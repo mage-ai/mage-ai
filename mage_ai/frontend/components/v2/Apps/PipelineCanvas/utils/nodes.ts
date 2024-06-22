@@ -12,7 +12,7 @@ import { ignoreKeys } from '@utils/hash';
 export function updateNodeGroupsWithItems(
   itemMapping: ItemMappingType,
 ): ItemMappingType {
-  // false &&
+  false &&
   isDebug() && console.log(
     'updateNodeGroupsWithItems',
     'itemMapping', itemMapping,

@@ -1,4 +1,5 @@
 @use '../../../base/borders';
+@use '../../../base/grid';
 
 .blockNode {
   @include borders.border-colors();
@@ -9,6 +10,8 @@
 }
 
 .nodeWrapper {
+  @include grid.base();
+
   &.block {
     z-index: 6;
   }

@@ -14,7 +14,6 @@ import {
   NodeType,
   ConnectionMappingType,
   ItemMappingType,
-  NodeItemMappingType,
   PortMappingType,
   BlockMappingType,
   BlocksByGroupType,
@@ -126,7 +125,6 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
 
   const connectionsActiveRef = useRef<ConnectionMappingType>({});
   const itemsActiveRef = useRef<ItemMappingType>({});
-  const nodeItemsActiveRef = useRef<NodeItemMappingType>({});
   const portsActiveRef = useRef<PortMappingType>({});
 
   const modelLevelsMapping = useRef<ModelMappingType[]>([]);
@@ -136,7 +134,6 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
   const [connectionsDragging, setConnectionsDraggingState] =
     useState<Record<string, ConnectionType>>(null);
   const [items, setItemsState] = useState<Record<string, DragItem>>(null);
-  const [nodeItems, setNodeItemsState] = useState<NodeItemMappingType>(null);
 
   function mutateModels(payload?: ModelMappingType) {
     updateModelsAndRelationships({
@@ -214,7 +211,7 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
           n => ItemTypeEnum.NODE === n?.type,
         );
       const nodesArr = layoutItemsInGroups(nodes, layout);
-      // false &&
+      false &&
       isDebug() && console.log(
         'nodeIDs', nodeIDs,
         'nodes', nodes,
@@ -245,6 +242,8 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
       mutateModels,
     } = opts ?? {};
 
+    console.log(connections);
+
     const levelPrevious: number = activeLevel.current;
     levelPrevious !== null
       && containerRef?.current?.classList.remove(stylesBuilder[`level-${levelPrevious}-active`]);
@@ -260,6 +259,10 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
     !skipUpdateLayout && updateLayoutOfModels({
       level,
       mutateModels,
+    });
+
+    modelLevelsMapping?.[activeLevel?.current]?.itemMapping?.forEach((item: DragItem) => {
+      onDrag(itemsRef.current[item.id]);
     });
 
     console.log('level:', activeLevel?.current);
@@ -340,13 +343,11 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
         const {
           connectionMapping,
           itemMapping,
-          nodeItemMapping,
           portMapping,
         } = modelLevelsMapping.current.reduce((acc, mapping) => {
           const {
             connectionMapping,
             itemMapping,
-            nodeItemMapping,
             portMapping,
           } = mapping;
 
@@ -359,10 +360,6 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
               ...acc.itemMapping,
               ...itemMapping,
             },
-            nodeItemMapping: {
-              ...acc.nodeItemMapping,
-              ...nodeItemMapping,
-            },
             portMapping: {
               ...acc.portMapping,
               ...portMapping,
@@ -371,7 +368,6 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
         }, {
           connectionMapping: {} as ConnectionMappingType,
           itemMapping: {} as ItemMappingType,
-          nodeItemMapping: {} as NodeItemMappingType,
           portMapping: {} as PortMappingType,
         });
 
@@ -379,13 +375,11 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
           itemMapping,
           portMapping,
           connectionMapping,
-          nodeItemMapping,
         );
 
         mutateModels({
           connectionMapping,
           itemMapping,
-          nodeItemMapping,
           portMapping,
         });
 
@@ -499,13 +493,13 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
 
       if (versions?.every((version: number) => version === rectVersion)) {
         if (activeLevel?.current === null) {
-          console.log('onMountItem.setActiveLevel', item, activeLevel?.current);
+          // console.log('onMountItem.setActiveLevel', item, activeLevel?.current);
           setActiveLevel({ level: 0 });
         } else {
-          console.log('onMountItem.updateLayoutOfModels', item, activeLevel?.current);
+          // console.log('onMountItem.updateLayoutOfModels', item, activeLevel?.current);
           updateLayoutOfModels({ mutateModels: true });
         }
-        console.log('onMountItem.renderLayoutChanges', item, activeLevel?.current);
+        // console.log('onMountItem.renderLayoutChanges', item, activeLevel?.current);
         renderLayoutChanges();
       }
     }
@@ -582,11 +576,9 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
   }
 
   function onDragging(node: NodeItemType, monitor: DropTargetMonitor) {
-    console.log('DRAGGGGGGGGGGGGGGGGGGG', node);
     itemsRef.current[node.id].rect = node?.rect;
 
     let rectOrigin = node?.rect;
-    console.log(node, rectOrigin, itemsRef.current[node.id], itemsRef);
 
     if (
       ItemTypeEnum.PORT === node.type &&
@@ -711,7 +703,6 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
   const nodesMemo = useMemo(() => {
     const arr = [
      ...Object.values(items || {}),
-     ...Object.values(nodeItems || {}),
    ];
 
     console.log('Re-rendering children...', arr, itemsRef?.current);
@@ -732,7 +723,7 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
      />
    ));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  } , [items, nodeItems]);
+  } , [items]);
 
   return (
     <div

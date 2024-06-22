@@ -30,7 +30,9 @@ function getStyles({ rect }: DragItem, { isDragging }: { isDragging: boolean }):
     position: 'absolute',
     transform,
     zIndex,
-    ...(isDragging ? { height: 0, opacity: 0 } : {}),
+    ...(isDragging ? { height: 0, opacity: 0 } : {
+      minHeight: rect?.height ?? 0,
+    }),
   };
 }
 

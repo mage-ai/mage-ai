@@ -450,8 +450,6 @@ export function layoutItemsInGroups(
 
   const groupsMapping: Record<string, NodeType> = {};
 
-  console.log('TREEEEEEEEEEEEEEEEE', nodes);
-
   nodes?.forEach((node: NodeType) => {
     const { items = [] } = node;
 
@@ -477,7 +475,7 @@ export function layoutItemsInGroups(
       )))
       : 0;
 
-    // false &&
+    false &&
     isDebugBase() && console.log(
       items2,
       offsetTopMax,
@@ -485,7 +483,7 @@ export function layoutItemsInGroups(
     );
 
     const rectNode = addRects(defaultRect(node), (transformRect(node) ?? {} as RectType));
-    console.log('RECT TRANSSSSSSSSSSSSSSS', rectNode);
+
     const rectPadding = rectNode?.padding;
     const box1 = calculateBoundingBox(items2.map((item: DragItem) => item.rect));
     const box2 = {
@@ -505,7 +503,7 @@ export function layoutItemsInGroups(
       ),
     };
 
-    // isDebug() &&
+    isDebug() &&
     console.log(
       node.id,
       'offsetTopMax', offsetTopMax,
@@ -522,7 +520,6 @@ export function layoutItemsInGroups(
     };
   });
 
-  console.log('TREEEEEEEEEEEEEEEEE GGGGGGGGGGG', groupsMapping);
   Object.values(groupsMapping || {}).forEach((node: NodeType) => {
     groupsMapping[node.id] = {
       ...node,
@@ -551,13 +548,13 @@ export function layoutItemsInGroups(
     })),
   }));
 
-  // isDebug() &&
+  isDebug() &&
   console.log('rectsBeforeLayout', rectsBeforeLayout);
   const rectsInTree = layoutRectsInTreeFormation(rectsBeforeLayout, layout);
-  // isDebug() &&
+  isDebug() &&
   console.log('rectsInTree', rectsInTree);
   const rectsCentered = centerRects(rectsInTree, boundingRect, containerRect);
-  // isDebug() &&
+  isDebug() &&
   console.log(
     'rectsCentered', rectsCentered,
     'boundingRect', boundingRect,

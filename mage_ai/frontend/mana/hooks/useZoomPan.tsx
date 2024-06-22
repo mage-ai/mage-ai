@@ -167,15 +167,6 @@ export const useZoomPan = (
       left: (startX.current / scale.current) - originX,
       top: (startY.current / scale.current) - originY,
     };
-    console.log('SHFTTTTTTTTTTTTTTTTT', rect?.id,
-      startX.current,
-      startY.current,
-      originX,
-      originY,
-      rect, {
-      ...rect,
-      ...diff,
-    });
 
     // Apply the offset and take into account the current origin and scale
     return {

@@ -40,6 +40,7 @@ export const ConnectionLine = memo(({
       ? styles[`connection-from-${fromItem?.type}-to-${toItem?.type}`]
       : '',
   ].join(' ');
+  console.log('LINESSSSSSSSSSSSSSSSSS', connection, connection.fromItem.rect, connection.toItem.rect);
 
   return (stop0ColorName && stop1ColorName)
     ? (
