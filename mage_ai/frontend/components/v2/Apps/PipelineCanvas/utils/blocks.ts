@@ -312,8 +312,6 @@ export function initializeBlocksAndConnections(
     nodeItemMapping[groupID].upstreamNodes = upstreamNodes;
   });
 
-  console.log(connectionMapping);
-
   return {
     connectionMapping,
     itemMapping: {

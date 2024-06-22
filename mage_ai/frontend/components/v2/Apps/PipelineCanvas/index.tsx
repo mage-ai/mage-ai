@@ -246,157 +246,128 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
 
     connectionLineRootRef.current ||= createRoot(element);
 
+    Object.entries(itemElementsRef?.current ?? {})?.forEach(([type, map]) => {
+      Object.entries(map ?? {})?.forEach(([key, el]) => {
+        console.log(type, key, el?.current?.getBoundingClientRect());
+      });
+    });
+
+    const processed = {};
+    const paths = [];
+
+    const itemMapping = modelLevelsMapping?.current[activeLevel?.current]?.itemMapping;
+    Object.keys(itemMapping ?? {})?.forEach((itemID: string, idx: number) => {
+      const item = itemsRef?.current[itemID];
+
+      item?.ports?.forEach(({ id: portID }: PortType) => {
+        const port = portsRef?.current[portID];
+        const isInput = port?.subtype === PortSubtypeEnum.INPUT;
+        const item2 = itemsRef?.current[port?.target?.id];
+        const block2 = item2?.block;
+
+        if ((block2?.uuid in processed && itemID in processed[block2?.uuid])
+          || (itemID in processed && block2?.uuid in processed[itemID])) {
+          return;
+        }
+        processed[block2?.uuid] ||= {};
+        processed[block2?.uuid][itemID] = portID;
+        processed[itemID] ||= {};
+        processed[itemID][block2?.uuid] = portID;
+
+        const fromItem = isInput ? item2 : item;
+        const fromBlock = isInput ? block2 : item?.block;
+        const fromColor = getBlockColor(fromBlock?.type, { getColorName: true })?.names?.base ?? 'white';
+        const fromRect = fromItem?.rect;
+        const toItem = isInput ? item : item2;
+        const toBlock = isInput ? item?.block : block2;
+        const toColor = getBlockColor(toBlock?.type, { getColorName: true })?.names?.base ?? 'green';
+        const toRect = toItem?.rect;
+
+        const port2 = item2?.ports?.find(({ target }) => target.id === item.id);
+        const fromPort = isInput ? port2 : port;
+        const toPort = isInput ? port : port2;
+
+        const portRect = itemElementsRef?.current?.ports?.[portID]?.current?.getBoundingClientRect();
+        const portRect2 = itemElementsRef?.current?.ports?.[port2.id]?.current?.getBoundingClientRect();
+
+        connectionLinesPathRef.current[portID] ||= createRef();
+
+        const fromRectUse = (isInput ? portRect2 : portRect) ?? fromRect;
+        const toRectUse = (isInput ? portRect : portRect2) ?? toRect;
+
+        console.log(
+          'blocks',
+          [fromBlock.uuid, toBlock.uuid],
+          'from item rect',
+          [fromRect?.left, fromRect?.top],
+          'to item rect',
+          [toRect?.left, toRect?.top],
+          'from port rect',
+          [fromPort?.rect?.left, fromPort?.rect?.top],
+          'to port rect',
+          [toPort?.rect?.left, toPort?.rect?.top],
+          'from port rect now',
+          [portRect?.left, portRect?.top], // This is the most accurate to use
+          'to port rect now',
+          [portRect2?.left, portRect2?.top], // This is the most accurate to use
+          transformState,
+          [{
+
+            left: [fromRectUse, transformState?.position?.origin?.x?.current],
+          top: [fromRectUse, transformState?.position?.origin?.y?.current],
+            left2: [toRectUse, transformState?.position?.origin?.x?.current],
+            top2: [toRectUse, transformState?.position?.origin?.y?.current],
+          }]
+        );
+
+
+        const dValue = getPathD({
+          curveControl: 0,
+          fromPosition: isInput ? 'right' : 'left',
+          toPosition: isInput ? 'left' : 'right',
+        }, {
+          ...fromRect,
+          left: (fromRect?.left ?? 0),
+          top: (fromRect?.top ?? 0),
+        }, {
+          ...toRect,
+          left: (toRect?.left ?? 0),
+          top: (toRect?.top ?? 0),
+        });
+
+        const id = portID;
+        const gradientID = `${id}-grad`;
+        const gradientColors = fromColor && toColor && fromColor !== toColor;
+
+        gradientColors && paths.push(
+          <defs key={`${id}-defs`}>
+            <linearGradient id={gradientID} x1="0%" x2="100%" y1="0%" y2="0%">
+              <stop offset="0%" style={{ stopColor: `var(--colors-${fromColor})`, stopOpacity: 0 }} />
+              <stop offset="100%" style={{ stopColor: `var(--colors-${toColor ?? fromColor})`, stopOpacity: 1 }} />
+            </linearGradient>
+          </defs>,
+        );
+        paths.push(
+          <path
+            d={dValue}
+            fill="none"
+            id={String(id)}
+            key={`${id}-path`}
+            ref={connectionLinesPathRef.current[id]}
+            stroke={gradientColors ? `url(#${gradientID})` : `var(--colors-${fromColor ?? toColor ?? 'gray'})`}
+            style={{
+              strokeWidth: 1.5,
+            }}
+          />,
+        );
+      });
+    });
+
     connectionLineRootRef.current.render(
-      <>
-        {Object.entries(portsRef?.current ?? {})?.map(([id, port]: [string, PortType]) => {
-          connectionLinesPathRef.current[id] ||= createRef();
-
-          const item = itemsRef?.current[id];
-          item?.ports?.forEach((p: PortType) => {
-            const port = portsRef?.current[p.id];
-            const isInput = port?.subtype === PortSubtypeEnum.INPUT;
-
-            const item2 = itemsRef?.current[port?.target?.id];
-            const block2 = item2?.block;
-
-            const fromItem = isInput ? item2 : item;
-            const fromBlock = isInput ? block2 : item?.block;
-            const fromColor = getBlockColor(fromBlock?.type, { getColorName: true })?.names?.base ?? 'red';
-            const fromRect = fromItem?.rect;
-            const toItem = isInput ? item : item2;
-            const toBlock = isInput ? item?.block : block2;
-            const toColor = getBlockColor(toBlock?.type, { getColorName: true })?.names?.base ?? 'purple';
-            const toRect = toItem?.rect;
-
-            console.log('!!!!!!!!!!!!!!!!!!!!!!!!!!', id, fromColor, toColor, fromRect, toRect);
-
-            connectionLinesPathRef.current[id] ||= createRef();
-
-            const d = getPathD({
-              curveControl: 0,
-              fromPosition: isInput ? 'right' : 'left',
-              toPosition: isInput ? 'left' : 'right',
-            }, {
-              height: 1000,
-              left: 1000,
-              top: 1000,
-              width: 1000,
-            }, {
-              height: 1000,
-              left: 3000,
-              top: 3000,
-              width: 1000,
-            });
-
-            return  (
-              <>
-                <defs key={`${id}-defs`}>
-                  <linearGradient id={`${id}-grad`} x1="0%" x2="100%" y1="0%" y2="0%">
-                    <stop offset="0%" style={{ stopColor: 'var(--colors-red)' }} />
-                    <stop offset="100%" style={{ stopColor: 'var(--colors-white)' }} />
-                  </linearGradient>
-                </defs>
-                <path
-                  d={d}
-                  fill="none"
-                  id={id}
-                  key={`${id}-path`}
-                  ref={connectionLinesPathRef.current[id]}
-                  stroke={`url(#${id}-grad)`}
-                />
-              </>
-            );
-          });
-
-          const d = getPathD({
-            curveControl: 0,
-            fromPosition: 'left',
-            toPosition: 'right',
-          }, {
-            height: 10,
-            left: 10,
-            top: 10,
-            width: 10,
-          }, {
-            height: 100,
-            left: 4000,
-            top: 4000,
-            width: 100,
-          });
-
-          console.log(id, d);
-
-          // drawLine
-          return  (
-            <>
-              <defs>
-                <linearGradient id={`${id}-grad`} x1="0%" x2="100%" y1="0%" y2="0%">
-                  <stop offset="0%" style={{ stopColor: 'var(--colors-red)' }} />
-                  <stop offset="100%" style={{ stopColor: 'var(--colors-white)' }} />
-                </linearGradient>
-              </defs>
-              <path
-                d={d}
-                fill="none"
-                id={id}
-                ref={connectionLinesPathRef.current[id]}
-                stroke={`url(#${id}-grad)`}
-              />
-            </>
-          );
-        })}
-      </>,
+      <ConnectionLines>
+        {paths}
+      </ConnectionLines>,
     );
-
-    // const {
-    //   connectionMapping,
-    // } = createConnections(Object.values(portsRef?.current ?? {}), {
-    //   connectionMapping: connectionsRef?.current,
-    //   itemMapping: itemsRef?.current,
-    // }, { level: activeLevel.current });
-
-    // const linesMap = {
-    //   ...connectionMapping,
-    //   ...(connectionsRef?.current ?? {}),
-    //   ...(connectionsDraggingRef?.current ?? {}),
-    // };
-
-    // connectionLineRootRef.current.render(
-    //   <>
-    //     {console.log(linesMap)}
-    //     {Object.values(linesMap).map((connection: ConnectionType) => {
-    //       const colorNames = [
-    //         connection?.fromItem?.id,
-    //         connection?.toItem?.id,
-    //       ]?.map((id: string) => {
-    //         const item = itemsRef?.current?.[id];
-    //         const blockType = item?.block?.type;
-    //         return getBlockColor(blockType, { getColorName: true })?.names?.base;
-    //       });
-    //       return (
-    //         <ConnectionLine
-    //           connection={connection}
-    //           key={connection.id}
-    //           stop0ColorName="gray"
-    //           stop1ColorName="graymd"
-    //         />
-    //       );
-    //     })}
-    //   </>,
-    // );
-
-    // mutateModels({
-    //   connectionMapping,
-    // });
-
-    // Object.values(portsRef?.current ?? {}).forEach((port: PortType) => {
-    //   const item = itemsRef?.current?.[port?.parent?.id];
-    //   updateAllPortConnectionsForItem(item, {
-    //     connectionsRef,
-    //     itemsRef,
-    //     portsRef,
-    //   });
-    // });
   }
 
   function setActiveLevel(opts?: {
@@ -409,8 +380,6 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
       skipUpdateLayout,
       mutateModels,
     } = opts ?? {};
-
-    console.log(connections);
 
     const levelPrevious: number = activeLevel.current;
     levelPrevious !== null
@@ -432,8 +401,6 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
     modelLevelsMapping?.[activeLevel?.current]?.itemMapping?.forEach((item: DragItem) => {
       onDrag(itemsRef.current[item.id]);
     });
-
-    console.log('level:', activeLevel?.current);
 
     renderConnectionLines();
   }
@@ -695,6 +662,9 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
 
   function onMountPort(item: PortType, portRef: React.RefObject<HTMLDivElement>) {
     if (portRef.current) {
+      itemElementsRef.current.ports ||= {};
+      itemElementsRef.current.ports[item.id] = portRef;
+
       const rect = portRef.current.getBoundingClientRect();
       const rectDef = layoutConfig?.transformRect?.[ItemTypeEnum.PORT]?.(rect) ?? rect;
 
@@ -725,10 +695,6 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
         connectionsRef.current[port.id] = conn;
       }
 
-      console.log('PORT MOUNT!!!!!!!!!!!!', portsRef?.current?.[port.id],
-        itemsRef?.current?.[port.parent?.id],
-        connectionsRef?.current?.[port.id],
-      );
       updateAllPortConnectionsForItem(port?.parent, { connectionsRef, itemsRef, portsRef });
     }
   }
@@ -918,10 +884,7 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
     >
       <CanvasStyled ref={containerRef}>
         <DragLayer snapToGrid={snapToGridOnDrag} />
-
-
-        <ConnectionLines id={connectionLinesRootID('nodes')} />
-
+        <div id={connectionLinesRootID('nodes')} />
         {nodesMemo}
       </CanvasStyled>
     </div>
