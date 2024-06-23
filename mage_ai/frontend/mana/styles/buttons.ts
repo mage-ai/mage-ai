@@ -128,7 +128,9 @@ const base = css<StyleProps>`
   font-size: ${({ theme }) => theme.fonts.size.base};
   padding: ${({ asLink, basic, grouped, theme }) =>
     asLink
-      ? basic ? 0 : '2px 4px'
+      ? basic
+        ? 0
+        : '2px 4px'
       : grouped
         ? basic
           ? 0
@@ -144,7 +146,9 @@ export const sm = css<StyleProps>`
     typeof tag !== 'undefined'
       ? theme.buttons.padding.sm
       : asLink
-        ? basic ? 0 : '2px 4px'
+        ? basic
+          ? 0
+          : '2px 4px'
         : grouped
           ? basic
             ? 0

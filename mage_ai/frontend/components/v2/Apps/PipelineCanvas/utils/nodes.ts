@@ -1,62 +1,64 @@
 import { applyRectDiff, getRectDiff } from '../../../Canvas/utils/rect';
-import { DragItem, NodeType, ItemMappingType,
+import {
+  DragItem,
+  NodeType,
+  ItemMappingType,
   ConnectionMappingType,
   ModelMappingType,
   ModelRefsType,
-  PortMappingType } from '../../../Canvas/interfaces';
+  PortMappingType,
+} from '../../../Canvas/interfaces';
 import { ItemTypeEnum, PortSubtypeEnum } from '../../../Canvas/types';
 import { isDebug } from '@utils/environment';
 import { buildUUIDForLevel } from './levels';
 import { ignoreKeys } from '@utils/hash';
 
-export function updateNodeGroupsWithItems(
-  itemMapping: ItemMappingType,
-): ItemMappingType {
-  const mapping = Object.entries(itemMapping ?? {})?.reduce((
-    acc,
-    [nodeID, nodeItem]: [string, NodeType],
-  ) =>  {
-    if (ItemTypeEnum.NODE !== nodeItem?.type) {
-      return acc;
-    }
+export function updateNodeGroupsWithItems(itemMapping: ItemMappingType): ItemMappingType {
+  const mapping = Object.entries(itemMapping ?? {})?.reduce(
+    (acc, [nodeID, nodeItem]: [string, NodeType]) => {
+      if (ItemTypeEnum.NODE !== nodeItem?.type) {
+        return acc;
+      }
 
-    const items = nodeItem?.items?.reduce((acc, item: DragItem) => ({
-      ...acc,
-      [item.id]: itemMapping?.[item?.id],
-    }), {});
+      const items = nodeItem?.items?.reduce(
+        (acc, item: DragItem) => ({
+          ...acc,
+          [item.id]: itemMapping?.[item?.id],
+        }),
+        {},
+      );
 
-    return {
+      return {
+        ...acc,
+        [nodeID]: {
+          ...nodeItem,
+          items: Object.values(items),
+        },
+      };
+    },
+    {} as ItemMappingType,
+  );
+
+  return Object.entries(mapping ?? {})?.reduce(
+    (acc, [nodeID, nodeItem]: [string, NodeType]) => ({
       ...acc,
       [nodeID]: {
         ...nodeItem,
-        items: Object.values(items),
+        upstreamNodes: nodeItem?.upstreamNodes?.map((node: NodeType) => mapping?.[node?.id]),
       },
-    };
-  }, {} as ItemMappingType);
-
-  return Object.entries(mapping ?? {})?.reduce((
-    acc,
-    [nodeID, nodeItem]: [string, NodeType],
-  ) =>  ({
-    ...acc,
-    [nodeID]: {
-      ...nodeItem,
-      upstreamNodes: nodeItem?.upstreamNodes?.map((node: NodeType) => mapping?.[node?.id]),
-    },
-  }), {} as ItemMappingType);
+    }),
+    {} as ItemMappingType,
+  );
 }
 
-export function updateModelsAndRelationships({
-  itemsRef,
-  portsRef,
-}, payload: ModelMappingType): {
+export function updateModelsAndRelationships(
+  { itemsRef, portsRef },
+  payload: ModelMappingType,
+): {
   items: ItemMappingType;
   ports: PortMappingType;
 } {
-  const {
-    itemMapping,
-    portMapping,
-  } = payload ?? {};
+  const { itemMapping, portMapping } = payload ?? {};
 
   const refsToUpdate = {
     items: {},
@@ -68,13 +70,15 @@ export function updateModelsAndRelationships({
   // 3. Nodes and node’s items are updated
   // 4. Connection’s fromItem and toItem are updated
 
-  Object.values({
-    ...itemsRef.current,
-    ...itemMapping,
-  } ?? {}).forEach((item: DragItem) => {
+  Object.values(
+    {
+      ...itemsRef.current,
+      ...itemMapping,
+    } ?? {},
+  ).forEach((item: DragItem) => {
     const arr = [];
 
-    (item?.ports ?? [])?.forEach((port) => {
+    (item?.ports ?? [])?.forEach(port => {
       const port2 = {
         ...port,
         ...portsRef?.current?.[port?.id],
@@ -114,18 +118,22 @@ export function updateModelsAndRelationships({
       ...nodeInit,
       ...refsToUpdate.items[nodeID],
     };
-    const items = node?.items?.reduce((acc, item: DragItem) => ({
-      ...acc,
-      [item.id]: ignoreKeys(refsToUpdate.items?.[item?.id], ['node', 'ports']),
-    }), {});
+    const items = node?.items?.reduce(
+      (acc, item: DragItem) => ({
+        ...acc,
+        [item.id]: ignoreKeys(refsToUpdate.items?.[item?.id], ['node', 'ports']),
+      }),
+      {},
+    );
 
     node.items = Object.values(items ?? {});
     refsToUpdate.items[nodeID] = node;
   });
   // Node upstream nodes
   Object.entries(refsToUpdate.items ?? {}).forEach(([nodeID, nodeItem]: [string, NodeType]) => {
-    nodeItem.upstreamNodes =
-      nodeItem?.upstreamNodes?.map((node: NodeType) => (refsToUpdate.items[node?.id]));
+    nodeItem.upstreamNodes = nodeItem?.upstreamNodes?.map(
+      (node: NodeType) => refsToUpdate.items[node?.id],
+    );
     refsToUpdate.items[nodeID] = nodeItem;
   });
   // Update non-node item’s node

@@ -40,10 +40,7 @@ export enum GroupUUIDEnum {
 
 export const GroupMapping = {
   [GroupUUIDEnum.DATA_PREPARATION]: {
-    [GroupUUIDEnum.LOAD]: [
-      GroupUUIDEnum.INGEST,
-      GroupUUIDEnum.MAP,
-    ],
+    [GroupUUIDEnum.LOAD]: [GroupUUIDEnum.INGEST, GroupUUIDEnum.MAP],
     [GroupUUIDEnum.TRANSFORM]: [
       GroupUUIDEnum.CLEANING,
       GroupUUIDEnum.ENRICH,
@@ -51,10 +48,7 @@ export const GroupMapping = {
       GroupUUIDEnum.TOKENIZATION,
       GroupUUIDEnum.EMBED,
     ],
-    [GroupUUIDEnum.EXPORT]: [
-      GroupUUIDEnum.VECTOR_DATABASE,
-      GroupUUIDEnum.KNOWLEDGE_GRAPH,
-    ],
+    [GroupUUIDEnum.EXPORT]: [GroupUUIDEnum.VECTOR_DATABASE, GroupUUIDEnum.KNOWLEDGE_GRAPH],
     [GroupUUIDEnum.INDEX]: [
       GroupUUIDEnum.CONTEXTUAL_DICTIONARY,
       GroupUUIDEnum.DOCUMENT_HIERARCHY,

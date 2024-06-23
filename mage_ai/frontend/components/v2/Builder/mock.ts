@@ -1,6 +1,9 @@
 import { PipelineTypeEnum } from '@interfaces/PipelineType';
 import { BlockTypeEnum } from '@interfaces/BlockType';
-import { GroupUUIDEnum, PipelineExecutionFrameworkUUIDEnum } from '@interfaces/PipelineExecutionFramework/types';
+import {
+  GroupUUIDEnum,
+  PipelineExecutionFrameworkUUIDEnum,
+} from '@interfaces/PipelineExecutionFramework/types';
 import { cleanName } from '@utils/string';
 
 export const LoadPipeline = {
@@ -84,7 +87,7 @@ export const TransformPipeline = {
       },
     },
   ].map(block => ({ ...block, uuid: cleanName(block.name) })),
-}
+};
 
 export const ExportPipeline = {
   name: 'Export and store data forever',
@@ -102,7 +105,7 @@ export const ExportPipeline = {
       groups: [GroupUUIDEnum.VECTOR_DATABASE],
     },
   ].map(block => ({ ...block, uuid: cleanName(block.name) })),
-}
+};
 
 export const IndexPipeline = {
   name: 'Optimize data for search and APIs',
@@ -125,7 +128,7 @@ export const IndexPipeline = {
       groups: [GroupUUIDEnum.SEARCH_INDEX],
     },
   ].map(block => ({ ...block, uuid: cleanName(block.name) })),
-}
+};
 
 export const QueryProcessingPipeline = {
   name: 'Interpret user prompt',
@@ -166,7 +169,7 @@ export const QueryProcessingPipeline = {
     ...block,
     uuid: cleanName(block.name),
   })),
-}
+};
 
 export const RetrievalPipeline = {
   name: 'Retrieve numerous documents from company',
@@ -204,17 +207,17 @@ export const RetrievalPipeline = {
       type: BlockTypeEnum.TRANSFORMER,
     },
     {
-    name: 'Hybrid Search',
+      name: 'Hybrid Search',
       groups: [GroupUUIDEnum.RANKING],
       type: BlockTypeEnum.TRANSFORMER,
     },
     {
-    name: 'Query Expansion',
+      name: 'Query Expansion',
       groups: [GroupUUIDEnum.RANKING],
       type: BlockTypeEnum.TRANSFORMER,
     },
   ].map(block => ({ ...block, uuid: cleanName(block.name) })),
-}
+};
 
 export const ResponseGenerationPipeline = {
   name: 'Generate great answers for user',
@@ -252,7 +255,7 @@ export const ResponseGenerationPipeline = {
       type: BlockTypeEnum.DATA_EXPORTER,
     },
   ].map(block => ({ ...block, uuid: cleanName(block.name) })),
-}
+};
 
 export const DataPreparationPipeline = {
   name: 'Data pre-processing pipeline',
@@ -280,7 +283,7 @@ export const DataPreparationPipeline = {
       type: BlockTypeEnum.PIPELINE,
     },
   ],
-}
+};
 
 export const InferencePipeline = {
   name: 'Super cool inference pipeline',
@@ -322,6 +325,6 @@ export const PipelineFrameworkInstance = {
       type: BlockTypeEnum.PIPELINE,
     },
   ],
-}
+};
 
 export default PipelineFrameworkInstance;

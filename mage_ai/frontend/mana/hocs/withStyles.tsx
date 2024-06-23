@@ -57,7 +57,9 @@ export type WithStylesProp = {
   className?: string;
   id?: string;
   uuid?: string;
-} & ElementType & React.CSSProperties & GridType;
+} & ElementType &
+  React.CSSProperties &
+  GridType;
 
 // Utility function to merge multiple refs
 function mergeRefs<T>(...refs: (React.Ref<T> | undefined)[]): React.RefCallback<T> {
@@ -72,20 +74,16 @@ function mergeRefs<T>(...refs: (React.Ref<T> | undefined)[]): React.RefCallback<
   };
 }
 
-export function withStyles<P extends object = WithStylesProp>(
-  styles: any,
-  propsHOC?: HOCProps,
-) {
-  const { HTMLTag = 'div', PropTypes, classNames: baseClassNames, allowDynamicStyles = false } = propsHOC || ({} as HOCProps);
+export function withStyles<P extends object = WithStylesProp>(styles: any, propsHOC?: HOCProps) {
+  const {
+    HTMLTag = 'div',
+    PropTypes,
+    classNames: baseClassNames,
+    allowDynamicStyles = false,
+  } = propsHOC || ({} as HOCProps);
 
   return React.forwardRef<any, P & WithStylesProp>(function StyledComponent(
-    {
-      children,
-      className,
-      id,
-      uuid,
-      ...props
-    }: P & WithStylesProp,
+    { children, className, id, uuid, ...props }: P & WithStylesProp,
     ref: any,
   ) {
     const divRef = useRef<HTMLDivElement>(null);
@@ -95,16 +93,22 @@ export function withStyles<P extends object = WithStylesProp>(
 
     const classNames = styleClassNames(
       styles,
-      [...(baseClassNames?.map(cn => styles[cn] || '') || []), uuid ? styles[uuid] : '', className || ''],
+      [
+        ...(baseClassNames?.map(cn => styles[cn] || '') || []),
+        uuid ? styles[uuid] : '',
+        className || '',
+      ],
       { className, uuid, ...props },
     );
 
     // Build additional dynamic styles if allowed
-    const dynamicStyles = allowDynamicStyles ? {
-      fill: props.fill,
-      stroke: props.stroke,
-      strokeWidth: props.strokeWidth,
-    } : {};
+    const dynamicStyles = allowDynamicStyles
+      ? {
+          fill: props.fill,
+          stroke: props.stroke,
+          strokeWidth: props.strokeWidth,
+        }
+      : {};
 
     const propsExtracted = extractProps(props);
     if (allowDynamicStyles) {

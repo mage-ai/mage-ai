@@ -20,12 +20,7 @@ export const DraggablePort: FC<DraggablePortProps> = memo(function DraggablePort
   itemRef,
   handlers,
 }: DraggablePortProps) {
-  const {
-    onDragStart,
-    onDrop,
-    onMouseDown,
-    onMouseUp,
-  } = handlers;
+  const { onDragStart, onDrop, onMouseDown, onMouseUp } = handlers;
 
   const [, connectDrag] = useDrag(
     () => ({

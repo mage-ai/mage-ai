@@ -1,17 +1,15 @@
 import BlockType from './BlockType';
 import PipelineScheduleType from './PipelineScheduleType';
 import TransformerActionType from './TransformerActionType';
-import {
-  BatchPipeline,
-  HexagonAll,
-  IntegrationPipeline,
-  StreamingPipeline,
-} from '@oracle/icons';
+import { BatchPipeline, HexagonAll, IntegrationPipeline, StreamingPipeline } from '@oracle/icons';
 import { CatalogType } from './IntegrationSourceType';
 import { ExecutorTypeEnum } from '@interfaces/ExecutorType';
 import { KernelNameEnum } from './KernelType';
 import { PipelineMetadataType } from './MetadataType';
-import { GroupUUIDEnum, PipelineExecutionFrameworkUUIDEnum } from './PipelineExecutionFramework/types';
+import {
+  GroupUUIDEnum,
+  PipelineExecutionFrameworkUUIDEnum,
+} from './PipelineExecutionFramework/types';
 
 export enum PipelineTypeEnum {
   EXECUTION_FRAMEWORK = 'execution_framework',
@@ -59,13 +57,13 @@ export const PIPELINE_TYPE_ICON_MAPPING = {
 };
 
 /*
-* These are not actual attributes on the Pipeline model. They are statuses
-* depending on the status of the pipeline schedules (triggers) for a pipeline.
-*/
+ * These are not actual attributes on the Pipeline model. They are statuses
+ * depending on the status of the pipeline schedules (triggers) for a pipeline.
+ */
 export enum PipelineStatusEnum {
-  ACTIVE = 'active',    // At least one active trigger
-  INACTIVE = 'inactive',    // All inactive triggers
-  NO_SCHEDULES = 'no_schedules',    // No triggers
+  ACTIVE = 'active', // At least one active trigger
+  INACTIVE = 'inactive', // All inactive triggers
+  NO_SCHEDULES = 'no_schedules', // No triggers
   RETRY = 'retry',
   // Retry incomplete block runs for failed pipeline runs specifically
   RETRY_INCOMPLETE_BLOCK_RUNS = 'retry_incomplete_block_runs',
@@ -98,11 +96,13 @@ export const PIPELINE_TYPE_TO_KERNEL_NAME = {
   [PipelineTypeEnum.PYSPARK]: KernelNameEnum.PYSPARK,
 };
 
-export const KERNEL_NAME_TO_PIPELINE_TYPE =
-  Object.entries(PIPELINE_TYPE_TO_KERNEL_NAME).reduce((acc, [k, v]) => ({
+export const KERNEL_NAME_TO_PIPELINE_TYPE = Object.entries(PIPELINE_TYPE_TO_KERNEL_NAME).reduce(
+  (acc, [k, v]) => ({
     ...acc,
     [v]: k,
-  }), {});
+  }),
+  {},
+);
 
 export interface PipelineExtensionsType {
   [key: string]: {

@@ -16,14 +16,15 @@ import {
 import { PortSubtypeEnum, ItemTypeEnum } from '../../../Canvas/types';
 import { createConnection } from '../../../Canvas/Connections/utils';
 
-export function createConnections(ports: PortType[], modelMappings: ModelMappingType, opts?: {
-  level?: number;
-}): ModelMappingType {
+export function createConnections(
+  ports: PortType[],
+  modelMappings: ModelMappingType,
+  opts?: {
+    level?: number;
+  },
+): ModelMappingType {
   const { level } = opts || {};
-  const {
-    itemMapping,
-    connectionMapping,
-  } = modelMappings;
+  const { itemMapping } = modelMappings;
   ports?.forEach((port: PortType) => {
     let fromItemBlock = null;
     let toItemBlock = null;
@@ -40,11 +41,15 @@ export function createConnections(ports: PortType[], modelMappings: ModelMapping
     const toItem = itemMapping?.[(toItemBlock as BlockType)?.uuid];
 
     const fromPort = fromItem?.ports?.find(
-      p => p?.target?.block?.uuid === (toItemBlock as BlockType)?.uuid
-        && p.subtype === PortSubtypeEnum.OUTPUT);
+      p =>
+        p?.target?.block?.uuid === (toItemBlock as BlockType)?.uuid &&
+        p.subtype === PortSubtypeEnum.OUTPUT,
+    );
     const toPort = toItem?.ports?.find(
-      p => p?.target?.block?.uuid === (fromItemBlock as BlockType)?.uuid
-        && p.subtype === PortSubtypeEnum.INPUT);
+      p =>
+        p?.target?.block?.uuid === (fromItemBlock as BlockType)?.uuid &&
+        p.subtype === PortSubtypeEnum.INPUT,
+    );
 
     if (fromPort) {
       fromPort.rect = { ...fromItem.rect } as RectType;
@@ -52,15 +57,9 @@ export function createConnections(ports: PortType[], modelMappings: ModelMapping
     if (toPort) {
       toPort.rect = { ...toItem.rect } as RectType;
     }
-
-    if (fromPort && toPort) {
-      const connection = createConnection(fromPort, toPort, { level });
-      connectionMapping[connection.id] = connection;
-    }
   });
 
   return {
-    connectionMapping,
     itemMapping,
   };
 }

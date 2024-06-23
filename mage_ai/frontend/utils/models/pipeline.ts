@@ -1,7 +1,12 @@
 import BlockType, { BlockTypeEnum } from 'interfaces/BlockType';
-import PipelineExecutionFrameworkType, { PipelineExecutionFrameworkBlockType } from '@interfaces/PipelineExecutionFramework/interfaces';
+import PipelineExecutionFrameworkType, {
+  PipelineExecutionFrameworkBlockType,
+} from '@interfaces/PipelineExecutionFramework/interfaces';
 import PipelineType from 'interfaces/PipelineType';
-import { GroupUUIDEnum, PipelineExecutionFrameworkUUIDEnum } from '@interfaces/PipelineExecutionFramework/types';
+import {
+  GroupUUIDEnum,
+  PipelineExecutionFrameworkUUIDEnum,
+} from '@interfaces/PipelineExecutionFramework/types';
 import { ReplicationMethodEnum, StreamType } from '@interfaces/IntegrationSourceType';
 
 interface TreeNode {
@@ -17,17 +22,14 @@ export function blocksWithStreamsWithIncrementalReplicationMethod(pipeline: Pipe
 } {
   const streamsByBlockUUID = {};
 
-  pipeline?.blocks?.forEach((block) => {
-    const {
-      catalog,
-      type,
-      uuid,
-    } = block;
+  pipeline?.blocks?.forEach(block => {
+    const { catalog, type, uuid } = block;
 
     if (BlockTypeEnum.DATA_LOADER === type && catalog?.streams) {
-      const streams = catalog?.streams?.filter(({
-        replication_method: replicationMethod,
-      }) => ReplicationMethodEnum.INCREMENTAL === replicationMethod);
+      const streams = catalog?.streams?.filter(
+        ({ replication_method: replicationMethod }) =>
+          ReplicationMethodEnum.INCREMENTAL === replicationMethod,
+      );
 
       if (streams?.length >= 1) {
         if (!(uuid in streamsByBlockUUID)) {
@@ -65,10 +67,7 @@ export function extractNestedBlocks(
     addPipelineGroupsToBlocks = false,
     addPipelineToBlocks = false,
   } = opts || {};
-  const {
-    downstreamBlocks,
-    upstreamBlocks,
-  } = dependencies || {};
+  const { downstreamBlocks, upstreamBlocks } = dependencies || {};
 
   let mapping = {};
 
@@ -86,10 +85,7 @@ export function extractNestedBlocks(
     }
 
     if (addPipelineGroupsToBlocks) {
-      block.groups = [
-        ...(pipeline.groups ?? []),
-        ...(block.groups ?? []),
-      ] as any[];
+      block.groups = [...(pipeline.groups ?? []), ...(block.groups ?? [])] as any[];
     }
 
     const isPipeline = BlockTypeEnum.PIPELINE === block.type;
@@ -111,8 +107,9 @@ export function extractNestedBlocks(
               const pip = pipelines[uuid];
               deps[key] ||= [];
               pip?.blocks?.forEach((b: BlockType) => {
-                if (('downstreamBlocks' === key && !b?.upstream_blocks?.length)
-                  || ('upstreamBlocks' === key && !b?.downstream_blocks?.length)
+                if (
+                  ('downstreamBlocks' === key && !b?.upstream_blocks?.length) ||
+                  ('upstreamBlocks' === key && !b?.downstream_blocks?.length)
                 ) {
                   deps[key].push(b?.uuid);
                 }
@@ -126,12 +123,7 @@ export function extractNestedBlocks(
       }
       mapping = {
         ...mapping,
-        ...extractNestedBlocks(
-          pipeline2,
-          pipelines,
-          opts,
-          deps,
-        ),
+        ...extractNestedBlocks(pipeline2, pipelines, opts, deps),
       };
     }
 
@@ -145,8 +137,8 @@ export function groupBlocksByGroups(
   blocks: (BlockType | PipelineExecutionFrameworkBlockType)[],
 ): Record<GroupUUIDEnum, Record<string, any>> {
   const blockGroupMap = {} as Record<GroupUUIDEnum, Record<string, any>>;
-  blocks?.forEach((block) => {
-    (block?.groups || [])?.forEach((group) => {
+  blocks?.forEach(block => {
+    (block?.groups || [])?.forEach(group => {
       const uuid = group as GroupUUIDEnum;
       blockGroupMap[uuid] ||= {};
       blockGroupMap[uuid][block.uuid] = block;

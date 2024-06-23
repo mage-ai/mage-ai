@@ -61,13 +61,7 @@ export const DragLayer: FC<CustomDragLayerProps> = ({
   onDragging,
   snapToGrid,
 }: CustomDragLayerProps) => {
-  const {
-    currentOffset,
-    initialOffset,
-    isDragging,
-    item,
-    itemType,
-  } = useDragLayer(monitor => ({
+  const { currentOffset, initialOffset, isDragging, item, itemType } = useDragLayer(monitor => ({
     currentOffset: monitor.getSourceClientOffset(),
     initialOffset: monitor.getInitialSourceClientOffset(),
     isDragging: monitor.isDragging(),
@@ -75,18 +69,19 @@ export const DragLayer: FC<CustomDragLayerProps> = ({
     itemType: monitor.getItemType(),
   }));
 
-  onDragging && onDragging?.({
-    currentOffset,
-    initialOffset,
-    item,
-    itemType: itemType as ItemTypeEnum,
-  });
+  onDragging &&
+    onDragging?.({
+      currentOffset,
+      initialOffset,
+      item,
+      itemType: itemType as ItemTypeEnum,
+    });
 
   function renderItem() {
     switch (itemType) {
       case ItemTypeEnum.BLOCK:
         return null;
-        // return <BoxDragPreview title={item.title} />;
+      // return <BoxDragPreview title={item.title} />;
       default:
         return null;
     }
@@ -98,11 +93,13 @@ export const DragLayer: FC<CustomDragLayerProps> = ({
 
   return (
     <div style={layerStyles}>
-      <div style={getItemStyles(
-        initialOffset,
-        currentOffset,
-        snapToGrid ? xy => snapToGridFunc(xy, gridDimensions) : null,
-      )}>
+      <div
+        style={getItemStyles(
+          initialOffset,
+          currentOffset,
+          snapToGrid ? xy => snapToGridFunc(xy, gridDimensions) : null,
+        )}
+      >
         {renderItem()}
       </div>
     </div>

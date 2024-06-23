@@ -20,15 +20,13 @@ export default function Badge({ Icon, baseColorName, label, short }: BadgeType) 
   return (
     <Grid templateColumnsMaxContent={short}>
       <BadgeStyled
-      alignItems="center"
-      backgroundColor={`${baseColorName}lo`}
-      className={[
-
-      ].join(' ')}
-      columnGap={10}
-      templateColumns="auto 1fr"
-      templateRows="1fr"
-    >
+        alignItems='center'
+        backgroundColor={`${baseColorName}lo`}
+        className={[].join(' ')}
+        columnGap={10}
+        templateColumns='auto 1fr'
+        templateRows='1fr'
+      >
         {Icon && <Icon colorName={baseColorName} size={16} />}
         <Text semibold>{label}</Text>
       </BadgeStyled>

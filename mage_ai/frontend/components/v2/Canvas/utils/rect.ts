@@ -2,19 +2,15 @@ import update from 'immutability-helper';
 
 import { ZoomPanPositionType, ZoomPanStateType } from '@mana/hooks/useZoomPan';
 import { DragItem, LayoutConfigType, NodeItemType, NodeType, RectType } from '../interfaces';
-import {
-  LayoutConfigDirectionEnum,
-  LayoutConfigDirectionOriginEnum,
-} from '../types';
+import { LayoutConfigDirectionEnum, LayoutConfigDirectionOriginEnum } from '../types';
 import { range, indexBy, flattenArray } from '@utils/array';
 import { isDebug as isDebugBase } from '@utils/environment';
 
 function isDebug() {
-  return isDebugBase()
-    && false;
+  return isDebugBase() && false;
 }
 
-type GroupType = { items: DragItem[], position: { left: number; top: number } };
+type GroupType = { items: DragItem[]; position: { left: number; top: number } };
 
 const DEFAULT_LAYOUT_CONFIG: LayoutConfigType = {
   direction: LayoutConfigDirectionEnum.HORIZONTAL,
@@ -52,17 +48,11 @@ function shiftRectsIntoBoundingBox(rects: RectType[], boundingBox: RectType): Re
   }));
 }
 
-export function layoutItems(
-  items: DragItem[],
-  opts?: SetupOpts,
-): RectType[] {
+export function layoutItems(items: DragItem[], opts?: SetupOpts): RectType[] {
   const blocks = items?.map(i => i?.block);
   const itemsByBlock = indexBy(items, i => i?.block?.uuid);
 
-  const {
-    groupBy,
-    layout,
-  } = opts || {};
+  const { groupBy, layout } = opts || {};
 
   const {
     direction = LayoutConfigDirectionEnum.HORIZONTAL,
@@ -90,7 +80,7 @@ export function layoutItems(
     } else {
       levels[block.uuid] = Math.max(
         ...block?.upstream_blocks?.map((upstreamId: string) => {
-          const upstreamBlock = blocks.find((b) => b.uuid === upstreamId);
+          const upstreamBlock = blocks.find(b => b.uuid === upstreamId);
           return upstreamBlock ? determineLevel(itemsByBlock[upstreamBlock?.uuid]) + 1 : 0;
         }),
       );
@@ -104,7 +94,7 @@ export function layoutItems(
   const groups: Record<string, GroupType> = {};
 
   if (groupBy) {
-    items.forEach((item) => {
+    items.forEach(item => {
       const groupKey = groupBy(item);
       if (!groups[groupKey]) {
         groups[groupKey] = { items: [], position: null };
@@ -126,7 +116,10 @@ export function layoutItems(
       top: 0,
     }));
 
-    const groupedRects = groupRectangles(groupBlocks as RectType[], Math.max(gap?.column, gap?.row));
+    const groupedRects = groupRectangles(
+      groupBlocks as RectType[],
+      Math.max(gap?.column, gap?.row),
+    );
 
     groupedRects.forEach(({ left, top, ...rect }) => {
       positions.push({
@@ -152,10 +145,7 @@ export function layoutItems(
   return positions;
 }
 
-export function layoutRectsInContainer(
-  rects: RectType[],
-  layout?: LayoutConfigType,
-): RectType[] {
+export function layoutRectsInContainer(rects: RectType[], layout?: LayoutConfigType): RectType[] {
   // This function lays out items within a container by centering them.
   const { height, width } = layout?.containerRect || { height: 0, width: 0 };
   const rect = calculateBoundingBox(rects);
@@ -171,10 +161,14 @@ export function layoutRectsInContainer(
   }));
 }
 
-function centerRects(rects: RectType[], boundingRect: RectType, containerRect: RectType): RectType[] {
+function centerRects(
+  rects: RectType[],
+  boundingRect: RectType,
+  containerRect: RectType,
+): RectType[] {
   const centerRect = {
-    left: ((containerRect.left + containerRect.width) / 2) + ((boundingRect.width ?? 0) / 2),
-    top: ((containerRect.top + containerRect.height) / 2) + ((boundingRect.height ?? 0) / 2),
+    left: (containerRect.left + containerRect.width) / 2 + (boundingRect.width ?? 0) / 2,
+    top: (containerRect.top + containerRect.height) / 2 + (boundingRect.height ?? 0) / 2,
   };
   const centroid = calculateBoundingBox(rects);
   const diff = getRectDiff(centroid, centerRect);
@@ -194,15 +188,19 @@ export function setUpstreamRectsForItems(items: DragItem[]): DragItem[] {
     rect: {
       ...item.rect,
       id: item.id,
-      upstreamRects: item?.block?.upstream_blocks.reduce(
-        (acc: RectType[], id: string) => acc.concat(rectsByItemID[id] ?? []),
-        [],
-      ) ?? [],
+      upstreamRects:
+        item?.block?.upstream_blocks.reduce(
+          (acc: RectType[], id: string) => acc.concat(rectsByItemID[id] ?? []),
+          [],
+        ) ?? [],
     },
   }));
 }
 
-export function layoutItemsInTreeFormation(items: DragItem[], layout?: LayoutConfigType): DragItem[] {
+export function layoutItemsInTreeFormation(
+  items: DragItem[],
+  layout?: LayoutConfigType,
+): DragItem[] {
   const { boundingRect, containerRect } = layout || {};
 
   const items2 = setUpstreamRectsForItems(items);
@@ -221,17 +219,17 @@ export function layoutItemsInTreeFormation(items: DragItem[], layout?: LayoutCon
   }));
 }
 
-function layoutRectsInTreeFormation(items: RectType[], layout?: LayoutConfigType, opts?: {
-  align?: {
-    horizontal?: 'left' | 'center' | 'right';
-    vertical?: 'top' | 'center' | 'bottom';
+function layoutRectsInTreeFormation(
+  items: RectType[],
+  layout?: LayoutConfigType,
+  opts?: {
+    align?: {
+      horizontal?: 'left' | 'center' | 'right';
+      vertical?: 'top' | 'center' | 'bottom';
+    };
   },
-}): RectType[] {
-  const {
-    direction,
-    gap,
-    stagger,
-  } = { ...DEFAULT_LAYOUT_CONFIG, ...layout };
+): RectType[] {
+  const { direction, gap, stagger } = { ...DEFAULT_LAYOUT_CONFIG, ...layout };
   const { column: gapCol, row: gapRow } = gap;
 
   const positionedItems: Record<number | string, RectType[]> = {};
@@ -255,18 +253,20 @@ function layoutRectsInTreeFormation(items: RectType[], layout?: LayoutConfigType
       isDebug() && console.log(`Item ${item.id} has no upstreamRects:`, item?.upstreamRects);
       levels.set(item.id, 0);
     } else {
-      const lvl = Math.max(...item.upstreamRects.map(rect => {
-        const parentItem = items.find(i => i.id === rect.id);
-        isDebug() && console.log(`Checking parent for ${item.id}`, parentItem);
-        if (parentItem) {
-          const parentLevel = determineLevel(parentItem);
-          const children = childrenMapping.get(parentItem) || [];
-          children.push(item);
-          childrenMapping.set(parentItem, children);
-          return parentLevel + 1;
-        }
-        return 0;
-      }));
+      const lvl = Math.max(
+        ...item.upstreamRects.map(rect => {
+          const parentItem = items.find(i => i.id === rect.id);
+          isDebug() && console.log(`Checking parent for ${item.id}`, parentItem);
+          if (parentItem) {
+            const parentLevel = determineLevel(parentItem);
+            const children = childrenMapping.get(parentItem) || [];
+            children.push(item);
+            childrenMapping.set(parentItem, children);
+            return parentLevel + 1;
+          }
+          return 0;
+        }),
+      );
       isDebug() && console.log(`Setting level for item ${item.id} to ${lvl}`);
       levels.set(item.id, lvl);
     }
@@ -318,8 +318,7 @@ function layoutRectsInTreeFormation(items: RectType[], layout?: LayoutConfigType
         isDebug() && console.log(`[${direction}] Left final for ${item.id}:`, left);
         item.left = left;
 
-        top += rects.slice(0, idx).reduce((sum, rect) => sum + rect.height, 0)
-          + (idx * gapRow);
+        top += rects.slice(0, idx).reduce((sum, rect) => sum + rect.height, 0) + idx * gapRow;
 
         // Zig-zag middle, right, left
 
@@ -334,8 +333,7 @@ function layoutRectsInTreeFormation(items: RectType[], layout?: LayoutConfigType
         isDebug() && console.log(`[${direction}] Top final for ${item.id}:`, top);
         item.top = top;
 
-        left += rects.slice(0, idx).reduce((sum, rect) => sum + rect.width, 0)
-          + (idx * gapCol);
+        left += rects.slice(0, idx).reduce((sum, rect) => sum + rect.width, 0) + idx * gapCol;
 
         // Zig-zag center, down, up
 
@@ -352,8 +350,14 @@ function layoutRectsInTreeFormation(items: RectType[], layout?: LayoutConfigType
     dimensionsByLevel[levelKey] = calculateBoundingBox(rects2);
   });
 
-  const maxHeight = Object.values(dimensionsByLevel).reduce((max, rect) => Math.max(max, rect.height), 0);
-  const maxWidth = Object.values(dimensionsByLevel).reduce((max, rect) => Math.max(max, rect.width), 0);
+  const maxHeight = Object.values(dimensionsByLevel).reduce(
+    (max, rect) => Math.max(max, rect.height),
+    0,
+  );
+  const maxWidth = Object.values(dimensionsByLevel).reduce(
+    (max, rect) => Math.max(max, rect.width),
+    0,
+  );
 
   // Vertical:
   // - Align row horizontally
@@ -365,18 +369,13 @@ function layoutRectsInTreeFormation(items: RectType[], layout?: LayoutConfigType
     const levelKey = String(level);
     const rectLvl = dimensionsByLevel[levelKey];
     const maxDim = isHorizontal
-      ? { top: rectLvl.top + ((maxHeight - rectLvl.height)) / 2 }
-      : { left: rectLvl.left + ((maxWidth - rectLvl.width) / 2) };
+      ? { top: rectLvl.top + (maxHeight - rectLvl.height) / 2 }
+      : { left: rectLvl.left + (maxWidth - rectLvl.width) / 2 };
     const rectMax = { ...rectLvl, ...maxDim };
     const diff = getRectDiff(rectLvl, rectMax);
 
-    isDebug()
-      && console.log(
-        `[${direction}:${level}]`,
-        'rectLvl', rectLvl,
-        'rectMax', rectMax,
-        'diff', diff,
-      );
+    isDebug() &&
+      console.log(`[${direction}:${level}]`, 'rectLvl', rectLvl, 'rectMax', rectMax, 'diff', diff);
     const rects2 = rects.map(rect => applyRectDiff(rect, diff));
 
     // Align row items vertically / Align column items horizontally
@@ -385,30 +384,24 @@ function layoutRectsInTreeFormation(items: RectType[], layout?: LayoutConfigType
       width?: number;
     } = isHorizontal
       ? rects2.reduce((max, rect) => ({ width: Math.max(max.width, rect.width) }), { width: 0 })
-      : rects2.reduce((max, rect) => ({ height: Math.max(max.height, rect.height) }), { height: 0 });
+      : rects2.reduce((max, rect) => ({ height: Math.max(max.height, rect.height) }), {
+          height: 0,
+        });
     const rects3 = rects2.map(rect => ({
       ...rect,
       left: isHorizontal ? rect.left + (maxDim2.width - rect.width) / 2 : rect.left,
       top: isHorizontal ? rect.top : rect.top + (maxDim2.height - rect.height) / 2,
     }));
     positionedItems[levelKey] = rects3;
-
   });
 
   // Center the entire layout within its container
   const rects = flattenArray(Object.values(positionedItems));
   const finalBoundingBox = calculateBoundingBox(rects);
-  isDebug() && console.log(
-    'levelItems', levelItems,
-    'box', finalBoundingBox,
-  );
+  isDebug() && console.log('levelItems', levelItems, 'box', finalBoundingBox);
 
-  const offsetX = opts?.align?.horizontal
-    ? finalBoundingBox.left - (finalBoundingBox.width / 2)
-    : 0;
-  const offsetY = opts?.align?.vertical
-    ? finalBoundingBox.top - (finalBoundingBox.height / 2)
-    : 0;
+  const offsetX = opts?.align?.horizontal ? finalBoundingBox.left - finalBoundingBox.width / 2 : 0;
+  const offsetY = opts?.align?.vertical ? finalBoundingBox.top - finalBoundingBox.height / 2 : 0;
 
   return rects.map((rect: RectType) => ({
     ...rect,
@@ -443,44 +436,40 @@ export function applyRectDiff(rect: RectType, diff: RectType, dimensions?: boole
 }
 
 export function transformZoomPanRect(rect: RectType, transformState: ZoomPanStateType) {
-  const {
-    container,
-    element,
-    position,
-  } = transformState ?? {} as ZoomPanStateType;
+  const { container, element, position } = transformState ?? ({} as ZoomPanStateType);
 
   const scale = transformState?.scale?.current ?? 1;
 
-  const rectContainer = (container?.current ?? {} as HTMLElement)?.getBoundingClientRect();
+  const rectContainer = (container?.current ?? ({} as HTMLElement))?.getBoundingClientRect();
   const containerWidth = rectContainer.width;
   const containerHeight = rectContainer.height;
 
-  const rectViewport = (element?.current ?? {} as HTMLElement)?.getBoundingClientRect();
+  const rectViewport = (element?.current ?? ({} as HTMLElement))?.getBoundingClientRect();
   const viewportWidth = rectViewport.width;
   const viewportHeight = rectViewport.height;
 
-  const current = position?.current ?? {} as ZoomPanPositionType;
-  const xCur = (current?.x?.current ?? 0);
-  const yCur = (current?.y?.current ?? 0);
+  const current = position?.current ?? ({} as ZoomPanPositionType);
+  const xCur = current?.x?.current ?? 0;
+  const yCur = current?.y?.current ?? 0;
 
-  const origin = position?.origin ?? {} as ZoomPanPositionType;
-  const xOrg = (origin?.x?.current ?? 0);
-  const yOrg = (origin?.y?.current ?? 0);
+  const origin = position?.origin ?? ({} as ZoomPanPositionType);
+  const xOrg = origin?.x?.current ?? 0;
+  const yOrg = origin?.y?.current ?? 0;
 
-  const left = (rect?.left ?? 0);
-  const top = (rect?.top ?? 0);
-  const width = (rect?.width ?? 0);
-  const height = (rect?.height ?? 0);
+  const left = rect?.left ?? 0;
+  const top = rect?.top ?? 0;
+  const width = rect?.width ?? 0;
+  const height = rect?.height ?? 0;
 
-  const leftOrg = (left + xOrg); // Reset before panning
+  const leftOrg = left + xOrg; // Reset before panning
   const leftFactor = xOrg / (viewportWidth - containerWidth);
   const transformedLeft = leftOrg;
-    // + ((containerWidth - viewportWidth) * leftFactor);
+  // + ((containerWidth - viewportWidth) * leftFactor);
 
-  const topOrg = (top + yOrg); // Reset before panning
+  const topOrg = top + yOrg; // Reset before panning
   const topFactor = yOrg / (viewportHeight - containerHeight);
   const transformedTop = topOrg;
-    // + ((containerHeight - viewportHeight) * topFactor);
+  // + ((containerHeight - viewportHeight) * topFactor);
 
   console.log('origin', xOrg, yOrg);
   console.log('current', xCur, yCur);
@@ -498,20 +487,12 @@ export function transformZoomPanRect(rect: RectType, transformState: ZoomPanStat
   };
 }
 
-export function layoutItemsInGroups(
-  nodes: NodeType[],
-  layout: LayoutConfigType,
-): NodeType[] {
-  const {
-    boundingRect,
-    containerRect,
-  } = layout;
-  const {
-    node: transformRect = (rect: RectType) => ({ ...rect }) as RectType,
-  } = layout?.transformRect || {};
-  const {
-    item: defaultRect = (item: NodeItemType) => ({ ...item?.rect }) as RectType,
-  } = layout?.defaultRect || {};
+export function layoutItemsInGroups(nodes: NodeType[], layout: LayoutConfigType): NodeType[] {
+  const { boundingRect, containerRect } = layout;
+  const { node: transformRect = (rect: RectType) => ({ ...rect }) as RectType } =
+    layout?.transformRect || {};
+  const { item: defaultRect = (item: NodeItemType) => ({ ...item?.rect }) as RectType } =
+    layout?.defaultRect || {};
 
   const groupsMapping: Record<string, NodeType> = {};
 
@@ -521,33 +502,40 @@ export function layoutItemsInGroups(
     const layoutInner = {
       ...layout,
 
-      direction: LayoutConfigDirectionEnum.HORIZONTAL === layout.direction
-        ? LayoutConfigDirectionEnum.VERTICAL
-        : LayoutConfigDirectionEnum.HORIZONTAL,
+      direction:
+        LayoutConfigDirectionEnum.HORIZONTAL === layout.direction
+          ? LayoutConfigDirectionEnum.VERTICAL
+          : LayoutConfigDirectionEnum.HORIZONTAL,
     };
     const items2 = layoutItemsInTreeFormation(items, layoutInner);
 
-    const offsetTopMax = items2?.length >= 1
-      ? Math.max(...items2.map((item: DragItem) =>
-        (item?.rect?.inner?.badge?.height ?? 0) + (item?.rect?.inner?.badge?.offset?.top ?? 0)
-        + (item?.rect?.inner?.title?.height ?? 0) + (item?.rect?.inner?.title?.offset?.top ?? 0),
-      ))
-      : 0;
-    const offsetLeftMax = items2?.length >= 1
-      ? Math.max(...items2.map((item: DragItem) => Math.max(
-        (item?.rect?.inner?.badge?.offset?.left ?? 0),
-        (item?.rect?.inner?.title?.offset?.left ?? 0),
-      )))
-      : 0;
+    const offsetTopMax =
+      items2?.length >= 1
+        ? Math.max(
+            ...items2.map(
+              (item: DragItem) =>
+                (item?.rect?.inner?.badge?.height ?? 0) +
+                (item?.rect?.inner?.badge?.offset?.top ?? 0) +
+                (item?.rect?.inner?.title?.height ?? 0) +
+                (item?.rect?.inner?.title?.offset?.top ?? 0),
+            ),
+          )
+        : 0;
+    const offsetLeftMax =
+      items2?.length >= 1
+        ? Math.max(
+            ...items2.map((item: DragItem) =>
+              Math.max(
+                item?.rect?.inner?.badge?.offset?.left ?? 0,
+                item?.rect?.inner?.title?.offset?.left ?? 0,
+              ),
+            ),
+          )
+        : 0;
 
-    false &&
-    isDebugBase() && console.log(
-      items2,
-      offsetTopMax,
-      offsetLeftMax,
-    );
+    false && isDebugBase() && console.log(items2, offsetTopMax, offsetLeftMax);
 
-    const rectNode = addRects(defaultRect(node), (transformRect(node?.rect) ?? {} as RectType));
+    const rectNode = addRects(defaultRect(node), transformRect(node?.rect) ?? ({} as RectType));
 
     const rectPadding = rectNode?.padding;
     const box1 = calculateBoundingBox(items2.map((item: DragItem) => item.rect));
@@ -569,14 +557,19 @@ export function layoutItemsInGroups(
     };
 
     isDebug() &&
-    console.log(
-      node.id,
-      'offsetTopMax', offsetTopMax,
-      'items2', items2,
-      'rectNode', rectNode,
-      'itemsBox', box1,
-      'itemsBoxPadding', box2,
-    );
+      console.log(
+        node.id,
+        'offsetTopMax',
+        offsetTopMax,
+        'items2',
+        items2,
+        'rectNode',
+        rectNode,
+        'itemsBox',
+        box1,
+        'itemsBoxPadding',
+        box2,
+      );
 
     groupsMapping[node.id] = {
       ...node,
@@ -590,18 +583,15 @@ export function layoutItemsInGroups(
       ...node,
       rect: {
         ...node?.rect,
-        upstreamRects: (node.upstreamNodes ?? []).reduce(
-          (acc: RectType[], node2: NodeType) => {
-            const rect = groupsMapping[node2.id]?.rect;
-            return rect ? acc.concat({ ...rect, id: node2?.id }) : acc;
-          }, []),
+        upstreamRects: (node.upstreamNodes ?? []).reduce((acc: RectType[], node2: NodeType) => {
+          const rect = groupsMapping[node2.id]?.rect;
+          return rect ? acc.concat({ ...rect, id: node2?.id }) : acc;
+        }, []),
       },
     };
   });
 
-  const rectsBeforeLayout = Object.values(
-    groupsMapping || {},
-  )?.map((node: NodeType) => ({
+  const rectsBeforeLayout = Object.values(groupsMapping || {})?.map((node: NodeType) => ({
     ...node.rect,
     id: node?.id,
     left: null,
@@ -613,23 +603,25 @@ export function layoutItemsInGroups(
     })),
   }));
 
-  isDebug() &&
-  console.log('rectsBeforeLayout', rectsBeforeLayout);
+  isDebug() && console.log('rectsBeforeLayout', rectsBeforeLayout);
 
   const rectsInTree = layoutRectsInTreeFormation(rectsBeforeLayout, layout);
-  isDebug() &&
-  console.log('rectsInTree', rectsInTree);
+  isDebug() && console.log('rectsInTree', rectsInTree);
 
   // rectsInTree = rectsInTree?.map(rect => transformZoomPanRect(rect, transformState));
 
   // rectsInTree = centerRects(rectsInTree, boundingRect, containerRect);
   isDebug() &&
-  console.log(
-    'rectsInTree', rectsInTree,
-    'boundingRect', boundingRect,
-    'containerRect', containerRect,
-    window.innerWidth, window.innerHeight,
-  );
+    console.log(
+      'rectsInTree',
+      rectsInTree,
+      'boundingRect',
+      boundingRect,
+      'containerRect',
+      containerRect,
+      window.innerWidth,
+      window.innerHeight,
+    );
 
   return rectsInTree.reduce((acc, rect: RectType) => {
     const node = groupsMapping[rect.id];
@@ -652,11 +644,7 @@ export function layoutItemsInGroups(
       top: (rect?.offset?.top ?? 0) + (rect?.padding?.top ?? 0),
     };
 
-    isDebug() && console.log(
-      'box', rect,
-      'itemsBox', itemsBox,
-      'diff', diff,
-    );
+    isDebug() && console.log('box', rect, 'itemsBox', itemsBox, 'diff', diff);
 
     itemsRects = itemsRects.map((itemRect: RectType) => applyRectDiff(itemRect, diff));
 
@@ -690,10 +678,7 @@ function updateItemRect(item: DragItem, rect: RectType) {
   });
 }
 
-function layoutItemsInSqaure(
-  items: DragItem[],
-  layout?: LayoutConfigType,
-) {
+function layoutItemsInSqaure(items: DragItem[], layout?: LayoutConfigType) {
   const rects = items.map(item => item.rect);
   const repositionedRects = repositionInGroup(rects, layout);
 
@@ -704,19 +689,10 @@ function layoutItemsInSqaure(
   });
 }
 
-function repositionInGroup(
-  rects: RectType[],
-  layout?: LayoutConfigType,
-): RectType[] {
+function repositionInGroup(rects: RectType[], layout?: LayoutConfigType): RectType[] {
   const { gap, grid } = layout || {};
-  let {
-    columns: numCols,
-    rows: numRows,
-  } = grid || {};
-  const {
-    column: horizontalSpacing = 50,
-    row: verticalSpacing = 50,
-  } = gap || {};
+  let { columns: numCols, rows: numRows } = grid || {};
+  const { column: horizontalSpacing = 50, row: verticalSpacing = 50 } = gap || {};
 
   // If there is only one rect, return it as is
   if (rects.length === 1) {
@@ -725,7 +701,7 @@ function repositionInGroup(
 
   if (!numRows && !numCols) {
     numCols = Math.floor(Math.sqrt(rects.length));
-    numRows = Math.ceil(rects.length / numCols);  // If numRows is not provided, calculate it based on numCols
+    numRows = Math.ceil(rects.length / numCols); // If numRows is not provided, calculate it based on numCols
   } else {
     numCols = numCols ?? 1;
     numRows = numRows ?? 1;
@@ -772,7 +748,7 @@ function groupRectangles(
   numRows?: number,
 ): RectType[] {
   if (!numRows) {
-    numRows = Math.ceil(rects.length / numCols);  // If numRows is not provided, calculate it based on numCols
+    numRows = Math.ceil(rects.length / numCols); // If numRows is not provided, calculate it based on numCols
   }
 
   let currentX = 0;
@@ -810,14 +786,9 @@ function calculateCentroid(rects: RectType[]): { left: number; top: number } {
   let topSum = 0;
 
   [...rects]?.forEach((rect: RectType) => {
-    const {
-      left,
-      top,
-      width,
-      height,
-    } = { ...rect };
-    leftSum += left + (width / 2);
-    topSum += top + (height / 2);
+    const { left, top, width, height } = { ...rect };
+    leftSum += left + width / 2;
+    topSum += top + height / 2;
   });
 
   return {
@@ -855,14 +826,8 @@ function layoutRectsInWavePattern(
     wavelength?: number;
   },
 ): RectType[] {
-  const {
-    amplitude = 40,
-    wavelength = 100,
-  } = opts || {};
-  const {
-    direction = LayoutConfigDirectionEnum.HORIZONTAL,
-    gap,
-  } = layout || {};
+  const { amplitude = 40, wavelength = 100 } = opts || {};
+  const { direction = LayoutConfigDirectionEnum.HORIZONTAL, gap } = layout || {};
 
   let accumulatedWidth = 0;
   let accumulatedHeight = 0;
@@ -873,7 +838,7 @@ function layoutRectsInWavePattern(
     if (direction === LayoutConfigDirectionEnum.HORIZONTAL) {
       // Calculate wave positioning for horizontal direction
       const xPos = accumulatedWidth;
-      const yPos = amplitude * Math.sin((2 * Math.PI / wavelength) * xPos);
+      const yPos = amplitude * Math.sin(((2 * Math.PI) / wavelength) * xPos);
       accumulatedWidth += rect.width + (gap?.column ?? 0);
 
       updatedRect = {
@@ -884,7 +849,7 @@ function layoutRectsInWavePattern(
     } else {
       // Calculate wave positioning for vertical direction
       const yPos = accumulatedHeight;
-      const xPos = amplitude * Math.sin((2 * Math.PI / wavelength) * yPos);
+      const xPos = amplitude * Math.sin(((2 * Math.PI) / wavelength) * yPos);
       accumulatedHeight += rect.height + (gap?.row ?? 0);
 
       updatedRect = {

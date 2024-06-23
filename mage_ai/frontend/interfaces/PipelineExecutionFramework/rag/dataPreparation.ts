@@ -22,7 +22,7 @@ export const Load: PipelineExecutionFrameworkType = {
       upstream_blocks: [GroupUUIDEnum.INGEST],
       downstream_blocks: [],
     },
-  ]?.map((b) => ({ ...b, name: capitalizeRemoveUnderscoreLower(b.uuid) })),
+  ]?.map(b => ({ ...b, name: capitalizeRemoveUnderscoreLower(b.uuid) })),
 };
 
 export const Transform: PipelineExecutionFrameworkType = {
@@ -50,16 +50,12 @@ export const Transform: PipelineExecutionFrameworkType = {
       configuration: {
         dynamic: {
           parent: true,
-          modes: [
-            DynamicModeEnum.STREAM,
-          ],
+          modes: [DynamicModeEnum.STREAM],
         },
         variables: {
           upstream: {
             [GroupUUIDEnum.CHUNKING]: {
-              input_data_types: [
-                InputDataTypeEnum.GENERATOR,
-              ],
+              input_data_types: [InputDataTypeEnum.GENERATOR],
             },
           },
         },
@@ -81,58 +77,64 @@ export const Transform: PipelineExecutionFrameworkType = {
               'spell',
               'max_length',
               'add_special_tokens',
-            ].reduce((acc, uuid) => ({
-              ...acc,
-              [uuid]: {
-                input: {
-                  description: '...',
-                  label: `${uuid} - ${Number(new Date())}`,
-                  options: [
-                    {
-                      label: `${uuid} - ${Number(new Date())}`,
-                      value: 'none',
-                    },
-                  ],
-                  type: InteractionInputTypeEnum.DROPDOWN_MENU,
+            ].reduce(
+              (acc, uuid) => ({
+                ...acc,
+                [uuid]: {
+                  input: {
+                    description: '...',
+                    label: `${uuid} - ${Number(new Date())}`,
+                    options: [
+                      {
+                        label: `${uuid} - ${Number(new Date())}`,
+                        value: 'none',
+                      },
+                    ],
+                    type: InteractionInputTypeEnum.DROPDOWN_MENU,
+                  },
+                  variable: {
+                    description: '...',
+                    name: '...',
+                    required: true,
+                    types: [InteractionVariableTypeEnum.STRING],
+                  },
                 },
-                variable: {
-                  description: '...',
-                  name: '...',
-                  required: true,
-                  types: [InteractionVariableTypeEnum.STRING],
-                },
-              },
-            }), {}),
+              }),
+              {},
+            ),
           },
           word_tokenizer: {
-            'name': 'Word Tokenizer',
-            'description': 'Tokenize text into words',
+            name: 'Word Tokenizer',
+            description: 'Tokenize text into words',
             variables: [
               'hallucination_variable',
               'fire_variable',
               'spell_variable',
               'max_length_variable',
               'add_special_tokens_variable',
-            ].reduce((acc, uuid) => ({
-              ...acc,
-              [uuid]: {
-                'input': {
-                  'description': 'Enter the text you want to tokenize into words.',
-                  'label': `${uuid} - ${Number(new Date())}`,
-                  'style': {
-                    multiline: true,
+            ].reduce(
+              (acc, uuid) => ({
+                ...acc,
+                [uuid]: {
+                  input: {
+                    description: 'Enter the text you want to tokenize into words.',
+                    label: `${uuid} - ${Number(new Date())}`,
+                    style: {
+                      multiline: true,
+                    },
+                    type: InteractionInputTypeEnum.TEXT_FIELD,
                   },
-                  'type': InteractionInputTypeEnum.TEXT_FIELD,
+                  variable: {
+                    description: 'The variable to store the tokenized words.',
+                    name: 'tokenized_words',
+                    required: true,
+                    types: [InteractionVariableTypeEnum.STRING],
+                    uuid: '',
+                  },
                 },
-                'variable': {
-                  'description': 'The variable to store the tokenized words.',
-                  'name': 'tokenized_words',
-                  'required': true,
-                  'types': [InteractionVariableTypeEnum.STRING],
-                  'uuid': '',
-                },
-              },
-            }), {}),
+              }),
+              {},
+            ),
           },
         },
       },
@@ -144,45 +146,45 @@ export const Transform: PipelineExecutionFrameworkType = {
       configuration: {
         templates: {
           bert_embedding: {
-            'name': 'BERT Embedding',
-            'description': 'Generate BERT embeddings for the provided text.',
+            name: 'BERT Embedding',
+            description: 'Generate BERT embeddings for the provided text.',
             variables: {
               bert_embeddings_uuid: {
-                'input': {
-                  'description': 'Input text for BERT embeddings.',
-                  'label': 'Text Input',
-                  'style': {
-                    'multiline': true,
+                input: {
+                  description: 'Input text for BERT embeddings.',
+                  label: 'Text Input',
+                  style: {
+                    multiline: true,
                   },
-                  'type': InteractionInputTypeEnum.TEXT_FIELD,
+                  type: InteractionInputTypeEnum.TEXT_FIELD,
                 },
-                'variable': {
-                  'description': 'The variable to store BERT embeddings.',
-                  'name': 'bert_embeddings',
-                  'required': true,
-                  'types': [InteractionVariableTypeEnum.DATE],
+                variable: {
+                  description: 'The variable to store BERT embeddings.',
+                  name: 'bert_embeddings',
+                  required: true,
+                  types: [InteractionVariableTypeEnum.DATE],
                 },
               },
             },
           },
           word2vec_embedding: {
-            'name': 'Word2Vec Embedding',
-            'description': 'Generate Word2Vec embeddings for the provided text.',
+            name: 'Word2Vec Embedding',
+            description: 'Generate Word2Vec embeddings for the provided text.',
             variables: {
               word2vec_embeddings_uuid: {
-                'input': {
-                  'description': 'Input text for Word2Vec embeddings.',
-                  'label': 'Text Input',
-                  'style': {
-                    'multiline': true,
+                input: {
+                  description: 'Input text for Word2Vec embeddings.',
+                  label: 'Text Input',
+                  style: {
+                    multiline: true,
                   },
-                  'type': InteractionInputTypeEnum.TEXT_FIELD,
+                  type: InteractionInputTypeEnum.TEXT_FIELD,
                 },
-                'variable': {
-                  'description': 'The variable to store Word2Vec embeddings.',
-                  'name': 'word2vec_embeddings',
-                  'required': true,
-                  'types': [InteractionVariableTypeEnum.DATE],
+                variable: {
+                  description: 'The variable to store Word2Vec embeddings.',
+                  name: 'word2vec_embeddings',
+                  required: true,
+                  types: [InteractionVariableTypeEnum.DATE],
                 },
               },
             },
@@ -190,7 +192,7 @@ export const Transform: PipelineExecutionFrameworkType = {
         },
       },
     },
-    ]?.map((b) => ({ ...b, name: capitalizeRemoveUnderscoreLower(b.uuid) })),
+  ]?.map(b => ({ ...b, name: capitalizeRemoveUnderscoreLower(b.uuid) })),
 };
 
 export const Export: PipelineExecutionFrameworkType = {
@@ -206,7 +208,7 @@ export const Export: PipelineExecutionFrameworkType = {
       uuid: GroupUUIDEnum.VECTOR_DATABASE,
       type: BlockTypeEnum.GROUP,
     },
-    ]?.map((b) => ({ ...b, name: capitalizeRemoveUnderscoreLower(b.uuid) })),
+  ]?.map(b => ({ ...b, name: capitalizeRemoveUnderscoreLower(b.uuid) })),
 };
 
 export const Index: PipelineExecutionFrameworkType = {
@@ -226,7 +228,7 @@ export const Index: PipelineExecutionFrameworkType = {
       uuid: GroupUUIDEnum.SEARCH_INDEX,
       type: BlockTypeEnum.GROUP,
     },
-    ]?.map((b) => ({ ...b, name: capitalizeRemoveUnderscoreLower(b.uuid) })),
+  ]?.map(b => ({ ...b, name: capitalizeRemoveUnderscoreLower(b.uuid) })),
 };
 
 const DataPreparation: PipelineExecutionFrameworkType = {
@@ -259,7 +261,7 @@ const DataPreparation: PipelineExecutionFrameworkType = {
       upstream_blocks: [Export.uuid],
       downstream_blocks: [],
     },
-    ]?.map((b) => ({ ...b, name: capitalizeRemoveUnderscoreLower(b.uuid) })),
+  ]?.map(b => ({ ...b, name: capitalizeRemoveUnderscoreLower(b.uuid) })),
 };
 
 export default DataPreparation;

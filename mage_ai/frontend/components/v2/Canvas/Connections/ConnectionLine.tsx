@@ -14,57 +14,41 @@ type ConnectionLineProps = {
   stop1ColorName?: string;
 };
 
-export const ConnectionLine = memo(({
-  connection,
-  onMount,
-  stop0ColorName,
-  stop1ColorName,
-}: ConnectionLineProps) => {
-  const { fromItem, toItem } = connection || {};
-  const fromRect = connection?.fromItem?.rect;
-  const toRect = connection?.toItem?.rect;
-  const connUUID = `${connectionUUID(connection)}`;
+export const ConnectionLine = memo(
+  ({ connection, onMount, stop0ColorName, stop1ColorName }: ConnectionLineProps) => {
+    const { fromItem, toItem } = connection || {};
+    const fromRect = connection?.fromItem?.rect;
+    const toRect = connection?.toItem?.rect;
+    const connUUID = `${connectionUUID(connection)}`;
 
-  // Create placeholder that will be updated when the ports are mounted.
-  let dValue = '';
+    // Create placeholder that will be updated when the ports are mounted.
+    let dValue = '';
 
-  if (fromRect && toRect) {  // Correct "&&" instead of "&"
-    dValue = getPathD(connection, fromRect as RectType, toRect as RectType);
-  }
+    if (fromRect && toRect) {
+      // Correct "&&" instead of "&"
+      dValue = getPathD(connection, fromRect as RectType, toRect as RectType);
+    }
 
-  const className = [
-    stylesBuilder.level,
-    stylesBuilder[`level-${connection?.level}`],
-    styles.connectionLine,
-    fromItem?.type && toItem?.type
-      ? styles[`connection-from-${fromItem?.type}-to-${toItem?.type}`]
-      : '',
-  ].join(' ');
+    const className = [
+      stylesBuilder.level,
+      stylesBuilder[`level-${connection?.level}`],
+      styles.connectionLine,
+      fromItem?.type && toItem?.type
+        ? styles[`connection-from-${fromItem?.type}-to-${toItem?.type}`]
+        : '',
+    ].join(' ');
 
-  return (stop0ColorName && stop1ColorName)
-    ? (
+    return stop0ColorName && stop1ColorName ? (
       <PathGradient
         className={className}
         d={dValue}
         id={connUUID}
         key={connUUID}
-        stop0ClassNames={[
-          'stop',
-          'stop-opacity-100',
-          `stop-color-${stop0ColorName}`,
-        ]}
-        stop1ClassNames={[
-          'stop',
-          'stop-opacity-100',
-          `stop-color-${stop1ColorName}`,
-        ]}
+        stop0ClassNames={['stop', 'stop-opacity-100', `stop-color-${stop0ColorName}`]}
+        stop1ClassNames={['stop', 'stop-opacity-100', `stop-color-${stop1ColorName}`]}
       />
-    ): (
-      <Path
-        className={className}
-        d={dValue}
-        id={connUUID}
-        key={connUUID}
-      />
-  );
-});
+    ) : (
+      <Path className={className} d={dValue} id={connUUID} key={connUUID} />
+    );
+  },
+);

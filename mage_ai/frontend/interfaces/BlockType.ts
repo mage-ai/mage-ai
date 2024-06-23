@@ -285,20 +285,26 @@ interface VariableSettingsType {
 export interface TemplateType {
   description?: string;
   name?: string;
-  variables?: Record<string, {
-    input: InteractionInputType,
-    variable: InteractionVariableType,
-  }>;
+  variables?: Record<
+    string,
+    {
+      input: InteractionInputType;
+      variable: InteractionVariableType;
+    }
+  >;
 }
 
 export interface ConfigurationType extends BaseConfigurationType {
-  dynamic?: {
-    batch_settings?: BatchSettingsType;
-    modes?: DynamicModeEnum[];
-    parent?: boolean | string[];
-    reduce_output?: boolean | string[];
-    reduce_output_upstream?: string[];
-  };
+  dynamic?:
+    | any
+    | boolean
+    | {
+        batch_settings?: BatchSettingsType;
+        modes?: DynamicModeEnum[];
+        parent?: boolean | string[];
+        reduce_output?: boolean | string[];
+        reduce_output_upstream?: string[];
+      };
   templates?: Record<string, TemplateType>;
   variables?: {
     downstream?: Record<string, VariableSettingsType>;

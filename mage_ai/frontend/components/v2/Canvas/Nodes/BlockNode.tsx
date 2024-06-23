@@ -20,7 +20,7 @@ import { ItemTypeEnum, PortSubtypeEnum } from '../types';
 import { DragAndDropHandlersType } from './types';
 
 type BlockNodeProps = {
-  block?: BlockType
+  block?: BlockType;
   borderConfig?: BorderConfigType;
   item: DragItem;
   collapsed?: boolean;
@@ -75,122 +75,144 @@ export function BlockNode({
 
   const classNames = [
     true || borders?.length >= 2
-      ? stylesGradient[[
-        'gradient-background-to-top-right',
-        ...((borders ?? []).concat([
-          // { baseColorName: 'yellow' },
-          // { baseColorName: 'green' },
-        ]))?.slice?.(0, 2)?.map(b => b.baseColorName),
-      ].join('-')]
+      ? stylesGradient[
+          [
+            'gradient-background-to-top-right',
+            ...(borders ?? [])
+              .concat([
+                // { baseColorName: 'yellow' },
+                // { baseColorName: 'green' },
+              ])
+              ?.slice?.(0, 2)
+              ?.map(b => b.baseColorName),
+          ].join('-')
+        ]
       : '',
   ].filter(b => b);
   if (classNames?.length === 0 && borders?.length >= 1) {
     classNames.push(stylesGradient[`border-color-${borders?.[0]?.baseColorName?.toLowerCase()}`]);
   }
 
-  const badgeRow = useMemo(() => badge && (
-    <Grid
-      alignItems="center"
-      columnGap={8}
-      id={`${item.id}-badge`}
-      templateColumns={[
-        inputs?.length >= 1 ? 'auto' : '',
-        (inputs?.length >= 1 || outputs?.length >= 1) ? '1fr' : '',
-        outputs?.length >= 1 ? 'auto' : '',
-        ((!inputs?.length ?? false) && (!outputs?.length ?? false)) ? 'auto 1fr' : '',
-      ].join(' ')}
-      templateRows="1fr"
-    >
-      {inputs?.length >= 1 && (
-        <Circle
-          backgroundColor={getBlockColor(
-            inputs?.[0]?.target?.block?.type, { getColorName: true },
-          )?.names?.base || 'gray'}
-          size={12}
-        />
-      )}
-      {badge && <Badge {...badge} />}
-      {(!inputs?.length ?? false) && (!outputs?.length ?? false) && <div />}
-      {outputs?.length >= 1 && (
-        <Circle
-          backgroundColor={getBlockColor(
-            outputs?.[0]?.target?.block?.type, { getColorName: true },
-          )?.names?.base || 'gray'}
-            size={12}
-        />
-      )}
-    </Grid>
-  ), [badge, inputs, item, outputs]);
+  const badgeRow = useMemo(
+    () =>
+      badge && (
+        <Grid
+          alignItems='center'
+          columnGap={8}
+          id={`${item.id}-badge`}
+          templateColumns={[
+            inputs?.length >= 1 ? 'auto' : '',
+            inputs?.length >= 1 || outputs?.length >= 1 ? '1fr' : '',
+            outputs?.length >= 1 ? 'auto' : '',
+            (!inputs?.length ?? false) && (!outputs?.length ?? false) ? 'auto 1fr' : '',
+          ].join(' ')}
+          templateRows='1fr'
+        >
+          {inputs?.length >= 1 && (
+            <Circle
+              backgroundColor={
+                getBlockColor(inputs?.[0]?.target?.block?.type, { getColorName: true })?.names
+                  ?.base || 'gray'
+              }
+              size={12}
+            />
+          )}
+          {badge && <Badge {...badge} />}
+          {(!inputs?.length ?? false) && (!outputs?.length ?? false) && <div />}
+          {outputs?.length >= 1 && (
+            <Circle
+              backgroundColor={
+                getBlockColor(outputs?.[0]?.target?.block?.type, { getColorName: true })?.names
+                  ?.base || 'gray'
+              }
+              size={12}
+            />
+          )}
+        </Grid>
+      ),
+    [badge, inputs, item, outputs],
+  );
 
-  const connectionRows = useMemo(() => inputOutputPairs?.length >= 1 && (
-    <PanelRows>
-      {inputOutputPairs?.map(({
-        input,
-        output,
-      }, idx: number) =>
-        <Connection
-          handlers={handlers}
-          input={input}
-          key={[
-            input ? buildPortUUID(input) : '',
-            output ? buildPortUUID(output) : '',
-          ].join(':')}
-          onMount={onMount}
-          output={output}
-        />,
-      )}
-    </PanelRows>
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  ), [block, handlers, inputOutputPairs]);
+  const connectionRows = useMemo(
+    () =>
+      inputOutputPairs?.length >= 1 && (
+        <PanelRows>
+          {inputOutputPairs?.map(({ input, output }, idx: number) => (
+            <Connection
+              handlers={handlers}
+              input={input}
+              key={[input ? buildPortUUID(input) : '', output ? buildPortUUID(output) : ''].join(
+                ':',
+              )}
+              onMount={onMount}
+              output={output}
+            />
+          ))}
+        </PanelRows>
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+      ),
+    [handlers, inputOutputPairs, onMount],
+  );
 
-  const templateConfigurations = useMemo(() => groups && Object.entries(groups)?.map(([groupUUID, group]) => !isEmptyObject(group?.configuration?.templates)
-    && Object.entries(group?.configuration?.templates || {})?.map(([uuid, template]) => (
-      <TemplateConfigurations
-        block={block}
-        group={group}
-        key={uuid}
-        template={template}
-        uuid={uuid}
-      />
-  ))), [block, groups]);
+  const templateConfigurations = useMemo(
+    () =>
+      groups &&
+      Object.entries(groups)?.map(
+        ([groupUUID, group]) =>
+          !isEmptyObject(group?.configuration?.templates) &&
+          Object.entries(group?.configuration?.templates || {})?.map(([uuid, template]) => (
+            <TemplateConfigurations
+              block={block}
+              group={group}
+              key={uuid}
+              template={template}
+              uuid={uuid}
+            />
+          )),
+      ),
+    [block, groups],
+  );
 
-  const titleRow = useMemo(() => (
-    <Grid
-      alignItems="center"
-      columnGap={12}
-      id={`${item.id}-title`}
-      templateColumns={[
-        before ? 'auto' : '1fr',
-        (before || after) ? '1fr' : '',
-        before && after ? 'auto' : '',
-      ].join(' ')}
-      templateRows="1fr"
-    >
-      {before && <Aside {...before} />}
-
-      <Text semibold small>{titleConfig?.label}</Text>
-
-      {after && <Aside {...after} />}
-    </Grid>
-  ), [after, before, item, titleConfig]);
-
-  const main = useMemo(() => (
-    <div className={styles.blockNode}>
+  const titleRow = useMemo(
+    () => (
       <Grid
-        rowGap={8}
-        templateRows="auto"
+        alignItems='center'
+        columnGap={12}
+        id={`${item.id}-title`}
+        templateColumns={[
+          before ? 'auto' : '1fr',
+          before || after ? '1fr' : '',
+          before && after ? 'auto' : '',
+        ].join(' ')}
+        templateRows='1fr'
       >
-        {badgeRow}
-        {!badge && titleRow}
-        {connectionRows}
-        {templateConfigurations}
+        {before && <Aside {...before} />}
 
-        {BlockTypeEnum.PIPELINE === block?.type && (
-          <div />
-        )}
+        <Text semibold small>
+          {titleConfig?.label}
+        </Text>
+
+        {after && <Aside {...after} />}
       </Grid>
-    </div>
-  ), [badge, badgeRow, block, connectionRows, templateConfigurations, titleRow]);
+    ),
+    [after, before, item, titleConfig],
+  );
+
+  const main = useMemo(
+    () => (
+      <div className={styles.blockNode}>
+        <Grid rowGap={8} templateRows='auto'>
+          {badgeRow}
+          {!badge && titleRow}
+          {connectionRows}
+          {templateConfigurations}
+
+          {BlockTypeEnum.PIPELINE === block?.type && <div />}
+        </Grid>
+      </div>
+    ),
+    [badge, badgeRow, block, connectionRows, templateConfigurations, titleRow],
+  );
 
   return (
     <GradientContainer

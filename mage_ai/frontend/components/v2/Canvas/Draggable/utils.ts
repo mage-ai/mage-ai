@@ -13,13 +13,18 @@ export function getBlockConnectionUUID(block: BlockType) {
     block?.language,
     String(block?.upstream_blocks?.length || 0),
     String(block?.downstream_blocks?.length || 0),
-  ].filter(s => s).join('-');
+  ]
+    .filter(s => s)
+    .join('-');
 }
 
-export function buildPortUUID(item: PortType | DragItem, opts?: {
-  fromBlock: BlockType;
-  toBlock: BlockType;
-}) {
+export function buildPortUUID(
+  item: PortType | DragItem,
+  opts?: {
+    fromBlock: BlockType;
+    toBlock: BlockType;
+  },
+) {
   if (!item && opts?.fromBlock && opts?.toBlock) {
     return buildPortID(
       getBlockConnectionUUID(opts?.fromBlock),
@@ -60,7 +65,6 @@ export function buildPortUUID(item: PortType | DragItem, opts?: {
 
       return buildPortID(String(fromItem?.id), String(toItem?.id));
     }
-
   }
 
   return getBlockConnectionUUID(item.block);

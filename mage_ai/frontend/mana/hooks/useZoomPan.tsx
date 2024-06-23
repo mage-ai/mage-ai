@@ -88,33 +88,22 @@ export const useZoomPan = (
     const element = elementRef.current;
     if (!element) return;
 
-    const {
-      height: heightContainer,
-      width: widthContainer,
-    } = container?.getBoundingClientRect() ?? {};
+    const { height: heightContainer, width: widthContainer } =
+      container?.getBoundingClientRect() ?? {};
 
     if (!viewportRect?.current) {
       viewportRect.current = element.getBoundingClientRect();
     }
-    const {
-      height: heightViewport,
-      width: widthViewport,
-    } = viewportRect?.current ?? {};
+    const { height: heightViewport, width: widthViewport } = viewportRect?.current ?? {};
 
     const updateTransform = () => {
-      element.style.transform =
-        `translate(${originX.current}px, ${originY.current}px) scale(${scale.current})`;
+      element.style.transform = `translate(${originX.current}px, ${originY.current}px) scale(${scale.current})`;
     };
 
     function initializeOrigin() {
       const canvasRect = element.getBoundingClientRect();
       const containerRect = container.getBoundingClientRect();
-      const {
-        x,
-        xPercent,
-        y,
-        yPercent,
-      } = initialPosition ?? {};
+      const { x, xPercent, y, yPercent } = initialPosition ?? {};
 
       originX.current = x ?? (canvasRect?.width - containerRect?.width) * (xPercent ?? 0);
       originY.current = y ?? (canvasRect?.height - containerRect?.height) * (yPercent ?? 0);
@@ -130,12 +119,11 @@ export const useZoomPan = (
       const elementRect = element.getBoundingClientRect();
       const containerRect = container.getBoundingClientRect();
 
-
       const scaledWidth = containerRect.width;
       const scaledHeight = containerRect.height;
 
-      const xMin = (elementRect.width - scaledWidth) - 1;
-      const yMin = (elementRect.height - scaledHeight) - 1;
+      const xMin = elementRect.width - scaledWidth - 1;
+      const yMin = elementRect.height - scaledHeight - 1;
       const xMax = 0;
       const yMax = 0;
 
@@ -203,8 +191,8 @@ export const useZoomPan = (
         originX.current = limited.x;
         originY.current = limited.y;
       } else {
-        const xNew = originX.current -= event.deltaX;
-        const yNew = originY.current -= event.deltaY;
+        const xNew = (originX.current -= event.deltaX);
+        const yNew = (originY.current -= event.deltaY);
         handleDirection(xNew, yNew);
 
         const limited = enforceLimits(xNew, yNew, scale.current);

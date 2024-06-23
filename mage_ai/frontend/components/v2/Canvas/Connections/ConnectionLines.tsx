@@ -11,9 +11,7 @@ export const ConnectionLines: React.FC<ConnectionLinesProps> = ({
   id,
 }: ConnectionLinesProps) => (
   <svg
-    className={[
-      styles.connectionLines,
-    ]?.join(' ')}
+    className={[styles.connectionLines]?.join(' ')}
     id={id}
     style={{
       height: '100%',

@@ -44,33 +44,36 @@ const BlockNodeWrapper: React.FC<BlockNodeWrapperProps> = ({
   const [draggingNode, setDraggingNode] = useState<NodeItemType | null>(null);
 
   const block = item?.block;
-  const {
-    pipeline,
-    type,
-    uuid,
-  } = block || {};
+  const { pipeline, type, uuid } = block || {};
   const isPipeline = useMemo(() => !type || BlockTypeEnum.PIPELINE === type, [type]);
   const isGroup = useMemo(() => !type || BlockTypeEnum.GROUP === type, [type]);
 
   const { onMouseDown, onMouseUp } = handlers;
-  const name = useMemo(() => ItemTypeEnum.BLOCK === item?.type
-    ? (item?.block?.name ?? item?.block?.uuid)
-    : item?.id, [item]);
+  const name = useMemo(
+    () => (ItemTypeEnum.BLOCK === item?.type ? item?.block?.name ?? item?.block?.uuid : item?.id),
+    [item],
+  );
 
   function handleMouseDown(
     event: React.MouseEvent<HTMLDivElement> | React.TouchEvent<HTMLDivElement>,
     node: NodeItemType,
-  ) {
+    target?: any,
+  ): boolean {
     onMouseDown(event, node);
     setDraggingNode(node);
+
+    return true;
   }
 
   function handleMouseUp(
     event: React.MouseEvent<HTMLDivElement> | React.TouchEvent<HTMLDivElement>,
     node: NodeItemType,
-  ) {
+    target?: any,
+  ): boolean {
     onMouseUp(event, node);
     setDraggingNode(null);
+
+    return true;
   }
 
   function onMount(port: PortType, portRef: React.RefObject<HTMLDivElement>) {
@@ -82,17 +85,24 @@ const BlockNodeWrapper: React.FC<BlockNodeWrapperProps> = ({
       onMountPort(port, portRef);
     }
   }
-  const groups = useMemo(() => block?.groups?.reduce((acc, group) => ({
-    ...acc,
-    [group]: frameworkGroups?.[group],
-  }), {}), [block, frameworkGroups]);
+  const groups = useMemo(
+    () =>
+      block?.groups?.reduce(
+        (acc, group) => ({
+          ...acc,
+          [group]: frameworkGroups?.[group],
+        }),
+        {},
+      ),
+    [block, frameworkGroups],
+  );
 
   const names = useMemo(() => {
     if (BlockTypeEnum.PIPELINE === type) {
-      const typeCounts = countOccurrences(flattenArray(
-        pipeline?.blocks?.map((b) => b?.type) || [],
-      ));
-      const modeType = sortByKey(Object.entries(typeCounts || {}), arr => arr[1], { reverse: true })[0];
+      const typeCounts = countOccurrences(flattenArray(pipeline?.blocks?.map(b => b?.type) || []));
+      const modeType = sortByKey(Object.entries(typeCounts || {}), arr => arr[1], {
+        reverse: true,
+      })[0];
       const colors = getBlockColor(modeType as BlockTypeEnum, { getColorName: true })?.names;
       return colors?.base ? colors : { base: 'gray' };
     }
@@ -101,18 +111,19 @@ const BlockNodeWrapper: React.FC<BlockNodeWrapperProps> = ({
     return c && c?.names ? c?.names : { base: 'gray' };
   }, [pipeline, type]);
 
-  const ports = useMemo(() => (item?.inputs || []).concat(item?.outputs || []), [item]);
+  const ports = useMemo(() => item?.ports ?? [], [item]);
 
   const borders = useMemo(() => {
     const arr = [names?.base || ''];
     ports?.forEach(({ target }) => {
-      const cn = getBlockColor(target?.block?.type as BlockTypeEnum, { getColorName: true })?.names?.base;
+      const cn = getBlockColor(target?.block?.type as BlockTypeEnum, { getColorName: true })?.names
+        ?.base;
       if (!arr.includes(cn)) {
         arr.push(cn);
       }
     });
 
-    const c = arr?.reduce((acc, c) => c ? acc.concat({ baseColorName: c }) : acc, []);
+    const c = arr?.reduce((acc, c) => (c ? acc.concat({ baseColorName: c }) : acc), []);
     if (!c?.length) {
       if (selected) {
         c.push(...[{ baseColorName: 'red' }, { baseColorName: 'yellow' }]);
@@ -131,7 +142,8 @@ const BlockNodeWrapper: React.FC<BlockNodeWrapperProps> = ({
   useEffect(() => {
     if (itemRef.current && phaseRef.current === 0 && onMountItem) {
       const checkComputedStyles = () => {
-        const computedStyle = typeof window !== 'undefined' && window.getComputedStyle(itemRef.current);
+        const computedStyle =
+          typeof window !== 'undefined' && window.getComputedStyle(itemRef.current);
         if (computedStyle) {
           onMountItem?.(item, itemRef);
         } else {
@@ -152,10 +164,7 @@ const BlockNodeWrapper: React.FC<BlockNodeWrapperProps> = ({
 
   return (
     <NodeWrapper
-      className={[
-        stylesBuilder.level,
-        stylesBuilder[`level-${item?.level}`],
-      ]?.join(' ')}
+      className={[stylesBuilder.level, stylesBuilder[`level-${item?.level}`]]?.join(' ')}
       draggingNode={draggingNode}
       handlers={{
         ...handlers,
@@ -180,28 +189,31 @@ const BlockNodeWrapper: React.FC<BlockNodeWrapperProps> = ({
         onMount={onMount}
         titleConfig={{
           asides: {
-            after: (isPipeline || isGroup)
-              ? undefined
-              : {
-                Icon: Code,
-                onClick: () => alert('Coding...'),
-              },
+            after:
+              isPipeline || isGroup
+                ? undefined
+                : {
+                    Icon: Code,
+                    onClick: () => alert('Coding...'),
+                  },
             before: {
               Icon: StatusTypeEnum.EXECUTED === block?.status ? Check : PlayButtonFilled,
-              baseColorName: StatusTypeEnum.FAILED === block?.status
-                ? 'red'
-                : StatusTypeEnum.EXECUTED
-                  ? 'green'
-                  : 'blue',
+              baseColorName:
+                StatusTypeEnum.FAILED === block?.status
+                  ? 'red'
+                  : StatusTypeEnum.EXECUTED
+                    ? 'green'
+                    : 'blue',
             },
           },
-          badge: (isPipeline || isGroup)
-            ? {
-              Icon: collapsed ? Infinite : PipeIconVertical,
-              baseColorName: names?.base || 'purple',
-              label: name || uuid,
-            }
-            : undefined,
+          badge:
+            isPipeline || isGroup
+              ? {
+                  Icon: collapsed ? Infinite : PipeIconVertical,
+                  baseColorName: names?.base || 'purple',
+                  label: String(name || uuid || ''),
+                }
+              : undefined,
           label: String(name || uuid || ''),
         }}
       />

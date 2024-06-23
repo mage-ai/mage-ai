@@ -540,13 +540,13 @@ export default function useCodeBlockProps({
         },
         {
           disabled: sideBySideEnabled,
-          beforeIcon: <LayoutSplit success={sideBySideEnabled} disabled={sideBySideEnabled} {...MENU_ICON_PROPS} />,
+          beforeIcon: <LayoutSplit disabled={sideBySideEnabled} success={sideBySideEnabled} {...MENU_ICON_PROPS} />,
           uuid: 'Show output next to code (beta)',
           onClick: () => setSideBySideEnabled(true),
         },
         {
           disabled: !sideBySideEnabled || scrollTogether,
-          beforeIcon: <LayoutSplit success={scrollTogether} disabled={!sideBySideEnabled || scrollTogether} {...MENU_ICON_PROPS} />,
+          beforeIcon: <LayoutSplit disabled={!sideBySideEnabled || scrollTogether} success={scrollTogether} {...MENU_ICON_PROPS} />,
           uuid: 'Scroll output alongside code (beta)',
           onClick: () => setScrollTogether(true),
         },
@@ -660,7 +660,7 @@ df = get_variable('${pipeline.uuid}', '${block.uuid}', 'output_0')
               });
             }
           }),
-        ]
+        ],
     },
     header: {
       buttons: [
@@ -677,7 +677,7 @@ df = get_variable('${pipeline.uuid}', '${block.uuid}', 'output_0')
         }
 
         if (validate(b)) {
-          return true
+          return true;
         }
       },
       subtitle,

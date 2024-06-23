@@ -14,12 +14,7 @@ import { ElementRoleEnum } from '@mana/shared/types';
 // This is the style used for the preview when dragging
 function getStyles(item: NodeItemType, { isDragging }: { isDragging: boolean }): CSSProperties {
   const { id, rect, type } = item;
-  const {
-    left,
-    top,
-    width,
-    zIndex,
-  } = rect || ({} as RectType);
+  const { left, top, width, zIndex } = rect || ({} as RectType);
   const transform = `translate3d(${left ?? 0}px, ${top ?? 0}px, 0)`;
 
   return {
@@ -32,9 +27,11 @@ function getStyles(item: NodeItemType, { isDragging }: { isDragging: boolean }):
     position: 'absolute',
     transform,
     zIndex,
-    ...(isDragging ? { height: 0, opacity: 0 } : {
-      minHeight: rect?.height ?? 0,
-    }),
+    ...(isDragging
+      ? { height: 0, opacity: 0 }
+      : {
+          minHeight: rect?.height ?? 0,
+        }),
     ...(width ? { minWidth: width } : {}),
   };
 }
@@ -53,13 +50,7 @@ export const NodeWrapper: FC<NodeWrapperProps> = memo(function NodeWrapper({
   item,
   itemRef,
 }: NodeWrapperProps) {
-  const {
-    onDragEnd,
-    onDragStart,
-    onDrop,
-    onMouseDown,
-    onMouseUp,
-  } = handlers;
+  const { onDragEnd, onDragStart, onDrop, onMouseDown, onMouseUp } = handlers;
   const itemToDrag: DragItem | PortType = useMemo(() => draggingNode || item, [draggingNode, item]);
 
   useEffect(() => {
@@ -116,11 +107,7 @@ export const NodeWrapper: FC<NodeWrapperProps> = memo(function NodeWrapper({
 
   return (
     <div
-      className={[
-        styles.nodeWrapper,
-        styles[itemToDrag?.type],
-        className ?? '',
-      ].join(' ')}
+      className={[styles.nodeWrapper, styles[itemToDrag?.type], className ?? ''].join(' ')}
       onDragEnd={event => onDragEnd(event, item)}
       onDragStart={event => onDragStart(event, item)}
       onMouseDown={event => onMouseDown(event, item)}

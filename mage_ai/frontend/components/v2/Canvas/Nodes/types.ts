@@ -16,11 +16,13 @@ export type DragAndDropHandlersType = {
     onMouseDown: (
       event: React.MouseEvent<HTMLDivElement> | React.TouchEvent<HTMLDivElement>,
       node: NodeItemType,
-    ) => void;
+      target?: any,
+    ) => boolean;
     onMouseUp: (
       event: React.MouseEvent<HTMLDivElement> | React.TouchEvent<HTMLDivElement>,
       node: NodeItemType,
-    ) => void;
+      target?: any,
+    ) => boolean;
   };
 };
 

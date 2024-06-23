@@ -5,10 +5,9 @@ export function buildNamesapceForLevel(level: number): string {
 }
 
 export function buildUUIDForLevel(uuid: string, level: number): string {
-  return [
-    buildNamesapceForLevel(level) ?? '',
-    String(uuid ?? ''),
-  ]?.filter?.(Boolean).join(DELIMITER);
+  return [buildNamesapceForLevel(level) ?? '', String(uuid ?? '')]
+    ?.filter?.(Boolean)
+    .join(DELIMITER);
 }
 
 export function getBaseUUIDAtLevel(uuid: string, level: number): string {
