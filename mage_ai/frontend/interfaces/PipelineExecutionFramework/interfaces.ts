@@ -6,7 +6,7 @@ export type PipelineExecutionFrameworkBlockType = BlockType & {
   name?: string;
   downstream_blocks?: (GroupUUIDEnum | PipelineExecutionFrameworkUUIDEnum)[];
   groups?: (GroupUUIDEnum | PipelineExecutionFrameworkUUIDEnum)[];
-  type?: BlockTypeEnum.GROUP | BlockTypeEnum.PIPELINE;
+  type?: BlockTypeEnum;
   upstream_blocks?: (GroupUUIDEnum | PipelineExecutionFrameworkUUIDEnum)[];
   uuid: GroupUUIDEnum | PipelineExecutionFrameworkUUIDEnum;
 };

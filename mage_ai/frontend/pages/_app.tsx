@@ -10,6 +10,9 @@ import { createRoot } from 'react-dom/client';
 
 import 'react-toastify/dist/ReactToastify.min.css';
 import '@styles/globals.css';
+import '@styles/scss/globals/main.scss';
+import '@styles/scss/globals/dark.scss';
+import '@styles/scss/globals/light.scss';
 import AuthToken from '@api/utils/AuthToken';
 import CommandCenter from '@components/CommandCenter';
 import Head from '@oracle/elements/Head';
@@ -41,6 +44,8 @@ import { gridTheme as gridThemeDefault, theme as stylesTheme } from '@styles/the
 import { isDemo } from '@utils/environment';
 import { queryFromUrl, queryString, redirectToUrl } from '@utils/url';
 
+const NextAppV2 = dynamic(() => import('@components/NextAppV2'));
+
 const COMMAND_CENTER_ROOT_ID = 'command-center-root';
 
 const Banner = dynamic(() => import('@oracle/components/Banner'), { ssr: false });
@@ -51,13 +56,13 @@ type AppInternalProps = {
     currentTheme?: any;
   };
   title?: string;
-  version: number;
 };
 
 type MyAppProps = {
   currentTheme: ThemeType;
   pageProps: AppInternalProps;
   router: any;
+  version?: string;
 };
 
 function MyApp(props: MyAppProps & AppProps) {
@@ -67,7 +72,7 @@ function MyApp(props: MyAppProps & AppProps) {
   const keyHistory = useRef([]);
 
   const { Component, currentTheme, pageProps, router } = props;
-  const { defaultTitle, themeProps = {}, title, version = 1 } = pageProps;
+  const { defaultTitle, themeProps = {}, title } = pageProps;
 
   const { featureEnabled, featureUUIDs } = useProject();
   const commandCenterEnabled = useMemo(
@@ -260,6 +265,11 @@ function MyApp(props: MyAppProps & AppProps) {
     [commandCenterEnabled, requireUserAuthentication],
   );
 
+  if (props?.version === 'v2') {
+    // @ts-ignore
+    return <NextAppV2 {...props} />;
+  }
+
   return (
     <>
       <KeyboardContext.Provider value={keyboardContextValue}>
@@ -270,8 +280,8 @@ function MyApp(props: MyAppProps & AppProps) {
                 <ErrorProvider>
                   <Head defaultTitle={defaultTitle} title={title}>
                     <meta
-                      content='width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=0'
-                      name='viewport'
+                      content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=0"
+                      name="viewport"
                     />
                   </Head>
 

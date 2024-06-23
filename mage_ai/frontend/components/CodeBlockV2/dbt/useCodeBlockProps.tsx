@@ -149,7 +149,7 @@ export default function useCodeBlockProps({
   const buttonExecute = {
     color: color?.accent,
     description: (
-      <FlexContainer alignItems='center'>
+      <FlexContainer alignItems="center">
         <KeyboardTextGroup
           addPlusSignBetweenKeys
           keyTextGroups={[[KEY_SYMBOL_META, KEY_SYMBOL_ENTER]]}
@@ -183,7 +183,7 @@ export default function useCodeBlockProps({
   const buttonExecuteCancel = {
     color: color?.accent,
     description: (
-      <FlexContainer alignItems='center'>
+      <FlexContainer alignItems="center">
         <KeyboardTextGroup
           addPlusSignBetweenKeys
           keyTextGroups={[[KEY_SYMBOL_I], [KEY_SYMBOL_I]]}

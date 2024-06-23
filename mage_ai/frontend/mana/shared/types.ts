@@ -314,12 +314,12 @@ export type ElementType = {
   style?: React.CSSProperties;
 };
 
-export function extractProps(props: { [key: string]: any }) {
+export function extractProps(props: { [key: string]: any }): { [key: string]: any } {
   return Object.entries(props).reduce(
     (acc, [key, value]) => ({
       ...acc,
       ...(key in KEYS ? { [key]: value } : {}),
     }),
-    {},
-  );
+    {} as any,
+  ) as any;
 }

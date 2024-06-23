@@ -33,10 +33,10 @@ export default function PipelineBuilder() {
 
   return (
     <div className={styles.container}>
-      <Grid autoColumns='auto' height='inherit' templateRows='auto 1fr auto' width='100%'>
+      <Grid autoColumns="auto" height="inherit" templateRows="auto 1fr auto" width="100%">
         <div />
 
-        <Grid autoRows='auto' height='inherit' templateColumns='auto 1fr' width='100%'>
+        <Grid autoRows="auto" height="inherit" templateColumns="auto 1fr" width="100%">
           <div />
 
           {/* @ts-ignore */}
