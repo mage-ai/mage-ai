@@ -22,7 +22,7 @@
 }
 
 .connectionLines {
-  z-index: 13;
+  z-index: 1;
 
   .connectionLine {
     &.connection-from-port-to-port,
@@ -33,11 +33,11 @@
     &.connection-from-block-to-port,
     &.connection-from-node-to-block,
     &.connection-from-node-to-port {
-      z-index: 55;
+      z-index: 5;
     }
 
     &.connection-from-node-to-node {
-      z-index: 30;
+      z-index: 3;
     }
   }
 }

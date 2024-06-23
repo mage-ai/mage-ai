@@ -9,7 +9,6 @@
   border-radius: var(--borders-radius-base);
   height: inherit;
   overflow: hidden; // To clip children with border-radius
-  padding: var(--borders-outline-width); // Space for the border
   position: relative;
   display: grid;
   justify-items: stretch;

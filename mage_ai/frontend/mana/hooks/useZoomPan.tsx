@@ -5,6 +5,11 @@ import { useRef, useEffect } from 'react';
 const hasRole = (element: HTMLElement | null, role: string): boolean =>
   element?.closest('[role]')?.getAttribute('role')?.split(' ').includes(role) ?? false;
 
+enum PanningDirectionEnum {
+  HORIZONTAL = 'horizontal',
+  VERTICAL = 'vertical',
+}
+
 export type ZoomPanPositionType = {
   x: React.MutableRefObject<number>;
   y: React.MutableRefObject<number>;
@@ -55,11 +60,25 @@ export const useZoomPan = (
   const startX = useRef(null);
   const startY = useRef(null);
   const zoom = useRef(null);
+  const viewportRect = useRef<DOMRect>(null);
 
   useEffect(() => {
-    const container = containerRef?.current ?? window;
+    const container = containerRef?.current;
     const element = elementRef.current;
     if (!element) return;
+
+    const {
+      height: heightContainer,
+      width: widthContainer,
+    } = container?.getBoundingClientRect() ?? {};
+
+    if (!viewportRect?.current) {
+      viewportRect.current = element.getBoundingClientRect();
+    }
+    const {
+      height: heightViewport,
+      width: widthViewport,
+    } = viewportRect?.current ?? {};
 
     const updateTransform = () => {
       element.style.transform =
@@ -81,6 +100,29 @@ export const useZoomPan = (
       updateTransform();
     }
 
+    function enforceLimits(
+      event: MouseEvent | TouchEvent | WheelEvent,
+      handleEvent: (event: MouseEvent | TouchEvent | WheelEvent) => void,
+    ) {
+      handleEvent(event);
+
+      const xMax = (widthViewport - (widthViewport / scale.current)) / 2;
+      const yMax = (heightViewport - (heightViewport / scale.current)) / 2;
+
+      let limitReached = false;
+      if (originX?.current > xMax) {
+        originX.current = xMax * scale.current;
+        limitReached = true;
+      }
+
+      if (originY?.current > yMax) {
+        originY.current = yMax * scale.current;
+        limitReached = true;
+      }
+
+      limitReached && updateTransform();
+    }
+
     const handleZoom = (value: number) => {
       scale.current = value;
       zoom.current = value;
@@ -88,22 +130,35 @@ export const useZoomPan = (
 
     const handleWheel = (e: WheelEvent) => {
       if (disabled || roles?.some(role => hasRole(e.target as HTMLElement, role))) return;
-      e.preventDefault();
-      const delta = (-e.deltaY / 500) * zoomSensitivity;
-      const oldScale = scale.current;
-      handleZoom(
-        Math.min(Math.max(minScale, scale.current + delta), maxScale),
-      );
 
-      const scaleRatio = scale.current / oldScale;
-      const rect = element.getBoundingClientRect();
-      const cursorX = e.clientX - rect.left;
-      const cursorY = e.clientY - rect.top;
+      enforceLimits(e, (event: WheelEvent) => {
+        event.preventDefault();
 
-      originX.current -= (cursorX - originX.current) * (scaleRatio - 1);
-      originY.current -= (cursorY - originY.current) * (scaleRatio - 1);
+        const isZooming = event.metaKey || event.ctrlKey;
+        const isPanningHorizontally = !isZooming && event.shiftKey;
 
-      updateTransform();
+        if (isZooming) {
+          const delta = (-event.deltaY / 500) * zoomSensitivity;
+          const oldScale = scale.current;
+          handleZoom(
+            Math.min(Math.max(minScale, scale.current + delta), maxScale),
+          );
+
+          const scaleRatio = scale.current / oldScale;
+          const rect = element.getBoundingClientRect();
+          const cursorX = event.clientX - rect.left;
+          const cursorY = event.clientY - rect.top;
+
+          originX.current -= (cursorX - originX.current) * (scaleRatio - 1);
+          originY.current -= (cursorY - originY.current) * (scaleRatio - 1);
+        } else if (isPanningHorizontally) {
+          originX.current -= event.deltaX; // Pan horizontally
+        } else {
+          originY.current -= event.deltaY; // Pan vertically
+        }
+
+        updateTransform();
+      });
     };
 
     const handleMouseDown = (e: MouseEvent) => {
@@ -119,10 +174,12 @@ export const useZoomPan = (
       if (disabled || roles?.some(role => hasRole(e.target as HTMLElement, role))) return;
       if (!pan.current) return;
 
-      originX.current = e.clientX - startX.current;
-      originY.current = e.clientY - startY.current;
+      enforceLimits(e, (event) => {
+        originX.current = event.clientX - startX.current;
+        originY.current = event.clientY - startY.current;
 
-      updateTransform();
+        updateTransform();
+      });
     };
 
     const handleMouseUp = () => {
@@ -132,6 +189,7 @@ export const useZoomPan = (
     const handleTouchStart = (e: TouchEvent) => {
       if (disabled || roles?.some(role => hasRole(e.target as HTMLElement, role))) return;
       if (e.touches.length !== 1) return;
+
       const touch = e.touches[0];
       startX.current = touch.clientX - originX.current;
       startY.current = touch.clientY - originY.current;
@@ -141,10 +199,13 @@ export const useZoomPan = (
     const handleTouchMove = (e: TouchEvent) => {
       if (disabled || roles?.some(role => hasRole(e.target as HTMLElement, role))) return;
       if (!pan.current || e.touches.length !== 1) return;
-      const touch = e.touches[0];
-      originX.current = touch.clientX - startX.current;
-      originY.current = touch.clientY - startY.current;
-      updateTransform();
+
+      enforceLimits(e, (event: TouchEvent) => {
+        const touch = event.touches[0];
+        originX.current = touch.clientX - startX.current;
+        originY.current = touch.clientY - startY.current;
+        updateTransform();
+      });
     };
 
     const handleTouchEnd = () => {

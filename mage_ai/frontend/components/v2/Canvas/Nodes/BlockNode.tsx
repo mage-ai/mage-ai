@@ -74,13 +74,13 @@ export function BlockNode({
   }, [block, inputs, item, outputs]);
 
   const classNames = [
-    borders?.length >= 2
+    true || borders?.length >= 2
       ? stylesGradient[[
         'gradient-background-to-top-right',
         ...((borders ?? []).concat([
           // { baseColorName: 'yellow' },
           // { baseColorName: 'green' },
-        ]))?.slice?.(0, 100)?.map(b => b.baseColorName),
+        ]))?.slice?.(0, 2)?.map(b => b.baseColorName),
       ].join('-')]
       : '',
   ].filter(b => b);

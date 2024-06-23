@@ -73,8 +73,8 @@ function connectionLinesRootID(uuid: string) {
 type PipelineBuilderProps = {
   canvasRef: React.RefObject<HTMLDivElement>;
   containerRef: React.RefObject<HTMLDivElement>;
-  onDragEnd: () => void;
-  onDragStart: () => void;
+  onDragEnd: (event: React.MouseEvent<HTMLDivElement>) => void;
+  onDragStart: (event: React.MouseEvent<HTMLDivElement>) => void;
   pipeline: PipelineType | PipelineExecutionFrameworkType;
   pipelineExecutionFramework: PipelineExecutionFrameworkType
   pipelineExecutionFrameworks: PipelineExecutionFrameworkType[];
@@ -885,12 +885,13 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
     renderConnectionLines();
   }
 
-  function onMouseDown(_event: React.MouseEvent<HTMLDivElement>, _node: NodeItemType) {
-    onDragStartProp();
+  function onMouseDown(event: React.MouseEvent<HTMLDivElement>, _node: NodeItemType) {
+    if (event.button > 0) return;
+    onDragStartProp(event);
   }
 
-  function onMouseUp(_event: React.MouseEvent<HTMLDivElement>, _node: NodeItemType) {
-    onDragEnd();
+  function onMouseUp(event: React.MouseEvent<HTMLDivElement>, _node: NodeItemType) {
+    onDragEnd(event);
     resetAfterDrop();
   }
 
@@ -1108,10 +1109,19 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
       <CanvasContainer gridSize={GRID_SIZE} ref={containerRef}>
         <DragLayer gridDimensions={gridDimensions} onDragging={onDragging} snapToGrid={snapToGridOnDrag} />
 
-        <div id={connectionLinesRootID('nodes')} />
+        <div
+          id={connectionLinesRootID('nodes')}
+          style={{
+            height: '100%',
+            position: 'absolute',
+            width: '100%',
+            zIndex: 5,
+          }}
+        />
 
         {nodesMemo}
       </CanvasContainer>
+      <div style={{ position: 'absolute', width: 9825, height: 7900, top: 0, left: 0, background: 'transparent', border: '1px solid red' }} />
     </div>
   );
 };
@@ -1132,8 +1142,10 @@ export default function PipelineBuilderCanvas(props: PipelineBuilderProps) {
   });
 
   useEffect(() => {
-    const handleMouseDown = (e: MouseEvent) => {
-      const targetElement = e.target as HTMLElement;
+    const handleMouseDown = (event: MouseEvent) => {
+      if (event.button > 0) return;
+
+      const targetElement = event.target as HTMLElement;
       const hasRole = [ElementRoleEnum.DRAGGABLE].some(role =>
         targetElement.closest(`[role="${role}"]`),
       );
@@ -1142,8 +1154,11 @@ export default function PipelineBuilderCanvas(props: PipelineBuilderProps) {
         setZoomPanDisabled(true);
       }
     };
-    const handleMouseUp = (e: MouseEvent) => {
-      const targetElement = e.target as HTMLElement;
+
+    const handleMouseUp = (event: MouseEvent) => {
+      if (event.button > 0) return;
+
+      const targetElement = event.target as HTMLElement;
       const hasRole = [ElementRoleEnum.DRAGGABLE, ElementRoleEnum.DROPPABLE].some(role =>
         targetElement.closest(`[role="${role}"]`),
       );
