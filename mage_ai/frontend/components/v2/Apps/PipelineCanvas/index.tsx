@@ -209,13 +209,13 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
     itemsMetadataRef.current.rect.version = version ?? ((itemsMetadataRef.current.rect.version ?? 0) + 1);
   }
 
-  function updateLayoutOfModels() {
+  function updateLayoutOfItems(): ItemMappingType {
     const layout = {
       boundingRect: canvasRef?.current?.getBoundingClientRect(),
       containerRect: containerRef?.current?.getBoundingClientRect(),
       defaultRect: {
         item: () => ({
-          height: 75,
+          height: 0,
           left: 0,
           padding: {
             bottom: 12,
@@ -224,7 +224,7 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
             top: 12,
           },
           top: 0,
-          width: 300,
+          width: 0,
         }),
       },
       direction: LayoutConfigDirectionEnum.HORIZONTAL,
@@ -235,32 +235,35 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
       transformState,
     } as LayoutConfigType;
 
-    updateNodeItems({
+    const nodeMapping = {
       ...itemsRef.current,
       ...updateNodeGroupsWithItems(itemsRef?.current ?? {}),
-    });
-    const nodesGroupedArr = [];
+    };
+    const itemsUpdated = {} as ItemMappingType;
 
     modelLevelsMapping?.current?.forEach((modelMapping: ModelMappingType) => {
-      const { itemMapping } = modelMapping;
-
-      const nodeIDs = Object.keys(itemMapping ?? {}) ?? [];
-
-      const nodes = nodeIDs.map(
-        (nodeID: string) => (itemsRef.current ?? {})?.[nodeID] as NodeType)?.filter(
-          n => ItemTypeEnum.NODE === n?.type,
-        );
-      const nodesArr = layoutItemsInGroups(nodes, layout);
-      nodesGroupedArr.push(...nodesArr);
-    });
-
-    nodesGroupedArr?.forEach((node: NodeType) => {
-      node?.items?.forEach((itemNode: DragItem) => {
-        updateNodeItems({ [itemNode.id]: itemNode });
+      const nodeIDs = Object.keys(modelMapping?.itemMapping ?? {}) ?? [];
+      const nodes = [] as NodeType[];
+      nodeIDs.forEach((nodeID: string) => {
+        const node = nodeMapping?.[nodeID] as NodeType;
+        if (ItemTypeEnum.NODE === node?.type) {
+          itemsUpdated[nodeID] = node;
+          nodes.push(node);
+        }
       });
 
-      updateNodeItems({ [node.id]: node });
+      layoutItemsInGroups(nodes, layout)?.forEach((node: NodeType) => {
+        itemsUpdated[node.id] = node;
+
+        node?.items?.forEach((itemNode: DragItem) => {
+          itemsUpdated[itemNode.id] = itemNode;
+        });
+      });
     });
+
+    updateNodeItems(itemsUpdated);
+
+    return itemsUpdated;
   }
 
   function onDragging({
@@ -869,22 +872,24 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
       if (versions?.every((version: number) => version === rectVersion)) {
         if (activeLevel?.current === null) {
           setActiveLevel(0);
-          updateLayoutOfModels();
+          const itemsUpdated = updateLayoutOfItems();
           renderConnectionLines();
-          renderLayoutChanges({ items: itemsRef?.current });
+          console.log('!!!!!!!!!!!!!!!!!!', itemsUpdated);
+          renderLayoutChanges({ items: itemsUpdated });
         }
       }
     }
 
     if (ItemTypeEnum.NODE === type) {
       const node = itemsRef?.current?.[id];
+      console.log('WTFFFFFFFFFFFFFFFFFFFFFFF', node?.rect);
 
-      if (node?.rect) {
-        const { rect } = node;
+      // if (node?.rect) {
+      //   const { rect } = node;
 
-        itemRef.current.style.height = `${rect?.height}px`;
-        itemRef.current.style.width = `${rect?.width}px`;
-      }
+      //   itemRef.current.style.height = `${rect?.height}px`;
+      //   itemRef.current.style.width = `${rect?.width}px`;
+      // }
     }
   }
 

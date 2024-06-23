@@ -12,10 +12,12 @@ import { DragAndDropType } from './types';
 import { ElementRoleEnum } from '@mana/shared/types';
 
 // This is the style used for the preview when dragging
-function getStyles({ rect }: DragItem, { isDragging }: { isDragging: boolean }): CSSProperties {
+function getStyles(item: NodeItemType, { isDragging }: { isDragging: boolean }): CSSProperties {
+  const { id, rect, type } = item;
   const {
     left,
     top,
+    width,
     zIndex,
   } = rect || ({} as RectType);
   const transform = `translate3d(${left ?? 0}px, ${top ?? 0}px, 0)`;
@@ -33,6 +35,7 @@ function getStyles({ rect }: DragItem, { isDragging }: { isDragging: boolean }):
     ...(isDragging ? { height: 0, opacity: 0 } : {
       minHeight: rect?.height ?? 0,
     }),
+    ...(width ? { minWidth: width } : {}),
   };
 }
 

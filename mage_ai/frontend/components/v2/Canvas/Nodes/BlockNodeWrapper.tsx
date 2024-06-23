@@ -11,6 +11,7 @@ import { countOccurrences, flattenArray, sortByKey } from '@utils/array';
 import { dig } from '@utils/hash';
 import { ItemTypeEnum } from '../types';
 import stylesBuilder from '@styles/scss/apps/Canvas/Pipelines/Builder.module.scss';
+import { isDebug } from '@utils/environment';
 
 type BlockNodeWrapperProps = {
   collapsed?: boolean;
@@ -29,9 +30,12 @@ const BlockNodeWrapper: React.FC<BlockNodeWrapperProps> = ({
   onMountPort,
   onMountItem,
   selected = false,
-  version,
 }) => {
-  console.log(item?.id, item?.version);
+  console.log(item?.type, item?.id, item?.version);
+
+  if (ItemTypeEnum.NODE === item?.type) {
+    isDebug() && console.log(item);
+  }
 
   const itemRef = useRef(null);
   const phaseRef = useRef(0);

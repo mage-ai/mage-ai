@@ -564,7 +564,7 @@ export function layoutItemsInGroups(
       padding: rectPadding,
       width: Math.max(
         box1.width + (rectPadding?.left ?? 0) + (rectPadding?.right ?? 0),
-        defaultRect(node).height,
+        defaultRect(node).width,
       ),
     };
 
