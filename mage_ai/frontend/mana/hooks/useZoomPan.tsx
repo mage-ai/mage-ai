@@ -61,7 +61,6 @@ export const useZoomPan = (
     initialPosition,
     maxScale = 4,
     minScale = 0.01,
-    onStateChange,
     roles,
     zoomSensitivity = 0.5,
   } = opts;

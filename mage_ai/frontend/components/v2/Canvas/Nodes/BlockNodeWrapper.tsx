@@ -1,3 +1,4 @@
+import React from 'react';
 import { BlockNode } from './BlockNode';
 import { StatusTypeEnum, BlockTypeEnum } from '@interfaces/BlockType';
 import { NodeWrapper, NodeWrapperProps } from './NodeWrapper';
@@ -7,6 +8,7 @@ import { createRef, useEffect, useCallback, useState, useMemo, useRef } from 're
 import { GroupUUIDEnum } from '@interfaces/PipelineExecutionFramework/types';
 import { NodeItemType, PortType, DragItem } from '../interfaces';
 import { countOccurrences, flattenArray, sortByKey } from '@utils/array';
+import { dig } from '@utils/hash';
 import { ItemTypeEnum } from '../types';
 import stylesBuilder from '@styles/scss/apps/Canvas/Pipelines/Builder.module.scss';
 
@@ -16,9 +18,10 @@ type BlockNodeWrapperProps = {
   onMountPort: (port: PortType, ref: React.RefObject<HTMLDivElement>) => void;
   frameworkGroups: Record<GroupUUIDEnum, Record<string, any>>;
   selected?: boolean;
-};
+  version?: number | string;
+} & NodeWrapperProps;
 
-export function BlockNodeWrapper({
+const BlockNodeWrapper: React.FC<BlockNodeWrapperProps> = ({
   collapsed,
   frameworkGroups,
   item,
@@ -26,7 +29,10 @@ export function BlockNodeWrapper({
   onMountPort,
   onMountItem,
   selected = false,
-}: NodeWrapperProps & BlockNodeWrapperProps) {
+  version,
+}) => {
+  console.log(item?.id, item?.version);
+
   const itemRef = useRef(null);
   const phaseRef = useRef(0);
   const timeoutRef = useRef(null);
@@ -197,4 +203,11 @@ export function BlockNodeWrapper({
       />
     </NodeWrapper>
   );
+};
+
+function areEqual(prevProps: BlockNodeWrapperProps, nextProps: BlockNodeWrapperProps) {
+  const keys = ['item.version'];
+  return keys?.every((key: string) => dig(prevProps, key) === dig(nextProps, key));
 }
+
+export default React.memo(BlockNodeWrapper, areEqual);

@@ -221,7 +221,12 @@ export function layoutItemsInTreeFormation(items: DragItem[], layout?: LayoutCon
   }));
 }
 
-function layoutRectsInTreeFormation(items: RectType[], layout?: LayoutConfigType): RectType[] {
+function layoutRectsInTreeFormation(items: RectType[], layout?: LayoutConfigType, opts?: {
+  align?: {
+    horizontal?: 'left' | 'center' | 'right';
+    vertical?: 'top' | 'center' | 'bottom';
+  },
+}): RectType[] {
   const {
     direction,
     gap,
@@ -398,8 +403,12 @@ function layoutRectsInTreeFormation(items: RectType[], layout?: LayoutConfigType
     'box', finalBoundingBox,
   );
 
-  const offsetX = finalBoundingBox.left - (finalBoundingBox.width / 2);
-  const offsetY = finalBoundingBox.top - (finalBoundingBox.height / 2);
+  const offsetX = opts?.align?.horizontal
+    ? finalBoundingBox.left - (finalBoundingBox.width / 2)
+    : 0;
+  const offsetY = opts?.align?.vertical
+    ? finalBoundingBox.top - (finalBoundingBox.height / 2)
+    : 0;
 
   return rects.map((rect: RectType) => ({
     ...rect,
@@ -496,7 +505,6 @@ export function layoutItemsInGroups(
   const {
     boundingRect,
     containerRect,
-    transformState,
   } = layout;
   const {
     node: transformRect = (rect: RectType) => ({ ...rect }) as RectType,

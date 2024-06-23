@@ -12,13 +12,6 @@ import { ignoreKeys } from '@utils/hash';
 export function updateNodeGroupsWithItems(
   itemMapping: ItemMappingType,
 ): ItemMappingType {
-  false &&
-  isDebug() && console.log(
-    'updateNodeGroupsWithItems',
-    'itemMapping', itemMapping,
-    'itemMapping', itemMapping,
-  );
-
   const mapping = Object.entries(itemMapping ?? {})?.reduce((
     acc,
     [nodeID, nodeItem]: [string, NodeType],
@@ -54,29 +47,26 @@ export function updateNodeGroupsWithItems(
 }
 
 export function updateModelsAndRelationships({
-  connectionsRef,
   itemsRef,
   portsRef,
-}: ModelRefsType, payload?: ModelMappingType) {
+}, payload: ModelMappingType): {
+  items: ItemMappingType;
+  ports: PortMappingType;
+} {
   const {
-    connectionMapping,
     itemMapping,
     portMapping,
   } = payload ?? {};
+
+  const refsToUpdate = {
+    items: {},
+    ports: {},
+  };
 
   // 1. Items are updated
   // 2. Item’s ports are updated
   // 3. Nodes and node’s items are updated
   // 4. Connection’s fromItem and toItem are updated
-
-  false && isDebug() && console.log(
-    'updateModelsAndRelationships before',
-    'itemsRef', itemsRef?.current,
-    'portsRef', portsRef?.current,
-    'connectionsRef', connectionsRef?.current,
-    'payload', payload,
-    Object.values(payload?.connectionMapping ?? {})?.map(conn => [conn.fromItem?.id, conn.toItem?.id]),
-  );
 
   Object.values({
     ...itemsRef.current,
@@ -105,68 +95,46 @@ export function updateModelsAndRelationships({
     });
 
     item.ports = arr;
-    itemsRef.current[item.id] = item;
+    refsToUpdate.items[item.id] = item;
 
-    portsRef.current = {
+    refsToUpdate.ports = {
       ...portsRef.current,
       ...arr.reduce((acc, port) => ({ ...acc, [port.id]: port }), {}),
+      ...refsToUpdate.ports,
     };
   });
 
   // Nodes
-  Object.entries(itemsRef.current ?? {}).forEach(([nodeID, nodeInit]: [string, NodeType]) => {
+  Object.entries(refsToUpdate.items ?? {}).forEach(([nodeID, nodeInit]: [string, NodeType]) => {
     if (ItemTypeEnum.NODE !== nodeInit?.type) {
       return;
     }
 
     const node = {
       ...nodeInit,
-      ...itemsRef.current?.[nodeID],
+      ...refsToUpdate.items[nodeID],
     };
     const items = node?.items?.reduce((acc, item: DragItem) => ({
       ...acc,
-      [item.id]: ignoreKeys(itemsRef?.current?.[item?.id], ['node', 'ports']),
+      [item.id]: ignoreKeys(refsToUpdate.items?.[item?.id], ['node', 'ports']),
     }), {});
 
     node.items = Object.values(items ?? {});
-    itemsRef.current[nodeID] = node;
+    refsToUpdate.items[nodeID] = node;
   });
   // Node upstream nodes
-  Object.entries(itemsRef.current ?? {}).forEach(([nodeID, nodeItem]: [string, NodeType]) => {
+  Object.entries(refsToUpdate.items ?? {}).forEach(([nodeID, nodeItem]: [string, NodeType]) => {
     nodeItem.upstreamNodes =
-      nodeItem?.upstreamNodes?.map((node: NodeType) => (itemsRef.current[node?.id]));
-    itemsRef.current[nodeID] = nodeItem;
+      nodeItem?.upstreamNodes?.map((node: NodeType) => (refsToUpdate.items[node?.id]));
+    refsToUpdate.items[nodeID] = nodeItem;
   });
   // Update non-node item’s node
-  Object.entries(itemsRef.current ?? {}).forEach(([itemID, item]: [string, DragItem]) => {
+  Object.entries(refsToUpdate.items ?? {}).forEach(([itemID, item]: [string, DragItem]) => {
     if (!item?.node) return;
 
-    item.node = itemsRef.current[item?.node?.id] as NodeType;
-    itemsRef.current[itemID] = ignoreKeys(item, ['items', 'upstreamNodes']);
+    item.node = refsToUpdate.items[item?.node?.id] as NodeType;
+    refsToUpdate.items[itemID] = ignoreKeys(item, ['items', 'upstreamNodes']);
   });
 
-  Object.entries({
-    ...connectionsRef.current,
-    ...connectionMapping,
-  }).forEach(([key, conn]: [string, any]) => {
-    const { fromItem, toItem } = conn;
-    conn.fromItem = portsRef.current[fromItem?.id];
-    conn.toItem = portsRef.current[toItem?.id];
-    connectionsRef.current[key] = conn;
-  });
-
-  false &&
-  isDebug() && console.log(
-    'updateModelsAndRelationships after',
-    'itemsRef', itemsRef?.current,
-    'portsRef', portsRef?.current,
-    'connectionsRef', connectionsRef?.current,
-    Object.values(connectionsRef?.current ?? {})?.map(conn => [conn.fromItem, conn.toItem]),
-  );
-
-  return {
-    connectionsRef,
-    itemsRef,
-    portsRef,
-  };
+  return refsToUpdate;
 }

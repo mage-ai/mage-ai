@@ -37,6 +37,7 @@ export interface RectType {
 interface BaseItem {
   id: number | string;
   level?: number;
+  version?: number | string;
   type: ItemTypeEnum;
 }
 
@@ -115,13 +116,11 @@ export type GroupMappingType = Record<GroupUUIDEnum, PipelineExecutionFrameworkB
 export type GroupLevelsMappingType = GroupMappingType[];
 
 export type ModelMappingType = {
-  connectionMapping?: ConnectionMappingType;
   itemMapping?: ItemMappingType;
   portMapping?: PortMappingType;
 };
 
 export type ModelRefsType = {
-  connectionsRef?: { current: ConnectionMappingType };
   itemsRef?: { current: ItemMappingType };
   portsRef?: { current: PortMappingType };
 };
