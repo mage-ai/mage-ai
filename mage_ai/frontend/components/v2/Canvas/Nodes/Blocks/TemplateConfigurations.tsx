@@ -32,7 +32,7 @@ export default function TemplateConfigurations({
       {Object.entries(template?.variables || [])?.map(([variableUUID, config], idx: number) => (
         <Grid
           columnGap={8}
-          justifyContent="space-between"
+          justifyContent='space-between'
           key={variableUUID}
           templateColumnsAutoFitMaxContent
         >

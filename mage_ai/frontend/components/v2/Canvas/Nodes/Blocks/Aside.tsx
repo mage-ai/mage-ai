@@ -7,11 +7,11 @@ export default function Aside({ Icon, baseColorName, onClick }: AsideType) {
   const icon = Icon ? <Icon inverted={baseColorName === 'green'} size={14} /> : null;
   const el = (
     <Grid
-      alignItems="center"
+      alignItems='center'
       backgroundColor={baseColorName ? baseColorName?.toLowerCase() : undefined}
       borders={baseColorName ? false : true}
       bordersTransparent={baseColorName ? true : false}
-      justifyContent="center"
+      justifyContent='center'
       style={{
         height: 32,
         width: 32,

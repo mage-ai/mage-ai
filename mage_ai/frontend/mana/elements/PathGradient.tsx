@@ -26,24 +26,24 @@ const PathGradientComponent = React.forwardRef<
   return (
     <PathGradient className={className} ref={ref}>
       <defs>
-        <linearGradient id={`${id}-grad`} x1="0%" x2="100%" y1="0%" y2="0%">
+        <linearGradient id={`${id}-grad`} x1='0%' x2='100%' y1='0%' y2='0%'>
           {stop0ClassNames.length > 0 && (
             <stop
               className={getJoinedClassNames(stop0ClassNames)}
               id={`${id}-stop-0`}
-              offset="0%"
+              offset='0%'
             />
           )}
           {stop1ClassNames.length > 0 && (
             <stop
               className={getJoinedClassNames(stop1ClassNames)}
               id={`${id}-stop-1`}
-              offset="100%"
+              offset='100%'
             />
           )}
         </linearGradient>
       </defs>
-      <path d={d} fill="none" id={id} stroke={`url(#${id}-grad)`} {...rest} />
+      <path d={d} fill='none' id={id} stroke={`url(#${id}-grad)`} {...rest} />
     </PathGradient>
   );
 });

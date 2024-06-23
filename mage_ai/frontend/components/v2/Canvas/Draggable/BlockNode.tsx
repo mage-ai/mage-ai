@@ -21,7 +21,7 @@ export interface BoxProps {
 const BlockNode: FC<BoxProps> = memo(function Box({ backgroundColor, preview, title }: BoxProps) {
   return (
     <Grid
-      alignItems="center"
+      alignItems='center'
       role={preview ? 'BoxPreview' : 'Box'}
       style={{ ...styles, backgroundColor }}
     >

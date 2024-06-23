@@ -10,9 +10,9 @@ import { createRoot } from 'react-dom/client';
 
 import 'react-toastify/dist/ReactToastify.min.css';
 import '@styles/globals.css';
-import '@styles/scss/globals/main.scss';
-import '@styles/scss/globals/dark.scss';
-import '@styles/scss/globals/light.scss';
+import '@styles/scss/main.scss';
+import '@styles/scss/themes/dark.scss';
+import '@styles/scss/themes/light.scss';
 import AuthToken from '@api/utils/AuthToken';
 import CommandCenter from '@components/CommandCenter';
 import Head from '@oracle/elements/Head';
@@ -280,8 +280,8 @@ function MyApp(props: MyAppProps & AppProps) {
                 <ErrorProvider>
                   <Head defaultTitle={defaultTitle} title={title}>
                     <meta
-                      content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=0"
-                      name="viewport"
+                      content='width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=0'
+                      name='viewport'
                     />
                   </Head>
 
