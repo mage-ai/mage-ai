@@ -160,7 +160,7 @@ export const useZoomPan = (
     element.addEventListener('touchstart', handleTouchStart, { passive: true });
     element.addEventListener('touchmove', handleTouchMove, { passive: true });
 
-    initializeOrigin();
+    // initializeOrigin();
 
     return () => {
       element.removeEventListener('wheel', handleWheel);
@@ -182,8 +182,8 @@ export const useZoomPan = (
     const originX = (canvasRect?.width - containerRect?.width) / 2;
     const originY = (canvasRect?.height - containerRect?.height) / 2;
     const diff = {
-      left: (startX.current / scale.current) - originX,
-      top: (startY.current / scale.current) - originY,
+      // left: (startX.current / scale.current) - originX,
+      // top: (startY.current / scale.current) - originY,
     };
 
     // Apply the offset and take into account the current origin and scale

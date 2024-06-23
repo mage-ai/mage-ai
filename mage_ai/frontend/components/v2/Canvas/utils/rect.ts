@@ -1,12 +1,12 @@
 import update from 'immutability-helper';
 
-import BlockType from '@interfaces/BlockType';
-import { DragItem, LayoutConfigType, NodeType, RectType } from '../interfaces';
+import { ZoomPanPositionType, ZoomPanStateType } from '@mana/hooks/useZoomPan';
+import { DragItem, LayoutConfigType, NodeItemType, NodeType, RectType } from '../interfaces';
 import {
   LayoutConfigDirectionEnum,
   LayoutConfigDirectionOriginEnum,
 } from '../types';
-import { range, indexBy, uniqueArray, flattenArray } from '@utils/array';
+import { range, indexBy, flattenArray } from '@utils/array';
 import { isDebug as isDebugBase } from '@utils/environment';
 
 function isDebug() {
@@ -433,6 +433,62 @@ export function applyRectDiff(rect: RectType, diff: RectType, dimensions?: boole
   };
 }
 
+export function transformZoomPanRect(rect: RectType, transformState: ZoomPanStateType) {
+  const {
+    container,
+    element,
+    position,
+  } = transformState ?? {} as ZoomPanStateType;
+
+  const scale = transformState?.scale?.current ?? 1;
+
+  const rectContainer = (container?.current ?? {} as HTMLElement)?.getBoundingClientRect();
+  const containerWidth = rectContainer.width;
+  const containerHeight = rectContainer.height;
+
+  const rectViewport = (element?.current ?? {} as HTMLElement)?.getBoundingClientRect();
+  const viewportWidth = rectViewport.width;
+  const viewportHeight = rectViewport.height;
+
+  const current = position?.current ?? {} as ZoomPanPositionType;
+  const xCur = (current?.x?.current ?? 0);
+  const yCur = (current?.y?.current ?? 0);
+
+  const origin = position?.origin ?? {} as ZoomPanPositionType;
+  const xOrg = (origin?.x?.current ?? 0);
+  const yOrg = (origin?.y?.current ?? 0);
+
+  const left = (rect?.left ?? 0);
+  const top = (rect?.top ?? 0);
+  const width = (rect?.width ?? 0);
+  const height = (rect?.height ?? 0);
+
+  const leftOrg = (left + xOrg); // Reset before panning
+  const leftFactor = xOrg / (viewportWidth - containerWidth);
+  const transformedLeft = leftOrg;
+    // + ((containerWidth - viewportWidth) * leftFactor);
+
+  const topOrg = (top + yOrg); // Reset before panning
+  const topFactor = yOrg / (viewportHeight - containerHeight);
+  const transformedTop = topOrg;
+    // + ((containerHeight - viewportHeight) * topFactor);
+
+  console.log('origin', xOrg, yOrg);
+  console.log('current', xCur, yCur);
+  console.log('factor', leftFactor, topFactor);
+  console.log('scale', scale);
+  console.log('leftTopOrg', leftOrg, topOrg);
+  console.log('item', left, top);
+
+  return {
+    ...rect,
+    height: height * scale,
+    left: transformedLeft,
+    top: transformedTop,
+    width: width * scale,
+  };
+}
+
 export function layoutItemsInGroups(
   nodes: NodeType[],
   layout: LayoutConfigType,
@@ -440,12 +496,13 @@ export function layoutItemsInGroups(
   const {
     boundingRect,
     containerRect,
+    transformState,
   } = layout;
   const {
-    node: transformRect = () => ({}) as RectType,
+    node: transformRect = (rect: RectType) => ({ ...rect }) as RectType,
   } = layout?.transformRect || {};
   const {
-    node: defaultRect = () => ({}) as RectType,
+    item: defaultRect = (item: NodeItemType) => ({ ...item?.rect }) as RectType,
   } = layout?.defaultRect || {};
 
   const groupsMapping: Record<string, NodeType> = {};
@@ -482,7 +539,7 @@ export function layoutItemsInGroups(
       offsetLeftMax,
     );
 
-    const rectNode = addRects(defaultRect(node), (transformRect(node) ?? {} as RectType));
+    const rectNode = addRects(defaultRect(node), (transformRect(node?.rect) ?? {} as RectType));
 
     const rectPadding = rectNode?.padding;
     const box1 = calculateBoundingBox(items2.map((item: DragItem) => item.rect));
@@ -550,19 +607,23 @@ export function layoutItemsInGroups(
 
   isDebug() &&
   console.log('rectsBeforeLayout', rectsBeforeLayout);
+
   const rectsInTree = layoutRectsInTreeFormation(rectsBeforeLayout, layout);
   isDebug() &&
   console.log('rectsInTree', rectsInTree);
-  const rectsCentered = centerRects(rectsInTree, boundingRect, containerRect);
+
+  // rectsInTree = rectsInTree?.map(rect => transformZoomPanRect(rect, transformState));
+
+  // rectsInTree = centerRects(rectsInTree, boundingRect, containerRect);
   isDebug() &&
   console.log(
-    'rectsCentered', rectsCentered,
+    'rectsInTree', rectsInTree,
     'boundingRect', boundingRect,
     'containerRect', containerRect,
     window.innerWidth, window.innerHeight,
   );
 
-  return rectsCentered.reduce((acc, rect: RectType) => {
+  return rectsInTree.reduce((acc, rect: RectType) => {
     const node = groupsMapping[rect.id];
     let items = node?.items ?? [];
 

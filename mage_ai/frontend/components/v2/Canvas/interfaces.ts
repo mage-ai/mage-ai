@@ -82,11 +82,12 @@ export interface LayoutConfigType {
   };
   itemRect?: RectType;
   stagger?: number;
-  transform?: ZoomPanStateType;
   transformRect?: {
     block?: (rect?: RectType) => RectType;
+    node?: (rect?: RectType) => RectType;
     port?: (rect?: RectType) => RectType;
   };
+  transformState?: ZoomPanStateType;
 }
 
 export type NodeItemType = DragItem | NodeType | PortType;

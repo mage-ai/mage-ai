@@ -42,7 +42,7 @@ import { ConnectionLines } from '../../Canvas/Connections/ConnectionLines';
 import { getPathD } from '../../Canvas/Connections/utils';
 import { buildNamesapceForLevel } from './utils/levels';
 import { createConnections } from './utils/ports';
-import { addRects, calculateBoundingBox, getRectDiff, layoutItemsInGroups, layoutItemsInTreeFormation } from '../../Canvas/utils/rect';
+import { addRects, calculateBoundingBox, getRectDiff, layoutItemsInGroups, layoutItemsInTreeFormation, transformZoomPanRect } from '../../Canvas/utils/rect';
 import { updateAllPortConnectionsForItem, drawLine } from '../../Canvas/utils/connections';
 import { createConnection, getConnections, updatePaths } from '../../Canvas/Connections/utils';
 import { rectFromOrigin } from './utils/positioning';
@@ -113,6 +113,7 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
         block: (rect: RectType) => transformState?.offsetRectToCenter(rect),
         port: (rect: RectType) => transformState?.offsetRectToCenter(rect),
       },
+      transformState,
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }),
     [transformState],
@@ -187,7 +188,7 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
       boundingRect: canvasRef?.current?.getBoundingClientRect(),
       containerRect: containerRef?.current?.getBoundingClientRect(),
       defaultRect: {
-        node: () => ({
+        item: () => ({
           height: 75,
           left: 0,
           padding: {
@@ -205,7 +206,7 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
         column: 40,
         row: 40,
       },
-      transform: transformState,
+      transformState,
     } as LayoutConfigType;
 
     itemsRef.current = {
@@ -244,11 +245,13 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
     // renderLayoutChanges();
   }
 
-  function renderConnectionLines(opts?: {
-    direction?: LayoutConfigDirectionEnum;
-    origin?: LayoutConfigDirectionOriginEnum;
-  }) {
-    const { direction, origin } = opts ?? {};
+  function renderConnectionLines(layout?: LayoutConfigType) {
+    const {
+      direction,
+      origin,
+      transformState,
+    } = layout ?? {};
+    console.log(layout);
     const isVertical = LayoutConfigDirectionEnum.VERTICAL === direction;
     const isReverse = (origin ?? false) && [
       LayoutConfigDirectionOriginEnum.BOTTOM,
@@ -304,26 +307,24 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
 
       const values = {
         [port1.id]: {
+          ...port1,
           color: color1,
-          id: port1.id,
           rect: rect1,
-          rects: [
-            rect1Port,
-            rect1Item,
-            rect1Node,
-          ],
-          subtype: port1.subtype,
+          rects: {
+            item: rect1Item,
+            node: rect1Node,
+            port: rect1Port,
+          },
         },
         [port2.id]: {
+          ...port2,
           color: color2,
-          id: port2.id,
           rect: rect2,
-          rects: [
-            rect2Port,
-            rect2Item,
-            rect2Node,
-          ],
-          subtype: port2.subtype,
+          rects: {
+            item: rect2Item,
+            node: rect2Node,
+            port: rect2Port,
+          },
         },
       };
 
@@ -342,119 +343,68 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
       const fromValues = values[fromPort?.id];
       const toValues = values[toPort?.id];
 
-      function transformRect(rect: RectType, transformState: ZoomPanStateType) {
-        const {
-          container,
-          element,
-          position,
-        } = transformState ?? {} as ZoomPanStateType;
-
-        const rectContainer = (container?.current ?? {} as HTMLElement)?.getBoundingClientRect();
-        const containerWidth = rectContainer.width;
-        const containerHeight = rectContainer.height;
-
-        const rectViewport = (element?.current ?? {} as HTMLElement)?.getBoundingClientRect();
-        const viewportWidth = rectViewport.width;
-        const viewportHeight = rectViewport.height;
-
-        const current = position?.current ?? {} as ZoomPanPositionType;
-        const xCur = current?.x?.current ?? 0;
-        const yCur = current?.y?.current ?? 0;
-
-        const origin = position?.origin ?? {} as ZoomPanPositionType;
-        const xOrg = origin?.x?.current ?? 0;
-        const yOrg = origin?.y?.current ?? 0;
-
-        const scale = transformState?.scale?.current ?? 1;
-
-        const { left, top, width, height } = rect;
-
-
-
-        const leftOrg = (left + xOrg); // Reset before panning
-        const leftFactor = xOrg / (viewportWidth - containerWidth);
-        const transformedLeft = leftOrg + ((containerWidth - viewportWidth) * leftFactor);
-          // + (xCur - (containerWidth * leftFactor)); // Move to the current position
-        // const leftFactor = ((left / containerWidth) * scale);
-        // transformedLeft -= viewportWidth * leftFactor;
-        // transformedLeft += viewportWidth * leftFactor;
-
-
-        const topOrg = (top + yOrg); // Reset before panning
-        const topFactor = yOrg / (viewportHeight - containerHeight);
-        const transformedTop = topOrg + ((containerHeight - viewportHeight) * topFactor);
-          // + (yCur - (containerHeight * topFactor)); // Move to the current position
-        // const topFactor = ((top / containerHeight) * scale);
-        // transformedTop -= viewportHeight * topFactor;
-        // transformedTop += viewportHeight * topFactor;
-
-        console.log('origin', xOrg, yOrg);
-        console.log('current', xCur, yCur);
-        console.log('factor', leftFactor, topFactor);
-        console.log('rect', left, top);
-
-        return {
-          ...rect,
-          height: height * scale,
-          left: transformedLeft,
-          top: transformedTop,
-          width: width * scale,
-        };
-      }
-
       function buildRect(values: any) {
-        const isOutput = PortSubtypeEnum.OUTPUT === values?.subtype;
-        let rect = {
+        const rect = {
           height: values?.rect?.height ?? 0,
           left: values?.rect?.left ?? 0,
           top: values?.rect?.top ?? 0,
           width: values?.rect?.width ?? 0,
         };
 
-        console.log(0, rect);
-        rect = transformState ? transformRect(rect, transformState) : rect;
-        console.log(1, rect);
+        // console.log(0, rect);
+        // rect = transformState ? transformZoomPanRect(rect, transformState) : rect;
+        // console.log(1, rect);
 
+        const scale = Number(transformState?.scale?.current ?? 1);
         let leftOffset = 0;
         let topOffset = 0;
-        values?.rects?.forEach((parent: DOMRect, idx: number) => {
-          console.log(idx, leftOffset, topOffset);
-          leftOffset += (parent?.left ?? 0);
-          // + (parent?.width ?? 0);
-          topOffset += (parent?.top ?? 0);
-        });
-        // rect.left += leftOffset;
-        // rect.top -= topOffset;
+        if (ItemTypeEnum.PORT === values?.type) {
+          const isOutput = PortSubtypeEnum.OUTPUT === values?.subtype;
 
+          if (Object.values(values?.rects)?.every(Boolean)) {
+            const {
+              item,
+              // Need to handle node ports differently.
+              // node,
+              port,
+            } = values?.rects;
 
-        // if (Object.values(values?.rectElements)?.every(Boolean)) {
-        //   const {
-        //     item,
-        //     node, // Need to handle node ports differently.
-        //     port,
-        //   } = values?.rectElements;
+            if (isVertical) {
+              if (isReverse) {
 
-        //   if (isVertical) {
-        //     if (isReverse) {
+              } else {
+              }
+            } else {
+              if (isReverse) {
 
-        //     } else {
-        //     }
-        //   } else {
-        //     if (isReverse) {
+              } else {
+                topOffset += (
+                  (
+                    (item?.height - port?.height) - (port?.top - item?.top)
+                  ) / 2
+                ) / scale;
+                if (isReverse) {
+                } else {
+                  if (isOutput) {
+                    leftOffset -= (
+                      (
+                        (item?.width - port?.width) - (port?.left - item?.left)
+                      )
+                      + (port?.width / 2)
+                    ) / scale;
+                  } else {
+                    leftOffset += (
+                      (port?.left - item?.left) + (port?.width / 2)
+                    ) / scale;
+                  }
+                }
+              }
+            }
+          }
+        }
 
-        //     } else {
-        //       rect.top += ((item?.height - port?.height) - (port?.top - item?.top)) / 2;
-        //       if (isReverse) {
-        //       } else {
-        //         if (isOutput) {
-        //           rect.left -= ((item?.width - port?.width) - (port?.left - item?.left)) + (port?.width / 2);
-        //         } else {
-        //           rect.left += (port?.left - item?.left) + (port?.width / 2);
-        //         }
-        //       }
-        //     }
-        //   }
-        // }
+        rect.left += leftOffset;
+        rect.top += topOffset;
 
         return rect;
       }
@@ -553,9 +503,7 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
       onDrag(itemsRef.current[item.id]);
     });
 
-    renderConnectionLines({
-      direction: LayoutConfigDirectionEnum.HORIZONTAL,
-    });
+    renderConnectionLines(layoutConfig);
   }
 
   function handleDoubleClick(event: React.MouseEvent) {
@@ -848,10 +796,7 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
       connectionsRef.current[id] = conn;
     }
 
-    renderConnectionLines({
-      direction: layoutConfig?.direction,
-      origin: layoutConfig?.origin,
-    });
+    renderConnectionLines(layoutConfig);
   }
 
   function onMouseDown(_event: React.MouseEvent<HTMLDivElement>, _node: NodeItemType) {
