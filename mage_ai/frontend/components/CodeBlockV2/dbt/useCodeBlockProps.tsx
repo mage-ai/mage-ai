@@ -88,17 +88,8 @@ export default function useCodeBlockProps({
   theme,
   updatePipeline,
 }: UseCodeBlockPropsType): UseCodeBlockPropsReturnType {
-  const {
-    color: blockColor,
-    configuration,
-    replicated_block: replicatedBlock,
-    type,
-    uuid,
-  } = block;
-  const {
-    dynamic,
-    reduce_output: reduceOutput,
-  } = configuration || {};
+  const { color: blockColor, configuration, replicated_block: replicatedBlock, type, uuid } = block;
+  const { dynamic, reduce_output: reduceOutput } = configuration || {};
 
   const color = getColorsForBlockType(type, {
     blockColor,
@@ -119,11 +110,11 @@ export default function useCodeBlockProps({
     subtitle = filePath;
   }
 
-  function validateBeforeAction({
-    setSelectedHeaderTab,
-  } = {
-    setSelectedHeaderTab: null,
-  }) {
+  function validateBeforeAction(
+    { setSelectedHeaderTab } = {
+      setSelectedHeaderTab: null,
+    },
+  ) {
     const errors = validate(block);
     if (errors) {
       if (setSelectedHeaderTab) {
@@ -131,9 +122,10 @@ export default function useCodeBlockProps({
           {
             closeAfterClick: true,
             label: 'Continue dbt configuration',
-            onClick: () => setSelectedHeaderTab?.(headerTabs?.find((
-              tab,
-            ) => HeaderTabEnum.CONFIGURATION === tab.uuid)),
+            onClick: () =>
+              setSelectedHeaderTab?.(
+                headerTabs?.find(tab => HeaderTabEnum.CONFIGURATION === tab.uuid),
+              ),
           },
         ];
       }
@@ -165,25 +157,20 @@ export default function useCodeBlockProps({
 
         <Spacing mr={1} />
 
-        <Text muted>
-          Compile SQL and excute query for sample data.
-        </Text>
+        <Text muted>Compile SQL and excute query for sample data.</Text>
       </FlexContainer>
     ),
     disabled: ({ active }) => active,
     icon: <PlayButtonFilled size={ICON_SIZE} />,
     keyTextsPosition: KeyTextsPostitionEnum.LEFT,
-    keyboardShortcutValidation: !shortcutsEnabled ? null : ({
-      keyHistory,
-      keyMapping,
-    }, index: number, {
-      selected,
-    }) => selected && (
-      onlyKeysPresent([KEY_CODE_META, KEY_CODE_ENTER], keyMapping)
-        || onlyKeysPresent([KEY_CODE_CONTROL, KEY_CODE_ENTER], keyMapping)
-    ),
+    keyboardShortcutValidation: !shortcutsEnabled
+      ? null
+      : ({ keyHistory, keyMapping }, index: number, { selected }) =>
+          selected &&
+          (onlyKeysPresent([KEY_CODE_META, KEY_CODE_ENTER], keyMapping) ||
+            onlyKeysPresent([KEY_CODE_CONTROL, KEY_CODE_ENTER], keyMapping)),
     label: () => 'Preview',
-    onClick: (opts) => {
+    onClick: opts => {
       if (validateBeforeAction(opts)) {
         runBlockAndTrack({
           block,
@@ -204,25 +191,19 @@ export default function useCodeBlockProps({
 
         <Spacing mr={1} />
 
-        <Text muted>
-          Interrupt kernel and cancel execution
-        </Text>
+        <Text muted>Interrupt kernel and cancel execution</Text>
       </FlexContainer>
     ),
     icon: (
       <Circle borderOnly danger size={ICON_SIZE * 1.5}>
-        <Close
-          danger
-          size={ICON_SIZE * 0.75}
-        />
+        <Close danger size={ICON_SIZE * 0.75} />
       </Circle>
     ),
     keyTextsPosition: KeyTextsPostitionEnum.RIGHT,
-    keyboardShortcutValidation: !shortcutsEnabled ? null : ({
-      keyHistory,
-    }, index: number, {
-      selected,
-    }) => selected && keyHistory[0] === KEY_CODE_I && keyHistory[1] === KEY_CODE_I,
+    keyboardShortcutValidation: !shortcutsEnabled
+      ? null
+      : ({ keyHistory }, index: number, { selected }) =>
+          selected && keyHistory[0] === KEY_CODE_I && keyHistory[1] === KEY_CODE_I,
     onClick: interruptKernel,
     uuid: ButtonUUIDEnum.EXECUTE_CANCEL,
     visible: ({ active }) => active,
@@ -233,7 +214,7 @@ export default function useCodeBlockProps({
     description: 'Run model',
     disabled: ({ active }) => active,
     label: () => 'Run',
-    onClick: (opts) => {
+    onClick: opts => {
       if (validateBeforeAction(opts)) {
         runBlockAndTrack({
           block,
@@ -251,7 +232,7 @@ export default function useCodeBlockProps({
     description: 'Test model',
     disabled: ({ active }) => active,
     label: () => 'Test',
-    onClick: (opts) => {
+    onClick: opts => {
       if (validateBeforeAction(opts)) {
         runBlockAndTrack({
           block,
@@ -269,7 +250,7 @@ export default function useCodeBlockProps({
     description: 'Build model',
     disabled: ({ active }) => active,
     label: () => 'Build',
-    onClick: (opts) => {
+    onClick: opts => {
       if (validateBeforeAction(opts)) {
         runBlockAndTrack({
           block,
@@ -289,7 +270,7 @@ export default function useCodeBlockProps({
         {
           beforeIcon: <TreeWithArrowsUp {...MENU_ICON_PROPS} />,
           uuid: 'Run all upstream blocks then execute',
-          onClick: (opts) => {
+          onClick: opts => {
             if (validateBeforeAction(opts)) {
               runBlockAndTrack({
                 block,
@@ -299,9 +280,9 @@ export default function useCodeBlockProps({
           },
         },
         {
-          beforeIcon: <TreeWithArrowsUp {...MENU_ICON_PROPS}/>,
+          beforeIcon: <TreeWithArrowsUp {...MENU_ICON_PROPS} />,
           uuid: 'Run incomplete upstream blocks then execute',
-          onClick: (opts) => {
+          onClick: opts => {
             if (validateBeforeAction(opts)) {
               runBlockAndTrack({
                 block,
@@ -313,7 +294,7 @@ export default function useCodeBlockProps({
         {
           beforeIcon: <TreeWithArrowsDown {...MENU_ICON_PROPS} />,
           uuid: 'Execute then run downstream blocks',
-          onClick: (opts) => {
+          onClick: opts => {
             if (validateBeforeAction(opts)) {
               runBlockAndTrack({
                 block,
@@ -326,14 +307,16 @@ export default function useCodeBlockProps({
           beforeIcon: <Monitor {...MENU_ICON_PROPS} />,
           label: () => (
             <Text>
-              Run <Text color={color?.accent} inline monospace>
+              Run{' '}
+              <Text color={color?.accent} inline monospace>
                 @tests
-              </Text> defined in block
+              </Text>{' '}
+              defined in block
             </Text>
           ),
           leftAligned: true,
           uuid: 'Run @tests defined in block',
-          onClick: (opts) => {
+          onClick: opts => {
             if (validateBeforeAction(opts)) {
               runBlockAndTrack({
                 block,
@@ -355,57 +338,61 @@ export default function useCodeBlockProps({
           beforeIcon: <TreeWithArrowsDown success={dynamic} {...MENU_ICON_PROPS} />,
           disabled: dynamic,
           uuid: 'Set block as dynamic',
-          onClick: () => savePipelineContent({
-            block: {
-              ...block,
-              configuration: {
-                ...configuration,
-                dynamic: true,
+          onClick: () =>
+            savePipelineContent({
+              block: {
+                ...block,
+                configuration: {
+                  ...configuration,
+                  dynamic: true,
+                },
               },
-            },
-          }),
+            }),
         },
         {
           beforeIcon: <Close disabled={!dynamic} {...MENU_ICON_PROPS} />,
           disabled: !dynamic,
           uuid: 'Disable block as dynamic',
-          onClick: () => savePipelineContent({
-            block: {
-              ...block,
-              configuration: {
-                ...configuration,
-                dynamic: false,
+          onClick: () =>
+            savePipelineContent({
+              block: {
+                ...block,
+                configuration: {
+                  ...configuration,
+                  dynamic: false,
+                },
               },
-            },
-          }),
+            }),
         },
         {
           beforeIcon: <Filter success={reduceOutput} {...MENU_ICON_PROPS} />,
           uuid: 'Reduce output',
           disabled: reduceOutput,
-          onClick: () => savePipelineContent({
-            block: {
-              ...block,
-              configuration: {
-                ...configuration,
-                reduce_output: true,
+          onClick: () =>
+            savePipelineContent({
+              block: {
+                ...block,
+                configuration: {
+                  ...configuration,
+                  reduce_output: true,
+                },
               },
-            },
-          }),
+            }),
         },
         {
           beforeIcon: <Close disabled={!reduceOutput} {...MENU_ICON_PROPS} />,
           uuid: 'Don’t reduce output',
           disabled: !reduceOutput,
-          onClick: () => savePipelineContent({
-            block: {
-              ...block,
-              configuration: {
-                ...configuration,
-                reduce_output: false,
+          onClick: () =>
+            savePipelineContent({
+              block: {
+                ...block,
+                configuration: {
+                  ...configuration,
+                  reduce_output: false,
+                },
               },
-            },
-          }),
+            }),
         },
       ],
     },
@@ -416,27 +403,30 @@ export default function useCodeBlockProps({
           beforeIcon: <TreeWithArrowsUp {...MENU_ICON_PROPS} />,
           uuid: 'Add upstream models',
           tooltip: () => 'Add upstream models for this model to the pipeline.',
-          onClick: () => updatePipeline({
-            pipeline: {
-              add_upstream_for_block_uuid: uuid,
-            },
-          }),
+          onClick: () =>
+            updatePipeline({
+              pipeline: {
+                add_upstream_for_block_uuid: uuid,
+              },
+            }),
         },
         {
           beforeIcon: <Conditional {...MENU_ICON_PROPS} />,
           uuid: 'Add conditional',
-          onClick: () => openSidekickView(ViewKeyEnum.ADDON_BLOCKS, true, {
-            addon: AddonBlockTypeEnum.CONDITIONAL,
-            blockUUID: block?.uuid,
-          }),
+          onClick: () =>
+            openSidekickView(ViewKeyEnum.ADDON_BLOCKS, true, {
+              addon: AddonBlockTypeEnum.CONDITIONAL,
+              blockUUID: block?.uuid,
+            }),
         },
         {
           beforeIcon: <Callback {...MENU_ICON_PROPS} />,
           uuid: 'Add callback',
-          onClick: () => openSidekickView(ViewKeyEnum.ADDON_BLOCKS, true, {
-            addon: AddonBlockTypeEnum.CALLBACK,
-            blockUUID: block?.uuid,
-          }),
+          onClick: () =>
+            openSidekickView(ViewKeyEnum.ADDON_BLOCKS, true, {
+              addon: AddonBlockTypeEnum.CALLBACK,
+              blockUUID: block?.uuid,
+            }),
         },
         {
           beforeIcon: <PowerUps {...MENU_ICON_PROPS} />,
@@ -477,9 +467,10 @@ export default function useCodeBlockProps({
           beforeIcon: <BatchSquaresStacked disabled={!!replicatedBlock} {...MENU_ICON_PROPS} />,
           uuid: 'Replicate block',
           disabled: !!replicatedBlock,
-          onClick: () => addNewBlock({
-            replicated_block: uuid,
-          }),
+          onClick: () =>
+            addNewBlock({
+              replicated_block: uuid,
+            }),
         },
         {
           beforeIcon: <Trash {...MENU_ICON_PROPS} />,
@@ -540,13 +531,25 @@ export default function useCodeBlockProps({
         },
         {
           disabled: sideBySideEnabled,
-          beforeIcon: <LayoutSplit disabled={sideBySideEnabled} success={sideBySideEnabled} {...MENU_ICON_PROPS} />,
+          beforeIcon: (
+            <LayoutSplit
+              disabled={sideBySideEnabled}
+              success={sideBySideEnabled}
+              {...MENU_ICON_PROPS}
+            />
+          ),
           uuid: 'Show output next to code (beta)',
           onClick: () => setSideBySideEnabled(true),
         },
         {
           disabled: !sideBySideEnabled || scrollTogether,
-          beforeIcon: <LayoutSplit disabled={!sideBySideEnabled || scrollTogether} success={scrollTogether} {...MENU_ICON_PROPS} />,
+          beforeIcon: (
+            <LayoutSplit
+              disabled={!sideBySideEnabled || scrollTogether}
+              success={scrollTogether}
+              {...MENU_ICON_PROPS}
+            />
+          ),
           uuid: 'Scroll output alongside code (beta)',
           onClick: () => setScrollTogether(true),
         },
@@ -582,8 +585,9 @@ export default function useCodeBlockProps({
         {
           beforeIcon: <DocumentIcon {...MENU_ICON_PROPS} />,
           uuid: 'Play with data in a scratchpad',
-          onClick: () => addNewBlock({
-            content: `"""
+          onClick: () =>
+            addNewBlock({
+              content: `"""
 NOTE: Scratchpad blocks are used only for experimentation and testing out code.
 The code written here will not be executed as part of the pipeline.
 """
@@ -592,9 +596,9 @@ from mage_ai.data_preparation.variable_manager import get_variable
 
 df = get_variable('${pipeline.uuid}', '${block.uuid}', 'output_0')
 `,
-            language: BlockLanguageEnum.PYTHON,
-            type: BlockTypeEnum.SCRATCHPAD,
-          }),
+              language: BlockLanguageEnum.PYTHON,
+              type: BlockTypeEnum.SCRATCHPAD,
+            }),
         },
         {
           beforeIcon: <Charts {...MENU_ICON_PROPS} />,
@@ -633,8 +637,8 @@ df = get_variable('${pipeline.uuid}', '${block.uuid}', 'output_0')
             savePipelineContent={savePipelineContent}
           />
         );
-      // } else if (HeaderTabEnum.OVERVIEW === tab?.uuid) {
-      //   return;
+        // } else if (HeaderTabEnum.OVERVIEW === tab?.uuid) {
+        //   return;
       } else if (HeaderTabEnum.LINEAGE === tab?.uuid) {
         return <Lineage block={block} />;
       }
@@ -645,31 +649,27 @@ df = get_variable('${pipeline.uuid}', '${block.uuid}', 'output_0')
 
   return {
     editor: {
-      shortcuts: (hideRunButton && shortcutsEnabled)
-        ? []
-        : [
-          (monaco, editor) => executeCode(monaco, () => {
-            if (validateBeforeAction()) {
-              runBlockAndTrack({
-                /*
-                * This block doesn't get updated when the upstream dependencies change,
-                * so we need to update the shortcuts in the CodeEditor component.
-                */
-                block,
-                code: editor.getValue(),
-              });
-            }
-          }),
-        ],
+      shortcuts:
+        hideRunButton && shortcutsEnabled
+          ? []
+          : [
+              (monaco, editor) =>
+                executeCode(monaco, () => {
+                  if (validateBeforeAction()) {
+                    runBlockAndTrack({
+                      /*
+                       * This block doesn't get updated when the upstream dependencies change,
+                       * so we need to update the shortcuts in the CodeEditor component.
+                       */
+                      block,
+                      code: editor.getValue(),
+                    });
+                  }
+                }),
+            ],
     },
     header: {
-      buttons: [
-        buttonExecute,
-        buttonRun,
-        buttonTest,
-        buttonBuild,
-        buttonExecuteCancel,
-      ],
+      buttons: [buttonExecute, buttonRun, buttonTest, buttonBuild, buttonExecuteCancel],
       menuGroups,
       subheaderVisibleDefault: (b: BlockType) => {
         if (!b?.status || StatusTypeEnum.NOT_EXECUTED === b?.status) {
