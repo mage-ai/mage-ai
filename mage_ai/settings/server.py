@@ -125,6 +125,7 @@ DISABLE_AUTORELOAD = get_bool_value(os.getenv('DISABLE_AUTORELOAD', 'False'))
 HOSTNAME = os.getenv('HOSTNAME')
 INITIAL_METADATA = os.getenv('INITIAL_METADATA')
 LOGS_DIR_PATH = os.getenv('LOGS_DIR_PATH')
+MAGE_CLUSTER_UUID = os.getenv('MAGE_CLUSTER_UUID') or 'mage'
 MAX_FILE_CACHE_SIZE = os.getenv('MAX_FILE_CACHE_SIZE') or (1024 * 1024)  # 1 MB
 ENABLE_USER_PROJECTS = get_bool_value(os.getenv('ENABLE_USER_PROJECTS'))
 REDIS_URL = os.getenv('REDIS_URL')

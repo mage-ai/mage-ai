@@ -1,0 +1,56 @@
+---
+title: Global Hooks Guide
+sidebarTitle: "Guide"
+description: "Follow this step by step guide on creating a global hook in Mage."
+---
+<img
+  alt="Penguin Fishing"
+  src="https://github.com/mage-ai/assets/blob/main/penguin_fishing.gif?raw=True"
+/>
+
+### <b>Step 1: Navigate to the Global Hooks UI</b>
+1. Log in to your Mage account.
+<Note>
+If you are new to Mage, follow these steps to enable Global Hooks:
+1. From the Dashboard UI, click Pipelines from the left navigation pane
+2. Once in the Pipelines UI, click click Settings from the left navigation pane
+3. Scroll down to view the features settings and toggle on Global Hooks
+</Note>
+2. Click on Global Hooks in the left navigation pane
+3. Once on the Global Hooks view, click on the "+ Add new global hook" button.
+
+### <b>Step 2: Configure the Hook</b>
+1. **Hook UUID**: Enter a unique name for your hook.
+2. **Resource Type**: Select the type of resource (API call type) from the resource drop down.
+3. **Operation Type**: Select the type of operation needed for your hook.
+<Note>
+Once the "Create new global Hook" button is clicked the rest of the configuration settings will populate.
+</Note>
+4. **Targeting Conditions**: Enter conditions if you want it to apply the hook to only certain pipelines. Leave this field blank to apply the hook to all pipelines. 
+5. **Before Operation Starts Toggle**: Toggle to on if you want the hook to run before an operation starts.
+6. **After Operation Completes Toggle**: Toggle to on if you want the hook to run after an operation ends.
+7. **Run if Operation Succeeds Toggle**: Toggle to on if you want to hook to run only if the operation succeeds.
+8. **Run if Operation Fails Toggle**: Toggle to on if you want the hook to run if the operation fails.
+9. **Pipeline to Execute**: Select the pipeline you want to execute the hook from.
+10. **Valid Code Snapshot**: Click the "Create Snapshot of code" button to validate the pipeline code.
+
+<Note>
+ When making a code change to the pipeline, you have to re-validate the global hook by clicking the "Create snapshot" button
+</Note>
+
+11. **Stop Operation if Hook Fails Toggle**: Toggle on if you want to stop the operation from running if the hook fails.
+12. **Execute Hook with History and Logging Toggle**: Toggle to on if you want to log the hook's execution, but be aware of potential performance impacts.
+
+<Note>
+Toggling on the history and logging feature will significantly degrade performance of the of the operations resolution time.
+</Note>
+13. **Run Hook Asynchronously:** Enable this setting to run hooks asynchronously and not block the current resource operation from resolving
+14. **Block Outputs**: To select block output features, Click the "+ Add block outputs" button
+15. **Block to Extract Data From**: If needed, select the block data will be merge from into the hook operation’s data.
+16. **Object to Merge Block into data**: If needed, select the type of data that will be merged into the hook operation’s data.
+17. **Additional Dictionary Keys**: Enter information into this field if you have nested objects in your block.
+
+### **Step 3: Save and Test the Hook**
+
+1. Click the "Save changes" button to update the global hook with the new configuration changes.
+1. To execute a global hook, perform the action or operation that matches the hook's configured conditions, and the hook will run the designated code or pipeline based on its defined settings.

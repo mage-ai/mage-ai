@@ -12,7 +12,8 @@ class BaseSink(ABC):
     config_class = None
 
     def __init__(self, config: Dict, **kwargs):
-        self.connector_type = config.get('connector_type')
+        if config:
+            self.connector_type = config.get('connector_type')
         if self.config_class is not None:
             if 'connector_type' in config:
                 config.pop('connector_type')
