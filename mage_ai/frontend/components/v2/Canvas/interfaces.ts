@@ -67,8 +67,7 @@ export interface LayoutConfigType {
   boundingRect?: RectType;
   containerRect?: RectType;
   defaultRect?: {
-    item?: (item?: DragItem) => RectType;
-    node?: (node?: NodeType) => RectType;
+    item?: (item?: NodeItemType) => RectType;
   };
   direction?: LayoutConfigDirectionEnum;
   level?: number;
@@ -85,12 +84,12 @@ export interface LayoutConfigType {
   stagger?: number;
   transform?: ZoomPanStateType;
   transformRect?: {
-    block?: (item?: DragItem) => RectType;
-    node?: (node?: NodeType) => RectType;
+    block?: (rect?: RectType) => RectType;
+    port?: (rect?: RectType) => RectType;
   };
 }
 
-export type NodeItemType = DragItem | PortType;
+export type NodeItemType = DragItem | NodeType | PortType;
 
 export interface ConnectionType {
   curveControl?: number; // Controls the curvature of the line (0 for straight, higher for more curved)

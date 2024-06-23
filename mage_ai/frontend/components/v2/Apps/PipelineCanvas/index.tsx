@@ -6,7 +6,7 @@ import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { createRoot } from 'react-dom/client';
 
-import { CanvasStyled } from './index.style';
+import CanvasContainer from './index.style';
 import {
   DragItem,
   NodeItemType,
@@ -22,6 +22,7 @@ import {
   GroupLevelsMappingType,
   ModelMappingType,
   RectType,
+  LayoutConfigType,
 } from '../../Canvas/interfaces';
 import {
   ItemTypeEnum,
@@ -51,10 +52,10 @@ import BlockType, { BlockTypeEnum } from '@interfaces/BlockType';
 import { initializeBlocksAndConnections } from './utils/blocks';
 import { extractNestedBlocks, groupBlocksByGroups, buildTreeOfBlockGroups } from '@utils/models/pipeline';
 import { buildDependencies } from './utils/pipelines';
-import { ZoomPanStateType, useZoomPan } from '@mana/hooks/useZoomPan';
+import { ZoomPanPositionType, ZoomPanStateType, useZoomPan } from '@mana/hooks/useZoomPan';
 import PipelineType from '@interfaces/PipelineType';
 import { getBlockColor } from '@mana/themes/blocks';
-import { countOccurrences, groupBy, indexBy, flattenArray } from '@utils/array';
+import { countOccurrences, groupBy, indexBy, flattenArray, zip } from '@utils/array';
 import { ignoreKeys, objectSize } from '@utils/hash';
 import PipelineExecutionFrameworkType, {
   PipelineExecutionFrameworkBlockType,
@@ -70,14 +71,14 @@ function connectionLinesRootID(uuid: string) {
 }
 
 type PipelineBuilderProps = {
-  pipeline: PipelineType | PipelineExecutionFrameworkType;
-  pipelineExecutionFramework: PipelineExecutionFrameworkType
-  pipelineExecutionFrameworks: PipelineExecutionFrameworkType[];
-  pipelines?: PipelineType[];
   canvasRef: React.RefObject<HTMLDivElement>;
   containerRef: React.RefObject<HTMLDivElement>;
   onDragEnd: () => void;
   onDragStart: () => void;
+  pipeline: PipelineType | PipelineExecutionFrameworkType;
+  pipelineExecutionFramework: PipelineExecutionFrameworkType
+  pipelineExecutionFrameworks: PipelineExecutionFrameworkType[];
+  pipelines?: PipelineType[];
   snapToGridOnDrag?: boolean;
   snapToGridOnDrop?: boolean;
   transformState: ZoomPanStateType;
@@ -90,20 +91,24 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
   onDragStart: onDragStartProp,
   pipeline,
   pipelineExecutionFramework,
-  transformState,
   pipelineExecutionFrameworks,
   pipelines,
   snapToGridOnDrag = true,
   snapToGridOnDrop = true,
+  transformState,
 }: PipelineBuilderProps) => {
-  const layoutConfig = useMemo(
+  const layoutConfig: LayoutConfigType = useMemo(
     () => ({
       defaultRect: {
         item: () => ({
           height: 75,
+          left: null,
+          top: null,
           width: 300,
         }),
       },
+      direction: LayoutConfigDirectionEnum.HORIZONTAL,
+      origin: LayoutConfigDirectionOriginEnum.LEFT,
       transformRect: {
         block: (rect: RectType) => transformState?.offsetRectToCenter(rect),
         port: (rect: RectType) => transformState?.offsetRectToCenter(rect),
@@ -201,7 +206,7 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
         row: 40,
       },
       transform: transformState,
-    };
+    } as LayoutConfigType;
 
     itemsRef.current = {
       ...itemsRef.current,
@@ -239,133 +244,279 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
     // renderLayoutChanges();
   }
 
-  function renderConnectionLines() {
-    const element = document.getElementById(connectionLinesRootID('nodes'));
+  function renderConnectionLines(opts?: {
+    direction?: LayoutConfigDirectionEnum;
+    origin?: LayoutConfigDirectionOriginEnum;
+  }) {
+    const { direction, origin } = opts ?? {};
+    const isVertical = LayoutConfigDirectionEnum.VERTICAL === direction;
+    const isReverse = (origin ?? false) && [
+      LayoutConfigDirectionOriginEnum.BOTTOM,
+      LayoutConfigDirectionOriginEnum.RIGHT,
+    ].includes(origin);
 
+    const element = document.getElementById(connectionLinesRootID('nodes'));
     if (!element) return;
 
-    connectionLineRootRef.current ||= createRoot(element);
-
-    Object.entries(itemElementsRef?.current ?? {})?.forEach(([type, map]) => {
-      Object.entries(map ?? {})?.forEach(([key, el]) => {
-        console.log(type, key, el?.current?.getBoundingClientRect());
-      });
-    });
-
+    const paths = {};
     const processed = {};
-    const paths = [];
 
-    const itemMapping = modelLevelsMapping?.current[activeLevel?.current]?.itemMapping;
-    Object.keys(itemMapping ?? {})?.forEach((itemID: string, idx: number) => {
-      const item = itemsRef?.current[itemID];
+    const {
+      itemMapping,
+      portMapping,
+    } = modelLevelsMapping?.current[activeLevel?.current] ?? {};
 
-      item?.ports?.forEach(({ id: portID }: PortType) => {
-        const port = portsRef?.current[portID];
-        const isInput = port?.subtype === PortSubtypeEnum.INPUT;
-        const item2 = itemsRef?.current[port?.target?.id];
-        const block2 = item2?.block;
+    const itemsByNodeIDMapping = {};
+    Object.keys(itemMapping ?? {})?.forEach((nodeID: string) => {
+      const node = itemsRef?.current[nodeID];
+      if (!node || ItemTypeEnum.NODE !== node?.type) return;
 
-        if ((block2?.uuid in processed && itemID in processed[block2?.uuid])
-          || (itemID in processed && block2?.uuid in processed[itemID])) {
-          return;
-        }
-        processed[block2?.uuid] ||= {};
-        processed[block2?.uuid][itemID] = portID;
-        processed[itemID] ||= {};
-        processed[itemID][block2?.uuid] = portID;
-
-        const fromItem = isInput ? item2 : item;
-        const fromBlock = isInput ? block2 : item?.block;
-        const fromColor = getBlockColor(fromBlock?.type, { getColorName: true })?.names?.base ?? 'white';
-        const fromRect = fromItem?.rect;
-        const toItem = isInput ? item : item2;
-        const toBlock = isInput ? item?.block : block2;
-        const toColor = getBlockColor(toBlock?.type, { getColorName: true })?.names?.base ?? 'green';
-        const toRect = toItem?.rect;
-
-        const port2 = item2?.ports?.find(({ target }) => target.id === item.id);
-        const fromPort = isInput ? port2 : port;
-        const toPort = isInput ? port : port2;
-
-        const portRect = itemElementsRef?.current?.ports?.[portID]?.current?.getBoundingClientRect();
-        const portRect2 = itemElementsRef?.current?.ports?.[port2.id]?.current?.getBoundingClientRect();
-
-        connectionLinesPathRef.current[portID] ||= createRef();
-
-        const fromRectUse = (isInput ? portRect2 : portRect) ?? fromRect;
-        const toRectUse = (isInput ? portRect : portRect2) ?? toRect;
-
-        console.log(
-          'blocks',
-          [fromBlock.uuid, toBlock.uuid],
-          'from item rect',
-          [fromRect?.left, fromRect?.top],
-          'to item rect',
-          [toRect?.left, toRect?.top],
-          'from port rect',
-          [fromPort?.rect?.left, fromPort?.rect?.top],
-          'to port rect',
-          [toPort?.rect?.left, toPort?.rect?.top],
-          'from port rect now',
-          [portRect?.left, portRect?.top], // This is the most accurate to use
-          'to port rect now',
-          [portRect2?.left, portRect2?.top], // This is the most accurate to use
-          transformState,
-          [{
-
-            left: [fromRectUse, transformState?.position?.origin?.x?.current],
-          top: [fromRectUse, transformState?.position?.origin?.y?.current],
-            left2: [toRectUse, transformState?.position?.origin?.x?.current],
-            top2: [toRectUse, transformState?.position?.origin?.y?.current],
-          }]
-        );
-
-
-        const dValue = getPathD({
-          curveControl: 0,
-          fromPosition: isInput ? 'right' : 'left',
-          toPosition: isInput ? 'left' : 'right',
-        }, {
-          ...fromRect,
-          left: (fromRect?.left ?? 0),
-          top: (fromRect?.top ?? 0),
-        }, {
-          ...toRect,
-          left: (toRect?.left ?? 0),
-          top: (toRect?.top ?? 0),
-        });
-
-        const id = portID;
-        const gradientID = `${id}-grad`;
-        const gradientColors = fromColor && toColor && fromColor !== toColor;
-
-        gradientColors && paths.push(
-          <defs key={`${id}-defs`}>
-            <linearGradient id={gradientID} x1="0%" x2="100%" y1="0%" y2="0%">
-              <stop offset="0%" style={{ stopColor: `var(--colors-${fromColor})`, stopOpacity: 0 }} />
-              <stop offset="100%" style={{ stopColor: `var(--colors-${toColor ?? fromColor})`, stopOpacity: 1 }} />
-            </linearGradient>
-          </defs>,
-        );
-        paths.push(
-          <path
-            d={dValue}
-            fill="none"
-            id={String(id)}
-            key={`${id}-path`}
-            ref={connectionLinesPathRef.current[id]}
-            stroke={gradientColors ? `url(#${gradientID})` : `var(--colors-${fromColor ?? toColor ?? 'gray'})`}
-            style={{
-              strokeWidth: 1.5,
-            }}
-          />,
-        );
+      (node as NodeType)?.items?.forEach((item: DragItem) => {
+        itemsByNodeIDMapping[item.id] = node;
       });
     });
 
+    Object.keys(portMapping ?? {})?.forEach((portID: string) => {
+      const port1 = portsRef?.current[portID];
+
+      if (port1?.target?.id in (processed[port1?.parent?.id] ?? {})) return;
+      if (port1?.parent?.id in (processed[port1?.target?.id] ?? {})) return;
+
+      const item1 = itemsRef?.current[port1?.parent?.id];
+      const node1 = itemsByNodeIDMapping[item1?.id];
+      const rect1 = item1?.rect;
+      const block1 = item1?.block;
+      const color1 = getBlockColor(block1?.type, { getColorName: true })?.names?.base;
+      const rect1Port = itemElementsRef?.current?.port?.[port1.id]?.current?.getBoundingClientRect();
+      const rect1Item = itemElementsRef?.current?.block?.[item1.id]?.current?.getBoundingClientRect();
+      const rect1Node = itemElementsRef?.current?.node?.[node1.id]?.current?.getBoundingClientRect();
+
+      const item2 = itemsRef?.current[port1?.target?.id];
+      const node2 = itemsByNodeIDMapping[item2?.id];
+      const port2 = item2?.ports?.find(({ subtype, target }: PortType) => subtype !== port1?.subtype
+        && target.id === item1?.id);
+      const rect2 = item2?.rect;
+      const block2 = item2?.block;
+      const color2 = getBlockColor(block2?.type, { getColorName: true })?.names?.base;
+      const rect2Port = itemElementsRef?.current?.port?.[port2.id]?.current?.getBoundingClientRect();
+      const rect2Item = itemElementsRef?.current?.block?.[item2.id]?.current?.getBoundingClientRect();
+      const rect2Node = itemElementsRef?.current?.node?.[node2.id]?.current?.getBoundingClientRect();
+
+      const values = {
+        [port1.id]: {
+          color: color1,
+          id: port1.id,
+          rect: rect1,
+          rects: [
+            rect1Port,
+            rect1Item,
+            rect1Node,
+          ],
+          subtype: port1.subtype,
+        },
+        [port2.id]: {
+          color: color2,
+          id: port2.id,
+          rect: rect2,
+          rects: [
+            rect2Port,
+            rect2Item,
+            rect2Node,
+          ],
+          subtype: port2.subtype,
+        },
+      };
+
+      const [fromPort, toPort] = [
+        PortSubtypeEnum.OUTPUT === port1?.subtype
+          ? port1
+          : PortSubtypeEnum.OUTPUT === port2?.subtype
+            ? port2
+            : null,
+        PortSubtypeEnum.INPUT === port1?.subtype
+          ? port1
+          : PortSubtypeEnum.INPUT === port2?.subtype
+            ? port2
+            : null,
+      ];
+      const fromValues = values[fromPort?.id];
+      const toValues = values[toPort?.id];
+
+      function transformRect(rect: RectType, transformState: ZoomPanStateType) {
+        const {
+          container,
+          element,
+          position,
+        } = transformState ?? {} as ZoomPanStateType;
+
+        const rectContainer = (container?.current ?? {} as HTMLElement)?.getBoundingClientRect();
+        const containerWidth = rectContainer.width;
+        const containerHeight = rectContainer.height;
+
+        const rectViewport = (element?.current ?? {} as HTMLElement)?.getBoundingClientRect();
+        const viewportWidth = rectViewport.width;
+        const viewportHeight = rectViewport.height;
+
+        const current = position?.current ?? {} as ZoomPanPositionType;
+        const xCur = current?.x?.current ?? 0;
+        const yCur = current?.y?.current ?? 0;
+
+        const origin = position?.origin ?? {} as ZoomPanPositionType;
+        const xOrg = origin?.x?.current ?? 0;
+        const yOrg = origin?.y?.current ?? 0;
+
+        const scale = transformState?.scale?.current ?? 1;
+
+        const { left, top, width, height } = rect;
+
+
+
+        const leftOrg = (left + xOrg); // Reset before panning
+        const leftFactor = xOrg / (viewportWidth - containerWidth);
+        const transformedLeft = leftOrg + ((containerWidth - viewportWidth) * leftFactor);
+          // + (xCur - (containerWidth * leftFactor)); // Move to the current position
+        // const leftFactor = ((left / containerWidth) * scale);
+        // transformedLeft -= viewportWidth * leftFactor;
+        // transformedLeft += viewportWidth * leftFactor;
+
+
+        const topOrg = (top + yOrg); // Reset before panning
+        const topFactor = yOrg / (viewportHeight - containerHeight);
+        const transformedTop = topOrg + ((containerHeight - viewportHeight) * topFactor);
+          // + (yCur - (containerHeight * topFactor)); // Move to the current position
+        // const topFactor = ((top / containerHeight) * scale);
+        // transformedTop -= viewportHeight * topFactor;
+        // transformedTop += viewportHeight * topFactor;
+
+        console.log('origin', xOrg, yOrg);
+        console.log('current', xCur, yCur);
+        console.log('factor', leftFactor, topFactor);
+        console.log('rect', left, top);
+
+        return {
+          ...rect,
+          height: height * scale,
+          left: transformedLeft,
+          top: transformedTop,
+          width: width * scale,
+        };
+      }
+
+      function buildRect(values: any) {
+        const isOutput = PortSubtypeEnum.OUTPUT === values?.subtype;
+        let rect = {
+          height: values?.rect?.height ?? 0,
+          left: values?.rect?.left ?? 0,
+          top: values?.rect?.top ?? 0,
+          width: values?.rect?.width ?? 0,
+        };
+
+        console.log(0, rect);
+        rect = transformState ? transformRect(rect, transformState) : rect;
+        console.log(1, rect);
+
+        let leftOffset = 0;
+        let topOffset = 0;
+        values?.rects?.forEach((parent: DOMRect, idx: number) => {
+          console.log(idx, leftOffset, topOffset);
+          leftOffset += (parent?.left ?? 0);
+          // + (parent?.width ?? 0);
+          topOffset += (parent?.top ?? 0);
+        });
+        // rect.left += leftOffset;
+        // rect.top -= topOffset;
+
+
+        // if (Object.values(values?.rectElements)?.every(Boolean)) {
+        //   const {
+        //     item,
+        //     node, // Need to handle node ports differently.
+        //     port,
+        //   } = values?.rectElements;
+
+        //   if (isVertical) {
+        //     if (isReverse) {
+
+        //     } else {
+        //     }
+        //   } else {
+        //     if (isReverse) {
+
+        //     } else {
+        //       rect.top += ((item?.height - port?.height) - (port?.top - item?.top)) / 2;
+        //       if (isReverse) {
+        //       } else {
+        //         if (isOutput) {
+        //           rect.left -= ((item?.width - port?.width) - (port?.left - item?.left)) + (port?.width / 2);
+        //         } else {
+        //           rect.left += (port?.left - item?.left) + (port?.width / 2);
+        //         }
+        //       }
+        //     }
+        //   }
+        // }
+
+        return rect;
+      }
+      const fromRect = buildRect(fromValues);
+      const toRect = buildRect(toValues);
+
+      const fromPosition = isVertical ? 'top' : 'right';
+      const toPosition = isVertical ? 'bottom' : 'left';
+      const dValue = getPathD({
+        curveControl: 0,
+        fromPosition: isReverse ? toPosition : fromPosition,
+        toPosition: isReverse ? fromPosition : toPosition,
+      }, fromRect, toRect);
+
+      const portIDsCombined = [fromPort?.id, toPort?.id].sort().join('-');
+      const gradientID = `${portIDsCombined}-grad`;
+      const colors = [
+        fromValues?.color,
+        fromValues?.color && toValues?.color && fromValues?.color !== toValues?.color
+          ? toValues?.color
+          : null,
+        ].filter(Boolean);
+
+      if (colors?.length) {
+
+      }
+      paths[gradientID] = (
+        <defs key={`${gradientID}-defs`}>
+          <linearGradient id={gradientID} x1="0%" x2="100%" y1="0%" y2="0%">
+            <stop offset="0%" style={{ stopColor: `var(--colors-${colors[0]})`, stopOpacity: 0 }} />
+            <stop offset="100%" style={{ stopColor: `var(--colors-${colors[1]})`, stopOpacity: 1 }} />
+          </linearGradient>
+        </defs>
+      );
+
+      connectionLinesPathRef.current[portIDsCombined] ||= createRef();
+      const pathRef = connectionLinesPathRef.current[portIDsCombined];
+
+      paths[portIDsCombined] = (
+        <path
+          d={dValue}
+          fill="none"
+          id={portIDsCombined}
+          key={`${portIDsCombined}-path`}
+          ref={pathRef}
+          stroke={colors?.length >= 2 ? `url(#${gradientID})` : `var(--colors-${colors[0] ?? 'gray'})`}
+          style={{
+            strokeWidth: 1.5,
+          }}
+        />
+      );
+
+      processed[fromValues.id] ||= {};
+      processed[fromValues.id][toValues.id] = portIDsCombined;
+      processed[toValues.id] ||= {};
+      processed[toValues.id][fromValues.id] = portIDsCombined;
+    });
+
+    connectionLineRootRef.current ||= createRoot(element);
     connectionLineRootRef.current.render(
       <ConnectionLines>
-        {paths}
+        {Object.values(paths)}
       </ConnectionLines>,
     );
   }
@@ -402,7 +553,9 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
       onDrag(itemsRef.current[item.id]);
     });
 
-    renderConnectionLines();
+    renderConnectionLines({
+      direction: LayoutConfigDirectionEnum.HORIZONTAL,
+    });
   }
 
   function handleDoubleClick(event: React.MouseEvent) {
@@ -540,13 +693,17 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
   }
 
   function onMountItem(item: DragItem, itemRef: React.RefObject<HTMLDivElement>) {
-    const rectVersion = itemsMetadataRef.current.rect.version;
     const { id, type } = item;
+    itemElementsRef.current ||= {};
+    itemElementsRef.current[type] ||= {};
+    itemElementsRef.current[type][id] = itemRef;
 
+    const rectVersion = itemsMetadataRef.current.rect.version;
     if (!itemRef.current) return;
 
-    if ([ItemTypeEnum.BLOCK, ItemTypeEnum.NODE].includes(type)) {
-      if (item?.rect?.version === rectVersion) return;
+    if ([ItemTypeEnum.BLOCK, ItemTypeEnum.NODE].includes(type)
+      && (!item?.rect || item?.rect?.version <= rectVersion)
+    ) {
       const previousVersion = (item?.rect?.version ?? -1) >= 0;
       const rectOld = item?.rect;
       const rect = itemRef.current.getBoundingClientRect() as RectType;
@@ -651,52 +808,50 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
         itemRef.current.style.width = `${rect?.width}px`;
       }
     }
-
-    if (!itemElementsRef?.current) {
-      itemElementsRef.current = {};
-    }
-
-    itemElementsRef.current[type] ||= {};
-    itemElementsRef.current[type][id] = itemRef;
   }
 
   function onMountPort(item: PortType, portRef: React.RefObject<HTMLDivElement>) {
-    if (portRef.current) {
-      itemElementsRef.current.ports ||= {};
-      itemElementsRef.current.ports[item.id] = portRef;
+    if (!portRef?.current) return;
+    const { id, type } = item;
 
-      const rect = portRef.current.getBoundingClientRect();
-      const rectDef = layoutConfig?.transformRect?.[ItemTypeEnum.PORT]?.(rect) ?? rect;
+    itemElementsRef.current ||= {};
+    itemElementsRef.current[type] ||= {};
+    itemElementsRef.current[type][id] = portRef;
 
-      const port = update(item, {
-        rect: {
-          $set: {
-            height: rect.height,
-            left: rect.left + (rectDef?.left ?? 0),
-            offset: {
-              left: portRef?.current?.offsetLeft,
-              top: portRef?.current?.offsetTop,
-            },
-            top: rect.top + (rectDef?.top ?? 0),
-            width: rect.width,
+    const rect = portRef.current.getBoundingClientRect();
+    const rectDef = layoutConfig?.transformRect?.[ItemTypeEnum.PORT]?.(rect) ?? rect;
+
+    const port = update(item, {
+      rect: {
+        $set: {
+          height: rect.height,
+          left: rect.left + (rectDef?.left ?? 0),
+          offset: {
+            left: portRef?.current?.offsetLeft,
+            top: portRef?.current?.offsetTop,
           },
+          top: rect.top + (rectDef?.top ?? 0),
+          width: rect.width,
         },
-      });
+      },
+    });
 
-      mutateModels({
-        portMapping: {
-          [port.id]: port,
-        },
-      });
+    mutateModels({
+      portMapping: {
+        [id]: port,
+      },
+    });
 
-      if (port.id in connectionsRef.current) {
-        const conn = connectionsRef.current[port.id];
-        conn.fromItem = port;
-        connectionsRef.current[port.id] = conn;
-      }
-
-      updateAllPortConnectionsForItem(port?.parent, { connectionsRef, itemsRef, portsRef });
+    if (id in connectionsRef.current) {
+      const conn = connectionsRef.current[id];
+      conn.fromItem = port;
+      connectionsRef.current[id] = conn;
     }
+
+    renderConnectionLines({
+      direction: layoutConfig?.direction,
+      origin: layoutConfig?.origin,
+    });
   }
 
   function onMouseDown(_event: React.MouseEvent<HTMLDivElement>, _node: NodeItemType) {
@@ -882,11 +1037,11 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
         width: '100vw',
       }}
     >
-      <CanvasStyled ref={containerRef}>
+      <CanvasContainer gridSize={GRID_SIZE} ref={containerRef}>
         <DragLayer snapToGrid={snapToGridOnDrag} />
         <div id={connectionLinesRootID('nodes')} />
         {nodesMemo}
-      </CanvasStyled>
+      </CanvasContainer>
     </div>
   );
 };
@@ -899,6 +1054,10 @@ export default function PipelineBuilderCanvas(props: PipelineBuilderProps) {
   const transformState = useZoomPan(canvasRef, {
     containerRef,
     disabled: isZoomPanDisabled,
+    initialPosition: {
+      xPercent: 0.5,
+      yPercent: 0.5,
+    },
     roles: [ElementRoleEnum.DRAGGABLE],
   });
 

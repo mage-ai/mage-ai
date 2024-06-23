@@ -5,18 +5,21 @@ import { useRef, useEffect } from 'react';
 const hasRole = (element: HTMLElement | null, role: string): boolean =>
   element?.closest('[role]')?.getAttribute('role')?.split(' ').includes(role) ?? false;
 
+export type ZoomPanPositionType = {
+  x: React.MutableRefObject<number>;
+  y: React.MutableRefObject<number>;
+};
 export type ZoomPanStateType = {
-  zoom: React.MutableRefObject<number>;
+  container?: React.RefObject<HTMLElement>;
+  element: React.RefObject<HTMLElement>;
   offsetRectToCenter: (rect: RectType) => RectType;
-  position: {
-    x: React.MutableRefObject<number>;
-    y: React.MutableRefObject<number>;
-    origin: {
-      x: React.MutableRefObject<number>;
-      y: React.MutableRefObject<number>;
-    };
-  };
   pan: React.MutableRefObject<boolean>;
+  position: {
+    current: ZoomPanPositionType;
+    origin: ZoomPanPositionType;
+  };
+  scale: React.MutableRefObject<number>;
+  zoom: React.MutableRefObject<number>;
 };
 
 export const useZoomPan = (
@@ -24,20 +27,35 @@ export const useZoomPan = (
   opts?: {
     containerRef?: React.RefObject<HTMLElement>;
     disabled?: boolean;
-    zoomSensitivity?: number;
-    minScale?: number;
+    initialPosition?: {
+      x?: number;
+      xPercent?: number;
+      y?: number;
+      yPercent?: number;
+    };
     maxScale?: number;
+    minScale?: number;
     roles?: string[];
+    zoomSensitivity?: number;
   },
 ): ZoomPanStateType => {
-  const { containerRef, disabled = false, zoomSensitivity = 0.5, minScale = 0.01, maxScale = 4, roles } = opts;
+  const {
+    containerRef,
+    disabled = false,
+    initialPosition,
+    maxScale = 4,
+    minScale = 0.01,
+    roles,
+    zoomSensitivity = 0.5,
+  } = opts;
 
-  const scale = useRef(1);
   const originX = useRef(0);
   const originY = useRef(0);
-  const startX = useRef(0);
-  const startY = useRef(0);
-  const isPanning = useRef(false);
+  const pan = useRef(null);
+  const scale = useRef(1);
+  const startX = useRef(null);
+  const startY = useRef(null);
+  const zoom = useRef(null);
 
   useEffect(() => {
     const container = containerRef?.current ?? window;
@@ -45,23 +63,28 @@ export const useZoomPan = (
     if (!element) return;
 
     const updateTransform = () => {
-      element.style.transform = `translate(${originX.current}px, ${originY.current}px) scale(${scale.current})`;
-      // console.log(
-      //   'scale', scale?.current,
-      //   'originX', originX?.current,
-      //   'originY', originY?.current,
-      //   'startX', startX?.current,
-      //   'startY', startY?.current,
-      // );
+      element.style.transform =
+        `translate(${originX.current}px, ${originY.current}px) scale(${scale.current})`;
     };
 
-    const initializeOrigin = () => {
+    function initializeOrigin() {
       const canvasRect = element.getBoundingClientRect();
       const containerRect = container.getBoundingClientRect();
+      const {
+        x,
+        xPercent,
+        y,
+        yPercent,
+      } = initialPosition ?? {};
 
-      originX.current = (canvasRect?.width - containerRect?.width) / 2;
-      originY.current = (canvasRect?.height - containerRect?.height) / 2;
+      originX.current = x ?? (canvasRect?.width - containerRect?.width) * (xPercent ?? 0);
+      originY.current = y ?? (canvasRect?.height - containerRect?.height) * (yPercent ?? 0);
       updateTransform();
+    }
+
+    const handleZoom = (value: number) => {
+      scale.current = value;
+      zoom.current = value;
     };
 
     const handleWheel = (e: WheelEvent) => {
@@ -69,7 +92,9 @@ export const useZoomPan = (
       e.preventDefault();
       const delta = (-e.deltaY / 500) * zoomSensitivity;
       const oldScale = scale.current;
-      scale.current = Math.min(Math.max(minScale, scale.current + delta), maxScale);
+      handleZoom(
+        Math.min(Math.max(minScale, scale.current + delta), maxScale),
+      );
 
       const scaleRatio = scale.current / oldScale;
       const rect = element.getBoundingClientRect();
@@ -88,12 +113,12 @@ export const useZoomPan = (
       e.preventDefault();
       startX.current = e.clientX - originX.current;
       startY.current = e.clientY - originY.current;
-      isPanning.current = true;
+      pan.current = true;
     };
 
     const handleMouseMove = (e: MouseEvent) => {
       if (disabled || roles?.some(role => hasRole(e.target as HTMLElement, role))) return;
-      if (!isPanning.current) return;
+      if (!pan.current) return;
 
       originX.current = e.clientX - startX.current;
       originY.current = e.clientY - startY.current;
@@ -102,7 +127,7 @@ export const useZoomPan = (
     };
 
     const handleMouseUp = () => {
-      isPanning.current = false;
+      pan.current = false;
     };
 
     const handleTouchStart = (e: TouchEvent) => {
@@ -111,12 +136,12 @@ export const useZoomPan = (
       const touch = e.touches[0];
       startX.current = touch.clientX - originX.current;
       startY.current = touch.clientY - originY.current;
-      isPanning.current = true;
+      pan.current = true;
     };
 
     const handleTouchMove = (e: TouchEvent) => {
       if (disabled || roles?.some(role => hasRole(e.target as HTMLElement, role))) return;
-      if (!isPanning.current || e.touches.length !== 1) return;
+      if (!pan.current || e.touches.length !== 1) return;
       const touch = e.touches[0];
       originX.current = touch.clientX - startX.current;
       originY.current = touch.clientY - startY.current;
@@ -124,7 +149,7 @@ export const useZoomPan = (
     };
 
     const handleTouchEnd = () => {
-      isPanning.current = false;
+      pan.current = false;
     };
 
     element.addEventListener('mousedown', handleMouseDown);
@@ -150,13 +175,6 @@ export const useZoomPan = (
   }, [disabled, zoomSensitivity, minScale, maxScale, roles]);
 
   function offsetRectToCenter(rect: RectType): RectType {
-    // const containerRect = containerRef?.current.getBoundingClientRect();
-    // const containerCenterX = containerRect.width / 2;
-    // const containerCenterY = containerRect.height / 2;
-
-    // const rectCenterX = (rect.width * scale.current) / 2;
-    // const rectCenterY = (rect.height * scale.current) / 2;
-
     // Calculate the offset to center the rect
     const canvasRect = elementRef?.current?.getBoundingClientRect();
     const containerRect = containerRef?.current?.getBoundingClientRect();
@@ -176,16 +194,21 @@ export const useZoomPan = (
   }
 
   return {
-    zoom: scale,
+    container: containerRef,
+    element: elementRef,
     offsetRectToCenter,
+    pan,
     position: {
-      x: startX,
-      y: startY,
+      current: {
+        x: startX,
+        y: startY,
+      },
       origin: {
         x: originX,
         y: originY,
       },
     },
-    pan: isPanning,
+    scale,
+    zoom,
   };
 };

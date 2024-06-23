@@ -1,17 +1,11 @@
 @use '../../../abstracts/helpers' as *;
 @use '../../../base/svg';
 
-$grid-size: 40px;
-
 .canvas {
   background-color: var(--colors-graylo);
   height: 500%; /* Large enough to initially fit all content, will expand as needed */
   width: 500%;  /* Large enough to initially fit all content, will expand as needed */
   position: absolute; /* Ensure it behaves correctly inside the parent container */
-  /* top: 50%; */
-  /* left: 50%; */
-  /* Center the container within its parent */
-  /* transform: translate(-50%, -50%); */
   overflow: visible; /* Ensure content can overflow without clipping */
   transform-origin: top left;
 
@@ -26,26 +20,32 @@ $grid-size: 40px;
     pointer-events: none;
   }
 
-  &:before {
-    background-image:
-      repeating-linear-gradient(
-        to right,
-        transparent,
-        transparent calc(#{$grid-size} - 1px),
-        var(--colors-graylo) calc(#{$grid-size} - 1px),
-        var(--colors-graylo) $grid-size
-      );
-  }
+  @each $value1 in $numbers-more {
+    $size: $value1 * 10;
 
-  &:after {
-    background-image:
-      repeating-linear-gradient(
-        to bottom,
-        transparent,
-        transparent calc(#{$grid-size} - 1px),
-        var(--colors-graylo) calc(#{$grid-size} - 1px),
-        var(--colors-graylo) $grid-size
-      );
+    &.grid-size-#{$size} {
+      &:before {
+        background-image:
+          repeating-linear-gradient(
+            to right,
+            transparent,
+            transparent calc(#{$size}px - 1px),
+            var(--colors-graylo) calc(#{$size}px - 1px),
+            var(--colors-graylo) #{$size}px
+          );
+      }
+
+      &:after {
+        background-image:
+          repeating-linear-gradient(
+            to bottom,
+            transparent,
+            transparent calc(#{$size}px - 1px),
+            var(--colors-graylo) calc(#{$size}px - 1px),
+            var(--colors-graylo) #{$size}px
+          );
+      }
+    }
   }
 
   @each $value1 in $numbers-more {
@@ -61,6 +61,13 @@ $grid-size: 40px;
     opacity: 0;
     pointer-events: none;
     z-index: -1;
+  }
+
+  .centered {
+    /* Center the container within its parent */
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
   }
 }
 

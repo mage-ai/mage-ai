@@ -95,7 +95,7 @@ export function BlockNode({
       id={`${item.id}-badge`}
       templateColumns={[
         inputs?.length >= 1 ? 'auto' : '',
-        inputs?.length >= 1 && outputs?.length >= 1 ? '1fr' : '',
+        (inputs?.length >= 1 || outputs?.length >= 1) ? '1fr' : '',
         outputs?.length >= 1 ? 'auto' : '',
         ((!inputs?.length ?? false) && (!outputs?.length ?? false)) ? 'auto 1fr' : '',
       ].join(' ')}
