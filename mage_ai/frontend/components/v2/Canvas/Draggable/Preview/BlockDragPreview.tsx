@@ -1,7 +1,7 @@
 import type { CSSProperties, FC } from 'react';
 import { memo, useEffect, useState } from 'react';
 
-import BlockNode from '../../Nodes/BlockNode';
+import BlockNode from '../BlockNode';
 
 const styles: CSSProperties = {
   display: 'inline-block',

@@ -1,6 +1,9 @@
-export function selectEntriesWithValues(obj, opts?: {
-  includeEmptyArrays?: boolean;
-}): any {
+export function selectEntriesWithValues(
+  obj,
+  opts?: {
+    includeEmptyArrays?: boolean;
+  },
+): any {
   if (!obj) {
     return {};
   }
@@ -8,7 +11,11 @@ export function selectEntriesWithValues(obj, opts?: {
   const finalObj = {};
   Object.entries(obj || {}).forEach(([k, v]) => {
     if (typeof v !== 'undefined' && v !== null) {
-      if (!Array.isArray(v) || opts?.includeEmptyArrays || (v?.length >= 1 && v?.every(i => typeof i !== 'undefined' && i !== null))) {
+      if (
+        !Array.isArray(v) ||
+        opts?.includeEmptyArrays ||
+        (v?.length >= 1 && v?.every(i => typeof i !== 'undefined' && i !== null))
+      ) {
         finalObj[k] = v;
       }
     }
@@ -39,16 +46,15 @@ export function ignoreKeys(d, keys) {
 }
 
 export function isObject(variable: any) {
-  return (
-    typeof variable === 'object' &&
-    !Array.isArray(variable) &&
-    variable !== null
-  );
+  return typeof variable === 'object' && !Array.isArray(variable) && variable !== null;
 }
 
-export function isEmptyObject(obj, opts?: {
-  idIsInObject?: boolean;
-}) {
+export function isEmptyObject(
+  obj,
+  opts?: {
+    idIsInObject?: boolean;
+  },
+) {
   const idIsInObject = opts?.idIsInObject;
   const obj2 = { ...obj };
   if (!idIsInObject) {
@@ -57,9 +63,7 @@ export function isEmptyObject(obj, opts?: {
   const values = Object.values(obj2);
 
   return values.every(
-    (val) => val === null
-      || (Array.isArray(val) && val.length === 0)
-      || JSON.stringify(val) === '{}',
+    val => val === null || (Array.isArray(val) && val.length === 0) || JSON.stringify(val) === '{}',
   );
 }
 
@@ -68,11 +72,7 @@ export function isEqual(a, b) {
 }
 
 export function mapObject(obj, func) {
-  return Object.fromEntries(
-    Object.entries(obj).map(
-      ([k, v], i) => [k, func(v, k, i)],
-    ),
-  );
+  return Object.fromEntries(Object.entries(obj).map(([k, v], i) => [k, func(v, k, i)]));
 }
 
 export function pickKey(obj) {
@@ -80,9 +80,13 @@ export function pickKey(obj) {
   return keys.filter(k => obj[k]);
 }
 
-export function selectKeys(obj, keys, opts?: {
-  include_blanks?: boolean;
-}): any {
+export function selectKeys(
+  obj,
+  keys,
+  opts?: {
+    include_blanks?: boolean;
+  },
+): any {
   return keys.reduce((acc, key) => {
     if (key in obj || opts?.include_blanks) {
       acc[key] = obj?.[key];
@@ -111,25 +115,24 @@ export const dig = (o, sArg) => {
 
 export function setNested(obj, path, value) {
   let schema = obj;
-  let pList = path.split('.');
-  let len = pList.length;
-  for(let i = 0; i < len-1; i++) {
-    let elem = pList[i];
-    if( !schema[elem] ) schema[elem] = {}
+  const pList = path.split('.');
+  const len = pList.length;
+  for (let i = 0; i < len - 1; i++) {
+    const elem = pList[i];
+    if (!schema[elem]) schema[elem] = {};
     schema = schema[elem];
   }
 
-  const valuePrev = schema[pList[len-1]];
+  const valuePrev = schema[pList[len - 1]];
   if (Array.isArray(value) && valuePrev && Array.isArray(valuePrev)) {
     // @ts-ignore
-    schema[pList[len-1]] = (valuePrev || []).concat(value);
+    schema[pList[len - 1]] = (valuePrev || []).concat(value);
   } else {
-    schema[pList[len-1]] = value;
+    schema[pList[len - 1]] = value;
   }
 
   return schema;
 }
-
 
 // Deep merge two objects.
 // @param target
@@ -151,4 +154,8 @@ export function mergeDeep(target, ...sources) {
   }
 
   return mergeDeep(target, ...sources);
+}
+
+export function objectSize(obj) {
+  return obj ? Object.keys(obj).length : 0;
 }

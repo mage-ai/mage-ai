@@ -1,0 +1,31 @@
+@use './variables' as *;
+
+$base-color-names: (black, blue, glow, gray, green, pink, purple, red, rose, sky, teal, white, yellow);
+$colors-names: (black, blackfixed, blackhi, blacklo, blackmd, blue, bluehi, bluelo, bluemd, bluemuted, bluetext, dbt, dbthi, dbtlo, dbtmd, glow2, glow, gray, grayhi, graylo, graymd, green, greenhi, greenlo, greenmd, pink, pinkhi, pinklo, pinkmd, purple, purplehi, purplelo, purplemd, red, redhi, redlo, redmd, rose, rosehi, roselo, rosemd, sky, skyhi, skylo, skymd, statuses-success, statuses-successhi, teal, tealhi, teallo, tealmd, white, whitefixed, whitehi, whitelo, whitemd, yellow, yellowhi, yellowlo, yellowmd);
+$size: (sm: $size-sm, md: $size-md, lg: $size-lg, xl: $size-xl, xxl: $size-xxl, xxxl: $size-xxxl);
+$numbers: 0, 1, 2, 3, 4;
+$numbers-more: 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20;
+
+$base-directions: (
+  to bottom left,
+  to bottom right,
+  to bottom,
+  to left,
+  to right,
+  to top left,
+  to top right,
+  to top
+);
+$directions: (to bottom, to bottom left, to bottom right, to left, to left bottom, to left top, to right, to right bottom, to right top, to top, to top left, to top right);
+
+@function str-replace($string, $search, $replace: '') {
+  $result: '';
+  $i: str-index($string, $search);
+
+  @if $i {
+    @return str-slice($string, 1, $i - 1) + $replace +
+      str-replace(str-slice($string, $i + str-length($search)), $search, $replace);
+  }
+
+  @return $string;
+}

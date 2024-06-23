@@ -1,8 +1,45 @@
-import { PortSubtypeEnum } from '../types';
+import { IconType } from '@mana/icons/types';
+import { BadgeType } from '@mana/elements/Badge';
+import { ConnectionType, DragItem, NodeItemType } from '../interfaces';
+
+export type DragAndDropHandlersType = {
+  handlers?: {
+    onDragEnd?: (
+      event: React.MouseEvent<HTMLDivElement> | React.TouchEvent<HTMLDivElement>,
+      node: NodeItemType,
+    ) => void;
+    onDragStart?: (
+      event: React.MouseEvent<HTMLDivElement> | React.TouchEvent<HTMLDivElement>,
+      node: NodeItemType,
+    ) => void;
+    onDrop: (dragTarget: NodeItemType, dropTarget: NodeItemType) => void;
+    onMouseDown: (
+      event: React.MouseEvent<HTMLDivElement> | React.TouchEvent<HTMLDivElement>,
+      node: NodeItemType,
+      target?: any,
+    ) => boolean;
+    onMouseUp: (
+      event: React.MouseEvent<HTMLDivElement> | React.TouchEvent<HTMLDivElement>,
+      node: NodeItemType,
+      target?: any,
+    ) => boolean;
+  };
+};
+
+export type DraggableType = {
+  canDrag?: (item: DragItem) => boolean;
+  draggingNode?: NodeItemType;
+  itemRef?: React.RefObject<HTMLDivElement>;
+} & DragAndDropHandlersType;
+
+export type DroppableType = DragAndDropHandlersType;
+
+export type DragAndDropType = DraggableType & DroppableType;
 
 export type AsideType = {
-  Icon?: string;
-  color?: string;
+  Icon?: IconType;
+  baseColorName?: string;
+  onClick?: (event: React.MouseEvent<HTMLElement>) => void;
 };
 
 export type AsidesType = {
@@ -10,28 +47,31 @@ export type AsidesType = {
   before?: AsideType;
 };
 
-export type ConnectionsType = {
-  type: PortSubtypeEnum;
-};
-
-export type BadgeType = {
-  color?: string;
-  label?: string;
-};
-
 export type TitleConfigType = {
   asides?: AsidesType;
   badge?: BadgeType;
-  connections?: ConnectionType[];
+  inputConnection?: ConnectionType;
   label?: string;
+  outputConnection?: ConnectionType;
 };
 
 type BorderType = {
-  color?: string;
-  end?: number;
-  start?: number;
+  baseColorName?: string;
 };
 
 export type BorderConfigType = {
   borders?: BorderType[];
+};
+
+export type ConfigurationOptionType = {
+  asides?: AsidesType;
+  connecton?: ConnectionType;
+  interaction?: InteractionConfigType;
+  label?: string;
+  value?: string;
+};
+
+export type InteractionConfigType = {
+  select?: any;
+  textInput?: any;
 };

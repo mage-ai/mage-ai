@@ -43,9 +43,7 @@ export function find(arr, func) {
 }
 
 export function findClosestNum(arr, num) {
-  return arr.reduce((prev, curr) => (
-    Math.abs(curr - num) < Math.abs(prev - num) ? curr : prev
-  ));
+  return arr.reduce((prev, curr) => (Math.abs(curr - num) < Math.abs(prev - num) ? curr : prev));
 }
 
 export function groupBy(arr, func) {
@@ -96,14 +94,12 @@ export function prependArray(value, arrArg) {
 }
 
 export function sortByKey(arr, sort, opts: any = {}) {
-  const {
-    ascending = true,
-    absoluteValue = false,
-  } = opts;
+  const { ascending = true, absoluteValue = false } = opts;
 
-  const sortingFunc = (typeof sort === 'string' || typeof sort === 'number')
-    ? val => absoluteValue ? Math.abs(dig(val, sort)) : dig(val, sort)
-    : val => absoluteValue ? Math.abs(sort(val)) : sort(val);
+  const sortingFunc =
+    typeof sort === 'string' || typeof sort === 'number'
+      ? val => (absoluteValue ? Math.abs(dig(val, sort)) : dig(val, sort))
+      : val => (absoluteValue ? Math.abs(sort(val)) : sort(val));
 
   return [...arr].sort((a, b) => {
     let sortingOrder = 0;
@@ -160,7 +156,8 @@ export function transpose(array) {
 }
 
 export function binarySearch(array, pred) {
-  let lo = -1, hi = array.length;
+  let lo = -1,
+    hi = array.length;
   while (1 + lo < hi) {
     const mi = lo + ((hi - lo) >> 1);
 
@@ -209,7 +206,7 @@ export function arrayIncludesArray(arr1, arr2) {
 
   let result = true;
 
-  arr1.forEach((val) => {
+  arr1.forEach(val => {
     if (!mapping[val]) {
       result = false;
     }
@@ -247,7 +244,7 @@ export function standardDeviation(arr, usePopulation = false) {
   const mean = arr.reduce((acc, val) => acc + val, 0) / arr.length;
   return Math.sqrt(
     arr.reduce((acc, val) => acc.concat((val - mean) ** 2), []).reduce((acc, val) => acc + val, 0) /
-      (arr.length - (usePopulation ? 0 : 1))
+      (arr.length - (usePopulation ? 0 : 1)),
   );
 }
 
@@ -263,4 +260,24 @@ export function intersection(arr1: any[], arr2: any[], parser?: (item: any) => a
 
     return arr3.includes(i);
   });
+}
+export function flattenArray(arr: any[]): any[] {
+  return arr.reduce(
+    (flat, toFlatten) =>
+      flat.concat(Array.isArray(toFlatten) ? flattenArray(toFlatten) : toFlatten),
+    [],
+  );
+}
+
+export function countOccurrences<T>(arr: any[]): Record<any, number> {
+  return arr.reduce(
+    (acc, item) => {
+      if (!acc[item]) {
+        acc[item] = 0;
+      }
+      acc[item]++;
+      return acc;
+    },
+    {} as Record<any, number>,
+  );
 }

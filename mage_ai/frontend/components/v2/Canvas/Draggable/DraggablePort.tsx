@@ -1,44 +1,50 @@
 import update from 'immutability-helper';
-import React, { FC, memo, useEffect, useMemo, useRef } from 'react';
+import React, { FC, memo, useEffect } from 'react';
 
-import type { DragSourceMonitor, DropTargetMonitor } from 'react-dnd';
-import { DragItem, NodeItemType, PortType, RectType } from '../interfaces';
-import { DragPreviewImage, useDrag, useDrop } from 'react-dnd';
-import { PortSubtypeEnum, ItemTypeEnum, ElementRoleEnum } from '../types';
-import { getNodeUUID } from './utils';
+import type { DragSourceMonitor } from 'react-dnd';
+import { NodeItemType, PortType, RectType } from '../interfaces';
+import { useDrag, useDrop } from 'react-dnd';
+import { ItemTypeEnum } from '../types';
+import { DragAndDropType } from '../Nodes/types';
+import { buildPortUUID } from './utils';
+import { ElementRoleEnum } from '@mana/shared/types';
 
 type DraggablePortProps = {
+  children: React.ReactNode;
   item: PortType;
-  itemRef: React.RefObject<HTMLDivElement>;
-  handleOnDrop: (source: NodeItemType, target: NodeItemType) => void;
-  handleMouseDown: (event: React.MouseEvent<HTMLDivElement>) => void;
-  handleMouseUp: (event: React.MouseEvent<HTMLDivElement>) => void;
-  onDragStart: (item: NodeItemType, monitor: DragSourceMonitor) => void;
-  onMount: (item: PortType, itemRef: React.RefObject<HTMLDivElement>) => void;
-};
+} & DragAndDropType;
 
 export const DraggablePort: FC<DraggablePortProps> = memo(function DraggablePort({
+  children,
   item,
   itemRef,
-  handleOnDrop,
-  handleMouseDown,
-  handleMouseUp,
-  onDragStart,
-  onMount,
+  handlers,
 }: DraggablePortProps) {
-  const uuid = getNodeUUID(item);
-  const phaseRef = useRef(0);
+  const { onDragStart, onDrop, onMouseDown, onMouseUp } = handlers;
 
-  const [{ backgroundColor, isDragging }, connectDrag, preview] = useDrag(
+  const [, connectDrag] = useDrag(
     () => ({
       canDrag: (monitor: DragSourceMonitor) => {
+        const { x, y } = monitor.getInitialClientOffset();
+
+        const node = update(item, {
+          rect: {
+            $set: {
+              height: item.rect.height,
+              left: x,
+              top: y,
+              width: item.rect.width,
+            },
+          },
+        });
+
         onDragStart(
-          update(item, {
+          null,
+          update(node, {
             rect: {
               $set: itemRef?.current?.getBoundingClientRect() as RectType,
             },
           }),
-          monitor,
         );
 
         return true;
@@ -52,7 +58,6 @@ export const DraggablePort: FC<DraggablePortProps> = memo(function DraggablePort
           opacity: isDragging ? 0.4 : 1,
         };
       },
-      // end: (item: DragItem, monitor) => null,
       isDragging: (monitor: DragSourceMonitor) => {
         const node = monitor.getItem() as NodeItemType;
         return node.id === item.id;
@@ -65,15 +70,15 @@ export const DraggablePort: FC<DraggablePortProps> = memo(function DraggablePort
 
   const [{ canDrop, isOver }, connectDrop] = useDrop(
     () => ({
-      accept: [ItemTypeEnum.BLOCK, ItemTypeEnum.PORT],
-      canDrop: (node: NodeItemType, monitor: DropTargetMonitor) => true,
+      accept: [ItemTypeEnum.BLOCK, ItemTypeEnum.NODE, ItemTypeEnum.PORT],
       collect: monitor => ({
         canDrop: monitor.canDrop(),
         isOver: monitor.isOver(),
       }),
-      drop: (dragTarget: NodeItemType, monitor: DropTargetMonitor) => {
+      drop: (dragTarget: NodeItemType) => {
         const { left, height, top, width } = itemRef?.current?.getBoundingClientRect() as RectType;
-        handleOnDrop(
+
+        onDrop(
           dragTarget,
           update(item, {
             rect: {
@@ -83,47 +88,34 @@ export const DraggablePort: FC<DraggablePortProps> = memo(function DraggablePort
         );
       },
     }),
-    [handleOnDrop, item],
+    [onDrop, item],
   );
 
   useEffect(() => {
-    if (itemRef.current) {
-      if (phaseRef.current === 0) {
-        connectDrag(itemRef);
-        connectDrop(itemRef);
-
-        if (onMount) {
-          onMount?.(item, itemRef);
-        }
-      }
-      phaseRef.current += 1;
-    }
+    itemRef?.current && connectDrag(itemRef);
+    itemRef?.current && connectDrop(itemRef);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [item, onMount]);
+  }, []);
 
   return (
     <div
-      key={uuid}
-      onDragEnd={handleMouseUp}
-      onMouseDown={handleMouseDown}
-      onMouseUp={handleMouseUp}
+      key={buildPortUUID(item)}
+      onDragEnd={event => onMouseUp(event, item)}
+      onMouseDown={event => onMouseDown(event, item)}
+      onMouseUp={event => onMouseUp(event, item)}
       onTouchStart={event => event.stopPropagation()}
-      style={{
-        border: '1px dotted black',
-        padding: 12,
-      }}
     >
       <div
         ref={itemRef}
         role={[ElementRoleEnum.DRAGGABLE, ElementRoleEnum.DROPPABLE].join(' ')}
         style={{
-          backgroundColor: isOver && canDrop ? 'red' : 'green',
+          backgroundColor: isOver && canDrop ? 'transparent' : 'transparent',
           cursor: 'move',
           display: 'inline-block',
-          height: 24,
-          width: 24,
         }}
-      />
+      >
+        {children}
+      </div>
     </div>
   );
 });

@@ -13,7 +13,7 @@ import { setThemeSettings } from '@mana/themes/utils';
 import { DefaultPanel } from './catalog';
 import { Dark, Menu, PanelCollapseLeft } from '@mana/icons';
 import { updateClassnames, upsertRootElement } from './utils';
-import styles from '@styles/scss/pages/Apps/Manager.module.scss';
+import styles from '@styles/scss/apps/Manager/Manager.module.scss';
 
 function Manager() {
   const phaseRef = useRef(0);
@@ -167,21 +167,21 @@ function Manager() {
   return (
     <div className={styles.container}>
       <Grid
-        height='inherit'
-        overflow='visible'
+        height="inherit"
+        overflow="visible"
         padding={12}
         rowGap={12}
-        templateColumns='auto-fill'
-        templateRows='auto 1fr'
-        width='100%'
+        templateColumns="auto-fill"
+        templateRows="auto 1fr"
+        width="100%"
       >
         <Grid
           columnGap={12}
-          overflow='visible'
+          overflow="visible"
           row={1}
-          templateColumns='auto 1fr 1fr auto'
-          templateRows='1fr'
-          width='inherit'
+          templateColumns="auto 1fr 1fr auto"
+          templateRows="1fr"
+          width="inherit"
         >
           <Button
             Icon={fileBrowserVisible ? PanelCollapseLeft : Menu}
@@ -191,9 +191,9 @@ function Manager() {
             }}
           />
 
-          <TextInput monospace number placeholder='Row' />
+          <TextInput monospace number placeholder="Row" />
 
-          <TextInput monospace number placeholder='Column' />
+          <TextInput monospace number placeholder="Column" />
 
           <ButtonGroup>
             <Button
@@ -210,12 +210,12 @@ function Manager() {
         </Grid>
 
         <Grid
-          autoFlow='column'
+          autoFlow="column"
           columnGap={12}
           ref={containerRef}
           row={2}
-          templateRows='1fr'
-          width='inherit'
+          templateRows="1fr"
+          width="inherit"
         />
       </Grid>
     </div>

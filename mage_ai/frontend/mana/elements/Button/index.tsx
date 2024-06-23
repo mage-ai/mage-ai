@@ -6,6 +6,7 @@ import Loading, { LoadingStyleEnum } from '../../components/Loading';
 import Tag from '../../components/Tag';
 import buttons, { StyleProps, sm as buttonsSm } from '../../styles/buttons';
 import useWithLogging, { WithLoggingProps } from '../../hooks/useWithLogging';
+import { ElementRoleEnum } from '../../shared/types';
 
 type ButtonStyleProps = {
   Icon?: ({ ...props }: any) => any;
@@ -45,7 +46,8 @@ const ButtonStyled = styled.button<ButtonStyleProps>`
 const AStyled = styled.a<ButtonStyleProps>`
   ${CSS}
 
-  display: inline;
+  align-items: center;
+  display: inline-grid;
 `;
 
 function Button({
@@ -79,6 +81,7 @@ function Button({
       basic={basic}
       loading={loading ? true : undefined}
       primary={primary}
+      role={ElementRoleEnum.BUTTON}
       secondary={secondary}
       small={small}
       style={{

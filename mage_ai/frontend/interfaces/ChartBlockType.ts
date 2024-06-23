@@ -154,7 +154,7 @@ export interface ConfigurationType {
     disable_tests?: boolean;
   };
   disable_output_preview?: boolean;
-  dynamic?: boolean;
+  dynamic?: boolean | any;
   file_path?: string;
   file_source?: FileSourceType;
   global_data_product?: {

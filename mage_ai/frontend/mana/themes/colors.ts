@@ -1,5 +1,6 @@
 import { ModeEnum, ModeType } from './modes';
 import { blue as blueGradient } from './gradients';
+import { indexBy } from '@utils/array';
 
 interface InteractiveElementStateColorsType {
   default: string;
@@ -100,6 +101,67 @@ interface ColorsDerivedType {
   };
   typography: TypographyColorsType;
 }
+
+export const COLOR_NAMES = indexBy(
+  [
+    'black',
+    'blackFixed',
+    'blue',
+    'blueLo',
+    'blueMd',
+    'blueMuted',
+    'blueHi',
+    'dbt',
+    'dbtLo',
+    'dbtMd',
+    'dbtHi',
+    'blueText',
+    'glow',
+    'glow2',
+    'gray',
+    'grayLo',
+    'grayMd',
+    'grayHi',
+    'green',
+    'greenLo',
+    'greenMd',
+    'greenHi',
+    'pink',
+    'pinkLo',
+    'pinkMd',
+    'pinkHi',
+    'purple',
+    'purpleLo',
+    'purpleMd',
+    'purpleHi',
+    'red',
+    'redLo',
+    'redMd',
+    'redHi',
+    'sky',
+    'skyLo',
+    'skyMd',
+    'skyHi',
+    'rose',
+    'roseLo',
+    'roseMd',
+    'roseHi',
+    'teal',
+    'tealLo',
+    'tealMd',
+    'tealHi',
+    'yellow',
+    'yellowLo',
+    'yellowMd',
+    'yellowHi',
+    'white',
+    'whiteFixed',
+    'whiteLo',
+    'whiteMd',
+    'whiteHi',
+  ],
+  c => c,
+);
 
 export interface ColorsType extends ColorsDerivedType {
   black: string;

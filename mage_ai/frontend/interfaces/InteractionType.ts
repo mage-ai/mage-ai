@@ -1,5 +1,3 @@
-import { BlockLanguageEnum } from './BlockType';
-
 export enum InteractionInputTypeEnum {
   CHECKBOX = 'checkbox',
   CODE = 'code',
@@ -86,7 +84,7 @@ export default interface InteractionType {
     [uuid: string]: InteractionInputType;
   };
   layout?: InteractionLayoutItemType[][];
-  language?: BlockLanguageEnum;
+  language?: any;
   uuid?: string;
   variables?: {
     [variable: string]: InteractionVariableType;

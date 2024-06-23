@@ -1,9 +1,4 @@
-import React, {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-} from 'react';
+import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 import App, { AppProps } from 'next/app';
 import Cookies from 'js-cookie';
 import LoadingBar from 'react-top-loading-bar';
@@ -15,6 +10,9 @@ import { createRoot } from 'react-dom/client';
 
 import 'react-toastify/dist/ReactToastify.min.css';
 import '@styles/globals.css';
+import '@styles/scss/main.scss';
+import '@styles/scss/themes/dark.scss';
+import '@styles/scss/themes/light.scss';
 import AuthToken from '@api/utils/AuthToken';
 import CommandCenter from '@components/CommandCenter';
 import Head from '@oracle/elements/Head';
@@ -42,12 +40,11 @@ import { SheetProvider } from '@context/Sheet/SheetProvider';
 import { ThemeType } from '@oracle/styles/themes/constants';
 import { addPageHistory } from '@storage/CommandCenter/utils';
 import { getCurrentTheme } from '@oracle/styles/themes/utils';
-import {
-  gridTheme as gridThemeDefault,
-  theme as stylesTheme,
-} from '@styles/theme';
+import { gridTheme as gridThemeDefault, theme as stylesTheme } from '@styles/theme';
 import { isDemo } from '@utils/environment';
 import { queryFromUrl, queryString, redirectToUrl } from '@utils/url';
+
+const NextAppV2 = dynamic(() => import('@components/NextAppV2'));
 
 const COMMAND_CENTER_ROOT_ID = 'command-center-root';
 
@@ -59,13 +56,13 @@ type AppInternalProps = {
     currentTheme?: any;
   };
   title?: string;
-  version: number;
 };
 
 type MyAppProps = {
   currentTheme: ThemeType;
   pageProps: AppInternalProps;
   router: any;
+  version?: string;
 };
 
 function MyApp(props: MyAppProps & AppProps) {
@@ -74,27 +71,14 @@ function MyApp(props: MyAppProps & AppProps) {
   const keyMapping = useRef({});
   const keyHistory = useRef([]);
 
-  const {
-    Component,
-    currentTheme,
-    pageProps,
-    router,
-  } = props;
-  const {
-    defaultTitle,
-    themeProps = {},
-    title,
-    version = 1,
-  } = pageProps;
+  const { Component, currentTheme, pageProps, router } = props;
+  const { defaultTitle, themeProps = {}, title } = pageProps;
 
-  const {
-    featureEnabled,
-    featureUUIDs,
-  } = useProject();
-  const commandCenterEnabled = useMemo(() => featureEnabled?.(featureUUIDs?.COMMAND_CENTER), [
-    featureEnabled,
-    featureUUIDs,
-  ]);
+  const { featureEnabled, featureUUIDs } = useProject();
+  const commandCenterEnabled = useMemo(
+    () => featureEnabled?.(featureUUIDs?.COMMAND_CENTER),
+    [featureEnabled, featureUUIDs],
+  );
 
   const windowIsDefined = typeof window !== 'undefined';
   const isDemoApp = useMemo(() => isDemo(), []);
@@ -137,12 +121,7 @@ function MyApp(props: MyAppProps & AppProps) {
       router.events.off('routeChangeStart', handleRouteChangeStart);
       router.events.off('routeChangeComplete', handleRouteChangeComplete);
     };
-  }, [
-    keyHistory,
-    keyMapping,
-    router.events,
-    savePageHistory,
-  ]);
+  }, [keyHistory, keyMapping, router.events, savePageHistory]);
 
   useEffect(() => {
     const handleState = () => {
@@ -154,10 +133,7 @@ function MyApp(props: MyAppProps & AppProps) {
         commandCenterRootRef?.current?.render(
           <KeyboardContext.Provider value={keyboardContextValue}>
             <ThemeProvider
-              theme={Object.assign(
-                stylesTheme,
-                themeProps?.currentTheme || currentTheme,
-              )}
+              theme={Object.assign(stylesTheme, themeProps?.currentTheme || currentTheme)}
             >
               <GridThemeProvider gridTheme={gridThemeDefault}>
                 <ModalProvider>
@@ -185,6 +161,7 @@ function MyApp(props: MyAppProps & AppProps) {
         window.removeEventListener(CustomEventUUID.COMMAND_CENTER_ENABLED, handleState);
       }
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const {
@@ -195,21 +172,24 @@ function MyApp(props: MyAppProps & AppProps) {
     unregisterOnKeyDown,
     unregisterOnKeyUp,
   } = useGlobalKeyboardShortcuts(keyMapping, keyHistory);
-  const keyboardContextValue = useMemo(() => ({
-    disableGlobalKeyboardShortcuts,
-    registerOnKeyDown,
-    registerOnKeyUp,
-    setDisableGlobalKeyboardShortcuts,
-    unregisterOnKeyDown,
-    unregisterOnKeyUp,
-  }), [
-    disableGlobalKeyboardShortcuts,
-    registerOnKeyDown,
-    registerOnKeyUp,
-    setDisableGlobalKeyboardShortcuts,
-    unregisterOnKeyDown,
-    unregisterOnKeyUp,
-  ]);
+  const keyboardContextValue = useMemo(
+    () => ({
+      disableGlobalKeyboardShortcuts,
+      registerOnKeyDown,
+      registerOnKeyUp,
+      setDisableGlobalKeyboardShortcuts,
+      unregisterOnKeyDown,
+      unregisterOnKeyUp,
+    }),
+    [
+      disableGlobalKeyboardShortcuts,
+      registerOnKeyDown,
+      registerOnKeyUp,
+      setDisableGlobalKeyboardShortcuts,
+      unregisterOnKeyDown,
+      unregisterOnKeyUp,
+    ],
+  );
 
   const val = Cookies.get(
     REQUIRE_USER_AUTHENTICATION_COOKIE_KEY,
@@ -221,24 +201,22 @@ function MyApp(props: MyAppProps & AppProps) {
     REQUIRE_USER_PERMISSIONS_COOKIE_KEY,
     REQUIRE_USER_PERMISSIONS_COOKIE_PROPERTIES,
   );
-  const noValuePermissions = typeof valPermissions === 'undefined'
-    || valPermissions === null
-    || !REQUIRE_USER_PERMISSIONS();
+  const noValuePermissions =
+    typeof valPermissions === 'undefined' || valPermissions === null || !REQUIRE_USER_PERMISSIONS();
 
   const { status } = useStatus({
     delay: 3000,
     pauseFetch: !noValue && !noValuePermissions,
   });
 
-  const requireUserAuthentication =
-    useMemo(() => status?.require_user_authentication, [status]);
-  const requireUserPermissions =
-    useMemo(() => status?.require_user_permissions, [status]);
+  const requireUserAuthentication = useMemo(() => status?.require_user_authentication, [status]);
+  const requireUserPermissions = useMemo(() => status?.require_user_permissions, [status]);
 
   const { data: dataProjects } = api.projects.list({}, { revalidateOnFocus: false });
 
   useEffect(() => {
-    if (noValue &&
+    if (
+      noValue &&
       typeof requireUserAuthentication !== 'undefined' &&
       requireUserAuthentication !== null
     ) {
@@ -249,7 +227,8 @@ function MyApp(props: MyAppProps & AppProps) {
       );
     }
 
-    if (noValuePermissions &&
+    if (
+      noValuePermissions &&
       typeof requireUserPermissions !== 'undefined' &&
       requireUserPermissions !== null
     ) {
@@ -281,29 +260,25 @@ function MyApp(props: MyAppProps & AppProps) {
     windowIsDefined,
   ]);
 
-  const shouldShowCommandCenter =
-    useMemo(() => (!requireUserAuthentication || AuthToken.isLoggedIn()) && commandCenterEnabled, [
-      commandCenterEnabled,
-      requireUserAuthentication,
-    ]);
+  const shouldShowCommandCenter = useMemo(
+    () => (!requireUserAuthentication || AuthToken.isLoggedIn()) && commandCenterEnabled,
+    [commandCenterEnabled, requireUserAuthentication],
+  );
+
+  if (props?.version === 'v2') {
+    // @ts-ignore
+    return <NextAppV2 {...props} />;
+  }
 
   return (
     <>
       <KeyboardContext.Provider value={keyboardContextValue}>
-        <ThemeProvider
-          theme={Object.assign(
-            stylesTheme,
-            themeProps?.currentTheme || currentTheme,
-          )}
-        >
+        <ThemeProvider theme={Object.assign(stylesTheme, themeProps?.currentTheme || currentTheme)}>
           <GridThemeProvider gridTheme={gridThemeDefault}>
             <ModalProvider>
               <SheetProvider>
                 <ErrorProvider>
-                  <Head
-                    defaultTitle={defaultTitle}
-                    title={title}
-                  >
+                  <Head defaultTitle={defaultTitle} title={title}>
                     <meta
                       content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=0"
                       name="viewport"
@@ -338,14 +313,12 @@ function MyApp(props: MyAppProps & AppProps) {
         </ThemeProvider>
       </KeyboardContext.Provider>
 
-      {isDemoApp && (
-        <GoogleAnalytics gaId={DEMO_GA_MEASUREMENT_ID} />
-      )}
+      {isDemoApp && <GoogleAnalytics gaId={DEMO_GA_MEASUREMENT_ID} />}
     </>
   );
 }
 
-MyApp.getInitialProps = async (appContext) => {
+MyApp.getInitialProps = async appContext => {
   const appProps = await App.getInitialProps(appContext);
   const { ctx } = appContext;
 

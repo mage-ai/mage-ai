@@ -85,7 +85,7 @@ const shared = css<StyleProps>`
           : basic
             ? theme.colors.backgrounds.button.basic.default
             : theme.colors.backgrounds.button.base.default};
-  border-radius: ${({ asLink, theme }) => theme.borders.radius[asLink ? 'sm' : 'base']};
+  border-radius: ${({ theme }) => theme.borders.radius.base};
   color: ${({ primary, secondary, theme }) =>
     primary || secondary ? theme.fonts.color.text.inverted : theme.fonts.color.text.base};
 
@@ -128,7 +128,9 @@ const base = css<StyleProps>`
   font-size: ${({ theme }) => theme.fonts.size.base};
   padding: ${({ asLink, basic, grouped, theme }) =>
     asLink
-      ? '2px 4px'
+      ? basic
+        ? 0
+        : '2px 4px'
       : grouped
         ? basic
           ? 0
@@ -144,7 +146,9 @@ export const sm = css<StyleProps>`
     typeof tag !== 'undefined'
       ? theme.buttons.padding.sm
       : asLink
-        ? '2px 4px'
+        ? basic
+          ? 0
+          : '2px 4px'
         : grouped
           ? basic
             ? 0

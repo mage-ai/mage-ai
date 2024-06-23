@@ -1,0 +1,37 @@
+@use '../abstracts/helpers' as *;
+
+@mixin fill-stroke-colors() {
+  @each $value in $colors-names {
+    &.fill-#{$value} {
+      fill: var(--colors-#{$value});
+    }
+
+    &.stroke-#{$value} {
+      stroke: var(--colors-#{$value});
+    }
+  }
+}
+
+@mixin gradient() {
+  @each $value in $colors-names {
+    &.stop-color-#{$value} {
+      stop-color: var(--colors-#{$value});
+    }
+  }
+
+  @each $value1 in $numbers-more {
+    &.stop-opacity-#{$value1 * 5} {
+      stop-opacity: #{($value1 * 5) / 100};
+    }
+  }
+}
+
+@mixin stroke-width() {
+  stroke-width: 1.5;
+
+  @each $value1 in $numbers-more {
+    &.stroke-width-#{$value1} {
+      stroke-width: #{$value1}px;
+    }
+  }
+}
