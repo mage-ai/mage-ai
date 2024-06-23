@@ -309,3 +309,56 @@ export function updatePaths(
     }
   });
 }
+
+function updatePathPoint(d: string, opts?: {
+  rectStart?: RectType,
+  rectEnd?: RectType,
+}): string {
+  const parts = extractBezierControlPoints(d);
+  if (!parts) return;
+
+  const { rectEnd, rectStart } = opts;
+  const { endX, endY, startX, startY, x1, y1, x2, y2 } = parts;
+
+  const newStartX = rectStart?.left ?? startX;
+  const newStartY = rectStart?.top ?? startY;
+  const newEndX = rectEnd?.left ?? endX;
+  const newEndY = rectEnd?.top ?? endY;
+
+  // Construct new d attribute with updated endpoint
+  return `M${newStartX},${newStartY} C${x1},${y1},${x2},${y2},${newEndX},${newEndY}`;
+}
+
+export function extractBezierControlPoints(d) {
+  // M519.203125,520.8671875 C519.203125,520.8671875 243.1015625,750.42578125 243.1015625,750.42578125
+  // {
+  //   "startX": 519.203125,
+  //   "startY": 520.8671875,
+  //   "x1": 519.203125,
+  //   "y1": 520.8671875,
+  //   "x2": 243.1015625,
+  //   "y2": 750.42578125,
+  //   "endX": 243.1015625,
+  //   "endY": 750.42578125
+  // }
+
+  // Regular expression to match the cubic Bezier curve command `C x1 y1, x2 y2, endX endY`
+  const cubicBezierRegEx =
+    /M\s*([-\d.]+)\s*,?\s*([-\d.]+)\s+C\s*([-\d.]+)\s*,?\s*([-\d.]+)\s*,?\s*([-\d.]+)\s*,?\s*([-\d.]+)\s*,?\s*([-\d.]+)\s*,?\s*([-\d.]+)/;
+
+  const match = d.match(cubicBezierRegEx);
+  if (match) {
+    const [, startX, startY, x1, y1, x2, y2, endX, endY] = match;
+    return {
+      endX: parseFloat(endX),
+      endY: parseFloat(endY),
+      startX: parseFloat(startX),
+      startY: parseFloat(startY),
+      x1: parseFloat(x1),
+      x2: parseFloat(x2),
+      y1: parseFloat(y1),
+      y2: parseFloat(y2),
+    };
+  }
+  return null;
+}

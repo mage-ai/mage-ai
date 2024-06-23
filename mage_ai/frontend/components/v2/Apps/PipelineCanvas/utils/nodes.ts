@@ -82,10 +82,6 @@ export function updateModelsAndRelationships({
     ...itemsRef.current,
     ...itemMapping,
   } ?? {}).forEach((item: DragItem) => {
-    if (ItemTypeEnum.NODE === item?.type) {
-      return;
-    }
-
     const arr = [];
 
     (item?.ports ?? [])?.forEach((port) => {
@@ -117,10 +113,8 @@ export function updateModelsAndRelationships({
     };
   });
 
-  Object.entries({
-    ...itemsRef.current,
-    ...itemMapping,
-  } ?? {}).forEach(([nodeID, nodeInit]: [string, NodeType]) => {
+  // Nodes
+  Object.entries(itemsRef.current ?? {}).forEach(([nodeID, nodeInit]: [string, NodeType]) => {
     if (ItemTypeEnum.NODE !== nodeInit?.type) {
       return;
     }
@@ -128,15 +122,27 @@ export function updateModelsAndRelationships({
     const node = {
       ...nodeInit,
       ...itemsRef.current?.[nodeID],
-      ...itemMapping?.[nodeID],
     };
-    const items = node?.items?.reduce((acc, item: DragItem) => ({ ...acc, [item.id]: itemsRef?.current?.[item?.id] }), {});
+    const items = node?.items?.reduce((acc, item: DragItem) => ({
+      ...acc,
+      [item.id]: ignoreKeys(itemsRef?.current?.[item?.id], ['node', 'ports']),
+    }), {});
+
     node.items = Object.values(items ?? {});
     itemsRef.current[nodeID] = node;
   });
+  // Node upstream nodes
   Object.entries(itemsRef.current ?? {}).forEach(([nodeID, nodeItem]: [string, NodeType]) => {
-    nodeItem.upstreamNodes = nodeItem?.upstreamNodes?.map((node: NodeType) => itemsRef.current[node?.id]);
+    nodeItem.upstreamNodes =
+      nodeItem?.upstreamNodes?.map((node: NodeType) => (itemsRef.current[node?.id]));
     itemsRef.current[nodeID] = nodeItem;
+  });
+  // Update non-node item’s node
+  Object.entries(itemsRef.current ?? {}).forEach(([itemID, item]: [string, DragItem]) => {
+    if (!item?.node) return;
+
+    item.node = itemsRef.current[item?.node?.id] as NodeType;
+    itemsRef.current[itemID] = ignoreKeys(item, ['items', 'upstreamNodes']);
   });
 
   Object.entries({

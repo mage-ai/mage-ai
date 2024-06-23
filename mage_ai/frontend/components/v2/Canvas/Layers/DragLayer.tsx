@@ -4,7 +4,19 @@ import { useDragLayer } from 'react-dnd';
 
 import { BoxDragPreview } from '../Draggable/Preview/BlockDragPreview';
 import { ItemTypeEnum } from '../types';
-import { snapToGrid } from '../utils/snapToGrid';
+import { NodeItemType } from '../interfaces';
+import { snapToGrid as snapToGridFunc } from '../utils/snapToGrid';
+
+export interface CustomDragLayerProps {
+  gridDimensions?: { height: number; width: number };
+  onDragging?: (opts?: {
+    currentOffset: XYCoord;
+    initialOffset: XYCoord;
+    itemType: ItemTypeEnum;
+    item: NodeItemType;
+  }) => void;
+  snapToGrid: boolean;
+}
 
 const layerStyles: CSSProperties = {
   height: '100%',
@@ -19,7 +31,7 @@ const layerStyles: CSSProperties = {
 function getItemStyles(
   initialOffset: XYCoord | null,
   currentOffset: XYCoord | null,
-  isSnapToGrid: boolean,
+  handleSnapToGrid?: (xy: XYCoord) => [number, number],
 ) {
   if (!initialOffset || !currentOffset) {
     return {
@@ -29,10 +41,10 @@ function getItemStyles(
 
   let { x, y } = currentOffset;
 
-  if (isSnapToGrid) {
+  if (handleSnapToGrid) {
     x -= initialOffset.x;
     y -= initialOffset.y;
-    [x, y] = snapToGrid({ x, y });
+    [x, y] = handleSnapToGrid?.({ x, y });
     x += initialOffset.x;
     y += initialOffset.y;
   }
@@ -44,12 +56,18 @@ function getItemStyles(
   };
 }
 
-export interface CustomDragLayerProps {
-  snapToGrid: boolean;
-}
-
-export const DragLayer: FC<CustomDragLayerProps> = props => {
-  const { itemType, isDragging, item, initialOffset, currentOffset } = useDragLayer(monitor => ({
+export const DragLayer: FC<CustomDragLayerProps> = ({
+  gridDimensions,
+  onDragging,
+  snapToGrid,
+}: CustomDragLayerProps) => {
+  const {
+    currentOffset,
+    initialOffset,
+    isDragging,
+    item,
+    itemType,
+  } = useDragLayer(monitor => ({
     currentOffset: monitor.getSourceClientOffset(),
     initialOffset: monitor.getInitialSourceClientOffset(),
     isDragging: monitor.isDragging(),
@@ -57,10 +75,18 @@ export const DragLayer: FC<CustomDragLayerProps> = props => {
     itemType: monitor.getItemType(),
   }));
 
+  onDragging && onDragging?.({
+    currentOffset,
+    initialOffset,
+    item,
+    itemType: itemType as ItemTypeEnum,
+  });
+
   function renderItem() {
     switch (itemType) {
       case ItemTypeEnum.BLOCK:
-        return <BoxDragPreview title={item.title} />;
+        return null;
+        // return <BoxDragPreview title={item.title} />;
       default:
         return null;
     }
@@ -69,9 +95,14 @@ export const DragLayer: FC<CustomDragLayerProps> = props => {
   if (!isDragging) {
     return null;
   }
+
   return (
     <div style={layerStyles}>
-      <div style={getItemStyles(initialOffset, currentOffset, props.snapToGrid)}>
+      <div style={getItemStyles(
+        initialOffset,
+        currentOffset,
+        snapToGrid ? xy => snapToGridFunc(xy, gridDimensions) : null,
+      )}>
         {renderItem()}
       </div>
     </div>

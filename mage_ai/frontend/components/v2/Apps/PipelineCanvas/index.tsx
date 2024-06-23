@@ -1,6 +1,6 @@
 import update from 'immutability-helper';
 import { Ref, startTransition, useCallback, useEffect, useMemo, useRef, useState, createRef } from 'react';
-import { useDrop } from 'react-dnd';
+import { useDrop, XYCoord } from 'react-dnd';
 import type { DragSourceMonitor, DropTargetMonitor } from 'react-dnd';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
@@ -39,7 +39,7 @@ import { snapToGrid } from '../../Canvas/utils/snapToGrid';
 import { randomNameGenerator, randomSimpleHashGenerator } from '@utils/string';
 import { ConnectionLine } from '../../Canvas/Connections/ConnectionLine';
 import { ConnectionLines } from '../../Canvas/Connections/ConnectionLines';
-import { getPathD } from '../../Canvas/Connections/utils';
+import { getPathD, extractBezierControlPoints } from '../../Canvas/Connections/utils';
 import { buildNamesapceForLevel } from './utils/levels';
 import { createConnections } from './utils/ports';
 import { addRects, calculateBoundingBox, getRectDiff, layoutItemsInGroups, layoutItemsInTreeFormation, transformZoomPanRect } from '../../Canvas/utils/rect';
@@ -93,10 +93,15 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
   pipelineExecutionFramework,
   pipelineExecutionFrameworks,
   pipelines,
-  snapToGridOnDrag = true,
+  snapToGridOnDrag = false,
   snapToGridOnDrop = true,
   transformState,
 }: PipelineBuilderProps) => {
+  const gridDimensions = useMemo(() => ({
+    height: GRID_SIZE,
+    width: GRID_SIZE,
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }), []);
   const layoutConfig: LayoutConfigType = useMemo(
     () => ({
       defaultRect: {
@@ -118,7 +123,10 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
   // Control
   const phaseRef = useRef<number>(0);
   const connectionLineRootRef = useRef(null);
-  const connectionLinesPathRef = useRef<Record<string, React.RefObject<SVGPathElement>>>({});
+  const connectionLinesPathRef = useRef<Record<string, Record<string, {
+    handleUpdatePath: (item: NodeItemType) => void;
+    pathRef: React.RefObject<SVGPathElement>;
+  }>>>({});
 
   // Presentation
   const activeLevel = useRef<number>(null);
@@ -155,6 +163,12 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
       itemsRef,
       portsRef,
     }, payload);
+    console.log(
+      'mutateModels',
+      connectionsRef.current,
+      itemsRef.current,
+      portsRef.current,
+    );
   }
 
   function setConnectionsDragging(connectionsDragging: Record<string, ConnectionType>) {
@@ -178,7 +192,6 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
 
   function updateLayoutOfModels(opts?: {
     level?: number;
-    mutateModels?: boolean;
   }) {
     const layout = {
       boundingRect: canvasRef?.current?.getBoundingClientRect(),
@@ -221,14 +234,6 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
           n => ItemTypeEnum.NODE === n?.type,
         );
       const nodesArr = layoutItemsInGroups(nodes, layout);
-      false &&
-      isDebug() && console.log(
-        'nodeIDs', nodeIDs,
-        'nodes', nodes,
-        connectionsRef?.current,
-        nodesArr,
-        opts?.mutateModels,
-      );
       nodesGroupedArr.push(...nodesArr);
     });
 
@@ -238,15 +243,66 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
       });
       itemsRef.current[node.id] = node;
     });
-    // renderLayoutChanges();
   }
 
-  function renderConnectionLines(layout?: LayoutConfigType) {
+  function onDragging({
+    currentOffset,
+    initialOffset,
+    item,
+    itemType,
+  }: {
+    currentOffset: XYCoord,
+    initialOffset: XYCoord,
+    itemType: ItemTypeEnum;
+    item: NodeItemType;
+  }) {
+    if (!initialOffset || !currentOffset) {
+      return;
+    }
+
+    let { x, y } = currentOffset;
+
+    if (snapToGridOnDrag) {
+      x -= initialOffset.x;
+      y -= initialOffset.y;
+
+      [x, y] = snapToGrid({ x, y }, gridDimensions);
+      x += initialOffset.x;
+      y += initialOffset.y;
+    }
+
+    if (ItemTypeEnum.BLOCK === itemType) {
+      item?.ports?.forEach(({ id: portID }: PortType) => {
+        Object.values(connectionLinesPathRef?.current?.[portID] ?? {})?.forEach(
+          ({ handleUpdatePath }: { handleUpdatePath: (item: NodeItemType) => void },
+        ) => {
+          const port1 = portsRef.current?.[portID];
+          handleUpdatePath(update(port1, {
+            rect: {
+              $merge: {
+                left: x + (port1?.rect?.offset?.left ?? 0),
+                top: y + (port1?.rect?.offset?.top ?? 0),
+              },
+            },
+          }));
+        });
+      });
+    }
+  }
+
+  function renderConnectionLines(opts?: {
+    layout?: LayoutConfigType;
+    modelMapping?: ModelMappingType;
+  }) {
+    const {
+      layout,
+      modelMapping,
+    } = opts ?? {};
     const {
       direction,
       origin,
       transformState,
-    } = layout ?? {};
+    } = layout ?? layoutConfig;
 
     const isVertical = LayoutConfigDirectionEnum.VERTICAL === direction;
     const isReverse = (origin ?? false) && [
@@ -276,35 +332,64 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
     });
 
     Object.keys(portMapping ?? {})?.forEach((portID: string) => {
-      const port1 = portsRef?.current[portID];
+      let port1 = portsRef?.current[portID];
 
       if (port1?.target?.id in (processed[port1?.parent?.id] ?? {})) return;
       if (port1?.parent?.id in (processed[port1?.target?.id] ?? {})) return;
 
-      const item1 = itemsRef?.current[port1?.parent?.id];
-      const node1 = itemsByNodeIDMapping[item1?.id];
-      const rect1 = item1?.rect;
+      // 1
+      let item1 = itemsRef?.current[port1?.parent?.id];
+      const item1Override = modelMapping?.itemMapping?.[item1?.id];
+      item1 = item1Override ?? item1;
       const block1 = item1?.block;
       const color1 = getBlockColor(block1?.type, { getColorName: true })?.names?.base;
-      const rect1Port = itemElementsRef?.current?.port?.[port1.id]?.current?.getBoundingClientRect();
-      const rect1Item = itemElementsRef?.current?.block?.[item1.id]?.current?.getBoundingClientRect();
+      const node1 = itemsByNodeIDMapping[item1?.id];
+
+      // port1
+      const port1Override = modelMapping?.portMapping?.[port1.id];
+      port1 = port1Override ?? port1;
+
+      // item.rect
+      const rect1 = item1Override?.rect ?? item1?.rect;
+      const rect1Item = item1Override?.rect
+        ?? itemElementsRef?.current?.block?.[item1.id]?.current?.getBoundingClientRect();
+      // port.rect
+      const rect1Port = port1Override?.rect
+        ?? itemElementsRef?.current?.port?.[port1.id]?.current?.getBoundingClientRect();
+      // node.rect
       const rect1Node = itemElementsRef?.current?.node?.[node1.id]?.current?.getBoundingClientRect();
 
-      const item2 = itemsRef?.current[port1?.target?.id];
-      const node2 = itemsByNodeIDMapping[item2?.id];
-      const port2 = item2?.ports?.find(({ subtype, target }: PortType) => subtype !== port1?.subtype
-        && target.id === item1?.id);
-      const rect2 = item2?.rect;
+      // 2
+      let item2 = itemsRef?.current[port1?.target?.id];
+      const item2Override = modelMapping?.itemMapping?.[item2?.id];
+      item2 = item2Override ?? item2;
       const block2 = item2?.block;
       const color2 = getBlockColor(block2?.type, { getColorName: true })?.names?.base;
-      const rect2Port = itemElementsRef?.current?.port?.[port2.id]?.current?.getBoundingClientRect();
-      const rect2Item = itemElementsRef?.current?.block?.[item2.id]?.current?.getBoundingClientRect();
+      const node2 = itemsByNodeIDMapping[item2?.id];
+
+      // port2
+      let port2 = item2?.ports?.find(({ subtype, target }: PortType) => subtype !== port1?.subtype
+        && target.id === item1?.id);
+      const port2Override = modelMapping?.portMapping?.[port2.id];
+      port2 = port2Override ?? port2;
+
+      // item.rect
+      const rect2 = item2Override?.rect ?? item2?.rect;
+      const rect2Item = item2Override?.rect
+        ?? itemElementsRef?.current?.block?.[item2.id]?.current?.getBoundingClientRect();
+      // port.rect
+      const rect2Port = port2Override?.rect
+        ?? itemElementsRef?.current?.port?.[port2.id]?.current?.getBoundingClientRect();
+      // node.rect
       const rect2Node = itemElementsRef?.current?.node?.[node2.id]?.current?.getBoundingClientRect();
 
       const values = {
         [port1.id]: {
           ...port1,
+          block: block1,
           color: color1,
+          item: item1,
+          node: node1,
           rect: rect1,
           rects: {
             item: rect1Item,
@@ -314,7 +399,10 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
         },
         [port2.id]: {
           ...port2,
+          block: block2,
           color: color2,
+          item: item2,
+          node: node2,
           rect: rect2,
           rects: {
             item: rect2Item,
@@ -347,9 +435,8 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
           width: values?.rect?.width ?? 0,
         };
 
-        // console.log(0, rect);
+        // console.log(0, item1?.id, item2?.id, rect);
         // rect = transformState ? transformZoomPanRect(rect, transformState) : rect;
-        // console.log(1, rect);
 
         const scale = Number(transformState?.scale?.current ?? 1);
         let leftOffset = 0;
@@ -401,19 +488,22 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
 
         rect.left += leftOffset;
         rect.top += topOffset;
+        // console.log(1, item1?.id, item2?.id, rect);
 
         return rect;
       }
+
       const fromRect = buildRect(fromValues);
       const toRect = buildRect(toValues);
 
       const fromPosition = isVertical ? 'top' : 'right';
       const toPosition = isVertical ? 'bottom' : 'left';
-      const dValue = getPathD({
+      const pathDOpts = {
         curveControl: 0,
         fromPosition: isReverse ? toPosition : fromPosition,
         toPosition: isReverse ? fromPosition : toPosition,
-      }, fromRect, toRect);
+      } as any;
+      const dValue = getPathD(pathDOpts, fromRect, toRect);
 
       const portIDsCombined = [fromPort?.id, toPort?.id].sort().join('-');
       const gradientID = `${portIDsCombined}-grad`;
@@ -424,20 +514,31 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
           : null,
         ].filter(Boolean);
 
-      if (colors?.length) {
-
+      if (colors?.length >= 2) {
+        paths[gradientID] = (
+          <defs key={`${gradientID}-defs`}>
+            <linearGradient id={gradientID} x1="0%" x2="100%" y1="0%" y2="0%">
+              <stop offset="0%" style={{ stopColor: `var(--colors-${colors[0]})`, stopOpacity: 0 }} />
+              <stop offset="100%" style={{ stopColor: `var(--colors-${colors[1]})`, stopOpacity: 1 }} />
+            </linearGradient>
+          </defs>
+        );
       }
-      paths[gradientID] = (
-        <defs key={`${gradientID}-defs`}>
-          <linearGradient id={gradientID} x1="0%" x2="100%" y1="0%" y2="0%">
-            <stop offset="0%" style={{ stopColor: `var(--colors-${colors[0]})`, stopOpacity: 0 }} />
-            <stop offset="100%" style={{ stopColor: `var(--colors-${colors[1]})`, stopOpacity: 1 }} />
-          </linearGradient>
-        </defs>
-      );
 
-      connectionLinesPathRef.current[portIDsCombined] ||= createRef();
-      const pathRef = connectionLinesPathRef.current[portIDsCombined];
+      const pathRef =
+        connectionLinesPathRef?.current?.[fromValues?.id]?.[toValues?.id]?.pathRef ?? createRef();
+
+      function handleUpdatePath(item: NodeItemType) {
+        const isOutput = fromValues?.id === item?.id;
+        const isInput = toValues?.id === item?.id;
+        const dValue = getPathD(
+          pathDOpts,
+          isOutput ? item?.rect : fromRect,
+          isInput ? item?.rect : toRect,
+        );
+
+        pathRef?.current?.setAttribute('d', dValue);
+      }
 
       paths[portIDsCombined] = (
         <path
@@ -455,8 +556,21 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
 
       processed[fromValues.id] ||= {};
       processed[fromValues.id][toValues.id] = portIDsCombined;
+
       processed[toValues.id] ||= {};
       processed[toValues.id][fromValues.id] = portIDsCombined;
+
+      connectionLinesPathRef.current[fromValues?.id] ||= {};
+      connectionLinesPathRef.current[fromValues?.id][toValues?.id] = {
+        handleUpdatePath,
+        pathRef,
+      };
+
+      connectionLinesPathRef.current[toValues?.id] ||= {};
+      connectionLinesPathRef.current[toValues?.id][fromValues?.id] = {
+        handleUpdatePath,
+        pathRef,
+      };
     });
 
     connectionLineRootRef.current ||= createRoot(element);
@@ -490,16 +604,7 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
     activeLevel.current = level;
     containerRef?.current?.classList.add(stylesBuilder[`level-${level}-active`]);
 
-    !skipUpdateLayout && updateLayoutOfModels({
-      level,
-      mutateModels,
-    });
-
-    modelLevelsMapping?.[activeLevel?.current]?.itemMapping?.forEach((item: DragItem) => {
-      onDrag(itemsRef.current[item.id]);
-    });
-
-    renderConnectionLines(layoutConfig);
+    renderConnectionLines();
   }
 
   function handleDoubleClick(event: React.MouseEvent) {
@@ -625,17 +730,6 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  function onDrag(item: NodeItemType) {
-    updateAllPortConnectionsForItem(ItemTypeEnum.BLOCK === item.type
-      ? item
-      : (item as PortType).parent
-    , {
-      connectionsRef,
-      itemsRef,
-      portsRef,
-    });
-  }
-
   function onMountItem(item: DragItem, itemRef: React.RefObject<HTMLDivElement>) {
     const { id, type } = item;
     itemElementsRef.current ||= {};
@@ -731,14 +825,10 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
 
       if (versions?.every((version: number) => version === rectVersion)) {
         if (activeLevel?.current === null) {
-          // console.log('onMountItem.setActiveLevel', item, activeLevel?.current);
           setActiveLevel({ level: 0 });
-        } else {
-          // console.log('onMountItem.updateLayoutOfModels', item, activeLevel?.current);
-          updateLayoutOfModels({ mutateModels: true });
+          updateLayoutOfModels({ level: 0, mutateModels: true });
+          renderLayoutChanges();
         }
-        // console.log('onMountItem.renderLayoutChanges', item, activeLevel?.current);
-        renderLayoutChanges();
       }
     }
 
@@ -792,7 +882,7 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
       connectionsRef.current[id] = conn;
     }
 
-    renderConnectionLines(layoutConfig);
+    renderConnectionLines();
   }
 
   function onMouseDown(_event: React.MouseEvent<HTMLDivElement>, _node: NodeItemType) {
@@ -805,7 +895,6 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
   }
 
   function onDragStart(_event: React.MouseEvent<HTMLDivElement>, node: NodeItemType) {
-
     if (!itemDraggingRef.current && ItemTypeEnum.PORT === node.type) {
       itemDraggingRef.current = node;
       const connection = createConnection(
@@ -818,20 +907,25 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
     }
   }
 
-  function onDragging(node: NodeItemType, monitor: DropTargetMonitor) {
+  function onDragInit(node: NodeItemType, monitor: DropTargetMonitor) {
+    // We still probably need this when we are draggin lines from port to port.
+
+    // Called only once when it starts
     itemsRef.current[node.id].rect = node?.rect;
 
-    let rectOrigin = node?.rect;
+    // let rectOrigin = node?.rect;
 
     if (
       ItemTypeEnum.PORT === node.type &&
       itemDraggingRef.current &&
       buildPortUUID(node) === buildPortUUID(itemDraggingRef?.current)
     ) {
-      rectOrigin = itemDraggingRef?.current?.rect;
+      // rectOrigin = itemDraggingRef?.current?.rect;
+    } else {
+      renderConnectionLines();
     }
 
-    onDrag(update(node, { rect: { $set: rectFromOrigin(rectOrigin, monitor) } }));
+    // onDrag(update(node, { rect: { $set: rectFromOrigin(rectOrigin, monitor) } }));
   }
 
   function resetAfterDrop() {
@@ -840,7 +934,7 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
   }
 
   function onDropBlock(nodeInit: NodeItemType, monitor: DropTargetMonitor) {
-    console.log('nodeInit', nodeInit, nodeInit?.rect);
+    console.log('onDropBlock', nodeInit?.id);
 
     const node = itemsRef.current[nodeInit.id];
 
@@ -866,35 +960,68 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
     // if (left + itemWidth > screenX) left = screenX - itemWidth;
     // if (top + itemHeight > screenY) top = screenY - itemHeight;
 
+    let leftOffset = 0;
+    let topOffset = 0;
     if (snapToGridOnDrop) {
-      const [snappedX, snappedY] = snapToGrid(
+      // TODO (dangerous): This doesn’t apply to the ports; need to handle that separately.
+      const [
+        xSnapped,
+        ySnapped,
+      ] = snapToGrid(
         {
           x: left,
           y: top,
         },
-        {
-          height: GRID_SIZE,
-          width: GRID_SIZE,
-        },
+        gridDimensions,
       );
-      left = snappedX;
-      top = snappedY;
+      leftOffset = xSnapped - left;
+      topOffset = ySnapped - top;
     }
 
-    mutateModels({
-      itemMapping: {
-        [node.id]: update(node, {
-          rect: {
-            $merge: {
-              left,
-              top,
-            },
-          },
-        }),
+    left += leftOffset;
+    top += topOffset;
+
+
+    const node2 = update(node, {
+      rect: {
+        $merge: {
+          left,
+          top,
+        },
       },
     });
-    onDrag(itemsRef.current[node.id]);
-    itemElementsRef.current[node.type][node.id].current.style.transform = `translate(${left}px, ${top}px)`;
+
+    const portsUpdated = {};
+    node2?.ports?.forEach(({ id: portID }: PortType) => {
+      const port1 = portsRef.current[portID];
+      const port2 = update(port1, {
+        rect: {
+          $merge: {
+            left: left + (port1?.rect?.offset?.left ?? 0),
+            top: top + (port1?.rect?.offset?.top ?? 0),
+          },
+        },
+      });
+      portsRef.current[port2.id] = port2;
+      portsUpdated[port2.type] ||= {};
+      portsUpdated[port2.type][port2.id] = port2;
+    });
+
+    const elItem = itemElementsRef.current[node.type][node.id].current;
+    if (elItem) {
+      elItem.style.transform = `translate(${left}px, ${top}px)`;
+    }
+
+    const modelMapping = {
+      itemMapping: {
+        [node2.id]: node2,
+      },
+      portMapping: portsUpdated,
+    };
+
+    mutateModels(modelMapping);
+    renderConnectionLines({ modelMapping });
+
     setItemsState({ ...itemsRef.current });
   }
 
@@ -936,7 +1063,7 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
 
         return undefined;
       },
-      hover: onDragging,
+      hover: onDragInit,
     }),
     [],
   );
@@ -947,7 +1074,7 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
      ...Object.values(items || {}),
    ];
 
-    console.log('Re-rendering children...', arr, itemsRef?.current);
+    console.log('Rendering children...', arr?.length);
     return arr?.map((node: NodeType, idx: number) => (
       <BlockNodeWrapper
        frameworkGroups={frameworkGroupsRef?.current}
@@ -979,8 +1106,10 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
       }}
     >
       <CanvasContainer gridSize={GRID_SIZE} ref={containerRef}>
-        <DragLayer snapToGrid={snapToGridOnDrag} />
+        <DragLayer gridDimensions={gridDimensions} onDragging={onDragging} snapToGrid={snapToGridOnDrag} />
+
         <div id={connectionLinesRootID('nodes')} />
+
         {nodesMemo}
       </CanvasContainer>
     </div>
