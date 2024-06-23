@@ -163,12 +163,6 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
       itemsRef,
       portsRef,
     }, payload);
-    console.log(
-      'mutateModels',
-      connectionsRef.current,
-      itemsRef.current,
-      portsRef.current,
-    );
   }
 
   function setConnectionsDragging(connectionsDragging: Record<string, ConnectionType>) {
@@ -605,6 +599,8 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
     containerRef?.current?.classList.add(stylesBuilder[`level-${level}-active`]);
 
     renderConnectionLines();
+
+    renderLayoutChanges();
   }
 
   function handleDoubleClick(event: React.MouseEvent) {
@@ -647,9 +643,9 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
 
       // Models
       groupLevelsMappingRef?.current?.forEach((groupMapping: GroupMappingType, level: number) => {
-        if (level > 1) {
-          return;
-        }
+        // if (level > 1) {
+        //   return;
+        // }
 
         modelLevelsMapping.current.push(
           initializeBlocksAndConnections(
@@ -665,18 +661,18 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
         );
       });
 
-      // const finalLevel = modelLevelsMapping.current.length;
-      // modelLevelsMapping.current.push(
-      //   initializeBlocksAndConnections(
-      //     Object.values(blockMapping),
-      //     {
-      //       groupMapping: finalLevel >= 1 ? groupLevelsMappingRef?.current?.[finalLevel - 1] : undefined,
-      //     },
-      //     {
-      //     ...layout,
-      //     level: finalLevel,
-      //   }),
-      // );
+      const finalLevel = modelLevelsMapping.current.length;
+      modelLevelsMapping.current.push(
+        initializeBlocksAndConnections(
+          Object.values(blockMapping),
+          {
+            groupMapping: finalLevel >= 1 ? groupLevelsMappingRef?.current?.[finalLevel - 1] : undefined,
+          },
+          {
+          ...layout,
+          level: finalLevel,
+        }),
+      );
 
       startTransition(() => {
         const {
@@ -1095,6 +1091,8 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   } , [items]);
 
+  const { boundaryRefs } = transformState;
+
   return (
     <div
       onDoubleClick={handleDoubleClick}
@@ -1115,13 +1113,45 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
             height: '100%',
             position: 'absolute',
             width: '100%',
-            zIndex: 5,
+            zIndex: 3,
           }}
         />
 
         {nodesMemo}
+
+        <div ref={boundaryRefs?.left} style={{
+          bottom: 0,
+          height: '100vh',
+          left: 0,
+          position: 'fixed',
+          top: 0,
+          width: 1,
+        }} />
+        <div ref={boundaryRefs?.right} style={{
+          bottom: 0,
+          height: '100vh',
+          position: 'fixed',
+          right: 0,
+          top: 0,
+          width: 1,
+        }} />
+        <div ref={boundaryRefs?.bottom} style={{
+          bottom: 0,
+          height: 1,
+          left: 0,
+          position: 'fixed',
+          right: 0,
+          width: '100vw',
+        }} />
+        <div ref={boundaryRefs?.top} style={{
+          height: 1,
+          left: 0,
+          position: 'fixed',
+          right: 0,
+          top: 0,
+          width: '100vw',
+        }} />
       </CanvasContainer>
-      <div style={{ position: 'absolute', width: 9825, height: 7900, top: 0, left: 0, background: 'transparent', border: '1px solid red' }} />
     </div>
   );
 };
@@ -1139,6 +1169,9 @@ export default function PipelineBuilderCanvas(props: PipelineBuilderProps) {
     //   yPercent: 0.5,
     // },
     roles: [ElementRoleEnum.DRAGGABLE],
+    onStateChange: (state) => {
+      console.log('ZoomPan state changed:', state);
+    },
   });
 
   useEffect(() => {

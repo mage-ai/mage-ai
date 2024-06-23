@@ -235,30 +235,30 @@ const DataPreparation: PipelineExecutionFrameworkType = {
   groups: [GroupUUIDEnum.DATA_PREPARATION],
   execution_framework: PipelineExecutionFrameworkUUIDEnum.RAG,
   blocks: [
-    // {
-    //   uuid: Load.uuid,
-    //   type: BlockTypeEnum.PIPELINE,
-    //   upstream_blocks: [],
-    //   downstream_blocks: [Transform.uuid],
-    // },
-    // {
-    //   uuid: Transform.uuid,
-    //   type: BlockTypeEnum.PIPELINE,
-    //   upstream_blocks: [Load.uuid],
-    //   downstream_blocks: [Export.uuid],
-    // },
-    // {
-    //   uuid: Export.uuid,
-    //   type: BlockTypeEnum.PIPELINE,
-    //   upstream_blocks: [Transform.uuid],
-    //   downstream_blocks: [Index.uuid],
-    // },
-    // {
-    //   uuid: Index.uuid,
-    //   type: BlockTypeEnum.PIPELINE,
-    //   upstream_blocks: [Export.uuid],
-    //   downstream_blocks: [],
-    // },
+    {
+      uuid: Load.uuid,
+      type: BlockTypeEnum.PIPELINE,
+      upstream_blocks: [],
+      downstream_blocks: [Transform.uuid],
+    },
+    {
+      uuid: Transform.uuid,
+      type: BlockTypeEnum.PIPELINE,
+      upstream_blocks: [Load.uuid],
+      downstream_blocks: [Export.uuid],
+    },
+    {
+      uuid: Export.uuid,
+      type: BlockTypeEnum.PIPELINE,
+      upstream_blocks: [Transform.uuid],
+      downstream_blocks: [Index.uuid],
+    },
+    {
+      uuid: Index.uuid,
+      type: BlockTypeEnum.PIPELINE,
+      upstream_blocks: [Export.uuid],
+      downstream_blocks: [],
+    },
     ]?.map((b) => ({ ...b, name: capitalizeRemoveUnderscoreLower(b.uuid) })),
 };
 

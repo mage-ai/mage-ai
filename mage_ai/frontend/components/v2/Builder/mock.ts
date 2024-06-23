@@ -210,7 +210,7 @@ export const ResponseGenerationPipeline = {
       type: BlockTypeEnum.DATA_LOADER,
     },
     {
-      name: 'Response Synthesis',
+      name: 'Synthesize response from model',
       groups: [GroupUUIDEnum.RESPONSE_SYNTHESIS],
       type: BlockTypeEnum.CUSTOM,
     },
