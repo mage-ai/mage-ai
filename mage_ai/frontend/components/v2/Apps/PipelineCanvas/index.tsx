@@ -109,10 +109,6 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
       },
       direction: LayoutConfigDirectionEnum.HORIZONTAL,
       origin: LayoutConfigDirectionOriginEnum.LEFT,
-      transformRect: {
-        block: (rect: RectType) => transformState?.offsetRectToCenter(rect),
-        port: (rect: RectType) => transformState?.offsetRectToCenter(rect),
-      },
       transformState,
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }),
@@ -251,7 +247,7 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
       origin,
       transformState,
     } = layout ?? {};
-    console.log(layout);
+
     const isVertical = LayoutConfigDirectionEnum.VERTICAL === direction;
     const isReverse = (origin ?? false) && [
       LayoutConfigDirectionOriginEnum.BOTTOM,
@@ -999,10 +995,10 @@ export default function PipelineBuilderCanvas(props: PipelineBuilderProps) {
   const transformState = useZoomPan(canvasRef, {
     containerRef,
     disabled: isZoomPanDisabled,
-    initialPosition: {
-      xPercent: 0.5,
-      yPercent: 0.5,
-    },
+    // initialPosition: {
+    //   xPercent: 0.5,
+    //   yPercent: 0.5,
+    // },
     roles: [ElementRoleEnum.DRAGGABLE],
   });
 

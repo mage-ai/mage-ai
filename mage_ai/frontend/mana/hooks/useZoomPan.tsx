@@ -12,7 +12,6 @@ export type ZoomPanPositionType = {
 export type ZoomPanStateType = {
   container?: React.RefObject<HTMLElement>;
   element: React.RefObject<HTMLElement>;
-  offsetRectToCenter: (rect: RectType) => RectType;
   pan: React.MutableRefObject<boolean>;
   position: {
     current: ZoomPanPositionType;
@@ -160,7 +159,7 @@ export const useZoomPan = (
     element.addEventListener('touchstart', handleTouchStart, { passive: true });
     element.addEventListener('touchmove', handleTouchMove, { passive: true });
 
-    // initializeOrigin();
+    initializeOrigin();
 
     return () => {
       element.removeEventListener('wheel', handleWheel);
@@ -174,29 +173,9 @@ export const useZoomPan = (
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [disabled, zoomSensitivity, minScale, maxScale, roles]);
 
-  function offsetRectToCenter(rect: RectType): RectType {
-    // Calculate the offset to center the rect
-    const canvasRect = elementRef?.current?.getBoundingClientRect();
-    const containerRect = containerRef?.current?.getBoundingClientRect();
-
-    const originX = (canvasRect?.width - containerRect?.width) / 2;
-    const originY = (canvasRect?.height - containerRect?.height) / 2;
-    const diff = {
-      // left: (startX.current / scale.current) - originX,
-      // top: (startY.current / scale.current) - originY,
-    };
-
-    // Apply the offset and take into account the current origin and scale
-    return {
-      ...rect,
-      ...diff,
-    };
-  }
-
   return {
     container: containerRef,
     element: elementRef,
-    offsetRectToCenter,
     pan,
     position: {
       current: {
