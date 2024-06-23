@@ -97,7 +97,7 @@ export function BlockNode({
     () =>
       badge && (
         <Grid
-          alignItems="center"
+          alignItems='center'
           columnGap={8}
           id={`${item.id}-badge`}
           templateColumns={[
@@ -106,7 +106,7 @@ export function BlockNode({
             outputs?.length >= 1 ? 'auto' : '',
             (!inputs?.length ?? false) && (!outputs?.length ?? false) ? 'auto 1fr' : '',
           ].join(' ')}
-          templateRows="1fr"
+          templateRows='1fr'
         >
           {inputs?.length >= 1 && (
             <Circle
@@ -176,7 +176,7 @@ export function BlockNode({
   const titleRow = useMemo(
     () => (
       <Grid
-        alignItems="center"
+        alignItems='center'
         columnGap={12}
         id={`${item.id}-title`}
         templateColumns={[
@@ -184,7 +184,7 @@ export function BlockNode({
           before || after ? '1fr' : '',
           before && after ? 'auto' : '',
         ].join(' ')}
-        templateRows="1fr"
+        templateRows='1fr'
       >
         {before && <Aside {...before} />}
 
@@ -201,7 +201,7 @@ export function BlockNode({
   const main = useMemo(
     () => (
       <div className={styles.blockNode}>
-        <Grid rowGap={8} templateRows="auto">
+        <Grid rowGap={8} templateRows='auto'>
           {badgeRow}
           {!badge && titleRow}
           {connectionRows}

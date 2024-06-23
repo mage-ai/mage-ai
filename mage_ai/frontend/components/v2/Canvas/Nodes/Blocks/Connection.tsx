@@ -61,21 +61,21 @@ export default function Connection({ input, handlers, output, onMount }: Connect
 
   return (
     <Grid
-      alignItems="center"
+      alignItems='center'
       columnGap={8}
       templateColumns={[
         (input && output) || !(input && output) ? '1fr 1fr' : '',
         input && !output ? 'auto auto' : '',
         !input && output ? 'auto auto' : '',
       ].join(' ')}
-      templateRows="1fr"
+      templateRows='1fr'
     >
       <Grid
-        alignItems="center"
+        alignItems='center'
         columnGap={8}
-        justifyItems="start"
-        templateColumns="auto 1fr"
-        templateRows="1fr"
+        justifyItems='start'
+        templateColumns='auto 1fr'
+        templateRows='1fr'
       >
         <div ref={inputRef} style={{ height: 12, width: 12 }}>
           <DraggablePort handlers={handlers} item={input} itemRef={inputRef}>
@@ -89,11 +89,11 @@ export default function Connection({ input, handlers, output, onMount }: Connect
       </Grid>
 
       <Grid
-        alignItems="center"
+        alignItems='center'
         columnGap={8}
-        justifyItems="end"
-        templateColumns="1fr auto"
-        templateRows="1fr"
+        justifyItems='end'
+        templateColumns='1fr auto'
+        templateRows='1fr'
       >
         <Text italic={!output} muted small>
           {output?.target?.block?.name || output?.target?.block?.uuid || 'Output'}
