@@ -205,6 +205,7 @@ WHERE TABLE_NAME = '{table_name}'
         unique_conflict_method: str = None,
         unique_constraints: List[str] = None,
         write_disposition: str = None,
+        create_dataset: bool = False,
         **configuration_params,
     ) -> None:
         """
@@ -225,6 +226,7 @@ WHERE TABLE_NAME = '{table_name}'
                 Defaults to `'replace'`. If `write_disposition` is specified as a keyword argument,
                 this parameter is ignored (as both define the same functionality).
             overwrite_types (Dict): The column types to be overwritten by users.
+            create_dataset (bool): If set to True, creates the dataset
             **configuration_params: Configuration parameters for export job
         """
         if table_id is None:
@@ -286,6 +288,7 @@ WHERE table_id = '{table_name}'
                             df,
                             temp_table_id,
                             overwrite_types=overwrite_types,
+                            create_dataset=create_dataset,
                             **configuration_params,
                         )
 
@@ -342,6 +345,7 @@ WHERE table_id = '{table_name}'
                         table_id,
                         overwrite_types=overwrite_types,
                         write_disposition=write_disposition,
+                        create_dataset=create_dataset,
                         **configuration_params,
                     )
 
@@ -356,6 +360,7 @@ WHERE table_id = '{table_name}'
         df: DataFrame,
         table_id: str,
         overwrite_types: Dict = None,
+        create_dataset: bool = False,
         **configuration_params,
     ):
         config = LoadJobConfig(**configuration_params)
@@ -371,7 +376,8 @@ WHERE table_id = '{table_name}'
             schema = parts[1]
             table_name = parts[2]
 
-        self.client.create_dataset(dataset=schema, exists_ok=True)
+        if schema and create_dataset:
+            self.client.create_dataset(dataset=schema, exists_ok=True)
 
         column_types = self.get_column_types(schema, table_name)
 
