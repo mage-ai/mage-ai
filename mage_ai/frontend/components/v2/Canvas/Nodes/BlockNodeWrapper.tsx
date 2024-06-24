@@ -41,8 +41,8 @@ const BlockNodeWrapper: React.FC<BlockNodeWrapperProps> = ({
 
   const block = item?.block;
   const { pipeline, type, uuid } = block || {};
-  const isPipeline = useMemo(() => !type || BlockTypeEnum.PIPELINE === type, [type]);
-  const isGroup = useMemo(() => !type || BlockTypeEnum.GROUP === type, [type]);
+  const isPipeline = useMemo(() => type && BlockTypeEnum.PIPELINE === type, [type]);
+  const isGroup = useMemo(() => type && BlockTypeEnum.GROUP === type, [type]);
 
   const { onMouseDown, onMouseLeave, onMouseOver, onMouseUp } = handlers;
   const name = useMemo(
@@ -214,7 +214,7 @@ const BlockNodeWrapper: React.FC<BlockNodeWrapperProps> = ({
           asides: {
             after: {
               className: styles.showOnHover,
-              ...(isPipeline || isGroup
+              ...((isPipeline || isGroup)
                 ? {
                     Icon: Add,
                     onClick: () => alert('Coding...'),

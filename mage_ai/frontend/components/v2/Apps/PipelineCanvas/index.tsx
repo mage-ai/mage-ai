@@ -35,22 +35,23 @@ import {
   PortSubtypeEnum,
   LayoutConfigDirectionOriginEnum,
 } from '../../Canvas/types';
-import { ElementRoleEnum } from '@mana/shared/types';
 import BlockNodeWrapper from '../../Canvas/Nodes/BlockNodeWrapper';
-import { DragLayer } from '../../Canvas/Layers/DragLayer';
-import { snapToGrid } from '../../Canvas/utils/snapToGrid';
-import { ConnectionLines } from '../../Canvas/Connections/ConnectionLines';
-import { getPathD } from '../../Canvas/Connections/utils';
-import { getElementPositionInContainer, layoutItemsInGroups } from '../../Canvas/utils/rect';
-import { updateModelsAndRelationships, updateNodeGroupsWithItems } from './utils/nodes';
-import { buildPortUUID } from '@components/v2/Canvas/Draggable/utils';
-import { initializeBlocksAndConnections } from './utils/blocks';
-import { buildDependencies } from './utils/pipelines';
-import { ZoomPanStateType, useZoomPan } from '@mana/hooks/useZoomPan';
-import PipelineType from '@interfaces/PipelineType';
-import { getBlockColor } from '@mana/themes/blocks';
 import PipelineExecutionFrameworkType from '@interfaces/PipelineExecutionFramework/interfaces';
+import PipelineType from '@interfaces/PipelineType';
 import stylesBuilder from '@styles/scss/apps/Canvas/Pipelines/Builder.module.scss';
+import useContextMenu, { ClientEventType, MenuItemType, RemoveContextMenuType, RenderContextMenuType } from '@mana/hooks/useContextMenu';
+import { ConnectionLines } from '../../Canvas/Connections/ConnectionLines';
+import { DragLayer } from '../../Canvas/Layers/DragLayer';
+import { ElementRoleEnum } from '@mana/shared/types';
+import { Settings } from '@mana/icons';
+import { ZoomPanStateType, useZoomPan } from '@mana/hooks/useZoomPan';
+import { buildDependencies } from './utils/pipelines';
+import { getBlockColor } from '@mana/themes/blocks';
+import { getElementPositionInContainer, layoutItemsInGroups } from '../../Canvas/utils/rect';
+import { getPathD } from '../../Canvas/Connections/utils';
+import { initializeBlocksAndConnections } from './utils/blocks';
+import { snapToGrid } from '../../Canvas/utils/snapToGrid';
+import { updateModelsAndRelationships, updateNodeGroupsWithItems } from './utils/nodes';
 
 const GRID_SIZE = 40;
 
@@ -67,6 +68,8 @@ type PipelineBuilderProps = {
   pipelineExecutionFramework: PipelineExecutionFrameworkType;
   pipelineExecutionFrameworks: PipelineExecutionFrameworkType[];
   pipelines?: PipelineType[];
+  removeContextMenu: RemoveContextMenuType;
+  renderContextMenu: RenderContextMenuType;
   snapToGridOnDrag?: boolean;
   snapToGridOnDrop?: boolean;
   transformState: ZoomPanStateType;
@@ -81,6 +84,8 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
   pipelineExecutionFramework,
   pipelineExecutionFrameworks,
   pipelines,
+  removeContextMenu,
+  renderContextMenu,
   snapToGridOnDrag = false,
   snapToGridOnDrop = true,
   transformState,
@@ -684,6 +689,41 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
     resetAfterDrop();
   }
 
+  function handleContextMenu(event: ClientEventType) {
+    renderContextMenu(event, [
+      { Icon: Settings, uuid: 'New file' },
+      { uuid: 'New folder' },
+      { divider: true },
+      {
+        Icon: Settings,
+        uuid: 'Open file',
+      },
+      { uuid: 'Duplicate', description: () => 'Carbon copy file' },
+      { uuid: 'Move' },
+      { divider: true },
+      { uuid: 'Rename' },
+      { divider: true },
+      {
+        uuid: 'Transfer',
+        items: [{ uuid: 'Upload files' }, { uuid: 'Download file' }],
+      },
+      {
+        uuid: 'Copy',
+        items: [{ uuid: 'Copy path' }, { uuid: 'Copy relative path' }],
+      },
+      { divider: true },
+      {
+        uuid: 'View',
+        items: [{ uuid: 'Expand subdirectories' }, { uuid: 'Collapse subdirectories' }],
+      },
+      { divider: true },
+      {
+        uuid: 'Projects',
+        items: [{ uuid: 'New Mage project' }, { uuid: 'New dbt project' }],
+      },
+    ]);
+  }
+
   useEffect(() => {
     if (phaseRef.current === 0) {
       const { blockMapping, blocksByGroup, groupLevelsMapping, groupMapping } = buildDependencies(
@@ -1129,6 +1169,7 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
       }}
     >
       <div
+        onContextMenu={handleContextMenu}
         onDoubleClick={handleDoubleClick}
         ref={canvasRef}
         style={{
@@ -1236,6 +1277,14 @@ export default function PipelineBuilderCanvas(props: PipelineBuilderProps) {
   const [dropEnabled, setDropEnabled] = useState(false);
   const [, setZoomPanDisabledState] = useState(false);
 
+  const {
+    closeContextMenu,
+    contextMenu,
+    renderContextMenu,
+    removeContextMenu,
+    shouldPassControl,
+  } = useContextMenu({ container: canvasRef, uuid: 'pipeline-builder-canvas' });
+
   useZoomPan(zoomPanStateRef, {
     roles: [ElementRoleEnum.DRAGGABLE],
     // initialPosition: {
@@ -1252,7 +1301,8 @@ export default function PipelineBuilderCanvas(props: PipelineBuilderProps) {
 
   useEffect(() => {
     const handleMouseDown = (event: MouseEvent) => {
-      if (event.button > 0) return;
+      if (shouldPassControl(event as ClientEventType)) return;
+      closeContextMenu(event as ClientEventType, { conditionally: true });
 
       const targetElement = event.target as HTMLElement;
       const hasRole = [
@@ -1270,7 +1320,7 @@ export default function PipelineBuilderCanvas(props: PipelineBuilderProps) {
     const handleMouseUp = (event: MouseEvent) => {
       // Always do this or else there will be situations where it’s never reset.
 
-      if (event.button > 0) return;
+      if (shouldPassControl(event as ClientEventType)) return;
 
       const targetElement = event.target as HTMLElement;
       const hasRole = [
@@ -1302,15 +1352,21 @@ export default function PipelineBuilderCanvas(props: PipelineBuilderProps) {
   }, [dragEnabled, dropEnabled]);
 
   return (
-    <DndProvider backend={HTML5Backend}>
-      <PipelineBuilder
-        {...props}
-        canvasRef={canvasRef}
-        containerRef={containerRef}
-        onDragEnd={() => setZoomPanDisabled(false)}
-        onDragStart={() => setZoomPanDisabled(true)}
-        transformState={zoomPanStateRef.current}
-      />
-    </DndProvider>
+    <>
+      <DndProvider backend={HTML5Backend}>
+        <PipelineBuilder
+          {...props}
+          canvasRef={canvasRef}
+          containerRef={containerRef}
+          onDragEnd={() => setZoomPanDisabled(false)}
+          onDragStart={() => setZoomPanDisabled(true)}
+          removeContextMenu={removeContextMenu}
+          renderContextMenu={renderContextMenu}
+          transformState={zoomPanStateRef.current}
+        />
+      </DndProvider>
+
+      {contextMenu}
+    </>
   );
 }

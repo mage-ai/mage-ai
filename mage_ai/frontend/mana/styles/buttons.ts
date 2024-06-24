@@ -5,7 +5,7 @@ import text, { StyleProps as TextStyleProps } from './typography';
 import { outlineHover, transition, transitionFast } from './mixins';
 
 export type StyleProps = {
-  asLink?: boolean;
+  aslink?: boolean;
   basic?: boolean;
   grouped?: boolean;
   loading?: boolean;
@@ -17,31 +17,31 @@ export type StyleProps = {
 } & TextStyleProps;
 
 const shared = css<StyleProps>`
-  ${({ asLink, plain }) => !plain && (asLink ? transitionFast : transition)}
+  ${({ aslink, plain }) => !plain && (aslink ? transitionFast : transition)}
   ${text}
 
-  ${({ asLink, basic, grouped, plain, primary, secondary, theme }) => !plain &&
+  ${({ aslink, basic, grouped, plain, primary, secondary, theme }) => !plain &&
     outlineHover({
       borderColor: theme.fonts.color.text.inverted,
       outlineColor: primary
         ? theme.buttons.outline.color.primary.hover
         : secondary
           ? theme.buttons.outline.color.secondary.hover
-          : asLink || basic
+          : aslink || basic
             ? theme.buttons.outline.color.basic.hover
             : theme.buttons.outline.color.base.hover,
       outlineOffset: grouped ? UNIT : null,
     })}
 
-  ${({ asLink, grouped, plain }) =>
-    (asLink || grouped || plain) &&
+  ${({ aslink, grouped, plain }) =>
+  (aslink || grouped || plain) &&
     `
     border: none !important;
   `}
 
-  ${({ asLink, basic, grouped, plain }) => !asLink && !grouped && !plain && basic && borders}
-  ${({ asLink, basic, grouped, plain, primary, secondary, theme }) =>
-    !asLink &&
+  ${({ aslink, basic, grouped, plain }) => !aslink && !grouped && !plain && basic && borders}
+  ${({ aslink, basic, grouped, plain, primary, secondary, theme }) =>
+    !aslink &&
     !grouped &&
     !plain &&
     basic &&
@@ -57,10 +57,10 @@ const shared = css<StyleProps>`
     };
   `}
 
-  ${({ asLink, basic, grouped, plain, primary, secondary, theme }) =>
+  ${({ aslink, basic, grouped, plain, primary, secondary, theme }) =>
     !grouped &&
     !plain &&
-    (asLink || basic) &&
+    (aslink || basic) &&
     `
     &:hover {
       border-color: ${
@@ -68,7 +68,7 @@ const shared = css<StyleProps>`
           ? theme.buttons.border.color.primary.hover
           : secondary
             ? theme.buttons.border.color.secondary.hover
-            : asLink || basic
+            : aslink || basic
               ? theme.buttons.border.color.basic.hover
               : theme.buttons.border.color.base.hover
       };
@@ -77,8 +77,8 @@ const shared = css<StyleProps>`
 
   ${({ basic, grouped }) => !grouped && !basic && bordersTransparent}
 
-  background-color: ${({ asLink, basic, plain, primary, secondary, theme }) => !plain && (
-    asLink
+  background-color: ${({ aslink, basic, plain, primary, secondary, theme }) => !plain && (
+    aslink
       ? 'transparent'
       : primary
         ? theme.colors.backgrounds.button.primary.default
@@ -87,7 +87,7 @@ const shared = css<StyleProps>`
           : basic
             ? theme.colors.backgrounds.button.basic.default
             : theme.colors.backgrounds.button.base.default)};
-  border-radius: ${({ theme }) => theme.borders.radius.base};
+  border-radius: ${({ plain, theme }) => !plain && theme.borders.radius.base};
   color: ${({ primary, secondary, theme }) =>
     primary || secondary ? theme.fonts.color.text.inverted : theme.fonts.color.text.base};
 
@@ -129,8 +129,8 @@ const shared = css<StyleProps>`
 const base = css<StyleProps>`
   ${shared}
   font-size: ${({ theme }) => theme.fonts.size.base};
-  padding: ${({ asLink, basic, grouped, plain, theme }) => !plain && (
-    asLink
+  padding: ${({ aslink, basic, grouped, plain, theme }) => !plain && (
+    aslink
       ? basic
         ? 0
         : '2px 4px'
@@ -146,10 +146,10 @@ export const sm = css<StyleProps>`
   ${shared}
 
   font-size: ${({ theme }) => theme.fonts.size.sm};
-  padding: ${({ asLink, basic, grouped, plain, theme, tag }) => !plain && (
+  padding: ${({ aslink, basic, grouped, plain, theme, tag }) => !plain && (
     typeof tag !== 'undefined'
       ? theme.buttons.padding.sm
-      : asLink
+      : aslink
         ? basic
           ? 0
           : '2px 4px'
@@ -169,9 +169,10 @@ export const sm = css<StyleProps>`
     padding-top: 0;
   `}
 
-  ${({ basic, grouped, theme }) =>
+  ${({ basic, grouped, plain, theme }) =>
     grouped &&
     !basic &&
+    !plain &&
     `
     border-radius: ${theme.borders.radius.sm};
   `}

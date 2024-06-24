@@ -99,38 +99,54 @@ export function BlockNode({
       badge && (
         <Grid
           alignItems="center"
+          autoColumns="auto"
+          autoFlow="column"
           columnGap={8}
           id={`${item.id}-badge`}
-          templateColumns={[
-            inputs?.length >= 1 ? 'auto' : '',
-            inputs?.length >= 1 || outputs?.length >= 1 ? '1fr' : '',
-            outputs?.length >= 1 ? 'auto' : '',
-            (!inputs?.length ?? false) && (!outputs?.length ?? false) ? 'auto 1fr' : '',
-            after ? 'auto' : '',
-          ].join(' ')}
+          justifyContent="space-between"
+          templateColumns="1fr"
           templateRows="1fr"
         >
-          {inputs?.length >= 1 && (
-            <Circle
-              backgroundColor={
-                getBlockColor(inputs?.[0]?.target?.block?.type, { getColorName: true })?.names
-                  ?.base || 'gray'
-              }
-              size={12}
-            />
-          )}
-          {badge && <Badge {...badge} />}
-          {(!inputs?.length ?? false) && (!outputs?.length ?? false) && <div />}
-          {outputs?.length >= 1 && (
-            <Circle
-              backgroundColor={
-                getBlockColor(outputs?.[0]?.target?.block?.type, { getColorName: true })?.names
-                  ?.base || 'gray'
-              }
-              size={12}
-            />
-          )}
-          {after && <Aside {...after} />}
+          <Grid
+            alignItems="center"
+            autoColumns="auto"
+            autoFlow="column"
+            columnGap={8}
+            justifyContent="start"
+            templateColumns="max-content"
+            templateRows="1fr"
+          >
+            {false && inputs?.length >= 1 && (
+              <Circle
+                backgroundColor={
+                  getBlockColor(inputs?.[0]?.target?.block?.type, { getColorName: true })?.names
+                    ?.base || 'gray'
+                }
+                size={12}
+              />
+            )}
+            {badge && <Badge {...badge} />}
+          </Grid>
+          <Grid
+            alignItems="center"
+            autoColumns="auto"
+            autoFlow="column"
+            columnGap={8}
+            justifyContent="end"
+            templateColumns="max-content"
+            templateRows="1fr"
+          >
+            {after && <Aside {...after} />}
+            {false && outputs?.length >= 1 && (
+              <Circle
+                backgroundColor={
+                  getBlockColor(outputs?.[0]?.target?.block?.type, { getColorName: true })?.names
+                    ?.base || 'gray'
+                }
+                size={12}
+              />
+            )}
+          </Grid>
         </Grid>
       ),
     [after, badge, inputs, item, outputs],
