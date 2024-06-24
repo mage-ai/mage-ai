@@ -191,8 +191,6 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
   function renderLayoutChanges(opts?: { level?: number; items?: ItemMappingType }) {
     const itemMapping = opts?.items ?? modelLevelsMapping.current[opts.level]?.itemMapping ?? {};
 
-    console.log('Updating items:', itemMapping);
-
     setItemsState(prev => ({
       ...prev,
       ...itemMapping,
@@ -1153,8 +1151,6 @@ export default function PipelineBuilderCanvas(props: PipelineBuilderProps) {
     // },
     roles: [ElementRoleEnum.DRAGGABLE],
   });
-
-  console.log(isZoomPanDisabled);
 
   useEffect(() => {
     const handleMouseDown = (event: MouseEvent) => {

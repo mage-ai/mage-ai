@@ -31,12 +31,6 @@ const BlockNodeWrapper: React.FC<BlockNodeWrapperProps> = ({
   onMountItem,
   selected = false,
 }) => {
-  console.log(item?.type, item?.id, item?.version);
-
-  if (ItemTypeEnum.NODE === item?.type) {
-    isDebug() && console.log(item);
-  }
-
   const itemRef = useRef(null);
   const phaseRef = useRef(0);
   const timeoutRef = useRef(null);
