@@ -1232,6 +1232,8 @@ export default function PipelineBuilderCanvas(props: PipelineBuilderProps) {
     transform: transformRef,
     zoom,
   });
+  const [dragEnabled, setDragEnabled] = useState(false);
+  const [dropEnabled, setDropEnabled] = useState(false);
   const [, setZoomPanDisabledState] = useState(false);
 
   useZoomPan(zoomPanStateRef, {
@@ -1253,7 +1255,9 @@ export default function PipelineBuilderCanvas(props: PipelineBuilderProps) {
       if (event.button > 0) return;
 
       const targetElement = event.target as HTMLElement;
-      const hasRole = [ElementRoleEnum.DRAGGABLE].some(role =>
+      const hasRole = [
+        dragEnabled && ElementRoleEnum.DRAGGABLE,
+      ].filter(Boolean).some(role =>
         targetElement.closest(`[role="${role}"]`),
       );
 
@@ -1269,7 +1273,10 @@ export default function PipelineBuilderCanvas(props: PipelineBuilderProps) {
       if (event.button > 0) return;
 
       const targetElement = event.target as HTMLElement;
-      const hasRole = [ElementRoleEnum.DRAGGABLE, ElementRoleEnum.DROPPABLE].some(role =>
+      const hasRole = [
+        dragEnabled && ElementRoleEnum.DRAGGABLE,
+        dropEnabled && ElementRoleEnum.DROPPABLE,
+      ].filter(Boolean).some(role =>
         targetElement.closest(`[role="${role}"]`),
       );
 
@@ -1292,7 +1299,7 @@ export default function PipelineBuilderCanvas(props: PipelineBuilderProps) {
       }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [dragEnabled, dropEnabled]);
 
   return (
     <DndProvider backend={HTML5Backend}>

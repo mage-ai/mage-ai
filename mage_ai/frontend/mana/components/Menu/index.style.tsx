@@ -1,10 +1,10 @@
-import React from 'react';
-import styled from 'styled-components';
+import styled, { css } from 'styled-components';
 
-import { UNIT } from '@mana/themes/spaces';
+import { UNIT } from '../../themes/spaces';
+import { gradientBackground } from '../../styles/mixins';
 
-export const MENU_ITEM_HEIGHT = 34;
-export const MENU_MIN_WIDTH = UNIT * 70;
+export const MENU_ITEM_HEIGHT = 35;
+export const MENU_MIN_WIDTH = UNIT * 40;
 
 type MenuStyledProps = {
   contained?: boolean;
@@ -12,6 +12,11 @@ type MenuStyledProps = {
   top?: number;
   zIndex?: number;
 };
+
+const borderStyles = css`
+  border-left: 1px solid var(--colors-graymd);
+  border-right: 1px solid var(--colors-graymd);
+`;
 
 export const MenuStyled = styled.div<MenuStyledProps>`
   ${({ left, top, zIndex }) =>
@@ -22,13 +27,84 @@ export const MenuStyled = styled.div<MenuStyledProps>`
     z-index: ${zIndex || 1};
   `}
 
-  ${({ contained, theme }) => `
-    backdrop-filter: ${theme.menus.blur.base};
-    background-color: ${theme.menus.background[contained ? 'contained' : 'base'].default};
-    border-radius: ${theme.menus.border.radius.base};
-    padding: ${theme.menus.padding.base};
-  `}
-
   min-width: ${MENU_MIN_WIDTH}px;
   position: ${({ contained }) => (contained ? 'absolute' : 'fixed')};
+  width: max-content;
+`;
+
+export const MenuItemContainerStyled = styled.div<{
+  contained?: boolean;
+  first?: boolean;
+  last?: boolean;
+}>`
+  ${borderStyles}
+
+  overflow: hidden;
+
+  ${({ contained, theme }) => `
+    backdrop-filter: ${theme.menus.blur[contained ? 'contained' : 'base']};
+  `}
+
+  ${({ contained }) => !contained && gradientBackground('0deg', '#0000004D', '#0000004D', 0, 100, 'graylo')}
+  ${({ contained }) => contained && `
+    background-color: var(--colors-graylo);
+  `}
+
+  ${({ first, theme }) => first && `
+    border-top: 1px solid var(--colors-graymd);
+    border-top-left-radius: ${theme.menus.border.radius.base};
+    border-top-right-radius: ${theme.menus.border.radius.base};
+  `}
+
+  ${({ last, theme }) => last && `
+    border-bottom: 1px solid var(--colors-graymd);
+    border-bottom-left-radius: ${theme.menus.border.radius.base};
+    border-bottom-right-radius: ${theme.menus.border.radius.base};
+  `}
+
+  &:hover {
+    border-left-color: var(--colors-gray);
+    border-right-color: var(--colors-gray);
+  }
+`;
+
+export const MenuItemStyled = styled.div<{
+  first?: boolean;
+  last?: boolean;
+}>`
+  border-top: 1px solid transparent;
+  border-bottom: 1px solid transparent;
+
+  &:hover {
+    background-color: var(--colors-graymd);
+    border-bottom-color: var(--colors-gray);
+    border-top-color: var(--colors-gray);
+  }
+
+  ${({ first }) => first && `
+    &:hover {
+      border-top-color: transparent;
+    }
+  `}
+
+  ${({ last }) => last && `
+    &:hover {
+      border-bottom-color: transparent;
+    }
+  `}
+
+  ${({ theme }) => `
+    padding: ${theme.menus.padding.item.base};
+
+  `}
+`;
+
+export const DividerStyled = styled.div`
+  ${borderStyles}
+  background-color: var(--colors-graymd);
+  height: 1px;
+  margin-bottom: 2px;
+  margin-top: 2px;
+  margin-left: 16px;
+  margin-right: 16px;
 `;

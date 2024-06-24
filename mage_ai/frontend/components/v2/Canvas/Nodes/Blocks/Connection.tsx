@@ -8,13 +8,14 @@ import { DraggablePort } from '../../Draggable/DraggablePort';
 import { DragAndDropHandlersType } from '../types';
 
 type ConnectionProps = {
+  draggable?: boolean;
   input: PortType;
   output: PortType;
   emphasized?: boolean;
   onMount?: (port: PortType, portRef: React.RefObject<HTMLDivElement>) => void;
 } & DragAndDropHandlersType;
 
-export default function Connection({ input, handlers, output, onMount }: ConnectionProps) {
+export default function Connection({ draggable, input, handlers, output, onMount }: ConnectionProps) {
   const inputRef = useRef<HTMLDivElement>(null);
   const outputRef = useRef<HTMLDivElement>(null);
 
@@ -78,9 +79,12 @@ export default function Connection({ input, handlers, output, onMount }: Connect
         templateRows="1fr"
       >
         <div ref={inputRef} style={{ height: 12, width: 12 }}>
-          <DraggablePort handlers={handlers} item={input} itemRef={inputRef}>
-            {inputPort}
-          </DraggablePort>
+          {!draggable && inputPort}
+          {draggable && (
+            <DraggablePort handlers={handlers} item={input} itemRef={inputRef}>
+              {inputPort}
+            </DraggablePort>
+          )}
         </div>
 
         <Text italic={!input} muted small>
@@ -100,9 +104,12 @@ export default function Connection({ input, handlers, output, onMount }: Connect
         </Text>
 
         <div ref={outputRef} style={{ height: 12, width: 12 }}>
-          <DraggablePort handlers={handlers} item={output} itemRef={outputRef}>
-            {outputPort}
-          </DraggablePort>
+          {!draggable && outputPort}
+          {draggable && (
+            <DraggablePort handlers={handlers} item={output} itemRef={outputRef}>
+              {outputPort}
+            </DraggablePort>
+          )}
         </div>
       </Grid>
     </Grid>

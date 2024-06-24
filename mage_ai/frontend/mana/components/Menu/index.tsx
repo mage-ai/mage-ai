@@ -2,19 +2,18 @@ import React, { useCallback, useContext, useMemo, useRef } from 'react';
 import { ThemeContext, ThemeProvider } from 'styled-components';
 import { createRoot } from 'react-dom/client';
 
-import DeferredRenderer from '@mana/components/DeferredRenderer';
 import Button from '@mana/elements/Button';
-import Divider from '@mana/elements/Divider';
+import DeferredRenderer from '@mana/components/DeferredRenderer';
+import Grid from '@mana/components/Grid';
 import KeyboardTextGroup from '@mana/elements/Text/Keyboard/Group';
 import Text from '@mana/elements/Text';
-import { Row } from '@mana/components/Container';
-import Grid from '@mana/components/Grid';
-import { MenuStyled, MENU_ITEM_HEIGHT, MENU_MIN_WIDTH } from './index.style';
-import { HEADER_Z_INDEX } from '@components/constants';
-import { UNIT } from '@mana/themes/spaces';
 import icons from '@mana/icons';
 import useDebounce from '@utils/hooks/useDebounce';
-import { MenuItemType } from './types';
+import { HEADER_Z_INDEX } from '@components/constants';
+import { MenuItemType } from './interfaces';
+import { DividerStyled, MenuItemContainerStyled, MenuStyled, MenuItemStyled, MENU_ITEM_HEIGHT, MENU_MIN_WIDTH } from './index.style';
+import { Row } from '@mana/components/Container';
+import { UNIT } from '@mana/themes/spaces';
 
 const { CaretRight } = icons;
 
@@ -36,51 +35,89 @@ type MenuProps = {
 };
 
 type ItemProps = {
+  contained?: boolean;
+  first?: boolean;
+  last?: boolean;
   item: MenuItemType;
   small?: boolean;
 };
 
-function MenuItem({ item, small }: ItemProps) {
+function MenuItem({ contained, first, item, last, small }: ItemProps) {
   const { Icon, description, divider, items, keyboardShortcuts, label, onClick, uuid } = item;
   const itemsCount = useMemo(() => items?.length || 0, [items]);
 
   if (divider) {
-    return <Divider compact={small} />;
+    return <MenuItemContainerStyled><DividerStyled /></MenuItemContainerStyled>;
   }
+
+  const before = Icon ? <Icon size={small ? 12 : undefined} /> : undefined;
 
   return (
     <Button
-      Icon={Icon ? () => <Icon size={small ? 16 : undefined} /> : undefined}
       asLink
       onClick={onClick}
+      plain
     >
-      <Grid rowGap={4}>
-        <Grid
-          alignItems="center"
-          autoFlow="column"
-          justifyContent="space-between"
-          templateRows="1fr"
+      <MenuItemContainerStyled
+        contained={contained}
+        first={first}
+        last={last}
+      >
+        <MenuItemStyled
+          first={first}
+          last={last}
         >
-          <Text small={small}>{label?.() || uuid}</Text>
+          <Grid rowGap={4}>
+            <Grid
+              alignItems="center"
+              columnGap={16}
+              justifyContent="space-between"
+              templateColumns={[
+                '1fr',
+                'auto',
+              ].filter(Boolean).join(' ')}
+              templateRows="1fr"
+            >
+              <Grid
+                columnGap={4}
+                templateColumns={[
+                  before && 'auto',
+                  '1fr',
+                ].filter(Boolean).join(' ')}
+              >
+                {before}
+                <Text small={small}>{label?.() || uuid}</Text>
+              </Grid>
 
-          {keyboardShortcuts && (
-            <KeyboardTextGroup
-              monospace
-              small={!small}
-              textGroup={keyboardShortcuts}
-              xsmall={small}
-            />
-          )}
+              <Grid
+                columnGap={4}
+                templateColumns={[
+                  keyboardShortcuts && 'auto',
+                  itemsCount >= 1 && 'auto',
+                ].filter(Boolean).join(' ')}
+              >
+                {keyboardShortcuts && (
+                  <KeyboardTextGroup
+                    monospace
+                    small={!small}
+                    textGroup={keyboardShortcuts}
+                    xsmall={small}
+                  />
+                )}
 
-          {itemsCount >= 1 && <CaretRight size={12} />}
-        </Grid>
+                {itemsCount >= 1 && <CaretRight size={12} />}
+              </Grid>
 
-        {description && (
-          <Text muted small={!small} xsmall={small}>
-            {description?.()}
-          </Text>
-        )}
-      </Grid>
+            </Grid>
+
+            {description && (
+              <Text muted small={!small} xsmall={small}>
+                {description?.()}
+              </Text>
+            )}
+          </Grid>
+        </MenuItemStyled>
+      </MenuItemContainerStyled>
     </Button>
   );
 }
@@ -143,7 +180,8 @@ function Menu({ boundingContainer, contained, coordinates, event, items, small, 
 
       // Calculate the mouse position relative to the element
       const paddingHorizontal = rect?.left - rectContainer?.left;
-      const x = rectContainer?.left + rectContainer?.width - (rect?.left + paddingHorizontal);
+      // 4px for the 4 borders: 2 from the parent and 2 from the child.
+      const x = rectContainer?.left + rectContainer?.width - (rect?.left + paddingHorizontal + 4);
       const y = rect?.top - rectContainer?.top - 2 * (rect?.height - element?.clientHeight);
 
       itemsRootRef.current.render(
@@ -169,6 +207,8 @@ function Menu({ boundingContainer, contained, coordinates, event, items, small, 
     [boundingContainer, rootID, themeContext, uuid],
   );
 
+  const itemsCount = useMemo(() => items?.length || 0, [items]);
+
   return (
     <MenuStyled
       contained={contained}
@@ -177,25 +217,23 @@ function Menu({ boundingContainer, contained, coordinates, event, items, small, 
       top={top}
       zIndex={HEADER_Z_INDEX + 100}
     >
-      {items?.length >= 1 && (
+      {itemsCount >= 1 && (
         <>
-          <Row direction="column" nogutter>
-            {items?.map((item: MenuItemType, idx: number) => (
-              <div
-                key={`menu-item-${item.uuid}-${idx}`}
-                onMouseEnter={event => {
-                  cancel();
-                  debouncer(() => renderItems(item, event), 100);
-                }}
-                onMouseLeave={() => {
-                  cancel();
-                }}
-                style={{ display: 'grid', width: '100%' }}
-              >
-                <MenuItem item={item} small={small} />
-              </div>
-            ))}
-          </Row>
+          {items?.map((item: MenuItemType, idx: number) => (
+            <div
+              key={`menu-item-${item.uuid}-${idx}`}
+              onMouseEnter={event => {
+                cancel();
+                debouncer(() => renderItems(item, event), 100);
+              }}
+              onMouseLeave={() => {
+                cancel();
+              }}
+              style={{ display: 'grid', width: '100%' }}
+            >
+              <MenuItem contained={contained} first={idx === 0} item={item} last={idx === itemsCount - 1} small={small} />
+            </div>
+          ))}
 
           <div id={rootID} />
         </>

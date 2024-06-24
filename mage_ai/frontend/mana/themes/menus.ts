@@ -1,11 +1,11 @@
-import { BackgroundsType, ColorsType } from './colors';
+import { ColorsType } from './colors';
 import { PaddingVerticalEnum } from './interactive';
 import { BorderRadius } from './borders';
 
 export interface MenuType {
-  background: BackgroundsType['menu'];
   blur: {
     base: string;
+    contained: string;
   };
   border: {
     radius: {
@@ -13,17 +13,19 @@ export interface MenuType {
     };
   };
   padding: {
-    base: string;
+    item: {
+      base: string;
+    };
   };
 }
 
 export default function build(colors: ColorsType): MenuType {
   return {
-    background: colors.backgrounds.menu,
     blur: {
       // saturate: higher, more color from items behind
       // blur: 1-3px
-      base: 'saturate(100%) blur(3px)',
+      base: 'blur(20px)',
+      contained: 'saturate(100%) blur(3px)',
     },
     border: {
       radius: {
@@ -31,7 +33,9 @@ export default function build(colors: ColorsType): MenuType {
       },
     },
     padding: {
-      base: `${PaddingVerticalEnum.SM} ${PaddingVerticalEnum.SM}`,
+      item: {
+        base: `${PaddingVerticalEnum.SM} 16px`,
+      },
     },
   };
 }

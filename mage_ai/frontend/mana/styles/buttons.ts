@@ -9,6 +9,7 @@ export type StyleProps = {
   basic?: boolean;
   grouped?: boolean;
   loading?: boolean;
+  plain?: boolean;
   primary?: boolean;
   secondary?: boolean;
   small?: boolean;
@@ -16,11 +17,10 @@ export type StyleProps = {
 } & TextStyleProps;
 
 const shared = css<StyleProps>`
-  ${({ asLink }) => (asLink ? transitionFast : transition)}
+  ${({ asLink, plain }) => !plain && (asLink ? transitionFast : transition)}
   ${text}
 
-
-  ${({ asLink, basic, grouped, primary, secondary, theme }) =>
+  ${({ asLink, basic, grouped, plain, primary, secondary, theme }) => !plain &&
     outlineHover({
       borderColor: theme.fonts.color.text.inverted,
       outlineColor: primary
@@ -33,16 +33,17 @@ const shared = css<StyleProps>`
       outlineOffset: grouped ? UNIT : null,
     })}
 
-  ${({ asLink, grouped }) =>
-    (asLink || grouped) &&
+  ${({ asLink, grouped, plain }) =>
+    (asLink || grouped || plain) &&
     `
-    border: none;
+    border: none !important;
   `}
 
-  ${({ asLink, basic, grouped }) => !asLink && !grouped && basic && borders}
-  ${({ asLink, basic, grouped, primary, secondary, theme }) =>
+  ${({ asLink, basic, grouped, plain }) => !asLink && !grouped && !plain && basic && borders}
+  ${({ asLink, basic, grouped, plain, primary, secondary, theme }) =>
     !asLink &&
     !grouped &&
+    !plain &&
     basic &&
     `
     border-color: ${
@@ -56,8 +57,9 @@ const shared = css<StyleProps>`
     };
   `}
 
-  ${({ asLink, basic, grouped, primary, secondary, theme }) =>
+  ${({ asLink, basic, grouped, plain, primary, secondary, theme }) =>
     !grouped &&
+    !plain &&
     (asLink || basic) &&
     `
     &:hover {
@@ -75,7 +77,7 @@ const shared = css<StyleProps>`
 
   ${({ basic, grouped }) => !grouped && !basic && bordersTransparent}
 
-  background-color: ${({ asLink, basic, primary, secondary, theme }) =>
+  background-color: ${({ asLink, basic, plain, primary, secondary, theme }) => !plain && (
     asLink
       ? 'transparent'
       : primary
@@ -84,7 +86,7 @@ const shared = css<StyleProps>`
           ? theme.colors.backgrounds.button.secondary.default
           : basic
             ? theme.colors.backgrounds.button.basic.default
-            : theme.colors.backgrounds.button.base.default};
+            : theme.colors.backgrounds.button.base.default)};
   border-radius: ${({ theme }) => theme.borders.radius.base};
   color: ${({ primary, secondary, theme }) =>
     primary || secondary ? theme.fonts.color.text.inverted : theme.fonts.color.text.base};
@@ -97,8 +99,9 @@ const shared = css<StyleProps>`
     primary || secondary ? theme.fonts.weight.bold : theme.fonts.weight.semiBold};
   line-height: ${({ small, theme }) => theme.buttons.font.lineHeight[small ? 'sm' : 'base']}px;
 
-  ${({ basic, grouped, primary, secondary, theme }) =>
+  ${({ basic, grouped, plain, primary, secondary, theme }) =>
     !grouped &&
+    !plain &&
     `
     &:hover {
       background-color: ${
@@ -126,7 +129,7 @@ const shared = css<StyleProps>`
 const base = css<StyleProps>`
   ${shared}
   font-size: ${({ theme }) => theme.fonts.size.base};
-  padding: ${({ asLink, basic, grouped, theme }) =>
+  padding: ${({ asLink, basic, grouped, plain, theme }) => !plain && (
     asLink
       ? basic
         ? 0
@@ -135,14 +138,15 @@ const base = css<StyleProps>`
         ? basic
           ? 0
           : theme.buttons.padding.xxs
-        : theme.buttons.padding.base};
+        : theme.buttons.padding.base
+  )};
 `;
 
 export const sm = css<StyleProps>`
   ${shared}
 
   font-size: ${({ theme }) => theme.fonts.size.sm};
-  padding: ${({ asLink, basic, grouped, theme, tag }) =>
+  padding: ${({ asLink, basic, grouped, plain, theme, tag }) => !plain && (
     typeof tag !== 'undefined'
       ? theme.buttons.padding.sm
       : asLink
@@ -153,7 +157,8 @@ export const sm = css<StyleProps>`
           ? basic
             ? 0
             : theme.buttons.padding.xxs
-          : theme.buttons.padding.sm};
+          : theme.buttons.padding.sm
+  )};
 
   ${({ grouped, tag, theme }) =>
     typeof tag !== 'undefined' &&

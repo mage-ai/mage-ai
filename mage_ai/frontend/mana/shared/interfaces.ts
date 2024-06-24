@@ -1,3 +1,6 @@
+import React from 'react';
+import { LanguageEnum } from './enums';
+
 export enum EventOperationEnum {
   DRAGGING = 'drag.active',
   DRAG_END = 'drag.end',
@@ -17,7 +20,7 @@ export type ClientEventType = {
   data?: Record<string, any>;
   operationTarget?: HTMLElement;
   operationType?: EventOperationEnum;
-} & Event & MouseEvent;
+} & Event & MouseEvent & TouchEvent & KeyboardEvent & React.MouseEvent & React.TouchEvent;
 
 export type HandleOperationType = (event: ClientEventType) => boolean;
 
@@ -29,4 +32,15 @@ export type ClientEventCallbackType = {
 export interface EventStackEntryType {
   callback: ClientEventCallbackType;
   event: ClientEventType;
+}
+
+export interface FileType {
+  content?: string;
+  extension?: string;
+  language?: LanguageEnum;
+  modified_timestamp?: number;
+  name: string;
+  path: string;
+  relative_path?: string;
+  size: number;
 }

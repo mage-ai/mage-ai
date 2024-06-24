@@ -3,7 +3,7 @@ import { BlockNode } from './BlockNode';
 import { StatusTypeEnum, BlockTypeEnum } from '@interfaces/BlockType';
 import { NodeWrapper, NodeWrapperProps } from './NodeWrapper';
 import { getBlockColor } from '@mana/themes/blocks';
-import { Check, Code, PipeIconVertical, PlayButtonFilled, Infinite } from '@mana/icons';
+import { Add, CaretDown, Check, Code, PipeIconVertical, PlayButtonFilled, Infinite } from '@mana/icons';
 import { createRef, useEffect, useCallback, useState, useMemo, useRef } from 'react';
 import { GroupUUIDEnum } from '@interfaces/PipelineExecutionFramework/types';
 import { NodeItemType, PortType, DragItem } from '../interfaces';
@@ -11,6 +11,7 @@ import { countOccurrences, flattenArray, sortByKey } from '@utils/array';
 import { dig } from '@utils/hash';
 import { ItemTypeEnum } from '../types';
 import stylesBuilder from '@styles/scss/apps/Canvas/Pipelines/Builder.module.scss';
+import styles from '@styles/scss/components/Canvas/Nodes/BlockNode.module.scss';
 import { isDebug } from '@utils/environment';
 
 type BlockNodeWrapperProps = {
@@ -35,6 +36,7 @@ const BlockNodeWrapper: React.FC<BlockNodeWrapperProps> = ({
   const phaseRef = useRef(0);
   const timeoutRef = useRef(null);
   const portElementRefs = useRef<Record<string, any>>({});
+  const [draggable, setDraggable] = useState(false);
   const [draggingNode, setDraggingNode] = useState<NodeItemType | null>(null);
 
   const block = item?.block;
@@ -178,13 +180,18 @@ const BlockNodeWrapper: React.FC<BlockNodeWrapperProps> = ({
 
   return (
     <NodeWrapper
-      className={[stylesBuilder.level, stylesBuilder[`level-${item?.level}`]]?.join(' ')}
+      className={[
+        stylesBuilder.level,
+        stylesBuilder[`level-${item?.level}`],
+        styles.blockNodeContainer,
+      ]?.join(' ')}
+      draggable={false}
       draggingNode={draggingNode}
       handlers={{
         ...handlers,
         onMouseDown: handleMouseDown,
         onMouseLeave: handleMouseLeave,
-        onMouseOver: handleMouseOver,
+        onMouseOver: !draggable && handleMouseOver,
         onMouseUp: handleMouseUp,
       }}
       item={item}
@@ -205,13 +212,18 @@ const BlockNodeWrapper: React.FC<BlockNodeWrapperProps> = ({
         onMount={onMount}
         titleConfig={{
           asides: {
-            after:
-              isPipeline || isGroup
-                ? undefined
-                : {
-                    Icon: Code,
+            after: {
+              className: styles.showOnHover,
+              ...(isPipeline || isGroup
+                ? {
+                    Icon: Add,
                     onClick: () => alert('Coding...'),
-                  },
+                  }
+                : {
+                    Icon: CaretDown,
+                    onClick: () => alert('Coding...'),
+                  }),
+            },
             before: {
               Icon: StatusTypeEnum.EXECUTED === block?.status ? Check : PlayButtonFilled,
               baseColorName:

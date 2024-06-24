@@ -106,6 +106,7 @@ export function BlockNode({
             inputs?.length >= 1 || outputs?.length >= 1 ? '1fr' : '',
             outputs?.length >= 1 ? 'auto' : '',
             (!inputs?.length ?? false) && (!outputs?.length ?? false) ? 'auto 1fr' : '',
+            after ? 'auto' : '',
           ].join(' ')}
           templateRows="1fr"
         >
@@ -129,9 +130,10 @@ export function BlockNode({
               size={12}
             />
           )}
+          {after && <Aside {...after} />}
         </Grid>
       ),
-    [badge, inputs, item, outputs],
+    [after, badge, inputs, item, outputs],
   );
 
   const connectionRows = useMemo(
@@ -141,15 +143,15 @@ export function BlockNode({
       <PanelRows>
         {inputOutputPairs?.map(({ input, output }, idx: number) => (
           <Connection
-              handlers={handlers}
-              input={input}
-              key={[input ? buildPortUUID(input) : '', output ? buildPortUUID(output) : ''].join(
-                ':',
-              )}
-              onMount={onMount}
-              output={output}
-            />
-          ))}
+            handlers={handlers}
+            input={input}
+            key={[input ? buildPortUUID(input) : '', output ? buildPortUUID(output) : ''].join(
+              ':',
+            )}
+            onMount={onMount}
+            output={output}
+          />
+        ))}
       </PanelRows>
 
         // eslint-disable-next-line react-hooks/exhaustive-deps

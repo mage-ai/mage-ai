@@ -38,17 +38,21 @@ export type DragAndDropHandlersType = {
 
 export type DraggableType = {
   canDrag?: (item: DragItem) => boolean;
+  draggable?: boolean;
   draggingNode?: NodeItemType;
   itemRef?: React.RefObject<HTMLDivElement>;
 } & DragAndDropHandlersType;
 
-export type DroppableType = DragAndDropHandlersType;
+export type DroppableType = {
+  droppable?: boolean;
+} & DragAndDropHandlersType;
 
 export type DragAndDropType = DraggableType & DroppableType;
 
 export type AsideType = {
   Icon?: IconType;
   baseColorName?: string;
+  className?: string;
   onClick?: (event: React.MouseEvent<HTMLElement>) => void;
 };
 

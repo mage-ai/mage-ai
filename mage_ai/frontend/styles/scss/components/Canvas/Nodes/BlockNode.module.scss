@@ -9,6 +9,18 @@
   padding: var(--padding-base);
 }
 
+.blockNodeContainer {
+  &:hover {
+    .showOnHover {
+      visibility: visible;
+    }
+  }
+
+  .showOnHover {
+    visibility: hidden;
+  }
+}
+
 .nodeWrapper {
   @include grid.base();
 
