@@ -870,3 +870,46 @@ export function addRects(rect1: RectType, rect2: RectType): RectType {
     top: rect1.top + rect2.top,
   };
 }
+
+// export function getElementPositionInContainer(viewportRect, containerRect, initialElementRect) {
+//   // Calculate the offset of the viewport within the container
+//   const viewportOffsetX = viewportRect.left - containerRect.left;
+//   const viewportOffsetY = viewportRect.top - containerRect.top;
+
+//   // Calculate the absolute position of the element within the container
+//   const elementXInContainer = initialElementRect.left + viewportOffsetX;
+//   const elementYInContainer = initialElementRect.top + viewportOffsetY;
+
+//   return {
+//     left: elementXInContainer,
+//     top: elementYInContainer,
+//     width: initialElementRect.width,
+//     height: initialElementRect.height,
+//     offset: {
+//       left: initialElementRect.left - viewportRect.left,
+//       top: initialElementRect.top - viewportRect.top,
+//     },
+//   };
+// }
+
+export function getElementPositionInContainer(viewport: RectType, container: RectType, element: RectType): RectType {
+  const containerOffsetLeft = container.left - viewport.left;
+  const containerOffsetTop = container.top - viewport.top;
+
+  const elementOffsetLeft = element.left - container.left;
+  const elementOffsetTop = element.top - container.top;
+
+  const absoluteLeft = containerOffsetLeft + elementOffsetLeft;
+  const absoluteTop = containerOffsetTop + elementOffsetTop;
+
+  return {
+    height: element.height,
+    left: absoluteLeft,
+    offset: {
+      left: elementOffsetLeft,
+      top: elementOffsetTop,
+    },
+    top: absoluteTop,
+    width: element.width,
+  };
+}

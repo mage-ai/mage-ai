@@ -41,7 +41,7 @@ import { DragLayer } from '../../Canvas/Layers/DragLayer';
 import { snapToGrid } from '../../Canvas/utils/snapToGrid';
 import { ConnectionLines } from '../../Canvas/Connections/ConnectionLines';
 import { getPathD } from '../../Canvas/Connections/utils';
-import { layoutItemsInGroups } from '../../Canvas/utils/rect';
+import { getElementPositionInContainer, layoutItemsInGroups } from '../../Canvas/utils/rect';
 import { updateModelsAndRelationships, updateNodeGroupsWithItems } from './utils/nodes';
 import { buildPortUUID } from '@components/v2/Canvas/Draggable/utils';
 import { initializeBlocksAndConnections } from './utils/blocks';
@@ -303,8 +303,34 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
           ({ handleUpdatePath }: { handleUpdatePath: (item: NodeItemType) => void }) => {
             const port1 = portsRef.current?.[portID];
 
-            const x1 = (port1?.rect?.left ?? 0);
-            const y1 = (port1?.rect?.top ?? 0);
+            const port1ElementRect = itemElementsRef?.current?.port?.[port1.id]?.current?.getBoundingClientRect();
+            let port1Rect = {} as RectType;
+
+            if (port1ElementRect) {
+              port1Rect = {
+                height: port1ElementRect.height,
+                left: port1ElementRect.left,
+                top: port1ElementRect.top,
+                width: port1ElementRect.width,
+              };
+              // Need to adjust this because the element’s ref’s coordinates are relative to the current viewport.
+              const more = getElementPositionInContainer(
+                canvasRef?.current?.getBoundingClientRect(),
+                containerRef?.current?.getBoundingClientRect(),
+                port1Rect,
+              );
+
+              port1Rect.left = more.left;
+              port1Rect.top = more.top;
+            }
+
+            port1Rect = {
+              ...port1?.rect,
+              ...port1Rect,
+            };
+
+            const x1 = (port1Rect?.left ?? 0);
+            const y1 = (port1Rect?.top ?? 0);
             const { x: x3, y: y3 } = finalCoords(x1 + x, y1 + y);
             const port2 = update(port1, {
               rect: {
@@ -825,7 +851,7 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
 
       if (versions?.every((version: number) => version === rectVersion)) {
         if (activeLevel?.current === null) {
-          setActiveLevel(0);
+          setActiveLevel(3);
           const itemsUpdated = updateLayoutOfItems();
           renderConnectionLines();
           renderLayoutChanges({ items: itemsUpdated });
@@ -879,6 +905,14 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
         },
       });
     }
+  }
+
+  function handleMouseOver(_event: React.MouseEvent<HTMLDivElement>, node: NodeItemType) {
+    onDragStartCommunicateToParent();
+  }
+
+  function handleMouseLeave(_event: React.MouseEvent<HTMLDivElement>, node: NodeItemType) {
+    onDragEndCommunicateToParent();
   }
 
   function handleDragEnd(_event: React.MouseEvent<HTMLDivElement>, node: NodeItemType) {
@@ -988,6 +1022,8 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
       portMapping: portsUpdated,
     };
 
+    console.log(portsUpdated);
+
     mutateModels(modelMapping);
     renderConnectionLines({ modelMapping });
     renderLayoutChanges({ items: modelMapping.itemMapping });
@@ -1034,6 +1070,8 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
           onDragEnd: handleDragEnd,
           onDragStart: handleDragStart,
           onDrop: onDropPort,
+          // onMouseOver: handleMouseOver,
+          // onMouseLeave: handleMouseLeave,
         }}
         item={node}
         key={`${node.id}-${node.type}-${idx}`}
@@ -1077,6 +1115,7 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
             id={connectionLinesRootID('nodes')}
             style={{
               height: '100%',
+              pointerEvents: 'none',
               position: 'absolute',
               width: '100%',
               zIndex: 5,
@@ -1138,19 +1177,46 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
 export default function PipelineBuilderCanvas(props: PipelineBuilderProps) {
   const canvasRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const disabledRef = useRef(false);
+  const originX = useRef(0);
+  const originY = useRef(0);
+  const panning = useRef({ active: false, direction: null });
+  const phase = useRef(0);
+  const scale = useRef(1);
+  const startX = useRef(0);
+  const startY = useRef(0);
+  const transformRef = useRef(null);
+  const zoom = useRef(1);
 
-  // Does this even do anything?
-  const [isZoomPanDisabled, setZoomPanDisabled] = useState(false);
+  const zoomPanStateRef = useRef<ZoomPanStateType>({
+    container: containerRef,
+    disabled: disabledRef,
+    element: canvasRef,
+    originX,
+    originY,
+    panning,
+    phase,
+    scale,
+    startX,
+    startY,
+    transform: transformRef,
+    zoom,
+  });
+  const [, setZoomPanDisabledState] = useState(false);
 
-  const transformState = useZoomPan(canvasRef, {
-    containerRef,
-    disabled: isZoomPanDisabled,
+  useZoomPan(zoomPanStateRef, {
+    roles: [ElementRoleEnum.DRAGGABLE],
     // initialPosition: {
     //   xPercent: 0.5,
     //   yPercent: 0.5,
     // },
-    roles: [ElementRoleEnum.DRAGGABLE],
   });
+
+  function setZoomPanDisabled(value: boolean) {
+    zoomPanStateRef.current.disabled.current = value;
+    // We need to update any state or else dragging doesn’t work.
+    setZoomPanDisabledState(value);
+  }
 
   useEffect(() => {
     const handleMouseDown = (event: MouseEvent) => {
@@ -1206,7 +1272,7 @@ export default function PipelineBuilderCanvas(props: PipelineBuilderProps) {
         containerRef={containerRef}
         onDragEnd={() => setZoomPanDisabled(false)}
         onDragStart={() => setZoomPanDisabled(true)}
-        transformState={transformState}
+        transformState={zoomPanStateRef.current}
       />
     </DndProvider>
   );

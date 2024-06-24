@@ -42,7 +42,7 @@ const BlockNodeWrapper: React.FC<BlockNodeWrapperProps> = ({
   const isPipeline = useMemo(() => !type || BlockTypeEnum.PIPELINE === type, [type]);
   const isGroup = useMemo(() => !type || BlockTypeEnum.GROUP === type, [type]);
 
-  const { onMouseDown, onMouseUp } = handlers;
+  const { onMouseDown, onMouseLeave, onMouseOver, onMouseUp } = handlers;
   const name = useMemo(
     () => (ItemTypeEnum.BLOCK === item?.type ? item?.block?.name ?? item?.block?.uuid : item?.id),
     [item],
@@ -56,6 +56,26 @@ const BlockNodeWrapper: React.FC<BlockNodeWrapperProps> = ({
     onMouseDown && onMouseDown?.(event, node);
     setDraggingNode(node);
 
+    return true;
+  }
+
+  function handleMouseLeave(
+    event: React.MouseEvent<HTMLDivElement> | React.TouchEvent<HTMLDivElement>,
+    node: NodeItemType,
+    target?: any,
+  ): boolean {
+    onMouseLeave && onMouseLeave?.(event, node);
+    setDraggingNode(null);
+
+    return true;
+  }
+
+  function handleMouseOver(
+    event: React.MouseEvent<HTMLDivElement> | React.TouchEvent<HTMLDivElement>,
+    node: NodeItemType,
+    target?: any,
+  ): boolean {
+    onMouseOver && onMouseOver?.(event, node);
     return true;
   }
 
@@ -163,6 +183,8 @@ const BlockNodeWrapper: React.FC<BlockNodeWrapperProps> = ({
       handlers={{
         ...handlers,
         onMouseDown: handleMouseDown,
+        onMouseLeave: handleMouseLeave,
+        onMouseOver: handleMouseOver,
         onMouseUp: handleMouseUp,
       }}
       item={item}

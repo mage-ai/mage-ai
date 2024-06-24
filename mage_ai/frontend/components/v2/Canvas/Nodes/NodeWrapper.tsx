@@ -50,7 +50,7 @@ export const NodeWrapper: FC<NodeWrapperProps> = memo(function NodeWrapper({
   item,
   itemRef,
 }: NodeWrapperProps) {
-  const { onDragEnd, onDragStart, onDrop, onMouseDown, onMouseUp } = handlers;
+  const { onDragEnd, onDragStart, onDrop, onMouseDown, onMouseLeave, onMouseOver, onMouseUp } = handlers;
   const itemToDrag: DragItem | PortType = useMemo(() => draggingNode || item, [draggingNode, item]);
 
   useEffect(() => {
@@ -111,6 +111,9 @@ export const NodeWrapper: FC<NodeWrapperProps> = memo(function NodeWrapper({
       onDragEnd={onDragEnd ? event => onDragEnd?.(event, item) : undefined}
       onDragStart={onDragStart ? event => onDragStart?.(event, item) : undefined}
       onMouseDown={onMouseDown ? event => onMouseDown?.(event, item) : undefined}
+      // THESE WILL DISABLE the style opacity of the wrapper.
+      // onMouseLeave={onMouseLeave ? event => onMouseLeave?.(event, item) : undefined}
+      // onMouseOver={onMouseOver ? event => onMouseOver?.(event, item) : undefined}
       onMouseUp={onMouseUp ? event => onMouseUp?.(event, item) : undefined}
       ref={itemRef}
       role={[ElementRoleEnum.DRAGGABLE].join(' ')}

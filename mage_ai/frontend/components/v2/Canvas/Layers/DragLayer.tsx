@@ -2,7 +2,6 @@ import type { CSSProperties, FC } from 'react';
 import type { XYCoord } from 'react-dnd';
 import { useDragLayer } from 'react-dnd';
 
-import { BoxDragPreview } from '../Draggable/Preview/BlockDragPreview';
 import { ItemTypeEnum } from '../types';
 import { NodeItemType } from '../interfaces';
 import { snapToGrid as snapToGridFunc } from '../utils/snapToGrid';
@@ -109,7 +108,6 @@ export const DragLayer: FC<CustomDragLayerProps> = ({
     switch (itemType) {
       case ItemTypeEnum.BLOCK:
         return null;
-      // return <BoxDragPreview title={item.title} />;
       default:
         return null;
     }

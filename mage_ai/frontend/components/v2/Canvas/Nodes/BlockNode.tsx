@@ -19,6 +19,7 @@ import { buildPortUUID } from '../Draggable/utils';
 import { ItemTypeEnum, PortSubtypeEnum } from '../types';
 import { DragAndDropHandlersType } from './types';
 
+
 type BlockNodeProps = {
   block?: BlockType;
   borderConfig?: BorderConfigType;
@@ -136,9 +137,10 @@ export function BlockNode({
   const connectionRows = useMemo(
     () =>
       inputOutputPairs?.length >= 1 && (
-        <PanelRows>
-          {inputOutputPairs?.map(({ input, output }, idx: number) => (
-            <Connection
+
+      <PanelRows>
+        {inputOutputPairs?.map(({ input, output }, idx: number) => (
+          <Connection
               handlers={handlers}
               input={input}
               key={[input ? buildPortUUID(input) : '', output ? buildPortUUID(output) : ''].join(
@@ -148,7 +150,8 @@ export function BlockNode({
               output={output}
             />
           ))}
-        </PanelRows>
+      </PanelRows>
+
         // eslint-disable-next-line react-hooks/exhaustive-deps
       ),
     [handlers, inputOutputPairs, onMount],
