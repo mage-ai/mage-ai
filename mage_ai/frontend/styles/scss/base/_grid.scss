@@ -293,7 +293,7 @@ $values: (
 
   &.borders-true {
     @include borders.base;
-    border-color: var(--border-color);
+    border-color: var(--borders-color-base-default);
   }
 
   &.borders-transparent-true {

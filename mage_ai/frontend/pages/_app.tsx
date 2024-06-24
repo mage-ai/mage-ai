@@ -56,6 +56,7 @@ type AppInternalProps = {
     currentTheme?: any;
   };
   title?: string;
+  version?: string;
 };
 
 type MyAppProps = {
@@ -265,7 +266,7 @@ function MyApp(props: MyAppProps & AppProps) {
     [commandCenterEnabled, requireUserAuthentication],
   );
 
-  if (props?.version === 'v2') {
+  if ((props?.version || props?.pageProps?.version) === 'v2') {
     // @ts-ignore
     return <NextAppV2 {...props} />;
   }
