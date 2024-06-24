@@ -55,6 +55,7 @@ type AppInternalProps = {
   themeProps?: {
     currentTheme?: any;
   };
+  themeSettings?: Record<string, any>;
   title?: string;
   version?: string;
 };
@@ -266,9 +267,27 @@ function MyApp(props: MyAppProps & AppProps) {
     [commandCenterEnabled, requireUserAuthentication],
   );
 
-  if ((props?.version || props?.pageProps?.version) === 'v2') {
-    // @ts-ignore
-    return <NextAppV2 {...props} />;
+  const appMemo = useMemo(() => (
+    <NextAppV2
+      Component={Component}
+      pageProps={{
+        defaultTitle,
+        themeSettings: pageProps?.themeSettings,
+        title,
+        version: (props?.version || props?.pageProps?.version) as any,
+      }}
+      router={router}
+    />
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  ), []);
+
+  const useV2 = useMemo(() =>
+    props?.version  === 'v2' || props?.pageProps?.version === 'v2',
+    [props?.version, props?.pageProps?.version],
+  );
+
+  if (useV2) {
+    return appMemo;
   }
 
   return (

@@ -68,7 +68,7 @@ export const useZoomPan = (
   const originX = useRef(0);
   const originY = useRef(0);
   const panning = useRef({
-    active: false,
+    active: !disabled,
     direction: null,
   });
   const scale = useRef(1);

@@ -6,6 +6,7 @@ import {
   ConnectionMappingType,
   ModelMappingType,
   ModelRefsType,
+  PortType,
   PortMappingType,
 } from '../../../Canvas/interfaces';
 import { ItemTypeEnum, PortSubtypeEnum } from '../../../Canvas/types';
@@ -62,11 +63,13 @@ export function updateModelsAndRelationships(
 
   const refsToUpdate = {
     items: {},
-    ports: {},
+    ports: {
+      ...portMapping,
+    },
   };
 
-  // 1. Items are updated
-  // 2. Item’s ports are updated
+  // 1. Ports are updated first!
+  // 2. Items are updated
   // 3. Nodes and node’s items are updated
   // 4. Connection’s fromItem and toItem are updated
 
