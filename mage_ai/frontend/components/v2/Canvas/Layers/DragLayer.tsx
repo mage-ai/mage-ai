@@ -10,10 +10,13 @@ import { snapToGrid as snapToGridFunc } from '../utils/snapToGrid';
 export interface CustomDragLayerProps {
   gridDimensions?: { height: number; width: number };
   onDragging?: (opts?: {
-    currentOffset: XYCoord;
+    clientOffset: XYCoord,
+    currentOffset: XYCoord,
+    differenceFromInitialOffset: XYCoord,
+    initialClientOffset: XYCoord,
     initialOffset: XYCoord;
-    itemType: ItemTypeEnum;
     item: NodeItemType;
+    itemType: ItemTypeEnum;
   }) => void;
   snapToGrid: boolean;
 }
@@ -61,8 +64,30 @@ export const DragLayer: FC<CustomDragLayerProps> = ({
   onDragging,
   snapToGrid,
 }: CustomDragLayerProps) => {
-  const { currentOffset, initialOffset, isDragging, item, itemType } = useDragLayer(monitor => ({
+  const {
+    clientOffset,
+    currentOffset,
+    differenceFromInitialOffset,
+    initialClientOffset,
+    initialOffset,
+    isDragging,
+    item,
+    itemType,
+  } = useDragLayer(monitor => ({
+    // Pointer positions:
+    // client offset of the pointer at the time when the current drag operation has started
+    initialClientOffset: monitor.getInitialClientOffset(),
+    // client offset of the pointer while a drag operation is in progress
+    clientOffset: monitor.getClientOffset(),
+    // difference between the last recorded client offset of the pointer and
+    // the client offset when the current drag operation has started
+    differenceFromInitialOffset: monitor.getDifferenceFromInitialOffset(),
+    // client offset of the drag source component's root DOM node,
+    // based on its position at the time when the current drag operation has started,
+    // and the movement difference.
     currentOffset: monitor.getSourceClientOffset(),
+    // client offset of the drag source component's root DOM node at the time
+    // when the current drag operation has started
     initialOffset: monitor.getInitialSourceClientOffset(),
     isDragging: monitor.isDragging(),
     item: monitor.getItem(),
@@ -71,7 +96,10 @@ export const DragLayer: FC<CustomDragLayerProps> = ({
 
   onDragging &&
     onDragging?.({
+      clientOffset,
       currentOffset,
+      differenceFromInitialOffset,
+      initialClientOffset,
       initialOffset,
       item,
       itemType: itemType as ItemTypeEnum,

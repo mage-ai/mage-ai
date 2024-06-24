@@ -18,7 +18,6 @@ import CanvasContainer from './index.style';
 import {
   DragItem,
   NodeItemType,
-  ConnectionType,
   PortType,
   NodeType,
   ItemMappingType,
@@ -62,6 +61,8 @@ function connectionLinesRootID(uuid: string) {
 type PipelineBuilderProps = {
   canvasRef: React.RefObject<HTMLDivElement>;
   containerRef: React.RefObject<HTMLDivElement>;
+  onDragEnd: () => void;
+  onDragStart: () => void;
   pipeline: PipelineType | PipelineExecutionFrameworkType;
   pipelineExecutionFramework: PipelineExecutionFrameworkType;
   pipelineExecutionFrameworks: PipelineExecutionFrameworkType[];
@@ -74,6 +75,8 @@ type PipelineBuilderProps = {
 const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
   canvasRef,
   containerRef,
+  onDragEnd: onDragEndCommunicateToParent,
+  onDragStart: onDragStartCommunicateToParent,
   pipeline,
   pipelineExecutionFramework,
   pipelineExecutionFrameworks,
@@ -127,7 +130,6 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
 
   // Presentation
   const activeLevel = useRef<number>(null);
-  const connectionsDraggingRef = useRef<Record<string, ConnectionType>>({});
   const itemDraggingRef = useRef<NodeItemType | null>(null);
   const itemElementsRef = useRef<Record<string, Record<string, React.RefObject<HTMLDivElement>>>>(
     {},
@@ -261,29 +263,40 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
   }
 
   function onDragging({
+    clientOffset,
     currentOffset,
+    differenceFromInitialOffset,
+    initialClientOffset,
     initialOffset,
     item,
     itemType,
   }: {
+    clientOffset: XYCoord;
     currentOffset: XYCoord;
+    differenceFromInitialOffset: XYCoord;
+    initialClientOffset: XYCoord;
     initialOffset: XYCoord;
     itemType: ItemTypeEnum;
     item: NodeItemType;
   }) {
-    if (!initialOffset || !currentOffset) {
+    if (!differenceFromInitialOffset) {
       return;
     }
 
-    let { x, y } = currentOffset;
+    const { x, y } = differenceFromInitialOffset;
 
-    if (snapToGridOnDrag) {
-      x -= initialOffset.x;
-      y -= initialOffset.y;
-
-      [x, y] = snapToGrid({ x, y }, gridDimensions);
-      x += initialOffset.x;
-      y += initialOffset.y;
+    function finalCoords(x2: number, y2: number) {
+      if (snapToGridOnDrag) {
+        const [xs, ys] = snapToGrid({ x: x2, y: y2 }, gridDimensions);
+        return {
+          x: xs,
+          y: ys,
+        };
+      }
+      return {
+        x: x2,
+        y: y2,
+      };
     }
 
     if (ItemTypeEnum.BLOCK === itemType) {
@@ -291,16 +304,20 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
         Object.values(connectionLinesPathRef?.current?.[portID] ?? {})?.forEach(
           ({ handleUpdatePath }: { handleUpdatePath: (item: NodeItemType) => void }) => {
             const port1 = portsRef.current?.[portID];
-            handleUpdatePath(
-              update(port1, {
-                rect: {
-                  $merge: {
-                    left: x + (port1?.rect?.offset?.left ?? 0),
-                    top: y + (port1?.rect?.offset?.top ?? 0),
-                  },
+
+            const x1 = (port1?.rect?.left ?? 0);
+            const y1 = (port1?.rect?.top ?? 0);
+            const { x: x3, y: y3 } = finalCoords(x1 + x, y1 + y);
+            const port2 = update(port1, {
+              rect: {
+                $merge: {
+                  left: x3,
+                  top: y3,
                 },
-              }),
-            );
+              },
+            });
+
+            handleUpdatePath(port2);
           },
         );
       });
@@ -540,12 +557,9 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
       function handleUpdatePath(item: NodeItemType) {
         const isOutput = fromValues?.id === item?.id;
         const isInput = toValues?.id === item?.id;
-        const dValue = getPathD(
-          pathDOpts,
-          isOutput ? item?.rect : fromRect,
-          isInput ? item?.rect : toRect,
-        );
-
+        const rect1 = isOutput ? item?.rect : fromRect;
+        const rect2 = isInput ? item?.rect : toRect;
+        const dValue = getPathD(pathDOpts, rect1, rect2);
         pathRef?.current?.setAttribute('d', dValue);
       }
 
@@ -823,7 +837,6 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
   }
 
   function onMountPort(item: PortType, portRef: React.RefObject<HTMLDivElement>) {
-    if (!portRef?.current) return;
     const { id, type } = item;
 
     itemElementsRef.current ||= {};
@@ -857,7 +870,9 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
     renderConnectionLines();
   }
 
-  function onDragStart(_event: React.MouseEvent<HTMLDivElement>, node: NodeItemType) {
+  function handleDragStart(_event: React.MouseEvent<HTMLDivElement>, node: NodeItemType) {
+    onDragStartCommunicateToParent();
+
     if (!itemDraggingRef.current && ItemTypeEnum.PORT === node.type) {
       itemDraggingRef.current = node;
       setActiveItems({
@@ -866,6 +881,10 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
         },
       });
     }
+  }
+
+  function handleDragEnd(_event: React.MouseEvent<HTMLDivElement>, node: NodeItemType) {
+    onDragEndCommunicateToParent();
   }
 
   function onDragInit(node: NodeItemType, monitor: DropTargetMonitor) {
@@ -894,8 +913,6 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
   }
 
   function onDropBlock(nodeInit: NodeItemType, monitor: DropTargetMonitor) {
-    console.log('onDropBlock', nodeInit?.id);
-
     const node = itemsRef.current[nodeInit.id];
 
     resetAfterDrop();
@@ -958,9 +975,7 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
           },
         },
       });
-      portsRef.current[port2.id] = port2;
-      portsUpdated[port2.type] ||= {};
-      portsUpdated[port2.type][port2.id] = port2;
+      portsUpdated[port2.id] = port2;
     });
 
     const elItem = itemElementsRef.current[node.type][node.id].current;
@@ -1018,7 +1033,8 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
       <BlockNodeWrapper
         frameworkGroups={frameworkGroupsRef?.current}
         handlers={{
-          onDragStart,
+          onDragEnd: handleDragEnd,
+          onDragStart: handleDragStart,
           onDrop: onDropPort,
         }}
         item={node}
@@ -1130,7 +1146,7 @@ export default function PipelineBuilderCanvas(props: PipelineBuilderProps) {
 
   const transformState = useZoomPan(canvasRef, {
     containerRef,
-    // disabled: isZoomPanDisabled,
+    disabled: isZoomPanDisabled,
     // initialPosition: {
     //   xPercent: 0.5,
     //   yPercent: 0.5,
@@ -1138,49 +1154,53 @@ export default function PipelineBuilderCanvas(props: PipelineBuilderProps) {
     roles: [ElementRoleEnum.DRAGGABLE],
   });
 
-    useEffect(() => {
-      const handleMouseDown = (event: MouseEvent) => {
-        if (event.button > 0) return;
+  console.log(isZoomPanDisabled);
 
-        const targetElement = event.target as HTMLElement;
-        const hasRole = [ElementRoleEnum.DRAGGABLE].some(role =>
-          targetElement.closest(`[role="${role}"]`),
-        );
+  useEffect(() => {
+    const handleMouseDown = (event: MouseEvent) => {
+      if (event.button > 0) return;
 
-        if (hasRole) {
-          // For some reason, we need to do this or else you can’t drag anything.
-          setZoomPanDisabled(true);
-        }
-      };
+      const targetElement = event.target as HTMLElement;
+      const hasRole = [ElementRoleEnum.DRAGGABLE].some(role =>
+        targetElement.closest(`[role="${role}"]`),
+      );
 
-      const handleMouseUp = (event: MouseEvent) => {
-        if (event.button > 0) return;
-
-        const targetElement = event.target as HTMLElement;
-        const hasRole = [ElementRoleEnum.DRAGGABLE, ElementRoleEnum.DROPPABLE].some(role =>
-          targetElement.closest(`[role="${role}"]`),
-        );
-
-        if (hasRole) {
-          setZoomPanDisabled(false);
-        }
-      };
-
-      const canvasElement = canvasRef.current;
-
-      if (canvasElement) {
-        canvasElement.addEventListener('mousedown', handleMouseDown);
-        canvasElement.addEventListener('mouseup', handleMouseUp);
+      if (hasRole) {
+        // For some reason, we need to do this or else you can’t drag anything.
+        setZoomPanDisabled(true);
       }
+    };
 
-      return () => {
-        if (canvasElement) {
-          canvasElement.removeEventListener('mousedown', handleMouseDown);
-          canvasElement.removeEventListener('mouseup', handleMouseUp);
-        }
-      };
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
+    const handleMouseUp = (event: MouseEvent) => {
+      // Always do this or else there will be situations where it’s never reset.
+
+      if (event.button > 0) return;
+
+      const targetElement = event.target as HTMLElement;
+      const hasRole = [ElementRoleEnum.DRAGGABLE, ElementRoleEnum.DROPPABLE].some(role =>
+        targetElement.closest(`[role="${role}"]`),
+      );
+
+      if (hasRole) {
+        setZoomPanDisabled(false);
+      }
+    };
+
+    const canvasElement = canvasRef.current;
+
+    if (canvasElement) {
+      canvasElement.addEventListener('mousedown', handleMouseDown);
+      canvasElement.addEventListener('mouseup', handleMouseUp);
+    }
+
+    return () => {
+      if (canvasElement) {
+        canvasElement.removeEventListener('mousedown', handleMouseDown);
+        canvasElement.removeEventListener('mouseup', handleMouseUp);
+      }
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <DndProvider backend={HTML5Backend}>
@@ -1188,10 +1208,9 @@ export default function PipelineBuilderCanvas(props: PipelineBuilderProps) {
         {...props}
         canvasRef={canvasRef}
         containerRef={containerRef}
+        onDragEnd={() => setZoomPanDisabled(false)}
+        onDragStart={() => setZoomPanDisabled(true)}
         transformState={transformState}
-        // Don’t know if this is necessary.
-        // onDragEnd={() => setZoomPanDisabled(false)}
-        // onDragStart={() => setZoomPanDisabled(true)}
       />
     </DndProvider>
   );

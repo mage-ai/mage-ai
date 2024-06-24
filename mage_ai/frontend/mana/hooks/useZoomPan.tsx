@@ -81,7 +81,8 @@ export const useZoomPan = (
   const leftMaxRef = useRef(null);
   const rightMaxRef = useRef(null);
   const topMaxRef = useRef(null);
-  const timeoutRef = useRef(null);
+
+  const phaseRef = useRef(0);
 
   useEffect(() => {
     const container = containerRef?.current;
@@ -269,7 +270,11 @@ export const useZoomPan = (
     element.addEventListener('touchstart', handleTouchStart, { passive: true });
     element.addEventListener('touchmove', handleTouchMove, { passive: true });
 
-    initializeOrigin();
+    if (phaseRef.current === 0) {
+      initializeOrigin();
+    }
+
+    phaseRef.current += 1;
 
     return () => {
       element.removeEventListener('wheel', handleWheel);
@@ -284,13 +289,13 @@ export const useZoomPan = (
   }, [disabled, zoomSensitivity, minScale, maxScale, roles]);
 
   return {
-    container: containerRef,
     boundaryRefs: {
       bottom: bottomMaxRef,
       left: leftMaxRef,
       right: rightMaxRef,
       top: topMaxRef,
     },
+    container: containerRef,
     element: elementRef,
     panning,
     position: {

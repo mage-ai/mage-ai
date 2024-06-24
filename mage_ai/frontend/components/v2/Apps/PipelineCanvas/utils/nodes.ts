@@ -63,9 +63,7 @@ export function updateModelsAndRelationships(
 
   const refsToUpdate = {
     items: {},
-    ports: {
-      ...portMapping,
-    },
+    ports: portMapping,
   };
 
   // 1. Ports are updated first!
@@ -83,21 +81,20 @@ export function updateModelsAndRelationships(
 
     (item?.ports ?? [])?.forEach(port => {
       const port2 = {
-        ...port,
-        ...portsRef?.current?.[port?.id],
-        ...portMapping?.[port?.id],
+        ...(portMapping?.[port?.id] ?? portsRef?.current?.[port?.id] ?? port),
         parent: ignoreKeys(item, ['ports']),
       };
 
-      if (item?.rect && item?.rect?.diff && !port2?.rect) {
-        const rect1 = port2?.rect;
-        const diff = getRectDiff(item?.rect, item?.rect?.diff);
-        const rect2 = applyRectDiff(rect1, diff);
-        port2.rect = {
-          ...rect2,
-          diff: rect1,
-        };
-      }
+      // Why are we doing this?
+      // if (item?.rect && item?.rect?.diff && !port2?.rect) {
+      //   const rect1 = port2?.rect;
+      //   const diff = getRectDiff(item?.rect, item?.rect?.diff);
+      //   const rect2 = applyRectDiff(rect1, diff);
+      //   port2.rect = {
+      //     ...rect2,
+      //     diff: rect1,
+      //   };
+      // }
       arr.push(port2);
     });
 
