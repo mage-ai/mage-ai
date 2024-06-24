@@ -1065,7 +1065,7 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
               height: '100%',
               position: 'absolute',
               width: '100%',
-              zIndex: 3,
+              zIndex: 5,
             }}
           />
 
