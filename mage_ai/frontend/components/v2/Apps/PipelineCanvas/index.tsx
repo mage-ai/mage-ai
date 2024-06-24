@@ -65,12 +65,6 @@ type PipelineBuilderProps = {
   pipeline: PipelineType | PipelineExecutionFrameworkType;
   pipelineExecutionFramework: PipelineExecutionFrameworkType;
   pipelineExecutionFrameworks: PipelineExecutionFrameworkType[];
-  onMouseDown: {
-    current: any;
-  };
-  onMouseUp: {
-    current: any;
-  };
   pipelines?: PipelineType[];
   snapToGridOnDrag?: boolean;
   snapToGridOnDrop?: boolean;
@@ -80,8 +74,6 @@ type PipelineBuilderProps = {
 const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
   canvasRef,
   containerRef,
-  onMouseDown: onMouseDownRef,
-  onMouseUp: onMouseUpRef,
   pipeline,
   pipelineExecutionFramework,
   pipelineExecutionFrameworks,
@@ -154,8 +146,10 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
 
   // State management
   const [items, setItemsState] = useState<Record<string, NodeItemType>>(null);
+  const [activeItems, setActiveItemsState] = useState<Record<string, ModelMappingType>>(null);
 
   function updateNodeItems(items: ItemMappingType) {
+    // This should be the only setter for itemsRef.
     itemsRef.current = {
       ...itemsRef.current,
       ...Object.entries(items).reduce(
@@ -172,6 +166,7 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
   }
 
   function updatePorts(ports: PortMappingType) {
+    // This should be the only setter for portsRef.
     portsRef.current = ports;
   }
 
@@ -187,8 +182,8 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
     updatePorts(ports);
   }
 
-  function setConnectionsDragging(connectionsDragging: Record<string, ConnectionType>) {
-    connectionsDraggingRef.current = connectionsDragging;
+  function setActiveItems(modelMapping: ModelMappingType) {
+    setActiveItemsState(modelMapping);
   }
 
   function renderLayoutChanges(opts?: { level?: number; items?: ItemMappingType }) {
@@ -497,7 +492,6 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
 
         rect.left += leftOffset;
         rect.top += topOffset;
-        // console.log(1, item1?.id, item2?.id, rect);
 
         return rect;
       }
@@ -613,50 +607,13 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
     renderConnectionLines();
   }
 
-  function handleMouseDown(
-    event: React.MouseEvent<HTMLDivElement> | React.TouchEvent<HTMLDivElement>,
-    node: NodeItemType,
-    target?: any,
-  ): boolean {
-    if ((event as { button: number }).button > 0) return;
-
-    console.log('down');
-
-    return true;
+  function onMouseDown(event: React.MouseEvent<HTMLDivElement>, _node: NodeItemType) {
+    if (event.button > 0) return;
   }
 
-  function handleMouseUp(
-    event: React.MouseEvent<HTMLDivElement> | React.TouchEvent<HTMLDivElement>,
-    node: NodeItemType,
-    target?: any,
-  ): boolean {
+  function onMouseUp(event: React.MouseEvent<HTMLDivElement>, _node: NodeItemType) {
     resetAfterDrop();
-
-    console.log('up');
-
-    return false;
   }
-
-  function handleDragEnd(
-    event: React.MouseEvent<HTMLDivElement> | React.TouchEvent<HTMLDivElement>,
-    node: NodeItemType,
-  ) {
-    console.log('drag end');
-  }
-
-  useEffect(() => {
-    onMouseDownRef.current = handleMouseDown;
-    onMouseUpRef.current = handleMouseUp;
-
-    const onMouseDownR = onMouseDownRef.current;
-    const onMouseUpR = onMouseUpRef.current;
-
-    return () => {
-      onMouseDownR.current = null;
-      onMouseUpR.current = null;
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   useEffect(() => {
     if (phaseRef.current === 0) {
@@ -687,10 +644,6 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
 
       // Models
       groupLevelsMappingRef?.current?.forEach((groupMapping: GroupMappingType, level: number) => {
-        // if (level > 1) {
-        //   return;
-        // }
-
         modelLevelsMapping.current.push(
           initializeBlocksAndConnections(
             Object.values(groupMapping),
@@ -863,22 +816,9 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
           setActiveLevel(0);
           const itemsUpdated = updateLayoutOfItems();
           renderConnectionLines();
-          console.log('!!!!!!!!!!!!!!!!!!', itemsUpdated);
           renderLayoutChanges({ items: itemsUpdated });
         }
       }
-    }
-
-    if (ItemTypeEnum.NODE === type) {
-      const node = itemsRef?.current?.[id];
-      console.log('WTFFFFFFFFFFFFFFFFFFFFFFF', node?.rect);
-
-      // if (node?.rect) {
-      //   const { rect } = node;
-
-      //   itemRef.current.style.height = `${rect?.height}px`;
-      //   itemRef.current.style.width = `${rect?.width}px`;
-      // }
     }
   }
 
@@ -920,7 +860,11 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
   function onDragStart(_event: React.MouseEvent<HTMLDivElement>, node: NodeItemType) {
     if (!itemDraggingRef.current && ItemTypeEnum.PORT === node.type) {
       itemDraggingRef.current = node;
-      // setConnectionsDragging({ [connection.id]: connection });
+      setActiveItems({
+        [`${node.type}Mapping`]: {
+          [node.id]: node,
+        },
+      });
     }
   }
 
@@ -930,24 +874,23 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
     // Called only once when it starts
     updateNodeItems({ [node.id]: node });
 
-    // let rectOrigin = node?.rect;
+    let rectOrigin = node?.rect;
 
     if (
       ItemTypeEnum.PORT === node.type &&
       itemDraggingRef.current &&
       buildPortUUID(node) === buildPortUUID(itemDraggingRef?.current)
     ) {
-      // rectOrigin = itemDraggingRef?.current?.rect;
+      rectOrigin = itemDraggingRef?.current?.rect;
+      console.log('What do we do with this rect?', rectOrigin);
     } else {
       renderConnectionLines();
     }
-
-    // onDrag(update(node, { rect: { $set: rectFromOrigin(rectOrigin, monitor) } }));
   }
 
   function resetAfterDrop() {
     itemDraggingRef.current = null;
-    setConnectionsDragging(null);
+    setActiveItems(null);
   }
 
   function onDropBlock(nodeInit: NodeItemType, monitor: DropTargetMonitor) {
@@ -1037,18 +980,14 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
     renderLayoutChanges({ items: modelMapping.itemMapping });
   }
 
-  const onDropPort = useCallback(
-    (dragTarget: NodeItemType, dropTarget: NodeItemType) => {
-      if (ItemTypeEnum.PORT === dragTarget.type && ItemTypeEnum.PORT === dropTarget.type) {
-        const node = itemDraggingRef.current;
-        throw new Error('setConnections({ [connection.id]: connection });');
-      }
+  function onDropPort(dragTarget: NodeItemType, dropTarget: NodeItemType) {
+    if (ItemTypeEnum.PORT === dragTarget.type && ItemTypeEnum.PORT === dropTarget.type) {
+      const node = itemDraggingRef.current;
+      console.log('Create a new connection for:', node);
+    }
 
-      resetAfterDrop();
-    },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [items],
-  );
+    resetAfterDrop();
+  }
 
   const [, connectDrop] = useDrop(
     () => ({
@@ -1079,11 +1018,8 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
       <BlockNodeWrapper
         frameworkGroups={frameworkGroupsRef?.current}
         handlers={{
-          onDragEnd: handleDragEnd,
           onDragStart,
           onDrop: onDropPort,
-          onMouseDown: handleMouseDown,
-          onMouseUp: handleMouseUp,
         }}
         item={node}
         key={`${node.id}-${node.type}-${idx}`}
@@ -1188,11 +1124,13 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
 export default function PipelineBuilderCanvas(props: PipelineBuilderProps) {
   const canvasRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-  const onMouseDownRef = useRef(null);
-  const onMouseUpRef = useRef(null);
+
+  // Does this even do anything?
+  const [isZoomPanDisabled, setZoomPanDisabled] = useState(false);
 
   const transformState = useZoomPan(canvasRef, {
     containerRef,
+    // disabled: isZoomPanDisabled,
     // initialPosition: {
     //   xPercent: 0.5,
     //   yPercent: 0.5,
@@ -1200,54 +1138,49 @@ export default function PipelineBuilderCanvas(props: PipelineBuilderProps) {
     roles: [ElementRoleEnum.DRAGGABLE],
   });
 
-  function handleMouseDown(event: MouseEvent) {
-    if (event.button > 0) return;
+    useEffect(() => {
+      const handleMouseDown = (event: MouseEvent) => {
+        if (event.button > 0) return;
 
-    const targetElement = event.target as HTMLElement;
-    const hasRole = [ElementRoleEnum.DRAGGABLE].some(role =>
-      targetElement.closest(`[role="${role}"]`),
-    );
+        const targetElement = event.target as HTMLElement;
+        const hasRole = [ElementRoleEnum.DRAGGABLE].some(role =>
+          targetElement.closest(`[role="${role}"]`),
+        );
 
-    if (onMouseDownRef?.current?.(event)) return;
+        if (hasRole) {
+          // For some reason, we need to do this or else you can’t drag anything.
+          setZoomPanDisabled(true);
+        }
+      };
 
-    console.log('down2');
-    if (hasRole) {
-      transformState.panning.current.active = true;
-    }
-  }
+      const handleMouseUp = (event: MouseEvent) => {
+        if (event.button > 0) return;
 
-  function handleMouseUp(event: MouseEvent) {
-    if (event.button > 0) return;
+        const targetElement = event.target as HTMLElement;
+        const hasRole = [ElementRoleEnum.DRAGGABLE, ElementRoleEnum.DROPPABLE].some(role =>
+          targetElement.closest(`[role="${role}"]`),
+        );
 
-    const targetElement = event.target as HTMLElement;
-    const hasRole = [ElementRoleEnum.DRAGGABLE, ElementRoleEnum.DROPPABLE].some(role =>
-      targetElement.closest(`[role="${role}"]`),
-    );
+        if (hasRole) {
+          setZoomPanDisabled(false);
+        }
+      };
 
-    if (onMouseUpRef?.current?.(event)) return;
+      const canvasElement = canvasRef.current;
 
-    console.log('up2');
-    if (hasRole) {
-      transformState.panning.current.active = false;
-    }
-  }
-
-  useEffect(() => {
-    const canvasElement = canvasRef.current;
-
-    if (canvasElement) {
-      canvasElement.addEventListener('mousedown', handleMouseDown);
-      canvasElement.addEventListener('mouseup', handleMouseUp);
-    }
-
-    return () => {
       if (canvasElement) {
-        canvasElement.removeEventListener('mousedown', handleMouseDown);
-        canvasElement.removeEventListener('mouseup', handleMouseUp);
+        canvasElement.addEventListener('mousedown', handleMouseDown);
+        canvasElement.addEventListener('mouseup', handleMouseUp);
       }
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+
+      return () => {
+        if (canvasElement) {
+          canvasElement.removeEventListener('mousedown', handleMouseDown);
+          canvasElement.removeEventListener('mouseup', handleMouseUp);
+        }
+      };
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
   return (
     <DndProvider backend={HTML5Backend}>
@@ -1255,9 +1188,10 @@ export default function PipelineBuilderCanvas(props: PipelineBuilderProps) {
         {...props}
         canvasRef={canvasRef}
         containerRef={containerRef}
-        onMouseDown={onMouseDownRef}
-        onMouseUp={onMouseUpRef}
         transformState={transformState}
+        // Don’t know if this is necessary.
+        // onDragEnd={() => setZoomPanDisabled(false)}
+        // onDragStart={() => setZoomPanDisabled(true)}
       />
     </DndProvider>
   );

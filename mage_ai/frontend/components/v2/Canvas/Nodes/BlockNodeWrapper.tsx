@@ -59,7 +59,7 @@ const BlockNodeWrapper: React.FC<BlockNodeWrapperProps> = ({
     node: NodeItemType,
     target?: any,
   ): boolean {
-    onMouseDown(event, node);
+    onMouseDown && onMouseDown?.(event, node);
     setDraggingNode(node);
 
     return true;
@@ -70,7 +70,7 @@ const BlockNodeWrapper: React.FC<BlockNodeWrapperProps> = ({
     node: NodeItemType,
     target?: any,
   ): boolean {
-    onMouseUp(event, node);
+    onMouseUp && onMouseUp?.(event, node);
     setDraggingNode(null);
 
     return true;

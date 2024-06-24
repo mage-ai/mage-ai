@@ -108,10 +108,10 @@ export const NodeWrapper: FC<NodeWrapperProps> = memo(function NodeWrapper({
   return (
     <div
       className={[styles.nodeWrapper, styles[itemToDrag?.type], className ?? ''].join(' ')}
-      onDragEnd={event => onDragEnd(event, item)}
-      onDragStart={event => onDragStart(event, item)}
-      onMouseDown={event => onMouseDown(event, item)}
-      onMouseUp={event => onMouseUp(event, item)}
+      onDragEnd={onDragEnd ? event => onDragEnd?.(event, item) : undefined}
+      onDragStart={onDragStart ? event => onDragStart?.(event, item) : undefined}
+      onMouseDown={onMouseDown ? event => onMouseDown?.(event, item) : undefined}
+      onMouseUp={onMouseUp ? event => onMouseUp?.(event, item) : undefined}
       ref={itemRef}
       role={[ElementRoleEnum.DRAGGABLE].join(' ')}
       style={getStyles(item, { isDragging: isDragging && draggingNode?.type === item?.type })}
