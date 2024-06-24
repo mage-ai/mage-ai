@@ -169,10 +169,22 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
 
   function updatePorts(ports: PortMappingType) {
     // This should be the only setter for portsRef.
-    portsRef.current = ports;
+    portsRef.current = {
+      ...portsRef.current,
+      ...Object.entries(ports).reduce(
+        (acc: PortMappingType, [id, item]: [string, PortType]) => ({
+          ...acc,
+          [id]: {
+            ...item,
+            version: String(Number(item?.version ?? -1) + 1),
+          },
+        }),
+        {} as PortMappingType,
+      ),
+    };
   }
 
-  function mutateModels(payload?: ModelMappingType) {
+  function mutateModels(payload?: ModelMappingType): ModelMappingType {
     const { items, ports } = updateModelsAndRelationships(
       {
         itemsRef,
@@ -182,6 +194,11 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
     );
     updateNodeItems(items);
     updatePorts(ports);
+
+    return {
+      itemMapping: itemsRef.current,
+      portMapping: portsRef.current,
+    };
   }
 
   function setActiveItems(modelMapping: ModelMappingType) {
@@ -297,6 +314,11 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
       };
     }
 
+    const modelMapping = {
+      itemMapping: {},
+      portMapping: {},
+    };
+
     if (ItemTypeEnum.BLOCK === itemType) {
       item?.ports?.forEach(({ id: portID }: PortType) => {
         Object.values(connectionLinesPathRef?.current?.[portID] ?? {})?.forEach(
@@ -307,21 +329,18 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
             let port1Rect = {} as RectType;
 
             if (port1ElementRect) {
-              port1Rect = {
-                height: port1ElementRect.height,
-                left: port1ElementRect.left,
-                top: port1ElementRect.top,
-                width: port1ElementRect.width,
-              };
               // Need to adjust this because the element’s ref’s coordinates are relative to the current viewport.
-              const more = getElementPositionInContainer(
+              const absolute = getElementPositionInContainer(
                 canvasRef?.current?.getBoundingClientRect(),
                 containerRef?.current?.getBoundingClientRect(),
-                port1Rect,
+                port1ElementRect,
               );
-
-              port1Rect.left = more.left;
-              port1Rect.top = more.top;
+              port1Rect = {
+                height: port1ElementRect.height,
+                left: absolute.left,
+                top: absolute.top,
+                width: port1ElementRect.width,
+              };
             }
 
             port1Rect = {
@@ -342,10 +361,22 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
             });
 
             handleUpdatePath(port2);
+            modelMapping.portMapping[port2.id] = port2;
           },
         );
       });
     }
+
+    const xy = finalCoords(item.rect.left + x, item.rect.top + y);
+    const item2 = update(item, {
+      rect: {
+        $merge: {
+          left: xy.x,
+          top: xy.y,
+        },
+      },
+    });
+    modelMapping.itemMapping[item.id] = item2;
   }
 
   function renderConnectionLines(opts?: {
@@ -449,7 +480,7 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
           rect: rect1,
           rects: {
             item: rect1Item,
-            node: rect1Node,
+            // node: rect1Node,
             port: rect1Port,
           },
         },
@@ -462,7 +493,7 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
           rect: rect2,
           rects: {
             item: rect2Item,
-            node: rect2Node,
+            // node: rect2Node,
             port: rect2Port,
           },
         },
@@ -495,18 +526,21 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
         // rect = transformState ? transformZoomPanRect(rect, transformState) : rect;
 
         const scale = Number(transformState?.scale?.current ?? 1);
-        let leftOffset = 0;
-        let topOffset = 0;
         if (ItemTypeEnum.PORT === values?.type) {
           const isOutput = PortSubtypeEnum.OUTPUT === values?.subtype;
 
           if (Object.values(values?.rects)?.every(Boolean)) {
+            // Rect calcs are initially performed on the item/block level.
+            // Recalculate so that the paths are drawn to the ports.
             const {
               item,
               // Need to handle node ports differently.
               // node,
               port,
             } = values?.rects;
+
+            rect.height = port?.height ?? rect.height;
+            rect.width = port?.width ?? rect.width;
 
             if (isVertical) {
               if (isReverse) {
@@ -515,24 +549,21 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
             } else {
               if (isReverse) {
               } else {
-                topOffset += (item?.height - port?.height - (port?.top - item?.top)) / 2 / scale;
+                rect.top = (item?.top ?? 0) + ((port?.top - item?.top) ?? 0);
+
                 if (isReverse) {
                 } else {
+                  rect.left += (port?.left ?? 0) - (item?.left ?? 0);
                   if (isOutput) {
-                    leftOffset -=
-                      (item?.width - port?.width - (port?.left - item?.left) + port?.width / 2) /
-                      scale;
+                    rect.left -= (port?.width ?? 0) / 2;
                   } else {
-                    leftOffset += (port?.left - item?.left + port?.width / 2) / scale;
+                    rect.left += (port?.width ?? 0) / 2;
                   }
                 }
               }
             }
           }
         }
-
-        rect.left += leftOffset;
-        rect.top += topOffset;
 
         return rect;
       }
@@ -853,8 +884,8 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
         if (activeLevel?.current === null) {
           setActiveLevel(3);
           const itemsUpdated = updateLayoutOfItems();
-          renderConnectionLines();
           renderLayoutChanges({ items: itemsUpdated });
+          renderConnectionLines();
         }
       }
     }
@@ -869,7 +900,7 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
 
     const rect = portRef.current.getBoundingClientRect();
     const rectDef = layoutConfig?.transformRect?.[ItemTypeEnum.PORT]?.(rect) ?? rect;
-
+    const rectVersion = itemsMetadataRef.current.rect.version;
     const port = update(item, {
       rect: {
         $set: {
@@ -880,6 +911,7 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
             top: portRef?.current?.offsetTop,
           },
           top: rect.top + (rectDef?.top ?? 0),
+          version: rectVersion,
           width: rect.width,
         },
       },
@@ -923,25 +955,25 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
     // We still probably need this when we are draggin lines from port to port.
 
     // Called only once when it starts
-    updateNodeItems({ [node.id]: node });
+    // updateNodeItems({ [node.id]: node });
 
-    let rectOrigin = node?.rect;
+    // let rectOrigin = node?.rect;
 
-    if (
-      ItemTypeEnum.PORT === node.type &&
-      itemDraggingRef.current &&
-      buildPortUUID(node) === buildPortUUID(itemDraggingRef?.current)
-    ) {
-      rectOrigin = itemDraggingRef?.current?.rect;
-      console.log('What do we do with this rect?', rectOrigin);
-    } else {
-      renderConnectionLines();
-    }
+    // if (
+    //   ItemTypeEnum.PORT === node.type &&
+    //   itemDraggingRef.current &&
+    //   buildPortUUID(node) === buildPortUUID(itemDraggingRef?.current)
+    // ) {
+    //   rectOrigin = itemDraggingRef?.current?.rect;
+    //   console.log('What do we do with this rect?', rectOrigin);
+    // } else {
+    //   renderConnectionLines();
+    // }
   }
 
   function resetAfterDrop() {
-    itemDraggingRef.current = null;
-    setActiveItems(null);
+    // itemDraggingRef.current = null;
+    // setActiveItems(null);
   }
 
   function onDropBlock(nodeInit: NodeItemType, monitor: DropTargetMonitor) {
@@ -996,7 +1028,9 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
       },
     });
 
-    const portsUpdated = {};
+    const portsUpdated = {
+      ...portsRef.current,
+    };
     node2?.ports?.forEach(({ id: portID }: PortType) => {
       const port1 = portsRef.current[portID];
       const port2 = update(port1, {
@@ -1007,6 +1041,7 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
           },
         },
       });
+
       portsUpdated[port2.id] = port2;
     });
 
@@ -1015,18 +1050,19 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
       elItem.style.transform = `translate(${left}px, ${top}px)`;
     }
 
-    const modelMapping = {
+    const payload = {
       itemMapping: {
+        ...itemsRef.current,
         [node2.id]: node2,
       },
       portMapping: portsUpdated,
     };
 
-    console.log(portsUpdated);
-
-    mutateModels(modelMapping);
-    renderConnectionLines({ modelMapping });
-    renderLayoutChanges({ items: modelMapping.itemMapping });
+    mutateModels(payload);
+    const itemsUpdated = updateLayoutOfItems();
+    renderConnectionLines();
+    renderLayoutChanges({ items: itemsUpdated });
+    renderConnectionLines();
   }
 
   function onDropPort(dragTarget: NodeItemType, dropTarget: NodeItemType) {
@@ -1082,8 +1118,6 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [items]);
 
-  const { boundaryRefs } = transformState;
-
   return (
     <div
       ref={wrapperRef}
@@ -1125,7 +1159,6 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
           {nodesMemo}
 
           <div
-            ref={boundaryRefs?.left}
             style={{
               bottom: 0,
               height: '100vh',
@@ -1136,7 +1169,6 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
             }}
           />
           <div
-            ref={boundaryRefs?.right}
             style={{
               bottom: 0,
               height: '100vh',
@@ -1147,7 +1179,6 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
             }}
           />
           <div
-            ref={boundaryRefs?.bottom}
             style={{
               bottom: 0,
               height: 1,
@@ -1158,7 +1189,6 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
             }}
           />
           <div
-            ref={boundaryRefs?.top}
             style={{
               height: 1,
               left: 0,
