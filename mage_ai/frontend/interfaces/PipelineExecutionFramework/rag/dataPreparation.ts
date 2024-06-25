@@ -9,6 +9,7 @@ export const Load: PipelineExecutionFrameworkType = {
   uuid: GroupUUIDEnum.LOAD,
   groups: [GroupUUIDEnum.LOAD],
   type: PipelineTypeEnum.EXECUTION_FRAMEWORK,
+  // @ts-ignore
   blocks: [
     {
       uuid: GroupUUIDEnum.INGEST,
@@ -91,6 +92,7 @@ export const Transform: PipelineExecutionFrameworkType = {
   uuid: GroupUUIDEnum.TRANSFORM,
   groups: [GroupUUIDEnum.TRANSFORM],
   type: PipelineTypeEnum.EXECUTION_FRAMEWORK,
+  // @ts-ignore
   blocks: [
     {
       uuid: GroupUUIDEnum.CLEANING,
@@ -261,6 +263,7 @@ export const Export: PipelineExecutionFrameworkType = {
   uuid: GroupUUIDEnum.EXPORT,
   groups: [GroupUUIDEnum.EXPORT],
   type: PipelineTypeEnum.EXECUTION_FRAMEWORK,
+  // @ts-ignore
   blocks: [
     {
       uuid: GroupUUIDEnum.KNOWLEDGE_GRAPH,
@@ -277,6 +280,7 @@ export const Index: PipelineExecutionFrameworkType = {
   uuid: GroupUUIDEnum.INDEX,
   groups: [GroupUUIDEnum.INDEX],
   type: PipelineTypeEnum.EXECUTION_FRAMEWORK,
+  // @ts-ignore
   blocks: [
     {
       uuid: GroupUUIDEnum.CONTEXTUAL_DICTIONARY,
@@ -298,6 +302,7 @@ const DataPreparation: PipelineExecutionFrameworkType = {
   type: PipelineTypeEnum.EXECUTION_FRAMEWORK,
   groups: [GroupUUIDEnum.DATA_PREPARATION],
   execution_framework: PipelineExecutionFrameworkUUIDEnum.RAG,
+  // @ts-ignore
   blocks: [
     {
       uuid: Load.uuid,
