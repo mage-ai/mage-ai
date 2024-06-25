@@ -76,7 +76,7 @@ type PipelineBuilderProps = {
   setZoomPanDisabled: (value: boolean) => void;
   snapToGridOnDrag?: boolean;
   snapToGridOnDrop?: boolean;
-  transformState: ZoomPanStateType;
+  transformState: React.MutableRefObject<ZoomPanStateType>;
 };
 
 const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
@@ -117,7 +117,7 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
       },
       direction: LayoutConfigDirectionEnum.HORIZONTAL,
       origin: LayoutConfigDirectionOriginEnum.LEFT,
-      transformState,
+      transformState: transformState?.current,
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }),
     [transformState],
@@ -255,7 +255,7 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
         column: 40,
         row: 40,
       },
-      transformState,
+      transformState: transformState?.current,
     } as LayoutConfigType;
 
     const nodeMapping = {
@@ -535,9 +535,9 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
         };
 
         // console.log(0, item1?.id, item2?.id, rect);
-        // rect = transformState ? transformZoomPanRect(rect, transformState) : rect;
+        // rect = transformState ? transformZoomPanRect(rect, transformState?.current) : rect;
 
-        const scale = Number(transformState?.scale?.current ?? 1);
+        const scale = Number(transformState?.current?.scale?.current ?? 1);
         if (ItemTypeEnum.PORT === values?.type) {
           const isOutput = PortSubtypeEnum.OUTPUT === values?.subtype;
 
@@ -704,8 +704,45 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
         },
         uuid: 'Reposition blocks',
       },
-      { uuid: 'New folder' },
       { divider: true },
+      {
+        items: [
+          {
+            onClick: (event: ClientEventType) => {
+              event.preventDefault();
+              removeContextMenu(event);
+              transformState?.current?.handleZoom?.current?.(event as any, 1);
+              startTransition(() => {
+                setZoomPanDisabled(false);
+              });
+            },
+            uuid: (transformState?.current?.zoom?.current ?? 1) === 1  ? 'Default zoom' : 'Zoom to 100%',
+          },
+          {
+            onClick: (event: ClientEventType) => {
+              event.preventDefault();
+              removeContextMenu(event);
+              transformState?.current?.handlePanning?.current?.(event as any, { x: 0, y: 0 });
+              startTransition(() => {
+                setZoomPanDisabled(false);
+              });
+            },
+            uuid: 'Reset view',
+          },
+          {
+            onClick: (event: ClientEventType) => {
+              event.preventDefault();
+              removeContextMenu(event);
+              transformState?.current?.handlePanning?.current?.(event as any, { xPercent: 0.5, yPercent: 0.5 });
+              startTransition(() => {
+                setZoomPanDisabled(false);
+              });
+            },
+            uuid: 'Center view',
+          },
+        ],
+        uuid: 'View controls',
+      },
       {
         Icon: ArrowsAdjustingFrameSquare,
         uuid: 'Open file',
@@ -1280,6 +1317,13 @@ export default function PipelineBuilderCanvas(props: PipelineBuilderProps) {
   const canvasRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const disabledRef = useRef(false);
+  const handlePanning = useRef<(event: MouseEvent, positionOverride?: {
+    x?: number;
+    xPercent?: number,
+    y?: number;
+    yPercent?: number,
+  }) => void>(() => null);
+  const handleZoom = useRef<(event: WheelEvent, scaleOverride?: number) => void>(() => null);
   const originX = useRef(0);
   const originY = useRef(0);
   const panning = useRef({ active: false, direction: null });
@@ -1294,6 +1338,8 @@ export default function PipelineBuilderCanvas(props: PipelineBuilderProps) {
     container: containerRef,
     disabled: disabledRef,
     element: canvasRef,
+    handlePanning,
+    handleZoom,
     originX,
     originY,
     panning,
@@ -1313,7 +1359,7 @@ export default function PipelineBuilderCanvas(props: PipelineBuilderProps) {
     renderContextMenu,
     removeContextMenu,
     shouldPassControl,
-  } = useContextMenu({ container: canvasRef, uuid: 'pipeline-builder-canvas' });
+  } = useContextMenu({ container: containerRef, uuid: 'pipeline-builder-canvas' });
 
   useZoomPan(zoomPanStateRef, {
     roles: [ElementRoleEnum.DRAGGABLE],
@@ -1399,7 +1445,7 @@ export default function PipelineBuilderCanvas(props: PipelineBuilderProps) {
           setDragEnabled={setDragEnabled}
           setDropEnabled={setDropEnabled}
           setZoomPanDisabled={setZoomPanDisabled}
-          transformState={zoomPanStateRef.current}
+          transformState={zoomPanStateRef}
         />
       </DndProvider>
 
