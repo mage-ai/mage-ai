@@ -31,6 +31,8 @@ class EntityName(str, Enum):
     Download = 'Download'
     EventMatcher = 'EventMatcher'
     EventRule = 'EventRule'
+    ExecutionFramework = 'ExecutionFramework'
+    ExecutionFrameworkPipeline = 'ExecutionFrameworkPipeline'
     ExecutionState = 'ExecutionState'
     ExtensionOption = 'ExtensionOption'
     Feature = 'Feature'

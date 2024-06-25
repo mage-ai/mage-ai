@@ -1,11 +1,11 @@
-from enum import Enum
+from mage_ai.shared.models import BaseEnum
 
 
-class ExecutionFrameworkUUID(Enum):
+class ExecutionFrameworkUUID(BaseEnum):
     RAG = 'rag'
 
 
-class GroupUUID(Enum):
+class GroupUUID(BaseEnum):
     ANSWER_ENRICHMENT = 'answer_enrichment'
     CHUNKING = 'chunking'
     CLEANING = 'cleaning'

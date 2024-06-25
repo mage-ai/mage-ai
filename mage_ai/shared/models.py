@@ -3,13 +3,30 @@ import typing
 from dataclasses import dataclass, make_dataclass
 from enum import Enum
 from functools import reduce
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Type, Union
 
 import inflection
 
 from mage_ai.shared.environments import is_debug
 from mage_ai.shared.hash import merge_dict
 from mage_ai.shared.parsers import encode_complex
+
+
+class BaseEnum(str, Enum):
+    @classmethod
+    def has_value(cls, value: Union[Any, str]) -> bool:
+        if isinstance(value, cls):
+            return True
+        return isinstance(value, str) and value.upper() in (name for name in cls.__members__)
+
+    @classmethod
+    def from_value(cls, value: Union[Any, str]) -> Optional[Any]:
+        if not cls.has_value(value):
+            return None
+        if isinstance(value, cls):
+            return value
+        if isinstance(value, str):
+            return cls[value.upper()]
 
 
 class BaseClass:
@@ -195,32 +212,56 @@ class BaseClass:
         except AttributeError as err:
             print(f'[WARNING] {self.__class__.__name__}.serialize_attribute_classes: {err}')
 
-    def serialize_attribute_enum(self, attribute_name: str, enum_class):
+    def serialize_attribute_enum(
+        self,
+        attribute_name: str,
+        enum_class: Union[List[Union[Type[BaseEnum], Type[Enum]]], Type[BaseEnum], Type[Enum]],
+    ):
         try:
             value = getattr(self, attribute_name)
             if value and isinstance(value, str):
-                setattr(
-                    self,
-                    attribute_name,
-                    enum_class.from_value(value)
-                    if issubclass(enum_class, BaseEnum)
-                    else enum_class(value),
-                )
+                if not isinstance(enum_class, list):
+                    enum_class = [enum_class]
+
+                for enum_class_type in enum_class:
+                    if isinstance(enum_class_type, type) and issubclass(
+                        enum_class_type, (BaseEnum, Enum)
+                    ):
+                        setattr(
+                            self,
+                            attribute_name,
+                            enum_class_type.from_value(value)
+                            if issubclass(enum_class_type, BaseEnum)
+                            else enum_class_type(value),
+                        )
+                        return
         except AttributeError as err:
             print(f'[WARNING] {self.__class__.__name__}.serialize_attribute_enum: {err}')
 
-    def serialize_attribute_enums(self, attribute_name: str, enum_class):
+    def serialize_attribute_enums(
+        self,
+        attribute_name: str,
+        enum_class: Union[List[Union[Type[BaseEnum], Type[Enum]]], Type[BaseEnum], Type[Enum]],
+    ):
         try:
             values = getattr(self, attribute_name)
             if values and isinstance(values, list):
                 arr = []
                 for value in values:
                     if isinstance(value, str):
-                        arr.append(
-                            enum_class.from_value(value)
-                            if issubclass(enum_class, BaseEnum)
-                            else enum_class(value)
-                        )
+                        if not isinstance(enum_class, list):
+                            enum_class = [enum_class]
+
+                        for enum_class_type in enum_class:
+                            if isinstance(enum_class_type, type) and issubclass(
+                                enum_class_type, (BaseEnum, Enum)
+                            ):
+                                arr.append(
+                                    enum_class_type.from_value(value)
+                                    if issubclass(enum_class_type, BaseEnum)
+                                    else enum_class_type(value)
+                                )
+                                return
                     else:
                         arr.append(value)
                 setattr(self, attribute_name, arr)
@@ -317,20 +358,3 @@ class Delegator:
         self._target = target
         if self._target:
             self.delegate = DelegatorTarget(self._target)
-
-
-class BaseEnum(str, Enum):
-    @classmethod
-    def has_value(cls, value: Union[Any, str]) -> bool:
-        if isinstance(value, cls):
-            return True
-        return isinstance(value, str) and value.upper() in (name for name in cls.__members__)
-
-    @classmethod
-    def from_value(cls, value: Union[Any, str]) -> Optional[Any]:
-        if not cls.has_value(value):
-            return None
-        if isinstance(value, cls):
-            return value
-        if isinstance(value, str):
-            return cls[value.upper()]
