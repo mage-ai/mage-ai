@@ -54,7 +54,7 @@ class ActiveMQSource(BaseSource):
         self._print(f'Starting to initialize consumer for queue {queue_name}')
 
         try:
-            conn = stomp.Connection11([(connection_host, connection_port)])
+            conn = stomp.Connection11([(connection_host, connection_port)], heartbeats=(10000, 10000))
             self._print('Connecting to broker')
             conn.connect(username, password, wait=True)
             self.connection = conn
