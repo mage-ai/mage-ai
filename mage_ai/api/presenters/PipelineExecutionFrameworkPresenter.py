@@ -12,7 +12,7 @@ class PipelineExecutionFrameworkPresenter(BasePresenter):
     ]
 
     async def prepare_present(self, **kwargs) -> Dict:
-        return await self.resource.model.to_dict_async()
+        return await self.resource.model.to_dict_async(include_execution_framework=True)
 
 
 PipelineExecutionFrameworkPresenter.register_formats(

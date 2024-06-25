@@ -61,7 +61,6 @@ def build_pipeline_dict(
     pipeline_output_dict = dict(
         created_at=None,
         description=None,
-        execution_framework=None,
         name=None,
         tags=None,
         type=None,

@@ -1019,14 +1019,15 @@ class Pipeline:
 
         return blocks_by_uuid
 
-    def to_dict_base(self, exclude_data_integration=False) -> Dict:
+    def to_dict_base(
+        self, exclude_data_integration=False, include_execution_framework: Optional[bool] = None
+    ) -> Dict:
         base = dict(
             cache_block_output_in_memory=self.cache_block_output_in_memory,
             concurrency_config=self.concurrency_config,
             created_at=self.created_at,
             data_integration=self.data_integration if not exclude_data_integration else None,
             description=self.description,
-            execution_framework=self.execution_framework,
             executor_config=self.executor_config,
             executor_count=self.executor_count,
             executor_type=self.executor_type,
@@ -1041,6 +1042,13 @@ class Pipeline:
             uuid=self.uuid,
             variables_dir=self.variables_dir,
         )
+
+        if (
+            include_execution_framework
+            and self.execution_framework is not None
+            and self.execution_framework
+        ):
+            base['execution_framework'] = self.execution_framework
 
         if self.variables is not None:
             base['variables'] = self.variables
@@ -1058,6 +1066,7 @@ class Pipeline:
         include_outputs_spark: bool = False,
         sample_count: int = None,
         exclude_data_integration: bool = False,
+        include_execution_framework: Optional[bool] = None,
     ) -> Dict:
         shared_kwargs = dict(
             include_content=include_content,
@@ -1109,7 +1118,10 @@ class Pipeline:
             data.update(extensions=extensions_data)
 
         return merge_dict(
-            self.to_dict_base(exclude_data_integration=exclude_data_integration),
+            self.to_dict_base(
+                exclude_data_integration=exclude_data_integration,
+                include_execution_framework=include_execution_framework,
+            ),
             data,
         )
 
@@ -1129,6 +1141,7 @@ class Pipeline:
         disable_block_output_previews: bool = False,
         exclude_blank_variable_uuids: bool = False,
         max_results: Optional[int] = None,
+        include_execution_framework: Optional[bool] = None,
     ):
         shared_kwargs = dict(
             check_if_file_exists=True,
@@ -1206,7 +1219,9 @@ class Pipeline:
                 )
             data.update(extensions=extensions_data)
 
-        return merge_dict(self.to_dict_base(), data)
+        return merge_dict(
+            self.to_dict_base(include_execution_framework=include_execution_framework), data
+        )
 
     async def update(self, data, update_content=False):
         from mage_ai.orchestration.db.models.utils import (
@@ -2323,13 +2338,17 @@ class Pipeline:
                 current_pipeline.conditionals_by_uuid[block_uuid] = block
             else:
                 current_pipeline.blocks_by_uuid[block_uuid] = block
-            pipeline_dict = current_pipeline.to_dict(include_extensions=True)
+            pipeline_dict = current_pipeline.to_dict(
+                include_execution_framework=True,
+                include_extensions=True,
+            )
         else:
             if self.data_integration is not None:
                 with open(self.catalog_config_path, 'w') as fp:
                     json.dump(self.data_integration, fp)
             pipeline_dict = self.to_dict(
                 exclude_data_integration=True,
+                include_execution_framework=True,
                 include_extensions=True,
             )
         if not pipeline_dict:
