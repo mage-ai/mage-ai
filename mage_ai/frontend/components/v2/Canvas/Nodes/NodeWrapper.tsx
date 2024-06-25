@@ -12,7 +12,16 @@ import { DragAndDropType } from './types';
 import { ElementRoleEnum } from '@mana/shared/types';
 
 // This is the style used for the preview when dragging
-function getStyles(item: NodeItemType, { isDragging }: { isDragging: boolean }): CSSProperties {
+function getStyles(
+  item: NodeItemType,
+  {
+    draggable,
+    isDragging,
+  }: {
+    draggable: boolean;
+    isDragging: boolean;
+  },
+): CSSProperties {
   const { id, rect, type } = item;
   const { left, top, width, zIndex } = rect || ({} as RectType);
   const transform = `translate3d(${left ?? 0}px, ${top ?? 0}px, 0)`;
@@ -23,10 +32,10 @@ function getStyles(item: NodeItemType, { isDragging }: { isDragging: boolean }):
     // border: '1px dashed gray',
     // IE fallback: hide the real node using CSS when dragging
     // because IE will ignore our custom "empty image" drag preview.
-    cursor: 'move',
     position: 'absolute',
     transform,
     zIndex,
+    ...(draggable ? { cursor: 'move' } : {}),
     ...(isDragging
       ? { height: 0, opacity: 0 }
       : {
@@ -45,24 +54,22 @@ export type NodeWrapperProps = {
 export const NodeWrapper: FC<NodeWrapperProps> = memo(function NodeWrapper({
   children,
   className,
+  draggable,
   draggingNode,
+  droppable,
   handlers,
   item,
   itemRef,
 }: NodeWrapperProps) {
-  const { onDragEnd, onDragStart, onDrop, onMouseDown, onMouseUp } = handlers;
+  const { onDragEnd, onDragStart, onDrop, onMouseDown, onMouseLeave, onMouseOver, onMouseUp } =
+    handlers;
   const itemToDrag: DragItem | PortType = useMemo(() => draggingNode || item, [draggingNode, item]);
-
-  useEffect(() => {
-    preview(getEmptyImage(), { captureDraggingState: true });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   const [{ isDragging }, connectDrag, preview] = useDrag(
     () => ({
       canDrag: () => {
-        onDragStart(null, item);
-        return true;
+        onDragStart({ data: { node: itemToDrag } } as any);
+        return draggable;
       },
       collect: (monitor: DragSourceMonitor) => ({ isDragging: monitor.isDragging() }),
       isDragging: (monitor: DragSourceMonitor) => {
@@ -72,13 +79,15 @@ export const NodeWrapper: FC<NodeWrapperProps> = memo(function NodeWrapper({
       item: itemToDrag,
       type: itemToDrag.type,
     }),
-    [itemToDrag, onDragStart],
+    [draggable, itemToDrag, onDragStart],
   );
 
   const [, connectDrop] = useDrop(
     () => ({
       accept: [ItemTypeEnum.PORT],
       canDrop: (node: NodeItemType, monitor: DropTargetMonitor) => {
+        if (!droppable) return false;
+
         if (!monitor.isOver({ shallow: true })) {
           return false;
         }
@@ -99,22 +108,34 @@ export const NodeWrapper: FC<NodeWrapperProps> = memo(function NodeWrapper({
         onDrop(dragTarget, item);
       },
     }),
-    [onDrop, item],
+    [droppable, onDrop, item],
   );
 
+  useEffect(() => {
+    preview(getEmptyImage(), { captureDraggingState: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // This needs to always connect without any conditionals or else it’ll never connect after mount.
   connectDrop(itemRef);
-  draggingNode?.type === item?.type && connectDrag(itemRef);
+  connectDrag(itemRef);
 
   return (
     <div
       className={[styles.nodeWrapper, styles[itemToDrag?.type], className ?? ''].join(' ')}
-      onDragEnd={event => onDragEnd(event, item)}
-      onDragStart={event => onDragStart(event, item)}
-      onMouseDown={event => onMouseDown(event, item)}
-      onMouseUp={event => onMouseUp(event, item)}
+      onDragEnd={draggable && onDragEnd ? event => onDragEnd?.(event as any) : undefined}
+      onDragStart={draggable && onDragStart ? event => onDragStart?.(event as any) : undefined}
+      onMouseDown={draggable && onMouseDown ? event => onMouseDown?.(event as any) : undefined}
+      // THESE WILL DISABLE the style opacity of the wrapper.
+      // onMouseLeave={onMouseLeave ? event => onMouseLeave?.(event as any) : undefined}
+      onMouseOver={!draggable && onMouseOver ? event => onMouseOver?.(event as any) : undefined}
+      onMouseUp={draggable && onMouseUp ? event => onMouseUp?.(event as any) : undefined}
       ref={itemRef}
       role={[ElementRoleEnum.DRAGGABLE].join(' ')}
-      style={getStyles(item, { isDragging: isDragging && draggingNode?.type === item?.type })}
+      style={getStyles(item, {
+        draggable,
+        isDragging: isDragging && itemToDrag?.type === item?.type,
+      })}
     >
       {children}
     </div>

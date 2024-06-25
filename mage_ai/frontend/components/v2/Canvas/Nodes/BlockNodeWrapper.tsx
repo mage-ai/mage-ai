@@ -1,9 +1,19 @@
 import React from 'react';
+import update from 'immutability-helper';
 import { BlockNode } from './BlockNode';
-import { StatusTypeEnum, BlockTypeEnum } from '@interfaces/BlockType';
+import { StatusTypeEnum, BlockTypeEnum, TemplateType } from '@interfaces/BlockType';
 import { NodeWrapper, NodeWrapperProps } from './NodeWrapper';
 import { getBlockColor } from '@mana/themes/blocks';
-import { Check, Code, PipeIconVertical, PlayButtonFilled, Infinite } from '@mana/icons';
+import {
+  Add,
+  CaretDown,
+  Check,
+  Code,
+  ArrowsAdjustingFrameSquare,
+  PipeIconVertical,
+  PlayButtonFilled,
+  Infinite,
+} from '@mana/icons';
 import { createRef, useEffect, useCallback, useState, useMemo, useRef } from 'react';
 import { GroupUUIDEnum } from '@interfaces/PipelineExecutionFramework/types';
 import { NodeItemType, PortType, DragItem } from '../interfaces';
@@ -11,32 +21,40 @@ import { countOccurrences, flattenArray, sortByKey } from '@utils/array';
 import { dig } from '@utils/hash';
 import { ItemTypeEnum } from '../types';
 import stylesBuilder from '@styles/scss/apps/Canvas/Pipelines/Builder.module.scss';
+import styles from '@styles/scss/components/Canvas/Nodes/BlockNode.module.scss';
 import { isDebug } from '@utils/environment';
+import {
+  ClientEventType,
+  EventOperationEnum,
+  SubmitEventOperationType,
+} from '@mana/shared/interfaces';
+import { ButtonEnum } from '@mana/shared/enums';
+import { MenuItemType } from '@mana/components/Menu/interfaces';
 
 type BlockNodeWrapperProps = {
   collapsed?: boolean;
+  draggable?: boolean;
+  droppable?: boolean;
   onMountItem: (item: DragItem, ref: React.RefObject<HTMLDivElement>) => void;
   onMountPort: (port: PortType, ref: React.RefObject<HTMLDivElement>) => void;
   frameworkGroups: Record<GroupUUIDEnum, Record<string, any>>;
   selected?: boolean;
+  submitEventOperation: SubmitEventOperationType;
   version?: number | string;
 } & NodeWrapperProps;
 
 const BlockNodeWrapper: React.FC<BlockNodeWrapperProps> = ({
   collapsed,
+  draggable = false,
+  droppable = false,
   frameworkGroups,
   item,
   handlers,
   onMountPort,
   onMountItem,
   selected = false,
+  submitEventOperation,
 }) => {
-  console.log(item?.type, item?.id, item?.version);
-
-  if (ItemTypeEnum.NODE === item?.type) {
-    isDebug() && console.log(item);
-  }
-
   const itemRef = useRef(null);
   const phaseRef = useRef(0);
   const timeoutRef = useRef(null);
@@ -45,35 +63,48 @@ const BlockNodeWrapper: React.FC<BlockNodeWrapperProps> = ({
 
   const block = item?.block;
   const { pipeline, type, uuid } = block || {};
-  const isPipeline = useMemo(() => !type || BlockTypeEnum.PIPELINE === type, [type]);
-  const isGroup = useMemo(() => !type || BlockTypeEnum.GROUP === type, [type]);
+  const isPipeline = useMemo(() => type && BlockTypeEnum.PIPELINE === type, [type]);
+  const isGroup = useMemo(() => type && BlockTypeEnum.GROUP === type, [type]);
 
-  const { onMouseDown, onMouseUp } = handlers;
+  const { onMouseDown, onMouseLeave, onMouseOver, onMouseUp } = handlers;
   const name = useMemo(
     () => (ItemTypeEnum.BLOCK === item?.type ? item?.block?.name ?? item?.block?.uuid : item?.id),
     [item],
   );
 
-  function handleMouseDown(
-    event: React.MouseEvent<HTMLDivElement> | React.TouchEvent<HTMLDivElement>,
-    node: NodeItemType,
-    target?: any,
-  ): boolean {
-    onMouseDown(event, node);
-    setDraggingNode(node);
+  const buildEvent = useCallback(
+    (event: any, operation?: EventOperationEnum) =>
+      update(event, {
+        data: {
+          $set: {
+            node: item,
+          },
+        },
+        operationTarget: {
+          $set: itemRef,
+        },
+        operationType: {
+          $set: operation,
+        },
+      }) as any,
+    [item],
+  );
 
-    return true;
+  function handleMouseDown(event: ClientEventType) {
+    event.stopPropagation();
+    onMouseDown && onMouseDown?.(buildEvent(event, EventOperationEnum.DRAG_START));
   }
 
-  function handleMouseUp(
-    event: React.MouseEvent<HTMLDivElement> | React.TouchEvent<HTMLDivElement>,
-    node: NodeItemType,
-    target?: any,
-  ): boolean {
-    onMouseUp(event, node);
-    setDraggingNode(null);
+  function handleMouseLeave(event: ClientEventType) {
+    onMouseLeave && onMouseLeave?.(buildEvent(event));
+  }
 
-    return true;
+  function handleMouseOver(event: ClientEventType) {
+    onMouseOver && onMouseOver?.(buildEvent(event));
+  }
+
+  function handleMouseUp(event: ClientEventType) {
+    onMouseUp && onMouseUp?.(buildEvent(event, EventOperationEnum.DRAG_END));
   }
 
   function onMount(port: PortType, portRef: React.RefObject<HTMLDivElement>) {
@@ -162,13 +193,63 @@ const BlockNodeWrapper: React.FC<BlockNodeWrapperProps> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  function handleGroupTemplateSelect(event: any, item1: NodeItemType, template: TemplateType) {
+    console.log('ADDDDDDDDDDDDDDDDDDDDDD', event, item1, template);
+  }
+
+  function handleClickGroupMenu(event: any) {
+    event.preventDefault();
+    submitEventOperation(
+      update(event, {
+        button: { $set: ButtonEnum.CONTEXT_MENU },
+        data: {
+          $set: {
+            node: item,
+          },
+        },
+        operationTarget: { $set: event.target },
+        operationType: { $set: EventOperationEnum.CONTEXT_MENU_OPEN },
+      }),
+      {
+        args: [
+          [
+            {
+              uuid: `Templates for ${item?.block?.name}`,
+            },
+            ...Object.entries(item?.block?.configuration?.templates ?? {})?.map(
+              ([uuid, template]) => ({
+                description: () => template?.description,
+                onClick: (event: any) => handleGroupTemplateSelect(event, item, template),
+                label: () => template?.name,
+                uuid,
+              }),
+            ),
+          ],
+        ],
+        kwargs: {
+          boundingContainer: itemRef?.current?.getBoundingClientRect(),
+        },
+      },
+    );
+  }
+
   return (
     <NodeWrapper
-      className={[stylesBuilder.level, stylesBuilder[`level-${item?.level}`]]?.join(' ')}
+      className={[
+        stylesBuilder.level,
+        stylesBuilder[`level-${item?.level}`],
+        !draggable && !droppable && styles.showOnHoverContainer,
+      ]
+        ?.filter(Boolean)
+        ?.join(' ')}
+      draggable={draggable}
       draggingNode={draggingNode}
+      droppable={droppable}
       handlers={{
         ...handlers,
         onMouseDown: handleMouseDown,
+        onMouseLeave: handleMouseLeave,
+        onMouseOver: !draggable && handleMouseOver,
         onMouseUp: handleMouseUp,
       }}
       item={item}
@@ -179,6 +260,7 @@ const BlockNodeWrapper: React.FC<BlockNodeWrapperProps> = ({
         borderConfig={{
           borders,
         }}
+        draggable={draggable}
         groups={groups}
         handlers={{
           ...handlers,
@@ -189,13 +271,18 @@ const BlockNodeWrapper: React.FC<BlockNodeWrapperProps> = ({
         onMount={onMount}
         titleConfig={{
           asides: {
-            after:
-              isPipeline || isGroup
-                ? undefined
+            after: {
+              className: styles.showOnHover,
+              ...(isGroup
+                ? {
+                    Icon: draggable ? ArrowsAdjustingFrameSquare : Add,
+                    onClick: handleClickGroupMenu,
+                  }
                 : {
-                    Icon: Code,
+                    Icon: draggable ? ArrowsAdjustingFrameSquare : CaretDown,
                     onClick: () => alert('Coding...'),
-                  },
+                  }),
+            },
             before: {
               Icon: StatusTypeEnum.EXECUTED === block?.status ? Check : PlayButtonFilled,
               baseColorName:
@@ -222,7 +309,7 @@ const BlockNodeWrapper: React.FC<BlockNodeWrapperProps> = ({
 };
 
 function areEqual(prevProps: BlockNodeWrapperProps, nextProps: BlockNodeWrapperProps) {
-  const keys = ['item.version'];
+  const keys = ['item.version', 'draggable', 'droppable'];
   return keys?.every((key: string) => dig(prevProps, key) === dig(nextProps, key));
 }
 

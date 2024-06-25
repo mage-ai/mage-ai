@@ -36,6 +36,12 @@ $values: (
     &.auto-rows-#{$value} {
       grid-auto-rows: $value;
     }
+    &.template-columns-#{$value} {
+      grid-template-columns: $value;
+    }
+    &.template-rows-#{$value} {
+      grid-template-rows: $value;
+    }
   }
 }
 

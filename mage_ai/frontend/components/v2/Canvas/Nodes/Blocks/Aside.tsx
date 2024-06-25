@@ -3,7 +3,7 @@ import Button from '@mana/elements/Button';
 
 import { AsideType } from '../types';
 
-export default function Aside({ Icon, baseColorName, onClick }: AsideType) {
+export default function Aside({ Icon, baseColorName, className, onClick }: AsideType) {
   const icon = Icon ? <Icon inverted={baseColorName === 'green'} size={14} /> : null;
   const el = (
     <Grid
@@ -20,12 +20,15 @@ export default function Aside({ Icon, baseColorName, onClick }: AsideType) {
       {icon}
     </Grid>
   );
+
   return onClick ? (
     <Button
       Icon={() => el}
       asLink
       basic
+      className={className}
       onClick={(event: React.MouseEvent<HTMLElement, MouseEvent>) => {
+        event.preventDefault();
         onClick(event);
       }}
     />

@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { createRef, useContext, useRef, useState } from 'react';
 import { ThemeContext, ThemeProvider } from 'styled-components';
 import dynamic from 'next/dynamic';

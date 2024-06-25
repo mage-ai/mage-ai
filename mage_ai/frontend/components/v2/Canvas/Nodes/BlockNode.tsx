@@ -22,6 +22,7 @@ import { DragAndDropHandlersType } from './types';
 type BlockNodeProps = {
   block?: BlockType;
   borderConfig?: BorderConfigType;
+  draggable?: boolean;
   item: DragItem;
   collapsed?: boolean;
   configurationOptions?: ConfigurationOptionType[];
@@ -33,6 +34,7 @@ type BlockNodeProps = {
 export function BlockNode({
   block,
   borderConfig,
+  draggable,
   groups,
   handlers,
   item,
@@ -98,39 +100,57 @@ export function BlockNode({
       badge && (
         <Grid
           alignItems="center"
+          autoColumns="auto"
+          autoFlow="column"
           columnGap={8}
           id={`${item.id}-badge`}
-          templateColumns={[
-            inputs?.length >= 1 ? 'auto' : '',
-            inputs?.length >= 1 || outputs?.length >= 1 ? '1fr' : '',
-            outputs?.length >= 1 ? 'auto' : '',
-            (!inputs?.length ?? false) && (!outputs?.length ?? false) ? 'auto 1fr' : '',
-          ].join(' ')}
+          justifyContent="space-between"
+          templateColumns="1fr"
           templateRows="1fr"
         >
-          {inputs?.length >= 1 && (
-            <Circle
-              backgroundColor={
-                getBlockColor(inputs?.[0]?.target?.block?.type, { getColorName: true })?.names
-                  ?.base || 'gray'
-              }
-              size={12}
-            />
-          )}
-          {badge && <Badge {...badge} />}
-          {(!inputs?.length ?? false) && (!outputs?.length ?? false) && <div />}
-          {outputs?.length >= 1 && (
-            <Circle
-              backgroundColor={
-                getBlockColor(outputs?.[0]?.target?.block?.type, { getColorName: true })?.names
-                  ?.base || 'gray'
-              }
-              size={12}
-            />
-          )}
+          <Grid
+            alignItems="center"
+            autoColumns="auto"
+            autoFlow="column"
+            columnGap={8}
+            justifyContent="start"
+            templateColumns="max-content"
+            templateRows="1fr"
+          >
+            {false && inputs?.length >= 1 && (
+              <Circle
+                backgroundColor={
+                  getBlockColor(inputs?.[0]?.target?.block?.type, { getColorName: true })?.names
+                    ?.base || 'gray'
+                }
+                size={12}
+              />
+            )}
+            {badge && <Badge {...badge} />}
+          </Grid>
+          <Grid
+            alignItems="center"
+            autoColumns="auto"
+            autoFlow="column"
+            columnGap={8}
+            justifyContent="end"
+            templateColumns="max-content"
+            templateRows="1fr"
+          >
+            {after && <Aside {...after} />}
+            {false && outputs?.length >= 1 && (
+              <Circle
+                backgroundColor={
+                  getBlockColor(outputs?.[0]?.target?.block?.type, { getColorName: true })?.names
+                    ?.base || 'gray'
+                }
+                size={12}
+              />
+            )}
+          </Grid>
         </Grid>
       ),
-    [badge, inputs, item, outputs],
+    [after, badge, inputs, item, outputs],
   );
 
   const connectionRows = useMemo(
@@ -139,6 +159,7 @@ export function BlockNode({
         <PanelRows>
           {inputOutputPairs?.map(({ input, output }, idx: number) => (
             <Connection
+              draggable={draggable}
               handlers={handlers}
               input={input}
               key={[input ? buildPortUUID(input) : '', output ? buildPortUUID(output) : ''].join(
@@ -149,9 +170,10 @@ export function BlockNode({
             />
           ))}
         </PanelRows>
+
         // eslint-disable-next-line react-hooks/exhaustive-deps
       ),
-    [handlers, inputOutputPairs, onMount],
+    [draggable, handlers, inputOutputPairs, onMount],
   );
 
   const templateConfigurations = useMemo(

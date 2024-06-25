@@ -1,5 +1,6 @@
 import React from 'react';
 import styled, { css } from 'styled-components';
+import { motion } from 'framer-motion';
 
 import ButtonGroup from './Group';
 import Loading, { LoadingStyleEnum } from '../../components/Loading';
@@ -13,13 +14,17 @@ type ButtonStyleProps = {
   IconAfter?: ({ ...props }: any) => any;
   anchor?: boolean;
   children?: React.ReactNode;
+  width?: string;
 } & StyleProps;
 
 type ButtonProps = {
+  asLink?: boolean;
   className?: string;
   id?: string;
   loading?: boolean;
   onMouseEnter?: (event: React.MouseEvent<HTMLDivElement>) => void;
+  plain?: boolean;
+  motion?: boolean;
 } & ButtonStyleProps &
   WithLoggingProps;
 
@@ -35,19 +40,24 @@ const cssRow = css<ButtonStyleProps>`
 const CSS = css<ButtonStyleProps>`
   ${({ small }) => (small ? buttonsSm : buttons)}
   ${cssRow}
+  ${({ width }) => width && `width: ${width};`}
 `;
 
-const ButtonStyled = styled.button<ButtonStyleProps>`
+const ButtonStyled = styled(motion.button)<ButtonStyleProps>`
   ${CSS}
 
   display: grid;
 `;
 
-const AStyled = styled.a<ButtonStyleProps>`
+const AStyled = styled(motion.a)<ButtonStyleProps>`
   ${CSS}
 
   align-items: center;
   display: inline-grid;
+
+  &:focus {
+    outline: none;
+  }
 `;
 
 function Button({
@@ -56,14 +66,17 @@ function Button({
   basic,
   children,
   loading,
+  motion,
+  plain,
   primary,
   secondary,
   small,
   tag,
+  Icon,
+  IconAfter,
   ...props
 }: ButtonProps) {
   const HTMLTag = anchor || asLink ? AStyled : ButtonStyled;
-  const { Icon, IconAfter } = props;
   const loadingRight = loading && Icon && !(tag || IconAfter);
   const loadingLeft = !loadingRight && loading && (!Icon || (!tag && !IconAfter));
   const loadingEl = (
@@ -77,13 +90,15 @@ function Button({
     <HTMLTag
       {...props}
       {...(asLink ? { href: '#' } : {})}
-      asLink={asLink}
-      basic={basic}
+      {...(motion ? { whileTap: { scale: 0.97 } } : {})}
+      aslink={asLink ? 'true' : undefined}
+      basic={basic ? 'true' : undefined}
       loading={loading ? true : undefined}
-      primary={primary}
+      plain={plain ? 'true' : undefined}
+      primary={primary ? 'true' : undefined}
       role={ElementRoleEnum.BUTTON}
-      secondary={secondary}
-      small={small}
+      secondary={secondary ? 'true' : undefined}
+      small={small ? 'true' : undefined}
       style={{
         gridTemplateColumns: [
           Icon ? 'auto' : '',

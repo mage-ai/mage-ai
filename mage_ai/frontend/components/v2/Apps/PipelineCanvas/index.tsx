@@ -18,7 +18,6 @@ import CanvasContainer from './index.style';
 import {
   DragItem,
   NodeItemType,
-  ConnectionType,
   PortType,
   NodeType,
   ItemMappingType,
@@ -36,22 +35,34 @@ import {
   PortSubtypeEnum,
   LayoutConfigDirectionOriginEnum,
 } from '../../Canvas/types';
-import { ElementRoleEnum } from '@mana/shared/types';
 import BlockNodeWrapper from '../../Canvas/Nodes/BlockNodeWrapper';
-import { DragLayer } from '../../Canvas/Layers/DragLayer';
-import { snapToGrid } from '../../Canvas/utils/snapToGrid';
-import { ConnectionLines } from '../../Canvas/Connections/ConnectionLines';
-import { getPathD } from '../../Canvas/Connections/utils';
-import { layoutItemsInGroups } from '../../Canvas/utils/rect';
-import { updateModelsAndRelationships, updateNodeGroupsWithItems } from './utils/nodes';
-import { buildPortUUID } from '@components/v2/Canvas/Draggable/utils';
-import { initializeBlocksAndConnections } from './utils/blocks';
-import { buildDependencies } from './utils/pipelines';
-import { ZoomPanStateType, useZoomPan } from '@mana/hooks/useZoomPan';
-import PipelineType from '@interfaces/PipelineType';
-import { getBlockColor } from '@mana/themes/blocks';
 import PipelineExecutionFrameworkType from '@interfaces/PipelineExecutionFramework/interfaces';
+import PipelineType from '@interfaces/PipelineType';
 import stylesBuilder from '@styles/scss/apps/Canvas/Pipelines/Builder.module.scss';
+import useContextMenu, {
+  MenuItemType,
+  RenderContextMenuOptions,
+  RemoveContextMenuType,
+  RenderContextMenuType,
+} from '@mana/hooks/useContextMenu';
+import {
+  ClientEventType,
+  EventOperationEnum,
+  SubmitEventOperationType,
+  EventOperationOptionsType,
+} from '@mana/shared/interfaces';
+import { ConnectionLines } from '../../Canvas/Connections/ConnectionLines';
+import { DragLayer } from '../../Canvas/Layers/DragLayer';
+import { ElementRoleEnum } from '@mana/shared/types';
+import { ArrowsAdjustingFrameSquare } from '@mana/icons';
+import { ZoomPanStateType, useZoomPan } from '@mana/hooks/useZoomPan';
+import { buildDependencies } from './utils/pipelines';
+import { getBlockColor } from '@mana/themes/blocks';
+import { getElementPositionInContainer, layoutItemsInGroups } from '../../Canvas/utils/rect';
+import { getPathD } from '../../Canvas/Connections/utils';
+import { initializeBlocksAndConnections } from './utils/blocks';
+import { snapToGrid } from '../../Canvas/utils/snapToGrid';
+import { updateModelsAndRelationships, updateNodeGroupsWithItems } from './utils/nodes';
 
 const GRID_SIZE = 40;
 
@@ -62,30 +73,36 @@ function connectionLinesRootID(uuid: string) {
 type PipelineBuilderProps = {
   canvasRef: React.RefObject<HTMLDivElement>;
   containerRef: React.RefObject<HTMLDivElement>;
+  dragEnabled?: boolean;
+  dropEnabled?: boolean;
   pipeline: PipelineType | PipelineExecutionFrameworkType;
   pipelineExecutionFramework: PipelineExecutionFrameworkType;
   pipelineExecutionFrameworks: PipelineExecutionFrameworkType[];
-  onMouseDown: {
-    current: any;
-  };
-  onMouseUp: {
-    current: any;
-  };
   pipelines?: PipelineType[];
+  removeContextMenu: RemoveContextMenuType;
+  renderContextMenu: RenderContextMenuType;
+  setDragEnabled: (value: boolean) => void;
+  setDropEnabled: (value: boolean) => void;
+  setZoomPanDisabled: (value: boolean) => void;
   snapToGridOnDrag?: boolean;
   snapToGridOnDrop?: boolean;
-  transformState: ZoomPanStateType;
+  transformState: React.MutableRefObject<ZoomPanStateType>;
 };
 
 const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
   canvasRef,
   containerRef,
-  onMouseDown: onMouseDownRef,
-  onMouseUp: onMouseUpRef,
+  dragEnabled,
+  dropEnabled,
   pipeline,
   pipelineExecutionFramework,
   pipelineExecutionFrameworks,
   pipelines,
+  removeContextMenu,
+  renderContextMenu,
+  setDragEnabled,
+  setDropEnabled,
+  setZoomPanDisabled,
   snapToGridOnDrag = false,
   snapToGridOnDrop = true,
   transformState,
@@ -110,7 +127,7 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
       },
       direction: LayoutConfigDirectionEnum.HORIZONTAL,
       origin: LayoutConfigDirectionOriginEnum.LEFT,
-      transformState,
+      transformState: transformState?.current,
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }),
     [transformState],
@@ -135,7 +152,6 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
 
   // Presentation
   const activeLevel = useRef<number>(null);
-  const connectionsDraggingRef = useRef<Record<string, ConnectionType>>({});
   const itemDraggingRef = useRef<NodeItemType | null>(null);
   const itemElementsRef = useRef<Record<string, Record<string, React.RefObject<HTMLDivElement>>>>(
     {},
@@ -154,8 +170,10 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
 
   // State management
   const [items, setItemsState] = useState<Record<string, NodeItemType>>(null);
+  const [activeItems, setActiveItemsState] = useState<Record<string, ModelMappingType>>(null);
 
   function updateNodeItems(items: ItemMappingType) {
+    // This should be the only setter for itemsRef.
     itemsRef.current = {
       ...itemsRef.current,
       ...Object.entries(items).reduce(
@@ -172,10 +190,23 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
   }
 
   function updatePorts(ports: PortMappingType) {
-    portsRef.current = ports;
+    // This should be the only setter for portsRef.
+    portsRef.current = {
+      ...portsRef.current,
+      ...Object.entries(ports).reduce(
+        (acc: PortMappingType, [id, item]: [string, PortType]) => ({
+          ...acc,
+          [id]: {
+            ...item,
+            version: String(Number(item?.version ?? -1) + 1),
+          },
+        }),
+        {} as PortMappingType,
+      ),
+    };
   }
 
-  function mutateModels(payload?: ModelMappingType) {
+  function mutateModels(payload?: ModelMappingType): ModelMappingType {
     const { items, ports } = updateModelsAndRelationships(
       {
         itemsRef,
@@ -185,16 +216,19 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
     );
     updateNodeItems(items);
     updatePorts(ports);
+
+    return {
+      itemMapping: itemsRef.current,
+      portMapping: portsRef.current,
+    };
   }
 
-  function setConnectionsDragging(connectionsDragging: Record<string, ConnectionType>) {
-    connectionsDraggingRef.current = connectionsDragging;
+  function setActiveItems(modelMapping: ModelMappingType) {
+    setActiveItemsState(modelMapping);
   }
 
   function renderLayoutChanges(opts?: { level?: number; items?: ItemMappingType }) {
     const itemMapping = opts?.items ?? modelLevelsMapping.current[opts.level]?.itemMapping ?? {};
-
-    console.log('Updating items:', itemMapping);
 
     setItemsState(prev => ({
       ...prev,
@@ -231,7 +265,7 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
         column: 40,
         row: 40,
       },
-      transformState,
+      transformState: transformState?.current,
     } as LayoutConfigType;
 
     const nodeMapping = {
@@ -266,50 +300,106 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
   }
 
   function onDragging({
+    clientOffset,
     currentOffset,
+    differenceFromInitialOffset,
+    initialClientOffset,
     initialOffset,
     item,
     itemType,
   }: {
+    clientOffset: XYCoord;
     currentOffset: XYCoord;
+    differenceFromInitialOffset: XYCoord;
+    initialClientOffset: XYCoord;
     initialOffset: XYCoord;
     itemType: ItemTypeEnum;
     item: NodeItemType;
   }) {
-    if (!initialOffset || !currentOffset) {
+    if (!differenceFromInitialOffset) {
       return;
     }
 
-    let { x, y } = currentOffset;
+    const { x, y } = differenceFromInitialOffset;
 
-    if (snapToGridOnDrag) {
-      x -= initialOffset.x;
-      y -= initialOffset.y;
-
-      [x, y] = snapToGrid({ x, y }, gridDimensions);
-      x += initialOffset.x;
-      y += initialOffset.y;
+    function finalCoords(x2: number, y2: number) {
+      if (snapToGridOnDrag) {
+        const [xs, ys] = snapToGrid({ x: x2, y: y2 }, gridDimensions);
+        return {
+          x: xs,
+          y: ys,
+        };
+      }
+      return {
+        x: x2,
+        y: y2,
+      };
     }
+
+    const modelMapping = {
+      itemMapping: {},
+      portMapping: {},
+    };
 
     if (ItemTypeEnum.BLOCK === itemType) {
       item?.ports?.forEach(({ id: portID }: PortType) => {
         Object.values(connectionLinesPathRef?.current?.[portID] ?? {})?.forEach(
           ({ handleUpdatePath }: { handleUpdatePath: (item: NodeItemType) => void }) => {
             const port1 = portsRef.current?.[portID];
-            handleUpdatePath(
-              update(port1, {
-                rect: {
-                  $merge: {
-                    left: x + (port1?.rect?.offset?.left ?? 0),
-                    top: y + (port1?.rect?.offset?.top ?? 0),
-                  },
+
+            const port1ElementRect =
+              itemElementsRef?.current?.port?.[port1.id]?.current?.getBoundingClientRect();
+            let port1Rect = {} as RectType;
+
+            if (port1ElementRect) {
+              // Need to adjust this because the element’s ref’s coordinates are relative to the current viewport.
+              const absolute = getElementPositionInContainer(
+                canvasRef?.current?.getBoundingClientRect(),
+                containerRef?.current?.getBoundingClientRect(),
+                port1ElementRect,
+              );
+              port1Rect = {
+                height: port1ElementRect.height,
+                left: absolute.left,
+                top: absolute.top,
+                width: port1ElementRect.width,
+              };
+            }
+
+            port1Rect = {
+              ...port1?.rect,
+              ...port1Rect,
+            };
+
+            const x1 = port1Rect?.left ?? 0;
+            const y1 = port1Rect?.top ?? 0;
+            const { x: x3, y: y3 } = finalCoords(x1 + x, y1 + y);
+            const port2 = update(port1, {
+              rect: {
+                $merge: {
+                  left: x3,
+                  top: y3,
                 },
-              }),
-            );
+              },
+            });
+
+            handleUpdatePath(port2);
+            // modelMapping.portMapping[port2.id] = port2;
           },
         );
       });
     }
+
+    // const xy = finalCoords(item.rect.left + x, item.rect.top + y);
+    // const item2 = update(item, {
+    //   rect: {
+    //     $merge: {
+    //       left: xy.x,
+    //       top: xy.y,
+    //     },
+    //   },
+    // });
+    // modelMapping.itemMapping[item.id] = item2;
   }
 
   function renderConnectionLines(opts?: {
@@ -413,7 +503,7 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
           rect: rect1,
           rects: {
             item: rect1Item,
-            node: rect1Node,
+            // node: rect1Node,
             port: rect1Port,
           },
         },
@@ -426,7 +516,7 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
           rect: rect2,
           rects: {
             item: rect2Item,
-            node: rect2Node,
+            // node: rect2Node,
             port: rect2Port,
           },
         },
@@ -456,21 +546,24 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
         };
 
         // console.log(0, item1?.id, item2?.id, rect);
-        // rect = transformState ? transformZoomPanRect(rect, transformState) : rect;
+        // rect = transformState ? transformZoomPanRect(rect, transformState?.current) : rect;
 
         const scale = Number(transformState?.scale?.current ?? 1);
-        let leftOffset = 0;
-        let topOffset = 0;
         if (ItemTypeEnum.PORT === values?.type) {
           const isOutput = PortSubtypeEnum.OUTPUT === values?.subtype;
 
           if (Object.values(values?.rects)?.every(Boolean)) {
+            // Rect calcs are initially performed on the item/block level.
+            // Recalculate so that the paths are drawn to the ports.
             const {
               item,
               // Need to handle node ports differently.
               // node,
               port,
             } = values?.rects;
+
+            rect.height = port?.height ?? rect.height;
+            rect.width = port?.width ?? rect.width;
 
             if (isVertical) {
               if (isReverse) {
@@ -479,25 +572,21 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
             } else {
               if (isReverse) {
               } else {
-                topOffset += (item?.height - port?.height - (port?.top - item?.top)) / 2 / scale;
+                rect.top = (item?.top ?? 0) + (port?.top - item?.top ?? 0);
+
                 if (isReverse) {
                 } else {
+                  rect.left += (port?.left ?? 0) - (item?.left ?? 0);
                   if (isOutput) {
-                    leftOffset -=
-                      (item?.width - port?.width - (port?.left - item?.left) + port?.width / 2) /
-                      scale;
+                    rect.left -= (port?.width ?? 0) / 2;
                   } else {
-                    leftOffset += (port?.left - item?.left + port?.width / 2) / scale;
+                    rect.left += (port?.width ?? 0) / 2;
                   }
                 }
               }
             }
           }
         }
-
-        rect.left += leftOffset;
-        rect.top += topOffset;
-        // console.log(1, item1?.id, item2?.id, rect);
 
         return rect;
       }
@@ -546,12 +635,9 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
       function handleUpdatePath(item: NodeItemType) {
         const isOutput = fromValues?.id === item?.id;
         const isInput = toValues?.id === item?.id;
-        const dValue = getPathD(
-          pathDOpts,
-          isOutput ? item?.rect : fromRect,
-          isInput ? item?.rect : toRect,
-        );
-
+        const rect1 = isOutput ? item?.rect : fromRect;
+        const rect2 = isInput ? item?.rect : toRect;
+        const dValue = getPathD(pathDOpts, rect1, rect2);
         pathRef?.current?.setAttribute('d', dValue);
       }
 
@@ -613,50 +699,113 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
     renderConnectionLines();
   }
 
-  function handleMouseDown(
-    event: React.MouseEvent<HTMLDivElement> | React.TouchEvent<HTMLDivElement>,
-    node: NodeItemType,
-    target?: any,
-  ): boolean {
-    if ((event as { button: number }).button > 0) return;
+  function submitEventOperation(event: ClientEventType, opts?: EventOperationOptionsType) {
+    const { operationType } = event;
 
-    console.log('down');
-
-    return true;
+    if (EventOperationEnum.CONTEXT_MENU_OPEN === operationType) {
+      handleContextMenu(event, ...opts?.args, opts?.kwargs);
+    }
   }
 
-  function handleMouseUp(
-    event: React.MouseEvent<HTMLDivElement> | React.TouchEvent<HTMLDivElement>,
-    node: NodeItemType,
-    target?: any,
-  ): boolean {
-    resetAfterDrop();
-
-    console.log('up');
-
-    return false;
-  }
-
-  function handleDragEnd(
-    event: React.MouseEvent<HTMLDivElement> | React.TouchEvent<HTMLDivElement>,
-    node: NodeItemType,
+  function handleContextMenu(
+    event: ClientEventType,
+    items?: MenuItemType[],
+    opts?: RenderContextMenuOptions,
   ) {
-    console.log('drag end');
+    const { data } = event;
+
+    const menuItems = items ?? [
+      {
+        Icon: ArrowsAdjustingFrameSquare,
+        onClick: (event: ClientEventType) => {
+          removeContextMenu(event);
+          startTransition(() => {
+            setZoomPanDisabled(true);
+            setDragEnabled(true);
+            setDropEnabled(true);
+          });
+        },
+        uuid: 'Reposition blocks',
+      },
+      { divider: true },
+      {
+        items: [
+          {
+            onClick: (event: ClientEventType) => {
+              event?.preventDefault();
+              removeContextMenu(event ?? null);
+              transformState?.current?.handleZoom?.current?.((event ?? null) as any, 1);
+              startTransition(() => {
+                setZoomPanDisabled(false);
+              });
+            },
+            uuid:
+              (transformState?.current?.zoom?.current ?? 1) === 1 ? 'Default zoom' : 'Zoom to 100%',
+          },
+          {
+            onClick: (event: ClientEventType) => {
+              event?.preventDefault();
+              removeContextMenu(event ?? null);
+              transformState?.current?.handlePanning?.current?.((event ?? null) as any, {
+                x: 0,
+                y: 0,
+              });
+              startTransition(() => {
+                setZoomPanDisabled(false);
+              });
+            },
+            uuid: 'Reset view',
+          },
+          {
+            onClick: (event: ClientEventType) => {
+              event.preventDefault();
+              removeContextMenu(event);
+              transformState?.current?.handlePanning?.current?.((event ?? null) as any, {
+                xPercent: 0.5,
+                yPercent: 0.5,
+              });
+              startTransition(() => {
+                setZoomPanDisabled(false);
+              });
+            },
+            uuid: 'Center view',
+          },
+        ],
+        uuid: 'View controls',
+      },
+      {
+        Icon: ArrowsAdjustingFrameSquare,
+        uuid: 'Open file',
+      },
+      { uuid: 'Duplicate', description: () => 'Carbon copy file' },
+      { uuid: 'Move' },
+      { divider: true },
+      { uuid: 'Rename' },
+      { divider: true },
+      {
+        uuid: 'Transfer',
+        items: [{ uuid: 'Upload files' }, { uuid: 'Download file' }],
+      },
+      {
+        uuid: 'Copy',
+        items: [{ uuid: 'Copy path' }, { uuid: 'Copy relative path' }],
+      },
+      { divider: true },
+      {
+        uuid: 'View',
+        items: [{ uuid: 'Expand subdirectories' }, { uuid: 'Collapse subdirectories' }],
+      },
+      { divider: true },
+      {
+        uuid: 'Projects',
+        items: [{ uuid: 'New Mage project' }, { uuid: 'New dbt project' }],
+      },
+    ];
+
+    if (data?.node) {
+    }
+    renderContextMenu(event, menuItems, opts);
   }
-
-  useEffect(() => {
-    onMouseDownRef.current = handleMouseDown;
-    onMouseUpRef.current = handleMouseUp;
-
-    const onMouseDownR = onMouseDownRef.current;
-    const onMouseUpR = onMouseUpRef.current;
-
-    return () => {
-      onMouseDownR.current = null;
-      onMouseUpR.current = null;
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   useEffect(() => {
     if (phaseRef.current === 0) {
@@ -687,10 +836,6 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
 
       // Models
       groupLevelsMappingRef?.current?.forEach((groupMapping: GroupMappingType, level: number) => {
-        // if (level > 1) {
-        //   return;
-        // }
-
         modelLevelsMapping.current.push(
           initializeBlocksAndConnections(
             Object.values(groupMapping),
@@ -860,30 +1005,16 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
 
       if (versions?.every((version: number) => version === rectVersion)) {
         if (activeLevel?.current === null) {
-          setActiveLevel(0);
+          setActiveLevel(3);
           const itemsUpdated = updateLayoutOfItems();
-          renderConnectionLines();
-          console.log('!!!!!!!!!!!!!!!!!!', itemsUpdated);
           renderLayoutChanges({ items: itemsUpdated });
+          renderConnectionLines();
         }
       }
-    }
-
-    if (ItemTypeEnum.NODE === type) {
-      const node = itemsRef?.current?.[id];
-      console.log('WTFFFFFFFFFFFFFFFFFFFFFFF', node?.rect);
-
-      // if (node?.rect) {
-      //   const { rect } = node;
-
-      //   itemRef.current.style.height = `${rect?.height}px`;
-      //   itemRef.current.style.width = `${rect?.width}px`;
-      // }
     }
   }
 
   function onMountPort(item: PortType, portRef: React.RefObject<HTMLDivElement>) {
-    if (!portRef?.current) return;
     const { id, type } = item;
 
     itemElementsRef.current ||= {};
@@ -892,7 +1023,7 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
 
     const rect = portRef.current.getBoundingClientRect();
     const rectDef = layoutConfig?.transformRect?.[ItemTypeEnum.PORT]?.(rect) ?? rect;
-
+    const rectVersion = itemsMetadataRef.current.rect.version;
     const port = update(item, {
       rect: {
         $set: {
@@ -903,6 +1034,7 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
             top: portRef?.current?.offsetTop,
           },
           top: rect.top + (rectDef?.top ?? 0),
+          version: rectVersion,
           width: rect.width,
         },
       },
@@ -917,42 +1049,64 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
     renderConnectionLines();
   }
 
-  function onDragStart(_event: React.MouseEvent<HTMLDivElement>, node: NodeItemType) {
-    if (!itemDraggingRef.current && ItemTypeEnum.PORT === node.type) {
-      itemDraggingRef.current = node;
-      // setConnectionsDragging({ [connection.id]: connection });
+  function handleDragStart(event: ClientEventType) {
+    // setZoomPanDisabled(true);
+    // if (!itemDraggingRef.current && ItemTypeEnum.PORT === node.type) {
+    //   itemDraggingRef.current = node;
+    //   setActiveItems({
+    //     [`${node.type}Mapping`]: {
+    //       [node.id]: node,
+    //     },
+    //   });
+    // }
+  }
+
+  function handleDragEnd(event: ClientEventType) {
+    setZoomPanDisabled(false);
+    setDragEnabled(false);
+    setDropEnabled(false);
+  }
+
+  function handleMouseDown(event: ClientEventType) {
+    const { operationType } = event;
+
+    if (EventOperationEnum.DRAG_START !== operationType) {
+      setZoomPanDisabled(false);
+      setDragEnabled(false);
+      setDropEnabled(false);
     }
   }
+
+  // function handleMouseOver(event: ClientEventType) {
+  // }
+
+  // function handleMouseLeave(event: ClientEventType) {
+  //   setZoomPanDisabled(false);
+  // }
 
   function onDragInit(node: NodeItemType, monitor: DropTargetMonitor) {
     // We still probably need this when we are draggin lines from port to port.
-
     // Called only once when it starts
-    updateNodeItems({ [node.id]: node });
-
+    // updateNodeItems({ [node.id]: node });
     // let rectOrigin = node?.rect;
-
-    if (
-      ItemTypeEnum.PORT === node.type &&
-      itemDraggingRef.current &&
-      buildPortUUID(node) === buildPortUUID(itemDraggingRef?.current)
-    ) {
-      // rectOrigin = itemDraggingRef?.current?.rect;
-    } else {
-      renderConnectionLines();
-    }
-
-    // onDrag(update(node, { rect: { $set: rectFromOrigin(rectOrigin, monitor) } }));
+    // if (
+    //   ItemTypeEnum.PORT === node.type &&
+    //   itemDraggingRef.current &&
+    //   buildPortUUID(node) === buildPortUUID(itemDraggingRef?.current)
+    // ) {
+    //   rectOrigin = itemDraggingRef?.current?.rect;
+    //   console.log('What do we do with this rect?', rectOrigin);
+    // } else {
+    //   renderConnectionLines();
+    // }
   }
 
   function resetAfterDrop() {
-    itemDraggingRef.current = null;
-    setConnectionsDragging(null);
+    // itemDraggingRef.current = null;
+    // setActiveItems(null);
   }
 
   function onDropBlock(nodeInit: NodeItemType, monitor: DropTargetMonitor) {
-    console.log('onDropBlock', nodeInit?.id);
-
     const node = itemsRef.current[nodeInit.id];
 
     resetAfterDrop();
@@ -1004,7 +1158,9 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
       },
     });
 
-    const portsUpdated = {};
+    const portsUpdated = {
+      ...portsRef.current,
+    };
     node2?.ports?.forEach(({ id: portID }: PortType) => {
       const port1 = portsRef.current[portID];
       const port2 = update(port1, {
@@ -1015,9 +1171,8 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
           },
         },
       });
-      portsRef.current[port2.id] = port2;
-      portsUpdated[port2.type] ||= {};
-      portsUpdated[port2.type][port2.id] = port2;
+
+      portsUpdated[port2.id] = port2;
     });
 
     const elItem = itemElementsRef.current[node.type][node.id].current;
@@ -1025,30 +1180,27 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
       elItem.style.transform = `translate(${left}px, ${top}px)`;
     }
 
-    const modelMapping = {
+    const payload = {
       itemMapping: {
+        ...itemsRef.current,
         [node2.id]: node2,
       },
       portMapping: portsUpdated,
     };
 
-    mutateModels(modelMapping);
-    renderConnectionLines({ modelMapping });
-    renderLayoutChanges({ items: modelMapping.itemMapping });
+    // DON’T call renderLayout changes or else the item’s rect is changed.
+    mutateModels(payload);
+    renderConnectionLines();
   }
 
-  const onDropPort = useCallback(
-    (dragTarget: NodeItemType, dropTarget: NodeItemType) => {
-      if (ItemTypeEnum.PORT === dragTarget.type && ItemTypeEnum.PORT === dropTarget.type) {
-        const node = itemDraggingRef.current;
-        throw new Error('setConnections({ [connection.id]: connection });');
-      }
+  function onDropPort(dragTarget: NodeItemType, dropTarget: NodeItemType) {
+    if (ItemTypeEnum.PORT === dragTarget.type && ItemTypeEnum.PORT === dropTarget.type) {
+      const node = itemDraggingRef.current;
+      console.log('Create a new connection for:', node);
+    }
 
-      resetAfterDrop();
-    },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [items],
-  );
+    resetAfterDrop();
+  }
 
   const [, connectDrop] = useDrop(
     () => ({
@@ -1077,24 +1229,26 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
 
     return arr?.map((node: NodeType, idx: number) => (
       <BlockNodeWrapper
+        draggable={dragEnabled}
+        droppable={dropEnabled}
         frameworkGroups={frameworkGroupsRef?.current}
         handlers={{
           onDragEnd: handleDragEnd,
-          onDragStart,
+          onDragStart: handleDragStart,
           onDrop: onDropPort,
           onMouseDown: handleMouseDown,
-          onMouseUp: handleMouseUp,
+          // onMouseOver: handleMouseOver,
+          // onMouseLeave: handleMouseLeave,
         }}
         item={node}
         key={`${node.id}-${node.type}-${idx}`}
         onMountItem={onMountItem}
         onMountPort={onMountPort}
+        submitEventOperation={submitEventOperation}
       />
     ));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [items]);
-
-  const { boundaryRefs } = transformState;
+  }, [dragEnabled, dropEnabled, items]);
 
   return (
     <div
@@ -1107,7 +1261,9 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
       }}
     >
       <div
+        onContextMenu={e => handleContextMenu(e as any)}
         onDoubleClick={handleDoubleClick}
+        onMouseDown={e => handleMouseDown(e as any)}
         ref={canvasRef}
         style={{
           height: 'inherit',
@@ -1127,16 +1283,16 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
             id={connectionLinesRootID('nodes')}
             style={{
               height: '100%',
+              pointerEvents: 'none',
               position: 'absolute',
               width: '100%',
-              zIndex: 3,
+              zIndex: 5,
             }}
           />
 
           {nodesMemo}
 
           <div
-            ref={boundaryRefs?.left}
             style={{
               bottom: 0,
               height: '100vh',
@@ -1147,7 +1303,6 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
             }}
           />
           <div
-            ref={boundaryRefs?.right}
             style={{
               bottom: 0,
               height: '100vh',
@@ -1158,7 +1313,6 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
             }}
           />
           <div
-            ref={boundaryRefs?.bottom}
             style={{
               bottom: 0,
               height: 1,
@@ -1169,7 +1323,6 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
             }}
           />
           <div
-            ref={boundaryRefs?.top}
             style={{
               height: 1,
               left: 0,
@@ -1188,51 +1341,106 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
 export default function PipelineBuilderCanvas(props: PipelineBuilderProps) {
   const canvasRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-  const onMouseDownRef = useRef(null);
-  const onMouseUpRef = useRef(null);
+  const disabledRef = useRef(false);
+  const handlePanning = useRef<
+    (
+      event: MouseEvent,
+      positionOverride?: {
+        x?: number;
+        xPercent?: number;
+        y?: number;
+        yPercent?: number;
+      },
+    ) => void
+  >(() => null);
+  const handleZoom = useRef<(event: WheelEvent, scaleOverride?: number) => void>(() => null);
+  const originX = useRef(0);
+  const originY = useRef(0);
+  const panning = useRef({ active: false, direction: null });
+  const phase = useRef(0);
+  const scale = useRef(1);
+  const startX = useRef(0);
+  const startY = useRef(0);
+  const transformRef = useRef(null);
+  const zoom = useRef(1);
 
-  const transformState = useZoomPan(canvasRef, {
-    containerRef,
+  const zoomPanStateRef = useRef<ZoomPanStateType>({
+    container: containerRef,
+    disabled: disabledRef,
+    element: canvasRef,
+    handlePanning,
+    handleZoom,
+    originX,
+    originY,
+    panning,
+    phase,
+    scale,
+    startX,
+    startY,
+    transform: transformRef,
+    zoom,
+  });
+  const [dragEnabled, setDragEnabled] = useState(false);
+  const [dropEnabled, setDropEnabled] = useState(false);
+  const [, setZoomPanDisabledState] = useState(false);
+
+  const { contextMenu, renderContextMenu, removeContextMenu, shouldPassControl } = useContextMenu({
+    container: containerRef,
+    uuid: 'pipeline-builder-canvas',
+  });
+
+  useZoomPan(zoomPanStateRef, {
+    roles: [ElementRoleEnum.DRAGGABLE],
     // initialPosition: {
     //   xPercent: 0.5,
     //   yPercent: 0.5,
     // },
-    roles: [ElementRoleEnum.DRAGGABLE],
   });
 
-  function handleMouseDown(event: MouseEvent) {
-    if (event.button > 0) return;
-
-    const targetElement = event.target as HTMLElement;
-    const hasRole = [ElementRoleEnum.DRAGGABLE].some(role =>
-      targetElement.closest(`[role="${role}"]`),
-    );
-
-    if (onMouseDownRef?.current?.(event)) return;
-
-    console.log('down2');
-    if (hasRole) {
-      transformState.panning.current.active = true;
-    }
-  }
-
-  function handleMouseUp(event: MouseEvent) {
-    if (event.button > 0) return;
-
-    const targetElement = event.target as HTMLElement;
-    const hasRole = [ElementRoleEnum.DRAGGABLE, ElementRoleEnum.DROPPABLE].some(role =>
-      targetElement.closest(`[role="${role}"]`),
-    );
-
-    if (onMouseUpRef?.current?.(event)) return;
-
-    console.log('up2');
-    if (hasRole) {
-      transformState.panning.current.active = false;
-    }
+  function setZoomPanDisabled(value: boolean) {
+    zoomPanStateRef.current.disabled.current = value;
+    // We need to update any state or else dragging doesn’t work.
+    setZoomPanDisabledState(value);
   }
 
   useEffect(() => {
+    const handleMouseDown = (event: MouseEvent) => {
+      if (shouldPassControl(event as ClientEventType)) return;
+      removeContextMenu(event as ClientEventType, { conditionally: true });
+
+      const targetElement = event.target as HTMLElement;
+      const hasRole = [dragEnabled && ElementRoleEnum.DRAGGABLE]
+        .filter(Boolean)
+        .some(role => targetElement.closest(`[role="${role}"]`));
+
+      if (hasRole) {
+        // For some reason, we need to do this or else you can’t drag anything.
+        setZoomPanDisabled(true);
+        setDragEnabled(true);
+        setDragEnabled(true);
+      }
+    };
+
+    const handleMouseUp = (event: MouseEvent) => {
+      // Always do this or else there will be situations where it’s never reset.
+
+      if (shouldPassControl(event as ClientEventType)) return;
+
+      const targetElement = event.target as HTMLElement;
+      const hasRole = [
+        dragEnabled && ElementRoleEnum.DRAGGABLE,
+        dropEnabled && ElementRoleEnum.DROPPABLE,
+      ]
+        .filter(Boolean)
+        .some(role => targetElement.closest(`[role="${role}"]`));
+
+      if (hasRole) {
+        setZoomPanDisabled(false);
+        setDragEnabled(false);
+        setDropEnabled(false);
+      }
+    };
+
     const canvasElement = canvasRef.current;
 
     if (canvasElement) {
@@ -1247,18 +1455,27 @@ export default function PipelineBuilderCanvas(props: PipelineBuilderProps) {
       }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [dragEnabled, dropEnabled]);
 
   return (
-    <DndProvider backend={HTML5Backend}>
-      <PipelineBuilder
-        {...props}
-        canvasRef={canvasRef}
-        containerRef={containerRef}
-        onMouseDown={onMouseDownRef}
-        onMouseUp={onMouseUpRef}
-        transformState={transformState}
-      />
-    </DndProvider>
+    <>
+      <DndProvider backend={HTML5Backend}>
+        <PipelineBuilder
+          {...props}
+          canvasRef={canvasRef}
+          containerRef={containerRef}
+          dragEnabled={dragEnabled}
+          dropEnabled={dropEnabled}
+          removeContextMenu={removeContextMenu}
+          renderContextMenu={renderContextMenu}
+          setDragEnabled={setDragEnabled}
+          setDropEnabled={setDropEnabled}
+          setZoomPanDisabled={setZoomPanDisabled}
+          transformState={zoomPanStateRef}
+        />
+      </DndProvider>
+
+      {contextMenu}
+    </>
   );
 }

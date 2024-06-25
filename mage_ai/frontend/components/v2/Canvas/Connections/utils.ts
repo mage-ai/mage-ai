@@ -115,3 +115,19 @@ export function getPathD(
 
   return `M${startX},${startY} C${x1},${y1} ${x2},${y2} ${endX},${endY}`;
 }
+
+export function parsePathD(d: string): any {
+  // Use regular expression to extract the values from the d attribute
+  const pathRegex =
+    /M\s*([\d.]+),([\d.]+)\s*C\s*([\d.]+),([\d.]+)\s*([\d.]+),([\d.]+)\s*([\d.]+),([\d.]+)/;
+  const match = pathRegex.exec(d);
+
+  if (!match) {
+    throw new Error('Invalid path data');
+  }
+
+  // We know the structure of the path data, so we can map the captured groups
+  const [, startX, startY, x1, y1, x2, y2, endX, endY] = match.map(Number);
+
+  return { startX, startY, x1, y1, x2, y2, endX, endY };
+}

@@ -19,7 +19,6 @@ function NextAppV2({
     themeSettings?: Record<string, ThemeSettingsType>;
     version?: LayoutVersionEnum;
   };
-  theme: ThemeType;
 }) {
   const {
     defaultTitle,

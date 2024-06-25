@@ -49,6 +49,7 @@
     "cronstrue": "^2.31.0",
     "d3-color": "^3.1.0",
     "dangerously-set-html-content": "^1.0.13",
+    "framer-motion": "^11.2.11",
     "global": "^4.4.0",
     "html-react-parser": "^5.1.10",
     "immutability-helper": "^3.1.1",

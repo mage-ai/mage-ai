@@ -436,7 +436,8 @@ export function applyRectDiff(rect: RectType, diff: RectType, dimensions?: boole
 }
 
 export function transformZoomPanRect(rect: RectType, transformState: ZoomPanStateType) {
-  const { container, element, position } = transformState ?? ({} as ZoomPanStateType);
+  const { container, element, originX, originY, startX, startY } =
+    transformState ?? ({} as ZoomPanStateType);
 
   const scale = transformState?.scale?.current ?? 1;
 
@@ -448,13 +449,11 @@ export function transformZoomPanRect(rect: RectType, transformState: ZoomPanStat
   const viewportWidth = rectViewport.width;
   const viewportHeight = rectViewport.height;
 
-  const current = position?.current ?? ({} as ZoomPanPositionType);
-  const xCur = current?.x?.current ?? 0;
-  const yCur = current?.y?.current ?? 0;
+  const xCur = startX?.current ?? 0;
+  const yCur = startY?.current ?? 0;
 
-  const origin = position?.origin ?? ({} as ZoomPanPositionType);
-  const xOrg = origin?.x?.current ?? 0;
-  const yOrg = origin?.y?.current ?? 0;
+  const xOrg = originX?.current ?? 0;
+  const yOrg = originY?.current ?? 0;
 
   const left = rect?.left ?? 0;
   const top = rect?.top ?? 0;
@@ -868,5 +867,52 @@ export function addRects(rect1: RectType, rect2: RectType): RectType {
     ...rect1,
     left: rect1.left + rect2.left,
     top: rect1.top + rect2.top,
+  };
+}
+
+// export function getElementPositionInContainer(viewportRect, containerRect, initialElementRect) {
+//   // Calculate the offset of the viewport within the container
+//   const viewportOffsetX = viewportRect.left - containerRect.left;
+//   const viewportOffsetY = viewportRect.top - containerRect.top;
+
+//   // Calculate the absolute position of the element within the container
+//   const elementXInContainer = initialElementRect.left + viewportOffsetX;
+//   const elementYInContainer = initialElementRect.top + viewportOffsetY;
+
+//   return {
+//     left: elementXInContainer,
+//     top: elementYInContainer,
+//     width: initialElementRect.width,
+//     height: initialElementRect.height,
+//     offset: {
+//       left: initialElementRect.left - viewportRect.left,
+//       top: initialElementRect.top - viewportRect.top,
+//     },
+//   };
+// }
+
+export function getElementPositionInContainer(
+  viewport: RectType,
+  container: RectType,
+  element: RectType,
+): RectType {
+  const containerOffsetLeft = container.left - viewport.left;
+  const containerOffsetTop = container.top - viewport.top;
+
+  const elementOffsetLeft = element.left - container.left;
+  const elementOffsetTop = element.top - container.top;
+
+  const absoluteLeft = containerOffsetLeft + elementOffsetLeft;
+  const absoluteTop = containerOffsetTop + elementOffsetTop;
+
+  return {
+    height: element.height,
+    left: absoluteLeft,
+    offset: {
+      left: elementOffsetLeft,
+      top: elementOffsetTop,
+    },
+    top: absoluteTop,
+    width: element.width,
   };
 }

@@ -2,7 +2,7 @@
 @use '../../../base/svg';
 
 .canvas {
-  background-color: var(--colors-graylo);
+  background-color: var(--backgrounds-body);
   height: 500%; /* Large enough to initially fit all content, will expand as needed */
   width: 500%;  /* Large enough to initially fit all content, will expand as needed */
   position: absolute; /* Ensure it behaves correctly inside the parent container */

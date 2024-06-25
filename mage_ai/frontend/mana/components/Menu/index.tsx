@@ -1,22 +1,39 @@
 import React, { useCallback, useContext, useMemo, useRef } from 'react';
 import { ThemeContext, ThemeProvider } from 'styled-components';
 import { createRoot } from 'react-dom/client';
+import { Variants, motion } from 'framer-motion';
 
-import DeferredRenderer from '@mana/components/DeferredRenderer';
-import Button from '@mana/elements/Button';
-import Divider from '@mana/elements/Divider';
-import KeyboardTextGroup from '@mana/elements/Text/Keyboard/Group';
-import Text from '@mana/elements/Text';
-import { Row } from '@mana/components/Container';
-import Grid from '@mana/components/Grid';
-import { MenuStyled, MENU_ITEM_HEIGHT, MENU_MIN_WIDTH } from './index.style';
-import { HEADER_Z_INDEX } from '@components/constants';
-import { UNIT } from '@mana/themes/spaces';
-import icons from '@mana/icons';
+import Button from '../../elements/Button';
+import DeferredRenderer from '../DeferredRenderer';
+import Grid from '../Grid';
+import KeyboardTextGroup from '../../elements/Text/Keyboard/Group';
+import Text from '../../elements/Text';
+import { CaretRight } from '@mana/icons';
 import useDebounce from '@utils/hooks/useDebounce';
-import { MenuItemType } from './types';
+import { HEADER_Z_INDEX } from '@components/constants';
+import { MenuItemType } from './interfaces';
+import {
+  DividerContainer,
+  MenuContent,
+  ItemContent,
+  DividerStyled,
+  MenuItemContainerStyled,
+  MenuStyled,
+  MenuItemStyled,
+  MENU_ITEM_HEIGHT,
+  MENU_MIN_WIDTH,
+} from './index.style';
+import { UNIT } from '@mana/themes/spaces';
+import { ClientEventType } from '@mana/shared/interfaces';
 
-const { CaretRight } = icons;
+const itemVariants: Variants = {
+  open: {
+    opacity: 1,
+    y: 0,
+    transition: { type: 'spring', stiffness: 300, damping: 24 },
+  },
+  closed: { opacity: 0, y: 20, transition: { duration: 0.2 } },
+};
 
 type MenuProps = {
   boundingContainer?: {
@@ -36,43 +53,65 @@ type MenuProps = {
 };
 
 type ItemProps = {
+  contained?: boolean;
+  first?: boolean;
+  last?: boolean;
   item: MenuItemType;
   small?: boolean;
 };
 
-function MenuItem({ item, small }: ItemProps) {
+function MenuItem({ contained, first, item, last, small }: ItemProps) {
   const { Icon, description, divider, items, keyboardShortcuts, label, onClick, uuid } = item;
   const itemsCount = useMemo(() => items?.length || 0, [items]);
 
   if (divider) {
-    return <Divider compact={small} />;
+    return (
+      <DividerContainer>
+        <DividerStyled />
+      </DividerContainer>
+    );
   }
 
-  return (
-    <Button
-      Icon={Icon ? () => <Icon size={small ? 16 : undefined} /> : undefined}
-      asLink
-      onClick={onClick}
-    >
+  const before = Icon ? <Icon size={small ? 12 : undefined} /> : undefined;
+
+  const el = (
+    <MenuItemStyled>
       <Grid rowGap={4}>
         <Grid
           alignItems="center"
-          autoFlow="column"
+          columnGap={16}
           justifyContent="space-between"
+          templateColumns={['1fr', 'auto'].filter(Boolean).join(' ')}
           templateRows="1fr"
         >
-          <Text small={small}>{label?.() || uuid}</Text>
+          <Grid
+            alignItems="center"
+            columnGap={4}
+            templateColumns={[before && 'auto', '1fr'].filter(Boolean).join(' ')}
+          >
+            {before}
+            <Text bold={!onClick} muted={!onClick} small={small}>
+              {label?.() || uuid}
+            </Text>
+          </Grid>
 
-          {keyboardShortcuts && (
-            <KeyboardTextGroup
-              monospace
-              small={!small}
-              textGroup={keyboardShortcuts}
-              xsmall={small}
-            />
-          )}
+          <Grid
+            columnGap={4}
+            templateColumns={[keyboardShortcuts && 'auto', itemsCount >= 1 && 'auto']
+              .filter(Boolean)
+              .join(' ')}
+          >
+            {keyboardShortcuts && (
+              <KeyboardTextGroup
+                monospace
+                small={!small}
+                textGroup={keyboardShortcuts}
+                xsmall={small}
+              />
+            )}
 
-          {itemsCount >= 1 && <CaretRight size={12} />}
+            {itemsCount >= 1 && <CaretRight size={12} />}
+          </Grid>
         </Grid>
 
         {description && (
@@ -81,7 +120,34 @@ function MenuItem({ item, small }: ItemProps) {
           </Text>
         )}
       </Grid>
-    </Button>
+    </MenuItemStyled>
+  );
+
+  return (
+    <MenuItemContainerStyled
+      contained={contained}
+      first={first}
+      last={last}
+      noHover={!onClick ? 'true' : undefined}
+    >
+      <ItemContent first={first} last={last} noHover={!onClick ? 'true' : undefined}>
+        {!onClick && el}
+        {onClick && (
+          <Button
+            asLink
+            motion
+            onClick={e => {
+              e.preventDefault();
+              onClick?.(e as ClientEventType);
+            }}
+            plain
+            width="100%"
+          >
+            {el}
+          </Button>
+        )}
+      </ItemContent>
+    </MenuItemContainerStyled>
   );
 }
 
@@ -106,12 +172,14 @@ function Menu({ boundingContainer, contained, coordinates, event, items, small, 
       xFinal = 0;
     }
 
+    const { height: heightMenu } = containerRef?.current?.getBoundingClientRect() || { height: 0 };
+
     const element = event?.target as HTMLElement;
     const rect = element?.getBoundingClientRect() || ({} as DOMRect);
     let yFinal = y + UNIT / 2;
-    const menuHeight = MENU_ITEM_HEIGHT * items.length;
+    const menuHeight = heightMenu ?? MENU_ITEM_HEIGHT * items.length;
     if (y + menuHeight >= window.innerHeight) {
-      yFinal = y - menuHeight - (rect?.height || 0);
+      yFinal = window.innerHeight - (menuHeight + UNIT * 2);
     }
 
     return {
@@ -143,7 +211,8 @@ function Menu({ boundingContainer, contained, coordinates, event, items, small, 
 
       // Calculate the mouse position relative to the element
       const paddingHorizontal = rect?.left - rectContainer?.left;
-      const x = rectContainer?.left + rectContainer?.width - (rect?.left + paddingHorizontal);
+      // 4px for the 4 borders: 2 from the parent and 2 from the child.
+      const x = rectContainer?.left + rectContainer?.width - (rect?.left + paddingHorizontal + 4);
       const y = rect?.top - rectContainer?.top - 2 * (rect?.height - element?.clientHeight);
 
       itemsRootRef.current.render(
@@ -169,19 +238,47 @@ function Menu({ boundingContainer, contained, coordinates, event, items, small, 
     [boundingContainer, rootID, themeContext, uuid],
   );
 
+  const itemsCount = useMemo(() => items?.length || 0, [items]);
+
   return (
     <MenuStyled
-      contained={contained}
+      contained={contained ? 'true' : undefined}
       left={left}
       ref={containerRef}
       top={top}
       zIndex={HEADER_Z_INDEX + 100}
     >
-      {items?.length >= 1 && (
-        <>
-          <Row direction="column" nogutter>
+      <MenuContent
+        animate={{ opacity: 1, scale: 1 }}
+        initial={{ opacity: 0.75, scale: 0.95 }}
+        transition={{ duration: 0.01, ease: [0.0, 0.0, 0.58, 1.0] }}
+      >
+        {itemsCount >= 1 && (
+          <motion.div
+            style={{ pointerEvents: 'auto' }}
+            variants={{
+              open: {
+                clipPath: 'inset(0% 0% 0% 0% round 10px)',
+                transition: {
+                  type: 'spring',
+                  bounce: 0,
+                  duration: 0.7,
+                  delayChildren: 0.3,
+                  staggerChildren: 0.05,
+                },
+              },
+              closed: {
+                clipPath: 'inset(10% 50% 90% 50% round 10px)',
+                transition: {
+                  type: 'spring',
+                  bounce: 0,
+                  duration: 0.3,
+                },
+              },
+            }}
+          >
             {items?.map((item: MenuItemType, idx: number) => (
-              <div
+              <motion.div
                 key={`menu-item-${item.uuid}-${idx}`}
                 onMouseEnter={event => {
                   cancel();
@@ -191,15 +288,22 @@ function Menu({ boundingContainer, contained, coordinates, event, items, small, 
                   cancel();
                 }}
                 style={{ display: 'grid', width: '100%' }}
+                variants={itemVariants}
               >
-                <MenuItem item={item} small={small} />
-              </div>
+                <MenuItem
+                  contained={contained}
+                  first={idx === 0}
+                  item={item}
+                  last={idx === itemsCount - 1}
+                  small={small}
+                />
+              </motion.div>
             ))}
-          </Row>
+          </motion.div>
+        )}
+      </MenuContent>
 
-          <div id={rootID} />
-        </>
-      )}
+      <div id={rootID} />
     </MenuStyled>
   );
 }

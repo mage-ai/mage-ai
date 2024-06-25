@@ -1,44 +1,37 @@
 import { IconType } from '@mana/icons/types';
 import { BadgeType } from '@mana/elements/Badge';
 import { ConnectionType, DragItem, NodeItemType } from '../interfaces';
+import { ClientEventType } from '@mana/shared/interfaces';
 
 export type DragAndDropHandlersType = {
   handlers?: {
-    onDragEnd?: (
-      event: React.MouseEvent<HTMLDivElement> | React.TouchEvent<HTMLDivElement>,
-      node: NodeItemType,
-    ) => void;
-    onDragStart?: (
-      event: React.MouseEvent<HTMLDivElement> | React.TouchEvent<HTMLDivElement>,
-      node: NodeItemType,
-    ) => void;
+    onDragEnd?: (event: ClientEventType) => void;
+    onDragStart?: (event: ClientEventType) => void;
     onDrop: (dragTarget: NodeItemType, dropTarget: NodeItemType) => void;
-    onMouseDown: (
-      event: React.MouseEvent<HTMLDivElement> | React.TouchEvent<HTMLDivElement>,
-      node: NodeItemType,
-      target?: any,
-    ) => boolean;
-    onMouseUp: (
-      event: React.MouseEvent<HTMLDivElement> | React.TouchEvent<HTMLDivElement>,
-      node: NodeItemType,
-      target?: any,
-    ) => boolean;
+    onMouseDown?: (event: ClientEventType) => void;
+    onMouseLeave?: (event: ClientEventType) => void;
+    onMouseOver?: (event: ClientEventType) => void;
+    onMouseUp?: (event: ClientEventType) => void;
   };
 };
 
 export type DraggableType = {
   canDrag?: (item: DragItem) => boolean;
+  draggable?: boolean;
   draggingNode?: NodeItemType;
   itemRef?: React.RefObject<HTMLDivElement>;
 } & DragAndDropHandlersType;
 
-export type DroppableType = DragAndDropHandlersType;
+export type DroppableType = {
+  droppable?: boolean;
+} & DragAndDropHandlersType;
 
 export type DragAndDropType = DraggableType & DroppableType;
 
 export type AsideType = {
   Icon?: IconType;
   baseColorName?: string;
+  className?: string;
   onClick?: (event: React.MouseEvent<HTMLElement>) => void;
 };
 

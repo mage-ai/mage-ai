@@ -16,32 +16,47 @@ export type ZoomPanPositionType = {
   x: React.MutableRefObject<number>;
   y: React.MutableRefObject<number>;
 };
+
 export type ZoomPanStateType = {
-  boundaryRefs: {
-    bottom: React.LegacyRef<HTMLDivElement>;
-    left: React.LegacyRef<HTMLDivElement>;
-    right: React.LegacyRef<HTMLDivElement>;
-    top: React.LegacyRef<HTMLDivElement>;
-  };
   container?: React.RefObject<HTMLElement>;
+  disabled?: React.MutableRefObject<boolean>;
   element: React.RefObject<HTMLElement>;
+  handlePanning: React.MutableRefObject<
+    (
+      event: MouseEvent,
+      positionOverride?: {
+        x?: number;
+        xPercent?: number;
+        y?: number;
+        yPercent?: number;
+      },
+    ) => void
+  >;
+  handleZoom: React.MutableRefObject<(event: WheelEvent, scaleOverride?: number) => void>;
+  originX: React.MutableRefObject<number>;
+  originY: React.MutableRefObject<number>;
+  phase: React.MutableRefObject<number>;
   panning: React.MutableRefObject<{
     active: boolean;
     direction: DirectionEnum;
   }>;
-  position: {
-    current: ZoomPanPositionType;
-    origin: ZoomPanPositionType;
-  };
   scale: React.MutableRefObject<number>;
+  startX: React.MutableRefObject<number>;
+  startY: React.MutableRefObject<number>;
+  transform: React.MutableRefObject<string>;
   zoom: React.MutableRefObject<number>;
 };
 
+export type BoundaryType = {
+  bottom: React.LegacyRef<HTMLDivElement>;
+  left: React.LegacyRef<HTMLDivElement>;
+  right: React.LegacyRef<HTMLDivElement>;
+  top: React.LegacyRef<HTMLDivElement>;
+};
+
 export const useZoomPan = (
-  elementRef: React.RefObject<HTMLElement>,
+  stateRef: React.MutableRefObject<ZoomPanStateType>,
   opts?: {
-    containerRef?: React.RefObject<HTMLElement>;
-    disabled?: boolean;
     initialPosition?: {
       x?: number;
       xPercent?: number;
@@ -54,34 +69,29 @@ export const useZoomPan = (
     roles?: string[];
     zoomSensitivity?: number;
   },
-): ZoomPanStateType => {
-  const {
-    containerRef,
-    disabled = false,
-    initialPosition,
-    maxScale = 4,
-    minScale = 0.01,
-    roles,
-    zoomSensitivity = 0.5,
-  } = opts;
+): BoundaryType => {
+  const { initialPosition, maxScale = 4, minScale = 0.01, roles, zoomSensitivity = 0.5 } = opts;
 
-  const originX = useRef(0);
-  const originY = useRef(0);
-  const panning = useRef({
-    active: false,
-    direction: null,
-  });
-  const scale = useRef(1);
-  const startX = useRef(null);
-  const startY = useRef(null);
-  const zoom = useRef(null);
-  const viewportRect = useRef<DOMRect>(null);
+  const disabledRef = stateRef.current.disabled;
+  const containerRef = stateRef.current.container;
+  const elementRef = stateRef.current.element;
+  const handlePanning = stateRef.current.handlePanning;
+  const handleZoom = stateRef.current.handleZoom;
+  const originX = stateRef.current.originX;
+  const originY = stateRef.current.originY;
+  const panning = stateRef?.current?.panning;
+  const phaseRef = stateRef.current.phase;
+  const scale = stateRef.current.scale;
+  const startX = stateRef.current.startX;
+  const startY = stateRef.current.startY;
+  const transformRef = stateRef.current.transform;
+  const zoom = stateRef.current.zoom;
 
+  const viewportRect = useRef<RectType | null>(null);
   const bottomMaxRef = useRef(null);
   const leftMaxRef = useRef(null);
   const rightMaxRef = useRef(null);
   const topMaxRef = useRef(null);
-  const timeoutRef = useRef(null);
 
   useEffect(() => {
     const container = containerRef?.current;
@@ -97,18 +107,27 @@ export const useZoomPan = (
     const { height: heightViewport, width: widthViewport } = viewportRect?.current ?? {};
 
     const updateTransform = () => {
-      element.style.transform = `translate(${originX.current}px, ${originY.current}px) scale(${scale.current})`;
+      transformRef.current = `translate(${originX.current}px, ${originY.current}px) scale(${scale.current})`;
+      element.style.transform = transformRef.current;
     };
 
-    function initializeOrigin() {
+    handlePanning.current = (
+      _event: MouseEvent | WheelEvent,
+      positionOverride?: {
+        x?: number;
+        xPercent?: number;
+        y?: number;
+        yPercent?: number;
+      },
+    ) => {
       const canvasRect = element.getBoundingClientRect();
       const containerRect = container.getBoundingClientRect();
-      const { x, xPercent, y, yPercent } = initialPosition ?? {};
+      const { x, xPercent, y, yPercent } = positionOverride ?? {};
 
       originX.current = x ?? (canvasRect?.width - containerRect?.width) * (xPercent ?? 0);
       originY.current = y ?? (canvasRect?.height - containerRect?.height) * (yPercent ?? 0);
       updateTransform();
-    }
+    };
 
     const enforceLimits = (newX: number, newY: number, newScale: number) => {
       const element = elementRef.current;
@@ -141,11 +160,6 @@ export const useZoomPan = (
       };
     };
 
-    const handleZoom = (value: number) => {
-      scale.current = value;
-      zoom.current = value;
-    };
-
     function handleDirection(xNew: number, yNew: number) {
       if (xNew > 0) {
         panning.current.direction = DirectionEnum.LEFT;
@@ -160,36 +174,53 @@ export const useZoomPan = (
       }
     }
 
+    handleZoom.current = (event?: WheelEvent, scaleOverride?: number) => {
+      const oldScale = scale.current;
+
+      let newScale = null;
+      if (scaleOverride ?? false) {
+        newScale = scaleOverride;
+      } else {
+        const delta = (-event.deltaY / 500) * zoomSensitivity;
+        newScale = Math.min(Math.max(minScale, scale.current + delta), maxScale);
+      }
+
+      const scaleRatio = newScale / oldScale;
+
+      scale.current = newScale;
+      zoom.current = newScale;
+
+      const rect = element.getBoundingClientRect();
+      const cursorX = event ? event.clientX - rect.left : startX.current ?? 0;
+      const cursorY = event ? event.clientY - rect.top : startY.current ?? 0;
+
+      const xNew = (cursorX - originX.current) * (scaleRatio - 1);
+      const yNew = (cursorY - originY.current) * (scaleRatio - 1);
+      originX.current -= xNew;
+      originY.current -= yNew;
+
+      handleDirection(xNew, yNew);
+
+      const limited = enforceLimits(originX.current, originY.current, newScale);
+      originX.current = limited.x;
+      originY.current = limited.y;
+
+      updateTransform();
+    };
+
     const handleWheel = (event: WheelEvent) => {
-      if (disabled || roles?.some(role => hasRole(event.target as HTMLElement, role))) return;
+      if (disabledRef.current || roles?.some(role => hasRole(event.target as HTMLElement, role)))
+        return;
 
       event.preventDefault();
+
+      panning.current.active = false;
 
       const isZooming = event.metaKey || event.ctrlKey;
       const isPanningHorizontally = !isZooming && event.shiftKey;
 
       if (isZooming) {
-        const delta = (-event.deltaY / 500) * zoomSensitivity;
-        const oldScale = scale.current;
-        const newScale = Math.min(Math.max(minScale, scale.current + delta), maxScale);
-        const scaleRatio = newScale / oldScale;
-
-        handleZoom(newScale);
-
-        const rect = element.getBoundingClientRect();
-        const cursorX = event.clientX - rect.left;
-        const cursorY = event.clientY - rect.top;
-
-        const xNew = (cursorX - originX.current) * (scaleRatio - 1);
-        const yNew = (cursorY - originY.current) * (scaleRatio - 1);
-        originX.current -= xNew;
-        originY.current -= yNew;
-
-        handleDirection(xNew, yNew);
-
-        const limited = enforceLimits(originX.current, originY.current, newScale);
-        originX.current = limited.x;
-        originY.current = limited.y;
+        handleZoom.current(event);
       } else {
         const xNew = (originX.current -= event.deltaX);
         const yNew = (originY.current -= event.deltaY);
@@ -202,13 +233,14 @@ export const useZoomPan = (
         } else {
           originY.current = limited.y;
         }
-      }
 
-      updateTransform();
+        updateTransform();
+      }
     };
 
     const handleMouseDown = (event: MouseEvent) => {
-      if (disabled || roles?.some(role => hasRole(event.target as HTMLElement, role))) return;
+      if (disabledRef.current || roles?.some(role => hasRole(event.target as HTMLElement, role)))
+        return;
       if (event.button !== 0) return;
 
       event.preventDefault();
@@ -218,7 +250,8 @@ export const useZoomPan = (
     };
 
     const handleMouseMove = (event: MouseEvent) => {
-      if (disabled || roles?.some(role => hasRole(event.target as HTMLElement, role))) return;
+      if (disabledRef.current || roles?.some(role => hasRole(event.target as HTMLElement, role)))
+        return;
       if (!panning.current.active) return;
 
       const newX = event.clientX - startX.current;
@@ -238,7 +271,8 @@ export const useZoomPan = (
     };
 
     const handleTouchStart = (e: TouchEvent) => {
-      if (disabled || roles?.some(role => hasRole(e.target as HTMLElement, role))) return;
+      if (disabledRef.current || roles?.some(role => hasRole(e.target as HTMLElement, role)))
+        return;
       if (e.touches.length !== 1) return;
 
       const touch = e.touches[0];
@@ -248,7 +282,8 @@ export const useZoomPan = (
     };
 
     const handleTouchMove = (event: TouchEvent) => {
-      if (disabled || roles?.some(role => hasRole(event.target as HTMLElement, role))) return;
+      if (disabledRef.current || roles?.some(role => hasRole(event.target as HTMLElement, role)))
+        return;
       if (!panning.current.active || event.touches.length !== 1) return;
 
       const touch = event.touches[0];
@@ -269,7 +304,11 @@ export const useZoomPan = (
     element.addEventListener('touchstart', handleTouchStart, { passive: true });
     element.addEventListener('touchmove', handleTouchMove, { passive: true });
 
-    initializeOrigin();
+    if (phaseRef.current === 0 && initialPosition && handlePanning?.current) {
+      handlePanning?.current?.(null, initialPosition);
+    }
+
+    phaseRef.current += 1;
 
     return () => {
       element.removeEventListener('wheel', handleWheel);
@@ -281,29 +320,12 @@ export const useZoomPan = (
       element.removeEventListener('touchend', handleTouchEnd);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [disabled, zoomSensitivity, minScale, maxScale, roles]);
+  }, [zoomSensitivity, minScale, maxScale, roles]);
 
   return {
-    container: containerRef,
-    boundaryRefs: {
-      bottom: bottomMaxRef,
-      left: leftMaxRef,
-      right: rightMaxRef,
-      top: topMaxRef,
-    },
-    element: elementRef,
-    panning,
-    position: {
-      current: {
-        x: startX,
-        y: startY,
-      },
-      origin: {
-        x: originX,
-        y: originY,
-      },
-    },
-    scale,
-    zoom,
+    bottom: bottomMaxRef,
+    left: leftMaxRef,
+    right: rightMaxRef,
+    top: topMaxRef,
   };
 };
