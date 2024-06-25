@@ -37,3 +37,16 @@ ExecutionFrameworkPolicy.allow_read(
     ],
     condition=lambda policy: policy.has_at_least_viewer_role(),
 )
+
+ExecutionFrameworkPolicy.allow_query(
+    [
+        'level',
+    ],
+    on_action=[
+        constants.LIST,
+    ],
+    scopes=[
+        OauthScope.CLIENT_PRIVATE,
+    ],
+    condition=lambda policy: policy.has_at_least_viewer_role(),
+)

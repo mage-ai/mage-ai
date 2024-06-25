@@ -8,12 +8,14 @@ from mage_ai.shared.array import find
 
 
 def get_execution_frameworks(
+    level: Optional[int] = None,
     uuid: Optional[str] = None,
 ) -> Union[List[PipelineExecutionFramework], PipelineExecutionFramework]:
     arr = []
     for framework in EXECUTION_FRAMEWORKS:
         arr.append(framework)
-        arr += framework.get_pipelines()
+        if level is None or level >= 1:
+            arr += framework.get_pipelines(level=level)
 
     if uuid:
         result = find(lambda framework: framework.uuid == uuid, arr)
@@ -27,8 +29,14 @@ def get_execution_frameworks(
 class ExecutionFrameworkResource(GenericResource):
     @classmethod
     async def collection(cls, query, meta, user, **kwargs):
+        level = query.get('level', [None])
+        if level:
+            level = level[0]
+        if level is not None:
+            level = int(level)
+
         return cls.build_result_set(
-            get_execution_frameworks(),
+            get_execution_frameworks(level=level),
             user,
             **kwargs,
         )

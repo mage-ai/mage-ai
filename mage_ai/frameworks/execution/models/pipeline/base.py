@@ -20,8 +20,12 @@ class PipelineExecutionFramework(BaseExecutionFramework):
         self.serialize_attribute_classes('pipelines', PipelineExecutionFramework)
         self.serialize_attribute_enum('type', PipelineType)
 
-    def get_pipelines(self) -> List[PipelineExecutionFramework]:
-        arr = self.pipelines or []
-        if self.pipelines:
-            arr += flatten([framework.get_pipelines() for framework in self.pipelines])
+    def get_pipelines(self, level: Optional[int] = None) -> List[PipelineExecutionFramework]:
+        arr = []
+        if level is None or level >= 1:
+            arr += self.pipelines or []
+            if (level is None or level >= 2) and self.pipelines:
+                arr += flatten([
+                    framework.get_pipelines(level=level) for framework in self.pipelines
+                ])
         return arr
