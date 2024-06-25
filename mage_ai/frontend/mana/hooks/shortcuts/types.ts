@@ -119,7 +119,7 @@ export enum KeyEnum {
   DASH = '-',
   EQUAL = '=',
   PERIOD = '.',
-  QUOTE = "'",
+  QUOTE = '\'',
   SEMICOLON = ';',
   SLASH = '/',
 
