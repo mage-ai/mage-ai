@@ -8,6 +8,7 @@ import useKeyboardShortcuts from './shortcuts/useKeyboardShortcuts';
 import { KeyEnum } from './shortcuts/types';
 import { ClientEventType as ClientEventTypeT } from '../shared/interfaces';
 import { MenuItemType as MenuItemTypeT } from '../components/Menu/interfaces';
+import { range } from '@utils/array';
 import { selectKeys } from '@utils/hash';
 
 export type RenderContextMenuType = (event: ClientEventTypeT, items: MenuItemTypeT[]) => void;
@@ -15,6 +16,11 @@ export type RemoveContextMenuType = (event: ClientEventTypeT, opts?: { condition
 
 export type MenuItemType = MenuItemTypeT;
 export type ClientEventType = ClientEventTypeT;
+
+type PositionType = {
+  x: number;
+  y: number;
+};
 
 export default function useContextMenu({
   container,
@@ -30,6 +36,8 @@ export default function useContextMenu({
 } {
   const contextMenuRef = useRef<HTMLDivElement | null>(null);
   const contextMenuRootRef = useRef<Root | null>(null);
+  const itemsRef = useRef<MenuItemType[]>(null);
+  const positionRef = useRef<number[]>(null);
   const themeContext = useContext(ThemeContext);
 
   const rootID = useMemo(() => `context-menu-root-${uuid}`, [uuid]);
@@ -61,7 +69,73 @@ export default function useContextMenu({
       contextMenuRootRef.current = null;
     }
 
+    itemsRef.current = null;
+    positionRef.current = [null];
     deregisterCommands();
+  }
+
+  function filterItems(items: MenuItemType[]): MenuItemType[] {
+    return items?.filter(({ divider }: MenuItemType) => !divider);
+  }
+
+  function getCurrentItem(): {
+    item: MenuItemType;
+    items: MenuItemType[];
+  } {
+    if (!itemsRef?.current) return;
+
+    let item = null;
+    let items = filterItems(itemsRef.current ?? []);
+
+
+    positionRef?.current?.forEach((y: number, x: number) => {
+      if (y === null) {
+        return;
+      }
+
+      if (x >= 1 && item?.items?.length >= 1) {
+        const arr = filterItems(item?.items ?? []);
+        if (arr?.length >= 1) {
+          items = arr;
+        }
+      }
+      item = items?.[y];
+    });
+
+    return {
+      item,
+      items,
+    };
+  }
+
+  function handlePositionChange({ x, y }: { x?: number, y?: number }) {
+    const { item, items } = getCurrentItem();
+
+    if (x ?? false) {
+      if (x < 0 && positionRef.current.length >= 2) {
+        positionRef.current.pop();
+      } else if (x > 0) {
+        const ycur = positionRef.current[positionRef.current.length - 1];
+        const icur = items?.[ycur];
+        if (icur?.items?.length >= 1) {
+          positionRef.current.push(null);
+        }
+      }
+    }
+
+    if (y ?? false) {
+      let yNew = positionRef.current[positionRef.current.length - 1] ?? (y > 0 ? -1 : (item?.items?.length ?? 0));
+      yNew += y;
+
+      const count = items?.length ?? 0;
+      if (yNew < 0) {
+        yNew = 0;
+      } else if (count >= 1 && yNew >= count) {
+        yNew = count - 1;
+      }
+
+      positionRef.current[positionRef.current.length - 1] = yNew;
+    }
   }
 
   function renderContextMenu(event: ClientEventType, items: MenuItemType[]) {
@@ -95,14 +169,24 @@ export default function useContextMenu({
       </DeferredRenderer>,
     );
 
+    itemsRef.current = items;
+    positionRef.current = [null];
     registerCommands({
       down: {
-        handler: () => {
-          console.log('DOWN');
-        },
-        predicate: {
-          key: KeyEnum.ARROWDOWN,
-        },
+        handler: () => handlePositionChange({ y: 1 }),
+        predicate: { key: KeyEnum.ARROWDOWN },
+      },
+      left: {
+        handler: () => handlePositionChange({ x: -1 }),
+        predicate: { key: KeyEnum.ARROWLEFT },
+      },
+      right: {
+        handler: () => handlePositionChange({ x: 1 }),
+        predicate: { key: KeyEnum.ARROWRIGHT },
+      },
+      up: {
+        handler: () => handlePositionChange({ y: -1 }),
+        predicate: { key: KeyEnum.ARROWUP },
       },
     });
   }
