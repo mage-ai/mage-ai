@@ -1,38 +1,17 @@
 import { IconType } from '@mana/icons/types';
 import { BadgeType } from '@mana/elements/Badge';
 import { ConnectionType, DragItem, NodeItemType } from '../interfaces';
+import { ClientEventType } from '@mana/shared/interfaces';
 
 export type DragAndDropHandlersType = {
   handlers?: {
-    onDragEnd?: (
-      event: React.MouseEvent<HTMLDivElement> | React.TouchEvent<HTMLDivElement>,
-      node: NodeItemType,
-    ) => void;
-    onDragStart?: (
-      event: React.MouseEvent<HTMLDivElement> | React.TouchEvent<HTMLDivElement>,
-      node: NodeItemType,
-    ) => void;
+    onDragEnd?: (event: ClientEventType) => void;
+    onDragStart?: (event: ClientEventType) => void;
     onDrop: (dragTarget: NodeItemType, dropTarget: NodeItemType) => void;
-    onMouseDown?: (
-      event: React.MouseEvent<HTMLDivElement> | React.TouchEvent<HTMLDivElement>,
-      node: NodeItemType,
-      target?: any,
-    ) => boolean;
-    onMouseLeave?: (
-      event: React.MouseEvent<HTMLDivElement> | React.TouchEvent<HTMLDivElement>,
-      node: NodeItemType,
-      target?: any,
-    ) => boolean;
-    onMouseOver?: (
-      event: React.MouseEvent<HTMLDivElement> | React.TouchEvent<HTMLDivElement>,
-      node: NodeItemType,
-      target?: any,
-    ) => boolean;
-    onMouseUp?: (
-      event: React.MouseEvent<HTMLDivElement> | React.TouchEvent<HTMLDivElement>,
-      node: NodeItemType,
-      target?: any,
-    ) => boolean;
+    onMouseDown?: (event: ClientEventType) => void;
+    onMouseLeave?: (event: ClientEventType) => void;
+    onMouseOver?: (event: ClientEventType) => void;
+    onMouseUp?: (event: ClientEventType) => void;
   };
 };
 

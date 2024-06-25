@@ -3,17 +3,18 @@ import { ThemeContext, ThemeProvider } from 'styled-components';
 import { createRoot } from 'react-dom/client';
 import { Variants, motion } from 'framer-motion';
 
-import Button from '@mana/elements/Button';
-import DeferredRenderer from '@mana/components/DeferredRenderer';
-import Grid from '@mana/components/Grid';
-import KeyboardTextGroup from '@mana/elements/Text/Keyboard/Group';
-import Text from '@mana/elements/Text';
+import Button from '../../elements/Button';
+import DeferredRenderer from '../DeferredRenderer';
+import Grid from '../Grid';
+import KeyboardTextGroup from '../../elements/Text/Keyboard/Group';
+import Text from '../../elements/Text';
 import { CaretRight } from '@mana/icons';
 import useDebounce from '@utils/hooks/useDebounce';
 import { HEADER_Z_INDEX } from '@components/constants';
 import { MenuItemType } from './interfaces';
 import { DividerContainer, MenuContent, ItemContent, DividerStyled, MenuItemContainerStyled, MenuStyled, MenuItemStyled, MENU_ITEM_HEIGHT, MENU_MIN_WIDTH } from './index.style';
 import { UNIT } from '@mana/themes/spaces';
+import { ClientEventType } from '@mana/shared/interfaces';
 
 const itemVariants: Variants = {
   open: {
@@ -69,7 +70,10 @@ function MenuItem({ contained, first, item, last, small }: ItemProps) {
         <Button
           asLink
           motion
-          onClick={onClick}
+          onClick={(e) => {
+            e.preventDefault();
+            onClick?.(e as ClientEventType);
+          }}
           plain
           width="100%"
         >

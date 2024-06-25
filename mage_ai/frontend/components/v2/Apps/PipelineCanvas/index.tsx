@@ -39,11 +39,12 @@ import BlockNodeWrapper from '../../Canvas/Nodes/BlockNodeWrapper';
 import PipelineExecutionFrameworkType from '@interfaces/PipelineExecutionFramework/interfaces';
 import PipelineType from '@interfaces/PipelineType';
 import stylesBuilder from '@styles/scss/apps/Canvas/Pipelines/Builder.module.scss';
-import useContextMenu, { ClientEventType, MenuItemType, RemoveContextMenuType, RenderContextMenuType } from '@mana/hooks/useContextMenu';
+import useContextMenu, { MenuItemType, RemoveContextMenuType, RenderContextMenuType } from '@mana/hooks/useContextMenu';
+import { ClientEventType, EventOperationEnum } from '@mana/shared/interfaces';
 import { ConnectionLines } from '../../Canvas/Connections/ConnectionLines';
 import { DragLayer } from '../../Canvas/Layers/DragLayer';
 import { ElementRoleEnum } from '@mana/shared/types';
-import { Settings } from '@mana/icons';
+import { ArrowsAdjustingFrameSquare } from '@mana/icons';
 import { ZoomPanStateType, useZoomPan } from '@mana/hooks/useZoomPan';
 import { buildDependencies } from './utils/pipelines';
 import { getBlockColor } from '@mana/themes/blocks';
@@ -62,14 +63,17 @@ function connectionLinesRootID(uuid: string) {
 type PipelineBuilderProps = {
   canvasRef: React.RefObject<HTMLDivElement>;
   containerRef: React.RefObject<HTMLDivElement>;
-  onDragEnd: () => void;
-  onDragStart: () => void;
+  dragEnabled?: boolean;
+  dropEnabled?: boolean;
   pipeline: PipelineType | PipelineExecutionFrameworkType;
   pipelineExecutionFramework: PipelineExecutionFrameworkType;
   pipelineExecutionFrameworks: PipelineExecutionFrameworkType[];
   pipelines?: PipelineType[];
   removeContextMenu: RemoveContextMenuType;
   renderContextMenu: RenderContextMenuType;
+  setDragEnabled: (value: boolean) => void;
+  setDropEnabled: (value: boolean) => void;
+  setZoomPanDisabled: (value: boolean) => void;
   snapToGridOnDrag?: boolean;
   snapToGridOnDrop?: boolean;
   transformState: ZoomPanStateType;
@@ -78,14 +82,17 @@ type PipelineBuilderProps = {
 const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
   canvasRef,
   containerRef,
-  onDragEnd: onDragEndCommunicateToParent,
-  onDragStart: onDragStartCommunicateToParent,
+  dragEnabled,
+  dropEnabled,
   pipeline,
   pipelineExecutionFramework,
   pipelineExecutionFrameworks,
   pipelines,
   removeContextMenu,
   renderContextMenu,
+  setDragEnabled,
+  setDropEnabled,
+  setZoomPanDisabled,
   snapToGridOnDrag = false,
   snapToGridOnDrop = true,
   transformState,
@@ -366,22 +373,22 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
             });
 
             handleUpdatePath(port2);
-            modelMapping.portMapping[port2.id] = port2;
+            // modelMapping.portMapping[port2.id] = port2;
           },
         );
       });
     }
 
-    const xy = finalCoords(item.rect.left + x, item.rect.top + y);
-    const item2 = update(item, {
-      rect: {
-        $merge: {
-          left: xy.x,
-          top: xy.y,
-        },
-      },
-    });
-    modelMapping.itemMapping[item.id] = item2;
+    // const xy = finalCoords(item.rect.left + x, item.rect.top + y);
+    // const item2 = update(item, {
+    //   rect: {
+    //     $merge: {
+    //       left: xy.x,
+    //       top: xy.y,
+    //     },
+    //   },
+    // });
+    // modelMapping.itemMapping[item.id] = item2;
   }
 
   function renderConnectionLines(opts?: {
@@ -681,21 +688,26 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
     renderConnectionLines();
   }
 
-  function onMouseDown(event: React.MouseEvent<HTMLDivElement>, _node: NodeItemType) {
-    if (event.button > 0) return;
-  }
-
-  function onMouseUp(event: React.MouseEvent<HTMLDivElement>, _node: NodeItemType) {
-    resetAfterDrop();
-  }
-
   function handleContextMenu(event: ClientEventType) {
-    renderContextMenu(event, [
-      { Icon: Settings, uuid: 'New file' },
+    const { data } = event;
+
+    const menuItems = [
+      {
+        Icon: ArrowsAdjustingFrameSquare,
+        onClick: (event: ClientEventType) => {
+          removeContextMenu(event);
+          startTransition(() => {
+            setZoomPanDisabled(true);
+            setDragEnabled(true);
+            setDropEnabled(true);
+          });
+        },
+        uuid: 'Reposition blocks',
+      },
       { uuid: 'New folder' },
       { divider: true },
       {
-        Icon: Settings,
+        Icon: ArrowsAdjustingFrameSquare,
         uuid: 'Open file',
       },
       { uuid: 'Duplicate', description: () => 'Carbon copy file' },
@@ -721,7 +733,13 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
         uuid: 'Projects',
         items: [{ uuid: 'New Mage project' }, { uuid: 'New dbt project' }],
       },
-    ]);
+    ];
+
+    if (data?.node) {
+
+    }
+
+    renderContextMenu(event, menuItems);
   }
 
   useEffect(() => {
@@ -966,30 +984,41 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
     renderConnectionLines();
   }
 
-  function handleDragStart(_event: React.MouseEvent<HTMLDivElement>, node: NodeItemType) {
-    onDragStartCommunicateToParent();
+  function handleDragStart(event: ClientEventType) {
+    // setZoomPanDisabled(true);
 
-    if (!itemDraggingRef.current && ItemTypeEnum.PORT === node.type) {
-      itemDraggingRef.current = node;
-      setActiveItems({
-        [`${node.type}Mapping`]: {
-          [node.id]: node,
-        },
-      });
+    // if (!itemDraggingRef.current && ItemTypeEnum.PORT === node.type) {
+    //   itemDraggingRef.current = node;
+    //   setActiveItems({
+    //     [`${node.type}Mapping`]: {
+    //       [node.id]: node,
+    //     },
+    //   });
+    // }
+  }
+
+  function handleDragEnd(event: ClientEventType) {
+    setZoomPanDisabled(false);
+    setDragEnabled(false);
+    setDropEnabled(false);
+  }
+
+  function handleMouseDown(event: ClientEventType) {
+    const { operationType } = event;
+
+    if (EventOperationEnum.DRAG_START !== operationType) {
+      setZoomPanDisabled(false);
+      setDragEnabled(false);
+      setDropEnabled(false);
     }
   }
 
-  function handleMouseOver(_event: React.MouseEvent<HTMLDivElement>, node: NodeItemType) {
-    onDragStartCommunicateToParent();
-  }
+  // function handleMouseOver(event: ClientEventType) {
+  // }
 
-  function handleMouseLeave(_event: React.MouseEvent<HTMLDivElement>, node: NodeItemType) {
-    onDragEndCommunicateToParent();
-  }
-
-  function handleDragEnd(_event: React.MouseEvent<HTMLDivElement>, node: NodeItemType) {
-    onDragEndCommunicateToParent();
-  }
+  // function handleMouseLeave(event: ClientEventType) {
+  //   setZoomPanDisabled(false);
+  // }
 
   function onDragInit(node: NodeItemType, monitor: DropTargetMonitor) {
     // We still probably need this when we are draggin lines from port to port.
@@ -1098,10 +1127,8 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
       portMapping: portsUpdated,
     };
 
+    // DON’T call renderLayout changes or else the item’s rect is changed.
     mutateModels(payload);
-    const itemsUpdated = updateLayoutOfItems();
-    renderConnectionLines();
-    renderLayoutChanges({ items: itemsUpdated });
     renderConnectionLines();
   }
 
@@ -1141,11 +1168,14 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
 
     return arr?.map((node: NodeType, idx: number) => (
       <BlockNodeWrapper
+        draggable={dragEnabled}
+        droppable={dropEnabled}
         frameworkGroups={frameworkGroupsRef?.current}
         handlers={{
           onDragEnd: handleDragEnd,
           onDragStart: handleDragStart,
           onDrop: onDropPort,
+          onMouseDown: handleMouseDown,
           // onMouseOver: handleMouseOver,
           // onMouseLeave: handleMouseLeave,
         }}
@@ -1156,7 +1186,7 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
       />
     ));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [items]);
+  }, [dragEnabled, dropEnabled, items]);
 
   return (
     <div
@@ -1169,8 +1199,9 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
       }}
     >
       <div
-        onContextMenu={handleContextMenu}
+        onContextMenu={e => handleContextMenu(e as any)}
         onDoubleClick={handleDoubleClick}
+        onMouseDown={e => handleMouseDown(e as any)}
         ref={canvasRef}
         style={{
           height: 'inherit',
@@ -1278,7 +1309,6 @@ export default function PipelineBuilderCanvas(props: PipelineBuilderProps) {
   const [, setZoomPanDisabledState] = useState(false);
 
   const {
-    closeContextMenu,
     contextMenu,
     renderContextMenu,
     removeContextMenu,
@@ -1302,7 +1332,7 @@ export default function PipelineBuilderCanvas(props: PipelineBuilderProps) {
   useEffect(() => {
     const handleMouseDown = (event: MouseEvent) => {
       if (shouldPassControl(event as ClientEventType)) return;
-      closeContextMenu(event as ClientEventType, { conditionally: true });
+      removeContextMenu(event as ClientEventType, { conditionally: true });
 
       const targetElement = event.target as HTMLElement;
       const hasRole = [
@@ -1314,6 +1344,8 @@ export default function PipelineBuilderCanvas(props: PipelineBuilderProps) {
       if (hasRole) {
         // For some reason, we need to do this or else you can’t drag anything.
         setZoomPanDisabled(true);
+        setDragEnabled(true);
+        setDragEnabled(true);
       }
     };
 
@@ -1332,6 +1364,8 @@ export default function PipelineBuilderCanvas(props: PipelineBuilderProps) {
 
       if (hasRole) {
         setZoomPanDisabled(false);
+        setDragEnabled(false);
+        setDropEnabled(false);
       }
     };
 
@@ -1358,10 +1392,13 @@ export default function PipelineBuilderCanvas(props: PipelineBuilderProps) {
           {...props}
           canvasRef={canvasRef}
           containerRef={containerRef}
-          onDragEnd={() => setZoomPanDisabled(false)}
-          onDragStart={() => setZoomPanDisabled(true)}
+          dragEnabled={dragEnabled}
+          dropEnabled={dropEnabled}
           removeContextMenu={removeContextMenu}
           renderContextMenu={renderContextMenu}
+          setDragEnabled={setDragEnabled}
+          setDropEnabled={setDropEnabled}
+          setZoomPanDisabled={setZoomPanDisabled}
           transformState={zoomPanStateRef.current}
         />
       </DndProvider>

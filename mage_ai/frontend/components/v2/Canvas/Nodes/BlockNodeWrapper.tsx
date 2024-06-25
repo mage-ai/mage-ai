@@ -1,9 +1,10 @@
 import React from 'react';
+import update from 'immutability-helper';
 import { BlockNode } from './BlockNode';
 import { StatusTypeEnum, BlockTypeEnum } from '@interfaces/BlockType';
 import { NodeWrapper, NodeWrapperProps } from './NodeWrapper';
 import { getBlockColor } from '@mana/themes/blocks';
-import { Add, CaretDown, Check, Code, PipeIconVertical, PlayButtonFilled, Infinite } from '@mana/icons';
+import { Add, CaretDown, Check, Code, ArrowsAdjustingFrameSquare, PipeIconVertical, PlayButtonFilled, Infinite } from '@mana/icons';
 import { createRef, useEffect, useCallback, useState, useMemo, useRef } from 'react';
 import { GroupUUIDEnum } from '@interfaces/PipelineExecutionFramework/types';
 import { NodeItemType, PortType, DragItem } from '../interfaces';
@@ -13,9 +14,12 @@ import { ItemTypeEnum } from '../types';
 import stylesBuilder from '@styles/scss/apps/Canvas/Pipelines/Builder.module.scss';
 import styles from '@styles/scss/components/Canvas/Nodes/BlockNode.module.scss';
 import { isDebug } from '@utils/environment';
+import { ClientEventType, EventOperationEnum } from '@mana/shared/interfaces';
 
 type BlockNodeWrapperProps = {
   collapsed?: boolean;
+  draggable?: boolean;
+  droppable?: boolean;
   onMountItem: (item: DragItem, ref: React.RefObject<HTMLDivElement>) => void;
   onMountPort: (port: PortType, ref: React.RefObject<HTMLDivElement>) => void;
   frameworkGroups: Record<GroupUUIDEnum, Record<string, any>>;
@@ -25,6 +29,8 @@ type BlockNodeWrapperProps = {
 
 const BlockNodeWrapper: React.FC<BlockNodeWrapperProps> = ({
   collapsed,
+  draggable = false,
+  droppable = false,
   frameworkGroups,
   item,
   handlers,
@@ -36,7 +42,6 @@ const BlockNodeWrapper: React.FC<BlockNodeWrapperProps> = ({
   const phaseRef = useRef(0);
   const timeoutRef = useRef(null);
   const portElementRefs = useRef<Record<string, any>>({});
-  const [draggable, setDraggable] = useState(false);
   const [draggingNode, setDraggingNode] = useState<NodeItemType | null>(null);
 
   const block = item?.block;
@@ -50,46 +55,35 @@ const BlockNodeWrapper: React.FC<BlockNodeWrapperProps> = ({
     [item],
   );
 
-  function handleMouseDown(
-    event: React.MouseEvent<HTMLDivElement> | React.TouchEvent<HTMLDivElement>,
-    node: NodeItemType,
-    target?: any,
-  ): boolean {
-    onMouseDown && onMouseDown?.(event, node);
-    setDraggingNode(node);
+  const buildEvent = useCallback((event: any, operation?: EventOperationEnum) => update(event, {
+    data: {
+      $set: {
+        node: item,
+      },
+    },
+    operationTarget: {
+      $set: itemRef,
+    },
+    operationType: {
+      $set: operation,
+    },
+  }) as any, [item]);
 
-    return true;
+  function handleMouseDown(event: ClientEventType) {
+    event.stopPropagation();
+    onMouseDown && onMouseDown?.(buildEvent(event, EventOperationEnum.DRAG_START));
   }
 
-  function handleMouseLeave(
-    event: React.MouseEvent<HTMLDivElement> | React.TouchEvent<HTMLDivElement>,
-    node: NodeItemType,
-    target?: any,
-  ): boolean {
-    onMouseLeave && onMouseLeave?.(event, node);
-    setDraggingNode(null);
-
-    return true;
+function handleMouseLeave(event: ClientEventType) {
+    onMouseLeave && onMouseLeave?.(buildEvent(event));
   }
 
-  function handleMouseOver(
-    event: React.MouseEvent<HTMLDivElement> | React.TouchEvent<HTMLDivElement>,
-    node: NodeItemType,
-    target?: any,
-  ): boolean {
-    onMouseOver && onMouseOver?.(event, node);
-    return true;
+  function handleMouseOver(event: ClientEventType) {
+    onMouseOver && onMouseOver?.(buildEvent(event));
   }
 
-  function handleMouseUp(
-    event: React.MouseEvent<HTMLDivElement> | React.TouchEvent<HTMLDivElement>,
-    node: NodeItemType,
-    target?: any,
-  ): boolean {
-    onMouseUp && onMouseUp?.(event, node);
-    setDraggingNode(null);
-
-    return true;
+  function handleMouseUp(event: ClientEventType) {
+    onMouseUp && onMouseUp?.(buildEvent(event, EventOperationEnum.DRAG_END));
   }
 
   function onMount(port: PortType, portRef: React.RefObject<HTMLDivElement>) {
@@ -183,10 +177,11 @@ const BlockNodeWrapper: React.FC<BlockNodeWrapperProps> = ({
       className={[
         stylesBuilder.level,
         stylesBuilder[`level-${item?.level}`],
-        styles.blockNodeContainer,
-      ]?.join(' ')}
-      draggable={false}
+        !draggable && !droppable && styles.showOnHoverContainer,
+      ]?.filter(Boolean)?.join(' ')}
+      draggable={draggable}
       draggingNode={draggingNode}
+      droppable={droppable}
       handlers={{
         ...handlers,
         onMouseDown: handleMouseDown,
@@ -202,6 +197,7 @@ const BlockNodeWrapper: React.FC<BlockNodeWrapperProps> = ({
         borderConfig={{
           borders,
         }}
+        draggable={draggable}
         groups={groups}
         handlers={{
           ...handlers,
@@ -216,11 +212,11 @@ const BlockNodeWrapper: React.FC<BlockNodeWrapperProps> = ({
               className: styles.showOnHover,
               ...((isPipeline || isGroup)
                 ? {
-                    Icon: Add,
+                    Icon: draggable ? ArrowsAdjustingFrameSquare : Add,
                     onClick: () => alert('Coding...'),
                   }
                 : {
-                    Icon: CaretDown,
+                    Icon: draggable ? ArrowsAdjustingFrameSquare : CaretDown,
                     onClick: () => alert('Coding...'),
                   }),
             },
@@ -250,7 +246,7 @@ const BlockNodeWrapper: React.FC<BlockNodeWrapperProps> = ({
 };
 
 function areEqual(prevProps: BlockNodeWrapperProps, nextProps: BlockNodeWrapperProps) {
-  const keys = ['item.version'];
+  const keys = ['item.version', 'draggable', 'droppable'];
   return keys?.every((key: string) => dig(prevProps, key) === dig(nextProps, key));
 }
 

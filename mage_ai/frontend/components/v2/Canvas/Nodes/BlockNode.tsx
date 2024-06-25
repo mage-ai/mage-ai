@@ -23,6 +23,7 @@ import { DragAndDropHandlersType } from './types';
 type BlockNodeProps = {
   block?: BlockType;
   borderConfig?: BorderConfigType;
+  draggable?: boolean;
   item: DragItem;
   collapsed?: boolean;
   configurationOptions?: ConfigurationOptionType[];
@@ -34,6 +35,7 @@ type BlockNodeProps = {
 export function BlockNode({
   block,
   borderConfig,
+  draggable,
   groups,
   handlers,
   item,
@@ -159,6 +161,7 @@ export function BlockNode({
       <PanelRows>
         {inputOutputPairs?.map(({ input, output }, idx: number) => (
           <Connection
+            draggable={draggable}
             handlers={handlers}
             input={input}
             key={[input ? buildPortUUID(input) : '', output ? buildPortUUID(output) : ''].join(

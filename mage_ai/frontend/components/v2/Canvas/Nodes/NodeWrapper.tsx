@@ -61,15 +61,10 @@ export const NodeWrapper: FC<NodeWrapperProps> = memo(function NodeWrapper({
   const { onDragEnd, onDragStart, onDrop, onMouseDown, onMouseLeave, onMouseOver, onMouseUp } = handlers;
   const itemToDrag: DragItem | PortType = useMemo(() => draggingNode || item, [draggingNode, item]);
 
-  useEffect(() => {
-    preview(getEmptyImage(), { captureDraggingState: true });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
   const [{ isDragging }, connectDrag, preview] = useDrag(
     () => ({
       canDrag: () => {
-        onDragStart(null, item);
+        onDragStart({ data: { node: itemToDrag } } as any);
         return draggable;
       },
       collect: (monitor: DragSourceMonitor) => ({ isDragging: monitor.isDragging() }),
@@ -112,24 +107,30 @@ export const NodeWrapper: FC<NodeWrapperProps> = memo(function NodeWrapper({
     [droppable, onDrop, item],
   );
 
-  droppable && connectDrop(itemRef);
-  draggable && draggingNode?.type === item?.type && connectDrag(itemRef);
+  useEffect(() => {
+    preview(getEmptyImage(), { captureDraggingState: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // This needs to always connect without any conditionals or else it’ll never connect after mount.
+  connectDrop(itemRef);
+  connectDrag(itemRef);
 
   return (
     <div
       className={[styles.nodeWrapper, styles[itemToDrag?.type], className ?? ''].join(' ')}
-      onDragEnd={draggable && onDragEnd ? event => onDragEnd?.(event, item) : undefined}
-      onDragStart={draggable && onDragStart ? event => onDragStart?.(event, item) : undefined}
-      onMouseDown={draggable && onMouseDown ? event => onMouseDown?.(event, item) : undefined}
+      onDragEnd={draggable && onDragEnd ? event => onDragEnd?.(event as any) : undefined}
+      onDragStart={draggable && onDragStart ? event => onDragStart?.(event as any) : undefined}
+      onMouseDown={draggable && onMouseDown ? event => onMouseDown?.(event as any) : undefined}
       // THESE WILL DISABLE the style opacity of the wrapper.
-      // onMouseLeave={onMouseLeave ? event => onMouseLeave?.(event, item) : undefined}
-      onMouseOver={onMouseOver ? event => onMouseOver?.(event, item) : undefined}
-      onMouseUp={draggable && onMouseUp ? event => onMouseUp?.(event, item) : undefined}
+      // onMouseLeave={onMouseLeave ? event => onMouseLeave?.(event as any) : undefined}
+      onMouseOver={(!draggable && onMouseOver) ? event => onMouseOver?.(event as any) : undefined}
+      onMouseUp={draggable && onMouseUp ? event => onMouseUp?.(event as any) : undefined}
       ref={itemRef}
       role={[ElementRoleEnum.DRAGGABLE].join(' ')}
       style={getStyles(item, {
         draggable,
-        isDragging: isDragging && draggingNode?.type === item?.type,
+        isDragging: isDragging && itemToDrag?.type === item?.type,
       })}
     >
       {children}
