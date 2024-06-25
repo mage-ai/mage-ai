@@ -23,7 +23,12 @@ export type ClientEventType = {
   data?: Record<string, any>;
   operationTarget?: HTMLElement;
   operationType?: EventOperationEnum;
-} & Event & MouseEvent & TouchEvent & KeyboardEvent & React.MouseEvent & React.TouchEvent;
+} & Event &
+  MouseEvent &
+  TouchEvent &
+  KeyboardEvent &
+  React.MouseEvent &
+  React.TouchEvent;
 
 export type HandleOperationType = (event: ClientEventType) => boolean;
 
@@ -54,4 +59,7 @@ export interface EventOperationOptionsType {
     boundingContainer?: DOMRect;
   };
 }
-export type SubmitEventOperationType = (event: ClientEventType, opts?: EventOperationOptionsType) => void;
+export type SubmitEventOperationType = (
+  event: ClientEventType,
+  opts?: EventOperationOptionsType,
+) => void;

@@ -9,10 +9,10 @@ import { snapToGrid as snapToGridFunc } from '../utils/snapToGrid';
 export interface CustomDragLayerProps {
   gridDimensions?: { height: number; width: number };
   onDragging?: (opts?: {
-    clientOffset: XYCoord,
-    currentOffset: XYCoord,
-    differenceFromInitialOffset: XYCoord,
-    initialClientOffset: XYCoord,
+    clientOffset: XYCoord;
+    currentOffset: XYCoord;
+    differenceFromInitialOffset: XYCoord;
+    initialClientOffset: XYCoord;
     initialOffset: XYCoord;
     item: NodeItemType;
     itemType: ItemTypeEnum;

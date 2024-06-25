@@ -267,22 +267,25 @@ function MyApp(props: MyAppProps & AppProps) {
     [commandCenterEnabled, requireUserAuthentication],
   );
 
-  const appMemo = useMemo(() => (
-    <NextAppV2
-      Component={Component}
-      pageProps={{
-        defaultTitle,
-        themeSettings: pageProps?.themeSettings,
-        title,
-        version: (props?.version || props?.pageProps?.version) as any,
-      }}
-      router={router}
-    />
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  ), []);
+  const appMemo = useMemo(
+    () => (
+      <NextAppV2
+        Component={Component}
+        pageProps={{
+          defaultTitle,
+          themeSettings: pageProps?.themeSettings,
+          title,
+          version: (props?.version || props?.pageProps?.version) as any,
+        }}
+        router={router}
+      />
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    ),
+    [],
+  );
 
-  const useV2 = useMemo(() =>
-    props?.version  === 'v2' || props?.pageProps?.version === 'v2',
+  const useV2 = useMemo(
+    () => props?.version === 'v2' || props?.pageProps?.version === 'v2',
     [props?.version, props?.pageProps?.version],
   );
 
@@ -300,8 +303,8 @@ function MyApp(props: MyAppProps & AppProps) {
                 <ErrorProvider>
                   <Head defaultTitle={defaultTitle} title={title}>
                     <meta
-                      content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=0"
-                      name="viewport"
+                      content='width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=0'
+                      name='viewport'
                     />
                   </Head>
 

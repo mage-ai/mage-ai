@@ -4,7 +4,16 @@ import { BlockNode } from './BlockNode';
 import { StatusTypeEnum, BlockTypeEnum, TemplateType } from '@interfaces/BlockType';
 import { NodeWrapper, NodeWrapperProps } from './NodeWrapper';
 import { getBlockColor } from '@mana/themes/blocks';
-import { Add, CaretDown, Check, Code, ArrowsAdjustingFrameSquare, PipeIconVertical, PlayButtonFilled, Infinite } from '@mana/icons';
+import {
+  Add,
+  CaretDown,
+  Check,
+  Code,
+  ArrowsAdjustingFrameSquare,
+  PipeIconVertical,
+  PlayButtonFilled,
+  Infinite,
+} from '@mana/icons';
 import { createRef, useEffect, useCallback, useState, useMemo, useRef } from 'react';
 import { GroupUUIDEnum } from '@interfaces/PipelineExecutionFramework/types';
 import { NodeItemType, PortType, DragItem } from '../interfaces';
@@ -14,7 +23,11 @@ import { ItemTypeEnum } from '../types';
 import stylesBuilder from '@styles/scss/apps/Canvas/Pipelines/Builder.module.scss';
 import styles from '@styles/scss/components/Canvas/Nodes/BlockNode.module.scss';
 import { isDebug } from '@utils/environment';
-import { ClientEventType, EventOperationEnum, SubmitEventOperationType } from '@mana/shared/interfaces';
+import {
+  ClientEventType,
+  EventOperationEnum,
+  SubmitEventOperationType,
+} from '@mana/shared/interfaces';
 import { ButtonEnum } from '@mana/shared/enums';
 import { MenuItemType } from '@mana/components/Menu/interfaces';
 
@@ -59,26 +72,30 @@ const BlockNodeWrapper: React.FC<BlockNodeWrapperProps> = ({
     [item],
   );
 
-  const buildEvent = useCallback((event: any, operation?: EventOperationEnum) => update(event, {
-    data: {
-      $set: {
-        node: item,
-      },
-    },
-    operationTarget: {
-      $set: itemRef,
-    },
-    operationType: {
-      $set: operation,
-    },
-  }) as any, [item]);
+  const buildEvent = useCallback(
+    (event: any, operation?: EventOperationEnum) =>
+      update(event, {
+        data: {
+          $set: {
+            node: item,
+          },
+        },
+        operationTarget: {
+          $set: itemRef,
+        },
+        operationType: {
+          $set: operation,
+        },
+      }) as any,
+    [item],
+  );
 
   function handleMouseDown(event: ClientEventType) {
     event.stopPropagation();
     onMouseDown && onMouseDown?.(buildEvent(event, EventOperationEnum.DRAG_START));
   }
 
-function handleMouseLeave(event: ClientEventType) {
+  function handleMouseLeave(event: ClientEventType) {
     onMouseLeave && onMouseLeave?.(buildEvent(event));
   }
 
@@ -177,40 +194,43 @@ function handleMouseLeave(event: ClientEventType) {
   }, []);
 
   function handleGroupTemplateSelect(event: any, item1: NodeItemType, template: TemplateType) {
-    console.log('ADDDDDDDDDDDDDDDDDDDDDD', event, item1, template)
+    console.log('ADDDDDDDDDDDDDDDDDDDDDD', event, item1, template);
   }
 
   function handleClickGroupMenu(event: any) {
     event.preventDefault();
-    submitEventOperation(update(event,{
-      button: { $set: ButtonEnum.CONTEXT_MENU },
-      data: {
-        $set: {
-          node: item,
+    submitEventOperation(
+      update(event, {
+        button: { $set: ButtonEnum.CONTEXT_MENU },
+        data: {
+          $set: {
+            node: item,
+          },
+        },
+        operationTarget: { $set: event.target },
+        operationType: { $set: EventOperationEnum.CONTEXT_MENU_OPEN },
+      }),
+      {
+        args: [
+          [
+            {
+              uuid: `Templates for ${item?.block?.name}`,
+            },
+            ...Object.entries(item?.block?.configuration?.templates ?? {})?.map(
+              ([uuid, template]) => ({
+                description: () => template?.description,
+                onClick: (event: any) => handleGroupTemplateSelect(event, item, template),
+                label: () => template?.name,
+                uuid,
+              }),
+            ),
+          ],
+        ],
+        kwargs: {
+          boundingContainer: itemRef?.current?.getBoundingClientRect(),
         },
       },
-      operationTarget: { $set: event.target },
-      operationType: { $set: EventOperationEnum.CONTEXT_MENU_OPEN },
-    }), {
-      args: [
-        [
-          {
-            uuid: `Templates for ${item?.block?.name}`,
-          },
-          ...Object.entries(
-            item?.block?.configuration?.templates ?? {},
-          )?.map(([uuid, template]) => ({
-            description: () => template?.description,
-            onClick: (event: any) => handleGroupTemplateSelect(event, item, template),
-            label: () => template?.name,
-            uuid,
-          })),
-        ],
-      ],
-      kwargs: {
-        boundingContainer: itemRef?.current?.getBoundingClientRect(),
-      },
-    });
+    );
   }
 
   return (
@@ -219,7 +239,9 @@ function handleMouseLeave(event: ClientEventType) {
         stylesBuilder.level,
         stylesBuilder[`level-${item?.level}`],
         !draggable && !droppable && styles.showOnHoverContainer,
-      ]?.filter(Boolean)?.join(' ')}
+      ]
+        ?.filter(Boolean)
+        ?.join(' ')}
       draggable={draggable}
       draggingNode={draggingNode}
       droppable={droppable}

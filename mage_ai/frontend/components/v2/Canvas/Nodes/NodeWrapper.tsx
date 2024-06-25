@@ -12,13 +12,16 @@ import { DragAndDropType } from './types';
 import { ElementRoleEnum } from '@mana/shared/types';
 
 // This is the style used for the preview when dragging
-function getStyles(item: NodeItemType, {
-  draggable,
-  isDragging,
-}: {
-  draggable: boolean,
-  isDragging: boolean,
-}): CSSProperties {
+function getStyles(
+  item: NodeItemType,
+  {
+    draggable,
+    isDragging,
+  }: {
+    draggable: boolean;
+    isDragging: boolean;
+  },
+): CSSProperties {
   const { id, rect, type } = item;
   const { left, top, width, zIndex } = rect || ({} as RectType);
   const transform = `translate3d(${left ?? 0}px, ${top ?? 0}px, 0)`;
@@ -58,7 +61,8 @@ export const NodeWrapper: FC<NodeWrapperProps> = memo(function NodeWrapper({
   item,
   itemRef,
 }: NodeWrapperProps) {
-  const { onDragEnd, onDragStart, onDrop, onMouseDown, onMouseLeave, onMouseOver, onMouseUp } = handlers;
+  const { onDragEnd, onDragStart, onDrop, onMouseDown, onMouseLeave, onMouseOver, onMouseUp } =
+    handlers;
   const itemToDrag: DragItem | PortType = useMemo(() => draggingNode || item, [draggingNode, item]);
 
   const [{ isDragging }, connectDrag, preview] = useDrag(
@@ -124,7 +128,7 @@ export const NodeWrapper: FC<NodeWrapperProps> = memo(function NodeWrapper({
       onMouseDown={draggable && onMouseDown ? event => onMouseDown?.(event as any) : undefined}
       // THESE WILL DISABLE the style opacity of the wrapper.
       // onMouseLeave={onMouseLeave ? event => onMouseLeave?.(event as any) : undefined}
-      onMouseOver={(!draggable && onMouseOver) ? event => onMouseOver?.(event as any) : undefined}
+      onMouseOver={!draggable && onMouseOver ? event => onMouseOver?.(event as any) : undefined}
       onMouseUp={draggable && onMouseUp ? event => onMouseUp?.(event as any) : undefined}
       ref={itemRef}
       role={[ElementRoleEnum.DRAGGABLE].join(' ')}

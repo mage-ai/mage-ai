@@ -892,7 +892,11 @@ export function addRects(rect1: RectType, rect2: RectType): RectType {
 //   };
 // }
 
-export function getElementPositionInContainer(viewport: RectType, container: RectType, element: RectType): RectType {
+export function getElementPositionInContainer(
+  viewport: RectType,
+  container: RectType,
+  element: RectType,
+): RectType {
   const containerOffsetLeft = container.left - viewport.left;
   const containerOffsetTop = container.top - viewport.top;
 

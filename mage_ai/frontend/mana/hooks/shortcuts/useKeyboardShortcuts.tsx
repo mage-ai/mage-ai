@@ -55,22 +55,14 @@ export default function useKeyboardShortcuts({
     timeoutRef.current = setTimeout(clearAll, timeout);
   }
 
-  function validatePredicate(
-    predicate: PredicateType,
-    events: CustomKeyboardEventType[],
-  ): boolean {
-    const {
-      key,
-      predicates,
-      present,
-      type = EventEnum.KEYDOWN,
-    } = predicate;
+  function validatePredicate(predicate: PredicateType, events: CustomKeyboardEventType[]): boolean {
+    const { key, predicates, present, type = EventEnum.KEYDOWN } = predicate;
 
     // console.log(predicates, present, key, type, events);
 
     if (predicates?.length) {
-      return predicates?.every(
-        (pred: PredicateType, position: number) => validatePredicate(pred, [events[position]]),
+      return predicates?.every((pred: PredicateType, position: number) =>
+        validatePredicate(pred, [events[position]]),
       );
     } else if (present) {
       return key in (eventsHistoryRef?.current?.[type] ?? {});
@@ -79,14 +71,23 @@ export default function useKeyboardShortcuts({
     const keys = ['altKey', 'ctrlKey', 'key', 'metaKey', 'shiftKey', 'type'];
     const event = events?.[0] ?? false;
 
-    return event && isEqual(selectKeys({
-      altKey: false,
-      ctrlKey: false,
-      metaKey: false,
-      shiftKey: false,
-      type,
-      ...predicate,
-    }, keys), selectKeys(event, keys));
+    return (
+      event &&
+      isEqual(
+        selectKeys(
+          {
+            altKey: false,
+            ctrlKey: false,
+            metaKey: false,
+            shiftKey: false,
+            type,
+            ...predicate,
+          },
+          keys,
+        ),
+        selectKeys(event, keys),
+      )
+    );
   }
 
   function executeCommands(event: CustomKeyboardEventType) {
@@ -95,43 +96,47 @@ export default function useKeyboardShortcuts({
 
     const commandsToExecute = {};
 
-    Object.entries(commandsRef?.current ?? {})?.forEach(([uuid, command]: [string, CommandType]) => {
-      if (!command?.predicate || !command?.handler) return;
+    Object.entries(commandsRef?.current ?? {})?.forEach(
+      ([uuid, command]: [string, CommandType]) => {
+        if (!command?.predicate || !command?.handler) return;
 
-      let valid = false;
+        let valid = false;
 
-      const events = eventsSeriesRef?.current ?? [];
+        const events = eventsSeriesRef?.current ?? [];
 
-      if (EventEnum.KEYDOWN === event.type) {
-        events.push(buildEventSeries());
-      }
+        if (EventEnum.KEYDOWN === event.type) {
+          events.push(buildEventSeries());
+        }
 
-      const predicates = command?.predicate?.predicates ?? [];
+        const predicates = command?.predicate?.predicates ?? [];
 
-      if (predicates.length >= 2) {
-        valid = predicates.every((
-          predicate: PredicateType,
-          position: number,
-        ) => position >= events?.length && validatePredicate(predicate, events[position]));
-      } else {
-        valid = events.some(
-          (arr1: CustomKeyboardEventType[]) => predicates.length === 1
-            ? validatePredicate(command.predicate, arr1)
-            : arr1?.some(
-              (event: CustomKeyboardEventType) => validatePredicate(command.predicate, [event]),
-            ),
-        );
-      }
+        if (predicates.length >= 2) {
+          valid = predicates.every(
+            (predicate: PredicateType, position: number) =>
+              position >= events?.length && validatePredicate(predicate, events[position]),
+          );
+        } else {
+          valid = events.some((arr1: CustomKeyboardEventType[]) =>
+            predicates.length === 1
+              ? validatePredicate(command.predicate, arr1)
+              : arr1?.some((event: CustomKeyboardEventType) =>
+                  validatePredicate(command.predicate, [event]),
+                ),
+          );
+        }
 
-      // console.log('valid', valid);
+        // console.log('valid', valid);
 
-      if (valid) {
-        commandsToExecute[uuid] = command;
-      }
-    });
+        if (valid) {
+          commandsToExecute[uuid] = command;
+        }
+      },
+    );
 
-    const command =
-      sortByKey(Object.values(commandsToExecute ?? {}), ({ priority }) => priority)?.[0];
+    const command = sortByKey(
+      Object.values(commandsToExecute ?? {}),
+      ({ priority }) => priority,
+    )?.[0];
 
     if (command) {
       command?.handler?.(event);

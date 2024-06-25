@@ -15,7 +15,13 @@ type ConnectionProps = {
   onMount?: (port: PortType, portRef: React.RefObject<HTMLDivElement>) => void;
 } & DragAndDropHandlersType;
 
-export default function Connection({ draggable, input, handlers, output, onMount }: ConnectionProps) {
+export default function Connection({
+  draggable,
+  input,
+  handlers,
+  output,
+  onMount,
+}: ConnectionProps) {
   const inputRef = useRef<HTMLDivElement>(null);
   const outputRef = useRef<HTMLDivElement>(null);
 
@@ -62,21 +68,21 @@ export default function Connection({ draggable, input, handlers, output, onMount
 
   return (
     <Grid
-      alignItems="center"
+      alignItems='center'
       columnGap={8}
       templateColumns={[
         (input && output) || !(input && output) ? '1fr 1fr' : '',
         input && !output ? 'auto auto' : '',
         !input && output ? 'auto auto' : '',
       ].join(' ')}
-      templateRows="1fr"
+      templateRows='1fr'
     >
       <Grid
-        alignItems="center"
+        alignItems='center'
         columnGap={8}
-        justifyItems="start"
-        templateColumns="auto 1fr"
-        templateRows="1fr"
+        justifyItems='start'
+        templateColumns='auto 1fr'
+        templateRows='1fr'
       >
         <div ref={inputRef} style={{ height: 12, width: 12 }}>
           {!draggable && inputPort}
@@ -93,11 +99,11 @@ export default function Connection({ draggable, input, handlers, output, onMount
       </Grid>
 
       <Grid
-        alignItems="center"
+        alignItems='center'
         columnGap={8}
-        justifyItems="end"
-        templateColumns="1fr auto"
-        templateRows="1fr"
+        justifyItems='end'
+        templateColumns='1fr auto'
+        templateRows='1fr'
       >
         <Text italic={!output} muted small>
           {output?.target?.block?.name || output?.target?.block?.uuid || 'Output'}

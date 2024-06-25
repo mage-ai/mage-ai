@@ -20,7 +20,8 @@ const shared = css<StyleProps>`
   ${({ aslink, plain }) => !plain && (aslink ? transitionFast : transition)}
   ${text}
 
-  ${({ aslink, basic, grouped, plain, primary, secondary, theme }) => !plain &&
+  ${({ aslink, basic, grouped, plain, primary, secondary, theme }) =>
+    !plain &&
     outlineHover({
       borderColor: theme.fonts.color.text.inverted,
       outlineColor: primary
@@ -34,7 +35,7 @@ const shared = css<StyleProps>`
     })}
 
   ${({ aslink, grouped, plain }) =>
-  (aslink || grouped || plain) &&
+    (aslink || grouped || plain) &&
     `
     border: none !important;
   `}
@@ -77,8 +78,9 @@ const shared = css<StyleProps>`
 
   ${({ basic, grouped }) => !grouped && !basic && bordersTransparent}
 
-  background-color: ${({ aslink, basic, plain, primary, secondary, theme }) => !plain && (
-    aslink
+  background-color: ${({ aslink, basic, plain, primary, secondary, theme }) =>
+    !plain &&
+    (aslink
       ? 'transparent'
       : primary
         ? theme.colors.backgrounds.button.primary.default
@@ -129,8 +131,9 @@ const shared = css<StyleProps>`
 const base = css<StyleProps>`
   ${shared}
   font-size: ${({ theme }) => theme.fonts.size.base};
-  padding: ${({ aslink, basic, grouped, plain, theme }) => !plain && (
-    aslink
+  padding: ${({ aslink, basic, grouped, plain, theme }) =>
+    !plain &&
+    (aslink
       ? basic
         ? 0
         : '2px 4px'
@@ -138,16 +141,16 @@ const base = css<StyleProps>`
         ? basic
           ? 0
           : theme.buttons.padding.xxs
-        : theme.buttons.padding.base
-  )};
+        : theme.buttons.padding.base)};
 `;
 
 export const sm = css<StyleProps>`
   ${shared}
 
   font-size: ${({ theme }) => theme.fonts.size.sm};
-  padding: ${({ aslink, basic, grouped, plain, theme, tag }) => !plain && (
-    typeof tag !== 'undefined'
+  padding: ${({ aslink, basic, grouped, plain, theme, tag }) =>
+    !plain &&
+    (typeof tag !== 'undefined'
       ? theme.buttons.padding.sm
       : aslink
         ? basic
@@ -157,8 +160,7 @@ export const sm = css<StyleProps>`
           ? basic
             ? 0
             : theme.buttons.padding.xxs
-          : theme.buttons.padding.sm
-  )};
+          : theme.buttons.padding.sm)};
 
   ${({ grouped, tag, theme }) =>
     typeof tag !== 'undefined' &&

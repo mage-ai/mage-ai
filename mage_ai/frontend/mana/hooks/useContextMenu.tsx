@@ -14,8 +14,15 @@ export type RenderContextMenuOptions = {
   boundingContainer?: DOMRect;
 };
 
-export type RenderContextMenuType = (event: ClientEventTypeT, items: MenuItemTypeT[], opts?: RenderContextMenuOptions) => void;
-export type RemoveContextMenuType = (event: ClientEventTypeT, opts?: { conditionally?: boolean }) => void;
+export type RenderContextMenuType = (
+  event: ClientEventTypeT,
+  items: MenuItemTypeT[],
+  opts?: RenderContextMenuOptions,
+) => void;
+export type RemoveContextMenuType = (
+  event: ClientEventTypeT,
+  opts?: { conditionally?: boolean },
+) => void;
 
 export type MenuItemType = MenuItemTypeT;
 export type ClientEventType = ClientEventTypeT;
@@ -40,10 +47,7 @@ export default function useContextMenu({
 
   const rootID = useMemo(() => `context-menu-root-${uuid}`, [uuid]);
 
-  const {
-    deregisterCommands,
-    registerCommands,
-  } = useKeyboardShortcuts({
+  const { deregisterCommands, registerCommands } = useKeyboardShortcuts({
     target: contextMenuRootRef,
   });
 
@@ -73,7 +77,7 @@ export default function useContextMenu({
   }
 
   function filterItems(items: MenuItemType[]): MenuItemType[] {
-    return items?.filter(({ divider }: MenuItemType) => !divider);
+    return items?.filter(({ divider, onClick }: MenuItemType) => !divider && onClick);
   }
 
   function getCurrentItem(): {
@@ -83,8 +87,7 @@ export default function useContextMenu({
     if (!itemsRef?.current) return;
 
     let item = null;
-    let items = filterItems(itemsRef.current ?? []);
-
+    let items = filterItems(itemsRef?.current ? itemsRef?.current : []);
 
     positionRef?.current?.forEach((y: number, x: number) => {
       if (y === null) {
@@ -107,7 +110,7 @@ export default function useContextMenu({
     };
   }
 
-  function handlePositionChange({ x, y }: { x?: number, y?: number }) {
+  function handlePositionChange({ x, y }: { x?: number; y?: number }) {
     const { item, items } = getCurrentItem();
 
     if (x ?? false) {
@@ -123,7 +126,9 @@ export default function useContextMenu({
     }
 
     if (y ?? false) {
-      let yNew = positionRef.current[positionRef.current.length - 1] ?? (y > 0 ? -1 : (item?.items?.length ?? 0));
+      let yNew =
+        positionRef.current[positionRef.current.length - 1] ??
+        (y > 0 ? -1 : item?.items?.length ?? 0);
       yNew += y;
 
       const count = items?.length ?? 0;
@@ -139,7 +144,11 @@ export default function useContextMenu({
     console.log(getCurrentItem()?.item?.uuid);
   }
 
-  function renderContextMenu(event: ClientEventType, items: MenuItemType[], opts?: RenderContextMenuOptions) {
+  function renderContextMenu(
+    event: ClientEventType,
+    items: MenuItemType[],
+    opts?: RenderContextMenuOptions,
+  ) {
     if (!container?.current || !isEventInContainer(event)) return;
 
     event.preventDefault();
@@ -157,10 +166,10 @@ export default function useContextMenu({
       <DeferredRenderer idleTimeout={1}>
         <ThemeProvider theme={themeContext}>
           <Menu
-            boundingContainer={opts?.boundingContainer ?? selectKeys(
-              container?.current?.getBoundingClientRect() || {},
-              ['width', 'x', 'y'],
-            )}
+            boundingContainer={
+              opts?.boundingContainer ??
+              selectKeys(container?.current?.getBoundingClientRect() || {}, ['width', 'x', 'y'])
+            }
             event={event}
             items={items}
             small

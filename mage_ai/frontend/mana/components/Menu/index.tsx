@@ -12,7 +12,17 @@ import { CaretRight } from '@mana/icons';
 import useDebounce from '@utils/hooks/useDebounce';
 import { HEADER_Z_INDEX } from '@components/constants';
 import { MenuItemType } from './interfaces';
-import { DividerContainer, MenuContent, ItemContent, DividerStyled, MenuItemContainerStyled, MenuStyled, MenuItemStyled, MENU_ITEM_HEIGHT, MENU_MIN_WIDTH } from './index.style';
+import {
+  DividerContainer,
+  MenuContent,
+  ItemContent,
+  DividerStyled,
+  MenuItemContainerStyled,
+  MenuStyled,
+  MenuItemStyled,
+  MENU_ITEM_HEIGHT,
+  MENU_MIN_WIDTH,
+} from './index.style';
 import { UNIT } from '@mana/themes/spaces';
 import { ClientEventType } from '@mana/shared/interfaces';
 
@@ -55,7 +65,11 @@ function MenuItem({ contained, first, item, last, small }: ItemProps) {
   const itemsCount = useMemo(() => items?.length || 0, [items]);
 
   if (divider) {
-    return <DividerContainer><DividerStyled /></DividerContainer>;
+    return (
+      <DividerContainer>
+        <DividerStyled />
+      </DividerContainer>
+    );
   }
 
   const before = Icon ? <Icon size={small ? 12 : undefined} /> : undefined;
@@ -64,23 +78,17 @@ function MenuItem({ contained, first, item, last, small }: ItemProps) {
     <MenuItemStyled>
       <Grid rowGap={4}>
         <Grid
-        alignItems="center"
-        columnGap={16}
-        justifyContent="space-between"
-        templateColumns={[
-          '1fr',
-          'auto',
-        ].filter(Boolean).join(' ')}
-        templateRows="1fr"
-      >
-        <Grid
-          alignItems="center"
-          columnGap={4}
-          templateColumns={[
-            before && 'auto',
-            '1fr',
-          ].filter(Boolean).join(' ')}
+          alignItems='center'
+          columnGap={16}
+          justifyContent='space-between'
+          templateColumns={['1fr', 'auto'].filter(Boolean).join(' ')}
+          templateRows='1fr'
         >
+          <Grid
+            alignItems='center'
+            columnGap={4}
+            templateColumns={[before && 'auto', '1fr'].filter(Boolean).join(' ')}
+          >
             {before}
             <Text bold={!onClick} muted={!onClick} small={small}>
               {label?.() || uuid}
@@ -88,31 +96,29 @@ function MenuItem({ contained, first, item, last, small }: ItemProps) {
           </Grid>
 
           <Grid
-          columnGap={4}
-          templateColumns={[
-            keyboardShortcuts && 'auto',
-            itemsCount >= 1 && 'auto',
-          ].filter(Boolean).join(' ')}
-        >
+            columnGap={4}
+            templateColumns={[keyboardShortcuts && 'auto', itemsCount >= 1 && 'auto']
+              .filter(Boolean)
+              .join(' ')}
+          >
             {keyboardShortcuts && (
-            <KeyboardTextGroup
-              monospace
-              small={!small}
-              textGroup={keyboardShortcuts}
-              xsmall={small}
-            />
-          )}
+              <KeyboardTextGroup
+                monospace
+                small={!small}
+                textGroup={keyboardShortcuts}
+                xsmall={small}
+              />
+            )}
 
             {itemsCount >= 1 && <CaretRight size={12} />}
           </Grid>
-
         </Grid>
 
         {description && (
-        <Text muted small={!small} xsmall={small}>
-          {description?.()}
-        </Text>
-      )}
+          <Text muted small={!small} xsmall={small}>
+            {description?.()}
+          </Text>
+        )}
       </Grid>
     </MenuItemStyled>
   );
@@ -122,19 +128,20 @@ function MenuItem({ contained, first, item, last, small }: ItemProps) {
       contained={contained}
       first={first}
       last={last}
+      noHover={!onClick ? 'true' : undefined}
     >
-      <ItemContent first={first} last={last}>
+      <ItemContent first={first} last={last} noHover={!onClick ? 'true' : undefined}>
         {!onClick && el}
         {onClick && (
           <Button
             asLink
             motion
-            onClick={(e) => {
+            onClick={e => {
               e.preventDefault();
               onClick?.(e as ClientEventType);
             }}
             plain
-            width="100%"
+            width='100%'
           >
             {el}
           </Button>
@@ -170,9 +177,9 @@ function Menu({ boundingContainer, contained, coordinates, event, items, small, 
     const element = event?.target as HTMLElement;
     const rect = element?.getBoundingClientRect() || ({} as DOMRect);
     let yFinal = y + UNIT / 2;
-    const menuHeight = heightMenu ?? (MENU_ITEM_HEIGHT * items.length);
+    const menuHeight = heightMenu ?? MENU_ITEM_HEIGHT * items.length;
     if (y + menuHeight >= window.innerHeight) {
-      yFinal = window.innerHeight - (menuHeight + (UNIT * 2));
+      yFinal = window.innerHeight - (menuHeight + UNIT * 2);
     }
 
     return {

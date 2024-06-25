@@ -26,4 +26,4 @@ export const ConnectionLines: React.FC<ConnectionLinesProps> = ({
   >
     {children}
   </motion.svg>
-  );
+);

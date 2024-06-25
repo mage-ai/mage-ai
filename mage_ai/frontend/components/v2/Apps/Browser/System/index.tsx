@@ -45,11 +45,10 @@ function SystemBrowser({ app, operations }: AppLoaderProps, ref: React.Ref<HTMLD
   const addPanel = app?.operations?.[OperationTypeEnum.ADD_PANEL]?.effect as AddPanelOperationType;
   const removeApp = operations?.[OperationTypeEnum.REMOVE_APP]?.effect;
 
-  const {
-    contextMenu,
-    renderContextMenu,
-    removeContextMenu,
-  } = useContextMenu({ container: containerRef, uuid: appUUID });
+  const { contextMenu, renderContextMenu, removeContextMenu } = useContextMenu({
+    container: containerRef,
+    uuid: appUUID,
+  });
 
   function renderItems(items: ItemDetailType[]) {
     if (!itemsRootRef?.current) {
@@ -140,7 +139,10 @@ function SystemBrowser({ app, operations }: AppLoaderProps, ref: React.Ref<HTMLD
                       { divider: true },
                       {
                         uuid: 'View',
-                        items: [{ uuid: 'Expand subdirectories' }, { uuid: 'Collapse subdirectories' }],
+                        items: [
+                          { uuid: 'Expand subdirectories' },
+                          { uuid: 'Collapse subdirectories' },
+                        ],
                       },
                       { divider: true },
                       {

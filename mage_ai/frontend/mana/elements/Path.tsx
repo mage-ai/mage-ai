@@ -25,16 +25,19 @@ type PathProps = {
   style?: React.CSSProperties;
 };
 
-function PathComponent({
-  d,
-  id,
-  stroke = 'gray',
-  strokeWidth = '1.5',
-  fill = 'none',
-  raw,
-  style: styleProp,
-  ...rest
-}: PathProps & React.HTMLAttributes<SVGPathElement>, ref: React.Ref<SVGPathElement>) {
+function PathComponent(
+  {
+    d,
+    id,
+    stroke = 'gray',
+    strokeWidth = '1.5',
+    fill = 'none',
+    raw,
+    style: styleProp,
+    ...rest
+  }: PathProps & React.HTMLAttributes<SVGPathElement>,
+  ref: React.Ref<SVGPathElement>,
+) {
   const controls = useAnimation();
 
   useEffect(() => {
@@ -57,12 +60,7 @@ function PathComponent({
   if (raw) {
     return (
       // @ts-ignore
-      <motion.path
-        {...props}
-        animate={controls}
-        initial={{ pathLength: 0 }}
-        style={styleProp}
-      />
+      <motion.path {...props} animate={controls} initial={{ pathLength: 0 }} style={styleProp} />
     );
   }
 

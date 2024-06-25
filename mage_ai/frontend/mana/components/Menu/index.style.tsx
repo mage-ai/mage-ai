@@ -10,6 +10,7 @@ export const MENU_MIN_WIDTH = UNIT * 40;
 type MenuStyledProps = {
   contained?: string;
   left?: number;
+  noHover?: string;
   top?: number;
   zIndex?: number;
 };
@@ -19,15 +20,27 @@ const borderStyles = css`
   border-right: 1px solid var(--colors-graymd);
 `;
 
-const focusedBackground = css`
-  background-color: var(--colors-graymd);
-  border-left-color: var(--colors-gray);
-  border-right-color: var(--colors-gray);
+const focusedBackground = css<{
+  noHover?: string;
+}>`
+  ${({ noHover }) =>
+    !noHover &&
+    `
+    background-color: var(--colors-graymd);
+    border-left-color: var(--colors-gray);
+    border-right-color: var(--colors-gray);
+  `}
 `;
 
-const focused = css`
-  border-bottom-color: var(--colors-gray);
-  border-top-color: var(--colors-gray);
+const focused = css<{
+  noHover?: string;
+}>`
+  ${({ noHover }) =>
+    !noHover &&
+    `
+    border-bottom-color: var(--colors-gray);
+    border-top-color: var(--colors-gray);
+  `}
 `;
 
 export const MenuStyled = styled.div<MenuStyledProps>`
@@ -59,18 +72,23 @@ export const MenuItemContainerStyled = styled.div<{
   contained?: boolean;
   first?: boolean;
   last?: boolean;
+  noHover?: string;
 }>`
   ${borderStyles}
 
   overflow: hidden;
 
-  ${({ first, theme }) => first && `
+  ${({ first, theme }) =>
+    first &&
+    `
     border-top: 1px solid var(--colors-graymd);
     border-top-left-radius: ${theme.menus.border.radius.base};
     border-top-right-radius: ${theme.menus.border.radius.base};
   `}
 
-  ${({ last, theme }) => last && `
+  ${({ last, theme }) =>
+    last &&
+    `
     border-bottom: 1px solid var(--colors-graymd);
     border-bottom-left-radius: ${theme.menus.border.radius.base};
     border-bottom-right-radius: ${theme.menus.border.radius.base};
@@ -84,6 +102,7 @@ export const MenuItemContainerStyled = styled.div<{
 export const ItemContent = styled.div<{
   first?: boolean;
   last?: boolean;
+  noHover?: string;
 }>`
   border-top: 1px solid transparent;
   border-bottom: 1px solid transparent;
@@ -92,13 +111,17 @@ export const ItemContent = styled.div<{
     ${focused}
   }
 
-  ${({ first }) => first && `
+  ${({ first }) =>
+    first &&
+    `
     &:hover {
       border-top-color: transparent;
     }
   `}
 
-  ${({ last }) => last && `
+  ${({ last }) =>
+    last &&
+    `
     &:hover {
       border-bottom-color: transparent;
     }

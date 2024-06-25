@@ -39,8 +39,18 @@ import BlockNodeWrapper from '../../Canvas/Nodes/BlockNodeWrapper';
 import PipelineExecutionFrameworkType from '@interfaces/PipelineExecutionFramework/interfaces';
 import PipelineType from '@interfaces/PipelineType';
 import stylesBuilder from '@styles/scss/apps/Canvas/Pipelines/Builder.module.scss';
-import useContextMenu, { MenuItemType, RenderContextMenuOptions, RemoveContextMenuType, RenderContextMenuType } from '@mana/hooks/useContextMenu';
-import { ClientEventType, EventOperationEnum, SubmitEventOperationType, EventOperationOptionsType } from '@mana/shared/interfaces';
+import useContextMenu, {
+  MenuItemType,
+  RenderContextMenuOptions,
+  RemoveContextMenuType,
+  RenderContextMenuType,
+} from '@mana/hooks/useContextMenu';
+import {
+  ClientEventType,
+  EventOperationEnum,
+  SubmitEventOperationType,
+  EventOperationOptionsType,
+} from '@mana/shared/interfaces';
 import { ConnectionLines } from '../../Canvas/Connections/ConnectionLines';
 import { DragLayer } from '../../Canvas/Layers/DragLayer';
 import { ElementRoleEnum } from '@mana/shared/types';
@@ -337,7 +347,8 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
           ({ handleUpdatePath }: { handleUpdatePath: (item: NodeItemType) => void }) => {
             const port1 = portsRef.current?.[portID];
 
-            const port1ElementRect = itemElementsRef?.current?.port?.[port1.id]?.current?.getBoundingClientRect();
+            const port1ElementRect =
+              itemElementsRef?.current?.port?.[port1.id]?.current?.getBoundingClientRect();
             let port1Rect = {} as RectType;
 
             if (port1ElementRect) {
@@ -360,8 +371,8 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
               ...port1Rect,
             };
 
-            const x1 = (port1Rect?.left ?? 0);
-            const y1 = (port1Rect?.top ?? 0);
+            const x1 = port1Rect?.left ?? 0;
+            const y1 = port1Rect?.top ?? 0;
             const { x: x3, y: y3 } = finalCoords(x1 + x, y1 + y);
             const port2 = update(port1, {
               rect: {
@@ -537,7 +548,7 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
         // console.log(0, item1?.id, item2?.id, rect);
         // rect = transformState ? transformZoomPanRect(rect, transformState?.current) : rect;
 
-        const scale = Number(transformState?.current?.scale?.current ?? 1);
+        const scale = Number(transformState?.scale?.current ?? 1);
         if (ItemTypeEnum.PORT === values?.type) {
           const isOutput = PortSubtypeEnum.OUTPUT === values?.subtype;
 
@@ -561,7 +572,7 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
             } else {
               if (isReverse) {
               } else {
-                rect.top = (item?.top ?? 0) + ((port?.top - item?.top) ?? 0);
+                rect.top = (item?.top ?? 0) + (port?.top - item?.top ?? 0);
 
                 if (isReverse) {
                 } else {
@@ -604,13 +615,13 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
       if (colors?.length >= 2) {
         paths[gradientID] = (
           <defs key={`${gradientID}-defs`}>
-            <linearGradient id={gradientID} x1="0%" x2="100%" y1="0%" y2="0%">
+            <linearGradient id={gradientID} x1='0%' x2='100%' y1='0%' y2='0%'>
               <stop
-                offset="0%"
+                offset='0%'
                 style={{ stopColor: `var(--colors-${colors[1]})`, stopOpacity: 1 }}
               />
               <stop
-                offset="100%"
+                offset='100%'
                 style={{ stopColor: `var(--colors-${colors[0]})`, stopOpacity: 1 }}
               />
             </linearGradient>
@@ -633,7 +644,7 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
       paths[portIDsCombined] = (
         <path
           d={dValueForPath}
-          fill="none"
+          fill='none'
           id={portIDsCombined}
           key={`${portIDsCombined}-path`}
           ref={pathRef}
@@ -696,7 +707,11 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
     }
   }
 
-  function handleContextMenu(event: ClientEventType, items?: MenuItemType[], opts?: RenderContextMenuOptions) {
+  function handleContextMenu(
+    event: ClientEventType,
+    items?: MenuItemType[],
+    opts?: RenderContextMenuOptions,
+  ) {
     const { data } = event;
 
     const menuItems = items ?? [
@@ -724,13 +739,17 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
                 setZoomPanDisabled(false);
               });
             },
-            uuid: (transformState?.current?.zoom?.current ?? 1) === 1  ? 'Default zoom' : 'Zoom to 100%',
+            uuid:
+              (transformState?.current?.zoom?.current ?? 1) === 1 ? 'Default zoom' : 'Zoom to 100%',
           },
           {
             onClick: (event: ClientEventType) => {
               event?.preventDefault();
               removeContextMenu(event ?? null);
-              transformState?.current?.handlePanning?.current?.((event ?? null) as any, { x: 0, y: 0 });
+              transformState?.current?.handlePanning?.current?.((event ?? null) as any, {
+                x: 0,
+                y: 0,
+              });
               startTransition(() => {
                 setZoomPanDisabled(false);
               });
@@ -741,7 +760,10 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
             onClick: (event: ClientEventType) => {
               event.preventDefault();
               removeContextMenu(event);
-              transformState?.current?.handlePanning?.current?.((event ?? null) as any, { xPercent: 0.5, yPercent: 0.5 });
+              transformState?.current?.handlePanning?.current?.((event ?? null) as any, {
+                xPercent: 0.5,
+                yPercent: 0.5,
+              });
               startTransition(() => {
                 setZoomPanDisabled(false);
               });
@@ -781,7 +803,6 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
     ];
 
     if (data?.node) {
-
     }
     renderContextMenu(event, menuItems, opts);
   }
@@ -1030,7 +1051,6 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
 
   function handleDragStart(event: ClientEventType) {
     // setZoomPanDisabled(true);
-
     // if (!itemDraggingRef.current && ItemTypeEnum.PORT === node.type) {
     //   itemDraggingRef.current = node;
     //   setActiveItems({
@@ -1066,12 +1086,9 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
 
   function onDragInit(node: NodeItemType, monitor: DropTargetMonitor) {
     // We still probably need this when we are draggin lines from port to port.
-
     // Called only once when it starts
     // updateNodeItems({ [node.id]: node });
-
     // let rectOrigin = node?.rect;
-
     // if (
     //   ItemTypeEnum.PORT === node.type &&
     //   itemDraggingRef.current &&
@@ -1325,12 +1342,17 @@ export default function PipelineBuilderCanvas(props: PipelineBuilderProps) {
   const canvasRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const disabledRef = useRef(false);
-  const handlePanning = useRef<(event: MouseEvent, positionOverride?: {
-    x?: number;
-    xPercent?: number,
-    y?: number;
-    yPercent?: number,
-  }) => void>(() => null);
+  const handlePanning = useRef<
+    (
+      event: MouseEvent,
+      positionOverride?: {
+        x?: number;
+        xPercent?: number;
+        y?: number;
+        yPercent?: number;
+      },
+    ) => void
+  >(() => null);
   const handleZoom = useRef<(event: WheelEvent, scaleOverride?: number) => void>(() => null);
   const originX = useRef(0);
   const originY = useRef(0);
@@ -1362,12 +1384,10 @@ export default function PipelineBuilderCanvas(props: PipelineBuilderProps) {
   const [dropEnabled, setDropEnabled] = useState(false);
   const [, setZoomPanDisabledState] = useState(false);
 
-  const {
-    contextMenu,
-    renderContextMenu,
-    removeContextMenu,
-    shouldPassControl,
-  } = useContextMenu({ container: containerRef, uuid: 'pipeline-builder-canvas' });
+  const { contextMenu, renderContextMenu, removeContextMenu, shouldPassControl } = useContextMenu({
+    container: containerRef,
+    uuid: 'pipeline-builder-canvas',
+  });
 
   useZoomPan(zoomPanStateRef, {
     roles: [ElementRoleEnum.DRAGGABLE],
@@ -1389,11 +1409,9 @@ export default function PipelineBuilderCanvas(props: PipelineBuilderProps) {
       removeContextMenu(event as ClientEventType, { conditionally: true });
 
       const targetElement = event.target as HTMLElement;
-      const hasRole = [
-        dragEnabled && ElementRoleEnum.DRAGGABLE,
-      ].filter(Boolean).some(role =>
-        targetElement.closest(`[role="${role}"]`),
-      );
+      const hasRole = [dragEnabled && ElementRoleEnum.DRAGGABLE]
+        .filter(Boolean)
+        .some(role => targetElement.closest(`[role="${role}"]`));
 
       if (hasRole) {
         // For some reason, we need to do this or else you can’t drag anything.
@@ -1412,9 +1430,9 @@ export default function PipelineBuilderCanvas(props: PipelineBuilderProps) {
       const hasRole = [
         dragEnabled && ElementRoleEnum.DRAGGABLE,
         dropEnabled && ElementRoleEnum.DROPPABLE,
-      ].filter(Boolean).some(role =>
-        targetElement.closest(`[role="${role}"]`),
-      );
+      ]
+        .filter(Boolean)
+        .some(role => targetElement.closest(`[role="${role}"]`));
 
       if (hasRole) {
         setZoomPanDisabled(false);

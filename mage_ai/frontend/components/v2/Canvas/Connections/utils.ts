@@ -118,7 +118,8 @@ export function getPathD(
 
 export function parsePathD(d: string): any {
   // Use regular expression to extract the values from the d attribute
-  const pathRegex = /M\s*([\d.]+),([\d.]+)\s*C\s*([\d.]+),([\d.]+)\s*([\d.]+),([\d.]+)\s*([\d.]+),([\d.]+)/;
+  const pathRegex =
+    /M\s*([\d.]+),([\d.]+)\s*C\s*([\d.]+),([\d.]+)\s*([\d.]+),([\d.]+)\s*([\d.]+),([\d.]+)/;
   const match = pathRegex.exec(d);
 
   if (!match) {

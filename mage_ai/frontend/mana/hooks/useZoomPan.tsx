@@ -21,12 +21,17 @@ export type ZoomPanStateType = {
   container?: React.RefObject<HTMLElement>;
   disabled?: React.MutableRefObject<boolean>;
   element: React.RefObject<HTMLElement>;
-  handlePanning: React.MutableRefObject<(event: MouseEvent, positionOverride?: {
-    x?: number;
-    xPercent?: number,
-    y?: number;
-    yPercent?: number,
-  }) => void>;
+  handlePanning: React.MutableRefObject<
+    (
+      event: MouseEvent,
+      positionOverride?: {
+        x?: number;
+        xPercent?: number;
+        y?: number;
+        yPercent?: number;
+      },
+    ) => void
+  >;
   handleZoom: React.MutableRefObject<(event: WheelEvent, scaleOverride?: number) => void>;
   originX: React.MutableRefObject<number>;
   originY: React.MutableRefObject<number>;
@@ -65,13 +70,7 @@ export const useZoomPan = (
     zoomSensitivity?: number;
   },
 ): BoundaryType => {
-  const {
-    initialPosition,
-    maxScale = 4,
-    minScale = 0.01,
-    roles,
-    zoomSensitivity = 0.5,
-  } = opts;
+  const { initialPosition, maxScale = 4, minScale = 0.01, roles, zoomSensitivity = 0.5 } = opts;
 
   const disabledRef = stateRef.current.disabled;
   const containerRef = stateRef.current.container;
@@ -112,12 +111,15 @@ export const useZoomPan = (
       element.style.transform = transformRef.current;
     };
 
-    handlePanning.current = (_event: MouseEvent | WheelEvent, positionOverride?: {
-      x?: number;
-      xPercent?: number,
-      y?: number;
-      yPercent?: number,
-    }) => {
+    handlePanning.current = (
+      _event: MouseEvent | WheelEvent,
+      positionOverride?: {
+        x?: number;
+        xPercent?: number;
+        y?: number;
+        yPercent?: number;
+      },
+    ) => {
       const canvasRect = element.getBoundingClientRect();
       const containerRect = container.getBoundingClientRect();
       const { x, xPercent, y, yPercent } = positionOverride ?? {};
@@ -189,8 +191,8 @@ export const useZoomPan = (
       zoom.current = newScale;
 
       const rect = element.getBoundingClientRect();
-      const cursorX = event ? event.clientX - rect.left : (startX.current ?? 0);
-      const cursorY = event ? event.clientY - rect.top : (startY.current ?? 0);
+      const cursorX = event ? event.clientX - rect.left : startX.current ?? 0;
+      const cursorY = event ? event.clientY - rect.top : startY.current ?? 0;
 
       const xNew = (cursorX - originX.current) * (scaleRatio - 1);
       const yNew = (cursorY - originY.current) * (scaleRatio - 1);
@@ -207,7 +209,8 @@ export const useZoomPan = (
     };
 
     const handleWheel = (event: WheelEvent) => {
-      if (disabledRef.current || roles?.some(role => hasRole(event.target as HTMLElement, role))) return;
+      if (disabledRef.current || roles?.some(role => hasRole(event.target as HTMLElement, role)))
+        return;
 
       event.preventDefault();
 
@@ -236,7 +239,8 @@ export const useZoomPan = (
     };
 
     const handleMouseDown = (event: MouseEvent) => {
-      if (disabledRef.current || roles?.some(role => hasRole(event.target as HTMLElement, role))) return;
+      if (disabledRef.current || roles?.some(role => hasRole(event.target as HTMLElement, role)))
+        return;
       if (event.button !== 0) return;
 
       event.preventDefault();
@@ -246,7 +250,8 @@ export const useZoomPan = (
     };
 
     const handleMouseMove = (event: MouseEvent) => {
-      if (disabledRef.current || roles?.some(role => hasRole(event.target as HTMLElement, role))) return;
+      if (disabledRef.current || roles?.some(role => hasRole(event.target as HTMLElement, role)))
+        return;
       if (!panning.current.active) return;
 
       const newX = event.clientX - startX.current;
@@ -266,7 +271,8 @@ export const useZoomPan = (
     };
 
     const handleTouchStart = (e: TouchEvent) => {
-      if (disabledRef.current || roles?.some(role => hasRole(e.target as HTMLElement, role))) return;
+      if (disabledRef.current || roles?.some(role => hasRole(e.target as HTMLElement, role)))
+        return;
       if (e.touches.length !== 1) return;
 
       const touch = e.touches[0];
@@ -276,7 +282,8 @@ export const useZoomPan = (
     };
 
     const handleTouchMove = (event: TouchEvent) => {
-      if (disabledRef.current || roles?.some(role => hasRole(event.target as HTMLElement, role))) return;
+      if (disabledRef.current || roles?.some(role => hasRole(event.target as HTMLElement, role)))
+        return;
       if (!panning.current.active || event.touches.length !== 1) return;
 
       const touch = event.touches[0];

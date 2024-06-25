@@ -21,11 +21,11 @@ function PanelRows({ children, ...props }: { children: React.ReactNode }) {
       <LayoutGroup>
         {React.Children.map(children, (child, index) => (
           <motion.div key={index}>
-            <Row first={index === 0}  {...props}>
+            <Row first={index === 0} {...props}>
               {child}
             </Row>
           </motion.div>
-      ))}
+        ))}
       </LayoutGroup>
     </Panel>
   );
