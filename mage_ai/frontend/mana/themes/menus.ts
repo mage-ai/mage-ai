@@ -29,12 +29,12 @@ export default function build(colors: ColorsType): MenuType {
     },
     border: {
       radius: {
-        base: BorderRadius.SM,
+        base: `${BorderRadius.SM}px`,
       },
     },
     padding: {
       item: {
-        base: `${PaddingVerticalEnum.SM} 16px`,
+        base: `${PaddingVerticalEnum.SM}px 16px`,
       },
     },
   };

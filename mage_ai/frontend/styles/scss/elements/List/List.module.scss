@@ -1,0 +1,17 @@
+.list {
+  &.ol,
+  &.ul {
+    color: var(--fonts-color-text-muted);
+    padding-left: var(--padding-vertical-lg);
+  }
+
+  &.row {
+    .item:not(:first-child) {
+      border-top: var(--borders-width) var(--borders-style) var(--borders-color-base-default);
+    }
+  }
+
+  .item {
+
+  }
+}

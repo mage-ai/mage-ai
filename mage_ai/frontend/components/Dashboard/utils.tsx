@@ -6,17 +6,21 @@ import {
   TemplateShapes,
   Upload,
 } from '@oracle/icons';
+import { generateUUID } from '@utils/uuids/generator';
 import { PipelineTypeEnum } from '@interfaces/PipelineType';
 import { UNIT } from '@oracle/styles/units/spacing';
-import { randomNameGenerator } from '@utils/string';
+import { randomNameGenerator, capitalize } from '@utils/string';
+import {
+  PipelineExecutionFrameworkUUIDEnum,
+  FRAMEWORK_NAME_MAPPING,
+} from '@interfaces/PipelineExecutionFramework/types';
 
 const ICON_SIZE = UNIT * 1.5;
 
 export const getNewPipelineButtonMenuItems = (
-  createPipeline: (
-    reqBody: { pipeline: { name: string, type?: PipelineTypeEnum } },
-  ) => void,
+  createPipeline: (reqBody: { pipeline: { name: string; type?: PipelineTypeEnum } }) => void,
   opts?: {
+    createRAG: any;
     showAIModal?: () => void;
     showBrowseTemplates?: () => void;
     showCreatePipelineModal?: (opts: { pipelineType: PipelineTypeEnum }) => void;
@@ -73,6 +77,18 @@ export const getNewPipelineButtonMenuItems = (
         }
       },
       uuid: 'Pipelines/NewPipelineMenu/streaming',
+    },
+    {
+      beforeIcon: <AISparkle size={ICON_SIZE} />,
+      label: () => FRAMEWORK_NAME_MAPPING[PipelineExecutionFrameworkUUIDEnum.RAG],
+      onClick: () => {
+        opts?.createRAG?.({
+          pipeline: {
+            name: capitalize(generateUUID()),
+          },
+        });
+      },
+      uuid: 'Pipelines/NewPipelineMenu/RAG',
     },
   ];
 

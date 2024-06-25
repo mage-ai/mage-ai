@@ -1,126 +1,180 @@
-import BlockType from '@interfaces/BlockType';
-import { PipelineExecutionFrameworkBlockType } from '@interfaces/PipelineExecutionFramework/interfaces';
-import { GroupUUIDEnum } from '@interfaces/PipelineExecutionFramework/types';
-import { ZoomPanStateType } from '@mana/hooks/useZoomPan';
-
-import {
-  ItemTypeEnum,
-  PortSubtypeEnum,
-  LayoutConfigDirectionEnum,
-  LayoutConfigDirectionOriginEnum,
-} from './types';
+import { RectType as RectTypeBase } from '@mana/shared/interfaces';
 
 export interface OffsetType {
-  left?: number;
-  top?: number;
-  x?: number;
-  y?: number;
+  left?: any;
+  top?: any;
+  x?: any;
+  y?: any;
 }
 
-export interface RectType {
-  bottom?: number;
-  diff?: RectType;
-  height?: number;
-  id?: number | string;
-  inner?: Record<string, RectType>;
-  left: number;
-  offset?: OffsetType;
-  padding?: RectType;
-  right?: number;
-  top: number;
-  upstreamRects?: RectType[];
-  version?: number;
-  width?: number;
-  zIndex?: number;
+export interface RectType extends RectTypeBase {
+  animate?: any;
+  block?: any;
+  children?: any[];
+  diff?: any;
+  inner?: Record<string, any>;
+  offset?: any;
+  padding?: any;
+  parent?: any;
+  type?: any;
+  version?: any;
 }
 
 interface BaseItem {
-  id: number | string;
-  level?: number;
-  version?: number | string;
-  type: ItemTypeEnum;
+  id: any;
+  index?: any;
+  level?: any;
+  status?: any;
+  subtype?: any;
+  type: any;
+  version?: any;
+}
+
+export interface OutputNodeType extends DragItem {
+  eventStreams?: Record<string, Record<string, any>>;
+  process?: any | { message: any; message_request_uuid: any };
 }
 
 export interface DragItem extends BaseItem {
-  block?: BlockType;
-  groups?: string[];
-  isDragging?: boolean;
-  node?: NodeType;
-  ports?: PortType[];
-  rect?: RectType;
-  title?: string;
-  upstreamItems?: DragItem[];
+  block?: any & {
+    frameworks: any[];
+  } & any;
+  downstream?: any[];
+  groups?: any[];
+  isDragging?: any;
+  node?: any;
+  outputs?: any[];
+  ports?: any[];
+  rect?: any;
+  title?: any;
+  upstream?: any[];
+  upstreamItems?: any[];
 }
 
 export interface PortType extends DragItem {
-  index?: number;
-  parent: DragItem; // Always references the block that the port belongs to.
-  target: DragItem; // Always references the block that the port is connected to that isn’t the current block.
-  subtype: PortSubtypeEnum;
+  index?: any;
+  parent: any; // Always references the block that the port belongs to.
+  target: any; // Always references the block that the port is connected to that isn’t the current block.
+}
+
+export interface AppNodeType extends DragItem {
+  app: any;
+  ref?: React.MutableRefObject<any>;
 }
 
 export interface NodeType extends DragItem {
-  items: (DragItem | NodeType)[];
-  upstreamNodes?: (DragItem | NodeType)[];
+  apps?: any[];
+  items?: (any | any | any)[];
+  node?: any;
+}
+
+export type NodeItemType = any | any | any | any | any;
+export type FlatItemType = [any, any, any, any, any];
+
+interface LayoutOptionsType {
+  amplitude?: any; // Wave layout options
+  angleStep?: any; // Smaller angle increment for tighter spiral (Spiral layout options)
+  horizontalAlignment?: any;
+  initialAngle?: any; // 45 degrees in radians (Spiral layout options)
+  stagger?: any; // Stagger between each item
+  verticalAlignment?: any;
+  wavelength?: any; // Wave layout options
+}
+
+export interface RectTransformationOptionsType {
+  boundingBox?: any;
+  defaultRect?: (rect: any) => any;
+  layout?: any;
+  layoutOptions?: any;
+  offset?: any;
+  padding?: any;
+  rect?: any;
+  rectTransformations?: any[];
+}
+
+export interface RectTransformationType {
+  condition?: (rects: any[]) => any;
+  conditionSelf?: (rect: any) => any;
+  initialRect?: any;
+  initialScope?: any;
+  options?: (rects: any[]) => any;
+  scope?: any; // Leave empty to operate on all rects at the top level
+  scopeTransformations?: any[];
+  targets?: (rects: any[]) => any[];
+  transform?: (rects: any[]) => any[];
+  type?: any;
 }
 
 export interface LayoutConfigType {
-  boundingRect?: RectType;
-  containerRect?: RectType;
+  childrenLayout?: any;
+  containerRef?: React.MutableRefObject<any>;
   defaultRect?: {
-    item?: (item?: NodeItemType) => RectType;
+    item?: (item?: any) => any;
   };
-  direction?: LayoutConfigDirectionEnum;
-  level?: number;
-  origin?: LayoutConfigDirectionOriginEnum;
+  display?: any;
+  direction?: any;
+  level?: any;
+  offsetRectFinal?: any;
+  options?: any;
+  origin?: any;
   gap?: {
-    column?: number;
-    row?: number;
+    column?: any;
+    row?: any;
   };
   grid?: {
-    columns?: number;
-    rows?: number;
+    columns?: any;
+    rows?: any;
   };
-  itemRect?: RectType;
-  stagger?: number;
+  itemRect?: any;
+  rectTransformations?: any[];
+  stagger?: any;
+  style?: any;
+  styleOptions?: any;
   transformRect?: {
-    block?: (rect?: RectType) => RectType;
-    node?: (rect?: RectType) => RectType;
-    port?: (rect?: RectType) => RectType;
+    block?: (rect?: any) => any;
+    node?: (rect?: any) => any;
+    port?: (rect?: any) => any;
   };
-  transformState?: ZoomPanStateType;
+  transformStateRef?: React.MutableRefObject<any>;
+  viewportRef?: React.MutableRefObject<any>;
 }
-
-export type NodeItemType = DragItem | NodeType | PortType;
 
 export interface ConnectionType {
-  curveControl?: number; // Controls the curvature of the line (0 for straight, higher for more curved)
-  from: string; // ID of the source node
-  fromItem?: PortType; // Reference to the source node
-  fromPosition?: 'top' | 'bottom' | 'left' | 'right' | 'middle'; // Position where the connection starts
-  id: string;
-  level?: number;
-  to: string; // ID of the destination node
-  toItem?: PortType; // Reference to the destination node
-  toPosition?: 'top' | 'bottom' | 'left' | 'right' | 'middle'; // Position where the connection ends
+  curveControl?: any; // Controls the curvature of the line (0 for straight, higher for more curved)
+  from: any; // ID of the source node
+  fromItem?: any; // Reference to the source node
+  fromPosition?: any; // Position where the connection starts
+  id: any;
+  level?: any;
+  to: any; // ID of the destination node
+  toItem?: any; // Reference to the destination node
+  toPosition?: any; // Position where the connection ends
 }
 
-export type ConnectionMappingType = Record<string, ConnectionType>;
-export type ItemMappingType = Record<string, DragItem | NodeItemType>;
-export type NodeItemMappingType = Record<string, NodeType>;
-export type PortMappingType = Record<string, PortType>;
+export type ConnectionMappingType = Record<any, any>;
+export type ItemMappingType = Record<any, any>;
+export type NodeItemMappingType = Record<any, any>;
+export type PortMappingType = Record<any, any>;
 
-export type BlockMappingType = Record<string, BlockType>;
-export type BlocksByGroupType = Record<GroupUUIDEnum, BlockMappingType>;
-export type GroupMappingType = Record<GroupUUIDEnum, PipelineExecutionFrameworkBlockType>;
-export type GroupLevelsMappingType = GroupMappingType[];
+export type BlockMappingType = Record<any, any>;
+export type OutputMappingType = Record<any, any>;
+export type BlocksByGroupType = Record<any, any>;
+export type GroupMappingType = Record<any, any>;
+export type GroupLevelsMappingType = any[];
+
+export type GroupLevelType = any[][];
+
+export type BlockGroupType = {
+  blocks: any[];
+  group: any;
+};
 
 export type ModelMappingType = {
-  itemMapping?: ItemMappingType;
-  portMapping?: PortMappingType;
+  itemMapping?: any;
+  portMapping?: any;
 };
 
 export type ModelRefsType = {
-  itemsRef?: { current: ItemMappingType };
-  portsRef?: { current: PortMappingType };
+  itemsRef?: { current: any };
+  portsRef?: { current: any };
 };

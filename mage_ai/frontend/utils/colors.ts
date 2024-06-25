@@ -46,3 +46,20 @@ export function generateColorShades(baseColor: string): string[] {
 
   return shades;
 }
+
+export const luminance = (hex: string) => {
+  if (!hex) return 0;
+
+  const a = hex.match(/\w\w/g)!.map((x) => parseInt(x, 16) / 255).map((x) =>
+    x <= 0.03928 ? x / 12.92 : Math.pow((x + 0.055) / 1.055, 2.4)
+  );
+  return 0.2126 * a[0] + 0.7152 * a[1] + 0.0722 * a[2];
+};
+
+export const contrastRatio = (hex1: string, hex2: string) => {
+  const lum1 = luminance(hex1);
+  const lum2 = luminance(hex2);
+  const brightest = Math.max(lum1, lum2);
+  const darkest = Math.min(lum1, lum2);
+  return (brightest + 0.05) / (darkest + 0.05);
+};

@@ -1,0 +1,54 @@
+@use '../../../abstracts/mixins' as *;
+
+.errorManager {
+  position: fixed;
+  z-index: 1000;
+
+  &.right {
+    top: 50%;
+    left: auto;
+    right: var(--padding-base);
+    transform: translateY(-50%);
+  }
+
+  &.left {
+    top: 50%;
+    right: auto;
+    left: var(--padding-base);
+    transform: translateY(-50%);
+  }
+
+  &.topRight {
+    right: var(--padding-base);
+    top: var(--padding-base);
+  }
+
+  &.topLeft {
+    left: var(--padding-base);
+    top: var(--padding-base);
+  }
+
+  &.bottomLeft {
+    bottom: var(--padding-base);
+    left: var(--padding-base);
+  }
+
+  &.bottomRight {
+    bottom: var(--padding-base);
+    right: var(--padding-base);
+  }
+
+  .errorContainer {
+    @include gradient(0deg, var(--menus-background-gradient-default), var(--menus-background-gradient-default), 0%, 100%);
+    background-color: var(--menus-background-base-default);
+    backdrop-filter: blur(var(--modal-blur-base));
+    max-width: calc(100vw - 2 * var(--padding-base));
+  }
+}
+
+.target {
+  height: 2px;;
+  position: fixed;
+  pointer-events: none;
+  z-index: 1000;
+}

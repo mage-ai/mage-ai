@@ -15,7 +15,7 @@ CONTEXTUALIZATION = BlockExecutionFramework.load(
     ),
     type=BlockType.GROUP,
     templates_dir=templates_dir,
-    configuration=Configuration.load(Metadata.load(required=True)),
+    configuration=Configuration.load(metadata=Metadata.load(required=True)),
     upstream_blocks=[],
     downstream_blocks=[GroupUUID.RESPONSE_SYNTHESIS],
 )
@@ -27,7 +27,7 @@ RESPONSE_SYNTHESIS = BlockExecutionFramework.load(
     ),
     type=BlockType.GROUP,
     templates_dir=templates_dir,
-    configuration=Configuration.load(Metadata.load(required=True)),
+    configuration=Configuration.load(metadata=Metadata.load(required=True)),
     upstream_blocks=[GroupUUID.CONTEXTUALIZATION],
     downstream_blocks=[GroupUUID.ANSWER_ENRICHMENT],
 )

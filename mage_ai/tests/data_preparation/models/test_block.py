@@ -511,67 +511,67 @@ def on_failure_callback(**kwargs):
             ),
         )
 
-#     def test_full_table_name(self):
-#         faker = Faker()
-#         pipeline = Pipeline.create(faker.name(), repo_path=self.repo_path)
-#         block = Block.create(faker.name(), 'data_loader', self.repo_path, pipeline=pipeline)
+    #     def test_full_table_name(self):
+    #         faker = Faker()
+    #         pipeline = Pipeline.create(faker.name(), repo_path=self.repo_path)
+    #         block = Block.create(faker.name(), 'data_loader', self.repo_path, pipeline=pipeline)
 
-#         def get_block():
-#             return Pipeline.get(pipeline.uuid, repo_path=self.repo_path).get_block(block.uuid)
+    #         def get_block():
+    #             return Pipeline.get(pipeline.uuid, repo_path=self.repo_path).get_block(block.uuid)
 
-#         with open(block.file_path, 'w') as file:
-#             file.write('')
-#         self.assertEqual(get_block().full_table_name, None)
+    #         with open(block.file_path, 'w') as file:
+    #             file.write('')
+    #         self.assertEqual(get_block().full_table_name, None)
 
-#         with open(block.file_path, 'w') as file:
-#             file.write("""
-# CREATE TABLE mage.users_v1 (
-#     id BIGINT
-# );
-# """)
-#         self.assertEqual(get_block().full_table_name, 'mage.users_v1')
+    #         with open(block.file_path, 'w') as file:
+    #             file.write("""
+    # CREATE TABLE mage.users_v1 (
+    #     id BIGINT
+    # );
+    # """)
+    #         self.assertEqual(get_block().full_table_name, 'mage.users_v1')
 
-#         with open(block.file_path, 'w') as file:
-#             file.write("""
-# CREATE TABLE mage.users_v1 (
-#     id BIGINT
-# );
+    #         with open(block.file_path, 'w') as file:
+    #             file.write("""
+    # CREATE TABLE mage.users_v1 (
+    #     id BIGINT
+    # );
 
-# INSERT INTO mage.users_v2
-# SELECT 1 AS id;
-# """)
-#         self.assertEqual(get_block().full_table_name, 'mage.users_v1')
+    # INSERT INTO mage.users_v2
+    # SELECT 1 AS id;
+    # """)
+    #         self.assertEqual(get_block().full_table_name, 'mage.users_v1')
 
-#         with open(block.file_path, 'w') as file:
-#             file.write("""
-# INSERT INTO mage.users_v2
-# SELECT 1 AS id;
-# """)
-#         self.assertEqual(get_block().full_table_name, 'mage.users_v2')
+    #         with open(block.file_path, 'w') as file:
+    #             file.write("""
+    # INSERT INTO mage.users_v2
+    # SELECT 1 AS id;
+    # """)
+    #         self.assertEqual(get_block().full_table_name, 'mage.users_v2')
 
-#         with open(block.file_path, 'w') as file:
-#             file.write("""
-# INSERT INTO mage.users_v2
-# SELECT 1 AS id;
+    #         with open(block.file_path, 'w') as file:
+    #             file.write("""
+    # INSERT INTO mage.users_v2
+    # SELECT 1 AS id;
 
-# INSERT INTO mage.users_v3
-# SELECT 1 AS id;
-# """)
-#         self.assertEqual(get_block().full_table_name, 'mage.users_v3')
+    # INSERT INTO mage.users_v3
+    # SELECT 1 AS id;
+    # """)
+    #         self.assertEqual(get_block().full_table_name, 'mage.users_v3')
 
-#         with open(block.file_path, 'w') as file:
-#             file.write("""
-# INSERT mage.users_v2
-# SELECT 1 AS id;
-# """)
-#         self.assertEqual(get_block().full_table_name, 'mage.users_v2')
+    #         with open(block.file_path, 'w') as file:
+    #             file.write("""
+    # INSERT mage.users_v2
+    # SELECT 1 AS id;
+    # """)
+    #         self.assertEqual(get_block().full_table_name, 'mage.users_v2')
 
-#         with open(block.file_path, 'w') as file:
-#             file.write("""
-# INSERT OVERWRITE INTO mage.users_v2
-# SELECT 1 AS id;
-# """)
-#         self.assertEqual(get_block().full_table_name, 'mage.users_v2')
+    #         with open(block.file_path, 'w') as file:
+    #             file.write("""
+    # INSERT OVERWRITE INTO mage.users_v2
+    # SELECT 1 AS id;
+    # """)
+    #         self.assertEqual(get_block().full_table_name, 'mage.users_v2')
 
     def test_delete(self):
         pipeline = Pipeline.create(

@@ -1,13 +1,19 @@
 import styles from '@styles/scss/elements/Circle.module.scss';
 import { withStyles } from '../hocs/withStyles';
 
-const Circle = withStyles<{
+type CircleProps = {
   backgroundColor?: string;
   borderColor?: string;
+  border?: string;
   size?: number;
-}>(styles, {
+};
+
+const Circle = withStyles<CircleProps>(styles, {
   HTMLTag: 'div',
   classNames: ['circle'],
 });
 
-export default Circle;
+function CircleComponent({ border, ...rest }: CircleProps) {
+  return <Circle style={{ border }} {...rest} />;
+}
+export default CircleComponent;

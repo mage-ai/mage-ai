@@ -1,4 +1,3 @@
-import os
 from dataclasses import dataclass
 from typing import List, Optional, Union
 
@@ -21,9 +20,3 @@ class BlockExecutionFramework(BaseExecutionFramework):
         self.serialize_attribute_enums('downstream_blocks', [GroupUUID, ExecutionFrameworkUUID])
         self.serialize_attribute_enums('upstream_blocks', [GroupUUID, ExecutionFrameworkUUID])
         self.serialize_attribute_enum('type', BlockType)
-
-        if self.templates_dir:
-            path = os.path.join(self.templates_dir, self.uuid, 'configurations.yaml')
-            if os.path.exists(path):
-                self.configuration = self.configuration or Configuration.load()
-                self.configuration.load_templates(path)

@@ -1,0 +1,22 @@
+.avatarContainer {
+  background: linear-gradient(
+    to top left,
+    rgba(255, 255, 255, 0.5),
+    var(--colors-greenlo),
+    var(--colors-purple)
+  );
+  border-radius: 50%;
+  border-color: var(--colors-graymd) !important;
+  border-style: var(--borders-style) !important;
+  border-width: var(--borders-width) !important;
+  overflow: hidden;
+}
+
+.avatar {
+  background-image: url('/images/avatar-a.png');
+  background-position: center;
+  background-size: cover;
+  position: relative;
+  height: inherit;
+  width: inherit;
+}

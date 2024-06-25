@@ -75,6 +75,7 @@ export interface InteractionVariableType {
   required?: boolean;
   types?: InteractionVariableTypeEnum[];
   uuid?: string;
+  value?: any;
 }
 
 export default interface InteractionType {

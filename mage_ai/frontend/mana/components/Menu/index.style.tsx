@@ -1,9 +1,10 @@
 import styled, { css } from 'styled-components';
+import { UNIT } from '../../themes/spaces';
+import { gradientBackgroundVars } from '../../styles/mixins';
+import scrollbars from '../../styles/scrollbars';
 import { motion } from 'framer-motion';
 
-import { UNIT } from '../../themes/spaces';
-import { gradientBackground } from '../../styles/mixins';
-
+export const DIVIDER_SPACE = 2;
 export const MENU_ITEM_HEIGHT = 35;
 export const MENU_MIN_WIDTH = UNIT * 40;
 
@@ -20,7 +21,7 @@ const borderStyles = css`
   border-right: 1px solid var(--colors-graymd);
 `;
 
-const focusedBackground = css<{
+const hoveredBackground = css<{
   noHover?: string;
 }>`
   ${({ noHover }) =>
@@ -32,7 +33,17 @@ const focusedBackground = css<{
   `}
 `;
 
-const focused = css<{
+const focusedBackground = css`
+  ${hoveredBackground}
+`;
+
+const activeBackground = css`
+  background-color: var(--colors-graylo);
+  border-left-color: var(--colors-gray);
+  border-right-color: var(--colors-gray);
+`;
+
+const hovered = css<{
   noHover?: string;
 }>`
   ${({ noHover }) =>
@@ -43,7 +54,7 @@ const focused = css<{
   `}
 `;
 
-export const MenuStyled = styled.div<MenuStyledProps>`
+export const MenuStyled = styled(motion.div)<MenuStyledProps>`
   ${({ left, top, zIndex }) =>
     (typeof left !== 'undefined' || typeof top !== 'undefined') &&
     `
@@ -52,20 +63,41 @@ export const MenuStyled = styled.div<MenuStyledProps>`
     z-index: ${zIndex || 1};
   `}
 
+  ${({ theme }) => `
+    border-radius: var(--menus-border-radius-base);
+    border-radius: var(--menus-border-radius-base);
+    max-height: calc(100vh - (2px + ${theme.header.base.height}px));
+    overflow: hidden;
+  `}
+
   min-width: ${MENU_MIN_WIDTH}px;
-  position: ${({ contained }) => (contained ? 'absolute' : 'fixed')};
+  position: fixed;
   width: max-content;
+
+  &:hover {
+    cursor: default;
+  }
 `;
 
 export const MenuContent = styled(motion.nav)`
+  height: inherit;
+  max-height: inherit;
   overflow: hidden;
 
-  ${({ theme }) => `
-    backdrop-filter: ${theme.menus.blur.base};
-    border-radius: ${theme.menus.border.radius.base};
-  `}
+  backdrop-filter: blur(var(--modal-blur-base));
+  ${gradientBackgroundVars(
+    '0deg',
+    'var(--menus-background-gradient-default)',
+    'var(--menus-background-gradient-default)',
+    0,
+    100,
+    'var(--menus-background-base-default)'
+  )}
+`;
 
-  ${gradientBackground('0deg', '#0000004D', '#0000004D', 0, 100, 'graylo')}
+export const MenuContentScroll = styled(motion.div)`
+  ${scrollbars}
+  max-height: inherit;
 `;
 
 export const MenuItemContainerStyled = styled.div<{
@@ -73,6 +105,8 @@ export const MenuItemContainerStyled = styled.div<{
   first?: boolean;
   last?: boolean;
   noHover?: string;
+  onMouseEnter?: (event: any) => void;
+  onMouseLeave?: (event: any) => void;
 }>`
   ${borderStyles}
 
@@ -81,22 +115,67 @@ export const MenuItemContainerStyled = styled.div<{
   ${({ first, theme }) =>
     first &&
     `
-    border-top: 1px solid var(--colors-graymd);
-    border-top-left-radius: ${theme.menus.border.radius.base};
-    border-top-right-radius: ${theme.menus.border.radius.base};
+    margin-top: var(--menus-border-radius-base);
   `}
 
   ${({ last, theme }) =>
     last &&
     `
-    border-bottom: 1px solid var(--colors-graymd);
-    border-bottom-left-radius: ${theme.menus.border.radius.base};
-    border-bottom-right-radius: ${theme.menus.border.radius.base};
+    margin-bottom: var(--menus-border-radius-base);
   `}
 
-  &:hover {
+  &.focusing {
     ${focusedBackground}
   }
+
+  &.activated {
+    ${activeBackground}
+  }
+
+  &.hovering {
+    ${hoveredBackground}
+  }
+
+  &:hover {
+    ${hoveredBackground}
+  }
+
+  a {
+    &:hover {
+      cursor: default;
+    }
+  }
+`;
+
+export const BorderTop = styled.div`
+  ${({ theme }) => `
+    border-top-left-radius: var(--menus-border-radius-base);
+    border-top-right-radius: var(--menus-border-radius-base);
+    border-top: 1px solid var(--colors-graymd);
+    border-left: 1px solid var(--colors-graymd);
+    border-right: 1px solid var(--colors-graymd);
+    top: 0;
+    height: var(--menus-border-radius-base);
+    overflow: hidden;
+    position: fixed;
+    width: 100%;
+  `}
+`;
+
+export const BorderBottom = styled.div`
+  ${({ theme }) => `
+
+    border-bottom-left-radius: var(--menus-border-radius-base);
+    border-bottom-right-radius: var(--menus-border-radius-base);
+    border-bottom: 1px solid var(--colors-graymd);
+    border-left: 1px solid var(--colors-graymd);
+    border-right: 1px solid var(--colors-graymd);
+    bottom: 0;
+    height: var(--menus-border-radius-base);
+    overflow: hidden;
+    position: fixed;
+    width: 100%;
+  `}
 `;
 
 export const ItemContent = styled.div<{
@@ -108,12 +187,13 @@ export const ItemContent = styled.div<{
   border-bottom: 1px solid transparent;
 
   &:hover {
-    ${focused}
+    ${hovered}
   }
 
   ${({ first }) =>
     first &&
     `
+
     &:hover {
       border-top-color: transparent;
     }
@@ -122,6 +202,7 @@ export const ItemContent = styled.div<{
   ${({ last }) =>
     last &&
     `
+
     &:hover {
       border-bottom-color: transparent;
     }
@@ -145,8 +226,8 @@ export const DividerContainer = styled.div`
 export const DividerStyled = styled.div`
   background-color: var(--colors-graymd);
   height: 1px;
-  margin-bottom: 2px;
-  margin-top: 2px;
+  margin-bottom: ${DIVIDER_SPACE}px;
+  margin-top: ${DIVIDER_SPACE}px;
   margin-left: 16px;
   margin-right: 16px;
 `;

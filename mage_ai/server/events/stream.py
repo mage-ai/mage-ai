@@ -1,20 +1,17 @@
 import asyncio
 from collections import defaultdict
-from datetime import datetime
 from typing import cast
-from uuid import uuid4
 
 import simplejson
 
 from mage_ai.kernels.magic.constants import EventStreamType
+from mage_ai.kernels.magic.execution import FLUSH_INTERVAL
 from mage_ai.kernels.magic.models import EventStream
 from mage_ai.kernels.magic.queues.manager import get_execution_result_queue_async
 from mage_ai.server.api.base import BaseHandler
 from mage_ai.shared.parsers import encode_complex
 from mage_ai.shared.queues import Empty
 from mage_ai.shared.queues import Queue as FasterQueue
-
-SLEEP_SECONDS = 0.1
 
 
 class EventStreamHandler(BaseHandler):
@@ -42,9 +39,7 @@ class EventStreamHandler(BaseHandler):
 
             if result is not None:
                 event_stream = EventStream.load(
-                    event_uuid=uuid4().hex,
                     result=result,
-                    timestamp=int(datetime.utcnow().timestamp() * 1000),
                     type=EventStreamType.EXECUTION,
                     uuid=self.uuid,
                 )
@@ -56,7 +51,7 @@ class EventStreamHandler(BaseHandler):
                 self.write(f'data: {event_stream_json}\n\n')
 
             await self.flush()
-            await asyncio.sleep(SLEEP_SECONDS)
+            await asyncio.sleep(FLUSH_INTERVAL)
 
     async def __get_queue(self) -> FasterQueue:
         kernel_queue = await get_execution_result_queue_async()

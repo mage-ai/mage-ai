@@ -1,44 +1,31 @@
 from mage_ai.api.errors import ApiError
 from mage_ai.api.resources.GenericResource import GenericResource
-from mage_ai.kernels.default.models import KernelProcess
-from mage_ai.kernels.default.utils import get_process_info
-
-TERMINATE_INACTIVE = '__terminate_inactive__'
+from mage_ai.kernels.constants import KernelOperation
+from mage_ai.kernels.magic.kernels.manager import KernelManager
 
 
 class KernelProcessResource(GenericResource):
     @classmethod
-    async def collection(cls, query, meta, user, **kwargs):
-        check_active_status = query.get('check_active_status', [False])
-        if check_active_status:
-            check_active_status = check_active_status[0]
-
-        return cls.build_result_set(
-            KernelProcess.load_all(check_active_status=check_active_status),
-            user,
-            **kwargs,
-        )
+    async def collection(cls, _query, _meta, user, **kwargs):
+        return cls.build_result_set(KernelManager.kernels.values(), user, **kwargs)
 
     @classmethod
-    def member(self, pk, user, **kwargs):
-        if TERMINATE_INACTIVE == pk:
-            return self(KernelProcess.load(pid=TERMINATE_INACTIVE), user, **kwargs)
+    async def member(cls, pk, user, **kwargs):
+        if pk not in KernelManager.kernels:
+            raise ApiError({
+                **ApiError.RESOURCE_NOT_FOUND,
+                **dict(message=f'Process {pk} not found.'),
+            })
+        kernel = KernelManager.kernels[pk]
+        return cls(kernel, user, **kwargs)
 
-        query = kwargs.get('query', {})
-        check_active_status = query.get('check_active_status', [False])
-        if check_active_status:
-            check_active_status = check_active_status[0]
-
-        info = get_process_info(pk, check_active_status=check_active_status)
-
-        if not info:
-            raise ApiError(ApiError.RESOURCE_NOT_FOUND)
-
-        kernel_process = KernelProcess.load(**info)
-        return self(kernel_process, user, **kwargs)
+    async def update(self, payload, **kwargs):
+        if payload.get(KernelOperation.INTERRUPT, False):
+            await KernelManager.interrupt_kernel_async(self.model.uuid)
+        elif payload.get(KernelOperation.RESTART, False):
+            num_processes = payload.get('num_processes', None)
+            await KernelManager.restart_kernel_async(self.model.uuid, num_processes=num_processes)
+        return self
 
     async def delete(self, **kwargs):
-        if self.model.pid == TERMINATE_INACTIVE:
-            KernelProcess.terminate_inactive()
-
-        self.model.terminate()
+        await KernelManager.terminate_kernel_async(self.model.uuid)

@@ -1,4 +1,4 @@
-export function pauseEvent(e){
+export function pauseEvent(e) {
   if (e.stopPropagation) {
     e.stopPropagation();
   }
@@ -9,4 +9,8 @@ export function pauseEvent(e){
   e.returnValue = false;
 
   return false;
+}
+
+export function newMessageRequestUUID(): string {
+  return String(Number(new Date()));
 }

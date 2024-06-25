@@ -1,48 +1,157 @@
 import PanelRows from '@mana/elements/PanelRows';
+import stylesBlockNode from '@styles/scss/components/Canvas/Nodes/BlockNode.module.scss';
+import { CommandType } from '@mana/events/interfaces';
 import Grid from '@mana/components/Grid';
 import Text from '@mana/elements/Text';
+import { SharedBlockProps } from '../types';
+import Loading from '@mana/components/Loading';
 import BlockType, { TemplateType } from '@interfaces/BlockType';
+import { PipelineExecutionFrameworkBlockType } from '@interfaces/PipelineExecutionFramework/interfaces';
+import {
+  InteractionVariableTypeEnum,
+  InteractionInputStyleInputTypeEnum,
+  InteractionInputType,
+  InteractionVariableType,
+  InteractionInputTypeEnum,
+} from '@interfaces/InteractionType';
+import TextInput from '@mana/elements/Input/TextInput';
+import { TooltipAlign, TooltipWrapper, TooltipDirection, TooltipJustify } from '@context/v2/Tooltip';
 
 export default function TemplateConfigurations({
+  colorNames,
+  commands,
   block,
   group,
   template,
+  teleportIntoBlock,
+  updateBlock,
   uuid,
 }: {
-  block: BlockType;
-  group: BlockType;
+    colorNames?: any;
+  commands?: Record<string, CommandType>;
+  group: PipelineExecutionFrameworkBlockType;
   template: TemplateType;
+  teleportIntoBlock: (event: any, target: any) => void;
   uuid: string;
-}) {
-  const templateSettings = block?.configuration?.templates?.[uuid] || ({} as TemplateType);
+} & SharedBlockProps) {
+  const { inputs, variables } = group?.configuration?.templates?.[uuid] ?? {};
+  const userValuesByVariable = block?.configuration?.templates?.[uuid]?.variables;
 
   return (
-    <PanelRows>
-      <Grid rowGap={4}>
-        <Text semibold xsmall>
+    <PanelRows padding={false}>
+      <Grid padding={12} rowGap={4} justifyItems="stretch"  justifyContent="space-between" alignItems="center" templateRows="1fr" templateColumns="1fr auto" height="100%">
+        <Text secondary semibold small>
           {template?.name || uuid}
         </Text>
-        {false && template?.description && (
-          <Text secondary xsmall>
-            {template?.description}
-          </Text>
-        )}
+
+        <div>
+          <Loading
+            circle
+            className={stylesBlockNode.loader}
+            // colorName={colorNames?.hi}
+            // colorNameAlt={colorNames?.md}
+          />
+        </div>
       </Grid>
 
-      {Object.entries(template?.variables || [])?.map(([variableUUID, config], idx: number) => (
-        <Grid
-          columnGap={8}
-          justifyContent="space-between"
-          key={variableUUID}
-          templateColumnsAutoFitMaxContent
-        >
-          <Text muted small>
-            {variableUUID || '-'}
-          </Text>
+      {Object.entries(variables ?? {})?.map(
+        ([variableUUID, variableConfig]: [string, InteractionVariableType]) => {
+          const {
+            description,
+            input,
+            name: displayName,
+            required,
+            types, // Data type; string, integer, etc
+            value: defaultValue,
+          } = variableConfig ?? ({} as InteractionVariableType);
+          const variableFromUser = userValuesByVariable?.[variableUUID] ?? null;
+          const {
+            options, // For dropdown menu
+            // Monospace, multiline aka textarea, etc.
+            // default
+            // input_type
+            // language
+            // monospace
+            // multiline
+            // muted
+            style,
+            // What is this used for?
+            // text,
+            type: typeOfInput,
+          } = inputs?.[input] ?? ({} as InteractionInputType);
 
-          <Text small>{templateSettings?.variables?.[variableUUID] ?? '-'}</Text>
-        </Grid>
-      ))}
+          const value = variableFromUser ?? defaultValue ?? '';
+
+          return (
+            <label key={variableUUID}>
+              <Grid
+                alignItems="stretch"
+                baseLeft
+                baseRight
+                columnGap={8}
+                justifyContent="space-between"
+                smallBottom
+                smallTop
+                style={{
+                  gridTemplateColumns: 'minmax(0px, max-content) auto',
+                }}
+              >
+                <TooltipWrapper
+                  align={TooltipAlign.END}
+                  horizontalDirection={TooltipDirection.LEFT}
+                  style={{ alignContent: 'center', justifySelf: 'stretch', maxWidth: 300 }}
+                  tooltip={
+                    <Text secondary small>
+                      {description}
+                    </Text>
+                  }
+                >
+                  <Text secondary small>
+                    {displayName || variableUUID || '-'}
+                  </Text>
+                </TooltipWrapper>
+
+                {InteractionInputTypeEnum.TEXT_FIELD === typeOfInput && (
+                  <TextInput
+                    align="right"
+                    autoComplete="off"
+                    basic
+                    blendWithText
+                    commands={commands}
+                    defaultValue={value}
+                    id={[block?.uuid, uuid, variableUUID]?.filter(Boolean).join('-')}
+                    italicPlaceholder
+                    monospace={style.monospace}
+                    name={variableUUID}
+                    number={
+                      InteractionInputStyleInputTypeEnum.NUMBER === style?.input_type ||
+                      [InteractionVariableTypeEnum.FLOAT, InteractionVariableTypeEnum.INTEGER].some(
+                        varType => types?.includes(varType),
+                      )
+                    }
+                    onChange={event =>
+                      updateBlock(
+                        event as any,
+                        `configuration.templates.${uuid}.variables.${variableUUID}`,
+                        event?.target?.value,
+                      )
+                    }
+                    onClick={(event: React.MouseEvent<HTMLInputElement>) => {
+                      // Need to do this because the Canvas is swallowing the click event.
+                      event.preventDefault();
+                      event.stopPropagation();
+                      (event.target as HTMLInputElement).focus();
+                    }}
+                    placeholder={types?.filter(Boolean)?.join(', ')}
+                    required={required}
+                    small
+                  />
+                )}
+              </Grid>
+            </label>
+          );
+        },
+      )}
     </PanelRows>
   );
 }

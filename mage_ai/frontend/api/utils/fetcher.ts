@@ -44,7 +44,7 @@ export const GET: 'GET' = 'GET';
 export const POST: 'POST' = 'POST';
 export const PUT: 'PUT' = 'PUT';
 
-function preprocess(url: string, opts: FetcherOptionsType = {}) {
+export function preprocess(url: string, opts: FetcherOptionsType = {}) {
   const { body, ctx, method = GET, query = {}, token } = opts;
 
   const headers = {

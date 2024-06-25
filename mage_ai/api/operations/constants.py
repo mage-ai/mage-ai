@@ -1,5 +1,7 @@
 from enum import Enum
 
+from mage_ai.shared.models import BaseEnum
+
 ALL = 'all'
 CREATE = 'create'
 DELETE = 'delete'
@@ -27,3 +29,10 @@ class OperationType(str, Enum):
     DETAIL = DETAIL
     LIST = LIST
     UPDATE = UPDATE
+
+
+class MetaKey(BaseEnum):
+    FORMAT = '_format'
+    LIMIT = '_limit'
+    OFFSET = '_offset'
+    ORDER_BY = '_order_by[]'

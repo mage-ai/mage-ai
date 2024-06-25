@@ -1,6 +1,44 @@
 import ThemeType from './interfaces';
+import { Colors } from '@mana/themes/colors';
 import { BlockColorEnum, BlockTypeEnum } from '@interfaces/BlockType';
 import { COLOR_NAMES } from './colors';
+import { contrastRatio } from '@utils/colors';
+import { getThemeSettings } from '@mana/themes/utils';
+import { ModeEnum } from './modes';
+
+export type ColorNameType = {
+  base?: string;
+  hi?: string;
+  lo?: string;
+  md?: string;
+  contrast?: {
+    inverted?: string;
+    monotone?: string;
+  };
+};
+
+export function getContrastColor(colorName: string): ColorNameType['contrast'] {
+  const { mode = ModeEnum.DARK } = getThemeSettings() ?? {};
+  const baseDark = Colors?.[colorName]?.[mode];
+  const baseWhite = Colors?.white?.[mode];
+  const baseBlack = Colors?.black?.[mode];
+  const ratioWhite = contrastRatio(baseDark, baseWhite);
+  const ratioBlack = contrastRatio(baseDark, baseBlack);
+
+  // console.log(
+  //   colors,
+  //   baseDark,
+  //   baseWhite,
+  //   baseBlack,
+  //   ratioWhite,
+  //   ratioBlack,
+  // );
+
+  return {
+    inverted: ratioWhite > ratioBlack ? 'black' : 'white',
+    monotone: ratioWhite > ratioBlack ? 'white' : 'black',
+  };
+}
 
 export function getBlockColor(
   blockType: BlockTypeEnum,
@@ -14,12 +52,7 @@ export function getBlockColor(
   accent?: string;
   accentDark?: string;
   accentLight?: string;
-  names?: {
-    base: string;
-    hi: string;
-    lo: string;
-    md: string;
-  };
+  names?: ColorNameType;
 } {
   const { blockColor, getColorName, isSelected, theme } = props || {};
   const colors = getColorName ? COLOR_NAMES : theme?.colors;
@@ -83,20 +116,31 @@ export function getBlockColor(
     accent = colors?.typography?.text?.base;
     accentLight = colors?.typography?.text?.muted;
   } else if (BlockTypeEnum.GROUP === blockType) {
-    baseName = 'gray';
+    baseName = 'azure';
   } else if (BlockTypeEnum.PIPELINE === blockType) {
-    baseName = 'pink';
+    baseName = 'purple';
   }
 
-  return {
+  const info = {
     accent,
     accentDark,
     accentLight,
     names: {
-      base: baseName,
-      hi: `${baseName}hi`,
-      lo: `${baseName}lo`,
-      md: `${baseName}md`,
+      base: baseName || null,
+      hi: baseName ? `${baseName}hi` : null,
+      lo: baseName ? `${baseName}lo` : null,
+      md: baseName ? `${baseName}md` : null,
+      contrast: {
+        inverted: null,
+        monotone: null,
+      },
     },
   };
+
+  // @ts-ignore
+  info.names.contrast = getContrastColor(info?.names?.base);
+
+  // console.log(info);
+
+  return info
 }

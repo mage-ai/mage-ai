@@ -1,4 +1,3 @@
-import { Ref } from 'react';
 import { LanguageEnum } from '../languages/constants';
 
 // https://microsoft.github.io/monaco-editor/typedoc/enums/languages.CompletionItemKind.html

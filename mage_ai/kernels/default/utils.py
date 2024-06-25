@@ -96,6 +96,8 @@ def get_process_info(pid: int, check_active_status: bool = False) -> Optional[Di
         process = psutil.Process(int(pid))
         cmdline = process.cmdline()
         proc_info = {
+            'running': process.is_running(),
+            'status_raw': process.status(),
             'pid': process.pid,
             'ppid': process.ppid(),
             'name': process.name(),

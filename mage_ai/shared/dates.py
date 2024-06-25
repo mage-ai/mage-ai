@@ -1,9 +1,16 @@
 import datetime
-from typing import List, Optional, Tuple
+from typing import List, Optional, Tuple, Union
 
 import pytz
 
 from mage_ai.shared.array import find_index
+
+
+def now(ts: Optional[bool] = None) -> Union[datetime.datetime, int]:
+    ds = datetime.datetime.utcnow().replace(tzinfo=pytz.UTC)
+    if ts:
+        return int(ds.timestamp() * 1000)
+    return ds
 
 
 def compare(date1, date2) -> Optional[int]:

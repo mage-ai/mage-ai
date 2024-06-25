@@ -1,4 +1,13 @@
+from typing import Any, Dict, List
+
+import yaml
+
 from mage_ai.data_preparation.models.constants import BlockLanguage, BlockType
+from mage_ai.frameworks.execution.llm.rag.pipelines.data_preparation import (
+    DATA_PREPARATION,
+)
+from mage_ai.frameworks.execution.llm.rag.pipelines.inference import INFERENCE
+from mage_ai.frameworks.execution.models.enums import GroupUUID
 from mage_ai.io.base import DataSource
 from mage_ai.shared.hash import index_by
 
@@ -697,4 +706,69 @@ TEMPLATES_ONLY_FOR_V2 = [
     ),
 ]
 
-TEMPLATES_BY_UUID = index_by(lambda x: x['name'], TEMPLATES + TEMPLATES_ONLY_FOR_V2)
+
+def __extract_additional_groups(path: str, group_name: str) -> List[str]:
+    """
+    Extract additional groups from the path after the specified group_name.
+
+    Args:
+        path (str): The path string to process.
+        group_name (str): The name of the group to search for in the path.
+
+    Returns:
+        List[str]: List of additional groups extracted from the path.
+    """
+    path_segments = path.split('/')
+
+    # Check if the group_name is in path_segments
+    if group_name in path_segments:
+        # Find the index of the group_name
+        group_index = path_segments.index(group_name)
+        # Extract segments after group_name up until the last segment (template name)
+        additional_groups = path_segments[
+            group_index + 1 : -1
+        ]  # Slicing till the second last segment
+    else:
+        # If group not found, return an empty list or handle accordingly
+        additional_groups = []
+
+    return additional_groups
+
+
+def __build_templates_ai() -> List[Dict[str, Any]]:
+    temps = []
+    for pipelines in [
+        DATA_PREPARATION.pipelines,
+        INFERENCE.pipelines,
+    ]:
+        for pipeline in pipelines if isinstance(pipelines, list) else []:
+            if not pipeline.blocks:
+                continue
+
+            for block in pipeline.blocks:
+                if not block.configuration or not block.configuration.templates:
+                    continue
+                for key, template in block.configuration.templates.items():
+                    additional_groups = (
+                        __extract_additional_groups(template.path, block.uuid)
+                        if template.path
+                        else []
+                    )
+
+                    temps.append(
+                        dict(
+                            block_type=template.type,
+                            description=template.description,
+                            groups=[pipeline.name, block.name] + additional_groups,
+                            language=BlockLanguage.PYTHON,
+                            name=template.name,
+                            path=template.path,
+                        )
+                    )
+    return temps
+
+
+TEMPLATES_AI = __build_templates_ai()
+TEMPLATES_BY_UUID = index_by(
+    lambda x: x['name'], (TEMPLATES + TEMPLATES_ONLY_FOR_V2 + TEMPLATES_AI)
+)

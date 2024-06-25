@@ -1,7 +1,7 @@
 @use './variables' as *;
 
-$base-color-names: (black, blue, glow, gray, green, pink, purple, red, rose, sky, teal, white, yellow);
-$colors-names: (black, blackfixed, blackhi, blacklo, blackmd, blue, bluehi, bluelo, bluemd, bluemuted, bluetext, dbt, dbthi, dbtlo, dbtmd, glow2, glow, gray, grayhi, graylo, graymd, green, greenhi, greenlo, greenmd, pink, pinkhi, pinklo, pinkmd, purple, purplehi, purplelo, purplemd, red, redhi, redlo, redmd, rose, rosehi, roselo, rosemd, sky, skyhi, skylo, skymd, statuses-success, statuses-successhi, teal, tealhi, teallo, tealmd, white, whitefixed, whitehi, whitelo, whitemd, yellow, yellowhi, yellowlo, yellowmd);
+$base-color-names: (azure, black, blue, glow, gray, green, pink, purple, red, redlo, rose, sky, teal, white, yellow);
+$colors-names: (azure, azurelo, black, blackfixed, blackhi, blacklo, blackmd, blue, bluehi, bluelo, bluemd, bluemuted, bluetext, dbt, dbthi, dbtlo, dbtmd, glow2, glow, gray, grayhi, graylo, graymd, green, greenhi, greenlo, greenmd, pink, pinkhi, pinklo, pinkmd, purple, purplehi, purplelo, purplemd, red, redhi, redlo, redmd, rose, rosehi, roselo, rosemd, sky, skyhi, skylo, skymd, statuses-success, statuses-successhi, teal, tealhi, teallo, tealmd, white, whitefixed, whitehi, whitelo, whitemd, yellow, yellowhi, yellowlo, yellowmd);
 $size: (sm: $size-sm, md: $size-md, lg: $size-lg, xl: $size-xl, xxl: $size-xxl, xxxl: $size-xxxl);
 $numbers: 0, 1, 2, 3, 4;
 $numbers-more: 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20;

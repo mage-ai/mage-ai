@@ -1,12 +1,9 @@
-import Route from '@components/v2/Route';
-import dynamic from 'next/dynamic';
-
 function Home() {
-  const AppsManager = dynamic(() => import('@components/v2/Apps/Manager'), {
-    ssr: false,
-  });
-
-  return <AppsManager />;
+  return (
+    <div>
+      <h1>Home</h1>
+    </div>
+  );
 }
 
-export default Route(Home);
+export default Home;

@@ -1,0 +1,32 @@
+@use '../../abstracts/helpers' as *;
+@use '../../abstracts/variables' as *;
+
+.container {
+  align-items: center;
+  display: inline-flex;
+  height: inherit;
+  position: relative;
+  width: inherit;
+}
+
+.input {
+  height: inherit;
+  width: inherit;
+
+  @each $value in $numbers-more {
+    &.with-icon-size-#{$value * 2} {
+      padding-left: #{($padding-vertical-lg * 1.25) + ($value * 2)};
+    }
+  }
+}
+
+.icon {
+  align-items: center;
+  display: flex;
+  height: 100%;
+  left: #{$padding-vertical-lg * 0.75};
+  opacity: 0.5;
+  pointer-events: none; // Makes the icon unclickable
+  position: absolute;
+  top: 0;
+}

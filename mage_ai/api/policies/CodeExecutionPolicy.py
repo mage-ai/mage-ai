@@ -1,5 +1,5 @@
 from mage_ai.api.oauth_scope import OauthScope
-from mage_ai.api.operations import constants
+from mage_ai.api.operations.constants import OperationType
 from mage_ai.api.policies.BasePolicy import BasePolicy
 from mage_ai.api.presenters.CodeExecutionPresenter import CodeExecutionPresenter
 from mage_ai.orchestration.constants import Entity
@@ -14,7 +14,7 @@ class CodeExecutionPolicy(BasePolicy):
 
 CodeExecutionPolicy.allow_actions(
     [
-        constants.CREATE,
+        OperationType.CREATE,
     ],
     scopes=[
         OauthScope.CLIENT_PRIVATE,
@@ -29,15 +29,19 @@ CodeExecutionPolicy.allow_read(
         OauthScope.CLIENT_PRIVATE,
     ],
     on_action=[
-        constants.CREATE,
+        OperationType.CREATE,
     ],
     condition=lambda policy: policy.has_at_least_editor_role_and_pipeline_edit_access(),
 )
 
 CodeExecutionPolicy.allow_write(
     [
+        'environment',
         'message',
         'message_request_uuid',
+        'output_path',
+        'source',
+        'stream',
         'timestamp',
         'uuid',
     ],
@@ -45,7 +49,7 @@ CodeExecutionPolicy.allow_write(
         OauthScope.CLIENT_PRIVATE,
     ],
     on_action=[
-        constants.LIST,
+        OperationType.CREATE,
     ],
     condition=lambda policy: policy.has_at_least_editor_role_and_pipeline_edit_access(),
 )

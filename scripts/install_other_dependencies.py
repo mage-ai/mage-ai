@@ -2,6 +2,8 @@ import argparse
 import os
 import subprocess
 
+import nltk
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--path', type=str)
@@ -23,3 +25,7 @@ if __name__ == '__main__':
         print(f'Installing DBT packages for DBT project {dbt_dir}.')
         subprocess.run(['dbt', 'deps'], cwd=dbt_dir)
         print('')
+
+    nltk.download('punkt')
+    nltk.download('stopwords')
+    nltk.download('wordnet')

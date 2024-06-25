@@ -1,9 +1,9 @@
 import asyncio
 import threading
-from typing import Optional
+from typing import List, Optional
 
-from mage_ai.data.models.generator import DataGenerator
 from mage_ai.kernels.magic.kernels.models import Kernel
+from mage_ai.kernels.magic.models import Kernel as KernelDetails
 from mage_ai.kernels.magic.queues.manager import get_execution_result_queue
 from mage_ai.shared.environments import is_debug
 
@@ -34,8 +34,8 @@ class KernelManager:
         return KernelManager.kernels[uuid]
 
     @staticmethod
-    def get_kernels() -> DataGenerator:
-        return DataGenerator([k.details for k in KernelManager.kernels.values()])
+    async def get_kernels() -> List[KernelDetails]:
+        return await asyncio.gather(*[k.get_details() for k in KernelManager.kernels.values()])
 
     @staticmethod
     async def interrupt_kernel_async(uuid: str) -> None:

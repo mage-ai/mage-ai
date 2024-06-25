@@ -1,0 +1,72 @@
+@use '../../abstracts/mixins';
+
+.header {
+  backdrop-filter: var(--menus-blur-base);
+  background-color: var(--header-background-color-base);
+  height: var(--header-height);
+  left: 0;
+  position: fixed;
+  right: 0;
+  top: 0;
+  width: 100vw;
+  z-index: 10;
+
+  .button {
+    @include mixins.transition-fast;
+
+    background: none !important;
+    border-color: var(--colors-graymd) !important;
+    border-radius: 8px;
+    border-style: var(--borders-style) !important;
+    border-width: var(--borders-width) !important;
+    height: 40px;
+    color: var(--fonts-color-text-secondary) !important;
+    justify-content: center !important;
+    padding: 0 11px;
+
+    &:focus {
+      box-shadow: none;
+      color: var(--backgrounds-button-secondary-hover) !important;
+      outline: none !important;
+
+      .buttonIcon {
+        fill: var(--backgrounds-button-secondary-hover);
+      }
+    }
+
+    &:hover {
+      border-color: var(--backgrounds-body) !important;
+      box-shadow:
+        0 0 0 var(--borders-outline-offset) var(--backgrounds-body),
+        0 0 0 var(--borders-outline-total) var(--backgrounds-button-secondary-default);
+      color: var(--backgrounds-button-secondary-default) !important;
+
+      .buttonIcon {
+        fill: var(--backgrounds-button-secondary-default);
+      }
+    }
+
+    &:active,
+    &.selected {
+      box-shadow: none !important;
+      border-color: var(--backgrounds-button-secondary-default) !important;
+      color: var(--backgrounds-button-secondary-default) !important;
+
+      .buttonIcon {
+        fill: var(--backgrounds-button-secondary-default);
+      }
+    }
+
+    .buttonIcon {
+      @include mixins.transition-fast;
+
+      fill: var(--fonts-color-text-secondary);
+    }
+  }
+}
+
+.content {
+  height: 100vh;
+  overflow: hidden;
+  width: 100vw;
+}

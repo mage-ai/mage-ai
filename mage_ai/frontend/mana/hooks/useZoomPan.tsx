@@ -1,4 +1,3 @@
-import { RectType } from '@components/v2/Canvas/interfaces';
 import { useRef, useEffect } from 'react';
 
 // A helper function to check if an element has a specific role in a space-separated list of roles
@@ -23,7 +22,7 @@ export type ZoomPanStateType = {
   element: React.RefObject<HTMLElement>;
   handlePanning: React.MutableRefObject<
     (
-      event: MouseEvent,
+      event: any,
       positionOverride?: {
         x?: number;
         xPercent?: number;
@@ -32,7 +31,9 @@ export type ZoomPanStateType = {
       },
     ) => void
   >;
-  handleZoom: React.MutableRefObject<(event: WheelEvent, scaleOverride?: number) => void>;
+  handleZoom: React.MutableRefObject<(event: WheelEvent, scaleOverride?: number, opts?: {
+    isTrackPad?: boolean;
+  }) => void>;
   originX: React.MutableRefObject<number>;
   originY: React.MutableRefObject<number>;
   phase: React.MutableRefObject<number>;
@@ -55,7 +56,7 @@ export type BoundaryType = {
 };
 
 export const useZoomPan = (
-  stateRef: React.MutableRefObject<ZoomPanStateType>,
+  stateRef: React.MutableRefObject<any>,
   opts?: {
     initialPosition?: {
       x?: number;
@@ -65,12 +66,12 @@ export const useZoomPan = (
     };
     maxScale?: number;
     minScale?: number;
-    onStateChange?: (state: ZoomPanStateType) => void;
+    onStateChange?: (state: any) => void;
     roles?: string[];
     zoomSensitivity?: number;
   },
 ): BoundaryType => {
-  const { initialPosition, maxScale = 4, minScale = 0.01, roles, zoomSensitivity = 0.5 } = opts;
+  const { initialPosition, maxScale = 4, minScale = 0.01, roles, zoomSensitivity = 2.5 } = opts;
 
   const disabledRef = stateRef.current.disabled;
   const containerRef = stateRef.current.container;
@@ -87,7 +88,7 @@ export const useZoomPan = (
   const transformRef = stateRef.current.transform;
   const zoom = stateRef.current.zoom;
 
-  const viewportRect = useRef<RectType | null>(null);
+  const viewportRect = useRef<any | null>(null);
   const bottomMaxRef = useRef(null);
   const leftMaxRef = useRef(null);
   const rightMaxRef = useRef(null);
@@ -108,7 +109,9 @@ export const useZoomPan = (
 
     const updateTransform = () => {
       transformRef.current = `translate(${originX.current}px, ${originY.current}px) scale(${scale.current})`;
+      element.style.transformOrigin = '0px 0px';
       element.style.transform = transformRef.current;
+      // console.log(element.style.transformOrigin, element.style.transform)
     };
 
     handlePanning.current = (
@@ -154,6 +157,17 @@ export const useZoomPan = (
         y = Math.max(yMin, Math.min(yMax, newY));
       }
 
+      const ymax = containerRect?.height ?? 0;
+      const ydif = (elementRect?.height ?? 0) / newScale;
+      y = y < ydif - ymax ? ydif - ymax : y;
+
+      const xmax = containerRect?.width ?? 0;
+      const xdif = (elementRect?.width ?? 0) / newScale;
+      x = x < xdif - xmax ? xdif - xmax : x;
+
+      x = x > 0 ? 0 : x;
+      y = y > 0 ? 0 : y;
+
       return {
         x,
         y,
@@ -174,15 +188,21 @@ export const useZoomPan = (
       }
     }
 
-    handleZoom.current = (event?: WheelEvent, scaleOverride?: number) => {
+    handleZoom.current = (event?: WheelEvent, scaleOverride?: number, opts?: {
+      isTouchPad?: boolean;
+    }) => {
       const oldScale = scale.current;
 
+      const minScaleUse = Math.max((widthViewport / widthContainer), (heightViewport / heightContainer), minScale);
       let newScale = null;
       if (scaleOverride ?? false) {
         newScale = scaleOverride;
       } else {
-        const delta = (-event.deltaY / 500) * zoomSensitivity;
-        newScale = Math.min(Math.max(minScale, scale.current + delta), maxScale);
+        const delta = (-event.deltaY / 500) * (opts?.isTouchPad
+          ? 1
+          : zoomSensitivity
+        );
+        newScale = Math.min(Math.max(minScaleUse, scale.current + delta), maxScale);
       }
 
       const scaleRatio = newScale / oldScale;
@@ -202,6 +222,7 @@ export const useZoomPan = (
       handleDirection(xNew, yNew);
 
       const limited = enforceLimits(originX.current, originY.current, newScale);
+
       originX.current = limited.x;
       originY.current = limited.y;
 
@@ -212,15 +233,21 @@ export const useZoomPan = (
       if (disabledRef.current || roles?.some(role => hasRole(event.target as HTMLElement, role)))
         return;
 
-      event.preventDefault();
+      // event.preventDefault();
 
       panning.current.active = false;
 
       const isZooming = event.metaKey || event.ctrlKey;
       const isPanningHorizontally = !isZooming && event.shiftKey;
+      // This will never be true if they are zooming...
+      const isTouchPad = (event as any).wheelDeltaY
+        ? (event as any).wheelDeltaY === -3 * event.deltaY
+        : event.deltaMode === 0;
 
-      if (isZooming) {
-        handleZoom.current(event);
+      if (!isTouchPad && isZooming) {
+        handleZoom.current(event, null, {
+          isTouchPad,
+        });
       } else {
         const xNew = (originX.current -= event.deltaX);
         const yNew = (originY.current -= event.deltaY);
@@ -228,9 +255,11 @@ export const useZoomPan = (
 
         const limited = enforceLimits(xNew, yNew, scale.current);
 
-        if (isPanningHorizontally) {
+        if (isPanningHorizontally || isTouchPad) {
           originX.current = limited.x;
-        } else {
+        }
+
+        if (!isPanningHorizontally || isTouchPad) {
           originY.current = limited.y;
         }
 
@@ -300,7 +329,8 @@ export const useZoomPan = (
     element.addEventListener('mousemove', handleMouseMove);
     window.addEventListener('mouseup', handleMouseUp);
     element.addEventListener('touchend', handleTouchEnd);
-    element.addEventListener('wheel', handleWheel);
+    element.addEventListener('wheel', handleWheel, { passive: true });
+    element.addEventListener('mousewheel', handleWheel, { passive: true });
     element.addEventListener('touchstart', handleTouchStart, { passive: true });
     element.addEventListener('touchmove', handleTouchMove, { passive: true });
 
@@ -312,6 +342,7 @@ export const useZoomPan = (
 
     return () => {
       element.removeEventListener('wheel', handleWheel);
+      element.removeEventListener('mousewheel', handleWheel);
       element.removeEventListener('mousedown', handleMouseDown);
       element.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('mouseup', handleMouseUp);

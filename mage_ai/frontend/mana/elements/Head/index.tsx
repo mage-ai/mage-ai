@@ -1,31 +1,25 @@
 import NextHead from 'next/head';
-import { useContext } from 'react';
-import { ThemeContext } from 'styled-components';
+import React from 'react';
+
+const STYLE_ROOT_ID = 'dynamic-style-root';
 
 type HeadProps = {
-  children?: any;
-  defaultTitle?: string;
   title?: string;
 };
 
-const Head = ({ children, defaultTitle = 'Mage Pro', title }: HeadProps) => {
-  const theme = useContext(ThemeContext);
+const Head = ({ title }: HeadProps) => (
+  <NextHead>
+    <title>{title}</title>
 
-  return (
-    <NextHead>
-      <title>{title ? `${title} | ${defaultTitle}` : defaultTitle}</title>
+    <link href="/images/favicons/pro.ico" rel="icon" />
 
-      <link href="/favicon-pro.ico" rel="icon" />
+    <style id={STYLE_ROOT_ID} />
 
-      <style>{`
-        html body {
-          background-color: ${theme?.backgrounds?.body};
-        }
-      `}</style>
+    <meta
+      content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=0"
+      name="viewport"
+    />
+  </NextHead>
+);
 
-      {children}
-    </NextHead>
-  );
-};
-
-export default Head;
+export default React.memo(Head, (p1, p2) => p1.title === p2.title);

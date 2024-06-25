@@ -4,7 +4,7 @@ from mage_ai.frameworks.execution.llm.rag.pipelines.data_preparation import (
 )
 from mage_ai.frameworks.execution.llm.rag.pipelines.inference import INFERENCE
 from mage_ai.frameworks.execution.models.block.base import BlockExecutionFramework
-from mage_ai.frameworks.execution.models.enums import ExecutionFrameworkUUID
+from mage_ai.frameworks.execution.models.enums import ExecutionFrameworkUUID, GroupUUID
 from mage_ai.frameworks.execution.models.pipeline.base import PipelineExecutionFramework
 
 RAG = PipelineExecutionFramework.load(
@@ -17,11 +17,13 @@ RAG = PipelineExecutionFramework.load(
     blocks=[
         BlockExecutionFramework.load(
             uuid=DATA_PREPARATION.uuid,
+            groups=[GroupUUID.DATA_PREPARATION],
             description=DATA_PREPARATION.description,
             type=BlockType.PIPELINE,
         ),
         BlockExecutionFramework.load(
             uuid=INFERENCE.uuid,
+            groups=[GroupUUID.INFERENCE],
             description=INFERENCE.description,
             type=BlockType.PIPELINE,
         ),

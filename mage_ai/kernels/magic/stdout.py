@@ -8,6 +8,7 @@ class AsyncStdout(io.StringIO):
         super().__init__()
         self._buffer = io.StringIO()
         self._old_stdout = sys.stdout
+        sys.stdout = self
         self._lock = threading.Lock()
 
     def flush(self):
@@ -23,12 +24,13 @@ class AsyncStdout(io.StringIO):
             self._buffer.truncate(0)
             return output
 
-    def write(self, s):
+    def write(self, s: str) -> int:
         with self._lock:
             self._buffer.write(s)
             self._buffer.flush()
             self._old_stdout.write(s)
             self._old_stdout.flush()
+            return len(s)  # Return the number of characters written
 
     def reset_buffer(self):
         with self._lock:

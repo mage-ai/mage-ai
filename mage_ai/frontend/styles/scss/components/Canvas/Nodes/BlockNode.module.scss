@@ -1,14 +1,17 @@
+@use '../../../abstracts/variables' as *;
+@use '../../../abstracts/mixins' as *;
 @use '../../../base/borders';
 @use '../../../base/grid';
+@use './mixins' as *;
+
+$enter-duration: 3s;
 
 .blockNode {
   @include borders.border-colors();
 
   height: inherit;
-  min-width: 312px;
   padding: var(--padding-base);
 }
-
 .showOnHoverContainer {
   &:hover {
     .showOnHover {
@@ -21,35 +24,140 @@
   }
 }
 
-.nodeWrapper {
-  @include grid.base();
-
-  &.block {
-    z-index: 6;
+.blockNodeWrapper {
+  &.loading {
+    .loader {
+      visibility: visible;
+      opacity: 1;
+    }
   }
 
-  &.node {
-    z-index: 4;
+  &.executing {
+    .display-if-executing {
+      display: block;
+    }
+
+    .display-ifnot-executing {
+      display: none;
+    }
+  }
+
+  .display-if-executing {
+    display: none;
+  }
+
+  .display-ifnot-executing {
+    display: block;
+  }
+
+  .loader {
+    visibility: hidden;
+    opacity: 0;
+    position: relative;
+    height: 2px;
+    margin-top: 4px;
+    margin-bottom: 2px;
+    width: 100%;
   }
 }
 
-.connectionLines {
-  z-index: 1;
+.dragWrapper {
+  z-index: 3;
 
-  .connectionLine {
-    &.connection-from-port-to-port,
-    &.connection-from-port-to-block,
-    &.connection-from-port-to-node,
-    &.connection-from-block-to-block,
-    &.connection-from-block-to-node,
-    &.connection-from-block-to-port,
-    &.connection-from-node-to-block,
-    &.connection-from-node-to-port {
-      z-index: 5;
-    }
-
-    &.connection-from-node-to-node {
-      z-index: 3;
-    }
+  &.output {
+    z-index: 6;
   }
+
+  &.app {
+    z-index: 5;
+  }
+
+  &.groupSelection {
+    z-index: 2;
+  }
+
+  .groupSelection {
+    height: inherit;
+  }
+}
+
+.resizeHandle {
+  background-color: var(--borders-color-base-default);
+  border-radius: 8px;
+  opacity: 0;
+  position: absolute;
+  z-index: 6;
+
+  &.bottom {
+    bottom: 0;
+    cursor: ns-resize;
+    height: 8px;
+    left: 0;
+    margin-bottom: -8px;
+    right: 0;
+    width: 100%;
+  }
+
+  &.right {
+    bottom: 0;
+    cursor: ew-resize;
+    height: 100%;
+    margin-right: -8px;
+    right: 0;
+    top: 0;
+    width: 8px;
+  }
+}
+
+.inheritDimensions {
+  height: inherit;
+  width: inherit;
+}
+
+.outputContainerHeader,
+.outputContainer {
+  @include gradient(0deg, var(--menus-background-gradient-default), var(--menus-background-gradient-default), 0%, 100%);
+  background-color: var(--menus-background-base-default);
+  backdrop-filter: blur(var(--modal-blur-base));
+
+  border-color: var(--borders-color-base-default);
+  border-left-width: var(--borders-width);
+  border-right-width: var(--borders-width);
+  border-style: var(--borders-style);
+}
+
+.outputContainerHeader {
+  border-top-left-radius: var(--borders-radius-md);
+  border-top-right-radius: var(--borders-radius-md);
+  border-top-width: var(--borders-width);
+  border-bottom: var(--borders-width) var(--borders-style) var(--colors-graylo);
+  position: absolute;
+  transform: translateY(-100%);
+  width: 100%;
+
+  &:hover {
+    cursor: move;
+  }
+}
+
+.outputContainer {
+  @include borders.border-colors();
+
+  border-bottom-left-radius: var(--borders-radius-md);
+  border-bottom-right-radius: var(--borders-radius-md);
+  border-bottom-width: var(--borders-width);
+  box-shadow: 8px 8px 4px 8px var(--modal-box-shadow-base);
+  overflow: hidden;
+
+  .fadeOut {
+    opacity: 0;
+    transition: opacity 0.3s ease-out;
+  }
+}
+
+.outputScrollContainer {
+  // Border widths
+  max-height: calc(100% - 2px);
+  overflow: auto;
+  width: 100%;
 }

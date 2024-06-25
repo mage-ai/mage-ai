@@ -13,6 +13,10 @@
   display: grid;
   justify-items: stretch;
   box-sizing: content-box;
+
+  &.noBorder {
+    border-radius: 0;
+  }
 }
 
 
@@ -20,8 +24,16 @@
   @include backgrounds.background-colors();
 
   background-color: var(--backgrounds-body);
-  border-radius: calc(var(--borders-radius-base) - 2px);
+  border-radius: calc(var(--borders-radius-base) - var(--borders-gradient-width));
   border: none;
   height: inherit;
   overflow: hidden; // To clip children with border-radius
+}
+
+.variant-error {
+  background: linear-gradient(90deg, rgba(255, 59, 59, 0.30) 2.21%, rgba(255, 59, 59, 0.30) 2.51%, rgba(255, 59, 59, 0.00) 29.51%);
+}
+
+.variant-error-reverse {
+  background: linear-gradient(270deg, rgba(255, 59, 59, 0.30) 2.21%, rgba(255, 59, 59, 0.30) 2.51%, rgba(255, 59, 59, 0.00) 29.51%);
 }

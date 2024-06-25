@@ -21,15 +21,7 @@ type ContextMapping = {
   [contextUUID: string]: ContextType;
 };
 
-function ContextMenu({
-  children,
-  x,
-  y,
-}: {
-  children: any;
-  x: number;
-  y: number;
-}) {
+function ContextMenu({ children, x, y }: { children: any; x: number; y: number }) {
   return (
     <div
       style={{
@@ -44,7 +36,10 @@ function ContextMenu({
   );
 }
 
-export default function useContextMenu(uuid: string, container: Element = null): {
+export default function useContextMenu(
+  uuid: string,
+  container: Element = null,
+): {
   contextMenu: React.ReactNode;
   hideContextMenu: () => void;
   showContextMenu: (event: MouseEvent, data: DataType) => void;
@@ -54,11 +49,9 @@ export default function useContextMenu(uuid: string, container: Element = null):
 
   useEffect(() => {
     if (container || typeof document !== 'undefined') {
-      setMountNode(container || (typeof document !== 'undefined' ? document.body : null))
-    };
-  }, [
-    container,
-  ]);
+      setMountNode(container || (typeof document !== 'undefined' ? document.body : null));
+    }
+  }, [container]);
 
   const contextMenu = useMemo(() => {
     if (mountNode) {
@@ -66,24 +59,13 @@ export default function useContextMenu(uuid: string, container: Element = null):
 
       Object.entries(contextMapping || {})?.forEach(([contextUUID, context]) => {
         const {
-          data: {
-            menuItems,
-            renderMenu,
-          },
+          data: { menuItems, renderMenu },
           event,
         } = context;
-        const {
-          clientX,
-          clientY,
-          target,
-        } = event;
+        const { clientX, clientY, target } = event;
 
         menus.push(
-          <ContextMenu
-            key={contextUUID}
-            x={clientX}
-            y={clientY}
-          >
+          <ContextMenu key={contextUUID} x={clientX} y={clientY}>
             <ClickOutside
               disableEscape
               onClickOutside={() => setContextMapping(prev => ignoreKeys(prev, [contextUUID]))}
@@ -100,32 +82,32 @@ export default function useContextMenu(uuid: string, container: Element = null):
                 />
               )}
             </ClickOutside>
-          </ContextMenu>
+          </ContextMenu>,
         );
       });
 
-      return createPortal(
-        <>
-          {menus}
-        </>,
-        mountNode,
-      );
+      return createPortal(<>{menus}</>, mountNode);
     }
   }, [contextMapping, mountNode]);
 
-  const showContextMenu = useCallback((event: MouseEvent, data: DataType) => {
-    pauseEvent(event);
-    setContextMapping(prev => ({
-      ...prev,
-      [uuid]: {
-        event,
-        data,
-      },
-    }));
-  }, [uuid]);
+  const showContextMenu = useCallback(
+    (event: MouseEvent, data: DataType) => {
+      pauseEvent(event);
+      setContextMapping(prev => ({
+        ...prev,
+        [uuid]: {
+          event,
+          data,
+        },
+      }));
+    },
+    [uuid],
+  );
 
-  const hideContextMenu =
-    useCallback(() => setContextMapping(prev => ignoreKeys(prev, [uuid])), [uuid]);
+  const hideContextMenu = useCallback(
+    () => setContextMapping(prev => ignoreKeys(prev, [uuid])),
+    [uuid],
+  );
 
   return {
     contextMenu,

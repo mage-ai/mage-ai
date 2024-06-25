@@ -1,4 +1,4 @@
-import { dig } from '@utils/hash';
+import { dig, deepCopy } from '@utils/hash';
 import { isNumeric } from './string';
 
 export function insertAtIndex(item, idx, arr) {
@@ -93,13 +93,13 @@ export function prependArray(value, arrArg) {
   return newArray;
 }
 
-export function sortByKey(arr, sort, opts: any = {}) {
+export function sortByKey(arr: any, sort: any, opts: any = {}) {
   const { ascending = true, absoluteValue = false } = opts;
 
   const sortingFunc =
     typeof sort === 'string' || typeof sort === 'number'
-      ? val => (absoluteValue ? Math.abs(dig(val, sort)) : dig(val, sort))
-      : val => (absoluteValue ? Math.abs(sort(val)) : sort(val));
+      ? (val: any) => (absoluteValue ? Math.abs(dig(val, sort as any)) : dig(val, sort as any))
+      : (val: any) => (absoluteValue ? Math.abs(sort(val)) : sort(val));
 
   return [...arr].sort((a, b) => {
     let sortingOrder = 0;
@@ -143,11 +143,17 @@ export function uniqueArray(arrArg) {
   return [...new Set(arrArg)];
 }
 
-export function unique(arrArg, compare) {
-  return arrArg.reduce((uniqueArg, item) => {
-    const arr = uniqueArg.map(compare);
+export function unique(arrArg: any[], compare: (item: any) => any) {
+  const map = indexBy(arrArg, compare);
 
-    return arr.includes(compare(item)) ? uniqueArg : [...uniqueArg, item];
+  return arrArg.reduce((acc, item) => {
+    const key = compare(item);
+    if (map[key]) {
+      acc.push(item);
+      delete map[key];
+    }
+
+    return acc;
   }, []);
 }
 
@@ -215,9 +221,10 @@ export function arrayIncludesArray(arr1, arr2) {
   return result;
 }
 
-export function range(numberOfItems) {
-  if (isNumeric(numberOfItems) && numberOfItems >= 1) {
-    return Array(numberOfItems).fill(0);
+export function range(numberOfItems: number, endIndex?: number): number[] {
+  const num = (endIndex ?? false) ? (endIndex - numberOfItems) : numberOfItems;
+  if (isNumeric(num) && num >= 1) {
+    return Array(num).fill(0).map((_, i) => i + ((endIndex ?? false) ? numberOfItems : 0));
   }
   return [];
 }
@@ -248,8 +255,8 @@ export function standardDeviation(arr, usePopulation = false) {
   );
 }
 
-export function randomSample(items) {
-  return items[Math.floor(Math.random() * items.length)];
+export function randomSample(items, count?: number) {
+  return items[Math.floor(Math.random() * (count ?? items.length))];
 }
 
 export function intersection(arr1: any[], arr2: any[], parser?: (item: any) => any): any[] {
@@ -280,4 +287,27 @@ export function countOccurrences<T>(arr: any[]): Record<any, number> {
     },
     {} as Record<any, number>,
   );
+}
+
+export function deepCopyArray<T>(obj: T): T {
+  if (obj === null || typeof obj !== 'object') {
+    return obj;
+  }
+
+  if (Array.isArray(obj)) {
+    return obj.map(item => deepCopy(item)) as unknown as T;
+  }
+
+  const copiedObj: any = {};
+  for (const key in obj) {
+    if (obj.hasOwnProperty(key)) {
+      copiedObj[key] = deepCopy((obj as any)[key]);
+    }
+  }
+
+  return copiedObj;
+}
+
+export function reverseArray<T>(arr: T[]): T[] {
+  return [...arr].reverse();
 }

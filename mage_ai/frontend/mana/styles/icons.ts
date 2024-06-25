@@ -7,47 +7,60 @@ export type StyleProps = {
   fill?: string;
   height?: number;
   inverted?: boolean;
+  muted?: boolean;
   opacity?: number;
+  secondary?: boolean;
   size?: number;
   small?: boolean;
   stroke?: string;
   style?: any;
+  success?: boolean;
   useStroke?: boolean;
   viewBox?: string;
   width?: number;
   xsmall?: boolean;
+  warning?: boolean;
+  error?: boolean;
 };
 
 const icons = css<StyleProps>`
-  ${({ color, colorName, fill, inverted, theme, useStroke }) =>
+  ${({ color, colorName, fill, inverted, muted, secondary, theme, useStroke, ...rest }) =>
     !useStroke &&
     `
     fill: ${
-      typeof color !== 'undefined'
-        ? color
-        : typeof colorName !== 'undefined'
-          ? theme.colors[colorName]
-          : typeof fill !== 'undefined' && fill !== null
-            ? fill
-            : inverted
-              ? theme.icons.color.inverted
-              : theme.icons.color.base
+      [
+        rest?.error && 'var(--colors-statuses-error)',
+        rest?.success && 'var(--colors-statuses-success)',
+        rest?.warning && 'var(--colors-statuses-warning)',
+        muted && 'var(--fonts-color-text-muted)',
+        typeof colorName !== 'undefined' && theme.colors[colorName],
+        typeof color !== 'undefined' && color,
+        fill ??
+          theme.icons.color[
+            [inverted && 'inverted', secondary && 'secondary'].find(Boolean) ??
+              'base'
+          ],
+      ].filter(Boolean)[0]
     };
   `}
 
-  ${({ color, colorName, inverted, stroke, theme, useStroke }) =>
+  ${({ color, colorName, inverted, stroke, muted, secondary, theme, useStroke, ...rest }) =>
     useStroke &&
     `
     stroke: ${
-      typeof color !== 'undefined'
-        ? color
-        : typeof colorName !== 'undefined'
-          ? theme.colors[colorName]
-          : typeof stroke !== 'undefined' && stroke !== null
-            ? stroke
-            : inverted
-              ? theme.icons.color.inverted
-              : theme.icons.color.base
+      [
+        rest?.error && 'var(--colors-statuses-error)',
+        rest?.success && 'var(--colors-statuses-success)',
+        rest?.warning && 'var(--colors-statuses-warning)',
+        muted && 'var(--fonts-color-text-muted)',
+        typeof colorName !== 'undefined' && theme.colors[colorName],
+        typeof color !== 'undefined' && color,
+        stroke ??
+          theme.icons.color[
+            [inverted && 'inverted', secondary && 'secondary'].find(Boolean) ??
+              'base'
+          ],
+      ].filter(Boolean)[0]
     };
   `}
 `;

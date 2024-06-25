@@ -1,5 +1,19 @@
 @use '../../../abstracts/helpers' as *;
+@use '../../../abstracts/variables' as *;
 @use '../../../base/svg';
+
+@mixin hide {
+  opacity: 0;
+  pointer-events: none;
+  visibility: hidden;
+  z-index: -1;
+}
+
+@mixin show {
+  opacity: 1;
+  pointer-events: all;
+  visibility: visible;
+}
 
 .canvas {
   background-color: var(--backgrounds-body);
@@ -8,6 +22,9 @@
   position: absolute; /* Ensure it behaves correctly inside the parent container */
   overflow: visible; /* Ensure content can overflow without clipping */
   transform-origin: top left;
+
+  /* Add outline shadow */
+  box-shadow: 0 0 30px 10px var(--blue);
 
   &:before,
   &:after {
@@ -48,20 +65,33 @@
     }
   }
 
-  @each $value1 in $numbers-more {
-    &.level-#{$value1}-active {
-      .level-#{$value1} {
-        opacity: 1;
-        pointer-events: all;
-      }
+  &.optional-hidden {
+    .optional {
+
     }
   }
 
-  .level {
-    opacity: 0;
-    pointer-events: none;
-    z-index: -1;
+  .optional {
+
   }
+
+  &.dragging {
+    .connectionLines {
+      z-index: 5;
+    }
+  }
+
+  .connectionLines {
+    height: 100%;
+    pointer-events: none;
+    position: absolute;
+    width: 100%;
+
+  }
+
+  /* .level {
+    @include hidden;
+  } */
 
   .centered {
     /* Center the container within its parent */
@@ -71,6 +101,186 @@
   }
 }
 
+.hide {
+  @include hide;
+}
+
+.hiddenOffscreen {
+  display: none !important;
+  height: 0 !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+  position: absolute !important;
+  right: 100% !important;
+  top: 100% !important;
+  transform: none !important;
+  visibility: hidden !important;
+  width: 0 !important;
+  z-index: -9999 !important;
+}
+
+.show {
+  @include show;
+}
+
+@mixin animating {
+  height: 100vh;
+  object-fit: contain;
+  overflow: hidden;
+  position: absolute;
+  width: 100vw;
+}
+
+@mixin disable {
+  height: 0;
+  pointer-events: none;
+  width: 0;
+}
+
+.wrapper {
+  &.waiting {
+    .enter {
+      @include hide;
+    }
+  }
+}
+
 .path {
   @include svg.fill-stroke-colors();
+}
+
+.planesWrapper {
+  @include disable;
+  left: 0;
+  top: 0;
+}
+
+.idle {
+  @include hide;
+}
+
+.enter {
+  @include show;
+
+  height: 100vh;
+  position: absolute;
+  width: 100vw;
+
+  z-index: 4;
+
+  &.waiting {
+    @include disable;
+  }
+}
+
+.entering {
+  @include animating;
+  @include show;
+
+  z-index: 4;
+}
+
+.exit {
+  @include animating;
+}
+
+.exiting {
+  @include show;
+
+  z-index: 5;
+}
+
+.interstitial {
+  height: 0;
+  width: 0;
+
+  &.show {
+    @include animating;
+
+    align-items: center;
+    display: grid;
+    justify-items: center;
+    z-index: 7;
+  }
+
+  .content {
+    backdrop-filter: blur(20px);
+    background-color: var(--colors-graylo);
+    border-radius: var(--borders-radius-sm);
+    position: absolute;
+    min-width: 200px;
+    top: 50%;
+    transform: translateY(-50%);
+  }
+
+  .icon {
+    @include hide;
+    position: absolute;
+  }
+
+  &.left {
+    .iconLeft {
+      @include show;
+      position: relative;
+    }
+  }
+
+  &.right {
+    .iconRight {
+      @include show;
+      position: relative;
+    }
+  }
+}
+
+@keyframes dash-base {
+  to {
+    stroke-dashoffset: -10; /* Same as stroke-dasharray for continuous flow */
+  }
+}
+
+@keyframes dash-to-output {
+  to {
+    stroke-dashoffset: -2; /* Complete cycle of dash and gap proportions */
+  }
+}
+
+.line {
+  &.animateFlow {
+    animation: dash-base 10s linear infinite;
+    fill: none;
+    stroke-dasharray: 5, 5; /* Equal lengths of dash and gap */
+    stroke-dashoffset: 0;
+
+    &.app-output,
+    &.block-output {
+      animation: dash-to-output 0.5s linear infinite;
+      opacity: 1;
+      stroke-dasharray: 1, 1;
+    }
+  }
+
+  &.app-output,
+  &.block-output {
+    opacity: 0.3;
+  }
+}
+
+.background {
+  @include hide;
+
+  fill: none;
+
+  &.animateFlow {
+    @include show;
+  }
+
+  &.block-block {
+    opacity: 0.99;
+  }
+
+  &.app-output,
+  &.block-output {
+    opacity: 0.3;
+  }
 }

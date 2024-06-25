@@ -56,6 +56,7 @@ export function extractNestedBlocks(
     addBlockDependenciesToNestedPipelineBlocks?: boolean;
     addPipelineGroupsToBlocks?: boolean;
     addPipelineToBlocks?: boolean;
+    excludeBlockTypes?: BlockTypeEnum[];
   },
   dependencies?: {
     downstreamBlocks?: DependencyUUIDType[];
@@ -66,6 +67,7 @@ export function extractNestedBlocks(
     addBlockDependenciesToNestedPipelineBlocks = false,
     addPipelineGroupsToBlocks = false,
     addPipelineToBlocks = false,
+    excludeBlockTypes,
   } = opts || {};
   const { downstreamBlocks, upstreamBlocks } = dependencies || {};
 
@@ -127,7 +129,9 @@ export function extractNestedBlocks(
       };
     }
 
-    mapping[block.uuid] = block;
+    if (!excludeBlockTypes || !excludeBlockTypes.includes(block.type)) {
+      mapping[block.uuid] = block;
+    }
   });
 
   return mapping;

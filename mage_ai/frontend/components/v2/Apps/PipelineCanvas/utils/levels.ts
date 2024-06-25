@@ -4,7 +4,11 @@ export function buildNamesapceForLevel(level: number): string {
   return `level_${level}`;
 }
 
-export function buildUUIDForLevel(uuid: string, level: number): string {
+export function buildUUIDForLevel(uuid: string, level?: number): string {
+  if (typeof level === undefined || level === null) {
+    return uuid;
+  }
+
   return [buildNamesapceForLevel(level) ?? '', String(uuid ?? '')]
     ?.filter?.(Boolean)
     .join(DELIMITER);

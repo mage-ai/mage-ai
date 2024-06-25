@@ -49,6 +49,7 @@ export interface TypographyColorsType {
     blue: string;
     inverted: string;
     muted: string;
+    secondary: string;
   };
 }
 
@@ -88,6 +89,8 @@ interface ColorsDerivedType {
   icons: {
     base: string;
     inverted: string;
+    muted: string;
+    secondary: string;
   };
   outline: OutlineType;
   placeholder: {
@@ -104,6 +107,8 @@ interface ColorsDerivedType {
 
 export const COLOR_NAMES = indexBy(
   [
+    'azure',
+    'azureLo',
     'black',
     'blackFixed',
     'blue',
@@ -164,6 +169,8 @@ export const COLOR_NAMES = indexBy(
 );
 
 export interface ColorsType extends ColorsDerivedType {
+  azure: string;
+  azureLo: string;
   black: string;
   blackFixed: string;
   blue: string;
@@ -221,7 +228,18 @@ export interface ColorsType extends ColorsDerivedType {
   whiteHi: string;
 }
 
-const Colors = {
+export const Colors = {
+  azure: {
+    [ModeEnum.DARK]: '#148EFF',
+    [ModeEnum.LIGHT]: '#148EFF',
+    [ModeEnum.MODE3]: '#148EFF',
+  },
+  azureLo: {
+    // 10%
+    [ModeEnum.DARK]: '#1F6BFF1A',
+    [ModeEnum.LIGHT]: '#1F6BFF1A',
+    [ModeEnum.MODE3]: '#1F6BFF1A',
+  },
   black: {
     [ModeEnum.DARK]: '#000000',
     [ModeEnum.LIGHT]: '#000000',
@@ -233,7 +251,7 @@ const Colors = {
     [ModeEnum.MODE3]: '#000000',
   },
   blackLo: {
-    [ModeEnum.DARK]: '#00000033',
+    [ModeEnum.DARK]: '#00000033', // 20%
     [ModeEnum.LIGHT]: '#00000033',
     [ModeEnum.MODE3]: '#00000033',
   },
@@ -243,7 +261,7 @@ const Colors = {
     [ModeEnum.MODE3]: '#00000099',
   },
   blackHi: {
-    [ModeEnum.DARK]: '#000000D9',
+    [ModeEnum.DARK]: '#000000D9', // 85%
     [ModeEnum.LIGHT]: '#000000D9',
     [ModeEnum.MODE3]: '#000000D9',
   },
@@ -512,6 +530,16 @@ const Colors = {
     [ModeEnum.LIGHT]: '#1B00661A',
     [ModeEnum.MODE3]: '#FFFFFF1A',
   },
+  monotone: {
+    [ModeEnum.DARK]: '#FFFFFF',
+    [ModeEnum.LIGHT]: '#000000',
+    [ModeEnum.MODE3]: '#A1A1A1',
+  },
+  inverted: {
+    [ModeEnum.DARK]: '#000000',
+    [ModeEnum.LIGHT]: '#FFFFFF',
+    [ModeEnum.MODE3]: '#A1A1A1',
+  },
 };
 
 function convert(mapping: ModeType): ModeType {
@@ -550,11 +578,11 @@ const ColorsDerived = {
         }),
       },
       basic: {
-        default: {
-          [ModeEnum.DARK]: 'transparent',
-          [ModeEnum.LIGHT]: 'transparent',
-          [ModeEnum.MODE3]: 'transparent',
-        },
+        default: convert({
+          [ModeEnum.DARK]: 'grayLo',
+          [ModeEnum.LIGHT]: 'grayLo',
+          [ModeEnum.MODE3]: 'grayLo',
+        }),
         hover: convert({
           [ModeEnum.DARK]: 'whiteHi',
           [ModeEnum.LIGHT]: 'whiteHi',
@@ -656,6 +684,30 @@ const ColorsDerived = {
           [ModeEnum.DARK]: 'grayMd',
           [ModeEnum.LIGHT]: 'blueMd',
           [ModeEnum.MODE3]: 'blueMd',
+        }),
+      },
+      thumbNested: {
+        default: convert({
+          [ModeEnum.DARK]: '#34404C33',
+          [ModeEnum.LIGHT]: '#FFFFFF33',
+          [ModeEnum.MODE3]: '#FFFFFF33',
+        }),
+        hover: convert({
+          [ModeEnum.DARK]: '#FFFFFF1A',
+          [ModeEnum.LIGHT]: '#FFFFFF1A',
+          [ModeEnum.MODE3]: '#FFFFFF1A',
+        }),
+      },
+      trackNested: {
+        default: convert({
+          [ModeEnum.DARK]: '#34404C1A',
+          [ModeEnum.LIGHT]: '#0500FF1A',
+          [ModeEnum.MODE3]: '#4776FF1A',
+        }),
+        hover: convert({
+          [ModeEnum.DARK]: '#34404C33',
+          [ModeEnum.LIGHT]: '#0500FF33',
+          [ModeEnum.MODE3]: '#4776FF33',
         }),
       },
     },
@@ -771,6 +823,16 @@ const ColorsDerived = {
       [ModeEnum.LIGHT]: 'white',
       [ModeEnum.MODE3]: 'gray',
     }),
+    muted: convert({
+      [ModeEnum.DARK]: 'whiteLo',
+      [ModeEnum.LIGHT]: 'blackMd',
+      [ModeEnum.MODE3]: 'blackMd',
+    }),
+    secondary: convert({
+      [ModeEnum.DARK]: 'whiteMd',
+      [ModeEnum.LIGHT]: 'black',
+      [ModeEnum.MODE3]: 'black',
+    }),
   },
   outline: {
     button: {
@@ -870,6 +932,11 @@ const ColorsDerived = {
         [ModeEnum.MODE3]: 'white',
       }),
       muted: convert({
+        [ModeEnum.DARK]: 'whiteLo',
+        [ModeEnum.LIGHT]: 'blackLo',
+        [ModeEnum.MODE3]: 'blackLo',
+      }),
+      secondary: convert({
         [ModeEnum.DARK]: 'whiteMd',
         [ModeEnum.LIGHT]: 'blackMd',
         [ModeEnum.MODE3]: 'blackMd',
@@ -878,6 +945,13 @@ const ColorsDerived = {
   },
 };
 
-const ColorsAll = { ...Colors, ...ColorsDerived };
+const ColorsAll = {
+  ...Colors,
+  ...(Object.entries(Colors).reduce((acc, [key, value]) => ({
+    ...acc,
+    [key.toLowerCase()]: value,
+  }), {})),
+  ...ColorsDerived,
+};
 
 export default ColorsAll;

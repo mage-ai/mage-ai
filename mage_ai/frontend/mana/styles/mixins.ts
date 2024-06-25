@@ -1,7 +1,7 @@
 import { css } from 'styled-components';
 
 export const transition = css`
-  transition: 0.2s all ease-in-out;
+  transition: 0.3s all ease-in-out;
 `;
 
 export const transitionFast = css`
@@ -71,6 +71,40 @@ export const gradientBackground = (
   );
 `;
 
+export const gradientBackgroundVars = (
+  angle: string,
+  startColorVar: string,
+  endColorVar: string,
+  startPercentage?: number,
+  endPercentage?: number,
+  backgroundColorVar?: string,
+) => css`
+  background: -webkit-linear-gradient(
+    ${angle},
+    ${startColorVar} ${startPercentage || 0}%,
+    ${endColorVar} ${endPercentage || 100}%,
+    ${backgroundColorVar}
+  );
+  background: -moz-linear-gradient(
+    ${angle},
+    ${startColorVar} ${startPercentage || 0}%,
+    ${endColorVar} ${endPercentage || 100}%,
+    ${backgroundColorVar}
+  );
+  background: -o-linear-gradient(
+    ${angle},
+    ${startColorVar} ${startPercentage || 0}%,
+    ${endColorVar} ${endPercentage || 100}%,
+    ${backgroundColorVar}
+  );
+  background: linear-gradient(
+    ${angle},
+    ${startColorVar} ${startPercentage || 0}%,
+    ${endColorVar} ${endPercentage || 100}%,
+    ${backgroundColorVar}
+  );
+`;
+
 type OutlineHoverProps = {
   active?: boolean;
   borderColor?: string;
@@ -90,21 +124,21 @@ export const outlineHover = ({
     &:hover {
       box-shadow:
         0 0 0
-          ${theme.borders.outline.offset + (outlineOffset || 0)}px
-          ${borderColor || theme.colors.backgrounds.button.base},
+          ${theme.borders.outline.offset + (outlineOffset ?? 0)}px
+          ${borderColor ?? theme.colors.backgrounds.button.base},
         0 0 0
-          ${theme.borders.outline.offset + (outlineOffset || 0) + theme.borders.outline.width + (outlineWidth || 0)}px
-          ${outlineColor || theme.colors.purple};
+          ${theme.borders.outline.offset + (outlineOffset ?? 0) + theme.borders.outline.width + (outlineWidth ?? 0)}px
+          ${outlineColor ?? theme.colors.purple};
     }
 
     &:focus {
       box-shadow:
         0 0 0
-          ${theme.borders.outline.offset + (outlineOffset || 0)}px
-          ${borderColor || theme.colors.backgrounds.button.base},
+          ${theme.borders.outline.offset + (outlineOffset ?? 0)}px
+          ${borderColor ?? theme.colors.backgrounds.button.base},
         0 0 0
-          ${theme.borders.outline.offset + (outlineOffset || 0) + theme.borders.outline.width + (outlineWidth || 0)}px
-          ${outlineColor || theme.colors.purple};
+          ${theme.borders.outline.offset + (outlineOffset ?? 0) + theme.borders.outline.width + (outlineWidth ?? 0)}px
+          ${outlineColor ?? theme.colors.purple};
     }
   `}
 

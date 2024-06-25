@@ -1,0 +1,5 @@
+export const BADGE_HEIGHT = 40;
+export const PADDING_VERTICAL = 12;
+export const BLOCK_NODE_MIN_WIDTH = 300;
+export const GROUP_NODE_MIN_WIDTH = 320;
+export const SELECTED_GROUP_NODE_MIN_WIDTH = GROUP_NODE_MIN_WIDTH * 2;

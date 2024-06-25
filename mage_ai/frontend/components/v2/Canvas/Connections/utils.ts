@@ -47,7 +47,7 @@ export function connectionUUID({ from, fromItem, to, toItem }: ConnectionType): 
   return `${from}-${to}`;
 }
 
-function getAnchorPosition({ left, height, top, width }: RectType, position?: string) {
+function getAnchorPosition({ left, height, top, width, offset }: RectType, position?: string) {
   switch (position) {
     case 'top':
       return { x: left + width / 2, y: top };
@@ -75,6 +75,12 @@ function calculatePosition(
 ) {
   const fromPosition = getAnchorPosition(fromRect, fromPositionArg);
   const toPosition = getAnchorPosition(toRect, toPositionArg);
+
+  fromPosition.x += fromRect.offset?.x ?? 0;
+  fromPosition.y += fromRect.offset?.y ?? 0;
+  toPosition.x += toRect.offset?.x ?? 0;
+  toPosition.y += toRect.offset?.y ?? 0;
+
   const { x: startX, y: startY } = fromPosition;
   const { x: endX, y: endY } = toPosition;
 

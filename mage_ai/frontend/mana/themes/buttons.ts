@@ -38,8 +38,8 @@ export default function build(colors: ColorsType): ButtonsType {
     },
     font: {
       lineHeight: {
-        base: 19,
-        sm: 17,
+        base: 18,
+        sm: 16,
       },
     },
     grid: {
@@ -54,10 +54,14 @@ export default function build(colors: ColorsType): ButtonsType {
       color: colors.outline.button,
     },
     padding: {
-      base: `${PaddingVerticalEnum.BASE} 14px`,
-      sm: `${PaddingVerticalEnum.MD} 13px`,
-      xs: `${PaddingVerticalEnum.XS} ${PaddingVerticalEnum.SM}`,
-      xxs: PaddingVerticalEnum.XS,
+      // 1 for the border
+      base: `${PaddingVerticalEnum.BASE - 1}px 14px`,
+      // 1 for the border
+      sm: `${PaddingVerticalEnum.MD - 1}px 13px`,
+      // 1 for the border
+      xs: `${PaddingVerticalEnum.XS - 1}px ${PaddingVerticalEnum.SM}px`,
+      // 1 for the border
+      xxs: `${PaddingVerticalEnum.XS - 1}px`,
     },
   };
 }

@@ -6,7 +6,7 @@ import DeferredRenderer from '@mana/components/DeferredRenderer';
 import Item from './Item/index';
 import Loading from '@mana/components/Loading';
 import Scrollbar from '@mana/elements/Scrollbar';
-import useMutate from '@api/useMutate';
+import { useMutate } from '@context/v2/APIMutation/useMutate';
 import { ALL_SUPPORTED_FILE_EXTENSIONS_REGEX, COMMON_EXCLUDE_PATTERNS } from '@interfaces/FileType';
 import {
   AppConfigType,
@@ -45,8 +45,8 @@ function SystemBrowser({ app, operations }: AppLoaderProps, ref: React.Ref<HTMLD
   const addPanel = app?.operations?.[OperationTypeEnum.ADD_PANEL]?.effect as AddPanelOperationType;
   const removeApp = operations?.[OperationTypeEnum.REMOVE_APP]?.effect;
 
-  const { contextMenu, renderContextMenu, removeContextMenu } = useContextMenu({
-    container: containerRef,
+  const { contextMenuRef, renderContextMenu, removeContextMenu } = useContextMenu({
+    containerRef,
     uuid: appUUID,
   });
 
@@ -161,7 +161,9 @@ function SystemBrowser({ app, operations }: AppLoaderProps, ref: React.Ref<HTMLD
     }
   }
 
-  const mutants = useMutate('browser_items', {
+  const mutants = useMutate({
+    resource: 'browser_items',
+  }, {
     handlers: {
       list: {
         onSuccess: (items: FileType[]) => {
@@ -196,7 +198,8 @@ function SystemBrowser({ app, operations }: AppLoaderProps, ref: React.Ref<HTMLD
     <Scrollbar ref={containerRef} style={{ overflow: 'auto' }}>
       {mutants.list.isLoading && <Loading />}
       <div id={rootID} />
-      {contextMenu}
+
+      <div ref={contextMenuRef} />
     </Scrollbar>
   );
 }

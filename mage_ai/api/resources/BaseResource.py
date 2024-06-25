@@ -134,7 +134,7 @@ class BaseResource(Resource, ResultSetMixIn):
 
     @classmethod
     def register_child_resource(
-        cls, resource_name_plural: str, resource_class: BaseResource, **kwargs
+        cls, resource_name_plural: str, resource_class: Type[BaseResource], **kwargs
     ):
         cls.child_resources()[resource_name_plural] = resource_class
 

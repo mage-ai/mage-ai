@@ -2,6 +2,7 @@ from mage_ai.api.oauth_scope import OauthScope
 from mage_ai.api.operations.constants import OperationType
 from mage_ai.api.policies.BasePolicy import BasePolicy
 from mage_ai.api.presenters.PipelineExecutionFrameworkPresenter import (
+    WRITEABLE_ATTRIBUTES,
     PipelineExecutionFrameworkPresenter,
 )
 from mage_ai.orchestration.constants import Entity
@@ -39,9 +40,8 @@ PipelineExecutionFrameworkPolicy.allow_actions(
 
 
 PipelineExecutionFrameworkPolicy.allow_read(
-    PipelineExecutionFrameworkPresenter.default_attributes,
+    PipelineExecutionFrameworkPresenter.default_attributes + ['pipelines'],
     on_action=[
-        OperationType.DETAIL,
         OperationType.LIST,
     ],
     scopes=[
@@ -51,7 +51,18 @@ PipelineExecutionFrameworkPolicy.allow_read(
 )
 
 PipelineExecutionFrameworkPolicy.allow_read(
-    PipelineExecutionFrameworkPresenter.default_attributes,
+    PipelineExecutionFrameworkPresenter.default_attributes + ['framework', 'pipelines'],
+    on_action=[
+        OperationType.DETAIL,
+    ],
+    scopes=[
+        OauthScope.CLIENT_PRIVATE,
+    ],
+    condition=lambda policy: policy.has_at_least_viewer_role(),
+)
+
+PipelineExecutionFrameworkPolicy.allow_read(
+    PipelineExecutionFrameworkPresenter.default_attributes + ['pipelines'],
     on_action=[
         OperationType.CREATE,
         OperationType.DELETE,
@@ -83,15 +94,7 @@ PipelineExecutionFrameworkPolicy.allow_write(
 )
 
 PipelineExecutionFrameworkPolicy.allow_write(
-    [
-        'blocks',
-        'description',
-        'name',
-        'pipelines',
-        'settings',
-        'tags',
-        'type',
-    ],
+    WRITEABLE_ATTRIBUTES,
     on_action=[
         OperationType.UPDATE,
     ],

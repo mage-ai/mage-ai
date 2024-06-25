@@ -1,43 +1,37 @@
-import React, { useRef } from 'react';
+import React from 'react';
 
 import Button, { ButtonGroup } from '@mana/elements/Button';
+import Grid from '@mana/components/Grid';
 import KeyboardTextGroup from '@mana/elements/Text/Keyboard/Group';
-import { AppLoaderProps } from '../../../interfaces';
+import Text from '@mana/elements/Text';
+import TextInput from '@mana/elements/Input/TextInput';
+import useToolbars, { ToolbarsType } from '../useToolbars';
 import { KEY_SYMBOL_META, KEY_SYMBOL_ENTER } from '@utils/hooks/keyboardShortcuts/constants';
 import { Save, PlayButtonFilled } from '@mana/icons';
-import TextInput from '@mana/elements/Input/TextInput';
-import { FileType, ResourceType } from '@components/v2/IDE/interfaces';
-import Grid from '@mana/components/Grid';
-import Text from '@mana/elements/Text';
 
-function ToolbarTop(
-  props: AppLoaderProps & {
-    loading: boolean;
-    resource: ResourceType;
-    stale: boolean;
-    updateLocalContent: (file: FileType) => void;
-    updateServerContent: (
-      file: FileType,
-      payload: {
-        content?: string;
-        path?: string;
-      },
-    ) => void;
-  },
-) {
-  const inputRef = useRef<HTMLInputElement>(null);
-
-  const { loading, resource, stale, updateLocalContent, updateServerContent } = props;
-  const { main, original } = resource;
+function ToolbarTop({
+  loading,
+  ...props
+}: {
+  loading?: boolean;
+} & ToolbarsType) {
+  const {
+    inputRef,
+    main,
+    overrideLocalContentFromServer,
+    overrideServerContentFromLocal,
+    saveCurrentContent,
+    stale,
+  } = useToolbars(props);
 
   return (
     <Grid
-      alignItems='stretch'
+      alignItems="stretch"
       columnGap={8}
       paddingBottom={8}
       paddingTop={8}
       templateColumns={stale ? 'auto auto 1fr' : 'auto 1fr'}
-      templateRows='auto'
+      templateRows="auto"
     >
       {!stale && (
         <ButtonGroup>
@@ -45,11 +39,7 @@ function ToolbarTop(
             Icon={Save}
             basic
             loading={loading}
-            onClick={() => {
-              updateServerContent(main, {
-                path: inputRef?.current?.value || main?.path,
-              });
-            }}
+            onClick={event => saveCurrentContent(event as any)}
             small
           />
           <Button
@@ -80,7 +70,7 @@ function ToolbarTop(
           </Text>
 
           <ButtonGroup>
-            <Button asLink loading={loading} onClick={() => updateServerContent(main, main)} small>
+            <Button asLink loading={loading} onClick={(event) => overrideServerContentFromLocal(event as any)} small>
               Save local
             </Button>
             <Button
@@ -88,7 +78,7 @@ function ToolbarTop(
               basic
               onClick={event => {
                 event.preventDefault();
-                updateLocalContent(original);
+                overrideLocalContentFromServer();
               }}
               small
             >

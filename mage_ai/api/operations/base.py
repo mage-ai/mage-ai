@@ -610,7 +610,10 @@ class BaseOperation:
             )
 
         if DELETE == self.action:
-            await res.process_delete(**updated_options)
+            await res.process_delete(**{
+                **updated_options,
+                **dict(payload=self.__payload_for_resource()),
+            })
         elif DETAIL == self.action:
 
             def _build_authorize_query(

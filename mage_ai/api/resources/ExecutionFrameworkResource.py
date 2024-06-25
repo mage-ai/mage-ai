@@ -1,32 +1,16 @@
-from typing import List, Optional, Union
+import urllib.parse
+from typing import Optional
 
 from mage_ai.api.errors import ApiError
 from mage_ai.api.resources.GenericResource import GenericResource
 from mage_ai.api.resources.PipelineExecutionFrameworkResource import (
     PipelineExecutionFrameworkResource,
 )
-from mage_ai.frameworks.execution.constants import EXECUTION_FRAMEWORKS
 from mage_ai.frameworks.execution.models.pipeline.base import PipelineExecutionFramework
-from mage_ai.shared.array import find
-
-
-def get_execution_frameworks(
-    level: Optional[int] = None,
-    uuid: Optional[str] = None,
-) -> Union[List[PipelineExecutionFramework], PipelineExecutionFramework]:
-    arr = []
-    for framework in EXECUTION_FRAMEWORKS:
-        arr.append(framework)
-        if level is None or level >= 1:
-            arr += framework.get_pipelines(level=level)
-
-    if uuid:
-        result = find(lambda framework: framework.uuid == uuid, arr)
-        if result:
-            return result
-        else:
-            raise ApiError(ApiError.RESOURCE_NOT_FOUND)
-    return arr
+from mage_ai.frameworks.execution.models.pipeline.utils import (
+    get_all_frameworks,
+    get_framework,
+)
 
 
 class ExecutionFrameworkResource(GenericResource):
@@ -39,21 +23,19 @@ class ExecutionFrameworkResource(GenericResource):
             level = int(level)
 
         return cls.build_result_set(
-            get_execution_frameworks(level=level),
+            await get_all_frameworks(level=level),
             user,
             **kwargs,
         )
 
     @classmethod
-    async def get_model(cls, pk, **kwargs) -> PipelineExecutionFramework:
-        model = get_execution_frameworks(uuid=pk)
-        if isinstance(model, list):
-            return model[0]
+    async def get_model(cls, pk: str, **kwargs) -> Optional[PipelineExecutionFramework]:
+        model = await get_framework(urllib.parse.unquote(pk))
         return model
 
     @classmethod
     async def member(cls, pk, user, **kwargs):
-        model = cls.get_model(pk, **kwargs)
+        model = cls.get_model(urllib.parse.unquote(pk), **kwargs)
 
         if not model:
             raise ApiError(ApiError.RESOURCE_NOT_FOUND)

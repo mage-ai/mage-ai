@@ -34,6 +34,7 @@ class EntityName(str, Enum):
     EventRule = 'EventRule'
     ExecutionFramework = 'ExecutionFramework'
     ExecutionFrameworkPipeline = 'ExecutionFrameworkPipeline'
+    ExecutionOutput = 'ExecutionOutput'
     ExecutionState = 'ExecutionState'
     ExtensionOption = 'ExtensionOption'
     Feature = 'Feature'

@@ -10,6 +10,7 @@ export type StyleProps = {
   medium?: boolean;
   monospace?: boolean;
   muted?: boolean;
+  secondary?: boolean;
   semiBold?: boolean;
   small?: boolean;
   xsmall?: boolean;
@@ -32,7 +33,7 @@ export const monospaceFontFamily = css<StyleProps>`
               : theme.fonts.family.monospace.regular};
 `;
 
-const baseFontFamily = css<StyleProps>`
+export const baseFontFamily = css<StyleProps>`
   font-family: ${({ black, bold, light, medium, semiBold, theme }) =>
     light
       ? theme.fonts.family.base.lightFont
@@ -49,17 +50,14 @@ const baseFontFamily = css<StyleProps>`
 
 const base = css<StyleProps>`
   ${({ monospace }) => monospace && monospaceFontFamily}
-
   ${({ monospace }) => !monospace && baseFontFamily}
 
-  color: ${({ blue, inverted, muted, theme }) =>
-    inverted
-      ? theme.fonts.color.text.inverted
-      : blue
-        ? theme.fonts.color.text.blue
-        : muted
-          ? theme.fonts.color.text.muted
-          : theme.fonts.color.text.base};
+  color: ${({ blue, inverted, muted, secondary, theme }) =>
+    theme.icons.color[
+      [blue && 'blue', inverted && 'inverted', muted && 'muted', secondary && 'secondary'].find(
+        Boolean,
+      ) ?? 'base'
+    ]};
 
   font-size: ${({ small, theme, xsmall }) =>
     small ? theme.fonts.size.sm : xsmall ? theme.fonts.size.xs : theme.fonts.size.base};

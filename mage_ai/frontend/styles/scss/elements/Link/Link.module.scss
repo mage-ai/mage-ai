@@ -1,0 +1,47 @@
+.link {
+  .block {
+    display: block;
+  }
+
+  .inline-block {
+    display: inline-block;
+  }
+
+  &:hover {
+    color: var(--link-color-hover) !important;
+  }
+
+  &.disabled {
+    color: var(--fonts-color-text-muted);
+    cursor: not-allowed;
+    pointer-events: none;
+  }
+
+  &.activeColorOnHover {
+    &:hover {
+      color: var(--fonts-color-text-base) !important;
+    }
+  }
+}
+
+.base {
+  color: var(--link-color-base) !important;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+.wrap {
+  display: block;
+  outline: none;
+
+  &:focus,
+  &:active,
+  &:hover,
+  &:visited {
+    border: none !important;
+    outline: none !important;
+    text-decoration: none !important;
+  }
+}
