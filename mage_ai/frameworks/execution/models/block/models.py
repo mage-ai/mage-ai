@@ -9,6 +9,11 @@ from mage_ai.shared.models import BaseDataClass
 
 
 @dataclass
+class Metadata(BaseDataClass):
+    required: Optional[bool] = None
+
+
+@dataclass
 class Template(BaseDataClass):
     description: Optional[str] = None
     inputs: Dict[str, InteractionInput] = field(default_factory=dict)
@@ -30,11 +35,13 @@ class Template(BaseDataClass):
 
 @dataclass
 class Configuration(BaseDataClass):
-    templates: Optional[Dict[str, Template]]
     dynamic: Optional[DynamicConfiguration] = None
+    metadata: Optional[Metadata] = None
+    templates: Optional[Dict[str, Template]] = None
 
     def __post_init__(self):
         self.serialize_attribute_class('dynamic', DynamicConfiguration)
+        self.serialize_attribute_class('metadata', Metadata)
 
         if self.templates and isinstance(self.templates, dict):
             self.templates = {
