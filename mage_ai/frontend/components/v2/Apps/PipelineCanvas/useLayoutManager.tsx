@@ -109,7 +109,6 @@ export default function useLayoutManager({
     });
 
     updateNodeItems(itemsUpdated);
-
     return itemsUpdated;
   }
 

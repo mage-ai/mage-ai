@@ -13,6 +13,7 @@ import { MenuItemType, RenderContextMenuOptions, RemoveContextMenuType, RenderCo
 } from '@mana/hooks/useContextMenu';
 import { ModelManagerType } from './useModelManager';
 import { PresentationManagerType } from './usePresentationManager';
+import stylesBuilder from '@styles/scss/apps/Canvas/Pipelines/Builder.module.scss';
 
 const GRID_SIZE = 40;
 
@@ -221,6 +222,7 @@ export default function useEventManager({
             setDragEnabled(true);
             setDropEnabled(true);
           });
+          containerRef?.current?.classList.add(stylesBuilder.dragging);
         },
         uuid: 'Reposition blocks',
       },
@@ -320,6 +322,7 @@ export default function useEventManager({
     setZoomPanDisabled(false);
     setDragEnabled(false);
     setDropEnabled(false);
+    containerRef?.current?.classList.remove(stylesBuilder.dragging);
   }
 
   function handleMouseDown(event: ClientEventType) {

@@ -56,37 +56,40 @@
       .level-#{$value1} {
         opacity: 1;
         pointer-events: all;
+
       }
+
+      .block {
+        z-index: 6;
+      }
+
+      .node {
+        z-index: 4;
+      }
+    }
+  }
+
+  &.dragging {
+    .connectionLines {
+      z-index: 5;
     }
   }
 
   .block {
-    z-index: 6 !important;
+    z-index: 6;
   }
 
-  &.node {
-    z-index: 4 !important;
+  .node {
+    z-index: 4;
   }
 
   .connectionLines {
-    z-index: 1;
+    height: 100%;
+    pointer-events: none;
+    position: absolute;
+    width: 100%;
+    z-index: 4;
 
-    .connectionLine {
-      &.connection-from-port-to-port,
-      &.connection-from-port-to-block,
-      &.connection-from-port-to-node,
-      &.connection-from-block-to-block,
-      &.connection-from-block-to-node,
-      &.connection-from-block-to-port,
-      &.connection-from-node-to-block,
-      &.connection-from-node-to-port {
-        z-index: 5;
-      }
-
-      &.connection-from-node-to-node {
-        z-index: 3;
-      }
-    }
   }
 
   .level {

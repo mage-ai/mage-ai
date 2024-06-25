@@ -336,16 +336,7 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
             snapToGrid={snapToGridOnDrag}
           />
 
-          <div
-            id={connectionLinesRootID.current}
-            style={{
-              height: '100%',
-              pointerEvents: 'none',
-              position: 'absolute',
-              width: '100%',
-              zIndex: 5,
-            }}
-          />
+          <div id={connectionLinesRootID.current} />
 
           {nodesMemo}
         </CanvasContainer>
