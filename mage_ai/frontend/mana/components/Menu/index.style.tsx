@@ -19,6 +19,17 @@ const borderStyles = css`
   border-right: 1px solid var(--colors-graymd);
 `;
 
+const focusedBackground = css`
+  background-color: var(--colors-graymd);
+  border-left-color: var(--colors-gray);
+  border-right-color: var(--colors-gray);
+`;
+
+const focused = css`
+  border-bottom-color: var(--colors-gray);
+  border-top-color: var(--colors-gray);
+`;
+
 export const MenuStyled = styled.div<MenuStyledProps>`
   ${({ left, top, zIndex }) =>
     (typeof left !== 'undefined' || typeof top !== 'undefined') &&
@@ -66,9 +77,7 @@ export const MenuItemContainerStyled = styled.div<{
   `}
 
   &:hover {
-    background-color: var(--colors-graymd);
-    border-left-color: var(--colors-gray);
-    border-right-color: var(--colors-gray);
+    ${focusedBackground}
   }
 `;
 
@@ -80,8 +89,7 @@ export const ItemContent = styled.div<{
   border-bottom: 1px solid transparent;
 
   &:hover {
-    border-bottom-color: var(--colors-gray);
-    border-top-color: var(--colors-gray);
+    ${focused}
   }
 
   ${({ first }) => first && `

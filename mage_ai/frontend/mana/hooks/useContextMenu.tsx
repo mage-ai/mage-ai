@@ -4,6 +4,8 @@ import { createRoot, Root } from 'react-dom/client';
 
 import DeferredRenderer from '@mana/components/DeferredRenderer';
 import Menu from '../components/Menu';
+import useKeyboardShortcuts from './shortcuts/useKeyboardShortcuts';
+import { KeyEnum } from './shortcuts/types';
 import { ClientEventType as ClientEventTypeT } from '../shared/interfaces';
 import { MenuItemType as MenuItemTypeT } from '../components/Menu/interfaces';
 import { selectKeys } from '@utils/hash';
@@ -32,6 +34,13 @@ export default function useContextMenu({
 
   const rootID = useMemo(() => `context-menu-root-${uuid}`, [uuid]);
 
+  const {
+    deregisterCommands,
+    registerCommands,
+  } = useKeyboardShortcuts({
+    target: contextMenuRootRef,
+  });
+
   function isEventInContainer(event: ClientEventType): boolean {
     return container?.current?.contains(event.target as Node);
   }
@@ -51,6 +60,8 @@ export default function useContextMenu({
       contextMenuRootRef.current.unmount();
       contextMenuRootRef.current = null;
     }
+
+    deregisterCommands();
   }
 
   function renderContextMenu(event: ClientEventType, items: MenuItemType[]) {
@@ -83,6 +94,17 @@ export default function useContextMenu({
         </ThemeProvider>
       </DeferredRenderer>,
     );
+
+    registerCommands({
+      down: {
+        handler: () => {
+          console.log('DOWN');
+        },
+        predicate: {
+          key: KeyEnum.ARROWDOWN,
+        },
+      },
+    });
   }
 
   useEffect(() => {
@@ -100,6 +122,7 @@ export default function useContextMenu({
       document?.removeEventListener('click', handleDocumentClick);
       menuRoot && menuRoot.unmount();
       contextMenuRootRef.current = null;
+      deregisterCommands();
     };
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
