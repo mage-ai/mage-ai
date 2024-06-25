@@ -9,6 +9,9 @@
   overflow: visible; /* Ensure content can overflow without clipping */
   transform-origin: top left;
 
+  /* Add outline shadow */
+  box-shadow: 0 0 30px 10px var(--colors-graymd);
+
   &:before,
   &:after {
     content: '';

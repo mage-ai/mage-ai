@@ -127,14 +127,37 @@ class Pipeline(DelegatorTarget):
 
         return self.pipelines
 
-    async def to_dict_async(self, *args, **kwargs) -> Dict:
-        pipeline = await self.get_pipeline()
-        data = await pipeline.to_dict_async(*args, **kwargs) if pipeline else {}
+    async def to_dict_async(
+        self, *args, include_pipelines: Optional[bool] = None, **kwargs
+    ) -> Dict:
+        await self.get_pipeline()
+        await self.get_blocks()
 
-        pipes = await self.get_pipelines()
-        pdicts = await asyncio.gather(*[p.to_dict_async(*args, **kwargs) for p in pipes])
-        data['pipelines'] = pdicts
-        data['blocks'] = await self.get_blocks()
+        data = dict(
+            description=self.description,
+            execution_framework=self.execution_framework,
+            name=self.name,
+            tags=self.tags,
+            type=self.type,
+            uuid=self.uuid,
+            variables=self.variables,
+        )
+
+        if self.blocks:
+            data['blocks'] = await asyncio.gather(*[
+                block.to_dict_async(*args, **kwargs) for block in self.blocks
+            ])
+
+        if include_pipelines:
+            await self.get_pipelines()
+            data['pipelines'] = await asyncio.gather(*[
+                pipeline.to_dict_async(
+                    *args,
+                    **kwargs,
+                    include_pipelines=include_pipelines,
+                )
+                for pipeline in self.pipelines
+            ])
 
         return data
 
