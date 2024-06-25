@@ -67,6 +67,8 @@ class BlockType(str, Enum):
     SCRATCHPAD = 'scratchpad'
     SENSOR = 'sensor'
     TRANSFORMER = 'transformer'
+    GROUP = 'group'
+    PIPELINE = 'pipeline'
 
 
 class BlockColor(str, Enum):
@@ -104,6 +106,7 @@ class PipelineType(str, Enum):
     PYTHON = 'python'
     PYSPARK = 'pyspark'
     STREAMING = 'streaming'
+    EXECUTION_FRAMEWORK = 'execution_framework'
 
 
 class PipelineStatus(str, Enum):
