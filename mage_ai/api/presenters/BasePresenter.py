@@ -23,7 +23,7 @@ class CustomList(list):
         self.already_validated = False
 
 
-class BasePresenter():
+class BasePresenter:
     all_attributes_attr = {}
     all_formats_attr = {}
     default_attributes = []
@@ -148,17 +148,15 @@ class BasePresenter():
 
             options_for_key = present_options_by_key.get(key) if present_options_by_key else {}
 
-            if issubclass(
-                    value.__class__,
-                    list) or issubclass(
-                    value.__class__,
-                    UserList):
+            if issubclass(value.__class__, list) or issubclass(value.__class__, UserList):
                 obj[key] = [
                     await self.__transform_value(
                         key,
                         v,
                         **merge_dict(kwargs, options_for_key or {}),
-                    ) for v in value]
+                    )
+                    for v in value
+                ]
             else:
                 obj[key] = await self.__transform_value(
                     key,
@@ -183,8 +181,10 @@ class BasePresenter():
 
         if issubclass(value.__class__, BaseModel):
             resource_class_name = f'{value.__class__.__name__}Resource'
-            resource_class = getattr(importlib.import_module(
-                f'mage_ai.api.resources.{resource_class_name}'), resource_class_name, )
+            resource_class = getattr(
+                importlib.import_module(f'mage_ai.api.resources.{resource_class_name}'),
+                resource_class_name,
+            )
             value = resource_class(value, self.current_user, **kwargs)
 
         if isinstance(value, datetime):
@@ -260,4 +260,5 @@ class BasePresenter():
                 return val(*args, **kwargs)
             else:
                 return val
+
         return _missing()

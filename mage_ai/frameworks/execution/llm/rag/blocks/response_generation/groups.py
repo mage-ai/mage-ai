@@ -1,7 +1,11 @@
+import os
+
 from mage_ai.data_preparation.models.constants import BlockType
 from mage_ai.frameworks.execution.models.block.base import BlockExecutionFramework
 from mage_ai.frameworks.execution.models.block.models import Configuration, Metadata
 from mage_ai.frameworks.execution.models.enums import GroupUUID
+
+templates_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'templates')
 
 CONTEXTUALIZATION = BlockExecutionFramework.load(
     uuid=GroupUUID.CONTEXTUALIZATION,
@@ -10,6 +14,7 @@ CONTEXTUALIZATION = BlockExecutionFramework.load(
         ' coherent response.'
     ),
     type=BlockType.GROUP,
+    templates_dir=templates_dir,
     configuration=Configuration.load(Metadata.load(required=True)),
     upstream_blocks=[],
     downstream_blocks=[GroupUUID.RESPONSE_SYNTHESIS],
@@ -21,6 +26,7 @@ RESPONSE_SYNTHESIS = BlockExecutionFramework.load(
         ' information.'
     ),
     type=BlockType.GROUP,
+    templates_dir=templates_dir,
     configuration=Configuration.load(Metadata.load(required=True)),
     upstream_blocks=[GroupUUID.CONTEXTUALIZATION],
     downstream_blocks=[GroupUUID.ANSWER_ENRICHMENT],
@@ -32,6 +38,7 @@ ANSWER_ENRICHMENT = BlockExecutionFramework.load(
         ' response.'
     ),
     type=BlockType.GROUP,
+    templates_dir=templates_dir,
     upstream_blocks=[GroupUUID.RESPONSE_SYNTHESIS],
     downstream_blocks=[GroupUUID.RESPONSE_FORMATTING],
 )
@@ -42,6 +49,7 @@ RESPONSE_FORMATTING = BlockExecutionFramework.load(
         ' requirements or preferences.'
     ),
     type=BlockType.GROUP,
+    templates_dir=templates_dir,
     upstream_blocks=[GroupUUID.ANSWER_ENRICHMENT],
     downstream_blocks=[],
 )

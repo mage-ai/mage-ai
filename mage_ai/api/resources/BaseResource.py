@@ -1,6 +1,8 @@
+from __future__ import annotations
+
 import importlib
 import inspect
-from typing import Any, Coroutine, Optional, Union
+from typing import Any, Coroutine, Optional, Type, Union
 
 import inflection
 
@@ -24,6 +26,7 @@ class BaseResource(Resource, ResultSetMixIn):
     #     mage_ai.api.operations.constants.COOKIE_PREFIX + <cookie_name>
     cookie_names = []
     model_class = None
+    child_resource_attr = {}
     parent_models_attr = {}
     parent_resource_attr = {}
 
@@ -77,6 +80,16 @@ class BaseResource(Resource, ResultSetMixIn):
         return cls.parent_resource_attr[cls.__name__]
 
     @classmethod
+    def child_resources(cls):
+        if not cls.child_resource_attr.get(cls.__name__):
+            cls.child_resource_attr[cls.__name__] = {}
+        return cls.child_resource_attr[cls.__name__]
+
+    @classmethod
+    def get_child_resource_class(cls, resource_name_plural: str) -> Optional[Type[BaseResource]]:
+        return cls.child_resources().get(resource_name_plural)
+
+    @classmethod
     def register_collective_loader(cls, key, **kwargs):
         cls.collective_loader()[key] = kwargs
 
@@ -118,6 +131,12 @@ class BaseResource(Resource, ResultSetMixIn):
             '{}_id'.format(resource_class.resource_name_singular()),
         )
         cls.parent_resource()[column_name] = resource_class
+
+    @classmethod
+    def register_child_resource(
+        cls, resource_name_plural: str, resource_class: BaseResource, **kwargs
+    ):
+        cls.child_resources()[resource_name_plural] = resource_class
 
     @classmethod
     def build_result_set(cls, arr, user, **kwargs) -> ResultSet:

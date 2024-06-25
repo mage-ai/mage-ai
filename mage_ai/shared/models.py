@@ -268,6 +268,9 @@ class BaseClass:
         except AttributeError as err:
             print(f'[WARNING] {self.__class__.__name__}.serialize_attribute_enums: {err}')
 
+    async def to_dict_async(self, *args, **kwargs) -> Dict:
+        return self.to_dict(*args, **kwargs)
+
     def to_dict(
         self,
         convert_enum: bool = False,
@@ -340,6 +343,9 @@ class DelegatorTarget:
 
     def __getattr__(self, item):
         return getattr(self._target, item)
+
+    def get_target(self):
+        return self._target
 
 
 class Delegator:

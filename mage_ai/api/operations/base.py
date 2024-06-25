@@ -51,7 +51,7 @@ def singularize(name):
     return inflection.singularize(name)
 
 
-class BaseOperation():
+class BaseOperation:
     def __init__(self, **kwargs):
         self.action = kwargs.get('action')
         self.files = kwargs.get('files', {})
@@ -135,7 +135,7 @@ class BaseOperation():
 
             resource_attributes = list(set(resource_attributes))
 
-            if (issubclass(type(result), list) or issubclass(type(result), UserList)):
+            if issubclass(type(result), list) or issubclass(type(result), UserList):
                 results = result
             else:
                 results = [result]
@@ -187,14 +187,21 @@ class BaseOperation():
                     )
                     presented_results_parsed.append(presented_result)
 
-            response_key = self.resource if LIST == self.action else self.__resource_name_singular()
+            response_key = (
+                self.resource if LIST == self.action else self.__resource_name_singular()
+            )
 
             if presented_is_list:
                 response[response_key] = presented_results_parsed
             else:
-                response[response_key] = presented_results_parsed[0] if len(
-                    presented_results_parsed,
-                ) >= 1 else presented_results_parsed
+                response[response_key] = (
+                    presented_results_parsed[0]
+                    if len(
+                        presented_results_parsed,
+                    )
+                    >= 1
+                    else presented_results_parsed
+                )
 
             response['metadata'] = metadata
 
@@ -222,14 +229,17 @@ class BaseOperation():
                     },
                 }
         except ApiError as err:
-            if err.code == 403 and \
-                    self.user and \
-                    self.user.project_access == 0 and \
-                    not self.user.roles:
-
+            if (
+                err.code == 403
+                and self.user
+                and self.user.project_access == 0
+                and not self.user.roles
+            ):
                 if not REQUIRE_USER_PERMISSIONS:
-                    err.message = 'You don’t have access to this project. ' + \
-                        'Please ask an admin or owner for permissions.'
+                    err.message = (
+                        'You don’t have access to this project. '
+                        + 'Please ask an admin or owner for permissions.'
+                    )
 
             results_altered = self.__run_hooks_after(
                 condition=HookCondition.FAILURE,
@@ -297,11 +307,12 @@ class BaseOperation():
         resources: List[Dict] = None,
     ) -> List[Hook]:
         if FeatureUUID.GLOBAL_HOOKS not in self.__flags:
-            self.__flags[FeatureUUID.GLOBAL_HOOKS] = \
+            self.__flags[FeatureUUID.GLOBAL_HOOKS] = (
                 Project.is_feature_enabled_in_root_or_active_project(
                     FeatureUUID.GLOBAL_HOOKS,
                     context_data=self.context.data,
                     user=self.user,
+                )
             )
 
         if not self.__flags[FeatureUUID.GLOBAL_HOOKS]:
@@ -340,7 +351,9 @@ class BaseOperation():
                     id=self.user.id,
                     last_name=self.user.last_name,
                     username=self.user.username,
-                ) if self.user else None,
+                )
+                if self.user
+                else None,
             )
         except Exception as err:
             if is_debug():
@@ -349,7 +362,7 @@ class BaseOperation():
 
         try:
             if hooks:
-                for hook in (hooks or []):
+                for hook in hooks or []:
                     if hook.status and HookStrategy.RAISE == hook.status.strategy:
                         raise Exception(hook.status.error)
 
@@ -391,7 +404,7 @@ class BaseOperation():
                 resources=resources,
             )
 
-        for hook in (hooks or []):
+        for hook in hooks or []:
             output = hook.output
 
             if not output:
@@ -439,7 +452,7 @@ class BaseOperation():
         if not hooks:
             return payload
 
-        for hook in (hooks or []):
+        for hook in hooks or []:
             output = hook.output
             if not output:
                 continue
@@ -472,7 +485,7 @@ class BaseOperation():
     async def __create_or_index(self) -> Union[BaseResource, Dict, List[BaseResource]]:
         updated_options = await self.__updated_options()
 
-        operation_resource = None,
+        operation_resource = (None,)
         payload = None
         if CREATE == self.action:
             payload = self.__payload_for_resource()
@@ -498,6 +511,7 @@ class BaseOperation():
             )
 
         if CREATE == self.action:
+
             def _build_authorize_attributes(parsed_value: Any, policy=policy) -> Callable:
                 return policy.authorize_attributes(
                     WRITE,
@@ -526,15 +540,22 @@ class BaseOperation():
 
             return result
         elif LIST == self.action:
+
             def _build_authorize_query(
                 parsed_value: Any,
                 policy=policy,
                 updated_options=updated_options,
                 **_kwargs,
             ) -> Callable:
-                return policy.authorize_query(parsed_value, **ignore_keys(updated_options, [
-                    'query',
-                ]))
+                return policy.authorize_query(
+                    parsed_value,
+                    **ignore_keys(
+                        updated_options,
+                        [
+                            'query',
+                        ],
+                    ),
+                )
 
             if parser:
                 value_parsed, parser_found, error = await parser.parse_query_and_authorize(
@@ -591,15 +612,22 @@ class BaseOperation():
         if DELETE == self.action:
             await res.process_delete(**updated_options)
         elif DETAIL == self.action:
+
             def _build_authorize_query(
                 parsed_value: Any,
                 policy=policy,
                 updated_options=updated_options,
                 **_kwargs,
             ) -> Callable:
-                return policy.authorize_query(parsed_value, **ignore_keys(updated_options, [
-                    'query',
-                ]))
+                return policy.authorize_query(
+                    parsed_value,
+                    **ignore_keys(
+                        updated_options,
+                        [
+                            'query',
+                        ],
+                    ),
+                )
 
             if parser:
                 value_parsed, parser_found, error = await parser.parse_query_and_authorize(
@@ -618,15 +646,22 @@ class BaseOperation():
                             **merge_dict(updated_options, dict(query=self.query)),
                         )
                         policy = self.__policy_class()(res, self.user, **updated_options)
-                        await policy.authorize_query(self.query, **ignore_keys(updated_options, [
-                            'query',
-                        ]))
+                        await policy.authorize_query(
+                            self.query,
+                            **ignore_keys(
+                                updated_options,
+                                [
+                                    'query',
+                                ],
+                            ),
+                        )
                     else:
                         raise error
             else:
                 await _build_authorize_query(self.query)
 
         elif UPDATE == self.action:
+
             def _build_authorize_attributes(parsed_value: Any, policy=policy) -> Callable:
                 return policy.authorize_attributes(
                     WRITE,
@@ -649,9 +684,15 @@ class BaseOperation():
                 updated_options=updated_options,
                 **_kwargs,
             ) -> Callable:
-                return policy.authorize_query(parsed_value, **ignore_keys(updated_options, [
-                    'query',
-                ]))
+                return policy.authorize_query(
+                    parsed_value,
+                    **ignore_keys(
+                        updated_options,
+                        [
+                            'query',
+                        ],
+                    ),
+                )
 
             if parser:
                 value_parsed, parser_found, error = await parser.parse_query_and_authorize(
@@ -687,6 +728,12 @@ class BaseOperation():
         ).present()
 
     def __classified_class(self):
+        parent_resource_class = self.__resource_parent_class()
+        if parent_resource_class:
+            child_resource_class = parent_resource_class.get_child_resource_class(self.resource)
+            if child_resource_class:
+                return child_resource_class.model_name()
+
         return classify(self.__resource_name_singular())
 
     def __resource_name_singular(self):
@@ -696,9 +743,10 @@ class BaseOperation():
         try:
             return getattr(
                 importlib.import_module(
-                    'mage_ai.api.monitors.{}Monitor'.format(
-                        self.__classified_class())), '{}Monitor'.format(
-                    self.__classified_class()), )
+                    'mage_ai.api.monitors.{}Monitor'.format(self.__classified_class())
+                ),
+                '{}Monitor'.format(self.__classified_class()),
+            )
         except ModuleNotFoundError:
             return BaseMonitor
 
@@ -715,23 +763,26 @@ class BaseOperation():
     def __policy_class(self):
         return getattr(
             importlib.import_module(
-                'mage_ai.api.policies.{}Policy'.format(
-                    self.__classified_class())), '{}Policy'.format(
-                self.__classified_class()), )
+                'mage_ai.api.policies.{}Policy'.format(self.__classified_class())
+            ),
+            '{}Policy'.format(self.__classified_class()),
+        )
 
     def __presenter_class(self):
         return getattr(
             importlib.import_module(
-                'mage_ai.api.presenters.{}Presenter'.format(
-                    self.__classified_class())), '{}Presenter'.format(
-                self.__classified_class()), )
+                'mage_ai.api.presenters.{}Presenter'.format(self.__classified_class())
+            ),
+            '{}Presenter'.format(self.__classified_class()),
+        )
 
     def __resource_class(self):
         return getattr(
             importlib.import_module(
-                'mage_ai.api.resources.{}Resource'.format(
-                    self.__classified_class())), '{}Resource'.format(
-                self.__classified_class()), )
+                'mage_ai.api.resources.{}Resource'.format(self.__classified_class())
+            ),
+            '{}Resource'.format(self.__classified_class()),
+        )
 
     def __resource_parent_entity_name(self) -> str:
         if self.resource_parent:
@@ -741,8 +792,7 @@ class BaseOperation():
         entity_name = self.__resource_parent_entity_name()
         if entity_name:
             return getattr(
-                importlib.import_module(
-                    'mage_ai.api.resources.{}Resource'.format(entity_name)),
+                importlib.import_module('mage_ai.api.resources.{}Resource'.format(entity_name)),
                 '{}Resource'.format(entity_name),
             )
 
@@ -800,6 +850,7 @@ class BaseOperation():
             cookie_header = self.headers.get('Cookie')
             if cookie_header is not None:
                 from http.cookies import SimpleCookie
+
                 cookies = SimpleCookie()
                 cookies.load(cookie_header)
             # Handle each cookie:
@@ -824,8 +875,7 @@ class BaseOperation():
 
     def __presentation_format(self):
         if not self.__presentation_format_attr:
-            self.__presentation_format_attr = (self.meta or {}).get(
-                META_KEY_FORMAT, self.action)
+            self.__presentation_format_attr = (self.meta or {}).get(META_KEY_FORMAT, self.action)
         return self.__presentation_format_attr
 
     async def __updated_options(self):

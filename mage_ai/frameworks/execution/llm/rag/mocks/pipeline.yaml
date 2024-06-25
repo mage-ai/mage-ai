@@ -1,0 +1,11 @@
+name: Mager RAGer pipeline
+uuid: mager_rager_pipeline
+type: python
+execution_framework: rag
+blocks:
+  - name: Main top-level data_pre_processing_pipeline pipeline
+    uuid: data_pre_processing_pipeline
+    type: pipeline
+  - name: Main top-level super_cool_inference_pipeline pipeline
+    uuid: super_cool_inference_pipeline
+    type: pipeline

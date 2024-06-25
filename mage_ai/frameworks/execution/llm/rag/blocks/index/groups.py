@@ -1,6 +1,10 @@
+import os
+
 from mage_ai.data_preparation.models.constants import BlockType
 from mage_ai.frameworks.execution.models.block.base import BlockExecutionFramework
 from mage_ai.frameworks.execution.models.enums import GroupUUID
+
+templates_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'templates')
 
 CONTEXTUAL_DICTIONARY = BlockExecutionFramework.load(
     uuid=GroupUUID.CONTEXTUAL_DICTIONARY,
@@ -9,6 +13,7 @@ CONTEXTUAL_DICTIONARY = BlockExecutionFramework.load(
         'dataset.'
     ),
     type=BlockType.GROUP,
+    templates_dir=templates_dir,
     upstream_blocks=[],
     downstream_blocks=[],
 )
@@ -19,6 +24,7 @@ DOCUMENT_HIERARCHY = BlockExecutionFramework.load(
         'navigation and retrieval.'
     ),
     type=BlockType.GROUP,
+    templates_dir=templates_dir,
     upstream_blocks=[],
     downstream_blocks=[],
 )
@@ -29,6 +35,7 @@ SEARCH_INDEX = BlockExecutionFramework.load(
         'documents.'
     ),
     type=BlockType.GROUP,
+    templates_dir=templates_dir,
     upstream_blocks=[],
     downstream_blocks=[],
 )

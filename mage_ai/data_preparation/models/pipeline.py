@@ -99,6 +99,7 @@ class Pipeline:
         use_repo_path: bool = False,
         description: str = None,
         tags: List[str] = None,
+        execution_framework: Optional[str] = None,
     ):
         self.block_configs = []
         self.blocks_by_uuid = {}
@@ -114,6 +115,7 @@ class Pipeline:
         self.extensions = {}
         self.name = None
         self.notification_config = dict()
+        self.execution_framework = execution_framework
 
         # For multi project
         warn_for_repo_path(repo_path)
@@ -282,6 +284,7 @@ class Pipeline:
         description: str = None,
         pipeline_type: PipelineType = PipelineType.PYTHON,
         tags: List[str] = None,
+        execution_framework: Optional[str] = None,
     ):
         """
         1. Create a new folder for pipeline
@@ -298,23 +301,26 @@ class Pipeline:
         copy_template_directory('pipeline', pipeline_path)
         # Update metadata.yaml with pipeline config
         with open(os.path.join(pipeline_path, PIPELINE_CONFIG_FILE), 'w') as fp:
-            yaml.dump(
-                dict(
-                    created_at=str(datetime.now(tz=pytz.UTC)),
-                    description=description,
-                    name=name,
-                    tags=tags or [],
-                    uuid=uuid,
-                    type=format_enum(pipeline_type or PipelineType.PYTHON),
-                ),
-                fp,
+            data = dict(
+                created_at=str(datetime.now(tz=pytz.UTC)),
+                description=description,
+                name=name,
+                tags=tags or [],
+                uuid=uuid,
+                type=format_enum(pipeline_type or PipelineType.PYTHON),
             )
+
+            if execution_framework is not None:
+                data['execution_framework'] = execution_framework
+
+            yaml.dump(data, fp)
 
         pipeline = Pipeline(
             uuid,
             description=description,
             repo_path=repo_path,
             tags=tags or [],
+            execution_framework=execution_framework,
         )
 
         return pipeline
@@ -656,8 +662,7 @@ class Pipeline:
                     'full_path',
                 )
                 for d in build_repo_path_for_all_projects(
-                    context_data=kwargs.get('context_data'),
-                    mage_projects_only=True
+                    context_data=kwargs.get('context_data'), mage_projects_only=True
                 ).values()
             ]
 
@@ -883,7 +888,7 @@ class Pipeline:
         self.spark_config = config.get('spark_config') or {}
         self.tags = config.get('tags') or []
         self.widget_configs = config.get('widgets') or []
-
+        self.execution_framework = config.get('execution_framework')
         self.variables = config.get('variables')
 
         def build_shared_args_kwargs(c):
@@ -1014,7 +1019,9 @@ class Pipeline:
 
         return blocks_by_uuid
 
-    def to_dict_base(self, exclude_data_integration=False) -> Dict:
+    def to_dict_base(
+        self, exclude_data_integration=False, include_execution_framework: Optional[bool] = None
+    ) -> Dict:
         base = dict(
             cache_block_output_in_memory=self.cache_block_output_in_memory,
             concurrency_config=self.concurrency_config,
@@ -1036,6 +1043,13 @@ class Pipeline:
             variables_dir=self.variables_dir,
         )
 
+        if (
+            include_execution_framework
+            and self.execution_framework is not None
+            and self.execution_framework
+        ):
+            base['execution_framework'] = self.execution_framework
+
         if self.variables is not None:
             base['variables'] = self.variables
 
@@ -1052,6 +1066,7 @@ class Pipeline:
         include_outputs_spark: bool = False,
         sample_count: int = None,
         exclude_data_integration: bool = False,
+        include_execution_framework: Optional[bool] = None,
     ) -> Dict:
         shared_kwargs = dict(
             include_content=include_content,
@@ -1103,7 +1118,10 @@ class Pipeline:
             data.update(extensions=extensions_data)
 
         return merge_dict(
-            self.to_dict_base(exclude_data_integration=exclude_data_integration),
+            self.to_dict_base(
+                exclude_data_integration=exclude_data_integration,
+                include_execution_framework=include_execution_framework,
+            ),
             data,
         )
 
@@ -1123,6 +1141,7 @@ class Pipeline:
         disable_block_output_previews: bool = False,
         exclude_blank_variable_uuids: bool = False,
         max_results: Optional[int] = None,
+        include_execution_framework: Optional[bool] = None,
     ):
         shared_kwargs = dict(
             check_if_file_exists=True,
@@ -1200,7 +1219,9 @@ class Pipeline:
                 )
             data.update(extensions=extensions_data)
 
-        return merge_dict(self.to_dict_base(), data)
+        return merge_dict(
+            self.to_dict_base(include_execution_framework=include_execution_framework), data
+        )
 
     async def update(self, data, update_content=False):
         from mage_ai.orchestration.db.models.utils import (
@@ -2317,13 +2338,17 @@ class Pipeline:
                 current_pipeline.conditionals_by_uuid[block_uuid] = block
             else:
                 current_pipeline.blocks_by_uuid[block_uuid] = block
-            pipeline_dict = current_pipeline.to_dict(include_extensions=True)
+            pipeline_dict = current_pipeline.to_dict(
+                include_execution_framework=True,
+                include_extensions=True,
+            )
         else:
             if self.data_integration is not None:
                 with open(self.catalog_config_path, 'w') as fp:
                     json.dump(self.data_integration, fp)
             pipeline_dict = self.to_dict(
                 exclude_data_integration=True,
+                include_execution_framework=True,
                 include_extensions=True,
             )
         if not pipeline_dict:

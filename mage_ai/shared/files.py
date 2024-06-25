@@ -1,10 +1,11 @@
 import asyncio
 import glob
 import os
+import re
 import shutil
 import time
 from pathlib import Path
-from typing import Callable, Dict, List, Optional, Tuple
+from typing import Any, Callable, Dict, List, Mapping, Optional, Tuple
 
 import aiofiles
 
@@ -272,3 +273,65 @@ async def rename_async(old_path: str, new_path: str, overwrite: Optional[bool] =
         if is_debug():
             print(f'[ERROR] files.move_async: {err}')
     return False
+
+
+async def check_file(
+    file_path: str,
+    criteria: Mapping[str, List[str]],
+    files_with_criteria: List[Dict[str, Any]],
+):
+    async with aiofiles.open(file_path, 'r') as file:
+        content = await file.read()
+
+        def __match(key: str, values: List[Optional[str]], content=content) -> bool:
+            key_regex = (
+                re.escape(key) + r'\s*:\s*([^\n#]+)'
+            )  # Only match top-level key-value pairs
+            key_match = re.search(key_regex, content, re.MULTILINE)
+
+            if key_match and values is not None:
+                return any(
+                    value is not None
+                    and re.search(
+                        f'^{re.escape(key)}\\s*:\\s*{re.escape(value)}$', content, re.MULTILINE
+                    )
+                    for value in values
+                )
+
+            return False
+
+        if all([__match(key, values) for key, values in criteria.items()]):
+            files_with_criteria.append({
+                'content': content,
+                'dir_name': os.path.dirname(file_path),
+                'file_path': file_path,
+            })
+
+
+async def find_files_with_criteria(
+    directories: List[str], criteria: Mapping[str, List[str]]
+) -> List[Dict[str, str]]:
+    files_with_criteria = []
+
+    tasks = []
+    for directory in directories:
+        for root, _, files in os.walk(directory):
+            for filename in files:
+                if filename.endswith('.yaml') or filename.endswith('.yml'):
+                    file_path = os.path.join(root, filename)
+                    tasks.append(check_file(file_path, criteria, files_with_criteria))
+
+    await asyncio.gather(*tasks)
+    return files_with_criteria
+
+
+def remove_subpath(full_path: str, subpath: str) -> str:
+    """
+    Remove a specified subpath from the full path.
+    """
+    # Convert paths to use consistent separators if necessary
+    full_path = str(Path(full_path).resolve())
+    subpath = str(Path(subpath).resolve())
+
+    # Replace subpath with an empty string if it exists within the full path
+    return full_path.replace(subpath, '')

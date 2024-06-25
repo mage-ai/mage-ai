@@ -31,6 +31,10 @@ class BlockFactory:
             if language == BlockLanguage.YAML:
                 return DBTBlockYAML
             return DBTBlockSQL
+        elif BlockType.GROUP == block_type:  # These need to be handled
+            return Block
+        elif BlockType.PIPELINE == block_type:  # These need to be handled
+            return Block
         elif pipeline and PipelineType.INTEGRATION == pipeline.type:
             if BlockType.CALLBACK == block_type:
                 return CallbackBlock
@@ -60,11 +64,14 @@ class BlockFactory:
         pipeline=None,
         status=BlockStatus.NOT_EXECUTED,
     ) -> 'Block':
-        block_class = BlockFactory.block_class_from_type(
-            block_type,
-            language=language,
-            pipeline=pipeline,
-        ) or Block
+        block_class = (
+            BlockFactory.block_class_from_type(
+                block_type,
+                language=language,
+                pipeline=pipeline,
+            )
+            or Block
+        )
         return block_class(
             name,
             uuid,
