@@ -1,14 +1,15 @@
 @use '../../../base/borders';
 @use '../../../base/grid';
+@use './mixins' as *;
+
+$enter-duration: 3s;
 
 .blockNode {
   @include borders.border-colors();
 
   height: inherit;
-  min-width: 312px;
   padding: var(--padding-base);
 }
-
 .showOnHoverContainer {
   &:hover {
     .showOnHover {
@@ -21,35 +22,56 @@
   }
 }
 
-.nodeWrapper {
-  @include grid.base();
-
-  &.block {
-    z-index: 6;
+.blockNodeWrapper {
+  &.loading {
+    .loader {
+      visibility: visible;
+      opacity: 1;
+    }
   }
 
-  &.node {
-    z-index: 4;
+  &.executing {
+    .display-if-executing {
+      display: block;
+    }
+
+    .display-ifnot-executing {
+      display: none;
+    }
+  }
+
+  .display-if-executing {
+    display: none;
+  }
+
+  .display-ifnot-executing {
+    display: block;
+  }
+
+  .loader {
+    visibility: hidden;
+    opacity: 0;
+    position: relative;
+    height: 2px;
+    margin-top: 4px;
+    margin-bottom: 2px;
+    width: 100%;
   }
 }
 
-.connectionLines {
-  z-index: 1;
+.dragWrapper {
+  z-index: 3;
 
-  .connectionLine {
-    &.connection-from-port-to-port,
-    &.connection-from-port-to-block,
-    &.connection-from-port-to-node,
-    &.connection-from-block-to-block,
-    &.connection-from-block-to-node,
-    &.connection-from-block-to-port,
-    &.connection-from-node-to-block,
-    &.connection-from-node-to-port {
-      z-index: 5;
-    }
+  &.app,
+  &.output {
+    z-index: 4;
+  }
 
-    &.connection-from-node-to-node {
-      z-index: 3;
-    }
+  &.groupSelection {
+    z-index: 2;
+  }
+
+  .groupSelection {
+    height: inherit;
   }
 }

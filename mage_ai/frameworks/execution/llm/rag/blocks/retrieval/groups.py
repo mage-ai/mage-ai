@@ -25,7 +25,7 @@ ITERATIVE_RETRIEVAL = BlockExecutionFramework.load(
     ),
     type=BlockType.GROUP,
     templates_dir=templates_dir,
-    configuration=Configuration.load(Metadata.load(required=True)),
+    configuration=Configuration.load(metadata=Metadata.load(required=True)),
     upstream_blocks=[GroupUUID.MEMORY],
     downstream_blocks=[GroupUUID.MULTI_HOP_REASONING],
 )

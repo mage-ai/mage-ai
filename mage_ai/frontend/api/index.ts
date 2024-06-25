@@ -117,6 +117,11 @@ export const WIDGETS: 'widgets' = 'widgets';
 export const WORKSPACES: 'workspaces' = 'workspaces';
 export const CODE_EXECUTIONS: 'code_executions' = 'code_executions';
 
+// v2
+export const EXECUTION_FRAMEWORKS: 'execution_frameworks' = 'execution_frameworks';
+export const EXECUTION_OUTPUTS: 'execution_outputs' = 'execution_outputs';
+export const KERNEL_PROCESSES: 'kernel_processes' = 'kernel_processes';
+
 // Update this as routes get added
 const RESOURCES_PAIRS_ARRAY: any[][] = [
   [ACTION_EXECUTE, PIPELINES],
@@ -195,7 +200,6 @@ const RESOURCES_PAIRS_ARRAY: any[][] = [
   [SEARCH_RESULTS],
   [SECRETS],
   [SEEDS],
-  [CODE_EXECUTIONS],
   [SESSIONS],
   [SPARK_APPLICATIONS],
   [SPARK_ENVIRONMENTS],
@@ -219,6 +223,12 @@ const RESOURCES_PAIRS_ARRAY: any[][] = [
   [VERSION_CONTROL_REMOTES, VERSION_CONTROL_PROJECTS],
   [WIDGETS, PIPELINES],
   [WORKSPACES],
+  // v2
+  [CODE_EXECUTIONS],
+  [EXECUTION_FRAMEWORKS],
+  [EXECUTION_OUTPUTS],
+  [KERNEL_PROCESSES],
+  [PIPELINES, EXECUTION_FRAMEWORKS],
 ];
 
 // @ts-ignore

@@ -1,5 +1,7 @@
 @use '../abstracts/colors/light' as colors;
 @mixin mode() {
+  --colors-azure: #{colors.$colors-azure};
+  --colors-azurelo: #{colors.$colors-azurelo};
   --colors-black: #{colors.$colors-black};
   --colors-blackfixed: #{colors.$colors-blackfixed};
   --colors-blacklo: #{colors.$colors-blacklo};
@@ -169,6 +171,7 @@
   --fonts-color-text-blue: #{colors.$fonts-color-text-blue};
   --fonts-color-text-inverted: #{colors.$fonts-color-text-inverted};
   --fonts-color-text-muted: #{colors.$fonts-color-text-muted};
+  --fonts-color-text-secondary: #{colors.$fonts-color-text-muted};
   --fonts-color-text-warning: #{colors.$fonts-color-text-warning};
   --icons-color-base: #{colors.$icons-color-base};
   --icons-color-inverted: #{colors.$icons-color-inverted};
@@ -181,6 +184,8 @@
   --inputs-border-color-base-focus: #{colors.$inputs-border-color-base-focus};
   --inputs-border-color-base-hover: #{colors.$inputs-border-color-base-hover};
   --inputs-placeholder-color: #{colors.$inputs-placeholder-color};
+  --link-color-base: #{colors.$link-color-base};
+  --link-color-hover: #{colors.$link-color-hover};
   --menus-background-base-default: #{colors.$menus-background-base-default};
   --menus-background-contained-default: #{colors.$menus-background-contained-default};
   --menus-blur-base: #{colors.$menus-blur-base};
@@ -188,4 +193,6 @@
   --scrollbars-background-thumb-hover: #{colors.$scrollbars-background-thumb-hover};
   --scrollbars-background-track-default: #{colors.$scrollbars-background-track-default};
   --scrollbars-background-track-hover: #{colors.$scrollbars-background-track-hover};
+  --modal-background-color-base: #{colors.$modal-background-color-base};
+  --modal-box-shadow-base: #{colors.$modal-box-shadow-base};
 }

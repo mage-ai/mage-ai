@@ -47,6 +47,11 @@
 @mixin base-styles {
   color: var(--fonts-color-text-base);
   margin: 0;
+  white-space: break-spaces;
+
+  &.nowrap {
+    white-space: nowrap;
+  }
 
   &.inverted {
     color: var(--fonts-color-text-inverted);
@@ -54,14 +59,17 @@
   &.blue {
     color: var(--fonts-color-text-blue);
   }
-  &.secondary {
-    color: var(--colors-whitemd);
-  }
   &.muted {
-    color: var(--colors-whitelo);
+    color: var(--fonts-color-text-muted);
+  }
+  &.secondary {
+    color: var(--fonts-color-text-secondary);
   }
   &.warning {
     color: var(--fonts-color-text-warning);
+  }
+  &.success {
+    color: var(--colors-green);
   }
 
   font-size: var(--fonts-size-base);
@@ -83,7 +91,12 @@
   &.bold {
     font-weight: var(--fonts-weight-bold);
   }
+
+  &.underline {
+    text-decoration: underline;
+  }
 }
+
 @mixin base {
   @include base-styles;
   @include base-font-family;

@@ -39,7 +39,7 @@ CHUNKING = BlockExecutionFramework.load(
     ),
     type=BlockType.GROUP,
     templates_dir=templates_dir,
-    configuration=Configuration.load(Metadata.load(required=True)),
+    configuration=Configuration.load(metadata=Metadata.load(required=True)),
     upstream_blocks=[GroupUUID.ENRICH],
     downstream_blocks=[GroupUUID.TOKENIZATION],
 )
@@ -52,7 +52,7 @@ TOKENIZATION = BlockExecutionFramework.load(
     ),
     type=BlockType.GROUP,
     templates_dir=templates_dir,
-    configuration=Configuration.load(Metadata.load(required=True)),
+    configuration=Configuration.load(metadata=Metadata.load(required=True)),
     upstream_blocks=[GroupUUID.CHUNKING],
     downstream_blocks=[GroupUUID.EMBED],
 )
@@ -65,7 +65,7 @@ EMBED = BlockExecutionFramework.load(
     ),
     type=BlockType.GROUP,
     templates_dir=templates_dir,
-    configuration=Configuration.load(Metadata.load(required=True)),
+    configuration=Configuration.load(metadata=Metadata.load(required=True)),
     upstream_blocks=[GroupUUID.TOKENIZATION],
     downstream_blocks=[],
 )

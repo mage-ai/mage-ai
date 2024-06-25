@@ -6,9 +6,15 @@ from mage_ai.api.presenters.BasePresenter import BasePresenter
 class KernelPresenter(BasePresenter):
     default_attributes = [
         'alive',
+        'closed',
         'id',
         'name',
+        'process_details',
         'processes',
+        'ready',
+        'running',
+        'state',
+        'terminated',
         'usage',
     ]
 

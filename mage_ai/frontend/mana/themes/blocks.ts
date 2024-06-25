@@ -2,6 +2,13 @@ import ThemeType from './interfaces';
 import { BlockColorEnum, BlockTypeEnum } from '@interfaces/BlockType';
 import { COLOR_NAMES } from './colors';
 
+export type ColorNameType = {
+  base: string;
+  hi: string;
+  lo: string;
+  md: string;
+};
+
 export function getBlockColor(
   blockType: BlockTypeEnum,
   props?: {
@@ -14,12 +21,7 @@ export function getBlockColor(
   accent?: string;
   accentDark?: string;
   accentLight?: string;
-  names?: {
-    base: string;
-    hi: string;
-    lo: string;
-    md: string;
-  };
+  names?: ColorNameType;
 } {
   const { blockColor, getColorName, isSelected, theme } = props || {};
   const colors = getColorName ? COLOR_NAMES : theme?.colors;
@@ -83,9 +85,9 @@ export function getBlockColor(
     accent = colors?.typography?.text?.base;
     accentLight = colors?.typography?.text?.muted;
   } else if (BlockTypeEnum.GROUP === blockType) {
-    baseName = 'gray';
+    baseName = 'azure';
   } else if (BlockTypeEnum.PIPELINE === blockType) {
-    baseName = 'pink';
+    baseName = 'purple';
   }
 
   return {
@@ -93,10 +95,10 @@ export function getBlockColor(
     accentDark,
     accentLight,
     names: {
-      base: baseName,
-      hi: `${baseName}hi`,
-      lo: `${baseName}lo`,
-      md: `${baseName}md`,
+      base: baseName || null,
+      hi: baseName ? `${baseName}hi` : null,
+      lo: baseName ? `${baseName}lo` : null,
+      md: baseName ? `${baseName}md` : null,
     },
   };
 }

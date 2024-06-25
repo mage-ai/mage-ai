@@ -1,23 +1,64 @@
 import React from 'react';
 import styled from 'styled-components';
+import { dig } from '@utils/hash';
 
 export enum LoadingStyleEnum {
   BLOCKS = 'blocks',
+  CIRCLE = 'circle',
   DEFAULT = 'default',
   INFINITE_BLOCKS = 'infinite_blocks',
   SCROLLING_BARS = 'scrolling_bars',
 }
 
 type LoadingProps = {
+  circle?: boolean;
   className?: string;
   color?: string;
+  colorName?: string;
+  colorNameAlt?: string;
   colorLight?: string;
   height?: number;
   loadingStyle?: LoadingStyleEnum;
   position?: 'absolute' | 'fixed' | 'relative' | 'static' | 'sticky';
+  thickness?: number;
   vertical?: boolean;
   width?: string | number;
 };
+
+const CircleStyle = styled.div<LoadingProps>`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  ${({ color, colorName, height, position, theme, thickness, width }) => `
+    height: 100%;
+    position: ${position || 'relative'};
+    width: 100%;
+    z-index: ${position === 'relative' ? 1 : 2};
+
+    .loader {
+      height: ${typeof height === 'number' ? `${height}px` : height || '14px'};
+      width: ${typeof width === 'number' ? `${width}px` : width || '14px'};
+      border-radius: 50%;
+      background: conic-gradient(${color || dig(theme.colors, colorName ?? 'statuses.success')} 270deg, transparent 0);
+      mask: radial-gradient(
+        farthest-side,
+        transparent calc(100% - ${thickness || 2}px),
+        #000 0
+      );
+      animation: rotate 1.5s linear infinite;
+    }
+  `}
+
+  @keyframes rotate {
+    0% {
+      transform: rotate(0deg);
+    }
+    100% {
+      transform: rotate(360deg);
+    }
+  }
+`;
 
 const LoadingStyleBlocks = styled.div<LoadingProps>`
   display: flex;
@@ -202,18 +243,34 @@ const ScrollingBarsStyle = styled.div`
 `;
 
 const RepeatingBarStyle = styled.div<LoadingProps>`
-  ${({ color, colorLight, height, position, theme, width }) => `
+  ${({ color, colorLight, colorName, colorNameAlt, height, position, theme, width }) => `
   position: relative;
   width: ${width || '100%'};
 
   .loader {
     height: ${height || 2}px;
     width: inherit;
-    --c:no-repeat linear-gradient(${color || theme.colors.statuses.success} 0 0);
-    background: var(--c),var(--c), ${colorLight || theme.colors.statuses.successHi};
+    --c:no-repeat linear-gradient(${
+      color ?? colorName ? theme.colors[colorName] : theme.colors.statuses.success
+    } 0 0);
+    background: var(--c),var(--c), ${
+      colorLight ?? (colorNameAlt || colorName)
+        ? theme.colors[colorNameAlt || colorName]
+        : theme.colors.statuses.successHi
+    };
     background-size: 60% 100%;
     animation: l16 3s infinite;
     position: ${position || 'relative'};
+
+    ${
+      position === 'fixed'
+        ? `
+      left: 0;
+      top: 0;
+      z-index: 1;
+      `
+        : ''
+    }
   }
 
   @keyframes l16 {
@@ -225,7 +282,7 @@ const RepeatingBarStyle = styled.div<LoadingProps>`
 `;
 
 function Loading(
-  { className, loadingStyle = LoadingStyleEnum.DEFAULT, ...props }: LoadingProps,
+  { circle, className, loadingStyle = LoadingStyleEnum.DEFAULT, ...props }: LoadingProps,
   ref: React.Ref<HTMLDivElement>,
 ) {
   const element = <div className="loader" />;
@@ -237,6 +294,8 @@ function Loading(
     LoadingStyle = ScrollingBarsStyle;
   } else if (LoadingStyleEnum.INFINITE_BLOCKS === loadingStyle) {
     LoadingStyle = InfiniteBlocksStyle;
+  } else if (LoadingStyleEnum.CIRCLE === loadingStyle || circle) {
+    LoadingStyle = CircleStyle;
   }
 
   return (

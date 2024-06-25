@@ -287,9 +287,14 @@ export interface TemplateType {
   name?: string;
   inputs?: Record<string, InteractionInputType>;
   variables?: Record<string, InteractionVariableType>;
+  configuration_path?: string;
+  path?: string;
+  type?: BlockTypeEnum;
+  uuid?: string;
 }
 
 export interface ConfigurationType extends BaseConfigurationType {
+  file?: any;
   dynamic?:
     | any
     | boolean

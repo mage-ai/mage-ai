@@ -52,6 +52,7 @@ export default function base(
     theme,
     value,
     wordWrapColumn = 100,
+    ...rest
   }: IDEConfigurationProps = options;
 
   return {
@@ -64,7 +65,7 @@ export default function base(
     autoClosingComments: 'always',
     autoClosingQuotes: 'always',
     // autoDetectHighContrast: false,
-    autoIndent: 'advanced',
+    autoIndent: 'advanced', // "none" | "advanced" | "full" | "brackets" | "keep"
     // Enable that the editor will install a ResizeObserver to check if its
     // container dom node size has changed.
     automaticLayout: true,
@@ -387,5 +388,6 @@ export default function base(
     suggestOnTriggerCharacters: true, // true
     renderLineHighlight: 'all', // 'none' | 'gutter' | 'line' | 'all'
     renderLineHighlightOnlyWhenFocus: true, // false
+    ...rest,
   };
 }

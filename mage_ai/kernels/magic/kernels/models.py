@@ -4,14 +4,14 @@ from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
 from multiprocessing import Event, Pool, Queue
 from multiprocessing.managers import SyncManager
+from multiprocessing.pool import CLOSE, INIT, RUN, TERMINATE
 from queue import Empty
-from typing import List, Optional, cast
+from typing import Any, Dict, List, Optional, cast
 
 from mage_ai.kernels.magic.models import Kernel as KernelDetails
 from mage_ai.kernels.magic.models import ProcessContext
-from mage_ai.kernels.magic.process import Process, ProcessBase
+from mage_ai.kernels.magic.process import Process
 from mage_ai.kernels.magic.threads.reader import ReaderThread
-from mage_ai.shared.environments import is_debug
 from mage_ai.shared.queues import Queue as FasterQueue
 
 DEFAULT_NUM_PROCESSES = 1
@@ -67,12 +67,42 @@ class Kernel:
             args=(self.read_queue, self.write_queue, self.stop_event), start=True
         )
 
-    @property
-    def details(self) -> KernelDetails:
+    async def get_details(self) -> KernelDetails:
         return KernelDetails(
+            self,
             kernel_id=self.uuid,
-            processes=getattr(self.pool, '_pool', []) if self.pool is not None else [],
+            processes=self.get_processes(),
         )
+
+    def get_processes(self) -> List[Any]:
+        processes = getattr(self.pool, '_pool', []) if self.pool is not None else []
+        return processes
+
+    def get_state(self) -> Optional[str]:
+        # Pool.INIT
+        # Pool.RUN
+        # Pool.CLOSE
+        # Pool.TERMINATE
+        if self.pool is None:
+            return ''
+
+        pool: Any = self.pool
+        return str(pool._state)
+
+    def is_alive(self) -> Optional[bool]:
+        return self.is_ready() is True and (self.get_state() == INIT or self.is_running() is True)
+
+    def is_ready(self) -> Optional[bool]:
+        return not self.is_terminated() and not self.is_closed()
+
+    def is_running(self) -> Optional[bool]:
+        return self.get_state() == RUN
+
+    def is_closed(self) -> Optional[bool]:
+        return self.get_state() == CLOSE
+
+    def is_terminated(self) -> Optional[bool]:
+        return self.get_state() == TERMINATE
 
     def force_terminate(self):
         if self.pool is not None:
@@ -84,36 +114,46 @@ class Kernel:
             except Exception as e:
                 print(f'[Kernel] Error during force termination: {e}')
 
-    def run(
-        self,
-        message: str,
-        message_request_uuid: Optional[str] = None,
-        timestamp: Optional[float] = None,
-    ) -> ProcessBase:
-        now = datetime.utcnow().timestamp()
+    def build_process(self, message: str, **kwargs) -> Process:
+        self.processes = [pr for pr in self.processes if pr.internal_state is not CLOSE]
 
-        if is_debug():
-            print('[Manager.start_processes]', now - (timestamp or 0))
+        process = Process(
+            self.uuid,
+            message,
+            kernel_uuid=self.uuid,
+            **kwargs,
+        )
 
-        process = Process(self.uuid, message, message_request_uuid=message_request_uuid)
+        return process
+
+    def run(self, *args, **kwargs) -> Process:
+        process = self.build_process(*args, **kwargs)
+        return self.run_process(process)
+
+    def run_process(self, process: Process) -> Process:
         if (
             self.pool is not None
             and self.read_queue is not None
             and self.stop_event_pool is not None
         ):
-            process.start(
-                self.pool,
-                self.read_queue,
-                self.stop_event_pool,
-                context=ProcessContext(
+            context = (
+                ProcessContext(
                     lock=self.lock,
                     shared_dict=self.shared_dict,
                     shared_list=self.shared_list,
                 )
                 if self.shared_dict and self.shared_list
-                else None,
-                timestamp=now,
+                else None
             )
+
+            process.start(
+                self.pool,
+                self.read_queue,
+                self.stop_event_pool,
+                context=context,
+                timestamp=datetime.utcnow().timestamp(),
+            )
+
             self.processes.append(process)
 
         return process
@@ -208,3 +248,11 @@ class Kernel:
         if self.pool is not None:
             await asyncio.get_event_loop().run_in_executor(self.executor, self.pool.terminate)
             await asyncio.get_event_loop().run_in_executor(self.executor, self.pool.join)
+
+    def to_dict(self) -> Dict:
+        return dict(
+            active=self.active,
+            num_processes=self.num_processes,
+            processes=self.processes,
+            uuid=self.uuid,
+        )

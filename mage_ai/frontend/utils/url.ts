@@ -47,19 +47,16 @@ export function queryString(query: object = {}) {
     .join('&');
 }
 
-export function filterQuery(
-  query: object = {},
-  keysToInclude: string[] = [],
-) {
-  return Object.entries(query)
-    .reduce((acc, [key, value]) => {
-      if ((keysToInclude.includes(key))
-        && (!Array.isArray(value)
-          || (Array.isArray(value) && value.length > 0))) {
-          acc[key] = value;
-      }
-      return acc;
-    }, {});
+export function filterQuery(query: object = {}, keysToInclude: string[] = []) {
+  return Object.entries(query).reduce((acc, [key, value]) => {
+    if (
+      keysToInclude.includes(key) &&
+      (!Array.isArray(value) || (Array.isArray(value) && value.length > 0))
+    ) {
+      acc[key] = value;
+    }
+    return acc;
+  }, {});
 }
 
 export const redirectToUrl = (url: string, server?: ServerResponse) => {
@@ -74,3 +71,11 @@ export const redirectToUrl = (url: string, server?: ServerResponse) => {
     Router.push(url);
   }
 };
+
+export function snakeToHyphens(url: string): string {
+  return url.replace(/_/g, '-');
+}
+
+export function hyphensToSnake(url: string): string {
+  return url.replace(/-/g, '_');
+}

@@ -1,3 +1,4 @@
+import asyncio
 import json
 import os
 from typing import Any, Dict, List, Optional, Tuple, Union
@@ -720,3 +721,55 @@ async def get_outputs_for_display_async(block, **kwargs) -> List[Dict[str, Any]]
         __callback(data)
 
     return items
+
+
+async def get_output_data_async(
+    block: Any,
+    block_uuid: Optional[str] = None,
+    execution_partition: Optional[str] = None,
+    max_results: Optional[int] = None,
+    input_data_types: Optional[List[InputDataType]] = None,
+    read_batch_settings: Optional[BatchSettings] = None,
+    read_chunks: Optional[List[ChunkKeyTypeUnion]] = None,
+    sample: Optional[bool] = None,
+    sample_count: Optional[int] = None,
+) -> List[Any]:
+    variable_uuids = block.get_variables_by_block(
+        block_uuid=block_uuid,
+        max_results=max_results,
+        partition=execution_partition,
+    )
+
+    variable_objects = [
+        block.get_variable_object(
+            block_uuid=block_uuid,
+            partition=execution_partition,
+            variable_uuid=variable_uuid,
+            input_data_types=input_data_types,
+            read_batch_settings=read_batch_settings,
+            read_chunks=read_chunks,
+        )
+        for variable_uuid in variable_uuids
+    ]
+
+    async def __read(
+        variable_object,
+        block=block,
+        sample=sample,
+        sample_count=sample_count,
+    ):
+        data = await variable_object.read_data_async(
+            sample=sample,
+            sample_count=sample_count,
+            spark=block.get_spark_session(),
+        )
+
+        return dict(
+            data=data,
+            partition=variable_object.partition,
+            type=variable_object.variable_type,
+            types=variable_object.variable_types,
+            uuid=variable_object.uuid,
+        )
+
+    return await asyncio.gather(*[__read(variable_object) for variable_object in variable_objects])

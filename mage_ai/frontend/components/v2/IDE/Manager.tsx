@@ -11,6 +11,17 @@ import { ModeEnum } from '@mana/themes/modes';
 import { getHost } from '@api/utils/url';
 import { getTheme, getThemeSettings } from '@mana/themes/utils';
 import { languageClientConfig, loggerConfig } from './constants';
+import { DEBUG } from '../utils/debug';
+
+function debugLog(message: any, args?: any | any[]) {
+  const arr = [`[EditorManager] ${message}`];
+  if (Array.isArray(args)) {
+    arr.push(...args);
+  } else if (args) {
+    arr.push(args);
+  }
+  DEBUG.editor.manager && console.log(...arr);
+}
 
 type onComplete = (
   wrapper?: any,
@@ -28,6 +39,7 @@ type InitializeWrapperProps = {
 };
 
 type InitializeLanguageServerProps = {
+  enabled?: boolean;
   onComplete?: onComplete;
 };
 
@@ -95,7 +107,7 @@ class Manager {
       return;
     }
 
-    console.log('Loading services...');
+    debugLog('Loading services...');
 
     const monaco = await import('monaco-editor');
     await import('monaco-editor-wrapper');
@@ -119,7 +131,7 @@ class Manager {
       });
 
       Manager.servicesLoaded = true;
-      console.log('Services loaded.');
+      debugLog('Services loaded.');
     };
 
     await configureMonacoWorkers();
@@ -135,7 +147,13 @@ class Manager {
 
   // https://github.com/TypeFox/monaco-languageclient/blob/main/packages/wrapper/src/wrapper.ts
   public static getInstance(uuid: string): Manager {
-    console.log(Manager.instances);
+    if (!(uuid ?? false)) {
+      console.error(
+        '[WARNING] Editor manager is being initialized without a UUID, ' +
+          'you must use a UUID or else the same instance will be reused.',
+      );
+    }
+    debugLog(Manager.instances);
 
     if (!Manager.instances) {
       Manager.instances = {};
@@ -143,7 +161,7 @@ class Manager {
 
     const instancesUnused = {};
 
-    console.log(
+    debugLog(
       `Instances (${Object.keys(Manager.instances || {}).length}):`,
       Object.keys(Manager.instances || {}),
     );
@@ -153,10 +171,10 @@ class Manager {
       const path = resource?.main?.path || resource?.original?.path;
       const used = Manager.isResourceOpen(path);
 
-      // console.log(`  Instance: ${key}`);
-      // console.log(`    - Initialized: ${manager?.isInitialized()}`);
-      // console.log(`    - In use:      ${used}`);
-      // console.log(`    - Resource:    ${path}`);
+      // debugLog(`  Instance: ${key}`);
+      // debugLog(`    - Initialized: ${manager?.isInitialized()}`);
+      // debugLog(`    - In use:      ${used}`);
+      // debugLog(`    - Resource:    ${path}`);
 
       if (!used) {
         instancesUnused[key] = manager;
@@ -165,10 +183,10 @@ class Manager {
 
     const unusedCount = Object.keys(instancesUnused).length;
     if (unusedCount >= 1) {
-      console.log(`Unused instances (${unusedCount}):`, Object.keys(instancesUnused || {}));
+      debugLog(`Unused instances (${unusedCount}):`, Object.keys(instancesUnused || {}));
 
       const uuidUnused = Object.keys(instancesUnused)[0];
-      console.log(`Reusing unused instance ${uuidUnused}...`);
+      debugLog(`Reusing unused instance ${uuidUnused}...`);
 
       const instances = {};
       Object.entries(Manager.instances).forEach(([key, value]) => {
@@ -176,7 +194,7 @@ class Manager {
       });
       Manager.instances = instances;
     } else if (!(uuid in Manager.instances)) {
-      console.log(`Constructing new instance ${uuid}...`);
+      debugLog(`Constructing new instance ${uuid}...`);
       Manager.instances[uuid] = new Manager(uuid);
     }
 
@@ -208,6 +226,9 @@ class Manager {
           };
         }
       }
+    } else {
+      console.error(`No resource found for ${path}`, file);
+      debugLog('Current resources:', Manager.resources);
     }
   }
 
@@ -243,13 +264,13 @@ class Manager {
 
     if (this.wrapper) {
       if (shutdown) {
-        console.log(`Shutting down manager ${this.uuid}...`);
+        debugLog(`Shutting down manager ${this.uuid}...`);
         await this.wrapper.dispose();
         if (Manager.instances && this.uuid in Manager.instances) {
           delete Manager.instances[this.uuid];
         }
       } else {
-        console.log(`Disposing editor ${this.uuid}...`);
+        debugLog(`Disposing editor ${this.uuid}...`);
         await this.wrapper.getMonacoEditorApp().disposeApp();
       }
     }
@@ -257,11 +278,11 @@ class Manager {
 
   public closeResource() {
     const path = this.resource?.main?.path || this.resource?.original?.path;
-    console.log(`Closing resource: ${path}`);
+    debugLog(`Closing resource: ${path}`);
     const resources = Object.keys(Manager.resources).length;
     delete Manager.resources[path];
     const open = Object.keys(Manager.resources).length;
-    console.log(`Resources open: ${open} (${open - resources} changed)`);
+    debugLog(`Resources open: ${open} (${open - resources} changed)`);
   }
 
   public getWrapper() {
@@ -289,7 +310,7 @@ class Manager {
     });
 
     if (this.requiresNewModel) {
-      console.log(`Creating new model for resource: ${this.resource.main.path}`);
+      debugLog(`Creating new model for resource: ${this.resource.main.path}`);
       await this.wrapper.updateCodeResources(this.buildCodeResources(this.resource));
     }
   }
@@ -313,15 +334,20 @@ class Manager {
     await Manager.loadServices();
 
     this.onCompletions.wrapper = () => wrapper?.onComplete?.();
-    this.onCompletions.languageServer = () => languageServer?.onComplete?.();
+    this.onCompletions.languageServer = () =>
+      !languageServer?.enabled || languageServer?.onComplete?.();
     this.onCompletions.workspace = () => workspace?.onComplete?.();
 
     await this.initializeWrapper(
-      wrapper,
+      {
+        ...wrapper,
+        languageServer,
+      },
       async (languageServerClientWrapper: any) =>
         await this.startLanguageServer(
           languageServerClientWrapper,
           async (languageClient: any) => await this.initializeWorkspace(languageClient, workspace),
+          languageServer,
         ),
     );
     await this.isCompleted();
@@ -366,10 +392,10 @@ class Manager {
   }
 
   private async initializeWrapper(
-    opts: InitializeWrapperProps,
+    opts: InitializeWrapperProps & { languageServer?: InitializeLanguageServerProps },
     callback: (languageServerClientWrapper: any) => void,
   ) {
-    const { options } = opts || {};
+    const { languageServer, options } = opts || {};
 
     const { MonacoEditorLanguageClientWrapper } = await import('monaco-editor-wrapper');
 
@@ -379,12 +405,17 @@ class Manager {
         ...options?.configurations,
         theme: options?.theme,
       });
+
       const diffConfigurations = baseDiffConfigurations(getTheme(), {
         ...options?.configurations,
         theme: options?.theme,
       });
 
-      const configs = await this.buildUserConfig(configurations, diffConfigurations);
+      const configs = await this.buildUserConfig(
+        configurations,
+        diffConfigurations,
+        languageServer,
+      );
       await wrapper.init(configs as any);
       this.wrapper = wrapper;
       callback(wrapper?.getLanguageClientWrapper());
@@ -398,24 +429,25 @@ class Manager {
   private async startLanguageServer(
     languageServerClientWrapper: any,
     callback: (languageClient: any) => void,
+    languageServer: InitializeLanguageServerProps,
   ) {
     this.languageServerClientWrapper = languageServerClientWrapper;
 
-    if (this.isLanguageServerEnabled()) {
+    if (languageServer?.enabled && this.isLanguageServerEnabled()) {
       if (this.isLanguageServerInitialized()) {
         this.languageClient = Manager.languageServers?.[this.language];
-        console.log(`LSP: ${this.language} already started, skipping...`);
+        debugLog(`LSP: ${this.language} already started, skipping...`);
       } else {
         await languageServerClientWrapper.start().then(() => {
           this.languageClient = languageServerClientWrapper.getLanguageClient();
           Manager.languageServers[this.language] = this.languageClient;
-          console.log(`LSP: ${this.language} starting...`);
+          debugLog(`LSP: ${this.language} starting...`);
         });
       }
     }
 
-    const lsps = Object.keys(Manager.languageServers);
-    console.log(`LSPs (${lsps?.length || 0}): ${lsps?.join(', ')}`);
+    const lsps = Object.keys(Manager.languageServers ?? {});
+    debugLog(`LSPs (${lsps?.length || 0}): ${lsps?.join(', ')}`);
 
     this.completions.languageServer = [true, false];
     callback(this.languageClient);
@@ -452,7 +484,7 @@ class Manager {
     //   if (isDebug()) {
     //     fetch((files: FileType[]) => {
     //       files.forEach(registerItem);
-    //       console.log(`[DEBUG] Registered ${files?.length} from /home/src`);
+    //       debugLog(`[DEBUG] Registered ${files?.length} from /home/src`);
     //     }, {
     //       paths: [
     //         '/home/src/mage_ai/ai',
@@ -540,19 +572,24 @@ class Manager {
     );
   }
 
-  private async buildUserConfig(configurations: any, diffConfigurations?: any) {
+  private async buildUserConfig(
+    configurations: any,
+    diffConfigurations?: any,
+    languageServer?: InitializeLanguageServerProps,
+  ) {
     const { main, original } = this.resource;
     const useDiffEditor = main && original && main?.content !== original?.content;
 
     return {
       id: this.uuid,
-      languageClientConfig: this.isLanguageServerInitialized()
-        ? null
-        : {
-            ...languageClientConfig,
-            languageId: this.language,
-            name: `mage-lsp-${this.language}`,
-          },
+      languageClientConfig:
+        !languageServer?.enabled || this.isLanguageServerInitialized()
+          ? null
+          : {
+              ...languageClientConfig,
+              languageId: this.language,
+              name: `mage-lsp-${this.language}`,
+            },
       loggerConfig,
       wrapperConfig: {
         editorAppConfig: {

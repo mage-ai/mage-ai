@@ -1,7 +1,7 @@
 import os
 from dataclasses import dataclass, field
 from functools import reduce
-from typing import Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import yaml
 
@@ -35,21 +35,14 @@ class InteractionInputOption(BaseDataClass):
 
 
 @dataclass
-class InteractionInputStyle:
-    input_type: InteractionInputStyleInputType = None
-    language: str = None
+class InteractionInputStyle(BaseDataClass):
+    input_type: Optional[InteractionInputStyleInputType] = None
+    language: Optional[str] = None
     monospace: Optional[bool] = None
-    multiline: bool = None
+    multiline: Optional[bool] = None
 
     def __post_init__(self):
-        if self.input_type and isinstance(self.input_type, str):
-            self.input_type = InteractionInputStyleInputType(self.input_type)
-
-    def to_dict(self) -> Dict:
-        return dict(
-            input_type=self.input_type.value if self.input_type else None,
-            multiline=self.multiline,
-        )
+        self.serialize_attribute_enum('input_type', InteractionInputStyleInputType)
 
 
 @dataclass
@@ -89,27 +82,26 @@ class InteractionLayoutItem:
 
 
 @dataclass
-class InteractionVariable:
+class InteractionVariable(BaseDataClass):
     description: str = None
     input: str = None
     name: str = None
     required: bool = None
     types: List[InteractionVariableType] = field(default_factory=list)
     uuid: str = None
+    value: Optional[Any] = None
 
     def __post_init__(self):
         if self.types and isinstance(self.types, list):
             self.types = [InteractionVariableType(t) for t in self.types]
 
-    def to_dict(self) -> Dict:
-        return dict(
-            description=self.description,
-            input=self.input,
-            name=self.name,
-            required=self.required,
-            types=[i.value for i in self.types],
-            uuid=self.uuid,
-        )
+    def to_dict(self, *args, **kwargs) -> Dict:
+        return {
+          **super().to_dict(*args, **kwargs),
+          **dict(
+              types=[i.value for i in self.types],
+          ),
+        }
 
 
 class Interaction:

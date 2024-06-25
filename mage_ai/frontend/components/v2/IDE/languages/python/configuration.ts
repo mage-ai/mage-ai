@@ -7,23 +7,6 @@ export const pythonLanguageExtension = {
 
 export default function configuration() {
   return {
-    brackets: [
-      // Your defined brackets
-      ['{', '}'],
-      ['[', ']'],
-      ['(', ')'],
-      ['<', '>'],
-      ['"', '"'],
-      ['_', '_'],
-      ['**', '**'],
-      ['**_', '_**'],
-      ['{{', '}}'],
-      ['`', '`'],
-      ['#ifndef', '#endif'],
-      ['<%', '%>'],
-      ['${', '}'],
-      ['$', ')'],
-    ],
     autoClosingPairs: [
       // Optionally define auto-closing pairs
       { open: '{', close: '}', notIn: ['string'] },
@@ -41,6 +24,26 @@ export default function configuration() {
       { open: '${', close: '}' },
       { open: '$(', close: ')' },
     ],
+    blockComments: [['"""', '"""']],
+    brackets: [
+      // Your defined brackets
+      ['{', '}'],
+      ['[', ']'],
+      ['(', ')'],
+      ['<', '>'],
+      ['"', '"'],
+      ['_', '_'],
+      ['**', '**'],
+      ['**_', '_**'],
+      ['{{', '}}'],
+      ['`', '`'],
+      ['#ifndef', '#endif'],
+      ['<%', '%>'],
+      ['${', '}'],
+      ['$', ')'],
+    ],
+    colorizedBracketPairs: [['{', '}']],
+    comments: '#',
     surroundingPairs: [
       // Define pairs that trigger when surrounding selections
       { open: '{', close: '}' },
@@ -58,6 +61,5 @@ export default function configuration() {
       { open: '${', close: '}' },
       { open: '$(', close: ')' },
     ],
-    colorizedBracketPairs: [['{', '}']],
   };
 }

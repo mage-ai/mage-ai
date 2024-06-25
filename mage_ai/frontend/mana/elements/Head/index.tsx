@@ -1,6 +1,8 @@
 import NextHead from 'next/head';
-import { useContext } from 'react';
 import { ThemeContext } from 'styled-components';
+import { useContext } from 'react';
+
+const STYLE_ROOT_ID = 'dynamic-style-root';
 
 type HeadProps = {
   children?: any;
@@ -22,6 +24,8 @@ const Head = ({ children, defaultTitle = 'Mage Pro', title }: HeadProps) => {
           background-color: ${theme?.backgrounds?.body};
         }
       `}</style>
+
+      <style id={STYLE_ROOT_ID} />
 
       {children}
     </NextHead>

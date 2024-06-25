@@ -160,7 +160,7 @@ from mage_ai.shared.utils import clean_name as clean_name_orig
 from mage_ai.shared.utils import is_spark_env
 
 # from mage_ai.system.memory.manager import MemoryManager
-from mage_ai.system.memory.wrappers import execute_with_memory_tracking
+# from mage_ai.system.memory.wrappers import execute_with_memory_tracking
 from mage_ai.system.models import ResourceUsage
 
 PYTHON_COMMAND = 'python3'
@@ -375,6 +375,7 @@ class Block(
         hook=None,
         repo_config=None,
         timeout: int = None,
+        groups: Optional[List[str]] = None,
     ) -> None:
         if configuration is None:
             configuration = dict()
@@ -409,6 +410,8 @@ class Block(
         self.dynamic_block_index = None
         self.dynamic_block_uuid = None
         self.dynamic_upstream_block_uuids = None
+
+        self.groups = groups
 
         # Spark session
         self.spark = None
@@ -1044,6 +1047,7 @@ class Block(
         config: Dict = None,
         widget: bool = False,
         downstream_block_uuids: List[str] = None,
+        groups: Optional[List[str]] = None,
     ) -> 'Block':
         from mage_ai.data_preparation.models.block.block_factory import BlockFactory
 
@@ -1162,6 +1166,7 @@ class Block(
             language=language,
             pipeline=pipeline,
             replicated_block=replicated_block,
+            groups=groups,
         )
         block.already_exists = already_exists
 
@@ -1482,24 +1487,26 @@ class Block(
 
             try:
                 if not run_all_blocks:
-                    not_executed_upstream_blocks = list(
-                        filter(
-                            lambda b: b.status == BlockStatus.NOT_EXECUTED,
-                            self.upstream_blocks,
-                        )
-                    )
-                    all_upstream_is_dbt = all([
-                        BlockType.DBT == b.type for b in not_executed_upstream_blocks
-                    ])
-                    if not all_upstream_is_dbt and len(not_executed_upstream_blocks) > 0:
-                        upstream_block_uuids = list(
-                            map(lambda b: b.uuid, not_executed_upstream_blocks)
-                        )
-                        raise Exception(
-                            f"Block {self.uuid}'s upstream blocks have not been executed yet. "
-                            f'Please run upstream blocks {upstream_block_uuids} '
-                            'before running the current block.'
-                        )
+                    pass
+                    # not_executed_upstream_blocks = list(
+                    #     filter(
+                    #         lambda b: b.status == BlockStatus.NOT_EXECUTED,
+                    #         self.upstream_blocks,
+                    #     )
+                    # )
+                    # all_upstream_is_dbt = all([
+                    #     BlockType.DBT == b.type for b in not_executed_upstream_blocks
+                    # ])
+                    # if not all_upstream_is_dbt and len(not_executed_upstream_blocks) > 0:
+                    #     upstream_block_uuids = list(
+                    #         map(lambda b: b.uuid, not_executed_upstream_blocks)
+                    #     )
+                    #     raise Exception(
+                    #         f"Block {self.uuid}'s upstream blocks have not been executed yet. "
+                    #         f'Please run upstream blocks {upstream_block_uuids} '
+                    #         'before running the current block.'
+                    #     )
+
                 global_vars = self.enrich_global_vars(
                     global_vars,
                     dynamic_block_index=dynamic_block_index,
@@ -1687,6 +1694,11 @@ class Block(
         run_sensors: bool = True,
         update_status: bool = True,
         parallel: bool = True,
+        execution_partition: Optional[str] = None,
+        override_outputs: Optional[bool] = None,
+        store_variables: Optional[bool] = None,
+        verify_output: Optional[bool] = None,
+        from_notebook: Optional[bool] = None,
     ) -> None:
         if parallel:
             loop = asyncio.get_event_loop()
@@ -1697,10 +1709,14 @@ class Block(
                     analyze_outputs=analyze_outputs,
                     build_block_output_stdout=build_block_output_stdout,
                     custom_code=custom_code,
-                    from_notebook=not run_sensors,
+                    from_notebook=from_notebook if from_notebook else not run_sensors,
                     global_vars=global_vars,
                     run_all_blocks=run_all_blocks,
                     update_status=update_status,
+                    execution_partition=execution_partition,
+                    override_outputs=override_outputs,
+                    store_variables=store_variables,
+                    verify_output=verify_output,
                 ),
             )
         else:
@@ -1708,10 +1724,14 @@ class Block(
                 analyze_outputs=analyze_outputs,
                 build_block_output_stdout=build_block_output_stdout,
                 custom_code=custom_code,
-                from_notebook=not run_sensors,
+                from_notebook=from_notebook if from_notebook else not run_sensors,
                 global_vars=global_vars,
                 run_all_blocks=run_all_blocks,
                 update_status=update_status,
+                execution_partition=execution_partition,
+                override_outputs=override_outputs,
+                store_variables=store_variables,
+                verify_output=verify_output,
             )
 
     def _validate_execution(self, decorated_functions, input_vars):
@@ -2133,23 +2153,23 @@ class Block(
                 if global_vars:
                     global_vars.update(part_index=part_index)
 
-        if MEMORY_MANAGER_V2:
-            log_message_prefix = self.uuid
-            if self.pipeline:
-                log_message_prefix = f'{self.pipeline_uuid}:{log_message_prefix}'
-            log_message_prefix = f'[{log_message_prefix}:execute_block_function]'
+        # if MEMORY_MANAGER_V2:
+        #     log_message_prefix = self.uuid
+        #     if self.pipeline:
+        #         log_message_prefix = f'{self.pipeline_uuid}:{log_message_prefix}'
+        #     log_message_prefix = f'[{log_message_prefix}:execute_block_function]'
 
-            output, self.resource_usage = execute_with_memory_tracking(
-                block_function_updated,
-                args=input_vars,
-                kwargs=global_vars
-                if has_kwargs and global_vars is not None and len(global_vars) != 0
-                else None,
-                logger=logger,
-                logging_tags=logging_tags,
-                log_message_prefix=log_message_prefix,
-            )
-        elif has_kwargs and global_vars is not None and len(global_vars) != 0:
+        #     output, self.resource_usage = execute_with_memory_tracking(
+        #         block_function_updated,
+        #         args=input_vars,
+        #         kwargs=global_vars
+        #         if has_kwargs and global_vars is not None and len(global_vars) != 0
+        #         else None,
+        #         logger=logger,
+        #         logging_tags=logging_tags,
+        #         log_message_prefix=log_message_prefix,
+        #     )
+        if has_kwargs and global_vars is not None and len(global_vars) != 0:
             output = block_function_updated(*input_vars, **global_vars)
         else:
             output = block_function_updated(*input_vars)
@@ -3468,7 +3488,8 @@ class Block(
         else:
             output_variables = {k: v for k, v in variable_mapping.items() if is_output_variable(k)}
             print_variables = {
-                k: v for k, v in variable_mapping.items()
+                k: v
+                for k, v in variable_mapping.items()
                 if is_valid_print_variable(k, v, self.uuid)
             }
 

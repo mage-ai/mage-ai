@@ -49,6 +49,7 @@ export interface TypographyColorsType {
     blue: string;
     inverted: string;
     muted: string;
+    secondary: string;
   };
 }
 
@@ -88,6 +89,8 @@ interface ColorsDerivedType {
   icons: {
     base: string;
     inverted: string;
+    muted: string;
+    secondary: string;
   };
   outline: OutlineType;
   placeholder: {
@@ -104,6 +107,8 @@ interface ColorsDerivedType {
 
 export const COLOR_NAMES = indexBy(
   [
+    'azure',
+    'azureLo',
     'black',
     'blackFixed',
     'blue',
@@ -164,6 +169,8 @@ export const COLOR_NAMES = indexBy(
 );
 
 export interface ColorsType extends ColorsDerivedType {
+  azure: string;
+  azureLo: string;
   black: string;
   blackFixed: string;
   blue: string;
@@ -222,6 +229,17 @@ export interface ColorsType extends ColorsDerivedType {
 }
 
 const Colors = {
+  azure: {
+    [ModeEnum.DARK]: '#148EFF',
+    [ModeEnum.LIGHT]: '#148EFF',
+    [ModeEnum.MODE3]: '#148EFF',
+  },
+  azureLo: {
+    // 10%
+    [ModeEnum.DARK]: '#1F6BFF1A',
+    [ModeEnum.LIGHT]: '#1F6BFF1A',
+    [ModeEnum.MODE3]: '#1F6BFF1A',
+  },
   black: {
     [ModeEnum.DARK]: '#000000',
     [ModeEnum.LIGHT]: '#000000',
@@ -233,7 +251,7 @@ const Colors = {
     [ModeEnum.MODE3]: '#000000',
   },
   blackLo: {
-    [ModeEnum.DARK]: '#00000033',
+    [ModeEnum.DARK]: '#00000033', // 20%
     [ModeEnum.LIGHT]: '#00000033',
     [ModeEnum.MODE3]: '#00000033',
   },
@@ -243,7 +261,7 @@ const Colors = {
     [ModeEnum.MODE3]: '#00000099',
   },
   blackHi: {
-    [ModeEnum.DARK]: '#000000D9',
+    [ModeEnum.DARK]: '#000000D9', // 85%
     [ModeEnum.LIGHT]: '#000000D9',
     [ModeEnum.MODE3]: '#000000D9',
   },
@@ -771,6 +789,16 @@ const ColorsDerived = {
       [ModeEnum.LIGHT]: 'white',
       [ModeEnum.MODE3]: 'gray',
     }),
+    muted: convert({
+      [ModeEnum.DARK]: 'whiteLo',
+      [ModeEnum.LIGHT]: 'blackLo',
+      [ModeEnum.MODE3]: 'blackLo',
+    }),
+    secondary: convert({
+      [ModeEnum.DARK]: 'whiteMd',
+      [ModeEnum.LIGHT]: 'blackMd',
+      [ModeEnum.MODE3]: 'blackMd',
+    }),
   },
   outline: {
     button: {
@@ -870,6 +898,11 @@ const ColorsDerived = {
         [ModeEnum.MODE3]: 'white',
       }),
       muted: convert({
+        [ModeEnum.DARK]: 'whiteLo',
+        [ModeEnum.LIGHT]: 'blackLo',
+        [ModeEnum.MODE3]: 'blackLo',
+      }),
+      secondary: convert({
         [ModeEnum.DARK]: 'whiteMd',
         [ModeEnum.LIGHT]: 'blackMd',
         [ModeEnum.MODE3]: 'blackMd',

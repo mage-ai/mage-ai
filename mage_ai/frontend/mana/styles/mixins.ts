@@ -1,7 +1,7 @@
 import { css } from 'styled-components';
 
 export const transition = css`
-  transition: 0.2s all ease-in-out;
+  transition: 0.3s all ease-in-out;
 `;
 
 export const transitionFast = css`
@@ -90,21 +90,21 @@ export const outlineHover = ({
     &:hover {
       box-shadow:
         0 0 0
-          ${theme.borders.outline.offset + (outlineOffset || 0)}px
-          ${borderColor || theme.colors.backgrounds.button.base},
+          ${theme.borders.outline.offset + (outlineOffset ?? 0)}px
+          ${borderColor ?? theme.colors.backgrounds.button.base},
         0 0 0
-          ${theme.borders.outline.offset + (outlineOffset || 0) + theme.borders.outline.width + (outlineWidth || 0)}px
-          ${outlineColor || theme.colors.purple};
+          ${theme.borders.outline.offset + (outlineOffset ?? 0) + theme.borders.outline.width + (outlineWidth ?? 0)}px
+          ${outlineColor ?? theme.colors.purple};
     }
 
     &:focus {
       box-shadow:
         0 0 0
-          ${theme.borders.outline.offset + (outlineOffset || 0)}px
-          ${borderColor || theme.colors.backgrounds.button.base},
+          ${theme.borders.outline.offset + (outlineOffset ?? 0)}px
+          ${borderColor ?? theme.colors.backgrounds.button.base},
         0 0 0
-          ${theme.borders.outline.offset + (outlineOffset || 0) + theme.borders.outline.width + (outlineWidth || 0)}px
-          ${outlineColor || theme.colors.purple};
+          ${theme.borders.outline.offset + (outlineOffset ?? 0) + theme.borders.outline.width + (outlineWidth ?? 0)}px
+          ${outlineColor ?? theme.colors.purple};
     }
   `}
 

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from collections import deque
 from dataclasses import dataclass
-from typing import List, Optional
+from typing import Any, List, Optional
 
 from mage_ai.data_preparation.models.constants import BlockType, PipelineType
 from mage_ai.frameworks.execution.models.base import BaseExecutionFramework
@@ -14,6 +14,7 @@ from mage_ai.shared.hash import group_by, merge_dict
 @dataclass
 class PipelineExecutionFramework(BaseExecutionFramework):
     blocks: Optional[List[BlockExecutionFramework]] = None
+    pipeline_schedules: Optional[List[Any]] = None
     pipelines: Optional[List[PipelineExecutionFramework]] = None
     type: Optional[PipelineType] = PipelineType.EXECUTION_FRAMEWORK
 
@@ -119,10 +120,12 @@ class PipelineExecutionFramework(BaseExecutionFramework):
                     if pipeline_block and pipeline_block.upstream_blocks:
                         leaf_nodes_of_upstream_pipelines = []
                         for b in pipeline_block.upstream_blocks:
-                            leaf_nodes_of_upstream_pipelines += \
-                                pipeline_configs.get(b, dict()).get('leaf_nodes', [])
-                        block_group['upstream_block_groups'] = \
-                            [b.uuid for b in leaf_nodes_of_upstream_pipelines]
+                            leaf_nodes_of_upstream_pipelines += pipeline_configs.get(
+                                b, dict()
+                            ).get('leaf_nodes', [])
+                        block_group['upstream_block_groups'] = [
+                            b.uuid for b in leaf_nodes_of_upstream_pipelines
+                        ]
 
             if not block_group['downstream_block_groups']:
                 # Leaf node
@@ -132,10 +135,12 @@ class PipelineExecutionFramework(BaseExecutionFramework):
                     if pipeline_block and pipeline_block.downstream_blocks:
                         root_nodes_of_downstream_pipelines = []
                         for b in pipeline_block.downstream_blocks:
-                            root_nodes_of_downstream_pipelines += \
-                                pipeline_configs.get(b, dict()).get('root_nodes', [])
-                        block_group['downstream_block_groups'] = \
-                            [b.uuid for b in root_nodes_of_downstream_pipelines]
+                            root_nodes_of_downstream_pipelines += pipeline_configs.get(
+                                b, dict()
+                            ).get('root_nodes', [])
+                        block_group['downstream_block_groups'] = [
+                            b.uuid for b in root_nodes_of_downstream_pipelines
+                        ]
 
         return block_groups
 
@@ -163,7 +168,8 @@ class PipelineExecutionFramework(BaseExecutionFramework):
                     upstream_blocks.append(blocks_by_group[guuid])
                 elif guuid in flatten_block_groups_by_uuid:
                     upstream_blocks.append(
-                        find_upstream_blocks(flatten_block_groups_by_uuid[guuid]))
+                        find_upstream_blocks(flatten_block_groups_by_uuid[guuid])
+                    )
 
             return list(set(flatten(upstream_blocks)))
 
@@ -175,7 +181,8 @@ class PipelineExecutionFramework(BaseExecutionFramework):
                     downstream_blocks.append(blocks_by_group[guuid])
                 elif guuid in flatten_block_groups_by_uuid:
                     downstream_blocks.append(
-                        find_downstream_blocks(flatten_block_groups_by_uuid[guuid]))
+                        find_downstream_blocks(flatten_block_groups_by_uuid[guuid])
+                    )
 
             return list(set(flatten(downstream_blocks)))
 
@@ -187,10 +194,19 @@ class PipelineExecutionFramework(BaseExecutionFramework):
             b.configuration = merge_dict(
                 b.configuration or dict(),
                 block_group_configuration.to_dict(ignore_attributes=['templates'])
-                if block_group_configuration else dict(),
+                if block_group_configuration
+                else dict(),
             )
             if block_group['upstream_block_groups']:
                 b.upstream_blocks = find_upstream_blocks(block_group)
 
             if block_group['downstream_block_groups']:
                 b.downstream_blocks = find_downstream_blocks(block_group)
+
+    def get_blocks(self) -> List[BlockExecutionFramework]:
+        arr = []
+        for pipeline in self.get_pipelines():
+            for block in pipeline.blocks or []:
+                if BlockType.GROUP == block.type:
+                    arr.append(block)
+        return arr

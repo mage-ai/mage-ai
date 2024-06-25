@@ -1,0 +1,7 @@
+@use '../../../base/grid';
+
+.outputNodeContainer {
+  &.executed {
+    @include grid.base();
+  }
+}

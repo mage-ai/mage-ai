@@ -1,15 +1,21 @@
-import { css } from 'styled-components';
+import styled, { css } from 'styled-components';
 
 import { transition } from '../styles/mixins';
 
 export type ScrollbarsStyledProps = {
-  hidden?: boolean;
+  flexbox?: boolean;
+  hideXscrollbar?: boolean;
+  showY?: boolean;
   style?: React.CSSProperties;
 };
 
 const base = css<ScrollbarsStyledProps>`
-  ${({ hidden }) =>
-    hidden &&
+  height: inherit;
+  overflow-x: auto;
+  overflow-y: auto;
+
+  ${({ hideXscrollbar }) =>
+    hideXscrollbar &&
     `
     // for Internet Explorer, Edge
     -ms-overflow-style: none;
@@ -58,6 +64,14 @@ const base = css<ScrollbarsStyledProps>`
       background: ${background.track.hover};
     }
   `}
+
+  ${({ showY }) =>
+    showY &&
+    `
+    overflow-y: visible;
+  `}
 `;
+
+export const InnerStyled = styled.div``;
 
 export default base;

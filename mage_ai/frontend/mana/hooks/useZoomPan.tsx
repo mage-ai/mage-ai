@@ -1,4 +1,3 @@
-import { RectType } from '@components/v2/Canvas/interfaces';
 import { useRef, useEffect } from 'react';
 
 // A helper function to check if an element has a specific role in a space-separated list of roles
@@ -23,7 +22,7 @@ export type ZoomPanStateType = {
   element: React.RefObject<HTMLElement>;
   handlePanning: React.MutableRefObject<
     (
-      event: MouseEvent,
+      event: any,
       positionOverride?: {
         x?: number;
         xPercent?: number;
@@ -55,7 +54,7 @@ export type BoundaryType = {
 };
 
 export const useZoomPan = (
-  stateRef: React.MutableRefObject<ZoomPanStateType>,
+  stateRef: React.MutableRefObject<any>,
   opts?: {
     initialPosition?: {
       x?: number;
@@ -65,7 +64,7 @@ export const useZoomPan = (
     };
     maxScale?: number;
     minScale?: number;
-    onStateChange?: (state: ZoomPanStateType) => void;
+    onStateChange?: (state: any) => void;
     roles?: string[];
     zoomSensitivity?: number;
   },
@@ -87,7 +86,7 @@ export const useZoomPan = (
   const transformRef = stateRef.current.transform;
   const zoom = stateRef.current.zoom;
 
-  const viewportRect = useRef<RectType | null>(null);
+  const viewportRect = useRef<any | null>(null);
   const bottomMaxRef = useRef(null);
   const leftMaxRef = useRef(null);
   const rightMaxRef = useRef(null);

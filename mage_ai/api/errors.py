@@ -42,6 +42,11 @@ class ApiError(Exception):
         message='Invalid OAuth token.',
         type='invalid_oauth_token',
     )
+    INTERNAL_SERVER_ERROR = dict(
+        code=ErrorCode.CODE_500.value,
+        message='Internal server error.',
+        type='internal_server_error',
+    )
 
     def __init__(self, opts: Optional[Dict] = None):
         if opts:

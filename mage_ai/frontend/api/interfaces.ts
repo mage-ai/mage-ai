@@ -1,6 +1,3 @@
-import { AxiosError } from 'axios';
-import { ErrorDetailsType } from '@interfaces/ErrorsType';
-
 // "message": "Request failed with status code 400",
 // "name": "AxiosError",
 // "config": {
@@ -38,35 +35,42 @@ import { ErrorDetailsType } from '@interfaces/ErrorsType';
 // "status": 400
 export type AxiosErrorType = {
   response: {
-    data: { error: ErrorDetailsType } | Record<string, any>;
+    data: any | Record<string, any>;
   };
-} & AxiosError;
+} & any;
 
-type ResourceType = Record<string, any>;
+export type ResourceType = Record<string, any>;
 
 export type ResponseType = {
-  data?: Record<string, ResourceType>;
+  data?: Record<string, any>;
+  metadata?: Record<string, any>;
 };
 
 export type ErrorResponseType = {
-  error?: ErrorDetailsType;
+  error?: any;
 };
 
 export type OnSuccessHandlerType = (
-  response: any | ResponseType,
+  response: any | any,
   variables?: any,
   context?: any,
 ) => Promise<unknown> | unknown;
+
 export type OnErrorHandlerType = (
   err: any,
   variables?: any,
   context?: any,
 ) => Promise<unknown> | unknown;
 
+export type OnStartHandlerType = () => void;
+
 export interface HandlersType {
   onError?: OnErrorHandlerType;
   onSuccess?: OnSuccessHandlerType;
+  onStart?: OnStartHandlerType;
 }
+
+export type MutationFetchArgumentsType = HandlersType | any;
 
 export interface ResourceHandlersType {
   create?: HandlersType;
@@ -76,14 +80,28 @@ export interface ResourceHandlersType {
   update?: HandlersType;
 }
 
-export type MutateFunctionArgsType = {
-  id?: string | string[];
-  payload?: Record<string, any>;
-  query?: Record<string, any>;
+export type IDArgsType = {
+  id?: any;
+  idParent?: any;
+  resource?: any;
+  resourceParent?: any;
 };
+
+export type ArgsValueOrFunctionType =
+  | Record<string, any>
+  | ((args: Record<string, any>) => Record<string, any>);
+
+export type MutateFunctionArgsType = {
+  event?: any | any;
+  meta?: ArgsValueOrFunctionType;
+  payload?: ArgsValueOrFunctionType;
+  query?: ArgsValueOrFunctionType;
+} & any &
+  any;
+
 export type MutateFunctionType = (
-  args: MutateFunctionArgsType,
-) => Promise<ResourceType | ResourceType[]>;
+  args?: any,
+) => Promise<any | any[]>;
 
 export type MutatationType = {
   data: any;
@@ -101,10 +119,41 @@ export type MutatationType = {
   status: any;
 };
 
+export type ModelsType = Record<string, any | any[]>;
+
+export type MutationStatusMappingType = any;
+
+interface AbortControllerType {
+  abort: () => void;
+}
+
 export interface MutateType {
-  create: MutatationType;
-  delete: MutatationType;
-  detail: MutatationType;
-  list: MutatationType;
-  update: MutatationType;
+  abortController: {
+    create: AbortControllerType;
+    delete: AbortControllerType;
+    detail: AbortControllerType;
+    list: AbortControllerType;
+    update: AbortControllerType;
+  };
+  create: any;
+  delete: any;
+  detail: any;
+  getModel: (uuid?: string) => any;
+  getModels: () => any[];
+  list: any;
+  modelsRef: React.MutableRefObject<any>;
+  setModel: (
+    model: any | ((prev: any) => any),
+    uuid?: string,
+  ) => any;
+  setModels: (
+    models: any[] | ((prev: any[]) => any[]),
+  ) => any[];
+  status: any;
+  update: any;
+}
+
+export interface URLOptionsType {
+  disableEncodeURIComponent?: boolean;
+  disableHyphenCase?: boolean;
 }

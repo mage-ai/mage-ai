@@ -1,6 +1,12 @@
+from typing import Any, Dict, List
+import yaml
+
 from mage_ai.data_preparation.models.constants import BlockLanguage, BlockType
+from mage_ai.frameworks.execution.models.enums import GroupUUID
 from mage_ai.io.base import DataSource
 from mage_ai.shared.hash import index_by
+from mage_ai.frameworks.execution.llm.rag.pipelines.data_preparation import DATA_PREPARATION
+from mage_ai.frameworks.execution.llm.rag.pipelines.inference import INFERENCE
 
 GROUP_AGGREGATE = 'Aggregate'
 GROUP_COLUMN_ACTIONS = 'Column actions'
@@ -697,4 +703,33 @@ TEMPLATES_ONLY_FOR_V2 = [
     ),
 ]
 
-TEMPLATES_BY_UUID = index_by(lambda x: x['name'], TEMPLATES + TEMPLATES_ONLY_FOR_V2)
+def __build_templates_ai() -> List[Dict[str, Any]]:
+    temps = []
+    for pipelines in [
+        DATA_PREPARATION.pipelines,
+        INFERENCE.pipelines,
+    ]:
+        for pipeline in (pipelines if isinstance(pipelines, list) else []):
+            if not pipeline.blocks:
+                continue
+
+            for block in pipeline.blocks:
+                if not block.configuration or not block.configuration.templates:
+                    continue
+                for key, template in block.configuration.templates.items():
+                    temps.append(dict(
+                        block_type=template.type,
+                        description=template.description,
+                        groups=[pipeline.uuid, block.uuid],
+                        language=BlockLanguage.PYTHON,
+                        name=template.name,
+                        path=template.path,
+                    ))
+    return temps
+
+TEMPLATES_AI = __build_templates_ai()
+TEMPLATES_BY_UUID = index_by(lambda x: x['name'], (
+    TEMPLATES
+    + TEMPLATES_ONLY_FOR_V2
+    + TEMPLATES_AI
+))

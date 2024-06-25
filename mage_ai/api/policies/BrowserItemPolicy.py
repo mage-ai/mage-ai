@@ -1,5 +1,5 @@
 from mage_ai.api.oauth_scope import OauthScope
-from mage_ai.api.operations import constants
+from mage_ai.api.operations.constants import OperationType
 from mage_ai.api.policies.BasePolicy import BasePolicy
 from mage_ai.api.presenters.BrowserItemPresenter import BrowserItemPresenter
 from mage_ai.orchestration.constants import Entity
@@ -14,8 +14,8 @@ class BrowserItemPolicy(BasePolicy):
 
 BrowserItemPolicy.allow_actions(
     [
-        constants.LIST,
-        constants.DETAIL,
+        OperationType.LIST,
+        OperationType.DETAIL,
     ],
     scopes=[
         OauthScope.CLIENT_PRIVATE,
@@ -26,9 +26,9 @@ BrowserItemPolicy.allow_actions(
 
 BrowserItemPolicy.allow_actions(
     [
-        constants.CREATE,
-        constants.DELETE,
-        constants.UPDATE,
+        OperationType.CREATE,
+        OperationType.DELETE,
+        OperationType.UPDATE,
     ],
     scopes=[
         OauthScope.CLIENT_PRIVATE,
@@ -43,14 +43,27 @@ BrowserItemPolicy.allow_read(
         OauthScope.CLIENT_PRIVATE,
     ],
     on_action=[
-        constants.CREATE,
-        constants.DELETE,
-        constants.UPDATE,
-        constants.LIST,
-        constants.DETAIL,
+        OperationType.CREATE,
+        OperationType.DELETE,
+        OperationType.UPDATE,
+        OperationType.LIST,
+        OperationType.DETAIL,
     ],
     condition=lambda policy: policy.has_at_least_viewer_role(),
 )
+
+
+BrowserItemPolicy.allow_read(
+    ['output'],
+    scopes=[
+        OauthScope.CLIENT_PRIVATE,
+    ],
+    on_action=[
+        OperationType.DETAIL,
+    ],
+    condition=lambda policy: policy.has_at_least_viewer_role(),
+)
+
 
 BrowserItemPolicy.allow_write(
     [
@@ -62,9 +75,9 @@ BrowserItemPolicy.allow_write(
         OauthScope.CLIENT_PRIVATE,
     ],
     on_action=[
-        constants.CREATE,
-        constants.DELETE,
-        constants.UPDATE,
+        OperationType.CREATE,
+        OperationType.DELETE,
+        OperationType.UPDATE,
     ],
     condition=lambda policy: policy.has_at_least_editor_role_and_notebook_edit_access(),
 )
@@ -79,7 +92,7 @@ BrowserItemPolicy.allow_query(
         OauthScope.CLIENT_PRIVATE,
     ],
     on_action=[
-        constants.LIST,
+        OperationType.LIST,
     ],
     condition=lambda policy: policy.has_at_least_viewer_role(),
 )
@@ -92,7 +105,7 @@ BrowserItemPolicy.allow_query(
         OauthScope.CLIENT_PRIVATE,
     ],
     on_action=[
-        constants.LIST,
+        OperationType.LIST,
     ],
     condition=lambda policy: policy.has_at_least_editor_role_and_notebook_edit_access(),
 )

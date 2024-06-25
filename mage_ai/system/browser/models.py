@@ -3,7 +3,7 @@ from __future__ import annotations
 import os
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Optional
+from typing import Dict, List, Optional
 
 from mage_ai.data_preparation.models.constants import (
     FILE_EXTENSION_TO_BLOCK_LANGUAGE,
@@ -23,6 +23,7 @@ class Item(BaseDataClass):
     language: Optional[BlockLanguage] = None
     modified_timestamp: Optional[int] = None
     name: Optional[str] = None
+    output: Optional[List[Dict]] = None
     relative_path: Optional[str] = None
     size: Optional[int] = None
 

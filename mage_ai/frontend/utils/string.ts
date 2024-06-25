@@ -7,6 +7,33 @@ import nouns from './samples/nouns';
 import numbers from './samples/numbers';
 import { randomSample, range } from './array';
 
+export const formatDurationFromEpoch = (epochTimestampInMillis: number): string => {
+  const totalSeconds = epochTimestampInMillis / 1000; // Convert milliseconds to seconds as a float
+  const seconds = Math.floor(totalSeconds % 60);
+  const milliseconds = epochTimestampInMillis % 1000;
+  const minutes = Math.floor((totalSeconds / 60) % 60);
+  const hours = Math.floor((totalSeconds / 3600) % 24);
+  const days = Math.floor(totalSeconds / 86400);
+
+  const formattedTime: string[] = [];
+  if (days > 0) {
+    formattedTime.push(`${days}d`);
+  }
+  if (hours > 0) {
+    formattedTime.push(`${hours}h`);
+  }
+  if (minutes > 0) {
+    formattedTime.push(`${minutes}m`);
+  }
+  if (totalSeconds < 60) {
+    formattedTime.push(`${totalSeconds.toFixed(3)}s`);
+  } else if (seconds > 0 || formattedTime.length === 0) {
+    formattedTime.push(`${seconds}s`);
+  }
+
+  return formattedTime.join(' ');
+};
+
 export function isJsonString(str) {
   if (!str) {
     return false;
@@ -52,7 +79,11 @@ export function formattedQuantity(quantity, decimalPlaces = 4) {
   return n + Array(zeroesNeeded).join('0');
 }
 
-export function getNewUUID(randomSeed = 1) {
+export function getNewUUID(randomSeed: number = 1, format?: 'ts' | 'clock') {
+  if (format === 'clock') {
+    return moment().format('mm:ss.SSS');
+  }
+
   return String(new Date().getTime() * randomSeed);
 }
 
@@ -145,7 +176,11 @@ export function singularize(string) {
     return `${string.slice(0, length - 3)}y`;
   }
 
-  if (string.slice(length - 2, length) === 'es' && string.slice(length - 3, length) !== 'ces') {
+  if (
+    string.slice(length - 2, length) === 'es' &&
+    string.slice(length - 3, length) !== 'ces' &&
+    string.slice(length - 4, length) !== 'ines'
+  ) {
     return string.slice(0, length - 2);
   }
 

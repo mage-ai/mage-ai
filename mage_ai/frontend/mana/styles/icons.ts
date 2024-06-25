@@ -7,7 +7,9 @@ export type StyleProps = {
   fill?: string;
   height?: number;
   inverted?: boolean;
+  muted?: boolean;
   opacity?: number;
+  secondary?: boolean;
   size?: number;
   small?: boolean;
   stroke?: string;
@@ -19,35 +21,35 @@ export type StyleProps = {
 };
 
 const icons = css<StyleProps>`
-  ${({ color, colorName, fill, inverted, theme, useStroke }) =>
+  ${({ color, colorName, fill, inverted, muted, secondary, theme, useStroke }) =>
     !useStroke &&
     `
     fill: ${
-      typeof color !== 'undefined'
-        ? color
-        : typeof colorName !== 'undefined'
-          ? theme.colors[colorName]
-          : typeof fill !== 'undefined' && fill !== null
-            ? fill
-            : inverted
-              ? theme.icons.color.inverted
-              : theme.icons.color.base
+      [
+        typeof colorName !== 'undefined' && theme.colors[colorName],
+        typeof color !== 'undefined' && color,
+        fill ??
+          theme.icons.color[
+            [inverted && 'inverted', muted && 'muted', secondary && 'secondary'].find(Boolean) ??
+              'base'
+          ],
+      ].filter(Boolean)[0]
     };
   `}
 
-  ${({ color, colorName, inverted, stroke, theme, useStroke }) =>
+  ${({ color, colorName, inverted, stroke, muted, secondary, theme, useStroke }) =>
     useStroke &&
     `
     stroke: ${
-      typeof color !== 'undefined'
-        ? color
-        : typeof colorName !== 'undefined'
-          ? theme.colors[colorName]
-          : typeof stroke !== 'undefined' && stroke !== null
-            ? stroke
-            : inverted
-              ? theme.icons.color.inverted
-              : theme.icons.color.base
+      [
+        typeof colorName !== 'undefined' && theme.colors[colorName],
+        typeof color !== 'undefined' && color,
+        stroke ??
+          theme.icons.color[
+            [inverted && 'inverted', muted && 'muted', secondary && 'secondary'].find(Boolean) ??
+              'base'
+          ],
+      ].filter(Boolean)[0]
     };
   `}
 `;

@@ -5,6 +5,7 @@ import os
 from typing import Any, Dict, List, Optional
 
 import yaml
+from typing_extensions import Union
 
 from mage_ai.data_preparation.models.constants import (
     PIPELINES_FOLDER,
@@ -13,10 +14,12 @@ from mage_ai.data_preparation.models.constants import (
 )
 from mage_ai.data_preparation.models.pipeline import Pipeline as PipelineBase
 from mage_ai.frameworks.execution.models.block.adapter import Block
-from mage_ai.frameworks.execution.models.enums import ExecutionFrameworkUUID
+from mage_ai.frameworks.execution.models.block.base import BlockExecutionFramework
+from mage_ai.frameworks.execution.models.enums import ExecutionFrameworkUUID, GroupUUID
+from mage_ai.frameworks.execution.models.pipeline.base import PipelineExecutionFramework
+from mage_ai.frameworks.execution.models.pipeline.utils import get_framework
 from mage_ai.settings.repo import get_repo_path
-from mage_ai.shared.files import find_files_with_criteria, remove_subpath
-from mage_ai.shared.hash import ignore_keys_with_blank_values, index_by
+from mage_ai.shared.files import find_files_with_criteria
 from mage_ai.shared.models import DelegatorTarget
 
 
@@ -44,7 +47,7 @@ class Pipeline(DelegatorTarget):
         config = await asyncio.to_thread(yaml.safe_load, content)
 
         uuid = os.path.basename(dir_name)
-        repo_path = remove_subpath(dir_name, os.path.join(PIPELINES_FOLDER, uuid))
+        repo_path = dir_name.split(os.path.join(PIPELINES_FOLDER, uuid))[0]
         pipeline = PipelineBase(repo_path=repo_path, uuid=uuid)
         pipeline.load_config(config)
 
@@ -96,6 +99,21 @@ class Pipeline(DelegatorTarget):
         ])
         return [pipeline for pipeline in pipelines if pipeline is not None]
 
+    async def get_framework(self) -> Union[PipelineExecutionFramework, None]:
+        if not self.execution_framework:
+            return None
+        return await get_framework(self.execution_framework)
+
+    async def get_framework_groups(self) -> List[BlockExecutionFramework]:
+        framework = await self.get_framework()
+        if not framework:
+            return []
+        return framework.get_blocks()
+
+    async def get_blocks_in_group(self, uuid: GroupUUID) -> List[Block]:
+        blocks = await self.get_blocks(refresh=True)
+        return [block for block in blocks if block.groups and uuid in block.groups]
+
     async def get_pipeline(self, refresh: Optional[bool] = None) -> PipelineBase:
         if self.pipeline and not refresh:
             return self.pipeline
@@ -127,20 +145,61 @@ class Pipeline(DelegatorTarget):
 
         return self.pipelines
 
-    async def to_dict_async(self, *args, **kwargs) -> Dict:
-        pipeline = await self.get_pipeline()
-        data = await pipeline.to_dict_async(*args, **kwargs) if pipeline else {}
+    async def create_block(self, payload: Dict) -> Block:
+        return await Block.create(payload['uuid'], self, payload)
 
-        pipes = await self.get_pipelines()
-        pdicts = await asyncio.gather(*[p.to_dict_async(*args, **kwargs) for p in pipes])
-        data['pipelines'] = pdicts
-        data['blocks'] = await self.get_blocks()
+    async def to_dict_async(
+        self, *args, include_pipelines: Optional[bool] = None, **kwargs
+    ) -> Dict:
+        await self.get_pipeline()
+        await self.get_blocks()
+
+        data = dict(
+            description=self.description,
+            execution_framework=self.execution_framework,
+            name=self.name,
+            tags=self.tags,
+            type=self.type,
+            uuid=self.uuid,
+            variables=self.variables,
+        )
+
+        if self.blocks:
+            data['blocks'] = await asyncio.gather(*[
+                block.to_dict_async(*args, **kwargs) for block in self.blocks
+            ])
+
+        if include_pipelines:
+            await self.get_pipelines()
+            data['pipelines'] = await asyncio.gather(*[
+                pipeline.to_dict_async(
+                    *args,
+                    **kwargs,
+                    include_pipelines=include_pipelines,
+                )
+                for pipeline in self.pipelines
+            ])
 
         return data
 
     async def add_block(self, block: Block, *args, **kwargs):
         pipeline = await self.get_pipeline()
         pipeline.add_block(block.block, *args, **kwargs)
+
+    async def remove_block(self, block: Block, *args, **kwargs):
+        self.delete_block(block.block, force=True)
+
+    async def update_block_configuration(self, block: Block, configuration: Dict):
+        if not self.pipeline:
+            return
+
+        block_dict = self.pipeline.blocks_by_uuid.get(block.uuid)
+        if not block_dict:
+            return
+
+        block_dict.update(dict(configuration=configuration))
+        self.pipeline.blocks_by_uuid[block.uuid] = block_dict
+        await self.pipeline.save_async(include_execution_framework=True)
 
     async def update(
         self,
@@ -153,37 +212,39 @@ class Pipeline(DelegatorTarget):
         type: Optional[PipelineType] = None,
         **kwargs,
     ):
-        block_payloads = index_by(lambda x: x['uuid'], blocks or [])
-        await self.get_blocks(refresh=True)
-        for block in self.blocks or []:
-            if block.uuid not in block_payloads:
-                self.delete_block(block.block)
-            else:
-                block.update(ignore_keys_with_blank_values(block_payloads.pop(block.uuid)))
+        pass
+        # block_payloads = index_by(lambda x: x['uuid'], blocks or [])
+        # await self.get_blocks(refresh=True)
+        # for block in self.blocks or []:
+        #     if block.uuid not in block_payloads:
+        #         self.delete_block(block.block, force=True)
+        #     else:
+        #         pay = block_payloads.pop(block.uuid)
+        #         block.update(ignore_keys_with_blank_values(pay))
 
-        for uuid, payload in block_payloads.items():
-            await Block.create(uuid, self, payload)
+        # for uuid, payload in block_payloads.items():
+        #     await Block.create(uuid, self, payload)
 
-        await self.get_pipeline(refresh=True)
-        if self.pipeline is not None:
-            await self.pipeline.update(
-                ignore_keys_with_blank_values(
-                    dict(
-                        description=description,
-                        name=name,
-                        settings=settings,
-                        tags=tags,
-                        type=type,
-                    )
-                ),
-            )
+        # await self.get_pipeline(refresh=True)
+        # if self.pipeline is not None:
+        #     await self.pipeline.update(
+        #         ignore_keys_with_blank_values(
+        #             dict(
+        #                 description=description,
+        #                 name=name,
+        #                 settings=settings,
+        #                 tags=tags,
+        #                 type=type,
+        #             )
+        #         ),
+        #     )
 
-        pipeline_payloads = index_by(lambda x: x['uuid'], pipelines or [])
-        await self.get_pipelines(refresh=True)
-        await asyncio.gather(*[
-            adapter.update(
-                **ignore_keys_with_blank_values(pipeline_payloads.get(adapter.uuid) or {})
-            )
-            for adapter in (self.pipelines or [])
-            if pipeline_payloads.get(adapter.uuid)
-        ])
+        # pipeline_payloads = index_by(lambda x: x['uuid'], pipelines or [])
+        # await self.get_pipelines(refresh=True)
+        # await asyncio.gather(*[
+        #     adapter.update(
+        #         **ignore_keys_with_blank_values(pipeline_payloads.get(adapter.uuid) or {})
+        #     )
+        #     for adapter in (self.pipelines or [])
+        #     if pipeline_payloads.get(adapter.uuid)
+        # ])

@@ -2,6 +2,10 @@ export enum PipelineExecutionFrameworkUUIDEnum {
   RAG = 'rag',
 }
 
+export const FRAMEWORK_NAME_MAPPING = {
+  [PipelineExecutionFrameworkUUIDEnum.RAG]: 'Retrieval Augmented Generation',
+};
+
 export enum GroupUUIDEnum {
   ANSWER_ENRICHMENT = 'answer_enrichment',
   CHUNKING = 'chunking',

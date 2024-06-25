@@ -14,6 +14,7 @@ class KernelPolicy(BasePolicy):
 KernelPolicy.allow_actions(
     [
         constants.LIST,
+        constants.DETAIL,
     ],
     scopes=[
         OauthScope.CLIENT_PRIVATE,
@@ -38,6 +39,7 @@ KernelPolicy.allow_read(
     ],
     on_action=[
         constants.LIST,
+        constants.DETAIL,
     ],
     condition=lambda policy: policy.has_at_least_viewer_role(),
 )
