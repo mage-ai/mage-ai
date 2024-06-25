@@ -3,6 +3,9 @@ from mage_ai.shared.models import Delegator
 
 
 class Block(Delegator):
+    type = ''
+    uuid = ''
+
     def __init__(
         self,
         target: BlockBase,
