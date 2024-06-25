@@ -62,3 +62,41 @@ PipelineExecutionFrameworkPolicy.allow_read(
     ],
     condition=lambda policy: policy.has_at_least_editor_role_and_pipeline_edit_access(),
 )
+
+PipelineExecutionFrameworkPolicy.allow_write(
+    [
+        'clone_pipeline_uuid',
+        'custom_template_uuid',
+        'description',
+        'name',
+        'tags',
+        'type',
+        'uuid',
+    ],
+    on_action=[
+        OperationType.CREATE,
+    ],
+    scopes=[
+        OauthScope.CLIENT_PRIVATE,
+    ],
+    condition=lambda policy: policy.has_at_least_editor_role_and_pipeline_edit_access(),
+)
+
+PipelineExecutionFrameworkPolicy.allow_write(
+    [
+        'blocks',
+        'description',
+        'name',
+        'pipelines',
+        'settings',
+        'tags',
+        'type',
+    ],
+    on_action=[
+        OperationType.UPDATE,
+    ],
+    scopes=[
+        OauthScope.CLIENT_PRIVATE,
+    ],
+    condition=lambda policy: policy.has_at_least_editor_role_and_pipeline_edit_access(),
+)

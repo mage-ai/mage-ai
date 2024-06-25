@@ -99,6 +99,7 @@ class Pipeline:
         use_repo_path: bool = False,
         description: str = None,
         tags: List[str] = None,
+        execution_framework: Optional[str] = None,
     ):
         self.block_configs = []
         self.blocks_by_uuid = {}
@@ -114,7 +115,7 @@ class Pipeline:
         self.extensions = {}
         self.name = None
         self.notification_config = dict()
-        self.execution_framework = None
+        self.execution_framework = execution_framework
 
         # For multi project
         warn_for_repo_path(repo_path)
@@ -283,6 +284,7 @@ class Pipeline:
         description: str = None,
         pipeline_type: PipelineType = PipelineType.PYTHON,
         tags: List[str] = None,
+        execution_framework: Optional[str] = None,
     ):
         """
         1. Create a new folder for pipeline
@@ -299,23 +301,26 @@ class Pipeline:
         copy_template_directory('pipeline', pipeline_path)
         # Update metadata.yaml with pipeline config
         with open(os.path.join(pipeline_path, PIPELINE_CONFIG_FILE), 'w') as fp:
-            yaml.dump(
-                dict(
-                    created_at=str(datetime.now(tz=pytz.UTC)),
-                    description=description,
-                    name=name,
-                    tags=tags or [],
-                    uuid=uuid,
-                    type=format_enum(pipeline_type or PipelineType.PYTHON),
-                ),
-                fp,
+            data = dict(
+                created_at=str(datetime.now(tz=pytz.UTC)),
+                description=description,
+                name=name,
+                tags=tags or [],
+                uuid=uuid,
+                type=format_enum(pipeline_type or PipelineType.PYTHON),
             )
+
+            if execution_framework is not None:
+                data['execution_framework'] = execution_framework
+
+            yaml.dump(data, fp)
 
         pipeline = Pipeline(
             uuid,
             description=description,
             repo_path=repo_path,
             tags=tags or [],
+            execution_framework=execution_framework,
         )
 
         return pipeline

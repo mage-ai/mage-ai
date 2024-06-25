@@ -15,8 +15,11 @@ class PipelineExecutionFrameworkPresenter(BasePresenter):
         return await self.resource.model.to_dict_async()
 
 
-PipelineExecutionFrameworkPresenter.register_format(
-    OperationType.DETAIL,
+PipelineExecutionFrameworkPresenter.register_formats(
+    [
+        OperationType.DETAIL,
+        OperationType.UPDATE,
+    ],
     PipelineExecutionFrameworkPresenter.default_attributes
     + [
         'pipelines',
