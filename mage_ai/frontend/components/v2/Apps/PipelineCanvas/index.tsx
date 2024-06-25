@@ -1,7 +1,6 @@
 import update from 'immutability-helper';
 import {
   startTransition,
-  useCallback,
   useEffect,
   useMemo,
   useRef,
@@ -48,7 +47,6 @@ import useContextMenu, {
 import {
   ClientEventType,
   EventOperationEnum,
-  SubmitEventOperationType,
   EventOperationOptionsType,
 } from '@mana/shared/interfaces';
 import { ConnectionLines } from '../../Canvas/Connections/ConnectionLines';
@@ -107,6 +105,8 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
   snapToGridOnDrop = true,
   transformState,
 }: PipelineBuilderProps) => {
+  console.log(JSON.stringify(pipeline));
+  console.log(JSON.stringify(pipelines));
   const gridDimensions = useMemo(
     () => ({
       height: GRID_SIZE,
