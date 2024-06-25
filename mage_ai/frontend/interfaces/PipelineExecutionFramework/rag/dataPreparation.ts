@@ -15,6 +15,68 @@ export const Load: PipelineExecutionFrameworkType = {
       type: BlockTypeEnum.GROUP,
       upstream_blocks: [],
       downstream_blocks: [GroupUUIDEnum.MAP],
+      configuration: {
+        templates: {
+          files: {
+            description: 'Load files',
+            name: 'Local file loader',
+            variables: {
+              path: {
+                inputs: {
+                  text: {
+                    description: 'Path to file directory',
+                    label: 'Directory path',
+                    options: null,
+                    style: {
+                      monospace: true,
+                    },
+                    text: [],
+                    type: InteractionInputTypeEnum.TEXT_FIELD,
+                  },
+                },
+                variables: {
+                  path: {
+                    description: 'Already explained',
+                    input: 'text',
+                    name: 'Path to file directory',
+                    required: true,
+                    types: [InteractionVariableTypeEnum.STRING],
+                  },
+                },
+              },
+            },
+          },
+          github: {
+            description: 'Fetch GitHub repository',
+            name: 'GitHub repository loader',
+            variables: {
+              path: {
+                inputs: {
+                  text: {
+                    description: 'GitHub repository URL',
+                    label: 'Repo URL',
+                    options: null,
+                    style: {
+                      monospace: true,
+                    },
+                    text: [],
+                    type: InteractionInputTypeEnum.TEXT_FIELD,
+                  },
+                },
+                variables: {
+                  url: {
+                    description: 'Already explained',
+                    input: 'text',
+                    name: 'Address of the repository',
+                    required: true,
+                    types: [InteractionVariableTypeEnum.STRING],
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
     },
     {
       uuid: GroupUUIDEnum.MAP,

@@ -39,8 +39,8 @@ import BlockNodeWrapper from '../../Canvas/Nodes/BlockNodeWrapper';
 import PipelineExecutionFrameworkType from '@interfaces/PipelineExecutionFramework/interfaces';
 import PipelineType from '@interfaces/PipelineType';
 import stylesBuilder from '@styles/scss/apps/Canvas/Pipelines/Builder.module.scss';
-import useContextMenu, { MenuItemType, RemoveContextMenuType, RenderContextMenuType } from '@mana/hooks/useContextMenu';
-import { ClientEventType, EventOperationEnum } from '@mana/shared/interfaces';
+import useContextMenu, { MenuItemType, RenderContextMenuOptions, RemoveContextMenuType, RenderContextMenuType } from '@mana/hooks/useContextMenu';
+import { ClientEventType, EventOperationEnum, SubmitEventOperationType, EventOperationOptionsType } from '@mana/shared/interfaces';
 import { ConnectionLines } from '../../Canvas/Connections/ConnectionLines';
 import { DragLayer } from '../../Canvas/Layers/DragLayer';
 import { ElementRoleEnum } from '@mana/shared/types';
@@ -688,10 +688,18 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
     renderConnectionLines();
   }
 
-  function handleContextMenu(event: ClientEventType) {
+  function submitEventOperation(event: ClientEventType, opts?: EventOperationOptionsType) {
+    const { operationType } = event;
+
+    if (EventOperationEnum.CONTEXT_MENU_OPEN === operationType) {
+      handleContextMenu(event, ...opts?.args, opts?.kwargs);
+    }
+  }
+
+  function handleContextMenu(event: ClientEventType, items?: MenuItemType[], opts?: RenderContextMenuOptions) {
     const { data } = event;
 
-    const menuItems = [
+    const menuItems = items ?? [
       {
         Icon: ArrowsAdjustingFrameSquare,
         onClick: (event: ClientEventType) => {
@@ -775,8 +783,7 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
     if (data?.node) {
 
     }
-
-    renderContextMenu(event, menuItems);
+    renderContextMenu(event, menuItems, opts);
   }
 
   useEffect(() => {
@@ -1208,6 +1215,7 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
         draggable={dragEnabled}
         droppable={dropEnabled}
         frameworkGroups={frameworkGroupsRef?.current}
+        submitEventOperation={submitEventOperation}
         handlers={{
           onDragEnd: handleDragEnd,
           onDragStart: handleDragStart,

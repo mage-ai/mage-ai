@@ -1,7 +1,7 @@
 import React from 'react';
 import update from 'immutability-helper';
 import { BlockNode } from './BlockNode';
-import { StatusTypeEnum, BlockTypeEnum } from '@interfaces/BlockType';
+import { StatusTypeEnum, BlockTypeEnum, TemplateType } from '@interfaces/BlockType';
 import { NodeWrapper, NodeWrapperProps } from './NodeWrapper';
 import { getBlockColor } from '@mana/themes/blocks';
 import { Add, CaretDown, Check, Code, ArrowsAdjustingFrameSquare, PipeIconVertical, PlayButtonFilled, Infinite } from '@mana/icons';
@@ -14,7 +14,9 @@ import { ItemTypeEnum } from '../types';
 import stylesBuilder from '@styles/scss/apps/Canvas/Pipelines/Builder.module.scss';
 import styles from '@styles/scss/components/Canvas/Nodes/BlockNode.module.scss';
 import { isDebug } from '@utils/environment';
-import { ClientEventType, EventOperationEnum } from '@mana/shared/interfaces';
+import { ClientEventType, EventOperationEnum, SubmitEventOperationType } from '@mana/shared/interfaces';
+import { ButtonEnum } from '@mana/shared/enums';
+import { MenuItemType } from '@mana/components/Menu/interfaces';
 
 type BlockNodeWrapperProps = {
   collapsed?: boolean;
@@ -24,6 +26,7 @@ type BlockNodeWrapperProps = {
   onMountPort: (port: PortType, ref: React.RefObject<HTMLDivElement>) => void;
   frameworkGroups: Record<GroupUUIDEnum, Record<string, any>>;
   selected?: boolean;
+  submitEventOperation: SubmitEventOperationType;
   version?: number | string;
 } & NodeWrapperProps;
 
@@ -37,6 +40,7 @@ const BlockNodeWrapper: React.FC<BlockNodeWrapperProps> = ({
   onMountPort,
   onMountItem,
   selected = false,
+  submitEventOperation,
 }) => {
   const itemRef = useRef(null);
   const phaseRef = useRef(0);
@@ -172,6 +176,43 @@ function handleMouseLeave(event: ClientEventType) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  function handleGroupTemplateSelect(event: any, item1: NodeItemType, template: TemplateType) {
+    console.log('ADDDDDDDDDDDDDDDDDDDDDD', event, item1, template)
+  }
+
+  function handleClickGroupMenu(event: any) {
+    event.preventDefault();
+    submitEventOperation(update(event,{
+      button: { $set: ButtonEnum.CONTEXT_MENU },
+      data: {
+        $set: {
+          node: item,
+        },
+      },
+      operationTarget: { $set: event.target },
+      operationType: { $set: EventOperationEnum.CONTEXT_MENU_OPEN },
+    }), {
+      args: [
+        [
+          {
+            uuid: `Templates for ${item?.block?.name}`,
+          },
+          ...Object.entries(
+            item?.block?.configuration?.templates ?? {},
+          )?.map(([uuid, template]) => ({
+            description: () => template?.description,
+            onClick: (event: any) => handleGroupTemplateSelect(event, item, template),
+            label: () => template?.name,
+            uuid,
+          })),
+        ],
+      ],
+      kwargs: {
+        boundingContainer: itemRef?.current?.getBoundingClientRect(),
+      },
+    });
+  }
+
   return (
     <NodeWrapper
       className={[
@@ -210,10 +251,10 @@ function handleMouseLeave(event: ClientEventType) {
           asides: {
             after: {
               className: styles.showOnHover,
-              ...((isPipeline || isGroup)
+              ...(isGroup
                 ? {
                     Icon: draggable ? ArrowsAdjustingFrameSquare : Add,
-                    onClick: () => alert('Coding...'),
+                    onClick: handleClickGroupMenu,
                   }
                 : {
                     Icon: draggable ? ArrowsAdjustingFrameSquare : CaretDown,

@@ -60,6 +60,63 @@ function MenuItem({ contained, first, item, last, small }: ItemProps) {
 
   const before = Icon ? <Icon size={small ? 12 : undefined} /> : undefined;
 
+  const el = (
+    <MenuItemStyled>
+      <Grid rowGap={4}>
+        <Grid
+        alignItems="center"
+        columnGap={16}
+        justifyContent="space-between"
+        templateColumns={[
+          '1fr',
+          'auto',
+        ].filter(Boolean).join(' ')}
+        templateRows="1fr"
+      >
+        <Grid
+          alignItems="center"
+          columnGap={4}
+          templateColumns={[
+            before && 'auto',
+            '1fr',
+          ].filter(Boolean).join(' ')}
+        >
+            {before}
+            <Text bold={!onClick} muted={!onClick} small={small}>
+              {label?.() || uuid}
+            </Text>
+          </Grid>
+
+          <Grid
+          columnGap={4}
+          templateColumns={[
+            keyboardShortcuts && 'auto',
+            itemsCount >= 1 && 'auto',
+          ].filter(Boolean).join(' ')}
+        >
+            {keyboardShortcuts && (
+            <KeyboardTextGroup
+              monospace
+              small={!small}
+              textGroup={keyboardShortcuts}
+              xsmall={small}
+            />
+          )}
+
+            {itemsCount >= 1 && <CaretRight size={12} />}
+          </Grid>
+
+        </Grid>
+
+        {description && (
+        <Text muted small={!small} xsmall={small}>
+          {description?.()}
+        </Text>
+      )}
+      </Grid>
+    </MenuItemStyled>
+  );
+
   return (
     <MenuItemContainerStyled
       contained={contained}
@@ -67,69 +124,21 @@ function MenuItem({ contained, first, item, last, small }: ItemProps) {
       last={last}
     >
       <ItemContent first={first} last={last}>
-        <Button
-          asLink
-          motion
-          onClick={(e) => {
-            e.preventDefault();
-            onClick?.(e as ClientEventType);
-          }}
-          plain
-          width="100%"
-        >
-          <MenuItemStyled>
-            <Grid rowGap={4}>
-              <Grid
-              alignItems="center"
-              columnGap={16}
-              justifyContent="space-between"
-              templateColumns={[
-                '1fr',
-                'auto',
-              ].filter(Boolean).join(' ')}
-              templateRows="1fr"
-            >
-                <Grid
-                alignItems="center"
-                columnGap={4}
-                templateColumns={[
-                  before && 'auto',
-                  '1fr',
-                ].filter(Boolean).join(' ')}
-              >
-                  {before}
-                  <Text small={small}>{label?.() || uuid}</Text>
-                </Grid>
-
-                <Grid
-                columnGap={4}
-                templateColumns={[
-                  keyboardShortcuts && 'auto',
-                  itemsCount >= 1 && 'auto',
-                ].filter(Boolean).join(' ')}
-              >
-                  {keyboardShortcuts && (
-                  <KeyboardTextGroup
-                    monospace
-                    small={!small}
-                    textGroup={keyboardShortcuts}
-                    xsmall={small}
-                  />
-                )}
-
-                  {itemsCount >= 1 && <CaretRight size={12} />}
-                </Grid>
-
-              </Grid>
-
-              {description && (
-              <Text muted small={!small} xsmall={small}>
-                {description?.()}
-              </Text>
-            )}
-            </Grid>
-          </MenuItemStyled>
-        </Button>
+        {!onClick && el}
+        {onClick && (
+          <Button
+            asLink
+            motion
+            onClick={(e) => {
+              e.preventDefault();
+              onClick?.(e as ClientEventType);
+            }}
+            plain
+            width="100%"
+          >
+            {el}
+          </Button>
+        )}
       </ItemContent>
     </MenuItemContainerStyled>
   );

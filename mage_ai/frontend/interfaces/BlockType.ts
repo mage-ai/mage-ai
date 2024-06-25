@@ -285,13 +285,8 @@ interface VariableSettingsType {
 export interface TemplateType {
   description?: string;
   name?: string;
-  variables?: Record<
-    string,
-    {
-      input: InteractionInputType;
-      variable: InteractionVariableType;
-    }
-  >;
+  inputs?: Record<string, InteractionInputType>;
+  variables?: Record<string, InteractionVariableType>;
 }
 
 export interface ConfigurationType extends BaseConfigurationType {

@@ -1,11 +1,13 @@
 import React from 'react';
-import { LanguageEnum } from './enums';
+import { ButtonEnum, LanguageEnum } from './enums';
 
 export enum EventOperationEnum {
+  CONTEXT_MENU_OPEN = 'context_menu.open',
   DRAGGING = 'drag.active',
   DRAG_END = 'drag.end',
   DRAG_START = 'drag.start',
   DROP_START = 'drop.start',
+  MOUSE_DOWN = 'mouse.down',
 }
 
 export type EventControlType = {
@@ -16,6 +18,7 @@ export type EventControlType = {
 };
 
 export type ClientEventType = {
+  button?: ButtonEnum;
   control?: EventControlType;
   data?: Record<string, any>;
   operationTarget?: HTMLElement;
@@ -44,3 +47,11 @@ export interface FileType {
   relative_path?: string;
   size: number;
 }
+
+export interface EventOperationOptionsType {
+  args?: any[];
+  kwargs?: {
+    boundingContainer?: DOMRect;
+  };
+}
+export type SubmitEventOperationType = (event: ClientEventType, opts?: EventOperationOptionsType) => void;

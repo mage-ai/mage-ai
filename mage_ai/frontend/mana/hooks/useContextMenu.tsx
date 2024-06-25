@@ -8,19 +8,17 @@ import useKeyboardShortcuts from './shortcuts/useKeyboardShortcuts';
 import { KeyEnum } from './shortcuts/types';
 import { ClientEventType as ClientEventTypeT } from '../shared/interfaces';
 import { MenuItemType as MenuItemTypeT } from '../components/Menu/interfaces';
-import { range } from '@utils/array';
 import { selectKeys } from '@utils/hash';
 
-export type RenderContextMenuType = (event: ClientEventTypeT, items: MenuItemTypeT[]) => void;
+export type RenderContextMenuOptions = {
+  boundingContainer?: DOMRect;
+};
+
+export type RenderContextMenuType = (event: ClientEventTypeT, items: MenuItemTypeT[], opts?: RenderContextMenuOptions) => void;
 export type RemoveContextMenuType = (event: ClientEventTypeT, opts?: { conditionally?: boolean }) => void;
 
 export type MenuItemType = MenuItemTypeT;
 export type ClientEventType = ClientEventTypeT;
-
-type PositionType = {
-  x: number;
-  y: number;
-};
 
 export default function useContextMenu({
   container,
@@ -141,7 +139,7 @@ export default function useContextMenu({
     console.log(getCurrentItem()?.item?.uuid);
   }
 
-  function renderContextMenu(event: ClientEventType, items: MenuItemType[]) {
+  function renderContextMenu(event: ClientEventType, items: MenuItemType[], opts?: RenderContextMenuOptions) {
     if (!container?.current || !isEventInContainer(event)) return;
 
     event.preventDefault();
@@ -159,7 +157,7 @@ export default function useContextMenu({
       <DeferredRenderer idleTimeout={1}>
         <ThemeProvider theme={themeContext}>
           <Menu
-            boundingContainer={selectKeys(
+            boundingContainer={opts?.boundingContainer ?? selectKeys(
               container?.current?.getBoundingClientRect() || {},
               ['width', 'x', 'y'],
             )}

@@ -28,6 +28,7 @@ export default function Aside({ Icon, baseColorName, className, onClick }: Aside
       basic
       className={className}
       onClick={(event: React.MouseEvent<HTMLElement, MouseEvent>) => {
+        event.preventDefault();
         onClick(event);
       }}
     />
