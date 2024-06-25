@@ -1,8 +1,11 @@
+import os
+
 from mage_ai.data_preparation.models.constants import BlockType
 from mage_ai.frameworks.execution.models.block.base import BlockExecutionFramework
 from mage_ai.frameworks.execution.models.block.models import Configuration, Metadata
 from mage_ai.frameworks.execution.models.enums import GroupUUID
 
+templates_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'templates')
 MEMORY = BlockExecutionFramework.load(
     uuid=GroupUUID.MEMORY,
     description=(
@@ -10,6 +13,7 @@ MEMORY = BlockExecutionFramework.load(
         'context for current queries.'
     ),
     type=BlockType.GROUP,
+    templates_dir=templates_dir,
     upstream_blocks=[],
     downstream_blocks=[GroupUUID.ITERATIVE_RETRIEVAL],
 )
@@ -20,6 +24,7 @@ ITERATIVE_RETRIEVAL = BlockExecutionFramework.load(
         'intermediate findings.'
     ),
     type=BlockType.GROUP,
+    templates_dir=templates_dir,
     configuration=Configuration.load(Metadata.load(required=True)),
     upstream_blocks=[GroupUUID.MEMORY],
     downstream_blocks=[GroupUUID.MULTI_HOP_REASONING],
@@ -31,6 +36,7 @@ MULTI_HOP_REASONING = BlockExecutionFramework.load(
         'requiring multiple steps of reasoning.'
     ),
     type=BlockType.GROUP,
+    templates_dir=templates_dir,
     upstream_blocks=[GroupUUID.ITERATIVE_RETRIEVAL],
     downstream_blocks=[GroupUUID.RANKING],
 )
@@ -41,6 +47,7 @@ RANKING = BlockExecutionFramework.load(
         'query.'
     ),
     type=BlockType.GROUP,
+    templates_dir=templates_dir,
     upstream_blocks=[GroupUUID.MULTI_HOP_REASONING],
     downstream_blocks=[],
 )

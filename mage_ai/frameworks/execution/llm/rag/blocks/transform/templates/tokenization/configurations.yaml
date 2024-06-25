@@ -18,13 +18,11 @@ subword_tokenizer:
           value: 'none'
       type: dropdown_menu
     max_length:
-      description: 'max_length - 1701048399000'
       options:
         - label: 'max_length - 1701048399000'
           value: 'none'
       type: dropdown_menu
     add_special_tokens:
-      description: 'add_special_tokens - 1701048399000'
       options:
         - label: 'add_special_tokens - 1701048399000'
           value: 'none'
@@ -53,14 +51,14 @@ subword_tokenizer:
         - string
     max_length:
       input: max_length
-      description: '...'
+      description: 'max_length - 1701048399000'
       name: 'max_length - 1701048399000'
       required: true
       types:
         - string
     add_special_tokens:
       input: add_special_tokens
-      description: '...'
+      description: 'add_special_tokens - 1701048399000'
       name: 'add_special_tokens - 1701048399000'
       required: true
       types:
@@ -71,27 +69,22 @@ word_tokenizer:
   description: 'Tokenize text into words'
   inputs:
     hallucination_variable:
-      description: 'Enter the text you want to tokenize into words.'
       style:
         multiline: true
       type: text_field
     fire_variable:
-      description: 'Enter the text you want to tokenize into words.'
       style:
         multiline: true
       type: text_field
     spell_variable:
-      description: 'Enter the text you want to tokenize into words.'
       style:
         multiline: true
       type: text_field
     max_length_variable:
-      description: 'Enter the text you want to tokenize into words.'
       style:
         multiline: true
       type: text_field
     add_special_tokens_variable:
-      description: 'Enter the text you want to tokenize into words.'
       style:
         multiline: true
       type: text_field

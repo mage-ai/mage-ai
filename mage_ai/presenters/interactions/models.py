@@ -1,7 +1,7 @@
 import os
 from dataclasses import dataclass, field
 from functools import reduce
-from typing import Dict, List, Tuple, Union
+from typing import Dict, List, Optional, Tuple, Union
 
 import yaml
 
@@ -38,6 +38,7 @@ class InteractionInputOption(BaseDataClass):
 class InteractionInputStyle:
     input_type: InteractionInputStyleInputType = None
     language: str = None
+    monospace: Optional[bool] = None
     multiline: bool = None
 
     def __post_init__(self):
