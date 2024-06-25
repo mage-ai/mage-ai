@@ -90,6 +90,7 @@ export default function useContextMenu({
 
     positionRef?.current?.forEach((y: number, x: number) => {
       if (y === null) {
+        item = null;
         return;
       }
 
@@ -136,6 +137,8 @@ export default function useContextMenu({
 
       positionRef.current[positionRef.current.length - 1] = yNew;
     }
+
+    console.log(getCurrentItem()?.item?.uuid);
   }
 
   function renderContextMenu(event: ClientEventType, items: MenuItemType[]) {
@@ -175,6 +178,13 @@ export default function useContextMenu({
       down: {
         handler: () => handlePositionChange({ y: 1 }),
         predicate: { key: KeyEnum.ARROWDOWN },
+      },
+      enter: {
+        handler: () => {
+          const handle = getCurrentItem()?.item?.onClick;
+          handle && handle?.();
+        },
+        predicate: { key: KeyEnum.ENTER },
       },
       left: {
         handler: () => handlePositionChange({ x: -1 }),

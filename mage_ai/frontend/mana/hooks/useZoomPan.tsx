@@ -112,7 +112,7 @@ export const useZoomPan = (
       element.style.transform = transformRef.current;
     };
 
-    handlePanning.current = (event: MouseEvent | WheelEvent, positionOverride?: {
+    handlePanning.current = (_event: MouseEvent | WheelEvent, positionOverride?: {
       x?: number;
       xPercent?: number,
       y?: number;
@@ -172,18 +172,25 @@ export const useZoomPan = (
       }
     }
 
-    handleZoom.current = (event: WheelEvent, scaleOverride?: number) => {
-      const delta = (-event.deltaY / 500) * zoomSensitivity;
+    handleZoom.current = (event?: WheelEvent, scaleOverride?: number) => {
       const oldScale = scale.current;
-      const newScale = scaleOverride ?? Math.min(Math.max(minScale, scale.current + delta), maxScale);
+
+      let newScale = null;
+      if (scaleOverride ?? false) {
+        newScale = scaleOverride;
+      } else {
+        const delta = (-event.deltaY / 500) * zoomSensitivity;
+        newScale = Math.min(Math.max(minScale, scale.current + delta), maxScale);
+      }
+
       const scaleRatio = newScale / oldScale;
 
       scale.current = newScale;
       zoom.current = newScale;
 
       const rect = element.getBoundingClientRect();
-      const cursorX = event.clientX - rect.left;
-      const cursorY = event.clientY - rect.top;
+      const cursorX = event ? event.clientX - rect.left : (startX.current ?? 0);
+      const cursorY = event ? event.clientY - rect.top : (startY.current ?? 0);
 
       const xNew = (cursorX - originX.current) * (scaleRatio - 1);
       const yNew = (cursorY - originY.current) * (scaleRatio - 1);

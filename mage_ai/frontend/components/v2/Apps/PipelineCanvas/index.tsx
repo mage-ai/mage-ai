@@ -709,9 +709,9 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
         items: [
           {
             onClick: (event: ClientEventType) => {
-              event.preventDefault();
-              removeContextMenu(event);
-              transformState?.current?.handleZoom?.current?.(event as any, 1);
+              event?.preventDefault();
+              removeContextMenu(event ?? null);
+              transformState?.current?.handleZoom?.current?.((event ?? null) as any, 1);
               startTransition(() => {
                 setZoomPanDisabled(false);
               });
@@ -720,9 +720,9 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
           },
           {
             onClick: (event: ClientEventType) => {
-              event.preventDefault();
-              removeContextMenu(event);
-              transformState?.current?.handlePanning?.current?.(event as any, { x: 0, y: 0 });
+              event?.preventDefault();
+              removeContextMenu(event ?? null);
+              transformState?.current?.handlePanning?.current?.((event ?? null) as any, { x: 0, y: 0 });
               startTransition(() => {
                 setZoomPanDisabled(false);
               });
@@ -733,7 +733,7 @@ const PipelineBuilder: React.FC<PipelineBuilderProps> = ({
             onClick: (event: ClientEventType) => {
               event.preventDefault();
               removeContextMenu(event);
-              transformState?.current?.handlePanning?.current?.(event as any, { xPercent: 0.5, yPercent: 0.5 });
+              transformState?.current?.handlePanning?.current?.((event ?? null) as any, { xPercent: 0.5, yPercent: 0.5 });
               startTransition(() => {
                 setZoomPanDisabled(false);
               });
