@@ -78,14 +78,14 @@ function MenuItem({ contained, first, item, last, small }: ItemProps) {
     <MenuItemStyled>
       <Grid rowGap={4}>
         <Grid
-          alignItems="center"
+          alignItems='center'
           columnGap={16}
-          justifyContent="space-between"
+          justifyContent='space-between'
           templateColumns={['1fr', 'auto'].filter(Boolean).join(' ')}
-          templateRows="1fr"
+          templateRows='1fr'
         >
           <Grid
-            alignItems="center"
+            alignItems='center'
             columnGap={4}
             templateColumns={[before && 'auto', '1fr'].filter(Boolean).join(' ')}
           >
@@ -141,7 +141,7 @@ function MenuItem({ contained, first, item, last, small }: ItemProps) {
               onClick?.(e as ClientEventType);
             }}
             plain
-            width="100%"
+            width='100%'
           >
             {el}
           </Button>

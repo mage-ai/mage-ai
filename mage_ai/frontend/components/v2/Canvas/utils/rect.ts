@@ -436,7 +436,8 @@ export function applyRectDiff(rect: RectType, diff: RectType, dimensions?: boole
 }
 
 export function transformZoomPanRect(rect: RectType, transformState: ZoomPanStateType) {
-  const { container, element, position } = transformState ?? ({} as ZoomPanStateType);
+  const { container, element, originX, originY, startX, startY } =
+    transformState ?? ({} as ZoomPanStateType);
 
   const scale = transformState?.scale?.current ?? 1;
 
@@ -448,13 +449,11 @@ export function transformZoomPanRect(rect: RectType, transformState: ZoomPanStat
   const viewportWidth = rectViewport.width;
   const viewportHeight = rectViewport.height;
 
-  const current = position?.current ?? ({} as ZoomPanPositionType);
-  const xCur = current?.x?.current ?? 0;
-  const yCur = current?.y?.current ?? 0;
+  const xCur = startX?.current ?? 0;
+  const yCur = startY?.current ?? 0;
 
-  const origin = position?.origin ?? ({} as ZoomPanPositionType);
-  const xOrg = origin?.x?.current ?? 0;
-  const yOrg = origin?.y?.current ?? 0;
+  const xOrg = originX?.current ?? 0;
+  const yOrg = originY?.current ?? 0;
 
   const left = rect?.left ?? 0;
   const top = rect?.top ?? 0;
