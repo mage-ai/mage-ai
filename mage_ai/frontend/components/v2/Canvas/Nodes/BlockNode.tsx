@@ -99,23 +99,23 @@ export function BlockNode({
     () =>
       badge && (
         <Grid
-          alignItems='center'
-          autoColumns='auto'
-          autoFlow='column'
+          alignItems="center"
+          autoColumns="auto"
+          autoFlow="column"
           columnGap={8}
           id={`${item.id}-badge`}
-          justifyContent='space-between'
-          templateColumns='1fr'
-          templateRows='1fr'
+          justifyContent="space-between"
+          templateColumns="1fr"
+          templateRows="1fr"
         >
           <Grid
-            alignItems='center'
-            autoColumns='auto'
-            autoFlow='column'
+            alignItems="center"
+            autoColumns="auto"
+            autoFlow="column"
             columnGap={8}
-            justifyContent='start'
-            templateColumns='max-content'
-            templateRows='1fr'
+            justifyContent="start"
+            templateColumns="max-content"
+            templateRows="1fr"
           >
             {false && inputs?.length >= 1 && (
               <Circle
@@ -129,13 +129,13 @@ export function BlockNode({
             {badge && <Badge {...badge} />}
           </Grid>
           <Grid
-            alignItems='center'
-            autoColumns='auto'
-            autoFlow='column'
+            alignItems="center"
+            autoColumns="auto"
+            autoFlow="column"
             columnGap={8}
-            justifyContent='end'
-            templateColumns='max-content'
-            templateRows='1fr'
+            justifyContent="end"
+            templateColumns="max-content"
+            templateRows="1fr"
           >
             {after && <Aside {...after} />}
             {false && outputs?.length >= 1 && (
@@ -198,7 +198,7 @@ export function BlockNode({
   const titleRow = useMemo(
     () => (
       <Grid
-        alignItems='center'
+        alignItems="center"
         columnGap={12}
         id={`${item.id}-title`}
         templateColumns={[
@@ -206,7 +206,7 @@ export function BlockNode({
           before || after ? '1fr' : '',
           before && after ? 'auto' : '',
         ].join(' ')}
-        templateRows='1fr'
+        templateRows="1fr"
       >
         {before && <Aside {...before} />}
 
@@ -223,7 +223,7 @@ export function BlockNode({
   const main = useMemo(
     () => (
       <div className={styles.blockNode}>
-        <Grid rowGap={8} templateRows='auto'>
+        <Grid rowGap={8} templateRows="auto">
           {badgeRow}
           {!badge && titleRow}
           {connectionRows}

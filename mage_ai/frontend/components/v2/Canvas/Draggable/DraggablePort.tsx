@@ -8,7 +8,6 @@ import { ItemTypeEnum } from '../types';
 import { DragAndDropType } from '../Nodes/types';
 import { buildPortUUID } from './utils';
 import { ElementRoleEnum } from '@mana/shared/types';
-import { ClientEventType } from '@mana/shared/interfaces';
 
 type DraggablePortProps = {
   children: React.ReactNode;
@@ -47,7 +46,7 @@ export const DraggablePort: FC<DraggablePortProps> = memo(function DraggablePort
               },
             }),
           },
-        } as ClientEventType);
+        } as any);
 
         return true;
       },
