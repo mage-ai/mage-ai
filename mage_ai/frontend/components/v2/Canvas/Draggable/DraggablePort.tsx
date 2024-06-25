@@ -101,9 +101,12 @@ export const DraggablePort: FC<DraggablePortProps> = memo(function DraggablePort
   return (
     <div
       key={buildPortUUID(item)}
-      onDragEnd={event => onMouseUp(event, item)}
-      onMouseDown={event => onMouseDown(event, item)}
-      onMouseUp={event => onMouseUp(event, item)}
+      // @ts-ignore
+      onDragEnd={event => onMouseUp(update(event, { data: { node: { $set: item } } }) as any)}
+      // @ts-ignore
+      onMouseDown={event => onMouseDown(update(event, { data: { node: { $set: item } } }) as any)}
+      // @ts-ignore
+      onMouseUp={event => onMouseUp(update(event, { data: { node: { $set: item } } }) as any)}
       onTouchStart={event => event.stopPropagation()}
     >
       <div
