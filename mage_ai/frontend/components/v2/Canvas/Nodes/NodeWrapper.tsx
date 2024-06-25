@@ -122,7 +122,7 @@ export const NodeWrapper: FC<NodeWrapperProps> = memo(function NodeWrapper({
 
   return (
     <div
-      className={[styles.nodeWrapper, styles[itemToDrag?.type], className ?? ''].join(' ')}
+      className={[styles.nodeWrapper, className ?? ''].join(' ')}
       onDragEnd={draggable && onDragEnd ? event => onDragEnd?.(event as any) : undefined}
       onDragStart={draggable && onDragStart ? event => onDragStart?.(event as any) : undefined}
       onMouseDown={draggable && onMouseDown ? event => onMouseDown?.(event as any) : undefined}

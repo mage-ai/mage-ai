@@ -3,15 +3,15 @@ import CanvasContainer from './index.style';
 import PipelineExecutionFrameworkType from '@interfaces/PipelineExecutionFramework/interfaces';
 import PipelineType from '@interfaces/PipelineType';
 import type { DropTargetMonitor } from 'react-dnd';
-import { DragItem, NodeItemType, NodeType, GroupMappingType, ItemMappingType,
-PortMappingType } from '../../Canvas/interfaces';
+import { DragItem, ModelMappingType, NodeItemType, NodeType, GroupMappingType, ItemMappingType, PortMappingType } from '../../Canvas/interfaces';
 import { DragLayer } from '../../Canvas/Layers/DragLayer';
 import { ItemTypeEnum } from '../../Canvas/types';
 import { RemoveContextMenuType, RenderContextMenuType } from '@mana/hooks/useContextMenu';
 import { ZoomPanStateType } from '@mana/hooks/useZoomPan';
 import { buildDependencies } from './utils/pipelines';
 import { useDrop } from 'react-dnd';
-import { useEffect, useMemo, useRef, startTransition } from 'react';
+import { useEffect, useMemo, useRef, useState, startTransition } from 'react';
+import styles from '@styles/scss/apps/Canvas/Pipelines/Builder.module.scss';
 import useLayoutManager, { LayoutManagerType } from './useLayoutManager';
 import useModelManager, { ModelManagerType } from './useModelManager';
 import useEventManager, { EventManagerType } from './useEventManager';
@@ -51,8 +51,31 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
   setZoomPanDisabled,
   transformState,
 }: BuilderCanvasProps) => {
+  const activeLevel = useRef<number>(null);
   const phaseRef = useRef<number>(0);
   const wrapperRef = useRef(null);
+
+  // VERY IMPORTANT THAT THE STATE IS IN THIS COMPONENT OR ELSE NOTHING WILL RENDER!
+  const [items, setItemsState] = useState<Record<string, NodeItemType>>(null);
+  const [activeItems, setActiveItemsState] = useState<Record<string, ModelMappingType>>(null);
+
+  function setActiveItems(modelMapping: ModelMappingType) {
+    setActiveItemsState(modelMapping);
+  }
+
+  function setActiveLevel(levelArg?: number) {
+    const levelPrevious: number = activeLevel?.current ?? null;
+    levelPrevious !== null &&
+      containerRef?.current?.classList.remove(styles[`level-${levelPrevious}-active`]);
+
+    let level: number = levelArg ?? (activeLevel?.current ?? 0) + 1;
+    if (level >= modelLevelsMapping?.current?.length) {
+      level = 0;
+    }
+
+    activeLevel.current = level;
+    containerRef?.current?.classList.add(styles[`level-${level}-active`]);
+  }
 
   const {
     blocksByGroupRef,
@@ -66,17 +89,15 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
   }: ModelManagerType = useModelManager();
 
   const {
-    activeLevel,
-    items,
     layoutConfig,
     modelLevelsMapping,
     renderLayoutChanges,
-    setActiveLevel,
     updateLayoutOfItems,
   }: LayoutManagerType = useLayoutManager({
     canvasRef,
     containerRef,
     itemsRef,
+    setItemsState,
     transformState,
     updateNodeItems,
   });
@@ -160,7 +181,7 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
       };
 
       // Presentation
-      // updateItemsMetadata();
+      updateItemsMetadata();
 
       // Framework
       blocksByGroupRef.current = blocksByGroup;

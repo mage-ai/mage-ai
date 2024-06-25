@@ -238,6 +238,7 @@ const BlockNodeWrapper: React.FC<BlockNodeWrapperProps> = ({
       className={[
         stylesBuilder.level,
         stylesBuilder[`level-${item?.level}`],
+        item?.type ? stylesBuilder[item?.type] : '',
         !draggable && !droppable && styles.showOnHoverContainer,
       ]
         ?.filter(Boolean)

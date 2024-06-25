@@ -11,7 +11,6 @@ import {
 } from '../../Canvas/interfaces';
 import { updateModelsAndRelationships } from './utils/nodes';
 
-
 export type ModelManagerType = {
   blocksByGroupRef: React.MutableRefObject<BlocksByGroupType>;
   frameworkGroupsRef: React.MutableRefObject<GroupMappingType>;

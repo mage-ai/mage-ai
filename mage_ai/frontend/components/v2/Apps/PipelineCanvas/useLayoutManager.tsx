@@ -1,4 +1,3 @@
-import styles from '@styles/scss/apps/Canvas/Pipelines/Builder.module.scss';
 import { DragItem, LayoutConfigType, NodeType } from '../../Canvas/interfaces';
 import { ItemMappingType, ModelMappingType, NodeItemType } from '../../Canvas/interfaces';
 import { ItemTypeEnum, LayoutConfigDirectionOriginEnum, LayoutConfigDirectionEnum } from '../../Canvas/types';
@@ -6,23 +5,21 @@ import { ModelManagerType } from './useModelManager';
 import { ZoomPanStateType } from '@mana/hooks/useZoomPan';
 import { layoutItemsInGroups } from '../../Canvas/utils/rect';
 import { updateNodeGroupsWithItems } from './utils/nodes';
-import { useRef, useState } from 'react';
+import { useRef } from 'react';
 
 type LayoutManagerProps = {
   canvasRef: React.MutableRefObject<HTMLDivElement>;
   containerRef: React.MutableRefObject<HTMLDivElement>;
   itemsRef: React.MutableRefObject<ItemMappingType>;
+  setItemsState: React.Dispatch<React.SetStateAction<ItemMappingType>>;
   transformState: React.MutableRefObject<ZoomPanStateType>;
   updateNodeItems: ModelManagerType['updateNodeItems'];
 };
 
 export type LayoutManagerType = {
-  activeLevel: React.MutableRefObject<number>;
-  items: Record<string, NodeItemType>;
   layoutConfig: React.MutableRefObject<LayoutConfigType>;
   modelLevelsMapping: React.MutableRefObject<ModelMappingType[]>;
   renderLayoutChanges: (opts?: { level?: number; items?: ItemMappingType }) => void;
-  setActiveLevel: (levelArg?: number) => void;
   updateLayoutOfItems: () => ItemMappingType;
 };
 
@@ -30,6 +27,7 @@ export default function useLayoutManager({
   canvasRef,
   containerRef,
   itemsRef,
+  setItemsState,
   transformState,
   updateNodeItems,
 }: LayoutManagerProps): LayoutManagerType {
@@ -47,15 +45,7 @@ export default function useLayoutManager({
     transformState: transformState?.current,
   });
 
-  const activeLevel = useRef<number>(null);
   const modelLevelsMapping = useRef<ModelMappingType[]>([]);
-
-  const [items, setItemsState] = useState<Record<string, NodeItemType>>(null);
-  // const [activeItems, setActiveItemsState] = useState<Record<string, ModelMappingType>>(null);
-
-  // function setActiveItems(modelMapping: ModelMappingType) {
-  //   setActiveItemsState(modelMapping);
-  // }
 
   function renderLayoutChanges(opts?: { level?: number; items?: ItemMappingType }) {
     const itemMapping = opts?.items ?? modelLevelsMapping.current[opts.level]?.itemMapping ?? {};
@@ -64,20 +54,6 @@ export default function useLayoutManager({
       ...prev,
       ...itemMapping,
     }));
-  }
-
-  function setActiveLevel(levelArg?: number) {
-    const levelPrevious: number = activeLevel.current;
-    levelPrevious !== null &&
-      containerRef?.current?.classList.remove(styles[`level-${levelPrevious}-active`]);
-
-    let level: number = levelArg ?? (activeLevel?.current ?? 0) + 1;
-    if (level >= modelLevelsMapping?.current?.length) {
-      level = 0;
-    }
-
-    activeLevel.current = level;
-    containerRef?.current?.classList.add(styles[`level-${level}-active`]);
   }
 
   function updateLayoutOfItems(): ItemMappingType {
@@ -138,12 +114,9 @@ export default function useLayoutManager({
   }
 
   return {
-    activeLevel,
-    items,
     layoutConfig,
     modelLevelsMapping,
     renderLayoutChanges,
-    setActiveLevel,
     updateLayoutOfItems,
   };
 }
