@@ -4,13 +4,17 @@ from mage_ai.api.errors import ApiError
 from mage_ai.api.resources.GenericResource import GenericResource
 from mage_ai.frameworks.execution.constants import EXECUTION_FRAMEWORKS
 from mage_ai.frameworks.execution.models.pipeline.base import PipelineExecutionFramework
-from mage_ai.shared.array import find, flatten
+from mage_ai.shared.array import find
 
 
 def get_execution_frameworks(
     uuid: Optional[str] = None,
 ) -> Union[List[PipelineExecutionFramework], PipelineExecutionFramework]:
-    arr = flatten([framework.get_pipelines() for framework in EXECUTION_FRAMEWORKS])
+    arr = []
+    for framework in EXECUTION_FRAMEWORKS:
+        arr.append(framework)
+        arr += framework.get_pipelines()
+
     if uuid:
         result = find(lambda framework: framework.uuid == uuid, arr)
         if result:

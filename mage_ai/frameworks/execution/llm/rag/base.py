@@ -9,7 +9,7 @@ from mage_ai.frameworks.execution.models.pipeline.base import PipelineExecutionF
 
 RAG = PipelineExecutionFramework.load(
     uuid=ExecutionFrameworkUUID.RAG,
-    descriptions=(
+    description=(
         'A powerful system that efficiently processes large amounts of data and generates '
         'highly relevant responses to complex user queries by leveraging advanced techniques '
         'in natural language processing, information retrieval, and machine learning'
