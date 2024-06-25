@@ -1,4 +1,4 @@
-from mage_ai.data_preparation.models.constants import BlockType, PipelineType
+from mage_ai.data_preparation.models.constants import BlockType
 from mage_ai.frameworks.execution.llm.rag.pipelines.data_preparation import (
     DATA_PREPARATION,
 )
@@ -9,7 +9,6 @@ from mage_ai.frameworks.execution.models.pipeline.base import PipelineExecutionF
 
 RAG = PipelineExecutionFramework(
     uuid=ExecutionFrameworkUUID.RAG,
-    type=PipelineType.EXECUTION_FRAMEWORK,
     blocks=[
         BlockExecutionFramework(uuid=DATA_PREPARATION.uuid, type=BlockType.PIPELINE),
         BlockExecutionFramework(uuid=INFERENCE.uuid, type=BlockType.PIPELINE),

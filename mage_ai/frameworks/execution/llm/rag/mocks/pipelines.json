@@ -1,0 +1,388 @@
+[
+  {
+    "name": "Data pre-processing pipeline",
+    "uuid": "data_pre_processing_pipeline",
+    "type": "python",
+    "blocks": [
+      {
+        "name": "Data-prep load_unstructured_data pipeline",
+        "uuid": "load_unstructured_data",
+        "type": "pipeline"
+      },
+      {
+        "name": "Data-prep transform_a_ton_of_documents pipeline",
+        "uuid": "transform_a_ton_of_documents",
+        "type": "pipeline"
+      },
+      {
+        "name": "Data-prep export_and_store_data_forever pipeline",
+        "uuid": "export_and_store_data_forever",
+        "type": "pipeline"
+      },
+      {
+        "name": "Data-prep optimize_data_for_search_and_apis pipeline",
+        "uuid": "optimize_data_for_search_and_apis",
+        "type": "pipeline"
+      }
+    ]
+  },
+  {
+    "name": "Export and store data forever",
+    "uuid": "export_and_store_data_forever",
+    "type": "python",
+    "blocks": [
+      {
+        "name": "Store relationships in Neo4J",
+        "type": "data_exporter",
+        "groups": [
+          "knowledge_graph"
+        ],
+        "uuid": "store_relationships_in_neo4j"
+      },
+      {
+        "name": "Store embeddings PGVector",
+        "type": "data_exporter",
+        "groups": [
+          "vector_database"
+        ],
+        "uuid": "store_embeddings_pgvector"
+      }
+    ]
+  },
+  {
+    "name": "Optimize data for search and APIs",
+    "uuid": "optimize_data_for_search_and_apis",
+    "type": "python",
+    "blocks": [
+      {
+        "name": "Create Contextual Dictionary",
+        "type": "custom",
+        "groups": [
+          "contextual_dictionary"
+        ],
+        "uuid": "create_contextual_dictionary"
+      },
+      {
+        "name": "Create Document Hierarchy",
+        "type": "custom",
+        "groups": [
+          "document_hierarchy"
+        ],
+        "uuid": "create_document_hierarchy"
+      },
+      {
+        "name": "Search index using FAISS",
+        "type": "custom",
+        "groups": [
+          "search_index"
+        ],
+        "uuid": "search_index_using_faiss"
+      }
+    ]
+  },
+  {
+    "name": "Super cool inference pipeline",
+    "uuid": "super_cool_inference_pipeline",
+    "type": "python",
+    "blocks": [
+      {
+        "name": "My custom interpret_user_prompt pipeline",
+        "uuid": "interpret_user_prompt",
+        "type": "pipeline"
+      },
+      {
+        "name": "My custom retrieve_numerous_documents_from_company pipeline",
+        "uuid": "retrieve_numerous_documents_from_company",
+        "type": "pipeline"
+      },
+      {
+        "name": "My custom generate_great_answers_for_user pipeline",
+        "uuid": "generate_great_answers_for_user",
+        "type": "pipeline"
+      }
+    ]
+  },
+  {
+    "name": "Load unstructured data",
+    "uuid": "load_unstructured_data",
+    "type": "python",
+    "blocks": [
+      {
+        "name": "Ingest titanic data",
+        "type": "data_loader",
+        "groups": [
+          "ingest"
+        ],
+        "uuid": "ingest_titanic_data"
+      },
+      {
+        "name": "Serialize and map documents",
+        "type": "data_loader",
+        "groups": [
+          "map"
+        ],
+        "uuid": "serialize_and_map_documents"
+      }
+    ]
+  },
+  {
+    "name": "Interpret user prompt",
+    "uuid": "interpret_user_prompt",
+    "type": "python",
+    "blocks": [
+      {
+        "name": "Understand user intentions",
+        "type": "data_loader",
+        "groups": [
+          "intent_detection"
+        ],
+        "uuid": "understand_user_intentions"
+      },
+      {
+        "name": "Detect malicious intent",
+        "type": "data_loader",
+        "groups": [
+          "intent_detection"
+        ],
+        "uuid": "detect_malicious_intent"
+      },
+      {
+        "name": "Add guardrails",
+        "type": "data_loader",
+        "groups": [
+          "intent_detection"
+        ],
+        "uuid": "add_guardrails"
+      },
+      {
+        "name": "Decompose user query",
+        "type": "data_loader",
+        "groups": [
+          "query_decomposition"
+        ],
+        "uuid": "decompose_user_query"
+      },
+      {
+        "name": "Improve user query prompts",
+        "type": "data_loader",
+        "groups": [
+          "query_augmentation"
+        ],
+        "uuid": "improve_user_query_prompts"
+      },
+      {
+        "name": "Augment user query with context",
+        "type": "data_loader",
+        "groups": [
+          "query_augmentation"
+        ],
+        "uuid": "augment_user_query_with_context"
+      }
+    ]
+  },
+  {
+    "name": "Generate great answers for user",
+    "uuid": "generate_great_answers_for_user",
+    "type": "python",
+    "blocks": [
+      {
+        "name": "Add documents to context for LLM",
+        "groups": [
+          "contextualization"
+        ],
+        "type": "data_exporter",
+        "uuid": "add_documents_to_context_for_llm"
+      },
+      {
+        "name": "Synthesize response from model",
+        "groups": [
+          "response_synthesis"
+        ],
+        "type": "data_exporter",
+        "uuid": "synthesize_response_from_model"
+      },
+      {
+        "name": "Add custom information to response",
+        "groups": [
+          "answer_enrichment"
+        ],
+        "type": "data_exporter",
+        "uuid": "add_custom_information_to_response"
+      },
+      {
+        "name": "Add source links to response",
+        "groups": [
+          "answer_enrichment"
+        ],
+        "type": "data_exporter",
+        "uuid": "add_source_links_to_response"
+      },
+      {
+        "name": "Explain how the model got the answer",
+        "groups": [
+          "answer_enrichment"
+        ],
+        "type": "data_exporter",
+        "uuid": "explain_how_the_model_got_the_answer"
+      },
+      {
+        "name": "Parse model query and present",
+        "groups": [
+          "response_formatting"
+        ],
+        "type": "data_exporter",
+        "uuid": "parse_model_query_and_present"
+      }
+    ]
+  },
+  {
+    "name": "Retrieve numerous documents from company",
+    "uuid": "retrieve_numerous_documents_from_company",
+    "type": "python",
+    "blocks": [
+      {
+        "name": "Page-Based Recursive Retrieval",
+        "groups": [
+          "iterative_retrieval"
+        ],
+        "type": "transformer",
+        "uuid": "page_based_recursive_retrieval"
+      },
+      {
+        "name": "Information-Centric Recursive Retrieval",
+        "groups": [
+          "iterative_retrieval"
+        ],
+        "type": "transformer",
+        "uuid": "information_centric_recursive_retrieval"
+      },
+      {
+        "name": "Concept-Centric Recursive Retrieval",
+        "groups": [
+          "iterative_retrieval"
+        ],
+        "type": "transformer",
+        "uuid": "concept_centric_recursive_retrieval"
+      },
+      {
+        "name": "Fetch Wikipedia articles for memory",
+        "groups": [
+          "memory"
+        ],
+        "type": "custom",
+        "uuid": "fetch_wikipedia_articles_for_memory"
+      },
+      {
+        "name": "Multi-hop reasoning and logic",
+        "groups": [
+          "multi_hop_reasoning"
+        ],
+        "type": "transformer",
+        "uuid": "multi_hop_reasoning_and_logic"
+      },
+      {
+        "name": "ReRanking",
+        "groups": [
+          "ranking"
+        ],
+        "type": "transformer",
+        "uuid": "reranking"
+      },
+      {
+        "name": "Hybrid Search",
+        "groups": [
+          "ranking"
+        ],
+        "type": "transformer",
+        "uuid": "hybrid_search"
+      },
+      {
+        "name": "Query Expansion",
+        "groups": [
+          "ranking"
+        ],
+        "type": "transformer",
+        "uuid": "query_expansion"
+      }
+    ]
+  },
+  {
+    "name": "Transform a ton of documents",
+    "uuid": "transform_a_ton_of_documents",
+    "type": "python",
+    "blocks": [
+      {
+        "name": "Clean column names",
+        "type": "transformer",
+        "groups": [
+          "cleaning"
+        ],
+        "uuid": "clean_column_names"
+      },
+      {
+        "name": "Add 3rd party data",
+        "type": "transformer",
+        "groups": [
+          "enrich"
+        ],
+        "uuid": "add_3rd_party_data"
+      },
+      {
+        "name": "Sliding window chunker",
+        "type": "transformer",
+        "groups": [
+          "chunking"
+        ],
+        "uuid": "sliding_window_chunker"
+      },
+      {
+        "name": "Subword tokenizer",
+        "type": "transformer",
+        "groups": [
+          "tokenization"
+        ],
+        "configuration": {
+          "templates": {
+            "subword_tokenizer": {
+              "variables": {
+                "hallucination": 10,
+                "fire": "water",
+                "spell": true
+              }
+            },
+            "word_tokenizer": {
+              "variables": {
+                "spacing": "none",
+                "max_length": 100,
+                "add_special_tokens": true
+              }
+            }
+          }
+        },
+        "uuid": "subword_tokenizer"
+      },
+      {
+        "name": "Instructor embeddings",
+        "type": "transformer",
+        "groups": [
+          "embed"
+        ],
+        "configuration": {
+          "templates": {
+            "bert_embedding": {
+              "variables": {
+                "bert_embeddings_uuid": "abc"
+              }
+            },
+            "word2vec_embedding": {
+              "variables": {
+                "word2vec_embeddings_uuid": "def"
+              }
+            }
+          }
+        },
+        "uuid": "instructor_embeddings"
+      }
+    ]
+  }
+]

@@ -1,5 +1,8 @@
-from mage_ai.data_preparation.models.constants import BlockType, PipelineType
-from mage_ai.frameworks.execution.llm.rag.blocks import export, index, load, transform
+from mage_ai.data_preparation.models.constants import BlockType
+from mage_ai.frameworks.execution.llm.rag.blocks.export import groups as export
+from mage_ai.frameworks.execution.llm.rag.blocks.index import groups as index
+from mage_ai.frameworks.execution.llm.rag.blocks.load import groups as load
+from mage_ai.frameworks.execution.llm.rag.blocks.transform import groups as transform
 from mage_ai.frameworks.execution.models.block.base import BlockExecutionFramework
 from mage_ai.frameworks.execution.models.enums import ExecutionFrameworkUUID, GroupUUID
 from mage_ai.frameworks.execution.models.pipeline.base import PipelineExecutionFramework
@@ -7,14 +10,15 @@ from mage_ai.frameworks.execution.models.pipeline.base import PipelineExecutionF
 LOAD = PipelineExecutionFramework(
     uuid=GroupUUID.LOAD,
     groups=[GroupUUID.LOAD],
-    type=PipelineType.EXECUTION_FRAMEWORK,
-    blocks=[load.INGEST, load.MAP],
+    blocks=[
+        load.INGEST,
+        load.MAP,
+    ],
 )
 
 TRANSFORM = PipelineExecutionFramework(
     uuid=GroupUUID.TRANSFORM,
     groups=[GroupUUID.TRANSFORM],
-    type=PipelineType.EXECUTION_FRAMEWORK,
     blocks=[
         transform.CLEANING,
         transform.ENRICH,
@@ -27,7 +31,6 @@ TRANSFORM = PipelineExecutionFramework(
 EXPORT = PipelineExecutionFramework(
     uuid=GroupUUID.EXPORT,
     groups=[GroupUUID.EXPORT],
-    type=PipelineType.EXECUTION_FRAMEWORK,
     blocks=[
         export.KNOWLEDGE_GRAPH,
         export.VECTOR_DATABASE,
@@ -37,7 +40,6 @@ EXPORT = PipelineExecutionFramework(
 INDEX = PipelineExecutionFramework(
     uuid=GroupUUID.INDEX,
     groups=[GroupUUID.INDEX],
-    type=PipelineType.EXECUTION_FRAMEWORK,
     blocks=[
         index.CONTEXTUAL_DICTIONARY,
         index.DOCUMENT_HIERARCHY,
@@ -47,7 +49,6 @@ INDEX = PipelineExecutionFramework(
 
 DATA_PREPARATION = PipelineExecutionFramework(
     uuid=GroupUUID.DATA_PREPARATION,
-    type=PipelineType.EXECUTION_FRAMEWORK,
     groups=[GroupUUID.DATA_PREPARATION],
     execution_framework=ExecutionFrameworkUUID.RAG,
     blocks=[

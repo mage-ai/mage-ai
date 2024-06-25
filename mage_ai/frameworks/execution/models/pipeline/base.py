@@ -10,7 +10,7 @@ class PipelineExecutionFramework(BaseExecutionFramework):
         self,
         *args,
         blocks: Optional[List[BlockExecutionFramework]] = None,
-        type: Optional[PipelineType] = None,
+        type: Optional[PipelineType] = PipelineType.EXECUTION_FRAMEWORK,
         **kwargs,
     ):
         super().__init__(*args, **kwargs)
