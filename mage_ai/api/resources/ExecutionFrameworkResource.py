@@ -2,6 +2,9 @@ from typing import List, Optional, Union
 
 from mage_ai.api.errors import ApiError
 from mage_ai.api.resources.GenericResource import GenericResource
+from mage_ai.api.resources.PipelineExecutionFrameworkResource import (
+    PipelineExecutionFrameworkResource,
+)
 from mage_ai.frameworks.execution.constants import EXECUTION_FRAMEWORKS
 from mage_ai.frameworks.execution.models.pipeline.base import PipelineExecutionFramework
 from mage_ai.shared.array import find
@@ -42,10 +45,20 @@ class ExecutionFrameworkResource(GenericResource):
         )
 
     @classmethod
-    async def member(cls, pk, user, **kwargs):
+    async def get_model(cls, pk, **kwargs) -> PipelineExecutionFramework:
         model = get_execution_frameworks(uuid=pk)
+        if isinstance(model, list):
+            return model[0]
+        return model
+
+    @classmethod
+    async def member(cls, pk, user, **kwargs):
+        model = cls.get_model(pk, **kwargs)
 
         if not model:
             raise ApiError(ApiError.RESOURCE_NOT_FOUND)
 
         return cls(model, user, **kwargs)
+
+
+ExecutionFrameworkResource.register_child_resource('pipelines', PipelineExecutionFrameworkResource)

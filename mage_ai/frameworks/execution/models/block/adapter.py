@@ -1,14 +1,10 @@
 from mage_ai.data_preparation.models.block import Block as BlockBase
-from mage_ai.shared.models import Delegator
+from mage_ai.shared.models import DelegatorTarget
 
 
-class Block(Delegator):
-    type = ''
-    uuid = ''
-
+class Block(DelegatorTarget):
     def __init__(
         self,
         target: BlockBase,
     ):
-        self.target = target
-        self.delegate = Delegator(self.target)
+        super().__init__(target)

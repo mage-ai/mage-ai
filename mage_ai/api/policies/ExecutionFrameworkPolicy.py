@@ -1,5 +1,5 @@
 from mage_ai.api.oauth_scope import OauthScope
-from mage_ai.api.operations import constants
+from mage_ai.api.operations.constants import OperationType
 from mage_ai.api.policies.BasePolicy import BasePolicy
 from mage_ai.api.presenters.ExecutionFrameworkPresenter import (
     ExecutionFrameworkPresenter,
@@ -16,8 +16,8 @@ class ExecutionFrameworkPolicy(BasePolicy):
 
 ExecutionFrameworkPolicy.allow_actions(
     [
-        constants.DETAIL,
-        constants.LIST,
+        OperationType.DETAIL,
+        OperationType.LIST,
     ],
     scopes=[
         OauthScope.CLIENT_PRIVATE,
@@ -29,8 +29,8 @@ ExecutionFrameworkPolicy.allow_actions(
 ExecutionFrameworkPolicy.allow_read(
     ExecutionFrameworkPresenter.default_attributes,
     on_action=[
-        constants.DETAIL,
-        constants.LIST,
+        OperationType.DETAIL,
+        OperationType.LIST,
     ],
     scopes=[
         OauthScope.CLIENT_PRIVATE,
@@ -43,7 +43,7 @@ ExecutionFrameworkPolicy.allow_query(
         'level',
     ],
     on_action=[
-        constants.LIST,
+        OperationType.LIST,
     ],
     scopes=[
         OauthScope.CLIENT_PRIVATE,

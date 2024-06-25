@@ -114,6 +114,7 @@ class Pipeline:
         self.extensions = {}
         self.name = None
         self.notification_config = dict()
+        self.execution_framework = None
 
         # For multi project
         warn_for_repo_path(repo_path)
@@ -656,8 +657,7 @@ class Pipeline:
                     'full_path',
                 )
                 for d in build_repo_path_for_all_projects(
-                    context_data=kwargs.get('context_data'),
-                    mage_projects_only=True
+                    context_data=kwargs.get('context_data'), mage_projects_only=True
                 ).values()
             ]
 
@@ -883,7 +883,7 @@ class Pipeline:
         self.spark_config = config.get('spark_config') or {}
         self.tags = config.get('tags') or []
         self.widget_configs = config.get('widgets') or []
-
+        self.execution_framework = config.get('execution_framework')
         self.variables = config.get('variables')
 
         def build_shared_args_kwargs(c):
@@ -1021,6 +1021,7 @@ class Pipeline:
             created_at=self.created_at,
             data_integration=self.data_integration if not exclude_data_integration else None,
             description=self.description,
+            execution_framework=self.execution_framework,
             executor_config=self.executor_config,
             executor_count=self.executor_count,
             executor_type=self.executor_type,
