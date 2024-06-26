@@ -1,5 +1,7 @@
 import { AxiosError } from 'axios';
 import { ErrorDetailsType } from '@interfaces/ErrorsType';
+import { OperationTypeEnum } from './constants';
+import { MutationStatusEnum } from './enums';
 
 // "message": "Request failed with status code 400",
 // "name": "AxiosError",
@@ -82,7 +84,7 @@ export type MutateFunctionArgsType = {
   query?: Record<string, any>;
 };
 export type MutateFunctionType = (
-  args: MutateFunctionArgsType,
+  args: MutateFunctionArgsType, ...restArgs: any[]
 ) => Promise<ResourceType | ResourceType[]>;
 
 export type MutatationType = {
@@ -101,10 +103,27 @@ export type MutatationType = {
   status: any;
 };
 
+export type ModelsType = Record<string, any | any[]>;
+
+export type MutationStatusMappingType = {
+  [OperationTypeEnum.CREATE]: MutationStatusEnum;
+  [OperationTypeEnum.DELETE]: MutationStatusEnum;
+  [OperationTypeEnum.DETAIL]: MutationStatusEnum;
+  [OperationTypeEnum.LIST]: MutationStatusEnum;
+  [OperationTypeEnum.UPDATE]: MutationStatusEnum;
+};
+
 export interface MutateType {
   create: MutatationType;
   delete: MutatationType;
   detail: MutatationType;
   list: MutatationType;
+  modelsRef: React.MutableRefObject<ModelsType>;
+  status: MutationStatusMappingType;
   update: MutatationType;
+}
+
+export interface URLOptionsType {
+  disableEncodeURIComponent?: boolean;
+  disableHyphenCase?: boolean;
 }
