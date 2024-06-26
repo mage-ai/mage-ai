@@ -272,6 +272,7 @@ function MyApp(props: MyAppProps & AppProps) {
       <NextAppV2
         Component={Component}
         pageProps={{
+          ...pageProps,
           defaultTitle,
           themeSettings: pageProps?.themeSettings,
           title,

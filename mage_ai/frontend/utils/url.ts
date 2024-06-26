@@ -74,3 +74,11 @@ export const redirectToUrl = (url: string, server?: ServerResponse) => {
     Router.push(url);
   }
 };
+
+export function snakeToHyphens(url: string): string {
+  return url.replace(/_/g, '-');
+}
+
+export function hyphensToSnake(url: string): string {
+  return url.replace(/-/g, '_');
+}

@@ -11,13 +11,13 @@ type LayoutManagerProps = {
   canvasRef: React.MutableRefObject<HTMLDivElement>;
   containerRef: React.MutableRefObject<HTMLDivElement>;
   itemsRef: React.MutableRefObject<ItemMappingType>;
+  layoutConfig: React.MutableRefObject<LayoutConfigType>;
   setItemsState: React.Dispatch<React.SetStateAction<ItemMappingType>>;
   transformState: React.MutableRefObject<ZoomPanStateType>;
   updateNodeItems: ModelManagerType['updateNodeItems'];
 };
 
 export type LayoutManagerType = {
-  layoutConfig: React.MutableRefObject<LayoutConfigType>;
   modelLevelsMapping: React.MutableRefObject<ModelMappingType[]>;
   renderLayoutChanges: (opts?: { level?: number; items?: ItemMappingType }) => void;
   updateLayoutOfItems: () => ItemMappingType;
@@ -27,24 +27,11 @@ export default function useLayoutManager({
   canvasRef,
   containerRef,
   itemsRef,
+  layoutConfig,
   setItemsState,
   transformState,
   updateNodeItems,
 }: LayoutManagerProps): LayoutManagerType {
-  const layoutConfig = useRef<LayoutConfigType>({
-    defaultRect: {
-      item: () => ({
-        height: 75,
-        left: null,
-        top: null,
-        width: 300,
-      }),
-    },
-    direction: LayoutConfigDirectionEnum.HORIZONTAL,
-    origin: LayoutConfigDirectionOriginEnum.LEFT,
-    transformState: transformState?.current,
-  });
-
   const modelLevelsMapping = useRef<ModelMappingType[]>([]);
 
   function renderLayoutChanges(opts?: { level?: number; items?: ItemMappingType }) {
@@ -58,29 +45,38 @@ export default function useLayoutManager({
 
   function updateLayoutOfItems(): ItemMappingType {
     const layout = {
-      boundingRect: canvasRef?.current?.getBoundingClientRect(),
-      containerRect: containerRef?.current?.getBoundingClientRect(),
-      defaultRect: {
-        item: () => ({
-          height: 0,
-          left: 0,
-          padding: {
-            bottom: 12,
-            left: 12,
-            right: 12,
-            top: 12,
-          },
-          top: 0,
-          width: 0,
-        }),
-      },
-      direction: LayoutConfigDirectionEnum.HORIZONTAL,
-      gap: {
-        column: 40,
-        row: 40,
-      },
-      transformState: transformState?.current,
-    } as LayoutConfigType;
+      // boundingRect: canvasRef?.current?.getBoundingClientRect(),
+      // containerRect: containerRef?.current?.getBoundingClientRect(),
+      // defaultRect: {
+      //   item: ({ rect }) => ({
+      //     left: 0,
+      //     padding: {
+      //       bottom: 12,
+      //       left: 12,
+      //       right: 12,
+      //       top: 12,
+      //     },
+      //     top: 0,
+      //     ...rect,
+      //   }),
+      // },
+      // direction: LayoutConfigDirectionEnum.HORIZONTAL === layoutConfig.current.direction
+      //   ? LayoutConfigDirectionEnum.VERTICAL
+      //   : LayoutConfigDirectionEnum.HORIZONTAL,
+      // gap: {
+      //   column: 40,
+      //   row: 40,
+      // },
+      // Doesn’t do anything
+      // transformRect: {
+      //   node: (rect) => ({
+      //     ...rect,
+      //     left: rect.left + 40,
+      //     top: rect.top + 40,
+      //   }),
+      // },
+      ...layoutConfig.current,
+    };
 
     const nodeMapping = {
       ...itemsRef.current,
@@ -99,13 +95,15 @@ export default function useLayoutManager({
         }
       });
 
-      layoutItemsInGroups(nodes, layout)?.forEach((node: NodeType) => {
+      const groups = layoutItemsInGroups(nodes, layout);
+      groups?.forEach((node: NodeType) => {
         itemsUpdated[node.id] = node;
 
         node?.items?.forEach((itemNode: DragItem) => {
           itemsUpdated[itemNode.id] = itemNode;
         });
       });
+
     });
 
     updateNodeItems(itemsUpdated);

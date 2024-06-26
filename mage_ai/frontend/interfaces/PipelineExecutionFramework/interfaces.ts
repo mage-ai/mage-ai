@@ -15,6 +15,7 @@ type PipelineExecutionFrameworkType = {
   blocks: PipelineExecutionFrameworkBlockType[];
   execution_framework?: PipelineExecutionFrameworkUUIDEnum;
   groups?: (GroupUUIDEnum | PipelineExecutionFrameworkUUIDEnum)[];
+  pipelines?: PipelineExecutionFrameworkType[];
   name?: string;
   type: PipelineTypeEnum.EXECUTION_FRAMEWORK;
   uuid: GroupUUIDEnum | PipelineExecutionFrameworkUUIDEnum;

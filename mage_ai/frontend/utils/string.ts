@@ -145,7 +145,8 @@ export function singularize(string) {
     return `${string.slice(0, length - 3)}y`;
   }
 
-  if (string.slice(length - 2, length) === 'es' && string.slice(length - 3, length) !== 'ces') {
+  if (string.slice(length - 2, length) === 'es' && string.slice(length - 3, length) !== 'ces'
+    && string.slice(length - 4, length) !== 'ines') {
     return string.slice(0, length - 2);
   }
 

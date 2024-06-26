@@ -96,8 +96,8 @@ export function selectKeys(
   }, {});
 }
 
-export const dig = (o, sArg) => {
-  let s = String(sArg);
+export const dig = (o, sArg: string | string[]) => {
+  let s = Array.isArray(sArg) ? sArg.join('.') : String(sArg);
 
   s = s.replace(/\[(\w+)\]/g, '.$1'); // convert indexes to properties
   s = s.replace(/^\./, ''); // strip a leading dot

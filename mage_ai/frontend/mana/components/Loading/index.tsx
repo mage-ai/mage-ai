@@ -214,6 +214,12 @@ const RepeatingBarStyle = styled.div<LoadingProps>`
     background-size: 60% 100%;
     animation: l16 3s infinite;
     position: ${position || 'relative'};
+
+    ${position === 'fixed' ? `
+      left: 0;
+      top: 0;
+      z-index: 1;
+      ` : ''}
   }
 
   @keyframes l16 {

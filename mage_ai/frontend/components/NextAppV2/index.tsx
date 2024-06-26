@@ -1,35 +1,37 @@
-import { AppProps } from 'next/app';
-import { ThemeProvider } from 'styled-components';
-import { useEffect } from 'react';
-
 import Head from '@mana/elements/Head';
 import ThemeType from '@mana/themes/interfaces';
+import { AppProps } from 'next/app';
 import { LayoutVersionEnum } from '@utils/layouts';
+import { ModeEnum } from '@mana/themes/modes';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { ThemeProvider } from 'styled-components';
 import { ThemeSettingsType } from '@mana/themes/interfaces';
 import { getTheme, getThemeSettings } from '@mana/themes/utils';
-import { ModeEnum } from '@mana/themes/modes';
+import { useEffect } from 'react';
 
 function NextAppV2({
   Component,
-  pageProps,
+  pageProps: {
+    defaultTitle,
+    mode: modeProp,
+    themeSettings: themeSettingsProp,
+    title,
+    version,
+    ...rest
+  },
 }: AppProps & {
   pageProps: {
     defaultTitle?: string;
+    mode?: ModeEnum;
     title?: string;
     themeSettings?: Record<string, ThemeSettingsType>;
     version?: LayoutVersionEnum;
   };
 }) {
-  const {
-    defaultTitle,
-    themeSettings: themeSettingsProp,
-    title,
-    version,
-  } = pageProps || ({} as any);
-
+  const queryClient = new QueryClient();
   const themeSettings = (themeSettingsProp?.[version] || getThemeSettings()) as ThemeSettingsType;
   const theme = themeSettings?.theme || getTheme({ theme: themeSettings });
-  const mode = themeSettings?.mode || ModeEnum.DARK;
+  const mode = themeSettings?.mode || modeProp || ModeEnum.DARK;
 
   useEffect(() => {
     if (typeof document !== 'undefined') {
@@ -47,7 +49,9 @@ function NextAppV2({
         />
       </Head>
       <ThemeProvider theme={theme as ThemeType}>
-        <Component />
+        <QueryClientProvider client={queryClient}>
+          <Component {...rest} />
+        </QueryClientProvider>
       </ThemeProvider>
     </>
   );

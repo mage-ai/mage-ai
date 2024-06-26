@@ -1,4 +1,5 @@
 import  BuilderCanvas, { BuilderCanvasProps } from './Canvas';
+import Loading from '@mana/components/Loading';
 import useContextMenu from '@mana/hooks/useContextMenu';
 import { ClientEventType } from '@mana/shared/interfaces';
 import { DndProvider } from 'react-dnd';
@@ -7,7 +8,9 @@ import { HTML5Backend } from 'react-dnd-html5-backend';
 import { ZoomPanStateType, useZoomPan } from '@mana/hooks/useZoomPan';
 import { useEffect, useRef, useState } from 'react';
 
-export default function PipelineBuilder(props: BuilderCanvasProps) {
+export default function PipelineBuilder({ loading, ...props }: BuilderCanvasProps & {
+  loading?: boolean;
+}) {
   const canvasRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const disabledRef = useRef(false);
@@ -128,6 +131,7 @@ export default function PipelineBuilder(props: BuilderCanvasProps) {
 
   return (
     <>
+      {loading && <Loading position="fixed" />}
       <DndProvider backend={HTML5Backend}>
         <BuilderCanvas
           {...props}

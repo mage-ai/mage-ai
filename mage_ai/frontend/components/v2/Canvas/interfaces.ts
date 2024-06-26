@@ -72,6 +72,7 @@ export interface LayoutConfigType {
   };
   direction?: LayoutConfigDirectionEnum;
   level?: number;
+  offsetRectFinal?: RectType;
   origin?: LayoutConfigDirectionOriginEnum;
   gap?: {
     column?: number;

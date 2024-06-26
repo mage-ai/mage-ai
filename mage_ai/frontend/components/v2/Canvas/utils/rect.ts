@@ -435,72 +435,52 @@ export function applyRectDiff(rect: RectType, diff: RectType, dimensions?: boole
   };
 }
 
-export function transformZoomPanRect(rect: RectType, transformState: ZoomPanStateType) {
-  const { container, element, originX, originY, startX, startY } =
-    transformState ?? ({} as ZoomPanStateType);
+function layoutRectsInGrid(rects: RectType[], layout?: LayoutConfigType): RectType[] {
+  const { containerRect, gap } = layout || {};
+  const rectsCopy = [...rects];
+  let currentX = 0;
+  let currentY = 0;
+  let maxRowHeight = 0;
+  const positionedRects: RectType[] = [];
 
-  const scale = transformState?.scale?.current ?? 1;
+  for (const rect of rectsCopy) {
+    // If the current rect goes beyond the container width, move to the next row
+    if (currentX + rect.width > containerRect.width) {
+      currentX = 0;
+      currentY += maxRowHeight + gap.row;
+      maxRowHeight = 0;
+    }
 
-  const rectContainer = (container?.current ?? ({} as HTMLElement))?.getBoundingClientRect();
-  const containerWidth = rectContainer.width;
-  const containerHeight = rectContainer.height;
+    // Position the rect
+    positionedRects.push({
+      ...rect,
+      left: currentX,
+      top: currentY,
+    });
 
-  const rectViewport = (element?.current ?? ({} as HTMLElement))?.getBoundingClientRect();
-  const viewportWidth = rectViewport.width;
-  const viewportHeight = rectViewport.height;
+    // Update currentX and maxRowHeight for next rect
+    currentX += rect.width + gap.column;
+    maxRowHeight = Math.max(maxRowHeight, rect.height);
+  }
 
-  const xCur = startX?.current ?? 0;
-  const yCur = startY?.current ?? 0;
-
-  const xOrg = originX?.current ?? 0;
-  const yOrg = originY?.current ?? 0;
-
-  const left = rect?.left ?? 0;
-  const top = rect?.top ?? 0;
-  const width = rect?.width ?? 0;
-  const height = rect?.height ?? 0;
-
-  const leftOrg = left + xOrg; // Reset before panning
-  const leftFactor = xOrg / (viewportWidth - containerWidth);
-  const transformedLeft = leftOrg;
-  // + ((containerWidth - viewportWidth) * leftFactor);
-
-  const topOrg = top + yOrg; // Reset before panning
-  const topFactor = yOrg / (viewportHeight - containerHeight);
-  const transformedTop = topOrg;
-  // + ((containerHeight - viewportHeight) * topFactor);
-
-  console.log('origin', xOrg, yOrg);
-  console.log('current', xCur, yCur);
-  console.log('factor', leftFactor, topFactor);
-  console.log('scale', scale);
-  console.log('leftTopOrg', leftOrg, topOrg);
-  console.log('item', left, top);
-
-  return {
-    ...rect,
-    height: height * scale,
-    left: transformedLeft,
-    top: transformedTop,
-    width: width * scale,
-  };
+  return positionedRects;
 }
 
-export function layoutItemsInGroups(nodes: NodeType[], layout: LayoutConfigType): NodeType[] {
-  const { boundingRect, containerRect } = layout;
-  const { node: transformRect = (rect: RectType) => ({ ...rect }) as RectType } =
-    layout?.transformRect || {};
-  const { item: defaultRect = (item: NodeItemType) => ({ ...item?.rect }) as RectType } =
-    layout?.defaultRect || {};
-
+function layoutItemsInNodeGroup(nodes: NodeType[], layout: LayoutConfigType) {
   const groupsMapping: Record<string, NodeType> = {};
+
+  const {
+    node: transformRect = (rect: RectType) => ({ ...rect }) as RectType,
+  } = layout?.transformRect || {};
+  const {
+    item: defaultRect = (item: NodeItemType) => ({ ...item?.rect }) as RectType,
+  } = layout?.defaultRect || {};
 
   nodes?.forEach((node: NodeType) => {
     const { items = [] } = node;
 
     const layoutInner = {
       ...layout,
-
       direction:
         LayoutConfigDirectionEnum.HORIZONTAL === layout.direction
           ? LayoutConfigDirectionEnum.VERTICAL
@@ -577,96 +557,175 @@ export function layoutItemsInGroups(nodes: NodeType[], layout: LayoutConfigType)
     };
   });
 
-  Object.values(groupsMapping || {}).forEach((node: NodeType) => {
-    groupsMapping[node.id] = {
-      ...node,
-      rect: {
-        ...node?.rect,
-        upstreamRects: (node.upstreamNodes ?? []).reduce((acc: RectType[], node2: NodeType) => {
-          const rect = groupsMapping[node2.id]?.rect;
-          return rect ? acc.concat({ ...rect, id: node2?.id }) : acc;
-        }, []),
-      },
-    };
-  });
+  return Object.values(groupsMapping || {});
+}
 
-  const rectsBeforeLayout = Object.values(groupsMapping || {})?.map((node: NodeType) => ({
-    ...node.rect,
-    id: node?.id,
+function convertUpstreamNodesToUpstreamRects(nodes: NodeItemType[]) {
+  const groupsMapping = indexBy(nodes, node => node.id);
+
+  return Object.values(groupsMapping || {}).map((node: NodeType) => ({
+    ...node,
+    rect: {
+      ...node?.rect,
+      upstreamRects: (node.upstreamNodes ?? []).reduce((acc: RectType[], node2: NodeType) => {
+        const rect = groupsMapping[node2.id]?.rect;
+        return rect ? acc.concat({ ...rect, id: node2?.id }) : acc;
+      }, []),
+    },
+  }));
+}
+
+function convertItemsToRects(items: NodeItemType[]): RectType[] {
+  return items?.map((item: NodeItemType) => ({
+    ...item.rect,
+    id: item?.id,
+    upstreamRects: item?.rect?.upstreamRects?.map((rect: RectType) => rect),
+  }));
+}
+
+function clearnPositionsForRects(rects: RectType[]) {
+  // Reset position to nothing; clean state.
+  return rects?.map((rect: RectType) => ({
+    ...rect,
     left: null,
     top: null,
-    upstreamRects: node?.rect?.upstreamRects?.map((rect: RectType) => ({
+    upstreamRects: rect?.upstreamRects?.map((rect: RectType) => ({
       ...rect,
       left: null,
       top: null,
     })),
   }));
+}
 
-  isDebug() && console.log('rectsBeforeLayout', rectsBeforeLayout);
+function centerRectsInBoundingBox(rects: RectType[], box: RectType): RectType[] {
+  const boxSmall = calculateBoundingBox(rects);
 
-  const rectsInTree = layoutRectsInTreeFormation(rectsBeforeLayout, layout);
-  isDebug() && console.log('rectsInTree', rectsInTree);
+  const offsetTop = (box.height - boxSmall.height) / 2;
+  const offsetLeft = (box.width - boxSmall.width) / 2;
+  console.log(box, boxSmall, offsetTop, offsetLeft);
+  return rects.map(rect => applyRectDiff(rect, {
+    left: offsetLeft,
+    top: offsetTop,
+  }));
+}
 
-  // rectsInTree = rectsInTree?.map(rect => transformZoomPanRect(rect, transformState));
+function shiftRectsByDiffRect(rects: RectType[], rectDiff: RectType) {
+  return rects.map(rect => applyRectDiff(rect, rectDiff));
+}
 
-  // rectsInTree = centerRects(rectsInTree, boundingRect, containerRect);
-  isDebug() &&
-    console.log(
-      'rectsInTree',
-      rectsInTree,
-      'boundingRect',
-      boundingRect,
-      'containerRect',
-      containerRect,
-      window.innerWidth,
-      window.innerHeight,
-    );
+function addPaddingToRectInsideBox(rects: RectType[], box: RectType, pad: {
+  bottom: number;
+  left: number;
+  right: number;
+  top: number;
+}) {
+  return rects?.map((rect: RectType) => ({
+    ...rect,
+    left: Math.min(
+      ((box.left ?? 0) + box.width) - pad.right,
+      Math.max((box.left ?? 0) + pad.left, rect.left),
+    ),
+    top: Math.min(
+      ((box.top ?? 0) + box.height) - pad.bottom,
+      Math.max((box.top ?? 0) + pad.top, rect.top),
+    ),
+  }));
+}
 
-  return rectsInTree.reduce((acc, rect: RectType) => {
-    const node = groupsMapping[rect.id];
-    let items = node?.items ?? [];
+function layoutRectsInSpiral(rects: RectType[], layout?: LayoutConfigType): RectType[] {
+  const { containerRect, gap } = layout ?? {};
+  const rectsCopy = [...rects];
+  const halfWidth = containerRect.width / 2;
+  const halfHeight = containerRect.height / 2;
+  let x = halfWidth;
+  let y = halfHeight;
+  let angle = 0;
+  const stepSize = gap?.row || gap?.column;
+  const positionedRects: RectType[] = [];
 
-    // items = items?.map((item: DragItem) => ({
-    //   ...item,
-    //   rect: applyRectDiff(item?.rect, {
-    //     ...diff,
-    //     left: diff.left + rectPadding.left,
-    //     top: diff.top + rectPadding.top,
-    //   }),
-    // }));
+  for (const rect of rectsCopy) {
+    // Position the rect
+    positionedRects.push({
+      ...rect,
+      left: x - rect.width / 2,
+      top: y - rect.height / 2,
+    });
 
-    let itemsRects = items?.map((item: DragItem) => item.rect);
-    itemsRects = shiftRectsIntoBoundingBox(itemsRects, rect);
-    const itemsBox = calculateBoundingBox(itemsRects);
-    const diff = {
-      left: (rect?.offset?.left ?? 0) + (rect?.padding?.left ?? 0),
-      top: (rect?.offset?.top ?? 0) + (rect?.padding?.top ?? 0),
-    };
+    // Update position for next rect in spiral pattern
+    angle += stepSize / Math.sqrt(x * x + y * y);
+    x = halfWidth + (stepSize * angle) * Math.cos(angle);
+    y = halfHeight + (stepSize * angle) * Math.sin(angle);
+  }
 
-    isDebug() && console.log('box', rect, 'itemsBox', itemsBox, 'diff', diff);
+  return positionedRects;
+}
 
-    itemsRects = itemsRects.map((itemRect: RectType) => applyRectDiff(itemRect, diff));
+function moveItemsIntoNode(node) {
+  const rects = shiftRectsIntoBoundingBox(node.items.map(i => i.rect), node.rect);
+  return {
+    ...node,
+    items: rects.map((rect, idx) => ({ ...node.items[idx], rect })),
+  };
+}
 
-    items = items?.map((item: DragItem, idx: number) => ({
+function alignItemsInsideNode(node) {
+  const diff = {
+    left: (node.rect?.offset?.left ?? 0) + (node.rect?.padding?.left ?? 0),
+    top: (node.rect?.offset?.top ?? 0) + (node.rect?.padding?.top ?? 0),
+  };
+  return {
+    ...node,
+    items: node.items.map(item => ({
       ...item,
-      rect: itemsRects[idx],
-    }));
+      rect: applyRectDiff({ ...item.rect }, diff),
+    })),
+  };
+}
 
-    return acc.concat({
+export function layoutItemsInGroups(nodes: NodeType[], layout: LayoutConfigType): NodeType[] {
+  const { boundingRect, containerRect, offsetRectFinal, padRect, shiftRect } = layout;
+
+  let nodes2 = layoutItemsInNodeGroup(nodes, layout);
+  nodes2 = convertUpstreamNodesToUpstreamRects(nodes2);
+  let rects2 = convertItemsToRects(nodes2);
+  rects2 = clearnPositionsForRects(rects2);
+
+  // Doesn’t look good when there are too few groups and they have little dependency on each other
+  // rects2 = layoutRectsInTreeFormation(rects2, layout);
+  rects2 = layoutRectsInWavePattern(rects2, layout); // Best for low count
+  // rects2 = centerRectsInBoundingBox(rects2, boundingRect); // Centers a lot
+  rects2 = shiftRectsByDiffRect(rects2, shiftRect); // Centers a lot
+  // rects2 = addPaddingToRectInsideBox(rects2, boundingRect, padRect);
+  // rects2 = groupRectangles(rects2); // Places them tightly together side by side
+  // rects2 = layoutRectsInGrid(rects2, layout); // Same as group rectangles
+  // rects2 = layoutRectsInSpiral(rects2, layout);
+
+  rects2 = rects2.map((rect: RectType, idx1) => {
+    const node = nodes2[idx1];
+
+    // Move into parent
+    node.items = moveItemsIntoNode({ ...node, rect }).items;
+
+    // Align within parent
+    node.items = alignItemsInsideNode(node).items;
+
+    return {
       ...node,
-      items: items?.map((item: DragItem) => ({
+      items: node.items?.map((item: DragItem) => ({
         ...item,
         node: {
           ...node,
-          items: items?.map(() => ({
+          items: node.items?.map(() => ({
             id: item?.id,
             rect: item?.rect,
           })),
         },
       })),
       rect,
-    });
-  }, []);
+      // rect: applyRectDiff(rect, offsetRectFinal ?? {}),
+    };
+  });
+  return rects2;
 }
 
 function updateItemRect(item: DragItem, rect: RectType) {
@@ -674,68 +733,6 @@ function updateItemRect(item: DragItem, rect: RectType) {
     rect: {
       $merge: rect,
     },
-  });
-}
-
-function layoutItemsInSqaure(items: DragItem[], layout?: LayoutConfigType) {
-  const rects = items.map(item => item.rect);
-  const repositionedRects = repositionInGroup(rects, layout);
-
-  return items.map((item, index) => {
-    const { left, top } = repositionedRects[index];
-
-    return updateItemRect(item, { ...item?.rect, left, top });
-  });
-}
-
-function repositionInGroup(rects: RectType[], layout?: LayoutConfigType): RectType[] {
-  const { gap, grid } = layout || {};
-  let { columns: numCols, rows: numRows } = grid || {};
-  const { column: horizontalSpacing = 50, row: verticalSpacing = 50 } = gap || {};
-
-  // If there is only one rect, return it as is
-  if (rects.length === 1) {
-    return rects;
-  }
-
-  if (!numRows && !numCols) {
-    numCols = Math.floor(Math.sqrt(rects.length));
-    numRows = Math.ceil(rects.length / numCols); // If numRows is not provided, calculate it based on numCols
-  } else {
-    numCols = numCols ?? 1;
-    numRows = numRows ?? 1;
-  }
-
-  let currentX = 0;
-  let currentY = 0;
-  let maxHeightInRow = 0;
-  let colIdx = 0;
-
-  // Calculate the bounding box of the original positions
-  const centroid = calculateCentroid(rects);
-
-  return rects.map((rect, index) => {
-    if (colIdx >= numCols) {
-      currentX = 0;
-      currentY += maxHeightInRow + verticalSpacing;
-      maxHeightInRow = 0;
-      colIdx = 0;
-    }
-
-    const updatedRect = {
-      ...rect,
-      left: currentX - centroid.left,
-      top: currentY - centroid.top,
-    };
-
-    currentX += rect.width + horizontalSpacing;
-    if (rect.height > maxHeightInRow) {
-      maxHeightInRow = rect.height;
-    }
-
-    colIdx += 1;
-
-    return updatedRect;
   });
 }
 
@@ -778,22 +775,6 @@ function groupRectangles(
 
     return updatedRect;
   });
-}
-
-function calculateCentroid(rects: RectType[]): { left: number; top: number } {
-  let leftSum = 0;
-  let topSum = 0;
-
-  [...rects]?.forEach((rect: RectType) => {
-    const { left, top, width, height } = { ...rect };
-    leftSum += left + width / 2;
-    topSum += top + height / 2;
-  });
-
-  return {
-    left: leftSum / rects.length,
-    top: topSum / rects.length,
-  };
 }
 
 export function calculateBoundingBox(rects: RectType[]): RectType {

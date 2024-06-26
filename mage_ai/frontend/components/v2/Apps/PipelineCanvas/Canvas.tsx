@@ -3,9 +3,9 @@ import CanvasContainer from './index.style';
 import PipelineExecutionFrameworkType from '@interfaces/PipelineExecutionFramework/interfaces';
 import PipelineType from '@interfaces/PipelineType';
 import type { DropTargetMonitor } from 'react-dnd';
-import { DragItem, ModelMappingType, NodeItemType, NodeType, GroupMappingType, ItemMappingType, PortMappingType } from '../../Canvas/interfaces';
+import { LayoutConfigType, DragItem, ModelMappingType, NodeItemType, NodeType, GroupMappingType, ItemMappingType, PortMappingType } from '../../Canvas/interfaces';
 import { DragLayer } from '../../Canvas/Layers/DragLayer';
-import { ItemTypeEnum } from '../../Canvas/types';
+import { ItemTypeEnum, LayoutConfigDirectionOriginEnum, LayoutConfigDirectionEnum } from '../../Canvas/types';
 import { RemoveContextMenuType, RenderContextMenuType } from '@mana/hooks/useContextMenu';
 import { ZoomPanStateType } from '@mana/hooks/useZoomPan';
 import { buildDependencies } from './utils/pipelines';
@@ -23,10 +23,8 @@ export type BuilderCanvasProps = {
   containerRef: React.RefObject<HTMLDivElement>;
   dragEnabled?: boolean;
   dropEnabled?: boolean;
-  pipeline: PipelineType | PipelineExecutionFrameworkType;
-  pipelineExecutionFramework: PipelineExecutionFrameworkType;
-  pipelineExecutionFrameworks: PipelineExecutionFrameworkType[];
-  pipelines?: PipelineType[];
+  pipeline: PipelineExecutionFrameworkType;
+  executionFramework: PipelineExecutionFrameworkType;
   removeContextMenu: RemoveContextMenuType;
   renderContextMenu: RenderContextMenuType;
   setDragEnabled: (value: boolean) => void;
@@ -41,9 +39,7 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
   dragEnabled,
   dropEnabled,
   pipeline,
-  pipelineExecutionFramework,
-  pipelineExecutionFrameworks,
-  pipelines,
+  executionFramework,
   removeContextMenu,
   renderContextMenu,
   setDragEnabled,
@@ -54,6 +50,76 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
   const activeLevel = useRef<number>(null);
   const phaseRef = useRef<number>(0);
   const wrapperRef = useRef(null);
+  const validLevels = useRef<number[]>([1, 2]);
+
+  const layoutConfig = useRef<LayoutConfigType>({
+    containerRect: {
+      left: 40,
+      top: 40,
+      height: window.innerHeight,
+      width: window.innerWidth,
+    },
+    boundingRect: {
+      // left: 0,
+      // top: 0,
+      height: window.innerHeight,
+      width: window.innerWidth,
+    },
+    shiftRect: {
+      top: 200,
+      left: 300,
+    },
+    padRect: {
+      bottom: 12,
+      left: 12,
+      right: 12,
+      top: 12,
+    },
+    // offsetRectFinal: {
+    //   left: 300,
+    //   top: 100,
+    // },
+    gap: {
+      column: 40,
+      row: 40,
+    },
+    transforms: [
+      {
+        left: null,
+        top: null,
+        type: 'set',
+      },
+      {
+        top: 200,
+        left: 200,
+        bottom: 10,
+        right: 10,
+        type: 'pad',
+      },
+      {
+        top: 200,
+        left: 300,
+        type: 'shift',
+      },
+    ],
+    defaultRect: {
+      item: () => ({
+        height: 75,
+        left: null,
+        top: null,
+        width: 300,
+        padding: {
+          bottom: 12,
+          left: 12,
+          right: 12,
+          top: 12,
+        },
+      }),
+    },
+    direction: LayoutConfigDirectionEnum.HORIZONTAL,
+    origin: LayoutConfigDirectionOriginEnum.LEFT,
+    transformState: transformState?.current,
+  });
 
   // VERY IMPORTANT THAT THE STATE IS IN THIS COMPONENT OR ELSE NOTHING WILL RENDER!
   const [items, setItemsState] = useState<Record<string, NodeItemType>>(null);
@@ -68,9 +134,15 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
     levelPrevious !== null &&
       containerRef?.current?.classList.remove(styles[`level-${levelPrevious}-active`]);
 
-    let level: number = levelArg ?? (activeLevel?.current ?? 0) + 1;
-    if (level >= modelLevelsMapping?.current?.length) {
-      level = 0;
+    let level: number = levelArg ?? (activeLevel?.current ?? 0);
+    if (validLevels?.current?.length >= 1) {
+      const idx = validLevels.current.findIndex(i => i === level);
+      level = validLevels.current[idx + 1] ?? validLevels.current[0];
+    } else {
+      level += 1;
+      if (level >= modelLevelsMapping?.current?.length) {
+        level = 0;
+      }
     }
 
     activeLevel.current = level;
@@ -89,7 +161,6 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
   }: ModelManagerType = useModelManager();
 
   const {
-    layoutConfig,
     modelLevelsMapping,
     renderLayoutChanges,
     updateLayoutOfItems,
@@ -97,6 +168,7 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
     canvasRef,
     containerRef,
     itemsRef,
+    layoutConfig,
     setItemsState,
     transformState,
     updateNodeItems,
@@ -164,10 +236,10 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
   useEffect(() => {
     if (phaseRef.current === 0) {
       const { blockMapping, blocksByGroup, groupLevelsMapping, groupMapping } = buildDependencies(
-        pipelineExecutionFramework,
-        pipelineExecutionFrameworks,
+        executionFramework,
+        executionFramework?.pipelines,
         pipeline,
-        pipelines,
+        pipeline?.pipelines,
       );
 
       const boundingRect = canvasRef?.current?.getBoundingClientRect();

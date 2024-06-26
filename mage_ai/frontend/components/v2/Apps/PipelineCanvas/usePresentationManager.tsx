@@ -188,7 +188,7 @@ export default function usePresentationManager({
 
       if (versions?.every((version: number) => version === rectVersion)) {
         if (activeLevel?.current === null) {
-          setActiveLevel(3);
+          setActiveLevel();
           const itemsUpdated = updateLayoutOfItems();
           renderLayoutChanges({ items: itemsUpdated });
           renderConnectionLines();
