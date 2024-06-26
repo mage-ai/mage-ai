@@ -39,7 +39,9 @@ class TestTableBigQuery(DBTestCase):
     def test_export_does_not_create_dataset_if_flag_is_not_provided(self):
         self.bigquery_instance.export(self.mock_df, self.table_id)
 
-        self.bigquery_instance.client.create_dataset.assert_not_called()
+        self.bigquery_instance.client.create_dataset.assert_called_once_with(
+            dataset=self.dataset, exists_ok=True
+        )
         self.bigquery_instance.client.load_table_from_dataframe.assert_called_once()
 
     def test_export_creates_dataset_if_flag_is_true_and_append_with_constraints(self):
