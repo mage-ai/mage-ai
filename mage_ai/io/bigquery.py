@@ -205,7 +205,7 @@ WHERE TABLE_NAME = '{table_name}'
         unique_conflict_method: str = None,
         unique_constraints: List[str] = None,
         write_disposition: str = None,
-        create_dataset: bool = False,
+        create_dataset: bool = True,
         **configuration_params,
     ) -> None:
         """
@@ -360,7 +360,7 @@ WHERE table_id = '{table_name}'
         df: DataFrame,
         table_id: str,
         overwrite_types: Dict = None,
-        create_dataset: bool = False,
+        create_dataset: bool = True,
         **configuration_params,
     ):
         config = LoadJobConfig(**configuration_params)
