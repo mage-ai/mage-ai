@@ -2,11 +2,11 @@ import PipelineExecutionFrameworkType, {
   FrameworkType,
 } from '@interfaces/PipelineExecutionFramework/interfaces';
 import BlockType, { BlockTypeEnum } from '@interfaces/BlockType';
-import { BlockMappingType, BlocksByGroupType } from '../../../Canvas/interfaces';
+import { BlockMappingType, BlocksByGroupType, GroupMappingType } from '../../../Canvas/interfaces';
 import { GroupUUIDEnum } from '@interfaces/PipelineExecutionFramework/types';
 import { extractNestedBlocks } from '@utils/models/pipeline';
 import { indexBy, flattenArray, uniqueArray } from '@utils/array';
-import { selectKeys } from '@utils/hash';
+import { ignoreKeys, selectKeys } from '@utils/hash';
 
 export function buildDependencies(
   executionFramework: PipelineExecutionFrameworkType,
@@ -14,6 +14,7 @@ export function buildDependencies(
 ): {
   blockMapping: BlockMappingType;
   blocksByGroup: BlocksByGroupType;
+  groupMapping: GroupMappingType;
   groupsByLevel: FrameworkType[][];
 } {
   // Build group hierarchy from pipeline execution framework’s blocks:
@@ -174,7 +175,7 @@ export function buildDependencies(
   // Get all the blocks from the user’s pipeline
   const pipelinesMapping = indexBy(extractNestedPipelines(pipeline), ({ uuid }) => uuid);
   const blockMapping = extractNestedBlocks(pipeline, pipelinesMapping, {
-    addPipelineToBlocks: false,
+    addPipelineToBlocks: true,
     excludeBlockTypes: [BlockTypeEnum.PIPELINE],
   });
   const blocksByGroup = blocksToGroupMapping(Object.values(blockMapping));
@@ -210,15 +211,20 @@ export function buildDependencies(
         ]) as any;
       });
 
+      if (block?.pipeline) {
+        block.pipeline = ignoreKeys(block.pipeline, ['blocks', 'pipelines']);
+      }
+
       blockMapping[blockUUID] = block;
     });
   });
 
-  // console.log('groupsByLevel', groupsByLevel);
+  // console.log('blockMapping', blockMapping);
 
   return {
     blockMapping,
     blocksByGroup,
+    groupMapping,
     groupsByLevel,
   };
 }

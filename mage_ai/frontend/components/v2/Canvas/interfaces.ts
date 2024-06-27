@@ -1,4 +1,5 @@
 import BlockType from '@interfaces/BlockType';
+import PipelineType from '@interfaces/PipelineType';
 import { FrameworkType, PipelineExecutionFrameworkBlockType } from '@interfaces/PipelineExecutionFramework/interfaces';
 import { GroupUUIDEnum } from '@interfaces/PipelineExecutionFramework/types';
 import { ZoomPanStateType } from '@mana/hooks/useZoomPan';
@@ -28,7 +29,7 @@ export interface RectType {
   padding?: RectType;
   right?: number;
   top: number;
-  upstreamRects?: RectType[];
+  upstream?: RectType[];
   version?: number;
   width?: number;
   zIndex?: number;
@@ -42,7 +43,9 @@ interface BaseItem {
 }
 
 export interface DragItem extends BaseItem {
-  block?: BlockType;
+  block?: BlockType & {
+    frameworks: PipelineExecutionFrameworkBlockType[]
+  };
   groups?: string[];
   isDragging?: boolean;
   node?: NodeType;
@@ -61,10 +64,9 @@ export interface PortType extends DragItem {
 
 export interface NodeType extends DragItem {
   downstream?: string[];
-  items: (DragItem | NodeType | string)[];
+  items: (DragItem | NodeType)[];
   node?: NodeType;
   upstream?: string[];
-  upstreamNodes?: (DragItem | NodeType)[];
 }
 
 export interface LayoutConfigType {

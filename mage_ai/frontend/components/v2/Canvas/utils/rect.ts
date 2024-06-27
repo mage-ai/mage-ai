@@ -188,7 +188,7 @@ export function setUpstreamRectsForItems(items: DragItem[]): DragItem[] {
     rect: {
       ...item.rect,
       id: item.id,
-      upstreamRects:
+      upstream:
         item?.block?.upstream_blocks.reduce(
           (acc: RectType[], id: string) => acc.concat(rectsByItemID[id] ?? []),
           [],
@@ -249,12 +249,12 @@ function layoutRectsInTreeFormation(
     }
     visited.add(item.id);
 
-    if (item.upstreamRects.length === 0) {
-      isDebug() && console.log(`Item ${item.id} has no upstreamRects:`, item?.upstreamRects);
+    if (item.upstream.length === 0) {
+      isDebug() && console.log(`Item ${item.id} has no upstream:`, item?.upstream);
       levels.set(item.id, 0);
     } else {
       const lvl = Math.max(
-        ...item.upstreamRects.map(rect => {
+        ...item.upstream.map(rect => {
           const parentItem = items.find(i => i.id === rect.id);
           isDebug() && console.log(`Checking parent for ${item.id}`, parentItem);
           if (parentItem) {
@@ -567,9 +567,9 @@ function convertUpstreamNodesToUpstreamRects(nodes: NodeItemType[]) {
     ...node,
     rect: {
       ...node?.rect,
-      upstreamRects: (node.upstreamNodes ?? []).reduce((acc: RectType[], node2: NodeType) => {
-        const rect = groupsMapping[node2.id]?.rect;
-        return rect ? acc.concat({ ...rect, id: node2?.id }) : acc;
+      upstream: (node.upstream ?? []).reduce((acc: RectType[], nodeID: string) => {
+        const rect = groupsMapping[nodeID]?.rect;
+        return rect ? acc.concat({ ...rect, id: nodeID }) : acc;
       }, []),
     },
   }));
@@ -579,7 +579,7 @@ function convertItemsToRects(items: NodeItemType[]): RectType[] {
   return items?.map((item: NodeItemType) => ({
     ...item.rect,
     id: item?.id,
-    upstreamRects: item?.rect?.upstreamRects?.map((rect: RectType) => rect),
+    upstream: item?.rect?.upstream?.map((rect: RectType) => rect),
   }));
 }
 
@@ -589,7 +589,7 @@ function clearnPositionsForRects(rects: RectType[]) {
     ...rect,
     left: null,
     top: null,
-    upstreamRects: rect?.upstreamRects?.map((rect: RectType) => ({
+    upstream: rect?.upstream?.map((rect: RectType) => ({
       ...rect,
       left: null,
       top: null,
@@ -700,7 +700,7 @@ export function layoutItemsInGroups(nodes: NodeType[], layout: LayoutConfigType)
   // rects2 = layoutRectsInGrid(rects2, layout); // Same as group rectangles
   // rects2 = layoutRectsInSpiral(rects2, layout);
 
-  rects2 = rects2.map((rect: RectType, idx1) => {
+  const node3: NodeType[] = rects2.map((rect: RectType, idx1) => {
     const node = nodes2[idx1];
 
     // Move into parent
@@ -723,9 +723,10 @@ export function layoutItemsInGroups(nodes: NodeType[], layout: LayoutConfigType)
       })),
       rect,
       // rect: applyRectDiff(rect, offsetRectFinal ?? {}),
-    };
+    } as NodeType;
   });
-  return rects2;
+
+  return node3;
 }
 
 function updateItemRect(item: DragItem, rect: RectType) {

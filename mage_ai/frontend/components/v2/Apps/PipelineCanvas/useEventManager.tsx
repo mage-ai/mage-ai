@@ -16,6 +16,7 @@ import { PresentationManagerType } from './usePresentationManager';
 import stylesBuilder from '@styles/scss/apps/Canvas/Pipelines/Builder.module.scss';
 import { range } from '@utils/array';
 import { LayoutManagerType } from './useLayoutManager';
+import { ActiveLevelRefType, LayoutConfigRefType, ItemIDsByLevelRef, SetActiveLevelType } from './interfaces';
 
 const GRID_SIZE = 40;
 
@@ -27,7 +28,7 @@ type EventManagerProps = {
   itemDraggingRef: React.MutableRefObject<NodeItemType | null>;
   itemElementsRef: React.MutableRefObject<Record<string, Record<string, React.RefObject<HTMLDivElement>>>>;
   itemsRef: React.MutableRefObject<ItemMappingType>;
-  modelLevelsMapping: LayoutManagerType['modelLevelsMapping'];
+  itemIDsByLevelRef: ItemIDsByLevelRef;
   mutateModels: ModelManagerType['mutateModels'];
   portsRef: React.MutableRefObject<PortMappingType>;
   removeContextMenu: RemoveContextMenuType;
@@ -69,7 +70,7 @@ export type EventManagerType = {
 
 export default function useEventManager({
   activeLevel,
-  modelLevelsMapping,
+  itemIDsByLevelRef,
   canvasRef,
   connectionLinesPathRef,
   containerRef,
@@ -281,18 +282,22 @@ export default function useEventManager({
       {
         uuid: 'Groupings',
       },
-      ...Object.entries(modelLevelsMapping?.current ?? {}).map(([level, modelMapping]: [number, ModelMappingType]) => ({
+      ...(itemIDsByLevelRef?.current ?? {}).map((ids: string[], level: number) => ({
           Icon: level === activeLevel?.current ? Check : Group,
           description: () => '...',
-          items: Object.values(modelMapping?.itemMapping ?? {}).map((item: NodeItemType) => ({
-            // Icon: item.icon,
-            // onClick: (event?: ClientEventType) => {
-            //   event?.preventDefault();
-            //   setActiveLevel(level);
-            //   removeContextMenu(event);
-            // },
-            uuid: item.name,
-          })),
+          items: ids?.map((id: string) => {
+            const item = itemsRef.current?.[id];
+            const { block, title } = item;
+
+            return {
+              onClick: (event?: ClientEventType) => {
+                event?.preventDefault();
+                removeContextMenu(event);
+                alert(`Focus on item for block ${block?.name || block?.uuid} with title ${title}`);
+              },
+              uuid: title || block?.name || block?.uuid,
+            };
+          }),
           onClick: (event?: ClientEventType) => {
             event?.preventDefault();
             setActiveLevel(level);

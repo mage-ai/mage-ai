@@ -8,20 +8,21 @@ import { ModelManagerType } from './useModelManager';
 import { createRoot, Root } from 'react-dom/client';
 import { getBlockColor } from '@mana/themes/blocks';
 import { getPathD } from '../../Canvas/Connections/utils';
+import { ActiveLevelRefType, LayoutConfigRefType, ItemIDsByLevelRef, SetActiveLevelType } from './interfaces';
 
 function buildConnectionLinesRootID(uuid: string): string {
   return `connection-lines-root-${uuid}`;
 }
 
 type PresentationManagerProps = {
-  activeLevel: LayoutManagerType['activeLevel'];
+  activeLevel: ActiveLevelRefType;
+  itemIDsByLevelRef: ItemIDsByLevelRef;
   itemsRef: ModelManagerType['itemsRef'];
-  layoutConfig: LayoutManagerType['layoutConfig'];
-  modelLevelsMapping: LayoutManagerType['modelLevelsMapping'];
+  layoutConfig: LayoutConfigRefType;
   mutateModels: ModelManagerType['mutateModels'];
   portsRef: ModelManagerType['portsRef'];
   renderLayoutChanges: LayoutManagerType['renderLayoutChanges'];
-  setActiveLevel: LayoutManagerType['setActiveLevel'];
+  setActiveLevel: SetActiveLevelType;
   updateLayoutOfItems: LayoutManagerType['updateLayoutOfItems'];
   updateNodeItems: ModelManagerType['updateNodeItems'];
 };
@@ -46,9 +47,9 @@ export type PresentationManagerType = {
 
 export default function usePresentationManager({
   activeLevel,
+  itemIDsByLevelRef,
   itemsRef,
   layoutConfig,
-  modelLevelsMapping,
   mutateModels,
   portsRef,
   renderLayoutChanges,
@@ -252,7 +253,17 @@ export default function usePresentationManager({
     const paths = {};
     const processed = {};
 
-    const { itemMapping, portMapping } = modelLevelsMapping?.current[activeLevel?.current] ?? {};
+    const itemMapping = {};
+    const portMapping = {};
+
+    itemIDsByLevelRef?.current?.[activeLevel?.current]?.forEach((id: string) => {
+      const item = itemsRef?.current[id];
+      item?.ports?.forEach(({ id: portID }) => {
+        portMapping[portID] = portsRef?.current[portID];
+      });
+
+      itemMapping[id] = item;
+    });
 
     const itemsByNodeIDMapping = {};
     Object.keys(itemMapping ?? {})?.forEach((nodeID: string) => {

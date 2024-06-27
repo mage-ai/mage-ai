@@ -25,7 +25,6 @@ type BlockNodeProps = {
   item: DragItem;
   collapsed?: boolean;
   configurationOptions?: ConfigurationOptionType[];
-  groups?: Record<string, BlockType>;
   onMount?: (port: PortType, portRef: React.RefObject<HTMLDivElement>) => void;
   titleConfig?: TitleConfigType;
 };
@@ -34,7 +33,6 @@ export function BlockNode({
   block,
   borderConfig,
   draggable,
-  groups,
   handlers,
   item,
   onMount,
@@ -177,13 +175,12 @@ export function BlockNode({
 
   const templateConfigurations = useMemo(
     () =>
-      groups &&
-      Object.entries(groups)?.map(
-        ([groupUUID, group]) =>
+      (item?.block?.frameworks ?? [])?.map(
+        (group) =>
           !isEmptyObject(group?.configuration?.templates) &&
           Object.entries(group?.configuration?.templates || {})?.map(([uuid, template]) => (
             <TemplateConfigurations
-              block={block}
+              block={item?.block}
               group={group}
               key={uuid}
               template={template}
@@ -191,7 +188,7 @@ export function BlockNode({
             />
           )),
       ),
-    [block, groups],
+    [item],
   );
 
   const titleRow = useMemo(

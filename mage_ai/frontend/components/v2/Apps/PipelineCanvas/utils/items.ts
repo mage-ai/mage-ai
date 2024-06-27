@@ -14,14 +14,15 @@ export function createItemsFromBlockGroups(
   const nodes = [];
   const items = [];
 
-  const itemIDsByNodeID = {};
   blockGroups.forEach((blockGroup: BlockGroupType) => {
     const { blocks, group } = blockGroup;
     const items2 = createItemsFromBlocks(blocks, opts);
 
     const node = {
       ...buildItemFromBlock(group as BlockType, opts),
-      items: items2.map(item => item.id),
+      items: items2.map(item => ({
+        id: item.id,
+      })),
       type: ItemTypeEnum.NODE,
     };
     nodes.push(node);
@@ -32,8 +33,6 @@ export function createItemsFromBlockGroups(
         node: selectKeys(node, ['downstream', 'id', 'items', 'upstream']),
       });
     });
-
-    itemIDsByNodeID[node.id] = node.items;
   });
 
   return {
@@ -48,7 +47,7 @@ function buildItemFromBlock(block: BlockType, opts?: {
   const { level } = opts || {};
 
   return {
-    block,
+    block: block as any,
     downstream: (block?.downstream_blocks)?.map(uuid => buildUUIDForLevel(uuid, level)) ?? [],
     id: buildUUIDForLevel(block.uuid, level),
     level,

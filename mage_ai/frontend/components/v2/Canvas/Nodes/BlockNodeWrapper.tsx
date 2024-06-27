@@ -37,7 +37,6 @@ type BlockNodeWrapperProps = {
   droppable?: boolean;
   onMountItem: (item: DragItem, ref: React.RefObject<HTMLDivElement>) => void;
   onMountPort: (port: PortType, ref: React.RefObject<HTMLDivElement>) => void;
-  frameworkGroups: Record<GroupUUIDEnum, Record<string, any>>;
   selected?: boolean;
   submitEventOperation: SubmitEventOperationType;
   version?: number | string;
@@ -47,7 +46,6 @@ const BlockNodeWrapper: React.FC<BlockNodeWrapperProps> = ({
   collapsed,
   draggable = false,
   droppable = false,
-  frameworkGroups,
   item,
   handlers,
   onMountPort,
@@ -116,18 +114,6 @@ const BlockNodeWrapper: React.FC<BlockNodeWrapperProps> = ({
       onMountPort(port, portRef);
     }
   }
-  const groups = useMemo(
-    () =>
-      block?.groups?.reduce(
-        (acc, group) => ({
-          ...acc,
-          [group]: frameworkGroups?.[group],
-        }),
-        {},
-      ),
-    [block, frameworkGroups],
-  );
-
   const names = useMemo(() => {
     if (BlockTypeEnum.PIPELINE === type) {
       const typeCounts = countOccurrences(flattenArray(pipeline?.blocks?.map(b => b?.type) || []));
@@ -262,7 +248,6 @@ const BlockNodeWrapper: React.FC<BlockNodeWrapperProps> = ({
           borders,
         }}
         draggable={draggable}
-        groups={groups}
         handlers={{
           ...handlers,
           onMouseDown: handleMouseDown,

@@ -3,25 +3,18 @@ import CanvasContainer from './index.style';
 import PipelineExecutionFrameworkType, { FrameworkType } from '@interfaces/PipelineExecutionFramework/interfaces';
 import type { DropTargetMonitor } from 'react-dnd';
 import {
-  BlockGroupType, LayoutConfigType, DragItem, ModelMappingType, NodeItemType, NodeType,
-  PortType, PortMappingType, BlockMappingType, GroupLevelType } from '../../Canvas/interfaces';
+  LayoutConfigType, DragItem, ModelMappingType, NodeItemType, NodeType, BlockMappingType, GroupLevelType } from '../../Canvas/interfaces';
 import styles from '@styles/scss/apps/Canvas/Pipelines/Builder.module.scss';
 import useEventManager, { EventManagerType } from './useEventManager';
 import useLayoutManager, { LayoutManagerType } from './useLayoutManager';
 import useModelManager, { ModelManagerType } from './useModelManager';
 import usePresentationManager, { PresentationManagerType } from './usePresentationManager';
 import { DragLayer } from '../../Canvas/Layers/DragLayer';
-import { GroupUUIDEnum } from '@interfaces/PipelineExecutionFramework/types';
 import { ItemTypeEnum, LayoutConfigDirectionOriginEnum, LayoutConfigDirectionEnum } from '../../Canvas/types';
 import { RemoveContextMenuType, RenderContextMenuType } from '@mana/hooks/useContextMenu';
 import { ZoomPanStateType } from '@mana/hooks/useZoomPan';
-import { buildDependencies } from './utils/pipelines';
-import { createItemsFromBlockGroups } from './utils/items';
-import { createPortsByItem } from './utils/ports';
-import { indexBy } from '@utils/array';
 import { useDrop } from 'react-dnd';
 import { useEffect, useMemo, useRef, useState, startTransition } from 'react';
-import { objectSize } from '@utils/hash';
 
 export type BuilderCanvasProps = {
   canvasRef: React.RefObject<HTMLDivElement>;
@@ -55,9 +48,9 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
   const activeLevel = useRef<number>(null);
   const phaseRef = useRef<number>(0);
   const wrapperRef = useRef(null);
-  const validLevels = useRef<number[]>([1, 2]);
-  const blockMappingRef = useRef<BlockMappingType>(null);
-  const groupLevelRef = useRef<GroupLevelType>(null);
+
+  const itemIDsByLevelRef = useRef<string[][]>(null);
+  const validLevels = useRef<number[]>(null);
 
   const layoutConfig = useRef<LayoutConfigType>({
     containerRect: {
@@ -147,7 +140,7 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
       level = validLevels.current[idx + 1] ?? validLevels.current[0];
     } else {
       level += 1;
-      if (level >= modelLevelsMapping?.current?.length) {
+      if (level >= itemIDsByLevelRef?.current?.length) {
         level = 0;
       }
     }
@@ -157,23 +150,24 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
   }
 
   const {
-    blocksByGroupRef,
-    frameworkGroupsRef,
-    groupLevelsMappingRef,
+    initializeModels,
     itemsRef,
     mutateModels,
     portsRef,
     updateNodeItems,
-    updatePorts,
-  }: ModelManagerType = useModelManager();
+    // What is this being used for?
+    // updatePorts,
+  }: ModelManagerType = useModelManager({
+    itemIDsByLevelRef,
+  });
 
   const {
-    modelLevelsMapping,
     renderLayoutChanges,
     updateLayoutOfItems,
   }: LayoutManagerType = useLayoutManager({
     canvasRef,
     containerRef,
+    itemIDsByLevelRef,
     itemsRef,
     layoutConfig,
     setItemsState,
@@ -186,16 +180,17 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
     connectionLinesRootID,
     itemDraggingRef,
     itemElementsRef,
-    itemsMetadataRef,
     onMountItem,
     onMountPort,
     renderConnectionLines,
     updateItemsMetadata,
+    // What is this used for externally?
+    // itemsMetadataRef,
   }: PresentationManagerType = usePresentationManager({
     activeLevel,
+    itemIDsByLevelRef,
     itemsRef,
     layoutConfig,
-    modelLevelsMapping,
     mutateModels,
     portsRef,
     renderLayoutChanges,
@@ -211,15 +206,10 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
     handleDragEnd,
     handleDragStart,
     handleMouseDown,
-    onDragInit,
     onDragging,
     onDropBlock,
     onDropPort,
-    resetAfterDrop,
-    setSnapToGridOnDrag,
-    setSnapToGridOnDrop,
     snapToGridOnDrag,
-    snapToGridOnDrop,
     submitEventOperation,
   }: EventManagerType = useEventManager({
     activeLevel,
@@ -228,8 +218,8 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
     containerRef,
     itemDraggingRef,
     itemElementsRef,
+    itemIDsByLevelRef,
     itemsRef,
-    modelLevelsMapping,
     mutateModels,
     portsRef,
     removeContextMenu,
@@ -244,120 +234,20 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
 
   useEffect(() => {
     if (phaseRef.current === 0 && executionFramework && pipeline) {
-      const { blockMapping, blocksByGroup, groupsByLevel } = buildDependencies(
-        executionFramework,
-        pipeline,
-      );
-
-      // console.log('groupsByLevel', groupsByLevel);
-
-      const boundingRect = canvasRef?.current?.getBoundingClientRect();
-      const rectCon = containerRef?.current?.getBoundingClientRect();
-      const layout = {
-        layout: {
-          ...layoutConfig,
-          boundingRect,
-          containerRect: rectCon,
-        },
-      };
-
-      // Presentation
-      updateItemsMetadata();
-
-      // Models
-      blockMappingRef.current = blockMapping;
-      groupLevelRef.current = groupsByLevel;
-
-      // Hydrate each group’s blocks for every level using the blocks from the user’s pipeline.
-      const blockGroupsByLevel: BlockGroupType[][] = [];
-      [...(groupsByLevel ?? [])]?.reverse().forEach((groups: FrameworkType[], idx: number) => {
-        const blockGroupsInLevel = [];
-
-        const blocksByGrandparent = {};
-        if (idx >= 1 && blockGroupsByLevel.length >= 1) {
-          (blockGroupsByLevel[0] ?? [])?.forEach((groupBlock: BlockGroupType) => {
-            const { blocks, group } = groupBlock;
-            group?.groups?.forEach((groupID: GroupUUIDEnum) => {
-              blocksByGrandparent[groupID] ||= [];
-              blocksByGrandparent[groupID].push(...blocks);
-            });
-          });
-        }
-
-        groups?.forEach((group: FrameworkType) => {
-          const blocks = [];
-          if (idx === 0) {
-            const gblocks = Object.values(blocksByGroup?.[group.uuid] ?? {});
-            blocks.push(...(gblocks ?? []));
-          } else if (blockGroupsByLevel.length >= 1) {
-            blocks.push(...(blocksByGrandparent?.[group.uuid] ?? []));
-          }
-          blockGroupsInLevel.push({
-            blocks,
-            group,
-          });
-        });
-
-        blockGroupsByLevel.unshift(blockGroupsInLevel);
-      });
-
-      let itemMapping = {};
-      const portMapping = {};
-
-      // Each group at a specific level has a different set of ports.
-      // Every level has the same blocks, just different grouping.
-      // Every block at every level has the same ports.
-      // Create an item for every group at every level.
-      // Create a port for every group at every level.
-      // Create an item for every block at every level because they’ll have different groupings.
-      const maxLevel = 0;
-      blockGroupsByLevel?.forEach((blockGroups: BlockGroupType[], level: number) => {
-        if (level !== null && level > maxLevel) return;
-
-        const {
-          items,
-          nodes,
-        } = createItemsFromBlockGroups(blockGroups, {
-          level,
-        });
-
-        itemMapping = {
-          ...itemMapping,
-          ...indexBy(items, ({ id }) => id),
-          ...indexBy(nodes, ({ id }) => id),
-        };
-
-        const ports = createPortsByItem(nodes.concat(items), {
-          level,
-        });
-
-        Object.entries(ports ?? {})?.forEach(([id, { ports }]: [string, {
-          ports: PortType[];
-        }]) => {
-          itemMapping[id] = {
-            ...itemMapping[id],
-            ports,
-          };
-
-          ports?.forEach(port => {
-            portMapping[port.id] = port;
-          });
-        });
-
-        console.log('items', items);
-        console.log('nodes', nodes);
-        console.log('ports', ports);
-      });
-
-      console.log('itemMapping', objectSize(itemMapping));
-      console.log('portMapping', objectSize(portMapping));
+      // What is this layout still used for?
+      // const boundingRect = canvasRef?.current?.getBoundingClientRect();
+      // const rectCon = containerRef?.current?.getBoundingClientRect();
+      // const layout = {
+      //   layout: {
+      //     ...layoutConfig,
+      //     boundingRect,
+      //     containerRect: rectCon,
+      //   },
+      // };
 
       startTransition(() => {
-        mutateModels({
-          itemMapping,
-          portMapping,
-        });
-
+        initializeModels(executionFramework, pipeline);
+        updateItemsMetadata();
         renderLayoutChanges({ items: itemsRef?.current });
       });
 
@@ -396,7 +286,6 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
       <BlockNodeWrapper
         draggable={dragEnabled}
         droppable={dropEnabled}
-        frameworkGroups={frameworkGroupsRef?.current}
         handlers={{
           onDragEnd: handleDragEnd,
           onDragStart: handleDragStart,

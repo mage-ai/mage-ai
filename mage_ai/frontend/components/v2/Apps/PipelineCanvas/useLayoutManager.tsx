@@ -10,6 +10,7 @@ import { useRef } from 'react';
 type LayoutManagerProps = {
   canvasRef: React.MutableRefObject<HTMLDivElement>;
   containerRef: React.MutableRefObject<HTMLDivElement>;
+  itemIDsByLevelRef: React.MutableRefObject<string[][]>;
   itemsRef: React.MutableRefObject<ItemMappingType>;
   layoutConfig: React.MutableRefObject<LayoutConfigType>;
   setItemsState: React.Dispatch<React.SetStateAction<ItemMappingType>>;
@@ -18,7 +19,6 @@ type LayoutManagerProps = {
 };
 
 export type LayoutManagerType = {
-  modelLevelsMapping: React.MutableRefObject<ModelMappingType[]>;
   renderLayoutChanges: (opts?: { level?: number; items?: ItemMappingType }) => void;
   updateLayoutOfItems: () => ItemMappingType;
 };
@@ -26,16 +26,22 @@ export type LayoutManagerType = {
 export default function useLayoutManager({
   canvasRef,
   containerRef,
+  itemIDsByLevelRef,
   itemsRef,
   layoutConfig,
   setItemsState,
   transformState,
   updateNodeItems,
 }: LayoutManagerProps): LayoutManagerType {
-  const modelLevelsMapping = useRef<ModelMappingType[]>([]);
-
   function renderLayoutChanges(opts?: { level?: number; items?: ItemMappingType }) {
-    const itemMapping = opts?.items ?? modelLevelsMapping.current[opts.level]?.itemMapping ?? {};
+    let itemMapping = opts?.items;
+    if (!(itemMapping ?? false)) {
+      const ids = itemIDsByLevelRef?.current[opts.level] ?? [];
+      itemMapping = ids?.reduce((acc, id) => {
+        acc[id] = itemsRef.current[id];
+        return acc;
+      }, {} as ItemMappingType);
+    }
 
     setItemsState(prev => ({
       ...prev,
@@ -78,19 +84,20 @@ export default function useLayoutManager({
       ...layoutConfig.current,
     };
 
-    const nodeMapping = {
-      ...itemsRef.current,
-      ...updateNodeGroupsWithItems(itemsRef?.current ?? {}),
-    };
     const itemsUpdated = {} as ItemMappingType;
 
-    modelLevelsMapping?.current?.forEach((modelMapping: ModelMappingType) => {
-      const nodeIDs = Object.keys(modelMapping?.itemMapping ?? {}) ?? [];
+    itemIDsByLevelRef?.current?.forEach((ids: string[]) => {
       const nodes = [] as NodeType[];
-      nodeIDs.forEach((nodeID: string) => {
-        const node = nodeMapping?.[nodeID] as NodeType;
+
+      ids.forEach((nodeID: string) => {
+        const node = itemsRef?.current?.[nodeID] as NodeType;
+
         if (ItemTypeEnum.NODE === node?.type) {
-          itemsUpdated[nodeID] = node;
+          node.items = node.items?.map((itemID: string) => {
+            const item = itemsRef?.current?.[itemID] as NodeItemType;
+            return item;
+          });
+
           nodes.push(node);
         }
       });
@@ -107,11 +114,11 @@ export default function useLayoutManager({
     });
 
     updateNodeItems(itemsUpdated);
+
     return itemsUpdated;
   }
 
   return {
-    modelLevelsMapping,
     renderLayoutChanges,
     updateLayoutOfItems,
   };
