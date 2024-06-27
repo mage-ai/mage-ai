@@ -24,13 +24,15 @@ export const APIMutationProvider: React.FC<APIMutationProviderProps> = ({
   function renderError(error: APIErrorType) {
     isDebug() && console.error(errorRef.current);
 
-    errorRef.current = error;
     const element = errorElementRef?.current
       || (errorElementRef.current = document.getElementById(ROOT_ID));
     (rootRef as { current: any }).current ||= createRoot(element);
+    dismissError();
+
+    errorRef.current = error;
     (rootRef.current as any).render(
       <ThemeProvider theme={themeContext}>
-        <ErrorManager dismissError={dismissError} errorRef={errorRef} />
+        <ErrorManager dismissError={dismissError} errorRef={errorRef} key={String(new Date())} />
       </ThemeProvider>,
     );
   }
