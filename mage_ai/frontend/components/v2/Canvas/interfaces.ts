@@ -60,7 +60,9 @@ export interface PortType extends DragItem {
 }
 
 export interface NodeType extends DragItem {
-  items: (DragItem | NodeType)[];
+  downstream?: string[];
+  items: (DragItem | NodeType | string)[];
+  upstream?: string[];
   upstreamNodes?: (DragItem | NodeType)[];
 }
 
@@ -117,6 +119,11 @@ export type GroupMappingType = Record<GroupUUIDEnum, PipelineExecutionFrameworkB
 export type GroupLevelsMappingType = GroupMappingType[];
 
 export type GroupLevelType = FrameworkType[][];
+
+export type BlockGroupType = {
+  blocks: BlockType[];
+  group: FrameworkType;
+};
 
 export type ModelMappingType = {
   itemMapping?: ItemMappingType;

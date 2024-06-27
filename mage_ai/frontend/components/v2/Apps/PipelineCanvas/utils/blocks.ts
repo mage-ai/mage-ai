@@ -12,7 +12,6 @@ import {
   BlocksByGroupType,
   NodeType,
 } from '../../../Canvas/interfaces';
-import { createConnections } from './ports';
 import { blocksToGroupMapping } from './pipelines';
 import { buildUUIDForLevel } from './levels';
 import { buildPortUUID } from '../../../Canvas/Draggable/utils';
@@ -223,34 +222,36 @@ export function initializeBlocksAndConnections(
   });
 
   // Create connections; the fromItem and toItem MUST be ports, NOT blocks.
-  Object.values(downFlowPorts)?.forEach((port: PortType) => {
-    let fromItemBlock = null;
-    let toItemBlock = null;
+  // Connections aren’t required anymore.
 
-    if (PortSubtypeEnum.INPUT === port?.subtype) {
-      fromItemBlock = port?.target?.block;
-      toItemBlock = port?.parent?.block;
-    } else {
-      fromItemBlock = port?.parent?.block;
-      toItemBlock = port?.target?.block;
-    }
+  // Object.values(downFlowPorts)?.forEach((port: PortType) => {
+  //   let fromItemBlock = null;
+  //   let toItemBlock = null;
 
-    const fromItem = itemMapping[fromItemBlock.uuid];
-    const toItem = itemMapping[toItemBlock.uuid];
+  //   if (PortSubtypeEnum.INPUT === port?.subtype) {
+  //     fromItemBlock = port?.target?.block;
+  //     toItemBlock = port?.parent?.block;
+  //   } else {
+  //     fromItemBlock = port?.parent?.block;
+  //     toItemBlock = port?.target?.block;
+  //   }
 
-    const fromPort = fromItem?.ports?.find(
-      p => p?.target?.block?.uuid === toItemBlock?.uuid && p.subtype === PortSubtypeEnum.OUTPUT,
-    );
-    const toPort = toItem?.ports?.find(
-      p => p?.target?.block?.uuid === fromItemBlock?.uuid && p.subtype === PortSubtypeEnum.INPUT,
-    );
+  //   const fromItem = itemMapping[fromItemBlock.uuid];
+  //   const toItem = itemMapping[toItemBlock.uuid];
 
-    fromPort.rect = { ...fromItem.rect };
-    toPort.rect = { ...toItem.rect };
+  //   const fromPort = fromItem?.ports?.find(
+  //     p => p?.target?.block?.uuid === toItemBlock?.uuid && p.subtype === PortSubtypeEnum.OUTPUT,
+  //   );
+  //   const toPort = toItem?.ports?.find(
+  //     p => p?.target?.block?.uuid === fromItemBlock?.uuid && p.subtype === PortSubtypeEnum.INPUT,
+  //   );
 
-    const connection = createConnection(fromPort, toPort, { level });
-    connectionMapping[connection.id] = connection;
-  });
+  //   fromPort.rect = { ...fromItem.rect };
+  //   toPort.rect = { ...toItem.rect };
+
+  //   const connection = createConnection(fromPort, toPort, { level });
+  //   connectionMapping[connection.id] = connection;
+  // });
 
   // {
   //   "load": {

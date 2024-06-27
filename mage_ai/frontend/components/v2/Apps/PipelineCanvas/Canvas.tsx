@@ -1,24 +1,25 @@
 import BlockNodeWrapper from '../../Canvas/Nodes/BlockNodeWrapper';
-import BlockType from '@interfaces/BlockType';
 import CanvasContainer from './index.style';
 import PipelineExecutionFrameworkType, { FrameworkType } from '@interfaces/PipelineExecutionFramework/interfaces';
 import type { DropTargetMonitor } from 'react-dnd';
-import { LayoutConfigType, DragItem, ModelMappingType, NodeItemType, NodeType, ItemMappingType, PortMappingType, BlockMappingType, GroupLevelType } from '../../Canvas/interfaces';
+import {
+  BlockGroupType, LayoutConfigType, DragItem, ModelMappingType, NodeItemType, NodeType,
+  ItemMappingType, PortMappingType, BlockMappingType, GroupLevelType } from '../../Canvas/interfaces';
+import styles from '@styles/scss/apps/Canvas/Pipelines/Builder.module.scss';
+import useEventManager, { EventManagerType } from './useEventManager';
+import useLayoutManager, { LayoutManagerType } from './useLayoutManager';
+import useModelManager, { ModelManagerType } from './useModelManager';
+import usePresentationManager, { PresentationManagerType } from './usePresentationManager';
 import { DragLayer } from '../../Canvas/Layers/DragLayer';
+import { GroupUUIDEnum } from '@interfaces/PipelineExecutionFramework/types';
 import { ItemTypeEnum, LayoutConfigDirectionOriginEnum, LayoutConfigDirectionEnum } from '../../Canvas/types';
 import { RemoveContextMenuType, RenderContextMenuType } from '@mana/hooks/useContextMenu';
 import { ZoomPanStateType } from '@mana/hooks/useZoomPan';
 import { blocksToGroupMapping, buildDependencies } from './utils/pipelines';
+import { flattenArray, indexBy } from '@utils/array';
+import { createItemsFromBlockGroups } from './utils/items';
 import { useDrop } from 'react-dnd';
 import { useEffect, useMemo, useRef, useState, startTransition } from 'react';
-import styles from '@styles/scss/apps/Canvas/Pipelines/Builder.module.scss';
-import useLayoutManager, { LayoutManagerType } from './useLayoutManager';
-import useModelManager, { ModelManagerType } from './useModelManager';
-import useEventManager, { EventManagerType } from './useEventManager';
-import usePresentationManager, { PresentationManagerType } from './usePresentationManager';
-import { initializeBlocksAndConnections } from './utils/blocks';
-import { indexBy } from '@utils/array';
-import { GroupUUIDEnum } from '@interfaces/PipelineExecutionFramework/types';
 
 export type BuilderCanvasProps = {
   canvasRef: React.RefObject<HTMLDivElement>;
@@ -269,16 +270,13 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
       groupLevelRef.current = groupsByLevel;
 
       const blocksByGroup = blocksToGroupMapping(Object.values(blockMapping));
-      const groupBlocksByLevel = [];
+      const blockGroupsByLevel: BlockGroupType[][] = [];
       [...(groupsByLevel ?? [])]?.reverse().forEach((groups: FrameworkType[], idx: number) => {
-        const groupBlocksInLevel = [];
+        const blockGroupsInLevel = [];
 
         const blocksByGrandparent = {};
-        if (idx >= 1 && groupBlocksByLevel.length >= 1) {
-          (groupBlocksByLevel[0] ?? [])?.forEach((groupBlock: {
-            blocks: BlockType[];
-            group: FrameworkType;
-          }) => {
+        if (idx >= 1 && blockGroupsByLevel.length >= 1) {
+          (blockGroupsByLevel[0] ?? [])?.forEach((groupBlock: BlockGroupType) => {
             const { blocks, group } = groupBlock;
             group?.groups?.forEach((groupID: GroupUUIDEnum) => {
               blocksByGrandparent[groupID] ||= [];
@@ -291,50 +289,54 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
           const blocks = [];
           if (idx === 0) {
             const gblocks = Object.values(blocksByGroup?.[group.uuid] ?? {});
-            console.log('gblocks', group, gblocks);
             blocks.push(...(gblocks ?? []));
-          } else if (groupBlocksByLevel.length >= 1) {
+          } else if (blockGroupsByLevel.length >= 1) {
             blocks.push(...(blocksByGrandparent?.[group.uuid] ?? []));
           }
-          groupBlocksInLevel.push({
+          blockGroupsInLevel.push({
             blocks,
             group,
           });
         });
 
-        groupBlocksByLevel.unshift(groupBlocksInLevel);
+        blockGroupsByLevel.unshift(blockGroupsInLevel);
       });
 
-      const itemMapping = {};
+      let itemMapping = {};
       const portMapping = {};
 
-      // const finalLevel = groupsByLevel.length;
-      // for (let i = groupsByLevel;.length - 1; i >= 0; i--) {
-      //   const groups = groupsByLevel[i];
-      //   initializeBlocksAndConnections(
-      //     Object.values(blockMapping),
-      //     {
-      //       groupMapping: finalLevel >= 1 ? groupLevelsMappingRef?.current?.[finalLevel - 1] : undefined,
-      //     },
-      //     {
-      //       ...layout,
-      //       level: finalLevel,
-      //     },
-      //   );
-      // }
-      // groupsByLevel?.forEach((groups: FrameworkType[], level: number) => {
-      //   initializeBlocksAndConnections(
-      //     Object.values(blockMapping),
-      //     {
-      //       groupMapping:
-      //         finalLevel >= 1 ? groupLevelsMappingRef?.current?.[finalLevel - 1] : undefined,
-      //     },
-      //     {
-      //       ...layout,
-      //       level: finalLevel,
-      //     },
-      //   ),
-      // });
+      // Each group at a specific level has a different set of ports.
+      // Every level has the same blocks, just different grouping.
+      // Every block at every level has the same ports.
+      // Create an item for every group at every level.
+      // Create a port for every group at every level.
+      // Create an item for every block at every level because they’ll have different groupings.
+
+      blockGroupsByLevel?.forEach((blockGroups: BlockGroupType[], level: number) => {
+        const {
+          items,
+          nodes,
+        } = createItemsFromBlockGroups(blockGroups, {
+          level,
+        });
+
+        console.log('items', items);
+        console.log('nodes', nodes);
+
+        itemMapping = {
+          ...itemMapping,
+          ...indexBy(items, ({ id }) => id),
+          ...indexBy(nodes, ({ id }) => id),
+        };
+
+        // portMapping = {
+        //   ...portMapping,
+        //   ...models.portMapping,
+        // };
+      });
+
+      console.log('itemMapping', itemMapping);
+      console.log('portMapping', portMapping);
 
       startTransition(() => {
         const { itemMapping, portMapping } = modelLevelsMapping.current.reduce(

@@ -1,20 +1,12 @@
 import PipelineExecutionFrameworkType, {
   FrameworkType,
-  PipelineExecutionFrameworkBlockType,
 } from '@interfaces/PipelineExecutionFramework/interfaces';
-import PipelineType from '@interfaces/PipelineType';
-import { extractNestedBlocks } from '@utils/models/pipeline';
-import { removeAtIndex, indexBy, flattenArray, uniqueArray } from '@utils/array';
-import { isDebug } from '@utils/environment';
-import { objectSize, selectKeys } from '@utils/hash';
+import BlockType from '@interfaces/BlockType';
+import { BlockMappingType, BlocksByGroupType } from '../../../Canvas/interfaces';
 import { GroupUUIDEnum } from '@interfaces/PipelineExecutionFramework/types';
-import BlockType, { BlockTypeEnum } from '@interfaces/BlockType';
-import {
-  BlockMappingType,
-  BlocksByGroupType,
-  GroupMappingType,
-  GroupLevelsMappingType,
-} from '../../../Canvas/interfaces';
+import { extractNestedBlocks } from '@utils/models/pipeline';
+import { indexBy, flattenArray, uniqueArray } from '@utils/array';
+import { selectKeys } from '@utils/hash';
 
 export function buildDependencies(
   executionFramework: PipelineExecutionFrameworkType,
@@ -163,7 +155,7 @@ export function buildDependencies(
       'downstream_blocks',
       'groups',
       'name',
-      'upstream_blocks_uuid',
+      'upstream_blocks',
       'uuid',
     ])));
   });
@@ -173,6 +165,8 @@ export function buildDependencies(
   const blockMapping = extractNestedBlocks(pipeline, pipelinesMapping, {
     addPipelineToBlocks: false,
   });
+
+  // console.log('groupsByLevel', groupsByLevel);
 
   return {
     blockMapping,
