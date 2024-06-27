@@ -5,6 +5,7 @@ import { DragItem, LayoutConfigType, NodeItemType, NodeType, RectType, RectTrans
 import { LayoutConfigDirectionEnum, LayoutConfigDirectionOriginEnum, TransformRectTypeEnum, RectTransformationScopeEnum } from '../types';
 import { range, indexBy, flattenArray } from '@utils/array';
 import { isDebug as isDebugBase } from '@utils/environment';
+import { validateFiniteNumber } from '@utils/number';
 
 function isDebug() {
   return isDebugBase() && false;
@@ -51,21 +52,25 @@ export function transformRects(rectsInit: RectType[], transformations: RectTrans
     let rects = [...rectsByStage[rectsByStage.length - 1]];
 
     const opts = options ? options?.(rects) : {};
-    const { layout, offset, padding } = opts || {};
+    const { layout, layoutOptions, offset, padding, rect: defaultRect } = opts || {};
     const { parent } = rects?.[0] ?? {};
 
     const scopeLog = scope || (initialScope ? `initial=${initialScope}` : null) || 'all';
     const tag = `${stage}:${scopeLog}:${type}`;
     const tags = [opts, transformation];
-    isDebug() && console.log(`${tag}:start`, ...tags, rects);
+    // isDebug() && console.log(`${tag}:start`, ...tags, rects);
 
     if (targets) {
       rects = targets(rects);
     }
 
+    if (!rects?.length) {
+      return
+    }
+
     if (condition && !condition(rects)) {
       rectsByStage.push(rects);
-      isDebug() && console.log(`${tag}:condition not met`, ...tags, rects);
+      // isDebug() && console.log(`${tag}:condition not met`, ...tags, rects);
       return;
     }
 
@@ -91,44 +96,57 @@ export function transformRects(rectsInit: RectType[], transformations: RectTrans
         }])[0],
       }));
     } else {
-      if (TransformRectTypeEnum.TREE === type) {
+      if (TransformRectTypeEnum.LAYOUT_TREE === type) {
         rects = layoutRectsInTreeFormation(rects, layout ?? {});
-      }  else if (TransformRectTypeEnum.SHIFT_INTO_PARENT === type && parent) {
+      } else if (TransformRectTypeEnum.LAYOUT_WAVE === type) {
+        rects = layoutRectsInWavePattern(rects, layout, layoutOptions);
+      } else if (TransformRectTypeEnum.LAYOUT_RECTANGLE === type) {
+        rects = groupRectangles(rects, layout);
+      } else if (TransformRectTypeEnum.LAYOUT_GRID === type) {
+        rects = layoutRectsInGrid(rects, layout);
+      } else if (TransformRectTypeEnum.LAYOUT_SPIRAL === type) {
+        rects = layoutRectsInSpiral(rects, layout);
+      } else if (TransformRectTypeEnum.SHIFT_INTO_PARENT === type && parent) {
         rects = shiftRectsIntoBoundingBox(rects, parent);
       } else if (TransformRectTypeEnum.ALIGN_CHILDREN === type) {
         rects = rects.map((rect) => {
           const { parent } = rect;
           const diff = {
-            left: (parent?.offset?.left ?? 0) + (parent?.padding?.left ?? 0),
-            top: (parent?.offset?.top ?? 0) + (parent?.padding?.top ?? 0),
+            left: (validateFiniteNumber(parent?.offset?.left) ?? 0) + (validateFiniteNumber(parent?.padding?.left) ?? 0),
+            top: (validateFiniteNumber(parent?.offset?.top) ?? 0) + (validateFiniteNumber(parent?.padding?.top) ?? 0),
           };
 
           return applyRectDiff(rect, diff);
         });
       } else if (TransformRectTypeEnum.FIT_TO_CHILDREN === type) {
         rects = rects.map((rect) => {
-          const box = calculateBoundingBox(rect.children ?? []);
+          const box = calculateBoundingBox(rect?.children?.length >= 1 ? rect.children : [rect]);
 
           return {
             ...rect,
-            height: box.height + (padding?.top ?? 0) + (padding?.bottom ?? 0) + (offset?.top ?? 0),
+            height: validateFiniteNumber(box.height) + validateFiniteNumber(padding?.top ?? 0) + validateFiniteNumber(padding?.bottom ?? 0) + validateFiniteNumber(offset?.top ?? 0),
             offset,
             padding,
-            width: box.width + (padding?.left ?? 0) + (padding?.right ?? 0) + (offset?.left ?? 0),
+            width: validateFiniteNumber(box.width) + validateFiniteNumber(padding?.left ?? 0) + validateFiniteNumber(padding?.right ?? 0) + validateFiniteNumber(offset?.left ?? 0),
           };
         });
       } else if (TransformRectTypeEnum.PAD === type) {
         rects = rects.map((rect) => ({ ...rect, padding }));
       } else if (TransformRectTypeEnum.SHIFT === type) {
         rects = shiftRectsByDiffRect(rects, offset ?? { left: 0, top: 0 });
+      } else if (TransformRectTypeEnum.MIN_DIMENSIONS === type) {
+        rects = rects.map(rect => ({
+          ...rect,
+          height: Math.max(validateFiniteNumber(rect.height), validateFiniteNumber(defaultRect?.height ?? 0)),
+          width: Math.max(validateFiniteNumber(rect.width), validateFiniteNumber(defaultRect?.width ?? 0)),
+        }));
       } else if (transform) {
         rects = transform(rects);
       }
     }
-
     rectsByStage.push(rects);
 
-    isDebug() && console.log(`${tag}:end`, ...tags, rects);
+    // isDebug() && console.log(`${tag}:end`, ...tags, rects);
   });
 
   return rectsByStage[rectsByStage.length - 1];
@@ -138,13 +156,13 @@ function shiftRectsIntoBoundingBox(rects: RectType[], boundingBox: RectType): Re
   // This function shifts a list of rectangles to fit within a specified bounding box.
   const groupBoundingBox = calculateBoundingBox(rects);
 
-  const offsetX = boundingBox.left - groupBoundingBox.left;
-  const offsetY = boundingBox.top - groupBoundingBox.top;
+  const offsetX = validateFiniteNumber(boundingBox.left) - validateFiniteNumber(groupBoundingBox.left);
+  const offsetY = validateFiniteNumber(boundingBox.top) - validateFiniteNumber(groupBoundingBox.top);
 
   return rects.map(rect => ({
     ...rect,
-    left: rect.left + offsetX,
-    top: rect.top + offsetY,
+    left: validateFiniteNumber(rect.left) + validateFiniteNumber(offsetX),
+    top: validateFiniteNumber(rect.top) + validateFiniteNumber(offsetY),
   }));
 }
 
@@ -526,13 +544,13 @@ export function getRectDiff(rect1: RectType, rect2: RectType): RectType {
 }
 
 export function applyRectDiff(rect: RectType, diff: RectType, dimensions?: boolean): RectType {
-  const dl = dimensions ? (rect.width + diff.width) / 4 : diff.left;
-  const dt = dimensions ? (rect.height + diff.height) / 4 : diff.top;
+  const dl = dimensions ? (validateFiniteNumber(rect.width) + validateFiniteNumber(diff.width)) / 4 : validateFiniteNumber(diff.left);
+  const dt = dimensions ? (validateFiniteNumber(rect.height) + validateFiniteNumber(diff.height)) / 4 : validateFiniteNumber(diff.top);
 
   return {
     ...rect,
-    left: rect.left + dl,
-    top: rect.top + dt,
+    left: validateFiniteNumber(rect.left) + validateFiniteNumber(dl),
+    top: validateFiniteNumber(rect.top) + validateFiniteNumber(dt),
   };
 }
 
@@ -850,11 +868,17 @@ function updateItemRect(item: DragItem, rect: RectType) {
 
 function groupRectangles(
   rects: RectType[],
-  horizontalSpacing: number = 10,
-  verticalSpacing: number = 10,
-  numCols: number = 4,
-  numRows?: number,
+  layout?: LayoutConfigType,
 ): RectType[] {
+  const {
+    gap,
+    grid,
+  } = layout || {};
+  const horizontalSpacing: number = gap?.column ?? 10;
+  const verticalSpacing: number = gap?.row ?? 10;
+  const numCols: number = grid?.columns ?? 4;
+  const numRows: number = grid?.rows ?? null;
+
   if (!numRows) {
     numRows = Math.ceil(rects.length / numCols); // If numRows is not provided, calculate it based on numCols
   }
@@ -894,19 +918,19 @@ export function calculateBoundingBox(rects: RectType[]): RectType {
     return { left: 0, top: 0, width: 0, height: 0 };
   }
 
-  const minLeft = Math.min(...rects.map(rect => rect.left));
-  const minTop = Math.min(...rects.map(rect => rect.top));
-  const maxRight = Math.max(...rects.map(rect => rect.left + (rect.width ?? 0)));
-  const maxBottom = Math.max(...rects.map(rect => rect.top + (rect.height ?? 0)));
+  const minLeft = Math.min(...rects.map(rect => validateFiniteNumber(rect.left)));
+  const minTop = Math.min(...rects.map(rect => validateFiniteNumber(rect.top)));
+  const maxRight = Math.max(...rects.map(rect => validateFiniteNumber(rect.left) + (validateFiniteNumber(rect.width) ?? 0)));
+  const maxBottom = Math.max(...rects.map(rect => validateFiniteNumber(rect.top) + (validateFiniteNumber(rect.height) ?? 0)));
 
-  const width = maxRight - minLeft;
-  const height = maxBottom - minTop;
+  const width = validateFiniteNumber(maxRight - minLeft);
+  const height = validateFiniteNumber(maxBottom - minTop);
 
   return {
-    height: height,
-    left: minLeft,
-    top: minTop,
-    width: width,
+    height: validateFiniteNumber(height),
+    left: validateFiniteNumber(minLeft),
+    top: validateFiniteNumber(minTop),
+    width: validateFiniteNumber(width),
   };
 }
 

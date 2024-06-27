@@ -2,12 +2,12 @@ import stylesBuilder from '@styles/scss/apps/Canvas/Pipelines/Builder.module.scs
 import type { DropTargetMonitor } from 'react-dnd';
 import update from 'immutability-helper';
 import { ActiveLevelRefType, AppHandlersRefType, LayoutConfigRefType, ItemIDsByLevelRef, SetActiveLevelType } from './interfaces';
-import { ArrowsAdjustingFrameSquare, Check, Group } from '@mana/icons';
+import { ArrowsAdjustingFrameSquare, Check, Group, TemplateShapes } from '@mana/icons';
 import { ClientEventType, EventOperationEnum, EventOperationOptionsType } from '@mana/shared/interfaces';
-import { ItemTypeEnum } from '../../Canvas/types';
+import { ItemTypeEnum, LayoutConfigDirectionEnum } from '../../Canvas/types';
 import { MenuItemType, RenderContextMenuOptions, RemoveContextMenuType, RenderContextMenuType } from '@mana/hooks/useContextMenu';
 import { ModelManagerType } from './useModelManager';
-import { NodeItemType, PortType, RectType, ItemMappingType, PortMappingType, ModelMappingType } from '../../Canvas/interfaces';
+import { NodeItemType, PortType, RectType, ItemMappingType, PortMappingType, ModelMappingType, LayoutConfigType } from '../../Canvas/interfaces';
 import { PresentationManagerType } from './usePresentationManager';
 import { XYCoord } from 'react-dnd';
 import { ZoomPanStateType } from '@mana/hooks/useZoomPan';
@@ -16,6 +16,7 @@ import { pluralize } from '@utils/string';
 import { sortByKey } from '@utils/array';
 import { snapToGrid } from '../../Canvas/utils/snapToGrid';
 import { useRef, useState, startTransition } from 'react';
+import { LayoutManagerType } from './useLayoutManager';
 
 const GRID_SIZE = 40;
 
@@ -38,8 +39,13 @@ type EventManagerProps = {
   setActiveLevel: (level?: number) => void;
   setDragEnabled: (value: boolean) => void;
   setDropEnabled: (value: boolean) => void;
+  setLayoutConfig: (prev: (value: LayoutConfigType) => LayoutConfigType) => void;
   setZoomPanDisabled: (value: boolean) => void;
   transformState: React.MutableRefObject<ZoomPanStateType>;
+  updateLayoutOfItems: LayoutManagerType['updateLayoutOfItems'];
+  renderLayoutChanges: LayoutManagerType['renderLayoutChanges'];
+  updateLayoutConfig: LayoutManagerType['updateLayoutConfig'];
+  layoutConfig: LayoutManagerType['layoutConfig'];
 };
 
 export type EventManagerType = {
@@ -87,8 +93,13 @@ export default function useEventManager({
   setActiveLevel,
   setDragEnabled,
   setDropEnabled,
+  setLayoutConfig,
+  updateLayoutConfig,
+  layoutConfig,
   setZoomPanDisabled,
   transformState,
+  updateLayoutOfItems,
+  renderLayoutChanges,
 }: EventManagerProps): EventManagerType {
   const gridDimensions = useRef<RectType>({ height: GRID_SIZE, left: 0, top: 0, width: GRID_SIZE });
 
@@ -321,6 +332,48 @@ export default function useEventManager({
           };
         },
       ),
+      {
+        Icon: TemplateShapes,
+        items: [
+          {
+            Icon: layoutConfig?.current?.direction === LayoutConfigDirectionEnum.VERTICAL
+              ? Check
+              : undefined,
+            uuid: 'Vertical direction',
+            onClick: layoutConfig?.current?.direction === LayoutConfigDirectionEnum.VERTICAL
+            ? null
+            : (event: ClientEventType) => {
+              event.preventDefault();
+              updateLayoutConfig({
+                direction: LayoutConfigDirectionEnum.VERTICAL,
+              });
+              renderLayoutChanges({
+                items: mutateModels({ itemMapping: updateLayoutOfItems() }).itemMapping,
+              });
+              removeContextMenu(event);
+            },
+          },
+          {
+            Icon: layoutConfig?.current?.direction === LayoutConfigDirectionEnum.HORIZONTAL
+              ? Check
+              : undefined,
+            uuid: 'Horizontal direction',
+            onClick: layoutConfig?.current?.direction === LayoutConfigDirectionEnum.HORIZONTAL
+            ? null
+            : (event: ClientEventType) => {
+              event.preventDefault();
+              updateLayoutConfig({
+                direction: LayoutConfigDirectionEnum.HORIZONTAL,
+              });
+              renderLayoutChanges({
+                items: mutateModels({ itemMapping: updateLayoutOfItems() }).itemMapping,
+              });
+              removeContextMenu(event);
+            },
+          },
+        ],
+        uuid: 'Change block layout pattern',
+      },
     ];
 
     if (data?.node) {

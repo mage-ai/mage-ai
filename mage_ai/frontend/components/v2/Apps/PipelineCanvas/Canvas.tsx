@@ -35,7 +35,7 @@ export type BuilderCanvasProps = {
 const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
   canvasRef,
   containerRef,
-  defaultActiveLevel = 2,
+  defaultActiveLevel = 1,
   dragEnabled,
   dropEnabled,
   pipeline,
@@ -53,15 +53,6 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
 
   const itemIDsByLevelRef = useRef<string[][]>(null);
   const validLevels = useRef<number[]>(null);
-
-  const layoutConfig = useRef<LayoutConfigType>({
-    containerRef: containerRef,
-    direction: LayoutConfigDirectionEnum.HORIZONTAL,
-    gap: { column: 40, row: 40 },
-    origin: LayoutConfigDirectionOriginEnum.LEFT,
-    transformStateRef: transformState,
-    viewportRef: canvasRef,
-  });
 
   // VERY IMPORTANT THAT THE STATE IS IN THIS COMPONENT OR ELSE NOTHING WILL RENDER!
   const [items, setItemsState] = useState<Record<string, NodeItemType>>(null);
@@ -108,13 +99,14 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
   const {
     renderLayoutChanges,
     updateLayoutOfItems,
+    updateLayoutConfig,
+    layoutConfig,
   }: LayoutManagerType = useLayoutManager({
     activeLevel,
     canvasRef,
     containerRef,
     itemIDsByLevelRef,
     itemsRef,
-    layoutConfig,
     setItemsState,
     transformState,
     updateNodeItems,
@@ -160,6 +152,10 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
   }: EventManagerType = useEventManager({
     activeLevel,
     appHandlersRef,
+    layoutConfig,
+    updateLayoutConfig,
+    updateLayoutOfItems,
+    renderLayoutChanges,
     canvasRef,
     connectionLinesPathRef,
     containerRef,

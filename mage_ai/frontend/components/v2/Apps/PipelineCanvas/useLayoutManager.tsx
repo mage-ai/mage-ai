@@ -1,4 +1,5 @@
 import { DragItem, LayoutConfigType, NodeType } from '../../Canvas/interfaces';
+import update from 'immutability-helper';
 import { ItemMappingType, ModelMappingType, NodeItemType, RectType } from '../../Canvas/interfaces';
 import { ModelManagerType } from './useModelManager';
 import { ZoomPanStateType } from '@mana/hooks/useZoomPan';
@@ -6,8 +7,9 @@ import { layoutItemsInGroups, transformRects } from '../../Canvas/utils/rect';
 import { useRef } from 'react';
 import { ActiveLevelRefType, ItemIDsByLevelRef } from './interfaces';
 import { RectTransformationScopeEnum, ItemTypeEnum, LayoutConfigDirectionOriginEnum, LayoutConfigDirectionEnum, TransformRectTypeEnum } from '../../Canvas/types';
-import { calculateBoundingBox, getMaxOffset } from '../../Canvas/utils/rect';
+import { calculateBoundingBox } from '../../Canvas/utils/rect';
 import { flattenArray } from '@utils/array';
+import { validateFiniteNumber } from '@utils/number';
 
 type LayoutManagerProps = {
   activeLevel: ActiveLevelRefType;
@@ -15,7 +17,6 @@ type LayoutManagerProps = {
   containerRef: React.MutableRefObject<HTMLDivElement>;
   itemIDsByLevelRef: ItemIDsByLevelRef;
   itemsRef: React.MutableRefObject<ItemMappingType>;
-  layoutConfig: React.MutableRefObject<LayoutConfigType>;
   setItemsState: React.Dispatch<React.SetStateAction<ItemMappingType>>;
   transformState: React.MutableRefObject<ZoomPanStateType>;
   updateNodeItems: ModelManagerType['updateNodeItems'];
@@ -24,6 +25,8 @@ type LayoutManagerProps = {
 export type LayoutManagerType = {
   renderLayoutChanges: (opts?: { level?: number; items?: ItemMappingType }) => void;
   updateLayoutOfItems: () => ItemMappingType;
+  updateLayoutConfig: (config: LayoutConfigType) => void;
+  layoutConfig: React.MutableRefObject<LayoutConfigType>;
 };
 
 export default function useLayoutManager({
@@ -32,15 +35,30 @@ export default function useLayoutManager({
   containerRef,
   itemIDsByLevelRef,
   itemsRef,
-  layoutConfig,
   setItemsState,
   transformState,
   updateNodeItems,
 }: LayoutManagerProps): LayoutManagerType {
+  const layoutConfig = useRef<LayoutConfigType>({
+    containerRef: containerRef,
+    direction: LayoutConfigDirectionEnum.HORIZONTAL,
+    gap: { column: 40, row: 40 },
+    origin: LayoutConfigDirectionOriginEnum.LEFT,
+    transformStateRef: transformState,
+    viewportRef: canvasRef,
+  });
+
+  function updateLayoutConfig(config: LayoutConfigType) {
+    layoutConfig.current = {
+      ...layoutConfig.current,
+      ...config,
+    };
+  }
+
   function renderLayoutChanges(opts?: { level?: number; items?: ItemMappingType }) {
     let itemMapping = opts?.items;
     if (!(itemMapping ?? false)) {
-      const ids = itemIDsByLevelRef?.current[opts.level] ?? [];
+      const ids = itemIDsByLevelRef?.current[opts?.level] ?? [];
       itemMapping = ids?.reduce((acc, id) => {
         acc[id] = itemsRef.current[id];
         return acc;
@@ -57,22 +75,26 @@ export default function useLayoutManager({
     const level = activeLevel?.current ?? 0;
     const directions = [
       level === 1
-        ? LayoutConfigDirectionEnum.HORIZONTAL
+        ? layoutConfig?.current?.direction
         : level === 2
-        ? LayoutConfigDirectionEnum.HORIZONTAL
-          : LayoutConfigDirectionEnum.VERTICAL,
+        ? layoutConfig?.current?.direction
+          : LayoutConfigDirectionEnum.VERTICAL === layoutConfig?.current?.direction
+            ? LayoutConfigDirectionEnum.HORIZONTAL
+            : LayoutConfigDirectionEnum.VERTICAL,
       level === 1
-        ? LayoutConfigDirectionEnum.HORIZONTAL
+        ? layoutConfig?.current?.direction
         : level === 2
-        ? LayoutConfigDirectionEnum.VERTICAL
-          : LayoutConfigDirectionEnum.HORIZONTAL,
+        ? LayoutConfigDirectionEnum.VERTICAL === layoutConfig?.current?.direction
+          ? LayoutConfigDirectionEnum.HORIZONTAL
+          : LayoutConfigDirectionEnum.VERTICAL
+        : layoutConfig?.current?.direction,
     ];
 
     return [
       {
         options: () => ({ layout: { direction: directions[0] } }),
         scope: RectTransformationScopeEnum.CHILDREN,
-        type: TransformRectTypeEnum.TREE,
+        type: TransformRectTypeEnum.LAYOUT_TREE,
       },
       {
         options: (rects: RectType[]) => ({
@@ -80,11 +102,14 @@ export default function useLayoutManager({
             left: 0,
             top: Math.max(
               ...flattenArray(rects?.map(rect => rect.children)).map(
-                (rect) =>
-                  (rect?.inner?.badge?.height ?? 0) +
-                  (rect?.inner?.badge?.offset?.top ?? 0) +
-                  (rect?.inner?.title?.height ?? 0) +
-                  (rect?.inner?.title?.offset?.top ?? 0),
+                (rect) => {
+                  const val = (rect?.inner?.badge?.height ?? 0) +
+                    (rect?.inner?.badge?.offset?.top ?? 0) +
+                    (rect?.inner?.title?.height ?? 0) +
+                    (rect?.inner?.title?.offset?.top ?? 0);
+
+                  return validateFiniteNumber(val) ?? 0;
+                }
               ),
             ),
           },
@@ -100,7 +125,7 @@ export default function useLayoutManager({
       },
       {
         options: () => ({ layout: { direction: directions[1] } }),
-        type: TransformRectTypeEnum.TREE,
+        type: TransformRectTypeEnum.LAYOUT_TREE,
       },
       {
         condition: (rects: RectType[]) => {
@@ -108,7 +133,7 @@ export default function useLayoutManager({
           return box?.width > containerRef?.current?.getBoundingClientRect()?.width;
         },
         options: () => ({ layout: { direction: LayoutConfigDirectionEnum.HORIZONTAL } }),
-        type: TransformRectTypeEnum.TREE,
+        type: TransformRectTypeEnum.LAYOUT_TREE,
       },
       {
         condition: (rects: RectType[]) => {
@@ -116,7 +141,24 @@ export default function useLayoutManager({
           return box?.height > containerRef?.current?.getBoundingClientRect()?.height;
         },
         options: () => ({ layout: { direction: LayoutConfigDirectionEnum.VERTICAL } }),
-        type: TransformRectTypeEnum.TREE,
+        type: TransformRectTypeEnum.LAYOUT_TREE,
+      },
+      {
+        condition: (rects: RectType[]) => {
+          const count = rects?.filter?.(rect => (rect?.children?.length ?? 0) >= 1)?.length ?? 0;
+          return count / Math.max(rects?.length ?? 1) < 1;
+        },
+        options: () => ({
+          layout: update(layoutConfig?.current, {
+            gap: {
+              $set: {
+                column: 40,
+                row: 40,
+              },
+            },
+          }),
+          layoutOptions: { amplitude: 200, wavelength: 300 } }),
+        type: TransformRectTypeEnum.LAYOUT_WAVE,
       },
       {
         options: (rects: RectType[]) => {
@@ -126,11 +168,11 @@ export default function useLayoutManager({
             offset: {
               left: Math.max(
                 40,
-                typeof window !== 'undefined' ? (window.innerWidth - box.width) / 2 : 0,
+                validateFiniteNumber(typeof window !== 'undefined' ? (window.innerWidth - box.width) / 2 : 0),
               ),
               top: Math.max(
                 40,
-                typeof window !== 'undefined' ? (window.innerHeight - box.height) / 2 : 0,
+                validateFiniteNumber(typeof window !== 'undefined' ? (window.innerHeight - box.height) / 2 : 0),
               ),
             },
           };
@@ -144,6 +186,11 @@ export default function useLayoutManager({
       {
         scope: RectTransformationScopeEnum.CHILDREN,
         type: TransformRectTypeEnum.ALIGN_CHILDREN,
+      },
+      // Give min height of 300px
+      {
+        options: () => ({ rect: { height: 300} }),
+        type: TransformRectTypeEnum.MIN_DIMENSIONS,
       },
     ];
   }
@@ -196,9 +243,11 @@ export default function useLayoutManager({
         })),
       }));
 
+      const trans = rectTransformations();
+
       nodesTransformed = transformRects(
         rects,
-        rectTransformations(),
+        trans,
       ).map((rect: RectType, idx: number) => {
         const node = nodes[idx];
 
@@ -235,6 +284,8 @@ export default function useLayoutManager({
 
   return {
     renderLayoutChanges,
+    updateLayoutConfig,
+    layoutConfig,
     updateLayoutOfItems,
   };
 }

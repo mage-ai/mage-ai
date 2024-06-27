@@ -77,3 +77,7 @@ export function binaryStringToNumber(binaryString: string): number {
   // => 15
   return parseInt(binaryString, 2);
 }
+
+export function validateFiniteNumber(value: number): number | null {
+  return Number.isFinite(value) ? value : null;
+}

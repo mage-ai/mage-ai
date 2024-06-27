@@ -75,8 +75,13 @@ export interface NodeType extends DragItem {
 export interface RectTransformationOptionsType {
   boundingBox?: RectType;
   layout?: LayoutConfigType;
+  layoutOptions?: {
+    amplitude?: number;
+    wavelength?: number;
+  };
   offset?: RectType;
   padding?: RectType;
+  rect?: RectType;
 }
 
 export interface RectTransformationType {
