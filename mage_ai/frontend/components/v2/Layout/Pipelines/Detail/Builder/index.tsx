@@ -25,9 +25,9 @@ function PipelineBuilder({ frameworkUUID, uuid }: PipelineDetailProps) {
   const executionFrameworks = useMutate('execution_frameworks', {
     handlers: {
       detail: {
-      onSuccess: (data) => {
-        setExecutionFramework(data);
-      },
+        onSuccess: (data) => {
+          setExecutionFramework(data);
+        },
       },
     },
   });

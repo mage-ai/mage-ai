@@ -182,8 +182,14 @@ const BlockNodeWrapper: React.FC<BlockNodeWrapperProps> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  function handleGroupTemplateSelect(event: any, item1: NodeItemType, template: TemplateType) {
-    console.log('ADDDDDDDDDDDDDDDDDDDDDD', event, item1, template);
+  function handleGroupTemplateSelect(event: any, item: NodeItemType, template: TemplateType) {
+    submitEventOperation(event, {
+      handler: (e, { addBlockToGroup }) => {
+        addBlockToGroup({
+          template,
+        });
+      },
+    });
   }
 
   function handleClickGroupMenu(event: any) {
@@ -208,8 +214,8 @@ const BlockNodeWrapper: React.FC<BlockNodeWrapperProps> = ({
             ...Object.entries(item?.block?.configuration?.templates ?? {})?.map(
               ([uuid, template]) => ({
                 description: () => template?.description,
-                onClick: (event: any) => handleGroupTemplateSelect(event, item, template),
                 label: () => template?.name,
+                onClick: (event: any) => handleGroupTemplateSelect(event, item, template),
                 uuid,
               }),
             ),

@@ -21,6 +21,7 @@ export type ClientEventType = {
   button?: ButtonEnum;
   control?: EventControlType;
   data?: Record<string, any>;
+  handle?: HandleOperationType;
   operationTarget?: HTMLElement;
   operationType?: EventOperationEnum;
 } & Event &
@@ -58,6 +59,7 @@ export interface EventOperationOptionsType {
   kwargs?: {
     boundingContainer?: DOMRect;
   };
+  handler?: (event: ClientEventType, handlers: Record<string, (args: any | any[]) => void>) => void;
 }
 export type SubmitEventOperationType = (
   event: ClientEventType,

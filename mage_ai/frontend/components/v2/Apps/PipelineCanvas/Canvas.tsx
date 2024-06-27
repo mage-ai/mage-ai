@@ -56,71 +56,11 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
 
   const layoutConfig = useRef<LayoutConfigType>({
     containerRef: containerRef,
-    defaultRect: {
-      item: () => ({
-        height: 75,
-        left: null,
-        top: null,
-        width: 300,
-        padding: {
-          bottom: 12,
-          left: 12,
-          right: 12,
-          top: 12,
-        },
-      }),
-    },
     direction: LayoutConfigDirectionEnum.HORIZONTAL,
     gap: { column: 40, row: 40 },
     origin: LayoutConfigDirectionOriginEnum.LEFT,
     transformStateRef: transformState,
     viewportRef: canvasRef,
-
-    // containerRect: {
-    //   left: 40,
-    //   top: 40,
-    //   height: window.innerHeight,
-    //   width: window.innerWidth,
-    // },
-    // boundingRect: {
-    //   // left: 0,
-    //   // top: 0,
-    //   height: window.innerHeight,
-    //   width: window.innerWidth,
-    // },
-    // shiftRect: {
-    //   top: 200,
-    //   left: 300,
-    // },
-    // padRect: {
-    //   bottom: 12,
-    //   left: 12,
-    //   right: 12,
-    //   top: 12,
-    // },
-    // offsetRectFinal: {
-    //   left: 300,
-    //   top: 100,
-    // },
-    // transforms: [
-    //   {
-    //     left: null,
-    //     top: null,
-    //     type: 'set',
-    //   },
-    //   {
-    //     top: 200,
-    //     left: 200,
-    //     bottom: 10,
-    //     right: 10,
-    //     type: 'pad',
-    //   },
-    //   {
-    //     top: 200,
-    //     left: 300,
-    //     type: 'shift',
-    //   },
-    // ],
   });
 
   // VERY IMPORTANT THAT THE STATE IS IN THIS COMPONENT OR ELSE NOTHING WILL RENDER!
@@ -152,6 +92,7 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
   }
 
   const {
+    appHandlersRef,
     initializeModels,
     itemsRef,
     mutateModels,
@@ -161,6 +102,7 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
     // updatePorts,
   }: ModelManagerType = useModelManager({
     itemIDsByLevelRef,
+    pipeline,
   });
 
   const {
@@ -217,6 +159,7 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
     submitEventOperation,
   }: EventManagerType = useEventManager({
     activeLevel,
+    appHandlersRef,
     canvasRef,
     connectionLinesPathRef,
     containerRef,

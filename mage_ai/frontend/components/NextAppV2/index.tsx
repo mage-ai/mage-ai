@@ -1,6 +1,7 @@
 import Head from '@mana/elements/Head';
 import ThemeType from '@mana/themes/interfaces';
 import { AppProps } from 'next/app';
+import { APIMutationProvider } from '@context/APIMutation';
 import { LayoutVersionEnum } from '@utils/layouts';
 import { ModeEnum } from '@mana/themes/modes';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -50,7 +51,9 @@ function NextAppV2({
       </Head>
       <ThemeProvider theme={theme as ThemeType}>
         <QueryClientProvider client={queryClient}>
-          <Component {...rest} />
+          <APIMutationProvider>
+            <Component {...rest} />
+          </APIMutationProvider>
         </QueryClientProvider>
       </ThemeProvider>
     </>

@@ -4,11 +4,15 @@ import { GroupUUIDEnum } from '@interfaces/PipelineExecutionFramework/types';
 import { buildDependencies } from './utils/pipelines';
 import { createItemsFromBlockGroups } from './utils/items';
 import { createPortsByItem } from './utils/ports';
-import { indexBy } from '@utils/array';
 import { updateModelsAndRelationships } from './utils/nodes';
 import { useRef } from 'react';
+import { ClientEventType } from '@mana/hooks/useContextMenu';
+import { AppHandlerType, AppHandlersRefType } from './interfaces';
+import { useMutate } from '@context/APIMutation';
 
 export type ModelManagerType = {
+  addBlockToGroup: (event: ClientEventType) => void;
+  appHandlersRef: AppHandlersRefType;
   initializeModels: (
     executionFramework: PipelineExecutionFrameworkType,
     pipeline: PipelineExecutionFrameworkType,
@@ -22,13 +26,31 @@ export type ModelManagerType = {
 
 type ModelManagerProps = {
   itemIDsByLevelRef: React.MutableRefObject<string[][]>;
+  pipeline: PipelineExecutionFrameworkType;
 };
 
 export default function useModelManager({
   itemIDsByLevelRef,
+  pipeline,
 }: ModelManagerProps): ModelManagerType {
+  const appHandlersRef = useRef<AppHandlerType>({} as AppHandlerType);
   const itemsRef = useRef<ItemMappingType>({});
   const portsRef = useRef<PortMappingType>({});
+
+  const mutants = useMutate(['execution_frameworks', 'pipelines']);
+
+  appHandlersRef.current = {
+    addBlockToGroup,
+  };
+
+  function addBlockToGroup({ template }) {
+    mutants.create.mutate({
+      id: [pipeline?.uuid],
+      payload: {
+        template,
+      },
+    });
+  }
 
   function initializeModels(
     executionFramework: PipelineExecutionFrameworkType,
@@ -191,6 +213,8 @@ export default function useModelManager({
   }
 
   return {
+    addBlockToGroup,
+    appHandlersRef,
     initializeModels,
     itemsRef,
     mutateModels,

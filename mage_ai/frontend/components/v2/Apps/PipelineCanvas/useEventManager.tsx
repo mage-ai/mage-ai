@@ -1,28 +1,28 @@
-import update from 'immutability-helper';
-import { XYCoord } from 'react-dnd';
-import type { DropTargetMonitor } from 'react-dnd';
-import { getElementPositionInContainer } from '../../Canvas/utils/rect';
-import { ItemTypeEnum } from '../../Canvas/types';
-import { NodeItemType, PortType, RectType, ItemMappingType, PortMappingType, ModelMappingType } from '../../Canvas/interfaces';
-import { useRef, useState, startTransition } from 'react';
-import { snapToGrid } from '../../Canvas/utils/snapToGrid';
-import { ArrowsAdjustingFrameSquare, Check, Group } from '@mana/icons';
-import { ZoomPanStateType } from '@mana/hooks/useZoomPan';
-import { ClientEventType, EventOperationEnum, EventOperationOptionsType } from '@mana/shared/interfaces';
-import { MenuItemType, RenderContextMenuOptions, RemoveContextMenuType, RenderContextMenuType,
-} from '@mana/hooks/useContextMenu';
-import { ModelManagerType } from './useModelManager';
-import { PresentationManagerType } from './usePresentationManager';
 import stylesBuilder from '@styles/scss/apps/Canvas/Pipelines/Builder.module.scss';
-import { range, sortByKey } from '@utils/array';
-import { LayoutManagerType } from './useLayoutManager';
-import { ActiveLevelRefType, LayoutConfigRefType, ItemIDsByLevelRef, SetActiveLevelType } from './interfaces';
+import type { DropTargetMonitor } from 'react-dnd';
+import update from 'immutability-helper';
+import { ActiveLevelRefType, AppHandlersRefType, LayoutConfigRefType, ItemIDsByLevelRef, SetActiveLevelType } from './interfaces';
+import { ArrowsAdjustingFrameSquare, Check, Group } from '@mana/icons';
+import { ClientEventType, EventOperationEnum, EventOperationOptionsType } from '@mana/shared/interfaces';
+import { ItemTypeEnum } from '../../Canvas/types';
+import { MenuItemType, RenderContextMenuOptions, RemoveContextMenuType, RenderContextMenuType } from '@mana/hooks/useContextMenu';
+import { ModelManagerType } from './useModelManager';
+import { NodeItemType, PortType, RectType, ItemMappingType, PortMappingType, ModelMappingType } from '../../Canvas/interfaces';
+import { PresentationManagerType } from './usePresentationManager';
+import { XYCoord } from 'react-dnd';
+import { ZoomPanStateType } from '@mana/hooks/useZoomPan';
+import { getElementPositionInContainer } from '../../Canvas/utils/rect';
 import { pluralize } from '@utils/string';
+import { sortByKey } from '@utils/array';
+import { snapToGrid } from '../../Canvas/utils/snapToGrid';
+import { useRef, useState, startTransition } from 'react';
 
 const GRID_SIZE = 40;
 
 type EventManagerProps = {
   activeLevel: React.MutableRefObject<number>;
+  addBlockToGroup: ModelManagerType['addBlockToGroup'];
+  appHandlersRef: AppHandlersRefType;
   canvasRef: React.MutableRefObject<HTMLDivElement>;
   connectionLinesPathRef: PresentationManagerType['connectionLinesPathRef'];
   containerRef: React.MutableRefObject<HTMLDivElement>;
@@ -71,6 +71,7 @@ export type EventManagerType = {
 
 export default function useEventManager({
   activeLevel,
+  appHandlersRef,
   itemIDsByLevelRef,
   canvasRef,
   connectionLinesPathRef,
@@ -206,10 +207,14 @@ export default function useEventManager({
   }
 
   function submitEventOperation(event: ClientEventType, opts?: EventOperationOptionsType) {
-    const { operationType } = event;
+    if (opts?.handler) {
+      opts?.handler(event, appHandlersRef.current);
+    } else {
+      const { operationType } = event;
 
-    if (EventOperationEnum.CONTEXT_MENU_OPEN === operationType) {
-      handleContextMenu(event, ...opts?.args, opts?.kwargs);
+      if (EventOperationEnum.CONTEXT_MENU_OPEN === operationType) {
+        handleContextMenu(event, ...opts?.args, opts?.kwargs);
+      }
     }
   }
 
@@ -344,7 +349,11 @@ export default function useEventManager({
   }
 
   function handleMouseDown(event: ClientEventType) {
-    const { operationType } = event;
+    const { handle, operationType } = event;
+
+    if (handle) {
+      handle?.(event);
+    }
 
     if (EventOperationEnum.DRAG_START !== operationType) {
       setZoomPanDisabled(false);

@@ -1,29 +1,32 @@
 // https://tanstack.com/query/v4/docs/framework/react/reference/useMutation
-import { buildFetchV2 } from './utils/fetcher';
-import { buildUrl } from './utils/url';
+import axios from 'axios';
+import { FetcherOptionsType, preprocess } from '@api/utils/fetcher';
+import { buildUrl } from '@api/utils/url';
+import { OperationTypeEnum, ResponseTypeEnum } from '@api/constants';
 import { hyphensToSnake } from '@utils/url';
 import { isEqual } from '@utils/hash';
-import { useMemo, useRef, useState } from 'react';
+import { useContext, useMemo, useRef, useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
-
 import api from '@api';
+import { APIMutationContext } from './Context';
 import {
   HandlersType,
   ModelsType,
   MutateFunctionArgsType,
+  MutateFunctionType,
   MutateType,
   MutationStatusMappingType,
-  ResponseType,
   ResourceHandlersType,
+  ResponseType,
   URLOptionsType,
-} from './interfaces';
-import { OperationTypeEnum } from './constants';
-import { MutationStatusEnum as MutationStatusEnumBase } from './enums';
+} from '@api/interfaces';
+import { MutationStatusEnum as MutationStatusEnumBase } from '@api/enums';
 import { dig } from '@utils/hash';
 import { singularize } from '@utils/string';
 
 export const MutationStatusEnum = MutationStatusEnumBase;
-export default function useMutate(
+
+export function useMutate(
   endpoint: string | string[],
   opts?: {
     callbackOnEveryRequest?: boolean;
@@ -34,6 +37,7 @@ export default function useMutate(
     subscribeToStatusUpdates?: boolean;
   },
 ): MutateType {
+  const context = useContext(APIMutationContext);
   const {
     callbackOnEveryRequest,
     subscribeToStatusUpdates,
@@ -79,14 +83,72 @@ export default function useMutate(
     };
   }
 
+  function handleResponse(response) {
+    return response?.data;
+  }
+
+  function handleError(error) {
+    return context.renderError(error);
+  }
+
+  async function fetch(operation: OperationTypeEnum, args?: any, opts: FetcherOptionsType = {}): Promise<any> {
+    const argsArr = preprocessArgs(args) ?? {};
+    const [id1, id2] = [...argsArr, null];
+    const [resource1, resource2] = endpoints?.length >= 2 ? endpoints : [endpoints[0], null];
+
+    const urlArg: string = buildUrl(...[resource1, id1, resource2, id2]);
+
+    const {
+      responseType = ResponseTypeEnum.JSON,
+      signal = null,
+    } = opts || {} as FetcherOptionsType;
+
+    const { data, headers, method, queryString, url } = preprocess(urlArg, {
+      ...opts,
+      body: preprocessPayload(args),
+      method: OperationTypeEnum.CREATE === operation
+        ? 'POST'
+        : OperationTypeEnum.DELETE === operation
+          ? 'DELETE'
+          : OperationTypeEnum.UPDATE === operation
+            ? 'PATCH'
+            : 'GET',
+      query: addMetaQuery(args),
+    });
+
+    return axios.request({
+      data: data.body,
+      headers,
+      method,
+      onDownloadProgress: opts?.onDownloadProgress
+        ? e =>
+            opts.onDownloadProgress(e, {
+              body: opts?.body,
+              query: opts?.query,
+            })
+        : null,
+      onUploadProgress: opts?.onUploadProgress
+        ? e =>
+            opts.onUploadProgress(e, {
+              body: opts?.body,
+              query: opts?.query,
+            })
+        : null,
+      responseType,
+      signal,
+      url: queryString ? `${url}?${queryString}` : url,
+    });
+  }
+
   function augmentHandlers(operation: OperationTypeEnum, handlers?: HandlersType) {
     const { onError, onSuccess } = handlers || ({} as HandlersType);
+
     return {
       ...(handlers || {}),
       onError: (error: any, variables: any, context?: any) => {
-        console.error(error, `${JSON.stringify(error)}`);
-
         onError && onError?.(error, variables, context);
+
+        context.showError(error);
 
         handleStatusUpdate([error, variables, context]);
       },
@@ -142,61 +204,40 @@ export default function useMutate(
     return (Array.isArray(args?.id) ? handleArgs(args?.id) : [args?.id]?.map(handleArgs));
   }
 
-  function wrapMutation(mutate: () => any) {
+  async function wrapMutation(operation: OperationTypeEnum, args?: MutateFunctionArgsType) {
     const now = Number(new Date());
 
     if (!checkpointRef?.current) {
       checkpointRef.current = now;
     } else if (now - checkpointRef.current < throttle) {
-      return () => new Promise(() => null) ;
+      return Promise.resolve(null);
     }
 
-    return mutate();
+    return new Promise((resolve, reject) => fetch(operation, args)
+      .then(response => resolve(handleResponse(response)))
+      .catch(error => reject(handleError(error))))
   }
 
   const fnCreate = useMutation({
     ...augmentHandlers(OperationTypeEnum.CREATE, resourceHandlers?.create || {}),
-    mutationFn: (args?: MutateFunctionArgsType) => wrapMutation(() => {
-      const url: string = buildUrl(...[
-        parentResourceName ?? resourceNamePlural,
-        preprocessArgs(args)[0] ?? null,
-        resourceNamePlural ?? null,
-        null,
-        addMetaQuery(args),
-      ]);
-
-      return buildFetchV2(url, { body: preprocessPayload(args), method: 'POST' });
-    }),
+    mutationFn: (args?: MutateFunctionArgsType) => wrapMutation(OperationTypeEnum.CREATE, args),
   });
 
   const fnDelete = useMutation({
     ...augmentHandlers(OperationTypeEnum.DELETE, resourceHandlers?.delete || {}),
-    mutationFn: (args?: MutateFunctionArgsType) => wrapMutation(() => apiEndpoint.useDelete(
-        ...preprocessArgs(args),
-        addMetaQuery(args),
-      )),
+    mutationFn: (args?: MutateFunctionArgsType) => wrapMutation(OperationTypeEnum.DELETE, args),
   });
   const fnDetail = useMutation({
     ...augmentHandlers(OperationTypeEnum.DETAIL, resourceHandlers?.detail || {}),
-    mutationFn: (args?: MutateFunctionArgsType) => wrapMutation(() =>
-      apiEndpoint.detailAsync(...preprocessArgs(args), addMetaQuery(args)),
-    ),
+    mutationFn: (args?: MutateFunctionArgsType) => wrapMutation(OperationTypeEnum.DETAIL, args),
   });
   const fnList = useMutation({
     ...augmentHandlers(OperationTypeEnum.LIST, resourceHandlers?.list || {}),
-    mutationFn: (args?: MutateFunctionArgsType) => wrapMutation(() => apiEndpoint.listAsync(
-      ...[
-        ...(isChildResource ? (Array.isArray(args?.id) ? args?.id : [args?.id]) : []),
-        addMetaQuery(args),
-      ],
-    )),
+    mutationFn: (args?: MutateFunctionArgsType) => wrapMutation(OperationTypeEnum.LIST, args),
   });
   const fnUpdate = useMutation({
     ...augmentHandlers(OperationTypeEnum.UPDATE, resourceHandlers?.update || {}),
-    mutationFn: (args?: MutateFunctionArgsType) => wrapMutation(() => apiEndpoint.useUpdate(
-        ...preprocessArgs(args),
-        addMetaQuery(args),
-      )(preprocessPayload(args))),
+    mutationFn: (args?: MutateFunctionArgsType) => wrapMutation(OperationTypeEnum.UPDATE, args),
   });
 
   function handleStatusUpdate(context: any) {
