@@ -14,9 +14,10 @@ import { MenuItemType, RenderContextMenuOptions, RemoveContextMenuType, RenderCo
 import { ModelManagerType } from './useModelManager';
 import { PresentationManagerType } from './usePresentationManager';
 import stylesBuilder from '@styles/scss/apps/Canvas/Pipelines/Builder.module.scss';
-import { range } from '@utils/array';
+import { range, sortByKey } from '@utils/array';
 import { LayoutManagerType } from './useLayoutManager';
 import { ActiveLevelRefType, LayoutConfigRefType, ItemIDsByLevelRef, SetActiveLevelType } from './interfaces';
+import { pluralize } from '@utils/string';
 
 const GRID_SIZE = 40;
 
@@ -282,11 +283,17 @@ export default function useEventManager({
       {
         uuid: 'Groupings',
       },
-      ...(itemIDsByLevelRef?.current ?? {}).map((ids: string[], level: number) => ({
+      ...(itemIDsByLevelRef?.current ?? []).map((ids: string[], level: number) => {
+        const items = sortByKey(
+          ids?.map((id: string) =>
+            itemsRef.current?.[id])?.filter(({ type }) => ItemTypeEnum.BLOCK === type),
+          ({ block, title, id }) => block?.name || title || block?.uuid || id,
+        );
+
+        return {
           Icon: level === activeLevel?.current ? Check : Group,
-          description: () => '...',
-          items: ids?.map((id: string) => {
-            const item = itemsRef.current?.[id];
+          description: () => pluralize('block', ids?.length ?? 0),
+          items: items?.map((item: NodeItemType) => {
             const { block, title } = item;
 
             return {
@@ -303,8 +310,9 @@ export default function useEventManager({
             setActiveLevel(level);
             removeContextMenu(event);
           },
-          uuid: `Level ${level} grouping`,
-        }),
+          uuid: `Blocks grouped at level ${level}`,
+        };
+      },
       ),
       { uuid: 'Move' },
       { divider: true },
@@ -332,6 +340,7 @@ export default function useEventManager({
 
     if (data?.node) {
     }
+
     renderContextMenu(event, menuItems, opts);
   }
 
