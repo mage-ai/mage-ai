@@ -310,8 +310,10 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
       // Create an item for every group at every level.
       // Create a port for every group at every level.
       // Create an item for every block at every level because they’ll have different groupings.
-
+      const maxLevel = 0;
       blockGroupsByLevel?.forEach((blockGroups: BlockGroupType[], level: number) => {
+        if (level !== null && level > maxLevel) return;
+
         const {
           items,
           nodes,
@@ -329,7 +331,6 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
           level,
         });
 
-        let portsCount = 0;
         Object.entries(ports ?? {})?.forEach(([id, { ports }]: [string, {
           ports: PortType[];
         }]) => {
@@ -340,7 +341,6 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
 
           ports?.forEach(port => {
             portMapping[port.id] = port;
-            portsCount += 1;
           });
         });
 
@@ -352,14 +352,14 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
       console.log('itemMapping', objectSize(itemMapping));
       console.log('portMapping', objectSize(portMapping));
 
-      // startTransition(() => {
-      //   mutateModels({
-      //     itemMapping,
-      //     portMapping,
-      //   });
+      startTransition(() => {
+        mutateModels({
+          itemMapping,
+          portMapping,
+        });
 
-      //   renderLayoutChanges({ items: itemsRef?.current });
-      // });
+        renderLayoutChanges({ items: itemsRef?.current });
+      });
 
       phaseRef.current += 1;
     }
