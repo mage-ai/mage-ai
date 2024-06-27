@@ -1,14 +1,14 @@
 import BlockNodeWrapper from '../../Canvas/Nodes/BlockNodeWrapper';
+import BlockType from '@interfaces/BlockType';
 import CanvasContainer from './index.style';
-import PipelineExecutionFrameworkType from '@interfaces/PipelineExecutionFramework/interfaces';
-import PipelineType from '@interfaces/PipelineType';
+import PipelineExecutionFrameworkType, { FrameworkType } from '@interfaces/PipelineExecutionFramework/interfaces';
 import type { DropTargetMonitor } from 'react-dnd';
-import { LayoutConfigType, DragItem, ModelMappingType, NodeItemType, NodeType, GroupMappingType, ItemMappingType, PortMappingType } from '../../Canvas/interfaces';
+import { LayoutConfigType, DragItem, ModelMappingType, NodeItemType, NodeType, ItemMappingType, PortMappingType, BlockMappingType, GroupLevelType } from '../../Canvas/interfaces';
 import { DragLayer } from '../../Canvas/Layers/DragLayer';
 import { ItemTypeEnum, LayoutConfigDirectionOriginEnum, LayoutConfigDirectionEnum } from '../../Canvas/types';
 import { RemoveContextMenuType, RenderContextMenuType } from '@mana/hooks/useContextMenu';
 import { ZoomPanStateType } from '@mana/hooks/useZoomPan';
-import { buildDependencies } from './utils/pipelines';
+import { blocksToGroupMapping, buildDependencies } from './utils/pipelines';
 import { useDrop } from 'react-dnd';
 import { useEffect, useMemo, useRef, useState, startTransition } from 'react';
 import styles from '@styles/scss/apps/Canvas/Pipelines/Builder.module.scss';
@@ -17,6 +17,8 @@ import useModelManager, { ModelManagerType } from './useModelManager';
 import useEventManager, { EventManagerType } from './useEventManager';
 import usePresentationManager, { PresentationManagerType } from './usePresentationManager';
 import { initializeBlocksAndConnections } from './utils/blocks';
+import { indexBy } from '@utils/array';
+import { GroupUUIDEnum } from '@interfaces/PipelineExecutionFramework/types';
 
 export type BuilderCanvasProps = {
   canvasRef: React.RefObject<HTMLDivElement>;
@@ -51,6 +53,8 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
   const phaseRef = useRef<number>(0);
   const wrapperRef = useRef(null);
   const validLevels = useRef<number[]>([1, 2]);
+  const blockMappingRef = useRef<BlockMappingType>(null);
+  const groupLevelRef = useRef<GroupLevelType>(null);
 
   const layoutConfig = useRef<LayoutConfigType>({
     containerRect: {
@@ -245,6 +249,7 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
       );
 
       console.log('groupsByLevel', groupsByLevel);
+      console.log('blockMapping', blockMapping);
 
       const boundingRect = canvasRef?.current?.getBoundingClientRect();
       const rectCon = containerRef?.current?.getBoundingClientRect();
@@ -259,41 +264,77 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
       // Presentation
       updateItemsMetadata();
 
-      // Framework
-      blocksByGroupRef.current = blocksByGroup;
-      groupLevelsMappingRef.current = groupLevelsMapping;
-      frameworkGroupsRef.current = groupMapping;
-
       // Models
-      groupLevelsMappingRef?.current?.forEach((groupMapping: GroupMappingType, level: number) => {
-        modelLevelsMapping.current.push(
-          initializeBlocksAndConnections(
-            Object.values(groupMapping),
-            {
-              groupMapping: level >= 1 ? groupLevelsMappingRef?.current?.[level - 1] : undefined,
-            },
-            {
-              layout,
-              level,
-            } as any,
-          ),
-        );
+      blockMappingRef.current = blockMapping;
+      groupLevelRef.current = groupsByLevel;
+
+      const blocksByGroup = blocksToGroupMapping(Object.values(blockMapping));
+      const groupBlocksByLevel = [];
+      [...(groupsByLevel ?? [])]?.reverse().forEach((groups: FrameworkType[], idx: number) => {
+        const groupBlocksInLevel = [];
+
+        const blocksByGrandparent = {};
+        if (idx >= 1 && groupBlocksByLevel.length >= 1) {
+          (groupBlocksByLevel[0] ?? [])?.forEach((groupBlock: {
+            blocks: BlockType[];
+            group: FrameworkType;
+          }) => {
+            const { blocks, group } = groupBlock;
+            group?.groups?.forEach((groupID: GroupUUIDEnum) => {
+              blocksByGrandparent[groupID] ||= [];
+              blocksByGrandparent[groupID].push(...blocks);
+            });
+          });
+        }
+
+        groups?.forEach((group: FrameworkType) => {
+          const blocks = [];
+          if (idx === 0) {
+            const gblocks = Object.values(blocksByGroup?.[group.uuid] ?? {});
+            console.log('gblocks', group, gblocks);
+            blocks.push(...(gblocks ?? []));
+          } else if (groupBlocksByLevel.length >= 1) {
+            blocks.push(...(blocksByGrandparent?.[group.uuid] ?? []));
+          }
+          groupBlocksInLevel.push({
+            blocks,
+            group,
+          });
+        });
+
+        groupBlocksByLevel.unshift(groupBlocksInLevel);
       });
 
-      const finalLevel = modelLevelsMapping.current.length;
-      modelLevelsMapping.current.push(
-        initializeBlocksAndConnections(
-          Object.values(blockMapping),
-          {
-            groupMapping:
-              finalLevel >= 1 ? groupLevelsMappingRef?.current?.[finalLevel - 1] : undefined,
-          },
-          {
-            ...layout,
-            level: finalLevel,
-          },
-        ),
-      );
+      const itemMapping = {};
+      const portMapping = {};
+
+      // const finalLevel = groupsByLevel.length;
+      // for (let i = groupsByLevel;.length - 1; i >= 0; i--) {
+      //   const groups = groupsByLevel[i];
+      //   initializeBlocksAndConnections(
+      //     Object.values(blockMapping),
+      //     {
+      //       groupMapping: finalLevel >= 1 ? groupLevelsMappingRef?.current?.[finalLevel - 1] : undefined,
+      //     },
+      //     {
+      //       ...layout,
+      //       level: finalLevel,
+      //     },
+      //   );
+      // }
+      // groupsByLevel?.forEach((groups: FrameworkType[], level: number) => {
+      //   initializeBlocksAndConnections(
+      //     Object.values(blockMapping),
+      //     {
+      //       groupMapping:
+      //         finalLevel >= 1 ? groupLevelsMappingRef?.current?.[finalLevel - 1] : undefined,
+      //     },
+      //     {
+      //       ...layout,
+      //       level: finalLevel,
+      //     },
+      //   ),
+      // });
 
       startTransition(() => {
         const { itemMapping, portMapping } = modelLevelsMapping.current.reduce(

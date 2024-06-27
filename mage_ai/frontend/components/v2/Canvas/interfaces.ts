@@ -1,5 +1,5 @@
 import BlockType from '@interfaces/BlockType';
-import { PipelineExecutionFrameworkBlockType } from '@interfaces/PipelineExecutionFramework/interfaces';
+import { FrameworkType, PipelineExecutionFrameworkBlockType } from '@interfaces/PipelineExecutionFramework/interfaces';
 import { GroupUUIDEnum } from '@interfaces/PipelineExecutionFramework/types';
 import { ZoomPanStateType } from '@mana/hooks/useZoomPan';
 
@@ -115,6 +115,8 @@ export type BlockMappingType = Record<string, BlockType>;
 export type BlocksByGroupType = Record<GroupUUIDEnum, BlockMappingType>;
 export type GroupMappingType = Record<GroupUUIDEnum, PipelineExecutionFrameworkBlockType>;
 export type GroupLevelsMappingType = GroupMappingType[];
+
+export type GroupLevelType = FrameworkType[][];
 
 export type ModelMappingType = {
   itemMapping?: ItemMappingType;

@@ -164,6 +164,7 @@ export function buildDependencies(
       'groups',
       'name',
       'upstream_blocks_uuid',
+      'uuid',
     ])));
   });
 
