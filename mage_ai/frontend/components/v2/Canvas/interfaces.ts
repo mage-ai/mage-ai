@@ -76,8 +76,12 @@ export interface RectTransformationOptionsType {
   boundingBox?: RectType;
   layout?: LayoutConfigType;
   layoutOptions?: {
+    // Wave layout options
     amplitude?: number;
     wavelength?: number;
+    // Spiral layout options
+    angleStep: number; // Smaller angle increment for tighter spiral
+    initialAngle: number; // 45 degrees in radians
   };
   offset?: RectType;
   padding?: RectType;

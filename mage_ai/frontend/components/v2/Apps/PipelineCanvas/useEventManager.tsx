@@ -1,10 +1,11 @@
 import stylesBuilder from '@styles/scss/apps/Canvas/Pipelines/Builder.module.scss';
 import type { DropTargetMonitor } from 'react-dnd';
 import update from 'immutability-helper';
-import { ActiveLevelRefType, AppHandlersRefType, LayoutConfigRefType, ItemIDsByLevelRef, SetActiveLevelType } from './interfaces';
-import { ArrowsAdjustingFrameSquare, Check, Group, TemplateShapes } from '@mana/icons';
+import { ActiveLevelRefType, AppHandlersRefType, LayoutConfigRefType, ItemIDsByLevelRef, SetActiveLevelType,
+} from './interfaces';
+import { ArrowDown, PaginateArrowRight, BatchSquaresStacked, Table, Circle, BranchAlt, Monitor, ArrowsAdjustingFrameSquare, Check, Group, TemplateShapes } from '@mana/icons';
 import { ClientEventType, EventOperationEnum, EventOperationOptionsType } from '@mana/shared/interfaces';
-import { ItemTypeEnum, LayoutConfigDirectionEnum } from '../../Canvas/types';
+import { ItemTypeEnum, LayoutConfigDirectionEnum, TransformRectTypeEnum } from '../../Canvas/types';
 import { MenuItemType, RenderContextMenuOptions, RemoveContextMenuType, RenderContextMenuType } from '@mana/hooks/useContextMenu';
 import { ModelManagerType } from './useModelManager';
 import { NodeItemType, PortType, RectType, ItemMappingType, PortMappingType, ModelMappingType, LayoutConfigType } from '../../Canvas/interfaces';
@@ -338,7 +339,7 @@ export default function useEventManager({
           {
             Icon: layoutConfig?.current?.direction === LayoutConfigDirectionEnum.VERTICAL
               ? Check
-              : undefined,
+              : ArrowDown,
             uuid: 'Vertical direction',
             onClick: layoutConfig?.current?.direction === LayoutConfigDirectionEnum.VERTICAL
             ? null
@@ -356,7 +357,7 @@ export default function useEventManager({
           {
             Icon: layoutConfig?.current?.direction === LayoutConfigDirectionEnum.HORIZONTAL
               ? Check
-              : undefined,
+              : PaginateArrowRight,
             uuid: 'Horizontal direction',
             onClick: layoutConfig?.current?.direction === LayoutConfigDirectionEnum.HORIZONTAL
             ? null
@@ -371,6 +372,33 @@ export default function useEventManager({
               removeContextMenu(event);
             },
           },
+          ...Object.entries({
+            [TransformRectTypeEnum.LAYOUT_GRID]: ['Square layout', BatchSquaresStacked],
+            [TransformRectTypeEnum.LAYOUT_RECTANGLE]: ['Rows and column layout', Table],
+            [TransformRectTypeEnum.LAYOUT_SPIRAL]: ['Spiral layout', Circle],
+            [TransformRectTypeEnum.LAYOUT_TREE]: ['Tree layout', BranchAlt],
+            [TransformRectTypeEnum.LAYOUT_WAVE]: ['Wave layout', Monitor],
+          }).map(([value, arr]) => ({
+            Icon: layoutConfig?.current?.rectTransformations?.find(({ type }) => type === value)
+              ? Check
+              : arr[1],
+            uuid: arr[0],
+            onClick: layoutConfig?.current?.rectTransformations?.find(({ type }) => type === value)
+              ? null
+              : (event: ClientEventType) => {
+                event.preventDefault();
+
+                updateLayoutConfig({
+                  rectTransformations: [{ type: value }]
+                });
+
+                renderLayoutChanges({
+                  items: mutateModels({ itemMapping: updateLayoutOfItems() }).itemMapping,
+                });
+
+                removeContextMenu(event);
+              },
+          }))
         ],
         uuid: 'Change block layout pattern',
       },

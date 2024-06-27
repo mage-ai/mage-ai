@@ -105,7 +105,7 @@ export function transformRects(rectsInit: RectType[], transformations: RectTrans
       } else if (TransformRectTypeEnum.LAYOUT_GRID === type) {
         rects = layoutRectsInGrid(rects, layout);
       } else if (TransformRectTypeEnum.LAYOUT_SPIRAL === type) {
-        rects = layoutRectsInSpiral(rects, layout);
+        rects = layoutRectsInSpiral(rects, layout, layoutOptions);
       } else if (TransformRectTypeEnum.SHIFT_INTO_PARENT === type && parent) {
         rects = shiftRectsIntoBoundingBox(rects, parent);
       } else if (TransformRectTypeEnum.ALIGN_CHILDREN === type) {
@@ -555,32 +555,53 @@ export function applyRectDiff(rect: RectType, diff: RectType, dimensions?: boole
 }
 
 function layoutRectsInGrid(rects: RectType[], layout?: LayoutConfigType): RectType[] {
-  const { gap } = layout || {};
+  const { gap, direction = LayoutConfigDirectionEnum.HORIZONTAL } = layout || {};
   const { containerRect } = getRectsFromLayout(layout || {});
   const rectsCopy = [...rects];
   let currentX = 0;
   let currentY = 0;
   let maxRowHeight = 0;
+  let maxColWidth = 0;
   const positionedRects: RectType[] = [];
 
   for (const rect of rectsCopy) {
-    // If the current rect goes beyond the container width, move to the next row
-    if (currentX + rect.width > containerRect.width) {
-      currentX = 0;
-      currentY += maxRowHeight + gap.row;
-      maxRowHeight = 0;
+    if (direction === LayoutConfigDirectionEnum.HORIZONTAL) {
+      // If the current rect goes beyond the container width, move to the next row
+      if (currentX + rect.width > containerRect.width) {
+        currentX = 0;
+        currentY += maxRowHeight + gap.row;
+        maxRowHeight = 0;
+      }
+
+      // Position the rect
+      positionedRects.push({
+        ...rect,
+        left: currentX,
+        top: currentY,
+      });
+
+      // Update currentX and maxRowHeight for next rect
+      currentX += rect.width + gap.column;
+      maxRowHeight = Math.max(maxRowHeight, rect.height);
+    } else {
+      // If the current rect goes beyond the container height, move to the next column
+      if (currentY + rect.height > containerRect.height) {
+        currentY = 0;
+        currentX += maxColWidth + gap.column;
+        maxColWidth = 0;
+      }
+
+      // Position the rect
+      positionedRects.push({
+        ...rect,
+        left: currentX,
+        top: currentY,
+      });
+
+      // Update currentY and maxColWidth for next rect
+      currentY += rect.height + gap.row;
+      maxColWidth = Math.max(maxColWidth, rect.width);
     }
-
-    // Position the rect
-    positionedRects.push({
-      ...rect,
-      left: currentX,
-      top: currentY,
-    });
-
-    // Update currentX and maxRowHeight for next rect
-    currentX += rect.width + gap.column;
-    maxRowHeight = Math.max(maxRowHeight, rect.height);
   }
 
   return positionedRects;
@@ -756,31 +777,57 @@ function addPaddingToRectInsideBox(rects: RectType[], box: RectType, pad: {
   }));
 }
 
-function layoutRectsInSpiral(rects: RectType[], layout?: LayoutConfigType): RectType[] {
-  const { gap } = layout || {};
+function layoutRectsInSpiral(rects: RectType[], layout?: LayoutConfigType, layoutOptions?: LayoutOptionsType): RectType[] {
+  const { gap, direction } = layout || {};
+  const { initialAngle = 0, angleStep = Math.PI / 8 } = layoutOptions || {};
   const { containerRect } = getRectsFromLayout(layout || {});
+
   const rectsCopy = [...rects];
   const halfWidth = containerRect.width / 2;
   const halfHeight = containerRect.height / 2;
-  let x = halfWidth;
-  let y = halfHeight;
-  let angle = 0;
-  const stepSize = gap?.row || gap?.column;
+
+  let angle = initialAngle; // Initial angle in radians
+  const stepSize = Math.max(gap?.row || gap?.column || 20); // Base increment for radius
+
+  let radius = stepSize; // Initial radius
   const positionedRects: RectType[] = [];
 
-  for (const rect of rectsCopy) {
-    // Position the rect
-    positionedRects.push({
-      ...rect,
-      left: x - rect.width / 2,
-      top: y - rect.height / 2,
-    });
+  const horizontalAspectRatio = 1.5; // Moderate horizontal elongation
+  const verticalAspectRatio = 1 / horizontalAspectRatio; // Moderate vertical elongation
 
-    // Update position for next rect in spiral pattern
-    angle += stepSize / Math.sqrt(x * x + y * y);
-    x = halfWidth + (stepSize * angle) * Math.cos(angle);
-    y = halfHeight + (stepSize * angle) * Math.sin(angle);
-  }
+  rectsCopy.forEach((rect) => {
+    let x: number;
+    let y: number;
+    let overlap: boolean;
+    let left: number;
+    let top: number;
+
+    do {
+      // Calculate the elongated position based on angle and radius
+      x = radius * Math.cos(angle) * (direction === LayoutConfigDirectionEnum.HORIZONTAL ? horizontalAspectRatio : verticalAspectRatio);
+      y = radius * Math.sin(angle) * (direction === LayoutConfigDirectionEnum.VERTICAL ? horizontalAspectRatio : verticalAspectRatio);
+
+      left = Math.max(0, halfWidth + x - rect.width / 2);
+      top = Math.max(0, halfHeight + y - rect.height / 2);
+
+      overlap = positionedRects.some((posRect) => {
+        return !(left + rect.width < posRect.left || left > posRect.left + posRect.width || top + rect.height < posRect.top || top > posRect.top + posRect.height);
+      });
+
+      if (overlap || left < 0 || top < 0) {
+        // If there is overlap or the rect goes out of bounds, adjust the angle and radius
+        angle += angleStep;
+        radius += stepSize;
+      } else {
+        // Otherwise, add the rect to the positionedRects
+        positionedRects.push({
+          ...rect,
+          left,
+          top,
+        });
+      }
+    } while (overlap);
+  });
 
   return positionedRects;
 }
@@ -876,9 +923,13 @@ function groupRectangles(
   } = layout || {};
   const horizontalSpacing: number = gap?.column ?? 10;
   const verticalSpacing: number = gap?.row ?? 10;
-  const numCols: number = grid?.columns ?? 4;
-  const numRows: number = grid?.rows ?? null;
+  let numCols: number = grid?.columns ?? null;
+  let numRows: number = grid?.rows ?? null;
 
+  if (!numRows && !numCols) {
+    numRows = Math.ceil(Math.sqrt(rects.length)); // If neither numRows nor numCols are provided, calculate them based on the number of rects
+    numCols = Math.ceil(rects.length) / numRows;
+  }
   if (!numRows) {
     numRows = Math.ceil(rects.length / numCols); // If numRows is not provided, calculate it based on numCols
   }
@@ -1039,7 +1090,6 @@ function getRectsFromLayout(layout: LayoutConfigType): {
   containerRect: DOMRect | RectType;
 } {
   const { containerRef, viewportRef } = layout || {};
-  console.log(containerRef, viewportRef);
 
   const boundingRect = viewportRef?.current?.getBoundingClientRect() ?? {
     height: typeof window !== 'undefined' ? window.innerHeight : 0,
