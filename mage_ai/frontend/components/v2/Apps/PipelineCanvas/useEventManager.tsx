@@ -3,10 +3,10 @@ import { XYCoord } from 'react-dnd';
 import type { DropTargetMonitor } from 'react-dnd';
 import { getElementPositionInContainer } from '../../Canvas/utils/rect';
 import { ItemTypeEnum } from '../../Canvas/types';
-import { NodeItemType, PortType, RectType, ItemMappingType, PortMappingType } from '../../Canvas/interfaces';
+import { NodeItemType, PortType, RectType, ItemMappingType, PortMappingType, ModelMappingType } from '../../Canvas/interfaces';
 import { useRef, useState, startTransition } from 'react';
 import { snapToGrid } from '../../Canvas/utils/snapToGrid';
-import { ArrowsAdjustingFrameSquare } from '@mana/icons';
+import { ArrowsAdjustingFrameSquare, Check, Group } from '@mana/icons';
 import { ZoomPanStateType } from '@mana/hooks/useZoomPan';
 import { ClientEventType, EventOperationEnum, EventOperationOptionsType } from '@mana/shared/interfaces';
 import { MenuItemType, RenderContextMenuOptions, RemoveContextMenuType, RenderContextMenuType,
@@ -14,16 +14,20 @@ import { MenuItemType, RenderContextMenuOptions, RemoveContextMenuType, RenderCo
 import { ModelManagerType } from './useModelManager';
 import { PresentationManagerType } from './usePresentationManager';
 import stylesBuilder from '@styles/scss/apps/Canvas/Pipelines/Builder.module.scss';
+import { range } from '@utils/array';
+import { LayoutManagerType } from './useLayoutManager';
 
 const GRID_SIZE = 40;
 
 type EventManagerProps = {
+  activeLevel: React.MutableRefObject<number>;
   canvasRef: React.MutableRefObject<HTMLDivElement>;
   connectionLinesPathRef: PresentationManagerType['connectionLinesPathRef'];
   containerRef: React.MutableRefObject<HTMLDivElement>;
   itemDraggingRef: React.MutableRefObject<NodeItemType | null>;
   itemElementsRef: React.MutableRefObject<Record<string, Record<string, React.RefObject<HTMLDivElement>>>>;
   itemsRef: React.MutableRefObject<ItemMappingType>;
+  modelLevelsMapping: LayoutManagerType['modelLevelsMapping'];
   mutateModels: ModelManagerType['mutateModels'];
   portsRef: React.MutableRefObject<PortMappingType>;
   removeContextMenu: RemoveContextMenuType;
@@ -64,6 +68,8 @@ export type EventManagerType = {
 };
 
 export default function useEventManager({
+  activeLevel,
+  modelLevelsMapping,
   canvasRef,
   connectionLinesPathRef,
   containerRef,
@@ -273,10 +279,28 @@ export default function useEventManager({
         uuid: 'View controls',
       },
       {
-        Icon: ArrowsAdjustingFrameSquare,
-        uuid: 'Open file',
+        uuid: 'Groupings',
       },
-      { uuid: 'Duplicate', description: () => 'Carbon copy file' },
+      ...Object.entries(modelLevelsMapping?.current ?? {}).map(([level, modelMapping]: [number, ModelMappingType]) => ({
+          Icon: level === activeLevel?.current ? Check : Group,
+          description: () => '...',
+          items: Object.values(modelMapping?.itemMapping ?? {}).map((item: NodeItemType) => ({
+            // Icon: item.icon,
+            // onClick: (event?: ClientEventType) => {
+            //   event?.preventDefault();
+            //   setActiveLevel(level);
+            //   removeContextMenu(event);
+            // },
+            uuid: item.name,
+          })),
+          onClick: (event?: ClientEventType) => {
+            event?.preventDefault();
+            setActiveLevel(level);
+            removeContextMenu(event);
+          },
+          uuid: `Level ${level} grouping`,
+        }),
+      ),
       { uuid: 'Move' },
       { divider: true },
       { uuid: 'Rename' },

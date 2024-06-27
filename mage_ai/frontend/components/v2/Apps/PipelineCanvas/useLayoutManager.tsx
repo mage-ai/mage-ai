@@ -111,7 +111,6 @@ export default function useLayoutManager({
   }
 
   return {
-    layoutConfig,
     modelLevelsMapping,
     renderLayoutChanges,
     updateLayoutOfItems,

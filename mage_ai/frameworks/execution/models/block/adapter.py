@@ -51,6 +51,7 @@ class Block(DelegatorTarget):
         return dict(
             configuration=self.configuration,
             downstream_blocks=self.downstream_blocks,
+            groups=self.groups,
             language=self.language,
             name=self.name,
             type=self.type,

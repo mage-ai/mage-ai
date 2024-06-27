@@ -374,6 +374,7 @@ class Block(
         hook=None,
         repo_config=None,
         timeout: int = None,
+        groups: Optional[List[str]] = None,
     ) -> None:
         if configuration is None:
             configuration = dict()
@@ -407,6 +408,8 @@ class Block(
         self.dynamic_block_index = None
         self.dynamic_block_uuid = None
         self.dynamic_upstream_block_uuids = None
+
+        self.groups = groups
 
         # Spark session
         self.spark = None
@@ -2932,6 +2935,9 @@ class Block(
         if self.replicated_block:
             data['replicated_block'] = self.replicated_block
 
+        if self.groups:
+            data['groups'] = self.groups
+
         return data
 
     def to_dict(
@@ -3463,7 +3469,8 @@ class Block(
         else:
             output_variables = {k: v for k, v in variable_mapping.items() if is_output_variable(k)}
             print_variables = {
-                k: v for k, v in variable_mapping.items()
+                k: v
+                for k, v in variable_mapping.items()
                 if is_valid_print_variable(k, v, self.uuid)
             }
 

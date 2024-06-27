@@ -2,7 +2,13 @@ import BlockType, { BlockTypeEnum } from '../BlockType';
 import { GroupUUIDEnum, PipelineExecutionFrameworkUUIDEnum } from './types';
 import { PipelineTypeEnum } from '../PipelineType';
 
+export type FrameworkType = (PipelineExecutionFrameworkBlockType | PipelineExecutionFrameworkType) & {
+  downstream_blocks?: (GroupUUIDEnum | PipelineExecutionFrameworkUUIDEnum)[];
+  upstream_blocks?: (GroupUUIDEnum | PipelineExecutionFrameworkUUIDEnum)[];
+};
+
 export type PipelineExecutionFrameworkBlockType = BlockType & {
+  blocks: PipelineExecutionFrameworkBlockType[];
   name?: string;
   downstream_blocks?: (GroupUUIDEnum | PipelineExecutionFrameworkUUIDEnum)[];
   groups?: (GroupUUIDEnum | PipelineExecutionFrameworkUUIDEnum)[];

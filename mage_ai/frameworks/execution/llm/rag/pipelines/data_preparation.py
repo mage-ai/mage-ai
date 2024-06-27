@@ -63,6 +63,7 @@ INDEX = PipelineExecutionFramework.load(
 )
 
 DATA_PREPARATION = PipelineExecutionFramework.load(
+    pipeline_schedules=['TIME', 'EVENT', 'API'],
     uuid=GroupUUID.DATA_PREPARATION,
     description=(
         'The process of preparing and organizing data for use in the RAG system, including '

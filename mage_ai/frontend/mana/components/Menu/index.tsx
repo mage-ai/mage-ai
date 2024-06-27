@@ -74,6 +74,8 @@ function MenuItem({ contained, first, item, last, small }: ItemProps) {
 
   const before = Icon ? <Icon size={small ? 12 : undefined} /> : undefined;
 
+  const noHover = (!onClick && !items?.length) ? 'true' : undefined;
+
   const el = (
     <MenuItemStyled>
       <Grid rowGap={4}>
@@ -90,7 +92,7 @@ function MenuItem({ contained, first, item, last, small }: ItemProps) {
             templateColumns={[before && 'auto', '1fr'].filter(Boolean).join(' ')}
           >
             {before}
-            <Text bold={!onClick} muted={!onClick} small={small}>
+            <Text bold={!onClick} muted={!!noHover} small={small}>
               {label?.() || uuid}
             </Text>
           </Grid>
@@ -128,9 +130,9 @@ function MenuItem({ contained, first, item, last, small }: ItemProps) {
       contained={contained}
       first={first}
       last={last}
-      noHover={!onClick ? 'true' : undefined}
+      noHover={noHover}
     >
-      <ItemContent first={first} last={last} noHover={!onClick ? 'true' : undefined}>
+      <ItemContent first={first} last={last} noHover={noHover}>
         {!onClick && el}
         {onClick && (
           <Button

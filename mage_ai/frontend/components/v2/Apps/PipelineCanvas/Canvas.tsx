@@ -215,12 +215,14 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
     snapToGridOnDrop,
     submitEventOperation,
   }: EventManagerType = useEventManager({
+    activeLevel,
     canvasRef,
     connectionLinesPathRef,
     containerRef,
     itemDraggingRef,
     itemElementsRef,
     itemsRef,
+    modelLevelsMapping,
     mutateModels,
     portsRef,
     removeContextMenu,
@@ -233,14 +235,16 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
     transformState,
   });
 
+  console.log(modelLevelsMapping.current);
+
   useEffect(() => {
-    if (phaseRef.current === 0) {
-      const { blockMapping, blocksByGroup, groupLevelsMapping, groupMapping } = buildDependencies(
+    if (phaseRef.current === 0 && executionFramework && pipeline) {
+      const { blockMapping, groupsByLevel } = buildDependencies(
         executionFramework,
-        executionFramework?.pipelines,
         pipeline,
-        pipeline?.pipelines,
       );
+
+      console.log('groupsByLevel', groupsByLevel);
 
       const boundingRect = canvasRef?.current?.getBoundingClientRect();
       const rectCon = containerRef?.current?.getBoundingClientRect();
@@ -320,11 +324,12 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
 
         renderLayoutChanges({ items: itemsRef?.current });
       });
+
+      phaseRef.current += 1;
     }
 
-    phaseRef.current += 1;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [executionFramework, pipeline]);
 
   const [, connectDrop] = useDrop(
     () => ({
