@@ -218,6 +218,8 @@ export default function useEventManager({
     items?: MenuItemType[],
     opts?: RenderContextMenuOptions,
   ) {
+    removeContextMenu(event);
+
     const { data } = event;
 
     const menuItems = items ?? [
@@ -234,7 +236,6 @@ export default function useEventManager({
         },
         uuid: 'Reposition blocks',
       },
-      { divider: true },
       {
         items: [
           {
@@ -280,62 +281,41 @@ export default function useEventManager({
         ],
         uuid: 'View controls',
       },
+      { divider: true },
       {
         uuid: 'Groupings',
       },
       ...(itemIDsByLevelRef?.current ?? []).map((ids: string[], level: number) => {
-        const items = sortByKey(
-          ids?.map((id: string) =>
-            itemsRef.current?.[id])?.filter(({ type }) => ItemTypeEnum.BLOCK === type),
-          ({ block, title, id }) => block?.name || title || block?.uuid || id,
-        );
+          const items = sortByKey(
+            ids?.map((id: string) =>
+              itemsRef.current?.[id])?.filter(({ type }) => ItemTypeEnum.BLOCK === type),
+            ({ block, title, id }) => block?.name || title || block?.uuid || id,
+          );
 
-        return {
-          Icon: level === activeLevel?.current ? Check : Group,
-          description: () => pluralize('block', ids?.length ?? 0),
-          items: items?.map((item: NodeItemType) => {
-            const { block, title } = item;
+          return {
+            Icon: level === activeLevel?.current ? Check : Group,
+            description: () => pluralize('block', ids?.length ?? 0),
+            items: items?.map((item: NodeItemType) => {
+              const { block, title } = item;
 
-            return {
-              onClick: (event?: ClientEventType) => {
-                event?.preventDefault();
-                removeContextMenu(event);
-                alert(`Focus on item for block ${block?.name || block?.uuid} with title ${title}`);
-              },
-              uuid: title || block?.name || block?.uuid,
-            };
-          }),
-          onClick: (event?: ClientEventType) => {
-            event?.preventDefault();
-            setActiveLevel(level);
-            removeContextMenu(event);
-          },
-          uuid: `Blocks grouped at level ${level}`,
-        };
-      },
+              return {
+                onClick: (event?: ClientEventType) => {
+                  event?.preventDefault();
+                  removeContextMenu(event);
+                  alert(`Focus on item for block ${block?.name || block?.uuid} with title ${title}`);
+                },
+                uuid: title || block?.name || block?.uuid,
+              };
+            }),
+            onClick: (event?: ClientEventType) => {
+              event?.preventDefault();
+              setActiveLevel(level);
+              removeContextMenu(event);
+            },
+            uuid: `Blocks grouped at level ${level}`,
+          };
+        },
       ),
-      { uuid: 'Move' },
-      { divider: true },
-      { uuid: 'Rename' },
-      { divider: true },
-      {
-        uuid: 'Transfer',
-        items: [{ uuid: 'Upload files' }, { uuid: 'Download file' }],
-      },
-      {
-        uuid: 'Copy',
-        items: [{ uuid: 'Copy path' }, { uuid: 'Copy relative path' }],
-      },
-      { divider: true },
-      {
-        uuid: 'View',
-        items: [{ uuid: 'Expand subdirectories' }, { uuid: 'Collapse subdirectories' }],
-      },
-      { divider: true },
-      {
-        uuid: 'Projects',
-        items: [{ uuid: 'New Mage project' }, { uuid: 'New dbt project' }],
-      },
     ];
 
     if (data?.node) {

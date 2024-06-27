@@ -29,20 +29,23 @@ export default function TemplateConfigurations({
         )}
       </Grid>
 
-      {Object.entries(template?.variables || [])?.map(([variableUUID, config], idx: number) => (
-        <Grid
-          columnGap={8}
-          justifyContent="space-between"
-          key={variableUUID}
-          templateColumnsAutoFitMaxContent
-        >
-          <Text muted small>
-            {variableUUID || '-'}
-          </Text>
+      {Object.entries(template?.variables || [])?.map(([variableUUID, config], idx: number) => {
+        const value = templateSettings?.variables?.[variableUUID] ?? null;
+        return (
+          <Grid
+            columnGap={8}
+            justifyContent="space-between"
+            key={variableUUID}
+            templateColumnsAutoFitMaxContent
+          >
+            <Text muted small>
+              {variableUUID || '-'}
+            </Text>
 
-          <Text small>{templateSettings?.variables?.[variableUUID] ?? '-'}</Text>
-        </Grid>
-      ))}
+            <Text muted={value === null ? true : false} small>{value ?? '-'}</Text>
+          </Grid>
+        );
+      })}
     </PanelRows>
   );
 }

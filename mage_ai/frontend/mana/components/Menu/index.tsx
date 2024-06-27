@@ -75,6 +75,7 @@ function MenuItem({ contained, first, item, last, small }: ItemProps) {
   const before = Icon ? <Icon size={small ? 12 : undefined} /> : undefined;
 
   const noHover = (!onClick && !items?.length) ? 'true' : undefined;
+  const isHeading = !onClick && !items?.length && !divider;
 
   const el = (
     <MenuItemStyled>
@@ -92,7 +93,7 @@ function MenuItem({ contained, first, item, last, small }: ItemProps) {
             templateColumns={[before && 'auto', '1fr'].filter(Boolean).join(' ')}
           >
             {before}
-            <Text bold={!onClick} muted={!!noHover} small={small}>
+            <Text bold={isHeading} muted={!!noHover} small={small}>
               {label?.() || uuid}
             </Text>
           </Grid>

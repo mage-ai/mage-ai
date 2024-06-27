@@ -262,7 +262,7 @@ const BlockNodeWrapper: React.FC<BlockNodeWrapperProps> = ({
           asides: {
             after: {
               className: styles.showOnHover,
-              ...(isGroup
+              ...(ItemTypeEnum.NODE === item?.type
                 ? {
                     Icon: draggable ? ArrowsAdjustingFrameSquare : Add,
                     onClick: handleClickGroupMenu,
