@@ -82,9 +82,9 @@ export default function useModelManager({
     // Create a port for every group at every level.
     // Create an item for every block at every level because they’ll have different groupings.
     const itemIDsByLevel = [];
-    const maxLevel = 1;
+    const maxLevel = null;
     blockGroupsByLevel?.forEach((blockGroups: BlockGroupType[], level: number) => {
-      if (level !== null && level > maxLevel) return;
+      if (level !== null && maxLevel !== null && level > maxLevel) return;
 
       const {
         items,
@@ -104,7 +104,8 @@ export default function useModelManager({
       });
       itemIDsByLevel.push(itemsIDs);
 
-      const ports = createPortsByItem(nodes.concat(items), {
+      const ports = [];
+      createPortsByItem(nodes.concat(items), {
         level,
       });
 
@@ -126,7 +127,7 @@ export default function useModelManager({
       // console.log('ports', ports);
     });
 
-    console.log('itemMapping', itemMapping);
+    // console.log('itemMapping', itemMapping);
     // console.log('portMapping', portMapping);
 
     // Models

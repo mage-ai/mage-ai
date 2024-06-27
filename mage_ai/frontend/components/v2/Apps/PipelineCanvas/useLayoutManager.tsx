@@ -56,8 +56,16 @@ export default function useLayoutManager({
   function rectTransformations() {
     const level = activeLevel?.current ?? 0;
     const directions = [
-      level === 1 ? LayoutConfigDirectionEnum.HORIZONTAL : LayoutConfigDirectionEnum.VERTICAL,
-      level === 1 ? LayoutConfigDirectionEnum.HORIZONTAL : LayoutConfigDirectionEnum.HORIZONTAL,
+      level === 1
+        ? LayoutConfigDirectionEnum.HORIZONTAL
+        : level === 2
+        ? LayoutConfigDirectionEnum.HORIZONTAL
+          : LayoutConfigDirectionEnum.VERTICAL,
+      level === 1
+        ? LayoutConfigDirectionEnum.HORIZONTAL
+        : level === 2
+        ? LayoutConfigDirectionEnum.VERTICAL
+          : LayoutConfigDirectionEnum.HORIZONTAL,
     ];
 
     return [
@@ -94,22 +102,41 @@ export default function useLayoutManager({
         options: () => ({ layout: { direction: directions[1] } }),
         type: TransformRectTypeEnum.TREE,
       },
-      // {
-      //   condition: (rects: RectType[]) => {
-      //     const box = calculateBoundingBox(rects);
-      //     return box?.width > containerRef?.current?.getBoundingClientRect()?.width;
-      //   },
-      //   options: () => ({ layout: { direction: LayoutConfigDirectionEnum.HORIZONTAL } }),
-      //   type: TransformRectTypeEnum.TREE,
-      // },
-      // {
-      //   condition: (rects: RectType[]) => {
-      //     const box = calculateBoundingBox(rects);
-      //     return box?.height > containerRef?.current?.getBoundingClientRect()?.height;
-      //   },
-      //   options: () => ({ layout: { direction: LayoutConfigDirectionEnum.VERTICAL } }),
-      //   type: TransformRectTypeEnum.TREE,
-      // },
+      {
+        condition: (rects: RectType[]) => {
+          const box = calculateBoundingBox(rects);
+          return box?.width > containerRef?.current?.getBoundingClientRect()?.width;
+        },
+        options: () => ({ layout: { direction: LayoutConfigDirectionEnum.HORIZONTAL } }),
+        type: TransformRectTypeEnum.TREE,
+      },
+      {
+        condition: (rects: RectType[]) => {
+          const box = calculateBoundingBox(rects);
+          return box?.height > containerRef?.current?.getBoundingClientRect()?.height;
+        },
+        options: () => ({ layout: { direction: LayoutConfigDirectionEnum.VERTICAL } }),
+        type: TransformRectTypeEnum.TREE,
+      },
+      {
+        options: (rects: RectType[]) => {
+          const box = calculateBoundingBox(rects);
+
+          return {
+            offset: {
+              left: Math.max(
+                40,
+                typeof window !== 'undefined' ? (window.innerWidth - box.width) / 2 : 0,
+              ),
+              top: Math.max(
+                40,
+                typeof window !== 'undefined' ? (window.innerHeight - box.height) / 2 : 0,
+              ),
+            },
+          };
+        },
+        type: TransformRectTypeEnum.SHIFT,
+      },
       {
         scope: RectTransformationScopeEnum.CHILDREN,
         type: TransformRectTypeEnum.SHIFT_INTO_PARENT,

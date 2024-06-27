@@ -96,8 +96,6 @@ export function transformRects(rectsInit: RectType[], transformations: RectTrans
       }  else if (TransformRectTypeEnum.SHIFT_INTO_PARENT === type && parent) {
         rects = shiftRectsIntoBoundingBox(rects, parent);
       } else if (TransformRectTypeEnum.ALIGN_CHILDREN === type) {
-        const { origin } = layout ?? {};
-
         rects = rects.map((rect) => {
           const { parent } = rect;
           const diff = {
@@ -121,6 +119,8 @@ export function transformRects(rectsInit: RectType[], transformations: RectTrans
         });
       } else if (TransformRectTypeEnum.PAD === type) {
         rects = rects.map((rect) => ({ ...rect, padding }));
+      } else if (TransformRectTypeEnum.SHIFT === type) {
+        rects = shiftRectsByDiffRect(rects, offset ?? { left: 0, top: 0 });
       } else if (transform) {
         rects = transform(rects);
       }

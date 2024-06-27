@@ -1,4 +1,4 @@
-import { PortType, NodeItemType } from '../../../Canvas/interfaces';
+import { NodeType, PortType, NodeItemType } from '../../../Canvas/interfaces';
 import { PortSubtypeEnum, ItemTypeEnum } from '../../../Canvas/types';
 import { buildPortIDFromBlockToBlock } from '../../../Canvas/Draggable/utils';
 import { buildUUIDForLevel } from './levels';
@@ -16,7 +16,7 @@ export function createPortsByItem(items: NodeItemType[], opts?: { level?: number
   const itemsMapping = indexBy(items, ({ id }) => id);
 
   return items?.reduce((acc: PortsByItemType, item: NodeItemType) => {
-    const { block, downstream, upstream } = item;
+    const { block, downstream, upstream } = item as NodeType;
     const props = {
       block,
       level,

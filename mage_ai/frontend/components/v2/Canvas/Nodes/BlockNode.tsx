@@ -170,7 +170,7 @@ export function BlockNode({
 
         // eslint-disable-next-line react-hooks/exhaustive-deps
       ),
-    [draggable, handlers, inputOutputPairs, onMount],
+    [draggable, handlers, item, inputOutputPairs, onMount],
   );
 
   const templateConfigurations = useMemo(

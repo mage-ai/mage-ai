@@ -35,7 +35,7 @@ export type BuilderCanvasProps = {
 const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
   canvasRef,
   containerRef,
-  defaultActiveLevel = 1,
+  defaultActiveLevel = 2,
   dragEnabled,
   dropEnabled,
   pipeline,

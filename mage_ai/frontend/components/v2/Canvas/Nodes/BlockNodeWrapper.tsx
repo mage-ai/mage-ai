@@ -65,7 +65,9 @@ const BlockNodeWrapper: React.FC<BlockNodeWrapperProps> = ({
 
   const { onMouseDown, onMouseLeave, onMouseOver, onMouseUp } = handlers;
   const name = useMemo(
-    () => (ItemTypeEnum.BLOCK === item?.type ? item?.block?.name ?? item?.block?.uuid : item?.id),
+    () => (ItemTypeEnum.BLOCK === item?.type
+      ? item?.block?.name ?? item?.block?.uuid
+      : item?.title ?? item?.id),
     [item],
   );
 
@@ -117,9 +119,10 @@ const BlockNodeWrapper: React.FC<BlockNodeWrapperProps> = ({
     if (ItemTypeEnum.NODE === item?.type) {
       // Use the color of the most common block type in the group.
       const typeCounts = countOccurrences(flattenArray((item as NodeType)?.items?.map(i => i?.block?.type) || []));
-      const modeType = sortByKey(Object.entries(typeCounts || {}), arr => arr[1], {
+      const modeTypes = sortByKey(Object.entries(typeCounts || {}), arr => arr[1], {
         reverse: true,
-      })?.[0]?.[0];
+      });
+      const modeType = modeTypes?.length >= 2 ? modeTypes?.[0]?.[0] : item?.block?.type;
       const colors = getBlockColor(modeType as BlockTypeEnum, { getColorName: true })?.names;
       return colors?.base ? colors : { base: 'gray' };
     }
