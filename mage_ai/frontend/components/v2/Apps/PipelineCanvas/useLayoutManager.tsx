@@ -4,13 +4,13 @@ import { ItemTypeEnum, LayoutConfigDirectionOriginEnum, LayoutConfigDirectionEnu
 import { ModelManagerType } from './useModelManager';
 import { ZoomPanStateType } from '@mana/hooks/useZoomPan';
 import { layoutItemsInGroups } from '../../Canvas/utils/rect';
-import { updateNodeGroupsWithItems } from './utils/nodes';
 import { useRef } from 'react';
+import { ItemIDsByLevelRef } from './interfaces';
 
 type LayoutManagerProps = {
   canvasRef: React.MutableRefObject<HTMLDivElement>;
   containerRef: React.MutableRefObject<HTMLDivElement>;
-  itemIDsByLevelRef: React.MutableRefObject<string[][]>;
+  itemIDsByLevelRef: ItemIDsByLevelRef;
   itemsRef: React.MutableRefObject<ItemMappingType>;
   layoutConfig: React.MutableRefObject<LayoutConfigType>;
   setItemsState: React.Dispatch<React.SetStateAction<ItemMappingType>>;
@@ -86,6 +86,7 @@ export default function useLayoutManager({
 
     const itemsUpdated = {} as ItemMappingType;
 
+    // Update the layout of items across every level.
     itemIDsByLevelRef?.current?.forEach((ids: string[]) => {
       const nodes = [] as NodeType[];
 
@@ -93,7 +94,7 @@ export default function useLayoutManager({
         const node = itemsRef?.current?.[nodeID] as NodeType;
 
         if (ItemTypeEnum.NODE === node?.type) {
-          node.items = node.items?.map((itemID: string) => {
+          node.items = node.items?.map(({ id: itemID }) => {
             const item = itemsRef?.current?.[itemID] as NodeItemType;
             return item;
           });

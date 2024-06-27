@@ -699,6 +699,8 @@ export function layoutItemsInGroups(nodes: NodeType[], layout: LayoutConfigType)
   // rects2 = groupRectangles(rects2); // Places them tightly together side by side
   // rects2 = layoutRectsInGrid(rects2, layout); // Same as group rectangles
   // rects2 = layoutRectsInSpiral(rects2, layout);
+  //
+  console.log(nodes2, rects2);
 
   const node3: NodeType[] = rects2.map((rect: RectType, idx1) => {
     const node = nodes2[idx1];

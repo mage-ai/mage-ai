@@ -102,6 +102,7 @@ export default function useModelManager({
         itemsIDs.push(item.id);
         itemMapping[item.id] = item;
       });
+      itemIDsByLevel.push(itemsIDs);
 
       const ports = createPortsByItem(nodes.concat(items), {
         level,
@@ -190,7 +191,6 @@ export default function useModelManager({
 
   return {
     initializeModels,
-    itemIDsByLevelRef,
     itemsRef,
     mutateModels,
     portsRef,
