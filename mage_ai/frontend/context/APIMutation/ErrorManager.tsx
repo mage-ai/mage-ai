@@ -30,6 +30,14 @@ const ErrorManager: FC<ErrorManagerProps> = memo(function ErrorManager({
   errorRef,
 }: ErrorManagerProps) {
   const position = randomSample(POSITIONS);
+  const {
+    error,
+  } = errorRef?.current?.response?.data ?? {};
+  const {
+    code,
+    message,
+    type
+  } = error ?? {};
 
   return (
     <div className={[
@@ -57,13 +65,23 @@ const ErrorManager: FC<ErrorManagerProps> = memo(function ErrorManager({
             {errorRef?.current?.message}
           </Text>
 
+          <Divider />
+
+          {[code, type, message].map((val) => val && (
+            <Text key={val} monospace>
+              {val}
+            </Text>
+          ))}
+
           <Divider short />
 
-          <pre style={{ whiteSpace: 'break-spaces' }}>
-            <Text inline monospace>
-              {JSON.stringify(errorRef?.current?.response?.data?.error ?? '{}', null, 2)}
-            </Text>
-          </pre>
+          {error && (
+            <pre style={{ whiteSpace: 'break-spaces' }}>
+              <Text inline monospace>
+                {JSON.stringify(error, null, 2)}
+              </Text>
+            </pre>
+          )}
         </Grid>
 
         <Divider />

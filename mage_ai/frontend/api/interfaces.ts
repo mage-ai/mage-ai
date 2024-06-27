@@ -44,10 +44,11 @@ export type AxiosErrorType = {
   };
 } & AxiosError;
 
-type ResourceType = Record<string, any>;
+export type ResourceType = Record<string, any>;
 
 export type ResponseType = {
   data?: Record<string, ResourceType>;
+  metadata?: Record<string, any>;
 };
 
 export type ErrorResponseType = {

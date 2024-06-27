@@ -44,8 +44,8 @@ export default function useModelManager({
   };
 
   function addBlockToGroup({ template }) {
-    mutants.create.mutate({
-      id: [pipeline?.uuid],
+    mutants.update.mutate({
+      id: [pipeline?.execution_framework, pipeline?.uuid],
       payload: {
         template,
       },

@@ -39,9 +39,9 @@ function getStyles(
     ...(isDragging
       ? { height: 0, opacity: 0 }
       : {
-          minHeight: rect?.height ?? 0,
+          minHeight: rect?.height === Infinity || rect?.height === -Infinity ? 0 : rect?.height ?? 0,
         }),
-    ...(width ? { minWidth: width } : {}),
+    ...((width ?? false) ? { minWidth: width } : {}),
   };
 }
 

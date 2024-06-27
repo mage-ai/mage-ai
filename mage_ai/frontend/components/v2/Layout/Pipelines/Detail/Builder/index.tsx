@@ -2,40 +2,40 @@ import dynamic from 'next/dynamic';
 import Grid from '@mana/components/Grid';
 import styles from '@styles/scss/pages/PipelineBuilder/PipelineBuilder.module.scss';
 import { PipelineDetailProps } from '../interfaces';
-import useMutate, { MutationStatusEnum } from '@api/useMutate';
-import { useEffect, useMemo, useState } from 'react';
+import { useMutate } from '@context/APIMutation';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { PipelineExecutionFrameworkUUIDEnum } from '@interfaces/PipelineExecutionFramework/types';
 import PipelineExecutionFrameworkType from '@interfaces/PipelineExecutionFramework/interfaces';
 
 const Canvas = dynamic(() => import('../../../../Apps/PipelineCanvas'), { ssr: false });
 
 function PipelineBuilder({ frameworkUUID, uuid }: PipelineDetailProps) {
+  const phaseRef = useRef(0);
   const [pipeline, setPipeline] = useState<PipelineExecutionFrameworkType>(null);
   const [executionFramework, setExecutionFramework] = useState<PipelineExecutionFrameworkType>(null);
 
-  const pipelines = useMutate(['pipelines', 'execution_frameworks'], {
+  const pipelines = useMutate(['execution_frameworks', 'pipelines'], {
     handlers: {
       detail: {
-      onSuccess: (data) => {
-        setPipeline(data);
-      },
+        onSuccess: setPipeline,
       },
     },
   });
-  const executionFrameworks = useMutate('execution_frameworks', {
+  const executionFrameworks = useMutate(['execution_frameworks'], {
     handlers: {
       detail: {
-        onSuccess: (data) => {
-          setExecutionFramework(data);
-        },
+        onSuccess: setExecutionFramework,
       },
     },
   });
 
   useEffect(() => {
-    executionFrameworks.detail.mutate({ id: frameworkUUID }, {
-      onSuccess: () => pipelines.detail.mutate({ id: [frameworkUUID, uuid] }),
-    });
+    if (phaseRef.current === 0) {
+      phaseRef.current += 1;
+      // console.log(executionFrameworks.detail.mutate)
+      executionFrameworks.detail.mutate({ id: frameworkUUID });
+      pipelines.detail.mutate({ id: [frameworkUUID, uuid] })
+    }
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
