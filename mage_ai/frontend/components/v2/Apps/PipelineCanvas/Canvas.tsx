@@ -15,6 +15,9 @@ import { RemoveContextMenuType, RenderContextMenuType } from '@mana/hooks/useCon
 import { ZoomPanStateType } from '@mana/hooks/useZoomPan';
 import { useDrop } from 'react-dnd';
 import { useEffect, useMemo, useRef, useState, startTransition } from 'react';
+import { get, set } from '@storage/localStorage';
+
+const ACTIVE_LEVEL_KEY = 'pipeline_builder_canvas_active_level';
 
 export type BuilderCanvasProps = {
   canvasRef: React.RefObject<HTMLDivElement>;
@@ -35,7 +38,6 @@ export type BuilderCanvasProps = {
 const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
   canvasRef,
   containerRef,
-  defaultActiveLevel = 1,
   dragEnabled,
   dropEnabled,
   pipeline,
@@ -80,6 +82,7 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
 
     activeLevel.current = level;
     containerRef?.current?.classList.add(styles[`level-${level}-active`]);
+    set(ACTIVE_LEVEL_KEY, Number(level));
   }
 
   const {
@@ -125,7 +128,6 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
     // itemsMetadataRef,
   }: PresentationManagerType = usePresentationManager({
     activeLevel,
-    defaultActiveLevel,
     itemIDsByLevelRef,
     itemsRef,
     layoutConfig,

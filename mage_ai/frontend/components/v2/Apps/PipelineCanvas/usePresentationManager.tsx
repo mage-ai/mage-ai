@@ -9,14 +9,15 @@ import { createRoot, Root } from 'react-dom/client';
 import { getBlockColor } from '@mana/themes/blocks';
 import { getPathD } from '../../Canvas/Connections/utils';
 import { ActiveLevelRefType, LayoutConfigRefType, ItemIDsByLevelRef, SetActiveLevelType } from './interfaces';
+import { get, set } from '@storage/localStorage';
 
+export const ACTIVE_LEVEL_KEY = 'pipeline_builder_canvas_active_level';
 function buildConnectionLinesRootID(uuid: string): string {
   return `connection-lines-root-${uuid}`;
 }
 
 type PresentationManagerProps = {
   activeLevel: ActiveLevelRefType;
-  defaultActiveLevel?: number;
   itemIDsByLevelRef: ItemIDsByLevelRef;
   itemsRef: ModelManagerType['itemsRef'];
   layoutConfig: LayoutConfigRefType;
@@ -48,7 +49,6 @@ export type PresentationManagerType = {
 
 export default function usePresentationManager({
   activeLevel,
-  defaultActiveLevel,
   itemIDsByLevelRef,
   itemsRef,
   layoutConfig,
@@ -191,7 +191,7 @@ export default function usePresentationManager({
 
       if (versions?.every((version: number) => version === rectVersion)) {
         if (activeLevel?.current === null) {
-          setActiveLevel(defaultActiveLevel);
+          setActiveLevel(get(ACTIVE_LEVEL_KEY) ?? 0);
           const itemsUpdated = updateLayoutOfItems();
           renderLayoutChanges({ items: itemsUpdated });
           renderConnectionLines();

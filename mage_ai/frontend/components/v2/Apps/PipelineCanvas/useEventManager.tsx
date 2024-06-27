@@ -3,7 +3,7 @@ import type { DropTargetMonitor } from 'react-dnd';
 import update from 'immutability-helper';
 import { ActiveLevelRefType, AppHandlersRefType, LayoutConfigRefType, ItemIDsByLevelRef, SetActiveLevelType,
 } from './interfaces';
-import { ArrowDown, PaginateArrowRight, BatchSquaresStacked, Table, Circle, BranchAlt, Monitor, ArrowsAdjustingFrameSquare, Check, Group, TemplateShapes } from '@mana/icons';
+import { CubeWithArrowDown, PaginateArrowRight, BatchSquaresStacked, Table, Circle, BranchAlt, Monitor, ArrowsAdjustingFrameSquare, Check, Group, TemplateShapes } from '@mana/icons';
 import { ClientEventType, EventOperationEnum, EventOperationOptionsType } from '@mana/shared/interfaces';
 import { ItemTypeEnum, LayoutConfigDirectionEnum, TransformRectTypeEnum } from '../../Canvas/types';
 import { MenuItemType, RenderContextMenuOptions, RemoveContextMenuType, RenderContextMenuType } from '@mana/hooks/useContextMenu';
@@ -339,7 +339,7 @@ export default function useEventManager({
           {
             Icon: layoutConfig?.current?.direction === LayoutConfigDirectionEnum.VERTICAL
               ? Check
-              : ArrowDown,
+              : CubeWithArrowDown,
             uuid: 'Vertical direction',
             onClick: layoutConfig?.current?.direction === LayoutConfigDirectionEnum.VERTICAL
             ? null

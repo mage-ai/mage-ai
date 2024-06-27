@@ -20,6 +20,7 @@ class Template(BaseDataClass):
     description: Optional[str] = None
     inputs: Dict[str, InteractionInput] = field(default_factory=dict)
     name: Optional[str] = None
+    uuid: Optional[str] = None
     variables: Dict[str, InteractionVariable] = field(default_factory=dict)
 
     def __post_init__(self):
@@ -55,5 +56,5 @@ class Configuration(BaseDataClass):
         with open(path, 'r') as file:
             template_configurations = yaml.safe_load(file)
             self.templates.update({
-                k: Template.load(**v) for k, v in template_configurations.items()
+                k: Template.load(uuid=k, **v) for k, v in template_configurations.items()
             })

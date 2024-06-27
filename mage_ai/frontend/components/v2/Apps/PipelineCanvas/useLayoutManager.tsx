@@ -10,6 +10,10 @@ import { RectTransformationScopeEnum, ItemTypeEnum, LayoutConfigDirectionOriginE
 import { calculateBoundingBox } from '../../Canvas/utils/rect';
 import { flattenArray } from '@utils/array';
 import { validateFiniteNumber } from '@utils/number';
+import { get, set } from '@storage/localStorage';
+import { selectKeys } from '@utils/hash';
+
+const LAYOUT_CONFIG_KEY = 'pipeline_builder_canvas_layout_config';
 
 type LayoutManagerProps = {
   activeLevel: ActiveLevelRefType;
@@ -48,11 +52,28 @@ export default function useLayoutManager({
     viewportRef: canvasRef,
   });
 
+  layoutConfig.current = {
+    ...layoutConfig.current,
+    ...JSON.parse(get(LAYOUT_CONFIG_KEY) ?? '{}'),
+  };
+
   function updateLayoutConfig(config: LayoutConfigType) {
     layoutConfig.current = {
       ...layoutConfig.current,
       ...config,
     };
+    set(LAYOUT_CONFIG_KEY, JSON.stringify({
+      ...selectKeys(layoutConfig?.current ?? {}, [
+        'direction',
+      ]),
+      rectTransformations: layoutConfig?.current?.rectTransformations?.filter(({ type }) => [
+        TransformRectTypeEnum.LAYOUT_TREE,
+        TransformRectTypeEnum.LAYOUT_WAVE,
+        TransformRectTypeEnum.LAYOUT_RECTANGLE,
+        TransformRectTypeEnum.LAYOUT_GRID,
+        TransformRectTypeEnum.LAYOUT_SPIRAL,
+      ].includes(type)),
+    }));
   }
 
   function renderLayoutChanges(opts?: { level?: number; items?: ItemMappingType }) {
