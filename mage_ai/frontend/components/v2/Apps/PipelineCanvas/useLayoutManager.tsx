@@ -1,13 +1,16 @@
 import { DragItem, LayoutConfigType, NodeType } from '../../Canvas/interfaces';
 import { ItemMappingType, ModelMappingType, NodeItemType, RectType } from '../../Canvas/interfaces';
-import { ItemTypeEnum, LayoutConfigDirectionOriginEnum, LayoutConfigDirectionEnum } from '../../Canvas/types';
 import { ModelManagerType } from './useModelManager';
 import { ZoomPanStateType } from '@mana/hooks/useZoomPan';
 import { layoutItemsInGroups, transformRects } from '../../Canvas/utils/rect';
 import { useRef } from 'react';
-import { ItemIDsByLevelRef } from './interfaces';
+import { ActiveLevelRefType, ItemIDsByLevelRef } from './interfaces';
+import { RectTransformationScopeEnum, ItemTypeEnum, LayoutConfigDirectionOriginEnum, LayoutConfigDirectionEnum, TransformRectTypeEnum } from '../../Canvas/types';
+import { calculateBoundingBox, getMaxOffset } from '../../Canvas/utils/rect';
+import { flattenArray } from '@utils/array';
 
 type LayoutManagerProps = {
+  activeLevel: ActiveLevelRefType;
   canvasRef: React.MutableRefObject<HTMLDivElement>;
   containerRef: React.MutableRefObject<HTMLDivElement>;
   itemIDsByLevelRef: ItemIDsByLevelRef;
@@ -24,6 +27,7 @@ export type LayoutManagerType = {
 };
 
 export default function useLayoutManager({
+  activeLevel,
   canvasRef,
   containerRef,
   itemIDsByLevelRef,
@@ -49,6 +53,74 @@ export default function useLayoutManager({
     }));
   }
 
+  function rectTransformations() {
+    const level = activeLevel?.current ?? 0;
+    const directions = [
+      level === 1 ? LayoutConfigDirectionEnum.HORIZONTAL : LayoutConfigDirectionEnum.VERTICAL,
+      level === 1 ? LayoutConfigDirectionEnum.HORIZONTAL : LayoutConfigDirectionEnum.HORIZONTAL,
+    ];
+
+    return [
+      {
+        options: () => ({ layout: { direction: directions[0] } }),
+        scope: RectTransformationScopeEnum.CHILDREN,
+        type: TransformRectTypeEnum.TREE,
+      },
+      {
+        options: (rects: RectType[]) => ({
+          offset: {
+            left: 0,
+            top: Math.max(
+              ...flattenArray(rects?.map(rect => rect.children)).map(
+                (rect) =>
+                  (rect?.inner?.badge?.height ?? 0) +
+                  (rect?.inner?.badge?.offset?.top ?? 0) +
+                  (rect?.inner?.title?.height ?? 0) +
+                  (rect?.inner?.title?.offset?.top ?? 0),
+              ),
+            ),
+          },
+          padding: {
+            bottom: 12,
+            left: 12,
+            right: 12,
+            top: 12,
+          },
+        }),
+        scope: RectTransformationScopeEnum.SELF,
+        type: TransformRectTypeEnum.FIT_TO_CHILDREN,
+      },
+      {
+        options: () => ({ layout: { direction: directions[1] } }),
+        type: TransformRectTypeEnum.TREE,
+      },
+      // {
+      //   condition: (rects: RectType[]) => {
+      //     const box = calculateBoundingBox(rects);
+      //     return box?.width > containerRef?.current?.getBoundingClientRect()?.width;
+      //   },
+      //   options: () => ({ layout: { direction: LayoutConfigDirectionEnum.HORIZONTAL } }),
+      //   type: TransformRectTypeEnum.TREE,
+      // },
+      // {
+      //   condition: (rects: RectType[]) => {
+      //     const box = calculateBoundingBox(rects);
+      //     return box?.height > containerRef?.current?.getBoundingClientRect()?.height;
+      //   },
+      //   options: () => ({ layout: { direction: LayoutConfigDirectionEnum.VERTICAL } }),
+      //   type: TransformRectTypeEnum.TREE,
+      // },
+      {
+        scope: RectTransformationScopeEnum.CHILDREN,
+        type: TransformRectTypeEnum.SHIFT_INTO_PARENT,
+      },
+      {
+        scope: RectTransformationScopeEnum.CHILDREN,
+        type: TransformRectTypeEnum.ALIGN_CHILDREN,
+      },
+    ];
+  }
+
   function updateLayoutOfItems(): ItemMappingType {
     const itemsUpdated = {} as ItemMappingType;
 
@@ -70,58 +142,54 @@ export default function useLayoutManager({
       });
 
       let nodesTransformed = [] as NodeType[];
-      if (layoutConfig?.current?.rectTransformations) {
-        console.log(`[${level}] Transforming rects for ${nodes.length} nodes`);
-        const rects = nodes?.map((node) => ({
-          ...node?.rect,
-          children: node?.items?.map(({ id }) => {
-            const item = itemsRef?.current?.[id] ?? {} as NodeType;
 
-            return {
-              ...item.rect,
-              id,
-              left: null,
-              top: null,
-              upstream: item?.upstream?.map((id: string) => ({
-                ...itemsRef?.current?.[id]?.rect,
-                id,
-                left: null,
-                top: null,
-              })),
-            };
-          }),
-          upstream: node?.upstream?.map((id: string) => ({
-            ...itemsRef?.current?.[id]?.rect,
+      const rects = nodes?.map((node) => ({
+        ...node?.rect,
+        children: node?.items?.map(({ id }) => {
+          const item = itemsRef?.current?.[id] ?? {} as NodeType;
+
+          return {
+            ...item.rect,
             id,
             left: null,
             top: null,
-          })),
-        }));
-
-        nodesTransformed = transformRects(
-          rects,
-          layoutConfig?.current?.rectTransformations,
-        ).map((rect: RectType, idx: number) => {
-          const node = nodes[idx];
-
-          return {
-            ...node,
-            items: node?.items?.map((item: NodeItemType, idx: number) => ({
-              ...item,
-              rect: {
-                ...item?.rect,
-                ...rect?.children?.[idx],
-              },
+            upstream: item?.upstream?.map((id: string) => ({
+              ...itemsRef?.current?.[id]?.rect,
+              id,
+              left: null,
+              top: null,
             })),
-            rect: {
-              ...node?.rect,
-              ...rect,
-            },
           };
-        });
-      } else {
-        nodesTransformed = layoutItemsInGroups(nodes, layoutConfig.current);
-      }
+        }),
+        upstream: node?.upstream?.map((id: string) => ({
+          ...itemsRef?.current?.[id]?.rect,
+          id,
+          left: null,
+          top: null,
+        })),
+      }));
+
+      nodesTransformed = transformRects(
+        rects,
+        rectTransformations(),
+      ).map((rect: RectType, idx: number) => {
+        const node = nodes[idx];
+
+        return {
+          ...node,
+          items: node?.items?.map((item: NodeItemType, idx: number) => ({
+            ...item,
+            rect: {
+              ...item?.rect,
+              ...rect?.children?.[idx],
+            },
+          })),
+          rect: {
+            ...node?.rect,
+            ...rect,
+          },
+        };
+      });
 
       nodesTransformed?.forEach((node: NodeType) => {
         itemsUpdated[node.id] = node;

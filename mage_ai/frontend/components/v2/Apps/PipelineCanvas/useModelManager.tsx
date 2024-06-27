@@ -82,7 +82,7 @@ export default function useModelManager({
     // Create a port for every group at every level.
     // Create an item for every block at every level because they’ll have different groupings.
     const itemIDsByLevel = [];
-    const maxLevel = 0;
+    const maxLevel = 1;
     blockGroupsByLevel?.forEach((blockGroups: BlockGroupType[], level: number) => {
       if (level !== null && level > maxLevel) return;
 

@@ -152,18 +152,18 @@ export function BlockNode({
 
   const connectionRows = useMemo(
     () =>
-      inputOutputPairs?.length >= 1 && (
+      ItemTypeEnum.BLOCK === item?.type && inputOutputPairs?.length >= 1 && (
         <PanelRows>
           {inputOutputPairs?.map(({ input, output }, idx: number) => (
             <Connection
               draggable={draggable}
               handlers={handlers}
-              input={input}
+              input={input as PortType}
               key={[input ? input?.id : '', output ? output?.id : ''].join(
                 ':',
               )}
               onMount={onMount}
-              output={output}
+              output={output as PortType}
             />
           ))}
         </PanelRows>

@@ -16,6 +16,7 @@ function buildConnectionLinesRootID(uuid: string): string {
 
 type PresentationManagerProps = {
   activeLevel: ActiveLevelRefType;
+  defaultActiveLevel?: number;
   itemIDsByLevelRef: ItemIDsByLevelRef;
   itemsRef: ModelManagerType['itemsRef'];
   layoutConfig: LayoutConfigRefType;
@@ -47,6 +48,7 @@ export type PresentationManagerType = {
 
 export default function usePresentationManager({
   activeLevel,
+  defaultActiveLevel,
   itemIDsByLevelRef,
   itemsRef,
   layoutConfig,
@@ -189,7 +191,7 @@ export default function usePresentationManager({
 
       if (versions?.every((version: number) => version === rectVersion)) {
         if (activeLevel?.current === null) {
-          setActiveLevel();
+          setActiveLevel(defaultActiveLevel);
           const itemsUpdated = updateLayoutOfItems();
           renderLayoutChanges({ items: itemsUpdated });
           renderConnectionLines();
@@ -238,7 +240,7 @@ export default function usePresentationManager({
     modelMapping?: ModelMappingType;
   }): React.ReactNode {
     const { layout, modelMapping } = opts ?? {};
-    const { direction, origin, transformState } = layout ?? layoutConfig?.current ?? {};
+    const { direction, origin, transformStateRef } = layout ?? layoutConfig?.current ?? {};
 
     const isVertical = LayoutConfigDirectionEnum.VERTICAL === direction;
     const isReverse =
@@ -303,8 +305,8 @@ export default function usePresentationManager({
         port1Override?.rect ??
         itemElementsRef?.current?.port?.[port1.id]?.current?.getBoundingClientRect();
       // node.rect
-      const rect1Node =
-        itemElementsRef?.current?.node?.[node1.id]?.current?.getBoundingClientRect();
+      // const rect1Node =
+      //   itemElementsRef?.current?.node?.[node1.id]?.current?.getBoundingClientRect();
 
       // 2
       let item2 = itemsRef?.current[port1?.target?.id];
@@ -331,8 +333,8 @@ export default function usePresentationManager({
         port2Override?.rect ??
         itemElementsRef?.current?.port?.[(port2 ?? { id: 'null' }).id]?.current?.getBoundingClientRect();
       // node.rect
-      const rect2Node =
-        itemElementsRef?.current?.node?.[node2.id]?.current?.getBoundingClientRect();
+      // const rect2Node =
+      //   itemElementsRef?.current?.node?.[node2.id]?.current?.getBoundingClientRect();
 
       const values = {
         [port1.id]: {
@@ -389,7 +391,7 @@ export default function usePresentationManager({
         // console.log(0, item1?.id, item2?.id, rect);
         // rect = transformState ? transformZoomPanRect(rect, transformState?.current) : rect;
 
-        const scale = Number(transformState?.scale?.current ?? 1);
+        const scale = Number(transformStateRef?.current?.scale?.current ?? 1);
         if (ItemTypeEnum.PORT === values?.type) {
           const isOutput = PortSubtypeEnum.OUTPUT === values?.subtype;
 
@@ -530,8 +532,8 @@ export default function usePresentationManager({
     connectionLinesPathRef,
     connectionLinesRootID,
     itemDraggingRef,
-    itemsMetadataRef,
     itemElementsRef,
+    itemsMetadataRef,
     onMountItem,
     onMountPort,
     renderConnectionLines,

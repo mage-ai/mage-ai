@@ -16,7 +16,7 @@ import {
 } from '@mana/icons';
 import { createRef, useEffect, useCallback, useState, useMemo, useRef } from 'react';
 import { GroupUUIDEnum } from '@interfaces/PipelineExecutionFramework/types';
-import { NodeItemType, PortType, DragItem } from '../interfaces';
+import { NodeItemType, PortType, DragItem, NodeType } from '../interfaces';
 import { countOccurrences, flattenArray, sortByKey } from '@utils/array';
 import { dig } from '@utils/hash';
 import { ItemTypeEnum } from '../types';
@@ -29,7 +29,6 @@ import {
   SubmitEventOperationType,
 } from '@mana/shared/interfaces';
 import { ButtonEnum } from '@mana/shared/enums';
-import { MenuItemType } from '@mana/components/Menu/interfaces';
 
 type BlockNodeWrapperProps = {
   collapsed?: boolean;
@@ -115,18 +114,19 @@ const BlockNodeWrapper: React.FC<BlockNodeWrapperProps> = ({
     }
   }
   const names = useMemo(() => {
-    if (BlockTypeEnum.PIPELINE === type) {
-      const typeCounts = countOccurrences(flattenArray(pipeline?.blocks?.map(b => b?.type) || []));
+    if (ItemTypeEnum.NODE === item?.type) {
+      // Use the color of the most common block type in the group.
+      const typeCounts = countOccurrences(flattenArray((item as NodeType)?.items?.map(i => i?.block?.type) || []));
       const modeType = sortByKey(Object.entries(typeCounts || {}), arr => arr[1], {
         reverse: true,
-      })[0];
+      })?.[0]?.[0];
       const colors = getBlockColor(modeType as BlockTypeEnum, { getColorName: true })?.names;
       return colors?.base ? colors : { base: 'gray' };
     }
 
     const c = getBlockColor(type as BlockTypeEnum, { getColorName: true });
     return c && c?.names ? c?.names : { base: 'gray' };
-  }, [pipeline, type]);
+  }, [item, type]);
 
   const ports = useMemo(() => item?.ports ?? [], [item]);
 
@@ -280,7 +280,7 @@ const BlockNodeWrapper: React.FC<BlockNodeWrapperProps> = ({
             },
           },
           badge:
-            isPipeline || isGroup
+            ItemTypeEnum.NODE === item?.type
               ? {
                   Icon: collapsed ? Infinite : PipeIconVertical,
                   baseColorName: names?.base || 'purple',

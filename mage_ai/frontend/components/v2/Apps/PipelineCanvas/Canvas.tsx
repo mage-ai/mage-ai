@@ -3,25 +3,23 @@ import CanvasContainer from './index.style';
 import PipelineExecutionFrameworkType from '@interfaces/PipelineExecutionFramework/interfaces';
 import type { DropTargetMonitor } from 'react-dnd';
 import { LayoutConfigType, DragItem, ModelMappingType, NodeItemType,
-NodeType,
-RectType } from '../../Canvas/interfaces';
+NodeType } from '../../Canvas/interfaces';
 import styles from '@styles/scss/apps/Canvas/Pipelines/Builder.module.scss';
 import useEventManager, { EventManagerType } from './useEventManager';
 import useLayoutManager, { LayoutManagerType } from './useLayoutManager';
 import useModelManager, { ModelManagerType } from './useModelManager';
 import usePresentationManager, { PresentationManagerType } from './usePresentationManager';
 import { DragLayer } from '../../Canvas/Layers/DragLayer';
-import { RectTransformationScopeEnum, ItemTypeEnum, LayoutConfigDirectionOriginEnum, LayoutConfigDirectionEnum, TransformRectTypeEnum } from '../../Canvas/types';
+import { ItemTypeEnum, LayoutConfigDirectionOriginEnum, LayoutConfigDirectionEnum } from '../../Canvas/types';
 import { RemoveContextMenuType, RenderContextMenuType } from '@mana/hooks/useContextMenu';
 import { ZoomPanStateType } from '@mana/hooks/useZoomPan';
-import { calculateBoundingBox, getMaxOffset } from '../../Canvas/utils/rect';
 import { useDrop } from 'react-dnd';
 import { useEffect, useMemo, useRef, useState, startTransition } from 'react';
-import { flattenArray } from '@utils/array';
 
 export type BuilderCanvasProps = {
   canvasRef: React.RefObject<HTMLDivElement>;
   containerRef: React.RefObject<HTMLDivElement>;
+  defaultActiveLevel?: number;
   dragEnabled?: boolean;
   dropEnabled?: boolean;
   pipeline: PipelineExecutionFrameworkType;
@@ -37,6 +35,7 @@ export type BuilderCanvasProps = {
 const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
   canvasRef,
   containerRef,
+  defaultActiveLevel = 1,
   dragEnabled,
   dropEnabled,
   pipeline,
@@ -74,58 +73,6 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
     direction: LayoutConfigDirectionEnum.HORIZONTAL,
     gap: { column: 40, row: 40 },
     origin: LayoutConfigDirectionOriginEnum.LEFT,
-    rectTransformations: [
-      {
-        options: () => ({ layout: { direction: LayoutConfigDirectionEnum.HORIZONTAL } }),
-        scope: RectTransformationScopeEnum.CHILDREN,
-        type: TransformRectTypeEnum.TREE,
-      },
-      {
-        options: (rects: RectType[]) => ({
-          offset: {
-            left: 0,
-            top: Math.max(
-              ...flattenArray(rects?.map(rect => rect.children)).map(
-                (rect) =>
-                  (rect?.inner?.badge?.height ?? 0) +
-                  (rect?.inner?.badge?.offset?.top ?? 0) +
-                  (rect?.inner?.title?.height ?? 0) +
-                  (rect?.inner?.title?.offset?.top ?? 0),
-              ),
-            ),
-          },
-          padding: {
-            bottom: 12,
-            left: 12,
-            right: 12,
-            top: 12,
-          },
-        }),
-        scope: RectTransformationScopeEnum.SELF,
-        type: TransformRectTypeEnum.FIT_TO_CHILDREN,
-      },
-      {
-        options: () => ({ layout: { direction: LayoutConfigDirectionEnum.VERTICAL } }),
-        type: TransformRectTypeEnum.TREE,
-      },
-      {
-        condition: (rects: RectType[]) => {
-          const box = calculateBoundingBox(rects);
-          return box?.width > containerRef?.current?.getBoundingClientRect()?.width;
-        },
-        options: () => ({ layout: { direction: LayoutConfigDirectionEnum.HORIZONTAL } }),
-        type: TransformRectTypeEnum.TREE,
-      },
-      {
-        scope: RectTransformationScopeEnum.CHILDREN,
-        type: TransformRectTypeEnum.SHIFT_INTO_PARENT,
-      },
-      {
-        options: () => ({ layout: { origin: LayoutConfigDirectionOriginEnum.BOTTOM } }),
-        scope: RectTransformationScopeEnum.CHILDREN,
-        type: TransformRectTypeEnum.ALIGN_CHILDREN,
-      },
-    ],
     transformStateRef: transformState,
     viewportRef: canvasRef,
 
@@ -194,7 +141,7 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
       const idx = validLevels.current.findIndex(i => i === level);
       level = validLevels.current[idx + 1] ?? validLevels.current[0];
     } else {
-      level += 1;
+      level += (levelArg === null ? 1 : 0);
       if (level >= itemIDsByLevelRef?.current?.length) {
         level = 0;
       }
@@ -220,6 +167,7 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
     renderLayoutChanges,
     updateLayoutOfItems,
   }: LayoutManagerType = useLayoutManager({
+    activeLevel,
     canvasRef,
     containerRef,
     itemIDsByLevelRef,
@@ -243,6 +191,7 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
     // itemsMetadataRef,
   }: PresentationManagerType = usePresentationManager({
     activeLevel,
+    defaultActiveLevel,
     itemIDsByLevelRef,
     itemsRef,
     layoutConfig,

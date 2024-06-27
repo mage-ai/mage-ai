@@ -48,7 +48,7 @@ function getStyles(
 export type NodeWrapperProps = {
   children?: React.ReactNode;
   className?: string;
-  item: DragItem;
+  item: NodeItemType;
 } & DragAndDropType;
 
 export const NodeWrapper: FC<NodeWrapperProps> = memo(function NodeWrapper({
