@@ -18,6 +18,55 @@ export interface APIErrorType {
   };
   code: string;
   status: number;
+  // {
+  //   "data": {
+  //     "error": {
+  //       "code": 404,
+  //       "message": "Record not found.",
+  //       "type": "record_not_found"
+  //     },
+  //     "status": 404
+  //   },
+  //   "status": 404,
+  //   "statusText": "Not Found",
+  //   "headers": {
+  //     "content-length": "99",
+  //     "content-type": "application/json"
+  //   },
+  //   "config": {
+  //     "transitional": {
+  //       "silentJSONParsing": true,
+  //       "forcedJSONParsing": true,
+  //       "clarifyTimeoutError": false
+  //     },
+  //     "transformRequest": [
+  //       null
+  //     ],
+  //     "transformResponse": [
+  //       null
+  //     ],
+  //     "timeout": 0,
+  //     "xsrfCookieName": "XSRF-TOKEN",
+  //     "xsrfHeaderName": "X-XSRF-TOKEN",
+  //     "maxContentLength": -1,
+  //     "maxBodyLength": -1,
+  //     "env": {
+  //       "FormData": null
+  //     },
+  //     "headers": {
+  //       "Accept": "application/json, text/plain, */*",
+  //       "Content-Type": "application/json"
+  //     },
+  //     "data": "{\"execution_framework\":{\"template\":{\"description\":\"Fetch GitHub repository\",\"inputs\":{\"text\":{\"options\":[],\"style\":{\"input_type\":null,\"multiline\":null},\"type\":\"text_field\"}},\"name\":\"GitHub repository loader\",\"uuid\":\"github\",\"variables\":{\"url\":{\"description\":\"GitHub repository URL\",\"input\":\"text\",\"name\":\"Repo URL\",\"required\":true,\"types\":[\"string\"],\"uuid\":null}}}},\"api_key\":\"zkWlN0PkIKSN0C11CfUHUj84OT5XOJ6tDZ6bDRO2\"}",
+  //     "method": "post",
+  //     "onDownloadProgress": null,
+  //     "onUploadProgress": null,
+  //     "responseType": "json",
+  //     "signal": null,
+  //     "url": "http://localhost:6789/api/execution_frameworks/mager_rager_pipeline/pipelines?_http_error_codes=true&api_key=zkWlN0PkIKSN0C11CfUHUj84OT5XOJ6tDZ6bDRO2"
+  //   },
+  //   "request": {}
+  // }
 }
 
 export type APIMutationProviderProps = {
