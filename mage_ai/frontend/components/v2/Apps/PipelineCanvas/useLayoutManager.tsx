@@ -92,31 +92,78 @@ export default function useLayoutManager({
 
     const layoutStyleTransformations = [];
 
+    const shift =
+      {
+        options: (rects: RectType[]) => {
+          const box = calculateBoundingBox(rects);
+
+          return {
+            offset: {
+              left: Math.max(
+                40,
+                validateFiniteNumber(typeof window !== 'undefined' ? (window.innerWidth - box.width) / 2 : 0),
+              ),
+              top: Math.max(
+                40,
+                validateFiniteNumber(typeof window !== 'undefined' ? (window.innerHeight - box.height) / 2 : 0),
+              ),
+            },
+          };
+        },
+        type: TransformRectTypeEnum.SHIFT,
+      };
+    const tree = {
+      options: () => ({ layout: { direction: directions[1] } }),
+      type: TransformRectTypeEnum.LAYOUT_TREE,
+    };
+    const treecon = [
+      {
+        condition: (rects: RectType[]) => {
+          const box = calculateBoundingBox(rects);
+          return box?.width > containerRef?.current?.getBoundingClientRect()?.width;
+        },
+        options: () => ({ layout: { direction: LayoutConfigDirectionEnum.HORIZONTAL } }),
+        type: TransformRectTypeEnum.LAYOUT_TREE,
+      },
+      {
+        condition: (rects: RectType[]) => {
+          const box = calculateBoundingBox(rects);
+          return box?.height > containerRef?.current?.getBoundingClientRect()?.height;
+        },
+        options: () => ({ layout: { direction: LayoutConfigDirectionEnum.VERTICAL } }),
+        type: TransformRectTypeEnum.LAYOUT_TREE,
+      },
+    ];
+
+    const wavecon = {
+      condition: (rects: RectType[]) => {
+        const count = rects?.filter?.(rect => (rect?.children?.length ?? 0) >= 1)?.length ?? 0;
+        return count / Math.max(rects?.length ?? 1) < 1;
+      },
+    };
+    const wave = {
+      options: () => ({
+        layout: update(layoutConfig?.current, {
+          gap: {
+            $set: {
+              column: 40,
+              row: 40,
+            },
+          },
+        }),
+        layoutOptions: { amplitude: 200, wavelength: 300 }
+      }),
+      type: TransformRectTypeEnum.LAYOUT_WAVE,
+    };
+
     if (layoutConfig?.current?.rectTransformations) {
       layoutConfig?.current?.rectTransformations?.forEach(({
         type,
       }) => {
         if (TransformRectTypeEnum.LAYOUT_TREE === type) {
-          // Below
+          layoutStyleTransformations.push(tree);
         } else if (TransformRectTypeEnum.LAYOUT_WAVE === type) {
-          layoutStyleTransformations.push({
-            condition: (rects: RectType[]) => {
-              const count = rects?.filter?.(rect => (rect?.children?.length ?? 0) >= 1)?.length ?? 0;
-              return count / Math.max(rects?.length ?? 1) < 1;
-            },
-            options: () => ({
-              layout: update(layoutConfig?.current, {
-                gap: {
-                  $set: {
-                    column: 40,
-                    row: 40,
-                  },
-                },
-              }),
-              layoutOptions: { amplitude: 200, wavelength: 300 }
-            }),
-            type: TransformRectTypeEnum.LAYOUT_WAVE,
-          });
+          layoutStyleTransformations.push(wave);
         } else if (TransformRectTypeEnum.LAYOUT_RECTANGLE === type) {
           layoutStyleTransformations.push({
             options: () => ({
@@ -170,47 +217,12 @@ export default function useLayoutManager({
       });
     }
 
-    if (!layoutStyleTransformations) {
+    let defaultTrans = false;
+    if (!layoutStyleTransformations?.length) {
+      defaultTrans = true;
       layoutStyleTransformations.push(...[
-        {
-          options: () => ({ layout: { direction: directions[1] } }),
-          type: TransformRectTypeEnum.LAYOUT_TREE,
-        },
-        {
-          condition: (rects: RectType[]) => {
-            const box = calculateBoundingBox(rects);
-            return box?.width > containerRef?.current?.getBoundingClientRect()?.width;
-          },
-          options: () => ({ layout: { direction: LayoutConfigDirectionEnum.HORIZONTAL } }),
-          type: TransformRectTypeEnum.LAYOUT_TREE,
-        },
-        {
-          condition: (rects: RectType[]) => {
-            const box = calculateBoundingBox(rects);
-            return box?.height > containerRef?.current?.getBoundingClientRect()?.height;
-          },
-          options: () => ({ layout: { direction: LayoutConfigDirectionEnum.VERTICAL } }),
-          type: TransformRectTypeEnum.LAYOUT_TREE,
-        },
-        {
-          options: (rects: RectType[]) => {
-            const box = calculateBoundingBox(rects);
-
-            return {
-              offset: {
-                left: Math.max(
-                  40,
-                  validateFiniteNumber(typeof window !== 'undefined' ? (window.innerWidth - box.width) / 2 : 0),
-                ),
-                top: Math.max(
-                  40,
-                  validateFiniteNumber(typeof window !== 'undefined' ? (window.innerHeight - box.height) / 2 : 0),
-                ),
-              },
-            };
-          },
-          type: TransformRectTypeEnum.SHIFT,
-        },
+        tree,
+        ...treecon,
       ]);
     }
 
@@ -261,6 +273,12 @@ export default function useLayoutManager({
         scope: RectTransformationScopeEnum.CHILDREN,
         type: TransformRectTypeEnum.ALIGN_CHILDREN,
       },
+      ...(defaultTrans ? [{
+
+        ...wave,
+        ...wavecon,
+      }] : []),
+      shift,
     ];
   }
 
