@@ -1,7 +1,7 @@
 import PipelineExecutionFrameworkType, {
   FrameworkType,
 } from '@interfaces/PipelineExecutionFramework/interfaces';
-import BlockType from '@interfaces/BlockType';
+import BlockType, { BlockTypeEnum } from '@interfaces/BlockType';
 import { BlockMappingType, BlocksByGroupType } from '../../../Canvas/interfaces';
 import { GroupUUIDEnum } from '@interfaces/PipelineExecutionFramework/types';
 import { extractNestedBlocks } from '@utils/models/pipeline';
@@ -13,6 +13,7 @@ export function buildDependencies(
   pipeline: PipelineExecutionFrameworkType,
 ): {
   blockMapping: BlockMappingType;
+  blocksByGroup: BlocksByGroupType;
   groupsByLevel: FrameworkType[][];
 } {
   // Build group hierarchy from pipeline execution framework’s blocks:
@@ -147,34 +148,82 @@ export function buildDependencies(
   levels.push(blocksLastLevel);
 
   // Remove unused attributes in the groups
+  const groupMapping = {};
   const groupsByLevel = [];
   levels.forEach((groups) => {
-    groupsByLevel.push(groups.map((group) => selectKeys(group, [
-      'configuration',
-      'description',
-      'downstream_blocks',
-      'groups',
-      'name',
-      'upstream_blocks',
-      'uuid',
-    ])));
+    const groupsInLevel = [];
+
+    groups.forEach((group) => {
+      const group2 = selectKeys(group, [
+        'configuration',
+        'description',
+        'downstream_blocks',
+        'groups',
+        'name',
+        'upstream_blocks',
+        'uuid',
+      ]);
+
+      groupsInLevel.push(group2);
+      groupMapping[group2.uuid] = group2;
+    });
+
+    groupsByLevel.push(groupsInLevel);
   });
 
   // Get all the blocks from the user’s pipeline
   const pipelinesMapping = indexBy(extractNestedPipelines(pipeline), ({ uuid }) => uuid);
   const blockMapping = extractNestedBlocks(pipeline, pipelinesMapping, {
     addPipelineToBlocks: false,
+    excludeBlockTypes: [BlockTypeEnum.PIPELINE],
+  });
+  const blocksByGroup = blocksToGroupMapping(Object.values(blockMapping));
+
+  // For every block in a group, update the block’s upstream and downstream blocks by:
+  // 1. Get the block’s group’s upstream and downstream blocks; the group’s upstream and downstream
+  //   blocks will be pointing to another group.
+  // 2. Get the group that’s being pointed to.
+  // 3. Get the block UUIDs from the pointed group.
+  // 4. Add the blocks’ UUID to the current blocks’s upstream and downstream blocks.
+
+  Object.entries(blockMapping ?? {})?.forEach(([blockUUID, block]: [string, BlockType]) => {
+    block?.groups?.forEach((groupUUID: GroupUUIDEnum) => {
+      const group = groupMapping[groupUUID];
+
+      const dn = group?.downstream_blocks ?? [];
+      dn.forEach((groupUUIDdn: GroupUUIDEnum) => {
+        const blocksdn = blocksByGroup[groupUUIDdn];
+        block.downstream_blocks ||= [];
+        block.downstream_blocks = uniqueArray([
+          ...block.downstream_blocks,
+          ...(blocksdn ? Object.keys(blocksdn) : []),
+        ]) as any;
+      });
+
+      const up = group?.upstream_blocks ?? [];
+      up.forEach((groupUUIDup: GroupUUIDEnum) => {
+        const blocksup = blocksByGroup[groupUUIDup];
+        block.upstream_blocks ||= [];
+        block.upstream_blocks = uniqueArray([
+          ...block.upstream_blocks,
+          ...(blocksup ? Object.keys(blocksup) : []),
+        ]) as any;
+      });
+
+      blockMapping[blockUUID] = block;
+    });
   });
 
   // console.log('groupsByLevel', groupsByLevel);
 
   return {
     blockMapping,
+    blocksByGroup,
     groupsByLevel,
   };
 }
 
-export function blocksToGroupMapping(blocks: BlockType[]): BlocksByGroupType {
+function blocksToGroupMapping(blocks: BlockType[]): BlocksByGroupType {
   const mapping = {} as BlocksByGroupType;
 
   blocks?.forEach((block: BlockType) => {

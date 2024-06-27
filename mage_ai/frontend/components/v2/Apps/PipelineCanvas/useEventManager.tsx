@@ -374,7 +374,7 @@ export default function useEventManager({
     // if (
     //   ItemTypeEnum.PORT === node.type &&
     //   itemDraggingRef.current &&
-    //   buildPortUUID(node) === buildPortUUID(itemDraggingRef?.current)
+    //   node.id === itemDraggingRef?.current?.id
     // ) {
     //   rectOrigin = itemDraggingRef?.current?.rect;
     //   console.log('What do we do with this rect?', rectOrigin);

@@ -2,6 +2,7 @@ import BlockType from '@interfaces/BlockType';
 import { BlockGroupType, NodeItemType } from '../../../Canvas/interfaces';
 import { ItemTypeEnum } from '../../../Canvas/types';
 import { buildUUIDForLevel } from './levels';
+import { selectKeys } from '@utils/hash';
 
 export function createItemsFromBlockGroups(
   blockGroups: BlockGroupType[],
@@ -13,15 +14,26 @@ export function createItemsFromBlockGroups(
   const nodes = [];
   const items = [];
 
+  const itemIDsByNodeID = {};
   blockGroups.forEach((blockGroup: BlockGroupType) => {
     const { blocks, group } = blockGroup;
     const items2 = createItemsFromBlocks(blocks, opts);
-    items.push(...items2);
-    nodes.push({
+
+    const node = {
       ...buildItemFromBlock(group as BlockType, opts),
       items: items2.map(item => item.id),
       type: ItemTypeEnum.NODE,
+    };
+    nodes.push(node);
+
+    items2.forEach((item: NodeItemType) => {
+      items.push({
+        ...item,
+        node: selectKeys(node, ['downstream', 'id', 'items', 'upstream']),
+      });
     });
+
+    itemIDsByNodeID[node.id] = node.items;
   });
 
   return {
