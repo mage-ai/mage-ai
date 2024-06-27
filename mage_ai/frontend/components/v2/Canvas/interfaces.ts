@@ -2,6 +2,7 @@ import BlockType from '@interfaces/BlockType';
 import PipelineType from '@interfaces/PipelineType';
 import { FrameworkType, PipelineExecutionFrameworkBlockType } from '@interfaces/PipelineExecutionFramework/interfaces';
 import { GroupUUIDEnum } from '@interfaces/PipelineExecutionFramework/types';
+import { RectTransformationScopeEnum, TransformRectTypeEnum } from './types';
 import { ZoomPanStateType } from '@mana/hooks/useZoomPan';
 
 import {
@@ -20,6 +21,7 @@ export interface OffsetType {
 
 export interface RectType {
   bottom?: number;
+  children?: RectType[];
   diff?: RectType;
   height?: number;
   id?: number | string;
@@ -27,6 +29,7 @@ export interface RectType {
   left: number;
   offset?: OffsetType;
   padding?: RectType;
+  parent?: RectType;
   right?: number;
   top: number;
   upstream?: RectType[];
@@ -69,9 +72,26 @@ export interface NodeType extends DragItem {
   upstream?: string[];
 }
 
+export interface RectTransformationOptionsType {
+  boundingBox?: RectType;
+  layout?: LayoutConfigType;
+  offset?: RectType;
+  padding?: RectType;
+}
+
+export interface RectTransformationType {
+  condition?: (rects: RectType[]) => boolean;
+  initialScope?: RectTransformationScopeEnum;
+  options?: (rects: RectType[]) => RectTransformationOptionsType;
+  scope?: RectTransformationScopeEnum; // Leave empty to operate on all rects at the top level
+  scopeTransformations?: RectTransformationType[];
+  targets?: (rects: RectType[]) => RectType[];
+  transform?: (rects: RectType[]) => RectType[];
+  type?: TransformRectTypeEnum;
+}
+
 export interface LayoutConfigType {
-  boundingRect?: RectType;
-  containerRect?: RectType;
+  containerRef?: React.MutableRefObject<HTMLElement>;
   defaultRect?: {
     item?: (item?: NodeItemType) => RectType;
   };
@@ -88,13 +108,15 @@ export interface LayoutConfigType {
     rows?: number;
   };
   itemRect?: RectType;
+  rectTransformations?: RectTransformationType[];
   stagger?: number;
   transformRect?: {
     block?: (rect?: RectType) => RectType;
     node?: (rect?: RectType) => RectType;
     port?: (rect?: RectType) => RectType;
   };
-  transformState?: ZoomPanStateType;
+  transformStateRef?: React.MutableRefObject<ZoomPanStateType>;
+  viewportRef?: React.MutableRefObject<HTMLElement>;
 }
 
 export type NodeItemType = DragItem | NodeType | PortType;

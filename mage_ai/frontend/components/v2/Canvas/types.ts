@@ -25,3 +25,20 @@ export enum ColorEnum {
   BLUE = 'blue',
   YELLOW = 'yellow',
 }
+
+export enum RectTransformationScopeEnum {
+  CHILDREN = 'children', // all the children in a parent
+  PARENT = 'parent', // when within children, operate on parent
+  SELF = 'self', // 1 by 1
+}
+
+export enum TransformRectTypeEnum {
+  ALIGN_CHILDREN = 'align_children',
+  FIT_TO_CHILDREN = 'fit_to_children',
+  GRID = 'grid',
+  PAD = 'pad',
+  SHIFT = 'shift',
+  SHIFT_INTO_PARENT = 'shift_into_parent',
+  TREE = 'tree',
+  UPDATE = 'update',
+}

@@ -1,9 +1,9 @@
 import { DragItem, LayoutConfigType, NodeType } from '../../Canvas/interfaces';
-import { ItemMappingType, ModelMappingType, NodeItemType } from '../../Canvas/interfaces';
+import { ItemMappingType, ModelMappingType, NodeItemType, RectType } from '../../Canvas/interfaces';
 import { ItemTypeEnum, LayoutConfigDirectionOriginEnum, LayoutConfigDirectionEnum } from '../../Canvas/types';
 import { ModelManagerType } from './useModelManager';
 import { ZoomPanStateType } from '@mana/hooks/useZoomPan';
-import { layoutItemsInGroups } from '../../Canvas/utils/rect';
+import { layoutItemsInGroups, transformRects } from '../../Canvas/utils/rect';
 import { useRef } from 'react';
 import { ItemIDsByLevelRef } from './interfaces';
 
@@ -50,44 +50,10 @@ export default function useLayoutManager({
   }
 
   function updateLayoutOfItems(): ItemMappingType {
-    const layout = {
-      // boundingRect: canvasRef?.current?.getBoundingClientRect(),
-      // containerRect: containerRef?.current?.getBoundingClientRect(),
-      // defaultRect: {
-      //   item: ({ rect }) => ({
-      //     left: 0,
-      //     padding: {
-      //       bottom: 12,
-      //       left: 12,
-      //       right: 12,
-      //       top: 12,
-      //     },
-      //     top: 0,
-      //     ...rect,
-      //   }),
-      // },
-      // direction: LayoutConfigDirectionEnum.HORIZONTAL === layoutConfig.current.direction
-      //   ? LayoutConfigDirectionEnum.VERTICAL
-      //   : LayoutConfigDirectionEnum.HORIZONTAL,
-      // gap: {
-      //   column: 40,
-      //   row: 40,
-      // },
-      // Doesn’t do anything
-      // transformRect: {
-      //   node: (rect) => ({
-      //     ...rect,
-      //     left: rect.left + 40,
-      //     top: rect.top + 40,
-      //   }),
-      // },
-      ...layoutConfig.current,
-    };
-
     const itemsUpdated = {} as ItemMappingType;
 
     // Update the layout of items across every level.
-    itemIDsByLevelRef?.current?.forEach((ids: string[]) => {
+    itemIDsByLevelRef?.current?.forEach((ids: string[], level: number) => {
       const nodes = [] as NodeType[];
 
       ids.forEach((nodeID: string) => {
@@ -103,8 +69,61 @@ export default function useLayoutManager({
         }
       });
 
-      const groups = layoutItemsInGroups(nodes, layout);
-      groups?.forEach((node: NodeType) => {
+      let nodesTransformed = [] as NodeType[];
+      if (layoutConfig?.current?.rectTransformations) {
+        console.log(`[${level}] Transforming rects for ${nodes.length} nodes`);
+        const rects = nodes?.map((node) => ({
+          ...node?.rect,
+          children: node?.items?.map(({ id }) => {
+            const item = itemsRef?.current?.[id] ?? {} as NodeType;
+
+            return {
+              ...item.rect,
+              id,
+              left: null,
+              top: null,
+              upstream: item?.upstream?.map((id: string) => ({
+                ...itemsRef?.current?.[id]?.rect,
+                id,
+                left: null,
+                top: null,
+              })),
+            };
+          }),
+          upstream: node?.upstream?.map((id: string) => ({
+            ...itemsRef?.current?.[id]?.rect,
+            id,
+            left: null,
+            top: null,
+          })),
+        }));
+
+        nodesTransformed = transformRects(
+          rects,
+          layoutConfig?.current?.rectTransformations,
+        ).map((rect: RectType, idx: number) => {
+          const node = nodes[idx];
+
+          return {
+            ...node,
+            items: node?.items?.map((item: NodeItemType, idx: number) => ({
+              ...item,
+              rect: {
+                ...item?.rect,
+                ...rect?.children?.[idx],
+              },
+            })),
+            rect: {
+              ...node?.rect,
+              ...rect,
+            },
+          };
+        });
+      } else {
+        nodesTransformed = layoutItemsInGroups(nodes, layoutConfig.current);
+      }
+
+      nodesTransformed?.forEach((node: NodeType) => {
         itemsUpdated[node.id] = node;
 
         node?.items?.forEach((itemNode: DragItem) => {

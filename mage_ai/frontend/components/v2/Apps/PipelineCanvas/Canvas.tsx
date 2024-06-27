@@ -1,20 +1,23 @@
 import BlockNodeWrapper from '../../Canvas/Nodes/BlockNodeWrapper';
 import CanvasContainer from './index.style';
-import PipelineExecutionFrameworkType, { FrameworkType } from '@interfaces/PipelineExecutionFramework/interfaces';
+import PipelineExecutionFrameworkType from '@interfaces/PipelineExecutionFramework/interfaces';
 import type { DropTargetMonitor } from 'react-dnd';
-import {
-  LayoutConfigType, DragItem, ModelMappingType, NodeItemType, NodeType, BlockMappingType, GroupLevelType } from '../../Canvas/interfaces';
+import { LayoutConfigType, DragItem, ModelMappingType, NodeItemType,
+NodeType,
+RectType } from '../../Canvas/interfaces';
 import styles from '@styles/scss/apps/Canvas/Pipelines/Builder.module.scss';
 import useEventManager, { EventManagerType } from './useEventManager';
 import useLayoutManager, { LayoutManagerType } from './useLayoutManager';
 import useModelManager, { ModelManagerType } from './useModelManager';
 import usePresentationManager, { PresentationManagerType } from './usePresentationManager';
 import { DragLayer } from '../../Canvas/Layers/DragLayer';
-import { ItemTypeEnum, LayoutConfigDirectionOriginEnum, LayoutConfigDirectionEnum } from '../../Canvas/types';
+import { RectTransformationScopeEnum, ItemTypeEnum, LayoutConfigDirectionOriginEnum, LayoutConfigDirectionEnum, TransformRectTypeEnum } from '../../Canvas/types';
 import { RemoveContextMenuType, RenderContextMenuType } from '@mana/hooks/useContextMenu';
 import { ZoomPanStateType } from '@mana/hooks/useZoomPan';
+import { calculateBoundingBox, getMaxOffset } from '../../Canvas/utils/rect';
 import { useDrop } from 'react-dnd';
 import { useEffect, useMemo, useRef, useState, startTransition } from 'react';
+import { flattenArray } from '@utils/array';
 
 export type BuilderCanvasProps = {
   canvasRef: React.RefObject<HTMLDivElement>;
@@ -53,55 +56,7 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
   const validLevels = useRef<number[]>(null);
 
   const layoutConfig = useRef<LayoutConfigType>({
-    containerRect: {
-      left: 40,
-      top: 40,
-      height: window.innerHeight,
-      width: window.innerWidth,
-    },
-    boundingRect: {
-      // left: 0,
-      // top: 0,
-      height: window.innerHeight,
-      width: window.innerWidth,
-    },
-    shiftRect: {
-      top: 200,
-      left: 300,
-    },
-    padRect: {
-      bottom: 12,
-      left: 12,
-      right: 12,
-      top: 12,
-    },
-    // offsetRectFinal: {
-    //   left: 300,
-    //   top: 100,
-    // },
-    gap: {
-      column: 40,
-      row: 40,
-    },
-    transforms: [
-      {
-        left: null,
-        top: null,
-        type: 'set',
-      },
-      {
-        top: 200,
-        left: 200,
-        bottom: 10,
-        right: 10,
-        type: 'pad',
-      },
-      {
-        top: 200,
-        left: 300,
-        type: 'shift',
-      },
-    ],
+    containerRef: containerRef,
     defaultRect: {
       item: () => ({
         height: 75,
@@ -117,8 +72,108 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
       }),
     },
     direction: LayoutConfigDirectionEnum.HORIZONTAL,
+    gap: { column: 40, row: 40 },
     origin: LayoutConfigDirectionOriginEnum.LEFT,
-    transformState: transformState?.current,
+    rectTransformations: [
+      {
+        options: () => ({ layout: { direction: LayoutConfigDirectionEnum.HORIZONTAL } }),
+        scope: RectTransformationScopeEnum.CHILDREN,
+        type: TransformRectTypeEnum.TREE,
+      },
+      {
+        options: (rects: RectType[]) => ({
+          offset: {
+            left: 0,
+            top: Math.max(
+              ...flattenArray(rects?.map(rect => rect.children)).map(
+                (rect) =>
+                  (rect?.inner?.badge?.height ?? 0) +
+                  (rect?.inner?.badge?.offset?.top ?? 0) +
+                  (rect?.inner?.title?.height ?? 0) +
+                  (rect?.inner?.title?.offset?.top ?? 0),
+              ),
+            ),
+          },
+          padding: {
+            bottom: 12,
+            left: 12,
+            right: 12,
+            top: 12,
+          },
+        }),
+        scope: RectTransformationScopeEnum.SELF,
+        type: TransformRectTypeEnum.FIT_TO_CHILDREN,
+      },
+      {
+        options: () => ({ layout: { direction: LayoutConfigDirectionEnum.VERTICAL } }),
+        type: TransformRectTypeEnum.TREE,
+      },
+      {
+        condition: (rects: RectType[]) => {
+          const box = calculateBoundingBox(rects);
+          return box?.width > containerRef?.current?.getBoundingClientRect()?.width;
+        },
+        options: () => ({ layout: { direction: LayoutConfigDirectionEnum.HORIZONTAL } }),
+        type: TransformRectTypeEnum.TREE,
+      },
+      {
+        scope: RectTransformationScopeEnum.CHILDREN,
+        type: TransformRectTypeEnum.SHIFT_INTO_PARENT,
+      },
+      {
+        options: () => ({ layout: { origin: LayoutConfigDirectionOriginEnum.BOTTOM } }),
+        scope: RectTransformationScopeEnum.CHILDREN,
+        type: TransformRectTypeEnum.ALIGN_CHILDREN,
+      },
+    ],
+    transformStateRef: transformState,
+    viewportRef: canvasRef,
+
+    // containerRect: {
+    //   left: 40,
+    //   top: 40,
+    //   height: window.innerHeight,
+    //   width: window.innerWidth,
+    // },
+    // boundingRect: {
+    //   // left: 0,
+    //   // top: 0,
+    //   height: window.innerHeight,
+    //   width: window.innerWidth,
+    // },
+    // shiftRect: {
+    //   top: 200,
+    //   left: 300,
+    // },
+    // padRect: {
+    //   bottom: 12,
+    //   left: 12,
+    //   right: 12,
+    //   top: 12,
+    // },
+    // offsetRectFinal: {
+    //   left: 300,
+    //   top: 100,
+    // },
+    // transforms: [
+    //   {
+    //     left: null,
+    //     top: null,
+    //     type: 'set',
+    //   },
+    //   {
+    //     top: 200,
+    //     left: 200,
+    //     bottom: 10,
+    //     right: 10,
+    //     type: 'pad',
+    //   },
+    //   {
+    //     top: 200,
+    //     left: 300,
+    //     type: 'shift',
+    //   },
+    // ],
   });
 
   // VERY IMPORTANT THAT THE STATE IS IN THIS COMPONENT OR ELSE NOTHING WILL RENDER!
@@ -234,17 +289,6 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
 
   useEffect(() => {
     if (phaseRef.current === 0 && executionFramework && pipeline) {
-      // What is this layout still used for?
-      // const boundingRect = canvasRef?.current?.getBoundingClientRect();
-      // const rectCon = containerRef?.current?.getBoundingClientRect();
-      // const layout = {
-      //   layout: {
-      //     ...layoutConfig,
-      //     boundingRect,
-      //     containerRect: rectCon,
-      //   },
-      // };
-
       startTransition(() => {
         initializeModels(executionFramework, pipeline);
         updateItemsMetadata();
