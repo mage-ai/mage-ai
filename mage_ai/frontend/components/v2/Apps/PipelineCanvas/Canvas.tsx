@@ -36,6 +36,12 @@ export type BuilderCanvasProps = {
 };
 import useNodeManager from './useNodeManager';
 
+// To update and render new views:
+// 1. Update the models using initialize models: initializeModels
+// 2. Update the layout of the items: updateLayoutOfItems (this takes care of setItemRects as well).
+// 3. Update the rects of the DraggableBlockNodes: setItemRects
+
+
 const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
   canvasRef,
   containerRef,
@@ -76,6 +82,7 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
   }: ModelManagerType = useModelManager({
     itemIDsByLevelRef,
     pipelineUUID,
+    setItemRects,
     executionFrameworkUUID,
   });
 
@@ -111,7 +118,11 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
     removeComponentById,
   } = useNodeManager({
     itemRects,
+    itemElementsRef,
     dragEnabled,
+    updateLayoutOfItems,
+    setItemRects,
+    initializeModels,
     dropEnabled,
     handleDragEnd,
     handleDragStart,

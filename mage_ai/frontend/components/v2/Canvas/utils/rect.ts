@@ -1109,3 +1109,32 @@ function getRectsFromLayout(layout: LayoutConfigType): {
     containerRect,
   };
 }
+
+export function findRectAtPoint(x: number, y: number, rects: RectType[]): RectType | null {
+  if (rects.length === 0) {
+    return null;
+  }
+
+  let closestRect: DOMRect | null = null;
+  let minDistance = Infinity;
+
+  for (const rect of rects) {
+    const dist = distanceToRect(x, y, rect);
+    if (dist < minDistance && isPointInsideRect(x, y, rect)) {
+      minDistance = dist;
+      closestRect = rect;
+    }
+  }
+
+  return closestRect;
+}
+
+function distanceToRect(x: number, y: number, rect: DOMRect): number {
+  const dx = Math.max(rect.left - x, 0, x - rect.right);
+  const dy = Math.max(rect.top - y, 0, y - rect.bottom);
+  return Math.sqrt(dx * dx + dy * dy);
+}
+
+function isPointInsideRect(x: number, y: number, rect: DOMRect): boolean {
+  return (x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom);
+}

@@ -35,6 +35,7 @@ export default function useModelManager({
   itemIDsByLevelRef,
   pipelineUUID,
   executionFrameworkUUID,
+  setItemRects,
 }: ModelManagerProps): ModelManagerType {
   const appHandlersRef = useRef<AppHandlerType>({} as AppHandlerType);
   const itemsRef = useRef<ItemMappingType>({});
@@ -65,9 +66,19 @@ export default function useModelManager({
         },
       },
       update: {
-        onSuccess: (data) => {
+        onSuccess: (data, dataPrev) => {
           setPipeline(data);
-          onModelChangeRef.current(data);
+          onModelChangeRef.current(data, dataPrev);
+
+          initializeModels(executionFramework, data)
+            .then(({ itemMapping }) => {
+              console.log('initializeModels completed successfully');
+              setItemRects(Object.values(itemMapping ?? {}));
+            })
+            .catch((error) => {
+              console.error('initializeModels encountered an error:', error);
+            });
+
         },
       },
     },
@@ -94,122 +105,132 @@ export default function useModelManager({
 
   function initializeModels(
     executionFramework2: PipelineExecutionFrameworkType,
-    pipeline2: PipelineExecutionFrameworkType,
-  ) {
-    const { blocksByGroup, groupMapping, groupsByLevel } = buildDependencies(
-      executionFramework2,
-      pipeline2,
-    );
+    pipeline2: PipelineExecutionFrameworkType
+  ): Promise<void> {
+    return new Promise((resolve, reject) => {
+      try {
+        const { blocksByGroup, groupMapping, groupsByLevel } = buildDependencies(
+          executionFramework2,
+          pipeline2,
+        );
 
-    // console.log(blocksByGroup, groupMapping, groupsByLevel)
+        // console.log(blocksByGroup, groupMapping, groupsByLevel)
 
-    // Hydrate each group’s blocks for every level using the blocks from the user’s pipeline.
-    const blockGroupsByLevel: BlockGroupType[][] = [];
-    [...(groupsByLevel ?? [])]?.reverse().forEach((groups: FrameworkType[], idx: number) => {
-      const blockGroupsInLevel = [];
+        // Hydrate each group’s blocks for every level using the blocks from the user’s pipeline.
+        const blockGroupsByLevel: BlockGroupType[][] = [];
+        [...(groupsByLevel ?? [])]?.reverse().forEach((groups: FrameworkType[], idx: number) => {
+          const blockGroupsInLevel = [];
 
-      const blocksByGrandparent = {};
-      if (idx >= 1 && blockGroupsByLevel.length >= 1) {
-        (blockGroupsByLevel[0] ?? [])?.forEach((groupBlock: BlockGroupType) => {
-          const { blocks, group } = groupBlock;
-          group?.groups?.forEach((groupID: GroupUUIDEnum) => {
-            blocksByGrandparent[groupID] ||= [];
-            blocksByGrandparent[groupID].push(...blocks);
+          const blocksByGrandparent = {};
+          if (idx >= 1 && blockGroupsByLevel.length >= 1) {
+            (blockGroupsByLevel[0] ?? [])?.forEach((groupBlock: BlockGroupType) => {
+              const { blocks, group } = groupBlock;
+              group?.groups?.forEach((groupID: GroupUUIDEnum) => {
+                blocksByGrandparent[groupID] ||= [];
+                blocksByGrandparent[groupID].push(...blocks);
+              });
+            });
+          }
+
+          groups?.forEach((group: FrameworkType) => {
+            const blocks = [];
+            if (idx === 0) {
+              const gblocks = Object.values(blocksByGroup?.[group.uuid] ?? {});
+              blocks.push(...(gblocks ?? []));
+            } else if (blockGroupsByLevel.length >= 1) {
+              blocks.push(...(blocksByGrandparent?.[group.uuid] ?? []));
+            }
+            blockGroupsInLevel.push({
+              blocks,
+              group,
+            });
           });
+
+          blockGroupsByLevel.unshift(blockGroupsInLevel);
         });
+
+        const itemMapping = {};
+        const portMapping = {};
+
+        // Each group at a specific level has a different set of ports.
+        // Every level has the same blocks, just different grouping.
+        // Every block at every level has the same ports.
+        // Create an item for every group at every level.
+        // Create a port for every group at every level.
+        // Create an item for every block at every level because they’ll have different groupings.
+        const itemIDsByLevel = [];
+        const maxLevel = null;
+        blockGroupsByLevel?.forEach((blockGroups: BlockGroupType[], level: number) => {
+          if (level !== null && maxLevel !== null && level > maxLevel) return;
+
+          const {
+            items,
+            nodes,
+          } = createItemsFromBlockGroups(blockGroups, {
+            level,
+          });
+
+          const itemsIDs = [];
+          items.concat(nodes)?.forEach((item: NodeItemType) => {
+            if (item?.block?.groups) {
+              item.block.frameworks = item.block.groups.map((id: GroupUUIDEnum) => groupMapping[id]);
+            }
+            // item.version = itemVersionRef.current;
+
+            const itemPrev = itemsRef?.current?.[item.id];
+            if (itemPrev?.rect) {
+              item.rect = itemPrev?.rect;
+              item.version = itemPrev?.version + 1;
+            } else {
+              item.version = 0;
+            }
+
+            itemsIDs.push(item.id);
+            itemMapping[item.id] = item;
+            onItemChangeRef.current(item);
+          });
+          itemIDsByLevel.push(itemsIDs);
+
+          const ports = [];
+          createPortsByItem(nodes.concat(items), {
+            level,
+          });
+
+          Object.entries(ports ?? {})?.forEach(([id, { ports }]: [string, {
+            ports: PortType[];
+          }]) => {
+            itemMapping[id] = {
+              ...itemMapping[id],
+              ports,
+            };
+
+            ports?.forEach(port => {
+              portMapping[port.id] = port;
+            });
+          });
+
+          console.log('items', items);
+          console.log('nodes', nodes);
+          console.log('ports', ports);
+        });
+
+        // console.log('itemMapping', itemMapping);
+        // console.log('portMapping', portMapping);
+
+        // Models
+        itemIDsByLevelRef.current = itemIDsByLevel;
+
+        const mapping = mutateModels({
+          itemMapping,
+          portMapping,
+        });
+
+        console.log('itemMapping', itemMapping)
+
+        resolve(mapping); // Resolve the promise when the function completes
+      } catch (error) {
+        reject(error); // Reject the promise if there is an error
       }
-
-      groups?.forEach((group: FrameworkType) => {
-        const blocks = [];
-        if (idx === 0) {
-          const gblocks = Object.values(blocksByGroup?.[group.uuid] ?? {});
-          blocks.push(...(gblocks ?? []));
-        } else if (blockGroupsByLevel.length >= 1) {
-          blocks.push(...(blocksByGrandparent?.[group.uuid] ?? []));
-        }
-        blockGroupsInLevel.push({
-          blocks,
-          group,
-        });
-      });
-
-      blockGroupsByLevel.unshift(blockGroupsInLevel);
-    });
-
-    const itemMapping = {};
-    const portMapping = {};
-
-    // Each group at a specific level has a different set of ports.
-    // Every level has the same blocks, just different grouping.
-    // Every block at every level has the same ports.
-    // Create an item for every group at every level.
-    // Create a port for every group at every level.
-    // Create an item for every block at every level because they’ll have different groupings.
-    const itemIDsByLevel = [];
-    const maxLevel = null;
-    blockGroupsByLevel?.forEach((blockGroups: BlockGroupType[], level: number) => {
-      if (level !== null && maxLevel !== null && level > maxLevel) return;
-
-      const {
-        items,
-        nodes,
-      } = createItemsFromBlockGroups(blockGroups, {
-        level,
-      });
-
-      const itemsIDs = [];
-      items.concat(nodes)?.forEach((item: NodeItemType) => {
-        if (item?.block?.groups) {
-          item.block.frameworks = item.block.groups.map((id: GroupUUIDEnum) => groupMapping[id]);
-        }
-        // item.version = itemVersionRef.current;
-
-        const itemPrev = itemsRef?.current?.[item.id];
-        if (itemPrev?.rect) {
-          item.rect = itemPrev?.rect;
-          item.version = itemPrev?.version + 1;
-        } else {
-          item.version = 0;
-        }
-
-        itemsIDs.push(item.id);
-        itemMapping[item.id] = item;
-        onItemChangeRef.current(item);
-      });
-      itemIDsByLevel.push(itemsIDs);
-
-      const ports = [];
-      createPortsByItem(nodes.concat(items), {
-        level,
-      });
-
-      Object.entries(ports ?? {})?.forEach(([id, { ports }]: [string, {
-        ports: PortType[];
-      }]) => {
-        itemMapping[id] = {
-          ...itemMapping[id],
-          ports,
-        };
-
-        ports?.forEach(port => {
-          portMapping[port.id] = port;
-        });
-      });
-
-      // console.log('items', items);
-      // console.log('nodes', nodes);
-      // console.log('ports', ports);
-    });
-
-    // console.log('itemMapping', itemMapping);
-    // console.log('portMapping', portMapping);
-
-    // Models
-    itemIDsByLevelRef.current = itemIDsByLevel;
-
-    mutateModels({
-      itemMapping,
-      portMapping,
     });
   }
 

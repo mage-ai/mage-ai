@@ -116,18 +116,18 @@ export function useMutate(
     // }
 
     const { data } = response || {};
+    const modelsPrev = { ...modelsRef.current };
     modelsRef.current = {
       ...modelsRef.current,
       ...data,
     };
 
-    const result = typeof parse === 'function'
-      ? parse(data)
-      : resourceName in (data ?? {}) ? data?.[resourceName] : data?.[resource];
+    const key = resourceName in (data ?? {}) ? resourceName : resource;
+    const result = typeof parse === 'function' ? parse(data) : data?.[key];
 
     handleStatusUpdate();
 
-    return result;
+    return [result, modelsPrev?.[key]];
   }
 
   function handleError(error: APIErrorType, operation: OperationTypeEnum) {
@@ -210,9 +210,9 @@ export function useMutate(
       onSettled: () => handleStatusUpdate(),
       onSuccess: (response: ResponseType, variables: any, context?: any) => {
 
-        const resp = handleResponse(response, variables, context);
+        const [model, modelPrev] = handleResponse(response, variables, context);
 
-        onSuccess && onSuccess(resp);
+        onSuccess && onSuccess(model, modelPrev);
       }
     };
   }

@@ -336,7 +336,7 @@ export default function useLayoutManager({
             bottom: 12,
             left: 12,
             right: 12,
-            top: 12,
+            top: 100,
           },
         }),
         scope: RectTransformationScopeEnum.SELF,
