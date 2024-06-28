@@ -7,6 +7,7 @@ import { ModeEnum } from '@mana/themes/modes';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ThemeProvider } from 'styled-components';
 import { ThemeSettingsType } from '@mana/themes/interfaces';
+import { TooltipProvider } from '@context/Tooltip/TooltipContext';
 import { getTheme, getThemeSettings } from '@mana/themes/utils';
 import { useEffect } from 'react';
 
@@ -52,7 +53,9 @@ function NextAppV2({
       <ThemeProvider theme={theme as ThemeType}>
         <QueryClientProvider client={queryClient}>
           <APIMutationProvider>
-            <Component {...rest} />
+            <TooltipProvider>
+              <Component {...rest} />
+            </TooltipProvider>
           </APIMutationProvider>
         </QueryClientProvider>
       </ThemeProvider>

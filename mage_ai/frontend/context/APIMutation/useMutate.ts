@@ -19,6 +19,8 @@ import {
   ResourceHandlersType,
   ResponseType,
   URLOptionsType,
+  IDArgsType,
+  ArgsValueOrFunctionType,
 } from '@api/interfaces';
 
 import { MutationStatusEnum as MutationStatusEnumBase } from '@api/enums';
@@ -27,16 +29,22 @@ import { singularize } from '@utils/string';
 export const MutationStatusEnum = MutationStatusEnumBase;
 
 export function useMutate(
-  endpoint: string | string[],
+  args: IDArgsType,
   opts?: {
     callbackOnEveryRequest?: boolean;
-    throttle?: Record<OperationTypeEnum, number>;
     handlers?: ResourceHandlersType;
     parse?: string | ((...args: any[]) => any);
-    urlParser?: URLOptionsType;
     subscribeToStatusUpdates?: boolean;
+    throttle?: Record<OperationTypeEnum, number>;
+    urlParser?: URLOptionsType;
   },
 ): MutateType {
+  const {
+    id,
+    idParent,
+    resource,
+    resourceParent,
+  } = args;
   const context = useContext(APIMutationContext);
 
   const {
@@ -50,9 +58,6 @@ export function useMutate(
   } = opts?.urlParser ?? {};
 
   const { handlers: resourceHandlers, parse } = opts || {};
-
-  const resourceNames = typeof endpoint === 'string' ? endpoint.split('.') : endpoint;
-  const [resourceParent, resource] = resourceNames?.length >= 2 ? resourceNames : [null, ...resourceNames];
   const resourceName = singularize(resource);
 
   const abortControllerRef = useRef<Record<OperationTypeEnum, AbortController>>({
@@ -64,11 +69,11 @@ export function useMutate(
   });
 
   const throttleRef = useRef<Record<OperationTypeEnum, number>>({
-    [OperationTypeEnum.CREATE]: 1000,
-    [OperationTypeEnum.DELETE]: 1000,
-    [OperationTypeEnum.DETAIL]: 1000,
-    [OperationTypeEnum.LIST]: 1000,
-    [OperationTypeEnum.UPDATE]: 1000,
+    [OperationTypeEnum.CREATE]: 300,
+    [OperationTypeEnum.DELETE]: 300,
+    [OperationTypeEnum.DETAIL]: 300,
+    [OperationTypeEnum.LIST]: 300,
+    [OperationTypeEnum.UPDATE]: 300,
     ...throttleProp,
   });
   const checkpointRef = useRef<{
@@ -80,6 +85,14 @@ export function useMutate(
   }>(null);
   const modelsRef = useRef<ModelsType>({});
 
+  const requests = useRef<Record<OperationTypeEnum, any[]>>({
+    [OperationTypeEnum.CREATE]: [],
+    [OperationTypeEnum.DELETE]: [],
+    [OperationTypeEnum.DETAIL]: [],
+    [OperationTypeEnum.LIST]: [],
+    [OperationTypeEnum.UPDATE]: [],
+  });
+
   const statusRef = useRef<MutationStatusMappingType>({
     [OperationTypeEnum.CREATE]: MutationStatusEnumBase.IDLE,
     [OperationTypeEnum.DELETE]: MutationStatusEnumBase.IDLE,
@@ -89,11 +102,11 @@ export function useMutate(
   });
   const [status, setStatus] = useState<MutationStatusMappingType>();
 
-  function preprocessPayload({ payload }: { payload?: any } = {}): {
+  function preprocessPayload({ payload }: { payload?: ArgsValueOrFunctionType } = {}): {
     [key: string]: any;
   } {
     return {
-      [resourceName]: payload,
+      [resourceName]: typeof payload === 'function' ? payload(modelsRef?.current?.[resourceName]) : payload,
     };
   }
 
@@ -110,25 +123,34 @@ export function useMutate(
 
     const result = typeof parse === 'function'
       ? parse(data)
-      : resourceName in data ? data?.[resourceName] : data?.[resource];
+      : resourceName in (data ?? {}) ? data?.[resourceName] : data?.[resource];
 
     handleStatusUpdate();
 
     return result;
   }
 
-  function handleError(error: APIErrorType, variables?: any, ctx?: any) {
+  function handleError(error: APIErrorType, operation: OperationTypeEnum) {
     console.error(error);
-    context && context?.renderError(error);
+    context && context?.renderError(error, (event) => {
+      const reqs = requests.current[operation] ?? [];
+      const args = reqs.pop();
+      console.log(args)
+      if (args) {
+        wrapMutation(...(args ?? []) as [any, any]).then(handleArgs).catch(handleError);
+      }
+    });
     handleStatusUpdate();
     return error;
   }
 
   async function fetch(operation: OperationTypeEnum, args?: any, opts: FetcherOptionsType = {}): Promise<any> {
-    const argsArr = preprocessArgs(args) ?? {};
-    const [id1, id2] = [...argsArr, null];
-
-    const urlArg: string = buildUrl(...[resourceParent ?? resource, id1, resourceParent ? resource : null, id2]);
+    const urlArg: string = buildUrl(...[
+      resourceParent ?? resource,
+      handleArgs(idParent ?? id),
+      resourceParent ? resource : null,
+      handleArgs(idParent ? id : null),
+    ]);
 
     const {
       responseType = ResponseTypeEnum.JSON,
@@ -154,17 +176,17 @@ export function useMutate(
       method,
       onDownloadProgress: opts?.onDownloadProgress
         ? e =>
-            opts.onDownloadProgress(e, {
-              body: opts?.body,
-              query: opts?.query,
-            })
+          opts.onDownloadProgress(e, {
+            body: opts?.body,
+            query: opts?.query,
+          })
         : null,
       onUploadProgress: opts?.onUploadProgress
         ? e =>
-            opts.onUploadProgress(e, {
-              body: opts?.body,
-              query: opts?.query,
-            })
+          opts.onUploadProgress(e, {
+            body: opts?.body,
+            query: opts?.query,
+          })
         : null,
       responseType,
       signal,
@@ -180,7 +202,7 @@ export function useMutate(
       ...(handlers || {}),
       mutationFn: (args?: MutateFunctionArgsType) => wrapMutation(operation, args),
       onError: (error: any, variables: any, context?: any) => {
-        handleError(error, variables, context)
+        handleError(error, operation)
         onError && onError(error, variables, context);
       },
       onSettled: () => handleStatusUpdate(),
@@ -197,32 +219,28 @@ export function useMutate(
     };
   }
 
-  function handleArgs(id?: string | string[]): string | string[] {
+  function handleArgs(id?: string): string {
+    if (!id) return id;
+
     const handlers = [
       (url: string) => disableHyphenCase ? url : hyphensToSnake(url),
       (url: string) => disableEncodeURIComponent ? url : encodeURIComponent(url),
     ];
-
-    if (Array.isArray(id)) {
-      return id.map((i) => handlers.reduce((acc, handler) => handler(acc), i));
-    }
-
     return handlers.reduce((acc, handler) => handler(acc), id as string);
-  }
-
-  function preprocessArgs(args?: MutateFunctionArgsType): any | any[] {
-    return (Array.isArray(args?.id) ? handleArgs(args?.id) : [args?.id]?.map(handleArgs));
   }
 
   async function wrapMutation(operation: OperationTypeEnum, args?: MutateFunctionArgsType) {
     const now = Number(new Date());
 
+    context?.dismissError();
+    context?.dismissTarget();
+
     if (checkpointRef?.current?.[operation] === null) {
       checkpointRef.current[operation] = now;
     }
 
-    if (operation in (throttleRef?.current ?? {}) && now - (checkpointRef?.current?.[operation] ?? 0) < throttleRef?.current?.[operation]) {
-      console.log('SKIPPING', checkpointRef)
+    if (operation in (throttleRef?.current ?? {})
+      && now - (checkpointRef?.current?.[operation] ?? 0) < throttleRef?.current?.[operation]) {
       return Promise.resolve(null);
     }
 
@@ -232,7 +250,20 @@ export function useMutate(
     abortControllerRef.current[operation] = new AbortController();
     const signal = abortControllerRef.current[operation].signal;
 
-    return fetch(operation, args, { signal });
+    const request = [operation, args]
+    requests.current[operation].push(request);
+
+    if (args?.event) {
+      const target = (args?.event?.target as HTMLElement).closest('[role="button"]') as HTMLElement;
+      if (!target) return;
+
+      const rect = target.getBoundingClientRect();
+      context.renderTarget({
+        rect,
+      });
+    }
+
+    return fetch(...request as [any, any], { signal });
   }
 
   const fnCreate = useMutation(augmentHandlers(OperationTypeEnum.CREATE));
@@ -242,6 +273,8 @@ export function useMutate(
   const fnUpdate = useMutation(augmentHandlers(OperationTypeEnum.UPDATE));
 
   function handleStatusUpdate() {
+    context.dismissTarget();
+
     Object.entries({
       [OperationTypeEnum.CREATE]: fnCreate,
       [OperationTypeEnum.DELETE]: fnDelete,

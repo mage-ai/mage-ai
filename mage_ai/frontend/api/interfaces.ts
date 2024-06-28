@@ -79,14 +79,22 @@ export interface ResourceHandlersType {
   update?: HandlersType;
 }
 
-export type MutateFunctionArgsType = {
-  id?: string | string[];
-  payload?: Record<string, any>;
-  query?: Record<string, any>;
+export type IDArgsType = {
+  id?: string;
+  idParent?: string;
+  resource?: string;
+  resourceParent?: string;
 };
-export type MutateFunctionType = (
-  args: MutateFunctionArgsType, ...restArgs: any[]
-) => Promise<ResourceType | ResourceType[]>;
+
+export type ArgsValueOrFunctionType = Record<string, any> | ((args: Record<string, any>) => Record<string, any>);
+
+export type MutateFunctionArgsType = {
+  meta?: ArgsValueOrFunctionType;
+  payload?: ArgsValueOrFunctionType;
+  query?: ArgsValueOrFunctionType;
+} & IDArgsType;
+
+export type MutateFunctionType = (args?: MutateFunctionArgsType) => Promise<ResourceType | ResourceType[]>;
 
 export type MutatationType = {
   data: any;

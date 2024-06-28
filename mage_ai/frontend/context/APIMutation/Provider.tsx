@@ -1,10 +1,12 @@
-import React, { useContext, useRef } from 'react';
+import React, { useContext, useState, useRef } from 'react';
 import { ThemeContext, ThemeProvider } from 'styled-components';
 import { createRoot, Root } from 'react-dom/client';
-
+import ReactDOM from 'react-dom';
+import Loading from '@mana/components/Loading';
 import ErrorManager from './ErrorManager';
-import { APIErrorType, APIMutationContext, APIMutationProviderProps } from './Context';
+import { APIErrorType, APIMutationContext, APIMutationProviderProps, TargetType } from './Context';
 import { isDebug } from '@utils/environment';
+import styles from '@styles/scss/components/Error/API/ErrorManager.module.scss';
 
 const ROOT_ID = 'api-mutation-root';
 
@@ -16,12 +18,24 @@ export const APIMutationProvider: React.FC<APIMutationProviderProps> = ({
   const errorElementRef = useRef<HTMLElement | null>(null);
   const rootRef = useRef<Root | null>(null);
 
+  const [target, setTarget] = useState<TargetType | null>(null);
+  const targetRef = useRef<HTMLDivElement>(null);
+
+  function renderTarget(target: TargetType) {
+    setTarget(target);
+  }
+
+  function dismissTarget() {
+    setTarget(null);
+  }
+
   function dismissError() {
+    dismissTarget();
     errorRef.current = null;
     rootRef?.current && (rootRef.current as any).render(null);
   }
 
-  function renderError(error: APIErrorType) {
+  function renderError(error: APIErrorType, retry?: (event: any) => void) {
     const element = errorElementRef?.current
       || (errorElementRef.current = document.getElementById(ROOT_ID));
     (rootRef as { current: any }).current ||= createRoot(element);
@@ -30,7 +44,7 @@ export const APIMutationProvider: React.FC<APIMutationProviderProps> = ({
     errorRef.current = error;
     (rootRef.current as any).render(
       <ThemeProvider theme={themeContext}>
-        <ErrorManager dismissError={dismissError} errorRef={errorRef} key={String(new Date())} />
+        <ErrorManager dismissError={dismissError} errorRef={errorRef} key={String(new Date())} retry={retry} />
       </ThemeProvider>,
     );
 
@@ -38,10 +52,27 @@ export const APIMutationProvider: React.FC<APIMutationProviderProps> = ({
   }
 
   return (
-    <APIMutationContext.Provider value={{ dismissError, renderError } as any}>
+    <APIMutationContext.Provider value={{ dismissError, dismissTarget, renderError, renderTarget } as any}>
       <>
         {children}
         <div id={ROOT_ID} />
+
+        {target && ReactDOM.createPortal(
+          <div
+            className={styles.target}
+            ref={targetRef}
+            style={{
+              height: target?.content ? 'inherit' : 2,
+              left: target.rect.left,
+              top: target.rect.top,
+              width: target.rect.width,
+            }}
+          >
+            {!target.content && <Loading />}
+            {target.content}
+          </div>,
+          document.body
+        )}
       </>
     </APIMutationContext.Provider>
   );

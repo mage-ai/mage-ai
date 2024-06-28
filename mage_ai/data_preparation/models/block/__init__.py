@@ -1045,6 +1045,7 @@ class Block(
         config: Dict = None,
         widget: bool = False,
         downstream_block_uuids: List[str] = None,
+        groups: Optional[List[str]] = None,
     ) -> 'Block':
         from mage_ai.data_preparation.models.block.block_factory import BlockFactory
 
@@ -1163,6 +1164,7 @@ class Block(
             language=language,
             pipeline=pipeline,
             replicated_block=replicated_block,
+            groups=groups,
         )
         block.already_exists = already_exists
 

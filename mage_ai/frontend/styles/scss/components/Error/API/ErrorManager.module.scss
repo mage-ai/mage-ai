@@ -2,35 +2,26 @@
   position: fixed;
   z-index: 1000;
 
-  &.center {
-    bottom: 50%;
-    transform: translateY(-50%);
-    left: 50%;
-    right: 50%;
-  }
-
   &.right {
-    bottom: 50%;
+    top: 50%;
     left: auto;
     right: var(--padding-base);
     transform: translateY(-50%);
   }
 
-  &.top {
-    bottom: auto;
-    left: 50%;
-    right: 50%;
-    top: var(--padding-base);
+  &.left {
+    top: 50%;
+    right: auto;
+    left: var(--padding-base);
+    transform: translateY(-50%);
   }
 
   &.topRight {
-    bottom: auto;
     right: var(--padding-base);
     top: var(--padding-base);
   }
 
   &.topLeft {
-    bottom: auto;
     left: var(--padding-base);
     top: var(--padding-base);
   }
@@ -45,15 +36,15 @@
     right: var(--padding-base);
   }
 
-  &.bottom {
-    bottom: var(--padding-base);
-    top: auto;
-    left: 50%;
-    right: 50%;
-  }
-
   .errorContainer {
     backdrop-filter: var(--menus-blur-base);
     max-width: calc(100vw - 2 * var(--padding-base));
   }
+}
+
+.target {
+  height: 2px;;
+  position: fixed;
+  pointer-events: none;
+  z-index: 1000;
 }

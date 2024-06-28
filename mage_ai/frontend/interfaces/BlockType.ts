@@ -287,19 +287,23 @@ export interface TemplateType {
   name?: string;
   inputs?: Record<string, InteractionInputType>;
   variables?: Record<string, InteractionVariableType>;
+  configuration_path?: string;
+  path?: string;
+  type?: BlockTypeEnum;
+  uuid?: string;
 }
 
 export interface ConfigurationType extends BaseConfigurationType {
   dynamic?:
-    | any
-    | boolean
-    | {
-        batch_settings?: BatchSettingsType;
-        modes?: DynamicModeEnum[];
-        parent?: boolean | string[];
-        reduce_output?: boolean | string[];
-        reduce_output_upstream?: string[];
-      };
+  | any
+  | boolean
+  | {
+    batch_settings?: BatchSettingsType;
+    modes?: DynamicModeEnum[];
+    parent?: boolean | string[];
+    reduce_output?: boolean | string[];
+    reduce_output_upstream?: string[];
+  };
   templates?: Record<string, TemplateType>;
   variables?: {
     downstream?: Record<string, VariableSettingsType>;

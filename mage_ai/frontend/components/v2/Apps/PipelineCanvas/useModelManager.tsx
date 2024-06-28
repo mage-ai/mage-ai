@@ -1,4 +1,4 @@
-import PipelineExecutionFrameworkType, { FrameworkType } from '@interfaces/PipelineExecutionFramework/interfaces';
+import PipelineExecutionFrameworkType, { ConfigurationType, FrameworkType } from '@interfaces/PipelineExecutionFramework/interfaces';
 import { BlockGroupType, BlockMappingType, GroupLevelType, ItemMappingType, ModelMappingType, NodeItemType, PortMappingType, PortType } from '../../Canvas/interfaces';
 import { GroupUUIDEnum } from '@interfaces/PipelineExecutionFramework/types';
 import { buildDependencies } from './utils/pipelines';
@@ -11,7 +11,6 @@ import { AppHandlerType, AppHandlersRefType } from './interfaces';
 import { useMutate } from '@context/APIMutation';
 
 export type ModelManagerType = {
-  addBlockToGroup: (event: ClientEventType) => void;
   appHandlersRef: AppHandlersRefType;
   initializeModels: (
     executionFramework: PipelineExecutionFrameworkType,
@@ -37,20 +36,25 @@ export default function useModelManager({
   const itemsRef = useRef<ItemMappingType>({});
   const portsRef = useRef<PortMappingType>({});
 
-  const mutants = useMutate(['execution_frameworks', 'pipelines']);
+  const pipelineMutants = useMutate({
+    id: pipeline?.uuid,
+    idParent: pipeline?.execution_framework,
+    resource: 'pipelines',
+    resourceParent: 'execution_frameworks',
+  });
+  const blockMutants = useMutate({
+    id: pipeline?.uuid,
+    idParent: pipeline?.execution_framework,
+    resource: 'pipelines',
+    resourceParent: 'execution_frameworks',
+  });
 
   appHandlersRef.current = {
-    addBlockToGroup,
+    blocks: blockMutants,
+    pipelines: pipelineMutants,
   };
 
-  function addBlockToGroup({ template }) {
-    mutants.update.mutate({
-      id: [pipeline?.execution_framework, pipeline?.uuid],
-      payload: {
-        template,
-      },
-    });
-  }
+  console.log(pipelineMutants.modelsRef)
 
   function initializeModels(
     executionFramework: PipelineExecutionFrameworkType,
@@ -213,7 +217,6 @@ export default function useModelManager({
   }
 
   return {
-    addBlockToGroup,
     appHandlersRef,
     initializeModels,
     itemsRef,

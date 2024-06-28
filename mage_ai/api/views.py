@@ -1,10 +1,12 @@
 import json
+import traceback
 from datetime import datetime
 from functools import reduce
 from typing import Dict, List, Optional, Tuple, Union
 
 import simplejson
 
+from mage_ai.api.errors import ApiError, format_and_colorize_stacktrace
 from mage_ai.api.logging import debug, error, info
 from mage_ai.api.operations.base import BaseOperation
 from mage_ai.api.operations.constants import CREATE, DELETE, DETAIL, LIST, UPDATE
@@ -67,7 +69,21 @@ async def execute_operation(
             err,
             **tags,
         )
-        raise err
+        if http_error_codes:
+            error = ApiError(dict(
+                code=ApiError.INTERNAL_SERVER_ERROR['code'],
+                errors=traceback.format_tb(err.__traceback__),
+                message=repr(err),
+                type=ApiError.INTERNAL_SERVER_ERROR['type'],
+            ))
+            return __render_error(
+                handler,
+                error.to_dict(),
+                http_error_codes=http_error_codes,
+                **tags,
+            )
+        else:
+            raise err
 
     end_time = datetime.utcnow()
 
@@ -212,6 +228,11 @@ def __render_error(handler, error: Dict, http_error_codes: Optional[bool] = None
     if error is not None and http_error_codes:
         error_code = error.get('code', 500)
         handler.set_status(error_code) if error_code else None
+
+    error['errors'], error['message'] = format_and_colorize_stacktrace(
+      error.get('errors') or [],
+      error.get('message') or '',
+    )
 
     handler.write(
         dict(

@@ -73,9 +73,16 @@ export type APIMutationProviderProps = {
   children: React.ReactNode;
 };
 
+export type TargetType = {
+  content: React.ReactNode | null;
+  rect: DOMRect | null;
+};
+
 export interface APIMutationContextType {
   dismissError: () => void;
+  dismissTarget: (target: TargetType) => void;
   renderError: (error: APIErrorType) => void;
+  renderTarget: (target: TargetType) => void;
 }
 
 const invariantViolation = () => {
@@ -87,6 +94,8 @@ const invariantViolation = () => {
 
 export const APIMutationContext = React.createContext<APIMutationContextType>({
   dismissError: invariantViolation,
+  dismissTarget: invariantViolation,
   renderError: invariantViolation,
+  renderTarget: invariantViolation,
 });
 APIMutationContext.displayName = 'APIMutationContext';

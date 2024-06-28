@@ -14,14 +14,22 @@ function PipelineBuilder({ frameworkUUID, uuid }: PipelineDetailProps) {
   const [pipeline, setPipeline] = useState<PipelineExecutionFrameworkType>(null);
   const [executionFramework, setExecutionFramework] = useState<PipelineExecutionFrameworkType>(null);
 
-  const pipelines = useMutate(['execution_frameworks', 'pipelines'], {
+  const pipelines = useMutate({
+    id: uuid,
+    idParent: frameworkUUID,
+    resource: 'pipelines',
+    resourceParent: 'execution_frameworks',
+  }, {
     handlers: {
       detail: {
         onSuccess: setPipeline,
       },
     },
   });
-  const executionFrameworks = useMutate(['execution_frameworks'], {
+  const executionFrameworks = useMutate({
+    idParent: frameworkUUID,
+    resource: 'execution_frameworks'
+  }, {
     handlers: {
       detail: {
         onSuccess: setExecutionFramework,
@@ -32,9 +40,8 @@ function PipelineBuilder({ frameworkUUID, uuid }: PipelineDetailProps) {
   useEffect(() => {
     if (phaseRef.current === 0) {
       phaseRef.current += 1;
-      // console.log(executionFrameworks.detail.mutate)
-      executionFrameworks.detail.mutate({ id: frameworkUUID });
-      pipelines.detail.mutate({ id: [frameworkUUID, uuid] })
+      executionFrameworks.detail.mutate();
+      pipelines.detail.mutate()
     }
 
     // eslint-disable-next-line react-hooks/exhaustive-deps

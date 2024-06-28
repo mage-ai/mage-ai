@@ -264,6 +264,13 @@ TEMPLATES_ONLY_FOR_V2 = [
     ),
     dict(
         block_type=BlockType.DATA_LOADER,
+        description='Load data from multiple files on your machine.',
+        language=BlockLanguage.PYTHON,
+        name='Local files',
+        path='data_loaders/files.py',
+    ),
+    dict(
+        block_type=BlockType.DATA_LOADER,
         description='Load data from a worksheet in Google Sheets.',
         language=BlockLanguage.PYTHON,
         name='Google Sheets',

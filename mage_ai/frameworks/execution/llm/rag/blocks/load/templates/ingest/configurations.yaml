@@ -1,6 +1,8 @@
 files:
   description: 'Load files'
   name: 'Local file loader'
+  path: data_loaders/files.py
+  type: data_loader
   inputs:
     text:
       style:
@@ -14,9 +16,24 @@ files:
       required: true
       types:
         - string
+    exclude_pattern:
+      name: 'Exclude pattern'
+      description: 'Exclude pattern'
+      input: text
+      required: false
+      types:
+        - string
+    include_pattern:
+      name: 'Include pattern'
+      description: 'Include pattern'
+      input: text
+      required: false
+      types:
+        - string
 github:
   description: 'Fetch GitHub repository'
   name: 'GitHub repository loader'
+  type: data_loader
   inputs:
     text:
       style:

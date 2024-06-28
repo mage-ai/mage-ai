@@ -148,7 +148,7 @@ export default function useMutate(
     if (!checkpointRef?.current) {
       checkpointRef.current = now;
     } else if (now - checkpointRef.current < throttle) {
-      return () => new Promise(() => null) ;
+      return () => new Promise(() => null);
     }
 
     return mutate();
@@ -172,9 +172,9 @@ export default function useMutate(
   const fnDelete = useMutation({
     ...augmentHandlers(OperationTypeEnum.DELETE, resourceHandlers?.delete || {}),
     mutationFn: (args?: MutateFunctionArgsType) => wrapMutation(() => apiEndpoint.useDelete(
-        ...preprocessArgs(args),
-        addMetaQuery(args),
-      )),
+      ...preprocessArgs(args),
+      addMetaQuery(args),
+    )),
   });
   const fnDetail = useMutation({
     ...augmentHandlers(OperationTypeEnum.DETAIL, resourceHandlers?.detail || {}),
@@ -194,9 +194,9 @@ export default function useMutate(
   const fnUpdate = useMutation({
     ...augmentHandlers(OperationTypeEnum.UPDATE, resourceHandlers?.update || {}),
     mutationFn: (args?: MutateFunctionArgsType) => wrapMutation(() => apiEndpoint.useUpdate(
-        ...preprocessArgs(args),
-        addMetaQuery(args),
-      )(preprocessPayload(args))),
+      ...preprocessArgs(args),
+      addMetaQuery(args),
+    )(preprocessPayload(args))),
   });
 
   function handleStatusUpdate(context: any) {

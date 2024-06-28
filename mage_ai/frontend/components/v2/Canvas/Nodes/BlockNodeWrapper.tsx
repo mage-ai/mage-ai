@@ -23,12 +23,14 @@ import { ItemTypeEnum } from '../types';
 import stylesBuilder from '@styles/scss/apps/Canvas/Pipelines/Builder.module.scss';
 import styles from '@styles/scss/components/Canvas/Nodes/BlockNode.module.scss';
 import { isDebug } from '@utils/environment';
+import { generateUUID } from '@utils/uuids/generator';
 import {
   ClientEventType,
   EventOperationEnum,
   SubmitEventOperationType,
 } from '@mana/shared/interfaces';
 import { ButtonEnum } from '@mana/shared/enums';
+import PipelineExecutionFrameworkType from '@interfaces/PipelineExecutionFramework/interfaces';
 
 type BlockNodeWrapperProps = {
   collapsed?: boolean;
@@ -60,8 +62,7 @@ const BlockNodeWrapper: React.FC<BlockNodeWrapperProps> = ({
 
   const block = item?.block;
   const { pipeline, type, uuid } = block || {};
-  const isPipeline = useMemo(() => type && BlockTypeEnum.PIPELINE === type, [type]);
-  const isGroup = useMemo(() => type && BlockTypeEnum.GROUP === type, [type]);
+  const isGroup = useMemo(() => !item?.block?.type || item?.block?.type === BlockTypeEnum.GROUP, [item]);
 
   const { onMouseDown, onMouseLeave, onMouseOver, onMouseUp } = handlers;
   const name = useMemo(
@@ -183,10 +184,26 @@ const BlockNodeWrapper: React.FC<BlockNodeWrapperProps> = ({
   }, []);
 
   function handleGroupTemplateSelect(event: any, item: NodeItemType, template: TemplateType) {
+    console.log('wtf', item)
     submitEventOperation(event, {
-      handler: (e, { addBlockToGroup }) => {
-        addBlockToGroup({
-          template,
+      handler: (e, { pipelines }) => {
+        pipelines.update.mutate({
+          event: e,
+          payload: (pipeline: PipelineExecutionFrameworkType) => ({
+            ...pipeline,
+            blocks: [
+              ...(pipeline?.blocks ?? []),
+              {
+                configuration: {
+                  templates: {
+                    [template.uuid]: template,
+                  },
+                },
+                groups: [item.block.uuid],
+                uuid: generateUUID(),
+              },
+            ],
+          }),
         });
       },
     });
@@ -228,17 +245,16 @@ const BlockNodeWrapper: React.FC<BlockNodeWrapperProps> = ({
     );
   }
 
+  const requiredGroup = isGroup && item?.block?.configuration?.metadata?.required;
+  const emptyGroup = isGroup && item?.items?.length === 0;
+
   return (
     <NodeWrapper
       className={[
         stylesBuilder.level,
         stylesBuilder[`level-${item?.level}`],
-        (!item?.block?.type || item?.block?.type === BlockTypeEnum.GROUP)
-          && !item?.block?.configuration?.metadata?.required
-          ? stylesBuilder.optional
-          : '',
-        item?.type ? stylesBuilder[item?.type] : '',
-        !draggable && !droppable && styles.showOnHoverContainer,
+        item?.type && stylesBuilder[item?.type],
+        !emptyGroup && !draggable && !droppable && styles.showOnHoverContainer,
       ]
         ?.filter(Boolean)
         ?.join(' ')}
@@ -303,7 +319,7 @@ const BlockNodeWrapper: React.FC<BlockNodeWrapperProps> = ({
           label: String(name || uuid || ''),
         }}
       />
-    </NodeWrapper>
+    </NodeWrapper >
   );
 };
 

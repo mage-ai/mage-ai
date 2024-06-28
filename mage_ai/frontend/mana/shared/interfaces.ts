@@ -1,4 +1,5 @@
 import React from 'react';
+import { MutateType } from '@api/interfaces';
 import { ButtonEnum, LanguageEnum } from './enums';
 
 export enum EventOperationEnum {
@@ -59,7 +60,7 @@ export interface EventOperationOptionsType {
   kwargs?: {
     boundingContainer?: DOMRect;
   };
-  handler?: (event: ClientEventType, handlers: Record<string, (args: any | any[]) => void>) => void;
+  handler?: (event: ClientEventType, handlers: Record<string, MutateType>) => void;
 }
 export type SubmitEventOperationType = (
   event: ClientEventType,
