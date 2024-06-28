@@ -33,15 +33,22 @@ type ModelManagerProps = {
 
 export default function useModelManager({
   itemIDsByLevelRef,
-  setItemsState,
   pipelineUUID,
   executionFrameworkUUID,
-  setPipeline,
-  setExecutionFramework,
 }: ModelManagerProps): ModelManagerType {
   const appHandlersRef = useRef<AppHandlerType>({} as AppHandlerType);
-  const itemsRef = useRef<ItemMappingType>(null);
-  const portsRef = useRef<PortMappingType>(null);
+  const itemsRef = useRef<ItemMappingType>({});
+  const portsRef = useRef<PortMappingType>({});
+  const phaseRef = useRef<number>(0);
+
+  const onItemChangeRef = useRef<(payload: NodeItemType) => void>(null);
+  const onModelChangeRef = useRef<(payload: PipelineExecutionFrameworkType) => void>(null);
+
+  const [pipeline, setPipeline] = useState<PipelineExecutionFrameworkType>(null);
+  const [executionFramework, setExecutionFramework] = useState<PipelineExecutionFrameworkType>(null);
+
+  const pready = useRef<boolean>(false);
+  const fready = useRef<boolean>(false);
 
   const pipelineMutants = useMutate({
     id: pipelineUUID,
@@ -53,11 +60,14 @@ export default function useModelManager({
       detail: {
         onSuccess: (data) => {
           setPipeline(data);
+          console.log(data)
+          pready.current = true;
         },
       },
       update: {
         onSuccess: (data) => {
           setPipeline(data);
+          onModelChangeRef.current(data);
         },
       },
     },
@@ -69,7 +79,9 @@ export default function useModelManager({
     handlers: {
       detail: {
         onSuccess: (data) => {
+          console.log(data)
           setExecutionFramework(data);
+          fready.current = true;
         },
       },
     },
@@ -162,6 +174,7 @@ export default function useModelManager({
 
         itemsIDs.push(item.id);
         itemMapping[item.id] = item;
+        onItemChangeRef.current(item);
       });
       itemIDsByLevel.push(itemsIDs);
 
@@ -198,42 +211,41 @@ export default function useModelManager({
       itemMapping,
       portMapping,
     });
-    setItemsState(itemMapping);
   }
 
-  function updateNodeItems(items: ItemMappingType) {
-    // This should be the only setter for itemsRef.
-    itemsRef.current = {
-      ...itemsRef.current,
-      ...Object.entries(items).reduce(
-        (acc: ItemMappingType, [id, item]: [string, NodeItemType]) => ({
-          ...acc,
-          [id]: {
-            ...item,
-            version: String(Number(item?.version ?? -1) + 1),
-          },
-        }),
-        {} as ItemMappingType,
-      ),
-    };
-  }
+  // function updateNodeItems(items: ItemMappingType) {
+  //   // This should be the only setter for itemsRef.
+  //   itemsRef.current = {
+  //     ...itemsRef.current,
+  //     ...Object.entries(items).reduce(
+  //       (acc: ItemMappingType, [id, item]: [string, NodeItemType]) => ({
+  //         ...acc,
+  //         [id]: {
+  //           ...item,
+  //           version: String(Number(item?.version ?? -1) + 1),
+  //         },
+  //       }),
+  //       {} as ItemMappingType,
+  //     ),
+  //   };
+  // }
 
-  function updatePorts(ports: PortMappingType) {
-    // This should be the only setter for portsRef.
-    portsRef.current = {
-      ...portsRef.current,
-      ...Object.entries(ports).reduce(
-        (acc: PortMappingType, [id, item]: [string, PortType]) => ({
-          ...acc,
-          [id]: {
-            ...item,
-            version: String(Number(item?.version ?? -1) + 1),
-          },
-        }),
-        {} as PortMappingType,
-      ),
-    };
-  }
+  // function updatePorts(ports: PortMappingType) {
+  //   // This should be the only setter for portsRef.
+  //   portsRef.current = {
+  //     ...portsRef.current,
+  //     ...Object.entries(ports).reduce(
+  //       (acc: PortMappingType, [id, item]: [string, PortType]) => ({
+  //         ...acc,
+  //         [id]: {
+  //           ...item,
+  //           version: String(Number(item?.version ?? -1) + 1),
+  //         },
+  //       }),
+  //       {} as PortMappingType,
+  //     ),
+  //   };
+  // }
 
   function mutateModels(payload?: ModelMappingType): ModelMappingType {
     const { items, ports } = updateModelsAndRelationships(
@@ -243,8 +255,8 @@ export default function useModelManager({
       },
       payload,
     );
-    updateNodeItems(items);
-    updatePorts(ports);
+    // updateNodeItems(items);
+    // updatePorts(ports);
 
     return {
       itemMapping: itemsRef.current,
@@ -252,20 +264,23 @@ export default function useModelManager({
     };
   }
 
-  // useEffect(() => {
-  //   console.log(itemsRef.current, executionFramework, pipeline)
-  //   if (itemsRef.current === null && executionFramework && pipeline) {
-  //     initializeModels(executionFramework, pipeline);
-  //   }
-  // }, [executionFramework, pipeline]);
+  useEffect(() => {
+    if (phaseRef.current === 0 && pready.current && fready.current) {
+      initializeModels(executionFramework, pipeline);
+      phaseRef.current = 1;
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [executionFramework, pipeline]);
 
   return {
     appHandlersRef,
     initializeModels,
     itemsRef,
-    mutateModels,
+    onItemChangeRef,
+    onModelChangeRef,
     portsRef,
-    updateNodeItems,
-    updatePorts,
+    // mutateModels,
+    // updateNodeItems,
+    // updatePorts,
   };
 }

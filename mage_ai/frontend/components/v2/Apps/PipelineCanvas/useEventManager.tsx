@@ -384,6 +384,7 @@ export default function useEventManager({
                 updateLayoutConfig({
                   rectTransformations: [{ type: value as TransformRectTypeEnum }]
                 });
+                updateLayoutOfItems();
 
                 removeContextMenu(event);
               },

@@ -1,9 +1,10 @@
-import BlockNodeWrapper from '../../Canvas/Nodes/BlockNodeWrapper';
+
+import DraggableBlockNode from '../../Canvas/Nodes/DraggableBlockNode';
 import CanvasContainer from './index.style';
 import PipelineExecutionFrameworkType from '@interfaces/PipelineExecutionFramework/interfaces';
 import type { DropTargetMonitor } from 'react-dnd';
 import {
-  LayoutConfigType, DragItem, ModelMappingType, NodeItemType,
+  LayoutConfigType, DragItem, ModelMappingType, NodeItemType, RectType,
   NodeType
 } from '../../Canvas/interfaces';
 import useEventManager, { EventManagerType } from './useEventManager';
@@ -16,15 +17,16 @@ import { RemoveContextMenuType, RenderContextMenuType } from '@mana/hooks/useCon
 import { ZoomPanStateType } from '@mana/hooks/useZoomPan';
 import { useDrop } from 'react-dnd';
 import { useEffect, useMemo, useRef, useState, startTransition } from 'react';
-
+import useItemManager from './useItemManager';
+import useDynamicDebounce from '@utils/hooks/useDebounce';
 export type BuilderCanvasProps = {
   canvasRef: React.RefObject<HTMLDivElement>;
   containerRef: React.RefObject<HTMLDivElement>;
   defaultActiveLevel?: number;
   dragEnabled?: boolean;
   dropEnabled?: boolean;
-  // pipeline: PipelineExecutionFrameworkType;
-  // executionFramework: PipelineExecutionFrameworkType;
+  pipelineUUID: string;
+  executionFrameworkUUID: string;
   removeContextMenu: RemoveContextMenuType;
   renderContextMenu: RenderContextMenuType;
   setDragEnabled: (value: boolean) => void;
@@ -32,6 +34,7 @@ export type BuilderCanvasProps = {
   setZoomPanDisabled: (value: boolean) => void;
   transformState: React.MutableRefObject<ZoomPanStateType>;
 };
+import useNodeManager from './useNodeManager';
 
 const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
   canvasRef,
@@ -49,29 +52,23 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
   setZoomPanDisabled,
   transformState,
 }: BuilderCanvasProps) => {
-  const blocksCountRef = useRef<number>(null);
+  const [itemRects, setItemRects] = useState([]);
+
+  const itemIDsByLevelRef = useRef<string[][]>(null);
   const phaseRef = useRef<number>(0);
   const wrapperRef = useRef(null);
-  const itemIDsByLevelRef = useRef<string[][]>(null);
-  const [array, setArray] = useState([]);
 
   // VERY IMPORTANT THAT THE STATE IS IN THIS COMPONENT OR ELSE NOTHING WILL RENDER!
   const [pipeline, setPipeline] = useState<PipelineExecutionFrameworkType>(null);
   const [executionFramework, setExecutionFramework] = useState<PipelineExecutionFrameworkType>(null);
-  const [version, setVersion] = useState<string>(null);
-
-  const [items, setItemsState] = useState<Record<string, NodeItemType>>(null);
-  const [activeItems, setActiveItemsState] = useState<Record<string, ModelMappingType>>(null);
-
-  function setActiveItems(modelMapping: ModelMappingType) {
-    setActiveItemsState(modelMapping);
-  }
 
   const {
     appHandlersRef,
     initializeModels,
     itemsRef,
     mutateModels,
+    onItemChangeRef,
+    onModelChangeRef,
     portsRef,
     updateNodeItems,
     // What is this being used for?
@@ -79,9 +76,6 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
   }: ModelManagerType = useModelManager({
     itemIDsByLevelRef,
     pipelineUUID,
-    setItemsState,
-    setPipeline,
-    setExecutionFramework,
     executionFrameworkUUID,
   });
 
@@ -96,20 +90,46 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
     pipeline,
     canvasRef,
     containerRef,
-    array, setArray,
     itemIDsByLevelRef,
     itemsRef,
-    setItemsState,
+    setItemRects,
     transformState,
     updateNodeItems,
   });
+
+  const { itemElementsRef,
+    onMountItem,
+  } = useItemManager({
+    updateLayoutOfItems,
+    itemsRef,
+
+  });
+
+  const {
+    addNewComponent,
+    dynamicRootRef,
+    removeComponentById,
+  } = useNodeManager({
+    itemRects,
+    dragEnabled,
+    dropEnabled,
+    handleDragEnd,
+    handleDragStart,
+    handleMouseDown,
+    itemsRef,
+    onDropPort,
+    onMountItem,
+    onItemChangeRef,
+    onModelChangeRef,
+    onMountPort,
+    submitEventOperation,
+  });
+
 
   const {
     connectionLinesPathRef,
     connectionLinesRootID,
     itemDraggingRef,
-    itemElementsRef,
-    onMountItem,
     onMountPort,
     renderConnectionLines,
     updateItemsMetadata,
@@ -117,12 +137,11 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
     // itemsMetadataRef,
   }: PresentationManagerType = usePresentationManager({
     activeLevel,
-    array, setArray,
+    itemElementsRef,
     itemIDsByLevelRef,
     itemsRef,
     layoutConfig,
     mutateModels,
-    setVersion,
     portsRef,
     setActiveLevel,
     updateLayoutOfItems,
@@ -175,18 +194,6 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [executionFrameworkUUID, pipelineUUID, executionFramework, pipeline]);
 
-  useEffect(() => {
-    if ((pipeline?.blocks?.length ?? null) !== (blocksCountRef.current ?? null) ||
-      (blocksCountRef.current === null && executionFramework?.uuid && pipeline?.uuid)) {
-      startTransition(() => {
-        initializeModels(executionFramework, pipeline);
-        updateItemsMetadata();
-
-        blocksCountRef.current = pipeline?.blocks?.length;
-      });
-    }
-  }, [executionFramework, pipeline]);
-
   const [, connectDrop] = useDrop(
     () => ({
       // https://react-dnd.github.io/react-dnd/docs/api/use-drop
@@ -208,33 +215,6 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
     [],
   );
   connectDrop(canvasRef);
-
-  // const nodesMemo = useMemo(() => {
-  //   return array?.map((rect: RectType, idx: number) => (
-  //     <BlockNodeWrapper
-  //       rect={rect}
-  //       draggable={dragEnabled}
-  //       droppable={dropEnabled}
-  //       handlers={{
-  //         onDragEnd: handleDragEnd,
-  //         onDragStart: handleDragStart,
-  //         onDrop: onDropPort,
-  //         onMouseDown: handleMouseDown,
-
-  //         // Not using right now.
-  //         // onMouseOver: handleMouseOver,
-  //         // onMouseLeave: handleMouseLeave,
-  //       }}
-  //       item={itemsRef.current[rect.id] as NodeItemType}
-  //       key={rect.id}
-  //       onMountItem={onMountItem}
-  //       onMountPort={onMountPort}
-  //       submitEventOperation={submitEventOperation}
-  //       version={version}
-  //     />
-  //   ));
-  //   // eslint-disable-next-line react-hooks/exhaustive-deps
-  // }, [dragEnabled, dropEnabled, array]);
 
   return (
     <div
@@ -269,51 +249,25 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
           />
 
           <div id={connectionLinesRootID.current} />
+          <div id="dynamic-components-root" ref={dynamicRootRef} />
 
-          {!array?.length && Object.values(items ?? {})?.map((item, idx) => (
-            <BlockNodeWrapper
-              draggable={dragEnabled}
-              droppable={dropEnabled}
+          {itemRects?.map((item: NodeItemType) => itemsRef.current[item.id] && (
+            <DraggableBlockNode
               handlers={{
                 onDragEnd: handleDragEnd,
                 onDragStart: handleDragStart,
                 onDrop: onDropPort,
                 onMouseDown: handleMouseDown,
-
-                // Not using right now.
-                // onMouseOver: handleMouseOver,
-                // onMouseLeave: handleMouseLeave,
               }}
-              item={item}
-              key={`${item.id}-${item.type}-${idx}`}
-              onMountItem={onMountItem}
-              onMountPort={onMountPort}
-              submitEventOperation={submitEventOperation}
-              version={version}
-            />
-          ))}
-
-          {array?.length >= 1 && array?.map((rect, idx) => (
-            <BlockNodeWrapper
-              draggable={dragEnabled}
-              rect={rect}
-              droppable={dropEnabled}
-              handlers={{
-                onDragEnd: handleDragEnd,
-                onDragStart: handleDragStart,
-                onDrop: onDropPort,
-                onMouseDown: handleMouseDown,
-
-                // Not using right now.
-                // onMouseOver: handleMouseOver,
-                // onMouseLeave: handleMouseLeave,
+              item={itemsRef.current[item.id] as NodeItemType}
+              key={item.id}
+              onMountItem={(item: DragItem, ref: React.RefObject<HTMLDivElement>) => {
+                onMountItem(item, ref);
+                removeComponentById(item.id);
               }}
-              item={itemsRef.current[rect.id] as NodeItemType}
-              key={rect.id}
-              onMountItem={onMountItem}
               onMountPort={onMountPort}
+              rect={item.rect}
               submitEventOperation={submitEventOperation}
-              version={version}
             />
           ))}
         </CanvasContainer>

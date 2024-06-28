@@ -43,6 +43,7 @@ export type LayoutManagerType = {
     optionalGroupsVisible: boolean;
   }>;
   setActiveLevel: (level?: number) => void;
+  setArray: React.Dispatch<React.SetStateAction<NodeItemType[]>>;
 };
 
 export default function useLayoutManager({
@@ -50,11 +51,9 @@ export default function useLayoutManager({
   canvasRef,
   containerRef,
   itemIDsByLevelRef,
-  array, setArray,
+  setItemRects,
   itemsRef,
-  setItemsState,
   transformState,
-  updateNodeItems,
 }: LayoutManagerProps): LayoutManagerType {
   const validLevels = useRef<number[]>(null);
   const phaseRef = useRef<number>(0);
@@ -452,10 +451,7 @@ export default function useLayoutManager({
       itemsRef.current[item.id] = item;
     });
 
-    setArray(Object.values(itemsRef.current ?? {}).map(i => ({
-      id: i.id,
-      ...i.rect,
-    })))
+    setItemRects(Object.values(itemsRef.current ?? {}).map(i => i));
 
     setActiveLevel(activeLevel?.current ?? 0);
   }

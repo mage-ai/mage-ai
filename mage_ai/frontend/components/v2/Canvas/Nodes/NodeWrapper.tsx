@@ -80,7 +80,7 @@ export const NodeWrapper: FC<NodeWrapperProps> = memo(function NodeWrapper({
         return node.id === itemToDrag.id;
       },
       item: itemToDrag,
-      type: itemToDrag.type,
+      type: itemToDrag?.type,
     }),
     [draggable, itemToDrag, onDragStart],
   );

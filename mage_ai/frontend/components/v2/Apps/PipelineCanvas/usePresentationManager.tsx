@@ -26,6 +26,7 @@ type PresentationManagerProps = {
   setActiveLevel: SetActiveLevelType;
   updateLayoutOfItems: LayoutManagerType['updateLayoutOfItems'];
   updateNodeItems: ModelManagerType['updateNodeItems'];
+  itemElementsRef: React.MutableRefObject<Record<string, Record<string, React.RefObject<HTMLDivElement>>>>;
 };
 
 export type PresentationManagerType = {
@@ -37,8 +38,7 @@ export type PresentationManagerType = {
   connectionLinesRootID: React.MutableRefObject<string>;
   itemDraggingRef: React.MutableRefObject<NodeItemType | null>;
   itemsMetadataRef: React.MutableRefObject<Record<string, any>>;
-  itemElementsRef: React.MutableRefObject<Record<string, Record<string, React.RefObject<HTMLDivElement>>>>;
-  onMountItem: (item: DragItem, itemRef: React.RefObject<HTMLDivElement>) => void;
+
   onMountPort: (port: PortType, portRef: React.RefObject<HTMLDivElement>) => void;
   renderConnectionLines: (opts?: {
     layout?: LayoutConfigType | undefined; modelMapping?: ModelMappingType | undefined;
@@ -54,13 +54,12 @@ export default function usePresentationManager({
   mutateModels,
   portsRef,
   setActiveLevel,
-  setVersion,
-  array, setArray,
+  itemElementsRef,
   updateLayoutOfItems,
   // Updates the itemsReftems,
   updateNodeItems,
 }: PresentationManagerProps): PresentationManagerType {
-  const [debouncer, cancelDebounce] = useDynamicDebounce();
+
 
   const connectionLinesRootID = useRef<string>(buildConnectionLinesRootID('nodes'));
   const connectionLineRootRef = useRef<React.MutableRefObject<Root>>(null);
@@ -82,9 +81,7 @@ export default function usePresentationManager({
 
   const itemDraggingRef = useRef<NodeItemType | null>(null);
   const itemsMetadataRef = useRef<Record<string, any>>({ rect: {} });
-  const itemElementsRef = useRef<Record<string, Record<string, React.RefObject<HTMLDivElement>>>>(
-    {},
-  );
+
 
   function updateItemsMetadata(data?: { version?: number }) {
     const { version } = data ?? {};
@@ -92,114 +89,7 @@ export default function usePresentationManager({
       version ?? (itemsMetadataRef.current.rect.version ?? 0) + 1;
   }
 
-  function onMountItem(item: DragItem, itemRef: React.RefObject<HTMLDivElement>) {
-    const { id, type } = item;
-    itemElementsRef.current ||= {};
-    itemElementsRef.current[type] ||= {};
-    itemElementsRef.current[type][id] = itemRef;
 
-    const rectVersion = itemsMetadataRef.current.rect.version;
-    if (!itemRef.current) return;
-
-    if (
-      [ItemTypeEnum.BLOCK, ItemTypeEnum.NODE].includes(type) &&
-      (!item?.rect || (item?.rect?.version && item?.rect?.version <= rectVersion))
-    ) {
-      const previousVersion = (item?.rect?.version ?? -1) >= 0;
-      const rectOld = item?.rect;
-      const rect = itemRef.current.getBoundingClientRect() as RectType;
-      rect.id = item.id;
-
-      const defaultPositions: RectType = layoutConfig?.current?.transformRect?.[type]?.(rect as RectType) ??
-        rect ?? {
-        left: undefined,
-        top: undefined,
-      };
-
-      const elementBadge = itemRef?.current?.querySelector(`#${item.id}-badge`);
-      const rectBadge = elementBadge?.getBoundingClientRect() ?? {
-        height: 0,
-        left: 0,
-        top: 0,
-        width: 0,
-      };
-      const elementTitle = itemRef?.current?.querySelector(`#${item.id}-title`);
-      const rectTitle = elementTitle?.getBoundingClientRect() ?? {
-        height: 0,
-        left: 0,
-        top: 0,
-        width: 0,
-      };
-
-      const shouldUpdate =
-        !previousVersion || rect?.width !== rectOld?.width || rect?.height !== rectOld?.height;
-
-      let newItem = update(item, {
-        rect: {
-          $set: {
-            diff: item?.rect,
-            height: shouldUpdate ? rect.height : rectOld?.height,
-            inner: {
-              badge: {
-                height: rectBadge?.height,
-                left: rectBadge?.left,
-                top: rectBadge?.top,
-                width: rectBadge?.width,
-              },
-              title: {
-                height: rectTitle?.height,
-                left: rectTitle?.left,
-                top: rectTitle?.top,
-                width: rectTitle?.width,
-              },
-            },
-            // left: (previousVersion ? rectOld?.left : defaultPositions?.left ?? 0) ?? 0,
-            left: 0,
-            offset: {
-              left: itemRef?.current?.offsetLeft,
-              top: itemRef?.current?.offsetTop,
-            },
-            // top: (previousVersion ? rectOld?.top : defaultPositions?.top ?? 0) ?? 0,
-            top: 0,
-            version: rectVersion,
-            width: shouldUpdate ? rect.width : rectOld?.width,
-          },
-        },
-      });
-
-      newItem = update(newItem, {
-        rect: {
-          inner: {
-            badge: {
-              offset: {
-                $set: {
-                  // No need to offset it because there is no extra spacing besides the group’s padding.
-                  // left: (elementBadge as { offsetLeft?: number })?.offsetLeft,
-                  top: (elementBadge as { offsetTop?: number })?.offsetTop,
-                },
-              },
-            },
-            title: {
-              offset: {
-                $set: {
-                  // No need to offset it because there is no extra spacing besides the group’s padding.
-                  // left: (elementTitle as { offsetLeft?: number })?.offsetLeft,
-                  top: (elementTitle as { offsetTop?: number })?.offsetTop,
-                },
-              },
-            },
-          },
-        },
-      });
-
-      // Good
-      itemsRef.current[item.id] = newItem;
-      debouncer(() => {
-        // Good
-        updateLayoutOfItems()
-      }, 100);
-    }
-  }
 
   function onMountPort(item: PortType, portRef: React.RefObject<HTMLDivElement>) {
     const { id, type } = item;
@@ -533,9 +423,7 @@ export default function usePresentationManager({
     connectionLinesPathRef,
     connectionLinesRootID,
     itemDraggingRef,
-    itemElementsRef,
     itemsMetadataRef,
-    onMountItem,
     onMountPort,
     renderConnectionLines,
     updateItemsMetadata,

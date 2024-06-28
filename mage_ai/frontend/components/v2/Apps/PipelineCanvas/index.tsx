@@ -1,4 +1,4 @@
-import  BuilderCanvas, { BuilderCanvasProps } from './Canvas';
+import BuilderCanvas, { BuilderCanvasProps } from './Canvas';
 import Loading from '@mana/components/Loading';
 import useContextMenu from '@mana/hooks/useContextMenu';
 import { ClientEventType } from '@mana/shared/interfaces';

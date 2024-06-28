@@ -14,7 +14,6 @@ import {
   PlayButtonFilled,
   Infinite,
 } from '@mana/icons';
-import { getStyles } from './utils';
 import { createRef, useEffect, useCallback, useState, useMemo, useRef } from 'react';
 import { GroupUUIDEnum } from '@interfaces/PipelineExecutionFramework/types';
 import { NodeItemType, PortType, DragItem, NodeType, RectType } from '../interfaces';
@@ -68,6 +67,48 @@ const BlockNodeWrapper: React.FC<BlockNodeWrapperProps> = ({
   const { pipeline, type, uuid } = block || {};
   const isGroup = useMemo(() => !item?.block?.type || item?.block?.type === BlockTypeEnum.GROUP, [item]);
 
+  const { onMouseDown, onMouseLeave, onMouseOver, onMouseUp } = handlers;
+  const name = useMemo(
+    () => (ItemTypeEnum.BLOCK === item?.type
+      ? item?.block?.name ?? item?.block?.uuid
+      : item?.title ?? item?.id),
+    [item],
+  );
+
+  const buildEvent = useCallback(
+    (event: any, operation?: EventOperationEnum) =>
+      update(event, {
+        data: {
+          $set: {
+            node: item,
+          },
+        },
+        operationTarget: {
+          $set: itemRef,
+        },
+        operationType: {
+          $set: operation,
+        },
+      }) as any,
+    [item],
+  );
+
+  function handleMouseDown(event: ClientEventType) {
+    event.stopPropagation();
+    onMouseDown && onMouseDown?.(buildEvent(event, EventOperationEnum.DRAG_START));
+  }
+
+  function handleMouseLeave(event: ClientEventType) {
+    onMouseLeave && onMouseLeave?.(buildEvent(event));
+  }
+
+  function handleMouseOver(event: ClientEventType) {
+    onMouseOver && onMouseOver?.(buildEvent(event));
+  }
+
+  function handleMouseUp(event: ClientEventType) {
+    onMouseUp && onMouseUp?.(buildEvent(event, EventOperationEnum.DRAG_END));
+  }
 
   function onMount(port: PortType, portRef: React.RefObject<HTMLDivElement>) {
     if (!(port?.id in portElementRefs.current)) {
@@ -145,23 +186,6 @@ const BlockNodeWrapper: React.FC<BlockNodeWrapperProps> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  function handleMouseDown(event: ClientEventType) {
-    event.stopPropagation();
-    onMouseDown && onMouseDown?.(buildEvent(event, EventOperationEnum.DRAG_START));
-  }
-
-  function handleMouseLeave(event: ClientEventType) {
-    onMouseLeave && onMouseLeave?.(buildEvent(event));
-  }
-
-  function handleMouseOver(event: ClientEventType) {
-    onMouseOver && onMouseOver?.(buildEvent(event));
-  }
-
-  function handleMouseUp(event: ClientEventType) {
-    onMouseUp && onMouseUp?.(buildEvent(event, EventOperationEnum.DRAG_END));
-  }
-
   function handleGroupTemplateSelect(event: any, item: NodeItemType, template: TemplateType) {
     submitEventOperation(event, {
       handler: (e, { pipelines }) => {
@@ -227,7 +251,7 @@ const BlockNodeWrapper: React.FC<BlockNodeWrapperProps> = ({
   const emptyGroup = isGroup && item?.items?.length === 0;
 
   return (
-    <div
+    <NodeWrapper
       className={[
         stylesBuilder.level,
         stylesBuilder[`level-${item?.level}`],
@@ -236,11 +260,19 @@ const BlockNodeWrapper: React.FC<BlockNodeWrapperProps> = ({
       ]
         ?.filter(Boolean)
         ?.join(' ')}
-      ref={itemRef}
-      style={getStyles(item, {
-        draggable,
-        rect,
-      })}
+      draggable={draggable}
+      draggingNode={draggingNode}
+      droppable={droppable}
+      handlers={{
+        ...handlers,
+        onMouseDown: handleMouseDown,
+        onMouseLeave: handleMouseLeave,
+        onMouseOver: !draggable && handleMouseOver,
+        onMouseUp: handleMouseUp,
+      }}
+      item={item}
+      itemRef={itemRef}
+      rect={rect}
     >
       <BlockNode
         block={block}
@@ -290,7 +322,7 @@ const BlockNodeWrapper: React.FC<BlockNodeWrapperProps> = ({
           label: String(name || uuid || ''),
         }}
       />
-    </div>
+    </NodeWrapper >
   );
 };
 
