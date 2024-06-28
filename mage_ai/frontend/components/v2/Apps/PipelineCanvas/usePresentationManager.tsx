@@ -9,9 +9,7 @@ import { createRoot, Root } from 'react-dom/client';
 import { getBlockColor } from '@mana/themes/blocks';
 import { getPathD } from '../../Canvas/Connections/utils';
 import { ActiveLevelRefType, LayoutConfigRefType, ItemIDsByLevelRef, SetActiveLevelType } from './interfaces';
-import { get, set } from '@storage/localStorage';
 
-export const ACTIVE_LEVEL_KEY = 'pipeline_builder_canvas_active_level';
 function buildConnectionLinesRootID(uuid: string): string {
   return `connection-lines-root-${uuid}`;
 }
@@ -41,7 +39,7 @@ export type PresentationManagerType = {
   itemElementsRef: React.MutableRefObject<Record<string, Record<string, React.RefObject<HTMLDivElement>>>>;
   onMountItem: (item: DragItem, itemRef: React.RefObject<HTMLDivElement>) => void;
   onMountPort: (port: PortType, portRef: React.RefObject<HTMLDivElement>) => void;
-  renderConnectionLines: (opts?:{
+  renderConnectionLines: (opts?: {
     layout?: LayoutConfigType | undefined; modelMapping?: ModelMappingType | undefined;
   } | undefined) => React.ReactNode;
   updateItemsMetadata: (data?: { version?: number }) => void;
@@ -106,9 +104,9 @@ export default function usePresentationManager({
 
       const defaultPositions: RectType = layoutConfig?.current?.transformRect?.[type]?.(rect as RectType) ??
         rect ?? {
-          left: undefined,
-          top: undefined,
-        };
+        left: undefined,
+        top: undefined,
+      };
 
       const elementBadge = itemRef?.current?.querySelector(`#${item.id}-badge`);
       const rectBadge = elementBadge?.getBoundingClientRect() ?? {
@@ -190,12 +188,10 @@ export default function usePresentationManager({
       const versions = arr?.map(({ rect }) => rect?.version ?? 0);
 
       if (versions?.every((version: number) => version === rectVersion)) {
-        if (activeLevel?.current === null) {
-          setActiveLevel(get(ACTIVE_LEVEL_KEY) ?? 0);
-          const itemsUpdated = updateLayoutOfItems();
-          renderLayoutChanges({ items: itemsUpdated });
-          renderConnectionLines();
-        }
+        setActiveLevel(activeLevel?.current ?? 0);
+        const itemsUpdated = updateLayoutOfItems();
+        renderLayoutChanges({ items: itemsUpdated });
+        renderConnectionLines();
       }
     }
   }
@@ -473,7 +469,7 @@ export default function usePresentationManager({
       }
 
 
-      if (typeof fromValues?.id !== 'undefined' && typeof toValues?.id  !== 'undefined') {
+      if (typeof fromValues?.id !== 'undefined' && typeof toValues?.id !== 'undefined') {
         const pathRef =
           connectionLinesPathRef?.current?.[fromValues?.id]?.[toValues?.id]?.pathRef ?? createRef();
 

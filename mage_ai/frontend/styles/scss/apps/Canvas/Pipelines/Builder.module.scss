@@ -1,6 +1,12 @@
 @use '../../../abstracts/helpers' as *;
 @use '../../../base/svg';
 
+@mixin hidden {
+  opacity: 0;
+  pointer-events: none;
+  z-index: -1;
+}
+
 .canvas {
   background-color: var(--backgrounds-body);
   height: 500%; /* Large enough to initially fit all content, will expand as needed */
@@ -69,6 +75,12 @@
     }
   }
 
+  &.optional-hidden {
+    .optional {
+      @include hidden;
+    }
+  }
+
   &.dragging {
     .connectionLines {
       z-index: 5;
@@ -93,9 +105,7 @@
   }
 
   .level {
-    opacity: 0;
-    pointer-events: none;
-    z-index: -1;
+    @include hidden;
   }
 
   .centered {

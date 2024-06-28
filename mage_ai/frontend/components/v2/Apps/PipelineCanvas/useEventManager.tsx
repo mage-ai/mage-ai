@@ -1,7 +1,8 @@
 import stylesBuilder from '@styles/scss/apps/Canvas/Pipelines/Builder.module.scss';
 import type { DropTargetMonitor } from 'react-dnd';
 import update from 'immutability-helper';
-import { ActiveLevelRefType, AppHandlersRefType, LayoutConfigRefType, ItemIDsByLevelRef, SetActiveLevelType,
+import {
+  ActiveLevelRefType, AppHandlersRefType, LayoutConfigRefType, ItemIDsByLevelRef, SetActiveLevelType,
 } from './interfaces';
 import { CubeWithArrowDown, PaginateArrowRight, BatchSquaresStacked, Table, Circle, BranchAlt, Monitor, ArrowsAdjustingFrameSquare, Check, Group, TemplateShapes } from '@mana/icons';
 import { ClientEventType, EventOperationEnum, EventOperationOptionsType } from '@mana/shared/interfaces';
@@ -303,35 +304,35 @@ export default function useEventManager({
         uuid: 'Groupings',
       },
       ...(itemIDsByLevelRef?.current ?? []).map((ids: string[], level: number) => {
-          const items = sortByKey(
-            ids?.map((id: string) =>
-              itemsRef.current?.[id])?.filter(({ type }) => ItemTypeEnum.BLOCK === type),
-            ({ block, title, id }) => block?.name || title || block?.uuid || id,
-          );
+        const items = sortByKey(
+          ids?.map((id: string) =>
+            itemsRef.current?.[id])?.filter(({ type }) => ItemTypeEnum.BLOCK === type),
+          ({ block, title, id }) => block?.name || title || block?.uuid || id,
+        );
 
-          return {
-            Icon: level === activeLevel?.current ? Check : Group,
-            description: () => pluralize('block', ids?.length ?? 0),
-            items: items?.map((item: NodeItemType) => {
-              const { block, title } = item;
+        return {
+          Icon: level === activeLevel?.current ? Check : Group,
+          description: () => pluralize('block', ids?.length ?? 0),
+          items: items?.map((item: NodeItemType) => {
+            const { block, title } = item;
 
-              return {
-                onClick: (event?: ClientEventType) => {
-                  event?.preventDefault();
-                  removeContextMenu(event);
-                  alert(`Focus on item for block ${block?.name || block?.uuid} with title ${title}`);
-                },
-                uuid: title || block?.name || block?.uuid,
-              };
-            }),
-            onClick: (event?: ClientEventType) => {
-              event?.preventDefault();
-              setActiveLevel(level);
-              removeContextMenu(event);
-            },
-            uuid: `Blocks grouped at level ${level}`,
-          };
-        },
+            return {
+              onClick: (event?: ClientEventType) => {
+                event?.preventDefault();
+                removeContextMenu(event);
+                alert(`Focus on item for block ${block?.name || block?.uuid} with title ${title}`);
+              },
+              uuid: title || block?.name || block?.uuid,
+            };
+          }),
+          onClick: (event?: ClientEventType) => {
+            event?.preventDefault();
+            setActiveLevel(level);
+            removeContextMenu(event);
+          },
+          uuid: `Blocks grouped at level ${level}`,
+        };
+      },
       ),
       {
         Icon: TemplateShapes,
@@ -342,17 +343,17 @@ export default function useEventManager({
               : CubeWithArrowDown,
             uuid: 'Vertical direction',
             onClick: layoutConfig?.current?.direction === LayoutConfigDirectionEnum.VERTICAL
-            ? null
-            : (event: ClientEventType) => {
-              event.preventDefault();
-              updateLayoutConfig({
-                direction: LayoutConfigDirectionEnum.VERTICAL,
-              });
-              renderLayoutChanges({
-                items: mutateModels({ itemMapping: updateLayoutOfItems() }).itemMapping,
-              });
-              removeContextMenu(event);
-            },
+              ? null
+              : (event: ClientEventType) => {
+                event.preventDefault();
+                updateLayoutConfig({
+                  direction: LayoutConfigDirectionEnum.VERTICAL,
+                });
+                renderLayoutChanges({
+                  items: mutateModels({ itemMapping: updateLayoutOfItems() }).itemMapping,
+                });
+                removeContextMenu(event);
+              },
           },
           {
             Icon: layoutConfig?.current?.direction === LayoutConfigDirectionEnum.HORIZONTAL
@@ -360,17 +361,17 @@ export default function useEventManager({
               : PaginateArrowRight,
             uuid: 'Horizontal direction',
             onClick: layoutConfig?.current?.direction === LayoutConfigDirectionEnum.HORIZONTAL
-            ? null
-            : (event: ClientEventType) => {
-              event.preventDefault();
-              updateLayoutConfig({
-                direction: LayoutConfigDirectionEnum.HORIZONTAL,
-              });
-              renderLayoutChanges({
-                items: mutateModels({ itemMapping: updateLayoutOfItems() }).itemMapping,
-              });
-              removeContextMenu(event);
-            },
+              ? null
+              : (event: ClientEventType) => {
+                event.preventDefault();
+                updateLayoutConfig({
+                  direction: LayoutConfigDirectionEnum.HORIZONTAL,
+                });
+                renderLayoutChanges({
+                  items: mutateModels({ itemMapping: updateLayoutOfItems() }).itemMapping,
+                });
+                removeContextMenu(event);
+              },
           },
           ...Object.entries({
             [TransformRectTypeEnum.LAYOUT_GRID]: ['Square layout', BatchSquaresStacked],
@@ -389,7 +390,7 @@ export default function useEventManager({
                 event.preventDefault();
 
                 updateLayoutConfig({
-                  rectTransformations: [{ type: value }]
+                  rectTransformations: [{ type: value as TransformRectTypeEnum }]
                 });
 
                 renderLayoutChanges({

@@ -4,7 +4,7 @@ import { ItemMappingType, ModelMappingType, NodeItemType, RectType } from '../..
 import { ModelManagerType } from './useModelManager';
 import { ZoomPanStateType } from '@mana/hooks/useZoomPan';
 import { layoutItemsInGroups, transformRects } from '../../Canvas/utils/rect';
-import { useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import { ActiveLevelRefType, ItemIDsByLevelRef } from './interfaces';
 import { RectTransformationScopeEnum, ItemTypeEnum, LayoutConfigDirectionOriginEnum, LayoutConfigDirectionEnum, TransformRectTypeEnum } from '../../Canvas/types';
 import { calculateBoundingBox } from '../../Canvas/utils/rect';
@@ -12,8 +12,11 @@ import { flattenArray } from '@utils/array';
 import { validateFiniteNumber } from '@utils/number';
 import { get, set } from '@storage/localStorage';
 import { selectKeys } from '@utils/hash';
+import styles from '@styles/scss/apps/Canvas/Pipelines/Builder.module.scss';
 
-const LAYOUT_CONFIG_KEY = 'pipeline_builder_canvas_layout_config';
+function builderLocalStorageKey(uuid: string) {
+  return `pipeline_builder_canvas_local_settings_${uuid}`;
+}
 
 type LayoutManagerProps = {
   activeLevel: ActiveLevelRefType;
@@ -31,10 +34,17 @@ export type LayoutManagerType = {
   updateLayoutOfItems: () => ItemMappingType;
   updateLayoutConfig: (config: LayoutConfigType) => void;
   layoutConfig: React.MutableRefObject<LayoutConfigType>;
+  activeLevel: React.MutableRefObject<number>;
+  localSettings: React.MutableRefObject<{
+    activeLevel: number;
+    layoutConfig: LayoutConfigType;
+    optionalGroupsVisible: boolean;
+  }>;
+  setActiveLevel: (level?: number) => void;
 };
 
 export default function useLayoutManager({
-  activeLevel,
+  pipeline,
   canvasRef,
   containerRef,
   itemIDsByLevelRef,
@@ -43,37 +53,102 @@ export default function useLayoutManager({
   transformState,
   updateNodeItems,
 }: LayoutManagerProps): LayoutManagerType {
-  const layoutConfig = useRef<LayoutConfigType>({
-    containerRef: containerRef,
-    direction: LayoutConfigDirectionEnum.HORIZONTAL,
-    gap: { column: 40, row: 40 },
-    origin: LayoutConfigDirectionOriginEnum.LEFT,
-    transformStateRef: transformState,
-    viewportRef: canvasRef,
-  });
+  const validLevels = useRef<number[]>(null);
+  const phaseRef = useRef<number>(0);
+  const activeLevel = useRef<number>(null);
+  const layoutConfig = useRef<LayoutConfigType>(null);
+  const optionalGroupsVisible = useRef<boolean>(null);
 
-  layoutConfig.current = {
-    ...layoutConfig.current,
-    ...JSON.parse(get(LAYOUT_CONFIG_KEY) ?? '{}'),
-  };
+  useEffect(() => {
+    if (phaseRef.current === 0 && pipeline?.uuid) {
+      const settings = get(builderLocalStorageKey(pipeline?.uuid));
+      console.log('settings', settings, pipeline?.uuid)
+
+      if (settings) {
+
+        if (settings?.activeLevel !== null) {
+          activeLevel.current = settings?.activeLevel;
+        }
+        if (settings?.optionalGroupsVisible !== null) {
+          optionalGroupsVisible.current = settings?.optionalGroupsVisible;
+        }
+        layoutConfig.current ||= {};
+
+        layoutConfig.current.containerRef = containerRef;
+        layoutConfig.current.direction = settings?.layoutConfig?.direction ?? LayoutConfigDirectionEnum.HORIZONTAL;
+        layoutConfig.current.gap = { column: 40, row: 40 };
+        layoutConfig.current.origin = LayoutConfigDirectionOriginEnum.LEFT;
+        layoutConfig.current.rectTransformations = settings?.layoutConfig?.rectTransformations ?? null;
+        layoutConfig.current.transformStateRef = transformState;
+        layoutConfig.current.viewportRef = canvasRef;
+
+        phaseRef.current += 1;
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pipeline]);
+
+  // console.log('layoutConfig', layoutConfig.current)
+
+  function updateLocalSettings(value?: any) {
+    if ('optionalGroupVisibility' in (value ?? {})) {
+      optionalGroupsVisible.current = value ?? false;
+    }
+
+    const save = {
+      activeLevel: activeLevel?.current ?? null,
+      layoutConfig: {
+        direction: layoutConfig?.current?.direction ?? null,
+        rectTransformations: layoutConfig?.current?.rectTransformations?.reduce((acc, { type }) =>
+          [
+            TransformRectTypeEnum.LAYOUT_TREE,
+            TransformRectTypeEnum.LAYOUT_WAVE,
+            TransformRectTypeEnum.LAYOUT_RECTANGLE,
+            TransformRectTypeEnum.LAYOUT_GRID,
+            TransformRectTypeEnum.LAYOUT_SPIRAL,
+          ].includes(type) ? acc.concat({ type } as any) : acc,
+          []),
+      },
+      optionalGroupsVisible: optionalGroupsVisible?.current ?? null,
+    };
+
+    set(builderLocalStorageKey(pipeline.uuid), save);
+
+    const val = optionalGroupsVisible?.current ?? false;
+    if (val) {
+      containerRef?.current?.classList.add(styles['optional-hidden']);
+    } else {
+      containerRef?.current?.classList.remove(styles['optional-hidden']);
+    }
+  }
+
+  function setActiveLevel(levelArg?: number) {
+    const levelPrevious: number = activeLevel?.current ?? null;
+    levelPrevious !== null &&
+      containerRef?.current?.classList.remove(styles[`level-${levelPrevious}-active`]);
+
+    let level: number = levelArg ?? (activeLevel?.current ?? 0);
+    if (validLevels?.current?.length >= 1) {
+      const idx = validLevels.current.findIndex(i => i === level);
+      level = validLevels.current[idx + 1] ?? validLevels.current[0];
+    } else {
+      level += (levelArg === null ? 1 : 0);
+      if (level >= itemIDsByLevelRef?.current?.length) {
+        level = 0;
+      }
+    }
+
+    activeLevel.current = level;
+    containerRef?.current?.classList.add(styles[`level-${level}-active`]);
+    updateLocalSettings()
+  }
 
   function updateLayoutConfig(config: LayoutConfigType) {
     layoutConfig.current = {
       ...layoutConfig.current,
       ...config,
     };
-    set(LAYOUT_CONFIG_KEY, JSON.stringify({
-      ...selectKeys(layoutConfig?.current ?? {}, [
-        'direction',
-      ]),
-      rectTransformations: layoutConfig?.current?.rectTransformations?.filter(({ type }) => [
-        TransformRectTypeEnum.LAYOUT_TREE,
-        TransformRectTypeEnum.LAYOUT_WAVE,
-        TransformRectTypeEnum.LAYOUT_RECTANGLE,
-        TransformRectTypeEnum.LAYOUT_GRID,
-        TransformRectTypeEnum.LAYOUT_SPIRAL,
-      ].includes(type)),
-    }));
+    updateLocalSettings();
   }
 
   function renderLayoutChanges(opts?: { level?: number; items?: ItemMappingType }) {
@@ -98,41 +173,41 @@ export default function useLayoutManager({
       level === 1
         ? layoutConfig?.current?.direction
         : level === 2
-        ? layoutConfig?.current?.direction
+          ? layoutConfig?.current?.direction
           : LayoutConfigDirectionEnum.VERTICAL === layoutConfig?.current?.direction
             ? LayoutConfigDirectionEnum.HORIZONTAL
             : LayoutConfigDirectionEnum.VERTICAL,
       level === 1
         ? layoutConfig?.current?.direction
         : level === 2
-        ? LayoutConfigDirectionEnum.VERTICAL === layoutConfig?.current?.direction
-          ? LayoutConfigDirectionEnum.HORIZONTAL
-          : LayoutConfigDirectionEnum.VERTICAL
-        : layoutConfig?.current?.direction,
+          ? LayoutConfigDirectionEnum.VERTICAL === layoutConfig?.current?.direction
+            ? LayoutConfigDirectionEnum.HORIZONTAL
+            : LayoutConfigDirectionEnum.VERTICAL
+          : layoutConfig?.current?.direction,
     ];
 
     const layoutStyleTransformations = [];
 
     const shift =
-      {
-        options: (rects: RectType[]) => {
-          const box = calculateBoundingBox(rects);
+    {
+      options: (rects: RectType[]) => {
+        const box = calculateBoundingBox(rects);
 
-          return {
-            offset: {
-              left: Math.max(
-                40,
-                validateFiniteNumber(typeof window !== 'undefined' ? (window.innerWidth - box.width) / 2 : 0),
-              ),
-              top: Math.max(
-                40,
-                validateFiniteNumber(typeof window !== 'undefined' ? (window.innerHeight - box.height) / 2 : 0),
-              ),
-            },
-          };
-        },
-        type: TransformRectTypeEnum.SHIFT,
-      };
+        return {
+          offset: {
+            left: Math.max(
+              40,
+              validateFiniteNumber(typeof window !== 'undefined' ? (window.innerWidth - box.width) / 2 : 0),
+            ),
+            top: Math.max(
+              40,
+              validateFiniteNumber(typeof window !== 'undefined' ? (window.innerHeight - box.height) / 2 : 0),
+            ),
+          },
+        };
+      },
+      type: TransformRectTypeEnum.SHIFT,
+    };
     const tree = {
       options: () => ({ layout: { direction: directions[1] } }),
       type: TransformRectTypeEnum.LAYOUT_TREE,
@@ -164,7 +239,7 @@ export default function useLayoutManager({
     };
     const wave = {
       options: () => ({
-        layout: update(layoutConfig?.current, {
+        layout: update(layoutConfig?.current ?? {}, {
           gap: {
             $set: {
               column: 40,
@@ -282,7 +357,7 @@ export default function useLayoutManager({
       },
       // Give min height of 300px
       {
-        options: () => ({ rect: { height: 300} }),
+        options: () => ({ rect: { height: 300 } }),
         type: TransformRectTypeEnum.MIN_DIMENSIONS,
       },
       ...layoutStyleTransformations,
@@ -392,9 +467,11 @@ export default function useLayoutManager({
   }
 
   return {
-    renderLayoutChanges,
-    updateLayoutConfig,
+    activeLevel,
     layoutConfig,
+    renderLayoutChanges,
+    setActiveLevel,
+    updateLayoutConfig,
     updateLayoutOfItems,
   };
 }

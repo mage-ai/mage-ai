@@ -233,6 +233,9 @@ const BlockNodeWrapper: React.FC<BlockNodeWrapperProps> = ({
       className={[
         stylesBuilder.level,
         stylesBuilder[`level-${item?.level}`],
+        item?.block?.type === BlockTypeEnum.GROUP && !item?.block?.configuration?.metadata?.required
+          ? stylesBuilder.optional
+          : '',
         item?.type ? stylesBuilder[item?.type] : '',
         !draggable && !droppable && styles.showOnHoverContainer,
       ]
@@ -270,13 +273,13 @@ const BlockNodeWrapper: React.FC<BlockNodeWrapperProps> = ({
               className: styles.showOnHover,
               ...(ItemTypeEnum.NODE === item?.type
                 ? {
-                    Icon: draggable ? ArrowsAdjustingFrameSquare : Add,
-                    onClick: handleClickGroupMenu,
-                  }
+                  Icon: draggable ? ArrowsAdjustingFrameSquare : Add,
+                  onClick: handleClickGroupMenu,
+                }
                 : {
-                    Icon: draggable ? ArrowsAdjustingFrameSquare : CaretDown,
-                    onClick: () => alert('Coding...'),
-                  }),
+                  Icon: draggable ? ArrowsAdjustingFrameSquare : CaretDown,
+                  onClick: () => alert('Coding...'),
+                }),
             },
             before: {
               Icon: StatusTypeEnum.EXECUTED === block?.status ? Check : PlayButtonFilled,
@@ -291,10 +294,10 @@ const BlockNodeWrapper: React.FC<BlockNodeWrapperProps> = ({
           badge:
             ItemTypeEnum.NODE === item?.type
               ? {
-                  Icon: collapsed ? Infinite : PipeIconVertical,
-                  baseColorName: names?.base || 'purple',
-                  label: String(name || uuid || ''),
-                }
+                Icon: collapsed ? Infinite : PipeIconVertical,
+                baseColorName: names?.base || 'purple',
+                label: String(name || uuid || ''),
+              }
               : undefined,
           label: String(name || uuid || ''),
         }}

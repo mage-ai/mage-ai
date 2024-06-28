@@ -2,9 +2,10 @@ import BlockNodeWrapper from '../../Canvas/Nodes/BlockNodeWrapper';
 import CanvasContainer from './index.style';
 import PipelineExecutionFrameworkType from '@interfaces/PipelineExecutionFramework/interfaces';
 import type { DropTargetMonitor } from 'react-dnd';
-import { LayoutConfigType, DragItem, ModelMappingType, NodeItemType,
-NodeType } from '../../Canvas/interfaces';
-import styles from '@styles/scss/apps/Canvas/Pipelines/Builder.module.scss';
+import {
+  LayoutConfigType, DragItem, ModelMappingType, NodeItemType,
+  NodeType
+} from '../../Canvas/interfaces';
 import useEventManager, { EventManagerType } from './useEventManager';
 import useLayoutManager, { LayoutManagerType } from './useLayoutManager';
 import useModelManager, { ModelManagerType } from './useModelManager';
@@ -15,9 +16,6 @@ import { RemoveContextMenuType, RenderContextMenuType } from '@mana/hooks/useCon
 import { ZoomPanStateType } from '@mana/hooks/useZoomPan';
 import { useDrop } from 'react-dnd';
 import { useEffect, useMemo, useRef, useState, startTransition } from 'react';
-import { get, set } from '@storage/localStorage';
-
-const ACTIVE_LEVEL_KEY = 'pipeline_builder_canvas_active_level';
 
 export type BuilderCanvasProps = {
   canvasRef: React.RefObject<HTMLDivElement>;
@@ -49,12 +47,9 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
   setZoomPanDisabled,
   transformState,
 }: BuilderCanvasProps) => {
-  const activeLevel = useRef<number>(null);
   const phaseRef = useRef<number>(0);
   const wrapperRef = useRef(null);
-
   const itemIDsByLevelRef = useRef<string[][]>(null);
-  const validLevels = useRef<number[]>(null);
 
   // VERY IMPORTANT THAT THE STATE IS IN THIS COMPONENT OR ELSE NOTHING WILL RENDER!
   const [items, setItemsState] = useState<Record<string, NodeItemType>>(null);
@@ -62,27 +57,6 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
 
   function setActiveItems(modelMapping: ModelMappingType) {
     setActiveItemsState(modelMapping);
-  }
-
-  function setActiveLevel(levelArg?: number) {
-    const levelPrevious: number = activeLevel?.current ?? null;
-    levelPrevious !== null &&
-      containerRef?.current?.classList.remove(styles[`level-${levelPrevious}-active`]);
-
-    let level: number = levelArg ?? (activeLevel?.current ?? 0);
-    if (validLevels?.current?.length >= 1) {
-      const idx = validLevels.current.findIndex(i => i === level);
-      level = validLevels.current[idx + 1] ?? validLevels.current[0];
-    } else {
-      level += (levelArg === null ? 1 : 0);
-      if (level >= itemIDsByLevelRef?.current?.length) {
-        level = 0;
-      }
-    }
-
-    activeLevel.current = level;
-    containerRef?.current?.classList.add(styles[`level-${level}-active`]);
-    set(ACTIVE_LEVEL_KEY, Number(level));
   }
 
   const {
@@ -103,9 +77,12 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
     renderLayoutChanges,
     updateLayoutOfItems,
     updateLayoutConfig,
+    activeLevel,
+    setActiveLevel,
+    updateLocalSettings,
     layoutConfig,
   }: LayoutManagerType = useLayoutManager({
-    activeLevel,
+    pipeline,
     canvasRef,
     containerRef,
     itemIDsByLevelRef,
