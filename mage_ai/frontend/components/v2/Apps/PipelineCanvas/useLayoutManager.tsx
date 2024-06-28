@@ -96,7 +96,7 @@ export default function useLayoutManager({
     }
 
     const save = {
-      activeLevel: activeLevel?.current ?? null,
+      activeLevel: activeLevel?.current ?? 0,
       layoutConfig: {
         direction: layoutConfig?.current?.direction ?? null,
         rectTransformations: layoutConfig?.current?.rectTransformations?.reduce((acc, { type }) =>
@@ -109,16 +109,16 @@ export default function useLayoutManager({
           ].includes(type) ? acc.concat({ type } as any) : acc,
           []),
       },
-      optionalGroupsVisible: optionalGroupsVisible?.current ?? null,
+      optionalGroupsVisible: optionalGroupsVisible?.current ?? false,
     };
 
     set(builderLocalStorageKey(pipeline.uuid), save);
 
     const val = optionalGroupsVisible?.current ?? false;
     if (val) {
-      containerRef?.current?.classList.add(styles['optional-hidden']);
-    } else {
       containerRef?.current?.classList.remove(styles['optional-hidden']);
+    } else {
+      containerRef?.current?.classList.add(styles['optional-hidden']);
     }
   }
 

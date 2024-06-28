@@ -77,8 +77,12 @@
 
   &.optional-hidden {
     .optional {
-      @include hidden;
+
     }
+  }
+
+  .optional {
+
   }
 
   &.dragging {

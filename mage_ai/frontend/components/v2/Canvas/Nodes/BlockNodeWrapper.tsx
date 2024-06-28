@@ -233,7 +233,8 @@ const BlockNodeWrapper: React.FC<BlockNodeWrapperProps> = ({
       className={[
         stylesBuilder.level,
         stylesBuilder[`level-${item?.level}`],
-        item?.block?.type === BlockTypeEnum.GROUP && !item?.block?.configuration?.metadata?.required
+        (!item?.block?.type || item?.block?.type === BlockTypeEnum.GROUP)
+          && !item?.block?.configuration?.metadata?.required
           ? stylesBuilder.optional
           : '',
         item?.type ? stylesBuilder[item?.type] : '',

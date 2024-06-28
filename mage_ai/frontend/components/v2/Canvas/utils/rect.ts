@@ -502,8 +502,8 @@ function layoutRectsInTreeFormation(
       height?: number;
       width?: number;
     } = isHorizontal
-      ? rects2.reduce((max, rect) => ({ width: Math.max(max.width, rect.width) }), { width: 0 })
-      : rects2.reduce((max, rect) => ({ height: Math.max(max.height, rect.height) }), {
+        ? rects2.reduce((max, rect) => ({ width: Math.max(max.width, rect.width) }), { width: 0 })
+        : rects2.reduce((max, rect) => ({ height: Math.max(max.height, rect.height) }), {
           height: 0,
         });
     const rects3 = rects2.map(rect => ({
@@ -636,25 +636,25 @@ function layoutItemsInNodeGroup(nodes: NodeType[], layout: LayoutConfigType) {
     const offsetTopMax =
       items2?.length >= 1
         ? Math.max(
-            ...items2.map(
-              (item: DragItem) =>
-                (item?.rect?.inner?.badge?.height ?? 0) +
-                (item?.rect?.inner?.badge?.offset?.top ?? 0) +
-                (item?.rect?.inner?.title?.height ?? 0) +
-                (item?.rect?.inner?.title?.offset?.top ?? 0),
-            ),
-          )
+          ...items2.map(
+            (item: DragItem) =>
+              (item?.rect?.inner?.badge?.height ?? 0) +
+              (item?.rect?.inner?.badge?.offset?.top ?? 0) +
+              (item?.rect?.inner?.title?.height ?? 0) +
+              (item?.rect?.inner?.title?.offset?.top ?? 0),
+          ),
+        )
         : 0;
     const offsetLeftMax =
       items2?.length >= 1
         ? Math.max(
-            ...items2.map((item: DragItem) =>
-              Math.max(
-                item?.rect?.inner?.badge?.offset?.left ?? 0,
-                item?.rect?.inner?.title?.offset?.left ?? 0,
-              ),
+          ...items2.map((item: DragItem) =>
+            Math.max(
+              item?.rect?.inner?.badge?.offset?.left ?? 0,
+              item?.rect?.inner?.title?.offset?.left ?? 0,
             ),
-          )
+          ),
+        )
         : 0;
 
     false && isDebugBase() && console.log(items2, offsetTopMax, offsetLeftMax);
