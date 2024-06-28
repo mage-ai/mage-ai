@@ -13,6 +13,8 @@ import { validateFiniteNumber } from '@utils/number';
 import { get, set } from '@storage/localStorage';
 import { selectKeys } from '@utils/hash';
 import styles from '@styles/scss/apps/Canvas/Pipelines/Builder.module.scss';
+import PipelineType from '@interfaces/PipelineType';
+import PipelineExecutionFrameworkType from '@interfaces/PipelineExecutionFramework/interfaces';
 
 function builderLocalStorageKey(uuid: string) {
   return `pipeline_builder_canvas_local_settings_${uuid}`;
@@ -26,11 +28,11 @@ type LayoutManagerProps = {
   itemsRef: React.MutableRefObject<ItemMappingType>;
   setItemsState: React.Dispatch<React.SetStateAction<ItemMappingType>>;
   transformState: React.MutableRefObject<ZoomPanStateType>;
+  pipeline: PipelineExecutionFrameworkType
   updateNodeItems: ModelManagerType['updateNodeItems'];
 };
 
 export type LayoutManagerType = {
-  renderLayoutChanges: (opts?: { level?: number; items?: ItemMappingType }) => void;
   updateLayoutOfItems: () => ItemMappingType;
   updateLayoutConfig: (config: LayoutConfigType) => void;
   layoutConfig: React.MutableRefObject<LayoutConfigType>;
@@ -48,6 +50,7 @@ export default function useLayoutManager({
   canvasRef,
   containerRef,
   itemIDsByLevelRef,
+  array, setArray,
   itemsRef,
   setItemsState,
   transformState,
@@ -112,7 +115,7 @@ export default function useLayoutManager({
       optionalGroupsVisible: optionalGroupsVisible?.current ?? false,
     };
 
-    set(builderLocalStorageKey(pipeline.uuid), save);
+    set(builderLocalStorageKey(pipeline?.uuid), save);
 
     const val = optionalGroupsVisible?.current ?? false;
     if (val) {
@@ -149,22 +152,6 @@ export default function useLayoutManager({
       ...config,
     };
     updateLocalSettings();
-  }
-
-  function renderLayoutChanges(opts?: { level?: number; items?: ItemMappingType }) {
-    let itemMapping = opts?.items;
-    if (!(itemMapping ?? false)) {
-      const ids = itemIDsByLevelRef?.current[opts?.level] ?? [];
-      itemMapping = ids?.reduce((acc, id) => {
-        acc[id] = itemsRef.current[id];
-        return acc;
-      }, {} as ItemMappingType);
-    }
-
-    setItemsState(prev => ({
-      ...prev,
-      ...itemMapping,
-    }));
   }
 
   function rectTransformations() {
@@ -323,6 +310,7 @@ export default function useLayoutManager({
     }
 
     return [
+      // Give min height of 300px
       {
         options: () => ({ layout: { direction: directions[0] } }),
         scope: RectTransformationScopeEnum.CHILDREN,
@@ -355,12 +343,17 @@ export default function useLayoutManager({
         scope: RectTransformationScopeEnum.SELF,
         type: TransformRectTypeEnum.FIT_TO_CHILDREN,
       },
-      // Give min height of 300px
       {
         options: () => ({ rect: { height: 300 } }),
         type: TransformRectTypeEnum.MIN_DIMENSIONS,
       },
       ...layoutStyleTransformations,
+      ...(defaultTrans ? [{
+
+        ...wave,
+        ...wavecon,
+      }] : []),
+      shift,
       {
         scope: RectTransformationScopeEnum.CHILDREN,
         type: TransformRectTypeEnum.SHIFT_INTO_PARENT,
@@ -369,12 +362,6 @@ export default function useLayoutManager({
         scope: RectTransformationScopeEnum.CHILDREN,
         type: TransformRectTypeEnum.ALIGN_CHILDREN,
       },
-      ...(defaultTrans ? [{
-
-        ...wave,
-        ...wavecon,
-      }] : []),
-      shift,
     ];
   }
 
@@ -461,15 +448,21 @@ export default function useLayoutManager({
 
     });
 
-    updateNodeItems(itemsUpdated);
+    Object.values(itemsUpdated).forEach((item) => {
+      itemsRef.current[item.id] = item;
+    });
 
-    return itemsUpdated;
+    setArray(Object.values(itemsRef.current ?? {}).map(i => ({
+      id: i.id,
+      ...i.rect,
+    })))
+
+    setActiveLevel(activeLevel?.current ?? 0);
   }
 
   return {
     activeLevel,
     layoutConfig,
-    renderLayoutChanges,
     setActiveLevel,
     updateLayoutConfig,
     updateLayoutOfItems,

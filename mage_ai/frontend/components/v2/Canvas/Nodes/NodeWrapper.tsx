@@ -17,12 +17,14 @@ function getStyles(
   {
     draggable,
     isDragging,
+    rect,
   }: {
     draggable: boolean;
     isDragging: boolean;
   },
 ): CSSProperties {
-  const { id, rect, type } = item;
+  const { id, type } = item;
+  rect = rect ?? item?.rect;
   const { left, top, width, zIndex } = rect || ({} as RectType);
   const transform = `translate3d(${left ?? 0}px, ${top ?? 0}px, 0)`;
 
@@ -39,8 +41,8 @@ function getStyles(
     ...(isDragging
       ? { height: 0, opacity: 0 }
       : {
-          minHeight: rect?.height === Infinity || rect?.height === -Infinity ? 0 : rect?.height ?? 0,
-        }),
+        minHeight: rect?.height === Infinity || rect?.height === -Infinity ? 0 : rect?.height ?? 0,
+      }),
     ...((width ?? false) ? { minWidth: width } : {}),
   };
 }
@@ -60,6 +62,7 @@ export const NodeWrapper: FC<NodeWrapperProps> = memo(function NodeWrapper({
   handlers,
   item,
   itemRef,
+  rect,
 }: NodeWrapperProps) {
   const { onDragEnd, onDragStart, onDrop, onMouseDown, onMouseLeave, onMouseOver, onMouseUp } =
     handlers;
@@ -135,6 +138,7 @@ export const NodeWrapper: FC<NodeWrapperProps> = memo(function NodeWrapper({
       style={getStyles(item, {
         draggable,
         isDragging: isDragging && itemToDrag?.type === item?.type,
+        rect,
       })}
     >
       {children}

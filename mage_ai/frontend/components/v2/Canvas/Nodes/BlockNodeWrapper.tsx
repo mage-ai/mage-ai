@@ -31,6 +31,7 @@ import {
 } from '@mana/shared/interfaces';
 import { ButtonEnum } from '@mana/shared/enums';
 import PipelineExecutionFrameworkType from '@interfaces/PipelineExecutionFramework/interfaces';
+import PipelineType from '@interfaces/PipelineType';
 
 type BlockNodeWrapperProps = {
   collapsed?: boolean;
@@ -51,6 +52,7 @@ const BlockNodeWrapper: React.FC<BlockNodeWrapperProps> = ({
   handlers,
   onMountPort,
   onMountItem,
+  rect,
   selected = false,
   submitEventOperation,
 }) => {
@@ -189,7 +191,7 @@ const BlockNodeWrapper: React.FC<BlockNodeWrapperProps> = ({
       handler: (e, { pipelines }) => {
         pipelines.update.mutate({
           event: e,
-          payload: (pipeline: PipelineExecutionFrameworkType) => ({
+          payload: (pipeline: PipelineType) => ({
             ...pipeline,
             blocks: [
               ...(pipeline?.blocks ?? []),
@@ -247,6 +249,7 @@ const BlockNodeWrapper: React.FC<BlockNodeWrapperProps> = ({
 
   const requiredGroup = isGroup && item?.block?.configuration?.metadata?.required;
   const emptyGroup = isGroup && item?.items?.length === 0;
+  console.log(rect)
 
   return (
     <NodeWrapper
@@ -270,6 +273,7 @@ const BlockNodeWrapper: React.FC<BlockNodeWrapperProps> = ({
       }}
       item={item}
       itemRef={itemRef}
+      rect={rect}
     >
       <BlockNode
         block={block}
@@ -323,9 +327,10 @@ const BlockNodeWrapper: React.FC<BlockNodeWrapperProps> = ({
   );
 };
 
-function areEqual(prevProps: BlockNodeWrapperProps, nextProps: BlockNodeWrapperProps) {
-  const keys = ['item.version', 'draggable', 'droppable'];
-  return keys?.every((key: string) => dig(prevProps, key) === dig(nextProps, key));
+function areEqual(p1: BlockNodeWrapperProps, p2: BlockNodeWrapperProps) {
+  return p1.draggable === p2.draggable
+    && p1.droppable === p2.droppable
+    && p1.rect === p2.rect;
 }
 
 export default React.memo(BlockNodeWrapper, areEqual);

@@ -23,8 +23,8 @@ export type BuilderCanvasProps = {
   defaultActiveLevel?: number;
   dragEnabled?: boolean;
   dropEnabled?: boolean;
-  pipeline: PipelineExecutionFrameworkType;
-  executionFramework: PipelineExecutionFrameworkType;
+  // pipeline: PipelineExecutionFrameworkType;
+  // executionFramework: PipelineExecutionFrameworkType;
   removeContextMenu: RemoveContextMenuType;
   renderContextMenu: RenderContextMenuType;
   setDragEnabled: (value: boolean) => void;
@@ -38,8 +38,10 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
   containerRef,
   dragEnabled,
   dropEnabled,
-  pipeline,
-  executionFramework,
+  // pipeline,
+  // executionFramework,
+  pipelineUUID,
+  executionFrameworkUUID,
   removeContextMenu,
   renderContextMenu,
   setDragEnabled,
@@ -47,11 +49,17 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
   setZoomPanDisabled,
   transformState,
 }: BuilderCanvasProps) => {
+  const blocksCountRef = useRef<number>(null);
   const phaseRef = useRef<number>(0);
   const wrapperRef = useRef(null);
   const itemIDsByLevelRef = useRef<string[][]>(null);
+  const [array, setArray] = useState([]);
 
   // VERY IMPORTANT THAT THE STATE IS IN THIS COMPONENT OR ELSE NOTHING WILL RENDER!
+  const [pipeline, setPipeline] = useState<PipelineExecutionFrameworkType>(null);
+  const [executionFramework, setExecutionFramework] = useState<PipelineExecutionFrameworkType>(null);
+  const [version, setVersion] = useState<string>(null);
+
   const [items, setItemsState] = useState<Record<string, NodeItemType>>(null);
   const [activeItems, setActiveItemsState] = useState<Record<string, ModelMappingType>>(null);
 
@@ -70,21 +78,25 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
     // updatePorts,
   }: ModelManagerType = useModelManager({
     itemIDsByLevelRef,
-    pipeline,
+    pipelineUUID,
+    setItemsState,
+    setPipeline,
+    setExecutionFramework,
+    executionFrameworkUUID,
   });
 
   const {
-    renderLayoutChanges,
     updateLayoutOfItems,
     updateLayoutConfig,
     activeLevel,
     setActiveLevel,
-    updateLocalSettings,
+    // updateLocalSettings,
     layoutConfig,
   }: LayoutManagerType = useLayoutManager({
     pipeline,
     canvasRef,
     containerRef,
+    array, setArray,
     itemIDsByLevelRef,
     itemsRef,
     setItemsState,
@@ -105,12 +117,13 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
     // itemsMetadataRef,
   }: PresentationManagerType = usePresentationManager({
     activeLevel,
+    array, setArray,
     itemIDsByLevelRef,
     itemsRef,
     layoutConfig,
     mutateModels,
+    setVersion,
     portsRef,
-    renderLayoutChanges,
     setActiveLevel,
     updateLayoutOfItems,
     updateNodeItems,
@@ -134,7 +147,6 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
     layoutConfig,
     updateLayoutConfig,
     updateLayoutOfItems,
-    renderLayoutChanges,
     canvasRef,
     connectionLinesPathRef,
     containerRef,
@@ -155,17 +167,24 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
   });
 
   useEffect(() => {
-    if (phaseRef.current === 0 && executionFramework && pipeline) {
+    if (phaseRef.current === 0 && executionFrameworkUUID && pipelineUUID) {
+      appHandlersRef.current.executionFrameworks.detail.mutate();
+      appHandlersRef.current.pipelines.detail.mutate();
+      phaseRef.current = 1;
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [executionFrameworkUUID, pipelineUUID, executionFramework, pipeline]);
+
+  useEffect(() => {
+    if ((pipeline?.blocks?.length ?? null) !== (blocksCountRef.current ?? null) ||
+      (blocksCountRef.current === null && executionFramework?.uuid && pipeline?.uuid)) {
       startTransition(() => {
         initializeModels(executionFramework, pipeline);
         updateItemsMetadata();
-        renderLayoutChanges({ items: itemsRef?.current });
+
+        blocksCountRef.current = pipeline?.blocks?.length;
       });
-
-      phaseRef.current += 1;
     }
-
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [executionFramework, pipeline]);
 
   const [, connectDrop] = useDrop(
@@ -190,32 +209,32 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
   );
   connectDrop(canvasRef);
 
-  const nodesMemo = useMemo(() => {
-    const arr = [...Object.values(items || {})];
+  // const nodesMemo = useMemo(() => {
+  //   return array?.map((rect: RectType, idx: number) => (
+  //     <BlockNodeWrapper
+  //       rect={rect}
+  //       draggable={dragEnabled}
+  //       droppable={dropEnabled}
+  //       handlers={{
+  //         onDragEnd: handleDragEnd,
+  //         onDragStart: handleDragStart,
+  //         onDrop: onDropPort,
+  //         onMouseDown: handleMouseDown,
 
-    return arr?.map((node: NodeType, idx: number) => (
-      <BlockNodeWrapper
-        draggable={dragEnabled}
-        droppable={dropEnabled}
-        handlers={{
-          onDragEnd: handleDragEnd,
-          onDragStart: handleDragStart,
-          onDrop: onDropPort,
-          onMouseDown: handleMouseDown,
-
-          // Not using right now.
-          // onMouseOver: handleMouseOver,
-          // onMouseLeave: handleMouseLeave,
-        }}
-        item={node}
-        key={`${node.id}-${node.type}-${idx}`}
-        onMountItem={onMountItem}
-        onMountPort={onMountPort}
-        submitEventOperation={submitEventOperation}
-      />
-    ));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dragEnabled, dropEnabled, items]);
+  //         // Not using right now.
+  //         // onMouseOver: handleMouseOver,
+  //         // onMouseLeave: handleMouseLeave,
+  //       }}
+  //       item={itemsRef.current[rect.id] as NodeItemType}
+  //       key={rect.id}
+  //       onMountItem={onMountItem}
+  //       onMountPort={onMountPort}
+  //       submitEventOperation={submitEventOperation}
+  //       version={version}
+  //     />
+  //   ));
+  //   // eslint-disable-next-line react-hooks/exhaustive-deps
+  // }, [dragEnabled, dropEnabled, array]);
 
   return (
     <div
@@ -251,7 +270,52 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
 
           <div id={connectionLinesRootID.current} />
 
-          {nodesMemo}
+          {!array?.length && Object.values(items ?? {})?.map((item, idx) => (
+            <BlockNodeWrapper
+              draggable={dragEnabled}
+              droppable={dropEnabled}
+              handlers={{
+                onDragEnd: handleDragEnd,
+                onDragStart: handleDragStart,
+                onDrop: onDropPort,
+                onMouseDown: handleMouseDown,
+
+                // Not using right now.
+                // onMouseOver: handleMouseOver,
+                // onMouseLeave: handleMouseLeave,
+              }}
+              item={item}
+              key={`${item.id}-${item.type}-${idx}`}
+              onMountItem={onMountItem}
+              onMountPort={onMountPort}
+              submitEventOperation={submitEventOperation}
+              version={version}
+            />
+          ))}
+
+          {array?.length >= 1 && array?.map((rect, idx) => (
+            <BlockNodeWrapper
+              draggable={dragEnabled}
+              rect={rect}
+              droppable={dropEnabled}
+              handlers={{
+                onDragEnd: handleDragEnd,
+                onDragStart: handleDragStart,
+                onDrop: onDropPort,
+                onMouseDown: handleMouseDown,
+
+                // Not using right now.
+                // onMouseOver: handleMouseOver,
+                // onMouseLeave: handleMouseLeave,
+              }}
+              item={itemsRef.current[rect.id] as NodeItemType}
+              key={rect.id}
+              onMountItem={onMountItem}
+              onMountPort={onMountPort}
+              submitEventOperation={submitEventOperation}
+              version={version}
+            />
+          ))}
         </CanvasContainer>
       </div>
     </div>

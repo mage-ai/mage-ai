@@ -5,12 +5,14 @@ import { buildDependencies } from './utils/pipelines';
 import { createItemsFromBlockGroups } from './utils/items';
 import { createPortsByItem } from './utils/ports';
 import { updateModelsAndRelationships } from './utils/nodes';
-import { useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ClientEventType } from '@mana/hooks/useContextMenu';
 import { AppHandlerType, AppHandlersRefType } from './interfaces';
 import { useMutate } from '@context/APIMutation';
 
 export type ModelManagerType = {
+  executionFramework: PipelineExecutionFrameworkType;
+  pipeline: PipelineExecutionFrameworkType;
   appHandlersRef: AppHandlersRefType;
   initializeModels: (
     executionFramework: PipelineExecutionFrameworkType,
@@ -25,45 +27,69 @@ export type ModelManagerType = {
 
 type ModelManagerProps = {
   itemIDsByLevelRef: React.MutableRefObject<string[][]>;
-  pipeline: PipelineExecutionFrameworkType;
+  pipelineUUID: string;
+  executionFrameworkUUID: string;
 };
 
 export default function useModelManager({
   itemIDsByLevelRef,
-  pipeline,
+  setItemsState,
+  pipelineUUID,
+  executionFrameworkUUID,
+  setPipeline,
+  setExecutionFramework,
 }: ModelManagerProps): ModelManagerType {
   const appHandlersRef = useRef<AppHandlerType>({} as AppHandlerType);
-  const itemsRef = useRef<ItemMappingType>({});
-  const portsRef = useRef<PortMappingType>({});
+  const itemsRef = useRef<ItemMappingType>(null);
+  const portsRef = useRef<PortMappingType>(null);
 
   const pipelineMutants = useMutate({
-    id: pipeline?.uuid,
-    idParent: pipeline?.execution_framework,
+    id: pipelineUUID,
+    idParent: executionFrameworkUUID,
     resource: 'pipelines',
     resourceParent: 'execution_frameworks',
+  }, {
+    handlers: {
+      detail: {
+        onSuccess: (data) => {
+          setPipeline(data);
+        },
+      },
+      update: {
+        onSuccess: (data) => {
+          setPipeline(data);
+        },
+      },
+    },
   });
-  const blockMutants = useMutate({
-    id: pipeline?.uuid,
-    idParent: pipeline?.execution_framework,
-    resource: 'pipelines',
-    resourceParent: 'execution_frameworks',
+  const executionFrameworkMutants = useMutate({
+    id: executionFrameworkUUID,
+    resource: 'execution_frameworks',
+  }, {
+    handlers: {
+      detail: {
+        onSuccess: (data) => {
+          setExecutionFramework(data);
+        },
+      },
+    },
   });
 
   appHandlersRef.current = {
-    blocks: blockMutants,
+    executionFrameworks: executionFrameworkMutants,
     pipelines: pipelineMutants,
   };
 
-  console.log(pipelineMutants.modelsRef)
-
   function initializeModels(
-    executionFramework: PipelineExecutionFrameworkType,
-    pipeline: PipelineExecutionFrameworkType,
+    executionFramework2: PipelineExecutionFrameworkType,
+    pipeline2: PipelineExecutionFrameworkType,
   ) {
     const { blocksByGroup, groupMapping, groupsByLevel } = buildDependencies(
-      executionFramework,
-      pipeline,
+      executionFramework2,
+      pipeline2,
     );
+
+    // console.log(blocksByGroup, groupMapping, groupsByLevel)
 
     // Hydrate each group’s blocks for every level using the blocks from the user’s pipeline.
     const blockGroupsByLevel: BlockGroupType[][] = [];
@@ -124,6 +150,15 @@ export default function useModelManager({
         if (item?.block?.groups) {
           item.block.frameworks = item.block.groups.map((id: GroupUUIDEnum) => groupMapping[id]);
         }
+        // item.version = itemVersionRef.current;
+
+        const itemPrev = itemsRef?.current?.[item.id];
+        if (itemPrev?.rect) {
+          item.rect = itemPrev?.rect;
+          item.version = itemPrev?.version + 1;
+        } else {
+          item.version = 0;
+        }
 
         itemsIDs.push(item.id);
         itemMapping[item.id] = item;
@@ -163,6 +198,7 @@ export default function useModelManager({
       itemMapping,
       portMapping,
     });
+    setItemsState(itemMapping);
   }
 
   function updateNodeItems(items: ItemMappingType) {
@@ -215,6 +251,13 @@ export default function useModelManager({
       portMapping: portsRef.current,
     };
   }
+
+  // useEffect(() => {
+  //   console.log(itemsRef.current, executionFramework, pipeline)
+  //   if (itemsRef.current === null && executionFramework && pipeline) {
+  //     initializeModels(executionFramework, pipeline);
+  //   }
+  // }, [executionFramework, pipeline]);
 
   return {
     appHandlersRef,

@@ -41,7 +41,7 @@ export interface RectType {
 interface BaseItem {
   id: number | string;
   level?: number;
-  version?: number | string;
+  version?: number;
   type: ItemTypeEnum;
 }
 

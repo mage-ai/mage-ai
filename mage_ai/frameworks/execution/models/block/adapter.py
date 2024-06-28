@@ -65,11 +65,11 @@ class Block(DelegatorTarget):
     async def to_dict_async(self, *args, **kwargs) -> Dict:
         return dict(
             configuration=self.configuration,
-            downstream_blocks=self.downstream_blocks,
+            downstream_blocks=[b.uuid for b in (self.downstream_blocks or [])],
             groups=self.groups,
             language=self.language,
             name=self.name,
             type=self.type,
-            upstream_blocks=self.upstream_blocks,
+            upstream_blocks=[b.uuid for b in (self.upstream_blocks or [])],
             uuid=self.uuid,
         )

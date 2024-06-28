@@ -75,17 +75,17 @@ export function BlockNode({
   const classNames = [
     true || borders?.length >= 2
       ? stylesGradient[
-          [
-            'gradient-background-to-top-right',
-            ...(borders ?? [])
-              .concat([
-                // { baseColorName: 'yellow' },
-                // { baseColorName: 'green' },
-              ])
-              ?.slice?.(0, 2)
-              ?.map(b => b.baseColorName),
-          ].join('-')
-        ]
+      [
+        'gradient-background-to-top-right',
+        ...(borders ?? [])
+          .concat([
+            // { baseColorName: 'yellow' },
+            // { baseColorName: 'green' },
+          ])
+          ?.slice?.(0, 2)
+          ?.map(b => b.baseColorName),
+      ].join('-')
+      ]
       : '',
   ].filter(b => b);
   if (classNames?.length === 0 && borders?.length >= 1) {
@@ -178,7 +178,7 @@ export function BlockNode({
       (item?.block?.frameworks ?? [])?.map(
         (group) =>
           !isEmptyObject(group?.configuration?.templates) &&
-          Object.entries(group?.configuration?.templates || {})?.map(([uuid, template]) => (
+          Object.entries(group?.configuration?.templates || {})?.map(([uuid, template]) => item?.block?.configuration?.templates?.[uuid] && (
             <TemplateConfigurations
               block={item?.block}
               group={group}

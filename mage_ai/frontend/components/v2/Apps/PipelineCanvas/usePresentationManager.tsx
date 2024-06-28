@@ -8,7 +8,9 @@ import { ModelManagerType } from './useModelManager';
 import { createRoot, Root } from 'react-dom/client';
 import { getBlockColor } from '@mana/themes/blocks';
 import { getPathD } from '../../Canvas/Connections/utils';
+import { throttle } from '../../Canvas/utils/throttle';
 import { ActiveLevelRefType, LayoutConfigRefType, ItemIDsByLevelRef, SetActiveLevelType } from './interfaces';
+import useDynamicDebounce from '@utils/hooks/useDebounce';
 
 function buildConnectionLinesRootID(uuid: string): string {
   return `connection-lines-root-${uuid}`;
@@ -21,7 +23,6 @@ type PresentationManagerProps = {
   layoutConfig: LayoutConfigRefType;
   mutateModels: ModelManagerType['mutateModels'];
   portsRef: ModelManagerType['portsRef'];
-  renderLayoutChanges: LayoutManagerType['renderLayoutChanges'];
   setActiveLevel: SetActiveLevelType;
   updateLayoutOfItems: LayoutManagerType['updateLayoutOfItems'];
   updateNodeItems: ModelManagerType['updateNodeItems'];
@@ -52,18 +53,25 @@ export default function usePresentationManager({
   layoutConfig,
   mutateModels,
   portsRef,
-  renderLayoutChanges,
   setActiveLevel,
+  setVersion,
+  array, setArray,
   updateLayoutOfItems,
+  // Updates the itemsReftems,
   updateNodeItems,
 }: PresentationManagerProps): PresentationManagerType {
+  const [debouncer, cancelDebounce] = useDynamicDebounce();
+
   const connectionLinesRootID = useRef<string>(buildConnectionLinesRootID('nodes'));
   const connectionLineRootRef = useRef<React.MutableRefObject<Root>>(null);
   const connectionLinesPathRef = useRef<
     Record<
       string,
+      // Redraws the rects
       Record<
+        // Updates the items state
         string,
+        // Redraws the path lines
         {
           handleUpdatePath: (item: NodeItemType) => void;
           pathRef: React.RefObject<SVGPathElement>;
@@ -145,12 +153,14 @@ export default function usePresentationManager({
                 width: rectTitle?.width,
               },
             },
-            left: (previousVersion ? rectOld?.left : defaultPositions?.left ?? 0) ?? 0,
+            // left: (previousVersion ? rectOld?.left : defaultPositions?.left ?? 0) ?? 0,
+            left: 0,
             offset: {
               left: itemRef?.current?.offsetLeft,
               top: itemRef?.current?.offsetTop,
             },
-            top: (previousVersion ? rectOld?.top : defaultPositions?.top ?? 0) ?? 0,
+            // top: (previousVersion ? rectOld?.top : defaultPositions?.top ?? 0) ?? 0,
+            top: 0,
             version: rectVersion,
             width: shouldUpdate ? rect.width : rectOld?.width,
           },
@@ -182,17 +192,12 @@ export default function usePresentationManager({
         },
       });
 
-      updateNodeItems({ [item.id]: newItem });
-
-      const arr = Object.values(itemsRef.current || {});
-      const versions = arr?.map(({ rect }) => rect?.version ?? 0);
-
-      if (versions?.every((version: number) => version === rectVersion)) {
-        setActiveLevel(activeLevel?.current ?? 0);
-        const itemsUpdated = updateLayoutOfItems();
-        renderLayoutChanges({ items: itemsUpdated });
-        renderConnectionLines();
-      }
+      // Good
+      itemsRef.current[item.id] = newItem;
+      debouncer(() => {
+        // Good
+        updateLayoutOfItems()
+      }, 100);
     }
   }
 

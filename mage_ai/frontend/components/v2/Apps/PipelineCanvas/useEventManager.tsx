@@ -45,7 +45,6 @@ type EventManagerProps = {
   setZoomPanDisabled: (value: boolean) => void;
   transformState: React.MutableRefObject<ZoomPanStateType>;
   updateLayoutOfItems: LayoutManagerType['updateLayoutOfItems'];
-  renderLayoutChanges: LayoutManagerType['renderLayoutChanges'];
   updateLayoutConfig: LayoutManagerType['updateLayoutConfig'];
   layoutConfig: LayoutManagerType['layoutConfig'];
 };
@@ -101,7 +100,6 @@ export default function useEventManager({
   setZoomPanDisabled,
   transformState,
   updateLayoutOfItems,
-  renderLayoutChanges,
 }: EventManagerProps): EventManagerType {
   const gridDimensions = useRef<RectType>({ height: GRID_SIZE, left: 0, top: 0, width: GRID_SIZE });
 
@@ -348,10 +346,7 @@ export default function useEventManager({
                 event.preventDefault();
                 updateLayoutConfig({
                   direction: LayoutConfigDirectionEnum.VERTICAL,
-                });
-                renderLayoutChanges({
-                  items: mutateModels({ itemMapping: updateLayoutOfItems() }).itemMapping,
-                });
+                })
                 removeContextMenu(event);
               },
           },
@@ -366,10 +361,7 @@ export default function useEventManager({
                 event.preventDefault();
                 updateLayoutConfig({
                   direction: LayoutConfigDirectionEnum.HORIZONTAL,
-                });
-                renderLayoutChanges({
-                  items: mutateModels({ itemMapping: updateLayoutOfItems() }).itemMapping,
-                });
+                })
                 removeContextMenu(event);
               },
           },
@@ -391,10 +383,6 @@ export default function useEventManager({
 
                 updateLayoutConfig({
                   rectTransformations: [{ type: value as TransformRectTypeEnum }]
-                });
-
-                renderLayoutChanges({
-                  items: mutateModels({ itemMapping: updateLayoutOfItems() }).itemMapping,
                 });
 
                 removeContextMenu(event);

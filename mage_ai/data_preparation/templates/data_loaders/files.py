@@ -16,10 +16,17 @@ def ingest_files(*args, **kwargs):
     Template for loading data from filesystem.
     Load data from 1 file or multiple file directories.
 
-    For multiple directories, use the following:
-        FileIO().load(file_directories=['dir_1', 'dir_2'])
+    Args:
+        *args: Variable length argument list.
+        **kwargs: Arbitrary keyword arguments.
 
-    Docs: https://docs.mage.ai/design/data-loading#fileio
+    Keyword Args:
+        path (str): Path to file directory.
+        exclude_pattern (str): Exclude pattern for file paths.
+        include_pattern (str): Include pattern for file paths.
+
+    Yields:
+        str: Content of each file.
     """
     path = kwargs.get('path') or ''
     exclude_pattern = kwargs.get('exclude_pattern')
@@ -33,7 +40,7 @@ def ingest_files(*args, **kwargs):
         ) and (not include_pattern or re.search(include_pattern, path or '')),
     )
 
-    for path in paths:
+    for path, _, _ in paths:
         with open(path, 'r') as file:
             yield file.read()
 {% endblock %}

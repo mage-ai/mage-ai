@@ -10,7 +10,7 @@ export type ActiveLevelRefType = React.MutableRefObject<number>;
 export type ItemIDsByLevelRef = React.MutableRefObject<string[][]>;
 
 export type AppHandlerType = {
-  blocks: MutateType;
+  executionFrameworks: MutateType;
   pipelines: MutateType;
 };
 

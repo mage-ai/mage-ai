@@ -10,42 +10,6 @@ import PipelineExecutionFrameworkType from '@interfaces/PipelineExecutionFramewo
 const Canvas = dynamic(() => import('../../../../Apps/PipelineCanvas'), { ssr: false });
 
 function PipelineBuilder({ frameworkUUID, uuid }: PipelineDetailProps) {
-  const phaseRef = useRef(0);
-  const [pipeline, setPipeline] = useState<PipelineExecutionFrameworkType>(null);
-  const [executionFramework, setExecutionFramework] = useState<PipelineExecutionFrameworkType>(null);
-
-  const pipelines = useMutate({
-    id: uuid,
-    idParent: frameworkUUID,
-    resource: 'pipelines',
-    resourceParent: 'execution_frameworks',
-  }, {
-    handlers: {
-      detail: {
-        onSuccess: setPipeline,
-      },
-    },
-  });
-  const executionFrameworks = useMutate({
-    idParent: frameworkUUID,
-    resource: 'execution_frameworks'
-  }, {
-    handlers: {
-      detail: {
-        onSuccess: setExecutionFramework,
-      },
-    },
-  });
-
-  useEffect(() => {
-    if (phaseRef.current === 0) {
-      phaseRef.current += 1;
-      executionFrameworks.detail.mutate();
-      pipelines.detail.mutate()
-    }
-
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   return (
     <div className={styles.container}>
@@ -56,9 +20,8 @@ function PipelineBuilder({ frameworkUUID, uuid }: PipelineDetailProps) {
           <div />
 
           <Canvas
-            executionFramework={executionFramework}
-            loading={!executionFramework || !pipeline}
-            pipeline={pipeline}
+            pipelineUUID={uuid}
+            executionFrameworkUUID={frameworkUUID}
           />
         </Grid>
 

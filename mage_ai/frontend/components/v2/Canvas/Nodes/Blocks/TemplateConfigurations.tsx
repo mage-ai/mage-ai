@@ -5,12 +5,10 @@ import BlockType, { TemplateType } from '@interfaces/BlockType';
 
 export default function TemplateConfigurations({
   block,
-  group,
   template,
   uuid,
 }: {
   block: BlockType;
-  group: BlockType;
   template: TemplateType;
   uuid: string;
 }) {
@@ -31,6 +29,7 @@ export default function TemplateConfigurations({
 
       {Object.entries(template?.variables || [])?.map(([variableUUID, config], idx: number) => {
         const value = templateSettings?.variables?.[variableUUID] ?? null;
+
         return (
           <Grid
             columnGap={8}

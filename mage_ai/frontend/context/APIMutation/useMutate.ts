@@ -111,9 +111,9 @@ export function useMutate(
   }
 
   function handleResponse(response: ResponseType, variables?: any, ctx?: any) {
-    if (!callbackOnEveryRequest && response && isEqual(response, modelsRef.current)) {
-      return;
-    }
+    // if (!callbackOnEveryRequest && response && isEqual(response, modelsRef.current)) {
+    //   return;
+    // }
 
     const { data } = response || {};
     modelsRef.current = {
@@ -135,11 +135,12 @@ export function useMutate(
     context && context?.renderError(error, (event) => {
       const reqs = requests.current[operation] ?? [];
       const args = reqs.pop();
-      console.log(args)
+
       if (args) {
         wrapMutation(...(args ?? []) as [any, any]).then(handleArgs).catch(handleError);
       }
     });
+
     handleStatusUpdate();
     return error;
   }
@@ -203,11 +204,15 @@ export function useMutate(
       mutationFn: (args?: MutateFunctionArgsType) => wrapMutation(operation, args),
       onError: (error: any, variables: any, context?: any) => {
         handleError(error, operation)
+
         onError && onError(error, variables, context);
       },
       onSettled: () => handleStatusUpdate(),
       onSuccess: (response: ResponseType, variables: any, context?: any) => {
-        onSuccess && onSuccess(handleResponse(response, variables, context));
+
+        const resp = handleResponse(response, variables, context);
+
+        onSuccess && onSuccess(resp);
       }
     };
   }

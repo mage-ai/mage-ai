@@ -182,7 +182,8 @@ class Pipeline(DelegatorTarget):
             if block.uuid not in block_payloads:
                 self.delete_block(block.block)
             else:
-                block.update(ignore_keys_with_blank_values(block_payloads.pop(block.uuid)))
+                pay = block_payloads.pop(block.uuid)
+                block.update(ignore_keys_with_blank_values(pay))
 
         for uuid, payload in block_payloads.items():
             await Block.create(uuid, self, payload)
