@@ -70,6 +70,7 @@ from mage_ai.data_preparation.shared.secrets import (
 from mage_ai.data_preparation.shared.utils import get_template_vars
 from mage_ai.data_preparation.templates.utils import copy_template_directory
 from mage_ai.data_preparation.variable_manager import VariableManager
+from mage_ai.frameworks.execution.models.enums import ExecutionFrameworkUUID
 from mage_ai.orchestration.constants import Entity
 from mage_ai.orchestration.notification.config import NotificationConfig
 from mage_ai.orchestration.notification.sender import NotificationSender
@@ -913,6 +914,7 @@ class Pipeline:
                 executor_config=c.get('executor_config'),
                 executor_type=c.get('executor_type', ExecutorType.LOCAL_PYTHON),
                 extension_uuid=c.get('extension_uuid'),
+                groups=c.get('groups'),
                 has_callback=c.get('has_callback'),
                 language=c.get('language'),
                 pipeline=self,
@@ -933,6 +935,7 @@ class Pipeline:
             self.block_configs,
             blocks,
             all_blocks,
+            execution_framework=self.execution_framework,
         )
         self.callbacks_by_uuid = self.__initialize_blocks_by_uuid(
             self.callback_configs,
@@ -1000,8 +1003,20 @@ class Pipeline:
         configs,
         blocks,
         all_blocks,
+        execution_framework: str = None,
     ):
         blocks_by_uuid = {b.uuid: b for b in blocks}
+
+        if execution_framework is not None and \
+           ExecutionFrameworkUUID.has_value(execution_framework):
+            # Enforce the block execution dependencies with the execution framework
+            from mage_ai.frameworks.execution.constants import (
+                EXECUTION_FRAMEWORKS_BY_UUID,
+            )
+            framework = EXECUTION_FRAMEWORKS_BY_UUID.get(execution_framework)
+            framework.set_block_dependency(blocks_by_uuid)
+            return blocks_by_uuid
+
         all_blocks_by_uuid = {b.uuid: b for b in all_blocks}
 
         for b in configs:

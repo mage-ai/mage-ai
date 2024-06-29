@@ -364,6 +364,7 @@ class Block(
         executor_config: Dict = None,
         executor_type: ExecutorType = ExecutorType.LOCAL_PYTHON,
         extension_uuid: str = None,
+        groups: List[str] = None,
         status: BlockStatus = BlockStatus.NOT_EXECUTED,
         pipeline=None,
         replicated_block: str = None,
@@ -384,6 +385,7 @@ class Block(
         self.executor_config = executor_config
         self.executor_type = executor_type
         self.extension_uuid = extension_uuid
+        self.groups = groups
         self.status = status
         self.pipeline = pipeline
         self.language = language or BlockLanguage.PYTHON
@@ -2912,6 +2914,7 @@ class Block(
             downstream_blocks=self.downstream_block_uuids,
             executor_config=self.executor_config,
             executor_type=(format_enum(self.executor_type) if self.executor_type else None),
+            groups=self.groups,
             has_callback=self.has_callback,
             name=self.name,
             language=language,
