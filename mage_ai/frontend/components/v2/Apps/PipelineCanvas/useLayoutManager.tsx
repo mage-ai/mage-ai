@@ -378,7 +378,7 @@ export default function useLayoutManager({
         if (ItemTypeEnum.NODE === node?.type) {
           node.items = node.items?.reduce((acc, i1) => {
             if (!i1) return acc;
-            const item = itemsRef?.current?.[i1] as NodeItemType;
+            const item = itemsRef?.current?.[typeof i1 === 'string' ? i1 : i1.id] as NodeItemType;
             if (!item) return acc;
 
             return acc.concat(item);
@@ -407,7 +407,7 @@ export default function useLayoutManager({
               const item3 = itemsRef?.current?.[id3];
               if (!item3) return acc3;
 
-              return acc3.concat({ ...item3.rect, id, left: null, top: null });
+              return acc3.concat({ ...item3.rect, id: id3, left: null, top: null });
             }, []) ?? [],
           });
         }, []) ?? [],
@@ -430,13 +430,18 @@ export default function useLayoutManager({
 
         return {
           ...node,
-          items: node?.items?.map((item: NodeItemType, idx: number) => ({
-            ...item,
-            rect: {
-              ...item?.rect,
-              ...rect?.children?.[idx],
-            },
-          })) ?? [],
+          items: node?.items?.map((i2: any, idx: number) => {
+            const rect2 = rect?.children?.[idx] as RectType;
+            const item2 = itemsRef?.current?.[typeof i2 === 'string' ? i2 : i2.id] as NodeType;
+
+            return {
+              ...item2,
+              rect: {
+                ...item2?.rect,
+                ...(rect2 ?? {}) as RectType,
+              },
+            };
+          }) ?? [],
           rect: {
             ...node?.rect,
             ...rect,
@@ -447,8 +452,8 @@ export default function useLayoutManager({
       nodesTransformed?.forEach((node: NodeType) => {
         itemsUpdated[node.id] = node;
 
-        node?.items?.forEach((itemNode: DragItem) => {
-          itemsUpdated[itemNode.id] = itemNode;
+        node?.items?.forEach((itemNode: any) => {
+          itemsUpdated[typeof itemNode === 'string' ? itemNode : itemNode.id] = itemNode;
         });
       });
     });

@@ -1,5 +1,5 @@
 import BlockType from '@interfaces/BlockType';
-import { BlockGroupType, NodeItemType } from '../../../Canvas/interfaces';
+import { BlockGroupType, NodeItemType, NodeType } from '../../../Canvas/interfaces';
 import { ItemTypeEnum } from '../../../Canvas/types';
 import { buildUUIDForLevel } from './levels';
 import { selectKeys } from '@utils/hash';
@@ -35,15 +35,15 @@ export function createItemsFromBlockGroups(
     });
   });
 
-  const itemsByNodeID = {}
+  const itemsByNodeID: Record<string, string[]> = {}
   items?.forEach((item: NodeItemType) => {
     if (ItemTypeEnum.NODE !== item?.type && item?.node) {
       itemsByNodeID[item?.node?.id] ||= [];
-      itemsByNodeID[item?.node?.id].push(item?.id)
+      itemsByNodeID[item?.node?.id].push(String(item?.id))
     }
   });
 
-  nodes?.forEach((node: NodeItemType) => {
+  nodes?.forEach((node: NodeType) => {
     node.items = itemsByNodeID[node?.id] ?? [];
   });
 

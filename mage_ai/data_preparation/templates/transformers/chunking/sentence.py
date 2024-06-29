@@ -24,3 +24,4 @@ def sentence_chunker(document_data: Tuple[str, str], *args, **kwargs) -> List[Tu
     chunks = [(document_id, document_content, sentence) for sentence in sentences]
 
     return chunks
+{% endblock %}

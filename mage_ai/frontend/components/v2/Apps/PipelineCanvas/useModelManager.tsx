@@ -1,21 +1,19 @@
 import PipelineExecutionFrameworkType, { ConfigurationType, FrameworkType } from '@interfaces/PipelineExecutionFramework/interfaces';
 import { AppHandlerType, AppHandlersRefType } from './interfaces';
-import { BlockGroupType, BlockMappingType, GroupLevelType, ItemMappingType, ModelMappingType, NodeItemType, PortMappingType, PortType } from '../../Canvas/interfaces';
+import { BlockGroupType, BlockMappingType, GroupLevelType, ItemMappingType, ModelMappingType, NodeItemType, NodeType, PortMappingType, PortType } from '../../Canvas/interfaces';
 import { GroupUUIDEnum } from '@interfaces/PipelineExecutionFramework/types';
 import { buildDependencies } from './utils/pipelines';
 import { createItemsFromBlockGroups } from './utils/items';
 import { createPortsByItem } from './utils/ports';
 import { useEffect, useRef, useState } from 'react';
 import { useMutate } from '@context/APIMutation';
+import { ItemElementsRefType } from './interfaces';
+import { indexBy } from '@utils/array';
 
 export type ModelManagerType = {
   executionFramework: PipelineExecutionFrameworkType;
   pipeline: PipelineExecutionFrameworkType;
   appHandlersRef: AppHandlersRefType;
-  initializeModels: (
-    executionFramework: PipelineExecutionFrameworkType,
-    pipeline: PipelineExecutionFrameworkType,
-  ) => void;
   itemsRef: React.MutableRefObject<ItemMappingType>;
   mutateModels: (payload?: ModelMappingType) => ModelMappingType;
   portsRef: React.MutableRefObject<PortMappingType>;
@@ -24,6 +22,7 @@ export type ModelManagerType = {
 };
 
 type ModelManagerProps = {
+  itemElementsRef: ItemElementsRefType;
   itemIDsByLevelRef: React.MutableRefObject<string[][]>;
   pipelineUUID: string;
   executionFrameworkUUID: string;
@@ -31,6 +30,7 @@ type ModelManagerProps = {
 };
 
 export default function useModelManager({
+  itemElementsRef,
   itemIDsByLevelRef,
   pipelineUUID,
   executionFrameworkUUID,
@@ -65,18 +65,15 @@ export default function useModelManager({
         },
       },
       update: {
-        onSuccess: (data, dataPrev) => {
-          setPipeline(data);
-          onModelChangeRef.current(data, dataPrev);
+        onSuccess: (pipeline2, pipeline2Prev) => {
+          console.log(pipeline2?.blocks?.length, pipeline2Prev?.blocks?.length)
 
-          initializeModels(executionFramework, data)
-            .then((items) => {
-              console.log('initializeModels completed successfully');
-            })
-            .catch((error) => {
-              console.error('initializeModels encountered an error:', error);
-            });
-
+          if (pipeline2?.blocks?.length > (pipeline2Prev?.blocks?.length ?? 0)) {
+            initializeModels(executionFramework, pipeline2)
+              .then(() => {
+                setPipeline(pipeline2);
+              });
+          }
         },
       },
     },
@@ -103,8 +100,9 @@ export default function useModelManager({
   function initializeModels(
     executionFramework2: PipelineExecutionFrameworkType,
     pipeline2: PipelineExecutionFrameworkType
-  ): Promise<void> {
+  ): Promise<NodeItemType[]> {
     return new Promise((resolve, reject) => {
+      console.log('itemsRef.current.start', itemsRef.current)
       try {
         const { blocksByGroup, groupMapping, groupsByLevel } = buildDependencies(
           executionFramework2,
@@ -178,6 +176,30 @@ export default function useModelManager({
             if (itemPrev?.rect) {
               item.rect = itemPrev?.rect;
               item.version = itemPrev?.version + 1;
+
+              // const itemItemsCurr = ((item as NodeType)?.items ?? []) as string[];
+              // const itemItemsPrev = ((itemPrev as NodeType)?.items ?? []) as NodeItemType[];
+
+              // console.log(item.id, item, itemPrev)
+
+              // // Check which items from the previous node is no longer present.
+              // if (itemItemsPrev?.length >= 1) {
+              //   let widthDiff = 0;
+
+              //   itemItemsPrev?.forEach((item1: NodeItemType) => {
+              //     // If no item or if the item exists in the new node, skip.s
+              //     if (!item1 || itemItemsCurr?.includes(String(item1?.id))) return;
+
+              //     const itemDiff = itemsRef?.current?.[item1.id];
+              //     if (itemDiff) {
+              //       widthDiff += itemDiff?.rect?.diff?.width ?? 0;
+              //     }
+              //   });
+
+              //   console.log(item.id, item.rect.width, widthDiff)
+              //   // Reduce the width of the node by the width of the missing items.
+              //   item.rect.width -= widthDiff;
+              // }
             } else {
               item.version = 0;
             }
@@ -213,7 +235,7 @@ export default function useModelManager({
         itemsRef.current = itemMapping;
         portsRef.current = portMapping;
 
-        // console.log('itemMapping', itemMapping);
+        console.log('itemsRef.current.end', itemsRef.current);
         // console.log('portMapping', portMapping);
 
         // Models
@@ -292,15 +314,15 @@ export default function useModelManager({
 
   useEffect(() => {
     if (phaseRef.current === 0 && pready.current && fready.current) {
+      console.log('initializeModels', phaseRef.current);
       initializeModels(executionFramework, pipeline);
-      phaseRef.current = 1;
+      phaseRef.current += 1;
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [executionFramework, pipeline]);
 
   return {
     appHandlersRef,
-    initializeModels,
     itemsRef,
     onItemChangeRef,
     onModelChangeRef,

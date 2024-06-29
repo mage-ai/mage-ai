@@ -31,7 +31,6 @@ export default function useNodeManager({
   dropEnabled,
   handleDragEnd,
   itemElementsRef,
-  initializeModels,
   updateLayoutOfItems,
   handleDragStart,
   handleMouseDown,

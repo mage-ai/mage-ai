@@ -1,6 +1,7 @@
 import React from 'react';
 import { MutateType } from '@api/interfaces';
 import { ButtonEnum, LanguageEnum } from './enums';
+import { RemoveContextMenuType, RenderContextMenuType } from '@mana/hooks/useContextMenu';
 
 export enum EventOperationEnum {
   CONTEXT_MENU_OPEN = 'context_menu.open',
@@ -60,7 +61,14 @@ export interface EventOperationOptionsType {
   kwargs?: {
     boundingContainer?: DOMRect;
   };
-  handler?: (event: ClientEventType, handlers: Record<string, MutateType>) => void;
+  handler?: (
+    event: ClientEventType,
+    handlers: Record<string, MutateType>,
+    callbacks: {
+      removeContextMenu: RemoveContextMenuType;
+      renderContextMenu: RenderContextMenuType;
+    },
+  ) => void;
 }
 export type SubmitEventOperationType = (
   event: ClientEventType,

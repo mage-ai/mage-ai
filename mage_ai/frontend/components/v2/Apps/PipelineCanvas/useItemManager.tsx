@@ -9,24 +9,26 @@ import { createRoot, Root } from 'react-dom/client';
 import { getBlockColor } from '@mana/themes/blocks';
 import { getPathD } from '../../Canvas/Connections/utils';
 import { throttle } from '../../Canvas/utils/throttle';
-import { ActiveLevelRefType, LayoutConfigRefType, ItemIDsByLevelRef, SetActiveLevelType } from './interfaces';
+import { ItemElementsType, ItemElementsRefType } from './interfaces';
 import useDynamicDebounce from '@utils/hooks/useDebounce';
 
 export default function useItemManager({
+  itemElementsRef,
   itemsRef,
-  updateLayoutOfItems
+  updateLayoutOfItems,
+}: {
+  itemElementsRef: ItemElementsRefType;
+  itemsRef: React.MutableRefObject<Record<string, NodeItemType>>;
+  updateLayoutOfItems: LayoutManagerType['updateLayoutOfItems'];
 }): {
-  itemElementsRef: React.MutableRefObject<Record<string, Record<string, React.RefObject<HTMLDivElement>>>>;
   onMountItem: (item: DragItem, itemRef: React.RefObject<HTMLDivElement>) => void,
 } {
   const [debouncer, cancelDebounce] = useDynamicDebounce();
-  const itemElementsRef = useRef<Record<string, Record<string, React.RefObject<HTMLDivElement>>>>(
-    {},
-  );
+
   // Stage 2: Initial setup of components on mount.
   function onMountItem(item: DragItem, itemRef: React.RefObject<HTMLDivElement>) {
     const { id, type } = item;
-    itemElementsRef.current ||= {};
+    itemElementsRef.current ||= {} as ItemElementsType;
     itemElementsRef.current[type] ||= {};
     itemElementsRef.current[type][id] = itemRef;
 
@@ -81,7 +83,6 @@ export default function useItemManager({
   }
 
   return {
-    itemElementsRef,
     onMountItem,
   };
 }

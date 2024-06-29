@@ -9,7 +9,7 @@ import { ClientEventType, EventOperationEnum, EventOperationOptionsType } from '
 import { ItemTypeEnum, LayoutConfigDirectionEnum, TransformRectTypeEnum } from '../../Canvas/types';
 import { MenuItemType, RenderContextMenuOptions, RemoveContextMenuType, RenderContextMenuType } from '@mana/hooks/useContextMenu';
 import { ModelManagerType } from './useModelManager';
-import { NodeItemType, PortType, RectType, ItemMappingType, PortMappingType, ModelMappingType, LayoutConfigType } from '../../Canvas/interfaces';
+import { NodeItemType, PortType, RectType, ItemMappingType, PortMappingType, ModelMappingType, LayoutConfigType, NodeType } from '../../Canvas/interfaces';
 import { PresentationManagerType } from './usePresentationManager';
 import { XYCoord } from 'react-dnd';
 import { ZoomPanStateType } from '@mana/hooks/useZoomPan';
@@ -17,10 +17,10 @@ import { getElementPositionInContainer } from '../../Canvas/utils/rect';
 import { pluralize } from '@utils/string';
 import { sortByKey } from '@utils/array';
 import { snapToGrid } from '../../Canvas/utils/snapToGrid';
-import { findRectAtPoint } from '../../Canvas/utils/rect';
+import { calculateBoundingBox, findRectAtPoint } from '../../Canvas/utils/rect';
 import { useRef, useState, startTransition } from 'react';
 import { LayoutManagerType } from './useLayoutManager';
-import { BlockTypeEnum } from '@interfaces/BlockType';
+import BlockType, { BlockTypeEnum } from '@interfaces/BlockType';
 
 const GRID_SIZE = 40;
 
@@ -220,7 +220,10 @@ export default function useEventManager({
 
   function submitEventOperation(event: ClientEventType, opts?: EventOperationOptionsType) {
     if (opts?.handler) {
-      opts?.handler(event, appHandlersRef.current);
+      opts?.handler(event, appHandlersRef.current, {
+        removeContextMenu,
+        renderContextMenu,
+      });
     } else {
       const { operationType } = event;
 
@@ -427,26 +430,83 @@ export default function useEventManager({
           {
             Icon: Trash,
             onClick: (event: ClientEventType) => {
+              event?.preventDefault();
               removeContextMenu(event);
-              appHandlersRef.current?.pipelines.update.mutate({
-                payload: (pipeline) => {
-                  const element = itemElementsRef?.current?.[target.type]?.[target.id]?.current;
+
+              const itemRemoved = itemsRef?.current?.[target?.id];
+              if (itemRemoved) {
+                console.log('!!!!!!!!!!!!!!!!!!!!!', itemRemoved)
+                itemRemoved.rect = {
+                  ...itemRemoved?.rect,
+                  diff: itemRemoved?.rect,
+                  height: 0,
+                  left: 0,
+                  top: 0,
+                  width: 0,
+                };
+
+                const element = itemElementsRef?.current?.[target.type]?.[target.id]?.current;
+                if (element) {
+                  const rect = element.getBoundingClientRect();
+                  itemRemoved.rect.diff.height = rect.height;
+                  itemRemoved.rect.diff.width = rect.width;
+
                   element.style.width = '0px';
                   element.style.height = '0px';
                   element.style.visibility = 'hidden';
                   element.style.opacity = '0';
                   element.style.display = 'none';
 
-                  // delete itemsRef?.current?.[target.id];
-                  console.log(itemElementsRef?.current?.[target.type]?.[target.id])
+                  delete itemElementsRef.current[target.type][target.id];
+                }
 
-                  updateLayoutOfItems();
+                if (itemRemoved?.node) {
+                  const node = itemsRef.current[itemRemoved.node.id] as NodeType;
 
-                  return {
-                    ...pipeline,
-                    blocks: pipeline.blocks.filter((block) => block.uuid !== target.block.uuid),
+                  const rects1 = [];
+                  const rects2 = [];
+
+                  itemRemoved?.node?.items?.forEach((item1: any) => {
+                    if (!item1) return;
+                    const item2 = itemsRef.current[typeof item1 === 'string' ? item1 : item1?.id];
+                    if (!item2) return;
+
+                    rects1.push(item2.rect);
+                    if (itemRemoved?.id !== item2?.id) {
+                      rects2.push(item2.rect);
+                    }
+                  });
+
+                  const box1 = calculateBoundingBox(rects1);
+                  const box2 = calculateBoundingBox(rects2);
+
+                  const diffHeight = box1.height - box2.height;
+                  const diffWidth = box1.width - box2.width;
+
+                  const rect = node?.rect;
+                  node.rect = {
+                    ...node.rect,
+                    diff: rect,
+                    height: rect.height -= diffHeight,
+                    width: rect.width -= diffWidth,
                   };
-                },
+                  node.items = node.items.filter(
+                    (item: any) => (typeof item === 'string' ? item : item.id) !== itemRemoved.id
+                  );
+
+                  itemsRef.current[node.id] = node;
+                }
+
+                delete itemsRef.current[itemRemoved.id];
+              }
+
+              updateLayoutOfItems();
+
+              appHandlersRef.current?.pipelines.update.mutate({
+                payload: (pipeline) => ({
+                  ...pipeline,
+                  blocks: pipeline.blocks.filter((block: BlockType) => block.uuid !== target.block.uuid),
+                }),
               });
             },
             uuid: `Remove ${target?.block?.name} from pipeline`,

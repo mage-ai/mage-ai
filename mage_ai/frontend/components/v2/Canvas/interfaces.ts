@@ -67,7 +67,7 @@ export interface PortType extends DragItem {
 
 export interface NodeType extends DragItem {
   downstream?: string[];
-  items: (DragItem | NodeType)[];
+  items: (DragItem | NodeType | string)[];
   node?: NodeType;
   upstream?: string[];
 }

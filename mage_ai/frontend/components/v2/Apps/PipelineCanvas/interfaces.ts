@@ -3,7 +3,10 @@ import { MutateType } from '@api/interfaces';
 import { TemplateType } from '@interfaces/BlockType';
 import { DragItem, NodeItemType, NodeType, RectType, PortType, LayoutConfigType, ModelMappingType } from '../../Canvas/interfaces';
 import { ClientEventType } from '@mana/shared/interfaces';
+import { ItemTypeEnum } from '@components/v2/Canvas/types';
 
+export type ItemElementsType = Record<ItemTypeEnum, Record<string, React.RefObject<HTMLDivElement>>>;
+export type ItemElementsRefType = React.MutableRefObject<ItemElementsType>
 export type SetActiveLevelType = (level?: number) => void;
 export type LayoutConfigRefType = React.MutableRefObject<LayoutConfigType>;
 export type ActiveLevelRefType = React.MutableRefObject<number>;

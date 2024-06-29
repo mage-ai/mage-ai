@@ -19,6 +19,8 @@ import { useDrop } from 'react-dnd';
 import { useEffect, useMemo, useRef, useState, startTransition } from 'react';
 import useItemManager from './useItemManager';
 import useDynamicDebounce from '@utils/hooks/useDebounce';
+import { ItemElementsType } from './interfaces';
+
 export type BuilderCanvasProps = {
   canvasRef: React.RefObject<HTMLDivElement>;
   containerRef: React.RefObject<HTMLDivElement>;
@@ -60,6 +62,11 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
 }: BuilderCanvasProps) => {
   const [itemRects, setItemRects] = useState([]);
 
+  const itemElementsRef = useRef<ItemElementsType>({
+    [ItemTypeEnum.BLOCK]: {},
+    [ItemTypeEnum.NODE]: {},
+    [ItemTypeEnum.PORT]: {},
+  });
   const itemIDsByLevelRef = useRef<string[][]>(null);
   const phaseRef = useRef<number>(0);
   const wrapperRef = useRef(null);
@@ -70,20 +77,17 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
 
   const {
     appHandlersRef,
-    initializeModels,
     itemsRef,
     mutateModels,
     onItemChangeRef,
     onModelChangeRef,
     portsRef,
-    updateNodeItems,
-    // What is this being used for?
-    // updatePorts,
   }: ModelManagerType = useModelManager({
+    executionFrameworkUUID,
+    itemElementsRef,
     itemIDsByLevelRef,
     pipelineUUID,
     setItemRects,
-    executionFrameworkUUID,
   });
 
   const {
@@ -94,23 +98,16 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
     // updateLocalSettings,
     layoutConfig,
   }: LayoutManagerType = useLayoutManager({
-    pipeline,
     canvasRef,
     containerRef,
     itemIDsByLevelRef,
     itemsRef,
+    pipeline,
     setItemRects,
     transformState,
-    updateNodeItems,
   });
 
-  const { itemElementsRef,
-    onMountItem,
-  } = useItemManager({
-    updateLayoutOfItems,
-    itemsRef,
-
-  });
+  const { onMountItem } = useItemManager({ itemElementsRef, itemsRef, updateLayoutOfItems });
 
   const {
     addNewComponent,
@@ -122,7 +119,6 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
     dragEnabled,
     updateLayoutOfItems,
     setItemRects,
-    initializeModels,
     dropEnabled,
     handleDragEnd,
     handleDragStart,
@@ -156,7 +152,6 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
     portsRef,
     setActiveLevel,
     updateLayoutOfItems,
-    updateNodeItems,
   });
 
   const {

@@ -51,8 +51,6 @@ export function handleClickGroupMenu(
   submitEventOperation: SubmitEventOperationType,
   itemRef: any,
 ) {
-  event.preventDefault();
-
   function extractTemplatesFromItem(block: FrameworkType) {
     const { configuration } = block as PipelineExecutionFrameworkBlockType;
 
@@ -69,11 +67,14 @@ export function handleClickGroupMenu(
   function extractTemplatesFromChidlren(block: FrameworkType) {
     const { children } = block;
     if (children) {
-      return flattenArray(children?.map((child, idx: number) => {
+      const arr = [];
+
+      return flattenArray(children?.map((child) => {
         const items = extractTemplatesFromChidlren(child);
+        if (!items?.length) return [];
 
         return [
-          ...(idx >= 1 ? [{ divider: true }] : []),
+          ...(arr.length >= 1 ? [{ divider: true }] : []),
           {
             items,
             uuid: `${child?.name || child?.uuid} templates`
@@ -89,8 +90,6 @@ export function handleClickGroupMenu(
   }
 
   const menuItems = extractTemplatesFromChidlren(itemClicked?.block);
-  console.log(menuItems)
-
   submitEventOperation(
     update(event, {
       button: { $set: ButtonEnum.CONTEXT_MENU },
@@ -122,7 +121,7 @@ function handleGroupTemplateSelect(
   submitEventOperation: SubmitEventOperationType,
 ) {
   submitEventOperation(event, {
-    handler: (e, { pipelines }) => {
+    handler: (e, { pipelines }, { removeContextMenu }) => {
       pipelines.update.mutate({
         event: e,
         payload: (pipeline: PipelineType) => ({
@@ -141,6 +140,8 @@ function handleGroupTemplateSelect(
           ],
         }),
       });
+
+      removeContextMenu(e);
     },
   });
 }
