@@ -1,13 +1,10 @@
+import ContextProvider from '@context/v2/ContextProvider';
 import Head from '@mana/elements/Head';
 import ThemeType from '@mana/themes/interfaces';
 import { AppProps } from 'next/app';
-import { APIMutationProvider } from '@context/APIMutation';
 import { LayoutVersionEnum } from '@utils/layouts';
 import { ModeEnum } from '@mana/themes/modes';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { ThemeProvider } from 'styled-components';
 import { ThemeSettingsType } from '@mana/themes/interfaces';
-import { TooltipProvider } from '@context/Tooltip/TooltipContext';
 import { getTheme, getThemeSettings } from '@mana/themes/utils';
 import { useEffect } from 'react';
 
@@ -30,7 +27,6 @@ function NextAppV2({
     version?: LayoutVersionEnum;
   };
 }) {
-  const queryClient = new QueryClient();
   const themeSettings = (themeSettingsProp?.[version] || getThemeSettings()) as ThemeSettingsType;
   const theme = themeSettings?.theme || getTheme({ theme: themeSettings });
   const mode = themeSettings?.mode || modeProp || ModeEnum.DARK;
@@ -50,15 +46,9 @@ function NextAppV2({
           name="viewport"
         />
       </Head>
-      <ThemeProvider theme={theme as ThemeType}>
-        <QueryClientProvider client={queryClient}>
-          <APIMutationProvider>
-            <TooltipProvider>
-              <Component {...rest} />
-            </TooltipProvider>
-          </APIMutationProvider>
-        </QueryClientProvider>
-      </ThemeProvider>
+      <ContextProvider theme={theme as ThemeType}>
+        <Component {...rest} />
+      </ContextProvider>
     </>
   );
 }

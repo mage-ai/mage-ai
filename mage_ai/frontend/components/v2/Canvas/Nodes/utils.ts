@@ -77,10 +77,11 @@ export function handleClickGroupMenu(
           ...(arr.length >= 1 ? [{ divider: true }] : []),
           {
             items,
-            uuid: `${child?.name || child?.uuid} templates`
-              + (items?.length >= 1
-                ? ` (${items.length})`
-                : ''),
+            uuid: child?.name || child?.uuid,
+            // uuid: `${child?.name || child?.uuid} templates`
+            //   + (items?.length >= 1
+            //     ? ` (${items.length})`
+            //     : ''),
           },
         ];
       }));
@@ -90,6 +91,7 @@ export function handleClickGroupMenu(
   }
 
   const menuItems = extractTemplatesFromChidlren(itemClicked?.block);
+
   submitEventOperation(
     update(event, {
       button: { $set: ButtonEnum.CONTEXT_MENU },
@@ -104,7 +106,10 @@ export function handleClickGroupMenu(
     {
       args: itemClicked?.block
         ? [
-          menuItems,
+          [
+            ...(menuItems?.length >= 1 ? [{ uuid: 'Templates' }] : []),
+            ...menuItems,
+          ],
         ]
         : [],
       kwargs: {

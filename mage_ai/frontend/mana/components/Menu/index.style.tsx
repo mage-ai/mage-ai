@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { UNIT } from '../../themes/spaces';
 import { gradientBackground } from '../../styles/mixins';
 
+const DIVIDER_SPACE = 2;
 export const MENU_ITEM_HEIGHT = 35;
 export const MENU_MIN_WIDTH = UNIT * 40;
 
@@ -101,6 +102,12 @@ export const MenuItemContainerStyled = styled.div<{
   &:hover {
     ${focusedBackground}
   }
+
+  a {
+    &:hover {
+      cursor: default;
+    }
+  }
 `;
 
 export const ItemContent = styled.div<{
@@ -118,6 +125,8 @@ export const ItemContent = styled.div<{
   ${({ first }) =>
     first &&
     `
+    margin-top: ${DIVIDER_SPACE}px;
+
     &:hover {
       border-top-color: transparent;
     }
@@ -126,6 +135,8 @@ export const ItemContent = styled.div<{
   ${({ last }) =>
     last &&
     `
+    margin-bottom: ${DIVIDER_SPACE}px;
+
     &:hover {
       border-bottom-color: transparent;
     }
@@ -149,8 +160,8 @@ export const DividerContainer = styled.div`
 export const DividerStyled = styled.div`
   background-color: var(--colors-graymd);
   height: 1px;
-  margin-bottom: 2px;
-  margin-top: 2px;
+  margin-bottom: ${DIVIDER_SPACE}px;
+  margin-top: ${DIVIDER_SPACE}px;
   margin-left: 16px;
   margin-right: 16px;
 `;

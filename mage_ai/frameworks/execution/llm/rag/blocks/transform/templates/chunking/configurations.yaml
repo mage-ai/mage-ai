@@ -1,7 +1,7 @@
 ### Fixed
 fixed:
-  description: 'Load fixed-size chunks'
-  name: 'Fixed size chunk loader'
+  description: 'Load fixed-size chunks from text.'
+  name: 'Fixed-size chunk loader'
   path: transformers/chunking/fixed.py
   type: transformer
   inputs:
@@ -13,8 +13,8 @@ fixed:
       type: text_field
   variables:
     chunk_size:
-      description: 'Size of each chunk'
-      name: 'Chunk Size'
+      description: 'Size of each chunk.'
+      name: 'Chunk size'
       input: text
       required: true
       types:
@@ -23,7 +23,7 @@ fixed:
 
 ### Sentence
 sentence:
-  description: 'Load sentence chunks'
+  description: 'Load sentence-based chunks from text.'
   name: 'Sentence chunk loader'
   path: transformers/chunking/sentence.py
   type: transformer
@@ -36,8 +36,8 @@ sentence:
       type: text_field
   variables:
     sentence_splitter:
-      description: 'Splitter for sentences'
-      name: 'Sentence Splitter'
+      description: 'Splitter used for separating sentences.'
+      name: 'Sentence splitter'
       input: text
       required: true
       types:
@@ -45,7 +45,7 @@ sentence:
 
 ### Paragraph
 paragraph:
-  description: 'Load paragraph chunks'
+  description: 'Load paragraph-based chunks from text.'
   name: 'Paragraph chunk loader'
   path: transformers/chunking/paragraph.py
   type: transformer
@@ -58,8 +58,8 @@ paragraph:
       type: text_field
   variables:
     paragraph_splitter:
-      description: 'Splitter for paragraphs'
-      name: 'Paragraph Splitter'
+      description: 'Splitter used for separating paragraphs.'
+      name: 'Paragraph splitter'
       input: text
       required: true
       types:
@@ -67,7 +67,7 @@ paragraph:
 
 ### Overlapping
 overlapping:
-  description: 'Load overlapping chunks'
+  description: 'Load overlapping chunks from text.'
   name: 'Overlapping chunk loader'
   path: transformers/chunking/overlapping.py
   type: transformer
@@ -80,8 +80,8 @@ overlapping:
       type: text_field
   variables:
     overlap_size:
-      description: 'Size of overlap between chunks'
-      name: 'Overlap Size'
+      description: 'Size of overlap between adjacent chunks.'
+      name: 'Overlap size'
       input: text
       required: true
       types:
@@ -90,7 +90,7 @@ overlapping:
 
 ### Token
 token:
-  description: 'Load token-based chunks'
+  description: 'Load token-based chunks from text.'
   name: 'Token chunk loader'
   path: transformers/chunking/token.py
   type: transformer
@@ -103,8 +103,8 @@ token:
       type: text_field
   variables:
     token_count:
-      description: 'Number of tokens in each chunk'
-      name: 'Token Count'
+      description: 'Number of tokens in each chunk.'
+      name: 'Token count'
       input: text
       required: true
       types:
@@ -113,7 +113,7 @@ token:
 
 ### Sliding Window
 sliding_window:
-  description: 'Load chunks using sliding window'
+  description: 'Load chunks from text using a sliding window approach.'
   name: 'Sliding window chunk loader'
   path: transformers/chunking/sliding_window.py
   type: transformer
@@ -126,16 +126,16 @@ sliding_window:
       type: text_field
   variables:
     window_size:
-      description: 'Size of the sliding window'
-      name: 'Window Size'
+      description: 'Size of the sliding window.'
+      name: 'Window size'
       input: text
       required: true
       types:
         - integer
       value: 1000  # Default value
     stride:
-      description: 'Stride length for sliding window'
-      name: 'Stride'
+      description: 'Stride length for the sliding window.'
+      name: 'Stride length'
       input: text
       required: true
       types:
@@ -144,7 +144,7 @@ sliding_window:
 
 ### Delimiter
 delimiter:
-  description: 'Load chunks based on delimiter'
+  description: 'Load chunks from text based on a specified delimiter.'
   name: 'Delimiter chunk loader'
   path: transformers/chunking/delimiter.py
   type: transformer
@@ -157,7 +157,7 @@ delimiter:
       type: text_field
   variables:
     delimiter:
-      description: 'Delimiter to separate chunks'
+      description: 'Delimiter used to separate chunks.'
       name: 'Delimiter'
       input: text
       required: true
@@ -167,7 +167,7 @@ delimiter:
 
 ### Semantic
 semantic:
-  description: 'Load semantic chunks'
+  description: 'Load semantic-based chunks from text using a pre-trained model.'
   name: 'Semantic chunk loader'
   path: transformers/chunking/semantic.py
   type: transformer
@@ -180,8 +180,8 @@ semantic:
       type: text_field
   variables:
     model_path:
-      description: 'Path to the semantic model'
-      name: 'Model Path'
+      description: 'Path to the pre-trained semantic model.'
+      name: 'Model path'
       input: text
       required: true
       types:
@@ -189,7 +189,7 @@ semantic:
 
 ### Length
 length:
-  description: 'Load chunks based on length'
+  description: 'Load length-based chunks from text.'
   name: 'Length-based chunk loader'
   path: transformers/chunking/length.py
   type: transformer
@@ -202,8 +202,8 @@ length:
       type: text_field
   variables:
     max_length:
-      description: 'Maximum length of each chunk'
-      name: 'Max Length'
+      description: 'Maximum length of each chunk.'
+      name: 'Max length'
       input: text
       required: true
       types:
@@ -212,7 +212,7 @@ length:
 
 ### N-Gram
 n_gram:
-  description: 'Load n-gram chunks'
+  description: 'Load N-gram-based chunks from text.'
   name: 'N-gram chunk loader'
   path: transformers/chunking/n_gram.py
   type: transformer
@@ -225,8 +225,8 @@ n_gram:
       type: text_field
   variables:
     n:
-      description: 'N value for n-grams'
-      name: 'N'
+      description: 'N value for n-grams.'
+      name: 'N value'
       input: text
       required: true
       types:

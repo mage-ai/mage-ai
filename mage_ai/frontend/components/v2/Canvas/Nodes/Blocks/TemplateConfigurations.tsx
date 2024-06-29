@@ -4,10 +4,12 @@ import Text from '@mana/elements/Text';
 import BlockType, { TemplateType } from '@interfaces/BlockType';
 import { PipelineExecutionFrameworkBlockType } from '@interfaces/PipelineExecutionFramework/interfaces';
 import {
+  InteractionVariableTypeEnum,
   InteractionInputStyleInputTypeEnum,
   InteractionInputType, InteractionVariableType, InteractionInputTypeEnum
 } from '@interfaces/InteractionType';
 import TextInput from '@mana/elements/Input/TextInput';
+import { TooltipWrapper } from '@context/Tooltip';
 
 export default function TemplateConfigurations({
   block,
@@ -28,18 +30,32 @@ export default function TemplateConfigurations({
 
   return (
     <PanelRows padding={false}>
-      <Grid padding={12} rowGap={4}>
-        <Text semibold xsmall>
-          {template?.name || uuid}
-        </Text>
-        {false && template?.description && (
-          <Text secondary xsmall>
-            {template?.description}
+      <TooltipWrapper
+        style={{ alignContent: 'center', justifySelf: 'stretch' }}
+        tooltip={
+          <Grid rowGap={8}>
+            <Text semibold small>
+              {template?.name || uuid}
+            </Text>
+            {template?.description && (
+              <Text secondary small>
+                {template?.description}
+              </Text>
+            )}
+          </Grid >
+        }
+        tooltipStyle={{ maxWidth: 400 }}
+      >
+        <Grid padding={12} rowGap={4}>
+          <Text semibold xsmall>
+            {template?.name || uuid}
           </Text>
-        )}
-      </Grid >
+        </Grid>
+      </TooltipWrapper>
 
-      {Object.entries(variables ?? {})?.map(([variableUUID, variableConfig]: [string, InteractionVariableType], idx: number) => {
+      {Object.entries(variables ?? {})?.map((
+        [variableUUID, variableConfig]: [string, InteractionVariableType]
+      ) => {
         const {
           description,
           input,
@@ -48,10 +64,8 @@ export default function TemplateConfigurations({
           types, // Data type; string, integer, etc
           value: defaultValue,
         } = variableConfig ?? {} as InteractionVariableType;
-        const variableFromUser: { value: any } = userValuesByVariable?.[variableUUID] ?? null;
+        const variableFromUser = userValuesByVariable?.[variableUUID] ?? null;
         const {
-          // description,
-          // label,
           options, // For dropdown menu
           // Monospace, multiline aka textarea, etc.
           // default
@@ -71,7 +85,7 @@ export default function TemplateConfigurations({
         return (
           <label key={variableUUID}>
             <Grid
-              alignItems="center"
+              alignItems="stretch"
               baseLeft
               baseRight
               columnGap={8}
@@ -82,9 +96,18 @@ export default function TemplateConfigurations({
                 gridTemplateColumns: 'minmax(0px, max-content) auto',
               }}
             >
-              <Text secondary small>
-                {displayName || variableUUID || '-'}
-              </Text>
+              <TooltipWrapper
+                style={{ alignContent: 'center', justifySelf: 'stretch' }}
+                tooltip={
+                  <Text secondary xsmall>
+                    {description}
+                  </Text>
+                }
+              >
+                <Text secondary small>
+                  {displayName || variableUUID || '-'}
+                </Text>
+              </TooltipWrapper>
 
               {InteractionInputTypeEnum.TEXT_FIELD === typeOfInput && (
                 <TextInput
@@ -93,8 +116,11 @@ export default function TemplateConfigurations({
                   blendWithText
                   defaultValue={value}
                   italicPlaceholder
-                  number={InteractionInputStyleInputTypeEnum.NUMBER === style?.input_type}
                   monospace={style.monospace}
+                  number={InteractionInputStyleInputTypeEnum.NUMBER === style?.input_type || [
+                    InteractionVariableTypeEnum.FLOAT,
+                    InteractionVariableTypeEnum.INTEGER,
+                  ].some(varType => types?.includes(varType))}
                   placeholder={types?.filter(Boolean)?.join(', ')}
                   required={required}
                   small
