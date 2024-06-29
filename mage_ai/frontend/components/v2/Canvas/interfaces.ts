@@ -47,8 +47,8 @@ interface BaseItem {
 
 export interface DragItem extends BaseItem {
   block?: BlockType & {
-    frameworks: PipelineExecutionFrameworkBlockType[]
-  };
+    frameworks: FrameworkType[];
+  } & FrameworkType;
   groups?: string[];
   isDragging?: boolean;
   node?: NodeType;
@@ -149,7 +149,7 @@ export type PortMappingType = Record<string, PortType>;
 
 export type BlockMappingType = Record<string, BlockType>;
 export type BlocksByGroupType = Record<GroupUUIDEnum, BlockMappingType>;
-export type GroupMappingType = Record<GroupUUIDEnum, PipelineExecutionFrameworkBlockType>;
+export type GroupMappingType = Record<GroupUUIDEnum, FrameworkType>;
 export type GroupLevelsMappingType = GroupMappingType[];
 
 export type GroupLevelType = FrameworkType[][];

@@ -1,4 +1,4 @@
-import React, { useCallback, useContext, useMemo, useRef } from 'react';
+import React, { useCallback, useContext, useEffect, useMemo, useRef } from 'react';
 import { ThemeContext, ThemeProvider } from 'styled-components';
 import { createRoot } from 'react-dom/client';
 import { Variants, motion } from 'framer-motion';
@@ -9,7 +9,7 @@ import Grid from '../Grid';
 import KeyboardTextGroup from '../../elements/Text/Keyboard/Group';
 import Text from '../../elements/Text';
 import { CaretRight } from '@mana/icons';
-import useDebounce from '@utils/hooks/useDebounce';
+import useDebounce, { DebouncerType, CancelType } from '@utils/hooks/useDebounce';
 import { HEADER_Z_INDEX } from '@components/constants';
 import { MenuItemType } from './interfaces';
 import {
@@ -47,6 +47,7 @@ type MenuProps = {
     y: number;
   };
   event?: MouseEvent | React.MouseEvent<HTMLDivElement>;
+  handleHideMenuItems?: React.MutableRefObject<Record<string, () => void>>;
   items: MenuItemType[];
   small?: boolean;
   uuid: string;
@@ -154,10 +155,20 @@ function MenuItem({ contained, first, item, last, small }: ItemProps) {
   );
 }
 
-function Menu({ boundingContainer, contained, coordinates, event, items, small, uuid }: MenuProps) {
+function Menu({
+  boundingContainer,
+  contained,
+  coordinates,
+  handleHideMenuItems,
+  event,
+  items,
+  small,
+  uuid,
+}: MenuProps) {
   const themeContext = useContext(ThemeContext);
   const containerRef = useRef(null);
   const itemExpandedRef = useRef(null);
+  const hideChildMenuItems = useRef<() => void>(() => null);
 
   const [debouncer, cancel] = useDebounce();
 
@@ -196,9 +207,7 @@ function Menu({ boundingContainer, contained, coordinates, event, items, small, 
 
   const renderItems = useCallback(
     (item: MenuItemType, event: React.MouseEvent<HTMLDivElement>) => {
-      if (!item?.items?.length || itemExpandedRef?.current?.uuid === item?.uuid) {
-        return;
-      }
+      if (itemExpandedRef?.current?.uuid === item?.uuid) return;
 
       event.stopPropagation();
       event.preventDefault();
@@ -218,30 +227,44 @@ function Menu({ boundingContainer, contained, coordinates, event, items, small, 
       const x = rectContainer?.left + rectContainer?.width - (rect?.left + paddingHorizontal + 4);
       const y = rect?.top - rectContainer?.top - 2 * (rect?.height - element?.clientHeight);
 
-      itemsRootRef.current.render(
-        <React.StrictMode>
-          <DeferredRenderer idleTimeout={1}>
-            <ThemeProvider theme={themeContext}>
-              <Menu
-                boundingContainer={boundingContainer}
-                contained
-                coordinates={{ x, y }}
-                event={event}
-                items={item?.items}
-                small
-                uuid={`${uuid}-${item.uuid}`}
-              />
-            </ThemeProvider>
-          </DeferredRenderer>
-        </React.StrictMode>,
+      itemsRootRef.current.render(item?.items?.length >= 1
+        ? (
+          <React.StrictMode>
+            <DeferredRenderer idleTimeout={1}>
+              <ThemeProvider theme={themeContext}>
+                <Menu
+                  boundingContainer={boundingContainer}
+                  contained
+                  coordinates={{ x, y }}
+                  event={event}
+                  handleHideMenuItems={hideChildMenuItems}
+                  items={item?.items}
+                  small
+                  uuid={`${uuid}-${item.uuid}`}
+                />
+              </ThemeProvider>
+            </DeferredRenderer>
+          </React.StrictMode>
+        )
+        : null
       );
 
       itemExpandedRef.current = item;
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [boundingContainer, rootID, themeContext, uuid],
   );
 
   const itemsCount = useMemo(() => items?.length || 0, [items]);
+
+  const hideChildren = useCallback(() => {
+    if (hideChildMenuItems?.current) {
+      Object.values(hideChildMenuItems?.current ?? {})?.forEach((hideChild: () => void) => {
+        hideChild?.();
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <MenuStyled
@@ -285,7 +308,26 @@ function Menu({ boundingContainer, contained, coordinates, event, items, small, 
                 key={`menu-item-${item.uuid}-${idx}`}
                 onMouseEnter={event => {
                   cancel();
-                  debouncer(() => renderItems(item, event), 100);
+                  debouncer(() => {
+                    renderItems(item, event);
+
+                    if (handleHideMenuItems) {
+                      handleHideMenuItems.current = {
+                        ...handleHideMenuItems.current,
+                        [item.uuid]: () => {
+                          console.log('hide items for', item)
+
+                          hideChildren();
+                          renderItems({
+                            ...item,
+                            items: [],
+                          }, event);
+                        },
+                      };
+                    }
+
+                    hideChildren();
+                  }, 100);
                 }}
                 onMouseLeave={() => {
                   cancel();

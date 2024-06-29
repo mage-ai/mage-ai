@@ -1,5 +1,8 @@
 import { useRef, useCallback } from 'react';
 
+export type DebouncerType = <T extends (...args: any[]) => void>(fn: T, delay: number, ...args: Parameters<T>) => void;
+export type CancelType = () => void;
+
 // A Hook that returns a debouncer function
 function useDynamicDebounce(): [
   (fn: (...args: any[]) => void, delay: number, ...args: any[]) => void,
@@ -12,7 +15,7 @@ function useDynamicDebounce(): [
    * The debouncer function accepts a function to debounce (fn),
    * the arguments to apply to that function (args), and the delay before execution.
    */
-  const debouncer = useCallback(
+  const debouncer: DebouncerType = useCallback(
     <T extends (...args: any[]) => void>(fn: T, delay: number, ...args: Parameters<T>) => {
       // Clear any existing timeout to ensure only the last action is executed
       if (timeoutRef.current) {
@@ -27,7 +30,7 @@ function useDynamicDebounce(): [
   );
 
   // Optionally, provide a way to cancel the debounce
-  const cancel = useCallback(() => {
+  const cancel: CancelType = useCallback(() => {
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);
       timeoutRef.current = null;

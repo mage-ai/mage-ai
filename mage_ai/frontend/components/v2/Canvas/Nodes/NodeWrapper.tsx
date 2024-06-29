@@ -11,6 +11,13 @@ import { ItemTypeEnum } from '../types';
 import { DragAndDropType } from './types';
 import { ElementRoleEnum } from '@mana/shared/types';
 
+export type NodeWrapperProps = {
+  children?: React.ReactNode;
+  className?: string;
+  item: NodeItemType;
+  rect?: RectType;
+} & DragAndDropType;
+
 // This is the style used for the preview when dragging
 function getStyles(
   item: NodeItemType,
@@ -21,6 +28,7 @@ function getStyles(
   }: {
     draggable: boolean;
     isDragging: boolean;
+    rect?: RectType;
   },
 ): CSSProperties {
   const { id, type } = item;
@@ -46,12 +54,6 @@ function getStyles(
     ...((width ?? false) ? { minWidth: width } : {}),
   };
 }
-
-export type NodeWrapperProps = {
-  children?: React.ReactNode;
-  className?: string;
-  item: NodeItemType;
-} & DragAndDropType;
 
 export const NodeWrapper: FC<NodeWrapperProps> = memo(function NodeWrapper({
   children,

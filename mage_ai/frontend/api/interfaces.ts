@@ -2,6 +2,7 @@ import { AxiosError } from 'axios';
 import { ErrorDetailsType } from '@interfaces/ErrorsType';
 import { OperationTypeEnum } from './constants';
 import { MutationStatusEnum } from './enums';
+import { ClientEventType } from '@mana/shared/interfaces';
 
 // "message": "Request failed with status code 400",
 // "name": "AxiosError",
@@ -89,6 +90,7 @@ export type IDArgsType = {
 export type ArgsValueOrFunctionType = Record<string, any> | ((args: Record<string, any>) => Record<string, any>);
 
 export type MutateFunctionArgsType = {
+  event?: ClientEventType | any;
   meta?: ArgsValueOrFunctionType;
   payload?: ArgsValueOrFunctionType;
   query?: ArgsValueOrFunctionType;

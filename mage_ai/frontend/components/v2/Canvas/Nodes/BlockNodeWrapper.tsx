@@ -1,44 +1,29 @@
 import React from 'react';
+import styles from '@styles/scss/components/Canvas/Nodes/BlockNode.module.scss';
+import stylesBuilder from '@styles/scss/apps/Canvas/Pipelines/Builder.module.scss';
 import update from 'immutability-helper';
 import { BlockNode } from './BlockNode';
-import { StatusTypeEnum, BlockTypeEnum, TemplateType } from '@interfaces/BlockType';
-import { NodeWrapper, NodeWrapperProps } from './NodeWrapper';
+import { ClientEventType, EventOperationEnum, SubmitEventOperationType } from '@mana/shared/interfaces';
+import { ItemTypeEnum } from '../types';
+import { NodeItemType, NodeType, PortType, RectType } from '../interfaces';
+import { StatusTypeEnum, BlockTypeEnum } from '@interfaces/BlockType';
+import { countOccurrences, flattenArray, sortByKey } from '@utils/array';
 import { getBlockColor } from '@mana/themes/blocks';
+import { handleClickGroupMenu } from './utils';
+import { useEffect, useCallback, useState, useMemo, useRef } from 'react';
+import { NodeWrapperProps } from './NodeWrapper';
+import { ConfigurationType } from '@interfaces/PipelineExecutionFramework/interfaces';
 import {
-  Add,
-  CaretDown,
-  Check,
-  Code,
-  ArrowsAdjustingFrameSquare,
-  PipeIconVertical,
-  PlayButtonFilled,
+  Add, CaretDown, Check, ArrowsAdjustingFrameSquare, PipeIconVertical, PlayButtonFilled,
   Infinite,
 } from '@mana/icons';
-import { getStyles } from './utils';
-import { createRef, useEffect, useCallback, useState, useMemo, useRef } from 'react';
-import { GroupUUIDEnum } from '@interfaces/PipelineExecutionFramework/types';
-import { NodeItemType, PortType, DragItem, NodeType, RectType } from '../interfaces';
-import { countOccurrences, flattenArray, sortByKey } from '@utils/array';
-import { dig } from '@utils/hash';
-import { ItemTypeEnum } from '../types';
-import stylesBuilder from '@styles/scss/apps/Canvas/Pipelines/Builder.module.scss';
-import styles from '@styles/scss/components/Canvas/Nodes/BlockNode.module.scss';
-import { isDebug } from '@utils/environment';
-import { generateUUID } from '@utils/uuids/generator';
-import {
-  ClientEventType,
-  EventOperationEnum,
-  SubmitEventOperationType,
-} from '@mana/shared/interfaces';
-import { ButtonEnum } from '@mana/shared/enums';
-import PipelineExecutionFrameworkType from '@interfaces/PipelineExecutionFramework/interfaces';
-import PipelineType from '@interfaces/PipelineType';
 
-type BlockNodeWrapperProps = {
+export type BlockNodeWrapperProps = {
+  Wrapper: React.FC<NodeWrapperProps>;
   collapsed?: boolean;
   draggable?: boolean;
   droppable?: boolean;
-  onMountItem: (item: DragItem, ref: React.RefObject<HTMLDivElement>) => void;
+  onMountItem: (item: NodeItemType, ref: React.RefObject<HTMLDivElement>) => void;
   onMountPort: (port: PortType, ref: React.RefObject<HTMLDivElement>) => void;
   rect: RectType;
   selected?: boolean;
@@ -46,7 +31,8 @@ type BlockNodeWrapperProps = {
   version?: number | string;
 } & NodeWrapperProps;
 
-const BlockNodeWrapper: React.FC<BlockNodeWrapperProps> = ({
+export const BlockNodeWrapper: React.FC<BlockNodeWrapperProps & NodeWrapperProps> = ({
+  Wrapper,
   collapsed,
   draggable = false,
   droppable = false,
@@ -62,12 +48,55 @@ const BlockNodeWrapper: React.FC<BlockNodeWrapperProps> = ({
   const phaseRef = useRef(0);
   const timeoutRef = useRef(null);
   const portElementRefs = useRef<Record<string, any>>({});
-  const [draggingNode, setDraggingNode] = useState<NodeItemType | null>(null);
+  const [draggingNode] = useState<NodeItemType | null>(null);
+
+  const { onMouseDown, onMouseLeave, onMouseOver, onMouseUp } = handlers;
 
   const block = item?.block;
-  const { pipeline, type, uuid } = block || {};
+  const { type, uuid } = block || {};
   const isGroup = useMemo(() => !item?.block?.type || item?.block?.type === BlockTypeEnum.GROUP, [item]);
 
+  const name = useMemo(
+    () => (ItemTypeEnum.BLOCK === item?.type
+      ? item?.block?.name ?? item?.block?.uuid
+      : item?.title ?? item?.id),
+    [item],
+  );
+
+  const buildEvent = useCallback(
+    (event: any, operation?: EventOperationEnum) =>
+      update(event, {
+        data: {
+          $set: {
+            node: item,
+          },
+        },
+        operationTarget: {
+          $set: itemRef,
+        },
+        operationType: {
+          $set: operation,
+        },
+      }) as any,
+    [item],
+  );
+
+  function handleMouseDown(event: ClientEventType) {
+    event.stopPropagation();
+    onMouseDown && onMouseDown?.(buildEvent(event, EventOperationEnum.DRAG_START));
+  }
+
+  function handleMouseLeave(event: ClientEventType) {
+    onMouseLeave && onMouseLeave?.(buildEvent(event));
+  }
+
+  function handleMouseOver(event: ClientEventType) {
+    onMouseOver && onMouseOver?.(buildEvent(event));
+  }
+
+  function handleMouseUp(event: ClientEventType) {
+    onMouseUp && onMouseUp?.(buildEvent(event, EventOperationEnum.DRAG_END));
+  }
 
   function onMount(port: PortType, portRef: React.RefObject<HTMLDivElement>) {
     if (!(port?.id in portElementRefs.current)) {
@@ -145,156 +174,94 @@ const BlockNodeWrapper: React.FC<BlockNodeWrapperProps> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  function handleMouseDown(event: ClientEventType) {
-    event.stopPropagation();
-    onMouseDown && onMouseDown?.(buildEvent(event, EventOperationEnum.DRAG_START));
-  }
+  const requiredGroup = isGroup && (item?.block?.configuration as ConfigurationType)?.metadata?.required;
+  const emptyGroup = isGroup && (item as NodeType)?.items?.length === 0;
 
-  function handleMouseLeave(event: ClientEventType) {
-    onMouseLeave && onMouseLeave?.(buildEvent(event));
-  }
-
-  function handleMouseOver(event: ClientEventType) {
-    onMouseOver && onMouseOver?.(buildEvent(event));
-  }
-
-  function handleMouseUp(event: ClientEventType) {
-    onMouseUp && onMouseUp?.(buildEvent(event, EventOperationEnum.DRAG_END));
-  }
-
-  function handleGroupTemplateSelect(event: any, item: NodeItemType, template: TemplateType) {
-    submitEventOperation(event, {
-      handler: (e, { pipelines }) => {
-        pipelines.update.mutate({
-          event: e,
-          payload: (pipeline: PipelineType) => ({
-            ...pipeline,
-            blocks: [
-              ...(pipeline?.blocks ?? []),
-              {
-                configuration: {
-                  templates: {
-                    [template.uuid]: template,
-                  },
-                },
-                groups: [item.block.uuid],
-                uuid: generateUUID(),
-              },
-            ],
-          }),
-        });
-      },
-    });
-  }
-
-  function handleClickGroupMenu(event: any) {
-    event.preventDefault();
-    submitEventOperation(
-      update(event, {
-        button: { $set: ButtonEnum.CONTEXT_MENU },
-        data: {
-          $set: {
-            node: item,
+  const blockNode = (
+    <BlockNode
+      block={block}
+      borderConfig={{
+        borders,
+      }}
+      draggable={draggable}
+      handlers={{
+        ...handlers,
+        onMouseDown: handleMouseDown,
+        onMouseUp: handleMouseUp,
+      }}
+      item={item}
+      onMount={onMount}
+      titleConfig={{
+        asides: {
+          after: {
+            className: styles.showOnHover,
+            ...(ItemTypeEnum.NODE === item?.type
+              ? {
+                Icon: draggable ? ArrowsAdjustingFrameSquare : Add,
+                onClick: event => handleClickGroupMenu(event, item as NodeType, submitEventOperation, itemRef),
+              }
+              : {
+                Icon: draggable ? ArrowsAdjustingFrameSquare : CaretDown,
+                onClick: () => alert('Coding...'),
+              }),
+          },
+          before: {
+            Icon: StatusTypeEnum.EXECUTED === block?.status ? Check : PlayButtonFilled,
+            baseColorName:
+              StatusTypeEnum.FAILED === block?.status
+                ? 'red'
+                : StatusTypeEnum.EXECUTED
+                  ? 'green'
+                  : 'blue',
           },
         },
-        operationTarget: { $set: event.target },
-        operationType: { $set: EventOperationEnum.CONTEXT_MENU_OPEN },
-      }),
-      {
-        args: [
-          [
-            {
-              uuid: `Templates for ${item?.block?.name}`,
-            },
-            ...Object.entries(item?.block?.configuration?.templates ?? {})?.map(
-              ([uuid, template]) => ({
-                description: () => template?.description,
-                label: () => template?.name,
-                onClick: (event: any) => handleGroupTemplateSelect(event, item, template),
-                uuid,
-              }),
-            ),
-          ],
-        ],
-        kwargs: {
-          boundingContainer: itemRef?.current?.getBoundingClientRect(),
-        },
-      },
-    );
-  }
+        badge:
+          ItemTypeEnum.NODE === item?.type
+            ? {
+              Icon: collapsed ? Infinite : PipeIconVertical,
+              baseColorName: names?.base || 'purple',
+              label: String(name || uuid || ''),
+            }
+            : undefined,
+        label: String(name || uuid || ''),
+      }}
+    />
+  );
 
-  const requiredGroup = isGroup && item?.block?.configuration?.metadata?.required;
-  const emptyGroup = isGroup && item?.items?.length === 0;
-
-  return (
-    <div
-      className={[
-        stylesBuilder.level,
-        stylesBuilder[`level-${item?.level}`],
-        item?.type && stylesBuilder[item?.type],
-        !emptyGroup && !draggable && !droppable && styles.showOnHoverContainer,
-      ]
-        ?.filter(Boolean)
-        ?.join(' ')}
-      ref={itemRef}
-      style={getStyles(item, {
-        draggable,
-        rect,
-      })}
-    >
-      <BlockNode
-        block={block}
-        borderConfig={{
-          borders,
-        }}
+  if (Wrapper) {
+    return (
+      <Wrapper
+        className={[
+          stylesBuilder.level,
+          stylesBuilder[`level-${item?.level}`],
+          item?.type && stylesBuilder[item?.type],
+          !emptyGroup && !draggable && !droppable && styles.showOnHoverContainer,
+        ]
+          ?.filter(Boolean)
+          ?.join(' ')}
         draggable={draggable}
+        draggingNode={draggingNode}
+        droppable={droppable}
         handlers={{
           ...handlers,
           onMouseDown: handleMouseDown,
+          onMouseLeave: handleMouseLeave,
+          onMouseOver: !draggable && handleMouseOver,
           onMouseUp: handleMouseUp,
         }}
         item={item}
-        onMount={onMount}
-        titleConfig={{
-          asides: {
-            after: {
-              className: styles.showOnHover,
-              ...(ItemTypeEnum.NODE === item?.type
-                ? {
-                  Icon: draggable ? ArrowsAdjustingFrameSquare : Add,
-                  onClick: handleClickGroupMenu,
-                }
-                : {
-                  Icon: draggable ? ArrowsAdjustingFrameSquare : CaretDown,
-                  onClick: () => alert('Coding...'),
-                }),
-            },
-            before: {
-              Icon: StatusTypeEnum.EXECUTED === block?.status ? Check : PlayButtonFilled,
-              baseColorName:
-                StatusTypeEnum.FAILED === block?.status
-                  ? 'red'
-                  : StatusTypeEnum.EXECUTED
-                    ? 'green'
-                    : 'blue',
-            },
-          },
-          badge:
-            ItemTypeEnum.NODE === item?.type
-              ? {
-                Icon: collapsed ? Infinite : PipeIconVertical,
-                baseColorName: names?.base || 'purple',
-                label: String(name || uuid || ''),
-              }
-              : undefined,
-          label: String(name || uuid || ''),
-        }}
-      />
-    </div>
-  );
+        itemRef={itemRef}
+        rect={rect}
+      >
+        {blockNode}
+      </Wrapper>
+    );
+  }
+
+  return BlockNode;
 };
 
-function areEqual(p1: BlockNodeWrapperProps, p2: BlockNodeWrapperProps) {
+export function areEqual(p1: BlockNodeWrapperProps, p2: BlockNodeWrapperProps) {
   return p1.draggable === p2.draggable
     && p1.droppable === p2.droppable
     && p1.rect === p2.rect;

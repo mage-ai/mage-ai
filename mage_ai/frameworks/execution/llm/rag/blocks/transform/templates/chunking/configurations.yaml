@@ -1,0 +1,234 @@
+### Fixed
+fixed:
+  description: 'Load fixed-size chunks'
+  name: 'Fixed size chunk loader'
+  path: transformers/chunking/fixed.py
+  type: transformer
+  inputs:
+    text:
+      style:
+        input_type: null
+        multiline: false
+        monospace: true
+      type: text_field
+  variables:
+    chunk_size:
+      description: 'Size of each chunk'
+      name: 'Chunk Size'
+      input: text
+      required: true
+      types:
+        - integer
+      value: 1000  # Default value
+
+### Sentence
+sentence:
+  description: 'Load sentence chunks'
+  name: 'Sentence chunk loader'
+  path: transformers/chunking/sentence.py
+  type: transformer
+  inputs:
+    text:
+      style:
+        input_type: null
+        multiline: false
+        monospace: true
+      type: text_field
+  variables:
+    sentence_splitter:
+      description: 'Splitter for sentences'
+      name: 'Sentence Splitter'
+      input: text
+      required: true
+      types:
+        - string
+
+### Paragraph
+paragraph:
+  description: 'Load paragraph chunks'
+  name: 'Paragraph chunk loader'
+  path: transformers/chunking/paragraph.py
+  type: transformer
+  inputs:
+    text:
+      style:
+        input_type: null
+        multiline: false
+        monospace: true
+      type: text_field
+  variables:
+    paragraph_splitter:
+      description: 'Splitter for paragraphs'
+      name: 'Paragraph Splitter'
+      input: text
+      required: true
+      types:
+        - string
+
+### Overlapping
+overlapping:
+  description: 'Load overlapping chunks'
+  name: 'Overlapping chunk loader'
+  path: transformers/chunking/overlapping.py
+  type: transformer
+  inputs:
+    text:
+      style:
+        input_type: null
+        multiline: false
+        monospace: true
+      type: text_field
+  variables:
+    overlap_size:
+      description: 'Size of overlap between chunks'
+      name: 'Overlap Size'
+      input: text
+      required: true
+      types:
+        - integer
+      value: 200  # Default value
+
+### Token
+token:
+  description: 'Load token-based chunks'
+  name: 'Token chunk loader'
+  path: transformers/chunking/token.py
+  type: transformer
+  inputs:
+    text:
+      style:
+        input_type: null
+        multiline: false
+        monospace: true
+      type: text_field
+  variables:
+    token_count:
+      description: 'Number of tokens in each chunk'
+      name: 'Token Count'
+      input: text
+      required: true
+      types:
+        - integer
+      value: 100  # Default value
+
+### Sliding Window
+sliding_window:
+  description: 'Load chunks using sliding window'
+  name: 'Sliding window chunk loader'
+  path: transformers/chunking/sliding_window.py
+  type: transformer
+  inputs:
+    text:
+      style:
+        input_type: null
+        multiline: false
+        monospace: true
+      type: text_field
+  variables:
+    window_size:
+      description: 'Size of the sliding window'
+      name: 'Window Size'
+      input: text
+      required: true
+      types:
+        - integer
+      value: 1000  # Default value
+    stride:
+      description: 'Stride length for sliding window'
+      name: 'Stride'
+      input: text
+      required: true
+      types:
+        - integer
+      value: 500  # Default value
+
+### Delimiter
+delimiter:
+  description: 'Load chunks based on delimiter'
+  name: 'Delimiter chunk loader'
+  path: transformers/chunking/delimiter.py
+  type: transformer
+  inputs:
+    text:
+      style:
+        input_type: null
+        multiline: false
+        monospace: true
+      type: text_field
+  variables:
+    delimiter:
+      description: 'Delimiter to separate chunks'
+      name: 'Delimiter'
+      input: text
+      required: true
+      types:
+        - string
+      value: '\n\n'  # Default value
+
+### Semantic
+semantic:
+  description: 'Load semantic chunks'
+  name: 'Semantic chunk loader'
+  path: transformers/chunking/semantic.py
+  type: transformer
+  inputs:
+    text:
+      style:
+        input_type: null
+        multiline: false
+        monospace: true
+      type: text_field
+  variables:
+    model_path:
+      description: 'Path to the semantic model'
+      name: 'Model Path'
+      input: text
+      required: true
+      types:
+        - string
+
+### Length
+length:
+  description: 'Load chunks based on length'
+  name: 'Length-based chunk loader'
+  path: transformers/chunking/length.py
+  type: transformer
+  inputs:
+    text:
+      style:
+        input_type: null
+        multiline: false
+        monospace: true
+      type: text_field
+  variables:
+    max_length:
+      description: 'Maximum length of each chunk'
+      name: 'Max Length'
+      input: text
+      required: true
+      types:
+        - integer
+      value: 1000  # Default value
+
+### N-Gram
+n_gram:
+  description: 'Load n-gram chunks'
+  name: 'N-gram chunk loader'
+  path: transformers/chunking/n_gram.py
+  type: transformer
+  inputs:
+    text:
+      style:
+        input_type: null
+        multiline: false
+        monospace: true
+      type: text_field
+  variables:
+    n:
+      description: 'N value for n-grams'
+      name: 'N'
+      input: text
+      required: true
+      types:
+        - integer
+      value: 3  # Default value

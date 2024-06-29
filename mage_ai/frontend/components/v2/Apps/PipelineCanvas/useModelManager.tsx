@@ -1,13 +1,11 @@
 import PipelineExecutionFrameworkType, { ConfigurationType, FrameworkType } from '@interfaces/PipelineExecutionFramework/interfaces';
+import { AppHandlerType, AppHandlersRefType } from './interfaces';
 import { BlockGroupType, BlockMappingType, GroupLevelType, ItemMappingType, ModelMappingType, NodeItemType, PortMappingType, PortType } from '../../Canvas/interfaces';
 import { GroupUUIDEnum } from '@interfaces/PipelineExecutionFramework/types';
 import { buildDependencies } from './utils/pipelines';
 import { createItemsFromBlockGroups } from './utils/items';
 import { createPortsByItem } from './utils/ports';
-import { updateModelsAndRelationships } from './utils/nodes';
 import { useEffect, useRef, useState } from 'react';
-import { ClientEventType } from '@mana/hooks/useContextMenu';
-import { AppHandlerType, AppHandlersRefType } from './interfaces';
 import { useMutate } from '@context/APIMutation';
 
 export type ModelManagerType = {
@@ -29,6 +27,7 @@ type ModelManagerProps = {
   itemIDsByLevelRef: React.MutableRefObject<string[][]>;
   pipelineUUID: string;
   executionFrameworkUUID: string;
+  setItemRects: React.Dispatch<React.SetStateAction<NodeItemType[]>>;
 };
 
 export default function useModelManager({
@@ -89,7 +88,6 @@ export default function useModelManager({
     handlers: {
       detail: {
         onSuccess: (data) => {
-          console.log(data)
           setExecutionFramework(data);
           fready.current = true;
         },
@@ -207,11 +205,10 @@ export default function useModelManager({
             });
           });
 
-          console.log('items', items);
-          console.log('nodes', nodes);
-          console.log('ports', ports);
+          // console.log('items', items);
+          // console.log('nodes', nodes);
+          // console.log('ports', ports);
         });
-
 
         itemsRef.current = itemMapping;
         portsRef.current = portMapping;

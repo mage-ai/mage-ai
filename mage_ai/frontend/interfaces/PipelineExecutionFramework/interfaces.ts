@@ -1,5 +1,5 @@
 import BlockType, { BlockTypeEnum } from '../BlockType';
-import { ConfigurationType as BaseConfigurationType } from './ChartBlockType';
+import { ConfigurationType as BaseConfigurationType } from '../ChartBlockType';
 import { GroupUUIDEnum, PipelineExecutionFrameworkUUIDEnum } from './types';
 import { PipelineTypeEnum } from '../PipelineType';
 
@@ -11,6 +11,7 @@ export type ConfigurationType = {
 
 export type FrameworkType = (PipelineExecutionFrameworkBlockType | PipelineExecutionFrameworkType) & {
   downstream_blocks?: (GroupUUIDEnum | PipelineExecutionFrameworkUUIDEnum)[];
+  children?: FrameworkType[];
   upstream_blocks?: (GroupUUIDEnum | PipelineExecutionFrameworkUUIDEnum)[];
 };
 

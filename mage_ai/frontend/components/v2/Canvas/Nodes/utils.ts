@@ -1,15 +1,13 @@
-import React from 'react';
-import type { DragSourceMonitor, DropTargetMonitor } from 'react-dnd';
+import { TemplateType } from '@interfaces/BlockType';
+import PipelineType from '@interfaces/PipelineType';
+import { FrameworkType, PipelineExecutionFrameworkBlockType } from '@interfaces/PipelineExecutionFramework/interfaces';
+import update from 'immutability-helper';
+import { generateUUID } from '@utils/uuids/generator';
+import { ButtonEnum } from '@mana/shared/enums';
 import { CSSProperties, FC } from 'react';
-import { getEmptyImage } from 'react-dnd-html5-backend';
-import { memo, useEffect, useMemo } from 'react';
-import { useDrag, useDrop } from 'react-dnd';
-
-import styles from '@styles/scss/components/Canvas/Nodes/BlockNode.module.scss';
-import { DragItem, NodeItemType, PortType, RectType } from '../interfaces';
-import { ItemTypeEnum } from '../types';
-import { DragAndDropType } from './types';
-import { ElementRoleEnum } from '@mana/shared/types';
+import { EventOperationEnum, SubmitEventOperationType } from '@mana/shared/interfaces';
+import { NodeType, NodeItemType, RectType } from '../interfaces';
+import { flattenArray } from '@utils/array';
 
 export function getStyles(
   item: NodeItemType,
@@ -18,8 +16,9 @@ export function getStyles(
     isDragging,
     rect,
   }: {
-    draggable: boolean;
-    isDragging: boolean;
+    draggable?: boolean;
+    isDragging?: boolean;
+    rect?: RectType;
   },
 ): CSSProperties {
   const { id, type } = item;
@@ -44,4 +43,104 @@ export function getStyles(
       }),
     ...((width ?? false) ? { minWidth: width } : {}),
   };
+}
+
+export function handleClickGroupMenu(
+  event: any,
+  itemClicked: NodeType,
+  submitEventOperation: SubmitEventOperationType,
+  itemRef: any,
+) {
+  event.preventDefault();
+
+  function extractTemplatesFromItem(block: FrameworkType) {
+    const { configuration } = block as PipelineExecutionFrameworkBlockType;
+
+    return Object.entries(configuration?.templates ?? {})?.map(
+      ([templateUUID, template]) => ({
+        description: () => template?.description,
+        label: () => template?.name || templateUUID,
+        onClick: (event: any) => handleGroupTemplateSelect(event, block, template, submitEventOperation),
+        uuid: templateUUID,
+      }),
+    );
+  }
+
+  function extractTemplatesFromChidlren(block: FrameworkType) {
+    const { children } = block;
+    if (children) {
+      return flattenArray(children?.map((child, idx: number) => {
+        const items = extractTemplatesFromChidlren(child);
+
+        return [
+          ...(idx >= 1 ? [{ divider: true }] : []),
+          {
+            items,
+            uuid: `${child?.name || child?.uuid} templates`
+              + (items?.length >= 1
+                ? ` (${items.length})`
+                : ''),
+          },
+        ];
+      }));
+    }
+
+    return extractTemplatesFromItem(block);
+  }
+
+  const menuItems = extractTemplatesFromChidlren(itemClicked?.block);
+  console.log(menuItems)
+
+  submitEventOperation(
+    update(event, {
+      button: { $set: ButtonEnum.CONTEXT_MENU },
+      data: {
+        $set: {
+          node: itemClicked,
+        },
+      },
+      operationTarget: { $set: event.target },
+      operationType: { $set: EventOperationEnum.CONTEXT_MENU_OPEN },
+    }),
+    {
+      args: itemClicked?.block
+        ? [
+          menuItems,
+        ]
+        : [],
+      kwargs: {
+        boundingContainer: itemRef?.current?.getBoundingClientRect(),
+      },
+    },
+  );
+}
+
+function handleGroupTemplateSelect(
+  event: any,
+  block: FrameworkType,
+  template: TemplateType,
+  submitEventOperation: SubmitEventOperationType,
+) {
+  submitEventOperation(event, {
+    handler: (e, { pipelines }) => {
+      pipelines.update.mutate({
+        event: e,
+        payload: (pipeline: PipelineType) => ({
+          ...pipeline,
+          blocks: [
+            ...(pipeline?.blocks ?? []),
+            {
+              configuration: {
+                templates: {
+                  [template.uuid]: template,
+                },
+              },
+              groups: [block.uuid],
+              uuid: generateUUID(),
+            },
+          ],
+        }),
+      });
+    },
+  });
 }

@@ -55,6 +55,10 @@ export const MenuStyled = styled.div<MenuStyledProps>`
   min-width: ${MENU_MIN_WIDTH}px;
   position: ${({ contained }) => (contained ? 'absolute' : 'fixed')};
   width: max-content;
+
+  &:hover {
+    cursor: default;
+  }
 `;
 
 export const MenuContent = styled(motion.nav)`

@@ -5,16 +5,25 @@ files:
   type: data_loader
   inputs:
     text:
+      # Only if the input type is dropdown_menu, provide a list of options for the user to choose from
+      # Don’t include this unless the input’s type is dropdown_menu
+      options:
+        - label: Cosine similarity # The display label for the option
+          value: cosine # The value that will be passed to the pipeline when the user selects this option
+        - label: Dot product
+          value: dot_product
       style:
-        monospace: true
-      type: text_field
+        input_type: null # If the variable associated to this input is a float or integer, set this value to number
+        multiline: false # Use a multiline input field; set to true if the input is a long text like code, etc.
+        monospace: true # Use monospace font for the input field; set to true if the input is related to code or a number
+      type: text_field # The type of input to display to the user, can be 1 of these values: checkbox, code, dropdown_menu, switch, text_field
   variables:
     path:
-      description: 'Directory path to load files from'
-      name: 'Directory Path'
-      input: text
-      required: true
-      types:
+      description: 'Directory path to load files from' # Description of the variable and what it’s used for
+      name: 'Directory Path' # Display name of the variable
+      input: text # UUID of the associated input field
+      required: true # Required field
+      types: # Can be 1 or more of these values: boolean, date, datetime, dictionary, float, integer, list, string
         - string
     exclude_pattern:
       name: 'Exclude Pattern'
@@ -56,7 +65,7 @@ github:
       required: false
       types:
         - string
-      value: master
+      value: master # Default value
     path:
       description: 'Directory or file path within the repository'
       name: 'Repository path'
@@ -71,4 +80,4 @@ github:
       required: false
       types:
         - string
-      value: ".py"
+      value: ".py" # Default value

@@ -105,7 +105,7 @@ export function buildDependencies(
   const pipesMapping = indexBy(pipesLast, ({ uuid }) => uuid);
   const blocksLastLevel = [];
   pipesLast?.forEach((pipe) => {
-    const { downstream_blocks: dn, upstream_blocks: up  } = pipe;
+    const { downstream_blocks: dn, upstream_blocks: up } = pipe;
     const blocks = pipe?.blocks ?? [];
 
     if (blocks?.length >= 1) {
@@ -149,8 +149,8 @@ export function buildDependencies(
   levels.push(blocksLastLevel);
 
   // Remove unused attributes in the groups
-  const groupMapping = {};
-  const groupsByLevel = [];
+  const groupMapping = {} as GroupMappingType;
+  const groupsByLevel1 = [];
   levels.forEach((groups) => {
     const groupsInLevel = [];
 
@@ -169,7 +169,26 @@ export function buildDependencies(
       groupMapping[group2.uuid] = group2;
     });
 
-    groupsByLevel.push(groupsInLevel);
+    groupsByLevel1.push(groupsInLevel);
+  });
+
+  const groupsByLevel = [];
+  groupsByLevel1.reverse().forEach((groups: FrameworkType[], idx: number) => {
+    const groupsInLevel = [];
+
+    groups.forEach((group) => {
+      const group2 = { ...group };
+
+      if (idx >= 1) {
+        const groupsInPrevLevel = groupsByLevel[0];
+        group2.children =
+          groupsInPrevLevel?.filter?.((groupPrev: FrameworkType) => groupPrev?.groups?.includes(group2.uuid));
+      }
+
+      groupsInLevel.push(group2);
+    });
+
+    groupsByLevel.unshift(groupsInLevel);
   });
 
   // Get all the blocks from the user’s pipeline

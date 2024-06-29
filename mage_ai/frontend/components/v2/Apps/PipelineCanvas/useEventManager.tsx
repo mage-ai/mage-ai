@@ -26,7 +26,6 @@ const GRID_SIZE = 40;
 
 type EventManagerProps = {
   activeLevel: React.MutableRefObject<number>;
-  addBlockToGroup: ModelManagerType['addBlockToGroup'];
   appHandlersRef: AppHandlersRefType;
   canvasRef: React.MutableRefObject<HTMLDivElement>;
   connectionLinesPathRef: PresentationManagerType['connectionLinesPathRef'];
@@ -244,10 +243,13 @@ export default function useEventManager({
       const item = itemsRef?.current?.[id];
       if (!item) return;
 
-      const { rect } = item;
+      const element = itemElementsRef?.current?.[item?.type]?.[id]?.current;
+      if (!element) return;
+
+      const { left, top, width, height } = element?.getBoundingClientRect() ?? item?.rect;
 
       rects.push({
-        ...rect,
+        left, top, width, height,
         id: item.id,
         index,
         item,
@@ -416,9 +418,10 @@ export default function useEventManager({
     ]));
 
     if (target) {
-      if (target?.block?.type === BlockTypeEnum.GROUP) {
-
-      } else if (target?.type === ItemTypeEnum.BLOCK) {
+      if (target?.type === ItemTypeEnum.BLOCK && ![
+        BlockTypeEnum.GROUP,
+        BlockTypeEnum.PIPELINE,
+      ].includes(target?.block?.type)) {
         menuItems.push(...[
           { divider: true },
           {
