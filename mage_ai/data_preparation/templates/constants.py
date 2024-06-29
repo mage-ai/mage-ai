@@ -267,7 +267,14 @@ TEMPLATES_ONLY_FOR_V2 = [
         description='Load data from multiple files on your machine.',
         language=BlockLanguage.PYTHON,
         name='Local files',
-        path='data_loaders/files.py',
+        path='data_loaders/ingest/files.py',
+    ),
+    dict(
+      block_type=BlockType.DATA_LOADER,
+      description='Load data from multiple files in a GitHub repository.',
+      language=BlockLanguage.PYTHON,
+      name='GitHub files',
+      path='data_loaders/ingest/github.py',
     ),
     dict(
         block_type=BlockType.DATA_LOADER,

@@ -373,39 +373,46 @@ export default function useLayoutManager({
 
       ids.forEach((nodeID: string) => {
         const node = itemsRef?.current?.[nodeID] as NodeType;
+        if (!node) return;
 
         if (ItemTypeEnum.NODE === node?.type) {
-          node.items = node.items?.map(({ id: itemID }) => {
-            const item = itemsRef?.current?.[itemID] as NodeItemType;
-            return item;
-          });
+          node.items = node.items?.reduce((acc, i1) => {
+            if (!i1) return acc;
+            const item = itemsRef?.current?.[i1] as NodeItemType;
+            if (!item) return acc;
+
+            return acc.concat(item);
+          }, []);
 
           nodes.push(node);
         }
-      });
+      }, []);
 
       let nodesTransformed = [] as NodeType[];
 
       const rects = nodes?.map((node) => ({
         ...node?.rect,
-        id: node.id,
-        children: node?.items?.map(({ id }) => {
-          const item = itemsRef?.current?.[id] ?? {} as NodeType;
+        children: node?.items?.reduce((acc, item2: NodeType) => {
+          if (!item2) return acc;
 
-          return {
-            ...item.rect,
-            id,
+          const item2a = itemsRef?.current?.[item2?.id] ?? {} as NodeType;
+          if (!item2a) return acc;
+
+          return acc.concat({
+            ...item2a.rect,
+            id: item2a.id,
             left: null,
             top: null,
-            upstream: item?.upstream?.map((id: string) => ({
-              ...itemsRef?.current?.[id]?.rect,
-              id,
-              left: null,
-              top: null,
-            })),
-          };
-        }),
-        upstream: node?.upstream?.map((id: string) => ({
+            upstream: (item2a as NodeType)?.upstream?.reduce((acc3: RectType[], id3: string) => {
+              const item3 = itemsRef?.current?.[id3];
+              if (!item3) return acc3;
+
+              return acc3.concat({ ...item3.rect, id, left: null, top: null });
+            }, []) ?? [],
+          });
+        }, []) ?? [],
+        id: node.id,
+        upstream: (node?.upstream ?? [])?.map((id: string) => ({
           ...itemsRef?.current?.[id]?.rect,
           id,
           left: null,
@@ -429,7 +436,7 @@ export default function useLayoutManager({
               ...item?.rect,
               ...rect?.children?.[idx],
             },
-          })),
+          })) ?? [],
           rect: {
             ...node?.rect,
             ...rect,
@@ -444,14 +451,14 @@ export default function useLayoutManager({
           itemsUpdated[itemNode.id] = itemNode;
         });
       });
-
     });
 
     Object.values(itemsUpdated).forEach((item) => {
       itemsRef.current[item.id] = item;
     });
 
-    setItemRects(Object.values(itemsRef.current ?? {}).map(i => i));
+    const items = Object.values(itemsRef.current ?? {}).map(i => i);
+    setItemRects(items);
 
     setActiveLevel(activeLevel?.current ?? 0);
   }

@@ -4,7 +4,7 @@ import update from 'immutability-helper';
 import {
   ActiveLevelRefType, AppHandlersRefType, LayoutConfigRefType, ItemIDsByLevelRef, SetActiveLevelType,
 } from './interfaces';
-import { CubeWithArrowDown, PaginateArrowRight, BatchSquaresStacked, Table, Circle, BranchAlt, Monitor, ArrowsAdjustingFrameSquare, Check, Group, TemplateShapes } from '@mana/icons';
+import { CubeWithArrowDown, PaginateArrowRight, BatchSquaresStacked, Table, Circle, BranchAlt, Monitor, ArrowsAdjustingFrameSquare, Check, Group, TemplateShapes, Trash } from '@mana/icons';
 import { ClientEventType, EventOperationEnum, EventOperationOptionsType } from '@mana/shared/interfaces';
 import { ItemTypeEnum, LayoutConfigDirectionEnum, TransformRectTypeEnum } from '../../Canvas/types';
 import { MenuItemType, RenderContextMenuOptions, RemoveContextMenuType, RenderContextMenuType } from '@mana/hooks/useContextMenu';
@@ -17,8 +17,10 @@ import { getElementPositionInContainer } from '../../Canvas/utils/rect';
 import { pluralize } from '@utils/string';
 import { sortByKey } from '@utils/array';
 import { snapToGrid } from '../../Canvas/utils/snapToGrid';
+import { findRectAtPoint } from '../../Canvas/utils/rect';
 import { useRef, useState, startTransition } from 'react';
 import { LayoutManagerType } from './useLayoutManager';
+import { BlockTypeEnum } from '@interfaces/BlockType';
 
 const GRID_SIZE = 40;
 
@@ -234,11 +236,30 @@ export default function useEventManager({
     items?: MenuItemType[],
     opts?: RenderContextMenuOptions,
   ) {
+    const { data } = event;
     removeContextMenu(event);
 
-    const { data } = event;
+    const rects = [];
+    itemIDsByLevelRef?.current?.[activeLevel?.current]?.forEach((id, index) => {
+      const item = itemsRef?.current?.[id];
+      if (!item) return;
 
-    const menuItems = items ?? [
+      const { rect } = item;
+
+      rects.push({
+        ...rect,
+        id: item.id,
+        index,
+        item,
+      });
+    });
+
+    const rect = rects?.length >= 1 ? findRectAtPoint(event.pageX, event.pageY, rects) : null;
+    const target = rect ? rect.item : null;
+
+    const menuItems = [];
+
+    menuItems.push(...(items ?? [
       {
         Icon: ArrowsAdjustingFrameSquare,
         onClick: (event: ClientEventType) => {
@@ -304,7 +325,7 @@ export default function useEventManager({
       ...(itemIDsByLevelRef?.current ?? []).map((ids: string[], level: number) => {
         const items = sortByKey(
           ids?.map((id: string) =>
-            itemsRef.current?.[id])?.filter(({ type }) => ItemTypeEnum.BLOCK === type),
+            itemsRef.current?.[id])?.filter(i => ItemTypeEnum.BLOCK === i?.type),
           ({ block, title, id }) => block?.name || title || block?.uuid || id,
         );
 
@@ -392,7 +413,44 @@ export default function useEventManager({
         ],
         uuid: 'Change block layout pattern',
       },
-    ];
+    ]));
+
+    if (target) {
+      if (target?.block?.type === BlockTypeEnum.GROUP) {
+
+      } else if (target?.type === ItemTypeEnum.BLOCK) {
+        menuItems.push(...[
+          { divider: true },
+          {
+            Icon: Trash,
+            onClick: (event: ClientEventType) => {
+              removeContextMenu(event);
+              appHandlersRef.current?.pipelines.update.mutate({
+                payload: (pipeline) => {
+                  const element = itemElementsRef?.current?.[target.type]?.[target.id]?.current;
+                  element.style.width = '0px';
+                  element.style.height = '0px';
+                  element.style.visibility = 'hidden';
+                  element.style.opacity = '0';
+                  element.style.display = 'none';
+
+                  // delete itemsRef?.current?.[target.id];
+                  console.log(itemElementsRef?.current?.[target.type]?.[target.id])
+
+                  updateLayoutOfItems();
+
+                  return {
+                    ...pipeline,
+                    blocks: pipeline.blocks.filter((block) => block.uuid !== target.block.uuid),
+                  };
+                },
+              });
+            },
+            uuid: `Remove ${target?.block?.name} from pipeline`,
+          },
+        ]);
+      }
+    }
 
     if (data?.node) {
     }

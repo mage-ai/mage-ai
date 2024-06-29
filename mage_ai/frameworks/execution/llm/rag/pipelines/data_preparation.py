@@ -100,5 +100,7 @@ DATA_PREPARATION = PipelineExecutionFramework.load(
             downstream_blocks=[],
         ),
     ],
-    pipelines=[LOAD, TRANSFORM, EXPORT, INDEX],
+    pipelines=[
+        LOAD, TRANSFORM, EXPORT, INDEX
+    ],
 )

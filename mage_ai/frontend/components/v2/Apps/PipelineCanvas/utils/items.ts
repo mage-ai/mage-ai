@@ -35,6 +35,19 @@ export function createItemsFromBlockGroups(
     });
   });
 
+  const itemsByNodeID = {}
+  items?.forEach((item: NodeItemType) => {
+    if (ItemTypeEnum.NODE !== item?.type && item?.node) {
+      itemsByNodeID[item?.node?.id] ||= [];
+      itemsByNodeID[item?.node?.id].push(item?.id)
+    }
+  });
+
+  nodes?.forEach((node: NodeItemType) => {
+    node.items = itemsByNodeID[node?.id] ?? [];
+  });
+
+
   return {
     items,
     nodes,

@@ -75,6 +75,7 @@ export default function useItemManager({
     };
 
     itemsRef.current[item.id] = item;
+    console.log('mounted', item)
     cancelDebounce();
     debouncer(updateLayoutOfItems, 100);
   }

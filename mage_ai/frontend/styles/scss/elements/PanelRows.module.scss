@@ -9,7 +9,10 @@
 
 .row {
   border-top: 1px solid var(--borders-color-base-default);
-  padding: var(--padding-base);
+
+  &.padding {
+    padding: var(--padding-base);
+  }
 
   &.first-true {
     border-top-color: transparent;

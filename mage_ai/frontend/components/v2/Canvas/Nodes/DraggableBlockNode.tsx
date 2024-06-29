@@ -93,6 +93,10 @@ const BlockNodeWrapper: React.FC<BlockNodeWrapperProps> = ({
     [item],
   );
 
+  function handleContextMenu(event: ClientEventType) {
+
+  }
+
   function handleMouseDown(event: ClientEventType) {
     event.stopPropagation();
     onMouseDown && onMouseDown?.(buildEvent(event, EventOperationEnum.DRAG_START));
@@ -286,6 +290,7 @@ const BlockNodeWrapper: React.FC<BlockNodeWrapperProps> = ({
           onMouseUp: handleMouseUp,
         }}
         item={item}
+        onContextMenu={handleContextMenu}
         onMount={onMount}
         titleConfig={{
           asides: {

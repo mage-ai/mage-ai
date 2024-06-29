@@ -3,8 +3,12 @@ import { Styled } from './index.style';
 import { WithStylesProp } from '@mana/hocs/withStyles';
 
 type GridProps = {
+  baseLeft?: boolean;
+  baseRight?: boolean;
   children?: React.ReactNode | Element | Element[] | React.ReactNode[] | any | any[];
   id?: string;
+  smallBottom?: boolean;
+  smallTop?: boolean;
   uuid?: string;
 } & WithStylesProp;
 

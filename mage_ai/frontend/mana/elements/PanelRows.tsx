@@ -3,6 +3,10 @@ import styles from '@styles/scss/elements/PanelRows.module.scss';
 import { LayoutGroup, motion } from 'framer-motion';
 import { withStyles } from '../hocs/withStyles';
 
+type PanelProps = {
+  padding?: boolean;
+}
+
 const Panel = withStyles(styles, {
   HTMLTag: 'div',
   classNames: ['panel'],
@@ -15,19 +19,19 @@ const Row = withStyles<{
   classNames: ['row'],
 });
 
-function PanelRows({ children, ...props }: { children: React.ReactNode }) {
+function PanelRows({ children, padding = true, ...props }: { children: React.ReactNode } & PanelProps) {
   return (
     <Panel>
       <LayoutGroup>
         {React.Children.map(children, (child, index) => (
           <motion.div key={index}>
-            <Row first={index === 0} {...props}>
+            <Row className={padding ? styles.padding : ''} first={index === 0} {...props}>
               {child}
             </Row>
           </motion.div>
         ))}
       </LayoutGroup>
-    </Panel>
+    </Panel >
   );
 }
 

@@ -71,9 +71,8 @@ export default function useModelManager({
           onModelChangeRef.current(data, dataPrev);
 
           initializeModels(executionFramework, data)
-            .then(({ itemMapping }) => {
+            .then((items) => {
               console.log('initializeModels completed successfully');
-              setItemRects(Object.values(itemMapping ?? {}));
             })
             .catch((error) => {
               console.error('initializeModels encountered an error:', error);
@@ -187,7 +186,6 @@ export default function useModelManager({
 
             itemsIDs.push(item.id);
             itemMapping[item.id] = item;
-            onItemChangeRef.current(item);
           });
           itemIDsByLevel.push(itemsIDs);
 
@@ -214,20 +212,30 @@ export default function useModelManager({
           console.log('ports', ports);
         });
 
+
+        itemsRef.current = itemMapping;
+        portsRef.current = portMapping;
+
         // console.log('itemMapping', itemMapping);
         // console.log('portMapping', portMapping);
 
         // Models
         itemIDsByLevelRef.current = itemIDsByLevel;
 
-        const mapping = mutateModels({
-          itemMapping,
-          portMapping,
-        });
+        // const mapping = mutateModels({
+        //   itemMapping,
+        //   portMapping,
+        // });
 
-        console.log('itemMapping', itemMapping)
+        // Do this so it mounts and then the on mount can start the chain.
+        const items = Object.values(itemsRef.current);
+        setItemRects(items);
+        // Object.values(mapping?.items ?? {})?.forEach((item) => {
+        //   onItemChangeRef.current(item);
+        // });
 
-        resolve(mapping); // Resolve the promise when the function completes
+
+        resolve(items); // Resolve the promise when the function completes
       } catch (error) {
         reject(error); // Reject the promise if there is an error
       }
@@ -268,22 +276,22 @@ export default function useModelManager({
   //   };
   // }
 
-  function mutateModels(payload?: ModelMappingType): ModelMappingType {
-    const { items, ports } = updateModelsAndRelationships(
-      {
-        itemsRef,
-        portsRef,
-      },
-      payload,
-    );
-    // updateNodeItems(items);
-    // updatePorts(ports);
+  // function mutateModels(payload?: ModelMappingType): ModelMappingType {
+  //   const { items, ports } = updateModelsAndRelationships(
+  //     {
+  //       itemsRef,
+  //       portsRef,
+  //     },
+  //     payload,
+  //   );
+  //   // updateNodeItems(items);
+  //   // updatePorts(ports);
 
-    return {
-      itemMapping: itemsRef.current,
-      portMapping: portsRef.current,
-    };
-  }
+  //   return {
+  //     itemMapping: itemsRef.current,
+  //     portMapping: portsRef.current,
+  //   };
+  // }
 
   useEffect(() => {
     if (phaseRef.current === 0 && pready.current && fready.current) {

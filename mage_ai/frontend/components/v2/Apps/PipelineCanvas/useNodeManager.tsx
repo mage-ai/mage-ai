@@ -1,6 +1,8 @@
 import BlockNodeWrapper from '../../Canvas/Nodes/BlockNodeWrapper';
 import { NodeItemType } from '../../Canvas/interfaces';
+import PipelineType from '@interfaces/PipelineType';
 import { RectType } from '@components/v2/Canvas/interfaces';
+import { ItemTypeEnum } from '@components/v2/Canvas/types';
 import { ThemeContext, ThemeProvider } from 'styled-components';
 import { createRoot, Root } from 'react-dom/client';
 import { useContext, useRef, useState } from 'react';
@@ -28,6 +30,9 @@ export default function useNodeManager({
   dragEnabled,
   dropEnabled,
   handleDragEnd,
+  itemElementsRef,
+  initializeModels,
+  updateLayoutOfItems,
   handleDragStart,
   handleMouseDown,
   itemsRef,
@@ -141,11 +146,48 @@ export default function useNodeManager({
   };
 
   onItemChangeRef.current = (item: NodeItemType) => {
+    console.log('Adding', item)
     addNewComponent(item);
   };
 
-  onModelChangeRef.current = () => {
+  onModelChangeRef.current = (pipeline, pipelinePrev) => {
+    // console.log(pipeline, pipelinePrev)
+    // pipeline.blocks.forEach((block) => {
+    //   const blockIndex = pipelinePrev.blocks.findIndex((b) => b.uuid === block.uuid);
+    //   if (blockIndex === -1) {
+    //     const item = {
+    //       id: block.uuid,
+    //       title: block.name,
+    //       rect: null,
+    //       type: ItemTypeEnum.BLOCK,
+    //     };
+    //     addNewComponent(item);
+    //     // When the component mounts, it takes care of the rest.
+    //   }
+    // });
 
+    // pipelinePrev.blocks.forEach((block) => {
+    //   const blockIndex = pipeline.blocks.findIndex((b) => b.uuid === block.uuid);
+    //   if (blockIndex === -1) {
+    //     const item = itemsRef.current[block.uuid];
+
+    //     if (!item) return;
+
+    //     removeComponentById(item?.id);
+
+    //     const element = itemElementsRef?.current?.[item.type]?.[item.id]?.current;
+    //     if (element) {
+    //       element.style.width = '0px';
+    //       element.style.height = '0px';
+    //       element.style.visibility = 'hidden';
+    //       element.style.opacity = '0';
+    //       element.style.display = 'none';
+    //     }
+
+    //     delete itemsRef?.current[item.id];
+    //     updateLayoutOfItems();
+    //   }
+    // });
   };
 
   return {

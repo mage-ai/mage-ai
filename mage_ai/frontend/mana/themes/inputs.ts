@@ -17,8 +17,16 @@ export interface InputsType {
     };
   };
   padding: {
-    base: string;
-    sm: string;
+    horizontal: {
+      base: string;
+      sm: string;
+      xs: string;
+    };
+    vertical: {
+      base: string;
+      sm: string;
+      xs: string;
+    };
   };
   placeholder: {
     color: string;
@@ -41,8 +49,16 @@ export default function build(colors: ColorsType): InputsType {
       },
     },
     padding: {
-      base: `${PaddingVerticalEnum.BASE} 16px`,
-      sm: `${PaddingVerticalEnum.SM} 16px`,
+      horizontal: {
+        base: PaddingVerticalEnum.LG,
+        sm: PaddingVerticalEnum.LG,
+        xs: PaddingVerticalEnum.XS,
+      },
+      vertical: {
+        base: PaddingVerticalEnum.BASE,
+        sm: PaddingVerticalEnum.SM,
+        xs: PaddingVerticalEnum.XS,
+      },
     },
     placeholder: {
       color: colors.placeholder.input.base,

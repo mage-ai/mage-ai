@@ -2,21 +2,32 @@ import PanelRows from '@mana/elements/PanelRows';
 import Grid from '@mana/components/Grid';
 import Text from '@mana/elements/Text';
 import BlockType, { TemplateType } from '@interfaces/BlockType';
+import { PipelineExecutionFrameworkBlockType } from '@interfaces/PipelineExecutionFramework/interfaces';
+import {
+  InteractionInputStyleType, InteractionInputType, InteractionVariableType, InteractionVariableTypeEnum, InteractionInputTypeEnum
+} from '@interfaces/InteractionType';
+import TextInput from '@mana/elements/Input/TextInput';
 
 export default function TemplateConfigurations({
   block,
+  group,
   template,
   uuid,
 }: {
   block: BlockType;
+  group: PipelineExecutionFrameworkBlockType
   template: TemplateType;
   uuid: string;
 }) {
-  const templateSettings = block?.configuration?.templates?.[uuid] || ({} as TemplateType);
+  const {
+    inputs,
+    variables,
+  } = group?.configuration?.templates?.[uuid] ?? {};
+  const userValuesByVariable = block?.configuration?.templates?.[uuid]?.variables;
 
   return (
-    <PanelRows>
-      <Grid rowGap={4}>
+    <PanelRows padding={false}>
+      <Grid padding={12} rowGap={4}>
         <Text semibold xsmall>
           {template?.name || uuid}
         </Text>
@@ -25,26 +36,72 @@ export default function TemplateConfigurations({
             {template?.description}
           </Text>
         )}
-      </Grid>
+      </Grid >
 
-      {Object.entries(template?.variables || [])?.map(([variableUUID, config], idx: number) => {
-        const value = templateSettings?.variables?.[variableUUID] ?? null;
+      {Object.entries(variables ?? {})?.map(([variableUUID, variableConfig]: [string, InteractionVariableType], idx: number) => {
+        const {
+          description,
+          input,
+          name: displayName,
+          required,
+          types, // Data type; string, integer, etc
+          value: defaultValue,
+        } = variableConfig ?? {} as InteractionVariableType;
+        const variableFromUser: { value: any } = userValuesByVariable?.[variableUUID] ?? null;
+        const {
+          // description,
+          // label,
+          options, // For dropdown menu
+          // Monospace, multiline aka textarea, etc.
+          // default
+          // input_type
+          // language
+          // monospace
+          // multiline
+          // muted
+          style,
+          // What is this used for?
+          // text,
+          type: typeOfInput,
+        } = inputs?.[input] ?? {} as InteractionInputType;
+
+        const value = variableFromUser?.value ?? defaultValue ?? '';
 
         return (
-          <Grid
-            columnGap={8}
-            justifyContent="space-between"
-            key={variableUUID}
-            templateColumnsAutoFitMaxContent
-          >
-            <Text muted small>
-              {variableUUID || '-'}
-            </Text>
+          <label key={variableUUID}>
+            <Grid
+              alignItems="center"
+              baseLeft
+              baseRight
+              columnGap={8}
+              justifyContent="space-between"
+              smallBottom
+              smallTop
+              style={{
+                gridTemplateColumns: 'minmax(0px, max-content) auto',
+              }}
+            >
+              <Text secondary small>
+                {displayName || variableUUID || '-'}
+              </Text>
 
-            <Text muted={value === null ? true : false} small>{value ?? '-'}</Text>
-          </Grid>
+              {InteractionInputTypeEnum.TEXT_FIELD === typeOfInput && (
+                <TextInput
+                  align="right"
+                  basic
+                  blendWithText
+                  defaultValue={value}
+                  italicPlaceholder
+                  monospace={style.monospace}
+                  placeholder={types?.filter(Boolean)?.join(', ')}
+                  required={required}
+                  small
+                />
+              )}
+            </Grid>
+          </label  >
         );
       })}
-    </PanelRows>
+    </PanelRows >
   );
 }

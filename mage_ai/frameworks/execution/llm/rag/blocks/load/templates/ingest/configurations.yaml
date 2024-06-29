@@ -1,7 +1,7 @@
 files:
   description: 'Load files'
   name: 'Local file loader'
-  path: data_loaders/files.py
+  path: data_loaders/ingest/files.py
   type: data_loader
   inputs:
     text:
@@ -10,22 +10,23 @@ files:
       type: text_field
   variables:
     path:
-      description: 'Path to file directory'
-      name: 'Directory path'
+      description: 'Directory path to load files from'
+      name: 'Directory Path'
       input: text
       required: true
       types:
         - string
     exclude_pattern:
-      name: 'Exclude pattern'
-      description: 'Exclude pattern'
+      name: 'Exclude Pattern'
+      description: 'Pattern to exclude specific files'
       input: text
       required: false
       types:
         - string
+      value: "*.db|.local/*"
     include_pattern:
-      name: 'Include pattern'
-      description: 'Include pattern'
+      name: 'Include Pattern'
+      description: 'Pattern to include specific files'
       input: text
       required: false
       types:
@@ -33,6 +34,7 @@ files:
 github:
   description: 'Fetch GitHub repository'
   name: 'GitHub repository loader'
+  path: data_loaders/ingest/github.py
   type: data_loader
   inputs:
     text:
@@ -40,10 +42,33 @@ github:
         monospace: true
       type: text_field
   variables:
-    url:
-      description: 'GitHub repository URL'
-      name: 'Repo URL'
+    repo_url:
+      description: 'URL of the GitHub repository'
+      name: 'Repository URL'
       input: text
       required: true
       types:
         - string
+    branch:
+      description: 'Name of the branch'
+      name: 'Branch name'
+      input: text
+      required: false
+      types:
+        - string
+      value: master
+    path:
+      description: 'Directory or file path within the repository'
+      name: 'Repository path'
+      input: text
+      required: false
+      types:
+        - string
+    file_extension:
+      description: 'Filter files by extension (e.g., .txt)'
+      name: 'File extension filter'
+      input: text
+      required: false
+      types:
+        - string
+      value: ".py"
