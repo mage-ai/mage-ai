@@ -59,15 +59,11 @@ export default function useModelManager({
     handlers: {
       detail: {
         onSuccess: (data) => {
-          setPipeline(data);
-          console.log(data)
           pready.current = true;
         },
       },
       update: {
         onSuccess: (pipeline2, pipeline2Prev) => {
-          console.log(pipeline2?.blocks?.length, pipeline2Prev?.blocks?.length)
-
           if (pipeline2?.blocks?.length > (pipeline2Prev?.blocks?.length ?? 0)) {
             initializeModels(executionFramework, pipeline2)
               .then(() => {

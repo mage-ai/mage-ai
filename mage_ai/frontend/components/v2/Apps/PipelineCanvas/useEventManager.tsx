@@ -435,7 +435,6 @@ export default function useEventManager({
 
               const itemRemoved = itemsRef?.current?.[target?.id];
               if (itemRemoved) {
-                console.log('!!!!!!!!!!!!!!!!!!!!!', itemRemoved)
                 itemRemoved.rect = {
                   ...itemRemoved?.rect,
                   diff: itemRemoved?.rect,

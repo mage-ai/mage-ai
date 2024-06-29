@@ -110,12 +110,14 @@ export const BlockNodeWrapper: React.FC<BlockNodeWrapperProps & NodeWrapperProps
   const names = useMemo(() => {
     if (ItemTypeEnum.NODE === item?.type) {
       // Use the color of the most common block type in the group.
-      const typeCounts = countOccurrences(flattenArray((item as NodeType)?.items?.map(i => i?.block?.type) || []));
-      const modeTypes = sortByKey(Object.entries(typeCounts || {}), arr => arr[1], {
-        reverse: true,
-      });
-      const modeType = modeTypes?.length >= 2 ? modeTypes?.[0]?.[0] : item?.block?.type;
+      const typeCounts = Object.entries(
+        countOccurrences(flattenArray((item as NodeType)?.items?.map(i => i?.block?.type) || [])) ?? {},
+      )?.map(([type, count]) => ({ type, count }));
+
+      const modeTypes = sortByKey(typeCounts, ({ count }) => count, { ascending: false });
+      const modeType = modeTypes?.length >= 2 ? modeTypes?.[0]?.type : item?.block?.type;
       const colors = getBlockColor(modeType as BlockTypeEnum, { getColorName: true })?.names;
+
       return colors?.base ? colors : { base: 'gray' };
     }
 
