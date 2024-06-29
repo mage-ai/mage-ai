@@ -4,7 +4,8 @@ import Text from '@mana/elements/Text';
 import BlockType, { TemplateType } from '@interfaces/BlockType';
 import { PipelineExecutionFrameworkBlockType } from '@interfaces/PipelineExecutionFramework/interfaces';
 import {
-  InteractionInputStyleType, InteractionInputType, InteractionVariableType, InteractionVariableTypeEnum, InteractionInputTypeEnum
+  InteractionInputStyleInputTypeEnum,
+  InteractionInputType, InteractionVariableType, InteractionInputTypeEnum
 } from '@interfaces/InteractionType';
 import TextInput from '@mana/elements/Input/TextInput';
 
@@ -92,6 +93,7 @@ export default function TemplateConfigurations({
                   blendWithText
                   defaultValue={value}
                   italicPlaceholder
+                  number={InteractionInputStyleInputTypeEnum.NUMBER === style?.input_type}
                   monospace={style.monospace}
                   placeholder={types?.filter(Boolean)?.join(', ')}
                   required={required}

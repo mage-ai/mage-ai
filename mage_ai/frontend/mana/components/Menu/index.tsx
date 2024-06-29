@@ -73,7 +73,10 @@ function MenuItem({ contained, first, item, last, small }: ItemProps) {
     );
   }
 
-  const before = Icon ? <Icon size={small ? 12 : undefined} /> : undefined;
+  const iconProps = {
+    size: small ? 12 : undefined,
+  };
+  const before = Icon ? Icon(iconProps) : undefined;
 
   const noHover = (!onClick && !items?.length) ? 'true' : undefined;
   const isHeading = !onClick && !items?.length && !divider;

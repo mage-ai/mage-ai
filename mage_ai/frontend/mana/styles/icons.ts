@@ -7,6 +7,7 @@ export type StyleProps = {
   fill?: string;
   height?: number;
   inverted?: boolean;
+  muted?: boolean;
   opacity?: number;
   size?: number;
   small?: boolean;
@@ -19,54 +20,36 @@ export type StyleProps = {
 };
 
 const icons = css<StyleProps>`
-  ${({ color, colorName, fill, inverted, theme, useStroke }) =>
-    !useStroke &&
-    `
-    fill: ${
-      typeof color !== 'undefined'
-        ? color
-        : typeof colorName !== 'undefined'
-          ? theme.colors[colorName]
-          : typeof fill !== 'undefined' && fill !== null
-            ? fill
-            : inverted
-              ? theme.icons.color.inverted
-              : theme.icons.color.base
-    };
+  ${({ color, colorName, fill, inverted, muted, theme, useStroke }) => !useStroke && `
+    fill: ${[
+      typeof colorName !== 'undefined' && theme.colors[colorName],
+      typeof color !== 'undefined' && color,
+      fill ?? (inverted ? theme.icons.color.inverted : (muted ? theme.icons.muted : theme.icons.color.base)),
+    ].filter(Boolean)[0]};
   `}
 
-  ${({ color, colorName, inverted, stroke, theme, useStroke }) =>
-    useStroke &&
-    `
-    stroke: ${
-      typeof color !== 'undefined'
-        ? color
-        : typeof colorName !== 'undefined'
-          ? theme.colors[colorName]
-          : typeof stroke !== 'undefined' && stroke !== null
-            ? stroke
-            : inverted
-              ? theme.icons.color.inverted
-              : theme.icons.color.base
-    };
+  ${({ color, colorName, inverted, stroke, muted, theme, useStroke }) => useStroke && `
+    stroke: ${[
+      typeof colorName !== 'undefined' && theme.colors[colorName],
+      typeof color !== 'undefined' && color,
+      stroke ?? (inverted ? theme.icons.color.inverted : (muted ? theme.icons.muted : theme.icons.color.base)),
+    ].filter(Boolean)[0]};
   `}
 `;
 
 const svg = css<StyleProps>`
   ${({ height, size, small, theme, width, xsmall }) => `
-    height: ${
-      typeof height === 'undefined' && typeof size === 'undefined'
-        ? theme.icons.size[small ? 'sm' : xsmall ? 'xs' : 'base']
-        : typeof height === 'undefined'
-          ? size
-          : height
+    height: ${typeof height === 'undefined' && typeof size === 'undefined'
+      ? theme.icons.size[small ? 'sm' : xsmall ? 'xs' : 'base']
+      : typeof height === 'undefined'
+        ? size
+        : height
     }px;
-    width: ${
-      typeof width === 'undefined' && typeof size === 'undefined'
-        ? theme.icons.size[small ? 'sm' : xsmall ? 'xs' : 'base']
-        : typeof width === 'undefined'
-          ? size
-          : width
+    width: ${typeof width === 'undefined' && typeof size === 'undefined'
+      ? theme.icons.size[small ? 'sm' : xsmall ? 'xs' : 'base']
+      : typeof width === 'undefined'
+        ? size
+        : width
     }px;
   `}
 `;

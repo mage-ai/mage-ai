@@ -43,6 +43,7 @@ export enum TransformRectTypeEnum {
   LAYOUT_WAVE = 'layout_wave',
   MIN_DIMENSIONS = 'min_dimensions',
   PAD = 'pad',
+  RESET = 'reset',
   SHIFT = 'shift',
   SHIFT_INTO_PARENT = 'shift_into_parent',
   UPDATE = 'update',

@@ -88,6 +88,7 @@ interface ColorsDerivedType {
   icons: {
     base: string;
     inverted: string;
+    muted: string;
   };
   outline: OutlineType;
   placeholder: {
@@ -770,6 +771,11 @@ const ColorsDerived = {
       [ModeEnum.DARK]: 'black',
       [ModeEnum.LIGHT]: 'white',
       [ModeEnum.MODE3]: 'gray',
+    }),
+    muted: convert({
+      [ModeEnum.DARK]: 'whiteMd',
+      [ModeEnum.LIGHT]: 'blackMd',
+      [ModeEnum.MODE3]: 'blackMd',
     }),
   },
   outline: {

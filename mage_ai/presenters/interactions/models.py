@@ -36,23 +36,13 @@ class InteractionInputOption(BaseDataClass):
 
 @dataclass
 class InteractionInputStyle(BaseDataClass):
-    input_type: InteractionInputStyleInputType = None
-    language: str = None
+    input_type: Optional[InteractionInputStyleInputType] = None
+    language: Optional[str] = None
     monospace: Optional[bool] = None
-    multiline: bool = None
+    multiline: Optional[bool] = None
 
     def __post_init__(self):
-        if self.input_type and isinstance(self.input_type, str):
-            self.input_type = InteractionInputStyleInputType(self.input_type)
-
-    def to_dict(self, *args, **kwargs) -> Dict:
-        return {
-          **super().to_dict(*args, **kwargs),
-          **dict(
-              input_type=self.input_type.value if self.input_type else None,
-              multiline=self.multiline,
-          ),
-        }
+        self.serialize_attribute_enum('input_type', InteractionInputStyleInputType)
 
 
 @dataclass

@@ -214,8 +214,8 @@ export default function useEventManager({
   }
 
   function handleDoubleClick(event: React.MouseEvent) {
-    setActiveLevel();
-    renderConnectionLines();
+    alert('DOUBLE CLICK!');
+    // renderConnectionLines();
   }
 
   function submitEventOperation(event: ClientEventType, opts?: EventOperationOptionsType) {
@@ -352,6 +352,7 @@ export default function useEventManager({
           onClick: (event?: ClientEventType) => {
             event?.preventDefault();
             setActiveLevel(level);
+            updateLayoutOfItems();
             removeContextMenu(event);
           },
           uuid: `Blocks grouped at level ${level}`,
@@ -361,60 +362,50 @@ export default function useEventManager({
       {
         Icon: TemplateShapes,
         items: [
-          {
-            Icon: layoutConfig?.current?.direction === LayoutConfigDirectionEnum.VERTICAL
-              ? Check
-              : CubeWithArrowDown,
-            uuid: 'Vertical direction',
-            onClick: layoutConfig?.current?.direction === LayoutConfigDirectionEnum.VERTICAL
-              ? null
-              : (event: ClientEventType) => {
+          ...[
+            [LayoutConfigDirectionEnum.VERTICAL, 'Vertical layout', CubeWithArrowDown],
+            [LayoutConfigDirectionEnum.HORIZONTAL, 'Horizontal layout', PaginateArrowRight],
+          ].map(([direction, uuid, icon]) => {
+            const selected = layoutConfig?.current?.direction === direction;
+            const Icon = selected ? Check : icon;
+
+            return {
+              Icon: (props) => <Icon {...props} colorName={selected ? 'green' : undefined} />,
+              onClick: (event: ClientEventType) => {
                 event.preventDefault();
-                updateLayoutConfig({
-                  direction: LayoutConfigDirectionEnum.VERTICAL,
-                })
+                updateLayoutConfig({ direction: direction as LayoutConfigDirectionEnum });
                 removeContextMenu(event);
               },
-          },
-          {
-            Icon: layoutConfig?.current?.direction === LayoutConfigDirectionEnum.HORIZONTAL
-              ? Check
-              : PaginateArrowRight,
-            uuid: 'Horizontal direction',
-            onClick: layoutConfig?.current?.direction === LayoutConfigDirectionEnum.HORIZONTAL
-              ? null
-              : (event: ClientEventType) => {
-                event.preventDefault();
-                updateLayoutConfig({
-                  direction: LayoutConfigDirectionEnum.HORIZONTAL,
-                })
-                removeContextMenu(event);
-              },
-          },
+              uuid,
+            };
+          }),
           ...Object.entries({
             [TransformRectTypeEnum.LAYOUT_GRID]: ['Square layout', BatchSquaresStacked],
             [TransformRectTypeEnum.LAYOUT_RECTANGLE]: ['Rows and column layout', Table],
             [TransformRectTypeEnum.LAYOUT_SPIRAL]: ['Spiral layout', Circle],
             [TransformRectTypeEnum.LAYOUT_TREE]: ['Tree layout', BranchAlt],
             [TransformRectTypeEnum.LAYOUT_WAVE]: ['Wave layout', Monitor],
-          }).map(([value, arr]) => ({
-            Icon: layoutConfig?.current?.rectTransformations?.find(({ type }) => type === value)
-              ? Check
-              : arr[1],
-            uuid: arr[0],
-            onClick: layoutConfig?.current?.rectTransformations?.find(({ type }) => type === value)
-              ? null
-              : (event: ClientEventType) => {
-                event.preventDefault();
+          }).map(([value, arr]) => {
+            const selected =
+              layoutConfig?.current?.rectTransformations?.find(({ type }) => type === value);
+            const uuid = arr[0];
+            const Icon = selected ? Check : arr[1];
 
+            return {
+              Icon: (props) => <Icon {...props} colorName={selected ? 'green' : undefined} />,
+              onClick: (event: ClientEventType) => {
+                event.preventDefault();
                 updateLayoutConfig({
-                  rectTransformations: [{ type: value as TransformRectTypeEnum }]
+                  rectTransformations: [{
+                    type: value as TransformRectTypeEnum,
+                  }]
                 });
                 updateLayoutOfItems();
-
                 removeContextMenu(event);
               },
-          }))
+              uuid,
+            };
+          })
         ],
         uuid: 'Change block layout pattern',
       },

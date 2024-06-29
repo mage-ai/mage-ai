@@ -59,6 +59,7 @@ export default function useModelManager({
     handlers: {
       detail: {
         onSuccess: (data) => {
+          setPipeline(data);
           pready.current = true;
         },
       },
@@ -98,7 +99,8 @@ export default function useModelManager({
     pipeline2: PipelineExecutionFrameworkType
   ): Promise<NodeItemType[]> {
     return new Promise((resolve, reject) => {
-      console.log('itemsRef.current.start', itemsRef.current)
+      // console.log('itemsRef.current.start', itemsRef.current)
+
       try {
         const { blocksByGroup, groupMapping, groupsByLevel } = buildDependencies(
           executionFramework2,
@@ -222,32 +224,18 @@ export default function useModelManager({
               portMapping[port.id] = port;
             });
           });
-
-          // console.log('items', items);
-          // console.log('nodes', nodes);
-          // console.log('ports', ports);
         });
 
         itemsRef.current = itemMapping;
         portsRef.current = portMapping;
 
-        console.log('itemsRef.current.end', itemsRef.current);
-        // console.log('portMapping', portMapping);
 
         // Models
         itemIDsByLevelRef.current = itemIDsByLevel;
 
-        // const mapping = mutateModels({
-        //   itemMapping,
-        //   portMapping,
-        // });
-
-        // Do this so it mounts and then the on mount can start the chain.
+        // WARNING: Do this so it mounts and then the on mount can start the chain.
         const items = Object.values(itemsRef.current);
         setItemRects(items);
-        // Object.values(mapping?.items ?? {})?.forEach((item) => {
-        //   onItemChangeRef.current(item);
-        // });
 
 
         resolve(items); // Resolve the promise when the function completes
@@ -310,7 +298,7 @@ export default function useModelManager({
 
   useEffect(() => {
     if (phaseRef.current === 0 && pready.current && fready.current) {
-      console.log('initializeModels', phaseRef.current);
+      // console.log('initializeModels', phaseRef.current);
       initializeModels(executionFramework, pipeline);
       phaseRef.current += 1;
     }

@@ -96,7 +96,13 @@ export function transformRects(rectsInit: RectType[], transformations: RectTrans
         }])[0],
       }));
     } else {
-      if (TransformRectTypeEnum.LAYOUT_TREE === type) {
+      if (TransformRectTypeEnum.RESET === type) {
+        rects = rects.map((rect) => ({
+          ...rect,
+          height: 0,
+          width: 0,
+        }));
+      } else if (TransformRectTypeEnum.LAYOUT_TREE === type) {
         rects = layoutRectsInTreeFormation(rects, layout ?? {});
       } else if (TransformRectTypeEnum.LAYOUT_WAVE === type) {
         rects = layoutRectsInWavePattern(rects, layout, layoutOptions);
@@ -135,11 +141,18 @@ export function transformRects(rectsInit: RectType[], transformations: RectTrans
       } else if (TransformRectTypeEnum.SHIFT === type) {
         rects = shiftRectsByDiffRect(rects, offset ?? { left: 0, top: 0 });
       } else if (TransformRectTypeEnum.MIN_DIMENSIONS === type) {
-        rects = rects.map(rect => ({
-          ...rect,
-          height: Math.max(validateFiniteNumber(rect.height), validateFiniteNumber(defaultRect?.height ?? 0)),
-          width: Math.max(validateFiniteNumber(rect.width), validateFiniteNumber(defaultRect?.width ?? 0)),
-        }));
+        rects = rects.map(rect => {
+          const height1 = validateFiniteNumber(rect.height);
+          const width1 = validateFiniteNumber(rect.width);
+          const heightd = validateFiniteNumber(defaultRect?.height ?? 0);
+          const widthd = validateFiniteNumber(defaultRect?.width ?? 0);
+
+          return {
+            ...rect,
+            height: height1 < heightd ? heightd : height1,
+            width: width1 < widthd ? widthd : width1,
+          };
+        });
       } else if (transform) {
         rects = transform(rects);
       }

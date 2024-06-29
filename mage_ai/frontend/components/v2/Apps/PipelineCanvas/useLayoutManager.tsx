@@ -155,22 +155,10 @@ export default function useLayoutManager({
 
   function rectTransformations() {
     const level = activeLevel?.current ?? 0;
-    const directions = [
-      level === 1
-        ? layoutConfig?.current?.direction
-        : level === 2
-          ? layoutConfig?.current?.direction
-          : LayoutConfigDirectionEnum.VERTICAL === layoutConfig?.current?.direction
-            ? LayoutConfigDirectionEnum.HORIZONTAL
-            : LayoutConfigDirectionEnum.VERTICAL,
-      level === 1
-        ? layoutConfig?.current?.direction
-        : level === 2
-          ? LayoutConfigDirectionEnum.VERTICAL === layoutConfig?.current?.direction
-            ? LayoutConfigDirectionEnum.HORIZONTAL
-            : LayoutConfigDirectionEnum.VERTICAL
-          : layoutConfig?.current?.direction,
-    ];
+    const direction = layoutConfig?.current?.direction || LayoutConfigDirectionEnum.HORIZONTAL;
+    const directionOp = LayoutConfigDirectionEnum.HORIZONTAL === direction
+      ? LayoutConfigDirectionEnum.VERTICAL
+      : LayoutConfigDirectionEnum.HORIZONTAL;
 
     const layoutStyleTransformations = [];
 
@@ -195,7 +183,7 @@ export default function useLayoutManager({
       type: TransformRectTypeEnum.SHIFT,
     };
     const tree = {
-      options: () => ({ layout: { direction: directions[1] } }),
+      options: () => ({ layout: { direction: direction } }),
       type: TransformRectTypeEnum.LAYOUT_TREE,
     };
     const treecon = [
@@ -309,9 +297,11 @@ export default function useLayoutManager({
     }
 
     return [
-      // Give min height of 300px
       {
-        options: () => ({ layout: { direction: directions[0] } }),
+        type: TransformRectTypeEnum.RESET,
+      },
+      {
+        options: () => ({ layout: { direction: directionOp } }),
         scope: RectTransformationScopeEnum.CHILDREN,
         type: TransformRectTypeEnum.LAYOUT_TREE,
       },
