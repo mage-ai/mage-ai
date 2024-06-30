@@ -36,12 +36,17 @@ export default function useAppManager({ activeLevel }: { activeLevel: React.Muta
     });
   };
 
+  function handleStopApp({ detail: { event } }: CustomAppEvent) {
+    const { data } = event;
+    const { node: appNode } = data;
+  }
+
   const { dispatchAppEvent } = useAppEventsHandler({
     appsRef,
     startApp,
-    stopApp,
   } as AppManagerType, {
     [CustomAppEventEnum.START_APP]: handleStartApp,
+    [CustomAppEventEnum.STOP_APP]: handleStopApp,
     [CustomAppEventEnum.APP_RECT_UPDATED]: handleAppRectUpdated,
   });
 
@@ -61,13 +66,6 @@ export default function useAppManager({ activeLevel }: { activeLevel: React.Muta
     ], ({ id }) => id);
 
     dispatchAppEvent(CustomAppEventEnum.APP_STARTED, {
-      event,
-    });
-  }
-
-  function stopApp(event: ClientEventType, app: AppConfigType) {
-    dispatchAppEvent(CustomAppEventEnum.APP_STOPPED, {
-      app,
       event,
     });
   }

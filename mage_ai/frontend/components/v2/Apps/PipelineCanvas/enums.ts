@@ -1,5 +1,6 @@
 export enum CustomAppEventEnum {
   START_APP = 'START_APP',
+  STOP_APP = 'STOP_APP',
   APP_STARTED = 'APP_STARTED',
   APP_STOPPED = 'APP_STOPPED',
   NODE_MOUNTED = 'NODE_MOUNTED',

@@ -6,7 +6,10 @@ import {
   ModelManagerType,
   ActiveLevelRefType, AppHandlersRefType, LayoutConfigRefType, ItemIDsByLevelRef, SetActiveLevelType,
 } from './interfaces';
-import { Search, CubeWithArrowDown, PaginateArrowRight, BatchSquaresStacked, Table, Circle, BranchAlt, Monitor, ArrowsAdjustingFrameSquare, Check, Group, TemplateShapes, Trash } from '@mana/icons';
+import {
+  Select, SearchV2, CubeWithArrowDown, PaginateArrowRight, BatchSquaresStacked, Table, Circle, BranchAlt, Monitor, Undo,
+  ArrowsAdjustingFrameSquare, Check, Group, TemplateShapes, Trash, GroupV2, ArrowsPointingInFromAllCorners
+} from '@mana/icons';
 import { ClientEventType, EventOperationEnum, EventOperationOptionsType } from '@mana/shared/interfaces';
 import { ItemTypeEnum, LayoutConfigDirectionEnum, TransformRectTypeEnum } from '../../Canvas/types';
 import { MenuItemType, RenderContextMenuOptions, RemoveContextMenuType, RenderContextMenuType } from '@mana/hooks/useContextMenu';
@@ -256,7 +259,6 @@ export default function useEventManager({
     items?: MenuItemType[],
     opts?: RenderContextMenuOptions,
   ) {
-    return;
     const { data } = event;
     removeContextMenu(event);
 
@@ -285,7 +287,7 @@ export default function useEventManager({
 
     menuItems.push(...(items ?? [
       {
-        Icon: ArrowsAdjustingFrameSquare,
+        Icon: Select,
         onClick: (event: ClientEventType) => {
           removeContextMenu(event);
           startTransition(() => {
@@ -298,9 +300,10 @@ export default function useEventManager({
         uuid: 'Reposition blocks',
       },
       {
-        Icon: Search,
+        Icon: SearchV2,
         items: [
           {
+            Icon: iconProps => <Undo {...iconProps} secondary />,
             onClick: (event: ClientEventType) => {
               event?.preventDefault();
               removeContextMenu(event ?? null);
@@ -313,6 +316,7 @@ export default function useEventManager({
               (transformState?.current?.zoom?.current ?? 1) === 1 ? 'Default zoom' : 'Zoom to 100%',
           },
           {
+            Icon: ArrowsAdjustingFrameSquare,
             onClick: (event: ClientEventType) => {
               event?.preventDefault();
               removeContextMenu(event ?? null);
@@ -327,6 +331,7 @@ export default function useEventManager({
             uuid: 'Reset view',
           },
           {
+            Icon: ArrowsPointingInFromAllCorners,
             onClick: (event: ClientEventType) => {
               event.preventDefault();
               removeContextMenu(event);
@@ -346,7 +351,7 @@ export default function useEventManager({
       { divider: true },
 
       {
-        Icon: TemplateShapes,
+        Icon: GroupV2,
         items: [
           ...[
             [LayoutConfigDirectionEnum.VERTICAL, 'Vertical layout', CubeWithArrowDown],

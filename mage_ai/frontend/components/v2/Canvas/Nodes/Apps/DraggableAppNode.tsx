@@ -11,7 +11,7 @@ import Aside from '../Blocks/Aside';
 import TextInput from '@mana/elements/Input/TextInput';
 import {
   ArrowsAdjustingFrameSquare, DiamondShared, AppVersions, IdentityTag, Menu, PanelCollapseLeft,
-  PanelCollapseRight, More, AddV2, Grab, GroupV2,
+  PanelCollapseRight, Builder, AddV2, Grab, GroupV2, Comment, Conversation
 } from '@mana/icons';
 import Text from '@mana/elements/Text';
 import { Minimize, Chat, BlockGenericV2, PlayButtonFilled } from '@mana/icons';
@@ -77,7 +77,7 @@ const DraggableAppNode: React.FC<DraggableAppNodeProps> = ({
             templateRows="1fr"
           >
             <Button
-              Icon={asideBeforeOpen ? PanelCollapseLeft : More}
+              Icon={asideBeforeOpen ? PanelCollapseLeft : Builder}
               basic={asideBeforeOpen}
               onClick={() => setAsideBeforeOpen(prev => !prev)}
               small
@@ -116,9 +116,11 @@ const DraggableAppNode: React.FC<DraggableAppNodeProps> = ({
           >
             {[
               { label: () => 'File', uuid: 'File' },
-              { Icon: Chat, uuid: 'Chat', description: 'Get support in the community channel on Slack', href: 'https://mage.ai/chat', target: '_blank', anchor: 'true' },
+              { Icon: Conversation, uuid: 'Chat', description: 'Get support in the community channel on Slack', href: 'https://mage.ai/chat', target: '_blank', anchor: 'true' },
               { Icon: Minimize, uuid: 'Close', description: 'Close app', onClick: handleCloseApp },
               { Icon: Grab, uuid: 'Layout', description: 'Drag to reposition app', onClick: handleUpdateLayout },
+              { Icon: Comment, uuid: 'Comment', description: 'Add a comment to the pipeline or for a specific block', onClick: event => alert('Comment') },
+
             ].map(({ Icon, anchor, label, description, href, target, uuid, onClick }) => (
               <TooltipWrapper
                 key={uuid}
