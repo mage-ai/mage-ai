@@ -9,6 +9,19 @@
   padding: var(--padding-base);
 }
 
+.blockNodeWrapper {
+  &.loading {
+    .loader {
+      display: block;
+      width: 100%;
+    }
+  }
+
+  .loader {
+    display: none;
+  }
+}
+
 .showOnHoverContainer {
   &:hover {
     .showOnHover {

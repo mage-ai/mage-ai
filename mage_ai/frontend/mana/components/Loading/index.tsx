@@ -38,7 +38,7 @@ const CircleStyle = styled.div<LoadingProps>`
       height: ${(typeof height === 'number' ? `${height}px` : height || '14px')};
       width: ${(typeof width === 'number' ? `${width}px` : width || '14px')};
       border-radius: 50%;
-      background: conic-gradient(${color || theme.colors[colorName ?? 'green']} 270deg, transparent 0);
+      background: conic-gradient(${color || theme.colors[colorName ?? 'success']} 270deg, transparent 0);
       mask: radial-gradient(
         farthest-side,
         transparent calc(100% - ${thickness || 2}px),

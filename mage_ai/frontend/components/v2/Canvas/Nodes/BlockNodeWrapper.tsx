@@ -25,6 +25,7 @@ export type BlockNodeWrapperProps = {
   collapsed?: boolean;
   draggable?: boolean;
   droppable?: boolean;
+  loading?: boolean;
   onMountItem: (item: NodeItemType, ref: React.RefObject<HTMLDivElement>) => void;
   onMountPort: (port: PortType, ref: React.RefObject<HTMLDivElement>) => void;
   rect: RectType;
@@ -40,6 +41,7 @@ export const BlockNodeWrapper: React.FC<BlockNodeWrapperProps & NodeWrapperProps
   droppable = false,
   item,
   handlers,
+  loading = false,
   onMountPort,
   onMountItem,
   rect,
@@ -248,17 +250,19 @@ export const BlockNodeWrapper: React.FC<BlockNodeWrapperProps & NodeWrapperProps
     />
   );
 
+  const className = useMemo(() => [
+    styles.blockNodeWrapper,
+    stylesBuilder.level,
+    stylesBuilder[`level-${item?.level}`],
+    item?.type && stylesBuilder[item?.type],
+    !emptyGroup && !draggable && !droppable && styles.showOnHoverContainer,
+    loading && styles.loading,
+  ]?.filter(Boolean)?.join(' '), [draggable, droppable, loading, emptyGroup, item]);
+
   if (Wrapper) {
     return (
       <Wrapper
-        className={[
-          stylesBuilder.level,
-          stylesBuilder[`level-${item?.level}`],
-          item?.type && stylesBuilder[item?.type],
-          !emptyGroup && !draggable && !droppable && styles.showOnHoverContainer,
-        ]
-          ?.filter(Boolean)
-          ?.join(' ')}
+        className={className}
         draggable={draggable}
         draggingNode={draggingNode}
         droppable={droppable}
@@ -278,7 +282,7 @@ export const BlockNodeWrapper: React.FC<BlockNodeWrapperProps & NodeWrapperProps
     );
   }
 
-  return BlockNode;
+  return <div className={className} ref={itemRef}>{blockNode}</div>;
 };
 
 export function areEqual(p1: BlockNodeWrapperProps, p2: BlockNodeWrapperProps) {

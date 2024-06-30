@@ -1,26 +1,26 @@
+import Aside from './Blocks/Aside';
+import Badge from '@mana/elements/Badge';
+import BlockType, { BlockTypeEnum } from '@interfaces/BlockType';
+import Circle from '@mana/elements/Circle';
+import Connection from './Blocks/Connection';
+import GradientContainer from '@mana/elements/Gradient';
 import Grid from '@mana/components/Grid';
 import Loading from '@mana/components/Loading';
-import Text from '@mana/elements/Text';
-import Badge from '@mana/elements/Badge';
-import Circle from '@mana/elements/Circle';
-import { ConfigurationOptionType, BorderConfigType, TitleConfigType } from './types';
-import styles from '@styles/scss/components/Canvas/Nodes/BlockNode.module.scss';
-import stylesGradient from '@styles/scss/elements/GradientContainer.module.scss';
-import { getBlockColor } from '@mana/themes/blocks';
-import Aside from './Blocks/Aside';
-import { DragItem, PortType } from '../interfaces';
-import GradientContainer from '@mana/elements/Gradient';
-import Connection from './Blocks/Connection';
 import PanelRows from '@mana/elements/PanelRows';
 import TemplateConfigurations from './Blocks/TemplateConfigurations';
-import BlockType, { BlockTypeEnum } from '@interfaces/BlockType';
+import Text from '@mana/elements/Text';
+import styles from '@styles/scss/components/Canvas/Nodes/BlockNode.module.scss';
+import stylesGradient from '@styles/scss/elements/GradientContainer.module.scss';
+import { ConfigurationOptionType, BorderConfigType, TitleConfigType } from './types';
+import { DragAndDropHandlersType, SharedBlockProps } from './types';
+import { DragItem, PortType } from '../interfaces';
+import { FrameworkType, PipelineExecutionFrameworkBlockType } from '@interfaces/PipelineExecutionFramework/interfaces';
+import { ItemTypeEnum, PortSubtypeEnum } from '../types';
+import { SubmitEventOperationType } from '@mana/shared/interfaces';
 import { TooltipWrapper } from '@context/Tooltip';
+import { getBlockColor } from '@mana/themes/blocks';
 import { isEmptyObject } from '@utils/hash';
 import { useMemo } from 'react';
-import { ItemTypeEnum, PortSubtypeEnum } from '../types';
-import { DragAndDropHandlersType, SharedBlockProps } from './types';
-import { SubmitEventOperationType } from '@mana/shared/interfaces';
-import { FrameworkType, PipelineExecutionFrameworkBlockType } from '@interfaces/PipelineExecutionFramework/interfaces';
 
 type BlockNodeProps = {
   borderConfig?: BorderConfigType;
@@ -247,6 +247,7 @@ export function BlockNode({
         <Grid rowGap={8} templateRows="auto">
           {badgeRow}
           {!badge && titleRow}
+          <div className={styles.loader}><Loading position="absolute" /></div>
           {connectionRows}
           {templateConfigurations}
 
