@@ -9,9 +9,12 @@ import useDispatchMounted from '../useDispatchMounted';
 import { getColorNamesFromItems } from '../utils';
 import Aside from '../Blocks/Aside';
 import TextInput from '@mana/elements/Input/TextInput';
-import { ArrowsAdjustingFrameSquare, DiamondShared, AppVersions, IdentityTag, Menu, PanelCollapseLeft, PanelCollapseRight } from '@mana/icons';
+import {
+  ArrowsAdjustingFrameSquare, DiamondShared, AppVersions, IdentityTag, Menu, PanelCollapseLeft,
+  PanelCollapseRight, More, AddV2, Grab, GroupV2,
+} from '@mana/icons';
 import Text from '@mana/elements/Text';
-import { Chat, BlockGenericV2, PlayButtonFilled } from '@mana/icons';
+import { Minimize, Chat, BlockGenericV2, PlayButtonFilled } from '@mana/icons';
 import Grid from '@mana/components/Grid';
 import Divider from '@mana/elements/Divider';
 import { areEqualRects, areDraggableStylesEqual } from '../equals';
@@ -42,6 +45,14 @@ const DraggableAppNode: React.FC<DraggableAppNodeProps> = ({
 
   useDispatchMounted(node, nodeRef);
 
+  function handleCloseApp() {
+
+  }
+
+  function handleUpdateLayout() {
+
+  }
+
   return (
     <DraggableWrapper
       className={styles.appNodeWrapper}
@@ -66,7 +77,7 @@ const DraggableAppNode: React.FC<DraggableAppNodeProps> = ({
             templateRows="1fr"
           >
             <Button
-              Icon={asideBeforeOpen ? PanelCollapseLeft : Menu}
+              Icon={asideBeforeOpen ? PanelCollapseLeft : More}
               basic={asideBeforeOpen}
               onClick={() => setAsideBeforeOpen(prev => !prev)}
               small
@@ -105,25 +116,31 @@ const DraggableAppNode: React.FC<DraggableAppNodeProps> = ({
           >
             {[
               { label: () => 'File', uuid: 'File' },
-              { label: () => 'Edit', uuid: 'Edit' },
-              { label: () => 'View', uuid: 'View' },
-              { Icon: Chat, uuid: 'Chat' },
-              { Icon: ArrowsAdjustingFrameSquare, uuid: 'Layout' },
-            ].map(({ Icon, label, uuid }) => (
-              <Button
-                Icon={Icon}
-                basic
+              { Icon: Chat, uuid: 'Chat', description: 'Get support in the community channel on Slack', href: 'https://mage.ai/chat', target: '_blank', anchor: 'true' },
+              { Icon: Minimize, uuid: 'Close', description: 'Close app', onClick: handleCloseApp },
+              { Icon: Grab, uuid: 'Layout', description: 'Drag to reposition app', onClick: handleUpdateLayout },
+            ].map(({ Icon, anchor, label, description, href, target, uuid, onClick }) => (
+              <TooltipWrapper
                 key={uuid}
-                onClick={event => alert(uuid)}
-                small
-                style={{ background: 'none', border: 'none' }}
+                tooltip={<Text secondary small>{description ?? label?.() ?? uuid}</Text>}
               >
-                {label &&
-                  <Text medium small>
-                    {label()}
-                  </Text>
-                }
-              </Button>
+                <Button
+                  anchor={anchor}
+                  Icon={Icon}
+                  basic
+                  href={href}
+                  target={target}
+                  onClick={onClick ?? undefined}
+                  small
+                  style={{ background: 'none', border: 'none' }}
+                >
+                  {label &&
+                    <Text medium small>
+                      {label()}
+                    </Text>
+                  }
+                </Button>
+              </TooltipWrapper>
             ))}
           </Grid>
 
@@ -160,7 +177,6 @@ const DraggableAppNode: React.FC<DraggableAppNodeProps> = ({
                 <TooltipWrapper
                   tooltip={
                     <Grid rowGap={8}>
-
                       <Button
                         asLink
                         onClick={event => alert('Edit')}

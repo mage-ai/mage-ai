@@ -13,7 +13,7 @@ import { ElementRoleEnum } from '../../shared/types';
 type ButtonStyleProps = {
   Icon?: ({ ...props }: any) => any;
   IconAfter?: ({ ...props }: any) => any;
-  anchor?: boolean;
+  anchor?: boolean | string;
   children?: React.ReactNode;
   width?: string;
 } & StyleProps;
@@ -28,6 +28,8 @@ type ButtonProps = {
   plain?: boolean;
   motion?: boolean;
   style?: React.CSSProperties;
+  target?: string;
+  href?: string;
 } & ButtonStyleProps &
   WithLoggingProps;
 
@@ -68,6 +70,8 @@ function Button({
   asLink,
   basic,
   children,
+  href,
+  target,
   loading,
   loadingColorName,
   motion,
@@ -97,7 +101,7 @@ function Button({
       {/* @ts-ignore */}
       <HTMLTag
         {...props}
-        {...(asLink ? { href: '#' } : {})}
+        {...(asLink ? { href: href ?? '#' } : {})}
         {...(motion ? { whileTap: { scale: 0.97 } } : {})}
         aslink={asLink ? 'true' : undefined}
         basic={basic ? 'true' : undefined}
@@ -115,6 +119,7 @@ function Button({
             IconAfter ? 'auto' : '',
           ].join(' '),
         }}
+        target={target}
         tag={tag}
         wrap={wrap ? 'true' : undefined}
       >

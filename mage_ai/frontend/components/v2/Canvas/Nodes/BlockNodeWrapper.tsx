@@ -17,7 +17,7 @@ import { ConfigurationType } from '@interfaces/PipelineExecutionFramework/interf
 import { AppTypeEnum, AppSubtypeEnum } from '../../Apps/constants';
 import { ElementRoleEnum } from '@mana/shared/types';
 import {
-  Add, Code, Check, ArrowsAdjustingFrameSquare, PipeIconVertical, PlayButtonFilled,
+  AddV2, Code, Check, Grab, PipeIconVertical, PlayButtonFilled,
   Infinite,
 } from '@mana/icons';
 import { setNested } from '@utils/hash';
@@ -231,11 +231,11 @@ export const BlockNodeWrapper: React.FC<BlockNodeWrapperProps & NodeWrapperProps
             className: styles.showOnHover,
             ...(ItemTypeEnum.NODE === item?.type
               ? {
-                Icon: draggable ? ArrowsAdjustingFrameSquare : Add,
+                Icon: draggable ? Grab : AddV2,
                 onClick: event => handleClickGroupMenu(event, item as NodeType, submitEventOperation, itemRef),
               }
               : {
-                Icon: draggable ? ArrowsAdjustingFrameSquare : Code,
+                Icon: draggable ? Grab : Code,
                 onClick: event => submitEventOperation(buildEvent(event, EventOperationEnum.APP_START), {
                   args: [
                     AppTypeEnum.EDITOR,
@@ -276,6 +276,8 @@ export const BlockNodeWrapper: React.FC<BlockNodeWrapperProps & NodeWrapperProps
       item?.type && stylesBuilder[item?.type],
       !emptyGroup && !draggable && !droppable && styles.showOnHoverContainer,
       loading && styles.loading,
+      styles.container,
+      item?.status && styles[item?.status],
     ]?.filter(Boolean)?.join(' '),
     role: ElementRoleEnum.BLOCK,
   }), [draggable, droppable, loading, emptyGroup, item]);

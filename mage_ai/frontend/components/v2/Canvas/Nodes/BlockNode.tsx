@@ -283,8 +283,6 @@ export function BlockNode({
       // Only use gradient borders when block selected
       className={[
         ...classNames,
-        styles.container,
-        item?.status && styles[item?.status],
       ]?.filter(Boolean)?.join(' ')}
     >
       {main}
