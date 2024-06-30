@@ -1,4 +1,5 @@
-import { TemplateType } from '@interfaces/BlockType';
+import { BlockTypeEnum, TemplateType } from '@interfaces/BlockType';
+import { ColorNameType, getBlockColor } from '@mana/themes/blocks';
 import PipelineType from '@interfaces/PipelineType';
 import { FrameworkType, PipelineExecutionFrameworkBlockType } from '@interfaces/PipelineExecutionFramework/interfaces';
 import update from 'immutability-helper';
@@ -7,7 +8,30 @@ import { ButtonEnum } from '@mana/shared/enums';
 import { CSSProperties } from 'react';
 import { EventOperationEnum, SubmitEventOperationType } from '@mana/shared/interfaces';
 import { NodeType, NodeItemType, RectType } from '../interfaces';
-import { flattenArray } from '@utils/array';
+import { ItemTypeEnum } from '../types';
+import { countOccurrences, flattenArray, sortByKey } from '@utils/array';
+
+export function getColorNamesFromItems(items: NodeType[]): ColorNameType[] {
+  return items?.map?.((item: NodeType) => {
+    if (ItemTypeEnum.NODE === item?.type) {
+      // Use the color of the most common block type in the group.
+      const typeCounts = Object.entries(
+        countOccurrences(flattenArray(
+          (item as NodeType)?.items?.map((i: NodeItemType) => i?.block?.type) || [])) ?? {},
+      )?.map(([type, count]) => ({ count, type }));
+
+      const modeTypes = sortByKey(typeCounts, ({ count }) => count, { ascending: false });
+      const modeType = modeTypes?.length >= 2 ? modeTypes?.[0]?.type : item?.block?.type;
+      const colors = getBlockColor(modeType as BlockTypeEnum, { getColorName: true })?.names;
+
+      return colors?.base ? colors : { base: 'gray' };
+    }
+
+    const c = getBlockColor(item?.block?.type as BlockTypeEnum, { getColorName: true });
+
+    return c && c?.names ? c?.names : { base: 'gray' } as ColorNameType;
+  }) as ColorNameType[];
+}
 
 export function getDraggableStyles(
   rect: RectType,

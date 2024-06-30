@@ -254,6 +254,7 @@ export default function useEventManager({
     items?: MenuItemType[],
     opts?: RenderContextMenuOptions,
   ) {
+    return;
     const { data } = event;
     removeContextMenu(event);
 

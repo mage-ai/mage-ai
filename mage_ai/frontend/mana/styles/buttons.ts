@@ -6,8 +6,10 @@ import { outlineHover, transition, transitionFast } from './mixins';
 
 export type StyleProps = {
   aslink?: boolean;
+  backgroundColor?: string;
   basic?: boolean;
-  grouped?: boolean;
+  borderColor?: string;
+  grouped?: boolean | string;
   loading?: boolean;
   plain?: boolean;
   primary?: boolean;
@@ -23,11 +25,11 @@ const shared = css<StyleProps>`
   position: relative;
   z-index: 1;
 
-  ${({ aslink, basic, grouped, plain, primary, secondary, theme }) =>
+  ${({ aslink, basic, borderColor, grouped, plain, primary, secondary, theme }) =>
     !plain &&
     outlineHover({
       borderColor: theme.fonts.color.text.inverted,
-      outlineColor: primary
+      outlineColor: (theme.colors?.[borderColor] ?? borderColor) ?? primary
         ? theme.buttons.outline.color.primary.hover
         : secondary
           ? theme.buttons.outline.color.secondary.hover
@@ -44,19 +46,19 @@ const shared = css<StyleProps>`
   `}
 
   ${({ aslink, basic, grouped, plain }) => !aslink && !grouped && !plain && basic && borders}
-  ${({ aslink, basic, grouped, plain, primary, secondary, theme }) =>
+  ${({ aslink, basic, borderColor, grouped, plain, primary, secondary, theme }) =>
     !aslink &&
     !grouped &&
     !plain &&
     basic &&
     `
-    border-color: ${primary
+    border-color: ${(theme.colors?.[borderColor] ?? borderColor) ?? (primary
       ? theme.buttons.border.color.primary.default
       : secondary
         ? theme.buttons.border.color.secondary.default
         : basic
           ? theme.buttons.border.color.basic.default
-          : theme.buttons.border.color.base.default
+          : theme.buttons.border.color.base.default)
     };
   `}
 
@@ -79,17 +81,19 @@ const shared = css<StyleProps>`
 
   ${({ basic, grouped }) => !grouped && !basic && bordersTransparent}
 
-  background-color: ${({ aslink, basic, plain, primary, secondary, theme }) =>
-    !plain &&
-    (aslink
-      ? 'transparent'
-      : primary
-        ? theme.colors.backgrounds.button.primary.default
-        : secondary
-          ? theme.colors.backgrounds.button.secondary.default
-          : basic
-            ? theme.colors.backgrounds.button.basic.default
-            : theme.colors.backgrounds.button.base.default)};
+  background-color: ${({ aslink, backgroundColor, basic, plain, primary, secondary, theme }) =>
+    (theme.colors?.[backgroundColor] ?? backgroundColor) ?? (
+      !plain &&
+      (aslink
+        ? 'transparent'
+        : primary
+          ? theme.colors.backgrounds.button.primary.default
+          : secondary
+            ? theme.colors.backgrounds.button.secondary.default
+            : basic
+              ? theme.colors.backgrounds.button.basic.default
+              : theme.colors.backgrounds.button.base.default)
+    )};
   border-radius: ${({ plain, theme }) => !plain && theme.borders.radius.base};
   color: ${({ primary, secondary, theme }) =>
     primary || secondary ? theme.fonts.color.text.inverted : theme.fonts.color.text.base};
@@ -102,12 +106,12 @@ const shared = css<StyleProps>`
     primary || secondary ? theme.fonts.weight.bold : theme.fonts.weight.semiBold};
   line-height: ${({ small, theme }) => theme.buttons.font.lineHeight[small ? 'sm' : 'base']}px;
 
-  ${({ basic, grouped, plain, primary, secondary, theme }) =>
+  ${({ basic, backgroundColor, grouped, plain, primary, secondary, theme }) =>
     !grouped &&
     !plain &&
     `
     &:hover {
-      background-color: ${primary
+      background-color: ${(theme.colors?.[backgroundColor] ?? backgroundColor) ?? primary
       ? theme.colors.backgrounds.button.primary.hover
       : secondary
         ? theme.colors.backgrounds.button.secondary.hover

@@ -331,9 +331,9 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
             );
           })}
 
-          {console.log('appNodes', appNodes)}
           {appNodes?.map((appNode: AppNodeType) => (
             <DraggableAppNode
+              items={appNode?.upstream?.map(id => itemsRef?.current?.[id])}
               key={appNode.id}
               node={appNode}
             />

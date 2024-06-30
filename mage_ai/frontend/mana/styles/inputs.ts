@@ -50,7 +50,8 @@ const shared = css<StyleProps>`
     typeof width === 'undefined' ? '100%' : typeof width === 'number' ? `${width}px` : width
   };
 
-  ${({ align, basic, blendWithText, italicPlaceholder, theme }) => `
+  ${({ align, basic, blendWithText, italicPlaceholder, small, theme }) => `
+    font-family: ${theme.fonts.family.base[small ? 'regular' : 'medium']};
     font-weight: ${theme.fonts.weight.medium};
     line-height: ${theme.fonts.lineHeight.base};
     text-align: ${align || 'left'};
@@ -80,29 +81,37 @@ const shared = css<StyleProps>`
       background: ${blendWithText ? 'none' : theme.inputs.background.base.focus};
       border-color: ${blendWithText
       ? 'none'
-      : basic ? theme.borders.color : theme.inputs.border.color.base.focus};
+      : basic
+        ? theme.inputs.border.color.base.default
+        : theme.inputs.border.color.base.focus};
     }
 
     &:hover {
       background: ${blendWithText ? 'none' : theme.inputs.background.base.hover};
       border-color: ${blendWithText
       ? 'none'
-      : basic ? theme.borders.color : theme.inputs.border.color.base.hover};
+      : basic
+        ? theme.inputs.border.color.base.default
+        : theme.inputs.border.color.base.hover};
     }
 
     &:active {
       background: ${blendWithText ? 'none' : theme.inputs.background.base.active};
       border-color: ${blendWithText
       ? 'none'
-      : basic ? theme.borders.color : theme.inputs.border.color.base.active};
+      : basic
+        ? theme.inputs.border.color.base.default
+        : theme.inputs.border.color.base.active};
     }
   `}
 
-  ${({ basic, theme }) =>
+  ${({ basic, blendWithText, theme }) => !blendWithText &&
     outlineHover({
       active: true,
       borderColor: theme.fonts.color.text.inverted,
-      outlineColor: basic ? theme.borders.color : theme.inputs.border.color.base.hover,
+      outlineColor:
+        basic ? theme.inputs.border.color.base.default
+          : theme.inputs.border.color.base.hover,
     })
   }
 `;

@@ -1,7 +1,24 @@
-.appNode {
-  background-color: red;
-  min-height: 400px;
-  min-width: 400px;
+@use '../../../base/borders';
+@use '../../../abstracts/variables' as *;
+@use '../../../base/grid';
+
+.appNodeWrapper {
+  @include grid.base();
+
+  height: 800px;
+  width: 1000px;
   position: absolute;
   z-index: 6;
+}
+
+.appNodeContainer  {
+  @include borders.base();
+  @include borders.border-colors();
+  @include grid.base();
+
+  backdrop-filter: blur(#{$modal-blur-base});
+  background: var(--modal-background-color-base);
+  border-radius: (--borders-radius-md);
+  box-shadow: 8px 8px 4px 8px var(--modal-box-shadow-base);
+  padding: var(--padding-sm);
 }
