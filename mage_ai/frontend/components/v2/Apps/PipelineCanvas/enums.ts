@@ -1,4 +1,5 @@
 export enum CustomAppEventEnum {
+  NODE_DROPPED = 'NODE_DROPPED',
   START_DRAGGING = 'START_DRAGGING',
   START_APP = 'START_APP',
   STOP_APP = 'STOP_APP',

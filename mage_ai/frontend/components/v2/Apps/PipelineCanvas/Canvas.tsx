@@ -1,4 +1,6 @@
+import update from 'immutability-helper';
 import DraggableAppNode from '../../Canvas/Nodes/Apps/DraggableAppNode';
+import { ClientEventType } from '@mana/shared/interfaces';
 import DraggableBlockNode from '../../Canvas/Nodes/DraggableBlockNode';
 import CanvasContainer from './index.style';
 import PipelineExecutionFrameworkType from '@interfaces/PipelineExecutionFramework/interfaces';
@@ -8,19 +10,20 @@ import {
   NodeType, FlatItemType,
   AppNodeType
 } from '../../Canvas/interfaces';
-import useEventManager, { EventManagerType } from './useEventManager';
+import useEventManager from './useEventManager';
 import useLayoutManager, { LayoutManagerType } from './useLayoutManager';
-import useModelManager, { ModelManagerType } from './useModelManager';
+import useModelManager from './useModelManager';
 import usePresentationManager, { PresentationManagerType } from './usePresentationManager';
 import { DragLayer } from '../../Canvas/Layers/DragLayer';
 import { ItemTypeEnum, LayoutConfigDirectionOriginEnum, LayoutConfigDirectionEnum } from '../../Canvas/types';
 import { RemoveContextMenuType, RenderContextMenuType } from '@mana/hooks/useContextMenu';
 import { ZoomPanStateType } from '@mana/hooks/useZoomPan';
+import { snapToGrid } from '../../Canvas/utils/snapToGrid';
 import { useDrop } from 'react-dnd';
 import { useEffect, useMemo, useRef, useState, startTransition } from 'react';
 import useItemManager from './useItemManager';
 import useDynamicDebounce from '@utils/hooks/useDebounce';
-import { AppManagerType, ItemElementsType } from './interfaces';
+import { AppManagerType, ItemElementsType, EventManagerType, ModelManagerType } from './interfaces';
 import { groupBy, unique, sortByKey, flattenArray } from '@utils/array';
 import useNodeManager from './useNodeManager';
 import useAppManager from './useAppManager';
@@ -40,6 +43,7 @@ export type BuilderCanvasProps = {
   setDragEnabled: (value: boolean) => void;
   setDropEnabled: (value: boolean) => void;
   setZoomPanDisabled: (value: boolean) => void;
+  snapToGridOnDrop?: boolean;
   transformState: React.MutableRefObject<ZoomPanStateType>;
 };
 
@@ -63,6 +67,7 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
   setDragEnabled,
   setDropEnabled,
   setZoomPanDisabled,
+  snapToGridOnDrop = true,
   transformState,
 }: BuilderCanvasProps) => {
   const activeLevel = useRef<number>(null);
@@ -124,7 +129,7 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
     setAppRects({ mapping, rects });
   };
 
-  useAppEventsHandler(null, {
+  const { dispatchAppEvent } = useAppEventsHandler(null, {
     [CustomAppEventEnum.APP_STARTED]: handleAppChanged,
     [CustomAppEventEnum.APP_STOPPED]: handleAppChanged,
   });
@@ -261,7 +266,7 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
   const [, connectDrop] = useDrop(
     () => ({
       // https://react-dnd.github.io/react-dnd/docs/api/use-drop
-      accept: [ItemTypeEnum.BLOCK, ItemTypeEnum.NODE, ItemTypeEnum.PORT],
+      accept: [ItemTypeEnum.APP, ItemTypeEnum.BLOCK, ItemTypeEnum.NODE, ItemTypeEnum.PORT],
       canDrop: (node: NodeItemType, monitor: DropTargetMonitor) => {
         if (!monitor.isOver({ shallow: true })) {
           return false;
@@ -270,7 +275,79 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
         return true;
       },
       drop: (item: DragItem, monitor: DropTargetMonitor) => {
-        onDropBlock(item, monitor);
+        const delta = monitor.getDifferenceFromInitialOffset() as {
+          x: number;
+          y: number;
+        };
+
+        // let left = Math.round(node?.rect?.left + delta.x);
+        // let top = Math.round(node?.rect?.top + delta.y);
+        let left = Math.round((item?.rect?.left ?? 0) + delta.x);
+        let top = Math.round((item?.rect?.top ?? 0) + delta.y);
+
+        // Prevents the item from being dragged outside the screen but the screen is larger
+        // because of the zooming and panning.
+        // const screenX = window.innerWidth;
+        // const screenY = window.innerHeight;
+        // const itemWidth = node?.rect?.width;
+        // const itemHeight = node?.rect?.height;
+
+        // if (left < 0) left = 0;
+        // if (top < 0) top = 0;
+        // if (left + itemWidth > screenX) left = screenX - itemWidth;
+        // if (top + itemHeight > screenY) top = screenY - itemHeight;
+
+        let leftOffset = 0;
+        let topOffset = 0;
+        if (snapToGridOnDrop) {
+          // TODO (dangerous): This doesn’t apply to the ports; need to handle that separately.
+          const [xSnapped, ySnapped] = snapToGrid(
+            {
+              x: left,
+              y: top,
+            },
+            { height: gridDimensions.current.height, width: gridDimensions.current.width },
+          );
+          leftOffset = xSnapped - left;
+          topOffset = ySnapped - top;
+        }
+
+        left += leftOffset;
+        top += topOffset;
+
+        const node = update(item, {
+          rect: {
+            $merge: {
+              left,
+              top,
+            },
+          },
+        });
+
+        const element = itemElementsRef.current[node.type][node.id].current;
+        if (element) {
+          element.style.transform = `translate(${left}px, ${top}px)`;
+        }
+
+        dispatchAppEvent(CustomAppEventEnum.NODE_DROPPED, {
+          event: {
+            data: {
+              node,
+            },
+          } as ClientEventType,
+          options: {
+            kwargs: {
+              rect: {
+                left,
+                offset: {
+                  left: leftOffset,
+                  top: topOffset,
+                },
+                top,
+              },
+            },
+          },
+        });
 
         return undefined;
       },

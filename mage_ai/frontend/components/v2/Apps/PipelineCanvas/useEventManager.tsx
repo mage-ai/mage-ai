@@ -101,6 +101,7 @@ export default function useEventManager({
   const { dispatchAppEvent } = useAppEventsHandler({
     updateLayoutOfItems,
   } as any, {
+    [CustomAppEventEnum.NODE_DROPPED]: onDropBlock,
     [CustomAppEventEnum.START_DRAGGING]: handleStartDragging,
   });
 
@@ -589,62 +590,22 @@ export default function useEventManager({
     // setActiveItems(null);
   }
 
-  function onDropBlock(nodeInit: NodeItemType, monitor: DropTargetMonitor) {
-    const node = itemsRef.current[nodeInit.id];
+  function onDropBlock(event: CustomEvent) {
+    DEBUG.dropping && console.log('onDropBlock', event);
+    const { event: clientEvent, maanger, options } = event.detail;
+    const { node } = clientEvent.data;
+    const { rect } = options?.kwargs ?? {};
 
-    resetAfterDrop();
-
-    const delta = monitor.getDifferenceFromInitialOffset() as {
-      x: number;
-      y: number;
-    };
-
-    let left = Math.round(node?.rect?.left + delta.x);
-    let top = Math.round(node?.rect?.top + delta.y);
-
-    // Prevents the item from being dragged outside the screen but the screen is larger
-    // because of the zooming and panning.
-    // const screenX = window.innerWidth;
-    // const screenY = window.innerHeight;
-    // const itemWidth = node?.rect?.width;
-    // const itemHeight = node?.rect?.height;
-
-    // if (left < 0) left = 0;
-    // if (top < 0) top = 0;
-    // if (left + itemWidth > screenX) left = screenX - itemWidth;
-    // if (top + itemHeight > screenY) top = screenY - itemHeight;
-
-    let leftOffset = 0;
-    let topOffset = 0;
-    if (snapToGridOnDrop) {
-      // TODO (dangerous): This doesn’t apply to the ports; need to handle that separately.
-      const [xSnapped, ySnapped] = snapToGrid(
-        {
-          x: left,
-          y: top,
-        },
-        { height: gridDimensions.current.height, width: gridDimensions.current.width },
-      );
-      leftOffset = xSnapped - left;
-      topOffset = ySnapped - top;
-    }
-
-    left += leftOffset;
-    top += topOffset;
-
-    const node2 = update(node, {
-      rect: {
-        $merge: {
-          left,
-          top,
-        },
-      },
-    });
+    const {
+      left,
+      top,
+    } = rect;
 
     const portsUpdated = {
       ...portsRef.current,
     };
-    node2?.ports?.forEach(({ id: portID }: PortType) => {
+
+    node?.ports?.forEach(({ id: portID }: PortType) => {
       const port1 = portsRef.current[portID];
       const port2 = update(port1, {
         rect: {
@@ -658,15 +619,10 @@ export default function useEventManager({
       portsUpdated[port2.id] = port2;
     });
 
-    const elItem = itemElementsRef.current[node.type][node.id].current;
-    if (elItem) {
-      elItem.style.transform = `translate(${left}px, ${top}px)`;
-    }
-
     const payload = {
       itemMapping: {
         ...itemsRef.current,
-        [node2.id]: node2,
+        [node.id]: node,
       },
       portMapping: portsUpdated,
     };
@@ -696,7 +652,6 @@ export default function useEventManager({
     handleMouseDown,
     onDragInit,
     onDragging,
-    onDropBlock,
     onDropPort,
     resetAfterDrop,
     setSnapToGridOnDrag,

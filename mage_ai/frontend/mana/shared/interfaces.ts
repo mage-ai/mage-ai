@@ -72,6 +72,18 @@ export interface EventOperationOptionsType {
   kwargs?: {
     boundingContainer?: DOMRect;
     computedStyle?: CSSStyleDeclaration;
+    rect?: {
+      height?: number;
+      left?: number;
+      top?: number;
+      width?: number;
+      offset?: {
+        height?: number;
+        left?: number;
+        top?: number;
+        width?: number;
+      };
+    };
   };
   handler?: (
     event: ClientEventType,
