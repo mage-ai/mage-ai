@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useMemo, useRef } from 'react';
 import Button, { ButtonGroup } from '@mana/elements/Button';
 import styles from '@styles/scss/components/Canvas/Nodes/DraggableAppNode.module.scss';
 import { DraggableWrapper, DraggableWrapperProps } from '../DraggableWrapper';
@@ -19,7 +19,10 @@ import Grid from '@mana/components/Grid';
 import Divider from '@mana/elements/Divider';
 import { areEqualRects, areDraggableStylesEqual } from '../equals';
 import { TooltipAlign, TooltipWrapper, TooltipDirection, TooltipJustify } from '@context/Tooltip';
+import { DragAndDropType } from '../types';
+import { setupDraggableHandlers, buildEvent } from '../utils';
 import { DEBUG } from '@components/v2/utils/debug';
+import { draggableProps } from '../draggable/utils';
 
 type DraggableAppNodeProps = {
   draggable?: boolean;
@@ -27,9 +30,11 @@ type DraggableAppNodeProps = {
   items: NodeType[];
   node: AppNodeType;
   rect: RectType;
-};
+} & DragAndDropType;
 
 const DraggableAppNode: React.FC<DraggableAppNodeProps> = ({
+  draggable,
+  handlers,
   index = 0,
   items,
   node,
@@ -56,13 +61,29 @@ const DraggableAppNode: React.FC<DraggableAppNodeProps> = ({
     });
   }
 
-  function handleUpdateLayout() {
-
+  function handleUpdateLayout(event: MouseEvent) {
+    dispatchAppEvent(CustomAppEventEnum.START_DRAGGING, {
+      event: convertEvent(event, {
+        app: node.app,
+        node,
+      }),
+    });
   }
+
+  const draggingHandlers = setupDraggableHandlers(
+    handlers, node, nodeRef, block,
+  );
+
+  const sharedProps = useMemo(() => draggableProps({
+    draggable,
+    item: node,
+    classNames: [styles.appNodeWrapper],
+  }), [draggable, node]);
 
   return (
     <DraggableWrapper
-      className={styles.appNodeWrapper}
+      {...sharedProps}
+      handlers={draggingHandlers}
       node={node}
       nodeRef={nodeRef}
       rect={rect}

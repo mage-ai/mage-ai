@@ -22,7 +22,8 @@ import {
 } from '@mana/icons';
 import { setNested } from '@utils/hash';
 import { areEqualRects, areDraggableStylesEqual } from './equals';
-import { DEBUG } from '@components/v2/utils/debug';
+import { setupDraggableHandlers, buildEvent } from './utils';
+import { draggableProps } from './draggable/utils';
 
 export type BlockNodeWrapperProps = {
   Wrapper?: React.FC<NodeWrapperProps>;
@@ -58,8 +59,6 @@ export const BlockNodeWrapper: React.FC<BlockNodeWrapperProps & NodeWrapperProps
   const portElementRefs = useRef<Record<string, any>>({});
   const [draggingNode] = useState<NodeItemType | null>(null);
 
-  const { onMouseDown, onMouseLeave, onMouseOver, onMouseUp } = handlers;
-
   const block = useMemo(() => item?.block, [item]);
   const { type, uuid } = useMemo(() => ({ type: block?.type, uuid: block?.uuid }) || {}, [block]);
   const isGroup = useMemo(() => !item?.block?.type || item?.block?.type === BlockTypeEnum.GROUP, [item]);
@@ -71,29 +70,14 @@ export const BlockNodeWrapper: React.FC<BlockNodeWrapperProps & NodeWrapperProps
     [item],
   );
 
-  const buildEvent = useCallback(
-    (event: any, operation?: EventOperationEnum) =>
-      update(event, {
-        data: {
-          $set: {
-            block,
-            node: item,
-          },
-        },
-        operationTarget: {
-          $set: itemRef,
-        },
-        operationType: {
-          $set: operation,
-        },
-      }) as any,
-    [block, item],
-  );
-
   const updateBlock = useCallback((
     event: ClientEventType | Event, key: string, value: any) => {
     submitEventOperation(
-      buildEvent(event as any, EventOperationEnum.MUTATE_MODEL_BLOCK), {
+      buildEvent(
+        event as any,
+        EventOperationEnum.MUTATE_MODEL_BLOCK,
+        item, itemRef, block,
+      ), {
       handler: (e, { blocks }) => {
         blocks.update.mutate({
           event,
@@ -110,31 +94,8 @@ export const BlockNodeWrapper: React.FC<BlockNodeWrapperProps & NodeWrapperProps
         });
       },
     });
-  }, [block, buildEvent, submitEventOperation]);
+  }, [block, item, itemRef, submitEventOperation]);
 
-  function handleMouseDown(event: ClientEventType) {
-    event.stopPropagation();
-    const event2 = buildEvent(event, EventOperationEnum.DRAG_START);
-
-    DEBUG.dragging && console.log('BlockNodeWrapper.handleMouseDown', event2, onMouseDown);
-
-    onMouseDown && onMouseDown?.(event2);
-  }
-
-  function handleMouseLeave(event: ClientEventType) {
-    DEBUG.dragging && console.log('handleMouseLeave', event);
-    onMouseLeave && onMouseLeave?.(buildEvent(event));
-  }
-
-  function handleMouseOver(event: ClientEventType) {
-    DEBUG.dragging && console.log('handleMouseOver', event);
-    onMouseOver && onMouseOver?.(buildEvent(event));
-  }
-
-  function handleMouseUp(event: ClientEventType) {
-    DEBUG.dragging && console.log('handleMouseUp', event);
-    onMouseUp && onMouseUp?.(buildEvent(event, EventOperationEnum.DRAG_END));
-  }
 
   function onMount(port: PortType, portRef: React.RefObject<HTMLDivElement>) {
     if (!(port?.id in portElementRefs.current)) {
@@ -217,6 +178,10 @@ export const BlockNodeWrapper: React.FC<BlockNodeWrapperProps & NodeWrapperProps
   const requiredGroup = isGroup && (item?.block?.configuration as ConfigurationType)?.metadata?.required;
   const emptyGroup = isGroup && (item as NodeType)?.items?.length === 0;
 
+  const draggingHandlers = setupDraggableHandlers(
+    handlers, item, itemRef, block,
+  );
+
   const blockNode = (
     <BlockNode
       block={block}
@@ -225,11 +190,7 @@ export const BlockNodeWrapper: React.FC<BlockNodeWrapperProps & NodeWrapperProps
       }}
       colorNames={names}
       draggable={draggable}
-      handlers={{
-        ...handlers,
-        onMouseDown: handleMouseDown,
-        onMouseUp: handleMouseUp,
-      }}
+      handlers={draggingHandlers}
       item={item}
       onMount={onMount}
       updateBlock={updateBlock}
@@ -244,7 +205,9 @@ export const BlockNodeWrapper: React.FC<BlockNodeWrapperProps & NodeWrapperProps
               }
               : {
                 Icon: draggable ? Grab : Code,
-                onClick: event => submitEventOperation(buildEvent(event, EventOperationEnum.APP_START), {
+                onClick: event => submitEventOperation(buildEvent(
+                  event, EventOperationEnum.APP_START, item, itemRef, block,
+                ), {
                   args: [
                     AppTypeEnum.EDITOR,
                     AppSubtypeEnum.CANVAS,
@@ -276,34 +239,23 @@ export const BlockNodeWrapper: React.FC<BlockNodeWrapperProps & NodeWrapperProps
     />
   );
 
-  const sharedProps = useMemo(() => ({
-    className: [
-      styles.blockNodeWrapper,
-      stylesBuilder.level,
-      stylesBuilder[`level-${item?.level}`],
-      item?.type && stylesBuilder[item?.type],
-      !emptyGroup && !draggable && !droppable && styles.showOnHoverContainer,
-      loading && styles.loading,
-      styles.container,
+  const sharedProps = useMemo(() => draggableProps({
+    draggable,
+    droppable,
+    emptyGroup,
+    item,
+    loading,
+    classNames: [
       item?.status && styles[item?.status],
-    ]?.filter(Boolean)?.join(' '),
-    role: ElementRoleEnum.BLOCK,
+    ],
   }), [draggable, droppable, loading, emptyGroup, item]);
 
   if (Wrapper) {
     return (
       <Wrapper
         {...sharedProps}
-        draggable={draggable}
         draggingNode={draggingNode}
-        droppable={droppable}
-        handlers={{
-          ...handlers,
-          onMouseDown: handleMouseDown,
-          onMouseLeave: handleMouseLeave,
-          onMouseOver: !draggable && handleMouseOver,
-          onMouseUp: handleMouseUp,
-        }}
+        handlers={draggingHandlers}
         item={item}
         itemRef={itemRef}
         rect={rect}

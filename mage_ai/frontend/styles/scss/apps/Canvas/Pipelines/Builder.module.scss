@@ -65,6 +65,10 @@
 
       }
 
+      .app {
+        z-index: 6;
+      }
+
       .block {
         z-index: 6;
       }
@@ -85,12 +89,14 @@
 
   }
 
-
-
   &.dragging {
     .connectionLines {
       z-index: 5;
     }
+  }
+
+  .app {
+    z-index: 6;
   }
 
   .block {

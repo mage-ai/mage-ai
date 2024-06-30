@@ -1,5 +1,4 @@
 import React from 'react';
-import styles from '@styles/scss/components/Canvas/Nodes/DraggableWrapper.module.scss';
 import type { DragSourceMonitor } from 'react-dnd';
 import { DraggableType } from './types';
 import { ElementRoleEnum } from '@mana/shared/types';
@@ -9,6 +8,7 @@ import { getDraggableStyles } from './utils';
 import { getEmptyImage } from 'react-dnd-html5-backend';
 import { memo, useEffect } from 'react';
 import { useDrag } from 'react-dnd';
+import styles from '@styles/scss/components/Canvas/Nodes/BlockNode.module.scss';
 
 export type DraggableWrapperProps = {
   children?: React.ReactNode;
@@ -57,7 +57,10 @@ export const DraggableWrapper: FC<DraggableWrapperProps> = memo(function Draggab
 
   return (
     <div
-      className={[styles.draggable, className ?? ''].join(' ')}
+      className={[
+        styles.nodeWrapper,
+        className ?? '',
+      ].join(' ')}
       onDragEnd={draggable && onDragEnd ? event => onDragEnd?.(event as any) : undefined}
       onDragStart={draggable && onDragStart ? event => onDragStart?.(event as any) : undefined}
       onMouseDown={draggable && onMouseDown ? event => onMouseDown?.(event as any) : undefined}

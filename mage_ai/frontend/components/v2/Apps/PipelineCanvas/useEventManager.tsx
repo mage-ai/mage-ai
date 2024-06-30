@@ -4,6 +4,7 @@ import type { DropTargetMonitor } from 'react-dnd';
 import update from 'immutability-helper';
 import {
   ModelManagerType,
+  EventManagerType,
   ActiveLevelRefType, AppHandlersRefType, LayoutConfigRefType, ItemIDsByLevelRef, SetActiveLevelType,
 } from './interfaces';
 import {
@@ -58,33 +59,6 @@ type EventManagerProps = {
   layoutConfig: LayoutManagerType['layoutConfig'];
 };
 
-export type EventManagerType = {
-  gridDimensions: React.MutableRefObject<RectType>;
-  handleContextMenu: RenderContextMenuType;
-  handleDoubleClick: (event: React.MouseEvent) => void;
-  handleDragEnd: (event: ClientEventType) => void;
-  handleDragStart: (event: ClientEventType) => void;
-  handleMouseDown: (event: ClientEventType) => void;
-  onDragInit: (node: NodeItemType, monitor: DropTargetMonitor) => void;
-  onDragging: (args: {
-    clientOffset: XYCoord;
-    currentOffset: XYCoord;
-    differenceFromInitialOffset: XYCoord;
-    initialClientOffset: XYCoord;
-    initialOffset: XYCoord;
-    itemType: ItemTypeEnum;
-    item: NodeItemType;
-  }) => void;
-  onDropBlock: (item: NodeItemType, monitor: DropTargetMonitor) => void;
-  onDropPort: (dragTarget: NodeItemType, dropTarget: NodeItemType) => void;
-  resetAfterDrop: () => void;
-  setSnapToGridOnDrag: (value: boolean) => void;
-  setSnapToGridOnDrop: (value: boolean) => void;
-  snapToGridOnDrag: boolean;
-  snapToGridOnDrop: boolean;
-  submitEventOperation: (event: ClientEventType, opts?: EventOperationOptionsType) => void;
-};
-
 export default function useEventManager({
   activeLevel,
   appHandlersRef,
@@ -115,8 +89,19 @@ export default function useEventManager({
   const [snapToGridOnDrag, setSnapToGridOnDrag] = useState(false);
   const [snapToGridOnDrop, setSnapToGridOnDrop] = useState(true);
 
+  function handleStartDragging(event: CustomEvent) {
+    startTransition(() => {
+      setZoomPanDisabled(true);
+      setDragEnabled(true);
+      setDropEnabled(true);
+    });
+    containerRef?.current?.classList.add(stylesBuilder.dragging);
+  }
+
   const { dispatchAppEvent } = useAppEventsHandler({
     updateLayoutOfItems,
+  } as any, {
+    [CustomAppEventEnum.START_DRAGGING]: handleStartDragging,
   });
 
   function onDragging({
@@ -291,12 +276,7 @@ export default function useEventManager({
         Icon: Select,
         onClick: (event: ClientEventType) => {
           removeContextMenu(event);
-          startTransition(() => {
-            setZoomPanDisabled(true);
-            setDragEnabled(true);
-            setDropEnabled(true);
-          });
-          containerRef?.current?.classList.add(stylesBuilder.dragging);
+          handleStartDragging();
         },
         uuid: 'Reposition blocks',
       },

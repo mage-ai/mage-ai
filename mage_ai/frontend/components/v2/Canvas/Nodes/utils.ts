@@ -1,4 +1,4 @@
-import { BlockTypeEnum, TemplateType } from '@interfaces/BlockType';
+import BlockType, { BlockTypeEnum, TemplateType } from '@interfaces/BlockType';
 import { ColorNameType, getBlockColor } from '@mana/themes/blocks';
 import PipelineType from '@interfaces/PipelineType';
 import { FrameworkType, PipelineExecutionFrameworkBlockType } from '@interfaces/PipelineExecutionFramework/interfaces';
@@ -9,7 +9,75 @@ import { CSSProperties } from 'react';
 import { EventOperationEnum, SubmitEventOperationType } from '@mana/shared/interfaces';
 import { NodeType, NodeItemType, RectType } from '../interfaces';
 import { ItemTypeEnum } from '../types';
+import { DragAndDropHandlersType, DraggableType } from './types';
 import { countOccurrences, flattenArray, sortByKey } from '@utils/array';
+import { ClientEventType } from '@mana/shared/interfaces';
+import { DEBUG } from '../../utils/debug';
+
+export function buildEvent(
+  event: any,
+  operation: EventOperationEnum,
+  item: NodeItemType,
+  itemRef: DraggableType['itemRef'],
+  block: BlockType,
+) {
+  return update(event, {
+    data: {
+      $set: {
+        block,
+        node: item,
+      },
+    },
+    operationTarget: {
+      $set: itemRef,
+    },
+    operationType: {
+      $set: operation,
+    },
+  }) as any;
+}
+
+export function setupDraggableHandlers(
+  handlers: DragAndDropHandlersType['handlers'],
+  item: NodeItemType,
+  itemRef: DraggableType['itemRef'],
+  block: BlockType,
+
+) {
+  const { onMouseDown, onMouseLeave, onMouseOver, onMouseUp } = handlers;
+
+  function handleMouseDown(event: ClientEventType) {
+    event.stopPropagation();
+    const event2 = buildEvent(event, EventOperationEnum.DRAG_START, item, itemRef, block);
+
+    DEBUG.dragging && console.log('BlockNodeWrapper.handleMouseDown', event2, onMouseDown);
+
+    onMouseDown && onMouseDown?.(event2);
+  }
+
+  function handleMouseLeave(event: ClientEventType) {
+    DEBUG.dragging && console.log('handleMouseLeave', event);
+    onMouseLeave && onMouseLeave?.(buildEvent(event, null, item, itemRef, block));
+  }
+
+  function handleMouseOver(event: ClientEventType) {
+    DEBUG.dragging && console.log('handleMouseOver', event);
+    onMouseOver && onMouseOver?.(buildEvent(event, null, item, itemRef, block));
+  }
+
+  function handleMouseUp(event: ClientEventType) {
+    DEBUG.dragging && console.log('handleMouseUp', event);
+    onMouseUp && onMouseUp?.(buildEvent(event, EventOperationEnum.DRAG_END, item, itemRef, block));
+  }
+
+  return {
+    ...handlers,
+    onMouseDown: handleMouseDown,
+    onMouseLeave: handleMouseLeave,
+    onMouseOver,
+    onMouseUp: handleMouseUp,
+  };
+}
 
 export function getColorNamesFromItems(items: NodeType[]): ColorNameType[] {
   return items?.map?.((item: NodeType) => {
@@ -52,6 +120,7 @@ export function getDraggableStyles(
     // border: '1px dashed gray',
     // IE fallback: hide the real node using CSS when dragging
     // because IE will ignore our custom "empty image" drag preview.
+    position: 'absolute',
     transform,
     zIndex,
     ...(draggable ? { cursor: 'move' } : {}),

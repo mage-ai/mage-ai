@@ -5,9 +5,6 @@
 
 .appNodeWrapper {
   @include grid.base();
-
-  position: absolute;
-  z-index: 6;
 }
 
 .appNodeContainer  {

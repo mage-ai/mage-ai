@@ -1,4 +1,6 @@
 import React from 'react';
+import { MenuItemType, RenderContextMenuOptions, RemoveContextMenuType, RenderContextMenuType } from '@mana/hooks/useContextMenu';
+import type { DropTargetMonitor, XYCoord } from 'react-dnd';
 import PipelineExecutionFrameworkType, { ConfigurationType, FrameworkType } from '@interfaces/PipelineExecutionFramework/interfaces';
 import { MutateType } from '@api/interfaces';
 import BlockType, { TemplateType } from '@interfaces/BlockType';
@@ -51,7 +53,34 @@ export interface ModelManagerType {
   updatePorts: (ports: PortMappingType) => void;
 }
 
-export type SubscriberType = AppManagerType | ModelManagerType | NodeItemType;
+export interface EventManagerType {
+  gridDimensions: React.MutableRefObject<RectType>;
+  handleContextMenu: RenderContextMenuType;
+  handleDoubleClick: (event: React.MouseEvent) => void;
+  handleDragEnd: (event: ClientEventType) => void;
+  handleDragStart: (event: ClientEventType) => void;
+  handleMouseDown: (event: ClientEventType) => void;
+  onDragInit: (node: NodeItemType, monitor: DropTargetMonitor) => void;
+  onDragging: (args: {
+    clientOffset: XYCoord;
+    currentOffset: XYCoord;
+    differenceFromInitialOffset: XYCoord;
+    initialClientOffset: XYCoord;
+    initialOffset: XYCoord;
+    itemType: ItemTypeEnum;
+    item: NodeItemType;
+  }) => void;
+  onDropBlock: (item: NodeItemType, monitor: DropTargetMonitor) => void;
+  onDropPort: (dragTarget: NodeItemType, dropTarget: NodeItemType) => void;
+  resetAfterDrop: () => void;
+  setSnapToGridOnDrag: (value: boolean) => void;
+  setSnapToGridOnDrop: (value: boolean) => void;
+  snapToGridOnDrag: boolean;
+  snapToGridOnDrop: boolean;
+  submitEventOperation: (event: ClientEventType, opts?: EventOperationOptionsType) => void;
+}
+
+export type SubscriberType = AppManagerType | EventManagerType | ModelManagerType | NodeItemType;
 
 export interface CustomEventDetail {
   app?: AppConfigType;
