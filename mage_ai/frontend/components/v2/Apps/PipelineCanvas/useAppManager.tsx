@@ -8,6 +8,7 @@ import { CustomAppEventEnum, } from './enums';
 import { AppManagerType } from './interfaces';
 import useAppEventsHandler, { CustomAppEvent } from './useAppEventsHandler';
 import { unique } from '@utils/array';
+import { DEBUG } from '@components/v2/utils/debug';
 
 export default function useAppManager({ activeLevel }: { activeLevel: React.MutableRefObject<number> }) {
   const appsRef = useRef<Record<string, AppNodeType[]>>({});
@@ -37,11 +38,37 @@ export default function useAppManager({ activeLevel }: { activeLevel: React.Muta
   };
 
   function handleStopApp({ detail: { event } }: CustomAppEvent) {
-    const { data } = event;
-    const { node: appNode } = data;
+    const { data } = event as ClientEventType;
+    const { app, node: appNode } = data;
+
+    DEBUG && console.log('handleStopApp.start', appNode, appNode.upstream, appsRef.current);
+
+    const mapping = {};
+    const entries = [...Object.entries(appsRef?.current ?? {})];
+
+    entries?.forEach(([nodeID, apps]: [string, AppNodeType[]]) => {
+      apps?.forEach((child) => {
+        if (child?.id === appNode?.id) {
+          delete appsRef.current[nodeID];
+        } else {
+          mapping[nodeID] ||= [];
+          mapping[nodeID].push(child);
+        }
+      });
+    });
+    appsRef.current = mapping;
+
+    DEBUG && console.log('handleStopApp.end', appNode, appNode.upstream, appsRef.current);
+
+    dispatchAppEvent(CustomAppEventEnum.APP_STOPPED, {
+      event: convertEvent(event, {
+        app,
+        node: appNode,
+      }),
+    });
   }
 
-  const { dispatchAppEvent } = useAppEventsHandler({
+  const { convertEvent, dispatchAppEvent } = useAppEventsHandler({
     appsRef,
     startApp,
   } as AppManagerType, {

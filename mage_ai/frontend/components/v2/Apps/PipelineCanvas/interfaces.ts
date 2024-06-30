@@ -53,16 +53,17 @@ export interface ModelManagerType {
 
 export type SubscriberType = AppManagerType | ModelManagerType | NodeItemType;
 
-export interface CustomAppEvent extends CustomEvent {
-  detail: {
-    app?: AppConfigType;
-    event?: ClientEventType
-    manager?: SubscriberType;
-    options?: {
-      args?: EventOperationOptionsType['args'];
-      kwargs?: EventOperationOptionsType['kwargs'];
-    };
+export interface CustomEventDetail {
+  app?: AppConfigType;
+  event?: ClientEventType
+  manager?: SubscriberType;
+  options?: {
+    args?: EventOperationOptionsType['args'];
+    kwargs?: EventOperationOptionsType['kwargs'];
   };
+}
+export interface CustomAppEvent extends CustomEvent {
+  detail: CustomEventDetail;
 }
 
 export type SubscriptionType = {

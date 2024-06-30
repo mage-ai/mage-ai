@@ -25,6 +25,7 @@ import { groupBy, unique, sortByKey, flattenArray } from '@utils/array';
 import useNodeManager from './useNodeManager';
 import useAppManager from './useAppManager';
 import useAppEventsHandler, { CustomAppEvent, CustomAppEventEnum } from './useAppEventsHandler';
+import { DEBUG } from '@components/v2/utils/debug';
 
 export type BuilderCanvasProps = {
   canvasRef: React.RefObject<HTMLDivElement>;
@@ -103,7 +104,7 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
   const [pipeline, setPipeline] = useState<PipelineExecutionFrameworkType>(null);
   const [executionFramework, setExecutionFramework] = useState<PipelineExecutionFrameworkType>(null);
 
-  const handleAppStarted = ({ detail: { manager } }: CustomAppEvent) => {
+  const handleAppChanged = ({ detail: { manager } }: CustomAppEvent) => {
     const mapping = {};
     const rects = [];
 
@@ -119,11 +120,13 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
       });
     });
 
+    DEBUG.apps && console.log('handleAppChanged', { mapping, rects });
     setAppRects({ mapping, rects });
   };
 
   useAppEventsHandler(null, {
-    [CustomAppEventEnum.APP_STARTED]: handleAppStarted,
+    [CustomAppEventEnum.APP_STARTED]: handleAppChanged,
+    [CustomAppEventEnum.APP_STOPPED]: handleAppChanged,
   });
 
   useAppManager({
@@ -359,6 +362,7 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
             ] = arr;
             const appNode = appRects?.mapping?.[id];
             if (!appNode) return;
+            DEBUG.apps && console.log('appRect rendering', id, left, top, width, height, appNode);
 
             return (
               <DraggableAppNode

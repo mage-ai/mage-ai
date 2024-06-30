@@ -116,7 +116,7 @@ export default function useModelManager({
     pipelines: pipelineMutants,
   };
 
-  const handleAppStarted = (event: CustomAppEvent) => {
+  const handleAppChanged = (event: CustomAppEvent) => {
     initializeModels(
       appHandlersRef?.current?.executionFrameworks?.modelsRef?.current?.execution_framework,
       appHandlersRef?.current?.pipelines?.modelsRef?.current?.pipeline,
@@ -124,10 +124,9 @@ export default function useModelManager({
     );
   };
 
-  useAppEventsHandler({
-    itemsRef,
-  } as ModelManagerType, {
-    [CustomAppEventEnum.APP_STARTED]: handleAppStarted,
+  useAppEventsHandler({ itemsRef } as ModelManagerType, {
+    [CustomAppEventEnum.APP_STARTED]: handleAppChanged,
+    [CustomAppEventEnum.APP_STOPPED]: handleAppChanged,
   });
 
   function initializeModels(

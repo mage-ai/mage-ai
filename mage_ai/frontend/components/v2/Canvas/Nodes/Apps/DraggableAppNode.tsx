@@ -3,7 +3,7 @@ import Button, { ButtonGroup } from '@mana/elements/Button';
 import styles from '@styles/scss/components/Canvas/Nodes/DraggableAppNode.module.scss';
 import { DraggableWrapper, DraggableWrapperProps } from '../DraggableWrapper';
 import { AppNodeType, NodeType, RectType } from '../../interfaces';
-import useAppEventsHandler, { CustomAppEvent } from '../../../Apps/PipelineCanvas/useAppEventsHandler';
+import useAppEventsHandler, { CustomAppEvent, CustomAppEventEnum, convertEvent } from '../../../Apps/PipelineCanvas/useAppEventsHandler';
 import { AppStatusEnum } from '../../../Apps/constants';
 import useDispatchMounted from '../useDispatchMounted';
 import { getColorNamesFromItems } from '../utils';
@@ -19,6 +19,7 @@ import Grid from '@mana/components/Grid';
 import Divider from '@mana/elements/Divider';
 import { areEqualRects, areDraggableStylesEqual } from '../equals';
 import { TooltipAlign, TooltipWrapper, TooltipDirection, TooltipJustify } from '@context/Tooltip';
+import { DEBUG } from '@components/v2/utils/debug';
 
 type DraggableAppNodeProps = {
   draggable?: boolean;
@@ -43,10 +44,16 @@ const DraggableAppNode: React.FC<DraggableAppNodeProps> = ({
   const block = item?.block;
   const app = node?.app;
 
+  const { dispatchAppEvent } = useAppEventsHandler(node);
   useDispatchMounted(node, nodeRef);
 
-  function handleCloseApp() {
-
+  function handleStopApp(event: MouseEvent) {
+    dispatchAppEvent(CustomAppEventEnum.STOP_APP, {
+      event: convertEvent(event, {
+        app: node.app,
+        node,
+      }),
+    });
   }
 
   function handleUpdateLayout() {
@@ -117,7 +124,7 @@ const DraggableAppNode: React.FC<DraggableAppNodeProps> = ({
             {[
               { label: () => 'File', uuid: 'File' },
               { Icon: Conversation, uuid: 'Chat', description: 'Get support in the community channel on Slack', href: 'https://mage.ai/chat', target: '_blank', anchor: 'true' },
-              { Icon: Minimize, uuid: 'Close', description: 'Close app', onClick: handleCloseApp },
+              { Icon: Minimize, uuid: 'Close', description: 'Close app', onClick: handleStopApp },
               { Icon: Grab, uuid: 'Layout', description: 'Drag to reposition app', onClick: handleUpdateLayout },
               { Icon: Comment, uuid: 'Comment', description: 'Add a comment to the pipeline or for a specific block', onClick: event => alert('Comment') },
 
@@ -246,6 +253,7 @@ function areEqual(p1: DraggableAppNodeProps, p2: DraggableAppNodeProps) {
     && areDraggableStylesEqual(p1, p2)
     && areEqualRects({ rect: p1?.rect }, { rect: p2?.rect });
 
+  DEBUG && console.log('DraggableAppNode.areEqual', equal, p1, p2);
   return equal;
 }
 

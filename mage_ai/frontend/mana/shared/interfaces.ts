@@ -25,10 +25,13 @@ export type EventControlType = {
 export type ClientEventType = {
   button?: ButtonEnum;
   control?: EventControlType;
-  data?: Record<string, any> | {
-    block: BlockType
+  data?: Record<string, BlockType | any> | {
+    app?: any;
+    block: BlockType;
     node?: any;
   } | {
+    app?: any;
+    block?: BlockType;
     node: any;
   };
   handle?: HandleOperationType;
