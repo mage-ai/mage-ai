@@ -27,6 +27,7 @@ type ButtonProps = {
   onMouseEnter?: (event: React.MouseEvent<HTMLDivElement>) => void;
   plain?: boolean;
   motion?: boolean;
+  style?: React.CSSProperties;
 } & ButtonStyleProps &
   WithLoggingProps;
 
@@ -74,6 +75,7 @@ function Button({
   primary,
   secondary,
   small,
+  style,
   tag,
   wrap,
   Icon,
@@ -105,6 +107,7 @@ function Button({
         secondary={secondary ? 'true' : undefined}
         small={small ? 'true' : undefined}
         style={{
+          ...style,
           gridTemplateColumns: [
             Icon ? 'auto' : '',
             children ? '1fr' : '',

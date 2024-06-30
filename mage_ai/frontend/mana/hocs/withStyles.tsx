@@ -19,6 +19,7 @@ export type GridType = {
   backgroundColor?: string;
   borders?: boolean;
   bordersTransparent?: boolean;
+  bordersBottom?: boolean;
   column?: number;
   columnEnd?: number;
   columnGap?: number;
@@ -104,10 +105,10 @@ export function withStyles<P extends object = WithStylesProp>(styles: any, props
     // Build additional dynamic styles if allowed
     const dynamicStyles = allowDynamicStyles
       ? {
-          fill: props.fill,
-          stroke: props.stroke,
-          strokeWidth: props.strokeWidth,
-        }
+        fill: props.fill,
+        stroke: props.stroke,
+        strokeWidth: props.strokeWidth,
+      }
       : {};
 
     const propsExtracted = extractProps(props);

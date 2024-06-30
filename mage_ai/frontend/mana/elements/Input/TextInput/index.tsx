@@ -13,6 +13,7 @@ type InputProps = {
   number?: boolean;
   placeholder?: string;
   required?: boolean;
+  style?: React.CSSProperties;
 } & InputStyleProps;
 
 const InputStyled = styled.input<InputStyleProps>`

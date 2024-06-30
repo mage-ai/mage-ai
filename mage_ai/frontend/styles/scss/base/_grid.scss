@@ -92,6 +92,37 @@ $values: (
 
 @mixin template-more() {
   @each $value1 in $numbers-more {
+    &.column-gap-#{($value1 * 2) + 20} {
+      grid-column-gap: #{($value1 * 2) + 20}px;
+    }
+    &.row-gap-#{($value1 * 2) + 20} {
+      grid-row-gap: #{($value1 * 2) + 20}px;
+    }
+    .padding-#{($value1 * 2) + 20} {
+      padding: #{($value1 * 2) + 20}px;
+    }
+    &.padding-left-#{($value1 * 2) + 20} {
+    padding-left: #{($value1 * 2) + 20}px;
+    }
+    &.padding-right-#{($value1 * 2) + 20} {
+      padding-right: #{($value1 * 2) + 20}px;
+    }
+    &.padding-top-#{($value1 * 2) + 20} {
+      padding-top: #{($value1 * 2) + 20}px;
+    }
+    &.padding-bottom-#{($value1 * 2) + 20} {
+      padding-bottom: #{($value1 * 2) + 20}px;
+    }
+  }
+
+  @each $value1 in $numbers-more {
+    &.column-gap-#{$value1} {
+      grid-column-gap: #{$value1}px;
+    }
+    &.row-gap-#{$value1} {
+      grid-row-gap: #{$value1}px;
+    }
+
     &.padding-#{$value1} {
       padding: #{$value1}px;
     }
@@ -108,9 +139,6 @@ $values: (
       padding-bottom: #{$value1}px;
     }
 
-    &.column-gap-#{$value1} {
-      grid-column-gap: #{$value1}px;
-    }
     &.column-start-#{$value1} {
       grid-column-start: $value1;
     }
@@ -121,9 +149,6 @@ $values: (
       grid-column: $value1;
     }
 
-    &.row-gap-#{$value1} {
-      grid-row-gap: #{$value1}px;
-    }
     &.row-start-#{$value1} {
       grid-row-start: $value1;
     }
@@ -298,6 +323,12 @@ $values: (
     @include borders.base;
     @include borders.border-colors();
     border-color: var(--borders-color-base-default);
+  }
+
+  &.borders-bottom-true {
+    border-bottom-color: var(--borders-color-base-default);
+    border-bottom-style: var(--borders-style);
+    border-bottom-width: var(--borders-width);
   }
 
   &.borders-transparent-true {
