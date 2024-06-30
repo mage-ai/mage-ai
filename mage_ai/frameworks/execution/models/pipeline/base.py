@@ -8,6 +8,7 @@ from mage_ai.data_preparation.models.constants import BlockType, PipelineType
 from mage_ai.frameworks.execution.models.base import BaseExecutionFramework
 from mage_ai.frameworks.execution.models.block.base import BlockExecutionFramework
 from mage_ai.shared.array import flatten
+from mage_ai.shared.hash import group_by
 
 
 @dataclass
@@ -32,43 +33,137 @@ class PipelineExecutionFramework(BaseExecutionFramework):
         return arr
 
     def flatten_block_groups(self):
-        flatten_block_groups = []
+        """
+        Example pipeline hierarchy:
+        PIPELINE.RAG = {
+            PIPELINE.DATA_PREPARATION: {
+                PIPELINE.LOAD: [GROUP.INGEST, GROUP.MAP],
+                PIPELINE.TRANSFORM: [
+                    GROUP.CLEANING,
+                    GROUP.ENRICH,
+                    GROUP.CHUNKING,
+                    GROUP.TOKENIZATION,
+                    GROUP.EMBED,
+                ],
+                PIPELINE.EXPORT: [GROUP.VECTOR_DATABASE, GROUP.KNOWLEDGE_GRAPH],
+                PIPELINE.INDEX: [
+                    GROUP.CONTEXTUAL_DICTIONARY,
+                    GROUP.DOCUMENT_HIERARCHY,
+                    GROUP.SEARCH_INDEX,
+                ],
+            },
+            PIPELINE.INFERENCE: {
+                PIPELINE.QUERY_PROCESSING: [
+                    GROUP.INTENT_DETECTION,
+                    GROUP.QUERY_DECOMPOSITION,
+                    GROUP.QUERY_AUGMENTATION,
+                ],
+                PIPELINE.RETRIEVAL: [
+                    GROUP.ITERATIVE_RETRIEVAL,
+                    GROUP.MEMORY,
+                    GROUP.MULTI_HOP_REASONING,
+                    GROUP.RANKING,
+                ],
+                PIPELINE.RESPONSE_GENERATION: [
+                    GROUP.CONTEXTUALIZATION,
+                    GROUP.RESPONSE_SYNTHESIS,
+                    GROUP.ANSWER_ENRICHMENT,
+                    GROUP.RESPONSE_FORMATTING,
+                ],
+            },
+        }
+        """
+        # Flattened block execution frameworks that are GROUP type
+        block_groups = []
+        # All flattened block execution frameworks
+        block_execution_frameworks = []
+        # Map pipeline uuid to its root and leaf nodes
+        pipeline_configs = dict()
         pipelines_queue = deque()
         pipelines_queue.append(self)
         while pipelines_queue:
             pipeline = pipelines_queue.pop()
+            pipeline_configs[pipeline.uuid] = dict(
+                root_nodes=[],
+                leaf_nodes=[],
+            )
             for b in pipeline.blocks:
+                block_execution_frameworks.append(b)
                 if b.type == BlockType.GROUP:
-                    flatten_block_groups.append(b)
+                    block_groups.append(
+                        dict(
+                            block_group=b,
+                            pipeline=pipeline,
+                            upstream_block_groups=b.upstream_blocks,
+                            downstream_block_groups=b.downstream_blocks,
+                        )
+                    )
+                if not b.upstream_blocks:
+                    pipeline_configs[pipeline.uuid]['root_nodes'].append(b)
+                if not b.downstream_blocks:
+                    pipeline_configs[pipeline.uuid]['leaf_nodes'].append(b)
+
             if pipeline.pipelines:
                 for child_pipeline in pipeline.pipelines:
                     pipelines_queue.append(child_pipeline)
-        return flatten_block_groups
+
+        block_execution_frameworks_by_uuid = {b.uuid: b for b in block_execution_frameworks}
+
+        # Add upstream and downstream groups for the root and leaf node in the pipelines
+        for block_group in block_groups:
+            if not block_group['upstream_block_groups']:
+                # Root node
+                p = block_group['pipeline']
+                if p:
+                    pipeline_block = block_execution_frameworks_by_uuid.get(p.uuid)
+                    if pipeline_block and pipeline_block.upstream_blocks:
+                        leaf_nodes_of_upstream_pipelines = []
+                        for b in pipeline_block.upstream_blocks:
+                            leaf_nodes_of_upstream_pipelines += \
+                                pipeline_configs.get(b, dict()).get('leaf_nodes', [])
+                        block_group['upstream_block_groups'] = \
+                            [b.uuid for b in leaf_nodes_of_upstream_pipelines]
+
+            if not block_group['downstream_block_groups']:
+                # Leaf node
+                p = block_group['pipeline']
+                if p:
+                    pipeline_block = block_execution_frameworks_by_uuid.get(p.uuid)
+                    if pipeline_block and pipeline_block.downstream_blocks:
+                        root_nodes_of_downstream_pipelines = []
+                        for b in pipeline_block.downstream_blocks:
+                            root_nodes_of_downstream_pipelines += \
+                                pipeline_configs.get(b, dict()).get('root_nodes', [])
+                        block_group['downstream_block_groups'] = \
+                            [b.uuid for b in root_nodes_of_downstream_pipelines]
+
+        return block_groups
 
     def set_block_dependency(self, blocks_by_uuid):
         """
         1. Construct a map of blocks by group
         2. Construct a map of block execution framework group to block execution framework
         """
-        blocks_by_group = {b.groups[0]: b for b in blocks_by_uuid.values() if b.groups}
+        blocks_with_group = [b for b in blocks_by_uuid.values() if b.groups]
+        blocks_by_group = group_by(lambda b: b.groups[0], blocks_with_group)
 
-        flatten_block_groups = self.flatten_block_groups()
-        flatten_block_groups_by_uuid = {b.uuid: b for b in flatten_block_groups}
+        flatten_blocks = self.flatten_block_groups()
+        flatten_block_groups_by_uuid = {b['block_group'].uuid: b for b in flatten_blocks}
 
-        for b in blocks_by_group.values():
+        for b in blocks_with_group:
             block_group = flatten_block_groups_by_uuid.get(b.groups[0])
             if not block_group:
                 continue
-            if block_group.upstream_blocks:
-                b.upstream_blocks = [
+            if block_group['upstream_block_groups']:
+                b.upstream_blocks = flatten([
                     blocks_by_group[guuid]
-                    for guuid in block_group.upstream_blocks
+                    for guuid in block_group['upstream_block_groups']
                     if guuid in blocks_by_group
-                ]
+                ])
 
-            if block_group.downstream_blocks:
-                b.downstream_blockse = [
+            if block_group['downstream_block_groups']:
+                b.downstream_blockse = flatten([
                     blocks_by_group[guuid]
-                    for guuid in block_group.downstream_blocks
+                    for guuid in block_group['downstream_block_groups']
                     if guuid in blocks_by_group
-                ]
+                ])
