@@ -72,6 +72,8 @@ export interface HandlersType {
   onSuccess?: OnSuccessHandlerType;
 }
 
+export type MutationFetchArgumentsType = HandlersType | any;
+
 export interface ResourceHandlersType {
   create?: HandlersType;
   delete?: HandlersType;

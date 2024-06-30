@@ -1,11 +1,12 @@
-// https://tanstack.com/query/v4/docs/framework/react/reference/useMutation
 import axios from 'axios';
 import { FetcherOptionsType, preprocess } from '@api/utils/fetcher';
 import { buildUrl } from '@api/utils/url';
 import { OperationTypeEnum, ResponseTypeEnum } from '@api/constants';
 import { hyphensToSnake } from '@utils/url';
 import { isEqual } from '@utils/hash';
+import { getClosestRole } from '@utils/elements';
 import { useContext, useMemo, useRef, useState } from 'react';
+import { ElementRoleEnum } from '@mana/shared/types';
 import { useMutation } from '@tanstack/react-query';
 import { APIErrorType, APIMutationContext } from './Context';
 import {
@@ -13,11 +14,11 @@ import {
   ModelsType,
   MutateFunctionArgsType,
   ResourceType,
-  MutateFunctionType,
   MutateType,
   MutationStatusMappingType,
   ResourceHandlersType,
   ResponseType,
+  MutationFetchArgumentsType,
   URLOptionsType,
   IDArgsType,
   ArgsValueOrFunctionType,
@@ -165,7 +166,11 @@ export function useMutate(
     return error;
   }
 
-  async function fetch(operation: OperationTypeEnum, args?: any, opts: FetcherOptionsType = {}): Promise<any> {
+  async function fetch(
+    operation: OperationTypeEnum,
+    args?: MutationFetchArgumentsType,
+    opts: FetcherOptionsType = {},
+  ): Promise<any> {
     const urlArg: string = buildUrl(...[
       resourceParent ?? resource,
       handleArgs(idParent ?? id),
@@ -191,7 +196,7 @@ export function useMutate(
       query: addMetaQuery(args),
     });
 
-    return axios.request({
+    return new Promise((resolve, reject) => axios.request({
       data: data.body,
       headers,
       method,
@@ -212,7 +217,13 @@ export function useMutate(
       responseType,
       signal,
       url: queryString ? `${url}?${queryString}` : url,
-    });
+    }).then((data) => {
+      args?.onSuccess && args?.onSuccess?.(data);
+      return resolve(data);
+    }).catch((error) => {
+      args?.onError && args?.onError?.(error);
+      return reject(error);
+    }));
   }
 
   function augmentHandlers(operation: OperationTypeEnum) {
@@ -280,7 +291,8 @@ export function useMutate(
     requests.current[operation].push(request);
 
     if (args?.event) {
-      const target = (args?.event?.target as HTMLElement).closest('[role="button"]') as HTMLElement;
+      const eventTarget = (args?.event?.target as HTMLElement)
+      const target = eventTarget ? getClosestRole(eventTarget, ElementRoleEnum.BUTTON) : null;
       if (target) {
         const rect = target.getBoundingClientRect();
         context.renderTarget({ content: null, rect });

@@ -120,7 +120,7 @@ export function setNested(obj: Record<string, any>, path: string, value: any): R
 
   for (let i = 0; i < len - 1; i++) {
     const elem = pList[i];
-    if (!schema.hasOwnProperty(elem) || typeof schema[elem] !== 'object') {
+    if (!schema.hasOwnProperty(elem) || typeof schema[elem] !== 'object' || schema[elem] === null) {
       schema[elem] = {};
     }
     schema = schema[elem];

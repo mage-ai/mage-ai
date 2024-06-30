@@ -4,7 +4,7 @@ import styled, { css } from 'styled-components';
 import { motion } from 'framer-motion';
 
 import ButtonGroup from './Group';
-import Loading, { LoadingStyleEnum } from '../../components/Loading';
+import Loading from '../../components/Loading';
 import Tag from '../../components/Tag';
 import buttons, { StyleProps, sm as buttonsSm } from '../../styles/buttons';
 import useWithLogging, { WithLoggingProps } from '../../hooks/useWithLogging';
@@ -75,6 +75,7 @@ function Button({
   secondary,
   small,
   tag,
+  wrap,
   Icon,
   IconAfter,
   ...props
@@ -112,6 +113,7 @@ function Button({
           ].join(' '),
         }}
         tag={tag}
+        wrap={wrap ? 'true' : undefined}
       >
         {Icon && <Icon inverted={primary || secondary} small={small} />}
 

@@ -10,7 +10,7 @@ import {
   InteractionInputType, InteractionVariableType, InteractionInputTypeEnum
 } from '@interfaces/InteractionType';
 import TextInput from '@mana/elements/Input/TextInput';
-import { TooltipAlign, TooltipWrapper, TooltipDirection } from '@context/Tooltip';
+import { TooltipAlign, TooltipWrapper, TooltipDirection, TooltipJustify } from '@context/Tooltip';
 
 export default function TemplateConfigurations({
   block,
@@ -31,30 +31,29 @@ export default function TemplateConfigurations({
 
   return (
     <PanelRows padding={false}>
-      <TooltipWrapper
-        align={TooltipAlign.START}
-        horizontalDirection={TooltipDirection.LEFT}
-        style={{ alignContent: 'center', justifySelf: 'stretch' }}
-        tooltip={
-          <Grid rowGap={8}>
-            <Text semibold small>
-              {template?.name || uuid}
-            </Text>
-            {template?.description && (
-              <Text secondary small>
-                {template?.description}
+      <Grid justifyItems="start" padding={12} rowGap={4} templateColumns="auto" >
+        <TooltipWrapper
+          align={TooltipAlign.END}
+          justify={TooltipJustify.END}
+          tooltip={
+            <Grid rowGap={8}>
+              <Text semibold small>
+                {template?.name || uuid}
               </Text>
-            )}
-          </Grid >
-        }
-        tooltipStyle={{ maxWidth: 400 }}
-      >
-        <Grid padding={12} rowGap={4}>
+              {template?.description && (
+                <Text secondary small>
+                  {template?.description}
+                </Text>
+              )}
+            </Grid  >
+          }
+          tooltipStyle={{ maxWidth: 400 }}
+        >
           <Text semibold xsmall>
             {template?.name || uuid}
           </Text>
-        </Grid>
-      </TooltipWrapper>
+        </TooltipWrapper>
+      </Grid >
 
       {Object.entries(variables ?? {})?.map((
         [variableUUID, variableConfig]: [string, InteractionVariableType]

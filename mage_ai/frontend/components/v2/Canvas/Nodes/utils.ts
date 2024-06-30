@@ -78,6 +78,7 @@ export function handleClickGroupMenu(
           {
             items,
             uuid: child?.name || child?.uuid,
+            // Count of templates; doesn’t look great right now...
             // uuid: `${child?.name || child?.uuid} templates`
             //   + (items?.length >= 1
             //     ? ` (${items.length})`
@@ -129,6 +130,9 @@ function handleGroupTemplateSelect(
     handler: (e, { pipelines }, { removeContextMenu }) => {
       pipelines.update.mutate({
         event: e,
+        onSuccess: () => {
+          removeContextMenu(e);
+        },
         payload: (pipeline: PipelineType) => ({
           ...pipeline,
           blocks: [
@@ -145,8 +149,6 @@ function handleGroupTemplateSelect(
           ],
         }),
       });
-
-      removeContextMenu(e);
     },
   });
 }

@@ -70,3 +70,9 @@ export function buildSetFunction(updateFunction) {
 
   return setObject;
 }
+
+export function getClosestRole(element: HTMLElement | null, role: string): HTMLElement | null {
+  return element?.closest('[role]')?.getAttribute('role')?.split(' ').includes(role)
+    ? element.closest('[role]')
+    : null;
+}

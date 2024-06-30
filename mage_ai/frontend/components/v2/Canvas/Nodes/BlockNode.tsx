@@ -1,6 +1,6 @@
 import Aside from './Blocks/Aside';
 import Badge from '@mana/elements/Badge';
-import BlockType, { BlockTypeEnum } from '@interfaces/BlockType';
+import { BlockTypeEnum } from '@interfaces/BlockType';
 import Circle from '@mana/elements/Circle';
 import Connection from './Blocks/Connection';
 import GradientContainer from '@mana/elements/Gradient';

@@ -1,10 +1,12 @@
 import { indexBy } from '@utils/array';
 
 export enum ElementRoleEnum {
+  BLOCK = 'block',
   BUTTON = 'button',
   DRAGGABLE = 'draggable',
   DROPPABLE = 'droppable',
   PANNABLE = 'pannable',
+  PIPELINE = 'pipeline',
   SCROLLABLE = 'scrollable',
   ZOOMABLE = 'zoomable',
 }

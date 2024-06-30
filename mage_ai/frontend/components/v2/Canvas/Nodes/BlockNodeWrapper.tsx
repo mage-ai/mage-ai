@@ -14,6 +14,7 @@ import { handleClickGroupMenu } from './utils';
 import { useEffect, useCallback, useState, useMemo, useRef } from 'react';
 import { NodeWrapperProps } from './NodeWrapper';
 import { ConfigurationType } from '@interfaces/PipelineExecutionFramework/interfaces';
+import { ElementRoleEnum } from '@mana/shared/types';
 import {
   Add, CaretDown, Check, ArrowsAdjustingFrameSquare, PipeIconVertical, PlayButtonFilled,
   Infinite,
@@ -250,19 +251,22 @@ export const BlockNodeWrapper: React.FC<BlockNodeWrapperProps & NodeWrapperProps
     />
   );
 
-  const className = useMemo(() => [
-    styles.blockNodeWrapper,
-    stylesBuilder.level,
-    stylesBuilder[`level-${item?.level}`],
-    item?.type && stylesBuilder[item?.type],
-    !emptyGroup && !draggable && !droppable && styles.showOnHoverContainer,
-    loading && styles.loading,
-  ]?.filter(Boolean)?.join(' '), [draggable, droppable, loading, emptyGroup, item]);
+  const sharedProps = useMemo(() => ({
+    className: [
+      styles.blockNodeWrapper,
+      stylesBuilder.level,
+      stylesBuilder[`level-${item?.level}`],
+      item?.type && stylesBuilder[item?.type],
+      !emptyGroup && !draggable && !droppable && styles.showOnHoverContainer,
+      loading && styles.loading,
+    ]?.filter(Boolean)?.join(' '),
+    role: ElementRoleEnum.BLOCK,
+  }), [draggable, droppable, loading, emptyGroup, item]);
 
   if (Wrapper) {
     return (
       <Wrapper
-        className={className}
+        {...sharedProps}
         draggable={draggable}
         draggingNode={draggingNode}
         droppable={droppable}
@@ -282,7 +286,7 @@ export const BlockNodeWrapper: React.FC<BlockNodeWrapperProps & NodeWrapperProps
     );
   }
 
-  return <div className={className} ref={itemRef}>{blockNode}</div>;
+  return <div {...sharedProps} ref={itemRef}>{blockNode}</div>;
 };
 
 export function areEqual(p1: BlockNodeWrapperProps, p2: BlockNodeWrapperProps) {

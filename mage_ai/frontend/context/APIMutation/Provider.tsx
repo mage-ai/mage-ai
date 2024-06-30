@@ -64,7 +64,7 @@ export const APIMutationProvider: React.FC<APIMutationProviderProps> = ({
             style={{
               height: target?.content ? 'inherit' : 2,
               left: target.rect.left,
-              top: target.rect.top,
+              top: target.rect.top + target.rect.height,
               width: target.rect.width,
             }}
           >

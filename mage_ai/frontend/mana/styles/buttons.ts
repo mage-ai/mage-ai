@@ -14,7 +14,7 @@ export type StyleProps = {
   secondary?: boolean;
   small?: boolean;
   tag?: React.ReactNode | string | number;
-  wrap?: boolean;
+  wrap?: boolean | string;
 } & TextStyleProps;
 
 const shared = css<StyleProps>`
