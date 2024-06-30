@@ -1,12 +1,11 @@
 @use '../../../base/borders';
 @use '../../../abstracts/variables' as *;
 @use '../../../base/grid';
+@use './mixins' as *;
 
 .appNodeWrapper {
   @include grid.base();
 
-  height: 800px;
-  width: 1000px;
   position: absolute;
   z-index: 6;
 }
@@ -15,10 +14,15 @@
   @include borders.base();
   @include borders.border-colors();
   @include grid.base();
+  @include start-up-status;
 
   backdrop-filter: blur(#{$modal-blur-base});
   background: var(--modal-background-color-base);
   border-radius: (--borders-radius-md);
   box-shadow: 8px 8px 4px 8px var(--modal-box-shadow-base);
   padding: var(--padding-sm);
+}
+
+.codeContainer {
+  min-height: 200px;
 }

@@ -6,7 +6,7 @@ import { ZoomPanStateType } from '@mana/hooks/useZoomPan';
 import { layoutItemsInGroups, transformRects } from '../../Canvas/utils/rect';
 import { startTransition, useEffect, useRef } from 'react';
 import { ActiveLevelRefType, ItemIDsByLevelRef } from './interfaces';
-import { RectTransformationScopeEnum, ItemTypeEnum, LayoutConfigDirectionOriginEnum, LayoutConfigDirectionEnum, TransformRectTypeEnum } from '../../Canvas/types';
+import { ItemStatusEnum, RectTransformationScopeEnum, ItemTypeEnum, LayoutConfigDirectionOriginEnum, LayoutConfigDirectionEnum, TransformRectTypeEnum } from '../../Canvas/types';
 import { calculateBoundingBox } from '../../Canvas/utils/rect';
 import { flattenArray, indexBy, sum } from '@utils/array';
 import { validateFiniteNumber } from '@utils/number';
@@ -482,6 +482,10 @@ export default function useLayoutManager({
     const items = [];
     Object.values(itemsUpdated).forEach((item) => {
       item.version = Number(new Date());
+      if (ItemStatusEnum.PENDING_LAYOUT === item?.status) {
+        item.status = ItemStatusEnum.READY;
+      }
+
       itemsRef.current[item.id] = item;
       items.push(item);
     });

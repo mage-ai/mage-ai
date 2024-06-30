@@ -1,5 +1,5 @@
 import { ClientEventType } from '@mana/shared/interfaces';
-import { AppSubtypeEnum, AppTypeEnum } from '../constants';
+import { AppStatusEnum, AppSubtypeEnum, AppTypeEnum } from '../constants';
 import { AppConfigType } from '../interfaces';
 import { useEffect, useRef } from 'react';
 import { buildAppNode } from './AppManager/utils';
@@ -22,12 +22,18 @@ export default function useAppManager({ activeLevel }: { activeLevel: React.Muta
     appNode?.upstream?.forEach((nodeID: string) => {
       const apps = [];
       appsRef?.current?.[nodeID]?.forEach((child) => {
-        if (appNode?.id === child?.id) {
-          child.rect = appNode.rect;
+        const childCopy = { ...child, rect: { ...child.rect } };
+        if (appNode?.id === childCopy?.id) {
+          childCopy.rect = { ...appNode.rect };
         }
-        apps.push(child);
+
+        apps.push(childCopy);
       });
-    })
+    });
+
+    dispatchAppEvent(CustomAppEventEnum.APP_STARTED, {
+      event,
+    });
   };
 
   const { dispatchAppEvent } = useAppEventsHandler({
@@ -46,6 +52,9 @@ export default function useAppManager({ activeLevel }: { activeLevel: React.Muta
     const appNode = buildAppNode(node, app, {
       level: activeLevel?.current,
     });
+    if (appNode?.app?.status === AppStatusEnum.INITIALIZED) {
+      appNode.app.status = AppStatusEnum.PENDING_LAYOUT;
+    }
     appsRef.current[node.id] = unique([
       ...(appsRef?.current?.[node.id] ?? []),
       appNode,

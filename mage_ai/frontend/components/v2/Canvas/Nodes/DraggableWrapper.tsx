@@ -4,7 +4,7 @@ import type { DragSourceMonitor } from 'react-dnd';
 import { DraggableType } from './types';
 import { ElementRoleEnum } from '@mana/shared/types';
 import { FC } from 'react';
-import { NodeType } from '../interfaces';
+import { NodeType, RectType } from '../interfaces';
 import { getDraggableStyles } from './utils';
 import { getEmptyImage } from 'react-dnd-html5-backend';
 import { memo, useEffect } from 'react';
@@ -16,6 +16,7 @@ export type DraggableWrapperProps = {
   draggable?: boolean;
   node: NodeType
   nodeRef: React.RefObject<HTMLDivElement>;
+  rect: RectType
 } & DraggableType;
 
 export const DraggableWrapper: FC<DraggableWrapperProps> = memo(function DraggableWrapper({
@@ -25,6 +26,7 @@ export const DraggableWrapper: FC<DraggableWrapperProps> = memo(function Draggab
   handlers,
   node,
   nodeRef,
+  rect,
 }: DraggableWrapperProps) {
   const {
     onDragEnd,
@@ -65,7 +67,7 @@ export const DraggableWrapper: FC<DraggableWrapperProps> = memo(function Draggab
       onMouseUp={draggable && onMouseUp ? event => onMouseUp?.(event as any) : undefined}
       ref={nodeRef}
       role={[ElementRoleEnum.DRAGGABLE].join(' ')}
-      style={getDraggableStyles(node.rect, {
+      style={getDraggableStyles(rect, {
         draggable,
         isDragging,
       })}

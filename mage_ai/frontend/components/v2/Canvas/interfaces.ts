@@ -2,8 +2,7 @@ import BlockType from '@interfaces/BlockType';
 import PipelineType from '@interfaces/PipelineType';
 import { FrameworkType, PipelineExecutionFrameworkBlockType } from '@interfaces/PipelineExecutionFramework/interfaces';
 import { GroupUUIDEnum } from '@interfaces/PipelineExecutionFramework/types';
-import { RectTransformationScopeEnum, TransformRectTypeEnum } from './types';
-import { AppTypeEnum, AppSubtypeEnum } from '../Apps/constants';
+import { ItemStatusEnum, RectTransformationScopeEnum, TransformRectTypeEnum } from './types';
 import { AppConfigType } from '../Apps/interfaces';
 import { ZoomPanStateType } from '@mana/hooks/useZoomPan';
 
@@ -43,6 +42,7 @@ export interface RectType {
 interface BaseItem {
   id: number | string;
   level?: number;
+  status?: ItemStatusEnum;
   subtype?: PortSubtypeEnum;
   type: ItemTypeEnum;
   version?: number;

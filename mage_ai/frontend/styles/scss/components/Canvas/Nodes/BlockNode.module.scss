@@ -1,5 +1,6 @@
 @use '../../../base/borders';
 @use '../../../base/grid';
+@use './mixins' as *;
 
 .blockNode {
   @include borders.border-colors();
@@ -42,6 +43,10 @@
 
 .nodeWrapper {
   @include grid.base();
+}
+
+.container {
+  @include start-up-status;
 }
 
 .requiredGroup {

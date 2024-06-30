@@ -2,8 +2,9 @@ import React, { useEffect, useRef } from 'react';
 import Button, { ButtonGroup } from '@mana/elements/Button';
 import styles from '@styles/scss/components/Canvas/Nodes/DraggableAppNode.module.scss';
 import { DraggableWrapper, DraggableWrapperProps } from '../DraggableWrapper';
-import { AppNodeType, NodeType } from '../../interfaces';
+import { AppNodeType, NodeType, RectType } from '../../interfaces';
 import useAppEventsHandler, { CustomAppEvent } from '../../../Apps/PipelineCanvas/useAppEventsHandler';
+import { AppStatusEnum } from '../../../Apps/constants';
 import useDispatchMounted from '../useDispatchMounted';
 import { getColorNamesFromItems } from '../utils';
 import Aside from '../Blocks/Aside';
@@ -13,17 +14,22 @@ import Text from '@mana/elements/Text';
 import { Chat, BlockGenericV2, PlayButtonFilled } from '@mana/icons';
 import Grid from '@mana/components/Grid';
 import Divider from '@mana/elements/Divider';
+import { areEqualRects, areDraggableStylesEqual } from '../equals';
+import { TooltipAlign, TooltipWrapper, TooltipDirection, TooltipJustify } from '@context/Tooltip';
 
 type DraggableAppNodeProps = {
+  draggable?: boolean;
   index?: number;
   items: NodeType[];
   node: AppNodeType;
+  rect: RectType;
 };
 
 const DraggableAppNode: React.FC<DraggableAppNodeProps> = ({
   index = 0,
   items,
   node,
+  rect,
 }: DraggableAppNodeProps) => {
   const [asideBeforeOpen, setAsideBeforeOpen] = React.useState(false);
   const [asideAfterOpen, setAsideAfterOpen] = React.useState(false);
@@ -32,6 +38,7 @@ const DraggableAppNode: React.FC<DraggableAppNodeProps> = ({
   const colorNames = getColorNamesFromItems([item]);
   const baseColor = colorNames?.[index]?.base;
   const block = item?.block;
+  const app = node?.app;
 
   useDispatchMounted(node, nodeRef);
 
@@ -40,8 +47,12 @@ const DraggableAppNode: React.FC<DraggableAppNodeProps> = ({
       className={styles.appNodeWrapper}
       node={node}
       nodeRef={nodeRef}
+      rect={rect}
     >
-      <div className={styles.appNodeContainer}>
+      <div className={[
+        styles.appNodeContainer,
+        app?.status && styles[app?.status],
+      ]?.filter(Boolean)?.join((' '))}>
         <Grid
           rowGap={8}
           style={{
@@ -63,9 +74,9 @@ const DraggableAppNode: React.FC<DraggableAppNodeProps> = ({
 
             <Button
               Icon={PlayButtonFilled}
-              backgroundColor={baseColor}
+              backgroundcolor={baseColor}
               basic
-              borderColor={baseColor}
+              bordercolor={baseColor}
               onClick={() => alert('Run code')}
               small
             />
@@ -142,14 +153,29 @@ const DraggableAppNode: React.FC<DraggableAppNodeProps> = ({
                 <Button
                   Icon={iconProps => <DiamondShared {...iconProps} colorName="yellow" />}
                   basic
-                  grouped
+                  grouped="true"
                   onClick={event => alert('DiamondShared')}
                   small
                 />
+                <TooltipWrapper
+                  tooltip={
+                    <Grid rowGap={8}>
 
-                <Text monospace secondary small>
-                  {block?.configuration?.file_source?.path ?? block?.uuid}
-                </Text >
+                      <Button
+                        asLink
+                        onClick={event => alert('Edit')}
+                      >
+                        <Text monospace small>
+                          {block?.configuration?.file_source?.path}
+                        </Text>
+                      </Button>
+                    </Grid  >
+                  }
+                >
+                  <Text monospace secondary small>
+                    {block?.name ?? block?.uuid}
+                  </Text >
+                </TooltipWrapper>
               </Grid >
 
               <Grid
@@ -161,7 +187,7 @@ const DraggableAppNode: React.FC<DraggableAppNodeProps> = ({
                 <Button
                   Icon={iconProps => <IdentityTag {...iconProps} secondary />}
                   basic
-                  grouped
+                  grouped="true"
                   onClick={event => alert('IdentityTag')}
                   small
                 />
@@ -169,18 +195,18 @@ const DraggableAppNode: React.FC<DraggableAppNodeProps> = ({
                 <Button
                   Icon={iconProps => <AppVersions {...iconProps} secondary />}
                   basic
-                  grouped
+                  grouped="true"
                   onClick={event => alert('AppVersions')}
                   small
                 />
               </Grid>
             </Grid>
 
-            <Grid>
+            <Grid className={styles.codeContainer}>
               <Text>
                 Code
               </Text>
-            </Grid>
+            </Grid >
           </Grid>
 
           <Grid
@@ -198,7 +224,10 @@ const DraggableAppNode: React.FC<DraggableAppNodeProps> = ({
 }
 
 function areEqual(p1: DraggableAppNodeProps, p2: DraggableAppNodeProps) {
-  const equal = p1?.node?.id === p2?.node?.id;
+  const equal = p1?.node?.id === p2?.node?.id
+    && areDraggableStylesEqual(p1, p2)
+    && areEqualRects({ rect: p1?.rect }, { rect: p2?.rect });
+
   return equal;
 }
 

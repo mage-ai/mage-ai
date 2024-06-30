@@ -1,8 +1,8 @@
 import React, { createRef, useRef } from 'react';
 import update from 'immutability-helper';
 import { ConnectionLines } from '../../Canvas/Connections/ConnectionLines';
-import { DragItem, NodeItemType, NodeType, RectType, PortType, LayoutConfigType, ModelMappingType } from '../../Canvas/interfaces';
-import { ItemTypeEnum, LayoutConfigDirectionEnum, LayoutConfigDirectionOriginEnum, PortSubtypeEnum } from '../../Canvas/types';
+import { DragItem, NodeItemType, NodeType, RectType, PortType, LayoutConfigType, ModelMappingType, AppNodeType } from '../../Canvas/interfaces';
+import { ItemStatusEnum, ItemTypeEnum, LayoutConfigDirectionEnum, LayoutConfigDirectionOriginEnum, PortSubtypeEnum } from '../../Canvas/types';
 import { LayoutManagerType } from './useLayoutManager';
 import { ModelManagerType } from './useModelManager';
 import { createRoot, Root } from 'react-dom/client';
@@ -13,6 +13,7 @@ import { ItemElementsType, ItemElementsRefType } from './interfaces';
 import useDynamicDebounce from '@utils/hooks/useDebounce';
 import useAppEventsHandler, { CustomAppEvent, CustomAppEventEnum } from './useAppEventsHandler';
 import { ClientEventType } from '@mana/shared/interfaces';
+import { AppStatusEnum } from '../constants';
 
 export default function useItemManager({
   itemElementsRef,
@@ -93,10 +94,29 @@ export default function useItemManager({
         },
       };
 
+      if (ItemStatusEnum.INITIALIZED === item?.status) {
+        item.status = ItemStatusEnum.PENDING_LAYOUT;
+      }
+
       itemsRef.current[item.id] = item;
       cancelDebounce();
       debouncer(updateLayoutOfItems, 100);
     } else if ([ItemTypeEnum.APP].includes(type)) {
+      const node = itemsRef?.current?.[item?.upstream?.[0]];
+      if (!node) return;
+      const {
+        height = 0,
+        left = 0,
+        top = 0,
+        width = 0,
+      } = node?.rect ?? {};
+      item.rect.left = left + width + 20;
+      item.rect.top = top - ((item.rect.height ?? 0) - height);
+
+      if (AppStatusEnum.PENDING_LAYOUT === (item as AppNodeType)?.app?.status) {
+        (item as AppNodeType).app.status = AppStatusEnum.READY;
+      }
+
       dispatchAppEvent(CustomAppEventEnum.APP_RECT_UPDATED, {
         event: update({}, {
           data: {

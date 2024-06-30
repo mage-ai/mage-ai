@@ -18,6 +18,12 @@ export function buildAppNode(node: NodeType, app: AppConfigType, opts?: {
     app,
     id,
     level: opts?.level,
+    rect: {
+      height: undefined,
+      left: 0,
+      top: 0,
+      width: undefined,
+    },
     type: ItemTypeEnum.APP,
     upstream: [String(node.id)],
   };

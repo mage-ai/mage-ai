@@ -20,7 +20,7 @@ import { useDrop } from 'react-dnd';
 import { useEffect, useMemo, useRef, useState, startTransition } from 'react';
 import useItemManager from './useItemManager';
 import useDynamicDebounce from '@utils/hooks/useDebounce';
-import { ItemElementsType } from './interfaces';
+import { AppManagerType, ItemElementsType } from './interfaces';
 import { groupBy, unique, sortByKey, flattenArray } from '@utils/array';
 import useNodeManager from './useNodeManager';
 import useAppManager from './useAppManager';
@@ -76,7 +76,13 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
   const wrapperRef = useRef(null);
 
   const [itemRects, setItemRectsState] = useState<FlatItemType[]>([]);
-  const [appNodes, setAppNodes] = useState<AppNodeType[]>([]);
+  const [appRects, setAppRects] = useState<{
+    mapping: Record<string, AppNodeType>;
+    rects: FlatItemType[];
+  }>({
+    mapping: {},
+    rects: [],
+  });
 
   function setItemRects(items: NodeItemType[] | ((items: FlatItemType[]) => FlatItemType[])) {
     const buildItem = ({ id, rect }: NodeItemType): FlatItemType => {
@@ -98,13 +104,25 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
   const [executionFramework, setExecutionFramework] = useState<PipelineExecutionFrameworkType>(null);
 
   const handleAppStarted = ({ detail: { manager } }: CustomAppEvent) => {
-    console.log(manager)
-    setAppNodes(flattenArray(Object.values(manager?.appsRef?.current ?? [])));
+    const mapping = {};
+    const rects = [];
+
+    Object.values((manager as AppManagerType)?.appsRef?.current ?? {})?.forEach((appNodes: AppNodeType[]) => {
+      appNodes?.forEach((appNode: AppNodeType) => {
+        const { id, rect } = appNode;
+        const { left, top, width, height } = rect ?? {};
+
+        const flat = [String(id), left, top, width, height];
+
+        rects.push(flat);
+        mapping[flat[0]] = appNode;
+      });
+    });
+
+    setAppRects({ mapping, rects });
   };
 
-  useAppEventsHandler({
-    itemElementsRef,
-  }, {
+  useAppEventsHandler(null, {
     [CustomAppEventEnum.APP_STARTED]: handleAppStarted,
   });
 
@@ -331,13 +349,31 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
             );
           })}
 
-          {appNodes?.map((appNode: AppNodeType) => (
-            <DraggableAppNode
-              items={appNode?.upstream?.map(id => itemsRef?.current?.[id])}
-              key={appNode.id}
-              node={appNode}
-            />
-          ))}
+          {appRects?.rects?.map((arr) => {
+            const [
+              id,
+              left,
+              top,
+              width,
+              height,
+            ] = arr;
+            const appNode = appRects?.mapping?.[id];
+            if (!appNode) return;
+
+            return (
+              <DraggableAppNode
+                items={appNode?.upstream?.map(id => itemsRef?.current?.[id])}
+                key={appNode.id}
+                node={appNode}
+                rect={{
+                  height,
+                  left,
+                  top,
+                  width,
+                }}
+              />
+            );
+          })}
         </CanvasContainer>
       </div>
     </div>

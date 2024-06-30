@@ -250,7 +250,11 @@ export function BlockNode({
 
   const main = useMemo(
     () => (
-      <div className={styles.blockNode}>
+      <div
+        className={[
+          styles.blockNode,
+        ]?.filter(Boolean)?.join(' ')}
+      >
         <Grid templateRows="auto">
           <Grid rowGap={8} templateRows="auto">
             {badgeRow}
@@ -258,8 +262,8 @@ export function BlockNode({
           </Grid>
           <div className={styles.loader}>
             <Loading
-              colorName={colorNames?.hi}
-              colorNameAlt={colorNames?.md}
+              // colorName={colorNames?.hi}
+              // colorNameAlt={colorNames?.md}
               position="absolute"
             />
           </div>
@@ -271,13 +275,17 @@ export function BlockNode({
         </Grid>
       </div>
     ),
-    [badge, badgeRow, block, connectionRows, colorNames, templateConfigurations, titleRow],
+    [badge, badgeRow, block, connectionRows, templateConfigurations, titleRow],
   );
 
   return (
     <GradientContainer
       // Only use gradient borders when block selected
-      className={classNames?.join(' ')}
+      className={[
+        ...classNames,
+        styles.container,
+        item?.status && styles[item?.status],
+      ]?.filter(Boolean)?.join(' ')}
     >
       {main}
     </GradientContainer>

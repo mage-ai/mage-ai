@@ -1,4 +1,4 @@
-import { AppTypeEnum, AppSubtypeEnum } from './constants';
+import { AppTypeEnum, AppStatusEnum, AppSubtypeEnum } from './constants';
 
 export enum OperationTypeEnum {
   ADD_APP = 'add-app',
@@ -70,6 +70,7 @@ export interface AppConfigType {
   layout?: AppLayoutType;
   operations?: OperationsType;
   options?: Record<string, any>;
+  status?: AppStatusEnum;
   subtype?: AppSubtypeEnum;
   toolbars?: ToolbarsType;
   type?: AppTypeEnum;

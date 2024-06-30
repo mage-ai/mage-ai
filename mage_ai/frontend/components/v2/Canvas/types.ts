@@ -1,3 +1,8 @@
+export enum ItemStatusEnum {
+  INITIALIZED = 'initialized',
+  PENDING_LAYOUT = 'pending_layout',
+  READY = 'ready',
+}
 export enum LayoutConfigDirectionEnum {
   HORIZONTAL = 'horizontal',
   VERTICAL = 'vertical',

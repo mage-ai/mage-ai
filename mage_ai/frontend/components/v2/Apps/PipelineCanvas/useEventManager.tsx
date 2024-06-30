@@ -1,14 +1,15 @@
 import stylesBuilder from '@styles/scss/apps/Canvas/Pipelines/Builder.module.scss';
+import { AppStatusEnum } from '../constants';
 import type { DropTargetMonitor } from 'react-dnd';
 import update from 'immutability-helper';
 import {
+  ModelManagerType,
   ActiveLevelRefType, AppHandlersRefType, LayoutConfigRefType, ItemIDsByLevelRef, SetActiveLevelType,
 } from './interfaces';
 import { Search, CubeWithArrowDown, PaginateArrowRight, BatchSquaresStacked, Table, Circle, BranchAlt, Monitor, ArrowsAdjustingFrameSquare, Check, Group, TemplateShapes, Trash } from '@mana/icons';
 import { ClientEventType, EventOperationEnum, EventOperationOptionsType } from '@mana/shared/interfaces';
 import { ItemTypeEnum, LayoutConfigDirectionEnum, TransformRectTypeEnum } from '../../Canvas/types';
 import { MenuItemType, RenderContextMenuOptions, RemoveContextMenuType, RenderContextMenuType } from '@mana/hooks/useContextMenu';
-import { ModelManagerType } from './useModelManager';
 import { NodeItemType, PortType, RectType, ItemMappingType, PortMappingType, ModelMappingType, LayoutConfigType, NodeType } from '../../Canvas/interfaces';
 import { PresentationManagerType } from './usePresentationManager';
 import { XYCoord } from 'react-dnd';
@@ -23,7 +24,7 @@ import { LayoutManagerType } from './useLayoutManager';
 import BlockType, { BlockTypeEnum } from '@interfaces/BlockType';
 import { MutateType } from '@api/interfaces';
 import { IconProps } from '@mana/elements/Icon';
-import useAppEventsHandler, { CustomAppEvent, CustomAppEventEnum } from './useAppEventsHandler';
+import useAppEventsHandler, { CustomAppEventEnum } from './useAppEventsHandler';
 
 const GRID_SIZE = 40;
 
@@ -240,6 +241,7 @@ export default function useEventManager({
         const [type, subtype] = opts?.args;
         dispatchAppEvent(CustomAppEventEnum.START_APP, {
           app: {
+            status: AppStatusEnum.INITIALIZED,
             subtype,
             type,
           },

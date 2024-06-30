@@ -1,4 +1,5 @@
 import PipelineExecutionFrameworkType, { ConfigurationType, FrameworkType } from '@interfaces/PipelineExecutionFramework/interfaces';
+import { ItemStatusEnum } from '../../Canvas/types';
 import { AppHandlerType, AppHandlersRefType } from './interfaces';
 import { AppNodeType, BlockGroupType, BlockMappingType, GroupLevelType, ItemMappingType, ModelMappingType, NodeItemType, NodeType, PortMappingType, PortType } from '../../Canvas/interfaces';
 import { GroupUUIDEnum } from '@interfaces/PipelineExecutionFramework/types';
@@ -207,6 +208,7 @@ export default function useModelManager({
             const itemPrev = itemsRef?.current?.[item.id];
             if (itemPrev?.rect) {
               item.rect = itemPrev?.rect;
+              item.status = itemPrev?.status;
               item.version = itemPrev?.version + 1;
 
               // const itemItemsCurr = ((item as NodeType)?.items ?? []) as string[];
@@ -233,6 +235,7 @@ export default function useModelManager({
               //   item.rect.width -= widthDiff;
               // }
             } else {
+              item.status = ItemStatusEnum.INITIALIZED;
               item.version = 0;
             }
 

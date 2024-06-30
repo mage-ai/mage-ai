@@ -21,6 +21,7 @@ import {
   Infinite,
 } from '@mana/icons';
 import { setNested } from '@utils/hash';
+import { areEqualRects, areDraggableStylesEqual } from './equals';
 
 export type BlockNodeWrapperProps = {
   Wrapper?: React.FC<NodeWrapperProps>;
@@ -309,14 +310,9 @@ export function areEqual(p1: BlockNodeWrapperProps, p2: BlockNodeWrapperProps) {
   const appIDs = ({ item }) => item?.apps?.map(a => String(a?.id ?? '')).sort()?.join('|');
 
   const equal = appIDs(p1) === appIDs(p2)
-    && p1.draggable === p2.draggable
     && p1.droppable === p2.droppable
-    && [
-      'height',
-      'left',
-      'top',
-      'width',
-    ].every((key: string) => p1?.rect?.[key] === p2?.rect?.[key]);
+    && areDraggableStylesEqual(p1, p2)
+    && areEqualRects(p1, p2);
 
   return equal;
 }
