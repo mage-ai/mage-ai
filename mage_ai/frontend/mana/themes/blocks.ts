@@ -93,10 +93,11 @@ export function getBlockColor(
     accentDark,
     accentLight,
     names: {
-      base: baseName,
-      hi: `${baseName}hi`,
-      lo: `${baseName}lo`,
-      md: `${baseName}md`,
+      base: baseName || null,
+      hi: baseName ? `${baseName}hi` : null,
+      lo: baseName ? `${baseName}lo` : null,
+      md: baseName ? `${baseName}md` : null,
+
     },
   };
 }

@@ -4,7 +4,6 @@ import Text from '@mana/elements/Text';
 import { SharedBlockProps } from '../types';
 import Loading from '@mana/components/Loading';
 import BlockType, { TemplateType } from '@interfaces/BlockType';
-import styles from '@styles/scss/components/Canvas/Nodes/BlockNode.module.scss';
 import { PipelineExecutionFrameworkBlockType } from '@interfaces/PipelineExecutionFramework/interfaces';
 import {
   InteractionVariableTypeEnum,
@@ -32,7 +31,7 @@ export default function TemplateConfigurations({
   const userValuesByVariable = block?.configuration?.templates?.[uuid]?.variables;
 
   return (
-    <PanelRows skipIndexes={[1]} padding={false}>
+    <PanelRows padding={false}>
       <Grid justifyItems="start" padding={12} rowGap={4} templateColumns="auto" >
         <TooltipWrapper
           align={TooltipAlign.END}
@@ -56,8 +55,6 @@ export default function TemplateConfigurations({
           </Text>
         </TooltipWrapper>
       </Grid>
-
-      <div className={styles.loader}><Loading position="absolute" /></div>
 
       {Object.entries(variables ?? {})?.map((
         [variableUUID, variableConfig]: [string, InteractionVariableType]

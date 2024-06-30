@@ -213,6 +213,7 @@ export const BlockNodeWrapper: React.FC<BlockNodeWrapperProps & NodeWrapperProps
       borderConfig={{
         borders,
       }}
+      colorNames={names}
       draggable={draggable}
       handlers={{
         ...handlers,

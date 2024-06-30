@@ -14,6 +14,7 @@ type LoadingProps = {
   className?: string;
   color?: string;
   colorName?: string;
+  colorNameAlt?: string;
   colorLight?: string;
   height?: number;
   loadingStyle?: LoadingStyleEnum;
@@ -238,15 +239,21 @@ const ScrollingBarsStyle = styled.div`
 `;
 
 const RepeatingBarStyle = styled.div<LoadingProps>`
-  ${({ color, colorLight, height, position, theme, width }) => `
+  ${({ color, colorLight, colorName, colorNameAlt, height, position, theme, width }) => `
   position: relative;
   width: ${width || '100%'};
 
   .loader {
     height: ${height || 2}px;
     width: inherit;
-    --c:no-repeat linear-gradient(${color || theme.colors.statuses.success} 0 0);
-    background: var(--c),var(--c), ${colorLight || theme.colors.statuses.successHi};
+    --c:no-repeat linear-gradient(${color ??
+      colorName
+      ? theme.colors[colorName]
+      : theme.colors.statuses.success} 0 0);
+    background: var(--c),var(--c), ${colorLight ??
+      (colorNameAlt || colorName)
+      ? theme.colors[colorNameAlt || colorName]
+      : theme.colors.statuses.successHi};
     background-size: 60% 100%;
     animation: l16 3s infinite;
     position: ${position || 'relative'};

@@ -12,13 +12,18 @@
 .blockNodeWrapper {
   &.loading {
     .loader {
-      display: block;
+      visibility: visible;
+      opacity: 1;
     }
   }
 
   .loader {
-    display: none;
-    position: absolute;
+    visibility: hidden;
+    opacity: 0;
+    position: relative;
+    height: 2px;
+    margin-top: 4px;
+    margin-bottom: 2px;
     width: 100%;
   }
 }

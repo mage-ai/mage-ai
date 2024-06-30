@@ -26,6 +26,12 @@ type BlockNodeProps = {
   borderConfig?: BorderConfigType;
   draggable?: boolean;
   item: DragItem;
+  colorNames?: {
+    base: string;
+    hi?: string;
+    lo?: string;
+    md?: string;
+  };
   collapsed?: boolean;
   configurationOptions?: ConfigurationOptionType[];
   onMount?: (port: PortType, portRef: React.RefObject<HTMLDivElement>) => void;
@@ -35,6 +41,7 @@ type BlockNodeProps = {
 export function BlockNode({
   block,
   borderConfig,
+  colorNames,
   draggable,
   handlers,
   item,
@@ -76,25 +83,27 @@ export function BlockNode({
     });
   }, [block, inputs, item, outputs]);
 
-  const classNames = [
-    true || borders?.length >= 2
-      ? stylesGradient[
-      [
-        'gradient-background-to-top-right',
-        ...(borders ?? [])
-          .concat([
-            // { baseColorName: 'yellow' },
-            // { baseColorName: 'green' },
-          ])
-          ?.slice?.(0, 2)
-          ?.map(b => b.baseColorName),
-      ].join('-')
-      ]
-      : '',
-  ].filter(b => b);
-  if (classNames?.length === 0 && borders?.length >= 1) {
-    classNames.push(stylesGradient[`border-color-${borders?.[0]?.baseColorName?.toLowerCase()}`]);
-  }
+  const classNames = useMemo(() => {
+    const colors = borders?.map(b => b?.baseColorName) ?? [];
+    const arr = [
+      colors?.length >= 2
+        ? stylesGradient[
+        [
+          'gradient-background-to-top-right',
+          ...colors?.slice?.(0, 2),
+        ].join('-')
+        ]
+        : '',
+    ].filter(Boolean);
+
+    if (arr?.length === 0 && colors?.length >= 1) {
+      arr.push(stylesGradient[`border-color-${colors?.[0]?.toLowerCase()}`]);
+    }
+
+    return arr;
+  }, [borders]);
+
+  console.log(colorNames)
 
   const badgeRow = useMemo(
     () =>
@@ -244,16 +253,27 @@ export function BlockNode({
   const main = useMemo(
     () => (
       <div className={styles.blockNode}>
-        <Grid rowGap={8} templateRows="auto">
-          {badgeRow}
-          {!badge && titleRow}
-          {connectionRows}
-          {templateConfigurations}
-          {BlockTypeEnum.PIPELINE === block?.type && <div />}
+        <Grid templateRows="auto">
+          <Grid rowGap={8} templateRows="auto">
+            {badgeRow}
+            {!badge && titleRow}
+          </Grid>
+          <div className={styles.loader}>
+            <Loading
+              colorName={colorNames?.hi}
+              colorNameAlt={colorNames?.md}
+              position="absolute"
+            />
+          </div>
+          <Grid rowGap={8} templateRows="auto">
+            {connectionRows}
+            {templateConfigurations}
+            {BlockTypeEnum.PIPELINE === block?.type && <div />}
+          </Grid>
         </Grid>
       </div>
     ),
-    [badge, badgeRow, block, connectionRows, templateConfigurations, titleRow],
+    [badge, badgeRow, block, connectionRows, colorNames, templateConfigurations, titleRow],
   );
 
   return (
