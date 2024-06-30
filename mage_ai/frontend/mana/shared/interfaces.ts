@@ -1,11 +1,11 @@
-import React from 'react';
-import { MutateType } from '@api/interfaces';
-import { ButtonEnum, LanguageEnum } from './enums';
-import { RemoveContextMenuType, RenderContextMenuType } from '@mana/hooks/useContextMenu';
-import { NodeItemType } from '@components/v2/Canvas/interfaces';
 import BlockType from '@interfaces/BlockType';
+import React from 'react';
+import { ButtonEnum, LanguageEnum } from './enums';
+import { MutateType } from '@api/interfaces';
+import { RemoveContextMenuType, RenderContextMenuType } from '../hooks/useContextMenu';
 
 export enum EventOperationEnum {
+  APP_START = 'app.start',
   CONTEXT_MENU_OPEN = 'context_menu.open',
   DRAGGING = 'drag.active',
   DRAG_END = 'drag.end',
@@ -27,9 +27,9 @@ export type ClientEventType = {
   control?: EventControlType;
   data?: Record<string, any> | {
     block: BlockType
-    node?: NodeItemType;
+    node?: any;
   } | {
-    node: NodeItemType;
+    node: any;
   };
   handle?: HandleOperationType;
   operationTarget?: HTMLElement;

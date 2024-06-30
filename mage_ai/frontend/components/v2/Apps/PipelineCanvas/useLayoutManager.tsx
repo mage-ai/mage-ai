@@ -33,7 +33,7 @@ type LayoutManagerProps = {
 };
 
 export type LayoutManagerType = {
-  updateLayoutOfItems: () => ItemMappingType;
+  updateLayoutOfItems: () => void;
   updateLayoutConfig: (config: LayoutConfigType) => void;
   layoutConfig: React.MutableRefObject<LayoutConfigType>;
   activeLevel: React.MutableRefObject<number>;
@@ -354,7 +354,7 @@ export default function useLayoutManager({
     ];
   }
 
-  function updateLayoutOfItems(opts?: { level?: number }): ItemMappingType {
+  function updateLayoutOfItems(opts?: { level?: number }) {
     const itemsUpdated = {} as ItemMappingType;
 
     // Update the layout of items across every level.

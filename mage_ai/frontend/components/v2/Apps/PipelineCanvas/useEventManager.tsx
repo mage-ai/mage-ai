@@ -23,6 +23,7 @@ import { LayoutManagerType } from './useLayoutManager';
 import BlockType, { BlockTypeEnum } from '@interfaces/BlockType';
 import { MutateType } from '@api/interfaces';
 import { IconProps } from '@mana/elements/Icon';
+import useAppEventsHandler, { CustomAppEvent, CustomAppEventEnum } from './useAppEventsHandler';
 
 const GRID_SIZE = 40;
 
@@ -108,6 +109,10 @@ export default function useEventManager({
 
   const [snapToGridOnDrag, setSnapToGridOnDrag] = useState(false);
   const [snapToGridOnDrop, setSnapToGridOnDrop] = useState(true);
+
+  const { dispatchAppEvent } = useAppEventsHandler({
+    updateLayoutOfItems,
+  });
 
   function onDragging({
     // clientOffset,
@@ -231,6 +236,15 @@ export default function useEventManager({
 
       if (EventOperationEnum.CONTEXT_MENU_OPEN === operationType) {
         handleContextMenu(event, ...opts?.args, opts?.kwargs);
+      } else if (EventOperationEnum.APP_START === operationType) {
+        const [type, subtype] = opts?.args;
+        dispatchAppEvent(CustomAppEventEnum.START_APP, {
+          app: {
+            subtype,
+            type,
+          },
+          event,
+        });
       }
     }
   }

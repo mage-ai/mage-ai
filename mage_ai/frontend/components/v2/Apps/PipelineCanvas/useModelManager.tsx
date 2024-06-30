@@ -1,6 +1,6 @@
 import PipelineExecutionFrameworkType, { ConfigurationType, FrameworkType } from '@interfaces/PipelineExecutionFramework/interfaces';
 import { AppHandlerType, AppHandlersRefType } from './interfaces';
-import { BlockGroupType, BlockMappingType, GroupLevelType, ItemMappingType, ModelMappingType, NodeItemType, NodeType, PortMappingType, PortType } from '../../Canvas/interfaces';
+import { AppNodeType, BlockGroupType, BlockMappingType, GroupLevelType, ItemMappingType, ModelMappingType, NodeItemType, NodeType, PortMappingType, PortType } from '../../Canvas/interfaces';
 import { GroupUUIDEnum } from '@interfaces/PipelineExecutionFramework/types';
 import { buildDependencies } from './utils/pipelines';
 import { createItemsFromBlockGroups } from './utils/items';
@@ -13,6 +13,9 @@ import { MutatationType, MutateFunctionArgsType } from '@api/interfaces';
 import useDebounce from '@utils/hooks/useDebounce';
 import { ClientEventType } from '@mana/shared/interfaces';
 import PipelineType from '@interfaces/PipelineType';
+import { AppConfigType } from '../interfaces';
+import useAppEventsHandler, { CustomAppEvent, CustomAppEventEnum } from './useAppEventsHandler';
+import { AppManagerType } from './interfaces';
 
 export type ModelManagerType = {
   appHandlersRef: AppHandlersRefType;
@@ -31,7 +34,7 @@ type ModelManagerProps = {
   itemIDsByLevelRef: React.MutableRefObject<string[][]>;
   pipelineUUID: string;
   executionFrameworkUUID: string;
-  setItemRects: React.Dispatch<React.SetStateAction<NodeItemType[]>>;
+  setItemRects: React.Dispatch<React.SetStateAction<NodeItemType[] | ((items: NodeItemType[]) => NodeItemType[])>>;
 };
 
 export default function useModelManager({
@@ -125,9 +128,26 @@ export default function useModelManager({
     pipelines: pipelineMutants,
   };
 
+  const handleAppStarted = ({ detail }: CustomAppEvent) => {
+    initializeModels(
+      appHandlersRef?.current?.executionFrameworks?.modelsRef?.current?.execution_framework,
+      appHandlersRef?.current?.pipelines?.modelsRef?.current?.pipeline,
+      detail?.manager,
+    );
+  };
+
+  useAppEventsHandler({
+    itemsRef,
+  } as ModelManagerType, {
+    [CustomAppEventEnum.APP_STARTED]: handleAppStarted,
+  });
+
   function initializeModels(
     executionFramework2: PipelineExecutionFrameworkType,
-    pipeline2: PipelineExecutionFrameworkType
+    pipeline2: PipelineExecutionFrameworkType,
+    opts?: {
+      appsRef?: AppManagerType['appsRef'];
+    },
   ): Promise<NodeItemType[]> {
     return new Promise((resolve, reject) => {
       try {
@@ -191,7 +211,7 @@ export default function useModelManager({
           });
 
           const itemsIDs = [];
-          items.concat(nodes)?.forEach((item: NodeItemType) => {
+          items.concat(nodes)?.forEach((item: NodeType) => {
             if (item?.block?.groups) {
               item.block.frameworks = item.block.groups.map((id: GroupUUIDEnum) => groupMapping[id]);
             }
@@ -229,6 +249,10 @@ export default function useModelManager({
               item.version = 0;
             }
 
+            // Apps
+            item.apps = opts?.appsRef?.current?.[item.id]?.filter(
+              (app: AppNodeType) => app?.level === level);
+
             itemsIDs.push(item.id);
             itemMapping[item.id] = item;
           });
@@ -256,14 +280,12 @@ export default function useModelManager({
         itemsRef.current = itemMapping;
         portsRef.current = portMapping;
 
-
         // Models
         itemIDsByLevelRef.current = itemIDsByLevel;
 
         // WARNING: Do this so it mounts and then the on mount can start the chain.
         const items = Object.values(itemsRef.current);
         setItemRects(items);
-
 
         resolve(items); // Resolve the promise when the function completes
       } catch (error) {

@@ -66,11 +66,10 @@ export interface ToolbarsType {
 }
 
 export interface AppConfigType {
+  id?: string;
   layout?: AppLayoutType;
   operations?: OperationsType;
-  options?: {
-    [key: string]: any;
-  };
+  options?: Record<string, any>;
   subtype?: AppSubtypeEnum;
   toolbars?: ToolbarsType;
   type?: AppTypeEnum;

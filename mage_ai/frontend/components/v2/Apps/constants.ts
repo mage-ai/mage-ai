@@ -12,6 +12,7 @@ export enum AppTypeEnum {
 }
 
 export enum AppSubtypeEnum {
+  CANVAS = 'canvas',
   IDE = 'ide',
   SYSTEM = 'system',
 }

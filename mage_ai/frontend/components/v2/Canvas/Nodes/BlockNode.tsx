@@ -103,8 +103,6 @@ export function BlockNode({
     return arr;
   }, [borders]);
 
-  console.log(colorNames)
-
   const badgeRow = useMemo(
     () =>
       badge && (

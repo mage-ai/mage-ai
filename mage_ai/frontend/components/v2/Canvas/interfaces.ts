@@ -3,6 +3,8 @@ import PipelineType from '@interfaces/PipelineType';
 import { FrameworkType, PipelineExecutionFrameworkBlockType } from '@interfaces/PipelineExecutionFramework/interfaces';
 import { GroupUUIDEnum } from '@interfaces/PipelineExecutionFramework/types';
 import { RectTransformationScopeEnum, TransformRectTypeEnum } from './types';
+import { AppTypeEnum, AppSubtypeEnum } from '../Apps/constants';
+import { AppConfigType } from '../Apps/interfaces';
 import { ZoomPanStateType } from '@mana/hooks/useZoomPan';
 
 import {
@@ -41,20 +43,23 @@ export interface RectType {
 interface BaseItem {
   id: number | string;
   level?: number;
+  subtype: PortSubtypeEnum | AppSubtypeEnum;
+  type: ItemTypeEnum | AppTypeEnum;
   version?: number;
-  type: ItemTypeEnum;
 }
 
 export interface DragItem extends BaseItem {
   block?: BlockType & {
     frameworks: FrameworkType[];
   } & FrameworkType;
+  downstream?: string[];
   groups?: string[];
   isDragging?: boolean;
   node?: NodeType;
   ports?: PortType[];
   rect?: RectType;
   title?: string;
+  upstream?: string[];
   upstreamItems?: DragItem[];
 }
 
@@ -62,15 +67,20 @@ export interface PortType extends DragItem {
   index?: number;
   parent: DragItem; // Always references the block that the port belongs to.
   target: DragItem; // Always references the block that the port is connected to that isn’t the current block.
-  subtype: PortSubtypeEnum;
+}
+
+export interface AppNodeType extends DragItem {
+  app: AppConfigType;
 }
 
 export interface NodeType extends DragItem {
-  downstream?: string[];
-  items: (DragItem | NodeType | string)[];
+  apps?: AppNodeType[];
+  items?: (DragItem | NodeType | string)[];
   node?: NodeType;
-  upstream?: string[];
 }
+
+export type NodeItemType = DragItem | NodeType | PortType | AppNodeType;
+export type FlatItemType = [string, number, number, number, number];
 
 export interface RectTransformationOptionsType {
   boundingBox?: RectType;
@@ -127,9 +137,6 @@ export interface LayoutConfigType {
   transformStateRef?: React.MutableRefObject<ZoomPanStateType>;
   viewportRef?: React.MutableRefObject<HTMLElement>;
 }
-
-export type NodeItemType = DragItem | NodeType | PortType;
-export type FlatItemType = [string, number, number, number, number];
 
 export interface ConnectionType {
   curveControl?: number; // Controls the curvature of the line (0 for straight, higher for more curved)

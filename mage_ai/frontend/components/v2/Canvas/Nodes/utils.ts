@@ -9,20 +9,16 @@ import { EventOperationEnum, SubmitEventOperationType } from '@mana/shared/inter
 import { NodeType, NodeItemType, RectType } from '../interfaces';
 import { flattenArray } from '@utils/array';
 
-export function getStyles(
-  item: NodeItemType,
+export function getDraggableStyles(
+  rect: RectType,
   {
     draggable,
     isDragging,
-    rect,
   }: {
     draggable?: boolean;
     isDragging?: boolean;
-    rect?: RectType;
   },
 ): CSSProperties {
-  const { id, type } = item;
-  rect = rect ?? item?.rect;
   const { left, top, width, zIndex } = rect || ({} as RectType);
   const transform = `translate3d(${left ?? 0}px, ${top ?? 0}px, 0)`;
 
@@ -32,7 +28,6 @@ export function getStyles(
     // border: '1px dashed gray',
     // IE fallback: hide the real node using CSS when dragging
     // because IE will ignore our custom "empty image" drag preview.
-    position: 'absolute',
     transform,
     zIndex,
     ...(draggable ? { cursor: 'move' } : {}),

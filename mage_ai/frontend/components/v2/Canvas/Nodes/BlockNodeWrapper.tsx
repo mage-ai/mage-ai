@@ -14,9 +14,10 @@ import { handleClickGroupMenu } from './utils';
 import { useEffect, useCallback, useState, useMemo, useRef } from 'react';
 import { NodeWrapperProps } from './NodeWrapper';
 import { ConfigurationType } from '@interfaces/PipelineExecutionFramework/interfaces';
+import { AppTypeEnum, AppSubtypeEnum } from '../../Apps/constants';
 import { ElementRoleEnum } from '@mana/shared/types';
 import {
-  Add, CaretDown, Check, ArrowsAdjustingFrameSquare, PipeIconVertical, PlayButtonFilled,
+  Add, Code, Check, ArrowsAdjustingFrameSquare, PipeIconVertical, PlayButtonFilled,
   Infinite,
 } from '@mana/icons';
 import { setNested } from '@utils/hash';
@@ -233,8 +234,13 @@ export const BlockNodeWrapper: React.FC<BlockNodeWrapperProps & NodeWrapperProps
                 onClick: event => handleClickGroupMenu(event, item as NodeType, submitEventOperation, itemRef),
               }
               : {
-                Icon: draggable ? ArrowsAdjustingFrameSquare : CaretDown,
-                onClick: () => alert('Coding...'),
+                Icon: draggable ? ArrowsAdjustingFrameSquare : Code,
+                onClick: event => submitEventOperation(buildEvent(event, EventOperationEnum.APP_START), {
+                  args: [
+                    AppTypeEnum.EDITOR,
+                    AppSubtypeEnum.CANVAS,
+                  ],
+                }),
               }),
           },
           before: {
@@ -300,7 +306,9 @@ export const BlockNodeWrapper: React.FC<BlockNodeWrapperProps & NodeWrapperProps
 };
 
 export function areEqual(p1: BlockNodeWrapperProps, p2: BlockNodeWrapperProps) {
-  const equal = p1?.version === p2?.version
+  const appIDs = ({ item }) => item?.apps?.map(a => String(a?.id ?? '')).sort()?.join('|');
+
+  const equal = appIDs(p1) === appIDs(p2)
     && p1.draggable === p2.draggable
     && p1.droppable === p2.droppable
     && [

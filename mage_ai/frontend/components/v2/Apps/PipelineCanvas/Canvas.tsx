@@ -1,11 +1,12 @@
-
+import DraggableAppNode from '../../Canvas/Nodes/Apps/DraggableAppNode';
 import DraggableBlockNode from '../../Canvas/Nodes/DraggableBlockNode';
 import CanvasContainer from './index.style';
 import PipelineExecutionFrameworkType from '@interfaces/PipelineExecutionFramework/interfaces';
 import type { DropTargetMonitor } from 'react-dnd';
 import {
   LayoutConfigType, DragItem, ModelMappingType, NodeItemType, RectType,
-  NodeType, FlatItemType
+  NodeType, FlatItemType,
+  AppNodeType
 } from '../../Canvas/interfaces';
 import useEventManager, { EventManagerType } from './useEventManager';
 import useLayoutManager, { LayoutManagerType } from './useLayoutManager';
@@ -20,8 +21,10 @@ import { useEffect, useMemo, useRef, useState, startTransition } from 'react';
 import useItemManager from './useItemManager';
 import useDynamicDebounce from '@utils/hooks/useDebounce';
 import { ItemElementsType } from './interfaces';
-import { groupBy, unique, sortByKey } from '@utils/array';
+import { groupBy, unique, sortByKey, flattenArray } from '@utils/array';
 import useNodeManager from './useNodeManager';
+import useAppManager from './useAppManager';
+import useAppEventsHandler, { CustomAppEvent, CustomAppEventEnum } from './useAppEventsHandler';
 
 export type BuilderCanvasProps = {
   canvasRef: React.RefObject<HTMLDivElement>;
@@ -63,6 +66,7 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
 }: BuilderCanvasProps) => {
   const activeLevel = useRef<number>(null);
   const itemElementsRef = useRef<ItemElementsType>({
+    [ItemTypeEnum.APP]: {},
     [ItemTypeEnum.BLOCK]: {},
     [ItemTypeEnum.NODE]: {},
     [ItemTypeEnum.PORT]: {},
@@ -70,7 +74,9 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
   const itemIDsByLevelRef = useRef<string[][]>(null);
   const phaseRef = useRef<number>(0);
   const wrapperRef = useRef(null);
+
   const [itemRects, setItemRectsState] = useState<FlatItemType[]>([]);
+  const [appNodes, setAppNodes] = useState<AppNodeType[]>([]);
 
   function setItemRects(items: NodeItemType[] | ((items: FlatItemType[]) => FlatItemType[])) {
     const buildItem = ({ id, rect }: NodeItemType): FlatItemType => {
@@ -90,6 +96,21 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
   // VERY IMPORTANT THAT THE STATE IS IN THIS COMPONENT OR ELSE NOTHING WILL RENDER!
   const [pipeline, setPipeline] = useState<PipelineExecutionFrameworkType>(null);
   const [executionFramework, setExecutionFramework] = useState<PipelineExecutionFrameworkType>(null);
+
+  const handleAppStarted = ({ detail: { manager } }: CustomAppEvent) => {
+    console.log(manager)
+    setAppNodes(flattenArray(Object.values(manager?.appsRef?.current ?? [])));
+  };
+
+  useAppEventsHandler({
+    itemElementsRef,
+  }, {
+    [CustomAppEventEnum.APP_STARTED]: handleAppStarted,
+  });
+
+  useAppManager({
+    activeLevel,
+  });
 
   const {
     appHandlersRef,
@@ -307,8 +328,16 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
                 }}
                 submitEventOperation={submitEventOperation}
               />
-            )
+            );
           })}
+
+          {console.log('appNodes', appNodes)}
+          {appNodes?.map((appNode: AppNodeType) => (
+            <DraggableAppNode
+              key={appNode.id}
+              node={appNode}
+            />
+          ))}
         </CanvasContainer>
       </div>
     </div>

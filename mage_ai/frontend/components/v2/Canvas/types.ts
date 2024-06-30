@@ -16,6 +16,7 @@ export enum PortSubtypeEnum {
 }
 
 export enum ItemTypeEnum {
+  APP = 'app',
   BLOCK = 'block',
   NODE = 'node',
   PORT = 'port',
