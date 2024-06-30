@@ -196,34 +196,40 @@ export function useMutate(
       query: addMetaQuery(args),
     });
 
-    return new Promise((resolve, reject) => axios.request({
-      data: data.body,
-      headers,
-      method,
-      onDownloadProgress: opts?.onDownloadProgress
-        ? e =>
-          opts.onDownloadProgress(e, {
-            body: opts?.body,
-            query: opts?.query,
-          })
-        : null,
-      onUploadProgress: opts?.onUploadProgress
-        ? e =>
-          opts.onUploadProgress(e, {
-            body: opts?.body,
-            query: opts?.query,
-          })
-        : null,
-      responseType,
-      signal,
-      url: queryString ? `${url}?${queryString}` : url,
-    }).then((data) => {
-      args?.onSuccess && args?.onSuccess?.(data);
-      return resolve(data);
-    }).catch((error) => {
-      args?.onError && args?.onError?.(error);
-      return reject(error);
-    }));
+    return new Promise((resolve, reject) => {
+      if (args?.onStart) {
+        args?.onStart();
+      }
+
+      return axios.request({
+        data: data.body,
+        headers,
+        method,
+        onDownloadProgress: opts?.onDownloadProgress
+          ? e =>
+            opts.onDownloadProgress(e, {
+              body: opts?.body,
+              query: opts?.query,
+            })
+          : null,
+        onUploadProgress: opts?.onUploadProgress
+          ? e =>
+            opts.onUploadProgress(e, {
+              body: opts?.body,
+              query: opts?.query,
+            })
+          : null,
+        responseType,
+        signal,
+        url: queryString ? `${url}?${queryString}` : url,
+      }).then((data) => {
+        args?.onSuccess && args?.onSuccess?.(data);
+        return resolve(data);
+      }).catch((error) => {
+        args?.onError && args?.onError?.(error);
+        return reject(error);
+      });
+    });
   }
 
   function augmentHandlers(operation: OperationTypeEnum) {

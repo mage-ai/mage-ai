@@ -2,7 +2,9 @@ import PanelRows from '@mana/elements/PanelRows';
 import Grid from '@mana/components/Grid';
 import Text from '@mana/elements/Text';
 import { SharedBlockProps } from '../types';
+import Loading from '@mana/components/Loading';
 import BlockType, { TemplateType } from '@interfaces/BlockType';
+import styles from '@styles/scss/components/Canvas/Nodes/BlockNode.module.scss';
 import { PipelineExecutionFrameworkBlockType } from '@interfaces/PipelineExecutionFramework/interfaces';
 import {
   InteractionVariableTypeEnum,
@@ -30,7 +32,7 @@ export default function TemplateConfigurations({
   const userValuesByVariable = block?.configuration?.templates?.[uuid]?.variables;
 
   return (
-    <PanelRows padding={false}>
+    <PanelRows skipIndexes={[1]} padding={false}>
       <Grid justifyItems="start" padding={12} rowGap={4} templateColumns="auto" >
         <TooltipWrapper
           align={TooltipAlign.END}
@@ -53,7 +55,9 @@ export default function TemplateConfigurations({
             {template?.name || uuid}
           </Text>
         </TooltipWrapper>
-      </Grid >
+      </Grid>
+
+      <div className={styles.loader}><Loading position="absolute" /></div>
 
       {Object.entries(variables ?? {})?.map((
         [variableUUID, variableConfig]: [string, InteractionVariableType]
@@ -101,7 +105,7 @@ export default function TemplateConfigurations({
               <TooltipWrapper
                 align={TooltipAlign.END}
                 horizontalDirection={TooltipDirection.LEFT}
-                style={{ alignContent: 'center', justifySelf: 'stretch' }}
+                style={{ alignContent: 'center', justifySelf: 'stretch', maxWidth: 300 }}
                 tooltip={
                   <Text secondary xsmall>
                     {description}
@@ -139,6 +143,6 @@ export default function TemplateConfigurations({
           </label  >
         );
       })}
-    </PanelRows >
+    </PanelRows  >
   );
 }

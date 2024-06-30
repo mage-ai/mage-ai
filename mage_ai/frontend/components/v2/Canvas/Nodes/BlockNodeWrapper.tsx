@@ -94,6 +94,15 @@ export const BlockNodeWrapper: React.FC<BlockNodeWrapperProps & NodeWrapperProps
       handler: (e, { blocks }) => {
         blocks.update.mutate({
           event,
+          onError: () => {
+            itemRef.current.classList.remove(styles.loading);
+          },
+          onStart: () => {
+            itemRef.current.classList.add(styles.loading);
+          },
+          onSuccess: () => {
+            itemRef.current.classList.remove(styles.loading);
+          },
           payload: setNested({ ...block }, key, value),
         });
       },

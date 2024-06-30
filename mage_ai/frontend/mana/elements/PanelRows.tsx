@@ -5,6 +5,7 @@ import { withStyles } from '../hocs/withStyles';
 
 type PanelProps = {
   padding?: boolean;
+  skipIndexes?: number[];
 }
 
 const Panel = withStyles(styles, {
@@ -19,17 +20,19 @@ const Row = withStyles<{
   classNames: ['row'],
 });
 
-function PanelRows({ children, padding = true, ...props }: { children: React.ReactNode } & PanelProps) {
+function PanelRows({ children, padding = true, skipIndexes, ...props }: { children: React.ReactNode } & PanelProps) {
   return (
     <Panel>
       <LayoutGroup>
-        {React.Children.map(children, (child, index) => (
-          <motion.div key={index}>
-            <Row className={padding ? styles.padding : ''} first={index === 0} {...props}>
-              {child}
-            </Row>
-          </motion.div>
-        ))}
+        {React.Children.map(children, (child, index) => skipIndexes && skipIndexes?.includes(index)
+          ? child
+          : (
+            <motion.div key={index}>
+              <Row className={padding ? styles.padding : ''} first={index === 0} {...props}>
+                {child}
+              </Row>
+            </motion.div>
+          ))}
       </LayoutGroup>
     </Panel >
   );

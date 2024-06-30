@@ -61,15 +61,19 @@ export type OnSuccessHandlerType = (
   variables?: any,
   context?: any,
 ) => Promise<unknown> | unknown;
+
 export type OnErrorHandlerType = (
   err: any,
   variables?: any,
   context?: any,
 ) => Promise<unknown> | unknown;
 
+export type OnStartHandlerType = () => void;
+
 export interface HandlersType {
   onError?: OnErrorHandlerType;
   onSuccess?: OnSuccessHandlerType;
+  onStart?: OnStartHandlerType;
 }
 
 export type MutationFetchArgumentsType = HandlersType | any;
@@ -96,7 +100,7 @@ export type MutateFunctionArgsType = {
   meta?: ArgsValueOrFunctionType;
   payload?: ArgsValueOrFunctionType;
   query?: ArgsValueOrFunctionType;
-} & IDArgsType;
+} & IDArgsType & HandlersType;
 
 export type MutateFunctionType = (args?: MutateFunctionArgsType) => Promise<ResourceType | ResourceType[]>;
 

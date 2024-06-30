@@ -13,12 +13,13 @@
   &.loading {
     .loader {
       display: block;
-      width: 100%;
     }
   }
 
   .loader {
     display: none;
+    position: absolute;
+    width: 100%;
   }
 }
 

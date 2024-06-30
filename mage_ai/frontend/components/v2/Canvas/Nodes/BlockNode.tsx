@@ -247,10 +247,8 @@ export function BlockNode({
         <Grid rowGap={8} templateRows="auto">
           {badgeRow}
           {!badge && titleRow}
-          <div className={styles.loader}><Loading position="absolute" /></div>
           {connectionRows}
           {templateConfigurations}
-
           {BlockTypeEnum.PIPELINE === block?.type && <div />}
         </Grid>
       </div>

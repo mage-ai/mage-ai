@@ -98,17 +98,20 @@ export default function useModelManager({
   appHandlersRef.current = {
     blocks: {
       update: {
-        mutate: ({ event, payload: block }: MutateFunctionArgsType) => {
+        mutate: ({ event, onError, onStart, onSuccess, payload: block }: MutateFunctionArgsType) => {
           const model =
             pipelineMutants.setModel(
               prev => setPipelineBlock(prev as PipelineType, block as BlockType));
 
           cancel();
 
-          return new Promise((resolve) => {
+          return new Promise((resolve, reject) => {
             debounce(() => {
               pipelineMutants.update.mutate({
                 event,
+                onError,
+                onStart,
+                onSuccess,
                 payload: model,
               });
 
