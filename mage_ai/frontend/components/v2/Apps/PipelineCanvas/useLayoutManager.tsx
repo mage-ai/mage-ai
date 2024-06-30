@@ -4,11 +4,11 @@ import { ItemMappingType, ModelMappingType, NodeItemType, RectType } from '../..
 import { ModelManagerType } from './useModelManager';
 import { ZoomPanStateType } from '@mana/hooks/useZoomPan';
 import { layoutItemsInGroups, transformRects } from '../../Canvas/utils/rect';
-import { useEffect, useRef } from 'react';
+import { startTransition, useEffect, useRef } from 'react';
 import { ActiveLevelRefType, ItemIDsByLevelRef } from './interfaces';
 import { RectTransformationScopeEnum, ItemTypeEnum, LayoutConfigDirectionOriginEnum, LayoutConfigDirectionEnum, TransformRectTypeEnum } from '../../Canvas/types';
 import { calculateBoundingBox } from '../../Canvas/utils/rect';
-import { flattenArray } from '@utils/array';
+import { flattenArray, indexBy, sum } from '@utils/array';
 import { validateFiniteNumber } from '@utils/number';
 import { get, set } from '@storage/localStorage';
 import { selectKeys } from '@utils/hash';
@@ -26,7 +26,7 @@ type LayoutManagerProps = {
   containerRef: React.MutableRefObject<HTMLDivElement>;
   itemIDsByLevelRef: ItemIDsByLevelRef;
   itemsRef: React.MutableRefObject<ItemMappingType>;
-  setItemsState: React.Dispatch<React.SetStateAction<ItemMappingType>>;
+  setItemRects: React.Dispatch<React.SetStateAction<NodeItemType[]>>;
   transformState: React.MutableRefObject<ZoomPanStateType>;
   pipeline: PipelineExecutionFrameworkType
   updateNodeItems: ModelManagerType['updateNodeItems'];
@@ -47,6 +47,7 @@ export type LayoutManagerType = {
 };
 
 export default function useLayoutManager({
+  activeLevel,
   pipeline,
   canvasRef,
   containerRef,
@@ -57,7 +58,6 @@ export default function useLayoutManager({
 }: LayoutManagerProps): LayoutManagerType {
   const validLevels = useRef<number[]>(null);
   const phaseRef = useRef<number>(0);
-  const activeLevel = useRef<number>(null);
   const layoutConfig = useRef<LayoutConfigType>(null);
   const optionalGroupsVisible = useRef<boolean>(null);
 
@@ -354,7 +354,7 @@ export default function useLayoutManager({
     ];
   }
 
-  function updateLayoutOfItems(): ItemMappingType {
+  function updateLayoutOfItems(opts?: { level?: number }): ItemMappingType {
     const itemsUpdated = {} as ItemMappingType;
 
     // Update the layout of items across every level.
@@ -378,65 +378,94 @@ export default function useLayoutManager({
         }
       }, []);
 
-      let nodesTransformed = [] as NodeType[];
+      const rects: RectType[] = [];
+      nodes?.forEach((node) => {
+        const nodeRect = {
+          ...node?.rect,
+          children: node?.items?.reduce((acc, item2: NodeType) => {
+            if (!item2) return acc;
 
-      const rects = nodes?.map((node) => ({
-        ...node?.rect,
-        children: node?.items?.reduce((acc, item2: NodeType) => {
-          if (!item2) return acc;
+            const item2a = itemsRef?.current?.[item2?.id] ?? {} as NodeType;
+            if (!item2a) return acc;
 
-          const item2a = itemsRef?.current?.[item2?.id] ?? {} as NodeType;
-          if (!item2a) return acc;
+            return acc.concat({
+              ...item2a.rect,
+              id: item2a.id,
+              left: null,
+              top: null,
+              upstream: (item2a as NodeType)?.upstream?.reduce((acc3: RectType[], id3: string) => {
+                const item3 = itemsRef?.current?.[id3];
+                if (!item3) return acc3;
 
-          return acc.concat({
-            ...item2a.rect,
-            id: item2a.id,
+                return acc3.concat({ ...item3.rect, id: id3, left: null, top: null });
+              }, []) ?? [],
+            });
+          }, []) ?? [],
+          id: node.id,
+          upstream: (node?.upstream ?? [])?.map((id: string) => ({
+            ...itemsRef?.current?.[id]?.rect,
+            id,
             left: null,
             top: null,
-            upstream: (item2a as NodeType)?.upstream?.reduce((acc3: RectType[], id3: string) => {
-              const item3 = itemsRef?.current?.[id3];
-              if (!item3) return acc3;
+          })),
+        };
 
-              return acc3.concat({ ...item3.rect, id: id3, left: null, top: null });
-            }, []) ?? [],
-          });
-        }, []) ?? [],
-        id: node.id,
-        upstream: (node?.upstream ?? [])?.map((id: string) => ({
-          ...itemsRef?.current?.[id]?.rect,
-          id,
-          left: null,
-          top: null,
-        })),
-      }));
+        if (node?.items?.length !== nodeRect?.children?.length) {
+          console.error(
+            `[Attempting to build rect children] Node ${node.id} in level ${level} ` +
+            `has ${node?.items?.length} items, ` +
+            `but rect has ${nodeRect?.children?.length}`,
+            node,
+            nodeRect,
+          );
+          return;
+        }
+
+        rects.push(nodeRect);
+      });
 
       const trans = rectTransformations();
 
-      nodesTransformed = transformRects(
-        rects,
-        trans,
-      ).map((rect: RectType, idx: number) => {
-        const node = nodes[idx];
+      const nodesMapping = indexBy(nodes, (node: NodeItemType) => node.id);
+      const nodesTransformed = [] as NodeType[];
 
-        return {
-          ...node,
-          items: node?.items?.map((i2: any, idx: number) => {
-            const rect2 = rect?.children?.[idx] as RectType;
-            const item2 = itemsRef?.current?.[typeof i2 === 'string' ? i2 : i2.id] as NodeType;
+      // This can reshuffle the rects, so the order is not guaranteed.
+      const rectsTransformed = transformRects(rects, trans);
+      rectsTransformed.forEach((rect: RectType) => {
+        let node = nodesMapping[rect.id];
+        const itemsT = [];
 
-            return {
-              ...item2,
-              rect: {
-                ...item2?.rect,
-                ...(rect2 ?? {}) as RectType,
-              },
-            };
-          }) ?? [],
-          rect: {
-            ...node?.rect,
-            ...rect,
-          },
-        };
+        if (node?.items?.length !== rect?.children?.length) {
+          console.error(
+            `[Post transformations] Node ${node.id} in level ${level} has ${node?.items?.length} items, ` +
+            `but rect has ${rect?.children?.length}`,
+            node,
+            rect,
+          );
+          return;
+        }
+
+        node?.items?.forEach((i2: any, idx: number) => {
+          const rect2 = rect?.children?.[idx] as RectType;
+          const item2 = itemsRef?.current?.[typeof i2 === 'string' ? i2 : i2.id] as NodeType;
+
+          item2.rect.height = rect2.height;
+          item2.rect.left = rect2.left;
+          item2.rect.top = rect2.top;
+          item2.rect.width = rect2.width;
+
+          itemsT.push(item2);
+        });
+
+        node = update(node, {
+          items: { $set: itemsT },
+        });
+        node.rect.height = rect.height;
+        node.rect.left = rect.left;
+        node.rect.top = rect.top;
+        node.rect.width = rect.width;
+
+        nodesTransformed.push(node);
       });
 
       nodesTransformed?.forEach((node: NodeType) => {
@@ -446,20 +475,23 @@ export default function useLayoutManager({
           itemsUpdated[typeof itemNode === 'string' ? itemNode : itemNode.id] = itemNode;
         });
       });
+
+      // console.log(nodesTransformed)
     });
 
+    const items = [];
     Object.values(itemsUpdated).forEach((item) => {
+      item.version = Number(new Date());
       itemsRef.current[item.id] = item;
+      items.push(item);
     });
 
-    const items = Object.values(itemsRef.current ?? {}).map(i => i);
     setItemRects(items);
 
-    setActiveLevel(activeLevel?.current ?? 0);
+    setActiveLevel(opts?.level ?? activeLevel?.current ?? 0);
   }
 
   return {
-    activeLevel,
     layoutConfig,
     setActiveLevel,
     updateLayoutConfig,

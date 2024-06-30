@@ -74,6 +74,7 @@ function MenuItem({ contained, first, item, last, small }: ItemProps) {
   }
 
   const iconProps = {
+    secondary: true,
     size: small ? 12 : undefined,
   };
   const before = Icon ? Icon(iconProps) : undefined;
@@ -93,7 +94,7 @@ function MenuItem({ contained, first, item, last, small }: ItemProps) {
         >
           <Grid
             alignItems="center"
-            columnGap={4}
+            columnGap={8}
             templateColumns={[before && 'auto', '1fr'].filter(Boolean).join(' ')}
           >
             {before}

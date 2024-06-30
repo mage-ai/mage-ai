@@ -49,6 +49,7 @@ export interface TypographyColorsType {
     blue: string;
     inverted: string;
     muted: string;
+    secondary: string;
   };
 }
 
@@ -89,6 +90,7 @@ interface ColorsDerivedType {
     base: string;
     inverted: string;
     muted: string;
+    secondary: string;
   };
   outline: OutlineType;
   placeholder: {
@@ -773,6 +775,11 @@ const ColorsDerived = {
       [ModeEnum.MODE3]: 'gray',
     }),
     muted: convert({
+      [ModeEnum.DARK]: 'whiteLo',
+      [ModeEnum.LIGHT]: 'blackLo',
+      [ModeEnum.MODE3]: 'blackLo',
+    }),
+    secondary: convert({
       [ModeEnum.DARK]: 'whiteMd',
       [ModeEnum.LIGHT]: 'blackMd',
       [ModeEnum.MODE3]: 'blackMd',
@@ -876,6 +883,11 @@ const ColorsDerived = {
         [ModeEnum.MODE3]: 'white',
       }),
       muted: convert({
+        [ModeEnum.DARK]: 'whiteLo',
+        [ModeEnum.LIGHT]: 'blackLo',
+        [ModeEnum.MODE3]: 'blackLo',
+      }),
+      secondary: convert({
         [ModeEnum.DARK]: 'whiteMd',
         [ModeEnum.LIGHT]: 'blackMd',
         [ModeEnum.MODE3]: 'blackMd',

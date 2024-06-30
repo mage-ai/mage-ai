@@ -22,7 +22,7 @@ import {
 import { setNested } from '@utils/hash';
 
 export type BlockNodeWrapperProps = {
-  Wrapper: React.FC<NodeWrapperProps>;
+  Wrapper?: React.FC<NodeWrapperProps>;
   collapsed?: boolean;
   draggable?: boolean;
   droppable?: boolean;
@@ -290,9 +290,17 @@ export const BlockNodeWrapper: React.FC<BlockNodeWrapperProps & NodeWrapperProps
 };
 
 export function areEqual(p1: BlockNodeWrapperProps, p2: BlockNodeWrapperProps) {
-  return p1.draggable === p2.draggable
+  const equal = p1?.version === p2?.version
+    && p1.draggable === p2.draggable
     && p1.droppable === p2.droppable
-    && p1.rect === p2.rect;
+    && [
+      'height',
+      'left',
+      'top',
+      'width',
+    ].every((key: string) => p1?.rect?.[key] === p2?.rect?.[key]);
+
+  return equal;
 }
 
 export default React.memo(BlockNodeWrapper, areEqual);

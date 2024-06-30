@@ -5,7 +5,7 @@ import PipelineExecutionFrameworkType from '@interfaces/PipelineExecutionFramewo
 import type { DropTargetMonitor } from 'react-dnd';
 import {
   LayoutConfigType, DragItem, ModelMappingType, NodeItemType, RectType,
-  NodeType
+  NodeType, FlatItemType
 } from '../../Canvas/interfaces';
 import useEventManager, { EventManagerType } from './useEventManager';
 import useLayoutManager, { LayoutManagerType } from './useLayoutManager';
@@ -20,6 +20,8 @@ import { useEffect, useMemo, useRef, useState, startTransition } from 'react';
 import useItemManager from './useItemManager';
 import useDynamicDebounce from '@utils/hooks/useDebounce';
 import { ItemElementsType } from './interfaces';
+import { groupBy, unique, sortByKey } from '@utils/array';
+import useNodeManager from './useNodeManager';
 
 export type BuilderCanvasProps = {
   canvasRef: React.RefObject<HTMLDivElement>;
@@ -36,7 +38,6 @@ export type BuilderCanvasProps = {
   setZoomPanDisabled: (value: boolean) => void;
   transformState: React.MutableRefObject<ZoomPanStateType>;
 };
-import useNodeManager from './useNodeManager';
 
 // To update and render new views:
 // 1. Update the models using initialize models: initializeModels
@@ -60,8 +61,7 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
   setZoomPanDisabled,
   transformState,
 }: BuilderCanvasProps) => {
-  const [itemRects, setItemRects] = useState([]);
-
+  const activeLevel = useRef<number>(null);
   const itemElementsRef = useRef<ItemElementsType>({
     [ItemTypeEnum.BLOCK]: {},
     [ItemTypeEnum.NODE]: {},
@@ -70,6 +70,22 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
   const itemIDsByLevelRef = useRef<string[][]>(null);
   const phaseRef = useRef<number>(0);
   const wrapperRef = useRef(null);
+  const [itemRects, setItemRectsState] = useState<FlatItemType[]>([]);
+
+  function setItemRects(items: NodeItemType[] | ((items: FlatItemType[]) => FlatItemType[])) {
+    const buildItem = ({ id, rect }: NodeItemType): FlatItemType => {
+      const { left, top, width, height } = rect ?? {};
+      return [String(id), left, top, width, height];
+    };
+
+    startTransition(() => {
+      setItemRectsState((itemsPrev: FlatItemType[]) =>
+        typeof items === 'function'
+          ? items(itemsPrev) as FlatItemType[]
+          : (items as NodeItemType[])?.map((i: NodeItemType) => buildItem(i)) as FlatItemType[]
+      );
+    });
+  }
 
   // VERY IMPORTANT THAT THE STATE IS IN THIS COMPONENT OR ELSE NOTHING WILL RENDER!
   const [pipeline, setPipeline] = useState<PipelineExecutionFrameworkType>(null);
@@ -93,11 +109,11 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
   const {
     updateLayoutOfItems,
     updateLayoutConfig,
-    activeLevel,
     setActiveLevel,
     // updateLocalSettings,
     layoutConfig,
   }: LayoutManagerType = useLayoutManager({
+    activeLevel,
     canvasRef,
     containerRef,
     itemIDsByLevelRef,
@@ -257,25 +273,42 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
           <div id={connectionLinesRootID.current} />
           <div id="dynamic-components-root" ref={dynamicRootRef} />
 
-          {itemRects?.map((item: NodeItemType) => itemsRef.current[item.id] && (
-            <DraggableBlockNode
-              handlers={{
-                onDragEnd: handleDragEnd,
-                onDragStart: handleDragStart,
-                onDrop: onDropPort,
-                onMouseDown: handleMouseDown,
-              }}
-              item={itemsRef.current[item.id] as NodeItemType}
-              key={item.id}
-              onMountItem={(item: DragItem, ref: React.RefObject<HTMLDivElement>) => {
-                onMountItem(item, ref);
-                removeComponentById(item.id);
-              }}
-              onMountPort={onMountPort}
-              rect={item.rect}
-              submitEventOperation={submitEventOperation}
-            />
-          ))}
+          {itemRects?.map((arr: [string, number, number, number, number]) => {
+            const [
+              id,
+              left,
+              top,
+              width,
+              height,
+            ] = arr;
+            const item = itemsRef.current[id];
+            if (!item) return;
+
+            return (
+              <DraggableBlockNode
+                handlers={{
+                  onDragEnd: handleDragEnd,
+                  onDragStart: handleDragStart,
+                  onDrop: onDropPort,
+                  onMouseDown: handleMouseDown,
+                }}
+                item={item as NodeItemType}
+                key={arr.join(':')}
+                onMountItem={(item: DragItem, ref: React.RefObject<HTMLDivElement>) => {
+                  onMountItem(item, ref);
+                  removeComponentById(id);
+                }}
+                onMountPort={onMountPort}
+                rect={{
+                  height,
+                  left,
+                  top,
+                  width,
+                }}
+                submitEventOperation={submitEventOperation}
+              />
+            )
+          })}
         </CanvasContainer>
       </div>
     </div>

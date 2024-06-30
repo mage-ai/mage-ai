@@ -65,28 +65,42 @@ export function transformRects(rectsInit: RectType[], transformations: RectTrans
     }
 
     if (!rects?.length) {
-      return
+      rectsByStage.push(rects);
+      return rects;
     }
 
     if (condition && !condition(rects)) {
       rectsByStage.push(rects);
       isDebug() && console.log(`${tag}:condition not met`, ...tags, rects);
-      return;
+      rectsByStage.push(rects);
+      return rects;
     }
 
     if (RectTransformationScopeEnum.CHILDREN === scope) {
+      const arr = [];
       rects.forEach((rect) => {
         const rectChildren = [...(rect.children || [])] || [];
+        const count1 = rectChildren?.length;
+
         const rc = rectChildren?.map(rectChild => ({
           ...rectChild,
           parent: rect,
         }));
+
         rect.children = transformRects(rc, [{
           ...transformation,
           initialScope: scope,
           scope: undefined,
         }]);
+        if (rect.children?.length !== count1) {
+          throw new Error(
+            `Rect ${rect.id} started with ${count1} ` +
+            `children but ended with ${rect.children?.length} children after transformation.`,
+          );
+        }
+        arr.push(rect);
       });
+      rects = arr;
     } else if (RectTransformationScopeEnum.SELF === scope) {
       rects = rects?.map((rect) => ({
         ...rect,
@@ -162,7 +176,25 @@ export function transformRects(rectsInit: RectType[], transformations: RectTrans
     isDebug() && console.log(`${tag}:end`, ...tags, rects);
   });
 
-  return rectsByStage[rectsByStage.length - 1];
+  const stage = rectsByStage.length - 1;
+  const results = rectsByStage[stage];
+  const rectsPrev = rectsByStage[stage - 1];
+
+  if (rectsByStage.length >= 2) {
+    results?.forEach((rect, idx) => {
+      const rectp = rectsPrev[idx];
+
+      if (rect.children?.length !== rectp.children?.length) {
+        throw new Error(
+          `Rect ${rect.id} started with ${rectp?.children?.length} ` +
+          `children but ended with ${rect?.children?.length} children after transformation ` +
+          `going from stage ${stage - 1} to stage ${stage}`,
+        );
+      }
+    });
+  }
+
+  return results;
 }
 
 function shiftRectsIntoBoundingBox(rects: RectType[], boundingBox: RectType): RectType[] {

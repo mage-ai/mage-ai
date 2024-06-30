@@ -42,6 +42,7 @@ export enum TransformRectTypeEnum {
   LAYOUT_TREE = 'layout_tree',
   LAYOUT_WAVE = 'layout_wave',
   MIN_DIMENSIONS = 'min_dimensions',
+  NO_OP = 'no_op',
   PAD = 'pad',
   RESET = 'reset',
   SHIFT = 'shift',

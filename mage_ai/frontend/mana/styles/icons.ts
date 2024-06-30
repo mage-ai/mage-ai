@@ -9,6 +9,7 @@ export type StyleProps = {
   inverted?: boolean;
   muted?: boolean;
   opacity?: number;
+  secondary?: boolean;
   size?: number;
   small?: boolean;
   stroke?: string;
@@ -20,19 +21,27 @@ export type StyleProps = {
 };
 
 const icons = css<StyleProps>`
-  ${({ color, colorName, fill, inverted, muted, theme, useStroke }) => !useStroke && `
+  ${({ color, colorName, fill, inverted, muted, secondary, theme, useStroke }) => !useStroke && `
     fill: ${[
       typeof colorName !== 'undefined' && theme.colors[colorName],
       typeof color !== 'undefined' && color,
-      fill ?? (inverted ? theme.icons.color.inverted : (muted ? theme.icons.muted : theme.icons.color.base)),
+      fill ?? (theme.icons.color[[
+        inverted && 'inverted',
+        muted && 'muted',
+        secondary && 'secondary',
+      ].find(Boolean) ?? 'base']),
     ].filter(Boolean)[0]};
   `}
 
-  ${({ color, colorName, inverted, stroke, muted, theme, useStroke }) => useStroke && `
+  ${({ color, colorName, inverted, stroke, muted, secondary, theme, useStroke }) => useStroke && `
     stroke: ${[
       typeof colorName !== 'undefined' && theme.colors[colorName],
       typeof color !== 'undefined' && color,
-      stroke ?? (inverted ? theme.icons.color.inverted : (muted ? theme.icons.muted : theme.icons.color.base)),
+      stroke ?? (theme.icons.color[[
+        inverted && 'inverted',
+        muted && 'muted',
+        secondary && 'secondary',
+      ].find(Boolean) ?? 'base']),
     ].filter(Boolean)[0]};
   `}
 `;

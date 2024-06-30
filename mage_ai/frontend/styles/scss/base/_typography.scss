@@ -54,11 +54,11 @@
   &.blue {
     color: var(--fonts-color-text-blue);
   }
-  &.secondary {
-    color: var(--colors-whitemd);
-  }
   &.muted {
-    color: var(--colors-whitelo);
+    color: var(--fonts-color-text-muted);
+  }
+  &.secondary {
+    color: var(--fonts-color-text-secondary);
   }
   &.warning {
     color: var(--fonts-color-text-warning);

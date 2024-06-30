@@ -129,6 +129,7 @@ export interface LayoutConfigType {
 }
 
 export type NodeItemType = DragItem | NodeType | PortType;
+export type FlatItemType = [string, number, number, number, number];
 
 export interface ConnectionType {
   curveControl?: number; // Controls the curvature of the line (0 for straight, higher for more curved)
