@@ -14,11 +14,14 @@ export type StyleProps = {
   secondary?: boolean;
   small?: boolean;
   tag?: React.ReactNode | string | number;
+  wrap?: boolean;
 } & TextStyleProps;
 
 const shared = css<StyleProps>`
   ${({ aslink, plain }) => !plain && (aslink ? transitionFast : transition)}
   ${text}
+  position: relative;
+  z-index: 1;
 
   ${({ aslink, basic, grouped, plain, primary, secondary, theme }) =>
     !plain &&
@@ -34,8 +37,8 @@ const shared = css<StyleProps>`
       outlineOffset: grouped ? UNIT : null,
     })}
 
-  ${({ aslink, grouped, plain }) =>
-    (aslink || grouped || plain) &&
+  ${({ aslink, grouped, plain, wrap }) =>
+    (aslink || grouped || plain || wrap) &&
     `
     border: none !important;
   `}
@@ -47,14 +50,13 @@ const shared = css<StyleProps>`
     !plain &&
     basic &&
     `
-    border-color: ${
-      primary
-        ? theme.buttons.border.color.primary.default
-        : secondary
-          ? theme.buttons.border.color.secondary.default
-          : basic
-            ? theme.buttons.border.color.basic.default
-            : theme.buttons.border.color.base.default
+    border-color: ${primary
+      ? theme.buttons.border.color.primary.default
+      : secondary
+        ? theme.buttons.border.color.secondary.default
+        : basic
+          ? theme.buttons.border.color.basic.default
+          : theme.buttons.border.color.base.default
     };
   `}
 
@@ -64,15 +66,14 @@ const shared = css<StyleProps>`
     (aslink || basic) &&
     `
     &:hover {
-      border-color: ${
-        primary
-          ? theme.buttons.border.color.primary.hover
-          : secondary
-            ? theme.buttons.border.color.secondary.hover
-            : aslink || basic
-              ? theme.buttons.border.color.basic.hover
-              : theme.buttons.border.color.base.hover
-      };
+      border-color: ${primary
+      ? theme.buttons.border.color.primary.hover
+      : secondary
+        ? theme.buttons.border.color.secondary.hover
+        : aslink || basic
+          ? theme.buttons.border.color.basic.hover
+          : theme.buttons.border.color.base.hover
+    };
     }
   `}
 
@@ -106,19 +107,21 @@ const shared = css<StyleProps>`
     !plain &&
     `
     &:hover {
-      background-color: ${
-        primary
-          ? theme.colors.backgrounds.button.primary.hover
-          : secondary
-            ? theme.colors.backgrounds.button.secondary.hover
-            : basic
-              ? theme.colors.backgrounds.button.basic.hover
-              : theme.colors.backgrounds.button.base.hover
-      };
+      background-color: ${primary
+      ? theme.colors.backgrounds.button.primary.hover
+      : secondary
+        ? theme.colors.backgrounds.button.secondary.hover
+        : basic
+          ? theme.colors.backgrounds.button.basic.hover
+          : theme.colors.backgrounds.button.base.hover
+    };
     }
   `}
 
-  ${({ loading }) => loading && 'pointer-events: none;'}
+  ${({ loading }) => loading && `
+    cursor: wait;
+  `}
+
   ${({ loading }) =>
     !loading &&
     `
@@ -131,25 +134,27 @@ const shared = css<StyleProps>`
 const base = css<StyleProps>`
   ${shared}
   font-size: ${({ theme }) => theme.fonts.size.base};
-  padding: ${({ aslink, basic, grouped, plain, theme }) =>
+  padding: ${({ aslink, basic, grouped, plain, theme, wrap }) =>
     !plain &&
-    (aslink
-      ? basic
-        ? 0
-        : '2px 4px'
-      : grouped
+    (wrap
+      ? 0
+      : aslink
         ? basic
           ? 0
-          : theme.buttons.padding.xxs
-        : theme.buttons.padding.base)};
+          : '2px 4px'
+        : grouped
+          ? basic
+            ? 0
+            : theme.buttons.padding.xxs
+          : theme.buttons.padding.base)};
 `;
 
 export const sm = css<StyleProps>`
   ${shared}
 
   font-size: ${({ theme }) => theme.fonts.size.sm};
-  padding: ${({ aslink, basic, grouped, plain, theme, tag }) =>
-    !plain &&
+  padding: ${({ aslink, basic, grouped, plain, theme, tag, wrap }) =>
+    !plain && !wrap &&
     (typeof tag !== 'undefined'
       ? theme.buttons.padding.sm
       : aslink
@@ -171,10 +176,11 @@ export const sm = css<StyleProps>`
     padding-top: 0;
   `}
 
-  ${({ basic, grouped, plain, theme }) =>
+  ${({ basic, grouped, plain, theme, wrap }) =>
     grouped &&
     !basic &&
     !plain &&
+    !wrap &&
     `
     border-radius: ${theme.borders.radius.sm};
   `}

@@ -127,15 +127,11 @@ export default function useModelManager({
     pipeline2: PipelineExecutionFrameworkType
   ): Promise<NodeItemType[]> {
     return new Promise((resolve, reject) => {
-      // console.log('itemsRef.current.start', itemsRef.current)
-
       try {
         const { blocksByGroup, groupMapping, groupsByLevel } = buildDependencies(
           executionFramework2,
           pipeline2,
         );
-
-        // console.log(blocksByGroup, groupMapping, groupsByLevel)
 
         // Hydrate each group’s blocks for every level using the blocks from the user’s pipeline.
         const blockGroupsByLevel: BlockGroupType[][] = [];

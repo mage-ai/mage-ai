@@ -232,6 +232,7 @@ export const BlockNodeWrapper: React.FC<BlockNodeWrapperProps & NodeWrapperProps
                 : StatusTypeEnum.EXECUTED
                   ? 'green'
                   : 'blue',
+            onClick: event => console.log(event),
           },
         },
         badge:

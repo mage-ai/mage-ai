@@ -24,13 +24,14 @@ export default function Aside({ Icon, baseColorName, className, onClick }: Aside
   return onClick ? (
     <Button
       Icon={() => el}
-      asLink
       basic
       className={className}
+      loadingColorName={baseColorName}
       onClick={(event: React.MouseEvent<HTMLElement, MouseEvent>) => {
         event.preventDefault();
         onClick(event);
       }}
+      wrap
     />
   ) : (
     el

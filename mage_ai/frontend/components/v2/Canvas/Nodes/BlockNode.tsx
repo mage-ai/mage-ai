@@ -1,4 +1,5 @@
 import Grid from '@mana/components/Grid';
+import Loading from '@mana/components/Loading';
 import Text from '@mana/elements/Text';
 import Badge from '@mana/elements/Badge';
 import Circle from '@mana/elements/Circle';
