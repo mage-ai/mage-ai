@@ -43,8 +43,8 @@ export interface RectType {
 interface BaseItem {
   id: number | string;
   level?: number;
-  subtype: PortSubtypeEnum | AppSubtypeEnum;
-  type: ItemTypeEnum | AppTypeEnum;
+  subtype?: PortSubtypeEnum;
+  type: ItemTypeEnum;
   version?: number;
 }
 

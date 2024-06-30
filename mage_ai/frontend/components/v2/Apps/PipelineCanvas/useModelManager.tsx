@@ -15,20 +15,7 @@ import { ClientEventType } from '@mana/shared/interfaces';
 import PipelineType from '@interfaces/PipelineType';
 import { AppConfigType } from '../interfaces';
 import useAppEventsHandler, { CustomAppEvent, CustomAppEventEnum } from './useAppEventsHandler';
-import { AppManagerType } from './interfaces';
-
-export type ModelManagerType = {
-  appHandlersRef: AppHandlersRefType;
-  executionFramework: PipelineExecutionFrameworkType;
-  itemsRef: React.MutableRefObject<ItemMappingType>;
-  mutateModels: (payload?: ModelMappingType) => ModelMappingType;
-  onItemChangeRef: React.MutableRefObject<(payload: NodeItemType) => void>;
-  onModelChangeRef: React.MutableRefObject<(payload: PipelineExecutionFrameworkType) => void>;
-  pipeline: PipelineExecutionFrameworkType;
-  portsRef: React.MutableRefObject<PortMappingType>;
-  updateNodeItems: (items: ItemMappingType) => void;
-  updatePorts: (ports: PortMappingType) => void;
-};
+import { AppManagerType, ModelManagerType } from './interfaces';
 
 type ModelManagerProps = {
   itemIDsByLevelRef: React.MutableRefObject<string[][]>;
@@ -128,11 +115,11 @@ export default function useModelManager({
     pipelines: pipelineMutants,
   };
 
-  const handleAppStarted = ({ detail }: CustomAppEvent) => {
+  const handleAppStarted = (event: CustomAppEvent) => {
     initializeModels(
       appHandlersRef?.current?.executionFrameworks?.modelsRef?.current?.execution_framework,
       appHandlersRef?.current?.pipelines?.modelsRef?.current?.pipeline,
-      detail?.manager,
+      event.detail?.manager as unknown,
     );
   };
 

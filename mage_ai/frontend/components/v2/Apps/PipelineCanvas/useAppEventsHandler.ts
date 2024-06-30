@@ -1,4 +1,4 @@
-import { CustomAppEvent as CustomAppEventType, ManagerType, SubscriptionType } from './interfaces';
+import { CustomAppEvent as CustomAppEventType, SubscriberType, SubscriptionType } from './interfaces';
 import { CustomAppEventEnum } from './enums';
 import { useEffect, useRef } from 'react';
 
@@ -8,13 +8,13 @@ export {
 };
 
 export default function useAppEventsHandler(
-  manager: ManagerType,
+  subscriber: SubscriberType,
   subscriptions?: Record<string | CustomAppEventEnum, SubscriptionType['handler']>,
 ): {
   dispatchAppEvent: (type: CustomAppEventEnum, data: CustomAppEvent['detail']) => void;
-  managerRef: React.MutableRefObject<ManagerType>;
+  managerRef: React.MutableRefObject<SubscriberType>;
 } {
-  const managerRef = useRef(manager);
+  const managerRef = useRef(subscriber);
   const subscriptionsRef = useRef<Record<string | CustomAppEventEnum, SubscriptionType['handler']>>({} as any);
 
   function dispatchAppEvent(type: CustomAppEventEnum, data: CustomAppEvent['detail']) {

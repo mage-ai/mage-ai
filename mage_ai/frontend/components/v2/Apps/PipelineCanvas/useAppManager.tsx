@@ -10,10 +10,24 @@ import useAppEventsHandler, { CustomAppEvent } from './useAppEventsHandler';
 import { unique } from '@utils/array';
 
 export default function useAppManager({ activeLevel }: { activeLevel: React.MutableRefObject<number> }) {
-  const appsRef = useRef<Record<string, any>>({});
+  const appsRef = useRef<Record<string, AppNodeType[]>>({});
 
   const handleStartApp = (event: CustomAppEvent) => {
     startApp(event?.detail?.event, event?.detail?.app);
+  };
+
+  const handleAppRectUpdated = ({ detail: { event } }: CustomAppEvent) => {
+    const { data } = event;
+    const { node: appNode } = data;
+    appNode?.upstream?.forEach((nodeID: string) => {
+      const apps = [];
+      appsRef?.current?.[nodeID]?.forEach((child) => {
+        if (appNode?.id === child?.id) {
+          child.rect = appNode.rect;
+        }
+        apps.push(child);
+      });
+    })
   };
 
   const { dispatchAppEvent } = useAppEventsHandler({
@@ -22,6 +36,7 @@ export default function useAppManager({ activeLevel }: { activeLevel: React.Muta
     stopApp,
   } as AppManagerType, {
     [CustomAppEventEnum.START_APP]: handleStartApp,
+    [CustomAppEventEnum.APP_RECT_UPDATED]: handleAppRectUpdated,
   });
 
   function startApp(event: ClientEventType, app: AppConfigType) {

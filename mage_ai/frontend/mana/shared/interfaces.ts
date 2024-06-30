@@ -32,7 +32,7 @@ export type ClientEventType = {
     node: any;
   };
   handle?: HandleOperationType;
-  operationTarget?: HTMLElement;
+  operationTarget?: HTMLElement | React.RefObject<HTMLElement> | React.RefObject<HTMLDivElement> | React.RefObject<Element> | null;
   operationType?: EventOperationEnum;
 } & Event &
   MouseEvent &
@@ -68,6 +68,7 @@ export interface EventOperationOptionsType {
   args?: any[];
   kwargs?: {
     boundingContainer?: DOMRect;
+    computedStyle?: CSSStyleDeclaration;
   };
   handler?: (
     event: ClientEventType,

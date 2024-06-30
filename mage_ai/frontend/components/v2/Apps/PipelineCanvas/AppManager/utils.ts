@@ -1,5 +1,6 @@
 import { AppNodeType, NodeType } from '@components/v2/Canvas/interfaces';
 import { AppConfigType } from '../../interfaces';
+import { ItemTypeEnum } from '@components/v2/Canvas/types';
 
 function appInstanceID(nodeID: string, app: AppConfigType): string {
   return [nodeID, app.type, app.subtype, app.uuid].join(':');
@@ -17,8 +18,7 @@ export function buildAppNode(node: NodeType, app: AppConfigType, opts?: {
     app,
     id,
     level: opts?.level,
-    subtype: app.subtype,
-    type: app.type,
+    type: ItemTypeEnum.APP,
     upstream: [String(node.id)],
   };
 }
