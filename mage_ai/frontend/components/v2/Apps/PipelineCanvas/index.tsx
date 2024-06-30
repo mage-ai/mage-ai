@@ -7,6 +7,7 @@ import { ElementRoleEnum } from '@mana/shared/types';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { ZoomPanStateType, useZoomPan } from '@mana/hooks/useZoomPan';
 import { useEffect, useRef, useState } from 'react';
+import { DEBUG } from '@components/v2/utils/debug';
 
 export default function PipelineBuilder({ loading, ...props }: BuilderCanvasProps & {
   loading?: boolean;
@@ -75,6 +76,11 @@ export default function PipelineBuilder({ loading, ...props }: BuilderCanvasProp
     setZoomPanDisabledState(value);
   }
 
+  DEBUG.dragging && console.log(
+    ['dragEnabled', dragEnabled],
+    ['dropEnabled', dropEnabled],
+  );
+
   useEffect(() => {
     const handleMouseDown = (event: MouseEvent) => {
       if (shouldPassControl(event as ClientEventType)) return;
@@ -85,6 +91,7 @@ export default function PipelineBuilder({ loading, ...props }: BuilderCanvasProp
         .filter(Boolean)
         .some(role => targetElement.closest(`[role="${role}"]`));
 
+      DEBUG.dragging && console.log('handleMouseDown', targetElement, hasRole);
       if (hasRole) {
         // For some reason, we need to do this or else you can’t drag anything.
         setZoomPanDisabled(true);

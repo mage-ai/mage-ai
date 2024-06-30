@@ -328,6 +328,7 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
 
             return (
               <DraggableBlockNode
+                draggable={dragEnabled}
                 handlers={{
                   onDragEnd: handleDragEnd,
                   onDragStart: handleDragStart,
@@ -366,6 +367,7 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
 
             return (
               <DraggableAppNode
+                draggable={dragEnabled}
                 items={appNode?.upstream?.map(id => itemsRef?.current?.[id])}
                 key={appNode.id}
                 node={appNode}

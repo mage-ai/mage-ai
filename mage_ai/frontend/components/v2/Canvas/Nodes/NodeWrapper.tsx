@@ -10,6 +10,7 @@ import { DragItem, NodeItemType, PortType, RectType } from '../interfaces';
 import { ItemTypeEnum } from '../types';
 import { DragAndDropType } from './types';
 import { ElementRoleEnum } from '@mana/shared/types';
+import { DEBUG } from '@components/v2/utils/debug';
 
 export type NodeWrapperProps = {
   children?: React.ReactNode;
@@ -125,12 +126,27 @@ export const NodeWrapper: FC<NodeWrapperProps> = memo(function NodeWrapper({
   connectDrop(itemRef);
   connectDrag(itemRef);
 
+  DEBUG.dragging && console.log(
+    'NodeWrapper',
+    ['draggable', draggable],
+    ['isDragging', isDragging],
+  );
+
   return (
     <div
-      className={[styles.nodeWrapper, className ?? ''].join(' ')}
+      className={[
+        styles.nodeWrapper,
+        className ?? '',
+      ].join(' ')}
       onDragEnd={draggable && onDragEnd ? event => onDragEnd?.(event as any) : undefined}
       onDragStart={draggable && onDragStart ? event => onDragStart?.(event as any) : undefined}
-      onMouseDown={draggable && onMouseDown ? event => onMouseDown?.(event as any) : undefined}
+      onMouseDown={draggable && onMouseDown
+        ? event => {
+          DEBUG.dragging && console.log('NodeWrapper.onMouseDown', event);
+          onMouseDown?.(event as any);
+        }
+        : undefined
+      }
       // THESE WILL DISABLE the style opacity of the wrapper.
       // onMouseLeave={onMouseLeave ? event => onMouseLeave?.(event as any) : undefined}
       onMouseOver={!draggable && onMouseOver ? event => onMouseOver?.(event as any) : undefined}

@@ -28,6 +28,7 @@ import BlockType, { BlockTypeEnum } from '@interfaces/BlockType';
 import { MutateType } from '@api/interfaces';
 import { IconProps } from '@mana/elements/Icon';
 import useAppEventsHandler, { CustomAppEventEnum } from './useAppEventsHandler';
+import { DEBUG } from '@components/v2/utils/debug';
 
 const GRID_SIZE = 40;
 
@@ -558,6 +559,7 @@ export default function useEventManager({
   }
 
   function handleDragEnd(event: ClientEventType) {
+    DEBUG.dragging && console.log('handleDragEnd', event);
     setZoomPanDisabled(false);
     setDragEnabled(false);
     setDropEnabled(false);
@@ -570,7 +572,7 @@ export default function useEventManager({
     if (handle) {
       handle?.(event);
     }
-
+    DEBUG.dragging && console.log('handleMouseDown', operationType);
     if (EventOperationEnum.DRAG_START !== operationType) {
       setZoomPanDisabled(false);
       setDragEnabled(false);
@@ -689,9 +691,11 @@ export default function useEventManager({
       portMapping: portsUpdated,
     };
 
+    DEBUG.dragging && console.log('onDropBlock', payload);
+
     // DON’T call renderLayout changes or else the item’s rect is changed.
-    mutateModels(payload);
-    renderConnectionLines();
+    // mutateModels(payload);
+    // renderConnectionLines();
   }
 
   function onDropPort(dragTarget: NodeItemType, dropTarget: NodeItemType) {

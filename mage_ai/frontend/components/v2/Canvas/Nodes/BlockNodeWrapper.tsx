@@ -22,6 +22,7 @@ import {
 } from '@mana/icons';
 import { setNested } from '@utils/hash';
 import { areEqualRects, areDraggableStylesEqual } from './equals';
+import { DEBUG } from '@components/v2/utils/debug';
 
 export type BlockNodeWrapperProps = {
   Wrapper?: React.FC<NodeWrapperProps>;
@@ -113,18 +114,25 @@ export const BlockNodeWrapper: React.FC<BlockNodeWrapperProps & NodeWrapperProps
 
   function handleMouseDown(event: ClientEventType) {
     event.stopPropagation();
-    onMouseDown && onMouseDown?.(buildEvent(event, EventOperationEnum.DRAG_START));
+    const event2 = buildEvent(event, EventOperationEnum.DRAG_START);
+
+    DEBUG.dragging && console.log('BlockNodeWrapper.handleMouseDown', event2, onMouseDown);
+
+    onMouseDown && onMouseDown?.(event2);
   }
 
   function handleMouseLeave(event: ClientEventType) {
+    DEBUG.dragging && console.log('handleMouseLeave', event);
     onMouseLeave && onMouseLeave?.(buildEvent(event));
   }
 
   function handleMouseOver(event: ClientEventType) {
+    DEBUG.dragging && console.log('handleMouseOver', event);
     onMouseOver && onMouseOver?.(buildEvent(event));
   }
 
   function handleMouseUp(event: ClientEventType) {
+    DEBUG.dragging && console.log('handleMouseUp', event);
     onMouseUp && onMouseUp?.(buildEvent(event, EventOperationEnum.DRAG_END));
   }
 
