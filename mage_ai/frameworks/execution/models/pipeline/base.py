@@ -109,7 +109,7 @@ class PipelineExecutionFramework(BaseExecutionFramework):
 
         block_execution_frameworks_by_uuid = {b.uuid: b for b in block_execution_frameworks}
 
-        # Add upstream and downstream groups for the root and leaf node in the pipelines
+        # Add upstream and downstream groups for the root and leaf nodes in the pipelines
         for block_group in block_groups:
             if not block_group['upstream_block_groups']:
                 # Root node
@@ -142,7 +142,8 @@ class PipelineExecutionFramework(BaseExecutionFramework):
     def set_block_dependency(self, blocks_by_uuid):
         """
         1. Construct a map of blocks by group
-        2. Construct a map of block execution framework group to block execution framework
+        2. Get flattened block groups and their dependencies of this framework
+        3. Set the block dependencies for the block instances
         """
         blocks_with_group = [b for b in blocks_by_uuid.values() if b.groups]
         blocks_by_group = group_by(lambda b: b.groups[0], blocks_with_group)
