@@ -32,7 +32,7 @@ function TextInput({
   return (
     <InputStyled
       {...props}
-      italic={typeof italic === 'function' ? italic(value) : italic}
+      italic={(italic && typeof italic === 'function') ? (italic as (val: any) => boolean)?.(value) : italic}
       onChange={event => {
         setValue(event.target.value);
         if (onChange) {

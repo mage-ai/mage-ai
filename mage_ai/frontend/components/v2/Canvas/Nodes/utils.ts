@@ -4,7 +4,7 @@ import { FrameworkType, PipelineExecutionFrameworkBlockType } from '@interfaces/
 import update from 'immutability-helper';
 import { generateUUID } from '@utils/uuids/generator';
 import { ButtonEnum } from '@mana/shared/enums';
-import { CSSProperties, FC } from 'react';
+import { CSSProperties } from 'react';
 import { EventOperationEnum, SubmitEventOperationType } from '@mana/shared/interfaces';
 import { NodeType, NodeItemType, RectType } from '../interfaces';
 import { flattenArray } from '@utils/array';

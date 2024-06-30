@@ -1,6 +1,7 @@
 import PanelRows from '@mana/elements/PanelRows';
 import Grid from '@mana/components/Grid';
 import Text from '@mana/elements/Text';
+import { SharedBlockProps } from '../types';
 import BlockType, { TemplateType } from '@interfaces/BlockType';
 import { PipelineExecutionFrameworkBlockType } from '@interfaces/PipelineExecutionFramework/interfaces';
 import {
@@ -9,19 +10,19 @@ import {
   InteractionInputType, InteractionVariableType, InteractionInputTypeEnum
 } from '@interfaces/InteractionType';
 import TextInput from '@mana/elements/Input/TextInput';
-import { TooltipWrapper } from '@context/Tooltip';
+import { TooltipAlign, TooltipWrapper, TooltipDirection } from '@context/Tooltip';
 
 export default function TemplateConfigurations({
   block,
   group,
   template,
+  updateBlock,
   uuid,
 }: {
-  block: BlockType;
   group: PipelineExecutionFrameworkBlockType
   template: TemplateType;
   uuid: string;
-}) {
+} & SharedBlockProps) {
   const {
     inputs,
     variables,
@@ -31,6 +32,8 @@ export default function TemplateConfigurations({
   return (
     <PanelRows padding={false}>
       <TooltipWrapper
+        align={TooltipAlign.START}
+        horizontalDirection={TooltipDirection.LEFT}
         style={{ alignContent: 'center', justifySelf: 'stretch' }}
         tooltip={
           <Grid rowGap={8}>
@@ -97,6 +100,8 @@ export default function TemplateConfigurations({
               }}
             >
               <TooltipWrapper
+                align={TooltipAlign.END}
+                horizontalDirection={TooltipDirection.LEFT}
                 style={{ alignContent: 'center', justifySelf: 'stretch' }}
                 tooltip={
                   <Text secondary xsmall>
@@ -121,6 +126,11 @@ export default function TemplateConfigurations({
                     InteractionVariableTypeEnum.FLOAT,
                     InteractionVariableTypeEnum.INTEGER,
                   ].some(varType => types?.includes(varType))}
+                  onChange={(event) => updateBlock(
+                    event as any,
+                    `configuration.templates.${uuid}.variables.${variableUUID}.value`,
+                    event?.target?.value,
+                  )}
                   placeholder={types?.filter(Boolean)?.join(', ')}
                   required={required}
                   small

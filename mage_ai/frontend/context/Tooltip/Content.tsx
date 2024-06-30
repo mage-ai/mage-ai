@@ -22,9 +22,9 @@ function TooltipContent({
   } = options;
   const {
     align = TooltipAlign.START,
-    horizontalDirection = TooltipDirection.RIGHT,
     justify = TooltipJustify.START,
     position,
+    horizontalDirection = TooltipDirection.RIGHT,
     verticalDirection = TooltipDirection.UP,
   } = layout;
 
@@ -41,7 +41,7 @@ function TooltipContent({
       } else if (align === TooltipAlign.CENTER) {
         translateX = -Math.abs(width - widthe) / 2;
       } else if (align === TooltipAlign.END) {
-        translateX = width;
+        translateX = TooltipDirection.LEFT === horizontalDirection ? -(widthe - width) : width;
       }
       if (justify === TooltipJustify.START) {
         translateY = -heighte;

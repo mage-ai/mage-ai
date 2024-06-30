@@ -2,6 +2,7 @@ import React from 'react';
 import styles from '@styles/scss/components/Canvas/Nodes/BlockNode.module.scss';
 import stylesBuilder from '@styles/scss/apps/Canvas/Pipelines/Builder.module.scss';
 import update from 'immutability-helper';
+import PipelineType from '@interfaces/PipelineType';
 import { BlockNode } from './BlockNode';
 import { ClientEventType, EventOperationEnum, SubmitEventOperationType } from '@mana/shared/interfaces';
 import { ItemTypeEnum } from '../types';
@@ -17,6 +18,7 @@ import {
   Add, CaretDown, Check, ArrowsAdjustingFrameSquare, PipeIconVertical, PlayButtonFilled,
   Infinite,
 } from '@mana/icons';
+import { setNested } from '@utils/hash';
 
 export type BlockNodeWrapperProps = {
   Wrapper: React.FC<NodeWrapperProps>;
@@ -52,8 +54,8 @@ export const BlockNodeWrapper: React.FC<BlockNodeWrapperProps & NodeWrapperProps
 
   const { onMouseDown, onMouseLeave, onMouseOver, onMouseUp } = handlers;
 
-  const block = item?.block;
-  const { type, uuid } = block || {};
+  const block = useMemo(() => item?.block, [item]);
+  const { type, uuid } = useMemo(() => ({ type: block?.type, uuid: block?.uuid }) || {}, [block]);
   const isGroup = useMemo(() => !item?.block?.type || item?.block?.type === BlockTypeEnum.GROUP, [item]);
 
   const name = useMemo(
@@ -68,6 +70,7 @@ export const BlockNodeWrapper: React.FC<BlockNodeWrapperProps & NodeWrapperProps
       update(event, {
         data: {
           $set: {
+            block,
             node: item,
           },
         },
@@ -78,8 +81,21 @@ export const BlockNodeWrapper: React.FC<BlockNodeWrapperProps & NodeWrapperProps
           $set: operation,
         },
       }) as any,
-    [item],
+    [block, item],
   );
+
+  const updateBlock = useCallback((
+    event: ClientEventType | Event, key: string, value: any) => {
+    submitEventOperation(
+      buildEvent(event as any, EventOperationEnum.MUTATE_MODEL_BLOCK), {
+      handler: (e, { blocks }) => {
+        blocks.update.mutate({
+          event,
+          payload: setNested({ ...block }, key, value),
+        });
+      },
+    });
+  }, [block, buildEvent, submitEventOperation]);
 
   function handleMouseDown(event: ClientEventType) {
     event.stopPropagation();
@@ -193,6 +209,7 @@ export const BlockNodeWrapper: React.FC<BlockNodeWrapperProps & NodeWrapperProps
       }}
       item={item}
       onMount={onMount}
+      updateBlock={updateBlock}
       titleConfig={{
         asides: {
           after: {

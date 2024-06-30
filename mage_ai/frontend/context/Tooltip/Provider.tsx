@@ -13,6 +13,7 @@ export const TooltipProvider: React.FC<TooltipProviderProps> = ({ children }) =>
   const themeContext = useContext(ThemeContext);
 
   const timeoutRef = useRef(null);
+  const showTimeoutRef = useRef(null);
   const tooltipRenderRef = useRef<Root | null>(null);
   const tooltipRootRef = useRef<HTMLDivElement | null>(null);
 
@@ -27,6 +28,7 @@ export const TooltipProvider: React.FC<TooltipProviderProps> = ({ children }) =>
     showTooltipOptions?: ShowTooltipOptionsType,
   ): void {
     clearTimeout(timeoutRef.current);
+    clearTimeout(showTimeoutRef.current);
 
     const optionsPrev = showTooltipRef.current;
     showTooltipRef.current = showTooltipOptions;
@@ -34,7 +36,7 @@ export const TooltipProvider: React.FC<TooltipProviderProps> = ({ children }) =>
 
     tooltipRenderRef.current ||= createRoot(tooltipRootRef.current)
 
-    timeoutRef.current = setTimeout(() => {
+    showTimeoutRef.current = setTimeout(() => {
       tooltipRenderRef.current.render(
         <ContextProvider theme={themeContext}>
           <TooltipContent
@@ -48,7 +50,7 @@ export const TooltipProvider: React.FC<TooltipProviderProps> = ({ children }) =>
         </ContextProvider>
       );
       tooltipVisibleRef.current = true;
-    }, tooltipVisibleRef.current ? 0 : 300);
+    }, tooltipVisibleRef.current ? 0 : 1000);
   }
 
   function hideTooltip(delay?: number): void {
@@ -67,9 +69,10 @@ export const TooltipProvider: React.FC<TooltipProviderProps> = ({ children }) =>
 
   useEffect(() => {
     const isInside = (event: MouseEvent): boolean => {
-      const { wrapperRef } = showTooltipRef.current;
+      const { wrapperRef } = showTooltipRef.current ?? {}
+      if (!wrapperRef) return false;
 
-      const { height, left, top, width } = wrapperRef.current.getBoundingClientRect();
+      const { height, left, top, width } = wrapperRef?.current?.getBoundingClientRect() ?? {};
       const { height: heightt, left: leftt, top: topt, width: widtht } =
         tooltipContentRef?.current?.getBoundingClientRect() ?? {};
       const { pageX, pageY } = event;
@@ -100,6 +103,8 @@ export const TooltipProvider: React.FC<TooltipProviderProps> = ({ children }) =>
     };
 
     const handleMouseDown = (event: MouseEvent) => {
+      clearTimeout(showTimeoutRef.current);
+
       if (!tooltipVisibleRef?.current
         || !showTooltipRef?.current
         || !showTooltipRef?.current?.hideOn?.includes(HideTooltipReason.CLICK)

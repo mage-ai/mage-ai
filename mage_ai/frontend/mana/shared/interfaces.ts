@@ -2,6 +2,8 @@ import React from 'react';
 import { MutateType } from '@api/interfaces';
 import { ButtonEnum, LanguageEnum } from './enums';
 import { RemoveContextMenuType, RenderContextMenuType } from '@mana/hooks/useContextMenu';
+import { NodeItemType } from '@components/v2/Canvas/interfaces';
+import BlockType from '@interfaces/BlockType';
 
 export enum EventOperationEnum {
   CONTEXT_MENU_OPEN = 'context_menu.open',
@@ -10,6 +12,7 @@ export enum EventOperationEnum {
   DRAG_START = 'drag.start',
   DROP_START = 'drop.start',
   MOUSE_DOWN = 'mouse.down',
+  MUTATE_MODEL_BLOCK = 'mutate.model.block',
 }
 
 export type EventControlType = {
@@ -22,7 +25,12 @@ export type EventControlType = {
 export type ClientEventType = {
   button?: ButtonEnum;
   control?: EventControlType;
-  data?: Record<string, any>;
+  data?: Record<string, any> | {
+    block: BlockType
+    node?: NodeItemType;
+  } | {
+    node: NodeItemType;
+  };
   handle?: HandleOperationType;
   operationTarget?: HTMLElement;
   operationType?: EventOperationEnum;

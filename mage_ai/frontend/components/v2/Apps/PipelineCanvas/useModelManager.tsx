@@ -7,22 +7,27 @@ import { createItemsFromBlockGroups } from './utils/items';
 import { createPortsByItem } from './utils/ports';
 import { useEffect, useRef, useState } from 'react';
 import { useMutate } from '@context/APIMutation';
-import { ItemElementsRefType } from './interfaces';
-import { indexBy } from '@utils/array';
+import { setPipelineBlock } from './ModelManager/utils';
+import BlockType from '@interfaces/BlockType';
+import { MutatationType, MutateFunctionArgsType } from '@api/interfaces';
+import useDebounce from '@utils/hooks/useDebounce';
+import { ClientEventType } from '@mana/shared/interfaces';
+import PipelineType from '@interfaces/PipelineType';
 
 export type ModelManagerType = {
-  executionFramework: PipelineExecutionFrameworkType;
-  pipeline: PipelineExecutionFrameworkType;
   appHandlersRef: AppHandlersRefType;
+  executionFramework: PipelineExecutionFrameworkType;
   itemsRef: React.MutableRefObject<ItemMappingType>;
   mutateModels: (payload?: ModelMappingType) => ModelMappingType;
+  onItemChangeRef: React.MutableRefObject<(payload: NodeItemType) => void>;
+  onModelChangeRef: React.MutableRefObject<(payload: PipelineExecutionFrameworkType) => void>;
+  pipeline: PipelineExecutionFrameworkType;
   portsRef: React.MutableRefObject<PortMappingType>;
   updateNodeItems: (items: ItemMappingType) => void;
   updatePorts: (ports: PortMappingType) => void;
 };
 
 type ModelManagerProps = {
-  itemElementsRef: ItemElementsRefType;
   itemIDsByLevelRef: React.MutableRefObject<string[][]>;
   pipelineUUID: string;
   executionFrameworkUUID: string;
@@ -30,7 +35,6 @@ type ModelManagerProps = {
 };
 
 export default function useModelManager({
-  itemElementsRef,
   itemIDsByLevelRef,
   pipelineUUID,
   executionFrameworkUUID,
@@ -43,6 +47,8 @@ export default function useModelManager({
 
   const onItemChangeRef = useRef<(payload: NodeItemType) => void>(null);
   const onModelChangeRef = useRef<(payload: PipelineExecutionFrameworkType) => void>(null);
+
+  const [debounce, cancel] = useDebounce();
 
   const [pipeline, setPipeline] = useState<PipelineExecutionFrameworkType>(null);
   const [executionFramework, setExecutionFramework] = useState<PipelineExecutionFrameworkType>(null);
@@ -90,6 +96,28 @@ export default function useModelManager({
   });
 
   appHandlersRef.current = {
+    blocks: {
+      update: {
+        mutate: ({ event, payload: block }: MutateFunctionArgsType) => {
+          const model =
+            pipelineMutants.setModel(
+              prev => setPipelineBlock(prev as PipelineType, block as BlockType));
+
+          cancel();
+
+          return new Promise((resolve) => {
+            debounce(() => {
+              pipelineMutants.update.mutate({
+                event,
+                payload: model,
+              });
+
+              resolve(pipelineMutants.modelsRef.current.pipeline);
+            }, 1000);
+          });
+        },
+      } as MutatationType,
+    },
     executionFrameworks: executionFrameworkMutants,
     pipelines: pipelineMutants,
   };

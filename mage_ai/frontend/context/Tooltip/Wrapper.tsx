@@ -1,9 +1,10 @@
 import React, { useCallback, useRef } from 'react';
-import { TooltipJustify, TooltipAlign, HideTooltipReason, TooltipLayout, useTooltip } from './Context';
+import { TooltipDirection, TooltipJustify, TooltipAlign, HideTooltipReason, TooltipLayout, useTooltip } from './Context';
 
 export function TooltipWrapper({
   align,
   children,
+  hide,
   justify,
   position,
   showOnClick,
@@ -11,8 +12,11 @@ export function TooltipWrapper({
   style,
   tooltip,
   tooltipStyle,
+  horizontalDirection,
+  verticalDirection,
 }: {
   children: React.ReactNode;
+  hide?: boolean;
   showOnClick?: boolean;
   showOnHover?: boolean;
   style?: React.CSSProperties;
@@ -40,6 +44,8 @@ export function TooltipWrapper({
         align,
         justify,
         position: position ?? { x, y },
+        horizontalDirection,
+        verticalDirection,
       }, {
         event,
         hideOn,
@@ -47,7 +53,14 @@ export function TooltipWrapper({
         wrapperRef: wrapperRef,
       });
     }
-  }, [align, justify, position, showOnClick, showTooltip, tooltip, tooltipStyle]);
+  }, [align, justify, position, showOnClick, showTooltip, tooltip, tooltipStyle,
+    horizontalDirection,
+    verticalDirection,
+  ]);
+
+  if (hide) {
+    return children;
+  }
 
   return (
     <div
@@ -63,6 +76,7 @@ export function TooltipWrapper({
 
 export {
   TooltipAlign,
+  TooltipDirection,
   TooltipJustify,
 };
 

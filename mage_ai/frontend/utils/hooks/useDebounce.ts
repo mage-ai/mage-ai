@@ -4,7 +4,7 @@ export type DebouncerType = <T extends (...args: any[]) => void>(fn: T, delay: n
 export type CancelType = () => void;
 
 // A Hook that returns a debouncer function
-function useDynamicDebounce(): [
+function useDebounce(): [
   (fn: (...args: any[]) => void, delay: number, ...args: any[]) => void,
   () => void,
 ] {
@@ -40,4 +40,4 @@ function useDynamicDebounce(): [
   return [debouncer, cancel];
 }
 
-export default useDynamicDebounce;
+export default useDebounce;

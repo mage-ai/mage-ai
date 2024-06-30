@@ -130,6 +130,8 @@ export interface MutateType {
   detail: MutatationType;
   list: MutatationType;
   modelsRef: React.MutableRefObject<ModelsType>;
+  setModel: (model: ResourceType | ((prev: ResourceType) => ResourceType)) => ResourceType;
+  setModels: (models: ResourceType[] | ((prev: ResourceType[]) => ResourceType[])) => ResourceType[];
   status: MutationStatusMappingType;
   update: MutatationType;
 }

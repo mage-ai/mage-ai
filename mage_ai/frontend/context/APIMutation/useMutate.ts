@@ -102,25 +102,40 @@ export function useMutate(
   });
   const [status, setStatus] = useState<MutationStatusMappingType>();
 
+  function setModel(model: ResourceType | ((prev: ResourceType) => ResourceType)): ResourceType {
+    const model2 = typeof model === 'function'
+      ? model(modelsRef.current[resourceName])
+      : model;
+    modelsRef.current[resourceName] = model2
+    return modelsRef.current[resourceName];
+  }
+
+  function setModels(models: ResourceType[] | ((prev: ResourceType[]) => ResourceType[])): ResourceType[] {
+    const model2 = typeof models === 'function'
+      ? models(modelsRef.current[resource])
+      : models;
+    modelsRef.current[resource] = model2;
+    return modelsRef.current[resource];
+  }
+
   function preprocessPayload({ payload }: { payload?: ArgsValueOrFunctionType } = {}): {
     [key: string]: any;
   } {
+
     return {
       [resourceName]: typeof payload === 'function' ? payload(modelsRef?.current?.[resourceName]) : payload,
     };
   }
 
   function handleResponse(response: ResponseType, variables?: any, ctx?: any) {
-    // if (!callbackOnEveryRequest && response && isEqual(response, modelsRef.current)) {
-    //   return;
-    // }
+    if (!callbackOnEveryRequest && response && isEqual(response, modelsRef.current)) {
+      return;
+    }
 
-    const { data } = response || {};
     const modelsPrev = { ...modelsRef.current };
-    modelsRef.current = {
-      ...modelsRef.current,
-      ...data,
-    };
+    const { data } = response || {};
+    modelsRef.current[resourceName] = data[resourceName] ?? modelsRef.current[resourceName];
+    modelsRef.current[resource] = data[resource] ?? modelsRef.current[resource];
 
     const key = resourceName in (data ?? {}) ? resourceName : resource;
     const result = typeof parse === 'function' ? parse(data) : data?.[key];
@@ -132,14 +147,19 @@ export function useMutate(
 
   function handleError(error: APIErrorType, operation: OperationTypeEnum) {
     console.error(error);
-    context && context?.renderError(error, (event) => {
-      const reqs = requests.current[operation] ?? [];
-      const args = reqs.pop();
 
-      if (args) {
-        wrapMutation(...(args ?? []) as [any, any]).then(handleArgs).catch(handleError);
-      }
-    });
+    if (context && context?.renderError) {
+      context?.renderError(error, (event: MouseEvent) => {
+        const reqs = requests.current[operation] ?? [];
+        const args = reqs.pop();
+
+        if (args) {
+          wrapMutation(operation, { ...args, event })
+            .then(handleResponse)
+            .catch(err => handleError(err, operation));
+        }
+      });
+    }
 
     handleStatusUpdate();
     return error;
@@ -252,6 +272,7 @@ export function useMutate(
     if (abortControllerRef?.current?.[operation]) {
       abortControllerRef?.current?.[operation].abort();
     }
+
     abortControllerRef.current[operation] = new AbortController();
     const signal = abortControllerRef.current[operation].signal;
 
@@ -260,12 +281,10 @@ export function useMutate(
 
     if (args?.event) {
       const target = (args?.event?.target as HTMLElement).closest('[role="button"]') as HTMLElement;
-      if (!target) return;
-
-      const rect = target.getBoundingClientRect();
-      context.renderTarget({
-        rect,
-      });
+      if (target) {
+        const rect = target.getBoundingClientRect();
+        context.renderTarget({ content: null, rect });
+      }
     }
 
     return fetch(...request as [any, any], { signal });
@@ -308,6 +327,8 @@ export function useMutate(
     detail: mutationDetail,
     list: mutationList,
     modelsRef,
+    setModel,
+    setModels,
     status,
     update: mutationUpdate,
   } as MutateType;

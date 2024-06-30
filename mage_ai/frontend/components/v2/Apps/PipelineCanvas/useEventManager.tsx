@@ -21,6 +21,7 @@ import { calculateBoundingBox, findRectAtPoint } from '../../Canvas/utils/rect';
 import { useRef, useState, startTransition } from 'react';
 import { LayoutManagerType } from './useLayoutManager';
 import BlockType, { BlockTypeEnum } from '@interfaces/BlockType';
+import { MutateType } from '@api/interfaces';
 
 const GRID_SIZE = 40;
 
@@ -220,7 +221,7 @@ export default function useEventManager({
 
   function submitEventOperation(event: ClientEventType, opts?: EventOperationOptionsType) {
     if (opts?.handler) {
-      opts?.handler(event, appHandlersRef.current, {
+      opts?.handler(event, (appHandlersRef.current as unknown) as Record<string, MutateType>, {
         removeContextMenu,
         renderContextMenu,
       });

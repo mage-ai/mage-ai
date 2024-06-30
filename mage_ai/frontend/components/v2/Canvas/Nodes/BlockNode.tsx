@@ -13,13 +13,15 @@ import Connection from './Blocks/Connection';
 import PanelRows from '@mana/elements/PanelRows';
 import TemplateConfigurations from './Blocks/TemplateConfigurations';
 import BlockType, { BlockTypeEnum } from '@interfaces/BlockType';
+import { TooltipWrapper } from '@context/Tooltip';
 import { isEmptyObject } from '@utils/hash';
 import { useMemo } from 'react';
 import { ItemTypeEnum, PortSubtypeEnum } from '../types';
-import { DragAndDropHandlersType } from './types';
+import { DragAndDropHandlersType, SharedBlockProps } from './types';
+import { SubmitEventOperationType } from '@mana/shared/interfaces';
+import { FrameworkType, PipelineExecutionFrameworkBlockType } from '@interfaces/PipelineExecutionFramework/interfaces';
 
 type BlockNodeProps = {
-  block?: BlockType;
   borderConfig?: BorderConfigType;
   draggable?: boolean;
   item: DragItem;
@@ -37,7 +39,8 @@ export function BlockNode({
   item,
   onMount,
   titleConfig,
-}: BlockNodeProps & DragAndDropHandlersType) {
+  updateBlock,
+}: BlockNodeProps & DragAndDropHandlersType & SharedBlockProps) {
   const { borders } = borderConfig || {};
   const { asides, badge } = titleConfig || {};
   const { after, before } = asides || {};
@@ -123,7 +126,26 @@ export function BlockNode({
                 size={12}
               />
             )}
-            {badge && <Badge {...badge} />}
+            {badge &&
+              <TooltipWrapper
+                hide={block?.type && ![BlockTypeEnum.GROUP, BlockTypeEnum.PIPELINE].includes(block?.type)}
+                tooltip={
+                  <Grid rowGap={4}>
+                    <Text semibold>
+                      {block?.name || block?.uuid}
+                    </Text >
+                    {block?.description &&
+                      <Text secondary>
+                        {block?.description}
+                      </Text>
+                    }
+                  </Grid>
+                }
+                tooltipStyle={{ maxWidth: 400 }}
+              >
+                <Badge {...badge} />
+              </TooltipWrapper>
+            }
           </Grid>
           <Grid
             alignItems="center"
@@ -147,7 +169,7 @@ export function BlockNode({
           </Grid>
         </Grid>
       ),
-    [after, badge, inputs, item, outputs],
+    [after, badge, block, inputs, item, outputs],
   );
 
   const connectionRows = useMemo(
@@ -176,19 +198,21 @@ export function BlockNode({
   const templateConfigurations = useMemo(
     () =>
       (item?.block?.frameworks ?? [])?.map(
-        (group) =>
+        (group: PipelineExecutionFrameworkBlockType) =>
           !isEmptyObject(group?.configuration?.templates) &&
-          Object.entries(group?.configuration?.templates || {})?.map(([uuid, template]) => item?.block?.configuration?.templates?.[uuid] && (
-            <TemplateConfigurations
-              block={item?.block}
-              group={group}
-              key={uuid}
-              template={template}
-              uuid={uuid}
-            />
-          )),
+          Object.entries(group?.configuration?.templates || {})?.map(
+            ([uuid, template]) => item?.block?.configuration?.templates?.[uuid] && (
+              <TemplateConfigurations
+                block={item?.block}
+                group={group}
+                key={uuid}
+                template={template}
+                updateBlock={updateBlock}
+                uuid={uuid}
+              />
+            )),
       ),
-    [item],
+    [item, updateBlock],
   );
 
   const titleRow = useMemo(
