@@ -62,6 +62,7 @@ const DraggableAppNode: React.FC<DraggableAppNodeProps> = ({
   const fetchDetailCountRef = useRef(0);
   const handleOnMessageRef = useRef<(event: EventStreamType) => void>(null);
   const nodeRef = useRef<HTMLDivElement>(null);
+  const timeoutRef = useRef<any>(null);
 
   const { dispatchAppEvent } = useAppEventsHandler(node);
   const { phaseRef } = useDispatchMounted(node, nodeRef);
@@ -160,8 +161,8 @@ const DraggableAppNode: React.FC<DraggableAppNodeProps> = ({
   });
 
   function handleCodeExecution(event: MouseEvent) {
-    const process: ProcessDetailsType = executeCode(editor?.getValue());
-    addGroup(process, setEventStreamHandler);
+    const [process, executeHandler] = executeCode(editor?.getValue(), true);
+    addGroup(process, setEventStreamHandler, executeHandler);
   }
 
   useEffect(() => {

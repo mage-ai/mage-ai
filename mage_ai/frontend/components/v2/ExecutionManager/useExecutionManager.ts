@@ -77,9 +77,8 @@ export default function useExecutionManager(
     }
 
     const closeConnection = () => closeEventSourceConnection(uuid, consumerUUID);
-    const executeCode = (message: string): ProcessDetailsType => {
-      const eventSource = eventSourcesRef.current[uuid];
-
+    const executeCode = (message: string, future?: boolean): [ProcessDetailsType, () => void] => {
+      // const eventSource = eventSourcesRef.current[uuid];
       const messageUUID = getNewUUID();
       const payload = {
         message,
@@ -90,17 +89,25 @@ export default function useExecutionManager(
       messagesRef.current[uuid] ||= {};
       messagesRef.current[uuid][messageUUID] = payload;
 
-      mutants.create.mutate({
-        onError: (response: ResponseType) => {
-          debugLog('[RUNTIME] onError', response);
-        },
-        onSuccess: (response: ResponseType) => {
-          debugLog('[RUNTIME] onSuccess', response);
-        },
-        payload,
-      });
+      const executeHandler = () => {
+        mutants.create.mutate({
+          onError: (response: ResponseType) => {
+            debugLog('[RUNTIME] onError', response);
+          },
+          onSuccess: (response: ResponseType) => {
+            debugLog('[RUNTIME] onSuccess', response);
+          },
+          payload,
+        });
+      };
 
-      return payload;
+      if (future) {
+        return [payload, executeHandler];
+      }
+
+      executeHandler();
+
+      return [payload, undefined];
     }
 
     return {

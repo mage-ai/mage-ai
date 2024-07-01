@@ -3,10 +3,12 @@ import EventStreamType, {
   ServerConnectionStatusType,
 } from '@interfaces/EventStreamType';
 
+type ExecuteCodeResult = [ProcessDetailsType, () => void];
+
 export interface ConsumerOperations {
   closeConnection: () => void;
   connect: () => void;
-  executeCode: (message: string) => ProcessDetailsType;
+  executeCode: (message: string, future?: boolean) => ExecuteCodeResult;
 }
 
 export interface EventSourceHandlers {

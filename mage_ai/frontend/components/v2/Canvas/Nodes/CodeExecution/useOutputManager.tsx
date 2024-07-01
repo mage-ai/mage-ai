@@ -1,13 +1,16 @@
+import ContextProvider from '@context/v2/ContextProvider';
 import ExecutionOutput, { ExecutionOutputProps } from './ExecutionOutput';
-import React, { createRef, useContext, useRef, useEffect } from 'react';
+import React, { createRef, useContext, useRef } from 'react';
 import { DEBUG } from '@components/v2/utils/debug';
 import { Root, createRoot } from 'react-dom/client';
-import { ThemeContext, ThemeProvider } from 'styled-components';
+import { ThemeContext } from 'styled-components';
 
 export interface OutputManagerType {
   addGroup: (
     process: ExecutionOutputProps['process'],
-    onEventRef: ExecutionOutputProps['onEventRef']) => void;
+    setEventStreamHandler: ExecutionOutputProps['setEventStreamHandler'],
+    onMount?: ExecutionOutputProps['onMount'],
+  ) => void;
   containerRef: React.RefObject<HTMLDivElement>;
   groupsRef: React.RefObject<Record<string, React.RefObject<HTMLDivElement>>>;
   removeGroup: (uuid: string) => void;
@@ -25,6 +28,7 @@ export default function useOutputManager(): OutputManagerType {
   function addGroup(
     process: ExecutionOutputProps['process'],
     setEventStreamHandler: ExecutionOutputProps['setEventStreamHandler'],
+    onMount?: ExecutionOutputProps['onMount'],
   ) {
     const uuid = process.message_request_uuid;
     DEBUG.codeExecution.manager && console.log('[OutputManager] Adding group...', uuid);
@@ -48,13 +52,14 @@ export default function useOutputManager(): OutputManagerType {
     rootRefs.current[uuid] = createRoot(element);
 
     rootRefs.current[uuid].render(
-      <ThemeProvider theme={themeContext}>
+      <ContextProvider theme={themeContext}>
         <ExecutionOutput
+          onMount={onMount}
           process={process}
           ref={groupsRef.current[uuid]}
           setEventStreamHandler={setEventStreamHandler}
         />
-      </ThemeProvider>,
+      </ContextProvider >,
     );
 
     DEBUG.codeExecution.manager && console.log('[OutputManager] Group added...', uuid);
