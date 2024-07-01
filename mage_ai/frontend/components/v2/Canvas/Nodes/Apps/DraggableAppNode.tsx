@@ -160,7 +160,7 @@ const DraggableAppNode: React.FC<DraggableAppNodeProps> = ({
     onOpen: handleOpen,
   });
 
-  function handleCodeExecution(event: MouseEvent) {
+  function handleCodeExecution(event?: MouseEvent) {
     const [process, executeHandler] = executeCode(editor?.getValue(), true);
     addGroup(process, setEventStreamHandler, executeHandler);
   }
@@ -241,7 +241,7 @@ const DraggableAppNode: React.FC<DraggableAppNodeProps> = ({
             templateRows="1fr"
           >
             <Button
-              Icon={asideBeforeOpen ? PanelCollapseLeft : Builder}
+              Icon={asideBeforeOpen ? PanelCollapseLeft : BlockGenericV2}
               basic={asideBeforeOpen}
               onClick={() => setAsideBeforeOpen(prev => !prev)}
               small
@@ -252,16 +252,22 @@ const DraggableAppNode: React.FC<DraggableAppNodeProps> = ({
               backgroundcolor={baseColor}
               basic
               bordercolor={baseColor}
-              onClick={handleCodeExecution}
+              onClick={() => handleCodeExecution()}
               small
             />
 
             <TextInput basic placeholder="/" style={{ paddingBottom: 8, paddingTop: 8 }} />
 
-            <Button
-              Icon={asideAfterOpen ? PanelCollapseRight : BlockGenericV2}
+            {/* <Button
+              Icon={asideAfterOpen ? PanelCollapseRight : Builder}
               basic={asideAfterOpen}
               onClick={() => setAsideAfterOpen(true)}
+              small
+            /> */}
+
+            <Button
+              Icon={Grab}
+              onClick={event => handleUpdateLayout(event as any)}
               small
             />
           </Grid>
@@ -291,23 +297,23 @@ const DraggableAppNode: React.FC<DraggableAppNodeProps> = ({
                 uuid: 'Chat',
                 description: 'Get support in the community channel on Slack', href: 'https://mage.ai/chat', target: '_blank', anchor: 'true'
               },
-              {
-                Icon: CloseV2,
-                uuid: 'Close',
-                description: 'Close app',
-                onClick: handleStopApp,
-              },
-              {
-                Icon: Grab,
-                uuid: 'Layout',
-                description: 'Drag to reposition app',
-                onClick: handleUpdateLayout,
-              },
+              // {
+              //   Icon: Grab,
+              //   uuid: 'Layout',
+              //   description: 'Drag to reposition app',
+              //   onClick: handleUpdateLayout,
+              // },
               {
                 Icon: Comment,
                 uuid: 'Comment',
                 description: 'Add a comment to the pipeline or for a specific block',
                 onClick: event => alert('Comment'),
+              },
+              {
+                Icon: CloseV2,
+                uuid: 'Close',
+                description: 'Close app',
+                onClick: handleStopApp,
               },
             ].map(({ Icon, anchor, label, description, href, iconProps, target, uuid, onClick }) => (
               <TooltipWrapper
