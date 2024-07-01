@@ -8,7 +8,8 @@ export const DEBUG = {
   dropping: false,
   editor: {
     app: false,
-    manager: false,
+    manager: true,
+    node: false,
   },
   events: false,
   itemManager: false,

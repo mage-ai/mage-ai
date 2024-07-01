@@ -11,12 +11,7 @@ const Detail = dynamic(() => import('@components/v2/Layout/Pipelines/Detail'), {
 function PipelineDetailPage({ slug }: { slug: string[] }) {
   const { registerConsumer, teardown } = useExecutionManager();
 
-  useEffect(() => {
-    return () => {
-      console.log('Execution manager teardown...');
-      teardown();
-    };
-  }, [teardown]);
+  useEffect(() => () => teardown(), [teardown]);
 
   if (slug?.length >= 1) {
     const uuid: string = slug[0];

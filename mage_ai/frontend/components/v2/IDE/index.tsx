@@ -14,6 +14,7 @@ type IDEProps = {
   eventListeners?: EventListeners;
   onMountEditor?: (editor: any) => void;
   persistManagerOnUnmount?: boolean;
+  persistResourceOnUnmount?: boolean;
   resource: ResourceType;
   style?: React.CSSProperties;
   theme?: IDEThemeEnum;
@@ -27,6 +28,7 @@ function MateriaIDE({
   eventListeners,
   onMountEditor,
   persistManagerOnUnmount,
+  persistResourceOnUnmount,
   resource,
   style,
   theme: themeSelected,
@@ -83,9 +85,10 @@ function MateriaIDE({
     const instance = managerRef?.current;
     return () => {
       if (instance) {
-        if (persistManagerOnUnmount) {
+        if (!persistResourceOnUnmount) {
           instance.closeResource();
-        } else if (persistManagerOnUnmount) {
+        }
+        if (!persistManagerOnUnmount) {
           instance.dispose();
           diffEditorRef.current = null;
           editorRef.current = null;
@@ -93,7 +96,7 @@ function MateriaIDE({
         }
       }
     };
-  }, [eventListeners, manager, persistManagerOnUnmount]);
+  }, [eventListeners, manager, onMountEditor, persistManagerOnUnmount, persistResourceOnUnmount]);
 
   return (
     <ContainerStyled ref={containerRef}>

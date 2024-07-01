@@ -20,7 +20,7 @@ function debugLog(message: any, args?: any | any[]) {
   } else if (args) {
     arr.push(args);
   }
-  DEBUG.editorManager && console.log(...arr);
+  DEBUG.editor.manager && console.log(...arr);
 }
 
 type onComplete = (

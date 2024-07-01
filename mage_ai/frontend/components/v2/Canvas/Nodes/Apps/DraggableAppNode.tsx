@@ -67,7 +67,7 @@ const DraggableAppNode: React.FC<DraggableAppNodeProps> = ({
   const app = useMemo(() => node?.app, [node]);
 
   const renderRef = useRef(0);
-  DEBUG.editor &&
+  DEBUG.editor.node &&
     console.log(
       '[DraggableAppNode] render',
       app?.status,
@@ -113,6 +113,7 @@ const DraggableAppNode: React.FC<DraggableAppNodeProps> = ({
       editorClassName: [
         stylesEditor.editorMain,
       ].filter(Boolean).join(' '),
+      persistResourceOnUnmount: true,
       style: {},
     },
     skipInitialFetch: true,
@@ -453,7 +454,7 @@ function areEqual(p1: DraggableAppNodeProps, p2: DraggableAppNodeProps) {
     && areDraggableStylesEqual(p1, p2)
     && areEqualRects({ rect: p1?.rect }, { rect: p2?.rect });
 
-  DEBUG.state && console.log('DraggableAppNode.areEqual', equal, p1, p2);
+  DEBUG.editor.node && console.log('DraggableAppNode.areEqual', equal, p1, p2);
   return equal;
 }
 

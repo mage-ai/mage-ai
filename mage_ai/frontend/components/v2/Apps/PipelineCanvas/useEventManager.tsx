@@ -557,10 +557,10 @@ export default function useEventManager({
 
   function handleDragEnd(event: ClientEventType) {
     DEBUG.dragging && console.log('handleDragEnd', event);
-    setZoomPanDisabled(false);
-    setDragEnabled(false);
-    setDropEnabled(false);
-    containerRef?.current?.classList.remove(stylesBuilder.dragging);
+    // setZoomPanDisabled(false);
+    // setDragEnabled(false);
+    // setDropEnabled(false);
+    // containerRef?.current?.classList.remove(stylesBuilder.dragging);
   }
 
   function handleMouseDown(event: ClientEventType) {
@@ -574,6 +574,7 @@ export default function useEventManager({
       setZoomPanDisabled(false);
       setDragEnabled(false);
       setDropEnabled(false);
+      containerRef?.current?.classList.remove(stylesBuilder.dragging);
     }
   }
 

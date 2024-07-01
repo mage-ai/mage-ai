@@ -220,8 +220,10 @@ export default function useExecutionManager(
   }
 
   function teardown() {
+    DEBUG.codeExecution.manager && debugLog('Tearing down...');
     Object.keys(eventSourcesRef?.current).forEach((uuid) => {
       closeEventSourceConnection(uuid);
+      DEBUG.codeExecution.manager && debugLog(`Closed event stream connection for ${uuid}`);
     });
   }
 

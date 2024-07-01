@@ -324,14 +324,13 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
         left += leftOffset;
         top += topOffset;
 
-        const node = update(item, {
-          rect: {
-            $merge: {
-              left,
-              top,
-            },
-          },
-        });
+        const node = { ...item };
+        const rect2 = {
+          ...item?.rect,
+          left: left,
+          top: top,
+        };
+        node.rect = rect2;
 
         const element = itemElementsRef.current[node.type][node.id].current;
         if (element) {
