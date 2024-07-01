@@ -5,7 +5,7 @@ import { ModelManagerType } from './useModelManager';
 import { ZoomPanStateType } from '@mana/hooks/useZoomPan';
 import { layoutItemsInGroups, transformRects } from '../../Canvas/utils/rect';
 import { startTransition, useEffect, useRef } from 'react';
-import { ActiveLevelRefType, ItemIDsByLevelRef } from './interfaces';
+import { ActiveLevelRefType, ItemIDsByLevelRef, LayoutManagerType } from './interfaces';
 import { ItemStatusEnum, RectTransformationScopeEnum, ItemTypeEnum, LayoutConfigDirectionOriginEnum, LayoutConfigDirectionEnum, TransformRectTypeEnum } from '../../Canvas/types';
 import { calculateBoundingBox } from '../../Canvas/utils/rect';
 import { flattenArray, indexBy, sum } from '@utils/array';
@@ -15,6 +15,7 @@ import { selectKeys } from '@utils/hash';
 import styles from '@styles/scss/apps/Canvas/Pipelines/Builder.module.scss';
 import PipelineType from '@interfaces/PipelineType';
 import PipelineExecutionFrameworkType from '@interfaces/PipelineExecutionFramework/interfaces';
+import useAppEventsHandler, { CustomAppEvent, CustomAppEventEnum } from './useAppEventsHandler';
 
 function builderLocalStorageKey(uuid: string) {
   return `pipeline_builder_canvas_local_settings_${uuid}`;
@@ -26,24 +27,9 @@ type LayoutManagerProps = {
   containerRef: React.MutableRefObject<HTMLDivElement>;
   itemIDsByLevelRef: ItemIDsByLevelRef;
   itemsRef: React.MutableRefObject<ItemMappingType>;
-  setItemRects: React.Dispatch<React.SetStateAction<NodeItemType[]>>;
   transformState: React.MutableRefObject<ZoomPanStateType>;
   pipeline: PipelineExecutionFrameworkType
   updateNodeItems: ModelManagerType['updateNodeItems'];
-};
-
-export type LayoutManagerType = {
-  updateLayoutOfItems: () => void;
-  updateLayoutConfig: (config: LayoutConfigType) => void;
-  layoutConfig: React.MutableRefObject<LayoutConfigType>;
-  activeLevel: React.MutableRefObject<number>;
-  localSettings: React.MutableRefObject<{
-    activeLevel: number;
-    layoutConfig: LayoutConfigType;
-    optionalGroupsVisible: boolean;
-  }>;
-  setActiveLevel: (level?: number) => void;
-  setArray: React.Dispatch<React.SetStateAction<NodeItemType[]>>;
 };
 
 export default function useLayoutManager({
@@ -52,7 +38,6 @@ export default function useLayoutManager({
   canvasRef,
   containerRef,
   itemIDsByLevelRef,
-  setItemRects,
   itemsRef,
   transformState,
 }: LayoutManagerProps): LayoutManagerType {
@@ -61,10 +46,15 @@ export default function useLayoutManager({
   const layoutConfig = useRef<LayoutConfigType>(null);
   const optionalGroupsVisible = useRef<boolean>(null);
 
+  const { convertEvent, dispatchAppEvent } = useAppEventsHandler({
+    layoutConfig,
+  } as LayoutManagerType, {
+    [CustomAppEventEnum.NODE_RECT_UPDATED]: updateLayoutOfItems,
+  });
+
   useEffect(() => {
     if (phaseRef.current === 0 && pipeline?.uuid) {
       const settings = get(builderLocalStorageKey(pipeline?.uuid));
-      console.log('settings', settings, pipeline?.uuid)
 
       if (settings) {
 
@@ -354,7 +344,8 @@ export default function useLayoutManager({
     ];
   }
 
-  function updateLayoutOfItems(opts?: { level?: number }) {
+  function updateLayoutOfItems(event: CustomAppEvent) {
+    const { options } = event?.detail ?? {};
     const itemsUpdated = {} as ItemMappingType;
 
     // Update the layout of items across every level.
@@ -490,15 +481,18 @@ export default function useLayoutManager({
       items.push(item);
     });
 
-    setItemRects(items);
+    dispatchAppEvent(CustomAppEventEnum.NODE_LAYOUTS_CHANGED, {
+      event: convertEvent({}, {
+        nodes: items,
+      }),
+    });
 
-    setActiveLevel(opts?.level ?? activeLevel?.current ?? 0);
+    setActiveLevel(options?.level ?? activeLevel?.current ?? 0);
   }
 
   return {
     layoutConfig,
     setActiveLevel,
     updateLayoutConfig,
-    updateLayoutOfItems,
   };
 }

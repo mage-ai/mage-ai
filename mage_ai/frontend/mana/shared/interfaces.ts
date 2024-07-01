@@ -27,15 +27,13 @@ export type ClientEventType = {
   control?: EventControlType;
   data?: Record<string, BlockType | any> | {
     app?: any;
-    block: BlockType;
-    node?: any;
-  } | {
-    app?: any;
     block?: BlockType;
-    node: any;
+    node?: any;
+    nodes?: any[];
   };
   handle?: HandleOperationType;
-  operationTarget?: HTMLElement | React.RefObject<HTMLElement> | React.RefObject<HTMLDivElement> | React.RefObject<Element> | null;
+  operationTarget?: HTMLElement | React.RefObject<HTMLElement> | React.RefObject<HTMLDivElement>
+  | React.RefObject<Element> | null;
   operationType?: EventOperationEnum;
 } & Event &
   MouseEvent &

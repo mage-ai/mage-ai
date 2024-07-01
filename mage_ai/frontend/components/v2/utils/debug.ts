@@ -3,4 +3,6 @@ export const DEBUG = {
   dragging: false,
   dropping: false,
   events: false,
+  rendering: false,
+  state: false,
 };

@@ -30,6 +30,8 @@ export default function TemplateConfigurations({
   } = group?.configuration?.templates?.[uuid] ?? {};
   const userValuesByVariable = block?.configuration?.templates?.[uuid]?.variables;
 
+  console.log('wtffffffff')
+
   return (
     <PanelRows padding={false}>
       <Grid justifyItems="start" padding={12} rowGap={4} templateColumns="auto" >
@@ -120,8 +122,10 @@ export default function TemplateConfigurations({
                   basic
                   blendWithText
                   defaultValue={value}
+                  id={[block?.uuid, uuid, variableUUID]?.filter(Boolean).join('-')}
                   italicPlaceholder
                   monospace={style.monospace}
+                  name={variableUUID}
                   number={InteractionInputStyleInputTypeEnum.NUMBER === style?.input_type || [
                     InteractionVariableTypeEnum.FLOAT,
                     InteractionVariableTypeEnum.INTEGER,

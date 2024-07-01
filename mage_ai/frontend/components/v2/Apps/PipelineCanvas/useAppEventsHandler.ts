@@ -7,6 +7,7 @@ import BlockType from '@interfaces/BlockType';
 import { NodeItemType, NodeType } from '@components/v2/Canvas/interfaces';
 import { AppConfigType } from '../interfaces';
 import { DEBUG } from '../../utils/debug';
+import { selectEntriesWithValues } from '@utils/hash';
 
 export type CustomAppEvent = CustomAppEventType;
 export {
@@ -19,6 +20,7 @@ export function convertEvent(event: MouseEvent, opts?: {
   item?: NodeItemType;
   itemRef?: React.MutableRefObject<HTMLElement | HTMLDivElement>;
   node?: NodeType;
+  nodes?: NodeType[];
   operation?: ClientEventType['operationType'];
 }): ClientEventType {
   const {
@@ -27,16 +29,18 @@ export function convertEvent(event: MouseEvent, opts?: {
     item,
     itemRef,
     node,
+    nodes,
     operation,
   } = opts ?? {};
   return update(event as ClientEventType, {
     data: {
-      $set: {
+      $set: selectEntriesWithValues({
         app,
         block,
         item,
         node,
-      },
+        nodes,
+      }),
     },
     operationTarget: {
       $set: itemRef,
@@ -51,12 +55,13 @@ export default function useAppEventsHandler(
   subscriber: SubscriberType,
   subscriptions?: Record<string | CustomAppEventEnum, SubscriptionType['handler']>,
 ): {
-  convertEvent: (event: MouseEvent, opts?: {
+  convertEvent: (event: MouseEvent | any, opts?: {
     app?: AppConfigType;
     block?: BlockType;
     item?: NodeItemType;
     itemRef?: React.MutableRefObject<HTMLElement | HTMLDivElement>;
     node?: NodeType;
+    nodes?: NodeType[];
     operation?: ClientEventType['operationType'];
   }) => ClientEventType;
   dispatchAppEvent: (type: CustomAppEventEnum, data: CustomAppEvent['detail']) => void;

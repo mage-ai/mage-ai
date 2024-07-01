@@ -50,8 +50,8 @@ class Template(BaseDataClass):
 
         templates = {}
         templates[self.uuid] = dict(variables={})
-        for key in (self.variables or {}):
-            templates[self.uuid]['variables'][key] = None
+        for variable_uuid, variable_config in (self.variables or {}).items():
+            templates[self.uuid]['variables'][variable_uuid] = variable_config.value
 
         payload['configuration'] = dict(templates=templates)
 

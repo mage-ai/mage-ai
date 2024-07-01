@@ -80,7 +80,21 @@ export interface EventManagerType {
   submitEventOperation: (event: ClientEventType, opts?: EventOperationOptionsType) => void;
 }
 
-export type SubscriberType = AppManagerType | EventManagerType | ModelManagerType | NodeItemType;
+export type LayoutManagerType = {
+  updateLayoutOfItems: () => void;
+  updateLayoutConfig: (config: LayoutConfigType) => void;
+  layoutConfig: React.MutableRefObject<LayoutConfigType>;
+  activeLevel: React.MutableRefObject<number>;
+  localSettings: React.MutableRefObject<{
+    activeLevel: number;
+    layoutConfig: LayoutConfigType;
+    optionalGroupsVisible: boolean;
+  }>;
+  setActiveLevel: (level?: number) => void;
+  setArray: React.Dispatch<React.SetStateAction<NodeItemType[]>>;
+};
+
+export type SubscriberType = AppManagerType | EventManagerType | LayoutManagerType | ModelManagerType | NodeItemType;
 
 export interface CustomEventDetail {
   app?: AppConfigType;

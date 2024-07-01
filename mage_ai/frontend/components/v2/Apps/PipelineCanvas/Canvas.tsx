@@ -70,6 +70,8 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
   snapToGridOnDrop = true,
   transformState,
 }: BuilderCanvasProps) => {
+  DEBUG.rendering && console.log('Rendering Canvas');
+
   const activeLevel = useRef<number>(null);
   const itemElementsRef = useRef<ItemElementsType>({
     [ItemTypeEnum.APP]: {},
@@ -91,6 +93,7 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
   });
 
   function setItemRects(items: NodeItemType[] | ((items: FlatItemType[]) => FlatItemType[])) {
+    DEBUG.state && console.log('setItemRects', items);
     const buildItem = ({ id, rect }: NodeItemType): FlatItemType => {
       const { left, top, width, height } = rect ?? {};
       return [String(id), left, top, width, height];
@@ -109,6 +112,11 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
   const [pipeline, setPipeline] = useState<PipelineExecutionFrameworkType>(null);
   const [executionFramework, setExecutionFramework] = useState<PipelineExecutionFrameworkType>(null);
 
+  const handleNodeLayoutsChanged = ({ detail }: CustomAppEvent) => {
+    const { nodes } = detail.event.data;
+    setItemRects(nodes);
+  };
+
   const handleAppChanged = ({ detail: { manager } }: CustomAppEvent) => {
     const mapping = {};
     const rects = [];
@@ -126,12 +134,14 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
     });
 
     DEBUG.apps && console.log('handleAppChanged', { mapping, rects });
+    DEBUG.state && console.log('setAppRects', rects);
     setAppRects({ mapping, rects });
   };
 
   const { dispatchAppEvent } = useAppEventsHandler(null, {
     [CustomAppEventEnum.APP_STARTED]: handleAppChanged,
     [CustomAppEventEnum.APP_STOPPED]: handleAppChanged,
+    [CustomAppEventEnum.NODE_LAYOUTS_CHANGED]: handleNodeLayoutsChanged,
   });
 
   useAppManager({
@@ -150,11 +160,9 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
     itemElementsRef,
     itemIDsByLevelRef,
     pipelineUUID,
-    setItemRects,
   });
 
   const {
-    updateLayoutOfItems,
     updateLayoutConfig,
     setActiveLevel,
     // updateLocalSettings,
@@ -166,11 +174,10 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
     itemIDsByLevelRef,
     itemsRef,
     pipeline,
-    setItemRects,
     transformState,
   });
 
-  const { onMountItem } = useItemManager({ itemElementsRef, itemsRef, updateLayoutOfItems });
+  const { onMountItem } = useItemManager({ itemElementsRef, itemsRef });
 
   const {
     addNewComponent,
@@ -180,8 +187,6 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
     itemRects,
     itemElementsRef,
     dragEnabled,
-    updateLayoutOfItems,
-    setItemRects,
     dropEnabled,
     handleDragEnd,
     handleDragStart,
@@ -214,7 +219,6 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
     mutateModels,
     portsRef,
     setActiveLevel,
-    updateLayoutOfItems,
   });
 
   const {
@@ -234,7 +238,6 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
     appHandlersRef,
     layoutConfig,
     updateLayoutConfig,
-    updateLayoutOfItems,
     canvasRef,
     connectionLinesPathRef,
     containerRef,

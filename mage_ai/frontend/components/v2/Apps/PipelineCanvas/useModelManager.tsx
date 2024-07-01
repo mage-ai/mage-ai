@@ -1,4 +1,5 @@
 import PipelineExecutionFrameworkType, { ConfigurationType, FrameworkType } from '@interfaces/PipelineExecutionFramework/interfaces';
+import update from 'immutability-helper';
 import { ItemStatusEnum } from '../../Canvas/types';
 import { AppHandlerType, AppHandlersRefType } from './interfaces';
 import { AppNodeType, BlockGroupType, BlockMappingType, GroupLevelType, ItemMappingType, ModelMappingType, NodeItemType, NodeType, PortMappingType, PortType } from '../../Canvas/interfaces';
@@ -22,14 +23,12 @@ type ModelManagerProps = {
   itemIDsByLevelRef: React.MutableRefObject<string[][]>;
   pipelineUUID: string;
   executionFrameworkUUID: string;
-  setItemRects: React.Dispatch<React.SetStateAction<NodeItemType[] | ((items: NodeItemType[]) => NodeItemType[])>>;
 };
 
 export default function useModelManager({
   itemIDsByLevelRef,
   pipelineUUID,
   executionFrameworkUUID,
-  setItemRects,
 }: ModelManagerProps): ModelManagerType {
   const appHandlersRef = useRef<AppHandlerType>({} as AppHandlerType);
   const itemsRef = useRef<ItemMappingType>({});
@@ -124,7 +123,7 @@ export default function useModelManager({
     );
   };
 
-  useAppEventsHandler({ itemsRef } as ModelManagerType, {
+  const { convertEvent, dispatchAppEvent } = useAppEventsHandler({ itemsRef } as ModelManagerType, {
     [CustomAppEventEnum.APP_STARTED]: handleAppChanged,
     [CustomAppEventEnum.APP_STOPPED]: handleAppChanged,
   });
@@ -274,7 +273,11 @@ export default function useModelManager({
 
         // WARNING: Do this so it mounts and then the on mount can start the chain.
         const items = Object.values(itemsRef.current);
-        setItemRects(items);
+        dispatchAppEvent(CustomAppEventEnum.NODE_LAYOUTS_CHANGED, {
+          event: convertEvent({}, {
+            nodes: items,
+          }),
+        });
 
         resolve(items); // Resolve the promise when the function completes
       } catch (error) {

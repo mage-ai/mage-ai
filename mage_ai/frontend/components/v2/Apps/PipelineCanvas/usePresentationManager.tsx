@@ -24,7 +24,6 @@ type PresentationManagerProps = {
   mutateModels: ModelManagerType['mutateModels'];
   portsRef: ModelManagerType['portsRef'];
   setActiveLevel: SetActiveLevelType;
-  updateLayoutOfItems: LayoutManagerType['updateLayoutOfItems'];
   updateNodeItems: ModelManagerType['updateNodeItems'];
   itemElementsRef: React.MutableRefObject<Record<string, Record<string, React.RefObject<HTMLDivElement>>>>;
 };
@@ -55,7 +54,6 @@ export default function usePresentationManager({
   portsRef,
   setActiveLevel,
   itemElementsRef,
-  updateLayoutOfItems,
   // Updates the itemsReftems,
   updateNodeItems,
 }: PresentationManagerProps): PresentationManagerType {

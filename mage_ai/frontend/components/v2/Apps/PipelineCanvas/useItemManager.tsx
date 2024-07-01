@@ -18,11 +18,9 @@ import { AppStatusEnum } from '../constants';
 export default function useItemManager({
   itemElementsRef,
   itemsRef,
-  updateLayoutOfItems,
 }: {
   itemElementsRef: ItemElementsRefType;
   itemsRef: React.MutableRefObject<Record<string, NodeItemType>>;
-  updateLayoutOfItems: LayoutManagerType['updateLayoutOfItems'];
 }): {
   onMountItem: (item: DragItem, itemRef: React.RefObject<HTMLDivElement>) => void,
 } {
@@ -34,7 +32,7 @@ export default function useItemManager({
     onMountItem(node, operationTarget as React.RefObject<HTMLDivElement>);
   };
 
-  const { dispatchAppEvent } = useAppEventsHandler(null, {
+  const { convertEvent, dispatchAppEvent } = useAppEventsHandler(null, {
     [CustomAppEventEnum.NODE_MOUNTED]: handleNodeMounted,
   });
 
@@ -100,7 +98,14 @@ export default function useItemManager({
 
       itemsRef.current[item.id] = item;
       cancelDebounce();
-      debouncer(updateLayoutOfItems, 100);
+
+      debouncer(() => {
+        dispatchAppEvent(CustomAppEventEnum.NODE_RECT_UPDATED, {
+          event: convertEvent({}, {
+            node: item,
+          }),
+        });
+      }, 100);
     } else if ([ItemTypeEnum.APP].includes(type)) {
       const node = itemsRef?.current?.[item?.upstream?.[0]];
       if (!node) return;
