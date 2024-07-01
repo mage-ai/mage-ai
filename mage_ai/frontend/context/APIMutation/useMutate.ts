@@ -30,7 +30,7 @@ import { singularize } from '@utils/string';
 export const MutationStatusEnum = MutationStatusEnumBase;
 
 export function useMutate(
-  args: IDArgsType,
+  argsInit: IDArgsType,
   opts?: {
     callbackOnEveryRequest?: boolean;
     handlers?: ResourceHandlersType;
@@ -45,7 +45,7 @@ export function useMutate(
     idParent,
     resource,
     resourceParent,
-  } = args;
+  } = argsInit;
   const context = useContext(APIMutationContext);
 
   const {
@@ -148,9 +148,20 @@ export function useMutate(
 
   function handleError(error: APIErrorType, operation: OperationTypeEnum) {
     console.error(error);
+    const { message, name, stack } = (error ?? {}) as any;
 
     if (context && context?.renderError) {
-      context?.renderError(error, (event: MouseEvent) => {
+      context?.renderError({
+        client: {
+          error: {
+            errors: stack && stack?.split('\n')?.map(String),
+            message: message && String(message),
+            type: name && String(name),
+          },
+        },
+        message,
+        ...error,
+      }, (event: MouseEvent) => {
         const reqs = requests.current[operation] ?? [];
         const args = reqs.pop();
 
@@ -171,11 +182,15 @@ export function useMutate(
     args?: MutationFetchArgumentsType,
     opts: FetcherOptionsType = {},
   ): Promise<any> {
+    const {
+      id: idRuntime,
+      idParent: idParentRuntime,
+    } = args ?? {};
     const urlArg: string = buildUrl(...[
       resourceParent ?? resource,
-      handleArgs(idParent ?? id),
+      handleArgs((idParentRuntime ?? idParent) ?? (idRuntime ?? id)),
       resourceParent ? resource : null,
-      handleArgs(idParent ? id : null),
+      handleArgs((idParentRuntime ?? idParent) ? (idRuntime ?? id) : null),
     ]);
 
     const {
@@ -298,10 +313,17 @@ export function useMutate(
 
     if (args?.event) {
       const eventTarget = (args?.event?.target as HTMLElement)
-      const target = eventTarget ? getClosestRole(eventTarget, ElementRoleEnum.BUTTON) : null;
+      const target = eventTarget ? getClosestRole(
+        eventTarget,
+        [ElementRoleEnum.BUTTON],
+      ) : null;
       if (target) {
         const rect = target.getBoundingClientRect();
-        context.renderTarget({ content: null, rect });
+        context.renderTarget({
+          content: null,
+          target,
+          rect,
+        });
       }
     }
 

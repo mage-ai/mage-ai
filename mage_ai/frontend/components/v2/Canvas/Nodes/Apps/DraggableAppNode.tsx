@@ -1,6 +1,7 @@
-import React, { useMemo, useRef } from 'react';
+import React, { useEffect, useMemo, useRef } from 'react';
 import Button, { ButtonGroup } from '@mana/elements/Button';
 import styles from '@styles/scss/components/Canvas/Nodes/DraggableAppNode.module.scss';
+import stylesEditor from '@styles/scss/components/Canvas/Nodes/Apps/Editor.module.scss';
 import { DraggableWrapper, DraggableWrapperProps } from '../DraggableWrapper';
 import { AppNodeType, NodeType, RectType } from '../../interfaces';
 import useAppEventsHandler, { CustomAppEvent, CustomAppEventEnum, convertEvent } from '../../../Apps/PipelineCanvas/useAppEventsHandler';
@@ -11,7 +12,7 @@ import Aside from '../Blocks/Aside';
 import TextInput from '@mana/elements/Input/TextInput';
 import {
   ArrowsAdjustingFrameSquare, DiamondShared, AppVersions, IdentityTag, Menu, PanelCollapseLeft,
-  PanelCollapseRight, Builder, AddV2, Grab, GroupV2, Comment, Conversation
+  PanelCollapseRight, Builder, AddV2, Grab, GroupV2, Comment, Conversation, Save
 } from '@mana/icons';
 import Text from '@mana/elements/Text';
 import { Minimize, Chat, BlockGenericV2, PlayButtonFilled } from '@mana/icons';
@@ -24,6 +25,10 @@ import { DragAndDropType } from '../types';
 import { setupDraggableHandlers, buildEvent } from '../utils';
 import { DEBUG } from '@components/v2/utils/debug';
 import { draggableProps } from '../draggable/utils';
+import useApp from '../../../Apps/Editor/useApp';
+import { EditorContainerStyled } from './index.style';
+
+const PADDING_HORIZONTAL = 16;
 
 type DraggableAppNodeProps = {
   draggable?: boolean;
@@ -41,17 +46,81 @@ const DraggableAppNode: React.FC<DraggableAppNodeProps> = ({
   node,
   rect,
 }: DraggableAppNodeProps) => {
-  const [asideBeforeOpen, setAsideBeforeOpen] = React.useState(false);
-  const [asideAfterOpen, setAsideAfterOpen] = React.useState(false);
+  const fetchDetailCountRef = useRef(0);
   const nodeRef = useRef<HTMLDivElement>(null);
-  const item = items?.[index];
-  const colorNames = getColorNamesFromItems([item]);
-  const baseColor = colorNames?.[index]?.base;
-  const block = item?.block;
-  const app = node?.app;
 
   const { dispatchAppEvent } = useAppEventsHandler(node);
-  useDispatchMounted(node, nodeRef);
+  const { phaseRef } = useDispatchMounted(node, nodeRef);
+
+  const app = useMemo(() => node?.app, [node]);
+
+  const renderRef = useRef(0);
+  DEBUG.editor &&
+    console.log(
+      '[DraggableAppNode] render',
+      app?.status,
+      renderRef.current++,
+      phaseRef.current,
+      node,
+    );
+
+  const [asideBeforeOpen, setAsideBeforeOpen] = React.useState(false);
+  const [asideAfterOpen, setAsideAfterOpen] = React.useState(false);
+
+  const item = items?.[index];
+  const block = item?.block;
+  const { configuration } = block ?? {};
+  const { file } = configuration ?? {};
+
+  const appOptions = {
+    configurations: {
+      dimension: {
+        height: Math.max(rect?.height ?? 0, 400),
+        width: Math.max(rect?.width ?? 0, 400),
+      },
+      folding: false,
+      glyphMargin: false,
+      lineDecorationsWidth: PADDING_HORIZONTAL,
+      lineNumbers: 'off',
+      lineNumbersMinChars: 0,
+    },
+    file: file ?? {
+      ...configuration?.file_source,
+      path: configuration?.file_path,
+    },
+  };
+  const { main, mutate, toolbars } = useApp({
+    app: {
+      ...app,
+      options: appOptions,
+    },
+    editor: {
+      containerClassName: [
+        stylesEditor.editorContainer,
+      ].filter(Boolean).join(' '),
+      editorClassName: [
+        stylesEditor.editorMain,
+      ].filter(Boolean).join(' '),
+      style: {},
+    },
+    skipInitialFetch: true,
+    useToolbars: true,
+  });
+  const {
+    inputRef,
+    overrideLocalContentFromServer,
+    overrideServerContentFromLocal,
+    saveCurrentContent,
+    stale,
+  } = toolbars ?? {} as any;
+
+  useEffect(() => {
+    if (fetchDetailCountRef.current === 0 && file?.path) {
+      fetchDetailCountRef.current += 1;
+      mutate.detail.mutate({ id: file.path });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [app, file]);
 
   function handleStopApp(event: MouseEvent) {
     dispatchAppEvent(CustomAppEventEnum.STOP_APP, {
@@ -76,10 +145,13 @@ const DraggableAppNode: React.FC<DraggableAppNodeProps> = ({
   );
 
   const sharedProps = useMemo(() => draggableProps({
+    classNames: [styles.appNodeWrapper],
     draggable,
     item: node,
-    classNames: [styles.appNodeWrapper],
   }), [draggable, node]);
+
+  const colorNames = getColorNamesFromItems([item]);
+  const baseColor = colorNames?.[index]?.base;
 
   return (
     <NodeWrapper
@@ -95,14 +167,14 @@ const DraggableAppNode: React.FC<DraggableAppNodeProps> = ({
         app?.status && styles[app?.status],
       ]?.filter(Boolean)?.join((' '))}>
         <Grid
-          rowGap={8}
+          rowGap={PADDING_HORIZONTAL / 2}
           style={{
             gridTemplateRows: 'auto auto 1fr auto',
           }}
           templateColumns="auto"
         >
           <Grid
-            columnGap={8}
+            columnGap={PADDING_HORIZONTAL / 2}
             style={{ gridTemplateColumns: 'auto auto 1fr auto' }}
             templateRows="1fr"
           >
@@ -139,32 +211,57 @@ const DraggableAppNode: React.FC<DraggableAppNodeProps> = ({
             columnGap={40}
             justifyContent="start"
             paddingBottom={6}
-            paddingLeft={16}
-            paddingRight={16}
+            paddingLeft={PADDING_HORIZONTAL}
+            paddingRight={PADDING_HORIZONTAL}
             paddingTop={6}
             templateRows="auto"
           >
             {[
-              { label: () => 'File', uuid: 'File' },
-              { Icon: Conversation, uuid: 'Chat', description: 'Get support in the community channel on Slack', href: 'https://mage.ai/chat', target: '_blank', anchor: 'true' },
-              { Icon: Minimize, uuid: 'Close', description: 'Close app', onClick: handleStopApp },
-              { Icon: Grab, uuid: 'Layout', description: 'Drag to reposition app', onClick: handleUpdateLayout },
-              { Icon: Comment, uuid: 'Comment', description: 'Add a comment to the pipeline or for a specific block', onClick: event => alert('Comment') },
-
+              {
+                Icon: Save,
+                uuid: 'Save',
+                description: 'Save current file content.',
+                onClick: saveCurrentContent,
+              },
+              {
+                Icon: Conversation,
+                uuid: 'Chat',
+                description: 'Get support in the community channel on Slack', href: 'https://mage.ai/chat', target: '_blank', anchor: 'true'
+              },
+              {
+                Icon: Minimize,
+                uuid: 'Close',
+                description: 'Close app',
+                onClick: handleStopApp,
+              },
+              {
+                Icon: Grab,
+                uuid: 'Layout',
+                description: 'Drag to reposition app',
+                onClick: handleUpdateLayout,
+              },
+              {
+                Icon: Comment,
+                uuid: 'Comment',
+                description: 'Add a comment to the pipeline or for a specific block',
+                onClick: event => alert('Comment'),
+              },
             ].map(({ Icon, anchor, label, description, href, target, uuid, onClick }) => (
               <TooltipWrapper
                 key={uuid}
                 tooltip={<Text secondary small>{description ?? label?.() ?? uuid}</Text>}
               >
                 <Button
-                  anchor={anchor}
                   Icon={Icon}
+                  anchor={anchor}
                   basic
+                  data-loading-style="inline"
                   href={href}
-                  target={target}
+                  // loading
                   onClick={onClick ?? undefined}
                   small
                   style={{ background: 'none', border: 'none' }}
+                  target={target}
                 >
                   {label &&
                     <Text medium small>
@@ -186,8 +283,8 @@ const DraggableAppNode: React.FC<DraggableAppNodeProps> = ({
               columnGap={10}
               justifyContent="start"
               paddingBottom={18}
-              paddingLeft={16}
-              paddingRight={16}
+              paddingLeft={PADDING_HORIZONTAL}
+              paddingRight={PADDING_HORIZONTAL}
               paddingTop={18}
               bordersBottom
               templateRows="auto"
@@ -195,7 +292,7 @@ const DraggableAppNode: React.FC<DraggableAppNodeProps> = ({
             >
               <Grid
                 autoFlow="column"
-                columnGap={16}
+                columnGap={PADDING_HORIZONTAL}
                 justifyContent="start"
                 templateRows="auto"
               >
@@ -208,7 +305,7 @@ const DraggableAppNode: React.FC<DraggableAppNodeProps> = ({
                 />
                 <TooltipWrapper
                   tooltip={
-                    <Grid rowGap={8}>
+                    <Grid rowGap={PADDING_HORIZONTAL / 2}>
                       <Button
                         asLink
                         onClick={event => alert('Edit')}
@@ -225,10 +322,11 @@ const DraggableAppNode: React.FC<DraggableAppNodeProps> = ({
                   </Text >
                 </TooltipWrapper>
               </Grid >
+              {toolbars?.top}
 
               <Grid
                 autoFlow="column"
-                columnGap={32}
+                columnGap={PADDING_HORIZONTAL * 2}
                 justifyContent="start"
                 templateRows="auto"
               >
@@ -251,10 +349,10 @@ const DraggableAppNode: React.FC<DraggableAppNodeProps> = ({
             </Grid>
 
             <Grid className={styles.codeContainer}>
-              <Text>
-                Code
-              </Text>
-            </Grid >
+              <EditorContainerStyled>
+                {main}
+              </EditorContainerStyled>
+            </Grid>
           </Grid>
 
           <Grid
@@ -276,7 +374,7 @@ function areEqual(p1: DraggableAppNodeProps, p2: DraggableAppNodeProps) {
     && areDraggableStylesEqual(p1, p2)
     && areEqualRects({ rect: p1?.rect }, { rect: p2?.rect });
 
-  DEBUG && console.log('DraggableAppNode.areEqual', equal, p1, p2);
+  DEBUG.state && console.log('DraggableAppNode.areEqual', equal, p1, p2);
   return equal;
 }
 

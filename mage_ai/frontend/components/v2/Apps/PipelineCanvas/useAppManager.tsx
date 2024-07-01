@@ -41,7 +41,7 @@ export default function useAppManager({ activeLevel }: { activeLevel: React.Muta
     const { data } = event as ClientEventType;
     const { app, node: appNode } = data;
 
-    DEBUG && console.log('handleStopApp.start', appNode, appNode.upstream, appsRef.current);
+    DEBUG.appManager && console.log('handleStopApp.start', appNode, appNode.upstream, appsRef.current);
 
     const mapping = {};
     const entries = [...Object.entries(appsRef?.current ?? {})];
@@ -58,7 +58,7 @@ export default function useAppManager({ activeLevel }: { activeLevel: React.Muta
     });
     appsRef.current = mapping;
 
-    DEBUG && console.log('handleStopApp.end', appNode, appNode.upstream, appsRef.current);
+    DEBUG.appManager && console.log('handleStopApp.end', appNode, appNode.upstream, appsRef.current);
 
     dispatchAppEvent(CustomAppEventEnum.APP_STOPPED, {
       event: convertEvent(event, {

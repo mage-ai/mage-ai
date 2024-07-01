@@ -88,11 +88,23 @@ function Button({
 }: ButtonProps) {
   const HTMLTag = anchor || asLink ? AStyled : ButtonStyled;
 
+  const dataProps = {};
+  Object.entries(props ?? {})?.forEach(([key, value]) => {
+    if (key?.startsWith('data-')) {
+      dataProps[key] = value;
+      delete props[key];
+    }
+  });
+
   return (
-    <div className={[
-      styles.container,
-      loading && styles.loading,
-    ].filter(Boolean).join(' ')} role={ElementRoleEnum.BUTTON}>
+    <div
+      {...dataProps}
+      className={[
+        styles.container,
+        loading && styles.loading,
+      ].filter(Boolean).join(' ')}
+      role={ElementRoleEnum.BUTTON}
+    >
       <div className={[styles.overlay].filter(Boolean).join(' ')} />
       <div className={[styles.loader].filter(Boolean).join(' ')}>
         <Loading circle colorName={loadingColorName} />
@@ -119,8 +131,8 @@ function Button({
             IconAfter ? 'auto' : '',
           ].join(' '),
         }}
-        target={target}
         tag={tag}
+        target={target}
         wrap={wrap ? 'true' : undefined}
       >
         {Icon && <Icon inverted={primary || secondary} small={small} />}

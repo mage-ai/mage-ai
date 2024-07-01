@@ -1,18 +1,34 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import dynamic from 'next/dynamic';
 
+import useToolbarsHook from './Toolbars/useToolbars';
 import { AppLoaderProps, AppLoaderResultType } from '../interfaces';
-import useMutate from '@api/useMutate';
 import { FileCacheType, getFileCache, isStale, updateFileCache } from '../../IDE/cache';
 import { FileType } from '../../IDE/interfaces';
+import { MutateType } from '@api/interfaces';
+import { useMutate } from '@context/APIMutation';
 
 const ToolbarsTop = dynamic(() => import('./Toolbars/Top'));
 const MaterialIDE = dynamic(() => import('@components/v2/IDE'), {
   ssr: false,
 });
 
-export default function useApp(props: AppLoaderProps): AppLoaderResultType {
-  const { app } = props;
+export default function useApp(props: AppLoaderProps & {
+  editor?: {
+    containerClassName?: string;
+    editorClassName?: string;
+    style?: React.CSSProperties;
+  },
+  skipInitialFetch?: boolean;
+  useToolbars?: boolean;
+}): AppLoaderResultType & {
+  mutate: MutateType;
+} {
+  const { app, editor, skipInitialFetch, useToolbars } = props;
+
+  if (!app?.uuid) {
+    console.error('App UUID is required.');
+  }
 
   const file = useMemo(() => app?.options?.file, [app]);
   const { client, server } = useMemo(
@@ -34,6 +50,11 @@ export default function useApp(props: AppLoaderProps): AppLoaderResultType {
 
   async function updateLocalContent(item: FileType) {
     await import('../../IDE/Manager').then(mod => {
+      if (!item) {
+        console.log('No item to update.', item);
+        return;
+      }
+
       mod.Manager.setValue(item);
       updateFileCache({ client: item, server: item });
       // Trigger state update so the toolbar statuses re-render.
@@ -42,7 +63,9 @@ export default function useApp(props: AppLoaderProps): AppLoaderResultType {
     });
   }
 
-  const mutants = useMutate('browser_items', {
+  const mutants = useMutate({
+    resource: 'browser_items',
+  }, {
     handlers: {
       detail: {
         onSuccess: (item: FileType) => {
@@ -84,6 +107,7 @@ export default function useApp(props: AppLoaderProps): AppLoaderResultType {
   });
 
   function updateServerContent(
+    event: MouseEvent,
     item: FileType,
     payload: {
       content?: string;
@@ -91,7 +115,8 @@ export default function useApp(props: AppLoaderProps): AppLoaderResultType {
     },
   ) {
     mutants.update.mutate({
-      id: encodeURIComponent(item.path),
+      event,
+      id: item.path,
       payload: {
         content: payload?.content || contentRef?.current,
         path: payload?.path || item.path,
@@ -101,13 +126,13 @@ export default function useApp(props: AppLoaderProps): AppLoaderResultType {
 
   useEffect(() => {
     const path = file?.path;
-    if (phaseRef.current === 0 && path) {
+    if (phaseRef.current === 0 && path && !skipInitialFetch) {
       mutants.detail.mutate({
-        id: encodeURIComponent(path),
+        id: path,
       });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [client, file]);
+  }, [client, file, skipInitialFetch]);
 
   function onDidChangeModelContent(editor: any, _event: any) {
     const model = editor.getModel();
@@ -127,6 +152,7 @@ export default function useApp(props: AppLoaderProps): AppLoaderResultType {
     () =>
       (clientRef?.current || main?.content || phaseRef.current >= 1) && (
         <MaterialIDE
+          {...editor}
           configurations={app?.options?.configurations}
           eventListeners={{
             onDidChangeModelContent,
@@ -144,8 +170,24 @@ export default function useApp(props: AppLoaderProps): AppLoaderResultType {
     [app, main],
   );
 
+  const {
+    inputRef,
+    overrideLocalContentFromServer,
+    overrideServerContentFromLocal,
+    saveCurrentContent,
+  } = useToolbarsHook({
+    ...props,
+    resource: {
+      main,
+      original,
+    },
+    stale,
+    updateLocalContent,
+    updateServerContent,
+  });
+
   const top = useMemo(
-    () => (
+    () => !useToolbars && (
       <ToolbarsTop
         {...props}
         loading={mutants.update.isLoading}
@@ -159,13 +201,22 @@ export default function useApp(props: AppLoaderProps): AppLoaderResultType {
       />
     ),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [mutants.update.isLoading, main, original, props, stale],
+    [mutants.update.isLoading, main, original, props, stale, useToolbars],
   );
 
   return {
     main: mainApp,
-    toolbars: {
-      top,
-    },
+    mutate: mutants,
+    toolbars: useToolbars
+      ? {
+        inputRef,
+        main,
+        original,
+        overrideLocalContentFromServer,
+        overrideServerContentFromLocal,
+        saveCurrentContent,
+        stale,
+      }
+      : { top },
   };
 }

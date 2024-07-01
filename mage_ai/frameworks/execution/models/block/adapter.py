@@ -8,6 +8,8 @@ from mage_ai.data_preparation.models.pipeline import Pipeline as PipelineBase
 from mage_ai.frameworks.execution.models.block.models import Configuration
 from mage_ai.shared.hash import ignore_keys
 from mage_ai.shared.models import DelegatorTarget
+from mage_ai.shared.utils import get_absolute_path
+from mage_ai.system.browser.models import Item
 
 
 class Block(DelegatorTarget):
@@ -63,8 +65,12 @@ class Block(DelegatorTarget):
         self.pipeline_child = PipelineBase.create(self.name or self.uuid, self.repo_path)
 
     async def to_dict_async(self, *args, **kwargs) -> Dict:
+        config = self.configuration or {}
+        config['file'] = Item.load(
+          path=get_absolute_path(self.file.file_path)).to_dict() if self.file else None
+
         return dict(
-            configuration=self.configuration,
+            configuration=config,
             downstream_blocks=[b.uuid for b in (self.downstream_blocks or [])],
             groups=self.groups,
             language=self.language,

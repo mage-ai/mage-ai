@@ -1,5 +1,9 @@
 import { indexBy } from '@utils/array';
 
+export enum LoadingStyle {
+  INLINE = 'inline',
+}
+
 export enum ElementRoleEnum {
   BLOCK = 'block',
   BUTTON = 'button',

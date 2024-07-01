@@ -71,8 +71,14 @@ export function buildSetFunction(updateFunction) {
   return setObject;
 }
 
-export function getClosestRole(element: HTMLElement | null, role: string): HTMLElement | null {
-  return element?.closest('[role]')?.getAttribute('role')?.split(' ').includes(role)
-    ? element.closest('[role]')
-    : null;
+export function getClosestRole(element: HTMLElement | null, roles: string | string[]): HTMLElement | null {
+  const elements = (Array.isArray(roles) ? roles : [roles]).reduce((acc, role) => {
+    const el = element?.closest('[role]')?.getAttribute('role')?.split(' ').includes(role)
+      ? element.closest('[role]')
+      : null;
+
+    return el ? acc.concat(el) : acc;
+  }, []);
+
+  return elements?.[0] || null;
 }

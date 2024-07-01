@@ -12,10 +12,17 @@ export default function useDispatchMounted(node: NodeType, nodeRef: React.RefObj
   useEffect(() => {
     if (phaseRef.current === 0 && nodeRef?.current) {
       const dispatchMounted = (event?: any) => {
+        clearTimeout(timeoutRef.current)
+
+        if (phaseRef.current >= 1) return;
+
         const computedStyle =
           typeof window !== 'undefined' && window.getComputedStyle(nodeRef.current);
 
         if (computedStyle) {
+          clearTimeout(timeoutRef.current)
+          phaseRef.current += 1;
+
           dispatchAppEvent(CustomAppEventEnum.NODE_MOUNTED, {
             event: update(event ?? {}, {
               data: {
@@ -31,7 +38,6 @@ export default function useDispatchMounted(node: NodeType, nodeRef: React.RefObj
               kwargs: { computedStyle },
             },
           });
-          phaseRef.current += 1;
         } else {
           timeoutRef.current = setTimeout(dispatchMounted, 100);
         }
@@ -46,4 +52,8 @@ export default function useDispatchMounted(node: NodeType, nodeRef: React.RefObj
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  return {
+    phaseRef,
+  };
 }

@@ -1,12 +1,14 @@
-import React, { useContext, useState, useRef } from 'react';
+import ErrorManager from './ErrorManager';
+import Loading from '@mana/components/Loading';
+import React, { useContext, useState, useRef, useMemo } from 'react';
+import ReactDOM from 'react-dom';
+import styles from '@styles/scss/components/Error/API/ErrorManager.module.scss';
+import stylesButton from '@styles/scss/elements/Button/Button.module.scss';
+import { APIErrorType, APIMutationContext, APIMutationProviderProps, TargetType } from './Context';
+import { ElementRoleEnum, LoadingStyle } from '@mana/shared/types';
 import { ThemeContext, ThemeProvider } from 'styled-components';
 import { createRoot, Root } from 'react-dom/client';
-import ReactDOM from 'react-dom';
-import Loading from '@mana/components/Loading';
-import ErrorManager from './ErrorManager';
-import { APIErrorType, APIMutationContext, APIMutationProviderProps, TargetType } from './Context';
 import { isDebug } from '@utils/environment';
-import styles from '@styles/scss/components/Error/API/ErrorManager.module.scss';
 
 const ROOT_ID = 'api-mutation-root';
 
@@ -21,11 +23,18 @@ export const APIMutationProvider: React.FC<APIMutationProviderProps> = ({
   const [target, setTarget] = useState<TargetType | null>(null);
   const targetRef = useRef<HTMLDivElement>(null);
 
+  const loadingStyle = useMemo(() => target?.target?.dataset?.loadingStyle, [target]);
+
   function renderTarget(target: TargetType) {
     setTarget(target);
+
+    if (LoadingStyle.INLINE === target?.target?.dataset?.loadingStyle) {
+      target?.target?.classList?.add(stylesButton.loading);
+    }
   }
 
   function dismissTarget() {
+    target?.target?.classList?.remove(stylesButton.loading);
     setTarget(null);
   }
 
@@ -48,7 +57,7 @@ export const APIMutationProvider: React.FC<APIMutationProviderProps> = ({
       </ThemeProvider>,
     );
 
-    isDebug() && console.error(errorRef.current);
+    // isDebug() && console.error(errorRef.current);
   }
 
   return (
@@ -57,7 +66,7 @@ export const APIMutationProvider: React.FC<APIMutationProviderProps> = ({
         {children}
         <div id={ROOT_ID} />
 
-        {target && ReactDOM.createPortal(
+        {target && LoadingStyle.INLINE !== loadingStyle && ReactDOM.createPortal(
           <div
             className={styles.target}
             ref={targetRef}

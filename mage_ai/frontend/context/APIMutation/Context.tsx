@@ -1,6 +1,13 @@
 import * as React from 'react';
 
 export interface APIErrorType {
+  client?: {
+    error: {
+      errors: string[];
+      message: string;
+      type: string;
+    };
+  };
   message: string;
   name: string;
   config: {
@@ -16,6 +23,7 @@ export interface APIErrorType {
     signal: any;
     url: string;
   };
+  response?: any;
   code: string;
   status: number;
   // {
@@ -76,12 +84,21 @@ export type APIMutationProviderProps = {
 export type TargetType = {
   content: React.ReactNode | null;
   rect: DOMRect | null;
+  target: HTMLElement | null;
 };
 
 export interface APIMutationContextType {
   dismissError: () => void;
   dismissTarget: (target?: TargetType) => void;
-  renderError: (error: APIErrorType, request: (event: MouseEvent) => void) => void;
+  renderError: (error: APIErrorType & {
+    client: {
+      error: {
+        errors: string[];
+        message: string;
+        type: string;
+      };
+    };
+  }, request: (event: MouseEvent) => void) => void;
   renderTarget: (target: TargetType) => void;
 }
 

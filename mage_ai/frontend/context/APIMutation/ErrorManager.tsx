@@ -7,7 +7,7 @@ import Grid from '@mana/components/Grid';
 import Text from '@oracle/elements/Text';
 import styles from '@styles/scss/components/Error/API/ErrorManager.module.scss';
 import { APIErrorType, APIMutationContextType } from './Context';
-import { Backfill } from '@mana/icons';
+import { AlertTriangle } from '@mana/icons';
 import { randomSample } from '@utils/array';
 
 const POSITIONS = [
@@ -34,11 +34,13 @@ const ErrorManager: FC<ErrorManagerProps> = memo(function ErrorManager({
     error,
   } = errorRef?.current?.response?.data ?? {};
   const {
-    code,
-    errors,
-    message,
-    type
-  } = error ?? {};
+    error: clientError,
+  } = errorRef?.current?.client ?? {};
+
+  const code = error?.code;
+  const errors = clientError?.errors ?? error?.errors;
+  const message = clientError?.message ?? error?.message;
+  const type = clientError?.type ?? error?.type;
 
   return (
     <>
@@ -47,16 +49,16 @@ const ErrorManager: FC<ErrorManagerProps> = memo(function ErrorManager({
         styles[position],
       ].filter(Boolean).join(' ')}>
         <Grid
-          base
           backgroundColor="blacklo"
+          base
           borderColor="red"
           borders
           className={styles.errorContainer}
           padding={12}
           rowGap={12}
-          width="max-content"
           templateColumns="auto"
           templateRows="auto auto"
+          width="max-content"
         >
           <Grid
             rowGap={12}
@@ -67,7 +69,7 @@ const ErrorManager: FC<ErrorManagerProps> = memo(function ErrorManager({
               {errorRef?.current?.message}
             </Text>
 
-            <Divider />
+            {[code, type, message, errors?.length >= 1]?.some(Boolean) && <Divider />}
 
             {[code, type, message].map((val) => val && (
               <Text key={val} monospace>
@@ -77,9 +79,23 @@ const ErrorManager: FC<ErrorManagerProps> = memo(function ErrorManager({
 
             {[code, type, message]?.some(Boolean) && <Divider short />}
 
-            {error && (
-              <pre style={{ whiteSpace: 'break-spaces' }}>
-                <Text inline monospace>
+            {errors?.length >= 1 && clientError && (
+              <Text monospace>
+                <pre style={{
+                  whiteSpace: 'pre-wrap',
+                }}>
+                  <Ansi>{errors?.join('\n')}</Ansi>
+                </pre>
+              </Text>
+            )}
+            {errors?.length >= 1 && !clientError && (
+              <pre style={{
+                whiteSpace: 'break-spaces',
+              }}>
+                <Text
+                  inline
+                  monospace
+                >
                   {errors?.map((line: string) => (
                     <Ansi key={line}>{line}</Ansi>
                   ))}
@@ -92,15 +108,17 @@ const ErrorManager: FC<ErrorManagerProps> = memo(function ErrorManager({
 
           <Grid templateColumns="min-content">
             <ButtonGroup>
-              <Button Icon={Backfill} basic onClick={dismissError} small>
+              <Button Icon={AlertTriangle} basic onClick={dismissError} small>
                 Dismiss error
               </Button>
 
-              <Button Icon={Backfill} basic onClick={(event: any) => {
-                retry(event);
-              }} small>
-                Retry request
-              </Button>
+              {false &&
+                <Button Icon={AlertTriangle} basic onClick={(event: any) => {
+                  retry(event);
+                }} small>
+                  Retry request
+                </Button>
+              }
             </ButtonGroup>
           </Grid>
         </Grid>

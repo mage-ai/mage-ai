@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 
 import Loading from '@mana/components/Loading';
 import { EventListeners, addListeners, addListenersForDiff } from './events/addListeners';
@@ -8,19 +8,25 @@ import { ResourceType } from './interfaces';
 import { IDEThemeEnum } from './themes/interfaces';
 
 type IDEProps = {
+  containerClassName?: string;
   configurations?: any;
+  editorClassName?: string;
   eventListeners?: EventListeners;
   persistManagerOnUnmount?: boolean;
   resource: ResourceType;
+  style?: React.CSSProperties;
   theme?: IDEThemeEnum;
   uuid: string;
 };
 
 function MateriaIDE({
   configurations: configurationsOverride,
+  containerClassName,
+  editorClassName,
   eventListeners,
   persistManagerOnUnmount,
   resource,
+  style,
   theme: themeSelected,
   uuid,
 }: IDEProps) {
@@ -30,15 +36,16 @@ function MateriaIDE({
   const managerRef = useRef(null);
   const containerRef = useRef(null);
 
-  const manager = useManager(uuid, resource, {
-    wrapper: {
-      options: {
-        configurations: {
-          ...configurationsOverride,
-          theme: themeSelected,
-        },
+  const wrapperSettings = useMemo(() => ({
+    options: {
+      configurations: {
+        ...configurationsOverride,
+        theme: themeSelected,
       },
     },
+  }), [configurationsOverride, themeSelected]);
+  const manager = useManager(uuid, resource, {
+    wrapper: wrapperSettings,
   });
 
   useEffect(() => {
@@ -87,14 +94,19 @@ function MateriaIDE({
 
   return (
     <ContainerStyled ref={containerRef}>
-      <Loading className='ide-loading' />
+      <Loading className="ide-loading" />
 
-      <IDEStyled className='ide-container'>
-        <div ref={editorContainerRef} style={{ height: '100vh' }} />
+      <IDEStyled
+        className={[
+          'ide-container',
+          containerClassName ?? '',
+        ].filter(Boolean).join(' ')}
+      >
+        <div className={editorClassName} ref={editorContainerRef} style={style ?? { height: '100vh' }} />
       </IDEStyled>
 
       <div id={`monaco-suggest-application-root-${uuid}`} />
-    </ContainerStyled>
+    </ContainerStyled >
   );
 }
 

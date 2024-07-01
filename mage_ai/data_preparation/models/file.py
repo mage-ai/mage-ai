@@ -465,7 +465,9 @@ class File:
 
         update_file_cache()
 
-    def to_dict(self, include_content: bool = False, include_metadata: bool = False):
+    def to_dict(
+      self, include_content: bool = False, include_metadata: bool = False,
+      include_absolute_full_path: Optional[bool] = False):
         file_exists = self.exists()
         data = dict(
             name=self.filename,
@@ -473,6 +475,9 @@ class File:
             size=None,
             modified_timestamp=None,
         )
+
+        if include_absolute_full_path:
+            data['full_path'] = get_absolute_path(self.file_path)
 
         if include_content:
             data['content'] = self.content()

@@ -3,6 +3,7 @@ import { Styled } from './index.style';
 import { WithStylesProp } from '@mana/hocs/withStyles';
 
 type GridProps = {
+  base?: boolean;
   baseLeft?: boolean;
   baseRight?: boolean;
   bordersBottom?: boolean;

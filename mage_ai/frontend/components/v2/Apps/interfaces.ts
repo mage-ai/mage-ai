@@ -41,7 +41,7 @@ export type AppLoaderResultType = {
     left?: JSX.Element;
     right?: JSX.Element;
     top?: JSX.Element;
-  };
+  } | Record<string, any>;
 };
 
 export type AddAppFunctionOptionsType = {

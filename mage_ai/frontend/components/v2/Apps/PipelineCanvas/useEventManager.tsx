@@ -5,6 +5,7 @@ import update from 'immutability-helper';
 import {
   ModelManagerType,
   EventManagerType,
+  LayoutManagerType,
   ActiveLevelRefType, AppHandlersRefType, LayoutConfigRefType, ItemIDsByLevelRef, SetActiveLevelType,
 } from './interfaces';
 import {
@@ -24,7 +25,6 @@ import { sortByKey } from '@utils/array';
 import { snapToGrid } from '../../Canvas/utils/snapToGrid';
 import { calculateBoundingBox, findRectAtPoint } from '../../Canvas/utils/rect';
 import { useRef, useState, startTransition } from 'react';
-import { LayoutManagerType } from './useLayoutManager';
 import BlockType, { BlockTypeEnum } from '@interfaces/BlockType';
 import { MutateType } from '@api/interfaces';
 import { IconProps } from '@mana/elements/Icon';
@@ -239,12 +239,19 @@ export default function useEventManager({
         handleContextMenu(event, ...opts?.args, opts?.kwargs);
       } else if (EventOperationEnum.APP_START === operationType) {
         const [type, subtype] = opts?.args;
+        const app = {
+          status: AppStatusEnum.INITIALIZED,
+          subtype,
+          type,
+          uuid: event?.data?.block?.uuid,
+        };
+
+        if (!app?.uuid) {
+          console.error('App UUID is required to start the app.');
+        }
+
         dispatchAppEvent(CustomAppEventEnum.START_APP, {
-          app: {
-            status: AppStatusEnum.INITIALIZED,
-            subtype,
-            type,
-          },
+          app,
           event,
         });
       }

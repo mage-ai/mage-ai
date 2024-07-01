@@ -4,7 +4,6 @@ import re
 
 
 from mage_ai.shared.files import get_absolute_paths_from_all_files
-
 {{ super() -}}
 {% endblock %}
 
