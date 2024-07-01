@@ -91,7 +91,9 @@ export default function useModelManager({
         mutate: ({ event, onError, onStart, onSuccess, payload: block }: MutateFunctionArgsType) => {
           const model =
             pipelineMutants.setModel(
-              prev => setPipelineBlock(prev as PipelineType, block as BlockType));
+              prev => setPipelineBlock(prev as PipelineType, block as BlockType),
+              pipelineUUID,
+            );
 
           cancel();
 
@@ -105,7 +107,7 @@ export default function useModelManager({
                 payload: model,
               });
 
-              resolve(pipelineMutants.modelsRef.current.pipeline);
+              resolve(pipelineMutants.getModel(pipelineUUID));
             }, 1000);
           });
         },
@@ -117,8 +119,8 @@ export default function useModelManager({
 
   const handleAppChanged = (event: CustomAppEvent) => {
     initializeModels(
-      appHandlersRef?.current?.executionFrameworks?.modelsRef?.current?.execution_framework,
-      appHandlersRef?.current?.pipelines?.modelsRef?.current?.pipeline,
+      appHandlersRef?.current?.executionFrameworks?.getModel() as PipelineExecutionFrameworkType,
+      appHandlersRef?.current?.pipelines?.getModel() as PipelineExecutionFrameworkType,
       event.detail?.manager as unknown,
     );
   };

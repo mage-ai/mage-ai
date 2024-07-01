@@ -13,7 +13,8 @@ import Aside from '../Blocks/Aside';
 import TextInput from '@mana/elements/Input/TextInput';
 import {
   ArrowsAdjustingFrameSquare, DiamondShared, AppVersions, IdentityTag, Menu, PanelCollapseLeft,
-  PanelCollapseRight, Builder, AddV2, Grab, GroupV2, Comment, Conversation, Save
+  PanelCollapseRight, Builder, AddV2, Grab, GroupV2, Comment, Conversation, Save,
+  CloseV2
 } from '@mana/icons';
 import Text from '@mana/elements/Text';
 import { Minimize, Chat, BlockGenericV2, PlayButtonFilled } from '@mana/icons';
@@ -120,8 +121,8 @@ const DraggableAppNode: React.FC<DraggableAppNodeProps> = ({
 
   useEffect(() => {
     if (fetchDetailCountRef.current === 0 && file?.path) {
-      fetchDetailCountRef.current += 1;
       mutate.detail.mutate({ id: file.path });
+      fetchDetailCountRef.current += 1;
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [app, file]);
@@ -228,8 +229,8 @@ const DraggableAppNode: React.FC<DraggableAppNodeProps> = ({
             {[
               {
                 Icon: Save,
-                description: 'Save current file content.',
-                iconProps: { colorName: 'green' },
+                description: stale ? `You have unsaved changes. Content was modified ${lastModified}.` : 'Save current file content.',
+                iconProps: stale ? { colorName: 'red' } : {},
                 onClick: saveCurrentContent,
                 uuid: 'Save',
               },
@@ -239,7 +240,7 @@ const DraggableAppNode: React.FC<DraggableAppNodeProps> = ({
                 description: 'Get support in the community channel on Slack', href: 'https://mage.ai/chat', target: '_blank', anchor: 'true'
               },
               {
-                Icon: Minimize,
+                Icon: CloseV2,
                 uuid: 'Close',
                 description: 'Close app',
                 onClick: handleStopApp,
@@ -373,34 +374,38 @@ const DraggableAppNode: React.FC<DraggableAppNodeProps> = ({
               <div style={{
                 maxWidth: 300,
               }}>
-                <Text warning xsmall>
-                  Server content was modified {lastModified} and
+                <Text muted xsmall>
+                  Content was last saved <Text inline xsmall warning>{lastModified}</Text> and the server content
                   is different from the current local content.
                   Save the current content or reset it
                   with the server content.
                 </Text>
 
-                <br />
+                {false && (
+                  <>
+                    <br />
 
-                <ButtonGroup>
-                  <Button asLink onClick={() => overrideServerContentFromLocal()} wrap>
-                    <Text blue underline xsmall>
-                      Save local
-                    </Text >
-                  </Button>
-                  <Button
-                    asLink
-                    onClick={event => {
-                      event.preventDefault();
-                      overrideLocalContentFromServer();
-                    }}
-                    wrap
-                  >
-                    <Text muted underline xsmall>
-                      Reset
-                    </Text >
-                  </Button>
-                </ButtonGroup>
+                    <ButtonGroup>
+                      <Button asLink onClick={() => overrideServerContentFromLocal()} wrap>
+                        <Text blue underline xsmall>
+                          Save local
+                        </Text >
+                      </Button>
+                      <Button
+                        asLink
+                        onClick={event => {
+                          event.preventDefault();
+                          overrideLocalContentFromServer();
+                        }}
+                        wrap
+                      >
+                        <Text muted underline xsmall>
+                          Reset
+                        </Text >
+                      </Button>
+                    </ButtonGroup>
+                  </>
+                )}
               </div>
             </Grid>
           )}

@@ -7,6 +7,7 @@ import { FileCacheType, getFileCache, isStale, updateFileCache } from '../../IDE
 import { FileType } from '../../IDE/interfaces';
 import { MutateType } from '@api/interfaces';
 import { useMutate } from '@context/APIMutation';
+import { DEBUG } from '@components/v2/utils/debug';
 
 const ToolbarsTop = dynamic(() => import('./Toolbars/Top'));
 const MaterialIDE = dynamic(() => import('@components/v2/IDE'), {
@@ -47,13 +48,16 @@ export default function useApp(props: AppLoaderProps & {
   const contentRef = useRef(main?.content || '');
   const clientRef = useRef(client?.file);
   const phaseRef = useRef(0);
+  DEBUG.editorApp && console.log(file?.content, client?.file?.content, main?.content, contentRef?.current)
 
   async function updateLocalContent(item: FileType) {
     await import('../../IDE/Manager').then(mod => {
       if (!item) {
-        console.log('No item to update.', item);
+        DEBUG.editorApp && console.log('No item to update.', item);
         return;
       }
+
+      DEBUG.editorApp && console.log('updateLocalContent', item)
 
       mod.Manager.setValue(item);
       updateFileCache({ client: item, server: item });
@@ -85,7 +89,8 @@ export default function useApp(props: AppLoaderProps & {
           setMainState(item);
 
           if (item) {
-            contentRef.current = item.content;
+            // If it already exists, don’t update it.
+            contentRef.current = contentRef?.current ?? item.content;
             !staleUpdated && setStale(isStale(item.path));
           }
           phaseRef.current += 1;
@@ -114,6 +119,7 @@ export default function useApp(props: AppLoaderProps & {
       path?: string;
     },
   ) {
+    DEBUG.editorApp && console.log('CONTENTREF', contentRef?.current)
     mutants.update.mutate({
       event,
       id: item.path,

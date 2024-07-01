@@ -4,6 +4,7 @@ export const DEBUG = {
   dragging: false,
   dropping: false,
   editor: false,
+  editorApp: false,
   editorManager: false,
   events: false,
   itemManager: false,

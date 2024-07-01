@@ -13,7 +13,7 @@ import { getTheme, getThemeSettings } from '@mana/themes/utils';
 import { languageClientConfig, loggerConfig } from './constants';
 import { DEBUG } from '../utils/debug';
 
-function debugLog(message: string, args: any | any[]) {
+function debugLog(message: string, args?: any | any[]) {
   const arr = [`[EditorManager] ${message}`];
   if (Array.isArray(args)) {
     arr.push(...args);
@@ -206,7 +206,6 @@ class Manager {
   }
 
   public static setValue(file: FileType) {
-    console.log('MODEL SET VALUE', file)
     const { content, path } = file;
     const obj = Manager.resources[path];
     if (obj) {
@@ -229,7 +228,7 @@ class Manager {
       }
     } else {
       console.error(`No resource found for ${path}`, file);
-      console.log('Current resources:', Manager.resources);
+      debugLog('Current resources:', Manager.resources);
     }
   }
 

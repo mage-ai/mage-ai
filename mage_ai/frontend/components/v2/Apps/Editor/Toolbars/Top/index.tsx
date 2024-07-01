@@ -36,7 +36,7 @@ function ToolbarTop({ loading, ...props }: {
             Icon={Save}
             basic
             loading={loading}
-            onClick={() => saveCurrentContent()}
+            onClick={event => saveCurrentContent(event as any)}
             small
           />
           <Button
