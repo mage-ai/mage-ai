@@ -3,6 +3,7 @@ import React from 'react';
 import { ButtonEnum, LanguageEnum } from './enums';
 import { MutateType } from '@api/interfaces';
 import { RemoveContextMenuType, RenderContextMenuType } from '../hooks/useContextMenu';
+import { LayoutConfigType } from '@components/v2/Canvas/interfaces';
 
 export enum EventOperationEnum {
   APP_START = 'app.start',
@@ -70,6 +71,8 @@ export interface EventOperationOptionsType {
   kwargs?: {
     boundingContainer?: DOMRect;
     computedStyle?: CSSStyleDeclaration;
+    layoutConfig?: LayoutConfigType;
+    level?: number;
     rect?: {
       height?: number;
       left?: number;

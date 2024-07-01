@@ -6,6 +6,7 @@ import { LayoutConfigDirectionEnum, LayoutConfigDirectionOriginEnum, TransformRe
 import { range, indexBy, flattenArray } from '@utils/array';
 import { isDebug as isDebugBase } from '@utils/environment';
 import { validateFiniteNumber } from '@utils/number';
+import { DEBUG } from '@components/v2/utils/debug';
 
 function isDebug() {
   return isDebugBase() && false;
@@ -58,7 +59,7 @@ export function transformRects(rectsInit: RectType[], transformations: RectTrans
     const scopeLog = scope || (initialScope ? `initial=${initialScope}` : null) || 'all';
     const tag = `${stage}:${scopeLog}:${type}`;
     const tags = [opts, transformation];
-    isDebug() && console.log(`${tag}:start`, ...tags, rects);
+    DEBUG.rects && console.log(`${tag}:start`, ...tags, rects);
 
     if (targets) {
       rects = targets(rects);
@@ -71,7 +72,7 @@ export function transformRects(rectsInit: RectType[], transformations: RectTrans
 
     if (condition && !condition(rects)) {
       rectsByStage.push(rects);
-      isDebug() && console.log(`${tag}:condition not met`, ...tags, rects);
+      DEBUG.rects && console.log(`${tag}:condition not met`, ...tags, rects);
       rectsByStage.push(rects);
       return rects;
     }
@@ -173,7 +174,7 @@ export function transformRects(rectsInit: RectType[], transformations: RectTrans
     }
     rectsByStage.push(rects);
 
-    isDebug() && console.log(`${tag}:end`, ...tags, rects);
+    DEBUG.rects && console.log(`${tag}:end`, ...tags, rects);
   });
 
   const stage = rectsByStage.length - 1;

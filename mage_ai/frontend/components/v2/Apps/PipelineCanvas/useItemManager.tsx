@@ -14,6 +14,8 @@ import useDynamicDebounce from '@utils/hooks/useDebounce';
 import useAppEventsHandler, { CustomAppEvent, CustomAppEventEnum } from './useAppEventsHandler';
 import { ClientEventType } from '@mana/shared/interfaces';
 import { AppStatusEnum } from '../constants';
+import { DEBUG } from '@components/v2/utils/debug';
+import { areEqualRects } from '../../Canvas/Nodes/equals';
 
 export default function useItemManager({
   itemElementsRef,
@@ -96,14 +98,25 @@ export default function useItemManager({
         item.status = ItemStatusEnum.PENDING_LAYOUT;
       }
 
+      const itemPrev = itemsRef?.current?.[item.id];
       itemsRef.current[item.id] = item;
+
+      if (areEqualRects(itemPrev, item)) {
+        DEBUG.itemManager && console.log('[onMountItem] rects are equal', itemPrev, item);
+        return;
+      }
+
       cancelDebounce();
 
       debouncer(() => {
+        DEBUG.itemManager && console.log('onMountItem', item);
         dispatchAppEvent(CustomAppEventEnum.NODE_RECT_UPDATED, {
           event: convertEvent({}, {
             node: item,
           }),
+          manager: {
+            itemManager: {},
+          },
         });
       }, 100);
     } else if ([ItemTypeEnum.APP].includes(type)) {

@@ -54,7 +54,6 @@ type EventManagerProps = {
   setLayoutConfig: (prev: (value: LayoutConfigType) => LayoutConfigType) => void;
   setZoomPanDisabled: (value: boolean) => void;
   transformState: React.MutableRefObject<ZoomPanStateType>;
-  updateLayoutOfItems: LayoutManagerType['updateLayoutOfItems'];
   updateLayoutConfig: LayoutManagerType['updateLayoutConfig'];
   layoutConfig: LayoutManagerType['layoutConfig'];
 };
@@ -82,14 +81,13 @@ export default function useEventManager({
   layoutConfig,
   setZoomPanDisabled,
   transformState,
-  updateLayoutOfItems,
 }: EventManagerProps): EventManagerType {
   const gridDimensions = useRef<RectType>({ height: GRID_SIZE, left: 0, top: 0, width: GRID_SIZE });
 
   const [snapToGridOnDrag, setSnapToGridOnDrag] = useState(false);
   const [snapToGridOnDrop, setSnapToGridOnDrop] = useState(true);
 
-  function handleStartDragging(event: CustomEvent) {
+  function handleStartDragging(event?: CustomEvent) {
     startTransition(() => {
       setZoomPanDisabled(true);
       setDragEnabled(true);
@@ -98,12 +96,24 @@ export default function useEventManager({
     containerRef?.current?.classList.add(stylesBuilder.dragging);
   }
 
-  const { dispatchAppEvent } = useAppEventsHandler({
-    updateLayoutOfItems,
+  const { convertEvent, dispatchAppEvent } = useAppEventsHandler({
+    gridDimensions,
   } as any, {
     [CustomAppEventEnum.NODE_DROPPED]: onDropBlock,
     [CustomAppEventEnum.START_DRAGGING]: handleStartDragging,
   });
+
+  function updateNodeLayouts(event?: MouseEvent, opts?: {
+    layoutConfig?: LayoutConfigType;
+    level?: number;
+  }) {
+    dispatchAppEvent(CustomAppEventEnum.UPDATE_NODE_LAYOUTS, {
+      event: convertEvent(event ?? {}),
+      options: {
+        kwargs: opts,
+      },
+    });
+  }
 
   function onDragging({
     // clientOffset,
@@ -347,13 +357,11 @@ export default function useEventManager({
               Icon: (props: IconProps) => <Icon {...props} colorName={selected ? 'green' : undefined} />,
               onClick: (event: ClientEventType) => {
                 event.preventDefault();
-                updateLayoutConfig({
-                  direction: direction as LayoutConfigDirectionEnum,
-                  // rectTransformations: [{
-                  //   type: TransformRectTypeEnum.NO_OP,
-                  // }],
+                updateNodeLayouts(event, {
+                  layoutConfig: {
+                    direction: direction as LayoutConfigDirectionEnum,
+                  },
                 });
-                updateLayoutOfItems();
                 removeContextMenu(event);
               },
               uuid,
@@ -375,12 +383,13 @@ export default function useEventManager({
               Icon: (props: IconProps) => <Icon {...props} colorName={selected ? 'green' : undefined} />,
               onClick: (event: ClientEventType) => {
                 event.preventDefault();
-                updateLayoutConfig({
-                  rectTransformations: [{
-                    type: value as TransformRectTypeEnum,
-                  }],
+                updateNodeLayouts(event, {
+                  layoutConfig: {
+                    rectTransformations: [{
+                      type: value as TransformRectTypeEnum,
+                    }],
+                  }
                 });
-                updateLayoutOfItems();
                 removeContextMenu(event);
               },
               uuid,
@@ -417,14 +426,14 @@ export default function useEventManager({
           }),
           onClick: (event?: ClientEventType) => {
             event?.preventDefault();
-            setActiveLevel(level);
-            updateLayoutOfItems();
+            updateNodeLayouts(event, {
+              level,
+            });
             removeContextMenu(event);
           },
           uuid: `Blocks grouped at level ${level}`,
         };
-      },
-      ),
+      }),
     ]));
 
     if (target) {
@@ -506,7 +515,7 @@ export default function useEventManager({
                 delete itemsRef.current[itemRemoved.id];
               }
 
-              updateLayoutOfItems();
+              updateNodeLayouts();
 
               appHandlersRef.current?.pipelines.update.mutate({
                 payload: (pipeline) => ({

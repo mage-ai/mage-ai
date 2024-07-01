@@ -16,6 +16,7 @@ import styles from '@styles/scss/apps/Canvas/Pipelines/Builder.module.scss';
 import PipelineType from '@interfaces/PipelineType';
 import PipelineExecutionFrameworkType from '@interfaces/PipelineExecutionFramework/interfaces';
 import useAppEventsHandler, { CustomAppEvent, CustomAppEventEnum } from './useAppEventsHandler';
+import { DEBUG } from '@components/v2/utils/debug';
 
 function builderLocalStorageKey(uuid: string) {
   return `pipeline_builder_canvas_local_settings_${uuid}`;
@@ -50,6 +51,7 @@ export default function useLayoutManager({
     layoutConfig,
   } as LayoutManagerType, {
     [CustomAppEventEnum.NODE_RECT_UPDATED]: updateLayoutOfItems,
+    [CustomAppEventEnum.UPDATE_NODE_LAYOUTS]: updateLayoutOfItems,
   });
 
   useEffect(() => {
@@ -323,7 +325,7 @@ export default function useLayoutManager({
         type: TransformRectTypeEnum.FIT_TO_CHILDREN,
       },
       {
-        options: () => ({ rect: { height: 300 } }),
+        options: () => ({ rect: { height: 300, width: 300 } }),
         type: TransformRectTypeEnum.MIN_DIMENSIONS,
       },
       ...layoutStyleTransformations,
@@ -346,6 +348,12 @@ export default function useLayoutManager({
 
   function updateLayoutOfItems(event: CustomAppEvent) {
     const { options } = event?.detail ?? {};
+    const { layoutConfig, level } = options?.kwargs ?? {};
+
+    if (layoutConfig) {
+      updateLayoutConfig(layoutConfig)
+    }
+
     const itemsUpdated = {} as ItemMappingType;
 
     // Update the layout of items across every level.
@@ -467,7 +475,7 @@ export default function useLayoutManager({
         });
       });
 
-      // console.log(nodesTransformed)
+      (DEBUG.layout || DEBUG.layoutManager) && console.log('[LayoutManager] updateLayoutItems:', nodesTransformed);
     });
 
     const items = [];
@@ -487,7 +495,7 @@ export default function useLayoutManager({
       }),
     });
 
-    setActiveLevel(options?.level ?? activeLevel?.current ?? 0);
+    setActiveLevel(level ?? activeLevel?.current ?? 0);
   }
 
   return {

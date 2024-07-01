@@ -8,6 +8,7 @@ type InputStyleProps = {
 } & StyleProps;
 
 type InputProps = {
+  autoComplete?: string;
   defaultValue?: string;
   id?: string;
   italic?: boolean | ((value: any) => boolean);

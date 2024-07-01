@@ -24,6 +24,7 @@ import { setNested } from '@utils/hash';
 import { areEqualRects, areDraggableStylesEqual } from './equals';
 import { setupDraggableHandlers, buildEvent } from './utils';
 import { draggableProps } from './draggable/utils';
+import { DEBUG } from '@components/v2/utils/debug';
 
 export type BlockNodeWrapperProps = {
   Wrapper?: React.FC<NodeWrapperProps>;
@@ -96,7 +97,6 @@ export const BlockNodeWrapper: React.FC<BlockNodeWrapperProps & NodeWrapperProps
     });
   }, [block, item, itemRef, submitEventOperation]);
 
-
   function onMount(port: PortType, portRef: React.RefObject<HTMLDivElement>) {
     if (!(port?.id in portElementRefs.current)) {
       portElementRefs.current[port?.id] = {
@@ -155,10 +155,22 @@ export const BlockNodeWrapper: React.FC<BlockNodeWrapperProps & NodeWrapperProps
   useEffect(() => {
     if (itemRef.current && phaseRef.current === 0 && onMountItem) {
       const checkComputedStyles = () => {
-        const computedStyle =
-          typeof window !== 'undefined' && window?.getComputedStyle(itemRef?.current);
+        if (phaseRef.current >= 1) return;
+
+        clearTimeout(timeout);
+        let computedStyle = null;
+        try {
+          computedStyle =
+            typeof window !== 'undefined' && window?.getComputedStyle(itemRef?.current);
+        } catch (e) {
+          console.log(`[BlockNodeWrapper] Error getting computed style: ${e}`, item, itemRef?.current);
+          computedStyle = true;
+        }
         if (computedStyle) {
+          clearTimeout(timeout);
+          DEBUG.state && console.log('BlockNodeWrapper mounted', phaseRef.current, item, itemRef?.current);
           onMountItem?.(item, itemRef);
+          phaseRef.current += 1;
         } else {
           timeoutRef.current = setTimeout(checkComputedStyles, 100);
         }
@@ -166,7 +178,6 @@ export const BlockNodeWrapper: React.FC<BlockNodeWrapperProps & NodeWrapperProps
 
       setTimeout(checkComputedStyles, 100);
     }
-    phaseRef.current += 1;
 
     const timeout = timeoutRef.current;
     return () => {
@@ -276,6 +287,7 @@ export function areEqual(p1: BlockNodeWrapperProps, p2: BlockNodeWrapperProps) {
     && areDraggableStylesEqual(p1, p2)
     && areEqualRects(p1, p2);
 
+  DEBUG.state && console.log('[BlockNodeWrapper] areEqual', equal, p1, p2);
   return equal;
 }
 

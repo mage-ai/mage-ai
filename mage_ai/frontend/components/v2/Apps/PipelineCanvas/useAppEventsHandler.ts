@@ -75,8 +75,8 @@ export default function useAppEventsHandler(
 
     const eventCustom = new CustomEvent(type, {
       detail: {
-        ...data,
         manager: managerRef.current,
+        ...data,
       },
     });
     DEBUG.events && console.log('dispatchEvent:', eventCustom);

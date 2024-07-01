@@ -100,11 +100,15 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
     };
 
     startTransition(() => {
-      setItemRectsState((itemsPrev: FlatItemType[]) =>
-        typeof items === 'function'
+      setItemRectsState((itemsPrev: FlatItemType[]) => {
+        const itemsNew = typeof items === 'function'
           ? items(itemsPrev) as FlatItemType[]
           : (items as NodeItemType[])?.map((i: NodeItemType) => buildItem(i)) as FlatItemType[]
-      );
+
+        DEBUG.layout && console.log('handleNodeLayoutsChanged.setItemRects', itemsPrev, itemsNew);
+
+        return itemsNew;
+      });
     });
   }
 
@@ -396,6 +400,7 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
           <div id="dynamic-components-root" ref={dynamicRootRef} />
 
           {itemRects?.map((arr: [string, number, number, number, number]) => {
+            DEBUG.layout && console.log('[Canvas] Rendering itemRects', arr);
             const [
               id,
               left,

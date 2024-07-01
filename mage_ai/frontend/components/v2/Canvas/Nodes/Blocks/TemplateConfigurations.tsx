@@ -30,8 +30,6 @@ export default function TemplateConfigurations({
   } = group?.configuration?.templates?.[uuid] ?? {};
   const userValuesByVariable = block?.configuration?.templates?.[uuid]?.variables;
 
-  console.log('wtffffffff')
-
   return (
     <PanelRows padding={false}>
       <Grid justifyItems="start" padding={12} rowGap={4} templateColumns="auto" >
@@ -119,6 +117,7 @@ export default function TemplateConfigurations({
               {InteractionInputTypeEnum.TEXT_FIELD === typeOfInput && (
                 <TextInput
                   align="right"
+                  autoComplete="off"
                   basic
                   blendWithText
                   defaultValue={value}
