@@ -10,6 +10,7 @@ export interface IconsType {
   color: {
     base: string;
     inverted: string;
+    muted: string;
   };
   size: {
     base: number;

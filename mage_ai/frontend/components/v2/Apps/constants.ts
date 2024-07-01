@@ -12,6 +12,13 @@ export enum AppTypeEnum {
 }
 
 export enum AppSubtypeEnum {
+  CANVAS = 'canvas',
   IDE = 'ide',
   SYSTEM = 'system',
+}
+
+export enum AppStatusEnum {
+  INITIALIZED = 'initialized',
+  PENDING_LAYOUT = 'pending_layout',
+  READY = 'ready',
 }

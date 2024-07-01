@@ -1,9 +1,10 @@
 import React from 'react';
+import styles from '@styles/scss/elements/Button/Button.module.scss';
 import styled, { css } from 'styled-components';
 import { motion } from 'framer-motion';
 
 import ButtonGroup from './Group';
-import Loading, { LoadingStyleEnum } from '../../components/Loading';
+import Loading from '../../components/Loading';
 import Tag from '../../components/Tag';
 import buttons, { StyleProps, sm as buttonsSm } from '../../styles/buttons';
 import useWithLogging, { WithLoggingProps } from '../../hooks/useWithLogging';
@@ -12,7 +13,7 @@ import { ElementRoleEnum } from '../../shared/types';
 type ButtonStyleProps = {
   Icon?: ({ ...props }: any) => any;
   IconAfter?: ({ ...props }: any) => any;
-  anchor?: boolean;
+  anchor?: boolean | string;
   children?: React.ReactNode;
   width?: string;
 } & StyleProps;
@@ -22,9 +23,13 @@ type ButtonProps = {
   className?: string;
   id?: string;
   loading?: boolean;
+  loadingColorName?: string;
   onMouseEnter?: (event: React.MouseEvent<HTMLDivElement>) => void;
   plain?: boolean;
   motion?: boolean;
+  style?: React.CSSProperties;
+  target?: string;
+  href?: string;
 } & ButtonStyleProps &
   WithLoggingProps;
 
@@ -43,13 +48,13 @@ const CSS = css<ButtonStyleProps>`
   ${({ width }) => width && `width: ${width};`}
 `;
 
-const ButtonStyled = styled(motion.button)<ButtonStyleProps>`
+const ButtonStyled = styled(motion.button) <ButtonStyleProps>`
   ${CSS}
 
   display: grid;
 `;
 
-const AStyled = styled(motion.a)<ButtonStyleProps>`
+const AStyled = styled(motion.a) <ButtonStyleProps>`
   ${CSS}
 
   align-items: center;
@@ -65,65 +70,72 @@ function Button({
   asLink,
   basic,
   children,
+  href,
+  target,
   loading,
+  loadingColorName,
   motion,
   plain,
   primary,
   secondary,
   small,
+  style,
   tag,
+  wrap,
   Icon,
   IconAfter,
   ...props
 }: ButtonProps) {
   const HTMLTag = anchor || asLink ? AStyled : ButtonStyled;
-  const loadingRight = loading && Icon && !(tag || IconAfter);
-  const loadingLeft = !loadingRight && loading && (!Icon || (!tag && !IconAfter));
-  const loadingEl = (
-    <div style={{ marginLeft: loadingRight ? 4 : 0, marginRight: loadingLeft ? 4 : 0 }}>
-      <Loading loadingStyle={LoadingStyleEnum.BLOCKS} vertical />
-    </div>
-  );
 
   return (
-    // @ts-ignore
-    <HTMLTag
-      {...props}
-      {...(asLink ? { href: '#' } : {})}
-      {...(motion ? { whileTap: { scale: 0.97 } } : {})}
-      aslink={asLink ? 'true' : undefined}
-      basic={basic ? 'true' : undefined}
-      loading={loading ? true : undefined}
-      plain={plain ? 'true' : undefined}
-      primary={primary ? 'true' : undefined}
-      role={ElementRoleEnum.BUTTON}
-      secondary={secondary ? 'true' : undefined}
-      small={small ? 'true' : undefined}
-      style={{
-        gridTemplateColumns: [
-          Icon ? 'auto' : '',
-          children ? '1fr' : '',
-          tag ? 'auto' : '',
-          IconAfter ? 'auto' : '',
-        ].join(' '),
-      }}
-      tag={tag}
-    >
-      {Icon && !loadingLeft && <Icon inverted={primary || secondary} small={small} />}
-      {loadingLeft && loadingEl}
+    <div className={[
+      styles.container,
+      loading && styles.loading,
+    ].filter(Boolean).join(' ')} role={ElementRoleEnum.BUTTON}>
+      <div className={[styles.overlay].filter(Boolean).join(' ')} />
+      <div className={[styles.loader].filter(Boolean).join(' ')}>
+        <Loading circle colorName={loadingColorName} />
+      </div>
 
-      {children}
+      {/* @ts-ignore */}
+      <HTMLTag
+        {...props}
+        {...(asLink ? { href: href ?? '#' } : {})}
+        {...(motion ? { whileTap: { scale: 0.97 } } : {})}
+        aslink={asLink ? 'true' : undefined}
+        basic={basic ? 'true' : undefined}
+        loading={loading ? true : undefined}
+        plain={plain ? 'true' : undefined}
+        primary={primary ? 'true' : undefined}
+        secondary={secondary ? 'true' : undefined}
+        small={small ? 'true' : undefined}
+        style={{
+          ...style,
+          gridTemplateColumns: [
+            Icon ? 'auto' : '',
+            children ? '1fr' : '',
+            tag ? 'auto' : '',
+            IconAfter ? 'auto' : '',
+          ].join(' '),
+        }}
+        target={target}
+        tag={tag}
+        wrap={wrap ? 'true' : undefined}
+      >
+        {Icon && <Icon inverted={primary || secondary} small={small} />}
 
-      {tag && !loadingRight && (
-        <Tag inverted={primary || secondary} passthrough secondary={basic}>
-          {tag}
-        </Tag>
-      )}
+        {children}
 
-      {IconAfter && !loadingRight && <IconAfter inverted={primary || secondary} small={small} />}
+        {tag && (
+          <Tag inverted={primary || secondary} passthrough secondary={basic}>
+            {tag}
+          </Tag>
+        )}
 
-      {loadingRight && loadingEl}
-    </HTMLTag>
+        {IconAfter && <IconAfter inverted={primary || secondary} small={small} />}
+      </HTMLTag>
+    </div >
   );
 }
 

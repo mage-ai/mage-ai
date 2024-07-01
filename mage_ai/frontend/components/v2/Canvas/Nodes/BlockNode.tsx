@@ -1,32 +1,39 @@
-import Grid from '@mana/components/Grid';
-import Text from '@mana/elements/Text';
-import Badge from '@mana/elements/Badge';
-import Circle from '@mana/elements/Circle';
-import { ConfigurationOptionType, BorderConfigType, TitleConfigType } from './types';
-import styles from '@styles/scss/components/Canvas/Nodes/BlockNode.module.scss';
-import stylesGradient from '@styles/scss/elements/GradientContainer.module.scss';
-import { getBlockColor } from '@mana/themes/blocks';
 import Aside from './Blocks/Aside';
-import { DragItem, PortType } from '../interfaces';
-import GradientContainer from '@mana/elements/Gradient';
+import Badge from '@mana/elements/Badge';
+import { BlockTypeEnum } from '@interfaces/BlockType';
+import Circle from '@mana/elements/Circle';
 import Connection from './Blocks/Connection';
+import GradientContainer from '@mana/elements/Gradient';
+import Grid from '@mana/components/Grid';
+import Loading from '@mana/components/Loading';
 import PanelRows from '@mana/elements/PanelRows';
 import TemplateConfigurations from './Blocks/TemplateConfigurations';
-import BlockType, { BlockTypeEnum } from '@interfaces/BlockType';
+import Text from '@mana/elements/Text';
+import styles from '@styles/scss/components/Canvas/Nodes/BlockNode.module.scss';
+import stylesGradient from '@styles/scss/elements/GradientContainer.module.scss';
+import { ConfigurationOptionType, BorderConfigType, TitleConfigType } from './types';
+import { DragAndDropHandlersType, SharedBlockProps } from './types';
+import { DragItem, PortType } from '../interfaces';
+import { FrameworkType, PipelineExecutionFrameworkBlockType } from '@interfaces/PipelineExecutionFramework/interfaces';
+import { ItemTypeEnum, PortSubtypeEnum } from '../types';
+import { SubmitEventOperationType } from '@mana/shared/interfaces';
+import { TooltipWrapper } from '@context/Tooltip';
+import { getBlockColor } from '@mana/themes/blocks';
 import { isEmptyObject } from '@utils/hash';
 import { useMemo } from 'react';
-import { buildPortUUID } from '../Draggable/utils';
-import { ItemTypeEnum, PortSubtypeEnum } from '../types';
-import { DragAndDropHandlersType } from './types';
 
 type BlockNodeProps = {
-  block?: BlockType;
   borderConfig?: BorderConfigType;
   draggable?: boolean;
   item: DragItem;
+  colorNames?: {
+    base: string;
+    hi?: string;
+    lo?: string;
+    md?: string;
+  };
   collapsed?: boolean;
   configurationOptions?: ConfigurationOptionType[];
-  groups?: Record<string, BlockType>;
   onMount?: (port: PortType, portRef: React.RefObject<HTMLDivElement>) => void;
   titleConfig?: TitleConfigType;
 };
@@ -34,13 +41,14 @@ type BlockNodeProps = {
 export function BlockNode({
   block,
   borderConfig,
+  colorNames,
   draggable,
-  groups,
   handlers,
   item,
   onMount,
   titleConfig,
-}: BlockNodeProps & DragAndDropHandlersType) {
+  updateBlock,
+}: BlockNodeProps & DragAndDropHandlersType & SharedBlockProps) {
   const { borders } = borderConfig || {};
   const { asides, badge } = titleConfig || {};
   const { after, before } = asides || {};
@@ -75,25 +83,25 @@ export function BlockNode({
     });
   }, [block, inputs, item, outputs]);
 
-  const classNames = [
-    true || borders?.length >= 2
-      ? stylesGradient[
-          [
-            'gradient-background-to-top-right',
-            ...(borders ?? [])
-              .concat([
-                // { baseColorName: 'yellow' },
-                // { baseColorName: 'green' },
-              ])
-              ?.slice?.(0, 2)
-              ?.map(b => b.baseColorName),
-          ].join('-')
+  const classNames = useMemo(() => {
+    const colors = borders?.map(b => b?.baseColorName) ?? [];
+    const arr = [
+      colors?.length >= 2
+        ? stylesGradient[
+        [
+          'gradient-background-to-top-right',
+          ...colors?.slice?.(0, 2),
+        ].join('-')
         ]
-      : '',
-  ].filter(b => b);
-  if (classNames?.length === 0 && borders?.length >= 1) {
-    classNames.push(stylesGradient[`border-color-${borders?.[0]?.baseColorName?.toLowerCase()}`]);
-  }
+        : '',
+    ].filter(Boolean);
+
+    if (arr?.length === 0 && colors?.length >= 1) {
+      arr.push(stylesGradient[`border-color-${colors?.[0]?.toLowerCase()}`]);
+    }
+
+    return arr;
+  }, [borders]);
 
   const badgeRow = useMemo(
     () =>
@@ -126,7 +134,26 @@ export function BlockNode({
                 size={12}
               />
             )}
-            {badge && <Badge {...badge} />}
+            {badge &&
+              <TooltipWrapper
+                hide={block?.type && ![BlockTypeEnum.GROUP, BlockTypeEnum.PIPELINE].includes(block?.type)}
+                tooltip={
+                  <Grid rowGap={4}>
+                    <Text semibold>
+                      {block?.name || block?.uuid}
+                    </Text >
+                    {block?.description &&
+                      <Text secondary>
+                        {block?.description}
+                      </Text>
+                    }
+                  </Grid>
+                }
+                tooltipStyle={{ maxWidth: 400 }}
+              >
+                <Badge {...badge} />
+              </TooltipWrapper>
+            }
           </Grid>
           <Grid
             alignItems="center"
@@ -150,49 +177,50 @@ export function BlockNode({
           </Grid>
         </Grid>
       ),
-    [after, badge, inputs, item, outputs],
+    [after, badge, block, inputs, item, outputs],
   );
 
   const connectionRows = useMemo(
     () =>
-      inputOutputPairs?.length >= 1 && (
+      ItemTypeEnum.BLOCK === item?.type && inputOutputPairs?.length >= 1 && (
         <PanelRows>
           {inputOutputPairs?.map(({ input, output }, idx: number) => (
             <Connection
               draggable={draggable}
               handlers={handlers}
-              input={input}
-              key={[input ? buildPortUUID(input) : '', output ? buildPortUUID(output) : ''].join(
+              input={input as PortType}
+              key={[input ? input?.id : '', output ? output?.id : ''].join(
                 ':',
               )}
               onMount={onMount}
-              output={output}
+              output={output as PortType}
             />
           ))}
         </PanelRows>
 
         // eslint-disable-next-line react-hooks/exhaustive-deps
       ),
-    [draggable, handlers, inputOutputPairs, onMount],
+    [draggable, handlers, item, inputOutputPairs, onMount],
   );
 
   const templateConfigurations = useMemo(
     () =>
-      groups &&
-      Object.entries(groups)?.map(
-        ([groupUUID, group]) =>
+      (item?.block?.frameworks ?? [])?.map(
+        (group: PipelineExecutionFrameworkBlockType) =>
           !isEmptyObject(group?.configuration?.templates) &&
-          Object.entries(group?.configuration?.templates || {})?.map(([uuid, template]) => (
-            <TemplateConfigurations
-              block={block}
-              group={group}
-              key={uuid}
-              template={template}
-              uuid={uuid}
-            />
-          )),
+          Object.entries(group?.configuration?.templates || {})?.map(
+            ([uuid, template]) => item?.block?.configuration?.templates?.[uuid] && (
+              <TemplateConfigurations
+                block={item?.block}
+                group={group}
+                key={uuid}
+                template={template}
+                updateBlock={updateBlock}
+                uuid={uuid}
+              />
+            )),
       ),
-    [block, groups],
+    [item, updateBlock],
   );
 
   const titleRow = useMemo(
@@ -222,14 +250,28 @@ export function BlockNode({
 
   const main = useMemo(
     () => (
-      <div className={styles.blockNode}>
-        <Grid rowGap={8} templateRows="auto">
-          {badgeRow}
-          {!badge && titleRow}
-          {connectionRows}
-          {templateConfigurations}
-
-          {BlockTypeEnum.PIPELINE === block?.type && <div />}
+      <div
+        className={[
+          styles.blockNode,
+        ]?.filter(Boolean)?.join(' ')}
+      >
+        <Grid templateRows="auto">
+          <Grid rowGap={8} templateRows="auto">
+            {badgeRow}
+            {!badge && titleRow}
+          </Grid>
+          <div className={styles.loader}>
+            <Loading
+              // colorName={colorNames?.hi}
+              // colorNameAlt={colorNames?.md}
+              position="absolute"
+            />
+          </div>
+          <Grid rowGap={8} templateRows="auto">
+            {connectionRows}
+            {templateConfigurations}
+            {BlockTypeEnum.PIPELINE === block?.type && <div />}
+          </Grid>
         </Grid>
       </div>
     ),
@@ -239,7 +281,9 @@ export function BlockNode({
   return (
     <GradientContainer
       // Only use gradient borders when block selected
-      className={classNames?.join(' ')}
+      className={[
+        ...classNames,
+      ]?.filter(Boolean)?.join(' ')}
     >
       {main}
     </GradientContainer>

@@ -1,6 +1,9 @@
 import BlockType from '@interfaces/BlockType';
-import { PipelineExecutionFrameworkBlockType } from '@interfaces/PipelineExecutionFramework/interfaces';
+import PipelineType from '@interfaces/PipelineType';
+import { FrameworkType, PipelineExecutionFrameworkBlockType } from '@interfaces/PipelineExecutionFramework/interfaces';
 import { GroupUUIDEnum } from '@interfaces/PipelineExecutionFramework/types';
+import { ItemStatusEnum, RectTransformationScopeEnum, TransformRectTypeEnum } from './types';
+import { AppConfigType } from '../Apps/interfaces';
 import { ZoomPanStateType } from '@mana/hooks/useZoomPan';
 
 import {
@@ -19,6 +22,7 @@ export interface OffsetType {
 
 export interface RectType {
   bottom?: number;
+  children?: RectType[];
   diff?: RectType;
   height?: number;
   id?: number | string;
@@ -26,9 +30,10 @@ export interface RectType {
   left: number;
   offset?: OffsetType;
   padding?: RectType;
+  parent?: RectType;
   right?: number;
   top: number;
-  upstreamRects?: RectType[];
+  upstream?: RectType[];
   version?: number;
   width?: number;
   zIndex?: number;
@@ -37,18 +42,24 @@ export interface RectType {
 interface BaseItem {
   id: number | string;
   level?: number;
-  version?: number | string;
+  status?: ItemStatusEnum;
+  subtype?: PortSubtypeEnum;
   type: ItemTypeEnum;
+  version?: number;
 }
 
 export interface DragItem extends BaseItem {
-  block?: BlockType;
+  block?: BlockType & {
+    frameworks: FrameworkType[];
+  } & FrameworkType;
+  downstream?: string[];
   groups?: string[];
   isDragging?: boolean;
   node?: NodeType;
   ports?: PortType[];
   rect?: RectType;
   title?: string;
+  upstream?: string[];
   upstreamItems?: DragItem[];
 }
 
@@ -56,22 +67,56 @@ export interface PortType extends DragItem {
   index?: number;
   parent: DragItem; // Always references the block that the port belongs to.
   target: DragItem; // Always references the block that the port is connected to that isn’t the current block.
-  subtype: PortSubtypeEnum;
+}
+
+export interface AppNodeType extends DragItem {
+  app: AppConfigType;
 }
 
 export interface NodeType extends DragItem {
-  items: (DragItem | NodeType)[];
-  upstreamNodes?: (DragItem | NodeType)[];
+  apps?: AppNodeType[];
+  items?: (DragItem | NodeType | string)[];
+  node?: NodeType;
+}
+
+export type NodeItemType = DragItem | NodeType | PortType | AppNodeType;
+export type FlatItemType = [string, number, number, number, number];
+
+export interface RectTransformationOptionsType {
+  boundingBox?: RectType;
+  layout?: LayoutConfigType;
+  layoutOptions?: {
+    // Wave layout options
+    amplitude?: number;
+    wavelength?: number;
+    // Spiral layout options
+    angleStep: number; // Smaller angle increment for tighter spiral
+    initialAngle: number; // 45 degrees in radians
+  };
+  offset?: RectType;
+  padding?: RectType;
+  rect?: RectType;
+}
+
+export interface RectTransformationType {
+  condition?: (rects: RectType[]) => boolean;
+  initialScope?: RectTransformationScopeEnum;
+  options?: (rects: RectType[]) => RectTransformationOptionsType;
+  scope?: RectTransformationScopeEnum; // Leave empty to operate on all rects at the top level
+  scopeTransformations?: RectTransformationType[];
+  targets?: (rects: RectType[]) => RectType[];
+  transform?: (rects: RectType[]) => RectType[];
+  type?: TransformRectTypeEnum;
 }
 
 export interface LayoutConfigType {
-  boundingRect?: RectType;
-  containerRect?: RectType;
+  containerRef?: React.MutableRefObject<HTMLElement>;
   defaultRect?: {
     item?: (item?: NodeItemType) => RectType;
   };
   direction?: LayoutConfigDirectionEnum;
   level?: number;
+  offsetRectFinal?: RectType;
   origin?: LayoutConfigDirectionOriginEnum;
   gap?: {
     column?: number;
@@ -82,16 +127,16 @@ export interface LayoutConfigType {
     rows?: number;
   };
   itemRect?: RectType;
+  rectTransformations?: RectTransformationType[];
   stagger?: number;
   transformRect?: {
     block?: (rect?: RectType) => RectType;
     node?: (rect?: RectType) => RectType;
     port?: (rect?: RectType) => RectType;
   };
-  transformState?: ZoomPanStateType;
+  transformStateRef?: React.MutableRefObject<ZoomPanStateType>;
+  viewportRef?: React.MutableRefObject<HTMLElement>;
 }
-
-export type NodeItemType = DragItem | NodeType | PortType;
 
 export interface ConnectionType {
   curveControl?: number; // Controls the curvature of the line (0 for straight, higher for more curved)
@@ -112,8 +157,15 @@ export type PortMappingType = Record<string, PortType>;
 
 export type BlockMappingType = Record<string, BlockType>;
 export type BlocksByGroupType = Record<GroupUUIDEnum, BlockMappingType>;
-export type GroupMappingType = Record<GroupUUIDEnum, PipelineExecutionFrameworkBlockType>;
+export type GroupMappingType = Record<GroupUUIDEnum, FrameworkType>;
 export type GroupLevelsMappingType = GroupMappingType[];
+
+export type GroupLevelType = FrameworkType[][];
+
+export type BlockGroupType = {
+  blocks: BlockType[];
+  group: FrameworkType;
+};
 
 export type ModelMappingType = {
   itemMapping?: ItemMappingType;

@@ -1,5 +1,5 @@
 import React from 'react';
-import styles from '@styles/scss/components/Canvas/Nodes/BlockNode.module.scss';
+import styles from '@styles/scss/apps/Canvas/Pipelines/Builder.module.scss';
 import { motion } from 'framer-motion';
 
 type ConnectionLinesProps = {

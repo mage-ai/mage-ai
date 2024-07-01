@@ -14,44 +14,6 @@ import { isDebug } from '@utils/environment';
 import { buildUUIDForLevel } from './levels';
 import { ignoreKeys } from '@utils/hash';
 
-export function updateNodeGroupsWithItems(itemMapping: ItemMappingType): ItemMappingType {
-  const mapping = Object.entries(itemMapping ?? {})?.reduce(
-    (acc, [nodeID, nodeItem]: [string, NodeType]) => {
-      if (ItemTypeEnum.NODE !== nodeItem?.type) {
-        return acc;
-      }
-
-      const items = nodeItem?.items?.reduce(
-        (acc, item: DragItem) => ({
-          ...acc,
-          [item.id]: itemMapping?.[item?.id],
-        }),
-        {},
-      );
-
-      return {
-        ...acc,
-        [nodeID]: {
-          ...nodeItem,
-          items: Object.values(items),
-        },
-      };
-    },
-    {} as ItemMappingType,
-  );
-
-  return Object.entries(mapping ?? {})?.reduce(
-    (acc, [nodeID, nodeItem]: [string, NodeType]) => ({
-      ...acc,
-      [nodeID]: {
-        ...nodeItem,
-        upstreamNodes: nodeItem?.upstreamNodes?.map((node: NodeType) => mapping?.[node?.id]),
-      },
-    }),
-    {} as ItemMappingType,
-  );
-}
-
 export function updateModelsAndRelationships(
   { itemsRef, portsRef },
   payload: ModelMappingType,

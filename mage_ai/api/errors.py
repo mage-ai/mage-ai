@@ -42,6 +42,11 @@ class ApiError(Exception):
         message='Invalid OAuth token.',
         type='invalid_oauth_token',
     )
+    INTERNAL_SERVER_ERROR = dict(
+        code=ErrorCode.CODE_500.value,
+        message='Internal server error.',
+        type='internal_server_error',
+    )
 
     def __init__(self, opts: Optional[Dict] = None):
         if opts:
@@ -61,3 +66,43 @@ class ApiError(Exception):
             message=self.message,
             type=self.type,
         ).to_dict()
+
+
+def format_and_colorize_stacktrace(stacktrace, message):
+    # Define colors
+    red = '\033[91m'
+    green = '\033[92m'
+    yellow = '\033[93m'
+    # blue = '\033[94m'
+    # magenta = '\033[95m'
+    cyan = '\033[96m'
+    bright_black = '\033[90m'
+    bold = '\033[1m'
+    # underline = '\033[4m'
+    reset = '\033[0m'
+    error_msg_color = '\033[91m'
+
+    formatted_lines = []
+
+    for line in stacktrace:
+        if 'File "' in line and 'line' in line:
+            parts = line.split(", ")
+            filename_part = parts[0]
+            line_number_part = parts[1]
+            rest = ", ".join(parts[2:])
+
+            formatted_line = (
+                f"{green}{filename_part}{reset}, {yellow}{line_number_part}{reset}, "
+                f"{cyan}{rest}{reset}"
+            )
+            formatted_lines.append(formatted_line)
+        elif line.startswith('Traceback'):
+            formatted_lines.append(f"{red}{line}{reset}")
+        elif 'Exception occurred' in line:
+            formatted_lines.append(f"{bold}{red}{line}{reset}")
+        else:
+            formatted_lines.append(f"{bright_black}{line}{reset}")
+
+    formatted_message = f"{error_msg_color}{message}{reset}" if message else ""
+
+    return formatted_lines, formatted_message

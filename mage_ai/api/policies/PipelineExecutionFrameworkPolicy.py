@@ -86,11 +86,14 @@ PipelineExecutionFrameworkPolicy.allow_write(
     [
         'blocks',
         'description',
+        'execution_framework',
         'name',
         'pipelines',
         'settings',
         'tags',
         'type',
+        'uuid',
+        'variables',
     ],
     on_action=[
         OperationType.UPDATE,

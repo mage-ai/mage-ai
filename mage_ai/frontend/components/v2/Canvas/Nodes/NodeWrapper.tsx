@@ -10,6 +10,14 @@ import { DragItem, NodeItemType, PortType, RectType } from '../interfaces';
 import { ItemTypeEnum } from '../types';
 import { DragAndDropType } from './types';
 import { ElementRoleEnum } from '@mana/shared/types';
+import { DEBUG } from '@components/v2/utils/debug';
+
+export type NodeWrapperProps = {
+  children?: React.ReactNode;
+  className?: string;
+  item: NodeItemType;
+  rect?: RectType;
+} & DragAndDropType;
 
 // This is the style used for the preview when dragging
 function getStyles(
@@ -17,12 +25,15 @@ function getStyles(
   {
     draggable,
     isDragging,
+    rect,
   }: {
     draggable: boolean;
     isDragging: boolean;
+    rect?: RectType;
   },
 ): CSSProperties {
-  const { id, rect, type } = item;
+  const { id, type } = item;
+  rect = rect ?? item?.rect;
   const { left, top, width, zIndex } = rect || ({} as RectType);
   const transform = `translate3d(${left ?? 0}px, ${top ?? 0}px, 0)`;
 
@@ -39,17 +50,11 @@ function getStyles(
     ...(isDragging
       ? { height: 0, opacity: 0 }
       : {
-          minHeight: rect?.height ?? 0,
-        }),
-    ...(width ? { minWidth: width } : {}),
+        minHeight: rect?.height === Infinity || rect?.height === -Infinity ? 0 : rect?.height ?? 0,
+      }),
+    ...((width ?? false) ? { minWidth: width } : {}),
   };
 }
-
-export type NodeWrapperProps = {
-  children?: React.ReactNode;
-  className?: string;
-  item: DragItem;
-} & DragAndDropType;
 
 export const NodeWrapper: FC<NodeWrapperProps> = memo(function NodeWrapper({
   children,
@@ -60,6 +65,7 @@ export const NodeWrapper: FC<NodeWrapperProps> = memo(function NodeWrapper({
   handlers,
   item,
   itemRef,
+  rect,
 }: NodeWrapperProps) {
   const { onDragEnd, onDragStart, onDrop, onMouseDown, onMouseLeave, onMouseOver, onMouseUp } =
     handlers;
@@ -74,10 +80,11 @@ export const NodeWrapper: FC<NodeWrapperProps> = memo(function NodeWrapper({
       collect: (monitor: DragSourceMonitor) => ({ isDragging: monitor.isDragging() }),
       isDragging: (monitor: DragSourceMonitor) => {
         const node = monitor.getItem() as NodeItemType;
+        DEBUG.dragging && console.log('NodeWrapper.isDragging', node.id, itemToDrag.id);
         return node.id === itemToDrag.id;
       },
       item: itemToDrag,
-      type: itemToDrag.type,
+      type: itemToDrag?.type,
     }),
     [draggable, itemToDrag, onDragStart],
   );
@@ -120,12 +127,27 @@ export const NodeWrapper: FC<NodeWrapperProps> = memo(function NodeWrapper({
   connectDrop(itemRef);
   connectDrag(itemRef);
 
+  // DEBUG.dragging && console.log(
+  //   'NodeWrapper',
+  //   ['draggable', draggable],
+  //   ['isDragging', isDragging],
+  // );
+
   return (
     <div
-      className={[styles.nodeWrapper, styles[itemToDrag?.type], className ?? ''].join(' ')}
+      className={[
+        styles.nodeWrapper,
+        className ?? '',
+      ].join(' ')}
       onDragEnd={draggable && onDragEnd ? event => onDragEnd?.(event as any) : undefined}
       onDragStart={draggable && onDragStart ? event => onDragStart?.(event as any) : undefined}
-      onMouseDown={draggable && onMouseDown ? event => onMouseDown?.(event as any) : undefined}
+      onMouseDown={draggable && onMouseDown
+        ? event => {
+          DEBUG.dragging && console.log('NodeWrapper.onMouseDown', event);
+          onMouseDown?.(event as any);
+        }
+        : undefined
+      }
       // THESE WILL DISABLE the style opacity of the wrapper.
       // onMouseLeave={onMouseLeave ? event => onMouseLeave?.(event as any) : undefined}
       onMouseOver={!draggable && onMouseOver ? event => onMouseOver?.(event as any) : undefined}
@@ -135,6 +157,7 @@ export const NodeWrapper: FC<NodeWrapperProps> = memo(function NodeWrapper({
       style={getStyles(item, {
         draggable,
         isDragging: isDragging && itemToDrag?.type === item?.type,
+        rect,
       })}
     >
       {children}

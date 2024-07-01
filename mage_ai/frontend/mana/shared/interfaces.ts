@@ -1,13 +1,19 @@
+import BlockType from '@interfaces/BlockType';
 import React from 'react';
 import { ButtonEnum, LanguageEnum } from './enums';
+import { MutateType } from '@api/interfaces';
+import { RemoveContextMenuType, RenderContextMenuType } from '../hooks/useContextMenu';
+import { LayoutConfigType } from '@components/v2/Canvas/interfaces';
 
 export enum EventOperationEnum {
+  APP_START = 'app.start',
   CONTEXT_MENU_OPEN = 'context_menu.open',
   DRAGGING = 'drag.active',
   DRAG_END = 'drag.end',
   DRAG_START = 'drag.start',
   DROP_START = 'drop.start',
   MOUSE_DOWN = 'mouse.down',
+  MUTATE_MODEL_BLOCK = 'mutate.model.block',
 }
 
 export type EventControlType = {
@@ -20,8 +26,15 @@ export type EventControlType = {
 export type ClientEventType = {
   button?: ButtonEnum;
   control?: EventControlType;
-  data?: Record<string, any>;
-  operationTarget?: HTMLElement;
+  data?: Record<string, BlockType | any> | {
+    app?: any;
+    block?: BlockType;
+    node?: any;
+    nodes?: any[];
+  };
+  handle?: HandleOperationType;
+  operationTarget?: HTMLElement | React.RefObject<HTMLElement> | React.RefObject<HTMLDivElement>
+  | React.RefObject<Element> | null;
   operationType?: EventOperationEnum;
 } & Event &
   MouseEvent &
@@ -57,7 +70,30 @@ export interface EventOperationOptionsType {
   args?: any[];
   kwargs?: {
     boundingContainer?: DOMRect;
+    computedStyle?: CSSStyleDeclaration;
+    layoutConfig?: LayoutConfigType;
+    level?: number;
+    rect?: {
+      height?: number;
+      left?: number;
+      top?: number;
+      width?: number;
+      offset?: {
+        height?: number;
+        left?: number;
+        top?: number;
+        width?: number;
+      };
+    };
   };
+  handler?: (
+    event: ClientEventType,
+    handlers: Record<string, MutateType>,
+    callbacks: {
+      removeContextMenu: RemoveContextMenuType;
+      renderContextMenu: RenderContextMenuType;
+    },
+  ) => void;
 }
 export type SubmitEventOperationType = (
   event: ClientEventType,

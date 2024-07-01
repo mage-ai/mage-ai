@@ -1,7 +1,16 @@
+import BlockType from '@interfaces/BlockType';
 import { IconType } from '@mana/icons/types';
 import { BadgeType } from '@mana/elements/Badge';
 import { ConnectionType, DragItem, NodeItemType } from '../interfaces';
 import { ClientEventType } from '@mana/shared/interfaces';
+
+export type UpdateBlockRequestType = (event: ClientEventType | Event, key: string, value: any, opts?: {
+  delay?: number;
+}) => void;
+export type SharedBlockProps = {
+  block?: BlockType;
+  updateBlock: UpdateBlockRequestType;
+};
 
 export type DragAndDropHandlersType = {
   handlers?: {

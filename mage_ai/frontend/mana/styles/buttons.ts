@@ -6,25 +6,30 @@ import { outlineHover, transition, transitionFast } from './mixins';
 
 export type StyleProps = {
   aslink?: boolean;
+  backgroundcolor?: string;
   basic?: boolean;
-  grouped?: boolean;
+  bordercolor?: string;
+  grouped?: boolean | string;
   loading?: boolean;
   plain?: boolean;
   primary?: boolean;
   secondary?: boolean;
   small?: boolean;
   tag?: React.ReactNode | string | number;
+  wrap?: boolean | string;
 } & TextStyleProps;
 
 const shared = css<StyleProps>`
   ${({ aslink, plain }) => !plain && (aslink ? transitionFast : transition)}
   ${text}
+  position: relative;
+  z-index: 1;
 
-  ${({ aslink, basic, grouped, plain, primary, secondary, theme }) =>
+  ${({ aslink, basic, bordercolor, grouped, plain, primary, secondary, theme }) =>
     !plain &&
     outlineHover({
       borderColor: theme.fonts.color.text.inverted,
-      outlineColor: primary
+      outlineColor: (theme.colors?.[bordercolor] ?? bordercolor) ?? primary
         ? theme.buttons.outline.color.primary.hover
         : secondary
           ? theme.buttons.outline.color.secondary.hover
@@ -34,27 +39,26 @@ const shared = css<StyleProps>`
       outlineOffset: grouped ? UNIT : null,
     })}
 
-  ${({ aslink, grouped, plain }) =>
-    (aslink || grouped || plain) &&
+  ${({ aslink, grouped, plain, wrap }) =>
+    (aslink || grouped || plain || wrap) &&
     `
     border: none !important;
   `}
 
   ${({ aslink, basic, grouped, plain }) => !aslink && !grouped && !plain && basic && borders}
-  ${({ aslink, basic, grouped, plain, primary, secondary, theme }) =>
+  ${({ aslink, basic, bordercolor, grouped, plain, primary, secondary, theme }) =>
     !aslink &&
     !grouped &&
     !plain &&
     basic &&
     `
-    border-color: ${
-      primary
-        ? theme.buttons.border.color.primary.default
-        : secondary
-          ? theme.buttons.border.color.secondary.default
-          : basic
-            ? theme.buttons.border.color.basic.default
-            : theme.buttons.border.color.base.default
+    border-color: ${(theme.colors?.[bordercolor] ?? bordercolor) ?? (primary
+      ? theme.buttons.border.color.primary.default
+      : secondary
+        ? theme.buttons.border.color.secondary.default
+        : basic
+          ? theme.buttons.border.color.basic.default
+          : theme.buttons.border.color.base.default)
     };
   `}
 
@@ -64,31 +68,32 @@ const shared = css<StyleProps>`
     (aslink || basic) &&
     `
     &:hover {
-      border-color: ${
-        primary
-          ? theme.buttons.border.color.primary.hover
-          : secondary
-            ? theme.buttons.border.color.secondary.hover
-            : aslink || basic
-              ? theme.buttons.border.color.basic.hover
-              : theme.buttons.border.color.base.hover
-      };
+      border-color: ${primary
+      ? theme.buttons.border.color.primary.hover
+      : secondary
+        ? theme.buttons.border.color.secondary.hover
+        : aslink || basic
+          ? theme.buttons.border.color.basic.hover
+          : theme.buttons.border.color.base.hover
+    };
     }
   `}
 
   ${({ basic, grouped }) => !grouped && !basic && bordersTransparent}
 
-  background-color: ${({ aslink, basic, plain, primary, secondary, theme }) =>
-    !plain &&
-    (aslink
-      ? 'transparent'
-      : primary
-        ? theme.colors.backgrounds.button.primary.default
-        : secondary
-          ? theme.colors.backgrounds.button.secondary.default
-          : basic
-            ? theme.colors.backgrounds.button.basic.default
-            : theme.colors.backgrounds.button.base.default)};
+  background-color: ${({ aslink, backgroundcolor, basic, plain, primary, secondary, theme }) =>
+    (theme.colors?.[backgroundcolor] ?? backgroundcolor) ?? (
+      !plain &&
+      (aslink
+        ? 'transparent'
+        : primary
+          ? theme.colors.backgrounds.button.primary.default
+          : secondary
+            ? theme.colors.backgrounds.button.secondary.default
+            : basic
+              ? theme.colors.backgrounds.button.basic.default
+              : theme.colors.backgrounds.button.base.default)
+    )};
   border-radius: ${({ plain, theme }) => !plain && theme.borders.radius.base};
   color: ${({ primary, secondary, theme }) =>
     primary || secondary ? theme.fonts.color.text.inverted : theme.fonts.color.text.base};
@@ -101,24 +106,26 @@ const shared = css<StyleProps>`
     primary || secondary ? theme.fonts.weight.bold : theme.fonts.weight.semiBold};
   line-height: ${({ small, theme }) => theme.buttons.font.lineHeight[small ? 'sm' : 'base']}px;
 
-  ${({ basic, grouped, plain, primary, secondary, theme }) =>
+  ${({ basic, backgroundcolor, grouped, plain, primary, secondary, theme }) =>
     !grouped &&
     !plain &&
     `
     &:hover {
-      background-color: ${
-        primary
-          ? theme.colors.backgrounds.button.primary.hover
-          : secondary
-            ? theme.colors.backgrounds.button.secondary.hover
-            : basic
-              ? theme.colors.backgrounds.button.basic.hover
-              : theme.colors.backgrounds.button.base.hover
-      };
+      background-color: ${(theme.colors?.[backgroundcolor] ?? backgroundcolor) ?? primary
+      ? theme.colors.backgrounds.button.primary.hover
+      : secondary
+        ? theme.colors.backgrounds.button.secondary.hover
+        : basic
+          ? theme.colors.backgrounds.button.basic.hover
+          : theme.colors.backgrounds.button.base.hover
+    };
     }
   `}
 
-  ${({ loading }) => loading && 'pointer-events: none;'}
+  ${({ loading }) => loading && `
+    cursor: wait;
+  `}
+
   ${({ loading }) =>
     !loading &&
     `
@@ -131,25 +138,27 @@ const shared = css<StyleProps>`
 const base = css<StyleProps>`
   ${shared}
   font-size: ${({ theme }) => theme.fonts.size.base};
-  padding: ${({ aslink, basic, grouped, plain, theme }) =>
+  padding: ${({ aslink, basic, grouped, plain, theme, wrap }) =>
     !plain &&
-    (aslink
-      ? basic
-        ? 0
-        : '2px 4px'
-      : grouped
+    (wrap
+      ? 0
+      : aslink
         ? basic
           ? 0
-          : theme.buttons.padding.xxs
-        : theme.buttons.padding.base)};
+          : '2px 4px'
+        : grouped
+          ? basic
+            ? 0
+            : theme.buttons.padding.xxs
+          : theme.buttons.padding.base)};
 `;
 
 export const sm = css<StyleProps>`
   ${shared}
 
   font-size: ${({ theme }) => theme.fonts.size.sm};
-  padding: ${({ aslink, basic, grouped, plain, theme, tag }) =>
-    !plain &&
+  padding: ${({ aslink, basic, grouped, plain, theme, tag, wrap }) =>
+    !plain && !wrap &&
     (typeof tag !== 'undefined'
       ? theme.buttons.padding.sm
       : aslink
@@ -171,10 +180,11 @@ export const sm = css<StyleProps>`
     padding-top: 0;
   `}
 
-  ${({ basic, grouped, plain, theme }) =>
+  ${({ basic, grouped, plain, theme, wrap }) =>
     grouped &&
     !basic &&
     !plain &&
+    !wrap &&
     `
     border-radius: ${theme.borders.radius.sm};
   `}

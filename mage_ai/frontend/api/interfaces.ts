@@ -1,5 +1,8 @@
 import { AxiosError } from 'axios';
 import { ErrorDetailsType } from '@interfaces/ErrorsType';
+import { OperationTypeEnum } from './constants';
+import { MutationStatusEnum } from './enums';
+import { ClientEventType } from '@mana/shared/interfaces';
 
 // "message": "Request failed with status code 400",
 // "name": "AxiosError",
@@ -42,10 +45,11 @@ export type AxiosErrorType = {
   };
 } & AxiosError;
 
-type ResourceType = Record<string, any>;
+export type ResourceType = Record<string, any>;
 
 export type ResponseType = {
   data?: Record<string, ResourceType>;
+  metadata?: Record<string, any>;
 };
 
 export type ErrorResponseType = {
@@ -57,16 +61,22 @@ export type OnSuccessHandlerType = (
   variables?: any,
   context?: any,
 ) => Promise<unknown> | unknown;
+
 export type OnErrorHandlerType = (
   err: any,
   variables?: any,
   context?: any,
 ) => Promise<unknown> | unknown;
 
+export type OnStartHandlerType = () => void;
+
 export interface HandlersType {
   onError?: OnErrorHandlerType;
   onSuccess?: OnSuccessHandlerType;
+  onStart?: OnStartHandlerType;
 }
+
+export type MutationFetchArgumentsType = HandlersType | any;
 
 export interface ResourceHandlersType {
   create?: HandlersType;
@@ -76,14 +86,23 @@ export interface ResourceHandlersType {
   update?: HandlersType;
 }
 
-export type MutateFunctionArgsType = {
-  id?: string | string[];
-  payload?: Record<string, any>;
-  query?: Record<string, any>;
+export type IDArgsType = {
+  id?: string;
+  idParent?: string;
+  resource?: string;
+  resourceParent?: string;
 };
-export type MutateFunctionType = (
-  args: MutateFunctionArgsType,
-) => Promise<ResourceType | ResourceType[]>;
+
+export type ArgsValueOrFunctionType = Record<string, any> | ((args: Record<string, any>) => Record<string, any>);
+
+export type MutateFunctionArgsType = {
+  event?: ClientEventType | any;
+  meta?: ArgsValueOrFunctionType;
+  payload?: ArgsValueOrFunctionType;
+  query?: ArgsValueOrFunctionType;
+} & IDArgsType & HandlersType;
+
+export type MutateFunctionType = (args?: MutateFunctionArgsType) => Promise<ResourceType | ResourceType[]>;
 
 export type MutatationType = {
   data: any;
@@ -101,10 +120,29 @@ export type MutatationType = {
   status: any;
 };
 
+export type ModelsType = Record<string, any | any[]>;
+
+export type MutationStatusMappingType = {
+  [OperationTypeEnum.CREATE]: MutationStatusEnum;
+  [OperationTypeEnum.DELETE]: MutationStatusEnum;
+  [OperationTypeEnum.DETAIL]: MutationStatusEnum;
+  [OperationTypeEnum.LIST]: MutationStatusEnum;
+  [OperationTypeEnum.UPDATE]: MutationStatusEnum;
+};
+
 export interface MutateType {
   create: MutatationType;
   delete: MutatationType;
   detail: MutatationType;
   list: MutatationType;
+  modelsRef: React.MutableRefObject<ModelsType>;
+  setModel: (model: ResourceType | ((prev: ResourceType) => ResourceType)) => ResourceType;
+  setModels: (models: ResourceType[] | ((prev: ResourceType[]) => ResourceType[])) => ResourceType[];
+  status: MutationStatusMappingType;
   update: MutatationType;
+}
+
+export interface URLOptionsType {
+  disableEncodeURIComponent?: boolean;
+  disableHyphenCase?: boolean;
 }

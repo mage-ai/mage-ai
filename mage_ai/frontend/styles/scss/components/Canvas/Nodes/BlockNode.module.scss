@@ -1,5 +1,6 @@
 @use '../../../base/borders';
 @use '../../../base/grid';
+@use './mixins' as *;
 
 .blockNode {
   @include borders.border-colors();
@@ -7,6 +8,25 @@
   height: inherit;
   min-width: 312px;
   padding: var(--padding-base);
+}
+
+.blockNodeWrapper {
+  &.loading {
+    .loader {
+      visibility: visible;
+      opacity: 1;
+    }
+  }
+
+  .loader {
+    visibility: hidden;
+    opacity: 0;
+    position: relative;
+    height: 2px;
+    margin-top: 4px;
+    margin-bottom: 2px;
+    width: 100%;
+  }
 }
 
 .showOnHoverContainer {
@@ -23,33 +43,15 @@
 
 .nodeWrapper {
   @include grid.base();
-
-  &.block {
-    z-index: 6;
-  }
-
-  &.node {
-    z-index: 4;
-  }
 }
 
-.connectionLines {
-  z-index: 1;
+.container {
+  @include start-up-status;
+}
 
-  .connectionLine {
-    &.connection-from-port-to-port,
-    &.connection-from-port-to-block,
-    &.connection-from-port-to-node,
-    &.connection-from-block-to-block,
-    &.connection-from-block-to-node,
-    &.connection-from-block-to-port,
-    &.connection-from-node-to-block,
-    &.connection-from-node-to-port {
-      z-index: 5;
-    }
+.requiredGroup {
+}
 
-    &.connection-from-node-to-node {
-      z-index: 3;
-    }
-  }
+.emptyGroup {
+
 }

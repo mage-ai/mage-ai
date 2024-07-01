@@ -6,7 +6,7 @@ import { NodeItemType, PortType, RectType } from '../interfaces';
 import { useDrag, useDrop } from 'react-dnd';
 import { ItemTypeEnum } from '../types';
 import { DragAndDropType } from '../Nodes/types';
-import { buildPortUUID } from './utils';
+
 import { ElementRoleEnum } from '@mana/shared/types';
 
 type DraggablePortProps = {
@@ -100,7 +100,7 @@ export const DraggablePort: FC<DraggablePortProps> = memo(function DraggablePort
 
   return (
     <div
-      key={buildPortUUID(item)}
+      key={item.id}
       // @ts-ignore
       onDragEnd={event => onMouseUp(update(event, { data: { node: { $set: item } } }) as any)}
       // @ts-ignore

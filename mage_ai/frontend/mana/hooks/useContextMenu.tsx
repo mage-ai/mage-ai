@@ -16,7 +16,7 @@ export type RenderContextMenuOptions = {
 
 export type RenderContextMenuType = (
   event: ClientEventTypeT,
-  items: MenuItemTypeT[],
+  items?: MenuItemTypeT[],
   opts?: RenderContextMenuOptions,
 ) => void;
 export type RemoveContextMenuType = (

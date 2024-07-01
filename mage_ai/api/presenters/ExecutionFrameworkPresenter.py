@@ -1,3 +1,4 @@
+import inspect
 from typing import Dict
 
 from mage_ai.api.operations.constants import OperationType
@@ -16,8 +17,11 @@ class ExecutionFrameworkPresenter(BasePresenter):
 
     async def prepare_present(self, **kwargs) -> Dict:
         display_format = kwargs.get('format')
+        model = self.resource.model
 
-        return self.resource.model.to_dict(
+        if model and inspect.isawaitable(model):
+            model = await model
+        return model.to_dict(
             ignore_empty=True,
             include_templates=OperationType.DETAIL == display_format,
         )

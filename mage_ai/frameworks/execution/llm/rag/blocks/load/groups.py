@@ -12,7 +12,7 @@ INGEST = BlockExecutionFramework.load(
     description=('The process of importing raw data from various sources into the RAG system.'),
     type=BlockType.GROUP,
     templates_dir=templates_dir,
-    configuration=Configuration.load(Metadata.load(required=True)),
+    configuration=Configuration.load(metadata=Metadata.load(required=True)),
     upstream_blocks=[],
     downstream_blocks=[GroupUUID.MAP],
 )

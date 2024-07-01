@@ -10,7 +10,7 @@ from mage_ai.frameworks.execution.models.pipeline.base import PipelineExecutionF
 from mage_ai.shared.array import find
 
 
-def get_execution_frameworks(
+async def get_execution_frameworks(
     level: Optional[int] = None,
     uuid: Optional[str] = None,
 ) -> Union[List[PipelineExecutionFramework], PipelineExecutionFramework]:
@@ -39,14 +39,14 @@ class ExecutionFrameworkResource(GenericResource):
             level = int(level)
 
         return cls.build_result_set(
-            get_execution_frameworks(level=level),
+            await get_execution_frameworks(level=level),
             user,
             **kwargs,
         )
 
     @classmethod
     async def get_model(cls, pk, **kwargs) -> PipelineExecutionFramework:
-        model = get_execution_frameworks(uuid=pk)
+        model = await get_execution_frameworks(uuid=pk)
         if isinstance(model, list):
             return model[0]
         return model

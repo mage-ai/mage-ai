@@ -1,6 +1,12 @@
 @use '../../../abstracts/helpers' as *;
 @use '../../../base/svg';
 
+@mixin hidden {
+  opacity: 0;
+  pointer-events: none;
+  z-index: -1;
+}
+
 .canvas {
   background-color: var(--backgrounds-body);
   height: 500%; /* Large enough to initially fit all content, will expand as needed */
@@ -8,6 +14,9 @@
   position: absolute; /* Ensure it behaves correctly inside the parent container */
   overflow: visible; /* Ensure content can overflow without clipping */
   transform-origin: top left;
+
+  /* Add outline shadow */
+  box-shadow: 0 0 30px 10px var(--blue);
 
   &:before,
   &:after {
@@ -53,14 +62,62 @@
       .level-#{$value1} {
         opacity: 1;
         pointer-events: all;
+
+      }
+
+      .app {
+        z-index: 6;
+      }
+
+      .block {
+        z-index: 6;
+      }
+
+      .node {
+        z-index: 4;
       }
     }
   }
 
-  .level {
-    opacity: 0;
+  &.optional-hidden {
+    .optional {
+
+    }
+  }
+
+  .optional {
+
+  }
+
+  &.dragging {
+    .connectionLines {
+      z-index: 5;
+    }
+  }
+
+  .app {
+    z-index: 6;
+  }
+
+  .block {
+    z-index: 6;
+  }
+
+  .node {
+    z-index: 4;
+  }
+
+  .connectionLines {
+    height: 100%;
     pointer-events: none;
-    z-index: -1;
+    position: absolute;
+    width: 100%;
+    z-index: 5;
+
+  }
+
+  .level {
+    @include hidden;
   }
 
   .centered {
