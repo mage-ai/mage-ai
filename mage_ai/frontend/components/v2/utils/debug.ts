@@ -13,7 +13,7 @@ export const DEBUG = {
     manager: false,
     node: false,
   },
-  events: false,
+  events: true,
   itemManager: false,
   layout: false,
   layoutManager: false,

@@ -1,10 +1,10 @@
-import EventStreamType, { ServerConnectionStatusType } from '@interfaces/EventStreamType';
+import EventStreamType, { ProcessDetailsType, ServerConnectionStatusType } from '@interfaces/EventStreamType';
 import useOutputManager, { OutputManagerProps, OutputManagerType } from './CodeExecution/useOutputManager';
 import { DEBUG } from '@components/v2/utils/debug';
 import { ExecutionManagerType } from '../../ExecutionManager/interfaces';
 import { useEffect, useRef } from 'react';
 
-export type SetContainerType = OutputManagerProps['setContainer'];
+export type SetContainerType = OutputManagerType['setContainer'];
 
 export default function useExecutable(
   eventStreamUUID: string,
@@ -16,12 +16,14 @@ export default function useExecutable(
 ): {
   connect: () => void;
   containerRef: React.RefObject<HTMLDivElement>;
-  executeCode: (message: string) => void;
+  executeCode: (message: string, opts?: { future: boolean }) => [ProcessDetailsType, () => void] | [ProcessDetailsType, undefined];
+  removeGroup: OutputManagerType['removeGroup'];
+  setContainer: OutputManagerType['setContainer'];
 } {
   const { autoConnect } = opts ?? {};
   const handleOnMessageRef = useRef<(event: EventStreamType) => void>(null);
 
-  const { addGroup, containerRef, groupsRef, removeGroup, teardown } = useOutputManager(opts);
+  const { addGroup, containerRef, groupsRef, removeGroup, setContainer, teardown } = useOutputManager(opts);
   const {
     connect,
     executeCode,
@@ -49,14 +51,28 @@ export default function useExecutable(
     handleOnMessageRef?.current?.(event);
   }
 
-  function handleCodeExecution(message: string) {
+  function handleExecuteCode(
+    message: string,
+    opts?: { future: boolean },
+  ): [ProcessDetailsType, () => void] | [ProcessDetailsType, undefined] {
     const [process, executeHandler] = executeCode(message, {
-      future: true,
       connect: !autoConnect,
+      future: true,
     });
-    addGroup(process, (handler: (event: EventStreamType) => void) => {
-      handleOnMessageRef.current = handler;
-    }, executeHandler);
+
+    const execute = () => {
+      addGroup(process, (handler: (event: EventStreamType) => void) => {
+        handleOnMessageRef.current = handler;
+      }, executeHandler);
+    };
+
+    if (opts?.future) {
+      return [process, execute] as [ProcessDetailsType, () => void];
+    }
+
+    execute();
+
+    return [process, undefined] as [ProcessDetailsType, undefined];
   }
 
   useEffect(() => {
@@ -71,6 +87,8 @@ export default function useExecutable(
   return {
     connect,
     containerRef,
-    executeCode: handleCodeExecution,
+    executeCode: handleExecuteCode,
+    removeGroup,
+    setContainer,
   };
 }

@@ -1,7 +1,8 @@
 import BlockType from '@interfaces/BlockType';
-import { BlockGroupType, NodeItemType, NodeType } from '../../../Canvas/interfaces';
+import { BlockGroupType, NodeItemType, NodeType, OutputNodeType } from '../../../Canvas/interfaces';
 import { ItemTypeEnum } from '../../../Canvas/types';
 import { buildUUIDForLevel } from './levels';
+import { hashCode } from '@utils/string';
 import { selectKeys } from '@utils/hash';
 
 export function createItemsFromBlockGroups(
@@ -75,4 +76,25 @@ function createItemsFromBlocks(blocks: BlockType[], opts?: {
   level?: number;
 }): NodeItemType[] {
   return blocks.map(block => buildItemFromBlock(block, opts));
+}
+
+export function buildOutputNode(node: NodeItemType, block: BlockType, {
+  message,
+}): OutputNodeType {
+  const id = [block.uuid, hashCode(message), String(Number(new Date()))].join(':')
+  const { level, rect } = node ?? {};
+  return {
+    id,
+    level,
+    process: { message },
+    rect: {
+      height: undefined,
+      left: rect?.left + rect?.width,
+      parent: rect,
+      top: rect?.top + rect?.height,
+      width: undefined,
+    },
+    type: ItemTypeEnum.OUTPUT,
+    upstream: [String(node.id)],
+  };
 }

@@ -2,13 +2,15 @@ import update from 'immutability-helper';
 import DraggableAppNode from '../../Canvas/Nodes/Apps/DraggableAppNode';
 import { ClientEventType } from '@mana/shared/interfaces';
 import DraggableBlockNode from '../../Canvas/Nodes/DraggableBlockNode';
+import OutputNode from '../../Canvas/Nodes/CodeExecution/OutputNode';
 import CanvasContainer from './index.style';
 import PipelineExecutionFrameworkType from '@interfaces/PipelineExecutionFramework/interfaces';
 import type { DropTargetMonitor } from 'react-dnd';
 import {
   LayoutConfigType, DragItem, ModelMappingType, NodeItemType, RectType,
   NodeType, FlatItemType,
-  AppNodeType
+  AppNodeType,
+  OutputNodeType
 } from '../../Canvas/interfaces';
 import useEventManager from './useEventManager';
 import useLayoutManager from './useLayoutManager';
@@ -23,6 +25,7 @@ import { useDrop } from 'react-dnd';
 import { useEffect, useMemo, useRef, useState, startTransition } from 'react';
 import useItemManager from './useItemManager';
 import useDynamicDebounce from '@utils/hooks/useDebounce';
+import { buildOutputNode } from './utils/items';
 import { AppManagerType, LayoutManagerType, ItemElementsType, EventManagerType, ModelManagerType } from './interfaces';
 import { groupBy, unique, sortByKey, flattenArray } from '@utils/array';
 import useNodeManager from './useNodeManager';
@@ -77,13 +80,16 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
     [ItemTypeEnum.APP]: {},
     [ItemTypeEnum.BLOCK]: {},
     [ItemTypeEnum.NODE]: {},
+    [ItemTypeEnum.OUTPUT]: {},
     [ItemTypeEnum.PORT]: {},
   });
   const itemIDsByLevelRef = useRef<string[][]>(null);
   const phaseRef = useRef<number>(0);
   const wrapperRef = useRef(null);
 
-  const [itemRects, setItemRectsState] = useState<FlatItemType[]>([]);
+  // VERY IMPORTANT THAT THE STATE IS IN THIS COMPONENT OR ELSE NOTHING WILL RENDER!
+  const [pipeline, setPipeline] = useState<PipelineExecutionFrameworkType>(null);
+  const [executionFramework, setExecutionFramework] = useState<PipelineExecutionFrameworkType>(null);
   const [appRects, setAppRects] = useState<{
     mapping: Record<string, AppNodeType>;
     rects: FlatItemType[];
@@ -91,37 +97,41 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
     mapping: {},
     rects: [],
   });
+  const [itemRects, _setItemRects] = useState<FlatItemType[]>([]);
+  const [outputNodes, _setOutputNodes] = useState<OutputNodeType[]>([]);
 
-  function setItemRects(items: NodeItemType[] | ((items: FlatItemType[]) => FlatItemType[])) {
-    DEBUG.state && console.log('setItemRects', items);
-    const buildItem = ({ id, rect }: NodeItemType): FlatItemType => {
+  console.log(outputNodes)
+  const { dispatchAppEvent } = useAppEventsHandler(null, {
+    [CustomAppEventEnum.APP_STARTED]: handleAppChanged,
+    [CustomAppEventEnum.APP_STOPPED]: handleAppChanged,
+    [CustomAppEventEnum.APP_UPDATED]: handleAppChanged,
+    [CustomAppEventEnum.NODE_LAYOUTS_CHANGED]: handleNodeLayoutsChanged,
+  });
+
+  function handleNodeLayoutsChanged({ detail }: CustomAppEvent) {
+    const { nodes } = detail;
+
+    DEBUG.state && console.log('setItemRects', nodes);
+
+    const buildFlatItem = ({ id, rect }: NodeItemType): FlatItemType => {
       const { left, top, width, height } = rect ?? {};
       return [String(id), left, top, width, height];
     };
 
+    const outputs = [];
+    const flats = [];
+    nodes?.forEach((node: NodeItemType) => {
+      outputs.push(...(node.outputs ?? []));
+      flats.push(buildFlatItem(node));
+    });
+
     startTransition(() => {
-      setItemRectsState((itemsPrev: FlatItemType[]) => {
-        const itemsNew = typeof items === 'function'
-          ? items(itemsPrev) as FlatItemType[]
-          : (items as NodeItemType[])?.map((i: NodeItemType) => buildItem(i)) as FlatItemType[]
-
-        DEBUG.layout && console.log('handleNodeLayoutsChanged.setItemRects', itemsPrev, itemsNew);
-
-        return itemsNew;
-      });
+      _setItemRects(flats);
+      _setOutputNodes(outputs);
     });
   }
 
-  // VERY IMPORTANT THAT THE STATE IS IN THIS COMPONENT OR ELSE NOTHING WILL RENDER!
-  const [pipeline, setPipeline] = useState<PipelineExecutionFrameworkType>(null);
-  const [executionFramework, setExecutionFramework] = useState<PipelineExecutionFrameworkType>(null);
-
-  const handleNodeLayoutsChanged = ({ detail }: CustomAppEvent) => {
-    const { nodes } = detail.event.data;
-    setItemRects(nodes);
-  };
-
-  const handleAppChanged = ({ detail: { manager } }: CustomAppEvent) => {
+  function handleAppChanged({ detail: { manager } }: CustomAppEvent) {
     const mapping = {};
     const rects = [];
 
@@ -140,14 +150,7 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
     DEBUG.apps && console.log('handleAppChanged', { mapping, rects });
     DEBUG.state && console.log('setAppRects', rects);
     setAppRects({ mapping, rects });
-  };
-
-  const { dispatchAppEvent } = useAppEventsHandler(null, {
-    [CustomAppEventEnum.APP_STARTED]: handleAppChanged,
-    [CustomAppEventEnum.APP_STOPPED]: handleAppChanged,
-    [CustomAppEventEnum.APP_UPDATED]: handleAppChanged,
-    [CustomAppEventEnum.NODE_LAYOUTS_CHANGED]: handleNodeLayoutsChanged,
-  });
+  }
 
   useAppManager({
     activeLevel,
@@ -162,7 +165,6 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
     portsRef,
   }: ModelManagerType = useModelManager({
     executionFrameworkUUID,
-    itemElementsRef,
     itemIDsByLevelRef,
     pipelineUUID,
   });
@@ -274,7 +276,7 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
   const [, connectDrop] = useDrop(
     () => ({
       // https://react-dnd.github.io/react-dnd/docs/api/use-drop
-      accept: [ItemTypeEnum.APP, ItemTypeEnum.BLOCK, ItemTypeEnum.NODE, ItemTypeEnum.PORT],
+      accept: [ItemTypeEnum.APP, ItemTypeEnum.BLOCK, ItemTypeEnum.NODE, ItemTypeEnum.OUTPUT, ItemTypeEnum.PORT],
       canDrop: (node: NodeItemType, monitor: DropTargetMonitor) => {
         if (!monitor.isOver({ shallow: true })) {
           return false;
@@ -364,6 +366,17 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
   );
   connectDrop(canvasRef);
 
+  const handlers = useMemo(() => ({
+    handlers: {
+      onDragEnd: handleDragEnd,
+      onDragStart: handleDragStart,
+      onDrop: onDropPort,
+      onMouseDown: handleMouseDown,
+    },
+    registerConsumer,
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }), [])
+
   return (
     <div
       ref={wrapperRef}
@@ -413,15 +426,10 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
 
             return (
               <DraggableBlockNode
+                {...handlers}
                 draggable={dragEnabled}
-                handlers={{
-                  onDragEnd: handleDragEnd,
-                  onDragStart: handleDragStart,
-                  onDrop: onDropPort,
-                  onMouseDown: handleMouseDown,
-                }}
-                item={item as NodeItemType}
                 key={arr.join(':')}
+                node={item as NodeItemType}
                 onMountItem={(item: DragItem, ref: React.RefObject<HTMLDivElement>) => {
                   onMountItem(item, ref);
                   removeComponentById(id);
@@ -433,11 +441,21 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
                   top,
                   width,
                 }}
-                registerConsumer={registerConsumer}
                 submitEventOperation={submitEventOperation}
               />
             );
           })}
+
+          {outputNodes?.map((node: OutputNodeType) => (
+            <OutputNode
+              {...handlers}
+              draggable={dragEnabled}
+              key={node.id}
+              node={node}
+              rect={node.rect}
+              registerConsumer={registerConsumer}
+            />
+          ))}
 
           {appRects?.rects?.map((arr) => {
             const [
@@ -453,14 +471,9 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
 
             return (
               <DraggableAppNode
+                {...handlers}
                 draggable={dragEnabled}
-                handlers={{
-                  onDragEnd: handleDragEnd,
-                  onDragStart: handleDragStart,
-                  onDrop: onDropPort,
-                  onMouseDown: handleMouseDown,
-                }}
-                items={appNode?.upstream?.map(id => itemsRef?.current?.[id])}
+                items={appNode?.upstream?.map(id => itemsRef?.current?.[id]) as any[]}
                 key={appNode.id}
                 node={appNode}
                 rect={{
@@ -469,7 +482,6 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
                   top,
                   width,
                 }}
-                registerConsumer={registerConsumer}
               />
             );
           })}

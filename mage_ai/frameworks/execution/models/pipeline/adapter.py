@@ -180,7 +180,7 @@ class Pipeline(DelegatorTarget):
         await self.get_blocks(refresh=True)
         for block in self.blocks or []:
             if block.uuid not in block_payloads:
-                self.delete_block(block.block)
+                self.delete_block(block.block, force=True)
             else:
                 pay = block_payloads.pop(block.uuid)
                 block.update(ignore_keys_with_blank_values(pay))

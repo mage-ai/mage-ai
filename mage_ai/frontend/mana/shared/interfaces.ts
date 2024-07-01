@@ -74,6 +74,9 @@ export interface EventOperationOptionsType {
     computedStyle?: CSSStyleDeclaration;
     layoutConfig?: LayoutConfigType;
     level?: number;
+    process?: {
+      message?: string;
+    };
     rect?: {
       height?: number;
       left?: number;

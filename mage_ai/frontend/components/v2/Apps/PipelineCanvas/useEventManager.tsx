@@ -525,10 +525,13 @@ export default function useEventManager({
               updateNodeLayouts();
 
               appHandlersRef.current?.pipelines.update.mutate({
-                payload: (pipeline) => ({
-                  ...pipeline,
-                  blocks: pipeline.blocks.filter((block: BlockType) => block.uuid !== target.block.uuid),
-                }),
+                payload: (pipeline) => {
+                  console.log('WTFFFFFFFFFFFFFFFFFFFFFFF', pipeline)
+                  return {
+                    ...pipeline,
+                    blocks: pipeline.blocks.filter((block: BlockType) => block.uuid !== target.block.uuid),
+                  };
+                },
               });
             },
             uuid: `Remove ${target?.block?.name} from pipeline`,

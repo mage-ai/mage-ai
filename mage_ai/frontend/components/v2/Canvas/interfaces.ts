@@ -12,6 +12,7 @@ import {
   LayoutConfigDirectionEnum,
   LayoutConfigDirectionOriginEnum,
 } from './types';
+import EventStreamType, { ProcessDetailsType } from '@interfaces/EventStreamType';
 
 export interface OffsetType {
   left?: number;
@@ -48,6 +49,11 @@ interface BaseItem {
   version?: number;
 }
 
+export interface OutputNodeType extends DragItem {
+  events?: EventStreamType[];
+  process?: ProcessDetailsType | { message: string };
+}
+
 export interface DragItem extends BaseItem {
   block?: BlockType & {
     frameworks: FrameworkType[];
@@ -56,6 +62,7 @@ export interface DragItem extends BaseItem {
   groups?: string[];
   isDragging?: boolean;
   node?: NodeType;
+  outputs?: OutputNodeType[];
   ports?: PortType[];
   rect?: RectType;
   title?: string;
@@ -79,7 +86,7 @@ export interface NodeType extends DragItem {
   node?: NodeType;
 }
 
-export type NodeItemType = DragItem | NodeType | PortType | AppNodeType;
+export type NodeItemType = DragItem | NodeType | PortType | AppNodeType | OutputNodeType;
 export type FlatItemType = [string, number, number, number, number];
 
 export interface RectTransformationOptionsType {

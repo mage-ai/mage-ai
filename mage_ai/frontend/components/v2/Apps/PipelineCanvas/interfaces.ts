@@ -26,6 +26,7 @@ export type AppHandlerType = {
   blocks: {
     update: MutateType['update'];
   };
+  browserItems: MutateType;
   executionFrameworks: MutateType;
   pipelines: MutateType;
 };
@@ -102,8 +103,12 @@ export type SubscriberType = AppManagerType | EventManagerType | LayoutManagerTy
 
 export interface CustomEventDetail {
   app?: AppConfigType;
+  block?: BlockType;
   event?: ClientEventType
+  item?: NodeItemType;
   manager?: SubscriberType;
+  node?: NodeItemType;
+  nodes?: NodeItemType[];
   options?: {
     args?: EventOperationOptionsType['args'];
     kwargs?: EventOperationOptionsType['kwargs'];

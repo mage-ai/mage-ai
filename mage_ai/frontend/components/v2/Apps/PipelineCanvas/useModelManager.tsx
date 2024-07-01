@@ -2,10 +2,11 @@ import PipelineExecutionFrameworkType, { ConfigurationType, FrameworkType } from
 import update from 'immutability-helper';
 import { ItemStatusEnum } from '../../Canvas/types';
 import { AppHandlerType, AppHandlersRefType } from './interfaces';
-import { AppNodeType, BlockGroupType, BlockMappingType, GroupLevelType, ItemMappingType, ModelMappingType, NodeItemType, NodeType, PortMappingType, PortType } from '../../Canvas/interfaces';
+import { AppNodeType, BlockGroupType, BlockMappingType, GroupLevelType, ItemMappingType, ModelMappingType, NodeItemType, NodeType, OutputNodeType, PortMappingType, PortType } from '../../Canvas/interfaces';
+import { ItemTypeEnum } from '../../Canvas/types';
 import { GroupUUIDEnum } from '@interfaces/PipelineExecutionFramework/types';
 import { buildDependencies } from './utils/pipelines';
-import { createItemsFromBlockGroups } from './utils/items';
+import { createItemsFromBlockGroups, buildOutputNode } from './utils/items';
 import { createPortsByItem } from './utils/ports';
 import { useEffect, useRef, useState } from 'react';
 import { useMutate } from '@context/APIMutation';
@@ -18,6 +19,7 @@ import PipelineType from '@interfaces/PipelineType';
 import { AppConfigType } from '../interfaces';
 import useAppEventsHandler, { CustomAppEvent, CustomAppEventEnum } from './useAppEventsHandler';
 import { AppManagerType, ModelManagerType } from './interfaces';
+import { indexBy } from '@utils/array';
 
 type ModelManagerProps = {
   itemIDsByLevelRef: React.MutableRefObject<string[][]>;
@@ -32,6 +34,7 @@ export default function useModelManager({
 }: ModelManagerProps): ModelManagerType {
   const appHandlersRef = useRef<AppHandlerType>({} as AppHandlerType);
   const itemsRef = useRef<ItemMappingType>({});
+  const outputsRef = useRef<Record<string, OutputNodeType[]>>({});
   const portsRef = useRef<PortMappingType>({});
   const phaseRef = useRef<number>(0);
 
@@ -84,6 +87,9 @@ export default function useModelManager({
       },
     },
   });
+  const browserItemMutants = useMutate({
+    resource: 'browser_items',
+  });
 
   appHandlersRef.current = {
     blocks: {
@@ -113,22 +119,38 @@ export default function useModelManager({
         },
       } as MutatationType,
     },
+    browserItems: browserItemMutants,
     executionFrameworks: executionFrameworkMutants,
     pipelines: pipelineMutants,
   };
 
-  const handleAppChanged = (event: CustomAppEvent) => {
+  const { dispatchAppEvent } = useAppEventsHandler({ itemsRef } as ModelManagerType, {
+    [CustomAppEventEnum.APP_STARTED]: handleAppChanged,
+    [CustomAppEventEnum.APP_STOPPED]: handleAppChanged,
+    [CustomAppEventEnum.CODE_EXECUTION_SUBMITTED]: handleCodeExecutionSubmission,
+  });
+
+  function handleAppChanged(event: CustomAppEvent) {
     initializeModels(
       appHandlersRef?.current?.executionFrameworks?.getModel() as PipelineExecutionFrameworkType,
       appHandlersRef?.current?.pipelines?.getModel() as PipelineExecutionFrameworkType,
       event.detail?.manager as unknown,
     );
-  };
+  }
 
-  const { convertEvent, dispatchAppEvent } = useAppEventsHandler({ itemsRef } as ModelManagerType, {
-    [CustomAppEventEnum.APP_STARTED]: handleAppChanged,
-    [CustomAppEventEnum.APP_STOPPED]: handleAppChanged,
-  });
+  function handleCodeExecutionSubmission({ detail }: CustomAppEvent) {
+    const { block, node, options } = detail;
+    const output = buildOutputNode(node, block, options?.kwargs?.process as any);
+
+    outputsRef.current[node.id] ||= [];
+    outputsRef.current[node.id].push(output);
+
+    initializeModels(
+      appHandlersRef?.current?.executionFrameworks?.getModel() as PipelineExecutionFrameworkType,
+      appHandlersRef?.current?.pipelines?.getModel() as PipelineExecutionFrameworkType,
+      detail?.manager as unknown,
+    );
+  }
 
   function initializeModels(
     executionFramework2: PipelineExecutionFrameworkType,
@@ -243,6 +265,9 @@ export default function useModelManager({
             item.apps = opts?.appsRef?.current?.[item.id]?.filter(
               (app: AppNodeType) => app?.level === level);
 
+            // Output
+            item.outputs = outputsRef.current?.[item.id] ?? [];
+
             itemsIDs.push(item.id);
             itemMapping[item.id] = item;
           });
@@ -276,9 +301,7 @@ export default function useModelManager({
         // WARNING: Do this so it mounts and then the on mount can start the chain.
         const items = Object.values(itemsRef.current);
         dispatchAppEvent(CustomAppEventEnum.NODE_LAYOUTS_CHANGED, {
-          event: convertEvent({}, {
-            nodes: items,
-          }),
+          nodes: items,
         });
 
         resolve(items); // Resolve the promise when the function completes

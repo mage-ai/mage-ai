@@ -23,6 +23,7 @@ import { areEqualRects, areDraggableStylesEqual } from '../equals';
 import { convertToMillisecondsTimestamp } from '@utils/date';
 import { draggableProps } from '../draggable/utils';
 import { setupDraggableHandlers } from '../utils';
+import { CanvasNodeType } from '../interfaces';
 import {
   ArrowsAdjustingFrameSquare, DiamondShared, AppVersions, IdentityTag, Menu, PanelCollapseLeft,
   PanelCollapseRight, Builder, AddV2, Grab, GroupV2, Comment, Conversation, Save,
@@ -31,16 +32,7 @@ import {
 
 const PADDING_HORIZONTAL = 16;
 
-type DraggableAppNodeProps = {
-  draggable?: boolean;
-  index?: number;
-  items: NodeType[];
-  node: AppNodeType;
-  rect: RectType;
-  registerConsumer: ExecutionManagerType['registerConsumer'];
-} & DragAndDropType;
-
-const DraggableAppNode: React.FC<DraggableAppNodeProps> = ({
+const DraggableAppNode: React.FC<CanvasNodeType> = ({
   draggable,
   handlers,
   index = 0,
@@ -48,14 +40,17 @@ const DraggableAppNode: React.FC<DraggableAppNodeProps> = ({
   node,
   rect,
   registerConsumer,
-}: DraggableAppNodeProps) => {
+}: CanvasNodeType & {
+  index?: number;
+  items: NodeItemType[];
+}) => {
   const fetchDetailCountRef = useRef(0);
   const nodeRef = useRef<HTMLDivElement>(null);
 
   const { dispatchAppEvent } = useAppEventsHandler(node);
   const { phaseRef } = useDispatchMounted(node, nodeRef);
 
-  const app = useMemo(() => node?.app, [node]);
+  const app = useMemo(() => (node as AppNodeType)?.app, [node]);
 
   const renderRef = useRef(0);
   DEBUG.editor.node &&
@@ -133,7 +128,7 @@ const DraggableAppNode: React.FC<DraggableAppNodeProps> = ({
   function handleStopApp(event: MouseEvent) {
     dispatchAppEvent(CustomAppEventEnum.STOP_APP, {
       event: convertEvent(event, {
-        app: node.app,
+        ...node,
         node,
       }),
     });
@@ -142,7 +137,7 @@ const DraggableAppNode: React.FC<DraggableAppNodeProps> = ({
   function handleUpdateLayout(event: MouseEvent) {
     dispatchAppEvent(CustomAppEventEnum.START_DRAGGING, {
       event: convertEvent(event, {
-        app: node.app,
+        ...node,
         node,
       }),
     });
@@ -424,7 +419,7 @@ const DraggableAppNode: React.FC<DraggableAppNodeProps> = ({
   );
 }
 
-function areEqual(p1: DraggableAppNodeProps, p2: DraggableAppNodeProps) {
+function areEqual(p1: CanvasNodeType, p2: CanvasNodeType) {
   const equal = p1?.node?.id === p2?.node?.id
     && areDraggableStylesEqual(p1, p2)
     && areEqualRects({ rect: p1?.rect }, { rect: p2?.rect });

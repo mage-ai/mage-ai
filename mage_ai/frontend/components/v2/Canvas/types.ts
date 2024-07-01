@@ -24,6 +24,7 @@ export enum ItemTypeEnum {
   APP = 'app',
   BLOCK = 'block',
   NODE = 'node',
+  OUTPUT = 'output',
   PORT = 'port',
 }
 

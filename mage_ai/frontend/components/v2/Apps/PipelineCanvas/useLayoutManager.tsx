@@ -490,9 +490,7 @@ export default function useLayoutManager({
     });
 
     dispatchAppEvent(CustomAppEventEnum.NODE_LAYOUTS_CHANGED, {
-      event: convertEvent({}, {
-        nodes: items,
-      }),
+      nodes: items,
     });
 
     setActiveLevel(level ?? activeLevel?.current ?? 0);

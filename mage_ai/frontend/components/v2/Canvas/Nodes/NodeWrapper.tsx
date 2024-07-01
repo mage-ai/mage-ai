@@ -15,13 +15,13 @@ import { DEBUG } from '@components/v2/utils/debug';
 export type NodeWrapperProps = {
   children?: React.ReactNode;
   className?: string;
-  item: NodeItemType;
+  node: NodeItemType;
   rect?: RectType;
 } & DragAndDropType;
 
 // This is the style used for the preview when dragging
 function getStyles(
-  item: NodeItemType,
+  node: NodeItemType,
   {
     draggable,
     isDragging,
@@ -32,8 +32,8 @@ function getStyles(
     rect?: RectType;
   },
 ): CSSProperties {
-  const { id, type } = item;
-  rect = rect ?? item?.rect;
+  const { id, type } = node;
+  rect = rect ?? node?.rect;
   const { left, top, width, zIndex } = rect || ({} as RectType);
   const transform = `translate3d(${left ?? 0}px, ${top ?? 0}px, 0)`;
 
@@ -63,13 +63,13 @@ export const NodeWrapper: FC<NodeWrapperProps> = memo(function NodeWrapper({
   draggingNode,
   droppable,
   handlers,
-  item,
-  itemRef,
+  node,
+  nodeRef,
   rect,
 }: NodeWrapperProps) {
   const { onDragEnd, onDragStart, onDrop, onMouseDown, onMouseLeave, onMouseOver, onMouseUp } =
     handlers;
-  const itemToDrag: DragItem | PortType = useMemo(() => draggingNode || item, [draggingNode, item]);
+  const itemToDrag: DragItem | PortType = useMemo(() => draggingNode || node, [draggingNode, node]);
 
   const [{ isDragging }, connectDrag, preview] = useDrag(
     () => ({
@@ -100,9 +100,9 @@ export const NodeWrapper: FC<NodeWrapperProps> = memo(function NodeWrapper({
         }
 
         if (ItemTypeEnum.BLOCK === node.type) {
-          return node.id !== item.id;
+          return node.id !== node.id;
         } else if (ItemTypeEnum.PORT === node.type) {
-          return (node as PortType).parent.id !== item.id;
+          return (node as PortType).parent.id !== node.id;
         }
 
         return false;
@@ -112,10 +112,10 @@ export const NodeWrapper: FC<NodeWrapperProps> = memo(function NodeWrapper({
         isOverCurrent: monitor.isOver({ shallow: true }),
       }),
       drop: (dragTarget: NodeItemType) => {
-        onDrop(dragTarget, item);
+        onDrop(dragTarget, node);
       },
     }),
-    [droppable, onDrop, item],
+    [droppable, onDrop, node],
   );
 
   useEffect(() => {
@@ -124,8 +124,8 @@ export const NodeWrapper: FC<NodeWrapperProps> = memo(function NodeWrapper({
   }, []);
 
   // This needs to always connect without any conditionals or else it’ll never connect after mount.
-  connectDrop(itemRef);
-  connectDrag(itemRef);
+  connectDrop(nodeRef);
+  connectDrag(nodeRef);
 
   // DEBUG.dragging && console.log(
   //   'NodeWrapper',
@@ -152,11 +152,11 @@ export const NodeWrapper: FC<NodeWrapperProps> = memo(function NodeWrapper({
       // onMouseLeave={onMouseLeave ? event => onMouseLeave?.(event as any) : undefined}
       onMouseOver={!draggable && onMouseOver ? event => onMouseOver?.(event as any) : undefined}
       onMouseUp={draggable && onMouseUp ? event => onMouseUp?.(event as any) : undefined}
-      ref={itemRef}
+      ref={nodeRef}
       role={[ElementRoleEnum.DRAGGABLE].join(' ')}
-      style={getStyles(item, {
+      style={getStyles(node, {
         draggable,
-        isDragging: isDragging && itemToDrag?.type === item?.type,
+        isDragging: isDragging && itemToDrag?.type === node?.type,
         rect,
       })}
     >

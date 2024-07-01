@@ -15,44 +15,40 @@ import { useEffect, useCallback, useState, useMemo, useRef } from 'react';
 import { NodeWrapperProps } from './NodeWrapper';
 import { ConfigurationType } from '@interfaces/PipelineExecutionFramework/interfaces';
 import { AppTypeEnum, AppSubtypeEnum } from '../../Apps/constants';
-import useExecutable, { SetContainerType } from './useExecutable';
 import { ElementRoleEnum } from '@mana/shared/types';
 import {
   AddV2, Code, Check, Grab, PipeIconVertical, PlayButtonFilled,
   Infinite,
 } from '@mana/icons';
+import useExecutable from './useExecutable';
 import { setNested } from '@utils/hash';
 import { areEqualRects, areDraggableStylesEqual } from './equals';
 import { setupDraggableHandlers, buildEvent } from './utils';
 import { draggableProps } from './draggable/utils';
-import { DEBUG } from '@components/v2/utils/debug';
-import { ExecutionManagerType } from '../../ExecutionManager/interfaces';
 import { FileType } from '../../IDE/interfaces';
 import { getFileCache, updateFileCache } from '../../IDE/cache';
+import { CanvasNodeType } from './interfaces';
 import useAppEventsHandler, { CustomAppEvent, CustomAppEventEnum } from '../../Apps/PipelineCanvas/useAppEventsHandler';
+import { DEBUG } from '@components/v2/utils/debug';
 
 export type BlockNodeWrapperProps = {
   Wrapper?: React.FC<NodeWrapperProps>;
   collapsed?: boolean;
-  draggable?: boolean;
   droppable?: boolean;
   loading?: boolean;
   onMountItem: (item: NodeItemType, ref: React.RefObject<HTMLDivElement>) => void;
   onMountPort: (port: PortType, ref: React.RefObject<HTMLDivElement>) => void;
-  rect: RectType;
-  registerConsumer: ExecutionManagerType['registerConsumer'];
-  selected?: boolean;
-  setOutputContainer: SetContainerType;
   submitEventOperation: SubmitEventOperationType;
+  selected?: boolean;
   version?: number | string;
-} & NodeWrapperProps;
+} & NodeWrapperProps & CanvasNodeType;
 
 export const BlockNodeWrapper: React.FC<BlockNodeWrapperProps & NodeWrapperProps> = ({
   Wrapper,
   collapsed,
   draggable = false,
   droppable = false,
-  item,
+  node,
   handlers,
   loading = false,
   onMountPort,
@@ -60,92 +56,83 @@ export const BlockNodeWrapper: React.FC<BlockNodeWrapperProps & NodeWrapperProps
   rect,
   registerConsumer,
   selected = false,
-  setOutputContainer,
   submitEventOperation,
 }) => {
   const itemRef = useRef(null);
   const phaseRef = useRef(0);
   const timeoutRef = useRef(null);
   const portElementRefs = useRef<Record<string, any>>({});
-  const codeRef = useRef<string>(null);
   const [draggingNode] = useState<NodeItemType | null>(null);
 
-  const block = useMemo(() => item?.block, [item]);
+  const block = useMemo(() => node?.block, [node]);
   const file = block?.configuration?.file;
   const { type, uuid } = useMemo(() => ({ type: block?.type, uuid: block?.uuid }) || {}, [block]);
-  const isGroup = useMemo(() => !item?.block?.type || item?.block?.type === BlockTypeEnum.GROUP, [item]);
+  const isGroup = useMemo(() => !node?.block?.type || node?.block?.type === BlockTypeEnum.GROUP, [node]);
 
-  const {
-    executeCode,
-  } = useExecutable(block?.uuid, String(item?.id), registerConsumer, {
-    setContainer: setOutputContainer,
+  const { executeCode, setContainer } = useExecutable(block?.uuid, String(node?.id), registerConsumer);
+
+  const { convertEvent, dispatchAppEvent } = useAppEventsHandler(node, {
+    [CustomAppEventEnum.EXECUTION_OUTPUT_NODE_MOUNTED]: (event: CustomAppEvent) => {
+      setContainer(event.detail.event.operationTarget as React.RefObject<HTMLDivElement>);
+    },
   });
 
-  const { convertEvent, dispatchAppEvent } = useAppEventsHandler(item, {
-    [CustomAppEventEnum.EXECUTION_OUTPUT_NODE_MOUNTED]: handleCodeExecution,
-  });
-
-  function getCode(): string {
-    codeRef.current = getFileCache(file?.path)?.client?.file?.content ?? codeRef.current;
-    return codeRef.current;
-  }
-
-  function handleCodeExecution(event: CustomAppEvent) {
-    executeCode(getCode());
-  }
-
-  function preprocessCodeExecution(event: React.MouseEvent<HTMLElement>) {
-    // Get code: cache or block code from server.
-    // Dispatch event.
-    // - Model manager adds to store
-    // - Canvas updates state
-    // - Item manager handles the dimensions
-    // - Layout manager positions node
-    // - Canvas updates state
-    // - Canvas dispatches event
-    // Output node gets added to canvas state; output node is essentially the execution output as is.
-    // Once output node is mounted, dispatch event and node handles event to execute code.
-
+  function submitCodeExecution(event: React.MouseEvent<HTMLElement>) {
     submitEventOperation(
-      buildEvent(event as any, EventOperationEnum.EXECUTE_CODE, item, itemRef, block), {
+      buildEvent(event as any, EventOperationEnum.EXECUTE_CODE, node, itemRef, block), {
       handler: (e, { browserItems }) => {
-        const submitExecuteCode = () => {
-          dispatchAppEvent(CustomAppEventEnum.PREPROCESS_CODE_EXECUTION, {
+        const submitExecuteCode = (message: string) => {
+          if (!message) {
+            alert('No code to execute.');
+            return;
+          }
+
+          dispatchAppEvent(CustomAppEventEnum.CODE_EXECUTION_SUBMITTED, {
+            block,
             event: convertEvent(event, {
-              block,
-              item,
               itemRef,
             }),
+            node,
+            options: {
+              kwargs: {
+                process: {
+                  message,
+                },
+              },
+            },
           });
         };
 
-        if (!(getCode() ?? false)) {
+        const path = file?.path;
+        const code = getFileCache(path)?.client?.file?.content;
+
+        if (code ?? false) {
+          submitExecuteCode(code);
+        } else {
           browserItems.detail.mutate({
             event,
-            id: file.path,
+            id: path,
             onError: () => {
-
+              // stop loading
             },
             onStart: () => {
-
+              // set loading
             },
-            onSuccess: (item: FileType) => {
+            onSuccess: ({ data: { browser_item: item } }: { browser_item: FileType }) => {
               updateFileCache({ client: item });
-              submitExecuteCode();
+              submitExecuteCode(item.content);
             },
           });
-        } else {
-          submitExecuteCode();
         }
       },
     });
   }
 
   const name = useMemo(
-    () => (ItemTypeEnum.BLOCK === item?.type
-      ? item?.block?.name ?? item?.block?.uuid
-      : item?.title ?? item?.id),
-    [item],
+    () => (ItemTypeEnum.BLOCK === node?.type
+      ? block?.name ?? block?.uuid
+      : node?.title ?? node?.id),
+    [block, node],
   );
 
   const updateBlock = useCallback((
@@ -154,7 +141,7 @@ export const BlockNodeWrapper: React.FC<BlockNodeWrapperProps & NodeWrapperProps
       buildEvent(
         event as any,
         EventOperationEnum.MUTATE_MODEL_BLOCK,
-        item, itemRef, block,
+        node, itemRef, block,
       ), {
       handler: (e, { blocks }) => {
         blocks.update.mutate({
@@ -172,7 +159,7 @@ export const BlockNodeWrapper: React.FC<BlockNodeWrapperProps & NodeWrapperProps
         });
       },
     });
-  }, [block, item, itemRef, submitEventOperation]);
+  }, [block, node, itemRef, submitEventOperation]);
 
   function onMount(port: PortType, portRef: React.RefObject<HTMLDivElement>) {
     if (!(port?.id in portElementRefs.current)) {
@@ -184,14 +171,14 @@ export const BlockNodeWrapper: React.FC<BlockNodeWrapperProps & NodeWrapperProps
     }
   }
   const names = useMemo(() => {
-    if (ItemTypeEnum.NODE === item?.type) {
+    if (ItemTypeEnum.NODE === node?.type) {
       // Use the color of the most common block type in the group.
       const typeCounts = Object.entries(
-        countOccurrences(flattenArray((item as NodeType)?.items?.map(i => i?.block?.type) || [])) ?? {},
+        countOccurrences(flattenArray((node as NodeItemType)?.items?.map(i => i?.block?.type) || [])) ?? {},
       )?.map(([type, count]) => ({ type, count }));
 
       const modeTypes = sortByKey(typeCounts, ({ count }) => count, { ascending: false });
-      const modeType = modeTypes?.length >= 2 ? modeTypes?.[0]?.type : item?.block?.type;
+      const modeType = modeTypes?.length >= 2 ? modeTypes?.[0]?.type : node?.block?.type;
       const colors = getBlockColor(modeType as BlockTypeEnum, { getColorName: true })?.names;
 
       return colors?.base ? colors : { base: 'gray' };
@@ -199,9 +186,9 @@ export const BlockNodeWrapper: React.FC<BlockNodeWrapperProps & NodeWrapperProps
 
     const c = getBlockColor(type as BlockTypeEnum, { getColorName: true });
     return c && c?.names ? c?.names : { base: 'gray' };
-  }, [item, type]);
+  }, [node, type]);
 
-  const ports = useMemo(() => item?.ports ?? [], [item]);
+  const ports = useMemo(() => node?.ports ?? [], [node]);
 
   const borders = useMemo(() => {
     const arr = [names?.base || ''];
@@ -240,13 +227,13 @@ export const BlockNodeWrapper: React.FC<BlockNodeWrapperProps & NodeWrapperProps
           computedStyle =
             typeof window !== 'undefined' && window?.getComputedStyle(itemRef?.current);
         } catch (e) {
-          console.log(`[BlockNodeWrapper] Error getting computed style: ${e}`, item, itemRef?.current);
+          console.log(`[BlockNodeWrapper] Error getting computed style: ${e}`, node, itemRef?.current);
           computedStyle = true;
         }
         if (computedStyle) {
           clearTimeout(timeout);
-          DEBUG.state && console.log('BlockNodeWrapper mounted', phaseRef.current, item, itemRef?.current);
-          onMountItem?.(item, itemRef);
+          DEBUG.state && console.log('BlockNodeWrapper mounted', phaseRef.current, node, itemRef?.current);
+          onMountItem?.(node, itemRef);
           phaseRef.current += 1;
         } else {
           timeoutRef.current = setTimeout(checkComputedStyles, 100);
@@ -263,11 +250,8 @@ export const BlockNodeWrapper: React.FC<BlockNodeWrapperProps & NodeWrapperProps
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const requiredGroup = isGroup && (item?.block?.configuration as ConfigurationType)?.metadata?.required;
-  const emptyGroup = isGroup && (item as NodeType)?.items?.length === 0;
-
   const draggingHandlers = setupDraggableHandlers(
-    handlers, item, itemRef, block,
+    handlers, node, itemRef, block,
   );
 
   const blockNode = (
@@ -279,22 +263,22 @@ export const BlockNodeWrapper: React.FC<BlockNodeWrapperProps & NodeWrapperProps
       colorNames={names}
       draggable={draggable}
       handlers={draggingHandlers}
-      item={item}
+      item={node}
       onMount={onMount}
       updateBlock={updateBlock}
       titleConfig={{
         asides: {
           after: {
             className: styles.showOnHover,
-            ...(ItemTypeEnum.NODE === item?.type
+            ...(ItemTypeEnum.NODE === node?.type
               ? {
                 Icon: draggable ? Grab : AddV2,
-                onClick: event => handleClickGroupMenu(event, item as NodeType, submitEventOperation, itemRef),
+                onClick: event => handleClickGroupMenu(event, node as NodeType, submitEventOperation, itemRef),
               }
               : {
                 Icon: draggable ? Grab : Code,
                 onClick: event => submitEventOperation(buildEvent(
-                  event, EventOperationEnum.APP_START, item, itemRef, block,
+                  event, EventOperationEnum.APP_START, node, itemRef, block,
                 ), {
                   args: [
                     AppTypeEnum.EDITOR,
@@ -311,11 +295,11 @@ export const BlockNodeWrapper: React.FC<BlockNodeWrapperProps & NodeWrapperProps
                 : StatusTypeEnum.EXECUTED === block?.status
                   ? 'green'
                   : 'blue',
-            onClick: preprocessCodeExecution,
+            onClick: submitCodeExecution,
           },
         },
         badge:
-          ItemTypeEnum.NODE === item?.type
+          ItemTypeEnum.NODE === node?.type
             ? {
               Icon: collapsed ? Infinite : PipeIconVertical,
               baseColorName: names?.base || 'purple',
@@ -327,16 +311,20 @@ export const BlockNodeWrapper: React.FC<BlockNodeWrapperProps & NodeWrapperProps
     />
   );
 
+
+  const requiredGroup = isGroup && (block?.configuration as ConfigurationType)?.metadata?.required;
+  const emptyGroup = isGroup && (node as NodeType)?.items?.length === 0;
   const sharedProps = useMemo(() => draggableProps({
     draggable,
     droppable,
     emptyGroup,
-    item,
+    node,
+    requiredGroup,
     loading,
     classNames: [
-      item?.status && styles[item?.status],
+      node?.status && styles[node?.status],
     ],
-  }), [draggable, droppable, loading, emptyGroup, item]);
+  }), [draggable, droppable, loading, requiredGroup, emptyGroup, node]);
 
   if (Wrapper) {
     return (
@@ -344,8 +332,8 @@ export const BlockNodeWrapper: React.FC<BlockNodeWrapperProps & NodeWrapperProps
         {...sharedProps}
         draggingNode={draggingNode}
         handlers={draggingHandlers}
-        item={item}
-        itemRef={itemRef}
+        node={node}
+        nodeRef={itemRef}
         rect={rect}
       >
         {blockNode}
@@ -357,7 +345,7 @@ export const BlockNodeWrapper: React.FC<BlockNodeWrapperProps & NodeWrapperProps
 };
 
 export function areEqual(p1: BlockNodeWrapperProps, p2: BlockNodeWrapperProps) {
-  const appIDs = ({ item }) => item?.apps?.map(a => String(a?.id ?? '')).sort()?.join('|');
+  const appIDs = ({ node }) => node?.apps?.map(a => String(a?.id ?? '')).sort()?.join('|');
 
   const equal = appIDs(p1) === appIDs(p2)
     && p1.droppable === p2.droppable

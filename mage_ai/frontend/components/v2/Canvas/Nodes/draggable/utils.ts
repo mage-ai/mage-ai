@@ -8,25 +8,28 @@ export function draggableProps({
   draggable,
   droppable,
   emptyGroup,
-  item,
+  requiredGroup,
+  node,
   loading,
 }: {
   classNames?: string[];
   draggable?: boolean;
   droppable?: boolean;
   emptyGroup?: boolean;
-  item: NodeItemType;
+  requiredGroup?: boolean;
+  node: NodeItemType;
   loading?: boolean;
 }) {
   return {
     className: [
       styles.blockNodeWrapper,
       stylesBuilder.level,
-      stylesBuilder[`level-${item?.level}`],
-      item?.type && stylesBuilder[item?.type],
+      stylesBuilder[`level-${node?.level}`],
+      node?.type && stylesBuilder[node?.type],
       !emptyGroup && !draggable && !droppable && styles.showOnHoverContainer,
       loading && styles.loading,
       styles.container,
+      requiredGroup && styles.requiredGroup,
       ...(classNames ?? []),
     ]?.filter(Boolean)?.join(' '),
     role: ElementRoleEnum.BLOCK,

@@ -14,17 +14,17 @@ export interface OutputManagerType {
   containerRef: React.RefObject<HTMLDivElement>;
   groupsRef: React.RefObject<Record<string, React.RefObject<HTMLDivElement>>>;
   removeGroup: (uuid: string) => void;
+  setContainer?: (elementRef: React.RefObject<HTMLDivElement>) => void;
   teardown: () => void;
 }
 
 export type OutputManagerProps = {
   containerID?: string;
   containerRef?: React.RefObject<HTMLDivElement>;
-  setContainer?: (setter: (element: HTMLDivElement) => void) => void;
 };
 
 export default function useOutputManager(options?: OutputManagerProps): OutputManagerType {
-  const { containerID, containerRef: externalContainerRef, setContainer } = options ?? {};
+  const { containerID, containerRef: externalContainerRef } = options ?? {};
 
   const themeContext = useContext(ThemeContext);
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -33,13 +33,11 @@ export default function useOutputManager(options?: OutputManagerProps): OutputMa
 
   const groupsRef = useRef<Record<string, React.RefObject<HTMLDivElement>>>({});
 
-  function getContainer(): HTMLDivElement | null {
-    if (setContainer) {
-      setContainer((element: HTMLDivElement) => {
-        containerRef.current = element;
-      });
-    }
+  function setContainer(elementRef: React.RefObject<HTMLDivElement>): void {
+    containerRef.current = elementRef.current;
+  }
 
+  function getContainer(): HTMLDivElement | null {
     if (containerRef.current) return containerRef.current;
     if (externalContainerRef?.current) return;
     if (containerID) {
@@ -117,6 +115,7 @@ export default function useOutputManager(options?: OutputManagerProps): OutputMa
     containerRef,
     groupsRef,
     removeGroup,
+    setContainer,
     teardown,
   };
 }

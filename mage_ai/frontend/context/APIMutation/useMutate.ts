@@ -137,12 +137,12 @@ export function useMutate(
     return modelsRef.current[resource];
   }
 
-  function preprocessPayload({ payload }: { payload?: ArgsValueOrFunctionType } = {}): {
+  function preprocessPayload({ id, payload }: { payload?: ArgsValueOrFunctionType } & IDArgsType = {}): {
     [key: string]: any;
   } {
-
+    const modelPrev = getModel(id);
     return {
-      [resourceName]: typeof payload === 'function' ? payload(modelsRef?.current?.[resourceName]) : payload,
+      [resourceName]: typeof payload === 'function' ? payload(modelPrev) : payload,
     };
   }
 
@@ -222,13 +222,16 @@ export function useMutate(
     idParent?: string;
   } {
     const {
-      id: idRuntime,
-      idParent: idParentRuntime,
-    } = args ?? {};
+      id: idUse = undefined,
+      idParent: idParentUse = undefined,
+    } = {
+      ...args,
+      ...argsInit,
+    };
 
     return {
-      id: handleArgs((idParentRuntime ?? idParent) ?? (idRuntime ?? id)),
-      idParent: handleArgs((idParentRuntime ?? idParent) ? (idRuntime ?? id) : null),
+      id: idUse ? handleArgs(idUse) : undefined,
+      idParent: idParentUse ? handleArgs(idParentUse) : undefined,
     };
   }
 
@@ -237,6 +240,7 @@ export function useMutate(
     args?: MutationFetchArgumentsType,
     opts: FetcherOptionsType = {},
   ): Promise<any> {
+    const idArgs = getIDs(args) ?? {};
     const {
       id: idUse,
       idParent: idParentUse,
@@ -244,9 +248,9 @@ export function useMutate(
 
     const urlArg: string = buildUrl(...[
       resourceParent ?? resource,
-      idUse,
+      idParentUse ?? idUse,
       resourceParent ? resource : null,
-      idParentUse,
+      resourceParent ? idUse : null,
     ]);
 
     const {
@@ -256,7 +260,7 @@ export function useMutate(
 
     const { data, headers, method, queryString, url } = preprocess(urlArg, {
       ...opts,
-      body: preprocessPayload(args),
+      body: preprocessPayload({ ...args, ...idArgs }),
       method: OperationTypeEnum.CREATE === operation
         ? 'POST'
         : OperationTypeEnum.DELETE === operation
