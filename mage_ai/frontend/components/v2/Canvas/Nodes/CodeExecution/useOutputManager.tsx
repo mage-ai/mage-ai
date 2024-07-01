@@ -17,13 +17,36 @@ export interface OutputManagerType {
   teardown: () => void;
 }
 
-export default function useOutputManager(): OutputManagerType {
+export type OutputManagerProps = {
+  containerID?: string;
+  containerRef?: React.RefObject<HTMLDivElement>;
+  setContainer?: (setter: (element: HTMLDivElement) => void) => void;
+};
+
+export default function useOutputManager(options?: OutputManagerProps): OutputManagerType {
+  const { containerID, containerRef: externalContainerRef, setContainer } = options ?? {};
+
   const themeContext = useContext(ThemeContext);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const elementsRef = useRef<Record<string, HTMLDivElement>>({});
   const rootRefs = useRef<Record<string, Root>>({});
 
   const groupsRef = useRef<Record<string, React.RefObject<HTMLDivElement>>>({});
+
+  function getContainer(): HTMLDivElement | null {
+    if (setContainer) {
+      setContainer((element: HTMLDivElement) => {
+        containerRef.current = element;
+      });
+    }
+
+    if (containerRef.current) return containerRef.current;
+    if (externalContainerRef?.current) return;
+    if (containerID) {
+      containerRef.current = document.getElementById(containerID) as HTMLDivElement;
+      return containerRef.current;
+    }
+  }
 
   function addGroup(
     process: ExecutionOutputProps['process'],
@@ -33,7 +56,7 @@ export default function useOutputManager(): OutputManagerType {
     const uuid = process.message_request_uuid;
     DEBUG.codeExecution.manager && console.log('[OutputManager] Adding group...', uuid);
 
-    if (!containerRef?.current) {
+    if (!getContainer()) {
       DEBUG.codeExecution.manager && console.error('[OutputManager] containerRef is missing');
       return;
     }
@@ -45,7 +68,7 @@ export default function useOutputManager(): OutputManagerType {
     }
 
     const element = document.createElement('div');
-    containerRef.current.appendChild(element);
+    getContainer().appendChild(element);
     elementsRef.current[uuid] = element;
 
     groupsRef.current[uuid] = createRef();
@@ -74,8 +97,8 @@ export default function useOutputManager(): OutputManagerType {
       delete groupsRef.current[uuid];
 
       const element = elementsRef.current[uuid];
-      if (element && containerRef.current) {
-        containerRef.current.removeChild(element);
+      if (element && getContainer()) {
+        getContainer().removeChild(element);
       }
       delete elementsRef.current[uuid];
 

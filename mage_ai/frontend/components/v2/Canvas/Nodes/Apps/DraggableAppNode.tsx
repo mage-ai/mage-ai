@@ -1,43 +1,33 @@
-import React, { useEffect, useMemo, useRef } from 'react';
-import moment from 'moment';
 import Button, { ButtonGroup } from '@mana/elements/Button';
+import React, { useEffect, useMemo, useRef } from 'react';
+import TextInput from '@mana/elements/Input/TextInput';
+import moment from 'moment';
 import styles from '@styles/scss/components/Canvas/Nodes/DraggableAppNode.module.scss';
 import stylesEditor from '@styles/scss/components/Canvas/Nodes/Apps/Editor.module.scss';
-import { DraggableWrapper, DraggableWrapperProps } from '../DraggableWrapper';
-import { AppNodeType, NodeType, RectType } from '../../interfaces';
-import useAppEventsHandler, { CustomAppEvent, CustomAppEventEnum, convertEvent } from '../../../Apps/PipelineCanvas/useAppEventsHandler';
-import { AppStatusEnum } from '../../../Apps/constants';
+import useAppEventsHandler, { CustomAppEventEnum, convertEvent } from '../../../Apps/PipelineCanvas/useAppEventsHandler';
 import useDispatchMounted from '../useDispatchMounted';
+import { AppNodeType, NodeType, RectType } from '../../interfaces';
 import { getColorNamesFromItems } from '../utils';
-import Aside from '../Blocks/Aside';
-import TextInput from '@mana/elements/Input/TextInput';
+import Grid from '@mana/components/Grid';
+import Text from '@mana/elements/Text';
+import useApp from '../../../Apps/Editor/useApp';
+import useExecutable from '../useExecutable';
+import { DEBUG } from '@components/v2/utils/debug';
+import { DragAndDropType } from '../types';
+import { EditorContainerStyled } from './index.style';
+import { ExecutionManagerType } from '../../../ExecutionManager/interfaces';
+import { Minimize, Chat, BlockGenericV2, PlayButtonFilled } from '@mana/icons';
+import { NodeWrapper } from '../NodeWrapper';
+import { TooltipAlign, TooltipWrapper, TooltipDirection, TooltipJustify } from '@context/Tooltip';
+import { areEqualRects, areDraggableStylesEqual } from '../equals';
+import { convertToMillisecondsTimestamp } from '@utils/date';
+import { draggableProps } from '../draggable/utils';
+import { setupDraggableHandlers } from '../utils';
 import {
   ArrowsAdjustingFrameSquare, DiamondShared, AppVersions, IdentityTag, Menu, PanelCollapseLeft,
   PanelCollapseRight, Builder, AddV2, Grab, GroupV2, Comment, Conversation, Save,
   CloseV2
 } from '@mana/icons';
-import EventStreamType, {
-  ProcessDetailsType,
-  ServerConnectionStatusType,
-  EventStreamResponseType,
-  EventSourceReadyState,
-} from '@interfaces/EventStreamType';
-import Text from '@mana/elements/Text';
-import { Minimize, Chat, BlockGenericV2, PlayButtonFilled } from '@mana/icons';
-import Grid from '@mana/components/Grid';
-import { NodeWrapper } from '../NodeWrapper';
-import Divider from '@mana/elements/Divider';
-import { areEqualRects, areDraggableStylesEqual } from '../equals';
-import { TooltipAlign, TooltipWrapper, TooltipDirection, TooltipJustify } from '@context/Tooltip';
-import { DragAndDropType } from '../types';
-import { setupDraggableHandlers, buildEvent } from '../utils';
-import { DEBUG } from '@components/v2/utils/debug';
-import { draggableProps } from '../draggable/utils';
-import useApp from '../../../Apps/Editor/useApp';
-import { EditorContainerStyled } from './index.style';
-import { convertToMillisecondsTimestamp } from '@utils/date';
-import { ExecutionManagerType } from '../../../ExecutionManager/interfaces';
-import useOutputManager from '../CodeExecution/useOutputManager';
 
 const PADDING_HORIZONTAL = 16;
 
@@ -60,9 +50,7 @@ const DraggableAppNode: React.FC<DraggableAppNodeProps> = ({
   registerConsumer,
 }: DraggableAppNodeProps) => {
   const fetchDetailCountRef = useRef(0);
-  const handleOnMessageRef = useRef<(event: EventStreamType) => void>(null);
   const nodeRef = useRef<HTMLDivElement>(null);
-  const timeoutRef = useRef<any>(null);
 
   const { dispatchAppEvent } = useAppEventsHandler(node);
   const { phaseRef } = useDispatchMounted(node, nodeRef);
@@ -132,50 +120,13 @@ const DraggableAppNode: React.FC<DraggableAppNodeProps> = ({
     stale,
   } = toolbars ?? {} as any;
 
-  const { addGroup, containerRef, groupsRef, removeGroup, teardown } = useOutputManager();
-
-  function handleError(error: Event) {
-    DEBUG.editor.node && console.log('[DraggableAppNode] handleError event source', error);
-  }
-
-  function handleOpen(event: Event, status: ServerConnectionStatusType) {
-    DEBUG.editor.node && console.log('[DraggableAppNode] handleOpen event source', event, status);
-  }
-
-  function handleMessage(event: EventStreamType) {
-    handleOnMessageRef.current(event);
-  }
-
-  function setEventStreamHandler(handler: ((event: EventStreamType) => void)) {
-    handleOnMessageRef.current = handler;
-  }
-
-  const {
-    connect,
-    executeCode,
-    // Use the same UUID so that all the blocks can synchronize the output.
-  } = registerConsumer(block?.uuid, String(node?.id), {
-    onError: handleError,
-    onMessage: handleMessage,
-    onOpen: handleOpen,
-  });
-
-  function handleCodeExecution(event?: MouseEvent) {
-    const [process, executeHandler] = executeCode(editor?.getValue(), true);
-    addGroup(process, setEventStreamHandler, executeHandler);
-  }
+  const { containerRef, executeCode } = useExecutable(block?.uuid, String(node?.id), registerConsumer);
 
   useEffect(() => {
-    connect();
-
     if (fetchDetailCountRef.current === 0 && file?.path) {
       mutate.detail.mutate({ id: file.path });
       fetchDetailCountRef.current += 1;
     }
-
-    return () => {
-      teardown();
-    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [app, file]);
 
@@ -252,7 +203,7 @@ const DraggableAppNode: React.FC<DraggableAppNodeProps> = ({
               backgroundcolor={baseColor}
               basic
               bordercolor={baseColor}
-              onClick={() => handleCodeExecution()}
+              onClick={() => executeCode(editor.getValue())}
               small
             />
 
@@ -424,8 +375,6 @@ const DraggableAppNode: React.FC<DraggableAppNodeProps> = ({
             </Grid>
           </Grid>
 
-          <div className="wtfffffffffffffffffffffffffff" ref={containerRef} />
-
           {stale && (
             <Grid
               borders
@@ -467,6 +416,8 @@ const DraggableAppNode: React.FC<DraggableAppNodeProps> = ({
 
             </Grid>
           )}
+
+          <Grid ref={containerRef} rowGap={8} />
         </Grid>
       </div >
     </NodeWrapper>

@@ -3,7 +3,8 @@ export const DEBUG = {
   apps: false,
   codeExecution: {
     manager: false,
-    outputManager: true,
+    node: true,
+    outputManager: false,
   },
   dragging: false,
   dropping: false,

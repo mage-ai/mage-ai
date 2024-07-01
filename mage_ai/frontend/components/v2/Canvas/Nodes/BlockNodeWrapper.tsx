@@ -15,6 +15,7 @@ import { useEffect, useCallback, useState, useMemo, useRef } from 'react';
 import { NodeWrapperProps } from './NodeWrapper';
 import { ConfigurationType } from '@interfaces/PipelineExecutionFramework/interfaces';
 import { AppTypeEnum, AppSubtypeEnum } from '../../Apps/constants';
+import useExecutable, { SetContainerType } from './useExecutable';
 import { ElementRoleEnum } from '@mana/shared/types';
 import {
   AddV2, Code, Check, Grab, PipeIconVertical, PlayButtonFilled,
@@ -25,6 +26,10 @@ import { areEqualRects, areDraggableStylesEqual } from './equals';
 import { setupDraggableHandlers, buildEvent } from './utils';
 import { draggableProps } from './draggable/utils';
 import { DEBUG } from '@components/v2/utils/debug';
+import { ExecutionManagerType } from '../../ExecutionManager/interfaces';
+import { FileType } from '../../IDE/interfaces';
+import { getFileCache, updateFileCache } from '../../IDE/cache';
+import useAppEventsHandler, { CustomAppEvent, CustomAppEventEnum } from '../../Apps/PipelineCanvas/useAppEventsHandler';
 
 export type BlockNodeWrapperProps = {
   Wrapper?: React.FC<NodeWrapperProps>;
@@ -35,7 +40,9 @@ export type BlockNodeWrapperProps = {
   onMountItem: (item: NodeItemType, ref: React.RefObject<HTMLDivElement>) => void;
   onMountPort: (port: PortType, ref: React.RefObject<HTMLDivElement>) => void;
   rect: RectType;
+  registerConsumer: ExecutionManagerType['registerConsumer'];
   selected?: boolean;
+  setOutputContainer: SetContainerType;
   submitEventOperation: SubmitEventOperationType;
   version?: number | string;
 } & NodeWrapperProps;
@@ -51,18 +58,88 @@ export const BlockNodeWrapper: React.FC<BlockNodeWrapperProps & NodeWrapperProps
   onMountPort,
   onMountItem,
   rect,
+  registerConsumer,
   selected = false,
+  setOutputContainer,
   submitEventOperation,
 }) => {
   const itemRef = useRef(null);
   const phaseRef = useRef(0);
   const timeoutRef = useRef(null);
   const portElementRefs = useRef<Record<string, any>>({});
+  const codeRef = useRef<string>(null);
   const [draggingNode] = useState<NodeItemType | null>(null);
 
   const block = useMemo(() => item?.block, [item]);
+  const file = block?.configuration?.file;
   const { type, uuid } = useMemo(() => ({ type: block?.type, uuid: block?.uuid }) || {}, [block]);
   const isGroup = useMemo(() => !item?.block?.type || item?.block?.type === BlockTypeEnum.GROUP, [item]);
+
+  const {
+    executeCode,
+  } = useExecutable(block?.uuid, String(item?.id), registerConsumer, {
+    setContainer: setOutputContainer,
+  });
+
+  const { convertEvent, dispatchAppEvent } = useAppEventsHandler(item, {
+    [CustomAppEventEnum.EXECUTION_OUTPUT_NODE_MOUNTED]: handleCodeExecution,
+  });
+
+  function getCode(): string {
+    codeRef.current = getFileCache(file?.path)?.client?.file?.content ?? codeRef.current;
+    return codeRef.current;
+  }
+
+  function handleCodeExecution(event: CustomAppEvent) {
+    executeCode(getCode());
+  }
+
+  function preprocessCodeExecution(event: React.MouseEvent<HTMLElement>) {
+    // Get code: cache or block code from server.
+    // Dispatch event.
+    // - Model manager adds to store
+    // - Canvas updates state
+    // - Item manager handles the dimensions
+    // - Layout manager positions node
+    // - Canvas updates state
+    // - Canvas dispatches event
+    // Output node gets added to canvas state; output node is essentially the execution output as is.
+    // Once output node is mounted, dispatch event and node handles event to execute code.
+
+    submitEventOperation(
+      buildEvent(event as any, EventOperationEnum.EXECUTE_CODE, item, itemRef, block), {
+      handler: (e, { browserItems }) => {
+        const submitExecuteCode = () => {
+          dispatchAppEvent(CustomAppEventEnum.PREPROCESS_CODE_EXECUTION, {
+            event: convertEvent(event, {
+              block,
+              item,
+              itemRef,
+            }),
+          });
+        };
+
+        if (!(getCode() ?? false)) {
+          browserItems.detail.mutate({
+            event,
+            id: file.path,
+            onError: () => {
+
+            },
+            onStart: () => {
+
+            },
+            onSuccess: (item: FileType) => {
+              updateFileCache({ client: item });
+              submitExecuteCode();
+            },
+          });
+        } else {
+          submitExecuteCode();
+        }
+      },
+    });
+  }
 
   const name = useMemo(
     () => (ItemTypeEnum.BLOCK === item?.type
@@ -227,14 +304,14 @@ export const BlockNodeWrapper: React.FC<BlockNodeWrapperProps & NodeWrapperProps
               }),
           },
           before: {
-            Icon: StatusTypeEnum.EXECUTED === block?.status ? Check : PlayButtonFilled,
+            Icon: PlayButtonFilled,
             baseColorName:
               StatusTypeEnum.FAILED === block?.status
                 ? 'red'
-                : StatusTypeEnum.EXECUTED
+                : StatusTypeEnum.EXECUTED === block?.status
                   ? 'green'
                   : 'blue',
-            onClick: event => console.log(event),
+            onClick: preprocessCodeExecution,
           },
         },
         badge:

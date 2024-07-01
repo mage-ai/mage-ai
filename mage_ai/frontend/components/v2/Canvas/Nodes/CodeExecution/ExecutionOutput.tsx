@@ -3,6 +3,7 @@ import Grid from '@mana/components/Grid';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import Text from '@mana/elements/Text';
 import moment from 'moment';
+import styles from '@styles/scss/components/Canvas/Nodes/ExecutionOutput.module.scss';
 import { DATE_FORMAT_LONG_MS } from '@utils/date';
 import { DEBUG } from '@components/v2/utils/debug';
 import { TooltipAlign, TooltipWrapper, TooltipDirection, TooltipJustify } from '@context/Tooltip';
@@ -81,6 +82,9 @@ function ExecutionOutput({
 
     return (
       <TooltipWrapper
+        align={TooltipAlign.START}
+        horizontalDirection={TooltipDirection.LEFT}
+        justify={TooltipJustify.CENTER}
         key={eventUUID}
         tooltip={
           <Text monospace secondary small>
@@ -97,7 +101,7 @@ function ExecutionOutput({
           templateColumns="auto 1fr"
         >
           <Text monospace muted small>
-            [{index}][{groupUUID}]
+            [{index}]
           </Text>
 
           <Text monospace small>
@@ -109,9 +113,13 @@ function ExecutionOutput({
   }), [displayLocalTimezone, events]);
 
   return (
-    <Grid ref={ref}>
-      {outputs}
-    </Grid >
+    <div ref={ref}>
+      {outputs?.length > 0 &&
+        <Grid className={styles.executionOutputGroup}>
+          {outputs}
+        </Grid  >
+      }
+    </div>
   );
 }
 

@@ -9,6 +9,43 @@ type TooltipContentProps = {
   optionsPrev?: ShowTooltipOptionsType;
 };
 
+function getElementPageCoordinates(element: Element): { pageX: number, pageY: number, width: number, height: number } {
+  const rect = element.getBoundingClientRect();
+  const scrollLeft = window.pageXOffset || document.documentElement.scrollLeft;
+  const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+  const pageX = rect.left + scrollLeft;
+  const pageY = rect.top + scrollTop;
+  return { pageX, pageY, width: rect.width, height: rect.height };
+}
+
+function updateTooltipPosition(targetElement: HTMLElement, tooltipElement: HTMLElement, offsetX: number = 0, offsetY: number = 0): void {
+  const { pageX, pageY, width, height } = getElementPageCoordinates(targetElement);
+  const tooltipX = pageX + offsetX; // Allow custom horizontal offset
+  const tooltipY = pageY + height + offsetY; // Allow custom vertical offset
+
+  tooltipElement.style.position = 'absolute';
+  tooltipElement.style.left = `${tooltipX}px`;
+  tooltipElement.style.top = `${tooltipY}px`;
+}
+
+function showTooltip(targetElement: HTMLElement, tooltipElement: HTMLElement, offsetX: number = 0, offsetY: number = 0): () => void {
+  // Initial positioning of the tooltip
+  updateTooltipPosition(targetElement, tooltipElement, offsetX, offsetY);
+
+  // Update the tooltip position on scroll
+  const handleScroll = () => {
+    updateTooltipPosition(targetElement, tooltipElement, offsetX, offsetY);
+  };
+
+  // Add event listener for scroll
+  window.addEventListener('scroll', handleScroll);
+
+  // Cleanup function to remove event listener when tooltip is hidden
+  return () => {
+    window.removeEventListener('scroll', handleScroll);
+  };
+}
+
 function TooltipContent({
   children,
   layout,
@@ -56,6 +93,7 @@ function TooltipContent({
         translateY = height;
       }
 
+      showTooltip(wrapperRef.current, ref.current)
       ref.current.style.transform = `translate(${translateX}px, ${translateY}px)`;
       ref.current.classList.remove(styles.hide);
     }
@@ -71,8 +109,6 @@ function TooltipContent({
       ref={ref}
       style={{
         ...style,
-        left: position.x,
-        top: position.y,
       }}
     >
       {children}

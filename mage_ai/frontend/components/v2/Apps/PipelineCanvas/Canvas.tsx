@@ -54,7 +54,6 @@ export type BuilderCanvasProps = {
 // 2. Update the layout of the items: updateLayoutOfItems (this takes care of setItemRects as well).
 // 3. Update the rects of the DraggableBlockNodes: setItemRects
 
-
 const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
   canvasRef,
   containerRef,
@@ -455,13 +454,13 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
             return (
               <DraggableAppNode
                 draggable={dragEnabled}
-                items={appNode?.upstream?.map(id => itemsRef?.current?.[id])}
                 handlers={{
                   onDragEnd: handleDragEnd,
                   onDragStart: handleDragStart,
                   onDrop: onDropPort,
                   onMouseDown: handleMouseDown,
                 }}
+                items={appNode?.upstream?.map(id => itemsRef?.current?.[id])}
                 key={appNode.id}
                 node={appNode}
                 rect={{

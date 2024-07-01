@@ -8,7 +8,10 @@ type ExecuteCodeResult = [ProcessDetailsType, () => void];
 export interface ConsumerOperations {
   closeConnection: () => void;
   connect: () => void;
-  executeCode: (message: string, future?: boolean) => ExecuteCodeResult;
+  executeCode: (message: string, opts?: {
+    connect?: boolean;
+    future?: boolean;
+  }) => ExecuteCodeResult;
 }
 
 export interface EventSourceHandlers {

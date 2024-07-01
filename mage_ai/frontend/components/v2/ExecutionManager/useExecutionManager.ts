@@ -67,17 +67,20 @@ export default function useExecutionManager(
     consumersRef.current[uuid] ||= {};
     consumersRef.current[uuid][consumerUUID] = consumerUUID;
 
-    const connect = () => {
+    const connect = (opts?: EventSourceHandlers) => {
       connectionAttemptsRemainingRef.current[uuid] ||= maxConnectionAttempts;
       connectEventSource(
         uuid,
         connectionAttemptsRemainingRef.current[uuid],
-        options,
+        { ...options, ...opts },
       );
     }
 
     const closeConnection = () => closeEventSourceConnection(uuid, consumerUUID);
-    const executeCode = (message: string, future?: boolean): [ProcessDetailsType, () => void] => {
+    const executeCode = (message: string, opts?: {
+      connect?: boolean;
+      future?: boolean;
+    }): [ProcessDetailsType, () => void] => {
       // const eventSource = eventSourcesRef.current[uuid];
       const messageUUID = getNewUUID();
       const payload = {
@@ -90,7 +93,7 @@ export default function useExecutionManager(
       messagesRef.current[uuid][messageUUID] = payload;
 
       const executeHandler = () => {
-        mutants.create.mutate({
+        const execute = () => mutants.create.mutate({
           onError: (response: ResponseType) => {
             debugLog('[RUNTIME] onError', response);
           },
@@ -99,9 +102,15 @@ export default function useExecutionManager(
           },
           payload,
         });
+
+        if (opts?.connect) {
+          connect({ onOpen: execute });
+        } else {
+          execute();
+        }
       };
 
-      if (future) {
+      if (opts?.future) {
         return [payload, executeHandler];
       }
 

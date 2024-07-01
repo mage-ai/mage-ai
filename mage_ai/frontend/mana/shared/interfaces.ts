@@ -12,6 +12,7 @@ export enum EventOperationEnum {
   DRAG_END = 'drag.end',
   DRAG_START = 'drag.start',
   DROP_START = 'drop.start',
+  EXECUTE_CODE = 'execute.code',
   MOUSE_DOWN = 'mouse.down',
   MUTATE_MODEL_BLOCK = 'mutate.model.block',
 }
