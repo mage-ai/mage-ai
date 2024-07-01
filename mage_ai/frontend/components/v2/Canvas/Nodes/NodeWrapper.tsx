@@ -80,6 +80,7 @@ export const NodeWrapper: FC<NodeWrapperProps> = memo(function NodeWrapper({
       collect: (monitor: DragSourceMonitor) => ({ isDragging: monitor.isDragging() }),
       isDragging: (monitor: DragSourceMonitor) => {
         const node = monitor.getItem() as NodeItemType;
+        DEBUG.dragging && console.log('NodeWrapper.isDragging', node.id, itemToDrag.id);
         return node.id === itemToDrag.id;
       },
       item: itemToDrag,
@@ -126,11 +127,11 @@ export const NodeWrapper: FC<NodeWrapperProps> = memo(function NodeWrapper({
   connectDrop(itemRef);
   connectDrag(itemRef);
 
-  DEBUG.dragging && console.log(
-    'NodeWrapper',
-    ['draggable', draggable],
-    ['isDragging', isDragging],
-  );
+  // DEBUG.dragging && console.log(
+  //   'NodeWrapper',
+  //   ['draggable', draggable],
+  //   ['isDragging', isDragging],
+  // );
 
   return (
     <div

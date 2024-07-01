@@ -16,6 +16,7 @@ import {
 import Text from '@mana/elements/Text';
 import { Minimize, Chat, BlockGenericV2, PlayButtonFilled } from '@mana/icons';
 import Grid from '@mana/components/Grid';
+import { NodeWrapper } from '../NodeWrapper';
 import Divider from '@mana/elements/Divider';
 import { areEqualRects, areDraggableStylesEqual } from '../equals';
 import { TooltipAlign, TooltipWrapper, TooltipDirection, TooltipJustify } from '@context/Tooltip';
@@ -81,11 +82,12 @@ const DraggableAppNode: React.FC<DraggableAppNodeProps> = ({
   }), [draggable, node]);
 
   return (
-    <DraggableWrapper
+    <NodeWrapper
       {...sharedProps}
+      // draggingNode={draggingNode}
       handlers={draggingHandlers}
-      node={node}
-      nodeRef={nodeRef}
+      item={node}
+      itemRef={nodeRef}
       rect={rect}
     >
       <div className={[
@@ -265,7 +267,7 @@ const DraggableAppNode: React.FC<DraggableAppNodeProps> = ({
           </Grid>
         </Grid>
       </div >
-    </DraggableWrapper >
+    </NodeWrapper>
   );
 }
 

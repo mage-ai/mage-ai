@@ -29,10 +29,15 @@ function TooltipContent({
   } = layout;
 
   useEffect(() => {
-    if (ref?.current) {
+    if (ref?.current && wrapperRef?.current) {
       const { pageX: x, pageY: y } = (event ?? {}) as MouseEvent;
       const { height: heighte, left: lefte, top: tope, width: widthe } = ref?.current?.getBoundingClientRect();
-      const { height, left, top, width } = wrapperRef?.current?.getBoundingClientRect();
+      const {
+        height = 0,
+        left = 0,
+        top = 0,
+        width = 0,
+      } = wrapperRef?.current?.getBoundingClientRect() ?? {};
 
       let translateX = 0;
       let translateY = 0;

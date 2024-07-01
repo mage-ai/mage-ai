@@ -156,7 +156,7 @@ export const BlockNodeWrapper: React.FC<BlockNodeWrapperProps & NodeWrapperProps
     if (itemRef.current && phaseRef.current === 0 && onMountItem) {
       const checkComputedStyles = () => {
         const computedStyle =
-          typeof window !== 'undefined' && window.getComputedStyle(itemRef.current);
+          typeof window !== 'undefined' && window?.getComputedStyle(itemRef?.current);
         if (computedStyle) {
           onMountItem?.(item, itemRef);
         } else {

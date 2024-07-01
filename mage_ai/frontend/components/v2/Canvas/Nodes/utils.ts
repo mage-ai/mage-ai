@@ -114,7 +114,7 @@ export function getDraggableStyles(
   const { left, top, width, zIndex } = rect || ({} as RectType);
   const transform = `translate3d(${left ?? 0}px, ${top ?? 0}px, 0)`;
 
-  return {
+  const styles = {
     WebkitTransform: transform,
     // backgroundColor: canDrop ? (isOverCurrent ? 'blue' : backgroundColor) : backgroundColor,
     // border: '1px dashed gray',
@@ -131,6 +131,10 @@ export function getDraggableStyles(
       }),
     ...((width ?? false) ? { minWidth: width } : {}),
   };
+
+  DEBUG.dragging && console.log('getDraggableStyles', styles);
+
+  return styles;
 }
 
 export function handleClickGroupMenu(
