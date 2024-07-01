@@ -2,7 +2,7 @@ export const DEBUG = {
   appManager: false,
   apps: false,
   codeExecution: {
-    manager: true,
+    manager: false,
     outputManager: true,
   },
   dragging: false,

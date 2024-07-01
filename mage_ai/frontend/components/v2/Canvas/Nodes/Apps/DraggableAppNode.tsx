@@ -134,15 +134,19 @@ const DraggableAppNode: React.FC<DraggableAppNodeProps> = ({
   const { addGroup, containerRef, groupsRef, removeGroup, teardown } = useOutputManager();
 
   function handleError(error: Event) {
-    console.log('handleError', error);
+    DEBUG.editor.node && console.log('[DraggableAppNode] handleError event source', error);
   }
 
   function handleOpen(event: Event, status: ServerConnectionStatusType) {
-    console.log('handleOpen', event, status);
+    DEBUG.editor.node && console.log('[DraggableAppNode] handleOpen event source', event, status);
   }
 
   function handleMessage(event: EventStreamType) {
-    handleOnMessageRef?.current?.(event);
+    handleOnMessageRef.current(event);
+  }
+
+  function setEventStreamHandler(handler: ((event: EventStreamType) => void)) {
+    handleOnMessageRef.current = handler;
   }
 
   const {
@@ -157,7 +161,7 @@ const DraggableAppNode: React.FC<DraggableAppNodeProps> = ({
 
   function handleCodeExecution(event: MouseEvent) {
     const process: ProcessDetailsType = executeCode(editor?.getValue());
-    addGroup(process, handleOnMessageRef);
+    addGroup(process, setEventStreamHandler);
   }
 
   useEffect(() => {

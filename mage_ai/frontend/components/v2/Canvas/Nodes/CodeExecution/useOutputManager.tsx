@@ -24,7 +24,7 @@ export default function useOutputManager(): OutputManagerType {
 
   function addGroup(
     process: ExecutionOutputProps['process'],
-    onEventRef: ExecutionOutputProps['onEventRef'],
+    setEventStreamHandler: ExecutionOutputProps['setEventStreamHandler'],
   ) {
     const uuid = process.message_request_uuid;
     DEBUG.codeExecution.manager && console.log('[OutputManager] Adding group...', uuid);
@@ -50,9 +50,9 @@ export default function useOutputManager(): OutputManagerType {
     rootRefs.current[uuid].render(
       <ThemeProvider theme={themeContext}>
         <ExecutionOutput
-          onEventRef={onEventRef}
           process={process}
           ref={groupsRef.current[uuid]}
+          setEventStreamHandler={setEventStreamHandler}
         />
       </ThemeProvider>,
     );
@@ -63,19 +63,20 @@ export default function useOutputManager(): OutputManagerType {
   function removeGroup(uuid: string) {
     if (!(uuid in elementsRef.current)) return;
 
-    rootRefs.current[uuid].unmount();
-    delete rootRefs.current[uuid];
-    delete groupsRef.current[uuid];
+    setTimeout(() => {
+      rootRefs.current[uuid].unmount();
+      delete rootRefs.current[uuid];
+      delete groupsRef.current[uuid];
 
-    const element = elementsRef.current[uuid];
-    if (element && containerRef.current) {
-      containerRef.current.removeChild(element);
-    }
-    delete elementsRef.current[uuid];
+      const element = elementsRef.current[uuid];
+      if (element && containerRef.current) {
+        containerRef.current.removeChild(element);
+      }
+      delete elementsRef.current[uuid];
 
-    DEBUG.codeExecution.manager && console.log('[OutputManager] Removed group', uuid);
+      DEBUG.codeExecution.manager && console.log('[OutputManager] Removed group', uuid);
+    });
   }
-
 
   function teardown() {
     Object.keys(rootRefs.current).forEach(uuid => {
