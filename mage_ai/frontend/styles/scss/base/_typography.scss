@@ -83,7 +83,12 @@
   &.bold {
     font-weight: var(--fonts-weight-bold);
   }
+
+  &.underline {
+    text-decoration: underline;
+  }
 }
+
 @mixin base {
   @include base-styles;
   @include base-font-family;

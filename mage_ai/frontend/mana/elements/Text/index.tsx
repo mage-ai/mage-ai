@@ -9,6 +9,7 @@ type TextProps = {
   className?: string;
   inline?: boolean;
   small?: boolean;
+  underline?: boolean;
   xsmall?: boolean;
   // Below alter the class names
   black?: boolean;

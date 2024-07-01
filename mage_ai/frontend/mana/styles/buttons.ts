@@ -25,18 +25,21 @@ const shared = css<StyleProps>`
   position: relative;
   z-index: 1;
 
-  ${({ aslink, basic, bordercolor, grouped, plain, primary, secondary, theme }) =>
+  ${({ aslink, basic, bordercolor, grouped, plain, primary, secondary, theme, wrap }) =>
     !plain &&
     outlineHover({
       borderColor: theme.fonts.color.text.inverted,
-      outlineColor: (theme.colors?.[bordercolor] ?? bordercolor) ?? primary
-        ? theme.buttons.outline.color.primary.hover
-        : secondary
-          ? theme.buttons.outline.color.secondary.hover
-          : aslink || basic
-            ? theme.buttons.outline.color.basic.hover
-            : theme.buttons.outline.color.base.hover,
-      outlineOffset: grouped ? UNIT : null,
+      outlineColor: (aslink && wrap)
+        ? theme.colors.blueText
+        : (theme.colors?.[bordercolor] ?? bordercolor) ?? primary
+          ? theme.buttons.outline.color.primary.hover
+          : secondary
+            ? theme.buttons.outline.color.secondary.hover
+            : aslink || basic
+              ? theme.buttons.outline.color.basic.hover
+              : theme.buttons.outline.color.base.hover,
+      outlineOffset: wrap ? 0 : grouped ? UNIT : undefined,
+      outlineWidth: wrap ? 0 : undefined,
     })}
 
   ${({ aslink, grouped, plain, wrap }) =>
@@ -94,7 +97,7 @@ const shared = css<StyleProps>`
               ? theme.colors.backgrounds.button.basic.default
               : theme.colors.backgrounds.button.base.default)
     )};
-  border-radius: ${({ plain, theme }) => !plain && theme.borders.radius.base};
+  border-radius: ${({ plain, theme, wrap }) => !plain && theme.borders.radius[wrap ? 'xs' : 'base']};
   color: ${({ primary, secondary, theme }) =>
     primary || secondary ? theme.fonts.color.text.inverted : theme.fonts.color.text.base};
 
@@ -106,9 +109,10 @@ const shared = css<StyleProps>`
     primary || secondary ? theme.fonts.weight.bold : theme.fonts.weight.semiBold};
   line-height: ${({ small, theme }) => theme.buttons.font.lineHeight[small ? 'sm' : 'base']}px;
 
-  ${({ basic, backgroundcolor, grouped, plain, primary, secondary, theme }) =>
+  ${({ basic, backgroundcolor, grouped, plain, primary, secondary, theme, wrap }) =>
     !grouped &&
     !plain &&
+    !wrap &&
     `
     &:hover {
       background-color: ${(theme.colors?.[backgroundcolor] ?? backgroundcolor) ?? primary

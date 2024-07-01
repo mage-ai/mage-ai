@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useRef } from 'react';
+import moment from 'moment';
 import Button, { ButtonGroup } from '@mana/elements/Button';
 import styles from '@styles/scss/components/Canvas/Nodes/DraggableAppNode.module.scss';
 import stylesEditor from '@styles/scss/components/Canvas/Nodes/Apps/Editor.module.scss';
@@ -27,6 +28,7 @@ import { DEBUG } from '@components/v2/utils/debug';
 import { draggableProps } from '../draggable/utils';
 import useApp from '../../../Apps/Editor/useApp';
 import { EditorContainerStyled } from './index.style';
+import { convertToMillisecondsTimestamp } from '@utils/date';
 
 const PADDING_HORIZONTAL = 16;
 
@@ -108,6 +110,8 @@ const DraggableAppNode: React.FC<DraggableAppNodeProps> = ({
   });
   const {
     inputRef,
+    main: mainContentResource,
+    original,
     overrideLocalContentFromServer,
     overrideServerContentFromLocal,
     saveCurrentContent,
@@ -152,6 +156,11 @@ const DraggableAppNode: React.FC<DraggableAppNodeProps> = ({
 
   const colorNames = getColorNamesFromItems([item]);
   const baseColor = colorNames?.[index]?.base;
+  const lastModified = useMemo(() => {
+    if (original?.modified_timestamp) {
+      return moment(convertToMillisecondsTimestamp(original?.modified_timestamp ?? 0)).fromNow();
+    }
+  }, [original?.modified_timestamp]);
 
   return (
     <NodeWrapper
@@ -219,9 +228,10 @@ const DraggableAppNode: React.FC<DraggableAppNodeProps> = ({
             {[
               {
                 Icon: Save,
-                uuid: 'Save',
                 description: 'Save current file content.',
+                iconProps: { colorName: 'green' },
                 onClick: saveCurrentContent,
+                uuid: 'Save',
               },
               {
                 Icon: Conversation,
@@ -246,13 +256,13 @@ const DraggableAppNode: React.FC<DraggableAppNodeProps> = ({
                 description: 'Add a comment to the pipeline or for a specific block',
                 onClick: event => alert('Comment'),
               },
-            ].map(({ Icon, anchor, label, description, href, target, uuid, onClick }) => (
+            ].map(({ Icon, anchor, label, description, href, iconProps, target, uuid, onClick }) => (
               <TooltipWrapper
                 key={uuid}
                 tooltip={<Text secondary small>{description ?? label?.() ?? uuid}</Text>}
               >
                 <Button
-                  Icon={Icon}
+                  Icon={iconPropsInit => Icon && <Icon {...{ ...iconPropsInit, ...iconProps }} />}
                   anchor={anchor}
                   basic
                   data-loading-style="inline"
@@ -355,14 +365,45 @@ const DraggableAppNode: React.FC<DraggableAppNodeProps> = ({
             </Grid>
           </Grid>
 
-          <Grid
-            borders
-            padding={24}
-          >
-            <Text>
-              Output
-            </Text>
-          </Grid>
+          {stale && (
+            <Grid
+              borders
+              padding={16}
+            >
+              <div style={{
+                maxWidth: 300,
+              }}>
+                <Text warning xsmall>
+                  Server content was modified {lastModified} and
+                  is different from the current local content.
+                  Save the current content or reset it
+                  with the server content.
+                </Text>
+
+                <br />
+
+                <ButtonGroup>
+                  <Button asLink onClick={() => overrideServerContentFromLocal()} wrap>
+                    <Text blue underline xsmall>
+                      Save local
+                    </Text >
+                  </Button>
+                  <Button
+                    asLink
+                    onClick={event => {
+                      event.preventDefault();
+                      overrideLocalContentFromServer();
+                    }}
+                    wrap
+                  >
+                    <Text muted underline xsmall>
+                      Reset
+                    </Text >
+                  </Button>
+                </ButtonGroup>
+              </div>
+            </Grid>
+          )}
         </Grid>
       </div >
     </NodeWrapper>

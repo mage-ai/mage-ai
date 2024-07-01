@@ -5,6 +5,7 @@ export enum BorderRadius {
   BASE = '10px',
   ROUND = '40px',
   SM = '6px',
+  XS = '2px',
 }
 
 export interface BordersType {
@@ -22,6 +23,7 @@ export interface BordersType {
     base: string;
     round: string;
     sm: string;
+    xs: string;
   };
   style: string;
   width: string;
@@ -38,6 +40,7 @@ export default function build(colors: ColorsType): BordersType {
       base: BorderRadius.BASE,
       round: BorderRadius.ROUND,
       sm: BorderRadius.SM,
+      xs: BorderRadius.XS,
     },
     style: 'solid',
     width: '1px',
