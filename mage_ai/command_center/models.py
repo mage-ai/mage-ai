@@ -163,6 +163,7 @@ class Action(CommandCenterBaseClass):
 @dataclass
 class PipelineMetadata(CommandCenterBaseClass):
     blocks: List[Dict] = None
+    created_at: str = None
     description: str = None
     name: str = None
     repo_path: str = None
