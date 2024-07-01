@@ -3,7 +3,7 @@ azure-storage-blob==12.14.1
 backoff
 clickhouse_sqlalchemy~=0.2.4
 couchbase==4.1.1
-deltalake==0.17.2
+deltalake==0.17.4
 elasticsearch==8.9.0
 facebook_business==17.0.2
 gnupg==2.3.1

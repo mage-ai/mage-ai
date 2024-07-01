@@ -40,7 +40,7 @@ class DeltaLakeS3(BaseDeltaLake):
     def table_object_key_path(self) -> str:
         return f"{self.config['object_key_path']}/{self.config['table']}"
 
-    # PyDeltaTableError: Failed to load checkpoint: Failed to read checkpoint content:
+    # DeltaError: Failed to load checkpoint: Failed to read checkpoint content:
     # Generic S3 error: Error performing get request ../_delta_log/_last_checkpoint:
     # response error "Received redirect without LOCATION,
     # this normally indicates an incorrectly configured region", after 0 retries
