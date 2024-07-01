@@ -1,11 +1,10 @@
 import { DragItem, LayoutConfigType, NodeType } from '../../Canvas/interfaces';
 import update from 'immutability-helper';
 import { ItemMappingType, ModelMappingType, NodeItemType, RectType } from '../../Canvas/interfaces';
-import { ModelManagerType } from './useModelManager';
 import { ZoomPanStateType } from '@mana/hooks/useZoomPan';
 import { layoutItemsInGroups, transformRects } from '../../Canvas/utils/rect';
 import { startTransition, useEffect, useRef } from 'react';
-import { ActiveLevelRefType, ItemIDsByLevelRef, LayoutManagerType } from './interfaces';
+import { ActiveLevelRefType, ItemIDsByLevelRef, LayoutManagerType, ModelManagerType } from './interfaces';
 import { ItemStatusEnum, RectTransformationScopeEnum, ItemTypeEnum, LayoutConfigDirectionOriginEnum, LayoutConfigDirectionEnum, TransformRectTypeEnum } from '../../Canvas/types';
 import { calculateBoundingBox } from '../../Canvas/utils/rect';
 import { flattenArray, indexBy, sum } from '@utils/array';
@@ -480,7 +479,8 @@ export default function useLayoutManager({
 
     const items = [];
     Object.values(itemsUpdated).forEach((item) => {
-      item.version = Number(new Date());
+      const itemPrev = itemsRef?.current?.[item.id];
+      item.version = (itemPrev?.version ?? -1) + 1;
       if (ItemStatusEnum.PENDING_LAYOUT === item?.status) {
         item.status = ItemStatusEnum.READY;
       }

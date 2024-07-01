@@ -3,13 +3,11 @@ import update from 'immutability-helper';
 import { ConnectionLines } from '../../Canvas/Connections/ConnectionLines';
 import { DragItem, NodeItemType, NodeType, RectType, PortType, LayoutConfigType, ModelMappingType, AppNodeType } from '../../Canvas/interfaces';
 import { ItemStatusEnum, ItemTypeEnum, LayoutConfigDirectionEnum, LayoutConfigDirectionOriginEnum, PortSubtypeEnum } from '../../Canvas/types';
-import { LayoutManagerType } from './useLayoutManager';
-import { ModelManagerType } from './useModelManager';
 import { createRoot, Root } from 'react-dom/client';
 import { getBlockColor } from '@mana/themes/blocks';
 import { getPathD } from '../../Canvas/Connections/utils';
 import { throttle } from '../../Canvas/utils/throttle';
-import { ItemElementsType, ItemElementsRefType } from './interfaces';
+import { ItemManagerType, ItemElementsType, ItemElementsRefType } from './interfaces';
 import useDynamicDebounce from '@utils/hooks/useDebounce';
 import useAppEventsHandler, { CustomAppEvent, CustomAppEventEnum } from './useAppEventsHandler';
 import { ClientEventType } from '@mana/shared/interfaces';
@@ -26,6 +24,7 @@ export default function useItemManager({
 }): {
   onMountItem: (item: DragItem, itemRef: React.RefObject<HTMLDivElement>) => void,
 } {
+  const itemMetadataRef = useRef<Record<string, Record<string, any>>>({});
   const [debouncer, cancelDebounce] = useDynamicDebounce();
 
   const handleNodeMounted = ({ detail: { event } }: CustomAppEvent) => {
@@ -34,7 +33,9 @@ export default function useItemManager({
     onMountItem(node, operationTarget as React.RefObject<HTMLDivElement>);
   };
 
-  const { convertEvent, dispatchAppEvent } = useAppEventsHandler(null, {
+  const { convertEvent, dispatchAppEvent } = useAppEventsHandler({
+    itemMetadataRef,
+  } as ItemManagerType, {
     [CustomAppEventEnum.NODE_MOUNTED]: handleNodeMounted,
   });
 
@@ -101,10 +102,20 @@ export default function useItemManager({
       const itemPrev = itemsRef?.current?.[item.id];
       itemsRef.current[item.id] = item;
 
-      if (areEqualRects(itemPrev, item)) {
+      if (itemPrev?.rect && item?.rect
+        && areEqualRects(itemPrev as { rect: RectType }, item as { rect: RectType })) {
+        const rectsPrev = itemMetadataRef?.current?.[item.id]?.rects;
+
         DEBUG.itemManager && console.log('[onMountItem] rects are equal', itemPrev, item);
-        return;
+        DEBUG.itemManager && console.log('[onMountItem] Number of times mounted:', rectsPrev?.length ?? 0, item);
+
+        if (rectsPrev?.length >= 1) return;
       }
+
+      itemMetadataRef.current[item.id] ||= {
+        rects: [],
+      };
+      itemMetadataRef.current[item.id].rects.push(item.rect);
 
       cancelDebounce();
 
@@ -114,9 +125,6 @@ export default function useItemManager({
           event: convertEvent({}, {
             node: item,
           }),
-          manager: {
-            itemManager: {},
-          },
         });
       }, 100);
     } else if ([ItemTypeEnum.APP].includes(type)) {

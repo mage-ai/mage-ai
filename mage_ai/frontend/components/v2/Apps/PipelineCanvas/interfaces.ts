@@ -94,7 +94,11 @@ export type LayoutManagerType = {
   setArray: React.Dispatch<React.SetStateAction<NodeItemType[]>>;
 };
 
-export type SubscriberType = AppManagerType | EventManagerType | LayoutManagerType | ModelManagerType | NodeItemType;
+export type ItemManagerType = {
+  itemMetadataRef: React.MutableRefObject<Record<string, Record<string, any>>>;
+};
+
+export type SubscriberType = AppManagerType | EventManagerType | LayoutManagerType | ModelManagerType | NodeItemType | ItemManagerType;
 
 export interface CustomEventDetail {
   app?: AppConfigType;
