@@ -2,11 +2,23 @@ from mage_ai.api.oauth_scope import OauthScope
 from mage_ai.api.operations import constants
 from mage_ai.api.policies.BasePolicy import BasePolicy
 from mage_ai.api.presenters.PipelineRunPresenter import PipelineRunPresenter
-from mage_ai.data_preparation.repo_manager import get_project_uuid
 from mage_ai.orchestration.constants import Entity
 
 
 class PipelineRunPolicy(BasePolicy):
+    def initialize_project_uuid(self):
+        query = self.options.get('query', {})
+        pipeline_uuid = query.get('pipeline_uuid', [None])
+        if pipeline_uuid:
+            pipeline_uuid = pipeline_uuid[0]
+        if self.resource:
+            pipeline_run = self.resource.model
+            repo_config = pipeline_run.pipeline_schedule.repo_path
+            if repo_config:
+                self.project_uuid = repo_config.project_uuid
+        else:
+            super().initialize_project_uuid()
+
     @property
     def entity(self):
         query = self.options.get('query', {})
@@ -19,7 +31,7 @@ class PipelineRunPolicy(BasePolicy):
         if self.resource and self.resource.model:
             return Entity.PIPELINE, self.resource.model.pipeline_uuid
 
-        return Entity.PROJECT, get_project_uuid()
+        return super().entity
 
 
 PipelineRunPolicy.allow_actions([
