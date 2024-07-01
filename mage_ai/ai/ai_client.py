@@ -1,4 +1,11 @@
+from enum import Enum
 from typing import Dict
+
+
+class InferenceType(str, Enum):
+    DEFAULT = 'default'
+    # Handle case to generate customized code based on descriptionn
+    CODE_GENERATION = 'code_generation'
 
 
 class AIClient():
@@ -6,7 +13,8 @@ class AIClient():
             self,
             variable_values: Dict[str, str],
             prompt_template: str,
-            is_json_response: bool = True
+            is_json_response: bool = True,
+            inference_type: InferenceType = InferenceType.DEFAULT
     ):
         """
         Infers with Large Language Model with prompt and variables
