@@ -9,6 +9,11 @@ DESTINATIONS = [
     dict(name='Kafka'),
     dict(name='MongoDB'),
     dict(
+        module_name='GoogleCloudStorage',
+        name='Google Cloud Storage',
+        uuid='gcs',
+    ),
+    dict(
         module_name='MSSQL',
         name='Microsoft SQL Server',
         uuid='mssql',
