@@ -97,7 +97,8 @@ const shared = css<StyleProps>`
               ? theme.colors.backgrounds.button.basic.default
               : theme.colors.backgrounds.button.base.default)
     )};
-  border-radius: ${({ plain, theme, wrap }) => !plain && theme.borders.radius[wrap ? 'xs' : 'base']};
+  border-radius: ${({ aslink, plain, theme, wrap }) =>
+    !plain && theme.borders.radius[(wrap && aslink) ? 'xs' : 'base']};
   color: ${({ primary, secondary, theme }) =>
     primary || secondary ? theme.fonts.color.text.inverted : theme.fonts.color.text.base};
 

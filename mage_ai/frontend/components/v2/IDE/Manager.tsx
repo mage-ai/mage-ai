@@ -13,7 +13,7 @@ import { getTheme, getThemeSettings } from '@mana/themes/utils';
 import { languageClientConfig, loggerConfig } from './constants';
 import { DEBUG } from '../utils/debug';
 
-function debugLog(message: string, args?: any | any[]) {
+function debugLog(message: any, args?: any | any[]) {
   const arr = [`[EditorManager] ${message}`];
   if (Array.isArray(args)) {
     arr.push(...args);

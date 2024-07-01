@@ -81,19 +81,30 @@ export default function useAppManager({ activeLevel }: { activeLevel: React.Muta
     const { node } = event.data;
     appsRef.current[node.id] ||= [];
 
-    const appNode = buildAppNode(node, app, {
-      level: activeLevel?.current,
-    });
-    if (appNode?.app?.status === AppStatusEnum.INITIALIZED) {
-      appNode.app.status = AppStatusEnum.PENDING_LAYOUT;
+    let eventType = null;
+    const level = activeLevel?.current;
+    let appNode = appsRef?.current?.[node?.id]?.find(
+      (appNode) => appNode?.app?.uuid === app?.uuid && appNode?.level === level);
+
+    // If app is already started, update it’s location to move next to where the event originated.
+    if (appNode) {
+      const rect = (event?.target as HTMLElement)?.getBoundingClientRect()
+      appNode.rect = rect;
+      console.log(rect)
+      eventType = CustomAppEventEnum.APP_UPDATED;
+    } else {
+      appNode = buildAppNode(node, app, { level });
+      if (appNode?.app?.status === AppStatusEnum.INITIALIZED) {
+        appNode.app.status = AppStatusEnum.PENDING_LAYOUT;
+      }
+      eventType = CustomAppEventEnum.APP_STARTED;
     }
+
     appsRef.current[node.id] = unique([
       ...(appsRef?.current?.[node.id] ?? []),
       appNode,
     ], ({ id }) => id);
 
-    dispatchAppEvent(CustomAppEventEnum.APP_STARTED, {
-      event,
-    });
+    dispatchAppEvent(eventType, { event });
   }
 }

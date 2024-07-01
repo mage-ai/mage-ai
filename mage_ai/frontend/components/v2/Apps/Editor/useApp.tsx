@@ -22,9 +22,14 @@ export default function useApp(props: AppLoaderProps & {
   },
   skipInitialFetch?: boolean;
   useToolbars?: boolean;
-}): AppLoaderResultType & {
+}): {
+  editor: {
+    getValue: () => string;
+  };
   mutate: MutateType;
-} {
+} & AppLoaderResultType {
+  const contentRef = useRef<string>(null);
+  const editorRef = useRef<any>(null);
   const { app, editor, skipInitialFetch, useToolbars } = props;
 
   if (!app?.uuid) {
@@ -36,6 +41,9 @@ export default function useApp(props: AppLoaderProps & {
     () => getFileCache(file?.path) || ({} as FileCacheType),
     [file],
   );
+  if (contentRef.current === null) {
+    contentRef.current = client?.file?.content;
+  }
 
   const [main, setMainState] = useState<FileType>({
     ...file,
@@ -45,26 +53,57 @@ export default function useApp(props: AppLoaderProps & {
   const [original, setOriginal] = useState<FileType>(server?.file);
   const [stale, setStale] = useState(isStale(file?.path));
 
-  const contentRef = useRef(main?.content || '');
   const clientRef = useRef(client?.file);
   const phaseRef = useRef(0);
-  DEBUG.editorApp && console.log(file?.content, client?.file?.content, main?.content, contentRef?.current)
+
+  function getContent(): string {
+    return editorRef?.current?.getModel()?.getValue();
+  }
+
+  function getPath(): string {
+    const model = editorRef?.current?.getModel();
+    const path = model.uri.path;
+    return path;
+  }
+
+  function updateLocalCache() {
+    updateFileCache({
+      client: {
+        content: getContent(),
+        path: getPath(),
+      },
+    });
+  }
+
+  function setContent(value: string) {
+    editorRef?.current?.setValue(value);
+    updateLocalCache();
+  }
+
+  function onDidChangeModelContent() {
+    updateLocalCache();
+  }
 
   async function updateLocalContent(item: FileType) {
-    await import('../../IDE/Manager').then(mod => {
-      if (!item) {
-        DEBUG.editorApp && console.log('No item to update.', item);
-        return;
-      }
+    DEBUG.editor.app && console.log('updateLocalContent', item)
 
-      DEBUG.editorApp && console.log('updateLocalContent', item)
+    if (!item) {
+      DEBUG.editor.app && console.log('No item to update.', item);
+      return;
+    }
 
-      mod.Manager.setValue(item);
-      updateFileCache({ client: item, server: item });
-      // Trigger state update so the toolbar statuses re-render.
-      setMainState(item);
-      setStale(isStale(item.path));
-    });
+    if (editorRef?.current) {
+      setContent(item.content);
+    } else {
+      await import('../../IDE/Manager').then(mod => {
+        mod.Manager.setValue(item);
+      });
+    }
+
+    updateFileCache({ client: item, server: item });
+    // Trigger state update so the toolbar statuses re-render.
+    setMainState(item);
+    setStale(isStale(item.path));
   }
 
   const mutants = useMutate({
@@ -90,7 +129,10 @@ export default function useApp(props: AppLoaderProps & {
 
           if (item) {
             // If it already exists, don’t update it.
-            contentRef.current = contentRef?.current ?? item.content;
+            if (contentRef?.current === null) {
+              contentRef.current = item.content;
+              editorRef?.current?.setValue?.(contentRef.current);
+            }
             !staleUpdated && setStale(isStale(item.path));
           }
           phaseRef.current += 1;
@@ -102,7 +144,10 @@ export default function useApp(props: AppLoaderProps & {
           setMainState(item);
 
           if (item) {
-            contentRef.current = item.content;
+            if (contentRef?.current === null) {
+              contentRef.current = item.content;
+              editorRef?.current?.setValue?.(contentRef.current);
+            }
             setStale(isStale(item.path));
           }
           phaseRef.current += 1;
@@ -110,6 +155,13 @@ export default function useApp(props: AppLoaderProps & {
       },
     },
   });
+
+  function overrideServerContentFromLocal(event: MouseEvent) {
+    updateServerContent(event, main, {
+      content: getContent(),
+      path: getPath(),
+    });
+  }
 
   function updateServerContent(
     event: MouseEvent,
@@ -119,12 +171,11 @@ export default function useApp(props: AppLoaderProps & {
       path?: string;
     },
   ) {
-    DEBUG.editorApp && console.log('CONTENTREF', contentRef?.current)
     mutants.update.mutate({
       event,
       id: item.path,
       payload: {
-        content: payload?.content || contentRef?.current,
+        content: payload?.content || getContent(),
         path: payload?.path || item.path,
       },
     });
@@ -140,20 +191,6 @@ export default function useApp(props: AppLoaderProps & {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [client, file, skipInitialFetch]);
 
-  function onDidChangeModelContent(editor: any, _event: any) {
-    const model = editor.getModel();
-    const content = model.getValue();
-    const path = model.uri.path;
-
-    contentRef.current = content;
-    updateFileCache({
-      client: {
-        content: contentRef.current,
-        path,
-      },
-    });
-  }
-
   const mainApp = useMemo(
     () =>
       (clientRef?.current || main?.content || phaseRef.current >= 1) && (
@@ -162,6 +199,9 @@ export default function useApp(props: AppLoaderProps & {
           configurations={app?.options?.configurations}
           eventListeners={{
             onDidChangeModelContent,
+          }}
+          onMountEditor={(editor: any) => {
+            editorRef.current = editor;
           }}
           persistManagerOnUnmount
           resource={{
@@ -179,7 +219,6 @@ export default function useApp(props: AppLoaderProps & {
   const {
     inputRef,
     overrideLocalContentFromServer,
-    overrideServerContentFromLocal,
     saveCurrentContent,
   } = useToolbarsHook({
     ...props,
@@ -211,6 +250,9 @@ export default function useApp(props: AppLoaderProps & {
   );
 
   return {
+    editor: {
+      getValue: getContent,
+    },
     main: mainApp,
     mutate: mutants,
     toolbars: useToolbars

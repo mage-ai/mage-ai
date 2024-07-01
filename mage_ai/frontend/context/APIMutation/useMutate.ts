@@ -3,7 +3,6 @@ import { FetcherOptionsType, preprocess } from '@api/utils/fetcher';
 import { buildUrl } from '@api/utils/url';
 import { OperationTypeEnum, ResponseTypeEnum } from '@api/constants';
 import { hyphensToSnake } from '@utils/url';
-import { isEqual } from '@utils/hash';
 import { getClosestRole } from '@utils/elements';
 import { useContext, useMemo, useRef, useState } from 'react';
 import { ElementRoleEnum } from '@mana/shared/types';
@@ -103,11 +102,30 @@ export function useMutate(
   });
   const [status, setStatus] = useState<MutationStatusMappingType>();
 
-  function setModel(model: ResourceType | ((prev: ResourceType) => ResourceType)): ResourceType {
-    const model2 = typeof model === 'function'
-      ? model(modelsRef.current[resourceName])
-      : model;
-    modelsRef.current[resourceName] = model2
+  function getModel(uuid?: string): ResourceType {
+    return modelsRef?.current?.[resourceName]?.[uuid ?? id];
+  }
+
+  function getModels(): ResourceType[] {
+    return modelsRef?.current?.[resource];
+  }
+
+  function setModel(
+    model: ResourceType | ((prev: ResourceType) => ResourceType),
+    key?: string,
+  ): ResourceType {
+    const uuid = key ?? id;
+    let modelUpdated = null;
+    if (typeof model === 'function') {
+      const modelPrev = modelsRef?.current?.[resourceName]?.[uuid];
+      modelUpdated = model(modelPrev);
+    } else {
+      modelUpdated = model;
+    }
+
+    modelsRef.current[resourceName] ||= {};
+    modelsRef.current[resourceName][uuid] = modelUpdated;
+
     return modelsRef.current[resourceName];
   }
 
@@ -129,21 +147,43 @@ export function useMutate(
   }
 
   function handleResponse(response: ResponseType, variables?: any, ctx?: any) {
-    if (!callbackOnEveryRequest && response && isEqual(response, modelsRef.current)) {
-      return;
-    }
+    // if (!callbackOnEveryRequest && response && isEqual(response, modelsRef.current)) {
+    //   return;
+    // }
+    //
+    const ids = {
+      id,
+      idParent,
+      ...variables,
+    };
+    const {
+      id: idUse,
+    } = ids ?? {};
 
-    const modelsPrev = { ...modelsRef.current };
     const { data } = response || {};
-    modelsRef.current[resourceName] = data[resourceName] ?? modelsRef.current[resourceName];
-    modelsRef.current[resource] = data[resource] ?? modelsRef.current[resource];
+
+    let result = null;
+    let resultPrev = null;
 
     const key = resourceName in (data ?? {}) ? resourceName : resource;
-    const result = typeof parse === 'function' ? parse(data) : data?.[key];
+
+    if (parse && typeof parse === 'function') {
+      result = parse(data);
+    } else {
+      result = data[key];
+    }
+
+    if (idUse) {
+      resultPrev = modelsRef?.current?.[key]?.[idUse];
+      setModel(result ?? resultPrev, idUse);
+    } else {
+      resultPrev = modelsRef?.current?.[key];
+      setModels(result ?? resultPrev);
+    }
 
     handleStatusUpdate();
 
-    return [result, modelsPrev?.[key]];
+    return [result, resultPrev];
   }
 
   function handleError(error: APIErrorType, operation: OperationTypeEnum) {
@@ -177,20 +217,36 @@ export function useMutate(
     return error;
   }
 
+  function getIDs(args?: MutationFetchArgumentsType): {
+    id?: string;
+    idParent?: string;
+  } {
+    const {
+      id: idRuntime,
+      idParent: idParentRuntime,
+    } = args ?? {};
+
+    return {
+      id: handleArgs((idParentRuntime ?? idParent) ?? (idRuntime ?? id)),
+      idParent: handleArgs((idParentRuntime ?? idParent) ? (idRuntime ?? id) : null),
+    };
+  }
+
   async function fetch(
     operation: OperationTypeEnum,
     args?: MutationFetchArgumentsType,
     opts: FetcherOptionsType = {},
   ): Promise<any> {
     const {
-      id: idRuntime,
-      idParent: idParentRuntime,
-    } = args ?? {};
+      id: idUse,
+      idParent: idParentUse,
+    } = getIDs(args) ?? {};
+
     const urlArg: string = buildUrl(...[
       resourceParent ?? resource,
-      handleArgs((idParentRuntime ?? idParent) ?? (idRuntime ?? id)),
+      idUse,
       resourceParent ? resource : null,
-      handleArgs((idParentRuntime ?? idParent) ? (idRuntime ?? id) : null),
+      idParentUse,
     ]);
 
     const {
@@ -238,10 +294,10 @@ export function useMutate(
         signal,
         url: queryString ? `${url}?${queryString}` : url,
       }).then((data) => {
-        args?.onSuccess && args?.onSuccess?.(data);
+        args?.onSuccess && args?.onSuccess?.(data, args, opts);
         return resolve(data);
       }).catch((error) => {
-        args?.onError && args?.onError?.(error);
+        args?.onError && args?.onError?.(error, args, opts);
         return reject(error);
       });
     });
@@ -254,15 +310,14 @@ export function useMutate(
     return {
       ...(handlers || {}),
       mutationFn: (args?: MutateFunctionArgsType) => wrapMutation(operation, args),
-      onError: (error: any, variables: any, context?: any) => {
+      onError: (error: any, variables: any, ctx?: any) => {
         handleError(error, operation)
 
-        onError && onError(error, variables, context);
+        onError && onError(error, variables, ctx);
       },
       onSettled: () => handleStatusUpdate(),
-      onSuccess: (response: ResponseType, variables: any, context?: any) => {
-
-        const [model, modelPrev] = handleResponse(response, variables, context);
+      onSuccess: (response: ResponseType, variables: any, ctx?: any) => {
+        const [model, modelPrev] = handleResponse(response, variables, ctx);
 
         onSuccess && onSuccess(model, modelPrev);
       }
@@ -321,8 +376,8 @@ export function useMutate(
         const rect = target.getBoundingClientRect();
         context.renderTarget({
           content: null,
-          target,
           rect,
+          target,
         });
       }
     }
@@ -365,8 +420,9 @@ export function useMutate(
     create: mutationCreate,
     delete: mutationDelete,
     detail: mutationDetail,
+    getModel,
+    getModels,
     list: mutationList,
-    modelsRef,
     setModel,
     setModels,
     status,

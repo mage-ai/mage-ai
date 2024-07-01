@@ -11,7 +11,7 @@ import {
   AppNodeType
 } from '../../Canvas/interfaces';
 import useEventManager from './useEventManager';
-import useLayoutManager, { LayoutManagerType } from './useLayoutManager';
+import useLayoutManager from './useLayoutManager';
 import useModelManager from './useModelManager';
 import usePresentationManager, { PresentationManagerType } from './usePresentationManager';
 import { DragLayer } from '../../Canvas/Layers/DragLayer';
@@ -23,12 +23,13 @@ import { useDrop } from 'react-dnd';
 import { useEffect, useMemo, useRef, useState, startTransition } from 'react';
 import useItemManager from './useItemManager';
 import useDynamicDebounce from '@utils/hooks/useDebounce';
-import { AppManagerType, ItemElementsType, EventManagerType, ModelManagerType } from './interfaces';
+import { AppManagerType, LayoutManagerType, ItemElementsType, EventManagerType, ModelManagerType } from './interfaces';
 import { groupBy, unique, sortByKey, flattenArray } from '@utils/array';
 import useNodeManager from './useNodeManager';
 import useAppManager from './useAppManager';
 import useAppEventsHandler, { CustomAppEvent, CustomAppEventEnum } from './useAppEventsHandler';
 import { DEBUG } from '@components/v2/utils/debug';
+import { ExecutionManagerType } from '@components/v2/ExecutionManager/interfaces';
 
 export type BuilderCanvasProps = {
   canvasRef: React.RefObject<HTMLDivElement>;
@@ -36,8 +37,9 @@ export type BuilderCanvasProps = {
   defaultActiveLevel?: number;
   dragEnabled?: boolean;
   dropEnabled?: boolean;
-  pipelineUUID: string;
   executionFrameworkUUID: string;
+  pipelineUUID: string;
+  registerConsumer: ExecutionManagerType['registerConsumer'];
   removeContextMenu: RemoveContextMenuType;
   renderContextMenu: RenderContextMenuType;
   setDragEnabled: (value: boolean) => void;
@@ -58,10 +60,9 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
   containerRef,
   dragEnabled,
   dropEnabled,
-  // pipeline,
-  // executionFramework,
-  pipelineUUID,
   executionFrameworkUUID,
+  pipelineUUID,
+  registerConsumer,
   removeContextMenu,
   renderContextMenu,
   setDragEnabled,
@@ -145,6 +146,7 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
   const { dispatchAppEvent } = useAppEventsHandler(null, {
     [CustomAppEventEnum.APP_STARTED]: handleAppChanged,
     [CustomAppEventEnum.APP_STOPPED]: handleAppChanged,
+    [CustomAppEventEnum.APP_UPDATED]: handleAppChanged,
     [CustomAppEventEnum.NODE_LAYOUTS_CHANGED]: handleNodeLayoutsChanged,
   });
 
@@ -433,6 +435,7 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
                   top,
                   width,
                 }}
+                registerConsumer={registerConsumer}
                 submitEventOperation={submitEventOperation}
               />
             );
@@ -468,6 +471,7 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
                   top,
                   width,
                 }}
+                registerConsumer={registerConsumer}
               />
             );
           })}

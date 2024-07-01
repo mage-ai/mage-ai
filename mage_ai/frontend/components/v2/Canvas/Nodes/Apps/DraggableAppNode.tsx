@@ -16,6 +16,12 @@ import {
   PanelCollapseRight, Builder, AddV2, Grab, GroupV2, Comment, Conversation, Save,
   CloseV2
 } from '@mana/icons';
+import EventStreamType, {
+  ProcessDetailsType,
+  ServerConnectionStatusType,
+  EventStreamResponseType,
+  EventSourceReadyState,
+} from '@interfaces/EventStreamType';
 import Text from '@mana/elements/Text';
 import { Minimize, Chat, BlockGenericV2, PlayButtonFilled } from '@mana/icons';
 import Grid from '@mana/components/Grid';
@@ -30,6 +36,7 @@ import { draggableProps } from '../draggable/utils';
 import useApp from '../../../Apps/Editor/useApp';
 import { EditorContainerStyled } from './index.style';
 import { convertToMillisecondsTimestamp } from '@utils/date';
+import { ExecutionManagerType } from '../../../Apps/PipelineCanvas/ExecutionManager/useExecutionManager';
 
 const PADDING_HORIZONTAL = 16;
 
@@ -39,6 +46,7 @@ type DraggableAppNodeProps = {
   items: NodeType[];
   node: AppNodeType;
   rect: RectType;
+  registerConsumer: ExecutionManagerType['registerConsumer'];
 } & DragAndDropType;
 
 const DraggableAppNode: React.FC<DraggableAppNodeProps> = ({
@@ -48,6 +56,7 @@ const DraggableAppNode: React.FC<DraggableAppNodeProps> = ({
   items,
   node,
   rect,
+  registerConsumer,
 }: DraggableAppNodeProps) => {
   const fetchDetailCountRef = useRef(0);
   const nodeRef = useRef<HTMLDivElement>(null);
@@ -92,7 +101,7 @@ const DraggableAppNode: React.FC<DraggableAppNodeProps> = ({
       path: configuration?.file_path,
     },
   };
-  const { main, mutate, toolbars } = useApp({
+  const { editor, main, mutate, toolbars } = useApp({
     app: {
       ...app,
       options: appOptions,
@@ -119,7 +128,34 @@ const DraggableAppNode: React.FC<DraggableAppNodeProps> = ({
     stale,
   } = toolbars ?? {} as any;
 
+  function handleError(error: Event) {
+
+  }
+
+  function handleMessage(event: EventStreamResponseType) {
+    console.log('MMMMMMMMMMMMMMMMMMMMMMMMMM', event);
+    const {
+
+    } = event;
+  }
+
+  function handleOpen(event: Event, status: ServerConnectionStatusType) {
+
+  }
+
+  const {
+    connect,
+    executeCode,
+    // Use the same UUID so that all the blocks can synchronize the output.
+  } = registerConsumer(block?.uuid, String(node?.id), {
+    onError: handleError,
+    onMessage: handleMessage,
+    onOpen: handleOpen,
+  });
+
   useEffect(() => {
+    connect();
+
     if (fetchDetailCountRef.current === 0 && file?.path) {
       mutate.detail.mutate({ id: file.path });
       fetchDetailCountRef.current += 1;
@@ -200,7 +236,7 @@ const DraggableAppNode: React.FC<DraggableAppNodeProps> = ({
               backgroundcolor={baseColor}
               basic
               bordercolor={baseColor}
-              onClick={() => alert('Run code')}
+              onClick={() => executeCode(editor?.getValue())}
               small
             />
 
@@ -381,31 +417,28 @@ const DraggableAppNode: React.FC<DraggableAppNodeProps> = ({
                   with the server content.
                 </Text>
 
-                {false && (
-                  <>
-                    <br />
+                <br />
 
-                    <ButtonGroup>
-                      <Button asLink onClick={() => overrideServerContentFromLocal()} wrap>
-                        <Text blue underline xsmall>
-                          Save local
-                        </Text >
-                      </Button>
-                      <Button
-                        asLink
-                        onClick={event => {
-                          event.preventDefault();
-                          overrideLocalContentFromServer();
-                        }}
-                        wrap
-                      >
-                        <Text muted underline xsmall>
-                          Reset
-                        </Text >
-                      </Button>
-                    </ButtonGroup>
-                  </>
-                )}
+                <ButtonGroup>
+                  <Button asLink onClick={() => overrideServerContentFromLocal()} wrap>
+                    <Text blue underline xsmall>
+                      Save local
+                    </Text >
+                  </Button>
+
+                  <Button
+                    asLink
+                    onClick={event => {
+                      event.preventDefault();
+                      overrideLocalContentFromServer();
+                    }}
+                    wrap
+                  >
+                    <Text muted underline xsmall>
+                      Restore local content from server
+                    </Text >
+                  </Button>
+                </ButtonGroup>
               </div>
             </Grid>
           )}

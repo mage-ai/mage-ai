@@ -12,6 +12,7 @@ type IDEProps = {
   configurations?: any;
   editorClassName?: string;
   eventListeners?: EventListeners;
+  onMountEditor?: (editor: any) => void;
   persistManagerOnUnmount?: boolean;
   resource: ResourceType;
   style?: React.CSSProperties;
@@ -24,6 +25,7 @@ function MateriaIDE({
   containerClassName,
   editorClassName,
   eventListeners,
+  onMountEditor,
   persistManagerOnUnmount,
   resource,
   style,
@@ -63,6 +65,7 @@ function MateriaIDE({
           editorRef.current = manager.getEditor();
           if (editorRef?.current) {
             addListeners(editorRef?.current, eventListeners);
+            onMountEditor && onMountEditor?.(editorRef.current);
           }
         }
       };

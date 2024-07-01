@@ -134,9 +134,11 @@ export interface MutateType {
   create: MutatationType;
   delete: MutatationType;
   detail: MutatationType;
+  getModel: (uuid?: string) => ResourceType;
+  getModels: () => ResourceType[];
   list: MutatationType;
   modelsRef: React.MutableRefObject<ModelsType>;
-  setModel: (model: ResourceType | ((prev: ResourceType) => ResourceType)) => ResourceType;
+  setModel: (model: ResourceType | ((prev: ResourceType) => ResourceType), uuid?: string) => ResourceType;
   setModels: (models: ResourceType[] | ((prev: ResourceType[]) => ResourceType[])) => ResourceType[];
   status: MutationStatusMappingType;
   update: MutatationType;

@@ -1,11 +1,15 @@
 export const DEBUG = {
   appManager: false,
   apps: false,
+  codeExecution: {
+    manager: true,
+  },
   dragging: false,
   dropping: false,
-  editor: false,
-  editorApp: false,
-  editorManager: false,
+  editor: {
+    app: false,
+    manager: false,
+  },
   events: false,
   itemManager: false,
   layout: false,

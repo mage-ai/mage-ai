@@ -137,7 +137,7 @@ export default function useItemManager({
         width = 0,
       } = node?.rect ?? {};
       item.rect.left = left + width + 20;
-      item.rect.top = top - ((item.rect.height ?? 0) - height);
+      item.rect.top = top + 20;
 
       if (AppStatusEnum.PENDING_LAYOUT === (item as AppNodeType)?.app?.status) {
         (item as AppNodeType).app.status = AppStatusEnum.READY;
