@@ -11,7 +11,11 @@ const Detail = dynamic(() => import('@components/v2/Layout/Pipelines/Detail'), {
 function PipelineDetailPage({ slug }: { slug: string[] }) {
   const { registerConsumer, teardown } = useExecutionManager();
 
-  useEffect(() => () => teardown(), [teardown]);
+  useEffect(() => {
+    console.log('PipelineDetailPage: useEffect');
+    return () => teardown();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   if (slug?.length >= 1) {
     const uuid: string = slug[0];

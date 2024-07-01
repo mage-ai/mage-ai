@@ -31,7 +31,7 @@ export default function useApp(props: AppLoaderProps & {
 } & AppLoaderResultType {
   const contentRef = useRef<string>(null);
   const editorRef = useRef<any>(null);
-  console.log('!!!!!!!!!!!!!!!!!!', editorRef.current)
+
   const { app, editor, skipInitialFetch, useToolbars } = props;
 
   if (!app?.uuid) {

@@ -79,7 +79,6 @@ export default function useExecutionManager(
     const closeConnection = () => closeEventSourceConnection(uuid, consumerUUID);
     const executeCode = (message: string): ProcessDetailsType => {
       const eventSource = eventSourcesRef.current[uuid];
-      console.log('!!!!!!!!!!!!!!!!!', eventSource)
 
       const messageUUID = getNewUUID();
       const payload = {
@@ -219,7 +218,13 @@ export default function useExecutionManager(
     };
   }
 
+  function hasOpenConnections(): boolean {
+    return Object.keys(eventSourcesRef?.current).length > 0;
+  }
+
   function teardown() {
+    if (!hasOpenConnections()) return;
+
     DEBUG.codeExecution.manager && debugLog('Tearing down...');
     Object.keys(eventSourcesRef?.current).forEach((uuid) => {
       closeEventSourceConnection(uuid);

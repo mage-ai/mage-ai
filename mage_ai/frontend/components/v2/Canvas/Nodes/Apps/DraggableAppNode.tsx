@@ -36,7 +36,8 @@ import { draggableProps } from '../draggable/utils';
 import useApp from '../../../Apps/Editor/useApp';
 import { EditorContainerStyled } from './index.style';
 import { convertToMillisecondsTimestamp } from '@utils/date';
-import { ExecutionManagerType } from '../../../Apps/PipelineCanvas/ExecutionManager/useExecutionManager';
+import { ExecutionManagerType } from '../../../ExecutionManager/interfaces';
+import useOutputManager from '../CodeExecution/useOutputManager';
 
 const PADDING_HORIZONTAL = 16;
 
@@ -59,6 +60,7 @@ const DraggableAppNode: React.FC<DraggableAppNodeProps> = ({
   registerConsumer,
 }: DraggableAppNodeProps) => {
   const fetchDetailCountRef = useRef(0);
+  const handleOnMessageRef = useRef<(event: EventStreamType) => void>(null);
   const nodeRef = useRef<HTMLDivElement>(null);
 
   const { dispatchAppEvent } = useAppEventsHandler(node);
@@ -129,19 +131,18 @@ const DraggableAppNode: React.FC<DraggableAppNodeProps> = ({
     stale,
   } = toolbars ?? {} as any;
 
+  const { addGroup, containerRef, groupsRef, removeGroup, teardown } = useOutputManager();
+
   function handleError(error: Event) {
-
-  }
-
-  function handleMessage(event: EventStreamResponseType) {
-    console.log('MMMMMMMMMMMMMMMMMMMMMMMMMM', event);
-    const {
-
-    } = event;
+    console.log('handleError', error);
   }
 
   function handleOpen(event: Event, status: ServerConnectionStatusType) {
+    console.log('handleOpen', event, status);
+  }
 
+  function handleMessage(event: EventStreamType) {
+    handleOnMessageRef?.current?.(event);
   }
 
   const {
@@ -154,6 +155,11 @@ const DraggableAppNode: React.FC<DraggableAppNodeProps> = ({
     onOpen: handleOpen,
   });
 
+  function handleCodeExecution(event: MouseEvent) {
+    const process: ProcessDetailsType = executeCode(editor?.getValue());
+    addGroup(process, handleOnMessageRef);
+  }
+
   useEffect(() => {
     connect();
 
@@ -161,6 +167,10 @@ const DraggableAppNode: React.FC<DraggableAppNodeProps> = ({
       mutate.detail.mutate({ id: file.path });
       fetchDetailCountRef.current += 1;
     }
+
+    return () => {
+      teardown();
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [app, file]);
 
@@ -237,7 +247,7 @@ const DraggableAppNode: React.FC<DraggableAppNodeProps> = ({
               backgroundcolor={baseColor}
               basic
               bordercolor={baseColor}
-              onClick={() => executeCode(editor?.getValue())}
+              onClick={handleCodeExecution}
               small
             />
 
@@ -328,15 +338,15 @@ const DraggableAppNode: React.FC<DraggableAppNodeProps> = ({
             <Grid
               autoFlow="column"
               backgroundColor="graylo"
+              bordersBottom
               columnGap={10}
               justifyContent="start"
               paddingBottom={18}
               paddingLeft={PADDING_HORIZONTAL}
               paddingRight={PADDING_HORIZONTAL}
               paddingTop={18}
-              bordersBottom
-              templateRows="auto"
               templateColumns="1fr auto"
+              templateRows="auto"
             >
               <Grid
                 autoFlow="column"
@@ -403,6 +413,8 @@ const DraggableAppNode: React.FC<DraggableAppNodeProps> = ({
             </Grid>
           </Grid>
 
+          <div className="wtfffffffffffffffffffffffffff" ref={containerRef} />
+
           {stale && (
             <Grid
               borders
@@ -441,6 +453,7 @@ const DraggableAppNode: React.FC<DraggableAppNodeProps> = ({
                   </Button>
                 </ButtonGroup>
               </div>
+
             </Grid>
           )}
         </Grid>

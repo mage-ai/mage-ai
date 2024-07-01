@@ -3,12 +3,13 @@ export const DEBUG = {
   apps: false,
   codeExecution: {
     manager: true,
+    outputManager: true,
   },
   dragging: false,
   dropping: false,
   editor: {
     app: false,
-    manager: true,
+    manager: false,
     node: false,
   },
   events: false,
