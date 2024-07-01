@@ -8,7 +8,7 @@ from mage_ai.data_preparation.models.constants import BlockType, PipelineType
 from mage_ai.frameworks.execution.models.base import BaseExecutionFramework
 from mage_ai.frameworks.execution.models.block.base import BlockExecutionFramework
 from mage_ai.shared.array import flatten
-from mage_ai.shared.hash import group_by
+from mage_ai.shared.hash import group_by, merge_dict
 
 
 @dataclass
@@ -139,11 +139,14 @@ class PipelineExecutionFramework(BaseExecutionFramework):
 
         return block_groups
 
-    def set_block_dependency(self, blocks_by_uuid):
+    def initialize_block_instances(self, blocks_by_uuid):
         """
+        Initialize the block instances by Enforcing block settings with the framework.
+
         1. Construct a map of blocks by group
         2. Get flattened block groups and their dependencies of this framework
-        3. Set the block dependencies for the block instances
+        3. Set the block dependencies for block instances
+        4. Set the block configurations for block instances
         """
         blocks_with_group = [b for b in blocks_by_uuid.values() if b.groups]
         blocks_by_group = group_by(lambda b: b.groups[0], blocks_with_group)
@@ -155,6 +158,12 @@ class PipelineExecutionFramework(BaseExecutionFramework):
             block_group = flatten_block_groups_by_uuid.get(b.groups[0])
             if not block_group:
                 continue
+            block_group_configuration = block_group['block_group'].configuration
+            b.configuration = merge_dict(
+                b.configuration or dict(),
+                block_group_configuration.to_dict(ignore_attributes=['templates'])
+                if block_group_configuration else dict(),
+            )
             if block_group['upstream_block_groups']:
                 b.upstream_blocks = flatten([
                     blocks_by_group[guuid]

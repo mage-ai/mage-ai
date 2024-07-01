@@ -2914,7 +2914,6 @@ class Block(
             downstream_blocks=self.downstream_block_uuids,
             executor_config=self.executor_config,
             executor_type=(format_enum(self.executor_type) if self.executor_type else None),
-            groups=self.groups,
             has_callback=self.has_callback,
             name=self.name,
             language=language,
@@ -2934,6 +2933,9 @@ class Block(
 
         if self.replicated_block:
             data['replicated_block'] = self.replicated_block
+
+        if self.groups:
+            data['groups'] = self.groups
 
         return data
 
