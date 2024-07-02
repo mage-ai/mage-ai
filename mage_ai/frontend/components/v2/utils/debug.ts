@@ -1,6 +1,6 @@
 export const DEBUG = {
   appManager: false,
-  apps: true,
+  apps: false,
   codeExecution: {
     manager: false,
     node: false,
@@ -13,7 +13,7 @@ export const DEBUG = {
     manager: false,
     node: false,
   },
-  events: true,
+  events: false,
   itemManager: false,
   layout: false,
   layoutManager: false,
