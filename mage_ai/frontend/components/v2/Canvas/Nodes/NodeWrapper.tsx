@@ -70,7 +70,6 @@ export const NodeWrapper: FC<NodeWrapperProps> = memo(function NodeWrapper({
   const { onDragEnd, onDragStart, onDrop, onMouseDown, onMouseLeave, onMouseOver, onMouseUp } =
     handlers;
   const itemToDrag: DragItem | PortType = useMemo(() => draggingNode || node, [draggingNode, node]);
-
   const [{ isDragging }, connectDrag, preview] = useDrag(
     () => ({
       canDrag: () => {

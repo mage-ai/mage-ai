@@ -100,7 +100,6 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
   const [itemRects, _setItemRects] = useState<FlatItemType[]>([]);
   const [outputNodes, _setOutputNodes] = useState<OutputNodeType[]>([]);
 
-  console.log(outputNodes)
   const { dispatchAppEvent } = useAppEventsHandler(null, {
     [CustomAppEventEnum.APP_STARTED]: handleAppChanged,
     [CustomAppEventEnum.APP_STOPPED]: handleAppChanged,

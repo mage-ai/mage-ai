@@ -7,7 +7,6 @@
   @include borders.base();
   @include borders.border-colors();
   @include grid.base();
-  @include start-up-status;
 
   backdrop-filter: blur(#{$modal-blur-base});
   background: var(--modal-background-color-base);

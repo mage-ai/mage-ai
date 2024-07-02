@@ -34,7 +34,7 @@ export default function useModelManager({
 }: ModelManagerProps): ModelManagerType {
   const appHandlersRef = useRef<AppHandlerType>({} as AppHandlerType);
   const itemsRef = useRef<ItemMappingType>({});
-  const outputsRef = useRef<Record<string, OutputNodeType[]>>({});
+  const outputsRef = useRef<Record<string, Record<string, OutputNodeType>>>({});
   const portsRef = useRef<PortMappingType>({});
   const phaseRef = useRef<number>(0);
 
@@ -142,8 +142,8 @@ export default function useModelManager({
     const { block, node, options } = detail;
     const output = buildOutputNode(node, block, options?.kwargs?.process as any);
 
-    outputsRef.current[node.id] ||= [];
-    outputsRef.current[node.id].push(output);
+    outputsRef.current[node.id] ||= {};
+    outputsRef.current[node.id][output.id] = output;
 
     initializeModels(
       appHandlersRef?.current?.executionFrameworks?.getModel() as PipelineExecutionFrameworkType,
@@ -266,7 +266,7 @@ export default function useModelManager({
               (app: AppNodeType) => app?.level === level);
 
             // Output
-            item.outputs = outputsRef.current?.[item.id] ?? [];
+            item.outputs = Object.values(outputsRef.current?.[item.id] ?? {}) ?? [];
 
             itemsIDs.push(item.id);
             itemMapping[item.id] = item;

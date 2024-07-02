@@ -32,6 +32,7 @@ export function useMutate(
   argsInit: IDArgsType,
   opts?: {
     callbackOnEveryRequest?: boolean;
+    disableAbort?: boolean;
     handlers?: ResourceHandlersType;
     parse?: string | ((...args: any[]) => any);
     subscribeToStatusUpdates?: boolean;
@@ -49,6 +50,7 @@ export function useMutate(
 
   const {
     callbackOnEveryRequest,
+    disableAbort,
     subscribeToStatusUpdates,
     throttle: throttleProp,
   } = opts || {};
@@ -360,7 +362,7 @@ export function useMutate(
       return Promise.resolve(null);
     }
 
-    if (abortControllerRef?.current?.[operation]) {
+    if (!disableAbort && abortControllerRef?.current?.[operation]) {
       abortControllerRef?.current?.[operation].abort();
     }
 

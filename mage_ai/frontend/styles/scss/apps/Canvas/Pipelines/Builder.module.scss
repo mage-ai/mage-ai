@@ -73,6 +73,10 @@
         z-index: 6;
       }
 
+      .output {
+        z-index: 6;
+      }
+
       .node {
         z-index: 4;
       }
@@ -100,6 +104,10 @@
   }
 
   .block {
+    z-index: 6;
+  }
+
+  .output {
     z-index: 6;
   }
 

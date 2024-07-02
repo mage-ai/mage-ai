@@ -1,9 +1,9 @@
 export const DEBUG = {
   appManager: false,
-  apps: false,
+  apps: true,
   codeExecution: {
     manager: false,
-    node: true,
+    node: false,
     outputManager: false,
   },
   dragging: false,

@@ -51,7 +51,7 @@ export function convertEvent(event: MouseEvent, opts?: {
   }) as ClientEventType;
 }
 
-type SubscriptionsType = Record<string | CustomAppEventEnum, SubscriptionType['handler']>;
+export type SubscriptionsType = Record<string | CustomAppEventEnum, SubscriptionType['handler']>;
 
 export default function useAppEventsHandler(
   subscriber: SubscriberType,

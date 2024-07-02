@@ -3,7 +3,14 @@ import update from 'immutability-helper';
 import useAppEventsHandler, { CustomAppEventEnum } from '../../Apps/PipelineCanvas/useAppEventsHandler';
 import { NodeType } from '../interfaces';
 
-export default function useDispatchMounted(node: NodeType, nodeRef: React.RefObject<Element>, eventType?: CustomAppEventEnum | string) {
+export default function useDispatchMounted(
+  node: NodeType,
+  nodeRef: React.RefObject<Element>,
+  opts?: {
+    eventType?: CustomAppEventEnum | string;
+    onMount?: () => void;
+  },
+) {
   const phaseRef = useRef(0);
   const timeoutRef = useRef(null);
 
@@ -23,7 +30,7 @@ export default function useDispatchMounted(node: NodeType, nodeRef: React.RefObj
           clearTimeout(timeoutRef.current)
           phaseRef.current += 1;
 
-          dispatchAppEvent((eventType ?? CustomAppEventEnum.NODE_MOUNTED) as CustomAppEventEnum, {
+          dispatchAppEvent((opts?.eventType ?? CustomAppEventEnum.NODE_MOUNTED) as CustomAppEventEnum, {
             event: update(event ?? {}, {
               data: {
                 $set: {
@@ -38,6 +45,10 @@ export default function useDispatchMounted(node: NodeType, nodeRef: React.RefObj
               kwargs: { computedStyle },
             },
           });
+
+          if (opts?.onMount) {
+            opts?.onMount();
+          }
         } else {
           timeoutRef.current = setTimeout(dispatchMounted, 100);
         }

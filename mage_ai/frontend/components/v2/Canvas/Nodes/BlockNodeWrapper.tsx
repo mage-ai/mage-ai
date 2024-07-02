@@ -65,72 +65,34 @@ export const BlockNodeWrapper: React.FC<BlockNodeWrapperProps & NodeWrapperProps
   const [draggingNode] = useState<NodeItemType | null>(null);
 
   const block = useMemo(() => node?.block, [node]);
-  const file = block?.configuration?.file;
   const { type, uuid } = useMemo(() => ({ type: block?.type, uuid: block?.uuid }) || {}, [block]);
   const isGroup = useMemo(() => !node?.block?.type || node?.block?.type === BlockTypeEnum.GROUP, [node]);
 
-  const { executeCode, setContainer } = useExecutable(block?.uuid, String(node?.id), registerConsumer);
+  const { convertEvent, dispatchAppEvent } = useAppEventsHandler(node);
 
-  const { convertEvent, dispatchAppEvent, subscribe } = useAppEventsHandler(node);
 
-  function submitCodeExecution(event: React.MouseEvent<HTMLElement>) {
-    submitEventOperation(
-      buildEvent(event as any, EventOperationEnum.EXECUTE_CODE, node, itemRef, block), {
-      handler: (e, { browserItems }) => {
-        const submitExecuteCode = (message: string) => {
-          if (!message) {
-            alert('No code to execute.');
-            return;
-          }
+  const submitCodeExecution = useCallback((event: React.MouseEvent<HTMLElement>) => {
+    const eventTypes = node?.outputs?.length >= 1
+      ? node?.outputs?.map(o => o.id)
+      : [CustomAppEventEnum.CODE_EXECUTION_SUBMITTED];
 
-          const [process, handler] = executeCode(message, {
-            future: true,
-          });
-          subscribe({
-            [process.message_request_uuid]: (event: CustomAppEvent) => {
-              setContainer(event.detail.event.operationTarget as React.RefObject<HTMLDivElement>);
-              handler();
+    eventTypes?.forEach((eventType: CustomAppEventEnum) => {
+      dispatchAppEvent(eventType, {
+        block,
+        event: convertEvent(event, {
+          itemRef,
+        }),
+        node,
+        options: {
+          kwargs: {
+            process: {
+              uuid: block?.uuid,
             },
-          })
-
-          dispatchAppEvent(CustomAppEventEnum.CODE_EXECUTION_SUBMITTED, {
-            block,
-            event: convertEvent(event, {
-              itemRef,
-            }),
-            node,
-            options: {
-              kwargs: {
-                process,
-              },
-            },
-          });
-        };
-
-        const path = file?.path;
-        const code = getFileCache(path)?.client?.file?.content;
-
-        if (code ?? false) {
-          submitExecuteCode(code);
-        } else {
-          browserItems.detail.mutate({
-            event,
-            id: path,
-            onError: () => {
-              // stop loading
-            },
-            onStart: () => {
-              // set loading
-            },
-            onSuccess: ({ data: { browser_item: item } }: { data: { browser_item: FileType } }) => {
-              updateFileCache({ client: item });
-              submitExecuteCode(item.content);
-            },
-          });
-        }
-      },
+          },
+        },
+      });
     });
-  }
+  }, [node?.outputs]);
 
   const name = useMemo(
     () => (ItemTypeEnum.BLOCK === node?.type

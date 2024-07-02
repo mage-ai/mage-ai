@@ -1,7 +1,10 @@
 import styles from '@styles/scss/components/Canvas/Nodes/OutputNode.module.scss';
-import useAppEventsHandler, { CustomAppEventEnum, convertEvent } from '../../../Apps/PipelineCanvas/useAppEventsHandler';
+import stylesBlockNode from '@styles/scss/components/Canvas/Nodes/BlockNode.module.scss';
+import Grid from '@mana/components/Grid';
+import useAppEventsHandler, { CustomAppEventEnum, CustomAppEvent, SubscriptionsType, convertEvent } from '../../../Apps/PipelineCanvas/useAppEventsHandler';
 import useDispatchMounted from '../useDispatchMounted';
 import useExecutable from '../useExecutable';
+import { getFileCache, isStale, updateFileCache } from '../../../IDE/cache';
 import { CanvasNodeType } from '../interfaces';
 import { DEBUG } from '@components/v2/utils/debug';
 import { NodeWrapper } from '../NodeWrapper';
@@ -12,37 +15,48 @@ import { getColorNamesFromItems } from '../utils';
 import { setupDraggableHandlers } from '../utils';
 import React, { useEffect, useRef, useMemo } from 'react';
 
-const DraggableAppNode: React.FC<CanvasNodeType> = ({
+const OutputNode: React.FC<CanvasNodeType> = ({
   draggable,
   handlers,
   node,
   rect,
   registerConsumer,
 }: CanvasNodeType) => {
-  const fetchDetailCountRef = useRef(0);
   const nodeRef = useRef<HTMLDivElement>(null);
   const { block, process } = node as OutputNodeType;
+  const file = block?.configuration?.file;
+  const nodeID = String(node?.id);
 
-  const { dispatchAppEvent } = useAppEventsHandler(node);
-  const { phaseRef } = useDispatchMounted(node, nodeRef, (node as OutputNodeType).process.message_request_uuid);
-  const { containerRef, executeCode } = useExecutable(block?.uuid, String(node?.id), registerConsumer);
+  const { containerRef, executeCode } = useExecutable(process.uuid, nodeID, registerConsumer, {
+    autoConnect: true,
+  });
 
-  useEffect(() => {
-    // const rect = nodeRef.current.getBoundingClientRect();
-    // node.rect.width = rect.width;
-    // node.rect.height = rect.height;
+  function getCode() {
+    console.log(node, block, getFileCache(file?.path))
+    return getFileCache(file?.path)?.client?.file?.content ?? '';
+  }
 
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  useDispatchMounted(node, nodeRef, {
+    eventType: [CustomAppEventEnum.NODE_MOUNTED, nodeID].join('.'),
+    onMount: () => {
+      if (!nodeRef?.current) return;
+      executeCode(getCode());
+    },
+  });
 
+  const subscriptions = {
+    [nodeID as CustomAppEventEnum]: () => {
+      executeCode(getCode());
+    },
+  } as SubscriptionsType;
+  useAppEventsHandler(node, subscriptions);
 
   const draggingHandlers = setupDraggableHandlers(
     handlers, node, nodeRef, block,
   );
 
-
   const sharedProps = useMemo(() => draggableProps({
-    classNames: [styles.appNodeWrapper],
+    classNames: [styles.outputNodeContainer, stylesBlockNode.ready],
     draggable,
     node,
   }), [draggable, node]);
@@ -57,10 +71,7 @@ const DraggableAppNode: React.FC<CanvasNodeType> = ({
       nodeRef={nodeRef}
       rect={rect}
     >
-      <div className={[
-        styles.outputNodeContainer,
-      ]?.filter(Boolean)?.join((' '))}>
-      </div>
+      <div ref={containerRef} />
     </NodeWrapper>
   );
 }
@@ -70,8 +81,8 @@ function areEqual(p1: CanvasNodeType, p2: CanvasNodeType) {
     && areDraggableStylesEqual(p1, p2)
     && areEqualRects({ rect: p1?.rect }, { rect: p2?.rect });
 
-  DEBUG.codeExecution.node && console.log('DraggableAppNode.areEqual', equal, p1, p2);
+  DEBUG.codeExecution.node && console.log('OutputNode.areEqual', equal, p1, p2);
   return equal;
 }
 
-export default React.memo(DraggableAppNode, areEqual);
+export default React.memo(OutputNode, areEqual);

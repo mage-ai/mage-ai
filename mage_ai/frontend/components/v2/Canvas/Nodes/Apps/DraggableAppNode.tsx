@@ -42,7 +42,7 @@ const DraggableAppNode: React.FC<CanvasNodeType> = ({
   registerConsumer,
 }: CanvasNodeType & {
   index?: number;
-  items: NodeItemType[];
+  items: any[];
 }) => {
   const fetchDetailCountRef = useRef(0);
   const nodeRef = useRef<HTMLDivElement>(null);
@@ -65,8 +65,7 @@ const DraggableAppNode: React.FC<CanvasNodeType> = ({
   const [asideBeforeOpen, setAsideBeforeOpen] = React.useState(false);
   const [asideAfterOpen, setAsideAfterOpen] = React.useState(false);
 
-  const item = items?.[index];
-  const block = item?.block;
+  const block = items?.[index]?.block;
   const { configuration } = block ?? {};
   const { file } = configuration ?? {};
 
@@ -150,10 +149,10 @@ const DraggableAppNode: React.FC<CanvasNodeType> = ({
   const sharedProps = useMemo(() => draggableProps({
     classNames: [styles.appNodeWrapper],
     draggable,
-    item: node,
+    node,
   }), [draggable, node]);
 
-  const colorNames = getColorNamesFromItems([item]);
+  const colorNames = getColorNamesFromItems([node]);
   const baseColor = colorNames?.[index]?.base;
   const lastModified = useMemo(() => {
     if (original?.modified_timestamp) {
@@ -166,8 +165,8 @@ const DraggableAppNode: React.FC<CanvasNodeType> = ({
       {...sharedProps}
       // draggingNode={draggingNode}
       handlers={draggingHandlers}
-      item={node}
-      itemRef={nodeRef}
+      node={node}
+      nodeRef={nodeRef}
       rect={rect}
     >
       <div className={[
