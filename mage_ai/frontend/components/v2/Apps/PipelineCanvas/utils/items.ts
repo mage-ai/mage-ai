@@ -78,15 +78,16 @@ function createItemsFromBlocks(blocks: BlockType[], opts?: {
   return blocks.map(block => buildItemFromBlock(block, opts));
 }
 
-export function buildOutputNode(node: NodeItemType, block: BlockType, {
-  message,
+export function buildOutputNode(node: NodeItemType, block: BlockType, opts?: {
+  message: string;
+  message_request_uuid: string;
 }): OutputNodeType {
-  const id = [block.uuid, hashCode(message), String(Number(new Date()))].join(':')
+  const id = [block.uuid, opts?.message_request_uuid].join(':')
   const { level, rect } = node ?? {};
   return {
     id,
     level,
-    process: { message },
+    process: opts,
     rect: {
       height: undefined,
       left: rect?.left + rect?.width,

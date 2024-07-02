@@ -24,10 +24,13 @@ const DraggableAppNode: React.FC<CanvasNodeType> = ({
   const { block, process } = node as OutputNodeType;
 
   const { dispatchAppEvent } = useAppEventsHandler(node);
-  const { phaseRef } = useDispatchMounted(node, nodeRef);
+  const { phaseRef } = useDispatchMounted(node, nodeRef, (node as OutputNodeType).process.message_request_uuid);
   const { containerRef, executeCode } = useExecutable(block?.uuid, String(node?.id), registerConsumer);
 
   useEffect(() => {
+    // const rect = nodeRef.current.getBoundingClientRect();
+    // node.rect.width = rect.width;
+    // node.rect.height = rect.height;
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -37,10 +40,11 @@ const DraggableAppNode: React.FC<CanvasNodeType> = ({
     handlers, node, nodeRef, block,
   );
 
+
   const sharedProps = useMemo(() => draggableProps({
     classNames: [styles.appNodeWrapper],
     draggable,
-    item: node,
+    node,
   }), [draggable, node]);
 
   const colorNames = getColorNamesFromItems([node]);

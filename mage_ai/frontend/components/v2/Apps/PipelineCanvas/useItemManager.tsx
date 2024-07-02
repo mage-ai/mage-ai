@@ -155,15 +155,6 @@ export default function useItemManager({
           },
         }) as any,
       });
-    } else if ([ItemTypeEnum.OUTPUT].includes(type)) {
-      const node = { ...item };
-      const rect = itemRef.current.getBoundingClientRect() as RectType;
-      node.rect.width = rect.width;
-      node.rect.height = rect.height;
-      dispatchAppEvent(CustomAppEventEnum.EXECUTION_OUTPUT_NODE_MOUNTED, {
-        event: convertEvent({}, { itemRef }),
-        node,
-      });
     }
   }
 

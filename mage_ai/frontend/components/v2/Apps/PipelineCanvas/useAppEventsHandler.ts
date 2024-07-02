@@ -1,7 +1,7 @@
 import update from 'immutability-helper';
 import { CustomAppEvent as CustomAppEventType, SubscriberType, SubscriptionType } from './interfaces';
 import { CustomAppEventEnum } from './enums';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ClientEventType } from '@mana/shared/interfaces';
 import BlockType from '@interfaces/BlockType';
 import { NodeItemType, NodeType } from '@components/v2/Canvas/interfaces';
@@ -51,9 +51,11 @@ export function convertEvent(event: MouseEvent, opts?: {
   }) as ClientEventType;
 }
 
+type SubscriptionsType = Record<string | CustomAppEventEnum, SubscriptionType['handler']>;
+
 export default function useAppEventsHandler(
   subscriber: SubscriberType,
-  subscriptions?: Record<string | CustomAppEventEnum, SubscriptionType['handler']>,
+  subscriptionsArg?: SubscriptionsType,
 ): {
   convertEvent: (event: MouseEvent | any, opts?: {
     app?: AppConfigType;
@@ -66,7 +68,9 @@ export default function useAppEventsHandler(
   }) => ClientEventType;
   dispatchAppEvent: (type: CustomAppEventEnum, data: CustomAppEvent['detail']) => void;
   managerRef: React.MutableRefObject<SubscriberType>;
+  subscribe?: (subscriptions: SubscriptionsType) => void;
 } {
+  const [subscriptions, setSubscriptions] = useState<SubscriptionsType>(subscriptionsArg ?? {});
   const managerRef = useRef(subscriber);
   const subscriptionsRef = useRef<Record<string | CustomAppEventEnum, SubscriptionType['handler']>>({} as any);
 
@@ -108,11 +112,12 @@ export default function useAppEventsHandler(
       });
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [subscriptions]);
 
   return {
     convertEvent,
     dispatchAppEvent,
     managerRef,
+    subscribe: setSubscriptions,
   };
 }

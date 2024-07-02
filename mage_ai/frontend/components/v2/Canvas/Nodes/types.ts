@@ -28,7 +28,7 @@ export type DraggableType = {
   canDrag?: (item: DragItem) => boolean;
   draggable?: boolean;
   draggingNode?: NodeItemType;
-  itemRef?: React.RefObject<HTMLDivElement>;
+  nodeRef?: React.RefObject<HTMLDivElement>;
 } & DragAndDropHandlersType;
 
 export type DroppableType = {

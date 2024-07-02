@@ -51,7 +51,7 @@ interface BaseItem {
 
 export interface OutputNodeType extends DragItem {
   events?: EventStreamType[];
-  process?: ProcessDetailsType | { message: string };
+  process?: ProcessDetailsType | { message: string, message_request_uuid: string };
 }
 
 export interface DragItem extends BaseItem {

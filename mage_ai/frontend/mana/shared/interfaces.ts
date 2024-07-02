@@ -75,7 +75,8 @@ export interface EventOperationOptionsType {
     layoutConfig?: LayoutConfigType;
     level?: number;
     process?: {
-      message?: string;
+      message: string;
+      message_request_uuid: string;
     };
     rect?: {
       height?: number;

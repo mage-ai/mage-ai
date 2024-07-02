@@ -71,11 +71,7 @@ export const BlockNodeWrapper: React.FC<BlockNodeWrapperProps & NodeWrapperProps
 
   const { executeCode, setContainer } = useExecutable(block?.uuid, String(node?.id), registerConsumer);
 
-  const { convertEvent, dispatchAppEvent } = useAppEventsHandler(node, {
-    [CustomAppEventEnum.EXECUTION_OUTPUT_NODE_MOUNTED]: (event: CustomAppEvent) => {
-      setContainer(event.detail.event.operationTarget as React.RefObject<HTMLDivElement>);
-    },
-  });
+  const { convertEvent, dispatchAppEvent, subscribe } = useAppEventsHandler(node);
 
   function submitCodeExecution(event: React.MouseEvent<HTMLElement>) {
     submitEventOperation(
@@ -87,6 +83,16 @@ export const BlockNodeWrapper: React.FC<BlockNodeWrapperProps & NodeWrapperProps
             return;
           }
 
+          const [process, handler] = executeCode(message, {
+            future: true,
+          });
+          subscribe({
+            [process.message_request_uuid]: (event: CustomAppEvent) => {
+              setContainer(event.detail.event.operationTarget as React.RefObject<HTMLDivElement>);
+              handler();
+            },
+          })
+
           dispatchAppEvent(CustomAppEventEnum.CODE_EXECUTION_SUBMITTED, {
             block,
             event: convertEvent(event, {
@@ -95,9 +101,7 @@ export const BlockNodeWrapper: React.FC<BlockNodeWrapperProps & NodeWrapperProps
             node,
             options: {
               kwargs: {
-                process: {
-                  message,
-                },
+                process,
               },
             },
           });
@@ -118,7 +122,7 @@ export const BlockNodeWrapper: React.FC<BlockNodeWrapperProps & NodeWrapperProps
             onStart: () => {
               // set loading
             },
-            onSuccess: ({ data: { browser_item: item } }: { browser_item: FileType }) => {
+            onSuccess: ({ data: { browser_item: item } }: { data: { browser_item: FileType } }) => {
               updateFileCache({ client: item });
               submitExecuteCode(item.content);
             },
