@@ -1,4 +1,5 @@
 import OutputNode from './CodeExecution/OutputNode';
+import { formatNumberToDuration } from '@utils/string';
 import { getNewUUID } from '@utils/string';
 import { areEqual, areEqualApps } from './equals'
 import PipelineType from '@interfaces/PipelineType';
@@ -63,6 +64,9 @@ export const BlockNodeWrapper: React.FC<any> = ({
   useRegistration: ExecutionManagerType['useRegistration'];
 }) => {
   const buttonBeforeRef = useRef<HTMLDivElement>(null);
+  const timerStatusRef = useRef(null);
+  const timeoutRef = useRef(null);
+
   const nodeRef = useRef(null);
   const outputRef = useRef(null);
   const portElementRefs = useRef({});
@@ -99,6 +103,8 @@ export const BlockNodeWrapper: React.FC<any> = ({
           onMessage: (event: EventStreamType) => {
             if (executionDone(event)) {
               buttonBeforeRef?.current?.classList.remove(stylesButton.loading);
+              nodeRef?.current?.classList?.remove(styles.executing);
+              clearTimeout(timeoutRef.current);
             }
           },
           onOpen: handleOpen,
@@ -134,6 +140,27 @@ export const BlockNodeWrapper: React.FC<any> = ({
       });
       outputRef?.current?.classList?.add(stylesOutput.executed);
       buttonBeforeRef?.current?.classList?.add(stylesButton.loading);
+      nodeRef?.current?.classList?.add(styles.executing);
+
+      let loops = 0;
+      const now = Number(new Date());
+      const updateTimerStatus = () => {
+        let diff = (Number(new Date()) - now) / 1000;
+        if (loops >= 600) {
+          diff = Math.round(diff);
+        }
+
+        if (timerStatusRef?.current) {
+          timerStatusRef.current.innerText =
+            formatNumberToDuration(diff);
+        }
+        loops++;
+        timeoutRef.current = setTimeout(
+          updateTimerStatus,
+          diff <= 60 * 1000 && loops <= 60 * 10 ? 100 : 1000,
+        );
+      };
+      updateTimerStatus();
     };
 
     if (getCode()?.length >= 1) {
@@ -205,6 +232,7 @@ export const BlockNodeWrapper: React.FC<any> = ({
     <BlockNode
       block={block}
       buttonBeforeRef={buttonBeforeRef}
+      timerStatusRef={timerStatusRef}
       draggable={draggable}
       handlers={draggingHandlers}
       node={node}
@@ -229,13 +257,13 @@ export const BlockNodeWrapper: React.FC<any> = ({
   const outputNode = useMemo(() => {
     if (!active) return;
     const outputRect = {
-      height: rect.height,
-      left: rect.left,
-      top: rect.top + rect.height,
-      width: rect.width,
+      height: (rect.height ?? 0),
+      left: (rect.left ?? 0),
+      top: (rect.top ?? 0) + (rect.height ?? 0),
+      width: (rect.width ?? 0),
     };
-    outputRect.height += 1.2 * outputRect.height;
-    outputRect.width += 1.2 * outputRect.width;
+    outputRect.height += 1.2 * (outputRect.height ?? 0);
+    outputRect.width += 1.2 * (outputRect.width ?? 0);
 
     return (
       <OutputNode

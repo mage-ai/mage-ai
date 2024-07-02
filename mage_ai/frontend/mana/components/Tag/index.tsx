@@ -5,9 +5,12 @@ import { PaddingVerticalEnum } from '@mana/themes/interactive';
 import { baseXs } from '../../styles/typography';
 
 type StyleProps = {
+  className?: string;
   inverted?: boolean;
   passthrough?: boolean;
   secondary?: boolean;
+  statusVariant?: boolean;
+  style?: React.CSSProperties;
 };
 
 const TagStyled = styled.div<StyleProps>`
@@ -29,8 +32,21 @@ const TagStyled = styled.div<StyleProps>`
   pointer-events: ${({ passthrough }) => (passthrough ? 'inherit' : 'auto')};
 `;
 
-function Tag({ children, ...props }: { children: React.ReactNode | string | number } & StyleProps) {
-  return <TagStyled {...props}>{children}</TagStyled>;
+const StatusTag = styled.div`
+  align-items: center;
+  background-color: var(--colors-green);
+  border-radius: 8px;
+  color: var(--fonts-color-text-inverted);
+  display: inline-flex;
+  font-family: var(--fonts-family-base-semibold);
+  font-size: var(--fonts-size-xs);
+  justify-content: center;
+  padding: 6px;
+`
+
+function Tag({ children, statusVariant, ...props }: { children: React.ReactNode | string | number } & StyleProps, ref: React.Ref<HTMLDivElement>) {
+  const El = statusVariant ? StatusTag : TagStyled;
+  return <El {...props} ref={ref}>{children}</El>;
 }
 
-export default Tag;
+export default React.forwardRef(Tag);

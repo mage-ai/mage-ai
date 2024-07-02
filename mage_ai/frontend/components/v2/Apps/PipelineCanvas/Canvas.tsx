@@ -483,6 +483,8 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
                   top,
                   width,
                 }}
+                useExecuteCode={useExecuteCode}
+                useRegistration={useRegistration}
               />
             );
           })}

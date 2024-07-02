@@ -271,8 +271,6 @@ export default function useExecutionManager({
       }
 
       channelsRef.current[channel].streams[stream].consumers[consumer] = { options };
-
-      console.log('SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSss', channelsRef.current)
     };
 
     const unsubscribe = (consumer: string) => {
@@ -337,7 +335,7 @@ export default function useExecutionManager({
     channelsRef?.current?.[channel]?.streams[stream]?.options?.onMessage?.(eventData);
 
     const consumers = channelsRef?.current?.[channel]?.streams[stream]?.consumers;
-    console.log('!!!!!!!!!!!!!!!!!!!!!!!!!!!', stream, channelsRef?.current?.[channel]?.streams)
+
     Object.values(consumers ?? {}).forEach(({ options }) => {
       options?.onMessage?.(eventData);
     });

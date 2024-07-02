@@ -14,6 +14,7 @@ import useApp from '../../../Apps/Editor/useApp';
 import useExecutable from '../useExecutable';
 import { DEBUG } from '@components/v2/utils/debug';
 import { DragAndDropType } from '../types';
+import OutputGroups from '../CodeExecution/OutputGroups';
 import { EditorContainerStyled } from './index.style';
 import { ExecutionManagerType } from '../../../ExecutionManager/interfaces';
 import { Minimize, Chat, BlockGenericV2, PlayButtonFilled } from '@mana/icons';
@@ -35,14 +36,20 @@ const PADDING_HORIZONTAL = 16;
 
 type NodeType = {
   blocks: BlockType[];
+  index?: number;
+  useExecuteCode: ExecutionManagerType['useExecuteCode'];
+  useRegistration: ExecutionManagerType['useRegistration'];
 };
 
 const DraggableAppNode: React.FC<NodeType & CanvasNodeType> = ({
   draggable,
   handlers,
   blocks,
+  index = 0,
   node,
   rect,
+  useExecuteCode,
+  useRegistration,
 }) => {
   const fetchDetailCountRef = useRef(0);
   const nodeRef = useRef<HTMLDivElement>(null);
@@ -51,23 +58,26 @@ const DraggableAppNode: React.FC<NodeType & CanvasNodeType> = ({
   const { phaseRef } = useDispatchMounted(node, nodeRef);
 
   const app = useMemo(() => (node as AppNodeType)?.app, [node]);
-
-  const renderRef = useRef(0);
-  DEBUG.editor.node &&
-    console.log(
-      '[DraggableAppNode] render',
-      app?.status,
-      renderRef.current++,
-      phaseRef.current,
-      node,
-    );
-
   const [asideBeforeOpen, setAsideBeforeOpen] = React.useState(false);
   const [asideAfterOpen, setAsideAfterOpen] = React.useState(false);
 
-  const block = blocks?.[index];
+  const renderRef = useRef(0);
+  DEBUG.editor.node && console.log(
+    '[DraggableAppNode] render',
+    app?.status,
+    renderRef.current++,
+    phaseRef.current,
+    node,
+  );
+
+  const block = blocks?.[index] ?? node?.block;
   const { configuration } = block ?? {};
   const { file } = configuration ?? {};
+
+  const {
+    executeCode,
+  } = useExecuteCode(undefined, block.uuid);
+  // const { subscribe, unsubscribe } = useRegistration(undefined, block.uuid);
 
   const appOptions = {
     configurations: {
@@ -113,8 +123,6 @@ const DraggableAppNode: React.FC<NodeType & CanvasNodeType> = ({
     saveCurrentContent,
     stale,
   } = toolbars ?? {} as any;
-
-  const { containerRef, executeCode } = useExecutable(block?.uuid, String(node?.id), registerConsumer);
 
   useEffect(() => {
     if (fetchDetailCountRef.current === 0 && file?.path) {
@@ -411,7 +419,7 @@ const DraggableAppNode: React.FC<NodeType & CanvasNodeType> = ({
             </Grid>
           )}
 
-          <Grid ref={containerRef} rowGap={8} />
+          <OutputGroups block={block} node={node} useRegistration={useRegistration} />
         </Grid>
       </div >
     </NodeWrapper>

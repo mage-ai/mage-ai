@@ -34,7 +34,7 @@
     }
 
     .display-if-loading {
-      display: auto;
+      display: block;
     }
     .display-ifnot-loading {
       display: none;
@@ -48,6 +48,16 @@
     }
   }
 
+  &.executing {
+    .display-if-executing {
+      display: block;
+    }
+  }
+
+  .display-if-executing {
+    display: none;
+  }
+
   .show-ifnot-loading {
     @include show;
   }
@@ -59,7 +69,7 @@
     display: none;
   }
   .display-ifnot-loading {
-    display: auto;
+    display: block;
   }
 
   .loader {

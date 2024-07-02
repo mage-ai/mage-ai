@@ -1,4 +1,5 @@
 import Aside from './Blocks/Aside';
+import Tag from '@mana/components/Tag';
 import Badge from '@mana/elements/Badge';
 import BlockType from '@interfaces/BlockType';
 import Circle from '@mana/elements/Circle';
@@ -26,12 +27,14 @@ import { handleClickGroupMenu } from './utils';
 import { isEmptyObject } from '@utils/hash';
 import { buildEvent } from './utils';
 import { useMemo } from 'react';
+import { zIndex } from 'styled-system';
 
 type BlockNodeProps = {
   block: BlockType | PipelineExecutionFrameworkBlockType;
   buttonBeforeRef?: React.RefObject<HTMLDivElement>;
   collapsed?: boolean;
   draggable?: boolean;
+  timerStatusRef?: React.RefObject<HTMLDivElement>;
   node: NodeItemType;
   nodeRef: React.RefObject<HTMLDivElement>;
   onMount?: (port: PortType, portRef: React.RefObject<HTMLDivElement>) => void;
@@ -46,6 +49,7 @@ export function BlockNode({
   draggable,
   handlers,
   node,
+  timerStatusRef,
   nodeRef,
   onMount,
   submitCodeExecution,
@@ -335,13 +339,29 @@ export function BlockNode({
   );
 
   return (
-    <GradientContainer
-      // Only use gradient borders when block selected
-      className={[
-        ...classNames,
-      ]?.filter(Boolean)?.join(' ')}
-    >
-      {main}
-    </GradientContainer>
+    <>
+      <Tag
+        className={stylesBlockNode['display-if-executing']}
+        ref={timerStatusRef}
+        statusVariant
+        style={{
+          left: -10,
+          position: 'absolute',
+          top: -10,
+          zIndex: 7,
+        }}
+      >
+        Hello
+      </Tag >
+      <GradientContainer
+        // Only use gradient borders when block selected
+        className={[
+          ...classNames,
+        ]?.filter(Boolean)?.join(' ')}
+        style={{ position: 'relative' }}
+      >
+        {main}
+      </GradientContainer>
+    </>
   );
 }

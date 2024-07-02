@@ -18,6 +18,7 @@ type InnerProps = {
 
 type OutterProps = {
   gradientBackground?: string;
+  style?: React.CSSProperties;
 };
 
 const GradientContainerOutter = withStyles<OutterProps>(styles, {
@@ -36,6 +37,7 @@ export function GradientContainer({
   children,
   className,
   direction = 'to top right',
+  style,
 }: OutterProps &
   InnerProps & {
     borderColors?: string[];
@@ -51,6 +53,7 @@ export function GradientContainer({
           ? [direction.replace(' ', '-'), ...(borderColors || [])].join('-')
           : undefined
       }
+      style={style}
     >
       {/* @ts-ignore */}
       <GradientContainerInner backgroundColor={backgroundColor}>{children}</GradientContainerInner>
