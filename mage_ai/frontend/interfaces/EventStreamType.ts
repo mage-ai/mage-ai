@@ -29,9 +29,9 @@ export enum ExecutionStatusEnum {
 }
 
 export enum ServerConnectionStatusType {
-  CLOSED = 'closed',
-  CONNECTING = 'connecting',
-  OPEN = 'open',
+  CLOSED = 'closed', // 2
+  CONNECTING = 'connecting', // 0
+  OPEN = 'open', // 1
   RECONNECTING = 'reconnecting',
 }
 
@@ -69,6 +69,13 @@ export default interface EventStreamType {
   result: ExecutionResultType;
   type: EventStreamTypeEnum;
 }
+
+export const ReadyStateToServerConnectionStatus = {
+  [EventSourceReadyState.CLOSED]: ServerConnectionStatusType.CLOSED,
+  [EventSourceReadyState.CONNECTING]: ServerConnectionStatusType.CONNECTING,
+  [EventSourceReadyState.OPEN]: ServerConnectionStatusType.OPEN,
+}
+
 
 // {
 //   "event_uuid": "b442e0cca7da42c1818e1a45978f8b2e",

@@ -6,12 +6,11 @@ import EventStreamType, {
 type ExecuteCodeResult = [ProcessDetailsType, () => void];
 
 export interface ConsumerOperations {
-  closeConnection: () => void;
-  connect: () => void;
   executeCode: (message: string, opts?: {
     connect?: boolean;
     future?: boolean;
   }) => ExecuteCodeResult;
+  unsubscribe: () => void;
 }
 
 export interface EventSourceHandlers {
@@ -21,6 +20,11 @@ export interface EventSourceHandlers {
 }
 
 export interface ExecutionManagerType {
-  registerConsumer: (uuid: string, consumerUUID: string, options?: EventSourceHandlers) => ConsumerOperations;
+  registerConsumer: (
+    channel: string,
+    stream: string,
+    consumer: string,
+    options?: EventSourceHandlers,
+  ) => ConsumerOperations;
   teardown: () => void;
 }
