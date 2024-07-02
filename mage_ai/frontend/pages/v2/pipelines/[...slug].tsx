@@ -9,12 +9,22 @@ const Builder = dynamic(() => import('@components/v2/Layout/Pipelines/Detail/Bui
 const Detail = dynamic(() => import('@components/v2/Layout/Pipelines/Detail'), { ssr: false });
 
 function PipelineDetailPage({ slug }: { slug: string[] }) {
-  const { registerConsumer, teardown } = useExecutionManager();
+  const {
+    teardown,
+    useExecuteCode: useExecuteCodeBase,
+    useRegistration: useRegistrationBase,
+  } = useExecutionManager();
 
-  useEffect(() => {
-    return () => teardown();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  function useExecuteCode(channel: string = slug.join('/'), stream: string = '') {
+    return useExecuteCodeBase(channel, stream);
+  }
+
+  function useRegistration(channel: string = slug.join('/'), stream: string = '') {
+    return useRegistrationBase(channel, stream);
+  }
+
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => () => teardown(), []);
 
   if (slug?.length >= 1) {
     const uuid: string = slug[0];
@@ -30,7 +40,8 @@ function PipelineDetailPage({ slug }: { slug: string[] }) {
       <Layout
         // @ts-ignore
         frameworkUUID={frameworkUUID ?? undefined}
-        registerConsumer={registerConsumer}
+        useExecuteCode={useExecuteCode}
+        useRegistration={useRegistration}
         uuid={uuid ?? undefined}
       />
     );

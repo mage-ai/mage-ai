@@ -1,40 +1,66 @@
 import BlockType from '@interfaces/BlockType';
-import React, { useRef, useMemo } from 'react';
-import styles from '@styles/scss/components/Canvas/Nodes/OutputNode.module.scss';
-import stylesBlockNode from '@styles/scss/components/Canvas/Nodes/BlockNode.module.scss';
+import Grid from '@mana/components/Grid';
+import ExecutionOutput from './ExecutionOutput';
+import React, { useRef, useMemo, useEffect, useState } from 'react';
+import stylesOutput from '@styles/scss/components/Canvas/Nodes/OutputNode.module.scss';
+import styles from '@styles/scss/components/Canvas/Nodes/BlockNode.module.scss';
+import stylesBuilder from '@styles/scss/apps/Canvas/Pipelines/Builder.module.scss';
 import { CanvasNodeType } from '../interfaces';
 import { NodeWrapper } from '../NodeWrapper';
 import { OutputNodeType } from '../../interfaces';
 import { areEqual } from '../equals';
 import { draggableProps } from '../draggable/utils';
 import { setupDraggableHandlers } from '../utils';
+import EventStreamType from '@interfaces/EventStreamType';
 
 type OutputNodeProps = {
-  children: React.ReactNode;
   node: OutputNodeType;
+  nodeRef: React.RefObject<HTMLDivElement>;
+  useRegistration: (channel: string, stream: string) => { subscribe: (consumer: string, opts?: any) => void };
 } & CanvasNodeType;
 
 const OutputNode: React.FC<OutputNodeProps> = ({
   draggable,
-  children,
   handlers,
   node,
+  nodeRef,
   rect,
+  useRegistration,
 }: OutputNodeProps) => {
-  const nodeRef = useRef<HTMLDivElement>(null);
-  const draggingHandlers = setupDraggableHandlers(
-    handlers, node, nodeRef, node.block,
-  );
+  const block = node.block;
+  const [eventsGrouped, setEventsGrouped] = useState<Record<string, Record<string, EventStreamType>>>({});
+  const { subscribe } = useRegistration(undefined, block.uuid);
+  const handleMessage = useRef((event: EventStreamType) => {
+    console.log('OMGGGGGGGGGGGGGGG', event)
+    setEventsGrouped((prev) => ({
+      ...prev,
+      [event.result.process.message_request_uuid]: {
+        ...(prev?.[event.result.process.message_request_uuid] ?? {}),
+        [event.event_uuid]: event,
+      },
+    }));
+  });
+
+  subscribe([node.id, 'output'].join(':'), {
+    onMessage: handleMessage.current,
+  });
+
+  const draggingHandlers = setupDraggableHandlers(handlers, node, nodeRef, block);
 
   const sharedProps = useMemo(() => draggableProps({
     classNames: [
-      styles.outputNodeContainer,
-      stylesBlockNode.ready,
-      stylesBlockNode.outputContainer,
+      stylesOutput.outputNodeContainer,
+      styles.outputContainer,
+      styles.ready,
     ],
     draggable,
+    excludeClassNames: [
+      styles.container,
+    ],
     node,
   }), [draggable, node]);
+
+  console.log(eventsGrouped)
 
   return (
     <NodeWrapper
@@ -44,7 +70,14 @@ const OutputNode: React.FC<OutputNodeProps> = ({
       nodeRef={nodeRef}
       rect={rect}
     >
-      {children}
+      <Grid rowGap={8}>
+        {Object.keys(eventsGrouped ?? {})?.sort()?.map((mrUUID: string) => (
+          <ExecutionOutput
+            events={Object.values(eventsGrouped?.[mrUUID] ?? {}).sort()}
+            key={mrUUID}
+          />
+        ))}
+      </Grid >
     </NodeWrapper>
   );
 }

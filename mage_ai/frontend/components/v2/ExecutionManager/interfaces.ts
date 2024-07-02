@@ -19,12 +19,22 @@ export interface EventSourceHandlers {
   onOpen?: (status: ServerConnectionStatusType, event?: Event) => void;
 }
 
+export interface ExecuteCodeHook {
+  executeCode: (message: string, payload?: {
+    message_request_uuid?: string;
+    source?: string;
+    stream?: string;
+  }) => void;
+  messageRequestUUID: string;
+}
+
+export interface RegistrationHook {
+  subscribe: (consumer: string, handlers: EventSourceHandlers) => void;
+  unsubscribe: (consumer: string) => void;
+}
+
 export interface ExecutionManagerType {
-  registerConsumer: (
-    channel: string,
-    stream: string,
-    consumer: string,
-    options?: EventSourceHandlers,
-  ) => ConsumerOperations;
+  useExecuteCode: (channel: string, stream?: string) => ExecuteCodeHook;
+  useRegistration: (channel: string, stream?: string) => RegistrationHook;
   teardown: () => void;
 }

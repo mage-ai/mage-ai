@@ -54,12 +54,16 @@ class ProcessBase:
         message: str,
         *args,
         message_request_uuid: Optional[str] = None,
+        source: Optional[str] = None,
+        stream: Optional[str] = None,
         **kwargs,
     ):
         self.message = message
         self.message_request_uuid = message_request_uuid
         self.message_uuid = uuid4().hex
         self.result = None
+        self.source = source
+        self.stream = stream
         self.stop_event = None
         self.timestamp = None
         self.uuid = uuid
@@ -87,6 +91,8 @@ class ProcessBase:
             message=self.message,
             message_request_uuid=self.message_request_uuid,
             message_uuid=self.message_uuid,
+            source=self.source,
+            stream=self.stream,
             pid=self.pid,
             timestamp=self.timestamp,
             uuid=self.uuid,

@@ -8,6 +8,7 @@ export function draggableProps({
   draggable,
   droppable,
   emptyGroup,
+  excludeClassNames,
   requiredGroup,
   node,
   loading,
@@ -16,6 +17,7 @@ export function draggableProps({
   draggable?: boolean;
   droppable?: boolean;
   emptyGroup?: boolean;
+  excludeClassNames?: string[];
   requiredGroup?: boolean;
   node: NodeItemType;
   loading?: boolean;
@@ -31,9 +33,9 @@ export function draggableProps({
       styles.container,
       requiredGroup && styles.requiredGroup,
       ...(classNames ?? []),
-    ]?.filter(Boolean)?.join(' '),
-    role: ElementRoleEnum.BLOCK,
+    ]?.filter(cn => Boolean(cn) && (!excludeClassNames || !excludeClassNames.includes(cn)))?.join(' '),
     draggable,
     droppable,
+    role: ElementRoleEnum.BLOCK,
   };
 }

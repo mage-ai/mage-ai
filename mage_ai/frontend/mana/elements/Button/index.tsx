@@ -21,6 +21,7 @@ type ButtonStyleProps = {
 type ButtonProps = {
   asLink?: boolean;
   className?: string;
+  containerRef?: React.RefObject<HTMLDivElement>;
   id?: string;
   loading?: boolean;
   loadingColorName?: string;
@@ -66,12 +67,14 @@ const AStyled = styled(motion.a) <ButtonStyleProps>`
 `;
 
 function Button({
+  Icon,
+  IconAfter,
   anchor,
   asLink,
   basic,
   children,
+  containerRef,
   href,
-  target,
   loading,
   loadingColorName,
   motion,
@@ -81,9 +84,8 @@ function Button({
   small,
   style,
   tag,
+  target,
   wrap,
-  Icon,
-  IconAfter,
   ...props
 }: ButtonProps) {
   const HTMLTag = anchor || asLink ? AStyled : ButtonStyled;
@@ -103,11 +105,14 @@ function Button({
         styles.container,
         loading && styles.loading,
       ].filter(Boolean).join(' ')}
+      ref={containerRef}
       role={ElementRoleEnum.BUTTON}
     >
       <div className={[styles.overlay].filter(Boolean).join(' ')} />
       <div className={[styles.loader].filter(Boolean).join(' ')}>
-        <Loading circle colorName={loadingColorName} />
+        <Loading circle colorName={loadingColorName === 'blue'
+          ? 'white'
+          : loadingColorName} />
       </div>
 
       {/* @ts-ignore */}

@@ -24,6 +24,7 @@ export enum EventStreamTypeEnum {
 export enum ExecutionStatusEnum {
   ERROR = 'error',
   FAILURE = 'failure',
+  READY = 'ready',
   RUNNING = 'running',
   SUCCESS = 'success',
 }
@@ -46,6 +47,8 @@ export interface ProcessDetailsType {
   message_request_uuid: string;
   message_uuid: string;
   pid: number;
+  source?: string;
+  stream?: string;
   timestamp: number | null;
   uuid: string;
 }

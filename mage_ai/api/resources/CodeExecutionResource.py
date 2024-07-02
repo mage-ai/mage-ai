@@ -15,6 +15,8 @@ class CodeExecutionResource(GenericResource):
 
         message = payload.get('message', '')
         message_request_uuid = payload.get('message_request_uuid')
+        source = payload.get('source')
+        stream = payload.get('stream')
         num_processes = payload.get('num_processes', None)
         uuid = payload.get('uuid')
 
@@ -27,6 +29,8 @@ class CodeExecutionResource(GenericResource):
         process = kernel.run(
             message,
             message_request_uuid=message_request_uuid,
+            source=source,
+            stream=stream,
             timestamp=now,
         )
 

@@ -3,6 +3,7 @@
 @use './mixins' as *;
 
 .blockNode {
+  border-color: red;
   @include borders.border-colors();
 
   height: inherit;

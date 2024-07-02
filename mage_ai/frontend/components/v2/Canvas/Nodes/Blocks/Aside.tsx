@@ -1,9 +1,10 @@
+import React from 'react';
 import Grid from '@mana/components/Grid';
 import Button from '@mana/elements/Button';
 
 import { AsideType } from '../types';
 
-export default function Aside({ Icon, baseColorName, className, onClick }: AsideType) {
+function Aside({ Icon, baseColorName, buttonRef, className, onClick }: AsideType) {
   const icon = Icon ? <Icon inverted={baseColorName === 'green'} size={14} /> : null;
   const el = (
     <Grid
@@ -26,6 +27,7 @@ export default function Aside({ Icon, baseColorName, className, onClick }: Aside
       Icon={() => el}
       basic
       className={className}
+      containerRef={buttonRef}
       loadingColorName={baseColorName}
       onClick={(event: React.MouseEvent<HTMLElement, MouseEvent>) => {
         event.preventDefault();
@@ -37,3 +39,5 @@ export default function Aside({ Icon, baseColorName, className, onClick }: Aside
     el
   );
 }
+
+export default React.forwardRef(Aside);

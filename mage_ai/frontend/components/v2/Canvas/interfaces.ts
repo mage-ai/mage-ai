@@ -26,7 +26,7 @@ export interface RectType {
   children?: RectType[];
   diff?: RectType;
   height?: number;
-  id?: number | string;
+  id?: string;
   inner?: Record<string, RectType>;
   left: number;
   offset?: OffsetType;
@@ -41,7 +41,7 @@ export interface RectType {
 }
 
 interface BaseItem {
-  id: number | string;
+  id: string;
   level?: number;
   status?: ItemStatusEnum;
   subtype?: PortSubtypeEnum;

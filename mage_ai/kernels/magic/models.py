@@ -25,6 +25,7 @@ class ProcessDetails(BaseDataClass):
     message_request_uuid: Optional[str] = None
     message_uuid: Optional[str] = None
     pid: Optional[int] = None
+    source: Optional[str] = None
     timestamp: Optional[int] = None
     uuid: Optional[str] = None
 

@@ -3,8 +3,9 @@ export const DEBUG = {
   apps: false,
   codeExecution: {
     manager: true,
-    node: true,
-    outputManager: true,
+    node: false,
+    output: true,
+    outputManager: false,
   },
   dragging: false,
   dropping: false,
@@ -18,7 +19,7 @@ export const DEBUG = {
   layout: false,
   layoutManager: false,
   node: {
-    block: true,
+    block: false,
   },
   rects: false,
   rendering: false,

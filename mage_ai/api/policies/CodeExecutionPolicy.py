@@ -38,6 +38,8 @@ CodeExecutionPolicy.allow_write(
     [
         'message',
         'message_request_uuid',
+        'source',
+        'stream',
         'timestamp',
         'uuid',
     ],

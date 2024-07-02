@@ -11,7 +11,7 @@ import { createPortsByItem } from './utils/ports';
 import { useEffect, useRef, useState } from 'react';
 import { useMutate } from '@context/APIMutation';
 import { setPipelineBlock } from './ModelManager/utils';
-import BlockType from '@interfaces/BlockType';
+import BlockType, { BlockTypeEnum } from '@interfaces/BlockType';
 import { MutatationType, MutateFunctionArgsType } from '@api/interfaces';
 import useDebounce from '@utils/hooks/useDebounce';
 import { ClientEventType } from '@mana/shared/interfaces';
@@ -25,6 +25,7 @@ type ModelManagerProps = {
   itemIDsByLevelRef: React.MutableRefObject<string[][]>;
   pipelineUUID: string;
   executionFrameworkUUID: string;
+  setOutputIDs: React.Dispatch<React.SetStateAction<string[]>>;
 };
 
 export default function useModelManager({
@@ -305,7 +306,9 @@ export default function useModelManager({
           nodes: items,
         });
 
-        setOutputIDs([...new Set(items?.map(({ block }) => block.uuid))]);
+        setOutputIDs([...new Set(items?.reduce((acc, { block }) => [
+          BlockTypeEnum.GROUP, BlockTypeEnum.PIPELINE
+        ].includes(block.type) ? acc : acc.concat(block.uuid), []))]);
 
         resolve(items); // Resolve the promise when the function completes
       } catch (error) {

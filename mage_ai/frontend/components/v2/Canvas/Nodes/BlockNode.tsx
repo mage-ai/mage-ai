@@ -9,7 +9,7 @@ import Loading from '@mana/components/Loading';
 import PanelRows from '@mana/elements/PanelRows';
 import TemplateConfigurations from './Blocks/TemplateConfigurations';
 import Text from '@mana/elements/Text';
-import styles from '@styles/scss/components/Canvas/Nodes/BlockNode.module.scss';
+import stylesBlockNode from '@styles/scss/components/Canvas/Nodes/BlockNode.module.scss';
 import stylesGradient from '@styles/scss/elements/GradientContainer.module.scss';
 import { AddV2, Code, Grab, PipeIconVertical, PlayButtonFilled, Infinite } from '@mana/icons';
 import { AppTypeEnum, AppSubtypeEnum } from '../../Apps/constants';
@@ -29,6 +29,7 @@ import { useMemo } from 'react';
 
 type BlockNodeProps = {
   block: BlockType | PipelineExecutionFrameworkBlockType;
+  buttonBeforeRef?: React.RefObject<HTMLDivElement>;
   collapsed?: boolean;
   draggable?: boolean;
   node: NodeItemType;
@@ -40,6 +41,7 @@ type BlockNodeProps = {
 
 export function BlockNode({
   block,
+  buttonBeforeRef,
   collapsed,
   draggable,
   handlers,
@@ -55,7 +57,7 @@ export function BlockNode({
   const colorNames = blockColorNames(node)
   const borders = borderConfigs(node);
   const after: any = useMemo(() => ({
-    className: styles.showOnHover,
+    className: stylesBlockNode.showOnHover,
     ...(ItemTypeEnum.NODE === node?.type
       ? {
         Icon: draggable ? Grab : AddV2,
@@ -83,8 +85,10 @@ export function BlockNode({
         : StatusTypeEnum.EXECUTED === status
           ? 'green'
           : 'blue',
+    buttonRef: buttonBeforeRef,
+    className: stylesBlockNode.beforeButton,
     onClick: submitCodeExecution,
-  }), [status, submitCodeExecution]);
+  }), [buttonBeforeRef, status, submitCodeExecution]);
 
   const badge = useMemo(() => ItemTypeEnum.NODE === node?.type
     ? {
@@ -294,7 +298,7 @@ export function BlockNode({
     () => (
       <div
         className={[
-          styles.blockNode,
+          stylesBlockNode.blockNode,
         ]?.filter(Boolean)?.join(' ')}
       >
         <Grid templateRows="auto">
@@ -302,7 +306,7 @@ export function BlockNode({
             {badgeRow}
             {!badge && titleRow}
           </Grid>
-          <div className={styles.loader}>
+          <div className={stylesBlockNode.loader}>
             <Loading
               // colorName={colorNames?.hi}
               // colorNameAlt={colorNames?.md}

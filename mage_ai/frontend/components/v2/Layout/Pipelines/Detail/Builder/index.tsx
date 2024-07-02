@@ -10,7 +10,7 @@ import DetailLayout from '../DetailLayout';
 
 const Canvas = dynamic(() => import('../../../../Apps/PipelineCanvas'), { ssr: false });
 
-function PipelineBuilder({ frameworkUUID, registerConsumer, uuid }: PipelineDetailProps) {
+function PipelineBuilder({ frameworkUUID, uuid, ...props }: PipelineDetailProps) {
   return (
     <DetailLayout loadEditorServices>
       <div className={styles.container}>
@@ -21,9 +21,9 @@ function PipelineBuilder({ frameworkUUID, registerConsumer, uuid }: PipelineDeta
             <div />
 
             <Canvas
+              {...props}
               executionFrameworkUUID={frameworkUUID}
               pipelineUUID={uuid}
-              registerConsumer={registerConsumer}
             />
           </Grid>
 

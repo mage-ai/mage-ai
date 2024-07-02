@@ -1,14 +1,17 @@
 import OutputNode from './CodeExecution/OutputNode';
+import { getNewUUID } from '@utils/string';
 import { areEqual, areEqualApps } from './equals'
 import PipelineType from '@interfaces/PipelineType';
 import React from 'react';
 import styles from '@styles/scss/components/Canvas/Nodes/BlockNode.module.scss';
+import stylesButton from '@styles/scss/elements/Button/Button.module.scss';
+import stylesOutput from '@styles/scss/components/Canvas/Nodes/OutputNode.module.scss';
 import stylesBuilder from '@styles/scss/apps/Canvas/Pipelines/Builder.module.scss';
 import update from 'immutability-helper';
 import useAppEventsHandler, { CustomAppEvent, CustomAppEventEnum } from '../../Apps/PipelineCanvas/useAppEventsHandler';
 import useDispatchMounted from './useDispatchMounted';
-import useExecutable from './useExecutable';
-import useOutputManager, { OutputManagerProps, OutputManagerType } from './CodeExecution/useOutputManager';
+// import useExecutable from './useExecutable';
+import useOutputManager, { OutputManagerType } from './CodeExecution/useOutputManager';
 import { BlockNode } from './BlockNode';
 import { ClientEventType, EventOperationEnum, SubmitEventOperationType } from '@mana/shared/interfaces';
 import { ConfigurationType } from '@interfaces/PipelineExecutionFramework/interfaces';
@@ -22,14 +25,19 @@ import { createPortal } from 'react-dom';
 import { draggableProps } from './draggable/utils';
 import { getFileCache, isStale, updateFileCache } from '../../IDE/cache';
 import { handleClickGroupMenu } from './utils';
-import { onSuccess } from '@api/cleaner/utils/response';
+import { onError, onSuccess } from '@api/cleaner/utils/response';
 import { setNested } from '@utils/hash';
-import { ServerConnectionStatusType } from '@interfaces/EventStreamType';
+import EventStreamType, { ServerConnectionStatusType } from '@interfaces/EventStreamType';
 import { setupDraggableHandlers, buildEvent } from './utils';
 import { useEffect, useCallback, useState, useMemo, useRef } from 'react';
 import { WithOnMount } from '@mana/hooks/useWithOnMount';
+import { EventSourceHandlers, ConsumerOperations } from '../../ExecutionManager/interfaces';
+import { ExecutionManagerType } from '@components/v2/ExecutionManager/interfaces';
+import { executionDone } from '@components/v2/ExecutionManager/utils';
+
 export const BlockNodeWrapper: React.FC<any> = ({
   Wrapper,
+  active,
   appHandlersRef,
   draggable,
   droppable,
@@ -37,13 +45,29 @@ export const BlockNodeWrapper: React.FC<any> = ({
   node,
   onMountPort,
   rect,
-  registerConsumer,
   submitEventOperation,
+  useExecuteCode,
+  useRegistration,
+}: {
+  Wrapper: React.FC<any>,
+  active: boolean;
+  appHandlersRef: React.MutableRefObject<any>,
+  draggable: boolean;
+  droppable: boolean;
+  handlers: any;
+  node: NodeItemType | NodeType;
+  onMountPort: (port: PortType, portRef: React.RefObject<HTMLDivElement>) => void;
+  rect: RectType;
+  submitEventOperation: SubmitEventOperationType;
+  useExecuteCode: ExecutionManagerType['useExecuteCode'];
+  useRegistration: ExecutionManagerType['useRegistration'];
 }) => {
+  const buttonBeforeRef = useRef<HTMLDivElement>(null);
   const nodeRef = useRef(null);
+  const outputRef = useRef(null);
   const portElementRefs = useRef({});
-
-  const [connectionStatus, setConnectionStatus] = useState<ServerConnectionStatusType | null>(null);
+  const connectionErrorRef = useRef(null);
+  const connectionStatusRef = useRef<ServerConnectionStatusType>(null);
   const [portalMount, setPortalMount] = useState<HTMLElement | null>(null);
 
   // Attributes
@@ -56,6 +80,11 @@ export const BlockNodeWrapper: React.FC<any> = ({
   const emptyGroup = isGroup && (node as NodeType)?.items?.length === 0;
 
   // Hooks
+  const {
+    executeCode,
+  } = useExecuteCode(undefined, block.uuid);
+  const { subscribe, unsubscribe } = useRegistration(undefined, block.uuid);
+
   useDispatchMounted(node, nodeRef, {
     onMount: () => {
       const element = document.getElementById(`output-${uuid}`);
@@ -64,39 +93,57 @@ export const BlockNodeWrapper: React.FC<any> = ({
         return;
       }
 
+      if (active) {
+        subscribe(node.id, {
+          onError: handleError,
+          onMessage: (event: EventStreamType) => {
+            if (executionDone(event)) {
+              buttonBeforeRef?.current?.classList.remove(stylesButton.loading);
+            }
+          },
+          onOpen: handleOpen,
+        })
+      } else {
+        unsubscribe(node.id);
+      }
+
       setPortalMount(element);
     },
   });
   const draggingHandlers = setupDraggableHandlers(handlers, node, nodeRef, block);
-  const { connect, containerRef, executeCode } = useExecutable(uuid, node.id, registerConsumer, {
-    onError: handleError,
-    onOpen: handleOpen,
-  })
 
   // Methods
 
   function handleError(error: Event) {
-    console.error(error);
     DEBUG.node.block && console.log('[BlockNodeWrapper] connection.error:', error);
+    connectionErrorRef.current = error;
+    console.error('[BlockNodeWrapper] connection.error:', error);
   }
 
   function handleOpen(status: ServerConnectionStatusType) {
-    setConnectionStatus(status);
     DEBUG.node.block && console.log('[BlockNodeWrapper] connection.status:', status);
+    connectionStatusRef.current = status;
   }
 
   const getCode = useCallback(() => getFileCache(file?.path)?.client?.file?.content, [file]);
 
   const submitCodeExecution = useCallback((_event: React.MouseEvent<HTMLElement>) => {
+    const execute = () => {
+      executeCode(getCode(), {
+        source: node.id,
+      });
+      outputRef.current.classList.add(stylesOutput.executed);
+      buttonBeforeRef?.current?.classList.add(stylesButton.loading);
+    };
+
     if (getCode()?.length >= 1) {
-      executeCode(getCode());
+      execute();
     } else {
       appHandlersRef.current.browserItems.detail.mutate({
         id: file.path,
         onSuccess: (data: { browser_item: FileType }) => {
           updateFileCache({ client: data?.browser_item });
-          executeCode(getCode());
-          nodeRef.current.classList.add(styles.codeExecuted);
+          execute();
         },
       });
     }
@@ -129,7 +176,6 @@ export const BlockNodeWrapper: React.FC<any> = ({
     });
   }, [block, node, nodeRef, submitEventOperation]);
 
-
   const onMount = useCallback((port: PortType, portRef: React.RefObject<HTMLDivElement>) => {
     if (!(port?.id in portElementRefs.current)) {
       portElementRefs.current[port?.id] = {
@@ -158,6 +204,7 @@ export const BlockNodeWrapper: React.FC<any> = ({
   const blockNode = useMemo(() => (
     <BlockNode
       block={block}
+      buttonBeforeRef={buttonBeforeRef}
       draggable={draggable}
       handlers={draggingHandlers}
       node={node}
@@ -179,25 +226,28 @@ export const BlockNodeWrapper: React.FC<any> = ({
     updateBlock,
   ]);
 
-  const outputNode = useMemo(() => (
-    <OutputNode
-      {...sharedProps}
-      handlers={draggingHandlers}
-      node={node}
-      rect={{
-        height: rect.height,
-        left: rect.left,
-        top: rect.top + rect.width,
-        width: rect.width,
-      }}
-    >
-      <WithOnMount
-        onMount={connect}
-      >
-        <div ref={containerRef} />
-      </WithOnMount>
-    </OutputNode>
-  ), [containerRef, connect, sharedProps, draggingHandlers, node, rect]);
+  const outputNode = useMemo(() => {
+    if (!active) return;
+    const outputRect = {
+      height: rect.height,
+      left: rect.left,
+      top: rect.top + rect.height,
+      width: rect.width,
+    };
+    outputRect.height += 1.2 * outputRect.height;
+    outputRect.width += 1.2 * outputRect.width;
+
+    return (
+      <OutputNode
+        {...sharedProps}
+        handlers={draggingHandlers}
+        node={node}
+        nodeRef={outputRef}
+        rect={outputRect}
+        useRegistration={useRegistration}
+      />
+    );
+  }, [active, useRegistration, sharedProps, draggingHandlers, node, rect]);
 
   if (Wrapper) {
     return (

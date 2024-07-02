@@ -88,6 +88,8 @@ class Kernel:
         self,
         message: str,
         message_request_uuid: Optional[str] = None,
+        source: Optional[str] = None,
+        stream: Optional[str] = None,
         timestamp: Optional[float] = None,
     ) -> ProcessBase:
         now = datetime.utcnow().timestamp()
@@ -95,7 +97,10 @@ class Kernel:
         if is_debug():
             print('[Manager.start_processes]', now - (timestamp or 0))
 
-        process = Process(self.uuid, message, message_request_uuid=message_request_uuid)
+        process = Process(
+          self.uuid, message, message_request_uuid=message_request_uuid,
+          source=source, stream=stream
+        )
         if (
             self.pool is not None
             and self.read_queue is not None

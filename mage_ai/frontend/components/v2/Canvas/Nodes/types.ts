@@ -5,6 +5,7 @@ import { BadgeType } from '@mana/elements/Badge';
 import { ConnectionType, DragItem, NodeItemType } from '../interfaces';
 import { ClientEventType, EventOperationEnum, SubmitEventOperationType } from '@mana/shared/interfaces';
 import { CanvasNodeType } from './interfaces';
+import { ExecutionManagerType } from '../../ExecutionManager/interfaces';
 
 export type UpdateBlockRequestType = (event: ClientEventType | Event, key: string, value: any, opts?: {
   delay?: number;
@@ -42,6 +43,7 @@ export type DragAndDropType = DraggableType & DroppableType;
 export type AsideType = {
   Icon?: IconType;
   baseColorName?: string;
+  buttonRef: React.RefObject<HTMLDivElement>;
   className?: string;
   onClick?: (event: React.MouseEvent<HTMLElement>) => void;
 };
@@ -82,12 +84,15 @@ export type InteractionConfigType = {
 
 export type BlockNodeWrapperProps = {
   Wrapper?: React.FC<NodeWrapperProps>;
+  active?: boolean;
   collapsed?: boolean;
   droppable?: boolean;
   loading?: boolean;
   submitEventOperation: SubmitEventOperationType;
   selected?: boolean;
   version?: number | string;
+  useExecuteCode: ExecutionManagerType['useExecuteCode'];
+  useRegistration: ExecutionManagerType['useRegistration'];
 } & NodeWrapperProps & CanvasNodeType;
 
 export type SharedWrapperProps = BlockNodeWrapperProps & NodeWrapperProps;

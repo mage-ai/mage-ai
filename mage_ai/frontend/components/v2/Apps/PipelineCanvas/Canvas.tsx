@@ -33,6 +33,7 @@ import useAppManager from './useAppManager';
 import useAppEventsHandler, { CustomAppEvent, CustomAppEventEnum } from './useAppEventsHandler';
 import { DEBUG } from '@components/v2/utils/debug';
 import { ExecutionManagerType } from '@components/v2/ExecutionManager/interfaces';
+import BlockType from '@interfaces/BlockType';
 
 export type BuilderCanvasProps = {
   canvasRef: React.RefObject<HTMLDivElement>;
@@ -42,7 +43,6 @@ export type BuilderCanvasProps = {
   dropEnabled?: boolean;
   executionFrameworkUUID: string;
   pipelineUUID: string;
-  registerConsumer: ExecutionManagerType['registerConsumer'];
   removeContextMenu: RemoveContextMenuType;
   renderContextMenu: RenderContextMenuType;
   setDragEnabled: (value: boolean) => void;
@@ -50,6 +50,8 @@ export type BuilderCanvasProps = {
   setZoomPanDisabled: (value: boolean) => void;
   snapToGridOnDrop?: boolean;
   transformState: React.MutableRefObject<ZoomPanStateType>;
+  useExecuteCode: ExecutionManagerType['useExecuteCode'];
+  useRegistration: ExecutionManagerType['useRegistration'];
 };
 
 // To update and render new views:
@@ -64,7 +66,6 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
   dropEnabled,
   executionFrameworkUUID,
   pipelineUUID,
-  registerConsumer,
   removeContextMenu,
   renderContextMenu,
   setDragEnabled,
@@ -72,6 +73,8 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
   setZoomPanDisabled,
   snapToGridOnDrop = true,
   transformState,
+  useExecuteCode,
+  useRegistration,
 }: BuilderCanvasProps) => {
   DEBUG.rendering && console.log('Rendering Canvas');
 
@@ -99,7 +102,6 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
   });
   const [outputIDs, setOutputIDs] = useState<string[]>([]);
   const [itemRects, _setItemRects] = useState<FlatItemType[]>([]);
-  const [outputNodes, _setOutputNodes] = useState<OutputNodeType[]>([]);
   const outputPortalRefs = useRef<Record<string, React.RefObject<HTMLDivElement>>>({});
 
   const { dispatchAppEvent } = useAppEventsHandler(null, {
@@ -128,7 +130,6 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
 
     startTransition(() => {
       _setItemRects(flats);
-      _setOutputNodes(outputs);
     });
   }
 
@@ -376,7 +377,6 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
       onDrop: onDropPort,
       onMouseDown: handleMouseDown,
     },
-    registerConsumer,
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }), [])
 
@@ -430,15 +430,10 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
             return (
               <DraggableBlockNode
                 {...handlers}
+                active={activeLevel.current === item?.level}
                 draggable={dragEnabled}
                 key={arr.join(':')}
                 node={item as NodeItemType}
-                onMountItem={(item: DragItem, ref: React.RefObject<HTMLDivElement>) => {
-                  onMountItem(item, ref);
-                  removeComponentById(id);
-                }}
-                onMountPort={onMountPort}
-                // outputPortalRefs={outputPortalRefs}
                 rect={{
                   height,
                   left,
@@ -446,20 +441,11 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
                   width,
                 }}
                 submitEventOperation={submitEventOperation}
+                useExecuteCode={useExecuteCode}
+                useRegistration={useRegistration}
               />
             );
           })}
-
-          {/* {outputNodes?.map((node: OutputNodeType) => (
-            <OutputNode
-              {...handlers}
-              draggable={dragEnabled}
-              key={node.id}
-              node={node}
-              rect={node.rect}
-              registerConsumer={registerConsumer}
-            />
-          ))} */}
 
           {outputIDs?.map((id: string) => {
             const key = `output-${id}`;
@@ -486,8 +472,9 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
             return (
               <DraggableAppNode
                 {...handlers}
+                blocks={(appNode?.upstream?.map(
+                  (id: string) => itemsRef?.current?.[id]?.block as BlockType) as BlockType[])}
                 draggable={dragEnabled}
-                items={appNode?.upstream?.map(id => itemsRef?.current?.[id]) as any[]}
                 key={appNode.id}
                 node={appNode}
                 rect={{

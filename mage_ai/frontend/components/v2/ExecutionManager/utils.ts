@@ -1,5 +1,7 @@
 import EventStreamType, {
   ProcessDetailsType,
+  ResultType,
+  ExecutionStatusEnum,
   ServerConnectionStatusType,
   EventStreamResponseType,
   EventSourceReadyState,
@@ -11,4 +13,12 @@ export function closeConnection(eventSource: EventSource): ServerConnectionStatu
   }
 
   return ServerConnectionStatusType.CLOSED;
+}
+
+export function executionDone(event: EventStreamType): boolean {
+  const status = event.result.status;
+  const type = event.result.type;
+  return (event?.error ?? event?.result?.error ?? event?.result?.process.exitcode) !== null
+    || [ExecutionStatusEnum.ERROR, ExecutionStatusEnum.FAILURE].includes(status)
+    || (ExecutionStatusEnum.READY === status && type === ResultType.STATUS);
 }

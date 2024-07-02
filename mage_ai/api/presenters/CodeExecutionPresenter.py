@@ -10,6 +10,8 @@ class CodeExecutionPresenter(BasePresenter):
         'message',
         'message_uuid',
         'pid',
+        'source',
+        'stream',
         'timestamp',
         'uuid',
     ]

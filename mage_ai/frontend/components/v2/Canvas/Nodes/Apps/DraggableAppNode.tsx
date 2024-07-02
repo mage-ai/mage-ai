@@ -29,20 +29,20 @@ import {
   PanelCollapseRight, Builder, AddV2, Grab, GroupV2, Comment, Conversation, Save,
   CloseV2
 } from '@mana/icons';
+import BlockType from '@interfaces/BlockType';
 
 const PADDING_HORIZONTAL = 16;
 
-const DraggableAppNode: React.FC<CanvasNodeType> = ({
+type NodeType = {
+  blocks: BlockType[];
+};
+
+const DraggableAppNode: React.FC<NodeType & CanvasNodeType> = ({
   draggable,
   handlers,
-  index = 0,
-  items,
+  blocks,
   node,
   rect,
-  registerConsumer,
-}: CanvasNodeType & {
-  index?: number;
-  items: any[];
 }) => {
   const fetchDetailCountRef = useRef(0);
   const nodeRef = useRef<HTMLDivElement>(null);
@@ -65,7 +65,7 @@ const DraggableAppNode: React.FC<CanvasNodeType> = ({
   const [asideBeforeOpen, setAsideBeforeOpen] = React.useState(false);
   const [asideAfterOpen, setAsideAfterOpen] = React.useState(false);
 
-  const block = items?.[index]?.block;
+  const block = blocks?.[index];
   const { configuration } = block ?? {};
   const { file } = configuration ?? {};
 
