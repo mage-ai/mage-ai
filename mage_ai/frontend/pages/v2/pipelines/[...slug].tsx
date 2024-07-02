@@ -12,7 +12,6 @@ function PipelineDetailPage({ slug }: { slug: string[] }) {
   const { registerConsumer, teardown } = useExecutionManager();
 
   useEffect(() => {
-    console.log('PipelineDetailPage: useEffect');
     return () => teardown();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

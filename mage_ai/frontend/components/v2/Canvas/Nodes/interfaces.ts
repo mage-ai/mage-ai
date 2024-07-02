@@ -6,5 +6,5 @@ export type CanvasNodeType = {
   draggable?: boolean;
   node: AppNodeType | OutputNodeType;
   rect: RectType;
-  registerConsumer: ExecutionManagerType['registerConsumer'];
+  registerConsumer?: ExecutionManagerType['registerConsumer'];
 } & DragAndDropType;

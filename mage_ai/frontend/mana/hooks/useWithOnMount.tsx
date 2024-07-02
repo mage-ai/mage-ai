@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 
 export type OnMountType = {
   children: React.ReactNode;
@@ -6,10 +6,12 @@ export type OnMountType = {
 };
 
 export function WithOnMount({ children, onMount }: OnMountType) {
+  const phaseRef = useRef(0);
   useEffect(() => {
-    if (onMount) {
+    if (phaseRef.current === 0 && onMount) {
       onMount?.();
     }
+    phaseRef.current += 1;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

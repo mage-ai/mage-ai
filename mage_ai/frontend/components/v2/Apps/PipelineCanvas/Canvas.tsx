@@ -22,7 +22,7 @@ import { RemoveContextMenuType, RenderContextMenuType } from '@mana/hooks/useCon
 import { ZoomPanStateType } from '@mana/hooks/useZoomPan';
 import { snapToGrid } from '../../Canvas/utils/snapToGrid';
 import { useDrop } from 'react-dnd';
-import { useEffect, useMemo, useRef, useState, startTransition } from 'react';
+import { createRef, useEffect, useMemo, useRef, useState, startTransition } from 'react';
 import useItemManager from './useItemManager';
 import useDynamicDebounce from '@utils/hooks/useDebounce';
 import { buildOutputNode } from './utils/items';
@@ -97,8 +97,10 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
     mapping: {},
     rects: [],
   });
+  const [outputIDs, setOutputIDs] = useState<string[]>([]);
   const [itemRects, _setItemRects] = useState<FlatItemType[]>([]);
   const [outputNodes, _setOutputNodes] = useState<OutputNodeType[]>([]);
+  const outputPortalRefs = useRef<Record<string, React.RefObject<HTMLDivElement>>>({});
 
   const { dispatchAppEvent } = useAppEventsHandler(null, {
     [CustomAppEventEnum.APP_STARTED]: handleAppChanged,
@@ -166,6 +168,7 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
     executionFrameworkUUID,
     itemIDsByLevelRef,
     pipelineUUID,
+    setOutputIDs,
   });
 
   const {
@@ -366,6 +369,7 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
   connectDrop(canvasRef);
 
   const handlers = useMemo(() => ({
+    appHandlersRef,
     handlers: {
       onDragEnd: handleDragEnd,
       onDragStart: handleDragStart,
@@ -434,6 +438,7 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
                   removeComponentById(id);
                 }}
                 onMountPort={onMountPort}
+                // outputPortalRefs={outputPortalRefs}
                 rect={{
                   height,
                   left,
@@ -445,7 +450,7 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
             );
           })}
 
-          {outputNodes?.map((node: OutputNodeType) => (
+          {/* {outputNodes?.map((node: OutputNodeType) => (
             <OutputNode
               {...handlers}
               draggable={dragEnabled}
@@ -454,7 +459,17 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
               rect={node.rect}
               registerConsumer={registerConsumer}
             />
-          ))}
+          ))} */}
+
+          {outputIDs?.map((id: string) => {
+            const key = `output-${id}`;
+            const portalRef = outputPortalRefs.current[key] || createRef();
+            outputPortalRefs.current[key] = portalRef;
+
+            return (
+              <div key={key} id={key} ref={portalRef} />
+            )
+          })}
 
           {appRects?.rects?.map((arr) => {
             const [

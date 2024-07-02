@@ -1,6 +1,6 @@
 import Aside from './Blocks/Aside';
 import Badge from '@mana/elements/Badge';
-import { BlockTypeEnum } from '@interfaces/BlockType';
+import BlockType from '@interfaces/BlockType';
 import Circle from '@mana/elements/Circle';
 import Connection from './Blocks/Connection';
 import GradientContainer from '@mana/elements/Gradient';
@@ -11,53 +11,95 @@ import TemplateConfigurations from './Blocks/TemplateConfigurations';
 import Text from '@mana/elements/Text';
 import styles from '@styles/scss/components/Canvas/Nodes/BlockNode.module.scss';
 import stylesGradient from '@styles/scss/elements/GradientContainer.module.scss';
-import { ConfigurationOptionType, BorderConfigType, TitleConfigType } from './types';
+import { AddV2, Code, Grab, PipeIconVertical, PlayButtonFilled, Infinite } from '@mana/icons';
+import { AppTypeEnum, AppSubtypeEnum } from '../../Apps/constants';
+import { EventOperationEnum } from '@mana/shared/interfaces';
 import { DragAndDropHandlersType, SharedBlockProps } from './types';
-import { DragItem, PortType } from '../interfaces';
-import { FrameworkType, PipelineExecutionFrameworkBlockType } from '@interfaces/PipelineExecutionFramework/interfaces';
+import { NodeItemType, PortType, NodeType } from '../interfaces';
+import { PipelineExecutionFrameworkBlockType } from '@interfaces/PipelineExecutionFramework/interfaces';
 import { ItemTypeEnum, PortSubtypeEnum } from '../types';
-import { SubmitEventOperationType } from '@mana/shared/interfaces';
+import { StatusTypeEnum, BlockTypeEnum } from '@interfaces/BlockType';
 import { TooltipWrapper } from '@context/Tooltip';
+import { borderConfigs, blockColorNames } from './presentation';
 import { getBlockColor } from '@mana/themes/blocks';
+import { handleClickGroupMenu } from './utils';
 import { isEmptyObject } from '@utils/hash';
+import { buildEvent } from './utils';
 import { useMemo } from 'react';
 
 type BlockNodeProps = {
-  borderConfig?: BorderConfigType;
-  draggable?: boolean;
-  item: DragItem;
-  colorNames?: {
-    base: string;
-    hi?: string;
-    lo?: string;
-    md?: string;
-  };
+  block: BlockType | PipelineExecutionFrameworkBlockType;
   collapsed?: boolean;
-  configurationOptions?: ConfigurationOptionType[];
+  draggable?: boolean;
+  node: NodeItemType;
+  nodeRef: React.RefObject<HTMLDivElement>;
   onMount?: (port: PortType, portRef: React.RefObject<HTMLDivElement>) => void;
-  titleConfig?: TitleConfigType;
+  submitCodeExecution: (event: React.MouseEvent<HTMLElement>) => void;
+  submitEventOperation: (event: Event, options?: { args: any[] }) => void;
 };
 
 export function BlockNode({
   block,
-  borderConfig,
-  colorNames,
+  collapsed,
   draggable,
   handlers,
-  item,
+  node,
+  nodeRef,
   onMount,
-  titleConfig,
+  submitCodeExecution,
+  submitEventOperation,
   updateBlock,
 }: BlockNodeProps & DragAndDropHandlersType & SharedBlockProps) {
-  const { borders } = borderConfig || {};
-  const { asides, badge } = titleConfig || {};
-  const { after, before } = asides || {};
+  const { name, status, uuid } = block;
 
-  const inputs = item?.ports?.filter(p => p.subtype === PortSubtypeEnum.INPUT);
-  const outputs = item?.ports?.filter(p => p.subtype === PortSubtypeEnum.OUTPUT);
+  const colorNames = blockColorNames(node)
+  const borders = borderConfigs(node);
+  const after: any = useMemo(() => ({
+    className: styles.showOnHover,
+    ...(ItemTypeEnum.NODE === node?.type
+      ? {
+        Icon: draggable ? Grab : AddV2,
+        onClick: (event: MouseEvent) =>
+          handleClickGroupMenu(event, node as NodeType, submitEventOperation, nodeRef),
+      }
+      : {
+        Icon: draggable ? Grab : Code,
+        onClick: (event: MouseEvent) => submitEventOperation(buildEvent(
+          event, EventOperationEnum.APP_START, node, nodeRef, block,
+        ), {
+          args: [
+            AppTypeEnum.EDITOR,
+            AppSubtypeEnum.CANVAS,
+          ],
+        }),
+      }),
+  }), [draggable, submitEventOperation, node, nodeRef, block]);
 
-  const isPipeline = useMemo(() => BlockTypeEnum.PIPELINE === block?.type, [block]);
-  const isGroup = useMemo(() => BlockTypeEnum.GROUP === block?.type, [block]);
+  const before = useMemo(() => ({
+    Icon: PlayButtonFilled,
+    baseColorName:
+      StatusTypeEnum.FAILED === status
+        ? 'red'
+        : StatusTypeEnum.EXECUTED === status
+          ? 'green'
+          : 'blue',
+    onClick: submitCodeExecution,
+  }), [status, submitCodeExecution]);
+
+  const badge = useMemo(() => ItemTypeEnum.NODE === node?.type
+    ? {
+      Icon: collapsed ? Infinite : PipeIconVertical,
+      baseColorName: colorNames?.base || 'purple',
+      label: String(name || uuid || ''),
+    }
+    : undefined
+    , [node, name, uuid, collapsed, colorNames]);
+
+  const label = String(name || uuid || '');
+
+  const inputs = node?.ports?.filter(p => p.subtype === PortSubtypeEnum.INPUT);
+  const outputs = node?.ports?.filter(p => p.subtype === PortSubtypeEnum.OUTPUT);
+
 
   const inputOutputPairs = useMemo(() => {
     const count = Math.max(inputs?.length, outputs?.length);
@@ -70,7 +112,7 @@ export function BlockNode({
         block,
         id: block?.uuid,
         index: idx,
-        parent: item,
+        parent: node,
         subtype: !input ? PortSubtypeEnum.INPUT : !output ? PortSubtypeEnum.OUTPUT : undefined,
         target: null,
         type: ItemTypeEnum.PORT,
@@ -81,7 +123,7 @@ export function BlockNode({
         output: output || portDefault,
       };
     });
-  }, [block, inputs, item, outputs]);
+  }, [block, inputs, node, outputs]);
 
   const classNames = useMemo(() => {
     const colors = borders?.map(b => b?.baseColorName) ?? [];
@@ -111,7 +153,7 @@ export function BlockNode({
           autoColumns="auto"
           autoFlow="column"
           columnGap={8}
-          id={`${item.id}-badge`}
+          id={`${node.id}-badge`}
           justifyContent="space-between"
           templateColumns="1fr"
           templateRows="1fr"
@@ -177,14 +219,14 @@ export function BlockNode({
           </Grid>
         </Grid>
       ),
-    [after, badge, block, inputs, item, outputs],
+    [after, badge, block, inputs, node, outputs],
   );
 
   const connectionRows = useMemo(
     () =>
-      ItemTypeEnum.BLOCK === item?.type && inputOutputPairs?.length >= 1 && (
+      ItemTypeEnum.BLOCK === node?.type && inputOutputPairs?.length >= 1 && (
         <PanelRows>
-          {inputOutputPairs?.map(({ input, output }, idx: number) => (
+          {inputOutputPairs?.map(({ input, output }) => (
             <Connection
               draggable={draggable}
               handlers={handlers}
@@ -200,18 +242,18 @@ export function BlockNode({
 
         // eslint-disable-next-line react-hooks/exhaustive-deps
       ),
-    [draggable, handlers, item, inputOutputPairs, onMount],
+    [draggable, handlers, node, inputOutputPairs, onMount],
   );
 
   const templateConfigurations = useMemo(
     () =>
-      (item?.block?.frameworks ?? [])?.map(
+      (node?.block?.frameworks ?? [])?.map(
         (group: PipelineExecutionFrameworkBlockType) =>
           !isEmptyObject(group?.configuration?.templates) &&
           Object.entries(group?.configuration?.templates || {})?.map(
-            ([uuid, template]) => item?.block?.configuration?.templates?.[uuid] && (
+            ([uuid, template]) => node?.block?.configuration?.templates?.[uuid] && (
               <TemplateConfigurations
-                block={item?.block}
+                block={node?.block}
                 group={group}
                 key={uuid}
                 template={template}
@@ -220,7 +262,7 @@ export function BlockNode({
               />
             )),
       ),
-    [item, updateBlock],
+    [node, updateBlock],
   );
 
   const titleRow = useMemo(
@@ -228,7 +270,7 @@ export function BlockNode({
       <Grid
         alignItems="center"
         columnGap={12}
-        id={`${item.id}-title`}
+        id={`${node.id}-title`}
         templateColumns={[
           before ? 'auto' : '1fr',
           before || after ? '1fr' : '',
@@ -239,13 +281,13 @@ export function BlockNode({
         {before && <Aside {...before} />}
 
         <Text semibold small>
-          {titleConfig?.label}
+          {label}
         </Text>
 
         {after && <Aside {...after} />}
       </Grid>
     ),
-    [after, before, item, titleConfig],
+    [after, before, label, node],
   );
 
   const main = useMemo(

@@ -19,7 +19,7 @@ import PipelineType from '@interfaces/PipelineType';
 import { AppConfigType } from '../interfaces';
 import useAppEventsHandler, { CustomAppEvent, CustomAppEventEnum } from './useAppEventsHandler';
 import { AppManagerType, ModelManagerType } from './interfaces';
-import { indexBy } from '@utils/array';
+import { indexBy, unique } from '@utils/array';
 
 type ModelManagerProps = {
   itemIDsByLevelRef: React.MutableRefObject<string[][]>;
@@ -31,6 +31,7 @@ export default function useModelManager({
   itemIDsByLevelRef,
   pipelineUUID,
   executionFrameworkUUID,
+  setOutputIDs,
 }: ModelManagerProps): ModelManagerType {
   const appHandlersRef = useRef<AppHandlerType>({} as AppHandlerType);
   const itemsRef = useRef<ItemMappingType>({});
@@ -303,6 +304,8 @@ export default function useModelManager({
         dispatchAppEvent(CustomAppEventEnum.NODE_LAYOUTS_CHANGED, {
           nodes: items,
         });
+
+        setOutputIDs([...new Set(items?.map(({ block }) => block.uuid))]);
 
         resolve(items); // Resolve the promise when the function completes
       } catch (error) {

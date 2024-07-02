@@ -1,6 +1,7 @@
 import React from 'react';
 import { NodeWrapper, NodeWrapperProps } from './NodeWrapper';
-import { BlockNodeWrapper, BlockNodeWrapperProps, areEqual } from './BlockNodeWrapper';
+import { BlockNodeWrapper, areEqual } from './BlockNodeWrapper';
+import { BlockNodeWrapperProps } from './types';
 
 const DraggableBlockNode: React.FC<BlockNodeWrapperProps & NodeWrapperProps> = (props) =>
   <BlockNodeWrapper Wrapper={NodeWrapper} {...props} />

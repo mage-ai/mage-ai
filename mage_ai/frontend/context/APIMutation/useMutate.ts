@@ -363,6 +363,7 @@ export function useMutate(
     }
 
     if (!disableAbort && abortControllerRef?.current?.[operation]) {
+      console.log(`[useMutate] Aborting ${operation} for ${resource}`, args);
       abortControllerRef?.current?.[operation].abort();
     }
 

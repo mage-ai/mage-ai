@@ -22,6 +22,8 @@ import { MutationStatusEnum as MutationStatusEnumBase } from './enums';
 import { dig } from '@utils/hash';
 import { singularize } from '@utils/string';
 
+type QueueFunction = () => any;
+
 export const MutationStatusEnum = MutationStatusEnumBase;
 export default function useMutate(
   endpoint: string | string[],
@@ -53,10 +55,12 @@ export default function useMutate(
   const isChildResource: boolean = endpoints?.length >= 2;
 
   const checkpointRef = useRef<number>(null);
+  const queueRef = useRef<(() => void)[]>([]);
   const modelsRef = useRef<ModelsType>({
     [resourceName]: {},
     [resourceNamePlural]: [],
   });
+  const timeoutRef = useRef(null);
 
   const statusRef = useRef<MutationStatusMappingType>({
     [OperationTypeEnum.CREATE]: MutationStatusEnumBase.IDLE,
@@ -143,15 +147,25 @@ export default function useMutate(
   }
 
   function wrapMutation(mutate: () => any) {
-    const now = Number(new Date());
+    return new Promise((resolve) => {
+      queueRef.current.push(mutate);
 
-    if (!checkpointRef?.current) {
-      checkpointRef.current = now;
-    } else if (now - checkpointRef.current < throttle) {
-      return () => new Promise(() => null);
-    }
+      if (timeoutRef.current) {
+        queueRef.current.push(() => resolve(mutate()));
+      } else {
+        timeoutRef.current = setTimeout(() => {
+          while (queueRef.current.length) {
+            const func = queueRef.current.shift();
+            func && func();
+          }
+          timeoutRef.current = null;
+        }, queueRef.current.length === 1 ? 0 : throttle);
 
-    return mutate();
+        if (!timeoutRef.current) {
+          resolve(mutate());
+        }
+      }
+    });
   }
 
   const fnCreate = useMutation({

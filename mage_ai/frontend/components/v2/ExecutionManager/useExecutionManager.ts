@@ -14,6 +14,9 @@ import { useMutate } from '@context/APIMutation';
 import { useRef } from 'react';
 import { ConsumerOperations, EventSourceHandlers, ExecutionManagerType } from './interfaces';
 
+const MAX_OPEN_CONNECTIONS = 6;
+type QueueFunction = (opts?: EventSourceHandlers) => void;
+
 function debugLog(message: any, args?: any | any[]) {
   const arr = [`[CodeExecutionManager] ${message}`];
   if (Array.isArray(args)) {
@@ -24,17 +27,19 @@ function debugLog(message: any, args?: any | any[]) {
   DEBUG.codeExecution.manager && console.log(...arr);
 }
 
-export default function useExecutionManager(
-  {
-    autoReconnect,
-    maxConnectionAttempts,
-  }: {
-    autoReconnect?: boolean;
-    maxConnectionAttempts?: number;
-  } = {
-      autoReconnect: true,
-      maxConnectionAttempts: 10,
-    },
+export default function useExecutionManager({
+  autoReconnect,
+  maxConnectionAttempts,
+  throttle,
+}: {
+  autoReconnect?: boolean;
+  maxConnectionAttempts?: number;
+  throttle?: number;
+} = {
+    autoReconnect: true,
+    maxConnectionAttempts: 10,
+    throttle: 1000,
+  },
 ): ExecutionManagerType {
   const connectionAttemptsRemainingRef = useRef<Record<string, number>>({});
   const eventSourcesRef = useRef<Record<string, EventSource>>({});
@@ -48,7 +53,12 @@ export default function useExecutionManager(
   const responseErrorsRef = useRef<APIErrorType[]>([]);
   const statusesRef = useRef<Record<string, ServerConnectionStatusType>>({});
 
+  const connectionQueueRef = useRef<QueueFunction[]>([]);
+  const queueProcessingTimeoutRef = useRef(null);
+  const recentConnectionProcessedTimestampRef = useRef<number>(null);
+
   const mutants = useMutate({ resource: 'code_executions' }, {
+    disableAbort: true,
     handlers: {
       create: {
         onError: (error: APIErrorType, args?: MutationFetchArgumentsType) => {
@@ -63,17 +73,66 @@ export default function useExecutionManager(
     },
   });
 
+  function processQueue() {
+    console.log('processQueue', connectionQueueRef.current.length, throttle, queueProcessingTimeoutRef.current);
+    if (connectionQueueRef.current.length === 0) {
+      clearTimeout(queueProcessingTimeoutRef.current);
+      queueProcessingTimeoutRef.current = null;
+      return;
+    }
+
+    if (getOpenConnections()?.length >= MAX_OPEN_CONNECTIONS) {
+      console.log(`Max open connections reached: ${getOpenConnections()?.length} of ${MAX_OPEN_CONNECTIONS}`);
+      console.log(`Emptying ${connectionQueueRef.current.length} connection requests from the queue.`);
+      connectionQueueRef.current = [];
+      return;
+    }
+
+    const connect = connectionQueueRef.current.shift();
+    connect();
+    recentConnectionProcessedTimestampRef.current = Number(new Date());
+  }
+
   function registerConsumer(uuid: string, consumerUUID: string, options?: EventSourceHandlers): ConsumerOperations {
     consumersRef.current[uuid] ||= {};
     consumersRef.current[uuid][consumerUUID] = consumerUUID;
 
     const connect = (opts?: EventSourceHandlers) => {
-      connectionAttemptsRemainingRef.current[uuid] ||= maxConnectionAttempts;
-      connectEventSource(
-        uuid,
-        connectionAttemptsRemainingRef.current[uuid],
-        { ...options, ...opts },
-      );
+      const handle = (optsInternal: EventSourceHandlers) => {
+        connectionAttemptsRemainingRef.current[uuid] ||= maxConnectionAttempts;
+        connectEventSource(
+          uuid,
+          connectionAttemptsRemainingRef.current[uuid],
+          { ...options, ...opts, ...optsInternal },
+        );
+
+        return eventSourcesRef?.current?.[uuid];
+      }
+
+      const handleNext = () => {
+        const elapsed = Number(new Date()) - (recentConnectionProcessedTimestampRef.current ?? 0);
+        queueProcessingTimeoutRef.current = setTimeout(processQueue, Math.max(throttle - elapsed, 0));
+      };
+
+      connectionQueueRef.current.push(() => handle({
+        onError: (error: Event) => {
+          handleNext()
+          if (opts?.onError) {
+            opts?.onError?.(error);
+          }
+        },
+        onOpen: (status: ServerConnectionStatusType, event: Event) => {
+          handleNext()
+          if (opts?.onOpen) {
+            opts?.onOpen?.(status, event);
+          }
+        },
+      }));
+
+      if (!queueProcessingTimeoutRef.current) {
+        queueProcessingTimeoutRef.current = setTimeout(
+          processQueue, connectionQueueRef.current.length === 1 ? 0 : throttle);
+      }
     }
 
     const closeConnection = () => closeEventSourceConnection(uuid, consumerUUID);
@@ -151,7 +210,7 @@ export default function useExecutionManager(
     delete eventSourcesRef.current[uuid];
   }
 
-  function connectEventSource(uuid: string, attemptsRemaining: number, options?: EventSourceHandlers) {
+  function connectEventSource(uuid: string, attemptsRemaining: number, options?: EventSourceHandlers): EventSource {
     if (attemptsRemaining <= 0) {
       console.log('Max reconnection attempts reached. Stopping reconnection.');
       return;
@@ -165,17 +224,22 @@ export default function useExecutionManager(
     let connectionAttemptsRemaining = attemptsRemaining;
 
     if (eventSourcesRef?.current?.[uuid]) {
-      if (EventSourceReadyState.OPEN === eventSourcesRef?.current?.[uuid].readyState) {
+      const eventSource = eventSourcesRef?.current?.[uuid];
+      if (EventSourceReadyState.OPEN === eventSource.readyState) {
         setStatus(uuid, ServerConnectionStatusType.OPEN);
         connectionAttemptsRemaining = connectionAttemptsRemainingRef?.current?.[uuid];
         clearTimeout(timeoutsRef?.current?.[uuid]);
+        if (onOpen) {
+          onOpen?.(ServerConnectionStatusType.OPEN);
+        }
+        return eventSource;
       } else {
         closeEventSourceConnection(uuid);
       }
     }
 
     let eventSource = eventSourcesRef?.current?.[uuid];
-    if (eventSource) return;
+    if (eventSource) return eventSource;
 
     debugLog('Connecting to server...');
     eventSourcesRef.current[uuid] = new EventSource(getEventStreamsUrl(uuid));
@@ -189,7 +253,7 @@ export default function useExecutionManager(
 
       const status = ServerConnectionStatusType.OPEN;
       setStatus(uuid, status);
-      onOpen && onOpen?.(event, status);
+      onOpen && onOpen?.(status, event);
     };
 
     eventSource.onmessage = (event: EventStreamResponseType) => {
@@ -236,6 +300,11 @@ export default function useExecutionManager(
 
   function hasOpenConnections(): boolean {
     return Object.keys(eventSourcesRef?.current).length > 0;
+  }
+
+  function getOpenConnections(): EventSource[] {
+    return Object.values(
+      eventSourcesRef?.current ?? [])?.filter(es => es.readyState === EventSourceReadyState.OPEN);
   }
 
   function teardown() {

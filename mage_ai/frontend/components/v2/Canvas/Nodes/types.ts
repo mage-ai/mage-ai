@@ -1,8 +1,10 @@
 import BlockType from '@interfaces/BlockType';
+import { NodeWrapperProps } from './NodeWrapper';
 import { IconType } from '@mana/icons/types';
 import { BadgeType } from '@mana/elements/Badge';
 import { ConnectionType, DragItem, NodeItemType } from '../interfaces';
-import { ClientEventType } from '@mana/shared/interfaces';
+import { ClientEventType, EventOperationEnum, SubmitEventOperationType } from '@mana/shared/interfaces';
+import { CanvasNodeType } from './interfaces';
 
 export type UpdateBlockRequestType = (event: ClientEventType | Event, key: string, value: any, opts?: {
   delay?: number;
@@ -77,3 +79,15 @@ export type InteractionConfigType = {
   select?: any;
   textInput?: any;
 };
+
+export type BlockNodeWrapperProps = {
+  Wrapper?: React.FC<NodeWrapperProps>;
+  collapsed?: boolean;
+  droppable?: boolean;
+  loading?: boolean;
+  submitEventOperation: SubmitEventOperationType;
+  selected?: boolean;
+  version?: number | string;
+} & NodeWrapperProps & CanvasNodeType;
+
+export type SharedWrapperProps = BlockNodeWrapperProps & NodeWrapperProps;

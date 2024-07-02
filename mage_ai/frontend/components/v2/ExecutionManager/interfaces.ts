@@ -17,7 +17,7 @@ export interface ConsumerOperations {
 export interface EventSourceHandlers {
   onError?: (error: Event) => void;
   onMessage?: (event: EventStreamType) => void;
-  onOpen?: (event: Event, status: ServerConnectionStatusType) => void;
+  onOpen?: (status: ServerConnectionStatusType, event?: Event) => void;
 }
 
 export interface ExecutionManagerType {
