@@ -132,8 +132,8 @@ export const BlockNodeWrapper: React.FC<any> = ({
       executeCode(getCode(), {
         source: node.id,
       });
-      outputRef.current.classList.add(stylesOutput.executed);
-      buttonBeforeRef?.current?.classList.add(stylesButton.loading);
+      outputRef?.current?.classList?.add(stylesOutput.executed);
+      buttonBeforeRef?.current?.classList?.add(stylesButton.loading);
     };
 
     if (getCode()?.length >= 1) {

@@ -70,14 +70,14 @@ const OutputNode: React.FC<OutputNodeProps> = ({
       nodeRef={nodeRef}
       rect={rect}
     >
-      <Grid rowGap={8}>
+      <Grid templateRows="min-content" rowGap={8}>
         {Object.keys(eventsGrouped ?? {})?.sort()?.map((mrUUID: string) => (
           <ExecutionOutput
             events={Object.values(eventsGrouped?.[mrUUID] ?? {}).sort()}
             key={mrUUID}
           />
         ))}
-      </Grid >
+      </Grid  >
     </NodeWrapper>
   );
 }

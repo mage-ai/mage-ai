@@ -11,7 +11,7 @@ import TemplateConfigurations from './Blocks/TemplateConfigurations';
 import Text from '@mana/elements/Text';
 import stylesBlockNode from '@styles/scss/components/Canvas/Nodes/BlockNode.module.scss';
 import stylesGradient from '@styles/scss/elements/GradientContainer.module.scss';
-import { AddV2, Code, Grab, PipeIconVertical, PlayButtonFilled, Infinite } from '@mana/icons';
+import { AddV2, Code, Grab, PipeIconVertical, PlayButtonFilled, Pause, Infinite } from '@mana/icons';
 import { AppTypeEnum, AppSubtypeEnum } from '../../Apps/constants';
 import { EventOperationEnum } from '@mana/shared/interfaces';
 import { DragAndDropHandlersType, SharedBlockProps } from './types';
@@ -78,7 +78,17 @@ export function BlockNode({
   }), [draggable, submitEventOperation, node, nodeRef, block]);
 
   const before = useMemo(() => ({
-    Icon: PlayButtonFilled,
+    Icon: (iconProps) => {
+      return (
+        <>
+          <PlayButtonFilled {...iconProps} className={[
+            stylesBlockNode['display-ifnot-loading'],
+          ].join(' ')}
+          />
+          <Pause {...iconProps} className={stylesBlockNode['display-if-loading']} />
+        </>
+      );
+    },
     baseColorName:
       StatusTypeEnum.FAILED === status
         ? 'red'
