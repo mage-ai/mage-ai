@@ -218,7 +218,12 @@ function Menu({
 
       if (!itemsRootRef?.current) {
         const node = document.getElementById(rootID);
-        itemsRootRef.current = createRoot(node as HTMLElement);
+        try {
+          itemsRootRef.current = createRoot(node as HTMLElement);
+        } catch (error) {
+          console.error(error);
+          return
+        }
       }
 
       const element = event?.target as HTMLElement;

@@ -7,7 +7,7 @@ export const DEBUG = {
     output: false,
     outputManager: false,
   },
-  dragging: true,
+  dragging: false,
   dropping: false,
   editor: {
     app: false,

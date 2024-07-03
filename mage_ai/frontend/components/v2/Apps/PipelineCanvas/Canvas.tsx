@@ -1,4 +1,5 @@
 import update from 'immutability-helper';
+import { handleSaveAsImage } from './utils/images';
 import DraggableAppNode from '../../Canvas/Nodes/Apps/DraggableAppNode';
 import { ClientEventType } from '@mana/shared/interfaces';
 import DraggableBlockNode from '../../Canvas/Nodes/DraggableBlockNode';
@@ -35,6 +36,7 @@ import useAppEventsHandler, { CustomAppEvent, CustomAppEventEnum } from './useAp
 import { DEBUG } from '@components/v2/utils/debug';
 import { ExecutionManagerType } from '@components/v2/ExecutionManager/interfaces';
 import BlockType from '@interfaces/BlockType';
+import { calculateBoundingBox } from '@components/v2/Canvas/utils/rect';
 
 export type BuilderCanvasProps = {
   canvasRef: React.RefObject<HTMLDivElement>;
@@ -80,6 +82,7 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
   DEBUG.rendering && console.log('Rendering Canvas');
 
   const activeLevel = useRef<number>(null);
+  const imageDataRef = useRef<string>(null);
   const itemElementsRef = useRef<ItemElementsType>({
     [ItemTypeEnum.APP]: {},
     [ItemTypeEnum.BLOCK]: {},
@@ -110,6 +113,9 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
     [CustomAppEventEnum.APP_STOPPED]: handleAppChanged,
     [CustomAppEventEnum.APP_UPDATED]: handleAppChanged,
     [CustomAppEventEnum.NODE_LAYOUTS_CHANGED]: handleNodeLayoutsChanged,
+    [CustomAppEventEnum.SAVE_AS_IMAGE]: () => handleSaveAsImage(
+      canvasRef, wrapperRef, itemsRef, imageDataRef
+    ),
   });
 
   function handleNodeLayoutsChanged({ detail }: CustomAppEvent) {
@@ -289,6 +295,7 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
         return true;
       },
       drop: (item: DragItem, monitor: DropTargetMonitor) => {
+        // console.log('start', itemsRef.current)
         const delta = monitor.getDifferenceFromInitialOffset() as {
           x: number;
           y: number;
@@ -330,12 +337,22 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
         top += topOffset;
 
         const node = { ...item };
-        const rect2 = {
-          ...item?.rect,
-          left: left,
-          top: top,
-        };
-        node.rect = rect2;
+        console.log(item, node)
+        node.rect = node.rect ?? item.rect;
+        node.rect.left = left;
+        node.rect.top = top;
+
+        const itemM = itemsRef?.current?.[node.id];
+        const el = itemElementsRef.current[node.type][node.id].current.getBoundingClientRect();
+        console.log(
+          delta,
+          [leftOffset, topOffset],
+          [left, top],
+          el,
+          itemM?.rect,
+          item?.rect,
+          node?.rect,
+        );
 
         const element = itemElementsRef.current[node.type][node.id].current;
         if (element) {
@@ -361,6 +378,8 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
             },
           },
         });
+
+        // console.log('end', itemsRef.current)
 
         return undefined;
       },

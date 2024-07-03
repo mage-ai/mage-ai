@@ -4,7 +4,7 @@ import Button from '@mana/elements/Button';
 
 import { AsideType } from '../types';
 
-function Aside({ Icon, baseColorName, buttonRef, className, onClick }: AsideType) {
+function Aside({ Icon, baseColorName, buttonRef, className, onClick }: AsideType, ref: React.Ref<HTMLButtonElement>) {
   const icon = Icon ? <Icon inverted={baseColorName === 'green'} size={14} /> : null;
   const el = (
     <Grid
@@ -13,6 +13,7 @@ function Aside({ Icon, baseColorName, buttonRef, className, onClick }: AsideType
       borders={baseColorName ? false : true}
       bordersTransparent={baseColorName ? true : false}
       justifyContent="center"
+      ref={ref}
       style={{
         height: 32,
         width: 32,

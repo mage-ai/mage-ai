@@ -21,6 +21,7 @@ export default function useApp(props: AppLoaderProps & {
     persistResourceOnUnmount?: boolean;
     style?: React.CSSProperties;
   },
+  onMountEditor?: (editor: any) => void;
   skipInitialFetch?: boolean;
   useToolbars?: boolean;
 }): {
@@ -32,7 +33,7 @@ export default function useApp(props: AppLoaderProps & {
   const contentRef = useRef<string>(null);
   const editorRef = useRef<any>(null);
 
-  const { app, editor, skipInitialFetch, useToolbars } = props;
+  const { app, editor, onMountEditor, skipInitialFetch, useToolbars } = props;
 
   if (!app?.uuid) {
     console.error('App UUID is required.');
@@ -204,6 +205,7 @@ export default function useApp(props: AppLoaderProps & {
           }}
           onMountEditor={(editor: any) => {
             editorRef.current = editor;
+            onMountEditor && onMountEditor?.(editor);
           }}
           persistManagerOnUnmount
           persistResourceOnUnmount={editor?.persistResourceOnUnmount}
@@ -216,7 +218,7 @@ export default function useApp(props: AppLoaderProps & {
         />
       ),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [app, main, editor?.persistResourceOnUnmount],
+    [app, main, editor?.persistResourceOnUnmount, onMountEditor],
   );
 
   const {

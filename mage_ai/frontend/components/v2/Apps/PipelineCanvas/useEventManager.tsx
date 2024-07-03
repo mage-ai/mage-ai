@@ -1,4 +1,5 @@
 import stylesBuilder from '@styles/scss/apps/Canvas/Pipelines/Builder.module.scss';
+import html2canvas from 'html2canvas';
 import { AppStatusEnum } from '../constants';
 import type { DropTargetMonitor } from 'react-dnd';
 import update from 'immutability-helper';
@@ -9,6 +10,7 @@ import {
   ActiveLevelRefType, AppHandlersRefType, LayoutConfigRefType, ItemIDsByLevelRef, SetActiveLevelType,
 } from './interfaces';
 import {
+  TreeWithArrowsDown,
   Select, SearchV2, CubeWithArrowDown, PaginateArrowRight, BatchSquaresStacked, Table, Circle, BranchAlt, Monitor, Undo,
   ArrowsAdjustingFrameSquare, Check, Group, TemplateShapes, Trash, GroupV2, ArrowsPointingInFromAllCorners
 } from '@mana/icons';
@@ -443,6 +445,18 @@ export default function useEventManager({
           uuid: `Blocks grouped at level ${level}`,
         };
       }),
+      { divider: true },
+      {
+        Icon: TreeWithArrowsDown,
+        onClick: (event: ClientEventType) => {
+          event?.preventDefault();
+          removeContextMenu(event);
+          dispatchAppEvent(CustomAppEventEnum.SAVE_AS_IMAGE, {
+            event,
+          });
+        },
+        uuid: 'Save pipeline as image',
+      },
     ]));
 
     if (target) {
@@ -527,13 +541,10 @@ export default function useEventManager({
               updateNodeLayouts();
 
               appHandlersRef.current?.pipelines.update.mutate({
-                payload: (pipeline) => {
-                  console.log('WTFFFFFFFFFFFFFFFFFFFFFFF', pipeline)
-                  return {
-                    ...pipeline,
-                    blocks: pipeline.blocks.filter((block: BlockType) => block.uuid !== target.block.uuid),
-                  };
-                },
+                payload: (pipeline) => ({
+                  ...pipeline,
+                  blocks: pipeline.blocks.filter((block: BlockType) => block.uuid !== target.block.uuid),
+                }),
               });
             },
             uuid: `Remove ${target?.block?.name} from pipeline`,

@@ -1,4 +1,5 @@
 import Button, { ButtonGroup } from '@mana/elements/Button';
+import html2canvas from 'html2canvas';
 import React, { useEffect, useMemo, useRef } from 'react';
 import TextInput from '@mana/elements/Input/TextInput';
 import moment from 'moment';
@@ -37,6 +38,7 @@ const PADDING_HORIZONTAL = 16;
 type NodeType = {
   blocks: BlockType[];
   index?: number;
+  useCustomDragPreviewImage?: false;
   useExecuteCode: ExecutionManagerType['useExecuteCode'];
   useRegistration: ExecutionManagerType['useRegistration'];
 };
@@ -48,10 +50,12 @@ const DraggableAppNode: React.FC<NodeType & CanvasNodeType> = ({
   index = 0,
   node,
   rect,
+  useCustomDragPreviewImage = false,
   useExecuteCode,
   useRegistration,
 }) => {
   const fetchDetailCountRef = useRef(0);
+  const imageDataRef = useRef<string | null>(null);
   const nodeRef = useRef<HTMLDivElement>(null);
 
   const { dispatchAppEvent } = useAppEventsHandler(node);
@@ -109,6 +113,37 @@ const DraggableAppNode: React.FC<NodeType & CanvasNodeType> = ({
       ].filter(Boolean).join(' '),
       persistResourceOnUnmount: true,
       style: {},
+    },
+    onMountEditor: () => {
+      if (useCustomDragPreviewImage && nodeRef?.current && !imageDataRef?.current) {
+        const generateImage = async () => {
+          const computedStyle =
+            typeof window !== 'undefined' && window.getComputedStyle(nodeRef.current);
+
+          if (computedStyle) {
+            try {
+              // Ensure the element is visible
+              nodeRef.current.style.opacity = '1';
+              nodeRef.current.style.visibility = 'visible';
+              nodeRef.current.style.display = 'block';
+
+              // Adding a slight delay to ensure the node is fully rendered
+              await new Promise((resolve) => setTimeout(resolve, 2000));
+
+              const canvas = await html2canvas(nodeRef.current, { scale: 2, useCORS: true });
+              const imageData = canvas.toDataURL('image/png', 1.0); // Ensure maximum quality
+              imageDataRef.current = imageData;
+              console.log('Generated Image:', imageData); // For debugging
+            } catch (error) {
+              console.log('Error generating image:', error);
+            }
+          } else {
+            setTimeout(generateImage, 1000);
+          }
+        };
+
+        generateImage();
+      }
     },
     skipInitialFetch: true,
     useToolbars: true,

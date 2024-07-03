@@ -12,6 +12,7 @@ export enum CustomAppEventEnum {
   NODE_RECT_UPDATED = 'node_rect_updated',
   CODE_EXECUTION_SUBMITTED = 'code_execution_submitted',
   PORTAL_MOUNTED = 'portal.mounted',
+  SAVE_AS_IMAGE = 'save_as_image',
   START_APP = 'start_app',
   START_DRAGGING = 'start_dragging',
   STOPPING_APP = 'stopping_app',

@@ -2,9 +2,8 @@ import React from 'react';
 import type { DragSourceMonitor, DropTargetMonitor } from 'react-dnd';
 import { CSSProperties, FC } from 'react';
 import { getEmptyImage } from 'react-dnd-html5-backend';
-import { memo, useEffect, useMemo } from 'react';
+import { memo, useEffect, useRef } from 'react';
 import { useDrag, useDrop } from 'react-dnd';
-
 import styles from '@styles/scss/components/Canvas/Nodes/BlockNode.module.scss';
 import { DragItem, NodeItemType, PortType, RectType } from '../interfaces';
 import { ItemTypeEnum } from '../types';
@@ -48,7 +47,9 @@ function getStyles(
     zIndex,
     ...(draggable ? { cursor: 'move' } : {}),
     ...(isDragging
-      ? { height: 0, opacity: 0 }
+      ? ItemTypeEnum.APP === type
+        ? { height: rect?.height ?? undefined, opacity: 0 }
+        : { height: 0, opacity: 0 }
       : {
         minHeight: rect?.height === Infinity || rect?.height === -Infinity ? 0 : rect?.height ?? 0,
       }),
@@ -69,7 +70,12 @@ export const NodeWrapper: FC<NodeWrapperProps> = memo(function NodeWrapper({
 }: NodeWrapperProps) {
   const { onDragEnd, onDragStart, onDrop, onMouseDown, onMouseLeave, onMouseOver, onMouseUp } =
     handlers;
-  const itemToDrag: DragItem | PortType = useMemo(() => draggingNode || node, [draggingNode, node]);
+  const itemToDragRef = useRef({
+    ...(draggingNode || node),
+    nodeRef,
+  });
+  const itemToDrag = itemToDragRef.current;
+
   const [{ isDragging }, connectDrag, preview] = useDrag(
     () => ({
       canDrag: () => {
