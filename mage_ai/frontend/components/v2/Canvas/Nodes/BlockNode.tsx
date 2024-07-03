@@ -86,10 +86,10 @@ export function BlockNode({
       return (
         <>
           <PlayButtonFilled {...iconProps} className={[
-            stylesBlockNode['display-ifnot-loading'],
+            stylesBlockNode['display-ifnot-executing'],
           ].join(' ')}
           />
-          <Pause {...iconProps} className={stylesBlockNode['display-if-loading']} />
+          <Pause {...iconProps} className={stylesBlockNode['display-if-executing']} />
         </>
       );
     },

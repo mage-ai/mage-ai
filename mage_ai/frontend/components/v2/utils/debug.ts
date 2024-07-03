@@ -2,12 +2,12 @@ export const DEBUG = {
   appManager: false,
   apps: false,
   codeExecution: {
-    manager: true,
+    manager: false,
     node: false,
-    output: true,
+    output: false,
     outputManager: false,
   },
-  dragging: false,
+  dragging: true,
   dropping: false,
   editor: {
     app: false,

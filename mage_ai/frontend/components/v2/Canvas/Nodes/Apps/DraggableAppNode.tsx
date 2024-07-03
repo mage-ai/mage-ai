@@ -77,7 +77,6 @@ const DraggableAppNode: React.FC<NodeType & CanvasNodeType> = ({
   const {
     executeCode,
   } = useExecuteCode(undefined, block.uuid);
-  // const { subscribe, unsubscribe } = useRegistration(undefined, block.uuid);
 
   const appOptions = {
     configurations: {
@@ -419,7 +418,12 @@ const DraggableAppNode: React.FC<NodeType & CanvasNodeType> = ({
             </Grid>
           )}
 
-          <OutputGroups block={block} node={node} useRegistration={useRegistration} />
+          <OutputGroups
+            block={block}
+            node={node}
+            source="canvas-editor"
+            useRegistration={useRegistration}
+          />
         </Grid>
       </div >
     </NodeWrapper>

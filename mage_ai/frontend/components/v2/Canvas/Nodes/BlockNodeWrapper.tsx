@@ -11,7 +11,6 @@ import stylesBuilder from '@styles/scss/apps/Canvas/Pipelines/Builder.module.scs
 import update from 'immutability-helper';
 import useAppEventsHandler, { CustomAppEvent, CustomAppEventEnum } from '../../Apps/PipelineCanvas/useAppEventsHandler';
 import useDispatchMounted from './useDispatchMounted';
-// import useExecutable from './useExecutable';
 import useOutputManager, { OutputManagerType } from './CodeExecution/useOutputManager';
 import { BlockNode } from './BlockNode';
 import { ClientEventType, EventOperationEnum, SubmitEventOperationType } from '@mana/shared/interfaces';
@@ -72,6 +71,7 @@ export const BlockNodeWrapper: React.FC<any> = ({
   const portElementRefs = useRef({});
   const connectionErrorRef = useRef(null);
   const connectionStatusRef = useRef<ServerConnectionStatusType>(null);
+  const portalRef = useRef<HTMLDivElement>(null);
   const [portalMount, setPortalMount] = useState<HTMLElement | null>(null);
 
   // Attributes
@@ -89,33 +89,46 @@ export const BlockNodeWrapper: React.FC<any> = ({
   } = useExecuteCode(undefined, block.uuid);
   const { subscribe, unsubscribe } = useRegistration(undefined, block.uuid);
 
-  useDispatchMounted(node, nodeRef, {
-    onMount: () => {
+  function updateStyles(add: boolean) {
+    const func = add ? 'add' : 'remove';
+
+    buttonBeforeRef?.current?.classList?.[func]?.(stylesButton.loading);
+    nodeRef?.current?.classList?.[func]?.(styles.executing);
+  }
+
+  useAppEventsHandler(node, {
+    [CustomAppEventEnum.PORTAL_MOUNTED]: (event: any) => {
+      const { data, operationTarget } = event.detail.event ?? {};
+      if (data?.node?.id === ['output', node.id].join('-')) {
+        setPortalMount(operationTarget);
+        portalRef.current = operationTarget;
+      }
+    }
+  });
+
+  useDispatchMounted(node, nodeRef);
+
+  useEffect(() => {
+    const timeout = timeoutRef.current;
+    clearTimeout(timeout);
+    updateStyles(false);
+
+    return () => {
+      active && unsubscribe(node.id);
+      clearTimeout(timeout)
+    }
+  }, [active, node, unsubscribe]);
+
+  useEffect(() => {
+    if (!portalMount) {
       const element = document.getElementById(`output-${uuid}`);
       if (!element) {
         console.error('Element not found');
         return;
       }
-
-      if (active) {
-        subscribe(node.id, {
-          onError: handleError,
-          onMessage: (event: EventStreamType) => {
-            if (executionDone(event)) {
-              buttonBeforeRef?.current?.classList.remove(stylesButton.loading);
-              nodeRef?.current?.classList?.remove(styles.executing);
-              clearTimeout(timeoutRef.current);
-            }
-          },
-          onOpen: handleOpen,
-        })
-      } else {
-        unsubscribe(node.id);
-      }
-
       setPortalMount(element);
-    },
-  });
+    }
+  }, [portalMount, uuid]);
   const draggingHandlers = setupDraggableHandlers(handlers, node, nodeRef, block);
 
   // Methods
@@ -134,13 +147,24 @@ export const BlockNodeWrapper: React.FC<any> = ({
   const getCode = useCallback(() => getFileCache(file?.path)?.client?.file?.content, [file]);
 
   const submitCodeExecution = useCallback((_event: React.MouseEvent<HTMLElement>) => {
+    subscribe(node.id, {
+      onError: handleError,
+      onMessage: (event: EventStreamType) => {
+        if (executionDone(event)) {
+          updateStyles(false);
+          clearTimeout(timeoutRef.current);
+        }
+      },
+      onOpen: handleOpen,
+    });
+
     const execute = () => {
       executeCode(getCode(), {
         source: node.id,
       });
-      outputRef?.current?.classList?.add(stylesOutput.executed);
-      buttonBeforeRef?.current?.classList?.add(stylesButton.loading);
-      nodeRef?.current?.classList?.add(styles.executing);
+      updateStyles(true);
+      // Add this and don’t take it away unless closing.
+      outputRef?.current?.classList?.add?.(stylesOutput.executed);
 
       let loops = 0;
       const now = Number(new Date());
@@ -262,8 +286,8 @@ export const BlockNodeWrapper: React.FC<any> = ({
       top: (rect.top ?? 0) + (rect.height ?? 0),
       width: (rect.width ?? 0),
     };
-    outputRect.height += 1.2 * (outputRect.height ?? 0);
-    outputRect.width += 1.2 * (outputRect.width ?? 0);
+    outputRect.width * 2;
+    outputRect.left -= (outputRect.width - rect.width) / 2;
 
     return (
       <OutputNode
@@ -272,10 +296,12 @@ export const BlockNodeWrapper: React.FC<any> = ({
         node={node}
         nodeRef={outputRef}
         rect={outputRect}
+        source="block-node"
         useRegistration={useRegistration}
       />
     );
-  }, [active, useRegistration, sharedProps, draggingHandlers, node, rect]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [active, sharedProps, draggingHandlers]);
 
   if (Wrapper) {
     return (

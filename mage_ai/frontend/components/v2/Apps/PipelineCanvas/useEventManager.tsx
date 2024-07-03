@@ -93,6 +93,7 @@ export default function useEventManager({
       setDragEnabled(true);
       setDropEnabled(true);
     });
+    DEBUG.dragging && console.log('handleStartDragging', event);
     containerRef?.current?.classList.add(stylesBuilder.dragging);
   }
 
@@ -132,6 +133,7 @@ export default function useEventManager({
     itemType: ItemTypeEnum;
     item: NodeItemType;
   }) {
+    DEBUG.dragging && console.log('onDragging', event);
     if (!differenceFromInitialOffset) {
       return;
     }
@@ -547,6 +549,7 @@ export default function useEventManager({
   }
 
   function handleDragStart(event: ClientEventType) {
+    DEBUG.dragging && console.log('handleDragStart', event);
     // setZoomPanDisabled(true);
     // if (!itemDraggingRef.current && ItemTypeEnum.PORT === node.type) {
     //   itemDraggingRef.current = node;

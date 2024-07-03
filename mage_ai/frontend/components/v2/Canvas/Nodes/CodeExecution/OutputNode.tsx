@@ -12,6 +12,8 @@ import { setupDraggableHandlers } from '../utils';
 type OutputNodeProps = {
   node: OutputNodeType;
   nodeRef: React.RefObject<HTMLDivElement>;
+  onMount?: () => void;
+  source?: string;
   useRegistration: (channel: string, stream: string) => { subscribe: (consumer: string, opts?: any) => void };
 } & CanvasNodeType;
 
@@ -20,7 +22,9 @@ const OutputNode: React.FC<OutputNodeProps> = ({
   handlers,
   node,
   nodeRef,
+  onMount,
   rect,
+  source,
   useRegistration,
 }: OutputNodeProps) => {
   const block = node.block;
@@ -40,8 +44,6 @@ const OutputNode: React.FC<OutputNodeProps> = ({
     node,
   }), [draggable, node]);
 
-  console.log(rect)
-
   return (
     <NodeWrapper
       {...sharedProps}
@@ -50,7 +52,13 @@ const OutputNode: React.FC<OutputNodeProps> = ({
       nodeRef={nodeRef}
       rect={rect}
     >
-      <OutputGroups node={node} useRegistration={useRegistration} />
+      <OutputGroups
+        block={block}
+        node={node}
+        onMount={onMount}
+        source={source}
+        useRegistration={useRegistration}
+      />
     </NodeWrapper>
   );
 }

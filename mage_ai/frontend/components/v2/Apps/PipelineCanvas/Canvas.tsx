@@ -2,6 +2,7 @@ import update from 'immutability-helper';
 import DraggableAppNode from '../../Canvas/Nodes/Apps/DraggableAppNode';
 import { ClientEventType } from '@mana/shared/interfaces';
 import DraggableBlockNode from '../../Canvas/Nodes/DraggableBlockNode';
+import PortalNode from '../../Canvas/Nodes/CodeExecution/PortalNode';
 import OutputNode from '../../Canvas/Nodes/CodeExecution/OutputNode';
 import CanvasContainer from './index.style';
 import PipelineExecutionFrameworkType from '@interfaces/PipelineExecutionFramework/interfaces';
@@ -380,6 +381,14 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }), [])
 
+  const outputPortalsMemo = useMemo(() => outputIDs?.map((id: string) => {
+    const key = `output-${id}`;
+    const portalRef = outputPortalRefs.current[key] || createRef();
+    outputPortalRefs.current[key] = portalRef;
+
+    return <PortalNode id={key} key={key} ref={portalRef} />;
+  }), [outputIDs]);
+
   return (
     <div
       ref={wrapperRef}
@@ -447,15 +456,7 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
             );
           })}
 
-          {outputIDs?.map((id: string) => {
-            const key = `output-${id}`;
-            const portalRef = outputPortalRefs.current[key] || createRef();
-            outputPortalRefs.current[key] = portalRef;
-
-            return (
-              <div key={key} id={key} ref={portalRef} />
-            )
-          })}
+          {outputPortalsMemo}
 
           {appRects?.rects?.map((arr) => {
             const [

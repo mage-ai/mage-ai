@@ -176,12 +176,12 @@ export default function useExecutionManager({
 
         chancesLeft.current[channel] = chancesLeft.current[channel] ?? maxConnectionAttempts;
         connectEventSource(channel, stream);
-        const eventSource = getEventSource(channel, stream);
+        const eventSource = getEventSource(channel);
         if (!eventSource) {
           return connect();
         }
 
-        return getEventSource(channel, stream);
+        return getEventSource(channel);
       }
 
       const handleNext = () => {
@@ -295,7 +295,7 @@ export default function useExecutionManager({
     messageRequestUUID: string;
   } {
     // const eventSource = eventSourcesRef.current[channel];
-    const messageRequestUUID = getNewUUID();
+    const messageRequestUUID = String(Number(new Date()));
 
     const executeCode = (message: string, payload?: {
       message_request_uuid?: string;
@@ -324,10 +324,23 @@ export default function useExecutionManager({
     };
   }
 
-  function handleOnMessage(event: EventStreamResponseType, channel: string, stream: string) {
-    onmessageRef?.current && onmessageRef?.current?.(event);
+  function extractChannelAndStream(event: EventStreamResponseType) {
+    const eventData = JSON.parse(event.data ?? '{}');
+    const channel = eventData?.uuid;
+    const source = eventData?.result?.process?.source;
+    const stream = eventData?.result?.process?.stream;
 
+    return { channel, source, stream };
+  }
+
+  function handleOnMessage(event: EventStreamResponseType) {
+    const { channel, stream } = extractChannelAndStream(event)
     const eventData = JSON.parse(event.data);
+
+    // console.log('Target channel:', eventData.uuid, channel);
+    // console.log('Target stream :', eventData.result.process.stream, stream);
+
+    onmessageRef?.current && onmessageRef?.current?.(event);
 
     DEBUG.codeExecution.manager && debugLog('useEventStreams.onmessage', event, eventData);
     // setEvents(channel, stream, eventData);
@@ -341,45 +354,19 @@ export default function useExecutionManager({
     });
   }
 
-  function handleOnOpen(event: Event, channel: string, stream: string) {
+  function handleOnOpen(event: Event) {
+    const eventSource = event.target as EventSource;
     onopenRef?.current && onopenRef?.current?.(event);
-
-    const eventSource = getEventSource(channel, stream);
-    const status = ReadyStateToServerConnectionStatus[eventSource.readyState];
-
-    DEBUG.codeExecution.manager && debugLog('useEventStreams.onopen', event);
-    // setStatus(channel, stream, status);
-
-    channelsRef?.current?.[channel]?.streams[stream]?.options?.onOpen?.(
-      status,
-      event,
-    );
-
-    const consumers = channelsRef?.current?.[channel]?.streams[stream]?.consumers;
-    Object.values(consumers ?? {}).forEach(({ options }) => {
-      options?.onOpen?.(
-        status,
-        event,
-      );
-    });
+    DEBUG.codeExecution.manager && debugLog('useEventStreams.onopen', eventSource);
   }
 
-  function handleOnError(event: Event, channel: string, stream: string) {
+  function handleOnError(event: Event) {
     onerrorRef?.current && onerrorRef?.current?.(event);
-
     DEBUG.codeExecution.manager && debugLog('useEventStreams.onerror', event);
-    // setErrors(channel, stream, event);
-
-    channelsRef?.current?.[channel]?.streams[stream]?.options?.onError?.(event);
-
-    const consumers = channelsRef?.current?.[channel]?.streams[stream]?.consumers;
-    Object.values(consumers ?? {}).forEach(({ options }) => {
-      options?.onError?.(event);
-    });
   }
 
   function connectEventSource(channel: string, stream: string): EventSource | null {
-    let eventSource = getEventSource(channel, stream)
+    let eventSource = getEventSource(channel)
     if (eventSource) {
       if (EventSourceReadyState.OPEN === eventSource.readyState) {
         // setStatus(channel, stream, ServerConnectionStatusType.OPEN);
@@ -398,42 +385,42 @@ export default function useExecutionManager({
       }
     }
 
-    eventSource = getEventSource(channel, stream);
+    eventSource = getEventSource(channel);
     if (eventSource) return eventSource;
 
     debugLog('Connecting to server...');
-    createEventSource(channel, stream)
-    eventSource = getEventSource(channel, stream);
+    createEventSource(channel)
+    eventSource = getEventSource(channel);
     if (!eventSource) return;
   }
 
-  function getEventSource(channel: string, stream: string): EventSource {
+  function getEventSource(channel: string): EventSource {
     const eventSource = eventSourcesRef.current[channel];
-    updateEventSourceHandlers(eventSource, channel, stream)
+    updateEventSourceHandlers(eventSource)
     eventSourcesRef.current[channel] = eventSource;
     return eventSource;
   }
 
-  function createEventSource(channel: string, stream: string): EventSource {
+  function createEventSource(channel: string): EventSource {
     const eventSource = new EventSource(getEventStreamsUrl(channel));
-    updateEventSourceHandlers(eventSource, channel, stream)
+    updateEventSourceHandlers(eventSource)
     eventSourcesRef.current[channel] = eventSource;
     return eventSource;
   }
 
-  function updateEventSourceHandlers(eventSource: EventSource, channel: string, stream: string) {
+  function updateEventSourceHandlers(eventSource: EventSource) {
     if (!(eventSource ?? false)) return;
 
     eventSource.onerror = (event: Event): any => {
-      handleOnError(event, channel, stream);
+      handleOnError(event);
     };
 
     eventSource.onmessage = (event: EventStreamResponseType) => {
-      handleOnMessage(event, channel, stream);
+      handleOnMessage(event);
     };
 
     eventSource.onopen = (event: Event) => {
-      handleOnOpen(event, channel, stream);
+      handleOnOpen(event);
     };
   }
 
