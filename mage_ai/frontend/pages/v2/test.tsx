@@ -12,7 +12,7 @@ function Test() {
     });
     header.setHeader({
       navTag: 'LLM',
-      selectedNavItem: 'builder',
+      selectedNavItem: 'code',
       title: 'Pipelines',
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps

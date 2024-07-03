@@ -1,15 +1,19 @@
 @use '../../abstracts/mixins';
 
 .header {
+  background-color: var(--colors-blackhi);
+  backdrop-filter: var(--menus-blur-base);
   height: 52px;
   left: 0;
   padding-bottom: 6px;
   padding-left: var(--padding-sm);
   padding-right: var(--padding-sm);
   padding-top: 6px;
+  position: fixed;
   right: 0;
   top: 0;
   width: 100vw;
+  z-index: 10;
 
   .button {
     @include mixins.transition-fast;

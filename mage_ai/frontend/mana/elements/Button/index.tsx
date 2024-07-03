@@ -20,7 +20,7 @@ type ButtonStyleProps = {
   width?: string;
 } & StyleProps;
 
-type ButtonProps = {
+export type ButtonProps = {
   asLink?: boolean;
   className?: string;
   containerRef?: React.RefObject<HTMLDivElement>;

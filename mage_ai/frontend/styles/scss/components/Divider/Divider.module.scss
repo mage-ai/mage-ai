@@ -27,3 +27,10 @@ $spacing: 12px;
     width: 1px;
   }
 }
+
+.dashed-divider {
+  border-left: 0.5px dashed var(--colors-graymd);
+  border-right: 0.5px dashed var(--colors-graymd);
+  height: 40px;
+  width: 1px;
+}
