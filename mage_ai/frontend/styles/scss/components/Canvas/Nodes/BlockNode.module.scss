@@ -32,25 +32,15 @@
       visibility: visible;
       opacity: 1;
     }
-
-    .display-if-loading {
-      display: block;
-    }
-    .display-ifnot-loading {
-      display: none;
-    }
-
-    .show-if-loading {
-      @include show;
-    }
-    .hide-if-loading {
-      @include hide;
-    }
   }
 
   &.executing {
     .display-if-executing {
       display: block;
+    }
+
+    .display-ifnot-executing {
+      display: none;
     }
   }
 
@@ -58,17 +48,7 @@
     display: none;
   }
 
-  .show-ifnot-loading {
-    @include show;
-  }
-  .hide-ifnot-loading {
-    @include hide;
-  }
-
-  .display-if-loading {
-    display: none;
-  }
-  .display-ifnot-loading {
+  .display-ifnot-executing {
     display: block;
   }
 
