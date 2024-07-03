@@ -24,9 +24,9 @@ const OutputGroups: React.FC<OutputGroupsProps> = ({
 }: OutputGroupsProps) => {
   const scrollableDivRef = useRef<HTMLDivElement>(null);
 
-  const block = blockProp ?? node?.block;
+  const block = blockProp || node?.block;
   const [eventsGrouped, setEventsGrouped] = useState<Record<string, Record<string, EventStreamType>>>({});
-  const { subscribe } = useRegistration(undefined, block.uuid);
+  const { subscribe } = useRegistration(undefined, block?.uuid);
   const handleMessage = useRef((event: EventStreamType) => {
     setEventsGrouped((prev) => ({
       ...prev,

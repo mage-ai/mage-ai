@@ -528,7 +528,7 @@ export default function useEventManager({
                     height: rect.height -= diffHeight,
                     width: rect.width -= diffWidth,
                   };
-                  node.items = node.items.filter(
+                  node.items = node?.items?.filter(
                     (item: any) => (typeof item === 'string' ? item : item.id) !== itemRemoved.id
                   );
 
@@ -543,7 +543,7 @@ export default function useEventManager({
               appHandlersRef.current?.pipelines.update.mutate({
                 payload: (pipeline) => ({
                   ...pipeline,
-                  blocks: pipeline.blocks.filter((block: BlockType) => block.uuid !== target.block.uuid),
+                  blocks: pipeline?.blocks?.filter((block: BlockType) => block.uuid !== target.block.uuid),
                 }),
               });
             },

@@ -74,13 +74,13 @@ const DraggableAppNode: React.FC<NodeType & CanvasNodeType> = ({
     node,
   );
 
-  const block = blocks?.[index] ?? node?.block;
+  const block = blocks?.[index] || node?.block;
   const { configuration } = block ?? {};
   const { file } = configuration ?? {};
 
   const {
     executeCode,
-  } = useExecuteCode(undefined, block.uuid);
+  } = useExecuteCode(undefined, block?.uuid);
 
   const appOptions = {
     configurations: {
@@ -115,6 +115,13 @@ const DraggableAppNode: React.FC<NodeType & CanvasNodeType> = ({
       style: {},
     },
     onMountEditor: () => {
+      if (nodeRef?.current) {
+        // This is required or else a preview of the node won’t be available when dragging.
+        nodeRef.current.style.opacity = '1';
+        nodeRef.current.style.visibility = 'visible';
+        nodeRef.current.style.display = 'block';
+      }
+
       if (useCustomDragPreviewImage && nodeRef?.current && !imageDataRef?.current) {
         const generateImage = async () => {
           const computedStyle =
@@ -122,12 +129,6 @@ const DraggableAppNode: React.FC<NodeType & CanvasNodeType> = ({
 
           if (computedStyle) {
             try {
-              // Ensure the element is visible
-              nodeRef.current.style.opacity = '1';
-              nodeRef.current.style.visibility = 'visible';
-              nodeRef.current.style.display = 'block';
-
-              // Adding a slight delay to ensure the node is fully rendered
               await new Promise((resolve) => setTimeout(resolve, 2000));
 
               const canvas = await html2canvas(nodeRef.current, { scale: 2, useCORS: true });

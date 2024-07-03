@@ -31,8 +31,8 @@ export const MutationStatusEnum = MutationStatusEnumBase;
 export function useMutate(
   argsInit: IDArgsType,
   opts?: {
+    automaticAbort?: boolean;
     callbackOnEveryRequest?: boolean;
-    disableAbort?: boolean;
     handlers?: ResourceHandlersType;
     parse?: string | ((...args: any[]) => any);
     subscribeToStatusUpdates?: boolean;
@@ -49,8 +49,8 @@ export function useMutate(
   const context = useContext(APIMutationContext);
 
   const {
+    automaticAbort,
     callbackOnEveryRequest,
-    disableAbort,
     subscribeToStatusUpdates,
     throttle: throttleProp,
   } = opts || {};
@@ -362,7 +362,7 @@ export function useMutate(
       return Promise.resolve(null);
     }
 
-    if (!disableAbort && abortControllerRef?.current?.[operation]) {
+    if (automaticAbort && abortControllerRef?.current?.[operation]) {
       console.log(`[useMutate] Aborting ${operation} for ${resource}`, args);
       abortControllerRef?.current?.[operation].abort();
     }

@@ -6,7 +6,7 @@ from mage_ai.data_preparation.models.block import Block as BlockBase
 from mage_ai.data_preparation.models.constants import BlockType
 from mage_ai.data_preparation.models.pipeline import Pipeline as PipelineBase
 from mage_ai.frameworks.execution.models.block.models import Configuration
-from mage_ai.shared.hash import ignore_keys
+from mage_ai.shared.hash import extract
 from mage_ai.shared.models import DelegatorTarget
 from mage_ai.shared.utils import get_absolute_path
 from mage_ai.system.browser.models import Item
@@ -27,13 +27,15 @@ class Block(DelegatorTarget):
         configuration_payload = payload.get('configuration', {})
 
         if 'templates' in configuration_payload:
-            template_uuid = list(configuration_payload.get('templates', {}).keys())[0]
-            configuration = Configuration.load(**configuration_payload)
+            for template_uuid, temp_config in configuration_payload.get('templates', {}).items():
+                if len(temp_config.values()) >= 1:
+                    continue
+                configuration = Configuration.load(**configuration_payload)
 
-            if configuration and configuration.templates:
-                template = configuration.templates[template_uuid]
-                if template:
-                    payload.update(template.setup_block_config(payload))
+                if configuration and configuration.templates:
+                    template = configuration.templates[template_uuid]
+                    if template:
+                        payload.update(template.setup_block_config(payload))
 
         if not payload.get('type'):
             raise Exception('Block type is required')
@@ -43,13 +45,11 @@ class Block(DelegatorTarget):
             block_type=payload['type'],
             repo_path=pipeline.repo_path,
             pipeline=pipeline,
-            **ignore_keys(
+            **extract(
                 payload,
                 [
-                    'block_type',
-                    'name',
-                    'type',
-                    'uuid',
+                    'configuration',
+                    'groups',
                 ],
             ),
         )
