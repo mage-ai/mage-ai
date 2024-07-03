@@ -295,32 +295,42 @@ export default function useExecutionManager({
     messageRequestUUID: string;
   } {
     // const eventSource = eventSourcesRef.current[channel];
-    const messageRequestUUID = String(Number(new Date()));
 
     const executeCode = (message: string, payload?: {
       message_request_uuid?: string;
       source?: string;
-    }) => mutants.create.mutate({
-      onError: (response: ResponseType) => {
-        debugLog('[RUNTIME] onError', response);
-      },
-      onSuccess: (data: { code_execution: ProcessDetailsType }) => {
-        debugLog('[RUNTIME] onSuccess', data);
-        addToStream(channel, stream, { message: data.code_execution as ProcessDetailsType });
-      },
-      payload: {
-        message,
-        message_request_uuid: payload?.message_request_uuid ?? messageRequestUUID,
-        source: payload?.source,
-        stream,
-        timestamp: Number(new Date()),
-        uuid: channel, // This cannot change or no messages will be received
-      } as ProcessDetailsType,
-    });
+    }, opts?: {
+      future?: boolean;
+    }) => {
+      const messageRequestUUID = String(Number(new Date()));
+
+      const future = () => mutants.create.mutate({
+        onError: (response: ResponseType) => {
+          debugLog('[RUNTIME] onError', response);
+        },
+        onSuccess: (data: { code_execution: ProcessDetailsType }) => {
+          debugLog('[RUNTIME] onSuccess', data);
+          addToStream(channel, stream, { message: data.code_execution as ProcessDetailsType });
+        },
+        payload: {
+          message,
+          message_request_uuid: payload?.message_request_uuid ?? messageRequestUUID,
+          source: payload?.source,
+          stream,
+          timestamp: Number(new Date()),
+          uuid: channel, // This cannot change or no messages will be received
+        } as ProcessDetailsType,
+      });
+
+      if (!opts?.future) {
+        future();
+      }
+
+      return [messageRequestUUID, future];
+    };
 
     return {
       executeCode,
-      messageRequestUUID,
     };
   }
 
