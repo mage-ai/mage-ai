@@ -2,15 +2,24 @@ import dynamic from 'next/dynamic';
 import Grid from '@mana/components/Grid';
 import styles from '@styles/scss/pages/PipelineBuilder/PipelineBuilder.module.scss';
 import { PipelineDetailProps } from '../interfaces';
-import { useMutate } from '@context/APIMutation';
-import { useEffect, useMemo, useRef, useState } from 'react';
-import { PipelineExecutionFrameworkUUIDEnum } from '@interfaces/PipelineExecutionFramework/types';
-import PipelineExecutionFrameworkType from '@interfaces/PipelineExecutionFramework/interfaces';
+import { useContext, useEffect } from 'react';
+import { LayoutContext } from '@context/v2/Layout';
 import DetailLayout from '../DetailLayout';
 
 const Canvas = dynamic(() => import('../../../../Apps/PipelineCanvas'), { ssr: false });
 
 function PipelineBuilder({ frameworkUUID, uuid, ...props }: PipelineDetailProps) {
+  const { header, page } = useContext(LayoutContext);
+
+  useEffect(() => {
+    header.setHeader({
+      navTag: frameworkUUID,
+      selectedNavItem: 'builder',
+      title: uuid,
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   return (
     <DetailLayout loadEditorServices>
       <div className={styles.container}>

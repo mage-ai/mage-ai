@@ -1,0 +1,63 @@
+@use '../../abstracts/mixins';
+
+.header {
+  height: 52px;
+  left: 0;
+  padding-bottom: 6px;
+  padding-left: var(--padding-sm);
+  padding-right: var(--padding-sm);
+  padding-top: 6px;
+  right: 0;
+  top: 0;
+  width: 100vw;
+
+  .button {
+    @include mixins.transition-fast;
+
+    background: none !important;
+    border-color: var(--colors-graymd) !important;
+    border-radius: 8px;
+    border-style: var(--borders-style) !important;
+    border-width: var(--borders-width) !important;
+    height: 40px;
+    justify-content: center !important;
+    padding: 0 11px !important;
+
+    &:focus {
+      border-color: var(--colors-greenmd) !important;
+      box-shadow: none;
+
+      .buttonIcon {
+        fill: var(--colors-greenmd);
+      }
+    }
+
+    &:hover {
+      border-color: var(--backgrounds-body) !important;
+      box-shadow:
+        0 0 0 var(--borders-outline-offset) var(--backgrounds-body),
+        0 0 0 var(--borders-outline-total) var(--colors-green);
+
+      .buttonIcon {
+        fill: var(--colors-green);
+      }
+    }
+
+    &:active,
+    &.selected {
+      @include mixins.transition-instant;
+      box-shadow: none !important;
+      border-color: var(--colors-green) !important;
+
+      .buttonIcon {
+        fill: var(--colors-green);
+      }
+    }
+
+    .buttonIcon {
+      @include mixins.transition-fast;
+
+      fill: var(--colors-whitelo);
+    }
+  }
+}

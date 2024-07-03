@@ -7,6 +7,7 @@ import { ModeEnum } from '@mana/themes/modes';
 import { ThemeSettingsType } from '@mana/themes/interfaces';
 import { getTheme, getThemeSettings } from '@mana/themes/utils';
 import { useEffect } from 'react';
+import Header, { HEADER_ROOT_ID } from '../v2/Layout/Header';
 
 function NextAppV2({
   Component,
@@ -18,6 +19,7 @@ function NextAppV2({
     version,
     ...rest
   },
+  router,
 }: AppProps & {
   pageProps: {
     defaultTitle?: string;
@@ -47,6 +49,8 @@ function NextAppV2({
         />
       </Head>
       <ContextProvider theme={theme as ThemeType}>
+        <div id={HEADER_ROOT_ID}><Header /></div>
+
         <Component {...rest} />
       </ContextProvider>
     </>

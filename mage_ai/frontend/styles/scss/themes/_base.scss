@@ -3,6 +3,7 @@
 @mixin base() {
   --borders-outline-offset: #{$borders-outline-offset};
   --borders-outline-width: #{$borders-outline-width};
+  --borders-outline-total: #{$borders-outline-total};
   --borders-radius-base: #{$borders-radius-base};
   --borders-radius-round: #{$borders-radius-round};
   --borders-radius-sm: #{$borders-radius-sm};

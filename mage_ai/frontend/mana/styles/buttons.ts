@@ -10,6 +10,7 @@ export type StyleProps = {
   basic?: boolean;
   bordercolor?: string;
   grouped?: boolean | string;
+  header?: boolean;
   loading?: boolean;
   plain?: boolean;
   primary?: boolean;
@@ -25,19 +26,25 @@ const shared = css<StyleProps>`
   position: relative;
   z-index: 1;
 
-  ${({ aslink, basic, bordercolor, grouped, plain, primary, secondary, theme, wrap }) =>
+  ${({ header, theme }) => header && `
+
+  `}
+
+  ${({ aslink, basic, bordercolor, grouped, header, plain, primary, secondary, theme, wrap }) =>
     !plain &&
     outlineHover({
       borderColor: theme.fonts.color.text.inverted,
-      outlineColor: (aslink && wrap)
-        ? theme.colors.blueText
-        : (theme.colors?.[bordercolor] ?? bordercolor) ?? primary
-          ? theme.buttons.outline.color.primary.hover
-          : secondary
-            ? theme.buttons.outline.color.secondary.hover
-            : aslink || basic
-              ? theme.buttons.outline.color.basic.hover
-              : theme.buttons.outline.color.base.hover,
+      outlineColor: header
+        ? 'var(--colors-green)'
+        : (aslink && wrap)
+          ? theme.colors.blueText
+          : (theme.colors?.[bordercolor] ?? bordercolor) ?? primary
+            ? theme.buttons.outline.color.primary.hover
+            : secondary
+              ? theme.buttons.outline.color.secondary.hover
+              : aslink || basic
+                ? theme.buttons.outline.color.basic.hover
+                : theme.buttons.outline.color.base.hover,
       outlineOffset: wrap ? 0 : grouped ? UNIT : undefined,
       outlineWidth: wrap ? 0 : undefined,
     })}
@@ -48,7 +55,7 @@ const shared = css<StyleProps>`
     border: none !important;
   `}
 
-  ${({ aslink, basic, grouped, plain }) => !aslink && !grouped && !plain && basic && borders}
+  ${({ aslink, basic, grouped, header, plain }) => !aslink && !grouped && !plain && (basic || header) && borders}
   ${({ aslink, basic, bordercolor, grouped, plain, primary, secondary, theme }) =>
     !aslink &&
     !grouped &&

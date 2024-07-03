@@ -11,7 +11,7 @@ type LoggingType = {
 };
 
 export type WithLoggingProps = {
-  onClick: (event: React.MouseEvent) => void;
+  onClick?: (event: React.MouseEvent) => void;
   logEvent?: LoggingType;
 };
 

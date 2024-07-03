@@ -1,4 +1,5 @@
 import React from 'react';
+import NextLink from 'next/link';
 import styles from '@styles/scss/elements/Button/Button.module.scss';
 import styled, { css } from 'styled-components';
 import { motion } from 'framer-motion';
@@ -14,6 +15,7 @@ type ButtonStyleProps = {
   Icon?: ({ ...props }: any) => any;
   IconAfter?: ({ ...props }: any) => any;
   anchor?: boolean | string;
+  header?: boolean;
   children?: React.ReactNode;
   width?: string;
 } & StyleProps;
@@ -23,6 +25,10 @@ type ButtonProps = {
   className?: string;
   containerRef?: React.RefObject<HTMLDivElement>;
   id?: string;
+  linkProps?: {
+    as?: string;
+    href: string;
+  };
   loading?: boolean;
   loadingColorName?: string;
   onMouseEnter?: (event: React.MouseEvent<HTMLDivElement>) => void;
@@ -75,6 +81,7 @@ function Button({
   children,
   containerRef,
   href,
+  linkProps,
   loading,
   loadingColorName,
   motion,
@@ -88,7 +95,7 @@ function Button({
   wrap,
   ...props
 }: ButtonProps) {
-  const HTMLTag = anchor || asLink ? AStyled : ButtonStyled;
+  const HTMLTag = (anchor || asLink || linkProps) ? AStyled : ButtonStyled;
 
   const dataProps = {};
   Object.entries(props ?? {})?.forEach(([key, value]) => {
@@ -97,6 +104,46 @@ function Button({
       delete props[key];
     }
   });
+
+  const el = (
+    // @ts-ignore
+    <HTMLTag
+      {...props}
+      {...(asLink ? { href: href ?? '#' } : {})}
+      {...(motion ? { whileTap: { scale: 0.97 } } : {})}
+      aslink={asLink ? 'true' : undefined}
+      basic={basic ? 'true' : undefined}
+      loading={loading ? true : undefined}
+      plain={plain ? 'true' : undefined}
+      primary={primary ? 'true' : undefined}
+      secondary={secondary ? 'true' : undefined}
+      small={small ? 'true' : undefined}
+      style={{
+        gridTemplateColumns: [
+          Icon ? 'auto' : '',
+          children ? '1fr' : '',
+          tag ? 'auto' : '',
+          IconAfter ? 'auto' : '',
+        ].join(' '),
+        ...style,
+      }}
+      tag={tag}
+      target={target}
+      wrap={wrap ? 'true' : undefined}
+    >
+      {Icon && <Icon inverted={primary || secondary} small={small} />}
+
+      {children}
+
+      {tag && (
+        <Tag inverted={primary || secondary} passthrough secondary={basic}>
+          {tag}
+        </Tag>
+      )}
+
+      {IconAfter && <IconAfter inverted={primary || secondary} small={small} />}
+    </HTMLTag>
+  );
 
   return (
     <div
@@ -115,43 +162,13 @@ function Button({
           : loadingColorName} />
       </div>
 
-      {/* @ts-ignore */}
-      <HTMLTag
-        {...props}
-        {...(asLink ? { href: href ?? '#' } : {})}
-        {...(motion ? { whileTap: { scale: 0.97 } } : {})}
-        aslink={asLink ? 'true' : undefined}
-        basic={basic ? 'true' : undefined}
-        loading={loading ? true : undefined}
-        plain={plain ? 'true' : undefined}
-        primary={primary ? 'true' : undefined}
-        secondary={secondary ? 'true' : undefined}
-        small={small ? 'true' : undefined}
-        style={{
-          ...style,
-          gridTemplateColumns: [
-            Icon ? 'auto' : '',
-            children ? '1fr' : '',
-            tag ? 'auto' : '',
-            IconAfter ? 'auto' : '',
-          ].join(' '),
-        }}
-        tag={tag}
-        target={target}
-        wrap={wrap ? 'true' : undefined}
-      >
-        {Icon && <Icon inverted={primary || secondary} small={small} />}
+      {linkProps && (
+        <NextLink {...linkProps} passHref>
+          {el}
+        </NextLink>
+      )}
 
-        {children}
-
-        {tag && (
-          <Tag inverted={primary || secondary} passthrough secondary={basic}>
-            {tag}
-          </Tag>
-        )}
-
-        {IconAfter && <IconAfter inverted={primary || secondary} small={small} />}
-      </HTMLTag>
+      {!linkProps && el}
     </div >
   );
 }

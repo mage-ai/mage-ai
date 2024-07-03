@@ -8,6 +8,10 @@
   transition: 0.15s all linear;
 }
 
+@mixin transition-instant {
+  transition: 0.0s all linear;
+}
+
 @mixin gradient($angle, $start-color, $end-color, $start-percentage: 0%, $end-percentage: 100%) {
   background-image: -webkit-linear-gradient($angle, $start-color $start-percentage, $end-color $end-percentage);
   background-image: -moz-linear-gradient($angle, $start-color $start-percentage, $end-color $end-percentage);
