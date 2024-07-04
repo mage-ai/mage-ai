@@ -1,16 +1,16 @@
 import ContextProvider from '@context/v2/ContextProvider';
-import { ThemeProvider } from 'styled-components';
 import Head from '@mana/elements/Head';
-import { LayoutProvider } from '@context/v2/Layout';
+import HeaderPortal from '../v2/Layout/Header/Portal';
 import ThemeType from '@mana/themes/interfaces';
 import { AppProps } from 'next/app';
+import { LayoutProvider } from '@context/v2/Layout';
 import { LayoutVersionEnum } from '@utils/layouts';
+import { MenuProvider } from '@context/v2/Menu';
 import { ModeEnum } from '@mana/themes/modes';
+import { ThemeProvider } from 'styled-components';
 import { ThemeSettingsType } from '@mana/themes/interfaces';
 import { getTheme, getThemeSettings } from '@mana/themes/utils';
-import { useEffect } from 'react';
-import Header, { HEADER_ROOT_ID } from '../v2/Layout/Header';
-import { MenuProvider } from '@context/v2/Menu';
+import { useEffect, useRef } from 'react';
 
 function NextAppV2({
   Component,
@@ -32,6 +32,7 @@ function NextAppV2({
     version?: LayoutVersionEnum;
   };
 }) {
+  const headerRef = useRef(null);
   const themeSettings = (themeSettingsProp?.[version] || getThemeSettings()) as ThemeSettingsType;
   const theme = themeSettings?.theme || getTheme({ theme: themeSettings });
   const mode = themeSettings?.mode || modeProp || ModeEnum.DARK;
@@ -56,11 +57,11 @@ function NextAppV2({
         <MenuProvider>
           <LayoutProvider router={router} theme={theme}>
             <ContextProvider router={router} theme={theme as ThemeType}>
-              <div id={HEADER_ROOT_ID}><Header router={router} /></div>
+              <HeaderPortal headerRef={headerRef} />
 
               <Component {...rest} />
             </ContextProvider >
-          </LayoutProvider  >
+          </LayoutProvider   >
         </MenuProvider>
       </ThemeProvider>
     </>

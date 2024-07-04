@@ -19,11 +19,15 @@ type PageType = {
 
 export interface LayoutContextType {
   header?: HeaderType;
+  initialize?: (props: {
+    headerRef: React.RefObject<HTMLDivElement>;
+  }) => void;
   page?: PageType;
 }
 
 export const LayoutContext = React.createContext<LayoutContextType>({
   header: {},
+  initialize: null,
   page: {},
 });
 

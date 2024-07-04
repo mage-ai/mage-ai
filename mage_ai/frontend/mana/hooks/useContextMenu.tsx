@@ -42,7 +42,7 @@ export interface ContextMenuType {
 
 export type ContextMenuProps = {
   container?: HTMLDivElement;
-  containerRef?: React.RefObject<HTMLElement>;
+  containerRef?: React.RefObject<HTMLDivElement>;
   useAsStandardMenu?: boolean;
   uuid: string;
 };

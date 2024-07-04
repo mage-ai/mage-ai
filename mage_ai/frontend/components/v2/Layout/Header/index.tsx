@@ -34,7 +34,6 @@ export function Header({
   selectedNavItem,
   title,
 }: HeaderProps, ref: React.MutableRefObject<HTMLDivElement | null>) {
-  // const userFromLocalStorage = getUser();
   let headerRef = ref;
   headerRef ||= useRef<HTMLDivElement | null>(null);
   const buttonRefs = useRef<Record<string, React.MutableRefObject<HTMLElement>>>({});
@@ -44,7 +43,7 @@ export function Header({
     renderContextMenu,
     removeContextMenu,
   } = useContextMenu({
-    container: headerRef,
+    containerRef: headerRef,
     useAsStandardMenu: true,
     uuid: 'main-header',
   });

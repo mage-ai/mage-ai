@@ -1,10 +1,11 @@
 import ContextProvider from '../ContextProvider';
 import Header, { HeaderProps, HEADER_ROOT_ID } from '@components/v2/Layout/Header';
-import React, { useRef } from 'react';
+import React, { useRef, useState } from 'react';
+import ThemeType from '@mana/themes/interfaces';
 import { FaviconStatusEnum, changeFavicon } from './favicon';
 import { LayoutContext, PageProps } from './LayoutContext';
 import { Root, createRoot } from 'react-dom/client';
-import ThemeType from '@mana/themes/interfaces';
+import { createPortal } from 'react-dom';
 import { useMenuContext } from '../Menu';
 
 interface LayoutProviderProps {
@@ -14,31 +15,43 @@ interface LayoutProviderProps {
 }
 
 export const LayoutProvider = ({ children, router, theme }: LayoutProviderProps) => {
-  const useMenu = useMenuContext();
-  const headerRootRef = useRef<Root>(null);
-  const headerRef = useRef<HeaderProps>({
+  const [headerPortalRef, setHeaderPortalRef] = useState(null);
+  const [headerData, setHeaderData] = useState<HeaderProps>({
     navTag: undefined,
     selectedNavItem: undefined,
     title: undefined,
   });
+
+  const [headerContainerRef, setHeaderContainerRef] = useState<React.RefObject<HTMLDivElement>>(null);
+  const useMenu = useMenuContext();
+  const headerRootRef = useRef<Root>(null);
+  const headerRef = useRef<HeaderProps>(headerData);
   const pageRef = useRef<PageProps>({
     title: 'Mage Pro',
   });
+
+  function initialize({
+    headerRef,
+    page,
+  }) {
+    setHeaderPortalRef(headerRef)
+  }
 
   function setHeader(kwargs: HeaderProps) {
     headerRef.current = {
       ...headerRef.current,
       ...kwargs,
     };
+    setHeaderData(headerRef.current);
 
-    const element = document.getElementById(HEADER_ROOT_ID);
-    if (!element) return;
-    headerRootRef.current ||= createRoot(element);
-    headerRootRef.current.render(
-      <ContextProvider router={router} theme={theme}>
-        <Header {...headerRef.current} router={router} useMenu={useMenu} />
-      </ContextProvider  >
-    );
+    // const element = document.getElementById(HEADER_ROOT_ID);
+    // if (!element) return;
+    // headerRootRef.current ||= createRoot(element);
+    // headerRootRef.current.render(
+    //   <ContextProvider router={router} theme={theme}>
+    //     <Header {...headerRef.current} router={router} />
+    //   </ContextProvider  >
+    // );
 
     // console.log(kwargs, headerContainerRef.current,
     //   headerContainerRef?.current?.querySelectorAll('[role="title"]')
@@ -89,12 +102,20 @@ export const LayoutProvider = ({ children, router, theme }: LayoutProviderProps)
           ...headerRef.current,
           setHeader,
         },
+        initialize,
         page: {
           ...pageRef.current,
           setPage,
         },
       }}
     >
+      {headerPortalRef?.current && createPortal(
+        <Header {...{
+          ...headerRef?.current,
+          ...headerData,
+        }} router={router} />,
+        headerPortalRef?.current,
+      )}
       {children}
     </LayoutContext.Provider>
   );
