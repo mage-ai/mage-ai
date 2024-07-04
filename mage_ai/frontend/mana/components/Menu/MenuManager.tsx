@@ -10,14 +10,14 @@ export default function MenuManager({
   contained,
   direction = LayoutDirectionEnum.LEFT,
   items,
-  open,
+  open: openProp,
   uuid,
 }: {
   children: React.ReactNode;
   contained?: boolean;
   direction?: LayoutDirectionEnum;
   items: MenuItemType[];
-  open: boolean;
+  open?: boolean;
   uuid: string;
 }) {
   const {
@@ -29,6 +29,7 @@ export default function MenuManager({
     containerRef,
     uuid,
   });
+  const [open, setOpen] = React.useState(openProp);
 
   useEffect(() => {
     if (open) {
@@ -37,7 +38,7 @@ export default function MenuManager({
         parents,
         // rect: rectRelative,
       } = getAbsoluteRect(containerRef?.current, { includeParents: true });
-      const parent = parents?.[0];
+      // const parent = parents?.[0];
       // const offset = {
       //   // your absolute - parent absolute
       //   left: rectAbsolute?.left - parent?.left,
@@ -47,6 +48,12 @@ export default function MenuManager({
       showMenu(items, {
         // contained,
         direction,
+        onClose: (level: number) => {
+          if (level === 0) {
+            hideMenu();
+            setOpen(false);
+          }
+        },
         position: rectAbsolute,
         rects: {
           bounding: {
@@ -70,9 +77,15 @@ export default function MenuManager({
   return (
     <>
       {contained ? contextMenu : createPortal(contextMenu, portalRef.current)}
-      <div ref={containerRef}>
+      <div
+        onClick={(event) => {
+          event.preventDefault();
+          setOpen(prev => !prev);
+        }}
+        ref={containerRef}
+      >
         {children}
-      </div >
+      </div>
     </>
   );
 }

@@ -45,6 +45,7 @@ const itemVariants: Variants = {
 
 export type MenuProps = {
   above?: boolean;
+  children?: React.ReactNode;
   contained?: boolean;
   direction?: LayoutDirectionEnum;
   parentContainers?: HTMLElement;
@@ -55,7 +56,7 @@ export type MenuProps = {
   event?: MouseEvent | React.MouseEvent<HTMLDivElement>;
   items: MenuItemType[];
   level?: number;
-  parentItemsElementRef?: React.MutableRefObject<HTMLDivElement>;
+  onClose?: (level: number) => void;
   position?: RectType;
   rects?: {
     bounding?: RectType;
@@ -202,7 +203,7 @@ function Menu({
   level,
   openAtPosition,
   children,
-  parentItemsElementRef,
+  onClose,
   position,
   rects,
   small,
@@ -250,7 +251,6 @@ function Menu({
           event={event}
           items={item?.items}
           level={nextLevel}
-          // parentItemsElementRef={parentItemsElementRef?.current ? parentItemsElementRef : itemsElementRef}
           position={rect}
           rects={{
             bounding: rects?.bounding,
@@ -315,7 +315,7 @@ function Menu({
 
       itemExpandedRef.current = item;
     },
-    [standardMenu, themeContext, uuid, parentItemsElementRef,
+    [standardMenu, themeContext, uuid,
       above, contained, direction, rects,
       level,
     ],
@@ -347,20 +347,16 @@ function Menu({
   // Handle outside click
   const handleDocumentClick = useCallback((event: MouseEvent) => {
     const el = event.target as node;
-
-    const contains = [containerRef,
+    const contains = [
+      containerRef,
       ...(Object.values(itemsRef?.current ?? {}) ?? []),
     ]?.some((ref) => ref?.current?.contains(el));
 
-    if (contains) {
-      console.log(uuid);
+    if (!contains) {
+      removePortalsFromLevel(0);
+      onClose && onClose?.(0);
     }
-
-    // const rect = containerRectRef.current;
-    // if (rect && (event.pageX < rect.left || event.pageX > rect.right || event.pageY < rect.top || event.pageY > rect.bottom)) {
-    //   removeChildren();
-    // }
-  }, [removeChildren, uuid]);
+  }, [onClose, removePortalsFromLevel]);
 
   useEffect(() => {
     const computedStyle =

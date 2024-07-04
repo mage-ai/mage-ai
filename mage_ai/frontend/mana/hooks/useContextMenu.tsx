@@ -13,6 +13,7 @@ import { selectKeys } from '@utils/hash';
 export type RenderContextMenuOptions = {
   contained?: boolean;
   direction?: MenuProps['direction'];
+  onClose?: MenuProps['onClose'];
   position?: MenuProps['position'];
   rects?: MenuProps['rects'];
 };
@@ -189,7 +190,6 @@ export default function useContextMenu({
           contained={contained}
           event={event}
           items={items}
-          // parentItemsElementRef={contextMenuRef}
           position={position ?? {
             left: event?.pageX,
             top: event?.pageY,

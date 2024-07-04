@@ -1,4 +1,4 @@
-import React, { useMemo, useRef, useState } from 'react';
+import React, { useMemo, useRef } from 'react';
 import Grid from '@mana/components/Grid';
 import MenuManager from '@mana/components/Menu/MenuManager';
 import Button from '@mana/elements/Button';
@@ -13,9 +13,6 @@ function Aside({
   onClick,
   uuid,
 }: AsideType, ref: React.Ref<HTMLButtonElement>) {
-  const containerRef = useRef(null);
-  const [open, setOpen] = useState(false);
-
   const element = useMemo(() => {
     const el = (
       <Grid
@@ -41,9 +38,10 @@ function Aside({
         containerRef={buttonRef}
         loadingColorName={baseColorName}
         onClick={(event: React.MouseEvent<HTMLElement, MouseEvent>) => {
-          event.preventDefault();
-          onClick && onClick?.(event);
-          menuItems && setOpen(prev => !prev);
+          if (onClick) {
+            event.preventDefault();
+            onClick && onClick?.(event);
+          }
         }}
         wrap
       /> : el;
@@ -59,9 +57,7 @@ function Aside({
 
   return (
     <MenuManager
-      // contained
       items={menuItems}
-      open={open}
       uuid={uuid}
     >
       {element}
