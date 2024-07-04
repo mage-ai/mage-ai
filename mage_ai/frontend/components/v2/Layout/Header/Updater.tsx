@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react';
+import { BatchPipeline, PipelineV3, BlockGenericV2Partial } from '@mana/icons';
 import { FrameworkType, PipelineExecutionFrameworkBlockType } from '@interfaces/PipelineExecutionFramework/interfaces';
 import stylesHeader from '@styles/scss/layouts/Header/Header.module.scss';
 import { WithOnMount } from '@mana/hooks/useWithOnMount';
@@ -42,11 +43,11 @@ export default function HeaderUpdater({ executionFramework, groupsByLevel, pipel
 
     groupsByLevel.forEach((groups, index: number) => {
       menuItems.push({
-        label: () => index === 0
-          ? `${fname} pipelines`
+        Icon: index === 0
+          ? PipelineV3
           : index === 1
-            ? 'Stages'
-            : 'Operations',
+            ? BatchPipeline
+            : BlockGenericV2Partial,
         items: groups.map(({
           children,
           description,
@@ -59,6 +60,11 @@ export default function HeaderUpdater({ executionFramework, groupsByLevel, pipel
           onClick: () => true,
           uuid,
         })),
+        label: () => index === 0
+          ? `${fname} pipelines`
+          : index === 1
+            ? 'Stages'
+            : 'Operations',
         uuid: `level-${index}-grouping`,
       });
     });

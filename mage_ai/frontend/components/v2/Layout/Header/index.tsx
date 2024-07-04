@@ -135,18 +135,21 @@ export function Header({
   ));
 
   const intraItems = useMemo(() => intraAppNavItems?.map(({
+    Icon,
     items,
     label,
     uuid,
   }: MenuItemType, index: number) => (
     <MenuManager
-      // direction={LayoutDirectionEnum.RIGHT}
+      direction={LayoutDirectionEnum.RIGHT}
       items={items}
       key={uuid}
       uuid={uuid}
     >
       <Button
         {...buttonProps}
+        Icon={ip => Icon ? <Icon {...ip} {...iconProps} /> : null}
+        IconAfter={ip => <CaretDown {...ip} {...iconProps} />}
         style={{
           gridTemplateColumns: '',
         }}
