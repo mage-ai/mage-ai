@@ -1,7 +1,7 @@
 import { css } from 'styled-components';
 
 export const transition = css`
-  transition: 0.2s all ease-in-out;
+  transition: 0.3s all ease-in-out;
 `;
 
 export const transitionFast = css`

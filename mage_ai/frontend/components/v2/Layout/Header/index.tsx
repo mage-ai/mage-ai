@@ -1,19 +1,18 @@
-import React, { createRef, useCallback, useMemo, useRef } from 'react';
-import useContextMenu from '@mana/hooks/useContextMenu';
-import Grid from '@mana/components/Grid';
-import stylesHeader from '@styles/scss/layouts/Header/Header.module.scss';
-import MenuManager from '@mana/components/Menu/MenuManager';
-import { Code, Builder, CaretDown, CaretLeft } from '@mana/icons';
-import MageAvatar from '@mana/icons/avatars';
 import Button, { ButtonProps } from '@mana/elements/Button';
-import Text from '@mana/elements/Text';
-import { LayoutDirectionEnum } from '@mana/components/Menu/types';
-import NavTag from '@mana/components/Tag/NavTag';
-import { getUser } from '@utils/session';
 import DashedDivider from '@mana/elements/Divider/DashedDivider';
-import {
-  MenuItemType,
-} from '@mana/hooks/useContextMenu';
+import Grid from '@mana/components/Grid';
+import MageAvatar from '@mana/icons/avatars';
+import MenuManager from '@mana/components/Menu/MenuManager';
+import NavTag from '@mana/components/Tag/NavTag';
+import React, { createRef, useCallback, useMemo, useRef } from 'react';
+import Text from '@mana/elements/Text';
+import TextInput from '@mana/elements/Input/TextInput';
+import stylesHeader from '@styles/scss/layouts/Header/Header.module.scss';
+import useContextMenu from '@mana/hooks/useContextMenu';
+import { Code, Builder, CaretDown, CaretLeft } from '@mana/icons';
+import { LayoutDirectionEnum } from '@mana/components/Menu/types';
+import { MenuItemType } from '@mana/hooks/useContextMenu';
+import { getUser } from '@utils/session';
 
 export const HEADER_ROOT_ID = 'v2-header-root';
 
@@ -99,13 +98,22 @@ export function Header({
 
   const globalItems = globalNavItems ?? [
     {
-      href: 'https://www.mage.ai/help',
       label: () => 'Help',
+      linkProps: { href: 'https://www.mage.ai/chat' },
       style: {
         gridTemplateColumns: '',
       },
       target: '_blank',
       uuid: 'help',
+    },
+    {
+      label: () => 'Docs',
+      linkProps: { href: 'https://docs.mage.ai' },
+      style: {
+        gridTemplateColumns: '',
+      },
+      target: '_blank',
+      uuid: 'docs',
     },
   ];
 
@@ -157,7 +165,7 @@ export function Header({
         {(label && label?.()) ?? uuid}
       </Button>
     </MenuManager>
-  )), [buttonProps, intraAppNavItems]);
+  )), [buttonProps, intraAppNavItems, iconProps]);
 
   console.log(intraAppNavItems)
 
@@ -209,7 +217,9 @@ export function Header({
             {intraItems}
           </Grid>
 
-          <Grid {...gridProps} />
+          <Grid {...gridProps} templateColumns="1fr">
+            <TextInput basic monospace placeholder="Data Command Center" small />
+          </Grid>
 
           <Grid {...gridProps}>
             {renderNavItems(globalItems)}
