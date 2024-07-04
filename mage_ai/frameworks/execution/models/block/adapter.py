@@ -28,7 +28,7 @@ class Block(DelegatorTarget):
 
         if 'templates' in configuration_payload:
             for template_uuid, temp_config in configuration_payload.get('templates', {}).items():
-                if len(temp_config.values()) >= 1:
+                if 'uuid' not in temp_config:
                     continue
                 configuration = Configuration.load(**configuration_payload)
 
