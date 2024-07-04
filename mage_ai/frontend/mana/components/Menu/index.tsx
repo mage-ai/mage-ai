@@ -4,6 +4,7 @@ import { ThemeContext, ThemeProvider } from 'styled-components';
 import { createRoot } from 'react-dom/client';
 import { Variants, motion } from 'framer-motion';
 
+import { LayoutDirectionEnum } from './types';
 import Button from '../../elements/Button';
 import DeferredRenderer from '../DeferredRenderer';
 import Grid from '../Grid';
@@ -25,10 +26,11 @@ import {
   MENU_MIN_WIDTH,
 } from './index.style';
 import { UNIT } from '@mana/themes/spaces';
-import { ClientEventType } from '@mana/shared/interfaces';
-import { opacity } from 'styled-system';
+import { ClientEventType, RectType } from '@mana/shared/interfaces';
+import { getAbsoluteRect } from '@mana/shared/utils';
+import { addRects, getRectDiff } from '@components/v2/Canvas/utils/rect';
 
-const DEBUG = false;
+const DEBUG = true;
 
 const itemVariants: Variants = {
   open: {
@@ -39,17 +41,11 @@ const itemVariants: Variants = {
   closed: { opacity: 0, y: 20, transition: { duration: 0.2 } },
 };
 
-type MenuProps = {
-  originalBoundingContainer?: {
-    height: number;
-    left: number;
-    top: number;
-    width: number;
-    x: number;
-    y: number;
-  };
+export type MenuProps = {
+  above?: boolean;
   contained?: boolean;
-  parentContainer?: HTMLElement;
+  direction?: LayoutDirectionEnum;
+  parentContainers?: HTMLElement;
   openAtPosition?: {
     left: number;
     top: number;
@@ -57,6 +53,12 @@ type MenuProps = {
   event?: MouseEvent | React.MouseEvent<HTMLDivElement>;
   items: MenuItemType[];
   parentItemsElementRef?: React.MutableRefObject<HTMLDivElement>;
+  position?: RectType;
+  rects?: {
+    bounding?: RectType;
+    container?: RectType;
+    offset?: RectType;
+  };
   small?: boolean;
   standardMenu?: boolean;
   uuid: string;
@@ -190,14 +192,15 @@ function MenuItemBase({
 const MenuItem = React.forwardRef(MenuItemBase);
 
 function Menu({
-  originalBoundingContainer,
+  above,
   contained,
-  openAtPosition,
-  parentContainer,
+  direction = LayoutDirectionEnum.RIGHT,
   event,
   items,
-  parentRects,
+  openAtPosition,
   parentItemsElementRef,
+  position,
+  rects,
   small,
   standardMenu,
   uuid,
@@ -211,9 +214,15 @@ function Menu({
   const itemsRef = useRef<Record<string, React.RefObject<HTMLDivElement>>>({});
   const timeoutRef = useRef<ReturnType<typeof setTimeout>>();
   const rootID = useMemo(() => `menu-item-items-${uuid}`, [uuid]);
+  const offsetRef = useRef<RectType>({ left: 0, top: 0, width: 0, height: 0 });
 
   const renderChildItems = useCallback(
-    (item: MenuItemType, event: React.MouseEvent<HTMLDivElement>, itemInnerRef: React.RefObject<HTMLDivElement>) => {
+    (
+      item: MenuItemType,
+      event: React.MouseEvent<HTMLDivElement>,
+      itemInnerRef: React.RefObject<HTMLDivElement>,
+      index: number,
+    ) => {
       if (itemExpandedRef?.current?.uuid === item?.uuid) return;
 
       event.stopPropagation();
@@ -247,19 +256,34 @@ function Menu({
 
       if (!itemsRootRef?.current) return;
 
+      const r = itemInnerRef?.current?.getBoundingClientRect();
+      const rect = {
+        left: r?.left,
+        top: r?.top,
+        width: r?.width,
+        height: r?.height,
+      }
+
       itemsRootRef?.current.render(item?.items?.length >= 1
         ? (
           <React.StrictMode>
             <DeferredRenderer idleTimeout={1}>
               <ThemeProvider theme={themeContext}>
                 <Menu
-                  contained
+                  above={above}
+                  contained={contained}
+                  direction={direction}
                   event={event}
                   items={item?.items}
-                  parentRects={[...(parentRects ?? []), containerRectRef.current]}
-                  originalBoundingContainer={originalBoundingContainer}
-                  parentContainer={itemInnerRef.current}
                   parentItemsElementRef={itemsElementRef}
+                  position={rect}
+                  rects={{
+                    bounding: rects?.bounding,
+                    offset: {
+                      top: -rect.height,
+                    },
+                    container: rect,
+                  }}
                   small
                   standardMenu={standardMenu}
                   uuid={`${uuid}-${item.uuid}`}
@@ -273,8 +297,9 @@ function Menu({
 
       itemExpandedRef.current = item;
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [originalBoundingContainer, rootID, standardMenu, themeContext, uuid],
+    [standardMenu, themeContext, uuid, parentItemsElementRef,
+      above, contained, direction, rects,
+    ],
   );
 
   const itemsCount = useMemo(() => items?.length || 0, [items]);
@@ -313,55 +338,84 @@ function Menu({
       typeof window !== 'undefined' && window.getComputedStyle(containerRef.current);
 
     if (computedStyle && containerRef.current) {
-      const rect = containerRef.current.getBoundingClientRect();
-      const rectParent = parentContainer?.getBoundingClientRect() ?? {
-        left: 0,
-        top: 0,
-        width: 0,
-        height: 0,
-      };
-      const position = {
-        left: 0,
-        top: 0,
+      const {
+        container,
+        bounding,
+        offset,
+      } = rects ?? {};
+      const menu = containerRef?.current?.getBoundingClientRect();
+      const pos = {
+        height: position?.height ?? 0,
+        left: position?.left ?? 0,
+        top: position?.top ?? 0,
+        width: position?.width ?? 0,
       };
 
-      if (openAtPosition) {
-        position.left = openAtPosition.left;
-        position.top = openAtPosition.top;
-      } else if (rectParent) {
-        position.left = rectParent.left + rectParent.width;
-        position.top = rectParent.top;
-      }
-
-      const boundBox = originalBoundingContainer ?? rectParent ?? { left: 0, top: 0, width: 0, height: 0 };
+      // DEBUG && [
+      //   console.log('------------------------------------------------------------------'),
+      //   console.log(uuid),
+      //   console.log('box', bounding.left, bounding.top, bounding.width, bounding.height),
+      //   console.log('container', container.left, container.top, container.width, container.height),
+      //   console.log('offset', offset.left, offset.top, offset.width, offset.height),
+      //   console.log('menu', menu.left, menu.top, menu.width, menu.height),
+      // ];
 
       const padding = UNIT;
+      const right = bounding.left + bounding.width;
+      const bottom = bounding.top + bounding.height;
 
-      const right = boundBox.left + boundBox.width;
-      DEBUG && console.log('right', right)
-      const menuWidth = rect.width;
-      DEBUG && console.log('menuWidth', menuWidth)
-      const leftOffset = padding + menuWidth;
-      DEBUG && console.log('leftOffset', leftOffset)
-      if (position.left + leftOffset >= right) {
-        position.left = rectParent.left - leftOffset;
+      const hmenu = menu?.height ?? 0;
+      const wmenu = menu?.width ?? 0;
+
+      let xoff = offset?.left ?? 0;
+      let yoff = offset?.top ?? 0;
+      // DEBUG && [
+      //   console.log('offset.0', xoff, yoff),
+      //   console.log('position.0', position.left, position.top),
+      // ];
+
+
+      if (contained) {
+        if (LayoutDirectionEnum.LEFT === direction) {
+          xoff -= (wmenu - (container?.width ?? 0));
+        } else {
+          xoff += (wmenu - (container?.width ?? 0));
+        }
+
+        if (above) {
+          yoff -= (hmenu + (container?.height ?? 0));
+        } else {
+          yoff += (container?.height ?? 0);
+        }
+      } else {
+        if (above) {
+
+        } else {
+          xoff += container?.width ?? 0;
+          yoff += container?.height ?? 0;
+        }
       }
-      DEBUG && console.log('left', position.left)
 
-      const bottom = boundBox.top + boundBox.height;
-      DEBUG && console.log('bottom', bottom)
-      const menuHeight = rect.height;
-      DEBUG && console.log('menuHeight', menuHeight)
-      const topOffset = 0;
-      DEBUG && console.log('topOffset', topOffset)
-      if (position.top + topOffset >= bottom) {
-        position.top = (rectParent.top) - (topOffset - rectParent.height);
-      }
-      DEBUG && console.log('position.top', position.top)
-      DEBUG && console.log('items', position, rectParent, boundBox)
+      pos.left += xoff;
+      pos.top += yoff;
+      DEBUG && [
+        console.log('offset.1', xoff, yoff),
+        console.log('position.1', position.left, position.top),
+      ];
 
-      containerRef.current.style.left = `${position.left}px`;
-      containerRef.current.style.top = `${position.top}px`;
+      // if (position.left >= right) {
+      //   position.left = container.left;
+      // }
+      // if (position.top >= bottom) {
+      //   position.top = (container.top) - (yoff - container.height);
+      // }
+
+      // DEBUG && [
+      //   console.log('position.2', pos.left, pos.top),
+      // ];
+
+      containerRef.current.style.left = `${pos.left}px`;
+      containerRef.current.style.top = `${pos.top}px`;
       containerRef.current.style.opacity = '1';
       containerRef.current.style.visibility = 'visible';
       containerRef.current.style.zIndex = `${HEADER_Z_INDEX + 100}`;
@@ -385,7 +439,8 @@ function Menu({
 
       document.removeEventListener('click', handleDocumentClick);
     };
-  }, [handleDocumentClick, openAtPosition, originalBoundingContainer, parentContainer, rootID, standardMenu, uuid, removeChildren]);
+  }, [contained, handleDocumentClick, openAtPosition, rects, direction, above, uuid, position,
+    rootID, standardMenu, uuid, removeChildren]);
 
   return (
     <MenuStyled

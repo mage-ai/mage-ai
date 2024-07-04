@@ -23,7 +23,7 @@ import { StatusTypeEnum, BlockTypeEnum } from '@interfaces/BlockType';
 import { TooltipWrapper } from '@context/Tooltip';
 import { borderConfigs, blockColorNames } from './presentation';
 import { getBlockColor } from '@mana/themes/blocks';
-import { handleClickGroupMenu } from './utils';
+import { handleGroupTemplateSelect, menuItemsForTemplates } from './utils';
 import { isEmptyObject } from '@utils/hash';
 import { buildEvent } from './utils';
 import { useMemo } from 'react';
@@ -62,11 +62,18 @@ export function BlockNode({
   const borders = borderConfigs(node);
   const after: any = useMemo(() => ({
     className: stylesBlockNode.showOnHover,
+    uuid: node.id,
     ...(ItemTypeEnum.NODE === node?.type
       ? {
         Icon: draggable ? Grab : AddV2,
-        onClick: (event: MouseEvent) =>
-          handleClickGroupMenu(event, node as NodeType, submitEventOperation, nodeRef),
+        menuItems: menuItemsForTemplates(block, (event: any, block2, template) => handleGroupTemplateSelect(
+          event,
+          block2,
+          template,
+          submitEventOperation,
+        )),
+        // onClick: (event: MouseEvent) =>
+        //   handleClickGroupMenu(event, node as NodeType, submitEventOperation, nodeRef),
       }
       : {
         Icon: draggable ? Grab : Code,

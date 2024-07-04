@@ -1,4 +1,5 @@
 import { hyphenateCamelCase } from '@utils/string';
+import { RectType } from './interfaces';
 
 export function styleClassNames(
   styles: Record<string, boolean | number | string>,
@@ -10,9 +11,9 @@ export function styleClassNames(
   }: {
     [key: string]: boolean | number | string | any;
   } = {
-    className: '',
-    uuid: '',
-  },
+      className: '',
+      uuid: '',
+    },
 ): string {
   const arr: string[] = classNames || [];
 
@@ -35,4 +36,35 @@ export function styleClassNames(
   return arr
     .filter(value => typeof value !== 'undefined' && value !== null && String(value)?.length >= 1)
     .join(' ');
+}
+
+export function getAbsoluteRect(
+  element: HTMLElement,
+  opts?: {
+    includeParents?: boolean;
+  },
+): {
+  parents: RectType[];
+  rect: RectType;
+} {
+  const rect = {
+    ...element.getBoundingClientRect(),
+    left: 0,
+    top: 0,
+  };
+  const parents = [];
+
+  while (element) {
+    rect.left += element.offsetLeft - element.scrollLeft + element.clientLeft;
+    rect.top += element.offsetTop - element.scrollTop + element.clientTop;
+    element = element.offsetParent as HTMLElement;
+    if (element) {
+      parents.push(element?.getBoundingClientRect());
+    }
+  }
+
+  return {
+    parents,
+    rect,
+  };
 }

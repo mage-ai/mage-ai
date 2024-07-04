@@ -6,6 +6,7 @@ import { ConnectionType, DragItem, NodeItemType } from '../interfaces';
 import { ClientEventType, EventOperationEnum, SubmitEventOperationType } from '@mana/shared/interfaces';
 import { CanvasNodeType } from './interfaces';
 import { ExecutionManagerType } from '../../ExecutionManager/interfaces';
+import { MenuItemType } from '@mana/components/Menu/interfaces';
 
 export type UpdateBlockRequestType = (event: ClientEventType | Event, key: string, value: any, opts?: {
   delay?: number;
@@ -45,7 +46,9 @@ export type AsideType = {
   baseColorName?: string;
   buttonRef: React.RefObject<HTMLDivElement>;
   className?: string;
+  menuItems: MenuItemType[];
   onClick?: (event: React.MouseEvent<HTMLElement>) => void;
+  uuid?: string;
 };
 
 export type AsidesType = {

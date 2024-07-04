@@ -139,12 +139,7 @@ export function getDraggableStyles(
   return styles;
 }
 
-export function handleClickGroupMenu(
-  event: any,
-  itemClicked: NodeType,
-  submitEventOperation: SubmitEventOperationType,
-  itemRef: any,
-) {
+export function menuItemsForTemplates(block, handleOnClick) {
   function extractTemplatesFromItem(block: FrameworkType) {
     const { configuration } = block as PipelineExecutionFrameworkBlockType;
 
@@ -152,7 +147,7 @@ export function handleClickGroupMenu(
       ([templateUUID, template]) => ({
         description: () => template?.description,
         label: () => template?.name || templateUUID,
-        onClick: (event: any) => handleGroupTemplateSelect(event, block, template, submitEventOperation),
+        onClick: (event: any) => handleOnClick(event, block, template),
         uuid: templateUUID,
       }),
     );
@@ -185,7 +180,23 @@ export function handleClickGroupMenu(
     return extractTemplatesFromItem(block);
   }
 
-  const menuItems = extractTemplatesFromChidlren(itemClicked?.block);
+  const menuItems = extractTemplatesFromChidlren(block);
+
+  return menuItems;
+}
+
+export function handleClickGroupMenu(
+  event: any,
+  itemClicked: NodeType,
+  submitEventOperation: SubmitEventOperationType,
+  itemRef: any,
+) {
+  const menuItems = menuItemsForTemplates(itemClicked?.block, (event: any, block, template) => handleGroupTemplateSelect(
+    event,
+    block,
+    template,
+    submitEventOperation,
+  ));
 
   submitEventOperation(
     update(event, {
@@ -215,7 +226,7 @@ export function handleClickGroupMenu(
   );
 }
 
-function handleGroupTemplateSelect(
+export function handleGroupTemplateSelect(
   event: any,
   block: FrameworkType,
   template: TemplateType,

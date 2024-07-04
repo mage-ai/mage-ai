@@ -3,16 +3,18 @@ import { ThemeContext, ThemeProvider } from 'styled-components';
 import { createRoot, Root } from 'react-dom/client';
 
 import DeferredRenderer from '@mana/components/DeferredRenderer';
-import Menu from '../components/Menu';
+import Menu, { MenuProps } from '../components/Menu';
 import useKeyboardShortcuts from './shortcuts/useKeyboardShortcuts';
 import { KeyEnum } from './shortcuts/types';
-import { ClientEventType as ClientEventTypeT } from '../shared/interfaces';
+import { ClientEventType as ClientEventTypeT, RectType } from '../shared/interfaces';
 import { MenuItemType as MenuItemTypeT } from '../components/Menu/interfaces';
 import { selectKeys } from '@utils/hash';
 
 export type RenderContextMenuOptions = {
-  boundingContainer?: DOMRect;
-  container?: HTMLElement;
+  contained?: boolean;
+  direction?: MenuProps['direction'];
+  position?: MenuProps['position'];
+  rects?: MenuProps['rects'];
 };
 
 export type RenderContextMenuType = (
@@ -33,16 +35,20 @@ export interface ContextMenuType {
   removeContextMenu: RemoveContextMenuType;
   renderContextMenu: RenderContextMenuType;
   shouldPassControl: (event: ClientEventType) => boolean;
+  showMenu: (items: MenuItemType[], opts?: RenderContextMenuOptions) => void;
+  hideMenu: () => void;
 }
 
 export type ContextMenuProps = {
   container?: HTMLDivElement;
+  containerRef?: React.RefObject<HTMLElement>;
   useAsStandardMenu?: boolean;
   uuid: string;
 };
 
 export default function useContextMenu({
   container,
+  containerRef,
   useAsStandardMenu,
   uuid,
 }: ContextMenuProps): ContextMenuType {
@@ -52,6 +58,8 @@ export default function useContextMenu({
   const positionRef = useRef<number[]>(null);
   const themeContext = useContext(ThemeContext);
 
+  const getContainer = () => containerRef?.current ?? container;
+
   const rootID = useMemo(() => `context-menu-root-${uuid}`, [uuid]);
 
   const { deregisterCommands, registerCommands } = useKeyboardShortcuts({
@@ -59,7 +67,7 @@ export default function useContextMenu({
   });
 
   function isEventInContainer(event: ClientEventType, containerArg?: HTMLElement): boolean {
-    return (container || containerArg)?.contains(event.target as Node);
+    return event && (getContainer() || containerArg)?.contains(event.target as Node);
   }
 
   function isEventInContextMenu(event: ClientEventType): boolean {
@@ -67,11 +75,22 @@ export default function useContextMenu({
   }
 
   function shouldPassControl(event: ClientEventType) {
-    return event.button === 2 && isEventInContainer(event);
+    return event.button === 2 && event && isEventInContainer(event);
+  }
+
+  function hideMenu() {
+    contextMenuRootRef?.current?.render([])
+  }
+
+  function showMenu(
+    items: MenuItemType[],
+    opts?: RenderContextMenuOptions,
+  ) {
+    renderContextMenu(null, items ?? itemsRef.current, opts);
   }
 
   function removeContextMenu(event: ClientEventType, opts?: { conditionally?: boolean }) {
-    if (opts?.conditionally && isEventInContextMenu(event)) return;
+    if (opts?.conditionally && event && isEventInContextMenu(event)) return;
 
     if (contextMenuRootRef?.current) {
       contextMenuRootRef.current.unmount();
@@ -155,48 +174,37 @@ export default function useContextMenu({
     opts?: RenderContextMenuOptions,
   ) {
     const {
-      boundingContainer,
-      container: container2,
+      contained,
+      position,
     } = opts ?? {};
 
-    if (!container2 && (container && !isEventInContainer(event))) return;
+    if (!contained && (getContainer() && event && !isEventInContainer(event))) return;
 
     event?.preventDefault();
 
-    if (!contextMenuRootRef?.current && contextMenuRef.current) {
-      const node = contextMenuRef.current;
-      if (node) {
-        contextMenuRootRef.current = createRoot(node as any);
-      }
-    }
-
-    if (!contextMenuRootRef?.current) return;
-
-    contextMenuRootRef.current.render(
-      <DeferredRenderer idleTimeout={1}>
-        <ThemeProvider theme={themeContext}>
-          <Menu
-            event={event}
-            items={items}
-            parentContainer={container2}
-            parentItemsElementRef={contextMenuRef}
-            openAtPosition={!container2
-              ? {
-                left: event?.pageX,
-                top: event?.pageY,
-              }
-              : undefined
-            }
-            originalBoundingContainer={boundingContainer
-              ?? selectKeys(container?.getBoundingClientRect() || {}, ['width', 'x', 'y'])
-            }
-            small
-            standardMenu={useAsStandardMenu}
-            uuid={uuid}
-          />
-        </ThemeProvider>
-      </DeferredRenderer>,
+    const render = (root: Root) => root.render(
+      <ThemeProvider theme={themeContext}>
+        <Menu
+          {...opts}
+          contained={contained}
+          event={event}
+          items={items}
+          parentItemsElementRef={contextMenuRef}
+          position={position ?? {
+            left: event?.pageX,
+            top: event?.pageY,
+          }}
+          small
+          standardMenu={useAsStandardMenu}
+          uuid={uuid}
+        />
+      </ThemeProvider>
     );
+
+    if (!contextMenuRootRef?.current) {
+      contextMenuRootRef.current = createRoot(contextMenuRef.current as any);
+    }
+    render(contextMenuRootRef.current);
 
     itemsRef.current = items;
     positionRef.current = [null];
@@ -227,6 +235,12 @@ export default function useContextMenu({
     });
   }
 
+  function teardown() {
+    const menuRoot = contextMenuRootRef?.current;
+    menuRoot && menuRoot.unmount();
+    contextMenuRootRef.current = null;
+  }
+
   useEffect(() => {
     const handleDocumentClick = (event: any) => {
       const node = document.getElementById(rootID);
@@ -237,11 +251,8 @@ export default function useContextMenu({
 
     document?.addEventListener('click', handleDocumentClick);
 
-    const menuRoot = contextMenuRootRef?.current;
     return () => {
       document?.removeEventListener('click', handleDocumentClick);
-      menuRoot && menuRoot.unmount();
-      contextMenuRootRef.current = null;
       deregisterCommands();
     };
 
@@ -252,6 +263,9 @@ export default function useContextMenu({
     contextMenu: <div ref={contextMenuRef} />,
     removeContextMenu,
     renderContextMenu,
+    hideMenu,
+    showMenu,
     shouldPassControl,
+    teardown,
   };
 }
