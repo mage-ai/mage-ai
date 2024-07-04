@@ -231,7 +231,7 @@ export default function useContextMenu({
     const handleDocumentClick = (event: any) => {
       const node = document.getElementById(rootID);
       if (node && !node?.contains(event.target as Node)) {
-        // removeContextMenu(event);
+        removeContextMenu(event);
       }
     };
 
