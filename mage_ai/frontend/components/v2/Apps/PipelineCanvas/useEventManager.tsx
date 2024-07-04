@@ -557,10 +557,11 @@ export default function useEventManager({
     if (data?.node) {
     }
 
-    console.log('useEventManager', opts)
     renderContextMenu(event, menuItems, {
       ...opts,
-      boundingContainer: wrapperRef.current.getBoundingClientRect(),
+      rects: {
+        bounding: wrapperRef.current.getBoundingClientRect(),
+      },
     });
   }
 
