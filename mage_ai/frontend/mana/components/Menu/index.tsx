@@ -51,8 +51,8 @@ type MenuProps = {
   contained?: boolean;
   parentContainer?: HTMLElement;
   openAtPosition?: {
-    x: number;
-    y: number;
+    left: number;
+    top: number;
   };
   event?: MouseEvent | React.MouseEvent<HTMLDivElement>;
   items: MenuItemType[];
@@ -68,11 +68,17 @@ type ItemProps = {
   last?: boolean;
   item: MenuItemType;
   small?: boolean;
+  handleMouseEnter?: (event: MouseEvent) => void;
+  handleMouseLeave?: (event: MouseEvent) => void;
 };
 
-function MenuItemBase({ contained, first, item, last, small }: ItemProps,
-  ref: React.Ref<HTMLElement>
+function MenuItemBase({
+  contained, first, item, last, small,
+  handleMouseEnter, handleMouseLeave
+}: ItemProps,
+  ref: React.Ref<HTMLDivElement>
 ) {
+  const [debouncer, cancel] = useDebounce();
   const { Icon, description, divider, items, keyboardShortcuts, label, onClick, uuid } = item;
   const itemsCount = useMemo(() => items?.length || 0, [items]);
 
@@ -144,6 +150,16 @@ function MenuItemBase({ contained, first, item, last, small }: ItemProps,
 
   return (
     <MenuItemContainerStyled
+      onMouseEnter={(event) => {
+        cancel();
+        debouncer(() => handleMouseEnter(event), 100);
+      }}
+      onMouseLeave={(event) => {
+        cancel();
+        if (handleMouseLeave) {
+          debouncer(() => handleMouseLeave?.(event), 100);
+        }
+      }}
       contained={contained}
       first={first}
       last={last}
@@ -180,6 +196,7 @@ function Menu({
   parentContainer,
   event,
   items,
+  parentRects,
   parentItemsElementRef,
   small,
   standardMenu,
@@ -187,16 +204,16 @@ function Menu({
 }: MenuProps) {
   const themeContext = useContext(ThemeContext);
   const containerRef = useRef(null);
+  const containerRectRef = useRef<DOMRect | null>(null);
   const itemExpandedRef = useRef(null);
   const itemsElementRef = useRef(null);
   const itemsRootRef = useRef(null);
-  const itemsRef = useRef<Record<string, React.RefObject<HTMLElement>>>({});
+  const itemsRef = useRef<Record<string, React.RefObject<HTMLDivElement>>>({});
+  const timeoutRef = useRef<ReturnType<typeof setTimeout>>();
   const rootID = useMemo(() => `menu-item-items-${uuid}`, [uuid]);
 
-  const [debouncer, cancel] = useDebounce();
-
   const renderChildItems = useCallback(
-    (item: MenuItemType, event: React.MouseEvent<HTMLDivElement>, itemRef: React.RefObject<HTMLElement>) => {
+    (item: MenuItemType, event: React.MouseEvent<HTMLDivElement>, itemInnerRef: React.RefObject<HTMLDivElement>) => {
       if (itemExpandedRef?.current?.uuid === item?.uuid) return;
 
       event.stopPropagation();
@@ -228,6 +245,8 @@ function Menu({
         return;
       }
 
+      if (!itemsRootRef?.current) return;
+
       itemsRootRef?.current.render(item?.items?.length >= 1
         ? (
           <React.StrictMode>
@@ -237,8 +256,9 @@ function Menu({
                   contained
                   event={event}
                   items={item?.items}
+                  parentRects={[...(parentRects ?? []), containerRectRef.current]}
                   originalBoundingContainer={originalBoundingContainer}
-                  parentContainer={itemRef.current}
+                  parentContainer={itemInnerRef.current}
                   parentItemsElementRef={itemsElementRef}
                   small
                   standardMenu={standardMenu}
@@ -259,21 +279,34 @@ function Menu({
 
   const itemsCount = useMemo(() => items?.length || 0, [items]);
 
-  // Handle outside click
-  const handleDocumentClick = useCallback(
-    (event: MouseEvent) => {
-      const node = containerRef.current;
-      const root = itemsRootRef.current;
+  const hideChildren = useCallback(() => {
+    if (itemExpandedRef.current) {
+      itemExpandedRef.current = null;
+      itemsRootRef?.current?.render(null)
+    }
+  }, []);
 
-      DEBUG && console.log(node, event.target, node.contains(event.target as Node))
-      if (node && !node.contains(event.target as Node)) {
-        cancel();
-        itemExpandedRef.current = null;
-        root?.unmount();
-      }
-    },
-    [cancel]
-  );
+  const removeChildren = useCallback((exceptUUID?: string) => {
+    if (exceptUUID && itemExpandedRef.current === exceptUUID) return;
+
+    // Using a timeout to unmount after the current render cycle
+    timeoutRef.current = setTimeout(() => {
+      const root = itemsRootRef.current;
+      root?.unmount();
+
+      const element = itemsElementRef.current;
+      element && element.remove();
+    }, 0);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Handle outside click
+  const handleDocumentClick = useCallback((event: MouseEvent) => {
+    const rect = containerRectRef.current;
+    if (rect && (event.pageX < rect.left || event.pageX > rect.right || event.pageY < rect.top || event.pageY > rect.bottom)) {
+      removeChildren();
+    }
+  }, [removeChildren]);
 
   useEffect(() => {
     const computedStyle =
@@ -332,24 +365,27 @@ function Menu({
       containerRef.current.style.opacity = '1';
       containerRef.current.style.visibility = 'visible';
       containerRef.current.style.zIndex = `${HEADER_Z_INDEX + 100}`;
+
+      containerRectRef.current = containerRef.current.getBoundingClientRect();
     }
 
-    if (standardMenu) {
-      document.addEventListener('click', handleDocumentClick);
-    }
+    document.addEventListener('click', handleDocumentClick);
 
-    const root = itemsRootRef.current;
+    const timeout = timeoutRef.current;
 
     return () => {
-      cancel();
-      root && root?.unmount();
-      itemsRootRef.current = null;
+      removeChildren();
 
-      if (standardMenu) {
-        document.removeEventListener('click', handleDocumentClick);
-      }
+      clearTimeout(timeout);
+
+      itemsRootRef.current = null;
+      itemsElementRef.current = null;
+      itemExpandedRef.current = null;
+      timeoutRef.current = null;
+
+      document.removeEventListener('click', handleDocumentClick);
     };
-  }, [cancel, handleDocumentClick, openAtPosition, originalBoundingContainer, parentContainer, rootID, standardMenu, uuid]);
+  }, [handleDocumentClick, openAtPosition, originalBoundingContainer, parentContainer, rootID, standardMenu, uuid, removeChildren]);
 
   return (
     <MenuStyled
@@ -398,19 +434,14 @@ function Menu({
               return (
                 <motion.div
                   key={`menu-item-${item.uuid}-${idx}`}
-                  onMouseEnter={event => {
-                    cancel();
-                    debouncer(() => {
-                      renderChildItems(item, event, itemRef);
-                    }, 100);
-                  }}
-                  onMouseLeave={() => {
-                    cancel();
-                  }}
                   style={{ display: 'grid', width: '100%' }}
                   variants={itemVariants}
                 >
                   <MenuItem
+                    handleMouseEnter={(event) => {
+                      hideChildren();
+                      renderChildItems(item, event as any, itemRef);
+                    }}
                     contained={contained}
                     first={idx === 0}
                     item={item}

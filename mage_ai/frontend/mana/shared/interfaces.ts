@@ -24,6 +24,18 @@ export type EventControlType = {
   stopPropagationCondition?: (event: ClientEventType) => boolean;
 };
 
+export interface RectType {
+  bottom?: number;
+  height?: number;
+  id?: string;
+  left: number;
+  right?: number;
+  top: number;
+  upstream?: RectType[];
+  width?: number;
+  zIndex?: number;
+}
+
 export type ClientEventType = {
   button?: ButtonEnum;
   control?: EventControlType;

@@ -159,8 +159,6 @@ export default function useContextMenu({
       container: container2,
     } = opts ?? {};
 
-    console.log(event, items, opts, !container2, container && !isEventInContainer(event))
-
     if (!container2 && (container && !isEventInContainer(event))) return;
 
     event?.preventDefault();
@@ -233,7 +231,7 @@ export default function useContextMenu({
     const handleDocumentClick = (event: any) => {
       const node = document.getElementById(rootID);
       if (node && !node?.contains(event.target as Node)) {
-        removeContextMenu(event);
+        // removeContextMenu(event);
       }
     };
 

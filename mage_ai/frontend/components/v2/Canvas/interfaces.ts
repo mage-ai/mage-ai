@@ -1,4 +1,5 @@
 import BlockType from '@interfaces/BlockType';
+import { RectType as RectTypeBase } from '@mana/shared/interfaces';
 import PipelineType from '@interfaces/PipelineType';
 import { FrameworkType, PipelineExecutionFrameworkBlockType } from '@interfaces/PipelineExecutionFramework/interfaces';
 import { GroupUUIDEnum } from '@interfaces/PipelineExecutionFramework/types';
@@ -21,23 +22,14 @@ export interface OffsetType {
   y?: number;
 }
 
-export interface RectType {
-  bottom?: number;
+export interface RectType extends RectTypeBase {
   children?: RectType[];
   diff?: RectType;
-  height?: number;
-  id?: string;
   inner?: Record<string, RectType>;
-  left: number;
   offset?: OffsetType;
   padding?: RectType;
   parent?: RectType;
-  right?: number;
-  top: number;
-  upstream?: RectType[];
   version?: number;
-  width?: number;
-  zIndex?: number;
 }
 
 interface BaseItem {
