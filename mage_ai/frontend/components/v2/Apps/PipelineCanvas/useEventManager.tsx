@@ -30,7 +30,7 @@ import { useRef, useState, startTransition } from 'react';
 import BlockType, { BlockTypeEnum } from '@interfaces/BlockType';
 import { MutateType } from '@api/interfaces';
 import { IconProps } from '@mana/elements/Icon';
-import useAppEventsHandler, { CustomAppEventEnum } from './useAppEventsHandler';
+import useAppEventsHandler, { CustomAppEvent, CustomAppEventEnum } from './useAppEventsHandler';
 import { DEBUG } from '@components/v2/utils/debug';
 
 const GRID_SIZE = 40;
@@ -414,38 +414,7 @@ export default function useEventManager({
       {
         uuid: 'Groupings',
       },
-      ...(itemIDsByLevelRef?.current ?? []).map((ids: string[], level: number) => {
-        const items = sortByKey(
-          ids?.map((id: string) =>
-            itemsRef.current?.[id])?.filter(i => ItemTypeEnum.BLOCK === i?.type),
-          ({ block, title, id }) => block?.name || title || block?.uuid || id,
-        );
-
-        return {
-          Icon: level === activeLevel?.current ? Check : Group,
-          description: () => pluralize('block', ids?.length ?? 0),
-          items: items?.map((item: NodeItemType) => {
-            const { block, title } = item;
-
-            return {
-              onClick: (event?: ClientEventType) => {
-                event?.preventDefault();
-                removeContextMenu(event);
-                alert(`Focus on item for block ${block?.name || block?.uuid} with title ${title}`);
-              },
-              uuid: title || block?.name || block?.uuid,
-            };
-          }),
-          onClick: (event?: ClientEventType) => {
-            event?.preventDefault();
-            updateNodeLayouts(event, {
-              level,
-            });
-            removeContextMenu(event);
-          },
-          uuid: `Blocks grouped at level ${level}`,
-        };
-      }),
+      ...buildMenuItemGroupsForPipelineFramework(),
       { divider: true },
       {
         Icon: TreeWithArrowsDown,
@@ -562,6 +531,41 @@ export default function useEventManager({
       rects: {
         bounding: wrapperRef.current.getBoundingClientRect(),
       },
+    });
+  }
+
+  function buildMenuItemGroupsForPipelineFramework() {
+    return (itemIDsByLevelRef?.current ?? []).map((ids: string[], level: number) => {
+      const items = sortByKey(
+        ids?.map((id: string) =>
+          itemsRef.current?.[id])?.filter(i => ItemTypeEnum.BLOCK === i?.type),
+        ({ block, title, id }) => block?.name || title || block?.uuid || id,
+      );
+
+      return {
+        Icon: level === activeLevel?.current ? Check : Group,
+        description: () => pluralize('block', ids?.length ?? 0),
+        items: items?.map((item: NodeItemType) => {
+          const { block, title } = item;
+
+          return {
+            onClick: (event?: ClientEventType) => {
+              event?.preventDefault();
+              removeContextMenu(event);
+              alert(`Focus on item for block ${block?.name || block?.uuid} with title ${title}`);
+            },
+            uuid: title || block?.name || block?.uuid,
+          };
+        }),
+        onClick: (event?: ClientEventType) => {
+          event?.preventDefault();
+          updateNodeLayouts(event, {
+            level,
+          });
+          removeContextMenu(event);
+        },
+        uuid: `Blocks grouped at level ${level}`,
+      };
     });
   }
 

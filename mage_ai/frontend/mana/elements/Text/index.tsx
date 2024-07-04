@@ -8,6 +8,8 @@ type TextProps = {
   children: React.ReactNode | string | any;
   className?: string;
   inline?: boolean;
+  maxWidth?: number;
+  nowrap?: boolean;
   small?: boolean;
   underline?: boolean;
   xsmall?: boolean;
@@ -26,8 +28,16 @@ type TextProps = {
   warning?: boolean;
 } & ElementType;
 
-function Text({ children, className: classNameProp, inline, small, xsmall, ...props }: TextProps) {
-  const arr = [small ? styles.small : xsmall ? styles.xsmall : styles.text, classNameProp || ''];
+function Text({ children, className: classNameProp, inline, maxWidth, nowrap, small, xsmall, ...props }: TextProps) {
+  const arr = [
+    small
+      ? styles.small
+      : xsmall
+        ? styles.xsmall
+        : styles.text,
+    classNameProp || '',
+    nowrap && styles.nowrap,
+  ].filter(Boolean);
 
   Object.entries(props || {}).forEach(([key, value]) => {
     if (typeof value !== 'undefined') {
@@ -50,12 +60,18 @@ function Text({ children, className: classNameProp, inline, small, xsmall, ...pr
     .filter(value => typeof value !== 'undefined' && value !== null && String(value)?.length >= 1)
     .join(' ');
 
+  const xprops = extractProps(props);
+  xprops.style = {
+    ...xprops.style,
+    maxWidth: maxWidth ? `${maxWidth}px` : undefined,
+  }
+
   return inline ? (
-    <span {...extractProps(props)} className={classNames}>
+    <span {...xprops} className={classNames}>
       {children}
     </span>
   ) : (
-    <p {...extractProps(props)} className={classNames}>
+    <p {...xprops} className={classNames}>
       {children}
     </p>
   );

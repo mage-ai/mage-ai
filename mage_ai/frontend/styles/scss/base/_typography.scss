@@ -47,6 +47,11 @@
 @mixin base-styles {
   color: var(--fonts-color-text-base);
   margin: 0;
+  white-space: break-spaces;
+
+  &.nowrap {
+    white-space: nowrap;
+  }
 
   &.inverted {
     color: var(--fonts-color-text-inverted);

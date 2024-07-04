@@ -20,6 +20,7 @@ import { AppConfigType } from '../interfaces';
 import useAppEventsHandler, { CustomAppEvent, CustomAppEventEnum } from './useAppEventsHandler';
 import { AppManagerType, ModelManagerType } from './interfaces';
 import { indexBy, unique } from '@utils/array';
+import { useLayout } from '@context/v2/Layout';
 
 type ModelManagerProps = {
   itemIDsByLevelRef: React.MutableRefObject<string[][]>;
@@ -32,8 +33,10 @@ export default function useModelManager({
   itemIDsByLevelRef,
   pipelineUUID,
   executionFrameworkUUID,
+  setHeaderData,
   setOutputIDs,
 }: ModelManagerProps): ModelManagerType {
+  const { header, page } = useLayout();
   const appHandlersRef = useRef<AppHandlerType>({} as AppHandlerType);
   const itemsRef = useRef<ItemMappingType>({});
   const outputsRef = useRef<Record<string, Record<string, OutputNodeType>>>({});
@@ -309,6 +312,12 @@ export default function useModelManager({
         setOutputIDs([...new Set(items?.reduce((acc, { block }) => [
           BlockTypeEnum.GROUP, BlockTypeEnum.PIPELINE
         ].includes(block.type) ? acc : acc.concat(block.uuid), []))]);
+
+        setHeaderData({
+          executionFramework: executionFramework2,
+          groupsByLevel,
+          pipeline: pipeline2,
+        });
 
         resolve(items); // Resolve the promise when the function completes
       } catch (error) {

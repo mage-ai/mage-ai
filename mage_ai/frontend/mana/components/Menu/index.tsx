@@ -1,20 +1,19 @@
-import React, { createRef, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
-import { createPortal } from 'react-dom';
-import update from 'immutability-helper';
-import { ThemeContext, ThemeProvider } from 'styled-components';
-import { createRoot } from 'react-dom/client';
-import { Variants, motion } from 'framer-motion';
-
-import { LayoutDirectionEnum } from './types';
 import Button from '../../elements/Button';
 import DeferredRenderer from '../DeferredRenderer';
 import Grid from '../Grid';
 import KeyboardTextGroup from '../../elements/Text/Keyboard/Group';
+import React, { createRef, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import Text from '../../elements/Text';
-import { CaretRight } from '@mana/icons';
+import update from 'immutability-helper';
 import useDebounce, { DebouncerType, CancelType } from '@utils/hooks/useDebounce';
+import { CaretRight } from '@mana/icons';
 import { HEADER_Z_INDEX } from '@components/constants';
+import { LayoutDirectionEnum } from './types';
 import { MenuItemType } from './interfaces';
+import { ThemeContext, ThemeProvider } from 'styled-components';
+import { Variants, motion } from 'framer-motion';
+import { createPortal } from 'react-dom';
+import { createRoot } from 'react-dom/client';
 import {
   DividerContainer,
   MenuContent,
@@ -49,10 +48,6 @@ export type MenuProps = {
   contained?: boolean;
   direction?: LayoutDirectionEnum;
   parentContainers?: HTMLElement;
-  openAtPosition?: {
-    left: number;
-    top: number;
-  };
   event?: MouseEvent | React.MouseEvent<HTMLDivElement>;
   items: MenuItemType[];
   level?: number;
@@ -146,9 +141,9 @@ function MenuItemBase({
         </Grid>
 
         {description && (
-          <Text muted small={!small} xsmall={small}>
+          <Text maxWidth={400} muted small={!small} xsmall={small}>
             {description?.()}
-          </Text>
+          </Text >
         )}
       </Grid>
     </MenuItemStyled>
@@ -201,7 +196,6 @@ function Menu({
   direction = LayoutDirectionEnum.RIGHT,
   items,
   level,
-  openAtPosition,
   children,
   onClose,
   position,
@@ -211,6 +205,7 @@ function Menu({
   uuid,
 }: MenuProps) {
   const themeContext = useContext(ThemeContext);
+  const directionRef = useRef<LayoutDirectionEnum>(direction);
   const containerRef = useRef(null);
   const containerRectRef = useRef<DOMRect | null>(null);
   const itemExpandedRef = useRef(null);
@@ -247,7 +242,7 @@ function Menu({
         <Menu
           above={above}
           contained={contained}
-          direction={direction}
+          direction={directionRef.current}
           event={event}
           items={item?.items}
           level={nextLevel}
@@ -266,7 +261,6 @@ function Menu({
         />
       );
 
-      // Close submenus deeper than the current level
       removePortalsFromLevel(nextLevel);
 
       // Open the selected submenu
@@ -315,8 +309,8 @@ function Menu({
 
       itemExpandedRef.current = item;
     },
-    [standardMenu, themeContext, uuid,
-      above, contained, direction, rects,
+    [standardMenu, uuid, addPortal, removePortalsFromLevel,
+      above, contained, directionRef, rects,
       level,
     ],
   );
@@ -376,15 +370,6 @@ function Menu({
         width: position?.width ?? 0,
       };
 
-      // DEBUG && [
-      //   console.log('------------------------------------------------------------------'),
-      //   console.log(uuid),
-      //   console.log('box', bounding.left, bounding.top, bounding.width, bounding.height),
-      //   console.log('container', container.left, container.top, container.width, container.height),
-      //   console.log('offset', offset.left, offset.top, offset.width, offset.height),
-      //   console.log('menu', menu.left, menu.top, menu.width, menu.height),
-      // ];
-
       const padding = UNIT;
       const right = bounding.left + bounding.width;
       const bottom = bounding.top + bounding.height;
@@ -394,11 +379,6 @@ function Menu({
 
       let xoff = offset?.left ?? 0;
       let yoff = offset?.top ?? 0;
-      // DEBUG && [
-      //   console.log('offset.0', xoff, yoff),
-      //   console.log('position.0', position.left, position.top),
-      // ];
-
 
       if (contained) {
         // if (LayoutDirectionEnum.LEFT === direction) {
@@ -416,33 +396,38 @@ function Menu({
         if (above) {
 
         } else {
+          let xoffi = 0;
           if (LayoutDirectionEnum.LEFT === direction) {
-            xoff -= (wmenu ?? 0);
+            xoffi -= wmenu ?? 0;
           } else {
-            xoff += container?.width ?? 0;
+            xoffi += container?.width ?? 0;
           }
-          xoff += padding * (LayoutDirectionEnum.LEFT === direction ? -1 : 1);
+          xoffi += padding * (LayoutDirectionEnum.LEFT === direction ? -1 : 1);
+
+          if (pos.left + xoffi <= 0) {
+            if (LayoutDirectionEnum.LEFT === direction) {
+              if (level === 0) {
+                xoffi = -(container?.width ?? 0);
+              } else {
+                xoffi += wmenu + (container?.width ?? 0) + padding;
+              }
+
+              directionRef.current = LayoutDirectionEnum.RIGHT;
+            }
+          }
+
+          xoff += xoffi;
+
           yoff += container?.height ?? 0;
+          yoff += level === 0 ? (padding / 2) : 0;
         }
       }
 
+
       pos.left += xoff;
       pos.top += yoff;
-      // DEBUG && [
-      //   console.log('offset.1', xoff, yoff),
-      //   console.log('position.1', position.left, position.top),
-      // ];
 
-      // if (position.left >= right) {
-      //   position.left = container.left;
-      // }
-      // if (position.top >= bottom) {
-      //   position.top = (container.top) - (yoff - container.height);
-      // }
-
-      // DEBUG && [
-      //   console.log('position.2', pos.left, pos.top),
-      // ];
+      console.log(bounding, pos, container)
 
       containerRef.current.style.left = `${pos.left}px`;
       containerRef.current.style.top = `${pos.top}px`;
@@ -466,7 +451,7 @@ function Menu({
 
       document.removeEventListener('click', handleDocumentClick);
     };
-  }, [contained, handleDocumentClick, openAtPosition, rects, direction, above, uuid, position,
+  }, [contained, handleDocumentClick, rects, direction, above, uuid, position, level,
     rootID, standardMenu, uuid, removeChildren]);
 
   return (

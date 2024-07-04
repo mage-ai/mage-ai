@@ -6,6 +6,7 @@ import DraggableBlockNode from '../../Canvas/Nodes/DraggableBlockNode';
 import PortalNode from '../../Canvas/Nodes/CodeExecution/PortalNode';
 import OutputNode from '../../Canvas/Nodes/CodeExecution/OutputNode';
 import CanvasContainer from './index.style';
+import HeaderUpdater from '../../Layout/Header/Updater';
 import PipelineExecutionFrameworkType from '@interfaces/PipelineExecutionFramework/interfaces';
 import type { DropTargetMonitor } from 'react-dnd';
 import {
@@ -95,6 +96,7 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
   const wrapperRef = useRef(null);
 
   // VERY IMPORTANT THAT THE STATE IS IN THIS COMPONENT OR ELSE NOTHING WILL RENDER!
+  const [headerData, setHeaderData] = useState<any>(null);
   const [pipeline, setPipeline] = useState<PipelineExecutionFrameworkType>(null);
   const [executionFramework, setExecutionFramework] = useState<PipelineExecutionFrameworkType>(null);
   const [appRects, setAppRects] = useState<{
@@ -175,6 +177,7 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
   }: ModelManagerType = useModelManager({
     executionFrameworkUUID,
     itemIDsByLevelRef,
+    setHeaderData,
     pipelineUUID,
     setOutputIDs,
   });
@@ -511,6 +514,8 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
           })}
         </CanvasContainer>
       </div>
+
+      {headerData && <HeaderUpdater {...headerData} />}
     </div>
   );
 };

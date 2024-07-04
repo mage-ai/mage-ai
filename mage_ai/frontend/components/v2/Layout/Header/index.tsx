@@ -2,10 +2,12 @@ import React, { createRef, useCallback, useMemo, useRef } from 'react';
 import useContextMenu from '@mana/hooks/useContextMenu';
 import Grid from '@mana/components/Grid';
 import stylesHeader from '@styles/scss/layouts/Header/Header.module.scss';
+import MenuManager from '@mana/components/Menu/MenuManager';
 import { Code, Builder, CaretDown, CaretLeft } from '@mana/icons';
 import MageAvatar from '@mana/icons/avatars';
 import Button, { ButtonProps } from '@mana/elements/Button';
 import Text from '@mana/elements/Text';
+import { LayoutDirectionEnum } from '@mana/components/Menu/types';
 import NavTag from '@mana/components/Tag/NavTag';
 import { getUser } from '@utils/session';
 import DashedDivider from '@mana/elements/Divider/DashedDivider';
@@ -95,72 +97,6 @@ export function Header({
     },
   ];
 
-  const intraAppItems = intraAppNavItems ?? [
-    {
-      label: () => 'RAG overview',
-      items: [
-        {
-          label: () => 'RAG1',
-          onClick: () => null,
-          uuid: 'rag1',
-        },
-        {
-          label: () => 'RAG2',
-          onClick: () => null,
-          uuid: 'rag2',
-        },
-        {
-          label: () => 'RAG3',
-          onClick: () => null,
-          uuid: 'rag3',
-        },
-      ],
-      uuid: 'rag',
-    },
-    {
-      label: () => 'Pipelines',
-      onClick: () => null,
-      uuid: 'pipelines',
-    },
-    {
-      label: () => 'My pipeline',
-      onClick: () => null,
-      uuid: 'current',
-    },
-  ];
-
-  const renderIntraAppItems = useCallback((navItems) => navItems?.map(({
-    items,
-    uuid,
-  }) => {
-    buttonRefs.current[uuid] ||= createRef();
-    const buttonRef = buttonRefs.current[uuid];
-
-    return (
-      <div ref={buttonRef} key={uuid}>
-        <Button
-          {...buttonProps}
-          onClick={() => renderContextMenu(null, items, {
-            container: buttonRef.current,
-          })}
-          style={{
-            gridTemplateColumns: '',
-          }}
-        >
-          <Grid
-            {...gridProps}
-            alignItems="center"
-            columnGap={10}
-          >
-            RAG overview
-
-            <CaretDown {...iconProps} />
-          </Grid>
-        </Button >
-      </div>
-    )
-  }), [buttonProps, gridProps, iconProps, renderContextMenu]);
-
   const globalItems = globalNavItems ?? [
     {
       href: 'https://www.mage.ai/help',
@@ -198,6 +134,29 @@ export function Header({
     </nav>
   ));
 
+  const intraItems = useMemo(() => intraAppNavItems?.map(({
+    items,
+    uuid,
+  }: MenuItemType, index: number) => (
+    <MenuManager
+      // direction={LayoutDirectionEnum.RIGHT}
+      items={items}
+      key={uuid}
+      uuid={uuid}
+    >
+      <Button
+        {...buttonProps}
+        style={{
+          gridTemplateColumns: '',
+        }}
+      >
+        Group {uuid}
+      </Button>
+    </MenuManager>
+  )), [intraAppNavItems]);
+
+  console.log(intraAppNavItems)
+
   return (
     <>
       <header
@@ -232,7 +191,7 @@ export function Header({
                 <CaretLeft {...iconProps} />
 
                 {navTag && <NavTag role="tag">{navTag}</NavTag >}
-                {title && <Text role="title" semibold>{title}</Text>}
+                {title && <Text nowrap role="title" semibold>{title}</Text  >}
               </Grid>
             </Button >
           </Grid >
@@ -243,8 +202,7 @@ export function Header({
 
           <Grid {...gridProps}>
             <DashedDivider vertical />
-
-            {renderIntraAppItems(intraAppItems)}
+            {intraItems}
           </Grid>
 
           <Grid {...gridProps} />

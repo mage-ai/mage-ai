@@ -26,10 +26,6 @@ const shared = css<StyleProps>`
   position: relative;
   z-index: 1;
 
-  ${({ header, theme }) => header && `
-
-  `}
-
   ${({ aslink, basic, bordercolor, grouped, header, plain, primary, secondary, theme, wrap }) =>
     !plain &&
     outlineHover({
