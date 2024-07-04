@@ -1,4 +1,5 @@
-import React, { createRef, useCallback, useContext, useEffect, useMemo, useRef } from 'react';
+import React, { createRef, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import update from 'immutability-helper';
 import { ThemeContext, ThemeProvider } from 'styled-components';
 import { createRoot } from 'react-dom/client';
@@ -29,6 +30,7 @@ import { UNIT } from '@mana/themes/spaces';
 import { ClientEventType, RectType } from '@mana/shared/interfaces';
 import { getAbsoluteRect } from '@mana/shared/utils';
 import { addRects, getRectDiff } from '@components/v2/Canvas/utils/rect';
+import { PortalProvider, usePortals } from '@context/v2/Portal';
 
 const DEBUG = true;
 
@@ -52,6 +54,7 @@ export type MenuProps = {
   };
   event?: MouseEvent | React.MouseEvent<HTMLDivElement>;
   items: MenuItemType[];
+  level?: number;
   parentItemsElementRef?: React.MutableRefObject<HTMLDivElement>;
   position?: RectType;
   rects?: {
@@ -195,9 +198,10 @@ function Menu({
   above,
   contained,
   direction = LayoutDirectionEnum.RIGHT,
-  event,
   items,
+  level,
   openAtPosition,
+  children,
   parentItemsElementRef,
   position,
   rects,
@@ -215,29 +219,64 @@ function Menu({
   const timeoutRef = useRef<ReturnType<typeof setTimeout>>();
   const rootID = useMemo(() => `menu-item-items-${uuid}`, [uuid]);
   const offsetRef = useRef<RectType>({ left: 0, top: 0, width: 0, height: 0 });
+  const [portal, setPortal] = useState(null);
+  const { addPortal, removePortalsFromLevel } = usePortals();
 
   const renderChildItems = useCallback(
     (
       item: MenuItemType,
       event: React.MouseEvent<HTMLDivElement>,
       itemInnerRef: React.RefObject<HTMLDivElement>,
-      index: number,
     ) => {
       if (itemExpandedRef?.current?.uuid === item?.uuid) return;
 
       event.stopPropagation();
       event.preventDefault();
 
-      if (!itemsRootRef?.current) {
-        itemsElementRef.current = document.createElement('div');
-        parentItemsElementRef.current.appendChild(itemsElementRef.current);
-        try {
-          itemsRootRef.current = createRoot(itemsElementRef.current as HTMLElement);
-        } catch (error) {
-          console.error(error);
-          return
-        }
+      const r = itemInnerRef?.current?.getBoundingClientRect();
+      const rect = {
+        left: r?.left,
+        top: r?.top,
+        width: r?.width,
+        height: r?.height,
       }
+
+      const nextLevel = level + 1;
+      const menuComponent = (
+        <Menu
+          above={above}
+          contained={contained}
+          direction={direction}
+          event={event}
+          items={item?.items}
+          level={nextLevel}
+          // parentItemsElementRef={parentItemsElementRef?.current ? parentItemsElementRef : itemsElementRef}
+          position={rect}
+          rects={{
+            bounding: rects?.bounding,
+            container: rect,
+            offset: {
+              left: 0,
+              top: -rect.height,
+            },
+          }}
+          small
+          standardMenu={standardMenu}
+          uuid={`${uuid}-${item.uuid}`}
+        />
+      );
+
+      // Close submenus deeper than the current level
+      removePortalsFromLevel(nextLevel);
+
+      // Open the selected submenu
+      addPortal(nextLevel, menuComponent);
+
+      // Why are we appending?
+      // if (parentItemsElementRef?.current) {
+      //   setPortal(menuComponent);
+      //   return;
+      // }
 
       // const element = event?.target as HTMLElement;
       // const rect = element?.getBoundingClientRect() || ({} as DOMRect);
@@ -249,56 +288,36 @@ function Menu({
       // const x = rectContainer?.left + rectContainer?.width - (rect?.left + paddingHorizontal + 4);
       // const y = rect?.top - rectContainer?.top - 2 * (rect?.height - element?.clientHeight);
 
-      if (!itemsRootRef?.current) {
-        console.error('Cannot update an unmounted root', uuid);
-        return;
-      }
+      // if (!itemsRootRef?.current) {
+      //   const element = parentItemsElementRef?.current ?? itemsElementRef?.current;
+      //   itemsRootRef.current = createRoot(element as HTMLElement);
+      // }
 
-      if (!itemsRootRef?.current) return;
+      // if (!itemsRootRef?.current) {
+      //   console.error('Cannot update an unmounted root', uuid);
+      //   return;
+      // }
 
-      const r = itemInnerRef?.current?.getBoundingClientRect();
-      const rect = {
-        left: r?.left,
-        top: r?.top,
-        width: r?.width,
-        height: r?.height,
-      }
+      // if (!itemsRootRef?.current) return;
 
-      itemsRootRef?.current.render(item?.items?.length >= 1
-        ? (
-          <React.StrictMode>
-            <DeferredRenderer idleTimeout={1}>
-              <ThemeProvider theme={themeContext}>
-                <Menu
-                  above={above}
-                  contained={contained}
-                  direction={direction}
-                  event={event}
-                  items={item?.items}
-                  parentItemsElementRef={itemsElementRef}
-                  position={rect}
-                  rects={{
-                    bounding: rects?.bounding,
-                    offset: {
-                      top: -rect.height,
-                    },
-                    container: rect,
-                  }}
-                  small
-                  standardMenu={standardMenu}
-                  uuid={`${uuid}-${item.uuid}`}
-                />
-              </ThemeProvider>
-            </DeferredRenderer>
-          </React.StrictMode>
-        )
-        : null
-      );
+      // itemsRootRef?.current.render(item?.items?.length >= 1
+      //   ? (
+      //     <React.StrictMode>
+      //       <DeferredRenderer idleTimeout={1}>
+      //         <ThemeProvider theme={themeContext}>
+      //           {menuComponent}
+      //         </ThemeProvider>
+      //       </DeferredRenderer>
+      //     </React.StrictMode>
+      //   )
+      //   : null
+      // );
 
       itemExpandedRef.current = item;
     },
     [standardMenu, themeContext, uuid, parentItemsElementRef,
       above, contained, direction, rects,
+      level,
     ],
   );
 
@@ -327,11 +346,21 @@ function Menu({
 
   // Handle outside click
   const handleDocumentClick = useCallback((event: MouseEvent) => {
-    const rect = containerRectRef.current;
-    if (rect && (event.pageX < rect.left || event.pageX > rect.right || event.pageY < rect.top || event.pageY > rect.bottom)) {
-      removeChildren();
+    const el = event.target as node;
+
+    const contains = [containerRef,
+      ...(Object.values(itemsRef?.current ?? {}) ?? []),
+    ]?.some((ref) => ref?.current?.contains(el));
+
+    if (contains) {
+      console.log(uuid);
     }
-  }, [removeChildren]);
+
+    // const rect = containerRectRef.current;
+    // if (rect && (event.pageX < rect.left || event.pageX > rect.right || event.pageY < rect.top || event.pageY > rect.bottom)) {
+    //   removeChildren();
+    // }
+  }, [removeChildren, uuid]);
 
   useEffect(() => {
     const computedStyle =
@@ -376,32 +405,37 @@ function Menu({
 
 
       if (contained) {
-        if (LayoutDirectionEnum.LEFT === direction) {
-          xoff -= (wmenu - (container?.width ?? 0));
-        } else {
-          xoff += (wmenu - (container?.width ?? 0));
-        }
+        // if (LayoutDirectionEnum.LEFT === direction) {
+        //   xoff -= (wmenu - (container?.width ?? 0));
+        // } else {
+        //   xoff += (wmenu - (container?.width ?? 0));
+        // }
 
-        if (above) {
-          yoff -= (hmenu + (container?.height ?? 0));
-        } else {
-          yoff += (container?.height ?? 0);
-        }
+        // if (above) {
+        //   yoff -= (hmenu + (container?.height ?? 0));
+        // } else {
+        //   yoff += (container?.height ?? 0);
+        // }
       } else {
         if (above) {
 
         } else {
-          xoff += container?.width ?? 0;
+          if (LayoutDirectionEnum.LEFT === direction) {
+            xoff -= (wmenu ?? 0);
+          } else {
+            xoff += container?.width ?? 0;
+          }
+          xoff += padding * (LayoutDirectionEnum.LEFT === direction ? -1 : 1);
           yoff += container?.height ?? 0;
         }
       }
 
       pos.left += xoff;
       pos.top += yoff;
-      DEBUG && [
-        console.log('offset.1', xoff, yoff),
-        console.log('position.1', position.left, position.top),
-      ];
+      // DEBUG && [
+      //   console.log('offset.1', xoff, yoff),
+      //   console.log('position.1', position.left, position.top),
+      // ];
 
       // if (position.left >= right) {
       //   position.left = container.left;
@@ -428,11 +462,8 @@ function Menu({
     const timeout = timeoutRef.current;
 
     return () => {
-      removeChildren();
-
       clearTimeout(timeout);
 
-      itemsRootRef.current = null;
       itemsElementRef.current = null;
       itemExpandedRef.current = null;
       timeoutRef.current = null;
@@ -495,7 +526,9 @@ function Menu({
                   <MenuItem
                     handleMouseEnter={(event) => {
                       hideChildren();
-                      renderChildItems(item, event as any, itemRef);
+                      if (item?.items?.length >= 1) {
+                        renderChildItems(item, event as any, itemRef);
+                      }
                     }}
                     contained={contained}
                     first={idx === 0}
@@ -511,9 +544,22 @@ function Menu({
         )}
       </MenuContent>
 
-      <div id={rootID} />
+      {children}
+      {/* {!parentItemsElementRef?.current && <div id={rootID} ref={itemsElementRef} />}
+      {parentItemsElementRef && portal && createPortal(portal, parentItemsElementRef.current)} */}
     </MenuStyled>
   );
 }
 
-export default Menu;
+function MenuRoot(props: MenuProps) {
+  const portalRef = useRef<HTMLDivElement>(null);
+  return (
+    <PortalProvider containerRef={portalRef}>
+      <Menu {...props} level={0}>
+        <div ref={portalRef} />
+      </Menu>
+    </PortalProvider >
+  )
+}
+
+export default MenuRoot;

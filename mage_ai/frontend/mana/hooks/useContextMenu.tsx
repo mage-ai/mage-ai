@@ -189,7 +189,7 @@ export default function useContextMenu({
           contained={contained}
           event={event}
           items={items}
-          parentItemsElementRef={contextMenuRef}
+          // parentItemsElementRef={contextMenuRef}
           position={position ?? {
             left: event?.pageX,
             top: event?.pageY,

@@ -8,12 +8,14 @@ import { LayoutDirectionEnum } from '@mana/components/Menu/types';
 export default function MenuManager({
   children,
   contained,
+  direction = LayoutDirectionEnum.LEFT,
   items,
   open,
   uuid,
 }: {
   children: React.ReactNode;
   contained?: boolean;
+  direction?: LayoutDirectionEnum;
   items: MenuItemType[];
   open: boolean;
   uuid: string;
@@ -44,7 +46,7 @@ export default function MenuManager({
 
       showMenu(items, {
         // contained,
-        // direction: LayoutDirectionEnum.LEFT,
+        direction,
         position: rectAbsolute,
         rects: {
           bounding: {
@@ -54,16 +56,16 @@ export default function MenuManager({
             width: window.innerWidth,
           },
           container: rectAbsolute,
-          // offset: {
-          //   left: -parent?.left,
-          //   top: -parent?.top,
-          // },
+          offset: {
+            left: LayoutDirectionEnum.LEFT === direction ? rectAbsolute?.width : 0,
+            top: 0,
+          },
         },
       });
     } else if (!open) {
       hideMenu();
     }
-  }, [contained, hideMenu, open, items, showMenu]);
+  }, [contained, hideMenu, open, items, showMenu, direction]);
 
   return (
     <>

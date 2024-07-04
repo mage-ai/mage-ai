@@ -62,7 +62,7 @@ function Aside({
       // contained
       items={menuItems}
       open={open}
-      uuid={"wtffffffffffffffffffffffffffffffffffffffffff" ?? uuid}
+      uuid={uuid}
     >
       {element}
     </MenuManager>
