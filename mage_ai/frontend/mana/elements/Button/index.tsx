@@ -109,7 +109,7 @@ function Button({
     // @ts-ignore
     <HTMLTag
       {...props}
-      {...(asLink ? { href: href ?? '#' } : {})}
+      {...((asLink || linkProps) ? { href: href ?? linkProps?.href ?? '#' } : {})}
       {...(motion ? { whileTap: { scale: 0.97 } } : {})}
       aslink={asLink ? 'true' : undefined}
       basic={basic ? 'true' : undefined}
@@ -162,13 +162,16 @@ function Button({
           : loadingColorName} />
       </div>
 
-      {linkProps && (
-        <NextLink {...linkProps} passHref>
+      {linkProps?.href && (
+        <NextLink
+          as={linkProps.as}
+          href={linkProps.href}
+        >
           {el}
         </NextLink>
       )}
 
-      {!linkProps && el}
+      {!linkProps?.href && el}
     </div >
   );
 }

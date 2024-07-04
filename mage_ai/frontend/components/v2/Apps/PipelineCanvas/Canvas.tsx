@@ -272,6 +272,7 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
     setDropEnabled,
     setZoomPanDisabled,
     transformState,
+    wrapperRef,
   });
 
   useEffect(() => {

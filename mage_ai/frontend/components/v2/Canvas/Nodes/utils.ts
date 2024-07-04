@@ -11,6 +11,8 @@ import { NodeType, NodeItemType, RectType } from '../interfaces';
 import { ItemTypeEnum } from '../types';
 import { DragAndDropHandlersType, DraggableType } from './types';
 import { countOccurrences, flattenArray, sortByKey } from '@utils/array';
+import { getClosestRole } from '@utils/elements';
+import { ElementRoleEnum } from '@mana/shared/types';
 import { ClientEventType } from '@mana/shared/interfaces';
 import { DEBUG } from '../../utils/debug';
 
@@ -18,7 +20,7 @@ export function buildEvent(
   event: any,
   operation: EventOperationEnum,
   item: NodeItemType,
-  itemRef: DraggableType['itemRef'],
+  itemRef: DraggableType['nodeRef'],
   block: BlockType,
 ) {
   return update(event, {
@@ -206,7 +208,8 @@ export function handleClickGroupMenu(
         ]
         : [],
       kwargs: {
-        boundingContainer: itemRef?.current?.getBoundingClientRect(),
+        // boundingContainer: itemRef?.current?.getBoundingClientRect(),
+        container: getClosestRole(event.target, [ElementRoleEnum.BUTTON]) ?? event.target,
       },
     },
   );

@@ -5,10 +5,6 @@
   backdrop-filter: var(--menus-blur-base);
   height: 52px;
   left: 0;
-  padding-bottom: 6px;
-  padding-left: var(--padding-sm);
-  padding-right: var(--padding-sm);
-  padding-top: 6px;
   position: fixed;
   right: 0;
   top: 0;
@@ -24,12 +20,14 @@
     border-style: var(--borders-style) !important;
     border-width: var(--borders-width) !important;
     height: 40px;
+    color: var(--fonts-color-text-secondary) !important;
     justify-content: center !important;
     padding: 0 11px !important;
 
     &:focus {
-      border-color: var(--colors-greenmd) !important;
       box-shadow: none;
+      color: var(--colors-greenmd) !important;
+      outline: none !important;
 
       .buttonIcon {
         fill: var(--colors-greenmd);
@@ -41,6 +39,7 @@
       box-shadow:
         0 0 0 var(--borders-outline-offset) var(--backgrounds-body),
         0 0 0 var(--borders-outline-total) var(--colors-green);
+      color: var(--colors-green) !important;
 
       .buttonIcon {
         fill: var(--colors-green);
@@ -49,9 +48,9 @@
 
     &:active,
     &.selected {
-      @include mixins.transition-instant;
       box-shadow: none !important;
       border-color: var(--colors-green) !important;
+      color: var(--colors-green) !important;
 
       .buttonIcon {
         fill: var(--colors-green);

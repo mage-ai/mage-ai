@@ -12,6 +12,7 @@ import { selectKeys } from '@utils/hash';
 
 export type RenderContextMenuOptions = {
   boundingContainer?: DOMRect;
+  container?: HTMLElement;
 };
 
 export type RenderContextMenuType = (
@@ -27,18 +28,24 @@ export type RemoveContextMenuType = (
 export type MenuItemType = MenuItemTypeT;
 export type ClientEventType = ClientEventTypeT;
 
+export interface ContextMenuType {
+  contextMenu: JSX.Element;
+  removeContextMenu: RemoveContextMenuType;
+  renderContextMenu: RenderContextMenuType;
+  shouldPassControl: (event: ClientEventType) => boolean;
+}
+
+export type ContextMenuProps = {
+  container?: HTMLDivElement;
+  useAsStandardMenu?: boolean;
+  uuid: string;
+};
+
 export default function useContextMenu({
   container,
+  useAsStandardMenu,
   uuid,
-}: {
-  container: React.MutableRefObject<HTMLDivElement | null>;
-  uuid: string;
-}): {
-  contextMenu: JSX.Element;
-  renderContextMenu: RenderContextMenuType;
-  removeContextMenu: RemoveContextMenuType;
-  shouldPassControl: (event: ClientEventType) => boolean;
-} {
+}: ContextMenuProps): ContextMenuType {
   const contextMenuRef = useRef<HTMLDivElement | null>(null);
   const contextMenuRootRef = useRef<Root | null>(null);
   const itemsRef = useRef<MenuItemType[]>(null);
@@ -51,8 +58,8 @@ export default function useContextMenu({
     target: contextMenuRootRef,
   });
 
-  function isEventInContainer(event: ClientEventType): boolean {
-    return container?.current?.contains(event.target as Node);
+  function isEventInContainer(event: ClientEventType, containerArg?: HTMLElement): boolean {
+    return (container || containerArg)?.contains(event.target as Node);
   }
 
   function isEventInContextMenu(event: ClientEventType): boolean {
@@ -140,8 +147,6 @@ export default function useContextMenu({
 
       positionRef.current[positionRef.current.length - 1] = yNew;
     }
-
-    console.log(getCurrentItem()?.item?.uuid);
   }
 
   function renderContextMenu(
@@ -149,9 +154,16 @@ export default function useContextMenu({
     items: MenuItemType[],
     opts?: RenderContextMenuOptions,
   ) {
-    if (!container?.current || !isEventInContainer(event)) return;
+    const {
+      boundingContainer,
+      container: container2,
+    } = opts ?? {};
 
-    event.preventDefault();
+    console.log(event, items, opts, !container2, container && !isEventInContainer(event))
+
+    if (!container2 && (container && !isEventInContainer(event))) return;
+
+    event?.preventDefault();
 
     if (!contextMenuRootRef?.current && contextMenuRef.current) {
       const node = contextMenuRef.current;
@@ -166,13 +178,22 @@ export default function useContextMenu({
       <DeferredRenderer idleTimeout={1}>
         <ThemeProvider theme={themeContext}>
           <Menu
-            boundingContainer={
-              opts?.boundingContainer ??
-              selectKeys(container?.current?.getBoundingClientRect() || {}, ['width', 'x', 'y'])
-            }
             event={event}
             items={items}
+            parentContainer={container2}
+            parentItemsElementRef={contextMenuRef}
+            openAtPosition={!container2
+              ? {
+                left: event?.pageX,
+                top: event?.pageY,
+              }
+              : undefined
+            }
+            originalBoundingContainer={boundingContainer
+              ?? selectKeys(container?.getBoundingClientRect() || {}, ['width', 'x', 'y'])
+            }
             small
+            standardMenu={useAsStandardMenu}
             uuid={uuid}
           />
         </ThemeProvider>
@@ -227,7 +248,7 @@ export default function useContextMenu({
     };
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [useAsStandardMenu]);
 
   return {
     contextMenu: <div ref={contextMenuRef} />,

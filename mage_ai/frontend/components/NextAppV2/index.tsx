@@ -1,5 +1,7 @@
 import ContextProvider from '@context/v2/ContextProvider';
+import { ThemeProvider } from 'styled-components';
 import Head from '@mana/elements/Head';
+import { LayoutProvider } from '@context/v2/Layout';
 import ThemeType from '@mana/themes/interfaces';
 import { AppProps } from 'next/app';
 import { LayoutVersionEnum } from '@utils/layouts';
@@ -8,6 +10,7 @@ import { ThemeSettingsType } from '@mana/themes/interfaces';
 import { getTheme, getThemeSettings } from '@mana/themes/utils';
 import { useEffect } from 'react';
 import Header, { HEADER_ROOT_ID } from '../v2/Layout/Header';
+import { MenuProvider } from '@context/v2/Menu';
 
 function NextAppV2({
   Component,
@@ -48,11 +51,18 @@ function NextAppV2({
           name="viewport"
         />
       </Head>
-      <ContextProvider theme={theme as ThemeType}>
-        <div id={HEADER_ROOT_ID}><Header /></div>
 
-        <Component {...rest} />
-      </ContextProvider>
+      <ThemeProvider theme={theme}>
+        <MenuProvider>
+          <LayoutProvider router={router} theme={theme}>
+            <ContextProvider router={router} theme={theme as ThemeType}>
+              <div id={HEADER_ROOT_ID}><Header router={router} /></div>
+
+              <Component {...rest} />
+            </ContextProvider >
+          </LayoutProvider  >
+        </MenuProvider>
+      </ThemeProvider>
     </>
   );
 }

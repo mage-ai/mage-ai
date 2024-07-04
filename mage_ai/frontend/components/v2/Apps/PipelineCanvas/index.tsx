@@ -58,7 +58,7 @@ export default function PipelineBuilder({ loading, ...props }: BuilderCanvasProp
   const [, setZoomPanDisabledState] = useState(false);
 
   const { contextMenu, renderContextMenu, removeContextMenu, shouldPassControl } = useContextMenu({
-    container: containerRef,
+    container: containerRef.current,
     uuid: 'pipeline-builder-canvas',
   });
 

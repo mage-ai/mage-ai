@@ -1,4 +1,5 @@
-import React, { useMemo } from 'react';
+import React, { createRef, useCallback, useMemo, useRef } from 'react';
+import useContextMenu from '@mana/hooks/useContextMenu';
 import Grid from '@mana/components/Grid';
 import stylesHeader from '@styles/scss/layouts/Header/Header.module.scss';
 import { Code, Builder, CaretDown, CaretLeft } from '@mana/icons';
@@ -8,19 +9,18 @@ import Text from '@mana/elements/Text';
 import NavTag from '@mana/components/Tag/NavTag';
 import { getUser } from '@utils/session';
 import DashedDivider from '@mana/elements/Divider/DashedDivider';
+import {
+  MenuItemType,
+} from '@mana/hooks/useContextMenu';
 
 export const HEADER_ROOT_ID = 'v2-header-root';
 
-type NavItemType = {
-  label?: () => string;
-  uuid: string;
-} & ButtonProps;
-
 export type HeaderProps = {
-  globalNavItems?: NavItemType[];
-  interAppNavItems?: NavItemType[];
-  intraAppNavItems?: NavItemType[];
+  globalNavItems?: MenuItemType[];
+  interAppNavItems?: MenuItemType[];
+  intraAppNavItems?: MenuItemType[];
   navTag?: string;
+  router?: any;
   selectedNavItem?: string;
   title?: string;
 };
@@ -30,17 +30,31 @@ export function Header({
   interAppNavItems,
   intraAppNavItems,
   navTag,
+  router,
   selectedNavItem,
   title,
-}: HeaderProps, ref: React.Ref<HTMLDivElement>) {
-  const userFromLocalStorage = getUser();
+}: HeaderProps, ref: React.MutableRefObject<HTMLDivElement | null>) {
+  // const userFromLocalStorage = getUser();
+  let headerRef = ref;
+  headerRef ||= useRef<HTMLDivElement | null>(null);
+  const buttonRefs = useRef<Record<string, React.MutableRefObject<HTMLElement>>>({});
+
+  const {
+    contextMenu,
+    renderContextMenu,
+    removeContextMenu,
+  } = useContextMenu({
+    container: headerRef,
+    useAsStandardMenu: true,
+    uuid: 'main-header',
+  });
 
   const buttonProps = {
-    asLink: true,
     className: [
       stylesHeader.button,
     ].join(' '),
-    motion: true,
+    // motion: true,
+    small: true,
   };
   const gridProps = {
     autoColumns: 'min-content',
@@ -55,32 +69,98 @@ export function Header({
   const interAppItems = interAppNavItems ?? [
     {
       Icon: Builder,
-      linkProps: {
-        href: '/v2/pipelines/rag1/builder/rag',
+      // linkProps: {
+      //   as: '/v2/pipelines/[slug]/builder/[subslug]', // Dynamic route template
+      //   href: '/v2/pipelines/rag1/builder/rag', // Actual path with replaced segments
+      // },
+      onClick: () => {
+        router.push({
+          pathname: '/v2/pipelines/[slug]/builder/[framework]',
+          query: {
+            framework: 'rag',
+            slug: 'rag1',
+          },
+        });
       },
       uuid: 'builder',
     },
     {
       Icon: Code,
-      href: '/v2',
+      // linkProps: {
+      //   href: '/v2/test',
+      // },
+      onClick: () => {
+        router.push('/v2/test');
+      },
       uuid: 'code',
     },
   ];
 
   const intraAppItems = intraAppNavItems ?? [
     {
-      label: () => 'Tree',
-      uuid: 'tree',
+      label: () => 'RAG overview',
+      items: [
+        {
+          label: () => 'RAG1',
+          onClick: () => null,
+          uuid: 'rag1',
+        },
+        {
+          label: () => 'RAG2',
+          onClick: () => null,
+          uuid: 'rag2',
+        },
+        {
+          label: () => 'RAG3',
+          onClick: () => null,
+          uuid: 'rag3',
+        },
+      ],
+      uuid: 'rag',
     },
     {
       label: () => 'Pipelines',
+      onClick: () => null,
       uuid: 'pipelines',
     },
     {
       label: () => 'My pipeline',
+      onClick: () => null,
       uuid: 'current',
     },
   ];
+
+  const renderIntraAppItems = useCallback((navItems) => navItems?.map(({
+    items,
+    uuid,
+  }) => {
+    buttonRefs.current[uuid] ||= createRef();
+    const buttonRef = buttonRefs.current[uuid];
+
+    return (
+      <div ref={buttonRef} key={uuid}>
+        <Button
+          {...buttonProps}
+          onClick={() => renderContextMenu(null, items, {
+            container: buttonRef.current,
+          })}
+          style={{
+            gridTemplateColumns: '',
+          }}
+        >
+          <Grid
+            {...gridProps}
+            alignItems="center"
+            columnGap={10}
+          >
+            RAG overview
+
+            <CaretDown {...iconProps} />
+          </Grid>
+        </Button >
+      </div>
+    )
+  }), [buttonProps, gridProps, iconProps, renderContextMenu]);
 
   const globalItems = globalNavItems ?? [
     {
@@ -94,7 +174,7 @@ export function Header({
     },
   ];
 
-  const renderNavItems = (items: NavItemType[]) => items.map(({
+  const renderNavItems = (items: MenuItemType[]) => items.map(({
     Icon,
     label,
     uuid,
@@ -114,80 +194,90 @@ export function Header({
           gridTemplateColumns: '',
         }}
       >
-        {label && <Text secondary semibold small>{label?.()}</Text>}
+        {label && label?.()}
       </Button>
     </nav>
   ));
 
   return (
-    <header
-      className={stylesHeader.header}
-      ref={ref}
-    >
-      <Grid
-        {...gridProps}
-        style={{
-          gridTemplateColumns: 'auto auto auto 1fr auto',
-        }}
+    <>
+      <header
+        className={stylesHeader.header}
+        ref={headerRef}
       >
         <Grid
           {...gridProps}
+          paddingBottom={6}
+          paddingLeft={10}
+          paddingRight={10}
+          paddingTop={6}
+          style={{
+            gridTemplateColumns: 'auto auto auto 1fr auto',
+          }}
         >
-          <Button
-            {...buttonProps}
-            style={{
-              gridTemplateColumns: '',
-            }}
+          <Grid
+            {...gridProps}
           >
-            <Grid
-              {...gridProps}
-              alignItems="center"
-              columnGap={12}
-              paddingRight={(title ?? false) ? 8 : undefined}
+            <Button
+              {...buttonProps}
+              style={{
+                gridTemplateColumns: '',
+              }}
             >
-              <CaretLeft {...iconProps} />
+              <Grid
+                {...gridProps}
+                alignItems="center"
+                columnGap={12}
+                paddingRight={(title ?? false) ? 8 : undefined}
+              >
+                <CaretLeft {...iconProps} />
 
-              {navTag && <NavTag role="tag">{navTag}</NavTag >}
-              {title && <Text role="title" semibold>{title}</Text>}
-            </Grid>
-          </Button >
+                {navTag && <NavTag role="tag">{navTag}</NavTag >}
+                {title && <Text role="title" semibold>{title}</Text>}
+              </Grid>
+            </Button >
+          </Grid >
+
+          <Grid {...gridProps}>
+            {renderNavItems(interAppItems)}
+          </Grid>
+
+          <Grid {...gridProps}>
+            <DashedDivider vertical />
+
+            {renderIntraAppItems(intraAppItems)}
+          </Grid>
+
+          <Grid {...gridProps} />
+
+          <Grid {...gridProps}>
+            {renderNavItems(globalItems)}
+
+            <Button
+              {...buttonProps}
+              style={{
+                gridTemplateColumns: '',
+              }}
+            >
+              <Grid
+                {...gridProps}
+                alignItems="center"
+                columnGap={10}
+              >
+                <MageAvatar size={24} variant="a" />
+
+                Sorceress
+
+                <CaretDown {...iconProps} />
+              </Grid>
+            </Button >
+          </Grid>
         </Grid >
 
-        <Grid {...gridProps}>
-          {renderNavItems(interAppItems)}
-        </Grid>
-
-        <Grid {...gridProps}>
-          <DashedDivider vertical />
-          {renderNavItems(intraAppItems)}
-        </Grid>
-
-        <Grid {...gridProps} />
-
-        <Grid {...gridProps}>
-          {renderNavItems(globalItems)}
-
-          <Button
-            {...buttonProps}
-            style={{
-              gridTemplateColumns: '',
-            }}
-          >
-            <Grid
-              {...gridProps}
-              alignItems="center"
-              columnGap={10}
-            >
-              <MageAvatar size={24} variant="a" />
-
-              Sorceress
-
-              <CaretDown {...iconProps} />
-            </Grid>
-          </Button >
-        </Grid>
-      </Grid >
-    </header >
+        <DashedDivider />
+      </header >
+      {contextMenu}
+    </>
   );
 }
 

@@ -62,6 +62,7 @@ type EventManagerProps = {
 
 export default function useEventManager({
   activeLevel,
+  wrapperRef,
   appHandlersRef,
   itemIDsByLevelRef,
   canvasRef,
@@ -556,7 +557,11 @@ export default function useEventManager({
     if (data?.node) {
     }
 
-    renderContextMenu(event, menuItems, opts);
+    console.log('useEventManager', opts)
+    renderContextMenu(event, menuItems, {
+      ...opts,
+      boundingContainer: wrapperRef.current.getBoundingClientRect(),
+    });
   }
 
   function handleDragStart(event: ClientEventType) {

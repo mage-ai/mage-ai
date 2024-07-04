@@ -1,18 +1,20 @@
 import ContextProvider from '../ContextProvider';
 import Header, { HeaderProps, HEADER_ROOT_ID } from '@components/v2/Layout/Header';
-import React, { useRef, useContext } from 'react';
+import React, { useRef } from 'react';
 import { FaviconStatusEnum, changeFavicon } from './favicon';
 import { LayoutContext, PageProps } from './LayoutContext';
 import { Root, createRoot } from 'react-dom/client';
-import { ThemeContext } from 'styled-components';
+import ThemeType from '@mana/themes/interfaces';
+import { useMenuContext } from '../Menu';
 
 interface LayoutProviderProps {
   children: React.ReactNode;
+  router?: any;
+  theme?: ThemeType;
 }
 
-export const LayoutProvider = ({ children }: LayoutProviderProps) => {
-  const themeContext = useContext(ThemeContext);
-
+export const LayoutProvider = ({ children, router, theme }: LayoutProviderProps) => {
+  const useMenu = useMenuContext();
   const headerRootRef = useRef<Root>(null);
   const headerRef = useRef<HeaderProps>({
     navTag: undefined,
@@ -33,9 +35,9 @@ export const LayoutProvider = ({ children }: LayoutProviderProps) => {
     if (!element) return;
     headerRootRef.current ||= createRoot(element);
     headerRootRef.current.render(
-      <ContextProvider theme={themeContext}>
-        <Header {...headerRef.current} />
-      </ContextProvider >
+      <ContextProvider router={router} theme={theme}>
+        <Header {...headerRef.current} router={router} useMenu={useMenu} />
+      </ContextProvider  >
     );
 
     // console.log(kwargs, headerContainerRef.current,

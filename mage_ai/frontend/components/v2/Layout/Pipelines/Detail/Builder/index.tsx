@@ -12,13 +12,20 @@ function PipelineBuilder({ frameworkUUID, uuid, ...props }: PipelineDetailProps)
   const { header, page } = useContext(LayoutContext);
 
   useEffect(() => {
-    header.setHeader({
-      navTag: frameworkUUID,
-      selectedNavItem: 'builder',
-      title: uuid,
-    });
+    if (frameworkUUID && uuid) {
+      header.setHeader({
+        navTag: frameworkUUID,
+        selectedNavItem: 'builder',
+        title: uuid,
+      });
+
+      page.setPage({
+        error: true,
+        title: 'Ultra Mage',
+      });
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [frameworkUUID, uuid]);
 
   return (
     <DetailLayout loadEditorServices>
