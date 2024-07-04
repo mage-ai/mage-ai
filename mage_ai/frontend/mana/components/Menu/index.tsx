@@ -47,6 +47,7 @@ export type MenuProps = {
   children?: React.ReactNode;
   contained?: boolean;
   direction?: LayoutDirectionEnum;
+  directionPrevious?: LayoutDirectionEnum;
   parentContainers?: HTMLElement;
   event?: MouseEvent | React.MouseEvent<HTMLDivElement>;
   items: MenuItemType[];
@@ -194,6 +195,7 @@ function Menu({
   above,
   contained,
   direction = LayoutDirectionEnum.RIGHT,
+  directionPrevious,
   items,
   level,
   children,
@@ -243,6 +245,7 @@ function Menu({
           above={above}
           contained={contained}
           direction={directionRef.current}
+          directionPrevious={direction}
           event={event}
           items={item?.items}
           level={nextLevel}
@@ -310,7 +313,7 @@ function Menu({
       itemExpandedRef.current = item;
     },
     [standardMenu, uuid, addPortal, removePortalsFromLevel,
-      above, contained, directionRef, rects,
+      above, contained, directionRef, rects, direction,
       level,
     ],
   );
@@ -400,9 +403,11 @@ function Menu({
           if (LayoutDirectionEnum.LEFT === direction) {
             xoffi -= wmenu ?? 0;
           } else {
-            xoffi += container?.width ?? 0;
+            if (level >= 1) {
+              xoffi += (container?.width ?? 0) + padding;
+            } else {
+            }
           }
-          xoffi += padding * (LayoutDirectionEnum.LEFT === direction ? -1 : 1);
 
           if (pos.left + xoffi <= 0) {
             if (LayoutDirectionEnum.LEFT === direction) {
@@ -423,11 +428,8 @@ function Menu({
         }
       }
 
-
       pos.left += xoff;
       pos.top += yoff;
-
-      console.log(bounding, pos, container)
 
       containerRef.current.style.left = `${pos.left}px`;
       containerRef.current.style.top = `${pos.top}px`;
@@ -452,6 +454,7 @@ function Menu({
       document.removeEventListener('click', handleDocumentClick);
     };
   }, [contained, handleDocumentClick, rects, direction, above, uuid, position, level,
+    directionPrevious,
     rootID, standardMenu, uuid, removeChildren]);
 
   return (

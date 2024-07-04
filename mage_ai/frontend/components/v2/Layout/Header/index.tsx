@@ -136,6 +136,7 @@ export function Header({
 
   const intraItems = useMemo(() => intraAppNavItems?.map(({
     items,
+    label,
     uuid,
   }: MenuItemType, index: number) => (
     <MenuManager
@@ -150,10 +151,10 @@ export function Header({
           gridTemplateColumns: '',
         }}
       >
-        Group {uuid}
+        {(label && label?.()) ?? uuid}
       </Button>
     </MenuManager>
-  )), [intraAppNavItems]);
+  )), [buttonProps, intraAppNavItems]);
 
   console.log(intraAppNavItems)
 

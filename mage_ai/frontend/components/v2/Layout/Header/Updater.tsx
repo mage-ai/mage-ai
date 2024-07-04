@@ -38,10 +38,15 @@ export default function HeaderUpdater({ executionFramework, groupsByLevel, pipel
 
   useEffect(() => {
     const menuItems: MenuItemType[] = [];
+    const fname = executionFramework?.name ?? executionFramework?.uuid;
 
     groupsByLevel.forEach((groups, index: number) => {
       menuItems.push({
-        uuid: `Level ${index}`,
+        label: () => index === 0
+          ? `${fname} pipelines`
+          : index === 1
+            ? 'Stages'
+            : 'Operations',
         items: groups.map(({
           children,
           description,
@@ -54,12 +59,13 @@ export default function HeaderUpdater({ executionFramework, groupsByLevel, pipel
           onClick: () => true,
           uuid,
         })),
+        uuid: `level-${index}-grouping`,
       });
     });
 
     setHeader({
       intraAppNavItems: menuItems,
-      navTag: executionFramework?.uuid?.toUpperCase(),
+      navTag: executionFramework?.name ?? executionFramework?.uuid?.toUpperCase(),
       title: pipeline?.name || pipeline?.uuid,
     });
   }, [executionFramework, groupsByLevel, pipeline]);
