@@ -33,12 +33,18 @@ export default function NavigationButtonGroup({
   ) => {
     const {
       groups,
+      level,
+      uuid,
     } = item;
 
-    const items = [
+    let items = [
       ...(groups?.reverse() ?? []),
       item,
     ];
+    if (selectedGroupsByLevel?.[selectedGroupsByLevel?.length - 1]?.uuid === uuid) {
+      items = items.slice(0, level)
+    }
+
     setSelectedGroupsByLevel(items);
     if (items?.length >= 1) {
       updateCache(cacheKey, items);
@@ -47,7 +53,7 @@ export default function NavigationButtonGroup({
     }
 
     setSelectedButtonIndex(null);
-  }) : (groupsProp ?? []), [buildGroups, cacheKey, groupsProp]);
+  }) : (groupsProp ?? []), [buildGroups, cacheKey, groupsProp, selectedGroupsByLevel]);
 
   const buttons = useMemo(() => {
     const defaultState = selectedGroupsByLevel === null;
@@ -102,7 +108,7 @@ export default function NavigationButtonGroup({
                 : (selectedGroupsByLevel?.length - 1 ?? 0),
             ));
           }}
-          secondary
+          secondary={!done}
           semibold={done}
           small
           success={selected}

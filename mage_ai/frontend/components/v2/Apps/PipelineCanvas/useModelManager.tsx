@@ -26,6 +26,11 @@ type ModelManagerProps = {
   itemIDsByLevelRef: React.MutableRefObject<string[][]>;
   pipelineUUID: string;
   executionFrameworkUUID: string;
+  setHeaderData: (data: {
+    executionFramework: PipelineExecutionFrameworkType;
+    groupsByLevel: GroupLevelType;
+    pipeline: PipelineType;
+  }) => void;
   setOutputIDs: React.Dispatch<React.SetStateAction<string[]>>;
 };
 

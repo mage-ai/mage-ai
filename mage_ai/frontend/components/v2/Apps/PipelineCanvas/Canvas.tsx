@@ -23,6 +23,7 @@ import { DragLayer } from '../../Canvas/Layers/DragLayer';
 import { ItemTypeEnum, LayoutConfigDirectionOriginEnum, LayoutConfigDirectionEnum } from '../../Canvas/types';
 import { RemoveContextMenuType, RenderContextMenuType } from '@mana/hooks/useContextMenu';
 import { ZoomPanStateType } from '@mana/hooks/useZoomPan';
+import { MenuGroupType } from '@mana/components/Menu/interfaces';
 import { snapToGrid } from '../../Canvas/utils/snapToGrid';
 import { useDrop } from 'react-dnd';
 import { createRef, useEffect, useMemo, useRef, useState, startTransition } from 'react';
@@ -96,7 +97,7 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
   const wrapperRef = useRef(null);
 
   // VERY IMPORTANT THAT THE STATE IS IN THIS COMPONENT OR ELSE NOTHING WILL RENDER!
-  const [headerData, setHeaderData] = useState<any>(null);
+  const [headerData, setHeaderDataState] = useState<any>(null);
   const [pipeline, setPipeline] = useState<PipelineExecutionFrameworkType>(null);
   const [executionFramework, setExecutionFramework] = useState<PipelineExecutionFrameworkType>(null);
   const [appRects, setAppRects] = useState<{
@@ -119,6 +120,22 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
       canvasRef, wrapperRef, itemsRef, imageDataRef
     ),
   });
+
+  function setHeaderData(data: any) {
+    setHeaderDataState({
+      ...data,
+      handleMenuItemClick: (event: MouseEvent, group: MenuGroupType) => {
+        dispatchAppEvent(CustomAppEventEnum.UPDATE_NODE_LAYOUTS, {
+          event,
+          options: {
+            kwargs: {
+              ...group,
+            },
+          },
+        });
+      },
+    });
+  }
 
   function handleNodeLayoutsChanged({ detail }: CustomAppEvent) {
     const { nodes } = detail;

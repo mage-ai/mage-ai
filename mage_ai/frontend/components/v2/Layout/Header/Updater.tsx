@@ -57,15 +57,28 @@ function menuItemsForBlock(
   return convertToItem(block, onClick, level, index);
 }
 
-export default function HeaderUpdater({ executionFramework, groupsByLevel, pipeline }: {
+export default function HeaderUpdater({
+  executionFramework,
+  groupsByLevel,
+  handleMenuItemClick,
+  pipeline,
+}: {
   executionFramework: FrameworkType;
   groupsByLevel: MenuItemType[][];
+  handleMenuItemClick?: ItemClickHandler;
   pipeline: FrameworkType;
 }) {
   const { header: { setHeader } } = useLayout();
 
   useEffect(() => {
-    const buildIntraAppNavItems = (onClick: ItemClickHandler) => {
+    const buildIntraAppNavItems = (onClickBase: ItemClickHandler) => {
+      const onClick = (event: MouseEvent, item: MenuGroupType) => {
+        onClickBase(event, item);
+
+        if (handleMenuItemClick) {
+          handleMenuItemClick(event, item);
+        }
+      };
       const menuItems: MenuItemType[] = [];
       const fname = executionFramework?.name ?? executionFramework?.uuid;
 
@@ -135,7 +148,7 @@ export default function HeaderUpdater({ executionFramework, groupsByLevel, pipel
       title: pipeline?.name || pipeline?.uuid,
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [executionFramework, groupsByLevel, pipeline]);
+  }, [executionFramework, groupsByLevel, handleMenuItemClick, pipeline]);
 
   return <div />;
 }

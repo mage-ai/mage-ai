@@ -410,11 +410,11 @@ export default function useEventManager({
         ],
         uuid: 'Customize block layout',
       },
-      { divider: true },
-      {
-        uuid: 'Groupings',
-      },
-      ...buildMenuItemGroupsForPipelineFramework(),
+      // { divider: true },
+      // {
+      //   uuid: 'Groupings',
+      // },
+      // ...buildMenuItemGroupsForPipelineFramework(),
       { divider: true },
       {
         Icon: TreeWithArrowsDown,

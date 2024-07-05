@@ -334,11 +334,9 @@ function Menu({
   const itemsCount = useMemo(() => items?.length || 0, [items]);
 
   const hideChildren = useCallback(() => {
-    if (itemExpandedRef.current) {
-      itemExpandedRef.current = null;
-      itemsRootRef?.current?.render(null)
-    }
-  }, []);
+    itemExpandedRef.current = null;
+    removePortals(level + 1);
+  }, [level, removePortals]);
 
   const removeChildren = useCallback((exceptUUID?: string) => {
     if (exceptUUID && itemExpandedRef.current === exceptUUID) return;
@@ -459,7 +457,7 @@ function Menu({
       timeoutRef.current = null;
     };
   }, [contained, rects, direction, above, uuid, position, level,
-    directionPrevious, openItems,
+    directionPrevious, openItems, items, itemsRef, renderChildItems,
     rootID, standardMenu, uuid, removeChildren]);
 
   return (
