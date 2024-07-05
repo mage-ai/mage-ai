@@ -18,4 +18,5 @@ export enum CustomAppEventEnum {
   STOPPING_APP = 'stopping_app',
   STOP_APP = 'stop_app',
   UPDATE_NODE_LAYOUTS = 'update_node_layouts',
+  UPDATE_SETTINGS = 'update_settings',
 }

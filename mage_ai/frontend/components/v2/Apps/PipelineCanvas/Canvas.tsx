@@ -21,7 +21,7 @@ import useModelManager from './useModelManager';
 import { ModelProvider } from './ModelManager/ModelContext';
 import usePresentationManager, { PresentationManagerType } from './usePresentationManager';
 import { DragLayer } from '../../Canvas/Layers/DragLayer';
-import { ItemTypeEnum, LayoutConfigDirectionOriginEnum, LayoutConfigDirectionEnum } from '../../Canvas/types';
+import { ItemTypeEnum, LayoutConfigDirectionOriginEnum, LayoutConfigDirectionEnum, LayoutDisplayEnum } from '../../Canvas/types';
 import { RemoveContextMenuType, RenderContextMenuType } from '@mana/hooks/useContextMenu';
 import { ZoomPanStateType } from '@mana/hooks/useZoomPan';
 import { MenuGroupType } from '@mana/components/Menu/interfaces';
@@ -40,7 +40,7 @@ import { DEBUG } from '@components/v2/utils/debug';
 import { ExecutionManagerType } from '@components/v2/ExecutionManager/interfaces';
 import BlockType from '@interfaces/BlockType';
 import { calculateBoundingBox } from '@components/v2/Canvas/utils/rect';
-import { getCache } from '@mana/components/Menu/storage';
+import useSettingsManager from './useSettingsManager';
 
 export type BuilderCanvasProps = {
   canvasRef: React.RefObject<HTMLDivElement>;
@@ -85,8 +85,6 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
 }: BuilderCanvasProps) => {
   DEBUG.rendering && console.log('Rendering Canvas');
 
-  const selectedMenuGroup = useRef(getCache([executionFrameworkUUID, pipelineUUID].join(':')))
-  const activeLevel = useRef<number>((selectedMenuGroup?.current?.length ?? 1) - 1);
   const imageDataRef = useRef<string>(null);
   const itemElementsRef = useRef<ItemElementsType>({
     [ItemTypeEnum.APP]: {},
@@ -114,7 +112,7 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
   const [itemRects, _setItemRects] = useState<FlatItemType[]>([]);
   const outputPortalRefs = useRef<Record<string, React.RefObject<HTMLDivElement>>>({});
 
-  const { dispatchAppEvent } = useAppEventsHandler(null, {
+  const { convertEvent, dispatchAppEvent } = useAppEventsHandler(null, {
     [CustomAppEventEnum.APP_STARTED]: handleAppChanged,
     [CustomAppEventEnum.APP_STOPPED]: handleAppChanged,
     [CustomAppEventEnum.APP_UPDATED]: handleAppChanged,
@@ -128,8 +126,8 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
     setHeaderDataState({
       ...data,
       handleMenuItemClick: (event: MouseEvent, group: MenuGroupType) => {
-        dispatchAppEvent(CustomAppEventEnum.UPDATE_NODE_LAYOUTS, {
-          event,
+        dispatchAppEvent(CustomAppEventEnum.UPDATE_SETTINGS, {
+          event: convertEvent(event),
           options: {
             kwargs: {
               ...group,
@@ -183,6 +181,13 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
     setAppRects({ mapping, rects });
   }
 
+  const { activeLevel, layoutConfig } = useSettingsManager({
+    canvasRef,
+    containerRef,
+    executionFrameworkUUID,
+    pipelineUUID,
+  });
+
   useAppManager({
     activeLevel,
   });
@@ -196,6 +201,7 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
     onModelChangeRef,
     portsRef,
   }: ModelManagerType = useModelManager({
+    activeLevel,
     executionFrameworkUUID,
     itemIDsByLevelRef,
     setHeaderData,
@@ -203,12 +209,7 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
     setOutputIDs,
   });
 
-  const {
-    updateLayoutConfig,
-    setActiveLevel,
-    // updateLocalSettings,
-    layoutConfig,
-  }: LayoutManagerType = useLayoutManager({
+  useLayoutManager({
     activeLevel,
     canvasRef,
     containerRef,
@@ -259,7 +260,6 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
     layoutConfig,
     mutateModels,
     portsRef,
-    setActiveLevel,
   });
 
   const {
@@ -278,7 +278,6 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
     activeLevel,
     appHandlersRef,
     layoutConfig,
-    updateLayoutConfig,
     canvasRef,
     connectionLinesPathRef,
     containerRef,
@@ -291,7 +290,6 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
     removeContextMenu,
     renderConnectionLines,
     renderContextMenu,
-    setActiveLevel,
     setDragEnabled,
     setDropEnabled,
     setZoomPanDisabled,
@@ -484,12 +482,16 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
               const item = itemsRef.current[id];
               if (!item) return;
 
+              const draggable = dragEnabled && activeLevel?.current === item?.level
+                && (LayoutDisplayEnum.SIMPLE !== layoutConfig?.current?.display
+                  || ItemTypeEnum?.NODE === item?.type);
+
               return (
                 <DraggableBlockNode
                   {...handlers}
                   activeLevel={activeLevel}
                   appHandlersRef={handlers.appHandlersRef}
-                  draggable={dragEnabled}
+                  draggable={draggable}
                   key={arr.join(':')}
                   layoutConfig={layoutConfig}
                   node={item as NodeItemType}

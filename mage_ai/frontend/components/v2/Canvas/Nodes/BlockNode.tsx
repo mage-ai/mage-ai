@@ -73,7 +73,7 @@ export default function BlockNodeComponent({
   const colorNames = blockColorNames(node);
   const borders = borderConfigs(node);
   const after: any = useMemo(() => ({
-    className: stylesBlockNode.showOnHover,
+    className: !isGroup && stylesBlockNode.showOnHover,
     uuid: node.id,
     ...(ItemTypeEnum.NODE === node?.type
       ? {
@@ -100,7 +100,7 @@ export default function BlockNodeComponent({
           ],
         }),
       }),
-  }), [draggable, submitEventOperation, node, nodeRef, block]);
+  }), [draggable, submitEventOperation, node, nodeRef, block, isGroup]);
 
   const before = useMemo(() => ({
     Icon: (iconProps) => (
@@ -201,7 +201,7 @@ export default function BlockNodeComponent({
             autoFlow="column"
             columnGap={8}
             justifyContent="start"
-            templateColumns="max-content"
+            templateColumns={!inputs?.length && isGroup ? '1fr' : 'max-content'}
             templateRows="1fr"
           >
             {false && inputs?.length >= 1 && (

@@ -5,7 +5,7 @@ import { ItemMappingType, ModelMappingType, NodeItemType, RectType } from '../..
 import { ZoomPanStateType } from '@mana/hooks/useZoomPan';
 import { layoutItemsInGroups, transformRects } from '../../Canvas/utils/rect';
 import { startTransition, useEffect, useRef } from 'react';
-import { ActiveLevelRefType, ItemIDsByLevelRef, LayoutManagerType, ModelManagerType } from './interfaces';
+import { ActiveLevelRefType, ItemIDsByLevelRef, LayoutManagerType, ModelManagerType, SettingsManagerType } from './interfaces';
 import { ItemStatusEnum, RectTransformationScopeEnum, ItemTypeEnum, LayoutConfigDirectionOriginEnum, LayoutConfigDirectionEnum, TransformRectTypeEnum } from '../../Canvas/types';
 import { calculateBoundingBox } from '../../Canvas/utils/rect';
 import { flattenArray, indexBy, sum } from '@utils/array';
@@ -18,144 +18,34 @@ import PipelineExecutionFrameworkType from '@interfaces/PipelineExecutionFramewo
 import useAppEventsHandler, { CustomAppEvent, CustomAppEventEnum } from './useAppEventsHandler';
 import { DEBUG } from '@components/v2/utils/debug';
 
-function builderLocalStorageKey(uuid: string) {
-  return `pipeline_builder_canvas_local_settings_${uuid}`;
-}
-
-type LayoutConfigRef = React.MutableRefObject<LayoutConfigType>;
-
 type LayoutManagerProps = {
   activeLevel: ActiveLevelRefType;
   canvasRef: React.MutableRefObject<HTMLDivElement>;
   containerRef: React.MutableRefObject<HTMLDivElement>;
   itemIDsByLevelRef: ItemIDsByLevelRef;
   itemsRef: React.MutableRefObject<ItemMappingType>;
+  layoutConfig: LayoutManagerType['layoutConfig'];
+  layoutConfigs: LayoutManagerType['layoutConfigs'];
   transformState: React.MutableRefObject<ZoomPanStateType>;
   pipelineUUID: string;
   updateNodeItems: ModelManagerType['updateNodeItems'];
+  updateLayoutConfig: LayoutManagerType['updateLayoutConfig'];
 };
 
 export default function useLayoutManager({
-  activeLevel,
   canvasRef,
   containerRef,
   itemIDsByLevelRef,
   itemsRef,
-  pipelineUUID,
-  transformState,
-}: LayoutManagerProps): LayoutManagerType {
-  // const phaseRef = useRef<number>(0);
-  const validLevels = useRef<number[]>(null);
-  const layoutConfigs = useRef<LayoutConfigRef[]>([
-    useRef<LayoutConfigType>({
-      containerRef,
-      direction: LayoutConfigDirectionEnum.VERTICAL,
-      display: LayoutDisplayEnum.SIMPLE,
-      gap: { column: 40, row: 40 },
-      origin: LayoutConfigDirectionOriginEnum.LEFT,
-      rectTransformations: null,
-      transformStateRef: transformState,
-      viewportRef: canvasRef,
-    }),
-    useRef<LayoutConfigType>(null),
-    useRef<LayoutConfigType>(null),
-  ]);
-  const layoutConfig = layoutConfigs.current[activeLevel.current];
-  const optionalGroupsVisible = useRef<boolean>(null);
-
+}: LayoutManagerProps) {
+  // The only client publishing this message is the SettingsManager.
   const { dispatchAppEvent } = useAppEventsHandler({
-    layoutConfig,
-    layoutConfigs,
-  } as LayoutManagerType, {
-    [CustomAppEventEnum.NODE_RECT_UPDATED]: updateLayoutOfItems,
+    uuid: 'LayoutManager',
+  }, {
     [CustomAppEventEnum.UPDATE_NODE_LAYOUTS]: updateLayoutOfItems,
   });
 
-  // TODO: fix local settings
-  // const settings = get(builderLocalStorageKey(pipelineUUID));
-
-  // if (settings?.activeLevel !== null) {
-  //   activeLevel.current = settings?.activeLevel;
-  // }
-  // if (settings?.optionalGroupsVisible !== null) {
-  //   optionalGroupsVisible.current = settings?.optionalGroupsVisible;
-  // }
-  // layoutConfig.current ||= {};
-
-  // layoutConfig.current.containerRef = containerRef;
-  // layoutConfig.current.display = LayoutDisplayEnum.SIMPLE;
-  // layoutConfig.current.direction = settings?.layoutConfig?.direction ?? LayoutConfigDirectionEnum.HORIZONTAL;
-  // layoutConfig.current.gap = { column: 40, row: 40 };
-  // layoutConfig.current.origin = LayoutConfigDirectionOriginEnum.LEFT;
-  // layoutConfig.current.rectTransformations = settings?.layoutConfig?.rectTransformations ?? null;
-  // layoutConfig.current.transformStateRef = transformState;
-  // layoutConfig.current.viewportRef = canvasRef;
-
-  function updateLocalSettings(value?: any) {
-    if ('optionalGroupVisibility' in (value ?? {})) {
-      optionalGroupsVisible.current = value ?? false;
-    }
-
-    const save = {
-      activeLevel: activeLevel?.current ?? 0,
-      layoutConfig: {
-        direction: layoutConfig?.current?.direction ?? null,
-        rectTransformations: layoutConfig?.current?.rectTransformations?.reduce((acc, { type }) =>
-          [
-            TransformRectTypeEnum.LAYOUT_TREE,
-            TransformRectTypeEnum.LAYOUT_WAVE,
-            TransformRectTypeEnum.LAYOUT_RECTANGLE,
-            TransformRectTypeEnum.LAYOUT_GRID,
-            TransformRectTypeEnum.LAYOUT_SPIRAL,
-          ].includes(type) ? acc.concat({ type } as any) : acc,
-          []),
-      },
-      optionalGroupsVisible: optionalGroupsVisible?.current ?? false,
-    };
-
-    set(builderLocalStorageKey(pipelineUUID), save);
-
-    const val = optionalGroupsVisible?.current ?? false;
-    if (val) {
-      containerRef?.current?.classList.remove(styles['optional-hidden']);
-    } else {
-      containerRef?.current?.classList.add(styles['optional-hidden']);
-    }
-  }
-
-  function setActiveLevel(levelArg?: number) {
-    const levelPrevious: number = activeLevel?.current ?? null;
-    levelPrevious !== null &&
-      containerRef?.current?.classList.remove(styles[`level-${levelPrevious}-active`]);
-
-    let level: number = levelArg ?? (activeLevel?.current ?? 0);
-    if (validLevels?.current?.length >= 1) {
-      const idx = validLevels.current.findIndex(i => i === level);
-      level = validLevels.current[idx + 1] ?? validLevels.current[0];
-    } else {
-      level += (levelArg === null ? 1 : 0);
-      if (level >= itemIDsByLevelRef?.current?.length) {
-        level = 0;
-      }
-    }
-
-    activeLevel.current = level;
-    containerRef?.current?.classList.add(styles[`level-${level}-active`]);
-    containerRef?.current?.classList.add(
-      styles[`display-${layoutConfig.current.display ?? LayoutDisplayEnum.SIMPLE}`]);
-    updateLocalSettings()
-  }
-
-  function updateLayoutConfig(config: LayoutConfigType) {
-    layoutConfig.current = {
-      ...layoutConfig.current,
-      ...config,
-    };
-    updateLocalSettings();
-  }
-
-  function rectTransformations() {
-    const level = activeLevel?.current ?? 0;
+  function rectTransformations({ layoutConfig }) {
     const direction = layoutConfig?.current?.direction || LayoutConfigDirectionEnum.HORIZONTAL;
     const directionOp = LayoutConfigDirectionEnum.HORIZONTAL === direction
       ? LayoutConfigDirectionEnum.VERTICAL
@@ -371,17 +261,16 @@ export default function useLayoutManager({
   }
 
   function updateLayoutOfItems(event: CustomAppEvent) {
-    const { options } = event?.detail ?? {};
-    const { layoutConfig, level } = options?.kwargs ?? {};
+    const { manager } = event?.detail ?? {};
+    const { activeLevel, layoutConfig } = manager as SettingsManagerType;
 
-    if (layoutConfig) {
-      updateLayoutConfig(layoutConfig)
-    }
-
+    const rectTransformationsByLevel = {} as Record<number, RectTransformationType[]>;
     const itemsUpdated = {} as ItemMappingType;
 
     // Update the layout of items across every level.
     itemIDsByLevelRef?.current?.forEach((ids: string[], level: number) => {
+      if (activeLevel?.current !== null && activeLevel?.current !== level) return;
+
       const nodes = [] as NodeType[];
 
       ids.forEach((nodeID: string) => {
@@ -447,7 +336,10 @@ export default function useLayoutManager({
         rects.push(nodeRect);
       });
 
-      const trans = rectTransformations();
+      const trans = rectTransformations({
+        layoutConfig,
+      });
+      rectTransformationsByLevel[level] = trans;
 
       const nodesMapping = indexBy(nodes, (node: NodeItemType) => node.id);
       const nodesTransformed = [] as NodeType[];
@@ -515,15 +407,7 @@ export default function useLayoutManager({
     });
 
     dispatchAppEvent(CustomAppEventEnum.NODE_LAYOUTS_CHANGED, {
-      nodes: items,
+      nodes: items?.filter((item) => (activeLevel?.current ?? 0) === item?.level),
     });
-
-    setActiveLevel(level ?? activeLevel?.current ?? 0);
   }
-
-  return {
-    layoutConfig,
-    setActiveLevel,
-    updateLayoutConfig,
-  };
 }

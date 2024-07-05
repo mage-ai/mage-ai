@@ -36,6 +36,8 @@ export type AppHandlersRefType = React.MutableRefObject<AppHandlerType>;
 
 export type ActiveApps = Record<string, AppNodeType[]>;
 
+export type LayoutConfigRef = React.MutableRefObject<LayoutConfigType>;
+
 export interface AppManagerType {
   appsRef: React.MutableRefObject<ActiveApps>;
   startApp: (event: ClientEventType, app: AppConfigType) => void;
@@ -43,6 +45,7 @@ export interface AppManagerType {
 }
 
 export interface ModelManagerType {
+  activeLevel: React.MutableRefObject<number>;
   appHandlersRef: AppHandlersRefType;
   blocksByGroupRef: React.MutableRefObject<BlocksByGroupType>;
   executionFramework: PipelineExecutionFrameworkType;
@@ -86,8 +89,8 @@ export interface EventManagerType {
 export type LayoutManagerType = {
   updateLayoutOfItems: () => void;
   updateLayoutConfig: (config: LayoutConfigType) => void;
-  layoutConfig: React.MutableRefObject<LayoutConfigType>;
-  layoutConfigs: React.MutableRefObject<React.MutableRefObject<LayoutConfigType>[]>;
+  layoutConfig: LayoutConfigRef;
+  layoutConfigs: React.MutableRefObject<LayoutConfigRef[]>;
   activeLevel: React.MutableRefObject<number>;
   localSettings: React.MutableRefObject<{
     activeLevel: number;
@@ -102,8 +105,13 @@ export type ItemManagerType = {
   itemMetadataRef: React.MutableRefObject<Record<string, Record<string, any>>>;
 };
 
+export interface SettingsManagerType {
+  activeLevel: React.MutableRefObject<number>;
+  layoutConfig: LayoutConfigRef;
+}
+
 export type SubscriberType = AppManagerType | EventManagerType | LayoutManagerType
-  | ModelManagerType | NodeItemType | ItemManagerType;
+  | ModelManagerType | NodeItemType | ItemManagerType | SettingsManagerType;
 
 export interface CustomEventDetail {
   app?: AppConfigType;

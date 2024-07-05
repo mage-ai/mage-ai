@@ -7,7 +7,7 @@ import {
   ModelManagerType,
   EventManagerType,
   LayoutManagerType,
-  ActiveLevelRefType, AppHandlersRefType, LayoutConfigRefType, ItemIDsByLevelRef, SetActiveLevelType,
+  ActiveLevelRefType, AppHandlersRefType, LayoutConfigRefType, ItemIDsByLevelRef,
 } from './interfaces';
 import {
   TreeWithArrowsDown,
@@ -50,13 +50,11 @@ type EventManagerProps = {
   removeContextMenu: RemoveContextMenuType;
   renderConnectionLines: PresentationManagerType['renderConnectionLines'];
   renderContextMenu: RenderContextMenuType;
-  setActiveLevel: (level?: number) => void;
   setDragEnabled: (value: boolean) => void;
   setDropEnabled: (value: boolean) => void;
   setLayoutConfig: (prev: (value: LayoutConfigType) => LayoutConfigType) => void;
   setZoomPanDisabled: (value: boolean) => void;
   transformState: React.MutableRefObject<ZoomPanStateType>;
-  updateLayoutConfig: LayoutManagerType['updateLayoutConfig'];
   layoutConfig: LayoutManagerType['layoutConfig'];
 };
 
@@ -76,11 +74,9 @@ export default function useEventManager({
   removeContextMenu,
   renderConnectionLines,
   renderContextMenu,
-  setActiveLevel,
   setDragEnabled,
   setDropEnabled,
   setLayoutConfig,
-  updateLayoutConfig,
   layoutConfig,
   setZoomPanDisabled,
   transformState,
@@ -111,7 +107,7 @@ export default function useEventManager({
     layoutConfig?: LayoutConfigType;
     level?: number;
   }) {
-    dispatchAppEvent(CustomAppEventEnum.UPDATE_NODE_LAYOUTS, {
+    dispatchAppEvent(CustomAppEventEnum.UPDATE_SETTINGS, {
       event: convertEvent(event ?? {}),
       options: {
         kwargs: opts,

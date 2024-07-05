@@ -9,7 +9,7 @@ import { createRoot, Root } from 'react-dom/client';
 import { getBlockColor } from '@mana/themes/blocks';
 import { getPathD } from '../../Canvas/Connections/utils';
 import { throttle } from '../../Canvas/utils/throttle';
-import { ActiveLevelRefType, LayoutConfigRefType, ItemIDsByLevelRef, SetActiveLevelType } from './interfaces';
+import { ActiveLevelRefType, LayoutConfigRefType, ItemIDsByLevelRef } from './interfaces';
 import useDynamicDebounce from '@utils/hooks/useDebounce';
 
 function buildConnectionLinesRootID(uuid: string): string {
@@ -23,7 +23,6 @@ type PresentationManagerProps = {
   layoutConfig: LayoutConfigRefType;
   mutateModels: ModelManagerType['mutateModels'];
   portsRef: ModelManagerType['portsRef'];
-  setActiveLevel: SetActiveLevelType;
   updateNodeItems: ModelManagerType['updateNodeItems'];
   itemElementsRef: React.MutableRefObject<Record<string, Record<string, React.RefObject<HTMLDivElement>>>>;
 };
@@ -52,7 +51,6 @@ export default function usePresentationManager({
   layoutConfig,
   mutateModels,
   portsRef,
-  setActiveLevel,
   itemElementsRef,
   // Updates the itemsReftems,
   updateNodeItems,

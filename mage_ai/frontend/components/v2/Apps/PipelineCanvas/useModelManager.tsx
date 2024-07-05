@@ -27,6 +27,7 @@ import { indexBy, unique } from '@utils/array';
 import { useLayout } from '@context/v2/Layout';
 
 type ModelManagerProps = {
+  activeLevel: ModelManagerType['activeLevel'];
   itemIDsByLevelRef: React.MutableRefObject<string[][]>;
   pipelineUUID: string;
   executionFrameworkUUID: string;
@@ -39,6 +40,7 @@ type ModelManagerProps = {
 };
 
 export default function useModelManager({
+  activeLevel,
   itemIDsByLevelRef,
   pipelineUUID,
   executionFrameworkUUID,
@@ -314,20 +316,22 @@ export default function useModelManager({
         // Models
         itemIDsByLevelRef.current = itemIDsByLevel;
 
+        console.log('!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!', activeLevel.current)
         // WARNING: Do this so it mounts and then the on mount can start the chain.
         const items = Object.values(itemsRef.current);
         dispatchAppEvent(CustomAppEventEnum.NODE_LAYOUTS_CHANGED, {
-          nodes: items,
+          nodes: items?.filter((item) => activeLevel?.current === null
+            || activeLevel?.current === item?.level),
         });
 
         setOutputIDs([...new Set(items?.reduce((acc, { block }) => [
           BlockTypeEnum.GROUP, BlockTypeEnum.PIPELINE
-        ].includes(block.type) ? acc : acc.concat(block.uuid), []))]);
+        ].includes((block as BlockType)?.type) ? acc : acc.concat((block as BlockType)?.uuid), []))]);
 
         setHeaderData({
           executionFramework: executionFramework2,
           groupsByLevel,
-          pipeline: pipeline2,
+          pipeline: pipeline2 as PipelineType,
         });
 
         resolve(items); // Resolve the promise when the function completes
