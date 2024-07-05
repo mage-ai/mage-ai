@@ -52,7 +52,7 @@ export default function NavigationButtonGroup({
     }, idx: number) => {
       const selected = count >= 1 && idx === Math.min(activeIndex + 1, countTotal - 1);
       const first = idx === 0;
-      const last = idx === count - 1;
+      const last = idx === count;
       const initial = (defaultState && idx === 0);
       const done = idx <= activeIndex;
       const group = done ? selectedGroupsByLevel?.[idx] : null;
@@ -90,7 +90,7 @@ export default function NavigationButtonGroup({
             ));
           }}
           secondary
-          semibold
+          semibold={done}
           small
           success={selected}
           wrap
@@ -101,7 +101,6 @@ export default function NavigationButtonGroup({
             className={[
               stylesNavigation.grid,
               selected ? stylesNavigation['selected'] : '',
-              last ? stylesNavigation['last'] : '',
               done ? stylesNavigation['done'] : '',
               done ? stylesHeader[`done-${idx}`] : '',
             ].filter(Boolean).join(' ')}
