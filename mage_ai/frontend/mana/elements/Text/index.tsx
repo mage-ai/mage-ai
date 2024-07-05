@@ -25,6 +25,7 @@ type TextProps = {
   muted?: boolean;
   semibold?: boolean;
   secondary?: boolean;
+  success?: boolean;
   warning?: boolean;
 } & ElementType;
 

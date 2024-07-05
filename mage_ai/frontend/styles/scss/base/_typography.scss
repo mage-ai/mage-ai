@@ -68,6 +68,9 @@
   &.warning {
     color: var(--fonts-color-text-warning);
   }
+  &.success {
+    color: var(--colors-green);
+  }
 
   font-size: var(--fonts-size-base);
   font-style: var(--fonts-style-base);

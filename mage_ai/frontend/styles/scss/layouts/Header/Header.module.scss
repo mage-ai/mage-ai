@@ -22,7 +22,7 @@
     height: 40px;
     color: var(--fonts-color-text-secondary) !important;
     justify-content: center !important;
-    padding: 0 11px !important;
+    padding: 0 11px;
 
     &:focus {
       box-shadow: none;

@@ -3,6 +3,7 @@ import DashedDivider from '@mana/elements/Divider/DashedDivider';
 import Grid from '@mana/components/Grid';
 import MageAvatar from '@mana/icons/avatars';
 import MenuManager from '@mana/components/Menu/MenuManager';
+import NavigationButtonGroup from '@mana/components/Menu/NavigationButtonGroup';
 import NavTag from '@mana/components/Tag/NavTag';
 import React, { createRef, useCallback, useMemo, useRef } from 'react';
 import Text from '@mana/elements/Text';
@@ -35,6 +36,7 @@ export function Header({
   selectedNavItem,
   title,
 }: HeaderProps, ref: React.MutableRefObject<HTMLDivElement | null>) {
+  console.log('Header render');
   let headerRef = ref;
   headerRef ||= useRef<HTMLDivElement | null>(null);
   const buttonRefs = useRef<Record<string, React.MutableRefObject<HTMLElement>>>({});
@@ -49,22 +51,24 @@ export function Header({
     uuid: 'main-header',
   });
 
-  const buttonProps = {
+  const buttonProps = useMemo(() => ({
     className: [
       stylesHeader.button,
     ].join(' '),
     // motion: true,
     small: true,
-  };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }), []);
   const gridProps = {
     autoColumns: 'min-content',
     autoFlow: 'column',
     columnGap: 10,
   };
-  const iconProps = {
+  const iconProps = useMemo(() => ({
     className: stylesHeader.buttonIcon,
     size: 16,
-  };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }), []);
 
   const interAppItems = interAppNavItems ?? [
     {
@@ -214,7 +218,11 @@ export function Header({
 
           <Grid {...gridProps}>
             <DashedDivider vertical />
-            {intraItems}
+            {intraAppNavItems?.length >= 1 && (
+              <NavigationButtonGroup
+                groups={intraAppNavItems}
+              />
+            )}
           </Grid>
 
           <Grid {...gridProps} templateColumns="1fr">

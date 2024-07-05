@@ -7,6 +7,7 @@ import { LayoutDirectionEnum } from '@mana/components/Menu/types';
 
 export default function MenuManager({
   children,
+  className,
   contained,
   direction = LayoutDirectionEnum.LEFT,
   items,
@@ -14,6 +15,7 @@ export default function MenuManager({
   uuid,
 }: {
   children: React.ReactNode;
+  className?: string;
   contained?: boolean;
   direction?: LayoutDirectionEnum;
   items: MenuItemType[];
@@ -78,6 +80,7 @@ export default function MenuManager({
     <>
       {contained ? contextMenu : createPortal(contextMenu, portalRef.current)}
       <div
+        className={className}
         onClick={(event) => {
           event.preventDefault();
           setOpen(prev => !prev);
