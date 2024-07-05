@@ -25,7 +25,7 @@ export default function MenuManager({
   items?: MenuItemType[];
   open?: boolean;
   openState?: boolean;
-  handleOpen?: (value: boolean | ((prev: boolean) => boolean)) => void;
+  handleOpen?: (value: boolean | ((prev: boolean) => boolean), levelToClose: number) => void;
   uuid: string;
 }) {
   const {
@@ -39,13 +39,6 @@ export default function MenuManager({
   });
   const [openInternal, setOpenState] = useState(openProp);
   const open = useMemo(() => openState ?? openInternal, [openInternal, openState]);
-  const setOpen = useCallback((prev) => {
-    if (handleOpen) {
-      handleOpen(prev);
-    } else {
-      setOpenState(prev);
-    }
-  }, [handleOpen])
 
   useEffect(() => {
     if (open) {
@@ -65,9 +58,10 @@ export default function MenuManager({
         // contained,
         direction,
         onClose: (level: number) => {
-          if (level === 0) {
-            // setOpen(false);
-            console.log('should close', level)
+          if (handleOpen) {
+            handleOpen(level === 0, level);
+          } else if (level === 0) {
+            setOpenState(false);
           }
         },
         position: rectAbsolute,
@@ -88,7 +82,7 @@ export default function MenuManager({
     } else if (!open) {
       hideMenu();
     }
-  }, [contained, hideMenu, open, getItems, items, showMenu, direction, setOpen]);
+  }, [contained, hideMenu, open, getItems, items, showMenu, direction, handleOpen]);
 
   return (
     <>
@@ -97,7 +91,11 @@ export default function MenuManager({
         className={className}
         onClick={(event) => {
           event.preventDefault();
-          setOpen(prev => !prev);
+          if (handleOpen) {
+            handleOpen(prev => !prev, 0);
+          } else {
+            setOpenState(prev => !prev);
+          }
         }}
         ref={containerRef}
       >

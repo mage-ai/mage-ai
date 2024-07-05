@@ -5,7 +5,7 @@ import { Code, Builder, CaretDown, CaretLeft } from '@mana/icons';
 import Text from '@mana/elements/Text';
 import Link from '@mana/elements/Link';
 import Button, { ButtonProps } from '@mana/elements/Button';
-import { BuildGroupOptions } from './interfaces';
+import { MenuGroupType } from './interfaces';
 import MenuManager from '@mana/components/Menu/MenuManager';
 import { LayoutDirectionEnum } from '@mana/components/Menu/types';
 import stylesNavigation from '@styles/scss/components/Menu/NavigationButtonGroup.module.scss';
@@ -20,55 +20,44 @@ export default function NavigationButtonGroup({
   buildGroups,
   groups: groupsProp,
 }: NavigationButtonGroupProps) {
-  const [selectedIndex, setSelectedIndex] = useState<number>(null);
-  const [selectedGroupsByLevel, setSelectedGroupsByLevel] = useState<{
-    group: MenuItemType;
-    item: MenuItemType;
-    level: number;
-  }[]>(null);
-
-  const handleClickItem = useCallback(() => {
-    setSelectedGroupsByLevel
-  }, [groupsProp]);
+  const [selectedButtonIndex, setSelectedButtonIndex] = useState<number>(null);
+  const [selectedGroupsByLevel, setSelectedGroupsByLevel] = useState<MenuGroupType[]>(null);
 
   const groups = useMemo(() => buildGroups ? buildGroups((
     event: MouseEvent,
-    opts: BuildGroupOptions,
+    item: MenuGroupType,
   ) => {
     const {
-      group,
-      index,
+      groups,
+    } = item;
+
+    setSelectedGroupsByLevel([
+      ...(groups?.reverse() ?? []),
       item,
-      level,
-    } = opts;
-    // setSelectedGroupsByLevel((prev) => {
-    //   const next = [...(prev ?? [])];
-    //   next[index] = {
-    //     group,
-    //     item,
-    //     level,
-    //   };
-    //   return next;
-    // });
-    //
-    console.log('!!!!!!!!!!!!!!!!', opts)
+    ]);
+    setSelectedButtonIndex(null);
   }) : (groupsProp ?? []), [buildGroups, groupsProp]);
 
-
   const buttons = useMemo(() => {
-    const defaultState = selectedIndex === null;
+    const defaultState = selectedGroupsByLevel === null;
 
-    const count = groups?.length ?? 0;
+    const countTotal = groups?.length ?? 0;
+    const count = selectedGroupsByLevel?.length ?? 0;
     const inner = [];
+    const activeIndex = count - 1;
 
-    groups?.forEach(({
+    groups?.slice(0, count + 1)?.forEach(({
       label,
       uuid,
     }, idx: number) => {
-      const selected = idx === selectedIndex;
+      const selected = count >= 1 && idx === Math.min(activeIndex + 1, countTotal - 1);
       const first = idx === 0;
       const last = idx === count - 1;
       const initial = (defaultState && idx === 0);
+      const done = idx <= activeIndex;
+      const group = done ? selectedGroupsByLevel?.[idx] : null;
+      const labelUse = group?.name ?? group?.label ?? label;
+      const uuidUse = group?.uuid ?? uuid;
 
       const divider = (
         <div className={stylesNavigation['diagnoal-line-container']} key={`group-${idx}-divider`}>
@@ -78,19 +67,32 @@ export default function NavigationButtonGroup({
         </div>
       );
 
-      if (idx > selectedIndex) {
+      if (!first && idx > activeIndex) {
         inner.push(divider)
       }
 
       inner.push(
         <Link
+          activeColorOnHover
+          className={[
+            stylesNavigation.link,
+          ].join(' ')}
           key={`${uuid}-label`}
+          nowrap
           onClick={(event: any) => {
             event.preventDefault();
             event.stopPropagation();
-            setSelectedIndex(idx);
-            console.log('CLICKED LINK!!!!!!!!!!!!!', idx)
+            setSelectedButtonIndex(Math.min(
+              idx,
+              selectedGroupsByLevel === null
+                ? 0
+                : (selectedGroupsByLevel?.length - 1 ?? 0),
+            ));
           }}
+          secondary
+          semibold
+          small
+          success={selected}
           wrap
         >
           <Grid
@@ -100,8 +102,8 @@ export default function NavigationButtonGroup({
               stylesNavigation.grid,
               selected ? stylesNavigation['selected'] : '',
               last ? stylesNavigation['last'] : '',
-              idx < selectedIndex ? stylesNavigation['done'] : '',
-              idx < selectedIndex ? stylesHeader[`done-${idx}`] : '',
+              done ? stylesNavigation['done'] : '',
+              done ? stylesHeader[`done-${idx}`] : '',
             ].filter(Boolean).join(' ')}
             columnGap={6}
             paddingLeft={11 + (!first && selected ? (last ? 6 : 3) : 0)}
@@ -110,16 +112,7 @@ export default function NavigationButtonGroup({
               zIndex: count - idx,
             }}
           >
-            <Text
-              muted={!selected && !initial}
-              nowrap
-              secondary={idx > selectedIndex}
-              semibold
-              small
-              success={selected}
-            >
-              {(typeof label === 'function' ? label?.() : label) || uuid}
-            </Text >
+            {((typeof labelUse === 'function' ? labelUse?.() : labelUse) || uuidUse)}
 
             {(selected || initial) && <CaretDown secondary size={10} />}
           </Grid>
@@ -128,20 +121,20 @@ export default function NavigationButtonGroup({
     });
 
     return inner;
-  }, [groups, selectedIndex]);
+  }, [groups, selectedGroupsByLevel]);
 
   const currentGroupToSelect = useMemo(() => {
-    const currentGroup = selectedIndex === null ? null : groups?.[selectedIndex];
-    console.log(currentGroup)
+    const currentGroup = selectedButtonIndex === null ? null : groups?.[0];
 
     return (
       <MenuManager
         direction={LayoutDirectionEnum.RIGHT}
-        handleOpen={(prev) => {
-          const open = typeof prev === 'function' ? prev(selectedIndex !== null) : prev;
-          console.log(open, selectedIndex, !open && selectedIndex !== null)
-          if (!open && selectedIndex !== null) {
-            setSelectedIndex(null);
+        handleOpen={(prev, levelToClose: number) => {
+          const previouslyOpen =
+            typeof prev === 'function' ? prev(selectedButtonIndex !== null) : prev;
+
+          if (previouslyOpen && levelToClose === 0) {
+            setSelectedButtonIndex(null);
           }
         }}
         items={currentGroup?.items}
@@ -151,7 +144,7 @@ export default function NavigationButtonGroup({
       >
         <div
           className={[
-            stylesHeader.button, ,
+            stylesHeader.button,
             stylesNavigation.button,
           ].join(' ')}
           style={{
@@ -169,7 +162,7 @@ export default function NavigationButtonGroup({
         </div>
       </MenuManager>
     );
-  }, [buttons, groups, selectedIndex]);
+  }, [buttons, groups, selectedButtonIndex]);
 
   return (
     <>

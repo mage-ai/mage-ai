@@ -2,16 +2,18 @@ import NextLink from 'next/link';
 import React, { useState } from 'react';
 import styles from '@styles/scss/elements/Link/Link.module.scss';
 import { motion } from 'framer-motion';
-import { styleClassNames } from '../../shared/utils';
+import { TextProps, buildTextStyleProps } from '../Text';
 
-interface LinkProps {
+type LinkProps = {
+  activeColorOnHover?: boolean;
   children?: React.ReactNode | string;
   className?: string;
+  disabled?: boolean;
   display?: 'block' | 'inline-block' | 'inline';
   href?: string;
   onClick?: (e: React.MouseEvent<HTMLAnchorElement>) => void;
   wrap?: boolean;
-}
+} & TextProps;
 
 const blinkAnimation = {
   blink: {
@@ -22,12 +24,21 @@ const blinkAnimation = {
 };
 
 export default function Link({
+  activeColorOnHover,
   children,
+  className,
+  disabled,
+  display,
   href = '#',
   onClick,
   wrap,
-  ...props
+  ...rest
 }: LinkProps) {
+  const {
+    classNames,
+    props
+  } = buildTextStyleProps(rest as TextProps);
+
   const [isBlinking, setIsBlinking] = useState(false);
 
   const handleClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
@@ -49,6 +60,11 @@ export default function Link({
         className={[
           styles.link,
           wrap ? styles.wrap : styles.base,
+          activeColorOnHover && styles.activeColorOnHover,
+          disabled && styles.disabled,
+          className ?? '',
+          display ? styles[display] : '',
+          classNames ?? '',
         ].filter(Boolean).join(' ')}
         initial="initial"
         onClick={handleClick}

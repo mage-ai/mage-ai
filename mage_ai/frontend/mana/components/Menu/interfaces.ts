@@ -24,7 +24,7 @@ export interface MenuItemType {
 }
 
 export interface MenuGroupType extends MenuItemType {
-  group: MenuGroupType;
+  groups: MenuGroupType[];
   index: number;
   level: number;
 }

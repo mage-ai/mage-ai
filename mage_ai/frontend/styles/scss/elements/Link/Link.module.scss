@@ -1,7 +1,26 @@
 .link {
-
-  .display-block {
+  .block {
     display: block;
+  }
+
+  .inline-block {
+    display: inline-block;
+  }
+
+  &:hover {
+    color: var(--fonts-color-text-base);
+  }
+
+  &.disabled {
+    color: var(--fonts-color-text-muted);
+    cursor: not-allowed;
+    pointer-events: none;
+  }
+
+  &.activeColorOnHover {
+    &:hover {
+      color: var(--fonts-color-text-base);
+    }
   }
 }
 

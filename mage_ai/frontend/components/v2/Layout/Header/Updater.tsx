@@ -32,13 +32,13 @@ function menuItemsForBlock(
       items: block1?.children?.map(
         (block2: Block, index3: number) => menuItemsForBlock(block2,
           (event: MouseEvent, item: MenuGroupType) => {
-            onClick(event, {
-              group: {
+            onClick2(event, {
+              ...item,
+              groups: (item.groups ?? []).concat({
                 ...(block1 as any),
                 index: index2,
                 level: level2,
-              } as MenuGroupType,
-              ...item,
+              } as MenuGroupType)
             });
           },
           level2 + 1, index3,
@@ -91,12 +91,15 @@ export default function HeaderUpdater({ executionFramework, groupsByLevel, pipel
                   block,
                   (event: MouseEvent, item: MenuGroupType) => {
                     onClick(event, {
-                      group: {
-                        ...group,
-                        index: index2,
-                        level: 0,
-                      } as MenuGroupType,
                       ...item,
+                      groups: [
+                        ...(item.groups ?? []),
+                        {
+                          ...group,
+                          index: index2,
+                          level: 0,
+                        } as MenuGroupType,
+                      ],
                     });
                   },
                   1,

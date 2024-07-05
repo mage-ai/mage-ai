@@ -4,7 +4,7 @@ import styles from '@styles/scss/components/Text/Text.module.scss';
 import { ElementType, extractProps } from '../../shared/types';
 import { hyphenateCamelCase } from '@utils/string';
 
-type TextProps = {
+export type TextProps = {
   children: React.ReactNode | string | any;
   className?: string;
   inline?: boolean;
@@ -29,7 +29,17 @@ type TextProps = {
   warning?: boolean;
 } & ElementType;
 
-function Text({ children, className: classNameProp, inline, maxWidth, nowrap, small, xsmall, ...props }: TextProps) {
+export function buildTextStyleProps({
+  className: classNameProp,
+  maxWidth,
+  nowrap,
+  small,
+  xsmall,
+  ...props
+}: TextProps): {
+  classNames: string;
+  props: any;
+} {
   const arr = [
     small
       ? styles.small
@@ -67,15 +77,25 @@ function Text({ children, className: classNameProp, inline, maxWidth, nowrap, sm
     maxWidth: maxWidth ? `${maxWidth}px` : undefined,
   }
 
+  return {
+    classNames,
+    props: xprops,
+  };
+}
+
+export default function Text({ children, inline, ...rest }: TextProps) {
+  const {
+    classNames,
+    props
+  } = buildTextStyleProps(rest as TextProps);
+
   return inline ? (
-    <span {...xprops} className={classNames}>
+    <span {...props} className={classNames}>
       {children}
     </span>
   ) : (
-    <p {...xprops} className={classNames}>
+    <p {...props} className={classNames}>
       {children}
     </p>
   );
 }
-
-export default Text;
