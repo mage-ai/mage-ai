@@ -1,4 +1,5 @@
 import BlockType from '@interfaces/BlockType';
+import { MenuGroupType } from '@mana/components/Menu/interfaces';
 import React from 'react';
 import { ButtonEnum, LanguageEnum } from './enums';
 import { MutateType } from '@api/interfaces';
@@ -84,6 +85,7 @@ export interface EventOperationOptionsType {
   kwargs?: {
     boundingContainer?: DOMRect;
     computedStyle?: CSSStyleDeclaration;
+    group?: MenuGroupType;
     layoutConfig?: LayoutConfigType;
     level?: number;
     process?: {

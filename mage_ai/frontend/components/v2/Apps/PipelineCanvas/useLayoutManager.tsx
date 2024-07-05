@@ -262,15 +262,14 @@ export default function useLayoutManager({
 
   function updateLayoutOfItems(event: CustomAppEvent) {
     const { manager } = event?.detail ?? {};
-    const { activeLevel, layoutConfig } = manager as SettingsManagerType;
+    const { layoutConfig } = manager as SettingsManagerType;
 
     const rectTransformationsByLevel = {} as Record<number, RectTransformationType[]>;
     const itemsUpdated = {} as ItemMappingType;
 
+    // Don’t do any level filtering here, it’ll be done at the Canvas level.
     // Update the layout of items across every level.
     itemIDsByLevelRef?.current?.forEach((ids: string[], level: number) => {
-      if (activeLevel?.current !== null && activeLevel?.current !== level) return;
-
       const nodes = [] as NodeType[];
 
       ids.forEach((nodeID: string) => {
@@ -406,8 +405,9 @@ export default function useLayoutManager({
       items.push(item);
     });
 
+    // Don’t do any level filtering here, it’ll be done at the Canvas level.
     dispatchAppEvent(CustomAppEventEnum.NODE_LAYOUTS_CHANGED, {
-      nodes: items?.filter((item) => (activeLevel?.current ?? 0) === item?.level),
+      nodes: items,
     });
   }
 }

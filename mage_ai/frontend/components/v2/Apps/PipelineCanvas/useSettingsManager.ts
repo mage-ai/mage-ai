@@ -5,10 +5,12 @@ import { get, set } from '@storage/localStorage';
 import useAppEventsHandler, { CustomAppEvent, CustomAppEventEnum } from './useAppEventsHandler';
 import { getCache } from '@mana/components/Menu/storage';
 import { LayoutConfigRef, SettingsManagerType } from './interfaces';
+import { filterDisplayableNodes } from './utils/display';
 import {
   LayoutConfigDirectionEnum, LayoutConfigDirectionOriginEnum,
   LayoutDisplayEnum, TransformRectTypeEnum
 } from '../../Canvas/types';
+import { MenuGroupType } from '@mana/components/Menu/interfaces';
 
 function builderLocalStorageKey(uuid: string) {
   return `pipeline_builder_canvas_local_settings_${uuid}`;
@@ -25,8 +27,13 @@ export default function useSettingsManager({
   executionFrameworkUUID: string;
   pipelineUUID: string;
 }): SettingsManagerType {
-  const selectedMenuGroup = useRef(getCache([executionFrameworkUUID, pipelineUUID].join(':')))
-  const activeLevel = useRef<number>((selectedMenuGroup?.current?.length ?? 1) - 1);
+  const groups = getCache([executionFrameworkUUID, pipelineUUID].join(':'));
+  const selectedGroupRef = useRef<MenuGroupType>(groups?.[groups?.length - 1]);
+  const activeLevel = useRef<number>(
+    (selectedGroupRef?.current?.level ?? false)
+      ? selectedGroupRef?.current?.level + 1
+      : 0
+  );
 
   const validLevels = useRef<number[]>(null);
   const layoutConfigs = useRef<LayoutConfigRef[]>([
@@ -51,8 +58,10 @@ export default function useSettingsManager({
   } = useAppEventsHandler({
     activeLevel,
     layoutConfig,
+    selectedGroupRef,
   } as SettingsManagerType, {
-    [CustomAppEventEnum.NODE_RECT_UPDATED]: updateLocalSettings,
+    [CustomAppEventEnum.NODE_LAYOUTS_CHANGED]: updateVisibleNodes,
+    [CustomAppEventEnum.NODE_RECT_UPDATED]: handleUpdatedNodeRect,
     [CustomAppEventEnum.UPDATE_SETTINGS]: updateLocalSettings,
   });
 
@@ -75,13 +84,29 @@ export default function useSettingsManager({
   // layoutConfig.current.rectTransformations = settings?.layoutConfig?.rectTransformations ?? null;
   // layoutConfig.current.transformStateRef = transformState;
   // layoutConfig.current.viewportRef = canvasRef;
+  //
+  function updateLayout() {
+    dispatchAppEvent(CustomAppEventEnum.UPDATE_NODE_LAYOUTS, {
+      event: convertEvent(event),
+    });
+  }
 
   function updateLocalSettings(event: CustomAppEvent) {
     const { options } = event?.detail ?? {};
-    const { layoutConfig: layoutConfigData, level } = options?.kwargs ?? {};
+    const {
+      group,
+      layoutConfig: layoutConfigData,
+      level,
+    } = options?.kwargs ?? {};
 
-    setActiveLevel(level);
+    if (group ?? false) {
+      selectedGroupRef.current = group;
+    }
+
+    setActiveLevel((group?.level ?? false) ? (group.level + 1) : level);
     layoutConfigData && updateLayoutConfig(layoutConfigData);
+
+    updateLayout();
 
     // if ('optionalGroupVisibility' in (value ?? {})) {
     //   optionalGroupsVisible.current = value ?? false;
@@ -112,10 +137,6 @@ export default function useSettingsManager({
     // } else {
     //   containerRef?.current?.classList.add(stylesBuilder['optional-hidden']);
     // }
-
-    dispatchAppEvent(CustomAppEventEnum.UPDATE_NODE_LAYOUTS, {
-      event: convertEvent(event),
-    });
   }
 
   function setActiveLevel(levelArg?: number) {
@@ -135,9 +156,6 @@ export default function useSettingsManager({
     }
 
     activeLevel.current = level;
-    containerRef?.current?.classList.add(stylesBuilder[`level-${level}-active`]);
-    containerRef?.current?.classList.add(
-      stylesBuilder[`display-${layoutConfig.current.display ?? LayoutDisplayEnum.SIMPLE}`]);
   }
 
   function updateLayoutConfig(config: LayoutConfigType) {
@@ -147,8 +165,35 @@ export default function useSettingsManager({
     };
   }
 
+  function handleUpdatedNodeRect(event: CustomAppEvent) {
+    updateLayout();
+    updateVisibleNodes();
+  }
+
+  function updateVisibleNodes(event?: CustomAppEvent) {
+    if (event) {
+      const { node, nodes } = event?.detail ?? {};
+
+      const items = filterDisplayableNodes([
+        ...(node ? [node] : []),
+        ...(nodes ?? []),
+      ], {
+        layoutConfig: layoutConfig?.current,
+        level: activeLevel?.current,
+        selectedGroup: selectedGroupRef?.current,
+      });
+
+      console.log('IIIIIIIIIIIIIIIIIIIIIIIIIIIIII', items);
+    }
+
+    containerRef?.current?.classList.add(stylesBuilder[`level-${activeLevel.current}-active`]);
+    containerRef?.current?.classList.add(
+      stylesBuilder[`display-${layoutConfig.current.display ?? LayoutDisplayEnum.SIMPLE}`]);
+  }
+
   return {
     activeLevel,
     layoutConfig,
+    selectedGroupRef,
   };
 }

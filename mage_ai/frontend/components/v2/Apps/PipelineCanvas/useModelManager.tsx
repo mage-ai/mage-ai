@@ -226,10 +226,9 @@ export default function useModelManager({
         // Create a port for every group at every level.
         // Create an item for every block at every level because they’ll have different groupings.
         const itemIDsByLevel = [];
-        const maxLevel = null;
-        blockGroupsByLevel?.forEach((blockGroups: BlockGroupType[], level: number) => {
-          if (level !== null && maxLevel !== null && level > maxLevel) return;
 
+        // Initialize all models for all levels.
+        blockGroupsByLevel?.forEach((blockGroups: BlockGroupType[], level: number) => {
           const {
             items,
             nodes,
@@ -316,12 +315,11 @@ export default function useModelManager({
         // Models
         itemIDsByLevelRef.current = itemIDsByLevel;
 
-        console.log('!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!', activeLevel.current)
         // WARNING: Do this so it mounts and then the on mount can start the chain.
         const items = Object.values(itemsRef.current);
+        // Don’t do any level filtering here, it’ll be done at the Canvas level.
         dispatchAppEvent(CustomAppEventEnum.NODE_LAYOUTS_CHANGED, {
-          nodes: items?.filter((item) => activeLevel?.current === null
-            || activeLevel?.current === item?.level),
+          nodes: items,
         });
 
         setOutputIDs([...new Set(items?.reduce((acc, { block }) => [

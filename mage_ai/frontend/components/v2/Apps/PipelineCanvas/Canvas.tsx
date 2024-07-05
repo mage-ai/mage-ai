@@ -30,7 +30,6 @@ import { useDrop } from 'react-dnd';
 import { createRef, useEffect, useMemo, useRef, useState, startTransition } from 'react';
 import useItemManager from './useItemManager';
 import useDynamicDebounce from '@utils/hooks/useDebounce';
-import { buildOutputNode } from './utils/items';
 import { AppManagerType, LayoutManagerType, ItemElementsType, EventManagerType, ModelManagerType } from './interfaces';
 import { groupBy, unique, sortByKey, flattenArray } from '@utils/array';
 import useNodeManager from './useNodeManager';
@@ -130,33 +129,11 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
           event: convertEvent(event),
           options: {
             kwargs: {
-              ...group,
+              group,
             },
           },
         });
       },
-    });
-  }
-
-  function handleNodeLayoutsChanged({ detail }: CustomAppEvent) {
-    const { nodes } = detail;
-
-    DEBUG.state && console.log('setItemRects', nodes);
-
-    const buildFlatItem = ({ id, rect }: NodeItemType): FlatItemType => {
-      const { left, top, width, height } = rect ?? {};
-      return [String(id), left, top, width, height];
-    };
-
-    const outputs = [];
-    const flats = [];
-    nodes?.forEach((node: NodeItemType) => {
-      outputs.push(...(node.outputs ?? []));
-      flats.push(buildFlatItem(node));
-    });
-
-    startTransition(() => {
-      _setItemRects(flats);
     });
   }
 
@@ -181,12 +158,34 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
     setAppRects({ mapping, rects });
   }
 
-  const { activeLevel, layoutConfig } = useSettingsManager({
+  const { activeLevel, layoutConfig, selectedGroupRef } = useSettingsManager({
     canvasRef,
     containerRef,
     executionFrameworkUUID,
     pipelineUUID,
   });
+
+  function handleNodeLayoutsChanged({ detail }: CustomAppEvent) {
+    const { nodes } = detail;
+
+    DEBUG.state && console.log('setItemRects', nodes);
+
+    const buildFlatItem = ({ id, rect }: NodeItemType): FlatItemType => {
+      const { left, top, width, height } = rect ?? {};
+      return [String(id), left, top, width, height];
+    };
+
+    const outputs = [];
+    const flats = [];
+    nodes?.forEach((node: NodeItemType) => {
+      outputs.push(...(node.outputs ?? []));
+      flats.push(buildFlatItem(node));
+    });
+
+    startTransition(() => {
+      _setItemRects(flats);
+    });
+  }
 
   useAppManager({
     activeLevel,

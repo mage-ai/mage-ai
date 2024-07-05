@@ -122,9 +122,7 @@ export default function useItemManager({
       debouncer(() => {
         DEBUG.itemManager && console.log('onMountItem', item);
         dispatchAppEvent(CustomAppEventEnum.NODE_RECT_UPDATED, {
-          event: convertEvent({}, {
-            node: item,
-          }),
+          node: item,
         });
       }, 100);
     } else if ([ItemTypeEnum.APP].includes(type)) {

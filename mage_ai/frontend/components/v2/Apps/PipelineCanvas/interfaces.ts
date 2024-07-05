@@ -15,6 +15,7 @@ import { AppConfigType } from '../interfaces';
 import { EventOperationOptionsType } from '@mana/shared/interfaces';
 import { ItemTypeEnum } from '@components/v2/Canvas/types';
 import { CustomAppEventEnum } from './enums';
+import { MenuGroupType } from '@mana/components/Menu/interfaces';
 
 export type ItemElementsType = Record<ItemTypeEnum, Record<string, React.RefObject<HTMLDivElement | HTMLElement>>>;
 export type ItemElementsRefType = React.MutableRefObject<ItemElementsType>
@@ -108,6 +109,7 @@ export type ItemManagerType = {
 export interface SettingsManagerType {
   activeLevel: React.MutableRefObject<number>;
   layoutConfig: LayoutConfigRef;
+  selectedGroupRef: React.MutableRefObject<MenuGroupType>;
 }
 
 export type SubscriberType = AppManagerType | EventManagerType | LayoutManagerType
