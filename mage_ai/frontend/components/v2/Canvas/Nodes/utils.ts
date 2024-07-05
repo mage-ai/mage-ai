@@ -16,6 +16,29 @@ import { ElementRoleEnum } from '@mana/shared/types';
 import { ClientEventType } from '@mana/shared/interfaces';
 import { DEBUG } from '../../utils/debug';
 
+export function nodeClassNames(node: NodeItemType): string[] {
+  const { block, level, type } = node ?? {};
+  const groups = 'groups' in block ? ((block as any)?.groups ?? []) : [];
+
+  return [
+    ...(groups ?? []).map(groupClassName),
+    blockTypeClassName(type),
+    levelClassName(level),
+  ].filter(Boolean);
+}
+
+export function levelClassName(level: number): string {
+  return typeof level !== 'undefined' && level !== null && `lvl--${level}`;
+}
+
+export function groupClassName(groupUUID: string): string {
+  return `grp--${groupUUID}`
+}
+
+function blockTypeClassName(blockType: string): string {
+  return typeof blockType !== 'undefined' && blockType !== null && `typ--${blockType}`;
+}
+
 export function extractNestedBlocks(group: FrameworkType): BlockType[] {
   const blocks = [
     ...(group as any)?.children?.map(extractNestedBlocks),
@@ -24,7 +47,6 @@ export function extractNestedBlocks(group: FrameworkType): BlockType[] {
 
   return flattenArray(blocks) as BlockType[];
 }
-
 
 export function buildEvent(
   event: any,

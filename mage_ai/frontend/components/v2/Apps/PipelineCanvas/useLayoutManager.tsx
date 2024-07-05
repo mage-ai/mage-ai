@@ -340,6 +340,8 @@ export default function useLayoutManager({
       });
       rectTransformationsByLevel[level] = trans;
 
+      console.log(level, trans, nodes)
+
       const nodesMapping = indexBy(nodes, (node: NodeItemType) => node.id);
       const nodesTransformed = [] as NodeType[];
 

@@ -5,7 +5,7 @@ import { Code, Builder, CaretDown, CaretLeft } from '@mana/icons';
 import Text from '@mana/elements/Text';
 import Link from '@mana/elements/Link';
 import Button, { ButtonProps } from '@mana/elements/Button';
-import { MenuGroupType } from './interfaces';
+import { ItemClickHandler, MenuGroupType } from './interfaces';
 import MenuManager from '@mana/components/Menu/MenuManager';
 import { LayoutDirectionEnum } from '@mana/components/Menu/types';
 import stylesNavigation from '@styles/scss/components/Menu/NavigationButtonGroup.module.scss';
@@ -14,7 +14,7 @@ import { useCallback, useMemo, useState } from 'react';
 import { getCache, deleteCache, updateCache } from './storage';
 
 type NavigationButtonGroupProps = {
-  buildGroups?: (onClick: (event: MouseEvent, opts: MenuGroupType) => void) => MenuItemType[];
+  buildGroups?: (onClick: ItemClickHandler) => MenuItemType[];
   cacheKey?: string;
   groups?: MenuItemType[];
 }
@@ -30,6 +30,7 @@ export default function NavigationButtonGroup({
   const groups = useMemo(() => buildGroups ? buildGroups((
     event: MouseEvent,
     item: MenuGroupType,
+    handleGroupSelection?: (event: MouseEvent, groups: MenuGroupType[]) => void,
   ) => {
     const {
       groups,
@@ -51,6 +52,8 @@ export default function NavigationButtonGroup({
     } else {
       deleteCache(cacheKey);
     }
+
+    handleGroupSelection(event, items);
 
     setSelectedButtonIndex(null);
   }) : (groupsProp ?? []), [buildGroups, cacheKey, groupsProp, selectedGroupsByLevel]);

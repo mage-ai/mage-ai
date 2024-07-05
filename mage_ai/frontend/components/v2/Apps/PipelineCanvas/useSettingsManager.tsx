@@ -1,16 +1,18 @@
-import React, { useRef } from 'react';
+import React, { useRef, useEffect } from 'react';
 import stylesBuilder from '@styles/scss/apps/Canvas/Pipelines/Builder.module.scss';
 import { LayoutConfigType } from '../../Canvas/interfaces';
+import { levelClassName, groupClassName } from '../../Canvas/Nodes/utils';
 import { get, set } from '@storage/localStorage';
 import useAppEventsHandler, { CustomAppEvent, CustomAppEventEnum } from './useAppEventsHandler';
+import { STYLE_ROOT_ID } from '@context/v2/Style';
 import { getCache } from '@mana/components/Menu/storage';
 import { LayoutConfigRef, SettingsManagerType } from './interfaces';
-import { filterDisplayableNodes } from './utils/display';
 import {
   LayoutConfigDirectionEnum, LayoutConfigDirectionOriginEnum,
   LayoutDisplayEnum, TransformRectTypeEnum
 } from '../../Canvas/types';
 import { MenuGroupType } from '@mana/components/Menu/interfaces';
+import { Root, createRoot } from 'react-dom/client';
 
 function builderLocalStorageKey(uuid: string) {
   return `pipeline_builder_canvas_local_settings_${uuid}`;
@@ -27,17 +29,8 @@ export default function useSettingsManager({
   executionFrameworkUUID: string;
   pipelineUUID: string;
 }): SettingsManagerType {
-  const groups = getCache([executionFrameworkUUID, pipelineUUID].join(':'));
-  const selectedGroupRef = useRef<MenuGroupType>(groups?.[groups?.length - 1]);
-  const activeLevel = useRef<number>(
-    (selectedGroupRef?.current?.level ?? false)
-      ? selectedGroupRef?.current?.level + 1
-      : 0
-  );
-
-  const validLevels = useRef<number[]>(null);
-  const layoutConfigs = useRef<LayoutConfigRef[]>([
-    useRef<LayoutConfigType>({
+  function defaultLayoutConfig() {
+    return {
       containerRef,
       direction: LayoutConfigDirectionEnum.VERTICAL,
       display: LayoutDisplayEnum.SIMPLE,
@@ -45,11 +38,21 @@ export default function useSettingsManager({
       origin: LayoutConfigDirectionOriginEnum.LEFT,
       rectTransformations: null,
       viewportRef: canvasRef,
-    }),
-    useRef<LayoutConfigType>(null),
-    useRef<LayoutConfigType>(null),
+    };
+  }
+
+  const styleRootRef = useRef<HTMLStyleElement>(null);
+
+  const groups = getCache([executionFrameworkUUID, pipelineUUID].join(':'));
+  const selectedGroupsRef = useRef<MenuGroupType[]>(groups);
+  const activeLevel = useRef<number>(selectedGroupsRef?.current?.length ?? 0);
+
+  const validLevels = useRef<number[]>(null);
+  const layoutConfigs = useRef<LayoutConfigRef[]>([
+    useRef<LayoutConfigType>(defaultLayoutConfig()),
+    useRef<LayoutConfigType>(defaultLayoutConfig()),
+    useRef<LayoutConfigType>(defaultLayoutConfig()),
   ]);
-  const layoutConfig = layoutConfigs?.current?.[activeLevel?.current ?? 0];
   const optionalGroupsVisible = useRef<boolean>(null);
 
   const {
@@ -57,11 +60,12 @@ export default function useSettingsManager({
     dispatchAppEvent,
   } = useAppEventsHandler({
     activeLevel,
-    layoutConfig,
-    selectedGroupRef,
+    layoutConfig: layoutConfigs?.current?.[activeLevel?.current ?? 0],
+    layoutConfigs,
+    selectedGroupsRef,
   } as SettingsManagerType, {
-    [CustomAppEventEnum.NODE_LAYOUTS_CHANGED]: updateVisibleNodes,
-    [CustomAppEventEnum.NODE_RECT_UPDATED]: handleUpdatedNodeRect,
+    // [CustomAppEventEnum.NODE_LAYOUTS_CHANGED]: updateVisibleNodes,
+    [CustomAppEventEnum.NODE_RECT_UPDATED]: updateVisibleNodes,
     [CustomAppEventEnum.UPDATE_SETTINGS]: updateLocalSettings,
   });
 
@@ -85,28 +89,24 @@ export default function useSettingsManager({
   // layoutConfig.current.transformStateRef = transformState;
   // layoutConfig.current.viewportRef = canvasRef;
   //
-  function updateLayout() {
-    dispatchAppEvent(CustomAppEventEnum.UPDATE_NODE_LAYOUTS, {
-      event: convertEvent(event),
-    });
-  }
 
   function updateLocalSettings(event: CustomAppEvent) {
     const { options } = event?.detail ?? {};
     const {
-      group,
+      groups,
       layoutConfig: layoutConfigData,
       level,
     } = options?.kwargs ?? {};
 
-    if (group ?? false) {
-      selectedGroupRef.current = group;
+    if (groups ?? false) {
+      selectedGroupsRef.current = groups
     }
 
-    setActiveLevel((group?.level ?? false) ? (group.level + 1) : level);
-    layoutConfigData && updateLayoutConfig(layoutConfigData);
+    const lvl = !!groups ? groups.length - 1 : level;
+    setActiveLevel(lvl);
+    layoutConfigData && updateLayoutConfig(lvl, layoutConfigData);
 
-    updateLayout();
+    updateLayout(event);
 
     // if ('optionalGroupVisibility' in (value ?? {})) {
     //   optionalGroupsVisible.current = value ?? false;
@@ -158,42 +158,70 @@ export default function useSettingsManager({
     activeLevel.current = level;
   }
 
-  function updateLayoutConfig(config: LayoutConfigType) {
-    layoutConfig.current = {
-      ...layoutConfig.current,
+  function updateLayoutConfig(level: number, config: LayoutConfigType) {
+    layoutConfigs.current[level] = {
+      ...layoutConfigs.current[level],
       ...config,
     };
   }
 
-  function handleUpdatedNodeRect(event: CustomAppEvent) {
-    updateLayout();
-    updateVisibleNodes();
-  }
-
   function updateVisibleNodes(event?: CustomAppEvent) {
-    if (event) {
-      const { node, nodes } = event?.detail ?? {};
+    const level = activeLevel.current;
+    const display = layoutConfigs?.current?.[level]?.current?.display ?? LayoutDisplayEnum.SIMPLE;
 
-      const items = filterDisplayableNodes([
-        ...(node ? [node] : []),
-        ...(nodes ?? []),
-      ], {
-        layoutConfig: layoutConfig?.current,
-        level: activeLevel?.current,
-        selectedGroup: selectedGroupRef?.current,
-      });
+    const classNames = [
+      stylesBuilder[`display-${display}`],
+      stylesBuilder[`level-${level}-active`],
+    ];
+    const dynamicClassNames: string[] = [];
 
-      console.log('IIIIIIIIIIIIIIIIIIIIIIIIIIIIII', items);
+    if (event && selectedGroupsRef?.current) {
+      const groups = selectedGroupsRef?.current;
+      const group = groups?.[groups?.length - 1];
+
+      if (group) {
+        const cngroup = groupClassName(group?.uuid);
+        const cnlevel = levelClassName(activeLevel?.current);
+
+        dynamicClassNames.push(cngroup, cnlevel);
+
+        console.log('dynamicClassNamesdynamicClassNames', dynamicClassNames)
+
+        if (!styleRootRef?.current) {
+          styleRootRef.current = document.getElementById(STYLE_ROOT_ID) as HTMLStyleElement;
+        }
+
+        const cns = dynamicClassNames.join('.');
+        const styles = dynamicClassNames?.length === 0 ? '' : `
+          .${cns} {
+            .${cns} {
+              opacity: 1;
+              pointer-events: auto;
+              visibility: visible;
+              z-index: 6;
+            }
+          }
+        `;
+        styleRootRef.current.textContent = styles;
+      }
     }
 
-    containerRef?.current?.classList.add(stylesBuilder[`level-${activeLevel.current}-active`]);
-    containerRef?.current?.classList.add(
-      stylesBuilder[`display-${layoutConfig.current.display ?? LayoutDisplayEnum.SIMPLE}`]);
+    classNames
+      .concat(dynamicClassNames)
+      .forEach((className: string) => containerRef?.current?.classList.add(className));
+
+    updateLayout(event);
+  }
+
+  function updateLayout(event: CustomAppEvent) {
+    dispatchAppEvent(CustomAppEventEnum.UPDATE_NODE_LAYOUTS, {
+      event: convertEvent(event),
+    });
   }
 
   return {
     activeLevel,
-    layoutConfig,
-    selectedGroupRef,
+    layoutConfigs,
+    selectedGroupsRef,
   };
 }

@@ -2,6 +2,12 @@ import { ClientEventType, FileType } from '../../shared/interfaces';
 import { ItemTypeEnum } from './types';
 import { KeyboardTextGroupType } from '../../elements/Text/Keyboard/types';
 
+export type ItemClickHandler = (
+  event: MouseEvent,
+  group?: MenuGroupType,
+  handleGroupSelection?: (event: MouseEvent, groups: MenuGroupType[]) => void,
+) => void;
+
 export interface ItemDetailType extends FileType {
   items?: ItemType;
   parent?: ItemDetailType;

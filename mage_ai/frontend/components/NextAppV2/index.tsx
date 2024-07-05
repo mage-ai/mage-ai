@@ -33,6 +33,7 @@ function NextAppV2({
   };
 }) {
   const headerRef = useRef(null);
+
   const themeSettings = (themeSettingsProp?.[version] || getThemeSettings()) as ThemeSettingsType;
   const theme = themeSettings?.theme || getTheme({ theme: themeSettings });
   const mode = themeSettings?.mode || modeProp || ModeEnum.DARK;
@@ -58,7 +59,6 @@ function NextAppV2({
           <LayoutProvider router={router} theme={theme}>
             <ContextProvider router={router} theme={theme as ThemeType}>
               <HeaderPortal headerRef={headerRef} />
-
               <Component {...rest} />
             </ContextProvider >
           </LayoutProvider   >

@@ -109,7 +109,8 @@ export type ItemManagerType = {
 export interface SettingsManagerType {
   activeLevel: React.MutableRefObject<number>;
   layoutConfig: LayoutConfigRef;
-  selectedGroupRef: React.MutableRefObject<MenuGroupType>;
+  layoutConfigs: React.MutableRefObject<LayoutConfigRef[]>;
+  selectedGroupsRef: React.MutableRefObject<MenuGroupType[]>;
 }
 
 export type SubscriberType = AppManagerType | EventManagerType | LayoutManagerType

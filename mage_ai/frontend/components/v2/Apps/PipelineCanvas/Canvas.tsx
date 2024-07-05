@@ -124,12 +124,15 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
   function setHeaderData(data: any) {
     setHeaderDataState({
       ...data,
-      handleMenuItemClick: (event: MouseEvent, group: MenuGroupType) => {
+      handleMenuItemClick: (
+        event: MouseEvent,
+        groups: MenuGroupType[],
+      ) => {
         dispatchAppEvent(CustomAppEventEnum.UPDATE_SETTINGS, {
           event: convertEvent(event),
           options: {
             kwargs: {
-              group,
+              groups,
             },
           },
         });
@@ -158,7 +161,7 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
     setAppRects({ mapping, rects });
   }
 
-  const { activeLevel, layoutConfig, selectedGroupRef } = useSettingsManager({
+  const { activeLevel, layoutConfig } = useSettingsManager({
     canvasRef,
     containerRef,
     executionFrameworkUUID,

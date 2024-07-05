@@ -85,7 +85,7 @@ export interface EventOperationOptionsType {
   kwargs?: {
     boundingContainer?: DOMRect;
     computedStyle?: CSSStyleDeclaration;
-    group?: MenuGroupType;
+    groups?: MenuGroupType[];
     layoutConfig?: LayoutConfigType;
     level?: number;
     process?: {

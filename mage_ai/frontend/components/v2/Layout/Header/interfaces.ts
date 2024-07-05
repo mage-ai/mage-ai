@@ -1,7 +1,5 @@
-import { MenuGroupType } from '@mana/components/Menu/interfaces';
+import { ItemClickHandler, MenuGroupType } from '@mana/components/Menu/interfaces';
 import { MenuItemType } from '@mana/hooks/useContextMenu';
-
-export type ItemClickHandler = (event: MouseEvent, group?: MenuGroupType) => void;
 
 export interface HeaderProps {
   appHistory?: MenuItemType[];

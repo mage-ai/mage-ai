@@ -1,8 +1,7 @@
 import React, { useEffect } from 'react';
 import { BatchPipeline, PipelineV3, BlockGenericV2Partial } from '@mana/icons';
 import { FrameworkType, PipelineExecutionFrameworkBlockType } from '@interfaces/PipelineExecutionFramework/interfaces';
-import { ItemClickHandler } from './interfaces';
-import { MenuGroupType, MenuItemType } from '@mana/components/Menu/interfaces';
+import { ItemClickHandler, MenuGroupType, MenuItemType } from '@mana/components/Menu/interfaces';
 import { useLayout } from '@context/v2/Layout';
 
 type Block = FrameworkType & PipelineExecutionFrameworkBlockType;
@@ -65,7 +64,7 @@ export default function HeaderUpdater({
 }: {
   executionFramework: FrameworkType;
   groupsByLevel: MenuItemType[][];
-  handleMenuItemClick?: ItemClickHandler;
+  handleMenuItemClick?: (event: MouseEvent, groups: MenuGroupType[]) => void;
   pipeline: FrameworkType;
 }) {
   const { header: { setHeader } } = useLayout();
@@ -73,11 +72,7 @@ export default function HeaderUpdater({
   useEffect(() => {
     const buildIntraAppNavItems = (onClickBase: ItemClickHandler) => {
       const onClick = (event: MouseEvent, item: MenuGroupType) => {
-        onClickBase(event, item);
-
-        if (handleMenuItemClick) {
-          handleMenuItemClick(event, item);
-        }
+        onClickBase(event, item, handleMenuItemClick);
       };
       const menuItems: MenuItemType[] = [];
       const fname = executionFramework?.name ?? executionFramework?.uuid;
