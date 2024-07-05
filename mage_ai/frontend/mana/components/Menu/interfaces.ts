@@ -14,11 +14,17 @@ export interface ItemType {
 
 export interface MenuItemType {
   Icon?: ({ ...props }: any) => any;
-  description?: () => string;
+  description?: (() => string) | string;
   divider?: boolean;
   items?: MenuItemType[];
   keyboardShortcuts?: KeyboardTextGroupType;
-  label?: () => string;
-  onClick?: (event?: ClientEventType) => void;
+  label?: (() => string) | string;
+  onClick?: (event?: ClientEventType, item?: MenuItemType) => void;
   uuid?: string;
+}
+
+export interface MenuGroupType extends MenuItemType {
+  group: MenuGroupType;
+  index: number;
+  level: number;
 }

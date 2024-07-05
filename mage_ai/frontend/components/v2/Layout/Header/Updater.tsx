@@ -1,38 +1,60 @@
 import React, { useEffect } from 'react';
-import stylesHeader from '@styles/scss/layouts/Header/Header.module.scss';
 import { BatchPipeline, PipelineV3, BlockGenericV2Partial } from '@mana/icons';
 import { FrameworkType, PipelineExecutionFrameworkBlockType } from '@interfaces/PipelineExecutionFramework/interfaces';
-import { ItemClickHandler, HeaderProps } from './interfaces';
-import { MenuItemType } from '@mana/components/Menu/interfaces';
-import { WithOnMount } from '@mana/hooks/useWithOnMount';
-import { countOccurrences, flattenArray, sortByKey } from '@utils/array';
+import { ItemClickHandler } from './interfaces';
+import { MenuGroupType, MenuItemType } from '@mana/components/Menu/interfaces';
 import { useLayout } from '@context/v2/Layout';
 
 type Block = FrameworkType & PipelineExecutionFrameworkBlockType;
 
-function menuItemsForBlock(block: Block, onClick: (event: MouseEvent, item: MenuItemType) => void) {
-  function convertToItem({
-    children,
-    description,
-    // downstream_blocks,
-    name,
-    // upstream_blocks,
-    uuid,
-  }: Block) {
+function menuItemsForBlock(
+  block: Block,
+  onClick: (event: MouseEvent, group: MenuGroupType) => void,
+  level: number,
+  index: number,
+) {
+  function convertToItem(
+    block1: Block,
+    onClick2: (event: MouseEvent, group: MenuGroupType) => void,
+    level2: number,
+    index2: number,
+  ) {
+    const {
+      description,
+      // downstream_blocks,
+      name,
+      // upstream_blocks,
+      uuid,
+    } = block1;
+
     return {
-      description: () => description,
-      items: extractChildren(children as Block[]),
-      label: () => name || uuid,
-      onClick,
+      description,
+      items: block1?.children?.map(
+        (block2: Block, index3: number) => menuItemsForBlock(block2,
+          (event: MouseEvent, item: MenuGroupType) => {
+            onClick(event, {
+              group: {
+                ...(block1 as any),
+                index: index2,
+                level: level2,
+              } as MenuGroupType,
+              ...item,
+            });
+          },
+          level2 + 1, index3,
+        ),
+      ),
+      label: name || uuid,
+      onClick: (event: MouseEvent, item: MenuItemType) => onClick2(event, {
+        ...item,
+        index: index2,
+        level: level2,
+      } as MenuGroupType),
       uuid,
     };
   }
 
-  function extractChildren(children: Block[]) {
-    return children?.map(block => convertToItem(block as Block));
-  }
-
-  return convertToItem(block);
+  return convertToItem(block, onClick, level, index);
 }
 
 export default function HeaderUpdater({ executionFramework, groupsByLevel, pipeline }: {
@@ -54,7 +76,7 @@ export default function HeaderUpdater({ executionFramework, groupsByLevel, pipel
             : index === 1
               ? BatchPipeline
               : BlockGenericV2Partial,
-          items: groups.map((group: MenuItemType) => {
+          items: groups.map((group: MenuItemType, index2: number) => {
             const {
               children,
               description,
@@ -63,24 +85,36 @@ export default function HeaderUpdater({ executionFramework, groupsByLevel, pipel
             } = group as any;
 
             return {
-              description: () => description,
+              description,
               items: children?.map(
-                (block: Block) => menuItemsForBlock(
+                (block: Block, index3: number) => menuItemsForBlock(
                   block,
-                  (event: MouseEvent, item: MenuItemType) => {
+                  (event: MouseEvent, item: MenuGroupType) => {
                     onClick(event, {
-                      group,
-                      index,
-                      item,
+                      group: {
+                        ...group,
+                        index: index2,
+                        level: 0,
+                      } as MenuGroupType,
+                      ...item,
                     });
                   },
+                  1,
+                  index3,
                 ),
               ),
-              label: () => name || uuid,
+              label: name || uuid,
+              onClick: (event: MouseEvent, item: MenuGroupType) => {
+                onClick(event, {
+                  ...item,
+                  index: index2,
+                  level: 0,
+                });
+              },
               uuid,
             } as any;
           }) as MenuItemType[],
-          label: () => index === 0
+          label: index === 0
             ? `${fname} pipelines`
             : index === 1
               ? 'Stages'

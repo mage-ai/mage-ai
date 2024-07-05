@@ -44,7 +44,7 @@ const focused = css<{
   `}
 `;
 
-export const MenuStyled = styled.div<MenuStyledProps>`
+export const MenuStyled = styled(motion.div) <MenuStyledProps>`
   ${({ left, top, zIndex }) =>
     (typeof left !== 'undefined' || typeof top !== 'undefined') &&
     `

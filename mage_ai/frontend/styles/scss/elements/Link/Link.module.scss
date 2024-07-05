@@ -1,0 +1,23 @@
+.link {
+
+  .display-block {
+    display: block;
+  }
+}
+
+.base {
+
+}
+
+.wrap {
+  outline: none;
+
+  &:focus,
+  &:active,
+  &:hover,
+  &:visited {
+    border: none !important;
+    outline: none !important;
+    text-decoration: none !important;
+  }
+}

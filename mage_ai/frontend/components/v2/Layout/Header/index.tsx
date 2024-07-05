@@ -171,7 +171,7 @@ export function Header({
         )}
       </Grid>
     );
-  }, [buttonProps, intraAppNavItems, buildIntraAppNavItems, gridProps]);
+  }, [buttonProps, intraAppNavItems, buildIntraAppNavItems, gridProps, version]);
 
   const appHistoryNavMemo = useMemo(() => (
     <Grid {...gridProps}>

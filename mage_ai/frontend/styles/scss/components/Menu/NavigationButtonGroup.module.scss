@@ -36,11 +36,17 @@ $height: 40px;
 }
 
 .diagnoal-line-container {
+  background-color: transparent;
+  border: none;
   height: 38px; /* Height of the container */
+  outline: none;
   position: relative;
   width: 2px; /* Width of the container */
 
   .diagonal-line {
+    background-color: transparent;
+    border: none;
+    outline: none;
     position: absolute;
     width: 2px; /* Thickness of the line */
     height: 54px; /* Length of the diagonal */

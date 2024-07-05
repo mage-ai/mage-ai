@@ -3,7 +3,7 @@ import stylesHeader from '@styles/scss/layouts/Header/Header.module.scss';
 import { WithOnMount } from '@mana/hooks/useWithOnMount';
 import { useLayout } from '@context/v2/Layout';
 
-function HeaderPortal({ headerRef }: { headerRef: React.RefObject<HTMLDivElement> }) {
+export default function HeaderPortal({ headerRef }: { headerRef: React.RefObject<HTMLDivElement> }) {
   const { initialize } = useLayout();
 
   return (
@@ -15,5 +15,3 @@ function HeaderPortal({ headerRef }: { headerRef: React.RefObject<HTMLDivElement
     </WithOnMount >
   );
 }
-
-export default React.forwardRef(HeaderPortal);

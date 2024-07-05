@@ -11,7 +11,7 @@ import { HEADER_Z_INDEX } from '@components/constants';
 import { LayoutDirectionEnum } from './types';
 import { MenuItemType } from './interfaces';
 import { ThemeContext, ThemeProvider } from 'styled-components';
-import { Variants, motion } from 'framer-motion';
+import { AnimatePresence, Variants, motion } from 'framer-motion';
 import { createPortal } from 'react-dom';
 import { createRoot } from 'react-dom/client';
 import {
@@ -44,6 +44,7 @@ const itemVariants: Variants = {
 
 export type MenuProps = {
   above?: boolean;
+  addPortal: (level: number, portal: React.ReactNode, containerRef: React.RefObject<HTMLDivElement>) => void;
   children?: React.ReactNode;
   contained?: boolean;
   direction?: LayoutDirectionEnum;
@@ -51,6 +52,7 @@ export type MenuProps = {
   parentContainers?: HTMLElement;
   event?: MouseEvent | React.MouseEvent<HTMLDivElement>;
   items: MenuItemType[];
+  itemsRef: React.RefObject<Record<string, React.RefObject<HTMLDivElement>>>;
   level?: number;
   onClose?: (level: number) => void;
   position?: RectType;
@@ -59,6 +61,7 @@ export type MenuProps = {
     container?: RectType;
     offset?: RectType;
   };
+  removePortals: (level: number) => void;
   small?: boolean;
   standardMenu?: boolean;
   uuid: string;
@@ -118,7 +121,7 @@ function MenuItemBase({
           >
             {before}
             <Text bold={isHeading} muted={!!noHover} small={small}>
-              {label?.() || uuid}
+              {(typeof label === 'function' ? label?.() : label) || uuid}
             </Text>
           </Grid>
 
@@ -143,7 +146,7 @@ function MenuItemBase({
 
         {description && (
           <Text maxWidth={400} muted small={!small} xsmall={small}>
-            {description?.()}
+            {typeof description === 'function' ? description?.() : description}
           </Text >
         )}
       </Grid>
@@ -154,12 +157,12 @@ function MenuItemBase({
     <MenuItemContainerStyled
       onMouseEnter={(event) => {
         cancel();
-        debouncer(() => handleMouseEnter(event), 100);
+        debouncer(() => handleMouseEnter(event as any), 100);
       }}
       onMouseLeave={(event) => {
         cancel();
         if (handleMouseLeave) {
-          debouncer(() => handleMouseLeave?.(event), 100);
+          debouncer(() => handleMouseLeave?.(event as any), 100);
         }
       }}
       contained={contained}
@@ -176,7 +179,7 @@ function MenuItemBase({
             motion
             onClick={e => {
               e.preventDefault();
-              onClick?.(e as ClientEventType);
+              onClick?.(e as ClientEventType, item);
             }}
             plain
             width="100%"
@@ -193,32 +196,29 @@ const MenuItem = React.forwardRef(MenuItemBase);
 
 function Menu({
   above,
+  addPortal,
   contained,
   direction = LayoutDirectionEnum.RIGHT,
   directionPrevious,
   items,
+  itemsRef,
   level,
   children,
-  onClose,
   position,
   rects,
+  removePortals,
   small,
   standardMenu,
   uuid,
 }: MenuProps) {
-  const themeContext = useContext(ThemeContext);
   const directionRef = useRef<LayoutDirectionEnum>(direction);
   const containerRef = useRef(null);
   const containerRectRef = useRef<DOMRect | null>(null);
   const itemExpandedRef = useRef(null);
   const itemsElementRef = useRef(null);
   const itemsRootRef = useRef(null);
-  const itemsRef = useRef<Record<string, React.RefObject<HTMLDivElement>>>({});
   const timeoutRef = useRef<ReturnType<typeof setTimeout>>();
   const rootID = useMemo(() => `menu-item-items-${uuid}`, [uuid]);
-  const offsetRef = useRef<RectType>({ left: 0, top: 0, width: 0, height: 0 });
-  const [portal, setPortal] = useState(null);
-  const { addPortal, removePortalsFromLevel } = usePortals();
 
   const renderChildItems = useCallback(
     (
@@ -243,13 +243,16 @@ function Menu({
       const menuComponent = (
         <Menu
           above={above}
+          addPortal={addPortal}
           contained={contained}
           direction={directionRef.current}
           directionPrevious={direction}
           event={event}
           items={item?.items}
+          itemsRef={itemsRef}
           level={nextLevel}
           position={rect}
+          removePortals={removePortals}
           rects={{
             bounding: rects?.bounding,
             container: rect,
@@ -264,10 +267,10 @@ function Menu({
         />
       );
 
-      removePortalsFromLevel(nextLevel);
+      removePortals(nextLevel);
 
       // Open the selected submenu
-      addPortal(nextLevel, menuComponent);
+      addPortal(nextLevel, menuComponent, containerRef);
 
       // Why are we appending?
       // if (parentItemsElementRef?.current) {
@@ -312,8 +315,8 @@ function Menu({
 
       itemExpandedRef.current = item;
     },
-    [standardMenu, uuid, addPortal, removePortalsFromLevel,
-      above, contained, directionRef, rects, direction,
+    [standardMenu, uuid, addPortal, removePortals,
+      above, contained, directionRef, rects, direction, itemsRef,
       level,
     ],
   );
@@ -340,20 +343,6 @@ function Menu({
     }, 0);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  // Handle outside click
-  const handleDocumentClick = useCallback((event: MouseEvent) => {
-    const el = event.target as node;
-    const contains = [
-      containerRef,
-      ...(Object.values(itemsRef?.current ?? {}) ?? []),
-    ]?.some((ref) => ref?.current?.contains(el));
-
-    if (!contains) {
-      removePortalsFromLevel(0);
-      onClose && onClose?.(0);
-    }
-  }, [onClose, removePortalsFromLevel]);
 
   useEffect(() => {
     const computedStyle =
@@ -440,8 +429,6 @@ function Menu({
       containerRectRef.current = containerRef.current.getBoundingClientRect();
     }
 
-    document.addEventListener('click', handleDocumentClick);
-
     const timeout = timeoutRef.current;
 
     return () => {
@@ -450,16 +437,17 @@ function Menu({
       itemsElementRef.current = null;
       itemExpandedRef.current = null;
       timeoutRef.current = null;
-
-      document.removeEventListener('click', handleDocumentClick);
     };
-  }, [contained, handleDocumentClick, rects, direction, above, uuid, position, level,
+  }, [contained, rects, direction, above, uuid, position, level,
     directionPrevious,
     rootID, standardMenu, uuid, removeChildren]);
 
   return (
     <MenuStyled
+      animate={{ opacity: 1 }}
       contained={contained ? 'true' : undefined}
+      exit={{ opacity: 0 }} // This isn’t doing anything
+      initial={{ opacity: 1 }}
       ref={containerRef}
       style={{
         left: 0,
@@ -471,6 +459,7 @@ function Menu({
     >
       <MenuContent
         animate={{ opacity: 1, scale: 1 }}
+        exit={{ opacity: 0 }} // This isn’t doing anything
         initial={{ opacity: 0.75, scale: 0.95 }}
         transition={{ duration: 0.01, ease: [0.0, 0.0, 0.58, 1.0] }}
       >
@@ -500,7 +489,8 @@ function Menu({
           >
             {items?.map((item: MenuItemType, idx: number) => {
               itemsRef.current[item.uuid] ||= createRef();
-              const itemRef = itemsRef.current[item.uuid]
+              const itemRef = itemsRef.current[item.uuid];
+
               return (
                 <motion.div
                   key={`menu-item-${item.uuid}-${idx}`}
@@ -535,13 +525,73 @@ function Menu({
   );
 }
 
+function MenuController({ children, onClose, ...props }: MenuProps) {
+  const itemsRef = useRef<Record<string, React.RefObject<HTMLDivElement>>>({});
+  const containerRefs = useRef<Record<string, React.RefObject<HTMLDivElement>>>({});
+  const { addPortal, removePortalsFromLevel } = usePortals();
+
+  const removePortals = useCallback((level: number) => {
+    removePortalsFromLevel(level);
+    onClose && onClose?.(level);
+    delete containerRefs.current[level];
+  }, [onClose, removePortalsFromLevel]);
+
+  const addPortalHandler = useCallback((
+    level: number,
+    element: React.ReactNode,
+    containerRef: React.RefObject<HTMLDivElement>,
+  ) => {
+    containerRefs.current[level] = containerRef;
+    addPortal(level, element);
+  }, [addPortal]);
+
+  const handleDocumentClick = useCallback((event: MouseEvent) => {
+    const el = event.target as Node;
+    const contains = [
+      ...(Object.values(containerRefs?.current ?? {}) ?? []),
+      ...(Object.values(itemsRef?.current ?? {}) ?? []),
+    ]?.some((ref) => ref?.current?.contains(el));
+
+    if (!contains) {
+      event.stopPropagation();
+      removePortals(0);
+      onClose && onClose?.(0);
+    }
+  }, [onClose, removePortals]);
+
+  useEffect(() => {
+    document.addEventListener('click', handleDocumentClick);
+
+    return () => {
+      containerRefs.current = {};
+      itemsRef.current = {};
+      document.removeEventListener('click', handleDocumentClick);
+    };
+  }, [handleDocumentClick]);
+
+  return (
+    <Menu
+      {...props}
+      addPortal={addPortalHandler}
+      itemsRef={itemsRef}
+      level={0}
+      removePortals={removePortals}
+    >
+      {children}
+    </Menu>
+  );
+}
+
 function MenuRoot(props: MenuProps) {
   const portalRef = useRef<HTMLDivElement>(null);
+
   return (
     <PortalProvider containerRef={portalRef}>
-      <Menu {...props} level={0}>
-        <div ref={portalRef} />
-      </Menu>
+      <AnimatePresence >
+        <MenuController {...props}>
+          <div ref={portalRef} />
+        </MenuController>
+      </AnimatePresence >
     </PortalProvider >
   )
 }

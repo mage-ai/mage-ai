@@ -1,4 +1,4 @@
-import React, { useEffect, useContext, useRef } from 'react';
+import React, { useEffect, useContext, useRef, useState, useCallback, useMemo } from 'react';
 import { MenuContext } from '@context/v2/Menu';
 import { MenuItemType } from '@mana/hooks/useContextMenu';
 import { createPortal } from 'react-dom';
@@ -10,16 +10,22 @@ export default function MenuManager({
   className,
   contained,
   direction = LayoutDirectionEnum.LEFT,
+  getItems,
   items,
   open: openProp,
+  handleOpen,
+  openState,
   uuid,
 }: {
   children: React.ReactNode;
   className?: string;
   contained?: boolean;
   direction?: LayoutDirectionEnum;
-  items: MenuItemType[];
+  getItems?: () => MenuItemType[];
+  items?: MenuItemType[];
   open?: boolean;
+  openState?: boolean;
+  handleOpen?: (value: boolean | ((prev: boolean) => boolean)) => void;
   uuid: string;
 }) {
   const {
@@ -31,7 +37,15 @@ export default function MenuManager({
     containerRef,
     uuid,
   });
-  const [open, setOpen] = React.useState(openProp);
+  const [openInternal, setOpenState] = useState(openProp);
+  const open = useMemo(() => openState ?? openInternal, [openInternal, openState]);
+  const setOpen = useCallback((prev) => {
+    if (handleOpen) {
+      handleOpen(prev);
+    } else {
+      setOpenState(prev);
+    }
+  }, [handleOpen])
 
   useEffect(() => {
     if (open) {
@@ -47,13 +61,13 @@ export default function MenuManager({
       //   top: rectAbsolute?.top - parent?.top,
       // };
 
-      showMenu(items, {
+      showMenu(getItems ? getItems() : items, {
         // contained,
         direction,
         onClose: (level: number) => {
           if (level === 0) {
-            hideMenu();
-            setOpen(false);
+            // setOpen(false);
+            console.log('should close', level)
           }
         },
         position: rectAbsolute,
@@ -74,7 +88,7 @@ export default function MenuManager({
     } else if (!open) {
       hideMenu();
     }
-  }, [contained, hideMenu, open, items, showMenu, direction]);
+  }, [contained, hideMenu, open, getItems, items, showMenu, direction, setOpen]);
 
   return (
     <>
