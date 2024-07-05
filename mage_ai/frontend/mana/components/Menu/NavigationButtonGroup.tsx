@@ -11,17 +11,21 @@ import { LayoutDirectionEnum } from '@mana/components/Menu/types';
 import stylesNavigation from '@styles/scss/components/Menu/NavigationButtonGroup.module.scss';
 import stylesHeader from '@styles/scss/layouts/Header/Header.module.scss';
 import { useCallback, useMemo, useState } from 'react';
+import { getCache, deleteCache, updateCache } from './storage';
 
 type NavigationButtonGroupProps = {
-  buildGroups?: (onClick: (event: MouseEvent, opts: BuildGroupOptions) => void) => MenuItemType[];
+  buildGroups?: (onClick: (event: MouseEvent, opts: MenuGroupType) => void) => MenuItemType[];
+  cacheKey?: string;
   groups?: MenuItemType[];
 }
 export default function NavigationButtonGroup({
   buildGroups,
+  cacheKey,
   groups: groupsProp,
 }: NavigationButtonGroupProps) {
   const [selectedButtonIndex, setSelectedButtonIndex] = useState<number>(null);
-  const [selectedGroupsByLevel, setSelectedGroupsByLevel] = useState<MenuGroupType[]>(null);
+  const [selectedGroupsByLevel, setSelectedGroupsByLevel] =
+    useState<MenuGroupType[]>(cacheKey ? (getCache(cacheKey) ?? []) : []);
 
   const groups = useMemo(() => buildGroups ? buildGroups((
     event: MouseEvent,
@@ -31,12 +35,19 @@ export default function NavigationButtonGroup({
       groups,
     } = item;
 
-    setSelectedGroupsByLevel([
+    const items = [
       ...(groups?.reverse() ?? []),
       item,
-    ]);
+    ];
+    setSelectedGroupsByLevel(items);
+    if (items?.length >= 1) {
+      updateCache(cacheKey, items);
+    } else {
+      deleteCache(cacheKey);
+    }
+
     setSelectedButtonIndex(null);
-  }) : (groupsProp ?? []), [buildGroups, groupsProp]);
+  }) : (groupsProp ?? []), [buildGroups, cacheKey, groupsProp]);
 
   const buttons = useMemo(() => {
     const defaultState = selectedGroupsByLevel === null;
@@ -56,7 +67,9 @@ export default function NavigationButtonGroup({
       const initial = (defaultState && idx === 0);
       const done = idx <= activeIndex;
       const group = done ? selectedGroupsByLevel?.[idx] : null;
-      const labelUse = group?.name ?? group?.label ?? label;
+      const labelUse = (group as MenuGroupType & {
+        name?: string;
+      })?.name ?? group?.label ?? label;
       const uuidUse = group?.uuid ?? uuid;
 
       const divider = (

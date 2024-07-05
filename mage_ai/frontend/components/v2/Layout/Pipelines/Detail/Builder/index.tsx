@@ -31,6 +31,7 @@ function PipelineBuilder({ frameworkUUID, uuid, ...props }: PipelineDetailProps)
           },
           ...items?.filter(({ uuid }) => uuid === 'code'),
         ],
+        cacheKey: [frameworkUUID, uuid].join(':'),
         selectedNavItem: 'builder',
         version: 0,
       });

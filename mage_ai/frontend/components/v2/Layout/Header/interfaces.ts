@@ -11,6 +11,7 @@ export interface HeaderProps {
   buildIntraAppNavItems?: (onClick: ItemClickHandler, opts?: {
     includeChildren?: boolean;
   }) => MenuItemType[];
+  cacheKey?: string;
   globalNavItems?: MenuItemType[];
   interAppNavItems?: MenuItemType[];
   intraAppNavItems?: MenuItemType[];
