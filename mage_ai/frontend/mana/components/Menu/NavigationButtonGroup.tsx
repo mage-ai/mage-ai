@@ -68,6 +68,7 @@ export default function NavigationButtonGroup({
       uuid,
     }, idx: number) => {
       const selected = count >= 1 && idx === Math.min(activeIndex + 1, countTotal - 1);
+      const beforeSelected = count >= 1 && idx === Math.min(activeIndex, countTotal - 1);
       const first = idx === 0;
       const last = idx === count;
       const initial = (defaultState && idx === 0);
@@ -86,7 +87,7 @@ export default function NavigationButtonGroup({
         </div>
       );
 
-      if (!first && idx > activeIndex) {
+      if (!first) {
         inner.push(divider)
       }
 
@@ -101,17 +102,18 @@ export default function NavigationButtonGroup({
           onClick={(event: any) => {
             event.preventDefault();
             event.stopPropagation();
-            setSelectedButtonIndex(Math.min(
-              idx,
-              selectedGroupsByLevel === null
-                ? 0
-                : (selectedGroupsByLevel?.length - 1 ?? 0),
-            ));
+            setSelectedButtonIndex(0);
+            // setSelectedButtonIndex(Math.min(
+            //   idx,
+            //   selectedGroupsByLevel === null
+            //     ? 0
+            //     : (selectedGroupsByLevel?.length - 1 ?? 0),
+            // ));
           }}
           secondary={!done}
-          semibold={done}
+          semibold={!done || beforeSelected}
           small
-          success={selected}
+          success={beforeSelected}
           wrap
         >
           <Grid
@@ -123,9 +125,11 @@ export default function NavigationButtonGroup({
               done ? stylesNavigation['done'] : '',
               done ? stylesHeader[`done-${idx}`] : '',
             ].filter(Boolean).join(' ')}
-            columnGap={6}
-            paddingLeft={11 + (!first && selected ? (last ? 6 : 3) : 0)}
-            paddingRight={5 + (!selected ? 6 : 0)}
+            columnGap={8}
+            // paddingLeft={11 + (!first && selected ? (last ? 6 : 3) : 0)}
+            // paddingRight={5 + (!selected ? 6 : 0)}
+            paddingLeft={11}
+            paddingRight={11}
             style={{
               zIndex: count - idx,
             }}

@@ -61,7 +61,7 @@ $height: 40px;
   position: relative;
 }
 
-.done::before {
+/* .done::before {
   @include bg;
   background: linear-gradient(114deg, #1A1A1A 85%, transparent 85%);
   top: -21px;
@@ -80,4 +80,4 @@ $height: 40px;
 .selected::after {
   @include after;
   background: linear-gradient(114deg, #252D35 85%, transparent 85%);
-}
+} */

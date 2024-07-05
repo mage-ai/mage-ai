@@ -43,7 +43,7 @@ export const LayoutProvider = ({ children, router, theme }: LayoutProviderProps)
       ...kwargs,
       version,
     };
-    console.log(headerRef.current)
+
     setHeaderData(headerRef.current);
 
     // const element = document.getElementById(HEADER_ROOT_ID);

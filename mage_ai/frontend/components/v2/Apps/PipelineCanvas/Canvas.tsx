@@ -39,6 +39,7 @@ import { DEBUG } from '@components/v2/utils/debug';
 import { ExecutionManagerType } from '@components/v2/ExecutionManager/interfaces';
 import BlockType from '@interfaces/BlockType';
 import { calculateBoundingBox } from '@components/v2/Canvas/utils/rect';
+import { getCache } from '@mana/components/Menu/storage';
 
 export type BuilderCanvasProps = {
   canvasRef: React.RefObject<HTMLDivElement>;
@@ -83,7 +84,8 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
 }: BuilderCanvasProps) => {
   DEBUG.rendering && console.log('Rendering Canvas');
 
-  const activeLevel = useRef<number>(null);
+  const selectedMenuGroup = useRef(getCache([executionFrameworkUUID, pipelineUUID].join(':')))
+  const activeLevel = useRef<number>((selectedMenuGroup?.current?.length ?? 1) - 1);
   const imageDataRef = useRef<string>(null);
   const itemElementsRef = useRef<ItemElementsType>({
     [ItemTypeEnum.APP]: {},
