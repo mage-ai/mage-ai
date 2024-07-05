@@ -2,9 +2,9 @@ import BlockType from '@interfaces/BlockType';
 import { NodeWrapperProps } from './NodeWrapper';
 import { IconType } from '@mana/icons/types';
 import { BadgeType } from '@mana/elements/Badge';
-import { ConnectionType, DragItem, NodeItemType } from '../interfaces';
-import { ClientEventType, EventOperationEnum, SubmitEventOperationType } from '@mana/shared/interfaces';
-import { CanvasNodeType } from './interfaces';
+import { PortType, ConnectionType, DragItem, NodeItemType, LayoutConfigType } from '../interfaces';
+import { BlockNode, CanvasNodeType } from './interfaces';
+import { ClientEventType, SubmitEventOperationType } from '@mana/shared/interfaces';
 import { ExecutionManagerType } from '../../ExecutionManager/interfaces';
 import { MenuItemType } from '@mana/components/Menu/interfaces';
 
@@ -87,15 +87,14 @@ export type InteractionConfigType = {
 
 export type BlockNodeWrapperProps = {
   Wrapper?: React.FC<NodeWrapperProps>;
-  active?: boolean;
-  collapsed?: boolean;
-  droppable?: boolean;
   loading?: boolean;
   submitEventOperation: SubmitEventOperationType;
   selected?: boolean;
   version?: number | string;
   useExecuteCode: ExecutionManagerType['useExecuteCode'];
+  appHandlersRef: React.MutableRefObject<any>,
+  onMountPort?: (port: PortType, portRef: React.RefObject<HTMLDivElement>) => void;
   useRegistration: ExecutionManagerType['useRegistration'];
-} & NodeWrapperProps & CanvasNodeType;
+} & NodeWrapperProps & CanvasNodeType & BlockNode;
 
 export type SharedWrapperProps = BlockNodeWrapperProps & NodeWrapperProps;

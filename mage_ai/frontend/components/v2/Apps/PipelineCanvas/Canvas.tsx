@@ -212,7 +212,7 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
     containerRef,
     itemIDsByLevelRef,
     itemsRef,
-    pipeline,
+    pipelineUUID,
     transformState,
   });
 
@@ -481,9 +481,11 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
             return (
               <DraggableBlockNode
                 {...handlers}
-                active={activeLevel.current === item?.level}
+                activeLevel={activeLevel}
+                appHandlersRef={handlers.appHandlersRef}
                 draggable={dragEnabled}
                 key={arr.join(':')}
+                layoutConfig={layoutConfig}
                 node={item as NodeItemType}
                 rect={{
                   height,

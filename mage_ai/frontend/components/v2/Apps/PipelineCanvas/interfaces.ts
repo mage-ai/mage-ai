@@ -85,6 +85,7 @@ export type LayoutManagerType = {
   updateLayoutOfItems: () => void;
   updateLayoutConfig: (config: LayoutConfigType) => void;
   layoutConfig: React.MutableRefObject<LayoutConfigType>;
+  layoutConfigs: React.MutableRefObject<React.MutableRefObject<LayoutConfigType>[]>;
   activeLevel: React.MutableRefObject<number>;
   localSettings: React.MutableRefObject<{
     activeLevel: number;
@@ -99,7 +100,8 @@ export type ItemManagerType = {
   itemMetadataRef: React.MutableRefObject<Record<string, Record<string, any>>>;
 };
 
-export type SubscriberType = AppManagerType | EventManagerType | LayoutManagerType | ModelManagerType | NodeItemType | ItemManagerType;
+export type SubscriberType = AppManagerType | EventManagerType | LayoutManagerType
+  | ModelManagerType | NodeItemType | ItemManagerType;
 
 export interface CustomEventDetail {
   app?: AppConfigType;

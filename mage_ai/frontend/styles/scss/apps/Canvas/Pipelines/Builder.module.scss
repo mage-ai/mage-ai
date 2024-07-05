@@ -1,10 +1,48 @@
 @use '../../../abstracts/helpers' as *;
 @use '../../../base/svg';
 
+@mixin show {
+  opacity: 1;
+  pointer-events: all;
+}
+
 @mixin hidden {
   opacity: 0;
   pointer-events: none;
   z-index: -1;
+}
+
+@mixin zindexes {
+  @each $value1 in $numbers-more {
+    &.level-#{$value1}-active {
+      .app,
+      .block,
+      .output,
+      .port {
+        z-index: 6;
+      }
+
+      .node {
+        z-index: 4;
+      }
+    }
+  }
+}
+
+.display-simple {
+  @include zindexes;
+
+  &.level-0-active {
+    .level-0 {
+      &.node {
+        @include show;
+      }
+    }
+  }
+}
+
+.display-detailed {
+  @include zindexes;
 }
 
 .canvas {
@@ -17,6 +55,8 @@
 
   /* Add outline shadow */
   box-shadow: 0 0 30px 10px var(--blue);
+
+
 
   &:before,
   &:after {
@@ -53,31 +93,6 @@
             var(--colors-graylo) calc(#{$size}px - 1px),
             var(--colors-graylo) #{$size}px
           );
-      }
-    }
-  }
-
-  @each $value1 in $numbers-more {
-    &.level-#{$value1}-active {
-      .level-#{$value1} {
-        opacity: 1;
-        pointer-events: all;
-      }
-
-      .app {
-        z-index: 6;
-      }
-
-      .block {
-        z-index: 6;
-      }
-
-      .output {
-        z-index: 6;
-      }
-
-      .node {
-        z-index: 4;
       }
     }
   }

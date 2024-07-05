@@ -1,3 +1,8 @@
+export enum LayoutDisplayEnum {
+  DETAILED = 'detailed',
+  SIMPLE = 'simple',
+}
+
 export enum ItemStatusEnum {
   INITIALIZED = 'initialized',
   PENDING_LAYOUT = 'pending_layout',

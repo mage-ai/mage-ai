@@ -26,37 +26,48 @@ import { getBlockColor } from '@mana/themes/blocks';
 import { handleGroupTemplateSelect, menuItemsForTemplates } from './utils';
 import { isEmptyObject } from '@utils/hash';
 import { buildEvent } from './utils';
-import { useMemo } from 'react';
-import { zIndex } from 'styled-system';
+import { useEffect, useMemo, useState } from 'react';
+import { BlockNode } from './interfaces';
 
 type BlockNodeProps = {
   block: BlockType | PipelineExecutionFrameworkBlockType;
   buttonBeforeRef?: React.RefObject<HTMLDivElement>;
-  collapsed?: boolean;
-  draggable?: boolean;
   timerStatusRef?: React.RefObject<HTMLDivElement>;
-  node: NodeItemType;
   nodeRef: React.RefObject<HTMLDivElement>;
   onMount?: (port: PortType, portRef: React.RefObject<HTMLDivElement>) => void;
   submitCodeExecution: (event: React.MouseEvent<HTMLElement>) => void;
-  submitEventOperation: (event: Event, options?: { args: any[] }) => void;
-};
+} & BlockNode;
 
-export function BlockNode({
+export default function BlockNodeComponent({
+  activeLevel,
   block,
   buttonBeforeRef,
   collapsed,
   draggable,
   handlers,
+  layoutConfig,
   node,
-  timerStatusRef,
   nodeRef,
   onMount,
   submitCodeExecution,
   submitEventOperation,
+  timerStatusRef,
   updateBlock,
 }: BlockNodeProps & DragAndDropHandlersType & SharedBlockProps) {
-  const { name, status, uuid } = block;
+  const { name, status, type, uuid } = block;
+  const [level, setLevel] = useState<number>(0);
+
+  useEffect(() => {
+    if (activeLevel?.current !== null) {
+      if (activeLevel.current === node?.level) {
+        setLevel(activeLevel.current);
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [level, node.level]);
+
+  const isGroup =
+    useMemo(() => !type || [BlockTypeEnum.GROUP, BlockTypeEnum.PIPELINE].includes(type), [type]);
 
   const colorNames = blockColorNames(node)
   const borders = borderConfigs(node);
@@ -66,7 +77,9 @@ export function BlockNode({
     ...(ItemTypeEnum.NODE === node?.type
       ? {
         Icon: draggable ? Grab : AddV2,
-        menuItems: menuItemsForTemplates(block, (event: any, block2, template) => handleGroupTemplateSelect(
+        menuItems: menuItemsForTemplates(block, (
+          event: any, block2, template
+        ) => handleGroupTemplateSelect(
           event,
           block2,
           template,
@@ -89,17 +102,15 @@ export function BlockNode({
   }), [draggable, submitEventOperation, node, nodeRef, block]);
 
   const before = useMemo(() => ({
-    Icon: (iconProps) => {
-      return (
-        <>
-          <PlayButtonFilled {...iconProps} className={[
-            stylesBlockNode['display-ifnot-executing'],
-          ].join(' ')}
-          />
-          <Pause {...iconProps} className={stylesBlockNode['display-if-executing']} />
-        </>
-      );
-    },
+    Icon: (iconProps) => (
+      <>
+        <PlayButtonFilled {...iconProps} className={[
+          stylesBlockNode['display-ifnot-executing'],
+        ].join(' ')}
+        />
+        <Pause {...iconProps} className={stylesBlockNode['display-if-executing']} />
+      </>
+    ),
     baseColorName:
       StatusTypeEnum.FAILED === status
         ? 'red'

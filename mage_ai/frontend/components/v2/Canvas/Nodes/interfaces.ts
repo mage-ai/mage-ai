@@ -1,4 +1,4 @@
-import { AppNodeType, OutputNodeType, RectType } from '../interfaces';
+import { AppNodeType, NodeItemType, OutputNodeType, RectType, LayoutConfigType } from '../interfaces';
 import { DragAndDropType } from './types';
 
 export type CanvasNodeType = {
@@ -6,3 +6,13 @@ export type CanvasNodeType = {
   node: AppNodeType | OutputNodeType;
   rect: RectType;
 } & DragAndDropType;
+
+export type BlockNode = {
+  activeLevel: React.RefObject<number>;
+  layoutConfig?: React.RefObject<LayoutConfigType>;
+  collapsed?: boolean;
+  droppable?: boolean;
+  draggable?: boolean;
+  node: NodeItemType;
+  submitEventOperation: (event: Event, options?: { args: any[] }) => void;
+}

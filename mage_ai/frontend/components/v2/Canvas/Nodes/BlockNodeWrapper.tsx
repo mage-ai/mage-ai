@@ -12,7 +12,7 @@ import update from 'immutability-helper';
 import useAppEventsHandler, { CustomAppEvent, CustomAppEventEnum } from '../../Apps/PipelineCanvas/useAppEventsHandler';
 import useDispatchMounted from './useDispatchMounted';
 import useOutputManager, { OutputManagerType } from './CodeExecution/useOutputManager';
-import { BlockNode } from './BlockNode';
+import BlockNodeComponent from './BlockNode';
 import { ClientEventType, EventOperationEnum, SubmitEventOperationType } from '@mana/shared/interfaces';
 import { ConfigurationType } from '@interfaces/PipelineExecutionFramework/interfaces';
 import { DEBUG } from '@components/v2/utils/debug';
@@ -32,36 +32,29 @@ import { setupDraggableHandlers, buildEvent } from './utils';
 import { useEffect, useCallback, useState, useMemo, useRef } from 'react';
 import { WithOnMount } from '@mana/hooks/useWithOnMount';
 import { EventSourceHandlers, ConsumerOperations } from '../../ExecutionManager/interfaces';
+import { BlockNodeWrapperProps } from './types';
 import { ExecutionManagerType } from '@components/v2/ExecutionManager/interfaces';
 import { executionDone } from '@components/v2/ExecutionManager/utils';
 
-export const BlockNodeWrapper: React.FC<any> = ({
+type BlockNodeType = {
+
+} & BlockNodeWrapperProps;
+
+export const BlockNodeWrapper: React.FC<BlockNodeType> = ({
   Wrapper,
-  active,
+  activeLevel,
   appHandlersRef,
   draggable,
   droppable,
   handlers,
+  layoutConfig,
   node,
   onMountPort,
   rect,
   submitEventOperation,
   useExecuteCode,
   useRegistration,
-}: {
-  Wrapper: React.FC<any>,
-  active: boolean;
-  appHandlersRef: React.MutableRefObject<any>,
-  draggable: boolean;
-  droppable: boolean;
-  handlers: any;
-  node: NodeItemType | NodeType;
-  onMountPort: (port: PortType, portRef: React.RefObject<HTMLDivElement>) => void;
-  rect: RectType;
-  submitEventOperation: SubmitEventOperationType;
-  useExecuteCode: ExecutionManagerType['useExecuteCode'];
-  useRegistration: ExecutionManagerType['useRegistration'];
-}) => {
+}: BlockNodeType) => {
   const buttonBeforeRef = useRef<HTMLDivElement>(null);
   const timerStatusRef = useRef(null);
   const timeoutRef = useRef(null);
@@ -113,11 +106,13 @@ export const BlockNodeWrapper: React.FC<any> = ({
     clearTimeout(timeout);
     updateStyles(false);
 
+    const level = activeLevel.current;
     return () => {
-      active && unsubscribe(node.id);
+      level === node?.level && unsubscribe(node.id);
       clearTimeout(timeout)
     }
-  }, [active, node, unsubscribe]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [node, unsubscribe]);
 
   useEffect(() => {
     if (!portalMount) {
@@ -253,23 +248,27 @@ export const BlockNodeWrapper: React.FC<any> = ({
   }), [draggable, droppable, requiredGroup, emptyGroup, node]);
 
   const blockNode = useMemo(() => (
-    <BlockNode
+    <BlockNodeComponent
+      activeLevel={activeLevel}
       block={block}
       buttonBeforeRef={buttonBeforeRef}
-      timerStatusRef={timerStatusRef}
       draggable={draggable}
       handlers={draggingHandlers}
+      layoutConfig={layoutConfig}
       node={node}
       nodeRef={nodeRef}
       onMount={onMount}
       submitCodeExecution={submitCodeExecution}
       submitEventOperation={submitEventOperation}
+      timerStatusRef={timerStatusRef}
       updateBlock={updateBlock}
     />
   ), [
+    activeLevel,
     block,
     draggable,
     draggingHandlers,
+    layoutConfig,
     node,
     nodeRef,
     onMount,
@@ -279,7 +278,7 @@ export const BlockNodeWrapper: React.FC<any> = ({
   ]);
 
   const outputNode = useMemo(() => {
-    if (!active) return;
+    if (activeLevel.current !== node?.level) return;
     const outputRect = {
       height: (rect.height ?? 0),
       left: (rect.left ?? 0),
@@ -301,7 +300,7 @@ export const BlockNodeWrapper: React.FC<any> = ({
       />
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [active, sharedProps, draggingHandlers]);
+  }, [node, sharedProps, draggingHandlers]);
 
   if (Wrapper) {
     return (
