@@ -70,15 +70,13 @@ $height: 40px;
   background: linear-gradient(114deg, #252D35 85%, transparent 85%);
 }
 
+.selected::after {
+  @include after;
+  background: linear-gradient(114deg, #252D35 85%, transparent 85%);
+}
+
 .selected {
   &.last::before {
     width: calc(100% + 34px);
   }
-}
-
-/* Add a diagonal at the start of the background */
-
-.selected::after {
-  @include after;
-  background: linear-gradient(114deg, #252D35 85%, transparent 85%);
 }

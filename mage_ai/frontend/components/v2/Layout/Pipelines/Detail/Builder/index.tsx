@@ -1,4 +1,5 @@
 import dynamic from 'next/dynamic';
+import { SearchV3, ChatV2, Code, DocumentIcon, Builder, CaretDown, CaretLeft } from '@mana/icons';
 import Grid from '@mana/components/Grid';
 import styles from '@styles/scss/pages/PipelineBuilder/PipelineBuilder.module.scss';
 import { PipelineDetailProps } from '../interfaces';
@@ -14,13 +15,28 @@ function PipelineBuilder({ frameworkUUID, uuid, ...props }: PipelineDetailProps)
   useEffect(() => {
     if (frameworkUUID && uuid) {
       header.setHeader({
-        navTag: frameworkUUID,
+        buildInterAppNavItems: (items, { router }) => [
+          {
+            Icon: Builder,
+            onClick: () => {
+              router.push({
+                pathname: '/v2/pipelines/[slug]/builder/[framework]',
+                query: {
+                  framework: 'rag',
+                  slug: 'rag1',
+                },
+              });
+            },
+            uuid: 'builder',
+          },
+          ...items?.filter(({ uuid }) => uuid === 'code'),
+        ],
         selectedNavItem: 'builder',
-        title: uuid,
+        version: 0,
       });
 
       page.setPage({
-        error: true,
+        success: true,
         title: 'Ultra Mage',
       });
     }

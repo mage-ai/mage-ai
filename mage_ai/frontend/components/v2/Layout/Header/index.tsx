@@ -10,24 +10,19 @@ import Text from '@mana/elements/Text';
 import TextInput from '@mana/elements/Input/TextInput';
 import stylesHeader from '@styles/scss/layouts/Header/Header.module.scss';
 import useContextMenu from '@mana/hooks/useContextMenu';
-import { Code, Builder, CaretDown, CaretLeft } from '@mana/icons';
+import { SearchV3, ChatV2, Code, DocumentIcon, Builder, CaretDown, CaretLeft } from '@mana/icons';
 import { LayoutDirectionEnum } from '@mana/components/Menu/types';
 import { MenuItemType } from '@mana/hooks/useContextMenu';
 import { getUser } from '@utils/session';
+import { HeaderProps } from './interfaces';
+import { unique } from '@utils/array';
 
 export const HEADER_ROOT_ID = 'v2-header-root';
 
-export type HeaderProps = {
-  globalNavItems?: MenuItemType[];
-  interAppNavItems?: MenuItemType[];
-  intraAppNavItems?: MenuItemType[];
-  navTag?: string;
-  router?: any;
-  selectedNavItem?: string;
-  title?: string;
-};
-
 export function Header({
+  appHistory,
+  buildInterAppNavItems,
+  buildIntraAppNavItems,
   globalNavItems,
   interAppNavItems,
   intraAppNavItems,
@@ -35,16 +30,13 @@ export function Header({
   router,
   selectedNavItem,
   title,
+  version,
 }: HeaderProps, ref: React.MutableRefObject<HTMLDivElement | null>) {
   console.log('Header render');
-  let headerRef = ref;
-  headerRef ||= useRef<HTMLDivElement | null>(null);
-  const buttonRefs = useRef<Record<string, React.MutableRefObject<HTMLElement>>>({});
+  const headerRef = useRef<HTMLDivElement | null>(ref?.current);
 
   const {
     contextMenu,
-    renderContextMenu,
-    removeContextMenu,
   } = useContextMenu({
     containerRef: headerRef,
     useAsStandardMenu: true,
@@ -59,50 +51,49 @@ export function Header({
     small: true,
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }), []);
-  const gridProps = {
+
+  const gridProps = useMemo(() => ({
     autoColumns: 'min-content',
     autoFlow: 'column',
     columnGap: 10,
-  };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }), []);
+
   const iconProps = useMemo(() => ({
     className: stylesHeader.buttonIcon,
     size: 16,
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }), []);
 
-  const interAppItems = interAppNavItems ?? [
-    {
-      Icon: Builder,
-      // linkProps: {
-      //   as: '/v2/pipelines/[slug]/builder/[subslug]', // Dynamic route template
-      //   href: '/v2/pipelines/rag1/builder/rag', // Actual path with replaced segments
-      // },
-      onClick: () => {
-        router.push({
-          pathname: '/v2/pipelines/[slug]/builder/[framework]',
-          query: {
-            framework: 'rag',
-            slug: 'rag1',
-          },
-        });
+  const interAppItems = useMemo(() => {
+    const itemsDefault = [
+      {
+        Icon: Code,
+        onClick: () => {
+          router.push('/v2/test');
+        },
+        uuid: 'code',
       },
-      uuid: 'builder',
-    },
-    {
-      Icon: Code,
-      // linkProps: {
-      //   href: '/v2/test',
-      // },
-      onClick: () => {
-        router.push('/v2/test');
-      },
-      uuid: 'code',
-    },
-  ];
+    ];
+    const items: (MenuItemType & {
+      placeholder?: boolean;
+    })[] = [...(interAppNavItems ?? [])];
+
+    if (!version && !items?.length) {
+      items.push({
+        placeholder: true,
+        uuid: 'placeholder-inter-app-item-0',
+      });
+    }
+
+    return buildInterAppNavItems
+      ? buildInterAppNavItems?.(interAppNavItems ?? itemsDefault, { router })
+      : items.concat(itemsDefault);
+  }, [version, router, interAppNavItems, buildInterAppNavItems]);
 
   const globalItems = globalNavItems ?? [
     {
-      label: () => 'Help',
+      Icon: ChatV2,
       linkProps: { href: 'https://www.mage.ai/chat' },
       style: {
         gridTemplateColumns: '',
@@ -111,7 +102,7 @@ export function Header({
       uuid: 'help',
     },
     {
-      label: () => 'Docs',
+      Icon: DocumentIcon,
       linkProps: { href: 'https://docs.mage.ai' },
       style: {
         gridTemplateColumns: '',
@@ -121,9 +112,12 @@ export function Header({
     },
   ];
 
-  const renderNavItems = (items: MenuItemType[]) => items.map(({
+  const renderNavItems = (items: (MenuItemType & {
+    placeholder?: boolean;
+  })[]) => unique(items, ({ uuid }) => uuid)?.map(({
     Icon,
     label,
+    placeholder,
     uuid,
     ...rest
   }) => (
@@ -141,37 +135,81 @@ export function Header({
           gridTemplateColumns: '',
         }}
       >
+        {placeholder && <div style={{ width: iconProps?.size }} />}
         {label && label?.()}
       </Button>
     </nav>
   ));
 
-  const intraItems = useMemo(() => intraAppNavItems?.map(({
-    Icon,
-    items,
-    label,
-    uuid,
-  }: MenuItemType, index: number) => (
-    <MenuManager
-      direction={LayoutDirectionEnum.RIGHT}
-      items={items}
-      key={uuid}
-      uuid={uuid}
-    >
+  const intraAppItemsMemo = useMemo(() => {
+    const hasItems = intraAppNavItems?.length >= 1 || buildIntraAppNavItems;
+
+    if (version && !hasItems) {
+      return null;
+    }
+
+    return (
+      <Grid {...gridProps}>
+        <DashedDivider vertical />
+
+        {!version && !hasItems && (
+          <Button
+            {...buttonProps}
+            style={{
+              gridTemplateColumns: '',
+            }}
+          >
+            <div style={{ width: 200 }} />
+          </Button>
+        )}
+
+        {hasItems && (
+          <NavigationButtonGroup
+            buildGroups={buildIntraAppNavItems}
+            groups={intraAppNavItems}
+          />
+        )}
+      </Grid>
+    );
+  }, [buttonProps, intraAppNavItems, buildIntraAppNavItems, gridProps]);
+
+  const appHistoryNavMemo = useMemo(() => (
+    <Grid {...gridProps}>
       <Button
         {...buttonProps}
-        Icon={ip => Icon ? <Icon {...ip} {...iconProps} /> : null}
-        IconAfter={ip => <CaretDown {...ip} {...iconProps} />}
         style={{
           gridTemplateColumns: '',
         }}
       >
-        {(label && label?.()) ?? uuid}
-      </Button>
-    </MenuManager>
-  )), [buttonProps, intraAppNavItems, iconProps]);
+        <Grid
+          {...gridProps}
+          alignItems="center"
+          columnGap={12}
+          paddingRight={(title ?? false) ? 8 : undefined}
+        >
+          {(!version || !appHistory)
+            ? <CaretDown {...iconProps} />
+            : <CaretLeft {...iconProps} />
+          }
 
-  console.log(intraAppNavItems)
+          {(navTag || !version) &&
+            <NavTag role="tag">
+              {!navTag && !version
+                ? <>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</>
+                : navTag
+              }
+            </NavTag >
+          }
+
+          {(title && version) ?
+            <Text nowrap role="title" semibold>
+              {title}
+            </Text>
+            : <div style={{ width: 120 }} />}
+        </Grid>
+      </Button >
+    </Grid>
+  ), [buttonProps, gridProps, iconProps, navTag, title, appHistory, version])
 
   return (
     <>
@@ -186,47 +224,34 @@ export function Header({
           paddingRight={10}
           paddingTop={6}
           style={{
-            gridTemplateColumns: 'auto auto auto 1fr auto',
+            gridTemplateColumns: [
+              appHistoryNavMemo && 'auto',
+              interAppItems && 'auto',
+              intraAppItemsMemo && 'auto',
+              '1fr auto',
+            ].filter(Boolean).join(' '),
           }}
         >
-          <Grid
-            {...gridProps}
-          >
-            <Button
-              {...buttonProps}
-              style={{
-                gridTemplateColumns: '',
-              }}
-            >
-              <Grid
-                {...gridProps}
-                alignItems="center"
-                columnGap={12}
-                paddingRight={(title ?? false) ? 8 : undefined}
-              >
-                <CaretLeft {...iconProps} />
+          {appHistoryNavMemo}
 
-                {navTag && <NavTag role="tag">{navTag}</NavTag >}
-                {title && <Text nowrap role="title" semibold>{title}</Text  >}
-              </Grid>
-            </Button >
-          </Grid >
+          {interAppItems?.length && (
+            <Grid {...gridProps}>
+              {renderNavItems(interAppItems)}
+            </Grid>
+          )}
 
-          <Grid {...gridProps}>
-            {renderNavItems(interAppItems)}
-          </Grid>
-
-          <Grid {...gridProps}>
-            <DashedDivider vertical />
-            {intraAppNavItems?.length >= 1 && (
-              <NavigationButtonGroup
-                groups={intraAppNavItems}
-              />
-            )}
-          </Grid>
+          {intraAppItemsMemo}
 
           <Grid {...gridProps} templateColumns="1fr">
-            <TextInput basic monospace placeholder="Data Command Center" small />
+            <TextInput
+              Icon={ip => <SearchV3 {...ip} {...iconProps} />}
+              basic
+              placeholder="Command Center for data..."
+              small
+              style={{
+                height: '100%',
+              }}
+            />
           </Grid>
 
           <Grid {...gridProps}>

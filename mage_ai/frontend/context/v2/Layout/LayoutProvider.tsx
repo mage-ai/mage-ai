@@ -1,5 +1,5 @@
-import ContextProvider from '../ContextProvider';
-import Header, { HeaderProps, HEADER_ROOT_ID } from '@components/v2/Layout/Header';
+import Header from '@components/v2/Layout/Header';
+import { HeaderProps } from '@components/v2/Layout/Header/interfaces';
 import React, { useRef, useState } from 'react';
 import ThemeType from '@mana/themes/interfaces';
 import { FaviconStatusEnum, changeFavicon } from './favicon';
@@ -16,11 +16,7 @@ interface LayoutProviderProps {
 
 export const LayoutProvider = ({ children, router, theme }: LayoutProviderProps) => {
   const [headerPortalRef, setHeaderPortalRef] = useState(null);
-  const [headerData, setHeaderData] = useState<HeaderProps>({
-    navTag: undefined,
-    selectedNavItem: undefined,
-    title: undefined,
-  });
+  const [headerData, setHeaderData] = useState<HeaderProps>({} as HeaderProps);
 
   const [headerContainerRef, setHeaderContainerRef] = useState<React.RefObject<HTMLDivElement>>(null);
   const useMenu = useMenuContext();
@@ -38,10 +34,16 @@ export const LayoutProvider = ({ children, router, theme }: LayoutProviderProps)
   }
 
   function setHeader(kwargs: HeaderProps) {
+    const version = 'version' in kwargs
+      ? kwargs.version
+      : ((headerRef?.current?.version ?? 0) + 1);
+
     headerRef.current = {
       ...headerRef.current,
       ...kwargs,
+      version,
     };
+    console.log(headerRef.current)
     setHeaderData(headerRef.current);
 
     // const element = document.getElementById(HEADER_ROOT_ID);

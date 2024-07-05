@@ -11,13 +11,21 @@ import stylesHeader from '@styles/scss/layouts/Header/Header.module.scss';
 import { useMemo, useState } from 'react';
 
 type NavigationButtonGroupProps = {
-  groups: MenuItemType[];
+  buildGroups?: (onClick: (event: MouseEvent) => void) => MenuItemType[];
+  groups?: MenuItemType[];
 }
-export default function NavigationButtonGroup({ groups }: NavigationButtonGroupProps) {
+export default function NavigationButtonGroup({
+  buildGroups,
+  groups: groupsProp,
+}: NavigationButtonGroupProps) {
   const [selectedGroupsByLevel, setSelectedGroupsByLevel] = useState<MenuItemType[]>([]);
+  const groups = useMemo(() =>
+    buildGroups ? buildGroups((event: MouseEvent, item: MenuItemType) => {
+      console.log('clicked!!!!!!!!!!!!!')
+    }) : (groupsProp ?? []), [buildGroups, groupsProp]);
 
   const currentGroupToSelect = useMemo(() => {
-    const selectedIndex = 2 ?? (selectedGroupsByLevel?.length ?? 0);
+    const selectedIndex = (selectedGroupsByLevel?.length ?? 0);
     const currentGroup = groups?.[selectedIndex];
 
     const count = groups?.length ?? 0;
@@ -81,6 +89,7 @@ export default function NavigationButtonGroup({ groups }: NavigationButtonGroupP
         </Grid>
       );
     });
+
     return (
       <MenuManager
         direction={LayoutDirectionEnum.RIGHT}
