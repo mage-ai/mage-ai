@@ -2,7 +2,11 @@ import PipelineExecutionFrameworkType, { ConfigurationType, FrameworkType } from
 import update from 'immutability-helper';
 import { ItemStatusEnum } from '../../Canvas/types';
 import { AppHandlerType, AppHandlersRefType } from './interfaces';
-import { AppNodeType, BlockGroupType, BlockMappingType, GroupLevelType, ItemMappingType, ModelMappingType, NodeItemType, NodeType, OutputNodeType, PortMappingType, PortType } from '../../Canvas/interfaces';
+import {
+  AppNodeType, BlockGroupType, BlocksByGroupType, GroupLevelType, ItemMappingType,
+  ModelMappingType, NodeItemType, NodeType, OutputNodeType,
+  PortMappingType, PortType
+} from '../../Canvas/interfaces';
 import { ItemTypeEnum } from '../../Canvas/types';
 import { GroupUUIDEnum } from '@interfaces/PipelineExecutionFramework/types';
 import { buildDependencies } from './utils/pipelines';
@@ -43,6 +47,7 @@ export default function useModelManager({
 }: ModelManagerProps): ModelManagerType {
   const { header, page } = useLayout();
   const appHandlersRef = useRef<AppHandlerType>({} as AppHandlerType);
+  const blocksByGroupRef = useRef<BlocksByGroupType>({});
   const itemsRef = useRef<ItemMappingType>({});
   const outputsRef = useRef<Record<string, Record<string, OutputNodeType>>>({});
   const portsRef = useRef<PortMappingType>({});
@@ -302,6 +307,7 @@ export default function useModelManager({
           });
         });
 
+        blocksByGroupRef.current = blocksByGroup;
         itemsRef.current = itemMapping;
         portsRef.current = portMapping;
 
@@ -397,6 +403,7 @@ export default function useModelManager({
     onItemChangeRef,
     onModelChangeRef,
     portsRef,
+    blocksByGroupRef,
     // mutateModels,
     // updateNodeItems,
     // updatePorts,

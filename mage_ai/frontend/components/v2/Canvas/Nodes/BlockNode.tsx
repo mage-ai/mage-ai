@@ -12,13 +12,14 @@ import TemplateConfigurations from './Blocks/TemplateConfigurations';
 import Text from '@mana/elements/Text';
 import stylesBlockNode from '@styles/scss/components/Canvas/Nodes/BlockNode.module.scss';
 import stylesGradient from '@styles/scss/elements/GradientContainer.module.scss';
+import BlockGroupOverview from './Blocks/BlockGroupOverview';
 import { AddV2, Code, Grab, PipeIconVertical, PlayButtonFilled, Pause, Infinite } from '@mana/icons';
 import { AppTypeEnum, AppSubtypeEnum } from '../../Apps/constants';
 import { EventOperationEnum } from '@mana/shared/interfaces';
 import { DragAndDropHandlersType, SharedBlockProps } from './types';
 import { NodeItemType, PortType, NodeType } from '../interfaces';
-import { PipelineExecutionFrameworkBlockType } from '@interfaces/PipelineExecutionFramework/interfaces';
-import { ItemTypeEnum, PortSubtypeEnum } from '../types';
+import { FrameworkType, PipelineExecutionFrameworkBlockType } from '@interfaces/PipelineExecutionFramework/interfaces';
+import { ItemTypeEnum, LayoutDisplayEnum, PortSubtypeEnum } from '../types';
 import { StatusTypeEnum, BlockTypeEnum } from '@interfaces/BlockType';
 import { TooltipWrapper } from '@context/Tooltip';
 import { borderConfigs, blockColorNames } from './presentation';
@@ -345,15 +346,27 @@ export default function BlockNodeComponent({
               position="absolute"
             />
           </div>
-          <Grid rowGap={8} templateRows="auto">
-            {connectionRows}
-            {templateConfigurations}
-            {BlockTypeEnum.PIPELINE === block?.type && <div />}
-          </Grid>
+          {isGroup
+            ? LayoutDisplayEnum.DETAILED !== layoutConfig?.current?.display && (
+              <BlockGroupOverview
+                block={block as FrameworkType}
+              />
+            )
+            : (
+              <Grid rowGap={8} templateRows="auto">
+                {connectionRows}
+                {templateConfigurations}
+                {BlockTypeEnum.PIPELINE === block?.type && <div />}
+              </Grid>
+
+            )}
         </Grid>
       </div>
     ),
-    [badge, badgeRow, block, connectionRows, templateConfigurations, titleRow],
+    [badge, badgeRow, block, connectionRows, templateConfigurations, titleRow,
+      layoutConfig,
+      isGroup,
+    ],
   );
 
   return (

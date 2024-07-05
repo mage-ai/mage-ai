@@ -18,6 +18,7 @@ import {
 import useEventManager from './useEventManager';
 import useLayoutManager from './useLayoutManager';
 import useModelManager from './useModelManager';
+import { ModelProvider } from './ModelManager/ModelContext';
 import usePresentationManager, { PresentationManagerType } from './usePresentationManager';
 import { DragLayer } from '../../Canvas/Layers/DragLayer';
 import { ItemTypeEnum, LayoutConfigDirectionOriginEnum, LayoutConfigDirectionEnum } from '../../Canvas/types';
@@ -188,6 +189,7 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
 
   const {
     appHandlersRef,
+    blocksByGroupRef,
     itemsRef,
     mutateModels,
     onItemChangeRef,
@@ -412,6 +414,9 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
   );
   connectDrop(canvasRef);
 
+  const models = useMemo(() => ({
+    blocksByGroup: blocksByGroupRef,
+  }), [blocksByGroupRef]);
   const handlers = useMemo(() => ({
     appHandlersRef,
     handlers: {
@@ -466,39 +471,41 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
           <div id={connectionLinesRootID.current} />
           <div id="dynamic-components-root" ref={dynamicRootRef} />
 
-          {itemRects?.map((arr: [string, number, number, number, number]) => {
-            DEBUG.layout && console.log('[Canvas] Rendering itemRects', arr);
-            const [
-              id,
-              left,
-              top,
-              width,
-              height,
-            ] = arr;
-            const item = itemsRef.current[id];
-            if (!item) return;
+          <ModelProvider blocksByGroupRef={blocksByGroupRef}>
+            {itemRects?.map((arr: [string, number, number, number, number]) => {
+              DEBUG.layout && console.log('[Canvas] Rendering itemRects', arr);
+              const [
+                id,
+                left,
+                top,
+                width,
+                height,
+              ] = arr;
+              const item = itemsRef.current[id];
+              if (!item) return;
 
-            return (
-              <DraggableBlockNode
-                {...handlers}
-                activeLevel={activeLevel}
-                appHandlersRef={handlers.appHandlersRef}
-                draggable={dragEnabled}
-                key={arr.join(':')}
-                layoutConfig={layoutConfig}
-                node={item as NodeItemType}
-                rect={{
-                  height,
-                  left,
-                  top,
-                  width,
-                }}
-                submitEventOperation={submitEventOperation}
-                useExecuteCode={useExecuteCode}
-                useRegistration={useRegistration}
-              />
-            );
-          })}
+              return (
+                <DraggableBlockNode
+                  {...handlers}
+                  activeLevel={activeLevel}
+                  appHandlersRef={handlers.appHandlersRef}
+                  draggable={dragEnabled}
+                  key={arr.join(':')}
+                  layoutConfig={layoutConfig}
+                  node={item as NodeItemType}
+                  rect={{
+                    height,
+                    left,
+                    top,
+                    width,
+                  }}
+                  submitEventOperation={submitEventOperation}
+                  useExecuteCode={useExecuteCode}
+                  useRegistration={useRegistration}
+                />
+              );
+            })}
+          </ModelProvider >
 
           {outputPortalsMemo}
 

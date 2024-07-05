@@ -21,10 +21,8 @@
   @include borders.border-colors();
 
   height: inherit;
-  min-height: 300px;
   min-width: 312px;
   padding: var(--padding-base);
-
 }
 
 .blockNodeWrapper {

@@ -7,6 +7,7 @@ import { BlockNode, CanvasNodeType } from './interfaces';
 import { ClientEventType, SubmitEventOperationType } from '@mana/shared/interfaces';
 import { ExecutionManagerType } from '../../ExecutionManager/interfaces';
 import { MenuItemType } from '@mana/components/Menu/interfaces';
+import { ModelManagerType } from '@components/v2/Apps/PipelineCanvas/interfaces';
 
 export type UpdateBlockRequestType = (event: ClientEventType | Event, key: string, value: any, opts?: {
   delay?: number;
@@ -87,14 +88,17 @@ export type InteractionConfigType = {
 
 export type BlockNodeWrapperProps = {
   Wrapper?: React.FC<NodeWrapperProps>;
-  loading?: boolean;
-  submitEventOperation: SubmitEventOperationType;
-  selected?: boolean;
-  version?: number | string;
-  useExecuteCode: ExecutionManagerType['useExecuteCode'];
   appHandlersRef: React.MutableRefObject<any>,
+  loading?: boolean;
+  models?: {
+    blocksByGroup: React.RefObject<ModelManagerType['blocksByGroupRef']>;
+  };
   onMountPort?: (port: PortType, portRef: React.RefObject<HTMLDivElement>) => void;
+  selected?: boolean;
+  submitEventOperation: SubmitEventOperationType;
+  useExecuteCode: ExecutionManagerType['useExecuteCode'];
   useRegistration: ExecutionManagerType['useRegistration'];
+  version?: number | string;
 } & NodeWrapperProps & CanvasNodeType & BlockNode;
 
 export type SharedWrapperProps = BlockNodeWrapperProps & NodeWrapperProps;

@@ -37,17 +37,28 @@ export function GradientContainer({
   children,
   className,
   direction = 'to top right',
+  noBorder,
+  variant,
   style,
 }: OutterProps &
   InnerProps & {
     borderColors?: string[];
     className?: string;
     direction?: Direction;
+    noBorder?: boolean;
+    variant?: 'error';
   }) {
+  const noInner = noBorder || variant;
+
   return (
     // @ts-ignore
     <GradientContainerOutter
-      className={[styles['gradient-outter'], className || ''].join(' ')}
+      className={[
+        styles['gradient-outter'],
+        noInner && styles['noBorder'],
+        variant && styles[`variant-${variant}`],
+        className || '',
+      ].join(' ')}
       gradientBackground={
         direction && borderColors?.length >= 2
           ? [direction.replace(' ', '-'), ...(borderColors || [])].join('-')
@@ -56,7 +67,8 @@ export function GradientContainer({
       style={style}
     >
       {/* @ts-ignore */}
-      <GradientContainerInner backgroundColor={backgroundColor}>{children}</GradientContainerInner>
+      {!noInner && <GradientContainerInner backgroundColor={backgroundColor}>{children}</GradientContainerInner>}
+      {noInner && children}
     </GradientContainerOutter>
   );
 }

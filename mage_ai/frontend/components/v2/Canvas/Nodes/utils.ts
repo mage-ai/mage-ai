@@ -16,6 +16,16 @@ import { ElementRoleEnum } from '@mana/shared/types';
 import { ClientEventType } from '@mana/shared/interfaces';
 import { DEBUG } from '../../utils/debug';
 
+export function extractNestedBlocks(group: FrameworkType): BlockType[] {
+  const blocks = [
+    ...(group as any)?.children?.map(extractNestedBlocks),
+    ...(group as any)?.blocks,
+  ];
+
+  return flattenArray(blocks) as BlockType[];
+}
+
+
 export function buildEvent(
   event: any,
   operation: EventOperationEnum,

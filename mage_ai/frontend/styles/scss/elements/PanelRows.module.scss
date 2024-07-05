@@ -1,15 +1,19 @@
 @use '../base/borders';
 @use '../base/gradients';
 
+$border-radius: 4px;
+
 .panel {
   @include borders.base();
 
-  border-radius: 4px;
+  border-radius: $border-radius;
+  overflow: hidden;
   position: relative;
 }
 
 .row {
   border-top: 1px solid var(--borders-color-base-default);
+  overflow: hidden;
 
   &.padding {
     padding: var(--padding-base);
@@ -17,5 +21,6 @@
 
   &.first-true {
     border-top-color: transparent;
+    border-top-width: 0;
   }
 }

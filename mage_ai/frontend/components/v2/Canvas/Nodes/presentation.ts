@@ -1,8 +1,25 @@
 import { ItemTypeEnum } from '../types';
-import { getBlockColor } from '@mana/themes/blocks';
+import { ColorNameType, getBlockColor } from '@mana/themes/blocks';
 import { countOccurrences, flattenArray, sortByKey } from '@utils/array';
 import { NodeItemType, NodeType, PortType, RectType } from '../interfaces';
-import { StatusTypeEnum, BlockTypeEnum } from '@interfaces/BlockType';
+import BlockType, { StatusTypeEnum, BlockTypeEnum } from '@interfaces/BlockType';
+
+export function getModeColorName(blocks: BlockType[]): ColorNameType {
+  if (!blocks?.length) return;
+
+  const typeCounts = Object.entries(
+    countOccurrences(
+      flattenArray(
+        blocks?.map(b => b?.type) ?? []
+      )
+    ) ?? {},
+  )?.map(([type, count]) => ({ count, type }));
+
+  const modeTypes = sortByKey(typeCounts, ({ count }) => count, { ascending: false });
+  const modeType = modeTypes?.[0]?.type;
+
+  return getBlockColor(modeType as BlockTypeEnum, { getColorName: true })?.names;
+}
 
 export const blockColorNames = (node) => {
   const type = node?.block?.type;
