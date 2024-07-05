@@ -13,8 +13,9 @@ export default function MenuManager({
   getItems,
   items,
   open: openProp,
+  openItems,
   handleOpen,
-  openState,
+  isOpen,
   uuid,
 }: {
   children: React.ReactNode;
@@ -24,7 +25,11 @@ export default function MenuManager({
   getItems?: () => MenuItemType[];
   items?: MenuItemType[];
   open?: boolean;
-  openState?: boolean;
+  openItems?: {
+    column: number;
+    row: number;
+  }[];
+  isOpen?: boolean;
   handleOpen?: (value: boolean | ((prev: boolean) => boolean), levelToClose: number) => void;
   uuid: string;
 }) {
@@ -38,7 +43,7 @@ export default function MenuManager({
     uuid,
   });
   const [openInternal, setOpenState] = useState(openProp);
-  const open = useMemo(() => openState ?? openInternal, [openInternal, openState]);
+  const open = useMemo(() => isOpen ?? openInternal, [openInternal, isOpen]);
 
   useEffect(() => {
     if (open) {
@@ -64,6 +69,7 @@ export default function MenuManager({
             setOpenState(false);
           }
         },
+        openItems,
         position: rectAbsolute,
         rects: {
           bounding: {
@@ -82,7 +88,7 @@ export default function MenuManager({
     } else if (!open) {
       hideMenu();
     }
-  }, [contained, hideMenu, open, getItems, items, showMenu, direction, handleOpen]);
+  }, [contained, hideMenu, open, getItems, items, showMenu, direction, handleOpen, openItems]);
 
   return (
     <>

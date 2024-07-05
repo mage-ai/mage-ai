@@ -125,6 +125,10 @@ export default function NavigationButtonGroup({
 
   const currentGroupToSelect = useMemo(() => {
     const currentGroup = selectedButtonIndex === null ? null : groups?.[0];
+    const openItems = selectedGroupsByLevel?.map(({ index: row, level: column }) => ({
+      column,
+      row,
+    }));
 
     return (
       <MenuManager
@@ -137,9 +141,10 @@ export default function NavigationButtonGroup({
             setSelectedButtonIndex(null);
           }
         }}
+        isOpen={!!currentGroup}
         items={currentGroup?.items}
         key={currentGroup?.uuid}
-        openState={!!currentGroup}
+        openItems={openItems}
         uuid={currentGroup?.uuid}
       >
         <div
@@ -162,7 +167,7 @@ export default function NavigationButtonGroup({
         </div>
       </MenuManager>
     );
-  }, [buttons, groups, selectedButtonIndex]);
+  }, [buttons, groups, selectedButtonIndex, selectedGroupsByLevel]);
 
   return (
     <>

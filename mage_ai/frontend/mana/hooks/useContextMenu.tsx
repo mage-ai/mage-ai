@@ -14,6 +14,7 @@ export type RenderContextMenuOptions = {
   contained?: boolean;
   direction?: MenuProps['direction'];
   onClose?: MenuProps['onClose'];
+  openItems?: MenuProps['openItems'];
   position?: MenuProps['position'];
   rects?: MenuProps['rects'];
 };

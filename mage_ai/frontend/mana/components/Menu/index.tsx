@@ -55,6 +55,10 @@ export type MenuProps = {
   itemsRef: React.RefObject<Record<string, React.RefObject<HTMLDivElement>>>;
   level?: number;
   onClose?: (level: number) => void;
+  openItems?: {
+    column: number;
+    row: number;
+  }[];
   position?: RectType;
   rects?: {
     bounding?: RectType;
@@ -197,13 +201,14 @@ const MenuItem = React.forwardRef(MenuItemBase);
 function Menu({
   above,
   addPortal,
+  children,
   contained,
   direction = LayoutDirectionEnum.RIGHT,
   directionPrevious,
   items,
   itemsRef,
   level,
-  children,
+  openItems,
   position,
   rects,
   removePortals,
@@ -223,13 +228,18 @@ function Menu({
   const renderChildItems = useCallback(
     (
       item: MenuItemType,
-      event: React.MouseEvent<HTMLDivElement>,
       itemInnerRef: React.RefObject<HTMLDivElement>,
+      opts?: {
+        event?: React.MouseEvent<HTMLDivElement>;
+        openItems?: MenuProps['openItems'];
+      },
     ) => {
       if (itemExpandedRef?.current?.uuid === item?.uuid) return;
 
-      event.stopPropagation();
-      event.preventDefault();
+      if (opts?.event) {
+        opts?.event?.stopPropagation();
+        opts?.event?.preventDefault();
+      }
 
       const r = itemInnerRef?.current?.getBoundingClientRect();
       const rect = {
@@ -242,12 +252,12 @@ function Menu({
       const nextLevel = level + 1;
       const menuComponent = (
         <Menu
+          {...opts}
           above={above}
           addPortal={addPortal}
           contained={contained}
           direction={directionRef.current}
           directionPrevious={direction}
-          event={event}
           items={item?.items}
           itemsRef={itemsRef}
           level={nextLevel}
@@ -427,6 +437,16 @@ function Menu({
       containerRef.current.style.zIndex = `${HEADER_Z_INDEX + 100}`;
 
       containerRectRef.current = containerRef.current.getBoundingClientRect();
+
+      if (openItems?.length >= 1) {
+        const row = openItems?.[0]?.row;
+        const openItem = items?.[row];
+        if (openItem) {
+          renderChildItems(openItem, itemsRef?.current?.[openItem?.uuid], {
+            openItems: openItems.slice(1),
+          });
+        }
+      }
     }
 
     const timeout = timeoutRef.current;
@@ -439,7 +459,7 @@ function Menu({
       timeoutRef.current = null;
     };
   }, [contained, rects, direction, above, uuid, position, level,
-    directionPrevious,
+    directionPrevious, openItems,
     rootID, standardMenu, uuid, removeChildren]);
 
   return (
@@ -501,7 +521,9 @@ function Menu({
                     handleMouseEnter={(event) => {
                       hideChildren();
                       if (item?.items?.length >= 1) {
-                        renderChildItems(item, event as any, itemRef);
+                        renderChildItems(item, itemRef, {
+                          event: event as any,
+                        });
                       }
                     }}
                     contained={contained}
