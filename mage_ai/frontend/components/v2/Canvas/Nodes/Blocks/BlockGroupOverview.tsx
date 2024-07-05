@@ -7,7 +7,7 @@ import PanelRows from '@mana/elements/PanelRows';
 import Text from '@mana/elements/Text';
 import { FrameworkType, PipelineExecutionFrameworkBlockType } from '@interfaces/PipelineExecutionFramework/interfaces';
 import { useContext } from 'react';
-import { extractNestedBlocks } from '../utils';
+import { pluralize } from '@utils/string';
 
 type BlockOverviewProps = {
   block: FrameworkType;
@@ -68,7 +68,9 @@ export default function BlockGroupOverview({
                 />
 
                 <Text italic={!required} medium secondary small>
-                  {required ? 'Required' : 'Optional'}
+                  {blocks?.length >= 1
+                    ? pluralize('block', blocks?.length ?? 0)
+                    : (required ? 'Required' : 'Optional')}
                 </Text >
               </Grid>
 

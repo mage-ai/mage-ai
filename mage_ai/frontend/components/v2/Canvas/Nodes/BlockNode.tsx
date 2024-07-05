@@ -70,7 +70,7 @@ export default function BlockNodeComponent({
   const isGroup =
     useMemo(() => !type || [BlockTypeEnum.GROUP, BlockTypeEnum.PIPELINE].includes(type), [type]);
 
-  const colorNames = blockColorNames(node)
+  const colorNames = blockColorNames(node);
   const borders = borderConfigs(node);
   const after: any = useMemo(() => ({
     className: stylesBlockNode.showOnHover,

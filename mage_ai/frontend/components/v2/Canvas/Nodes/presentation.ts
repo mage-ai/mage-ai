@@ -23,6 +23,10 @@ export function getModeColorName(blocks: BlockType[]): ColorNameType {
 
 export const blockColorNames = (node) => {
   const type = node?.block?.type;
+  if (!type || [BlockTypeEnum.GROUP, BlockTypeEnum.PIPELINE].includes(type)) {
+    return getBlockColor(type ?? BlockTypeEnum.GROUP, { getColorName: true })?.names;
+  }
+
   if (ItemTypeEnum.NODE === node?.type) {
     // Use the color of the most common block type in the group.
     const typeCounts = Object.entries(

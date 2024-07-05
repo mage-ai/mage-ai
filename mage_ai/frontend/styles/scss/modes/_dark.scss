@@ -1,5 +1,7 @@
 @use '../abstracts/colors/dark' as colors;
 @mixin mode() {
+  --colors-azure: #{colors.$colors-azure};
+  --colors-azurelo: #{colors.$colors-azurelo};
   --colors-black: #{colors.$colors-black};
   --colors-blackfixed: #{colors.$colors-blackfixed};
   --colors-blackhi: #{colors.$colors-blackhi};
