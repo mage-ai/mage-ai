@@ -38,8 +38,10 @@ export default function useLayoutManager({
     [CustomAppEventEnum.UPDATE_NODE_LAYOUTS]: updateLayoutOfItems,
   });
 
-  function rectTransformations({ activeLevel, layoutConfigs }) {
+  function rectTransformations({ activeLevel, layoutConfigs, selectedGroupsRef }) {
     const layoutConfig = layoutConfigs?.current?.[activeLevel?.current]?.current ?? {};
+    const group = selectedGroupsRef?.current?.[selectedGroupsRef?.current?.length - 1];
+
     const direction = layoutConfig?.direction || LayoutConfigDirectionEnum.HORIZONTAL;
     const directionOp = LayoutConfigDirectionEnum.HORIZONTAL === direction
       ? LayoutConfigDirectionEnum.VERTICAL
@@ -198,6 +200,7 @@ export default function useLayoutManager({
           type: TransformRectTypeEnum.LAYOUT_TREE,
         },
         {
+          conditionSelf: (rect: RectType) => !group?.uuid || rect?.block?.uuid === group?.uuid,
           options: (rects: RectType[]) => ({
             offset: {
               left: 0,
@@ -256,7 +259,7 @@ export default function useLayoutManager({
 
   function updateLayoutOfItems(event: CustomAppEvent) {
     const { manager, options } = event?.detail ?? {};
-    const { activeLevel, layoutConfigs } = manager as SettingsManagerType;
+    const { activeLevel, layoutConfigs, selectedGroupsRef } = manager as SettingsManagerType;
     const { classNames, conditions, styles } = options?.kwargs ?? {};
 
     const layoutConfig = layoutConfigs?.current?.[activeLevel?.current]?.current ?? {};
@@ -292,6 +295,7 @@ export default function useLayoutManager({
       nodes?.forEach((node) => {
         const nodeRect = {
           ...node?.rect,
+          block: node.block,
           children: node?.items?.reduce((acc, item2: NodeType) => {
             if (!item2) return acc;
 
@@ -334,7 +338,7 @@ export default function useLayoutManager({
         rects.push(nodeRect);
       });
 
-      const trans = rectTransformations({ activeLevel, layoutConfigs });
+      const trans = rectTransformations({ activeLevel, layoutConfigs, selectedGroupsRef });
       rectTransformationsByLevel[level] = trans;
 
       const nodesMapping = indexBy(nodes, (node: NodeItemType) => node.id);

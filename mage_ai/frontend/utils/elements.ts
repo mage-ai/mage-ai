@@ -82,3 +82,47 @@ export function getClosestRole(element: HTMLElement | null, roles: string | stri
 
   return elements?.[0] || null;
 }
+
+export const isElementVisible = (element: HTMLElement | null): boolean => {
+  while (element) {
+    if (element === document.body) {
+      break;
+    }
+
+    const style = window.getComputedStyle(element);
+
+    // Check for display, visibility, and opacity
+    if (style.display === 'none' || style.visibility === 'hidden' || parseFloat(style.opacity) === 0) {
+      return false;
+    }
+
+    element = element.parentElement as HTMLElement;
+  }
+
+  // Check for dimensions
+  const rect = element?.getBoundingClientRect();
+  if (rect && (rect.width === 0 || rect.height === 0)) {
+    return false;
+  }
+
+  return true;
+};
+
+const isInViewport = (element: HTMLElement | null): boolean => {
+  if (!element) {
+    return false;
+  }
+
+  const rect = element.getBoundingClientRect();
+
+  return (
+    rect.top >= 0 &&
+    rect.left >= 0 &&
+    rect.bottom <= (window.innerHeight || document.documentElement.clientHeight) &&
+    rect.right <= (window.innerWidth || document.documentElement.clientWidth)
+  );
+};
+
+export const isElementReallyVisible = (element: HTMLElement | null): boolean => {
+  return isElementVisible(element) && isInViewport(element);
+};

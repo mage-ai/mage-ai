@@ -23,6 +23,7 @@ export interface OffsetType {
 }
 
 export interface RectType extends RectTypeBase {
+  block?: BlockType;
   children?: RectType[];
   diff?: RectType;
   inner?: Record<string, RectType>;
@@ -100,6 +101,7 @@ export interface RectTransformationOptionsType {
 
 export interface RectTransformationType {
   condition?: (rects: RectType[]) => boolean;
+  conditionSelf?: (rect: RectType) => boolean;
   initialScope?: RectTransformationScopeEnum;
   options?: (rects: RectType[]) => RectTransformationOptionsType;
   scope?: RectTransformationScopeEnum; // Leave empty to operate on all rects at the top level

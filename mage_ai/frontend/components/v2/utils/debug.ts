@@ -16,12 +16,12 @@ export const DEBUG = {
   },
   events: false,
   itemManager: false,
-  layout: true,
-  layoutManager: true,
+  layout: false,
+  layoutManager: false,
   node: {
     block: false,
   },
-  rects: true,
+  rects: false,
   rendering: false,
   settings: {
     manager: false,

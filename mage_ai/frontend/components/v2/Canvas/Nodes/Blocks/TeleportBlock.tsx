@@ -24,8 +24,9 @@ export default function TeleportGroup({
 
   const isup = block?.upstream_blocks?.includes(selectedGroup?.uuid);
   const isdn = block?.downstream_blocks?.includes(selectedGroup?.uuid);
-  const groupColor = getBlockColor(group?.type, { getColorName: true })?.names?.base
-    ?? getModeColorName(groupBlocks)?.base;
+
+  const groupColor = getBlockColor(group?.type ?? BlockTypeEnum.GROUP, { getColorName: true })?.names?.base;
+  const modeColor = getModeColorName(groupBlocks)?.base;
   const colorName = getBlockColor(block?.type ?? BlockTypeEnum.GROUP, { getColorName: true })?.names?.base;
 
   return (
@@ -39,8 +40,8 @@ export default function TeleportGroup({
       }}
     >
       {buildBadgeRow({
-        inputColorName: isup && groupColor,
-        outputColorName: isdn && groupColor,
+        inputColorName: isup && (group?.type ? (groupColor ?? modeColor) : (modeColor ?? groupColor)),
+        outputColorName: isdn && (group?.type ? (groupColor ?? modeColor) : (modeColor ?? groupColor)),
       })}
     </Grid >
   );

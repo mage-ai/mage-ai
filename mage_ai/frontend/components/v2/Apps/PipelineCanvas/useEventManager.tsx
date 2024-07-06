@@ -29,6 +29,7 @@ import { calculateBoundingBox, findRectAtPoint } from '../../Canvas/utils/rect';
 import { useRef, useState, startTransition } from 'react';
 import BlockType, { BlockTypeEnum } from '@interfaces/BlockType';
 import { MutateType } from '@api/interfaces';
+import { isElementReallyVisible } from '@utils/elements';
 import { IconProps } from '@mana/elements/Icon';
 import useAppEventsHandler, { CustomAppEvent, CustomAppEventEnum } from './useAppEventsHandler';
 import { DEBUG } from '@components/v2/utils/debug';
@@ -265,6 +266,7 @@ export default function useEventManager({
     items?: MenuItemType[],
     opts?: RenderContextMenuOptions,
   ) {
+
     const { data } = event;
     removeContextMenu(event);
 
@@ -274,7 +276,7 @@ export default function useEventManager({
       if (!item) return;
 
       const element = itemElementsRef?.current?.[item?.type]?.[id]?.current;
-      if (!element) return;
+      if (!element || !isElementReallyVisible(element)) return;
 
       const { left, top, width, height } = element?.getBoundingClientRect() ?? item?.rect;
 
@@ -427,39 +429,50 @@ export default function useEventManager({
     if (target) {
       if (ItemTypeEnum.NODE === target?.type) {
         const block = target?.block;
+        const selectedUUID = selectedGroupsRef?.current[selectedGroupsRef?.current?.length - 1]?.uuid;
 
-        menuItems.unshift(...[
-          {
-            Icon: OpenInSidekick,
-            onClick: (event: ClientEventType) => {
-              event?.preventDefault();
+        if (block?.uuid !== selectedUUID) {
+          menuItems.unshift(...[
+            {
+              Icon: OpenInSidekick,
+              onClick: (event: ClientEventType) => {
+                event?.preventDefault();
 
-              const groups = selectedGroupsRef.current ?? [];
-              const parent = groups[groups.length - 1];
+                let groups = [...(selectedGroupsRef.current ?? [])];
+                let parent = { ...selectedGroupsRef?.current[selectedGroupsRef?.current?.length - 1] };
+                const isSibling = !!parent
+                  && parent?.groups?.length >= 1
+                  && parent?.groups?.some(g => block?.groups?.includes(g?.uuid));
 
-              dispatchAppEvent(CustomAppEventEnum.UPDATE_HEADER_NAVIGATION, {
-                event: convertEvent(event),
-                options: {
-                  kwargs: {
-                    defaultGroups: [
-                      ...groups,
-                      {
-                        groups: parent ? [parent] : [],
-                        index: parent ? parent?.items?.findIndex(i => i.uuid === block?.uuid) : null,
-                        level: activeLevel?.current ?? 0,
-                        uuid: block?.uuid,
-                      },
-                    ],
+                if (isSibling) {
+                  groups = [...(selectedGroupsRef.current ?? [])]?.slice(0, selectedGroupsRef?.current?.length - 1);
+                  parent = { ...groups[groups.length - 1] };
+                }
+
+                dispatchAppEvent(CustomAppEventEnum.UPDATE_HEADER_NAVIGATION, {
+                  event: convertEvent(event),
+                  options: {
+                    kwargs: {
+                      defaultGroups: [
+                        ...groups,
+                        {
+                          groups: parent ? [parent] : [],
+                          index: parent ? parent?.items?.findIndex(i => i.uuid === block?.uuid) : null,
+                          level: activeLevel?.current ?? 0,
+                          uuid: block?.uuid,
+                        },
+                      ],
+                    },
                   },
-                },
-              });
+                });
 
-              removeContextMenu(event);
+                removeContextMenu(event);
+              },
+              uuid: `Teleport into ${block?.name}`,
             },
-            uuid: `Teleport into ${block?.name}`,
-          },
-          { divider: true },
-        ]);
+            { divider: true },
+          ]);
+        }
       } else if (target?.type === ItemTypeEnum.BLOCK && ![
         BlockTypeEnum.GROUP,
         BlockTypeEnum.PIPELINE,

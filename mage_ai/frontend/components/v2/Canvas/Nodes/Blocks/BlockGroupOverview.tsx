@@ -1,15 +1,17 @@
 import Circle from '@mana/elements/Circle';
-import { getModeColorName } from '../presentation';
-import { ModelContext } from '@components/v2/Apps/PipelineCanvas/ModelManager/ModelContext';
 import GradientContainer from '@mana/elements/Gradient';
 import Grid from '@mana/components/Grid';
 import PanelRows from '@mana/elements/PanelRows';
 import Text from '@mana/elements/Text';
 import { FrameworkType, PipelineExecutionFrameworkBlockType } from '@interfaces/PipelineExecutionFramework/interfaces';
-import { useContext, useMemo } from 'react';
-import { pluralize } from '@utils/string';
+import { LayoutDisplayEnum } from '../../types';
+import { ModelContext } from '@components/v2/Apps/PipelineCanvas/ModelManager/ModelContext';
+import { SettingsContext } from '@components/v2/Apps/PipelineCanvas/SettingsManager/SettingsContext';
 import { getBlockColor } from '@mana/themes/blocks';
+import { getModeColorName } from '../presentation';
 import { groupBy, sortByKey, sum } from '@utils/array';
+import { pluralize } from '@utils/string';
+import { useContext, useMemo } from 'react';
 
 type BlockOverviewProps = {
   block: FrameworkType;
@@ -18,6 +20,9 @@ type BlockOverviewProps = {
 export default function BlockGroupOverview({
   block,
 }: BlockOverviewProps) {
+  const { activeLevel, layoutConfigs, selectedGroupsRef } = useContext(SettingsContext);
+  const layoutConfig = layoutConfigs?.current?.[activeLevel?.current];
+  const detailLayout = LayoutDisplayEnum.DETAILED === layoutConfig?.current?.display;
   const { configuration, description, uuid } = block;
   const { blocksByGroupRef } = useContext(ModelContext);
   const groups = 'children' in (block ?? {}) ? (block as { children: any[] }).children : [];
@@ -153,17 +158,7 @@ export default function BlockGroupOverview({
         </PanelRows>
       </Grid>
     ));
-
-
-  }, [blocks, templatesForGroup])
-
-  if (blocks?.length >= 1) {
-    return (
-      <Grid rowGap={12}>
-        {childBlocksMemo}
-      </Grid >
-    );
-  }
+  }, [blocks, templatesForGroup]);
 
   if (!blocks?.length && !groups?.length) {
     return (
@@ -182,6 +177,18 @@ export default function BlockGroupOverview({
           </Text>
         </Grid>
       </PanelRows>
+    );
+  }
+
+  if (detailLayout) {
+    return;
+  }
+
+  if (blocks?.length >= 1) {
+    return (
+      <Grid rowGap={12}>
+        {childBlocksMemo}
+      </Grid >
     );
   }
 

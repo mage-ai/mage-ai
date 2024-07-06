@@ -56,8 +56,6 @@ export default function BlockNodeComponent({
   updateBlock,
 }: BlockNodeProps & DragAndDropHandlersType & SharedBlockProps) {
   const { activeLevel, layoutConfigs, selectedGroupsRef } = useContext(SettingsContext);
-  const layoutConfig = layoutConfigs?.current?.[activeLevel?.current];
-  const detailLayout = LayoutDisplayEnum.DETAILED === layoutConfig?.current?.display;
   const selectedGroup = selectedGroupsRef?.current?.[activeLevel?.current - 1];
   const isSiblingGroup = selectedGroup?.uuid !== block?.uuid &&
     selectedGroup?.groups?.some(g => block?.groups?.includes(g.uuid as GroupUUIDEnum));
@@ -355,7 +353,7 @@ export default function BlockNodeComponent({
             />
           </div>
           {isGroup
-            ? !detailLayout && (
+            ? (
               <BlockGroupOverview
                 block={block as FrameworkType}
               />
@@ -371,7 +369,7 @@ export default function BlockNodeComponent({
       </div>
     ),
     [badge, buildBadgeRow, block, connectionRows, templateConfigurations, titleRow, after,
-      isGroup, detailLayout, inputs,
+      isGroup, inputs,
     ],
   );
 

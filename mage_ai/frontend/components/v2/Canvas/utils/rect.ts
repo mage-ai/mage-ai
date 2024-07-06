@@ -43,6 +43,7 @@ export function transformRects(rectsInit: RectType[], transformations: RectTrans
   transformations.forEach((transformation, stage: number) => {
     const {
       condition,
+      conditionSelf,
       initialScope,
       options,
       scope,
@@ -76,6 +77,14 @@ export function transformRects(rectsInit: RectType[], transformations: RectTrans
       DEBUG.rects && console.log(`${tag}:condition not met`, ...tags, rects);
       rectsByStage.push(rects);
       return rects;
+    }
+
+    const rectsSnapshot = [...rects];
+    if (conditionSelf) {
+      DEBUG.rects && console.log(`${tag}:condition_self.init`, ...tags, rects);
+      rects = rects.filter(r => conditionSelf(r));
+      DEBUG.rects && console.log(`${tag}:condition_self.rects`, ...tags, rects);
+      DEBUG.rects && console.log(`${tag}:condition_self.start`, ...tags, rects);
     }
 
     if (RectTransformationScopeEnum.CHILDREN === scope) {
@@ -178,6 +187,14 @@ export function transformRects(rectsInit: RectType[], transformations: RectTrans
       });
     } else if (transform) {
       rects = transform(rects);
+    }
+
+    if (conditionSelf) {
+      DEBUG.rects && console.log(`${tag}:condition_self.end`, ...tags, rects);
+      DEBUG.rects && console.log(`${tag}:condition_self.reassembling_rects_snapshot.start`, ...tags, rectsSnapshot);
+      const mapping = indexBy(rects, r => r.id);
+      rects = rectsSnapshot.map(r => mapping[r.id] ?? r);
+      DEBUG.rects && console.log(`${tag}:condition_self.reassembling_rects_snapshot.end`, ...tags, rects);
     }
 
     DEBUG.rects && console.log(`${tag}:end`, ...tags, rects);
