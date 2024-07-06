@@ -27,8 +27,9 @@ import { getBlockColor } from '@mana/themes/blocks';
 import { handleGroupTemplateSelect, menuItemsForTemplates } from './utils';
 import { isEmptyObject } from '@utils/hash';
 import { buildEvent } from './utils';
-import { useEffect, useMemo, useState } from 'react';
+import { useContext, useEffect, useMemo, useState } from 'react';
 import { BlockNode } from './interfaces';
+import { LayoutContext } from '@components/v2/Apps/PipelineCanvas/LayoutManager/LayoutContext';
 
 type BlockNodeProps = {
   block: BlockType | PipelineExecutionFrameworkBlockType;
@@ -46,7 +47,6 @@ export default function BlockNodeComponent({
   collapsed,
   draggable,
   handlers,
-  layoutConfig,
   node,
   nodeRef,
   onMount,
@@ -55,6 +55,9 @@ export default function BlockNodeComponent({
   timerStatusRef,
   updateBlock,
 }: BlockNodeProps & DragAndDropHandlersType & SharedBlockProps) {
+  const { layoutConfigs } = useContext(LayoutContext);
+  const layoutConfig = layoutConfigs?.current?.[node?.level];
+
   const { name, status, type, uuid } = block;
   const [level, setLevel] = useState<number>(0);
 
@@ -388,7 +391,7 @@ export default function BlockNodeComponent({
         className={[
           ...classNames,
         ]?.filter(Boolean)?.join(' ')}
-        style={{ position: 'relative' }}
+        style={{ height: '100%', position: 'relative' }}
       >
         {main}
       </GradientContainer>

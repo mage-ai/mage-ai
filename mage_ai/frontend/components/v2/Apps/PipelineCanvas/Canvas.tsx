@@ -18,6 +18,7 @@ import {
 import useEventManager from './useEventManager';
 import useLayoutManager from './useLayoutManager';
 import useModelManager from './useModelManager';
+import { LayoutProvider } from './LayoutManager/LayoutContext';
 import { ModelProvider } from './ModelManager/ModelContext';
 import usePresentationManager, { PresentationManagerType } from './usePresentationManager';
 import { DragLayer } from '../../Canvas/Layers/DragLayer';
@@ -473,58 +474,59 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
           <div id="dynamic-components-root" ref={dynamicRootRef} />
 
           <ModelProvider blocksByGroupRef={blocksByGroupRef}>
-            {itemRects?.reduce((acc: {
-              order: string[][];
-              nodes: React.ReactNode[];
-            }, arr: [string, number, number, number, number]) => {
-              DEBUG.layout && console.log('[Canvas] Rendering itemRects', arr);
-              const { nodes, order } = acc;
+            <LayoutProvider layoutConfigs={layoutConfigs}>
+              {itemRects?.reduce((acc: {
+                order: string[][];
+                nodes: React.ReactNode[];
+              }, arr: [string, number, number, number, number]) => {
+                DEBUG.layout && console.log('[Canvas] Rendering itemRects', arr);
+                const { nodes, order } = acc;
 
-              const [
-                id,
-                left,
-                top,
-                width,
-                height,
-              ] = arr;
-              const item = itemsRef.current[id];
-              if (!item) return;
+                const [
+                  id,
+                  left,
+                  top,
+                  width,
+                  height,
+                ] = arr;
+                const item = itemsRef.current[id];
+                if (!item) return;
 
-              const draggable = dragEnabled && activeLevel?.current === item?.level
-                && (LayoutDisplayEnum.SIMPLE !== layoutConfig?.current?.display
-                  || ItemTypeEnum?.NODE === item?.type);
+                const draggable = dragEnabled && activeLevel?.current === item?.level
+                  && (LayoutDisplayEnum.SIMPLE !== layoutConfig?.current?.display
+                    || ItemTypeEnum?.NODE === item?.type);
 
-              const index = order[item.level]?.length ?? 0;
-              order[item.level] = [...(order[item.level] ?? []), id];
+                const index = order[item.level]?.length ?? 0;
+                order[item.level] = [...(order[item.level] ?? []), id];
 
-              return {
-                nodes: nodes.concat(
-                  <DraggableBlockNode
-                    {...handlers}
-                    activeLevel={activeLevel}
-                    appHandlersRef={handlers.appHandlersRef}
-                    draggable={draggable}
-                    index={index}
-                    key={arr.join(':')}
-                    layoutConfig={layoutConfig}
-                    node={item as NodeItemType}
-                    rect={{
-                      height,
-                      left,
-                      top,
-                      width,
-                    }}
-                    submitEventOperation={submitEventOperation}
-                    useExecuteCode={useExecuteCode}
-                    useRegistration={useRegistration}
-                  />
-                ),
-                order,
-              };
-            }, {
-              nodes: [],
-              order: [],
-            }).nodes}
+                return {
+                  nodes: nodes.concat(
+                    <DraggableBlockNode
+                      {...handlers}
+                      activeLevel={activeLevel}
+                      appHandlersRef={handlers.appHandlersRef}
+                      draggable={draggable}
+                      index={index}
+                      key={arr.join(':')}
+                      node={item as NodeItemType}
+                      rect={{
+                        height,
+                        left,
+                        top,
+                        width,
+                      }}
+                      submitEventOperation={submitEventOperation}
+                      useExecuteCode={useExecuteCode}
+                      useRegistration={useRegistration}
+                    />
+                  ),
+                  order,
+                };
+              }, {
+                nodes: [],
+                order: [],
+              }).nodes}
+            </LayoutProvider>
           </ModelProvider >
 
           {outputPortalsMemo}

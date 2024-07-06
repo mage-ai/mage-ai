@@ -177,7 +177,7 @@ export default function useLayoutManager({
       defaultTrans = true;
       layoutStyleTransformations.push(...[
         tree,
-        ...treecon,
+        // ...treecon,
       ]);
     }
 
@@ -229,7 +229,7 @@ export default function useLayoutManager({
         ...(defaultTrans ? [{
 
           ...wave,
-          ...wavecon,
+          // ...wavecon,
         }] : []),
         shift,
         {
