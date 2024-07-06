@@ -31,7 +31,7 @@ export default function useSettingsManager({
   executionFrameworkUUID: string;
   pipelineUUID: string;
 }): SettingsManagerType {
-  function defaultLayoutConfig() {
+  function defaultLayoutConfig(override?: Partial<LayoutConfigType>) {
     return {
       containerRef,
       direction: LayoutConfigDirectionEnum.VERTICAL,
@@ -40,6 +40,7 @@ export default function useSettingsManager({
       origin: LayoutConfigDirectionOriginEnum.LEFT,
       rectTransformations: null,
       viewportRef: canvasRef,
+      ...override,
     };
   }
 
@@ -52,7 +53,9 @@ export default function useSettingsManager({
   const validLevels = useRef<number[]>(null);
   const layoutConfigs = useRef<LayoutConfigRef[]>([
     useRef<LayoutConfigType>(defaultLayoutConfig()),
-    useRef<LayoutConfigType>(defaultLayoutConfig()),
+    useRef<LayoutConfigType>(defaultLayoutConfig({
+      direction: LayoutConfigDirectionEnum.HORIZONTAL,
+    })),
     useRef<LayoutConfigType>(defaultLayoutConfig()),
   ]);
   const optionalGroupsVisible = useRef<boolean>(null);
