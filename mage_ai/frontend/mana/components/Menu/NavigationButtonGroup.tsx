@@ -14,6 +14,7 @@ import { MenuItemType } from '@mana/hooks/useContextMenu';
 import { equals, sortByKey } from '@utils/array';
 import { getCache, deleteCache, updateCache } from './storage';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { DEBUG } from '@components/v2/utils/debug';
 
 type NavigationButtonGroupProps = {
   buildGroups?: (onClick: ItemClickHandler) => MenuItemType[];
@@ -65,16 +66,16 @@ export default function NavigationButtonGroup({
     : (groupsProp ?? []), [buildGroups, groupsProp, handleSelectGroup]);
 
   const handleNavigationUpdate = useCallback((event: CustomAppEvent) => {
-    false && console.log('handleNavigationUpdate', event)
+    DEBUG.events && console.log('handleNavigationUpdate', event)
     const { defaultGroups } = event?.detail?.options?.kwargs ?? {};
 
     const startingGroups = groups[0];
-    false && console.log('startingGroups', startingGroups)
+    DEBUG.events && console.log('startingGroups', startingGroups)
     const item = defaultGroups?.reduce((prev, curr) => {
-      false && console.log('prev', prev, 'curr', curr)
-      return prev.items[curr.index];
+      DEBUG.events && console.log('prev', prev, 'curr', curr)
+      return prev.items[curr.index] ?? prev.items?.find(i => i.uuid === curr.uuid);
     }, startingGroups);
-    false && console.log('item', item)
+    DEBUG.events && console.log('item', item)
     item.onClick({} as any, item);
   }, [groups]);
 
