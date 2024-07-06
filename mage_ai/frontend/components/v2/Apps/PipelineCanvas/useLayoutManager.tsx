@@ -204,8 +204,8 @@ export default function useLayoutManager({
             layout: update(layoutConfig, {
               gap: {
                 $set: {
-                  column: 80,
-                  row: 80,
+                  column: 40,
+                  row: 40,
                 },
               },
             }),
@@ -242,12 +242,24 @@ export default function useLayoutManager({
           type: TransformRectTypeEnum.FIT_TO_CHILDREN,
         },
         // mindims,
-        ...layoutStyleTransformations,
-        ...(defaultTrans ? [{
-
-          ...wave,
-          // ...wavecon,
-        }] : []),
+        // ...layoutStyleTransformations,
+        // ...(defaultTrans ? [{
+        //   ...wave,
+        //   ...wavecon,
+        // }] : []),
+        {
+          options: () => ({
+            layout: update(layoutConfig, {
+              gap: {
+                $set: {
+                  column: 120,
+                  row: 120,
+                },
+              },
+            }),
+          }),
+          type: TransformRectTypeEnum.LAYOUT_RECTANGLE,
+        },
         shift,
         {
           scope: RectTransformationScopeEnum.CHILDREN,

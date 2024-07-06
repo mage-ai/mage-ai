@@ -73,6 +73,7 @@ export type MenuProps = {
 
 type ItemProps = {
   contained?: boolean;
+  defaultOpen?: boolean;
   first?: boolean;
   last?: boolean;
   item: MenuItemType;
@@ -83,13 +84,30 @@ type ItemProps = {
 
 function MenuItemBase({
   contained, first, item, last, small,
-  handleMouseEnter, handleMouseLeave
+  handleMouseEnter, handleMouseLeave, defaultOpen,
 }: ItemProps,
   ref: React.Ref<HTMLDivElement>
 ) {
+  const timeoutRef = useRef<number | null>(null);
   const [debouncer, cancel] = useDebounce();
   const { Icon, description, divider, items, keyboardShortcuts, label, onClick, uuid } = item;
   const itemsCount = useMemo(() => items?.length || 0, [items]);
+
+  useEffect(() => {
+    if (defaultOpen && ref.current && ref.current.classList.contains('default-open')) {
+      timeoutRef.current = setTimeout(() => {
+        ref.current?.classList.remove('default-open');
+      }, 1000);
+    }
+
+    // Cleanup on unmount
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [defaultOpen]);
 
   if (divider) {
     return (
@@ -159,6 +177,7 @@ function MenuItemBase({
 
   return (
     <MenuItemContainerStyled
+      className={defaultOpen ? 'default-open' : ''}
       onMouseEnter={(event) => {
         cancel();
         debouncer(() => handleMouseEnter(event as any), 100);
@@ -516,6 +535,7 @@ function Menu({
                   variants={itemVariants}
                 >
                   <MenuItem
+                    defaultOpen={openItems?.[0]?.row === idx}
                     handleMouseEnter={(event) => {
                       hideChildren();
                       if (item?.items?.length >= 1) {

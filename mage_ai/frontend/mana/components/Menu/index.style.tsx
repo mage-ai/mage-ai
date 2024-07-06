@@ -99,6 +99,10 @@ export const MenuItemContainerStyled = styled.div<{
     border-bottom-right-radius: ${theme.menus.border.radius.base};
   `}
 
+  &.default-open {
+    ${focusedBackground}
+  }
+
   &:hover {
     ${focusedBackground}
   }

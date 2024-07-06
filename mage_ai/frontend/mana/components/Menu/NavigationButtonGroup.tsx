@@ -130,15 +130,10 @@ export default function NavigationButtonGroup({
           onClick={(event: any) => {
             event.preventDefault();
             event.stopPropagation();
-            setSelectedButtonIndex(0);
-            // setSelectedButtonIndex(Math.min(
-            //   idx,
-            //   selectedGroupsByLevel === null
-            //     ? 0
-            //     : (selectedGroupsByLevel?.length - 1 ?? 0),
-            // ));
+            setSelectedButtonIndex(
+              idx <= selectedGroupsByLevel?.length ? idx : selectedGroupsByLevel?.length);
           }}
-          secondary={!done}
+          secondary
           semibold={!done || beforeSelected}
           small
           success={beforeSelected}
@@ -179,6 +174,13 @@ export default function NavigationButtonGroup({
       column,
       row,
     }));
+    const itemsByLevel = [groups?.[0]?.items];
+    openItems?.reduce((prev: MenuItemType[], curr: { column: number, row: number }) => {
+      const arr = prev?.[curr?.row]?.items;
+      itemsByLevel.push(arr);
+      return arr;
+    }, itemsByLevel[0]);
+    const currentItems = itemsByLevel?.[selectedButtonIndex] ?? currentGroup?.items;
 
     return (
       <MenuManager
@@ -192,9 +194,9 @@ export default function NavigationButtonGroup({
           }
         }}
         isOpen={!!currentGroup}
-        items={currentGroup?.items}
+        items={currentItems}
         key={currentGroup?.uuid}
-        openItems={openItems}
+        // openItems={openItems}
         uuid={currentGroup?.uuid}
       >
         <div
