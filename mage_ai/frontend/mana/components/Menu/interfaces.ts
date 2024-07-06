@@ -30,7 +30,8 @@ export interface MenuItemType {
 }
 
 export interface MenuGroupType extends MenuItemType {
-  groups: MenuGroupType[];
-  index: number;
+  groups?: MenuGroupType[];
+  index?: number;
   level: number;
+  uuid?: string;
 }

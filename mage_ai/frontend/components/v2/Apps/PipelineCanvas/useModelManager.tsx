@@ -27,7 +27,6 @@ import { indexBy, unique } from '@utils/array';
 import { useLayout } from '@context/v2/Layout';
 
 type ModelManagerProps = {
-  activeLevel: ModelManagerType['activeLevel'];
   itemIDsByLevelRef: React.MutableRefObject<string[][]>;
   pipelineUUID: string;
   executionFrameworkUUID: string;
@@ -40,16 +39,16 @@ type ModelManagerProps = {
 };
 
 export default function useModelManager({
-  activeLevel,
   itemIDsByLevelRef,
   pipelineUUID,
   executionFrameworkUUID,
   setHeaderData,
   setOutputIDs,
 }: ModelManagerProps): ModelManagerType {
-  const { header, page } = useLayout();
   const appHandlersRef = useRef<AppHandlerType>({} as AppHandlerType);
-  const blocksByGroupRef = useRef<BlocksByGroupType>({});
+  const blocksByGroupRef = useRef<BlocksByGroupType>({} as BlocksByGroupType);
+  const groupsByLevelRef = useRef<GroupLevelType>([]);
+
   const itemsRef = useRef<ItemMappingType>({});
   const outputsRef = useRef<Record<string, Record<string, OutputNodeType>>>({});
   const portsRef = useRef<PortMappingType>({});
@@ -309,6 +308,8 @@ export default function useModelManager({
         });
 
         blocksByGroupRef.current = blocksByGroup;
+        groupsByLevelRef.current = groupsByLevel;
+
         itemsRef.current = itemMapping;
         portsRef.current = portMapping;
 
@@ -401,11 +402,12 @@ export default function useModelManager({
 
   return {
     appHandlersRef,
+    blocksByGroupRef,
+    groupsByLevelRef,
     itemsRef,
     onItemChangeRef,
     onModelChangeRef,
     portsRef,
-    blocksByGroupRef,
     // mutateModels,
     // updateNodeItems,
     // updatePorts,

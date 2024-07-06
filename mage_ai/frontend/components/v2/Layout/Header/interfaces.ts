@@ -15,6 +15,7 @@ export interface HeaderProps {
   intraAppNavItems?: MenuItemType[];
   navTag?: string;
   router?: any;
+  selectedIntraAppNavItems?: MenuGroupType[];
   selectedNavItem?: string;
   title?: string;
   version?: number;

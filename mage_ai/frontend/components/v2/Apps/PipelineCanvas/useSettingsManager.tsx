@@ -11,7 +11,7 @@ import { LayoutConfigRef, SettingsManagerType } from './interfaces';
 import {
   ItemTypeEnum, ItemStatusEnum,
   LayoutConfigDirectionEnum, LayoutConfigDirectionOriginEnum,
-  LayoutDisplayEnum, TransformRectTypeEnum
+  LayoutDisplayEnum
 } from '../../Canvas/types';
 import { MenuGroupType } from '@mana/components/Menu/interfaces';
 import { Root, createRoot } from 'react-dom/client';

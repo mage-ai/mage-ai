@@ -2,7 +2,7 @@ import PipelineExecutionFrameworkType, {
   FrameworkType,
 } from '@interfaces/PipelineExecutionFramework/interfaces';
 import BlockType, { BlockTypeEnum } from '@interfaces/BlockType';
-import { BlockMappingType, BlocksByGroupType, GroupMappingType } from '../../../Canvas/interfaces';
+import { BlockMappingType, BlocksByGroupType, GroupMappingType, GroupLevelType } from '../../../Canvas/interfaces';
 import { GroupUUIDEnum } from '@interfaces/PipelineExecutionFramework/types';
 import { extractNestedBlocks } from '@utils/models/pipeline';
 import { indexBy, flattenArray, uniqueArray } from '@utils/array';
@@ -15,7 +15,7 @@ export function buildDependencies(
   blockMapping: BlockMappingType;
   blocksByGroup: BlocksByGroupType;
   groupMapping: GroupMappingType;
-  groupsByLevel: FrameworkType[][];
+  groupsByLevel: GroupLevelType;
 } {
   // Build group hierarchy from pipeline execution framework’s blocks:
   // 1. Any block with 0 groups

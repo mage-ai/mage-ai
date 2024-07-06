@@ -406,8 +406,6 @@ export default function useLayoutManager({
       items.push(item);
     });
 
-    console.log(items)
-
     // Don’t do any level filtering here, it’ll be done at the Canvas level.
     dispatchAppEvent(CustomAppEventEnum.NODE_LAYOUTS_CHANGED, {
       nodes: items,

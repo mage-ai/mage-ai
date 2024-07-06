@@ -28,7 +28,7 @@ function menuItemsForBlock(
 
     return {
       description,
-      items: block1?.children?.map(
+      items: (block1 as any)?.children?.map(
         (block2: Block, index3: number) => menuItemsForBlock(block2,
           (event: MouseEvent, item: MenuGroupType) => {
             onClick2(event, {
@@ -57,11 +57,13 @@ function menuItemsForBlock(
 }
 
 export default function HeaderUpdater({
+  defaultGroups,
   executionFramework,
   groupsByLevel,
   handleMenuItemClick,
   pipeline,
 }: {
+  defaultGroups?: MenuGroupType[];
   executionFramework: FrameworkType;
   groupsByLevel: MenuItemType[][];
   handleMenuItemClick?: (event: MouseEvent, groups: MenuGroupType[]) => void;
@@ -75,7 +77,7 @@ export default function HeaderUpdater({
         onClickBase(event, item, handleMenuItemClick);
       };
       const menuItems: MenuItemType[] = [];
-      const fname = executionFramework?.name ?? executionFramework?.uuid;
+      const fname = (executionFramework as any)?.name ?? (executionFramework as any)?.uuid;
 
       (groupsByLevel as MenuItemType[][]).forEach((groups: MenuItemType[], index: number) => {
         menuItems.push({
@@ -139,11 +141,12 @@ export default function HeaderUpdater({
 
     setHeader({
       buildIntraAppNavItems,
-      navTag: executionFramework?.name ?? executionFramework?.uuid?.toUpperCase(),
-      title: pipeline?.name || pipeline?.uuid,
+      navTag: (executionFramework as any)?.name ?? (executionFramework as any)?.uuid?.toUpperCase(),
+      selectedIntraAppNavItems: defaultGroups,
+      title: (pipeline as any)?.name || (pipeline as any)?.uuid,
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [executionFramework, groupsByLevel, handleMenuItemClick, pipeline]);
+  }, [defaultGroups, executionFramework, groupsByLevel, handleMenuItemClick, pipeline]);
 
   return <div />;
 }

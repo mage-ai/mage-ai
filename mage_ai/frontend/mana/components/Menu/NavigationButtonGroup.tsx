@@ -10,24 +10,28 @@ import MenuManager from '@mana/components/Menu/MenuManager';
 import { LayoutDirectionEnum } from '@mana/components/Menu/types';
 import stylesNavigation from '@styles/scss/components/Menu/NavigationButtonGroup.module.scss';
 import stylesHeader from '@styles/scss/layouts/Header/Header.module.scss';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { getCache, deleteCache, updateCache } from './storage';
+import { equals, sortByKey } from '@utils/array';
 
 type NavigationButtonGroupProps = {
   buildGroups?: (onClick: ItemClickHandler) => MenuItemType[];
   cacheKey?: string;
+  defaultGroups?: MenuGroupType[];
   groups?: MenuItemType[];
 }
 export default function NavigationButtonGroup({
   buildGroups,
   cacheKey,
+  defaultGroups,
   groups: groupsProp,
 }: NavigationButtonGroupProps) {
+  const defaultGroupsRef = useRef<MenuGroupType[]>(null);
   const [selectedButtonIndex, setSelectedButtonIndex] = useState<number>(null);
   const [selectedGroupsByLevel, setSelectedGroupsByLevel] =
     useState<MenuGroupType[]>(cacheKey ? (getCache(cacheKey) ?? []) : []);
 
-  const groups = useMemo(() => buildGroups ? buildGroups((
+  const handleSelectGroup = useCallback((
     event: MouseEvent,
     item: MenuGroupType,
     handleGroupSelection?: (event: MouseEvent, groups: MenuGroupType[]) => void,
@@ -56,7 +60,53 @@ export default function NavigationButtonGroup({
     handleGroupSelection(event, items);
 
     setSelectedButtonIndex(null);
-  }) : (groupsProp ?? []), [buildGroups, cacheKey, groupsProp, selectedGroupsByLevel]);
+  }, [cacheKey, selectedGroupsByLevel]);
+
+  const groups = useMemo(() => buildGroups
+    ? buildGroups(handleSelectGroup)
+    : (groupsProp ?? []), [buildGroups, groupsProp, handleSelectGroup]);
+
+  useEffect(() => {
+    if (defaultGroups?.length >= 1 && (!defaultGroupsRef?.current
+      || !equals(
+        defaultGroups?.map(g => g.uuid).sort(),
+        defaultGroupsRef?.current?.map(g => g.uuid).sort(),
+      )
+    )) {
+      defaultGroupsRef.current = defaultGroups;
+
+      const level = Math.min(...defaultGroups?.map(g => g.level));
+
+      const arr = [...selectedGroupsByLevel.slice(0, level)];
+      const startingGroups = groups[0].items;
+
+      sortByKey(defaultGroups, g => g.level)?.forEach(({
+        level,
+        uuid,
+      }) => {
+        const parent = level >= 1
+          ? arr.slice(0, level).reduce(
+            (acc: MenuGroupType, group: MenuGroupType) => acc.items[group.index],
+            startingGroups[arr[0].index],
+          )
+          : null;
+
+        const items = level >= 1 ? parent?.items : startingGroups;
+        const index = items?.findIndex(g => g.uuid === uuid);
+        const item = {
+          ...items[index],
+          groups: (parent ? [parent] : []) as MenuGroupType[],
+          index,
+          level,
+          uuid,
+        };
+
+        arr.push(item);
+      });
+      const item = arr[arr.length - 1];
+      item.onClick({} as any, item);
+    }
+  }, [defaultGroups, groups, selectedGroupsByLevel]);
 
   const buttons = useMemo(() => {
     const defaultState = selectedGroupsByLevel === null;

@@ -29,6 +29,7 @@ export function Header({
   intraAppNavItems,
   navTag,
   router,
+  selectedIntraAppNavItems,
   selectedNavItem,
   title,
   version,
@@ -168,12 +169,14 @@ export function Header({
           <NavigationButtonGroup
             buildGroups={buildIntraAppNavItems}
             cacheKey={cacheKey}
+            defaultGroups={selectedIntraAppNavItems}
             groups={intraAppNavItems}
           />
         )}
       </Grid>
     );
-  }, [buttonProps, cacheKey, intraAppNavItems, buildIntraAppNavItems, gridProps, version]);
+  }, [buttonProps, cacheKey, selectedIntraAppNavItems,
+    intraAppNavItems, buildIntraAppNavItems, gridProps, version]);
 
   const appHistoryNavMemo = useMemo(() => (
     <Grid {...gridProps}>

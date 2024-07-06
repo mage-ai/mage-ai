@@ -10,7 +10,7 @@ import {
   ActiveLevelRefType, AppHandlersRefType, LayoutConfigRefType, ItemIDsByLevelRef,
 } from './interfaces';
 import {
-  TreeWithArrowsDown,
+  TreeWithArrowsDown, OpenInSidekick,
   Select, SearchV2, CubeWithArrowDown, PaginateArrowRight, BatchSquaresStacked, Table, Circle, BranchAlt, Monitor, Undo,
   ArrowsAdjustingFrameSquare, Check, Group, TemplateShapes, Trash, GroupV2, ArrowsPointingInFromAllCorners
 } from '@mana/icons';
@@ -61,6 +61,7 @@ type EventManagerProps = {
 export default function useEventManager({
   activeLevel,
   wrapperRef,
+  setHeaderData,
   appHandlersRef,
   itemIDsByLevelRef,
   canvasRef,
@@ -348,8 +349,6 @@ export default function useEventManager({
         ],
         uuid: 'View controls',
       },
-      { divider: true },
-
       {
         Icon: GroupV2,
         items: [
@@ -426,7 +425,29 @@ export default function useEventManager({
     ]));
 
     if (target) {
-      if (target?.type === ItemTypeEnum.BLOCK && ![
+      if (ItemTypeEnum.NODE === target?.type) {
+        const block = target?.block;
+
+        menuItems.unshift(...[
+          {
+            Icon: OpenInSidekick,
+            onClick: (event: ClientEventType) => {
+              event?.preventDefault();
+              removeContextMenu(event);
+              setHeaderData({
+                defaultGroups: [
+                  {
+                    level: activeLevel?.current ?? 0,
+                    uuid: block?.uuid,
+                  },
+                ],
+              });
+            },
+            uuid: `Teleport into ${block?.name}`,
+          },
+          { divider: true },
+        ]);
+      } else if (target?.type === ItemTypeEnum.BLOCK && ![
         BlockTypeEnum.GROUP,
         BlockTypeEnum.PIPELINE,
       ].includes(target?.block?.type)) {

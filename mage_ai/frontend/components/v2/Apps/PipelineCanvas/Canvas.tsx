@@ -98,8 +98,6 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
 
   // VERY IMPORTANT THAT THE STATE IS IN THIS COMPONENT OR ELSE NOTHING WILL RENDER!
   const [headerData, setHeaderDataState] = useState<any>(null);
-  const [pipeline, setPipeline] = useState<PipelineExecutionFrameworkType>(null);
-  const [executionFramework, setExecutionFramework] = useState<PipelineExecutionFrameworkType>(null);
   const [appRects, setAppRects] = useState<{
     mapping: Record<string, AppNodeType>;
     rects: FlatItemType[];
@@ -120,25 +118,6 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
       canvasRef, wrapperRef, itemsRef, imageDataRef
     ),
   });
-
-  function setHeaderData(data: any) {
-    setHeaderDataState({
-      ...data,
-      handleMenuItemClick: (
-        event: MouseEvent,
-        groups: MenuGroupType[],
-      ) => {
-        dispatchAppEvent(CustomAppEventEnum.UPDATE_SETTINGS, {
-          event: convertEvent(event),
-          options: {
-            kwargs: {
-              groups,
-            },
-          },
-        });
-      },
-    });
-  }
 
   function handleAppChanged({ detail: { manager } }: CustomAppEvent) {
     const mapping = {};
@@ -161,12 +140,53 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
     setAppRects({ mapping, rects });
   }
 
-  const { activeLevel, layoutConfig } = useSettingsManager({
+  const { activeLevel, layoutConfigs, selectedGroupsRef } = useSettingsManager({
     canvasRef,
     containerRef,
     executionFrameworkUUID,
     pipelineUUID,
   });
+  const layoutConfig = layoutConfigs?.current?.[activeLevel?.current]?.current ?? {};
+
+  useAppManager({ activeLevel });
+
+  const {
+    appHandlersRef,
+    blocksByGroupRef,
+    itemsRef,
+    mutateModels,
+    onItemChangeRef,
+    onModelChangeRef,
+    portsRef,
+  }: ModelManagerType = useModelManager({
+    executionFrameworkUUID,
+    itemIDsByLevelRef,
+    pipelineUUID,
+    setHeaderData,
+    setOutputIDs,
+  });
+
+  function setHeaderData(data: any) {
+    setHeaderDataState((prev: any) => ({
+      ...(data?.defaultGroups ? { defaultGroups: data?.defaultGroups } : {}),
+      executionFramework: data?.executionFramework ?? prev?.executionFramework,
+      groupsByLevel: data?.groupsByLevel ?? prev?.groupsByLevel,
+      handleMenuItemClick: (
+        event: MouseEvent,
+        groups: MenuGroupType[],
+      ) => {
+        dispatchAppEvent(CustomAppEventEnum.UPDATE_SETTINGS, {
+          event: convertEvent(event),
+          options: {
+            kwargs: {
+              groups,
+            },
+          },
+        });
+      },
+      pipeline: data?.pipeline ?? prev?.pipeline,
+    }));
+  }
 
   function handleNodeLayoutsChanged({ detail }: CustomAppEvent) {
     const { nodes } = detail;
@@ -189,27 +209,6 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
       _setItemRects(flats);
     });
   }
-
-  useAppManager({
-    activeLevel,
-  });
-
-  const {
-    appHandlersRef,
-    blocksByGroupRef,
-    itemsRef,
-    mutateModels,
-    onItemChangeRef,
-    onModelChangeRef,
-    portsRef,
-  }: ModelManagerType = useModelManager({
-    activeLevel,
-    executionFrameworkUUID,
-    itemIDsByLevelRef,
-    setHeaderData,
-    pipelineUUID,
-    setOutputIDs,
-  });
 
   useLayoutManager({
     activeLevel,
@@ -244,7 +243,6 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
     submitEventOperation,
   });
 
-
   const {
     connectionLinesPathRef,
     connectionLinesRootID,
@@ -278,6 +276,7 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
     submitEventOperation,
   }: EventManagerType = useEventManager({
     activeLevel,
+    setHeaderData,
     appHandlersRef,
     layoutConfig,
     canvasRef,
@@ -306,7 +305,7 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
       phaseRef.current = 1;
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [executionFrameworkUUID, pipelineUUID, executionFramework, pipeline]);
+  }, [executionFrameworkUUID, pipelineUUID]);
 
   const [, connectDrop] = useDrop(
     () => ({
