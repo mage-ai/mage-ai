@@ -1,11 +1,13 @@
-import Grid from '@mana/components/Grid';
-import { ModelContext } from '@components/v2/Apps/PipelineCanvas/ModelManager/ModelContext';
-import { useContext } from 'react';
-import { getBlockColor } from '@mana/themes/blocks';
 import BlockType, { BlockTypeEnum } from '@interfaces/BlockType';
-import { getModeColorName } from '../presentation';
-import { NodeItemType } from '../../interfaces';
+import Grid from '@mana/components/Grid';
+import Link from '@mana/elements/Link';
+import useAppEventsHandler, { CustomAppEvent, CustomAppEventEnum } from '@components/v2/Apps/PipelineCanvas/useAppEventsHandler';
 import { MenuGroupType } from '@mana/components/Menu/interfaces';
+import { ModelContext } from '@components/v2/Apps/PipelineCanvas/ModelManager/ModelContext';
+import { NodeItemType } from '../../interfaces';
+import { getBlockColor } from '@mana/themes/blocks';
+import { getModeColorName } from '../presentation';
+import { useContext } from 'react';
 
 export default function TeleportGroup({
   block,
@@ -18,6 +20,7 @@ export default function TeleportGroup({
   node: NodeItemType;
   selectedGroup: MenuGroupType;
 }) {
+  const { convertEvent, dispatchAppEvent } = useAppEventsHandler({ block } as any);
   const { blocksByGroupRef, groupMappingRef } = useContext(ModelContext);
   const group = groupMappingRef?.current?.[selectedGroup?.uuid];
   const groupBlocks = Object.values(blocksByGroupRef?.current?.[group?.uuid] ?? {});
@@ -30,19 +33,30 @@ export default function TeleportGroup({
   const colorName = getBlockColor(block?.type ?? BlockTypeEnum.GROUP, { getColorName: true })?.names?.base;
 
   return (
-    <Grid
-      borderColor={colorName}
-      borders
-      padding={12}
-      style={{
-        backgroundColor: 'var(--backgrounds-body)',
-        minWidth: 200,
+    <Link
+      onClick={(event: any) => {
+        event.preventDefault();
+        dispatchAppEvent(CustomAppEventEnum.TELEPORT_INTO_BLOCK, {
+          block,
+          event: convertEvent(event),
+        });
       }}
+      wrap
     >
-      {buildBadgeRow({
-        inputColorName: isup && (group?.type ? (groupColor ?? modeColor) : (modeColor ?? groupColor)),
-        outputColorName: isdn && (group?.type ? (groupColor ?? modeColor) : (modeColor ?? groupColor)),
-      })}
-    </Grid >
+      <Grid
+        borderColor={colorName}
+        borders
+        padding={12}
+        style={{
+          backgroundColor: 'var(--backgrounds-body)',
+          minWidth: 200,
+        }}
+      >
+        {buildBadgeRow({
+          inputColorName: isup && (group?.type ? (groupColor ?? modeColor) : (modeColor ?? groupColor)),
+          outputColorName: isdn && (group?.type ? (groupColor ?? modeColor) : (modeColor ?? groupColor)),
+        })}
+      </Grid >
+    </Link>
   );
 }

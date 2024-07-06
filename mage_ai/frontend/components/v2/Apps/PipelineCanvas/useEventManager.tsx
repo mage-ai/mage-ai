@@ -438,32 +438,9 @@ export default function useEventManager({
               onClick: (event: ClientEventType) => {
                 event?.preventDefault();
 
-                let groups = [...(selectedGroupsRef.current ?? [])];
-                let parent = { ...selectedGroupsRef?.current[selectedGroupsRef?.current?.length - 1] };
-                const isSibling = !!parent
-                  && parent?.groups?.length >= 1
-                  && parent?.groups?.some(g => block?.groups?.includes(g?.uuid));
-
-                if (isSibling) {
-                  groups = [...(selectedGroupsRef.current ?? [])]?.slice(0, selectedGroupsRef?.current?.length - 1);
-                  parent = { ...groups[groups.length - 1] };
-                }
-
-                dispatchAppEvent(CustomAppEventEnum.UPDATE_HEADER_NAVIGATION, {
+                dispatchAppEvent(CustomAppEventEnum.TELEPORT_INTO_BLOCK, {
+                  block,
                   event: convertEvent(event),
-                  options: {
-                    kwargs: {
-                      defaultGroups: [
-                        ...groups,
-                        {
-                          groups: parent ? [parent] : [],
-                          index: parent ? parent?.items?.findIndex(i => i.uuid === block?.uuid) : null,
-                          level: activeLevel?.current ?? 0,
-                          uuid: block?.uuid,
-                        },
-                      ],
-                    },
-                  },
                 });
 
                 removeContextMenu(event);

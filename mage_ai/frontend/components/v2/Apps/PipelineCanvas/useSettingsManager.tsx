@@ -1,6 +1,7 @@
 import React, { useRef, useEffect } from 'react';
 import stylesBuilder from '@styles/scss/apps/Canvas/Pipelines/Builder.module.scss';
 import { LayoutConfigType } from '../../Canvas/interfaces';
+import BlockType from '@interfaces/BlockType';
 import { buildContainerClassName, extractContainerClassNames } from './utils/display';
 import { levelClassName, groupClassName, nodeTypeClassName, statusClassName } from '../../Canvas/Nodes/utils';
 import { get, set } from '@storage/localStorage';
@@ -83,6 +84,7 @@ export default function useSettingsManager({
   } as SettingsManagerType, {
     [CustomAppEventEnum.NODE_LAYOUTS_CHANGED]: handleLayoutUpdates,
     [CustomAppEventEnum.NODE_RECT_UPDATED]: updateVisibleNodes,
+    [CustomAppEventEnum.TELEPORT_INTO_BLOCK]: teleportIntoBlock,
     [CustomAppEventEnum.UPDATE_SETTINGS]: updateLocalSettings,
   });
 
@@ -397,6 +399,38 @@ export default function useSettingsManager({
       [...((containerRef?.current?.classList ?? []) as string[])],
     )?.forEach(cn => {
       containerRef?.current?.classList?.remove(cn);
+    });
+  }
+
+  function teleportIntoBlock(event: CustomAppEvent, blockArg?: BlockType) {
+    const block = blockArg ?? event?.detail?.block;
+
+    let groups = [...(selectedGroupsRef.current ?? [])];
+    let parent = { ...selectedGroupsRef?.current[selectedGroupsRef?.current?.length - 1] };
+    const isSibling = !!parent
+      && parent?.groups?.length >= 1
+      && parent?.groups?.some(g => block?.groups?.includes((g as any)?.uuid));
+
+    if (isSibling) {
+      groups = [...(selectedGroupsRef.current ?? [])]?.slice(0, selectedGroupsRef?.current?.length - 1);
+      parent = { ...groups[groups.length - 1] };
+    }
+
+    dispatchAppEvent(CustomAppEventEnum.UPDATE_HEADER_NAVIGATION, {
+      event: convertEvent(event),
+      options: {
+        kwargs: {
+          defaultGroups: [
+            ...groups,
+            {
+              groups: parent ? [parent] : [],
+              index: parent ? parent?.items?.findIndex(i => i.uuid === block?.uuid) : null,
+              level: activeLevel?.current ?? 0,
+              uuid: block?.uuid,
+            },
+          ],
+        },
+      },
     });
   }
 

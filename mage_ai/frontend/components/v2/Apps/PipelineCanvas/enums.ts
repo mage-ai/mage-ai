@@ -17,6 +17,7 @@ export enum CustomAppEventEnum {
   START_DRAGGING = 'start_dragging',
   STOPPING_APP = 'stopping_app',
   STOP_APP = 'stop_app',
+  TELEPORT_INTO_BLOCK = 'teleport_into_block',
   UPDATE_NODE_LAYOUTS = 'update_node_layouts',
   UPDATE_SETTINGS = 'update_settings',
   UPDATE_HEADER_NAVIGATION = 'UPDATE_HEADER_NAVIGATION',
