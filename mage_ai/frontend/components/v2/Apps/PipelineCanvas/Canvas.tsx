@@ -472,8 +472,13 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
           <div id="dynamic-components-root" ref={dynamicRootRef} />
 
           <ModelProvider blocksByGroupRef={blocksByGroupRef}>
-            {itemRects?.map((arr: [string, number, number, number, number]) => {
+            {itemRects?.reduce((acc: {
+              order: string[][];
+              nodes: React.ReactNode[];
+            }, arr: [string, number, number, number, number]) => {
               DEBUG.layout && console.log('[Canvas] Rendering itemRects', arr);
+              const { nodes, order } = acc;
+
               const [
                 id,
                 left,
@@ -488,27 +493,37 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
                 && (LayoutDisplayEnum.SIMPLE !== layoutConfig?.current?.display
                   || ItemTypeEnum?.NODE === item?.type);
 
-              return (
-                <DraggableBlockNode
-                  {...handlers}
-                  activeLevel={activeLevel}
-                  appHandlersRef={handlers.appHandlersRef}
-                  draggable={draggable}
-                  key={arr.join(':')}
-                  layoutConfig={layoutConfig}
-                  node={item as NodeItemType}
-                  rect={{
-                    height,
-                    left,
-                    top,
-                    width,
-                  }}
-                  submitEventOperation={submitEventOperation}
-                  useExecuteCode={useExecuteCode}
-                  useRegistration={useRegistration}
-                />
-              );
-            })}
+              const index = order[item.level]?.length ?? 0;
+              order[item.level] = [...(order[item.level] ?? []), id];
+
+              return {
+                nodes: nodes.concat(
+                  <DraggableBlockNode
+                    {...handlers}
+                    activeLevel={activeLevel}
+                    appHandlersRef={handlers.appHandlersRef}
+                    draggable={draggable}
+                    index={index}
+                    key={arr.join(':')}
+                    layoutConfig={layoutConfig}
+                    node={item as NodeItemType}
+                    rect={{
+                      height,
+                      left,
+                      top,
+                      width,
+                    }}
+                    submitEventOperation={submitEventOperation}
+                    useExecuteCode={useExecuteCode}
+                    useRegistration={useRegistration}
+                  />
+                ),
+                order,
+              };
+            }, {
+              nodes: [],
+              order: [],
+            }).nodes}
           </ModelProvider >
 
           {outputPortalsMemo}

@@ -35,6 +35,7 @@ import { EventSourceHandlers, ConsumerOperations } from '../../ExecutionManager/
 import { BlockNodeWrapperProps } from './types';
 import { ExecutionManagerType } from '@components/v2/ExecutionManager/interfaces';
 import { executionDone } from '@components/v2/ExecutionManager/utils';
+import { nodeClassNames } from './utils';
 
 type BlockNodeType = {
 
@@ -47,6 +48,7 @@ export const BlockNodeWrapper: React.FC<BlockNodeType> = ({
   draggable,
   droppable,
   handlers,
+  index,
   layoutConfig,
   node,
   onMountPort,
@@ -255,6 +257,7 @@ export const BlockNodeWrapper: React.FC<BlockNodeType> = ({
       buttonBeforeRef={buttonBeforeRef}
       draggable={draggable}
       handlers={draggingHandlers}
+      index={index}
       layoutConfig={layoutConfig}
       node={node}
       nodeRef={nodeRef}
@@ -269,6 +272,7 @@ export const BlockNodeWrapper: React.FC<BlockNodeType> = ({
     block,
     draggable,
     draggingHandlers,
+    index,
     layoutConfig,
     node,
     nodeRef,
@@ -307,6 +311,12 @@ export const BlockNodeWrapper: React.FC<BlockNodeType> = ({
     return (
       <Wrapper
         {...sharedProps}
+        className={[
+          (sharedProps.className || []),
+          // Class names reserved for the SettingsManager to determine what is visible
+          // based on the selected groups.
+          ...nodeClassNames(node),
+        ].filter(Boolean).join(' ')}
         handlers={draggingHandlers}
         node={node}
         nodeRef={nodeRef}

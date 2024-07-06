@@ -1,18 +1,20 @@
 import React, { useRef, useEffect } from 'react';
 import stylesBuilder from '@styles/scss/apps/Canvas/Pipelines/Builder.module.scss';
 import { LayoutConfigType } from '../../Canvas/interfaces';
-import { levelClassName, groupClassName } from '../../Canvas/Nodes/utils';
+import { levelClassName, groupClassName, nodeTypeClassName, statusClassName } from '../../Canvas/Nodes/utils';
 import { get, set } from '@storage/localStorage';
 import useAppEventsHandler, { CustomAppEvent, CustomAppEventEnum } from './useAppEventsHandler';
 import { STYLE_ROOT_ID } from '@context/v2/Style';
 import { getCache } from '@mana/components/Menu/storage';
 import { LayoutConfigRef, SettingsManagerType } from './interfaces';
 import {
+  ItemTypeEnum, ItemStatusEnum,
   LayoutConfigDirectionEnum, LayoutConfigDirectionOriginEnum,
   LayoutDisplayEnum, TransformRectTypeEnum
 } from '../../Canvas/types';
 import { MenuGroupType } from '@mana/components/Menu/interfaces';
 import { Root, createRoot } from 'react-dom/client';
+import { BlockTypeEnum } from '@interfaces/BlockType';
 
 function builderLocalStorageKey(uuid: string) {
   return `pipeline_builder_canvas_local_settings_${uuid}`;
@@ -64,7 +66,6 @@ export default function useSettingsManager({
     layoutConfigs,
     selectedGroupsRef,
   } as SettingsManagerType, {
-    // [CustomAppEventEnum.NODE_LAYOUTS_CHANGED]: updateVisibleNodes,
     [CustomAppEventEnum.NODE_RECT_UPDATED]: updateVisibleNodes,
     [CustomAppEventEnum.UPDATE_SETTINGS]: updateLocalSettings,
   });
@@ -174,31 +175,60 @@ export default function useSettingsManager({
       stylesBuilder[`level-${level}-active`],
     ];
     const dynamicClassNames: string[] = [];
+    const conditions = [];
 
     if (event && selectedGroupsRef?.current) {
       const groups = selectedGroupsRef?.current;
       const group = groups?.[groups?.length - 1];
 
       if (group) {
-        const cngroup = groupClassName(group?.uuid);
-        const cnlevel = levelClassName(activeLevel?.current);
+        conditions.push({
+          block: {
+            groups: [group.uuid],
+          },
+          level,
+          type: ItemTypeEnum.NODE,
+        });
 
-        dynamicClassNames.push(cngroup, cnlevel);
-
-        console.log('dynamicClassNamesdynamicClassNames', dynamicClassNames)
+        [
+          groupClassName(group?.uuid),
+          levelClassName(activeLevel?.current),
+          nodeTypeClassName(ItemTypeEnum.NODE),
+          statusClassName(ItemStatusEnum.READY),
+        ].forEach((cn: string) => {
+          dynamicClassNames.push(cn);
+          classNames.push(`ctn--${cn}`);
+        });
 
         if (!styleRootRef?.current) {
           styleRootRef.current = document.getElementById(STYLE_ROOT_ID) as HTMLStyleElement;
         }
 
+        const ctncns = dynamicClassNames.map(cn => `ctn--${cn}`).join('.');
         const cns = dynamicClassNames.join('.');
         const styles = dynamicClassNames?.length === 0 ? '' : `
-          .${cns} {
+          .${ctncns} {
             .${cns} {
               opacity: 1;
               pointer-events: auto;
               visibility: visible;
               z-index: 6;
+
+              .codeExecuted {
+                .outputContainer {
+                  visibility: visible;
+                  opacity: 1;
+                  pointer-events: all;
+                  z-index: 6;
+                }
+              }
+
+              .outputContainer {
+                visibility: hidden;
+                opacity: 0;
+                pointer-events: none;
+                z-index: -1;
+              }
             }
           }
         `;
@@ -206,21 +236,32 @@ export default function useSettingsManager({
       }
     }
 
-    classNames
-      .concat(dynamicClassNames)
-      .forEach((className: string) => containerRef?.current?.classList.add(className));
+    classNames.forEach((className: string) => containerRef?.current?.classList.add(className));
 
-    updateLayout(event);
+    updateLayout(event, conditions);
   }
 
-  function updateLayout(event: CustomAppEvent) {
+  function updateLayout(event: CustomAppEvent, conditions?: {
+    block?: {
+      groups?: string[];
+      type?: BlockTypeEnum;
+    };
+    level?: number;
+    type?: ItemTypeEnum;
+  }[]) {
     dispatchAppEvent(CustomAppEventEnum.UPDATE_NODE_LAYOUTS, {
       event: convertEvent(event),
+      options: {
+        kwargs: {
+          conditions,
+        },
+      },
     });
   }
 
   return {
     activeLevel,
+    layoutConfig: layoutConfigs?.current?.[activeLevel?.current ?? 0],
     layoutConfigs,
     selectedGroupsRef,
   };

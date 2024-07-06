@@ -44,7 +44,7 @@ const StatusTag = styled.div`
   padding: 6px;
 `
 
-function Tag({ children, statusVariant, ...props }: { children: React.ReactNode | string | number } & StyleProps, ref: React.Ref<HTMLDivElement>) {
+function Tag({ children, statusVariant, ...props }: { children?: React.ReactNode | string | number } & StyleProps, ref: React.Ref<HTMLDivElement>) {
   const El = statusVariant ? StatusTag : TagStyled;
   return <El {...props} ref={ref}>{children}</El>;
 }

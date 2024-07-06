@@ -11,7 +11,7 @@ import { calculateBoundingBox } from '../../Canvas/utils/rect';
 import { flattenArray, indexBy, sum } from '@utils/array';
 import { validateFiniteNumber } from '@utils/number';
 import { get, set } from '@storage/localStorage';
-import { selectKeys } from '@utils/hash';
+import { displayable } from './utils/display';
 import styles from '@styles/scss/apps/Canvas/Pipelines/Builder.module.scss';
 import PipelineType from '@interfaces/PipelineType';
 import PipelineExecutionFrameworkType from '@interfaces/PipelineExecutionFramework/interfaces';
@@ -261,8 +261,9 @@ export default function useLayoutManager({
   }
 
   function updateLayoutOfItems(event: CustomAppEvent) {
-    const { manager } = event?.detail ?? {};
+    const { manager, options } = event?.detail ?? {};
     const { layoutConfig } = manager as SettingsManagerType;
+    const { conditions } = options?.kwargs ?? {};
 
     const rectTransformationsByLevel = {} as Record<number, RectTransformationType[]>;
     const itemsUpdated = {} as ItemMappingType;
@@ -285,7 +286,9 @@ export default function useLayoutManager({
             return acc.concat(item);
           }, []);
 
-          nodes.push(node);
+          if (!conditions || displayable(node, conditions)) {
+            nodes.push(node);
+          }
         }
       }, []);
 
@@ -339,8 +342,6 @@ export default function useLayoutManager({
         layoutConfig,
       });
       rectTransformationsByLevel[level] = trans;
-
-      console.log(level, trans, nodes)
 
       const nodesMapping = indexBy(nodes, (node: NodeItemType) => node.id);
       const nodesTransformed = [] as NodeType[];

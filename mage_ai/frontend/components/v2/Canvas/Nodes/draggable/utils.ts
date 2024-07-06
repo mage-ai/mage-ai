@@ -2,7 +2,6 @@ import styles from '@styles/scss/components/Canvas/Nodes/BlockNode.module.scss';
 import stylesBuilder from '@styles/scss/apps/Canvas/Pipelines/Builder.module.scss';
 import { ElementRoleEnum } from '@mana/shared/types';
 import { NodeItemType } from '../../interfaces';
-import { nodeClassNames } from '../utils';
 
 export function draggableProps({
   classNames,
@@ -34,9 +33,6 @@ export function draggableProps({
       styles.container,
       requiredGroup && styles.requiredGroup,
       ...(classNames ?? []),
-      // Class names reserved for the SettingsManager to determine what is visible
-      // based on the selected groups.
-      ...nodeClassNames(node),
     ]?.filter(cn => Boolean(cn) && (!excludeClassNames || !excludeClassNames.includes(cn)))?.join(' '),
     draggable,
     droppable,

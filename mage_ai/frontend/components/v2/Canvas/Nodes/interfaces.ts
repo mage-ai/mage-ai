@@ -13,6 +13,7 @@ export type BlockNode = {
   collapsed?: boolean;
   droppable?: boolean;
   draggable?: boolean;
+  index?: number;
   node: NodeItemType;
   submitEventOperation: (event: Event, options?: { args: any[] }) => void;
 }

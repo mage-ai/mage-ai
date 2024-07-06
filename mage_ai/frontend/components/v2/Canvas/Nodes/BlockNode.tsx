@@ -1,4 +1,5 @@
 import Aside from './Blocks/Aside';
+import { motion } from 'framer-motion';
 import Tag from '@mana/components/Tag';
 import Badge from '@mana/elements/Badge';
 import BlockType from '@interfaces/BlockType';
@@ -19,7 +20,7 @@ import { EventOperationEnum } from '@mana/shared/interfaces';
 import { DragAndDropHandlersType, SharedBlockProps } from './types';
 import { NodeItemType, PortType, NodeType } from '../interfaces';
 import { FrameworkType, PipelineExecutionFrameworkBlockType } from '@interfaces/PipelineExecutionFramework/interfaces';
-import { ItemTypeEnum, LayoutDisplayEnum, PortSubtypeEnum } from '../types';
+import { ItemTypeEnum, LayoutDisplayEnum, PortSubtypeEnum, ItemStatusEnum } from '../types';
 import { StatusTypeEnum, BlockTypeEnum } from '@interfaces/BlockType';
 import { TooltipWrapper } from '@context/Tooltip';
 import { borderConfigs, blockColorNames } from './presentation';
@@ -46,6 +47,7 @@ export default function BlockNodeComponent({
   collapsed,
   draggable,
   handlers,
+  index,
   layoutConfig,
   node,
   nodeRef,
@@ -256,7 +258,7 @@ export default function BlockNodeComponent({
           </Grid>
         </Grid>
       ),
-    [after, badge, block, inputs, node, outputs],
+    [after, badge, block, inputs, node, outputs, isGroup],
   );
 
   const connectionRows = useMemo(
@@ -369,7 +371,7 @@ export default function BlockNodeComponent({
     ],
   );
 
-  return (
+  const content = useMemo(() => (
     <>
       <Tag
         className={stylesBlockNode['display-if-executing']}
@@ -381,9 +383,8 @@ export default function BlockNodeComponent({
           top: -10,
           zIndex: 7,
         }}
-      >
-        Hello
-      </Tag >
+      />
+
       <GradientContainer
         // Only use gradient borders when block selected
         className={[
@@ -394,5 +395,31 @@ export default function BlockNodeComponent({
         {main}
       </GradientContainer>
     </>
-  );
+  ), [classNames, main, timerStatusRef]);
+
+  if (ItemStatusEnum.READY === node?.status) {
+    return (
+      <motion.div
+        animate={{
+          opacity: 1,
+          scale: 1,
+          translateY: 0,
+        }}
+        initial={{
+          opacity: 0,
+          scale: 0.95,
+          translateY: 10
+        }}
+        transition={{
+          delay: index / 50,
+          duration: 0.1,
+          ease: 'easeOut'
+        }}
+      >
+        {content}
+      </motion.div>
+    );
+  }
+
+  return content;
 }

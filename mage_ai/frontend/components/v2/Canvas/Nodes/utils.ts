@@ -8,7 +8,7 @@ import { ButtonEnum } from '@mana/shared/enums';
 import { CSSProperties } from 'react';
 import { EventOperationEnum, SubmitEventOperationType } from '@mana/shared/interfaces';
 import { NodeType, NodeItemType, RectType } from '../interfaces';
-import { ItemTypeEnum } from '../types';
+import { ItemTypeEnum, ItemStatusEnum } from '../types';
 import { DragAndDropHandlersType, DraggableType } from './types';
 import { countOccurrences, flattenArray, sortByKey } from '@utils/array';
 import { getClosestRole } from '@utils/elements';
@@ -17,13 +17,15 @@ import { ClientEventType } from '@mana/shared/interfaces';
 import { DEBUG } from '../../utils/debug';
 
 export function nodeClassNames(node: NodeItemType): string[] {
-  const { block, level, type } = node ?? {};
+  const { block } = node ?? {};
   const groups = 'groups' in block ? ((block as any)?.groups ?? []) : [];
 
   return [
     ...(groups ?? []).map(groupClassName),
-    blockTypeClassName(type),
-    levelClassName(level),
+    blockTypeClassName((block as any)?.type),
+    levelClassName(node?.level),
+    nodeTypeClassName(node?.type),
+    statusClassName(node?.status),
   ].filter(Boolean);
 }
 
@@ -35,8 +37,16 @@ export function groupClassName(groupUUID: string): string {
   return `grp--${groupUUID}`
 }
 
+export function nodeTypeClassName(type: ItemTypeEnum): string {
+  return typeof type !== 'undefined' && type !== null && `nty--${type}`;
+}
+
+export function statusClassName(status: ItemStatusEnum): string {
+  return typeof status !== 'undefined' && status !== null && `sts--${status}`;
+}
+
 function blockTypeClassName(blockType: string): string {
-  return typeof blockType !== 'undefined' && blockType !== null && `typ--${blockType}`;
+  return typeof blockType !== 'undefined' && blockType !== null && `bty--${blockType}`;
 }
 
 export function extractNestedBlocks(group: FrameworkType): BlockType[] {

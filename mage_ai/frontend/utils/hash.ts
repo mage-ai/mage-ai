@@ -163,3 +163,20 @@ export function mergeDeep(target, ...sources) {
 export function objectSize(obj) {
   return obj ? Object.keys(obj).length : 0;
 }
+
+type FlattenedObject = { [key: string]: any };
+
+export function flattenObject(obj: Record<string, any>, parentKey = '', res: FlattenedObject = {}): FlattenedObject {
+  for (const key in obj) {
+    if (obj.hasOwnProperty(key)) {
+      const newKey = parentKey ? `${parentKey}.${key}` : key;
+
+      if (typeof obj[key] === 'object' && obj[key] !== null && !Array.isArray(obj[key])) {
+        flattenObject(obj[key], newKey, res);
+      } else {
+        res[newKey] = obj[key];
+      }
+    }
+  }
+  return res;
+}
