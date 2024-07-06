@@ -194,10 +194,24 @@ export default function useLayoutManager({
     if (LayoutDisplayEnum.DETAILED === layoutConfig?.display) {
       transformers.push(...[
         reset,
+        // {
+        //   options: () => ({ layout: { direction: directionOp } }),
+        //   scope: RectTransformationScopeEnum.CHILDREN,
+        //   type: TransformRectTypeEnum.LAYOUT_TREE,
+        // },
         {
-          options: () => ({ layout: { direction: directionOp } }),
+          options: () => ({
+            layout: update(layoutConfig, {
+              gap: {
+                $set: {
+                  column: 80,
+                  row: 80,
+                },
+              },
+            }),
+          }),
           scope: RectTransformationScopeEnum.CHILDREN,
-          type: TransformRectTypeEnum.LAYOUT_TREE,
+          type: TransformRectTypeEnum.LAYOUT_RECTANGLE,
         },
         {
           conditionSelf: (rect: RectType) => !group?.uuid || rect?.block?.uuid === group?.uuid,
@@ -221,7 +235,7 @@ export default function useLayoutManager({
               bottom: 12,
               left: 12,
               right: 12,
-              top: 100,
+              top: 24,
             },
           }),
           scope: RectTransformationScopeEnum.SELF,
