@@ -7,9 +7,9 @@ import { get, set } from '@storage/localStorage';
 import useAppEventsHandler, { CustomAppEvent, CustomAppEventEnum } from './useAppEventsHandler';
 import { STYLE_ROOT_ID } from '@context/v2/Style';
 import { getCache } from '@mana/components/Menu/storage';
-import { LayoutConfigRef, SettingsManagerType } from './interfaces';
+import { LayoutConfigRef, ModelManagerType, SettingsManagerType } from './interfaces';
 import {
-  ItemTypeEnum, ItemStatusEnum,
+  ItemTypeEnum, ItemStatusEnum, ITEM_TYPES,
   LayoutConfigDirectionEnum, LayoutConfigDirectionOriginEnum,
   LayoutDisplayEnum
 } from '../../Canvas/types';
@@ -17,18 +17,20 @@ import { MenuGroupType } from '@mana/components/Menu/interfaces';
 import { Root, createRoot } from 'react-dom/client';
 import { BlockTypeEnum } from '@interfaces/BlockType';
 import { DEBUG } from '@components/v2/utils/debug';
+import { flattenArray } from '@utils/array';
 
 function builderLocalStorageKey(uuid: string) {
   return `pipeline_builder_canvas_local_settings_${uuid}`;
 }
 
 export default function useSettingsManager({
+  blocksByGroupRef,
   canvasRef,
   containerRef,
   executionFrameworkUUID,
   pipelineUUID,
-  setHeaderData,
 }: {
+  blocksByGroupRef: ModelManagerType['blocksByGroupRef'];
   canvasRef: React.RefObject<HTMLDivElement>;
   containerRef: React.RefObject<HTMLDivElement>;
   executionFrameworkUUID: string;
@@ -62,6 +64,10 @@ export default function useSettingsManager({
     })),
     useRef<LayoutConfigType>(defaultLayoutConfig({
       direction: LayoutConfigDirectionEnum.HORIZONTAL,
+    })),
+    useRef<LayoutConfigType>(defaultLayoutConfig({
+      direction: LayoutConfigDirectionEnum.HORIZONTAL,
+      display: LayoutDisplayEnum.DETAILED,
     })),
   ]);
   const optionalGroupsVisible = useRef<boolean>(null);
@@ -184,23 +190,33 @@ export default function useSettingsManager({
   function updateVisibleNodes(event?: CustomAppEvent) {
     const level = activeLevel.current;
     const display = layoutConfigs?.current?.[level]?.current?.display ?? LayoutDisplayEnum.SIMPLE;
-
-    addContainerClassNames([
-      stylesBuilder[`display-${display}`],
-      stylesBuilder[`level-${level}-active`],
-    ]);
-
     const conditions = [];
+
     const payload: {
       classNames?: string[];
       styles?: string;
     } = {};
 
-    if (event && selectedGroupsRef?.current) {
-      const groups = selectedGroupsRef?.current;
-      const group = groups?.[groups?.length - 1];
+    const cnsets = [];
+    const cnbase = [
+      levelClassName(activeLevel?.current),
+      statusClassName(ItemStatusEnum.READY),
+    ];
+
+    const selectedGroups = selectedGroupsRef?.current;
+    if (event && selectedGroups?.length >= 1) {
+      const group = selectedGroups?.[selectedGroups?.length - 1];
 
       if (group?.uuid) {
+        const blocksInGroup = blocksByGroupRef?.current?.[group.uuid] ?? [];
+        const count = Object.values(blocksInGroup ?? {}).length;
+
+        // Default
+        cnsets.push([
+          ...cnbase,
+          groupClassName(group?.uuid),
+          nodeTypeClassName(ItemTypeEnum.NODE),
+        ]);
         conditions.push({
           block: {
             groups: [group.uuid],
@@ -209,49 +225,105 @@ export default function useSettingsManager({
           type: ItemTypeEnum.NODE,
         });
 
-        const classNames = [
-          groupClassName(group?.uuid),
-          levelClassName(activeLevel?.current),
-          nodeTypeClassName(ItemTypeEnum.NODE),
-          statusClassName(ItemStatusEnum.READY),
-        ];
+        // Group has blocks
+        if (count >= 1) {
+          ITEM_TYPES.forEach(type => {
+            cnsets.push([
+              ...cnbase,
+              groupClassName(group?.uuid),
+              nodeTypeClassName(type),
+            ]);
+          });
+          conditions.push({
+            block: {
+              uuid: group.uuid,
+            },
+            level,
+            type: ItemTypeEnum.NODE,
+          });
+        }
 
-        const {
-          container,
-          styles,
-        } = buildStyles(classNames, ({ and, container }) => `
-          .${container} {
-            ${and} {
-              opacity: 1;
-              pointer-events: auto;
+        // Get sibling groups so that we can teleport to those.
+        const parentUUID = group?.groups?.[group?.groups?.length - 1]?.uuid;
+        if (parentUUID) {
+          conditions.push({
+            block: {
+              groups: [parentUUID],
+            },
+            level,
+            type: ItemTypeEnum.NODE,
+          });
+          cnsets.push([
+            ...cnbase,
+            groupClassName(parentUUID),
+            nodeTypeClassName(ItemTypeEnum.NODE),
+          ]);
+        }
+      }
+    } else {
+      // If nothing selected, then its level 0
+      cnsets.push([
+        ...cnbase,
+        nodeTypeClassName(ItemTypeEnum.NODE),
+      ]);
+    }
+
+    DEBUG.settings.manager && console.log(level, cnsets, selectedGroups)
+
+    const individualContainerClassNames =
+      cnsets.flatMap(cn => cn.flatMap(buildContainerClassName));
+    // .ctn--grp--tokenization.ctn--lvl--3.ctn--nty--node.ctn--sts--ready
+    // .ctn--grp--tokenization.ctn--lvl--3.ctn--nty--block.ctn--sts--ready
+    const cncons = [];
+    // .grp--tokenization.lvl--3.nty--node.sts--ready
+    // .grp--tokenization.lvl--3.nty--block.sts--ready
+    const cnames = [];
+
+    cnsets.forEach(cns => {
+      // .ctn--grp--tokenization.ctn--lvl--3.ctn--nty--node.ctn--sts--ready
+      const cncon = cns.map(buildContainerClassName).map(cn => `.${cn}`).join('');
+      cncons.push(cncon);
+
+      // .grp--tokenization.lvl--3.nty--node.sts--ready
+      const cn = cns.map(cn => `.${cn}`).join('');
+      cnames.push(cn);
+    });
+
+    const cncon = cncons.join(',\n');
+    const cn = cnames.join(',\n');
+    const styles = `
+      ${cncon} {
+        ${cn} {
+          opacity: 1;
+          pointer-events: auto;
+          visibility: visible;
+          z-index: 6;
+
+          .codeExecuted {
+            .outputContainer {
               visibility: visible;
+              opacity: 1;
+              pointer-events: all;
               z-index: 6;
-
-              .codeExecuted {
-                .outputContainer {
-                  visibility: visible;
-                  opacity: 1;
-                  pointer-events: all;
-                  z-index: 6;
-                }
-              }
-
-              .outputContainer {
-                opacity: 0;
-                pointer-events: none;
-                visibility: hidden;
-                z-index: -1;
-              }
             }
           }
-        `);
 
-        payload.classNames = container;
-        payload.styles = styles;
-
-        hideAllNodes();
+          .outputContainer {
+            opacity: 0;
+            pointer-events: none;
+            visibility: hidden;
+            z-index: -1;
+          }
+        }
       }
-    }
+    `;
+
+    payload.classNames = individualContainerClassNames;
+    payload.styles = styles;
+
+    resetContainerClassNames();
+    setStyles();
+    addContainerClassNames();
 
     dispatchAppEvent(CustomAppEventEnum.UPDATE_NODE_LAYOUTS, {
       event: convertEvent(event),
@@ -264,42 +336,42 @@ export default function useSettingsManager({
     });
   }
 
-  function hideAllNodes() {
-    const {
-      container,
-      styles: hideStyles,
-    } = buildStyles(
-      [ItemTypeEnum.APP, ItemTypeEnum.BLOCK, ItemTypeEnum.NODE, ItemTypeEnum.PORT,
-      ItemTypeEnum.OUTPUT].map(nodeTypeClassName),
-      ({ container, or }) => `
-      .${container} {
-        @keyframes start {
-          from {
-            opacity: 1;
-          }
-          to {
-            opacity: 0;
-          }
+  function defaultStylesAndContainerClassNames() {
+    const cns = ITEM_TYPES.map(nodeTypeClassName);
+    const cncons = cns.map(buildContainerClassName);
+    const cnconsand = cncons.map(cn => `.${cn}`).join('');
+    const cnsor = cns.map(cn => `.${cn}`).join(',\n');
+    const styles = `
+    ${cnconsand} {
+      @keyframes start {
+        from {
+          opacity: 1;
         }
-
-        ${or} {
-          animation: start 1s forwards;
+        to {
           opacity: 0;
-          pointer-events: none;
-          visibility: hidden;
-          z-index: -1;
         }
       }
-    `);
 
-    // Hide everything
-    setStyles(hideStyles);
-    addContainerClassNames(container);
+      ${cnsor} {
+        animation: start 1s forwards;
+        opacity: 0;
+        pointer-events: none;
+        visibility: hidden;
+        z-index: -1;
+      }
+    }`;
+
+    return {
+      classNames: cncons,
+      styles,
+    };
   }
 
-  function addContainerClassNames(classNames: string[]) {
-    resetContainerClassNames();
-    classNames.forEach((className: string) => containerRef?.current?.classList.add(className));
+  function addContainerClassNames(classNames?: string[]) {
+    [
+      ...(classNames ?? []),
+      ...defaultStylesAndContainerClassNames().classNames
+    ].forEach(cn => containerRef?.current?.classList.add(cn));
   }
 
   function handleLayoutUpdates(event: CustomAppEvent) {
@@ -310,35 +382,14 @@ export default function useSettingsManager({
     styles && setStyles(styles);
   }
 
-  function buildStyles(
-    classNames: string[],
-    builder: (opts: { and: string, container: string, or: string, targets: string[] }) => string,
-  ): {
-    container: string[],
-    styles: string,
-  } {
-    const container = classNames.map(buildContainerClassName);
-    const targets = classNames.map(cn => `.${cn}`);
-    const and = targets.join('');
-    const or = targets.join(',');
-    const styles = classNames?.length === 0 ? '' : builder({
-      and,
-      container: container.join('.'),
-      or,
-      targets,
-    });
-
-    return {
-      container,
-      styles,
-    };
-  }
-
-  function setStyles(styles: string) {
+  function setStyles(styles?: string) {
     if (!styleRootRef?.current) {
       styleRootRef.current = document.getElementById(STYLE_ROOT_ID) as HTMLStyleElement;
     }
-    styleRootRef.current.textContent = styles;
+    styleRootRef.current.textContent = [
+      defaultStylesAndContainerClassNames().styles,
+      styles ?? '',
+    ].join('\n');
   }
 
   function resetContainerClassNames() {

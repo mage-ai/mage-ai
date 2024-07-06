@@ -33,6 +33,14 @@ export enum ItemTypeEnum {
   PORT = 'port',
 }
 
+export const ITEM_TYPES = [
+  ItemTypeEnum.APP,
+  ItemTypeEnum.BLOCK,
+  ItemTypeEnum.NODE,
+  ItemTypeEnum.OUTPUT,
+  ItemTypeEnum.PORT,
+];
+
 export enum ColorEnum {
   BLUE = 'blue',
   YELLOW = 'yellow',

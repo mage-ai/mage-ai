@@ -82,77 +82,76 @@ export default function BlockGroupOverview({
     const sorted = sortByKey(grouped, ([k, v]) => sum(v.map(({ invalid }) => invalid)));
 
     return sorted?.map(([templateName, blocks2]) => (
-      <>
-        <Grid
-          rowGap={8}
-        >
-          <Text secondary xsmall>
-            {templateName}
-          </Text  >
+      <Grid
+        rowGap={8}
+        key={templateName}
+      >
+        <Text secondary xsmall>
+          {templateName}
+        </Text  >
 
-          <PanelRows padding={false}>
-            {sortByKey(blocks2, ({ invalid }) => invalid)?.map(({
-              block: block3,
-              invalid,
-              name: name3,
-              uuid: uuid3,
-            }) => {
-              const error = invalid >= 1;
-              const valid = !error;
+        <PanelRows padding={false}>
+          {sortByKey(blocks2, ({ invalid }) => invalid)?.map(({
+            block: block3,
+            invalid,
+            name: name3,
+            uuid: uuid3,
+          }) => {
+            const error = invalid >= 1;
+            const valid = !error;
 
-              return (
-                <GradientContainer
-                  key={uuid3}
-                  variant={error ? 'error-reverse' : undefined}
+            return (
+              <GradientContainer
+                key={uuid3}
+                variant={error ? 'error-reverse' : undefined}
+              >
+                <Grid
+                  alignItems="center"
+                  columnGap={8}
+                  padding={12}
+                  templateColumns="1fr 1fr"
+                  templateRows="1fr"
                 >
                   <Grid
                     alignItems="center"
                     columnGap={8}
-                    padding={12}
-                    templateColumns="1fr 1fr"
+                    justifyItems="start"
+                    templateColumns="auto"
                     templateRows="1fr"
                   >
-                    <Grid
-                      alignItems="center"
-                      columnGap={8}
-                      justifyItems="start"
-                      templateColumns="auto"
-                      templateRows="1fr"
-                    >
 
-                      <Text medium secondary={!valid} small>
-                        {block3?.name ?? block3?.uuid}
-                      </Text>
-                    </Grid>
-
-                    <Grid
-                      alignItems="center"
-                      columnGap={8}
-                      justifyItems="end"
-                      templateColumns="auto"
-                      templateRows="1fr"
-                    >
-                      {valid ?
-                        (
-                          <Circle
-                            backgroundColor={valid ? 'green' : undefined}
-                            borderColor={valid ? undefined : (error ? 'red' : 'gray')}
-                            size={12}
-                          />
-                        )
-                        : (
-                          <Text medium secondary small>
-                            Missing {pluralize('variable', invalid)}
-                          </Text >
-                        )}
-                    </Grid>
+                    <Text medium secondary={!valid} small>
+                      {block3?.name ?? block3?.uuid}
+                    </Text>
                   </Grid>
-                </GradientContainer>
-              );
-            })}
-          </PanelRows>
-        </Grid>
-      </>
+
+                  <Grid
+                    alignItems="center"
+                    columnGap={8}
+                    justifyItems="end"
+                    templateColumns="auto"
+                    templateRows="1fr"
+                  >
+                    {valid ?
+                      (
+                        <Circle
+                          backgroundColor={valid ? 'green' : undefined}
+                          borderColor={valid ? undefined : (error ? 'red' : 'gray')}
+                          size={12}
+                        />
+                      )
+                      : (
+                        <Text medium secondary small>
+                          Missing {pluralize('variable', invalid)}
+                        </Text >
+                      )}
+                  </Grid>
+                </Grid>
+              </GradientContainer>
+            );
+          })}
+        </PanelRows>
+      </Grid>
     ));
 
 

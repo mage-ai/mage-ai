@@ -140,17 +140,6 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
     setAppRects({ mapping, rects });
   }
 
-  const { activeLevel, layoutConfigs, selectedGroupsRef } = useSettingsManager({
-    canvasRef,
-    containerRef,
-    executionFrameworkUUID,
-    pipelineUUID,
-    setHeaderData,
-  });
-  const layoutConfig = layoutConfigs?.current?.[activeLevel?.current]?.current ?? {};
-
-  useAppManager({ activeLevel });
-
   const {
     appHandlersRef,
     blocksByGroupRef,
@@ -166,6 +155,18 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
     setHeaderData,
     setOutputIDs,
   });
+
+  const { activeLevel, layoutConfigs, selectedGroupsRef } = useSettingsManager({
+    blocksByGroupRef,
+    canvasRef,
+    containerRef,
+    executionFrameworkUUID,
+    pipelineUUID,
+    setHeaderData,
+  });
+  const layoutConfig = layoutConfigs?.current?.[activeLevel?.current]?.current ?? {};
+
+  useAppManager({ activeLevel });
 
   function setHeaderData(data: any) {
     setHeaderDataState((prev: any) => ({

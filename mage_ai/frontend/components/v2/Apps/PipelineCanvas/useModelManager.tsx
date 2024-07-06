@@ -177,7 +177,7 @@ export default function useModelManager({
   ): Promise<NodeItemType[]> {
     return new Promise((resolve, reject) => {
       try {
-        const { blocksByGroup, groupMapping, groupsByLevel } = buildDependencies(
+        const { blocksByGroup, blockMapping, groupMapping, groupsByLevel } = buildDependencies(
           executionFramework2,
           pipeline2,
         );
@@ -214,6 +214,9 @@ export default function useModelManager({
 
           blockGroupsByLevel.unshift(blockGroupsInLevel);
         });
+
+        // Level 3: all of it
+        blockGroupsByLevel.push(blockGroupsByLevel.reduce((acc, bg) => acc.concat(bg)))
 
         const itemMapping = {};
         const portMapping = {};
@@ -314,6 +317,7 @@ export default function useModelManager({
         portsRef.current = portMapping;
 
         // Models
+        // console.log('itemIDsByLevelRef', itemIDsByLevelRef)
         itemIDsByLevelRef.current = itemIDsByLevel;
 
         // WARNING: Do this so it mounts and then the on mount can start the chain.

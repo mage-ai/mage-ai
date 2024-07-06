@@ -238,7 +238,12 @@ export function buildDependencies(
     });
   });
 
-  // console.log('blockMapping', blockMapping);
+  // console.log({
+  //   blockMapping,
+  //   blocksByGroup,
+  //   groupMapping,
+  //   groupsByLevel,
+  // });
 
   return {
     blockMapping,

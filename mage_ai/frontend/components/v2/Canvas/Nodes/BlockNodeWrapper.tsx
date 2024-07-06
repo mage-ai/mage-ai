@@ -73,7 +73,7 @@ export const BlockNodeWrapper: React.FC<BlockNodeType> = ({
   const requiredGroup = isGroup && metadata?.required;
   const emptyGroup = isGroup && (node as NodeType)?.items?.length === 0;
 
-  console.log('render');
+  // console.log('render');
   // Hooks
   const {
     executeCode,

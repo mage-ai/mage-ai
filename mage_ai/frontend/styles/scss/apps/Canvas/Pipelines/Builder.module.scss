@@ -29,7 +29,7 @@
   }
 }
 
-.display-simple {
+/* .display-simple {
   @include zindexes;
 
   &.level-0-active {
@@ -43,7 +43,7 @@
 
 .display-detailed {
   @include zindexes;
-}
+} */
 
 .canvas {
   background-color: var(--backgrounds-body);
@@ -113,7 +113,7 @@
     }
   }
 
-  .app {
+  /* .app {
     z-index: 6;
   }
 
@@ -127,7 +127,7 @@
 
   .node {
     z-index: 4;
-  }
+  } */
 
   .connectionLines {
     height: 100%;
@@ -138,9 +138,9 @@
 
   }
 
-  .level {
+  /* .level {
     @include hidden;
-  }
+  } */
 
   .centered {
     /* Center the container within its parent */
