@@ -8,7 +8,7 @@ import { startTransition, useEffect, useRef } from 'react';
 import { ActiveLevelRefType, ItemIDsByLevelRef, LayoutManagerType, ModelManagerType, SettingsManagerType } from './interfaces';
 import { ItemStatusEnum, RectTransformationScopeEnum, ItemTypeEnum, LayoutConfigDirectionOriginEnum, LayoutConfigDirectionEnum, TransformRectTypeEnum } from '../../Canvas/types';
 import { calculateBoundingBox } from '../../Canvas/utils/rect';
-import { flattenArray, indexBy, sum } from '@utils/array';
+import { flattenArray, indexBy, sortByKey, sum } from '@utils/array';
 import { validateFiniteNumber } from '@utils/number';
 import { get, set } from '@storage/localStorage';
 import { displayable } from './utils/display';
@@ -19,17 +19,10 @@ import useAppEventsHandler, { CustomAppEvent, CustomAppEventEnum } from './useAp
 import { DEBUG } from '@components/v2/utils/debug';
 
 type LayoutManagerProps = {
-  activeLevel: ActiveLevelRefType;
   canvasRef: React.MutableRefObject<HTMLDivElement>;
   containerRef: React.MutableRefObject<HTMLDivElement>;
   itemIDsByLevelRef: ItemIDsByLevelRef;
   itemsRef: React.MutableRefObject<ItemMappingType>;
-  layoutConfig: LayoutManagerType['layoutConfig'];
-  layoutConfigs: LayoutManagerType['layoutConfigs'];
-  transformState: React.MutableRefObject<ZoomPanStateType>;
-  pipelineUUID: string;
-  updateNodeItems: ModelManagerType['updateNodeItems'];
-  updateLayoutConfig: LayoutManagerType['updateLayoutConfig'];
 };
 
 export default function useLayoutManager({
@@ -41,12 +34,13 @@ export default function useLayoutManager({
   // The only client publishing this message is the SettingsManager.
   const { dispatchAppEvent } = useAppEventsHandler({
     uuid: 'LayoutManager',
-  }, {
+  } as any, {
     [CustomAppEventEnum.UPDATE_NODE_LAYOUTS]: updateLayoutOfItems,
   });
 
-  function rectTransformations({ layoutConfig }) {
-    const direction = layoutConfig?.current?.direction || LayoutConfigDirectionEnum.HORIZONTAL;
+  function rectTransformations({ activeLevel, layoutConfigs }) {
+    const layoutConfig = layoutConfigs?.current?.[activeLevel?.current]?.current ?? {};
+    const direction = layoutConfig?.direction || LayoutConfigDirectionEnum.HORIZONTAL;
     const directionOp = LayoutConfigDirectionEnum.HORIZONTAL === direction
       ? LayoutConfigDirectionEnum.VERTICAL
       : LayoutConfigDirectionEnum.HORIZONTAL;
@@ -104,7 +98,7 @@ export default function useLayoutManager({
     };
     const wave = {
       options: () => ({
-        layout: update(layoutConfig?.current ?? {}, {
+        layout: update(layoutConfig ?? {}, {
           gap: {
             $set: {
               column: 40,
@@ -117,8 +111,8 @@ export default function useLayoutManager({
       type: TransformRectTypeEnum.LAYOUT_WAVE,
     };
 
-    if (layoutConfig?.current?.rectTransformations) {
-      layoutConfig?.current?.rectTransformations?.forEach(({
+    if (layoutConfig?.rectTransformations) {
+      layoutConfig?.rectTransformations?.forEach(({
         type,
       }) => {
         if (TransformRectTypeEnum.LAYOUT_TREE === type) {
@@ -128,7 +122,7 @@ export default function useLayoutManager({
         } else if (TransformRectTypeEnum.LAYOUT_RECTANGLE === type) {
           layoutStyleTransformations.push({
             options: () => ({
-              layout: update(layoutConfig?.current, {
+              layout: update(layoutConfig, {
                 gap: {
                   $set: {
                     column: 80,
@@ -142,7 +136,7 @@ export default function useLayoutManager({
         } else if (TransformRectTypeEnum.LAYOUT_GRID === type) {
           layoutStyleTransformations.push({
             options: () => ({
-              layout: update(layoutConfig?.current, {
+              layout: update(layoutConfig, {
                 gap: {
                   $set: {
                     column: 40,
@@ -156,7 +150,7 @@ export default function useLayoutManager({
         } else if (TransformRectTypeEnum.LAYOUT_SPIRAL === type) {
           layoutStyleTransformations.push({
             options: () => ({
-              layout: update(layoutConfig?.current, {
+              layout: update(layoutConfig, {
                 containerRef: {
                   $set: canvasRef,
                 },
@@ -191,15 +185,13 @@ export default function useLayoutManager({
       options: () => ({ rect: { height: 300, width: 300 } }),
       type: TransformRectTypeEnum.MIN_DIMENSIONS,
     };
+    const reset = { type: TransformRectTypeEnum.RESET };
 
-    const transformers: RectTransformationType[] = [
-      {
-        type: TransformRectTypeEnum.RESET,
-      },
-    ];
+    const transformers: RectTransformationType[] = [];
 
-    if (LayoutDisplayEnum.DETAILED === layoutConfig?.current?.display) {
+    if (LayoutDisplayEnum.DETAILED === layoutConfig?.display) {
       transformers.push(...[
+        reset,
         {
           options: () => ({ layout: { direction: directionOp } }),
           scope: RectTransformationScopeEnum.CHILDREN,
@@ -249,7 +241,7 @@ export default function useLayoutManager({
           type: TransformRectTypeEnum.ALIGN_CHILDREN,
         },
       ] as RectTransformationType[]);
-    } else if (LayoutDisplayEnum.SIMPLE === layoutConfig?.current?.display) {
+    } else if (LayoutDisplayEnum.SIMPLE === layoutConfig?.display) {
       transformers.push(...[
         mindims,
         ...layoutStyleTransformations,
@@ -257,13 +249,17 @@ export default function useLayoutManager({
       ] as RectTransformationType[]);
     }
 
+    DEBUG.layoutManager && console.log('transformers', transformers);
+
     return transformers;
   }
 
   function updateLayoutOfItems(event: CustomAppEvent) {
     const { manager, options } = event?.detail ?? {};
-    const { layoutConfig } = manager as SettingsManagerType;
+    const { activeLevel, layoutConfigs } = manager as SettingsManagerType;
     const { conditions } = options?.kwargs ?? {};
+
+    const layoutConfig = layoutConfigs?.current?.[activeLevel?.current]?.current ?? {};
 
     const rectTransformationsByLevel = {} as Record<number, RectTransformationType[]>;
     const itemsUpdated = {} as ItemMappingType;
@@ -286,7 +282,7 @@ export default function useLayoutManager({
             return acc.concat(item);
           }, []);
 
-          if (!conditions || displayable(node, conditions)) {
+          if ((conditions ?? []).length === 0 || displayable(node, conditions)) {
             nodes.push(node);
           }
         }
@@ -338,17 +334,17 @@ export default function useLayoutManager({
         rects.push(nodeRect);
       });
 
-      const trans = rectTransformations({
-        layoutConfig,
-      });
+      const trans = rectTransformations({ activeLevel, layoutConfigs });
       rectTransformationsByLevel[level] = trans;
 
       const nodesMapping = indexBy(nodes, (node: NodeItemType) => node.id);
       const nodesTransformed = [] as NodeType[];
 
       // This can reshuffle the rects, so the order is not guaranteed.
-      const rectsTransformed = transformRects(rects, trans);
-      rectsTransformed.forEach((rect: RectType) => {
+      const rectsTransformed = rects?.length >= 1 ? transformRects(rects, trans) : [];
+      sortByKey(rectsTransformed, ({ left, top }) =>
+        LayoutConfigDirectionEnum.HORIZONTAL === layoutConfig?.direction ? left : top,
+      ).forEach((rect: RectType, index: number) => {
         let node = nodesMapping[rect.id];
         const itemsT = [];
 
@@ -375,6 +371,8 @@ export default function useLayoutManager({
         });
 
         node = update(node, {
+          // Index is used to delay the animation when displaying the node.
+          index: { $set: index },
           items: { $set: itemsT },
         });
         node.rect.height = rect.height;
@@ -407,6 +405,8 @@ export default function useLayoutManager({
       itemsRef.current[item.id] = item;
       items.push(item);
     });
+
+    console.log(items)
 
     // Don’t do any level filtering here, it’ll be done at the Canvas level.
     dispatchAppEvent(CustomAppEventEnum.NODE_LAYOUTS_CHANGED, {

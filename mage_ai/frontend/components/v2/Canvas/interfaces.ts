@@ -34,6 +34,7 @@ export interface RectType extends RectTypeBase {
 
 interface BaseItem {
   id: string;
+  index?: number;
   level?: number;
   status?: ItemStatusEnum;
   subtype?: PortSubtypeEnum;

@@ -2,6 +2,16 @@ import { NodeItemType } from '@components/v2/Canvas/interfaces';
 import { EventOperationOptionsType } from '@mana/shared/interfaces';
 import { dig, flattenObject } from '@utils/hash';
 
+const CONTAINER_CLASS_NAME_PREFIX = 'ctn--';
+
+export function buildContainerClassName(className: string): string {
+  return `${CONTAINER_CLASS_NAME_PREFIX}--${className}`;
+}
+
+export function extractContainerClassNames(classNames: string[]): string[] {
+  return classNames?.filter(cn => cn.startsWith(CONTAINER_CLASS_NAME_PREFIX));
+}
+
 export function displayable(
   node: NodeItemType,
   conditions: EventOperationOptionsType['kwargs']['conditions'],

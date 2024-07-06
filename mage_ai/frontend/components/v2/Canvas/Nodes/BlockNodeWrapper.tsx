@@ -1,5 +1,6 @@
 import OutputNode from './CodeExecution/OutputNode';
 import { formatNumberToDuration } from '@utils/string';
+import { motion } from 'framer-motion';
 import { getNewUUID } from '@utils/string';
 import { areEqual, areEqualApps } from './equals'
 import PipelineType from '@interfaces/PipelineType';
@@ -17,23 +18,17 @@ import { ClientEventType, EventOperationEnum, SubmitEventOperationType } from '@
 import { ConfigurationType } from '@interfaces/PipelineExecutionFramework/interfaces';
 import { DEBUG } from '@components/v2/utils/debug';
 import { FileType } from '../../IDE/interfaces';
-import { ItemTypeEnum } from '../types';
-import { NodeItemType, NodeType, PortType, RectType } from '../interfaces';
-import { StatusTypeEnum, BlockTypeEnum } from '@interfaces/BlockType';
-import { areEqualRects, areDraggableStylesEqual } from './equals';
+import { ItemStatusEnum } from '../types';
+import { NodeType, PortType, RectType } from '../interfaces';
+import { BlockTypeEnum } from '@interfaces/BlockType';
 import { createPortal } from 'react-dom';
 import { draggableProps } from './draggable/utils';
 import { getFileCache, isStale, updateFileCache } from '../../IDE/cache';
-import { handleClickGroupMenu } from './utils';
-import { onError, onSuccess } from '@api/cleaner/utils/response';
 import { setNested } from '@utils/hash';
 import EventStreamType, { ServerConnectionStatusType } from '@interfaces/EventStreamType';
 import { setupDraggableHandlers, buildEvent } from './utils';
 import { useEffect, useCallback, useState, useMemo, useRef } from 'react';
-import { WithOnMount } from '@mana/hooks/useWithOnMount';
-import { EventSourceHandlers, ConsumerOperations } from '../../ExecutionManager/interfaces';
 import { BlockNodeWrapperProps } from './types';
-import { ExecutionManagerType } from '@components/v2/ExecutionManager/interfaces';
 import { executionDone } from '@components/v2/ExecutionManager/utils';
 import { nodeClassNames } from './utils';
 
@@ -48,7 +43,7 @@ export const BlockNodeWrapper: React.FC<BlockNodeType> = ({
   draggable,
   droppable,
   handlers,
-  index,
+  index: indexProp,
   layoutConfig,
   node,
   onMountPort,
@@ -257,7 +252,6 @@ export const BlockNodeWrapper: React.FC<BlockNodeType> = ({
       buttonBeforeRef={buttonBeforeRef}
       draggable={draggable}
       handlers={draggingHandlers}
-      index={index}
       layoutConfig={layoutConfig}
       node={node}
       nodeRef={nodeRef}
@@ -272,7 +266,6 @@ export const BlockNodeWrapper: React.FC<BlockNodeType> = ({
     block,
     draggable,
     draggingHandlers,
-    index,
     layoutConfig,
     node,
     nodeRef,
@@ -307,6 +300,29 @@ export const BlockNodeWrapper: React.FC<BlockNodeType> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [node, sharedProps, draggingHandlers]);
 
+  const wrapMotion = (content) => (
+    <motion.div
+      animate={{
+        opacity: 1,
+        scale: 1,
+        translateY: 0,
+      }}
+      initial={{
+        opacity: 0,
+        scale: 0.95,
+        translateY: 10
+      }}
+      transition={{
+        // In seconds
+        delay: (node?.index ?? indexProp) / 10,
+        duration: 0.1,
+        ease: 'easeOut'
+      }}
+    >
+      {content}
+    </motion.div>
+  );
+
   if (Wrapper) {
     return (
       <Wrapper
@@ -322,7 +338,8 @@ export const BlockNodeWrapper: React.FC<BlockNodeType> = ({
         nodeRef={nodeRef}
         rect={rect}
       >
-        {blockNode}
+
+        {ItemStatusEnum.READY === node?.status ? wrapMotion(blockNode) : blockNode}
         {portalMount && createPortal(outputNode, portalMount)}
       </Wrapper>
     );

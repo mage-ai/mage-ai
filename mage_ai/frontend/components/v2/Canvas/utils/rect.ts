@@ -37,6 +37,7 @@ export type SetupOpts = {
 };
 
 export function transformRects(rectsInit: RectType[], transformations: RectTransformationType[]): RectType[] {
+  DEBUG.rects && console.log('transformRects', transformations, rectsInit);
   const rectsByStage = [rectsInit];
 
   transformations.forEach((transformation, stage: number) => {
@@ -110,71 +111,78 @@ export function transformRects(rectsInit: RectType[], transformations: RectTrans
           scope: undefined,
         }])[0],
       }));
-    } else {
-      if (TransformRectTypeEnum.RESET === type) {
-        rects = rects.map((rect) => ({
+    } else if (TransformRectTypeEnum.RESET === type) {
+      rects = rects.map((rect) => ({
+        ...rect,
+        height: 0,
+        width: 0,
+      }));
+    } else if (TransformRectTypeEnum.LAYOUT_TREE === type) {
+      rects = layoutRectsInTreeFormation(rects, layout ?? {});
+    } else if (TransformRectTypeEnum.LAYOUT_WAVE === type) {
+      rects = layoutRectsInWavePattern(rects, layout, layoutOptions);
+    } else if (TransformRectTypeEnum.LAYOUT_RECTANGLE === type) {
+      rects = groupRectangles(rects, layout);
+    } else if (TransformRectTypeEnum.LAYOUT_GRID === type) {
+      rects = layoutRectsInGrid(rects, layout);
+    } else if (TransformRectTypeEnum.LAYOUT_SPIRAL === type) {
+      rects = layoutRectsInSpiral(rects, layout, layoutOptions);
+    } else if (TransformRectTypeEnum.SHIFT_INTO_PARENT === type && parent) {
+      rects = shiftRectsIntoBoundingBox(rects, parent);
+    } else if (TransformRectTypeEnum.ALIGN_CHILDREN === type) {
+      rects = rects.map((rect) => {
+        const { parent } = rect;
+        const diff = {
+          left: (validateFiniteNumber(parent?.offset?.left) ?? 0)
+            + (validateFiniteNumber(parent?.padding?.left) ?? 0),
+          top: (validateFiniteNumber(parent?.offset?.top) ?? 0)
+            + (validateFiniteNumber(parent?.padding?.top) ?? 0),
+        };
+
+        return applyRectDiff(rect, diff);
+      });
+    } else if (TransformRectTypeEnum.FIT_TO_CHILDREN === type) {
+      rects = rects.map((rect) => {
+        const box = calculateBoundingBox(rect?.children?.length >= 1 ? rect.children : [rect]);
+
+        return {
           ...rect,
-          height: 0,
-          width: 0,
-        }));
-      } else if (TransformRectTypeEnum.LAYOUT_TREE === type) {
-        rects = layoutRectsInTreeFormation(rects, layout ?? {});
-      } else if (TransformRectTypeEnum.LAYOUT_WAVE === type) {
-        rects = layoutRectsInWavePattern(rects, layout, layoutOptions);
-      } else if (TransformRectTypeEnum.LAYOUT_RECTANGLE === type) {
-        rects = groupRectangles(rects, layout);
-      } else if (TransformRectTypeEnum.LAYOUT_GRID === type) {
-        rects = layoutRectsInGrid(rects, layout);
-      } else if (TransformRectTypeEnum.LAYOUT_SPIRAL === type) {
-        rects = layoutRectsInSpiral(rects, layout, layoutOptions);
-      } else if (TransformRectTypeEnum.SHIFT_INTO_PARENT === type && parent) {
-        rects = shiftRectsIntoBoundingBox(rects, parent);
-      } else if (TransformRectTypeEnum.ALIGN_CHILDREN === type) {
-        rects = rects.map((rect) => {
-          const { parent } = rect;
-          const diff = {
-            left: (validateFiniteNumber(parent?.offset?.left) ?? 0) + (validateFiniteNumber(parent?.padding?.left) ?? 0),
-            top: (validateFiniteNumber(parent?.offset?.top) ?? 0) + (validateFiniteNumber(parent?.padding?.top) ?? 0),
-          };
+          height: validateFiniteNumber(box.height)
+            + validateFiniteNumber(padding?.top ?? 0)
+            + validateFiniteNumber(padding?.bottom ?? 0)
+            + validateFiniteNumber(offset?.top ?? 0),
+          offset,
+          padding,
+          width: validateFiniteNumber(box.width)
+            + validateFiniteNumber(padding?.left ?? 0)
+            + validateFiniteNumber(padding?.right ?? 0)
+            + validateFiniteNumber(offset?.left ?? 0),
+        };
+      });
+    } else if (TransformRectTypeEnum.PAD === type) {
+      rects = rects.map((rect) => ({ ...rect, padding }));
+    } else if (TransformRectTypeEnum.SHIFT === type) {
+      rects = shiftRectsByDiffRect(rects, offset ?? { left: 0, top: 0 });
+    } else if (TransformRectTypeEnum.MIN_DIMENSIONS === type) {
+      rects = rects.map(rect => {
+        const height1 = validateFiniteNumber(rect.height);
+        const width1 = validateFiniteNumber(rect.width);
+        const heightd = validateFiniteNumber(defaultRect?.height ?? 0);
+        const widthd = validateFiniteNumber(defaultRect?.width ?? 0);
 
-          return applyRectDiff(rect, diff);
-        });
-      } else if (TransformRectTypeEnum.FIT_TO_CHILDREN === type) {
-        rects = rects.map((rect) => {
-          const box = calculateBoundingBox(rect?.children?.length >= 1 ? rect.children : [rect]);
-
-          return {
-            ...rect,
-            height: validateFiniteNumber(box.height) + validateFiniteNumber(padding?.top ?? 0) + validateFiniteNumber(padding?.bottom ?? 0) + validateFiniteNumber(offset?.top ?? 0),
-            offset,
-            padding,
-            width: validateFiniteNumber(box.width) + validateFiniteNumber(padding?.left ?? 0) + validateFiniteNumber(padding?.right ?? 0) + validateFiniteNumber(offset?.left ?? 0),
-          };
-        });
-      } else if (TransformRectTypeEnum.PAD === type) {
-        rects = rects.map((rect) => ({ ...rect, padding }));
-      } else if (TransformRectTypeEnum.SHIFT === type) {
-        rects = shiftRectsByDiffRect(rects, offset ?? { left: 0, top: 0 });
-      } else if (TransformRectTypeEnum.MIN_DIMENSIONS === type) {
-        rects = rects.map(rect => {
-          const height1 = validateFiniteNumber(rect.height);
-          const width1 = validateFiniteNumber(rect.width);
-          const heightd = validateFiniteNumber(defaultRect?.height ?? 0);
-          const widthd = validateFiniteNumber(defaultRect?.width ?? 0);
-
-          return {
-            ...rect,
-            height: height1 < heightd ? heightd : height1,
-            width: width1 < widthd ? widthd : width1,
-          };
-        });
-      } else if (transform) {
-        rects = transform(rects);
-      }
+        return {
+          ...rect,
+          height: height1 < heightd ? heightd : height1,
+          width: width1 < widthd ? widthd : width1,
+        };
+      });
+    } else if (transform) {
+      rects = transform(rects);
     }
-    rectsByStage.push(rects);
 
     DEBUG.rects && console.log(`${tag}:end`, ...tags, rects);
+
+    rectsByStage.push(rects);
   });
 
   const stage = rectsByStage.length - 1;

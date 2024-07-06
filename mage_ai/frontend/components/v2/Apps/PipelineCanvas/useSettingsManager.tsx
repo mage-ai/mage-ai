@@ -1,6 +1,7 @@
 import React, { useRef, useEffect } from 'react';
 import stylesBuilder from '@styles/scss/apps/Canvas/Pipelines/Builder.module.scss';
 import { LayoutConfigType } from '../../Canvas/interfaces';
+import { buildContainerClassName, extractContainerClassNames } from './utils/display';
 import { levelClassName, groupClassName, nodeTypeClassName, statusClassName } from '../../Canvas/Nodes/utils';
 import { get, set } from '@storage/localStorage';
 import useAppEventsHandler, { CustomAppEvent, CustomAppEventEnum } from './useAppEventsHandler';
@@ -96,21 +97,25 @@ export default function useSettingsManager({
 
   function updateLocalSettings(event: CustomAppEvent) {
     const { options } = event?.detail ?? {};
-    const {
-      groups,
-      layoutConfig: layoutConfigData,
-      level,
-    } = options?.kwargs ?? {};
+    const kwargs = options?.kwargs ?? {};
 
-    if (groups ?? false) {
-      selectedGroupsRef.current = groups
+    let level = null
+    if ('groups' in kwargs) {
+      const { groups } = kwargs;
+      selectedGroupsRef.current = groups;
+      level = groups.length >= 1
+        ? groups[groups.length - 1].level + 1
+        : 0;
+    } else if ('level' in kwargs) {
+      level = kwargs.level;
+    }
+    setActiveLevel(level);
+
+    if ('layoutConfig' in kwargs) {
+      updateLayoutConfig(activeLevel.current, kwargs.layoutConfig);
     }
 
-    const lvl = !!groups ? groups.length - 1 : level;
-    setActiveLevel(lvl);
-    layoutConfigData && updateLayoutConfig(lvl, layoutConfigData);
-
-    updateLayout(event);
+    updateVisibleNodes(event);
 
     // if ('optionalGroupVisibility' in (value ?? {})) {
     //   optionalGroupsVisible.current = value ?? false;
@@ -200,14 +205,14 @@ export default function useSettingsManager({
           statusClassName(ItemStatusEnum.READY),
         ].forEach((cn: string) => {
           dynamicClassNames.push(cn);
-          classNames.push(`ctn--${cn}`);
+          classNames.push(buildContainerClassName(cn));
         });
 
         if (!styleRootRef?.current) {
           styleRootRef.current = document.getElementById(STYLE_ROOT_ID) as HTMLStyleElement;
         }
 
-        const ctncns = dynamicClassNames.map(cn => `ctn--${cn}`).join('.');
+        const ctncns = dynamicClassNames.map(buildContainerClassName).join('.');
         const cns = dynamicClassNames.join('.');
         const styles = dynamicClassNames?.length === 0 ? '' : `
           .${ctncns} {
@@ -239,32 +244,24 @@ export default function useSettingsManager({
       }
     }
 
+    extractContainerClassNames(
+      [...((containerRef?.current?.classList ?? []) as string[])],
+    )?.forEach(cn => {
+      containerRef?.current?.classList?.remove(cn);
+    })
+
     classNames.forEach((className: string) => containerRef?.current?.classList.add(className));
 
-    updateLayout(event, conditions);
-  }
-
-  function updateLayout(event: CustomAppEvent, conditions?: {
-    block?: {
-      groups?: string[];
-      type?: BlockTypeEnum;
-    };
-    level?: number;
-    type?: ItemTypeEnum;
-  }[]) {
     dispatchAppEvent(CustomAppEventEnum.UPDATE_NODE_LAYOUTS, {
       event: convertEvent(event),
       options: {
-        kwargs: {
-          conditions,
-        },
+        kwargs: conditions?.length === 0 ? null : { conditions },
       },
     });
   }
 
   return {
     activeLevel,
-    layoutConfig: layoutConfigs?.current?.[activeLevel?.current ?? 0],
     layoutConfigs,
     selectedGroupsRef,
   };

@@ -1,5 +1,4 @@
 import Aside from './Blocks/Aside';
-import { motion } from 'framer-motion';
 import Tag from '@mana/components/Tag';
 import Badge from '@mana/elements/Badge';
 import BlockType from '@interfaces/BlockType';
@@ -47,7 +46,6 @@ export default function BlockNodeComponent({
   collapsed,
   draggable,
   handlers,
-  index,
   layoutConfig,
   node,
   nodeRef,
@@ -396,30 +394,6 @@ export default function BlockNodeComponent({
       </GradientContainer>
     </>
   ), [classNames, main, timerStatusRef]);
-
-  if (ItemStatusEnum.READY === node?.status) {
-    return (
-      <motion.div
-        animate={{
-          opacity: 1,
-          scale: 1,
-          translateY: 0,
-        }}
-        initial={{
-          opacity: 0,
-          scale: 0.95,
-          translateY: 10
-        }}
-        transition={{
-          delay: index / 50,
-          duration: 0.1,
-          ease: 'easeOut'
-        }}
-      >
-        {content}
-      </motion.div>
-    );
-  }
 
   return content;
 }
