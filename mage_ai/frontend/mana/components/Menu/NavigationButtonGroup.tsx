@@ -1,32 +1,30 @@
-import { MenuItemType } from '@mana/hooks/useContextMenu';
+import Button, { ButtonProps } from '@mana/elements/Button';
 import DashedDivider from '@mana/elements/Divider/DashedDivider';
 import Grid from '@mana/components/Grid';
-import { Code, Builder, CaretDown, CaretLeft } from '@mana/icons';
-import Text from '@mana/elements/Text';
 import Link from '@mana/elements/Link';
-import Button, { ButtonProps } from '@mana/elements/Button';
-import { ItemClickHandler, MenuGroupType } from './interfaces';
 import MenuManager from '@mana/components/Menu/MenuManager';
-import { LayoutDirectionEnum } from '@mana/components/Menu/types';
-import stylesNavigation from '@styles/scss/components/Menu/NavigationButtonGroup.module.scss';
+import Text from '@mana/elements/Text';
 import stylesHeader from '@styles/scss/layouts/Header/Header.module.scss';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { getCache, deleteCache, updateCache } from './storage';
+import stylesNavigation from '@styles/scss/components/Menu/NavigationButtonGroup.module.scss';
+import useAppEventsHandler, { CustomAppEvent, CustomAppEventEnum } from '@components/v2/Apps/PipelineCanvas/useAppEventsHandler';
+import { Code, Builder, CaretDown, CaretLeft } from '@mana/icons';
+import { ItemClickHandler, MenuGroupType } from './interfaces';
+import { LayoutDirectionEnum } from '@mana/components/Menu/types';
+import { MenuItemType } from '@mana/hooks/useContextMenu';
 import { equals, sortByKey } from '@utils/array';
+import { getCache, deleteCache, updateCache } from './storage';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 type NavigationButtonGroupProps = {
   buildGroups?: (onClick: ItemClickHandler) => MenuItemType[];
   cacheKey?: string;
-  defaultGroups?: MenuGroupType[];
   groups?: MenuItemType[];
 }
 export default function NavigationButtonGroup({
   buildGroups,
   cacheKey,
-  defaultGroups,
   groups: groupsProp,
 }: NavigationButtonGroupProps) {
-  const defaultGroupsRef = useRef<MenuGroupType[]>(null);
   const [selectedButtonIndex, setSelectedButtonIndex] = useState<number>(null);
   const [selectedGroupsByLevel, setSelectedGroupsByLevel] =
     useState<MenuGroupType[]>(cacheKey ? (getCache(cacheKey) ?? []) : []);
@@ -66,47 +64,23 @@ export default function NavigationButtonGroup({
     ? buildGroups(handleSelectGroup)
     : (groupsProp ?? []), [buildGroups, groupsProp, handleSelectGroup]);
 
-  useEffect(() => {
-    if (defaultGroups?.length >= 1 && (!defaultGroupsRef?.current
-      || !equals(
-        defaultGroups?.map(g => g.uuid).sort(),
-        defaultGroupsRef?.current?.map(g => g.uuid).sort(),
-      )
-    )) {
-      defaultGroupsRef.current = defaultGroups;
+  const handleNavigationUpdate = useCallback((event: CustomAppEvent) => {
+    false && console.log('handleNavigationUpdate', event)
+    const { defaultGroups } = event?.detail?.options?.kwargs ?? {};
 
-      const level = Math.min(...defaultGroups?.map(g => g.level));
+    const startingGroups = groups[0];
+    false && console.log('startingGroups', startingGroups)
+    const item = defaultGroups?.reduce((prev, curr) => {
+      false && console.log('prev', prev, 'curr', curr)
+      return prev.items[curr.index];
+    }, startingGroups);
+    false && console.log('item', item)
+    item.onClick({} as any, item);
+  }, [groups]);
 
-      const arr = [...selectedGroupsByLevel.slice(0, level)];
-      const startingGroups = groups[0].items;
-
-      sortByKey(defaultGroups, g => g.level)?.forEach(({
-        level,
-        uuid,
-      }) => {
-        const parent = level >= 1
-          ? arr.slice(0, level).reduce(
-            (acc: MenuGroupType, group: MenuGroupType) => acc.items[group.index],
-            startingGroups[arr[0].index],
-          )
-          : null;
-
-        const items = level >= 1 ? parent?.items : startingGroups;
-        const index = items?.findIndex(g => g.uuid === uuid);
-        const item = {
-          ...items[index],
-          groups: (parent ? [parent] : []) as MenuGroupType[],
-          index,
-          level,
-          uuid,
-        };
-
-        arr.push(item);
-      });
-      const item = arr[arr.length - 1];
-      item.onClick({} as any, item);
-    }
-  }, [defaultGroups, groups, selectedGroupsByLevel]);
+  useAppEventsHandler({} as any, {
+    [CustomAppEventEnum.UPDATE_HEADER_NAVIGATION]: handleNavigationUpdate,
+  });
 
   const buttons = useMemo(() => {
     const defaultState = selectedGroupsByLevel === null;

@@ -61,7 +61,6 @@ type EventManagerProps = {
 export default function useEventManager({
   activeLevel,
   wrapperRef,
-  setHeaderData,
   appHandlersRef,
   itemIDsByLevelRef,
   canvasRef,
@@ -72,6 +71,7 @@ export default function useEventManager({
   itemsRef,
   mutateModels,
   portsRef,
+  selectedGroupsRef,
   removeContextMenu,
   renderConnectionLines,
   renderContextMenu,
@@ -433,15 +433,28 @@ export default function useEventManager({
             Icon: OpenInSidekick,
             onClick: (event: ClientEventType) => {
               event?.preventDefault();
-              removeContextMenu(event);
-              setHeaderData({
-                defaultGroups: [
-                  {
-                    level: activeLevel?.current ?? 0,
-                    uuid: block?.uuid,
+
+              const groups = selectedGroupsRef.current ?? [];
+              const parent = groups[groups.length - 1];
+
+              dispatchAppEvent(CustomAppEventEnum.UPDATE_HEADER_NAVIGATION, {
+                event: convertEvent(event),
+                options: {
+                  kwargs: {
+                    defaultGroups: [
+                      ...groups,
+                      {
+                        groups: parent ? [parent] : [],
+                        index: parent ? parent?.items?.findIndex(i => i.uuid === block?.uuid) : null,
+                        level: activeLevel?.current ?? 0,
+                        uuid: block?.uuid,
+                      },
+                    ],
                   },
-                ],
+                },
               });
+
+              removeContextMenu(event);
             },
             uuid: `Teleport into ${block?.name}`,
           },

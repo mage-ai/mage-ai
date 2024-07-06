@@ -84,6 +84,7 @@ export interface EventOperationOptionsType {
   args?: any[];
   kwargs?: {
     boundingContainer?: DOMRect;
+    classNames?: string[];
     computedStyle?: CSSStyleDeclaration;
     conditions?: {
       block?: {
@@ -93,6 +94,7 @@ export interface EventOperationOptionsType {
       level?: number;
       type?: NodeItemType['type'];
     }[];
+    defaultGroups?: MenuGroupType[];
     groups?: MenuGroupType[];
     layoutConfig?: LayoutConfigType;
     level?: number;
@@ -112,6 +114,7 @@ export interface EventOperationOptionsType {
         width?: number;
       };
     };
+    styles?: string;
   };
   handler?: (
     event: ClientEventType,

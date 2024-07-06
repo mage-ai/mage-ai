@@ -16,6 +16,7 @@ import {
 import { MenuGroupType } from '@mana/components/Menu/interfaces';
 import { Root, createRoot } from 'react-dom/client';
 import { BlockTypeEnum } from '@interfaces/BlockType';
+import { DEBUG } from '@components/v2/utils/debug';
 
 function builderLocalStorageKey(uuid: string) {
   return `pipeline_builder_canvas_local_settings_${uuid}`;
@@ -26,11 +27,13 @@ export default function useSettingsManager({
   containerRef,
   executionFrameworkUUID,
   pipelineUUID,
+  setHeaderData,
 }: {
   canvasRef: React.RefObject<HTMLDivElement>;
   containerRef: React.RefObject<HTMLDivElement>;
   executionFrameworkUUID: string;
   pipelineUUID: string;
+  setHeaderData?: (data: any) => void;
 }): SettingsManagerType {
   function defaultLayoutConfig(override?: Partial<LayoutConfigType>) {
     return {
@@ -70,6 +73,7 @@ export default function useSettingsManager({
     layoutConfigs,
     selectedGroupsRef,
   } as SettingsManagerType, {
+    [CustomAppEventEnum.NODE_LAYOUTS_CHANGED]: handleLayoutUpdates,
     [CustomAppEventEnum.NODE_RECT_UPDATED]: updateVisibleNodes,
     [CustomAppEventEnum.UPDATE_SETTINGS]: updateLocalSettings,
   });
@@ -93,11 +97,12 @@ export default function useSettingsManager({
   // layoutConfig.current.rectTransformations = settings?.layoutConfig?.rectTransformations ?? null;
   // layoutConfig.current.transformStateRef = transformState;
   // layoutConfig.current.viewportRef = canvasRef;
-  //
 
   function updateLocalSettings(event: CustomAppEvent) {
     const { options } = event?.detail ?? {};
     const kwargs = options?.kwargs ?? {};
+
+    DEBUG.settings.manager && console.log('updateLocalSettings', event)
 
     let level = null
     if ('groups' in kwargs) {
@@ -178,18 +183,22 @@ export default function useSettingsManager({
     const level = activeLevel.current;
     const display = layoutConfigs?.current?.[level]?.current?.display ?? LayoutDisplayEnum.SIMPLE;
 
-    const classNames = [
+    addContainerClassNames([
       stylesBuilder[`display-${display}`],
       stylesBuilder[`level-${level}-active`],
-    ];
-    const dynamicClassNames: string[] = [];
+    ]);
+
     const conditions = [];
+    const payload: {
+      classNames?: string[];
+      styles?: string;
+    } = {};
 
     if (event && selectedGroupsRef?.current) {
       const groups = selectedGroupsRef?.current;
       const group = groups?.[groups?.length - 1];
 
-      if (group) {
+      if (group?.uuid) {
         conditions.push({
           block: {
             groups: [group.uuid],
@@ -198,25 +207,19 @@ export default function useSettingsManager({
           type: ItemTypeEnum.NODE,
         });
 
-        [
+        const classNames = [
           groupClassName(group?.uuid),
           levelClassName(activeLevel?.current),
           nodeTypeClassName(ItemTypeEnum.NODE),
           statusClassName(ItemStatusEnum.READY),
-        ].forEach((cn: string) => {
-          dynamicClassNames.push(cn);
-          classNames.push(buildContainerClassName(cn));
-        });
+        ];
 
-        if (!styleRootRef?.current) {
-          styleRootRef.current = document.getElementById(STYLE_ROOT_ID) as HTMLStyleElement;
-        }
-
-        const ctncns = dynamicClassNames.map(buildContainerClassName).join('.');
-        const cns = dynamicClassNames.join('.');
-        const styles = dynamicClassNames?.length === 0 ? '' : `
-          .${ctncns} {
-            .${cns} {
+        const {
+          container,
+          styles,
+        } = buildStyles(classNames, ({ and, container }) => `
+          .${container} {
+            ${and} {
               opacity: 1;
               pointer-events: auto;
               visibility: visible;
@@ -232,31 +235,115 @@ export default function useSettingsManager({
               }
 
               .outputContainer {
-                visibility: hidden;
                 opacity: 0;
                 pointer-events: none;
+                visibility: hidden;
                 z-index: -1;
               }
             }
           }
-        `;
-        styleRootRef.current.textContent = styles;
+        `);
+
+        payload.classNames = container;
+        payload.styles = styles;
+
+        hideAllNodes();
       }
     }
-
-    extractContainerClassNames(
-      [...((containerRef?.current?.classList ?? []) as string[])],
-    )?.forEach(cn => {
-      containerRef?.current?.classList?.remove(cn);
-    })
-
-    classNames.forEach((className: string) => containerRef?.current?.classList.add(className));
 
     dispatchAppEvent(CustomAppEventEnum.UPDATE_NODE_LAYOUTS, {
       event: convertEvent(event),
       options: {
-        kwargs: conditions?.length === 0 ? null : { conditions },
+        kwargs: {
+          ...(conditions?.length === 0 ? null : { conditions }),
+          ...payload,
+        },
       },
+    });
+  }
+
+  function hideAllNodes() {
+    const {
+      container,
+      styles: hideStyles,
+    } = buildStyles(
+      [ItemTypeEnum.APP, ItemTypeEnum.BLOCK, ItemTypeEnum.NODE, ItemTypeEnum.PORT,
+      ItemTypeEnum.OUTPUT].map(nodeTypeClassName),
+      ({ container, or }) => `
+      .${container} {
+        @keyframes start {
+          from {
+            opacity: 1;
+          }
+          to {
+            opacity: 0;
+          }
+        }
+
+        ${or} {
+          animation: start 1s forwards;
+          opacity: 0;
+          pointer-events: none;
+          visibility: hidden;
+          z-index: -1;
+        }
+      }
+    `);
+
+    // Hide everything
+    setStyles(hideStyles);
+    addContainerClassNames(container);
+  }
+
+  function addContainerClassNames(classNames: string[]) {
+    resetContainerClassNames();
+    classNames.forEach((className: string) => containerRef?.current?.classList.add(className));
+  }
+
+  function handleLayoutUpdates(event: CustomAppEvent) {
+    DEBUG.settings.manager && console.log('handleLayoutUpdates', event)
+    const { classNames, styles } = event?.detail?.options?.kwargs ?? {};
+
+    classNames && addContainerClassNames(classNames);
+    styles && setStyles(styles);
+  }
+
+  function buildStyles(
+    classNames: string[],
+    builder: (opts: { and: string, container: string, or: string, targets: string[] }) => string,
+  ): {
+    container: string[],
+    styles: string,
+  } {
+    const container = classNames.map(buildContainerClassName);
+    const targets = classNames.map(cn => `.${cn}`);
+    const and = targets.join('');
+    const or = targets.join(',');
+    const styles = classNames?.length === 0 ? '' : builder({
+      and,
+      container: container.join('.'),
+      or,
+      targets,
+    });
+
+    return {
+      container,
+      styles,
+    };
+  }
+
+  function setStyles(styles: string) {
+    if (!styleRootRef?.current) {
+      styleRootRef.current = document.getElementById(STYLE_ROOT_ID) as HTMLStyleElement;
+    }
+    styleRootRef.current.textContent = styles;
+  }
+
+  function resetContainerClassNames() {
+    extractContainerClassNames(
+      [...((containerRef?.current?.classList ?? []) as string[])],
+    )?.forEach(cn => {
+      containerRef?.current?.classList?.remove(cn);
     });
   }
 

@@ -19,4 +19,5 @@ export enum CustomAppEventEnum {
   STOP_APP = 'stop_app',
   UPDATE_NODE_LAYOUTS = 'update_node_layouts',
   UPDATE_SETTINGS = 'update_settings',
+  UPDATE_HEADER_NAVIGATION = 'UPDATE_HEADER_NAVIGATION',
 }

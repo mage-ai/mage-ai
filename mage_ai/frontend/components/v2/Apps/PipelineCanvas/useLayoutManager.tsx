@@ -257,7 +257,7 @@ export default function useLayoutManager({
   function updateLayoutOfItems(event: CustomAppEvent) {
     const { manager, options } = event?.detail ?? {};
     const { activeLevel, layoutConfigs } = manager as SettingsManagerType;
-    const { conditions } = options?.kwargs ?? {};
+    const { classNames, conditions, styles } = options?.kwargs ?? {};
 
     const layoutConfig = layoutConfigs?.current?.[activeLevel?.current]?.current ?? {};
 
@@ -409,6 +409,12 @@ export default function useLayoutManager({
     // Don’t do any level filtering here, it’ll be done at the Canvas level.
     dispatchAppEvent(CustomAppEventEnum.NODE_LAYOUTS_CHANGED, {
       nodes: items,
+      options: {
+        kwargs: {
+          classNames,
+          styles,
+        },
+      },
     });
   }
 }

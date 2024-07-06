@@ -23,5 +23,8 @@ export const DEBUG = {
   },
   rects: false,
   rendering: false,
+  settings: {
+    manager: false,
+  },
   state: false,
 };

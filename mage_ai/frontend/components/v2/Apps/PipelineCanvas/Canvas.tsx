@@ -145,6 +145,7 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
     containerRef,
     executionFrameworkUUID,
     pipelineUUID,
+    setHeaderData,
   });
   const layoutConfig = layoutConfigs?.current?.[activeLevel?.current]?.current ?? {};
 
@@ -276,8 +277,8 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
     submitEventOperation,
   }: EventManagerType = useEventManager({
     activeLevel,
-    setHeaderData,
     appHandlersRef,
+    selectedGroupsRef,
     layoutConfig,
     canvasRef,
     connectionLinesPathRef,
