@@ -21,20 +21,24 @@ const Row = withStyles<{
 });
 
 function PanelRows({ children, padding = true, skipIndexes, ...props }: { children: React.ReactNode } & PanelProps) {
+  const arr = React.Children.map(children, (child, index) => skipIndexes && skipIndexes?.includes(index)
+    ? child
+    : (
+      <Row
+        {...props}
+        className={[padding ? styles.padding : ''].filter(Boolean).join(' ')}
+        key={index}
+      >
+        {child}
+      </Row>
+    ));
+
   return (
-    <Panel>
-      <LayoutGroup>
-        {React.Children.map(children, (child, index) => skipIndexes && skipIndexes?.includes(index)
-          ? child
-          : (
-            <motion.div key={index}>
-              <Row className={padding ? styles.padding : ''} first={index === 0} {...props}>
-                {child}
-              </Row>
-            </motion.div>
-          ))}
-      </LayoutGroup>
-    </Panel >
+    <LayoutGroup>
+      <Panel>
+        {arr}
+      </Panel >
+    </LayoutGroup >
   );
 }
 

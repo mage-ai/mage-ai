@@ -1,26 +1,33 @@
-@use '../base/borders';
 @use '../base/gradients';
 
 $border-radius: 4px;
 
 .panel {
-  @include borders.base();
 
-  border-radius: $border-radius;
   overflow: hidden;
   position: relative;
+
+  .row:first-child {
+    border-top-left-radius: $border-radius;
+    border-top-right-radius: $border-radius;
+  }
+
+  .row:last-child {
+    border-bottom-left-radius: $border-radius;
+    border-bottom-right-radius: $border-radius;
+    border-bottom-width: var(--borders-width);
+  }
 }
 
 .row {
-  border-top: 1px solid var(--borders-color-base-default);
+  border-color: var(--borders-color-base-default);
+  border-left-width: var(--borders-width);
+  border-right-width: var(--borders-width);
+  border-style: var(--borders-style);
+  border-top-width: var(--borders-width);
   overflow: hidden;
 
-  &.padding {
+  &.padding-true {
     padding: var(--padding-base);
-  }
-
-  &.first-true {
-    border-top-color: transparent;
-    border-top-width: 0;
   }
 }
