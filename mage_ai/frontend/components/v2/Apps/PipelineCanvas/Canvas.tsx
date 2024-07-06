@@ -18,7 +18,7 @@ import {
 import useEventManager from './useEventManager';
 import useLayoutManager from './useLayoutManager';
 import useModelManager from './useModelManager';
-import { LayoutProvider } from './LayoutManager/LayoutContext';
+import { SettingsProvider } from './SettingsManager/SettingsContext';
 import { ModelProvider } from './ModelManager/ModelContext';
 import usePresentationManager, { PresentationManagerType } from './usePresentationManager';
 import { DragLayer } from '../../Canvas/Layers/DragLayer';
@@ -143,7 +143,9 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
 
   const {
     appHandlersRef,
+    blockMappingRef,
     blocksByGroupRef,
+    groupMappingRef,
     itemsRef,
     mutateModels,
     onItemChangeRef,
@@ -473,8 +475,16 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
           <div id={connectionLinesRootID.current} />
           <div id="dynamic-components-root" ref={dynamicRootRef} />
 
-          <ModelProvider blocksByGroupRef={blocksByGroupRef}>
-            <LayoutProvider layoutConfigs={layoutConfigs}>
+          <ModelProvider
+            blockMappingRef={blockMappingRef}
+            blocksByGroupRef={blocksByGroupRef}
+            groupMappingRef={groupMappingRef}
+          >
+            <SettingsProvider
+              activeLevel={activeLevel}
+              layoutConfigs={layoutConfigs}
+              selectedGroupsRef={selectedGroupsRef}
+            >
               {itemRects?.reduce((acc: {
                 order: string[][];
                 nodes: React.ReactNode[];
@@ -526,7 +536,7 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
                 nodes: [],
                 order: [],
               }).nodes}
-            </LayoutProvider>
+            </SettingsProvider>
           </ModelProvider >
 
           {outputPortalsMemo}

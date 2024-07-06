@@ -224,7 +224,7 @@ export default function useLayoutManager({
           scope: RectTransformationScopeEnum.SELF,
           type: TransformRectTypeEnum.FIT_TO_CHILDREN,
         },
-        mindims,
+        // mindims,
         ...layoutStyleTransformations,
         ...(defaultTrans ? [{
 

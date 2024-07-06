@@ -6,7 +6,9 @@ import { MutateType } from '@api/interfaces';
 import BlockType, { TemplateType } from '@interfaces/BlockType';
 import {
   AppNodeType, DragItem, NodeItemType, NodeType, RectType, PortType, LayoutConfigType,
-  PortMappingType, ItemMappingType, BlocksByGroupType, ModelMappingType, GroupLevelType
+  PortMappingType, ItemMappingType, BlocksByGroupType, ModelMappingType, GroupLevelType,
+  BlockMappingType,
+  GroupMappingType
 } from '../../Canvas/interfaces';
 import { ClientEventType } from '@mana/shared/interfaces';
 import { AppConfigType } from '../interfaces';
@@ -45,6 +47,8 @@ export interface AppManagerType {
 
 export interface ModelManagerType {
   activeLevel: React.MutableRefObject<number>;
+  blockMappingRef: React.MutableRefObject<BlockMappingType>;
+  groupMappingRef: React.MutableRefObject<GroupMappingType>;
   appHandlersRef: AppHandlersRefType;
   blocksByGroupRef: React.MutableRefObject<BlocksByGroupType>;
   executionFramework: PipelineExecutionFrameworkType;

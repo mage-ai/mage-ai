@@ -3,7 +3,7 @@ import update from 'immutability-helper';
 import { ItemStatusEnum } from '../../Canvas/types';
 import { AppHandlerType, AppHandlersRefType } from './interfaces';
 import {
-  AppNodeType, BlockGroupType, BlocksByGroupType, GroupLevelType, ItemMappingType,
+  AppNodeType, BlockGroupType, BlockMappingType, BlocksByGroupType, GroupLevelType, GroupMappingType, ItemMappingType,
   ModelMappingType, NodeItemType, NodeType, OutputNodeType,
   PortMappingType, PortType
 } from '../../Canvas/interfaces';
@@ -48,6 +48,9 @@ export default function useModelManager({
   const appHandlersRef = useRef<AppHandlerType>({} as AppHandlerType);
   const blocksByGroupRef = useRef<BlocksByGroupType>({} as BlocksByGroupType);
   const groupsByLevelRef = useRef<GroupLevelType>([]);
+
+  const blockMappingRef = useRef<BlockMappingType>({});
+  const groupMappingRef = useRef<GroupMappingType>({});
 
   const itemsRef = useRef<ItemMappingType>({});
   const outputsRef = useRef<Record<string, Record<string, OutputNodeType>>>({});
@@ -310,6 +313,8 @@ export default function useModelManager({
           });
         });
 
+        blockMappingRef.current = blockMapping;
+        groupMappingRef.current = groupMapping;
         blocksByGroupRef.current = blocksByGroup;
         groupsByLevelRef.current = groupsByLevel;
 
@@ -406,14 +411,13 @@ export default function useModelManager({
 
   return {
     appHandlersRef,
+    blockMappingRef,
     blocksByGroupRef,
+    groupMappingRef,
     groupsByLevelRef,
     itemsRef,
     onItemChangeRef,
     onModelChangeRef,
     portsRef,
-    // mutateModels,
-    // updateNodeItems,
-    // updatePorts,
   };
 }

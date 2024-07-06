@@ -3,6 +3,8 @@ import { ModelManagerType } from '../interfaces';
 
 interface ModelContextType {
   blocksByGroupRef: ModelManagerType['blocksByGroupRef'];
+  blockMappingRef: ModelManagerType['blockMappingRef'];
+  groupMappingRef: ModelManagerType['groupMappingRef'];
 }
 export const ModelContext = createContext<ModelContextType | undefined>(undefined);
 

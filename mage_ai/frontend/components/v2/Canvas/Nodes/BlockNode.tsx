@@ -1,4 +1,5 @@
 import Aside from './Blocks/Aside';
+import TeleportBlock from './Blocks/TeleportBlock';
 import Tag from '@mana/components/Tag';
 import Badge from '@mana/elements/Badge';
 import BlockType from '@interfaces/BlockType';
@@ -16,20 +17,20 @@ import BlockGroupOverview from './Blocks/BlockGroupOverview';
 import { AddV2, Code, Grab, PipeIconVertical, PlayButtonFilled, Pause, Infinite } from '@mana/icons';
 import { AppTypeEnum, AppSubtypeEnum } from '../../Apps/constants';
 import { EventOperationEnum } from '@mana/shared/interfaces';
-import { DragAndDropHandlersType, SharedBlockProps } from './types';
+import { AsideType, DragAndDropHandlersType, SharedBlockProps } from './types';
 import { NodeItemType, PortType, NodeType } from '../interfaces';
 import { FrameworkType, PipelineExecutionFrameworkBlockType } from '@interfaces/PipelineExecutionFramework/interfaces';
 import { ItemTypeEnum, LayoutDisplayEnum, PortSubtypeEnum, ItemStatusEnum } from '../types';
 import { StatusTypeEnum, BlockTypeEnum } from '@interfaces/BlockType';
 import { TooltipWrapper } from '@context/Tooltip';
 import { borderConfigs, blockColorNames } from './presentation';
-import { getBlockColor } from '@mana/themes/blocks';
 import { handleGroupTemplateSelect, menuItemsForTemplates } from './utils';
 import { isEmptyObject } from '@utils/hash';
 import { buildEvent } from './utils';
-import { useContext, useEffect, useMemo, useState } from 'react';
+import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { BlockNode } from './interfaces';
-import { LayoutContext } from '@components/v2/Apps/PipelineCanvas/LayoutManager/LayoutContext';
+import { SettingsContext } from '@components/v2/Apps/PipelineCanvas/SettingsManager/SettingsContext';
+import { GroupUUIDEnum } from '@interfaces/PipelineExecutionFramework/types';
 
 type BlockNodeProps = {
   block: BlockType | PipelineExecutionFrameworkBlockType;
@@ -41,7 +42,6 @@ type BlockNodeProps = {
 } & BlockNode;
 
 export default function BlockNodeComponent({
-  activeLevel,
   block,
   buttonBeforeRef,
   collapsed,
@@ -55,8 +55,12 @@ export default function BlockNodeComponent({
   timerStatusRef,
   updateBlock,
 }: BlockNodeProps & DragAndDropHandlersType & SharedBlockProps) {
-  const { layoutConfigs } = useContext(LayoutContext);
-  const layoutConfig = layoutConfigs?.current?.[node?.level];
+  const { activeLevel, layoutConfigs, selectedGroupsRef } = useContext(SettingsContext);
+  const layoutConfig = layoutConfigs?.current?.[activeLevel?.current];
+  const detailLayout = LayoutDisplayEnum.DETAILED === layoutConfig?.current?.display;
+  const selectedGroup = selectedGroupsRef?.current?.[activeLevel?.current - 1];
+  const isSiblingGroup = selectedGroup?.uuid !== block?.uuid &&
+    selectedGroup?.groups?.some(g => block?.groups?.includes(g.uuid as GroupUUIDEnum));
 
   const { name, status, type, uuid } = block;
   const [level, setLevel] = useState<number>(0);
@@ -185,82 +189,77 @@ export default function BlockNodeComponent({
     return arr;
   }, [borders]);
 
-  const badgeRow = useMemo(
-    () =>
-      badge && (
-        <Grid
-          alignItems="center"
-          autoColumns="auto"
-          autoFlow="column"
-          columnGap={8}
-          id={`${node.id}-badge`}
-          justifyContent="space-between"
-          templateColumns="1fr"
-          templateRows="1fr"
-        >
-          <Grid
-            alignItems="center"
-            autoColumns="auto"
-            autoFlow="column"
-            columnGap={8}
-            justifyContent="start"
-            templateColumns={!inputs?.length && isGroup ? '1fr' : 'max-content'}
-            templateRows="1fr"
-          >
-            {false && inputs?.length >= 1 && (
-              <Circle
-                backgroundColor={
-                  getBlockColor(inputs?.[0]?.target?.block?.type, { getColorName: true })?.names
-                    ?.base || 'gray'
-                }
-                size={12}
-              />
-            )}
-            {badge &&
-              <TooltipWrapper
-                hide={block?.type && ![BlockTypeEnum.GROUP, BlockTypeEnum.PIPELINE].includes(block?.type)}
-                tooltip={
-                  <Grid rowGap={4}>
-                    <Text semibold>
-                      {block?.name || block?.uuid}
-                    </Text >
-                    {block?.description &&
-                      <Text secondary>
-                        {block?.description}
-                      </Text>
-                    }
-                  </Grid>
-                }
-                tooltipStyle={{ maxWidth: 400 }}
-              >
-                <Badge {...badge} />
-              </TooltipWrapper>
-            }
-          </Grid>
-          <Grid
-            alignItems="center"
-            autoColumns="auto"
-            autoFlow="column"
-            columnGap={8}
-            justifyContent="end"
-            templateColumns="max-content"
-            templateRows="1fr"
-          >
-            {after && <Aside {...after} />}
-            {false && outputs?.length >= 1 && (
-              <Circle
-                backgroundColor={
-                  getBlockColor(outputs?.[0]?.target?.block?.type, { getColorName: true })?.names
-                    ?.base || 'gray'
-                }
-                size={12}
-              />
-            )}
-          </Grid>
+  const badgeBase = useMemo(() => badge &&
+    <TooltipWrapper
+      hide={block?.type && ![BlockTypeEnum.GROUP, BlockTypeEnum.PIPELINE].includes(block?.type)}
+      tooltip={
+        <Grid rowGap={4}>
+          <Text semibold>
+            {block?.name || block?.uuid}
+          </Text >
+          {block?.description &&
+            <Text secondary>
+              {block?.description}
+            </Text>
+          }
         </Grid>
-      ),
-    [after, badge, block, inputs, node, outputs, isGroup],
-  );
+      }
+      tooltipStyle={{ maxWidth: 400 }}
+    >
+      <Badge {...badge} />
+    </TooltipWrapper>
+    , [badge, block]);
+
+  const buildBadgeRow = useCallback(({
+    after: afterArg,
+    badgeFullWidth = true,
+    inputColorName,
+    outputColorName,
+  }: {
+    after?: AsideType;
+    badgeFullWidth?: boolean;
+    inputColorName?: string;
+    outputColorName?: string;
+  }) => (
+    <Grid
+      alignItems="center"
+      autoColumns="auto"
+      autoFlow="column"
+      columnGap={8}
+      justifyContent="space-between"
+      templateColumns="1fr"
+      templateRows="1fr"
+    >
+      <Grid
+        alignItems="center"
+        autoColumns="auto"
+        autoFlow="column"
+        columnGap={8}
+        justifyContent="start"
+        templateColumns={badgeFullWidth
+          ? inputColorName
+            ? 'auto 1fr'
+            : '1fr'
+          : 'max-content'}
+        templateRows="1fr"
+      >
+        {inputColorName && <Circle backgroundColor={inputColorName} size={12} />}
+        {badgeBase}
+      </Grid>
+      <Grid
+        alignItems="center"
+        autoColumns="auto"
+        autoFlow="column"
+        columnGap={8}
+        justifyContent="end"
+        templateColumns="max-content"
+        templateRows="1fr"
+      >
+        {afterArg && <Aside {...afterArg} />}
+        {outputColorName && <Circle backgroundColor={outputColorName} size={12} />}
+      </Grid>
+    </Grid>
+  ), [badgeBase]);
 
   const connectionRows = useMemo(
     () =>
@@ -336,10 +335,16 @@ export default function BlockNodeComponent({
         className={[
           stylesBlockNode.blockNode,
         ]?.filter(Boolean)?.join(' ')}
+        style={{
+          minWidth: 300,
+        }}
       >
         <Grid templateRows="auto">
           <Grid rowGap={8} templateRows="auto">
-            {badgeRow}
+            {badge && buildBadgeRow({
+              after,
+              badgeFullWidth: !inputs?.length && isGroup,
+            })}
             {!badge && titleRow}
           </Grid>
           <div className={stylesBlockNode.loader}>
@@ -350,7 +355,7 @@ export default function BlockNodeComponent({
             />
           </div>
           {isGroup
-            ? LayoutDisplayEnum.DETAILED !== layoutConfig?.current?.display && (
+            ? !detailLayout && (
               <BlockGroupOverview
                 block={block as FrameworkType}
               />
@@ -361,14 +366,12 @@ export default function BlockNodeComponent({
                 {templateConfigurations}
                 {BlockTypeEnum.PIPELINE === block?.type && <div />}
               </Grid>
-
             )}
         </Grid>
       </div>
     ),
-    [badge, badgeRow, block, connectionRows, templateConfigurations, titleRow,
-      layoutConfig,
-      isGroup,
+    [badge, buildBadgeRow, block, connectionRows, templateConfigurations, titleRow, after,
+      isGroup, detailLayout, inputs,
     ],
   );
 
@@ -397,6 +400,17 @@ export default function BlockNodeComponent({
       </GradientContainer>
     </>
   ), [classNames, main, timerStatusRef]);
+
+  if (isSiblingGroup) {
+    return (
+      <TeleportBlock
+        block={block}
+        buildBadgeRow={buildBadgeRow}
+        node={node}
+        selectedGroup={selectedGroup}
+      />
+    );
+  }
 
   return content;
 }
