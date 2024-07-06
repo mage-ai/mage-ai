@@ -33,3 +33,7 @@
 .variant-error {
   background: linear-gradient(90deg, rgba(255, 59, 59, 0.30) 2.21%, rgba(255, 59, 59, 0.30) 2.51%, rgba(255, 59, 59, 0.00) 29.51%);
 }
+
+.variant-error-reverse {
+  background: linear-gradient(270deg, rgba(255, 59, 59, 0.30) 2.21%, rgba(255, 59, 59, 0.30) 2.51%, rgba(255, 59, 59, 0.00) 29.51%);
+}

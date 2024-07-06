@@ -46,7 +46,7 @@ export function GradientContainer({
     className?: string;
     direction?: Direction;
     noBorder?: boolean;
-    variant?: 'error';
+    variant?: 'error' | 'error-reverse';
   }) {
   const noInner = noBorder || variant;
 

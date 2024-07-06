@@ -103,7 +103,7 @@ export default function BlockGroupOverview({
               return (
                 <GradientContainer
                   key={uuid3}
-                // variant={!valid ? 'error' : undefined}
+                  variant={error ? 'error-reverse' : undefined}
                 >
                   <Grid
                     alignItems="center"

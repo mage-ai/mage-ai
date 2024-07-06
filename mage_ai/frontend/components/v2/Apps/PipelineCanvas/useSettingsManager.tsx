@@ -60,7 +60,9 @@ export default function useSettingsManager({
     useRef<LayoutConfigType>(defaultLayoutConfig({
       direction: LayoutConfigDirectionEnum.HORIZONTAL,
     })),
-    useRef<LayoutConfigType>(defaultLayoutConfig()),
+    useRef<LayoutConfigType>(defaultLayoutConfig({
+      direction: LayoutConfigDirectionEnum.HORIZONTAL,
+    })),
   ]);
   const optionalGroupsVisible = useRef<boolean>(null);
 
