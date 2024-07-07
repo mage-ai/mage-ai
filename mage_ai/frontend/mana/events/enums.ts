@@ -1,6 +1,8 @@
 export enum EventEnum {
   KEYDOWN = 'keydown',
   KEYUP = 'keyup',
+  MOUSEENTER = 'mouseenter',
+  MOUSELEAVE = 'mouseleave',
 }
 
 export enum KeyEnum {

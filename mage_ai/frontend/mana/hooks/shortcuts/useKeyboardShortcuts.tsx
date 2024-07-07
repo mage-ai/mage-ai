@@ -1,23 +1,26 @@
 import React, { useEffect, useRef } from 'react';
-
 import useDebounce from '@utils/hooks/useDebounce';
-import { CommandType, CustomKeyboardEventType, PredicateType } from './interfaces';
-import { EventEnum } from './types';
+import { CommandType, CustomKeyboardEventType, PredicateType } from '../../events/interfaces';
+import { EventEnum } from '../../events/enums';
 import { sortByKey } from '@utils/array';
 import { isEqual, selectKeys } from '@utils/hash';
 
 type KeyMapType = Record<string, CustomKeyboardEventType[]>;
 
+export interface KeyboardShortcutsType {
+  deregisterCommands: () => void;
+  registerCommands: (commands: Record<string, CommandType>) => void;
+}
+
+export interface KeyboardShortcutsProps {
+  target: React.MutableRefObject<any | null>;
+  timeout?: number;
+}
+
 export default function useKeyboardShortcuts({
   target,
   timeout = 1000,
-}: {
-  target: React.MutableRefObject<any | null>;
-  timeout?: number;
-}): {
-  deregisterCommands: () => void;
-  registerCommands: (commands: Record<string, CommandType>) => void;
-} {
+}: KeyboardShortcutsProps): KeyboardShortcutsType {
   const [debouncer, cancel] = useDebounce();
 
   const commandsRef = useRef<Record<string, CommandType>>({});
@@ -120,8 +123,8 @@ export default function useKeyboardShortcuts({
             predicates.length === 1
               ? validatePredicate(command.predicate, arr1)
               : arr1?.some((event: CustomKeyboardEventType) =>
-                  validatePredicate(command.predicate, [event]),
-                ),
+                validatePredicate(command.predicate, [event]),
+              ),
           );
         }
 

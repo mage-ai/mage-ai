@@ -1,4 +1,5 @@
 import { ClientEventType, FileType } from '../../shared/interfaces';
+import { CustomEvent } from '../../events/interfaces';
 import { ItemTypeEnum } from './types';
 import { KeyboardTextGroupType } from '../../elements/Text/Keyboard/types';
 
@@ -25,7 +26,7 @@ export interface MenuItemType {
   items?: MenuItemType[];
   keyboardShortcuts?: KeyboardTextGroupType;
   label?: (() => string) | string;
-  onClick?: (event?: ClientEventType, item?: MenuItemType) => void;
+  onClick?: (event?: ClientEventType | CustomEvent, item?: MenuItemType) => void;
   uuid?: string;
 }
 

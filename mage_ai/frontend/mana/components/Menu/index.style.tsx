@@ -1,8 +1,7 @@
 import styled, { css } from 'styled-components';
-import { motion } from 'framer-motion';
-
 import { UNIT } from '../../themes/spaces';
 import { gradientBackground } from '../../styles/mixins';
+import { motion } from 'framer-motion';
 
 const DIVIDER_SPACE = 2;
 export const MENU_ITEM_HEIGHT = 35;
@@ -21,7 +20,7 @@ const borderStyles = css`
   border-right: 1px solid var(--colors-graymd);
 `;
 
-const focusedBackground = css<{
+const hoveredBackground = css<{
   noHover?: string;
 }>`
   ${({ noHover }) =>
@@ -33,7 +32,17 @@ const focusedBackground = css<{
   `}
 `;
 
-const focused = css<{
+const focusedBackground = css`
+  ${hoveredBackground}
+`;
+
+const activeBackground = css`
+  background-color: var(--colors-graylo);
+  border-left-color: var(--colors-gray);
+  border-right-color: var(--colors-gray);
+`;
+
+const hovered = css<{
   noHover?: string;
 }>`
   ${({ noHover }) =>
@@ -78,6 +87,8 @@ export const MenuItemContainerStyled = styled.div<{
   first?: boolean;
   last?: boolean;
   noHover?: string;
+  onMouseEnter?: (event: any) => void;
+  onMouseLeave?: (event: any) => void;
 }>`
   ${borderStyles}
 
@@ -99,12 +110,20 @@ export const MenuItemContainerStyled = styled.div<{
     border-bottom-right-radius: ${theme.menus.border.radius.base};
   `}
 
-  &.default-open {
+  &.focusing {
     ${focusedBackground}
   }
 
+  &.activated {
+    ${activeBackground}
+  }
+
+  &.hovering {
+    ${hoveredBackground}
+  }
+
   &:hover {
-    ${focusedBackground}
+    ${hoveredBackground}
   }
 
   a {
@@ -123,7 +142,7 @@ export const ItemContent = styled.div<{
   border-bottom: 1px solid transparent;
 
   &:hover {
-    ${focused}
+    ${hovered}
   }
 
   ${({ first }) =>

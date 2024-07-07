@@ -32,7 +32,7 @@ export function convertEvent(event: MouseEvent, opts?: {
     nodes,
     operation,
   } = opts ?? {};
-  return update(event as ClientEventType, {
+  return update({ ...(event ?? {}) } as ClientEventType, {
     data: {
       $set: selectEntriesWithValues({
         app,

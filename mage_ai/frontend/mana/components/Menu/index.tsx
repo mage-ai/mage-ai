@@ -1,19 +1,19 @@
 import Button from '../../elements/Button';
-import DeferredRenderer from '../DeferredRenderer';
 import Grid from '../Grid';
 import KeyboardTextGroup from '../../elements/Text/Keyboard/Group';
-import React, { createRef, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import React, {
+  createRef, useCallback,
+  useEffect, useMemo, useRef
+} from 'react';
 import Text from '../../elements/Text';
-import update from 'immutability-helper';
-import useDebounce, { DebouncerType, CancelType } from '@utils/hooks/useDebounce';
+import useCustomEventHandler from '../../events/useCustomEventHandler';
+import useDebounce from '@utils/hooks/useDebounce';
+import { AnimatePresence, Variants, motion } from 'framer-motion';
 import { CaretRight } from '@mana/icons';
+import { CustomKeyboardEvent } from '../../events/interfaces';
 import { HEADER_Z_INDEX } from '@components/constants';
 import { LayoutDirectionEnum } from './types';
 import { MenuItemType } from './interfaces';
-import { ThemeContext, ThemeProvider } from 'styled-components';
-import { AnimatePresence, Variants, motion } from 'framer-motion';
-import { createPortal } from 'react-dom';
-import { createRoot } from 'react-dom/client';
 import {
   DividerContainer,
   MenuContent,
@@ -22,16 +22,11 @@ import {
   MenuItemContainerStyled,
   MenuStyled,
   MenuItemStyled,
-  MENU_ITEM_HEIGHT,
-  MENU_MIN_WIDTH,
 } from './index.style';
 import { UNIT } from '@mana/themes/spaces';
 import { ClientEventType, RectType } from '@mana/shared/interfaces';
-import { getAbsoluteRect } from '@mana/shared/utils';
-import { addRects, getRectDiff } from '@components/v2/Canvas/utils/rect';
 import { PortalProvider, usePortals } from '@context/v2/Portal';
-
-const DEBUG = true;
+import { EventEnum, KeyEnum } from '@mana/events/enums';
 
 const itemVariants: Variants = {
   open: {
@@ -59,6 +54,7 @@ export type MenuProps = {
     column: number;
     row: number;
   }[];
+  parentItemRef?: React.RefObject<HTMLDivElement>;
   position?: RectType;
   rects?: {
     bounding?: RectType;
@@ -66,6 +62,10 @@ export type MenuProps = {
     offset?: RectType;
   };
   removePortals: (level: number) => void;
+  renderChildrenRefs: React.MutableRefObject<{
+    hideChildren: () => void;
+    renderChildren: (event: any, item: MenuItemType) => void;
+  }[]>;
   small?: boolean;
   standardMenu?: boolean;
   uuid: string;
@@ -86,17 +86,17 @@ function MenuItemBase({
   contained, first, item, last, small,
   handleMouseEnter, handleMouseLeave, defaultOpen,
 }: ItemProps,
-  ref: React.Ref<HTMLDivElement>
+  ref: React.RefObject<HTMLDivElement>
 ) {
-  const timeoutRef = useRef<number | null>(null);
+  const timeoutRef = useRef(null);
   const [debouncer, cancel] = useDebounce();
   const { Icon, description, divider, items, keyboardShortcuts, label, onClick, uuid } = item;
   const itemsCount = useMemo(() => items?.length || 0, [items]);
 
   useEffect(() => {
-    if (defaultOpen && ref.current && ref.current.classList.contains('default-open')) {
+    if (defaultOpen && ref.current && ref.current.classList.contains('activated')) {
       timeoutRef.current = setTimeout(() => {
-        ref.current?.classList.remove('default-open');
+        ref.current?.classList.remove('activated');
       }, 1000);
     }
 
@@ -177,21 +177,21 @@ function MenuItemBase({
 
   return (
     <MenuItemContainerStyled
-      className={defaultOpen ? 'default-open' : ''}
-      onMouseEnter={(event) => {
+      className={defaultOpen ? 'activated' : ''}
+      contained={contained}
+      first={first}
+      last={last}
+      noHover={noHover}
+      onMouseEnter={(event: any) => {
         cancel();
         debouncer(() => handleMouseEnter(event as any), 100);
       }}
-      onMouseLeave={(event) => {
+      onMouseLeave={(event: any) => {
         cancel();
         if (handleMouseLeave) {
           debouncer(() => handleMouseLeave?.(event as any), 100);
         }
       }}
-      contained={contained}
-      first={first}
-      last={last}
-      noHover={noHover}
       ref={ref}
     >
       <ItemContent first={first} last={last} noHover={noHover}>
@@ -228,9 +228,11 @@ function Menu({
   itemsRef,
   level,
   openItems,
+  parentItemRef,
   position,
   rects,
   removePortals,
+  renderChildrenRefs,
   small,
   standardMenu,
   uuid,
@@ -280,8 +282,8 @@ function Menu({
           items={item?.items}
           itemsRef={itemsRef}
           level={nextLevel}
+          parentItemRef={itemInnerRef}
           position={rect}
-          removePortals={removePortals}
           rects={{
             bounding: rects?.bounding,
             container: rect,
@@ -290,6 +292,8 @@ function Menu({
               top: -rect.height,
             },
           }}
+          removePortals={removePortals}
+          renderChildrenRefs={renderChildrenRefs}
           small
           standardMenu={standardMenu}
           uuid={`${uuid}-${item.uuid}`}
@@ -301,52 +305,20 @@ function Menu({
       // Open the selected submenu
       addPortal(nextLevel, menuComponent, containerRef);
 
-      // Why are we appending?
-      // if (parentItemsElementRef?.current) {
-      //   setPortal(menuComponent);
-      //   return;
-      // }
-
-      // const element = event?.target as HTMLElement;
-      // const rect = element?.getBoundingClientRect() || ({} as DOMRect);
-      // const rectContainer = containerRef?.current?.getBoundingClientRect() || ({} as DOMRect);
-
-      // Calculate the mouse position relative to the element
-      // const paddingHorizontal = rect?.left - rectContainer?.left;
-      // 4px for the 4 borders: 2 from the parent and 2 from the child.
-      // const x = rectContainer?.left + rectContainer?.width - (rect?.left + paddingHorizontal + 4);
-      // const y = rect?.top - rectContainer?.top - 2 * (rect?.height - element?.clientHeight);
-
-      // if (!itemsRootRef?.current) {
-      //   const element = parentItemsElementRef?.current ?? itemsElementRef?.current;
-      //   itemsRootRef.current = createRoot(element as HTMLElement);
-      // }
-
-      // if (!itemsRootRef?.current) {
-      //   console.error('Cannot update an unmounted root', uuid);
-      //   return;
-      // }
-
-      // if (!itemsRootRef?.current) return;
-
-      // itemsRootRef?.current.render(item?.items?.length >= 1
-      //   ? (
-      //     <React.StrictMode>
-      //       <DeferredRenderer idleTimeout={1}>
-      //         <ThemeProvider theme={themeContext}>
-      //           {menuComponent}
-      //         </ThemeProvider>
-      //       </DeferredRenderer>
-      //     </React.StrictMode>
-      //   )
-      //   : null
-      // );
+      items?.forEach((item2) => {
+        const iref = itemsRef?.current?.[item2?.uuid];
+        if (item2?.uuid !== item?.uuid) {
+          iref?.current?.classList?.remove('activated');
+        } else {
+          iref?.current?.classList?.add('activated');
+        }
+      });
 
       itemExpandedRef.current = item;
     },
-    [standardMenu, uuid, addPortal, removePortals,
+    [standardMenu, uuid, addPortal, removePortals, renderChildrenRefs,
       above, contained, directionRef, rects, direction, itemsRef,
-      level,
+      level, items,
     ],
   );
 
@@ -356,20 +328,6 @@ function Menu({
     itemExpandedRef.current = null;
     removePortals(level + 1);
   }, [level, removePortals]);
-
-  const removeChildren = useCallback((exceptUUID?: string) => {
-    if (exceptUUID && itemExpandedRef.current === exceptUUID) return;
-
-    // Using a timeout to unmount after the current render cycle
-    timeoutRef.current = setTimeout(() => {
-      const root = itemsRootRef.current;
-      root?.unmount();
-
-      const element = itemsElementRef.current;
-      element && element.remove();
-    }, 0);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   useEffect(() => {
     const computedStyle =
@@ -464,6 +422,15 @@ function Menu({
           });
         }
       }
+
+      renderChildrenRefs.current[level] = {
+        hideChildren,
+        renderChildren: (event, item) => {
+          renderChildItems(item, itemsRef?.current?.[item?.uuid], {
+            event: event as any,
+          });
+        },
+      };
     }
 
     const timeout = timeoutRef.current;
@@ -475,9 +442,9 @@ function Menu({
       itemExpandedRef.current = null;
       timeoutRef.current = null;
     };
-  }, [contained, rects, direction, above, uuid, position, level,
-    directionPrevious, openItems, items, itemsRef, renderChildItems,
-    rootID, standardMenu, uuid, removeChildren]);
+  }, [contained, rects, direction, above, position, level, hideChildren,
+    directionPrevious, openItems, items, itemsRef, renderChildItems, renderChildrenRefs,
+    rootID, standardMenu, uuid]);
 
   return (
     <MenuStyled
@@ -535,7 +502,9 @@ function Menu({
                   variants={itemVariants}
                 >
                   <MenuItem
+                    contained={contained}
                     defaultOpen={openItems?.[0]?.row === idx}
+                    first={idx === 0}
                     handleMouseEnter={(event) => {
                       hideChildren();
                       if (item?.items?.length >= 1) {
@@ -544,8 +513,6 @@ function Menu({
                         });
                       }
                     }}
-                    contained={contained}
-                    first={idx === 0}
                     item={item}
                     last={idx === itemsCount - 1}
                     ref={itemRef}
@@ -565,9 +532,16 @@ function Menu({
   );
 }
 
-function MenuController({ children, onClose, ...props }: MenuProps) {
+function MenuController({ items, onClose, portalRef, ...props }: MenuProps & {
+  portalRef: React.RefObject<HTMLDivElement>,
+}) {
+  const dispatchEventRef = useRef(null);
   const itemsRef = useRef<Record<string, React.RefObject<HTMLDivElement>>>({});
   const containerRefs = useRef<Record<string, React.RefObject<HTMLDivElement>>>({});
+  const renderChildrenRefs = useRef<{
+    hideChildren: () => void;
+    renderChildren: (event: any, item: MenuItemType) => void;
+  }[]>([]);
   const { addPortal, removePortalsFromLevel } = usePortals();
 
   const removePortals = useCallback((level: number) => {
@@ -599,6 +573,65 @@ function MenuController({ children, onClose, ...props }: MenuProps) {
     }
   }, [onClose, removePortals]);
 
+  const handleKeyDown = useCallback((event: CustomKeyboardEvent) => {
+    const {
+      position,
+      previousPosition,
+      // previousTarget,
+      // target,
+    } = event?.detail;
+    // const item = target as MenuItemType;
+    // const itemPrevious = previousTarget as MenuItemType;
+
+    const getTargets = pos => {
+      let item = null;
+      let itemsInner = [...items];
+
+      pos?.forEach((row) => {
+        item = itemsInner?.[row];
+        itemsInner = [...(item?.items ?? [])];
+      });
+
+      return [item, itemsInner];
+    }
+    const [target] = getTargets(position);
+    const [previousTarget] = getTargets(previousPosition);
+    const item = target as MenuItemType;
+    const itemPrevious = previousTarget as MenuItemType;
+
+    if (KeyEnum.ESCAPE === event.key) {
+      removePortals(0);
+      onClose && onClose?.(0);
+    } else if (KeyEnum.ENTER === event.key && item && item?.onClick) {
+      item?.onClick(event, item);
+    } else if (item?.uuid !== itemPrevious?.uuid) {
+      const el = itemsRef?.current?.[item?.uuid];
+      const el2 = itemsRef?.current?.[previousTarget?.uuid];
+      if (el?.current) {
+        el?.current?.focus();
+        el?.current?.classList?.add('hovering');
+      }
+      if (el2?.current) {
+        el2?.current?.classList?.remove('hovering');
+      }
+
+      if (item?.items?.length >= 1) {
+        const { hideChildren, renderChildren } =
+          renderChildrenRefs?.current?.[position?.length - 1] ?? {};
+
+        if (KeyEnum.ARROWLEFT === event.key) {
+          hideChildren?.();
+        } else if (renderChildren) {
+          renderChildren(event, item);
+        }
+      }
+    }
+  }, [items, onClose, removePortals]);
+
+  dispatchEventRef.current = useCustomEventHandler(portalRef, {
+    [EventEnum.KEYDOWN]: handleKeyDown,
+  }).dispatchCustomEvent;
+
   useEffect(() => {
     document.addEventListener('click', handleDocumentClick);
 
@@ -607,17 +640,20 @@ function MenuController({ children, onClose, ...props }: MenuProps) {
       itemsRef.current = {};
       document.removeEventListener('click', handleDocumentClick);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [handleDocumentClick]);
 
   return (
     <Menu
       {...props}
       addPortal={addPortalHandler}
+      items={items}
       itemsRef={itemsRef}
       level={0}
       removePortals={removePortals}
+      renderChildrenRefs={renderChildrenRefs}
     >
-      {children}
+      <div ref={portalRef} />
     </Menu>
   );
 }
@@ -628,9 +664,7 @@ function MenuRoot(props: MenuProps) {
   return (
     <PortalProvider containerRef={portalRef}>
       <AnimatePresence >
-        <MenuController {...props}>
-          <div ref={portalRef} />
-        </MenuController>
+        <MenuController {...props} portalRef={portalRef} />
       </AnimatePresence >
     </PortalProvider >
   )

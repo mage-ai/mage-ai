@@ -1,14 +1,11 @@
+import Menu, { MenuProps } from '../components/Menu';
 import React, { useContext, useEffect, useMemo, useRef } from 'react';
+import useKeyboardNavigation from './useKeyboardNavigation';
+import { CustomKeyboardEvent } from '../events/interfaces';
+import { ClientEventType as ClientEventTypeT } from '../shared/interfaces';
+import { MenuItemType as MenuItemTypeT } from '../components/Menu/interfaces';
 import { ThemeContext, ThemeProvider } from 'styled-components';
 import { createRoot, Root } from 'react-dom/client';
-
-import DeferredRenderer from '@mana/components/DeferredRenderer';
-import Menu, { MenuProps } from '../components/Menu';
-import useKeyboardShortcuts from './shortcuts/useKeyboardShortcuts';
-import { KeyEnum } from './shortcuts/types';
-import { ClientEventType as ClientEventTypeT, RectType } from '../shared/interfaces';
-import { MenuItemType as MenuItemTypeT } from '../components/Menu/interfaces';
-import { selectKeys } from '@utils/hash';
 
 export type RenderContextMenuOptions = {
   contained?: boolean;
@@ -39,6 +36,7 @@ export interface ContextMenuType {
   shouldPassControl: (event: ClientEventType) => boolean;
   showMenu: (items: MenuItemType[], opts?: RenderContextMenuOptions) => void;
   hideMenu: () => void;
+  teardown: () => void;
 }
 
 export type ContextMenuProps = {
@@ -56,17 +54,26 @@ export default function useContextMenu({
 }: ContextMenuProps): ContextMenuType {
   const contextMenuRef = useRef<HTMLDivElement | null>(null);
   const contextMenuRootRef = useRef<Root | null>(null);
-  const itemsRef = useRef<MenuItemType[]>(null);
-  const positionRef = useRef<number[]>(null);
+  const onNavigationRef = useRef<any>(null);
+
+  const {
+    itemsRef,
+    registerItems,
+    resetPosition,
+  } = useKeyboardNavigation({
+    onNavigation,
+    target: contextMenuRootRef,
+  })
+
+  function onNavigation(event: CustomKeyboardEvent) {
+    onNavigationRef.current?.(event);
+  }
+
   const themeContext = useContext(ThemeContext);
 
   const getContainer = () => containerRef?.current ?? container;
 
   const rootID = useMemo(() => `context-menu-root-${uuid}`, [uuid]);
-
-  const { deregisterCommands, registerCommands } = useKeyboardShortcuts({
-    target: contextMenuRootRef,
-  });
 
   function isEventInContainer(event: ClientEventType, containerArg?: HTMLElement): boolean {
     return event && (getContainer() || containerArg)?.contains(event.target as Node);
@@ -88,7 +95,11 @@ export default function useContextMenu({
     items: MenuItemType[],
     opts?: RenderContextMenuOptions,
   ) {
-    renderContextMenu(null, items ?? itemsRef.current, opts);
+    renderContextMenu(
+      null,
+      items ?? itemsRef.current,
+      opts,
+    );
   }
 
   function removeContextMenu(event: ClientEventType, opts?: { conditionally?: boolean }) {
@@ -100,74 +111,7 @@ export default function useContextMenu({
     }
 
     itemsRef.current = null;
-    positionRef.current = [null];
-    deregisterCommands();
-  }
-
-  function filterItems(items: MenuItemType[]): MenuItemType[] {
-    return items?.filter(({ divider, onClick }: MenuItemType) => !divider && onClick);
-  }
-
-  function getCurrentItem(): {
-    item: MenuItemType;
-    items: MenuItemType[];
-  } {
-    if (!itemsRef?.current) return;
-
-    let item = null;
-    let items = filterItems(itemsRef?.current ? itemsRef?.current : []);
-
-    positionRef?.current?.forEach((y: number, x: number) => {
-      if (y === null) {
-        item = null;
-        return;
-      }
-
-      if (x >= 1 && item?.items?.length >= 1) {
-        const arr = filterItems(item?.items ?? []);
-        if (arr?.length >= 1) {
-          items = arr;
-        }
-      }
-      item = items?.[y];
-    });
-
-    return {
-      item,
-      items,
-    };
-  }
-
-  function handlePositionChange({ x, y }: { x?: number; y?: number }) {
-    const { item, items } = getCurrentItem();
-
-    if (x ?? false) {
-      if (x < 0 && positionRef.current.length >= 2) {
-        positionRef.current.pop();
-      } else if (x > 0) {
-        const ycur = positionRef.current[positionRef.current.length - 1];
-        const icur = items?.[ycur];
-        if (icur?.items?.length >= 1) {
-          positionRef.current.push(null);
-        }
-      }
-    }
-
-    if (y ?? false) {
-      let yNew =
-        positionRef.current[positionRef.current.length - 1] ??
-        (y > 0 ? -1 : item?.items?.length ?? 0);
-      yNew += y;
-
-      const count = items?.length ?? 0;
-      if (yNew < 0) {
-        yNew = 0;
-      } else if (count >= 1 && yNew >= count) {
-        yNew = count - 1;
-      }
-
-      positionRef.current[positionRef.current.length - 1] = yNew;
-    }
+    resetPosition();
   }
 
   function renderContextMenu(
@@ -207,33 +151,7 @@ export default function useContextMenu({
     }
     render(contextMenuRootRef.current);
 
-    itemsRef.current = items;
-    positionRef.current = [null];
-    registerCommands({
-      down: {
-        handler: () => handlePositionChange({ y: 1 }),
-        predicate: { key: KeyEnum.ARROWDOWN },
-      },
-      enter: {
-        handler: () => {
-          const handle = getCurrentItem()?.item?.onClick;
-          handle && handle?.();
-        },
-        predicate: { key: KeyEnum.ENTER },
-      },
-      left: {
-        handler: () => handlePositionChange({ x: -1 }),
-        predicate: { key: KeyEnum.ARROWLEFT },
-      },
-      right: {
-        handler: () => handlePositionChange({ x: 1 }),
-        predicate: { key: KeyEnum.ARROWRIGHT },
-      },
-      up: {
-        handler: () => handlePositionChange({ y: -1 }),
-        predicate: { key: KeyEnum.ARROWUP },
-      },
-    });
+    registerItems(items);
   }
 
   function teardown() {
@@ -254,7 +172,6 @@ export default function useContextMenu({
 
     return () => {
       document?.removeEventListener('click', handleDocumentClick);
-      deregisterCommands();
     };
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -262,11 +179,11 @@ export default function useContextMenu({
 
   return {
     contextMenu: <div ref={contextMenuRef} />,
+    hideMenu,
     removeContextMenu,
     renderContextMenu,
-    hideMenu,
-    showMenu,
     shouldPassControl,
+    showMenu,
     teardown,
   };
 }
