@@ -59,15 +59,18 @@ export default function useSettingsManager({
 
   const validLevels = useRef<number[]>(null);
   const layoutConfigs = useRef<LayoutConfigRef[]>([
-    useRef<LayoutConfigType>(defaultLayoutConfig()),
     useRef<LayoutConfigType>(defaultLayoutConfig({
       direction: LayoutConfigDirectionEnum.HORIZONTAL,
+
     })),
     useRef<LayoutConfigType>(defaultLayoutConfig({
       direction: LayoutConfigDirectionEnum.HORIZONTAL,
     })),
     useRef<LayoutConfigType>(defaultLayoutConfig({
       direction: LayoutConfigDirectionEnum.HORIZONTAL,
+    })),
+    useRef<LayoutConfigType>(defaultLayoutConfig({
+      direction: LayoutConfigDirectionEnum.VERTICAL,
       display: LayoutDisplayEnum.DETAILED,
     })),
   ]);
@@ -299,7 +302,11 @@ export default function useSettingsManager({
           opacity: 1;
           pointer-events: auto;
           visibility: visible;
-          z-index: 6;
+          z-index: 2;
+
+          &.${nodeTypeClassName(ItemTypeEnum.BLOCK)} {
+            z-index: 3;
+          }
 
           .codeExecuted {
             .outputContainer {

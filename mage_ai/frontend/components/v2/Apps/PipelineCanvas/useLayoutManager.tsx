@@ -101,9 +101,6 @@ export default function useLayoutManager({
     const wave = {
       options: () => ({
         layout: update(layoutConfig ?? {}, {
-          direction: {
-            $set: LayoutConfigDirectionEnum.VERTICAL,
-          },
           gap: {
             $set: {
               column: 40,
@@ -285,7 +282,8 @@ export default function useLayoutManager({
       transformers.push(...[
         mindims,
         // ...layoutStyleTransformations,
-        tree,
+        // tree,
+        wave,
         shift,
       ] as RectTransformationType[]);
     }

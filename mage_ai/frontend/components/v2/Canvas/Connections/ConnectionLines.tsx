@@ -5,11 +5,13 @@ import { motion } from 'framer-motion';
 type ConnectionLinesProps = {
   children?: React.ReactNode;
   id?: string;
+  zIndex?: number;
 };
 
 export const ConnectionLines: React.FC<ConnectionLinesProps> = ({
   children,
   id,
+  zIndex,
 }: ConnectionLinesProps) => (
   <motion.svg
     className={[styles.connectionLines]?.join(' ')}
@@ -22,6 +24,7 @@ export const ConnectionLines: React.FC<ConnectionLinesProps> = ({
       position: 'absolute',
       top: 0,
       width: '100%',
+      zIndex,
     }}
   >
     {children}

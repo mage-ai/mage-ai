@@ -60,13 +60,40 @@ export default function useModelManager({
   const onItemChangeRef = useRef<(payload: NodeItemType) => void>(null);
   const onModelChangeRef = useRef<(payload: PipelineExecutionFrameworkType) => void>(null);
 
-  const [debounce, cancel] = useDebounce();
+  const timeoutRef = useRef(null);
 
-  const [pipeline, setPipeline] = useState<PipelineExecutionFrameworkType>(null);
+  const [pipeline, setPipelineState] = useState<PipelineExecutionFrameworkType>(null);
   const [executionFramework, setExecutionFramework] = useState<PipelineExecutionFrameworkType>(null);
 
   const pready = useRef<boolean>(false);
   const fready = useRef<boolean>(false);
+
+  function setPipeline(pipelineUpdated: PipelineType) {
+    appHandlersRef.current.blocks = {
+      update: {
+        mutate: ({ event, onError, onStart, onSuccess, payload: block }: MutateFunctionArgsType) => {
+          const model = setPipelineBlock(pipelineUpdated as PipelineType, block as BlockType);
+
+          clearTimeout(timeoutRef.current);
+
+          return new Promise((resolve, reject) => {
+            timeoutRef.current = setTimeout(() => {
+              pipelineMutants.update.mutate({
+                event,
+                onError,
+                onStart,
+                onSuccess,
+                payload: model,
+              });
+
+              resolve(pipelineMutants.getModel(pipelineUpdated.uuid));
+            }, 1000);
+          });
+        },
+      } as MutatationType,
+    };
+    setPipelineState(pipelineUpdated);
+  }
 
   const pipelineMutants = useMutate({
     id: pipelineUUID,
@@ -88,11 +115,14 @@ export default function useModelManager({
               .then(() => {
                 setPipeline(pipeline2);
               });
+          } else {
+            setPipeline(pipeline2);
           }
         },
       },
     },
   });
+
   const executionFrameworkMutants = useMutate({
     id: executionFrameworkUUID,
     resource: 'execution_frameworks',
@@ -111,33 +141,7 @@ export default function useModelManager({
   });
 
   appHandlersRef.current = {
-    blocks: {
-      update: {
-        mutate: ({ event, onError, onStart, onSuccess, payload: block }: MutateFunctionArgsType) => {
-          const model =
-            pipelineMutants.setModel(
-              prev => setPipelineBlock(prev as PipelineType, block as BlockType),
-              pipelineUUID,
-            );
-
-          cancel();
-
-          return new Promise((resolve, reject) => {
-            debounce(() => {
-              pipelineMutants.update.mutate({
-                event,
-                onError,
-                onStart,
-                onSuccess,
-                payload: model,
-              });
-
-              resolve(pipelineMutants.getModel(pipelineUUID));
-            }, 1000);
-          });
-        },
-      } as MutatationType,
-    },
+    blocks: null,
     browserItems: browserItemMutants,
     executionFrameworks: executionFrameworkMutants,
     pipelines: pipelineMutants,
