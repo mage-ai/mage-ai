@@ -48,6 +48,7 @@ export type MenuProps = {
   event?: MouseEvent | React.MouseEvent<HTMLDivElement>;
   items: MenuItemType[];
   itemsRef: React.RefObject<Record<string, React.RefObject<HTMLDivElement>>>;
+  keyboardNavigationItemFilter?: (item: MenuItemType) => boolean;
   level?: number;
   onClose?: (level: number) => void;
   openItems?: {
@@ -532,7 +533,13 @@ function Menu({
   );
 }
 
-function MenuController({ items, onClose, portalRef, ...props }: MenuProps & {
+function MenuController({
+  items,
+  keyboardNavigationItemFilter,
+  onClose,
+  portalRef,
+  ...props
+}: MenuProps & {
   portalRef: React.RefObject<HTMLDivElement>,
 }) {
   const dispatchEventRef = useRef(null);
@@ -583,13 +590,13 @@ function MenuController({ items, onClose, portalRef, ...props }: MenuProps & {
     // const item = target as MenuItemType;
     // const itemPrevious = previousTarget as MenuItemType;
 
-    const getTargets = pos => {
+    const getTargets = (pos: number[]) => {
       let item = null;
-      let itemsInner = [...items];
+      let itemsInner = [...items].filter(keyboardNavigationItemFilter);
 
-      pos?.forEach((row) => {
+      pos?.forEach((row: number) => {
         item = itemsInner?.[row];
-        itemsInner = [...(item?.items ?? [])];
+        itemsInner = [...(item?.items ?? [])].filter(keyboardNavigationItemFilter);
       });
 
       return [item, itemsInner];
@@ -615,18 +622,20 @@ function MenuController({ items, onClose, portalRef, ...props }: MenuProps & {
         el2?.current?.classList?.remove('hovering');
       }
 
-      if (item?.items?.length >= 1) {
-        const { hideChildren, renderChildren } =
-          renderChildrenRefs?.current?.[position?.length - 1] ?? {};
+      const { hideChildren, renderChildren } =
+        renderChildrenRefs?.current?.[position?.length - 1] ?? {};
 
+      if (item?.items?.length >= 1) {
         if (KeyEnum.ARROWLEFT === event.key) {
           hideChildren?.();
         } else if (renderChildren) {
           renderChildren(event, item);
         }
+      } else if (itemPrevious?.items?.length >= 1) {
+        hideChildren?.();
       }
     }
-  }, [items, onClose, removePortals]);
+  }, [items, keyboardNavigationItemFilter, onClose, removePortals]);
 
   dispatchEventRef.current = useCustomEventHandler(portalRef, {
     [EventEnum.KEYDOWN]: handleKeyDown,

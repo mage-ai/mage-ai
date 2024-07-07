@@ -46,6 +46,9 @@ export type ContextMenuProps = {
   uuid: string;
 };
 
+function keyboardNavigationItemFilter(item: MenuItemType): boolean {
+  return !item?.divider && (!!item?.onClick || item?.items?.length >= 1);
+}
 export default function useContextMenu({
   container,
   containerRef,
@@ -54,20 +57,15 @@ export default function useContextMenu({
 }: ContextMenuProps): ContextMenuType {
   const contextMenuRef = useRef<HTMLDivElement | null>(null);
   const contextMenuRootRef = useRef<Root | null>(null);
-  const onNavigationRef = useRef<any>(null);
 
   const {
     itemsRef,
     registerItems,
     resetPosition,
   } = useKeyboardNavigation({
-    onNavigation,
+    itemFilter: keyboardNavigationItemFilter,
     target: contextMenuRootRef,
   })
-
-  function onNavigation(event: CustomKeyboardEvent) {
-    onNavigationRef.current?.(event);
-  }
 
   const themeContext = useContext(ThemeContext);
 
@@ -130,11 +128,13 @@ export default function useContextMenu({
 
     const render = (root: Root) => root.render(
       <ThemeProvider theme={themeContext}>
+        {/* @ts-ignore */}
         <Menu
           {...opts}
           contained={contained}
           event={event}
           items={items}
+          keyboardNavigationItemFilter={keyboardNavigationItemFilter}
           position={position ?? {
             left: event?.pageX,
             top: event?.pageY,

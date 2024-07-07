@@ -96,7 +96,7 @@ export default function useContextMenu(uuid: string, container: Element = null):
                   open
                   parentRef={undefined}
                   uuid={`ContextMenu/${contextUUID}`}
-                  // width={MENU_WIDTH}
+                // width={MENU_WIDTH}
                 />
               )}
             </ClickOutside>

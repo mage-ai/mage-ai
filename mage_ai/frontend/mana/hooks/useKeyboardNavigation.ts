@@ -7,10 +7,12 @@ import { EventEnum, KeyEnum } from '../events/enums';
 import { MenuItemType } from '../components/Menu/interfaces';
 
 export interface KeyboardNavigationProps {
+  itemFilter?: (item: any) => boolean;
   target: KeyboardShortcutsProps['target'];
 }
 
 export default function useKeyboardNavigation({
+  itemFilter = () => true,
   target,
 }: KeyboardNavigationProps): {
   itemsRef: React.MutableRefObject<MenuItemType[]>;
@@ -28,18 +30,14 @@ export default function useKeyboardNavigation({
     target,
   });
 
-  function filterItems(items: MenuItemType[]): MenuItemType[] {
-    return items?.filter(({ divider, onClick }: MenuItemType) => !divider && onClick);
-  }
-
   function getCurrentItem(): {
-    item: MenuItemType;
-    items: MenuItemType[];
+    item: any;
+    items: any[];
   } {
     if (!itemsRef?.current) return;
 
     let item = null;
-    let items = filterItems(itemsRef?.current ? itemsRef?.current : []);
+    let items = (itemsRef?.current ? itemsRef?.current : [])?.filter(itemFilter);
 
     positionRef?.current?.forEach((y: number, x: number) => {
       if (y === null) {
@@ -48,7 +46,7 @@ export default function useKeyboardNavigation({
       }
 
       if (x >= 1 && item?.items?.length >= 1) {
-        const arr = filterItems(item?.items ?? []);
+        const arr = (item?.items ?? [])?.filter(itemFilter);
         if (arr?.length >= 1) {
           items = arr;
         }
