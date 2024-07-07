@@ -24,7 +24,7 @@
   @include backgrounds.background-colors();
 
   background-color: var(--backgrounds-body);
-  border-radius: calc(var(--borders-radius-base) - 2px);
+  border-radius: calc(var(--borders-radius-base) - var(--borders-gradient-width));
   border: none;
   height: inherit;
   overflow: hidden; // To clip children with border-radius

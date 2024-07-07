@@ -17,7 +17,6 @@
 }
 
 .blockNode {
-  border-color: red;
   @include borders.border-colors();
 
   height: inherit;

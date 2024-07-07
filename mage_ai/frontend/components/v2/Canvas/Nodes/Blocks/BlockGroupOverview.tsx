@@ -10,6 +10,7 @@ import { SettingsContext } from '@components/v2/Apps/PipelineCanvas/SettingsMana
 import { getBlockColor } from '@mana/themes/blocks';
 import { getModeColorName } from '../presentation';
 import { groupBy, sortByKey, sum } from '@utils/array';
+import { groupValidation } from './utils';
 import { pluralize } from '@utils/string';
 import { useContext, useMemo } from 'react';
 
@@ -88,8 +89,8 @@ export default function BlockGroupOverview({
 
     return sorted?.map(([templateName, blocks2]) => (
       <Grid
-        rowGap={8}
         key={templateName}
+        rowGap={8}
       >
         <Text secondary xsmall>
           {templateName}
@@ -166,11 +167,9 @@ export default function BlockGroupOverview({
         <Grid
           alignItems="center"
           padding={16}
+          style={{ maxWidth: 400 }}
           templateColumns="1fr"
           templateRows="1fr"
-          style={{
-            maxWidth: 400,
-          }}
         >
           <Text secondary small>
             {description}
@@ -195,24 +194,8 @@ export default function BlockGroupOverview({
   return (
     <PanelRows padding={false}>
       {groups?.map((group: FrameworkType) => {
-        const {
-          name,
-          uuid: uuid2,
-        } = group;
-        const required = 'configuration' in group
-          ? ((group as any)?.configuration?.metadata?.required ?? false)
-          : 'children' in group && (group as any)?.children?.some(
-            (child: PipelineExecutionFrameworkBlockType) =>
-              child?.configuration?.metadata?.required);
-
-        const getBlocks =
-          (uuid3: string) => (Object.values(blocksByGroupRef?.current?.[uuid3] ?? {}) ?? []);
-        const blocks = [
-          ...getBlocks(uuid2),
-          ...((group as any)?.children ?? [])?.flatMap(g => getBlocks(g.uuid)),
-        ];
-        const valid = blocks?.length >= 1;
-        const error = required && !valid;
+        const { name, uuid: uuid2 } = group;
+        const { error, required, valid } = groupValidation(group, blocksByGroupRef?.current)
         const colorName = getModeColorName(blocks);
 
         return (

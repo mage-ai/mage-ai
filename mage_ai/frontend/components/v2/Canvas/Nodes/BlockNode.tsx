@@ -1,7 +1,6 @@
 import Aside from './Blocks/Aside';
-import TeleportBlock from './Blocks/TeleportBlock';
-import Tag from '@mana/components/Tag';
 import Badge from '@mana/elements/Badge';
+import BlockGroupOverview from './Blocks/BlockGroupOverview';
 import BlockType from '@interfaces/BlockType';
 import Circle from '@mana/elements/Circle';
 import Connection from './Blocks/Connection';
@@ -9,33 +8,37 @@ import GradientContainer from '@mana/elements/Gradient';
 import Grid from '@mana/components/Grid';
 import Loading from '@mana/components/Loading';
 import PanelRows from '@mana/elements/PanelRows';
+import Tag from '@mana/components/Tag';
+import TeleportBlock from './Blocks/TeleportBlock';
 import TemplateConfigurations from './Blocks/TemplateConfigurations';
 import Text from '@mana/elements/Text';
 import stylesBlockNode from '@styles/scss/components/Canvas/Nodes/BlockNode.module.scss';
 import stylesGradient from '@styles/scss/elements/GradientContainer.module.scss';
-import BlockGroupOverview from './Blocks/BlockGroupOverview';
 import { AddV2, Code, Grab, PipeIconVertical, PlayButtonFilled, Pause, Infinite } from '@mana/icons';
 import { AppTypeEnum, AppSubtypeEnum } from '../../Apps/constants';
-import { EventOperationEnum } from '@mana/shared/interfaces';
 import { AsideType, DragAndDropHandlersType, SharedBlockProps } from './types';
-import { NodeItemType, PortType, NodeType } from '../interfaces';
+import { BlockNode } from './interfaces';
+import { EventOperationEnum } from '@mana/shared/interfaces';
 import { FrameworkType, PipelineExecutionFrameworkBlockType } from '@interfaces/PipelineExecutionFramework/interfaces';
-import { ItemTypeEnum, LayoutDisplayEnum, PortSubtypeEnum, ItemStatusEnum } from '../types';
+import { GroupUUIDEnum } from '@interfaces/PipelineExecutionFramework/types';
+import { ItemTypeEnum, PortSubtypeEnum } from '../types';
+import { ModelContext } from '@components/v2/Apps/PipelineCanvas/ModelManager/ModelContext';
+import { NodeItemType, PortType } from '../interfaces';
+import { SettingsContext } from '@components/v2/Apps/PipelineCanvas/SettingsManager/SettingsContext';
 import { StatusTypeEnum, BlockTypeEnum } from '@interfaces/BlockType';
 import { TooltipWrapper } from '@context/Tooltip';
 import { borderConfigs, blockColorNames } from './presentation';
+import { buildEvent } from './utils';
+import { groupValidation } from './Blocks/utils';
 import { handleGroupTemplateSelect, menuItemsForTemplates } from './utils';
 import { isEmptyObject } from '@utils/hash';
-import { buildEvent } from './utils';
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
-import { BlockNode } from './interfaces';
-import { SettingsContext } from '@components/v2/Apps/PipelineCanvas/SettingsManager/SettingsContext';
-import { GroupUUIDEnum } from '@interfaces/PipelineExecutionFramework/types';
 
 type BlockNodeProps = {
   block: BlockType | PipelineExecutionFrameworkBlockType;
   buttonBeforeRef?: React.RefObject<HTMLDivElement>;
   timerStatusRef?: React.RefObject<HTMLDivElement>;
+  node: NodeItemType
   nodeRef: React.RefObject<HTMLDivElement>;
   onMount?: (port: PortType, portRef: React.RefObject<HTMLDivElement>) => void;
   submitCodeExecution: (event: React.MouseEvent<HTMLElement>) => void;
@@ -55,13 +58,23 @@ export default function BlockNodeComponent({
   timerStatusRef,
   updateBlock,
 }: BlockNodeProps & DragAndDropHandlersType & SharedBlockProps) {
+  const { name, status, type, uuid } = block;
+  const [level, setLevel] = useState<number>(0);
+
   const { activeLevel, layoutConfigs, selectedGroupsRef } = useContext(SettingsContext);
+  const { blocksByGroupRef } = useContext(ModelContext);
   const selectedGroup = selectedGroupsRef?.current?.[activeLevel?.current - 1];
   const isSiblingGroup = selectedGroup?.uuid !== block?.uuid &&
     selectedGroup?.groups?.some(g => block?.groups?.includes(g.uuid as GroupUUIDEnum));
+  const isGroup =
+    useMemo(() => !type || [BlockTypeEnum.GROUP, BlockTypeEnum.PIPELINE].includes(type), [type]);
 
-  const { name, status, type, uuid } = block;
-  const [level, setLevel] = useState<number>(0);
+  const { error, required, valid } = useMemo(
+    () => isGroup ? groupValidation(block as FrameworkType, blocksByGroupRef?.current) : {
+      error: false,
+      required: false,
+      valid: true,
+    }, [block, blocksByGroupRef, isGroup]);
 
   useEffect(() => {
     if (activeLevel?.current !== null) {
@@ -70,10 +83,7 @@ export default function BlockNodeComponent({
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [level, node.level]);
-
-  const isGroup =
-    useMemo(() => !type || [BlockTypeEnum.GROUP, BlockTypeEnum.PIPELINE].includes(type), [type]);
+  }, [level, node]);
 
   const colorNames = blockColorNames(node);
   const borders = borderConfigs(node);
@@ -169,6 +179,11 @@ export default function BlockNodeComponent({
 
   const classNames = useMemo(() => {
     const colors = borders?.map(b => b?.baseColorName) ?? [];
+
+    if (error) {
+      colors.unshift(...['red', (colors?.[0] ?? 'red')]);
+    }
+
     const arr = [
       colors?.length >= 2
         ? stylesGradient[
@@ -185,7 +200,7 @@ export default function BlockNodeComponent({
     }
 
     return arr;
-  }, [borders]);
+  }, [borders, error]);
 
   const badgeBase = useMemo(() => badge &&
     <TooltipWrapper
@@ -353,11 +368,7 @@ export default function BlockNodeComponent({
             />
           </div>
           {isGroup
-            ? (
-              <BlockGroupOverview
-                block={block as FrameworkType}
-              />
-            )
+            ? <BlockGroupOverview block={block as FrameworkType} />
             : (
               <Grid rowGap={8} templateRows="auto">
                 {connectionRows}
@@ -386,7 +397,6 @@ export default function BlockNodeComponent({
           zIndex: 7,
         }}
       />
-
       <GradientContainer
         // Only use gradient borders when block selected
         className={[
@@ -395,7 +405,7 @@ export default function BlockNodeComponent({
         style={{ height: '100%', position: 'relative' }}
       >
         {main}
-      </GradientContainer>
+      </GradientContainer >
     </>
   ), [classNames, main, timerStatusRef]);
 

@@ -1,6 +1,7 @@
 @use '../abstracts/variables' as *;
 
 @mixin base() {
+  --borders-gradient-width: #{$borders-gradient-width};
   --borders-outline-offset: #{$borders-outline-offset};
   --borders-outline-width: #{$borders-outline-width};
   --borders-outline-total: #{$borders-outline-total};
