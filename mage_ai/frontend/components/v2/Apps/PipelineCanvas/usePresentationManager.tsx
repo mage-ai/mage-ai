@@ -78,14 +78,11 @@ export default function usePresentationManager({
   const itemDraggingRef = useRef<NodeItemType | null>(null);
   const itemsMetadataRef = useRef<Record<string, any>>({ rect: {} });
 
-
   function updateItemsMetadata(data?: { version?: number }) {
     const { version } = data ?? {};
     itemsMetadataRef.current.rect.version =
       version ?? (itemsMetadataRef.current.rect.version ?? 0) + 1;
   }
-
-
 
   function onMountPort(item: PortType, portRef: React.RefObject<HTMLDivElement>) {
     const { id, type } = item;

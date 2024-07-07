@@ -1,34 +1,19 @@
 import update from 'immutability-helper';
-
-import { ZoomPanPositionType, ZoomPanStateType } from '@mana/hooks/useZoomPan';
 import { DragItem, LayoutConfigType, NodeItemType, NodeType, RectType, RectTransformationType } from '../interfaces';
 import { LayoutConfigDirectionEnum, LayoutConfigDirectionOriginEnum, TransformRectTypeEnum, RectTransformationScopeEnum } from '../types';
 import { range, indexBy, flattenArray } from '@utils/array';
 import { isDebug as isDebugBase } from '@utils/environment';
 import { validateFiniteNumber } from '@utils/number';
 import { DEBUG } from '@components/v2/utils/debug';
+import wave from './layout/wave';
+import grid from './layout/grid';
+import { DEFAULT_LAYOUT_CONFIG } from './layout/shared';
 
 function isDebug() {
   return isDebugBase() && false;
 }
 
 type GroupType = { items: DragItem[]; position: { left: number; top: number } };
-
-const DEFAULT_LAYOUT_CONFIG: LayoutConfigType = {
-  direction: LayoutConfigDirectionEnum.HORIZONTAL,
-  gap: {
-    column: 40,
-    row: 40,
-  },
-  itemRect: {
-    height: 100,
-    left: 0,
-    top: 0,
-    width: 100,
-  },
-  origin: LayoutConfigDirectionOriginEnum.LEFT,
-  stagger: 100,
-};
 
 export type SetupOpts = {
   groupBy?: (item: DragItem) => string;
@@ -129,11 +114,9 @@ export function transformRects(rectsInit: RectType[], transformations: RectTrans
     } else if (TransformRectTypeEnum.LAYOUT_TREE === type) {
       rects = layoutRectsInTreeFormation(rects, layout ?? {});
     } else if (TransformRectTypeEnum.LAYOUT_WAVE === type) {
-      rects = layoutRectsInWavePattern(rects, layout, layoutOptions);
-    } else if (TransformRectTypeEnum.LAYOUT_RECTANGLE === type) {
-      rects = groupRectangles(rects, layout);
+      rects = wave.pattern3(rects, layout, layoutOptions);
     } else if (TransformRectTypeEnum.LAYOUT_GRID === type) {
-      rects = layoutRectsInGrid(rects, layout);
+      rects = grid.pattern1(rects, layout);
     } else if (TransformRectTypeEnum.LAYOUT_SPIRAL === type) {
       rects = layoutRectsInSpiral(rects, layout, layoutOptions);
     } else if (TransformRectTypeEnum.SHIFT_INTO_PARENT === type && parent) {
@@ -625,63 +608,6 @@ export function applyRectDiff(rect: RectType, diff: RectType, dimensions?: boole
   };
 }
 
-function layoutRectsInGrid(rects: RectType[], layout?: LayoutConfigType): RectType[] {
-  const { gap, direction = LayoutConfigDirectionEnum.HORIZONTAL } = layout || {};
-  const { containerRect } = getRectsFromLayout(layout || {});
-  const rectsCopy = [...rects];
-  let currentX = 0;
-  let currentY = 0;
-  let maxRowHeight = 0;
-  let maxColWidth = 0;
-  const positionedRects: RectType[] = [];
-
-  for (const rect of rectsCopy) {
-    if (direction === LayoutConfigDirectionEnum.HORIZONTAL) {
-      // If the current rect goes beyond the container width, move to the next row
-      if (currentX + rect.width > containerRect.width) {
-        currentX = 0;
-        currentY += maxRowHeight + gap.row;
-        maxRowHeight = 0;
-      }
-
-      // Position the rect
-      positionedRects.push({
-        ...rect,
-        left: currentX,
-        top: currentY,
-      });
-
-      // Update currentX and maxRowHeight for next rect
-      currentX += rect.width + gap.column;
-      maxRowHeight = Math.max(maxRowHeight, rect.height);
-    } else {
-      // If the current rect goes beyond the container height, move to the next column
-      if (currentY + rect.height > containerRect.height) {
-        currentY = 0;
-        currentX += maxColWidth + gap.column;
-        maxColWidth = 0;
-      }
-
-      // Position the rect
-      positionedRects.push({
-        ...rect,
-        left: currentX,
-        top: currentY,
-      });
-
-      // Update currentY and maxColWidth for next rect
-      currentY += rect.height + gap.row;
-      maxColWidth = Math.max(maxColWidth, rect.width);
-    }
-  }
-
-  return positionedRects;
-}
-
-export function getMaxOffset() {
-
-}
-
 function layoutItemsInNodeGroup(nodes: NodeType[], layout: LayoutConfigType) {
   const groupsMapping: Record<string, NodeType> = {};
 
@@ -984,57 +910,6 @@ function updateItemRect(item: DragItem, rect: RectType) {
   });
 }
 
-function groupRectangles(
-  rects: RectType[],
-  layout?: LayoutConfigType,
-): RectType[] {
-  const {
-    gap,
-    grid,
-  } = layout || {};
-  const horizontalSpacing: number = gap?.column ?? 10;
-  const verticalSpacing: number = gap?.row ?? 10;
-  let numCols: number = grid?.columns ?? null;
-  let numRows: number = grid?.rows ?? null;
-
-  if (!numRows && !numCols) {
-    numRows = Math.ceil(Math.sqrt(rects.length)); // If neither numRows nor numCols are provided, calculate them based on the number of rects
-    numCols = Math.ceil(rects.length) / numRows;
-  }
-  if (!numRows) {
-    numRows = Math.ceil(rects.length / numCols); // If numRows is not provided, calculate it based on numCols
-  }
-
-  let currentX = 0;
-  let currentY = 0;
-  let maxHeightInRow = 0;
-  let colIdx = 0;
-
-  return rects.map((rect, index) => {
-    if (colIdx >= numCols) {
-      currentX = 0;
-      currentY += maxHeightInRow + verticalSpacing;
-      maxHeightInRow = 0;
-      colIdx = 0;
-    }
-
-    const updatedRect = {
-      ...rect,
-      left: currentX,
-      top: currentY,
-    };
-
-    currentX += rect.width + horizontalSpacing;
-    if (rect.height > maxHeightInRow) {
-      maxHeightInRow = rect.height;
-    }
-
-    colIdx += 1;
-
-    return updatedRect;
-  });
-}
-
 export function calculateBoundingBox(rects: RectType[]): RectType {
   if (rects.length === 0) {
     return { left: 0, top: 0, width: 0, height: 0 };
@@ -1054,51 +929,6 @@ export function calculateBoundingBox(rects: RectType[]): RectType {
     top: validateFiniteNumber(minTop),
     width: validateFiniteNumber(width),
   };
-}
-
-function layoutRectsInWavePattern(
-  rects: RectType[],
-  layout?: LayoutConfigType,
-  opts?: {
-    amplitude?: number;
-    wavelength?: number;
-  },
-): RectType[] {
-  const { amplitude = 40, wavelength = 100 } = opts || {};
-  const { direction = LayoutConfigDirectionEnum.HORIZONTAL, gap } = layout || {};
-
-  let accumulatedWidth = 0;
-  let accumulatedHeight = 0;
-
-  return rects.map((rect, index: number) => {
-    let updatedRect: RectType;
-
-    if (direction === LayoutConfigDirectionEnum.HORIZONTAL) {
-      // Calculate wave positioning for horizontal direction
-      const xPos = accumulatedWidth;
-      const yPos = amplitude * Math.sin(((2 * Math.PI) / wavelength) * xPos);
-      accumulatedWidth += rect.width + (gap?.column ?? 0);
-
-      updatedRect = {
-        ...rect,
-        left: xPos,
-        top: yPos,
-      };
-    } else {
-      // Calculate wave positioning for vertical direction
-      const yPos = accumulatedHeight;
-      const xPos = amplitude * Math.sin(((2 * Math.PI) / wavelength) * yPos);
-      accumulatedHeight += rect.height + (gap?.row ?? 0);
-
-      updatedRect = {
-        ...rect,
-        left: xPos,
-        top: yPos,
-      };
-    }
-
-    return updatedRect;
-  });
 }
 
 export function addRects(rect1: RectType, rect2: RectType): RectType {
@@ -1183,4 +1013,141 @@ function getRectsFromLayout(layout: LayoutConfigType): {
 
 export function findRectAtPoint(x, y, rects) {
   return rects.find(({ left, top, width, height }) => x >= left && x <= left + width && y >= top && y <= top + height);
+}
+
+function layoutRectsInGrid(
+  rects: RectType[],
+  layout?: LayoutConfigType,
+  opts?: {
+    align?: {
+      horizontal?: 'left' | 'center' | 'right';
+      vertical?: 'top' | 'center' | 'bottom';
+    };
+  }
+): RectType[] {
+  const { gap, direction = LayoutConfigDirectionEnum.HORIZONTAL } = { ...DEFAULT_LAYOUT_CONFIG, ...layout };
+  const { column: gapCol, row: gapRow } = gap;
+  const { containerRect } = getRectsFromLayout(layout || {});
+
+  const determinedLevels: Map<number | string, number> = new Map();
+  const childrenMapping: Map<RectType, RectType[]> = new Map();
+  const maxLevelWidths: Map<number, number> = new Map();
+  const maxLevelHeights: Map<number, number> = new Map();
+  const visited = new Set<number | string>();
+
+  // Determine the levels for each item
+  function determineLevel(item: RectType): number {
+    if (determinedLevels.has(item.id)) {
+      return determinedLevels.get(item.id);
+    }
+    if (visited.has(item.id)) {
+      throw new Error(`Cycle detected involving item id ${item.id}`);
+    }
+    visited.add(item.id);
+
+    if (item.upstream.length === 0) {
+      determinedLevels.set(item.id, 0);
+    } else {
+      const level = Math.max(
+        ...item.upstream.map((rect) => {
+          const parentItem = rects.find((i) => i.id === rect.id);
+          if (parentItem) {
+            const parentLevel = determineLevel(parentItem);
+            const children = childrenMapping.get(parentItem) || [];
+            children.push(item);
+            childrenMapping.set(parentItem, children);
+            return parentLevel + 1;
+          }
+          return 0;
+        })
+      );
+      determinedLevels.set(item.id, level);
+    }
+    visited.delete(item.id);
+    return determinedLevels.get(item.id);
+  }
+
+  rects.forEach(determineLevel);
+
+  // Group items by levels
+  const levelGroups: Map<number, RectType[]> = new Map();
+  rects.forEach((item) => {
+    const level = determinedLevels.get(item.id);
+    if (!levelGroups.has(level)) {
+      levelGroups.set(level, []);
+    }
+    levelGroups.get(level).push(item);
+
+    if (!maxLevelWidths.has(level)) {
+      maxLevelWidths.set(level, 0);
+      maxLevelHeights.set(level, 0);
+    }
+
+    // Track maximum dimensions at each level for alignment calculations
+    maxLevelWidths.set(level, Math.max(maxLevelWidths.get(level), item.width));
+    maxLevelHeights.set(level, Math.max(maxLevelHeights.get(level), item.height));
+  });
+
+  const isHorizontal = direction === LayoutConfigDirectionEnum.HORIZONTAL;
+  const positionedRects: RectType[] = [];
+
+  // Position items level by level
+  let currentX = 0;
+  let currentY = 0;
+
+  levelGroups.forEach((rectsAtLevel: RectType[], level: number) => {
+    // Reset current position for each level
+    if (isHorizontal) {
+      if (level > 0) {
+        currentY += maxLevelHeights.get(level - 1) + gapRow;
+      }
+      currentX = 0; // start new row
+    } else {
+      if (level > 0) {
+        currentX += maxLevelWidths.get(level - 1) + gapCol;
+      }
+      currentY = 0; // start new column
+    }
+
+    rectsAtLevel.forEach((rect, idx) => {
+      if (isHorizontal) {
+        if (currentX + rect.width > containerRect.width) {
+          currentX = 0;
+          currentY += maxLevelHeights.get(level) + gapRow;
+        }
+
+        positionedRects.push({
+          ...rect,
+          left: currentX,
+          top: currentY,
+        });
+
+        currentX += rect.width + gapCol;
+      } else {
+        if (currentY + rect.height > containerRect.height) {
+          currentY = 0;
+          currentX += maxLevelWidths.get(level) + gapCol;
+        }
+
+        positionedRects.push({
+          ...rect,
+          left: currentX,
+          top: currentY,
+        });
+
+        currentY += rect.height + gapRow;
+      }
+    });
+  });
+
+  // Compute bounding box for alignment adjustments
+  const finalBoundingBox = calculateBoundingBox(positionedRects);
+  const offsetX = opts?.align?.horizontal ? finalBoundingBox.left - finalBoundingBox.width / 2 : 0;
+  const offsetY = opts?.align?.vertical ? finalBoundingBox.top - finalBoundingBox.height / 2 : 0;
+
+  return positionedRects.map((rect: RectType) => ({
+    ...rect,
+    left: rect.left - offsetX,
+    top: rect.top - offsetY,
+  }));
 }

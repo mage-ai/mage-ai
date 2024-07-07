@@ -101,6 +101,9 @@ export default function useLayoutManager({
     const wave = {
       options: () => ({
         layout: update(layoutConfig ?? {}, {
+          direction: {
+            $set: LayoutConfigDirectionEnum.VERTICAL,
+          },
           gap: {
             $set: {
               column: 40,
@@ -112,6 +115,32 @@ export default function useLayoutManager({
       }),
       type: TransformRectTypeEnum.LAYOUT_WAVE,
     };
+    const grid = {
+      options: () => ({
+        layout: update(layoutConfig, {
+          gap: {
+            $set: {
+              column: 40,
+              row: 40,
+            },
+          },
+        }),
+      }),
+      type: TransformRectTypeEnum.LAYOUT_GRID,
+    };
+    const rectangles = {
+      options: () => ({
+        layout: update(layoutConfig, {
+          gap: {
+            $set: {
+              column: 80,
+              row: 80,
+            },
+          },
+        }),
+      }),
+      type: TransformRectTypeEnum.LAYOUT_RECTANGLE,
+    };
 
     if (layoutConfig?.rectTransformations) {
       layoutConfig?.rectTransformations?.forEach(({
@@ -122,33 +151,9 @@ export default function useLayoutManager({
         } else if (TransformRectTypeEnum.LAYOUT_WAVE === type) {
           layoutStyleTransformations.push(wave);
         } else if (TransformRectTypeEnum.LAYOUT_RECTANGLE === type) {
-          layoutStyleTransformations.push({
-            options: () => ({
-              layout: update(layoutConfig, {
-                gap: {
-                  $set: {
-                    column: 80,
-                    row: 80,
-                  },
-                },
-              }),
-            }),
-            type: TransformRectTypeEnum.LAYOUT_RECTANGLE,
-          });
+          layoutStyleTransformations.push(rectangles);
         } else if (TransformRectTypeEnum.LAYOUT_GRID === type) {
-          layoutStyleTransformations.push({
-            options: () => ({
-              layout: update(layoutConfig, {
-                gap: {
-                  $set: {
-                    column: 40,
-                    row: 40,
-                  },
-                },
-              }),
-            }),
-            type: TransformRectTypeEnum.LAYOUT_GRID,
-          });
+          layoutStyleTransformations.push(grid);
         } else if (TransformRectTypeEnum.LAYOUT_SPIRAL === type) {
           layoutStyleTransformations.push({
             options: () => ({
@@ -193,26 +198,26 @@ export default function useLayoutManager({
 
     if (LayoutDisplayEnum.DETAILED === layoutConfig?.display) {
       transformers.push(...[
-        reset,
-        // {
-        //   options: () => ({ layout: { direction: directionOp } }),
-        //   scope: RectTransformationScopeEnum.CHILDREN,
-        //   type: TransformRectTypeEnum.LAYOUT_TREE,
-        // },
+        // reset,
         {
-          options: () => ({
-            layout: update(layoutConfig, {
-              gap: {
-                $set: {
-                  column: 40,
-                  row: 40,
-                },
-              },
-            }),
-          }),
+          options: () => ({ layout: { direction: directionOp } }),
           scope: RectTransformationScopeEnum.CHILDREN,
-          type: TransformRectTypeEnum.LAYOUT_RECTANGLE,
+          type: TransformRectTypeEnum.LAYOUT_GRID,
         },
+        // {
+        //   options: () => ({
+        //     layout: update(layoutConfig, {
+        //       gap: {
+        //         $set: {
+        //           column: 40,
+        //           row: 40,
+        //         },
+        //       },
+        //     }),
+        //   }),
+        //   scope: RectTransformationScopeEnum.CHILDREN,
+        //   type: TransformRectTypeEnum.LAYOUT_RECTANGLE,
+        // },
         {
           conditionSelf: (rect: RectType) => !group?.uuid || rect?.block?.uuid === group?.uuid,
           options: (rects: RectType[]) => ({
@@ -247,19 +252,25 @@ export default function useLayoutManager({
         //   ...wave,
         //   ...wavecon,
         // }] : []),
-        {
-          options: () => ({
-            layout: update(layoutConfig, {
-              gap: {
-                $set: {
-                  column: 120,
-                  row: 120,
-                },
-              },
-            }),
-          }),
-          type: TransformRectTypeEnum.LAYOUT_RECTANGLE,
-        },
+        // {
+        //   options: () => ({
+        //     layout: update(layoutConfig, {
+        //       gap: {
+        //         $set: {
+        //           column: 120,
+        //           row: 120,
+        //         },
+        //       },
+        //     }),
+        //   }),
+        //   type: TransformRectTypeEnum.LAYOUT_RECTANGLE,
+        // },
+
+        // tree,
+        // grid,
+        // rectangles,
+        wave,
+
         shift,
         {
           scope: RectTransformationScopeEnum.CHILDREN,
@@ -273,7 +284,8 @@ export default function useLayoutManager({
     } else if (LayoutDisplayEnum.SIMPLE === layoutConfig?.display) {
       transformers.push(...[
         mindims,
-        ...layoutStyleTransformations,
+        // ...layoutStyleTransformations,
+        tree,
         shift,
       ] as RectTransformationType[]);
     }

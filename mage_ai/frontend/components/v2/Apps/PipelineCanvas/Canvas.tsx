@@ -41,6 +41,7 @@ import { ExecutionManagerType } from '@components/v2/ExecutionManager/interfaces
 import BlockType from '@interfaces/BlockType';
 import { calculateBoundingBox } from '@components/v2/Canvas/utils/rect';
 import useSettingsManager from './useSettingsManager';
+import LineManager from './LineManager';
 
 export type BuilderCanvasProps = {
   canvasRef: React.RefObject<HTMLDivElement>;
@@ -418,9 +419,6 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
   );
   connectDrop(canvasRef);
 
-  const models = useMemo(() => ({
-    blocksByGroup: blocksByGroupRef,
-  }), [blocksByGroupRef]);
   const handlers = useMemo(() => ({
     appHandlersRef,
     handlers: {
@@ -475,15 +473,17 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
           <div id={connectionLinesRootID.current} />
           <div id="dynamic-components-root" ref={dynamicRootRef} />
 
-          <ModelProvider
-            blockMappingRef={blockMappingRef}
-            blocksByGroupRef={blocksByGroupRef}
-            groupMappingRef={groupMappingRef}
+          <SettingsProvider
+            activeLevel={activeLevel}
+            layoutConfigs={layoutConfigs}
+            selectedGroupsRef={selectedGroupsRef}
           >
-            <SettingsProvider
-              activeLevel={activeLevel}
-              layoutConfigs={layoutConfigs}
-              selectedGroupsRef={selectedGroupsRef}
+            <LineManager />
+
+            <ModelProvider
+              blockMappingRef={blockMappingRef}
+              blocksByGroupRef={blocksByGroupRef}
+              groupMappingRef={groupMappingRef}
             >
               {itemRects?.reduce((acc: {
                 order: string[][];
@@ -536,8 +536,8 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
                 nodes: [],
                 order: [],
               }).nodes}
-            </SettingsProvider>
-          </ModelProvider >
+            </ModelProvider >
+          </SettingsProvider>
 
           {outputPortalsMemo}
 
