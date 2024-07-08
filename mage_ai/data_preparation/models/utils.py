@@ -6,7 +6,6 @@ from datetime import datetime
 from typing import Any, Dict, List, Optional, Tuple, Union
 from warnings import warn
 
-import dask.dataframe as dd
 import numpy as np
 import pandas as pd
 import polars as pl
@@ -114,17 +113,17 @@ def deserialize_columns(row: pd.Series, column_types: Dict) -> pd.Series:
     return row
 
 
-def dask_from_pandas(df: pd.DataFrame) -> dd:
-    ddf = dd.from_pandas(df, npartitions=1)
-    npartitions = 1 + ddf.memory_usage(deep=True).sum().compute() // MAX_PARTITION_BYTE_SIZE
-    ddf = ddf.repartition(npartitions=npartitions)
+# def dask_from_pandas(df: pd.DataFrame) -> dd:
+#     ddf = dd.from_pandas(df, npartitions=1)
+#     npartitions = 1 + ddf.memory_usage(deep=True).sum().compute() // MAX_PARTITION_BYTE_SIZE
+#     ddf = ddf.repartition(npartitions=npartitions)
 
-    return ddf
+#     return ddf
 
 
-def apply_transform(ddf: dd, apply_function) -> dd:
-    res = ddf.apply(apply_function, axis=1, meta=ddf)
-    return res.compute()
+# def apply_transform(ddf: dd, apply_function) -> dd:
+#     res = ddf.apply(apply_function, axis=1, meta=ddf)
+#     return res.compute()
 
 
 def apply_transform_pandas(df: pd.DataFrame, apply_function) -> pd.DataFrame:
