@@ -7,7 +7,7 @@ import BlockType, { TemplateType } from '@interfaces/BlockType';
 import {
   AppNodeType, DragItem, NodeItemType, NodeType, RectType, PortType, LayoutConfigType,
   PortMappingType, ItemMappingType, BlocksByGroupType, ModelMappingType, GroupLevelType,
-  BlockMappingType,
+  BlockMappingType, OutputMappingType,
   GroupMappingType
 } from '../../Canvas/interfaces';
 import { ClientEventType } from '@mana/shared/interfaces';
@@ -57,6 +57,7 @@ export interface ModelManagerType {
   mutateModels: (payload?: ModelMappingType) => ModelMappingType;
   onItemChangeRef: React.MutableRefObject<(payload: NodeItemType) => void>;
   onModelChangeRef: React.MutableRefObject<(payload: PipelineExecutionFrameworkType) => void>;
+  outputsRef?: React.MutableRefObject<OutputMappingType>;
   pipeline: PipelineExecutionFrameworkType;
   portsRef: React.MutableRefObject<PortMappingType>;
   updateNodeItems: (items: ItemMappingType) => void;

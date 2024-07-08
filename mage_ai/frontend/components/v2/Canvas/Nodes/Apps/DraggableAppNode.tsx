@@ -1,4 +1,5 @@
 import Button, { ButtonGroup } from '@mana/elements/Button';
+import Link from '@mana/elements/Link';
 import html2canvas from 'html2canvas';
 import React, { useEffect, useMemo, useRef } from 'react';
 import TextInput from '@mana/elements/Input/TextInput';
@@ -433,7 +434,7 @@ const DraggableAppNode: React.FC<NodeType & CanvasNodeType> = ({
               padding={16}
             >
               <div style={{
-                maxWidth: 300,
+                maxWidth: 500,
               }}>
                 <Text muted xsmall>
                   Content was last saved <Text inline xsmall warning>{lastModified}</Text> and the server content
@@ -444,26 +445,21 @@ const DraggableAppNode: React.FC<NodeType & CanvasNodeType> = ({
 
                 <br />
 
-                <ButtonGroup>
-                  <Button asLink onClick={() => overrideServerContentFromLocal()} wrap>
-                    <Text blue underline xsmall>
-                      Save local
-                    </Text >
-                  </Button>
+                <Grid columnGap={8} autoFlow="column" templateColumns="auto" justifyContent="start">
+                  <Link onClick={() => overrideServerContentFromLocal()} xsmall>
+                    Save local
+                  </Link>
 
-                  <Button
-                    asLink
+                  <Link
                     onClick={event => {
                       event.preventDefault();
                       overrideLocalContentFromServer();
                     }}
-                    wrap
+                    xsmall
                   >
-                    <Text muted underline xsmall>
-                      Restore local content from server
-                    </Text >
-                  </Button>
-                </ButtonGroup>
+                    Restore from server
+                  </Link>
+                </Grid >
               </div>
 
             </Grid>

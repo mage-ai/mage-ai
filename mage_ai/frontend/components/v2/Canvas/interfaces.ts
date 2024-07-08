@@ -165,6 +165,7 @@ export type NodeItemMappingType = Record<string, NodeType>;
 export type PortMappingType = Record<string, PortType>;
 
 export type BlockMappingType = Record<string, BlockType>;
+export type OutputMappingType = Record<string, OutputNodeType>;
 export type BlocksByGroupType = Record<GroupUUIDEnum, BlockMappingType>;
 export type GroupMappingType = Record<GroupUUIDEnum, FrameworkType>;
 export type GroupLevelsMappingType = GroupMappingType[];

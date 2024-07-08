@@ -23,7 +23,7 @@ import { XYCoord } from 'react-dnd';
 import { ZoomPanStateType } from '@mana/hooks/useZoomPan';
 import { getElementPositionInContainer } from '../../Canvas/utils/rect';
 import { pluralize } from '@utils/string';
-import { sortByKey } from '@utils/array';
+import { pushAtIndex, sortByKey } from '@utils/array';
 import { snapToGrid } from '../../Canvas/utils/snapToGrid';
 import { calculateBoundingBox, findRectAtPoint } from '../../Canvas/utils/rect';
 import { useRef, useState, startTransition } from 'react';
@@ -660,7 +660,7 @@ export default function useEventManager({
 
   function onDropBlock(event: CustomEvent) {
     DEBUG.dropping && console.log('onDropBlock', event);
-    const { event: clientEvent, maanger, options } = event.detail;
+    const { event: clientEvent, manager, options } = event.detail;
     const { node } = clientEvent.data;
     const { rect } = options?.kwargs ?? {};
 
@@ -669,37 +669,50 @@ export default function useEventManager({
       top,
     } = rect;
 
-    const portsUpdated = {
-      ...portsRef.current,
-    };
+    // const portsUpdated = {
+    //   ...portsRef.current,
+    // };
 
-    node?.ports?.forEach(({ id: portID }: PortType) => {
-      const port1 = portsRef.current[portID];
-      const port2 = update(port1, {
-        rect: {
-          $merge: {
-            left: left + (port1?.rect?.offset?.left ?? 0),
-            top: top + (port1?.rect?.offset?.top ?? 0),
-          },
-        },
-      });
+    // node?.ports?.forEach(({ id: portID }: PortType) => {
+    //   const port1 = portsRef.current[portID];
+    //   const port2 = update(port1, {
+    //     rect: {
+    //       $merge: {
+    //         left: left + (port1?.rect?.offset?.left ?? 0),
+    //         top: top + (port1?.rect?.offset?.top ?? 0),
+    //       },
+    //     },
+    //   });
 
-      portsUpdated[port2.id] = port2;
-    });
+    //   portsUpdated[port2.id] = port2;
+    // });
 
-    const payload = {
-      itemMapping: {
-        ...itemsRef.current,
-        [node.id]: node,
-      },
-      portMapping: portsUpdated,
-    };
+    // const payload = {
+    //   itemMapping: {
+    //     ...itemsRef.current,
+    //     [node.id]: node,
+    //   },
+    //   portMapping: portsUpdated,
+    // };
 
-    DEBUG.dragging && console.log('onDropBlock', payload);
+    // DEBUG.dragging && console.log('onDropBlock', payload);
 
     // DON’T call renderLayout changes or else the item’s rect is changed.
     // mutateModels(payload);
     // renderConnectionLines();
+
+    if (ItemTypeEnum.OUTPUT === node?.type) {
+      node.rect = {
+        ...node.rect,
+        left: left + (node?.rect?.offset?.left ?? 0),
+        top: top + (node?.rect?.offset?.top ?? 0),
+      };
+
+      dispatchAppEvent(CustomAppEventEnum.OUTPUT_UPDATED, {
+        event: convertEvent(event),
+        node,
+      });
+    }
   }
 
   function onDropPort(dragTarget: NodeItemType, dropTarget: NodeItemType) {

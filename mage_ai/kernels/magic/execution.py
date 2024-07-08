@@ -31,7 +31,8 @@ def check_queue(queue):
     # Put back the items
     for item in items:
         queue.put(item)
-    print(f"[DEBUG QUEUE] Current queue items: {items}")
+    if is_debug():
+        print(f"[DEBUG QUEUE] Current queue items: {items}")
 
 
 def read_stdout_continuously(
@@ -45,7 +46,8 @@ def read_stdout_continuously(
     while not stop_event.is_set():
         output = async_stdout.get_output()
         if output:
-            print(f"[SRT] Debug: Captured output: {output}")
+            if is_debug():
+                print(f"[SRT] Debug: Captured output: {output}")
             # Just enqueue it or else it’ll resolve to None
             queue.put(
                 ExecutionResult.load(
@@ -63,7 +65,8 @@ def read_stdout_continuously(
 
     output = async_stdout.get_output()
     if output:
-        print(f"[END] Debug: Captured output: {output}")
+        if is_debug():
+            print(f"[END] Debug: Captured output: {output}")
         queue.put(
             ExecutionResult.load(
                 data_type=DataType.TEXT_PLAIN,

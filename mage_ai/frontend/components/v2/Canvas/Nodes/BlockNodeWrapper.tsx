@@ -17,18 +17,21 @@ import { ClientEventType, EventOperationEnum, SubmitEventOperationType } from '@
 import { ConfigurationType } from '@interfaces/PipelineExecutionFramework/interfaces';
 import { DEBUG } from '@components/v2/utils/debug';
 import { FileType } from '../../IDE/interfaces';
-import { NodeType, PortType, RectType } from '../interfaces';
+import { NodeType, OutputNodeType, PortType, RectType } from '../interfaces';
 import { BlockTypeEnum } from '@interfaces/BlockType';
 import { createPortal } from 'react-dom';
 import { draggableProps } from './draggable/utils';
 import { getFileCache, isStale, updateFileCache } from '../../IDE/cache';
-import { setNested } from '@utils/hash';
+import { isEmptyObject, selectKeys, setNested } from '@utils/hash';
 import EventStreamType, { ServerConnectionStatusType } from '@interfaces/EventStreamType';
 import { setupDraggableHandlers, buildEvent } from './utils';
-import { useEffect, useCallback, useState, useMemo, useRef } from 'react';
+import { useContext, useEffect, useCallback, useState, useMemo, useRef } from 'react';
 import { BlockNodeWrapperProps } from './types';
+import { ItemTypeEnum } from '../types';
 import { executionDone } from '@components/v2/ExecutionManager/utils';
 import { nodeClassNames } from './utils';
+import { ModelContext } from '@components/v2/Apps/PipelineCanvas/ModelManager/ModelContext';
+import { buildOutputNode } from '@components/v2/Apps/PipelineCanvas/utils/items';
 
 type BlockNodeType = {
 
@@ -61,6 +64,8 @@ export const BlockNodeWrapper: React.FC<BlockNodeType> = ({
   const connectionStatusRef = useRef<ServerConnectionStatusType>(null);
   const portalRef = useRef<HTMLDivElement>(null);
   const [portalMount, setPortalMount] = useState<HTMLElement | null>(null);
+
+  const { outputsRef } = useContext(ModelContext);
 
   // Attributes
 
@@ -273,35 +278,64 @@ export const BlockNodeWrapper: React.FC<BlockNodeType> = ({
     updateBlock,
   ]);
 
-  const outputNode = useMemo(() => {
+  const outputNodes = useMemo(() => {
     if (activeLevel.current !== node?.level) return;
-    const outputRect = {
-      height: (rect.height ?? 0),
-      left: (rect.left ?? 0),
-      top: (rect.top ?? 0) + (rect.height ?? 0),
-      width: (rect.width ?? 0),
-    };
-    outputRect.width * 2;
-    outputRect.left -= (outputRect.width - rect.width) / 2;
 
-    return (
-      <OutputNode
-        {...sharedProps}
-        handlers={draggingHandlers}
-        node={node}
-        nodeRef={outputRef}
-        rect={outputRect}
-        source="block-node"
-        useRegistration={useRegistration}
-      />
-    );
+    const arr = [];
+    const outputs = [...(Object.values(outputsRef?.current?.[node?.id] ?? {}) ?? [])];
+
+    if ((outputs?.length ?? 0) === 0) {
+      outputs.push(buildOutputNode(node, block, {
+        message: null,
+        message_request_uuid: null,
+        uuid: null,
+      }));
+    }
+
+    outputs?.forEach((output: OutputNodeType) => {
+      if (!output?.rect) {
+        // const outputRect = {
+        //   height: (rect.height ?? 0),
+        //   left: (rect.left ?? 0),
+        //   top: (rect.top ?? 0) + (rect.height ?? 0),
+        //   width: (rect.width ?? 0),
+        // };
+        // outputRect.width * 2;
+        // outputRect.left -= (outputRect.width - rect.width) / 2;
+        // output.rect = outputRect;
+      }
+
+      arr.push(
+        <OutputNode
+          // {...sharedProps}
+          {...draggableProps({ classNames: [styles.nodeWrapper], draggable: true, droppable: false, node })}
+          handlers={draggingHandlers}
+          key={output.id}
+          node={output}
+          nodeRef={outputRef}
+          rect={output?.rect}
+          source="block-node"
+          useRegistration={useRegistration}
+        />
+      );
+    });
+
+    return arr;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [node, sharedProps, draggingHandlers]);
+  }, [block, node, outputsRef, sharedProps, draggingHandlers]);
 
   if (Wrapper) {
     return (
       <Wrapper
-        {...sharedProps}
+        // {...sharedProps}
+        {...draggableProps({
+          classNames: [node.status ? styles[node.status] : '', node.outputs?.length ? styles.codeExecuted : ''],
+          draggable,
+          droppable,
+          emptyGroup,
+          node,
+          requiredGroup,
+        })}
         className={[
           (sharedProps.className || []),
           // Class names reserved for the SettingsManager to determine what is visible
@@ -314,12 +348,20 @@ export const BlockNodeWrapper: React.FC<BlockNodeType> = ({
         rect={rect}
       >
         {blockNode}
-        {portalMount && createPortal(outputNode, portalMount)}
+        {portalMount && outputNodes?.map(outputNode => createPortal(outputNode, portalMount))}
       </Wrapper>
     );
   }
 
-  return <div {...sharedProps} ref={nodeRef}>{blockNode}</div>;
+  return (
+    <div
+      {...draggableProps({
+        classNames: [styles.nodeWrapper], draggable: true, droppable: false, node
+      })}
+      ref={nodeRef}>
+      {blockNode}
+    </div>
+  );
 };
 
 export default React.memo(BlockNodeWrapper, (p1, p2) => areEqual(p1, p2) && areEqualApps(p1, p2));

@@ -161,10 +161,11 @@ export default function useModelManager({
     pipelines: pipelineMutants,
   };
 
-  const { dispatchAppEvent } = useAppEventsHandler({ itemsRef } as ModelManagerType, {
+  const { dispatchAppEvent } = useAppEventsHandler({ itemsRef } as any, {
     [CustomAppEventEnum.APP_STARTED]: handleAppChanged,
     [CustomAppEventEnum.APP_STOPPED]: handleAppChanged,
     [CustomAppEventEnum.CODE_EXECUTION_SUBMITTED]: handleCodeExecutionSubmission,
+    [CustomAppEventEnum.OUTPUT_UPDATED]: handleOutputUpdated,
   });
 
   function handleAppChanged(event: CustomAppEvent) {
@@ -175,12 +176,19 @@ export default function useModelManager({
     );
   }
 
+  function handleOutputUpdated({ detail }: CustomAppEvent) {
+    const { node: output } = detail;
+    const { node } = output;
+
+    outputsRef.current[node.id] ||= {};
+    outputsRef.current[node.id][output.id] = output;
+  }
+
   function handleCodeExecutionSubmission({ detail }: CustomAppEvent) {
     const { block, node, options } = detail;
     const output = buildOutputNode(node, block, options?.kwargs?.process as any);
 
-    outputsRef.current[node.id] ||= {};
-    outputsRef.current[node.id][output.id] = output;
+    handleOutputUpdated({ detail: { node: output } } as CustomAppEvent);
 
     initializeModels(
       appHandlersRef?.current?.executionFrameworks?.getModel() as PipelineExecutionFrameworkType,
@@ -405,6 +413,7 @@ export default function useModelManager({
     itemsRef,
     onItemChangeRef,
     onModelChangeRef,
+    outputsRef,
     portsRef,
   };
 }

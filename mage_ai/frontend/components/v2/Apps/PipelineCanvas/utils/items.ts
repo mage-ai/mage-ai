@@ -1,5 +1,5 @@
 import BlockType from '@interfaces/BlockType';
-import { BlockGroupType, NodeItemType, NodeType, OutputNodeType } from '../../../Canvas/interfaces';
+import { BlockGroupType, NodeItemType, NodeType, OutputNodeType, RectType } from '../../../Canvas/interfaces';
 import { ItemTypeEnum } from '../../../Canvas/types';
 import { buildUUIDForLevel } from './levels';
 import { hashCode } from '@utils/string';
@@ -83,20 +83,29 @@ export function buildOutputNode(node: NodeItemType, block: BlockType, process: {
   message_request_uuid: string;
   uuid: string;
 }): OutputNodeType {
-  const id = [node.id, process.uuid].join(':')
-  const { level, rect } = node ?? {};
+  const id = [node.id, 'output', process.uuid].filter(Boolean).join(':');
+  const { level, rect, status } = node ?? {};
+
+  const outputRect = {
+    parent: rect,
+  } as RectType;
+  if (rect) {
+    outputRect.height = (rect.height ?? 0);
+    outputRect.left = (rect.left ?? 0);
+    outputRect.top = (rect.top ?? 0) + (rect.height ?? 0) + 8;
+    outputRect.width = (rect.width ?? 0) * 1.5;
+  }
+
   return {
     block,
     id,
     level,
+    node: {
+      id: node?.id,
+    } as any,
     process,
-    rect: {
-      height: rect.height,
-      left: rect?.left + rect?.width,
-      parent: rect,
-      top: rect?.top + rect?.height,
-      width: rect.width,
-    },
+    rect: outputRect,
+    status,
     type: ItemTypeEnum.OUTPUT,
     upstream: [String(node.id)],
   };

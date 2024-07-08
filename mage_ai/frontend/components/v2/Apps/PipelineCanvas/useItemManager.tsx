@@ -37,7 +37,7 @@ export default function useItemManager({
 
   const { convertEvent, dispatchAppEvent } = useAppEventsHandler({
     itemMetadataRef,
-  } as ItemManagerType, {
+  } as any, {
     [CustomAppEventEnum.NODE_MOUNTED]: handleNodeMounted,
   });
 

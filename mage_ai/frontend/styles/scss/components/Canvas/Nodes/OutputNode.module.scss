@@ -1,12 +1,7 @@
-@use '../../../abstracts/variables' as *;
 @use '../../../base/grid';
-@use './mixins' as *;
 
 .outputNodeContainer {
   &.executed {
     @include grid.base();
-
-    backdrop-filter: blur(#{$modal-blur-base});
-    background: var(--modal-background-color-base);
   }
 }

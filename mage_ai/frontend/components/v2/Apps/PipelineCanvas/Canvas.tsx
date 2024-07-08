@@ -152,6 +152,7 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
     mutateModels,
     onItemChangeRef,
     onModelChangeRef,
+    outputsRef,
     portsRef,
   }: ModelManagerType = useModelManager({
     executionFrameworkUUID,
@@ -318,7 +319,8 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
   const [, connectDrop] = useDrop(
     () => ({
       // https://react-dnd.github.io/react-dnd/docs/api/use-drop
-      accept: [ItemTypeEnum.APP, ItemTypeEnum.BLOCK, ItemTypeEnum.NODE, ItemTypeEnum.OUTPUT, ItemTypeEnum.PORT],
+      accept: [ItemTypeEnum.APP, ItemTypeEnum.BLOCK, ItemTypeEnum.NODE, ItemTypeEnum.OUTPUT,
+      ItemTypeEnum.PORT],
       canDrop: (node: NodeItemType, monitor: DropTargetMonitor) => {
         if (!monitor.isOver({ shallow: true })) {
           return false;
@@ -369,14 +371,16 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
         top += topOffset;
 
         const node = { ...item };
-        console.log(item, node)
         node.rect = node.rect ?? item.rect;
         node.rect.left = left;
         node.rect.top = top;
 
         const itemM = itemsRef?.current?.[node.id];
         const el = itemElementsRef.current[node.type][node.id].current.getBoundingClientRect();
-        console.log(
+
+        DEBUG.dragging && console.log(
+          'onDrop',
+          item?.id,
           delta,
           [leftOffset, topOffset],
           [left, top],
@@ -547,6 +551,8 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
               blocksByGroupRef={blocksByGroupRef}
               groupMappingRef={groupMappingRef}
               groupsByLevelRef={groupsByLevelRef}
+              itemsRef={itemsRef}
+              outputsRef={outputsRef}
             >
               {nodesMemo}
             </ModelProvider >

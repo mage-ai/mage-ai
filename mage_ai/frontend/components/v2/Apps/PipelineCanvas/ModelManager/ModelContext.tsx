@@ -6,6 +6,8 @@ interface ModelContextType {
   blockMappingRef: ModelManagerType['blockMappingRef'];
   groupMappingRef: ModelManagerType['groupMappingRef'];
   groupsByLevelRef: ModelManagerType['groupsByLevelRef'];
+  itemsRef: ModelManagerType['itemsRef'];
+  outputsRef: ModelManagerType['outputsRef'];
 }
 export const ModelContext = createContext<ModelContextType | undefined>(undefined);
 

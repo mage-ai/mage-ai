@@ -8,7 +8,7 @@
   }
 
   &:hover {
-    color: var(--fonts-color-text-base);
+    color: var(--link-color-hover) !important;
   }
 
   &.disabled {
@@ -19,13 +19,14 @@
 
   &.activeColorOnHover {
     &:hover {
-      color: var(--fonts-color-text-base);
+      color: var(--link-color-hover) !important;
     }
   }
 }
 
 .base {
-
+  color: var(--link-color-base) !important;
+  text-decoration: underline;
 }
 
 .wrap {

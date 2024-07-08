@@ -14,6 +14,7 @@ type OutputGroupsProps = {
   node: OutputNodeType;
   onMount?: () => void;
   source?: string;
+  styles?: React.CSSProperties;
   useRegistration: (channel: string, stream: string) => { subscribe: (consumer: string, opts?: any) => void };
 }
 
@@ -22,6 +23,7 @@ const OutputGroups: React.FC<OutputGroupsProps> = ({
   node,
   onMount,
   source,
+  styles,
   useRegistration,
 }: OutputGroupsProps) => {
   const scrollableDivRef = useRef<HTMLDivElement>(null);
@@ -30,7 +32,7 @@ const OutputGroups: React.FC<OutputGroupsProps> = ({
   const [eventsGrouped, setEventsGrouped] = useState<Record<string, Record<string, EventStreamType>>>({});
   const { subscribe } = useRegistration(undefined, block?.uuid);
   const handleMessage = useRef((event: EventStreamType) => {
-    DEBUG.execution.output && console.log('event.result', JSON.stringify(event.result, null, 2));
+    DEBUG.codeExecution.output && console.log('event.result', JSON.stringify(event.result, null, 2));
 
     setEventsGrouped((prev) => ({
       ...prev,
@@ -41,7 +43,7 @@ const OutputGroups: React.FC<OutputGroupsProps> = ({
     }));
   });
 
-  subscribe([node.id, 'output', source ?? ''].join(':'), {
+  subscribe([node.id, source ?? ''].join(':'), {
     onMessage: handleMessage.current,
   });
 
@@ -60,7 +62,7 @@ const OutputGroups: React.FC<OutputGroupsProps> = ({
   }
 
   return (
-    <div className={stylesOutput.outputContainer}>
+    <div className={stylesOutput.outputContainer} style={styles}>
       <Scrollbar ref={scrollableDivRef} style={{ maxHeight: 400, overflow: 'auto' }}>
         <Grid rowGap={8} templateRows="min-content">
           {Object.keys(eventsGrouped ?? {})?.sort()?.map((mrUUID: string) => (

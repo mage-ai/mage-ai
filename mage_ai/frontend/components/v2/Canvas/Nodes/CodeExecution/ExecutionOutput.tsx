@@ -19,7 +19,7 @@ function ExecutionOutput({
   const displayLocalTimezone = shouldDisplayLocalTimezone();
 
   const outputs = useMemo(() => events?.reduce(
-    (acc: React.ReactNode[], event: EventStreamType, index: number
+    (acc: React.ReactNode[], event: EventStreamType,
     ) => {
       const {
         error,
@@ -82,7 +82,7 @@ function ExecutionOutput({
             templateColumns="auto 1fr"
           >
             <Text monospace muted small>
-              [{index}]
+              [{acc?.length ?? 0}]
             </Text>
 
             <Text monospace small>

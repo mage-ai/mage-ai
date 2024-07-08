@@ -19,7 +19,7 @@ export type NodeWrapperProps = {
 } & DragAndDropType;
 
 // This is the style used for the preview when dragging
-function getStyles(
+export function getStyles(
   node: NodeItemType,
   {
     draggable,
@@ -64,6 +64,7 @@ function getStyles(
 export const NodeWrapper: FC<NodeWrapperProps> = memo(function NodeWrapper({
   children,
   className,
+  connectDrag,
   draggable,
   draggingNode,
   droppable,
@@ -80,7 +81,7 @@ export const NodeWrapper: FC<NodeWrapperProps> = memo(function NodeWrapper({
   });
   const itemToDrag = itemToDragRef.current;
 
-  const [{ isDragging }, connectDrag, preview] = useDrag(
+  const [{ isDragging }, connectDragBase, preview] = useDrag(
     () => ({
       canDrag: () => {
         onDragStart({ data: { node: itemToDrag } } as any);
@@ -128,13 +129,15 @@ export const NodeWrapper: FC<NodeWrapperProps> = memo(function NodeWrapper({
   );
 
   useEffect(() => {
-    preview(getEmptyImage(), { captureDraggingState: true });
+    // What does this even do? It sometimes shows a preview sometimes doesn’t.
+    // preview(getEmptyImage(), { captureDraggingState: true });
+    preview(nodeRef.current as Element);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // This needs to always connect without any conditionals or else it’ll never connect after mount.
   connectDrop(nodeRef);
-  connectDrag(nodeRef);
+  (connectDrag ?? connectDragBase)(nodeRef);
 
   // DEBUG.dragging && console.log(
   //   'NodeWrapper',

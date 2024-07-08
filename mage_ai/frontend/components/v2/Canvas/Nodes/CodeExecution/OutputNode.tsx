@@ -3,16 +3,19 @@ import React, { useMemo } from 'react';
 import stylesOutput from '@styles/scss/components/Canvas/Nodes/OutputNode.module.scss';
 import styles from '@styles/scss/components/Canvas/Nodes/BlockNode.module.scss';
 import { CanvasNodeType } from '../interfaces';
-import { NodeWrapper } from '../NodeWrapper';
+import { getStyles, NodeWrapper } from '../NodeWrapper';
 import { OutputNodeType } from '../../interfaces';
 import { areEqual } from '../equals';
 import { draggableProps } from '../draggable/utils';
 import { nodeClassNames, setupDraggableHandlers } from '../utils';
+import { useDrag } from 'react-dnd';
+import useDispatchMounted from '../useDispatchMounted';
+import { DEBUG } from '@components/v2/utils/debug';
+import { selectKeys } from '@utils/hash';
 
 type OutputNodeProps = {
   node: OutputNodeType;
   nodeRef: React.RefObject<HTMLDivElement>;
-  onMount?: () => void;
   source?: string;
   useRegistration: (channel: string, stream: string) => { subscribe: (consumer: string, opts?: any) => void };
 } & CanvasNodeType;
@@ -22,12 +25,19 @@ const OutputNode: React.FC<OutputNodeProps> = ({
   handlers,
   node,
   nodeRef,
-  onMount,
   rect,
   source,
   useRegistration,
 }: OutputNodeProps) => {
   const block = node.block;
+
+  const [{ isDragging }, connectDrag] = useDrag(() => ({
+    collect: (monitor) => ({
+      isDragging: monitor.isDragging(),
+    }),
+    item: node,
+    type: node.type,
+  }), [node]);
 
   const draggingHandlers = setupDraggableHandlers(handlers, node, nodeRef, block);
 
@@ -43,7 +53,12 @@ const OutputNode: React.FC<OutputNodeProps> = ({
     node,
   }), [draggable, node]);
 
-  console.log(node)
+  useDispatchMounted(node, nodeRef, {
+    onMount: () => {
+      DEBUG.codeExecution.node && console.log('OutputNode mounted:', node);
+    }
+  });
+
   return (
     <NodeWrapper
       {...sharedProps}
@@ -53,6 +68,7 @@ const OutputNode: React.FC<OutputNodeProps> = ({
         // based on the selected groups.
         ...nodeClassNames(node),
       ].filter(Boolean).join(' ')}
+      connectDrag={connectDrag}
       handlers={draggingHandlers}
       node={node}
       nodeRef={nodeRef}
@@ -61,8 +77,12 @@ const OutputNode: React.FC<OutputNodeProps> = ({
       <OutputGroups
         block={block}
         node={node}
-        onMount={onMount}
         source={source}
+        styles={selectKeys(getStyles(node, {
+          draggable,
+          isDragging,
+          rect,
+        }), ['height', 'opacity'])}
         useRegistration={useRegistration}
       />
     </NodeWrapper>
