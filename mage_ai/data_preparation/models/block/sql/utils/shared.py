@@ -228,17 +228,24 @@ def interpolate_input(
     return query
 
 
-def interpolate_vars(query, global_vars=None, block=None, dynamic_block_index: int = None):
+def interpolate_vars(
+    content: str,
+    global_vars: Dict = None,
+    block=None,
+    dynamic_block_index: int = None
+) -> str :
+    if not content:
+        return content
     if global_vars is None:
         global_vars = dict()
 
     if block:
-        query = block.interpolate_content(
-            query, variables=global_vars, dynamic_block_index=dynamic_block_index,
+        content = block.interpolate_content(
+            content, variables=global_vars, dynamic_block_index=dynamic_block_index,
         )
 
     return Template(
-        query,
+        content,
         undefined=StrictUndefined,
     ).render(
         variables=lambda x, p=None, v=global_vars: get_variable_for_template(
