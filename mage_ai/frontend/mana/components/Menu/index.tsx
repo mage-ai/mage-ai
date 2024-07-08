@@ -542,6 +542,8 @@ function MenuController({
 }: MenuProps & {
   portalRef: React.RefObject<HTMLDivElement>,
 }) {
+  const timeoutRef = useRef(null);
+  const triggeredOnClickRef = useRef(false);
   const dispatchEventRef = useRef(null);
   const itemsRef = useRef<Record<string, React.RefObject<HTMLDivElement>>>({});
   const containerRefs = useRef<Record<string, React.RefObject<HTMLDivElement>>>({});
@@ -610,7 +612,16 @@ function MenuController({
       removePortals(0);
       onClose && onClose?.(0);
     } else if (KeyEnum.ENTER === event.key && item && item?.onClick) {
-      item?.onClick(event, item);
+      if (!triggeredOnClickRef.current) {
+        triggeredOnClickRef.current = true;
+        // console.log(position, previousPosition, item)
+        item?.onClick(event, item);
+        // clearTimeout(timeoutRef.current);
+        // timeoutRef.current = setTimeout(() => {
+        //   triggeredOnClickRef.current = false;
+        // }, 100);
+      }
+
     } else if (item?.uuid !== itemPrevious?.uuid) {
       const el = itemsRef?.current?.[item?.uuid];
       const el2 = itemsRef?.current?.[previousTarget?.uuid];
@@ -643,11 +654,15 @@ function MenuController({
 
   useEffect(() => {
     document.addEventListener('click', handleDocumentClick);
+    const timeout = timeoutRef.current;
 
     return () => {
       containerRefs.current = {};
       itemsRef.current = {};
+      triggeredOnClickRef.current = false;
+
       document.removeEventListener('click', handleDocumentClick);
+      clearTimeout(timeout);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [handleDocumentClick]);

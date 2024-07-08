@@ -460,77 +460,81 @@ export default function useEventManager({
             Icon: Trash,
             onClick: (event: ClientEventType) => {
               event?.preventDefault();
-              removeContextMenu(event);
 
-              const itemRemoved = itemsRef?.current?.[target?.id];
-              if (itemRemoved) {
-                itemRemoved.rect = {
-                  ...itemRemoved?.rect,
-                  diff: itemRemoved?.rect,
-                  height: 0,
-                  left: 0,
-                  top: 0,
-                  width: 0,
-                };
+              // const itemRemoved = itemsRef?.current?.[target?.id];
+              // if (itemRemoved) {
+              //   itemRemoved.rect = {
+              //     ...itemRemoved?.rect,
+              //     diff: itemRemoved?.rect,
+              //     height: 0,
+              //     left: 0,
+              //     top: 0,
+              //     width: 0,
+              //   };
 
-                const element = itemElementsRef?.current?.[target.type]?.[target.id]?.current;
-                if (element) {
-                  const rect = element.getBoundingClientRect();
-                  itemRemoved.rect.diff.height = rect.height;
-                  itemRemoved.rect.diff.width = rect.width;
+              //   const element = itemElementsRef?.current?.[target.type]?.[target.id]?.current;
+              //   if (element) {
+              //     const rect = element.getBoundingClientRect();
+              //     itemRemoved.rect.diff.height = rect.height;
+              //     itemRemoved.rect.diff.width = rect.width;
 
-                  element.style.width = '0px';
-                  element.style.height = '0px';
-                  element.style.visibility = 'hidden';
-                  element.style.opacity = '0';
-                  element.style.display = 'none';
+              //     element.style.width = '0px';
+              //     element.style.height = '0px';
+              //     element.style.visibility = 'hidden';
+              //     element.style.opacity = '0';
+              //     element.style.display = 'none';
 
-                  delete itemElementsRef.current[target.type][target.id];
-                }
+              //     delete itemElementsRef.current[target.type][target.id];
+              //   }
 
-                if (itemRemoved?.node) {
-                  const node = itemsRef.current[itemRemoved.node.id] as NodeType;
+              //   if (itemRemoved?.node) {
+              //     const node = itemsRef.current[itemRemoved.node.id] as NodeType;
 
-                  const rects1 = [];
-                  const rects2 = [];
+              //     const rects1 = [];
+              //     const rects2 = [];
 
-                  itemRemoved?.node?.items?.forEach((item1: any) => {
-                    if (!item1) return;
-                    const item2 = itemsRef.current[typeof item1 === 'string' ? item1 : item1?.id];
-                    if (!item2) return;
+              //     itemRemoved?.node?.items?.forEach((item1: any) => {
+              //       if (!item1) return;
+              //       const item2 = itemsRef.current[typeof item1 === 'string' ? item1 : item1?.id];
+              //       if (!item2) return;
 
-                    rects1.push(item2.rect);
-                    if (itemRemoved?.id !== item2?.id) {
-                      rects2.push(item2.rect);
-                    }
-                  });
+              //       rects1.push(item2.rect);
+              //       if (itemRemoved?.id !== item2?.id) {
+              //         rects2.push(item2.rect);
+              //       }
+              //     });
 
-                  const box1 = calculateBoundingBox(rects1);
-                  const box2 = calculateBoundingBox(rects2);
+              //     const box1 = calculateBoundingBox(rects1);
+              //     const box2 = calculateBoundingBox(rects2);
 
-                  const diffHeight = box1.height - box2.height;
-                  const diffWidth = box1.width - box2.width;
+              //     const diffHeight = box1.height - box2.height;
+              //     const diffWidth = box1.width - box2.width;
 
-                  const rect = node?.rect;
-                  node.rect = {
-                    ...node.rect,
-                    diff: rect,
-                    height: rect.height -= diffHeight,
-                    width: rect.width -= diffWidth,
-                  };
-                  node.items = node?.items?.filter(
-                    (item: any) => (typeof item === 'string' ? item : item.id) !== itemRemoved.id
-                  );
+              //     const rect = node?.rect;
+              //     node.rect = {
+              //       ...node.rect,
+              //       diff: rect,
+              //       height: rect.height -= diffHeight,
+              //       width: rect.width -= diffWidth,
+              //     };
+              //     node.items = node?.items?.filter(
+              //       (item: any) => (typeof item === 'string' ? item : item.id) !== itemRemoved.id
+              //     );
 
-                  itemsRef.current[node.id] = node;
-                }
+              //     itemsRef.current[node.id] = node;
+              //   }
 
-                delete itemsRef.current[itemRemoved.id];
-              }
+              //   delete itemsRef.current[itemRemoved.id];
+              // }
 
-              updateNodeLayouts();
+              // updateNodeLayouts();
 
               appHandlersRef.current?.pipelines.update.mutate({
+                onSuccess: () => {
+                  // console.log('event.1')
+                  removeContextMenu(event);
+                  // updateNodeLayouts(event);
+                },
                 payload: (pipeline) => ({
                   ...pipeline,
                   blocks: pipeline?.blocks?.filter((block: BlockType) => block.uuid !== target.block.uuid),

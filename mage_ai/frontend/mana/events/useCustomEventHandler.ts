@@ -10,6 +10,7 @@ type CustomEventHandlerOptions = {
     addEventListener: (type: string, handler: (event: CustomEvent) => void) => void;
     removeEventListener: (type: string, handler: (event: CustomEvent) => void) => void;
   };
+  throttle?: number;
 };
 
 export interface CustomEventHandler {
@@ -22,6 +23,7 @@ export default function useCustomEventHandler(
   options?: CustomEventHandlerOptions,
 ): CustomEventHandler {
   const subscriptionsRef = useRef<EventSubscription>({});
+  const timeoutRef = useRef<any>(null);
 
   const dispatchCustomEvent = useCallback((type: EventEnum, detail?: DetailType, args?: any | any[]) => {
     function _dispatch(
@@ -48,8 +50,11 @@ export default function useCustomEventHandler(
   useEffect(() => {
     Object.entries(subscriptions ?? {})?.forEach(([type, handler]) => {
       const handle = (event: CustomEvent) => {
-        DEBUG.events.handler && console.log('handleCustomEvent:', client, event);
-        handler(event);
+        clearTimeout(timeoutRef.current);
+        timeoutRef.current = setTimeout(() => {
+          DEBUG.events.handler && console.log('handleCustomEvent:', client, event);
+          handler(event);
+        }, options?.throttle ?? 0);
       };
       subscriptionsRef.current[type] = handle;
     });

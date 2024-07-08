@@ -8,7 +8,7 @@ import { get, set } from '@storage/localStorage';
 import useAppEventsHandler, { CustomAppEvent, CustomAppEventEnum } from './useAppEventsHandler';
 import { STYLE_ROOT_ID } from '@context/v2/Style';
 import { getCache } from '@mana/components/Menu/storage';
-import { LayoutConfigRef, ModelManagerType, SettingsManagerType } from './interfaces';
+import { LayoutConfigRef, ModelManagerType, SettingsManagerType, SubscriberType } from './interfaces';
 import {
   ItemTypeEnum, ItemStatusEnum, ITEM_TYPES,
   LayoutConfigDirectionEnum, LayoutConfigDirectionOriginEnum,
@@ -77,20 +77,18 @@ export default function useSettingsManager({
       style: LayoutStyleEnum.WAVE,
     })),
   ]);
-  const optionalGroupsVisible = useRef<boolean>(null);
 
   const {
     convertEvent,
     dispatchAppEvent,
   } = useAppEventsHandler({
     activeLevel,
-    layoutConfig: layoutConfigs?.current?.[activeLevel?.current ?? 0],
     layoutConfigs,
     selectedGroupsRef,
-  } as SettingsManagerType, {
+  } as SubscriberType, {
     [CustomAppEventEnum.NODE_LAYOUTS_CHANGED]: handleLayoutUpdates,
-    [CustomAppEventEnum.NODE_RECT_UPDATED]: updateVisibleNodes,
     [CustomAppEventEnum.TELEPORT_INTO_BLOCK]: teleportIntoBlock,
+    [CustomAppEventEnum.UPDATE_DISPLAY]: updateVisibleNodes,
     [CustomAppEventEnum.UPDATE_SETTINGS]: updateLocalSettings,
   });
 
@@ -197,10 +195,17 @@ export default function useSettingsManager({
 
   function handleLayoutUpdates(event: CustomAppEvent) {
     DEBUG.settings.manager && console.log('handleLayoutUpdates', event)
-    const { classNames, styles } = event?.detail?.options?.kwargs ?? {};
+    const { detail } = event ?? {};
+    const { classNames, styles } = detail?.options?.kwargs ?? {};
+    // const { nodesUpdated } = detail ?? {};
 
     classNames && addContainerClassNames(classNames);
     styles && setStyles(styles);
+
+    // if (nodesUpdated?.length > 0) {
+    //   updateVisibleNodes(event);
+    // } else {
+    // }
   }
 
   function updateVisibleNodes(event?: CustomAppEvent) {

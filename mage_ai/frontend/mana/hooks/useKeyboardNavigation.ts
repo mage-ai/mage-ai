@@ -85,7 +85,6 @@ export default function useKeyboardNavigation({
 
   function handlePositionChange({ x, y }: { x?: number; y?: number }) {
     const positionPrevious = [...(positionRef.current ?? [])];
-    console.log(x, y)
     const { item, items } = getCurrentItem();
 
     DEBUG.keyboard.navigation && console.log('position.args', x, y);

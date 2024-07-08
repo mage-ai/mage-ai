@@ -100,6 +100,7 @@ export default function useKeyboardShortcuts({
   }
 
   function executeCommands(event: CustomKeyboardEventType) {
+    DEBUG.keyboard.shortcuts && console.log('commands', Object.keys(commandsRef.current ?? {}));
     DEBUG.keyboard.shortcuts && console.log('series', eventsSeriesRef.current);
     DEBUG.keyboard.shortcuts && console.log('history', eventsHistoryRef.current);
 

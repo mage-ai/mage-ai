@@ -92,7 +92,7 @@ export default function useModelManager({
         },
       } as MutatationType,
     };
-    setPipelineState(pipelineUpdated);
+    setPipelineState(() => pipelineUpdated as PipelineExecutionFrameworkType);
   }
 
   const pipelineMutants = useMutate({
@@ -110,11 +110,25 @@ export default function useModelManager({
       },
       update: {
         onSuccess: (pipeline2, pipeline2Prev) => {
-          if (pipeline2?.blocks?.length > (pipeline2Prev?.blocks?.length ?? 0)) {
-            initializeModels(executionFramework, pipeline2)
-              .then(() => {
-                setPipeline(pipeline2);
-              });
+          // console.log('modelManager.0')
+
+          const b1 = pipeline2?.blocks?.length;
+          const b2 = pipeline2Prev?.blocks?.length ?? 0;
+          if (b1 !== b2) {
+            const removed = pipeline2Prev
+              .blocks
+              .filter((b) => !pipeline2.blocks.find((b2) => b2.uuid === b.uuid));
+
+            initializeModels(executionFramework, pipeline2, {
+              modelsUpdated: {
+                blocks: {
+                  removed,
+                },
+              },
+            }).then(() => {
+              // console.log('modelManager.1')
+              setPipeline(pipeline2)
+            });
           } else {
             setPipeline(pipeline2);
           }
@@ -180,6 +194,11 @@ export default function useModelManager({
     pipeline2: PipelineExecutionFrameworkType,
     opts?: {
       appsRef?: AppManagerType['appsRef'];
+      modelsUpdated?: {
+        blocks: {
+          removed: BlockType[];
+        };
+      };
     },
   ): Promise<NodeItemType[]> {
     return new Promise((resolve, reject) => {
@@ -235,6 +254,8 @@ export default function useModelManager({
         // Create a port for every group at every level.
         // Create an item for every block at every level because they’ll have different groupings.
         const itemIDsByLevel = [];
+        const blocksRemoved = indexBy(opts?.modelsUpdated?.blocks?.removed ?? [], b => b.uuid);
+        const nodesRequireUpdate = [];
 
         // Initialize all models for all levels.
         blockGroupsByLevel?.forEach((blockGroups: BlockGroupType[], level: number) => {
@@ -293,6 +314,10 @@ export default function useModelManager({
             // Output
             item.outputs = Object.values(outputsRef.current?.[item.id] ?? {}) ?? [];
 
+            if ((item?.block as any)?.uuid in blocksRemoved) {
+              nodesRequireUpdate.push(item);
+            }
+
             itemsIDs.push(item.id);
             itemMapping[item.id] = item;
           });
@@ -301,6 +326,15 @@ export default function useModelManager({
           const ports = [];
           createPortsByItem(nodes.concat(items), {
             level,
+          });
+
+          const nodesRequireUpdateMapping = indexBy(nodesRequireUpdate, n => n.id);
+          nodes.concat(items)?.forEach((item: NodeType) => {
+            if (item?.items?.length > 0) {
+              if (item?.items?.some(iuuid => iuuid in nodesRequireUpdateMapping)) {
+                nodesRequireUpdate.push(item);
+              }
+            }
           });
 
           Object.entries(ports ?? {})?.forEach(([id, { ports }]: [string, {
@@ -326,7 +360,6 @@ export default function useModelManager({
         portsRef.current = portMapping;
 
         // Models
-        // console.log('itemIDsByLevelRef', itemIDsByLevelRef)
         itemIDsByLevelRef.current = itemIDsByLevel;
 
         // WARNING: Do this so it mounts and then the on mount can start the chain.
@@ -334,6 +367,7 @@ export default function useModelManager({
         // Don’t do any level filtering here, it’ll be done at the Canvas level.
         dispatchAppEvent(CustomAppEventEnum.NODE_LAYOUTS_CHANGED, {
           nodes: items,
+          nodesUpdated: nodesRequireUpdate,
         });
 
         setOutputIDs([...new Set(items?.reduce((acc, { block }) => [

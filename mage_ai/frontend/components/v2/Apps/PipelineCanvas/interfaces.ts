@@ -115,6 +115,7 @@ export interface CustomEventDetail {
   manager?: SubscriberType;
   node?: NodeItemType;
   nodes?: NodeItemType[];
+  nodesUpdated?: NodeItemType[];
   options?: {
     args?: EventOperationOptionsType['args'];
     kwargs?: EventOperationOptionsType['kwargs'];

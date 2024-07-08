@@ -366,7 +366,7 @@ export default function BlockNodeComponent({
       scale: 1,
       translateY: 0,
     },
-    initial: ItemStatusEnum.READY === node?.status ? {
+    initial: (ItemStatusEnum.READY === node?.status && node?.version === 1) ? {
       opacity: 0,
       scale: 0.95,
       translateY: 10

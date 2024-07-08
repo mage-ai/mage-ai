@@ -152,7 +152,7 @@ export default function useItemManager({
 
       debouncer(() => {
         DEBUG.itemManager && console.log('onMountItem', item);
-        dispatchAppEvent(CustomAppEventEnum.NODE_RECT_UPDATED, {
+        dispatchAppEvent(CustomAppEventEnum.UPDATE_DISPLAY, {
           node: item,
         });
       }, 100);

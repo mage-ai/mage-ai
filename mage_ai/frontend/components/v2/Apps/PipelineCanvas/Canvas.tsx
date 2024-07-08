@@ -192,6 +192,7 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
         });
       },
       pipeline: data?.pipeline ?? prev?.pipeline,
+      selectedGroupsRef,
     }));
   }
 
@@ -439,6 +440,66 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
     return <PortalNode id={key} key={key} ref={portalRef} />;
   }), [outputIDs]);
 
+  const nodesMemo = useMemo(() => {
+    const nodes = [];
+    const order = {};
+
+    itemRects?.forEach((arr: [string, number, number, number, number]) => {
+      DEBUG.layout && console.log('[Canvas] Rendering itemRects', arr);
+
+      const [
+        id,
+        left,
+        top,
+        width,
+        height,
+      ] = arr;
+
+      const item = itemsRef.current[id];
+      if (!item) return;
+
+      const draggable = dragEnabled && activeLevel?.current === item?.level
+        && (LayoutDisplayEnum.SIMPLE !== layoutConfigs?.[item?.level]?.current?.display
+          || ItemTypeEnum?.NODE === item?.type);
+
+      const index = order[item.level]?.length ?? 0;
+      order[item.level] = [...(order[item.level] ?? []), id];
+
+      nodes.push(
+        <DraggableBlockNode
+          {...handlers}
+          activeLevel={activeLevel}
+          appHandlersRef={handlers.appHandlersRef}
+          draggable={draggable}
+          index={index}
+          key={arr.join(':')}
+          node={item as NodeItemType}
+          rect={{
+            height,
+            left,
+            top,
+            width,
+          }}
+          submitEventOperation={submitEventOperation}
+          useExecuteCode={useExecuteCode}
+          useRegistration={useRegistration}
+        />
+      );
+    });
+
+    return nodes;
+  }, [
+    activeLevel,
+    dragEnabled,
+    handlers,
+    itemRects,
+    itemsRef,
+    layoutConfigs,
+    submitEventOperation,
+    useExecuteCode,
+    useRegistration,
+  ]);
+
   return (
     <div
       ref={wrapperRef}
@@ -484,60 +545,10 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
             <ModelProvider
               blockMappingRef={blockMappingRef}
               blocksByGroupRef={blocksByGroupRef}
-              groupsByLevelRef={groupsByLevelRef}
               groupMappingRef={groupMappingRef}
+              groupsByLevelRef={groupsByLevelRef}
             >
-              {itemRects?.reduce((acc: {
-                order: string[][];
-                nodes: React.ReactNode[];
-              }, arr: [string, number, number, number, number]) => {
-                DEBUG.layout && console.log('[Canvas] Rendering itemRects', arr);
-                const { nodes, order } = acc;
-
-                const [
-                  id,
-                  left,
-                  top,
-                  width,
-                  height,
-                ] = arr;
-                const item = itemsRef.current[id];
-                if (!item) return;
-
-                const draggable = dragEnabled && activeLevel?.current === item?.level
-                  && (LayoutDisplayEnum.SIMPLE !== layoutConfig?.current?.display
-                    || ItemTypeEnum?.NODE === item?.type);
-
-                const index = order[item.level]?.length ?? 0;
-                order[item.level] = [...(order[item.level] ?? []), id];
-
-                return {
-                  nodes: nodes.concat(
-                    <DraggableBlockNode
-                      {...handlers}
-                      activeLevel={activeLevel}
-                      appHandlersRef={handlers.appHandlersRef}
-                      draggable={draggable}
-                      index={index}
-                      key={arr.join(':')}
-                      node={item as NodeItemType}
-                      rect={{
-                        height,
-                        left,
-                        top,
-                        width,
-                      }}
-                      submitEventOperation={submitEventOperation}
-                      useExecuteCode={useExecuteCode}
-                      useRegistration={useRegistration}
-                    />
-                  ),
-                  order,
-                };
-              }, {
-                nodes: [],
-                order: [],
-              }).nodes}
+              {nodesMemo}
             </ModelProvider >
           </SettingsProvider>
 

@@ -11,12 +11,14 @@ function menuItemsForBlock(
   onClick: (event: MouseEvent, group: MenuGroupType) => void,
   level: number,
   index: number,
+  selectedGroupsRef?: React.MutableRefObject<MenuGroupType[]>,
 ) {
   function convertToItem(
     block1: Block,
     onClick2: (event: MouseEvent, group: MenuGroupType) => void,
     level2: number,
     index2: number,
+    selectedGroupsRef2?: React.MutableRefObject<MenuGroupType[]>,
   ) {
     const {
       description,
@@ -26,8 +28,15 @@ function menuItemsForBlock(
       uuid,
     } = block1;
 
+    const selectedGroupsCount = selectedGroupsRef2?.current?.length;
+    const selectedGroup = selectedGroupsRef2?.current?.[selectedGroupsCount - 1];
+    const selectedParentGroup = selectedGroupsRef2?.current?.[selectedGroupsCount - 2];
+    const isSelected = selectedGroup?.uuid === uuid;
+
     return {
-      description,
+      description: isSelected && selectedParentGroup
+        ? `Go back to ${(selectedParentGroup as any)?.name ?? selectedParentGroup?.uuid}`
+        : description,
       items: (block1 as any)?.children?.map(
         (block2: Block, index3: number) => menuItemsForBlock(block2,
           (event: MouseEvent, item: MenuGroupType) => {
@@ -41,6 +50,7 @@ function menuItemsForBlock(
             });
           },
           level2 + 1, index3,
+          selectedGroupsRef2,
         ),
       ),
       label: name || uuid,
@@ -53,7 +63,7 @@ function menuItemsForBlock(
     };
   }
 
-  return convertToItem(block, onClick, level, index);
+  return convertToItem(block, onClick, level, index, selectedGroupsRef);
 }
 
 export default function HeaderUpdater({
@@ -62,12 +72,14 @@ export default function HeaderUpdater({
   groupsByLevel,
   handleMenuItemClick,
   pipeline,
+  selectedGroupsRef,
 }: {
   defaultGroups?: MenuGroupType[];
   executionFramework: FrameworkType;
   groupsByLevel: MenuItemType[][];
   handleMenuItemClick?: (event: MouseEvent, groups: MenuGroupType[]) => void;
   pipeline: FrameworkType;
+  selectedGroupsRef?: React.MutableRefObject<MenuGroupType[]>;
 }) {
   const { header: { setHeader } } = useLayout();
 
@@ -114,6 +126,7 @@ export default function HeaderUpdater({
                   },
                   1,
                   index3,
+                  selectedGroupsRef,
                 ),
               ),
               label: name || uuid,
@@ -146,7 +159,7 @@ export default function HeaderUpdater({
       title: (pipeline as any)?.name || (pipeline as any)?.uuid,
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [defaultGroups, executionFramework, groupsByLevel, handleMenuItemClick, pipeline]);
+  }, [defaultGroups, executionFramework, groupsByLevel, handleMenuItemClick, pipeline, selectedGroupsRef]);
 
   return <div />;
 }
