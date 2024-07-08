@@ -270,7 +270,15 @@ export default function useExecutionManager({
         });
       }
 
+      const map = Object.keys(channelsRef?.current?.[channel]?.streams?.[stream]?.consumers ?? {});
+      DEBUG.codeExecution.manager && debugLog('useRegistration.subscribe.before',
+        channel, stream, consumer, options, map);
+
       channelsRef.current[channel].streams[stream].consumers[consumer] = { options };
+
+      const map2 = Object.keys(channelsRef?.current?.[channel]?.streams?.[stream]?.consumers ?? {});
+      DEBUG.codeExecution.manager && debugLog('useRegistration.subscribe.after',
+        channel, stream, consumer, options, map2);
     };
 
     const unsubscribe = (consumer: string) => {
@@ -352,14 +360,18 @@ export default function useExecutionManager({
 
     onmessageRef?.current && onmessageRef?.current?.(event);
 
-    DEBUG.codeExecution.manager && debugLog('useEventStreams.onmessage', event, eventData);
     // setEvents(channel, stream, eventData);
 
     channelsRef?.current?.[channel]?.streams[stream]?.options?.onMessage?.(eventData);
 
-    const consumers = channelsRef?.current?.[channel]?.streams[stream]?.consumers;
+    const consumers = channelsRef?.current?.[channel]?.streams[stream]?.consumers ?? {};
 
-    Object.values(consumers ?? {}).forEach(({ options }) => {
+    DEBUG.codeExecution.manager
+      && debugLog('useEventStreams.onmessage', event, eventData,
+        channelsRef?.current?.[channel],
+        Object.keys(consumers ?? {}));
+
+    Object.values(consumers ?? {})?.forEach(({ options }) => {
       options?.onMessage?.(eventData);
     });
   }

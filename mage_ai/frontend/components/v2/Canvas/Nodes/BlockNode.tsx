@@ -11,7 +11,6 @@ import GradientContainer from '@mana/elements/Gradient';
 import Grid from '@mana/components/Grid';
 import Loading from '@mana/components/Loading';
 import PanelRows from '@mana/elements/PanelRows';
-import Tag from '@mana/components/Tag';
 import TeleportBlock from './Blocks/TeleportBlock';
 import TemplateConfigurations from './Blocks/TemplateConfigurations';
 import Text from '@mana/elements/Text';
@@ -421,35 +420,22 @@ export default function BlockNodeComponent({
   );
 
   const content = useMemo(() => (
-    <>
-      <Tag
-        className={stylesBlockNode['display-if-executing']}
-        ref={timerStatusRef}
-        statusVariant
-        style={{
-          left: -10,
-          position: 'absolute',
-          top: -10,
-          zIndex: 7,
-        }}
-      />
-      <GradientContainer
-        // Only use gradient borders when block selected
-        className={[
-          ...classNames,
-        ]?.filter(Boolean)?.join(' ')}
-        role={ElementRoleEnum.CONTENT}
-        style={{
-          height: isSelectedGroup && blocksInGroup?.length > 0
-            ? '100%'
-            : 'fit-content',
-          position: 'relative',
-        }}
-      >
-        {main}
-      </GradientContainer >
-    </>
-  ), [blocksInGroup, classNames, isSelectedGroup, main, timerStatusRef]);
+    <GradientContainer
+      // Only use gradient borders when block selected
+      className={[
+        ...classNames,
+      ]?.filter(Boolean)?.join(' ')}
+      role={ElementRoleEnum.CONTENT}
+      style={{
+        height: isSelectedGroup && blocksInGroup?.length > 0
+          ? '100%'
+          : 'fit-content',
+        position: 'relative',
+      }}
+    >
+      {main}
+    </GradientContainer >
+  ), [blocksInGroup, classNames, isSelectedGroup, main]);
 
   return isSiblingGroup ? (
     <TeleportBlock

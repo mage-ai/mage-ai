@@ -26,6 +26,7 @@ const OutputGroups: React.FC<OutputGroupsProps> = ({
   styles,
   useRegistration,
 }: OutputGroupsProps) => {
+  const readyRef = useRef(false);
   const scrollableDivRef = useRef<HTMLDivElement>(null);
 
   const block = blockProp || node?.block;
@@ -43,13 +44,15 @@ const OutputGroups: React.FC<OutputGroupsProps> = ({
     }));
   });
 
-  subscribe([node.id, source ?? ''].join(':'), {
-    onMessage: handleMessage.current,
-  });
-
   useEffect(() => {
-    onMount?.();
-  }, [onMount]);
+    if (!readyRef?.current) {
+      subscribe([node?.id, source ?? ''].join(':'), {
+        onMessage: handleMessage.current,
+      });
+      onMount?.();
+      readyRef.current = true;
+    }
+  }, [node, source, onMount, handleMessage, subscribe]);
 
   useEffect(() => {
     scrollableDivRef.current?.scrollTo({

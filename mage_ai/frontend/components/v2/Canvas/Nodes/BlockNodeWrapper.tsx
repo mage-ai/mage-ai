@@ -1,4 +1,5 @@
 import OutputNode from './CodeExecution/OutputNode';
+import Tag from '@mana/components/Tag';
 import { formatNumberToDuration } from '@utils/string';
 import { motion } from 'framer-motion';
 import { getNewUUID } from '@utils/string';
@@ -56,6 +57,7 @@ export const BlockNodeWrapper: React.FC<BlockNodeType> = ({
   const buttonBeforeRef = useRef<HTMLDivElement>(null);
   const timerStatusRef = useRef(null);
   const timeoutRef = useRef(null);
+  const phaseRef = useRef(0);
 
   const nodeRef = useRef(null);
   const outputRef = useRef(null);
@@ -90,7 +92,7 @@ export const BlockNodeWrapper: React.FC<BlockNodeType> = ({
     nodeRef?.current?.classList?.[func]?.(styles.executing);
   }
 
-  useAppEventsHandler(node, {
+  useAppEventsHandler(node as any, {
     [CustomAppEventEnum.PORTAL_MOUNTED]: (event: any) => {
       const { data, operationTarget } = event.detail.event ?? {};
       if (data?.node?.id === ['output', node.id].join('-')) {
@@ -101,17 +103,22 @@ export const BlockNodeWrapper: React.FC<BlockNodeType> = ({
   });
 
   useEffect(() => {
-    const timeout = timeoutRef.current;
-    clearTimeout(timeout);
-    updateStyles(false);
-
     const level = activeLevel.current;
+    const timeout = timeoutRef.current;
+
+    if (phaseRef.current === 0) {
+      timeout?.current && clearTimeout(timeout.current);
+      updateStyles(false);
+      phaseRef.current += 1;
+    }
+
     return () => {
       level === node?.level && unsubscribe(node.id);
       clearTimeout(timeout)
+      timeoutRef.current = null;
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [node, unsubscribe]);
+  }, [node]);
 
   useEffect(() => {
     if (!portalMount) {
@@ -141,7 +148,7 @@ export const BlockNodeWrapper: React.FC<BlockNodeType> = ({
   const getCode = useCallback(() => getFileCache(file?.path)?.client?.file?.content, [file]);
 
   const submitCodeExecution = useCallback((_event: React.MouseEvent<HTMLElement>) => {
-    subscribe(node.id, {
+    subscribe([String(node.id), 'main'].join(':'), {
       onError: handleError,
       onMessage: (event: EventStreamType) => {
         if (executionDone(event)) {
@@ -178,7 +185,12 @@ export const BlockNodeWrapper: React.FC<BlockNodeType> = ({
           diff <= 60 * 1000 && loops <= 60 * 10 ? 100 : 1000,
         );
       };
-      updateTimerStatus();
+
+      clearTimeout(timeoutRef.current);
+      timeoutRef.current = setTimeout(
+        updateTimerStatus,
+        0,
+      );
     };
 
     if (getCode()?.length >= 1) {
@@ -308,7 +320,13 @@ export const BlockNodeWrapper: React.FC<BlockNodeType> = ({
       arr.push(
         <OutputNode
           // {...sharedProps}
-          {...draggableProps({ classNames: [styles.nodeWrapper], draggable: true, droppable: false, node })}
+          {...draggableProps({
+            classNames: [
+              styles.nodeWrapper],
+            draggable: true,
+            droppable: false,
+            node: output,
+          })}
           handlers={draggingHandlers}
           key={output.id}
           node={output}
@@ -324,12 +342,30 @@ export const BlockNodeWrapper: React.FC<BlockNodeType> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [block, node, outputsRef, sharedProps, draggingHandlers]);
 
+  const runtime = useMemo(() => (
+    <Tag
+      className={styles['display-if-executing']}
+      ref={timerStatusRef}
+      statusVariant
+      style={{
+        left: -10,
+        position: 'absolute',
+        top: -10,
+        zIndex: 7,
+      }}
+    />
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  ), [])
+
   if (Wrapper) {
     return (
       <Wrapper
         // {...sharedProps}
         {...draggableProps({
-          classNames: [node.status ? styles[node.status] : '', node.outputs?.length ? styles.codeExecuted : ''],
+          classNames: [
+            node.status ? styles[node.status] : '',
+            node.outputs?.length ? styles.codeExecuted : '',
+          ],
           draggable,
           droppable,
           emptyGroup,
@@ -347,6 +383,7 @@ export const BlockNodeWrapper: React.FC<BlockNodeType> = ({
         nodeRef={nodeRef}
         rect={rect}
       >
+        {runtime}
         {blockNode}
         {portalMount && outputNodes?.map(outputNode => createPortal(outputNode, portalMount))}
       </Wrapper>
@@ -358,7 +395,9 @@ export const BlockNodeWrapper: React.FC<BlockNodeType> = ({
       {...draggableProps({
         classNames: [styles.nodeWrapper], draggable: true, droppable: false, node
       })}
-      ref={nodeRef}>
+      ref={nodeRef}
+    >
+      {runtime}
       {blockNode}
     </div>
   );
