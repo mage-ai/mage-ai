@@ -6,6 +6,8 @@ import Grid from '@mana/components/Grid';
 import React, { useEffect, useRef, useState } from 'react';
 import { OutputNodeType } from '../../interfaces';
 import BlockType from '@interfaces/BlockType';
+import { DEBUG } from '@components/v2/utils/debug';
+import { isEmptyObject } from '@utils/hash';
 
 type OutputGroupsProps = {
   block: BlockType
@@ -28,6 +30,8 @@ const OutputGroups: React.FC<OutputGroupsProps> = ({
   const [eventsGrouped, setEventsGrouped] = useState<Record<string, Record<string, EventStreamType>>>({});
   const { subscribe } = useRegistration(undefined, block?.uuid);
   const handleMessage = useRef((event: EventStreamType) => {
+    DEBUG.execution.output && console.log('event.result', JSON.stringify(event.result, null, 2));
+
     setEventsGrouped((prev) => ({
       ...prev,
       [event.result.process.message_request_uuid]: {
@@ -50,6 +54,10 @@ const OutputGroups: React.FC<OutputGroupsProps> = ({
       top: scrollableDivRef.current.scrollHeight,
     });
   }, [eventsGrouped]);
+
+  if (isEmptyObject(eventsGrouped)) {
+    return;
+  }
 
   return (
     <div className={stylesOutput.outputContainer}>

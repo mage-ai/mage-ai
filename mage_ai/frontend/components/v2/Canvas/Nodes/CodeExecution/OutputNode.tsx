@@ -7,7 +7,7 @@ import { NodeWrapper } from '../NodeWrapper';
 import { OutputNodeType } from '../../interfaces';
 import { areEqual } from '../equals';
 import { draggableProps } from '../draggable/utils';
-import { setupDraggableHandlers } from '../utils';
+import { nodeClassNames, setupDraggableHandlers } from '../utils';
 
 type OutputNodeProps = {
   node: OutputNodeType;
@@ -34,7 +34,6 @@ const OutputNode: React.FC<OutputNodeProps> = ({
   const sharedProps = useMemo(() => draggableProps({
     classNames: [
       stylesOutput.outputNodeContainer,
-      styles.outputContainer,
       styles.ready,
     ],
     draggable,
@@ -44,9 +43,16 @@ const OutputNode: React.FC<OutputNodeProps> = ({
     node,
   }), [draggable, node]);
 
+  console.log(node)
   return (
     <NodeWrapper
       {...sharedProps}
+      className={[
+        (sharedProps.className || []),
+        // Class names reserved for the SettingsManager to determine what is visible
+        // based on the selected groups.
+        ...nodeClassNames(node),
+      ].filter(Boolean).join(' ')}
       handlers={draggingHandlers}
       node={node}
       nodeRef={nodeRef}

@@ -32,6 +32,8 @@ import {
   CloseV2
 } from '@mana/icons';
 import BlockType from '@interfaces/BlockType';
+import { nodeClassNames } from '../utils';
+import { ItemStatusEnum } from '../../types';
 
 const PADDING_HORIZONTAL = 16;
 
@@ -206,6 +208,19 @@ const DraggableAppNode: React.FC<NodeType & CanvasNodeType> = ({
   return (
     <NodeWrapper
       {...sharedProps}
+      className={[
+        (sharedProps.className || []),
+        // Class names reserved for the SettingsManager to determine what is visible
+        // based on the selected groups.s
+        ...nodeClassNames({
+          ...node,
+          block: {
+            ...blocks?.[0],
+            groups: (blocks as any)?.flatMap((b: any) => (b as any)?.groups ?? []) as any[],
+          },
+          status: app?.status as any
+        }),
+      ].filter(Boolean).join(' ')}
       // draggingNode={draggingNode}
       handlers={draggingHandlers}
       node={node}

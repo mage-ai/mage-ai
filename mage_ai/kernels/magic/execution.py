@@ -1,8 +1,8 @@
 import time
 from asyncio import Event as AsyncEvent
 from contextlib import redirect_stdout
-from multiprocessing import Process
-from multiprocessing.queues import Queue
+from multiprocessing import Queue
+from queue import Empty
 from threading import Event, Thread
 from typing import Dict, Iterable, Optional
 
@@ -11,38 +11,71 @@ from mage_ai.kernels.magic.constants import ExecutionStatus, ResultType
 from mage_ai.kernels.magic.models import ExecutionResult, ProcessContext, ProcessDetails
 from mage_ai.kernels.magic.stdout import AsyncStdout
 from mage_ai.server.kernel_output_parser import DataType
-from mage_ai.shared.environments import is_debug
+from mage_ai.shared.environments import is_debug as is_debug_base
 from mage_ai.shared.queues import Queue as FasterQueue
+
+FLUSH_INTERVAL = 0.5
+
+
+def is_debug():
+    return True and is_debug_base()
+
+
+def check_queue(queue):
+    items = []
+    try:
+        while True:
+            items.append(queue.get_nowait())
+    except Empty:
+        pass
+    # Put back the items
+    for item in items:
+        queue.put(item)
+    print(f"[DEBUG QUEUE] Current queue items: {items}")
 
 
 def read_stdout_continuously(
     uuid: str,
     queue: Queue,
-    process: Process,
+    process: ProcessDetails,
     async_stdout: AsyncStdout,
     stop_event: Event,
     main_queue: Optional[FasterQueue] = None,
 ) -> None:
-    # Continue until stop signal and buffer is empty
-    while not stop_event.is_set() or async_stdout.get_output():
+    while not stop_event.is_set():
         output = async_stdout.get_output()
         if output:
-            for line in output.splitlines():
-                line = line.strip()
-                if line:
-                    queue.put(
-                        ExecutionResult.load(
-                            data_type=DataType.TEXT_PLAIN,
-                            output=line,
-                            process=process,
-                            status=ExecutionStatus.RUNNING,
-                            type=ResultType.STDOUT,
-                            uuid=uuid,
-                        ),
-                    )
-                    if main_queue is not None:
-                        main_queue.put(uuid)
-        time.sleep(0.05)
+            print(f"[SRT] Debug: Captured output: {output}")
+            # Just enqueue it or else it’ll resolve to None
+            queue.put(
+                ExecutionResult.load(
+                    data_type=DataType.TEXT_PLAIN,
+                    output=output,
+                    process=process,
+                    status=ExecutionStatus.RUNNING,
+                    type=ResultType.STDOUT,
+                    uuid=uuid,
+                )
+            )
+            if main_queue is not None:
+                main_queue.put(uuid)
+        time.sleep(FLUSH_INTERVAL / 10)
+
+    output = async_stdout.get_output()
+    if output:
+        print(f"[END] Debug: Captured output: {output}")
+        queue.put(
+            ExecutionResult.load(
+                data_type=DataType.TEXT_PLAIN,
+                output=output,
+                process=process,
+                status=ExecutionStatus.RUNNING,
+                type=ResultType.STDOUT,
+                uuid=uuid,
+            )
+        )
+    if main_queue is not None:
+        main_queue.put(uuid)
 
 
 async def execute_code_async(
@@ -102,7 +135,7 @@ async def execute_code_async(
             )
 
         stop_event_read.set()  # Signal the reader thread to stop
-        reader_thread.join(timeout=0.5)  # Make sure reader thread finishes
+        reader_thread.join(timeout=FLUSH_INTERVAL * 2)  # Make sure reader thread finishes
 
         last_expr = code_lines[-1].strip()  # Get the last expression for evaluation
         if is_debug():
@@ -116,6 +149,8 @@ async def execute_code_async(
                 # print(output)
                 last_output = output  # Keep track of the last output
 
+        while check_queue(queue):
+            time.sleep(FLUSH_INTERVAL)
         queue.put(
             ExecutionResult.load(
                 output=last_output if 'last_output' in locals() else None,

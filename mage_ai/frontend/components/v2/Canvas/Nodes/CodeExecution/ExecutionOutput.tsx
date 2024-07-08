@@ -1,4 +1,4 @@
-import EventStreamType from '@interfaces/EventStreamType';
+import EventStreamType, { ResultType } from '@interfaces/EventStreamType';
 import Grid from '@mana/components/Grid';
 import React, { useMemo } from 'react';
 import Text from '@mana/elements/Text';
@@ -18,73 +18,80 @@ function ExecutionOutput({
 }: ExecutionOutputProps, ref: React.ForwardedRef<HTMLDivElement>) {
   const displayLocalTimezone = shouldDisplayLocalTimezone();
 
-  const outputs = useMemo(() => events?.map((event: EventStreamType, index: number) => {
-    const {
-      error,
-      event_uuid: eventUUID,
-      result,
-      timestamp,
-      type,
-      uuid,
-    } = event;
-    const {
-      data_type,
-      error: resultError,
-      output,
-      output_text: outputText,
-      process: resultProcess,
-      status,
-      type: resultType,
-      uuid: resultUuid,
-    } = result;
-    const {
-      exitcode,
-      is_alive,
-      message,
-      message_request_uuid: groupUUID,
-      message_uuid,
-      pid,
-      timestamp: processTimestamp,
-      uuid: processUuid,
-    } = resultProcess;
-    const {
-      code,
-      errors,
-      message: resultMessage,
-      type: errorType,
-    } = error ?? resultError ?? {};
+  const outputs = useMemo(() => events?.reduce(
+    (acc: React.ReactNode[], event: EventStreamType, index: number
+    ) => {
+      const {
+        error,
+        event_uuid: eventUUID,
+        result,
+        timestamp,
+        type,
+        uuid,
+      } = event;
+      const {
+        data_type,
+        error: resultError,
+        output,
+        output_text: outputText,
+        process: resultProcess,
+        status,
+        type: resultType,
+        uuid: resultUuid,
+      } = result;
 
-    return (
-      <TooltipWrapper
-        align={TooltipAlign.START}
-        horizontalDirection={TooltipDirection.LEFT}
-        justify={TooltipJustify.CENTER}
-        key={eventUUID}
-        tooltip={
-          <Text monospace secondary small>
-            {displayLocalOrUtcTime(
-              moment(timestamp).format(DATE_FORMAT_LONG_MS),
-              displayLocalTimezone,
-              DATE_FORMAT_LONG_MS,
-            )}
-          </Text>
-        }
-      >
-        <Grid
-          columnGap={8}
-          templateColumns="auto 1fr"
+      if (ResultType.STATUS === resultType) {
+        return acc;
+      }
+
+      const {
+        exitcode,
+        is_alive,
+        message,
+        message_request_uuid: groupUUID,
+        message_uuid,
+        pid,
+        timestamp: processTimestamp,
+        uuid: processUuid,
+      } = resultProcess;
+      const {
+        code,
+        errors,
+        message: resultMessage,
+        type: errorType,
+      } = error ?? resultError ?? {};
+
+      return acc.concat(
+        <TooltipWrapper
+          align={TooltipAlign.START}
+          horizontalDirection={TooltipDirection.LEFT}
+          justify={TooltipJustify.CENTER}
+          key={eventUUID}
+          tooltip={
+            <Text monospace secondary small>
+              {displayLocalOrUtcTime(
+                moment(timestamp).format(DATE_FORMAT_LONG_MS),
+                displayLocalTimezone,
+                DATE_FORMAT_LONG_MS,
+              )}
+            </Text>
+          }
         >
-          <Text monospace muted small>
-            [{index}]
-          </Text>
+          <Grid
+            columnGap={8}
+            templateColumns="auto 1fr"
+          >
+            <Text monospace muted small>
+              [{index}]
+            </Text>
 
-          <Text monospace small>
-            {outputText}
-          </Text  >
-        </Grid >
-      </TooltipWrapper >
-    );
-  }), [displayLocalTimezone, events]);
+            <Text monospace small>
+              {outputText}
+            </Text  >
+          </Grid >
+        </TooltipWrapper >
+      );
+    }, []), [displayLocalTimezone, events]);
 
   return (
     <div ref={ref}>

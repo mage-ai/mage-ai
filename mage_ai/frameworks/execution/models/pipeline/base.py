@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import List, Optional
+from typing import Any, List, Optional
 
 from mage_ai.data_preparation.models.constants import PipelineType
 from mage_ai.frameworks.execution.models.base import BaseExecutionFramework
@@ -12,6 +12,7 @@ from mage_ai.shared.array import flatten
 @dataclass
 class PipelineExecutionFramework(BaseExecutionFramework):
     blocks: Optional[List[BlockExecutionFramework]] = None
+    pipeline_schedules: Optional[List[Any]] = None
     pipelines: Optional[List[PipelineExecutionFramework]] = None
     type: Optional[PipelineType] = PipelineType.EXECUTION_FRAMEWORK
 

@@ -1,26 +1,12 @@
-@use '../../../base/borders';
 @use '../../../abstracts/variables' as *;
 @use '../../../base/grid';
 @use './mixins' as *;
 
 .outputNodeContainer {
-  @include borders.base();
-  @include borders.border-colors();
-  @include grid.base();
-
-  backdrop-filter: blur(#{$modal-blur-base});
-  background: var(--modal-background-color-base);
-  border-radius: (--borders-radius-md);
-  box-shadow: 8px 8px 4px 8px var(--modal-box-shadow-base);
-  padding: var(--padding-sm);
-
-  opacity: 0;
-  pointer-events: none;
-  visibility: hidden;
-
   &.executed {
-    opacity: 1;
-    pointer-events: all;
-    visibility: visible;
+    @include grid.base();
+
+    backdrop-filter: blur(#{$modal-blur-base});
+    background: var(--modal-background-color-base);
   }
 }

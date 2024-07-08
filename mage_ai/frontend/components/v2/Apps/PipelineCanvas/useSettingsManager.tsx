@@ -1,4 +1,5 @@
 import React, { useRef, useEffect } from 'react';
+import stylesOutput from '@styles/scss/components/Canvas/Nodes/OutputGroups.module.scss';
 import stylesBuilder from '@styles/scss/apps/Canvas/Pipelines/Builder.module.scss';
 import { LayoutConfigType } from '../../Canvas/interfaces';
 import BlockType from '@interfaces/BlockType';
@@ -335,24 +336,22 @@ export default function useSettingsManager({
 
           ${selectedGroupStyles}
 
+          &.${nodeTypeClassName(ItemTypeEnum.APP)} {
+            z-index: 5;
+          }
+          &.${nodeTypeClassName(ItemTypeEnum.OUTPUT)} {
+            z-index: 4;
+          }
           &.${nodeTypeClassName(ItemTypeEnum.BLOCK)} {
             z-index: 3;
           }
 
           .codeExecuted {
-            .outputContainer {
-              visibility: visible;
+            .${nodeTypeClassName(ItemTypeEnum.OUTPUT)} {
               opacity: 1;
               pointer-events: all;
-              z-index: 6;
+              visibility: visible;
             }
-          }
-
-          .outputContainer {
-            opacity: 0;
-            pointer-events: none;
-            visibility: hidden;
-            z-index: -1;
           }
         }
       }

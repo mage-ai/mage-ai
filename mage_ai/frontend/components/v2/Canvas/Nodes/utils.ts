@@ -18,7 +18,7 @@ import { DEBUG } from '../../utils/debug';
 
 export function nodeClassNames(node: NodeItemType): string[] {
   const { block } = node ?? {};
-  const groups = 'groups' in block ? ((block as any)?.groups ?? []) : [];
+  const groups = (block ?? false) ? ('groups' in block ? ((block as any)?.groups ?? []) : []) : [];
 
   return [
     ...(groups ?? []).map(groupClassName),

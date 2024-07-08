@@ -594,7 +594,7 @@ function MenuController({
 
     const getTargets = (pos: number[]) => {
       let item = null;
-      let itemsInner = [...items].filter(keyboardNavigationItemFilter);
+      let itemsInner = [...(items ?? [])].filter(keyboardNavigationItemFilter);
 
       pos?.forEach((row: number) => {
         item = itemsInner?.[row];
