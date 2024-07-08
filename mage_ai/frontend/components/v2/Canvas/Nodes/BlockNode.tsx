@@ -1,4 +1,5 @@
 import Aside from './Blocks/Aside';
+import { TooltipDirection, TooltipJustify, TooltipAlign, HideTooltipReason, TooltipLayout, useTooltip } from '@context/Tooltip/Context';
 import useDispatchMounted from './useDispatchMounted';
 import { motion } from 'framer-motion';
 import Badge from '@mana/elements/Badge';
@@ -215,7 +216,11 @@ export default function BlockNodeComponent({
 
   const badgeBase = useMemo(() => badge &&
     <TooltipWrapper
+      align={TooltipAlign.START}
       hide={block?.type && ![BlockTypeEnum.GROUP, BlockTypeEnum.PIPELINE].includes(block?.type)}
+      horizontalDirection={TooltipDirection.LEFT}
+      verticalDirection={TooltipDirection.UP}
+      justify={TooltipJustify.START}
       tooltip={
         <Grid rowGap={4}>
           <Text semibold>
@@ -270,18 +275,20 @@ export default function BlockNodeComponent({
         {inputColorName && <Circle backgroundColor={inputColorName} size={12} />}
         {badgeBase}
       </Grid>
-      <Grid
-        alignItems="center"
-        autoColumns="auto"
-        autoFlow="column"
-        columnGap={8}
-        justifyContent="end"
-        templateColumns="max-content"
-        templateRows="1fr"
-      >
-        {afterArg && <Aside {...afterArg} />}
-        {outputColorName && <Circle backgroundColor={outputColorName} size={12} />}
-      </Grid>
+      {(afterArg || outputColorName) && (
+        <Grid
+          alignItems="center"
+          autoColumns="auto"
+          autoFlow="column"
+          columnGap={8}
+          justifyContent="end"
+          templateColumns="max-content"
+          templateRows="1fr"
+        >
+          {afterArg && <Aside {...afterArg} />}
+          {outputColorName && <Circle backgroundColor={outputColorName} size={12} />}
+        </Grid>
+      )}
     </Grid>
   ), [badgeBase]);
 

@@ -76,6 +76,11 @@ function TooltipContent({
         width = 0,
       } = wrapperRef?.current?.getBoundingClientRect() ?? {};
 
+      const minX = 0;
+      const maxX = window.innerWidth;
+      const minY = 0;
+      const maxY = window.innerHeight;
+
       let translateX = 0;
       let translateY = 0;
       if (align === TooltipAlign.START) {
@@ -86,11 +91,23 @@ function TooltipContent({
         translateX = TooltipDirection.LEFT === horizontalDirection ? -(widthe - width) : width;
       }
       if (justify === TooltipJustify.START) {
-        translateY = -heighte;
+        translateY = TooltipDirection.UP === verticalDirection ? -(heighte + height) : -heighte;
       } else if (justify === TooltipJustify.CENTER) {
         translateY = -Math.abs(height - heighte) / 2;
       } else if (justify === TooltipJustify.END) {
-        translateY = height;
+        translateY = 0;
+      }
+
+      if (position?.x + translateX < minX) {
+        translateX = minX - position.x;
+      } else if (position?.x + translateX > maxX) {
+        translateX = maxX - position.x;
+      }
+
+      if (position?.y + translateY < minY) {
+        translateY = minY - position.y;
+      } else if (position?.y + translateY > maxY) {
+        translateY = maxY - position.y;
       }
 
       showTooltip(wrapperRef.current, ref.current)

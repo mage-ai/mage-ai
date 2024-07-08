@@ -147,6 +147,7 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
     blockMappingRef,
     blocksByGroupRef,
     groupMappingRef,
+    groupsByLevelRef,
     itemsRef,
     mutateModels,
     onItemChangeRef,
@@ -483,6 +484,7 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
             <ModelProvider
               blockMappingRef={blockMappingRef}
               blocksByGroupRef={blocksByGroupRef}
+              groupsByLevelRef={groupsByLevelRef}
               groupMappingRef={groupMappingRef}
             >
               {itemRects?.reduce((acc: {
