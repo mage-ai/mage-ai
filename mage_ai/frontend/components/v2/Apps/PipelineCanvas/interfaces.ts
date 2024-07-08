@@ -91,18 +91,7 @@ export interface EventManagerType {
 }
 
 export type LayoutManagerType = {
-  updateLayoutOfItems: () => void;
-  updateLayoutConfig: (config: LayoutConfigType) => void;
-  layoutConfig: LayoutConfigRef;
-  layoutConfigs: React.MutableRefObject<LayoutConfigRef[]>;
-  activeLevel: React.MutableRefObject<number>;
-  localSettings: React.MutableRefObject<{
-    activeLevel: number;
-    layoutConfig: LayoutConfigType;
-    optionalGroupsVisible: boolean;
-  }>;
-  setActiveLevel: (level?: number) => void;
-  setArray: React.Dispatch<React.SetStateAction<NodeItemType[]>>;
+  itemElementsRef: React.MutableRefObject<ItemElementsType>
 };
 
 export type ItemManagerType = {
@@ -115,8 +104,8 @@ export interface SettingsManagerType {
   selectedGroupsRef: React.MutableRefObject<MenuGroupType[]>;
 }
 
-export type SubscriberType = AppManagerType | EventManagerType | LayoutManagerType
-  | ModelManagerType | NodeItemType | ItemManagerType | SettingsManagerType;
+export type SubscriberType = AppManagerType & EventManagerType & LayoutManagerType
+  & ModelManagerType & NodeItemType & ItemManagerType & SettingsManagerType;
 
 export interface CustomEventDetail {
   app?: AppConfigType;

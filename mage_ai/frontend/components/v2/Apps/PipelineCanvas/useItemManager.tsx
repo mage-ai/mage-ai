@@ -14,6 +14,8 @@ import { ClientEventType } from '@mana/shared/interfaces';
 import { AppStatusEnum } from '../constants';
 import { DEBUG } from '@components/v2/utils/debug';
 import { areEqualRects } from '../../Canvas/Nodes/equals';
+import { ElementRoleEnum } from '@mana/shared/types';
+import { getClosestChildRole } from '@utils/elements';
 
 export default function useItemManager({
   itemElementsRef,
@@ -102,14 +104,43 @@ export default function useItemManager({
       const itemPrev = itemsRef?.current?.[item.id];
       itemsRef.current[item.id] = item;
 
-      if (itemPrev?.rect && item?.rect
-        && areEqualRects(itemPrev as { rect: RectType }, item as { rect: RectType })) {
-        const rectsPrev = itemMetadataRef?.current?.[item.id]?.rects;
+      if (itemPrev?.rect && item?.rect) {
+        let same = areEqualRects(itemPrev as { rect: RectType }, item as { rect: RectType });
 
-        DEBUG.itemManager && console.log('[onMountItem] rects are equal', itemPrev, item);
-        DEBUG.itemManager && console.log('[onMountItem] Number of times mounted:', rectsPrev?.length ?? 0, item);
+        if (same) {
+          const child = getClosestChildRole(itemRef?.current, ElementRoleEnum.CONTENT);
+          if (child) {
+            const rectChild = child?.getBoundingClientRect() as RectType;
+            const h1 = Math.ceil(item?.rect?.height)
+            const h2 = Math.ceil(rectChild.height)
+            const w1 = Math.ceil(item?.rect?.width)
+            const w2 = Math.ceil(rectChild.width)
 
-        if (rectsPrev?.length >= 1) return;
+            DEBUG.itemManager && console.log('SAME?',
+              item.id,
+              [h1, w1],
+              [h2, w2],
+              Math.abs(h1 - h2) <= 2,
+              Math.abs(w1 - w2) <= 2,
+            );
+
+            // 2 is for border width
+            same = Math.abs(h1 - h2) <= 2 && Math.abs(w1 - w2) <= 2;
+            if (!same) {
+              item.rect.height = rectChild.height;
+              item.rect.width = rectChild.width;
+            }
+          }
+        }
+
+        if (same) {
+          const rectsPrev = itemMetadataRef?.current?.[item.id]?.rects;
+          if (rectsPrev?.length >= 1) {
+            DEBUG.itemManager && console.log('[onMountItem] rects are equal', item.id, itemPrev?.rect, item?.rect);
+            DEBUG.itemManager && console.log('[onMountItem] Number of times mounted:', item.id, rectsPrev?.length ?? 0);
+            return;
+          }
+        }
       }
 
       itemMetadataRef.current[item.id] ||= {

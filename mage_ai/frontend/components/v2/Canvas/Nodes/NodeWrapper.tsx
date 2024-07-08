@@ -50,9 +50,13 @@ function getStyles(
       ? ItemTypeEnum.APP === type
         ? { height: rect?.height ?? undefined, opacity: 0 }
         : { height: 0, opacity: 0 }
-      : {
-        minHeight: rect?.height === Infinity || rect?.height === -Infinity ? 0 : rect?.height ?? 0,
-      }),
+      : ItemTypeEnum.NODE === type
+        ? {
+          height: rect?.height ?? undefined,
+          // minHeight: rect?.height === Infinity || rect?.height === -Infinity ? 0 : rect?.height ?? 0,
+        }
+        : {}
+    ),
     ...((width ?? false) ? { minWidth: width } : {}),
   };
 }

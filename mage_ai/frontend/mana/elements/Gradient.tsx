@@ -1,5 +1,6 @@
 import styles from '@styles/scss/elements/GradientContainer.module.scss';
 import { withStyles } from '../hocs/withStyles';
+import { ElementRoleEnum } from '@mana/shared/types';
 
 type Direction =
   | 'to bottom left'
@@ -18,6 +19,7 @@ type InnerProps = {
 
 type OutterProps = {
   gradientBackground?: string;
+  role?: ElementRoleEnum;
   style?: React.CSSProperties;
 };
 
@@ -38,6 +40,7 @@ export function GradientContainer({
   className,
   direction = 'to top right',
   noBorder,
+  role,
   variant,
   style,
 }: OutterProps &
@@ -64,6 +67,7 @@ export function GradientContainer({
           ? [direction.replace(' ', '-'), ...(borderColors || [])].join('-')
           : undefined
       }
+      role={role}
       style={style}
     >
       {/* @ts-ignore */}

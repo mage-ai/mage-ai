@@ -4,5 +4,6 @@ export const DEBUG = {
   },
   keyboard: {
     navigation: false,
+    shortcuts: false,
   },
 };

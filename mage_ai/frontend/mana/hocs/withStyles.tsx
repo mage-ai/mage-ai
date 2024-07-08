@@ -1,5 +1,5 @@
 import React, { useImperativeHandle, useRef } from 'react';
-import { ElementType, extractProps } from '@mana/shared/types';
+import { ElementRoleEnum, ElementType, extractProps } from '@mana/shared/types';
 import { styleClassNames } from '@mana/shared/utils';
 
 type HOCProps = {
@@ -57,6 +57,7 @@ export type WithStylesProp = {
   children?: React.ReactNode | Element | Element[] | React.ReactNode[] | any | any[];
   className?: string;
   id?: string;
+  role?: ElementRoleEnum;
   uuid?: string;
 } & ElementType &
   React.CSSProperties &
@@ -84,7 +85,7 @@ export function withStyles<P extends object = WithStylesProp>(styles: any, props
   } = propsHOC || ({} as HOCProps);
 
   return React.forwardRef<any, P & WithStylesProp>(function StyledComponent(
-    { children, className, id, uuid, ...props }: P & WithStylesProp,
+    { children, className, id, role, uuid, ...props }: P & WithStylesProp,
     ref: any,
   ) {
     const divRef = useRef<HTMLDivElement>(null);
@@ -124,6 +125,7 @@ export function withStyles<P extends object = WithStylesProp>(styles: any, props
         id={id}
         // @ts-ignore
         ref={mergeRefs(divRef, ref)}
+        role={role}
       >
         {children && (children as React.ReactNode)}
       </HTMLTag>

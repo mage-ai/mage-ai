@@ -1,4 +1,5 @@
 import Aside from './Blocks/Aside';
+import { motion } from 'framer-motion';
 import Badge from '@mana/elements/Badge';
 import BlockGroupOverview from './Blocks/BlockGroupOverview';
 import BlockType from '@interfaces/BlockType';
@@ -21,7 +22,7 @@ import { BlockNode } from './interfaces';
 import { EventOperationEnum } from '@mana/shared/interfaces';
 import { FrameworkType, PipelineExecutionFrameworkBlockType } from '@interfaces/PipelineExecutionFramework/interfaces';
 import { GroupUUIDEnum } from '@interfaces/PipelineExecutionFramework/types';
-import { ItemTypeEnum, PortSubtypeEnum } from '../types';
+import { ItemStatusEnum, ItemTypeEnum, PortSubtypeEnum } from '../types';
 import { ModelContext } from '@components/v2/Apps/PipelineCanvas/ModelManager/ModelContext';
 import { NodeItemType, PortType } from '../interfaces';
 import { SettingsContext } from '@components/v2/Apps/PipelineCanvas/SettingsManager/SettingsContext';
@@ -33,11 +34,13 @@ import { groupValidation } from './Blocks/utils';
 import { handleGroupTemplateSelect, menuItemsForTemplates } from './utils';
 import { isEmptyObject } from '@utils/hash';
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { ElementRoleEnum } from '@mana/shared/types';
 
 type BlockNodeProps = {
   block: BlockType | PipelineExecutionFrameworkBlockType;
   buttonBeforeRef?: React.RefObject<HTMLDivElement>;
   timerStatusRef?: React.RefObject<HTMLDivElement>;
+  index?: number;
   node: NodeItemType
   nodeRef: React.RefObject<HTMLDivElement>;
   onMount?: (port: PortType, portRef: React.RefObject<HTMLDivElement>) => void;
@@ -52,6 +55,7 @@ export default function BlockNodeComponent({
   handlers,
   node,
   nodeRef,
+  index: indexProp,
   onMount,
   submitCodeExecution,
   submitEventOperation,
@@ -342,46 +346,64 @@ export default function BlockNodeComponent({
     [after, before, label, node],
   );
 
-  const main = useMemo(
-    () => (
-      <div
-        className={[
-          stylesBlockNode.blockNode,
-        ]?.filter(Boolean)?.join(' ')}
-        style={{
-          minWidth: 300,
-        }}
-      >
-        <Grid templateRows="auto">
-          <Grid rowGap={8} templateRows="auto">
-            {badge && buildBadgeRow({
-              after,
-              badgeFullWidth: !inputs?.length && isGroup,
-            })}
-            {!badge && titleRow}
-          </Grid>
-          <div className={stylesBlockNode.loader}>
-            <Loading
-              // colorName={colorNames?.hi}
-              // colorNameAlt={colorNames?.md}
-              position="absolute"
-            />
-          </div>
-          {isGroup
-            ? <BlockGroupOverview block={block as FrameworkType} />
-            : (
-              <Grid rowGap={8} templateRows="auto">
-                {connectionRows}
-                {templateConfigurations}
-                {BlockTypeEnum.PIPELINE === block?.type && <div />}
-              </Grid>
-            )}
+  const motionProps = useMemo(() => ({
+    animate: {
+      opacity: 1,
+      scale: 1,
+      translateY: 0,
+    },
+    initial: ItemStatusEnum.READY === node?.status ? {
+      opacity: 0,
+      scale: 0.95,
+      translateY: 10
+    } : false,
+    transition: {
+      // In seconds
+      delay: (node?.index ?? indexProp) / 10,
+      duration: 0.1,
+      ease: 'easeOut'
+    },
+  }), [indexProp, node]);
+
+  const main = useMemo(() => (
+    <motion.div
+      {...motionProps}
+      className={[
+        stylesBlockNode.blockNode,
+      ]?.filter(Boolean)?.join(' ')}
+      style={{
+        height: 'fit-content',
+        minWidth: 300,
+      }}
+    >
+      <Grid templateRows="auto">
+        <Grid rowGap={8} templateRows="auto">
+          {badge && buildBadgeRow({
+            after,
+            badgeFullWidth: !inputs?.length && isGroup,
+          })}
+          {!badge && titleRow}
         </Grid>
-      </div>
-    ),
-    [badge, buildBadgeRow, block, connectionRows, templateConfigurations, titleRow, after,
-      isGroup, inputs,
-    ],
+        <div className={stylesBlockNode.loader}>
+          <Loading
+            // colorName={colorNames?.hi}
+            // colorNameAlt={colorNames?.md}
+            position="absolute"
+          />
+        </div>
+        {isGroup
+          ? <BlockGroupOverview block={block as FrameworkType} />
+          : (
+            <Grid rowGap={8} templateRows="auto">
+              {connectionRows}
+              {templateConfigurations}
+              {BlockTypeEnum.PIPELINE === block?.type && <div />}
+            </Grid>
+          )}
+      </Grid>
+    </motion.div>
+  ), [badge, buildBadgeRow, block, connectionRows, templateConfigurations, titleRow, after,
+    motionProps, isGroup, inputs],
   );
 
   const content = useMemo(() => (
@@ -402,6 +424,7 @@ export default function BlockNodeComponent({
         className={[
           ...classNames,
         ]?.filter(Boolean)?.join(' ')}
+        role={ElementRoleEnum.CONTENT}
         style={{ height: '100%', position: 'relative' }}
       >
         {main}
@@ -409,16 +432,13 @@ export default function BlockNodeComponent({
     </>
   ), [classNames, main, timerStatusRef]);
 
-  if (isSiblingGroup) {
-    return (
-      <TeleportBlock
-        block={block}
-        buildBadgeRow={buildBadgeRow}
-        node={node}
-        selectedGroup={selectedGroup}
-      />
-    );
-  }
-
-  return content;
+  return isSiblingGroup ? (
+    <TeleportBlock
+      block={block}
+      buildBadgeRow={buildBadgeRow}
+      role={ElementRoleEnum.CONTENT}
+      motionProps={motionProps}
+      selectedGroup={selectedGroup}
+    />
+  ) : content;
 }

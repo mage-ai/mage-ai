@@ -8,16 +8,19 @@ import { NodeItemType } from '../../interfaces';
 import { getBlockColor } from '@mana/themes/blocks';
 import { getModeColorName } from '../presentation';
 import { useContext } from 'react';
+import { ElementRoleEnum } from '@mana/shared/types';
 
 export default function TeleportGroup({
   block,
   buildBadgeRow,
-  node,
+  motionProps,
+  role,
   selectedGroup,
 }: {
   block: BlockType;
   buildBadgeRow: (props: { inputColorName?: string; outputColorName?: string }) => JSX.Element;
-  node: NodeItemType;
+  motionProps?: any;
+  role?: ElementRoleEnum;
   selectedGroup: MenuGroupType;
 }) {
   const { convertEvent, dispatchAppEvent } = useAppEventsHandler({ block } as any);
@@ -34,12 +37,18 @@ export default function TeleportGroup({
 
   return (
     <Link
+      motionProps={motionProps}
       onClick={(event: any) => {
         event.preventDefault();
         dispatchAppEvent(CustomAppEventEnum.TELEPORT_INTO_BLOCK, {
           block,
           event: convertEvent(event),
         });
+      }}
+      role={role}
+      style={{
+        height: 'fit-content',
+        width: 'fit-content',
       }}
       wrap
     >

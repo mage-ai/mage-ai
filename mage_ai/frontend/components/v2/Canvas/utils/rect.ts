@@ -40,7 +40,7 @@ export function transformRects(rectsInit: RectType[], transformations: RectTrans
     let rects = [...rectsByStage[rectsByStage.length - 1]];
 
     const opts = options ? options?.(rects) : {};
-    const { layout, layoutOptions, offset, padding, rect: defaultRect } = opts || {};
+    const { defaultRect, layout, layoutOptions, offset, padding, rect: rectBase } = opts || {};
     const { parent } = rects?.[0] ?? {};
 
     const scopeLog = scope || (initialScope ? `initial=${initialScope}` : null) || 'all';
@@ -65,7 +65,7 @@ export function transformRects(rectsInit: RectType[], transformations: RectTrans
     }
 
     const rectsSnapshot = [...rects];
-    if (conditionSelf) {
+    if (conditionSelf && RectTransformationScopeEnum.CHILDREN !== scope) {
       DEBUG.rects && console.log(`${tag}:condition_self.init`, ...tags, rects);
       rects = rects.filter(r => conditionSelf(r));
       DEBUG.rects && console.log(`${tag}:condition_self.rects`, ...tags, rects);
@@ -88,6 +88,7 @@ export function transformRects(rectsInit: RectType[], transformations: RectTrans
           initialScope: scope,
           scope: undefined,
         }]);
+
         if (rect.children?.length !== count1) {
           throw new Error(
             `Rect ${rect.id} started with ${count1} ` +
@@ -151,6 +152,12 @@ export function transformRects(rectsInit: RectType[], transformations: RectTrans
             + validateFiniteNumber(offset?.left ?? 0),
         };
       });
+    } else if (TransformRectTypeEnum.FIT_TO_SELF === type) {
+      rects = rects.map((rect) => {
+        const rectPrev = defaultRect?.(rect);
+        console.log('SELFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF', rect.id, rect, rectPrev);
+        return ({ ...rect, ...rectPrev });
+      });
     } else if (TransformRectTypeEnum.PAD === type) {
       rects = rects.map((rect) => ({ ...rect, padding }));
     } else if (TransformRectTypeEnum.SHIFT === type) {
@@ -159,8 +166,8 @@ export function transformRects(rectsInit: RectType[], transformations: RectTrans
       rects = rects.map(rect => {
         const height1 = validateFiniteNumber(rect.height);
         const width1 = validateFiniteNumber(rect.width);
-        const heightd = validateFiniteNumber(defaultRect?.height ?? 0);
-        const widthd = validateFiniteNumber(defaultRect?.width ?? 0);
+        const heightd = validateFiniteNumber(rectBase?.height ?? 0);
+        const widthd = validateFiniteNumber(rectBase?.width ?? 0);
 
         return {
           ...rect,

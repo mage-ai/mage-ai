@@ -217,9 +217,9 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
   }
 
   useLayoutManager({
-    activeLevel,
     canvasRef,
     containerRef,
+    itemElementsRef,
     itemIDsByLevelRef,
     itemsRef,
     pipelineUUID,

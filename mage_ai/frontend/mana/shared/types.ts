@@ -7,6 +7,7 @@ export enum LoadingStyle {
 export enum ElementRoleEnum {
   BLOCK = 'block',
   BUTTON = 'button',
+  CONTENT = 'content',
   DRAGGABLE = 'draggable',
   DROPPABLE = 'droppable',
   PANNABLE = 'pannable',

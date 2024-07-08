@@ -5,7 +5,7 @@ import { createPortal } from 'react-dom';
 import { getAbsoluteRect } from '@mana/shared/utils';
 import { LayoutDirectionEnum } from '@mana/components/Menu/types';
 
-export default function MenuManager({
+function MenuManager({
   children,
   className,
   contained,
@@ -32,12 +32,13 @@ export default function MenuManager({
   isOpen?: boolean;
   handleOpen?: (value: boolean | ((prev: boolean) => boolean), levelToClose: number) => void;
   uuid: string;
-}) {
+}, ref: React.Ref<HTMLDivElement>) {
   const {
     portalRef,
     useMenu,
   } = useContext(MenuContext);
-  const containerRef = useRef<HTMLDivElement | null>(null);
+  const containerInternalRef = useRef<HTMLDivElement | null>(null);
+  const containerRef = ref || containerInternalRef;
   const { contextMenu, showMenu, hideMenu } = useMenu({
     containerRef,
     uuid,
@@ -110,3 +111,5 @@ export default function MenuManager({
     </>
   );
 }
+
+export default React.forwardRef(MenuManager);

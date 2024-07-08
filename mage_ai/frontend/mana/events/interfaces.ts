@@ -3,7 +3,7 @@ import { EventEnum, KeyEnum } from './enums';
 interface KeyType {
   altKey?: boolean;
   ctrlKey?: boolean;
-  key: KeyEnum;
+  key?: KeyEnum;
   metaKey?: boolean;
   shiftKey?: boolean;
   type?: EventEnum;

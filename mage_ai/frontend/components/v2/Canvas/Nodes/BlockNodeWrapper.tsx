@@ -18,7 +18,6 @@ import { ClientEventType, EventOperationEnum, SubmitEventOperationType } from '@
 import { ConfigurationType } from '@interfaces/PipelineExecutionFramework/interfaces';
 import { DEBUG } from '@components/v2/utils/debug';
 import { FileType } from '../../IDE/interfaces';
-import { ItemStatusEnum } from '../types';
 import { NodeType, PortType, RectType } from '../interfaces';
 import { BlockTypeEnum } from '@interfaces/BlockType';
 import { createPortal } from 'react-dom';
@@ -252,6 +251,7 @@ export const BlockNodeWrapper: React.FC<BlockNodeType> = ({
       buttonBeforeRef={buttonBeforeRef}
       draggable={draggable}
       handlers={draggingHandlers}
+      index={indexProp}
       layoutConfig={layoutConfig}
       node={node}
       nodeRef={nodeRef}
@@ -266,6 +266,7 @@ export const BlockNodeWrapper: React.FC<BlockNodeType> = ({
     block,
     draggable,
     draggingHandlers,
+    indexProp,
     layoutConfig,
     node,
     nodeRef,
@@ -300,29 +301,6 @@ export const BlockNodeWrapper: React.FC<BlockNodeType> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [node, sharedProps, draggingHandlers]);
 
-  const wrapMotion = (content) => (
-    <motion.div
-      animate={{
-        opacity: 1,
-        scale: 1,
-        translateY: 0,
-      }}
-      initial={{
-        opacity: 0,
-        scale: 0.95,
-        translateY: 10
-      }}
-      transition={{
-        // In seconds
-        delay: (node?.index ?? indexProp) / 10,
-        duration: 0.1,
-        ease: 'easeOut'
-      }}
-    >
-      {content}
-    </motion.div>
-  );
-
   if (Wrapper) {
     return (
       <Wrapper
@@ -338,8 +316,7 @@ export const BlockNodeWrapper: React.FC<BlockNodeType> = ({
         nodeRef={nodeRef}
         rect={rect}
       >
-
-        {ItemStatusEnum.READY === node?.status ? wrapMotion(blockNode) : blockNode}
+        {blockNode}
         {portalMount && createPortal(outputNode, portalMount)}
       </Wrapper>
     );

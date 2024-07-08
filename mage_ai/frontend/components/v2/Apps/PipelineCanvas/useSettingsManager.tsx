@@ -2,8 +2,8 @@ import React, { useRef, useEffect } from 'react';
 import stylesBuilder from '@styles/scss/apps/Canvas/Pipelines/Builder.module.scss';
 import { LayoutConfigType } from '../../Canvas/interfaces';
 import BlockType from '@interfaces/BlockType';
-import { buildContainerClassName, extractContainerClassNames } from './utils/display';
-import { levelClassName, groupClassName, nodeTypeClassName, statusClassName } from '../../Canvas/Nodes/utils';
+import { LINE_CLASS_NAME, buildContainerClassName, extractContainerClassNames } from './utils/display';
+import { levelClassName, groupClassName, nodeTypeClassName, statusClassName, uuidClassName } from '../../Canvas/Nodes/utils';
 import { get, set } from '@storage/localStorage';
 import useAppEventsHandler, { CustomAppEvent, CustomAppEventEnum } from './useAppEventsHandler';
 import { STYLE_ROOT_ID } from '@context/v2/Style';
@@ -192,6 +192,14 @@ export default function useSettingsManager({
     };
   }
 
+  function handleLayoutUpdates(event: CustomAppEvent) {
+    DEBUG.settings.manager && console.log('handleLayoutUpdates', event)
+    const { classNames, styles } = event?.detail?.options?.kwargs ?? {};
+
+    classNames && addContainerClassNames(classNames);
+    styles && setStyles(styles);
+  }
+
   function updateVisibleNodes(event?: CustomAppEvent) {
     const level = activeLevel.current;
     const display = layoutConfigs?.current?.[level]?.current?.display ?? LayoutDisplayEnum.SIMPLE;
@@ -209,9 +217,9 @@ export default function useSettingsManager({
     ];
 
     const selectedGroups = selectedGroupsRef?.current;
-    if (event && selectedGroups?.length >= 1) {
-      const group = selectedGroups?.[selectedGroups?.length - 1];
+    const group = selectedGroups?.length >= 1 ? selectedGroups?.[selectedGroups?.length - 1] : null;
 
+    if (event && group) {
       if (group?.uuid) {
         const blocksInGroup = blocksByGroupRef?.current?.[group.uuid] ?? [];
         const count = Object.values(blocksInGroup ?? {}).length;
@@ -271,6 +279,10 @@ export default function useSettingsManager({
         ...cnbase,
         nodeTypeClassName(ItemTypeEnum.NODE),
       ]);
+      conditions.push({
+        level,
+        type: ItemTypeEnum.NODE,
+      });
     }
 
     DEBUG.settings.manager && console.log(level, cnsets, selectedGroups)
@@ -294,15 +306,26 @@ export default function useSettingsManager({
       cnames.push(cn);
     });
 
+    const selectedGroupStyles = '' ??
+      group ? `&.${uuidClassName(group?.uuid)}.${nodeTypeClassName(ItemTypeEnum.NODE)} {
+        max-height: none;
+      }` : '';
+    if (group?.uuid) {
+      cncons.push(buildContainerClassName(uuidClassName(group?.uuid)));
+    }
+
     const cncon = cncons.join(',\n');
     const cn = cnames.join(',\n');
     const styles = `
       ${cncon} {
+
         ${cn} {
           opacity: 1;
           pointer-events: auto;
           visibility: visible;
           z-index: 2;
+
+          ${selectedGroupStyles}
 
           &.${nodeTypeClassName(ItemTypeEnum.BLOCK)} {
             z-index: 3;
@@ -361,9 +384,11 @@ export default function useSettingsManager({
         }
       }
 
-      ${cnsor} {
+      ${cnsor},
+      ${LINE_CLASS_NAME} {
         animation: start 1s forwards;
         opacity: 0;
+        max-height: none;
         pointer-events: none;
         visibility: hidden;
         z-index: -1;
@@ -381,14 +406,6 @@ export default function useSettingsManager({
       ...(classNames ?? []),
       ...defaultStylesAndContainerClassNames().classNames
     ].forEach(cn => containerRef?.current?.classList.add(cn));
-  }
-
-  function handleLayoutUpdates(event: CustomAppEvent) {
-    DEBUG.settings.manager && console.log('handleLayoutUpdates', event)
-    const { classNames, styles } = event?.detail?.options?.kwargs ?? {};
-
-    classNames && addContainerClassNames(classNames);
-    styles && setStyles(styles);
   }
 
   function setStyles(styles?: string) {

@@ -4,6 +4,8 @@ import { dig, flattenObject } from '@utils/hash';
 
 const CONTAINER_CLASS_NAME_PREFIX = 'ctn--';
 
+export const LINE_CLASS_NAME = 'lne--connection';
+
 export function buildContainerClassName(className: string): string {
   return `${CONTAINER_CLASS_NAME_PREFIX}${className}`;
 }

@@ -15,6 +15,8 @@ import { equals, sortByKey } from '@utils/array';
 import { getCache, deleteCache, updateCache } from './storage';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { DEBUG } from '@components/v2/utils/debug';
+import useKeyboardShortcuts, { KeyboardShortcutsProps } from '../../hooks/shortcuts/useKeyboardShortcuts';
+import { EventEnum, KeyEnum } from '../../events/enums';
 
 type NavigationButtonGroupProps = {
   buildGroups?: (onClick: ItemClickHandler) => MenuItemType[];
@@ -26,9 +28,40 @@ export default function NavigationButtonGroup({
   cacheKey,
   groups: groupsProp,
 }: NavigationButtonGroupProps) {
+  const containerRef = useRef<HTMLDivElement>(null);
   const [selectedButtonIndex, setSelectedButtonIndex] = useState<number>(null);
   const [selectedGroupsByLevel, setSelectedGroupsByLevel] =
     useState<MenuGroupType[]>(cacheKey ? (getCache(cacheKey) ?? []) : []);
+
+  const { deregisterCommands, registerCommands } = useKeyboardShortcuts({
+    target: containerRef,
+  });
+
+  useEffect(() => {
+    registerCommands({
+      open: {
+        handler: () => {
+          if (selectedButtonIndex === null) {
+            let index = 0;
+            if (selectedGroupsByLevel?.length >= 1) {
+              index = selectedGroupsByLevel?.length - 1;
+            }
+            setSelectedButtonIndex(index);
+          }
+        },
+        predicate: {
+          key: KeyEnum.ARROWDOWN,
+          metaKey: true,
+        },
+      },
+    }, {
+      uuid: 'navigation-button-group',
+    });
+
+    return () => {
+      deregisterCommands();
+    }
+  }, [selectedButtonIndex, deregisterCommands, registerCommands, selectedGroupsByLevel]);
 
   const handleSelectGroup = useCallback((
     event: MouseEvent,
@@ -197,6 +230,7 @@ export default function NavigationButtonGroup({
         items={currentItems}
         key={currentGroup?.uuid}
         // openItems={openItems}
+        ref={containerRef}
         uuid={currentGroup?.uuid}
       >
         <div

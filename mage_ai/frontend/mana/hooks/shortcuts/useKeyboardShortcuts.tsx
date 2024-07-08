@@ -4,12 +4,16 @@ import { CommandType, CustomKeyboardEventType, PredicateType } from '../../event
 import { EventEnum } from '../../events/enums';
 import { sortByKey } from '@utils/array';
 import { isEqual, selectKeys } from '@utils/hash';
+import { DEBUG } from '../../utils/debug';
 
 type KeyMapType = Record<string, CustomKeyboardEventType[]>;
 
 export interface KeyboardShortcutsType {
   deregisterCommands: () => void;
-  registerCommands: (commands: Record<string, CommandType>) => void;
+  registerCommands: (
+    commands: Record<string, CommandType>,
+    metadata?: Record<string, any>,
+  ) => void;
 }
 
 export interface KeyboardShortcutsProps {
@@ -25,30 +29,32 @@ export default function useKeyboardShortcuts({
 
   const commandsRef = useRef<Record<string, CommandType>>({});
   const shouldClearAllRef = useRef<boolean>(false);
+  const metadataRef = useRef<Record<string, any>>({});
   const timeoutRef = useRef(null);
 
-  const eventsHistoryRef = useRef<Record<EventEnum, KeyMapType>>({
-    [EventEnum.KEYDOWN]: {},
-    [EventEnum.KEYUP]: {},
+  const eventsHistoryRef = useRef<Record<string, KeyMapType>>({
+    [EventEnum.KEYDOWN]: {} as KeyMapType,
+    [EventEnum.KEYUP]: {} as KeyMapType,
   });
-  const eventsRef = useRef<Record<EventEnum, KeyMapType>>({
-    [EventEnum.KEYDOWN]: {},
-    [EventEnum.KEYUP]: {},
+  const eventsRef = useRef<Record<string, KeyMapType>>({
+    [EventEnum.KEYDOWN]: {} as KeyMapType,
+    [EventEnum.KEYUP]: {} as KeyMapType,
   });
   const eventsSeriesRef = useRef<CustomKeyboardEventType[][]>([]);
 
-  function registerCommands(commands: Record<string, CommandType>) {
+  function registerCommands(commands: Record<string, CommandType>, metadata?: Record<string, any>) {
     commandsRef.current = commands;
+    metadataRef.current = metadata;
   }
 
   function clearAll() {
     eventsHistoryRef.current = {
-      [EventEnum.KEYDOWN]: {},
-      [EventEnum.KEYUP]: {},
+      [EventEnum.KEYDOWN]: {} as KeyMapType,
+      [EventEnum.KEYUP]: {} as KeyMapType,
     };
     eventsRef.current = {
-      [EventEnum.KEYDOWN]: {},
-      [EventEnum.KEYUP]: {},
+      [EventEnum.KEYDOWN]: {} as KeyMapType,
+      [EventEnum.KEYUP]: {} as KeyMapType,
     };
     eventsSeriesRef.current = [];
   }
@@ -61,7 +67,7 @@ export default function useKeyboardShortcuts({
   function validatePredicate(predicate: PredicateType, events: CustomKeyboardEventType[]): boolean {
     const { key, predicates, present, type = EventEnum.KEYDOWN } = predicate;
 
-    // console.log(predicates, present, key, type, events);
+    DEBUG.keyboard.shortcuts && console.log(predicates, present, key, type, events, metadataRef.current);
 
     if (predicates?.length) {
       return predicates?.every((pred: PredicateType, position: number) =>
@@ -94,8 +100,8 @@ export default function useKeyboardShortcuts({
   }
 
   function executeCommands(event: CustomKeyboardEventType) {
-    // console.log('series', eventsSeriesRef.current);
-    // console.log('history', eventsHistoryRef.current);
+    DEBUG.keyboard.shortcuts && console.log('series', eventsSeriesRef.current);
+    DEBUG.keyboard.shortcuts && console.log('history', eventsHistoryRef.current);
 
     const commandsToExecute = {};
 
@@ -128,7 +134,7 @@ export default function useKeyboardShortcuts({
           );
         }
 
-        // console.log('valid', valid);
+        DEBUG.keyboard.shortcuts && console.log('valid', valid);
 
         if (valid) {
           commandsToExecute[uuid] = command;

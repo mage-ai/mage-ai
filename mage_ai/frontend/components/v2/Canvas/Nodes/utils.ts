@@ -26,7 +26,12 @@ export function nodeClassNames(node: NodeItemType): string[] {
     levelClassName(node?.level),
     nodeTypeClassName(node?.type),
     statusClassName(node?.status),
+    uuidClassName((block as any)?.uuid),
   ].filter(Boolean);
+}
+
+export function uuidClassName(uuid: string): string {
+  return typeof uuid !== 'undefined' && uuid !== null && `uid--${uuid}`;
 }
 
 export function levelClassName(level: number): string {

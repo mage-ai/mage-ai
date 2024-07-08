@@ -30,6 +30,7 @@ export interface RectType extends RectTypeBase {
   offset?: OffsetType;
   padding?: RectType;
   parent?: RectType;
+  type?: ItemTypeEnum;
   version?: number;
 }
 
@@ -85,6 +86,7 @@ export type FlatItemType = [string, number, number, number, number];
 
 export interface RectTransformationOptionsType {
   boundingBox?: RectType;
+  defaultRect?: (rect: RectType) => RectType;
   layout?: LayoutConfigType;
   layoutOptions?: {
     // Wave layout options

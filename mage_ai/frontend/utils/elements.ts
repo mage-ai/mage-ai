@@ -1,5 +1,12 @@
 import { delay } from './delay';
 
+export function getChildrenDimensions(element: HTMLElement): { width: number; height: number } {
+  return {
+    width: getChildrenBoundingWidth(element),
+    height: getChildrenTotalHeight(element),
+  };
+}
+
 export function addClassNames(className: string, classNames: string[]): string {
   const arr = (className || '')?.split(' ')?.filter(cn => !classNames?.includes(cn));
 
@@ -83,6 +90,21 @@ export function getClosestRole(element: HTMLElement | null, roles: string | stri
   return elements?.[0] || null;
 }
 
+export function getClosestChildRole(element: HTMLElement | null, roles: string | string[]): HTMLElement | null {
+  if (!element) return null;
+
+  const roleArray = Array.isArray(roles) ? roles : [roles];
+
+  for (const role of roleArray) {
+    const matchingChild = element.querySelector(`[role*="${role}"]`);
+    if (matchingChild) {
+      return matchingChild as HTMLElement;
+    }
+  }
+
+  return null;
+}
+
 export const isElementVisible = (element: HTMLElement | null): boolean => {
   while (element) {
     if (element === document.body) {
@@ -126,3 +148,36 @@ const isInViewport = (element: HTMLElement | null): boolean => {
 export const isElementReallyVisible = (element: HTMLElement | null): boolean => {
   return isElementVisible(element) && isInViewport(element);
 };
+
+function getChildrenTotalHeight(element: HTMLElement): number {
+  let totalHeight = 0;
+
+  element.childNodes.forEach((child) => {
+    if (child instanceof HTMLElement) {
+      console.log('height', child, child.offsetHeight);
+      totalHeight += child.offsetHeight;
+    }
+  });
+
+  return totalHeight;
+}
+
+function getChildrenBoundingWidth(element: HTMLElement): number {
+  const children = Array.from(element.children) as HTMLElement[];
+
+  let boundingLeft = Infinity;
+  let boundingRight = -Infinity;
+
+  children.forEach((child) => {
+    const rect = child.getBoundingClientRect();
+    if (rect.left < boundingLeft) {
+      boundingLeft = rect.left;
+    }
+    if (rect.right > boundingRight) {
+      boundingRight = rect.right;
+    }
+    console.log('width', child, rect.left, rect.right, boundingLeft, boundingRight)
+  });
+
+  return boundingRight - boundingLeft;
+}

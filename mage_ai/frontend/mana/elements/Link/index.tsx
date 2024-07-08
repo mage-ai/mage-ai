@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import styles from '@styles/scss/elements/Link/Link.module.scss';
 import { motion } from 'framer-motion';
 import { TextProps, buildTextStyleProps } from '../Text';
+import { ElementRoleEnum } from '@mana/shared/types';
 
 type LinkProps = {
   activeColorOnHover?: boolean;
@@ -11,7 +12,9 @@ type LinkProps = {
   disabled?: boolean;
   display?: 'block' | 'inline-block' | 'inline';
   href?: string;
+  motionProps?: any;
   onClick?: (e: React.MouseEvent<HTMLAnchorElement>) => void;
+  role?: ElementRoleEnum;
   wrap?: boolean;
 } & TextProps;
 
@@ -30,7 +33,9 @@ export default function Link({
   disabled,
   display,
   href = '#',
+  motionProps,
   onClick,
+  role,
   wrap,
   ...rest
 }: LinkProps) {
@@ -50,13 +55,19 @@ export default function Link({
     }
   };
 
-  const HTMLTag = wrap ? 'a' : motion.a
+  const useMotion = motionProps || !wrap;
+  const HTMLTag = useMotion ? motion.a : 'a';
 
   return (
     <NextLink href={href} passHref>
       <HTMLTag
         {...props}
-        animate={isBlinking ? 'blink' : 'initial'}
+        {...{
+          ...motionProps,
+          ...(useMotion && !motionProps ? {
+            animate: isBlinking ? 'blink' : 'initial',
+          } : {})
+        }}
         className={[
           styles.link,
           wrap ? styles.wrap : styles.base,
@@ -68,6 +79,7 @@ export default function Link({
         ].filter(Boolean).join(' ')}
         initial="initial"
         onClick={handleClick}
+        role={role}
         variants={blinkAnimation}
       >
         {children}

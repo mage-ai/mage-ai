@@ -5,7 +5,7 @@ import { ItemMappingType, ModelMappingType, NodeItemType, RectType } from '../..
 import { ZoomPanStateType } from '@mana/hooks/useZoomPan';
 import { layoutItemsInGroups, transformRects } from '../../Canvas/utils/rect';
 import { startTransition, useEffect, useRef } from 'react';
-import { ActiveLevelRefType, ItemIDsByLevelRef, LayoutManagerType, ModelManagerType, SettingsManagerType } from './interfaces';
+import { ItemElementsType, ItemIDsByLevelRef, LayoutManagerType, ModelManagerType, SettingsManagerType } from './interfaces';
 import { ItemStatusEnum, RectTransformationScopeEnum, ItemTypeEnum, LayoutConfigDirectionOriginEnum, LayoutConfigDirectionEnum, TransformRectTypeEnum } from '../../Canvas/types';
 import { calculateBoundingBox } from '../../Canvas/utils/rect';
 import { flattenArray, indexBy, sortByKey, sum } from '@utils/array';
@@ -17,10 +17,13 @@ import PipelineType from '@interfaces/PipelineType';
 import PipelineExecutionFrameworkType from '@interfaces/PipelineExecutionFramework/interfaces';
 import useAppEventsHandler, { CustomAppEvent, CustomAppEventEnum } from './useAppEventsHandler';
 import { DEBUG } from '@components/v2/utils/debug';
+import { ElementRoleEnum } from '@mana/shared/types';
+import { getClosestChildRole } from '@utils/elements';
 
 type LayoutManagerProps = {
   canvasRef: React.MutableRefObject<HTMLDivElement>;
   containerRef: React.MutableRefObject<HTMLDivElement>;
+  itemElementsRef: LayoutManagerType['itemElementsRef'];
   itemIDsByLevelRef: ItemIDsByLevelRef;
   itemsRef: React.MutableRefObject<ItemMappingType>;
 };
@@ -28,11 +31,13 @@ type LayoutManagerProps = {
 export default function useLayoutManager({
   canvasRef,
   containerRef,
+  itemElementsRef,
   itemIDsByLevelRef,
   itemsRef,
 }: LayoutManagerProps) {
   // The only client publishing this message is the SettingsManager.
   const { dispatchAppEvent } = useAppEventsHandler({
+    itemElementsRef,
     uuid: 'LayoutManager',
   } as any, {
     [CustomAppEventEnum.UPDATE_NODE_LAYOUTS]: updateLayoutOfItems,
@@ -40,7 +45,6 @@ export default function useLayoutManager({
 
   function rectTransformations({ activeLevel, layoutConfigs, selectedGroupsRef }) {
     const layoutConfig = layoutConfigs?.current?.[activeLevel?.current]?.current ?? {};
-    const group = selectedGroupsRef?.current?.[selectedGroupsRef?.current?.length - 1];
 
     const direction = layoutConfig?.direction || LayoutConfigDirectionEnum.HORIZONTAL;
     const directionOp = LayoutConfigDirectionEnum.HORIZONTAL === direction
@@ -194,9 +198,40 @@ export default function useLayoutManager({
     const transformers: RectTransformationType[] = [];
 
     if (LayoutDisplayEnum.DETAILED === layoutConfig?.display) {
+      const activeGroupConditionSelf = (rect: RectType) => {
+        const group = selectedGroupsRef?.current?.[selectedGroupsRef?.current?.length - 1];
+        return !group?.uuid || rect?.block?.uuid === group?.uuid;
+      };
+      const activeGroupConditionChild = (rect: RectType) => {
+        const group = selectedGroupsRef?.current?.[selectedGroupsRef?.current?.length - 1];
+        return !group?.uuid || rect?.parent?.block?.uuid === group?.uuid;
+      };
+
       transformers.push(...[
         // reset,
         {
+          conditionSelf: (rect: RectType) => !activeGroupConditionSelf(rect),
+          options: () => ({
+            defaultRect: (rect: RectType) => {
+              const element = itemElementsRef?.current?.[rect?.type]?.[rect?.id]?.current;
+              const content = element && getClosestChildRole(element, ElementRoleEnum.CONTENT);
+              if (content) {
+                const contentRect = content?.getBoundingClientRect();
+                console.log('FIT_TO_SELF', rect.id, element, content, contentRect)
+                return {
+                  height: contentRect?.height,
+                  width: contentRect?.width,
+                };
+              }
+
+              return {};
+            },
+          }),
+          scope: RectTransformationScopeEnum.SELF,
+          type: TransformRectTypeEnum.FIT_TO_SELF,
+        },
+        {
+          conditionSelf: activeGroupConditionChild,
           options: () => ({ layout: { direction: directionOp } }),
           scope: RectTransformationScopeEnum.CHILDREN,
           type: TransformRectTypeEnum.LAYOUT_GRID,
@@ -216,7 +251,7 @@ export default function useLayoutManager({
         //   type: TransformRectTypeEnum.LAYOUT_RECTANGLE,
         // },
         {
-          conditionSelf: (rect: RectType) => !group?.uuid || rect?.block?.uuid === group?.uuid,
+          conditionSelf: activeGroupConditionSelf,
           options: (rects: RectType[]) => ({
             offset: {
               left: 0,
@@ -270,17 +305,19 @@ export default function useLayoutManager({
 
         shift,
         {
+          conditionSelf: activeGroupConditionChild,
           scope: RectTransformationScopeEnum.CHILDREN,
           type: TransformRectTypeEnum.SHIFT_INTO_PARENT,
         },
         {
+          conditionSelf: activeGroupConditionChild,
           scope: RectTransformationScopeEnum.CHILDREN,
           type: TransformRectTypeEnum.ALIGN_CHILDREN,
         },
       ] as RectTransformationType[]);
     } else if (LayoutDisplayEnum.SIMPLE === layoutConfig?.display) {
       transformers.push(...[
-        mindims,
+        // mindims,
         // ...layoutStyleTransformations,
         // tree,
         wave,
@@ -352,6 +389,7 @@ export default function useLayoutManager({
             });
           }, []) ?? [],
           id: node.id,
+          type: node.type,
           upstream: (node?.upstream ?? [])?.map((id: string) => ({
             ...itemsRef?.current?.[id]?.rect,
             id,
@@ -452,6 +490,7 @@ export default function useLayoutManager({
       options: {
         kwargs: {
           classNames,
+          conditions,
           styles,
         },
       },

@@ -19,6 +19,9 @@ export const DEBUG = {
   keyboard: false,
   layout: false,
   layoutManager: false,
+  lines: {
+    manager: false,
+  },
   node: {
     block: false,
   },

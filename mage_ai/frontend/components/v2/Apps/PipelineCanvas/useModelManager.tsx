@@ -353,57 +353,6 @@ export default function useModelManager({
     });
   }
 
-  // function updateNodeItems(items: ItemMappingType) {
-  //   // This should be the only setter for itemsRef.
-  //   itemsRef.current = {
-  //     ...itemsRef.current,
-  //     ...Object.entries(items).reduce(
-  //       (acc: ItemMappingType, [id, item]: [string, NodeItemType]) => ({
-  //         ...acc,
-  //         [id]: {
-  //           ...item,
-  //           version: String(Number(item?.version ?? -1) + 1),
-  //         },
-  //       }),
-  //       {} as ItemMappingType,
-  //     ),
-  //   };
-  // }
-
-  // function updatePorts(ports: PortMappingType) {
-  //   // This should be the only setter for portsRef.
-  //   portsRef.current = {
-  //     ...portsRef.current,
-  //     ...Object.entries(ports).reduce(
-  //       (acc: PortMappingType, [id, item]: [string, PortType]) => ({
-  //         ...acc,
-  //         [id]: {
-  //           ...item,
-  //           version: String(Number(item?.version ?? -1) + 1),
-  //         },
-  //       }),
-  //       {} as PortMappingType,
-  //     ),
-  //   };
-  // }
-
-  // function mutateModels(payload?: ModelMappingType): ModelMappingType {
-  //   const { items, ports } = updateModelsAndRelationships(
-  //     {
-  //       itemsRef,
-  //       portsRef,
-  //     },
-  //     payload,
-  //   );
-  //   // updateNodeItems(items);
-  //   // updatePorts(ports);
-
-  //   return {
-  //     itemMapping: itemsRef.current,
-  //     portMapping: portsRef.current,
-  //   };
-  // }
-
   useEffect(() => {
     if (phaseRef.current === 0 && pready.current && fready.current) {
       // console.log('initializeModels', phaseRef.current);
