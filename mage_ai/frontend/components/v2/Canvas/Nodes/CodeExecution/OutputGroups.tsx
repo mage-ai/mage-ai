@@ -45,13 +45,9 @@ const OutputGroups: React.FC<OutputGroupsProps> = ({
     });
   }, [eventsGrouped]);
 
-  if (isEmptyObject(eventsGrouped)) {
-    return;
-  }
-
   return (
     <div className={stylesOutput.outputContainer} style={styles}>
-      <Scrollbar ref={scrollableDivRef} style={{ maxHeight: 400, overflow: 'auto' }}>
+      <Scrollbar autoHorizontalPadding ref={scrollableDivRef} style={{ maxHeight: 400, overflow: 'auto' }}>
         <Grid rowGap={8} templateRows="min-content">
           {Object.keys(eventsGrouped ?? {})?.sort()?.map((mrUUID: string) => (
             <ExecutionOutput
@@ -60,7 +56,7 @@ const OutputGroups: React.FC<OutputGroupsProps> = ({
             />
           ))}
         </Grid>
-      </Scrollbar >
+      </Scrollbar  >
     </div>
   );
 }

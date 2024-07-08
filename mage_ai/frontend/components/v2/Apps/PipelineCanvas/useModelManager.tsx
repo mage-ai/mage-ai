@@ -154,17 +154,13 @@ export default function useModelManager({
     resource: 'browser_items',
   });
 
-  appHandlersRef.current = {
-    blocks: null,
-    browserItems: browserItemMutants,
-    executionFrameworks: executionFrameworkMutants,
-    pipelines: pipelineMutants,
-  };
+  appHandlersRef.current.browserItems = browserItemMutants;
+  appHandlersRef.current.executionFrameworks = executionFrameworkMutants;
+  appHandlersRef.current.pipelines = pipelineMutants;
 
   const { dispatchAppEvent } = useAppEventsHandler({ itemsRef } as any, {
     [CustomAppEventEnum.APP_STARTED]: handleAppChanged,
     [CustomAppEventEnum.APP_STOPPED]: handleAppChanged,
-    [CustomAppEventEnum.CODE_EXECUTION_SUBMITTED]: handleCodeExecutionSubmission,
     [CustomAppEventEnum.OUTPUT_UPDATED]: handleOutputUpdated,
   });
 
@@ -182,19 +178,12 @@ export default function useModelManager({
 
     outputsRef.current[node.id] ||= {};
     outputsRef.current[node.id][output.id] = output;
-  }
 
-  function handleCodeExecutionSubmission({ detail }: CustomAppEvent) {
-    const { block, node, options } = detail;
-    const output = buildOutputNode(node, block, options?.kwargs?.process as any);
-
-    handleOutputUpdated({ detail: { node: output } } as CustomAppEvent);
-
-    initializeModels(
-      appHandlersRef?.current?.executionFrameworks?.getModel() as PipelineExecutionFrameworkType,
-      appHandlersRef?.current?.pipelines?.getModel() as PipelineExecutionFrameworkType,
-      detail?.manager as unknown,
-    );
+    // initializeModels(
+    //   appHandlersRef?.current?.executionFrameworks?.getModel() as PipelineExecutionFrameworkType,
+    //   appHandlersRef?.current?.pipelines?.getModel() as PipelineExecutionFrameworkType,
+    //   detail?.manager as unknown,
+    // );
   }
 
   function initializeModels(

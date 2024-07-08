@@ -9,6 +9,8 @@
   background: var(--modal-background-color-base);
   border-radius: (--borders-radius-md);
   box-shadow: 8px 8px 4px 8px var(--modal-box-shadow-base);
+  min-height: 200px;
   min-width: 400px;
-  padding: var(--padding-sm);
+  padding-bottom: var(--padding-sm);
+  padding-top: var(--padding-sm);
 }

@@ -24,7 +24,9 @@ export interface ExecuteCodeHook {
     message_request_uuid?: string;
     source?: string;
     stream?: string;
-  }) => void;
+  }, opts?: {
+    future?: boolean;
+  }) => [string, () => void];
   messageRequestUUID: string;
 }
 

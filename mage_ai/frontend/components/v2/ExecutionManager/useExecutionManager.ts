@@ -312,8 +312,7 @@ export default function useExecutionManager({
     executeCode: (message: string, payload?: {
       message_request_uuid?: string;
       source?: string;
-    }) => void;
-    messageRequestUUID: string;
+    }) => [string, () => any];
   } {
     // const eventSource = eventSourcesRef.current[channel];
 
@@ -322,7 +321,7 @@ export default function useExecutionManager({
       source?: string;
     }, opts?: {
       future?: boolean;
-    }) => {
+    }): [string, () => any] => {
       const messageRequestUUID = String(Number(new Date()));
 
       const future = () => mutants.create.mutate({

@@ -19,7 +19,7 @@ import { ConfigurationType } from '@interfaces/PipelineExecutionFramework/interf
 import { DEBUG } from '@components/v2/utils/debug';
 import { FileType } from '../../IDE/interfaces';
 import { AppNodeType, NodeType, OutputNodeType, PortType, RectType } from '../interfaces';
-import { BlockTypeEnum } from '@interfaces/BlockType';
+import BlockType, { BlockTypeEnum } from '@interfaces/BlockType';
 import { createPortal } from 'react-dom';
 import { draggableProps } from './draggable/utils';
 import { getFileCache, isStale, updateFileCache } from '../../IDE/cache';
@@ -52,6 +52,11 @@ export const BlockNodeWrapper: React.FC<BlockNodeType> = ({
   useExecuteCode,
   useRegistration,
 }: BlockNodeType) => {
+  // Attributes
+
+  const block = useMemo(() => node?.block, [node]);
+  const { configuration, type, uuid } = block;
+
   const buttonBeforeRef = useRef<HTMLDivElement>(null);
   const timerStatusRef = useRef(null);
   const timeoutRef = useRef(null);
@@ -64,15 +69,12 @@ export const BlockNodeWrapper: React.FC<BlockNodeType> = ({
   const connectionStatusRef = useRef<ServerConnectionStatusType>(null);
   const portalRef = useRef<HTMLDivElement>(null);
   const handleOnMessageRef = useRef<(event: EventStreamType) => void>(null);
+  const [outputs, setOutputs] = useState<OutputNodeType[]>((block as any)?.outputs ?? null);
 
   const [portalMount, setPortalMount] = useState<HTMLElement | null>(null);
 
   const { outputsRef } = useContext(ModelContext);
 
-  // Attributes
-
-  const block = useMemo(() => node?.block, [node]);
-  const { configuration, type, uuid } = block;
   const { file, metadata } = configuration ?? {};
   const isGroup = useMemo(() => !type || type === BlockTypeEnum.GROUP, [type]);
   const requiredGroup = isGroup && metadata?.required;
@@ -93,7 +95,10 @@ export const BlockNodeWrapper: React.FC<BlockNodeType> = ({
     nodeRef?.current?.classList?.[func]?.(styles.executing);
   }
 
-  useAppEventsHandler(node as any, {
+  const { dispatchAppEvent } = useAppEventsHandler({
+    node,
+    outputsRef,
+  } as any, {
     [CustomAppEventEnum.START_APP]: (event: CustomAppEvent) => {
       if (event?.detail?.node?.id === node?.id) {
         // Wait until the app subscribes, then subscribe or else race condition.
@@ -103,7 +108,7 @@ export const BlockNodeWrapper: React.FC<BlockNodeType> = ({
     [CustomAppEventEnum.CLOSE_OUTPUT]: (event: CustomAppEvent) => {
       const { node: output } = event.detail ?? {};
       if (output && output?.upstream?.includes(node?.id)) {
-        outputRef?.current?.classList?.add?.('hidden');
+        // outputRef?.current?.classList?.add?.('hidden');
       }
     },
     [CustomAppEventEnum.PORTAL_MOUNTED]: (event: any) => {
@@ -177,16 +182,27 @@ export const BlockNodeWrapper: React.FC<BlockNodeType> = ({
     });
   }
 
-  const submitCodeExecution = useCallback((_event: React.MouseEvent<HTMLElement>) => {
+  const submitCodeExecution = useCallback((event: React.MouseEvent<HTMLElement>) => {
     handleSubscribe();
 
     const execute = () => {
-      executeCode(getCode(), {
-        source: node.id,
+      const message = getCode();
+      const [messageRequestUUID, future] = executeCode(message, { source: node.id }, { future: true });
+
+      const output = buildOutputNode(node, block, {
+        message,
+        message_request_uuid: messageRequestUUID,
+        uuid: (block as any)?.uuid,
       });
+
+      setOutputs((prev) => prev === null ? [output] : prev);
+
       updateStyles(true);
+
       // This style and classname is handled by the settings manager.
-      outputRef?.current?.classList?.remove?.('hidden');
+      // outputRef?.current?.classList?.remove?.('hidden');
+
+      future();
 
       let loops = 0;
       const now = Number(new Date());
@@ -226,7 +242,7 @@ export const BlockNodeWrapper: React.FC<BlockNodeType> = ({
       });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [block, consumerID, executeCode]);
+  }, [block, consumerID, node, executeCode]);
 
   const updateBlock = useCallback((
     event: ClientEventType | Event, key: string, value: any) => {
@@ -314,16 +330,6 @@ export const BlockNodeWrapper: React.FC<BlockNodeType> = ({
     if (activeLevel.current !== node?.level) return;
 
     const arr = [];
-    const outputs = [...(Object.values(outputsRef?.current?.[node?.id] ?? {}) ?? [])];
-
-    if ((outputs?.length ?? 0) === 0) {
-      outputs.push(buildOutputNode(node, block, {
-        message: null,
-        message_request_uuid: null,
-        uuid: null,
-      }));
-    }
-
     outputs?.forEach((output: OutputNodeType) => {
       arr.push(
         <OutputNode
@@ -337,7 +343,10 @@ export const BlockNodeWrapper: React.FC<BlockNodeType> = ({
           handleOnMessageRef={handleOnMessageRef}
           handlers={draggingHandlers}
           key={output.id}
-          node={output}
+          node={{
+            ...output,
+            node,
+          }}
           nodeRef={outputRef}
           rect={output?.rect}
         />
@@ -345,8 +354,7 @@ export const BlockNodeWrapper: React.FC<BlockNodeType> = ({
     });
 
     return arr;
-  }, [block, node, outputsRef, draggingHandlers, handleOnMessageRef, activeLevel
-  ]);
+  }, [node, outputs, draggingHandlers, handleOnMessageRef, activeLevel]);
 
   const runtime = useMemo(() => (
     <Tag

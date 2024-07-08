@@ -17,6 +17,7 @@ type InputProps = {
   italic?: boolean | ((value: any) => boolean);
   name?: string;
   number?: boolean;
+  onClick?: (event: React.MouseEvent<HTMLInputElement>) => void;
   placeholder?: string;
   required?: boolean;
   style?: React.CSSProperties;
@@ -32,6 +33,7 @@ function TextInput({
   italic,
   number,
   onChange,
+  onClick,
   required,
   id,
   name,
@@ -74,6 +76,7 @@ function TextInput({
             onChange(event);
           }
         }}
+        onClick={onClick}
         ref={ref}
         required={required}
         small={small}

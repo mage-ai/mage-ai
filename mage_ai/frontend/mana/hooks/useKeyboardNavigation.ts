@@ -85,6 +85,7 @@ export default function useKeyboardNavigation({
 
   function handlePositionChange({ x, y }: { x?: number; y?: number }) {
     const positionPrevious = [...(positionRef.current ?? [])];
+    console.log(x, y, positionRef.current)
     const { item, items } = getCurrentItem() ?? {};
 
     DEBUG.keyboard.navigation && console.log('position.args', x, y);
@@ -136,7 +137,7 @@ export default function useKeyboardNavigation({
 
   function registerItems(items: MenuItemType[], opts?: RegisterItemsOptions) {
     itemsRef.current = items;
-    positionRef.current = opts?.position ?? [null];
+    positionRef.current = opts?.position?.length > 0 ? opts?.position : [null];
 
     registerCommands({
       down: {

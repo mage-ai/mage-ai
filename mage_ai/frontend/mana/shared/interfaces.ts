@@ -101,6 +101,7 @@ export interface EventOperationOptionsType {
     process?: {
       message: string;
       message_request_uuid: string;
+      uuid: string;
     };
     rect?: {
       height?: number;

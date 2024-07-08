@@ -545,8 +545,6 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
             layoutConfigs={layoutConfigs}
             selectedGroupsRef={selectedGroupsRef}
           >
-            <LineManager />
-
             <ModelProvider
               blockMappingRef={blockMappingRef}
               blocksByGroupRef={blocksByGroupRef}
@@ -555,6 +553,8 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
               itemsRef={itemsRef}
               outputsRef={outputsRef}
             >
+              <LineManager />
+
               {nodesMemo}
             </ModelProvider >
           </SettingsProvider>

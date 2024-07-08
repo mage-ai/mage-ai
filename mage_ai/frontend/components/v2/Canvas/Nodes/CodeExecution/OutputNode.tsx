@@ -12,6 +12,8 @@ import { useDrag } from 'react-dnd';
 import useDispatchMounted from '../useDispatchMounted';
 import { DEBUG } from '@components/v2/utils/debug';
 import { selectKeys } from '@utils/hash';
+import { CustomAppEventEnum } from '@components/v2/Apps/PipelineCanvas/enums';
+import { CustomAppEvent } from '@components/v2/Apps/PipelineCanvas/useAppEventsHandler';
 
 type OutputNodeProps = {
   node: OutputNodeType;
@@ -50,9 +52,12 @@ const OutputNode: React.FC<OutputNodeProps> = ({
     node,
   }), [draggable, node]);
 
-  useDispatchMounted(node, nodeRef, {
-    onMount: () => {
-      DEBUG.codeExecution.node && console.log('OutputNode mounted:', node);
+  const { dispatchAppEvent } = useDispatchMounted(node, nodeRef, {
+    onMount: (event: CustomAppEvent) => {
+      dispatchAppEvent(CustomAppEventEnum.OUTPUT_UPDATED, {
+        event: event as any,
+        node,
+      })
     }
   });
 

@@ -369,7 +369,11 @@ export default function BlockNodeComponent({
       opacity: 0,
       scale: 0.95,
       translateY: 10
-    } : false,
+    } : {
+      opacity: 1,
+      scale: 1,
+      translateY: 0
+    },
     transition: {
       // In seconds
       delay: (node?.index ?? indexProp) / 10,

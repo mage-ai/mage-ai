@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import update from 'immutability-helper';
-import useAppEventsHandler, { CustomAppEventEnum } from '../../Apps/PipelineCanvas/useAppEventsHandler';
+import useAppEventsHandler, { CustomAppEvent, CustomAppEventEnum } from '../../Apps/PipelineCanvas/useAppEventsHandler';
 import { NodeType } from '../interfaces';
 
 export default function useDispatchMounted(
@@ -8,13 +8,13 @@ export default function useDispatchMounted(
   nodeRef: React.RefObject<Element>,
   opts?: {
     eventType?: CustomAppEventEnum | string;
-    onMount?: () => void;
+    onMount?: (event: CustomAppEvent) => void;
   },
 ) {
   const phaseRef = useRef(0);
   const timeoutRef = useRef(null);
 
-  const { dispatchAppEvent } = useAppEventsHandler(node);
+  const { dispatchAppEvent } = useAppEventsHandler(node as any);
 
   useEffect(() => {
     if (phaseRef.current === 0 && nodeRef?.current) {
@@ -47,7 +47,7 @@ export default function useDispatchMounted(
           });
 
           if (opts?.onMount) {
-            opts?.onMount();
+            opts?.onMount(event);
           }
         } else {
           timeoutRef.current = setTimeout(dispatchMounted, 100);
@@ -65,6 +65,7 @@ export default function useDispatchMounted(
   }, []);
 
   return {
+    dispatchAppEvent,
     phaseRef,
   };
 }

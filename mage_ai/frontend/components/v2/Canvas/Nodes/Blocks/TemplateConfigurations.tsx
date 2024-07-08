@@ -134,6 +134,12 @@ export default function TemplateConfigurations({
                     `configuration.templates.${uuid}.variables.${variableUUID}.value`,
                     event?.target?.value,
                   )}
+                  onClick={(event: React.MouseEvent<HTMLInputElement>) => {
+                    // Need to do this because the Canvas is swallowing the click event.
+                    event.preventDefault();
+                    event.stopPropagation();
+                    (event.target as HTMLInputElement).focus();
+                  }}
                   placeholder={types?.filter(Boolean)?.join(', ')}
                   required={required}
                   small
