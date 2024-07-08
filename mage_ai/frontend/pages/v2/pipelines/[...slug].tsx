@@ -11,17 +11,9 @@ const Detail = dynamic(() => import('@components/v2/Layout/Pipelines/Detail'), {
 function PipelineDetailPage({ slug }: { slug: string[] }) {
   const {
     teardown,
-    useExecuteCode: useExecuteCodeBase,
-    useRegistration: useRegistrationBase,
+    useExecuteCode,
+    useRegistration,
   } = useExecutionManager();
-
-  function useExecuteCode(channel: string = slug.join('/'), stream: string = '') {
-    return useExecuteCodeBase(channel, stream);
-  }
-
-  function useRegistration(channel: string = slug.join('/'), stream: string = '') {
-    return useRegistrationBase(channel, stream);
-  }
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => () => teardown(), []);

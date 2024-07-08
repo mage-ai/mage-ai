@@ -14,7 +14,7 @@ from mage_ai.server.kernel_output_parser import DataType
 from mage_ai.shared.environments import is_debug as is_debug_base
 from mage_ai.shared.queues import Queue as FasterQueue
 
-FLUSH_INTERVAL = 0.5
+FLUSH_INTERVAL = 0.1
 
 
 def is_debug():
@@ -31,8 +31,6 @@ def check_queue(queue):
     # Put back the items
     for item in items:
         queue.put(item)
-    if is_debug():
-        print(f"[DEBUG QUEUE] Current queue items: {items}")
 
 
 def read_stdout_continuously(
@@ -61,7 +59,7 @@ def read_stdout_continuously(
             )
             if main_queue is not None:
                 main_queue.put(uuid)
-        time.sleep(FLUSH_INTERVAL / 10)
+        time.sleep(FLUSH_INTERVAL / 2)
 
     output = async_stdout.get_output()
     if output:

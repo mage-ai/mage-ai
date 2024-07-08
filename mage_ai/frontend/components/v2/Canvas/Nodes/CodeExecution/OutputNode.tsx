@@ -1,4 +1,4 @@
-import OutputGroups from './OutputGroups';
+import OutputGroups, { OutputGroupsType } from './OutputGroups';
 import React, { useMemo } from 'react';
 import stylesOutput from '@styles/scss/components/Canvas/Nodes/OutputNode.module.scss';
 import styles from '@styles/scss/components/Canvas/Nodes/BlockNode.module.scss';
@@ -16,9 +16,7 @@ import { selectKeys } from '@utils/hash';
 type OutputNodeProps = {
   node: OutputNodeType;
   nodeRef: React.RefObject<HTMLDivElement>;
-  source?: string;
-  useRegistration: (channel: string, stream: string) => { subscribe: (consumer: string, opts?: any) => void };
-} & CanvasNodeType;
+} & CanvasNodeType & OutputGroupsType;
 
 const OutputNode: React.FC<OutputNodeProps> = ({
   draggable,
@@ -26,8 +24,7 @@ const OutputNode: React.FC<OutputNodeProps> = ({
   node,
   nodeRef,
   rect,
-  source,
-  useRegistration,
+  ...props
 }: OutputNodeProps) => {
   const block = node.block;
 
@@ -75,15 +72,12 @@ const OutputNode: React.FC<OutputNodeProps> = ({
       rect={rect}
     >
       <OutputGroups
-        block={block}
-        node={node}
-        source={source}
+        {...props}
         styles={selectKeys(getStyles(node, {
           draggable,
           isDragging,
           rect,
         }), ['height', 'opacity'])}
-        useRegistration={useRegistration}
       />
     </NodeWrapper>
   );

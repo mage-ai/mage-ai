@@ -296,6 +296,7 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
     itemIDsByLevelRef,
     itemsRef,
     mutateModels,
+    outputsRef,
     portsRef,
     removeContextMenu,
     renderConnectionLines,

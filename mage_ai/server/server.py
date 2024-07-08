@@ -15,6 +15,7 @@ import tornado.ioloop
 import tornado.web
 from sqlalchemy import or_
 from tornado import autoreload
+from tornado.httpclient import AsyncHTTPClient
 from tornado.ioloop import PeriodicCallback
 from tornado.log import enable_pretty_logging
 from tornado.options import options
@@ -538,6 +539,7 @@ async def main(
     project: Union[str, None] = None,
     project_type: ProjectType = ProjectType.STANDALONE,
     status_only: bool = False,
+    max_clients: int = 1000,
 ):
     if not status_only:
         from mage_ai.server.active_kernel import switch_active_kernel
@@ -566,6 +568,7 @@ async def main(
         update_routes=update_routes,
         status_only=status_only,
     )
+    AsyncHTTPClient.configure(None, max_clients=max_clients)
 
     port = int(port)
     max_port = port + 100

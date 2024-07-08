@@ -14,11 +14,12 @@ import { getNewUUID } from '@utils/string';
 import { useMutate } from '@context/APIMutation';
 import { useRef } from 'react';
 import { ConsumerOperations as ConsumerOperationsT, EventSourceHandlers as EventSourceHandlersT, ExecutionManagerType } from './interfaces';
+import { setNested } from '@utils/hash';
 
 export type ConsumerOperations = ConsumerOperationsT;
 export type EventSourceHandlers = EventSourceHandlersT;
 
-const MAX_OPEN_CONNECTIONS = 6;
+const MAX_OPEN_CONNECTIONS = 1000;
 type QueueFunction = (opts?: EventSourceHandlers) => void;
 type ConsumerMapping = Record<string, {
   options: EventSourceHandlers;
@@ -117,22 +118,6 @@ export default function useExecutionManager({
   }
 
   function registerStream(channel: string, stream: string, options?: EventSourceHandlers) {
-    channelsRef.current[channel] ||= {
-      options,
-      streams: {},
-    };
-    channelsRef.current[channel].options = options;
-
-    channelsRef.current[channel].streams[stream] ||= {
-      consumers: {},
-      errors: [],
-      events: [],
-      messages: {},
-      options,
-      status: null,
-    };
-    channelsRef.current[channel].streams[stream].options = options;
-
     const connect = (opts?: EventSourceHandlers) => {
       const handle = (optsInternal: EventSourceHandlers) => {
         const {
@@ -184,30 +169,48 @@ export default function useExecutionManager({
         return getEventSource(channel);
       }
 
-      const handleNext = () => {
-        const elapsed = Number(new Date()) - (recentConnectionProcessedTimestampRef.current ?? 0);
-        queueProcessingTimeoutRef.current = setTimeout(processQueue, Math.max(throttle - elapsed, 0));
-      };
+      // const handleNext = () => {
+      //   const elapsed = Number(new Date()) - (recentConnectionProcessedTimestampRef.current ?? 0);
+      //   queueProcessingTimeoutRef.current = setTimeout(processQueue, Math.max(throttle - elapsed, 0));
+      // };
 
-      connectionQueueRef.current.push(() => handle({
+      handle({
         onError: (error: Event) => {
-          handleNext()
+          // handleNext()
           if (opts?.onError) {
             opts?.onError?.(error);
           }
         },
         onOpen: (status: ServerConnectionStatusType, event: Event) => {
-          handleNext()
+          // handleNext()
           if (opts?.onOpen) {
             opts?.onOpen?.(status, event);
           }
         },
-      }));
+      });
 
-      if (!queueProcessingTimeoutRef.current) {
-        queueProcessingTimeoutRef.current = setTimeout(
-          processQueue, connectionQueueRef.current.length === 1 ? 0 : throttle);
-      }
+      // connectionQueueRef.current.push(() => handle({
+      //   onError: (error: Event) => {
+      //     handleNext()
+      //     if (opts?.onError) {
+      //       opts?.onError?.(error);
+      //     }
+      //   },
+      //   onOpen: (status: ServerConnectionStatusType, event: Event) => {
+      //     handleNext()
+      //     if (opts?.onOpen) {
+      //       opts?.onOpen?.(status, event);
+      //     }
+      //   },
+      // }));
+
+      // if (!queueProcessingTimeoutRef.current) {
+      //   queueProcessingTimeoutRef.current = setTimeout(
+      //     processQueue,
+      //     0,
+      //     // connectionQueueRef.current.length === 1 ? 0 : throttle,
+      //   );
+      // }
     }
 
     // Max of 6 connections.
@@ -257,24 +260,34 @@ export default function useExecutionManager({
   } {
 
     const subscribe = (consumer: string, options: EventSourceHandlers) => {
-      if (!(channel in channelsRef.current) || !(stream in channelsRef.current[channel])) {
-        registerStream(channel, stream, {
-          ...options,
-          onOpen: (status: ServerConnectionStatusType, event: Event) => {
-            channelsRef.current[channel].streams[stream].consumers[consumer] = { options };
-
-            if (options?.onOpen) {
-              options?.onOpen?.(status, event);
-            }
-          }
-        });
-      }
-
       const map = Object.keys(channelsRef?.current?.[channel]?.streams?.[stream]?.consumers ?? {});
       DEBUG.codeExecution.manager && debugLog('useRegistration.subscribe.before',
         channel, stream, consumer, options, map);
 
-      channelsRef.current[channel].streams[stream].consumers[consumer] = { options };
+      setNested(
+        channelsRef?.current ?? {},
+        [channel, 'options'].join('.'),
+        options,
+      );
+      setNested(
+        channelsRef?.current ?? {},
+        [channel, 'streams', stream, 'options'].join('.'),
+        options,
+      );
+      setNested(
+        channelsRef?.current ?? {},
+        [channel, 'streams', stream, 'consumers', consumer, 'options'].join('.'),
+        options,
+      );
+
+      registerStream(channel, stream, {
+        ...options,
+        onOpen: (status: ServerConnectionStatusType, event: Event) => {
+          if (options?.onOpen) {
+            options?.onOpen?.(status, event);
+          }
+        }
+      });
 
       const map2 = Object.keys(channelsRef?.current?.[channel]?.streams?.[stream]?.consumers ?? {});
       DEBUG.codeExecution.manager && debugLog('useRegistration.subscribe.after',

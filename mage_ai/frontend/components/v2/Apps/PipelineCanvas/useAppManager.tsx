@@ -71,7 +71,7 @@ export default function useAppManager({ activeLevel }: { activeLevel: React.Muta
   const { convertEvent, dispatchAppEvent } = useAppEventsHandler({
     appsRef,
     startApp,
-  } as AppManagerType, {
+  } as any, {
     [CustomAppEventEnum.START_APP]: handleStartApp,
     [CustomAppEventEnum.STOP_APP]: handleStopApp,
     [CustomAppEventEnum.APP_RECT_UPDATED]: handleAppRectUpdated,

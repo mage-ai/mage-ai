@@ -341,17 +341,27 @@ export default function useSettingsManager({
           }
           &.${nodeTypeClassName(ItemTypeEnum.OUTPUT)} {
             z-index: 4;
+
+            @keyframes start {
+              from {
+                opacity: 1;
+              }
+              to {
+                opacity: 0;
+              }
+            }
+
+            &.hidden {
+              animation: start 1s forwards;
+              opacity: 0;
+              max-height: none;
+              pointer-events: none;
+              visibility: hidden;
+              z-index: -1;
+            }
           }
           &.${nodeTypeClassName(ItemTypeEnum.BLOCK)} {
             z-index: 3;
-          }
-
-          .codeExecuted {
-            .${nodeTypeClassName(ItemTypeEnum.OUTPUT)} {
-              opacity: 1;
-              pointer-events: all;
-              visibility: visible;
-            }
           }
         }
       }

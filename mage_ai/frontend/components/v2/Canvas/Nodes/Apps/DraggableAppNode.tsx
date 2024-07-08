@@ -1,7 +1,8 @@
 import Button, { ButtonGroup } from '@mana/elements/Button';
+import EventStreamType from '@interfaces/EventStreamType';
 import Link from '@mana/elements/Link';
 import html2canvas from 'html2canvas';
-import React, { useEffect, useMemo, useRef } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import TextInput from '@mana/elements/Input/TextInput';
 import moment from 'moment';
 import styles from '@styles/scss/components/Canvas/Nodes/DraggableAppNode.module.scss';
@@ -13,7 +14,6 @@ import { getColorNamesFromItems } from '../utils';
 import Grid from '@mana/components/Grid';
 import Text from '@mana/elements/Text';
 import useApp from '../../../Apps/Editor/useApp';
-import useExecutable from '../useExecutable';
 import { DEBUG } from '@components/v2/utils/debug';
 import { DragAndDropType } from '../types';
 import OutputGroups from '../CodeExecution/OutputGroups';
@@ -25,6 +25,7 @@ import { TooltipAlign, TooltipWrapper, TooltipDirection, TooltipJustify } from '
 import { areEqualRects, areDraggableStylesEqual } from '../equals';
 import { convertToMillisecondsTimestamp } from '@utils/date';
 import { draggableProps } from '../draggable/utils';
+import { executionDone } from '@components/v2/ExecutionManager/utils';
 import { setupDraggableHandlers } from '../utils';
 import { CanvasNodeType } from '../interfaces';
 import {
@@ -34,7 +35,6 @@ import {
 } from '@mana/icons';
 import BlockType from '@interfaces/BlockType';
 import { nodeClassNames } from '../utils';
-import { ItemStatusEnum } from '../../types';
 
 const PADDING_HORIZONTAL = 16;
 
@@ -60,8 +60,10 @@ const DraggableAppNode: React.FC<NodeType & CanvasNodeType> = ({
   const fetchDetailCountRef = useRef(0);
   const imageDataRef = useRef<string | null>(null);
   const nodeRef = useRef<HTMLDivElement>(null);
+  const handleOnMessageRef = useRef<(event: EventStreamType) => void>(null);
+  const [executing, setExecuting] = useState(false);
 
-  const { dispatchAppEvent } = useAppEventsHandler(node);
+  const { dispatchAppEvent } = useAppEventsHandler(node as any);
   const { phaseRef } = useDispatchMounted(node, nodeRef);
 
   const app = useMemo(() => (node as AppNodeType)?.app, [node]);
@@ -83,7 +85,21 @@ const DraggableAppNode: React.FC<NodeType & CanvasNodeType> = ({
 
   const {
     executeCode,
-  } = useExecuteCode(undefined, block?.uuid);
+  } = useExecuteCode((block as any)?.uuid, (block as any)?.uuid);
+  const { subscribe, unsubscribe } = useRegistration((block as any)?.uuid, (block as any)?.uuid);
+
+  useEffect(() => {
+    const consumerID = [String(node.id), app.type, app.subtype].filter(Boolean).join(':');
+    subscribe(consumerID, {
+      onMessage: (event: EventStreamType) => {
+        handleOnMessageRef?.current?.(event);
+        if (executionDone(event)) {
+          setExecuting(false);
+        }
+      },
+    })
+    return () => unsubscribe(consumerID);
+  }, [app, node, subscribe, unsubscribe]);
 
   const appOptions = {
     configurations: {
@@ -256,6 +272,7 @@ const DraggableAppNode: React.FC<NodeType & CanvasNodeType> = ({
               backgroundcolor={baseColor}
               basic
               bordercolor={baseColor}
+              loading={executing}
               onClick={() => executeCode(editor.getValue())}
               small
             />
@@ -466,10 +483,7 @@ const DraggableAppNode: React.FC<NodeType & CanvasNodeType> = ({
           )}
 
           <OutputGroups
-            block={block}
-            node={node}
-            source="canvas-editor"
-            useRegistration={useRegistration}
+            handleOnMessageRef={handleOnMessageRef}
           />
         </Grid>
       </div >

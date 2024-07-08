@@ -12,7 +12,8 @@ import {
 import {
   TreeWithArrowsDown, OpenInSidekick,
   Select, SearchV2, CubeWithArrowDown, PaginateArrowRight, BatchSquaresStacked, Table, Circle, BranchAlt, Monitor, Undo,
-  ArrowsAdjustingFrameSquare, Check, Group, TemplateShapes, Trash, GroupV2, ArrowsPointingInFromAllCorners
+  ArrowsAdjustingFrameSquare, Check, Group, TemplateShapes, Trash, GroupV2, ArrowsPointingInFromAllCorners,
+  CloseV2
 } from '@mana/icons';
 import { ClientEventType, EventOperationEnum, EventOperationOptionsType } from '@mana/shared/interfaces';
 import { ItemTypeEnum, LayoutConfigDirectionEnum, TransformRectTypeEnum } from '../../Canvas/types';
@@ -47,6 +48,7 @@ type EventManagerProps = {
   itemsRef: React.MutableRefObject<ItemMappingType>;
   itemIDsByLevelRef: ItemIDsByLevelRef;
   mutateModels: ModelManagerType['mutateModels'];
+  outputsRef: ModelManagerType['outputsRef'];
   portsRef: React.MutableRefObject<PortMappingType>;
   removeContextMenu: RemoveContextMenuType;
   renderConnectionLines: PresentationManagerType['renderConnectionLines'];
@@ -71,6 +73,7 @@ export default function useEventManager({
   itemElementsRef,
   itemsRef,
   mutateModels,
+  outputsRef,
   portsRef,
   selectedGroupsRef,
   removeContextMenu,
@@ -256,6 +259,7 @@ export default function useEventManager({
         dispatchAppEvent(CustomAppEventEnum.START_APP, {
           app,
           event,
+          node: event?.data?.node,
         });
       }
     }
@@ -271,20 +275,30 @@ export default function useEventManager({
     removeContextMenu(event);
 
     const rects = [];
-    itemIDsByLevelRef?.current?.[activeLevel?.current]?.forEach((id, index) => {
+    const itemsToTest = [];
+    itemIDsByLevelRef?.current?.[activeLevel?.current]?.forEach((id) => {
       const item = itemsRef?.current?.[id];
       if (!item) return;
 
-      const element = itemElementsRef?.current?.[item?.type]?.[id]?.current;
+      itemsToTest.push(item);
+      const outputs = Object.values(outputsRef?.current?.[item?.id] ?? {}) ?? [];
+      outputs?.length >= 1 && itemsToTest.push(...(outputs ?? []));
+    });
+
+    itemsToTest.forEach((item: NodeItemType, index: number) => {
+      const element = itemElementsRef?.current?.[item?.type]?.[item?.id]?.current;
       if (!element || !isElementReallyVisible(element)) return;
 
       const { left, top, width, height } = element?.getBoundingClientRect() ?? item?.rect;
 
       rects.push({
-        left, top, width, height,
+        height,
         id: item.id,
         index,
         item,
+        left,
+        top,
+        width,
       });
     });
 
@@ -293,15 +307,30 @@ export default function useEventManager({
 
     const menuItems = [];
 
-    menuItems.push(...(items ?? [
-      {
+    if (target && ItemTypeEnum.OUTPUT === target?.type) {
+      menuItems.push({
+        Icon: CloseV2,
+        onClick: (event: ClientEventType) => {
+          removeContextMenu(event);
+          dispatchAppEvent(CustomAppEventEnum.CLOSE_OUTPUT, {
+            event,
+            node: target,
+          });
+        },
+        uuid: 'Close output',
+      });
+    } else {
+      menuItems.push({
         Icon: Select,
         onClick: (event: ClientEventType) => {
           removeContextMenu(event);
           handleStartDragging();
         },
         uuid: 'Reposition blocks',
-      },
+      });
+    }
+
+    menuItems.push(...(items ?? [
       {
         Icon: SearchV2,
         items: [
