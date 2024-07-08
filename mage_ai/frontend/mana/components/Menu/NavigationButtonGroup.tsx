@@ -17,6 +17,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { DEBUG } from '@components/v2/utils/debug';
 import useKeyboardShortcuts, { KeyboardShortcutsProps } from '../../hooks/shortcuts/useKeyboardShortcuts';
 import { EventEnum, KeyEnum } from '../../events/enums';
+import useCustomEventHandler from '../../events/useCustomEventHandler';
+import { CustomKeyboardEvent, KeyboardPositionType, KeyboardDetailType } from '../../events/interfaces';
 
 type NavigationButtonGroupProps = {
   buildGroups?: (onClick: ItemClickHandler) => MenuItemType[];
@@ -55,7 +57,7 @@ export default function NavigationButtonGroup({
         },
       },
     }, {
-      uuid: 'navigation-button-group',
+      uuid: 'NavigationButtonGroup',
     });
 
     return () => {
@@ -229,7 +231,7 @@ export default function NavigationButtonGroup({
         isOpen={!!currentGroup}
         items={currentItems}
         key={currentGroup?.uuid}
-        // openItems={openItems}
+        openItems={openItems?.slice(openItems?.length - 1)}
         ref={containerRef}
         uuid={currentGroup?.uuid}
       >

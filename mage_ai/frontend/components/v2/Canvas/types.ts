@@ -58,7 +58,6 @@ export enum TransformRectTypeEnum {
   FIT_TO_SELF = 'fit_to_self',
   GRID = 'grid',
   LAYOUT_GRID = 'layout_grid',
-  LAYOUT_RECTANGLE = 'layout_rectangle',
   LAYOUT_SPIRAL = 'layout_spiral',
   LAYOUT_TREE = 'layout_tree',
   LAYOUT_WAVE = 'layout_wave',
@@ -69,4 +68,11 @@ export enum TransformRectTypeEnum {
   SHIFT = 'shift',
   SHIFT_INTO_PARENT = 'shift_into_parent',
   UPDATE = 'update',
+}
+
+export enum LayoutStyleEnum {
+  GRID = TransformRectTypeEnum.LAYOUT_GRID,
+  SPIRAL = TransformRectTypeEnum.LAYOUT_SPIRAL,
+  TREE = TransformRectTypeEnum.LAYOUT_TREE,
+  WAVE = TransformRectTypeEnum.LAYOUT_WAVE,
 }

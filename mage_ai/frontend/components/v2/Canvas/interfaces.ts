@@ -3,7 +3,10 @@ import { RectType as RectTypeBase } from '@mana/shared/interfaces';
 import PipelineType from '@interfaces/PipelineType';
 import { FrameworkType, PipelineExecutionFrameworkBlockType } from '@interfaces/PipelineExecutionFramework/interfaces';
 import { GroupUUIDEnum } from '@interfaces/PipelineExecutionFramework/types';
-import { ItemStatusEnum, RectTransformationScopeEnum, TransformRectTypeEnum, LayoutDisplayEnum } from './types';
+import {
+  LayoutStyleEnum,
+  ItemStatusEnum, RectTransformationScopeEnum, TransformRectTypeEnum, LayoutDisplayEnum
+} from './types';
 import { AppConfigType } from '../Apps/interfaces';
 import { ZoomPanStateType } from '@mana/hooks/useZoomPan';
 
@@ -134,6 +137,7 @@ export interface LayoutConfigType {
   itemRect?: RectType;
   rectTransformations?: RectTransformationType[];
   stagger?: number;
+  style?: LayoutStyleEnum;
   transformRect?: {
     block?: (rect?: RectType) => RectType;
     node?: (rect?: RectType) => RectType;

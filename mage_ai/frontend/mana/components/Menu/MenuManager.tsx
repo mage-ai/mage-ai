@@ -38,7 +38,7 @@ function MenuManager({
     useMenu,
   } = useContext(MenuContext);
   const containerInternalRef = useRef<HTMLDivElement | null>(null);
-  const containerRef = ref || containerInternalRef;
+  const containerRef = (ref || containerInternalRef) as React.RefObject<HTMLDivElement>;
   const { contextMenu, showMenu, hideMenu } = useMenu({
     containerRef,
     uuid,
@@ -89,7 +89,8 @@ function MenuManager({
     } else if (!open) {
       hideMenu();
     }
-  }, [contained, hideMenu, open, getItems, items, showMenu, direction, handleOpen, openItems]);
+  }, [contained, containerRef,
+    hideMenu, open, getItems, items, showMenu, direction, handleOpen, openItems]);
 
   return (
     <>

@@ -1,5 +1,5 @@
 import { LayoutConfigType, NodeType, RectTransformationType } from '../../Canvas/interfaces';
-import { LayoutDisplayEnum } from '../../Canvas/types';
+import { LayoutDisplayEnum, LayoutStyleEnum } from '../../Canvas/types';
 import update from 'immutability-helper';
 import { ItemMappingType, ModelMappingType, NodeItemType, RectType } from '../../Canvas/interfaces';
 import { ZoomPanStateType } from '@mana/hooks/useZoomPan';
@@ -46,6 +46,7 @@ export default function useLayoutManager({
   function rectTransformations({ activeLevel, layoutConfigs, selectedGroupsRef }) {
     const layoutConfig = layoutConfigs?.current?.[activeLevel?.current]?.current ?? {};
 
+    const layoutStyle = layoutConfig?.layoutStyle ?? LayoutStyleEnum.WAVE;
     const direction = layoutConfig?.direction || LayoutConfigDirectionEnum.HORIZONTAL;
     const directionOp = LayoutConfigDirectionEnum.HORIZONTAL === direction
       ? LayoutConfigDirectionEnum.VERTICAL
@@ -129,18 +130,25 @@ export default function useLayoutManager({
       }),
       type: TransformRectTypeEnum.LAYOUT_GRID,
     };
-    const rectangles = {
+    const spiral = {
       options: () => ({
         layout: update(layoutConfig, {
+          containerRef: {
+            $set: canvasRef,
+          },
           gap: {
             $set: {
-              column: 80,
-              row: 80,
+              column: 160,
+              row: 160,
             },
           },
         }),
+        layoutOptions: {
+          angleStep: Math.PI / 12,
+          initialAngle: Math.PI / 6,
+        },
       }),
-      type: TransformRectTypeEnum.LAYOUT_RECTANGLE,
+      type: TransformRectTypeEnum.LAYOUT_SPIRAL,
     };
 
     if (layoutConfig?.rectTransformations) {
@@ -151,31 +159,10 @@ export default function useLayoutManager({
           layoutStyleTransformations.push(tree);
         } else if (TransformRectTypeEnum.LAYOUT_WAVE === type) {
           layoutStyleTransformations.push(wave);
-        } else if (TransformRectTypeEnum.LAYOUT_RECTANGLE === type) {
-          layoutStyleTransformations.push(rectangles);
         } else if (TransformRectTypeEnum.LAYOUT_GRID === type) {
           layoutStyleTransformations.push(grid);
         } else if (TransformRectTypeEnum.LAYOUT_SPIRAL === type) {
-          layoutStyleTransformations.push({
-            options: () => ({
-              layout: update(layoutConfig, {
-                containerRef: {
-                  $set: canvasRef,
-                },
-                gap: {
-                  $set: {
-                    column: 160,
-                    row: 160,
-                  },
-                },
-              }),
-              layoutOptions: {
-                angleStep: Math.PI / 12,
-                initialAngle: Math.PI / 6,
-              },
-            }),
-            type: TransformRectTypeEnum.LAYOUT_SPIRAL,
-          });
+          layoutStyleTransformations.push(spiral);
         }
       });
     }
@@ -195,12 +182,18 @@ export default function useLayoutManager({
     };
     const reset = { type: TransformRectTypeEnum.RESET };
 
+    const LAYOUT_STYLE_MAPPING = {
+      [LayoutStyleEnum.GRID]: [grid],
+      [LayoutStyleEnum.SPIRAL]: [spiral],
+      [LayoutStyleEnum.TREE]: [tree],
+      [LayoutStyleEnum.WAVE]: [wave],
+    };
     const transformers: RectTransformationType[] = [];
 
     if (LayoutDisplayEnum.DETAILED === layoutConfig?.display) {
       const activeGroupConditionSelf = (rect: RectType) => {
         const group = selectedGroupsRef?.current?.[selectedGroupsRef?.current?.length - 1];
-        return !group?.uuid || rect?.block?.uuid === group?.uuid;
+        return !group?.uuid || (rect?.block?.uuid === group?.uuid && rect?.children?.length > 0);
       };
       const activeGroupConditionChild = (rect: RectType) => {
         const group = selectedGroupsRef?.current?.[selectedGroupsRef?.current?.length - 1];
@@ -210,14 +203,15 @@ export default function useLayoutManager({
       transformers.push(...[
         // reset,
         {
-          conditionSelf: (rect: RectType) => !activeGroupConditionSelf(rect),
+          conditionSelf: (rect: RectType) => !activeGroupConditionSelf(rect)
+            || rect?.children?.length === 0,
           options: () => ({
             defaultRect: (rect: RectType) => {
               const element = itemElementsRef?.current?.[rect?.type]?.[rect?.id]?.current;
               const content = element && getClosestChildRole(element, ElementRoleEnum.CONTENT);
               if (content) {
                 const contentRect = content?.getBoundingClientRect();
-                console.log('FIT_TO_SELF', rect.id, element, content, contentRect)
+                // console.log('FIT_TO_SELF', rect.id, element, content, contentRect)
                 return {
                   height: contentRect?.height,
                   width: contentRect?.width,
@@ -298,10 +292,7 @@ export default function useLayoutManager({
         //   type: TransformRectTypeEnum.LAYOUT_RECTANGLE,
         // },
 
-        // tree,
-        // grid,
-        // rectangles,
-        wave,
+        ...(LAYOUT_STYLE_MAPPING[layoutStyle] ?? [wave]),
 
         shift,
         {

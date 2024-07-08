@@ -1,4 +1,5 @@
 import Aside from './Blocks/Aside';
+import useDispatchMounted from './useDispatchMounted';
 import { motion } from 'framer-motion';
 import Badge from '@mana/elements/Badge';
 import BlockGroupOverview from './Blocks/BlockGroupOverview';
@@ -72,6 +73,10 @@ export default function BlockNodeComponent({
     selectedGroup?.groups?.some(g => block?.groups?.includes(g.uuid as GroupUUIDEnum));
   const isGroup =
     useMemo(() => !type || [BlockTypeEnum.GROUP, BlockTypeEnum.PIPELINE].includes(type), [type]);
+  const isSelectedGroup = useMemo(() => selectedGroup?.uuid === block?.uuid, [block, selectedGroup]);
+  const blocksInGroup = useMemo(() => isGroup
+    && Object.values(blocksByGroupRef?.current?.[block?.uuid] ?? {}),
+    [isGroup, blocksByGroupRef, block]);
 
   const { error, required, valid } = useMemo(
     () => isGroup ? groupValidation(block as FrameworkType, blocksByGroupRef?.current) : {
@@ -88,6 +93,8 @@ export default function BlockNodeComponent({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [level, node]);
+
+  useDispatchMounted(node, nodeRef);
 
   const colorNames = blockColorNames(node);
   const borders = borderConfigs(node);
@@ -425,19 +432,24 @@ export default function BlockNodeComponent({
           ...classNames,
         ]?.filter(Boolean)?.join(' ')}
         role={ElementRoleEnum.CONTENT}
-        style={{ height: '100%', position: 'relative' }}
+        style={{
+          height: isSelectedGroup && blocksInGroup?.length > 0
+            ? '100%'
+            : 'fit-content',
+          position: 'relative',
+        }}
       >
         {main}
       </GradientContainer >
     </>
-  ), [classNames, main, timerStatusRef]);
+  ), [blocksInGroup, classNames, isSelectedGroup, main, timerStatusRef]);
 
   return isSiblingGroup ? (
     <TeleportBlock
       block={block}
       buildBadgeRow={buildBadgeRow}
-      role={ElementRoleEnum.CONTENT}
       motionProps={motionProps}
+      role={ElementRoleEnum.CONTENT}
       selectedGroup={selectedGroup}
     />
   ) : content;

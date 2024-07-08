@@ -3,6 +3,7 @@ export enum EventEnum {
   KEYUP = 'keyup',
   MOUSEENTER = 'mouseenter',
   MOUSELEAVE = 'mouseleave',
+  SET_KEYBOARD_NAVIGATION_POSITION = 'set-keyboard-navigation-position',
 }
 
 export enum KeyEnum {

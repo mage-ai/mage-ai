@@ -11,7 +11,6 @@ import stylesOutput from '@styles/scss/components/Canvas/Nodes/OutputNode.module
 import stylesBuilder from '@styles/scss/apps/Canvas/Pipelines/Builder.module.scss';
 import update from 'immutability-helper';
 import useAppEventsHandler, { CustomAppEvent, CustomAppEventEnum } from '../../Apps/PipelineCanvas/useAppEventsHandler';
-import useDispatchMounted from './useDispatchMounted';
 import useOutputManager, { OutputManagerType } from './CodeExecution/useOutputManager';
 import BlockNodeComponent from './BlockNode';
 import { ClientEventType, EventOperationEnum, SubmitEventOperationType } from '@mana/shared/interfaces';
@@ -95,8 +94,6 @@ export const BlockNodeWrapper: React.FC<BlockNodeType> = ({
       }
     }
   });
-
-  useDispatchMounted(node, nodeRef);
 
   useEffect(() => {
     const timeout = timeoutRef.current;

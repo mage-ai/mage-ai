@@ -4,8 +4,11 @@ import { SettingsContext } from '@components/v2/Apps/PipelineCanvas/SettingsMana
 import useAppEventsHandler, { CustomAppEvent, CustomAppEventEnum } from './useAppEventsHandler';
 import { nodeClassNames } from '../../Canvas/Nodes/utils';
 import { ConnectionLines } from '../../Canvas/Connections/ConnectionLines';
-import { ItemStatusEnum, LayoutDisplayEnum, LayoutConfigDirectionEnum, ItemTypeEnum } from '../../Canvas/types';
-import { ItemMappingType, NodeItemType } from '@components/v2/Canvas/interfaces';
+import {
+  LayoutStyleEnum,
+  ItemStatusEnum, LayoutDisplayEnum, LayoutConfigDirectionEnum, ItemTypeEnum
+} from '../../Canvas/types';
+import { LayoutConfigType, NodeItemType } from '@components/v2/Canvas/interfaces';
 import { getBlockColor } from '@mana/themes/blocks';
 import { getPathD } from '../../Canvas/Connections/utils';
 import { indexBy, sortByKey, uniqueArray } from '@utils/array';
@@ -29,8 +32,7 @@ export default function LineManager() {
   const { activeLevel, layoutConfigs, selectedGroupsRef } = useContext(SettingsContext);
   const selectedGroup = selectedGroupsRef?.current?.[selectedGroupsRef?.current?.length - 1];
   const layoutConfig = layoutConfigs?.current?.[activeLevel?.current];
-  const detailLayout = LayoutDisplayEnum.DETAILED === layoutConfig?.current?.display;
-  const isVertical = LayoutConfigDirectionEnum.VERTICAL === layoutConfig?.current?.direction;
+  const { direction, display, style } = layoutConfig?.current ?? {};
 
   const timeoutRef = useRef(null);
   const lineRefs = useRef<Record<string, React.RefObject<SVGPathElement>>>({});
@@ -63,7 +65,7 @@ export default function LineManager() {
 
           pairsByType[node.type].push([node, node2]);
         });
-      } else if (detailLayout && ItemTypeEnum.BLOCK === node?.type) {
+      } else if (LayoutDisplayEnum.DETAILED === display && ItemTypeEnum.BLOCK === node?.type) {
         const { block, rect } = node;
         (block as any)?.downstream_blocks?.forEach((blockUUID: string) => {
           const node2 = nodesByBlock?.[blockUUID];
@@ -97,13 +99,15 @@ export default function LineManager() {
         const idx = ORDER.indexOf(pair[0]?.type);
         return [
           idx >= 0 ? idx : ORDER.length,
-          isVertical
+          LayoutConfigDirectionEnum.VERTICAL === direction
             ? pair[0]?.rect?.top
             : pair[0]?.rect?.left,
         ].join('_')
       })?.forEach(
         ([node, node2], index: number) => {
-          paths[type].push(...renderLine(node, node2, index, itemElementsRef));
+          paths[type].push(...renderLine(node, node2, index, {
+            direction, display, style
+          }));
         });
     })
 
@@ -114,7 +118,11 @@ export default function LineManager() {
     node: NodeItemType,
     node2: NodeItemType,
     index: number,
-    itemElementsRef: LayoutManagerType['itemElementsRef'],
+    opts?: {
+      direction?: LayoutConfigType['direction'];
+      display?: LayoutConfigType['display'];
+      style?: LayoutConfigType['style'];
+    },
   ) {
     const { block } = node;
     const { block: block2 } = node2;
@@ -163,8 +171,24 @@ export default function LineManager() {
     const fromRect = rect;
     const toRect = rect2;
 
-    const fromPosition = isVertical ? 'bottom' : 'right';
-    const toPosition = isVertical ? 'top' : 'left';
+    const positions = {
+      [LayoutConfigDirectionEnum.VERTICAL]: [
+        'bottom',
+        'top',
+      ],
+      [LayoutConfigDirectionEnum.HORIZONTAL]: [
+        'right',
+        'left',
+      ],
+    };
+
+    const { direction, display, style } = opts ?? {};
+    let [fromPosition, toPosition] = positions[direction];
+    if (LayoutDisplayEnum.DETAILED === display && LayoutStyleEnum.WAVE === style) {
+      fromPosition = 'right';
+      toPosition = 'left';
+    }
+
     const pathDOpts = {
       curveControl: 0,
       fromPosition,

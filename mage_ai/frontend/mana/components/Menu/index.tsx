@@ -95,7 +95,7 @@ function MenuItemBase({
   const itemsCount = useMemo(() => items?.length || 0, [items]);
 
   useEffect(() => {
-    if (defaultOpen && ref.current && ref.current.classList.contains('activated')) {
+    if (!defaultOpen && ref.current && ref.current.classList.contains('activated')) {
       timeoutRef.current = setTimeout(() => {
         ref.current?.classList.remove('activated');
       }, 1000);

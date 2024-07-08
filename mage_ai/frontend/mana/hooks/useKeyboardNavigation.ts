@@ -5,6 +5,11 @@ import { CustomKeyboardEvent, KeyboardPositionType, KeyboardDetailType } from '.
 import { DEBUG } from '../utils/debug';
 import { EventEnum, KeyEnum } from '../events/enums';
 import { MenuItemType } from '../components/Menu/interfaces';
+import { range } from '@utils/array';
+
+interface RegisterItemsOptions {
+  position?: KeyboardPositionType;
+}
 
 export interface KeyboardNavigationProps {
   itemFilter?: (item: any) => boolean;
@@ -16,15 +21,33 @@ export default function useKeyboardNavigation({
   target,
 }: KeyboardNavigationProps): {
   itemsRef: React.MutableRefObject<MenuItemType[]>;
-  registerItems: (items: MenuItemType[]) => void;
+  registerItems: (items: MenuItemType[], opts?: RegisterItemsOptions) => void;
   resetPosition: () => void;
 } {
   const itemsRef = useRef<MenuItemType[]>(null);
   const positionRef = useRef<KeyboardPositionType>(null);
+  const timeoutRef = useRef<any>(null);
 
-  const { dispatchCustomEvent } = useCustomEventHandler('useKeyboardNavigation', null, {
+  const { dispatchCustomEvent } = useCustomEventHandler('useKeyboardNavigation', {
+    [EventEnum.SET_KEYBOARD_NAVIGATION_POSITION]: handleSetPosition,
+  }, {
     baseEvent: CustomKeyboardEvent,
   });
+
+  function handleSetPosition(event: CustomKeyboardEvent) {
+    clearTimeout(timeoutRef.current);
+    timeoutRef.current = setTimeout(() => {
+      positionRef.current = [null];
+      event?.detail?.position?.forEach((y: number, x: number) => {
+        if (x >= 1) {
+          handlePositionChange({ x: 1 });
+        }
+        range(y)?.forEach(() => {
+          handlePositionChange({ y: 1 });
+        });
+      });
+    }, 100);
+  }
 
   const { deregisterCommands, registerCommands } = useKeyboardShortcuts({
     target,
@@ -62,6 +85,7 @@ export default function useKeyboardNavigation({
 
   function handlePositionChange({ x, y }: { x?: number; y?: number }) {
     const positionPrevious = [...(positionRef.current ?? [])];
+    console.log(x, y)
     const { item, items } = getCurrentItem();
 
     DEBUG.keyboard.navigation && console.log('position.args', x, y);
@@ -111,14 +135,14 @@ export default function useKeyboardNavigation({
     } as KeyboardDetailType, [key]);
   }
 
-  function registerItems(items: MenuItemType[]) {
+  function registerItems(items: MenuItemType[], opts?: RegisterItemsOptions) {
     itemsRef.current = items;
-    positionRef.current = [null];
+    positionRef.current = opts?.position ?? [null];
 
     registerCommands({
       down: {
         handler: () => handlePositionChange({ y: 1 }),
-        predicate: { key: KeyEnum.ARROWDOWN },
+        predicate: { key: KeyEnum.ARROWDOWN, metaKey: false },
       },
       enter: {
         handler: () => {
@@ -127,19 +151,19 @@ export default function useKeyboardNavigation({
             target: getCurrentItem()?.item,
           } as KeyboardDetailType, [KeyEnum.ENTER]);
         },
-        predicate: { key: KeyEnum.ENTER },
+        predicate: { key: KeyEnum.ENTER, metaKey: false },
       },
       left: {
         handler: () => handlePositionChange({ x: -1 }),
-        predicate: { key: KeyEnum.ARROWLEFT },
+        predicate: { key: KeyEnum.ARROWLEFT, metaKey: false },
       },
       right: {
         handler: () => handlePositionChange({ x: 1 }),
-        predicate: { key: KeyEnum.ARROWRIGHT },
+        predicate: { key: KeyEnum.ARROWRIGHT, metaKey: false },
       },
       up: {
         handler: () => handlePositionChange({ y: -1 }),
-        predicate: { key: KeyEnum.ARROWUP },
+        predicate: { key: KeyEnum.ARROWUP, metaKey: false },
       },
     });
   }

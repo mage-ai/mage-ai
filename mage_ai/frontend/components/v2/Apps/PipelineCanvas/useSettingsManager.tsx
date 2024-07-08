@@ -12,7 +12,8 @@ import { LayoutConfigRef, ModelManagerType, SettingsManagerType } from './interf
 import {
   ItemTypeEnum, ItemStatusEnum, ITEM_TYPES,
   LayoutConfigDirectionEnum, LayoutConfigDirectionOriginEnum,
-  LayoutDisplayEnum
+  LayoutDisplayEnum,
+  LayoutStyleEnum,
 } from '../../Canvas/types';
 import { MenuGroupType } from '@mana/components/Menu/interfaces';
 import { Root, createRoot } from 'react-dom/client';
@@ -61,17 +62,19 @@ export default function useSettingsManager({
   const layoutConfigs = useRef<LayoutConfigRef[]>([
     useRef<LayoutConfigType>(defaultLayoutConfig({
       direction: LayoutConfigDirectionEnum.HORIZONTAL,
-
-    })),
-    useRef<LayoutConfigType>(defaultLayoutConfig({
-      direction: LayoutConfigDirectionEnum.HORIZONTAL,
     })),
     useRef<LayoutConfigType>(defaultLayoutConfig({
       direction: LayoutConfigDirectionEnum.HORIZONTAL,
     })),
     useRef<LayoutConfigType>(defaultLayoutConfig({
       direction: LayoutConfigDirectionEnum.VERTICAL,
+      display: LayoutDisplayEnum.SIMPLE,
+      style: LayoutStyleEnum.WAVE,
+    })),
+    useRef<LayoutConfigType>(defaultLayoutConfig({
+      direction: LayoutConfigDirectionEnum.HORIZONTAL,
       display: LayoutDisplayEnum.DETAILED,
+      style: LayoutStyleEnum.WAVE,
     })),
   ]);
   const optionalGroupsVisible = useRef<boolean>(null);

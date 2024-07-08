@@ -155,7 +155,6 @@ export function transformRects(rectsInit: RectType[], transformations: RectTrans
     } else if (TransformRectTypeEnum.FIT_TO_SELF === type) {
       rects = rects.map((rect) => {
         const rectPrev = defaultRect?.(rect);
-        console.log('SELFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF', rect.id, rect, rectPrev);
         return ({ ...rect, ...rectPrev });
       });
     } else if (TransformRectTypeEnum.PAD === type) {
@@ -225,103 +224,6 @@ function shiftRectsIntoBoundingBox(rects: RectType[], boundingBox: RectType): Re
     left: validateFiniteNumber(rect.left) + validateFiniteNumber(offsetX),
     top: validateFiniteNumber(rect.top) + validateFiniteNumber(offsetY),
   }));
-}
-
-export function layoutItems(items: DragItem[], opts?: SetupOpts): RectType[] {
-  const blocks = items?.map(i => i?.block);
-  const itemsByBlock = indexBy(items, i => i?.block?.uuid);
-
-  const { groupBy, layout } = opts || {};
-
-  const {
-    direction = LayoutConfigDirectionEnum.HORIZONTAL,
-    gap = {
-      column: 40,
-      row: 40,
-    },
-    itemRect = {
-      height: 200,
-      width: 300,
-    },
-  } = { ...DEFAULT_LAYOUT_CONFIG, ...layout };
-
-  const positions: RectType[] = [];
-  const levels: Record<string, number> = {};
-  let maxLevel = 0;
-
-  function determineLevel(item: DragItem): number {
-    const block = item.block;
-    if (levels[block.uuid] !== undefined) {
-      return levels[block.uuid];
-    }
-    if (block.upstream_blocks.length === 0) {
-      levels[block.uuid] = 0;
-    } else {
-      levels[block.uuid] = Math.max(
-        ...block?.upstream_blocks?.map((upstreamId: string) => {
-          const upstreamBlock = blocks.find(b => b.uuid === upstreamId);
-          return upstreamBlock ? determineLevel(itemsByBlock[upstreamBlock?.uuid]) + 1 : 0;
-        }),
-      );
-    }
-    maxLevel = Math.max(maxLevel, levels[block.uuid]);
-    return levels[block.uuid];
-  }
-
-  items.forEach(determineLevel);
-
-  const groups: Record<string, GroupType> = {};
-
-  if (groupBy) {
-    items.forEach(item => {
-      const groupKey = groupBy(item);
-      if (!groups[groupKey]) {
-        groups[groupKey] = { items: [], position: null };
-      }
-      groups[groupKey].items.push(item);
-    });
-  } else {
-    groups['default'] = { items, position: { left: 0, top: 0 } };
-  }
-
-  const currentGroupOffset = { left: 0, top: 0 };
-  const padding = 20; // Additional padding for groups
-
-  Object.values(groups).forEach((group: GroupType) => {
-    const groupBlocks = group.items.map(item => ({
-      ...(item?.rect ?? itemRect),
-      id: item.id,
-      left: 0,
-      top: 0,
-    }));
-
-    const groupedRects = groupRectangles(
-      groupBlocks as RectType[],
-      Math.max(gap?.column, gap?.row),
-    );
-
-    groupedRects.forEach(({ left, top, ...rect }) => {
-      positions.push({
-        ...(rect ?? itemRect),
-        left: currentGroupOffset.left + left,
-        top: currentGroupOffset.top + top,
-      });
-    });
-
-    const groupWidth = Math.max(...groupedRects.map(rect => rect.left + rect.width));
-    const groupHeight = Math.max(...groupedRects.map(rect => rect.top + rect.height));
-
-    // Update the offset for the next group
-    if (direction === LayoutConfigDirectionEnum.HORIZONTAL) {
-      currentGroupOffset.left += groupWidth + Math.max(gap?.column, gap?.row) + padding;
-      currentGroupOffset.top = 0; // Reset top position for horizontal row layout
-    } else {
-      currentGroupOffset.top += groupHeight + Math.max(gap?.column, gap?.row) + padding;
-      currentGroupOffset.left = 0; // Reset left position for vertical column layout
-    }
-  });
-
-  return positions;
 }
 
 export function layoutRectsInContainer(rects: RectType[], layout?: LayoutConfigType): RectType[] {

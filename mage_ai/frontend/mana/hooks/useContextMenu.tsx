@@ -119,6 +119,7 @@ export default function useContextMenu({
   ) {
     const {
       contained,
+      openItems,
       position,
     } = opts ?? {};
 
@@ -135,6 +136,7 @@ export default function useContextMenu({
           event={event}
           items={items}
           keyboardNavigationItemFilter={keyboardNavigationItemFilter}
+          openItems={openItems}
           position={position ?? {
             left: event?.pageX,
             top: event?.pageY,
@@ -151,7 +153,9 @@ export default function useContextMenu({
     }
     render(contextMenuRootRef.current);
 
-    registerItems(items);
+    registerItems(items, openItems ? {
+      position: openItems?.map(({ row }) => row),
+    } : {});
   }
 
   function teardown() {
