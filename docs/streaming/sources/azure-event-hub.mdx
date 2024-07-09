@@ -23,8 +23,8 @@ Mage check out the [documentation](https://docs.mage.ai/production/deploying-to-
   AZURE_STORAGE_ACCOUNT_NAME: "{{ env_var('AZURE_STORAGE_ACCOUNT_NAME') }}"
   AZURE_TENANT_ID: "{{ env_var('AZURE_TENANT_ID') }}"
 ```
-1. Add a data loader block to your pipeline and then select Azure Event Hub as the source.
-2. Complete the data loader block with the information below.
+2. Add a data loader block to your pipeline and then select "Azure Event Hub" as the source.
+3. Complete the data loader block with the information below.
 
 ```YAML
 connector_type: azure_event_hub
@@ -61,7 +61,7 @@ def transform(messages: List[Dict], *args, **kwargs):
     print(f'Transformed messages: {messages}')
     return messages
 ```
-5. Add a data exporter block and select “dummy”
+5. Add a data exporter block and select “Dummy”
 6. Use the default setting as seen below.
 
 ```YAML
