@@ -4,19 +4,6 @@
 
 $enter-duration: 3s;
 
-@mixin hide {
-  opacity: 0;
-  pointer-events: none;
-  visibility: hidden;
-  z-index: -1;
-}
-
-@mixin show {
-  opacity: 1;
-  pointer-events: all;
-  visibility: visible;
-}
-
 .blockNode {
   @include borders.border-colors();
 
@@ -77,8 +64,8 @@ $enter-duration: 3s;
   @include grid.base();
 }
 
-.startUpStatus {
-  /* @include start-up-status; */
+.status {
+  @include start-up-status;
 }
 
 .requiredGroup {
@@ -87,25 +74,4 @@ $enter-duration: 3s;
 
 .emptyGroup {
 
-}
-
-.show {
-  @include show;
-}
-
-.hide {
-  @include hide;
-}
-
-.node {
-  z-index: 2;
-}
-
-.block {
-  z-index: 3;
-}
-
-.app,
-.output {
-  z-index: 4
 }

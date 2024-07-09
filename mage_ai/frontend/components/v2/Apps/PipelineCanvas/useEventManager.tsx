@@ -315,20 +315,22 @@ export default function useEventManager({
 
     const rects = [];
     const itemsToTest = [];
-    itemIDsByLevelRef?.current?.[activeLevel?.current]?.forEach((id) => {
-      const item = itemsRef?.current?.[id];
-      if (!item) return;
 
+    Object.values(itemsRef?.current ?? {})?.forEach((item) => {
       itemsToTest.push(item);
       const outputs = Object.values(outputsRef?.current?.[item?.id] ?? {}) ?? [];
       outputs?.length >= 1 && itemsToTest.push(...(outputs ?? []));
     });
 
     itemsToTest.forEach((item: NodeItemType, index: number) => {
-      const element = itemElementsRef?.current?.[item?.type]?.[item?.id]?.current;
-      if (!element || !isElementReallyVisible(element)) return;
+      // const element = itemElementsRef?.current?.[item?.type]?.[item?.id]?.current;
+      // if (!element || !isElementReallyVisible(element)) return;
+      // const { left, top, width, height } = element?.getBoundingClientRect() ?? item?.rect;
 
-      const { left, top, width, height } = element?.getBoundingClientRect() ?? item?.rect;
+      if (!item?.rect) return;
+      const { left, top, width, height } = item?.rect ?? {};
+
+      if (!left && !top && !width && !height) return;
 
       rects.push({
         height,
@@ -341,7 +343,46 @@ export default function useEventManager({
       });
     });
 
-    const rect = rects?.length >= 1 ? findRectAtPoint(event.pageX, event.pageY, rects) : null;
+    const parseTransform = (transform: string) => {
+      const translateMatch = transform?.match(/translate\(([^)]+)\)/);
+      const scaleMatch = transform?.match(/scale\(([^)]+)\)/);
+
+      let translate = [0, 0];
+      if (translateMatch) {
+        translate = translateMatch ? translateMatch[1].split(',').map(val => parseFloat(val.trim())) : [0, 0];
+
+      }
+
+      let scale = 1;
+      if (scaleMatch) {
+        scale = scaleMatch ? parseFloat(scaleMatch[1]) : 1;
+      }
+
+
+      return { translate, scale };
+    };
+
+    const applyTransform = (
+      event: React.MouseEvent<HTMLButtonElement>,
+      currentTransform: { translate: number[]; scale: number }
+    ) => {
+      const pageX = event.pageX;
+      const pageY = event.pageY;
+
+      // Calculate new translate values based on click position
+      const newTranslateX = pageX - currentTransform.translate[0];
+      const newTranslateY = pageY - currentTransform.translate[1];
+
+      return {
+        translate: [newTranslateX, newTranslateY],
+        scale: currentTransform.scale,
+      };
+    };
+
+
+    const [x1, y1] = applyTransform(event, parseTransform(transformState?.current?.transform?.current)).translate
+    const rect = rects?.length >= 1 ? findRectAtPoint(x1, y1, rects) : null;
+
     const target = rect ? rect.item : null;
 
     const menuItems = [];
@@ -628,10 +669,9 @@ export default function useEventManager({
               // updateNodeLayouts();
 
               appHandlersRef.current?.pipelines.update.mutate({
+                event,
                 onSuccess: () => {
-                  // console.log('event.1')
                   removeContextMenu(event);
-                  // updateNodeLayouts(event);
                 },
                 payload: (pipeline) => ({
                   ...pipeline,

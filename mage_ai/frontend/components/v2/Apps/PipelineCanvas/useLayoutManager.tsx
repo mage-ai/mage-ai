@@ -322,6 +322,16 @@ export default function useLayoutManager({
           type: TransformRectTypeEnum.SHIFT,
         },
         {
+          conditionSelf: (rect: RectType) => rect?.children?.length <= 4,
+          options: (rects: RectType[]) => ({
+            offset: {
+              ...(LayoutConfigDirectionEnum.VERTICAL === direction ? { left: shiftRight(1.85)(rects) } : {}),
+              ...(LayoutConfigDirectionEnum.HORIZONTAL === direction ? { top: shiftDown(1.85)(rects) } : {}),
+            },
+          }),
+          type: TransformRectTypeEnum.SHIFT,
+        },
+        {
           conditionSelf: activeGroupConditionChild,
           scope: RectTransformationScopeEnum.CHILDREN,
           type: TransformRectTypeEnum.SHIFT_INTO_PARENT,

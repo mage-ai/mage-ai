@@ -1,4 +1,5 @@
 import BlockNodeComponent from './BlockNode';
+import stylesBuilder from '@styles/scss/apps/Canvas/Pipelines/Builder.module.scss';
 import useDispatchMounted from './useDispatchMounted';
 import { ItemStatusEnum, ItemTypeEnum, LayoutConfigDirectionEnum, PortSubtypeEnum } from '../types';
 import BlockType, { BlockTypeEnum } from '@interfaces/BlockType';
@@ -50,6 +51,7 @@ export const BlockNodeWrapper: React.FC<BlockNodeType> = ({
   // Attributes
   const controls = useAnimation();
   const block = useMemo(() => node?.block, [node]);
+  const innerRef = useRef(null);
   const { configuration, type, uuid } = block;
 
   const { activeLevel, layoutConfigs, selectedGroupsRef } = useContext(SettingsContext);
@@ -124,26 +126,6 @@ export const BlockNodeWrapper: React.FC<BlockNodeType> = ({
     [CustomAppEventEnum.HIDE_NODES]: handleDismissNode,
   });
 
-  function rectWithoutStyles() {
-    const styles = {};
-    [
-      'height',
-      'left',
-      'minHeight',
-      'minWidth',
-      'top',
-      'width',
-    ].forEach((key) => {
-      styles[key] = nodeRef.current.style[key];
-      nodeRef.current.style[key] = '';
-    });
-    const rect = nodeRef.current.getBoundingClientRect();
-    Object.keys(styles).forEach((key) => {
-      nodeRef.current.style[key] = styles[key];
-    });
-    return rect;
-  }
-
   function resetRect() {
     nodeRef.current.style.minHeight = '';
     nodeRef.current.style.minWidth = '';
@@ -153,17 +135,13 @@ export const BlockNodeWrapper: React.FC<BlockNodeType> = ({
     nodeRef.current.style.left = '';
   }
 
-  console.log("MMMMMMMMMMMMMMM", phaseRef.current, node.id)
-  useDispatchMounted(node, nodeRef, {
-    phaseRef,
-  });
+  useDispatchMounted(node, nodeRef, { phaseRef });
 
   function handleRectUpdated({ detail }: CustomAppEvent) {
-    console.log('UPDATINGGGGGGGGGGGGGGGG???????????????????')
     const { nodes } = detail;
     const mapping = indexBy(nodes, item => item.id);
     const mapping2 = indexBy(nodes, item => item?.block?.uuid);
-    console.log(nodes)
+
     if (!(node.id in mapping) && !(node?.block?.uuid in mapping2)) return;
 
     const curr = mapping[node.id]?.rect;
@@ -171,32 +149,22 @@ export const BlockNodeWrapper: React.FC<BlockNodeType> = ({
     const rect = curr ?? prev;
     const diff = rect?.diff;
 
-    const rectel = nodeRef?.current?.getBoundingClientRect();
-    // const rectwo = rectWithoutStyles();
-
-    const init = rectel?.left === 0 && rectel?.top === 0;
-
-    console.log(
-      node.id,
-      init,
-      rect,
-      diff,
-      areEqualRects({ rect }, { rect: diff }),
-    );
-
-    if (init) {
-      resetRect();
-    }
+    const init = (node.version === 0 || ItemStatusEnum.READY !== node.status) && phaseRef.current === 0;
 
     nodeRef.current.style.height = `${rect.height}px`;
     nodeRef.current.style.width = `${rect.width}px`;
     nodeRef.current.style.transform = `translate(${rect.left}px, ${rect.top}px)`;
+    innerRef.current.style.pointerEvents = 'all';
+    innerRef.current.style.visibility = 'visible';
 
     if (!init && !!diff && !areEqualRects({ rect }, { rect: diff })) {
-      console.log('DIFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF', rect)
-      // nodeRef.current.style.transition = 'width 5s ease, height 5s ease';
+      nodeRef.current.style.transition = [
+        'width 1s cubicBezier(.35, .17, .3, .86)',
+        'height 1s cubicBezier(.35, .17, .3, .86)',
+        'transform 1s cubicBezier(.35, .17, .3, .86)'
+      ].join(', ');
+      dispatchAppEvent(CustomAppEventEnum.NODE_DISPLAYED, { node, nodes });
     } else if (init) {
-
       const easing = cubicBezier(.35, .17, .3, .86);
       controls.set({
         opacity: 0,
@@ -222,24 +190,25 @@ export const BlockNodeWrapper: React.FC<BlockNodeType> = ({
         translateY: 0,
       });
 
-      // handleAnimationCompleteRef.current = () => {
-      //   dispatchAppEvent(CustomAppEventEnum.NODE_DISPLAYED, {
-      //     node,
-      //     nodes,
-      //   });
-      // };
+      handleAnimationCompleteRef.current = () => {
+        dispatchAppEvent(CustomAppEventEnum.NODE_DISPLAYED, { node, nodes });
+      };
     }
 
+    // z-index goes on the outside wrapper
     if (!nodeRef?.current?.classList?.contains(styles[node.type])) {
       nodeRef.current.classList.add(styles[node.type]);
     }
-    if (nodeRef?.current?.classList?.contains(styles.hide)) {
-      nodeRef.current.classList.remove(styles.hide);
+    // visibility goes on the inner wrapper
+    if (innerRef?.current?.classList?.contains(styles.hide)) {
+      innerRef.current.classList.remove(styles.hide);
+    }
+    if (innerRef?.current?.classList?.contains(styles.status)) {
+      innerRef.current.classList.remove(styles.status);
     }
   }
 
   function handleDismissNode({ detail }: CustomAppEvent) {
-    console.log('DISMISSINGGGGGGGGGGGGGGGG???????????????????')
     const { nodes } = detail;
     const mapping = indexBy(nodes, item => item.id);
     if (!(node.id in mapping)) return;
@@ -493,7 +462,7 @@ export const BlockNodeWrapper: React.FC<BlockNodeType> = ({
   // Components
   const sharedProps = useMemo(() => draggableProps({
     classNames: [
-      node?.status && styles[node?.status],
+      // node?.status && styles[node?.status],
       // styles.collapsed,
       // styles.loading,
     ],
@@ -512,7 +481,6 @@ export const BlockNodeWrapper: React.FC<BlockNodeType> = ({
       draggable={draggable}
       handlers={draggingHandlers}
       index={indexProp}
-      layoutConfig={layoutConfig}
       node={node}
       nodeRef={nodeRef}
       onMount={onMount}
@@ -527,7 +495,6 @@ export const BlockNodeWrapper: React.FC<BlockNodeType> = ({
     draggable,
     draggingHandlers,
     indexProp,
-    layoutConfig,
     node,
     nodeRef,
     onMount,
@@ -556,7 +523,7 @@ export const BlockNodeWrapper: React.FC<BlockNodeType> = ({
           {...props2}
           className={[
             props2.className,
-            styles.hide,
+            // styles.hide,
           ].filter(Boolean).join(' ')}
           handleOnMessageRef={handleOnMessageRef}
           handlers={draggingHandlers}
@@ -590,7 +557,7 @@ export const BlockNodeWrapper: React.FC<BlockNodeType> = ({
     return (
       <Wrapper
         {...draggableProps({
-          classNames: [node.status ? styles[node.status] : ''],
+          // classNames: [node.status ? styles[node.status] : ''],
           draggable,
           droppable,
           emptyGroup,
@@ -598,6 +565,10 @@ export const BlockNodeWrapper: React.FC<BlockNodeType> = ({
           requiredGroup,
         })}
         className={[
+          stylesBuilder.nodeWrapper,
+          stylesBuilder[node.type],
+          // This causes a flicker when adding or removing blocks,
+          // DO NOT ADD A CLASS THAT HIDES THIS COMPONENT!!!
           // styles.hide,
           (sharedProps.className || []),
           // Class names reserved for the SettingsManager to determine what is visible
@@ -609,15 +580,23 @@ export const BlockNodeWrapper: React.FC<BlockNodeType> = ({
         nodeRef={nodeRef}
         rect={rect}
       >
-        {runtime}
         <motion.div
           animate={controls}
+          className={[
+            stylesBuilder.inner,
+          ].filter(Boolean).join(' ')}
+          initial={{
+            opacity: Math.max(node.version, phaseRef.current, 0),
+            visibility: Math.max(node.version, phaseRef.current, 0) >= 1 ? 'visible' : undefined,
+          }}
           onAnimationComplete={() => {
             if (handleAnimationCompleteRef?.current) {
               handleAnimationCompleteRef?.current();
             }
           }}
+          ref={innerRef}
         >
+          {runtime}
           {blockNode}
         </motion.div>
         {portalMount && outputNodesMemo?.map(outputNode => createPortal(outputNode, portalMount))}
@@ -638,4 +617,4 @@ export const BlockNodeWrapper: React.FC<BlockNodeType> = ({
   );
 };
 
-export default React.memo(BlockNodeWrapper, (p1, p2) => true);
+export default React.memo(BlockNodeWrapper, (p1, p2) => areEqual(p1, p2) && areEqualApps(p1, p2));

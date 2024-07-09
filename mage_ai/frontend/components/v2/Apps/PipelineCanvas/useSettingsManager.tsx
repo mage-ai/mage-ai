@@ -333,7 +333,6 @@ export default function useSettingsManager({
     const { detail } = event ?? {};
     const { manager, nodes, blocksRemoved } = detail ?? {};
 
-    console.log(nodes, blocksRemoved)
     if (!isEmptyObject(blocksRemoved)) {
       dispatchAppEvent(CustomAppEventEnum.UPDATE_NODE_LAYOUTS, {
         nodes: getDisplayableNodes(),

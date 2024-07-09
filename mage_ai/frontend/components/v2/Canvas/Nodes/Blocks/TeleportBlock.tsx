@@ -17,7 +17,6 @@ import { useContext, useEffect, useMemo, useRef } from 'react';
 export default function TeleportGroup({
   block,
   buildBadgeRow,
-  contentRef,
   index: indexProp,
   role,
   node,
@@ -25,7 +24,6 @@ export default function TeleportGroup({
 }: {
   block: BlockType;
   buildBadgeRow: (props: { inputColorName?: string; outputColorName?: string }) => JSX.Element;
-  contentRef?: React.RefObject<HTMLDivElement>;
   index?: number;
   node?: NodeItemType;
   role?: ElementRoleEnum;
@@ -116,7 +114,6 @@ export default function TeleportGroup({
           borderColor={colorName}
           borders
           padding={12}
-          ref={contentRef}
           style={{
             backgroundColor: 'var(--backgrounds-body)',
             minWidth: 200,

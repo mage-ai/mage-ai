@@ -417,37 +417,47 @@ export default function LineManager() {
   }
 
   function handleLayoutChange(event: CustomAppEvent) {
-    controls.stop();
-    controls.set({
-      opacity: 0,
-      pathLength: 0,
-    });
+    const { animate = false } = event?.detail?.options?.kwargs ?? {};
+
     updateLines(event);
 
-    clearTimeout(timeoutRef.current);
-
-    const easing = cubicBezier(.35, .17, .3, .86);
-    timeoutRef.current = setTimeout(() => {
-      const duration = 0.5;
+    if (animate) {
+      controls.stop();
       controls.set({
         opacity: 0,
         pathLength: 0,
       });
-      controls.start(({
-        index,
-        isOutput,
-      }) => ({
-        ease: easing,
+
+      clearTimeout(timeoutRef.current);
+
+      const easing = cubicBezier(.35, .17, .3, .86);
+      timeoutRef.current = setTimeout(() => {
+        const duration = 0.5;
+        controls.set({
+          opacity: 0,
+          pathLength: 0,
+        });
+        controls.start(({
+          index,
+          isOutput,
+        }) => ({
+          ease: easing,
+          opacity: 1,
+          pathLength: 1,
+          transition: {
+            delay: (index * duration) + (isOutput ? 1 : 0.5),
+            duration: isOutput ? 0.1 : duration * ((100 - index) / 100),
+          },
+        }));
+
+        timeoutRef.current = null;
+      }, 100);
+    } else {
+      controls.set({
         opacity: 1,
         pathLength: 1,
-        transition: {
-          delay: (index * duration) + (isOutput ? 1 : 0.5),
-          duration: isOutput ? 0.1 : duration * ((100 - index) / 100),
-        },
-      }));
-
-      timeoutRef.current = null;
-    }, 100);
+      });
+    }
   }
 
   function handleOutputUpdated({ detail }: CustomAppEvent) {

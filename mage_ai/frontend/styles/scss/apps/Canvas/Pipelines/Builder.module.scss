@@ -1,15 +1,17 @@
 @use '../../../abstracts/helpers' as *;
 @use '../../../base/svg';
 
+@mixin hide {
+  opacity: 0;
+  pointer-events: none;
+  visibility: hidden;
+  z-index: -1;
+}
+
 @mixin show {
   opacity: 1;
   pointer-events: all;
-}
-
-@mixin hidden {
-  opacity: 0;
-  pointer-events: none;
-  z-index: -1;
+  visibility: visible;
 }
 
 @mixin zindexes {
@@ -113,21 +115,25 @@
     }
   }
 
-  /* .app {
-    z-index: 6;
-  }
-
-  .block {
-    z-index: 6;
-  }
-
-  .output {
-    z-index: 6;
+  .nodeWrapper {
   }
 
   .node {
-    z-index: 4;
-  } */
+    z-index: 2;
+  }
+
+  .block {
+    z-index: 3;
+  }
+
+  .app,
+  .output {
+    z-index: 4
+  }
+
+  .inner {
+    @include hide;
+  }
 
   .connectionLines {
     height: 100%;

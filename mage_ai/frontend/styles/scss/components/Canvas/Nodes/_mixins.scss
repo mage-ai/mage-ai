@@ -2,6 +2,7 @@
   opacity: 0;
   pointer-events: none;
   visibility: hidden;
+  z-index: -1;
 
   &.ready {
     opacity: 1;
