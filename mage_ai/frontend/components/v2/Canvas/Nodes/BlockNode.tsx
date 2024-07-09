@@ -1,7 +1,7 @@
 import Aside from './Blocks/Aside';
 import { TooltipDirection, TooltipJustify, TooltipAlign, HideTooltipReason, TooltipLayout, useTooltip } from '@context/Tooltip/Context';
 import useDispatchMounted from './useDispatchMounted';
-import { cubicBezier } from 'framer-motion';
+import { AnimatePresence, cubicBezier } from 'framer-motion';
 import Badge from '@mana/elements/Badge';
 import BlockGroupOverview from './Blocks/BlockGroupOverview';
 import BlockType from '@interfaces/BlockType';
@@ -361,41 +361,43 @@ export default function BlockNodeComponent({
   );
 
   const main = useMemo(() => (
-    <div
-      className={[
-        stylesBlockNode.blockNode,
-      ]?.filter(Boolean)?.join(' ')}
-      style={{
-        height: 'fit-content',
-        minWidth: 300,
-      }}
-    >
-      <Grid templateRows="auto">
-        <Grid rowGap={8} templateRows="auto">
-          {badge && buildBadgeRow({
-            after,
-            badgeFullWidth: !inputs?.length && isGroup,
-          })}
-          {!badge && titleRow}
+    <AnimatePresence>
+      <div
+        className={[
+          stylesBlockNode.blockNode,
+        ]?.filter(Boolean)?.join(' ')}
+        style={{
+          height: 'fit-content',
+          minWidth: 300,
+        }}
+      >
+        <Grid templateRows="auto">
+          <Grid rowGap={8} templateRows="auto">
+            {badge && buildBadgeRow({
+              after,
+              badgeFullWidth: !inputs?.length && isGroup,
+            })}
+            {!badge && titleRow}
+          </Grid>
+          <div className={stylesBlockNode.loader}>
+            <Loading
+              // colorName={colorNames?.hi}
+              // colorNameAlt={colorNames?.md}
+              position="absolute"
+            />
+          </div>
+          {isGroup
+            ? <BlockGroupOverview block={block as FrameworkType} />
+            : (
+              <Grid rowGap={8} templateRows="auto">
+                {connectionRows}
+                {templateConfigurations}
+                {BlockTypeEnum.PIPELINE === block?.type && <div />}
+              </Grid>
+            )}
         </Grid>
-        <div className={stylesBlockNode.loader}>
-          <Loading
-            // colorName={colorNames?.hi}
-            // colorNameAlt={colorNames?.md}
-            position="absolute"
-          />
-        </div>
-        {isGroup
-          ? <BlockGroupOverview block={block as FrameworkType} />
-          : (
-            <Grid rowGap={8} templateRows="auto">
-              {connectionRows}
-              {templateConfigurations}
-              {BlockTypeEnum.PIPELINE === block?.type && <div />}
-            </Grid>
-          )}
-      </Grid>
-    </div>
+      </div>
+    </AnimatePresence>
   ), [badge, buildBadgeRow, block, connectionRows, templateConfigurations, titleRow, after,
     isGroup, inputs],
   );
@@ -442,6 +444,7 @@ export default function BlockNodeComponent({
         position: 'relative',
       }}
     >
+
       {main}
     </GradientContainer >
   ), [blocksInGroup, motionProps, classNames, isSelectedGroup, main]);

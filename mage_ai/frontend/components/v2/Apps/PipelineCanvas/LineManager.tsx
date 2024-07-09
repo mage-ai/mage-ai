@@ -374,10 +374,10 @@ export default function LineManager() {
 
     const keys = ['left', 'top', 'width', 'height'];
 
-    console.log(
-      keys?.map(key => Math.round(fromRect?.[key])).map(String).join(':'),
-      keys?.map(key => Math.round(toRect?.[key])).map(String).join(':'),
-    )
+    // console.log(
+    //   keys?.map(key => Math.round(fromRect?.[key])).map(String).join(':'),
+    //   keys?.map(key => Math.round(toRect?.[key])).map(String).join(':'),
+    // )
 
     return {
       id: lineID,
@@ -416,7 +416,7 @@ export default function LineManager() {
         opacity: 1,
         pathLength: 1,
         transition: {
-          delay: ((index * duration) * 0.7) + (isOutput ? 5 : 1),
+          delay: (index * duration) + (isOutput ? 1 : 0.5),
           duration: isOutput ? 0 : duration * ((100 - index) / 100),
         },
       }));

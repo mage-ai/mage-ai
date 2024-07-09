@@ -92,7 +92,7 @@ export function buildOutputNode(node: NodeItemType, block: BlockType, process: {
   if (rect) {
     outputRect.height = (rect.height ?? 0);
     outputRect.left = (rect.left ?? 0);
-    outputRect.top = (rect.top ?? 0) + (rect.height ?? 0) + 8;
+    outputRect.top = (rect.top ?? 0)
     outputRect.width = (rect.width ?? 0) * 1.5;
   }
 
@@ -102,6 +102,7 @@ export function buildOutputNode(node: NodeItemType, block: BlockType, process: {
     level,
     node: {
       id: node?.id,
+      rect: node?.rect,
     } as any,
     process,
     rect: outputRect,

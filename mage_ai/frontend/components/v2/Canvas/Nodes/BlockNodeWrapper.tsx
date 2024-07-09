@@ -1,40 +1,30 @@
+import BlockNodeComponent from './BlockNode';
+import BlockType, { BlockTypeEnum } from '@interfaces/BlockType';
+import EventStreamType, { ServerConnectionStatusType } from '@interfaces/EventStreamType';
 import OutputNode from './CodeExecution/OutputNode';
-import Tag from '@mana/components/Tag';
-import { formatNumberToDuration } from '@utils/string';
-import { motion } from 'framer-motion';
-import { isElementReallyVisible } from '@utils/elements';
-import { getNewUUID } from '@utils/string';
-import { areEqual, areEqualApps } from './equals'
-import PipelineType from '@interfaces/PipelineType';
 import React from 'react';
+import Tag from '@mana/components/Tag';
 import styles from '@styles/scss/components/Canvas/Nodes/BlockNode.module.scss';
 import stylesButton from '@styles/scss/elements/Button/Button.module.scss';
-import stylesOutput from '@styles/scss/components/Canvas/Nodes/OutputNode.module.scss';
-import stylesBuilder from '@styles/scss/apps/Canvas/Pipelines/Builder.module.scss';
-import update from 'immutability-helper';
 import useAppEventsHandler, { CustomAppEvent, CustomAppEventEnum } from '../../Apps/PipelineCanvas/useAppEventsHandler';
-import useOutputManager, { OutputManagerType } from './CodeExecution/useOutputManager';
-import BlockNodeComponent from './BlockNode';
+import { AppNodeType, NodeType, OutputNodeType, PortType, RectType } from '../interfaces';
+import { BlockNodeWrapperProps } from './types';
 import { ClientEventType, EventOperationEnum, SubmitEventOperationType } from '@mana/shared/interfaces';
-import { ConfigurationType } from '@interfaces/PipelineExecutionFramework/interfaces';
 import { DEBUG } from '@components/v2/utils/debug';
 import { FileType } from '../../IDE/interfaces';
-import { AppNodeType, NodeType, OutputNodeType, PortType, RectType } from '../interfaces';
-import BlockType, { BlockTypeEnum } from '@interfaces/BlockType';
-import { createPortal } from 'react-dom';
-import { draggableProps } from './draggable/utils';
-import { getFileCache, isStale, updateFileCache } from '../../IDE/cache';
-import { isEmptyObject, selectKeys, setNested } from '@utils/hash';
-import EventStreamType, { ServerConnectionStatusType } from '@interfaces/EventStreamType';
-import { setupDraggableHandlers, buildEvent } from './utils';
-import { useCallback, useContext, useEffect, useState, useMemo, useRef } from 'react';
-import { BlockNodeWrapperProps } from './types';
-import { ItemTypeEnum } from '../types';
-import { executionDone } from '@components/v2/ExecutionManager/utils';
-import { nodeClassNames } from './utils';
 import { ModelContext } from '@components/v2/Apps/PipelineCanvas/ModelManager/ModelContext';
 import { SettingsContext } from '@components/v2/Apps/PipelineCanvas/SettingsManager/SettingsContext';
+import { areEqual, areEqualApps } from './equals'
 import { buildOutputNode } from '@components/v2/Apps/PipelineCanvas/utils/items';
+import { createPortal } from 'react-dom';
+import { draggableProps } from './draggable/utils';
+import { executionDone } from '@components/v2/ExecutionManager/utils';
+import { formatNumberToDuration } from '@utils/string';
+import { getFileCache, isStale, updateFileCache } from '../../IDE/cache';
+import { isEmptyObject, selectKeys, setNested } from '@utils/hash';
+import { nodeClassNames } from './utils';
+import { setupDraggableHandlers, buildEvent } from './utils';
+import { useCallback, useContext, useEffect, useState, useMemo, useRef } from 'react';
 
 type BlockNodeType = BlockNodeWrapperProps;
 

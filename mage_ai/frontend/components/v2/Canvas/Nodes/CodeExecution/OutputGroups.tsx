@@ -1,14 +1,13 @@
 import EventStreamType from '@interfaces/EventStreamType';
-import useAppEventsHandler, { CustomAppEvent, CustomAppEventEnum } from '../../../Apps/PipelineCanvas/useAppEventsHandler';
 import ExecutionOutput from './ExecutionOutput';
-import Scrollbar from '@mana/elements/Scrollbar';
-import stylesOutput from '@styles/scss/components/Canvas/Nodes/OutputGroups.module.scss';
 import Grid from '@mana/components/Grid';
 import React, { useEffect, useRef, useState } from 'react';
-import { OutputNodeType } from '../../interfaces';
+import Scrollbar from '@mana/elements/Scrollbar';
+import stylesOutput from '@styles/scss/components/Canvas/Nodes/OutputGroups.module.scss';
+import useAppEventsHandler, { CustomAppEvent, CustomAppEventEnum } from '../../../Apps/PipelineCanvas/useAppEventsHandler';
 import { DEBUG } from '@components/v2/utils/debug';
-import { isEmptyObject } from '@utils/hash';
-import { groupBy } from '@utils/array';
+import { OutputNodeType } from '../../interfaces';
+import { cubicBezier, motion } from 'framer-motion';
 
 export type OutputGroupsType = {
   handleOnMessageRef?: React.MutableRefObject<(event: EventStreamType) => void>;

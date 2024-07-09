@@ -1,6 +1,6 @@
 import BlockType, { BlockTypeEnum } from '@interfaces/BlockType';
 import { LayoutConfigDirectionEnum } from '../../types';
-import { cubicBezier, motion } from 'framer-motion';
+import { AnimatePresence, cubicBezier, motion, useAnimation } from 'framer-motion';
 import { SettingsContext } from '@components/v2/Apps/PipelineCanvas/SettingsManager/SettingsContext';
 import Grid from '@mana/components/Grid';
 import Link from '@mana/elements/Link';
@@ -10,7 +10,7 @@ import { ModelContext } from '@components/v2/Apps/PipelineCanvas/ModelManager/Mo
 import { NodeItemType } from '../../interfaces';
 import { getBlockColor } from '@mana/themes/blocks';
 import { getModeColorName } from '../presentation';
-import { useContext, useMemo } from 'react';
+import { useContext, useEffect, useMemo, useRef } from 'react';
 import { ElementRoleEnum } from '@mana/shared/types';
 
 export default function TeleportGroup({
@@ -28,6 +28,10 @@ export default function TeleportGroup({
   role?: ElementRoleEnum;
   selectedGroup: MenuGroupType;
 }) {
+  const controls = useAnimation();
+  const phaseRef = useRef(0);
+  const timeoutRef = useRef(null);
+
   const { activeLevel, layoutConfigs, selectedGroupsRef } = useContext(SettingsContext);
   const layoutConfig = layoutConfigs?.current?.[activeLevel?.current - 1]?.current;
   const { convertEvent, dispatchAppEvent } = useAppEventsHandler({ block } as any);
@@ -74,14 +78,10 @@ export default function TeleportGroup({
   const colorName =
     getBlockColor(block?.type ?? BlockTypeEnum.GROUP, { getColorName: true })?.names?.base;
 
-  const easing = cubicBezier(.35, .17, .3, .86);
-  const motionProps = {
-    animate: {
-      opacity: 1,
-      translateX: 0,
-      translateY: 0,
-    },
-    initial: {
+  useEffect(() => {
+    const timeout = timeoutRef.current;
+    clearTimeout(timeout);
+    controls.set({
       opacity: 0,
       ...(LayoutConfigDirectionEnum.HORIZONTAL === layoutConfig?.direction
         ? {
@@ -91,14 +91,30 @@ export default function TeleportGroup({
           translateY: 8,
         }
       ),
-    },
-    transition: {
-      // In seconds
-      delay: (node?.index ?? indexProp) / 10,
-      duration: 0.5,
-      ease: easing,
-    },
-  }
+    });
+
+    if (phaseRef.current === 0) {
+      timeoutRef.current = setTimeout(() => {
+        const easing = cubicBezier(.35, .17, .3, .86);
+        controls.start({
+          opacity: 1,
+          transition: {
+            delay: (node?.index ?? indexProp) / 10,
+            duration: 0.5,
+            ease: easing,
+          },
+          translateX: 0,
+          translateY: 0,
+        });
+        phaseRef.current = 1;
+      }, 100);
+    }
+
+    return () => {
+      clearTimeout(timeout);
+      timeoutRef.current = null;
+    };
+  }, [controls, layoutConfig, node, indexProp]);
 
   return (
     <Link
@@ -116,24 +132,24 @@ export default function TeleportGroup({
       }}
       wrap
     >
-      <motion.div
-        {...motionProps}
-      >
-        <Grid
-          borderColor={colorName}
-          borders
-          padding={12}
-          style={{
-            backgroundColor: 'var(--backgrounds-body)',
-            minWidth: 200,
-          }}
-        >
-          {buildBadgeRow({
-            inputColorName: isup && upstreamInGroup?.[0]?.colorName,
-            outputColorName: isdn && downstreamInGroup?.[0]?.colorName,
-          })}
-        </Grid >
-      </motion.div>
+      <AnimatePresence>
+        <motion.div animate={controls}>
+          <Grid
+            borderColor={colorName}
+            borders
+            padding={12}
+            style={{
+              backgroundColor: 'var(--backgrounds-body)',
+              minWidth: 200,
+            }}
+          >
+            {buildBadgeRow({
+              inputColorName: isup && upstreamInGroup?.[0]?.colorName,
+              outputColorName: isdn && downstreamInGroup?.[0]?.colorName,
+            })}
+          </Grid >
+        </motion.div >
+      </AnimatePresence>
     </Link>
   );
 }
