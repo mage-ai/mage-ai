@@ -214,6 +214,25 @@ export default function useEventManager({
           },
         );
       });
+    } else if (ItemTypeEnum.OUTPUT === itemType) {
+      const xy = finalCoords(item.rect.left + x, item.rect.top + y);
+      const item2 = update(item, {
+        rect: {
+          $merge: {
+            left: xy.x,
+            top: xy.y,
+          },
+        },
+      });
+      dispatchAppEvent(CustomAppEventEnum.OUTPUT_UPDATED, {
+        node: item2.node,
+        output: item2,
+        options: {
+          kwargs: {
+            redraw: true,
+          },
+        },
+      });
     }
 
     // const xy = finalCoords(item.rect.left + x, item.rect.top + y);

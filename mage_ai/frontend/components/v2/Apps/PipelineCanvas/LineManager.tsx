@@ -110,7 +110,26 @@ export default function LineManager() {
     [ItemTypeEnum.BLOCK]?: [NodeItemType, NodeItemType][],
     [ItemTypeEnum.NODE]?: [NodeItemType, NodeItemType][],
     [ItemTypeEnum.OUTPUT]?: [NodeItemType, NodeItemType][],
-  }, opts?: { replace?: boolean }) {
+  }, opts?: {
+    redraw?: boolean;
+    replace?: boolean;
+  }) {
+    if (opts?.redraw) {
+      Object.values(pairsByType ?? {})?.forEach(pairs => {
+        pairs?.forEach(([node, node2]) => {
+          const {
+            dvalue,
+            lineID,
+          } = prepareLinePathProps(node, node2);
+          const linePath = lineRefs?.current?.[lineID]?.current;
+          if (!linePath) return;
+          linePath?.setAttribute('d', dvalue);
+        });
+      });
+
+      return;
+    }
+
     const paths = {
       [ItemTypeEnum.BLOCK]: {},
       [ItemTypeEnum.NODE]: {},
@@ -156,16 +175,17 @@ export default function LineManager() {
     }
   }
 
-  function renderLine(
+  function prepareLinePathProps(
     node: NodeItemType,
     node2: NodeItemType,
-    index: number,
     opts?: {
       direction?: LayoutConfigType['direction'];
       display?: LayoutConfigType['display'];
       style?: LayoutConfigType['style'];
     },
-  ): LinePathType {
+  ) {
+    const lineID = getLineID(node.id, node2.id);
+
     const { block } = node;
     const { block: block2 } = node2;
     const isOutput = ItemTypeEnum.OUTPUT === node2?.type;
@@ -185,10 +205,6 @@ export default function LineManager() {
 
     DEBUG.lines.manager && console.log(node.id, node?.rect?.height, rect?.height)
 
-    const paths = [];
-    const lineID = getLineID(node.id, node2.id);
-
-    const gradientID = `${lineID}-grad`;
     const colors = [];
 
     if (isOutput) {
@@ -247,25 +263,42 @@ export default function LineManager() {
       fromPosition,
       toPosition,
     } as any;
+    const dvalue = getPathD(pathDOpts, fromRect, toRect);
 
-    lineRefs.current[lineID] ||= createRef();
-    const lineRef = lineRefs.current[lineID];
+    return {
+      colors,
+      dvalue,
+      fromRect,
+      isOutput,
+      lineID,
+      toRect,
+    };
+  }
+
+  function renderLine(
+    node: NodeItemType,
+    node2: NodeItemType,
+    index: number,
+    opts?: {
+      direction?: LayoutConfigType['direction'];
+      display?: LayoutConfigType['display'];
+      style?: LayoutConfigType['style'];
+    },
+  ): LinePathType {
+    const paths = [];
+
+    const {
+      colors,
+      dvalue,
+      fromRect,
+      isOutput,
+      lineID,
+      toRect,
+    } = prepareLinePathProps(node, node2, opts);
 
     // console.log(lineID, fromRect?.left, fromRect?.top, toRect?.left, toRect?.top)
 
-    const duration = 0.2;
-    const motionProps = isOutput ? {} : {
-      animate: { pathLength: 1 },
-      initial: { pathLength: 0 },
-      transition: {
-        delay: index * duration,
-        duration: duration * ((100 - index) / 100),
-        ease: 'easeInOut',
-        yoyo: Infinity,
-      },
-    };
-
-    const dvalue = getPathD(pathDOpts, fromRect, toRect);
+    const gradientID = `${lineID}-grad`;
 
     if (colors?.length >= 2) {
       paths.push(
@@ -283,6 +316,21 @@ export default function LineManager() {
         </defs>
       );
     }
+
+    lineRefs.current[lineID] ||= createRef();
+    const duration = 0.2;
+    const motionProps = isOutput ? {} : {
+      animate: { pathLength: 1 },
+      initial: { pathLength: 0 },
+      transition: {
+        delay: index * duration,
+        duration: duration * ((100 - index) / 100),
+        ease: 'easeInOut',
+        yoyo: Infinity,
+      },
+    };
+
+    const lineRef = lineRefs.current[lineID];
 
     paths.push(
       <motion.path
@@ -323,13 +371,13 @@ export default function LineManager() {
   }
 
   function handleOutputUpdated({ detail }: CustomAppEvent) {
-    const { node, output } = detail;
+    const { node, output, options } = detail;
 
     renderPaths({
       [ItemTypeEnum.OUTPUT]: [
         [node, output],
       ],
-    });
+    }, options);
   }
 
   useAppEventsHandler({ lineRefs } as any, {
@@ -337,7 +385,7 @@ export default function LineManager() {
       setLinesOutput((prev) => ignoreKeys(prev, [getLineID(node.id, output.id)]));
     },
     [CustomAppEventEnum.NODE_LAYOUTS_CHANGED]: handleLayoutChange,
-    [CustomAppEventEnum.OUTPUT_UPDATED]: handleOutputUpdated
+    [CustomAppEventEnum.OUTPUT_UPDATED]: handleOutputUpdated,
   });
 
   useEffect(() => {
