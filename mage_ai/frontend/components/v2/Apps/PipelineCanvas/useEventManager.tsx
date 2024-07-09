@@ -222,7 +222,8 @@ export default function useEventManager({
       ItemTypeEnum.NODE,
       ItemTypeEnum.OUTPUT,
     ].includes(itemType)) {
-      const xy = finalCoords(item.rect.left + x, item.rect.top + y);
+      const xy = finalCoords(item?.rect?.left + x, item?.rect?.top + y);
+
       const item2 = update(item, {
         rect: {
           $merge: {

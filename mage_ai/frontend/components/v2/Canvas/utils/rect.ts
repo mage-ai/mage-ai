@@ -40,7 +40,7 @@ export function transformRects(rectsInit: RectType[], transformations: RectTrans
     let rects = [...rectsByStage[rectsByStage.length - 1]];
 
     const opts = options ? options?.(rects) : {};
-    const { defaultRect, layout, layoutOptions, offset, padding, rect: rectBase } = opts || {};
+    const { boundingBox, defaultRect, layout, layoutOptions, offset, padding, rect: rectBase } = opts || {};
     const { parent } = rects?.[0] ?? {};
 
     const scopeLog = scope || (initialScope ? `initial=${initialScope}` : null) || 'all';
@@ -122,6 +122,18 @@ export function transformRects(rectsInit: RectType[], transformations: RectTrans
       rects = layoutRectsInSpiral(rects, layout, layoutOptions);
     } else if (TransformRectTypeEnum.SHIFT_INTO_PARENT === type && parent) {
       rects = shiftRectsIntoBoundingBox(rects, parent);
+    } else if (TransformRectTypeEnum.ALIGN_WITHIN_VIEWPORT === type) {
+      const box = calculateBoundingBox(rects);
+      const xoff = (boundingBox.width - box.width) / 2;
+      const yoff = (boundingBox.height - box.height) / 2;
+      rects = rects.map(rect => {
+        if (LayoutConfigDirectionEnum.HORIZONTAL === layout?.direction) {
+          rect.left += xoff;
+        } else if (LayoutConfigDirectionEnum.VERTICAL === layout?.direction) {
+          rect.top += yoff;
+        }
+        return rect;
+      });
     } else if (TransformRectTypeEnum.ALIGN_CHILDREN === type) {
       rects = rects.map((rect) => {
         const { parent } = rect;

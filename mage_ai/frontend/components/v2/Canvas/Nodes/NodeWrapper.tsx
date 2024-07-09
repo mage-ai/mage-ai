@@ -66,7 +66,6 @@ export const NodeWrapper: FC<NodeWrapperProps> = memo(function NodeWrapper({
   className,
   connectDrag,
   draggable,
-  draggingNode,
   droppable,
   handlers,
   node,
@@ -75,44 +74,37 @@ export const NodeWrapper: FC<NodeWrapperProps> = memo(function NodeWrapper({
 }: NodeWrapperProps) {
   const { onDragEnd, onDragStart, onDrop, onMouseDown, onMouseLeave, onMouseOver, onMouseUp } =
     handlers;
-  const itemToDragRef = useRef({
-    ...(draggingNode || node),
-    nodeRef,
-  });
-  const itemToDrag = itemToDragRef.current;
-
   const [{ isDragging }, connectDragBase, preview] = useDrag(
     () => ({
       canDrag: () => {
-        onDragStart({ data: { node: itemToDrag } } as any);
+        onDragStart({ data: { node } } as any);
         return draggable;
       },
       collect: (monitor: DragSourceMonitor) => ({ isDragging: monitor.isDragging() }),
       isDragging: (monitor: DragSourceMonitor) => {
-        const node = monitor.getItem() as NodeItemType;
-        DEBUG.dragging && console.log('NodeWrapper.isDragging', node.id, itemToDrag.id);
-        return node.id === itemToDrag.id;
+        const draggingItem = monitor.getItem() as NodeItemType;
+        return draggingItem.id === node.id;
       },
-      item: itemToDrag,
-      type: itemToDrag?.type,
+      item: node,
+      type: node?.type,
     }),
-    [draggable, itemToDrag, onDragStart],
+    [draggable, node, onDragStart],
   );
 
   const [, connectDrop] = useDrop(
     () => ({
       accept: [ItemTypeEnum.PORT],
-      canDrop: (node: NodeItemType, monitor: DropTargetMonitor) => {
+      canDrop: (droppingItem: NodeItemType, monitor: DropTargetMonitor) => {
         if (!droppable) return false;
 
         if (!monitor.isOver({ shallow: true })) {
           return false;
         }
 
-        if (ItemTypeEnum.BLOCK === node.type) {
-          return node.id !== node.id;
-        } else if (ItemTypeEnum.PORT === node.type) {
-          return (node as PortType).parent.id !== node.id;
+        if (ItemTypeEnum.BLOCK === droppingItem.type) {
+          return droppingItem.id !== node.id;
+        } else if (ItemTypeEnum.PORT === droppingItem.type) {
+          return (droppingItem as PortType).parent.id !== node.id;
         }
 
         return false;
@@ -168,7 +160,7 @@ export const NodeWrapper: FC<NodeWrapperProps> = memo(function NodeWrapper({
       role={[ElementRoleEnum.DRAGGABLE].join(' ')}
       style={getStyles(node, {
         draggable,
-        isDragging: isDragging && itemToDrag?.type === node?.type,
+        isDragging: isDragging && node?.type === node?.type,
         rect,
       })}
     >

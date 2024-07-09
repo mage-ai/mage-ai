@@ -109,7 +109,7 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
     rects: [],
   });
   const [outputIDs, setOutputIDs] = useState<string[]>([]);
-  const [itemRects, _setItemRects] = useMutableState<FlatItemType[]>([]);
+  const [itemRects, _setItemRects, _forceRender] = useMutableState<FlatItemType[]>([]);
   const outputPortalRefs = useRef<Record<string, React.RefObject<HTMLDivElement>>>({});
 
   const { convertEvent, dispatchAppEvent } = useAppEventsHandler(null, {
@@ -218,6 +218,7 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
 
     startTransition(() => {
       _setItemRects(flats);
+      _forceRender();
     });
   }
 

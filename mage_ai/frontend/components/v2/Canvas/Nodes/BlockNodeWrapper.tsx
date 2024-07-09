@@ -164,7 +164,11 @@ export const BlockNodeWrapper: React.FC<BlockNodeType> = ({
         'transform 1s cubicBezier(.35, .17, .3, .86)'
       ].join(', ');
       dispatchAppEvent(CustomAppEventEnum.NODE_DISPLAYED, { node, nodes });
-    } else if (init) {
+    } else if (init
+      || innerRef?.current?.style?.visibility === 'hidden'
+      || innerRef?.current?.style?.visibility === ''
+      || innerRef?.current?.style?.opacity !== '1'
+    ) {
       const easing = cubicBezier(.35, .17, .3, .86);
       controls.set({
         opacity: 0,

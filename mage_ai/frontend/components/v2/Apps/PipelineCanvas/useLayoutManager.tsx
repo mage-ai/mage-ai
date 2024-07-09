@@ -316,21 +316,30 @@ export default function useLayoutManager({
           options: (rects: RectType[]) => ({
             offset: {
               left: shiftRight()(rects),
-              top: shiftDown(1.85)(rects),
+              top: shiftDown()(rects),
             },
           }),
           type: TransformRectTypeEnum.SHIFT,
         },
         {
-          conditionSelf: (rect: RectType) => rect?.children?.length <= 4,
-          options: (rects: RectType[]) => ({
-            offset: {
-              ...(LayoutConfigDirectionEnum.VERTICAL === direction ? { left: shiftRight(1.85)(rects) } : {}),
-              ...(LayoutConfigDirectionEnum.HORIZONTAL === direction ? { top: shiftDown(1.85)(rects) } : {}),
+          options: () => ({
+            boundingBox: canvasRef?.current?.getBoundingClientRect(),
+            layout: {
+              direction: LayoutConfigDirectionEnum.VERTICAL,
             },
           }),
-          type: TransformRectTypeEnum.SHIFT,
+          type: TransformRectTypeEnum.ALIGN_WITHIN_VIEWPORT,
         },
+        // {
+        //   conditionSelf: (rect: RectType) => rect?.children?.length <= 4,
+        //   options: (rects: RectType[]) => ({
+        //     offset: {
+        //       ...(LayoutConfigDirectionEnum.VERTICAL === direction ? { left: shiftRight(1.85)(rects) } : {}),
+        //       ...(LayoutConfigDirectionEnum.HORIZONTAL === direction ? { top: shiftDown(1.85)(rects) } : {}),
+        //     },
+        //   }),
+        //   type: TransformRectTypeEnum.SHIFT,
+        // },
         {
           conditionSelf: activeGroupConditionChild,
           scope: RectTransformationScopeEnum.CHILDREN,
@@ -362,18 +371,89 @@ export default function useLayoutManager({
         // },
         {
           ...wave,
-          layoutOptions: { amplitude: 400, wavelength: 100 },
+          condition: (rects: RectType[]) => {
+            const box = calculateBoundingBox(rects);
+            return 0.75 > (box?.height / canvasRef?.current?.getBoundingClientRect()?.height);
+          },
+          options: () => ({
+            layout: update(layoutConfig ?? {}, {
+              gap: {
+                $set: {
+                  column: 40,
+                  row: 40,
+                },
+              },
+            } as any),
+            layoutOptions: { amplitude: 400, wavelength: 100 },
+          }),
         },
         {
-          options: (rects: RectType[]) => ({
-            offset: {
-              ...(LayoutConfigDirectionEnum.VERTICAL === direction ? { left: shiftRight(1.85)(rects) } : {}),
-              ...(LayoutConfigDirectionEnum.HORIZONTAL === direction ? { top: shiftDown(1.85)(rects) } : {}),
+          ...tree,
+          condition: (rects: RectType[]) => {
+            const box = calculateBoundingBox(rects);
+            return 0.75 < (box?.height / canvasRef?.current?.getBoundingClientRect()?.height);
+          },
+          options: () => ({
+            layout: update(layoutConfig ?? {}, {
+              gap: {
+                $set: {
+                  column: 40,
+                  row: 40,
+                },
+              },
+            } as any),
+          }),
+        },
+        {
+          condition: (rects: RectType[]) => {
+            const box = calculateBoundingBox(rects);
+            return box?.width < canvasRef?.current?.getBoundingClientRect()?.width;
+          },
+          options: () => ({
+            boundingBox: canvasRef?.current?.getBoundingClientRect(),
+            layout: {
+              direction: LayoutConfigDirectionEnum.HORIZONTAL,
             },
           }),
-          scope: RectTransformationScopeEnum.SELF,
+          type: TransformRectTypeEnum.ALIGN_WITHIN_VIEWPORT,
+        },
+        {
+          condition: (rects: RectType[]) => {
+            const box = calculateBoundingBox(rects);
+            return box?.height < canvasRef?.current?.getBoundingClientRect()?.height;
+          },
+          options: () => ({
+            boundingBox: canvasRef?.current?.getBoundingClientRect(),
+            layout: {
+              direction: LayoutConfigDirectionEnum.VERTICAL,
+            },
+          }),
+          type: TransformRectTypeEnum.ALIGN_WITHIN_VIEWPORT,
+        },
+        {
+          condition: (rects: RectType[]) => {
+            const box = calculateBoundingBox(rects);
+            return box?.height > canvasRef?.current?.getBoundingClientRect()?.height;
+          },
+          options: (rects: RectType[]) => ({
+            offset: {
+              top: shiftDown(0.5)(rects),
+            },
+          }),
           type: TransformRectTypeEnum.SHIFT,
-        }
+        },
+        {
+          condition: (rects: RectType[]) => {
+            const box = calculateBoundingBox(rects);
+            return box?.width > canvasRef?.current?.getBoundingClientRect()?.width;
+          },
+          options: (rects: RectType[]) => ({
+            offset: {
+              top: shiftRight(0.5)(rects),
+            },
+          }),
+          type: TransformRectTypeEnum.SHIFT,
+        },
       ] as RectTransformationType[]);
     }
 

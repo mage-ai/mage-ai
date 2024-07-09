@@ -101,17 +101,17 @@ export default function NavigationButtonGroup({
     : (groupsProp ?? []), [buildGroups, groupsProp, handleSelectGroup]);
 
   const handleNavigationUpdate = useCallback((event: CustomAppEvent) => {
-    true && console.log('handleNavigationUpdate', event)
+    DEBUG.header.navigation && console.log('handleNavigationUpdate', event)
     const { defaultGroups } = event?.detail?.options?.kwargs ?? {};
 
     const startingGroups = groups[0];
-    true && console.log('startingGroups', startingGroups)
+    DEBUG.header.navigation && console.log('startingGroups', startingGroups)
     const item = defaultGroups?.reduce((prev, curr) => {
-      true && console.log('prev', prev, 'curr', curr)
+      DEBUG.header.navigation && console.log('prev', prev, 'curr', curr)
       return prev.items[curr.index] ?? prev.items?.find(i => i.uuid === curr.uuid);
     }, startingGroups);
-    true && console.log('item', item)
-    item.onClick({} as any, item);
+    DEBUG.header.navigation && console.log('item', item)
+    item?.onClick({} as any, item);
   }, [groups]);
 
   useAppEventsHandler({} as any, {

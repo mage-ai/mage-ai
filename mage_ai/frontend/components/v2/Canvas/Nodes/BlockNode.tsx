@@ -401,33 +401,6 @@ export default function BlockNodeComponent({
   ), [badge, buildBadgeRow, block, connectionRows, templateConfigurations, titleRow, after,
     isGroup, inputs],
   );
-  const easing = cubicBezier(.35, .17, .3, .86);
-
-  const motionProps = useMemo(() => ({
-    // (ItemStatusEnum.READY === node?.status && node?.version === 1)
-    animate: {
-      opacity: 1,
-      translateX: 0,
-      translateY: 0,
-    },
-    initial: {
-      opacity: 0,
-      ...(LayoutConfigDirectionEnum.HORIZONTAL === layoutConfig?.direction
-        ? {
-          translateX: 16,
-        }
-        : {
-          translateY: 16,
-        }
-      ),
-    },
-    transition: {
-      // In seconds
-      delay: (node?.index ?? indexProp) / 10,
-      duration: 0.05,
-      ease: easing,
-    },
-  }), [indexProp, node, easing, layoutConfig]);
 
   const content = useMemo(() => (
     <GradientContainer

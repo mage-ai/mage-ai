@@ -46,7 +46,7 @@ export function getUpDownstreamColors(
 
   const up = [];
   const dn = [];
-  groupsInParent.forEach((bgroup: BlockType) => {
+  groupsInParent?.forEach((bgroup: BlockType) => {
     const bgroupBlocks = Object.values(blocksByGroup?.[bgroup?.uuid] ?? {}) ?? [];
     const modeColor = getModeColorName(bgroupBlocks)?.base;
     const groupColor = getBlockColor(bgroup?.type ?? BlockTypeEnum.GROUP, { getColorName: true })?.names?.base;
