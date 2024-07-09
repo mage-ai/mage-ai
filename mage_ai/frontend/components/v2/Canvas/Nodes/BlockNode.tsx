@@ -1,7 +1,7 @@
 import Aside from './Blocks/Aside';
 import { TooltipDirection, TooltipJustify, TooltipAlign, HideTooltipReason, TooltipLayout, useTooltip } from '@context/Tooltip/Context';
 import useDispatchMounted from './useDispatchMounted';
-import { motion } from 'framer-motion';
+import { cubicBezier } from 'framer-motion';
 import Badge from '@mana/elements/Badge';
 import BlockGroupOverview from './Blocks/BlockGroupOverview';
 import BlockType from '@interfaces/BlockType';
@@ -23,7 +23,7 @@ import { BlockNode } from './interfaces';
 import { EventOperationEnum } from '@mana/shared/interfaces';
 import { FrameworkType, PipelineExecutionFrameworkBlockType } from '@interfaces/PipelineExecutionFramework/interfaces';
 import { GroupUUIDEnum } from '@interfaces/PipelineExecutionFramework/types';
-import { ItemStatusEnum, ItemTypeEnum, PortSubtypeEnum } from '../types';
+import { ItemStatusEnum, ItemTypeEnum, LayoutConfigDirectionEnum, PortSubtypeEnum } from '../types';
 import { NodeItemType, PortType } from '../interfaces';
 import { ModelContext } from '@components/v2/Apps/PipelineCanvas/ModelManager/ModelContext';
 import { SettingsContext } from '@components/v2/Apps/PipelineCanvas/SettingsManager/SettingsContext';
@@ -66,8 +66,9 @@ export default function BlockNodeComponent({
   const { name, status, type, uuid } = block;
   const [level, setLevel] = useState<number>(0);
 
-  const { activeLevel, layoutConfigs, selectedGroupsRef } = useContext(SettingsContext);
   const { blocksByGroupRef } = useContext(ModelContext);
+  const { activeLevel, layoutConfigs, selectedGroupsRef } = useContext(SettingsContext);
+  const layoutConfig = layoutConfigs?.current?.[activeLevel?.current - 1]?.current;
   const selectedGroup = selectedGroupsRef?.current?.[activeLevel?.current - 1];
   const isSiblingGroup = selectedGroup?.uuid !== block?.uuid &&
     selectedGroup?.groups?.some(g => block?.groups?.includes(g.uuid as GroupUUIDEnum));
@@ -359,32 +360,8 @@ export default function BlockNodeComponent({
     [after, before, label, node],
   );
 
-  const motionProps = useMemo(() => ({
-    animate: {
-      opacity: 1,
-      scale: 1,
-      translateY: 0,
-    },
-    initial: (ItemStatusEnum.READY === node?.status && node?.version === 1) ? {
-      opacity: 0,
-      scale: 0.95,
-      translateY: 10
-    } : {
-      opacity: 1,
-      scale: 1,
-      translateY: 0
-    },
-    transition: {
-      // In seconds
-      delay: (node?.index ?? indexProp) / 10,
-      duration: 0.1,
-      ease: 'easeOut'
-    },
-  }), [indexProp, node]);
-
   const main = useMemo(() => (
-    <motion.div
-      {...motionProps}
+    <div
       className={[
         stylesBlockNode.blockNode,
       ]?.filter(Boolean)?.join(' ')}
@@ -418,10 +395,37 @@ export default function BlockNodeComponent({
             </Grid>
           )}
       </Grid>
-    </motion.div>
+    </div>
   ), [badge, buildBadgeRow, block, connectionRows, templateConfigurations, titleRow, after,
-    motionProps, isGroup, inputs],
+    isGroup, inputs],
   );
+  const easing = cubicBezier(.35, .17, .3, .86);
+
+  const motionProps = useMemo(() => ({
+    // (ItemStatusEnum.READY === node?.status && node?.version === 1)
+    animate: {
+      opacity: 1,
+      translateX: 0,
+      translateY: 0,
+    },
+    initial: {
+      opacity: 0,
+      ...(LayoutConfigDirectionEnum.HORIZONTAL === layoutConfig?.direction
+        ? {
+          translateX: 16,
+        }
+        : {
+          translateY: 16,
+        }
+      ),
+    },
+    transition: {
+      // In seconds
+      delay: (node?.index ?? indexProp) / 10,
+      duration: 0.05,
+      ease: easing,
+    },
+  }), [indexProp, node, easing, layoutConfig]);
 
   const content = useMemo(() => (
     <GradientContainer
@@ -429,6 +433,7 @@ export default function BlockNodeComponent({
       className={[
         ...classNames,
       ]?.filter(Boolean)?.join(' ')}
+      motionProps={motionProps}
       role={ElementRoleEnum.CONTENT}
       style={{
         height: isSelectedGroup && blocksInGroup?.length > 0
@@ -439,15 +444,20 @@ export default function BlockNodeComponent({
     >
       {main}
     </GradientContainer >
-  ), [blocksInGroup, classNames, isSelectedGroup, main]);
+  ), [blocksInGroup, motionProps, classNames, isSelectedGroup, main]);
 
-  return isSiblingGroup ? (
+  const teleportBlock = useMemo(() => (
     <TeleportBlock
       block={block}
       buildBadgeRow={buildBadgeRow}
-      motionProps={motionProps}
+      index={indexProp}
+      node={node}
       role={ElementRoleEnum.CONTENT}
       selectedGroup={selectedGroup}
     />
-  ) : content;
+  ), [block, buildBadgeRow, indexProp, node, selectedGroup]);
+
+  if (isSiblingGroup) return teleportBlock;
+
+  return content;
 }

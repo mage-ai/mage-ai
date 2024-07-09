@@ -4,9 +4,8 @@ import { motion } from 'framer-motion';
 import { NodeItemType } from '../interfaces';
 
 export function linePathKey(linePaths: Record<string, LinePathType>): string {
-  const lines1 = Object.values(linePaths ?? {})
-  const keys1 = lines1?.map(({ key }) => key).sort()?.join('--');
-  return keys1;
+  const arr = Object.values(linePaths ?? {})?.flatMap(lps => lps.flatMap(p => p.key))
+  return arr.filter(Boolean).sort().join('--')
 }
 
 export type LinePathType = {
@@ -47,8 +46,8 @@ const LinesComponent: React.FC<ConnectionLinesProps> = ({
 );
 
 function areEqual(prevProps, nextProps) {
-  const lines1 = Object.values(prevProps?.linePaths ?? {})
-  const lines2 = Object.values(nextProps?.linePaths ?? {})
+  const lines1 = Object.values(prevProps?.linePaths ?? {}) ?? [];
+  const lines2 = Object.values(nextProps?.linePaths ?? {}) ?? [];
   const keys1 = linePathKey(prevProps?.linePaths);
   const keys2 = linePathKey(nextProps?.linePaths);
 
@@ -56,6 +55,7 @@ function areEqual(prevProps, nextProps) {
   //   ['keys1', keys1],
   //   ['keys2', keys2],
   //   keys1 === keys2,
+  //   prevProps, nextProps,
   // );
 
   // console.log(

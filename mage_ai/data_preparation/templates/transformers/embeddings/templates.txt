@@ -1,0 +1,722 @@
+### glove.py
+
+```python
+{% extends "transformers/default.jinja" %}
+{% block imports %}
+import nltk
+from glove import Glove
+from typing import List, Tuple, Union
+
+nltk.download('punkt')
+{{ super() -}}
+{% endblock %}
+
+{% block content %}
+@transformer
+def glove(document_data: Tuple[str, str, str, List[str]], *args, **kwargs) -> Tuple[str, str, str, List[str], List[Union[float, int]]]:
+    """
+    Generate word embeddings by analyzing word co-occurrence statistics in a corpus.
+
+    Args:
+        document_data (Tuple[str, str, str, List[str]]): Tuple containing document_id, document_content, chunk_text, and tokens.
+
+    Returns:
+        Tuple[str, str, str, List[str], List[Union[float, int]]]: Tuple containing document_id, document_content, chunk_text, tokens, and embeddings.
+    """
+    document_id, document_content, chunk_text, tokens = document_data
+    embedding_size = kwargs['embedding_size']
+    window_size = kwargs.get('window_size', 15)
+    iterations = kwargs.get('iterations', 100)
+    min_count = kwargs.get('min_count', 5)
+
+    model = Glove(no_components=embedding_size, learning_rate=0.05)
+    model.fit([tokens], epochs=iterations, no_threads=4, window=window_size, min_count=min_count)
+    model.add_dictionary({word: idx for idx, word in enumerate(tokens)})
+    embeddings = [model.word_vectors[model.dictionary[word]] for word in tokens if word in model.dictionary]
+
+    return document_id, document_content, chunk_text, tokens, embeddings
+{% endblock %}
+```
+
+### fasttext.py
+
+```python
+{% extends "transformers/default.jinja" %}
+{% block imports %}
+import nltk
+from gensim.models import FastText
+from typing import List, Tuple, Union
+
+nltk.download('punkt')
+{{ super() -}}
+{% endblock %}
+
+{% block content %}
+@transformer
+def fasttext(document_data: Tuple[str, str, str, List[str]], *args, **kwargs) -> Tuple[str, str, str, List[str], List[Union[float, int]]]:
+    """
+    Extend Word2Vec by considering subword information, which helps in handling out-of-vocabulary words.
+
+    Args:
+        document_data (Tuple[str, str, str, List[str]]): Tuple containing document_id, document_content, chunk_text, and tokens.
+
+    Returns:
+        Tuple[str, str, str, List[str], List[Union[float, int]]]: Tuple containing document_id, document_content, chunk_text, tokens, and embeddings.
+    """
+    document_id, document_content, chunk_text, tokens = document_data
+    embedding_size = kwargs['embedding_size']
+    window = kwargs.get('window', 5)
+    min_count = kwargs.get('min_count', 1)
+    epochs = kwargs.get('epochs', 5)
+
+    model = FastText(vector_size=embedding_size, window=window, min_count=min_count)
+    model.build_vocab([tokens])
+    model.train([tokens], total_examples=model.corpus_count, epochs=epochs)
+    embeddings = [model.wv[word] for word in tokens]
+
+    return document_id, document_content, chunk_text, tokens, embeddings
+{% endblock %}
+```
+
+### bert.py
+
+```python
+{% extends "transformers/default.jinja" %}
+{% block imports %}
+from transformers import BertTokenizer, BertModel
+import torch
+from typing import List, Tuple, Union
+
+{{ super() -}}
+{% endblock %}
+
+{% block content %}
+@transformer
+def bert(document_data: Tuple[str, str, str, List[str]], *args, **kwargs) -> Tuple[str, str, str, List[str], List[Union[float, int]]]:
+    """
+    A transformer-based model that provides contextual embeddings by considering the entire sentence.
+
+    Args:
+        document_data (Tuple[str, str, str, List[str]]): Tuple containing document_id, document_content, chunk_text, and tokens.
+
+    Returns:
+        Tuple[str, str, str, List[str], List[Union[float, int]]]: Tuple containing document_id, document_content, chunk_text, tokens, and embeddings.
+    """
+    document_id, document_content, chunk_text, tokens = document_data
+    model_name = kwargs['model_name']
+    max_length = kwargs.get('max_length', 128)
+
+    tokenizer = BertTokenizer.from_pretrained(model_name)
+    model = BertModel.from_pretrained(model_name)
+
+    inputs = tokenizer(' '.join(tokens), return_tensors='pt', max_length=max_length, truncation=True, padding='max_length')
+    with torch.no_grad():
+        outputs = model(**inputs)
+
+    embeddings = outputs.last_hidden_state.mean(dim=1).squeeze().tolist()
+
+    return document_id, document_content, chunk_text, tokens, embeddings
+{% endblock %}
+```
+
+### roberta.py
+
+```python
+{% extends "transformers/default.jinja" %}
+{% block imports %}
+from transformers import RobertaTokenizer, RobertaModel
+import torch
+from typing import List, Tuple, Union
+
+{{ super() -}}
+{% endblock %}
+
+{% block content %}
+@transformer
+def roberta(document_data: Tuple[str, str, str, List[str]], *args, **kwargs) -> Tuple[str, str, str, List[str], List[Union[float, int]]]:
+    """
+    An optimized version of BERT with better performance on various NLP tasks.
+
+    Args:
+        document_data (Tuple[str, str, str, List[str]]): Tuple containing document_id, document_content, chunk_text, and tokens.
+
+    Returns:
+        Tuple[str, str, str, List[str], List[Union[float, int]]]: Tuple containing document_id, document_content, chunk_text, tokens, and embeddings.
+    """
+    document_id, document_content, chunk_text, tokens = document_data
+    model_name = kwargs['model_name']
+    max_length = kwargs.get('max_length', 128)
+
+    tokenizer = RobertaTokenizer.from_pretrained(model_name)
+    model = RobertaModel.from_pretrained(model_name)
+
+    inputs = tokenizer(' '.join(tokens), return_tensors='pt', max_length=max_length, truncation=True, padding='max_length')
+    with torch.no_grad():
+        outputs = model(**inputs)
+
+    embeddings = outputs.last_hidden_state.mean(dim=1).squeeze().tolist()
+
+    return document_id, document_content, chunk_text, tokens, embeddings
+{% endblock %}
+```
+
+### gpt.py
+
+```python
+{% extends "transformers/default.jinja" %}
+{% block imports %}
+from transformers import GPT2Tokenizer, GPT2Model
+import torch
+from typing import List, Tuple, Union
+
+{{ super() -}}
+{% endblock %}
+
+{% block content %}
+@transformer
+def gpt(document_data: Tuple[str, str, str, List[str]], *args, **kwargs) -> Tuple[str, str, str, List[str], List[Union[float, int]]]:
+    """
+    Generates embeddings using a generative model pre-trained on a large corpus.
+
+    Args:
+        document_data (Tuple[str, str, str, List[str]]): Tuple containing document_id, document_content, chunk_text, and tokens.
+
+    Returns:
+        Tuple[str, str, str, List[str], List[Union[float, int]]]: Tuple containing document_id, document_content, chunk_text, tokens, and embeddings.
+    """
+    document_id, document_content, chunk_text, tokens = document_data
+    model_name = kwargs['model_name']
+    max_length = kwargs.get('max_length', 128)
+
+    tokenizer = GPT2Tokenizer.from_pretrained(model_name)
+    model = GPT2Model.from_pretrained(model_name)
+
+    inputs = tokenizer(' '.join(tokens), return_tensors='pt', max_length=max_length, truncation=True, padding='max_length')
+    with torch.no_grad():
+        outputs = model(**inputs)
+
+    embeddings = outputs.last_hidden_state.mean(dim=1).squeeze().tolist()
+
+    return document_id, document_content, chunk_text, tokens, embeddings
+{% endblock %}
+```
+
+### t5.py
+
+```python
+{% extends "transformers/default.jinja" %}
+{% block imports %}
+from transformers import T5Tokenizer, T5Model
+import torch
+from typing import List, Tuple, Union
+
+{{ super() -}}
+{% endblock %}
+
+{% block content %}
+@transformer
+def t5(document_data: Tuple[str, str, str, List[str]], *args, **kwargs) -> Tuple[str, str, str, List[str], List[Union[float, int]]]:
+    """
+    A transformer model that converts all NLP problems into a text-to-text format, providing versatile embeddings.
+
+    Args:
+        document_data (Tuple[str, str, str, List[str]]): Tuple containing document_id, document_content, chunk_text, and tokens.
+
+    Returns:
+        Tuple[str, str, str, List[str], List[Union[float, int]]]: Tuple containing document_id, document_content, chunk_text, tokens, and embeddings.
+    """
+    document_id, document_content, chunk_text, tokens = document_data
+    model_name = kwargs['model_name']
+    max_length = kwargs.get('max_length', 128)
+
+    tokenizer = T5Tokenizer.from_pretrained(model_name)
+    model = T5Model.from_pretrained(model_name)
+
+    inputs = tokenizer(' '.join(tokens), return_tensors='pt', max_length=max_length, truncation=True, padding='max_length')
+    with torch.no_grad():
+        outputs = model(**inputs)
+
+    embeddings = outputs.last_hidden_state.mean(dim=1).squeeze().tolist()
+
+    return document_id, document_content, chunk_text, tokens, embeddings
+{% endblock %}
+```
+
+### sentence_bert.py
+
+```python
+{% extends "transformers/default.jinja" %}
+{% block imports %}
+from sentence_transformers import SentenceTransformer
+from typing import List, Tuple, Union
+
+{{ super() -}}
+{% endblock %}
+
+{% block content %}
+@transformer
+def sentence_bert(document_data: Tuple[str, str, str, List[str]], *args, **kwargs) -> Tuple[str, str, str, List[str], List[Union[float, int]]]:
+    """
+    Modifies BERT to derive semantically meaningful sentence embeddings.
+
+    Args:
+        document_data (Tuple[str, str, str, List[str]]): Tuple containing document_id, document_content, chunk_text, and tokens.
+
+    Returns:
+        Tuple[str, str, str, List[str], List[Union[float, int]]]: Tuple containing document_id, document_content, chunk_text, tokens, and embeddings.
+    """
+    document_id, document_content, chunk_text, tokens = document_data
+    model_name = kwargs['model_name']
+    max_length = kwargs.get('max_length', 128)
+
+    model = SentenceTransformer(model_name)
+    embeddings = model.encode(' '.join(tokens))
+
+    return document_id, document_content, chunk_text, tokens, embeddings
+{% endblock %}
+```
+
+### universal_sentence_encoder.py
+
+```python
+{% extends "transformers/default.jinja" %}
+{% block imports %}
+import tensorflow_hub as hub
+from typing import List, Tuple, Union
+
+{{ super() -}}
+{% endblock %}
+
+{% block content %}
+@transformer
+def universal_sentence_encoder(document_data: Tuple[str, str, str, List[str]], *args, **kwargs) -> Tuple[str, str, str, List[str], List[Union[float, int]]]:
+    """
+    Provide embeddings for sentences or phrases, optimized for transfer learning.
+
+    Args:
+        document_data (Tuple[str, str, str, List[str]]): Tuple containing document_id, document_content, chunk_text, and tokens.
+
+    Returns:
+        Tuple[str, str, str, List[str], List[Union[float, int]]]: Tuple containing document_id, document_content, chunk_text, tokens, and embeddings.
+    """
+    document_id, document_content, chunk_text, tokens = document_data
+    model_name = kwargs['model_name']
+
+    embed = hub.load(model_name)
+    embeddings = embed([' '.join(tokens)]).numpy().tolist()[0]
+
+    return document_id, document_content, chunk_text, tokens, embeddings
+{% endblock %}
+```
+
+### sbert.py
+
+```python
+{% extends "transformers/default.jinja" %}
+{% block imports %}
+from sentence_transformers import SentenceTransformer
+from typing import List, Tuple, Union
+
+{{ super() -}}
+{% endblock %}
+
+{% block content %}
+@transformer
+def sbert(document_data: Tuple[str, str, str, List[str]], *args, **kwargs) -> Tuple[str, str, str, List[str], List[Union[float, int]]]:
+    """
+    Sentence-BERT models like all-mpnet-base-v2 provide high-quality sentence embeddings that capture semantic meaning.
+
+    Args:
+        document_data (Tuple[str, str, str, List[str]]): Tuple containing document_id, document_content, chunk_text, and tokens.
+
+    Returns:
+        Tuple[str, str, str, List[str], List[Union[float, int]]]: Tuple containing document_id, document_content, chunk_text, tokens, and embeddings.
+    """
+    document_id, document_content, chunk_text, tokens = document_data
+    model_name = kwargs['model_name']
+    max_length = kwargs.get('max_length', 128)
+
+    model = SentenceTransformer(model_name)
+    embeddings = model.encode(' '.join(tokens))
+
+    return document_id, document_content, chunk_text, tokens, embeddings
+{% endblock %}
+```
+
+### openai_ada.py
+
+```python
+{% extends "transformers/default.jinja" %}
+{% block imports %}
+import openai
+from typing import List, Tuple, Union
+
+{{ super() -}}
+{% endblock %}
+
+{% block content %}
+@transformer
+def openai_ada(document_data: Tuple[str, str, str, List[str]], *args, **kwargs) -> Tuple[str, str, str, List[str], List[Union[float, int]]]:
+    """
+    OpenAI's text-embedding-ada-002 model is a popular choice for creating embeddings.
+
+    Args:
+        document_data (Tuple[str, str, str, List[str]]): Tuple containing document_id, document_content, chunk_text, and tokens.
+
+    Returns:
+        Tuple[str, str, str, List[str], List[Union[float, int]]]: Tuple containing document_id, document_content, chunk_text, tokens, and embeddings.
+    """
+    document_id, document_content, chunk_text, tokens = document_data
+    model_name = kwargs['model_name']
+    api_key = kwargs['api_key']
+    max_length = kwargs.get('max_length', 2048)
+
+    openai.api_key = api_key
+    response = openai.Embedding.create(model=model_name, input=[' '.join(tokens)])
+    embeddings = response['data'][0]['embedding']
+
+    return document_id, document_content, chunk_text, tokens, embeddings
+{% endblock %}
+```
+
+### cohere_embed.py
+
+```python
+{% extends "transformers/default.jinja" %}
+{% block imports %}
+import cohere
+from typing import List, Tuple, Union
+
+{{ super() -}}
+{% endblock %}
+
+{% block content %}
+@transformer
+def cohere_embed(document_data: Tuple[str, str, str, List[str]], *args, **kwargs) -> Tuple[str, str, str, List[str], List[Union[float, int]]]:
+    """
+    Cohere offers powerful embedding models.
+
+    Args:
+        document_data (Tuple[str, str, str, List[str]]): Tuple containing document_id, document_content, chunk_text, and tokens.
+
+    Returns:
+        Tuple[str, str, str, List[str], List[Union[float, int]]]: Tuple containing document_id, document_content, chunk_text, tokens, and embeddings.
+    """
+    document_id, document_content, chunk_text, tokens = document_data
+    model_name = kwargs['model_name']
+    api_key = kwargs['api_key']
+    max_length = kwargs.get('max_length', 512)
+
+    co = cohere.Client(api_key)
+    response = co.embed(model=model_name, texts=[' '.join(tokens)])
+    embeddings = response.embeddings[0]
+    return document_id, document_content, chunk_text, tokens, embeddings
+{% endblock %}
+```
+
+### domain_specific_fine_tuned.py
+
+```python
+{% extends "transformers/default.jinja" %}
+{% block imports %}
+from transformers import AutoTokenizer, AutoModel
+import torch
+from typing import List, Tuple, Union
+
+{{ super() -}}
+{% endblock %}
+
+{% block content %}
+@transformer
+def domain_specific_fine_tuned(document_data: Tuple[str, str, str, List[str]], *args, **kwargs) -> Tuple[str, str, str, List[str], List[Union[float, int]]]:
+    """
+    Pre-trained models fine-tuned on domain-specific data to create better embeddings.
+
+    Args:
+        document_data (Tuple[str, str, str, List[str]]): Tuple containing document_id, document_content, chunk_text, and tokens.
+
+    Returns:
+        Tuple[str, str, str, List[str], List[Union[float, int]]]: Tuple containing document_id, document_content, chunk_text, tokens, and embeddings.
+    """
+    document_id, document_content, chunk_text, tokens = document_data
+    base_model_name = kwargs['base_model_name']
+    fine_tuning_data_path = kwargs['fine_tuning_data_path']
+
+    tokenizer = AutoTokenizer.from_pretrained(base_model_name)
+    model = AutoModel.from_pretrained(fine_tuning_data_path)
+
+    inputs = tokenizer(' '.join(tokens), return_tensors='pt')
+    with torch.no_grad():
+        outputs = model(**inputs)
+
+    embeddings = outputs.last_hidden_state.mean(dim=1).squeeze().tolist()
+
+    return document_id, document_content, chunk_text, tokens, embeddings
+{% endblock %}
+```
+
+### multilingual_models.py
+
+```python
+{% extends "transformers/default.jinja" %}
+{% block imports %}
+from transformers import AutoTokenizer, AutoModel
+import torch
+from typing import List, Tuple, Union
+
+{{ super() -}}
+{% endblock %}
+
+{% block content %}
+@transformer
+def multilingual_models(document_data: Tuple[str, str, str, List[str]], *args, **kwargs) -> Tuple[str, str, str, List[str], List[Union[float, int]]]:
+    """
+    Multilingual embedding models for handling multiple languages.
+
+    Args:
+        document_data (Tuple[str, str, str, List[str]]): Tuple containing document_id, document_content, chunk_text, and tokens.
+
+    Returns:
+        Tuple[str, str, str, List[str], List[Union[float, int]]]: Tuple containing document_id, document_content, chunk_text, tokens, and embeddings.
+    """
+    document_id, document_content, chunk_text, tokens = document_data
+    model_name = kwargs['model_name']
+    max_length = kwargs.get('max_length', 128)
+
+    tokenizer = AutoTokenizer.from_pretrained(model_name)
+    model = AutoModel.from_pretrained(model_name)
+
+    inputs = tokenizer(' '.join(tokens), return_tensors='pt', max_length=max_length, truncation=True, padding='max_length')
+    with torch.no_grad():
+        outputs = model(**inputs)
+
+    embeddings = outputs.last_hidden_state.mean(dim=1).squeeze().tolist()
+
+    return document_id, document_content, chunk_text, tokens, embeddings
+{% endblock %}
+```
+
+### multimodal_embeddings.py
+
+```python
+{% extends "transformers/default.jinja" %}
+{% block imports %}
+from transformers import CLIPModel, CLIPTokenizer
+import torch
+from typing import List, Tuple, Union
+
+{{ super() -}}
+{% endblock %}
+
+{% block content %}
+@transformer
+def multimodal_embeddings(document_data: Tuple[str, str, str, List[str]], *args, **kwargs) -> Tuple[str, str, str, List[str], List[Union[float, int]]]:
+    """
+    Creating unified embeddings across text, images, audio, and video.
+
+    Args:
+        document_data (Tuple[str, str, str, List[str]]): Tuple containing document_id, document_content, chunk_text, and tokens.
+
+    Returns:
+        Tuple[str, str, str, List[str], List[Union[float, int]]]: Tuple containing document_id, document_content, chunk_text, tokens, and embeddings.
+    """
+    document_id, document_content, chunk_text, tokens = document_data
+    model_name = kwargs['model_name']
+    max_length = kwargs.get('max_length', 128)
+
+    tokenizer = CLIPTokenizer.from_pretrained(model_name)
+    model = CLIPModel.from_pretrained(model_name)
+
+    inputs = tokenizer(' '.join(tokens), return_tensors='pt', max_length=max_length, truncation=True, padding='max_length')
+    with torch.no_grad():
+        outputs = model.get_text_features(**inputs)
+
+    embeddings = outputs.mean(dim=1).squeeze().tolist()
+
+    return document_id, document_content, chunk_text, tokens, embeddings
+{% endblock %}
+```
+
+### embedding_truncation_compression.py
+
+```python
+{% extends "transformers/default.jinja" %}
+{% block imports %}
+from transformers import AutoTokenizer, AutoModel
+import torch
+from typing import List, Tuple, Union
+
+{{ super() -}}
+{% endblock %}
+
+{% block content %}
+@transformer
+def embedding_truncation_compression(document_data: Tuple[str, str, str, List[str]], *args, **kwargs) -> Tuple[str, str, str, List[str], List[Union[float, int]]]:
+    """
+    Truncating embeddings to lower dimensions with minimal performance loss.
+
+    Args:
+        document_data (Tuple[str, str, str, List[str]]): Tuple containing document_id, document_content, chunk_text, and tokens.
+
+    Returns:
+        Tuple[str, str, str, List[str], List[Union[float, int]]]: Tuple containing document_id, document_content, chunk_text, tokens, and embeddings.
+    """
+    document_id, document_content, chunk_text, tokens = document_data
+    original_model_name = kwargs['original_model_name']
+    truncated_dim = kwargs['truncated_dim']
+
+    tokenizer = AutoTokenizer.from_pretrained(original_model_name)
+    model = AutoModel.from_pretrained(original_model_name)
+
+    inputs = tokenizer(' '.join(tokens), return_tensors='pt')
+    with torch.no_grad():
+        outputs = model(**inputs)
+
+    # Simulating truncation by taking the first `truncated_dim` values
+    embeddings = outputs.last_hidden_state.mean(dim=1).squeeze()[:truncated_dim].tolist()
+
+    return document_id, document_content, chunk_text, tokens, embeddings
+{% endblock %}
+```
+
+### asymmetric_embeddings.py
+
+```python
+{% extends "transformers/default.jinja" %}
+{% block imports %}
+from transformers import AutoTokenizer, AutoModel
+import torch
+from typing import List, Tuple, Union
+
+{{ super() -}}
+{% endblock %}
+
+{% block content %}
+@transformer
+def asymmetric_embeddings(search_document: Tuple[str, str, str, List[str]], query: Tuple[str, str, str, List[str]], *args, **kwargs) -> Tuple[str, str, str, List[str], List[Union[float, int]], Tuple[str, str, str, List[str], List[Union[float, int]]]]:
+    """
+    Different model embeddings for search documents and queries.
+
+    Args:
+        search_document (Tuple[str, str, str, List[str]]): Search document data.
+        query (Tuple[str, str, str, List[str]]): Query data.
+
+    Returns:
+        Tuple[str, str, str, List[str], List[Union[float, int]]]: Search document embeddings.
+        Tuple[str, str, str, List[str], List[Union[float, int]]]: Query embeddings.
+    """
+    search_document_id, search_document_content, search_chunk_text, search_tokens = search_document
+    query_id, query_content, query_chunk_text, query_tokens = query
+    search_model_name = kwargs['search_model_name']
+    query_model_name = kwargs['query_model_name']
+
+    tokenizer_search = AutoTokenizer.from_pretrained(search_model_name)
+    model_search = AutoModel.from_pretrained(search_model_name)
+    tokenizer_query = AutoTokenizer.from_pretrained(query_model_name)
+    model_query = AutoModel.from_pretrained(query_model_name)
+
+    inputs_search = tokenizer_search(' '.join(search_tokens), return_tensors='pt')
+    inputs_query = tokenizer_query(' '.join(query_tokens), return_tensors='pt')
+
+    with torch.no_grad():
+        outputs_search = model_search(**inputs_search)
+        outputs_query = model_query(**inputs_query)
+
+    embeddings_search = outputs_search.last_hidden_state.mean(dim=1).squeeze().tolist()
+    embeddings_query = outputs_query.last_hidden_state.mean(dim=1).squeeze().tolist()
+
+    return (search_document_id, search_document_content, search_chunk_text, search_tokens, embeddings_search), (query_id, query_content, query_chunk_text, query_tokens, embeddings_query)
+{% endblock %}
+```
+
+### embedding_ensembles.py
+
+```python
+{% extends "transformers/default.jinja" %}
+{% block imports %}
+from transformers import AutoTokenizer, AutoModel
+import torch
+from typing import List, Tuple, Dict, Union
+
+{{ super() -}}
+{% endblock %}
+
+{% block content %}
+@transformer
+def embedding_ensembles(document_data: Tuple[str, str, str, List[str]], *args, **kwargs) -> Tuple[str, str, str, List[str], List[Union[float, int]]]:
+    """
+    Combining multiple embedding models and aggregating their outputs.
+
+    Args:
+        document_data (Tuple[str, str, str, List[str]]): Tuple containing document_id, document_content, chunk_text, and tokens.
+
+    Returns:
+        Tuple[str, str, str, List[str], List[Union[float, int]]]: Combined embeddings.
+    """
+    document_id, document_content, chunk_text, tokens = document_data
+    model_names = kwargs['model_names']
+
+    aggregated_embeddings = None
+
+    for model_name in model_names:
+        tokenizer = AutoTokenizer.from_pretrained(model_name)
+        model = AutoModel.from_pretrained(model_name)
+
+        inputs = tokenizer(' '.join(tokens), return_tensors='pt')
+        with torch.no_grad():
+            outputs = model(**inputs)
+
+        embeddings = outputs.last_hidden_state.mean(dim=1).squeeze().tolist()
+
+        if aggregated_embeddings is None:
+            aggregated_embeddings = torch.tensor(embeddings)
+        else:
+            aggregated_embeddings += torch.tensor(embeddings)
+
+    aggregated_embeddings = (aggregated_embeddings / len(model_names)).tolist()
+
+    return document_id, document_content, chunk_text, tokens, aggregated_embeddings
+{% endblock %}
+```
+
+### embedding_visualization.py
+
+```python
+{% extends "transformers/default.jinja" %}
+{% block imports %}
+import numpy as np
+from sklearn.manifold import TSNE
+from umap import UMAP
+from typing import List, Tuple, Union
+
+{{ super() -}}
+{% endblock %}
+
+{% block content %}
+@transformer
+def embedding_visualization(document_data: Tuple[str, str, str, List[str], List[Union[float, int]]], *args, **kwargs) -> Tuple[str, str, str, List[str], List[Union[float, int]]]:
+    """
+    Project high-dimensional embeddings into 2D/3D space.
+
+    Args:
+        document_data (Tuple[str, str, str, List[str], List[Union[float, int]]]): Tuple containing document_id, document_content, chunk_text, tokens, and embeddings.
+
+    Returns:
+        Tuple[str, str, str, List[str], List[Union[float, int]]]: Tuple containing document_id, document_content, chunk_text, tokens, and reduced_embeddings.
+    """
+    document_id, document_content, chunk_text, tokens, embeddings = document_data
+    method = kwargs['method']
+    n_components = kwargs.get('n_components', 2)
+
+    if method == 't-SNE':
+        reducer = TSNE(n_components=n_components)
+    elif method == 'UMAP':
+        reducer = UMAP(n_components=n_components)
+    else:
+        raise ValueError(f"Unsupported method: {method}")
+
+    reduced_embeddings = reducer.fit_transform(np.array([embeddings])).tolist()[0]
+
+    return document_id, document_content, chunk_text, tokens, reduced_embeddings
+{% endblock %}
+```

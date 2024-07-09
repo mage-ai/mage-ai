@@ -16,16 +16,10 @@ interface SettingsProvider extends SettingsContextType {
 
 export const SettingsProvider: React.FC<SettingsProvider> = ({
   children,
-  activeLevel,
-  layoutConfigs,
-  selectedGroupsRef,
+  ...props
 }: SettingsProvider) => (
   <SettingsContext.Provider
-    value={{
-      activeLevel,
-      layoutConfigs,
-      selectedGroupsRef,
-    }}
+    value={props}
   >
     {children}
   </SettingsContext.Provider>

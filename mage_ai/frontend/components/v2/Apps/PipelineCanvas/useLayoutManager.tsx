@@ -356,7 +356,10 @@ export default function useLayoutManager({
       }, []);
 
       const rects: RectType[] = [];
+      const rectsPrev = {};
       nodes?.forEach((node) => {
+        rectsPrev[node.id] = { ...node.rect };
+
         const nodeRect = {
           ...node?.rect,
           block: node.block,
@@ -365,6 +368,8 @@ export default function useLayoutManager({
 
             const item2a = itemsRef?.current?.[item2?.id] ?? {} as NodeType;
             if (!item2a) return acc;
+
+            rectsPrev[item2a.id] = { ...item2a.rect };
 
             return acc.concat({
               ...item2a.rect,
@@ -379,6 +384,7 @@ export default function useLayoutManager({
               }, []) ?? [],
             });
           }, []) ?? [],
+          diff: node?.rect,
           id: node.id,
           type: node.type,
           upstream: (node?.upstream ?? [])?.map((id: string) => ({
@@ -435,6 +441,7 @@ export default function useLayoutManager({
           item2.rect.left = rect2.left;
           item2.rect.top = rect2.top;
           item2.rect.width = rect2.width;
+          // item2.rect.diff = rectsPrev[item2.id];
 
           itemsT.push(item2);
         });
@@ -448,6 +455,7 @@ export default function useLayoutManager({
         node.rect.left = rect.left;
         node.rect.top = rect.top;
         node.rect.width = rect.width;
+        // node.rect.diff = rectsPrev[node.id];
 
         nodesTransformed.push(node);
       });
@@ -466,6 +474,13 @@ export default function useLayoutManager({
     const items = [];
     Object.values(itemsUpdated).forEach((item) => {
       const itemPrev = itemsRef?.current?.[item.id];
+      const rectPrev = itemPrev?.rect;
+      item.rect.diff = {
+        height: (rectPrev?.height ?? 0),
+        left: (rectPrev?.left ?? 0),
+        top: (rectPrev?.top ?? 0),
+        width: (rectPrev?.width ?? 0),
+      };
       item.version = (itemPrev?.version ?? -1) + 1;
       if (ItemStatusEnum.PENDING_LAYOUT === item?.status) {
         item.status = ItemStatusEnum.READY;

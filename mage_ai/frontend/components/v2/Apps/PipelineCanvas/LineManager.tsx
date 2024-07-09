@@ -1,6 +1,7 @@
 import React, { createRef, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import stylesBuilder from '@styles/scss/apps/Canvas/Pipelines/Builder.module.scss';
 import { ModelContext } from '@components/v2/Apps/PipelineCanvas/ModelManager/ModelContext';
-import { motion } from 'framer-motion';
+import { cubicBezier, motion, useAnimation } from 'framer-motion';
 import { SettingsContext } from '@components/v2/Apps/PipelineCanvas/SettingsManager/SettingsContext';
 import useAppEventsHandler, { CustomAppEvent, CustomAppEventEnum } from './useAppEventsHandler';
 import { nodeClassNames } from '../../Canvas/Nodes/utils';
@@ -37,6 +38,9 @@ export default function LineManager() {
   const selectedGroup = selectedGroupsRef?.current?.[selectedGroupsRef?.current?.length - 1];
   const layoutConfig = layoutConfigs?.current?.[activeLevel?.current];
   const { direction, display, style } = layoutConfig?.current ?? {};
+  const [ready, setState] = useState(false);
+  const readyRef = useRef(false);
+  const controls = useAnimation();
 
   const lineMappingRef = useRef({});
   const timeoutRef = useRef(null);
@@ -338,24 +342,13 @@ export default function LineManager() {
 
     lineRefs.current[node2?.type] ||= {};
     lineRefs.current[node2?.type][lineID] ||= createRef();
-    const duration = 0.2;
-    const motionProps = isOutput ? {} : {
-      animate: { pathLength: 1 },
-      initial: { pathLength: 0 },
-      transition: {
-        delay: index * duration,
-        duration: duration * ((100 - index) / 100),
-        ease: 'easeInOut',
-        yoyo: Infinity,
-      },
-    };
 
     const lineRef = lineRefs.current[node2.type][lineID];
-
     paths.push(
       <motion.path
         className={[LINE_CLASS_NAME].concat(nodeClassNames(node)).filter(Boolean).join(' ')}
         d={dvalue}
+        data-index={index}
         fill="none"
         id={lineID}
         key={lineID}
@@ -367,11 +360,24 @@ export default function LineManager() {
         style={{
           strokeWidth: isOutput ? 2 : 1.5,
         }}
-        {...motionProps}
+        animate={controls}
+        initial={{
+          opacity: 0,
+          pathLength: 0,
+        }}
+        custom={{
+          index,
+          isOutput,
+        }}
       />
     );
 
     const keys = ['left', 'top', 'width', 'height'];
+
+    console.log(
+      keys?.map(key => Math.round(fromRect?.[key])).map(String).join(':'),
+      keys?.map(key => Math.round(toRect?.[key])).map(String).join(':'),
+    )
 
     return {
       id: lineID,
@@ -386,10 +392,37 @@ export default function LineManager() {
   }
 
   function handleLayoutChange(event: CustomAppEvent) {
+    controls.stop();
+    controls.set({
+      opacity: 0,
+      pathLength: 0,
+    });
+    updateLines(event);
+
     clearTimeout(timeoutRef.current);
+
+    const easing = cubicBezier(.35, .17, .3, .86);
     timeoutRef.current = setTimeout(() => {
-      updateLines(event);
-    }, 500);
+      const duration = 0.5;
+      controls.set({
+        opacity: 0,
+        pathLength: 0,
+      });
+      controls.start(({
+        index,
+        isOutput,
+      }) => ({
+        ease: easing,
+        opacity: 1,
+        pathLength: 1,
+        transition: {
+          delay: ((index * duration) * 0.7) + (isOutput ? 5 : 1),
+          duration: isOutput ? 0 : duration * ((100 - index) / 100),
+        },
+      }));
+
+      timeoutRef.current = null;
+    }, 1000);
   }
 
   function handleOutputUpdated({ detail }: CustomAppEvent) {
@@ -456,7 +489,7 @@ export default function LineManager() {
   }, []);
 
   return (
-    <>
+    <div className={stylesBuilder.lineManager}>
       <ConnectionLines
         linePaths={linesBlock}
         zIndex={BASE_Z_INDEX + ORDER[ItemTypeEnum.BLOCK]}
@@ -469,6 +502,6 @@ export default function LineManager() {
         linePaths={linesOutput}
         zIndex={BASE_Z_INDEX + ORDER[ItemTypeEnum.OUTPUT]}
       />
-    </>
+    </div  >
   );
 }

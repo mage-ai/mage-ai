@@ -152,3 +152,11 @@
 .path {
   @include svg.fill-stroke-colors();
 }
+
+.lineManager {
+  &.pending {
+    path {
+      opacity: 0;
+    }
+  }
+}

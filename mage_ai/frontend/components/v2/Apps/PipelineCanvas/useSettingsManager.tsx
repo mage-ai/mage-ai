@@ -1,4 +1,5 @@
 import React, { useRef, useEffect } from 'react';
+import { useAnimation } from 'framer-motion';
 import { update } from './cache';
 import stylesOutput from '@styles/scss/components/Canvas/Nodes/OutputGroups.module.scss';
 import stylesBuilder from '@styles/scss/apps/Canvas/Pipelines/Builder.module.scss';
@@ -35,6 +36,8 @@ export default function useSettingsManager({
   pipelineUUID: string;
   setHeaderData?: (data: any) => void;
 }): SettingsManagerType {
+  const controls = useAnimation();
+
   function defaultLayoutConfig(override?: Partial<LayoutConfigType>) {
     return {
       containerRef,
@@ -209,15 +212,24 @@ export default function useSettingsManager({
     DEBUG.settings.manager && console.log('handleLayoutUpdates', event)
     const { detail } = event ?? {};
     const { classNames, styles } = detail?.options?.kwargs ?? {};
-    // const { nodesUpdated } = detail ?? {};
+
+    controls.set({ opacity: 0 });
 
     classNames && addContainerClassNames(classNames);
     styles && setStyles(styles);
 
-    // if (nodesUpdated?.length > 0) {
-    //   updateVisibleNodes(event);
-    // } else {
-    // }
+    controls.start(({
+      node,
+      nodeRef,
+      rect,
+    }) => {
+      console.log(node, rect);
+
+      return {
+        opacity: 1,
+        transition: { duration: 3 },
+      };
+    });
   }
 
   function updateVisibleNodes(event?: CustomAppEvent) {
@@ -488,6 +500,7 @@ export default function useSettingsManager({
 
   return {
     activeLevel,
+    controls,
     layoutConfigs,
     selectedGroupsRef,
   };

@@ -1,4 +1,6 @@
 import BlockType, { BlockTypeEnum } from '@interfaces/BlockType';
+import { LayoutConfigDirectionEnum } from '../../types';
+import { cubicBezier, motion } from 'framer-motion';
 import { SettingsContext } from '@components/v2/Apps/PipelineCanvas/SettingsManager/SettingsContext';
 import Grid from '@mana/components/Grid';
 import Link from '@mana/elements/Link';
@@ -14,17 +16,20 @@ import { ElementRoleEnum } from '@mana/shared/types';
 export default function TeleportGroup({
   block,
   buildBadgeRow,
-  motionProps,
+  index: indexProp,
   role,
+  node,
   selectedGroup,
 }: {
   block: BlockType;
   buildBadgeRow: (props: { inputColorName?: string; outputColorName?: string }) => JSX.Element;
-  motionProps?: any;
+  index?: number;
+  node?: NodeItemType;
   role?: ElementRoleEnum;
   selectedGroup: MenuGroupType;
 }) {
-  const { activeLevel } = useContext(SettingsContext);
+  const { activeLevel, layoutConfigs, selectedGroupsRef } = useContext(SettingsContext);
+  const layoutConfig = layoutConfigs?.current?.[activeLevel?.current - 1]?.current;
   const { convertEvent, dispatchAppEvent } = useAppEventsHandler({ block } as any);
   const { blocksByGroupRef, groupMappingRef, groupsByLevelRef } = useContext(ModelContext);
   const groupsInLevel = groupsByLevelRef?.current?.[activeLevel?.current - 2];
@@ -69,9 +74,34 @@ export default function TeleportGroup({
   const colorName =
     getBlockColor(block?.type ?? BlockTypeEnum.GROUP, { getColorName: true })?.names?.base;
 
+  const easing = cubicBezier(.35, .17, .3, .86);
+  const motionProps = {
+    animate: {
+      opacity: 1,
+      translateX: 0,
+      translateY: 0,
+    },
+    initial: {
+      opacity: 0,
+      ...(LayoutConfigDirectionEnum.HORIZONTAL === layoutConfig?.direction
+        ? {
+          translateX: 8,
+        }
+        : {
+          translateY: 8,
+        }
+      ),
+    },
+    transition: {
+      // In seconds
+      delay: (node?.index ?? indexProp) / 10,
+      duration: 0.5,
+      ease: easing,
+    },
+  }
+
   return (
     <Link
-      motionProps={motionProps}
       onClick={(event: any) => {
         event.preventDefault();
         dispatchAppEvent(CustomAppEventEnum.TELEPORT_INTO_BLOCK, {
@@ -86,20 +116,24 @@ export default function TeleportGroup({
       }}
       wrap
     >
-      <Grid
-        borderColor={colorName}
-        borders
-        padding={12}
-        style={{
-          backgroundColor: 'var(--backgrounds-body)',
-          minWidth: 200,
-        }}
+      <motion.div
+        {...motionProps}
       >
-        {buildBadgeRow({
-          inputColorName: isup && upstreamInGroup?.[0]?.colorName,
-          outputColorName: isdn && downstreamInGroup?.[0]?.colorName,
-        })}
-      </Grid >
+        <Grid
+          borderColor={colorName}
+          borders
+          padding={12}
+          style={{
+            backgroundColor: 'var(--backgrounds-body)',
+            minWidth: 200,
+          }}
+        >
+          {buildBadgeRow({
+            inputColorName: isup && upstreamInGroup?.[0]?.colorName,
+            outputColorName: isdn && downstreamInGroup?.[0]?.colorName,
+          })}
+        </Grid >
+      </motion.div>
     </Link>
   );
 }
