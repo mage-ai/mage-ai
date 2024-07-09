@@ -149,7 +149,7 @@ export const BlockNodeWrapper: React.FC<BlockNodeType> = ({
     const rect = curr ?? prev;
     const diff = rect?.diff;
 
-    const init = (node.version === 0 || ItemStatusEnum.READY !== node.status) && phaseRef.current === 0;
+    const init = (node.version === 0 || ItemStatusEnum.READY !== node.status) && phaseRef.current <= 1;
 
     nodeRef.current.style.height = `${rect.height}px`;
     nodeRef.current.style.width = `${rect.width}px`;
@@ -206,6 +206,8 @@ export const BlockNodeWrapper: React.FC<BlockNodeType> = ({
     if (innerRef?.current?.classList?.contains(styles.status)) {
       innerRef.current.classList.remove(styles.status);
     }
+
+    phaseRef.current = 2;
   }
 
   function handleDismissNode({ detail }: CustomAppEvent) {
