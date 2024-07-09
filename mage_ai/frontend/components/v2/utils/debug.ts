@@ -15,7 +15,7 @@ export const DEBUG = {
     node: false,
   },
   events: false,
-  itemManager: true,
+  itemManager: false,
   keyboard: false,
   layout: false,
   layoutManager: false,

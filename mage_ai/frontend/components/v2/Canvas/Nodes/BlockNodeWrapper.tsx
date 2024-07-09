@@ -122,6 +122,15 @@ export const BlockNodeWrapper: React.FC<BlockNodeType> = ({
     [CustomAppEventEnum.HIDE_NODES]: handleDismissNode,
   });
 
+  function resetRect() {
+    nodeRef.current.style.minHeight = '';
+    nodeRef.current.style.minWidth = '';
+    nodeRef.current.style.height = '';
+    nodeRef.current.style.width = '';
+    nodeRef.current.style.top = '';
+    nodeRef.current.style.left = '';
+  }
+
   function handleRectUpdated({ detail }: CustomAppEvent) {
     const { nodes } = detail;
     const mapping = indexBy(nodes, item => item.id);
@@ -133,15 +142,14 @@ export const BlockNodeWrapper: React.FC<BlockNodeType> = ({
     const rect = same ? prev : curr;
     const rectel = nodeRef?.current?.getBoundingClientRect();
     // const same2 = rect.left === rectel.left && rect.top === rectel.top;
-    const starting = rectel.left === 0 && rectel.top === 0;
+    // const starting = rectel.left === 0 && rectel.top === 0;
 
     const easing = cubicBezier(.35, .17, .3, .86);
-    if (starting) {
-      nodeRef.current.style.height = `${rect.height}px`;
-      nodeRef.current.style.left = `${rect.left}px`;
-      nodeRef.current.style.top = `${rect.top}px`;
-      nodeRef.current.style.width = `${rect.width}px`;
-    }
+
+    resetRect();
+    nodeRef.current.style.transform = `translate(${rect.left}px, ${rect.top}px)`;
+    nodeRef.current.style.height = `${rect.height}px`;
+    nodeRef.current.style.width = `${rect.width}px`;
 
     controls.set({
       opacity: 0,
@@ -210,12 +218,14 @@ export const BlockNodeWrapper: React.FC<BlockNodeType> = ({
       translateY: 16,
     });
 
+
     dispatchAppEvent(CustomAppEventEnum.NODE_DISMISSED, {
       node,
       nodes,
     });
 
     handleAnimationCompleteRef.current = () => {
+      resetRect();
       ['hide'].forEach(cn => nodeRef.current.classList.add(styles[cn]));
     };
   }

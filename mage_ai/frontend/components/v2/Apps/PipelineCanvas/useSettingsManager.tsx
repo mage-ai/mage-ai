@@ -452,22 +452,23 @@ export default function useSettingsManager({
   function handleNodeMountedPreviously(event) {
     const nodes = getDisplayableNodes();
     const ready = nodes?.every(item => ItemStatusEnum.READY === item.status);
-    if (ready) {
-      dispatchAppEvent(CustomAppEventEnum.NODE_RECT_UPDATED, {
-        nodes,
-      });
-    } else {
-      // Trigger a layout update if some nodes require a layout update.
-      dispatchAppEvent(CustomAppEventEnum.UPDATE_NODE_LAYOUTS, {
-        event: convertEvent(event),
-        nodes,
-        options: {
-          kwargs: {
-            conditions: buildDisplayableConditions() ?? null,
-          },
+    // Trigger a layout update if some nodes require a layout update.
+    console.log('SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS', itemsRef?.current, nodes)
+    dispatchAppEvent(CustomAppEventEnum.UPDATE_NODE_LAYOUTS, {
+      event: convertEvent(event),
+      nodes,
+      options: {
+        kwargs: {
+          conditions: buildDisplayableConditions() ?? null,
         },
-      });
-    }
+      },
+    });
+    // if (ready) {
+    //   dispatchAppEvent(CustomAppEventEnum.NODE_RECT_UPDATED, {
+    //     nodes,
+    //   });
+    // } else {
+    // }
   }
 
   function defaultStylesAndContainerClassNames() {
@@ -521,15 +522,17 @@ export default function useSettingsManager({
   function teleportIntoBlock(event: CustomAppEvent, blockArg?: BlockType) {
     const block = blockArg ?? event?.detail?.block;
 
-    let groups = [...(selectedGroupsRef.current ?? [])];
-    let parent = { ...selectedGroupsRef?.current[selectedGroupsRef?.current?.length - 1] };
-    const isSibling = !!parent
-      && parent?.groups?.length >= 1
-      && parent?.groups?.some(g => block?.groups?.includes((g as any)?.uuid));
+    const groups = [...(selectedGroupsRef.current ?? [])];
+    const parentIndex =
+      groups?.findIndex(g => !!(g as any).children?.find(i => i.uuid === block?.uuid));
 
-    if (isSibling) {
-      groups = [...(selectedGroupsRef.current ?? [])]?.slice(0, selectedGroupsRef?.current?.length - 1);
-      parent = { ...groups[groups.length - 1] };
+    let index = null;
+    let parent = null;
+    let groups2 = [...groups];
+    if (parentIndex >= 0) {
+      groups2 = groups2.slice(0, parentIndex + 1);
+      parent = groups[parentIndex];
+      index = parent.children.findIndex(i => i.uuid === block?.uuid);
     }
 
     dispatchAppEvent(CustomAppEventEnum.UPDATE_HEADER_NAVIGATION, {
@@ -537,11 +540,11 @@ export default function useSettingsManager({
       options: {
         kwargs: {
           defaultGroups: [
-            ...groups,
+            ...groups2,
             {
               groups: parent ? [parent] : [],
-              index: parent ? parent?.items?.findIndex(i => i.uuid === block?.uuid) : null,
-              level: activeLevel?.current ?? 0,
+              index,
+              level: groups2?.length ?? 0,
               uuid: block?.uuid,
             },
           ],

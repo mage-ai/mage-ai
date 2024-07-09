@@ -116,8 +116,6 @@ export default function LineManager() {
       }
     });
 
-    console.log(detail, node?.id, nodes, pairsByType)
-
     renderPaths(pairsByType, {
       replace: false,
     });
@@ -155,8 +153,6 @@ export default function LineManager() {
           paths[type][node.id].push(linePath)
         });
     });
-
-    console.log('!!!!!!!!!!!!!!!!!!!', paths)
 
     if (opts?.replace) {
       setLinesBlock(() => {

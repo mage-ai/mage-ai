@@ -210,11 +210,20 @@ export default function useLayoutManager({
               const element = itemElementsRef?.current?.[rect?.type]?.[rect?.id]?.current;
               const content = element && getClosestChildRole(element, ElementRoleEnum.CONTENT);
               if (content) {
-                const contentRect = content?.getBoundingClientRect();
-                // console.log('FIT_TO_SELF', rect.id, element, content, contentRect)
+                // const contentRect = content?.getBoundingClientRect();
+                const ogstyles = {};
+                ['height', 'width', 'min-height', 'min-width'].forEach((stylename) => {
+                  ogstyles[stylename] = element?.style?.[stylename];
+                  element.style[stylename] = '';
+                });
+                const contentRectWOS = content?.getBoundingClientRect();
+                ['height', 'width', 'min-height', 'min-width'].forEach((stylename) => {
+                  element.style[stylename] = ogstyles[stylename];
+                });
+
                 return {
-                  height: contentRect?.height,
-                  width: contentRect?.width,
+                  height: contentRectWOS?.height,
+                  width: contentRectWOS?.width,
                 };
               }
 
@@ -338,21 +347,30 @@ export default function useLayoutManager({
       ? [nodesFiltered.map(item => item.id)]
       : itemIDsByLevelRef?.current;
 
+    const itemsByNodeID = {};
+
     arrs?.forEach((ids: string[], level: number) => {
       const nodes = [] as NodeType[];
 
       ids.forEach((nodeID: string) => {
-        const node = itemsRef?.current?.[nodeID] as NodeType;
+        const node = { ...(itemsRef?.current?.[nodeID] as NodeType) };
         if (!node) return;
 
         if (ItemTypeEnum.NODE === node?.type) {
-          node.items = node.items?.reduce((acc, i1) => {
+          itemsByNodeID[node.id] = [[...(node.items ?? [])]];
+          const arr = node.items?.reduce((acc, i1) => {
             if (!i1) return acc;
             const item = itemsRef?.current?.[typeof i1 === 'string' ? i1 : i1.id] as NodeItemType;
             if (!item) return acc;
 
             return acc.concat(item);
           }, []);
+
+          if (itemsByNodeID[node.id] === arr?.length) {
+            itemsByNodeID[node.id].push(arr);
+          }
+
+          node.items = arr
 
           if ((conditions ?? []).length === 0 || displayable(node, conditions)) {
             nodes.push(node);
@@ -365,13 +383,16 @@ export default function useLayoutManager({
       nodes?.forEach((node) => {
         rectsPrev[node.id] = { ...node.rect };
 
+        const itemsDisplayable =
+          [...(node?.items ?? [])].filter(item => !conditions || displayable(item, conditions));
+
         const nodeRect = {
           ...node?.rect,
           block: node.block,
-          children: node?.items?.reduce((acc, item2: NodeType) => {
+          children: itemsDisplayable?.reduce((acc, item2: NodeType) => {
             if (!item2) return acc;
 
-            const item2a = itemsRef?.current?.[item2?.id] ?? {} as NodeType;
+            const item2a = { ...(itemsRef?.current?.[item2?.id] ?? {} as NodeType) };
             if (!item2a) return acc;
 
             rectsPrev[item2a.id] = { ...item2a.rect };
@@ -382,7 +403,7 @@ export default function useLayoutManager({
               left: null,
               top: null,
               upstream: (item2a as NodeType)?.upstream?.reduce((acc3: RectType[], id3: string) => {
-                const item3 = itemsRef?.current?.[id3];
+                const item3 = { ...(itemsRef?.current?.[id3]) };
                 if (!item3) return acc3;
 
                 return acc3.concat({ ...item3.rect, id: id3, left: null, top: null });
@@ -400,15 +421,23 @@ export default function useLayoutManager({
           })),
         };
 
-        if (node?.items?.length !== nodeRect?.children?.length) {
-          console.error(
-            `[Attempting to build rect children] Node ${node.id} in level ${level} ` +
-            `has ${node?.items?.length} items, ` +
-            `but rect has ${nodeRect?.children?.length}`,
-            node,
-            nodeRect,
-          );
-          return;
+        // if (node?.items?.length !== nodeRect?.children?.length) {
+        //   console.error(
+        //     `[Attempting to build rect children] Node ${node.id} in level ${level} ` +
+        //     `has ${node?.items?.length} items, ` +
+        //     `but rect has ${nodeRect?.children?.length}`,
+        //     node,
+        //     nodeRect,
+        //   );
+        //   return;
+        // }
+        const el = itemElementsRef?.current?.[node.id];
+        if (el) {
+          el.style.width = '';
+          el.style.height = '';
+          el.style.minWidth = '';
+          el.style.minHeight = '';
+
         }
 
         rects.push(nodeRect);
@@ -428,22 +457,23 @@ export default function useLayoutManager({
         let node = nodesMapping[rect.id];
         const itemsT = [];
 
-        if (node?.items?.length !== rect?.children?.length) {
-          console.error(
-            `[Post transformations] Node ${node.id} in level ${level} has ${node?.items?.length} items, ` +
-            `but rect has ${rect?.children?.length}`,
-            node,
-            rect,
-          );
-          return;
-        }
+        // if (node?.items?.length !== rect?.children?.length) {
+        //   console.error(
+        //     `[Post transformations] Node ${node.id} in level ${level} has ${node?.items?.length} items, ` +
+        //     `but rect has ${rect?.children?.length}`,
+        //     node,
+        //     rect,
+        //   );
+        //   return;
+        // }
 
         node?.items?.forEach((i2: any, idx: number) => {
-          const rect2 = rect?.children?.[idx] as RectType;
-          const item2 = itemsRef?.current?.[typeof i2 === 'string' ? i2 : i2.id] as NodeType;
+          const rect2 = { ...(rect?.children?.[idx] as RectType) };
+          const item2 = { ...(itemsRef?.current?.[typeof i2 === 'string' ? i2 : i2.id] as NodeType) };
 
-          if (conditions && !displayable(item2, conditions)) return;
+          // if (conditions && !displayable(item2, conditions)) return;
           // console.log(item2, conditions)
+          item2.rect = (item2?.rect ?? {}) as RectType;
 
           item2.rect.height = rect2.height;
           item2.rect.left = rect2.left;
@@ -454,11 +484,20 @@ export default function useLayoutManager({
           itemsT.push(item2);
         });
 
+        const itemsToAdd = [];
+        if (itemsByNodeID[node.id]?.length === itemsT?.length) {
+          itemsByNodeID[node.id].push(itemsT);
+          itemsToAdd.push(...itemsT);
+        } else {
+          itemsToAdd.push(...itemsByNodeID[node.id]?.[itemsByNodeID[node.id].length - 1]);
+        }
+
         node = update(node, {
           // Index is used to delay the animation when displaying the node.
           index: { $set: index },
           items: { $set: itemsT },
         });
+
         node.rect.height = rect.height;
         node.rect.left = rect.left;
         node.rect.top = rect.top;
@@ -494,8 +533,8 @@ export default function useLayoutManager({
         item.status = ItemStatusEnum.READY;
       }
 
-      itemsRef.current[item.id] = item;
-      items.push(item);
+      itemsRef.current[item.id] = { ...item };
+      items.push({ ...item });
     });
 
     dispatchAppEvent(CustomAppEventEnum.UPDATE_CACHE_ITEMS, {
