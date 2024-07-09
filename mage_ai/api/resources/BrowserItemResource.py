@@ -76,7 +76,15 @@ class BrowserItemResource(GenericResource):
                 **dict(message=f'Item at path {pk} not found.'),
             })
 
+        query = kwargs.get('query', {})
+        output_namespace = query.get('output_namespace', [None])
+        if output_namespace:
+            output_namespace = output_namespace[0]
+            if output_namespace:
+                await item.get_output(output_namespace)
+
         await item.get_content()
+
         return cls(item, user, **kwargs)
 
     @classmethod

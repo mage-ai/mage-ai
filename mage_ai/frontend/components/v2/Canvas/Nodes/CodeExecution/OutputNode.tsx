@@ -52,14 +52,7 @@ const OutputNode: React.FC<OutputNodeProps> = ({
     node,
   }), [draggable, node]);
 
-  const { dispatchAppEvent } = useDispatchMounted(node, nodeRef, {
-    onMount: (event: CustomAppEvent) => {
-      dispatchAppEvent(CustomAppEventEnum.OUTPUT_UPDATED, {
-        event: event as any,
-        node,
-      })
-    }
-  });
+  useDispatchMounted(node, nodeRef);
 
   return (
     <NodeWrapper
@@ -78,6 +71,7 @@ const OutputNode: React.FC<OutputNodeProps> = ({
     >
       <OutputGroups
         {...props}
+        node={node}
         styles={selectKeys(getStyles(node, {
           draggable,
           isDragging,

@@ -52,6 +52,19 @@ BrowserItemPolicy.allow_read(
     condition=lambda policy: policy.has_at_least_viewer_role(),
 )
 
+
+BrowserItemPolicy.allow_read(
+    ['output'],
+    scopes=[
+        OauthScope.CLIENT_PRIVATE,
+    ],
+    on_action=[
+        constants.DETAIL,
+    ],
+    condition=lambda policy: policy.has_at_least_viewer_role(),
+)
+
+
 BrowserItemPolicy.allow_write(
     [
         'content',

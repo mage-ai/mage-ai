@@ -90,7 +90,7 @@ export default function useAppManager({ activeLevel }: { activeLevel: React.Muta
     if (appNode) {
       const rect = (event?.target as HTMLElement)?.getBoundingClientRect()
       appNode.rect = rect;
-      console.log(rect)
+
       eventType = CustomAppEventEnum.APP_UPDATED;
     } else {
       appNode = buildAppNode(node, app, { level });

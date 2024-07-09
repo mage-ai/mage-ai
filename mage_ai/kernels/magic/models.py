@@ -1,9 +1,11 @@
 import asyncio
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+from datetime import datetime
 from multiprocessing import Lock
 from multiprocessing.context import SpawnProcess
 from multiprocessing.managers import DictProxy, ListProxy
 from typing import Any, Dict, List, Optional
+from uuid import uuid4
 
 import psutil
 
@@ -27,12 +29,14 @@ class ProcessDetails(BaseDataClass):
     pid: Optional[int] = None
     source: Optional[str] = None
     stream: Optional[str] = None
-    timestamp: Optional[int] = None
+    timestamp: Optional[int] = field(
+      default_factory=lambda: int(datetime.utcnow().timestamp() * 1000))
     uuid: Optional[str] = None
 
 
 @dataclass
 class ExecutionResult(BaseDataClass):
+    result_id: str = field(default_factory=lambda: uuid4().hex)
     data_type: Optional[DataType] = None
     error: Optional[ErrorDetails] = None
     output: Optional[Any] = None
@@ -40,6 +44,8 @@ class ExecutionResult(BaseDataClass):
     status: Optional[ExecutionStatus] = None
     type: Optional[ResultType] = None
     uuid: Optional[str] = None
+    timestamp: Optional[int] = field(
+      default_factory=lambda: int(datetime.utcnow().timestamp() * 1000))
 
     def __post_init__(self):
         self.serialize_attribute_class('error', ErrorDetails)
@@ -60,17 +66,21 @@ class ExecutionResult(BaseDataClass):
 
 @dataclass
 class EventStream(BaseDataClass):
-    event_uuid: str
-    timestamp: int
     uuid: str
     error: Optional[ErrorDetails] = None
+    event_uuid: Optional[str] = None
     result: Optional[ExecutionResult] = None
+    timestamp: Optional[int] = field(
+      default_factory=lambda: int(datetime.utcnow().timestamp() * 1000))
     type: Optional[EventStreamType] = None
 
     def __post_init__(self):
         self.serialize_attribute_class('error', ErrorDetails)
         self.serialize_attribute_class('result', ExecutionResult)
         self.serialize_attribute_enum('type', EventStreamType)
+
+        if not self.event_uuid and self.result and self.result.result_id:
+            self.event_uuid = self.result.result_id
 
 
 @dataclass

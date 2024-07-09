@@ -18,7 +18,7 @@ function Grid({ children, id, ...props }: GridProps, ref: React.Ref<any>) {
   return (
     <Styled ref={ref} {...props} id={id}>
       {children && (children as React.ReactNode)}
-    </Styled>
+    </Styled >
   );
 }
 

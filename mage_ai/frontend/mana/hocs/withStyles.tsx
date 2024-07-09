@@ -24,6 +24,7 @@ export type GridType = {
   columnEnd?: number;
   columnGap?: number;
   columnStart?: number;
+  data?: Record<string, any>;
   height?: number | string;
   justifyContent?: string;
   justifyItems?: string;
@@ -90,6 +91,14 @@ export function withStyles<P extends object = WithStylesProp>(styles: any, props
   ) {
     const divRef = useRef<HTMLDivElement>(null);
 
+    const data = Object.entries(
+      props ?? {},
+    )?.filter(([key]) => key?.startsWith('data-'))?.reduce((acc, [key, value]) => {
+      acc[key] = value;
+      delete props[key];
+      return acc;
+    }, {});
+
     // Expose the divRef to the parent component through the ref
     useImperativeHandle(ref, () => divRef.current, []);
 
@@ -126,6 +135,7 @@ export function withStyles<P extends object = WithStylesProp>(styles: any, props
         // @ts-ignore
         ref={mergeRefs(divRef, ref)}
         role={role}
+        {...data}
       >
         {children && (children as React.ReactNode)}
       </HTMLTag>

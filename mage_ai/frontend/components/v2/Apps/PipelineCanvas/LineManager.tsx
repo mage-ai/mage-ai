@@ -329,8 +329,8 @@ export default function LineManager() {
   }
 
   function handleOutputUpdated({ detail }: CustomAppEvent) {
-    const { node: output } = detail;
-    const node = output?.node;
+    const { node, output } = detail;
+
     renderPaths({
       [ItemTypeEnum.OUTPUT]: [
         [node, output],

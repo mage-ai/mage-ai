@@ -61,6 +61,7 @@ export interface ExecutionResultType {
   output: string | null;
   output_text?: string;
   process: ProcessDetailsType;
+  result_id: string;
   status: ExecutionStatusEnum;
   type: ResultType;
   uuid: string;

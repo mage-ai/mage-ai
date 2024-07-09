@@ -556,42 +556,42 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
               <LineManager />
 
               {nodesMemo}
-            </ModelProvider >
-          </SettingsProvider>
 
-          {outputPortalsMemo}
-
-          {appRects?.rects?.map((arr) => {
-            const [
-              id,
-              left,
-              top,
-              width,
-              height,
-            ] = arr;
-            const appNode = appRects?.mapping?.[id];
-            if (!appNode) return;
-            DEBUG.apps && console.log('appRect rendering', id, left, top, width, height, appNode);
-
-            return (
-              <DraggableAppNode
-                {...handlers}
-                blocks={(appNode?.upstream?.map(
-                  (id: string) => itemsRef?.current?.[id]?.block as BlockType) as BlockType[])}
-                draggable={dragEnabled}
-                key={appNode.id}
-                node={appNode}
-                rect={{
-                  height,
+              {appRects?.rects?.map((arr) => {
+                const [
+                  id,
                   left,
                   top,
                   width,
-                }}
-                useExecuteCode={useExecuteCode}
-                useRegistration={useRegistration}
-              />
-            );
-          })}
+                  height,
+                ] = arr;
+                const appNode = appRects?.mapping?.[id];
+                if (!appNode) return;
+                DEBUG.apps && console.log('appRect rendering', id, left, top, width, height, appNode);
+
+                return (
+                  <DraggableAppNode
+                    {...handlers}
+                    blocks={(appNode?.upstream?.map(
+                      (id: string) => itemsRef?.current?.[id]?.block as BlockType) as BlockType[])}
+                    draggable={dragEnabled}
+                    key={appNode.id}
+                    node={appNode}
+                    rect={{
+                      height,
+                      left,
+                      top,
+                      width,
+                    }}
+                    useExecuteCode={useExecuteCode}
+                    useRegistration={useRegistration}
+                  />
+                );
+              })}
+
+              {outputPortalsMemo}
+            </ModelProvider >
+          </SettingsProvider>
         </CanvasContainer>
       </div>
 

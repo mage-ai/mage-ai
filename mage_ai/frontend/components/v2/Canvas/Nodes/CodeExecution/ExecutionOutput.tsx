@@ -1,5 +1,6 @@
 import EventStreamType, { ResultType } from '@interfaces/EventStreamType';
 import Grid from '@mana/components/Grid';
+import Link from '@mana/elements/Link';
 import React, { useMemo } from 'react';
 import Text from '@mana/elements/Text';
 import moment from 'moment';
@@ -35,6 +36,7 @@ function ExecutionOutput({
         output,
         output_text: outputText,
         process: resultProcess,
+        result_id: resultID,
         status,
         type: resultType,
         uuid: resultUuid,
@@ -63,10 +65,10 @@ function ExecutionOutput({
 
       return acc.concat(
         <TooltipWrapper
-          align={TooltipAlign.START}
-          horizontalDirection={TooltipDirection.LEFT}
+          align={TooltipAlign.END}
+          horizontalDirection={TooltipDirection.RIGHT}
           justify={TooltipJustify.CENTER}
-          key={eventUUID}
+          key={resultID}
           tooltip={
             <Text monospace secondary small>
               {displayLocalOrUtcTime(
@@ -79,15 +81,27 @@ function ExecutionOutput({
         >
           <Grid
             columnGap={8}
+            data-message-request-uuid={groupUUID}
             templateColumns="auto 1fr"
           >
-            <Text monospace muted small>
+            <Text monospace muted
+              small
+              style={{
+                pointerEvents: 'none',
+              }}
+            >
               [{acc?.length ?? 0}]
             </Text>
 
-            <Text monospace small>
+            <Text
+              monospace
+              small
+              style={{
+                pointerEvents: 'none',
+              }}
+            >
               {outputText}
-            </Text  >
+            </Text   >
           </Grid >
         </TooltipWrapper >
       );

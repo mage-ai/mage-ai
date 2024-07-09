@@ -184,6 +184,11 @@ export default function useItemManager({
           },
         }) as any,
       });
+    } else if ([ItemTypeEnum.OUTPUT].includes(type)) {
+      dispatchAppEvent(CustomAppEventEnum.OUTPUT_UPDATED, {
+        node: item.node,
+        output: item,
+      });
     }
   }
 

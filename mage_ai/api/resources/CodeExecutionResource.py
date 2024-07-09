@@ -4,8 +4,8 @@ from datetime import datetime
 from mage_ai.api.errors import ApiError
 from mage_ai.api.resources.GenericResource import GenericResource
 from mage_ai.kernels.magic.kernels.manager import KernelManager
-from mage_ai.settings.repo import get_variables_dir
 from mage_ai.shared.environments import is_debug
+from mage_ai.system.browser.models import Item
 
 
 class CodeExecutionResource(GenericResource):
@@ -28,10 +28,9 @@ class CodeExecutionResource(GenericResource):
         output_file = None
         output_dir = payload.get('output_dir', None)
         if output_dir is not None:
+            item = Item.load(path=output_dir)
             output_file = os.path.join(
-                get_variables_dir(),
-                'code_executions',
-                output_dir,
+                item.output_dir('code_executions'),
                 message_request_uuid or str(int(now.timestamp())),
             )
             os.makedirs(os.path.dirname(output_file), exist_ok=True)

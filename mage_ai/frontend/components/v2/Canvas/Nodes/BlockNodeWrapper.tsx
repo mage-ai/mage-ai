@@ -2,6 +2,7 @@ import OutputNode from './CodeExecution/OutputNode';
 import Tag from '@mana/components/Tag';
 import { formatNumberToDuration } from '@utils/string';
 import { motion } from 'framer-motion';
+import { isElementReallyVisible } from '@utils/elements';
 import { getNewUUID } from '@utils/string';
 import { areEqual, areEqualApps } from './equals'
 import PipelineType from '@interfaces/PipelineType';
@@ -32,13 +33,13 @@ import { ItemTypeEnum } from '../types';
 import { executionDone } from '@components/v2/ExecutionManager/utils';
 import { nodeClassNames } from './utils';
 import { ModelContext } from '@components/v2/Apps/PipelineCanvas/ModelManager/ModelContext';
+import { SettingsContext } from '@components/v2/Apps/PipelineCanvas/SettingsManager/SettingsContext';
 import { buildOutputNode } from '@components/v2/Apps/PipelineCanvas/utils/items';
 
 type BlockNodeType = BlockNodeWrapperProps;
 
 export const BlockNodeWrapper: React.FC<BlockNodeType> = ({
   Wrapper,
-  activeLevel,
   appHandlersRef,
   draggable,
   droppable,
@@ -57,6 +58,10 @@ export const BlockNodeWrapper: React.FC<BlockNodeType> = ({
   const block = useMemo(() => node?.block, [node]);
   const { configuration, type, uuid } = block;
 
+  const { activeLevel, layoutConfigs, selectedGroupsRef } = useContext(SettingsContext);
+  const selectedGroup = selectedGroupsRef?.current?.[activeLevel?.current - 1];
+  const blockInSelectedGroup = useMemo(() => block?.groups?.includes(selectedGroup?.uuid), [block, selectedGroup]);
+
   const buttonBeforeRef = useRef<HTMLDivElement>(null);
   const timerStatusRef = useRef(null);
   const timeoutRef = useRef(null);
@@ -69,11 +74,9 @@ export const BlockNodeWrapper: React.FC<BlockNodeType> = ({
   const connectionStatusRef = useRef<ServerConnectionStatusType>(null);
   const portalRef = useRef<HTMLDivElement>(null);
   const handleOnMessageRef = useRef<(event: EventStreamType) => void>(null);
-  const [outputs, setOutputs] = useState<OutputNodeType[]>((block as any)?.outputs ?? null);
+  const [outputNodes, setOutputNodes] = useState<OutputNodeType[]>(null);
 
   const [portalMount, setPortalMount] = useState<HTMLElement | null>(null);
-
-  const { outputsRef } = useContext(ModelContext);
 
   const { file, metadata } = configuration ?? {};
   const isGroup = useMemo(() => !type || type === BlockTypeEnum.GROUP, [type]);
@@ -95,10 +98,7 @@ export const BlockNodeWrapper: React.FC<BlockNodeType> = ({
     nodeRef?.current?.classList?.[func]?.(styles.executing);
   }
 
-  const { dispatchAppEvent } = useAppEventsHandler({
-    node,
-    outputsRef,
-  } as any, {
+  const { dispatchAppEvent } = useAppEventsHandler(node as any, {
     [CustomAppEventEnum.START_APP]: (event: CustomAppEvent) => {
       if (event?.detail?.node?.id === node?.id) {
         // Wait until the app subscribes, then subscribe or else race condition.
@@ -108,7 +108,7 @@ export const BlockNodeWrapper: React.FC<BlockNodeType> = ({
     [CustomAppEventEnum.CLOSE_OUTPUT]: (event: CustomAppEvent) => {
       const { node: output } = event.detail ?? {};
       if (output && output?.upstream?.includes(node?.id)) {
-        // outputRef?.current?.classList?.add?.('hidden');
+        outputRef?.current?.classList?.add?.('hidden');
       }
     },
     [CustomAppEventEnum.PORTAL_MOUNTED]: (event: any) => {
@@ -127,6 +127,45 @@ export const BlockNodeWrapper: React.FC<BlockNodeType> = ({
     if (phaseRef.current === 0) {
       timeout?.current && clearTimeout(timeout.current);
       updateStyles(false);
+
+      if (level === node?.level && file?.path && blockInSelectedGroup) {
+        appHandlersRef.current.browserItems.detail.mutate({
+          id: file?.path,
+          onSuccess: (resp) => {
+            const itemf = resp?.data?.browser_item;
+            updateFileCache({ server: itemf });
+
+            const eventStreams = itemf?.output?.reduce(
+              (acc, result) => setNested(
+                acc,
+                [result.process.message_request_uuid, result.result_id].join('.'),
+                {
+                  result,
+                },
+              ), {});
+
+            if (!isEmptyObject(eventStreams)) {
+              const outputNode = {
+                ...buildOutputNode(node, block, {
+                  uuid: (block as any)?.uuid,
+                } as any),
+                eventStreams,
+                node,
+              };
+              setOutputNodes([outputNode as OutputNodeType]);
+              dispatchAppEvent(CustomAppEventEnum.OUTPUT_UPDATED, {
+                eventStreams,
+                node,
+                output: outputNode,
+              });
+            }
+          },
+          query: {
+            output_namespace: 'code_executions',
+          },
+        });
+      }
+
       phaseRef.current += 1;
     }
 
@@ -137,8 +176,9 @@ export const BlockNodeWrapper: React.FC<BlockNodeType> = ({
       clearTimeout(timeout)
       timeoutRef.current = null;
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [node, consumerID]);
+  }, [block, node, consumerID, file, blockInSelectedGroup, activeLevel,
+    appHandlersRef, dispatchAppEvent, unsubscribe
+  ]);
 
   useEffect(() => {
     if (!portalMount) {
@@ -188,7 +228,7 @@ export const BlockNodeWrapper: React.FC<BlockNodeType> = ({
     const execute = () => {
       const message = getCode();
       const [messageRequestUUID, future] = executeCode(message, {
-        output_dir: file?.relative_path ?? null,
+        output_dir: file?.path ?? null,
         source: node.id,
       }, {
         future: true, onError: () => {
@@ -197,18 +237,18 @@ export const BlockNodeWrapper: React.FC<BlockNodeType> = ({
         }
       });
 
-      const output = buildOutputNode(node, block, {
+      const outputNode = buildOutputNode(node, block, {
         message,
         message_request_uuid: messageRequestUUID,
         uuid: (block as any)?.uuid,
       });
 
-      setOutputs((prev) => prev === null ? [output] : prev);
+      setOutputNodes((prev) => prev === null ? [outputNode] : prev);
 
       updateStyles(true);
 
       // This style and classname is handled by the settings manager.
-      // outputRef?.current?.classList?.remove?.('hidden');
+      outputRef?.current?.classList?.remove?.('hidden');
 
       future();
 
@@ -334,14 +374,13 @@ export const BlockNodeWrapper: React.FC<BlockNodeType> = ({
     updateBlock,
   ]);
 
-  const outputNodes = useMemo(() => {
+  const outputNodesMemo = useMemo(() => {
     if (activeLevel.current !== node?.level) return;
 
     const arr = [];
-    outputs?.forEach((output: OutputNodeType) => {
+    outputNodes?.forEach((output: OutputNodeType) => {
       arr.push(
         <OutputNode
-          // {...sharedProps}
           {...draggableProps({
             classNames: [styles.nodeWrapper],
             draggable: true,
@@ -351,10 +390,7 @@ export const BlockNodeWrapper: React.FC<BlockNodeType> = ({
           handleOnMessageRef={handleOnMessageRef}
           handlers={draggingHandlers}
           key={output.id}
-          node={{
-            ...output,
-            node,
-          }}
+          node={output}
           nodeRef={outputRef}
           rect={output?.rect}
         />
@@ -362,7 +398,7 @@ export const BlockNodeWrapper: React.FC<BlockNodeType> = ({
     });
 
     return arr;
-  }, [node, outputs, draggingHandlers, handleOnMessageRef, activeLevel]);
+  }, [node, outputNodes, draggingHandlers, handleOnMessageRef, activeLevel]);
 
   const runtime = useMemo(() => (
     <Tag
@@ -404,7 +440,7 @@ export const BlockNodeWrapper: React.FC<BlockNodeType> = ({
       >
         {runtime}
         {blockNode}
-        {portalMount && outputNodes?.map(outputNode => createPortal(outputNode, portalMount))}
+        {portalMount && outputNodesMemo?.map(outputNode => createPortal(outputNode, portalMount))}
       </Wrapper>
     );
   }

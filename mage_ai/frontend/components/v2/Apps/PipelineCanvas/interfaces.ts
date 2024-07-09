@@ -1,4 +1,5 @@
 import React from 'react';
+import EventStreamType from '@interfaces/EventStreamType';
 import { MenuItemType, RenderContextMenuOptions, RemoveContextMenuType, RenderContextMenuType } from '@mana/hooks/useContextMenu';
 import type { DropTargetMonitor, XYCoord } from 'react-dnd';
 import PipelineExecutionFrameworkType, { ConfigurationType, FrameworkType } from '@interfaces/PipelineExecutionFramework/interfaces';
@@ -8,7 +9,8 @@ import {
   AppNodeType, DragItem, NodeItemType, NodeType, RectType, PortType, LayoutConfigType,
   PortMappingType, ItemMappingType, BlocksByGroupType, ModelMappingType, GroupLevelType,
   BlockMappingType, OutputMappingType,
-  GroupMappingType
+  GroupMappingType,
+  OutputNodeType
 } from '../../Canvas/interfaces';
 import { ClientEventType } from '@mana/shared/interfaces';
 import { AppConfigType } from '../interfaces';
@@ -112,6 +114,7 @@ export interface CustomEventDetail {
   app?: AppConfigType;
   block?: BlockType;
   event?: ClientEventType
+  eventStreams?: Record<string, Record<string, EventStreamType>>;
   item?: NodeItemType;
   manager?: SubscriberType;
   node?: NodeItemType;
@@ -121,6 +124,7 @@ export interface CustomEventDetail {
     args?: EventOperationOptionsType['args'];
     kwargs?: EventOperationOptionsType['kwargs'];
   };
+  output?: OutputNodeType;
 }
 export interface CustomAppEvent extends CustomEvent {
   detail: CustomEventDetail;

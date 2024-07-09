@@ -4,7 +4,6 @@ export enum CustomAppEventEnum {
   APP_STOPPED = 'app_stopped',
   APP_UPDATED = 'app_updated',
   CLOSE_OUTPUT = 'close_output',
-  CODE_EXECUTION_RESULT = 'code_execution_result',
   CONNECT_EVENT_STREAM = 'connect_event_stream',
   DISCONNECT_EVENT_STREAM = 'disconnect_event_stream',
   NODE_ATTRIBUTES_UPDATED = 'node_attributes_updated',

@@ -13,7 +13,7 @@ import {
   TreeWithArrowsDown, OpenInSidekick,
   Select, SearchV2, CubeWithArrowDown, PaginateArrowRight, BatchSquaresStacked, Table, Circle, BranchAlt, Monitor, Undo,
   ArrowsAdjustingFrameSquare, Check, Group, TemplateShapes, Trash, GroupV2, ArrowsPointingInFromAllCorners,
-  CloseV2
+  CloseV2, CopyV2,
 } from '@mana/icons';
 import { ClientEventType, EventOperationEnum, EventOperationOptionsType } from '@mana/shared/interfaces';
 import { ItemTypeEnum, LayoutConfigDirectionEnum, TransformRectTypeEnum } from '../../Canvas/types';
@@ -34,6 +34,7 @@ import { isElementReallyVisible } from '@utils/elements';
 import { IconProps } from '@mana/elements/Icon';
 import useAppEventsHandler, { CustomAppEvent, CustomAppEventEnum } from './useAppEventsHandler';
 import { DEBUG } from '@components/v2/utils/debug';
+import { copyToClipboard } from '@utils/clipboard';
 
 const GRID_SIZE = 40;
 
@@ -308,17 +309,46 @@ export default function useEventManager({
     const menuItems = [];
 
     if (target && ItemTypeEnum.OUTPUT === target?.type) {
-      menuItems.push({
-        Icon: CloseV2,
-        onClick: (event: ClientEventType) => {
-          removeContextMenu(event);
-          dispatchAppEvent(CustomAppEventEnum.CLOSE_OUTPUT, {
-            event,
-            node: target,
-          });
+      menuItems.push(...[
+        {
+          Icon: CloseV2,
+          onClick: (event: ClientEventType) => {
+            removeContextMenu(event);
+            dispatchAppEvent(CustomAppEventEnum.CLOSE_OUTPUT, {
+              event,
+              node: target,
+            });
+          },
+          uuid: 'Close output',
         },
-        uuid: 'Close output',
-      });
+        {
+          Icon: CopyV2,
+          onClick: (event2: ClientEventType) => {
+            removeContextMenu(event2);
+            const targetElement = event?.target as HTMLElement;
+            const mruuid = targetElement?.getAttribute('data-message-request-uuid');
+            const events = sortByKey(
+              Object.values(target?.eventStreams?.[mruuid] ?? {}) ?? [],
+              ({ result }) => result?.timestamp,
+            );
+            const text = events?.map(({ result }) => (result?.output_text ?? '')?.trim() ?? '').join('\n');
+            copyToClipboard(text);
+          },
+          uuid: 'Copy output',
+        },
+        {
+          Icon: Trash,
+          onClick: (event: ClientEventType) => {
+            removeContextMenu(event);
+            dispatchAppEvent(CustomAppEventEnum.CLOSE_OUTPUT, {
+              event,
+              node: target,
+            });
+          },
+          uuid: 'Delete output',
+        },
+        { divider: true },
+      ]);
     } else {
       menuItems.push({
         Icon: Select,
@@ -739,7 +769,8 @@ export default function useEventManager({
 
       dispatchAppEvent(CustomAppEventEnum.OUTPUT_UPDATED, {
         event: convertEvent(event),
-        node,
+        node: node.node,
+        output: node,
       });
     }
   }

@@ -25,6 +25,7 @@ import useAppEventsHandler, { CustomAppEvent, CustomAppEventEnum } from './useAp
 import { AppManagerType, ModelManagerType } from './interfaces';
 import { indexBy, unique } from '@utils/array';
 import { useLayout } from '@context/v2/Layout';
+import EventStreamType from '@interfaces/EventStreamType';
 
 type ModelManagerProps = {
   itemIDsByLevelRef: React.MutableRefObject<string[][]>;
@@ -173,17 +174,17 @@ export default function useModelManager({
   }
 
   function handleOutputUpdated({ detail }: CustomAppEvent) {
-    const { node: output } = detail;
-    const { node } = output;
+    const { node, output, eventStreams } = detail;
 
     outputsRef.current[node.id] ||= {};
-    outputsRef.current[node.id][output.id] = output;
 
-    // initializeModels(
-    //   appHandlersRef?.current?.executionFrameworks?.getModel() as PipelineExecutionFrameworkType,
-    //   appHandlersRef?.current?.pipelines?.getModel() as PipelineExecutionFrameworkType,
-    //   detail?.manager as unknown,
-    // );
+    const key = output?.id ?? node?.id;
+    outputsRef.current[node.id][key] = {
+      ...outputsRef.current[node.id][key],
+      ...output,
+      ...({ eventStreams } ?? {}),
+      node,
+    };
   }
 
   function initializeModels(

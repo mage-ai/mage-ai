@@ -38,9 +38,9 @@ const ErrorManager: FC<ErrorManagerProps> = memo(function ErrorManager({
   } = errorRef?.current?.client ?? {};
 
   const code = error?.code;
-  const errors = clientError?.errors ?? error?.errors;
-  const message = clientError?.message ?? error?.message;
-  const type = clientError?.type ?? error?.type;
+  const errors = error?.errors ?? clientError?.errors;
+  const message = error?.message ?? clientError?.message;
+  const type = error?.type ?? clientError?.type;
 
   return (
     <>

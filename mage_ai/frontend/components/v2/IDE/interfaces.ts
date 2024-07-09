@@ -19,6 +19,7 @@ export interface FileType {
   language?: LanguageEnum;
   modified_timestamp?: number;
   name: string;
+  output?: Record<string, any>[];
   path: string;
   relative_path?: string;
   size: number;

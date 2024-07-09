@@ -1,15 +1,19 @@
 import Button, { ButtonGroup } from '@mana/elements/Button';
+import { isEmptyObject } from '@utils/hash';
+import { buildOutputNode } from '@components/v2/Apps/PipelineCanvas/utils/items';
+import { setNested } from '@utils/hash';
+import { ModelContext } from '@components/v2/Apps/PipelineCanvas/ModelManager/ModelContext';
 import EventStreamType from '@interfaces/EventStreamType';
 import Link from '@mana/elements/Link';
 import html2canvas from 'html2canvas';
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useContext, useEffect, useMemo, useRef, useState } from 'react';
 import TextInput from '@mana/elements/Input/TextInput';
 import moment from 'moment';
 import styles from '@styles/scss/components/Canvas/Nodes/DraggableAppNode.module.scss';
 import stylesEditor from '@styles/scss/components/Canvas/Nodes/Apps/Editor.module.scss';
 import useAppEventsHandler, { CustomAppEventEnum, convertEvent } from '../../../Apps/PipelineCanvas/useAppEventsHandler';
 import useDispatchMounted from '../useDispatchMounted';
-import { AppNodeType, NodeType, RectType } from '../../interfaces';
+import { AppNodeType, NodeType, OutputNodeType } from '../../interfaces';
 import { getColorNamesFromItems } from '../utils';
 import Grid from '@mana/components/Grid';
 import Text from '@mana/elements/Text';
@@ -57,16 +61,17 @@ const DraggableAppNode: React.FC<NodeType & CanvasNodeType> = ({
   useExecuteCode,
   useRegistration,
 }) => {
+  const app = useMemo(() => (node as AppNodeType)?.app, [node]);
+  const { outputsRef } = useContext(ModelContext);
   const fetchDetailCountRef = useRef(0);
   const imageDataRef = useRef<string | null>(null);
   const nodeRef = useRef<HTMLDivElement>(null);
   const handleOnMessageRef = useRef<(event: EventStreamType) => void>(null);
   const [executing, setExecuting] = useState(false);
+  const [outputNodes, setOutputNodes] = useState<OutputNodeType[]>(null);
 
   const { dispatchAppEvent } = useAppEventsHandler(node as any);
   const { phaseRef } = useDispatchMounted(node, nodeRef);
-
-  const app = useMemo(() => (node as AppNodeType)?.app, [node]);
   const [asideBeforeOpen, setAsideBeforeOpen] = React.useState(false);
   const [asideAfterOpen, setAsideAfterOpen] = React.useState(false);
 
@@ -180,7 +185,44 @@ const DraggableAppNode: React.FC<NodeType & CanvasNodeType> = ({
 
   useEffect(() => {
     if (fetchDetailCountRef.current === 0 && file?.path) {
-      mutate.detail.mutate({ id: file.path });
+      mutate.detail.mutate({
+        // Exact same code as in BlockNodeWrapper
+        id: file?.path,
+        onSuccess: (resp) => {
+          const itemf = resp?.data?.browser_item;
+
+          // This is handled inside useApp.
+          // updateFileCache({ server: itemf });
+
+          const eventStreams = itemf?.output?.reduce(
+            (acc, result) => setNested(
+              acc,
+              [result.process.message_request_uuid, result.result_id].join('.'),
+              {
+                result,
+              },
+            ), {});
+
+          if (!isEmptyObject(eventStreams)) {
+            const outputNode = {
+              ...buildOutputNode(node, block, {
+                uuid: (block as any)?.uuid,
+              } as any),
+              eventStreams,
+              node,
+            };
+            setOutputNodes([outputNode as OutputNodeType]);
+            dispatchAppEvent(CustomAppEventEnum.OUTPUT_UPDATED, {
+              eventStreams,
+              node,
+              output: outputNode,
+            });
+          }
+        },
+        query: {
+          output_namespace: 'code_executions',
+        },
+      });
       fetchDetailCountRef.current += 1;
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -274,7 +316,7 @@ const DraggableAppNode: React.FC<NodeType & CanvasNodeType> = ({
               bordercolor={baseColor}
               loading={executing}
               onClick={() => executeCode(editor.getValue(), {
-                output_dir: file?.relative_path,
+                output_dir: file?.path,
               })}
               small
             />
@@ -484,9 +526,13 @@ const DraggableAppNode: React.FC<NodeType & CanvasNodeType> = ({
             </Grid>
           )}
 
-          <OutputGroups
-            handleOnMessageRef={handleOnMessageRef}
-          />
+          {outputNodes?.map(outputNode => (
+            <OutputGroups
+              handleOnMessageRef={handleOnMessageRef}
+              key={outputNode?.id}
+              node={outputNode}
+            />
+          ))}
         </Grid>
       </div >
     </NodeWrapper>

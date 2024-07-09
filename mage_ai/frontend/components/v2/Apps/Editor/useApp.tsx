@@ -128,7 +128,9 @@ export default function useApp(props: AppLoaderProps & {
             staleUpdated = true;
           }
 
-          setMainState(item);
+          if (!client?.file) {
+            setMainState(item);
+          }
 
           if (item) {
             // If it already exists, don’t update it.
