@@ -15,7 +15,7 @@ def clean_series(series, column_type=None, dropna=True):
 
     if column_type is float:
         series_cleaned = series_cleaned.astype(float)
-    else:
+    elif column_type is int:
         try:
             series_cleaned = series_cleaned.astype(float).astype(np.int64)
         except ValueError:
