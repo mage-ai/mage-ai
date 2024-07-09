@@ -1,6 +1,7 @@
 import React from 'react';
 import styles from '@styles/scss/apps/Canvas/Pipelines/Builder.module.scss';
 import { motion } from 'framer-motion';
+import { NodeItemType } from '../interfaces';
 
 export function linePathKey(linePaths: Record<string, LinePathType>): string {
   const lines1 = Object.values(linePaths ?? {})
@@ -12,10 +13,12 @@ export type LinePathType = {
   id: string;
   key: string;
   paths: React.ReactNode[];
+  source?: NodeItemType;
+  target?: NodeItemType;
 };
 
 type ConnectionLinesProps = {
-  linePaths?: Record<string, LinePathType>;
+  linePaths?: Record<string, LinePathType[]>;
   id?: string;
   zIndex?: number;
 };
@@ -39,7 +42,7 @@ const LinesComponent: React.FC<ConnectionLinesProps> = ({
       zIndex,
     }}
   >
-    {Object.values(linePaths ?? {})?.flatMap(({ paths }) => paths)}
+    {Object.values(linePaths ?? {})?.flatMap(lps => lps.flatMap(p => p.paths ?? []))}
   </motion.svg>
 );
 

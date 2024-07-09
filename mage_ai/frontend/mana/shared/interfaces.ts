@@ -115,6 +115,7 @@ export interface EventOperationOptionsType {
         width?: number;
       };
     };
+    redraw?: boolean;
     styles?: string;
   };
   handler?: (

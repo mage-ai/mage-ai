@@ -7,6 +7,7 @@ export enum CustomAppEventEnum {
   CONNECT_EVENT_STREAM = 'connect_event_stream',
   DISCONNECT_EVENT_STREAM = 'disconnect_event_stream',
   NODE_ATTRIBUTES_UPDATED = 'node_attributes_updated',
+  NODE_DRAGGING = 'node_dragging',
   NODE_DROPPED = 'node_dropped',
   NODE_LAYOUTS_CHANGED = 'node_layouts_changed',
   NODE_MOUNTED = 'node.mounted',

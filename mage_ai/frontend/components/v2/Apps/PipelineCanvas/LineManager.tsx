@@ -1,4 +1,4 @@
-import React, { createRef, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import React, { createRef, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { ModelContext } from '@components/v2/Apps/PipelineCanvas/ModelManager/ModelContext';
 import { motion } from 'framer-motion';
 import { SettingsContext } from '@components/v2/Apps/PipelineCanvas/SettingsManager/SettingsContext';
@@ -38,12 +38,19 @@ export default function LineManager() {
   const layoutConfig = layoutConfigs?.current?.[activeLevel?.current];
   const { direction, display, style } = layoutConfig?.current ?? {};
 
+  const lineMappingRef = useRef({});
   const timeoutRef = useRef(null);
-  const lineRefs = useRef<Record<string, React.RefObject<SVGPathElement>>>({});
+  const lineRefs = useRef<Record<
+    ItemTypeEnum,
+    Record<
+      string,
+      React.MutableRefObject<SVGPathElement>
+    >
+  >>({} as any);
 
-  const [linesBlock, setLinesBlock] = useState<Record<string, LinePathType>>({});
-  const [linesNode, setLinesNode] = useState<Record<string, LinePathType>>({});
-  const [linesOutput, setLinesOutput] = useState<Record<string, LinePathType>>({});
+  const [linesBlock, setLinesBlock] = useState<Record<string, LinePathType[]>>({});
+  const [linesNode, setLinesNode] = useState<Record<string, LinePathType[]>>({});
+  const [linesOutput, setLinesOutput] = useState<Record<string, LinePathType[]>>({});
 
   function updateLines({ detail }: CustomAppEvent) {
     // const { itemElementsRef } = detail?.manager;
@@ -111,25 +118,8 @@ export default function LineManager() {
     [ItemTypeEnum.NODE]?: [NodeItemType, NodeItemType][],
     [ItemTypeEnum.OUTPUT]?: [NodeItemType, NodeItemType][],
   }, opts?: {
-    redraw?: boolean;
     replace?: boolean;
   }) {
-    if (opts?.redraw) {
-      Object.values(pairsByType ?? {})?.forEach(pairs => {
-        pairs?.forEach(([node, node2]) => {
-          const {
-            dvalue,
-            lineID,
-          } = prepareLinePathProps(node, node2);
-          const linePath = lineRefs?.current?.[lineID]?.current;
-          if (!linePath) return;
-          linePath?.setAttribute('d', dvalue);
-        });
-      });
-
-      return;
-    }
-
     const paths = {
       [ItemTypeEnum.BLOCK]: {},
       [ItemTypeEnum.NODE]: {},
@@ -151,27 +141,52 @@ export default function LineManager() {
             direction, display, style
           });
 
-          paths[type][linePath.id] = linePath;
+          paths[type][node.id] ||= []
+          paths[type][node.id].push(linePath)
         });
     });
 
     if (opts?.replace) {
-      setLinesBlock(paths[ItemTypeEnum.BLOCK]);
-      setLinesNode(paths[ItemTypeEnum.NODE]);
-      setLinesOutput(paths[ItemTypeEnum.OUTPUT]);
+      setLinesBlock(() => {
+        const val = paths[ItemTypeEnum.BLOCK] ?? {};
+        lineMappingRef.current[ItemTypeEnum.BLOCK] = val;
+        return val;
+      });
+      setLinesNode(() => {
+        const val = paths[ItemTypeEnum.NODE] ?? {};
+        lineMappingRef.current[ItemTypeEnum.NODE] = val;
+        return val;
+      });
+      setLinesOutput(() => {
+        const val = paths[ItemTypeEnum.OUTPUT] ?? {};
+        lineMappingRef.current[ItemTypeEnum.OUTPUT] = val;
+        return val;
+      });
     } else {
-      setLinesBlock((prev) => ({
-        ...prev,
-        ...paths[ItemTypeEnum.BLOCK],
-      }));
-      setLinesNode((prev) => ({
-        ...prev,
-        ...paths[ItemTypeEnum.NODE],
-      }));
-      setLinesOutput((prev) => ({
-        ...prev,
-        ...paths[ItemTypeEnum.OUTPUT],
-      }));
+      setLinesBlock((prev) => {
+        const val = {
+          ...prev,
+          ...paths[ItemTypeEnum.BLOCK],
+        };
+        lineMappingRef.current[ItemTypeEnum.BLOCK] = val;
+        return val;
+      });
+      setLinesNode((prev) => {
+        const val = {
+          ...prev,
+          ...paths[ItemTypeEnum.NODE],
+        };
+        lineMappingRef.current[ItemTypeEnum.NODE] = val;
+        return val;
+      });
+      setLinesOutput((prev) => {
+        const val = {
+          ...prev,
+          ...paths[ItemTypeEnum.OUTPUT],
+        };
+        lineMappingRef.current[ItemTypeEnum.OUTPUT] = val;
+        return val;
+      });
     }
   }
 
@@ -251,7 +266,11 @@ export default function LineManager() {
       positions[LayoutConfigDirectionEnum.HORIZONTAL] = ['right', 'left'];
     }
 
-    const { direction, display, style } = opts ?? {};
+    const layoutConfig = layoutConfigs?.current?.[activeLevel?.current];
+    const { direction, display, style } = {
+      ...layoutConfig?.current,
+      ...opts,
+    };
     const [fromPosition, toPosition] = positions[direction];
     // if (!isOutput && LayoutDisplayEnum.DETAILED === display && LayoutStyleEnum.WAVE === style) {
     //   fromPosition = 'right';
@@ -317,7 +336,8 @@ export default function LineManager() {
       );
     }
 
-    lineRefs.current[lineID] ||= createRef();
+    lineRefs.current[node2?.type] ||= {};
+    lineRefs.current[node2?.type][lineID] ||= createRef();
     const duration = 0.2;
     const motionProps = isOutput ? {} : {
       animate: { pathLength: 1 },
@@ -330,7 +350,7 @@ export default function LineManager() {
       },
     };
 
-    const lineRef = lineRefs.current[lineID];
+    const lineRef = lineRefs.current[node2.type][lineID];
 
     paths.push(
       <motion.path
@@ -360,6 +380,8 @@ export default function LineManager() {
         keys?.map(key => Math.round(toRect?.[key])).map(String).join(':'),
       ].join('->'),
       paths,
+      source: node,
+      target: node2,
     };
   }
 
@@ -371,19 +393,59 @@ export default function LineManager() {
   }
 
   function handleOutputUpdated({ detail }: CustomAppEvent) {
-    const { node, output, options } = detail;
+    const { node, output } = detail;
 
     renderPaths({
       [ItemTypeEnum.OUTPUT]: [
         [node, output],
       ],
-    }, options);
+    });
+  }
+
+  function handleDragging({ detail }: CustomAppEvent) {
+    const { node, output } = detail;
+
+    Object.entries(lineMappingRef.current).forEach(([type, mapping]) => {
+      const lines = lineRefs.current?.[type];
+
+      Object.values(mapping).forEach((linePaths: LinePathType[]) => {
+        linePaths.forEach((linePath) => {
+          [node, output].filter(Boolean).forEach((item) => {
+            const {
+              id: lineID,
+              source,
+              target,
+            } = linePath;
+
+            if (![source.id, target.id].includes(item.id)) return;
+
+            const lineRef = lines[lineID]?.current;
+            if (!lineRef) return;
+
+            // console.log(
+            //   source.id,
+            //   target.id,
+            //   item.id,
+            // );
+
+            const {
+              dvalue,
+            } = prepareLinePathProps(
+              source.id === item.id ? item : source,
+              target.id === item.id ? item : target,
+            );
+            lineRef?.setAttribute('d', dvalue);
+          });
+        });
+      });
+    });
   }
 
   useAppEventsHandler({ lineRefs } as any, {
     [CustomAppEventEnum.CLOSE_OUTPUT]: ({ detail: { node, output } }: CustomAppEvent) => {
       setLinesOutput((prev) => ignoreKeys(prev, [getLineID(node.id, output.id)]));
     },
+    [CustomAppEventEnum.NODE_DRAGGING]: handleDragging,
     [CustomAppEventEnum.NODE_LAYOUTS_CHANGED]: handleLayoutChange,
     [CustomAppEventEnum.OUTPUT_UPDATED]: handleOutputUpdated,
   });

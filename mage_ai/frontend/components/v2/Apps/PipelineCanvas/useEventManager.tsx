@@ -18,7 +18,7 @@ import {
 import { ClientEventType, EventOperationEnum, EventOperationOptionsType } from '@mana/shared/interfaces';
 import { ItemTypeEnum, LayoutConfigDirectionEnum, TransformRectTypeEnum } from '../../Canvas/types';
 import { MenuItemType, RenderContextMenuOptions, RemoveContextMenuType, RenderContextMenuType } from '@mana/hooks/useContextMenu';
-import { NodeItemType, PortType, RectType, ItemMappingType, PortMappingType, ModelMappingType, LayoutConfigType, NodeType } from '../../Canvas/interfaces';
+import { NodeItemType, PortType, RectType, ItemMappingType, PortMappingType, ModelMappingType, LayoutConfigType, NodeType, OutputNodeType } from '../../Canvas/interfaces';
 import { PresentationManagerType } from './usePresentationManager';
 import { XYCoord } from 'react-dnd';
 import { ZoomPanStateType } from '@mana/hooks/useZoomPan';
@@ -78,6 +78,7 @@ export default function useEventManager({
   portsRef,
   selectedGroupsRef,
   removeContextMenu,
+  snapToGridOnDrop: snapToGridOnDropProp,
   renderConnectionLines,
   renderContextMenu,
   setDragEnabled,
@@ -90,7 +91,7 @@ export default function useEventManager({
   const gridDimensions = useRef<RectType>({ height: GRID_SIZE, left: 0, top: 0, width: GRID_SIZE });
 
   const [snapToGridOnDrag, setSnapToGridOnDrag] = useState(false);
-  const [snapToGridOnDrop, setSnapToGridOnDrop] = useState(true);
+  const [snapToGridOnDrop, setSnapToGridOnDrop] = useState(snapToGridOnDropProp);
 
   function handleStartDragging(event?: CustomEvent) {
     startTransition(() => {
@@ -167,54 +168,60 @@ export default function useEventManager({
     //   portMapping: {},
     // };
 
-    if (ItemTypeEnum.BLOCK === itemType) {
-      item?.ports?.forEach(({ id: portID }: PortType) => {
-        Object.values(connectionLinesPathRef?.current?.[portID] ?? {})?.forEach(
-          ({ handleUpdatePath }: { handleUpdatePath: (item: NodeItemType) => void }) => {
-            const port1 = portsRef.current?.[portID];
+    // if (ItemTypeEnum.BLOCK === itemType) {
+    //   item?.ports?.forEach(({ id: portID }: PortType) => {
+    //     Object.values(connectionLinesPathRef?.current?.[portID] ?? {})?.forEach(
+    //       ({ handleUpdatePath }: { handleUpdatePath: (item: NodeItemType) => void }) => {
+    //         const port1 = portsRef.current?.[portID];
 
-            const port1ElementRect =
-              itemElementsRef?.current?.port?.[port1.id]?.current?.getBoundingClientRect();
-            let port1Rect = {} as RectType;
+    //         const port1ElementRect =
+    //           itemElementsRef?.current?.port?.[port1.id]?.current?.getBoundingClientRect();
+    //         let port1Rect = {} as RectType;
 
-            if (port1ElementRect) {
-              // Need to adjust this because the element’s ref’s coordinates are relative to the current viewport.
-              const absolute = getElementPositionInContainer(
-                canvasRef?.current?.getBoundingClientRect(),
-                containerRef?.current?.getBoundingClientRect(),
-                port1ElementRect,
-              );
-              port1Rect = {
-                height: port1ElementRect.height,
-                left: absolute.left,
-                top: absolute.top,
-                width: port1ElementRect.width,
-              };
-            }
+    //         if (port1ElementRect) {
+    //           // Need to adjust this because the element’s ref’s coordinates are relative to the current viewport.
+    //           const absolute = getElementPositionInContainer(
+    //             canvasRef?.current?.getBoundingClientRect(),
+    //             containerRef?.current?.getBoundingClientRect(),
+    //             port1ElementRect,
+    //           );
+    //           port1Rect = {
+    //             height: port1ElementRect.height,
+    //             left: absolute.left,
+    //             top: absolute.top,
+    //             width: port1ElementRect.width,
+    //           };
+    //         }
 
-            port1Rect = {
-              ...port1?.rect,
-              ...port1Rect,
-            };
+    //         port1Rect = {
+    //           ...port1?.rect,
+    //           ...port1Rect,
+    //         };
 
-            const x1 = port1Rect?.left ?? 0;
-            const y1 = port1Rect?.top ?? 0;
-            const { x: x3, y: y3 } = finalCoords(x1 + x, y1 + y);
-            const port2 = update(port1, {
-              rect: {
-                $merge: {
-                  left: x3,
-                  top: y3,
-                },
-              },
-            });
+    //         const x1 = port1Rect?.left ?? 0;
+    //         const y1 = port1Rect?.top ?? 0;
+    //         const { x: x3, y: y3 } = finalCoords(x1 + x, y1 + y);
+    //         const port2 = update(port1, {
+    //           rect: {
+    //             $merge: {
+    //               left: x3,
+    //               top: y3,
+    //             },
+    //           },
+    //         });
 
-            handleUpdatePath(port2);
-            // modelMapping.portMapping[port2.id] = port2;
-          },
-        );
-      });
-    } else if (ItemTypeEnum.OUTPUT === itemType) {
+    //         handleUpdatePath(port2);
+    //         // modelMapping.portMapping[port2.id] = port2;
+    //       },
+    //     );
+    //   });
+    // }
+
+    if ([
+      ItemTypeEnum.BLOCK,
+      ItemTypeEnum.NODE,
+      ItemTypeEnum.OUTPUT,
+    ].includes(itemType)) {
       const xy = finalCoords(item.rect.left + x, item.rect.top + y);
       const item2 = update(item, {
         rect: {
@@ -224,9 +231,21 @@ export default function useEventManager({
           },
         },
       });
-      dispatchAppEvent(CustomAppEventEnum.OUTPUT_UPDATED, {
-        node: item2.node,
-        output: item2,
+
+      const data: {
+        node?: NodeItemType;
+        output?: OutputNodeType;
+      } = {};
+
+      if (ItemTypeEnum.OUTPUT === itemType) {
+        data.node = item2.node;
+        data.output = item2;
+      } else {
+        data.node = item2;
+      }
+
+      dispatchAppEvent(CustomAppEventEnum.NODE_DRAGGING, {
+        ...data,
         options: {
           kwargs: {
             redraw: true,
