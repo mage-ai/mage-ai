@@ -1,5 +1,5 @@
 import PipelineExecutionFrameworkType, { ConfigurationType, FrameworkType } from '@interfaces/PipelineExecutionFramework/interfaces';
-import update from 'immutability-helper';
+import { get } from './cache';
 import { ItemStatusEnum } from '../../Canvas/types';
 import { AppHandlerType, AppHandlersRefType } from './interfaces';
 import {
@@ -254,6 +254,7 @@ export default function useModelManager({
         const itemIDsByLevel = [];
         const blocksRemoved = indexBy(opts?.modelsUpdated?.blocks?.removed ?? [], b => b.uuid);
         const nodesRequireUpdate = [];
+        const itemsCache = get(pipeline2.uuid)?.items ?? {};
 
         // Initialize all models for all levels.
         blockGroupsByLevel?.forEach((blockGroups: BlockGroupType[], level: number) => {
@@ -270,6 +271,13 @@ export default function useModelManager({
               item.block.frameworks = item.block.groups.map((id: GroupUUIDEnum) => groupMapping[id]);
             }
             // item.version = itemVersionRef.current;
+
+            if (itemsRef?.current === null && itemsCache?.[item.id]) {
+              item = {
+                ...item,
+                ...itemsCache?.[item.id],
+              };
+            }
 
             const itemPrev = itemsRef?.current?.[item.id];
             if (itemPrev?.rect) {

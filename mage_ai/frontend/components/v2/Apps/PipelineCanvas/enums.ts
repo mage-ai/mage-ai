@@ -19,6 +19,7 @@ export enum CustomAppEventEnum {
   STOPPING_APP = 'stopping_app',
   STOP_APP = 'stop_app',
   TELEPORT_INTO_BLOCK = 'teleport_into_block',
+  UPDATE_CACHE_ITEMS = 'update_cache_items',
   UPDATE_DISPLAY = 'update_display',
   UPDATE_HEADER_NAVIGATION = 'UPDATE_HEADER_NAVIGATION',
   UPDATE_NODE_LAYOUTS = 'update_node_layouts',

@@ -475,6 +475,10 @@ export default function useLayoutManager({
       items.push(item);
     });
 
+    dispatchAppEvent(CustomAppEventEnum.UPDATE_CACHE_ITEMS, {
+      nodes: items,
+    });
+
     // Don’t do any level filtering here, it’ll be done at the Canvas level.
     dispatchAppEvent(CustomAppEventEnum.NODE_LAYOUTS_CHANGED, {
       nodes: items,

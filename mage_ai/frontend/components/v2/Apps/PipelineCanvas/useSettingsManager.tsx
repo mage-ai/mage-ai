@@ -1,11 +1,11 @@
 import React, { useRef, useEffect } from 'react';
+import { update } from './cache';
 import stylesOutput from '@styles/scss/components/Canvas/Nodes/OutputGroups.module.scss';
 import stylesBuilder from '@styles/scss/apps/Canvas/Pipelines/Builder.module.scss';
 import { LayoutConfigType } from '../../Canvas/interfaces';
 import BlockType from '@interfaces/BlockType';
 import { LINE_CLASS_NAME, buildContainerClassName, extractContainerClassNames } from './utils/display';
 import { levelClassName, groupClassName, nodeTypeClassName, statusClassName, uuidClassName } from '../../Canvas/Nodes/utils';
-import { get, set } from '@storage/localStorage';
 import useAppEventsHandler, { CustomAppEvent, CustomAppEventEnum } from './useAppEventsHandler';
 import { STYLE_ROOT_ID } from '@context/v2/Style';
 import { getCache } from '@mana/components/Menu/storage';
@@ -20,11 +20,6 @@ import { MenuGroupType } from '@mana/components/Menu/interfaces';
 import { Root, createRoot } from 'react-dom/client';
 import { BlockTypeEnum } from '@interfaces/BlockType';
 import { DEBUG } from '@components/v2/utils/debug';
-import { flattenArray } from '@utils/array';
-
-function builderLocalStorageKey(uuid: string) {
-  return `pipeline_builder_canvas_local_settings_${uuid}`;
-}
 
 export default function useSettingsManager({
   blocksByGroupRef,
@@ -91,6 +86,7 @@ export default function useSettingsManager({
     [CustomAppEventEnum.TELEPORT_INTO_BLOCK]: teleportIntoBlock,
     [CustomAppEventEnum.UPDATE_DISPLAY]: updateVisibleNodes,
     [CustomAppEventEnum.UPDATE_SETTINGS]: updateLocalSettings,
+    [CustomAppEventEnum.UPDATE_CACHE_ITEMS]: updateCache,
   });
 
   // TODO: fix local settings
@@ -112,6 +108,21 @@ export default function useSettingsManager({
   // layoutConfig.current.rectTransformations = settings?.layoutConfig?.rectTransformations ?? null;
   // layoutConfig.current.transformStateRef = transformState;
   // layoutConfig.current.viewportRef = canvasRef;
+
+  function updateCache({ detail }: CustomAppEvent) {
+    update(pipelineUUID, {
+      items: detail?.nodes?.reduce((acc, { id, rect, status, version }) => ({
+        ...acc,
+        [id]: {
+          rect: {
+            ...rect,
+          },
+          status,
+          version,
+        },
+      }), {}),
+    });
+  }
 
   function updateLocalSettings(event: CustomAppEvent) {
     const { options } = event?.detail ?? {};
