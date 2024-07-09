@@ -311,6 +311,7 @@ export default function useExecutionManager({
   function useExecuteCode(channel: string, stream?: string): {
     executeCode: (message: string, payload?: {
       message_request_uuid?: string;
+      output_dir?: string;
       source?: string;
     }) => [string, () => any];
   } {
@@ -318,23 +319,26 @@ export default function useExecutionManager({
 
     const executeCode = (message: string, payload?: {
       message_request_uuid?: string;
+      output_dir?: string;
       source?: string;
     }, opts?: {
       future?: boolean;
+      onError?: (response: ResponseType) => void;
+      onSuccess?: (data: { code_execution: ProcessDetailsType }) => void;
     }): [string, () => any] => {
       const messageRequestUUID = String(Number(new Date()));
 
       const future = () => mutants.create.mutate({
         onError: (response: ResponseType) => {
-          debugLog('[RUNTIME] onError', response);
+          opts?.onError && opts?.onError?.(response);
         },
         onSuccess: (data: { code_execution: ProcessDetailsType }) => {
-          debugLog('[RUNTIME] onSuccess', data);
-          addToStream(channel, stream, { message: data.code_execution as ProcessDetailsType });
+          opts?.onSuccess && opts?.onSuccess?.(data);
         },
         payload: {
           message,
           message_request_uuid: payload?.message_request_uuid ?? messageRequestUUID,
+          output_dir: payload?.output_dir,
           source: payload?.source,
           stream,
           timestamp: Number(new Date()),

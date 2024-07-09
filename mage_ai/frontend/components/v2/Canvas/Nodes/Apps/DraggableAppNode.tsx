@@ -273,7 +273,9 @@ const DraggableAppNode: React.FC<NodeType & CanvasNodeType> = ({
               basic
               bordercolor={baseColor}
               loading={executing}
-              onClick={() => executeCode(editor.getValue())}
+              onClick={() => executeCode(editor.getValue(), {
+                output_dir: file?.relative_path,
+              })}
               small
             />
 

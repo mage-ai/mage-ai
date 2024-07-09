@@ -88,6 +88,7 @@ class Kernel:
         self,
         message: str,
         message_request_uuid: Optional[str] = None,
+        output_file: Optional[str] = None,
         source: Optional[str] = None,
         stream: Optional[str] = None,
         timestamp: Optional[float] = None,
@@ -99,7 +100,7 @@ class Kernel:
 
         process = Process(
           self.uuid, message, message_request_uuid=message_request_uuid,
-          source=source, stream=stream
+          output_file=output_file, source=source, stream=stream
         )
         if (
             self.pool is not None

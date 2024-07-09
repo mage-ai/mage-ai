@@ -17,3 +17,12 @@ class BrowserItemPresenter(BasePresenter):
 
     async def prepare_present(self, **kwargs) -> Dict:
         return self.resource.model.to_dict()
+
+
+BrowserItemPresenter.register_format(
+    'with_output',
+    BrowserItemPresenter.default_attributes
+    + [
+        'output',
+    ],
+)

@@ -22,10 +22,13 @@ export interface EventSourceHandlers {
 export interface ExecuteCodeHook {
   executeCode: (message: string, payload?: {
     message_request_uuid?: string;
+    output_dir?: string;
     source?: string;
     stream?: string;
   }, opts?: {
     future?: boolean;
+    onError?: (response: ResponseType) => void;
+    onSuccess?: (data: { code_execution: ProcessDetailsType }) => void;
   }) => [string, () => void];
   messageRequestUUID: string;
 }

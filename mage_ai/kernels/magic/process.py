@@ -28,6 +28,8 @@ def execute_message(
     message: str,
     process_details: Dict,
     context: Optional[ProcessContext] = None,
+    main_queue: Optional[Any] = None,
+    output_file: Optional[str] = None,
 ) -> None:
     if is_debug():
         print(f'[Process.execute_code:{uuid}] Executing code: {message}')
@@ -41,6 +43,8 @@ def execute_message(
                 message,
                 process_details,
                 context,
+                main_queue,
+                output_file,
             )
         )
     except Exception as err:
@@ -54,6 +58,7 @@ class ProcessBase:
         message: str,
         *args,
         message_request_uuid: Optional[str] = None,
+        output_file: Optional[str] = None,
         source: Optional[str] = None,
         stream: Optional[str] = None,
         **kwargs,
@@ -61,6 +66,7 @@ class ProcessBase:
         self.message = message
         self.message_request_uuid = message_request_uuid
         self.message_uuid = uuid4().hex
+        self.output_file = output_file
         self.result = None
         self.source = source
         self.stream = stream
@@ -91,6 +97,7 @@ class ProcessBase:
             message=self.message,
             message_request_uuid=self.message_request_uuid,
             message_uuid=self.message_uuid,
+            output_file=self.output_file,
             source=self.source,
             stream=self.stream,
             pid=self.pid,
@@ -120,6 +127,8 @@ class ProcessBase:
                 self.message,
                 self.to_dict(),
                 context,
+                None,
+                self.output_file,
             ],
             kwds={},
         )

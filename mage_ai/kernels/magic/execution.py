@@ -1,3 +1,4 @@
+import json
 import time
 from asyncio import Event as AsyncEvent
 from contextlib import redirect_stdout
@@ -40,33 +41,19 @@ def read_stdout_continuously(
     async_stdout: AsyncStdout,
     stop_event: Event,
     main_queue: Optional[FasterQueue] = None,
+    output_file: Optional[str] = None,
 ) -> None:
+    file = None
+    if output_file:
+        file = open(output_file, 'a')
+
     while not stop_event.is_set():
         output = async_stdout.get_output()
         if output:
             if is_debug():
                 print(f"[SRT] Debug: Captured output: {output}")
             # Just enqueue it or else it’ll resolve to None
-            queue.put(
-                ExecutionResult.load(
-                    data_type=DataType.TEXT_PLAIN,
-                    output=output,
-                    process=process,
-                    status=ExecutionStatus.RUNNING,
-                    type=ResultType.STDOUT,
-                    uuid=uuid,
-                )
-            )
-            if main_queue is not None:
-                main_queue.put(uuid)
-        time.sleep(FLUSH_INTERVAL / 2)
-
-    output = async_stdout.get_output()
-    if output:
-        if is_debug():
-            print(f"[END] Debug: Captured output: {output}")
-        queue.put(
-            ExecutionResult.load(
+            result = ExecutionResult.load(
                 data_type=DataType.TEXT_PLAIN,
                 output=output,
                 process=process,
@@ -74,9 +61,41 @@ def read_stdout_continuously(
                 type=ResultType.STDOUT,
                 uuid=uuid,
             )
+            queue.put(result)
+
+            if main_queue is not None:
+                main_queue.put(uuid)
+
+            if file:
+                file.write(json.dumps(result.to_dict()) + '\n')
+                file.flush()
+
+        time.sleep(FLUSH_INTERVAL / 2)
+
+    output = async_stdout.get_output()
+    if output:
+        if is_debug():
+            print(f"[END] Debug: Captured output: {output}")
+
+        result = ExecutionResult.load(
+            data_type=DataType.TEXT_PLAIN,
+            output=output,
+            process=process,
+            status=ExecutionStatus.RUNNING,
+            type=ResultType.STDOUT,
+            uuid=uuid,
         )
+        queue.put(result)
+
+        if file:
+            file.write(json.dumps(result.to_dict()) + '\n')
+            file.flush()
+
     if main_queue is not None:
         main_queue.put(uuid)
+
+    if file:
+        file.close()
 
 
 async def execute_code_async(
@@ -87,6 +106,7 @@ async def execute_code_async(
     process_details: Dict,
     context: Optional[ProcessContext] = None,
     main_queue: Optional[FasterQueue] = None,
+    output_file: Optional[str] = None,
 ) -> None:
     process = ProcessDetails.load(**process_details)
 
@@ -115,6 +135,7 @@ async def execute_code_async(
                 async_stdout,
                 stop_event_read,
                 main_queue,
+                output_file,
             ),
             daemon=True,
         )
@@ -152,15 +173,22 @@ async def execute_code_async(
 
         while check_queue(queue):
             time.sleep(FLUSH_INTERVAL)
-        queue.put(
-            ExecutionResult.load(
-                output=last_output if 'last_output' in locals() else None,
-                process=process,
-                status=ExecutionStatus.SUCCESS,
-                type=ResultType.DATA,
-                uuid=uuid,
-            )
+
+        result = ExecutionResult.load(
+            output=last_output if 'last_output' in locals() else None,
+            process=process,
+            status=ExecutionStatus.SUCCESS,
+            type=ResultType.DATA,
+            uuid=uuid,
         )
+        queue.put(result)
+
+        # Save last expression output to the file
+        if output_file and result.output is not None:
+            with open(output_file, 'a') as file:
+                file.write(json.dumps(result.to_dict()) + '\n')
+                file.flush()
+
         queue.put(
             ExecutionResult.load(
                 process=process,

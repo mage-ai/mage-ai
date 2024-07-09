@@ -46,6 +46,8 @@ export interface ProcessDetailsType {
   message: string;
   message_request_uuid: string;
   message_uuid: string;
+  output_dir?: string;
+  output_file?: string;
   pid: number;
   source?: string;
   stream?: string;

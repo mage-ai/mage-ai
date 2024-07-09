@@ -187,7 +187,15 @@ export const BlockNodeWrapper: React.FC<BlockNodeType> = ({
 
     const execute = () => {
       const message = getCode();
-      const [messageRequestUUID, future] = executeCode(message, { source: node.id }, { future: true });
+      const [messageRequestUUID, future] = executeCode(message, {
+        output_dir: file?.relative_path ?? null,
+        source: node.id,
+      }, {
+        future: true, onError: () => {
+          updateStyles(false);
+          clearTimeout(timeoutRef.current);
+        }
+      });
 
       const output = buildOutputNode(node, block, {
         message,
