@@ -99,7 +99,10 @@ def execute_sql_code(
 
     if not config_file_loader:
         config_path = path.join(block.repo_path, 'io_config.yaml')
-        config_profile = configuration.get('data_provider_profile')
+        config_profile = interpolate_vars(
+            configuration.get('data_provider_profile'),
+            global_vars=global_vars,
+        )
         config_file_loader = ConfigFileLoader(config_path, config_profile)
 
     data_provider = configuration.get('data_provider')
