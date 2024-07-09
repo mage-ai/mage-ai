@@ -120,7 +120,7 @@ a {
 }
 
 body {
-  background-color: var(--backgrounds-body);
+  background-color: var(--backgrounds-body, #1E1F24);
   border-color: var(--borders-color-base-default);
   color: var(--fonts-color-text-base);
 
