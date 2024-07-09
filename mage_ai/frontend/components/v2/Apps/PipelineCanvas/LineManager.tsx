@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import { SettingsContext } from '@components/v2/Apps/PipelineCanvas/SettingsManager/SettingsContext';
 import useAppEventsHandler, { CustomAppEvent, CustomAppEventEnum } from './useAppEventsHandler';
 import { nodeClassNames } from '../../Canvas/Nodes/utils';
-import { ConnectionLines, LinePathType } from '../../Canvas/Connections/ConnectionLines';
+import { ConnectionLines, LinePathType, linePathKey } from '../../Canvas/Connections/ConnectionLines';
 import {
   LayoutStyleEnum,
   ItemStatusEnum, LayoutDisplayEnum, LayoutConfigDirectionEnum, ItemTypeEnum
@@ -18,9 +18,7 @@ import { GroupUUIDEnum } from '@interfaces/PipelineExecutionFramework/types';
 import { LayoutManagerType } from './interfaces';
 import { LINE_CLASS_NAME } from './utils/display';
 import { DEBUG } from '../../utils/debug';
-import { selectKeys } from '@utils/hash';
-
-
+import { ignoreKeys, selectKeys } from '@utils/hash';
 
 const BASE_Z_INDEX = 2;
 const ORDER = {
@@ -42,15 +40,10 @@ export default function LineManager() {
 
   const timeoutRef = useRef(null);
   const lineRefs = useRef<Record<string, React.RefObject<SVGPathElement>>>({});
-  const [lines, setLines] = useState<{
-    [ItemTypeEnum.BLOCK]: Record<string, LinePathType>;
-    [ItemTypeEnum.NODE]: Record<string, LinePathType>;
-    [ItemTypeEnum.OUTPUT]: Record<string, LinePathType>;
-  }>({
-    [ItemTypeEnum.BLOCK]: {},
-    [ItemTypeEnum.NODE]: {},
-    [ItemTypeEnum.OUTPUT]: {},
-  });
+
+  const [linesBlock, setLinesBlock] = useState<Record<string, LinePathType>>({});
+  const [linesNode, setLinesNode] = useState<Record<string, LinePathType>>({});
+  const [linesOutput, setLinesOutput] = useState<Record<string, LinePathType>>({});
 
   function updateLines({ detail }: CustomAppEvent) {
     // const { itemElementsRef } = detail?.manager;
@@ -143,23 +136,24 @@ export default function LineManager() {
         });
     });
 
-    setLines((prev) => opts?.replace
-      ? paths
-      : {
-        [ItemTypeEnum.BLOCK]: {
-          ...prev?.[ItemTypeEnum.BLOCK],
-          ...paths?.[ItemTypeEnum.BLOCK],
-        },
-        [ItemTypeEnum.NODE]: {
-          ...prev?.[ItemTypeEnum.NODE],
-          ...paths?.[ItemTypeEnum.NODE],
-        },
-        [ItemTypeEnum.OUTPUT]: {
-          ...prev?.[ItemTypeEnum.OUTPUT],
-          ...paths?.[ItemTypeEnum.OUTPUT],
-        },
-      }
-    );
+    if (opts?.replace) {
+      setLinesBlock(paths[ItemTypeEnum.BLOCK]);
+      setLinesNode(paths[ItemTypeEnum.NODE]);
+      setLinesOutput(paths[ItemTypeEnum.OUTPUT]);
+    } else {
+      setLinesBlock((prev) => ({
+        ...prev,
+        ...paths[ItemTypeEnum.BLOCK],
+      }));
+      setLinesNode((prev) => ({
+        ...prev,
+        ...paths[ItemTypeEnum.NODE],
+      }));
+      setLinesOutput((prev) => ({
+        ...prev,
+        ...paths[ItemTypeEnum.OUTPUT],
+      }));
+    }
   }
 
   function renderLine(
@@ -339,6 +333,9 @@ export default function LineManager() {
   }
 
   useAppEventsHandler({ lineRefs } as any, {
+    [CustomAppEventEnum.CLOSE_OUTPUT]: ({ detail: { node, output } }: CustomAppEvent) => {
+      setLinesOutput((prev) => ignoreKeys(prev, [getLineID(node.id, output.id)]));
+    },
     [CustomAppEventEnum.NODE_LAYOUTS_CHANGED]: handleLayoutChange,
     [CustomAppEventEnum.OUTPUT_UPDATED]: handleOutputUpdated
   });
@@ -348,15 +345,20 @@ export default function LineManager() {
     return () => timeout && clearTimeout(timeout);
   }, []);
 
-  const linesb = useMemo(() => lines?.[ItemTypeEnum.BLOCK] ?? {}, [lines]);
-  const linesn = useMemo(() => lines?.[ItemTypeEnum.NODE] ?? {}, [lines]);
-  const lineso = useMemo(() => lines?.[ItemTypeEnum.OUTPUT] ?? {}, [lines]);
-
   return (
     <>
-      <ConnectionLines linePaths={linesb} zIndex={BASE_Z_INDEX + ORDER[ItemTypeEnum.BLOCK]} />
-      <ConnectionLines linePaths={linesn} zIndex={BASE_Z_INDEX + ORDER[ItemTypeEnum.NODE]} />
-      <ConnectionLines linePaths={lineso} zIndex={BASE_Z_INDEX + ORDER[ItemTypeEnum.OUTPUT]} />
+      <ConnectionLines
+        linePaths={linesBlock}
+        zIndex={BASE_Z_INDEX + ORDER[ItemTypeEnum.BLOCK]}
+      />
+      <ConnectionLines
+        linePaths={linesNode}
+        zIndex={BASE_Z_INDEX + ORDER[ItemTypeEnum.NODE]}
+      />
+      <ConnectionLines
+        linePaths={linesOutput}
+        zIndex={BASE_Z_INDEX + ORDER[ItemTypeEnum.OUTPUT]}
+      />
     </>
   );
 }

@@ -316,7 +316,8 @@ export default function useEventManager({
             removeContextMenu(event);
             dispatchAppEvent(CustomAppEventEnum.CLOSE_OUTPUT, {
               event,
-              node: target,
+              node: target.node,
+              output: target
             });
           },
           uuid: 'Close output',

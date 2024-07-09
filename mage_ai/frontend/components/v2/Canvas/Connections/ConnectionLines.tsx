@@ -2,6 +2,12 @@ import React from 'react';
 import styles from '@styles/scss/apps/Canvas/Pipelines/Builder.module.scss';
 import { motion } from 'framer-motion';
 
+export function linePathKey(linePaths: Record<string, LinePathType>): string {
+  const lines1 = Object.values(linePaths ?? {})
+  const keys1 = lines1?.map(({ key }) => key).sort()?.join('--');
+  return keys1;
+}
+
 export type LinePathType = {
   id: string;
   key: string;
@@ -38,8 +44,10 @@ const LinesComponent: React.FC<ConnectionLinesProps> = ({
 );
 
 function areEqual(prevProps, nextProps) {
-  const keys1 = Object.values(prevProps?.linePaths ?? {})?.map(({ key }) => key).sort()?.join('--');
-  const keys2 = Object.values(nextProps?.linePaths ?? {})?.map(({ key }) => key).sort()?.join('--');
+  const lines1 = Object.values(prevProps?.linePaths ?? {})
+  const lines2 = Object.values(nextProps?.linePaths ?? {})
+  const keys1 = linePathKey(prevProps?.linePaths);
+  const keys2 = linePathKey(nextProps?.linePaths);
 
   // console.log(
   //   ['keys1', keys1],
@@ -47,7 +55,16 @@ function areEqual(prevProps, nextProps) {
   //   keys1 === keys2,
   // );
 
+  // console.log(
+  //   prevProps, nextProps,
+  //   lines1?.length === lines2?.length,
+  //   prevProps.zIndex === nextProps.zIndex,
+  //   prevProps.id === nextProps.id,
+  //   keys1 === keys2,
+  // )
+
   return (
+    lines1?.length === lines2?.length &&
     prevProps.zIndex === nextProps.zIndex &&
     prevProps.id === nextProps.id &&
     keys1 === keys2

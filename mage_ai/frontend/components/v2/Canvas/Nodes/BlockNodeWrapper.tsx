@@ -58,9 +58,11 @@ export const BlockNodeWrapper: React.FC<BlockNodeType> = ({
   const block = useMemo(() => node?.block, [node]);
   const { configuration, type, uuid } = block;
 
-  const { activeLevel, layoutConfigs, selectedGroupsRef } = useContext(SettingsContext);
+  const { activeLevel, selectedGroupsRef } = useContext(SettingsContext);
+  const { outputsRef } = useContext(ModelContext);
   const selectedGroup = selectedGroupsRef?.current?.[activeLevel?.current - 1];
   const blockInSelectedGroup = useMemo(() => block?.groups?.includes(selectedGroup?.uuid), [block, selectedGroup]);
+  const outputsClosedRef = useRef(null);
 
   const buttonBeforeRef = useRef<HTMLDivElement>(null);
   const timerStatusRef = useRef(null);
@@ -105,10 +107,14 @@ export const BlockNodeWrapper: React.FC<BlockNodeType> = ({
         setTimeout(() => handleSubscribe(), 1000);
       }
     },
-    [CustomAppEventEnum.CLOSE_OUTPUT]: (event: CustomAppEvent) => {
-      const { node: output } = event.detail ?? {};
-      if (output && output?.upstream?.includes(node?.id)) {
-        outputRef?.current?.classList?.add?.('hidden');
+    [CustomAppEventEnum.CLOSE_OUTPUT]: ({ detail }: CustomAppEvent) => {
+      if (node.id === detail?.node?.id) {
+        setOutputNodes(prev => {
+          outputsClosedRef.current = prev;
+          return null;
+        });
+        handleOnMessageRef.current = null;
+        unsubscribe(consumerID);
       }
     },
     [CustomAppEventEnum.PORTAL_MOUNTED]: (event: any) => {
@@ -247,9 +253,6 @@ export const BlockNodeWrapper: React.FC<BlockNodeType> = ({
 
       updateStyles(true);
 
-      // This style and classname is handled by the settings manager.
-      outputRef?.current?.classList?.remove?.('hidden');
-
       future();
 
       let loops = 0;
@@ -277,6 +280,10 @@ export const BlockNodeWrapper: React.FC<BlockNodeType> = ({
         0,
       );
     };
+
+    if (outputsClosedRef?.current) {
+      setOutputNodes(outputsClosedRef.current);
+    }
 
     if (getCode()?.length >= 1) {
       execute();
