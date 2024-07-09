@@ -1,8 +1,9 @@
 import React, { createRef, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import { getUpDownstreamColors } from '../../Canvas/Nodes/Blocks/utils';
 import stylesBuilder from '@styles/scss/apps/Canvas/Pipelines/Builder.module.scss';
-import { ModelContext } from '@components/v2/Apps/PipelineCanvas/ModelManager/ModelContext';
+import { ModelContext } from './ModelManager/ModelContext';
 import { cubicBezier, motion, useAnimation, useAnimate } from 'framer-motion';
-import { SettingsContext } from '@components/v2/Apps/PipelineCanvas/SettingsManager/SettingsContext';
+import { SettingsContext } from './SettingsManager/SettingsContext';
 import useAppEventsHandler, { CustomAppEvent, CustomAppEventEnum } from './useAppEventsHandler';
 import { nodeClassNames } from '../../Canvas/Nodes/utils';
 import { ConnectionLines, LinePathType, linePathKey } from '../../Canvas/Connections/ConnectionLines';
@@ -34,7 +35,7 @@ function getLineID(nodeID: string, downstreamID: string) {
 
 export default function LineManager() {
   const { activeLevel, layoutConfigs, selectedGroupsRef } = useContext(SettingsContext);
-  const { outputsRef } = useContext(ModelContext);
+  const { blocksByGroupRef, groupMappingRef, groupsByLevelRef, outputsRef } = useContext(ModelContext);
   const selectedGroup = selectedGroupsRef?.current?.[selectedGroupsRef?.current?.length - 1];
   const layoutConfig = layoutConfigs?.current?.[activeLevel?.current];
   const { direction, display, style } = layoutConfig?.current ?? {};
@@ -42,7 +43,6 @@ export default function LineManager() {
   const readyRef = useRef(false);
   const controls = useAnimation();
   const [scope, animate] = useAnimate()
-
 
   const lineMappingRef = useRef({});
   const timeoutRef = useRef(null);
@@ -237,7 +237,16 @@ export default function LineManager() {
         const color = getBlockColor(
           (b as any)?.type ?? BlockTypeEnum.GROUP, { getColorName: true },
         )?.names?.base;
-        if (color && !colors.includes(color)) {
+
+        if ((!color || colors.includes(color))
+          && (BlockTypeEnum.GROUP === block2?.type || !block2?.type)
+        ) {
+          const groupsInLevel = groupsByLevelRef?.current?.[activeLevel?.current - 2];
+          const {
+            downstreamInGroup
+          } = getUpDownstreamColors(block, groupsInLevel, blocksByGroupRef?.current);
+          colors.push(...(downstreamInGroup?.map(g => g.colorName) ?? []));
+        } else if (color && !colors.includes(color)) {
           colors.push(color);
         }
       });
@@ -346,24 +355,6 @@ export default function LineManager() {
 
     lineRefs.current[node2?.type] ||= {};
     lineRefs.current[node2?.type][lineID] ||= createRef();
-
-    const duration = 0.5;
-    const easing = cubicBezier(.35, .17, .3, .86);
-    const animateProps = {
-      animate: {
-        ease: easing,
-        opacity: 1,
-        pathLength: 1,
-        transition: {
-          delay: (index * duration) + (isOutput ? 2 : 1),
-          duration: isOutput ? 0.1 : duration * ((100 - index) / 100),
-        },
-      },
-      initial: {
-        opacity: 0,
-        pathLength: 0,
-      },
-    };
 
     const lineRef = lineRefs.current[node2.type][lineID];
 

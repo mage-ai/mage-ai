@@ -1,6 +1,8 @@
 import { FrameworkType, PipelineExecutionFrameworkBlockType } from '@interfaces/PipelineExecutionFramework/interfaces';
 import { BlocksByGroupType } from '../../interfaces';
-import BlockType from '@interfaces/BlockType';
+import BlockType, { BlockTypeEnum } from '@interfaces/BlockType';
+import { getBlockColor } from '@mana/themes/blocks';
+import { getModeColorName } from '../presentation';
 
 export function groupValidation(group: FrameworkType, blockByGroup: BlocksByGroupType): {
   blocks: BlockType[];
@@ -31,5 +33,38 @@ export function groupValidation(group: FrameworkType, blockByGroup: BlocksByGrou
     error,
     required,
     valid,
+  };
+}
+
+export function getUpDownstreamColors(
+  block,
+  groupsInLevel,
+  blocksByGroup,
+) {
+  const parentGroups = groupsInLevel?.filter(({ uuid }) => block?.groups?.includes(uuid));
+  const groupsInParent = parentGroups?.flatMap(({ children }) => children ?? []);
+
+  const up = [];
+  const dn = [];
+  groupsInParent.forEach((bgroup: BlockType) => {
+    const bgroupBlocks = Object.values(blocksByGroup?.[bgroup?.uuid] ?? {}) ?? [];
+    const modeColor = getModeColorName(bgroupBlocks)?.base;
+    const groupColor = getBlockColor(bgroup?.type ?? BlockTypeEnum.GROUP, { getColorName: true })?.names?.base;
+    const bgroup2 = {
+      ...bgroup,
+      blocks: bgroupBlocks,
+      colorName: modeColor ?? groupColor,
+    }
+
+    if (block?.upstream_blocks?.includes(bgroup?.uuid)) {
+      up.push(bgroup2);
+    } else if (block?.downstream_blocks?.includes(bgroup?.uuid)) {
+      dn.push(bgroup2);
+    }
+  });
+
+  return {
+    downstreamInGroup: dn,
+    upstreamInGroup: up,
   };
 }

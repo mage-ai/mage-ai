@@ -1,17 +1,18 @@
 import BlockType, { BlockTypeEnum } from '@interfaces/BlockType';
-import { LayoutConfigDirectionEnum } from '../../types';
-import { AnimatePresence, cubicBezier, motion, useAnimation } from 'framer-motion';
-import { SettingsContext } from '@components/v2/Apps/PipelineCanvas/SettingsManager/SettingsContext';
 import Grid from '@mana/components/Grid';
 import Link from '@mana/elements/Link';
 import useAppEventsHandler, { CustomAppEvent, CustomAppEventEnum } from '@components/v2/Apps/PipelineCanvas/useAppEventsHandler';
+import { AnimatePresence, cubicBezier, motion, useAnimation } from 'framer-motion';
+import { ElementRoleEnum } from '@mana/shared/types';
+import { LayoutConfigDirectionEnum } from '../../types';
 import { MenuGroupType } from '@mana/components/Menu/interfaces';
 import { ModelContext } from '@components/v2/Apps/PipelineCanvas/ModelManager/ModelContext';
 import { NodeItemType } from '../../interfaces';
+import { SettingsContext } from '@components/v2/Apps/PipelineCanvas/SettingsManager/SettingsContext';
 import { getBlockColor } from '@mana/themes/blocks';
 import { getModeColorName } from '../presentation';
+import { getUpDownstreamColors } from './utils';
 import { useContext, useEffect, useMemo, useRef } from 'react';
-import { ElementRoleEnum } from '@mana/shared/types';
 
 export default function TeleportGroup({
   block,
@@ -46,31 +47,7 @@ export default function TeleportGroup({
   const {
     downstreamInGroup,
     upstreamInGroup,
-  } = useMemo(() => {
-    const up = [];
-    const dn = [];
-    groupsInParent.forEach((bgroup: BlockType) => {
-      const bgroupBlocks = Object.values(blocksByGroupRef?.current?.[bgroup?.uuid] ?? {}) ?? [];
-      const modeColor = getModeColorName(bgroupBlocks)?.base;
-      const groupColor = getBlockColor(bgroup?.type ?? BlockTypeEnum.GROUP, { getColorName: true })?.names?.base;
-      const bgroup2 = {
-        ...bgroup,
-        blocks: bgroupBlocks,
-        colorName: modeColor ?? groupColor,
-      }
-
-      if (block?.upstream_blocks?.includes(bgroup?.uuid)) {
-        up.push(bgroup2);
-      } else if (block?.downstream_blocks?.includes(bgroup?.uuid)) {
-        dn.push(bgroup2);
-      }
-    });
-
-    return {
-      downstreamInGroup: dn,
-      upstreamInGroup: up,
-    };
-  }, [block, blocksByGroupRef, groupsInParent]);
+  } = getUpDownstreamColors(block, groupsInLevel, blocksByGroupRef?.current);
 
   const isup = upstreamInGroup?.length > 0;
   const isdn = downstreamInGroup?.length > 0;
