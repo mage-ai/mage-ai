@@ -21,6 +21,7 @@ import { MenuGroupType } from '@mana/components/Menu/interfaces';
 import { Root, createRoot } from 'react-dom/client';
 import { BlockTypeEnum } from '@interfaces/BlockType';
 import { DEBUG } from '@components/v2/utils/debug';
+import { isEmptyObject } from '@utils/hash';
 
 // 1. ModelManager: initialize models -> UPDATE_DISPLAY -> SettingsManager
 // 2. SettingsManager: filters the items that should be mounted -> NODE_LAYOUTS_CHANGED -> Canvas
@@ -270,7 +271,6 @@ export default function useSettingsManager({
           type: ItemTypeEnum.NODE,
         });
 
-
         // Group has blocks
         if (count >= 1) {
           ITEM_TYPES.forEach(type => {
@@ -331,7 +331,20 @@ export default function useSettingsManager({
 
   function filterNodesToBeMounted(event?: CustomAppEvent) {
     const { detail } = event ?? {};
-    const { manager, nodes } = detail ?? {};
+    const { manager, nodes, blocksRemoved } = detail ?? {};
+
+    console.log(nodes, blocksRemoved)
+    if (!isEmptyObject(blocksRemoved)) {
+      dispatchAppEvent(CustomAppEventEnum.UPDATE_NODE_LAYOUTS, {
+        nodes: getDisplayableNodes(),
+        options: {
+          kwargs: {
+            conditions: buildDisplayableConditions(),
+          },
+        },
+      });
+      return;
+    }
 
     // const payload: {
     //   classNames?: string[];
@@ -453,7 +466,7 @@ export default function useSettingsManager({
     const nodes = getDisplayableNodes();
     const ready = nodes?.every(item => ItemStatusEnum.READY === item.status);
     // Trigger a layout update if some nodes require a layout update.
-    console.log('SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS', itemsRef?.current, nodes)
+
     dispatchAppEvent(CustomAppEventEnum.UPDATE_NODE_LAYOUTS, {
       event: convertEvent(event),
       nodes,

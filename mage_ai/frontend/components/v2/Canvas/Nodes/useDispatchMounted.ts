@@ -9,10 +9,11 @@ export default function useDispatchMounted(
   nodeRef: React.RefObject<Element>,
   opts?: {
     eventType?: CustomAppEventEnum | string;
+    phaseRef?: React.MutableRefObject<number>;
     onMount?: (event: CustomAppEvent) => void;
   },
 ) {
-  const phaseRef = useRef(0);
+  const phaseRef = useRef(opts?.phaseRef?.current ?? 0);
   const timeoutRef = useRef(null);
 
   const { dispatchAppEvent } = useAppEventsHandler(node as any);

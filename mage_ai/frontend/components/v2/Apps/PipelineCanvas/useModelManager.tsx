@@ -373,6 +373,7 @@ export default function useModelManager({
         // Don’t do any level filtering here, it’ll be done at the Canvas level.
 
         dispatchAppEvent(CustomAppEventEnum.UPDATE_DISPLAY, {
+          blocksRemoved,
           nodes: items,
           nodesUpdated: nodesRequireUpdate,
         });

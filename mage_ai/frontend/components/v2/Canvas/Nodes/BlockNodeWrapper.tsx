@@ -1,4 +1,5 @@
 import BlockNodeComponent from './BlockNode';
+import useDispatchMounted from './useDispatchMounted';
 import { ItemStatusEnum, ItemTypeEnum, LayoutConfigDirectionEnum, PortSubtypeEnum } from '../types';
 import BlockType, { BlockTypeEnum } from '@interfaces/BlockType';
 import EventStreamType, { ServerConnectionStatusType } from '@interfaces/EventStreamType';
@@ -28,6 +29,7 @@ import { nodeClassNames } from './utils';
 import { setupDraggableHandlers, buildEvent } from './utils';
 import { useCallback, useContext, useEffect, useState, useMemo, useRef } from 'react';
 import { indexBy } from '@utils/array';
+import { getRectDiff } from '../utils/rect';
 
 type BlockNodeType = BlockNodeWrapperProps;
 
@@ -61,7 +63,7 @@ export const BlockNodeWrapper: React.FC<BlockNodeType> = ({
   const buttonBeforeRef = useRef<HTMLDivElement>(null);
   const timerStatusRef = useRef(null);
   const timeoutRef = useRef(null);
-  const phaseRef = useRef(0);
+  const phaseRef = useRef(node.version);
 
   const nodeRef = useRef(null);
   const outputRef = useRef(null);
@@ -122,6 +124,26 @@ export const BlockNodeWrapper: React.FC<BlockNodeType> = ({
     [CustomAppEventEnum.HIDE_NODES]: handleDismissNode,
   });
 
+  function rectWithoutStyles() {
+    const styles = {};
+    [
+      'height',
+      'left',
+      'minHeight',
+      'minWidth',
+      'top',
+      'width',
+    ].forEach((key) => {
+      styles[key] = nodeRef.current.style[key];
+      nodeRef.current.style[key] = '';
+    });
+    const rect = nodeRef.current.getBoundingClientRect();
+    Object.keys(styles).forEach((key) => {
+      nodeRef.current.style[key] = styles[key];
+    });
+    return rect;
+  }
+
   function resetRect() {
     nodeRef.current.style.minHeight = '';
     nodeRef.current.style.minWidth = '';
@@ -131,64 +153,93 @@ export const BlockNodeWrapper: React.FC<BlockNodeType> = ({
     nodeRef.current.style.left = '';
   }
 
+  console.log("MMMMMMMMMMMMMMM", phaseRef.current, node.id)
+  useDispatchMounted(node, nodeRef, {
+    phaseRef,
+  });
+
   function handleRectUpdated({ detail }: CustomAppEvent) {
+    console.log('UPDATINGGGGGGGGGGGGGGGG???????????????????')
     const { nodes } = detail;
     const mapping = indexBy(nodes, item => item.id);
-    if (!(node.id in mapping)) return;
+    const mapping2 = indexBy(nodes, item => item?.block?.uuid);
+    console.log(nodes)
+    if (!(node.id in mapping) && !(node?.block?.uuid in mapping2)) return;
 
     const curr = mapping[node.id]?.rect;
     const prev = node.rect;
-    const same = areEqualRects({ rect: curr }, { rect: prev });
-    const rect = same ? prev : curr;
+    const rect = curr ?? prev;
+    const diff = rect?.diff;
+
     const rectel = nodeRef?.current?.getBoundingClientRect();
-    // const same2 = rect.left === rectel.left && rect.top === rectel.top;
-    // const starting = rectel.left === 0 && rectel.top === 0;
+    // const rectwo = rectWithoutStyles();
 
-    const easing = cubicBezier(.35, .17, .3, .86);
+    const init = rectel?.left === 0 && rectel?.top === 0;
 
-    resetRect();
-    nodeRef.current.style.transform = `translate(${rect.left}px, ${rect.top}px)`;
+    console.log(
+      node.id,
+      init,
+      rect,
+      diff,
+      areEqualRects({ rect }, { rect: diff }),
+    );
+
+    if (init) {
+      resetRect();
+    }
+
     nodeRef.current.style.height = `${rect.height}px`;
     nodeRef.current.style.width = `${rect.width}px`;
+    nodeRef.current.style.transform = `translate(${rect.left}px, ${rect.top}px)`;
 
-    controls.set({
-      opacity: 0,
-      scale: 0.9,
-      ...(LayoutConfigDirectionEnum.HORIZONTAL === layoutConfig?.direction
-        ? {
-          translateX: 16,
-        }
-        : {
-          translateY: 16,
-        }
-      ),
-    });
-    controls.start({
-      opacity: 1,
-      scale: 1,
-      transition: {
-        delay: (node?.index ?? indexProp) / 10,
-        duration: 0.05,
-        ease: easing,
-      },
-      translateX: 0,
-      translateY: 0,
-    });
+    if (!init && !!diff && !areEqualRects({ rect }, { rect: diff })) {
+      console.log('DIFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF', rect)
+      // nodeRef.current.style.transition = 'width 5s ease, height 5s ease';
+    } else if (init) {
 
-    [
-      node.type,
-    ].forEach(cn => nodeRef.current.classList.add(styles[cn]));
-    ['hide'].forEach(cn => nodeRef.current.classList.remove(styles[cn]));
-
-    handleAnimationCompleteRef.current = () => {
-      dispatchAppEvent(CustomAppEventEnum.NODE_DISPLAYED, {
-        node,
-        nodes,
+      const easing = cubicBezier(.35, .17, .3, .86);
+      controls.set({
+        opacity: 0,
+        scale: 0.9,
+        ...(LayoutConfigDirectionEnum.HORIZONTAL === layoutConfig?.direction
+          ? {
+            translateX: 16,
+          }
+          : {
+            translateY: 16,
+          }
+        ),
       });
-    };
+      controls.start({
+        opacity: 1,
+        scale: 1,
+        transition: {
+          delay: (node?.index ?? indexProp) / 10,
+          duration: 0.05,
+          ease: easing,
+        },
+        translateX: 0,
+        translateY: 0,
+      });
+
+      // handleAnimationCompleteRef.current = () => {
+      //   dispatchAppEvent(CustomAppEventEnum.NODE_DISPLAYED, {
+      //     node,
+      //     nodes,
+      //   });
+      // };
+    }
+
+    if (!nodeRef?.current?.classList?.contains(styles[node.type])) {
+      nodeRef.current.classList.add(styles[node.type]);
+    }
+    if (nodeRef?.current?.classList?.contains(styles.hide)) {
+      nodeRef.current.classList.remove(styles.hide);
+    }
   }
 
   function handleDismissNode({ detail }: CustomAppEvent) {
+    console.log('DISMISSINGGGGGGGGGGGGGGGG???????????????????')
     const { nodes } = detail;
     const mapping = indexBy(nodes, item => item.id);
     if (!(node.id in mapping)) return;
@@ -225,7 +276,7 @@ export const BlockNodeWrapper: React.FC<BlockNodeType> = ({
     });
 
     handleAnimationCompleteRef.current = () => {
-      resetRect();
+      // resetRect();
       ['hide'].forEach(cn => nodeRef.current.classList.add(styles[cn]));
     };
   }
@@ -547,7 +598,7 @@ export const BlockNodeWrapper: React.FC<BlockNodeType> = ({
           requiredGroup,
         })}
         className={[
-          styles.hide,
+          // styles.hide,
           (sharedProps.className || []),
           // Class names reserved for the SettingsManager to determine what is visible
           // based on the selected groups.
@@ -587,4 +638,4 @@ export const BlockNodeWrapper: React.FC<BlockNodeType> = ({
   );
 };
 
-export default React.memo(BlockNodeWrapper, (p1, p2) => areEqual(p1, p2) && areEqualApps(p1, p2));
+export default React.memo(BlockNodeWrapper, (p1, p2) => true);

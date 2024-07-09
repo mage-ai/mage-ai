@@ -40,6 +40,7 @@ import { ElementRoleEnum } from '@mana/shared/types';
 type BlockNodeProps = {
   block: BlockType | PipelineExecutionFrameworkBlockType;
   buttonBeforeRef?: React.RefObject<HTMLDivElement>;
+  contentRef?: React.RefObject<HTMLDivElement>;
   timerStatusRef?: React.RefObject<HTMLDivElement>;
   index?: number;
   node: NodeItemType
@@ -51,6 +52,7 @@ type BlockNodeProps = {
 export default function BlockNodeComponent({
   block,
   buttonBeforeRef,
+  contentRef,
   collapsed,
   draggable,
   handlers,
@@ -95,7 +97,7 @@ export default function BlockNodeComponent({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [level, node]);
 
-  useDispatchMounted(node, nodeRef);
+  // useDispatchMounted(node, nodeRef);
 
   const colorNames = blockColorNames(node);
   const borders = borderConfigs(node);
@@ -436,6 +438,7 @@ export default function BlockNodeComponent({
         ...classNames,
       ]?.filter(Boolean)?.join(' ')}
       // motionProps={motionProps}
+      ref={contentRef}
       role={ElementRoleEnum.CONTENT}
       style={{
         height: isSelectedGroup && blocksInGroup?.length > 0
@@ -447,7 +450,7 @@ export default function BlockNodeComponent({
 
       {main}
     </GradientContainer >
-  ), [blocksInGroup, classNames, isSelectedGroup, main,
+  ), [blocksInGroup, classNames, isSelectedGroup, main, contentRef,
     // motionProps,
   ]);
 
@@ -455,6 +458,7 @@ export default function BlockNodeComponent({
     <TeleportBlock
       block={block}
       buildBadgeRow={buildBadgeRow}
+      contentRef={contentRef}
       index={indexProp}
       node={node}
       role={ElementRoleEnum.CONTENT}

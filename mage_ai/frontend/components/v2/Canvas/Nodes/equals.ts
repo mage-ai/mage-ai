@@ -10,12 +10,13 @@ export function areEqual(p1: any, p2: any) {
 }
 
 export function areEqualRects(p1: { rect: RectType }, p2: { rect: RectType }) {
-  return [
-    'height',
-    'left',
-    'top',
-    'width',
-  ].every((key: string) => p1?.rect?.[key] === p2?.rect?.[key]);
+  const r = p1.rect;
+  const curr = p2.rect;
+
+  return r?.top === curr?.top &&
+    r?.left === curr?.left &&
+    r?.width === curr?.width &&
+    r?.height === curr?.height;
 }
 
 export function areDraggableStylesEqual(p1: { draggable?: boolean }, p2: { draggable?: boolean }) {

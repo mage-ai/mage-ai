@@ -54,23 +54,24 @@ export default function useLayoutManager({
 
     const layoutStyleTransformations = [];
 
-    const shift = {
-      options: (rects: RectType[]) => {
-        const box = calculateBoundingBox(rects);
+    const shiftRight = (factor: number = 2) => (rects: RectType[]) => Math.max(
+      40,
+      validateFiniteNumber(typeof window !== 'undefined'
+        ? (window.innerWidth - calculateBoundingBox(rects).width) / factor : 0),
+    );
+    const shiftDown = (factor: number = 2) => (rects: RectType[]) => Math.max(
+      40,
+      validateFiniteNumber(typeof window !== 'undefined'
+        ? (window.innerHeight - calculateBoundingBox(rects).height) / factor : 0),
+    );
 
-        return {
-          offset: {
-            left: Math.max(
-              40,
-              validateFiniteNumber(typeof window !== 'undefined' ? (window.innerWidth - box.width) / 2 : 0),
-            ),
-            top: Math.max(
-              40,
-              validateFiniteNumber(typeof window !== 'undefined' ? (window.innerHeight - box.height) / 2 : 0),
-            ),
-          },
-        };
-      },
+    const shift = {
+      options: (rects: RectType[]) => ({
+        offset: {
+          left: shiftRight()(rects),
+          top: shiftDown()(rects),
+        },
+      }),
       type: TransformRectTypeEnum.SHIFT,
     };
 
@@ -113,7 +114,7 @@ export default function useLayoutManager({
             },
           },
         }),
-        layoutOptions: { amplitude: 200, wavelength: 300 }
+        layoutOptions: { amplitude: 200, wavelength: 100 }
       }),
       type: TransformRectTypeEnum.LAYOUT_WAVE,
     };
@@ -302,8 +303,24 @@ export default function useLayoutManager({
         // },
 
         ...(LAYOUT_STYLE_MAPPING[layoutStyle] ?? [wave]),
-
-        shift,
+        {
+          ...(LAYOUT_STYLE_MAPPING[layoutStyle] ?? [wave]),
+          condition: (rects: RectType[]) => {
+            const box = calculateBoundingBox(rects);
+            return box?.width > canvasRef?.current?.getBoundingClientRect()?.width;
+          },
+          options: () => ({ layout: { direction: LayoutConfigDirectionEnum.VERTICAL } }),
+        },
+        {
+          // conditionSelf: (rect: RectType) => rect?.children?.length === 0,
+          options: (rects: RectType[]) => ({
+            offset: {
+              left: shiftRight()(rects),
+              top: shiftDown(1.85)(rects),
+            },
+          }),
+          type: TransformRectTypeEnum.SHIFT,
+        },
         {
           conditionSelf: activeGroupConditionChild,
           scope: RectTransformationScopeEnum.CHILDREN,
@@ -317,11 +334,36 @@ export default function useLayoutManager({
       ] as RectTransformationType[]);
     } else if (LayoutDisplayEnum.SIMPLE === layoutConfig?.display) {
       transformers.push(...[
-        // mindims,
-        // ...layoutStyleTransformations,
-        // tree,
-        wave,
-        shift,
+        // {
+        //   ...tree,
+        //   condition: (rects: RectType[]) => {
+        //     const box = calculateBoundingBox(rects);
+        //     return box?.width > canvasRef?.current?.getBoundingClientRect()?.width;
+        //   },
+        //   options: () => ({ layout: { direction: LayoutConfigDirectionEnum.HORIZONTAL } }),
+        // },
+        // {
+        //   ...wave,
+        //   condition: (rects: RectType[]) => {
+        //     const box = calculateBoundingBox(rects);
+        //     return box?.height > canvasRef?.current?.getBoundingClientRect()?.height;
+        //   },
+        //   options: () => ({ layout: { direction: LayoutConfigDirectionEnum.VERTICAL } }),
+        // },
+        {
+          ...wave,
+          layoutOptions: { amplitude: 400, wavelength: 100 },
+        },
+        {
+          options: (rects: RectType[]) => ({
+            offset: {
+              ...(LayoutConfigDirectionEnum.VERTICAL === direction ? { left: shiftRight(1.85)(rects) } : {}),
+              ...(LayoutConfigDirectionEnum.HORIZONTAL === direction ? { top: shiftDown(1.85)(rects) } : {}),
+            },
+          }),
+          scope: RectTransformationScopeEnum.SELF,
+          type: TransformRectTypeEnum.SHIFT,
+        }
       ] as RectTransformationType[]);
     }
 
@@ -348,6 +390,7 @@ export default function useLayoutManager({
       : itemIDsByLevelRef?.current;
 
     const itemsByNodeID = {};
+    const rectsInitial = {};
 
     arrs?.forEach((ids: string[], level: number) => {
       const nodes = [] as NodeType[];
@@ -355,6 +398,13 @@ export default function useLayoutManager({
       ids.forEach((nodeID: string) => {
         const node = { ...(itemsRef?.current?.[nodeID] as NodeType) };
         if (!node) return;
+
+        rectsInitial[node.id] = {
+          left: node?.rect?.left ?? 0,
+          top: node?.rect?.top ?? 0,
+          width: node?.rect?.width ?? 0,
+          height: node?.rect?.height ?? 0,
+        };
 
         if (ItemTypeEnum.NODE === node?.type) {
           itemsByNodeID[node.id] = [[...(node.items ?? [])]];
@@ -521,7 +571,8 @@ export default function useLayoutManager({
     const items = [];
     Object.values(itemsUpdated).forEach((item) => {
       const itemPrev = itemsRef?.current?.[item.id];
-      const rectPrev = itemPrev?.rect;
+      const rectPrev = rectsInitial[item?.id] ?? { ...itemPrev?.rect };
+
       item.rect.diff = {
         height: (rectPrev?.height ?? 0),
         left: (rectPrev?.left ?? 0),

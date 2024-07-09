@@ -57,7 +57,7 @@ export function getStyles(
         }
         : {}
     ),
-    ...((width ?? false) ? { minWidth: width } : {}),
+    // ...((width ?? false) ? { minWidth: width } : {}),
   };
 }
 

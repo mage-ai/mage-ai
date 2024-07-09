@@ -1,4 +1,5 @@
 import update from 'immutability-helper';
+import useMutableState from '@mana/hooks/useMutableState';
 import { handleSaveAsImage } from './utils/images';
 import DraggableAppNode from '../../Canvas/Nodes/Apps/DraggableAppNode';
 import { ClientEventType } from '@mana/shared/interfaces';
@@ -108,7 +109,7 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
     rects: [],
   });
   const [outputIDs, setOutputIDs] = useState<string[]>([]);
-  const [itemRects, _setItemRects] = useState<FlatItemType[]>([]);
+  const [itemRects, _setItemRects] = useMutableState<FlatItemType[]>([]);
   const outputPortalRefs = useRef<Record<string, React.RefObject<HTMLDivElement>>>({});
 
   const { convertEvent, dispatchAppEvent } = useAppEventsHandler(null, {
