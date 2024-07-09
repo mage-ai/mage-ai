@@ -154,9 +154,14 @@
 }
 
 .lineManager {
-  &.pending {
-    path {
+  @keyframes exit {
+    to {
+      stroke-dasharray: 0, 100;
+      stroke-dashoffset: 0;
       opacity: 0;
     }
+  }
+  .exit {
+    animation: exit 1s cubic-bezier(.35, .17, .3, .86) forwards;
   }
 }

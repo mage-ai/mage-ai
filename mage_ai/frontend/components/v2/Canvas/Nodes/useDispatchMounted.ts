@@ -2,6 +2,7 @@ import React, { useEffect, useRef } from 'react';
 import update from 'immutability-helper';
 import useAppEventsHandler, { CustomAppEvent, CustomAppEventEnum } from '../../Apps/PipelineCanvas/useAppEventsHandler';
 import { NodeType } from '../interfaces';
+import { DEBUG } from '@components/v2/utils/debug';
 
 export default function useDispatchMounted(
   node: NodeType,
@@ -46,6 +47,7 @@ export default function useDispatchMounted(
             },
           });
 
+          DEBUG?.node?.[node?.type] && console.log(`Node ${node?.type} mounted`, node.id);
           if (opts?.onMount) {
             opts?.onMount(event);
           }

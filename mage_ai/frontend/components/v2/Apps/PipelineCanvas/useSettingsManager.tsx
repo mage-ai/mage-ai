@@ -3,9 +3,9 @@ import { useAnimation } from 'framer-motion';
 import { update } from './cache';
 import stylesOutput from '@styles/scss/components/Canvas/Nodes/OutputGroups.module.scss';
 import stylesBuilder from '@styles/scss/apps/Canvas/Pipelines/Builder.module.scss';
-import { LayoutConfigType } from '../../Canvas/interfaces';
+import { LayoutConfigType, NodeItemType } from '../../Canvas/interfaces';
 import BlockType from '@interfaces/BlockType';
-import { LINE_CLASS_NAME, buildContainerClassName, extractContainerClassNames } from './utils/display';
+import { LINE_CLASS_NAME, buildContainerClassName, displayable, extractContainerClassNames } from './utils/display';
 import { levelClassName, groupClassName, nodeTypeClassName, statusClassName, uuidClassName } from '../../Canvas/Nodes/utils';
 import useAppEventsHandler, { CustomAppEvent, CustomAppEventEnum } from './useAppEventsHandler';
 import { STYLE_ROOT_ID } from '@context/v2/Style';
@@ -22,17 +22,34 @@ import { Root, createRoot } from 'react-dom/client';
 import { BlockTypeEnum } from '@interfaces/BlockType';
 import { DEBUG } from '@components/v2/utils/debug';
 
+// 1. ModelManager: initialize models -> UPDATE_DISPLAY -> SettingsManager
+// 2. SettingsManager: filters the items that should be mounted -> NODE_LAYOUTS_CHANGED -> Canvas
+// 3. Canvas mounts the exact items that should be displayed
+// 4. ItemManager: each node is mounted and then ItemManager triggers -> UPDATE_DISPLAY
+// 5. SettingsManager: collects the updated items and triggers -> UPDATE_NODE_LAYOUTS
+// 6. LayoutManager lays out the items and applies transformations, then -> NODE_RECT_UPDATED
+// 7. Each node handles their updated rects and enter animations, once done -> NODE_DISPLAYED
+// 8. LineManager: draws the lines for each node that dispatches that event.
+
+// Changing groups:
+// 1. NavigationGroupMenu: triggers -> UPDATE_SETTINGS
+// 2. SettingsManager: updates layout settings to store the selected group and active level,
+//   then filters the items that should be mounted -> NODE_LAYOUTS_CHANGED -> Canvas
+// 3. Repeat from step 3 above...
+
 export default function useSettingsManager({
   blocksByGroupRef,
   canvasRef,
   containerRef,
   executionFrameworkUUID,
+  itemsRef,
   pipelineUUID,
 }: {
   blocksByGroupRef: ModelManagerType['blocksByGroupRef'];
   canvasRef: React.RefObject<HTMLDivElement>;
   containerRef: React.RefObject<HTMLDivElement>;
   executionFrameworkUUID: string;
+  itemsRef: ModelManagerType['itemsRef'];
   pipelineUUID: string;
   setHeaderData?: (data: any) => void;
 }): SettingsManagerType {
@@ -85,9 +102,10 @@ export default function useSettingsManager({
     layoutConfigs,
     selectedGroupsRef,
   } as SubscriberType, {
-    [CustomAppEventEnum.NODE_LAYOUTS_CHANGED]: handleLayoutUpdates,
+    // [CustomAppEventEnum.NODE_LAYOUTS_CHANGED]: handleLayoutUpdates,
     [CustomAppEventEnum.TELEPORT_INTO_BLOCK]: teleportIntoBlock,
-    [CustomAppEventEnum.UPDATE_DISPLAY]: updateVisibleNodes,
+    [CustomAppEventEnum.UPDATE_DISPLAY]: filterNodesToBeMounted,
+    [CustomAppEventEnum.NODE_MOUNTED_PREVIOUSLY]: handleNodeMountedPreviously,
     [CustomAppEventEnum.UPDATE_SETTINGS]: updateLocalSettings,
     [CustomAppEventEnum.UPDATE_CACHE_ITEMS]: updateCache,
   });
@@ -128,6 +146,8 @@ export default function useSettingsManager({
   }
 
   function updateLocalSettings(event: CustomAppEvent) {
+    const currentConditions = buildDisplayableConditions();
+
     const { options } = event?.detail ?? {};
     const kwargs = options?.kwargs ?? {};
 
@@ -149,7 +169,7 @@ export default function useSettingsManager({
       updateLayoutConfig(activeLevel.current, kwargs.layoutConfig);
     }
 
-    updateVisibleNodes(event);
+    hideCurrentNodes(currentConditions);
 
     // if ('optionalGroupVisibility' in (value ?? {})) {
     //   optionalGroupsVisible.current = value ?? false;
@@ -208,53 +228,33 @@ export default function useSettingsManager({
     };
   }
 
-  function handleLayoutUpdates(event: CustomAppEvent) {
-    DEBUG.settings.manager && console.log('handleLayoutUpdates', event)
-    const { detail } = event ?? {};
-    const { classNames, styles } = detail?.options?.kwargs ?? {};
+  function hideCurrentNodes(conditions) {
+    const nodes = Object.values(itemsRef?.current ?? {});
 
-    controls.set({ opacity: 0 });
-
-    classNames && addContainerClassNames(classNames);
-    styles && setStyles(styles);
-
-    controls.start(({
-      node,
-      nodeRef,
-      rect,
-    }) => {
-      console.log(node, rect);
-
-      return {
-        opacity: 1,
-        transition: { duration: 3 },
-      };
+    const nodesToHide = nodes.filter(item => displayable(item, conditions));
+    dispatchAppEvent(CustomAppEventEnum.HIDE_NODES, {
+      nodes: nodesToHide,
     });
+
+    filterNodesToBeMounted({ detail: { nodes } } as any);
   }
 
-  function updateVisibleNodes(event?: CustomAppEvent) {
-    const level = activeLevel.current;
-    const display = layoutConfigs?.current?.[level]?.current?.display ?? LayoutDisplayEnum.SIMPLE;
-    const conditions = [];
-
-    const payload: {
-      classNames?: string[];
-      styles?: string;
-    } = {};
-
+  function buildDisplayableConditions() {
     const cnsets = [];
     const cnbase = [
       levelClassName(activeLevel?.current),
       statusClassName(ItemStatusEnum.READY),
     ];
+    const level = activeLevel.current;
+    const conditions = [];
 
     const selectedGroups = selectedGroupsRef?.current;
     const group = selectedGroups?.length >= 1 ? selectedGroups?.[selectedGroups?.length - 1] : null;
 
     if (event && group) {
       if (group?.uuid) {
-        const blocksInGroup = blocksByGroupRef?.current?.[group.uuid] ?? [];
-        const count = Object.values(blocksInGroup ?? {}).length;
+        const blocksInGroup = Object.values(blocksByGroupRef?.current?.[group.uuid] ?? {}) ?? [];
+        const count = blocksInGroup.length;
 
         // Default
         cnsets.push([
@@ -269,6 +269,7 @@ export default function useSettingsManager({
           level,
           type: ItemTypeEnum.NODE,
         });
+
 
         // Group has blocks
         if (count >= 1) {
@@ -286,7 +287,15 @@ export default function useSettingsManager({
             level,
             type: ItemTypeEnum.NODE,
           });
+          conditions.push({
+            block: {
+              groups: [group.uuid],
+            },
+            level,
+            type: ItemTypeEnum.BLOCK,
+          });
         }
+        // console.log('Selected group', group?.uuid, count, blocksInGroup, conditions)
 
         // Get sibling groups so that we can teleport to those.
         const parentUUID = group?.groups?.[group?.groups?.length - 1]?.uuid;
@@ -317,95 +326,148 @@ export default function useSettingsManager({
       });
     }
 
-    DEBUG.settings.manager && console.log(level, cnsets, selectedGroups)
+    return conditions;
+  }
 
-    const individualContainerClassNames =
-      cnsets.flatMap(cn => cn.flatMap(buildContainerClassName));
-    // .ctn--grp--tokenization.ctn--lvl--3.ctn--nty--node.ctn--sts--ready
-    // .ctn--grp--tokenization.ctn--lvl--3.ctn--nty--block.ctn--sts--ready
-    const cncons = [];
-    // .grp--tokenization.lvl--3.nty--node.sts--ready
-    // .grp--tokenization.lvl--3.nty--block.sts--ready
-    const cnames = [];
+  function filterNodesToBeMounted(event?: CustomAppEvent) {
+    const { detail } = event ?? {};
+    const { manager, nodes } = detail ?? {};
 
-    cnsets.forEach(cns => {
-      // .ctn--grp--tokenization.ctn--lvl--3.ctn--nty--node.ctn--sts--ready
-      const cncon = cns.map(buildContainerClassName).map(cn => `.${cn}`).join('');
-      cncons.push(cncon);
+    // const payload: {
+    //   classNames?: string[];
+    //   styles?: string;
+    // } = {};
 
-      // .grp--tokenization.lvl--3.nty--node.sts--ready
-      const cn = cns.map(cn => `.${cn}`).join('');
-      cnames.push(cn);
-    });
 
-    const selectedGroupStyles = '' ??
-      group ? `&.${uuidClassName(group?.uuid)}.${nodeTypeClassName(ItemTypeEnum.NODE)} {
-        max-height: none;
-      }` : '';
-    if (group?.uuid) {
-      cncons.push(buildContainerClassName(uuidClassName(group?.uuid)));
-    }
+    // DEBUG.settings.manager && console.log(level, cnsets, selectedGroups)
 
-    const cncon = cncons.join(',\n');
-    const cn = cnames.join(',\n');
-    const styles = `
-      ${cncon} {
+    // const individualContainerClassNames =
+    //   cnsets.flatMap(cn => cn.flatMap(buildContainerClassName));
+    // // .ctn--grp--tokenization.ctn--lvl--3.ctn--nty--node.ctn--sts--ready
+    // // .ctn--grp--tokenization.ctn--lvl--3.ctn--nty--block.ctn--sts--ready
+    // const cncons = [];
+    // // .grp--tokenization.lvl--3.nty--node.sts--ready
+    // // .grp--tokenization.lvl--3.nty--block.sts--ready
+    // const cnames = [];
 
-        ${cn} {
-          opacity: 1;
-          pointer-events: auto;
-          visibility: visible;
-          z-index: 2;
+    // cnsets.forEach(cns => {
+    //   // .ctn--grp--tokenization.ctn--lvl--3.ctn--nty--node.ctn--sts--ready
+    //   const cncon = cns.map(buildContainerClassName).map(cn => `.${cn}`).join('');
+    //   cncons.push(cncon);
 
-          ${selectedGroupStyles}
+    //   // .grp--tokenization.lvl--3.nty--node.sts--ready
+    //   const cn = cns.map(cn => `.${cn}`).join('');
+    //   cnames.push(cn);
+    // });
 
-          &.${nodeTypeClassName(ItemTypeEnum.APP)} {
-            z-index: 5;
-          }
-          &.${nodeTypeClassName(ItemTypeEnum.OUTPUT)} {
-            z-index: 4;
+    // const selectedGroupStyles = '' ??
+    //   group ? `&.${uuidClassName(group?.uuid)}.${nodeTypeClassName(ItemTypeEnum.NODE)} {
+    //     max-height: none;
+    //   }` : '';
+    // if (group?.uuid) {
+    //   cncons.push(buildContainerClassName(uuidClassName(group?.uuid)));
+    // }
 
-            /* @keyframes start {
-              from {
-                opacity: 1;
-              }
-              to {
-                opacity: 0;
-              }
-            } */
+    // const cncon = cncons.join(',\n');
+    // const cn = cnames.join(',\n');
+    // const styles = `
+    //   ${cncon} {
 
-            &.hidden {
-              /* animation: start 1s forwards; */
-              opacity: 0;
-              max-height: none;
-              pointer-events: none;
-              visibility: hidden;
-              z-index: -1;
-            }
-          }
-          &.${nodeTypeClassName(ItemTypeEnum.BLOCK)} {
-            z-index: 3;
-          }
-        }
-      }
-    `;
+    //     ${cn} {
+    //       opacity: 1;
+    //       pointer-events: auto;
+    //       visibility: visible;
+    //       z-index: 2;
 
-    payload.classNames = individualContainerClassNames;
-    payload.styles = styles;
+    //       ${selectedGroupStyles}
 
-    resetContainerClassNames();
-    setStyles();
-    addContainerClassNames();
+    //       &.${nodeTypeClassName(ItemTypeEnum.APP)} {
+    //         z-index: 5;
+    //       }
+    //       &.${nodeTypeClassName(ItemTypeEnum.OUTPUT)} {
+    //         z-index: 4;
 
-    dispatchAppEvent(CustomAppEventEnum.UPDATE_NODE_LAYOUTS, {
-      event: convertEvent(event),
-      options: {
-        kwargs: {
-          ...(conditions?.length === 0 ? null : { conditions }),
-          ...payload,
+    //         /* @keyframes start {
+    //           from {
+    //             opacity: 1;
+    //           }
+    //           to {
+    //             opacity: 0;
+    //           }
+    //         } */
+
+    //         &.hidden {
+    //           /* animation: start 1s forwards; */
+    //           opacity: 0;
+    //           max-height: none;
+    //           pointer-events: none;
+    //           visibility: hidden;
+    //           z-index: -1;
+    //         }
+    //       }
+    //       &.${nodeTypeClassName(ItemTypeEnum.BLOCK)} {
+    //         z-index: 3;
+    //       }
+    //     }
+    //   }
+    // `;
+
+    // payload.classNames = individualContainerClassNames;
+    // payload.styles = styles;
+
+    // resetContainerClassNames();
+    // setStyles();
+    // addContainerClassNames();
+
+    const conditions = buildDisplayableConditions();
+    const filter = items => items?.filter(item => displayable(item, conditions));
+
+    const items = nodes ? filter(nodes) : [];
+    if (items?.length > 0) {
+      // If all already have been mounted, all we need to do is have the Canvas update the state.
+      // We don’t need to update the layout.
+      dispatchAppEvent(CustomAppEventEnum.NODE_LAYOUTS_CHANGED, {
+        nodes: items,
+      });
+    } else {
+      dispatchAppEvent(CustomAppEventEnum.UPDATE_NODE_LAYOUTS, {
+        event: convertEvent(event),
+        nodes: filter(Object.values(manager?.itemsRef?.current ?? {}) ?? []),
+        options: {
+          kwargs: {
+            ...(conditions?.length === 0 ? null : { conditions }),
+            // ...payload,
+          },
         },
-      },
-    });
+      });
+    }
+  }
+
+  function getDisplayableNodes(): NodeItemType[] {
+    const nodes = Object.values(itemsRef?.current ?? {});
+    const conditions = buildDisplayableConditions();
+    return nodes?.filter(item => displayable(item, conditions));
+  }
+
+  function handleNodeMountedPreviously(event) {
+    const nodes = getDisplayableNodes();
+    const ready = nodes?.every(item => ItemStatusEnum.READY === item.status);
+    if (ready) {
+      dispatchAppEvent(CustomAppEventEnum.NODE_RECT_UPDATED, {
+        nodes,
+      });
+    } else {
+      // Trigger a layout update if some nodes require a layout update.
+      dispatchAppEvent(CustomAppEventEnum.UPDATE_NODE_LAYOUTS, {
+        event: convertEvent(event),
+        nodes,
+        options: {
+          kwargs: {
+            conditions: buildDisplayableConditions() ?? null,
+          },
+        },
+      });
+    }
   }
 
   function defaultStylesAndContainerClassNames() {
@@ -415,18 +477,8 @@ export default function useSettingsManager({
     const cnsor = cns.map(cn => `.${cn}`).join(',\n');
     const styles = `
     ${cnconsand} {
-      @keyframes start {
-        from {
-          opacity: 1;
-        }
-        to {
-          opacity: 0;
-        }
-      }
-
       ${cnsor},
       ${LINE_CLASS_NAME} {
-        animation: start 1s forwards;
         opacity: 0;
         max-height: none;
         pointer-events: none;

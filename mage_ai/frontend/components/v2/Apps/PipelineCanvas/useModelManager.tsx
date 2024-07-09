@@ -371,10 +371,15 @@ export default function useModelManager({
         // WARNING: Do this so it mounts and then the on mount can start the chain.
         const items = Object.values(itemsRef.current);
         // Don’t do any level filtering here, it’ll be done at the Canvas level.
-        dispatchAppEvent(CustomAppEventEnum.NODE_LAYOUTS_CHANGED, {
+
+        dispatchAppEvent(CustomAppEventEnum.UPDATE_DISPLAY, {
           nodes: items,
           nodesUpdated: nodesRequireUpdate,
         });
+        // dispatchAppEvent(CustomAppEventEnum.NODE_LAYOUTS_CHANGED, {
+        //   nodes: items,
+        //   nodesUpdated: nodesRequireUpdate,
+        // });
 
         setOutputIDs([...new Set(items?.reduce((acc, { block }) => [
           BlockTypeEnum.GROUP, BlockTypeEnum.PIPELINE

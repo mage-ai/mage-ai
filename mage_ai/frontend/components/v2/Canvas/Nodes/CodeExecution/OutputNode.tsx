@@ -16,11 +16,13 @@ import { CustomAppEventEnum } from '@components/v2/Apps/PipelineCanvas/enums';
 import { CustomAppEvent } from '@components/v2/Apps/PipelineCanvas/useAppEventsHandler';
 
 type OutputNodeProps = {
+  className?: string;
   node: OutputNodeType;
   nodeRef: React.RefObject<HTMLDivElement>;
 } & CanvasNodeType & OutputGroupsType;
 
 const OutputNode: React.FC<OutputNodeProps> = ({
+  className,
   draggable,
   handlers,
   node,
@@ -58,10 +60,11 @@ const OutputNode: React.FC<OutputNodeProps> = ({
     <NodeWrapper
       {...sharedProps}
       className={[
+        className,
         (sharedProps.className || []),
         // Class names reserved for the SettingsManager to determine what is visible
         // based on the selected groups.
-        ...nodeClassNames(node),
+        // ...nodeClassNames(node),
       ].filter(Boolean).join(' ')}
       connectDrag={connectDrag}
       handlers={draggingHandlers}

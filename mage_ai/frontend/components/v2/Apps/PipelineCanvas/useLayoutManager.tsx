@@ -322,9 +322,10 @@ export default function useLayoutManager({
   }
 
   function updateLayoutOfItems(event: CustomAppEvent) {
-    const { manager, options } = event?.detail ?? {};
+    const { manager, nodes: nodesFiltered, options } = event?.detail ?? {};
+
     const { activeLevel, layoutConfigs, selectedGroupsRef } = manager as SettingsManagerType;
-    const { classNames, conditions, styles } = options?.kwargs ?? {};
+    const { classNames, conditions, styles, updateRectOnly } = options?.kwargs ?? {};
 
     const layoutConfig = layoutConfigs?.current?.[activeLevel?.current]?.current ?? {};
 
@@ -333,7 +334,11 @@ export default function useLayoutManager({
 
     // Don’t do any level filtering here, it’ll be done at the Canvas level.
     // Update the layout of items across every level.
-    itemIDsByLevelRef?.current?.forEach((ids: string[], level: number) => {
+    const arrs = nodesFiltered?.length > 0
+      ? [nodesFiltered.map(item => item.id)]
+      : itemIDsByLevelRef?.current;
+
+    arrs?.forEach((ids: string[], level: number) => {
       const nodes = [] as NodeType[];
 
       ids.forEach((nodeID: string) => {
@@ -437,6 +442,9 @@ export default function useLayoutManager({
           const rect2 = rect?.children?.[idx] as RectType;
           const item2 = itemsRef?.current?.[typeof i2 === 'string' ? i2 : i2.id] as NodeType;
 
+          if (conditions && !displayable(item2, conditions)) return;
+          // console.log(item2, conditions)
+
           item2.rect.height = rect2.height;
           item2.rect.left = rect2.left;
           item2.rect.top = rect2.top;
@@ -494,16 +502,20 @@ export default function useLayoutManager({
       nodes: items,
     });
 
-    // Don’t do any level filtering here, it’ll be done at the Canvas level.
-    dispatchAppEvent(CustomAppEventEnum.NODE_LAYOUTS_CHANGED, {
+    dispatchAppEvent(CustomAppEventEnum.NODE_RECT_UPDATED, {
       nodes: items,
-      options: {
-        kwargs: {
-          classNames,
-          conditions,
-          styles,
-        },
-      },
     });
+
+    // Don’t do any level filtering here, it’ll be done at the Canvas level.
+    // dispatchAppEvent(CustomAppEventEnum.NODE_LAYOUTS_CHANGED, {
+    //   nodes: items,
+    //   options: {
+    //     kwargs: {
+    //       classNames,
+    //       conditions,
+    //       styles,
+    //     },
+    //   },
+    // });
   }
 }

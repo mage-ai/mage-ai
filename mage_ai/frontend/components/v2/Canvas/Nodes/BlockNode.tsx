@@ -435,7 +435,7 @@ export default function BlockNodeComponent({
       className={[
         ...classNames,
       ]?.filter(Boolean)?.join(' ')}
-      motionProps={motionProps}
+      // motionProps={motionProps}
       role={ElementRoleEnum.CONTENT}
       style={{
         height: isSelectedGroup && blocksInGroup?.length > 0
@@ -447,7 +447,9 @@ export default function BlockNodeComponent({
 
       {main}
     </GradientContainer >
-  ), [blocksInGroup, motionProps, classNames, isSelectedGroup, main]);
+  ), [blocksInGroup, classNames, isSelectedGroup, main,
+    // motionProps,
+  ]);
 
   const teleportBlock = useMemo(() => (
     <TeleportBlock

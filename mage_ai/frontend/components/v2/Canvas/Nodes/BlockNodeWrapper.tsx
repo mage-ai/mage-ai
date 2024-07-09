@@ -1,12 +1,14 @@
 import BlockNodeComponent from './BlockNode';
+import { ItemStatusEnum, ItemTypeEnum, LayoutConfigDirectionEnum, PortSubtypeEnum } from '../types';
 import BlockType, { BlockTypeEnum } from '@interfaces/BlockType';
 import EventStreamType, { ServerConnectionStatusType } from '@interfaces/EventStreamType';
 import OutputNode from './CodeExecution/OutputNode';
 import React from 'react';
 import Tag from '@mana/components/Tag';
 import styles from '@styles/scss/components/Canvas/Nodes/BlockNode.module.scss';
-import stylesButton from '@styles/scss/elements/Button/Button.module.scss';
+import { AnimatePresence, cubicBezier, motion, useAnimation } from 'framer-motion';
 import useAppEventsHandler, { CustomAppEvent, CustomAppEventEnum } from '../../Apps/PipelineCanvas/useAppEventsHandler';
+import stylesButton from '@styles/scss/elements/Button/Button.module.scss';
 import { AppNodeType, NodeType, OutputNodeType, PortType, RectType } from '../interfaces';
 import { BlockNodeWrapperProps } from './types';
 import { ClientEventType, EventOperationEnum, SubmitEventOperationType } from '@mana/shared/interfaces';
@@ -14,7 +16,7 @@ import { DEBUG } from '@components/v2/utils/debug';
 import { FileType } from '../../IDE/interfaces';
 import { ModelContext } from '@components/v2/Apps/PipelineCanvas/ModelManager/ModelContext';
 import { SettingsContext } from '@components/v2/Apps/PipelineCanvas/SettingsManager/SettingsContext';
-import { areEqual, areEqualApps } from './equals'
+import { areEqual, areEqualApps, areEqualRects } from './equals'
 import { buildOutputNode } from '@components/v2/Apps/PipelineCanvas/utils/items';
 import { createPortal } from 'react-dom';
 import { draggableProps } from './draggable/utils';
@@ -25,6 +27,7 @@ import { isEmptyObject, selectKeys, setNested } from '@utils/hash';
 import { nodeClassNames } from './utils';
 import { setupDraggableHandlers, buildEvent } from './utils';
 import { useCallback, useContext, useEffect, useState, useMemo, useRef } from 'react';
+import { indexBy } from '@utils/array';
 
 type BlockNodeType = BlockNodeWrapperProps;
 
@@ -35,7 +38,6 @@ export const BlockNodeWrapper: React.FC<BlockNodeType> = ({
   droppable,
   handlers,
   index: indexProp,
-  layoutConfig,
   node,
   onMountPort,
   rect,
@@ -44,15 +46,17 @@ export const BlockNodeWrapper: React.FC<BlockNodeType> = ({
   useRegistration,
 }: BlockNodeType) => {
   // Attributes
-
+  const controls = useAnimation();
   const block = useMemo(() => node?.block, [node]);
   const { configuration, type, uuid } = block;
 
-  const { activeLevel, selectedGroupsRef } = useContext(SettingsContext);
+  const { activeLevel, layoutConfigs, selectedGroupsRef } = useContext(SettingsContext);
+  const layoutConfig = layoutConfigs?.current?.[activeLevel?.current - 1]?.current;
   const { outputsRef } = useContext(ModelContext);
   const selectedGroup = selectedGroupsRef?.current?.[activeLevel?.current - 1];
   const blockInSelectedGroup = useMemo(() => block?.groups?.includes(selectedGroup?.uuid), [block, selectedGroup]);
   const outputsClosedRef = useRef(null);
+  const handleAnimationCompleteRef = useRef(null);
 
   const buttonBeforeRef = useRef<HTMLDivElement>(null);
   const timerStatusRef = useRef(null);
@@ -97,6 +101,7 @@ export const BlockNodeWrapper: React.FC<BlockNodeType> = ({
         setTimeout(() => handleSubscribe(), 1000);
       }
     },
+    [CustomAppEventEnum.NODE_RECT_UPDATED]: handleRectUpdated,
     [CustomAppEventEnum.CLOSE_OUTPUT]: ({ detail }: CustomAppEvent) => {
       if (node.id === detail?.node?.id) {
         setOutputNodes(prev => {
@@ -113,8 +118,107 @@ export const BlockNodeWrapper: React.FC<BlockNodeType> = ({
         setPortalMount(operationTarget);
         portalRef.current = operationTarget;
       }
-    }
+    },
+    [CustomAppEventEnum.HIDE_NODES]: handleDismissNode,
   });
+
+  function handleRectUpdated({ detail }: CustomAppEvent) {
+    const { nodes } = detail;
+    const mapping = indexBy(nodes, item => item.id);
+    if (!(node.id in mapping)) return;
+
+    const curr = mapping[node.id]?.rect;
+    const prev = node.rect;
+    const same = areEqualRects({ rect: curr }, { rect: prev });
+    const rect = same ? prev : curr;
+    const rectel = nodeRef?.current?.getBoundingClientRect();
+    // const same2 = rect.left === rectel.left && rect.top === rectel.top;
+    const starting = rectel.left === 0 && rectel.top === 0;
+
+    const easing = cubicBezier(.35, .17, .3, .86);
+    if (starting) {
+      nodeRef.current.style.height = `${rect.height}px`;
+      nodeRef.current.style.left = `${rect.left}px`;
+      nodeRef.current.style.top = `${rect.top}px`;
+      nodeRef.current.style.width = `${rect.width}px`;
+    }
+
+    controls.set({
+      opacity: 0,
+      scale: 0.9,
+      ...(LayoutConfigDirectionEnum.HORIZONTAL === layoutConfig?.direction
+        ? {
+          translateX: 16,
+        }
+        : {
+          translateY: 16,
+        }
+      ),
+    });
+    controls.start({
+      opacity: 1,
+      scale: 1,
+      transition: {
+        delay: (node?.index ?? indexProp) / 10,
+        duration: 0.05,
+        ease: easing,
+      },
+      translateX: 0,
+      translateY: 0,
+    });
+
+    [
+      node.type,
+    ].forEach(cn => nodeRef.current.classList.add(styles[cn]));
+    ['hide'].forEach(cn => nodeRef.current.classList.remove(styles[cn]));
+
+    handleAnimationCompleteRef.current = () => {
+      dispatchAppEvent(CustomAppEventEnum.NODE_DISPLAYED, {
+        node,
+        nodes,
+      });
+    };
+  }
+
+  function handleDismissNode({ detail }: CustomAppEvent) {
+    const { nodes } = detail;
+    const mapping = indexBy(nodes, item => item.id);
+    if (!(node.id in mapping)) return;
+
+    const easing = cubicBezier(.86, .3, .17, .35);
+    controls.set({
+      opacity: 1,
+      scale: 1,
+      ...(LayoutConfigDirectionEnum.HORIZONTAL === layoutConfig?.direction
+        ? {
+          translateX: 0,
+        }
+        : {
+          translateY: 0,
+        }
+      ),
+    });
+    controls.start({
+      opacity: 0,
+      scale: 0.95,
+      transition: {
+        delay: 0,
+        duration: 0.3,
+        ease: easing,
+      },
+      translateX: 16,
+      translateY: 16,
+    });
+
+    dispatchAppEvent(CustomAppEventEnum.NODE_DISMISSED, {
+      node,
+      nodes,
+    });
+
+    handleAnimationCompleteRef.current = () => {
+      ['hide'].forEach(cn => nodeRef.current.classList.add(styles[cn]));
+    };
+  }
 
   useEffect(() => {
     const level = activeLevel.current;
@@ -375,15 +479,24 @@ export const BlockNodeWrapper: React.FC<BlockNodeType> = ({
     if (activeLevel.current !== node?.level) return;
 
     const arr = [];
+
     outputNodes?.forEach((output: OutputNodeType) => {
+      const props2 = draggableProps({
+        classNames: [
+          styles.nodeWrapper,
+        ],
+        draggable: true,
+        droppable: false,
+        node: output,
+      });
+
       arr.push(
         <OutputNode
-          {...draggableProps({
-            classNames: [styles.nodeWrapper],
-            draggable: true,
-            droppable: false,
-            node: output,
-          })}
+          {...props2}
+          className={[
+            props2.className,
+            styles.hide,
+          ].filter(Boolean).join(' ')}
           handleOnMessageRef={handleOnMessageRef}
           handlers={draggingHandlers}
           key={output.id}
@@ -415,7 +528,6 @@ export const BlockNodeWrapper: React.FC<BlockNodeType> = ({
   if (Wrapper) {
     return (
       <Wrapper
-        // {...sharedProps}
         {...draggableProps({
           classNames: [node.status ? styles[node.status] : ''],
           draggable,
@@ -425,10 +537,11 @@ export const BlockNodeWrapper: React.FC<BlockNodeType> = ({
           requiredGroup,
         })}
         className={[
+          styles.hide,
           (sharedProps.className || []),
           // Class names reserved for the SettingsManager to determine what is visible
           // based on the selected groups.
-          ...nodeClassNames(node),
+          // ...nodeClassNames(node),
         ].filter(Boolean).join(' ')}
         handlers={draggingHandlers}
         node={node}
@@ -436,7 +549,16 @@ export const BlockNodeWrapper: React.FC<BlockNodeType> = ({
         rect={rect}
       >
         {runtime}
-        {blockNode}
+        <motion.div
+          animate={controls}
+          onAnimationComplete={() => {
+            if (handleAnimationCompleteRef?.current) {
+              handleAnimationCompleteRef?.current();
+            }
+          }}
+        >
+          {blockNode}
+        </motion.div>
         {portalMount && outputNodesMemo?.map(outputNode => createPortal(outputNode, portalMount))}
       </Wrapper>
     );

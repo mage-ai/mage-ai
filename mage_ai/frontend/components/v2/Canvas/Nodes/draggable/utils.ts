@@ -24,13 +24,13 @@ export function draggableProps({
 }) {
   return {
     className: [
+      // stylesBuilder.level,
+      // stylesBuilder[`level-${node?.level}`],
+      // node?.type && stylesBuilder[node?.type],
+      // styles.startUpStatus,
       styles.blockNodeWrapper,
-      stylesBuilder.level,
-      stylesBuilder[`level-${node?.level}`],
-      node?.type && stylesBuilder[node?.type],
       !emptyGroup && !draggable && !droppable && styles.showOnHoverContainer,
       loading && styles.loading,
-      styles.container,
       requiredGroup && styles.requiredGroup,
       ...(classNames ?? []),
     ]?.filter(cn => Boolean(cn) && (!excludeClassNames || !excludeClassNames.includes(cn)))?.join(' '),

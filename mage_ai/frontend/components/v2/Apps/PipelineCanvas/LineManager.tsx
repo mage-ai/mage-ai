@@ -1,7 +1,7 @@
 import React, { createRef, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import stylesBuilder from '@styles/scss/apps/Canvas/Pipelines/Builder.module.scss';
 import { ModelContext } from '@components/v2/Apps/PipelineCanvas/ModelManager/ModelContext';
-import { cubicBezier, motion, useAnimation } from 'framer-motion';
+import { cubicBezier, motion, useAnimation, useAnimate } from 'framer-motion';
 import { SettingsContext } from '@components/v2/Apps/PipelineCanvas/SettingsManager/SettingsContext';
 import useAppEventsHandler, { CustomAppEvent, CustomAppEventEnum } from './useAppEventsHandler';
 import { nodeClassNames } from '../../Canvas/Nodes/utils';
@@ -41,6 +41,8 @@ export default function LineManager() {
   const [ready, setState] = useState(false);
   const readyRef = useRef(false);
   const controls = useAnimation();
+  const [scope, animate] = useAnimate()
+
 
   const lineMappingRef = useRef({});
   const timeoutRef = useRef(null);
@@ -58,8 +60,10 @@ export default function LineManager() {
 
   function updateLines({ detail }: CustomAppEvent) {
     // const { itemElementsRef } = detail?.manager;
+    // ?.filter(({ status }) => ItemStatusEnum.READY === status);
 
-    const nodes = detail?.nodes?.filter(({ status }) => ItemStatusEnum.READY === status);
+    const { node, nodes } = detail;
+
     const nodesMapping = indexBy(nodes, n => n.id);
     const nodesByBlock = indexBy(nodes, n => n?.block?.uuid);
 
@@ -69,7 +73,7 @@ export default function LineManager() {
       [ItemTypeEnum.OUTPUT]: [],
     } as any;
 
-    nodes?.forEach((node: NodeItemType) => {
+    (node ? [node] : nodes)?.forEach((node: NodeItemType) => {
       // Lines for groups
       if (ItemTypeEnum.NODE === node?.type) {
         node?.downstream?.forEach((downstreamID: string) => {
@@ -112,6 +116,8 @@ export default function LineManager() {
       }
     });
 
+    console.log(detail, node?.id, nodes, pairsByType)
+
     renderPaths(pairsByType, {
       replace: false,
     });
@@ -149,6 +155,8 @@ export default function LineManager() {
           paths[type][node.id].push(linePath)
         });
     });
+
+    console.log('!!!!!!!!!!!!!!!!!!!', paths)
 
     if (opts?.replace) {
       setLinesBlock(() => {
@@ -343,31 +351,61 @@ export default function LineManager() {
     lineRefs.current[node2?.type] ||= {};
     lineRefs.current[node2?.type][lineID] ||= createRef();
 
+    const duration = 0.5;
+    const easing = cubicBezier(.35, .17, .3, .86);
+    const animateProps = {
+      animate: {
+        ease: easing,
+        opacity: 1,
+        pathLength: 1,
+        transition: {
+          delay: (index * duration) + (isOutput ? 2 : 1),
+          duration: isOutput ? 0.1 : duration * ((100 - index) / 100),
+        },
+      },
+      initial: {
+        opacity: 0,
+        pathLength: 0,
+      },
+    };
+
     const lineRef = lineRefs.current[node2.type][lineID];
+
+    if (lineRef?.current) {
+      lineRef?.current?.classList?.remove(stylesBuilder.exit);
+    }
+
     paths.push(
       <motion.path
+        // {...animateProps}
+        animate={controls}
         className={[LINE_CLASS_NAME].concat(nodeClassNames(node)).filter(Boolean).join(' ')}
+        custom={{
+          index,
+          isOutput,
+        }}
         d={dvalue}
         data-index={index}
         fill="none"
         id={lineID}
         key={lineID}
-        ref={lineRef}
+        onAnimationComplete={() => {
+          if (lineRef?.current?.classList?.contains(stylesBuilder.exit)) {
+            setLinesBlock((prev) => ignoreKeys(prev, [node.id]));
+            setLinesNode((prev) => ignoreKeys(prev, [node.id]));
+            setLinesOutput((prev) => ignoreKeys(prev, [node.id]));
+          }
+        }}
+        ref={r => {
+          scope.current = r
+          lineRef.current = r
+        }}
         stroke={colors?.length >= 2
           ? `url(#${gradientID})`
           : `var(--colors-${colors[0] ?? 'gray'})`
         }
         style={{
           strokeWidth: isOutput ? 2 : 1.5,
-        }}
-        animate={controls}
-        initial={{
-          opacity: 0,
-          pathLength: 0,
-        }}
-        custom={{
-          index,
-          isOutput,
         }}
       />
     );
@@ -417,12 +455,12 @@ export default function LineManager() {
         pathLength: 1,
         transition: {
           delay: (index * duration) + (isOutput ? 1 : 0.5),
-          duration: isOutput ? 0 : duration * ((100 - index) / 100),
+          duration: isOutput ? 0.1 : duration * ((100 - index) / 100),
         },
       }));
 
       timeoutRef.current = null;
-    }, 1000);
+    }, 100);
   }
 
   function handleOutputUpdated({ detail }: CustomAppEvent) {
@@ -435,8 +473,8 @@ export default function LineManager() {
     });
   }
 
-  function handleDragging({ detail }: CustomAppEvent) {
-    const { node, output } = detail;
+  function linePathsForNode(node: NodeItemType, output?: OutputNodeType) {
+    const arr = [];
 
     Object.entries(lineMappingRef.current).forEach(([type, mapping]) => {
       const lines = lineRefs.current?.[type];
@@ -467,10 +505,33 @@ export default function LineManager() {
               source.id === item.id ? item : source,
               target.id === item.id ? item : target,
             );
-            lineRef?.setAttribute('d', dvalue);
+            arr.push({
+              dvalue,
+              linePath,
+              lineRef,
+            });
           });
         });
       });
+    });
+
+    return arr;
+  }
+
+  function handleDragging({ detail }: CustomAppEvent) {
+    const { node, output } = detail;
+    const linePaths = linePathsForNode(node, output);
+
+    linePaths?.forEach(({ dvalue, lineRef }) => {
+      lineRef?.setAttribute('d', dvalue);
+    });
+  }
+
+  function handleNodeDismissed({ detail }) {
+    const { node, output } = detail;
+    const linePaths = linePathsForNode(node, output);
+    linePaths?.forEach(({ lineRef }) => {
+      lineRef?.classList.add(stylesBuilder.exit);
     });
   }
 
@@ -478,6 +539,8 @@ export default function LineManager() {
     [CustomAppEventEnum.CLOSE_OUTPUT]: ({ detail: { node, output } }: CustomAppEvent) => {
       setLinesOutput((prev) => ignoreKeys(prev, [getLineID(node.id, output.id)]));
     },
+    [CustomAppEventEnum.NODE_DISPLAYED]: handleLayoutChange,
+    [CustomAppEventEnum.NODE_DISMISSED]: handleNodeDismissed,
     [CustomAppEventEnum.NODE_DRAGGING]: handleDragging,
     [CustomAppEventEnum.NODE_LAYOUTS_CHANGED]: handleLayoutChange,
     [CustomAppEventEnum.OUTPUT_UPDATED]: handleOutputUpdated,

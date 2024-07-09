@@ -2,18 +2,19 @@
 @use '../../../base/grid';
 @use './mixins' as *;
 
+$enter-duration: 3s;
+
 @mixin hide {
-  visibility: hidden;
   opacity: 0;
   pointer-events: none;
+  visibility: hidden;
   z-index: -1;
 }
 
 @mixin show {
-  visibility: visible;
   opacity: 1;
   pointer-events: all;
-  z-index: 6;
+  visibility: visible;
 }
 
 .blockNode {
@@ -76,8 +77,8 @@
   @include grid.base();
 }
 
-.container {
-  @include start-up-status;
+.startUpStatus {
+  /* @include start-up-status; */
 }
 
 .requiredGroup {
@@ -86,4 +87,25 @@
 
 .emptyGroup {
 
+}
+
+.show {
+  @include show;
+}
+
+.hide {
+  @include hide;
+}
+
+.node {
+  z-index: 2;
+}
+
+.block {
+  z-index: 3;
+}
+
+.app,
+.output {
+  z-index: 4
 }

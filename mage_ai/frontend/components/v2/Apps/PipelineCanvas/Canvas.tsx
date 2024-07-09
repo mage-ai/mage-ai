@@ -167,6 +167,7 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
     canvasRef,
     containerRef,
     executionFrameworkUUID,
+    itemsRef,
     pipelineUUID,
     setHeaderData,
   });

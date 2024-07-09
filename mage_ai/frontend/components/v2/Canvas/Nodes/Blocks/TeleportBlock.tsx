@@ -133,22 +133,22 @@ export default function TeleportGroup({
       wrap
     >
       <AnimatePresence>
-        <motion.div animate={controls}>
-          <Grid
-            borderColor={colorName}
-            borders
-            padding={12}
-            style={{
-              backgroundColor: 'var(--backgrounds-body)',
-              minWidth: 200,
-            }}
-          >
-            {buildBadgeRow({
-              inputColorName: isup && upstreamInGroup?.[0]?.colorName,
-              outputColorName: isdn && downstreamInGroup?.[0]?.colorName,
-            })}
-          </Grid >
-        </motion.div >
+        <Grid
+          borderColor={colorName}
+          borders
+          padding={12}
+          style={{
+            backgroundColor: 'var(--backgrounds-body)',
+            minWidth: 200,
+          }}
+        >
+          {buildBadgeRow({
+            inputColorName: isup && upstreamInGroup?.[0]?.colorName,
+            outputColorName: isdn && downstreamInGroup?.[0]?.colorName,
+          })}
+        </Grid >
+        {/* <motion.div animate={controls}>
+        </motion.div > */}
       </AnimatePresence>
     </Link>
   );

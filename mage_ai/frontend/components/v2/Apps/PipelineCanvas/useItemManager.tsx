@@ -28,6 +28,7 @@ export default function useItemManager({
 } {
   const itemMetadataRef = useRef<Record<string, Record<string, any>>>({});
   const [debouncer, cancelDebounce] = useDynamicDebounce();
+  const [debouncer2, cancelDebounce2] = useDynamicDebounce();
 
   const handleNodeMounted = ({ detail: { event } }: CustomAppEvent) => {
     const { data, operationTarget } = event;
@@ -36,7 +37,9 @@ export default function useItemManager({
   };
 
   const { convertEvent, dispatchAppEvent } = useAppEventsHandler({
+    itemElementsRef,
     itemMetadataRef,
+    itemsRef,
   } as any, {
     [CustomAppEventEnum.NODE_MOUNTED]: handleNodeMounted,
   });
@@ -138,7 +141,17 @@ export default function useItemManager({
           if (rectsPrev?.length >= 1) {
             DEBUG.itemManager && console.log('[onMountItem] rects are equal', item.id, itemPrev?.rect, item?.rect);
             DEBUG.itemManager && console.log('[onMountItem] Number of times mounted:', item.id, rectsPrev?.length ?? 0);
-            return;
+
+            item.status = ItemStatusEnum.READY;
+
+            cancelDebounce2();
+
+            debouncer2(() => {
+              DEBUG.itemManager && console.log('onMountItem.ready', item);
+              dispatchAppEvent(CustomAppEventEnum.NODE_MOUNTED_PREVIOUSLY, {
+                node: item,
+              });
+            }, 100);
           }
         }
       }

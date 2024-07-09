@@ -15,7 +15,7 @@ export const DEBUG = {
     node: false,
   },
   events: false,
-  itemManager: false,
+  itemManager: true,
   keyboard: false,
   layout: false,
   layoutManager: false,
@@ -24,6 +24,7 @@ export const DEBUG = {
   },
   node: {
     block: false,
+    node: false,
   },
   rects: false,
   rendering: false,
