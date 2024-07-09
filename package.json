@@ -1,6 +1,0 @@
-{
-  "dependencies": {
-    "react-dropzone": "^14.2.3",
-    "react-grid-system": "^8.2.0"
-  }
-}
