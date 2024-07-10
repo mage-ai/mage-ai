@@ -63,15 +63,3 @@ $enter-duration: 3s;
 .nodeWrapper {
   @include grid.base();
 }
-
-.status {
-  @include start-up-status;
-}
-
-.requiredGroup {
-  // Show only required groups by default
-}
-
-.emptyGroup {
-
-}

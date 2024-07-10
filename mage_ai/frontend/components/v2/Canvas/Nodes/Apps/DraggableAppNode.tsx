@@ -1,4 +1,5 @@
 import Button, { ButtonGroup } from '@mana/elements/Button';
+import stylesBuilder from '@styles/scss/apps/Canvas/Pipelines/Builder.module.scss';
 import { isEmptyObject } from '@utils/hash';
 import { buildOutputNode } from '@components/v2/Apps/PipelineCanvas/utils/items';
 import { setNested } from '@utils/hash';
@@ -270,7 +271,7 @@ const DraggableAppNode: React.FC<NodeType & CanvasNodeType> = ({
       className={[
         (sharedProps.className || []),
         // Class names reserved for the SettingsManager to determine what is visible
-        // based on the selected groups.s
+        // based on the selected groupss.
         ...nodeClassNames({
           ...node,
           block: {
@@ -280,7 +281,6 @@ const DraggableAppNode: React.FC<NodeType & CanvasNodeType> = ({
           status: app?.status as any
         }),
       ].filter(Boolean).join(' ')}
-      // draggingNode={draggingNode}
       handlers={draggingHandlers}
       node={node}
       nodeRef={nodeRef}

@@ -103,7 +103,6 @@ export default function useSettingsManager({
     layoutConfigs,
     selectedGroupsRef,
   } as SubscriberType, {
-    // [CustomAppEventEnum.NODE_LAYOUTS_CHANGED]: handleLayoutUpdates,
     [CustomAppEventEnum.TELEPORT_INTO_BLOCK]: teleportIntoBlock,
     [CustomAppEventEnum.UPDATE_DISPLAY]: filterNodesToBeMounted,
     [CustomAppEventEnum.NODE_MOUNTED_PREVIOUSLY]: handleNodeMountedPreviously,
@@ -333,23 +332,10 @@ export default function useSettingsManager({
     const { detail } = event ?? {};
     const { manager, nodes, blocksRemoved } = detail ?? {};
 
-    if (!isEmptyObject(blocksRemoved)) {
-      dispatchAppEvent(CustomAppEventEnum.UPDATE_NODE_LAYOUTS, {
-        nodes: getDisplayableNodes(),
-        options: {
-          kwargs: {
-            conditions: buildDisplayableConditions(),
-          },
-        },
-      });
-      return;
-    }
-
     // const payload: {
     //   classNames?: string[];
     //   styles?: string;
     // } = {};
-
 
     // DEBUG.settings.manager && console.log(level, cnsets, selectedGroups)
 
@@ -382,75 +368,67 @@ export default function useSettingsManager({
 
     // const cncon = cncons.join(',\n');
     // const cn = cnames.join(',\n');
-    // const styles = `
-    //   ${cncon} {
 
-    //     ${cn} {
-    //       opacity: 1;
-    //       pointer-events: auto;
-    //       visibility: visible;
-    //       z-index: 2;
+    const conditions = buildDisplayableConditions();
+    const itemsFromArgs = nodes ? nodes?.filter(item => displayable(item, conditions)) : [];
+    const items = getDisplayableNodes();
 
-    //       ${selectedGroupStyles}
+    const cnames = items.map(item => item.id);
+    const connames = cnames.map(cn => buildContainerClassName(cn));
 
-    //       &.${nodeTypeClassName(ItemTypeEnum.APP)} {
-    //         z-index: 5;
-    //       }
-    //       &.${nodeTypeClassName(ItemTypeEnum.OUTPUT)} {
-    //         z-index: 4;
+    const styles = `
+      ${connames.map(cn => '.' + cn).join('')} {
+        ${cnames.map(cn => '.' + cn).join(', ')} {
+          opacity: 1;
+          pointer-events: auto;
+          visibility: visible;
+          z-index: 2;
 
-    //         /* @keyframes start {
-    //           from {
-    //             opacity: 1;
-    //           }
-    //           to {
-    //             opacity: 0;
-    //           }
-    //         } */
+          &.${nodeTypeClassName(ItemTypeEnum.APP)} {
+            z-index: 5;
+          }
+          &.${nodeTypeClassName(ItemTypeEnum.OUTPUT)} {
+            z-index: 4;
 
-    //         &.hidden {
-    //           /* animation: start 1s forwards; */
-    //           opacity: 0;
-    //           max-height: none;
-    //           pointer-events: none;
-    //           visibility: hidden;
-    //           z-index: -1;
-    //         }
-    //       }
-    //       &.${nodeTypeClassName(ItemTypeEnum.BLOCK)} {
-    //         z-index: 3;
-    //       }
-    //     }
-    //   }
-    // `;
+            &.hidden {
+              opacity: 0;
+              max-height: none;
+              pointer-events: none;
+              visibility: hidden;
+              z-index: -1;
+            }
+          }
+          &.${nodeTypeClassName(ItemTypeEnum.BLOCK)} {
+            z-index: 3;
+          }
+        }
+      }
+    `;
 
     // payload.classNames = individualContainerClassNames;
     // payload.styles = styles;
 
-    // resetContainerClassNames();
-    // setStyles();
-    // addContainerClassNames();
+    resetContainerClassNames();
+    setStyles(styles);
+    addContainerClassNames(connames);
 
-    const conditions = buildDisplayableConditions();
-    const filter = items => items?.filter(item => displayable(item, conditions));
+    // Add item UUIDs to container class
 
-    const items = nodes ? filter(nodes) : [];
-    if (items?.length > 0) {
+    if (!isEmptyObject(blocksRemoved) || !itemsFromArgs?.length) {
+      dispatchAppEvent(CustomAppEventEnum.UPDATE_NODE_LAYOUTS, {
+        event: convertEvent(event),
+        nodes: items,
+        options: {
+          kwargs: {
+            conditions,
+          },
+        },
+      });
+    } else if (items?.length > 0) {
       // If all already have been mounted, all we need to do is have the Canvas update the state.
       // We don’t need to update the layout.
       dispatchAppEvent(CustomAppEventEnum.NODE_LAYOUTS_CHANGED, {
         nodes: items,
-      });
-    } else {
-      dispatchAppEvent(CustomAppEventEnum.UPDATE_NODE_LAYOUTS, {
-        event: convertEvent(event),
-        nodes: filter(Object.values(manager?.itemsRef?.current ?? {}) ?? []),
-        options: {
-          kwargs: {
-            ...(conditions?.length === 0 ? null : { conditions }),
-            // ...payload,
-          },
-        },
       });
     }
   }
@@ -475,12 +453,6 @@ export default function useSettingsManager({
         },
       },
     });
-    // if (ready) {
-    //   dispatchAppEvent(CustomAppEventEnum.NODE_RECT_UPDATED, {
-    //     nodes,
-    //   });
-    // } else {
-    // }
   }
 
   function defaultStylesAndContainerClassNames() {

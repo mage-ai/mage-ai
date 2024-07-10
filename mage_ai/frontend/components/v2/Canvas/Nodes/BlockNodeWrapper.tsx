@@ -99,12 +99,12 @@ export const BlockNodeWrapper: React.FC<BlockNodeType> = ({
   }
 
   const { dispatchAppEvent } = useAppEventsHandler(node as any, {
-    [CustomAppEventEnum.START_APP]: (event: CustomAppEvent) => {
-      if (event?.detail?.node?.id === node?.id) {
-        // Wait until the app subscribes, then subscribe or else race condition.
-        setTimeout(() => handleSubscribe(), 1000);
-      }
-    },
+    // [CustomAppEventEnum.START_APP]: (event: CustomAppEvent) => {
+    //   if (event?.detail?.node?.id === node?.id) {
+    //     // Wait until the app subscribes, then subscribe or else race condition.
+    //     setTimeout(() => handleSubscribe(), 1000);
+    //   }
+    // },
     [CustomAppEventEnum.NODE_RECT_UPDATED]: handleRectUpdated,
     [CustomAppEventEnum.CLOSE_OUTPUT]: ({ detail }: CustomAppEvent) => {
       if (node.id === detail?.node?.id) {
@@ -138,6 +138,7 @@ export const BlockNodeWrapper: React.FC<BlockNodeType> = ({
   useDispatchMounted(node, nodeRef, { phaseRef });
 
   function handleRectUpdated({ detail }: CustomAppEvent) {
+    console.log('WTFFFFFFFFFFFFFFFFFFFFFFFFFF')
     const { nodes } = detail;
     const mapping = indexBy(nodes, item => item.id);
     const mapping2 = indexBy(nodes, item => item?.block?.uuid);
@@ -164,52 +165,48 @@ export const BlockNodeWrapper: React.FC<BlockNodeType> = ({
         'transform 1s cubicBezier(.35, .17, .3, .86)'
       ].join(', ');
       dispatchAppEvent(CustomAppEventEnum.NODE_DISPLAYED, { node, nodes });
-    } else if (init
-      || innerRef?.current?.style?.visibility === 'hidden'
-      || innerRef?.current?.style?.visibility === ''
-      || innerRef?.current?.style?.opacity !== '1'
-    ) {
-      const easing = cubicBezier(.35, .17, .3, .86);
-      controls.set({
-        opacity: 0,
-        scale: 0.9,
-        ...(LayoutConfigDirectionEnum.HORIZONTAL === layoutConfig?.direction
-          ? {
-            translateX: 16,
-          }
-          : {
-            translateY: 16,
-          }
-        ),
-      });
-      controls.start({
-        opacity: 1,
-        scale: 1,
-        transition: {
-          delay: (node?.index ?? indexProp) / 10,
-          duration: 0.05,
-          ease: easing,
-        },
-        translateX: 0,
-        translateY: 0,
-      });
-
-      handleAnimationCompleteRef.current = () => {
-        dispatchAppEvent(CustomAppEventEnum.NODE_DISPLAYED, { node, nodes });
-      };
     }
 
-    // z-index goes on the outside wrapper
-    if (!nodeRef?.current?.classList?.contains(styles[node.type])) {
-      nodeRef.current.classList.add(styles[node.type]);
-    }
-    // visibility goes on the inner wrapper
-    if (innerRef?.current?.classList?.contains(styles.hide)) {
-      innerRef.current.classList.remove(styles.hide);
-    }
-    if (innerRef?.current?.classList?.contains(styles.status)) {
-      innerRef.current.classList.remove(styles.status);
-    }
+    const easing = cubicBezier(.35, .17, .3, .86);
+    controls.set({
+      opacity: 0,
+      scale: 0.9,
+      ...(LayoutConfigDirectionEnum.HORIZONTAL === layoutConfig?.direction
+        ? {
+          translateX: 16,
+        }
+        : {
+          translateY: 16,
+        }
+      ),
+    });
+    controls.start({
+      opacity: 1,
+      scale: 1,
+      transition: {
+        delay: (node?.index ?? indexProp) / 10,
+        duration: 0.05,
+        ease: easing,
+      },
+      translateX: 0,
+      translateY: 0,
+    });
+
+    handleAnimationCompleteRef.current = () => {
+      dispatchAppEvent(CustomAppEventEnum.NODE_DISPLAYED, { node, nodes });
+    };
+
+    // // z-index goes on the outside wrapper
+    // if (!nodeRef?.current?.classList?.contains(styles[node.type])) {
+    //   nodeRef.current.classList.add(styles[node.type]);
+    // }
+    // // visibility goes on the inner wrapper
+    // if (innerRef?.current?.classList?.contains(styles.hide)) {
+    //   innerRef.current.classList.remove(styles.hide);
+    // }
+    // if (innerRef?.current?.classList?.contains(styles.status)) {
+    //   innerRef.current.classList.remove(styles.status);
+    // }
 
     phaseRef.current = 2;
   }
@@ -250,10 +247,10 @@ export const BlockNodeWrapper: React.FC<BlockNodeType> = ({
       nodes,
     });
 
-    handleAnimationCompleteRef.current = () => {
-      // resetRect();
-      ['hide'].forEach(cn => nodeRef.current.classList.add(styles[cn]));
-    };
+    // handleAnimationCompleteRef.current = () => {
+    //   // resetRect();
+    //   ['hide'].forEach(cn => nodeRef.current.classList.add(styles[cn]));
+    // };
   }
 
   useEffect(() => {
@@ -288,7 +285,7 @@ export const BlockNodeWrapper: React.FC<BlockNodeType> = ({
                 eventStreams,
                 node,
               };
-              setOutputNodes([outputNode as OutputNodeType]);
+              // setOutputNodes([outputNode as OutputNodeType]);
               dispatchAppEvent(CustomAppEventEnum.OUTPUT_UPDATED, {
                 eventStreams,
                 node,
@@ -344,6 +341,7 @@ export const BlockNodeWrapper: React.FC<BlockNodeType> = ({
   const getCode = useCallback(() => getFileCache(file?.path)?.client?.file?.content, [file]);
 
   function handleSubscribe() {
+    unsubscribe(consumerID);
     subscribe(consumerID, {
       onError: handleError,
       onMessage: (event: EventStreamType) => {
@@ -379,7 +377,7 @@ export const BlockNodeWrapper: React.FC<BlockNodeType> = ({
         uuid: (block as any)?.uuid,
       });
 
-      setOutputNodes((prev) => prev === null ? [outputNode] : prev);
+      // setOutputNodes((prev) => prev === null ? [outputNode] : prev);
 
       updateStyles(true);
 
@@ -395,7 +393,7 @@ export const BlockNodeWrapper: React.FC<BlockNodeType> = ({
 
         if (timerStatusRef?.current) {
           timerStatusRef.current.innerText =
-            formatNumberToDuration(diff);
+            formatNumberToDuration(diff * 1000);
         }
         loops++;
         timeoutRef.current = setTimeout(
@@ -571,40 +569,44 @@ export const BlockNodeWrapper: React.FC<BlockNodeType> = ({
           requiredGroup,
         })}
         className={[
-          stylesBuilder.nodeWrapper,
-          stylesBuilder[node.type],
+          // stylesBuilder.nodeWrapper,
+          // stylesBuilder[node.type],
+          // stylesBuilder[node.status],
           // This causes a flicker when adding or removing blocks,
           // DO NOT ADD A CLASS THAT HIDES THIS COMPONENT!!!
           // styles.hide,
           (sharedProps.className || []),
           // Class names reserved for the SettingsManager to determine what is visible
           // based on the selected groups.
-          // ...nodeClassNames(node),
+          ...nodeClassNames(node),
         ].filter(Boolean).join(' ')}
         handlers={draggingHandlers}
         node={node}
         nodeRef={nodeRef}
         rect={rect}
       >
-        <motion.div
+        {/* <motion.div
           animate={controls}
           className={[
-            stylesBuilder.inner,
+            // stylesBuilder.inner,
+            // stylesBuilder[node.type],
+            // stylesBuilder[node.status],
           ].filter(Boolean).join(' ')}
-          initial={{
-            opacity: Math.max(node.version, phaseRef.current, 0),
-            visibility: Math.max(node.version, phaseRef.current, 0) >= 1 ? 'visible' : undefined,
-          }}
+          // initial={{
+          //   opacity: Math.max(node.version, phaseRef.current, 0),
+          //   pointerEvents: Math.max(node.version, phaseRef.current, 0) >= 1 ? 'all' : undefined,
+          //   visibility: Math.max(node.version, phaseRef.current, 0) >= 1 ? 'visible' : undefined,
+          // }}
           onAnimationComplete={() => {
             if (handleAnimationCompleteRef?.current) {
               handleAnimationCompleteRef?.current();
             }
           }}
           ref={innerRef}
-        >
-          {runtime}
-          {blockNode}
-        </motion.div>
+        > */}
+        {runtime}
+        {blockNode}
+        {/* </motion.div> */}
         {portalMount && outputNodesMemo?.map(outputNode => createPortal(outputNode, portalMount))}
       </Wrapper>
     );

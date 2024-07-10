@@ -4,7 +4,7 @@ export const DEBUG = {
   codeExecution: {
     manager: false,
     node: false,
-    output: false,
+    output: true,
     outputManager: false,
   },
   dragging: false,

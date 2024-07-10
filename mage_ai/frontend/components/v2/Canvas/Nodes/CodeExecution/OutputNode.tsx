@@ -1,5 +1,6 @@
 import OutputGroups, { OutputGroupsType } from './OutputGroups';
 import React, { useMemo } from 'react';
+import stylesBuilder from '@styles/scss/apps/Canvas/Pipelines/Builder.module.scss';
 import stylesOutput from '@styles/scss/components/Canvas/Nodes/OutputNode.module.scss';
 import styles from '@styles/scss/components/Canvas/Nodes/BlockNode.module.scss';
 import { CanvasNodeType } from '../interfaces';
@@ -44,8 +45,6 @@ const OutputNode: React.FC<OutputNodeProps> = ({
 
   const sharedProps = useMemo(() => draggableProps({
     classNames: [
-      stylesOutput.outputNodeContainer,
-      styles.ready,
     ],
     draggable,
     excludeClassNames: [
@@ -64,7 +63,7 @@ const OutputNode: React.FC<OutputNodeProps> = ({
         (sharedProps.className || []),
         // Class names reserved for the SettingsManager to determine what is visible
         // based on the selected groups.
-        // ...nodeClassNames(node),
+        ...nodeClassNames(node),
       ].filter(Boolean).join(' ')}
       connectDrag={connectDrag}
       handlers={draggingHandlers}

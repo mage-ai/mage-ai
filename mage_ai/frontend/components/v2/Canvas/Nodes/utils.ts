@@ -27,6 +27,7 @@ export function nodeClassNames(node: NodeItemType): string[] {
     nodeTypeClassName(node?.type),
     statusClassName(node?.status),
     uuidClassName((block as any)?.uuid),
+    String(node.id),
   ].filter(Boolean);
 }
 

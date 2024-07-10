@@ -14,39 +14,6 @@
   visibility: visible;
 }
 
-@mixin zindexes {
-  @each $value1 in $numbers-more {
-    &.level-#{$value1}-active {
-      .app,
-      .block,
-      .output,
-      .port {
-        z-index: 6;
-      }
-
-      .node {
-        z-index: 4;
-      }
-    }
-  }
-}
-
-/* .display-simple {
-  @include zindexes;
-
-  &.level-0-active {
-    .level-0 {
-      &.node {
-        @include show;
-      }
-    }
-  }
-}
-
-.display-detailed {
-  @include zindexes;
-} */
-
 .canvas {
   background-color: var(--backgrounds-body);
   height: 500%; /* Large enough to initially fit all content, will expand as needed */
@@ -115,26 +82,6 @@
     }
   }
 
-  .nodeWrapper {
-  }
-
-  .node {
-    z-index: 2;
-  }
-
-  .block {
-    z-index: 3;
-  }
-
-  .app,
-  .output {
-    z-index: 4
-  }
-
-  .inner {
-    @include hide;
-  }
-
   .connectionLines {
     height: 100%;
     pointer-events: none;
@@ -157,17 +104,4 @@
 
 .path {
   @include svg.fill-stroke-colors();
-}
-
-.lineManager {
-  @keyframes exit {
-    to {
-      stroke-dasharray: 0, 100;
-      stroke-dashoffset: 0;
-      opacity: 0;
-    }
-  }
-  .exit {
-    animation: exit 1s cubic-bezier(.35, .17, .3, .86) forwards;
-  }
 }
