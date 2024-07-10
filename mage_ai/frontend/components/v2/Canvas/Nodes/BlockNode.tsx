@@ -66,9 +66,11 @@ export default function BlockNodeComponent({
 }: BlockNodeProps & DragAndDropHandlersType & SharedBlockProps) {
   const { name, status, type, uuid } = block;
 
-  const { blocksByGroupRef } = useContext(ModelContext);
+  const { blocksByGroupRef, groupMappingRef } = useContext(ModelContext);
+  const groups = useMemo(() => block?.groups?.map(
+    guuid => groupMappingRef?.current?.[guuid]), [block, groupMappingRef]);
 
-  console.log(blocksByGroupRef)
+
   const { selectedGroupsRef } = useContext(SettingsContext);
   const selectedGroup = selectedGroupsRef?.current?.[selectedGroupsRef?.current?.length - 1];
   const isSiblingGroup = selectedGroup?.uuid !== block?.uuid &&
@@ -306,13 +308,13 @@ export default function BlockNodeComponent({
 
   const templateConfigurations = useMemo(
     () =>
-      (node?.block?.frameworks ?? [])?.map(
+      ((groups ?? block?.frameworks) ?? [])?.map(
         (group: PipelineExecutionFrameworkBlockType) =>
           !isEmptyObject(group?.configuration?.templates) &&
           Object.entries(group?.configuration?.templates || {})?.map(
-            ([uuid, template]) => node?.block?.configuration?.templates?.[uuid] && (
+            ([uuid, template]) => block?.configuration?.templates?.[uuid] && (
               <TemplateConfigurations
-                block={node?.block}
+                block={block}
                 group={group}
                 key={uuid}
                 template={template}
@@ -321,7 +323,7 @@ export default function BlockNodeComponent({
               />
             )),
       ),
-    [node, updateBlock],
+    [node, groups, updateBlock],
   );
 
   const titleRow = useMemo(

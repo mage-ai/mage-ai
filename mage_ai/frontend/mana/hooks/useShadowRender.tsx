@@ -1,7 +1,17 @@
 import React, { useCallback, useRef, useEffect, useState, useMemo } from 'react';
 import { WithOnMount } from './useWithOnMount';
 import { RectType } from '@mana/shared/interfaces';
-import { createPortal } from 'react-dom';
+
+const SHARED_STYLES = {
+  height: 9999,
+  opacity: 0,
+  overflow: 'hidden',
+  pointerEvents: 'none',
+  position: 'absolute',
+  visibility: 'hidden',
+  width: 9999,
+  zIndex: -9999,
+};
 
 interface NodeData {
   computedStyle: CSSStyleDeclaration;
@@ -13,18 +23,18 @@ interface NodeType {
   data?: any;
   id: string;
   ref?: React.MutableRefObject<HTMLElement>;
+  target?: React.ReactNode;
+  targetRef?: React.MutableRefObject<HTMLElement>;
 }
 
 interface ShadowRendererType {
   nodes: NodeType[];
   handleDataCapture: (node: NodeType, data: NodeData) => void;
-  portalRef?: React.RefObject<HTMLDivElement>;
   renderNode?: (node: NodeType) => React.ReactNode | null;
 }
 
 export function ShadowRenderer({ nodes, handleDataCapture }: ShadowRendererType) {
   const portalRef = useRef<HTMLDivElement>(null);
-  const portalTempRef = useRef<HTMLDivElement>(null);
   const {
     completed,
     container,
@@ -36,10 +46,10 @@ export function ShadowRenderer({ nodes, handleDataCapture }: ShadowRendererType)
   useEffect(() => {
     if (nodes?.length >= 1 && completed && phase === 0) {
       const shadowContainer = shadowContainerRef.current;
-      if (shadowContainer && portalTempRef.current) {
+      if (shadowContainer && portalRef.current) {
         while ((shadowContainer.firstChild ?? false)) {
           if (shadowContainer.firstChild instanceof Node) {
-            portalTempRef.current.appendChild(shadowContainer.firstChild);
+            portalRef.current.appendChild(shadowContainer.firstChild);
           }
         }
         setPhase(1);
@@ -47,9 +57,12 @@ export function ShadowRenderer({ nodes, handleDataCapture }: ShadowRendererType)
     }
 
     if (nodes?.length >= 1 && phase === 1) {
-      while ((portalTempRef.current.firstChild ?? false)) {
-        if (portalTempRef.current.firstChild instanceof Node) {
-          portalRef.current.appendChild(portalTempRef.current.firstChild);
+      let index = 0;
+      while ((portalRef.current.firstChild ?? false)) {
+        if (portalRef.current.firstChild instanceof Node) {
+          const dom = nodes[index].targetRef ?? portalRef;
+          dom?.current?.appendChild(portalRef.current.firstChild);
+          index++;
         }
       }
     }
@@ -57,8 +70,18 @@ export function ShadowRenderer({ nodes, handleDataCapture }: ShadowRendererType)
 
   return (
     <>
-      <div id="shadow-portal" ref={portalRef} />
-      <div id="shadow-portal-temp" ref={portalTempRef} />
+      <div
+        id="shadow-portal"
+        style={{
+          ...SHARED_STYLES,
+          height: 0,
+          width: 0,
+        } as React.CSSProperties}
+      >
+        <div ref={portalRef} />
+      </div>
+
+      {nodes?.map(node => node.target)}
 
       {phase === 0 && container}
     </>
@@ -118,19 +141,9 @@ export default function useShadowRender(
       <div
         id="shadow-container"
         ref={containerRef}
-        style={{
-          height: 9999,
-          opacity: 0,
-          overflow: 'hidden',
-          pointerEvents: 'none',
-          position: 'absolute',
-          visibility: 'hidden',
-          width: 9999,
-          zIndex: -9999,
-        }}
+        style={SHARED_STYLES as React.CSSProperties}
       >
         {nodes?.map((node: NodeType) => (
-
           <WithOnMount
             key={node.id}
             onMount={(ref) => {

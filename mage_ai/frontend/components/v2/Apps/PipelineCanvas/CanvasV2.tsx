@@ -1,13 +1,18 @@
 import BlockNodeV2 from '../../Canvas/Nodes/BlockNodeV2';
+import { transformRects } from '../../Canvas/utils/rect';
+import {
+  ItemTypeEnum, LayoutConfigDirectionEnum, LayoutConfigDirectionOriginEnum, LayoutDisplayEnum, LayoutStyleEnum,
+} from '../../Canvas/types';
 import BlockType from '@interfaces/BlockType';
 import CanvasContainer, { GRID_SIZE } from './index.style';
 import DragWrapper from '../../Canvas/Nodes/DragWrapper';
 import HeaderUpdater from '../../Layout/Header/Updater';
-import PipelineExecutionFrameworkType, { ConfigurationType, FrameworkType, PipelineExecutionFrameworkBlockType } from '@interfaces/PipelineExecutionFramework/interfaces';
+import PipelineExecutionFrameworkType,
+{ ConfigurationType, PipelineExecutionFrameworkBlockType } from '@interfaces/PipelineExecutionFramework/interfaces';
+import { hydrateBlockNodeRects, buildRectTransformations } from './Layout/utils';
 import PipelineType from '@interfaces/PipelineType';
 import { ExecutionManagerType } from '../../ExecutionManager/interfaces';
-import { ItemTypeEnum } from '@components/v2/Canvas/types';
-import { LayoutConfigType, RectType } from '@components/v2/Canvas/interfaces';
+import { LayoutConfigType, NodeType, RectType } from '@components/v2/Canvas/interfaces';
 import { MenuGroupType } from '@mana/components/Menu/interfaces';
 import { ModelProvider } from './ModelManager/ModelContext';
 import { RemoveContextMenuType, RenderContextMenuType } from '@mana/hooks/useContextMenu';
@@ -18,6 +23,7 @@ import { buildDependencies } from './utils/pipelines';
 import { createRef, useEffect, useMemo, useRef, useState, useCallback } from 'react';
 import { getCache } from '@mana/components/Menu/storage';
 import { useMutate } from '@context/APIMutation';
+import { indexBy } from '@utils/array';
 
 export type PipelineCanvasV2Props = {
   canvasRef: React.RefObject<HTMLDivElement>;
@@ -57,14 +63,50 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
 }: PipelineCanvasV2Props) => {
   // Refs
   const nodeRefs = useRef<Record<string, React.MutableRefObject<HTMLElement>>>({});
+  const dragRefs = useRef<Record<string, React.MutableRefObject<HTMLDivElement>>>({});
   const rectRefs = useRef<Record<string, React.MutableRefObject<RectType>>>({});
   const wrapperRef = useRef(null);
 
+  function defaultLayoutConfig(override?: Partial<LayoutConfigType>) {
+    return {
+      containerRef,
+      direction: LayoutConfigDirectionEnum.VERTICAL,
+      display: LayoutDisplayEnum.SIMPLE,
+      gap: { column: 40, row: 40 },
+      origin: LayoutConfigDirectionOriginEnum.LEFT,
+      rectTransformations: null,
+      viewportRef: canvasRef,
+      ...override,
+    };
+  }
   // State store
-  const [layoutConfigs, setLayoutConfigs] = useState<LayoutConfigType[]>([]);
+  const [rectsMapping, setRectsMapping] = useState<Record<string, RectType>>({});
+  const [layoutConfigs, setLayoutConfigs] = useState<LayoutConfigType[]>([
+    defaultLayoutConfig({
+      direction: LayoutConfigDirectionEnum.VERTICAL,
+    }),
+    defaultLayoutConfig({
+      direction: LayoutConfigDirectionEnum.VERTICAL,
+    }),
+    defaultLayoutConfig({
+      direction: LayoutConfigDirectionEnum.HORIZONTAL,
+      display: LayoutDisplayEnum.SIMPLE,
+      style: LayoutStyleEnum.WAVE,
+    }),
+    defaultLayoutConfig({
+      direction: LayoutConfigDirectionEnum.HORIZONTAL,
+      display: LayoutDisplayEnum.DETAILED,
+      style: LayoutStyleEnum.SPIRAL,
+    }),
+  ]);
   const [defaultGroups, setDefaultGroups] = useState<any>(null);
   const [selectedGroups, setSelectedGroups] = useState<MenuGroupType[]>(
     getCache([executionFrameworkUUID, pipelineUUID].join(':')));
+  const transformations = useMemo(() => buildRectTransformations({
+    containerRef: canvasRef,
+    layoutConfig: layoutConfigs?.[layoutConfigs?.length - 1],
+    selectedGroup: selectedGroups?.[selectedGroups?.length - 1],
+  }), [canvasRef, layoutConfigs, selectedGroups]);
 
   // Resources
   const [pipeline, setPipeline] = useState<PipelineExecutionFrameworkType>(null);
@@ -116,6 +158,43 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
   const displayableGroups = useMemo(() => [currentGroup, parentGroup, ...(siblingGroups ?? [])], [
     currentGroup, parentGroup, siblingGroups]);
 
+  const updateRects = useCallback((rectData: Record<string, {
+    data: {
+      node: {
+        type: ItemTypeEnum;
+      };
+    };
+    rect: RectType;
+  }>) => {
+    Object.entries(rectData).forEach(([id, info]) => {
+      if (!rectRefs.current[id]) {
+        rectRefs.current[id] = createRef();
+      }
+      const { data, rect } = info;
+      rectRefs.current[id].current = {
+        height: rect.height,
+        left: undefined,
+        top: undefined,
+        type: data.node.type,
+        width: rect.width,
+      };
+    });
+    const blockNodes = hydrateBlockNodeRects(Object.entries(rectRefs.current ?? {}).map(([id, rectRef]) => {
+      const rect = rectRef.current;
+
+      return {
+        block: blockMapping[id],
+        node: {
+          type: rect.type,
+        },
+        rect,
+      }
+    }), blocksByGroup);
+
+    const tfs = transformRects(blockNodes, transformations)
+    setRectsMapping(indexBy(tfs, r => r.id));
+  }, [blockMapping, blocksByGroup, transformations]);
+
   useEffect(() => {
     if (framework === null && frameworkMutants.detail.isIdle) {
       frameworkMutants.detail.mutate();
@@ -135,19 +214,14 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
       nodeRef = createRef();
       nodeRefs.current[block.uuid] = nodeRef;
     }
-    let rectRef = rectRefs.current[block.uuid];
-    if (!rectRef) {
-      rectRef = createRef();
-      rectRefs.current[block.uuid] = rectRef;
-      rectRef.current = {
-        height: 0,
-        left: 0,
-        top: 0,
-        width: 0,
-      };
+    let dragRef = dragRefs.current[block.uuid];
+    if (!dragRef) {
+      dragRef = createRef();
+      dragRefs.current[block.uuid] = dragRef;
     }
 
     const node = {
+      block,
       id: block.uuid,
       type,
     };
@@ -158,19 +232,36 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
           block={block}
           index={index}
           key={block.uuid}
-          node={node}
-          rectRef={rectRef}
+          node={node as NodeType}
           ref={nodeRef}
         />
       ),
       data: {
         node,
-        rectRef,
       },
       id: block.uuid,
       ref: nodeRef,
+      target: (
+        <DragWrapper
+          // draggable={draggable}
+          // droppable={droppable}
+          // droppableItemTypes={droppableItemTypes}
+          // eventHandlers={eventHandlers}
+          // handleDrop={handleDrop}
+          item={node as NodeType}
+          key={block.uuid}
+          rect={rectsMapping?.[block.uuid] ?? {
+            left: undefined,
+            top: undefined,
+          }}
+          ref={dragRef}
+        />
+      ),
+      targetRef: dragRef,
     };
-  }, []);
+  }, [rectsMapping]);
+
+  console.log('rendering...');
 
   return (
     <div
@@ -203,37 +294,12 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
               groupsByLevelRef={{ current: groupsByLevel }}
             >
               <ShadowRenderer
-                handleDataCapture={(node, { rect }) => {
-                  rectRefs.current[node.id].current = {
-                    height: rect.height,
-                    left: 500,
-                    top: 500,
-                    width: rect.width,
-                  };
+                handleDataCapture={({ data, id }, { rect }) => {
+                  updateRects({ [id]: { data, rect } });
                 }}
                 nodes={blocks?.map((block: BlockType, index: number) =>
-                  renderNodeData(block as any, ItemTypeEnum.BLOCK, index))}
-                renderNode={({
-                  component,
-                  data: {
-                    node,
-                    rectRef,
-                  },
-                  id,
-                }) => (
-                  <DragWrapper
-                    // draggable={draggable}
-                    // droppable={droppable}
-                    // droppableItemTypes={droppableItemTypes}
-                    // eventHandlers={eventHandlers}
-                    // handleDrop={handleDrop}
-                    item={node}
-                    key={id}
-                    rect={rectRef.current}
-                  >
-                    {component}
-                  </DragWrapper>
-                )}
+                  renderNodeData(block as any, ItemTypeEnum.BLOCK, index))
+                }
               />
 
               {/* {displayableGroups?.map((block: FrameworkType, index: number) =>

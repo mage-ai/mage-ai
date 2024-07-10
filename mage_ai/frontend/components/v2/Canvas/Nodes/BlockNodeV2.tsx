@@ -1,6 +1,6 @@
 import BlockNodeComponent, { BlockNodeProps } from './BlockNode';
+import stylesBlockNode from '@styles/scss/components/Canvas/Nodes/BlockNode.module.scss';
 import BlockType from '@interfaces/BlockType';
-import DragWrapper, { DragWrapperType, areEqual as areEqualDrag } from './DragWrapper';
 import React, { useCallback, useRef } from 'react';
 import { NodeType } from '../interfaces';
 import { RectType } from '@mana/shared/interfaces';
@@ -42,7 +42,10 @@ function BlockNode({
 
   return (
     <div
-      ref={ref}
+      className={[
+        stylesBlockNode.blockNodeWrapper,
+      ].filter(Boolean).join(' ')}
+      ref={ref as React.RefObject<HTMLDivElement>}
     >
       <BlockNodeComponent
         {...rest}
@@ -66,7 +69,4 @@ function areEqual(p1: BlockNodeType, p2: BlockNodeType) {
   return p1.block.uuid === p2.block.uuid;
 }
 
-export default React.memo(React.forwardRef(BlockNode), (p1, p2) => areEqual(p1, p2) && areEqualDrag(
-  { rect: p1.rectRef.current },
-  { rect: p2.rectRef.current },
-));
+export default React.memo(React.forwardRef(BlockNode), areEqual);
