@@ -1,4 +1,5 @@
 import Aside from './Blocks/Aside';
+import Tag from '@mana/components/Tag';
 import { TooltipDirection, TooltipJustify, TooltipAlign, HideTooltipReason, TooltipLayout, useTooltip } from '@context/Tooltip/Context';
 import useDispatchMounted from './useDispatchMounted';
 import { AnimatePresence, cubicBezier } from 'framer-motion';
@@ -37,13 +38,13 @@ import { isEmptyObject } from '@utils/hash';
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { ElementRoleEnum } from '@mana/shared/types';
 
-type BlockNodeProps = {
+export type BlockNodeProps = {
   block: BlockType | PipelineExecutionFrameworkBlockType;
   buttonBeforeRef?: React.RefObject<HTMLDivElement>;
   timerStatusRef?: React.RefObject<HTMLDivElement>;
   index?: number;
   node: NodeItemType
-  nodeRef: React.RefObject<HTMLDivElement>;
+  dragRef: React.RefObject<HTMLDivElement>;
   onMount?: (port: PortType, portRef: React.RefObject<HTMLDivElement>) => void;
   submitCodeExecution: (event: React.MouseEvent<HTMLElement>) => void;
 } & BlockNode;
@@ -55,7 +56,7 @@ export default function BlockNodeComponent({
   draggable,
   handlers,
   node,
-  nodeRef,
+  dragRef,
   index: indexProp,
   onMount,
   submitCodeExecution,
@@ -64,12 +65,12 @@ export default function BlockNodeComponent({
   updateBlock,
 }: BlockNodeProps & DragAndDropHandlersType & SharedBlockProps) {
   const { name, status, type, uuid } = block;
-  const [level, setLevel] = useState<number>(0);
 
   const { blocksByGroupRef } = useContext(ModelContext);
-  const { activeLevel, layoutConfigs, selectedGroupsRef } = useContext(SettingsContext);
-  const layoutConfig = layoutConfigs?.current?.[activeLevel?.current - 1]?.current;
-  const selectedGroup = selectedGroupsRef?.current?.[activeLevel?.current - 1];
+
+  console.log(blocksByGroupRef)
+  const { selectedGroupsRef } = useContext(SettingsContext);
+  const selectedGroup = selectedGroupsRef?.current?.[selectedGroupsRef?.current?.length - 1];
   const isSiblingGroup = selectedGroup?.uuid !== block?.uuid &&
     selectedGroup?.groups?.some(g => block?.groups?.includes(g.uuid as GroupUUIDEnum));
   const isGroup =
@@ -85,17 +86,6 @@ export default function BlockNodeComponent({
       required: false,
       valid: true,
     }, [block, blocksByGroupRef, isGroup]);
-
-  useEffect(() => {
-    if (activeLevel?.current !== null) {
-      if (activeLevel.current === node?.level) {
-        setLevel(activeLevel.current);
-      }
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [level, node]);
-
-  // useDispatchMounted(node, nodeRef);
 
   const colorNames = blockColorNames(node);
   const borders = borderConfigs(node);
@@ -114,12 +104,12 @@ export default function BlockNodeComponent({
           submitEventOperation,
         )),
         // onClick: (event: MouseEvent) =>
-        //   handleClickGroupMenu(event, node as NodeType, submitEventOperation, nodeRef),
+        //   handleClickGroupMenu(event, node as NodeType, submitEventOperation, dragRef),
       }
       : {
         Icon: draggable ? Grab : Code,
         onClick: (event: MouseEvent) => submitEventOperation(buildEvent(
-          event, EventOperationEnum.APP_START, node, nodeRef, block,
+          event, EventOperationEnum.APP_START, node, dragRef, block,
         ), {
           args: [
             AppTypeEnum.EDITOR,
@@ -127,7 +117,7 @@ export default function BlockNodeComponent({
           ],
         }),
       }),
-  }), [draggable, submitEventOperation, node, nodeRef, block, isGroup]);
+  }), [draggable, submitEventOperation, node, dragRef, block, isGroup]);
 
   const before = useMemo(() => ({
     Icon: (iconProps) => (
@@ -163,7 +153,6 @@ export default function BlockNodeComponent({
 
   const inputs = node?.ports?.filter(p => p.subtype === PortSubtypeEnum.INPUT);
   const outputs = node?.ports?.filter(p => p.subtype === PortSubtypeEnum.OUTPUT);
-
 
   const inputOutputPairs = useMemo(() => {
     const count = Math.max(inputs?.length, outputs?.length);
@@ -361,43 +350,41 @@ export default function BlockNodeComponent({
   );
 
   const main = useMemo(() => (
-    <AnimatePresence>
-      <div
-        className={[
-          stylesBlockNode.blockNode,
-        ]?.filter(Boolean)?.join(' ')}
-        style={{
-          height: 'fit-content',
-          minWidth: 300,
-        }}
-      >
-        <Grid templateRows="auto">
-          <Grid rowGap={8} templateRows="auto">
-            {badge && buildBadgeRow({
-              after,
-              badgeFullWidth: !inputs?.length && isGroup,
-            })}
-            {!badge && titleRow}
-          </Grid>
-          <div className={stylesBlockNode.loader}>
-            <Loading
-              // colorName={colorNames?.hi}
-              // colorNameAlt={colorNames?.md}
-              position="absolute"
-            />
-          </div>
-          {isGroup
-            ? <BlockGroupOverview block={block as FrameworkType} />
-            : (
-              <Grid rowGap={8} templateRows="auto">
-                {connectionRows}
-                {templateConfigurations}
-                {BlockTypeEnum.PIPELINE === block?.type && <div />}
-              </Grid>
-            )}
+    <div
+      className={[
+        stylesBlockNode.blockNode,
+      ]?.filter(Boolean)?.join(' ')}
+      style={{
+        height: 'fit-content',
+        // minWidth: 300,
+      }}
+    >
+      <Grid templateRows="auto">
+        <Grid rowGap={8} templateRows="auto">
+          {badge && buildBadgeRow({
+            after,
+            badgeFullWidth: !inputs?.length && isGroup,
+          })}
+          {!badge && titleRow}
         </Grid>
-      </div>
-    </AnimatePresence>
+        <div className={stylesBlockNode.loader}>
+          <Loading
+            // colorName={colorNames?.hi}
+            // colorNameAlt={colorNames?.md}
+            position="absolute"
+          />
+        </div>
+        {isGroup
+          ? <BlockGroupOverview block={block as FrameworkType} />
+          : (
+            <Grid rowGap={8} templateRows="auto">
+              {connectionRows}
+              {templateConfigurations}
+              {BlockTypeEnum.PIPELINE === block?.type && <div />}
+            </Grid>
+          )}
+      </Grid>
+    </div>
   ), [badge, buildBadgeRow, block, connectionRows, templateConfigurations, titleRow, after,
     isGroup, inputs],
   );
@@ -415,13 +402,25 @@ export default function BlockNodeComponent({
           ? '100%'
           : 'fit-content',
         position: 'relative',
+        width: isSelectedGroup && blocksInGroup?.length > 0
+          ? '100%'
+          : 'fit-content',
       }}
     >
-
+      <Tag
+        className={stylesBlockNode['display-if-executing']}
+        ref={timerStatusRef}
+        statusVariant
+        style={{
+          left: -10,
+          position: 'absolute',
+          top: -10,
+          zIndex: 7,
+        }}
+      />
       {main}
     </GradientContainer >
-  ), [blocksInGroup, classNames, isSelectedGroup, main,
-    // motionProps,
+  ), [blocksInGroup, classNames, isSelectedGroup, main, timerStatusRef,
   ]);
 
   const teleportBlock = useMemo(() => (

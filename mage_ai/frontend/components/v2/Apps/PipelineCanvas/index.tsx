@@ -1,4 +1,5 @@
 import BuilderCanvas, { BuilderCanvasProps } from './Canvas';
+import PipelineCanvasV2 from './CanvasV2';
 import Loading from '@mana/components/Loading';
 import useContextMenu from '@mana/hooks/useContextMenu';
 import { ClientEventType } from '@mana/shared/interfaces';
@@ -140,7 +141,7 @@ export default function PipelineBuilder({ loading, ...props }: BuilderCanvasProp
     <>
       {loading && <Loading position="fixed" />}
       <DndProvider backend={HTML5Backend}>
-        <BuilderCanvas
+        <PipelineCanvasV2
           {...props}
           canvasRef={canvasRef}
           containerRef={containerRef}

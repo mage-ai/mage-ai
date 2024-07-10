@@ -149,7 +149,7 @@ export function buildDependencies(
   levels.push(blocksLastLevel);
 
   // Remove unused attributes in the groups
-  const groupMapping = {} as GroupMappingType;
+  const groupMapping1 = {} as GroupMappingType;
   const groupsByLevel1 = [];
   levels.forEach((groups) => {
     const groupsInLevel = [];
@@ -166,7 +166,7 @@ export function buildDependencies(
       ]);
 
       groupsInLevel.push(group2);
-      groupMapping[group2.uuid] = group2;
+      groupMapping1[group2.uuid] = group2;
     });
 
     groupsByLevel1.push(groupsInLevel);
@@ -190,6 +190,10 @@ export function buildDependencies(
 
     groupsByLevel.unshift(groupsInLevel);
   });
+  const groupMapping = indexBy(groupsByLevel.flatMap(groups => groups?.map(g => ({
+    ...groupMapping1[g.uuid],
+    ...g,
+  }))), g => g.uuid);
 
   // Get all the blocks from the user’s pipeline
   const pipelinesMapping = indexBy(extractNestedPipelines(pipeline), ({ uuid }) => uuid);

@@ -4,7 +4,7 @@ import { MenuGroupType } from '@mana/components/Menu/interfaces';
 import { LayoutConfigType } from '@components/v2/Canvas/interfaces';
 
 interface SettingsContextType {
-  activeLevel: SettingsManagerType['activeLevel'];
+  activeLevel?: SettingsManagerType['activeLevel'];
   layoutConfigs: SettingsManagerType['layoutConfigs'];
   selectedGroupsRef: SettingsManagerType['selectedGroupsRef'];
 }
