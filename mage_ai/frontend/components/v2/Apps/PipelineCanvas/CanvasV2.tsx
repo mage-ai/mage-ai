@@ -1,5 +1,5 @@
 import BlockNodeV2, { BADGE_HEIGHT, PADDING_VERTICAL } from '../../Canvas/Nodes/BlockNodeV2';
-import { calculateBoundingBox, logMessageForRects } from '../../Canvas/utils/layout/shared';
+import { applyRectDiff, calculateBoundingBox, getRectDiff, logMessageForRects } from '../../Canvas/utils/layout/shared';
 import { transformRects } from '../../Canvas/utils/rect';
 import {
   ItemTypeEnum, LayoutConfigDirectionEnum, LayoutConfigDirectionOriginEnum, LayoutDisplayEnum, LayoutStyleEnum,
@@ -29,6 +29,7 @@ import { getCache } from '@mana/components/Menu/storage';
 import { useMutate } from '@context/APIMutation';
 import { indexBy, unique } from '@utils/array';
 import { getNewUUID } from '@utils/string';
+import { isEmptyObject } from '@utils/hash';
 
 const GROUP_NODE_PADDING = 16;
 
@@ -100,9 +101,13 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
       style: LayoutStyleEnum.WAVE,
     }),
     defaultLayoutConfig({
+      childrenLayout: defaultLayoutConfig({
+        direction: LayoutConfigDirectionEnum.HORIZONTAL,
+        display: LayoutDisplayEnum.SIMPLE,
+        style: LayoutStyleEnum.WAVE,
+      }),
       direction: LayoutConfigDirectionEnum.HORIZONTAL,
       display: LayoutDisplayEnum.SIMPLE,
-      rectTransformations: [],
       style: LayoutStyleEnum.WAVE,
     }),
     defaultLayoutConfig({
@@ -112,7 +117,7 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
         style: LayoutStyleEnum.GRID,
       }),
       direction: LayoutConfigDirectionEnum.HORIZONTAL,
-      display: LayoutDisplayEnum.DETAILED,
+      display: LayoutDisplayEnum.SIMPLE,
       style: LayoutStyleEnum.WAVE,
     }),
   ]);
@@ -171,7 +176,7 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
       },
       ref: nodeRef,
       shouldCapture: (_node: ShadowNodeType, element: HTMLElement) => {
-        const valid = !(block.uuid in rectsMappingRef.current);
+        const valid = !rectsMappingRef.current?.[block.uuid];
         // console.log('shouldCapture', block.uuid, valid);
         return valid;
       },
@@ -183,7 +188,7 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
     selectedGroupsRef.current = groupsArg;
 
     const currentGroup = groupsArg?.[groupsArg?.length - 1];
-    const group = groupMappingRef.current?.[currentGroup?.uuid];
+    const groupModel = groupMappingRef.current?.[currentGroup?.uuid];
     const parentGroup = groupsArg?.[groupsArg?.length - 2];
     const siblingGroups = groupMappingRef.current?.[parentGroup?.uuid]?.children?.filter(
       g => g.uuid !== currentGroup?.uuid);
@@ -192,7 +197,7 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
       (Object.values(blocksByGroupRef.current?.[currentGroup?.uuid] ?? {}) ?? []) as BlockType[];
 
     const groupsForEmptySelection = [];
-    if ((groupsArg?.length ?? 0) === 0) {
+    if ((groupsArg?.length ?? 0) === 0 && !currentGroup) {
       // No group selected: show top level pipelines (e.g. data preparation, inference)
       const defaultSelectionGroups = groupsByLevelRef.current?.[0];
       selectedGroupsRef.current = [
@@ -204,16 +209,18 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
       groupsForEmptySelection.push(...defaultSelectionGroups);
     }
 
-    const groups = (group?.children ?? []).concat(
+    const groups = (groupModel?.children ?? []).concat(
       [
         // Should we show the parent group as well?
         // parentGroup,
         // Add the current group so we can show groupings within it. This is handled manually.
-        // ...(blocks?.length > 0 ? [group] : []),
         // ------------------------------------------------------------------------------------------
+        ...(shouldRenderSelectedGroupSelection() ? [] : [groupModel]),
         ...(siblingGroups ?? []),
         ...(groupsForEmptySelection ?? []),
-      ].reduce((acc, group) => group ? acc.concat(groupMappingRef.current?.[group?.uuid]) : acc, [])
+      ].reduce((acc, group2) => group2 ? acc.concat(
+        groupMappingRef.current?.[group2?.uuid]
+      ) : acc, [])
     );
 
     blocksRef.current = blocks;
@@ -292,6 +299,14 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
   }), [defaultGroups, framework, pipeline]);
 
   // Models
+  function shouldRenderSelectedGroupSelection(): boolean {
+    const selectedGroup = selectedGroupsRef.current?.[selectedGroupsRef.current?.length - 1];
+    const group = groupMappingRef.current?.[selectedGroup?.uuid];
+    const blocksInGroup = blocksByGroupRef?.current?.[selectedGroup?.uuid] ?? {};
+    const isValidGroup = group
+      && ((group?.children?.length ?? 0) > 0 || !isEmptyObject(blocksInGroup ?? {}));
+    return !!isValidGroup;
+  }
   function updateRects(rectData: Record<string, {
     data: {
       node: {
@@ -315,13 +330,19 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
     });
 
     const updateState = () => {
-
-      const blocks = blocksRef.current ?? [];
-      const groups = groupsRef.current ?? [];
+      const blocks = [];
+      blocksRef?.current?.forEach(g => {
+        blocks.push({ ...g });
+      });
+      const groups = [];
+      groupsRef?.current?.forEach(g => {
+        groups.push({ ...g });
+      });
 
       const layoutConfig = layoutConfigsRef.current?.[selectedGroupsRef.current?.length - 1];
       const selectedGroup = selectedGroupsRef.current?.[selectedGroupsRef.current?.length - 1];
       const group = groupMappingRef.current?.[selectedGroup?.uuid];
+      const isValidGroup = shouldRenderSelectedGroupSelection();
 
       const blockNodes = [];
       Object.entries(rectRefs.current ?? {}).forEach(([id, rectRef]) => {
@@ -344,10 +365,9 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
         });
       });
 
-      if (group) {
-        groups.push(group);
+      if (isValidGroup) {
         blockNodes.push({
-          block: group,
+          block: { ...group },
           node: {
             type: ItemTypeEnum.NODE,
           },
@@ -363,7 +383,9 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
 
       const blockNodeMapping = indexBy(blockNodes, bn => bn?.block?.uuid);
       const rects1 = hydrateBlockNodeRects(
-        (blocks ?? []).concat(groups ?? []).map(m => blockNodeMapping[m.uuid]),
+        (blocks ?? []).concat(groups ?? [])
+          .concat(isValidGroup ? [{ ...group }] : [])
+          .map(m => blockNodeMapping[m.uuid]),
         blockNodeMapping,
       );
 
@@ -378,8 +400,10 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
             const upgroup = groupMappingRef.current?.[id];
             const gs = upgroup?.groups;
             const arr = [];
+
+            // Don’t add the parent as the upstream
             gs?.forEach((guuid) => {
-              if (guuid in rectsmap) {
+              if (!block?.groups?.includes(guuid) && rectsmap?.[guuid]) {
                 arr.push(rectsmap[guuid]);
               }
             });
@@ -387,12 +411,12 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
             upgroup?.children?.filter(
               b => block?.children?.some?.(c => b?.downstream_blocks?.includes(c.uuid))
             )?.forEach(b => {
-              if (b.uuid in rectsmap) {
+              if (rectsmap?.[b.uuid]) {
                 arr.push(rectsmap[b.uuid]);
               }
             });
 
-            if ((arr?.length ?? 0) === 0 && id in rectsmap) {
+            if ((arr?.length ?? 0) === 0 && rectsmap?.[id]) {
               arr.push(rectsmap[id]);
             }
 
@@ -401,21 +425,14 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
         };
       });
 
-      // blockNodes?.forEach(bn => {
-      //   if (bn?.block?.children?.length > 0) {
-      //     bn?.block?.children?.forEach(({ uuid }) => {
-      //       if (!(uuid in blockNodeMapping)) {
-      //         blockNodeMapping[uuid] = bn;
-      //       }
-      //     });
-      //   }
-      // });
+      console.log('WTFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF', rects)
 
       let rectsUse = rects;
       let groupRect = null;
-      if (layoutConfig?.childrenLayout) {
-        const blocksInGroup = blocksByGroupRef?.current?.[selectedGroup?.uuid];
-        const rectsInGroup = rects?.filter(r => r.id in blocksInGroup)
+      if (isValidGroup && layoutConfig?.childrenLayout) {
+        const childrenInGroup = indexBy(group?.children ?? [], c => c.uuid);
+        const blocksInGroup = blocksByGroupRef?.current?.[selectedGroup?.uuid] ?? {};
+        const rectsInGroup = rects?.filter(r => blocksInGroup?.[r.id] || childrenInGroup?.[r.id]);
 
         if (rectsInGroup?.length > 0) {
           const transformations =
@@ -428,7 +445,7 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
 
           const map = indexBy(tfs ?? [], r => r.id) ?? {};
           groupRect = buildSelectedGroupRect(group, map);
-          rectsUse = rectsUse?.filter(r => !(r.id in map) && r.id !== groupRect.id).concat({
+          rectsUse = rectsUse?.filter(r => !map?.[r.id] && r.id !== groupRect.id).concat({
             ...rectsmap?.[groupRect.id],
             ...groupRect,
             items: [],
@@ -448,13 +465,16 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
       console.log(`end:\n${logMessageForRects(tfs)}`);
 
       if (groupRect) {
-        tfs = tfs.concat(...(groupRect?.items ?? [])).filter(r => r.id !== groupRect.id);
+        const grouptf = tfs.find(r => r.id === groupRect.id);
+        const diff = getRectDiff(groupRect, grouptf);
+        const items = groupRect?.items?.map(r => applyRectDiff(r, diff));
+        tfs = tfs.concat(...(items ?? [])).filter(r => r.id !== groupRect.id);
       }
       rectsMappingRef.current = indexBy(tfs, r => r.id);
 
       if (blocks?.length > 0 || groups?.length > 0) {
-        if ((blocks?.length > 0 && blocks?.every(b => b.uuid in (rectsMappingRef.current ?? {})))
-          || (groups?.length > 0 && groups?.every(g => g.uuid in (rectsMappingRef.current ?? {})))
+        if ((blocks?.length > 0 && blocks?.every(b => (rectsMappingRef.current ?? {})?.[b.uuid]))
+          || (groups?.length > 0 && groups?.every(g => (rectsMappingRef.current ?? {})?.[g.uuid]))
         ) {
           setRectsMapping(rectsMappingRef.current);
         }
@@ -536,27 +556,40 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
   }, [blocks, groups, rectsMapping]);
 
   function buildSelectedGroupRect(selectedGroup: FrameworkType, rects: Record<string, RectType>) {
-    const blocksInGroup = blocksByGroupRef?.current?.[selectedGroup.uuid];
-    const rectsInGroup = Object.values(rects ?? {})?.filter(r => r.id in blocksInGroup)
-    const groupBlock = groupMappingRef?.current?.[selectedGroup.uuid];
+    const group = groupMappingRef?.current?.[selectedGroup.uuid];
+    const childrenInGroup = indexBy(group?.children ?? [], c => c.uuid);
+    const blocksInGroup = blocksByGroupRef?.current?.[selectedGroup?.uuid] ?? {};
+    const rectsInGroup =
+      Object.values(rects ?? {})?.filter(r => blocksInGroup?.[r.id] || childrenInGroup?.[r.id]);
 
-    const groupRect = {
-      ...calculateBoundingBox(rectsInGroup),
-      block: groupBlock,
-      id: groupBlock?.uuid,
-      items: rectsInGroup,
-      type: ItemTypeEnum.NODE,
-      upstream: unique(
-        rectsInGroup?.flatMap(r => r.upstream ?? []),
-        r => r.id
-      )?.filter(up => !(up.id in blocksInGroup)),
-    };
-    groupBlock?.upstream_blocks?.forEach(up => {
-      groupRect.upstream.push({
+    const upstreams = [];
+    group?.upstream_blocks?.forEach(up => {
+      upstreams.push({
         ...(rects?.[up] ?? {}),
         id: up,
       });
     });
+
+    rectsInGroup?.forEach(r => {
+      (r.upstream ?? [])?.forEach(rup => {
+        // Don’t add its own children as an upstream.
+        if (!childrenInGroup?.[rup.id]) {
+          upstreams.push(rup);
+        }
+      });
+    });
+
+    const groupRect = {
+      ...calculateBoundingBox(rectsInGroup),
+      block: group,
+      id: group?.uuid,
+      items: rectsInGroup,
+      type: ItemTypeEnum.NODE,
+      upstream: unique(
+        upstreams ?? [],
+        r => r.id
+      )?.filter(up => !blocksInGroup?.[up.id]),
+    };
 
     const yoff = BADGE_HEIGHT + PADDING_VERTICAL;
     groupRect.left -= GROUP_NODE_PADDING;
@@ -568,9 +601,16 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
   }
 
   const selectedGroupRect = useMemo(() => {
+    if (!shouldRenderSelectedGroupSelection()) return;
+
     const selectedGroup = selectedGroupsRef?.current?.[selectedGroupsRef?.current?.length - 1];
     const group = groupMappingRef?.current?.[selectedGroup?.uuid];
-    return buildSelectedGroupRect(group, rectsMapping);
+    const rect = buildSelectedGroupRect(group, rectsMapping);
+
+    return {
+      ...rect,
+      ...(rectsMappingRef?.current?.[group?.id] ?? {}),
+    };
   }, [rectsMapping]);
 
   const selectedGroupNode = useMemo(() => {
@@ -645,12 +685,10 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
 
               {selectedGroupNode}
 
-              {selectedGroupRect && (
-                <LineManagerV2
-                  rectsMapping={rectsMapping}
-                  selectedGroupRect={selectedGroupRect}
-                />
-              )}
+              <LineManagerV2
+                rectsMapping={rectsMapping}
+                selectedGroupRect={selectedGroupRect}
+              />
             </ModelProvider>
           </SettingsProvider>
         </CanvasContainer>

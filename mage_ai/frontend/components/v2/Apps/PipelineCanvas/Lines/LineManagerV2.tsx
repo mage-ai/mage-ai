@@ -19,7 +19,7 @@ import { GroupUUIDEnum } from '@interfaces/PipelineExecutionFramework/types';
 import { LayoutManagerType } from '../interfaces';
 import { LINE_CLASS_NAME } from '../utils/display';
 import { DEBUG } from '../../../utils/debug';
-import { ignoreKeys, selectKeys } from '@utils/hash';
+import { ignoreKeys, objectSize, selectKeys } from '@utils/hash';
 import { calculateBoundingBox } from '@components/v2/Canvas/utils/layout/shared';
 import { FrameworkType } from '@interfaces/PipelineExecutionFramework/interfaces';
 
@@ -44,7 +44,6 @@ export default function LineManagerV2({
 }) {
   const { blockMappingRef, blocksByGroupRef, groupMappingRef, outputsRef } = useContext(ModelContext);
   const { layoutConfigsRef, selectedGroupsRef } = useContext(SettingsContext);
-  const selectedGroup = selectedGroupsRef?.current?.[selectedGroupsRef?.current?.length - 1];
 
   function getLayoutConfig() {
     const layoutConfig = layoutConfigsRef?.current?.[selectedGroupsRef?.current?.length - 1];
@@ -124,9 +123,11 @@ export default function LineManagerV2({
     if (rectdn.top < rectup.top) {
       // rectdn is above rect
       positions[LayoutConfigDirectionEnum.VERTICAL] = ['top', 'bottom'];
+      positions[LayoutConfigDirectionEnum.HORIZONTAL] = ['right', 'bottom'];
     } else if (rectdn.top > rectup.top) {
       // rectdn is below rect
       positions[LayoutConfigDirectionEnum.VERTICAL] = ['bottom', 'top'];
+      positions[LayoutConfigDirectionEnum.HORIZONTAL] = ['right', 'top'];
     }
 
     if (rectdn.left < rectup.left) {
@@ -304,7 +305,7 @@ export default function LineManagerV2({
 
   const updateLines = useCallback((
     mapping: Record<string, RectType>,
-    groupRect: RectType,
+    groupRectArg: RectType,
     opts?: { replace: boolean },
   ) => {
     const pairsByType = {
@@ -313,19 +314,24 @@ export default function LineManagerV2({
       [ItemTypeEnum.OUTPUT]: [],
     } as any;
 
+
+    const selectedGroup = selectedGroupsRef?.current?.[selectedGroupsRef?.current?.length - 1];
+    const groupRect = groupRectArg ?? mapping?.[selectedGroup?.id]
+
     const blocksInGroup = Object.values(blocksByGroupRef?.current?.[groupRect?.id] ?? {}) ?? [];
     const currentGroupChildrenIDs =
       (((groupRect?.block as FrameworkType) ?? {
         children: [],
       })?.children ?? [])?.concat(blocksInGroup ?? [])?.map(child => child.uuid);
 
-    const allRectsAreInGroup =
-      Object.keys(mapping ?? {}).every(id => currentGroupChildrenIDs?.includes(id));
-
-    Object.entries({
+    const allRectsAreInGroup = Object.keys(mapping ?? {}).every(
+      id => id === groupRect?.id || currentGroupChildrenIDs?.includes(id));
+    const entries = Object.entries({
       ...(mapping ?? {}),
       ...((groupRect && !allRectsAreInGroup) ? { [groupRect.id]: groupRect } : {}),
-    })?.forEach(([id, rectdn]: [string, RectType]) => {
+    });
+
+    entries?.forEach(([id, rectdn]: [string, RectType]) => {
       if (ItemTypeEnum.NODE === rectdn?.type
         // Lines for groups
         && (allRectsAreInGroup || !currentGroupChildrenIDs?.includes(id))
@@ -333,6 +339,11 @@ export default function LineManagerV2({
         // Skip if rect is in the current group’s children.
         rectdn?.upstream?.forEach(up => {
           let rectup = null;
+          console.log(id, rectdn?.upstream, mapping, pairsByType,
+            allRectsAreInGroup,
+            currentGroupChildrenIDs?.includes(up.id),
+            up.id === groupRect?.id,
+          )
           if (!allRectsAreInGroup && (currentGroupChildrenIDs?.includes(up.id)
             || up.id === groupRect?.id)
           ) {
@@ -365,7 +376,6 @@ export default function LineManagerV2({
           if (!rectup) return;
 
           const block2 = rectup?.block;
-          DEBUG.lines.manager && console.log('selectedGroup', selectedGroup);
 
           // Don’t draw lines if blocks aren’t in the same active group.
           if (!(block as any)?.groups?.some(

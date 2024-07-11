@@ -85,7 +85,7 @@ export function buildRectTransformations({
         gap: { column: 40, row: 40 },
         options: {
           horizontalAlignment: LayoutHorizontalAlignmentEnum.CENTER,
-          stagger: 200,
+          stagger: 40,
           verticalAlignment: LayoutVerticalAlignmentEnum.CENTER,
         },
       },
@@ -126,12 +126,12 @@ export function buildRectTransformations({
   const conditionHeight = (rects: RectType[]) => {
     const box = calculateBoundingBox(rects);
     // Total height is less than 80% of the viewport height
-    return 0.8 > (box?.height / viewportRef?.current?.getBoundingClientRect()?.height);
+    return 0.99 > (box?.height / viewportRef?.current?.getBoundingClientRect()?.height);
   };
   const conditionWidth = (rects: RectType[]) => {
     const box = calculateBoundingBox(rects);
     // Total width is less than 80% of the viewport width
-    return 0.8 > (box?.width / viewportRef?.current?.getBoundingClientRect()?.width);
+    return 0.99 > (box?.width / viewportRef?.current?.getBoundingClientRect()?.width);
   };
   const conditionDimensions =
     LayoutConfigDirectionEnum.HORIZONTAL === direction ? conditionHeight : conditionWidth;
