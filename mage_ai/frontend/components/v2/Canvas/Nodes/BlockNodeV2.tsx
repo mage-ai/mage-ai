@@ -1,4 +1,4 @@
-import BlockNodeComponent, { BlockNodeProps } from './BlockNode';
+import BlockNodeComponent, { BlockNodeProps, BADGE_HEIGHT, PADDING_VERTICAL } from './BlockNode';
 import stylesBlockNode from '@styles/scss/components/Canvas/Nodes/BlockNode.module.scss';
 import BlockType from '@interfaces/BlockType';
 import React, { useCallback, useRef } from 'react';
@@ -64,3 +64,5 @@ function areEqual(p1: BlockNodeType, p2: BlockNodeType) {
 }
 
 export default React.memo(React.forwardRef(BlockNode), areEqual);
+
+export { BADGE_HEIGHT, PADDING_VERTICAL };

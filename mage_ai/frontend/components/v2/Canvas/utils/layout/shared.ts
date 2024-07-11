@@ -82,6 +82,14 @@ export function logMessageForRects(rects: RectType[]): string {
 
   return rects.map((copy) =>
     '|   ' + padString(String(copy.id).slice(0, 20), 20, ' ') + ': ' + (
-      [copy.left, copy.top, copy.width, copy.height].map(format).join(', '))
+      [copy.left, copy.top, copy.width, copy.height].map(v => format(v ?? 0)).join(', '))
   ).join('\n');
+}
+
+export function formatKeyValue(k, v): string {
+  return `${padString(k.slice(0, 20), 20, ' ')}: ${typeof v === 'function'
+    ? '__func__'
+    : typeof v === 'object'
+      ? '__obj__'
+      : v}`
 }

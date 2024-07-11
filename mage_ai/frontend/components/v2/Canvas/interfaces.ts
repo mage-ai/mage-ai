@@ -121,6 +121,7 @@ export interface RectTransformationType {
 }
 
 export interface LayoutConfigType {
+  childrenLayout?: LayoutConfigType;
   containerRef?: React.MutableRefObject<HTMLElement>;
   defaultRect?: {
     item?: (item?: NodeItemType) => RectType;

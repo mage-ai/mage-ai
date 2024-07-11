@@ -1,4 +1,4 @@
-import BlockNodeV2 from '../../Canvas/Nodes/BlockNodeV2';
+import BlockNodeV2, { BADGE_HEIGHT, PADDING_VERTICAL } from '../../Canvas/Nodes/BlockNodeV2';
 import { calculateBoundingBox, logMessageForRects } from '../../Canvas/utils/layout/shared';
 import { transformRects } from '../../Canvas/utils/rect';
 import {
@@ -12,7 +12,6 @@ import HeaderUpdater from '../../Layout/Header/Updater';
 import PipelineExecutionFrameworkType,
 { FrameworkType, PipelineExecutionFrameworkBlockType } from '@interfaces/PipelineExecutionFramework/interfaces';
 import { hydrateBlockNodeRects, buildRectTransformations } from './Layout/utils';
-import PipelineType from '@interfaces/PipelineType';
 import { ExecutionManagerType } from '../../ExecutionManager/interfaces';
 import {
   BlockMappingType, BlocksByGroupType, GroupLevelType, GroupMappingType, LayoutConfigType,
@@ -107,20 +106,14 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
       style: LayoutStyleEnum.WAVE,
     }),
     defaultLayoutConfig({
-      direction: LayoutConfigDirectionEnum.VERTICAL,
+      childrenLayout: defaultLayoutConfig({
+        direction: LayoutConfigDirectionEnum.HORIZONTAL,
+        display: LayoutDisplayEnum.SIMPLE,
+        style: LayoutStyleEnum.GRID,
+      }),
+      direction: LayoutConfigDirectionEnum.HORIZONTAL,
       display: LayoutDisplayEnum.DETAILED,
-      style: LayoutStyleEnum.TREE,
-    }),
-  ]);
-  const layoutConfigChildrenRef = useRef<LayoutConfigType>([
-    defaultLayoutConfig({
-
-    }),
-    defaultLayoutConfig({
-
-    }),
-    defaultLayoutConfig({
-
+      style: LayoutStyleEnum.WAVE,
     }),
   ]);
 
@@ -215,8 +208,9 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
       [
         // Should we show the parent group as well?
         // parentGroup,
-        // Add the current group so we can show groupings within it.
-        ...(blocks?.length > 0 ? [group] : []),
+        // Add the current group so we can show groupings within it. This is handled manually.
+        // ...(blocks?.length > 0 ? [group] : []),
+        // ------------------------------------------------------------------------------------------
         ...(siblingGroups ?? []),
         ...(groupsForEmptySelection ?? []),
       ].reduce((acc, group) => group ? acc.concat(groupMappingRef.current?.[group?.uuid]) : acc, [])
@@ -321,6 +315,14 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
     });
 
     const updateState = () => {
+
+      const blocks = blocksRef.current ?? [];
+      const groups = groupsRef.current ?? [];
+
+      const layoutConfig = layoutConfigsRef.current?.[selectedGroupsRef.current?.length - 1];
+      const selectedGroup = selectedGroupsRef.current?.[selectedGroupsRef.current?.length - 1];
+      const group = groupMappingRef.current?.[selectedGroup?.uuid];
+
       const blockNodes = [];
       Object.entries(rectRefs.current ?? {}).forEach(([id, rectRef]) => {
         const rect = rectRef.current;
@@ -341,11 +343,25 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
           rect,
         });
       });
+
+      if (group) {
+        groups.push(group);
+        blockNodes.push({
+          block: group,
+          node: {
+            type: ItemTypeEnum.NODE,
+          },
+          rect: {
+            height: 0,
+            left: 0,
+            top: 0,
+            type: ItemTypeEnum.NODE,
+            width: 0,
+          },
+        });
+      }
+
       const blockNodeMapping = indexBy(blockNodes, bn => bn?.block?.uuid);
-
-      const blocks = blocksRef.current ?? [];
-      const groups = groupsRef.current ?? [];
-
       const rects1 = hydrateBlockNodeRects(
         (blocks ?? []).concat(groups ?? []).map(m => blockNodeMapping[m.uuid]),
         blockNodeMapping,
@@ -376,7 +392,7 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
               }
             });
 
-            if ((arr?.length ?? 0) === 0) {
+            if ((arr?.length ?? 0) === 0 && id in rectsmap) {
               arr.push(rectsmap[id]);
             }
 
@@ -395,16 +411,45 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
       //   }
       // });
 
-      // console.log(`start:\n${logMessageForRects(rects)}`);
-      // console.log(rects);
+      let rectsUse = rects;
+      let groupRect = null;
+      if (layoutConfig?.childrenLayout) {
+        const blocksInGroup = blocksByGroupRef?.current?.[selectedGroup?.uuid];
+        const rectsInGroup = rects?.filter(r => r.id in blocksInGroup)
 
-      const transformations = buildRectTransformations({
-        layoutConfig: layoutConfigsRef.current?.[selectedGroupsRef.current?.length - 1],
-        selectedGroup: selectedGroupsRef.current?.[selectedGroupsRef.current?.length - 1],
-      });
-      const tfs = transformRects(rects, transformations);
-      console.log(`  end:\n${logMessageForRects(tfs)}`);
+        if (rectsInGroup?.length > 0) {
+          const transformations =
+            buildRectTransformations({ layoutConfig: layoutConfig?.childrenLayout, selectedGroup });
 
+          console.log(`| start[children]:\n${logMessageForRects(rectsInGroup)}`);
+          console.log(rectsInGroup);
+          const tfs = transformRects(rectsInGroup, transformations);
+          console.log(`| end[children]:\n${logMessageForRects(tfs)}`);
+
+          const map = indexBy(tfs ?? [], r => r.id) ?? {};
+          groupRect = buildSelectedGroupRect(group, map);
+          rectsUse = rectsUse?.filter(r => !(r.id in map) && r.id !== groupRect.id).concat({
+            ...rectsmap?.[groupRect.id],
+            ...groupRect,
+            items: [],
+          });
+        }
+      }
+
+      if ((rectsUse?.length ?? 0) === 0) {
+        rectsUse = rects;
+      }
+
+      console.log(`start:\n${logMessageForRects(rectsUse)}`);
+      console.log(rectsUse);
+
+      const transformations = buildRectTransformations({ layoutConfig, selectedGroup });
+      let tfs = transformRects(rectsUse, transformations);
+      console.log(`end:\n${logMessageForRects(tfs)}`);
+
+      if (groupRect) {
+        tfs = tfs.concat(...(groupRect?.items ?? [])).filter(r => r.id !== groupRect.id);
+      }
       rectsMappingRef.current = indexBy(tfs, r => r.id);
 
       if (blocks?.length > 0 || groups?.length > 0) {
@@ -490,31 +535,46 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
     return arr;
   }, [blocks, groups, rectsMapping]);
 
-  const selectedGroupRect = useMemo(() => {
-    const selectedGroup = selectedGroupsRef?.current?.[selectedGroupsRef?.current?.length - 1];
-    const currentGroupChildrenIDs = selectedGroup?.items?.map(item => item.uuid);
-    const rectsInGroup = currentGroupChildrenIDs?.map(id => rectsMapping?.[id]) ?? [];
-    const groupBlock = groupMappingRef?.current?.[selectedGroup?.uuid];
+  function buildSelectedGroupRect(selectedGroup: FrameworkType, rects: Record<string, RectType>) {
+    const blocksInGroup = blocksByGroupRef?.current?.[selectedGroup.uuid];
+    const rectsInGroup = Object.values(rects ?? {})?.filter(r => r.id in blocksInGroup)
+    const groupBlock = groupMappingRef?.current?.[selectedGroup.uuid];
+
     const groupRect = {
       ...calculateBoundingBox(rectsInGroup),
       block: groupBlock,
       id: groupBlock?.uuid,
+      items: rectsInGroup,
       type: ItemTypeEnum.NODE,
       upstream: unique(
         rectsInGroup?.flatMap(r => r.upstream ?? []),
         r => r.id
-      )?.filter(up => !currentGroupChildrenIDs?.includes(up.id)),
+      )?.filter(up => !(up.id in blocksInGroup)),
     };
-    groupRect.left -= GROUP_NODE_PADDING;
-    groupRect.top -= GROUP_NODE_PADDING;
-    groupRect.width += GROUP_NODE_PADDING * 2;
-    groupRect.height += GROUP_NODE_PADDING * 2;
+    groupBlock?.upstream_blocks?.forEach(up => {
+      groupRect.upstream.push({
+        ...(rects?.[up] ?? {}),
+        id: up,
+      });
+    });
 
-    return rectsInGroup?.length > 0 ? groupRect : null;
+    const yoff = BADGE_HEIGHT + PADDING_VERTICAL;
+    groupRect.left -= GROUP_NODE_PADDING;
+    groupRect.top -= GROUP_NODE_PADDING + yoff;
+    groupRect.width += GROUP_NODE_PADDING * 2;
+    groupRect.height += (GROUP_NODE_PADDING * 2) + yoff;
+
+    return groupRect;
+  }
+
+  const selectedGroupRect = useMemo(() => {
+    const selectedGroup = selectedGroupsRef?.current?.[selectedGroupsRef?.current?.length - 1];
+    const group = groupMappingRef?.current?.[selectedGroup?.uuid];
+    return buildSelectedGroupRect(group, rectsMapping);
   }, [rectsMapping]);
 
   const selectedGroupNode = useMemo(() => {
-    if (!selectedGroupRect) return;
+    if ((selectedGroupRect?.items ?? 0) === 0 || !selectedGroupRect?.block) return;
 
     const { block, type } = selectedGroupRect ?? {};
     const node = {

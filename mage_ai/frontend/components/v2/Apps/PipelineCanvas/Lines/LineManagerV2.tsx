@@ -302,24 +302,29 @@ export default function LineManagerV2({
     };
   }
 
-  const updateLines = useCallback((mapping: Record<string, RectType>, opts?: { replace: boolean }) => {
+  const updateLines = useCallback((
+    mapping: Record<string, RectType>,
+    groupRect: RectType,
+    opts?: { replace: boolean },
+  ) => {
     const pairsByType = {
       [ItemTypeEnum.BLOCK]: [],
       [ItemTypeEnum.NODE]: [],
       [ItemTypeEnum.OUTPUT]: [],
     } as any;
 
+    const blocksInGroup = Object.values(blocksByGroupRef?.current?.[groupRect?.id] ?? {}) ?? [];
     const currentGroupChildrenIDs =
-      ((selectedGroupRect?.block as FrameworkType) ?? {
+      (((groupRect?.block as FrameworkType) ?? {
         children: [],
-      })?.children?.map(child => child.uuid);
+      })?.children ?? [])?.concat(blocksInGroup ?? [])?.map(child => child.uuid);
 
     const allRectsAreInGroup =
       Object.keys(mapping ?? {}).every(id => currentGroupChildrenIDs?.includes(id));
 
     Object.entries({
       ...(mapping ?? {}),
-      ...((selectedGroupRect && !allRectsAreInGroup) ? { [selectedGroupRect.id]: selectedGroupRect } : {}),
+      ...((groupRect && !allRectsAreInGroup) ? { [groupRect.id]: groupRect } : {}),
     })?.forEach(([id, rectdn]: [string, RectType]) => {
       if (ItemTypeEnum.NODE === rectdn?.type
         // Lines for groups
@@ -328,8 +333,10 @@ export default function LineManagerV2({
         // Skip if rect is in the current group’s children.
         rectdn?.upstream?.forEach(up => {
           let rectup = null;
-          if (!allRectsAreInGroup && currentGroupChildrenIDs?.includes(up.id)) {
-            rectup = selectedGroupRect;
+          if (!allRectsAreInGroup && (currentGroupChildrenIDs?.includes(up.id)
+            || up.id === groupRect?.id)
+          ) {
+            rectup = groupRect;
           } else {
             rectup = mapping?.[up.id];
           }
@@ -378,7 +385,7 @@ export default function LineManagerV2({
   }, []);
 
   useEffect(() => {
-    updateLines(rectsMapping, {
+    updateLines(rectsMapping, selectedGroupRect, {
       replace: true,
     });
   }, [rectsMapping, selectedGroupRect, updateLines]);

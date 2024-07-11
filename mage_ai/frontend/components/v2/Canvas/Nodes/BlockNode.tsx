@@ -38,6 +38,9 @@ import { isEmptyObject } from '@utils/hash';
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { ElementRoleEnum } from '@mana/shared/types';
 
+export const BADGE_HEIGHT = 37;
+export const PADDING_VERTICAL = 12;
+
 export type BlockNodeProps = {
   block: BlockType | PipelineExecutionFrameworkBlockType;
   buttonBeforeRef?: React.RefObject<HTMLDivElement>;

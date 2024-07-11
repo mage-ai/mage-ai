@@ -13,6 +13,7 @@ import { RectType } from '@mana/shared/interfaces';
 import { calculateBoundingBox } from '../../../Canvas/utils/rect';
 import { flattenArray } from '@utils/array';
 import { validateFiniteNumber } from '@utils/number';
+import { padString } from '@utils/string';
 
 type BlockNodeType = {
   block: BlockType | FrameworkType;
@@ -331,7 +332,13 @@ export function buildRectTransformations({
     ] as RectTransformationType[]);
   }
 
-  DEBUG.rects && console.log('transformers', transformers);
+  if (DEBUG.rects) {
+    const msgs = [];
+    transformers?.forEach((t, idx: number) => {
+      msgs.push(`|   ${padString(String(idx), 2, ' ')}. ${t.type}`);
+    });
+    console.log(`transformers:\n${msgs.join('\n')}\n` + '-'.repeat(100));
+  }
 
   transformers.push(...(layoutConfig?.rectTransformations ?? []));
 

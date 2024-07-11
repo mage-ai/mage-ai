@@ -3,7 +3,7 @@ import tree from './layout/tree';
 import update from 'immutability-helper';
 import wave from './layout/wave';
 import { DEBUG } from '@components/v2/utils/debug';
-import { DEFAULT_LAYOUT_CONFIG, logMessageForRects } from './layout/shared';
+import { DEFAULT_LAYOUT_CONFIG, formatKeyValue, logMessageForRects } from './layout/shared';
 import { DragItem, LayoutConfigType, NodeItemType, NodeType, RectType, RectTransformationType } from '../interfaces';
 import { LayoutConfigDirectionEnum, TransformRectTypeEnum, RectTransformationScopeEnum } from '../types';
 import { applyRectDiff, getRectDiff } from './layout/shared';
@@ -58,11 +58,18 @@ export function transformRects(rectsInit: RectType[], transformations: RectTrans
     } = opts ?? {};
     const { parent } = rects?.[0] ?? {};
 
-    const debugLog = (stage: string, arr: RectType[], opts?: any) => {
+    const debugLog = (stage: string, arr1: RectType[], opts?: any) => {
       const format = (val: number) => ((val ?? null) !== null && !isNaN(val))
         ? padString(String(Math.round(val)), 6, ' ') : '     -';
 
-      const rectsBox = calculateBoundingBox(deepCopyArray(arr));
+      const arr = deepCopyArray(arr1).map(r => ({
+        ...r,
+        height: r.height ?? 0,
+        left: r.left ?? 0,
+        top: r.top ?? 0,
+        width: r.width ?? 0,
+      }))
+      const rectsBox = calculateBoundingBox(arr);
 
       const tag = `${stageNumber}. ${type}:${stage}` + (initialScope ? ` (${initialScope})` : '');
       const tags = [
@@ -103,11 +110,7 @@ export function transformRects(rectsInit: RectType[], transformations: RectTrans
       ].flatMap(o => Object.entries(o ?? {}));
 
       const args = tags?.map(([k, v]) =>
-        `|   ${padString(k.slice(0, 20), 20, ' ')}: ${typeof v === 'function'
-          ? '__func__'
-          : typeof v === 'object'
-            ? '__obj__'
-            : v}`
+        `|   ${formatKeyValue(k, v)}`
       )?.sort()?.join('\n');
 
       let text = logMessageForRects(arr);
