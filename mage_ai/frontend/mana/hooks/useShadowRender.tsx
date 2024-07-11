@@ -19,115 +19,139 @@ interface NodeData {
   rect: RectType;
 }
 
-interface NodeType {
+export interface ShadowNodeType {
   component: React.ReactNode;
   data?: any;
   id: string;
-  onCapture?: (node: NodeType, data: NodeData, element: HTMLElement) => void,
+  onCapture?: (node: ShadowNodeType, data: NodeData, element: HTMLElement) => void,
   ref?: React.MutableRefObject<HTMLElement>;
-  shouldCapture?: (node: NodeType, element: HTMLElement) => boolean;
-  target?: React.ReactNode;
-  targetRef?: React.MutableRefObject<HTMLElement>;
+  shouldCapture?: (node: ShadowNodeType, element: HTMLElement) => boolean;
+  targetRef?: (node: ShadowNodeType) => React.MutableRefObject<HTMLElement>;
 }
 
 interface ShadowRendererType {
-  nodes: NodeType[];
-  handleDataCapture: (node: NodeType, data: NodeData) => void;
-  renderNode?: (node: NodeType) => React.ReactNode | null;
+  nodes: ShadowNodeType[];
+  handleDataCapture: (node: ShadowNodeType, data: NodeData) => void;
+  maxAttempts?: number;
+  pollInterval?: number;
+  renderNode?: (node: ShadowNodeType) => React.ReactNode | null;
   uuid?: string;
+  waitUntil?: (nodes: ShadowNodeType[]) => boolean;
 }
 
-export function ShadowRenderer({ nodes, handleDataCapture, uuid }: ShadowRendererType) {
+export function ShadowRenderer({
+  nodes,
+  handleDataCapture,
+  maxAttempts = 10,
+  pollInterval = 100,
+  uuid,
+  waitUntil,
+}: ShadowRendererType) {
+  const attemptsRef = useRef(0);
   const portalRef = useRef<HTMLDivElement>(null);
   const renderRef = useRef(0);
-  const uuidRef = useRef(uuid);
-  const shadowContainer = useShadowRender(nodes, handleDataCapture, uuid);
-  // const [phase, setPhase] = useState(0);
+  const timeoutRef = useRef<any>(null);
+  const uuidPrev = useRef<string>(null);
 
-  // This useEffect will move the nodes out of the shadow DOM and into the main DOM
-  // useEffect(() => {
-  //   // if (nodes?.length >= 1 && isCompleted && phase === 0) {
-  //   //   const shadowContainer = shadowContainerRef.current;
-  //   //   console.log('[shadow]', shadowContainer, portalRef.current);
-  //   //   if (shadowContainer && portalRef.current) {
-  //   //     while ((shadowContainer.firstChild ?? false)) {
-  //   //       console.log('shadow child found');
-  //   //       if (shadowContainer.firstChild instanceof Node) {
-  //   //         portalRef.current.appendChild(shadowContainer.firstChild);
-  //   //       }
-  //   //     }
-  //   //     setPhase(1);
-  //   //   }
-  //   // }
-
-  //   // if (nodes?.length >= 1 && phase === 1) {
-  //   //   let index = 0;
-  //   //   while ((portalRef.current.firstChild ?? false)) {
-  //   //     if (portalRef.current.firstChild instanceof Node) {
-  //   //       const dom = nodes[index].targetRef ?? portalRef;
-  //   //       dom?.current?.appendChild(portalRef.current.firstChild);
-  //   //       index++;
-  //   //     }
-  //   //   }
-  //   // }
-  // }, [isCompleted, nodes, phase, shadowContainerRef]);
+  const [main, setMain] = useState<React.ReactNode>(null);
 
   useEffect(() => {
-    if (uuidRef.current !== uuid) {
+    if (uuid && !uuidPrev.current) {
+      uuidPrev.current = uuid;
+    }
+
+    if (uuid && uuidPrev.current && uuid !== uuidPrev.current) {
+      attemptsRef.current = 0;
+    }
+
+    const timeout = timeoutRef.current;
+    return () => {
+      clearTimeout(timeout);
+
+      attemptsRef.current = 0;
+      portalRef.current = null;
       renderRef.current = 0;
-      uuidRef.current = uuid;
+      timeoutRef.current = null;
     }
   }, [uuid]);
 
-  console.log(`[shadow:${uuid}:${renderRef.current}] starting...`);
+  const render = useCallback(() => {
+    attemptsRef.current += 1;
+    clearTimeout(timeoutRef.current);
+    timeoutRef.current = null;
 
-  const main = useMemo(() => {
     console.log(
-      `[shadow:${uuid}:${renderRef.current}] rendering:`,
-      nodes?.length,
-      nodes?.map(n => n.id),
+      `[shadow:${uuid}:${renderRef.current}] attempting: `,
+      `${attemptsRef.current} / ${maxAttempts}`,
     );
 
-    renderRef.current += 1;
+    if (attemptsRef.current < maxAttempts && (!waitUntil || waitUntil(nodes))) {
+      attemptsRef.current = maxAttempts;
 
-    return (
-      <>
-        <div
-          id={`shadow-portal-${uuid}`}
-          style={{
-            ...SHARED_STYLES,
-            height: 0,
-            width: 0,
-          } as React.CSSProperties}
-        >
-          <div ref={portalRef} />
+      console.log(
+        `[shadow:${uuid}:${renderRef.current}] rendering:`,
+        attemptsRef.current,
+        nodes?.length,
+        nodes?.map(n => n.id),
+      );
+
+      renderRef.current += 1;
+
+      setMain(
+        <div key={`shadow-portal-${uuid}`}>
+          <div
+            id={`shadow-portal-${uuid}`}
+            style={{
+              ...SHARED_STYLES,
+              height: 0,
+              width: 0,
+            } as React.CSSProperties}
+          >
+            <div ref={portalRef} />
+          </div>
+
+          <ShadowContainer
+            nodes={nodes}
+            handleDataCapture={handleDataCapture}
+            uuid={uuid}
+          />
         </div>
+      );
 
-        {nodes?.map(node => node.target)}
+      return;
+    }
 
-        {shadowContainer}
-      </>
-    )
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [nodes, uuid]);
+    if (attemptsRef.current < maxAttempts) {
+      timeoutRef.current = setTimeout(render, pollInterval);
+    }
+  }, [uuid, handleDataCapture, nodes, waitUntil, maxAttempts, pollInterval]);
+
+  clearTimeout(timeoutRef.current);
+  timeoutRef.current = setTimeout(render, pollInterval);
 
   return main;
 }
 
-export default function useShadowRender(
-  nodes: ShadowRendererType['nodes'],
-  handleDataCapture: ShadowRendererType['handleDataCapture'],
-  uuid?: string,
-): any {
+function ShadowContainer({ nodes, handleDataCapture, uuid }: {
+  nodes: ShadowRendererType['nodes'];
+  handleDataCapture: ShadowRendererType['handleDataCapture'];
+  uuid?: string;
+}): any {
   const completedNodesRefs = useRef<Record<string, NodeData>>({});
   const containerRef = useRef<HTMLDivElement>(null);
+  const timeoutTargetRefs = useRef<Record<string, any>>({});
   const timeoutRefs = useRef<Record<string, any>>({});
 
   useEffect(() => {
+    const timeoutTargets = Object.values(timeoutTargetRefs.current ?? {}) ?? [];
     const timeouts = Object.values(timeoutRefs.current ?? {}) ?? [];
 
     return () => {
+      completedNodesRefs.current = {};
+      containerRef.current = null;
+      timeoutTargets?.forEach(clearTimeout);
       timeouts?.forEach(clearTimeout);
+      timeoutTargetRefs.current = {};
       timeoutRefs.current = {};
     };
   }, []);
@@ -135,7 +159,7 @@ export default function useShadowRender(
   const containerMemo = useMemo(() => {
     console.log(`[hook:${uuid}] rendering:`, nodes?.length, nodes?.map(n => n.id));
 
-    function captureData(node: NodeType, element: HTMLElement) {
+    function captureData(node: ShadowNodeType, element: HTMLElement) {
       const report = () => {
         clearTimeout(timeoutRefs.current[node.id]);
         const computedStyle =
@@ -161,18 +185,29 @@ export default function useShadowRender(
         completedNodesRefs.current[node.id] = data;
 
         const { targetRef } = node;
-        console.log(`[hook:${uuid}] targetRef:`, targetRef.current);
 
-        if (targetRef) {
+        const renderTarget = () => {
+          const elementRef = targetRef(node);
+          console.log(`[hook:${uuid}] targetRef:`, elementRef?.current);
+
+          if (!elementRef?.current) {
+            timeoutTargetRefs.current[node.id] = setTimeout(renderTarget, 100);
+            return;
+          }
+
           const children = document.querySelectorAll(`[data-node-id="${node.id}"]`);
 
           console.log(`[hook:${uuid}] targetRef.children:`, children);
 
           children?.forEach(child => {
             if (child instanceof Node) {
-              targetRef.current.appendChild(child.firstChild);
+              elementRef.current.appendChild(child.firstChild);
             }
           });
+        };
+
+        if (targetRef ?? false) {
+          timeoutTargetRefs.current[node.id] = setTimeout(renderTarget, 100);
         }
 
         node?.onCapture && node?.onCapture?.(node, data, element);
@@ -184,10 +219,11 @@ export default function useShadowRender(
     return (
       <div
         id={`shadow-container-${uuid}`}
+        key={`shadow-container-${uuid}`}
         ref={containerRef}
         style={SHARED_STYLES as React.CSSProperties}
       >
-        {nodes?.map((node: NodeType) => {
+        {nodes?.map((node: ShadowNodeType) => {
           console.log(`[hook:${uuid}] WithOnMount:`, node.id)
 
           return (
