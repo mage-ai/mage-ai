@@ -314,7 +314,6 @@ export default function LineManagerV2({
       [ItemTypeEnum.OUTPUT]: [],
     } as any;
 
-
     const selectedGroup = selectedGroupsRef?.current?.[selectedGroupsRef?.current?.length - 1];
     const groupRect = groupRectArg ?? mapping?.[selectedGroup?.id]
 
@@ -326,35 +325,54 @@ export default function LineManagerV2({
 
     const allRectsAreInGroup = Object.keys(mapping ?? {}).every(
       id => id === groupRect?.id || currentGroupChildrenIDs?.includes(id));
-    const entries = Object.entries({
+    const values = Object.values({
       ...(mapping ?? {}),
       ...((groupRect && !allRectsAreInGroup) ? { [groupRect.id]: groupRect } : {}),
     });
 
-    entries?.forEach(([id, rectdn]: [string, RectType]) => {
-      if (ItemTypeEnum.NODE === rectdn?.type
-        // Lines for groups
-        && (allRectsAreInGroup || !currentGroupChildrenIDs?.includes(id))
-      ) {
+    console.log('lines', values)
+
+    values?.forEach((rectdn: RectType) => {
+      // Lines for groups
+      if (ItemTypeEnum.NODE === rectdn?.type) {
+        // e.g. data preparation: displaying this as the selected group, all 4 groups displayed
+        // belong inside it, so we show lines between those 4 groups.
+
         // Skip if rect is in the current group’s children.
-        rectdn?.upstream?.forEach(up => {
-          let rectup = null;
-          console.log(id, rectdn?.upstream, mapping, pairsByType,
+        rectdn?.upstream?.forEach(rectup1 => {
+          let rectup2 = null;
+          console.log(rectdn.id, rectdn?.upstream, mapping, pairsByType,
             allRectsAreInGroup,
-            currentGroupChildrenIDs?.includes(up.id),
-            up.id === groupRect?.id,
+            currentGroupChildrenIDs?.includes(rectup1.id),
+            rectup1.id === groupRect?.id,
           )
-          if (!allRectsAreInGroup && (currentGroupChildrenIDs?.includes(up.id)
-            || up.id === groupRect?.id)
+
+
+          // Current downstream and upstream block is a child of the currently selected group.
+          if (currentGroupChildrenIDs?.includes(rectdn.id)
+            && currentGroupChildrenIDs?.includes(rectup1.id)
           ) {
-            rectup = groupRect;
+            rectup2 = mapping?.[rectup1.id];
+          } else if (!allRectsAreInGroup
+            // The upstream block is a child of the currently selected group or
+            // the upstream block is the currently selected group.
+            && (currentGroupChildrenIDs?.includes(rectup1.id) || rectup1.id === groupRect?.id)
+          ) {
+            rectup2 = groupRect;
+          } else if (
+            currentGroupChildrenIDs?.includes(rectdn.id) && !currentGroupChildrenIDs?.includes(rectup1.id)
+          ) {
+            // If downstream block is in the current group’s children and
+            // the upstream is not in the current group’s children,
+            // then skip.
+            return; s
           } else {
-            rectup = mapping?.[up.id];
+            rectup2 = mapping?.[rectup1.id];
           }
 
-          if (!rectup) return;
+          if (!rectup2) return;
 
-          pairsByType[rectdn.type].push([rectup, rectdn]);
+          pairsByType[rectdn.type].push([rectup2, rectdn]);
         });
       } else if (LayoutDisplayEnum.DETAILED === getLayoutConfig()?.display
         && ItemTypeEnum.BLOCK === rectdn?.type

@@ -408,16 +408,27 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
               }
             });
 
-            upgroup?.children?.filter(
-              b => block?.children?.some?.(c => b?.downstream_blocks?.includes(c.uuid))
-            )?.forEach(b => {
-              if (rectsmap?.[b.uuid]) {
-                arr.push(rectsmap[b.uuid]);
-              }
-            });
+            // if ((arr?.length ?? 0) === 0 && rectsmap?.[id]) {
+            //   arr.push(rectsmap[id]);
+            // }
 
-            if ((arr?.length ?? 0) === 0 && rectsmap?.[id]) {
+            // If upstream is the currently selected block or...
+            if (group?.uuid === id
+              // If the upstream is a sibling of the
+              // currently selected block, then add it to the upstream.
+              || upgroup?.groups?.some?.(guuid => block?.groups?.includes(guuid))
+            ) {
               arr.push(rectsmap[id]);
+            } else {
+              // Look into the group of a sibling to check for the upstream blocks that have no
+              // downstream block.
+              upgroup?.children?.filter(
+                b => block?.children?.some?.(c => b?.downstream_blocks?.includes(c.uuid))
+              )?.forEach(b => {
+                if (rectsmap?.[b.uuid]) {
+                  arr.push(rectsmap[b.uuid]);
+                }
+              });
             }
 
             return acc.concat(arr);
