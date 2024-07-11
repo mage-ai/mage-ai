@@ -66,7 +66,9 @@ export function transformRects(rectsInit: RectType[], transformations: RectTrans
           'boundingBox',
           'layout',
         ]),
+        { initialScope },
         ignoreKeys(transformation, [
+          'initialScope',
           'options',
         ]),
         (boundingBox ? {
@@ -191,7 +193,16 @@ export function transformRects(rectsInit: RectType[], transformations: RectTrans
         top: 0,
       }));
     } else if (TransformRectTypeEnum.LAYOUT_TREE === type) {
-      rects = tree.pattern1(deepCopyArray(rects), layout ?? {});
+      rects = tree.pattern1(deepCopyArray(rects), layout ?? {}, {
+        patterns: {
+          level: arr => wave.pattern3(deepCopyArray(arr), {
+            ...layout,
+            direction: LayoutConfigDirectionEnum.VERTICAL === layout?.direction
+              ? LayoutConfigDirectionEnum.HORIZONTAL
+              : LayoutConfigDirectionEnum.VERTICAL,
+          }),
+        },
+      });
     } else if (TransformRectTypeEnum.LAYOUT_WAVE === type) {
       rects = wave.pattern3(deepCopyArray(rects), layout);
     } else if (TransformRectTypeEnum.LAYOUT_GRID === type) {
@@ -202,8 +213,8 @@ export function transformRects(rectsInit: RectType[], transformations: RectTrans
       rects = shiftRectsIntoBoundingBox(deepCopyArray(rects), parent);
     } else if (TransformRectTypeEnum.ALIGN_WITHIN_VIEWPORT === type) {
       const box = calculateBoundingBox(deepCopyArray(rects));
-      const xoff = (boundingBox.width / 2) - box.width;
-      const yoff = (boundingBox.height / 2) - box.height;
+      const xoff = (boundingBox.width / 2) - (box.width / 2);
+      const yoff = (boundingBox.height / 2) - (box.height / 2);
       rects = deepCopyArray(rects).map(rect => {
         if (LayoutConfigDirectionEnum.HORIZONTAL === layout?.direction) {
           rect.left += xoff;

@@ -1,15 +1,21 @@
 import { DEFAULT_LAYOUT_CONFIG, applyRectDiff, calculateBoundingBox, getRectDiff, isDebug } from './shared';
 import { LayoutConfigType } from '../../interfaces';
-import {
-  LayoutVerticalAlignmentEnum, LayoutHorizontalAlignmentEnum,
-  LayoutConfigDirectionEnum
-} from '../../types';
+import { LayoutConfigDirectionEnum } from '../../types';
 import { RectType } from '@mana/shared/interfaces';
 import { range, flattenArray } from '@utils/array';
 
-function pattern1(items: RectType[], layout?: LayoutConfigType): RectType[] {
+function pattern1(
+  items: RectType[],
+  layout?: LayoutConfigType,
+  opts?: {
+    patterns?: {
+      level?: (rects: RectType[]) => RectType[];
+      levels?: Record<string, (rects: RectType[]) => RectType[]>;
+    };
+  },
+): RectType[] {
   const { direction, gap, options } = { ...DEFAULT_LAYOUT_CONFIG, ...layout };
-  const { horizontalAlignment, verticalAlignment } = options ?? {};
+  // const { horizontalAlignment, verticalAlignment } = options ?? {};
   const { column: gapCol, row: gapRow } = gap;
   const stagger = options?.stagger ?? 0;
 
@@ -149,31 +155,43 @@ function pattern1(items: RectType[], layout?: LayoutConfigType): RectType[] {
 
   levelItems.forEach((rects: RectType[], level: number) => {
     const levelKey = String(level);
-    const rectLvl = dimensionsByLevel[levelKey];
-    const maxDim = isHorizontal
-      ? { top: rectLvl.top + (maxHeight - rectLvl.height) / 2 }
-      : { left: rectLvl.left + (maxWidth - rectLvl.width) / 2 };
-    const rectMax = { ...rectLvl, ...maxDim };
-    const diff = getRectDiff(rectLvl, rectMax);
+    let rects3 = [];
 
-    isDebug() &&
-      console.log(`[${direction}:${level}]`, 'rectLvl', rectLvl, 'rectMax', rectMax, 'diff', diff);
-    const rects2 = rects.map(rect => applyRectDiff(rect, diff));
+    const { level: patternAll, levels: patternPer } = opts?.patterns ?? {};
+    if (patternAll || patternPer) {
+      const pattern = patternPer
+        ? (patternPer?.[level] ?? patternPer?.[String(level)]) ?? patternAll
+        : patternAll;
+      rects3 = pattern(rects);
+    } else {
+      const rectLvl = dimensionsByLevel[levelKey];
+      const maxDim = isHorizontal
+        ? { top: rectLvl.top + (maxHeight - rectLvl.height) / 2 }
+        : { left: rectLvl.left + (maxWidth - rectLvl.width) / 2 };
+      const rectMax = { ...rectLvl, ...maxDim };
+      const diff = getRectDiff(rectLvl, rectMax);
 
-    // Align row items vertically / Align column items horizontally
-    const maxDim2: {
-      height?: number;
-      width?: number;
-    } = isHorizontal
-        ? rects2.reduce((max, rect) => ({ width: Math.max(max.width, rect.width) }), { width: 0 })
-        : rects2.reduce((max, rect) => ({ height: Math.max(max.height, rect.height) }), {
-          height: 0,
-        });
-    const rects3 = rects2.map(rect => ({
-      ...rect,
-      left: isHorizontal ? rect.left + (maxDim2.width - rect.width) / 2 : rect.left,
-      top: isHorizontal ? rect.top : rect.top + (maxDim2.height - rect.height) / 2,
-    }));
+      isDebug() &&
+        console.log(`[${direction}:${level}]`, 'rectLvl', rectLvl, 'rectMax', rectMax, 'diff', diff);
+      const rects2 = rects.map(rect => applyRectDiff(rect, diff));
+
+      // Align row items vertically / Align column items horizontally
+      const maxDim2: {
+        height?: number;
+        width?: number;
+      } = isHorizontal
+          ? rects2.reduce((max, rect) => ({ width: Math.max(max.width, rect.width) }), { width: 0 })
+          : rects2.reduce((max, rect) => ({ height: Math.max(max.height, rect.height) }), {
+            height: 0,
+          });
+
+      rects3 = rects2.map(rect => ({
+        ...rect,
+        left: isHorizontal ? rect.left + (maxDim2.width - rect.width) / 2 : rect.left,
+        top: isHorizontal ? rect.top : rect.top + (maxDim2.height - rect.height) / 2,
+      }));
+    }
+
     positionedItems[levelKey] = rects3;
   });
 
@@ -182,29 +200,33 @@ function pattern1(items: RectType[], layout?: LayoutConfigType): RectType[] {
   const finalBoundingBox = calculateBoundingBox(rects);
   isDebug() && console.log('levelItems', levelItems, 'box', finalBoundingBox);
 
+  // Move everything to origin
   let offsetX = 0;
   let offsetY = 0;
 
-  if (horizontalAlignment ?? false) {
-    if (LayoutHorizontalAlignmentEnum.CENTER === horizontalAlignment) {
-      offsetX += finalBoundingBox.left + finalBoundingBox.width / 2;
-    } else if (LayoutHorizontalAlignmentEnum.RIGHT === horizontalAlignment) {
-      offsetX += finalBoundingBox.left + finalBoundingBox.width;
-    } else if (LayoutHorizontalAlignmentEnum.LEFT === horizontalAlignment) {
-      offsetX += finalBoundingBox.left;
-    }
-  }
-  if (verticalAlignment ?? false) {
-    if (LayoutVerticalAlignmentEnum.CENTER === verticalAlignment) {
-      offsetY += finalBoundingBox.top + finalBoundingBox.height / 2;
-    } else if (LayoutVerticalAlignmentEnum.BOTTOM === verticalAlignment) {
-      offsetY += finalBoundingBox.top + finalBoundingBox.height;
-    } else if (LayoutVerticalAlignmentEnum.TOP === verticalAlignment) {
-      offsetY += finalBoundingBox.top;
-    }
-  }
+  const minX = rects.reduce((min, rect) => Math.min(min, rect.left), Infinity);
+  const minY = rects.reduce((min, rect) => Math.min(min, rect.top), Infinity);
+  offsetX -= minX;
+  offsetY -= minY;
 
-  isDebug() && console.log('Alignments:', horizontalAlignment, offsetX, verticalAlignment, offsetY);
+  // if (horizontalAlignment ?? false) {
+  //   if (LayoutHorizontalAlignmentEnum.CENTER === horizontalAlignment) {
+  //     offsetX += finalBoundingBox.left + finalBoundingBox.width / 2;
+  //   } else if (LayoutHorizontalAlignmentEnum.RIGHT === horizontalAlignment) {
+  //     offsetX += finalBoundingBox.left + finalBoundingBox.width;
+  //   } else if (LayoutHorizontalAlignmentEnum.LEFT === horizontalAlignment) {
+  //     offsetX += finalBoundingBox.left;
+  //   }
+  // }
+  // if (verticalAlignment ?? false) {
+  //   if (LayoutVerticalAlignmentEnum.CENTER === verticalAlignment) {
+  //     offsetY += finalBoundingBox.top + finalBoundingBox.height / 2;
+  //   } else if (LayoutVerticalAlignmentEnum.BOTTOM === verticalAlignment) {
+  //     offsetY += finalBoundingBox.top + finalBoundingBox.height;
+  //   } else if (LayoutVerticalAlignmentEnum.TOP === verticalAlignment) {
+  //     offsetY += finalBoundingBox.top;
+  //   }
+  // }
 
   return rects.map((rect: RectType) => ({
     ...rect,
@@ -215,4 +237,4 @@ function pattern1(items: RectType[], layout?: LayoutConfigType): RectType[] {
 
 export default {
   pattern1,
-}
+};

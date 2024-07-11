@@ -94,10 +94,11 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
   const layoutConfigsRef = useRef<LayoutConfigType[]>([
     defaultLayoutConfig({
       direction: LayoutConfigDirectionEnum.HORIZONTAL,
-      style: LayoutStyleEnum.TREE,
+      style: LayoutStyleEnum.WAVE,
     }),
     defaultLayoutConfig({
       direction: LayoutConfigDirectionEnum.VERTICAL,
+      style: LayoutStyleEnum.TREE,
     }),
     defaultLayoutConfig({
       direction: LayoutConfigDirectionEnum.HORIZONTAL,

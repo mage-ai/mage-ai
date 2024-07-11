@@ -327,9 +327,35 @@ export function buildRectTransformations({
       },
     ] as RectTransformationType[]);
   } else if (LayoutDisplayEnum.SIMPLE === layoutConfig?.display) {
+    const patterns = layoutPattern();
     transformers.push(...[
-      ...layoutPattern(),
+      ...patterns,
       ...viewportAlignment,
+      // ...viewportAlignment.map(({ condition, options, ...rest }) => {
+      //   // Only align if not in tree mode because tree mode already aligns its children.
+      //   const { condition: condition0, options: optionsT, type } = patterns?.[0];
+      //   const tdir = optionsT?.()?.layout?.direction ?? direction;
+
+      //   const { layout: lo } = options?.() ?? {};
+      //   const vpdir = lo?.direction;
+
+      //   return {
+      //     ...rest,
+      //     condition: (args: any) => {
+      //       let valid = !condition || condition(args);
+
+      //       // Apply the condition if the directions are opposite
+      //       if (LayoutStyleEnum.TREE === type && tdir !== vpdir) {
+      //         valid = (!condition0 || condition0(args))
+      //           && patterns?.slice(1, patterns?.length)?.every(
+      //             (p) => !p.condition || p.condition(args));
+      //       }
+
+      //       return valid;
+      //     },
+      //     options,
+      //   }
+      // }),
     ] as RectTransformationType[]);
   }
 
