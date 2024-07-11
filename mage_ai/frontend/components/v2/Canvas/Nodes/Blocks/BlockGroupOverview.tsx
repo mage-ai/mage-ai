@@ -21,11 +21,11 @@ type BlockOverviewProps = {
 export default function BlockGroupOverview({
   block,
 }: BlockOverviewProps) {
-  const { activeLevel, layoutConfigs, selectedGroupsRef } = useContext(SettingsContext);
-  const layoutConfig = layoutConfigs?.current?.[activeLevel?.current];
+  const { layoutConfigs, selectedGroupsRef } = useContext(SettingsContext);
+  const layoutConfig = layoutConfigs?.current?.[selectedGroupsRef?.current?.length - 1];
   const detailLayout = LayoutDisplayEnum.DETAILED === layoutConfig?.current?.display;
   const { configuration, description, uuid } = block;
-  const { blocksByGroupRef } = useContext(ModelContext);
+  const { blockMappingRef, blocksByGroupRef, groupMappingRef } = useContext(ModelContext);
   const groups = 'children' in (block ?? {}) ? (block as { children: any[] }).children : [];
 
   const templatesForGroup = useMemo(() => (configuration as any)?.templates ?? {}, [configuration]);
@@ -163,19 +163,29 @@ export default function BlockGroupOverview({
 
   if (!blocks?.length && !groups?.length) {
     return (
-      <PanelRows padding={false}>
-        <Grid
-          alignItems="center"
-          padding={16}
-          style={{ maxWidth: 400 }}
-          templateColumns="1fr"
-          templateRows="1fr"
-        >
-          <Text secondary small>
-            {description}
-          </Text>
-        </Grid>
-      </PanelRows>
+      <Grid rowGap={8}>
+        <PanelRows padding={false}>
+          <Grid
+            alignItems="center"
+            padding={16}
+            rowGap={8}
+            style={{ maxWidth: 400 }}
+            templateColumns="1fr"
+            templateRows="1fr"
+          >
+
+            {configuration?.metadata?.required && (
+              <Text italic secondary small>
+                This operation is required.
+              </Text>
+            )}
+
+            <Text secondary small>
+              {description}
+            </Text>
+          </Grid>
+        </PanelRows>
+      </Grid>
     );
   }
 
@@ -193,10 +203,50 @@ export default function BlockGroupOverview({
 
   return (
     <PanelRows padding={false}>
-      {groups?.map((group: FrameworkType) => {
-        const { name, uuid: uuid2 } = group;
-        const { error, required, valid } = groupValidation(group, blocksByGroupRef?.current)
-        const colorName = getModeColorName(blocks);
+      {groups?.map((group1: FrameworkType) => {
+        const group2 = groupMappingRef?.current?.[group1?.uuid];
+        const { name, uuid: uuid2 } = group2;
+
+        const errors = [];
+        const requireds = [];
+        const valids = [];
+        const blocks2 = [];
+
+        if (group2?.children?.length > 0) {
+          group2?.children?.forEach((g3) => {
+            const group3 = groupMappingRef?.current?.[g3.uuid];
+            const stats = groupValidation(group3, blocksByGroupRef?.current);
+
+            errors.push(stats.error);
+            requireds.push(stats.required);
+            valids.push(stats.valid);
+
+            const blocks3 = Object.values(blocksByGroupRef?.current?.[group3?.uuid] ?? {});
+            blocks2.push(...blocks3);
+
+            const gblock = blockMappingRef?.current?.[group3?.uuid];
+
+            // console.log(group1.uuid, group2.uuid, group3.uuid, errors, requireds, valids, group3, gblock, blocks3);
+          });
+        } else {
+          const stats = groupValidation(group2, blocksByGroupRef?.current);
+          const blocks3 = Object.values(blocksByGroupRef?.current?.[group2?.uuid] ?? {});
+          blocks2.push(...blocks3);
+
+          errors.push(stats.error);
+          requireds.push(stats.required);
+          valids.push(stats.valid);
+        }
+
+        const error = errors?.some(Boolean);
+        const required = requireds?.some(Boolean);
+        const valid = blocks2?.length > 0 && (!required || !error);
+
+        // console.log(group1.uuid, group2.uuid, error, requireds, valids);
+
+        const colorName = getModeColorName(blocks2);
+        const rcount = requireds?.filter(Boolean)?.length ?? 0;
+        const vcount = valids?.filter(Boolean)?.length ?? 0;
 
         return (
           <GradientContainer
@@ -226,7 +276,9 @@ export default function BlockGroupOverview({
                 <Text italic={!required} medium secondary small>
                   {blocks?.length >= 1
                     ? pluralize('block', blocks?.length ?? 0)
-                    : (required ? 'Required' : 'Optional')}
+                    : blocks2?.length > 0
+                      ? `${vcount}/${rcount}`
+                      : (required ? 'Required' : 'Optional')}
                 </Text >
               </Grid>
 

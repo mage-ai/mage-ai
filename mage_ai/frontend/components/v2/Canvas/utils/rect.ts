@@ -44,7 +44,7 @@ export function transformRects(rectsInit: RectType[], transformations: RectTrans
       type,
     } = transformation;
 
-    const rectsStart = [...deepCopy(rectsByStage[rectsByStage.length - 1])];
+    const rectsStart = deepCopy(rectsByStage[rectsByStage.length - 1]);
     let rects = deepCopy(rectsStart);
 
     const opts = options ? options?.(rects) : {};
@@ -64,14 +64,14 @@ export function transformRects(rectsInit: RectType[], transformations: RectTrans
 
       const rectsBox = calculateBoundingBox(deepCopyArray(arr));
 
-      const tag = `${stageNumber}. ${type}:${stage}`;
+      const tag = `${stageNumber}. ${type}:${stage}` + (initialScope ? ` (${initialScope})` : '');
       const tags = [
         layout,
         ignoreKeys(opts, [
           'boundingBox',
           'layout',
+          'offset',
         ]),
-        { initialScope },
         ignoreKeys(transformation, [
           'initialScope',
           'options',
@@ -90,6 +90,14 @@ export function transformRects(rectsInit: RectType[], transformations: RectTrans
             rectsBox.top,
             rectsBox.width,
             rectsBox.height,
+          ].map(format).join(', '),
+        } : {}),
+        (offset ? {
+          'offset': [
+            offset.left,
+            offset.top,
+            offset.width,
+            offset.height,
           ].map(format).join(', '),
         } : {}),
       ].flatMap(o => Object.entries(o ?? {}));
@@ -145,38 +153,57 @@ export function transformRects(rectsInit: RectType[], transformations: RectTrans
       return rects;
     }
 
-    const rectsSnapshot = [...rects];
+    let rectsSnapshot = [];
     if (conditionSelf && RectTransformationScopeEnum.CHILDREN !== scope) {
-      debugLog('condition_self.init', deepCopyArray(rects));
+      rectsSnapshot = deepCopy(rects);
       rects = rects.filter(r => conditionSelf(r));
-      debugLog('condition_self.rects', deepCopyArray(rects));
-      debugLog('condition_self.start', deepCopyArray(rects));
+      debugLog(`condition_self.start: ${rects.length}/${rectsSnapshot.length}`, rects);
     }
 
     if (RectTransformationScopeEnum.CHILDREN === scope) {
       const arr = [];
       rects.forEach((rect) => {
-        const rectChildren = [...(rect.children || [])] || [];
+        let rectChildren = [...(rect.children || [])] || [];
         const count1 = rectChildren?.length;
 
-        const rc = rectChildren?.map(rectChild => ({
-          ...rectChild,
-          parent: rect,
-        }));
-
-        rect.children = transformRects(rc, [{
-          ...transformation,
-          initialRect: rect,
-          initialScope: scope,
-          scope: undefined,
-        }]);
-
-        if (rect.children?.length !== count1) {
-          throw new Error(
-            `Rect ${rect.id} started with ${count1} ` +
-            `children but ended with ${rect.children?.length} children after transformation.`,
-          );
+        let rcsnap = [];
+        if (conditionSelf) {
+          rcsnap = deepCopy(rectChildren);
+          rectChildren = rectChildren.filter(r => conditionSelf(r));
+          debugLog(`condition_self(${rect.id}).start: ${rectChildren.length}/${rcsnap.length}`, rectChildren);
         }
+
+        if (rectChildren.length > 0) {
+          let rc = rectChildren?.map(rectChild => ({
+            ...rectChild,
+            parent: rect,
+          })) as RectType[];
+
+          rc = transformRects(rc, [{
+            ...ignoreKeys(transformation, [
+              'condition', 'conditionSelf', 'scope',
+            ]),
+            initialRect: rect,
+            initialScope: scope,
+          }]) as RectType[];
+
+          if (conditionSelf) {
+            const rcmap = indexBy(rc, r => r.id);
+            const rcend = rcsnap.map(r => rcmap[r.id] ?? r);
+            debugLog(`condition_self(${rect.id}).end:`, rcend);
+            rect.children = rcend
+          } else {
+            rect.children = rc;
+          }
+
+          if (rect.children?.length !== count1) {
+            throw new Error(
+              `Rect ${rect.id} started with ${count1} ` +
+              `children but ended with ${rect.children?.length} children after transformation.`,
+            );
+          }
+        }
+
         arr.push(rect);
       });
       rects = deepCopyArray(arr);
@@ -282,33 +309,31 @@ export function transformRects(rectsInit: RectType[], transformations: RectTrans
       rects = transform(deepCopyArray(rects));
     }
 
-    if (conditionSelf) {
-      debugLog('condition_self.end', deepCopyArray(rects));
-      debugLog('condition_self.reassembling_rects_snapshot.start', deepCopyArray(rects));
+    if (conditionSelf && RectTransformationScopeEnum.CHILDREN !== scope) {
       const mapping = indexBy(rects, r => r.id);
-      rects = deepCopyArray(rectsSnapshot).map(r => mapping[r.id] ?? r);
-      debugLog('condition_self.reassembling_rects_snapshot.end', deepCopyArray(rects));
+      rects = rectsSnapshot.map(r => mapping[r.id] ?? r);
+      debugLog('condition_self.end', rects);
     }
 
-    const rectsEnd = deepCopyArray(rects);
+    const rectsStartMapping = indexBy(rectsStart, r => r.id);
     debugLog(
       'diff',
-      deepCopyArray(rectsStart).map((r1, idx) => {
-        const r2 = rectsEnd[idx];
+      rects.map((rend: RectType) => {
+        const rstart = rectsStartMapping[rend.id];
 
         return {
-          ...r2,
-          height: r2.height - r1.height,
-          left: r2.left - r1.left,
-          top: r2.top - r1.top,
-          width: r2.width - r1.width,
+          ...rend,
+          height: rend.height - rstart.height,
+          left: rend.left - rstart.left,
+          top: rend.top - rstart.top,
+          width: rend.width - rstart.width,
         };
       }),
       {
         rectsOnly: true,
       },
     );
-    debugLog('end', rectsEnd);
+    debugLog('end', rects);
 
     rectsByStage.push(deepCopyArray(rects));
   });

@@ -98,16 +98,25 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
       style: LayoutStyleEnum.WAVE,
     }),
     defaultLayoutConfig({
+      direction: LayoutConfigDirectionEnum.HORIZONTAL,
+      display: LayoutDisplayEnum.DETAILED,
+      style: LayoutStyleEnum.WAVE,
+    }),
+    defaultLayoutConfig({
       direction: LayoutConfigDirectionEnum.VERTICAL,
       display: LayoutDisplayEnum.DETAILED,
       style: LayoutStyleEnum.TREE,
     }),
+  ]);
+  const layoutConfigChildrenRef = useRef<LayoutConfigType>([
     defaultLayoutConfig({
-      direction: LayoutConfigDirectionEnum.HORIZONTAL,
+
     }),
     defaultLayoutConfig({
-      direction: LayoutConfigDirectionEnum.HORIZONTAL,
-      display: LayoutDisplayEnum.DETAILED,
+
+    }),
+    defaultLayoutConfig({
+
     }),
   ]);
 
@@ -201,7 +210,7 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
     const groups = (group?.children ?? []).concat(
       [
         // Add the current group so we can show groupings within it.
-        group,
+        // group,
         // Should we show the parent group as well?
         // parentGroup,
         ...(siblingGroups ?? []),

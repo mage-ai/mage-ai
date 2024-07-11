@@ -70,8 +70,9 @@ export default function BlockNodeComponent({
   const groups = useMemo(() => block?.groups?.map(
     guuid => groupMappingRef?.current?.[guuid]), [block, groupMappingRef]);
 
+  const { layoutConfigs, selectedGroupsRef } = useContext(SettingsContext);
+  const layoutConfig = layoutConfigs?.current?.[selectedGroupsRef?.current?.length - 1];
 
-  const { selectedGroupsRef } = useContext(SettingsContext);
   const selectedGroup = selectedGroupsRef?.current?.[selectedGroupsRef?.current?.length - 1];
   const isSiblingGroup = selectedGroup?.uuid !== block?.uuid &&
     selectedGroup?.groups?.some(g => block?.groups?.includes(g.uuid as GroupUUIDEnum));
@@ -323,7 +324,7 @@ export default function BlockNodeComponent({
               />
             )),
       ),
-    [node, groups, updateBlock],
+    [block, groups, updateBlock],
   );
 
   const titleRow = useMemo(
@@ -403,6 +404,7 @@ export default function BlockNodeComponent({
         height: isSelectedGroup && blocksInGroup?.length > 0
           ? '100%'
           : 'fit-content',
+        minWidth: isGroup ? 320 : undefined,
         position: 'relative',
         width: isSelectedGroup && blocksInGroup?.length > 0
           ? '100%'
@@ -422,7 +424,7 @@ export default function BlockNodeComponent({
       />
       {main}
     </GradientContainer >
-  ), [blocksInGroup, classNames, isSelectedGroup, main, timerStatusRef,
+  ), [blocksInGroup, classNames, isSelectedGroup, main, timerStatusRef, isGroup
   ]);
 
   const teleportBlock = useMemo(() => (

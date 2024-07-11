@@ -221,7 +221,7 @@ export function buildRectTransformations({
     };
     const activeGroupConditionChild = (rect: RectType) => {
       const group = selectedGroup;
-      return !group?.uuid || rect?.parent?.block?.uuid === group?.uuid;
+      return !group?.uuid || rect?.block?.groups?.includes(group?.uuid);
     };
 
     transformers.push(...[
@@ -261,16 +261,6 @@ export function buildRectTransformations({
       },
       ...layoutPattern(),
       ...viewportAlignment,
-      {
-        conditionSelf: (rect: RectType) => rect?.children?.length === 0,
-        options: (rects: RectType[]) => ({
-          offset: {
-            left: shiftHorizontal()(rects),
-            top: shiftVertical()(rects),
-          },
-        }),
-        type: TransformRectTypeEnum.SHIFT,
-      },
       {
         conditionSelf: activeGroupConditionChild,
         scope: RectTransformationScopeEnum.CHILDREN,

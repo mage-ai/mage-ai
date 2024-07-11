@@ -30,7 +30,7 @@ export default function TeleportGroup({
   selectedGroup: MenuGroupType;
 }) {
   const { activeLevel, layoutConfigs, selectedGroupsRef } = useContext(SettingsContext);
-  const layoutConfig = layoutConfigs?.current?.[activeLevel?.current - 1]?.current;
+  const layoutConfig = layoutConfigs?.current?.[selectedGroupsRef?.current?.length - 1];
   const { convertEvent, dispatchAppEvent } = useAppEventsHandler({ block } as any);
   const { blocksByGroupRef, groupMappingRef, groupsByLevelRef } = useContext(ModelContext);
   const groupsInLevel = groupsByLevelRef?.current?.[activeLevel?.current - 2];
