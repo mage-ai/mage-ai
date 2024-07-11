@@ -36,9 +36,9 @@ export function getStyles(
     rect?: RectType;
   },
 ): CSSProperties {
-  const { id, type } = node;
+  const { type } = node;
   rect = rect ?? node?.rect;
-  const { left, top, width, zIndex } = rect || ({} as RectType);
+  const { left, top, width, zIndex = 1 } = rect || ({} as RectType);
   const transform = `translate3d(${left ?? 0}px, ${top ?? 0}px, 0)`;
 
   return {

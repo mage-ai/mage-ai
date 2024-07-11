@@ -99,7 +99,7 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
     }),
     defaultLayoutConfig({
       direction: LayoutConfigDirectionEnum.HORIZONTAL,
-      display: LayoutDisplayEnum.DETAILED,
+      display: LayoutDisplayEnum.SIMPLE,
       style: LayoutStyleEnum.WAVE,
     }),
     defaultLayoutConfig({
@@ -207,12 +207,14 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
       groupsForEmptySelection.push(...defaultSelectionGroups);
     }
 
+    console.log(group)
     const groups = (group?.children ?? []).concat(
       [
-        // Add the current group so we can show groupings within it.
-        // group,
+
         // Should we show the parent group as well?
         // parentGroup,
+        ...(group?.groups?.length > 0 && !group?.groups?.includes(executionFrameworkUUID)
+          ? [group] : []), // Add the current group so we can show groupings within it.
         ...(siblingGroups ?? []),
         ...(groupsForEmptySelection ?? []),
       ].reduce((acc, group) => group ? acc.concat(groupMappingRef.current?.[group?.uuid]) : acc, [])

@@ -32,7 +32,7 @@ export default function TeleportGroup({
   const { activeLevel, layoutConfigs, selectedGroupsRef } = useContext(SettingsContext);
   const layoutConfig = layoutConfigs?.current?.[selectedGroupsRef?.current?.length - 1];
   const { convertEvent, dispatchAppEvent } = useAppEventsHandler({ block } as any);
-  const { blocksByGroupRef, groupMappingRef, groupsByLevelRef } = useContext(ModelContext);
+  const { blockMappingRef, blocksByGroupRef, groupMappingRef, groupsByLevelRef } = useContext(ModelContext);
   const groupsInLevel = groupsByLevelRef?.current?.[activeLevel?.current - 2];
   const group = groupMappingRef?.current?.[selectedGroup?.uuid];
   const groupBlocks = Object.values(blocksByGroupRef?.current?.[group?.uuid] ?? {});
@@ -43,7 +43,10 @@ export default function TeleportGroup({
   const {
     downstreamInGroup,
     upstreamInGroup,
-  } = getUpDownstreamColors(block, groupsInLevel, blocksByGroupRef?.current);
+  } = getUpDownstreamColors(block, groupsInLevel, blocksByGroupRef?.current, {
+    blockMapping: blockMappingRef?.current ?? {},
+    groupMapping: groupMappingRef?.current ?? {},
+  });
 
   const isup = upstreamInGroup?.length > 0;
   const isdn = downstreamInGroup?.length > 0;

@@ -1,5 +1,5 @@
 import { FrameworkType, PipelineExecutionFrameworkBlockType } from '@interfaces/PipelineExecutionFramework/interfaces';
-import { BlocksByGroupType } from '../../interfaces';
+import { BlockMappingType, BlocksByGroupType, GroupMappingType } from '../../interfaces';
 import BlockType, { BlockTypeEnum } from '@interfaces/BlockType';
 import { getBlockColor } from '@mana/themes/blocks';
 import { getModeColorName } from '../presentation';
@@ -40,14 +40,34 @@ export function getUpDownstreamColors(
   block,
   groupsInLevel,
   blocksByGroup,
+  opts?: {
+    blockMapping?: BlockMappingType;
+    groupMapping?: GroupMappingType;
+  }
 ) {
+  const { blockMapping, groupMapping } = opts;
+  const group = groupMapping?.[block?.uuid];
+
   const parentGroups = groupsInLevel?.filter(({ uuid }) => block?.groups?.includes(uuid));
-  const groupsInParent = parentGroups?.flatMap(({ children }) => children ?? []);
+  const groupsInParent = parentGroups?.flatMap(({ children }) => children ?? []) ?? [];
+
+  if (group && !groupsInParent?.length) {
+    group?.groups?.forEach((g) => {
+      const parent = groupMapping[g];
+      groupsInParent.push(...(parent?.children?.map(gp => groupMapping?.[gp.uuid]) ?? []));
+    });
+  }
 
   const up = [];
   const dn = [];
   groupsInParent?.forEach((bgroup: BlockType) => {
     const bgroupBlocks = Object.values(blocksByGroup?.[bgroup?.uuid] ?? {}) ?? [];
+
+    if (bgroup?.children?.length > 0) {
+      bgroup?.children?.forEach((gchild) => {
+        bgroupBlocks.push(...(Object.values(blocksByGroup?.[gchild.uuid] ?? {}) ?? []));
+      });
+    }
     const modeColor = getModeColorName(bgroupBlocks)?.base;
     const groupColor = getBlockColor(bgroup?.type ?? BlockTypeEnum.GROUP, { getColorName: true })?.names?.base;
     const bgroup2 = {
