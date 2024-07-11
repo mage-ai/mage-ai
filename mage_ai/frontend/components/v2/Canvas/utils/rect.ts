@@ -1,19 +1,21 @@
-import update from 'immutability-helper';
-import { DragItem, LayoutConfigType, NodeItemType, NodeType, RectType, RectTransformationType } from '../interfaces';
-import { LayoutConfigDirectionEnum, LayoutConfigDirectionOriginEnum, TransformRectTypeEnum, RectTransformationScopeEnum } from '../types';
-import { range, indexBy, flattenArray } from '@utils/array';
-import { isDebug as isDebugBase } from '@utils/environment';
-import { validateFiniteNumber } from '@utils/number';
-import { DEBUG } from '@components/v2/utils/debug';
-import wave from './layout/wave';
 import grid from './layout/grid';
+import tree from './layout/tree';
+import update from 'immutability-helper';
+import wave from './layout/wave';
+import { DEBUG } from '@components/v2/utils/debug';
 import { DEFAULT_LAYOUT_CONFIG } from './layout/shared';
+import { DragItem, LayoutConfigType, NodeItemType, NodeType, RectType, RectTransformationType } from '../interfaces';
+import { LayoutConfigDirectionEnum, TransformRectTypeEnum, RectTransformationScopeEnum } from '../types';
+import { applyRectDiff, getRectDiff } from './layout/shared';
+import { indexBy, deepCopyArray, range } from '@utils/array';
+import { isDebug as isDebugBase } from '@utils/environment';
+import { padString } from '@utils/string';
+import { validateFiniteNumber } from '@utils/number';
+import { ignoreKeys } from '@utils/hash';
 
 function isDebug() {
   return isDebugBase() && false;
 }
-
-type GroupType = { items: DragItem[]; position: { left: number; top: number } };
 
 export type SetupOpts = {
   groupBy?: (item: DragItem) => string;
@@ -22,13 +24,13 @@ export type SetupOpts = {
 };
 
 export function transformRects(rectsInit: RectType[], transformations: RectTransformationType[]): RectType[] {
-  DEBUG.rects && console.log('transformRects', transformations, rectsInit);
-  const rectsByStage = [rectsInit];
+  const rectsByStage = [deepCopyArray(rectsInit)];
 
-  transformations.forEach((transformation, stage: number) => {
+  transformations.forEach((transformation, stageNumber: number) => {
     const {
       condition,
       conditionSelf,
+      initialRect,
       initialScope,
       options,
       scope,
@@ -37,39 +39,94 @@ export function transformRects(rectsInit: RectType[], transformations: RectTrans
       type,
     } = transformation;
 
-    let rects = [...rectsByStage[rectsByStage.length - 1]];
+    const rectsStart = [...deepCopyArray(rectsByStage[rectsByStage.length - 1])];
+    let rects = deepCopyArray(rectsStart);
 
     const opts = options ? options?.(rects) : {};
-    const { boundingBox, defaultRect, layout, layoutOptions, offset, padding, rect: rectBase } = opts || {};
+    const {
+      boundingBox,
+      defaultRect,
+      layout,
+      offset,
+      padding,
+      rect: rectBase,
+    } = opts ?? {};
     const { parent } = rects?.[0] ?? {};
 
-    const scopeLog = scope || (initialScope ? `initial=${initialScope}` : null) || 'all';
-    const tag = `${stage}:${scopeLog}:${type}`;
-    const tags = [opts, transformation];
-    DEBUG.rects && console.log(`${tag}:start`, ...tags, rects);
+    const debugLog = (stage: string, arr: RectType[], opts?: any) => {
+      const tag = `${stageNumber}. ${type}:${stage}`;
+      const tags = [
+        layout,
+        ignoreKeys(opts, [
+          'layout',
+        ]),
+        ignoreKeys(transformation, [
+          'options',
+        ]),
+      ].flatMap(o => Object.entries(o ?? {}));
+      const args = tags?.map(([k, v]) =>
+        `|   ${padString(k.slice(0, 20), 20, ' ')}: ${typeof v === 'function'
+          ? '__func__'
+          : typeof v === 'object'
+            ? '__obj__'
+            : v}`
+      )?.sort()?.join('\n');
+
+      const format = (val: number) =>
+        ((val ?? null) !== null && !isNaN(val)) ? padString(String(Math.round(val)), 6, ' ') : '     -';
+
+      let text = deepCopyArray(arr).map((copy) =>
+        '|   ' + padString(String(copy.id).slice(0, 20), 20, ' ') + ': ' + (
+          [copy.left, copy.top, copy.width, copy.height].map(format).join(', '))
+      ).join('\n');
+
+      if (initialRect) {
+        text = `[parent]: ${initialRect.id}\n${text}`;
+      }
+
+      if (!DEBUG.rects) return;
+
+      if (opts?.rectsOnly) {
+        console.log('| '
+          + stage
+          + `\n| ${range(10).map(() => '-').join('')}\n`
+          + text
+          + `\n| ${range(10).map(() => '-').join('')}\n`
+        );
+      } else {
+        console.log(tag
+          + `\n${range(100).map(() => '-').join('')}\n`
+          + text
+          + `\n${range(100).map(() => '-').join('')}\n`
+          + args
+          + `\n${range(100).map(() => '=').join('')}\n`);
+      }
+    };
+
+    debugLog('start', deepCopyArray(rects));
 
     if (targets) {
-      rects = targets(rects);
+      rects = [...targets(rects)];
     }
 
     if (!rects?.length) {
-      rectsByStage.push(rects);
+      rectsByStage.push([...rects]);
       return rects;
     }
 
     if (condition && !condition(rects)) {
-      rectsByStage.push(rects);
-      DEBUG.rects && console.log(`${tag}:condition not met`, ...tags, rects);
-      rectsByStage.push(rects);
+      rectsByStage.push([...rects]);
+      debugLog('[CONDITION NOT MET]', deepCopyArray(rects));
+      rectsByStage.push([...rects]);
       return rects;
     }
 
     const rectsSnapshot = [...rects];
     if (conditionSelf && RectTransformationScopeEnum.CHILDREN !== scope) {
-      DEBUG.rects && console.log(`${tag}:condition_self.init`, ...tags, rects);
+      debugLog('condition_self.init', deepCopyArray(rects));
       rects = rects.filter(r => conditionSelf(r));
-      DEBUG.rects && console.log(`${tag}:condition_self.rects`, ...tags, rects);
-      DEBUG.rects && console.log(`${tag}:condition_self.start`, ...tags, rects);
+      debugLog('condition_self.rects', deepCopyArray(rects));
+      debugLog('condition_self.start', deepCopyArray(rects));
     }
 
     if (RectTransformationScopeEnum.CHILDREN === scope) {
@@ -85,6 +142,7 @@ export function transformRects(rectsInit: RectType[], transformations: RectTrans
 
         rect.children = transformRects(rc, [{
           ...transformation,
+          initialRect: rect,
           initialScope: scope,
           scope: undefined,
         }]);
@@ -97,9 +155,9 @@ export function transformRects(rectsInit: RectType[], transformations: RectTrans
         }
         arr.push(rect);
       });
-      rects = arr;
+      rects = deepCopyArray(arr);
     } else if (RectTransformationScopeEnum.SELF === scope) {
-      rects = rects?.map((rect) => ({
+      rects = deepCopyArray(rects)?.map((rect) => ({
         ...rect,
         ...transformRects([rect], [{
           ...transformation,
@@ -107,26 +165,26 @@ export function transformRects(rectsInit: RectType[], transformations: RectTrans
         }])[0],
       }));
     } else if (TransformRectTypeEnum.RESET === type) {
-      rects = rects.map((rect) => ({
+      rects = deepCopyArray(rects).map((rect) => ({
         ...rect,
-        height: 0,
-        width: 0,
+        left: 0,
+        top: 0,
       }));
     } else if (TransformRectTypeEnum.LAYOUT_TREE === type) {
-      rects = layoutRectsInTreeFormation(rects, layout ?? {});
+      rects = tree.pattern1(deepCopyArray(rects), layout ?? {});
     } else if (TransformRectTypeEnum.LAYOUT_WAVE === type) {
-      rects = wave.pattern3(rects, layout, layoutOptions);
+      rects = wave.pattern3(deepCopyArray(rects), layout);
     } else if (TransformRectTypeEnum.LAYOUT_GRID === type) {
-      rects = grid.pattern1(rects, layout);
+      rects = grid.pattern1(deepCopyArray(rects), layout);
     } else if (TransformRectTypeEnum.LAYOUT_SPIRAL === type) {
-      rects = layoutRectsInSpiral(rects, layout, layoutOptions);
+      rects = layoutRectsInSpiral(deepCopyArray(rects), layout);
     } else if (TransformRectTypeEnum.SHIFT_INTO_PARENT === type && parent) {
-      rects = shiftRectsIntoBoundingBox(rects, parent);
+      rects = shiftRectsIntoBoundingBox(deepCopyArray(rects), parent);
     } else if (TransformRectTypeEnum.ALIGN_WITHIN_VIEWPORT === type) {
-      const box = calculateBoundingBox(rects);
+      const box = calculateBoundingBox(deepCopyArray(rects));
       const xoff = (boundingBox.width - box.width) / 2;
       const yoff = (boundingBox.height - box.height) / 2;
-      rects = rects.map(rect => {
+      rects = deepCopyArray(rects).map(rect => {
         if (LayoutConfigDirectionEnum.HORIZONTAL === layout?.direction) {
           rect.left += xoff;
         } else if (LayoutConfigDirectionEnum.VERTICAL === layout?.direction) {
@@ -135,7 +193,7 @@ export function transformRects(rectsInit: RectType[], transformations: RectTrans
         return rect;
       });
     } else if (TransformRectTypeEnum.ALIGN_CHILDREN === type) {
-      rects = rects.map((rect) => {
+      rects = deepCopyArray(rects).map((rect) => {
         const { parent } = rect;
         const diff = {
           left: (validateFiniteNumber(parent?.offset?.left) ?? 0)
@@ -147,7 +205,7 @@ export function transformRects(rectsInit: RectType[], transformations: RectTrans
         return applyRectDiff(rect, diff);
       });
     } else if (TransformRectTypeEnum.FIT_TO_CHILDREN === type) {
-      rects = rects.map((rect) => {
+      rects = deepCopyArray(rects).map((rect) => {
         const box = calculateBoundingBox(rect?.children?.length >= 1 ? rect.children : [rect]);
 
         return {
@@ -165,16 +223,16 @@ export function transformRects(rectsInit: RectType[], transformations: RectTrans
         };
       });
     } else if (TransformRectTypeEnum.FIT_TO_SELF === type) {
-      rects = rects.map((rect) => {
+      rects = deepCopyArray(rects).map((rect) => {
         const rectPrev = defaultRect?.(rect);
         return ({ ...rect, ...rectPrev });
       });
     } else if (TransformRectTypeEnum.PAD === type) {
-      rects = rects.map((rect) => ({ ...rect, padding }));
+      rects = deepCopyArray(rects).map((rect) => ({ ...rect, padding }));
     } else if (TransformRectTypeEnum.SHIFT === type) {
-      rects = shiftRectsByDiffRect(rects, offset ?? { left: 0, top: 0 });
+      rects = shiftRectsByDiffRect(deepCopyArray(rects), offset ?? { left: 0, top: 0 });
     } else if (TransformRectTypeEnum.MIN_DIMENSIONS === type) {
-      rects = rects.map(rect => {
+      rects = deepCopyArray(rects).map(rect => {
         const height1 = validateFiniteNumber(rect.height);
         const width1 = validateFiniteNumber(rect.width);
         const heightd = validateFiniteNumber(rectBase?.height ?? 0);
@@ -187,20 +245,38 @@ export function transformRects(rectsInit: RectType[], transformations: RectTrans
         };
       });
     } else if (transform) {
-      rects = transform(rects);
+      rects = transform(deepCopyArray(rects));
     }
 
     if (conditionSelf) {
-      DEBUG.rects && console.log(`${tag}:condition_self.end`, ...tags, rects);
-      DEBUG.rects && console.log(`${tag}:condition_self.reassembling_rects_snapshot.start`, ...tags, rectsSnapshot);
+      debugLog('condition_self.end', deepCopyArray(rects));
+      debugLog('condition_self.reassembling_rects_snapshot.start', deepCopyArray(rects));
       const mapping = indexBy(rects, r => r.id);
-      rects = rectsSnapshot.map(r => mapping[r.id] ?? r);
-      DEBUG.rects && console.log(`${tag}:condition_self.reassembling_rects_snapshot.end`, ...tags, rects);
+      rects = deepCopyArray(rectsSnapshot).map(r => mapping[r.id] ?? r);
+      debugLog('condition_self.reassembling_rects_snapshot.end', deepCopyArray(rects));
     }
 
-    DEBUG.rects && console.log(`${tag}:end`, ...tags, rects);
+    const rectsEnd = deepCopyArray(rects);
+    debugLog(
+      'diff',
+      deepCopyArray(rectsStart).map((r1, idx) => {
+        const r2 = rectsEnd[idx];
 
-    rectsByStage.push(rects);
+        return {
+          ...r2,
+          height: r2.height - r1.height,
+          left: r2.left - r1.left,
+          top: r2.top - r1.top,
+          width: r2.width - r1.width,
+        };
+      }),
+      {
+        rectsOnly: true,
+      },
+    );
+    debugLog('end', rectsEnd);
+
+    rectsByStage.push(deepCopyArray(rects));
   });
 
   const stage = rectsByStage.length - 1;
@@ -208,7 +284,7 @@ export function transformRects(rectsInit: RectType[], transformations: RectTrans
   const rectsPrev = rectsByStage[stage - 1];
 
   if (rectsByStage.length >= 2) {
-    results?.forEach((rect, idx) => {
+    deepCopyArray(results)?.forEach((rect, idx) => {
       const rectp = rectsPrev[idx];
 
       if (rect.children?.length !== rectp.children?.length) {
@@ -310,223 +386,6 @@ export function layoutItemsInTreeFormation(
     ...item,
     rect: rectsMapping[item.id],
   }));
-}
-
-function layoutRectsInTreeFormation(
-  items: RectType[],
-  layout?: LayoutConfigType,
-  opts?: {
-    align?: {
-      horizontal?: 'left' | 'center' | 'right';
-      vertical?: 'top' | 'center' | 'bottom';
-    };
-  },
-): RectType[] {
-  const { direction, gap, stagger } = { ...DEFAULT_LAYOUT_CONFIG, ...layout };
-  const { column: gapCol, row: gapRow } = gap;
-
-  const positionedItems: Record<number | string, RectType[]> = {};
-  const levels: Map<number | string, number> = new Map();
-  const maxLevelWidths: Map<number, number> = new Map();
-  const maxLevelHeights: Map<number, number> = new Map();
-  const childrenMapping: Map<RectType, RectType[]> = new Map();
-  const visited = new Set<number | string>();
-
-  // Determine the levels for each item
-  function determineLevel(item: RectType): number {
-    if (levels.has(item.id)) {
-      return levels.get(item.id);
-    }
-    if (visited.has(item.id)) {
-      throw new Error(`Cycle detected involving item id ${item.id}`);
-    }
-    visited.add(item.id);
-
-    if (item.upstream.length === 0) {
-      isDebug() && console.log(`Item ${item.id} has no upstream:`, item?.upstream);
-      levels.set(item.id, 0);
-    } else {
-      const lvl = Math.max(
-        ...item.upstream.map(rect => {
-          const parentItem = items.find(i => i.id === rect.id);
-          isDebug() && console.log(`Checking parent for ${item.id}`, parentItem);
-          if (parentItem) {
-            const parentLevel = determineLevel(parentItem);
-            const children = childrenMapping.get(parentItem) || [];
-            children.push(item);
-            childrenMapping.set(parentItem, children);
-            return parentLevel + 1;
-          }
-          return 0;
-        }),
-      );
-      isDebug() && console.log(`Setting level for item ${item.id} to ${lvl}`);
-      levels.set(item.id, lvl);
-    }
-    visited.delete(item.id);
-    return levels.get(item.id);
-  }
-
-  items.forEach(determineLevel);
-
-  // Collect items by level
-  const levelItems: Map<number, RectType[]> = new Map();
-  items.forEach(item => {
-    const level = levels.get(item.id);
-    if (!levelItems.has(level)) {
-      levelItems.set(level, []);
-    }
-    levelItems.get(level).push(item);
-
-    if (!maxLevelWidths.has(level)) {
-      maxLevelWidths.set(level, 0);
-      maxLevelHeights.set(level, 0);
-    }
-
-    // Track maximum dimensions at each level for centers calculation
-    maxLevelWidths.set(level, Math.max(maxLevelWidths.get(level), item.width));
-    maxLevelHeights.set(level, Math.max(maxLevelHeights.get(level), item.height));
-  });
-
-  const isHorizontal = direction === LayoutConfigDirectionEnum.HORIZONTAL;
-  const dimensionsByLevel = [];
-
-  // Position items level by level
-  levelItems.forEach((rects: RectType[], level: number) => {
-    const levelKey = String(level);
-    // const mod = level % 3;
-    // const factor = mod === 0 ? 0 : mod === 1 ? 1 : -1;
-    // const offset = stagger * factor;
-
-    rects.forEach((item, idx: number) => {
-      let left = 0;
-      let top = 0;
-
-      if (isHorizontal) {
-        range(level).forEach((_l, lvl: number) => {
-          const increment = maxLevelWidths.get(lvl) + gapCol;
-          isDebug() && console.log(`[${direction}] Adding left for ${item.id}:`, increment);
-          left += increment;
-        });
-        isDebug() && console.log(`[${direction}] Left final for ${item.id}:`, left);
-        item.left = left;
-
-        top += rects.slice(0, idx).reduce((sum, rect) => sum + rect.height, 0) + idx * gapRow;
-
-        // Zig-zag middle, right, left
-
-        isDebug() && console.log(`[${direction}] Top for ${item.id}:`, top);
-        item.top = top;
-      } else {
-        range(level).forEach((_l, lvl: number) => {
-          const increment = maxLevelHeights.get(lvl) + gapRow;
-          isDebug() && console.log(`[${direction}] Adding top for ${item.id}:`, increment);
-          top += increment;
-        });
-        isDebug() && console.log(`[${direction}] Top final for ${item.id}:`, top);
-        item.top = top;
-
-        left += rects.slice(0, idx).reduce((sum, rect) => sum + rect.width, 0) + idx * gapCol;
-
-        // Zig-zag center, down, up
-
-        isDebug() && console.log(`Left for ${item.id}:`, left);
-        item.left = left;
-      }
-
-      positionedItems[levelKey] ||= [];
-      positionedItems[levelKey].push(item);
-    });
-
-    // Calculate total dimension for alignment within current level
-    const rects2 = positionedItems[levelKey];
-    dimensionsByLevel[levelKey] = calculateBoundingBox(rects2);
-  });
-
-  const maxHeight = Object.values(dimensionsByLevel).reduce(
-    (max, rect) => Math.max(max, rect.height),
-    0,
-  );
-  const maxWidth = Object.values(dimensionsByLevel).reduce(
-    (max, rect) => Math.max(max, rect.width),
-    0,
-  );
-
-  // Vertical:
-  // - Align row horizontally
-  // - Align row items vertically
-  // Horizontal:
-  // - Align column vertically
-  // - Align column items horizontally
-
-  levelItems.forEach((rects: RectType[], level: number) => {
-    const levelKey = String(level);
-    const rectLvl = dimensionsByLevel[levelKey];
-    const maxDim = isHorizontal
-      ? { top: rectLvl.top + (maxHeight - rectLvl.height) / 2 }
-      : { left: rectLvl.left + (maxWidth - rectLvl.width) / 2 };
-    const rectMax = { ...rectLvl, ...maxDim };
-    const diff = getRectDiff(rectLvl, rectMax);
-
-    isDebug() &&
-      console.log(`[${direction}:${level}]`, 'rectLvl', rectLvl, 'rectMax', rectMax, 'diff', diff);
-    const rects2 = rects.map(rect => applyRectDiff(rect, diff));
-
-    // Align row items vertically / Align column items horizontally
-    const maxDim2: {
-      height?: number;
-      width?: number;
-    } = isHorizontal
-        ? rects2.reduce((max, rect) => ({ width: Math.max(max.width, rect.width) }), { width: 0 })
-        : rects2.reduce((max, rect) => ({ height: Math.max(max.height, rect.height) }), {
-          height: 0,
-        });
-    const rects3 = rects2.map(rect => ({
-      ...rect,
-      left: isHorizontal ? rect.left + (maxDim2.width - rect.width) / 2 : rect.left,
-      top: isHorizontal ? rect.top : rect.top + (maxDim2.height - rect.height) / 2,
-    }));
-    positionedItems[levelKey] = rects3;
-  });
-
-  // Center the entire layout within its container
-  const rects = flattenArray(Object.values(positionedItems));
-  const finalBoundingBox = calculateBoundingBox(rects);
-  isDebug() && console.log('levelItems', levelItems, 'box', finalBoundingBox);
-
-  const offsetX = opts?.align?.horizontal ? finalBoundingBox.left - finalBoundingBox.width / 2 : 0;
-  const offsetY = opts?.align?.vertical ? finalBoundingBox.top - finalBoundingBox.height / 2 : 0;
-
-  return rects.map((rect: RectType) => ({
-    ...rect,
-    left: rect.left - offsetX,
-    top: rect.top - offsetY,
-  }));
-}
-
-export function getRectDiff(rect1: RectType, rect2: RectType): RectType {
-  const dx = rect2.left - rect1.left;
-  const dy = rect2.top - rect1.top;
-  const dw = rect2.width - rect1.width;
-  const dh = rect2.height - rect1.height;
-
-  return {
-    height: dh,
-    left: dx,
-    top: dy,
-    width: dw,
-  };
-}
-
-export function applyRectDiff(rect: RectType, diff: RectType, dimensions?: boolean): RectType {
-  const dl = dimensions ? (validateFiniteNumber(rect.width) + validateFiniteNumber(diff.width)) / 4 : validateFiniteNumber(diff.left);
-  const dt = dimensions ? (validateFiniteNumber(rect.height) + validateFiniteNumber(diff.height)) / 4 : validateFiniteNumber(diff.top);
-
-  return {
-    ...rect,
-    left: validateFiniteNumber(rect.left) + validateFiniteNumber(dl),
-    top: validateFiniteNumber(rect.top) + validateFiniteNumber(dt),
-  };
 }
 
 function layoutItemsInNodeGroup(nodes: NodeType[], layout: LayoutConfigType) {
@@ -695,9 +554,9 @@ function addPaddingToRectInsideBox(rects: RectType[], box: RectType, pad: {
   }));
 }
 
-function layoutRectsInSpiral(rects: RectType[], layout?: LayoutConfigType, layoutOptions?: LayoutOptionsType): RectType[] {
-  const { gap, direction } = layout || {};
-  const { initialAngle = 0, angleStep = Math.PI / 8 } = layoutOptions || {};
+function layoutRectsInSpiral(rects: RectType[], layout?: LayoutConfigType): RectType[] {
+  const { gap, direction, options } = layout || {};
+  const { initialAngle = 0, angleStep = Math.PI / 8 } = options ?? {};
   const { containerRect } = getRectsFromLayout(layout || {});
 
   const rectsCopy = [...rects];

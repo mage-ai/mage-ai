@@ -1,7 +1,7 @@
 import React, { useCallback, useRef, useEffect, useState, useMemo } from 'react';
-import { WithOnMount } from './useWithOnMount';
+import { DEBUG } from '@mana/utils/debug';
 import { RectType } from '@mana/shared/interfaces';
-import { createPortal } from 'react-dom';
+import { WithOnMount } from './useWithOnMount';
 
 const SHARED_STYLES = {
   height: 9999,
@@ -80,7 +80,7 @@ export function ShadowRenderer({
     clearTimeout(timeoutRef.current);
     timeoutRef.current = null;
 
-    console.log(
+    DEBUG.hooks.shadow && console.log(
       `[shadow:${uuid}:${renderRef.current}] attempting: `,
       `${attemptsRef.current} / ${maxAttempts}`,
     );
@@ -88,7 +88,7 @@ export function ShadowRenderer({
     if (attemptsRef.current < maxAttempts && (!waitUntil || waitUntil(nodes))) {
       attemptsRef.current = maxAttempts;
 
-      console.log(
+      DEBUG.hooks.shadow && console.log(
         `[shadow:${uuid}:${renderRef.current}] rendering:`,
         attemptsRef.current,
         nodes?.length,
@@ -111,8 +111,8 @@ export function ShadowRenderer({
           </div>
 
           <ShadowContainer
-            nodes={nodes}
             handleDataCapture={handleDataCapture}
+            nodes={nodes}
             uuid={uuid}
           />
         </div>
@@ -157,7 +157,7 @@ function ShadowContainer({ nodes, handleDataCapture, uuid }: {
   }, []);
 
   const containerMemo = useMemo(() => {
-    console.log(`[hook:${uuid}] rendering:`, nodes?.length, nodes?.map(n => n.id));
+    DEBUG.hooks.shadow && console.log(`[hook:${uuid}] rendering:`, nodes?.length, nodes?.map(n => n.id));
 
     function captureData(node: ShadowNodeType, element: HTMLElement) {
       const report = () => {
@@ -170,7 +170,7 @@ function ShadowContainer({ nodes, handleDataCapture, uuid }: {
           return;
         }
 
-        console.log(`[hook:${uuid}] report:`, node.id);
+        DEBUG.hooks.shadow && console.log(`[hook:${uuid}] report:`, node.id);
 
         clearTimeout(timeoutRefs.current[node.id]);
 
@@ -188,7 +188,7 @@ function ShadowContainer({ nodes, handleDataCapture, uuid }: {
 
         const renderTarget = () => {
           const elementRef = targetRef(node);
-          console.log(`[hook:${uuid}] targetRef:`, elementRef?.current);
+          DEBUG.hooks.shadow && console.log(`[hook:${uuid}] targetRef:`, elementRef?.current);
 
           if (!elementRef?.current) {
             timeoutTargetRefs.current[node.id] = setTimeout(renderTarget, 100);
@@ -197,7 +197,7 @@ function ShadowContainer({ nodes, handleDataCapture, uuid }: {
 
           const children = document.querySelectorAll(`[data-node-id="${node.id}"]`);
 
-          console.log(`[hook:${uuid}] targetRef.children:`, children);
+          DEBUG.hooks.shadow && console.log(`[hook:${uuid}] targetRef.children:`, children);
 
           children?.forEach(child => {
             if (child instanceof Node) {
@@ -224,7 +224,7 @@ function ShadowContainer({ nodes, handleDataCapture, uuid }: {
         style={SHARED_STYLES as React.CSSProperties}
       >
         {nodes?.map((node: ShadowNodeType) => {
-          console.log(`[hook:${uuid}] WithOnMount:`, node.id)
+          DEBUG.hooks.shadow && console.log(`[hook:${uuid}] WithOnMount:`, node.id)
 
           return (
             <WithOnMount
@@ -234,7 +234,7 @@ function ShadowContainer({ nodes, handleDataCapture, uuid }: {
                 const element = node.ref ? node.ref.current : ref.current;
                 const capture = !shouldCapture || shouldCapture(node, element);
                 if (capture) {
-                  console.log(`[hook:${uuid}:${node.id}] onMount:`, capture, element);
+                  DEBUG.hooks.shadow && console.log(`[hook:${uuid}:${node.id}] onMount:`, capture, element);
                   captureData(node, element);
                 }
               }}

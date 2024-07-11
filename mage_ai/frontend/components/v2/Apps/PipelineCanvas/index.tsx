@@ -139,7 +139,6 @@ export default function PipelineBuilder({ loading, ...props }: BuilderCanvasProp
 
   return (
     <>
-      {loading && <Loading position="fixed" />}
       <DndProvider backend={HTML5Backend}>
         <PipelineCanvasV2
           {...props}

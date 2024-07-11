@@ -30,9 +30,5 @@ export default function DetailLayout({ children, loadEditorServices }: {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loadEditorServices]);
 
-  return (
-    <>
-      {children}
-    </>
-  )
+  return children;
 }

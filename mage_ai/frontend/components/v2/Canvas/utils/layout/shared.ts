@@ -1,6 +1,11 @@
-import { LayoutConfigType } from '../../interfaces';
+import { DEBUG } from '../../../utils/debug';
+import { LayoutConfigType, RectType } from '../../interfaces';
 import { LayoutConfigDirectionEnum, LayoutConfigDirectionOriginEnum } from '../../types';
 import { validateFiniteNumber } from '@utils/number';
+
+export function isDebug() {
+  return DEBUG.rects && false;
+}
 
 export const DEFAULT_LAYOUT_CONFIG: LayoutConfigType = {
   direction: LayoutConfigDirectionEnum.HORIZONTAL,
@@ -25,8 +30,10 @@ export function calculateBoundingBox(rects: RectType[]): RectType {
 
   const minLeft = Math.min(...rects.map(rect => validateFiniteNumber(rect.left)));
   const minTop = Math.min(...rects.map(rect => validateFiniteNumber(rect.top)));
-  const maxRight = Math.max(...rects.map(rect => validateFiniteNumber(rect.left) + (validateFiniteNumber(rect.width) ?? 0)));
-  const maxBottom = Math.max(...rects.map(rect => validateFiniteNumber(rect.top) + (validateFiniteNumber(rect.height) ?? 0)));
+  const maxRight = Math.max(...rects.map(
+    rect => validateFiniteNumber(rect.left) + (validateFiniteNumber(rect.width) ?? 0)));
+  const maxBottom = Math.max(...rects.map(
+    rect => validateFiniteNumber(rect.top) + (validateFiniteNumber(rect.height) ?? 0)));
 
   const width = validateFiniteNumber(maxRight - minLeft);
   const height = validateFiniteNumber(maxBottom - minTop);
@@ -36,5 +43,34 @@ export function calculateBoundingBox(rects: RectType[]): RectType {
     left: validateFiniteNumber(minLeft),
     top: validateFiniteNumber(minTop),
     width: validateFiniteNumber(width),
+  };
+}
+
+export function getRectDiff(rect1: RectType, rect2: RectType): RectType {
+  const dx = rect2.left - rect1.left;
+  const dy = rect2.top - rect1.top;
+  const dw = rect2.width - rect1.width;
+  const dh = rect2.height - rect1.height;
+
+  return {
+    height: dh,
+    left: dx,
+    top: dy,
+    width: dw,
+  };
+}
+
+export function applyRectDiff(rect: RectType, diff: RectType, dimensions?: boolean): RectType {
+  const dl = dimensions
+    ? (validateFiniteNumber(rect.width) + validateFiniteNumber(diff.width)) / 4
+    : validateFiniteNumber(diff.left);
+  const dt = dimensions
+    ? (validateFiniteNumber(rect.height) + validateFiniteNumber(diff.height)) / 4
+    : validateFiniteNumber(diff.top);
+
+  return {
+    ...rect,
+    left: validateFiniteNumber(rect.left) + validateFiniteNumber(dl),
+    top: validateFiniteNumber(rect.top) + validateFiniteNumber(dt),
   };
 }

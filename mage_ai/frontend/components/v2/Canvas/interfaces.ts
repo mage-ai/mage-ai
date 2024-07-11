@@ -4,7 +4,7 @@ import PipelineType from '@interfaces/PipelineType';
 import { FrameworkType, PipelineExecutionFrameworkBlockType } from '@interfaces/PipelineExecutionFramework/interfaces';
 import { GroupUUIDEnum } from '@interfaces/PipelineExecutionFramework/types';
 import {
-  LayoutStyleEnum,
+  LayoutStyleEnum, LayoutVerticalAlignmentEnum, LayoutHorizontalAlignmentEnum,
   ItemStatusEnum, RectTransformationScopeEnum, TransformRectTypeEnum, LayoutDisplayEnum
 } from './types';
 import { AppConfigType } from '../Apps/interfaces';
@@ -87,18 +87,21 @@ export interface NodeType extends DragItem {
 export type NodeItemType = DragItem | NodeType | PortType | AppNodeType | OutputNodeType;
 export type FlatItemType = [string, number, number, number, number];
 
+interface LayoutOptionsType {
+  amplitude?: number; // Wave layout options
+  angleStep?: number; // Smaller angle increment for tighter spiral (Spiral layout options)
+  horizontalAlignment?: LayoutHorizontalAlignmentEnum;
+  initialAngle?: number; // 45 degrees in radians (Spiral layout options)
+  stagger?: number; // Stagger between each item
+  verticalAlignment?: LayoutVerticalAlignmentEnum;
+  wavelength?: number; // Wave layout options
+}
+
 export interface RectTransformationOptionsType {
   boundingBox?: RectType;
   defaultRect?: (rect: RectType) => RectType;
   layout?: LayoutConfigType;
-  layoutOptions?: {
-    // Wave layout options
-    amplitude?: number;
-    wavelength?: number;
-    // Spiral layout options
-    angleStep: number; // Smaller angle increment for tighter spiral
-    initialAngle: number; // 45 degrees in radians
-  };
+  layoutOptions?: LayoutOptionsType;
   offset?: RectType;
   padding?: RectType;
   rect?: RectType;
@@ -107,6 +110,7 @@ export interface RectTransformationOptionsType {
 export interface RectTransformationType {
   condition?: (rects: RectType[]) => boolean;
   conditionSelf?: (rect: RectType) => boolean;
+  initialRect?: RectType;
   initialScope?: RectTransformationScopeEnum;
   options?: (rects: RectType[]) => RectTransformationOptionsType;
   scope?: RectTransformationScopeEnum; // Leave empty to operate on all rects at the top level
@@ -125,6 +129,7 @@ export interface LayoutConfigType {
   direction?: LayoutConfigDirectionEnum;
   level?: number;
   offsetRectFinal?: RectType;
+  options?: LayoutOptionsType;
   origin?: LayoutConfigDirectionOriginEnum;
   gap?: {
     column?: number;

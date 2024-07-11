@@ -124,6 +124,8 @@ function DragWrapper({
   connectDrop(dragRef);
   connectDrag(dragRef);
 
+  console.log(`[DragWrapper:${item.id}]`, rect?.left, rect?.top);
+
   return (
     <div
       {...Object.entries(

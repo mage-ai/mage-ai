@@ -1,14 +1,17 @@
 import BlockType from '@interfaces/BlockType';
-import { BlockMappingType, GroupMappingType, LayoutConfigType, RectType } from '../../../Canvas/interfaces';
-import { MenuGroupType } from '@mana/components/Menu/interfaces';
-import update from 'immutability-helper';
-import { BlocksByGroupType, RectTransformationType } from '../../../Canvas/interfaces';
 import { DEBUG } from '@components/v2/utils/debug';
 import { FrameworkType } from '@interfaces/PipelineExecutionFramework/interfaces';
 import { ItemTypeEnum, LayoutDisplayEnum, LayoutStyleEnum } from '../../../Canvas/types';
-import { RectTransformationScopeEnum, LayoutConfigDirectionEnum, TransformRectTypeEnum } from '../../../Canvas/types';
-import { calculateBoundingBox, transformRects as transformRectsBase } from '../../../Canvas/utils/rect';
-import { flattenArray, indexBy } from '@utils/array';
+import { LayoutConfigType } from '../../../Canvas/interfaces';
+import { MenuGroupType } from '@mana/components/Menu/interfaces';
+import {
+  RectTransformationScopeEnum, LayoutVerticalAlignmentEnum, LayoutHorizontalAlignmentEnum,
+  LayoutConfigDirectionEnum, TransformRectTypeEnum
+} from '../../../Canvas/types';
+import { RectTransformationType } from '../../../Canvas/interfaces';
+import { RectType } from '@mana/shared/interfaces';
+import { calculateBoundingBox } from '../../../Canvas/utils/rect';
+import { flattenArray } from '@utils/array';
 import { validateFiniteNumber } from '@utils/number';
 
 type BlockNodeType = {
@@ -22,7 +25,7 @@ type BlockNodeType = {
 export function hydrateBlockNodeRects(
   blockNodes: BlockNodeType[],
   blockNodeMapping: Record<string, BlockNodeType>,
-) {
+): RectType[] {
   return blockNodes.map((bn: BlockNodeType) => {
     const {
       block,
@@ -61,6 +64,8 @@ export function buildRectTransformations({
     : LayoutConfigDirectionEnum.HORIZONTAL;
   const viewportRef = layoutConfig?.viewportRef;
 
+  DEBUG.rects && console.log('buildRectTransformations', layoutConfig, selectedGroup);
+
   const layoutStyleTransformations = [];
 
   const shiftRight = (factor: number = 2) => (rects: RectType[]) => Math.max(
@@ -75,53 +80,45 @@ export function buildRectTransformations({
   );
 
   const tree = {
-    options: () => ({ layout: { direction: direction } }),
+    options: () => ({
+      layout: {
+        ...layoutConfig ?? {},
+        gap: { column: 40, row: 40 },
+        options: {
+          horizontalAlignment: LayoutHorizontalAlignmentEnum.CENTER,
+          stagger: 200,
+          verticalAlignment: LayoutVerticalAlignmentEnum.CENTER,
+        },
+      },
+    }),
     type: TransformRectTypeEnum.LAYOUT_TREE,
   };
 
   const wave = {
     options: () => ({
-      layout: update(layoutConfig ?? {}, {
-        gap: {
-          $set: {
-            column: 40,
-            row: 40,
-          },
-        },
-      }),
-      layoutOptions: { amplitude: 200, wavelength: 100 }
+      layout: {
+        ...layoutConfig ?? {},
+        gap: { column: 40, row: 40 },
+        options: { amplitude: 200, wavelength: 100 },
+      },
     }),
     type: TransformRectTypeEnum.LAYOUT_WAVE,
   };
   const grid = {
     options: () => ({
-      layout: update(layoutConfig, {
-        gap: {
-          $set: {
-            column: 40,
-            row: 40,
-          },
-        },
-      }),
+      layout: {
+        ...layoutConfig ?? {},
+        gap: { column: 40, row: 40 },
+      },
     }),
     type: TransformRectTypeEnum.LAYOUT_GRID,
   };
   const spiral = {
     options: () => ({
-      layout: update(layoutConfig, {
-        containerRef: {
-          $set: viewportRef,
-        },
-        gap: {
-          $set: {
-            column: 160,
-            row: 160,
-          },
-        },
-      }),
-      layoutOptions: {
-        angleStep: Math.PI / 12,
-        initialAngle: Math.PI / 6,
+      layout: {
+        ...layoutConfig ?? {},
+        gap: { column: 40, row: 40 },
+        options: { angleStep: Math.PI / 12, initialAngle: Math.PI / 6 },
       },
     }),
     type: TransformRectTypeEnum.LAYOUT_SPIRAL,
@@ -143,14 +140,79 @@ export function buildRectTransformations({
     });
   }
 
-  const LAYOUT_STYLE_MAPPING = {
-    [LayoutStyleEnum.GRID]: [grid],
-    [LayoutStyleEnum.SPIRAL]: [spiral],
-    [LayoutStyleEnum.TREE]: [tree],
-    [LayoutStyleEnum.WAVE]: [wave],
+  const conditionHeight = (rects: RectType[]) => {
+    const box = calculateBoundingBox(rects);
+    // Total height is less than 80% of the viewport height
+    return 0.8 > (box?.height / viewportRef?.current?.getBoundingClientRect()?.height);
+  };
+  const conditionWidth = (rects: RectType[]) => {
+    const box = calculateBoundingBox(rects);
+    // Total width is less than 80% of the viewport width
+    return 0.8 > (box?.width / viewportRef?.current?.getBoundingClientRect()?.width);
+  };
+  const conditionDimensions =
+    LayoutConfigDirectionEnum.HORIZONTAL === direction ? conditionHeight : conditionWidth;
+  const conditionallySwitchDirections = (patterns) => patterns.concat(patterns.map(pattern => ({
+    ...pattern,
+    condition: (args: any) => !conditionDimensions(args),
+    options: () => ({ layout: { direction: directionOp } }),
+  })));
+
+
+  const reset = { type: TransformRectTypeEnum.RESET };
+  const transformers: RectTransformationType[] = [reset];
+
+  const layoutPattern = () => {
+    const patternMapping = {
+      [LayoutDisplayEnum.DETAILED]: {
+        [LayoutStyleEnum.GRID]: [grid],
+        [LayoutStyleEnum.SPIRAL]: [spiral],
+        [LayoutStyleEnum.TREE]: [tree],
+        [LayoutStyleEnum.WAVE]: [wave],
+      },
+      [LayoutDisplayEnum.SIMPLE]: {
+        [LayoutStyleEnum.GRID]: [grid],
+        [LayoutStyleEnum.SPIRAL]: [spiral],
+        [LayoutStyleEnum.TREE]: [tree, {
+          ...wave,
+          condition: (args: any) => !conditionDimensions(args),
+          options: () => ({
+            layout: {
+              ...layoutConfig ?? {},
+              gap: { column: 40, row: 40 },
+              options: { amplitude: 400, wavelength: 100 },
+            },
+          }),
+        }],
+        [LayoutStyleEnum.WAVE]: [wave, {
+          ...tree,
+          condition: (args: any) => !conditionDimensions(args),
+        }],
+      },
+    }
+
+    const pattern = patternMapping[layoutConfig?.display]?.[layoutStyle];
+    return conditionallySwitchDirections(pattern ?? [wave]);
   };
 
-  const transformers: RectTransformationType[] = [];
+  const viewportAlignment = [
+    {
+      condition: conditionWidth,
+      options: () => ({
+        boundingBox: viewportRef?.current?.getBoundingClientRect(),
+        layout: { direction: LayoutConfigDirectionEnum.HORIZONTAL },
+      }),
+      type: TransformRectTypeEnum.ALIGN_WITHIN_VIEWPORT,
+    },
+    {
+      condition: conditionHeight,
+      options: () => ({
+        boundingBox: viewportRef?.current?.getBoundingClientRect(),
+        layout: { direction: LayoutConfigDirectionEnum.VERTICAL },
+      }),
+      type: TransformRectTypeEnum.ALIGN_WITHIN_VIEWPORT,
+    },
+  ];
 
   if (LayoutDisplayEnum.DETAILED === layoutConfig?.display) {
     const activeGroupConditionSelf = (rect: RectType) => {
@@ -197,17 +259,10 @@ export function buildRectTransformations({
         scope: RectTransformationScopeEnum.SELF,
         type: TransformRectTypeEnum.FIT_TO_CHILDREN,
       },
-      ...(LAYOUT_STYLE_MAPPING[layoutStyle] ?? [wave]),
+      ...layoutPattern(),
+      ...viewportAlignment,
       {
-        ...(LAYOUT_STYLE_MAPPING[layoutStyle] ?? [wave]),
-        condition: (rects: RectType[]) => {
-          const box = calculateBoundingBox(rects);
-          return box?.width > viewportRef?.current?.getBoundingClientRect()?.width;
-        },
-        options: () => ({ layout: { direction: LayoutConfigDirectionEnum.VERTICAL } }),
-      },
-      {
-        // conditionSelf: (rect: RectType) => rect?.children?.length === 0,
+        conditionSelf: (rect: RectType) => rect?.children?.length === 0,
         options: (rects: RectType[]) => ({
           offset: {
             left: shiftRight()(rects),
@@ -215,15 +270,6 @@ export function buildRectTransformations({
           },
         }),
         type: TransformRectTypeEnum.SHIFT,
-      },
-      {
-        options: () => ({
-          boundingBox: viewportRef?.current?.getBoundingClientRect(),
-          layout: {
-            direction: LayoutConfigDirectionEnum.VERTICAL,
-          },
-        }),
-        type: TransformRectTypeEnum.ALIGN_WITHIN_VIEWPORT,
       },
       {
         conditionSelf: activeGroupConditionChild,
@@ -238,72 +284,10 @@ export function buildRectTransformations({
     ] as RectTransformationType[]);
   } else if (LayoutDisplayEnum.SIMPLE === layoutConfig?.display) {
     transformers.push(...[
+      ...layoutPattern(),
+      ...viewportAlignment,
       {
-        ...wave,
-        condition: (rects: RectType[]) => {
-          const box = calculateBoundingBox(rects);
-          return 0.75 > (box?.height / viewportRef?.current?.getBoundingClientRect()?.height);
-        },
-        options: () => ({
-          layout: update(layoutConfig ?? {}, {
-            gap: {
-              $set: {
-                column: 40,
-                row: 40,
-              },
-            },
-          } as any),
-          layoutOptions: { amplitude: 400, wavelength: 100 },
-        }),
-      },
-      {
-        ...tree,
-        condition: (rects: RectType[]) => {
-          const box = calculateBoundingBox(rects);
-          return 0.75 < (box?.height / viewportRef?.current?.getBoundingClientRect()?.height);
-        },
-        options: () => ({
-          layout: update(layoutConfig ?? {}, {
-            gap: {
-              $set: {
-                column: 40,
-                row: 40,
-              },
-            },
-          } as any),
-        }),
-      },
-      {
-        condition: (rects: RectType[]) => {
-          const box = calculateBoundingBox(rects);
-          return box?.width < viewportRef?.current?.getBoundingClientRect()?.width;
-        },
-        options: () => ({
-          boundingBox: viewportRef?.current?.getBoundingClientRect(),
-          layout: {
-            direction: LayoutConfigDirectionEnum.HORIZONTAL,
-          },
-        }),
-        type: TransformRectTypeEnum.ALIGN_WITHIN_VIEWPORT,
-      },
-      {
-        condition: (rects: RectType[]) => {
-          const box = calculateBoundingBox(rects);
-          return box?.height < viewportRef?.current?.getBoundingClientRect()?.height;
-        },
-        options: () => ({
-          boundingBox: viewportRef?.current?.getBoundingClientRect(),
-          layout: {
-            direction: LayoutConfigDirectionEnum.VERTICAL,
-          },
-        }),
-        type: TransformRectTypeEnum.ALIGN_WITHIN_VIEWPORT,
-      },
-      {
-        condition: (rects: RectType[]) => {
-          const box = calculateBoundingBox(rects);
-          return box?.height > viewportRef?.current?.getBoundingClientRect()?.height;
-        },
+        condition: (args: any) => !conditionHeight(args),
         options: (rects: RectType[]) => ({
           offset: {
             top: shiftDown(0.5)(rects),
@@ -312,10 +296,7 @@ export function buildRectTransformations({
         type: TransformRectTypeEnum.SHIFT,
       },
       {
-        condition: (rects: RectType[]) => {
-          const box = calculateBoundingBox(rects);
-          return box?.width > viewportRef?.current?.getBoundingClientRect()?.width;
-        },
+        condition: (args: any) => !conditionWidth(args),
         options: (rects: RectType[]) => ({
           offset: {
             top: shiftRight(0.5)(rects),
@@ -326,7 +307,7 @@ export function buildRectTransformations({
     ] as RectTransformationType[]);
   }
 
-  DEBUG.layoutManager && console.log('transformers', transformers);
+  DEBUG.rects && console.log('transformers', transformers);
 
   return transformers;
 }

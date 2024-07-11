@@ -26,7 +26,9 @@ export type EventControlType = {
 };
 
 export interface RectType {
+  block?: any;
   bottom?: number;
+  children?: RectType[];
   height?: number;
   id?: string;
   left: number;

@@ -86,26 +86,25 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
       gap: { column: 40, row: 40 },
       origin: LayoutConfigDirectionOriginEnum.LEFT,
       rectTransformations: null,
+      style: LayoutStyleEnum.WAVE,
       viewportRef: canvasRef,
       ...override,
     };
   }
   const layoutConfigsRef = useRef<LayoutConfigType[]>([
     defaultLayoutConfig({
-      direction: LayoutConfigDirectionEnum.VERTICAL,
+      direction: LayoutConfigDirectionEnum.HORIZONTAL,
+      style: LayoutStyleEnum.TREE,
     }),
     defaultLayoutConfig({
       direction: LayoutConfigDirectionEnum.VERTICAL,
     }),
     defaultLayoutConfig({
       direction: LayoutConfigDirectionEnum.HORIZONTAL,
-      display: LayoutDisplayEnum.SIMPLE,
-      style: LayoutStyleEnum.WAVE,
     }),
     defaultLayoutConfig({
       direction: LayoutConfigDirectionEnum.HORIZONTAL,
       display: LayoutDisplayEnum.DETAILED,
-      style: LayoutStyleEnum.WAVE,
     }),
   ]);
 
@@ -168,7 +167,7 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
     };
   }
 
-  function setSelectedGroups(groupsArg: MenuGroupType[]) {
+  const setSelectedGroupsRef = useRef((groupsArg: MenuGroupType[]) => {
     selectedGroupsRef.current = groupsArg;
 
     const currentGroup = groupsArg?.[groupsArg?.length - 1];
@@ -180,10 +179,24 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
     const blocks =
       (Object.values(blocksByGroupRef.current?.[currentGroup?.uuid] ?? {}) ?? []) as BlockType[];
 
+    const groupsForEmptySelection = [];
+    if ((groupsArg?.length ?? 0) === 0) {
+      // No group selected: show top level pipelines (e.g. data preparation, inference)
+      const defaultSelectionGroups = groupsByLevelRef.current?.[0];
+      selectedGroupsRef.current = [
+        {
+          items: defaultSelectionGroups,
+          level: 0,
+        },
+      ];
+      groupsForEmptySelection.push(...defaultSelectionGroups);
+    }
+
     const groups = (group?.children ?? []).concat(
       [
         parentGroup,
         ...(siblingGroups ?? []),
+        ...(groupsForEmptySelection ?? []),
       ].reduce((acc, group) => group ? acc.concat(groupMappingRef.current?.[group?.uuid]) : acc, [])
     );
 
@@ -200,8 +213,6 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
         shadowNodes.push(...models?.map((block: BlockType | FrameworkType, index: number) =>
           renderNodeData(block as any, type, index)) as any
         ));
-
-      console.log(blocks, groups);
 
       setRenderer(
         <ShadowRenderer
@@ -221,7 +232,7 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
       blocks: blocksRef.current,
       groups: groupsRef.current,
     }) as any);
-  }
+  });
 
   // Resources
   const [pipeline, setPipeline] = useState<PipelineExecutionFrameworkType>(null);
@@ -256,7 +267,8 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
     ...(defaultGroups ? { defaultGroups } : {}),
     executionFramework: framework,
     groupsByLevel: groupsByLevelRef.current ?? [],
-    handleMenuItemClick: (_event: MouseEvent, groups: MenuGroupType[]) => setSelectedGroups(groups),
+    handleMenuItemClick: (_event: MouseEvent, groups: MenuGroupType[]) =>
+      setSelectedGroupsRef.current(groups),
     pipeline,
   }), [defaultGroups, framework, pipeline]);
 
@@ -302,20 +314,24 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
           rect,
         }
       });
+      const blockNodeMapping = indexBy(blockNodes, bn => bn?.block?.uuid);
 
       const transformations = buildRectTransformations({
-        layoutConfig: layoutConfigsRef.current?.[layoutConfigsRef.current?.length - 1],
+        layoutConfig: layoutConfigsRef.current?.[selectedGroupsRef.current?.length - 1],
         selectedGroup: selectedGroupsRef.current?.[selectedGroupsRef.current?.length - 1],
       });
 
-      const blockNodeMapping = indexBy(blockNodes, bn => bn?.block?.uuid);
-      const rects = hydrateBlockNodeRects(blockNodes, blockNodeMapping);
+      const blocks = blocksRef.current ?? [];
+      const groups = groupsRef.current ?? [];
+
+      const rects = hydrateBlockNodeRects(
+        (blocks ?? []).concat(groups ?? []).map(m => blockNodeMapping[m.uuid]),
+        blockNodeMapping,
+      );
       const tfs = transformRects(rects, transformations);
 
       rectsMappingRef.current = indexBy(tfs, r => r.id);
 
-      const blocks = blocksRef.current ?? [];
-      const groups = groupsRef.current ?? [];
       if (blocks?.length > 0 || groups?.length > 0) {
         if ((blocks?.length > 0 && blocks?.every(b => b.uuid in (rectsMappingRef.current ?? {})))
           || (groups?.length > 0 && groups?.every(g => g.uuid in (rectsMappingRef.current ?? {})))
@@ -350,7 +366,7 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
 
       // [WARNING]: The above needs to run 1st
       if (selectedGroupsRef.current === null) {
-        setSelectedGroups(getCache([framework.uuid, pipeline.uuid].join(':')));
+        setSelectedGroupsRef.current(getCache([framework.uuid, pipeline.uuid].join(':')));
       }
     }
   }, [framework, frameworkMutants, pipeline, pipelineMutants]);

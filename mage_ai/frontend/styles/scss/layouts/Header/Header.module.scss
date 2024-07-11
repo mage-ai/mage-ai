@@ -3,7 +3,7 @@
 .header {
   background-color: var(--colors-blackhi);
   backdrop-filter: var(--menus-blur-base);
-  height: 52px;
+  height: var(--header-height);
   left: 0;
   position: fixed;
   right: 0;
@@ -63,4 +63,11 @@
       fill: var(--colors-whitelo);
     }
   }
+}
+
+.content {
+  height: 100vh;
+  overflow: hidden;
+  padding-top: var(--header-height);
+  width: 100vw;
 }

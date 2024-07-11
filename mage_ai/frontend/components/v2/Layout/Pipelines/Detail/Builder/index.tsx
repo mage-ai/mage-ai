@@ -1,7 +1,8 @@
 import dynamic from 'next/dynamic';
 import { SearchV3, ChatV2, Code, DocumentIcon, Builder, CaretDown, CaretLeft } from '@mana/icons';
 import Grid from '@mana/components/Grid';
-import styles from '@styles/scss/pages/PipelineBuilder/PipelineBuilder.module.scss';
+import stylesHeader from '@styles/scss/layouts/Header/Header.module.scss';
+import stylesPipelineBuilder from '@styles/scss/pages/PipelineBuilder/PipelineBuilder.module.scss';
 import { PipelineDetailProps } from '../interfaces';
 import { useContext, useEffect } from 'react';
 import { LayoutContext } from '@context/v2/Layout';
@@ -46,7 +47,12 @@ function PipelineBuilder({ frameworkUUID, uuid, ...props }: PipelineDetailProps)
 
   return (
     <DetailLayout loadEditorServices>
-      <div className={styles.container}>
+      <div
+        className={[
+          stylesHeader.content,
+          stylesPipelineBuilder.container,
+        ].join(' ')}
+      >
         <Grid autoColumns="auto" height="inherit" templateRows="auto 1fr auto" width="100%">
           <div />
 

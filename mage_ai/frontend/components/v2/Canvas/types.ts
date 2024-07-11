@@ -1,3 +1,15 @@
+export enum LayoutVerticalAlignmentEnum {
+  BOTTOM = 'bottom',
+  CENTER = 'center',
+  TOP = 'top',
+}
+
+export enum LayoutHorizontalAlignmentEnum {
+  CENTER = 'center',
+  LEFT = 'left',
+  RIGHT = 'right',
+}
+
 export enum LayoutDisplayEnum {
   DETAILED = 'detailed',
   SIMPLE = 'simple',
