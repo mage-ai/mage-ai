@@ -72,7 +72,7 @@ export default function LineManagerV2({
     },
   ) {
     const lineID = getLineID(rectup.id, rectdn.id);
-    console.log(lineID, rectup, rectdn, opts)
+    // console.log(lineID, rectup, rectdn, opts)
 
     const { block } = rectup;
     const { block: block2 } = rectdn;
@@ -330,7 +330,7 @@ export default function LineManagerV2({
       ...((groupRect && !allRectsAreInGroup) ? { [groupRect.id]: groupRect } : {}),
     });
 
-    console.log('lines', values)
+    // console.log('lines', values)
 
     values?.forEach((rectdn: RectType) => {
       // Lines for groups
@@ -341,11 +341,12 @@ export default function LineManagerV2({
         // Skip if rect is in the current group’s children.
         rectdn?.upstream?.forEach(rectup1 => {
           let rectup2 = null;
-          console.log(rectdn.id, rectdn?.upstream, mapping, pairsByType,
-            allRectsAreInGroup,
-            currentGroupChildrenIDs?.includes(rectup1.id),
-            rectup1.id === groupRect?.id,
-          );
+
+          // console.log(rectdn.id, rectdn?.upstream, mapping, pairsByType,
+          //   allRectsAreInGroup,
+          //   currentGroupChildrenIDs?.includes(rectup1.id),
+          //   rectup1.id === groupRect?.id,
+          // );
 
           // Current downstream and upstream block is a child of the currently selected group.
           if (currentGroupChildrenIDs?.includes(rectdn.id)

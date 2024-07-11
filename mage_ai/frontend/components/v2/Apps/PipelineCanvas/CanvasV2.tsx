@@ -403,7 +403,6 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
             const arr = [];
             const block2 = blockMappingRef.current?.[id];
 
-
             // Don’t add the parent as the upstream
             gs?.forEach((guuid) => {
               if (!block?.groups?.includes(guuid) && rectsmap?.[guuid]) {
@@ -437,14 +436,10 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
               });
             }
 
-            console.log('OMGGGGGGGGGGGGGGGGGGGGGGGGG', block.uuid, block2?.uuid, id, blocksInGroup, rectsmap, arr)
-
             return acc.concat(arr);
           }, []),
         };
       });
-
-
 
       let rectsUse = rects;
       let groupRect = null;
@@ -454,7 +449,9 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
 
         if (rectsInGroup?.length > 0) {
           const transformations =
-            buildRectTransformations({ layoutConfig: layoutConfig?.childrenLayout, selectedGroup });
+            buildRectTransformations({
+              disableAlignments: true, layoutConfig: layoutConfig?.childrenLayout, selectedGroup,
+            });
 
           console.log(`| start[children]:\n${logMessageForRects(rectsInGroup)}`);
           console.log(rectsInGroup);

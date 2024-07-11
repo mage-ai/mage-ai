@@ -52,9 +52,11 @@ export function hydrateBlockNodeRects(
 }
 
 export function buildRectTransformations({
+  disableAlignments,
   layoutConfig,
   selectedGroup,
 }: {
+  disableAlignments?: boolean;
   layoutConfig?: LayoutConfigType;
   selectedGroup?: MenuGroupType;
 }): RectTransformationType[] {
@@ -243,67 +245,71 @@ export function buildRectTransformations({
         type: TransformRectTypeEnum.FIT_TO_CHILDREN,
       },
       ...layoutPattern(),
-      ...viewportAlignment,
-      {
-        conditionSelf: activeGroupConditionChild,
-        scope: RectTransformationScopeEnum.CHILDREN,
-        type: TransformRectTypeEnum.SHIFT_INTO_PARENT,
-      },
-      {
-        conditionSelf: activeGroupConditionChild,
-        scope: RectTransformationScopeEnum.CHILDREN,
-        type: TransformRectTypeEnum.ALIGN_CHILDREN,
-      },
-      {
-        conditionSelf: (rect: RectType) =>
-          // If the top of the rect is less than 5% of the viewport height
-          (rect.top / viewportRef?.current?.getBoundingClientRect()?.height) < 0.05,
-        options: (rects: RectType[]) => ({
-          boundingBox: viewportRef?.current?.getBoundingClientRect(),
-          offset: { top: shiftVertical(0.5)(rects) },
-        }),
-        scope: RectTransformationScopeEnum.SELF,
-        type: TransformRectTypeEnum.SHIFT,
-      },
-      {
-        conditionSelf: (rect: RectType) =>
-          // If the top of the rect is more than 95% of the viewport height
-          (rect.top / viewportRef?.current?.getBoundingClientRect()?.height) > 0.95,
-        options: (rects: RectType[]) => ({
-          boundingBox: viewportRef?.current?.getBoundingClientRect(),
-          offset: { top: shiftVertical(-0.5)(rects) },
-        }),
-        scope: RectTransformationScopeEnum.SELF,
-        type: TransformRectTypeEnum.SHIFT,
-      },
-      {
-        conditionSelf: (rect: RectType) =>
-          // If the left of the rect is less than 5% of the viewport width
-          (rect.left / viewportRef?.current?.getBoundingClientRect()?.width) < 0.05,
-        options: (rects: RectType[]) => ({
-          boundingBox: viewportRef?.current?.getBoundingClientRect(),
-          offset: { left: shiftHorizontal(0.5)(rects) },
-        }),
-        scope: RectTransformationScopeEnum.SELF,
-        type: TransformRectTypeEnum.SHIFT,
-      },
-      {
-        conditionSelf: (rect: RectType) =>
-          // If the left of the rect is more than 95% of the viewport width
-          (rect.left / viewportRef?.current?.getBoundingClientRect()?.width) > 0.95,
-        options: (rects: RectType[]) => ({
-          boundingBox: viewportRef?.current?.getBoundingClientRect(),
-          offset: { left: shiftHorizontal(-0.5)(rects) },
-        }),
-        scope: RectTransformationScopeEnum.SELF,
-        type: TransformRectTypeEnum.SHIFT,
-      },
     ] as RectTransformationType[]);
+
+    if (!disableAlignments) {
+      transformers.push(...[
+        ...viewportAlignment,
+        {
+          conditionSelf: activeGroupConditionChild,
+          scope: RectTransformationScopeEnum.CHILDREN,
+          type: TransformRectTypeEnum.SHIFT_INTO_PARENT,
+        },
+        {
+          conditionSelf: activeGroupConditionChild,
+          scope: RectTransformationScopeEnum.CHILDREN,
+          type: TransformRectTypeEnum.ALIGN_CHILDREN,
+        },
+        {
+          conditionSelf: (rect: RectType) =>
+            // If the top of the rect is less than 5% of the viewport height
+            (rect.top / viewportRef?.current?.getBoundingClientRect()?.height) < 0.05,
+          options: (rects: RectType[]) => ({
+            boundingBox: viewportRef?.current?.getBoundingClientRect(),
+            offset: { top: shiftVertical(0.5)(rects) },
+          }),
+          scope: RectTransformationScopeEnum.SELF,
+          type: TransformRectTypeEnum.SHIFT,
+        },
+        {
+          conditionSelf: (rect: RectType) =>
+            // If the top of the rect is more than 95% of the viewport height
+            (rect.top / viewportRef?.current?.getBoundingClientRect()?.height) > 0.95,
+          options: (rects: RectType[]) => ({
+            boundingBox: viewportRef?.current?.getBoundingClientRect(),
+            offset: { top: shiftVertical(-0.5)(rects) },
+          }),
+          scope: RectTransformationScopeEnum.SELF,
+          type: TransformRectTypeEnum.SHIFT,
+        },
+        {
+          conditionSelf: (rect: RectType) =>
+            // If the left of the rect is less than 5% of the viewport width
+            (rect.left / viewportRef?.current?.getBoundingClientRect()?.width) < 0.05,
+          options: (rects: RectType[]) => ({
+            boundingBox: viewportRef?.current?.getBoundingClientRect(),
+            offset: { left: shiftHorizontal(0.5)(rects) },
+          }),
+          scope: RectTransformationScopeEnum.SELF,
+          type: TransformRectTypeEnum.SHIFT,
+        },
+        {
+          conditionSelf: (rect: RectType) =>
+            // If the left of the rect is more than 95% of the viewport width
+            (rect.left / viewportRef?.current?.getBoundingClientRect()?.width) > 0.95,
+          options: (rects: RectType[]) => ({
+            boundingBox: viewportRef?.current?.getBoundingClientRect(),
+            offset: { left: shiftHorizontal(-0.5)(rects) },
+          }),
+          scope: RectTransformationScopeEnum.SELF,
+          type: TransformRectTypeEnum.SHIFT,
+        },
+      ] as RectTransformationType[]);
+    }
   } else if (LayoutDisplayEnum.SIMPLE === layoutConfig?.display) {
     const patterns = layoutPattern();
     transformers.push(...[
       ...patterns,
-      ...viewportAlignment,
       // ...viewportAlignment.map(({ condition, options, ...rest }) => {
       //   // Only align if not in tree mode because tree mode already aligns its children.
       //   const { condition: condition0, options: optionsT, type } = patterns?.[0];
@@ -330,6 +336,10 @@ export function buildRectTransformations({
       //   }
       // }),
     ] as RectTransformationType[]);
+
+    if (!disableAlignments) {
+      transformers.push(...viewportAlignment);
+    }
   }
 
   if (DEBUG.rects) {
