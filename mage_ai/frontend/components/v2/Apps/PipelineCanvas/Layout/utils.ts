@@ -48,11 +48,9 @@ export function hydrateBlockNodeRects(
 }
 
 export function buildRectTransformations({
-  containerRef,
   layoutConfig,
   selectedGroup,
 }: {
-  containerRef?: React.RefObject<HTMLDivElement>;
   layoutConfig?: LayoutConfigType;
   selectedGroup?: MenuGroupType;
 }): RectTransformationType[] {
@@ -61,6 +59,7 @@ export function buildRectTransformations({
   const directionOp = LayoutConfigDirectionEnum.HORIZONTAL === direction
     ? LayoutConfigDirectionEnum.VERTICAL
     : LayoutConfigDirectionEnum.HORIZONTAL;
+  const viewportRef = layoutConfig?.viewportRef;
 
   const layoutStyleTransformations = [];
 
@@ -111,7 +110,7 @@ export function buildRectTransformations({
     options: () => ({
       layout: update(layoutConfig, {
         containerRef: {
-          $set: containerRef,
+          $set: viewportRef,
         },
         gap: {
           $set: {
@@ -203,7 +202,7 @@ export function buildRectTransformations({
         ...(LAYOUT_STYLE_MAPPING[layoutStyle] ?? [wave]),
         condition: (rects: RectType[]) => {
           const box = calculateBoundingBox(rects);
-          return box?.width > containerRef?.current?.getBoundingClientRect()?.width;
+          return box?.width > viewportRef?.current?.getBoundingClientRect()?.width;
         },
         options: () => ({ layout: { direction: LayoutConfigDirectionEnum.VERTICAL } }),
       },
@@ -219,7 +218,7 @@ export function buildRectTransformations({
       },
       {
         options: () => ({
-          boundingBox: containerRef?.current?.getBoundingClientRect(),
+          boundingBox: viewportRef?.current?.getBoundingClientRect(),
           layout: {
             direction: LayoutConfigDirectionEnum.VERTICAL,
           },
@@ -243,7 +242,7 @@ export function buildRectTransformations({
         ...wave,
         condition: (rects: RectType[]) => {
           const box = calculateBoundingBox(rects);
-          return 0.75 > (box?.height / containerRef?.current?.getBoundingClientRect()?.height);
+          return 0.75 > (box?.height / viewportRef?.current?.getBoundingClientRect()?.height);
         },
         options: () => ({
           layout: update(layoutConfig ?? {}, {
@@ -261,7 +260,7 @@ export function buildRectTransformations({
         ...tree,
         condition: (rects: RectType[]) => {
           const box = calculateBoundingBox(rects);
-          return 0.75 < (box?.height / containerRef?.current?.getBoundingClientRect()?.height);
+          return 0.75 < (box?.height / viewportRef?.current?.getBoundingClientRect()?.height);
         },
         options: () => ({
           layout: update(layoutConfig ?? {}, {
@@ -277,10 +276,10 @@ export function buildRectTransformations({
       {
         condition: (rects: RectType[]) => {
           const box = calculateBoundingBox(rects);
-          return box?.width < containerRef?.current?.getBoundingClientRect()?.width;
+          return box?.width < viewportRef?.current?.getBoundingClientRect()?.width;
         },
         options: () => ({
-          boundingBox: containerRef?.current?.getBoundingClientRect(),
+          boundingBox: viewportRef?.current?.getBoundingClientRect(),
           layout: {
             direction: LayoutConfigDirectionEnum.HORIZONTAL,
           },
@@ -290,10 +289,10 @@ export function buildRectTransformations({
       {
         condition: (rects: RectType[]) => {
           const box = calculateBoundingBox(rects);
-          return box?.height < containerRef?.current?.getBoundingClientRect()?.height;
+          return box?.height < viewportRef?.current?.getBoundingClientRect()?.height;
         },
         options: () => ({
-          boundingBox: containerRef?.current?.getBoundingClientRect(),
+          boundingBox: viewportRef?.current?.getBoundingClientRect(),
           layout: {
             direction: LayoutConfigDirectionEnum.VERTICAL,
           },
@@ -303,7 +302,7 @@ export function buildRectTransformations({
       {
         condition: (rects: RectType[]) => {
           const box = calculateBoundingBox(rects);
-          return box?.height > containerRef?.current?.getBoundingClientRect()?.height;
+          return box?.height > viewportRef?.current?.getBoundingClientRect()?.height;
         },
         options: (rects: RectType[]) => ({
           offset: {
@@ -315,7 +314,7 @@ export function buildRectTransformations({
       {
         condition: (rects: RectType[]) => {
           const box = calculateBoundingBox(rects);
-          return box?.width > containerRef?.current?.getBoundingClientRect()?.width;
+          return box?.width > viewportRef?.current?.getBoundingClientRect()?.width;
         },
         options: (rects: RectType[]) => ({
           offset: {

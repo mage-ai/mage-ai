@@ -5,7 +5,8 @@ import { LayoutConfigType } from '@components/v2/Canvas/interfaces';
 
 interface SettingsContextType {
   activeLevel?: SettingsManagerType['activeLevel'];
-  layoutConfigs: SettingsManagerType['layoutConfigs'];
+  layoutConfigs?: SettingsManagerType['layoutConfigs'];
+  layoutConfigsRef: React.MutableRefObject<LayoutConfigType[]>;
   selectedGroupsRef: SettingsManagerType['selectedGroupsRef'];
 }
 export const SettingsContext = createContext<SettingsContextType | undefined>(undefined);
