@@ -1,5 +1,5 @@
 import BlockType from '@interfaces/BlockType';
-import { LayoutConfigType, RectType } from '../../../Canvas/interfaces';
+import { BlockMappingType, GroupMappingType, LayoutConfigType, RectType } from '../../../Canvas/interfaces';
 import { MenuGroupType } from '@mana/components/Menu/interfaces';
 import update from 'immutability-helper';
 import { BlocksByGroupType, RectTransformationType } from '../../../Canvas/interfaces';
@@ -19,25 +19,30 @@ type BlockNodeType = {
   rect: RectType;
 };
 
-export function hydrateBlockNodeRects(blockNodes: BlockNodeType[], blocksByGroup: BlocksByGroupType) {
-  const mapping = indexBy(blockNodes, bn => bn.uuid);
-
+export function hydrateBlockNodeRects(
+  blockNodes: BlockNodeType[],
+  blockNodeMapping: Record<string, BlockNodeType>,
+) {
   return blockNodes.map((bn: BlockNodeType) => {
     const {
       block,
       node,
       rect,
-    } = bn;
+    } = bn ?? {};
 
     return {
       ...rect,
       block,
-      children: ((block as any)?.children ?? [])?.map(
-        (b: any) => hydrateBlockNodeRects(mapping[b.uuid], blocksByGroup)),
-      id: block.uuid,
-      type: node.type,
-      upstream: ((block as any)?.upstream ?? [])?.map(
-        (b: any) => hydrateBlockNodeRects(mapping[b.uuid], blocksByGroup)),
+      children: hydrateBlockNodeRects(
+        ((block as any)?.children ?? [])?.map((b: any) => blockNodeMapping[b.uuid]),
+        blockNodeMapping,
+      ),
+      id: block?.uuid,
+      type: node?.type,
+      upstream: hydrateBlockNodeRects(
+        ((block as any)?.upstream ?? [])?.map((b: any) => blockNodeMapping[b.uuid]),
+        blockNodeMapping,
+      ),
     };
   });
 }

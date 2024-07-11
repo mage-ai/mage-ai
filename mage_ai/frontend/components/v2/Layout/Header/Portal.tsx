@@ -7,7 +7,7 @@ export default function HeaderPortal({ headerRef }: { headerRef: React.RefObject
   const { initialize } = useLayout();
 
   return (
-    <WithOnMount onMount={() => initialize({ headerRef })}>
+    <WithOnMount onMount={() => initialize({ headerRef })} uuid="HeaderPortal">
       <header
         className={stylesHeader.header}
         ref={headerRef}

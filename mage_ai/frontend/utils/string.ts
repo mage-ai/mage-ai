@@ -52,7 +52,11 @@ export function formattedQuantity(quantity, decimalPlaces = 4) {
   return n + Array(zeroesNeeded).join('0');
 }
 
-export function getNewUUID(randomSeed = 1) {
+export function getNewUUID(randomSeed: number = 1, format?: 'ts' | 'clock') {
+  if (format === 'clock') {
+    return moment().format('mm:ss.SSS');
+  }
+
   return String(new Date().getTime() * randomSeed);
 }
 
@@ -429,10 +433,10 @@ export function hexToRgb(hex) {
   const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
   return result
     ? {
-        r: parseInt(result[1], 16),
-        g: parseInt(result[2], 16),
-        b: parseInt(result[3], 16),
-      }
+      r: parseInt(result[1], 16),
+      g: parseInt(result[2], 16),
+      b: parseInt(result[3], 16),
+    }
     : null;
 }
 

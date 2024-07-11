@@ -38,8 +38,6 @@ function BlockNode({
 
   }, []);
 
-  console.log(ref?.current?.getBoundingClientRect(), rectRef?.current)
-
   return (
     <div
       className={[

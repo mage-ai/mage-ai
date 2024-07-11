@@ -24,6 +24,7 @@ import { createRef, useEffect, useMemo, useRef, useState, useCallback } from 're
 import { getCache } from '@mana/components/Menu/storage';
 import { useMutate } from '@context/APIMutation';
 import { indexBy } from '@utils/array';
+import { getNewUUID } from '@utils/string';
 
 export type PipelineCanvasV2Props = {
   canvasRef: React.RefObject<HTMLDivElement>;
@@ -66,6 +67,7 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
   const dragRefs = useRef<Record<string, React.MutableRefObject<HTMLDivElement>>>({});
   const rectRefs = useRef<Record<string, React.MutableRefObject<RectType>>>({});
   const wrapperRef = useRef(null);
+  const timeoutRef = useRef(null);
 
   function defaultLayoutConfig(override?: Partial<LayoutConfigType>) {
     return {
@@ -80,7 +82,7 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
     };
   }
   // State store
-  const [rectsMapping, setRectsMapping] = useState<Record<string, RectType>>({});
+  const rectsMappingRef = useRef<Record<string, RectType>>({});
   const [layoutConfigs, setLayoutConfigs] = useState<LayoutConfigType[]>([
     defaultLayoutConfig({
       direction: LayoutConfigDirectionEnum.VERTICAL,
@@ -96,12 +98,11 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
     defaultLayoutConfig({
       direction: LayoutConfigDirectionEnum.HORIZONTAL,
       display: LayoutDisplayEnum.DETAILED,
-      style: LayoutStyleEnum.SPIRAL,
+      style: LayoutStyleEnum.WAVE,
     }),
   ]);
   const [defaultGroups, setDefaultGroups] = useState<any>(null);
-  const [selectedGroups, setSelectedGroups] = useState<MenuGroupType[]>(
-    getCache([executionFrameworkUUID, pipelineUUID].join(':')));
+  const [selectedGroups, setSelectedGroups] = useState<MenuGroupType[]>(null);
   const transformations = useMemo(() => buildRectTransformations({
     containerRef: canvasRef,
     layoutConfig: layoutConfigs?.[layoutConfigs?.length - 1],
@@ -155,8 +156,9 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
     [currentGroup, groupMapping, parentGroup]);
   const blocks = useMemo(() =>
     Object.values(blocksByGroup?.[currentGroup?.uuid] ?? {}) ?? [], [blocksByGroup, currentGroup]);
-  const displayableGroups = useMemo(() => [currentGroup, parentGroup, ...(siblingGroups ?? [])], [
-    currentGroup, parentGroup, siblingGroups]);
+  const displayableGroups =
+    useMemo(() => [currentGroup, parentGroup, ...(siblingGroups ?? [])].filter(g => g ?? false), [
+      currentGroup, parentGroup, siblingGroups]);
 
   const updateRects = useCallback((rectData: Record<string, {
     data: {
@@ -179,21 +181,36 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
         width: rect.width,
       };
     });
-    const blockNodes = hydrateBlockNodeRects(Object.entries(rectRefs.current ?? {}).map(([id, rectRef]) => {
-      const rect = rectRef.current;
 
-      return {
-        block: blockMapping[id],
-        node: {
-          type: rect.type,
-        },
-        rect,
-      }
-    }), blocksByGroup);
+    const updateState = () => {
+      const blockNodes = Object.entries(rectRefs.current ?? {}).map(([id, rectRef]) => {
+        const rect = rectRef.current;
+        const { type } = rect;
 
-    const tfs = transformRects(blockNodes, transformations)
-    setRectsMapping(indexBy(tfs, r => r.id));
-  }, [blockMapping, blocksByGroup, transformations]);
+        let block = null;
+        if (ItemTypeEnum.BLOCK === type) {
+          block = blockMapping[id] ?? groupMapping[id];
+        } else {
+          block = groupMapping[id] ?? blockMapping[id];
+        }
+        return {
+          block,
+          node: {
+            type: rect.type,
+          },
+          rect,
+        }
+      });
+      const blockNodeMapping = indexBy(blockNodes, bn => bn?.block?.uuid);
+      const rects = hydrateBlockNodeRects(blockNodes, blockNodeMapping);
+      const tfs = transformRects(rects, transformations);
+
+      rectsMappingRef.current = indexBy(tfs, r => r.id);
+    };
+
+    clearTimeout(timeoutRef.current);
+    timeoutRef.current = setTimeout(updateState, 100);
+  }, [blockMapping, groupMapping, transformations]);
 
   useEffect(() => {
     if (framework === null && frameworkMutants.detail.isIdle) {
@@ -202,13 +219,18 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
     if (pipeline === null && pipelineMutants.detail.isIdle) {
       pipelineMutants.detail.mutate();
     }
-  }, [framework, frameworkMutants, pipeline, pipelineMutants]);
+    if (selectedGroups === null && (framework ?? false) && (pipeline ?? false)) {
+      setSelectedGroups(getCache([framework.uuid, pipeline.uuid].join(':')))
+    }
+  }, [framework, frameworkMutants, pipeline, pipelineMutants, selectedGroups]);
 
-  const renderNodeData = useCallback((
+  function renderNodeData(
     block: PipelineExecutionFrameworkBlockType & BlockType,
     type: ItemTypeEnum,
     index: number,
-  ) => {
+  ) {
+    console.log(`[Canvas:${type}] renderNodeData:`, block.uuid);
+
     let nodeRef = nodeRefs.current[block.uuid];
     if (!nodeRef) {
       nodeRef = createRef();
@@ -240,7 +262,11 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
         node,
       },
       id: block.uuid,
+      onCapture: (_node: any, _data: any, element: HTMLElement) => {
+        element.classList.add('captured');
+      },
       ref: nodeRef,
+      shouldCapture: (_node: any, element: HTMLElement) => !(block.uuid in rectsMappingRef.current),
       target: (
         <DragWrapper
           // draggable={draggable}
@@ -250,7 +276,7 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
           // handleDrop={handleDrop}
           item={node as NodeType}
           key={block.uuid}
-          rect={rectsMapping?.[block.uuid] ?? {
+          rect={rectsMappingRef.current?.[block.uuid] ?? {
             left: undefined,
             top: undefined,
           }}
@@ -259,9 +285,30 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
       ),
       targetRef: dragRef,
     };
-  }, [rectsMapping]);
+  }
 
-  console.log('rendering...');
+  const renderer = useMemo(() => blocks?.length > 0 && (
+    <ShadowRenderer
+      handleDataCapture={({ data, id }, { rect }) => {
+        updateRects({ [id]: { data, rect } });
+      }}
+      nodes={blocks?.map((block: BlockType, index: number) =>
+        renderNodeData(block as any, ItemTypeEnum.BLOCK, index))
+      }
+      uuid={`blocks-${getNewUUID(3, 'clock')}`}
+    />
+  ), [blocks]);
+  const rendererGroups = useMemo(() => displayableGroups?.length > 0 && (
+    <ShadowRenderer
+      handleDataCapture={({ data, id }, { rect }) => {
+        updateRects({ [id]: { data, rect } });
+      }}
+      nodes={displayableGroups?.map((block: BlockType, index: number) =>
+        renderNodeData(block as any, ItemTypeEnum.NODE, index))
+      }
+      uuid={`groups-${getNewUUID(3, 'clock')}`}
+    />
+  ), [displayableGroups]);
 
   return (
     <div
@@ -293,17 +340,8 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
               groupMappingRef={{ current: groupMapping }}
               groupsByLevelRef={{ current: groupsByLevel }}
             >
-              <ShadowRenderer
-                handleDataCapture={({ data, id }, { rect }) => {
-                  updateRects({ [id]: { data, rect } });
-                }}
-                nodes={blocks?.map((block: BlockType, index: number) =>
-                  renderNodeData(block as any, ItemTypeEnum.BLOCK, index))
-                }
-              />
-
-              {/* {displayableGroups?.map((block: FrameworkType, index: number) =>
-                renderNode(block as any, ItemTypeEnum.NODE, index))} */}
+              {renderer}
+              {rendererGroups}
             </ModelProvider>
           </SettingsProvider>
         </CanvasContainer>

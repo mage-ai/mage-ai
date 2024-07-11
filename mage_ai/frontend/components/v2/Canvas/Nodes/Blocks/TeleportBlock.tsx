@@ -29,10 +29,6 @@ export default function TeleportGroup({
   role?: ElementRoleEnum;
   selectedGroup: MenuGroupType;
 }) {
-  const controls = useAnimation();
-  const phaseRef = useRef(0);
-  const timeoutRef = useRef(null);
-
   const { activeLevel, layoutConfigs, selectedGroupsRef } = useContext(SettingsContext);
   const layoutConfig = layoutConfigs?.current?.[activeLevel?.current - 1]?.current;
   const { convertEvent, dispatchAppEvent } = useAppEventsHandler({ block } as any);
@@ -54,44 +50,6 @@ export default function TeleportGroup({
 
   const colorName =
     getBlockColor(block?.type ?? BlockTypeEnum.GROUP, { getColorName: true })?.names?.base;
-
-  useEffect(() => {
-    const timeout = timeoutRef.current;
-    clearTimeout(timeout);
-    controls.set({
-      opacity: 0,
-      ...(LayoutConfigDirectionEnum.HORIZONTAL === layoutConfig?.direction
-        ? {
-          translateX: 8,
-        }
-        : {
-          translateY: 8,
-        }
-      ),
-    });
-
-    if (phaseRef.current === 0) {
-      timeoutRef.current = setTimeout(() => {
-        const easing = cubicBezier(.35, .17, .3, .86);
-        controls.start({
-          opacity: 1,
-          transition: {
-            delay: (node?.index ?? indexProp) / 10,
-            duration: 0.5,
-            ease: easing,
-          },
-          translateX: 0,
-          translateY: 0,
-        });
-        phaseRef.current = 1;
-      }, 100);
-    }
-
-    return () => {
-      clearTimeout(timeout);
-      timeoutRef.current = null;
-    };
-  }, [controls, layoutConfig, node, indexProp]);
 
   return (
     <Link
@@ -124,8 +82,6 @@ export default function TeleportGroup({
             outputColorName: isdn && downstreamInGroup?.[0]?.colorName,
           })}
         </Grid >
-        {/* <motion.div animate={controls}>
-        </motion.div > */}
       </AnimatePresence>
     </Link>
   );
