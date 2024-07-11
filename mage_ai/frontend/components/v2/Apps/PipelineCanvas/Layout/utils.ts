@@ -68,12 +68,12 @@ export function buildRectTransformations({
 
   const layoutStyleTransformations = [];
 
-  const shiftRight = (factor: number = 2) => (rects: RectType[]) => Math.max(
+  const shiftHorizontal = (factor: number = 2) => (rects: RectType[]) => Math.max(
     40,
     validateFiniteNumber(typeof window !== 'undefined'
       ? (window.innerWidth - calculateBoundingBox(rects).width) / factor : 0),
   );
-  const shiftDown = (factor: number = 2) => (rects: RectType[]) => Math.max(
+  const shiftVertical = (factor: number = 2) => (rects: RectType[]) => Math.max(
     40,
     validateFiniteNumber(typeof window !== 'undefined'
       ? (window.innerHeight - calculateBoundingBox(rects).height) / factor : 0),
@@ -265,8 +265,8 @@ export function buildRectTransformations({
         conditionSelf: (rect: RectType) => rect?.children?.length === 0,
         options: (rects: RectType[]) => ({
           offset: {
-            left: shiftRight()(rects),
-            top: shiftDown()(rects),
+            left: shiftHorizontal()(rects),
+            top: shiftVertical()(rects),
           },
         }),
         type: TransformRectTypeEnum.SHIFT,
@@ -281,29 +281,55 @@ export function buildRectTransformations({
         scope: RectTransformationScopeEnum.CHILDREN,
         type: TransformRectTypeEnum.ALIGN_CHILDREN,
       },
+      {
+        conditionSelf: (rect: RectType) =>
+          // If the top of the rect is less than 5% of the viewport height
+          (rect.top / viewportRef?.current?.getBoundingClientRect()?.height) < 0.05,
+        options: (rects: RectType[]) => ({
+          boundingBox: viewportRef?.current?.getBoundingClientRect(),
+          offset: { top: shiftVertical(0.5)(rects) },
+        }),
+        scope: RectTransformationScopeEnum.SELF,
+        type: TransformRectTypeEnum.SHIFT,
+      },
+      {
+        conditionSelf: (rect: RectType) =>
+          // If the top of the rect is more than 95% of the viewport height
+          (rect.top / viewportRef?.current?.getBoundingClientRect()?.height) > 0.95,
+        options: (rects: RectType[]) => ({
+          boundingBox: viewportRef?.current?.getBoundingClientRect(),
+          offset: { top: shiftVertical(-0.5)(rects) },
+        }),
+        scope: RectTransformationScopeEnum.SELF,
+        type: TransformRectTypeEnum.SHIFT,
+      },
+      {
+        conditionSelf: (rect: RectType) =>
+          // If the left of the rect is less than 5% of the viewport width
+          (rect.left / viewportRef?.current?.getBoundingClientRect()?.width) < 0.05,
+        options: (rects: RectType[]) => ({
+          boundingBox: viewportRef?.current?.getBoundingClientRect(),
+          offset: { left: shiftHorizontal(0.5)(rects) },
+        }),
+        scope: RectTransformationScopeEnum.SELF,
+        type: TransformRectTypeEnum.SHIFT,
+      },
+      {
+        conditionSelf: (rect: RectType) =>
+          // If the left of the rect is more than 95% of the viewport width
+          (rect.left / viewportRef?.current?.getBoundingClientRect()?.width) > 0.95,
+        options: (rects: RectType[]) => ({
+          boundingBox: viewportRef?.current?.getBoundingClientRect(),
+          offset: { left: shiftHorizontal(-0.5)(rects) },
+        }),
+        scope: RectTransformationScopeEnum.SELF,
+        type: TransformRectTypeEnum.SHIFT,
+      },
     ] as RectTransformationType[]);
   } else if (LayoutDisplayEnum.SIMPLE === layoutConfig?.display) {
     transformers.push(...[
       ...layoutPattern(),
       ...viewportAlignment,
-      {
-        condition: (args: any) => !conditionHeight(args),
-        options: (rects: RectType[]) => ({
-          offset: {
-            top: shiftDown(0.5)(rects),
-          },
-        }),
-        type: TransformRectTypeEnum.SHIFT,
-      },
-      {
-        condition: (args: any) => !conditionWidth(args),
-        options: (rects: RectType[]) => ({
-          offset: {
-            top: shiftRight(0.5)(rects),
-          },
-        }),
-        type: TransformRectTypeEnum.SHIFT,
-      },
     ] as RectTransformationType[]);
   }
 

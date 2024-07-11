@@ -11,7 +11,7 @@ import { indexBy, deepCopyArray, range } from '@utils/array';
 import { isDebug as isDebugBase } from '@utils/environment';
 import { padString } from '@utils/string';
 import { validateFiniteNumber } from '@utils/number';
-import { ignoreKeys } from '@utils/hash';
+import { deepCopy, ignoreKeys } from '@utils/hash';
 
 function isDebug() {
   return isDebugBase() && false;
@@ -54,16 +54,39 @@ export function transformRects(rectsInit: RectType[], transformations: RectTrans
     const { parent } = rects?.[0] ?? {};
 
     const debugLog = (stage: string, arr: RectType[], opts?: any) => {
+      const format = (val: number) => ((val ?? null) !== null && !isNaN(val))
+        ? padString(String(Math.round(val)), 6, ' ') : '     -';
+
+      const rectsBox = calculateBoundingBox(deepCopyArray(arr));
+
       const tag = `${stageNumber}. ${type}:${stage}`;
       const tags = [
         layout,
         ignoreKeys(opts, [
+          'boundingBox',
           'layout',
         ]),
         ignoreKeys(transformation, [
           'options',
         ]),
+        (boundingBox ? {
+          'box.bound': [
+            boundingBox.left,
+            boundingBox.top,
+            boundingBox.width,
+            boundingBox.height,
+          ].map(format).join(', '),
+        } : {}),
+        (rectsBox ? {
+          'box.rects': [
+            rectsBox.left,
+            rectsBox.top,
+            rectsBox.width,
+            rectsBox.height,
+          ].map(format).join(', '),
+        } : {}),
       ].flatMap(o => Object.entries(o ?? {}));
+
       const args = tags?.map(([k, v]) =>
         `|   ${padString(k.slice(0, 20), 20, ' ')}: ${typeof v === 'function'
           ? '__func__'
@@ -71,9 +94,6 @@ export function transformRects(rectsInit: RectType[], transformations: RectTrans
             ? '__obj__'
             : v}`
       )?.sort()?.join('\n');
-
-      const format = (val: number) =>
-        ((val ?? null) !== null && !isNaN(val)) ? padString(String(Math.round(val)), 6, ' ') : '     -';
 
       let text = deepCopyArray(arr).map((copy) =>
         '|   ' + padString(String(copy.id).slice(0, 20), 20, ' ') + ': ' + (
@@ -182,8 +202,8 @@ export function transformRects(rectsInit: RectType[], transformations: RectTrans
       rects = shiftRectsIntoBoundingBox(deepCopyArray(rects), parent);
     } else if (TransformRectTypeEnum.ALIGN_WITHIN_VIEWPORT === type) {
       const box = calculateBoundingBox(deepCopyArray(rects));
-      const xoff = (boundingBox.width - box.width) / 2;
-      const yoff = (boundingBox.height - box.height) / 2;
+      const xoff = (boundingBox.width / 2) - box.width;
+      const yoff = (boundingBox.height / 2) - box.height;
       rects = deepCopyArray(rects).map(rect => {
         if (LayoutConfigDirectionEnum.HORIZONTAL === layout?.direction) {
           rect.left += xoff;

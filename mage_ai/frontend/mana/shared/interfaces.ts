@@ -32,6 +32,7 @@ export interface RectType {
   height?: number;
   id?: string;
   left: number;
+  parent?: RectType;
   right?: number;
   top: number;
   upstream?: RectType[];
