@@ -3,18 +3,23 @@ import tree from './layout/tree';
 import update from 'immutability-helper';
 import wave from './layout/wave';
 import { DEBUG } from '@components/v2/utils/debug';
-import { DEFAULT_LAYOUT_CONFIG } from './layout/shared';
+import { DEFAULT_LAYOUT_CONFIG, logMessageForRects } from './layout/shared';
 import { DragItem, LayoutConfigType, NodeItemType, NodeType, RectType, RectTransformationType } from '../interfaces';
 import { LayoutConfigDirectionEnum, TransformRectTypeEnum, RectTransformationScopeEnum } from '../types';
 import { applyRectDiff, getRectDiff } from './layout/shared';
-import { indexBy, deepCopyArray, range } from '@utils/array';
+import { indexBy, deepCopyArray as deepCopy, range } from '@utils/array';
 import { isDebug as isDebugBase } from '@utils/environment';
 import { padString } from '@utils/string';
 import { validateFiniteNumber } from '@utils/number';
-import { deepCopy, ignoreKeys } from '@utils/hash';
+import { ignoreKeys } from '@utils/hash';
 
 function isDebug() {
   return isDebugBase() && false;
+}
+
+function deepCopyArray(rects: RectType[]): RectType[] {
+  // The original deepCopyArray is expensive and takes a long time; use it wisely.
+  return rects;
 }
 
 export type SetupOpts = {
@@ -24,7 +29,7 @@ export type SetupOpts = {
 };
 
 export function transformRects(rectsInit: RectType[], transformations: RectTransformationType[]): RectType[] {
-  const rectsByStage = [deepCopyArray(rectsInit)];
+  const rectsByStage = [deepCopy(rectsInit)];
 
   transformations.forEach((transformation, stageNumber: number) => {
     const {
@@ -39,8 +44,8 @@ export function transformRects(rectsInit: RectType[], transformations: RectTrans
       type,
     } = transformation;
 
-    const rectsStart = [...deepCopyArray(rectsByStage[rectsByStage.length - 1])];
-    let rects = deepCopyArray(rectsStart);
+    const rectsStart = [...deepCopy(rectsByStage[rectsByStage.length - 1])];
+    let rects = deepCopy(rectsStart);
 
     const opts = options ? options?.(rects) : {};
     const {
@@ -97,10 +102,7 @@ export function transformRects(rectsInit: RectType[], transformations: RectTrans
             : v}`
       )?.sort()?.join('\n');
 
-      let text = deepCopyArray(arr).map((copy) =>
-        '|   ' + padString(String(copy.id).slice(0, 20), 20, ' ') + ': ' + (
-          [copy.left, copy.top, copy.width, copy.height].map(format).join(', '))
-      ).join('\n');
+      let text = logMessageForRects(arr);
 
       if (initialRect) {
         text = `[parent]: ${initialRect.id}\n${text}`;
@@ -194,14 +196,15 @@ export function transformRects(rectsInit: RectType[], transformations: RectTrans
       }));
     } else if (TransformRectTypeEnum.LAYOUT_TREE === type) {
       rects = tree.pattern1(deepCopyArray(rects), layout ?? {}, {
-        patterns: {
-          level: arr => wave.pattern3(deepCopyArray(arr), {
-            ...layout,
-            direction: LayoutConfigDirectionEnum.VERTICAL === layout?.direction
-              ? LayoutConfigDirectionEnum.HORIZONTAL
-              : LayoutConfigDirectionEnum.VERTICAL,
-          }),
-        },
+        // Doesn‘t work yet; the nodes are out of order in terms of its dependencies.
+        // patterns: {
+        //   level: arr => wave.pattern3(deepCopyArray(arr), {
+        //     ...layout,
+        //     direction: LayoutConfigDirectionEnum.VERTICAL === layout?.direction
+        //       ? LayoutConfigDirectionEnum.HORIZONTAL
+        //       : LayoutConfigDirectionEnum.VERTICAL,
+        //   }),
+        // },
       });
     } else if (TransformRectTypeEnum.LAYOUT_WAVE === type) {
       rects = wave.pattern3(deepCopyArray(rects), layout);

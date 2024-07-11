@@ -43,7 +43,7 @@ export function hydrateBlockNodeRects(
       id: block?.uuid,
       type: node?.type,
       upstream: hydrateBlockNodeRects(
-        ((block as any)?.upstream ?? [])?.map((b: any) => blockNodeMapping[b.uuid]),
+        ((block as any)?.upstream_blocks ?? [])?.map((buuid: string) => blockNodeMapping[buuid]),
         blockNodeMapping,
       ),
     };

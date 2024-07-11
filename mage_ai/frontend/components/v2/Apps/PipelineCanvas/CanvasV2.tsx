@@ -1,4 +1,5 @@
 import BlockNodeV2 from '../../Canvas/Nodes/BlockNodeV2';
+import { logMessageForRects } from '../../Canvas/utils/layout/shared';
 import { transformRects } from '../../Canvas/utils/rect';
 import {
   ItemTypeEnum, LayoutConfigDirectionEnum, LayoutConfigDirectionOriginEnum, LayoutDisplayEnum, LayoutStyleEnum,
@@ -98,6 +99,7 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
     }),
     defaultLayoutConfig({
       direction: LayoutConfigDirectionEnum.VERTICAL,
+      display: LayoutDisplayEnum.DETAILED,
       style: LayoutStyleEnum.TREE,
     }),
     defaultLayoutConfig({
@@ -195,7 +197,10 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
 
     const groups = (group?.children ?? []).concat(
       [
-        parentGroup,
+        // Add the current group so we can show groupings within it.
+        group,
+        // Should we show the parent group as well?
+        // parentGroup,
         ...(siblingGroups ?? []),
         ...(groupsForEmptySelection ?? []),
       ].reduce((acc, group) => group ? acc.concat(groupMappingRef.current?.[group?.uuid]) : acc, [])
@@ -329,7 +334,10 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
         (blocks ?? []).concat(groups ?? []).map(m => blockNodeMapping[m.uuid]),
         blockNodeMapping,
       );
+
+      console.log(`start:\n${logMessageForRects(rects)}`);
       const tfs = transformRects(rects, transformations);
+      console.log(`  end:\n${logMessageForRects(tfs)}`);
 
       rectsMappingRef.current = indexBy(tfs, r => r.id);
 

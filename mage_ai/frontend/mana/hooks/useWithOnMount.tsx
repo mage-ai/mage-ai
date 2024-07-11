@@ -1,3 +1,4 @@
+import { DEBUG } from '@mana/utils/debug';
 import { useEffect, useRef } from 'react';
 
 export type OnMountType = {
@@ -21,7 +22,7 @@ export function WithOnMount({
     const check = () => {
       clearTimeout(timeoutRef.current);
       if (phaseRef.current === 0 && onMount) {
-        console.log(`[WithOnMount:${uuid}:${phaseRef.current}]`);
+        DEBUG.hooks.withOnMount && console.log(`[WithOnMount:${uuid}:${phaseRef.current}]`);
 
         withRef ? onMount(ref) : onMount();
         phaseRef.current += 1;
@@ -53,7 +54,7 @@ export default function useWithOnMount({ children, onMount }: OnMountType): Reac
   const phaseRef = useRef(0);
   const timeoutRef = useRef(null);
 
-  console.log('[useWithOnMount] rendering...', phaseRef?.current);
+  DEBUG.hooks.withOnMount && console.log('[useWithOnMount] rendering...', phaseRef?.current);
 
   useEffect(() => {
     const check = () => {

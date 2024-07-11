@@ -4,6 +4,7 @@ export const DEBUG = {
   },
   hooks: {
     shadow: false,
+    withOnMount: false,
   },
   keyboard: {
     navigation: false,

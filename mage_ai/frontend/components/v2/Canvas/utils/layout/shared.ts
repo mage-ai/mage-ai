@@ -2,6 +2,7 @@ import { DEBUG } from '../../../utils/debug';
 import { LayoutConfigType, RectType } from '../../interfaces';
 import { LayoutConfigDirectionEnum, LayoutConfigDirectionOriginEnum } from '../../types';
 import { validateFiniteNumber } from '@utils/number';
+import { padString } from '@utils/string';
 
 export function isDebug() {
   return DEBUG.rects && false;
@@ -73,4 +74,14 @@ export function applyRectDiff(rect: RectType, diff: RectType, dimensions?: boole
     left: validateFiniteNumber(rect.left) + validateFiniteNumber(dl),
     top: validateFiniteNumber(rect.top) + validateFiniteNumber(dt),
   };
+}
+
+export function logMessageForRects(rects: RectType[]): string {
+  const format = (val: number) => ((val ?? null) !== null && !isNaN(val))
+    ? padString(String(Math.round(val)), 6, ' ') : '     -';
+
+  return rects.map((copy) =>
+    '|   ' + padString(String(copy.id).slice(0, 20), 20, ' ') + ': ' + (
+      [copy.left, copy.top, copy.width, copy.height].map(format).join(', '))
+  ).join('\n');
 }
