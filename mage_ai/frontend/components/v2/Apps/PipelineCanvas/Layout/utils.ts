@@ -26,7 +26,7 @@ export function hydrateBlockNodeRects(
   blockNodes: BlockNodeType[],
   blockNodeMapping: Record<string, BlockNodeType>,
 ): RectType[] {
-  return blockNodes.map((bn: BlockNodeType) => {
+  const arr = blockNodes.map((bn: BlockNodeType) => {
     const {
       block,
       node,
@@ -42,12 +42,12 @@ export function hydrateBlockNodeRects(
       ),
       id: block?.uuid,
       type: node?.type,
-      upstream: hydrateBlockNodeRects(
-        ((block as any)?.upstream_blocks ?? [])?.map((buuid: string) => blockNodeMapping[buuid]),
-        blockNodeMapping,
-      ),
+      // Handle this outside of this function
+      upstream: ((block as any)?.upstream_blocks ?? [])?.map((buuid: string) => ({ id: buuid })),
     };
   });
+
+  return arr;
 }
 
 export function buildRectTransformations({

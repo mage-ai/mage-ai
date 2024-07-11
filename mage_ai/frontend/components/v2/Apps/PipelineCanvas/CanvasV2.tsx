@@ -207,14 +207,12 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
       groupsForEmptySelection.push(...defaultSelectionGroups);
     }
 
-    console.log(group)
     const groups = (group?.children ?? []).concat(
       [
-
         // Should we show the parent group as well?
         // parentGroup,
-        ...(group?.groups?.length > 0 && !group?.groups?.includes(executionFrameworkUUID)
-          ? [group] : []), // Add the current group so we can show groupings within it.
+        // Add the current group so we can show groupings within it.
+        ...(blocks?.length > 0 ? [group] : []),
         ...(siblingGroups ?? []),
         ...(groupsForEmptySelection ?? []),
       ].reduce((acc, group) => group ? acc.concat(groupMappingRef.current?.[group?.uuid]) : acc, [])
@@ -319,7 +317,8 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
     });
 
     const updateState = () => {
-      const blockNodes = Object.entries(rectRefs.current ?? {}).map(([id, rectRef]) => {
+      const blockNodes = [];
+      Object.entries(rectRefs.current ?? {}).forEach(([id, rectRef]) => {
         const rect = rectRef.current;
         const { type } = rect;
 
@@ -329,30 +328,75 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
         } else {
           block = groupMappingRef.current?.[id] ?? blockMappingRef.current?.[id];
         }
-        return {
+
+        blockNodes.push({
           block,
           node: {
             type: rect.type,
           },
           rect,
-        }
+        });
       });
       const blockNodeMapping = indexBy(blockNodes, bn => bn?.block?.uuid);
-
-      const transformations = buildRectTransformations({
-        layoutConfig: layoutConfigsRef.current?.[selectedGroupsRef.current?.length - 1],
-        selectedGroup: selectedGroupsRef.current?.[selectedGroupsRef.current?.length - 1],
-      });
 
       const blocks = blocksRef.current ?? [];
       const groups = groupsRef.current ?? [];
 
-      const rects = hydrateBlockNodeRects(
+      const rects1 = hydrateBlockNodeRects(
         (blocks ?? []).concat(groups ?? []).map(m => blockNodeMapping[m.uuid]),
         blockNodeMapping,
       );
 
+      const rectsmap = indexBy(rects1, r => r?.id);
+      const rects = rects1?.map((rect) => {
+        const { block } = rect;
+        return {
+          ...rect,
+          // e.g. cleaning’s upstream is map
+          // map belongs to group load.
+          upstream: rect?.upstream?.reduce((acc, { id }) => {
+            const upgroup = groupMappingRef.current?.[id];
+            const gs = upgroup?.groups;
+            const arr = [];
+            gs?.forEach((guuid) => {
+              if (guuid in rectsmap) {
+                arr.push(rectsmap[guuid]);
+              }
+            });
+
+            upgroup?.children?.filter(
+              b => block?.children?.some?.(c => b?.downstream_blocks?.includes(c.uuid))
+            )?.forEach(b => {
+              if (b.uuid in rectsmap) {
+                arr.push(rectsmap[b.uuid]);
+              }
+            });
+
+            if ((arr?.length ?? 0) === 0) {
+              arr.push(rectsmap[id]);
+            }
+
+            return acc.concat(arr);
+          }, []),
+        };
+      });
+
+      // blockNodes?.forEach(bn => {
+      //   if (bn?.block?.children?.length > 0) {
+      //     bn?.block?.children?.forEach(({ uuid }) => {
+      //       if (!(uuid in blockNodeMapping)) {
+      //         blockNodeMapping[uuid] = bn;
+      //       }
+      //     });
+      //   }
+      // });
+
       console.log(`start:\n${logMessageForRects(rects)}`);
+      console.log(rects);
+      const transformations = buildRectTransformations({
+        layoutConfig: layoutConfigsRef.current?.[selectedGroupsRef.current?.length - 1],
+        selectedGroup: selectedGroupsRef.current?.[selectedGroupsRef.current?.length - 1],
+      });
       const tfs = transformRects(rects, transformations);
       console.log(`  end:\n${logMessageForRects(tfs)}`);
 
