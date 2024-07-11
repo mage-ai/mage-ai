@@ -342,6 +342,7 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
       const layoutConfig = layoutConfigsRef.current?.[selectedGroupsRef.current?.length - 1];
       const selectedGroup = selectedGroupsRef.current?.[selectedGroupsRef.current?.length - 1];
       const group = groupMappingRef.current?.[selectedGroup?.uuid];
+      const blocksInGroup = blocksByGroupRef?.current?.[selectedGroup?.uuid] ?? {};
       const isValidGroup = shouldRenderSelectedGroupSelection();
 
       const blockNodes = [];
@@ -400,6 +401,8 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
             const upgroup = groupMappingRef.current?.[id];
             const gs = upgroup?.groups;
             const arr = [];
+            const block2 = blockMappingRef.current?.[id];
+
 
             // Don’t add the parent as the upstream
             gs?.forEach((guuid) => {
@@ -408,12 +411,15 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
               }
             });
 
-            // if ((arr?.length ?? 0) === 0 && rectsmap?.[id]) {
-            //   arr.push(rectsmap[id]);
-            // }
-
-            // If upstream is the currently selected block or...
-            if (group?.uuid === id
+            // If current block is a block in the current group and the upstream is a block
+            // in the same group
+            if (blocksInGroup?.[block?.uuid] && blocksInGroup?.[block2?.uuid]) {
+              if (rectsmap?.[block2.uuid]) {
+                arr.push(rectsmap[block2.uuid]);
+              }
+            } else if (
+              // If upstream is the currently selected block or...
+              group?.uuid === id
               // If the upstream is a sibling of the
               // currently selected block, then add it to the upstream.
               || upgroup?.groups?.some?.(guuid => block?.groups?.includes(guuid))
@@ -431,18 +437,19 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
               });
             }
 
+            console.log('OMGGGGGGGGGGGGGGGGGGGGGGGGG', block.uuid, block2?.uuid, id, blocksInGroup, rectsmap, arr)
+
             return acc.concat(arr);
           }, []),
         };
       });
 
-      console.log('WTFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF', rects)
+
 
       let rectsUse = rects;
       let groupRect = null;
       if (isValidGroup && layoutConfig?.childrenLayout) {
         const childrenInGroup = indexBy(group?.children ?? [], c => c.uuid);
-        const blocksInGroup = blocksByGroupRef?.current?.[selectedGroup?.uuid] ?? {};
         const rectsInGroup = rects?.filter(r => blocksInGroup?.[r.id] || childrenInGroup?.[r.id]);
 
         if (rectsInGroup?.length > 0) {

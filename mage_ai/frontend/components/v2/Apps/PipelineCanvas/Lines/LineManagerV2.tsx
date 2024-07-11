@@ -345,8 +345,7 @@ export default function LineManagerV2({
             allRectsAreInGroup,
             currentGroupChildrenIDs?.includes(rectup1.id),
             rectup1.id === groupRect?.id,
-          )
-
+          );
 
           // Current downstream and upstream block is a child of the currently selected group.
           if (currentGroupChildrenIDs?.includes(rectdn.id)
@@ -365,7 +364,7 @@ export default function LineManagerV2({
             // If downstream block is in the current group’s children and
             // the upstream is not in the current group’s children,
             // then skip.
-            return; s
+            return;
           } else {
             rectup2 = mapping?.[rectup1.id];
           }
@@ -374,29 +373,30 @@ export default function LineManagerV2({
 
           pairsByType[rectdn.type].push([rectup2, rectdn]);
         });
-      } else if (LayoutDisplayEnum.DETAILED === getLayoutConfig()?.display
-        && ItemTypeEnum.BLOCK === rectdn?.type
-      ) {
-        const { block } = rectdn;
+      } else if (ItemTypeEnum.BLOCK === rectdn?.type) {
+        const { block: blockdn } = rectdn;
 
-        const outputs = Object.values(outputsRef?.current?.[rectdn?.id] ?? {});
-        if (outputs?.length > 0) {
-          outputs?.forEach((output: OutputNodeType) => {
-            DEBUG.lines.manager && console.log('line.output', output, rectdn);
+        if (LayoutDisplayEnum.DETAILED === getLayoutConfig()?.display) {
+          const outputs = Object.values(outputsRef?.current?.[rectdn?.id] ?? {});
+          if (outputs?.length > 0) {
+            outputs?.forEach((output: OutputNodeType) => {
+              DEBUG.lines.manager && console.log('line.output', output, rectdn);
 
-            pairsByType[output.type].push([rectdn, output]);
-          });
+              pairsByType[output.type].push([rectdn, output]);
+            });
+          }
+
         }
 
-        (block as any)?.upstream_blocks?.forEach((blockUUID: string) => {
-          const rectup = mapping?.[blockUUID];
+        (blockdn as any)?.upstream_blocks?.forEach((upuuid: string) => {
+          const rectup = mapping?.[upuuid];
 
           if (!rectup) return;
 
-          const block2 = rectup?.block;
+          const block2 = blockMappingRef?.current?.[upuuid];
 
           // Don’t draw lines if blocks aren’t in the same active group.
-          if (!(block as any)?.groups?.some(
+          if (!(blockdn as any)?.groups?.some(
             (guuid: GroupUUIDEnum) => block2?.groups?.includes(guuid)
               && (!selectedGroup || selectedGroup?.uuid === guuid)
           )) {
