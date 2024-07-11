@@ -8,22 +8,15 @@ import { RectType } from '@mana/shared/interfaces';
 type BlockNodeType = {
   block: BlockType;
   dragRef?: React.MutableRefObject<HTMLDivElement>;
-  draggable?: boolean;
   index?: number;
   node: NodeType;
-  rectRef: React.MutableRefObject<RectType>;
 } & BlockNodeProps;
 
 function BlockNode({
   block,
   dragRef,
   node,
-  draggable,
-  droppable,
-  droppableItemTypes,
-  eventHandlers,
-  handleDrop,
-  rectRef,
+  groupSelection,
   ...rest
 }: BlockNodeType, ref: React.MutableRefObject<HTMLElement>) {
   // Controls
@@ -42,6 +35,7 @@ function BlockNode({
     <div
       className={[
         stylesBlockNode.blockNodeWrapper,
+        groupSelection && stylesBlockNode.groupSelection,
       ].filter(Boolean).join(' ')}
       ref={ref as React.RefObject<HTMLDivElement>}
     >
@@ -53,6 +47,7 @@ function BlockNode({
         // handlers={draggingHandlers}
         // index={indexProp}
         dragRef={dragRef}
+        groupSelection={groupSelection}
         node={node}
         submitCodeExecution={submitCodeExecution}
         // submitEventOperation={submitEventOperation}
@@ -64,7 +59,8 @@ function BlockNode({
 }
 
 function areEqual(p1: BlockNodeType, p2: BlockNodeType) {
-  return p1.block.uuid === p2.block.uuid;
+  return p1.block.uuid === p2.block.uuid
+    && p1?.groupSelection === p2?.groupSelection;
 }
 
 export default React.memo(React.forwardRef(BlockNode), areEqual);

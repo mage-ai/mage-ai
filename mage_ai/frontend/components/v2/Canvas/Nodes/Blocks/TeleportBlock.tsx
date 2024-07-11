@@ -2,7 +2,6 @@ import BlockType, { BlockTypeEnum } from '@interfaces/BlockType';
 import Grid from '@mana/components/Grid';
 import Link from '@mana/elements/Link';
 import useAppEventsHandler, { CustomAppEvent, CustomAppEventEnum } from '@components/v2/Apps/PipelineCanvas/useAppEventsHandler';
-import { AnimatePresence, cubicBezier, motion, useAnimation } from 'framer-motion';
 import { ElementRoleEnum } from '@mana/shared/types';
 import { LayoutConfigDirectionEnum } from '../../types';
 import { MenuGroupType } from '@mana/components/Menu/interfaces';
@@ -65,27 +64,27 @@ export default function TeleportGroup({
       }}
       role={role}
       style={{
-        height: 'fit-content',
-        width: 'fit-content',
+        height: 'inherit',
+        width: 'inherit',
       }}
       wrap
     >
-      <AnimatePresence>
-        <Grid
-          borderColor={colorName}
-          borders
-          padding={12}
-          style={{
-            backgroundColor: 'var(--backgrounds-body)',
-            minWidth: 200,
-          }}
-        >
-          {buildBadgeRow({
-            inputColorName: isup && upstreamInGroup?.[0]?.colorName,
-            outputColorName: isdn && downstreamInGroup?.[0]?.colorName,
-          })}
-        </Grid >
-      </AnimatePresence>
+      <Grid
+        alignItems="start"
+        borderColor={colorName}
+        borders
+        height="inherit"
+        padding={12}
+        style={{
+          backgroundColor: 'var(--backgrounds-body)',
+          minWidth: 200,
+        }}
+      >
+        {buildBadgeRow({
+          inputColorName: isup && upstreamInGroup?.[0]?.colorName,
+          outputColorName: isdn && downstreamInGroup?.[0]?.colorName,
+        })}
+      </Grid >
     </Link>
   );
 }

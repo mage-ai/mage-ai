@@ -44,10 +44,12 @@ export default function LineManagerV2({
 }) {
   const { blockMappingRef, blocksByGroupRef, groupMappingRef, outputsRef } = useContext(ModelContext);
   const { layoutConfigsRef, selectedGroupsRef } = useContext(SettingsContext);
-  const layoutConfig = layoutConfigsRef?.current?.[selectedGroupsRef?.current?.length - 1];
-  const { direction, display, style } = layoutConfig ?? {};
-  const detailLayout = LayoutDisplayEnum.DETAILED === display;
   const selectedGroup = selectedGroupsRef?.current?.[selectedGroupsRef?.current?.length - 1];
+
+  function getLayoutConfig() {
+    const layoutConfig = layoutConfigsRef?.current?.[selectedGroupsRef?.current?.length - 1];
+    return layoutConfig ?? {};
+  }
 
   const lineRefs = useRef<Record<
     ItemTypeEnum,
@@ -135,6 +137,7 @@ export default function LineManagerV2({
       positions[LayoutConfigDirectionEnum.HORIZONTAL] = ['right', 'left'];
     }
 
+    const layoutConfig = getLayoutConfig();
     const { direction, display, style } = {
       ...layoutConfig,
       ...opts,
@@ -176,15 +179,13 @@ export default function LineManagerV2({
         const idx = ORDER[pair[0]?.type];
         return [
           idx >= 0 ? idx : Object.keys(ORDER).length,
-          LayoutConfigDirectionEnum.VERTICAL === direction
+          LayoutConfigDirectionEnum.VERTICAL === getLayoutConfig()?.direction
             ? pair[0]?.top
             : pair[0]?.left,
         ].join('_')
       })?.forEach(
         ([rectup, rectdn], index: number) => {
-          const linePath = renderLine(rectup, rectdn, index, {
-            direction, display, style
-          });
+          const linePath = renderLine(rectup, rectdn, index, getLayoutConfig());
 
           paths[type][rectup.id] ||= []
           paths[type][rectup.id].push(linePath)
@@ -337,7 +338,9 @@ export default function LineManagerV2({
 
           pairsByType[rectdn.type].push([rectup, rectdn]);
         });
-      } else if (LayoutDisplayEnum.DETAILED === display && ItemTypeEnum.BLOCK === rectdn?.type) {
+      } else if (LayoutDisplayEnum.DETAILED === getLayoutConfig()?.display
+        && ItemTypeEnum.BLOCK === rectdn?.type
+      ) {
         const { block } = rectdn;
 
         const outputs = Object.values(outputsRef?.current?.[rectdn?.id] ?? {});
@@ -371,13 +374,8 @@ export default function LineManagerV2({
     });
 
     renderPaths(pairsByType, opts);
-  }, [
-    display,
-    renderPaths,
-    selectedGroup,
-    selectedGroupRect,
-    outputsRef,
-  ]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     updateLines(rectsMapping, {

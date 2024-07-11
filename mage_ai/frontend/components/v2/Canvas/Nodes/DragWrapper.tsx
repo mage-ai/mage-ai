@@ -1,4 +1,5 @@
 import React, { useEffect, useRef } from 'react';
+import stylesBlockNode from '@styles/scss/components/Canvas/Nodes/BlockNode.module.scss';
 import type { DragSourceMonitor, DropTargetMonitor } from 'react-dnd';
 import { CSSProperties } from 'react';
 import { ElementRoleEnum } from '@mana/shared/types';
@@ -20,6 +21,7 @@ export type DragWrapperType = {
 
 type DragWrapperProps = {
   children?: React.ReactNode;
+  groupSelection?: boolean;
   item?: NodeItemType;
   rect?: RectType;
 } & DragWrapperType;
@@ -28,17 +30,19 @@ export function getStyles(
   node: NodeItemType,
   {
     draggable,
+    groupSelection,
     isDragging,
     rect,
   }: {
     draggable: boolean;
+    groupSelection?: boolean;
     isDragging: boolean;
     rect?: RectType;
   },
 ): CSSProperties {
   const { type } = node;
   rect = rect ?? node?.rect;
-  const { left, top, width, zIndex = 1 } = rect || ({} as RectType);
+  const { height, left, top, width } = rect || ({} as RectType);
   const transform = `translate3d(${left ?? 0}px, ${top ?? 0}px, 0)`;
 
   return {
@@ -49,7 +53,6 @@ export function getStyles(
     // because IE will ignore our custom "empty image" drag preview.
     position: 'absolute',
     transform,
-    zIndex,
     ...(draggable ? { cursor: 'move' } : {}),
     ...(isDragging
       ? ItemTypeEnum.APP === type
@@ -63,6 +66,7 @@ export function getStyles(
         : {}
     ),
     ...((width ?? false) ? { minWidth: width } : {}),
+    ...(groupSelection ? { height, width } : {}),
   };
 }
 
@@ -72,6 +76,7 @@ function DragWrapper({
   droppable,
   droppableItemTypes,
   eventHandlers,
+  groupSelection,
   handleDrop,
   item,
   rect,
@@ -134,10 +139,15 @@ function DragWrapper({
         ...acc,
         [k]: draggable && v ? v : undefined,
       }), {})}
+      className={[
+        stylesBlockNode.dragWrapper,
+        groupSelection && stylesBlockNode.groupSelection,
+      ].filter(Boolean).join(' ')}
       ref={dragRef}
       role={[ElementRoleEnum.DRAGGABLE].join(' ')}
       style={getStyles(item, {
         draggable,
+        groupSelection,
         isDragging,
         rect,
       })}
@@ -147,9 +157,10 @@ function DragWrapper({
   );
 }
 
-export function areEqual(p1: { rect: RectType }, p2: { rect: RectType }) {
+export function areEqual(p1: DragWrapperProps, p2: DragWrapperProps) {
   return p1.rect.left === p2.rect.left && p1.rect.top === p2.rect.top
-    && p1.rect.width === p2.rect.width && p1.rect.height === p2.rect.height;
+    && p1.rect.width === p2.rect.width && p1.rect.height === p2.rect.height
+    && p1?.groupSelection === p2?.groupSelection;
 }
 
 export default React.memo(React.forwardRef(DragWrapper), areEqual);

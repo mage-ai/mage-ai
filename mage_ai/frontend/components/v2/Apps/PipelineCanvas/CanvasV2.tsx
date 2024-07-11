@@ -510,8 +510,45 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
     groupRect.width += GROUP_NODE_PADDING * 2;
     groupRect.height += GROUP_NODE_PADDING * 2;
 
-    return groupRect;
+    return rectsInGroup?.length > 0 ? groupRect : null;
   }, [rectsMapping]);
+
+  const selectedGroupNode = useMemo(() => {
+    if (!selectedGroupRect) return;
+
+    const { block, type } = selectedGroupRect ?? {};
+    const node = {
+      block: block,
+      id: block?.uuid,
+      type,
+    } as NodeType;
+
+    return (
+      <DragWrapper
+        // draggable={draggable}
+        // droppable={droppable}
+        // droppableItemTypes={droppableItemTypes}
+        // eventHandlers={eventHandlers}
+        // handleDrop={handleDrop}
+        groupSelection
+        item={node}
+        key={block?.uuid}
+        rect={selectedGroupRect ?? {
+          left: undefined,
+          top: undefined,
+        }}
+      // ref={dragRef}
+      >
+        <BlockNodeV2
+          block={block}
+          key={block.uuid}
+          node={node as NodeType}
+          groupSelection
+        // ref={nodeRef}
+        />
+      </DragWrapper>
+    );
+  }, [selectedGroupRect])
 
   return (
     <div
@@ -546,7 +583,14 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
               {nodesMemo}
               {renderer}
 
-              <LineManagerV2 rectsMapping={rectsMapping} selectedGroupRect={selectedGroupRect} />
+              {selectedGroupNode}
+
+              {selectedGroupRect && (
+                <LineManagerV2
+                  rectsMapping={rectsMapping}
+                  selectedGroupRect={selectedGroupRect}
+                />
+              )}
             </ModelProvider>
           </SettingsProvider>
         </CanvasContainer>

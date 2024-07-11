@@ -10,6 +10,17 @@ $enter-duration: 3s;
   height: inherit;
   padding: var(--padding-base);
 }
+.showOnHoverContainer {
+  &:hover {
+    .showOnHover {
+      visibility: visible;
+    }
+  }
+
+  .showOnHover {
+    visibility: hidden;
+  }
+}
 
 .blockNodeWrapper {
   &.loading {
@@ -48,18 +59,14 @@ $enter-duration: 3s;
   }
 }
 
-.showOnHoverContainer {
-  &:hover {
-    .showOnHover {
-      visibility: visible;
-    }
+.dragWrapper {
+  z-index: 2;
+
+  &.groupSelection {
+    z-index: 1;
   }
 
-  .showOnHover {
-    visibility: hidden;
+  .groupSelection {
+    height: inherit;
   }
-}
-
-.nodeWrapper {
-  @include grid.base();
 }

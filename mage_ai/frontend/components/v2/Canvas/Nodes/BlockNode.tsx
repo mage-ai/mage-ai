@@ -46,6 +46,7 @@ export type BlockNodeProps = {
   node: NodeItemType
   dragRef: React.RefObject<HTMLDivElement>;
   onMount?: (port: PortType, portRef: React.RefObject<HTMLDivElement>) => void;
+  groupSelection?: boolean;
   submitCodeExecution: (event: React.MouseEvent<HTMLElement>) => void;
 } & BlockNode;
 
@@ -54,6 +55,7 @@ export default function BlockNodeComponent({
   buttonBeforeRef,
   collapsed,
   draggable,
+  groupSelection,
   handlers,
   node,
   dragRef,
@@ -438,7 +440,7 @@ export default function BlockNodeComponent({
     />
   ), [block, buildBadgeRow, indexProp, node, selectedGroup]);
 
-  if (isSiblingGroup) return teleportBlock;
+  if (isSiblingGroup || groupSelection) return teleportBlock;
 
   return content;
 }
