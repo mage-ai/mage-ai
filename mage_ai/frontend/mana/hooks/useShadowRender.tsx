@@ -201,7 +201,7 @@ function ShadowContainer({ nodes, handleDataCapture, uuid }: {
 
           children?.forEach(child => {
             if (child instanceof Node) {
-              elementRef.current.appendChild(child.firstChild);
+              elementRef.current.replaceChildren(child.firstChild);
             }
           });
         };

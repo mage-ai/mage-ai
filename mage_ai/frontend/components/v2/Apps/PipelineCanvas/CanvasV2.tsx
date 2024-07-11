@@ -164,8 +164,11 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
         element.classList.add('captured');
       },
       ref: nodeRef,
-      shouldCapture: (_node: ShadowNodeType, element: HTMLElement) =>
-        !(block.uuid in rectsMappingRef.current),
+      shouldCapture: (_node: ShadowNodeType, element: HTMLElement) => {
+        const valid = !(block.uuid in rectsMappingRef.current);
+        // console.log('shouldCapture', block.uuid, valid);
+        return valid;
+      },
       targetRef: (node: ShadowNodeType) => dragRefs.current[node.id],
     };
   }
@@ -219,6 +222,9 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
         shadowNodes.push(...models?.map((block: BlockType | FrameworkType, index: number) =>
           renderNodeData(block as any, type, index)) as any
         ));
+
+      // Need to clear this our shouldCapture in ShadowNodeType won’t execute.
+      rectsMappingRef.current = {};
 
       setRenderer(
         <ShadowRenderer
