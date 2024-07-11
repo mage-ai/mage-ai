@@ -1,11 +1,12 @@
 import BlockNodeV2 from '../../Canvas/Nodes/BlockNodeV2';
-import { logMessageForRects } from '../../Canvas/utils/layout/shared';
+import { calculateBoundingBox, logMessageForRects } from '../../Canvas/utils/layout/shared';
 import { transformRects } from '../../Canvas/utils/rect';
 import {
   ItemTypeEnum, LayoutConfigDirectionEnum, LayoutConfigDirectionOriginEnum, LayoutDisplayEnum, LayoutStyleEnum,
 } from '../../Canvas/types';
 import BlockType from '@interfaces/BlockType';
 import CanvasContainer, { GRID_SIZE } from './index.style';
+import LineManagerV2 from './Lines/LineManagerV2';
 import DragWrapper from '../../Canvas/Nodes/DragWrapper';
 import HeaderUpdater from '../../Layout/Header/Updater';
 import PipelineExecutionFrameworkType,
@@ -27,8 +28,10 @@ import { buildDependencies } from './utils/pipelines';
 import { createRef, useEffect, useMemo, useRef, useState, useCallback } from 'react';
 import { getCache } from '@mana/components/Menu/storage';
 import { useMutate } from '@context/APIMutation';
-import { indexBy } from '@utils/array';
+import { indexBy, unique } from '@utils/array';
 import { getNewUUID } from '@utils/string';
+
+const GROUP_NODE_PADDING = 16;
 
 type ModelsType = Record<string, {
   blocks: BlockType[];
@@ -100,6 +103,7 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
     defaultLayoutConfig({
       direction: LayoutConfigDirectionEnum.HORIZONTAL,
       display: LayoutDisplayEnum.SIMPLE,
+      rectTransformations: [],
       style: LayoutStyleEnum.WAVE,
     }),
     defaultLayoutConfig({
@@ -391,8 +395,9 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
       //   }
       // });
 
-      console.log(`start:\n${logMessageForRects(rects)}`);
-      console.log(rects);
+      // console.log(`start:\n${logMessageForRects(rects)}`);
+      // console.log(rects);
+
       const transformations = buildRectTransformations({
         layoutConfig: layoutConfigsRef.current?.[selectedGroupsRef.current?.length - 1],
         selectedGroup: selectedGroupsRef.current?.[selectedGroupsRef.current?.length - 1],
@@ -485,6 +490,29 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
     return arr;
   }, [blocks, groups, rectsMapping]);
 
+  const selectedGroupRect = useMemo(() => {
+    const selectedGroup = selectedGroupsRef?.current?.[selectedGroupsRef?.current?.length - 1];
+    const currentGroupChildrenIDs = selectedGroup?.items?.map(item => item.uuid);
+    const rectsInGroup = currentGroupChildrenIDs?.map(id => rectsMapping?.[id]) ?? [];
+    const groupBlock = groupMappingRef?.current?.[selectedGroup?.uuid];
+    const groupRect = {
+      ...calculateBoundingBox(rectsInGroup),
+      block: groupBlock,
+      id: groupBlock?.uuid,
+      type: ItemTypeEnum.NODE,
+      upstream: unique(
+        rectsInGroup?.flatMap(r => r.upstream ?? []),
+        r => r.id
+      )?.filter(up => !currentGroupChildrenIDs?.includes(up.id)),
+    };
+    groupRect.left -= GROUP_NODE_PADDING;
+    groupRect.top -= GROUP_NODE_PADDING;
+    groupRect.width += GROUP_NODE_PADDING * 2;
+    groupRect.height += GROUP_NODE_PADDING * 2;
+
+    return groupRect;
+  }, [rectsMapping]);
+
   return (
     <div
       ref={wrapperRef}
@@ -517,6 +545,8 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
             >
               {nodesMemo}
               {renderer}
+
+              <LineManagerV2 rectsMapping={rectsMapping} selectedGroupRect={selectedGroupRect} />
             </ModelProvider>
           </SettingsProvider>
         </CanvasContainer>

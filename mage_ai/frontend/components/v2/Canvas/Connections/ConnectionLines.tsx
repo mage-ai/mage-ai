@@ -1,10 +1,10 @@
 import React from 'react';
 import styles from '@styles/scss/apps/Canvas/Pipelines/Builder.module.scss';
 import { motion } from 'framer-motion';
-import { NodeItemType } from '../interfaces';
+import { RectType } from '@mana/shared/interfaces';
 
 export function linePathKey(linePaths: Record<string, LinePathType>): string {
-  const arr = Object.values(linePaths ?? {})?.flatMap(lps => lps.flatMap(p => p.key))
+  const arr = Object.values(linePaths ?? {})?.map(lp => lp.key);
   return arr.filter(Boolean).sort().join('--')
 }
 
@@ -12,8 +12,8 @@ export type LinePathType = {
   id: string;
   key: string;
   paths: React.ReactNode[];
-  source?: NodeItemType;
-  target?: NodeItemType;
+  source?: RectType;
+  target?: RectType;
 };
 
 type ConnectionLinesProps = {
@@ -22,7 +22,7 @@ type ConnectionLinesProps = {
   zIndex?: number;
 };
 
-const LinesComponent: React.FC<ConnectionLinesProps> = ({
+export const ConnectionLines: React.FC<ConnectionLinesProps> = ({
   id,
   linePaths,
   zIndex,
@@ -73,5 +73,3 @@ function areEqual(prevProps, nextProps) {
     keys1 === keys2
   );
 }
-
-export const ConnectionLines = React.memo(LinesComponent, areEqual);

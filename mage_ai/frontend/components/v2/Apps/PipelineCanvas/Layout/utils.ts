@@ -66,8 +66,6 @@ export function buildRectTransformations({
 
   DEBUG.rects && console.log('buildRectTransformations', layoutConfig, selectedGroup);
 
-  const layoutStyleTransformations = [];
-
   const shiftHorizontal = (factor: number = 2) => (rects: RectType[]) => Math.max(
     40,
     validateFiniteNumber(typeof window !== 'undefined'
@@ -123,22 +121,6 @@ export function buildRectTransformations({
     }),
     type: TransformRectTypeEnum.LAYOUT_SPIRAL,
   };
-
-  if (layoutConfig?.rectTransformations) {
-    layoutConfig?.rectTransformations?.forEach(({
-      type,
-    }) => {
-      if (TransformRectTypeEnum.LAYOUT_TREE === type) {
-        layoutStyleTransformations.push(tree);
-      } else if (TransformRectTypeEnum.LAYOUT_WAVE === type) {
-        layoutStyleTransformations.push(wave);
-      } else if (TransformRectTypeEnum.LAYOUT_GRID === type) {
-        layoutStyleTransformations.push(grid);
-      } else if (TransformRectTypeEnum.LAYOUT_SPIRAL === type) {
-        layoutStyleTransformations.push(spiral);
-      }
-    });
-  }
 
   const conditionHeight = (rects: RectType[]) => {
     const box = calculateBoundingBox(rects);
@@ -350,6 +332,8 @@ export function buildRectTransformations({
   }
 
   DEBUG.rects && console.log('transformers', transformers);
+
+  transformers.push(...(layoutConfig?.rectTransformations ?? []));
 
   return transformers;
 }

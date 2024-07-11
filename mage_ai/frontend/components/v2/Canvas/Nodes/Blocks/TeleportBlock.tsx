@@ -44,8 +44,8 @@ export default function TeleportGroup({
     downstreamInGroup,
     upstreamInGroup,
   } = getUpDownstreamColors(block, groupsInLevel, blocksByGroupRef?.current, {
-    blockMapping: blockMappingRef?.current ?? {},
-    groupMapping: groupMappingRef?.current ?? {},
+    blockMapping: blockMappingRef?.current,
+    groupMapping: groupMappingRef?.current,
   });
 
   const isup = upstreamInGroup?.length > 0;

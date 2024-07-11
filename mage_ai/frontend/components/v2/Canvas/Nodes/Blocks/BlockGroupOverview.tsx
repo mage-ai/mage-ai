@@ -21,11 +21,12 @@ type BlockOverviewProps = {
 export default function BlockGroupOverview({
   block,
 }: BlockOverviewProps) {
+  const { blockMappingRef, blocksByGroupRef, groupMappingRef } = useContext(ModelContext);
   const { layoutConfigs, selectedGroupsRef } = useContext(SettingsContext);
   const layoutConfig = layoutConfigs?.current?.[selectedGroupsRef?.current?.length - 1];
   const detailLayout = LayoutDisplayEnum.DETAILED === layoutConfig?.current?.display;
+
   const { configuration, description, uuid } = block;
-  const { blockMappingRef, blocksByGroupRef, groupMappingRef } = useContext(ModelContext);
   const groups = 'children' in (block ?? {}) ? (block as { children: any[] }).children : [];
 
   const templatesForGroup = useMemo(() => (configuration as any)?.templates ?? {}, [configuration]);
