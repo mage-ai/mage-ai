@@ -23,10 +23,13 @@ export interface ShadowNodeType {
   component: React.ReactNode;
   data?: any;
   id: string;
+  maxAttempts?: number;
   onCapture?: (node: ShadowNodeType, data: NodeData, element: HTMLElement) => void,
+  pollInterval?: number;
   ref?: React.MutableRefObject<HTMLElement>;
   shouldCapture?: (node: ShadowNodeType, element: HTMLElement) => boolean;
   targetRef?: (node: ShadowNodeType) => React.MutableRefObject<HTMLElement>;
+  waitUntil?: (node: ShadowNodeType) => boolean;
 }
 
 interface ShadowRendererType {
@@ -45,7 +48,7 @@ export function ShadowRenderer({
   handleDataCapture,
   handleNodeTransfer,
   maxAttempts = 10,
-  pollInterval = 100,
+  pollInterval = 50,
   uuid,
   waitUntil,
 }: ShadowRendererType) {
@@ -88,7 +91,7 @@ export function ShadowRenderer({
     );
 
     if (attemptsRef.current < maxAttempts && (!waitUntil || waitUntil(nodes))) {
-      attemptsRef.current = maxAttempts;
+      attemptsRef.current = null;
 
       DEBUG.hooks.shadow && console.log(
         `[shadow:${uuid}:${renderRef.current}] rendering:`,
@@ -124,13 +127,23 @@ export function ShadowRenderer({
       return;
     }
 
-    if (attemptsRef.current < maxAttempts) {
+    if (attemptsRef.current !== null && attemptsRef.current < maxAttempts) {
       timeoutRef.current = setTimeout(render, pollInterval);
+    }
+
+    if (attemptsRef.current !== null && attemptsRef.current >= maxAttempts) {
+      console.error(
+        `[shadow:${uuid}:${renderRef.current}] failed to render within ${attemptsRef.current} attempts:`,
+        nodes?.length,
+        nodes?.map(n => n.id)
+      );
     }
   }, [uuid, handleDataCapture, handleNodeTransfer, nodes, waitUntil, maxAttempts, pollInterval]);
 
-  clearTimeout(timeoutRef.current);
-  timeoutRef.current = setTimeout(render, pollInterval);
+  useEffect(() => {
+    clearTimeout(timeoutRef.current);
+    timeoutRef.current = setTimeout(render, pollInterval);
+  }, [render, pollInterval]);
 
   return main;
 }
@@ -143,19 +156,29 @@ function ShadowContainer({ nodes, handleDataCapture, handleNodeTransfer, uuid }:
 }): any {
   const completedNodesRefs = useRef<Record<string, NodeData>>({});
   const containerRef = useRef<HTMLDivElement>(null);
+
+  const attemptsRef = useRef<Record<string, number>>({});
+
   const timeoutTargetRefs = useRef<Record<string, any>>({});
+  const timeoutWaitUntilRefs = useRef<Record<string, any>>({});
   const timeoutRefs = useRef<Record<string, any>>({});
 
   useEffect(() => {
     const timeoutTargets = Object.values(timeoutTargetRefs.current ?? {}) ?? [];
+    const timeoutWaitUntils = Object.values(timeoutWaitUntilRefs.current ?? {}) ?? [];
     const timeouts = Object.values(timeoutRefs.current ?? {}) ?? [];
 
     return () => {
+      attemptsRef.current = {};
       completedNodesRefs.current = {};
       containerRef.current = null;
+
       timeoutTargets?.forEach(clearTimeout);
+      timeoutWaitUntils?.forEach(clearTimeout);
       timeouts?.forEach(clearTimeout);
+
       timeoutTargetRefs.current = {};
+      timeoutWaitUntilRefs.current = {};
       timeoutRefs.current = {};
     };
   }, []);
@@ -209,7 +232,12 @@ function ShadowContainer({ nodes, handleDataCapture, handleNodeTransfer, uuid }:
             }
           });
 
-          handleNodeTransfer && handleNodeTransfer?.(node, data, element)
+          if (handleNodeTransfer) {
+            DEBUG.hooks.shadow && console.log(
+              `[hook:${uuid}] handleNodeTransfer:`, data.rect, elementRef.current,
+            );
+            handleNodeTransfer?.(node, data, element);
+          }
         };
 
         if (targetRef ?? false) {
@@ -236,13 +264,50 @@ function ShadowContainer({ nodes, handleDataCapture, handleNodeTransfer, uuid }:
             <WithOnMount
               key={[node.id, uuid].filter(Boolean).join(':')}
               onMount={(ref) => {
-                const { shouldCapture } = node;
-                const element = node.ref ? node.ref.current : ref.current;
-                const capture = !shouldCapture || shouldCapture(node, element);
-                if (capture) {
-                  DEBUG.hooks.shadow && console.log(`[hook:${uuid}:${node.id}] onMount:`, capture, element);
-                  captureData(node, element);
-                }
+                const {
+                  maxAttempts = 10,
+                  pollInterval = 50,
+                  shouldCapture,
+                  waitUntil,
+                } = node;
+                attemptsRef.current[node.id] = 0;
+
+                const process = () => {
+                  attemptsRef.current[node.id] += 1;
+                  clearTimeout(timeoutWaitUntilRefs.current[node.id]);
+                  timeoutWaitUntilRefs.current[node.id] = null;
+
+                  if (attemptsRef.current[node.id] < maxAttempts && (!waitUntil || waitUntil(node))) {
+                    attemptsRef.current[node.id] = null;
+
+                    const element = node.ref ? node.ref.current : ref.current;
+                    const capture = !shouldCapture || shouldCapture(node, element);
+                    if (capture) {
+                      DEBUG.hooks.shadow && console.log(`[hook:${uuid}:${node.id}] onMount:`, capture, element);
+                      captureData(node, element);
+                    }
+
+                    return;
+                  }
+
+                  if (attemptsRef.current[node.id] !== null
+                    && attemptsRef.current[node.id] < maxAttempts) {
+                    timeoutWaitUntilRefs.current[node.id] = setTimeout(process, pollInterval);
+                    return;
+                  }
+
+                  if (attemptsRef.current[node.id] !== null
+                    && attemptsRef.current[node.id] >= maxAttempts) {
+                    console.error(
+                      `[hook:${uuid}] failed to wait for ${node.id} attempts:`,
+                      attemptsRef.current[node.id],
+                    );
+                  }
+                };
+
+                timeoutWaitUntilRefs.current[node.id] = setTimeout(
+                  process, waitUntil ? pollInterval : 0,
+                );
               }}
               uuid={uuid}
               withRef={!node.ref}

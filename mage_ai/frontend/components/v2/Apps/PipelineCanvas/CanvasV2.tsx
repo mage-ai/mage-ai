@@ -220,6 +220,7 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
         return valid;
       },
       targetRef: (node: ShadowNodeType) => dragRefs.current[node.id],
+      waitUntil: (node: ShadowNodeType) => dragRefs.current?.[node.id]?.current !== null,
     };
   }
 
@@ -378,10 +379,11 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
           handleDataCapture={({ data, id }, { rect }) => {
             updateRects({ [id]: { data, rect } });
           }}
+          handleNodeTransfer={(node: ShadowNodeType) => {
+            readyToEnterRef.current[node.id] = true;
+          }}
           nodes={shadowNodes}
           uuid={getNewUUID(3, 'clock')}
-          waitUntil={(nodes: ShadowNodeType[]) => nodes?.length > 0
-            && nodes?.every(({ id }) => !!dragRefs.current?.[id]?.current)}
         />
       )
     }
@@ -700,30 +702,24 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
         }
 
         arr.push(
-          <WithOnMount
+          <DragWrapper
+            // draggable={draggable}
+            // droppable={droppable}
+            // droppableItemTypes={droppableItemTypes}
+            // eventHandlers={eventHandlers}
+            // handleDrop={handleDrop}
+            item={{
+              block,
+              id: block.uuid,
+              type: nodeType,
+            } as NodeType}
             key={block.uuid}
-            onMount={() => {
-              readyToEnterRef.current[block.uuid] = true;
+            rect={rectsMapping?.[block.uuid] ?? {
+              left: undefined,
+              top: undefined,
             }}
-          >
-            <DragWrapper
-              // draggable={draggable}
-              // droppable={droppable}
-              // droppableItemTypes={droppableItemTypes}
-              // eventHandlers={eventHandlers}
-              // handleDrop={handleDrop}
-              item={{
-                block,
-                id: block.uuid,
-                type: nodeType,
-              } as NodeType}
-              rect={rectsMapping?.[block.uuid] ?? {
-                left: undefined,
-                top: undefined,
-              }}
-              ref={dragRef}
-            />
-          </WithOnMount>
+            ref={dragRef}
+          />
         );
       });
     });
