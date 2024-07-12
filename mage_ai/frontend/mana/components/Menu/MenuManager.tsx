@@ -5,49 +5,44 @@ import { createPortal } from 'react-dom';
 import { getAbsoluteRect } from '@mana/shared/utils';
 import { LayoutDirectionEnum } from '@mana/components/Menu/types';
 
-function MenuManager({
-  children,
-  className,
-  contained,
-  direction = LayoutDirectionEnum.LEFT,
-  getItems,
-  items,
-  open: openProp,
-  openItems,
-  handleOpen,
-  isOpen,
-  uuid,
-}: {
-  children: React.ReactNode;
-  className?: string;
+type UseMenuManagerProps = {
   contained?: boolean;
   direction?: LayoutDirectionEnum;
-  getItems?: () => MenuItemType[];
-  items?: MenuItemType[];
-  open?: boolean;
-  openItems?: {
-    column: number;
-    row: number;
-  }[];
-  isOpen?: boolean;
-  handleOpen?: (value: boolean | ((prev: boolean) => boolean), levelToClose: number) => void;
+  onClose?: (level: number) => void;
+  ref?: React.RefObject<HTMLDivElement>;
   uuid: string;
-}, ref: React.Ref<HTMLDivElement>) {
+};
+
+export function useMenuManager({
+  contained,
+  direction = LayoutDirectionEnum.LEFT,
+  onClose,
+  ref,
+  uuid,
+}: UseMenuManagerProps) {
   const {
     portalRef,
     useMenu,
   } = useContext(MenuContext);
+
   const containerInternalRef = useRef<HTMLDivElement | null>(null);
   const containerRef = (ref || containerInternalRef) as React.RefObject<HTMLDivElement>;
   const { contextMenu, showMenu, hideMenu } = useMenu({
     containerRef,
     uuid,
   });
-  const [openInternal, setOpenState] = useState(openProp);
-  const open = useMemo(() => isOpen ?? openInternal, [openInternal, isOpen]);
 
-  useEffect(() => {
-    if (open) {
+  const handleToggleMenu = useCallback(({
+    items,
+    openItems,
+  }: {
+    items?: MenuItemType[];
+    openItems?: {
+      column: number;
+      row: number;
+    }[];
+  }) => {
+    if ((items?.length ?? 0) > 0) {
       const rectAbsolute = containerRef?.current?.getBoundingClientRect();
       const {
         parents,
@@ -60,16 +55,10 @@ function MenuManager({
       //   top: rectAbsolute?.top - parent?.top,
       // };
 
-      showMenu(getItems ? getItems() : items, {
+      showMenu(items, {
         // contained,
         direction,
-        onClose: (level: number) => {
-          if (handleOpen) {
-            handleOpen(level === 0, level);
-          } else if (level === 0) {
-            setOpenState(false);
-          }
-        },
+        onClose,
         openItems,
         position: rectAbsolute,
         rects: {
@@ -86,15 +75,75 @@ function MenuManager({
           },
         },
       });
-    } else if (!open) {
+    } else {
       hideMenu();
     }
-  }, [contained, containerRef,
-    hideMenu, open, getItems, items, showMenu, direction, handleOpen, openItems]);
+  }, [
+    containerRef,
+    direction,
+    hideMenu,
+    onClose,
+    showMenu,
+  ]);
+
+  return {
+    containerRef,
+    handleToggleMenu,
+    menu: contained ? contextMenu : createPortal(contextMenu, portalRef.current),
+  };
+}
+
+function MenuManager({
+  children,
+  className,
+  items,
+  open: openProp,
+  openItems,
+  handleOpen,
+  isOpen,
+  ...rest
+}: UseMenuManagerProps & {
+  children: React.ReactNode;
+  className?: string;
+  contained?: boolean;
+  items?: MenuItemType[];
+  open?: boolean;
+  openItems?: {
+    column: number;
+    row: number;
+  }[];
+  isOpen?: boolean;
+  handleOpen?: (value: boolean | ((prev: boolean) => boolean), levelToClose: number) => void;
+}, ref: React.RefObject<HTMLDivElement>) {
+  const [openInternal, setOpenState] = useState(openProp);
+  const open = useMemo(() => isOpen ?? openInternal, [openInternal, isOpen]);
+
+  const {
+    containerRef,
+    handleToggleMenu,
+    menu,
+  } = useMenuManager({
+    onClose: (level: number) => {
+      if (handleOpen) {
+        handleOpen(level === 0, level);
+      } else if (level === 0) {
+        setOpenState(false);
+      }
+    },
+    ref,
+    ...rest,
+  });
+
+  useEffect(() => {
+    handleToggleMenu({
+      items: open ? items : null,
+      openItems,
+    });
+  }, [handleToggleMenu, handleOpen, items, openItems, open]);
 
   return (
     <>
-      {contained ? contextMenu : createPortal(contextMenu, portalRef.current)}
+      {menu}
       <div
         className={className}
         onClick={(event) => {

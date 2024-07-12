@@ -105,3 +105,40 @@
 .path {
   @include svg.fill-stroke-colors();
 }
+
+@mixin animating {
+  height: 100vh;
+  object-fit: contain;
+  overflow: hidden;
+  width: 100vw;
+}
+
+.planesWrapper {
+  height: 0;
+  left: 0;
+  pointer-events: none;
+  position: absolute;
+  top: 0;
+  width: 0;
+}
+
+.idle {
+  @include hide;
+}
+
+.entering {
+  @include animating;
+  @include show;
+
+  z-index: 4;
+}
+
+.exit {
+  @include animating;
+}
+
+.exiting {
+  @include show;
+
+  z-index: 5;
+}

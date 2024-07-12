@@ -15,7 +15,7 @@ export default function PipelineBuilder({ loading, ...props }: BuilderCanvasProp
 }) {
   const canvasRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-  const disabledRef = useRef(false);
+  const disabledRef = useRef(true);
   const handlePanning = useRef<
     (
       event: MouseEvent,
@@ -82,60 +82,60 @@ export default function PipelineBuilder({ loading, ...props }: BuilderCanvasProp
     ['dropEnabled', dropEnabled],
   );
 
-  useEffect(() => {
-    const handleMouseDown = (event: MouseEvent) => {
-      if (shouldPassControl(event as ClientEventType)) return;
-      removeContextMenu(event as ClientEventType, { conditionally: true });
+  // useEffect(() => {
+  //   const handleMouseDown = (event: MouseEvent) => {
+  //     if (shouldPassControl(event as ClientEventType)) return;
+  //     removeContextMenu(event as ClientEventType, { conditionally: true });
 
-      const targetElement = event.target as HTMLElement;
-      const hasRole = [dragEnabled && ElementRoleEnum.DRAGGABLE]
-        .filter(Boolean)
-        .some(role => targetElement.closest(`[role="${role}"]`));
+  //     const targetElement = event.target as HTMLElement;
+  //     const hasRole = [dragEnabled && ElementRoleEnum.DRAGGABLE]
+  //       .filter(Boolean)
+  //       .some(role => targetElement.closest(`[role="${role}"]`));
 
-      DEBUG.dragging && console.log('handleMouseDown', targetElement, hasRole);
-      if (hasRole) {
-        // For some reason, we need to do this or else you can’t drag anything.
-        setZoomPanDisabled(true);
-        setDragEnabled(true);
-        setDragEnabled(true);
-      }
-    };
+  //     DEBUG.dragging && console.log('handleMouseDown', targetElement, hasRole);
+  //     if (hasRole) {
+  //       // For some reason, we need to do this or else you can’t drag anything.
+  //       setZoomPanDisabled(true);
+  //       setDragEnabled(true);
+  //       setDragEnabled(true);
+  //     }
+  //   };
 
-    const handleMouseUp = (event: MouseEvent) => {
-      // Always do this or else there will be situations where it’s never reset.
+  //   const handleMouseUp = (event: MouseEvent) => {
+  //     // Always do this or else there will be situations where it’s never reset.
 
-      if (shouldPassControl(event as ClientEventType)) return;
+  //     if (shouldPassControl(event as ClientEventType)) return;
 
-      const targetElement = event.target as HTMLElement;
-      const hasRole = [
-        dragEnabled && ElementRoleEnum.DRAGGABLE,
-        dropEnabled && ElementRoleEnum.DROPPABLE,
-      ]
-        .filter(Boolean)
-        .some(role => targetElement.closest(`[role="${role}"]`));
+  //     const targetElement = event.target as HTMLElement;
+  //     const hasRole = [
+  //       dragEnabled && ElementRoleEnum.DRAGGABLE,
+  //       dropEnabled && ElementRoleEnum.DROPPABLE,
+  //     ]
+  //       .filter(Boolean)
+  //       .some(role => targetElement.closest(`[role="${role}"]`));
 
-      if (hasRole) {
-        setZoomPanDisabled(false);
-        setDragEnabled(false);
-        setDropEnabled(false);
-      }
-    };
+  //     if (hasRole) {
+  //       setZoomPanDisabled(false);
+  //       setDragEnabled(false);
+  //       setDropEnabled(false);
+  //     }
+  //   };
 
-    const canvasElement = canvasRef.current;
+  //   const canvasElement = canvasRef.current;
 
-    if (canvasElement) {
-      canvasElement.addEventListener('mousedown', handleMouseDown);
-      canvasElement.addEventListener('mouseup', handleMouseUp);
-    }
+  //   if (canvasElement) {
+  //     canvasElement.addEventListener('mousedown', handleMouseDown);
+  //     canvasElement.addEventListener('mouseup', handleMouseUp);
+  //   }
 
-    return () => {
-      if (canvasElement) {
-        canvasElement.removeEventListener('mousedown', handleMouseDown);
-        canvasElement.removeEventListener('mouseup', handleMouseUp);
-      }
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dragEnabled, dropEnabled]);
+  //   return () => {
+  //     if (canvasElement) {
+  //       canvasElement.removeEventListener('mousedown', handleMouseDown);
+  //       canvasElement.removeEventListener('mouseup', handleMouseUp);
+  //     }
+  //   };
+  //   // eslint-disable-next-line react-hooks/exhaustive-deps
+  // }, [dragEnabled, dropEnabled]);
 
   return (
     <>

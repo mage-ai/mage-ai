@@ -2,7 +2,7 @@ import Button, { ButtonProps } from '@mana/elements/Button';
 import DashedDivider from '@mana/elements/Divider/DashedDivider';
 import Grid from '@mana/components/Grid';
 import Link from '@mana/elements/Link';
-import MenuManager from '@mana/components/Menu/MenuManager';
+import { useMenuManager } from '@mana/components/Menu/MenuManager';
 import Text from '@mana/elements/Text';
 import stylesHeader from '@styles/scss/layouts/Header/Header.module.scss';
 import stylesNavigation from '@styles/scss/components/Menu/NavigationButtonGroup.module.scss';
@@ -31,39 +31,13 @@ export default function NavigationButtonGroup({
   groups: groupsProp,
 }: NavigationButtonGroupProps) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const [selectedButtonIndex, setSelectedButtonIndex] = useState<number>(null);
+  const selectedButtonIndexRef = useRef<number | null>(null);
   const [selectedGroupsByLevel, setSelectedGroupsByLevel] =
     useState<MenuGroupType[]>(cacheKey ? (getCache(cacheKey) ?? []) : []);
 
   const { deregisterCommands, registerCommands } = useKeyboardShortcuts({
     target: containerRef,
   });
-
-  useEffect(() => {
-    registerCommands({
-      open: {
-        handler: () => {
-          if (selectedButtonIndex === null) {
-            let index = 0;
-            if (selectedGroupsByLevel?.length >= 1) {
-              index = selectedGroupsByLevel?.length - 1;
-            }
-            setSelectedButtonIndex(index);
-          }
-        },
-        predicate: {
-          key: KeyEnum.ARROWDOWN,
-          metaKey: true,
-        },
-      },
-    }, {
-      uuid: 'NavigationButtonGroup',
-    });
-
-    return () => {
-      deregisterCommands();
-    }
-  }, [selectedButtonIndex, deregisterCommands, registerCommands, selectedGroupsByLevel]);
 
   const handleSelectGroup = useCallback((
     event: MouseEvent,
@@ -93,7 +67,7 @@ export default function NavigationButtonGroup({
 
     handleGroupSelection(event, items);
 
-    setSelectedButtonIndex(null);
+    selectedButtonIndexRef.current = null;
   }, [cacheKey, selectedGroupsByLevel]);
 
   const groups = useMemo(() => buildGroups
@@ -117,6 +91,70 @@ export default function NavigationButtonGroup({
   useAppEventsHandler({} as any, {
     [CustomAppEventEnum.UPDATE_HEADER_NAVIGATION]: handleNavigationUpdate,
   });
+
+  const {
+    handleToggleMenu,
+    menu,
+  } = useMenuManager({
+    direction: LayoutDirectionEnum.RIGHT,
+    onClose: (levelToClose: number) => {
+      if (levelToClose === 0) {
+        handleToggleMenu({ items: null, openItems: null });
+      }
+    },
+    ref: containerRef,
+    uuid: `NavigationButtonGroup-${cacheKey}`,
+  });
+
+  const openMenu = useCallback((idx?: number) => {
+    const selectedButtonIndex = (idx ?? selectedButtonIndexRef.current) <= selectedGroupsByLevel?.length
+      ? idx ?? selectedButtonIndexRef.current
+      : selectedGroupsByLevel?.length;
+    const currentGroup = selectedButtonIndex === null ? null : groups?.[0];
+    const openItems = selectedGroupsByLevel?.map(({ index: row, level: column }) => ({
+      column,
+      row,
+    }));
+    const itemsByLevel = [groups?.[0]?.items];
+    openItems?.reduce((prev: MenuItemType[], curr: { column: number, row: number }) => {
+      const arr = prev?.[curr?.row]?.items;
+      itemsByLevel.push(arr);
+      return arr;
+    }, itemsByLevel[0]);
+    const currentItems = itemsByLevel?.[selectedButtonIndex] ?? currentGroup?.items;
+
+    handleToggleMenu({
+      items: currentItems,
+      openItems: openItems?.slice(openItems?.length - 1),
+    });
+  }, [groups, handleToggleMenu, selectedGroupsByLevel]);
+
+  useEffect(() => {
+    registerCommands({
+      open: {
+        handler: () => {
+          if (selectedButtonIndexRef.current === null) {
+            let index = 0;
+            if (selectedGroupsByLevel?.length >= 1) {
+              index = selectedGroupsByLevel?.length - 1;
+            }
+            selectedButtonIndexRef.current = index;
+            openMenu();
+          }
+        },
+        predicate: {
+          key: KeyEnum.ARROWDOWN,
+          metaKey: true,
+        },
+      },
+    }, {
+      uuid: 'NavigationButtonGroup',
+    });
+
+    return () => {
+      deregisterCommands();
+    }
+  }, [deregisterCommands, openMenu, registerCommands, selectedGroupsByLevel]);
 
   const buttons = useMemo(() => {
     const defaultState = selectedGroupsByLevel === null;
@@ -165,8 +203,8 @@ export default function NavigationButtonGroup({
           onClick={(event: any) => {
             event.preventDefault();
             event.stopPropagation();
-            setSelectedButtonIndex(
-              idx <= selectedGroupsByLevel?.length ? idx : selectedGroupsByLevel?.length);
+            selectedButtonIndexRef.current = idx;
+            openMenu();
           }}
           secondary
           semibold={!done || beforeSelected}
@@ -201,65 +239,31 @@ export default function NavigationButtonGroup({
     });
 
     return inner;
-  }, [groups, selectedGroupsByLevel]);
-
-  const currentGroupToSelect = useMemo(() => {
-    const currentGroup = selectedButtonIndex === null ? null : groups?.[0];
-    const openItems = selectedGroupsByLevel?.map(({ index: row, level: column }) => ({
-      column,
-      row,
-    }));
-    const itemsByLevel = [groups?.[0]?.items];
-    openItems?.reduce((prev: MenuItemType[], curr: { column: number, row: number }) => {
-      const arr = prev?.[curr?.row]?.items;
-      itemsByLevel.push(arr);
-      return arr;
-    }, itemsByLevel[0]);
-    const currentItems = itemsByLevel?.[selectedButtonIndex] ?? currentGroup?.items;
-
-    return (
-      <MenuManager
-        direction={LayoutDirectionEnum.RIGHT}
-        handleOpen={(prev, levelToClose: number) => {
-          const previouslyOpen =
-            typeof prev === 'function' ? prev(selectedButtonIndex !== null) : prev;
-
-          if (previouslyOpen && levelToClose === 0) {
-            setSelectedButtonIndex(null);
-          }
-        }}
-        isOpen={!!currentGroup}
-        items={currentItems}
-        key={currentGroup?.uuid}
-        openItems={openItems?.slice(openItems?.length - 1)}
-        ref={containerRef}
-        uuid={currentGroup?.uuid}
-      >
-        <div
-          className={[
-            stylesHeader.button,
-            stylesNavigation.button,
-          ].join(' ')}
-          style={{
-            gridTemplateColumns: '',
-          }}
-        >
-          <Grid
-            alignItems="center"
-            autoColumns="min-content"
-            autoFlow="column"
-            height="100%"
-          >
-            {buttons}
-          </Grid >
-        </div>
-      </MenuManager>
-    );
-  }, [buttons, groups, selectedButtonIndex, selectedGroupsByLevel]);
+  }, [groups, openMenu, selectedGroupsByLevel]);
 
   return (
     <>
-      {currentGroupToSelect}
+      <div
+        className={[
+          stylesHeader.button,
+          stylesNavigation.button,
+        ].join(' ')}
+        ref={containerRef}
+        style={{
+          gridTemplateColumns: '',
+        }}
+      >
+        <Grid
+          alignItems="center"
+          autoColumns="min-content"
+          autoFlow="column"
+          height="100%"
+        >
+          {buttons}
+        </Grid >
+      </div>
+
+      {menu}
     </>
   );
 }

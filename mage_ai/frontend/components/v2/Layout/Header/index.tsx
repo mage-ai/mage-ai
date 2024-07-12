@@ -2,7 +2,6 @@ import Button, { ButtonProps } from '@mana/elements/Button';
 import DashedDivider from '@mana/elements/Divider/DashedDivider';
 import Grid from '@mana/components/Grid';
 import MageAvatar from '@mana/icons/avatars';
-import MenuManager from '@mana/components/Menu/MenuManager';
 import NavigationButtonGroup from '@mana/components/Menu/NavigationButtonGroup';
 import NavTag from '@mana/components/Tag/NavTag';
 import React, { createRef, useCallback, useMemo, useRef } from 'react';
