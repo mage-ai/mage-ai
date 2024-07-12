@@ -257,6 +257,7 @@
           "group": "Schedules and triggers",
           "icon": "clock",
           "pages": [
+            "orchestration/triggers/triggering-pipelines",
             "orchestration/triggers/configure-triggers-in-code",
             {
               "group": "Event triggers",
@@ -1090,6 +1091,10 @@
     {
       "source": "/guides/triggers/events/overview",
       "destination": "/orchestration/triggers/events/overview"
+    },
+    {
+      "source": "/guides/triggering-pipelines",
+      "destination": "/orchestration/triggers/triggering-pipelines"
     },
     {
       "source": "/guides/schedule-pipelines",
