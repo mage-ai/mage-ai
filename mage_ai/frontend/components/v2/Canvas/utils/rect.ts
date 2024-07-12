@@ -81,6 +81,7 @@ export function transformRects(
           'boundingBox',
           'layout',
           'offset',
+          'rect',
         ]),
         ignoreKeys(transformation, [
           'initialScope',
@@ -108,6 +109,14 @@ export function transformRects(
             offset.top,
             offset.width,
             offset.height,
+          ].map(format).join(', '),
+        } : {}),
+        (rectBase ? {
+          'rectBase': [
+            rectBase.left,
+            rectBase.top,
+            rectBase.width,
+            rectBase.height,
           ].map(format).join(', '),
         } : {}),
       ].flatMap(o => Object.entries(o ?? {}));

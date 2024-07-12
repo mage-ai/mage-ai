@@ -1,7 +1,7 @@
 import BlockNodeV2, { BADGE_HEIGHT, PADDING_VERTICAL } from '../../Canvas/Nodes/BlockNodeV2';
 import stylesPipelineBuilder from '@styles/scss/apps/Canvas/Pipelines/Builder.module.scss';
 import { motion, animate, useMotionValue, useMotionValueEvent, useTransform } from 'framer-motion';
-import { applyRectDiff, calculateBoundingBox, getRectDiff, logMessageForRects } from '../../Canvas/utils/layout/shared';
+import { applyRectDiff, calculateBoundingBox, getRectDiff, GROUP_NODE_PADDING } from '../../Canvas/utils/layout/shared';
 import { transformRects } from '../../Canvas/utils/rect';
 import {
   ItemTypeEnum, LayoutConfigDirectionEnum, LayoutConfigDirectionOriginEnum, LayoutDisplayEnum, LayoutStyleEnum,
@@ -34,9 +34,6 @@ import { getNewUUID } from '@utils/string';
 import { deepCopy, isEmptyObject } from '@utils/hash';
 import { WithOnMount } from '@mana/hooks/useWithOnMount';
 
-// https://framermotionexamples.com/example/the-animate-property-transform-origin
-// https://www.framer.com/motion/component/?via=cptv8##transform
-const GROUP_NODE_PADDING = 16;
 const ENTER_ANIMATION_START_THRESHOLD = 0.6;
 const ANIMATION_DURATION = 1;
 
@@ -272,8 +269,8 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
 
     scopeEnter.current.style.transformOrigin = '0px 0px';
 
-    const xorigin = (nextGroupRectCur?.left ?? 0) + (nextGroupRectCur?.width ?? 0);
-    const yorigin = (nextGroupRectCur?.top ?? 0) + (nextGroupRectCur?.height ?? 0);
+    const xorigin = (nextGroupRectCur?.left ?? 0);
+    const yorigin = (nextGroupRectCur?.top ?? 0);
     exitOriginX.current = xorigin;
     exitOriginY.current = yorigin;
     scopeExit.current.style.transformOrigin = `${xorigin}px ${yorigin}px`;
@@ -604,11 +601,12 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
       // console.log(`start:\n${logMessageForRects(rectsUse)}`);
       // console.log(rectsUse);
 
-      console.log(
-        '!!!!!!!!!!!!!!!!!!!!!',
-        groupRect,
-        group,
-      )
+      // console.log(
+      //   '!!!!!!!!!!!!!!!!!!!!!',
+      //   groupRect,
+      //   group,
+      // );
+
       const centerRect = phaseRef.current > 1
         ? groupRect ?? rectsUse?.find(r => r?.block?.uuid === group?.uuid)
         : null;

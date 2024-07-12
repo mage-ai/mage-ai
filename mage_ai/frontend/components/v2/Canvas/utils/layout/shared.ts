@@ -4,6 +4,8 @@ import { LayoutConfigDirectionEnum, LayoutConfigDirectionOriginEnum } from '../.
 import { validateFiniteNumber } from '@utils/number';
 import { padString } from '@utils/string';
 
+export const GROUP_NODE_PADDING = 16;
+
 export function isDebug() {
   return DEBUG.rects && false;
 }
@@ -11,17 +13,46 @@ export function isDebug() {
 export function centerRectOnScreen(boundingBox: RectType, rectBase: RectType, rects: RectType[]): RectType[] {
   if (boundingBox && rectBase) {
     const centerRect = rects.find(rect => rect.id === rectBase.id);
-    const xcenter = (validateFiniteNumber(boundingBox.width) - validateFiniteNumber(centerRect.width)) / 2;
-    const ycenter = (validateFiniteNumber(boundingBox.height) - validateFiniteNumber(centerRect.height)) / 2;
-    const xoff = xcenter - validateFiniteNumber(centerRect.left);
-    const yoff = ycenter - validateFiniteNumber(centerRect.top);
+
+    const {
+      left,
+      height,
+      top,
+      width,
+    } = centerRect
+    const xcenter = (boundingBox.width - width) / 2;
+    const ycenter = (boundingBox.height - height) / 2;
+
+    const xmin = Math.min(...rects.map(rect => rect.left));
+    const ymin = Math.min(...rects.map(rect => rect.top));
+
+    let xdistance = xcenter - left;
+    let ydistance = ycenter - top;
+
+    if (xmin + xdistance < GROUP_NODE_PADDING) {
+      xdistance = GROUP_NODE_PADDING - xmin;
+    }
+    if (ymin + ydistance < GROUP_NODE_PADDING) {
+      ydistance = GROUP_NODE_PADDING - ymin;
+    }
+
+    console.log(
+      centerRect,
+      [xcenter, boundingBox.width, width],
+      [ycenter, boundingBox.height, height],
+      xmin,
+      ymin,
+      [xdistance, xcenter, left],
+      [ydistance, ycenter, top],
+    )
 
     return rects.map(rect => ({
       ...rect,
-      left: (rect.left + xoff) - (rect.width / 2),
-      top: (rect.top + yoff) - (rect.height / 2),
+      left: rect.left + xdistance,
+      top: rect.top + ydistance,
     }));
   }
+
   return rects;
 }
 
