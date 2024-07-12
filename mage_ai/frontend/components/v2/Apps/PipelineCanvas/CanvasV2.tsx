@@ -1,6 +1,6 @@
 import BlockNodeV2, { BADGE_HEIGHT, PADDING_VERTICAL } from '../../Canvas/Nodes/BlockNodeV2';
 import stylesPipelineBuilder from '@styles/scss/apps/Canvas/Pipelines/Builder.module.scss';
-import { motion, animate, useMotionValue, useMotionValueEvent, useTransform } from 'framer-motion';
+import { motion, animate, useAnimation, useMotionValue, useMotionValueEvent, useTransform } from 'framer-motion';
 import { applyRectDiff, calculateBoundingBox, getRectDiff, GROUP_NODE_PADDING } from '../../Canvas/utils/layout/shared';
 import { transformRects } from '../../Canvas/utils/rect';
 import {
@@ -8,7 +8,7 @@ import {
 } from '../../Canvas/types';
 import BlockType from '@interfaces/BlockType';
 import CanvasContainer, { GRID_SIZE } from './index.style';
-import LineManagerV2 from './Lines/LineManagerV2';
+import LineManagerV2, { ANIMATION_DURATION as ANIMATION_DURATION_LINES, EASING } from './Lines/LineManagerV2';
 import DragWrapper from '../../Canvas/Nodes/DragWrapper';
 import HeaderUpdater from '../../Layout/Header/Updater';
 import PipelineExecutionFrameworkType,
@@ -36,6 +36,7 @@ import { WithOnMount } from '@mana/hooks/useWithOnMount';
 
 const ENTER_ANIMATION_START_THRESHOLD = 0.6;
 const ANIMATION_DURATION = 1;
+const INITIAL_ANIMATION_DURATION = 0.2;
 
 type ModelsType = Record<string, {
   blocks: BlockType[];
@@ -86,8 +87,12 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
   const timeoutRef = useRef(null);
   const readyToEnterRef = useRef<Record<string, boolean>>({});
 
-  const animationProgress = useMotionValue(1);
+  const [isAnimating, setIsAnimating] = useState(true);
+  const animationTimeoutRef = useRef(null);
+  const animationProgress = useMotionValue(0);
+  const animationInitialProgress = useMotionValue(0);
   const phaseRef = useRef(0);
+  const controlsForLines = useAnimation();
 
   const scaleExit = useTransform(() => {
     const val = animationProgress.get();
@@ -97,6 +102,11 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
     const val = animationProgress.get();
     return 1 - val;
   });
+
+  const opacityInit = useTransform(() => animationInitialProgress.get());
+  const scaleInit = useTransform(() => 0.8 + (0.2 * animationInitialProgress.get()));
+  const translateXInit = useTransform(() => 0 * GROUP_NODE_PADDING * (1 - animationInitialProgress.get()));
+  const translateYInit = useTransform(() => 0 * GROUP_NODE_PADDING * (1 - animationInitialProgress.get()));
 
   const opacityEnter = useTransform(() => {
     const val = animationProgress.get();
@@ -224,6 +234,60 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
     };
   }
 
+  function handleLineTransitions() {
+    controlsForLines.start(({
+      index,
+      isOutput,
+    }) => ({
+      ease: EASING,
+      opacity: 1,
+      pathLength: 1,
+      transition: {
+        delay: (index * ANIMATION_DURATION_LINES) + (isOutput ? 1 : 0.5),
+        duration: isOutput ? 0.1 : ANIMATION_DURATION_LINES * ((100 - index) / 100),
+      },
+    }));
+  }
+
+  function resetLineTransitions() {
+    controlsForLines.set({ opacity: 0, pathLength: 0 });
+  }
+
+  function handleInitialTransition(
+    currentGroupUUID: string,
+    rectsMap: Record<string, RectType>,
+    groupsPrev: MenuGroupType[],
+    groupsNext: MenuGroupType[],
+  ) {
+    const nextGroupRectCur = rectsMap?.[currentGroupUUID];
+    const xorigin = (nextGroupRectCur?.left ?? 0);
+    const yorigin = (nextGroupRectCur?.top ?? 0);
+    exitOriginX.current = xorigin;
+    exitOriginY.current = yorigin;
+    scopeEnter.current.style.transformOrigin = `${xorigin}px ${yorigin}px`;
+
+    resetLineTransitions();
+
+    animationInitialProgress.set(0);
+    animate(animationInitialProgress, 1, {
+      delay: 1,
+      duration: INITIAL_ANIMATION_DURATION,
+      onUpdate: (latest) => {
+        if (latest >= 1) {
+          scopeEnter.current.style.opacity = '';
+          scopeEnter.current.style.transform = '';
+          scopeEnter.current.style.transformOrigin = '';
+
+          animationTimeoutRef.current = setTimeout(() => {
+            setIsAnimating(false);
+          }, INITIAL_ANIMATION_DURATION);
+
+          handleLineTransitions();
+        }
+      },
+    });
+  }
+
   function handleTransitions(
     currentGroupUUID: string,
     rectsMap: Record<string, RectType>,
@@ -233,7 +297,7 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
     const prevCount = groupsPrev?.length ?? 0;
     const nextCount = groupsNext?.length ?? 0;
 
-    const nextGroupRectCur = rectsMap?.[currentGroupUUID]
+    const nextGroupRectCur = rectsMap?.[currentGroupUUID];
 
     if (prevCount === nextCount) {
       // Going into a sibling: switching (sibling teleport blocks)
@@ -288,16 +352,31 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
       scopeExit.current.style.transformOrigin,
     );
 
+    resetLineTransitions();
+    setIsAnimating(true);
+
     animationProgress.set(0);
     animate(animationProgress, 1, {
       duration: ANIMATION_DURATION,
       onUpdate: (latest) => {
         if (latest >= 1) {
+          clone.remove();
+
           scopeEnter.current.classList.remove(stylesPipelineBuilder.entering);
+          scopeEnter.current.style.opacity = '';
+          scopeEnter.current.style.transform = '';
+          scopeEnter.current.style.transformOrigin = '';
+
           scopeExit.current.classList.add(stylesPipelineBuilder.idle);
           scopeExit.current.classList.remove(stylesPipelineBuilder.exiting);
+
           wrapperRef.current.classList.remove(stylesPipelineBuilder.waiting);
-          clone.remove();
+
+          animationTimeoutRef.current = setTimeout(() => {
+            setIsAnimating(false);
+          }, ANIMATION_DURATION);
+
+          handleLineTransitions();
         }
       },
     });
@@ -347,7 +426,14 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
     blocksRef.current = blocks;
     groupsRef.current = groups;
 
-    if (phaseRef.current >= 1) {
+    if (phaseRef.current === 0) {
+      handleInitialTransition(
+        currentGroup?.uuid,
+        rectsMappingRef.current,
+        prevGroups,
+        selectedGroupsRef.current,
+      );
+    } else {
       handleTransitions(
         currentGroup?.uuid,
         rectsMappingRef.current,
@@ -609,9 +695,7 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
       //   group,
       // );
 
-      const centerRect = phaseRef.current > 1
-        ? groupRect ?? rectsUse?.find(r => r?.block?.uuid === group?.uuid)
-        : null;
+      const centerRect = groupRect ?? rectsUse?.find(r => r?.block?.uuid === group?.uuid);
 
       const transformations = buildRectTransformations({
         centerRect,
@@ -681,7 +765,20 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
         pipeline,
       });
     }
-  }, [defaultGroups, framework, pipeline])
+  }, [defaultGroups, framework, pipeline]);
+
+  // Cleanup
+  useEffect(() => {
+    const animationTimeout = animationTimeoutRef.current;
+    const timeout = timeoutRef.current;
+
+    return () => {
+      clearTimeout(animationTimeout);
+      clearTimeout(timeout);
+      animationTimeoutRef.current = null;
+      timeoutRef.current = null;
+    };
+  }, []);
 
   const blocks = useMemo(() => models?.blocks ?? [], [models?.blocks]);
   const groups = useMemo(() => models?.groups ?? [], [models?.groups]);
@@ -849,9 +946,9 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
         </DragWrapper>
       </WithOnMount>
     );
-  }, [selectedGroupRect])
+  }, [selectedGroupRect]);
 
-  useMotionValueEvent(animationProgress, 'change', (latest) => {
+  function handleMotionValueChange(latest: number, initial?: boolean) {
     const uuid = selectedGroupsRef.current?.[selectedGroupsRef.current?.length - 1]?.uuid;
     const rect1 = rectsMapping?.[uuid];
     const rect2 = rectsMappingRef?.current?.[uuid]
@@ -869,14 +966,16 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
       // x = left - (width / 2);
       // y = top - (height / 2);
 
-      const factor = latest < ENTER_ANIMATION_START_THRESHOLD ? 0 : 1;
-      const val = (scaleExit.get() / 2) * factor;
+      if (!initial) {
+        const factor = latest < ENTER_ANIMATION_START_THRESHOLD ? 0 : 1;
+        const val = (scaleExit.get() / 2) * factor;
 
-      // transform for translating
-      x = exitOriginX.current - left;
-      y = exitOriginY.current - top;
-      translateXEnter.set(x * (1 - val));
-      translateYEnter.set(y * (1 - val));
+        // transform for translating
+        x = (exitOriginX.current ?? 0) - left;
+        y = (exitOriginY.current ?? 0) - top;
+        translateXEnter.set(x * (1 - val));
+        translateYEnter.set(y * (1 - val));
+      }
 
       scopeEnter.current.style.transformOrigin = `${left ?? 0}px ${top ?? 0}px`;
     }
@@ -898,7 +997,10 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
     if ((x ?? false) && (y ?? false) && count1 >= countToMatch) {
       wrapperRef.current.classList.remove(stylesPipelineBuilder.waiting);
     }
-  });
+  }
+
+  useMotionValueEvent(animationInitialProgress, 'change', latest => handleMotionValueChange(latest, true));
+  useMotionValueEvent(animationProgress, 'change', handleMotionValueChange);
 
   return (
     <div
@@ -936,20 +1038,30 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
                   stylesPipelineBuilder.planesWrapper,
                   stylesPipelineBuilder.enter,
                 ].join(' ')}
-                initial={false}
                 ref={scopeEnter}
-                style={{
-                  opacity: phaseRef.current <= 1 ? 1 : opacityEnter,
-                  scale: phaseRef.current <= 1 ? 1 : scaleEnter,
-                  translateX: phaseRef.current <= 1 ? 0 : translateXEnter,
-                  translateY: phaseRef.current <= 1 ? 0 : translateYEnter,
-                }}
+                style={phaseRef.current < 2
+                  ? {
+                    opacity: opacityInit,
+                    scale: scaleInit,
+                    translateX: translateXInit,
+                    translateY: translateYInit,
+                  }
+                  : isAnimating
+                    ? {
+                      opacity: opacityEnter,
+                      scale: scaleEnter,
+                      translateX: translateXEnter,
+                      translateY: translateYEnter,
+                    }
+                    : {}
+                }
               >
                 <div>
                   {nodesMemo}
                   {selectedGroupNode}
 
                   <LineManagerV2
+                    controls={controlsForLines}
                     rectsMapping={rectsMapping}
                     selectedGroupRect={selectedGroupRect}
                   />
@@ -976,7 +1088,7 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
       </div>
 
       {headerData && <HeaderUpdater {...headerData as any} />}
-    </div>
+    </div >
   );
 }
 

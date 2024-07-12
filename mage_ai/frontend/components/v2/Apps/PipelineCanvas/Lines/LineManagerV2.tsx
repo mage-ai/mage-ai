@@ -1,6 +1,6 @@
 import React, { createRef, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { getUpDownstreamColors } from '../../../Canvas/Nodes/Blocks/utils';
-import stylesBuilder from '@styles/scss/apps/Canvas/Pipelines/Builder.module.scss';
+import stylesPipelineBuilder from '@styles/scss/apps/Canvas/Pipelines/Builder.module.scss';
 import { ModelContext } from '../ModelManager/ModelContext';
 import { cubicBezier, motion, useAnimation, useAnimate } from 'framer-motion';
 import { SettingsContext } from '../SettingsManager/SettingsContext';
@@ -23,7 +23,8 @@ import { ignoreKeys, objectSize, selectKeys } from '@utils/hash';
 import { calculateBoundingBox } from '@components/v2/Canvas/utils/layout/shared';
 import { FrameworkType } from '@interfaces/PipelineExecutionFramework/interfaces';
 
-export const GROUP_NODE_PADDING = 16;
+export const EASING = cubicBezier(.35, .17, .3, .86);
+export const ANIMATION_DURATION = 0.2;
 const BASE_Z_INDEX = 1;
 const ORDER = {
   [ItemTypeEnum.NODE]: 0,
@@ -36,14 +37,23 @@ function getLineID(upstream: string, downstream: string) {
 }
 
 export default function LineManagerV2({
+  animate,
+  controls: controlsProp,
   rectsMapping,
   selectedGroupRect,
+  visible,
 }: {
+  animate?: boolean;
+  controls?: any;
   rectsMapping: Record<string, RectType>;
   selectedGroupRect: RectType;
+  visible?: boolean;
 }) {
   const { blockMappingRef, blocksByGroupRef, groupMappingRef, outputsRef } = useContext(ModelContext);
   const { layoutConfigsRef, selectedGroupsRef } = useContext(SettingsContext);
+
+  const controls = useAnimation();
+  const timeoutRef = useRef<any>(null);
 
   function getLayoutConfig() {
     const layoutConfig = layoutConfigsRef?.current?.[selectedGroupsRef?.current?.length - 1];
@@ -62,7 +72,7 @@ export default function LineManagerV2({
   const [linesNode, setLinesNode] = useState<Record<string, LinePathType[]>>({});
   const [linesOutput, setLinesOutput] = useState<Record<string, LinePathType[]>>({});
 
-  function prepareLinePathProps(
+  const prepareLinePathProps = useCallback((
     rectup: RectType,
     rectdn: RectType,
     opts?: {
@@ -70,7 +80,7 @@ export default function LineManagerV2({
       display?: LayoutConfigType['display'];
       style?: LayoutConfigType['style'];
     },
-  ) {
+  ) => {
     const lineID = getLineID(rectup.id, rectdn.id);
     // console.log(lineID, rectup, rectdn, opts)
 
@@ -160,7 +170,8 @@ export default function LineManagerV2({
       lineID,
       toRect,
     };
-  }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   function renderPaths(pairsByType: {
     [ItemTypeEnum.BLOCK]?: [RectType, RectType][],
@@ -216,7 +227,7 @@ export default function LineManagerV2({
     });
   }
 
-  function renderLine(
+  const renderLine = useCallback((
     rectup: RectType,
     rectdn: RectType,
     index: number,
@@ -225,7 +236,7 @@ export default function LineManagerV2({
       display?: LayoutConfigType['display'];
       style?: LayoutConfigType['style'];
     },
-  ): LinePathType {
+  ): LinePathType => {
     const paths = [];
 
     const {
@@ -264,11 +275,13 @@ export default function LineManagerV2({
     const lineRef = lineRefs.current[rectdn.type][lineID];
 
     if (lineRef?.current) {
-      lineRef?.current?.classList?.remove(stylesBuilder.exit);
+      lineRef?.current?.classList?.remove(stylesPipelineBuilder.exit);
     }
 
     paths.push(
       <motion.path
+        animate={controlsProp ?? controls}
+        className={stylesPipelineBuilder.path}
         custom={{
           index,
           isOutput,
@@ -277,6 +290,10 @@ export default function LineManagerV2({
         data-index={index}
         fill="none"
         id={lineID}
+        initial={{
+          opacity: 0,
+          pathLength: 0,
+        }}
         key={lineID}
         ref={lineRef}
         stroke={colors?.length >= 2
@@ -301,7 +318,7 @@ export default function LineManagerV2({
       source: rectup,
       target: rectdn,
     };
-  }
+  }, [controls, controlsProp, prepareLinePathProps]);
 
   const updateLines = useCallback((
     mapping: Record<string, RectType>,
@@ -413,11 +430,59 @@ export default function LineManagerV2({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const startAnimating = useCallback(() => {
+    if (animate) {
+      controls.stop();
+      controls.set({
+        opacity: 0,
+        pathLength: 0,
+      });
+
+      timeoutRef.current = setTimeout(() => {
+        clearTimeout(timeoutRef.current);
+        timeoutRef.current = null;
+
+        controls.set({
+          opacity: 0,
+          pathLength: 0,
+        });
+        controls.start(({
+          index,
+          isOutput,
+        }) => ({
+          ease: EASING,
+          opacity: 1,
+          pathLength: 1,
+          transition: {
+            delay: (index * ANIMATION_DURATION) + (isOutput ? 1 : 0.5),
+            duration: isOutput ? 0.1 : ANIMATION_DURATION * ((100 - index) / 100),
+          },
+        }));
+      }, 100);
+    } else {
+      controls.set({
+        opacity: 1,
+        pathLength: 1,
+      });
+    }
+  }, [animate, controls]);
+
   useEffect(() => {
     updateLines(rectsMapping, selectedGroupRect, {
       replace: true,
     });
-  }, [rectsMapping, selectedGroupRect, updateLines]);
+
+    if (visible && !controlsProp) {
+      startAnimating();
+    }
+
+    const timeout = timeoutRef.current;
+
+    return () => {
+      clearTimeout(timeout);
+      timeoutRef.current = null;
+    };
+  }, [controlsProp, rectsMapping, selectedGroupRect, startAnimating, updateLines, visible]);
 
   return (
     <>

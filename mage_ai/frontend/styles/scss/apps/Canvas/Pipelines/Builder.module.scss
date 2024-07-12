@@ -102,14 +102,12 @@
   }
 }
 
-.path {
-  @include svg.fill-stroke-colors();
-}
 
 @mixin animating {
   height: 100vh;
   object-fit: contain;
   overflow: hidden;
+  position: absolute;
   width: 100vw;
 }
 
@@ -121,11 +119,14 @@
   }
 }
 
+.path {
+  @include svg.fill-stroke-colors();
+}
+
 .planesWrapper {
   height: 0;
   left: 0;
   pointer-events: none;
-  position: absolute;
   top: 0;
   width: 0;
 }
