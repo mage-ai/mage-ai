@@ -1093,10 +1093,6 @@
       "destination": "/orchestration/triggers/events/overview"
     },
     {
-      "source": "/guides/triggering-pipelines",
-      "destination": "/orchestration/triggers/triggering-pipelines"
-    },
-    {
       "source": "/guides/schedule-pipelines",
       "destination": "/orchestration/triggers/schedule-pipelines"
     },
