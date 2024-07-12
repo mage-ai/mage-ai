@@ -39,6 +39,20 @@ export default function NavigationButtonGroup({
     target: containerRef,
   });
 
+  const {
+    handleToggleMenu,
+    menu,
+  } = useMenuManager({
+    direction: LayoutDirectionEnum.RIGHT,
+    onClose: (levelToClose: number) => {
+      if (levelToClose === 0) {
+        handleToggleMenu({ items: null, openItems: null });
+      }
+    },
+    ref: containerRef,
+    uuid: `NavigationButtonGroup-${cacheKey}`,
+  });
+
   const handleSelectGroup = useCallback((
     event: MouseEvent,
     item: MenuGroupType,
@@ -66,9 +80,9 @@ export default function NavigationButtonGroup({
     }
 
     handleGroupSelection(event, items);
-
     selectedButtonIndexRef.current = null;
-  }, [cacheKey, selectedGroupsByLevel]);
+    handleToggleMenu({ items: null, openItems: null });
+  }, [cacheKey, handleToggleMenu, selectedGroupsByLevel]);
 
   const groups = useMemo(() => buildGroups
     ? buildGroups(handleSelectGroup)
@@ -90,20 +104,6 @@ export default function NavigationButtonGroup({
 
   useAppEventsHandler({} as any, {
     [CustomAppEventEnum.UPDATE_HEADER_NAVIGATION]: handleNavigationUpdate,
-  });
-
-  const {
-    handleToggleMenu,
-    menu,
-  } = useMenuManager({
-    direction: LayoutDirectionEnum.RIGHT,
-    onClose: (levelToClose: number) => {
-      if (levelToClose === 0) {
-        handleToggleMenu({ items: null, openItems: null });
-      }
-    },
-    ref: containerRef,
-    uuid: `NavigationButtonGroup-${cacheKey}`,
   });
 
   const openMenu = useCallback((idx?: number) => {

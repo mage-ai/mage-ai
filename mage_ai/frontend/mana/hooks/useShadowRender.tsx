@@ -32,6 +32,7 @@ export interface ShadowNodeType {
 interface ShadowRendererType {
   nodes: ShadowNodeType[];
   handleDataCapture: (node: ShadowNodeType, data: NodeData) => void;
+  handleNodeTransfer?: (node: ShadowNodeType, data: NodeData, element: HTMLElement) => void;
   maxAttempts?: number;
   pollInterval?: number;
   renderNode?: (node: ShadowNodeType) => React.ReactNode | null;
@@ -42,6 +43,7 @@ interface ShadowRendererType {
 export function ShadowRenderer({
   nodes,
   handleDataCapture,
+  handleNodeTransfer,
   maxAttempts = 10,
   pollInterval = 100,
   uuid,
@@ -112,6 +114,7 @@ export function ShadowRenderer({
 
           <ShadowContainer
             handleDataCapture={handleDataCapture}
+            handleNodeTransfer={handleNodeTransfer}
             nodes={nodes}
             uuid={uuid}
           />
@@ -124,7 +127,7 @@ export function ShadowRenderer({
     if (attemptsRef.current < maxAttempts) {
       timeoutRef.current = setTimeout(render, pollInterval);
     }
-  }, [uuid, handleDataCapture, nodes, waitUntil, maxAttempts, pollInterval]);
+  }, [uuid, handleDataCapture, handleNodeTransfer, nodes, waitUntil, maxAttempts, pollInterval]);
 
   clearTimeout(timeoutRef.current);
   timeoutRef.current = setTimeout(render, pollInterval);
@@ -132,9 +135,10 @@ export function ShadowRenderer({
   return main;
 }
 
-function ShadowContainer({ nodes, handleDataCapture, uuid }: {
+function ShadowContainer({ nodes, handleDataCapture, handleNodeTransfer, uuid }: {
   nodes: ShadowRendererType['nodes'];
   handleDataCapture: ShadowRendererType['handleDataCapture'];
+  handleNodeTransfer?: ShadowRendererType['handleNodeTransfer'];
   uuid?: string;
 }): any {
   const completedNodesRefs = useRef<Record<string, NodeData>>({});
@@ -204,6 +208,8 @@ function ShadowContainer({ nodes, handleDataCapture, uuid }: {
               elementRef.current.replaceChildren(child.firstChild);
             }
           });
+
+          handleNodeTransfer && handleNodeTransfer?.(node, data, element)
         };
 
         if (targetRef ?? false) {
@@ -249,7 +255,7 @@ function ShadowContainer({ nodes, handleDataCapture, uuid }: {
         })}
       </div>
     );
-  }, [handleDataCapture, nodes, uuid]);
+  }, [handleDataCapture, handleNodeTransfer, nodes, uuid]);
 
 
   return containerMemo;

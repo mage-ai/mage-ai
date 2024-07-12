@@ -67,6 +67,7 @@ export enum RectTransformationScopeEnum {
 export enum TransformRectTypeEnum {
   ALIGN_CHILDREN = 'align_children',
   ALIGN_WITHIN_VIEWPORT = 'align_within_viewport',
+  CENTER = 'center',
   FIT_TO_CHILDREN = 'fit_to_children',
   FIT_TO_SELF = 'fit_to_self',
   GRID = 'grid',

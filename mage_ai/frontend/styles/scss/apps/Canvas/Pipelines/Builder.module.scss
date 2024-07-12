@@ -113,6 +113,14 @@
   width: 100vw;
 }
 
+.wrapper {
+  &.waiting {
+    .enter {
+      @include hide;
+    }
+  }
+}
+
 .planesWrapper {
   height: 0;
   left: 0;

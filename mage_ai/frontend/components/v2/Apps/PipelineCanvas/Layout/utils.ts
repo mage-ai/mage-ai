@@ -52,10 +52,12 @@ export function hydrateBlockNodeRects(
 }
 
 export function buildRectTransformations({
+  centerRect,
   disableAlignments,
   layoutConfig,
   selectedGroup,
 }: {
+  centerRect?: RectType;
   disableAlignments?: boolean;
   layoutConfig?: LayoutConfigType;
   selectedGroup?: MenuGroupType;
@@ -180,11 +182,13 @@ export function buildRectTransformations({
     return conditionallySwitchDirections(pattern ?? [wave]);
   };
 
+  const boundingBox = viewportRef?.current?.getBoundingClientRect();
+
   const viewportAlignment = [
     {
       condition: conditionWidth,
       options: () => ({
-        boundingBox: viewportRef?.current?.getBoundingClientRect(),
+        boundingBox,
         layout: { direction: LayoutConfigDirectionEnum.HORIZONTAL },
       }),
       type: TransformRectTypeEnum.ALIGN_WITHIN_VIEWPORT,
@@ -192,7 +196,7 @@ export function buildRectTransformations({
     {
       condition: conditionHeight,
       options: () => ({
-        boundingBox: viewportRef?.current?.getBoundingClientRect(),
+        boundingBox,
         layout: { direction: LayoutConfigDirectionEnum.VERTICAL },
       }),
       type: TransformRectTypeEnum.ALIGN_WITHIN_VIEWPORT,
@@ -265,7 +269,7 @@ export function buildRectTransformations({
             // If the top of the rect is less than 5% of the viewport height
             (rect.top / viewportRef?.current?.getBoundingClientRect()?.height) < 0.05,
           options: (rects: RectType[]) => ({
-            boundingBox: viewportRef?.current?.getBoundingClientRect(),
+            boundingBox,
             offset: { top: shiftVertical(0.5)(rects) },
           }),
           scope: RectTransformationScopeEnum.SELF,
@@ -276,7 +280,7 @@ export function buildRectTransformations({
             // If the top of the rect is more than 95% of the viewport height
             (rect.top / viewportRef?.current?.getBoundingClientRect()?.height) > 0.95,
           options: (rects: RectType[]) => ({
-            boundingBox: viewportRef?.current?.getBoundingClientRect(),
+            boundingBox,
             offset: { top: shiftVertical(-0.5)(rects) },
           }),
           scope: RectTransformationScopeEnum.SELF,
@@ -287,7 +291,7 @@ export function buildRectTransformations({
             // If the left of the rect is less than 5% of the viewport width
             (rect.left / viewportRef?.current?.getBoundingClientRect()?.width) < 0.05,
           options: (rects: RectType[]) => ({
-            boundingBox: viewportRef?.current?.getBoundingClientRect(),
+            boundingBox,
             offset: { left: shiftHorizontal(0.5)(rects) },
           }),
           scope: RectTransformationScopeEnum.SELF,
@@ -298,7 +302,7 @@ export function buildRectTransformations({
             // If the left of the rect is more than 95% of the viewport width
             (rect.left / viewportRef?.current?.getBoundingClientRect()?.width) > 0.95,
           options: (rects: RectType[]) => ({
-            boundingBox: viewportRef?.current?.getBoundingClientRect(),
+            boundingBox,
             offset: { left: shiftHorizontal(-0.5)(rects) },
           }),
           scope: RectTransformationScopeEnum.SELF,
@@ -351,6 +355,16 @@ export function buildRectTransformations({
   }
 
   transformers.push(...(layoutConfig?.rectTransformations ?? []));
+
+  if (centerRect) {
+    transformers.push({
+      options: () => ({
+        boundingBox,
+        rect: centerRect,
+      }),
+      type: TransformRectTypeEnum.CENTER,
+    } as RectTransformationType);
+  }
 
   return transformers;
 }

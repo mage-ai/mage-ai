@@ -3,7 +3,7 @@ import tree from './layout/tree';
 import update from 'immutability-helper';
 import wave from './layout/wave';
 import { DEBUG } from '@components/v2/utils/debug';
-import { DEFAULT_LAYOUT_CONFIG, formatKeyValue, logMessageForRects } from './layout/shared';
+import { DEFAULT_LAYOUT_CONFIG, centerRectOnScreen, formatKeyValue, logMessageForRects } from './layout/shared';
 import { DragItem, LayoutConfigType, NodeItemType, NodeType, RectType, RectTransformationType } from '../interfaces';
 import { LayoutConfigDirectionEnum, TransformRectTypeEnum, RectTransformationScopeEnum } from '../types';
 import { applyRectDiff, getRectDiff } from './layout/shared';
@@ -28,7 +28,10 @@ export type SetupOpts = {
   level?: number;
 };
 
-export function transformRects(rectsInit: RectType[], transformations: RectTransformationType[]): RectType[] {
+export function transformRects(
+  rectsInit: RectType[],
+  transformations: RectTransformationType[],
+): RectType[] {
   const rectsByStage = [deepCopy(rectsInit)];
 
   transformations.forEach((transformation, stageNumber: number) => {
@@ -308,6 +311,10 @@ export function transformRects(rectsInit: RectType[], transformations: RectTrans
           width: width1 < widthd ? widthd : width1,
         };
       });
+    } else if (TransformRectTypeEnum.CENTER === type) {
+      if (boundingBox && rectBase) {
+        rects = centerRectOnScreen(boundingBox, rectBase, deepCopyArray(rects));
+      }
     } else if (transform) {
       rects = transform(deepCopyArray(rects));
     }

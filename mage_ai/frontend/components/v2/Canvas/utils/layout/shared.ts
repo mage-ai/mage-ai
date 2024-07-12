@@ -8,6 +8,23 @@ export function isDebug() {
   return DEBUG.rects && false;
 }
 
+export function centerRectOnScreen(boundingBox: RectType, rectBase: RectType, rects: RectType[]): RectType[] {
+  if (boundingBox && rectBase) {
+    const centerRect = rects.find(rect => rect.id === rectBase.id);
+    const xcenter = (validateFiniteNumber(boundingBox.width) - validateFiniteNumber(centerRect.width)) / 2;
+    const ycenter = (validateFiniteNumber(boundingBox.height) - validateFiniteNumber(centerRect.height)) / 2;
+    const xoff = xcenter - validateFiniteNumber(centerRect.left);
+    const yoff = ycenter - validateFiniteNumber(centerRect.top);
+
+    return rects.map(rect => ({
+      ...rect,
+      left: (rect.left + xoff) - (rect.width / 2),
+      top: (rect.top + yoff) - (rect.height / 2),
+    }));
+  }
+  return rects;
+}
+
 export const DEFAULT_LAYOUT_CONFIG: LayoutConfigType = {
   direction: LayoutConfigDirectionEnum.HORIZONTAL,
   gap: {
