@@ -8,7 +8,7 @@ import useAppEventsHandler, { CustomAppEvent, CustomAppEventEnum } from '../useA
 import { ConnectionLines, LinePathType, linePathKey } from '../../../Canvas/Connections/ConnectionLines';
 import {
   LayoutStyleEnum,
-  ItemStatusEnum, LayoutDisplayEnum, LayoutConfigDirectionEnum, ItemTypeEnum
+  ItemStatusEnum, LayoutDisplayEnum, LayoutConfigDirectionEnum, ItemTypeEnum,
 } from '../../../Canvas/types';
 import { LayoutConfigType, RectType, OutputNodeType } from '@components/v2/Canvas/interfaces';
 import { getBlockColor } from '@mana/themes/blocks';
@@ -30,7 +30,7 @@ const ORDER = {
   [ItemTypeEnum.NODE]: 0,
   [ItemTypeEnum.BLOCK]: 1,
   [ItemTypeEnum.OUTPUT]: 1,
-}
+};
 
 function getLineID(upstream: string, downstream: string) {
   return [upstream, downstream].join('->');
@@ -134,10 +134,28 @@ export default function LineManagerV2({
       // rectdn is above rect
       positions[LayoutConfigDirectionEnum.VERTICAL] = ['top', 'bottom'];
       positions[LayoutConfigDirectionEnum.HORIZONTAL] = ['right', 'bottom'];
+
+      // if downstream rect’s left is within the upstream’s left and right
+      if (rectdn.left > rectup.left && rectdn.left < rectup.left + rectup.width) {
+        positions[LayoutConfigDirectionEnum.VERTICAL][1] = 'left';
+      }
+
+      if (rectdn.left > rectup.left + rectup.width) {
+        positions[LayoutConfigDirectionEnum.HORIZONTAL][1] = 'left';
+      }
     } else if (rectdn.top > rectup.top) {
       // rectdn is below rect
       positions[LayoutConfigDirectionEnum.VERTICAL] = ['bottom', 'top'];
       positions[LayoutConfigDirectionEnum.HORIZONTAL] = ['right', 'top'];
+
+      // if downstream rect’s left is within the upstream’s left and right
+      if (rectdn.left > rectup.left && rectdn.left < rectup.left + rectup.width) {
+        positions[LayoutConfigDirectionEnum.VERTICAL][1] = 'left';
+      }
+
+      if (rectdn.left > rectup.left + rectup.width) {
+        positions[LayoutConfigDirectionEnum.HORIZONTAL][1] = 'left';
+      }
     }
 
     if (rectdn.left < rectup.left) {
@@ -194,13 +212,13 @@ export default function LineManagerV2({
           LayoutConfigDirectionEnum.VERTICAL === getLayoutConfig()?.direction
             ? pair[0]?.top
             : pair[0]?.left,
-        ].join('_')
+        ].join('_');
       })?.forEach(
         ([rectup, rectdn], index: number) => {
           const linePath = renderLine(rectup, rectdn, index, getLayoutConfig());
 
-          paths[type][rectup.id] ||= []
-          paths[type][rectup.id].push(linePath)
+          paths[type][rectup.id] ||= [];
+          paths[type][rectup.id].push(linePath);
         });
     });
 
@@ -265,7 +283,7 @@ export default function LineManagerV2({
               style={{ stopColor: `var(--colors-${colors[0]})`, stopOpacity: 1 }}
             />
           </linearGradient>
-        </defs>
+        </defs>,
       );
     }
 
@@ -303,7 +321,7 @@ export default function LineManagerV2({
         style={{
           strokeWidth: isOutput ? 2 : 1.5,
         }}
-      />
+      />,
     );
 
     const keys = ['left', 'top', 'width', 'height'];
@@ -332,7 +350,7 @@ export default function LineManagerV2({
     } as any;
 
     const selectedGroup = selectedGroupsRef?.current?.[selectedGroupsRef?.current?.length - 1];
-    const groupRect = groupRectArg ?? mapping?.[selectedGroup?.id]
+    const groupRect = groupRectArg ?? mapping?.[selectedGroup?.id];
 
     const blocksInGroup = Object.values(blocksByGroupRef?.current?.[groupRect?.id] ?? {}) ?? [];
     const currentGroupChildrenIDs =
@@ -416,7 +434,7 @@ export default function LineManagerV2({
           // Don’t draw lines if blocks aren’t in the same active group.
           if (!(blockdn as any)?.groups?.some(
             (guuid: GroupUUIDEnum) => block2?.groups?.includes(guuid)
-              && (!selectedGroup || selectedGroup?.uuid === guuid)
+              && (!selectedGroup || selectedGroup?.uuid === guuid),
           )) {
             return;
           }

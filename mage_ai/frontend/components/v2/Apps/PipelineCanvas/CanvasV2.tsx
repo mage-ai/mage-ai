@@ -862,11 +862,11 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
   const updateLocalResources = useCallback((pipelineArg: PipelineExecutionFrameworkType) => {
     const { blocksByGroup, blockMapping, groupMapping, groupsByLevel } =
       buildDependencies(framework, pipelineArg);
-    blocksByGroupRef.current = blocksByGroup;
-    blockMappingRef.current = blockMapping;
-    groupMappingRef.current = groupMapping;
-    groupsByLevelRef.current = groupsByLevel;
-  }, [framework]);
+      blocksByGroupRef.current = blocksByGroup;
+      blockMappingRef.current = blockMapping;
+      groupMappingRef.current = groupMapping;
+      groupsByLevelRef.current = groupsByLevel;
+    }, [framework]);
 
   const pipelineMutants = useMutate({
     id: pipelineUUID,
@@ -882,6 +882,7 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
           setPipeline(p1);
           if (p1?.blocks?.length !== p2?.blocks?.length) {
             updateLocalResources(p1);
+            renderLayoutUpdates();
           }
         },
       },
@@ -1085,7 +1086,7 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
       const transformations = buildRectTransformations({
         centerRect,
         conditionalDirections: (blocks?.length ?? 0) === 0,
-        disableAlignments: true,
+        disableAlignments: !!centerRect,
         layoutConfig,
         selectedGroup,
       });
