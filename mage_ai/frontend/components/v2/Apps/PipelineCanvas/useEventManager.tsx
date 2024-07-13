@@ -365,7 +365,7 @@ export default function useEventManager({
 
     const applyTransform = (
       event: React.MouseEvent<HTMLButtonElement>,
-      currentTransform: { translate: number[]; scale: number }
+      currentTransform: { translate: number[]; scale: number },
     ) => {
       const pageX = event.pageX;
       const pageY = event.pageY;
@@ -381,7 +381,7 @@ export default function useEventManager({
     };
 
 
-    const [x1, y1] = applyTransform(event, parseTransform(transformState?.current?.transform?.current)).translate
+    const [x1, y1] = applyTransform(event, parseTransform(transformState?.current?.transform?.current)).translate;
     const rect = rects?.length >= 1 ? findRectAtPoint(x1, y1, rects) : null;
 
     const target = rect ? rect.item : null;
@@ -397,7 +397,7 @@ export default function useEventManager({
             dispatchAppEvent(CustomAppEventEnum.CLOSE_OUTPUT, {
               event,
               node: target.node,
-              output: target
+              output: target,
             });
           },
           uuid: 'Close output',
@@ -537,13 +537,13 @@ export default function useEventManager({
                     rectTransformations: [{
                       type: value as TransformRectTypeEnum,
                     }],
-                  }
+                  },
                 });
                 removeContextMenu(event);
               },
               uuid,
             };
-          })
+          }),
         ],
         uuid: 'Customize block layout',
       },
@@ -569,7 +569,8 @@ export default function useEventManager({
     if (target) {
       if (ItemTypeEnum.NODE === target?.type) {
         const block = target?.block;
-        const selectedUUID = selectedGroupsRef?.current[selectedGroupsRef?.current?.length - 1]?.uuid;
+        const selectedUUID =
+          selectedGroupsRef?.current[selectedGroupsRef?.current?.length - 1]?.uuid;
 
         if (block?.uuid !== selectedUUID) {
           menuItems.unshift(...[

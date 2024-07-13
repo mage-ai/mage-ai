@@ -29,7 +29,7 @@ export const DEBUG = {
     block: false,
     node: false,
   },
-  rects: true,
+  rects: false,
   rendering: false,
   settings: {
     manager: false,

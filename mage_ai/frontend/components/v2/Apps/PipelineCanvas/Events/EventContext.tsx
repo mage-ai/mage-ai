@@ -2,6 +2,8 @@ import React, { createContext } from 'react';
 import { ClientEventType } from '@mana/shared/interfaces';
 import { MenuItemType } from '@mana/components/Menu/interfaces';
 import { RenderContextMenuOptions, RemoveContextMenuType } from '@mana/hooks/useContextMenu';
+import { FrameworkType } from '@interfaces/PipelineExecutionFramework/interfaces';
+import BlockType from '@interfaces/BlockType';
 
 interface EventContextType {
   handleContextMenu?: (
@@ -9,6 +11,7 @@ interface EventContextType {
   ) => void;
   handleMouseDown: (event: MouseEvent) => void;
   removeContextMenu: RemoveContextMenuType;
+  setSelectedGroup: (group: FrameworkType | BlockType) => void;
 }
 
 export const EventContext = createContext<EventContextType | undefined>(undefined);

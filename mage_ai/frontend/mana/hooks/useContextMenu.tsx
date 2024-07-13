@@ -14,6 +14,7 @@ export type RenderContextMenuOptions = {
   openItems?: MenuProps['openItems'];
   position?: MenuProps['position'];
   rects?: MenuProps['rects'];
+  reduceItems?: (newItems: MenuItemType[], existingItems: MenuItemType[]) => MenuItemType[];
 };
 
 export type RenderContextMenuType = (
@@ -65,7 +66,7 @@ export default function useContextMenu({
   } = useKeyboardNavigation({
     itemFilter: keyboardNavigationItemFilter,
     target: contextMenuRootRef,
-  })
+  });
 
   const themeContext = useContext(ThemeContext);
 
@@ -86,7 +87,7 @@ export default function useContextMenu({
   }
 
   function hideMenu() {
-    contextMenuRootRef?.current?.render([])
+    contextMenuRootRef?.current?.render([]);
   }
 
   function showMenu(
@@ -145,7 +146,7 @@ export default function useContextMenu({
           standardMenu={useAsStandardMenu}
           uuid={uuid}
         />
-      </ThemeProvider>
+      </ThemeProvider>,
     );
 
     if (!contextMenuRootRef?.current) {

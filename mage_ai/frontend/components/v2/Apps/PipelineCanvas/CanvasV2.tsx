@@ -781,6 +781,31 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
     phaseRef.current += 1;
   });
 
+  function setSelectedGroup(block: FrameworkType) {
+    const groups = [...(selectedGroupsRef.current ?? [])];
+    const parentIndex =
+      groups?.findIndex(g => !!(g as any).children?.find(i => i.uuid === block?.uuid));
+
+    let index = null;
+    let parent = null;
+    let groups2 = [...groups];
+    if (parentIndex >= 0) {
+      groups2 = groups2.slice(0, parentIndex + 1);
+      parent = groups[parentIndex];
+      index = parent.children.findIndex(i => i.uuid === block?.uuid);
+    }
+
+    setSelectedGroupsRef.current([
+      ...groups2,
+      {
+        groups: parent ? [parent] : [],
+        index,
+        level: groups2?.length ?? 0,
+        uuid: block?.uuid,
+      },
+    ]);
+  }
+
   function renderLayoutUpdates(callbackBeforeUpdateState?: () => void) {
     const currentGroup = getCurrentGroup();
     const siblingGroups = getCurrentGroupSiblings();
@@ -1304,7 +1329,7 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
 
     removeContextMenu(event);
 
-    renderContextMenu(event, items ?? [
+    let menuItems = [
       {
         Icon: SearchV2,
         items: [
@@ -1364,7 +1389,18 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
         },
         uuid: 'Save pipeline as image',
       },
-    ], {
+    ] as MenuItemType[];
+
+    const { reduceItems } = opts ?? {};
+    if (items) {
+      if (reduceItems) {
+        menuItems = reduceItems(items, menuItems);
+      } else {
+        menuItems = [...items];
+      }
+    }
+
+    renderContextMenu(event, menuItems, {
       ...opts,
       rects: {
         bounding: wrapperRef.current.getBoundingClientRect(),
@@ -1458,6 +1494,7 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
                 handleContextMenu={handleContextMenu}
                 handleMouseDown={handleMouseDown}
                 removeContextMenu={removeContextMenu}
+                setSelectedGroup={setSelectedGroup}
               >
                 <motion.div
                   className={[

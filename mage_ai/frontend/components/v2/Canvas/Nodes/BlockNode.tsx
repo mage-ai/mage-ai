@@ -38,7 +38,6 @@ import { groupValidation } from './Blocks/utils';
 import { handleGroupTemplateSelect, menuItemsForTemplates } from './utils';
 import { isEmptyObject } from '@utils/hash';
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
-import { EventContext } from '../../Apps/PipelineCanvas/Events/EventContext';
 import { ElementRoleEnum } from '@mana/shared/types';
 
 export const BADGE_HEIGHT = 37;

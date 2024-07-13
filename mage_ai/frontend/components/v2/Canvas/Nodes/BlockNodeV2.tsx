@@ -1,7 +1,9 @@
 import BlockNodeComponent, { BlockNodeProps, BADGE_HEIGHT, PADDING_VERTICAL } from './BlockNode';
+import { EventContext } from '../../Apps/PipelineCanvas/Events/EventContext';
+import { OpenInSidekick } from '@mana/icons';
 import stylesBlockNode from '@styles/scss/components/Canvas/Nodes/BlockNode.module.scss';
 import BlockType from '@interfaces/BlockType';
-import React, { useCallback, useRef } from 'react';
+import React, { useCallback, useContext, useRef } from 'react';
 import { NodeType } from '../interfaces';
 import { useMutate } from '@context/APIMutation';
 
@@ -24,6 +26,7 @@ function BlockNode({
   const buttonBeforeRef = useRef<HTMLDivElement>(null);
   const timerStatusRef = useRef(null);
 
+  const { handleContextMenu, removeContextMenu, setSelectedGroup } = useContext(EventContext);
 
   // Methods
   const submitCodeExecution = useCallback((event: React.MouseEvent<HTMLElement>) => {
@@ -39,6 +42,25 @@ function BlockNode({
         stylesBlockNode.blockNodeWrapper,
         groupSelection && stylesBlockNode.groupSelection,
       ].filter(Boolean).join(' ')}
+      onContextMenu={(event: any) => {
+        if (groupSelection) return;
+
+        event.preventDefault();
+        event.stopPropagation();
+        handleContextMenu(event, [
+          {
+            Icon: OpenInSidekick,
+            onClick: (event: any) => {
+              event?.preventDefault();
+              setSelectedGroup(block);
+              removeContextMenu(event);
+            },
+            uuid: `Teleport into ${block?.name}`,
+          },
+        ], {
+          reduceItems: (i1, i2) => i1,
+        });
+      }}
       ref={ref as React.RefObject<HTMLDivElement>}
     >
       <BlockNodeComponent
