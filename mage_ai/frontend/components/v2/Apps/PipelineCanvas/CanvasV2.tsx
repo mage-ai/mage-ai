@@ -469,19 +469,38 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
     handleMotionValueChange(latest, { transformOrigin: true });
   }
 
+  function handleAnimationZoomOut(latest: number) {
+
+  }
+
   function handleTransitions(
     currentGroupUUID: string,
     rectsMap: Record<string, RectType>,
-    groupsPrev: MenuGroupType[],
     groupsNext: MenuGroupType[],
-    prevGroupRect: RectType
+    opts: {
+      group?: FrameworkType;
+      groupRect: RectType;
+      groups: MenuGroupType[];
+      parent: FrameworkType;
+      siblings: FrameworkType[];
+    },
   ) {
+    const {
+      group: groupPrev,
+      groupRect: groupRectPrev,
+      groups: groupsPrev,
+      parent: parentPrev,
+      siblings: siblingsPrev,
+    } = opts;
     const prevCount = groupsPrev?.length ?? 0;
     const nextCount = groupsNext?.length ?? 0;
-    const prevGroup = groupsPrev?.[prevCount - 1];
-    const nextGroup = groupsNext?.[nextCount - 1];
+    const groupNext = getCurrentGroup();
+    const parentNext = getParentGroup();
 
-    const nextGroupRectCur = rectsMap?.[currentGroupUUID];
+    const menuGroupPrev = groupsPrev?.find(g => g.uuid === groupPrev?.uuid);
+    const menuGroupNext = groupsNext?.find(g => g.uuid === groupNext?.uuid);
+
+    const groupNextRectCur = rectsMap?.[currentGroupUUID];
 
     animationProgress.set(0);
     opacityInterstitial.set(0);
@@ -518,12 +537,24 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
       xExit: 0,
     };
 
-    if (prevCount === nextCount && prevCount === 1 && nextCount === 1) {
-      // Going into a sibling: switching (sibling teleport blocks)
+
+    if (prevCount === nextCount
+      && ((!parentNext && !parentPrev) || (parentNext?.uuid !== parentPrev?.uuid))
+    ) {
+      // Switching between different groups with different parents but on the same level.
       // Animate sliding the current view left or right and opacity
       animationHandler = handleAnimationSlide;
 
-      const right = nextGroup?.index > prevGroup?.index;
+      let right = null;
+      if (parentNext && parentPrev) {
+        const menuGroupParentPrev = groupsPrev?.find(g => g.uuid === parentPrev?.uuid);
+        const menuGroupParentNext = groupsNext?.find(g => g.uuid === parentNext?.uuid);
+        right = menuGroupParentNext?.index > menuGroupParentPrev?.index;
+      } else {
+        right = menuGroupNext?.index > menuGroupPrev?.index;
+      }
+
+      const xExit = (groupRectPrev?.width ?? 0) * (right ? 1 : -1);
 
       interstitialRef.current.classList.add(stylesPipelineBuilder.show);
       interstitialRef.current.classList.remove(stylesPipelineBuilder.left);
@@ -531,7 +562,6 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
       interstitialRef.current.classList.add(stylesPipelineBuilder[right ? 'right' : 'left']);
       interstitialRef.current.classList.remove(stylesPipelineBuilder.hide);
 
-      const xExit = (prevGroupRect?.width ?? 0) * (right ? 1 : -1);
 
       opacityEnter.set(0);
       scaleEnter.set(1);
@@ -555,8 +585,8 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
       translateXEnter.set(0);
       translateYEnter.set(0);
 
-      const xorigin = (nextGroupRectCur?.left ?? 0);
-      const yorigin = (nextGroupRectCur?.top ?? 0);
+      const xorigin = (groupNextRectCur?.left ?? 0);
+      const yorigin = (groupNextRectCur?.top ?? 0);
       exitOriginX.current = xorigin;
       exitOriginY.current = yorigin;
       scopeExit.current.style.transformOrigin = `${xorigin}px ${yorigin}px`;
@@ -597,7 +627,10 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
 
   function getParentGroup(): FrameworkType {
     if (selectedGroupsRef?.current?.length < 2) return;
+
     const menuGroup = selectedGroupsRef?.current?.[selectedGroupsRef?.current?.length - 2];
+    if (!menuGroup) return;
+
     return groupMappingRef.current?.[menuGroup.uuid];
   }
 
@@ -612,6 +645,9 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
   }
 
   const setSelectedGroupsRef = useRef((groupsArg: MenuGroupType[]) => {
+    const prevGroup = deepCopy(getCurrentGroup());
+    const prevParent = deepCopy(getParentGroup());
+    const prevSiblings = deepCopyArray(getCurrentGroupSiblings());
     const prevGroups = deepCopyArray(selectedGroupsRef.current ?? []);
     const prevGroupRect = deepCopy(getSelectedGroupRectFromRefs());
 
@@ -657,16 +693,20 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
       handleInitialTransition(
         currentGroup?.uuid,
         rectsMappingRef.current,
-        prevGroups,
         selectedGroupsRef.current,
       );
     } else {
       handleTransitions(
         currentGroup?.uuid,
         rectsMappingRef.current,
-        prevGroups,
         selectedGroupsRef.current,
-        prevGroupRect,
+        {
+          group: prevGroup,
+          groupRect: prevGroupRect,
+          groups: prevGroups,
+          parent: prevParent,
+          siblings: prevSiblings,
+        },
       );
 
       nodesToBeRenderedRef.current = {};
