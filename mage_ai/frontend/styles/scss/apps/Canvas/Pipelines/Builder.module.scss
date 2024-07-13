@@ -1,4 +1,5 @@
 @use '../../../abstracts/helpers' as *;
+@use '../../../abstracts/variables' as *;
 @use '../../../base/svg';
 
 @mixin hide {
@@ -102,6 +103,13 @@
   }
 }
 
+.hide {
+  @include hide;
+}
+
+.show {
+  @include show;
+}
 
 @mixin animating {
   height: 100vh;
@@ -150,4 +158,47 @@
   @include show;
 
   z-index: 5;
+}
+
+.interstitial {
+  height: 0;
+  width: 0;
+
+  &.show {
+    @include animating;
+
+    align-items: center;
+    display: grid;
+    justify-items: center;
+    z-index: 7;
+  }
+
+  .content {
+    backdrop-filter: blur(20px);
+    background-color: var(--colors-graylo);
+    border-radius: var(--borders-radius-sm);
+    position: absolute;
+    min-width: 200px;
+    top: calc(50% - var(--header-height));
+    transform: translateY(-50%);
+  }
+
+  .icon {
+    @include hide;
+    position: absolute;
+  }
+
+  &.left {
+    .iconLeft {
+      @include show;
+      position: relative;
+    }
+  }
+
+  &.right {
+    .iconRight {
+      @include show;
+      position: relative;
+    }
+  }
 }

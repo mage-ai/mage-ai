@@ -1,4 +1,7 @@
 import BlockNodeV2, { BADGE_HEIGHT, PADDING_VERTICAL } from '../../Canvas/Nodes/BlockNodeV2';
+import Grid from '@mana/components/Grid';
+import Text from '@mana/elements/Text';
+import { OpenInSidekick, OpenInSidekickLeft } from '@mana/icons';
 import stylesPipelineBuilder from '@styles/scss/apps/Canvas/Pipelines/Builder.module.scss';
 import { motion, animate, useAnimation, useMotionValue, useMotionValueEvent, useTransform } from 'framer-motion';
 import { applyRectDiff, calculateBoundingBox, getRectDiff, GROUP_NODE_PADDING } from '../../Canvas/utils/layout/shared';
@@ -85,7 +88,7 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
   const rectRefs = useRef<Record<string, React.MutableRefObject<RectType>>>({});
   const wrapperRef = useRef(null);
   const timeoutRef = useRef(null);
-  const readyToEnterRef = useRef<Record<string, boolean>>({});
+  const nodesToBeRenderedRef = useRef<Record<string, boolean>>({});
 
   const [isAnimating, setIsAnimating] = useState(true);
   const animationTimeoutRef = useRef(null);
@@ -93,35 +96,25 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
   const animationInitialProgress = useMotionValue(0);
   const phaseRef = useRef(0);
   const controlsForLines = useAnimation();
+  const interstitialRef = useRef(null);
 
-  const scaleExit = useTransform(() => {
-    const val = animationProgress.get();
-    return 1 + val;
-  });
-  const opacityExit = useTransform(() => {
-    const val = animationProgress.get();
-    return 1 - val;
-  });
+  const opacityInterstitial = useMotionValue(0);
 
   const opacityInit = useTransform(() => animationInitialProgress.get());
   const scaleInit = useTransform(() => 0.8 + (0.2 * animationInitialProgress.get()));
   const translateXInit = useTransform(() => 0 * GROUP_NODE_PADDING * (1 - animationInitialProgress.get()));
   const translateYInit = useTransform(() => 0 * GROUP_NODE_PADDING * (1 - animationInitialProgress.get()));
 
-  const opacityEnter = useTransform(() => {
-    const val = animationProgress.get();
-    const factor = val < ENTER_ANIMATION_START_THRESHOLD ? 0 : 2.5;
-    return (val - ENTER_ANIMATION_START_THRESHOLD) * factor;
-  });
-  const scaleEnter = useTransform(() => {
-    const val = animationProgress.get();
-    const factor = val < ENTER_ANIMATION_START_THRESHOLD ? 0 : 1;
-    return (scaleExit.get() / 2) * factor;
-  });
+  const scaleExit = useMotionValue(1);
+  const opacityExit = useMotionValue(1);
+  const opacityEnter = useMotionValue(0);
+  const scaleEnter = useMotionValue(0);
 
   const exitOriginX = useRef(0);
   const exitOriginY = useRef(0);
 
+  const translateXExit = useMotionValue(0);
+  const translateYExit = useMotionValue(0);
   const translateXEnter = useMotionValue(0);
   const translateYEnter = useMotionValue(0);
 
@@ -145,6 +138,11 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
   }
   const layoutConfigsRef = useRef<LayoutConfigType[]>([
     defaultLayoutConfig({
+      childrenLayout: defaultLayoutConfig({
+        direction: LayoutConfigDirectionEnum.HORIZONTAL,
+        display: LayoutDisplayEnum.SIMPLE,
+        style: LayoutStyleEnum.WAVE,
+      }),
       direction: LayoutConfigDirectionEnum.HORIZONTAL,
       style: LayoutStyleEnum.WAVE,
     }),
@@ -186,6 +184,11 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
   const [models, setModels] = useState<ModelsType>(null);
   const [rectsMapping, setRectsMapping] = useState<Record<string, RectType>>({});
   const [renderer, setRenderer] = useState<React.ReactNode>(null);
+
+  function getCurrentGroup() {
+    const groups = selectedGroupsRef?.current ?? [];
+    return groupMappingRef.current?.[groups?.[groups?.length - 1]?.uuid];
+  }
 
   function renderNodeData(
     block: PipelineExecutionFrameworkBlockType & BlockType,
@@ -233,6 +236,65 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
       waitUntil: (node: ShadowNodeType) => dragRefs.current?.[node.id]?.current !== null,
     };
   }
+
+  function buildSelectedGroupRect(uuid: string, rects?: Record<string, RectType>) {
+    const group = groupMappingRef?.current?.[uuid];
+    const childrenInGroup = indexBy(group?.children ?? [], c => c.uuid);
+    const blocksInGroup = blocksByGroupRef?.current?.[uuid] ?? {};
+    const rectsInGroup = getSelectedGroupRects(uuid, rects);
+
+    const upstreams = [];
+    group?.upstream_blocks?.forEach(up => {
+      upstreams.push({
+        ...(rects?.[up] ?? {}),
+        id: up,
+      });
+    });
+
+    rectsInGroup?.forEach(r => {
+      (r.upstream ?? [])?.forEach(rup => {
+        // Don’t add its own children as an upstream.
+        if (!childrenInGroup?.[rup.id]) {
+          upstreams.push(rup);
+        }
+      });
+    });
+
+    const groupRect = {
+      ...calculateBoundingBox(rectsInGroup),
+      block: group,
+      id: group?.uuid,
+      items: rectsInGroup,
+      type: ItemTypeEnum.NODE,
+      upstream: unique(
+        upstreams ?? [],
+        r => r.id
+      )?.filter(up => !blocksInGroup?.[up.id]),
+    };
+
+    const yoff = BADGE_HEIGHT + PADDING_VERTICAL;
+    groupRect.left -= GROUP_NODE_PADDING;
+    groupRect.top -= GROUP_NODE_PADDING + yoff;
+    groupRect.width += GROUP_NODE_PADDING * 2;
+    groupRect.height += (GROUP_NODE_PADDING * 2) + yoff;
+
+    return groupRect;
+  }
+
+  function getSelectedGroupRectFromRefs(rects?: Record<string, RectType>) {
+    if (!shouldRenderSelectedGroupSelection()) return;
+
+    const group = getCurrentGroup();
+    const rect = buildSelectedGroupRect(group?.uuid, rects ?? rectsMappingRef?.current);
+
+    return {
+      ...rect,
+      ...(rectsMappingRef?.current?.[group?.id] ?? {}),
+    };
+  }
+
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const selectedGroupRect = useMemo(() => getSelectedGroupRectFromRefs(rectsMapping), [rectsMapping]);
 
   function handleLineTransitions() {
     controlsForLines.start(({
@@ -288,57 +350,156 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
     });
   }
 
+  function handleMotionValueChange(latest: number, opts?: {
+    initial?: boolean;
+    transformOrigin?: boolean;
+  }) {
+    const group = getCurrentGroup();
+    const uuid = group?.uuid;
+    const rect1 = rectsMapping?.[uuid];
+    const rect2 = rectsMappingRef?.current?.[uuid];
+    const groupRect = getSelectedGroupRectFromRefs();
+
+    const rectpri = [groupRect, rect1, rect2];
+    const rectuse =
+      rectpri.find(r => ['height', 'left', 'top', 'width'].every(k => (r?.[k] ?? false) !== false));
+
+    let x = null;
+    let y = null;
+    if (rectuse) {
+      const { height, left, top, width } = rectuse;
+
+      // transform origin for scaling
+      // x = left - (width / 2);
+      // y = top - (height / 2);
+
+      const factor = latest < ENTER_ANIMATION_START_THRESHOLD ? 0 : 1;
+      const val = (scaleExit.get() / 2) * factor;
+
+      // transform for translating
+      x = (exitOriginX.current ?? 0) - left;
+      y = (exitOriginY.current ?? 0) - top;
+
+      if (opts?.transformOrigin) {
+        if (!opts?.initial) {
+          translateXEnter.set(x * (1 - val));
+          translateYEnter.set(y * (1 - val));
+        }
+
+        scopeEnter.current.style.transformOrigin = `${left ?? 0}px ${top ?? 0}px`;
+      }
+    }
+
+    console.log(`[transition] entering: ${uuid}:`, scopeEnter.current.style.transformOrigin);
+
+    const itemIDs =
+      (selectedGroupRect?.items?.map(i => i.id) ?? []).concat((groupRect ?? []) as any[]);
+    const required =
+      uniqueArray(Object.keys(nodesToBeRenderedRef.current ?? {}).concat(itemIDs));
+
+    const rectsCalculated = {
+      ...(rectsMappingRef.current),
+      ...(groupRect ? { [uuid]: groupRect } : {}),
+    };
+    const progress = uniqueArray(Object.keys(rectsCalculated ?? {}).concat(itemIDs));
+
+    console.log(
+      'readyToEnter', required?.length,
+      required,
+      nodesToBeRenderedRef.current,
+      'rectsMappingRef', progress?.length,
+      progress,
+    );
+
+    if ((x ?? false) && (y ?? false) && progress?.length >= required?.length) {
+      wrapperRef.current.classList.remove(stylesPipelineBuilder.waiting);
+    }
+  }
+
+  function handleAnimationSlide(latest: number, {
+    xExit,
+  }) {
+    // If the sibling teleport block is on the right of the current group:
+    // Exit: slide left, opacity
+    // Enter: slide right, opacity
+    opacityExit.set(1 - latest);
+    translateXExit.set(latest * xExit * -1);
+
+    // If the sibling teleport block is on the left of the current group:
+    // Exit: slide right, opacity
+    // Enter: slide left, opacity
+    const factor1 = latest < ENTER_ANIMATION_START_THRESHOLD ? 0 : 2.5;
+    opacityEnter.set((latest - ENTER_ANIMATION_START_THRESHOLD) * factor1);
+
+    const groupRect = getSelectedGroupRectFromRefs();
+    if ((groupRect?.width ?? 0) > 0) {
+      translateXEnter.set((1 - latest) * (xExit < 0 ? -1 : 1) * (groupRect?.width ?? 0));
+    }
+
+    translateYEnter.set(0);
+
+    opacityInterstitial.set(Math.max(
+      0,
+      Math.min(1,
+        (latest > 0.5 ? 1 - latest : latest) * 3
+      )
+    ));
+
+    handleMotionValueChange(latest)
+  }
+
+  useMotionValueEvent(
+    animationInitialProgress, 'change',
+    latest => handleMotionValueChange(latest, { initial: true, transformOrigin: true }),
+  );
+
+  function handleAnimationZoomIn(latest: number) {
+    // Exit:Animate zooming in and opacity
+    // If rect doesn’t exist in the canvas, then zoom in on the center origin.
+    scaleExit.set(1 + latest);
+    opacityExit.set(1 - latest);
+
+    // Enter: scale up the next set, opacity, use the new group as the origin.
+    const factor1 = latest < ENTER_ANIMATION_START_THRESHOLD ? 0 : 2.5;
+    opacityEnter.set((latest - ENTER_ANIMATION_START_THRESHOLD) * factor1);
+
+    const factor2 = latest < ENTER_ANIMATION_START_THRESHOLD ? 0 : 1;
+    scaleEnter.set((scaleExit.get() / 2) * factor2);
+
+    handleMotionValueChange(latest, { transformOrigin: true });
+  }
+
   function handleTransitions(
     currentGroupUUID: string,
     rectsMap: Record<string, RectType>,
     groupsPrev: MenuGroupType[],
     groupsNext: MenuGroupType[],
+    prevGroupRect: RectType
   ) {
     const prevCount = groupsPrev?.length ?? 0;
     const nextCount = groupsNext?.length ?? 0;
+    const prevGroup = groupsPrev?.[prevCount - 1];
+    const nextGroup = groupsNext?.[nextCount - 1];
 
     const nextGroupRectCur = rectsMap?.[currentGroupUUID];
 
-    if (prevCount === nextCount) {
-      // Going into a sibling: switching (sibling teleport blocks)
-      // Animate sliding the current view left or right and opacity
+    animationProgress.set(0);
+    opacityInterstitial.set(0);
 
-      // If the sibling teleport block is on the right of the current group:
-      // Exit: slide left, opacity
-      // Enter: slide right, opacity
+    opacityExit.set(1);
+    scaleExit.set(1);
+    translateXExit.set(0);
+    translateYExit.set(0);
 
-      // If the sibling teleport block is on the left of the current group:
-      // Exit: slide right, opacity
-      // Enter: slide left, opacity
-    } else if (prevCount > nextCount) {
-      // Going up to the parent: leaving (opposite of entering a child group)
+    resetLineTransitions();
+    setIsAnimating(true);
 
-      // Exit: Animate zooming out and opacity
-
-      // Enter: Animate the next set of nodes by scaling down but use the new selected group
-      // as the origin.
-    } else if (nextCount > prevCount) {
-      // Going into a child: entering (opposite of leaving a child group)
-
-      // Exit:Animate zooming in and opacity
-      // If rect doesn’t exist in the canvas, then zoom in on the center origin.
-
-
-      // Enter: scale up the next set, opacity, use the new group as the origin.
-    }
-
-    readyToEnterRef.current = {};
+    nodesToBeRenderedRef.current = {};
 
     const clone = scopeEnter.current.firstChild.cloneNode(true)
     scopeExit.current.appendChild(clone);
 
     scopeEnter.current.style.transformOrigin = '0px 0px';
-
-    const xorigin = (nextGroupRectCur?.left ?? 0);
-    const yorigin = (nextGroupRectCur?.top ?? 0);
-    exitOriginX.current = xorigin;
-    exitOriginY.current = yorigin;
-    scopeExit.current.style.transformOrigin = `${xorigin}px ${yorigin}px`;
 
     wrapperRef.current.classList.add(stylesPipelineBuilder.waiting);
 
@@ -352,13 +513,60 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
       scopeExit.current.style.transformOrigin,
     );
 
-    resetLineTransitions();
-    setIsAnimating(true);
+    let animationHandler = null;
+    const animationOptions = {
+      xExit: 0,
+    };
 
-    animationProgress.set(0);
+    if (prevCount === nextCount && prevCount === 1 && nextCount === 1) {
+      // Going into a sibling: switching (sibling teleport blocks)
+      // Animate sliding the current view left or right and opacity
+      animationHandler = handleAnimationSlide;
+
+      const right = nextGroup?.index > prevGroup?.index;
+
+      interstitialRef.current.classList.add(stylesPipelineBuilder.show);
+      interstitialRef.current.classList.remove(stylesPipelineBuilder.left);
+      interstitialRef.current.classList.remove(stylesPipelineBuilder.right);
+      interstitialRef.current.classList.add(stylesPipelineBuilder[right ? 'right' : 'left']);
+      interstitialRef.current.classList.remove(stylesPipelineBuilder.hide);
+
+      const xExit = (prevGroupRect?.width ?? 0) * (right ? 1 : -1);
+
+      opacityEnter.set(0);
+      scaleEnter.set(1);
+      translateXEnter.set(0);
+      translateYEnter.set(0);
+
+      animationOptions.xExit = xExit;
+    } else if (prevCount > nextCount) {
+      // Going up to the parent: leaving (opposite of entering a child group)
+
+      // Exit: Animate zooming out and opacity
+
+      // Enter: Animate the next set of nodes by scaling down but use the new selected group
+      // as the origin.
+    } else {
+      // Going into a child: entering (opposite of leaving a child group)
+      animationHandler = handleAnimationZoomIn;
+
+      opacityEnter.set(0);
+      scaleEnter.set(0);
+      translateXEnter.set(0);
+      translateYEnter.set(0);
+
+      const xorigin = (nextGroupRectCur?.left ?? 0);
+      const yorigin = (nextGroupRectCur?.top ?? 0);
+      exitOriginX.current = xorigin;
+      exitOriginY.current = yorigin;
+      scopeExit.current.style.transformOrigin = `${xorigin}px ${yorigin}px`;
+    }
+
     animate(animationProgress, 1, {
       duration: ANIMATION_DURATION,
       onUpdate: (latest) => {
+        animationHandler(latest, animationOptions);
+
         if (latest >= 1) {
           clone.remove();
 
@@ -372,6 +580,11 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
 
           wrapperRef.current.classList.remove(stylesPipelineBuilder.waiting);
 
+          interstitialRef.current.classList.add(stylesPipelineBuilder.hide);
+          interstitialRef.current.classList.remove(stylesPipelineBuilder.show);
+          interstitialRef.current.classList.remove(stylesPipelineBuilder.left);
+          interstitialRef.current.classList.remove(stylesPipelineBuilder.right);
+
           animationTimeoutRef.current = setTimeout(() => {
             setIsAnimating(false);
           }, ANIMATION_DURATION);
@@ -382,16 +595,30 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
     });
   }
 
+  function getParentGroup(): FrameworkType {
+    if (selectedGroupsRef?.current?.length < 2) return;
+    const menuGroup = selectedGroupsRef?.current?.[selectedGroupsRef?.current?.length - 2];
+    return groupMappingRef.current?.[menuGroup.uuid];
+  }
+
+  function getCurrentGroupSiblings(): FrameworkType[] {
+    const group = getCurrentGroup();
+    const parentGroup = getParentGroup();
+
+    if (!parentGroup) return;
+
+    return groupMappingRef.current?.[parentGroup?.uuid]?.children?.filter(
+      g => g.uuid !== group?.uuid);
+  }
+
   const setSelectedGroupsRef = useRef((groupsArg: MenuGroupType[]) => {
     const prevGroups = deepCopyArray(selectedGroupsRef.current ?? []);
+    const prevGroupRect = deepCopy(getSelectedGroupRectFromRefs());
+
     selectedGroupsRef.current = groupsArg;
 
-    const currentGroup = groupsArg?.[groupsArg?.length - 1];
-    const groupModel = groupMappingRef.current?.[currentGroup?.uuid];
-
-    const parentGroup = groupsArg?.[groupsArg?.length - 2];
-    const siblingGroups = groupMappingRef.current?.[parentGroup?.uuid]?.children?.filter(
-      g => g.uuid !== currentGroup?.uuid);
+    const currentGroup = getCurrentGroup();
+    const siblingGroups = getCurrentGroupSiblings();
 
     const blocks =
       (Object.values(blocksByGroupRef.current?.[currentGroup?.uuid] ?? {}) ?? []) as BlockType[];
@@ -409,13 +636,13 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
       groupsForEmptySelection.push(...defaultSelectionGroups);
     }
 
-    const groups = (groupModel?.children ?? []).concat(
+    const groups = (currentGroup?.children ?? []).concat(
       [
         // Should we show the parent group as well?
         // parentGroup,
         // Add the current group so we can show groupings within it. This is handled manually.
         // ------------------------------------------------------------------------------------------
-        ...(shouldRenderSelectedGroupSelection() ? [] : [groupModel]),
+        ...(shouldRenderSelectedGroupSelection() ? [] : [currentGroup]),
         ...(siblingGroups ?? []),
         ...(groupsForEmptySelection ?? []),
       ].reduce((acc, group2) => group2 ? acc.concat(
@@ -439,11 +666,17 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
         rectsMappingRef.current,
         prevGroups,
         selectedGroupsRef.current,
+        prevGroupRect,
       );
-      readyToEnterRef.current = {};
+
+      nodesToBeRenderedRef.current = {};
       (blocks ?? []).concat(groups ?? [])?.forEach(b => {
-        readyToEnterRef.current[b.uuid] = false;
+        nodesToBeRenderedRef.current[b.uuid] = false;
       });
+
+      if (shouldRenderSelectedGroupNode()) {
+        nodesToBeRenderedRef.current[currentGroup?.uuid] = false;
+      }
     }
 
     // Need to clear this our shouldCapture in ShadowNodeType won’t execute.
@@ -466,7 +699,7 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
             updateRects({ [id]: { data, rect } });
           }}
           handleNodeTransfer={(node: ShadowNodeType) => {
-            readyToEnterRef.current[node.id] = true;
+            nodesToBeRenderedRef.current[node.id] = true;
           }}
           nodes={shadowNodes}
           uuid={getNewUUID(3, 'clock')}
@@ -521,6 +754,7 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
       && ((group?.children?.length ?? 0) > 0 || !isEmptyObject(blocksInGroup ?? {}));
     return !!isValidGroup;
   }
+
   function updateRects(rectData: Record<string, {
     data: {
       node: {
@@ -687,18 +921,21 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
       }
 
       // console.log(`start:\n${logMessageForRects(rectsUse)}`);
-      // console.log(rectsUse);
+      console.log(rectsUse);
 
-      // console.log(
-      //   '!!!!!!!!!!!!!!!!!!!!!',
-      //   groupRect,
-      //   group,
-      // );
+      console.log(
+        '!!!!!!!!!!!!!!!!!!!!!',
+        isValidGroup,
+        layoutConfig?.childrenLayout,
+        groupRect,
+        group,
+      );
 
       const centerRect = groupRect ?? rectsUse?.find(r => r?.block?.uuid === group?.uuid);
 
       const transformations = buildRectTransformations({
         centerRect,
+        disableAlignments: true,
         layoutConfig,
         selectedGroup,
       });
@@ -825,10 +1062,10 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
   }, [blocks, groups, rectsMapping]);
 
   function getSelectedGroupRects(
-    uuid: string,
+    uuid?: string,
     rects?: Record<string, RectType>,
   ): RectType[] {
-    const group = groupMappingRef?.current?.[uuid];
+    const group = uuid ? groupMappingRef?.current?.[uuid] : getCurrentGroup();
     const childrenInGroup = indexBy(group?.children ?? [], c => c.uuid);
     const blocksInGroup = blocksByGroupRef?.current?.[uuid] ?? {};
     return Object.values(
@@ -836,65 +1073,14 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
     )?.filter(r => blocksInGroup?.[r.id] || childrenInGroup?.[r.id]);
   }
 
-  const buildSelectedGroupRect = useCallback((uuid: string, rects?: Record<string, RectType>) => {
-    const group = groupMappingRef?.current?.[uuid];
-    const childrenInGroup = indexBy(group?.children ?? [], c => c.uuid);
-    const blocksInGroup = blocksByGroupRef?.current?.[uuid] ?? {};
-    const rectsInGroup = getSelectedGroupRects(uuid, rects);
-
-    const upstreams = [];
-    group?.upstream_blocks?.forEach(up => {
-      upstreams.push({
-        ...(rects?.[up] ?? {}),
-        id: up,
-      });
-    });
-
-    rectsInGroup?.forEach(r => {
-      (r.upstream ?? [])?.forEach(rup => {
-        // Don’t add its own children as an upstream.
-        if (!childrenInGroup?.[rup.id]) {
-          upstreams.push(rup);
-        }
-      });
-    });
-
-    const groupRect = {
-      ...calculateBoundingBox(rectsInGroup),
-      block: group,
-      id: group?.uuid,
-      items: rectsInGroup,
-      type: ItemTypeEnum.NODE,
-      upstream: unique(
-        upstreams ?? [],
-        r => r.id
-      )?.filter(up => !blocksInGroup?.[up.id]),
-    };
-
-    const yoff = BADGE_HEIGHT + PADDING_VERTICAL;
-    groupRect.left -= GROUP_NODE_PADDING;
-    groupRect.top -= GROUP_NODE_PADDING + yoff;
-    groupRect.width += GROUP_NODE_PADDING * 2;
-    groupRect.height += (GROUP_NODE_PADDING * 2) + yoff;
-
-    return groupRect;
-  }, []);
-
-  const selectedGroupRect = useMemo(() => {
-    if (!shouldRenderSelectedGroupSelection()) return;
-
-    const selectedGroup = selectedGroupsRef?.current?.[selectedGroupsRef?.current?.length - 1];
-    const group = groupMappingRef?.current?.[selectedGroup?.uuid];
-    const rect = buildSelectedGroupRect(group?.uuid, rectsMapping);
-
-    return {
-      ...rect,
-      ...(rectsMappingRef?.current?.[group?.id] ?? {}),
-    };
-  }, [buildSelectedGroupRect, rectsMapping]);
+  function shouldRenderSelectedGroupNode(): boolean {
+    const group = getCurrentGroup();
+    const rectsInGroup = getSelectedGroupRects(group?.uuid);
+    return ((rectsInGroup?.length ?? 0) > 0) && (getCurrentGroupSiblings()?.length ?? 0) > 0;
+  }
 
   const selectedGroupNode = useMemo(() => {
-    if ((selectedGroupRect?.items ?? 0) === 0 || !selectedGroupRect?.block) return;
+    if (!shouldRenderSelectedGroupNode()) return;
 
     const { block, type } = selectedGroupRect ?? {};
     const node = {
@@ -919,7 +1105,7 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
       <WithOnMount
         key={block?.uuid}
         onMount={() => {
-          readyToEnterRef.current[block.uuid] = true
+          nodesToBeRenderedRef.current[block.uuid] = true;
         }}
       >
         <DragWrapper
@@ -946,61 +1132,8 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
         </DragWrapper>
       </WithOnMount>
     );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedGroupRect]);
-
-  function handleMotionValueChange(latest: number, initial?: boolean) {
-    const uuid = selectedGroupsRef.current?.[selectedGroupsRef.current?.length - 1]?.uuid;
-    const rect1 = rectsMapping?.[uuid];
-    const rect2 = rectsMappingRef?.current?.[uuid]
-
-    const rectpri = [selectedGroupRect, rect1, rect2];
-    const rectuse =
-      rectpri.find(r => ['height', 'left', 'top', 'width'].every(k => (r?.[k] ?? false) !== false));
-
-    let x = null;
-    let y = null;
-    if (rectuse) {
-      const { height, left, top, width } = rectuse;
-
-      // transform origin for scaling
-      // x = left - (width / 2);
-      // y = top - (height / 2);
-
-      if (!initial) {
-        const factor = latest < ENTER_ANIMATION_START_THRESHOLD ? 0 : 1;
-        const val = (scaleExit.get() / 2) * factor;
-
-        // transform for translating
-        x = (exitOriginX.current ?? 0) - left;
-        y = (exitOriginY.current ?? 0) - top;
-        translateXEnter.set(x * (1 - val));
-        translateYEnter.set(y * (1 - val));
-      }
-
-      scopeEnter.current.style.transformOrigin = `${left ?? 0}px ${top ?? 0}px`;
-    }
-
-    console.log(`[transition] entering: ${uuid}:`, scopeEnter.current.style.transformOrigin);
-
-    const itemIDs = selectedGroupRect?.items?.map(i => i.id) ?? [];
-    const countToMatch =
-      uniqueArray(Object.keys(readyToEnterRef.current ?? {}).concat(itemIDs))?.length;
-    const count1 = uniqueArray(Object.keys(rectsMappingRef.current).concat(itemIDs))?.length;
-    const count2 = uniqueArray(Object.keys(rectsMapping ?? {}).concat(itemIDs))?.length;
-
-    console.log(
-      'readyToEnter', countToMatch,
-      'rectsMappingRef', count1,
-      'rectsMapping', count2,
-    );
-
-    if ((x ?? false) && (y ?? false) && count1 >= countToMatch) {
-      wrapperRef.current.classList.remove(stylesPipelineBuilder.waiting);
-    }
-  }
-
-  useMotionValueEvent(animationInitialProgress, 'change', latest => handleMotionValueChange(latest, true));
-  useMotionValueEvent(animationProgress, 'change', handleMotionValueChange);
 
   return (
     <div
@@ -1022,6 +1155,43 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
           width: 'inherit',
         }}
       >
+        <motion.div
+          className={[
+            stylesPipelineBuilder.interstitial,
+            stylesPipelineBuilder.hide,
+          ].join(' ')}
+          ref={interstitialRef}
+          style={{ opacity: opacityInterstitial }}
+        >
+          <Grid
+            alignItems="center"
+            className={stylesPipelineBuilder.content}
+            justifyItems="center"
+            padding={24}
+            rowGap={16}
+          >
+            <OpenInSidekick
+              className={[
+                stylesPipelineBuilder.icon,
+                stylesPipelineBuilder.iconRight,
+              ].join(' ')}
+              secondary
+              size={40}
+            />
+            <OpenInSidekickLeft
+              className={[
+                stylesPipelineBuilder.icon,
+                stylesPipelineBuilder.iconLeft,
+              ].join(' ')}
+              secondary
+              size={40}
+            />
+            <Text medium secondary>
+              {getCurrentGroup()?.name}
+            </Text>
+          </Grid>
+        </motion.div>
+
         <CanvasContainer ref={containerRef}>
           <SettingsProvider
             layoutConfigsRef={layoutConfigsRef}
@@ -1078,6 +1248,8 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
                 style={{
                   opacity: opacityExit,
                   scale: scaleExit,
+                  translateX: translateXExit,
+                  translateY: translateYExit,
                 }}
               />
 
