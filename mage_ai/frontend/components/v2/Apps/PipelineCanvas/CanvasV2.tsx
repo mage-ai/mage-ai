@@ -353,35 +353,61 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
   function handleMotionValueChange(latest: number, opts?: {
     initial?: boolean;
     transformOrigin?: boolean;
+    zoomOut?: boolean;
   }) {
+    const { initial, transformOrigin, zoomOut } = opts ?? {};
     const group = getCurrentGroup();
-    const uuid = group?.uuid;
-    const rect1 = rectsMapping?.[uuid];
-    const rect2 = rectsMappingRef?.current?.[uuid];
+
+    const rect1 = rectsMapping?.[group?.uuid];
+    const rect2 = rectsMappingRef?.current?.[group?.uuid];
     const groupRect = getSelectedGroupRectFromRefs();
 
-    const rectpri = [groupRect, rect1, rect2];
-    const rectuse =
-      rectpri.find(r => ['height', 'left', 'top', 'width'].every(k => (r?.[k] ?? false) !== false));
+    const rectpri = [
+      groupRect,
+      rect1,
+      rect2,
+    ];
+    const rectuse = rectpri
+      .filter(Boolean)
+      .find(r => ['height', 'left', 'top', 'width'].every(k => (r?.[k] ?? false) !== false));
 
     let x = null;
     let y = null;
     if (rectuse) {
-      const { height, left, top, width } = rectuse;
+      const { left, top } = rectuse;
 
       // transform origin for scaling
       // x = left - (width / 2);
       // y = top - (height / 2);
 
-      const factor = latest < ENTER_ANIMATION_START_THRESHOLD ? 0 : 1;
-      const val = (scaleExit.get() / 2) * factor;
+      let val = 0;
+      if (zoomOut) {
+        const scaleFactor = 0.4;
+        const factor2 = latest < ENTER_ANIMATION_START_THRESHOLD ? 0 : 2.1;
+        // Initial value: 1.6
+        // latest: 0.6
+        // scaleExit: 1 - 0.24 = 0.76
+        // factor: 1.6/0.76 = 2.1 down to 1.67
+        // 2.1 - (0.43 * (latest - 0.6))
+        const scalev = (
+          factor2 - (
+            0.43
+            * ((latest - ENTER_ANIMATION_START_THRESHOLD) / scaleFactor))
+        ) * scaleExit.get();
+        val = scalev;
+      } else {
+        const factor = latest < ENTER_ANIMATION_START_THRESHOLD ? 0 : 0.5;
+        val = scaleExit.get() * factor;
+      }
 
       // transform for translating
       x = (exitOriginX.current ?? 0) - left;
       y = (exitOriginY.current ?? 0) - top;
 
-      if (opts?.transformOrigin) {
-        if (!opts?.initial) {
+      console.log('WTFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF', x, y)
+
+      if (transformOrigin) {
+        if (!initial) {
           translateXEnter.set(x * (1 - val));
           translateYEnter.set(y * (1 - val));
         }
@@ -390,7 +416,10 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
       }
     }
 
-    console.log(`[transition] entering: ${uuid}:`, scopeEnter.current.style.transformOrigin);
+    console.log(
+      `[transition] entering: ${group?.uuid}:`,
+      scopeEnter.current.style.transformOrigin,
+    );
 
     const itemIDs =
       (selectedGroupRect?.items?.map(i => i.id) ?? []).concat((groupRect ?? []) as any[]);
@@ -399,11 +428,13 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
 
     const rectsCalculated = {
       ...(rectsMappingRef.current),
-      ...(groupRect ? { [uuid]: groupRect } : {}),
+      ...(groupRect ? { [groupRect.id]: groupRect } : {}),
     };
     const progress = uniqueArray(Object.keys(rectsCalculated ?? {}).concat(itemIDs));
+    const ready = (x ?? false) && (y ?? false) && progress?.length >= required?.length;
 
     console.log(
+      `Ready: ${ready}`,
       'readyToEnter', required?.length,
       required,
       nodesToBeRenderedRef.current,
@@ -411,7 +442,7 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
       progress,
     );
 
-    if ((x ?? false) && (y ?? false) && progress?.length >= required?.length) {
+    if (ready) {
       wrapperRef.current.classList.remove(stylesPipelineBuilder.waiting);
     }
   }
@@ -456,21 +487,51 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
   function handleAnimationZoomIn(latest: number) {
     // Exit:Animate zooming in and opacity
     // If rect doesn’t exist in the canvas, then zoom in on the center origin.
-    scaleExit.set(1 + latest);
-    opacityExit.set(1 - latest);
+    scaleExit.set(1 + latest); // 1 -> 2
+    opacityExit.set(1 - latest); // 1 -> 0
 
     // Enter: scale up the next set, opacity, use the new group as the origin.
     const factor1 = latest < ENTER_ANIMATION_START_THRESHOLD ? 0 : 2.5;
-    opacityEnter.set((latest - ENTER_ANIMATION_START_THRESHOLD) * factor1);
+    opacityEnter.set((latest - ENTER_ANIMATION_START_THRESHOLD) * factor1); // 1st value: 0
 
-    const factor2 = latest < ENTER_ANIMATION_START_THRESHOLD ? 0 : 1;
-    scaleEnter.set((scaleExit.get() / 2) * factor2);
+    const factor2 = latest < ENTER_ANIMATION_START_THRESHOLD ? 0 : 0.5;
+    scaleEnter.set(scaleExit.get() * factor2); // 1st value: 1.6 * 0.5 = 0.8
 
     handleMotionValueChange(latest, { transformOrigin: true });
   }
 
   function handleAnimationZoomOut(latest: number) {
+    const scaleFactor = 0.4;
+    // Exit: Animate zooming out and opacity
+    scaleExit.set(1 - (latest * scaleFactor)); // 1 -> 0.6; (1 - 0.8) * 2 = 0.4, 1 - 0.4 = 0.6
+    opacityExit.set(1 - latest); // 1 -> 0
 
+    // Enter: Animate the next set of nodes by scaling down but use the new selected group
+    // as the origin.
+    // Enter: scale up the next set, opacity, use the new group as the origin.
+
+    // 0 -> 1
+    const factor1 = latest < ENTER_ANIMATION_START_THRESHOLD ? 0 : 2.5;
+    opacityEnter.set((latest - ENTER_ANIMATION_START_THRESHOLD) * factor1);
+
+    // 2 -> 1
+    const factor2 = latest < ENTER_ANIMATION_START_THRESHOLD ? 0 : 2.1;
+    // Initial value: 1.6
+    // latest: 0.6
+    // scaleExit: 1 - 0.24 = 0.76
+    // factor: 1.6/0.76 = 2.1 down to 1.67
+    // 2.1 - (0.43 * (latest - 0.6))
+    const scalev = (
+      factor2 - (
+        0.43
+        * ((latest - ENTER_ANIMATION_START_THRESHOLD) / scaleFactor))
+    ) * scaleExit.get();
+    scaleEnter.set(scalev);
+
+    handleMotionValueChange(latest, {
+      transformOrigin: true,
+      zoomOut: true,
+    });
   }
 
   function handleTransitions(
@@ -527,16 +588,11 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
     scopeExit.current.classList.add(stylesPipelineBuilder.exiting);
     scopeExit.current.classList.remove(stylesPipelineBuilder.idle);
 
-    console.log(
-      `[transition] start: ${currentGroupUUID}`,
-      scopeExit.current.style.transformOrigin,
-    );
-
     let animationHandler = null;
     const animationOptions = {
+      group: null,
       xExit: 0,
     };
-
 
     if (prevCount === nextCount
       && ((!parentNext && !parentPrev) || (parentNext?.uuid !== parentPrev?.uuid))
@@ -562,7 +618,6 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
       interstitialRef.current.classList.add(stylesPipelineBuilder[right ? 'right' : 'left']);
       interstitialRef.current.classList.remove(stylesPipelineBuilder.hide);
 
-
       opacityEnter.set(0);
       scaleEnter.set(1);
       translateXEnter.set(0);
@@ -571,11 +626,19 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
       animationOptions.xExit = xExit;
     } else if (prevCount > nextCount) {
       // Going up to the parent: leaving (opposite of entering a child group)
+      animationHandler = handleAnimationZoomOut;
 
-      // Exit: Animate zooming out and opacity
+      opacityEnter.set(0);
+      scaleEnter.set(2);
+      translateXEnter.set(0);
+      translateYEnter.set(0);
 
-      // Enter: Animate the next set of nodes by scaling down but use the new selected group
-      // as the origin.
+      const rectPrev = groupRectPrev ?? rectsMap?.[groupPrev?.uuid];
+      const xorigin = rectPrev?.left ?? 0;
+      const yorigin = rectPrev?.top ?? 0;
+      exitOriginX.current = xorigin;
+      exitOriginY.current = yorigin;
+      scopeExit.current.style.transformOrigin = `${xorigin}px ${yorigin}px`;
     } else {
       // Going into a child: entering (opposite of leaving a child group)
       animationHandler = handleAnimationZoomIn;
@@ -591,6 +654,11 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
       exitOriginY.current = yorigin;
       scopeExit.current.style.transformOrigin = `${xorigin}px ${yorigin}px`;
     }
+
+    console.log(
+      `[transition] start: ${currentGroupUUID}`,
+      scopeExit.current.style.transformOrigin,
+    );
 
     animate(animationProgress, 1, {
       duration: ANIMATION_DURATION,
