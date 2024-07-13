@@ -1,13 +1,14 @@
 import React, { useEffect, useRef } from 'react';
 import useCustomEventHandler from '../events/useCustomEventHandler';
 import useKeyboardShortcuts, { KeyboardShortcutsProps } from './shortcuts/useKeyboardShortcuts';
-import { CustomKeyboardEvent, KeyboardPositionType, KeyboardDetailType } from '../events/interfaces';
+import { CommandType, CustomKeyboardEvent, KeyboardPositionType, KeyboardDetailType } from '../events/interfaces';
 import { DEBUG } from '../utils/debug';
 import { EventEnum, KeyEnum } from '../events/enums';
 import { MenuItemType } from '../components/Menu/interfaces';
 import { range } from '@utils/array';
 
 interface RegisterItemsOptions {
+  commands?: Record<string, CommandType>;
   position?: KeyboardPositionType;
 }
 
@@ -164,7 +165,10 @@ export default function useKeyboardNavigation({
         handler: () => handlePositionChange({ y: -1 }),
         predicate: { key: KeyEnum.ARROWUP, metaKey: false },
       },
+      ...(opts?.commands ?? {}),
     });
+
+    console.log(opts);
   }
 
   function resetPosition() {

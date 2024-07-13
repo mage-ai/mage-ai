@@ -2,6 +2,7 @@ import Menu, { MenuProps } from '../components/Menu';
 import React, { useContext, useEffect, useMemo, useRef } from 'react';
 import useKeyboardNavigation from './useKeyboardNavigation';
 import { CustomKeyboardEvent } from '../events/interfaces';
+import { KeyEnum } from '../events/enums';
 import { ClientEventType as ClientEventTypeT } from '../shared/interfaces';
 import { MenuItemType as MenuItemTypeT } from '../components/Menu/interfaces';
 import { ThemeContext, ThemeProvider } from 'styled-components';
@@ -10,6 +11,7 @@ import { createRoot, Root } from 'react-dom/client';
 export type RenderContextMenuOptions = {
   contained?: boolean;
   direction?: MenuProps['direction'];
+  handleEscape?: (event: CustomKeyboardEvent) => void;
   onClose?: MenuProps['onClose'];
   openItems?: MenuProps['openItems'];
   position?: MenuProps['position'];
@@ -120,6 +122,7 @@ export default function useContextMenu({
   ) {
     const {
       contained,
+      handleEscape,
       openItems,
       position,
     } = opts ?? {};
@@ -154,9 +157,19 @@ export default function useContextMenu({
     }
     render(contextMenuRootRef.current);
 
-    registerItems(items, openItems ? {
-      position: openItems?.map(({ row }) => row),
-    } : {});
+    registerItems(items, {
+      ...(openItems ? {
+        position: openItems?.map(({ row }) => row),
+      } : {}),
+      ...(handleEscape ? {
+        commands: {
+          escape: {
+            handler: handleEscape,
+            predicate: { key: KeyEnum.ESCAPE },
+          },
+        },
+      } : {}),
+    });
   }
 
   function teardown() {

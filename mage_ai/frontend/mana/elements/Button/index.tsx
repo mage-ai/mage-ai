@@ -95,7 +95,8 @@ function Button({
   wrap,
   ...props
 }: ButtonProps) {
-  const HTMLTag = (anchor || asLink || linkProps) ? AStyled : ButtonStyled;
+  const islink = (anchor || asLink || linkProps);
+  const HTMLTag = islink ? AStyled : ButtonStyled;
 
   const dataProps = {};
   Object.entries(props ?? {})?.forEach(([key, value]) => {
@@ -130,6 +131,13 @@ function Button({
       tag={tag}
       target={target}
       wrap={wrap ? 'true' : undefined}
+      {...((!islink && !wrap) ? {
+        // whileHover: { scale: 1.2 },
+        // whileFocus
+        whileTap: {
+          scale: 0.98,
+        },
+      } : {})}
     >
       {Icon && <Icon inverted={primary || secondary} small={small} />}
 

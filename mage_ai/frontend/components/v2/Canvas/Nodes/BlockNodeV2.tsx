@@ -1,9 +1,10 @@
 import BlockNodeComponent, { BlockNodeProps, BADGE_HEIGHT, PADDING_VERTICAL } from './BlockNode';
 import { EventContext } from '../../Apps/PipelineCanvas/Events/EventContext';
-import { OpenInSidekick } from '@mana/icons';
+import { ModelContext } from '@components/v2/Apps/PipelineCanvas/ModelManager/ModelContext';
+import { OpenInSidekick, Trash } from '@mana/icons';
 import stylesBlockNode from '@styles/scss/components/Canvas/Nodes/BlockNode.module.scss';
-import BlockType from '@interfaces/BlockType';
-import React, { useCallback, useContext, useRef } from 'react';
+import BlockType, { BlockTypeEnum } from '@interfaces/BlockType';
+import React, { useCallback, useContext, useMemo, useRef } from 'react';
 import { NodeType } from '../interfaces';
 import { useMutate } from '@context/APIMutation';
 
@@ -22,6 +23,15 @@ function BlockNode({
   groupSelection,
   ...rest
 }: BlockNodeType, ref: React.MutableRefObject<HTMLElement>) {
+  const { name, type } = block;
+
+  // APIs
+  const { mutations } = useContext(ModelContext);
+
+  // Attributes
+  const isGroup =
+    useMemo(() => !type || [BlockTypeEnum.GROUP, BlockTypeEnum.PIPELINE].includes(type), [type]);
+
   // Controls
   const buttonBeforeRef = useRef<HTMLDivElement>(null);
   const timerStatusRef = useRef(null);
@@ -43,12 +53,15 @@ function BlockNode({
         groupSelection && stylesBlockNode.groupSelection,
       ].filter(Boolean).join(' ')}
       onContextMenu={(event: any) => {
-        if (groupSelection) return;
+        if (groupSelection || event.metaKey) return;
 
         event.preventDefault();
         event.stopPropagation();
-        handleContextMenu(event, [
-          {
+
+        const items = [];
+
+        if (isGroup) {
+          items.push({
             Icon: OpenInSidekick,
             onClick: (event: any) => {
               event?.preventDefault();
@@ -56,8 +69,29 @@ function BlockNode({
               removeContextMenu(event);
             },
             uuid: `Teleport into ${block?.name}`,
-          },
-        ], {
+          });
+        } else {
+          items.push({
+            Icon: Trash,
+            onClick: (event: any) => {
+              event?.preventDefault();
+
+              mutations.pipelines.update.mutate({
+                event,
+                onSuccess: () => {
+                  removeContextMenu(event);
+                },
+                payload: (pipeline) => ({
+                  ...pipeline,
+                  blocks: pipeline?.blocks?.filter((b: BlockType) => b.uuid !== block.uuid),
+                }),
+              });
+            },
+            uuid: `Remove ${name} from pipeline`,
+          });
+        }
+
+        handleContextMenu(event, items, {
           reduceItems: (i1, i2) => i1,
         });
       }}

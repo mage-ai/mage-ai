@@ -45,6 +45,7 @@ import { getNewUUID } from '@utils/string';
 import { deepCopy, isEmptyObject } from '@utils/hash';
 import { WithOnMount } from '@mana/hooks/useWithOnMount';
 import PipelineType from '@interfaces/PipelineType';
+import { CommandType } from '@mana/events/interfaces';
 
 const ENTER_ANIMATION_START_THRESHOLD = 0.6;
 const ANIMATION_DURATION = 1;
@@ -322,6 +323,20 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const selectedGroupRect = useMemo(() => getSelectedGroupRectFromRefs(rectsMapping), [rectsMapping]);
+
+  function handleAnimateBlocksChange(bnew: BlockType[], bdel: BlockType[]) {
+    // New blocks:
+    // 1. Pre-render their nodes.
+    // 2. Get their dimensions.
+    // 3. Recalculate the layout.
+    // 4. Animate the layout position change.
+    // 5. Animate all the blocks in the current group.
+    // 6. Animate the new block’s appearance using scale and opacity; or translate Y; use stagger
+    // https://www.framer.com/motion/stagger/
+    // scale: [1, 2, 2, 1, 1],
+    // rotate: [0, 0, 270, 270, 0],
+    // borderRadius: ["20%", "20%", "50%", "50%", "20%"],
+  }
 
   function handleLineTransitions() {
     controlsForLines.start(({
@@ -905,9 +920,18 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
       update: {
         onSuccess: (p1, p2) => {
           setPipeline(p1);
-          if (p1?.blocks?.length !== p2?.blocks?.length) {
-            updateLocalResources(p1);
-            renderLayoutUpdates();
+          const b1 = p1?.blocks;
+          const b2 = p2?.blocks;
+
+          updateLocalResources(p1);
+
+          if (b1?.length ?? 0 !== b2?.length ?? 0) {
+            const b1map = indexBy(b1, b => b.uuid);
+            const b2map = indexBy(b2, b => b.uuid);
+            const bnew = b1.filter(b => !b2map[b.uuid]);
+            const bdel = b2.filter(b => !b1map[b.uuid]);
+
+            renderLayoutUpdates(() => handleAnimateBlocksChange(bnew, bdel));
           }
         },
       },
@@ -1402,6 +1426,9 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
 
     renderContextMenu(event, menuItems, {
       ...opts,
+      handleEscape: (event2) => {
+        removeContextMenu(event2 as any);
+      },
       rects: {
         bounding: wrapperRef.current.getBoundingClientRect(),
       },

@@ -8,7 +8,7 @@ import React, {
 import Text from '../../elements/Text';
 import useCustomEventHandler from '../../events/useCustomEventHandler';
 import useDebounce from '@utils/hooks/useDebounce';
-import { AnimatePresence, Variants, motion } from 'framer-motion';
+import { AnimatePresence, Variants, motion, cubicBezier } from 'framer-motion';
 import { CaretRight } from '@mana/icons';
 import { CustomKeyboardEvent } from '../../events/interfaces';
 import { HEADER_Z_INDEX } from '@components/constants';
@@ -209,7 +209,20 @@ function MenuItemBase({
             plain
             width="100%"
           >
-            {el}
+            <motion.div
+              variants={{
+                closed: {
+                  opacity: 0.6,
+                  y: 2,
+                },
+                open: {
+                  opacity: 1,
+                  y: 0,
+                },
+              }}
+            >
+              {el}
+            </motion.div>
           </Button>
         )}
       </ItemContent>
@@ -244,7 +257,6 @@ function Menu({
   const containerRectRef = useRef<DOMRect | null>(null);
   const itemExpandedRef = useRef(null);
   const itemsElementRef = useRef(null);
-  const itemsRootRef = useRef(null);
   const timeoutRef = useRef<ReturnType<typeof setTimeout>>();
   const rootID = useMemo(() => `menu-item-items-${uuid}`, [uuid]);
 
@@ -450,10 +462,7 @@ function Menu({
 
   return (
     <MenuStyled
-      animate={{ opacity: 1 }}
       contained={contained ? 'true' : undefined}
-      exit={{ opacity: 0 }} // This isn’t doing anything
-      initial={{ opacity: 1 }}
       ref={containerRef}
       style={{
         left: 0,
@@ -464,68 +473,68 @@ function Menu({
       }}
     >
       <MenuContent
-        animate={{ opacity: 1, scale: 1 }}
-        exit={{ opacity: 0 }} // This isn’t doing anything
-        initial={{ opacity: 0.75, scale: 0.95 }}
-        transition={{ duration: 0.01, ease: [0.0, 0.0, 0.58, 1.0] }}
+        animate="open"
+        initial={level > 0 ? 'open' : 'closed'}
+        variants={{
+          closed: {
+            opacity: 0.75,
+            scale: 0.95,
+          },
+          open: {
+            opacity: 1,
+            scale: 1,
+            transition: {
+              duration: 0.03,
+              ease: 'linear',
+            },
+          },
+        }}
       >
-        {itemsCount >= 1 && (
-          <motion.div
-            style={{ pointerEvents: 'auto' }}
-            variants={{
-              open: {
-                clipPath: 'inset(0% 0% 0% 0% round 10px)',
-                transition: {
-                  type: 'spring',
-                  bounce: 0,
-                  duration: 0.7,
-                  delayChildren: 0.3,
-                  staggerChildren: 0.05,
-                },
+        <motion.div
+          animate="open"
+          initial={level === 1 ? 'closed' : 'open'}
+          variants={{
+            open: {
+              transition: {
+                delayChildren: 0.02,
+                duration: 0.04,
+                ease: 'linear',
+                staggerChildren: 0.04,
               },
-              closed: {
-                clipPath: 'inset(10% 50% 90% 50% round 10px)',
-                transition: {
-                  type: 'spring',
-                  bounce: 0,
-                  duration: 0.3,
-                },
-              },
-            }}
-          >
-            {items?.map((item: MenuItemType, idx: number) => {
-              itemsRef.current[item.uuid] ||= createRef();
-              const itemRef = itemsRef.current[item.uuid];
-
-              return (
-                <motion.div
-                  key={`menu-item-${item.uuid}-${idx}`}
-                  style={{ display: 'grid', width: '100%' }}
-                  variants={itemVariants}
-                >
-                  <MenuItem
-                    contained={contained}
-                    defaultOpen={openItems?.[0]?.row === idx}
-                    first={idx === 0}
-                    handleMouseEnter={(event) => {
-                      hideChildren();
-                      if (item?.items?.length >= 1) {
-                        renderChildItems(item, itemRef, {
-                          event: event as any,
-                        });
-                      }
-                    }}
-                    item={item}
-                    last={idx === itemsCount - 1}
-                    onClickCallback={() => removePortals(0)}
-                    ref={itemRef}
-                    small={small}
-                  />
-                </motion.div>
-              );
-            })}
-          </motion.div>
-        )}
+            },
+          }}
+        >
+          {itemsCount >= 1 && items?.map((item: MenuItemType, idx: number) => {
+          itemsRef.current[item.uuid] ||= createRef();
+          const itemRef = itemsRef.current[item.uuid];
+          console.log(level);
+          return (
+            <div
+              key={`menu-item-${item.uuid}-${idx}`}
+              style={{ display: 'grid', width: '100%' }}
+            >
+              <MenuItem
+                contained={contained}
+                defaultOpen={openItems?.[0]?.row === idx}
+                first={idx === 0}
+                handleMouseEnter={(event) => {
+                  hideChildren();
+                  if (item?.items?.length >= 1) {
+                    renderChildItems(item, itemRef, {
+                      event: event as any,
+                    });
+                  }
+                }}
+                item={item}
+                last={idx === itemsCount - 1}
+                onClickCallback={() => removePortals(0)}
+                ref={itemRef}
+                small={small}
+              />
+            </div>
+          );
+        })}
+        </motion.div>
       </MenuContent>
 
       {children}
