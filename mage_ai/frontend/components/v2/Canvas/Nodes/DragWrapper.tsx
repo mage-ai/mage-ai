@@ -5,7 +5,9 @@ import { CSSProperties } from 'react';
 import { ElementRoleEnum } from '@mana/shared/types';
 import { ItemTypeEnum } from '../types';
 import { NodeItemType, PortType, RectType } from '../interfaces';
+import { motion, useAnimation } from 'framer-motion';
 import { useDrag, useDrop } from 'react-dnd';
+import useWithOnMount from '@mana/hooks/useWithOnMount';
 
 export type DragWrapperType = {
   draggable?: boolean;
@@ -21,9 +23,12 @@ export type DragWrapperType = {
 
 type DragWrapperProps = {
   children?: React.ReactNode;
+  controllers?: React.MutableRefObject<Record<string, any>>;
   groupSelection?: boolean;
+  isAnimating?: boolean;
   item?: NodeItemType;
   rect?: RectType;
+  style?: any;
 } & DragWrapperType;
 
 export function getStyles(
@@ -75,12 +80,16 @@ function DragWrapper({
   draggable,
   droppable,
   droppableItemTypes,
+  controllers,
   eventHandlers,
   groupSelection,
   handleDrop,
+  isAnimating,
   item,
   rect,
+  style,
 }: DragWrapperProps, ref: React.MutableRefObject<HTMLDivElement>) {
+  const controls = useAnimation();
   const refInternal = useRef(null);
   const dragRef = ref ?? refInternal;
 
@@ -125,42 +134,59 @@ function DragWrapper({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  useWithOnMount({
+    onMount: () => {
+      controllers.current[item?.id] = controls;
+    },
+    waitUntil: () => !!(dragRef?.current ?? false)
+      && typeof window !== 'undefined'
+      && !!(window.getComputedStyle(dragRef?.current) ?? false),
+  });
+
   // This needs to always connect without any conditionals or else it’ll never connect after mount.
   connectDrop(dragRef);
   connectDrag(dragRef);
 
-  console.log(`[DragWrapper:${item.id}]`, rect?.left, rect?.top);
+  console.log(
+    `[DragWrapper:${item.id}]`,
+    rect?.left, rect?.top, rect?.width, rect?.height,
+    isAnimating, style,
+  );
 
   return (
-    <div
+    <motion.div
       {...Object.entries(
         eventHandlers ?? {},
       ).reduce((acc, [k, v]: [string, (event: any) => void]) => ({
         ...acc,
         [k]: draggable && v ? v : undefined,
       }), {})}
+      animate={controls}
       className={[
         stylesBlockNode.dragWrapper,
         groupSelection && stylesBlockNode.groupSelection,
       ].filter(Boolean).join(' ')}
       ref={dragRef}
       role={[ElementRoleEnum.DRAGGABLE].join(' ')}
-      style={getStyles(item, {
-        draggable,
-        groupSelection,
-        isDragging,
-        rect,
-      })}
+      style={isAnimating ? style : {
+        ...getStyles(item, {
+          draggable,
+          groupSelection,
+          isDragging,
+          rect,
+        }),
+      }}
     >
       {children}
-    </div>
+    </motion.div>
   );
 }
 
 export function areEqual(p1: DragWrapperProps, p2: DragWrapperProps) {
   return p1.rect.left === p2.rect.left && p1.rect.top === p2.rect.top
     && p1.rect.width === p2.rect.width && p1.rect.height === p2.rect.height
-    && p1?.groupSelection === p2?.groupSelection;
+    && p1?.groupSelection === p2?.groupSelection
+    && p1?.isAnimating === p2?.isAnimating;
 }
 
 export default React.memo(React.forwardRef(DragWrapper), areEqual);

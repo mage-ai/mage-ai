@@ -28,15 +28,6 @@ import { ClientEventType, RectType } from '@mana/shared/interfaces';
 import { PortalProvider, usePortals } from '@context/v2/Portal';
 import { EventEnum, KeyEnum } from '@mana/events/enums';
 
-const itemVariants: Variants = {
-  open: {
-    opacity: 1,
-    y: 0,
-    transition: { type: 'spring', stiffness: 300, damping: 24 },
-  },
-  closed: { opacity: 0, y: 20, transition: { duration: 0.2 } },
-};
-
 export type MenuProps = {
   above?: boolean;
   addPortal: (level: number, portal: React.ReactNode, containerRef: React.RefObject<HTMLDivElement>) => void;
@@ -213,11 +204,11 @@ function MenuItemBase({
               variants={{
                 closed: {
                   opacity: 0.6,
-                  y: 2,
+                  x: -2,
                 },
                 open: {
                   opacity: 1,
-                  y: 0,
+                  x: 0,
                 },
               }}
             >
@@ -507,7 +498,7 @@ function Menu({
           {itemsCount >= 1 && items?.map((item: MenuItemType, idx: number) => {
           itemsRef.current[item.uuid] ||= createRef();
           const itemRef = itemsRef.current[item.uuid];
-          console.log(level);
+
           return (
             <div
               key={`menu-item-${item.uuid}-${idx}`}

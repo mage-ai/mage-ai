@@ -167,8 +167,6 @@ export default function useKeyboardNavigation({
       },
       ...(opts?.commands ?? {}),
     });
-
-    console.log(opts);
   }
 
   function resetPosition() {
