@@ -1,11 +1,14 @@
+import React, { createRef, useEffect, useMemo, useRef, useState, startTransition } from 'react';
 import BlockNodeV2, { BADGE_HEIGHT, PADDING_VERTICAL } from '../../Canvas/Nodes/BlockNodeV2';
 import Grid from '@mana/components/Grid';
 import Text from '@mana/elements/Text';
-import { OpenInSidekick, OpenInSidekickLeft } from '@mana/icons';
+import { OpenInSidekick, OpenInSidekickLeft, ArrowsAdjustingFrameSquare, SearchV2,
+ArrowsPointingInFromAllCorners, TreeWithArrowsDown, Undo } from '@mana/icons';
 import stylesPipelineBuilder from '@styles/scss/apps/Canvas/Pipelines/Builder.module.scss';
 import { motion, animate, useAnimation, useMotionValue, useMotionValueEvent, useTransform } from 'framer-motion';
 import { applyRectDiff, calculateBoundingBox, getRectDiff, GROUP_NODE_PADDING } from '../../Canvas/utils/layout/shared';
 import { transformRects } from '../../Canvas/utils/rect';
+import { ClientEventType, EventOperationEnum } from '@mana/shared/interfaces';
 import {
   ItemTypeEnum, LayoutConfigDirectionEnum, LayoutConfigDirectionOriginEnum, LayoutDisplayEnum, LayoutStyleEnum,
 } from '../../Canvas/types';
@@ -29,7 +32,6 @@ import { SettingsProvider } from './SettingsManager/SettingsContext';
 import { ShadowNodeType, ShadowRenderer } from '@mana/hooks/useShadowRender';
 import { ZoomPanStateType } from '@mana/hooks/useZoomPan';
 import { buildDependencies } from './utils/pipelines';
-import { createRef, useEffect, useMemo, useRef, useState } from 'react';
 import { getCache } from '@mana/components/Menu/storage';
 import { useMutate } from '@context/APIMutation';
 import { deepCopyArray, equals, indexBy, unique, uniqueArray } from '@utils/array';
@@ -1232,6 +1234,98 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedGroupRect]);
 
+  function handleMouseDown(event: ClientEventType) {
+    const { handle, operationType } = event;
+
+    if (handle) {
+      handle?.(event);
+    }
+
+    if (EventOperationEnum.DRAG_START !== operationType) {
+      setZoomPanDisabled(false);
+      setDragEnabled(false);
+      setDropEnabled(false);
+      containerRef?.current?.classList.remove(stylesPipelineBuilder.dragging);
+    }
+  }
+
+  function handleContextMenu(
+    event: ClientEventType,
+    items?: MenuItemType[],
+    opts?: RenderContextMenuOptions,
+  ) {
+    removeContextMenu(event);
+
+    renderContextMenu(event, [
+      {
+        Icon: SearchV2,
+        items: [
+          {
+            Icon: iconProps => <Undo {...iconProps} secondary />,
+            onClick: (event: ClientEventType) => {
+              event?.preventDefault();
+              removeContextMenu(event ?? null);
+              transformState?.current?.handleZoom?.current?.((event ?? null) as any, 1);
+              startTransition(() => {
+                setZoomPanDisabled(false);
+              });
+            },
+            uuid:
+              (transformState?.current?.zoom?.current ?? 1) === 1 ? 'Default zoom' : 'Zoom to 100%',
+          },
+          {
+            Icon: ArrowsAdjustingFrameSquare,
+            onClick: (event: ClientEventType) => {
+              event?.preventDefault();
+              removeContextMenu(event ?? null);
+              transformState?.current?.handlePanning?.current?.((event ?? null) as any, {
+                x: 0,
+                y: 0,
+              });
+              startTransition(() => {
+                setZoomPanDisabled(false);
+              });
+            },
+            uuid: 'Reset view',
+          },
+          {
+            Icon: ArrowsPointingInFromAllCorners,
+            onClick: (event: ClientEventType) => {
+              event.preventDefault();
+              removeContextMenu(event);
+              transformState?.current?.handlePanning?.current?.((event ?? null) as any, {
+                xPercent: 0.5,
+                yPercent: 0.5,
+              });
+              startTransition(() => {
+                setZoomPanDisabled(false);
+              });
+            },
+            uuid: 'Center view',
+          },
+        ],
+        uuid: 'View controls',
+      },
+      { divider: true },
+      {
+        Icon: TreeWithArrowsDown,
+        onClick: (event: ClientEventType) => {
+          event?.preventDefault();
+          removeContextMenu(event);
+          dispatchAppEvent(CustomAppEventEnum.SAVE_AS_IMAGE, {
+            event,
+          });
+        },
+        uuid: 'Save pipeline as image',
+      },
+    ], {
+      ...opts,
+      rects: {
+        bounding: wrapperRef.current.getBoundingClientRect(),
+      },
+    });
+  }
+
   return (
     <div
       className={stylesPipelineBuilder.wrapper}
@@ -1244,6 +1338,17 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
       }}
     >
       <div
+        onContextMenu={e => handleContextMenu(e as any)}
+        onDoubleClick={() => {
+          transformState?.current?.handlePanning?.current?.((event ?? null) as any, {
+            x: 0,
+            y: 0,
+          });
+          startTransition(() => {
+            setZoomPanDisabled(false);
+          });
+        }}
+        onMouseDown={e => handleMouseDown(e as any)}
         ref={canvasRef}
         style={{
           height: 'inherit',
