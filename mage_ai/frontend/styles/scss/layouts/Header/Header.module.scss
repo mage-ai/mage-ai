@@ -1,8 +1,8 @@
 @use '../../abstracts/mixins';
 
 .header {
-  background-color: var(--colors-blackhi);
   backdrop-filter: var(--menus-blur-base);
+  background-color: var(--colors-blackhi);
   height: var(--header-height);
   left: 0;
   position: fixed;

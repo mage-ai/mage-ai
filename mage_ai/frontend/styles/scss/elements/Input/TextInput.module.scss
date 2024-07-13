@@ -4,16 +4,20 @@
 .container {
   align-items: center;
   display: inline-flex;
+  height: inherit;
   position: relative;
+  width: inherit;
 }
 
 .input {
+  height: inherit;
+  width: inherit;
+
   @each $value in $numbers-more {
     &.with-icon-size-#{$value * 2} {
       padding-left: #{($padding-vertical-lg * 1.25) + ($value * 2)};
     }
   }
-
 }
 
 .icon {

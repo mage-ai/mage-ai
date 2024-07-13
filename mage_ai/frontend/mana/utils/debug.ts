@@ -3,7 +3,7 @@ export const DEBUG = {
     handler: false,
   },
   hooks: {
-    shadow: true,
+    shadow: false,
     withOnMount: false,
   },
   keyboard: {

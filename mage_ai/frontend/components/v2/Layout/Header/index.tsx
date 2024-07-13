@@ -1,19 +1,19 @@
-import Button, { ButtonProps } from '@mana/elements/Button';
+import Button from '@mana/elements/Button';
 import DashedDivider from '@mana/elements/Divider/DashedDivider';
 import Grid from '@mana/components/Grid';
 import MageAvatar from '@mana/icons/avatars';
-import NavigationButtonGroup from '@mana/components/Menu/NavigationButtonGroup';
 import NavTag from '@mana/components/Tag/NavTag';
-import React, { createRef, useCallback, useMemo, useRef } from 'react';
+import NavigationButtonGroup from '@mana/components/Menu/NavigationButtonGroup';
+import React, { useMemo, useRef } from 'react';
+import Scrollbar from '@mana/elements/Scrollbar';
 import Text from '@mana/elements/Text';
 import TextInput from '@mana/elements/Input/TextInput';
 import stylesHeader from '@styles/scss/layouts/Header/Header.module.scss';
 import useContextMenu from '@mana/hooks/useContextMenu';
-import { SearchV3, ChatV2, Code, DocumentIcon, Builder, CaretDown, CaretLeft } from '@mana/icons';
-import { LayoutDirectionEnum } from '@mana/components/Menu/types';
-import { MenuItemType } from '@mana/hooks/useContextMenu';
-import { getUser } from '@utils/session';
 import { HeaderProps } from './interfaces';
+import { MenuItemType } from '@mana/hooks/useContextMenu';
+import { SearchV3, ChatV2, Code, DocumentIcon, CaretDown, CaretLeft } from '@mana/icons';
+import { getUser } from '@utils/session';
 import { unique } from '@utils/array';
 
 export const HEADER_ROOT_ID = 'v2-header-root';
@@ -150,8 +150,6 @@ export function Header({
 
     return (
       <Grid {...gridProps}>
-        <DashedDivider vertical />
-
         {!version && !hasItems && (
           <Button
             {...buttonProps}
@@ -176,7 +174,11 @@ export function Header({
     intraAppNavItems, buildIntraAppNavItems, gridProps, version]);
 
   const appHistoryNavMemo = useMemo(() => (
-    <Grid {...gridProps}>
+    <Grid
+      {...gridProps}
+      paddingBottom={6}
+      paddingTop={6}
+    >
       <Button
         {...buttonProps}
         style={{
@@ -221,42 +223,62 @@ export function Header({
       >
         <Grid
           {...gridProps}
-          paddingBottom={6}
           paddingLeft={10}
           paddingRight={10}
-          paddingTop={6}
           style={{
             gridTemplateColumns: [
-              appHistoryNavMemo && 'auto',
-              interAppItems && 'auto',
-              intraAppItemsMemo && 'auto',
-              '1fr auto',
+              appHistoryNavMemo && 'min-content',
+              interAppItems && 'min-content',
+              'minmax(0, 1fr)',
+              'min-content',
             ].filter(Boolean).join(' '),
           }}
         >
           {appHistoryNavMemo}
 
           {interAppItems?.length && (
-            <Grid {...gridProps}>
+            <Grid
+              {...gridProps}
+              paddingBottom={6}
+              paddingTop={6}
+            >
               {renderNavItems(interAppItems)}
             </Grid>
           )}
 
-          {intraAppItemsMemo}
-
-          <Grid {...gridProps} templateColumns="1fr">
-            <TextInput
-              Icon={ip => <SearchV3 {...ip} {...iconProps} />}
-              basic
-              placeholder="Command Center for data..."
-              small
+          <Scrollbar hideXscrollbar>
+            <Grid
+              {...gridProps}
+              paddingBottom={6}
+              paddingTop={6}
               style={{
-                height: '100%',
+                gridTemplateColumns: 'min-content min-content 1fr min-content',
               }}
-            />
-          </Grid>
+            >
+              <DashedDivider vertical />
 
-          <Grid {...gridProps}>
+              {intraAppItemsMemo}
+
+              <TextInput
+                Icon={ip => <SearchV3 {...ip} {...iconProps} />}
+                basic
+                placeholder="Command Center for data..."
+                small
+                style={{
+                  height: 40,
+                  minWidth: 400,
+                }}
+              />
+
+              <DashedDivider vertical />
+            </Grid>
+          </Scrollbar>
+
+          <Grid
+            {...gridProps}
+            paddingBottom={6}
+            paddingTop={6}
+          >
             {renderNavItems(globalItems)}
 
             <Button

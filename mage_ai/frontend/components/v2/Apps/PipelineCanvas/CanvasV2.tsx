@@ -29,7 +29,7 @@ import { SettingsProvider } from './SettingsManager/SettingsContext';
 import { ShadowNodeType, ShadowRenderer } from '@mana/hooks/useShadowRender';
 import { ZoomPanStateType } from '@mana/hooks/useZoomPan';
 import { buildDependencies } from './utils/pipelines';
-import { createRef, useEffect, useMemo, useRef, useState, useCallback } from 'react';
+import { createRef, useEffect, useMemo, useRef, useState } from 'react';
 import { getCache } from '@mana/components/Menu/storage';
 import { useMutate } from '@context/APIMutation';
 import { deepCopyArray, equals, indexBy, unique, uniqueArray } from '@utils/array';
@@ -404,8 +404,6 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
       x = (exitOriginX.current ?? 0) - left;
       y = (exitOriginY.current ?? 0) - top;
 
-      console.log('WTFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF', x, y)
-
       if (transformOrigin) {
         if (!initial) {
           translateXEnter.set(x * (1 - val));
@@ -416,10 +414,10 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
       }
     }
 
-    console.log(
-      `[transition] entering: ${group?.uuid}:`,
-      scopeEnter.current.style.transformOrigin,
-    );
+    // console.log(
+    //   `[transition] entering: ${group?.uuid}:`,
+    //   scopeEnter.current.style.transformOrigin,
+    // );
 
     const itemIDs =
       (selectedGroupRect?.items?.map(i => i.id) ?? []).concat((groupRect ?? []) as any[]);
@@ -433,14 +431,14 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
     const progress = uniqueArray(Object.keys(rectsCalculated ?? {}).concat(itemIDs));
     const ready = (x ?? false) && (y ?? false) && progress?.length >= required?.length;
 
-    console.log(
-      `Ready: ${ready}`,
-      'readyToEnter', required?.length,
-      required,
-      nodesToBeRenderedRef.current,
-      'rectsMappingRef', progress?.length,
-      progress,
-    );
+    // console.log(
+    //   `Ready: ${ready}`,
+    //   'readyToEnter', required?.length,
+    //   required,
+    //   nodesToBeRenderedRef.current,
+    //   'rectsMappingRef', progress?.length,
+    //   progress,
+    // );
 
     if (ready) {
       wrapperRef.current.classList.remove(stylesPipelineBuilder.waiting);
@@ -655,10 +653,10 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
       scopeExit.current.style.transformOrigin = `${xorigin}px ${yorigin}px`;
     }
 
-    console.log(
-      `[transition] start: ${currentGroupUUID}`,
-      scopeExit.current.style.transformOrigin,
-    );
+    // console.log(
+    //   `[transition] start: ${currentGroupUUID}`,
+    //   scopeExit.current.style.transformOrigin,
+    // );
 
     animate(animationProgress, 1, {
       duration: ANIMATION_DURATION,
@@ -1029,15 +1027,6 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
       }
 
       // console.log(`start:\n${logMessageForRects(rectsUse)}`);
-      console.log(rectsUse);
-
-      console.log(
-        '!!!!!!!!!!!!!!!!!!!!!',
-        isValidGroup,
-        layoutConfig?.childrenLayout,
-        groupRect,
-        group,
-      );
 
       const centerRect = groupRect ?? rectsUse?.find(r => r?.block?.uuid === group?.uuid);
 
