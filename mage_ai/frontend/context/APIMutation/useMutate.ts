@@ -3,7 +3,7 @@ import { FetcherOptionsType, preprocess } from '@api/utils/fetcher';
 import { buildUrl } from '@api/utils/url';
 import { OperationTypeEnum, ResponseTypeEnum } from '@api/constants';
 import { hyphensToSnake } from '@utils/url';
-import { getClosestRole } from '@utils/elements';
+import { getClosestRole, getClosestChildRole } from '@utils/elements';
 import { useContext, useMemo, useRef, useState } from 'react';
 import { ElementRoleEnum } from '@mana/shared/types';
 import { useMutation } from '@tanstack/react-query';
@@ -317,7 +317,7 @@ export function useMutate(
       ...(handlers || {}),
       mutationFn: (args?: MutateFunctionArgsType) => wrapMutation(operation, args),
       onError: (error: any, variables: any, ctx?: any) => {
-        handleError(error, operation)
+        handleError(error, operation);
 
         onError && onError(error, variables, ctx);
       },
@@ -326,7 +326,7 @@ export function useMutate(
         const [model, modelPrev] = handleResponse(response, variables, ctx);
 
         onSuccess && onSuccess(model, modelPrev);
-      }
+      },
     };
   }
 
@@ -370,12 +370,15 @@ export function useMutate(
     abortControllerRef.current[operation] = new AbortController();
     const signal = abortControllerRef.current[operation].signal;
 
-    const request = [operation, args]
+    const request = [operation, args];
     requests.current[operation].push(request);
 
     if (args?.event) {
-      const eventTarget = (args?.event?.target as HTMLElement)
-      const target = eventTarget ? getClosestRole(
+      const eventTarget = (args?.event?.target as HTMLElement);
+      const target = eventTarget ? getClosestChildRole(
+        eventTarget,
+        [ElementRoleEnum.BUTTON],
+      ) ?? getClosestRole(
         eventTarget,
         [ElementRoleEnum.BUTTON],
       ) : null;

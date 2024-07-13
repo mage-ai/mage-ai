@@ -40,7 +40,7 @@ export function levelClassName(level: number): string {
 }
 
 export function groupClassName(groupUUID: string): string {
-  return `grp--${groupUUID}`
+  return `grp--${groupUUID}`;
 }
 
 export function nodeTypeClassName(type: ItemTypeEnum): string {
@@ -195,7 +195,9 @@ export function menuItemsForTemplates(block, handleOnClick) {
       ([templateUUID, template]) => ({
         description: () => template?.description,
         label: () => template?.name || templateUUID,
-        onClick: (event: any) => handleOnClick(event, block, template),
+        onClick: (event: any, _item, callback?: () => void) => {
+          handleOnClick(event, block, template, callback);
+        },
         uuid: templateUUID,
       }),
     );

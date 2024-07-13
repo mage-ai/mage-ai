@@ -60,6 +60,8 @@ export function transformRects(
       rect: rectBase,
     } = opts ?? {};
     const { parent } = rects?.[0] ?? {};
+    const { styleOptions } = layout ?? {};
+    const { rectTransformations: rectTransformationsNested } = styleOptions ?? {};
 
     const debugLog = (stage: string, arr1: RectType[], opts?: any) => {
       const format = (val: number) => ((val ?? null) !== null && !isNaN(val))
@@ -71,7 +73,7 @@ export function transformRects(
         left: r.left ?? 0,
         top: r.top ?? 0,
         width: r.width ?? 0,
-      }))
+      }));
       const rectsBox = calculateBoundingBox(arr);
 
       const tag = `${stageNumber}. ${type}:${stage}` + (initialScope ? ` (${initialScope})` : '');
@@ -122,7 +124,7 @@ export function transformRects(
       ].flatMap(o => Object.entries(o ?? {}));
 
       const args = tags?.map(([k, v]) =>
-        `|   ${formatKeyValue(k, v)}`
+        `|   ${formatKeyValue(k, v, 0)}`,
       )?.sort()?.join('\n');
 
       let text = logMessageForRects(arr);
@@ -138,7 +140,7 @@ export function transformRects(
           + stage
           + `\n| ${range(10).map(() => '-').join('')}\n`
           + text
-          + `\n| ${range(10).map(() => '-').join('')}\n`
+          + `\n| ${range(10).map(() => '-').join('')}\n`,
         );
       } else {
         console.log(tag
@@ -206,7 +208,7 @@ export function transformRects(
             const rcmap = indexBy(rc, r => r.id);
             const rcend = rcsnap.map(r => rcmap[r.id] ?? r);
             debugLog(`condition_self(${rect.id}).end:`, rcend);
-            rect.children = rcend
+            rect.children = rcend;
           } else {
             rect.children = rc;
           }
@@ -239,14 +241,11 @@ export function transformRects(
     } else if (TransformRectTypeEnum.LAYOUT_TREE === type) {
       rects = tree.pattern1(deepCopyArray(rects), layout ?? {}, {
         // Doesn‘t work yet; the nodes are out of order in terms of its dependencies.
-        // patterns: {
-        //   level: arr => wave.pattern3(deepCopyArray(arr), {
-        //     ...layout,
-        //     direction: LayoutConfigDirectionEnum.VERTICAL === layout?.direction
-        //       ? LayoutConfigDirectionEnum.HORIZONTAL
-        //       : LayoutConfigDirectionEnum.VERTICAL,
-        //   }),
-        // },
+        ...(rectTransformationsNested ? {
+          rectTransformations: {
+            level: arr => transformRects(arr, rectTransformationsNested),
+          },
+        } : {}),
       });
     } else if (TransformRectTypeEnum.LAYOUT_WAVE === type) {
       rects = wave.pattern3(deepCopyArray(rects), layout);
@@ -665,9 +664,7 @@ function layoutRectsInSpiral(rects: RectType[], layout?: LayoutConfigType): Rect
       left = Math.max(0, halfWidth + x - rect.width / 2);
       top = Math.max(0, halfHeight + y - rect.height / 2);
 
-      overlap = positionedRects.some((posRect) => {
-        return !(left + rect.width < posRect.left || left > posRect.left + posRect.width || top + rect.height < posRect.top || top > posRect.top + posRect.height);
-      });
+      overlap = positionedRects.some((posRect) => !(left + rect.width < posRect.left || left > posRect.left + posRect.width || top + rect.height < posRect.top || top > posRect.top + posRect.height));
 
       if (overlap || left < 0 || top < 0) {
         // If there is overlap or the rect goes out of bounds, adjust the angle and radius
@@ -881,7 +878,7 @@ function layoutRectsInGrid(
       horizontal?: 'left' | 'center' | 'right';
       vertical?: 'top' | 'center' | 'bottom';
     };
-  }
+  },
 ): RectType[] {
   const { gap, direction = LayoutConfigDirectionEnum.HORIZONTAL } = { ...DEFAULT_LAYOUT_CONFIG, ...layout };
   const { column: gapCol, row: gapRow } = gap;
@@ -917,7 +914,7 @@ function layoutRectsInGrid(
             return parentLevel + 1;
           }
           return 0;
-        })
+        }),
       );
       determinedLevels.set(item.id, level);
     }

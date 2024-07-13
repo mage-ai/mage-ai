@@ -6,7 +6,7 @@ import { LayoutConfigType } from '../../../Canvas/interfaces';
 import { MenuGroupType } from '@mana/components/Menu/interfaces';
 import {
   RectTransformationScopeEnum, LayoutVerticalAlignmentEnum, LayoutHorizontalAlignmentEnum,
-  LayoutConfigDirectionEnum, TransformRectTypeEnum
+  LayoutConfigDirectionEnum, TransformRectTypeEnum,
 } from '../../../Canvas/types';
 import { RectTransformationType } from '../../../Canvas/interfaces';
 import { RectType } from '@mana/shared/interfaces';
@@ -53,11 +53,13 @@ export function hydrateBlockNodeRects(
 
 export function buildRectTransformations({
   centerRect,
+  conditionalDirections,
   disableAlignments,
   layoutConfig,
   selectedGroup,
 }: {
   centerRect?: RectType;
+  conditionalDirections?: boolean;
   disableAlignments?: boolean;
   layoutConfig?: LayoutConfigType;
   selectedGroup?: MenuGroupType;
@@ -176,10 +178,10 @@ export function buildRectTransformations({
           condition: (args: any) => !conditionDimensions(args),
         }],
       },
-    }
+    };
 
     const pattern = patternMapping[layoutConfig?.display]?.[layoutStyle];
-    return conditionallySwitchDirections(pattern ?? [wave]);
+    return conditionalDirections ? conditionallySwitchDirections(pattern ?? [wave]) : pattern;
   };
 
   const boundingBox = viewportRef?.current?.getBoundingClientRect();
@@ -234,7 +236,7 @@ export function buildRectTransformations({
                     (rect?.inner?.title?.offset?.top ?? 0);
 
                   return validateFiniteNumber(val) ?? 0;
-                }
+                },
               ),
             ),
           },

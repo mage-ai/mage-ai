@@ -5,7 +5,7 @@ import { FrameworkType, PipelineExecutionFrameworkBlockType } from '@interfaces/
 import { GroupUUIDEnum } from '@interfaces/PipelineExecutionFramework/types';
 import {
   LayoutStyleEnum, LayoutVerticalAlignmentEnum, LayoutHorizontalAlignmentEnum,
-  ItemStatusEnum, RectTransformationScopeEnum, TransformRectTypeEnum, LayoutDisplayEnum
+  ItemStatusEnum, RectTransformationScopeEnum, TransformRectTypeEnum, LayoutDisplayEnum,
 } from './types';
 import { AppConfigType } from '../Apps/interfaces';
 import { ZoomPanStateType } from '@mana/hooks/useZoomPan';
@@ -105,6 +105,7 @@ export interface RectTransformationOptionsType {
   offset?: RectType;
   padding?: RectType;
   rect?: RectType;
+  rectTransformations?: RectTransformationType[];
 }
 
 export interface RectTransformationType {
@@ -144,6 +145,7 @@ export interface LayoutConfigType {
   rectTransformations?: RectTransformationType[];
   stagger?: number;
   style?: LayoutStyleEnum;
+  styleOptions?: RectTransformationOptionsType;
   transformRect?: {
     block?: (rect?: RectType) => RectType;
     node?: (rect?: RectType) => RectType;

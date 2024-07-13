@@ -119,6 +119,12 @@
   width: 100vw;
 }
 
+@mixin disable {
+  height: 0;
+  pointer-events: none;
+  width: 0;
+}
+
 .wrapper {
   &.waiting {
     .enter {
@@ -132,15 +138,27 @@
 }
 
 .planesWrapper {
-  height: 0;
+  @include disable;
   left: 0;
-  pointer-events: none;
   top: 0;
-  width: 0;
 }
 
 .idle {
   @include hide;
+}
+
+.enter {
+  @include show;
+
+  height: 100vh;
+  position: absolute;
+  width: 100vw;
+
+  z-index: 4;
+
+  &.waiting {
+    @include disable;
+  }
 }
 
 .entering {

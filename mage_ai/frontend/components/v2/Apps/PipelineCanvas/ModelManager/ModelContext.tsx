@@ -1,5 +1,6 @@
 import React, { createContext } from 'react';
 import { ModelManagerType } from '../interfaces';
+import { MutateType } from '@api/interfaces';
 
 interface ModelContextType {
   blocksByGroupRef: ModelManagerType['blocksByGroupRef'];
@@ -7,6 +8,9 @@ interface ModelContextType {
   groupMappingRef: ModelManagerType['groupMappingRef'];
   groupsByLevelRef: ModelManagerType['groupsByLevelRef'];
   itemsRef?: ModelManagerType['itemsRef'];
+  mutations: {
+    pipelines: MutateType;
+  };
   outputsRef?: ModelManagerType['outputsRef'];
 }
 export const ModelContext = createContext<ModelContextType | undefined>(undefined);

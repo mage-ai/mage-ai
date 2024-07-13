@@ -3,7 +3,7 @@ import Grid from '../Grid';
 import KeyboardTextGroup from '../../elements/Text/Keyboard/Group';
 import React, {
   createRef, useCallback,
-  useEffect, useMemo, useRef
+  useEffect, useMemo, useRef,
 } from 'react';
 import Text from '../../elements/Text';
 import useCustomEventHandler from '../../events/useCustomEventHandler';
@@ -79,15 +79,16 @@ type ItemProps = {
   last?: boolean;
   item: MenuItemType;
   small?: boolean;
+  onClickCallback?: () => void;
   handleMouseEnter?: (event: MouseEvent) => void;
   handleMouseLeave?: (event: MouseEvent) => void;
 };
 
 function MenuItemBase({
   contained, first, item, last, small,
-  handleMouseEnter, handleMouseLeave, defaultOpen,
+  handleMouseEnter, handleMouseLeave, defaultOpen, onClickCallback,
 }: ItemProps,
-  ref: React.RefObject<HTMLDivElement>
+  ref: React.RefObject<HTMLDivElement>,
 ) {
   const timeoutRef = useRef(null);
   const [debouncer, cancel] = useDebounce();
@@ -203,7 +204,7 @@ function MenuItemBase({
             motion
             onClick={e => {
               e.preventDefault();
-              onClick?.(e as ClientEventType, item);
+              onClick?.(e as ClientEventType, item, () => onClickCallback());
             }}
             plain
             width="100%"
@@ -269,7 +270,7 @@ function Menu({
         top: r?.top,
         width: r?.width,
         height: r?.height,
-      }
+      };
 
       const nextLevel = level + 1;
       const menuComponent = (
@@ -516,6 +517,7 @@ function Menu({
                     }}
                     item={item}
                     last={idx === itemsCount - 1}
+                    onClickCallback={() => removePortals(0)}
                     ref={itemRef}
                     small={small}
                   />
@@ -602,7 +604,7 @@ function MenuController({
       });
 
       return [item, itemsInner];
-    }
+    };
     const [target] = getTargets(position);
     const [previousTarget] = getTargets(previousPosition);
     const item = target as MenuItemType;
@@ -615,7 +617,12 @@ function MenuController({
       if (!triggeredOnClickRef.current) {
         triggeredOnClickRef.current = true;
         // console.log(position, previousPosition, item)
-        item?.onClick(event, item);
+
+        // Need to add this or else useMutate can’t automatically add loading state.
+        item?.onClick({
+          ...event,
+          target: itemsRef?.current?.[item?.uuid]?.current,
+        }, item, () => removePortals(0));
         // clearTimeout(timeoutRef.current);
         // timeoutRef.current = setTimeout(() => {
         //   triggeredOnClickRef.current = false;
@@ -691,7 +698,7 @@ function MenuRoot(props: MenuProps) {
         <MenuController {...props} portalRef={portalRef} />
       </AnimatePresence >
     </PortalProvider >
-  )
+  );
 }
 
 export default MenuRoot;

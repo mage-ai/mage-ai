@@ -1,3 +1,4 @@
+import { isObject } from '@utils/hash';
 import { DEBUG } from '../../../utils/debug';
 import { LayoutConfigType, RectType } from '../../interfaces';
 import { LayoutConfigDirectionEnum, LayoutConfigDirectionOriginEnum } from '../../types';
@@ -19,7 +20,7 @@ export function centerRectOnScreen(boundingBox: RectType, rectBase: RectType, re
       height,
       top,
       width,
-    } = centerRect
+    } = centerRect;
     const xcenter = (boundingBox.width - width) / 2;
     const ycenter = (boundingBox.height - height) / 2;
 
@@ -36,15 +37,15 @@ export function centerRectOnScreen(boundingBox: RectType, rectBase: RectType, re
       ydistance = GROUP_NODE_PADDING - ymin;
     }
 
-    console.log(
-      centerRect,
-      [xcenter, boundingBox.width, width],
-      [ycenter, boundingBox.height, height],
-      xmin,
-      ymin,
-      [xdistance, xcenter, left],
-      [ydistance, ycenter, top],
-    )
+    // console.log(
+    //   centerRect,
+    //   [xcenter, boundingBox.width, width],
+    //   [ycenter, boundingBox.height, height],
+    //   xmin,
+    //   ymin,
+    //   [xdistance, xcenter, left],
+    //   [ydistance, ycenter, top],
+    // )
 
     return rects.map(rect => ({
       ...rect,
@@ -130,14 +131,14 @@ export function logMessageForRects(rects: RectType[]): string {
 
   return rects.map((copy) =>
     '|   ' + padString(String(copy.id).slice(0, 20), 20, ' ') + ': ' + (
-      [copy.left, copy.top, copy.width, copy.height].map(v => format(v ?? 0)).join(', '))
+      [copy.left, copy.top, copy.width, copy.height].map(v => format(v ?? 0)).join(', ')),
   ).join('\n');
 }
 
-export function formatKeyValue(k, v): string {
+export function formatKeyValue(k, v, level?: number): string {
   return `${padString(k.slice(0, 20), 20, ' ')}: ${typeof v === 'function'
     ? '__func__'
-    : typeof v === 'object'
-      ? '__obj__'
-      : v}`
+    : typeof v === 'object' && (v ?? false) && isObject(v)
+      ? Object.entries(v ?? {}).map(([k2, v2]) => `${k2}=${v2}`).join(',')
+      : v}`;
 }

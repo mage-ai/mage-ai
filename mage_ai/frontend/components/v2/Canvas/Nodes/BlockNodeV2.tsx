@@ -3,14 +3,15 @@ import stylesBlockNode from '@styles/scss/components/Canvas/Nodes/BlockNode.modu
 import BlockType from '@interfaces/BlockType';
 import React, { useCallback, useRef } from 'react';
 import { NodeType } from '../interfaces';
-import { RectType } from '@mana/shared/interfaces';
+import { useMutate } from '@context/APIMutation';
 
 type BlockNodeType = {
   block: BlockType;
   dragRef?: React.MutableRefObject<HTMLDivElement>;
   index?: number;
+  groupSelection?: boolean;
   node: NodeType;
-} & BlockNodeProps;
+};
 
 function BlockNode({
   block,
@@ -22,6 +23,7 @@ function BlockNode({
   // Controls
   const buttonBeforeRef = useRef<HTMLDivElement>(null);
   const timerStatusRef = useRef(null);
+
 
   // Methods
   const submitCodeExecution = useCallback((event: React.MouseEvent<HTMLElement>) => {

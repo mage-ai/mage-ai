@@ -26,7 +26,7 @@ export interface MenuItemType {
   items?: MenuItemType[];
   keyboardShortcuts?: KeyboardTextGroupType;
   label?: (() => string) | string;
-  onClick?: (event?: ClientEventType | CustomEvent, item?: MenuItemType) => void;
+  onClick?: (event?: ClientEventType | CustomEvent, item?: MenuItemType, callback?: () => void) => void;
   uuid?: string;
 }
 

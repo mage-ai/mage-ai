@@ -1,4 +1,6 @@
 import Aside from './Blocks/Aside';
+import { generateUUID } from '@utils/uuids/generator';
+import { LayoutDirectionEnum } from '@mana/components/Menu/types';
 import Tag from '@mana/components/Tag';
 import { TooltipDirection, TooltipJustify, TooltipAlign, HideTooltipReason, TooltipLayout, useTooltip } from '@context/Tooltip/Context';
 import useDispatchMounted from './useDispatchMounted';
@@ -36,6 +38,7 @@ import { groupValidation } from './Blocks/utils';
 import { handleGroupTemplateSelect, menuItemsForTemplates } from './utils';
 import { isEmptyObject } from '@utils/hash';
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { EventContext } from '../../Apps/PipelineCanvas/Events/EventContext';
 import { ElementRoleEnum } from '@mana/shared/types';
 
 export const BADGE_HEIGHT = 37;
@@ -44,13 +47,13 @@ export const PADDING_VERTICAL = 12;
 export type BlockNodeProps = {
   block: BlockType | PipelineExecutionFrameworkBlockType;
   buttonBeforeRef?: React.RefObject<HTMLDivElement>;
-  timerStatusRef?: React.RefObject<HTMLDivElement>;
+  dragRef: React.RefObject<HTMLDivElement>;
+  groupSelection?: boolean;
   index?: number;
   node: NodeItemType
-  dragRef: React.RefObject<HTMLDivElement>;
   onMount?: (port: PortType, portRef: React.RefObject<HTMLDivElement>) => void;
-  groupSelection?: boolean;
   submitCodeExecution: (event: React.MouseEvent<HTMLElement>) => void;
+  timerStatusRef?: React.RefObject<HTMLDivElement>;
 } & BlockNode;
 
 export default function BlockNodeComponent({
@@ -71,7 +74,7 @@ export default function BlockNodeComponent({
 }: BlockNodeProps & DragAndDropHandlersType & SharedBlockProps) {
   const { name, status, type, uuid } = block;
 
-  const { blocksByGroupRef, groupMappingRef } = useContext(ModelContext);
+  const { blocksByGroupRef, groupMappingRef, mutations } = useContext(ModelContext);
   const groups = useMemo(() => block?.groups?.map(
     guuid => groupMappingRef?.current?.[guuid]), [block, groupMappingRef]);
 
@@ -104,15 +107,29 @@ export default function BlockNodeComponent({
       ? {
         Icon: draggable ? Grab : AddV2,
         menuItems: menuItemsForTemplates(block, (
-          event: any, block2, template
-        ) => handleGroupTemplateSelect(
-          event,
+          event: any,
           block2,
           template,
-          submitEventOperation,
-        )),
-        // onClick: (event: MouseEvent) =>
-        //   handleClickGroupMenu(event, node as NodeType, submitEventOperation, dragRef),
+          callback,
+        ) => {
+          mutations.pipelines.update.mutate({
+            event,
+            onSuccess: () => {
+              callback && callback?.();
+            },
+            payload: {
+              block: {
+                configuration: {
+                  templates: {
+                    [template.uuid]: template,
+                  },
+                },
+                groups: [block2.uuid],
+                uuid: generateUUID(),
+              },
+            },
+          });
+        }),
       }
       : {
         Icon: draggable ? Grab : Code,
@@ -125,7 +142,8 @@ export default function BlockNodeComponent({
           ],
         }),
       }),
-  }), [draggable, submitEventOperation, node, dragRef, block, isGroup]);
+  }), [draggable, submitEventOperation, block, node, dragRef, isGroup,
+    mutations]);
 
   const before = useMemo(() => ({
     Icon: (iconProps) => (
@@ -216,7 +234,6 @@ export default function BlockNodeComponent({
       align={TooltipAlign.START}
       hide={block?.type && ![BlockTypeEnum.GROUP, BlockTypeEnum.PIPELINE].includes(block?.type)}
       horizontalDirection={TooltipDirection.LEFT}
-      verticalDirection={TooltipDirection.UP}
       justify={TooltipJustify.START}
       tooltip={
         <Grid rowGap={4}>
@@ -231,6 +248,7 @@ export default function BlockNodeComponent({
         </Grid>
       }
       tooltipStyle={{ maxWidth: 400 }}
+      verticalDirection={TooltipDirection.UP}
     >
       <Badge {...badge} />
     </TooltipWrapper>
@@ -382,7 +400,7 @@ export default function BlockNodeComponent({
             position="absolute"
           />
         </div>
-        {isGroup
+        {!groupSelection && (isGroup
           ? <BlockGroupOverview block={block as FrameworkType} />
           : (
             <Grid rowGap={8} templateRows="auto">
@@ -390,11 +408,11 @@ export default function BlockNodeComponent({
               {templateConfigurations}
               {BlockTypeEnum.PIPELINE === block?.type && <div />}
             </Grid>
-          )}
+          ))}
       </Grid>
     </div>
   ), [badge, buildBadgeRow, block, connectionRows, templateConfigurations, titleRow, after,
-    isGroup, inputs],
+    isGroup, inputs, groupSelection],
   );
 
   const content = useMemo(() => (
@@ -429,7 +447,7 @@ export default function BlockNodeComponent({
       />
       {main}
     </GradientContainer >
-  ), [blocksInGroup, classNames, isSelectedGroup, main, timerStatusRef, isGroup
+  ), [blocksInGroup, classNames, isSelectedGroup, main, timerStatusRef, isGroup,
   ]);
 
   const teleportBlock = useMemo(() => (
@@ -443,7 +461,7 @@ export default function BlockNodeComponent({
     />
   ), [block, buildBadgeRow, indexProp, node, selectedGroup]);
 
-  if (isSiblingGroup || groupSelection) return teleportBlock;
+  if (isSiblingGroup) return teleportBlock;
 
   return content;
 }

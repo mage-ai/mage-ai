@@ -2,7 +2,7 @@ import { saveAs } from 'file-saver'; // Import the file-saver library
 import html2canvas from 'html2canvas';
 import { calculateBoundingBox } from '@components/v2/Canvas/utils/rect';
 
-export async function handleSaveAsImage(canvasRef, wrapperRef, itemsRef, imageDataRef) {
+export async function handleSaveAsImage(canvasRef, wrapperRef, rectsMapping, imageDataRef) {
   const generateImage = async (boundingBox) => {
     const wrapper = wrapperRef.current;
 
@@ -53,7 +53,7 @@ export async function handleSaveAsImage(canvasRef, wrapperRef, itemsRef, imageDa
   };
 
   const boundingBox =
-    calculateBoundingBox(Object.values(itemsRef?.current ?? {}).map((item) => item.rect));
+    calculateBoundingBox(Object.values(rectsMapping ?? {}));
 
   boundingBox.left -= boundingBox.width * 0.25
   boundingBox.width *= 1.5

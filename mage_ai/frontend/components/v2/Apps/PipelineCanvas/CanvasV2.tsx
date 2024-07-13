@@ -1,15 +1,20 @@
-import React, { createRef, useEffect, useMemo, useRef, useState, startTransition } from 'react';
+import React, { createRef, useEffect, useMemo, useRef, useState, startTransition, useCallback } from 'react';
+import { handleSaveAsImage } from './utils/images';
+import { RenderContextMenuOptions } from '@mana/hooks/useContextMenu';
 import BlockNodeV2, { BADGE_HEIGHT, PADDING_VERTICAL } from '../../Canvas/Nodes/BlockNodeV2';
 import Grid from '@mana/components/Grid';
 import Text from '@mana/elements/Text';
-import { OpenInSidekick, OpenInSidekickLeft, ArrowsAdjustingFrameSquare, SearchV2,
-ArrowsPointingInFromAllCorners, TreeWithArrowsDown, Undo } from '@mana/icons';
+import {
+  OpenInSidekick, OpenInSidekickLeft, ArrowsAdjustingFrameSquare, SearchV2,
+  ArrowsPointingInFromAllCorners, TreeWithArrowsDown, Undo,
+} from '@mana/icons';
 import stylesPipelineBuilder from '@styles/scss/apps/Canvas/Pipelines/Builder.module.scss';
 import { motion, animate, useAnimation, useMotionValue, useMotionValueEvent, useTransform } from 'framer-motion';
 import { applyRectDiff, calculateBoundingBox, getRectDiff, GROUP_NODE_PADDING } from '../../Canvas/utils/layout/shared';
 import { transformRects } from '../../Canvas/utils/rect';
 import { ClientEventType, EventOperationEnum } from '@mana/shared/interfaces';
 import {
+  TransformRectTypeEnum,
   ItemTypeEnum, LayoutConfigDirectionEnum, LayoutConfigDirectionOriginEnum, LayoutDisplayEnum, LayoutStyleEnum,
 } from '../../Canvas/types';
 import BlockType from '@interfaces/BlockType';
@@ -23,10 +28,11 @@ import { hydrateBlockNodeRects, buildRectTransformations } from './Layout/utils'
 import { ExecutionManagerType } from '../../ExecutionManager/interfaces';
 import {
   BlockMappingType, BlocksByGroupType, GroupLevelType, GroupMappingType, LayoutConfigType,
-  NodeType, RectType
+  NodeType, RectType,
 } from '@components/v2/Canvas/interfaces';
-import { MenuGroupType } from '@mana/components/Menu/interfaces';
+import { MenuGroupType, MenuItemType } from '@mana/components/Menu/interfaces';
 import { ModelProvider } from './ModelManager/ModelContext';
+import { EventProvider } from './Events/EventContext';
 import { RemoveContextMenuType, RenderContextMenuType } from '@mana/hooks/useContextMenu';
 import { SettingsProvider } from './SettingsManager/SettingsContext';
 import { ShadowNodeType, ShadowRenderer } from '@mana/hooks/useShadowRender';
@@ -38,6 +44,7 @@ import { deepCopyArray, equals, indexBy, unique, uniqueArray } from '@utils/arra
 import { getNewUUID } from '@utils/string';
 import { deepCopy, isEmptyObject } from '@utils/hash';
 import { WithOnMount } from '@mana/hooks/useWithOnMount';
+import PipelineType from '@interfaces/PipelineType';
 
 const ENTER_ANIMATION_START_THRESHOLD = 0.6;
 const ANIMATION_DURATION = 1;
@@ -88,6 +95,7 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
   const nodeRefs = useRef<Record<string, React.MutableRefObject<HTMLElement>>>({});
   const dragRefs = useRef<Record<string, React.MutableRefObject<HTMLDivElement>>>({});
   const rectRefs = useRef<Record<string, React.MutableRefObject<RectType>>>({});
+  const imageDataRef = useRef<string>(null);
   const wrapperRef = useRef(null);
   const timeoutRef = useRef(null);
   const nodesToBeRenderedRef = useRef<Record<string, boolean>>({});
@@ -160,13 +168,30 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
     }),
     defaultLayoutConfig({
       childrenLayout: defaultLayoutConfig({
-        direction: LayoutConfigDirectionEnum.HORIZONTAL,
-        display: LayoutDisplayEnum.SIMPLE,
-        style: LayoutStyleEnum.GRID,
+        direction: LayoutConfigDirectionEnum.VERTICAL,
+        display: LayoutDisplayEnum.DETAILED,
+        grid: {
+          columns: 5,
+        },
+        style: LayoutStyleEnum.TREE,
+        styleOptions: {
+          rectTransformations: [
+            {
+              options: () => ({
+                layout: {
+                  direction: LayoutConfigDirectionEnum.HORIZONTAL,
+                  gap: { column: 40, row: 40 },
+                  options: { amplitude: 200, wavelength: 100 },
+                },
+              }),
+              type: TransformRectTypeEnum.LAYOUT_WAVE,
+            },
+          ],
+        },
       }),
-      direction: LayoutConfigDirectionEnum.HORIZONTAL,
-      display: LayoutDisplayEnum.SIMPLE,
-      style: LayoutStyleEnum.WAVE,
+      direction: LayoutConfigDirectionEnum.VERTICAL,
+      display: LayoutDisplayEnum.DETAILED,
+      style: LayoutStyleEnum.TREE,
     }),
   ]);
 
@@ -270,7 +295,7 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
       type: ItemTypeEnum.NODE,
       upstream: unique(
         upstreams ?? [],
-        r => r.id
+        r => r.id,
       )?.filter(up => !blocksInGroup?.[up.id]),
     };
 
@@ -320,8 +345,6 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
   function handleInitialTransition(
     currentGroupUUID: string,
     rectsMap: Record<string, RectType>,
-    groupsPrev: MenuGroupType[],
-    groupsNext: MenuGroupType[],
   ) {
     const nextGroupRectCur = rectsMap?.[currentGroupUUID];
     const xorigin = (nextGroupRectCur?.left ?? 0);
@@ -472,11 +495,11 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
     opacityInterstitial.set(Math.max(
       0,
       Math.min(1,
-        (latest > 0.5 ? 1 - latest : latest) * 3
-      )
+        (latest > 0.5 ? 1 - latest : latest) * 3,
+      ),
     ));
 
-    handleMotionValueChange(latest)
+    handleMotionValueChange(latest);
   }
 
   useMotionValueEvent(
@@ -538,7 +561,7 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
     currentGroupUUID: string,
     rectsMap: Record<string, RectType>,
     groupsNext: MenuGroupType[],
-    opts: {
+    opts?: {
       group?: FrameworkType;
       groupRect: RectType;
       groups: MenuGroupType[];
@@ -576,7 +599,7 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
 
     nodesToBeRenderedRef.current = {};
 
-    const clone = scopeEnter.current.firstChild.cloneNode(true)
+    const clone = scopeEnter.current.firstChild.cloneNode(true);
     scopeExit.current.appendChild(clone);
 
     scopeEnter.current.style.transformOrigin = '0px 0px';
@@ -721,6 +744,44 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
 
     selectedGroupsRef.current = groupsArg;
 
+    renderLayoutUpdates(() => {
+      const currentGroup = getCurrentGroup();
+
+      if (phaseRef.current === 0) {
+        handleInitialTransition(
+          currentGroup?.uuid,
+          rectsMappingRef.current,
+        );
+      } else {
+        handleTransitions(
+          currentGroup?.uuid,
+          rectsMappingRef.current,
+          selectedGroupsRef.current,
+          {
+            group: prevGroup,
+            groupRect: prevGroupRect,
+            groups: prevGroups,
+            parent: prevParent,
+            siblings: prevSiblings,
+          },
+        );
+
+        nodesToBeRenderedRef.current = {};
+        (blocksRef.current ?? []).concat(groupsRef.current ?? [])?.forEach(b => {
+          nodesToBeRenderedRef.current[b.uuid] = false;
+        });
+
+        if (shouldRenderSelectedGroupNode()) {
+          nodesToBeRenderedRef.current[currentGroup?.uuid] = false;
+        }
+      }
+    });
+
+
+    phaseRef.current += 1;
+  });
+
+  function renderLayoutUpdates(callbackBeforeUpdateState?: () => void) {
     const currentGroup = getCurrentGroup();
     const siblingGroups = getCurrentGroupSiblings();
 
@@ -728,7 +789,7 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
       (Object.values(blocksByGroupRef.current?.[currentGroup?.uuid] ?? {}) ?? []) as BlockType[];
 
     const groupsForEmptySelection = [];
-    if ((groupsArg?.length ?? 0) === 0 && !currentGroup) {
+    if (!currentGroup) {
       // No group selected: show top level pipelines (e.g. data preparation, inference)
       const defaultSelectionGroups = groupsByLevelRef.current?.[0];
       selectedGroupsRef.current = [
@@ -750,42 +811,14 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
         ...(siblingGroups ?? []),
         ...(groupsForEmptySelection ?? []),
       ].reduce((acc, group2) => group2 ? acc.concat(
-        groupMappingRef.current?.[group2?.uuid]
-      ) : acc, [])
+        groupMappingRef.current?.[group2?.uuid],
+      ) : acc, []),
     );
 
     blocksRef.current = blocks;
     groupsRef.current = groups;
 
-    if (phaseRef.current === 0) {
-      handleInitialTransition(
-        currentGroup?.uuid,
-        rectsMappingRef.current,
-        selectedGroupsRef.current,
-      );
-    } else {
-      handleTransitions(
-        currentGroup?.uuid,
-        rectsMappingRef.current,
-        selectedGroupsRef.current,
-        {
-          group: prevGroup,
-          groupRect: prevGroupRect,
-          groups: prevGroups,
-          parent: prevParent,
-          siblings: prevSiblings,
-        },
-      );
-
-      nodesToBeRenderedRef.current = {};
-      (blocks ?? []).concat(groups ?? [])?.forEach(b => {
-        nodesToBeRenderedRef.current[b.uuid] = false;
-      });
-
-      if (shouldRenderSelectedGroupNode()) {
-        nodesToBeRenderedRef.current[currentGroup?.uuid] = false;
-      }
-    }
+    callbackBeforeUpdateState && callbackBeforeUpdateState?.();
 
     // Need to clear this our shouldCapture in ShadowNodeType won’t execute.
     rectsMappingRef.current = {};
@@ -798,7 +831,7 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
         [ItemTypeEnum.NODE]: groups,
       }).forEach(([type, models]: [ItemTypeEnum, (BlockType | FrameworkType)[]]) =>
         shadowNodes.push(...models?.map((block: BlockType | FrameworkType, index: number) =>
-          renderNodeData(block as any, type, index)) as any
+          renderNodeData(block as any, type, index)) as any,
         ));
 
       setRenderer(
@@ -811,8 +844,8 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
           }}
           nodes={shadowNodes}
           uuid={getNewUUID(3, 'clock')}
-        />
-      )
+        />,
+      );
     }
 
     setModels((prev: ModelsType) => ({
@@ -820,13 +853,20 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
       blocks: blocksRef.current,
       groups: groupsRef.current,
     }) as any);
-
-    phaseRef.current += 1;
-  });
+  }
 
   // Resources
   const [pipeline, setPipeline] = useState<PipelineExecutionFrameworkType>(null);
   const [framework, setFramework] = useState<PipelineExecutionFrameworkType>(null);
+
+  const updateLocalResources = useCallback((pipelineArg: PipelineExecutionFrameworkType) => {
+    const { blocksByGroup, blockMapping, groupMapping, groupsByLevel } =
+      buildDependencies(framework, pipelineArg);
+    blocksByGroupRef.current = blocksByGroup;
+    blockMappingRef.current = blockMapping;
+    groupMappingRef.current = groupMapping;
+    groupsByLevelRef.current = groupsByLevel;
+  }, [framework]);
 
   const pipelineMutants = useMutate({
     id: pipelineUUID,
@@ -837,9 +877,17 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
     automaticAbort: false,
     handlers: {
       detail: { onSuccess: setPipeline },
-      update: { onSuccess: model => setPipeline(model) },
+      update: {
+        onSuccess: (p1, p2) => {
+          setPipeline(p1);
+          if (p1?.blocks?.length !== p2?.blocks?.length) {
+            updateLocalResources(p1);
+          }
+        },
+      },
     },
   });
+
   const frameworkMutants = useMutate({
     id: executionFrameworkUUID,
     resource: 'execution_frameworks',
@@ -984,7 +1032,7 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
               // Look into the group of a sibling to check for the upstream blocks that have no
               // downstream block.
               upgroup?.children?.filter(
-                b => block?.children?.some?.(c => b?.downstream_blocks?.includes(c.uuid))
+                b => block?.children?.some?.(c => b?.downstream_blocks?.includes(c.uuid)),
               )?.forEach(b => {
                 if (rectsmap?.[b.uuid]) {
                   arr.push(rectsmap[b.uuid]);
@@ -1006,7 +1054,9 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
         if (rectsInGroup?.length > 0) {
           const transformations =
             buildRectTransformations({
-              disableAlignments: true, layoutConfig: layoutConfig?.childrenLayout, selectedGroup,
+              disableAlignments: true,
+              layoutConfig: layoutConfig?.childrenLayout,
+              selectedGroup,
             });
 
           // console.log(`| start[children]:\n${logMessageForRects(rectsInGroup)}`);
@@ -1034,6 +1084,7 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
 
       const transformations = buildRectTransformations({
         centerRect,
+        conditionalDirections: (blocks?.length ?? 0) === 0,
         disableAlignments: true,
         layoutConfig,
         selectedGroup,
@@ -1073,14 +1124,9 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
 
     if ((framework ?? false) && (pipeline ?? false)) {
       if ([blocksByGroupRef, blockMappingRef, groupMappingRef, groupsByLevelRef].every(
-        r => !r.current
+        r => !r.current,
       )) {
-        const { blocksByGroup, blockMapping, groupMapping, groupsByLevel } =
-          buildDependencies(framework, pipeline);
-        blocksByGroupRef.current = blocksByGroup;
-        blockMappingRef.current = blockMapping;
-        groupMappingRef.current = groupMapping;
-        groupsByLevelRef.current = groupsByLevel;
+        updateLocalResources(pipeline);
       }
 
       // [WARNING]: The above needs to run 1st
@@ -1088,7 +1134,7 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
         setSelectedGroupsRef.current(getCache([framework.uuid, pipeline.uuid].join(':')));
       }
     }
-  }, [framework, frameworkMutants, pipeline, pipelineMutants]);
+  }, [framework, frameworkMutants, pipeline, pipelineMutants, updateLocalResources]);
 
   useEffect(() => {
     if ((framework ?? false) && (pipeline ?? false)) {
@@ -1152,7 +1198,7 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
               top: undefined,
             }}
             ref={dragRef}
-          />
+          />,
         );
       });
     });
@@ -1168,7 +1214,7 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
     const childrenInGroup = indexBy(group?.children ?? [], c => c.uuid);
     const blocksInGroup = blocksByGroupRef?.current?.[uuid] ?? {};
     return Object.values(
-      rects ?? rectsMappingRef?.current ?? {}
+      rects ?? rectsMappingRef?.current ?? {},
     )?.filter(r => blocksInGroup?.[r.id] || childrenInGroup?.[r.id]);
   }
 
@@ -1235,6 +1281,7 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
   }, [selectedGroupRect]);
 
   function handleMouseDown(event: ClientEventType) {
+    console.log('handleMouseDown', event);
     const { handle, operationType } = event;
 
     if (handle) {
@@ -1250,13 +1297,13 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
   }
 
   function handleContextMenu(
-    event: ClientEventType,
-    items?: MenuItemType[],
-    opts?: RenderContextMenuOptions,
+    event: ClientEventType, items?: MenuItemType[], opts?: RenderContextMenuOptions,
   ) {
+    if (event.metaKey) return;
+
     removeContextMenu(event);
 
-    renderContextMenu(event, [
+    renderContextMenu(event, items ?? [
       {
         Icon: SearchV2,
         items: [
@@ -1312,9 +1359,7 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
         onClick: (event: ClientEventType) => {
           event?.preventDefault();
           removeContextMenu(event);
-          dispatchAppEvent(CustomAppEventEnum.SAVE_AS_IMAGE, {
-            event,
-          });
+          handleSaveAsImage(canvasRef, wrapperRef, rectsMappingRef.current, imageDataRef);
         },
         uuid: 'Save pipeline as image',
       },
@@ -1404,58 +1449,67 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
               blocksByGroupRef={blocksByGroupRef}
               groupMappingRef={groupMappingRef}
               groupsByLevelRef={groupsByLevelRef}
+              mutations={{
+                pipelines: pipelineMutants,
+              }}
             >
-              <motion.div
-                className={[
-                  stylesPipelineBuilder.planesWrapper,
-                  stylesPipelineBuilder.enter,
-                ].join(' ')}
-                ref={scopeEnter}
-                style={phaseRef.current < 2
-                  ? {
-                    opacity: opacityInit,
-                    scale: scaleInit,
-                    translateX: translateXInit,
-                    translateY: translateYInit,
-                  }
-                  : isAnimating
-                    ? {
-                      opacity: opacityEnter,
-                      scale: scaleEnter,
-                      translateX: translateXEnter,
-                      translateY: translateYEnter,
-                    }
-                    : {}
-                }
+              <EventProvider
+                handleContextMenu={handleContextMenu}
+                handleMouseDown={handleMouseDown}
+                removeContextMenu={removeContextMenu}
               >
-                <div>
-                  {nodesMemo}
-                  {selectedGroupNode}
+                <motion.div
+                  className={[
+                    stylesPipelineBuilder.planesWrapper,
+                    stylesPipelineBuilder.enter,
+                  ].join(' ')}
+                  ref={scopeEnter}
+                  style={phaseRef.current < 2
+                    ? {
+                      opacity: opacityInit,
+                      scale: scaleInit,
+                      translateX: translateXInit,
+                      translateY: translateYInit,
+                    }
+                    : isAnimating
+                      ? {
+                        opacity: opacityEnter,
+                        scale: scaleEnter,
+                        translateX: translateXEnter,
+                        translateY: translateYEnter,
+                      }
+                      : {}
+                  }
+                >
+                  <div>
+                    {nodesMemo}
+                    {selectedGroupNode}
 
-                  <LineManagerV2
-                    controls={controlsForLines}
-                    rectsMapping={rectsMapping}
-                    selectedGroupRect={selectedGroupRect}
-                  />
-                </div>
-              </motion.div>
+                    <LineManagerV2
+                      controls={controlsForLines}
+                      rectsMapping={rectsMapping}
+                      selectedGroupRect={selectedGroupRect}
+                    />
+                  </div>
+                </motion.div>
 
-              <motion.div
-                className={[
-                  stylesPipelineBuilder.planesWrapper,
-                  stylesPipelineBuilder.idle,
-                  stylesPipelineBuilder.exit,
-                ].join(' ')}
-                ref={scopeExit}
-                style={{
-                  opacity: opacityExit,
-                  scale: scaleExit,
-                  translateX: translateXExit,
-                  translateY: translateYExit,
-                }}
-              />
+                <motion.div
+                  className={[
+                    stylesPipelineBuilder.planesWrapper,
+                    stylesPipelineBuilder.idle,
+                    stylesPipelineBuilder.exit,
+                  ].join(' ')}
+                  ref={scopeExit}
+                  style={{
+                    opacity: opacityExit,
+                    scale: scaleExit,
+                    translateX: translateXExit,
+                    translateY: translateYExit,
+                  }}
+                />
 
-              {renderer}
+                {renderer}
+              </EventProvider>
             </ModelProvider>
           </SettingsProvider>
         </CanvasContainer>
@@ -1464,6 +1518,6 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
       {headerData && <HeaderUpdater {...headerData as any} />}
     </div >
   );
-}
+};
 
 export default PipelineCanvasV2;
