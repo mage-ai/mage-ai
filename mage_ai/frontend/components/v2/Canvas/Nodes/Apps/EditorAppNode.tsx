@@ -53,6 +53,7 @@ type EditorAppNodeProps = {
   block: BlockType;
   fileRef?: React.MutableRefObject<FileType | undefined> | undefined;
   height?: number;
+  onClose: () => void;
   width?: number;
 };
 
@@ -61,6 +62,7 @@ function EditorAppNode({
   block,
   fileRef,
   height,
+  onClose,
   width,
 }: EditorAppNodeProps) {
   const nodeRef = useRef<HTMLDivElement>(null);
@@ -196,7 +198,9 @@ function EditorAppNode({
           {[
             {
               Icon: Save,
-              description: stale ? `You have unsaved changes. Content was modified ${lastModified}.` : 'Save current file content.',
+              description: stale
+                ? `You have unsaved changes. Content was modified ${lastModified}.`
+                : 'Save current file content.',
               iconProps: stale ? { colorName: 'red' } : {},
               onClick: saveCurrentContent,
               uuid: 'Save',
@@ -204,7 +208,8 @@ function EditorAppNode({
             {
               Icon: Conversation,
               uuid: 'Chat',
-              description: 'Get support in the community channel on Slack', href: 'https://mage.ai/chat', target: '_blank', anchor: 'true',
+              description: 'Get support in the community channel on Slack',
+              href: 'https://mage.ai/chat', target: '_blank', anchor: 'true',
             },
             // {
             //   Icon: Grab,
@@ -222,12 +227,12 @@ function EditorAppNode({
               Icon: CloseV2,
               uuid: 'Close',
               description: 'Close app',
-              // onClick: handleStopApp,
+              onClick: onClose,
             },
           ].map(({ Icon, anchor, label, description, href, iconProps, target, uuid, onClick }) => (
             <TooltipWrapper
               align={TooltipAlign.END}
-              direction={TooltipDirection.BOTTOM}
+              horizontalDirection={TooltipDirection.DOWN}
               key={uuid}
               tooltip={<Text secondary small>{description ?? label?.() ?? uuid}</Text>}
             >

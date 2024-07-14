@@ -337,11 +337,20 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
             appConfig: AppConfigType,
             appNodeRef: React.MutableRefObject<HTMLDivElement>,
             onMount: () => void,
+            onCloseRef: React.MutableRefObject<() => void>,
           ) => {
             const appNode = buildAppNode(node as NodeType, appConfig);
             if (!rectRefs.current[appNode.id]) {
               rectRefs.current[appNode.id] = createRef();
             }
+
+            onCloseRef.current = () => {
+              delete appNodeRefs.current[block.uuid];
+              setAppNodes(prev => {
+                delete prev[block.uuid][appNode.id];
+                return prev;
+              });
+            };
 
             appNodeRefs.current[block.uuid] = {
               onMount,

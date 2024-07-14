@@ -28,6 +28,7 @@ type BlockNodeType = {
     appConfig: AppConfigType,
     appNodeRef: React.MutableRefObject<HTMLDivElement>,
     callback: () => void,
+    onCloseRef: React.MutableRefObject<() => void>,
   ) => void;
   showOutput?: () => void;
 };
@@ -44,6 +45,7 @@ function BlockNode({
   const themeContext = useContext(ThemeContext);
   const { name, type } = block;
   const timeoutRef = useRef(null);
+  const onCloseRef = useRef<() => void>(null);
 
   const appRootRef = useRef<Root>(null);
   const outputRootRef = useRef<Root>(null);
@@ -97,6 +99,11 @@ function BlockNode({
     }, 1000);
   }
 
+  function closeEditorApp() {
+    appRootRef.current?.render(<div></div>);
+    onCloseRef?.current?.();
+  }
+
   function renderEditorApp(opts?: {
     app?: AppConfigType;
     block?: BlockType;
@@ -109,6 +116,9 @@ function BlockNode({
           app={opts?.app}
           block={opts?.block ?? block}
           fileRef={opts?.fileRef ?? fileRef}
+          onClose={() => {
+            closeEditorApp();
+          }}
         />
       </ContextProvider>,
     );
@@ -117,6 +127,25 @@ function BlockNode({
   function launchEditorApp(event: any) {
     const { configuration } = block ?? {};
     const { file } = configuration ?? {};
+    const app = {
+      subtype: AppSubtypeEnum.CANVAS,
+      type: AppTypeEnum.EDITOR,
+      uuid: [block.uuid, AppTypeEnum.EDITOR, AppSubtypeEnum.CANVAS].join(':'),
+    };
+
+    console.log(
+      appNodeRef.current,
+      appRootRef.current,
+    );
+
+    if (fileRef.current ?? false) {
+      renderEditorApp({
+        app,
+        block,
+        fileRef,
+      });
+      return;
+    }
 
     mutations.files.detail.mutate({
       event,
@@ -124,11 +153,6 @@ function BlockNode({
       onSuccess: ({ data }) => {
         fileRef.current = data?.browser_item;
 
-        const app = {
-          subtype: AppSubtypeEnum.CANVAS,
-          type: AppTypeEnum.EDITOR,
-          uuid: [block.uuid, AppTypeEnum.EDITOR, AppSubtypeEnum.CANVAS].join(':'),
-        };
 
         openApp(app, appNodeRef, () => {
           renderEditorApp({
@@ -136,7 +160,7 @@ function BlockNode({
             block,
             fileRef,
           });
-        });
+        }, onCloseRef);
       },
       query: {
         output_namespace: 'code_executions',
