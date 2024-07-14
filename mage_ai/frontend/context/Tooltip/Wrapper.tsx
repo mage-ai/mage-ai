@@ -42,9 +42,9 @@ export function TooltipWrapper({
 
       showTooltip(tooltip, {
         align,
+        horizontalDirection,
         justify,
         position: position ?? { x, y },
-        horizontalDirection,
         verticalDirection,
       }, {
         event,

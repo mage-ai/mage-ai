@@ -48,6 +48,7 @@ export type AsideType = {
   baseColorName?: string;
   buttonRef: React.RefObject<HTMLDivElement>;
   className?: string;
+  loading?: boolean;
   menuItems: MenuItemType[];
   onClick?: (event: React.MouseEvent<HTMLElement>) => void;
   uuid?: string;

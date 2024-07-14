@@ -4,57 +4,48 @@ import Grid from '@mana/components/Grid';
 import React, { useEffect, useRef, useState } from 'react';
 import Scrollbar from '@mana/elements/Scrollbar';
 import stylesOutput from '@styles/scss/components/Canvas/Nodes/OutputGroups.module.scss';
-import useAppEventsHandler, { CustomAppEvent, CustomAppEventEnum } from '../../../Apps/PipelineCanvas/useAppEventsHandler';
 import { DEBUG } from '@components/v2/utils/debug';
-import { OutputNodeType } from '../../interfaces';
-import { cubicBezier, motion } from 'framer-motion';
 
 export type OutputGroupsType = {
-  handleOnMessageRef?: React.MutableRefObject<(event: EventStreamType) => void>;
-  node: OutputNodeType;
-}
+  consumerID: string;
+  handleOnMessageRef?: React.MutableRefObject<Record<string, (event: EventStreamType) => void>>;
+};
 
 type OutputGroupsProps = {
   styles?: React.CSSProperties;
 } & OutputGroupsType;
 
 const OutputGroups: React.FC<OutputGroupsProps> = ({
+  consumerID,
   handleOnMessageRef,
-  node,
   styles,
 }: OutputGroupsProps) => {
   const scrollableDivRef = useRef<HTMLDivElement>(null);
 
   const [eventsGrouped, setEventsGrouped] =
-    useState<Record<string, Record<string, EventStreamType>>>(node?.eventStreams);
-
-  const { dispatchAppEvent } = useAppEventsHandler(node as any);
+    useState<Record<string, Record<string, EventStreamType>>>({});
 
   useEffect(() => {
-    if (!handleOnMessageRef?.current) {
-      handleOnMessageRef.current = (event: EventStreamType) => {
-        DEBUG.codeExecution.output && console.log('event.result', JSON.stringify(event.result, null, 2));
+    if (!handleOnMessageRef?.current?.[consumerID]) {
+      handleOnMessageRef.current[consumerID] = (event: EventStreamType) => {
+        DEBUG.codeExecution.output
+          && console.log('event.result', JSON.stringify(event.result, null, 2));
 
+        const { result } = event;
         setEventsGrouped((prev) => {
           const eventStreams = {
             ...prev,
-            [event.result.process.message_request_uuid]: {
-              ...(prev?.[event.result.process.message_request_uuid] ?? {}),
-              [event.result.result_id]: event,
+            [result.process.message_request_uuid]: {
+              ...(prev?.[result.process.message_request_uuid] ?? {}),
+              [result.result_id]: event,
             },
           };
-
-          dispatchAppEvent(CustomAppEventEnum.OUTPUT_UPDATED, {
-            eventStreams,
-            node: node.node,
-            output: node,
-          });
-
           return eventStreams;
         });
       };
     }
-  }, [dispatchAppEvent, handleOnMessageRef, node]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     scrollableDivRef.current?.scrollTo({
@@ -70,12 +61,13 @@ const OutputGroups: React.FC<OutputGroupsProps> = ({
             <ExecutionOutput
               events={Object.values(eventsGrouped?.[mrUUID] ?? {}).sort()}
               key={mrUUID}
+              uuid={mrUUID}
             />
           ))}
         </Grid>
-      </Scrollbar  >
+      </Scrollbar>
     </div>
   );
-}
+};
 
 export default OutputGroups;

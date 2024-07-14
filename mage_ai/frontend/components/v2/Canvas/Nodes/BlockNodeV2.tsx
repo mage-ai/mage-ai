@@ -1,29 +1,26 @@
-import BlockNodeComponent, { BlockNodeProps, BADGE_HEIGHT, PADDING_VERTICAL } from './BlockNode';
-import EventStreamType, { ServerConnectionStatusType } from '@interfaces/EventStreamType';
-import { formatNumberToDuration } from '@utils/string';
-import { getFileCache, updateFileCache } from '../../IDE/cache';
-import { executionDone } from '@components/v2/ExecutionManager/utils';
-import { ThemeContext } from 'styled-components';
-import ContextProvider from '@context/v2/ContextProvider';
-import { AppConfigType } from '../../Apps/interfaces';
-import EditorAppNode from './Apps/EditorAppNode';
-import { EventContext } from '../../Apps/PipelineCanvas/Events/EventContext';
-import { ModelContext } from '@components/v2/Apps/PipelineCanvas/ModelManager/ModelContext';
-import { OpenInSidekick, Trash } from '@mana/icons';
-import stylesBlockNode from '@styles/scss/components/Canvas/Nodes/BlockNode.module.scss';
+import BlockNodeComponent, { BADGE_HEIGHT, PADDING_VERTICAL } from './BlockNode';
 import BlockType, { BlockTypeEnum } from '@interfaces/BlockType';
+import ContextProvider from '@context/v2/ContextProvider';
+import EditorAppNode from './Apps/EditorAppNode';
+import EventStreamType, { ServerConnectionStatusType } from '@interfaces/EventStreamType';
 import React, { useState, useCallback, useContext, useMemo, useRef, useEffect } from 'react';
-import { NodeType } from '../interfaces';
-import { setNested } from '@utils/hash';
-import { RectType } from '@mana/shared/interfaces';
-import { buildAppNode } from '@components/v2/Apps/PipelineCanvas/AppManager/utils';
-import { AppSubtypeEnum, AppStatusEnum, AppTypeEnum } from '@components/v2/Apps/constants';
-import { createPortal } from 'react-dom';
-import { createRoot, Root } from 'react-dom/client';
-import { FileType } from '@components/v2/IDE/interfaces';
-import { getClosestRole } from '@utils/elements';
+import stylesBlockNode from '@styles/scss/components/Canvas/Nodes/BlockNode.module.scss';
+import { AppConfigType } from '../../Apps/interfaces';
+import { AppSubtypeEnum, AppTypeEnum } from '@components/v2/Apps/constants';
 import { ElementRoleEnum } from '@mana/shared/types';
+import { EventContext } from '../../Apps/PipelineCanvas/Events/EventContext';
+import { FileType } from '@components/v2/IDE/interfaces';
+import { ModelContext } from '@components/v2/Apps/PipelineCanvas/ModelManager/ModelContext';
+import { NodeType } from '../interfaces';
+import { OpenInSidekick, Trash } from '@mana/icons';
+import { ThemeContext } from 'styled-components';
 import { buildOutputNode } from '@components/v2/Apps/PipelineCanvas/utils/items';
+import { createRoot, Root } from 'react-dom/client';
+import { executionDone } from '@components/v2/ExecutionManager/utils';
+import { getClosestRole } from '@utils/elements';
+import { getFileCache, updateFileCache } from '../../IDE/cache';
+import { setNested } from '@utils/hash';
+import { consumers } from 'stream';
 
 type BlockNodeType = {
   block: BlockType;
@@ -33,8 +30,7 @@ type BlockNodeType = {
   node: NodeType;
   openApp?: (
     appConfig: AppConfigType,
-    appNodeRef: React.MutableRefObject<HTMLDivElement>,
-    callback: () => void,
+    render: (mountRef: React.MutableRefObject<HTMLDivElement>) => void,
     onCloseRef: React.MutableRefObject<() => void>,
   ) => void;
   showOutput?: () => void;
@@ -53,18 +49,17 @@ function BlockNode({
   const { configuration, name, type } = block;
   const { file } = configuration ?? {};
 
+  const consumerIDRef = useRef<string>(null);
   const timeoutRef = useRef(null);
   const onCloseRef = useRef<() => void>(null);
-  const consumerIDRef = useRef<string>(null);
   const connectionErrorRef = useRef(null);
   const connectionStatusRef = useRef<ServerConnectionStatusType>(null);
-  const onMessageRefs = useRef<Record<string, (event: EventStreamType) => void>>(null);
+  const handleOnMessageRef = useRef<Record<string, (event: EventStreamType) => void>>({});
 
   const appRootRef = useRef<Root>(null);
   const outputRootRef = useRef<Root>(null);
   const appNodeRef = useRef<HTMLDivElement>(null);
   const outputNodeRef = useRef<HTMLDivElement>(null);
-
 
   // APIs
   const fileRef = useRef<FileType>(null);
@@ -76,7 +71,6 @@ function BlockNode({
   const [executing, setExecuting] = useState(false);
 
   // Controls
-  // const loadingButtonRef = useRef<HTMLElement>(null);
   const timerStatusRef = useRef(null);
 
   const { handleContextMenu, removeContextMenu, setSelectedGroup,
@@ -121,18 +115,14 @@ function BlockNode({
   }
 
   function handleSubscribe(consumerID: string) {
-    onMessageRefs.current['node'] = (event: EventStreamType) => {
-      if (executionDone(event)) {
-        // loadingButtonRef?.current?.classList?.remove(stylesBlockNode.loading);
-        clearTimeout(timeoutRef.current);
-        setExecuting(false);
-      }
+    handleOnMessageRef.current['node'] = (event: EventStreamType) => {
+      setExecuting(!executionDone(event));
     };
 
     subscribe(consumerID, {
       onError: handleError,
       onMessage: (event: EventStreamType) => {
-        Object.values(onMessageRefs.current ?? {}).forEach(handler => handler(event));
+        Object.values(handleOnMessageRef.current ?? {}).forEach(handler => handler(event));
       },
       onOpen: handleOpen,
     });
@@ -152,7 +142,6 @@ function BlockNode({
       }, {
         future: true, onError: () => {
           getClosestRole(event.target as HTMLElement, [ElementRoleEnum.BUTTON]);
-          clearTimeout(timeoutRef.current);
         },
       });
 
@@ -162,38 +151,8 @@ function BlockNode({
         uuid: channel,
       });
 
-      // loadingButtonRef.current =
-      //   getClosestRole(event.target as HTMLElement, [ElementRoleEnum.BUTTON]);
-
-      // loadingButtonRef?.current?.classList?.add(stylesBlockNode.loading);
-
       future();
       setExecuting(true);
-
-      let loops = 0;
-      const now = Number(new Date());
-      const updateTimerStatus = () => {
-        let diff = (Number(new Date()) - now) / 1000;
-        if (loops >= 600) {
-          diff = Math.round(diff);
-        }
-
-        if (timerStatusRef?.current) {
-          timerStatusRef.current.innerText =
-            formatNumberToDuration(diff * 1000);
-        }
-        loops++;
-        timeoutRef.current = setTimeout(
-          updateTimerStatus,
-          diff <= 60 * 1000 && loops <= 60 * 10 ? 100 : 1000,
-        );
-      };
-
-      clearTimeout(timeoutRef.current);
-      timeoutRef.current = setTimeout(
-        updateTimerStatus,
-        0,
-      );
     };
 
     if (getCode()?.length >= 1) {
@@ -232,27 +191,31 @@ function BlockNode({
   }
 
   function closeEditorApp() {
-    appRootRef.current?.render(<div></div>);
-    onCloseRef?.current?.();
+    handleOnMessageRef.current = {};
+    appRootRef.current.unmount();
+    appRootRef.current = null;
+    onCloseRef && onCloseRef?.current?.();
   }
 
-  function renderEditorApp(opts?: {
-    app?: AppConfigType;
-    block?: BlockType;
-    fileRef?: React.MutableRefObject<FileType>;
-  }) {
-    appRootRef.current ||= createRoot(appNodeRef.current);
+  function renderEditorApp(
+    mountRef: React.RefObject<HTMLElement>,
+    opts?: {
+      app?: AppConfigType;
+      block?: BlockType;
+      fileRef?: React.MutableRefObject<FileType>;
+    },
+  ) {
+    appRootRef.current = createRoot(mountRef.current);
     appRootRef.current.render(
       <ContextProvider theme={themeContext}>
         <EditorAppNode
           app={opts?.app}
           block={opts?.block ?? block}
-          executing={executing}
           fileRef={opts?.fileRef ?? fileRef}
+          handleOnMessageRef={handleOnMessageRef}
           onClose={() => {
             closeEditorApp();
           }}
-          onMessageRefs={onMessageRefs}
           submitCodeExecution={submitCodeExecution}
         />
       </ContextProvider>,
@@ -260,14 +223,16 @@ function BlockNode({
   }
 
   function launchEditorApp(event: any) {
+    if (appRootRef.current) return;
+
     const app = {
       subtype: AppSubtypeEnum.CANVAS,
       type: AppTypeEnum.EDITOR,
       uuid: [block.uuid, AppTypeEnum.EDITOR, AppSubtypeEnum.CANVAS].join(':'),
     };
 
-    const render = () => openApp(app, appNodeRef, () => {
-      renderEditorApp({
+    const render = () => openApp(app, (mountRef: React.RefObject<HTMLDivElement>) => {
+      renderEditorApp(mountRef, {
         app,
         block,
         fileRef,
@@ -280,6 +245,28 @@ function BlockNode({
       getFile(event, () => render());
     }
   }
+
+  useEffect(() => {
+    consumerIDRef.current = block.uuid;
+    const consumerID = consumerIDRef.current;
+    const timeout = timeoutRef.current;
+
+    const appRoot = appRootRef.current;
+    const outputRoot = outputRootRef.current;
+
+    return () => {
+      clearTimeout(timeout);
+      timeoutRef.current = null;
+      unsubscribe(consumerID);
+
+      appRoot && appRoot?.unmount();
+      appRootRef.current = null;
+
+      outputRoot && outputRoot?.unmount();
+      outputRootRef.current = null;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <div

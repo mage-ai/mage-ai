@@ -7,7 +7,7 @@ export type OnMountType = {
   onMount: (ref?: React.RefObject<HTMLDivElement>) => void;
   pollInterval?: number;
   uuid?: string;
-  waitUntil?: () => boolean;
+  waitUntil?: (ref?: React.RefObject<HTMLElement>) => boolean;
 };
 
 export function WithOnMount({
@@ -23,26 +23,35 @@ export function WithOnMount({
   const attemptsRef = useRef(0);
   const timeoutRef = useRef(null);
 
-  const ref = useRef<HTMLDivElement>(null);
+  const mountRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (attemptsRef.current >= maxAttempts) return;
 
     const check = () => {
       clearTimeout(timeoutRef.current);
-      if (attemptsRef.current >= maxAttempts) return;
       attemptsRef.current += 1;
 
-      if (phaseRef.current === 0 && onMount && (!waitUntil || waitUntil())) {
+      if (attemptsRef.current >= maxAttempts) {
+        DEBUG.hooks.withOnMount && console.log('[WithOnMount]: maxAttempts reached');
+        return;
+      }
+
+      if (phaseRef.current === 0
+        && onMount
+        && (!waitUntil || waitUntil(withRef ? mountRef : null))
+        && (!withRef || mountRef?.current)
+      ) {
         DEBUG.hooks.withOnMount && console.log(`[WithOnMount:${uuid}:${phaseRef.current}]`);
 
-        withRef ? onMount(ref) : onMount();
+        withRef ? onMount(mountRef) : onMount();
         phaseRef.current += 1;
       } else {
         timeoutRef.current = setTimeout(check, pollInterval);
       }
     };
 
+    DEBUG.hooks.withOnMount && console.log(`[WithOnMount:${uuid}:${phaseRef.current}]`);
     if (phaseRef.current === 0) {
       timeoutRef.current = setTimeout(check, pollInterval);
     }
@@ -50,16 +59,17 @@ export function WithOnMount({
     const timeout = timeoutRef.current;
     return () => {
       clearTimeout(timeout);
-      // phaseRef.current = 0;
-      timeoutRef.current = null;
+
       attemptsRef.current = 0;
+      phaseRef.current = 0;
+      timeoutRef.current = null;
+      // WARNING: DO NOT CLEAR mountRef.current or else anything that requires it won't work.
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [maxAttempts, onMount, pollInterval]);
 
-
   return withRef
-    ? <div ref={ref}>{children}</div>
+    ? <div ref={mountRef}>{children}</div>
     : <>{children}</>;
 }
 

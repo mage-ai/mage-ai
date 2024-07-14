@@ -114,7 +114,7 @@ function Button({
       {...(motion ? { whileTap: { scale: 0.97 } } : {})}
       aslink={asLink ? 'true' : undefined}
       basic={basic ? 'true' : undefined}
-      loading={loading ? true : undefined}
+      loading={loading ? 'true' : undefined}
       plain={plain ? 'true' : undefined}
       primary={primary ? 'true' : undefined}
       secondary={secondary ? 'true' : undefined}
@@ -135,7 +135,7 @@ function Button({
         // whileHover: { scale: 1.2 },
         // whileFocus
         whileTap: {
-          scale: 0.98,
+          scale: 0.95,
         },
       } : {})}
     >

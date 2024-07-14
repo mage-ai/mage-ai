@@ -9,7 +9,9 @@ type TooltipContentProps = {
   optionsPrev?: ShowTooltipOptionsType;
 };
 
-function getElementPageCoordinates(element: Element): { pageX: number, pageY: number, width: number, height: number } {
+function getElementPageCoordinates(element: Element): {
+  pageX: number, pageY: number, width: number, height: number
+} {
   const rect = element.getBoundingClientRect();
   const scrollLeft = window.pageXOffset || document.documentElement.scrollLeft;
   const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
@@ -18,7 +20,12 @@ function getElementPageCoordinates(element: Element): { pageX: number, pageY: nu
   return { pageX, pageY, width: rect.width, height: rect.height };
 }
 
-function updateTooltipPosition(targetElement: HTMLElement, tooltipElement: HTMLElement, offsetX: number = 0, offsetY: number = 0): void {
+function updateTooltipPosition(
+  targetElement: HTMLElement,
+  tooltipElement: HTMLElement,
+  offsetX: number = 0,
+  offsetY: number = 0,
+): void {
   const { pageX, pageY, width, height } = getElementPageCoordinates(targetElement);
   const tooltipX = pageX + offsetX; // Allow custom horizontal offset
   const tooltipY = pageY + height + offsetY; // Allow custom vertical offset
@@ -28,7 +35,12 @@ function updateTooltipPosition(targetElement: HTMLElement, tooltipElement: HTMLE
   tooltipElement.style.top = `${tooltipY}px`;
 }
 
-function showTooltip(targetElement: HTMLElement, tooltipElement: HTMLElement, offsetX: number = 0, offsetY: number = 0): () => void {
+function showTooltip(
+  targetElement: HTMLElement,
+  tooltipElement: HTMLElement,
+  offsetX: number = 0,
+  offsetY: number = 0,
+): () => void {
   // Initial positioning of the tooltip
   updateTooltipPosition(targetElement, tooltipElement, offsetX, offsetY);
 
@@ -111,11 +123,14 @@ function TooltipContent({
       }
 
       showTooltip(wrapperRef.current, ref.current);
+      console.log(translateX, translateY);
       ref.current.style.transform = `translate(${translateX}px, ${translateY}px)`;
       ref.current.classList.remove(styles.hide);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [align, justify]);
+
+  console.log(style);
 
   return (
     <div

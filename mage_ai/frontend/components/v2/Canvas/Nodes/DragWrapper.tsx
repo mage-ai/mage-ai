@@ -156,6 +156,7 @@ function DragWrapper({
       className={[
         stylesBlockNode.dragWrapper,
         groupSelection && stylesBlockNode.groupSelection,
+        stylesBlockNode[item?.type],
       ].filter(Boolean).join(' ')}
       ref={dragRef}
       role={[ElementRoleEnum.DRAGGABLE].join(' ')}
@@ -174,6 +175,7 @@ function DragWrapper({
 }
 
 export function areEqual(p1: DragWrapperProps, p2: DragWrapperProps) {
+  return false;
   return p1.rect.left === p2.rect.left && p1.rect.top === p2.rect.top
     && p1.rect.width === p2.rect.width && p1.rect.height === p2.rect.height
     && p1?.groupSelection === p2?.groupSelection

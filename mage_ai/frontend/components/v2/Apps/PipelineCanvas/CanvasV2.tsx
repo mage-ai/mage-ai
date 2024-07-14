@@ -288,8 +288,7 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
   const blocksRef = useRef<BlockType[]>(null);
   const groupsRef = useRef<FrameworkType[]>(null);
   const appNodeRefs = useRef<Record<string, {
-    onMount: () => void;
-    ref: React.MutableRefObject<HTMLDivElement>;
+    render: (ref?: React.RefObject<HTMLDivElement>) => void;
   }>>({});
   // This is the one that gets updates; rectRefs keeps a running list of all rects.
   const rectsMappingRef = useRef<Record<string, RectType>>({});
@@ -335,8 +334,7 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
           node={node as NodeType}
           openApp={(
             appConfig: AppConfigType,
-            appNodeRef: React.MutableRefObject<HTMLDivElement>,
-            onMount: () => void,
+            render: (ref?: React.RefObject<HTMLDivElement>) => void,
             onCloseRef: React.MutableRefObject<() => void>,
           ) => {
             const appNode = buildAppNode(node as NodeType, appConfig);
@@ -347,15 +345,13 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
             onCloseRef.current = () => {
               delete appNodeRefs.current[block.uuid];
               setAppNodes(prev => {
-                delete prev[block.uuid][appNode.id];
+                delete prev[block.uuid];
                 return prev;
               });
             };
 
-            appNodeRefs.current[block.uuid] = {
-              onMount,
-              ref: appNodeRef,
-            };
+            appNodeRefs.current[block.uuid] ||= { render: null };
+            appNodeRefs.current[block.uuid].render = render;
 
             setAppNodes(prev => ({
               ...prev,
@@ -1056,8 +1052,6 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
     })) as MenuGroupType[];
     setSelectedGroupsRef.current(groupsNext);
 
-    console.log(groupsNext);
-
     dispatchAppEvent(CustomAppEventEnum.UPDATE_HEADER_NAVIGATION, {
       options: {
         kwargs: {
@@ -1171,7 +1165,7 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
           const b1 = p1?.blocks;
           const b2 = p2?.blocks;
 
-          console.log('Pipeline updated', b1?.length, b2?.length);
+          // console.log('Pipeline updated', b1?.length, b2?.length);
           if (b1?.length ?? 0 !== b2?.length ?? 0) {
             // const b1map = indexBy(b1, b => b.uuid);
             // const b2map = indexBy(b2, b => b.uuid);
@@ -1662,17 +1656,14 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
     return <PortalNode id={key} key={key} ref={portalRef} />;
   }), [blocks]);
 
-  const nodesMemo = useMemo(() => {
+  const renderNodeComponents = useCallback((mapping) => {
     const arr = [];
 
-    Object.entries({
-      [ItemTypeEnum.APP]: Object
-        .values(appNodes ?? {})
-        .flatMap(appmaps => Object.values(appmaps ?? {})),
-      [ItemTypeEnum.BLOCK]: blocks,
-      [ItemTypeEnum.NODE]: groups,
-      [ItemTypeEnum.OUTPUT]: Object.values(outputNodes ?? {}),
-    }).forEach(([nodeType, items]: [ItemTypeEnum, (AppNodeType | BlockType | FrameworkType | OutputNodeType)[]]) => {
+    Object.entries(mapping)
+      .forEach(([nodeType, items]: [
+        ItemTypeEnum,
+        (AppNodeType | BlockType | FrameworkType | OutputNodeType)[],
+      ]) => {
       items?.forEach((item: AppNodeType | BlockType | FrameworkType | OutputNodeType) => {
         let itemUUID = (item as any)?.uuid ?? (item as any)?.id;
         let nodeID = (item as any)?.uuid ?? (item as any)?.id;
@@ -1681,15 +1672,14 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
         if (ItemTypeEnum.APP === nodeType) {
           itemUUID = (item as any)?.block?.uuid;
           nodeID = (item as any)?.app?.uuid;
-
           children = (
             <WithOnMount
-              onMount={() => {
-                appNodeRefs?.current?.[itemUUID]?.onMount?.();
+              onMount={(ref) => {
+                appNodeRefs?.current?.[itemUUID]?.render?.(ref);
               }}
-            >
-              <div ref={appNodeRefs?.current?.[itemUUID]?.ref} />
-            </WithOnMount>
+              uuid={`${itemUUID}:${nodeID}`}
+              withRef
+            />
           );
         } else if (ItemTypeEnum.OUTPUT === nodeType) {
 
@@ -1724,7 +1714,19 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
     });
 
     return arr;
-  }, [appNodes, blocks, groups, outputNodes, rectsMapping]);
+  }, [rectsMapping]);
+
+  const nodesMemo = useMemo(() => renderNodeComponents({
+    [ItemTypeEnum.BLOCK]: blocks,
+    [ItemTypeEnum.NODE]: groups,
+  }), [blocks, groups, renderNodeComponents]);
+
+  const appsAndOutputMemo = useMemo(() => renderNodeComponents({
+    [ItemTypeEnum.APP]: Object
+      .values(appNodes ?? {})
+      .flatMap(appmaps => Object.values(appmaps ?? {})),
+    [ItemTypeEnum.OUTPUT]: Object.values(outputNodes ?? {}),
+  }), [appNodes, outputNodes, renderNodeComponents]);
 
   return (
     <div
@@ -1841,6 +1843,7 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
                   }
                 >
                   <div>
+                    {appsAndOutputMemo}
                     {nodesMemo}
                     {selectedGroupNode}
 

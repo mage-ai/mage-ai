@@ -195,7 +195,7 @@
     border-radius: var(--borders-radius-sm);
     position: absolute;
     min-width: 200px;
-    top: calc(50% - var(--header-height));
+    top: 50%;
     transform: translateY(-50%);
   }
 

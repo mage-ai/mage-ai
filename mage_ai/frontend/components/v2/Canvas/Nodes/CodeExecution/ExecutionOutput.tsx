@@ -1,21 +1,24 @@
+import moment from 'moment';
 import EventStreamType, { ResultType } from '@interfaces/EventStreamType';
 import Grid from '@mana/components/Grid';
-import Link from '@mana/elements/Link';
 import React, { useMemo } from 'react';
 import Text from '@mana/elements/Text';
-import moment from 'moment';
 import styles from '@styles/scss/components/Canvas/Nodes/ExecutionOutput.module.scss';
 import { DATE_FORMAT_LONG_MS } from '@utils/date';
 import { TooltipAlign, TooltipWrapper, TooltipDirection, TooltipJustify } from '@context/Tooltip';
+import { convertToMillisecondsTimestamp, dateFormatLongFromUnixTimestamp } from '@utils/date';
 import { displayLocalOrUtcTime } from '@components/Triggers/utils';
+import { isNumeric } from '@utils/string';
 import { shouldDisplayLocalTimezone } from '@components/settings/workspace/utils';
 
 export type ExecutionOutputProps = {
   events: EventStreamType[];
+  uuid: string;
 };
 
 function ExecutionOutput({
   events,
+  uuid,
 }: ExecutionOutputProps, ref: React.ForwardedRef<HTMLDivElement>) {
   const displayLocalTimezone = shouldDisplayLocalTimezone();
 
@@ -101,18 +104,29 @@ function ExecutionOutput({
               }}
             >
               {outputText}
-            </Text   >
+            </Text>
           </Grid >
-        </TooltipWrapper >
+        </TooltipWrapper >,
       );
     }, []), [displayLocalTimezone, events]);
 
   return (
     <div ref={ref}>
       {outputs?.length > 0 &&
-        <Grid className={styles.executionOutputGroup}>
-          {outputs}
-        </Grid  >
+        <Grid rowGap={4}>
+          <Text monospace muted xsmall>
+            {isNumeric(uuid)
+              ? dateFormatLongFromUnixTimestamp(
+                convertToMillisecondsTimestamp(Number(uuid)) / 1000, {
+                  withSeconds: true,
+                },
+              )
+              : uuid}
+          </Text>
+          <Grid className={styles.executionOutputGroup}>
+            {outputs}
+          </Grid>
+        </Grid>
       }
     </div>
   );

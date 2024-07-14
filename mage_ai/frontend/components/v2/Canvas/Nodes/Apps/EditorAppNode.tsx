@@ -1,4 +1,6 @@
 import Button, { ButtonGroup } from '@mana/elements/Button';
+import { executionDone } from '@components/v2/ExecutionManager/utils';
+import Tag from '@mana/components/Tag';
 import { ThemeContext } from 'styled-components';
 import { AppSubtypeEnum, AppTypeEnum } from '@components/v2/Apps/constants';
 import DragWrapper from '../DragWrapper';
@@ -13,12 +15,9 @@ import html2canvas from 'html2canvas';
 import React, { useContext, useEffect, useMemo, useRef, useState } from 'react';
 import TextInput from '@mana/elements/Input/TextInput';
 import moment from 'moment';
-import styles from '@styles/scss/components/Canvas/Nodes/DraggableAppNode.module.scss';
+import stylesAppNode from '@styles/scss/components/Canvas/Nodes/DraggableAppNode.module.scss';
 import stylesEditor from '@styles/scss/components/Canvas/Nodes/Apps/Editor.module.scss';
-import useAppEventsHandler, { CustomAppEventEnum, convertEvent } from '../../../Apps/PipelineCanvas/useAppEventsHandler';
-import useDispatchMounted from '../useDispatchMounted';
-import { AppNodeType, NodeType, OutputNodeType } from '../../interfaces';
-import { getColorNamesFromItems } from '../utils';
+import useAppEventsHandler, { CustomAppEventEnum } from '../../../Apps/PipelineCanvas/useAppEventsHandler';
 import Grid from '@mana/components/Grid';
 import Text from '@mana/elements/Text';
 import useApp from '../../../Apps/Editor/useApp';
@@ -33,7 +32,6 @@ import { TooltipAlign, TooltipWrapper, TooltipDirection, TooltipJustify } from '
 import { areEqualRects, areDraggableStylesEqual } from '../equals';
 import { convertToMillisecondsTimestamp } from '@utils/date';
 import { draggableProps } from '../draggable/utils';
-import { executionDone } from '@components/v2/ExecutionManager/utils';
 import { setupDraggableHandlers } from '../utils';
 import { CanvasNodeType } from '../interfaces';
 import {
@@ -54,8 +52,7 @@ type EditorAppNodeProps = {
   fileRef?: React.MutableRefObject<FileType | undefined> | undefined;
   height?: number;
   submitCodeExecution: (event: any) => void;
-  onMessageRefs?: React.MutableRefObject<Record<string, (event: EventStreamType) => void>>;
-  executing?: boolean;
+  handleOnMessageRef?: React.MutableRefObject<Record<string, (event: EventStreamType) => void>>;
   onClose: () => void;
   width?: number;
 };
@@ -66,16 +63,26 @@ function EditorAppNode({
   submitCodeExecution,
   fileRef,
   height,
-  executing,
   onClose,
-  onMessageRefs,
+  handleOnMessageRef,
   width,
 }: EditorAppNodeProps) {
   const nodeRef = useRef<HTMLDivElement>(null);
   const [asideBeforeOpen, setAsideBeforeOpen] = React.useState(false);
+  const [executing, setExecuting] = useState<boolean>(false);
 
   const { configuration } = block ?? {};
   const file = fileRef?.current ?? configuration?.file;
+
+  useEffect(() => {
+    if (!handleOnMessageRef?.current?.[app?.id]) {
+      handleOnMessageRef.current[app?.id] = (event: EventStreamType) => {
+        const done = executionDone(event);
+        setExecuting(!done);
+      };
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const appOptions = {
     configurations: {
@@ -140,7 +147,7 @@ function EditorAppNode({
 
   return (
     <div className={[
-      styles.appNodeContainer,
+      stylesAppNode.appNodeContainer,
     ].join((' '))}>
       <Grid
         rowGap={PADDING_HORIZONTAL / 2}
@@ -161,15 +168,18 @@ function EditorAppNode({
             small
           />
 
-          <Button
-            Icon={PlayButtonFilled}
-            backgroundcolor={baseColor}
-            basic
-            bordercolor={baseColor}
-            loading={executing}
-            onClick={submitCodeExecution}
-            small
-          />
+          <div style={{ position: 'relative' }}>
+            {executing && <Tag left statusVariant timer top />}
+            <Button
+              Icon={PlayButtonFilled}
+              backgroundcolor={baseColor}
+              basic
+              bordercolor={baseColor}
+              loading={executing}
+              onClick={submitCodeExecution}
+              small
+            />
+          </div>
 
           <TextInput basic placeholder="/" style={{ paddingBottom: 8, paddingTop: 8 }} />
 
@@ -237,6 +247,7 @@ function EditorAppNode({
             <TooltipWrapper
               align={TooltipAlign.END}
               horizontalDirection={TooltipDirection.DOWN}
+              justify={TooltipJustify.END}
               key={uuid}
               tooltip={<Text secondary small>{description ?? label?.() ?? uuid}</Text>}
             >
@@ -264,6 +275,7 @@ function EditorAppNode({
 
         <Grid
           borders
+          style={{ overflow: 'hidden' }}
           templateRows="auto 1fr"
         >
           <Grid
@@ -294,7 +306,8 @@ function EditorAppNode({
               />
               <TooltipWrapper
                 align={TooltipAlign.END}
-                horizontalDirection={TooltipDirection.BOTTOM}
+                horizontalDirection={TooltipDirection.DOWN}
+                justify={TooltipJustify.END}
                 tooltip={
                   <Grid rowGap={PADDING_HORIZONTAL / 2}>
                     <Button
@@ -339,7 +352,7 @@ function EditorAppNode({
             </Grid>
           </Grid>
 
-          <Grid className={styles.codeContainer}>
+          <Grid className={stylesAppNode.codeContainer}>
             <EditorContainerStyled>
               {main}
             </EditorContainerStyled>
@@ -364,7 +377,11 @@ function EditorAppNode({
               <br />
 
               <Grid autoFlow="column" columnGap={8} justifyContent="start" templateColumns="auto">
-                <Link onClick={() => overrideServerContentFromLocal()} xsmall>
+                <Link
+                  onClick={() => overrideServerContentFromLocal()}
+                  preventDet
+                  xsmall
+                >
                   Save local
                 </Link>
 
@@ -379,9 +396,13 @@ function EditorAppNode({
                 </Link>
               </Grid >
             </div>
-
           </Grid>
         )}
+
+        <OutputGroups
+          consumerID={`${app.uuid}-output-groups`}
+          handleOnMessageRef={handleOnMessageRef}
+        />
       </Grid>
     </div >
   );

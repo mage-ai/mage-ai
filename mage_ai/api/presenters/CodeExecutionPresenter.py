@@ -8,6 +8,7 @@ class CodeExecutionPresenter(BasePresenter):
         'exitcode',
         'is_alive',
         'message',
+        'message_request_uuid',
         'message_uuid',
         'pid',
         'source',

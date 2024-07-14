@@ -34,7 +34,7 @@ export const TooltipProvider: React.FC<TooltipProviderProps> = ({ children }) =>
     showTooltipRef.current = showTooltipOptions;
     const ContextProvider = dynamic(() => import('../v2/ContextProvider'));
 
-    tooltipRenderRef.current ||= createRoot(tooltipRootRef.current)
+    tooltipRenderRef.current ||= createRoot(tooltipRootRef.current);
 
     showTimeoutRef.current = setTimeout(() => {
       tooltipRenderRef.current.render(
@@ -47,7 +47,7 @@ export const TooltipProvider: React.FC<TooltipProviderProps> = ({ children }) =>
           >
             {content}
           </TooltipContent >
-        </ContextProvider>
+        </ContextProvider>,
       );
       tooltipVisibleRef.current = true;
     }, tooltipVisibleRef.current ? 0 : 1000);
@@ -69,7 +69,7 @@ export const TooltipProvider: React.FC<TooltipProviderProps> = ({ children }) =>
 
   useEffect(() => {
     const isInside = (event: MouseEvent): boolean => {
-      const { wrapperRef } = showTooltipRef.current ?? {}
+      const { wrapperRef } = showTooltipRef.current ?? {};
       if (!wrapperRef) return false;
 
       const { height, left, top, width } = wrapperRef?.current?.getBoundingClientRect() ?? {};
@@ -124,7 +124,7 @@ export const TooltipProvider: React.FC<TooltipProviderProps> = ({ children }) =>
       const { wrapperRef } = showTooltipRef.current;
 
       if ([wrapperRef, tooltipContentRef].some(
-        el => el?.current && !el?.current.contains(event.relatedTarget as Node)
+        el => el?.current && !el?.current.contains(event.relatedTarget as Node),
       )) {
         hideTooltip(0);
       }

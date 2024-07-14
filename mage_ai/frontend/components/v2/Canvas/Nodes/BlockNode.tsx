@@ -372,6 +372,7 @@ export default function BlockNodeComponent({
     () => (
       <Grid
         alignItems="center"
+        className={stylesBlockNode.showOnHoverContainer}
         columnGap={12}
         id={`${node.id}-title`}
         templateColumns={[
@@ -457,20 +458,9 @@ export default function BlockNodeComponent({
           : 'fit-content',
       }}
     >
-      <Tag
-        className={stylesBlockNode['display-if-executing']}
-        ref={timerStatusRef}
-        statusVariant
-        style={{
-          left: -10,
-          position: 'absolute',
-          top: -10,
-          zIndex: 7,
-        }}
-      />
       {main}
     </GradientContainer >
-  ), [renderNodeAsGroupSelection, classNames, main, timerStatusRef, isGroup,
+  ), [renderNodeAsGroupSelection, classNames, main, isGroup,
   ]);
 
   // console.log(block.uuid, isSiblingGroup);
@@ -488,5 +478,18 @@ export default function BlockNodeComponent({
 
   if (isSiblingGroup) return teleportBlock;
 
-  return content;
+  return (
+    <>
+      {executing && (
+        <Tag
+          left
+          statusVariant
+          timer
+          top
+        />
+      )}
+      {isSiblingGroup && teleportBlock}
+      {!isSiblingGroup && content}
+    </>
+  );
 }
