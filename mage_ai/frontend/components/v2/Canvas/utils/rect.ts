@@ -58,7 +58,10 @@ export function transformRects(
       offset,
       padding,
       rect: rectBase,
-    } = opts ?? {};
+    } = {
+      ...(opts ?? {}),
+      ...(opts?.layout?.options ?? {}),
+    };
     const { parent } = rects?.[0] ?? {};
     const { styleOptions } = layout ?? {};
     const { rectTransformations: rectTransformationsNested } = styleOptions ?? {};

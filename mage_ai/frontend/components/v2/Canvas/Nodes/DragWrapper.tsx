@@ -147,11 +147,11 @@ function DragWrapper({
   connectDrop(dragRef);
   connectDrag(dragRef);
 
-  console.log(
-    `[DragWrapper:${item.id}]`,
-    rect?.left, rect?.top, rect?.width, rect?.height,
-    isAnimating, style,
-  );
+  // console.log(
+  //   `[DragWrapper:${item.id}]`,
+  //   rect?.left, rect?.top, rect?.width, rect?.height,
+  //   isAnimating, style,
+  // );
 
   return (
     <motion.div

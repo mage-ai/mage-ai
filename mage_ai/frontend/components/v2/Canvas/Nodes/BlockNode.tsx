@@ -80,9 +80,11 @@ export default function BlockNodeComponent({
   const { layoutConfigs, selectedGroupsRef } = useContext(SettingsContext);
   const layoutConfig = layoutConfigs?.current?.[selectedGroupsRef?.current?.length - 1];
 
-  const selectedGroup = selectedGroupsRef?.current?.[selectedGroupsRef?.current?.length - 1];
+  const selectedGroup =
+    groupMappingRef?.current?.[selectedGroupsRef?.current?.[selectedGroupsRef?.current?.length - 1]?.uuid];
   const isSiblingGroup = selectedGroup?.uuid !== block?.uuid &&
-    selectedGroup?.groups?.some(g => block?.groups?.includes(g.uuid as GroupUUIDEnum));
+    selectedGroup?.groups?.some((guuid: string) => block?.groups?.includes(guuid as GroupUUIDEnum));
+
   const isGroup =
     useMemo(() => !type || [BlockTypeEnum.GROUP, BlockTypeEnum.PIPELINE].includes(type), [type]);
   const isSelectedGroup = useMemo(() => selectedGroup?.uuid === block?.uuid, [block, selectedGroup]);
@@ -235,7 +237,7 @@ export default function BlockNodeComponent({
       horizontalDirection={TooltipDirection.LEFT}
       justify={TooltipJustify.START}
       tooltip={
-        <Grid rowGap={4}>
+        <Grid rowGap={8}>
           <Text semibold>
             {block?.name || block?.uuid}
           </Text >
@@ -244,6 +246,18 @@ export default function BlockNodeComponent({
               {block?.description}
             </Text>
           }
+          {blocksInGroup?.length > 0 && (
+            <Grid rowGap={8}>
+              <Text secondary semibold small>
+                Blocks
+              </Text>
+              {blocksInGroup?.map(b => (
+                <Text key={b.uuid} monospace secondary small>
+                  {b.name || b.uuid}
+                </Text>
+              ))}
+            </Grid>
+          )}
         </Grid>
       }
       tooltipStyle={{ maxWidth: 400 }}
@@ -251,7 +265,7 @@ export default function BlockNodeComponent({
     >
       <Badge {...badge} />
     </TooltipWrapper>
-    , [badge, block]);
+    , [badge, block, blocksInGroup]);
 
   const buildBadgeRow = useCallback(({
     after: afterArg,
@@ -414,6 +428,11 @@ export default function BlockNodeComponent({
     isGroup, inputs, groupSelection],
   );
 
+  const renderNodeAsGroupSelection = useMemo(() =>
+    isSelectedGroup && (block?.children?.length > 0 || blocksInGroup?.length > 0), [
+      isSelectedGroup, block, blocksInGroup,
+    ]);
+
   const content = useMemo(() => (
     <GradientContainer
       // Only use gradient borders when block selected
@@ -423,12 +442,12 @@ export default function BlockNodeComponent({
       // motionProps={motionProps}
       role={ElementRoleEnum.CONTENT}
       style={{
-        height: isSelectedGroup && blocksInGroup?.length > 0
+        height: renderNodeAsGroupSelection
           ? '100%'
           : 'fit-content',
         minWidth: isGroup ? 320 : undefined,
         position: 'relative',
-        width: isSelectedGroup && blocksInGroup?.length > 0
+        width: renderNodeAsGroupSelection
           ? '100%'
           : 'fit-content',
       }}
@@ -446,8 +465,10 @@ export default function BlockNodeComponent({
       />
       {main}
     </GradientContainer >
-  ), [blocksInGroup, classNames, isSelectedGroup, main, timerStatusRef, isGroup,
+  ), [renderNodeAsGroupSelection, classNames, main, timerStatusRef, isGroup,
   ]);
+
+  // console.log(block.uuid, isSiblingGroup);
 
   const teleportBlock = useMemo(() => (
     <TeleportBlock

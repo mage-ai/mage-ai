@@ -33,7 +33,7 @@ export default function NavigationButtonGroup({
   const containerRef = useRef<HTMLDivElement>(null);
   const selectedButtonIndexRef = useRef<number | null>(null);
   const [selectedGroupsByLevel, setSelectedGroupsByLevel] =
-    useState<MenuGroupType[]>(cacheKey ? (getCache(cacheKey) ?? []) : []);
+    useState<MenuGroupType[]>(cacheKey ? (getCache(cacheKey) ?? [])?.filter(Boolean) : []);
 
   const { deregisterCommands, registerCommands } = useKeyboardShortcuts({
     target: containerRef,
@@ -91,20 +91,41 @@ export default function NavigationButtonGroup({
   const handleNavigationUpdate = useCallback((event: CustomAppEvent) => {
     const { defaultGroups } = event?.detail?.options?.kwargs ?? {};
 
-    const arr = [];
-    const startingGroups = groups[0];
-    const item = defaultGroups?.reduce((prev, curr) => {
-      const grp = prev.items[curr.index] ?? prev.items?.find(i => i.uuid === curr.uuid);
-      arr.push(grp);
-      return grp;
-    }, startingGroups);
+    let groups0 = [];
+    if (groups?.length > 0) {
+      groups0 = [...groups];
+    } else {
+      groups0 = [...(buildGroups
+        ? buildGroups(handleSelectGroup)
+        : (groupsProp ?? []))];
+    }
+    const startingGroup = groups[0];
+    const arr = (defaultGroups ?? [])?.map(g => groups0?.find(grp => grp.uuid === g.uuid) ?? g);
+    // const item = defaultGroups?.reduce((prev, curr) => {
+    //   if (prev ?? true) {
+    //     return curr;
+    //   }
 
-    setSelectedGroupsByLevel(arr);
-  }, [groups]);
+    //   const grp = (prev?.items ?? prev?.children)?.[curr.index]
+    //     ?? (prev?.items ?? prev?.children)?.find(i => i.uuid === curr.uuid);
+
+    //   arr.push(grp);
+    //   return grp;
+    // }, startingGroup);
+
+    console.log(startingGroup, defaultGroups, arr);
+
+    if (arr?.every(Boolean)) {
+      updateCache(cacheKey, arr);
+      setSelectedGroupsByLevel(arr);
+    }
+  }, [cacheKey, groups]);
 
   useAppEventsHandler({} as any, {
     [CustomAppEventEnum.UPDATE_HEADER_NAVIGATION]: handleNavigationUpdate,
   });
+
+  console.log(selectedGroupsByLevel);
 
   const openMenu = useCallback((idx?: number) => {
     const selectedButtonIndex = (idx ?? selectedButtonIndexRef.current) <= selectedGroupsByLevel?.length

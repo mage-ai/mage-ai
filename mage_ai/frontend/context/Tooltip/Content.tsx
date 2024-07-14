@@ -110,7 +110,7 @@ function TooltipContent({
         translateY = maxY - position.y;
       }
 
-      showTooltip(wrapperRef.current, ref.current)
+      showTooltip(wrapperRef.current, ref.current);
       ref.current.style.transform = `translate(${translateX}px, ${translateY}px)`;
       ref.current.classList.remove(styles.hide);
     }
@@ -121,7 +121,7 @@ function TooltipContent({
     <div
       className={[
         styles.tooltipContent,
-        styles.hide
+        styles.hide,
       ].join(' ')}
       ref={ref}
       style={{

@@ -237,12 +237,13 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
     defaultLayoutConfig({
       childrenLayout: defaultLayoutConfig({
         direction: LayoutConfigDirectionEnum.HORIZONTAL,
-        display: LayoutDisplayEnum.SIMPLE,
+        display: LayoutDisplayEnum.DETAILED,
+        options: { amplitude: 20, wavelength: 10 },
         style: LayoutStyleEnum.WAVE,
       }),
-      direction: LayoutConfigDirectionEnum.HORIZONTAL,
-      display: LayoutDisplayEnum.SIMPLE,
-      style: LayoutStyleEnum.WAVE,
+      direction: LayoutConfigDirectionEnum.VERTICAL,
+      display: LayoutDisplayEnum.DETAILED,
+      style: LayoutStyleEnum.TREE,
     }),
     defaultLayoutConfig({
       childrenLayout: defaultLayoutConfig({
@@ -810,7 +811,8 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
       xExit: 0,
     };
 
-    if (prevCount === nextCount
+    if (groupPrev
+      && prevCount === nextCount
       && ((!parentNext && !parentPrev) || (parentNext?.uuid !== parentPrev?.uuid))
     ) {
       // Switching between different groups with different parents but on the same level.
@@ -975,7 +977,10 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
 
   function setSelectedGroup(block: FrameworkType) {
     // Invoked from within a node component and not from the header; need to update header.
-    const groups = [...(selectedGroupsRef.current ?? [])];
+    const groups = [...(selectedGroupsRef.current ?? [])].map(g => ({
+      ...g,
+      ...groupMappingRef.current?.[g.uuid],
+    }));
     const parentIndex =
       groups?.findIndex(g => !!(g as any).children?.find(i => i.uuid === block?.uuid));
 
@@ -996,7 +1001,10 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
         level: groups2?.length ?? 0,
         uuid: block?.uuid,
       },
-    ];
+    ].filter(g => g?.uuid)?.map(g => ({
+      ...g,
+      ...groupMappingRef.current?.[g.uuid],
+    })) as MenuGroupType[];
     setSelectedGroupsRef.current(groupsNext);
 
     console.log(groupsNext);
@@ -1311,6 +1319,7 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
           rectsUse = rectsUse?.filter(r => !map?.[r.id] && r.id !== groupRect.id).concat({
             ...rectsmap?.[groupRect.id],
             ...groupRect,
+            children: [],
             items: [],
           });
         }
@@ -1464,7 +1473,9 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
   function shouldRenderSelectedGroupNode(): boolean {
     const group = getCurrentGroup();
     const rectsInGroup = getSelectedGroupRects(group?.uuid);
+    const blocksInGroup = blocksByGroupRef?.current?.[group?.uuid] ?? {};
     return ((rectsInGroup?.length ?? 0) > 0) && (getCurrentGroupSiblings()?.length ?? 0) > 0;
+      // && blocksInGroup?.length > 0;
   }
 
   const selectedGroupNode = useMemo(() => {
