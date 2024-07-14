@@ -237,25 +237,29 @@ export default function BlockNodeComponent({
       horizontalDirection={TooltipDirection.LEFT}
       justify={TooltipJustify.START}
       tooltip={
-        <Grid rowGap={8}>
-          <Text semibold>
-            {block?.name || block?.uuid}
-          </Text >
-          {block?.description &&
-            <Text secondary>
-              {block?.description}
-            </Text>
-          }
+        <Grid rowGap={16}>
+          <Grid rowGap={8}>
+            <Text semibold>
+              {block?.name || block?.uuid}
+            </Text >
+            {block?.description &&
+              <Text secondary>
+                {block?.description}
+              </Text>
+            }
+          </Grid>
           {blocksInGroup?.length > 0 && (
             <Grid rowGap={8}>
-              <Text secondary semibold small>
+              <Text semibold small>
                 Blocks
               </Text>
-              {blocksInGroup?.map(b => (
-                <Text key={b.uuid} monospace secondary small>
-                  {b.name || b.uuid}
-                </Text>
-              ))}
+              <Grid rowGap={8}>
+                {blocksInGroup?.map(b => (
+                  <Text key={b.uuid} monospace secondary small>
+                    {b.name || b.uuid}
+                  </Text>
+                ))}
+              </Grid>
             </Grid>
           )}
         </Grid>

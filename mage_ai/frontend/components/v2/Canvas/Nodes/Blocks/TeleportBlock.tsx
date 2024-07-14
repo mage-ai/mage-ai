@@ -6,6 +6,7 @@ import { ElementRoleEnum } from '@mana/shared/types';
 import { LayoutConfigDirectionEnum } from '../../types';
 import { MenuGroupType } from '@mana/components/Menu/interfaces';
 import { ModelContext } from '@components/v2/Apps/PipelineCanvas/ModelManager/ModelContext';
+import { EventContext } from '@components/v2/Apps/PipelineCanvas/Events/EventContext';
 import { NodeItemType } from '../../interfaces';
 import { SettingsContext } from '@components/v2/Apps/PipelineCanvas/SettingsManager/SettingsContext';
 import { getBlockColor } from '@mana/themes/blocks';
@@ -32,6 +33,7 @@ export default function TeleportGroup({
   const layoutConfig = layoutConfigs?.current?.[selectedGroupsRef?.current?.length - 1];
   const { convertEvent, dispatchAppEvent } = useAppEventsHandler({ block } as any);
   const { blockMappingRef, blocksByGroupRef, groupMappingRef, groupsByLevelRef } = useContext(ModelContext);
+  const { setSelectedGroup } = useContext(EventContext);
   const groupsInLevel = groupsByLevelRef?.current?.[activeLevel?.current - 2];
   const group = groupMappingRef?.current?.[selectedGroup?.uuid];
   const groupBlocks = Object.values(blocksByGroupRef?.current?.[group?.uuid] ?? {});
@@ -57,10 +59,7 @@ export default function TeleportGroup({
     <Link
       onClick={(event: any) => {
         event.preventDefault();
-        dispatchAppEvent(CustomAppEventEnum.TELEPORT_INTO_BLOCK, {
-          block,
-          event: convertEvent(event),
-        });
+        setSelectedGroup(block);
       }}
       role={role}
       style={{
