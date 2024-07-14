@@ -49,6 +49,7 @@ export type BlockNodeProps = {
   dragRef: React.RefObject<HTMLDivElement>;
   groupSelection?: boolean;
   index?: number;
+  openEditor: (event: any) => void;
   node: NodeItemType
   onMount?: (port: PortType, portRef: React.RefObject<HTMLDivElement>) => void;
   submitCodeExecution: (event: React.MouseEvent<HTMLElement>) => void;
@@ -57,6 +58,7 @@ export type BlockNodeProps = {
 
 export default function BlockNodeComponent({
   block,
+  children,
   buttonBeforeRef,
   collapsed,
   draggable,
@@ -66,6 +68,7 @@ export default function BlockNodeComponent({
   dragRef,
   index: indexProp,
   onMount,
+  openEditor,
   submitCodeExecution,
   submitEventOperation,
   timerStatusRef,
@@ -134,16 +137,12 @@ export default function BlockNodeComponent({
       }
       : {
         Icon: draggable ? Grab : Code,
-        onClick: (event: MouseEvent) => submitEventOperation(buildEvent(
-          event, EventOperationEnum.APP_START, node, dragRef, block,
-        ), {
-          args: [
-            AppTypeEnum.EDITOR,
-            AppSubtypeEnum.CANVAS,
-          ],
-        }),
+        onClick: (event: MouseEvent) => {
+          event.preventDefault();
+          openEditor();
+        },
       }),
-  }), [draggable, submitEventOperation, block, node, dragRef, isGroup,
+  }), [draggable, block, node, isGroup, openEditor,
     mutations]);
 
   const before = useMemo(() => ({

@@ -77,7 +77,7 @@ export function ShadowRenderer({
       portalRef.current = null;
       renderRef.current = 0;
       timeoutRef.current = null;
-    }
+    };
   }, [uuid]);
 
   const render = useCallback(() => {
@@ -121,7 +121,7 @@ export function ShadowRenderer({
             nodes={nodes}
             uuid={uuid}
           />
-        </div>
+        </div>,
       );
 
       return;
@@ -135,7 +135,7 @@ export function ShadowRenderer({
       console.error(
         `[shadow:${uuid}:${renderRef.current}] failed to render within ${attemptsRef.current} attempts:`,
         nodes?.length,
-        nodes?.map(n => n.id)
+        nodes?.map(n => n.id),
       );
     }
   }, [uuid, handleDataCapture, handleNodeTransfer, nodes, waitUntil, maxAttempts, pollInterval]);
@@ -258,7 +258,7 @@ function ShadowContainer({ nodes, handleDataCapture, handleNodeTransfer, uuid }:
         style={SHARED_STYLES as React.CSSProperties}
       >
         {nodes?.map((node: ShadowNodeType) => {
-          DEBUG.hooks.shadow && console.log(`[hook:${uuid}] WithOnMount:`, node.id)
+          DEBUG.hooks.shadow && console.log(`[hook:${uuid}] WithOnMount:`, node.id);
 
           return (
             <WithOnMount

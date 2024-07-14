@@ -1,5 +1,5 @@
 import BlockType from '@interfaces/BlockType';
-import { BlockGroupType, NodeItemType, NodeType, OutputNodeType, RectType } from '../../../Canvas/interfaces';
+import { BlockGroupType, NodeType, OutputNodeType, RectType } from '../../../Canvas/interfaces';
 import { ItemTypeEnum } from '../../../Canvas/types';
 import { buildUUIDForLevel } from './levels';
 import { hashCode } from '@utils/string';
@@ -9,8 +9,8 @@ export function createItemsFromBlockGroups(
   blockGroups: BlockGroupType[],
   opts?: { level?: number },
 ): {
-  items: NodeItemType[];
-  nodes: NodeItemType[];
+  items: NodeType[];
+  nodes: NodeType[];
 } {
   const nodes = [];
   const items = [];
@@ -28,7 +28,7 @@ export function createItemsFromBlockGroups(
     };
     nodes.push(node);
 
-    items2.forEach((item: NodeItemType) => {
+    items2.forEach((item: NodeType) => {
       items.push({
         ...item,
         node: selectKeys(node, ['downstream', 'id', 'items', 'upstream']),
@@ -36,11 +36,11 @@ export function createItemsFromBlockGroups(
     });
   });
 
-  const itemsByNodeID: Record<string, string[]> = {}
-  items?.forEach((item: NodeItemType) => {
+  const itemsByNodeID: Record<string, string[]> = {};
+  items?.forEach((item: NodeType) => {
     if (ItemTypeEnum.NODE !== item?.type && item?.node) {
       itemsByNodeID[item?.node?.id] ||= [];
-      itemsByNodeID[item?.node?.id].push(String(item?.id))
+      itemsByNodeID[item?.node?.id].push(String(item?.id));
     }
   });
 
@@ -57,7 +57,7 @@ export function createItemsFromBlockGroups(
 
 function buildItemFromBlock(block: BlockType, opts?: {
   level?: number;
-}): NodeItemType {
+}): NodeType {
   const { level } = opts || {};
 
   return {
@@ -74,11 +74,11 @@ function buildItemFromBlock(block: BlockType, opts?: {
 
 function createItemsFromBlocks(blocks: BlockType[], opts?: {
   level?: number;
-}): NodeItemType[] {
+}): NodeType[] {
   return blocks.map(block => buildItemFromBlock(block, opts));
 }
 
-export function buildOutputNode(node: NodeItemType, block: BlockType, process: {
+export function buildOutputNode(node: NodeType, block: BlockType, process?: {
   message: string;
   message_request_uuid: string;
   uuid: string;
@@ -92,7 +92,7 @@ export function buildOutputNode(node: NodeItemType, block: BlockType, process: {
   if (rect) {
     outputRect.height = (rect.height ?? 0);
     outputRect.left = (rect.left ?? 0);
-    outputRect.top = (rect.top ?? 0)
+    outputRect.top = (rect.top ?? 0);
     outputRect.width = (rect.width ?? 0) * 1.5;
   }
 

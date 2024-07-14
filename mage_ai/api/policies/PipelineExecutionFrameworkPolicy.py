@@ -39,7 +39,7 @@ PipelineExecutionFrameworkPolicy.allow_actions(
 
 
 PipelineExecutionFrameworkPolicy.allow_read(
-    PipelineExecutionFrameworkPresenter.default_attributes,
+    PipelineExecutionFrameworkPresenter.default_attributes + ['pipelines'],
     on_action=[
         OperationType.DETAIL,
         OperationType.LIST,
@@ -51,7 +51,7 @@ PipelineExecutionFrameworkPolicy.allow_read(
 )
 
 PipelineExecutionFrameworkPolicy.allow_read(
-    PipelineExecutionFrameworkPresenter.default_attributes,
+    PipelineExecutionFrameworkPresenter.default_attributes + ['pipelines'],
     on_action=[
         OperationType.CREATE,
         OperationType.DELETE,
@@ -84,6 +84,7 @@ PipelineExecutionFrameworkPolicy.allow_write(
 
 PipelineExecutionFrameworkPolicy.allow_write(
     [
+        'block',
         'blocks',
         'description',
         'execution_framework',

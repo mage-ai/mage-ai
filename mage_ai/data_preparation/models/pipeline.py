@@ -2401,6 +2401,7 @@ class Pipeline:
         block_uuid: str = None,
         extension_uuid: str = None,
         widget: bool = False,
+        include_execution_framework: Optional[bool] = None,
     ) -> None:
         blocks_current = sorted([b.uuid for b in self.blocks_by_uuid.values()])
 
@@ -2429,6 +2430,7 @@ class Pipeline:
             pipeline_dict = self.to_dict(
                 exclude_data_integration=True,
                 include_extensions=True,
+                include_execution_framework=include_execution_framework,
             )
         if not pipeline_dict:
             raise Exception('Writing empty pipeline metadata is prevented.')

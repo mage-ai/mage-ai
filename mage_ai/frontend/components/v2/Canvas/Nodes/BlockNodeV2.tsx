@@ -1,12 +1,22 @@
 import BlockNodeComponent, { BlockNodeProps, BADGE_HEIGHT, PADDING_VERTICAL } from './BlockNode';
+import { ThemeContext } from 'styled-components';
+import ContextProvider from '@context/v2/ContextProvider';
+import { AppConfigType } from '../../Apps/interfaces';
+import EditorAppNode from './Apps/EditorAppNode';
 import { EventContext } from '../../Apps/PipelineCanvas/Events/EventContext';
 import { ModelContext } from '@components/v2/Apps/PipelineCanvas/ModelManager/ModelContext';
 import { OpenInSidekick, Trash } from '@mana/icons';
 import stylesBlockNode from '@styles/scss/components/Canvas/Nodes/BlockNode.module.scss';
 import BlockType, { BlockTypeEnum } from '@interfaces/BlockType';
-import React, { useCallback, useContext, useMemo, useRef } from 'react';
+import React, { useState, useCallback, useContext, useMemo, useRef } from 'react';
 import { NodeType } from '../interfaces';
 import { setNested } from '@utils/hash';
+import { RectType } from '@mana/shared/interfaces';
+import { buildAppNode } from '@components/v2/Apps/PipelineCanvas/AppManager/utils';
+import { AppSubtypeEnum, AppStatusEnum, AppTypeEnum } from '@components/v2/Apps/constants';
+import { createPortal } from 'react-dom';
+import { createRoot, Root } from 'react-dom/client';
+import { FileType } from '@components/v2/IDE/interfaces';
 
 type BlockNodeType = {
   block: BlockType;
@@ -14,6 +24,12 @@ type BlockNodeType = {
   index?: number;
   groupSelection?: boolean;
   node: NodeType;
+  openApp?: (
+    appConfig: AppConfigType,
+    appNodeRef: React.MutableRefObject<HTMLDivElement>,
+    callback: () => void,
+  ) => void;
+  showOutput?: () => void;
 };
 
 function BlockNode({
@@ -21,17 +37,27 @@ function BlockNode({
   dragRef,
   node,
   groupSelection,
+  openApp,
+  showOutput,
   ...rest
 }: BlockNodeType, ref: React.MutableRefObject<HTMLElement>) {
+  const themeContext = useContext(ThemeContext);
   const { name, type } = block;
   const timeoutRef = useRef(null);
 
+  const appRootRef = useRef<Root>(null);
+  const outputRootRef = useRef<Root>(null);
+  const appNodeRef = useRef<HTMLDivElement>(null);
+  const outputNodeRef = useRef<HTMLDivElement>(null);
+
   // APIs
+  const fileRef = useRef<FileType>(null);
   const { mutations } = useContext(ModelContext);
 
   // Attributes
   const isGroup =
     useMemo(() => !type || [BlockTypeEnum.GROUP, BlockTypeEnum.PIPELINE].includes(type), [type]);
+  const [editorAppActive, setEditorAppActive] = useState(false);
 
   // Controls
   const buttonBeforeRef = useRef<HTMLDivElement>(null);
@@ -69,6 +95,53 @@ function BlockNode({
         },
       });
     }, 1000);
+  }
+
+  function renderEditorApp(opts?: {
+    app?: AppConfigType;
+    block?: BlockType;
+    file?: FileType;
+  }) {
+    appRootRef.current ||= createRoot(appNodeRef.current);
+    appRootRef.current.render(
+      <ContextProvider theme={themeContext}>
+        <EditorAppNode
+          app={opts?.app}
+          block={opts?.block ?? block}
+          file={opts?.file ?? fileRef.current}
+        />
+      </ContextProvider>,
+    );
+  }
+
+  function launchEditorApp(event: any) {
+    const { configuration } = block ?? {};
+    const { file } = configuration ?? {};
+
+    mutations.files.detail.mutate({
+      event,
+      id: file?.path,
+      onSuccess: ({ data }) => {
+        fileRef.current = data?.browser_item;
+
+        const app = {
+          subtype: AppSubtypeEnum.CANVAS,
+          type: AppTypeEnum.EDITOR,
+          uuid: [block.uuid, AppTypeEnum.EDITOR, AppSubtypeEnum.CANVAS].join(':'),
+        };
+
+        openApp(app, appNodeRef, () => {
+          renderEditorApp({
+            app,
+            block,
+            file: fileRef.current,
+          });
+        });
+      },
+      query: {
+        output_namespace: 'code_executions',
+      },
+    });
   }
 
   return (
@@ -124,16 +197,13 @@ function BlockNode({
     >
       <BlockNodeComponent
         {...rest}
-        // activeLevel={activeLevel}
         block={block}
         buttonBeforeRef={buttonBeforeRef}
-        // handlers={draggingHandlers}
-        // index={indexProp}
         dragRef={dragRef}
         groupSelection={groupSelection}
         node={node}
+        openEditor={launchEditorApp}
         submitCodeExecution={submitCodeExecution}
-        // submitEventOperation={submitEventOperation}
         timerStatusRef={timerStatusRef}
         updateBlock={updateBlock}
       />

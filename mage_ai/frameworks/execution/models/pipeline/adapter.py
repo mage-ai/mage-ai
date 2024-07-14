@@ -16,7 +16,6 @@ from mage_ai.frameworks.execution.models.block.adapter import Block
 from mage_ai.frameworks.execution.models.enums import ExecutionFrameworkUUID
 from mage_ai.settings.repo import get_repo_path
 from mage_ai.shared.files import find_files_with_criteria, remove_subpath
-from mage_ai.shared.hash import ignore_keys_with_blank_values, index_by
 from mage_ai.shared.models import DelegatorTarget
 
 
@@ -127,6 +126,9 @@ class Pipeline(DelegatorTarget):
 
         return self.pipelines
 
+    async def create_block(self, payload: Dict) -> Block:
+        return await Block.create(payload['uuid'], self, payload)
+
     async def to_dict_async(
         self, *args, include_pipelines: Optional[bool] = None, **kwargs
     ) -> Dict:
@@ -165,6 +167,21 @@ class Pipeline(DelegatorTarget):
         pipeline = await self.get_pipeline()
         pipeline.add_block(block.block, *args, **kwargs)
 
+    async def remove_block(self, block: Block, *args, **kwargs):
+        self.delete_block(block.block, force=True)
+
+    async def update_block_configuration(self, block: Block, configuration: Dict):
+        if not self.pipeline:
+            return
+
+        block_dict = self.pipeline.blocks_by_uuid.get(block.uuid)
+        if not block_dict:
+            return
+
+        block_dict.update(dict(configuration=configuration))
+        self.pipeline.blocks_by_uuid[block.uuid] = block_dict
+        await self.pipeline.save_async(include_execution_framework=True)
+
     async def update(
         self,
         blocks: Optional[List[Dict[str, Any]]] = None,
@@ -176,38 +193,39 @@ class Pipeline(DelegatorTarget):
         type: Optional[PipelineType] = None,
         **kwargs,
     ):
-        block_payloads = index_by(lambda x: x['uuid'], blocks or [])
-        await self.get_blocks(refresh=True)
-        for block in self.blocks or []:
-            if block.uuid not in block_payloads:
-                self.delete_block(block.block, force=True)
-            else:
-                pay = block_payloads.pop(block.uuid)
-                block.update(ignore_keys_with_blank_values(pay))
+        pass
+        # block_payloads = index_by(lambda x: x['uuid'], blocks or [])
+        # await self.get_blocks(refresh=True)
+        # for block in self.blocks or []:
+        #     if block.uuid not in block_payloads:
+        #         self.delete_block(block.block, force=True)
+        #     else:
+        #         pay = block_payloads.pop(block.uuid)
+        #         block.update(ignore_keys_with_blank_values(pay))
 
-        for uuid, payload in block_payloads.items():
-            await Block.create(uuid, self, payload)
+        # for uuid, payload in block_payloads.items():
+        #     await Block.create(uuid, self, payload)
 
-        await self.get_pipeline(refresh=True)
-        if self.pipeline is not None:
-            await self.pipeline.update(
-                ignore_keys_with_blank_values(
-                    dict(
-                        description=description,
-                        name=name,
-                        settings=settings,
-                        tags=tags,
-                        type=type,
-                    )
-                ),
-            )
+        # await self.get_pipeline(refresh=True)
+        # if self.pipeline is not None:
+        #     await self.pipeline.update(
+        #         ignore_keys_with_blank_values(
+        #             dict(
+        #                 description=description,
+        #                 name=name,
+        #                 settings=settings,
+        #                 tags=tags,
+        #                 type=type,
+        #             )
+        #         ),
+        #     )
 
-        pipeline_payloads = index_by(lambda x: x['uuid'], pipelines or [])
-        await self.get_pipelines(refresh=True)
-        await asyncio.gather(*[
-            adapter.update(
-                **ignore_keys_with_blank_values(pipeline_payloads.get(adapter.uuid) or {})
-            )
-            for adapter in (self.pipelines or [])
-            if pipeline_payloads.get(adapter.uuid)
-        ])
+        # pipeline_payloads = index_by(lambda x: x['uuid'], pipelines or [])
+        # await self.get_pipelines(refresh=True)
+        # await asyncio.gather(*[
+        #     adapter.update(
+        #         **ignore_keys_with_blank_values(pipeline_payloads.get(adapter.uuid) or {})
+        #     )
+        #     for adapter in (self.pipelines or [])
+        #     if pipeline_payloads.get(adapter.uuid)
+        # ])

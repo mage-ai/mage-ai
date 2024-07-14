@@ -1,4 +1,6 @@
 import Button, { ButtonGroup } from '@mana/elements/Button';
+import { ThemeContext } from 'styled-components';
+import { AppSubtypeEnum, AppTypeEnum } from '@components/v2/Apps/constants';
 import DragWrapper from '../DragWrapper';
 import stylesBuilder from '@styles/scss/apps/Canvas/Pipelines/Builder.module.scss';
 import { isEmptyObject } from '@utils/hash';
@@ -40,69 +42,38 @@ import {
   CloseV2,
 } from '@mana/icons';
 import BlockType from '@interfaces/BlockType';
-import { nodeClassNames } from '../utils';
+import { getBlockColor } from '@mana/themes/blocks';
+import { FileType } from '@components/v2/IDE/interfaces';
+import { AppConfigType } from '@components/v2/Apps/interfaces';
 
 const PADDING_HORIZONTAL = 16;
 
-type NodeType = {
-  blocks: BlockType[];
-  index?: number;
-  useCustomDragPreviewImage?: false;
+type EditorAppNodeProps = {
+  app?: AppConfigType
+  block: BlockType;
+  file?: FileType;
+  height?: number;
+  width?: number;
 };
 
-const DraggableAppNode: React.FC<NodeType & CanvasNodeType> = ({
-  draggable,
-  handlers,
+function EditorAppNode({
+  app,
   block,
-  index = 0,
-  node,
-  rect,
-  useCustomDragPreviewImage = false,
-  executeCode,
-  subscribe,
-}) => {
-  const app = useMemo(() => (node as AppNodeType)?.app, [node]);
-  const fetchDetailCountRef = useRef(0);
-  const imageDataRef = useRef<string | null>(null);
+  file: fileProp,
+  height,
+  width,
+}: EditorAppNodeProps) {
   const nodeRef = useRef<HTMLDivElement>(null);
-  const handleOnMessageRef = useRef<(event: EventStreamType) => void>(null);
-  const [executing, setExecuting] = useState(false);
-  const [outputNodes, setOutputNodes] = useState<OutputNodeType[]>(null);
-
-  const { dispatchAppEvent } = useAppEventsHandler(node as any);
-  const { phaseRef } = useDispatchMounted(node, nodeRef);
   const [asideBeforeOpen, setAsideBeforeOpen] = React.useState(false);
-  const [asideAfterOpen, setAsideAfterOpen] = React.useState(false);
-
-  const renderRef = useRef(0);
-  DEBUG.editor.node && console.log(
-    '[DraggableAppNode] render',
-    app?.status,
-    renderRef.current++,
-    phaseRef.current,
-    node,
-  );
 
   const { configuration } = block ?? {};
-  const { file } = configuration ?? {};
-
-  useEffect(() => {
-    const consumerID = [String(node.id), app.type, app.subtype].filter(Boolean).join(':');
-    // subscribe(consumerID, {
-    //   onMessage: (event: EventStreamType) => {
-    //     handleOnMessageRef?.current?.(event);
-    //     if (executionDone(event)) {
-    //       setExecuting(false);
-    //     }
-    //   },
-    // });
-  }, [app, node, subscribe]);
+  const file = fileProp ?? configuration?.file;
 
   const appOptions = {
     configurations: {
       dimension: {
-        height: Math.max(rect?.height ?? 0, 400),
-        width: Math.max(rect?.width ?? 0, 400),
+        height: Math.max(height ?? 0, 400),
+        width: Math.max(width ?? 0, 400),
       },
       folding: false,
       glyphMargin: false,
@@ -117,8 +88,11 @@ const DraggableAppNode: React.FC<NodeType & CanvasNodeType> = ({
   };
   const { editor, main, mutate, toolbars } = useApp({
     app: {
-      ...app,
       options: appOptions,
+      subtype: AppSubtypeEnum.CANVAS,
+      type: AppTypeEnum.EDITOR,
+      uuid: [block.uuid, AppTypeEnum.EDITOR, AppSubtypeEnum.CANVAS].join(':'),
+      ...app,
     },
     editor: {
       containerClassName: [
@@ -137,37 +111,11 @@ const DraggableAppNode: React.FC<NodeType & CanvasNodeType> = ({
         nodeRef.current.style.visibility = 'visible';
         nodeRef.current.style.display = 'block';
       }
-
-      if (useCustomDragPreviewImage && nodeRef?.current && !imageDataRef?.current) {
-        const generateImage = async () => {
-          const computedStyle =
-            typeof window !== 'undefined' && window.getComputedStyle(nodeRef.current);
-
-          if (computedStyle) {
-            try {
-              await new Promise((resolve) => setTimeout(resolve, 2000));
-
-              const canvas = await html2canvas(nodeRef.current, { scale: 2, useCORS: true });
-              const imageData = canvas.toDataURL('image/png', 1.0); // Ensure maximum quality
-              imageDataRef.current = imageData;
-              console.log('Generated Image:', imageData); // For debugging
-            } catch (error) {
-              console.log('Error generating image:', error);
-            }
-          } else {
-            setTimeout(generateImage, 1000);
-          }
-        };
-
-        generateImage();
-      }
     },
     skipInitialFetch: true,
     useToolbars: true,
   });
   const {
-    inputRef,
-    main: mainContentResource,
     original,
     overrideLocalContentFromServer,
     overrideServerContentFromLocal,
@@ -175,71 +123,7 @@ const DraggableAppNode: React.FC<NodeType & CanvasNodeType> = ({
     stale,
   } = toolbars ?? {} as any;
 
-  useEffect(() => {
-    if (fetchDetailCountRef.current === 0 && file?.path) {
-      mutate.detail.mutate({
-        // Exact same code as in BlockNodeWrapper
-        id: file?.path,
-        onSuccess: (resp) => {
-          const itemf = resp?.data?.browser_item;
-
-          // This is handled inside useApp.
-          // updateFileCache({ server: itemf });
-
-          const eventStreams = itemf?.output?.reduce(
-            (acc, result) => setNested(
-              acc,
-              [result.process.message_request_uuid, result.result_id].join('.'),
-              {
-                result,
-              },
-            ), {});
-
-          if (!isEmptyObject(eventStreams)) {
-            const outputNode = {
-              ...buildOutputNode(node, block, {
-                uuid: (block as any)?.uuid,
-              } as any),
-              eventStreams,
-              node,
-            };
-            setOutputNodes([outputNode as OutputNodeType]);
-            dispatchAppEvent(CustomAppEventEnum.OUTPUT_UPDATED, {
-              eventStreams,
-              node,
-              output: outputNode,
-            });
-          }
-        },
-        query: {
-          output_namespace: 'code_executions',
-        },
-      });
-      fetchDetailCountRef.current += 1;
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [app, file]);
-
-  function handleStopApp(event: MouseEvent) {
-    dispatchAppEvent(CustomAppEventEnum.STOP_APP, {
-      event: convertEvent(event, {
-        ...node,
-        node,
-      }),
-    });
-  }
-
-  function handleUpdateLayout(event: MouseEvent) {
-    dispatchAppEvent(CustomAppEventEnum.START_DRAGGING, {
-      event: convertEvent(event, {
-        ...node,
-        node,
-      }),
-    });
-  }
-
-  const colorNames = getColorNamesFromItems([node]);
-  const baseColor = colorNames?.[index]?.base;
+  const baseColor = getBlockColor(block?.type, { getColorName: true })?.names?.base;
   const lastModified = useMemo(() => {
     if (original?.modified_timestamp) {
       return moment(convertToMillisecondsTimestamp(original?.modified_timestamp ?? 0)).fromNow();
@@ -274,10 +158,10 @@ const DraggableAppNode: React.FC<NodeType & CanvasNodeType> = ({
             backgroundcolor={baseColor}
             basic
             bordercolor={baseColor}
-            loading={executing}
-            onClick={() => executeCode(editor.getValue(), {
-              output_dir: file?.path,
-            })}
+            // loading={executing}
+            // onClick={() => executeCode(editor.getValue(), {
+            //   output_dir: file?.path,
+            // })}
             small
           />
 
@@ -292,7 +176,7 @@ const DraggableAppNode: React.FC<NodeType & CanvasNodeType> = ({
 
           <Button
             Icon={Grab}
-            onClick={event => handleUpdateLayout(event as any)}
+            // onClick={event => handleUpdateLayout(event as any)}
             small
           />
         </Grid>
@@ -338,7 +222,7 @@ const DraggableAppNode: React.FC<NodeType & CanvasNodeType> = ({
               Icon: CloseV2,
               uuid: 'Close',
               description: 'Close app',
-              onClick: handleStopApp,
+              // onClick: handleStopApp,
             },
           ].map(({ Icon, anchor, label, description, href, iconProps, target, uuid, onClick }) => (
             <TooltipWrapper
@@ -485,17 +369,9 @@ const DraggableAppNode: React.FC<NodeType & CanvasNodeType> = ({
 
           </Grid>
         )}
-
-        {outputNodes?.map(outputNode => (
-          <OutputGroups
-            handleOnMessageRef={handleOnMessageRef}
-            key={outputNode?.id}
-            node={outputNode}
-          />
-        ))}
       </Grid>
     </div >
   );
-};
+}
 
-export default DraggableAppNode;
+export default EditorAppNode;

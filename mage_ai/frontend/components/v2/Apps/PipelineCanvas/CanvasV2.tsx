@@ -2,6 +2,7 @@ import React, { createRef, useEffect, useMemo, useRef, useState, startTransition
 import { handleSaveAsImage } from './utils/images';
 import { RenderContextMenuOptions } from '@mana/hooks/useContextMenu';
 import BlockNodeV2, { BADGE_HEIGHT, PADDING_VERTICAL } from '../../Canvas/Nodes/BlockNodeV2';
+import PortalNode from '../../Canvas/Nodes/PortalNode';
 import Grid from '@mana/components/Grid';
 import useAppEventsHandler, { CustomAppEvent, CustomAppEventEnum } from './useAppEventsHandler';
 import Text from '@mana/elements/Text';
@@ -29,7 +30,7 @@ import { hydrateBlockNodeRects, buildRectTransformations } from './Layout/utils'
 import { ExecutionManagerType } from '../../ExecutionManager/interfaces';
 import {
   BlockMappingType, BlocksByGroupType, GroupLevelType, GroupMappingType, LayoutConfigType,
-  NodeType, RectType,
+  NodeType, RectType, OutputNodeType, AppNodeType,
 } from '@components/v2/Canvas/interfaces';
 import { MenuGroupType, MenuItemType } from '@mana/components/Menu/interfaces';
 import { ModelProvider } from './ModelManager/ModelContext';
@@ -47,6 +48,9 @@ import { deepCopy, isEmptyObject } from '@utils/hash';
 import { WithOnMount } from '@mana/hooks/useWithOnMount';
 import PipelineType from '@interfaces/PipelineType';
 import { CommandType } from '@mana/events/interfaces';
+import { AppConfigType } from '../interfaces';
+import { buildOutputNode } from './utils/items';
+import { buildAppNode } from './AppManager/utils';
 
 const ENTER_ANIMATION_START_THRESHOLD = 0.6;
 const CHANGE_BLOCKS_ANIMATION_DURATION = 5;
@@ -127,6 +131,7 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
   const controllersRef = useRef<Record<string, any>>({});
   const controlsForLines = useAnimation();
   const interstitialRef = useRef(null);
+  const portalRefs = useRef<Record<string, React.MutableRefObject<HTMLDivElement>>>({});
 
   const opacityInterstitial = useMotionValue(0);
 
@@ -283,11 +288,17 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
   const blocksRef = useRef<BlockType[]>(null);
   const groupsRef = useRef<FrameworkType[]>(null);
   // This is the one that gets updates; rectRefs keeps a running list of all rects.
+  const appNodeRefs = useRef<Record<string, {
+    onMount: () => void;
+    ref: React.MutableRefObject<HTMLDivElement>;
+  }>>({});
   const rectsMappingRef = useRef<Record<string, RectType>>({});
 
   // State store
   const [defaultGroups, setDefaultGroups] = useState<any>(null);
   const [models, setModels] = useState<ModelsType>(null);
+  const [appNodes, setAppNodes] = useState<Record<string, Record<string, AppNodeType>>>({});
+  const [outputNodes, setOutputNodes] = useState<Record<string, OutputNodeType>>({});
   const [rectsMapping, setRectsMapping] = useState<Record<string, RectType>>({});
   const [renderer, setRenderer] = useState<React.ReactNode>(null);
 
@@ -318,11 +329,34 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
     return {
       component: (
         <BlockNodeV2
-          block={block}
+          block={block as any}
           index={index}
           key={block.uuid}
           node={node as NodeType}
+          openApp={(
+            appConfig: AppConfigType,
+            appNodeRef: React.MutableRefObject<HTMLDivElement>,
+            onMount: () => void,
+          ) => {
+            appNodeRefs.current[block.uuid] = {
+              onMount,
+              ref: appNodeRef,
+            };
+            setAppNodes(prev => ({
+              ...prev,
+              [block.uuid]: {
+                ...(prev[block.uuid] ?? {}),
+                [appConfig.uuid]: buildAppNode(node as NodeType, appConfig),
+              },
+            }));
+          }}
           ref={nodeRef}
+          showOutput={() => {
+            setOutputNodes(prev => ({
+              ...prev,
+              [block.uuid]: buildOutputNode(node as NodeType, block),
+            }));
+          }}
         />
       ),
       data: {
@@ -1416,48 +1450,6 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
   const blocks = useMemo(() => models?.blocks ?? [], [models?.blocks]);
   const groups = useMemo(() => models?.groups ?? [], [models?.groups]);
 
-  const nodesMemo = useMemo(() => {
-    const arr = [];
-
-    Object.entries({
-      [ItemTypeEnum.BLOCK]: blocks,
-      [ItemTypeEnum.NODE]: groups,
-    }).forEach(([nodeType, blocks]: [ItemTypeEnum, (BlockType | FrameworkType)[]]) => {
-      blocks?.forEach((block: BlockType | FrameworkType) => {
-        const index = arr.length;
-        let dragRef = dragRefs.current[block.uuid];
-        if (!dragRef) {
-          dragRef = createRef();
-          dragRefs.current[block.uuid] = dragRef;
-        }
-
-        arr.push(
-          <DragWrapper
-            // draggable={draggable}
-            // droppable={droppable}
-            // droppableItemTypes={droppableItemTypes}
-            // eventHandlers={eventHandlers}
-            // handleDrop={handleDrop}
-            controllers={controllersRef}
-            item={{
-              block,
-              id: block.uuid,
-              type: nodeType,
-            } as NodeType}
-            key={block.uuid}
-            rect={rectsMapping?.[block.uuid] ?? {
-              left: undefined,
-              top: undefined,
-            }}
-            ref={dragRef}
-          />,
-        );
-      });
-    });
-
-    return arr;
-  }, [blocks, groups, rectsMapping]);
-
   function getSelectedGroupRects(
     uuid?: string,
     rects?: Record<string, RectType>,
@@ -1530,7 +1522,7 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
           // }}
         >
           <BlockNodeV2
-            block={block}
+            block={block as any}
             groupSelection
             key={block.uuid}
             node={node as NodeType}
@@ -1647,6 +1639,81 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
     });
   }
 
+  const portalsMemo = useMemo(() => (blocks ?? [])?.map((block) => {
+    const key = `${block.uuid}-portal`;
+    const portalRef = portalRefs.current[key] || createRef();
+    portalRefs.current[key] = portalRef;
+
+    return <PortalNode id={key} key={key} ref={portalRef} />;
+  }), [blocks]);
+
+  const nodesMemo = useMemo(() => {
+    const arr = [];
+
+    Object.entries({
+      [ItemTypeEnum.APP]: Object
+        .values(appNodes ?? {})
+        .flatMap(appmaps => Object.values(appmaps ?? {})),
+      [ItemTypeEnum.BLOCK]: blocks,
+      [ItemTypeEnum.NODE]: groups,
+      [ItemTypeEnum.OUTPUT]: Object.values(outputNodes ?? {}),
+    }).forEach(([nodeType, items]: [ItemTypeEnum, (AppNodeType | BlockType | FrameworkType | OutputNodeType)[]]) => {
+      items?.forEach((item: AppNodeType | BlockType | FrameworkType | OutputNodeType) => {
+        let itemUUID = item?.uuid ?? item?.id;
+        let nodeID = item?.uuid ?? item?.id;
+        let children = null;
+
+        if (ItemTypeEnum.APP === nodeType) {
+          itemUUID = (item as any)?.block?.uuid;
+          nodeID = item?.app?.uuid;
+
+          children = (
+            <WithOnMount
+              onMount={() => {
+                appNodeRefs?.current?.[itemUUID]?.onMount?.();
+              }}
+            >
+              <div ref={appNodeRefs?.current?.[itemUUID]?.ref} />
+            </WithOnMount>
+          );
+        } else if (ItemTypeEnum.OUTPUT === nodeType) {
+
+        }
+
+        let dragRef = dragRefs.current[nodeID];
+        if (!dragRef) {
+          dragRef = createRef();
+          dragRefs.current[nodeID] = dragRef;
+        }
+
+        arr.push(
+          <DragWrapper
+            // draggable={draggable}
+            // droppable={droppable}
+            // droppableItemTypes={droppableItemTypes}
+            // eventHandlers={eventHandlers}
+            // handleDrop={handleDrop}
+            item={{
+              block: items,
+              id: nodeID,
+              type: nodeType,
+            } as NodeType}
+            key={nodeID}
+            rect={rectsMapping?.[nodeID] ?? {
+              left: undefined,
+              top: undefined,
+            }}
+            ref={dragRef}
+          >
+            {children}
+          </DragWrapper>,
+        );
+      });
+    });
+
+    return arr;
+  }, [appNodes, blocks, groups, outputNodes, rectsMapping]);
+
   return (
     <div
       className={stylesPipelineBuilder.wrapper}
@@ -1726,6 +1793,7 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
               groupMappingRef={groupMappingRef}
               groupsByLevelRef={groupsByLevelRef}
               mutations={{
+                files: fileMutants,
                 pipelines: pipelineMutants,
               }}
             >
@@ -1734,6 +1802,8 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
                 handleMouseDown={handleMouseDown}
                 removeContextMenu={removeContextMenu}
                 setSelectedGroup={setSelectedGroup}
+                useExecuteCode={useExecuteCode}
+                useRegistration={useRegistration}
               >
                 <motion.div
                   className={[
@@ -1784,6 +1854,8 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
                     translateY: translateYExit,
                   }}
                 />
+
+                {portalsMemo}
 
                 {renderer}
               </EventProvider>

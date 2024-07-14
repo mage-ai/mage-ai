@@ -9,14 +9,10 @@ function appInstanceID(nodeID: string, app: AppConfigType): string {
 export function buildAppNode(node: NodeType, app: AppConfigType, opts?: {
   level?: number;
 }): AppNodeType {
-  const id = appInstanceID(String(node.id), {
-    ...app,
-    uuid: String(app.uuid ?? node?.apps?.length ?? 0),
-  });
-
   return {
     app,
-    id,
+    block: node?.block,
+    id: app.uuid,
     level: opts?.level,
     rect: {
       height: undefined,

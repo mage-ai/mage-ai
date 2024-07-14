@@ -9,6 +9,7 @@ interface ModelContextType {
   groupsByLevelRef: ModelManagerType['groupsByLevelRef'];
   itemsRef?: ModelManagerType['itemsRef'];
   mutations: {
+    files: MutateType;
     pipelines: MutateType;
   };
   outputsRef?: ModelManagerType['outputsRef'];

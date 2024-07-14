@@ -134,15 +134,6 @@ function DragWrapper({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  useWithOnMount({
-    onMount: () => {
-      controllers.current[item?.id] = controls;
-    },
-    waitUntil: () => !!(dragRef?.current ?? false)
-      && typeof window !== 'undefined'
-      && !!(window.getComputedStyle(dragRef?.current) ?? false),
-  });
-
   // This needs to always connect without any conditionals or else it’ll never connect after mount.
   connectDrop(dragRef);
   connectDrag(dragRef);
