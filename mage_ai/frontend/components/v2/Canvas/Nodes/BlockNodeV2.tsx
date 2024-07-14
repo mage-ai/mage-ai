@@ -100,7 +100,7 @@ function BlockNode({
   function renderEditorApp(opts?: {
     app?: AppConfigType;
     block?: BlockType;
-    file?: FileType;
+    fileRef?: React.MutableRefObject<FileType>;
   }) {
     appRootRef.current ||= createRoot(appNodeRef.current);
     appRootRef.current.render(
@@ -108,7 +108,7 @@ function BlockNode({
         <EditorAppNode
           app={opts?.app}
           block={opts?.block ?? block}
-          file={opts?.file ?? fileRef.current}
+          fileRef={opts?.fileRef ?? fileRef}
         />
       </ContextProvider>,
     );
@@ -134,7 +134,7 @@ function BlockNode({
           renderEditorApp({
             app,
             block,
-            file: fileRef.current,
+            fileRef,
           });
         });
       },

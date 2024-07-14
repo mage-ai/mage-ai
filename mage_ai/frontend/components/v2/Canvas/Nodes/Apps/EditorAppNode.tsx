@@ -51,7 +51,7 @@ const PADDING_HORIZONTAL = 16;
 type EditorAppNodeProps = {
   app?: AppConfigType
   block: BlockType;
-  file?: FileType;
+  fileRef?: React.MutableRefObject<FileType | undefined> | undefined;
   height?: number;
   width?: number;
 };
@@ -59,7 +59,7 @@ type EditorAppNodeProps = {
 function EditorAppNode({
   app,
   block,
-  file: fileProp,
+  fileRef,
   height,
   width,
 }: EditorAppNodeProps) {
@@ -67,7 +67,7 @@ function EditorAppNode({
   const [asideBeforeOpen, setAsideBeforeOpen] = React.useState(false);
 
   const { configuration } = block ?? {};
-  const file = fileProp ?? configuration?.file;
+  const file = fileRef?.current ?? configuration?.file;
 
   const appOptions = {
     configurations: {
@@ -86,7 +86,7 @@ function EditorAppNode({
       path: configuration?.file_path,
     },
   };
-  const { editor, main, mutate, toolbars } = useApp({
+  const { main, toolbars } = useApp({
     app: {
       options: appOptions,
       subtype: AppSubtypeEnum.CANVAS,
@@ -226,6 +226,8 @@ function EditorAppNode({
             },
           ].map(({ Icon, anchor, label, description, href, iconProps, target, uuid, onClick }) => (
             <TooltipWrapper
+              align={TooltipAlign.END}
+              direction={TooltipDirection.BOTTOM}
               key={uuid}
               tooltip={<Text secondary small>{description ?? label?.() ?? uuid}</Text>}
             >
@@ -282,6 +284,8 @@ function EditorAppNode({
                 small
               />
               <TooltipWrapper
+                align={TooltipAlign.END}
+                horizontalDirection={TooltipDirection.BOTTOM}
                 tooltip={
                   <Grid rowGap={PADDING_HORIZONTAL / 2}>
                     <Button
