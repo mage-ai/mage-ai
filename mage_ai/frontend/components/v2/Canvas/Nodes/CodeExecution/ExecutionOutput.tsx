@@ -1,4 +1,4 @@
-import EventStreamType, { ResultType, ExecutionStatusEnum } from '@interfaces/EventStreamType';
+import EventStreamType, { ResultType, ExecutionResultType, ExecutionStatusEnum } from '@interfaces/EventStreamType';
 import Grid from '@mana/components/Grid';
 import React, { useMemo } from 'react';
 import Text from '@mana/elements/Text';
@@ -8,31 +8,31 @@ import { DATE_FORMAT_LONG_MS } from '@utils/date';
 import { TooltipAlign, TooltipWrapper, TooltipDirection, TooltipJustify } from '@context/Tooltip';
 import { convertToMillisecondsTimestamp, dateFormatLongFromUnixTimestamp } from '@utils/date';
 import { displayLocalOrUtcTime } from '@components/Triggers/utils';
-import { isNumeric } from '@utils/string';
+import { formatDurationFromEpoch, isNumeric } from '@utils/string';
 import { shouldDisplayLocalTimezone } from '@components/settings/workspace/utils';
 
 export type ExecutionOutputProps = {
-  events: EventStreamType[];
+  results: ExecutionResultType[];
   uuid: string;
 };
 
 function ExecutionOutput({
-  events,
+  results,
   uuid,
 }: ExecutionOutputProps, ref: React.ForwardedRef<HTMLDivElement>) {
   const displayLocalTimezone = shouldDisplayLocalTimezone();
 
-  const outputs = useMemo(() => events?.reduce(
-    (acc: React.ReactNode[], event: EventStreamType,
+  const timestamps = useMemo(() => results?.reduce((acc, result) => ({
+    max: acc.max === null ? result.timestamp : Math.max(acc.max, result.timestamp),
+    min: acc.min === null ? result.timestamp : Math.min(acc.min, result.timestamp),
+  }), {
+    max: null,
+    min: null,
+  }), [results]);
+
+  const outputs = useMemo(() => results?.reduce(
+    (acc: React.ReactNode[], result: ExecutionResultType,
     ) => {
-      const {
-        error,
-        event_uuid: eventUUID,
-        result,
-        timestamp,
-        type,
-        uuid,
-      } = event;
       const {
         data_type,
         error: resultError,
@@ -41,6 +41,7 @@ function ExecutionOutput({
         process: resultProcess,
         result_id: resultID,
         status,
+        timestamp,
         type: resultType,
         uuid: resultUuid,
       } = result;
@@ -64,7 +65,7 @@ function ExecutionOutput({
         errors,
         message: resultMessage,
         type: errorType,
-      } = error ?? resultError ?? {};
+      } = resultError ?? {};
 
       const isFinalOutput = ResultType.DATA === resultType
         && ExecutionStatusEnum.SUCCESS === status;
@@ -116,23 +117,34 @@ function ExecutionOutput({
           </Grid >
         </TooltipWrapper>,
       );
-    }, []), [displayLocalTimezone, events]);
+    }, []), [displayLocalTimezone, results]);
+
+  const runtime = useMemo(() => (timestamps?.max ?? 0) - (timestamps?.min ?? 0), [timestamps]);
 
   return (
     <div ref={ref}>
       {outputs?.length > 0 &&
         <Grid rowGap={4}>
-          <Text monospace muted xsmall>
-            {isNumeric(uuid)
-              ? dateFormatLongFromUnixTimestamp(
-                convertToMillisecondsTimestamp(Number(uuid)) / 1000, {
-                  withSeconds: true,
-                },
-              )
-              : uuid}
-          </Text>
+          <Grid autoFlow="column" columnGap={8} justifyContent="space-between">
+            <Text monospace muted xsmall>
+              {isNumeric(timestamps.min)
+                ? dateFormatLongFromUnixTimestamp(
+                  convertToMillisecondsTimestamp(Number(timestamps.min)) / 1000, {
+                    withSeconds: true,
+                  },
+                )
+                : timestamps.min}
+            </Text>
+          </Grid>
+
           <Grid className={styles.executionOutputGroup}>
             {outputs}
+          </Grid>
+
+          <Grid autoFlow="column" columnGap={8} justifyContent="end">
+            <Text monospace muted small>
+              {formatDurationFromEpoch(runtime)}
+            </Text>
           </Grid>
         </Grid>
       }

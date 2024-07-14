@@ -69,6 +69,7 @@ BrowserItemPolicy.allow_write(
     [
         'content',
         'name',
+        'output',
         'path',
     ],
     scopes=[

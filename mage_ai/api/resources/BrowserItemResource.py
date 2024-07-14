@@ -97,8 +97,16 @@ class BrowserItemResource(GenericResource):
         await self.model.delete()
 
     async def update(self, payload, **kwargs):
+        query = kwargs.get('query', {})
+        output_namespace = query.get('output_namespace', [None])
+        if output_namespace:
+            output_namespace = output_namespace[0]
+
         if 'path' not in payload:
             payload['path'] = self.model.path
+
+        if 'output' in payload:
+            await self.model.set_output(payload['output'], output_namespace)
 
         try:
             await self.model.synchronize(Item.load(**payload))

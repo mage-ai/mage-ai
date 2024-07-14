@@ -105,7 +105,7 @@ function TooltipContent({
       if (justify === TooltipJustify.START) {
         translateY = TooltipDirection.UP === verticalDirection ? -(heighte + height) : -heighte;
       } else if (justify === TooltipJustify.CENTER) {
-        translateY = -Math.abs(height - heighte) / 2;
+        translateY = -(height + ((heighte - height) / 2));
       } else if (justify === TooltipJustify.END) {
         translateY = 0;
       }

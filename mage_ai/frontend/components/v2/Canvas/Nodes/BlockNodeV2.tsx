@@ -42,6 +42,8 @@ type BlockNodeType = {
   ) => void;
 };
 
+const STEAM_OUTPUT_DIR = 'code_executions';
+
 function BlockNode({
   block,
   dragRef,
@@ -89,9 +91,8 @@ function BlockNode({
 
   // Methods
   const channel = useMemo(() => block.uuid, [block]);
-  const stream = 'code_executions';
-  const { executeCode } = useExecuteCode(channel, stream);
-  const { subscribe, unsubscribe } = useRegistration(channel, stream);
+  const { executeCode } = useExecuteCode(channel, STEAM_OUTPUT_DIR);
+  const { subscribe, unsubscribe } = useRegistration(channel, STEAM_OUTPUT_DIR);
 
   function getFile(event: any, callback?: () => void) {
     const { configuration } = block ?? {};
@@ -111,7 +112,7 @@ function BlockNode({
         callback && callback?.();
       },
       query: {
-        output_namespace: stream,
+        output_namespace: STEAM_OUTPUT_DIR,
       },
     });
   }
@@ -259,8 +260,20 @@ function BlockNode({
               {
                 Icon: Trash,
                 onClick: (event: ClientEventType) => {
-                  removeContextMenu(event);
-
+                  mutations.files.update.mutate({
+                    event,
+                    id: file?.path,
+                    onSuccess: () => {
+                      removeContextMenu(event);
+                      executionResultMappingRef.current = {};
+                    },
+                    payload: {
+                      output: [],
+                    },
+                    query: {
+                      output_namespace: STEAM_OUTPUT_DIR,
+                    },
+                  });
                 },
                 uuid: 'Delete output',
               },

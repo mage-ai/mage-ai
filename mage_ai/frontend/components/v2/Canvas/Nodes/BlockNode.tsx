@@ -236,7 +236,7 @@ export default function BlockNodeComponent({
       align={TooltipAlign.START}
       hide={block?.type && ![BlockTypeEnum.GROUP, BlockTypeEnum.PIPELINE].includes(block?.type)}
       horizontalDirection={TooltipDirection.LEFT}
-      justify={TooltipJustify.START}
+      justify={TooltipJustify.CENTER}
       tooltip={
         <Grid rowGap={16}>
           <Grid rowGap={8}>

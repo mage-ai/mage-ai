@@ -14,7 +14,12 @@ from mage_ai.data_preparation.models.constants import (
 from mage_ai.data_preparation.models.file import File
 from mage_ai.settings.repo import get_variables_dir
 from mage_ai.shared.array import flatten
-from mage_ai.shared.files import delete_async, exists_async, read_async
+from mage_ai.shared.files import (
+    delete_async,
+    exists_async,
+    read_async,
+    safe_delete_dir_async,
+)
 from mage_ai.shared.models import BaseDataClass
 from mage_ai.shared.path_fixer import remove_base_repo_directory_name
 
@@ -65,13 +70,19 @@ class Item(BaseDataClass):
 
     async def get_output(self, namespace: str, limit: Optional[int] = 10) -> Optional[List[Dict]]:
         if self.output is None and await exists_async(self.output_dir(namespace)):
-            file_paths = sorted(
-                os.listdir(self.output_dir(namespace)), key=lambda x: x.lower())[:limit]
-            output = await asyncio.gather(*[self.deserialize_output(os.path.join(
-                self.output_dir(namespace), file_path
-            )) for file_path in file_paths])
+            file_paths = sorted(os.listdir(self.output_dir(namespace)), key=lambda x: x.lower())[
+                :limit
+            ]
+            output = await asyncio.gather(*[
+                self.deserialize_output(os.path.join(self.output_dir(namespace), file_path))
+                for file_path in file_paths
+            ])
             self.output = flatten(output)
         return self.output
+
+    async def set_output(self, output: List[Dict], namespace: str):
+        if len(output) == 0:
+            await safe_delete_dir_async(self.output_dir(namespace))
 
     async def get_content(self) -> Optional[str]:
         if self.content is None:
