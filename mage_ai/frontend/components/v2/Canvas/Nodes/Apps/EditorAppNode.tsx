@@ -53,6 +53,9 @@ type EditorAppNodeProps = {
   block: BlockType;
   fileRef?: React.MutableRefObject<FileType | undefined> | undefined;
   height?: number;
+  submitCodeExecution: (event: any) => void;
+  onMessageRefs?: React.MutableRefObject<Record<string, (event: EventStreamType) => void>>;
+  executing?: boolean;
   onClose: () => void;
   width?: number;
 };
@@ -60,9 +63,12 @@ type EditorAppNodeProps = {
 function EditorAppNode({
   app,
   block,
+  submitCodeExecution,
   fileRef,
   height,
+  executing,
   onClose,
+  onMessageRefs,
   width,
 }: EditorAppNodeProps) {
   const nodeRef = useRef<HTMLDivElement>(null);
@@ -160,10 +166,8 @@ function EditorAppNode({
             backgroundcolor={baseColor}
             basic
             bordercolor={baseColor}
-            // loading={executing}
-            // onClick={() => executeCode(editor.getValue(), {
-            //   output_dir: file?.path,
-            // })}
+            loading={executing}
+            onClick={submitCodeExecution}
             small
           />
 

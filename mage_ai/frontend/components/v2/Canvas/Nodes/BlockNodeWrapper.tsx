@@ -18,7 +18,7 @@ import { DEBUG } from '@components/v2/utils/debug';
 import { FileType } from '../../IDE/interfaces';
 import { ModelContext } from '@components/v2/Apps/PipelineCanvas/ModelManager/ModelContext';
 import { SettingsContext } from '@components/v2/Apps/PipelineCanvas/SettingsManager/SettingsContext';
-import { areEqual, areEqualApps, areEqualRects } from './equals'
+import { areEqual, areEqualApps, areEqualRects } from './equals';
 import { buildOutputNode } from '@components/v2/Apps/PipelineCanvas/utils/items';
 import { createPortal } from 'react-dom';
 import { draggableProps } from './draggable/utils';
@@ -70,9 +70,9 @@ export const BlockNodeWrapper: React.FC<BlockNodeType> = ({
   const nodeRef = useRef(null);
   const outputRef = useRef(null);
   const portElementRefs = useRef({});
+  const portalRef = useRef<HTMLDivElement>(null);
   const connectionErrorRef = useRef(null);
   const connectionStatusRef = useRef<ServerConnectionStatusType>(null);
-  const portalRef = useRef<HTMLDivElement>(null);
   const handleOnMessageRef = useRef<(event: EventStreamType) => void>(null);
   const [outputNodes, setOutputNodes] = useState<OutputNodeType[]>(null);
 
@@ -138,7 +138,7 @@ export const BlockNodeWrapper: React.FC<BlockNodeType> = ({
   useDispatchMounted(node, nodeRef, { phaseRef });
 
   function handleRectUpdated({ detail }: CustomAppEvent) {
-    console.log('WTFFFFFFFFFFFFFFFFFFFFFFFFFF')
+    console.log('WTFFFFFFFFFFFFFFFFFFFFFFFFFF');
     const { nodes } = detail;
     const mapping = indexBy(nodes, item => item.id);
     const mapping2 = indexBy(nodes, item => item?.block?.uuid);
@@ -162,7 +162,7 @@ export const BlockNodeWrapper: React.FC<BlockNodeType> = ({
       nodeRef.current.style.transition = [
         'width 1s cubicBezier(.35, .17, .3, .86)',
         'height 1s cubicBezier(.35, .17, .3, .86)',
-        'transform 1s cubicBezier(.35, .17, .3, .86)'
+        'transform 1s cubicBezier(.35, .17, .3, .86)',
       ].join(', ');
       dispatchAppEvent(CustomAppEventEnum.NODE_DISPLAYED, { node, nodes });
     }
@@ -306,11 +306,11 @@ export const BlockNodeWrapper: React.FC<BlockNodeType> = ({
       if (level === node?.level) {
         unsubscribe(consumerID);
       }
-      clearTimeout(timeout)
+      clearTimeout(timeout);
       timeoutRef.current = null;
-    }
+    };
   }, [block, node, consumerID, file, blockInSelectedGroup, activeLevel,
-    appHandlersRef, dispatchAppEvent, unsubscribe
+    appHandlersRef, dispatchAppEvent, unsubscribe,
   ]);
 
   useEffect(() => {
@@ -368,7 +368,7 @@ export const BlockNodeWrapper: React.FC<BlockNodeType> = ({
         future: true, onError: () => {
           updateStyles(false);
           clearTimeout(timeoutRef.current);
-        }
+        },
       });
 
       const outputNode = buildOutputNode(node, block, {
@@ -535,7 +535,7 @@ export const BlockNodeWrapper: React.FC<BlockNodeType> = ({
           node={output}
           nodeRef={outputRef}
           rect={output?.rect}
-        />
+        />,
       );
     });
 
@@ -555,7 +555,7 @@ export const BlockNodeWrapper: React.FC<BlockNodeType> = ({
       }}
     />
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  ), [])
+  ), []);
 
   if (Wrapper) {
     return (
@@ -615,7 +615,7 @@ export const BlockNodeWrapper: React.FC<BlockNodeType> = ({
   return (
     <div
       {...draggableProps({
-        classNames: [styles.nodeWrapper], draggable: true, droppable: false, node
+        classNames: [styles.nodeWrapper], draggable: true, droppable: false, node,
       })}
       ref={nodeRef}
     >

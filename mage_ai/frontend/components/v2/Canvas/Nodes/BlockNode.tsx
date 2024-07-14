@@ -47,6 +47,7 @@ export type BlockNodeProps = {
   block: BlockType | PipelineExecutionFrameworkBlockType;
   buttonBeforeRef?: React.RefObject<HTMLDivElement>;
   dragRef: React.RefObject<HTMLDivElement>;
+  executing?: boolean;
   groupSelection?: boolean;
   index?: number;
   openEditor: (event: any) => void;
@@ -58,11 +59,11 @@ export type BlockNodeProps = {
 
 export default function BlockNodeComponent({
   block,
-  children,
   buttonBeforeRef,
   collapsed,
   draggable,
   groupSelection,
+  executing,
   handlers,
   node,
   dragRef,
@@ -162,9 +163,10 @@ export default function BlockNodeComponent({
           ? 'green'
           : 'blue',
     buttonRef: buttonBeforeRef,
+    loading: executing,
     className: stylesBlockNode.beforeButton,
     onClick: submitCodeExecution,
-  }), [buttonBeforeRef, status, submitCodeExecution]);
+  }), [buttonBeforeRef, status, submitCodeExecution, executing]);
 
   const badge = useMemo(() => ItemTypeEnum.NODE === node?.type
     ? {

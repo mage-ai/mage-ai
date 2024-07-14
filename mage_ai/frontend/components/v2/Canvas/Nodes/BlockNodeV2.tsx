@@ -1,4 +1,8 @@
 import BlockNodeComponent, { BlockNodeProps, BADGE_HEIGHT, PADDING_VERTICAL } from './BlockNode';
+import EventStreamType, { ServerConnectionStatusType } from '@interfaces/EventStreamType';
+import { formatNumberToDuration } from '@utils/string';
+import { getFileCache, updateFileCache } from '../../IDE/cache';
+import { executionDone } from '@components/v2/ExecutionManager/utils';
 import { ThemeContext } from 'styled-components';
 import ContextProvider from '@context/v2/ContextProvider';
 import { AppConfigType } from '../../Apps/interfaces';
@@ -8,7 +12,7 @@ import { ModelContext } from '@components/v2/Apps/PipelineCanvas/ModelManager/Mo
 import { OpenInSidekick, Trash } from '@mana/icons';
 import stylesBlockNode from '@styles/scss/components/Canvas/Nodes/BlockNode.module.scss';
 import BlockType, { BlockTypeEnum } from '@interfaces/BlockType';
-import React, { useState, useCallback, useContext, useMemo, useRef } from 'react';
+import React, { useState, useCallback, useContext, useMemo, useRef, useEffect } from 'react';
 import { NodeType } from '../interfaces';
 import { setNested } from '@utils/hash';
 import { RectType } from '@mana/shared/interfaces';
@@ -17,6 +21,9 @@ import { AppSubtypeEnum, AppStatusEnum, AppTypeEnum } from '@components/v2/Apps/
 import { createPortal } from 'react-dom';
 import { createRoot, Root } from 'react-dom/client';
 import { FileType } from '@components/v2/IDE/interfaces';
+import { getClosestRole } from '@utils/elements';
+import { ElementRoleEnum } from '@mana/shared/types';
+import { buildOutputNode } from '@components/v2/Apps/PipelineCanvas/utils/items';
 
 type BlockNodeType = {
   block: BlockType;
@@ -43,14 +50,21 @@ function BlockNode({
   ...rest
 }: BlockNodeType, ref: React.MutableRefObject<HTMLElement>) {
   const themeContext = useContext(ThemeContext);
-  const { name, type } = block;
+  const { configuration, name, type } = block;
+  const { file } = configuration ?? {};
+
   const timeoutRef = useRef(null);
   const onCloseRef = useRef<() => void>(null);
+  const consumerIDRef = useRef<string>(null);
+  const connectionErrorRef = useRef(null);
+  const connectionStatusRef = useRef<ServerConnectionStatusType>(null);
+  const onMessageRefs = useRef<Record<string, (event: EventStreamType) => void>>(null);
 
   const appRootRef = useRef<Root>(null);
   const outputRootRef = useRef<Root>(null);
   const appNodeRef = useRef<HTMLDivElement>(null);
   const outputNodeRef = useRef<HTMLDivElement>(null);
+
 
   // APIs
   const fileRef = useRef<FileType>(null);
@@ -59,18 +73,136 @@ function BlockNode({
   // Attributes
   const isGroup =
     useMemo(() => !type || [BlockTypeEnum.GROUP, BlockTypeEnum.PIPELINE].includes(type), [type]);
-  const [editorAppActive, setEditorAppActive] = useState(false);
+  const [executing, setExecuting] = useState(false);
 
   // Controls
-  const buttonBeforeRef = useRef<HTMLDivElement>(null);
+  // const loadingButtonRef = useRef<HTMLElement>(null);
   const timerStatusRef = useRef(null);
 
-  const { handleContextMenu, removeContextMenu, setSelectedGroup } = useContext(EventContext);
+  const { handleContextMenu, removeContextMenu, setSelectedGroup,
+    useExecuteCode, useRegistration,
+  } = useContext(EventContext);
 
   // Methods
-  const submitCodeExecution = useCallback((event: React.MouseEvent<HTMLElement>) => {
+  const channel = useMemo(() => block.uuid, [block]);
+  const stream = 'code_executions';
+  const { executeCode } = useExecuteCode(channel, stream);
+  const { subscribe, unsubscribe } = useRegistration(channel, stream);
 
-  }, []);
+  function getFile(event: any, callback?: () => void) {
+    const { configuration } = block ?? {};
+    const { file } = configuration ?? {};
+
+    mutations.files.detail.mutate({
+      event,
+      id: file?.path,
+      onSuccess: ({ data }) => {
+        fileRef.current = data?.browser_item;
+        updateFileCache({
+          server: data?.browser_item,
+        });
+        callback && callback?.();
+      },
+      query: {
+        output_namespace: stream,
+      },
+    });
+  }
+
+  function handleError(error: Event) {
+    console.log('[BlockNodeWrapper] connection.error:', error);
+    connectionErrorRef.current = error;
+    console.error('[BlockNodeWrapper] connection.error:', error);
+  }
+
+  function handleOpen(status: ServerConnectionStatusType) {
+    console.log('[BlockNodeWrapper] connection.status:', status);
+    connectionStatusRef.current = status;
+  }
+
+  function handleSubscribe(consumerID: string) {
+    onMessageRefs.current['node'] = (event: EventStreamType) => {
+      if (executionDone(event)) {
+        // loadingButtonRef?.current?.classList?.remove(stylesBlockNode.loading);
+        clearTimeout(timeoutRef.current);
+        setExecuting(false);
+      }
+    };
+
+    subscribe(consumerID, {
+      onError: handleError,
+      onMessage: (event: EventStreamType) => {
+        Object.values(onMessageRefs.current ?? {}).forEach(handler => handler(event));
+      },
+      onOpen: handleOpen,
+    });
+  }
+
+  const getCode = useCallback(() =>
+    getFileCache(file?.path)?.client?.file?.content, [file]);
+
+  const submitCodeExecution = useCallback((event: React.MouseEvent<HTMLElement>) => {
+    handleSubscribe('BlockNode');
+
+    const execute = () => {
+      const message = getCode();
+      const [messageRequestUUID, future] = executeCode(message, {
+        output_dir: file?.path ?? null,
+        source: block.uuid,
+      }, {
+        future: true, onError: () => {
+          getClosestRole(event.target as HTMLElement, [ElementRoleEnum.BUTTON]);
+          clearTimeout(timeoutRef.current);
+        },
+      });
+
+      const outputNode = buildOutputNode(node, block, {
+        message,
+        message_request_uuid: messageRequestUUID,
+        uuid: channel,
+      });
+
+      // loadingButtonRef.current =
+      //   getClosestRole(event.target as HTMLElement, [ElementRoleEnum.BUTTON]);
+
+      // loadingButtonRef?.current?.classList?.add(stylesBlockNode.loading);
+
+      future();
+      setExecuting(true);
+
+      let loops = 0;
+      const now = Number(new Date());
+      const updateTimerStatus = () => {
+        let diff = (Number(new Date()) - now) / 1000;
+        if (loops >= 600) {
+          diff = Math.round(diff);
+        }
+
+        if (timerStatusRef?.current) {
+          timerStatusRef.current.innerText =
+            formatNumberToDuration(diff * 1000);
+        }
+        loops++;
+        timeoutRef.current = setTimeout(
+          updateTimerStatus,
+          diff <= 60 * 1000 && loops <= 60 * 10 ? 100 : 1000,
+        );
+      };
+
+      clearTimeout(timeoutRef.current);
+      timeoutRef.current = setTimeout(
+        updateTimerStatus,
+        0,
+      );
+    };
+
+    if (getCode()?.length >= 1) {
+      execute();
+    } else {
+      getFile(event, execute);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [block, node, executeCode]);
 
   function updateBlock(event: any, key: string, value: any) {
     clearTimeout(timeoutRef.current);
@@ -115,57 +247,38 @@ function BlockNode({
         <EditorAppNode
           app={opts?.app}
           block={opts?.block ?? block}
+          executing={executing}
           fileRef={opts?.fileRef ?? fileRef}
           onClose={() => {
             closeEditorApp();
           }}
+          onMessageRefs={onMessageRefs}
+          submitCodeExecution={submitCodeExecution}
         />
       </ContextProvider>,
     );
   }
 
   function launchEditorApp(event: any) {
-    const { configuration } = block ?? {};
-    const { file } = configuration ?? {};
     const app = {
       subtype: AppSubtypeEnum.CANVAS,
       type: AppTypeEnum.EDITOR,
       uuid: [block.uuid, AppTypeEnum.EDITOR, AppSubtypeEnum.CANVAS].join(':'),
     };
 
-    console.log(
-      appNodeRef.current,
-      appRootRef.current,
-    );
-
-    if (fileRef.current ?? false) {
+    const render = () => openApp(app, appNodeRef, () => {
       renderEditorApp({
         app,
         block,
         fileRef,
       });
-      return;
+    }, onCloseRef);
+
+    if (fileRef.current ?? false) {
+      render();
+    } else {
+      getFile(event, () => render());
     }
-
-    mutations.files.detail.mutate({
-      event,
-      id: file?.path,
-      onSuccess: ({ data }) => {
-        fileRef.current = data?.browser_item;
-
-
-        openApp(app, appNodeRef, () => {
-          renderEditorApp({
-            app,
-            block,
-            fileRef,
-          });
-        }, onCloseRef);
-      },
-      query: {
-        output_namespace: 'code_executions',
-      },
-    });
   }
 
   return (
@@ -173,6 +286,7 @@ function BlockNode({
       className={[
         stylesBlockNode.blockNodeWrapper,
         groupSelection && stylesBlockNode.groupSelection,
+        executing && stylesBlockNode.executing,
       ].filter(Boolean).join(' ')}
       onContextMenu={(event: any) => {
         if (groupSelection || event.metaKey) return;
@@ -222,8 +336,8 @@ function BlockNode({
       <BlockNodeComponent
         {...rest}
         block={block}
-        buttonBeforeRef={buttonBeforeRef}
         dragRef={dragRef}
+        executing={executing}
         groupSelection={groupSelection}
         node={node}
         openEditor={launchEditorApp}

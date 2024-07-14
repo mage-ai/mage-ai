@@ -10,6 +10,7 @@ function Aside({
   buttonRef,
   className,
   menuItems,
+  loading,
   onClick,
   uuid,
 }: AsideType, ref: React.Ref<HTMLButtonElement>) {
@@ -36,6 +37,7 @@ function Aside({
         basic
         className={className}
         containerRef={buttonRef}
+        loading={loading}
         loadingColorName={baseColorName}
         onClick={(event: React.MouseEvent<HTMLElement, MouseEvent>) => {
           if (onClick) {
@@ -50,6 +52,7 @@ function Aside({
     baseColorName,
     buttonRef,
     className,
+    loading,
     menuItems,
     onClick,
     ref,
