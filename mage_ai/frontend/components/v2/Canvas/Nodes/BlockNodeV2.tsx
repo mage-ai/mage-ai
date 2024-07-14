@@ -1,9 +1,12 @@
 import BlockNodeComponent, { BADGE_HEIGHT, PADDING_VERTICAL } from './BlockNode';
+import { copyToClipboard } from '@utils/clipboard';
+import { indexBy, sortByKey } from '@utils/array';
+import { ClientEventType } from '@mana/shared/interfaces';
 import OutputGroups from './CodeExecution/OutputGroups';
 import BlockType, { BlockTypeEnum } from '@interfaces/BlockType';
 import ContextProvider from '@context/v2/ContextProvider';
 import EditorAppNode from './Apps/EditorAppNode';
-import EventStreamType, { ServerConnectionStatusType } from '@interfaces/EventStreamType';
+import EventStreamType, { ExecutionResultType, ServerConnectionStatusType } from '@interfaces/EventStreamType';
 import React, { useState, useCallback, useContext, useMemo, useRef, useEffect } from 'react';
 import stylesBlockNode from '@styles/scss/components/Canvas/Nodes/BlockNode.module.scss';
 import { AppConfigType } from '../../Apps/interfaces';
@@ -13,7 +16,7 @@ import { EventContext } from '../../Apps/PipelineCanvas/Events/EventContext';
 import { FileType } from '@components/v2/IDE/interfaces';
 import { ModelContext } from '@components/v2/Apps/PipelineCanvas/ModelManager/ModelContext';
 import { NodeType, OutputNodeType } from '../interfaces';
-import { OpenInSidekick, Trash } from '@mana/icons';
+import { CloseV2, CopyV2, OpenInSidekick, Trash } from '@mana/icons';
 import { ThemeContext } from 'styled-components';
 import { createRoot, Root } from 'react-dom/client';
 import { executionDone } from '@components/v2/ExecutionManager/utils';
@@ -64,6 +67,9 @@ function BlockNode({
   const outputRootRef = useRef<Root>(null);
   const onCloseOutputRef = useRef<() => void>(null);
   const onCloseAppRef = useRef<() => void>(null);
+  const executionResultMappingRef = useRef<{
+    [key: string]: ExecutionResultType;
+  }>({});
 
   // APIs
   const fileRef = useRef<FileType>(null);
@@ -96,6 +102,9 @@ function BlockNode({
       id: file?.path,
       onSuccess: ({ data }) => {
         fileRef.current = data?.browser_item;
+        executionResultMappingRef.current =
+          indexBy(fileRef.current?.output ?? {}, r => r.result_id);
+
         updateFileCache({
           server: data?.browser_item,
         });
@@ -120,6 +129,9 @@ function BlockNode({
 
   function handleSubscribe(consumerID: string) {
     handleOnMessageRef.current[consumerIDRef.current] = (event: EventStreamType) => {
+      if (event?.result) {
+        executionResultMappingRef.current[event.result.result_id] = event?.result;
+      }
       setExecuting(!executionDone(event));
     };
 
@@ -212,12 +224,59 @@ function BlockNode({
     outputRootRef.current = createRoot(mountRef.current);
     outputRootRef.current.render(
       <ContextProvider theme={themeContext}>
-        <OutputGroups
-          consumerID={outputNode.id}
-          setHandleOnMessage={(consumerID, handler) => {
-            handleOnMessageRef.current[consumerID] = handler;
+        <div
+          onContextMenu={(event: any) => {
+            event.preventDefault();
+            event.stopPropagation();
+            handleContextMenu(event, [
+              {
+                Icon: CloseV2,
+                onClick: (event2: ClientEventType) => {
+                  removeContextMenu(event2);
+                  closeOutput();
+                },
+                uuid: 'Close output',
+              },
+              {
+                Icon: CopyV2,
+                onClick: (event2: ClientEventType) => {
+                  removeContextMenu(event2);
+
+                  const targetElement = event?.target as HTMLElement;
+                  const mruuid = targetElement?.getAttribute('data-message-request-uuid');
+
+                  const resultsInit: ExecutionResultType[] =
+                    Object.values(executionResultMappingRef?.current ?? {})?.filter(
+                      result => result.process.message_request_uuid === mruuid);
+                  const results: ExecutionResultType[] = sortByKey(resultsInit ?? [],
+                    (result: ExecutionResultType) => result?.timestamp);
+                  const text = results?.map((result: ExecutionResultType) =>
+                    (result?.output_text ?? '')?.trim() ?? '').join('\n');
+                  copyToClipboard(text);
+                },
+                uuid: 'Copy output',
+              },
+              {
+                Icon: Trash,
+                onClick: (event: ClientEventType) => {
+                  removeContextMenu(event);
+
+                },
+                uuid: 'Delete output',
+              },
+              { divider: true },
+            ], {
+              reduceItems: (i1) => i1,
+            });
           }}
-        />
+        >
+          <OutputGroups
+            consumerID={outputNode.id}
+            setHandleOnMessage={(consumerID, handler) => {
+              handleOnMessageRef.current[consumerID] = handler;
+            }}
+          />
+        </div>
       </ContextProvider>,
     );
   }
@@ -287,8 +346,6 @@ function BlockNode({
     const consumerID = consumerIDRef.current;
     const timeout = timeoutRef.current;
 
-    const outputRoot = outputRootRef.current;
-
     return () => {
       clearTimeout(timeout);
       timeoutRef.current = null;
@@ -299,6 +356,8 @@ function BlockNode({
 
       closeOutput();
       outputRootRef.current = null;
+
+      executionResultMappingRef.current = {};
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -321,7 +380,7 @@ function BlockNode({
         if (isGroup) {
           items.push({
             Icon: OpenInSidekick,
-            onClick: (event: any) => {
+            onClick: (event: ClientEventType) => {
               event?.preventDefault();
               setSelectedGroup(block);
               removeContextMenu(event);
@@ -331,7 +390,7 @@ function BlockNode({
         } else {
           items.push({
             Icon: Trash,
-            onClick: (event: any) => {
+            onClick: (event: ClientEventType) => {
               event?.preventDefault();
 
               mutations.pipelines.update.mutate({
@@ -350,7 +409,7 @@ function BlockNode({
         }
 
         handleContextMenu(event, items, {
-          reduceItems: (i1, i2) => i1,
+          reduceItems: (i1) => i1,
         });
       }}
       ref={ref as React.RefObject<HTMLDivElement>}

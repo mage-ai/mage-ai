@@ -63,6 +63,7 @@ export interface ExecutionResultType {
   process: ProcessDetailsType;
   result_id: string;
   status: ExecutionStatusEnum;
+  timestamp: number;
   type: ResultType;
   uuid: string;
 }
@@ -80,7 +81,7 @@ export const ReadyStateToServerConnectionStatus = {
   [EventSourceReadyState.CLOSED]: ServerConnectionStatusType.CLOSED,
   [EventSourceReadyState.CONNECTING]: ServerConnectionStatusType.CONNECTING,
   [EventSourceReadyState.OPEN]: ServerConnectionStatusType.OPEN,
-}
+};
 
 
 // {

@@ -1,3 +1,4 @@
+import { ExecutionResultType } from '@interfaces/EventStreamType';
 import { LanguageEnum } from './languages/constants';
 
 export interface CodeResources {
@@ -19,7 +20,7 @@ export interface FileType {
   language?: LanguageEnum;
   modified_timestamp?: number;
   name: string;
-  output?: Record<string, any>[];
+  output?: ExecutionResultType[];
   path: string;
   relative_path?: string;
   size: number;
