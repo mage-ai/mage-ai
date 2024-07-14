@@ -287,11 +287,11 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
   const groupsByLevelRef = useRef<GroupLevelType>(null);
   const blocksRef = useRef<BlockType[]>(null);
   const groupsRef = useRef<FrameworkType[]>(null);
-  // This is the one that gets updates; rectRefs keeps a running list of all rects.
   const appNodeRefs = useRef<Record<string, {
     onMount: () => void;
     ref: React.MutableRefObject<HTMLDivElement>;
   }>>({});
+  // This is the one that gets updates; rectRefs keeps a running list of all rects.
   const rectsMappingRef = useRef<Record<string, RectType>>({});
 
   // State store
@@ -338,15 +338,21 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
             appNodeRef: React.MutableRefObject<HTMLDivElement>,
             onMount: () => void,
           ) => {
+            const appNode = buildAppNode(node as NodeType, appConfig);
+            if (!rectRefs.current[appNode.id]) {
+              rectRefs.current[appNode.id] = createRef();
+            }
+
             appNodeRefs.current[block.uuid] = {
               onMount,
               ref: appNodeRef,
             };
+
             setAppNodes(prev => ({
               ...prev,
               [block.uuid]: {
                 ...(prev[block.uuid] ?? {}),
-                [appConfig.uuid]: buildAppNode(node as NodeType, appConfig),
+                [appNode.id]: appNode,
               },
             }));
           }}
@@ -1659,13 +1665,13 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
       [ItemTypeEnum.OUTPUT]: Object.values(outputNodes ?? {}),
     }).forEach(([nodeType, items]: [ItemTypeEnum, (AppNodeType | BlockType | FrameworkType | OutputNodeType)[]]) => {
       items?.forEach((item: AppNodeType | BlockType | FrameworkType | OutputNodeType) => {
-        let itemUUID = item?.uuid ?? item?.id;
-        let nodeID = item?.uuid ?? item?.id;
+        let itemUUID = (item as any)?.uuid ?? (item as any)?.id;
+        let nodeID = (item as any)?.uuid ?? (item as any)?.id;
         let children = null;
 
         if (ItemTypeEnum.APP === nodeType) {
           itemUUID = (item as any)?.block?.uuid;
-          nodeID = item?.app?.uuid;
+          nodeID = (item as any)?.app?.uuid;
 
           children = (
             <WithOnMount
@@ -1685,24 +1691,21 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
           dragRef = createRef();
           dragRefs.current[nodeID] = dragRef;
         }
+        const rect = rectsMapping?.[nodeID] ?? {
+          left: undefined,
+          top: undefined,
+        };
+        const node = {
+          block: items,
+          id: nodeID,
+          type: nodeType,
+        } as NodeType;
 
         arr.push(
           <DragWrapper
-            // draggable={draggable}
-            // droppable={droppable}
-            // droppableItemTypes={droppableItemTypes}
-            // eventHandlers={eventHandlers}
-            // handleDrop={handleDrop}
-            item={{
-              block: items,
-              id: nodeID,
-              type: nodeType,
-            } as NodeType}
+            item={node}
             key={nodeID}
-            rect={rectsMapping?.[nodeID] ?? {
-              left: undefined,
-              top: undefined,
-            }}
+            rect={rect}
             ref={dragRef}
           >
             {children}
