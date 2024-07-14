@@ -1,8 +1,8 @@
-import moment from 'moment';
-import EventStreamType, { ResultType } from '@interfaces/EventStreamType';
+import EventStreamType, { ResultType, ExecutionStatusEnum } from '@interfaces/EventStreamType';
 import Grid from '@mana/components/Grid';
 import React, { useMemo } from 'react';
 import Text from '@mana/elements/Text';
+import moment from 'moment';
 import styles from '@styles/scss/components/Canvas/Nodes/ExecutionOutput.module.scss';
 import { DATE_FORMAT_LONG_MS } from '@utils/date';
 import { TooltipAlign, TooltipWrapper, TooltipDirection, TooltipJustify } from '@context/Tooltip';
@@ -66,6 +66,9 @@ function ExecutionOutput({
         type: errorType,
       } = error ?? resultError ?? {};
 
+      const isFinalOutput = ResultType.DATA === resultType
+        && ExecutionStatusEnum.SUCCESS === status;
+
       return acc.concat(
         <TooltipWrapper
           align={TooltipAlign.END}
@@ -73,29 +76,34 @@ function ExecutionOutput({
           justify={TooltipJustify.CENTER}
           key={resultID}
           tooltip={
-            <Text monospace secondary small>
-              {displayLocalOrUtcTime(
-                moment(timestamp).format(DATE_FORMAT_LONG_MS),
-                displayLocalTimezone,
-                DATE_FORMAT_LONG_MS,
-              )}
-            </Text>
+            <Grid
+              columnGap={8}
+              data-message-request-uuid={groupUUID}
+              templateColumns="auto 1fr"
+            >
+              <Text monospace muted
+                small
+                style={{
+                  pointerEvents: 'none',
+                }}
+              >
+                [{isFinalOutput ? 'output' : (acc?.length ?? 0)}]
+              </Text>
+              <Text monospace secondary small>
+                {displayLocalOrUtcTime(
+                  moment(timestamp).format(DATE_FORMAT_LONG_MS),
+                  displayLocalTimezone,
+                  DATE_FORMAT_LONG_MS,
+                )}
+              </Text>
+            </Grid >
           }
         >
           <Grid
             columnGap={8}
             data-message-request-uuid={groupUUID}
-            templateColumns="auto 1fr"
+            templateColumns="1fr"
           >
-            <Text monospace muted
-              small
-              style={{
-                pointerEvents: 'none',
-              }}
-            >
-              [{acc?.length ?? 0}]
-            </Text>
-
             <Text
               monospace
               small
@@ -106,7 +114,7 @@ function ExecutionOutput({
               {outputText}
             </Text>
           </Grid >
-        </TooltipWrapper >,
+        </TooltipWrapper>,
       );
     }, []), [displayLocalTimezone, events]);
 

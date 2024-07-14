@@ -79,8 +79,8 @@ function createItemsFromBlocks(blocks: BlockType[], opts?: {
 }
 
 export function buildOutputNode(node: NodeType, block: BlockType, process?: {
-  message: string;
-  message_request_uuid: string;
+  message?: string;
+  message_request_uuid?: string;
   uuid: string;
 }): OutputNodeType {
   const id = [node.id, 'output', process.uuid].filter(Boolean).join(':');
@@ -96,18 +96,23 @@ export function buildOutputNode(node: NodeType, block: BlockType, process?: {
     outputRect.width = (rect.width ?? 0) * 1.5;
   }
 
-  return {
-    block,
+  const output = {
+    block: null,
     id,
     level,
     node: {
       id: node?.id,
-      rect: node?.rect,
     } as any,
-    process,
+    process: process as any,
     rect: outputRect,
     status,
     type: ItemTypeEnum.OUTPUT,
     upstream: [String(node.id)],
-  };
+  } as OutputNodeType;
+
+  if (block) {
+    output.block = block as any;
+  }
+
+  return output;
 }

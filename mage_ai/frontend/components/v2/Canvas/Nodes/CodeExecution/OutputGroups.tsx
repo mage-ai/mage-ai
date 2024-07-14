@@ -8,7 +8,7 @@ import { DEBUG } from '@components/v2/utils/debug';
 
 export type OutputGroupsType = {
   consumerID: string;
-  handleOnMessageRef?: React.MutableRefObject<Record<string, (event: EventStreamType) => void>>;
+  setHandleOnMessage?: (consumerID: string, handler: (event: EventStreamType) => void) => void;
 };
 
 type OutputGroupsProps = {
@@ -17,7 +17,7 @@ type OutputGroupsProps = {
 
 const OutputGroups: React.FC<OutputGroupsProps> = ({
   consumerID,
-  handleOnMessageRef,
+  setHandleOnMessage,
   styles,
 }: OutputGroupsProps) => {
   const scrollableDivRef = useRef<HTMLDivElement>(null);
@@ -26,24 +26,22 @@ const OutputGroups: React.FC<OutputGroupsProps> = ({
     useState<Record<string, Record<string, EventStreamType>>>({});
 
   useEffect(() => {
-    if (!handleOnMessageRef?.current?.[consumerID]) {
-      handleOnMessageRef.current[consumerID] = (event: EventStreamType) => {
-        DEBUG.codeExecution.output
-          && console.log('event.result', JSON.stringify(event.result, null, 2));
+    setHandleOnMessage && setHandleOnMessage?.(consumerID, (event: EventStreamType) => {
+      DEBUG.codeExecution.output
+        && console.log('event.result', JSON.stringify(event.result, null, 2));
 
-        const { result } = event;
-        setEventsGrouped((prev) => {
-          const eventStreams = {
-            ...prev,
-            [result.process.message_request_uuid]: {
-              ...(prev?.[result.process.message_request_uuid] ?? {}),
-              [result.result_id]: event,
-            },
-          };
-          return eventStreams;
-        });
-      };
-    }
+      const { result } = event;
+      setEventsGrouped((prev) => {
+        const eventStreams = {
+          ...prev,
+          [result.process.message_request_uuid]: {
+            ...(prev?.[result.process.message_request_uuid] ?? {}),
+            [result.result_id]: event,
+          },
+        };
+        return eventStreams;
+      });
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

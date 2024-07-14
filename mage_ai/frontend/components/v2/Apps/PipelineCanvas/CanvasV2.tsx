@@ -290,6 +290,9 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
   const appNodeRefs = useRef<Record<string, {
     render: (ref?: React.RefObject<HTMLDivElement>) => void;
   }>>({});
+  const outputNodeRefs = useRef<Record<string, {
+    render: (node: OutputNodeType, ref?: React.RefObject<HTMLDivElement>) => void;
+  }>>({});
   // This is the one that gets updates; rectRefs keeps a running list of all rects.
   const rectsMappingRef = useRef<Record<string, RectType>>({});
 
@@ -332,7 +335,8 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
           index={index}
           key={block.uuid}
           node={node as NodeType}
-          openApp={(
+          ref={nodeRef}
+          showApp={(
             appConfig: AppConfigType,
             render: (ref?: React.RefObject<HTMLDivElement>) => void,
             onCloseRef: React.MutableRefObject<() => void>,
@@ -345,7 +349,7 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
             onCloseRef.current = () => {
               delete appNodeRefs.current[block.uuid];
               setAppNodes(prev => {
-                delete prev[block.uuid];
+                delete prev[block.uuid]?.[appNode.id];
                 return prev;
               });
             };
@@ -361,11 +365,33 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
               },
             }));
           }}
-          ref={nodeRef}
-          showOutput={() => {
+          showOutput={(
+            channel: string,
+            render: (
+              outputNode: OutputNodeType,
+              mountRef: React.MutableRefObject<HTMLDivElement>,
+            ) => void,
+            onCloseRef: React.MutableRefObject<() => void>,
+          ) => {
+            const outputNode = buildOutputNode(node as NodeType, block, { uuid: channel });
+            if (!rectRefs.current[outputNode.id]) {
+              rectRefs.current[outputNode.id] = createRef();
+            }
+
+            onCloseRef.current = () => {
+              delete outputNodeRefs.current[block.uuid];
+              setOutputNodes(prev => {
+                delete prev[block.uuid];
+                return prev;
+              });
+            };
+
+            outputNodeRefs.current[block.uuid] ||= { render: null };
+            outputNodeRefs.current[block.uuid].render = render;
+
             setOutputNodes(prev => ({
               ...prev,
-              [block.uuid]: buildOutputNode(node as NodeType, block),
+              [block.uuid]: outputNode,
             }));
           }}
         />
@@ -1666,23 +1692,24 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
       ]) => {
       items?.forEach((item: AppNodeType | BlockType | FrameworkType | OutputNodeType) => {
         let itemUUID = (item as any)?.uuid ?? (item as any)?.id;
-        let nodeID = (item as any)?.uuid ?? (item as any)?.id;
+        const nodeID = (item as any)?.uuid ?? (item as any)?.id;
         let children = null;
 
-        if (ItemTypeEnum.APP === nodeType) {
+        if ([ItemTypeEnum.APP, ItemTypeEnum.OUTPUT].includes(nodeType)) {
           itemUUID = (item as any)?.block?.uuid;
-          nodeID = (item as any)?.app?.uuid;
           children = (
             <WithOnMount
               onMount={(ref) => {
-                appNodeRefs?.current?.[itemUUID]?.render?.(ref);
+                if (ItemTypeEnum.APP === nodeType) {
+                  appNodeRefs?.current?.[itemUUID]?.render?.(ref);
+                } else {
+                  outputNodeRefs?.current?.[itemUUID]?.render?.(item as OutputNodeType, ref);
+                }
               }}
               uuid={`${itemUUID}:${nodeID}`}
               withRef
             />
           );
-        } else if (ItemTypeEnum.OUTPUT === nodeType) {
-
         }
 
         let dragRef = dragRefs.current[nodeID];

@@ -58,9 +58,11 @@ const StatusTag = styled.div<StyleProps>`
 
 function Timer() {
   const timerRef = useRef(null);
-  const initTimeRef = useRef<number>(Number(new Date()));
+  const initTimeRef = useRef<number>(null);
 
   useAnimationFrame(() => {
+    if (!initTimeRef.current) return;
+
     const now = Number(new Date());
     let diff = (now - initTimeRef.current) / 1000;
     if (diff >= 60 * 1000) {
@@ -70,6 +72,16 @@ function Timer() {
       timerRef.current.innerText = formatDurationFromEpoch(diff * 1000);
     }
   });
+
+  useEffect(() => {
+    if (!initTimeRef.current) {
+      initTimeRef.current = Number(new Date());
+    }
+
+    return () => {
+      initTimeRef.current = null;
+    };
+  }, []);
 
   return <div ref={timerRef} />;
 }

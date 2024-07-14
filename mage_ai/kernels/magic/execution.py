@@ -51,7 +51,7 @@ def read_stdout_continuously(
         output = async_stdout.get_output()
         if output:
             if is_debug():
-                print(f"[SRT] Debug: Captured output: {output}")
+                print(f'[SRT] Debug: Captured output: {output}')
             # Just enqueue it or else it’ll resolve to None
             result = ExecutionResult.load(
                 data_type=DataType.TEXT_PLAIN,
@@ -75,7 +75,7 @@ def read_stdout_continuously(
     output = async_stdout.get_output()
     if output:
         if is_debug():
-            print(f"[END] Debug: Captured output: {output}")
+            print(f'[END] Debug: Captured output: {output}')
 
         result = ExecutionResult.load(
             data_type=DataType.TEXT_PLAIN,
@@ -174,20 +174,22 @@ async def execute_code_async(
         while check_queue(queue):
             time.sleep(FLUSH_INTERVAL)
 
-        result = ExecutionResult.load(
-            output=last_output if 'last_output' in locals() else None,
-            process=process,
-            status=ExecutionStatus.SUCCESS,
-            type=ResultType.DATA,
-            uuid=uuid,
-        )
-        queue.put(result)
+        final_output = last_output if 'last_output' in locals() else None
+        if final_output is not None:
+            result = ExecutionResult.load(
+                output=final_output,
+                process=process,
+                status=ExecutionStatus.SUCCESS,
+                type=ResultType.DATA,
+                uuid=uuid,
+            )
+            queue.put(result)
 
-        # Save last expression output to the file
-        if output_file and result.output is not None:
-            with open(output_file, 'a') as file:
-                file.write(json.dumps(result.to_dict()) + '\n')
-                file.flush()
+            # Save last expression output to the file
+            if output_file and result.output is not None:
+                with open(output_file, 'a') as file:
+                    file.write(json.dumps(result.to_dict()) + '\n')
+                    file.flush()
 
         queue.put(
             ExecutionResult.load(

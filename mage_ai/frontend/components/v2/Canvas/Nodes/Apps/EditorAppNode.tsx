@@ -52,7 +52,7 @@ type EditorAppNodeProps = {
   fileRef?: React.MutableRefObject<FileType | undefined> | undefined;
   height?: number;
   submitCodeExecution: (event: any) => void;
-  handleOnMessageRef?: React.MutableRefObject<Record<string, (event: EventStreamType) => void>>;
+  setHandleOnMessage?: (consumerID: string, handler: (event: EventStreamType) => void) => void;
   onClose: () => void;
   width?: number;
 };
@@ -64,7 +64,7 @@ function EditorAppNode({
   fileRef,
   height,
   onClose,
-  handleOnMessageRef,
+  setHandleOnMessage,
   width,
 }: EditorAppNodeProps) {
   const nodeRef = useRef<HTMLDivElement>(null);
@@ -75,12 +75,10 @@ function EditorAppNode({
   const file = fileRef?.current ?? configuration?.file;
 
   useEffect(() => {
-    if (!handleOnMessageRef?.current?.[app?.id]) {
-      handleOnMessageRef.current[app?.id] = (event: EventStreamType) => {
-        const done = executionDone(event);
-        setExecuting(!done);
-      };
-    }
+    setHandleOnMessage && setHandleOnMessage?.(app.id, (event: EventStreamType) => {
+      const done = executionDone(event);
+      setExecuting(!done);
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -400,8 +398,8 @@ function EditorAppNode({
         )}
 
         <OutputGroups
-          consumerID={`${app.uuid}-output-groups`}
-          handleOnMessageRef={handleOnMessageRef}
+          consumerID={`${app.uuid}/output`}
+          setHandleOnMessage={setHandleOnMessage}
         />
       </Grid>
     </div >

@@ -1,4 +1,5 @@
 import BlockNodeComponent, { BADGE_HEIGHT, PADDING_VERTICAL } from './BlockNode';
+import OutputGroups from './CodeExecution/OutputGroups';
 import BlockType, { BlockTypeEnum } from '@interfaces/BlockType';
 import ContextProvider from '@context/v2/ContextProvider';
 import EditorAppNode from './Apps/EditorAppNode';
@@ -11,16 +12,14 @@ import { ElementRoleEnum } from '@mana/shared/types';
 import { EventContext } from '../../Apps/PipelineCanvas/Events/EventContext';
 import { FileType } from '@components/v2/IDE/interfaces';
 import { ModelContext } from '@components/v2/Apps/PipelineCanvas/ModelManager/ModelContext';
-import { NodeType } from '../interfaces';
+import { NodeType, OutputNodeType } from '../interfaces';
 import { OpenInSidekick, Trash } from '@mana/icons';
 import { ThemeContext } from 'styled-components';
-import { buildOutputNode } from '@components/v2/Apps/PipelineCanvas/utils/items';
 import { createRoot, Root } from 'react-dom/client';
 import { executionDone } from '@components/v2/ExecutionManager/utils';
 import { getClosestRole } from '@utils/elements';
 import { getFileCache, updateFileCache } from '../../IDE/cache';
 import { setNested } from '@utils/hash';
-import { consumers } from 'stream';
 
 type BlockNodeType = {
   block: BlockType;
@@ -28,12 +27,16 @@ type BlockNodeType = {
   index?: number;
   groupSelection?: boolean;
   node: NodeType;
-  openApp?: (
+  showApp?: (
     appConfig: AppConfigType,
     render: (mountRef: React.MutableRefObject<HTMLDivElement>) => void,
     onCloseRef: React.MutableRefObject<() => void>,
   ) => void;
-  showOutput?: () => void;
+  showOutput?: (
+    channel: string,
+    render: (outputNode: OutputNodeType, mountRef: React.MutableRefObject<HTMLDivElement>) => void,
+    onCloseRef: React.MutableRefObject<() => void>,
+  ) => void;
 };
 
 function BlockNode({
@@ -41,7 +44,7 @@ function BlockNode({
   dragRef,
   node,
   groupSelection,
-  openApp,
+  showApp,
   showOutput,
   ...rest
 }: BlockNodeType, ref: React.MutableRefObject<HTMLElement>) {
@@ -51,15 +54,16 @@ function BlockNode({
 
   const consumerIDRef = useRef<string>(null);
   const timeoutRef = useRef(null);
-  const onCloseRef = useRef<() => void>(null);
   const connectionErrorRef = useRef(null);
   const connectionStatusRef = useRef<ServerConnectionStatusType>(null);
   const handleOnMessageRef = useRef<Record<string, (event: EventStreamType) => void>>({});
 
+  const appRef = useRef<AppConfigType>(null);
+  const outputRef = useRef<OutputNodeType>(null);
   const appRootRef = useRef<Root>(null);
   const outputRootRef = useRef<Root>(null);
-  const appNodeRef = useRef<HTMLDivElement>(null);
-  const outputNodeRef = useRef<HTMLDivElement>(null);
+  const onCloseOutputRef = useRef<() => void>(null);
+  const onCloseAppRef = useRef<() => void>(null);
 
   // APIs
   const fileRef = useRef<FileType>(null);
@@ -115,7 +119,7 @@ function BlockNode({
   }
 
   function handleSubscribe(consumerID: string) {
-    handleOnMessageRef.current['node'] = (event: EventStreamType) => {
+    handleOnMessageRef.current[consumerIDRef.current] = (event: EventStreamType) => {
       setExecuting(!executionDone(event));
     };
 
@@ -136,30 +140,28 @@ function BlockNode({
 
     const execute = () => {
       const message = getCode();
-      const [messageRequestUUID, future] = executeCode(message, {
+      const [, future] = executeCode(message, {
         output_dir: file?.path ?? null,
         source: block.uuid,
       }, {
-        future: true, onError: () => {
+        future: true,
+        onError: () => {
           getClosestRole(event.target as HTMLElement, [ElementRoleEnum.BUTTON]);
+          setExecuting(false);
         },
-      });
-
-      const outputNode = buildOutputNode(node, block, {
-        message,
-        message_request_uuid: messageRequestUUID,
-        uuid: channel,
       });
 
       future();
       setExecuting(true);
     };
 
-    if (getCode()?.length >= 1) {
-      execute();
-    } else {
-      getFile(event, execute);
-    }
+    launchOutput(channel, () => {
+      if (getCode()?.length >= 1) {
+        execute();
+      } else {
+        getFile(event, execute);
+      }
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [block, node, executeCode]);
 
@@ -190,36 +192,72 @@ function BlockNode({
     }, 1000);
   }
 
+  function closeOutput() {
+    delete handleOnMessageRef.current?.[outputRef?.current?.id];
+    outputRootRef?.current && outputRootRef?.current?.unmount();
+    outputRootRef.current = null;
+    onCloseOutputRef && onCloseOutputRef?.current?.();
+  }
+
   function closeEditorApp() {
-    handleOnMessageRef.current = {};
-    appRootRef.current.unmount();
+    delete handleOnMessageRef.current?.[appRef?.current?.id];
+    delete handleOnMessageRef.current?.[`${appRef?.current?.id}/output`];
+    appRootRef?.current && appRootRef?.current?.unmount();
     appRootRef.current = null;
-    onCloseRef && onCloseRef?.current?.();
+    onCloseAppRef && onCloseAppRef?.current?.();
+  }
+
+  function renderOutput(mountRef: React.RefObject<HTMLElement>, outputNode: OutputNodeType) {
+    outputRef.current = outputNode;
+    outputRootRef.current = createRoot(mountRef.current);
+    outputRootRef.current.render(
+      <ContextProvider theme={themeContext}>
+        <OutputGroups
+          consumerID={outputNode.id}
+          setHandleOnMessage={(consumerID, handler) => {
+            handleOnMessageRef.current[consumerID] = handler;
+          }}
+        />
+      </ContextProvider>,
+    );
   }
 
   function renderEditorApp(
     mountRef: React.RefObject<HTMLElement>,
+    app: AppConfigType,
     opts?: {
-      app?: AppConfigType;
-      block?: BlockType;
       fileRef?: React.MutableRefObject<FileType>;
     },
   ) {
+    appRef.current = app;
     appRootRef.current = createRoot(mountRef.current);
     appRootRef.current.render(
       <ContextProvider theme={themeContext}>
         <EditorAppNode
-          app={opts?.app}
-          block={opts?.block ?? block}
+          app={app}
+          block={block}
           fileRef={opts?.fileRef ?? fileRef}
-          handleOnMessageRef={handleOnMessageRef}
           onClose={() => {
             closeEditorApp();
+          }}
+          setHandleOnMessage={(consumerID, handler) => {
+            handleOnMessageRef.current[consumerID] = handler;
           }}
           submitCodeExecution={submitCodeExecution}
         />
       </ContextProvider>,
     );
+  }
+
+  function launchOutput(channel: string, callback?: () => void) {
+    if (outputRootRef.current) {
+      callback && callback?.();
+    } else {
+      showOutput(channel, (outputNode: OutputNodeType, mountRef: React.RefObject<HTMLDivElement>) => {
+        renderOutput(mountRef, outputNode);
+        callback && callback?.();
+      }, onCloseOutputRef);
+    }
   }
 
   function launchEditorApp(event: any) {
@@ -231,13 +269,11 @@ function BlockNode({
       uuid: [block.uuid, AppTypeEnum.EDITOR, AppSubtypeEnum.CANVAS].join(':'),
     };
 
-    const render = () => openApp(app, (mountRef: React.RefObject<HTMLDivElement>) => {
-      renderEditorApp(mountRef, {
-        app,
-        block,
+    const render = () => showApp(app, (mountRef: React.RefObject<HTMLDivElement>) => {
+      renderEditorApp(mountRef, app, {
         fileRef,
       });
-    }, onCloseRef);
+    }, onCloseAppRef);
 
     if (fileRef.current ?? false) {
       render();
@@ -251,7 +287,6 @@ function BlockNode({
     const consumerID = consumerIDRef.current;
     const timeout = timeoutRef.current;
 
-    const appRoot = appRootRef.current;
     const outputRoot = outputRootRef.current;
 
     return () => {
@@ -259,10 +294,10 @@ function BlockNode({
       timeoutRef.current = null;
       unsubscribe(consumerID);
 
-      appRoot && appRoot?.unmount();
+      closeEditorApp();
       appRootRef.current = null;
 
-      outputRoot && outputRoot?.unmount();
+      closeOutput();
       outputRootRef.current = null;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps

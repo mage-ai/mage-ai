@@ -123,14 +123,11 @@ function TooltipContent({
       }
 
       showTooltip(wrapperRef.current, ref.current);
-      console.log(translateX, translateY);
       ref.current.style.transform = `translate(${translateX}px, ${translateY}px)`;
       ref.current.classList.remove(styles.hide);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [align, justify]);
-
-  console.log(style);
 
   return (
     <div

@@ -30,7 +30,8 @@ class ProcessDetails(BaseDataClass):
     source: Optional[str] = None
     stream: Optional[str] = None
     timestamp: Optional[int] = field(
-      default_factory=lambda: int(datetime.utcnow().timestamp() * 1000))
+        default_factory=lambda: int(datetime.utcnow().timestamp() * 1000)
+    )
     uuid: Optional[str] = None
 
 
@@ -45,7 +46,8 @@ class ExecutionResult(BaseDataClass):
     type: Optional[ResultType] = None
     uuid: Optional[str] = None
     timestamp: Optional[int] = field(
-      default_factory=lambda: int(datetime.utcnow().timestamp() * 1000))
+        default_factory=lambda: int(datetime.utcnow().timestamp() * 1000)
+    )
 
     def __post_init__(self):
         self.serialize_attribute_class('error', ErrorDetails)
@@ -55,8 +57,8 @@ class ExecutionResult(BaseDataClass):
         self.serialize_attribute_enum('type', ResultType)
 
     @property
-    def output_text(self) -> str:
-        return str(self.output)
+    def output_text(self) -> Optional[str]:
+        return str(self.output) if self.output is not None else self.output
 
     def to_dict(self, *args, **kwargs) -> Dict:
         data = super().to_dict(*args, **kwargs)
@@ -71,7 +73,8 @@ class EventStream(BaseDataClass):
     event_uuid: Optional[str] = None
     result: Optional[ExecutionResult] = None
     timestamp: Optional[int] = field(
-      default_factory=lambda: int(datetime.utcnow().timestamp() * 1000))
+        default_factory=lambda: int(datetime.utcnow().timestamp() * 1000)
+    )
     type: Optional[EventStreamType] = None
 
     def __post_init__(self):

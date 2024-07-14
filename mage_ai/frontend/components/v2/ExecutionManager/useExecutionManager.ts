@@ -10,10 +10,12 @@ import { DEBUG } from '../utils/debug';
 import { ResponseType, MutationFetchArgumentsType } from '@api/interfaces';
 import { closeConnection } from './utils';
 import { getEventStreamsUrl } from '@api/utils/url';
-import { getNewUUID } from '@utils/string';
 import { useMutate } from '@context/APIMutation';
+import { newMessageRequestUUID } from '@utils/events';
 import { useRef } from 'react';
-import { ConsumerOperations as ConsumerOperationsT, EventSourceHandlers as EventSourceHandlersT, ExecutionManagerType } from './interfaces';
+import { ConsumerOperations as ConsumerOperationsT,
+  EventSourceHandlers as EventSourceHandlersT,
+  ExecutionManagerType } from './interfaces';
 import { setNested } from '@utils/hash';
 
 export type ConsumerOperations = ConsumerOperationsT;
@@ -167,7 +169,7 @@ export default function useExecutionManager({
         }
 
         return getEventSource(channel);
-      }
+      };
 
       // const handleNext = () => {
       //   const elapsed = Number(new Date()) - (recentConnectionProcessedTimestampRef.current ?? 0);
@@ -211,7 +213,7 @@ export default function useExecutionManager({
       //     // connectionQueueRef.current.length === 1 ? 0 : throttle,
       //   );
       // }
-    }
+    };
 
     // Max of 6 connections.
     // Use the same connection but different streams to receive events specific for that strem.
@@ -286,7 +288,7 @@ export default function useExecutionManager({
           if (options?.onOpen) {
             options?.onOpen?.(status, event);
           }
-        }
+        },
       });
 
       const map2 = Object.keys(channelsRef?.current?.[channel]?.streams?.[stream]?.consumers ?? {});
@@ -313,10 +315,12 @@ export default function useExecutionManager({
       message_request_uuid?: string;
       output_dir?: string;
       source?: string;
+    }, opts?: {
+      future?: boolean;
+      onError?: (response: ResponseType) => void;
+      onSuccess?: (data: { code_execution: ProcessDetailsType }) => void;
     }) => [string, () => any];
   } {
-    // const eventSource = eventSourcesRef.current[channel];
-
     const executeCode = (message: string, payload?: {
       message_request_uuid?: string;
       output_dir?: string;
@@ -326,7 +330,7 @@ export default function useExecutionManager({
       onError?: (response: ResponseType) => void;
       onSuccess?: (data: { code_execution: ProcessDetailsType }) => void;
     }): [string, () => any] => {
-      const messageRequestUUID = String(Number(new Date()));
+      const messageRequestUUID = newMessageRequestUUID();
 
       const future = () => mutants.create.mutate({
         onError: (response: ResponseType) => {
@@ -368,7 +372,7 @@ export default function useExecutionManager({
   }
 
   function handleOnMessage(event: EventStreamResponseType) {
-    const { channel, stream } = extractChannelAndStream(event)
+    const { channel, stream } = extractChannelAndStream(event);
     const eventData = JSON.parse(event.data);
 
     // console.log('Target channel:', eventData.uuid, channel);
@@ -404,7 +408,7 @@ export default function useExecutionManager({
   }
 
   function connectEventSource(channel: string, stream: string): EventSource | null {
-    let eventSource = getEventSource(channel)
+    let eventSource = getEventSource(channel);
     if (eventSource) {
       if (EventSourceReadyState.OPEN === eventSource.readyState) {
         // setStatus(channel, stream, ServerConnectionStatusType.OPEN);
@@ -416,7 +420,7 @@ export default function useExecutionManager({
 
         debugLog(
           `Closing inactive connection for channel ${channel} with ${streamCount} ` +
-          `streams and ${consumerCount} consumers`
+          `streams and ${consumerCount} consumers`,
         );
         closeEventSourceConnection(channel);
         eventSource = null;
@@ -427,21 +431,21 @@ export default function useExecutionManager({
     if (eventSource) return eventSource;
 
     debugLog('Connecting to server...');
-    createEventSource(channel)
+    createEventSource(channel);
     eventSource = getEventSource(channel);
     if (!eventSource) return;
   }
 
   function getEventSource(channel: string): EventSource {
     const eventSource = eventSourcesRef.current[channel];
-    updateEventSourceHandlers(eventSource)
+    updateEventSourceHandlers(eventSource);
     eventSourcesRef.current[channel] = eventSource;
     return eventSource;
   }
 
   function createEventSource(channel: string): EventSource {
     const eventSource = new EventSource(getEventStreamsUrl(channel));
-    updateEventSourceHandlers(eventSource)
+    updateEventSourceHandlers(eventSource);
     eventSourcesRef.current[channel] = eventSource;
     return eventSource;
   }

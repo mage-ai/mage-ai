@@ -10,3 +10,7 @@ export function pauseEvent(e){
 
   return false;
 }
+
+export function newMessageRequestUUID(): string {
+  return String(Number(new Date()));
+}
