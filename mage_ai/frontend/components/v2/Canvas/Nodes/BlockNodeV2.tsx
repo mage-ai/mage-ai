@@ -6,7 +6,7 @@ import stylesBlockNode from '@styles/scss/components/Canvas/Nodes/BlockNode.modu
 import BlockType, { BlockTypeEnum } from '@interfaces/BlockType';
 import React, { useCallback, useContext, useMemo, useRef } from 'react';
 import { NodeType } from '../interfaces';
-import { useMutate } from '@context/APIMutation';
+import { setNested } from '@utils/hash';
 
 type BlockNodeType = {
   block: BlockType;
@@ -24,6 +24,7 @@ function BlockNode({
   ...rest
 }: BlockNodeType, ref: React.MutableRefObject<HTMLElement>) {
   const { name, type } = block;
+  const timeoutRef = useRef(null);
 
   // APIs
   const { mutations } = useContext(ModelContext);
@@ -42,9 +43,33 @@ function BlockNode({
   const submitCodeExecution = useCallback((event: React.MouseEvent<HTMLElement>) => {
 
   }, []);
-  const updateBlock = useCallback(() => {
 
-  }, []);
+  function updateBlock(event: any, key: string, value: any) {
+    clearTimeout(timeoutRef.current);
+
+    timeoutRef.current = setTimeout(() => {
+      clearTimeout(timeoutRef.current);
+
+      mutations.pipelines.update.mutate({
+        event,
+        onError: () => {
+          ref?.current?.classList?.remove(stylesBlockNode.loading);
+        },
+        onStart: () => {
+          ref?.current?.classList?.add(stylesBlockNode.loading);
+        },
+        onSuccess: () => {
+          ref?.current?.classList?.remove(stylesBlockNode.loading);
+        },
+        payload: {
+          block: setNested({
+            configuration: block.configuration,
+            uuid: block.uuid,
+          }, key, value),
+        },
+      });
+    }, 1000);
+  }
 
   return (
     <div

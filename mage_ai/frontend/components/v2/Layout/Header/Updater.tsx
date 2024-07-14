@@ -46,7 +46,7 @@ function menuItemsForBlock(
                 ...(block1 as any),
                 index: index2,
                 level: level2,
-              } as MenuGroupType)
+              } as MenuGroupType),
             });
           },
           level2 + 1, index3,
@@ -150,7 +150,7 @@ export default function HeaderUpdater({
       });
 
       return menuItems;
-    }
+    };
 
     setHeader({
       buildIntraAppNavItems,

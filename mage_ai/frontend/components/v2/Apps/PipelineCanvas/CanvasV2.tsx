@@ -3,6 +3,7 @@ import { handleSaveAsImage } from './utils/images';
 import { RenderContextMenuOptions } from '@mana/hooks/useContextMenu';
 import BlockNodeV2, { BADGE_HEIGHT, PADDING_VERTICAL } from '../../Canvas/Nodes/BlockNodeV2';
 import Grid from '@mana/components/Grid';
+import useAppEventsHandler, { CustomAppEvent, CustomAppEventEnum } from './useAppEventsHandler';
 import Text from '@mana/elements/Text';
 import {
   OpenInSidekick, OpenInSidekickLeft, ArrowsAdjustingFrameSquare, SearchV2,
@@ -187,7 +188,7 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
     return val0;
   });
 
-
+  const { dispatchAppEvent } = useAppEventsHandler({ executionFramework: framework, pipeline });
 
   // console.log(
   //   [l0, t0, w0, h0],
@@ -973,6 +974,7 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
   });
 
   function setSelectedGroup(block: FrameworkType) {
+    // Invoked from within a node component and not from the header; need to update header.
     const groups = [...(selectedGroupsRef.current ?? [])];
     const parentIndex =
       groups?.findIndex(g => !!(g as any).children?.find(i => i.uuid === block?.uuid));
@@ -986,7 +988,7 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
       index = parent.children.findIndex(i => i.uuid === block?.uuid);
     }
 
-    setSelectedGroupsRef.current([
+    const groupsNext = [
       ...groups2,
       {
         groups: parent ? [parent] : [],
@@ -994,7 +996,18 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
         level: groups2?.length ?? 0,
         uuid: block?.uuid,
       },
-    ]);
+    ];
+    setSelectedGroupsRef.current(groupsNext);
+
+    console.log(groupsNext);
+
+    dispatchAppEvent(CustomAppEventEnum.UPDATE_HEADER_NAVIGATION, {
+      options: {
+        kwargs: {
+          defaultGroups: groupsNext,
+        },
+      },
+    });
   }
 
   function renderLayoutUpdates(callbackBeforeUpdateState?: () => void) {
@@ -1095,17 +1108,18 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
       detail: { onSuccess: setPipeline },
       update: {
         onSuccess: (p1, p2) => {
+          updateLocalResources(p1);
           setPipeline(p1);
+
           const b1 = p1?.blocks;
           const b2 = p2?.blocks;
 
-          updateLocalResources(p1);
-
+          console.log('Pipeline updated', b1?.length, b2?.length);
           if (b1?.length ?? 0 !== b2?.length ?? 0) {
-            const b1map = indexBy(b1, b => b.uuid);
-            const b2map = indexBy(b2, b => b.uuid);
-            const bnew = b1.filter(b => !b2map[b.uuid]);
-            const bdel = b2.filter(b => !b1map[b.uuid]);
+            // const b1map = indexBy(b1, b => b.uuid);
+            // const b2map = indexBy(b2, b => b.uuid);
+            // const bnew = b1.filter(b => !b2map[b.uuid]);
+            // const bdel = b2.filter(b => !b1map[b.uuid]);
 
             renderLayoutUpdates(() => {
               // handleAnimateChangeBlocks(bnew, bdel);

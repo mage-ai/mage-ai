@@ -24,7 +24,7 @@ type NavigationButtonGroupProps = {
   buildGroups?: (onClick: ItemClickHandler) => MenuItemType[];
   cacheKey?: string;
   groups?: MenuItemType[];
-}
+};
 export default function NavigationButtonGroup({
   buildGroups,
   cacheKey,
@@ -69,7 +69,7 @@ export default function NavigationButtonGroup({
       item,
     ];
     if (selectedGroupsByLevel?.[selectedGroupsByLevel?.length - 1]?.uuid === uuid) {
-      items = items.slice(0, level)
+      items = items.slice(0, level);
     }
 
     setSelectedGroupsByLevel(items);
@@ -89,17 +89,17 @@ export default function NavigationButtonGroup({
     : (groupsProp ?? []), [buildGroups, groupsProp, handleSelectGroup]);
 
   const handleNavigationUpdate = useCallback((event: CustomAppEvent) => {
-    DEBUG.header.navigation && console.log('handleNavigationUpdate', event)
     const { defaultGroups } = event?.detail?.options?.kwargs ?? {};
 
+    const arr = [];
     const startingGroups = groups[0];
-    DEBUG.header.navigation && console.log('startingGroups', startingGroups)
     const item = defaultGroups?.reduce((prev, curr) => {
-      DEBUG.header.navigation && console.log('prev', prev, 'curr', curr)
-      return prev.items[curr.index] ?? prev.items?.find(i => i.uuid === curr.uuid);
+      const grp = prev.items[curr.index] ?? prev.items?.find(i => i.uuid === curr.uuid);
+      arr.push(grp);
+      return grp;
     }, startingGroups);
-    DEBUG.header.navigation && console.log('item', item)
-    item?.onClick({} as any, item);
+
+    setSelectedGroupsByLevel(arr);
   }, [groups]);
 
   useAppEventsHandler({} as any, {
@@ -153,7 +153,7 @@ export default function NavigationButtonGroup({
 
     return () => {
       deregisterCommands();
-    }
+    };
   }, [deregisterCommands, openMenu, registerCommands, selectedGroupsByLevel]);
 
   const buttons = useMemo(() => {
@@ -189,7 +189,7 @@ export default function NavigationButtonGroup({
       );
 
       if (!first) {
-        inner.push(divider)
+        inner.push(divider);
       }
 
       inner.push(
@@ -234,7 +234,7 @@ export default function NavigationButtonGroup({
 
             {(selected || initial) && <CaretDown secondary size={10} />}
           </Grid>
-        </Link>
+        </Link>,
       );
     });
 
