@@ -1,6 +1,7 @@
 import os
 import re
 
+
 # Function to parse the templates file
 def parse_templates(file_path):
     with open(file_path, 'r') as file:
@@ -12,11 +13,12 @@ def parse_templates(file_path):
 
     return matches
 
+
 # Function to create the files from the parsed templates
 def create_files_from_templates(templates):
     for filename, content in templates:
         # Determine the directory based on the filename
-        dir_name = "transformers/embeddings"
+        dir_name = 'data_exporters/vector_databases'
 
         # Ensure the directory exists
         os.makedirs(dir_name, exist_ok=True)
@@ -26,10 +28,11 @@ def create_files_from_templates(templates):
         with open(file_path, 'w') as file:
             file.write(content)
 
-        print(f"Created file: {file_path}")
+        print(f'Created file: {file_path}')
+
 
 # Main script execution
-if __name__ == "__main__":
+if __name__ == '__main__':
     templates_file_path = 'templates.txt'
     templates = parse_templates(templates_file_path)
     create_files_from_templates(templates)

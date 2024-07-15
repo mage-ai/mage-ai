@@ -593,13 +593,7 @@ asymmetric_embeddings:
   path: transformers/embeddings/asymmetric_embeddings.py
   type: transformer
   inputs:
-    search_document:
-      style:
-        input_type: null
-        multiline: false
-        monospace: false
-      type: text_field
-    query:
+    text:
       style:
         input_type: null
         multiline: false
@@ -643,34 +637,3 @@ embedding_ensembles:
       required: true
       types:
         - list
-
-### embedding_visualization.py
-
-embedding_visualization:
-  description: 'Project high-dimensional embeddings into 2D/3D space using techniques like t-SNE or UMAP. Helps analyze embedding clusters, outliers, and retrieval results to debug and improve RAG pipelines.'
-  name: 'Embedding visualization'
-  path: transformers/analytics/embedding_visualization.py
-  type: transformer
-  inputs:
-    embeddings:
-      style:
-        input_type: null
-        multiline: false
-        monospace: false
-      type: text_field
-  variables:
-    method:
-      description: 'Dimension reduction method to use (e.g., t-SNE, UMAP).'
-      name: 'Method'
-      input: text
-      required: true
-      types:
-        - string
-    n_components:
-      description: 'Number of dimensions to reduce to (2 or 3).'
-      name: 'Number of components'
-      input: text
-      required: false
-      types:
-        - integer
-      value: 2  # Default value

@@ -164,8 +164,6 @@ export default function BlockNodeComponent({
               x = Math.min(0, x);
               y = Math.min(0, y);
 
-              console.log(rect, x, y);
-
               transformState?.current?.handlePanning?.current?.((event ?? null) as any, {
                 x,
                 y,
@@ -177,7 +175,6 @@ export default function BlockNodeComponent({
         }),
     };
   }, [draggable, block, node, isGroup, openEditor, apps, mutations, transformState]);
-  console.log(apps);
 
   const before = useMemo(() => ({
     Icon: (iconProps) => (

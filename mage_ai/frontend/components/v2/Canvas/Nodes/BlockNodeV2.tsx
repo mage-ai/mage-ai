@@ -109,7 +109,6 @@ function BlockNode({
               (result: ExecutionResultType) => result?.timestamp);
             const text = results?.map((result: ExecutionResultType) =>
               (result?.output_text ?? '')?.trim() ?? '').join('\n');
-            console.log(text);
             copyToClipboard(text);
           },
           uuid: 'Copy output',
@@ -153,7 +152,7 @@ function BlockNode({
     setResultMappingUpdate: (consumerID, handler) => {
       handleResultMappingUpdateRef.current[consumerID] = handler;
     },
-  }), []);
+  }), [file, handleContextMenu, removeContextMenu]);
 
   // APIs
   const fileRef = useRef<FileType>(null);
