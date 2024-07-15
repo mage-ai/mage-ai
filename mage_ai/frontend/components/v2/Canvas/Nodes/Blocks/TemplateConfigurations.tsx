@@ -8,7 +8,7 @@ import { PipelineExecutionFrameworkBlockType } from '@interfaces/PipelineExecuti
 import {
   InteractionVariableTypeEnum,
   InteractionInputStyleInputTypeEnum,
-  InteractionInputType, InteractionVariableType, InteractionInputTypeEnum
+  InteractionInputType, InteractionVariableType, InteractionInputTypeEnum,
 } from '@interfaces/InteractionType';
 import TextInput from '@mana/elements/Input/TextInput';
 import { TooltipAlign, TooltipWrapper, TooltipDirection, TooltipJustify } from '@context/Tooltip';
@@ -57,7 +57,7 @@ export default function TemplateConfigurations({
       </Grid>
 
       {Object.entries(variables ?? {})?.map((
-        [variableUUID, variableConfig]: [string, InteractionVariableType]
+        [variableUUID, variableConfig]: [string, InteractionVariableType],
       ) => {
         const {
           description,
@@ -146,9 +146,9 @@ export default function TemplateConfigurations({
                 />
               )}
             </Grid>
-          </label  >
+          </label>
         );
       })}
-    </PanelRows  >
+    </PanelRows>
   );
 }

@@ -31,7 +31,7 @@ import { ItemStatusEnum, ItemTypeEnum, LayoutConfigDirectionEnum, PortSubtypeEnu
 import { AppNodeType, NodeItemType, PortType } from '../interfaces';
 import { ModelContext } from '@components/v2/Apps/PipelineCanvas/ModelManager/ModelContext';
 import { SettingsContext } from '@components/v2/Apps/PipelineCanvas/SettingsManager/SettingsContext';
-import { StatusTypeEnum, BlockTypeEnum } from '@interfaces/BlockType';
+import { StatusTypeEnum, BlockTypeEnum, LANGUAGE_DISPLAY_MAPPING } from '@interfaces/BlockType';
 import { TooltipWrapper } from '@context/Tooltip';
 import { borderConfigs, blockColorNames } from './presentation';
 import { buildEvent } from './utils';
@@ -49,6 +49,7 @@ export type BlockNodeProps = {
   apps?: Record<string, AppNodeType>;
   block: BlockType | PipelineExecutionFrameworkBlockType;
   buttonBeforeRef?: React.RefObject<HTMLDivElement>;
+  code?: string;
   dragRef: React.RefObject<HTMLDivElement>;
   executing?: boolean;
   groupSelection?: boolean;
@@ -64,6 +65,7 @@ export default function BlockNodeComponent({
   apps,
   block,
   buttonBeforeRef,
+  code: contentCode,
   collapsed,
   draggable,
   groupSelection,
@@ -464,55 +466,64 @@ export default function BlockNodeComponent({
               {connectionRows}
               {templateConfigurations}
               {isEmptyObject(block?.configuration?.templates) && (
-                <Markdown
-                  code={{ monospace: true, small: true }}
-                  pre={{ monospace: true, small: true }}
-                  span={{ monospace: true, small: true }}
-                >
-                  {`
-# h1
+                <PanelRows padding={false}>
+                  <Grid justifyItems="start" padding={12} rowGap={4} templateColumns="auto" >
+                    {contentCode && (
+                      <TooltipWrapper
+                        align={TooltipAlign.START}
+                        horizontalDirection={TooltipDirection.LEFT}
+                        justify={TooltipJustify.START}
+                        tooltip={contentCode && (
+                          <Markdown
+                            code={{ monospace: true, small: true }}
+                            pre={{ monospace: true, small: true }}
+                            span={{ monospace: true, small: true }}
+                          >
+                            {`${'```'}python
+  ${contentCode}
+  ${'```'}`}
+                          </Markdown>
+                        )}
+                      >
+                        <Text semibold xsmall>
+                          Custom code
+                        </Text>
+                      </TooltipWrapper>
+                    )}
+                    {!contentCode && (
+                      <Text semibold xsmall>
+                        Custom code
+                      </Text>
+                    )}
+                  </Grid>
+                  <Grid
+                    alignItems="stretch"
+                    baseLeft
+                    baseRight
+                    columnGap={8}
+                    justifyContent="space-between"
+                    smallBottom
+                    smallTop
+                    style={{
+                      gridTemplateColumns: 'minmax(0px, max-content) auto',
+                    }}
+                  >
+                    <Text secondary small>
+                      Language
+                    </Text>
 
-## h2
-
-### h3
-
-#### h4
-
-##### h5
-
-Text
-
----
-
-${'```'}python
-if 'data_exporter' not in globals():
-    from mage_ai.data_preparation.decorators import data_exporter
-
-
-@data_exporter
-def export_data(data, *args, **kwargs) -> Dict:
-    """
-    Exports data to some source.
-
-    Args:
-        data: The output from the upstream parent block
-        args: The output from any additional upstream blocks (if applicable)
-
-    Output (optional):
-        Optionally return any object and it'll be logged and
-        displayed when inspecting the block run.
-    """
-    # Specify your data exporting logic here
-${'```'}
-                    `}
-                </Markdown>
+                    <Text secondary small>
+                      {LANGUAGE_DISPLAY_MAPPING[block?.language] ?? ''}
+                    </Text>
+                  </Grid>
+                </PanelRows>
               )}
               {BlockTypeEnum.PIPELINE === block?.type && <div />}
             </Grid>
           ))}
       </Grid>
     </div>
-  ), [badge, buildBadgeRow, block, connectionRows, templateConfigurations, titleRow, after,
+  ), [badge, buildBadgeRow, block, connectionRows, templateConfigurations, titleRow, after, contentCode,
     isGroup, inputs, groupSelection],
   );
 

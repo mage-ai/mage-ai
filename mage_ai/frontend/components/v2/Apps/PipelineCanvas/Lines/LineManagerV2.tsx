@@ -431,9 +431,9 @@ export default function LineManagerV2({
 
     const outputNodesByBlockUUID = Object.values(mapping ?? {}).reduce((acc, node) => ({
       ...acc,
-      ...(ItemTypeEnum.OUTPUT === node.type ? {
-        [node.block.uuid]: [
-          ...(acc?.[node.block.uuid] ?? []),
+      ...(ItemTypeEnum.OUTPUT === node?.type ? {
+        [node?.block?.uuid]: [
+          ...(acc?.[node?.block?.uuid] ?? []),
           node,
         ],
       } : {}),

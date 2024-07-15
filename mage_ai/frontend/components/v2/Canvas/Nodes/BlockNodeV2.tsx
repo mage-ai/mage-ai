@@ -546,6 +546,7 @@ function BlockNode({
         {...rest}
         apps={apps}
         block={block}
+        code={fileRef.current?.content}
         dragRef={dragRef}
         executing={executing}
         groupSelection={groupSelection}
