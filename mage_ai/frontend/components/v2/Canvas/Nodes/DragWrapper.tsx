@@ -95,12 +95,16 @@ function DragWrapper({
 
   const [{ isDragging }, connectDrag, preview] = useDrag(
     () => ({
-      ...item,
       collect: (monitor: DragSourceMonitor) => ({ isDragging: monitor.isDragging() }),
       isDragging: (monitor: DragSourceMonitor) => {
         const draggingItem = monitor.getItem() as NodeItemType;
         return draggingItem.id === item.id;
       },
+      item: {
+        ...item,
+        rect,
+      },
+      type: item.type,
     }),
     [draggable, item],
   );

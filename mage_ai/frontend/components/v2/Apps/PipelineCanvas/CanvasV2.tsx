@@ -1,4 +1,6 @@
 import React, { createRef, useEffect, useMemo, useRef, useState, startTransition, useCallback } from 'react';
+import { findLargestUnoccupiedSpace } from '@utils/rects';
+import { snapToGrid } from '../../Canvas/utils/snapToGrid';
 import { handleSaveAsImage } from './utils/images';
 import { RenderContextMenuOptions } from '@mana/hooks/useContextMenu';
 import BlockNodeV2, { BADGE_HEIGHT, PADDING_VERTICAL } from '../../Canvas/Nodes/BlockNodeV2';
@@ -21,6 +23,7 @@ import {
   ItemTypeEnum, LayoutConfigDirectionEnum, LayoutConfigDirectionOriginEnum, LayoutDisplayEnum, LayoutStyleEnum,
 } from '../../Canvas/types';
 import BlockType from '@interfaces/BlockType';
+import { useDrop } from 'react-dnd';
 import CanvasContainer, { GRID_SIZE } from './index.style';
 import LineManagerV2, { ANIMATION_DURATION as ANIMATION_DURATION_LINES, EASING } from './Lines/LineManagerV2';
 import DragWrapper from '../../Canvas/Nodes/DragWrapper';
@@ -92,7 +95,7 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
   setDragEnabled,
   setDropEnabled,
   setZoomPanDisabled,
-  // snapToGridOnDrop = false,
+  snapToGridOnDrop = false,
   transformState,
   useExecuteCode,
   useRegistration,
@@ -1690,8 +1693,6 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
         ItemTypeEnum,
         (AppNodeType | BlockType | FrameworkType | OutputNodeType)[],
       ]) => {
-      const rects = [];
-
       items?.forEach((
         item: AppNodeType | BlockType | FrameworkType | OutputNodeType,
         idx: number,
@@ -1714,44 +1715,43 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
         }
 
         if ([ItemTypeEnum.APP, ItemTypeEnum.OUTPUT].includes(nodeType)) {
-          const rectg = getSelectedGroupRectFromRefs();
+          if (nodeID in rectsMappingRef?.current) {
+            rect = rectsMappingRef.current[nodeID];
+          } else {
+            const rectg = getSelectedGroupRectFromRefs();
+            const bbox = canvasRef?.current?.getBoundingClientRect();
 
-          const rectb = rectsMappingRef.current[itemUUID];
-          const rectp = idx > 0 ? rects[idx - 1] : {
-            left: (rectg?.left ?? 0) + rectg?.width,
-            top: (rectg?.top ?? 0),
-          };
+            const box = {
+              height: bbox?.height - PADDING_VERTICAL,
+              left: 0 + PADDING_VERTICAL,
+              top: 52 + PADDING_VERTICAL,
+              width: bbox?.width - PADDING_VERTICAL,
+            };
 
-          rect = {
-            id: nodeID,
-            left: rectp.left + (PADDING_VERTICAL * 2),
-            top: rectp.top
-              + (idx > 0
-                  ? (rectp.height ?? rectb.height) + + (PADDING_VERTICAL * 2)
-                  : 0),
-          };
+            const rects = Object.values(rectsMappingRef.current ?? {}).map(r => ({
+              ...r,
+              height: ItemTypeEnum.APP === r.type ? 1120 : ItemTypeEnum.OUTPUT === r.type ? 418 : r.height,
+              width: ItemTypeEnum.APP === r.type ? 620 : ItemTypeEnum.OUTPUT === r.type ? 400 : r.width,
+            })) as any[];
+            const lrg =
+              findLargestUnoccupiedSpace(
+                rectg as any,
+                rects,
+                box as any,
+            ) as RectType;
 
-          if (rectp?.id && dragRefs?.current?.[rectp?.id]) {
-            const el = dragRefs?.current?.[rectp?.id]?.current;
-            const dims = getChildrenDimensions(el);
-            if (rect.height) {
-              rect.height = dims.height;
-            }
-            if (rect.width) {
-              rect.width = dims.width;
-            }
+            rect.left = lrg.left;
+            rect.top = lrg.top;
+            rect.type = nodeType;
+            rect.id = nodeID;
+
+            rectsMappingRef.current[nodeID] = rect;
           }
-
-          console.log(nodeID, rect);
-
-          rectsMappingRef.current[nodeID] = rect;
-          rects.push({ ...rectb, ...rect });
 
           arr.push(
             <WithOnMount
               key={`${itemUUID}:${nodeID}:${nodeType}`}
               onMount={() => {
-                console.log(dragRef?.current?.getBoundingClientRect());
                 if (ItemTypeEnum.APP === nodeType) {
                   appNodeRefs?.current?.[itemUUID]?.render?.(dragRef);
                 } else {
@@ -1798,6 +1798,58 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
   const outputMemo = useMemo(() => renderNodeComponents({
     [ItemTypeEnum.OUTPUT]: Object.values(outputNodes ?? {}),
   }), [outputNodes, renderNodeComponents]);
+
+  const [, connectDrop] = useDrop(
+    () => ({
+      // https://react-dnd.github.io/react-dnd/docs/api/use-drop
+      accept: [ItemTypeEnum.APP, ItemTypeEnum.OUTPUT],
+      drop: (item: NodeType, monitor) => {
+        // console.log('start', itemsRef.current)
+        const delta = monitor.getDifferenceFromInitialOffset() as {
+          x: number;
+          y: number;
+        };
+
+        // let left = Math.round(node?.rect?.left + delta.x);
+        // let top = Math.round(node?.rect?.top + delta.y);
+        let left = Math.round((item?.rect?.left ?? 0) + delta.x);
+        let top = Math.round((item?.rect?.top ?? 0) + delta.y);
+
+        let leftOffset = 0;
+        let topOffset = 0;
+
+        if (snapToGridOnDrop) {
+          // TODO (dangerous): This doesn’t apply to the ports; need to handle that separately.
+          const [xSnapped, ySnapped] = snapToGrid(
+            {
+              x: left,
+              y: top,
+            },
+            { height: GRID_SIZE, width: GRID_SIZE },
+          );
+          leftOffset = xSnapped - left;
+          topOffset = ySnapped - top;
+        }
+
+        left += leftOffset;
+        top += topOffset;
+
+        const node = { ...item };
+        node.rect = node.rect ?? item.rect;
+        node.rect.left = left;
+        node.rect.top = top;
+
+        const element = dragRefs.current[node.id].current;
+        if (element) {
+          element.style.transform = `translate(${left}px, ${top}px)`;
+        }
+
+        rectsMappingRef.current[node.id] = node.rect;
+        return undefined;
+      },
+    }), [],
+  );
+  connectDrop(canvasRef);
 
   return (
     <div
