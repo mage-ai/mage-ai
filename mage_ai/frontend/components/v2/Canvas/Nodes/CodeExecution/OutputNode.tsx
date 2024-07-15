@@ -82,6 +82,6 @@ const OutputNode: React.FC<OutputNodeProps> = ({
       />
     </NodeWrapper>
   );
-}
+};
 
 export default React.memo(OutputNode, areEqual);

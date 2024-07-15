@@ -17,8 +17,8 @@ $spacing: 12px;
     margin-top: $spacing;
 
     &.compact {
-      margin-bottom: $spacing;
-      margin-top: $spacing;
+      margin-bottom: 0;
+      margin-top: 0;
     }
   }
 

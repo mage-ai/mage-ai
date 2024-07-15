@@ -349,6 +349,8 @@ export default function LineManagerV2({
       [ItemTypeEnum.OUTPUT]: [],
     } as any;
 
+    console.log(mapping);
+
     const selectedGroup = selectedGroupsRef?.current?.[selectedGroupsRef?.current?.length - 1];
     const groupRect = groupRectArg ?? mapping?.[selectedGroup?.id];
 
@@ -421,7 +423,6 @@ export default function LineManagerV2({
               pairsByType[output.type].push([rectdn, output]);
             });
           }
-
         }
 
         (blockdn as any)?.upstream_blocks?.forEach((upuuid: string) => {

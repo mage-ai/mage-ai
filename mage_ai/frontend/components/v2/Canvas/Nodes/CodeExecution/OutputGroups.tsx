@@ -1,13 +1,15 @@
 import EventStreamType, { ExecutionResultType } from '@interfaces/EventStreamType';
-import ExecutionOutput from './ExecutionOutput';
+import ExecutionOutput, { ExecutionOutputProps } from './ExecutionOutput';
 import Grid from '@mana/components/Grid';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import Scrollbar from '@mana/elements/Scrollbar';
 import stylesOutput from '@styles/scss/components/Canvas/Nodes/OutputGroups.module.scss';
 import { DEBUG } from '@components/v2/utils/debug';
 import { groupBy, indexBy } from '@utils/array';
+import { ElementRoleEnum } from '@mana/shared/types';
 
 export type OutputGroupsType = {
+  handleContextMenu?: ExecutionOutputProps['handleContextMenu'];
   onMount?: (consumerID: string) => void;
   setHandleOnMessage?: (consumerID: string, handler: (event: EventStreamType) => void) => void;
   setResultMappingUpdate?: (
@@ -17,13 +19,18 @@ export type OutputGroupsType = {
 };
 
 type OutputGroupsProps = {
+  children?: React.ReactNode;
   consumerID: string;
+  role?: ElementRoleEnum;
   styles?: React.CSSProperties;
 } & OutputGroupsType;
 
 const OutputGroups: React.FC<OutputGroupsProps> = ({
+  children,
   consumerID,
+  handleContextMenu,
   onMount,
+  role,
   setHandleOnMessage,
   setResultMappingUpdate,
   styles,
@@ -63,15 +70,24 @@ const OutputGroups: React.FC<OutputGroupsProps> = ({
     });
   }, [resultsGroupedByMessageRequestUUID]);
 
+  const keys = useMemo(() => Object.keys(
+    resultsGroupedByMessageRequestUUID ?? {},
+  )?.sort(), [resultsGroupedByMessageRequestUUID]);
+
   return (
-    <div className={stylesOutput.outputContainer} style={styles}>
-      <Scrollbar autoHorizontalPadding ref={scrollableDivRef} style={{ maxHeight: 400, overflow: 'auto' }}>
+    <div className={stylesOutput.outputContainer} role={role} style={styles}>
+      {children}
+
+      <Scrollbar
+        autoHorizontalPadding ref={scrollableDivRef} style={{ maxHeight: 400, overflow: 'auto' }}
+      >
         <Grid rowGap={8} templateRows="min-content">
-          {Object.keys(
-            resultsGroupedByMessageRequestUUID ?? {},
-          )?.sort()?.map((mrUUID: string) => (
+          {keys?.map((mrUUID: string, idx: number) => (
             <ExecutionOutput
+              first={idx === 0}
+              handleContextMenu={handleContextMenu}
               key={mrUUID}
+              last={idx === keys.length - 1}
               results={resultsGroupedByMessageRequestUUID[mrUUID]}
               uuid={mrUUID}
             />

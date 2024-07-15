@@ -1,20 +1,25 @@
 import BlockNodeComponent, { BADGE_HEIGHT, PADDING_VERTICAL } from './BlockNode';
+import Circle from '@mana/elements/Circle';
+import { getUpDownstreamColors } from './Blocks/utils';
+import { ModelContext } from '@components/v2/Apps/PipelineCanvas/ModelManager/ModelContext';
+import Grid from '@mana/components/Grid';
+import Text from '@mana/elements/Text';
 import { copyToClipboard } from '@utils/clipboard';
 import { indexBy, sortByKey } from '@utils/array';
-import { ClientEventType } from '@mana/shared/interfaces';
+import { ClientEventType, EventOperationEnum } from '@mana/shared/interfaces';
 import OutputGroups from './CodeExecution/OutputGroups';
 import BlockType, { BlockTypeEnum } from '@interfaces/BlockType';
 import ContextProvider from '@context/v2/ContextProvider';
 import EditorAppNode from './Apps/EditorAppNode';
 import EventStreamType, { ExecutionResultType, ServerConnectionStatusType } from '@interfaces/EventStreamType';
 import React, { useState, useCallback, useContext, useMemo, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import stylesBlockNode from '@styles/scss/components/Canvas/Nodes/BlockNode.module.scss';
 import { AppConfigType } from '../../Apps/interfaces';
 import { AppSubtypeEnum, AppTypeEnum } from '@components/v2/Apps/constants';
 import { ElementRoleEnum } from '@mana/shared/types';
 import { EventContext } from '../../Apps/PipelineCanvas/Events/EventContext';
 import { FileType } from '@components/v2/IDE/interfaces';
-import { ModelContext } from '@components/v2/Apps/PipelineCanvas/ModelManager/ModelContext';
 import { NodeType, OutputNodeType } from '../interfaces';
 import { CloseV2, CopyV2, OpenInSidekick, Trash } from '@mana/icons';
 import { ThemeContext } from 'styled-components';
@@ -23,6 +28,8 @@ import { executionDone } from '@components/v2/ExecutionManager/utils';
 import { getClosestRole } from '@utils/elements';
 import { getFileCache, updateFileCache } from '../../IDE/cache';
 import { setNested } from '@utils/hash';
+import { SettingsContext } from '@components/v2/Apps/PipelineCanvas/SettingsManager/SettingsContext';
+import Divider from '@mana/elements/Divider';
 
 type BlockNodeType = {
   block: BlockType;
@@ -54,6 +61,10 @@ function BlockNode({
   ...rest
 }: BlockNodeType, ref: React.MutableRefObject<HTMLElement>) {
   const themeContext = useContext(ThemeContext);
+  const { handleMouseDown } = useContext(EventContext);
+  const { selectedGroupsRef } = useContext(SettingsContext);
+  const { blockMappingRef, blocksByGroupRef, groupMappingRef, groupsByLevelRef } = useContext(ModelContext);
+
   const { configuration, name, type } = block;
   const { file } = configuration ?? {};
 
@@ -69,12 +80,68 @@ function BlockNode({
   const outputRef = useRef<OutputNodeType>(null);
   const appRootRef = useRef<Root>(null);
   const outputRootRef = useRef<Root>(null);
+  const outputPortalRef = useRef<HTMLDivElement>(null);
   const onCloseOutputRef = useRef<() => void>(null);
   const onCloseAppRef = useRef<() => void>(null);
   const executionResultMappingRef = useRef<Record<string, ExecutionResultType>>({});
   const launchOutputCallbackOnceRef = useRef<() => void>(null);
 
   const outputGroupsProps = useMemo(() => ({
+    handleContextMenu: (event: any, resultsInit: ExecutionResultType[]) => {
+      event.preventDefault();
+      event.stopPropagation();
+      handleContextMenu(event, [
+        {
+          Icon: CloseV2,
+          onClick: (event2: ClientEventType) => {
+            removeContextMenu(event2);
+            closeOutput();
+          },
+          uuid: 'Close output',
+        },
+        {
+          Icon: CopyV2,
+          onClick: (event2: ClientEventType) => {
+            removeContextMenu(event2);
+            const results: ExecutionResultType[] = sortByKey(resultsInit ?? [],
+              (result: ExecutionResultType) => result?.timestamp);
+            const text = results?.map((result: ExecutionResultType) =>
+              (result?.output_text ?? '')?.trim() ?? '').join('\n');
+            console.log(text);
+            copyToClipboard(text);
+          },
+          uuid: 'Copy output',
+        },
+        {
+          Icon: Trash,
+          onClick: (event: ClientEventType) => {
+            mutations.files.update.mutate({
+              event,
+              id: file?.path,
+              onSuccess: ({ data }) => {
+                removeContextMenu(event);
+                fileRef.current = data?.browser_item;
+                fileRef.current.output = [];
+                updateOutputResults();
+
+                updateFileCache({
+                  server: data?.browser_item,
+                });
+              },
+              payload: {
+                output: [],
+              },
+              query: {
+                output_namespace: STEAM_OUTPUT_DIR,
+              },
+            });
+          },
+          uuid: 'Delete output',
+        },
+      ], {
+        reduceItems: (i1) => i1,
+      });
+    },
     onMount: () => {
       updateOutputResults();
     },
@@ -242,78 +309,84 @@ function BlockNode({
     onCloseAppRef && onCloseAppRef?.current?.();
   }
 
+  function renderOutputPortalContent() {
+    const groupsInLevel = groupsByLevelRef?.current?.[selectedGroupsRef?.current?.length - 2];
+    const {
+      downstreamInGroup,
+      modeColor,
+      groupColor,
+      upstreamInGroup,
+    } = getUpDownstreamColors(block, groupsInLevel, blocksByGroupRef?.current, {
+      blockMapping: blockMappingRef?.current,
+      groupMapping: groupMappingRef?.current,
+    });
+    return (
+      <Grid
+        alignItems="center"
+        autoColumns="auto"
+        autoFlow="column"
+        columnGap={8}
+        justifyContent="space-between"
+        padding={6}
+
+        templateColumns="1fr"
+        templateRows="1fr"
+      >
+        <Grid
+          alignItems="center"
+          autoColumns="auto"
+          autoFlow="column"
+          columnGap={8}
+          justifyContent="start"
+          templateColumns="auto"
+          templateRows="1fr"
+        >
+          <Circle backgroundColor={modeColor ?? groupColor} size={12} />
+
+          <Text small>
+            {block?.name ?? block?.uuid}
+          </Text>
+        </Grid>
+
+        {downstreamInGroup && (
+          <Grid
+            alignItems="center"
+            autoColumns="auto"
+            autoFlow="column"
+            columnGap={8}
+            justifyContent="end"
+            templateColumns="max-content"
+            templateRows="1fr"
+          >
+            <Circle backgroundColor={downstreamInGroup?.[0]?.colorName ?? 'gray'} size={12} />
+          </Grid>
+        )}
+      </Grid>
+    );
+  }
+
   function renderOutput(mountRef: React.RefObject<HTMLElement>, outputNode: OutputNodeType) {
     outputRef.current = outputNode;
     outputRootRef.current = createRoot(mountRef.current);
     outputRootRef.current.render(
       <ContextProvider theme={themeContext}>
         <div
-          onContextMenu={(event: any) => {
-            event.preventDefault();
-            event.stopPropagation();
-            handleContextMenu(event, [
-              {
-                Icon: CloseV2,
-                onClick: (event2: ClientEventType) => {
-                  removeContextMenu(event2);
-                  closeOutput();
-                },
-                uuid: 'Close output',
-              },
-              {
-                Icon: CopyV2,
-                onClick: (event2: ClientEventType) => {
-                  removeContextMenu(event2);
-
-                  const targetElement = event?.target as HTMLElement;
-                  const mruuid = targetElement?.getAttribute('data-message-request-uuid');
-
-                  const resultsInit: ExecutionResultType[] =
-                    Object.values(executionResultMappingRef?.current ?? {})?.filter(
-                      result => result.process.message_request_uuid === mruuid);
-                  const results: ExecutionResultType[] = sortByKey(resultsInit ?? [],
-                    (result: ExecutionResultType) => result?.timestamp);
-                  const text = results?.map((result: ExecutionResultType) =>
-                    (result?.output_text ?? '')?.trim() ?? '').join('\n');
-                  copyToClipboard(text);
-                },
-                uuid: 'Copy output',
-              },
-              {
-                Icon: Trash,
-                onClick: (event: ClientEventType) => {
-                  mutations.files.update.mutate({
-                    event,
-                    id: file?.path,
-                    onSuccess: ({ data }) => {
-                      removeContextMenu(event);
-                      fileRef.current = data?.browser_item;
-                      fileRef.current.output = [];
-                      updateOutputResults();
-
-                      updateFileCache({
-                        server: data?.browser_item,
-                      });
-                    },
-                    payload: {
-                      output: [],
-                    },
-                    query: {
-                      output_namespace: STEAM_OUTPUT_DIR,
-                    },
-                  });
-                },
-                uuid: 'Delete output',
-              },
-            ], {
-              reduceItems: (i1) => i1,
+          onMouseDown={event => {
+            handleMouseDown({
+              ...event,
+              operationType: EventOperationEnum.DRAG_START,
             });
           }}
+          role={ElementRoleEnum.DRAGGABLE}
         >
           <OutputGroups
             {...outputGroupsProps}
             consumerID={outputNode.id}
-          />
+            role={ElementRoleEnum.CONTENT}
+          >
+            <div ref={outputPortalRef} />
+            <Divider compact />
+          </OutputGroups>
         </div>
       </ContextProvider>,
     );
@@ -464,6 +537,8 @@ function BlockNode({
         timerStatusRef={timerStatusRef}
         updateBlock={updateBlock}
       />
+
+      {outputPortalRef?.current && createPortal(renderOutputPortalContent(), outputPortalRef.current)}
     </div>
   );
 }

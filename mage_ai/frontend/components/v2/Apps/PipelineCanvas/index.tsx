@@ -1,12 +1,12 @@
 import BuilderCanvas, { BuilderCanvasProps } from './Canvas';
 import PipelineCanvasV2 from './CanvasV2';
-import Loading from '@mana/components/Loading';
 import useContextMenu from '@mana/hooks/useContextMenu';
 import { ClientEventType } from '@mana/shared/interfaces';
 import { DndProvider } from 'react-dnd';
 import { ElementRoleEnum } from '@mana/shared/types';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { ZoomPanStateType, useZoomPan } from '@mana/hooks/useZoomPan';
+import { getClosestRole } from '@utils/elements';
 import { useEffect, useRef, useState } from 'react';
 import { DEBUG } from '@components/v2/utils/debug';
 
@@ -88,9 +88,10 @@ export default function PipelineBuilder({ loading, ...props }: BuilderCanvasProp
       removeContextMenu(event as ClientEventType, { conditionally: true });
 
       const targetElement = event.target as HTMLElement;
-      const hasRole = [dragEnabled && ElementRoleEnum.DRAGGABLE]
-        .filter(Boolean)
-        .some(role => targetElement.closest(`[role="${role}"]`));
+      const hasRole = dragEnabled
+        && getClosestRole(targetElement, [
+          dragEnabled && ElementRoleEnum.DRAGGABLE,
+        ].filter(Boolean));
 
       DEBUG.dragging && console.log('handleMouseDown', targetElement, hasRole);
       if (hasRole) {
@@ -107,12 +108,11 @@ export default function PipelineBuilder({ loading, ...props }: BuilderCanvasProp
       if (shouldPassControl(event as ClientEventType)) return;
 
       const targetElement = event.target as HTMLElement;
-      const hasRole = [
-        dragEnabled && ElementRoleEnum.DRAGGABLE,
-        dropEnabled && ElementRoleEnum.DROPPABLE,
-      ]
-        .filter(Boolean)
-        .some(role => targetElement.closest(`[role="${role}"]`));
+      const hasRole = dragEnabled
+        && getClosestRole(targetElement, [
+          dragEnabled && ElementRoleEnum.DRAGGABLE,
+          dropEnabled && ElementRoleEnum.DROPPABLE,
+        ].filter(Boolean));
 
       if (hasRole) {
         setZoomPanDisabled(false);

@@ -23,10 +23,10 @@ export type DragWrapperType = {
 
 type DragWrapperProps = {
   children?: React.ReactNode;
-  controllers?: React.MutableRefObject<Record<string, any>>;
   groupSelection?: boolean;
   isAnimating?: boolean;
   item?: NodeItemType;
+  onContextMenu?: (event: any) => void;
   rect?: RectType;
   style?: any;
 } & DragWrapperType;
@@ -80,12 +80,12 @@ function DragWrapper({
   draggable,
   droppable,
   droppableItemTypes,
-  controllers,
   eventHandlers,
   groupSelection,
   handleDrop,
   isAnimating,
   item,
+  onContextMenu,
   rect,
   style,
 }: DragWrapperProps, ref: React.MutableRefObject<HTMLDivElement>) {
@@ -162,6 +162,7 @@ function DragWrapper({
         groupSelection && stylesBlockNode.groupSelection,
         stylesBlockNode[item?.type],
       ].filter(Boolean).join(' ')}
+      onContextMenu={onContextMenu}
       ref={dragRef}
       role={[ElementRoleEnum.DRAGGABLE].join(' ')}
       style={isAnimating ? style : {

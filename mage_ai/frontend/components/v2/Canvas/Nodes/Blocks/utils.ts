@@ -43,11 +43,13 @@ export function getUpDownstreamColors(
   opts?: {
     blockMapping?: BlockMappingType;
     groupMapping?: GroupMappingType;
-  }
+  },
 ) {
   const { blockMapping, groupMapping } = opts;
+  const { type } = block;
   const group = groupMapping?.[block?.uuid];
 
+  const isGroup = !type || [BlockTypeEnum.GROUP, BlockTypeEnum.PIPELINE].includes(type);
   const parentGroups = groupsInLevel?.filter(({ uuid }) => block?.groups?.includes(uuid));
   const groupsInParent = parentGroups?.flatMap(({ children }) => children ?? []) ?? [];
 
@@ -60,31 +62,62 @@ export function getUpDownstreamColors(
 
   const up = [];
   const dn = [];
-  groupsInParent?.forEach((bgroup: BlockType) => {
-    const bgroupBlocks = Object.values(blocksByGroup?.[bgroup?.uuid] ?? {}) ?? [];
 
-    if (bgroup?.children?.length > 0) {
-      bgroup?.children?.forEach((gchild) => {
-        bgroupBlocks.push(...(Object.values(blocksByGroup?.[gchild.uuid] ?? {}) ?? []));
+  if (isGroup) {
+    groupsInParent?.forEach((bgroup: BlockType) => {
+      const bgroupBlocks = Object.values(blocksByGroup?.[bgroup?.uuid] ?? {}) ?? [];
+
+      if (bgroup?.children?.length > 0) {
+        bgroup?.children?.forEach((gchild) => {
+          bgroupBlocks.push(...(Object.values(blocksByGroup?.[gchild.uuid] ?? {}) ?? []));
+        });
+      }
+      const modeColor = getModeColorName(bgroupBlocks)?.base;
+      const groupColor = getBlockColor(bgroup?.type ?? BlockTypeEnum.GROUP, { getColorName: true })?.names?.base;
+      const bgroup2 = {
+        ...bgroup,
+        blocks: bgroupBlocks,
+        colorName: modeColor ?? groupColor,
+      };
+
+      if (block?.upstream_blocks?.includes(bgroup?.uuid)) {
+        up.push(bgroup2);
+      } else if (block?.downstream_blocks?.includes(bgroup?.uuid)) {
+        dn.push(bgroup2);
+      }
+    });
+  } else {
+    [
+      [true, block?.upstream_blocks ?? []],
+      [false, block?.downstream_blocks ?? []],
+    ]?.forEach(([isup, buuids]) => {
+      const bgroupBlocks = buuids?.map(buuid => blockMapping?.[buuid]).filter(Boolean);
+
+      const modeColor = getModeColorName(bgroupBlocks)?.base;
+      bgroupBlocks?.forEach((bgroup) => {
+        const groupColor = getBlockColor(bgroup?.type ?? BlockTypeEnum.GROUP, { getColorName: true })?.names?.base;
+        const bgroup2 = {
+          ...bgroup,
+          blocks: bgroupBlocks,
+          colorName: modeColor ?? groupColor,
+        };
+
+        if (block?.upstream_blocks?.includes(bgroup?.uuid)) {
+          up.push(bgroup2);
+        } else if (block?.downstream_blocks?.includes(bgroup?.uuid)) {
+          dn.push(bgroup2);
+        }
       });
-    }
-    const modeColor = getModeColorName(bgroupBlocks)?.base;
-    const groupColor = getBlockColor(bgroup?.type ?? BlockTypeEnum.GROUP, { getColorName: true })?.names?.base;
-    const bgroup2 = {
-      ...bgroup,
-      blocks: bgroupBlocks,
-      colorName: modeColor ?? groupColor,
-    }
+    });
+  }
 
-    if (block?.upstream_blocks?.includes(bgroup?.uuid)) {
-      up.push(bgroup2);
-    } else if (block?.downstream_blocks?.includes(bgroup?.uuid)) {
-      dn.push(bgroup2);
-    }
-  });
+  const modeColor = getModeColorName(block)?.base;
+  const groupColor = getBlockColor(block?.type ?? BlockTypeEnum.GROUP, { getColorName: true })?.names?.base;
 
   return {
     downstreamInGroup: dn,
+    modeColor,
+    groupColor,
     upstreamInGroup: up,
   };
 }

@@ -366,6 +366,7 @@ export function transformRects(
   if (rectsByStage.length >= 2) {
     deepCopyArray(results)?.forEach((rect, idx) => {
       const rectp = rectsPrev[idx];
+      if (!rect?.children?.length && !rectp?.children?.length) return;
 
       if (rect.children?.length !== rectp.children?.length) {
         throw new Error(

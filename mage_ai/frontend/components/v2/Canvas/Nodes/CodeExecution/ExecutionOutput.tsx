@@ -1,4 +1,5 @@
 import EventStreamType, { ResultType, ExecutionResultType, ExecutionStatusEnum } from '@interfaces/EventStreamType';
+import useAppEventsHandler, { CustomAppEventEnum } from '../../../Apps/PipelineCanvas/useAppEventsHandler';
 import Grid from '@mana/components/Grid';
 import React, { useMemo } from 'react';
 import Text from '@mana/elements/Text';
@@ -12,11 +13,17 @@ import { formatDurationFromEpoch, isNumeric } from '@utils/string';
 import { shouldDisplayLocalTimezone } from '@components/settings/workspace/utils';
 
 export type ExecutionOutputProps = {
+  first?: boolean;
+  last?: boolean;
+  handleContextMenu?: (event: React.MouseEvent<HTMLDivElement>, results: ExecutionResultType[]) => void;
   results: ExecutionResultType[];
   uuid: string;
 };
 
 function ExecutionOutput({
+  first,
+  last,
+  handleContextMenu,
   results,
   uuid,
 }: ExecutionOutputProps, ref: React.ForwardedRef<HTMLDivElement>) {
@@ -121,10 +128,23 @@ function ExecutionOutput({
 
   const runtime = useMemo(() => (timestamps?.max ?? 0) - (timestamps?.min ?? 0), [timestamps]);
 
+  // const { convertEvent, dispatchAppEvent } = useAppEventsHandler(null, {
+  //   [CustomAppEventEnum.APP_STARTED]: handleAppChanged,
+  //   [CustomAppEventEnum.APP_STOPPED]: handleAppChanged,
+  //   [CustomAppEventEnum.APP_UPDATED]: handleAppChanged,
+  //   [CustomAppEventEnum.NODE_LAYOUTS_CHANGED]: handleNodeLayoutsChanged,
+  //   [CustomAppEventEnum.SAVE_AS_IMAGE]: () => handleSaveAsImage(
+  //     canvasRef, wrapperRef, itemsRef, imageDataRef,
+  //   ),
+  // });
+
   return (
-    <div ref={ref}>
+    <div
+      onContextMenu={handleContextMenu ? event => handleContextMenu(event, results) : undefined}
+      ref={ref}
+    >
       {outputs?.length > 0 &&
-        <Grid rowGap={4}>
+        <Grid paddingBottom={last ? 6 : 0} paddingTop={first ? 6 : 0} rowGap={4}>
           <Grid autoFlow="column" columnGap={8} justifyContent="space-between">
             <Text monospace muted xsmall>
               {isNumeric(timestamps.min)
