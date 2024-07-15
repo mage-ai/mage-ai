@@ -345,6 +345,7 @@ def make_app(
         ),
         # Download resource
         (r'/api/downloads/(?P<token>[\w/%.-]+)', ApiResourceDownloadHandler),
+        (r'/api/(?P<resource>file_contents)/(?P<pk>.+)', ApiResourceDetailHandler),
         (
             r'/api/(?P<resource>\w+)/(?P<pk>[\w\-\%2f\.]+)'
             r'/(?P<child>\w+)/(?P<child_pk>[\w\-\%2f\.]+)',
