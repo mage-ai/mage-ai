@@ -10,11 +10,12 @@ import { EventOperationEnum, SubmitEventOperationType } from '@mana/shared/inter
 import { NodeType, NodeItemType, RectType } from '../interfaces';
 import { ItemTypeEnum, ItemStatusEnum } from '../types';
 import { DragAndDropHandlersType, DraggableType } from './types';
-import { countOccurrences, flattenArray, sortByKey } from '@utils/array';
+import { countOccurrences, flattenArray, randomSample, sortByKey } from '@utils/array';
 import { getClosestRole } from '@utils/elements';
 import { ElementRoleEnum } from '@mana/shared/types';
 import { ClientEventType } from '@mana/shared/interfaces';
 import { DEBUG } from '../../utils/debug';
+import { pluralize } from '@utils/string';
 
 export function nodeClassNames(node: NodeItemType): string[] {
   const { block } = node ?? {};
@@ -191,16 +192,53 @@ export function menuItemsForTemplates(block, handleOnClick) {
   function extractTemplatesFromItem(block: FrameworkType) {
     const { configuration } = block as PipelineExecutionFrameworkBlockType;
 
-    return Object.entries(configuration?.templates ?? {})?.map(
-      ([templateUUID, template]) => ({
-        description: () => template?.description,
-        label: () => template?.name || templateUUID,
-        onClick: (event: any, _item, callback?: () => void) => {
-          handleOnClick(event, block, template, callback);
-        },
-        uuid: templateUUID,
-      }),
+    const blockTypes = {};
+
+    const arr = [];
+    Object.entries(configuration?.templates ?? {})?.forEach(
+      ([templateUUID, template]) => {
+        arr.push({
+          description: () => template?.description,
+          label: () => template?.name || templateUUID,
+          onClick: (event: any, _item, callback?: () => void) => {
+            handleOnClick(event, block, template, callback);
+          },
+          uuid: templateUUID,
+        });
+
+        blockTypes[template.type] ||= 0;
+        blockTypes[template.type] += 1;
+      },
     );
+
+    const color = randomSample(['pink', 'teal']);
+    let path = '';
+    let modeType =
+      sortByKey(Object.entries(blockTypes ?? {}), ([, count]) => count, { ascending: false })?.[0]?.[0];
+    if (modeType) {
+      path = `${pluralize(modeType, 2, false, true)}/default.jinja`;
+    } else {
+      modeType = BlockTypeEnum.CUSTOM;
+      path = 'custom/python/default.jinja';
+    }
+
+    arr.push({
+      description: () => 'Run custom code snippet for performing Retrieval-Augmented Generation '
+        + '(RAG) operations.',
+      label: () => 'Custom code...',
+      onClick: (event: any, _item, callback?: () => void) => {
+        handleOnClick(event, block, null, callback, {
+          color,
+          config: {
+            template_path: path,
+          },
+          type: modeType,
+        });
+      },
+      uuid: 'custom',
+    });
+
+    return arr;
   }
 
   function extractTemplatesFromChidlren(block: FrameworkType) {

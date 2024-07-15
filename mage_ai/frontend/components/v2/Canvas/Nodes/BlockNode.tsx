@@ -1,4 +1,5 @@
 import Aside from './Blocks/Aside';
+import Markdown from '@mana/components/Markdown';
 import { generateUUID } from '@utils/uuids/generator';
 import { LayoutDirectionEnum } from '@mana/components/Menu/types';
 import Tag from '@mana/components/Tag';
@@ -35,7 +36,7 @@ import { TooltipWrapper } from '@context/Tooltip';
 import { borderConfigs, blockColorNames } from './presentation';
 import { buildEvent } from './utils';
 import { groupValidation } from './Blocks/utils';
-import { handleGroupTemplateSelect, menuItemsForTemplates } from './utils';
+import { menuItemsForTemplates } from './utils';
 import { isEmptyObject } from '@utils/hash';
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { ElementRoleEnum } from '@mana/shared/types';
@@ -123,22 +124,29 @@ export default function BlockNodeComponent({
             block2,
             template,
             callback,
+            payloadArg,
           ) => {
+            const payload = {
+              ...payloadArg,
+              groups: [block2.uuid],
+              uuid: generateUUID(),
+            };
+
+            if (template?.uuid) {
+              payload.configuration = {
+                templates: {
+                  [template.uuid]: template,
+                },
+              };
+            }
+
             mutations.pipelines.update.mutate({
               event,
               onSuccess: () => {
                 callback && callback?.();
               },
               payload: {
-                block: {
-                  configuration: {
-                    templates: {
-                      [template.uuid]: template,
-                    },
-                  },
-                  groups: [block2.uuid],
-                  uuid: generateUUID(),
-                },
+                block: payload,
               },
             });
           }),
@@ -455,6 +463,36 @@ export default function BlockNodeComponent({
             <Grid rowGap={8} templateRows="auto">
               {connectionRows}
               {templateConfigurations}
+              {isEmptyObject(block?.configuration?.templates) && (
+                <Markdown>
+                  {`
+# Test cool
+
+Hello
+
+${'```'}python
+                  if 'data_exporter' not in globals():
+                      from mage_ai.data_preparation.decorators import data_exporter
+
+
+                  @data_exporter
+                  def export_data(data, *args, **kwargs):
+                      """
+                      Exports data to some source.
+
+                      Args:
+                          data: The output from the upstream parent block
+                          args: The output from any additional upstream blocks (if applicable)
+
+                      Output (optional):
+                          Optionally return any object and it'll be logged and
+                          displayed when inspecting the block run.
+                      """
+                      # Specify your data exporting logic here
+${'```'}
+                    `}
+                </Markdown>
+              )}
               {BlockTypeEnum.PIPELINE === block?.type && <div />}
             </Grid>
           ))}
