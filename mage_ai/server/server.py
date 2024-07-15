@@ -220,7 +220,7 @@ def replace_base_path(base_path: str) -> str:
     chmod(dst, stat.S_IRWXU)
     for path, _, files in os.walk(os.path.abspath(dst)):
         for filename in files:
-            if filename.endswith(('.html', '.js', '.css')):
+            if filename.endswith(('.html', '.js', '.css', '.scss')):
                 filepath = os.path.join(path, filename)
                 with open(filepath, encoding='utf-8') as f:
                     s = f.read()
