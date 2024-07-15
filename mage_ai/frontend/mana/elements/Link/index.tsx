@@ -16,6 +16,7 @@ type LinkProps = {
   onClick?: (e: React.MouseEvent<HTMLAnchorElement>) => void;
   preventDefault?: boolean;
   role?: ElementRoleEnum;
+  target?: string;
   wrap?: boolean;
 } & TextProps;
 

@@ -1,0 +1,35 @@
+@mixin base {
+  color: var(--fonts-color-text-base);
+  font-family: var(--fonts-family-base-bold);
+  font-style: var(--fonts-style-base);
+  font-weight: var(--fonts-weight-bold);
+}
+.h1 {
+  @include base;
+  font-size: var(--headline-font-size-1);
+  line-height: var(--headline-line-height-1);
+}
+
+.h2 {
+  @include base;
+  font-size: var(--headline-font-size-2);
+  line-height: var(--headline-line-height-2);
+}
+
+.h3 {
+  @include base;
+  font-size: var(--headline-font-size-3);
+  line-height: var(--headline-line-height-3);
+}
+
+.h4 {
+  @include base;
+  font-size: var(--headline-font-size-4);
+  line-height: var(--headline-line-height-4);
+}
+
+.h5 {
+  @include base;
+  font-size: var(--headline-font-size-5);
+  line-height: var(--headline-line-height-5);
+}

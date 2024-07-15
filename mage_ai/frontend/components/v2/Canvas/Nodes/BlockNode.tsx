@@ -464,31 +464,45 @@ export default function BlockNodeComponent({
               {connectionRows}
               {templateConfigurations}
               {isEmptyObject(block?.configuration?.templates) && (
-                <Markdown>
+                <Markdown
+                  code={{ monospace: true, small: true }}
+                  pre={{ monospace: true, small: true }}
+                  span={{ monospace: true, small: true }}
+                >
                   {`
-# Test cool
+# h1
 
-Hello
+## h2
+
+### h3
+
+#### h4
+
+##### h5
+
+Text
+
+---
 
 ${'```'}python
-                  if 'data_exporter' not in globals():
-                      from mage_ai.data_preparation.decorators import data_exporter
+if 'data_exporter' not in globals():
+    from mage_ai.data_preparation.decorators import data_exporter
 
 
-                  @data_exporter
-                  def export_data(data, *args, **kwargs):
-                      """
-                      Exports data to some source.
+@data_exporter
+def export_data(data, *args, **kwargs) -> Dict:
+    """
+    Exports data to some source.
 
-                      Args:
-                          data: The output from the upstream parent block
-                          args: The output from any additional upstream blocks (if applicable)
+    Args:
+        data: The output from the upstream parent block
+        args: The output from any additional upstream blocks (if applicable)
 
-                      Output (optional):
-                          Optionally return any object and it'll be logged and
-                          displayed when inspecting the block run.
-                      """
-                      # Specify your data exporting logic here
+    Output (optional):
+        Optionally return any object and it'll be logged and
+        displayed when inspecting the block run.
+    """
+    # Specify your data exporting logic here
 ${'```'}
                     `}
                 </Markdown>

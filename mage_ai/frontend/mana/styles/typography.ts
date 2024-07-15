@@ -33,7 +33,7 @@ export const monospaceFontFamily = css<StyleProps>`
               : theme.fonts.family.monospace.regular};
 `;
 
-const baseFontFamily = css<StyleProps>`
+export const baseFontFamily = css<StyleProps>`
   font-family: ${({ black, bold, light, medium, semiBold, theme }) =>
     light
       ? theme.fonts.family.base.lightFont
@@ -50,7 +50,6 @@ const baseFontFamily = css<StyleProps>`
 
 const base = css<StyleProps>`
   ${({ monospace }) => monospace && monospaceFontFamily}
-
   ${({ monospace }) => !monospace && baseFontFamily}
 
   color: ${({ blue, inverted, muted, secondary, theme }) => theme.icons.color[[

@@ -1,30 +1,69 @@
 import styled from 'styled-components';
 
-import { FONT_FAMILY_REGULAR, FONT_FAMILY_BOLD } from '@oracle/styles/fonts/primary';
-import { PADDING_HORIZONTAL, UNIT } from '@oracle/styles/units/spacing';
-import { BORDER_WIDTH, BORDER_RADIUS_SMALL } from '@oracle/styles/units/borders';
-import { REGULAR as REGULAR_FONT } from '@oracle/styles/fonts/sizes';
-import { ScrollbarStyledCss } from '@oracle/styles/scrollbars';
-import base from '../../styles/typography';
+import base, { StyleProps, baseFontFamily, monospaceFontFamily } from '../../styles/typography';
 import borders from '../../styles/borders';
 
-const VERTICAL_MARGIN = '0.75em';
+type MarkdownProps = StyleProps;
 
-export const MarkdownContainer = styled.div`
-  font-family: ${FONT_FAMILY_REGULAR};
-  margin: 0 ${UNIT}px;
+export type MarkdownType = {
+  a?: MarkdownProps;
+  blockquote?: MarkdownProps;
+  br?: MarkdownProps;
+  code?: MarkdownProps;
+  del?: MarkdownProps;
+  em?: MarkdownProps;
+  h1?: MarkdownProps;
+  h2?: MarkdownProps;
+  h3?: MarkdownProps;
+  h4?: MarkdownProps;
+  h5?: MarkdownProps;
+  hr?: MarkdownProps;
+  img?: MarkdownProps;
+  input?: MarkdownProps;
+  li?: MarkdownProps;
+  ol?: MarkdownProps;
+  p?: MarkdownProps;
+  pre?: MarkdownProps;
+  span?: MarkdownProps;
+  strong?: MarkdownProps;
+  table?: MarkdownProps;
+  tbody?: MarkdownProps;
+  td?: MarkdownProps;
+  th?: MarkdownProps;
+  thead?: MarkdownProps;
+  tr?: MarkdownProps;
+  ul?: MarkdownProps;
+};
+
+export const MarkdownContainer = styled.div<MarkdownType>`
   overflow: auto;
-  ${ScrollbarStyledCss}
+  margin: 0;
 
   ${base}
 
+  code {
+    ${base}
+    ${monospaceFontFamily}
+    font-size: ${({ theme }) => theme.fonts.size.sm};
+  }
+  pre {
+    ${base}
+    ${monospaceFontFamily}
+    font-size: ${({ theme }) => theme.fonts.size.sm};
+  }
+  span {
+    ${base}
+    ${monospaceFontFamily}
+    font-size: ${({ theme }) => theme.fonts.size.sm};
+  }
+
   p {
-    margin: 0.5em 0;
+    margin: 0;
   }
 
   blockquote {
-    margin: ${VERTICAL_MARGIN} 0;
-    padding: ${UNIT}px 0;
+    margin: 0;
+    padding: 0;
 
     border-left-color: var(--borders-color-base-default);
     border-left-style: var(--borders-style);
@@ -44,12 +83,11 @@ export const MarkdownContainer = styled.div`
   }
 
   pre {
-    border-radius: ${BORDER_RADIUS_SMALL}px;
+    border-radius: 0;
     white-space: pre;
-    margin: ${VERTICAL_MARGIN} 0;
-    padding: ${UNIT}px;
+    margin: 0;
+    padding: 0;
     overflow-x: auto;
-    ${ScrollbarStyledCss}
 
     span {
       padding: 0;
@@ -57,12 +95,8 @@ export const MarkdownContainer = styled.div`
   }
 
   ul, ol {
-    margin-bottom: ${VERTICAL_MARGIN};
-    padding-left: ${UNIT * 3}px;
-  }
-
-  li {
-    ${REGULAR_FONT}
+    margin-bottom: 0;
+    padding-left: 0;
   }
 
   li > input[type='checkbox'] {
@@ -70,19 +104,16 @@ export const MarkdownContainer = styled.div`
   }
 
   table {
-    ${REGULAR_FONT}
-    margin: ${VERTICAL_MARGIN};
+    margin: 0;
 
     thead {
-      font-family: ${FONT_FAMILY_BOLD};
       border-bottom-color: var(--borders-color-base-default);
       border-bottom-style: var(--borders-style);
       border-bottom-width: var(--borders-width);
     }
 
     th, td {
-      padding: ${UNIT * 0.5}px ${UNIT * 0.75}px;
-      ${borders}
+      padding: 0;
     }
   }
 `;

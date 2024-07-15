@@ -23,6 +23,7 @@ export type TextProps = {
   medium?: boolean;
   monospace?: boolean;
   muted?: boolean;
+  pre?: boolean;
   semibold?: boolean;
   secondary?: boolean;
   success?: boolean;
@@ -75,7 +76,7 @@ export function buildTextStyleProps({
   xprops.style = {
     ...xprops.style,
     maxWidth: maxWidth ? `${maxWidth}px` : undefined,
-  }
+  };
 
   return {
     classNames,
@@ -83,19 +84,22 @@ export function buildTextStyleProps({
   };
 }
 
-export default function Text({ children, inline, ...rest }: TextProps) {
+export default function Text({ children, inline, pre, ...rest }: TextProps) {
   const {
     classNames,
-    props
+    props,
   } = buildTextStyleProps(rest as TextProps);
 
-  return inline ? (
-    <span {...props} className={classNames}>
+  let El = 'p';
+  if (pre) {
+    El = 'pre';
+  } else if (inline) {
+    El = 'span';
+  }
+
+  return (
+    <El {...props} className={classNames}>
       {children}
-    </span>
-  ) : (
-    <p {...props} className={classNames}>
-      {children}
-    </p>
+    </El>
   );
 }
