@@ -20,7 +20,7 @@ import { AppSubtypeEnum, AppTypeEnum } from '@components/v2/Apps/constants';
 import { ElementRoleEnum } from '@mana/shared/types';
 import { EventContext } from '../../Apps/PipelineCanvas/Events/EventContext';
 import { FileType } from '@components/v2/IDE/interfaces';
-import { NodeType, OutputNodeType } from '../interfaces';
+import { AppNodeType, NodeType, OutputNodeType } from '../interfaces';
 import { CloseV2, CopyV2, OpenInSidekick, Trash } from '@mana/icons';
 import { ThemeContext } from 'styled-components';
 import { createRoot, Root } from 'react-dom/client';
@@ -39,7 +39,7 @@ type BlockNodeType = {
   node: NodeType;
   showApp?: (
     appConfig: AppConfigType,
-    render: (mountRef: React.MutableRefObject<HTMLDivElement>) => void,
+    render: (appNode: AppNodeType, mountRef: React.MutableRefObject<HTMLDivElement>) => void,
     onCloseRef: React.MutableRefObject<() => void>,
   ) => void;
   showOutput?: (
@@ -76,7 +76,9 @@ function BlockNode({
   const handleResultMappingUpdateRef =
     useRef<Record<string, (resultMapping: Record<string, ExecutionResultType>) => void>>({});
 
-  const appRef = useRef<AppConfigType>(null);
+  const [apps, setApps] = useState<Record<string, AppNodeType>>({});
+  const appRef = useRef<AppNodeType>(null);
+  const appNodeRef = useRef<React.RefObject<HTMLElement>>(null);
   const outputRef = useRef<OutputNodeType>(null);
   const appRootRef = useRef<Root>(null);
   const outputRootRef = useRef<Root>(null);
@@ -305,8 +307,16 @@ function BlockNode({
     delete handleOnMessageRef.current?.[appRef?.current?.id];
     delete handleOnMessageRef.current?.[`${appRef?.current?.id}/output`];
     appRootRef?.current && appRootRef?.current?.unmount();
+
+    appNodeRef.current = null;
     appRootRef.current = null;
+
     onCloseAppRef && onCloseAppRef?.current?.();
+    setApps(prev => {
+      const data = { ...prev };
+      delete data[appRef?.current?.id];
+      return data;
+    });
   }
 
   function renderOutputPortalContent() {
@@ -392,18 +402,20 @@ function BlockNode({
 
   function renderEditorApp(
     mountRef: React.RefObject<HTMLElement>,
-    app: AppConfigType,
+    appNode: AppNodeType,
     opts?: {
       fileRef?: React.MutableRefObject<FileType>;
     },
   ) {
-    appRef.current = app;
+    appRef.current = appNode;
+    appNodeRef.current = mountRef;
+
     appRootRef.current = createRoot(mountRef.current);
     appRootRef.current.render(
       <ContextProvider theme={themeContext}>
         <EditorAppNode
           {...outputGroupsProps}
-          app={app}
+          app={appNode}
           block={block}
           fileRef={opts?.fileRef ?? fileRef}
           onClose={() => {
@@ -413,6 +425,14 @@ function BlockNode({
         />
       </ContextProvider>,
     );
+
+    setApps(prev => ({
+      ...prev,
+      [appNode.id]: {
+        ...appNode,
+        ref: appNodeRef.current,
+      },
+    }));
   }
 
   function launchOutput(channel: string, callback?: () => void) {
@@ -435,8 +455,8 @@ function BlockNode({
       uuid: [block.uuid, AppTypeEnum.EDITOR, AppSubtypeEnum.CANVAS].join(':'),
     };
 
-    const render = () => showApp(app, (mountRef: React.RefObject<HTMLDivElement>) => {
-      renderEditorApp(mountRef, app, {
+    const render = () => showApp(app, (appNode: AppNodeType, mountRef: React.RefObject<HTMLDivElement>) => {
+      renderEditorApp(mountRef, appNode, {
         fileRef,
       });
     }, onCloseAppRef);
@@ -525,6 +545,7 @@ function BlockNode({
     >
       <BlockNodeComponent
         {...rest}
+        apps={apps}
         block={block}
         dragRef={dragRef}
         executing={executing}

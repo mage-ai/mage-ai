@@ -342,7 +342,7 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
           ref={nodeRef}
           showApp={(
             appConfig: AppConfigType,
-            render: (ref?: React.RefObject<HTMLDivElement>) => void,
+            render: (appNode: AppNodeType, ref?: React.RefObject<HTMLDivElement>) => void,
             onCloseRef: React.MutableRefObject<() => void>,
           ) => {
             const appNode = buildAppNode(node as NodeType, appConfig);
@@ -1796,7 +1796,7 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
                 };
 
                 if (ItemTypeEnum.APP === nodeType) {
-                  appNodeRefs?.current?.[itemUUID]?.render?.(dragRef);
+                  appNodeRefs?.current?.[itemUUID]?.render?.(item as AppNodeType, dragRef);
 
                   clearTimeout(timeoutUpdateAppRectsRef.current);
                   timeoutUpdateAppRectsRef.current =
@@ -1985,6 +1985,7 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
           <SettingsProvider
             layoutConfigsRef={layoutConfigsRef}
             selectedGroupsRef={selectedGroupsRef}
+            transformState={transformState}
           >
             <ModelProvider
               blockMappingRef={blockMappingRef}

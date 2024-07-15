@@ -27,7 +27,7 @@ import { EventOperationEnum } from '@mana/shared/interfaces';
 import { FrameworkType, PipelineExecutionFrameworkBlockType } from '@interfaces/PipelineExecutionFramework/interfaces';
 import { GroupUUIDEnum } from '@interfaces/PipelineExecutionFramework/types';
 import { ItemStatusEnum, ItemTypeEnum, LayoutConfigDirectionEnum, PortSubtypeEnum } from '../types';
-import { NodeItemType, PortType } from '../interfaces';
+import { AppNodeType, NodeItemType, PortType } from '../interfaces';
 import { ModelContext } from '@components/v2/Apps/PipelineCanvas/ModelManager/ModelContext';
 import { SettingsContext } from '@components/v2/Apps/PipelineCanvas/SettingsManager/SettingsContext';
 import { StatusTypeEnum, BlockTypeEnum } from '@interfaces/BlockType';
@@ -39,11 +39,13 @@ import { handleGroupTemplateSelect, menuItemsForTemplates } from './utils';
 import { isEmptyObject } from '@utils/hash';
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { ElementRoleEnum } from '@mana/shared/types';
+import { AppConfigType } from '@components/v2/Apps/interfaces';
 
 export const BADGE_HEIGHT = 37;
 export const PADDING_VERTICAL = 12;
 
 export type BlockNodeProps = {
+  apps?: Record<string, AppNodeType>;
   block: BlockType | PipelineExecutionFrameworkBlockType;
   buttonBeforeRef?: React.RefObject<HTMLDivElement>;
   dragRef: React.RefObject<HTMLDivElement>;
@@ -58,6 +60,7 @@ export type BlockNodeProps = {
 } & BlockNode;
 
 export default function BlockNodeComponent({
+  apps,
   block,
   buttonBeforeRef,
   collapsed,
@@ -81,7 +84,7 @@ export default function BlockNodeComponent({
   const groups = useMemo(() => block?.groups?.map(
     guuid => groupMappingRef?.current?.[guuid]), [block, groupMappingRef]);
 
-  const { layoutConfigs, selectedGroupsRef } = useContext(SettingsContext);
+  const { layoutConfigs, selectedGroupsRef, transformState } = useContext(SettingsContext);
   const layoutConfig = layoutConfigs?.current?.[selectedGroupsRef?.current?.length - 1];
 
   const selectedGroup =
@@ -105,46 +108,76 @@ export default function BlockNodeComponent({
 
   const colorNames = blockColorNames(node);
   const borders = borderConfigs(node);
-  const after: any = useMemo(() => ({
-    className: !isGroup && stylesBlockNode.showOnHover,
-    uuid: node.id,
-    ...(ItemTypeEnum.NODE === node?.type
-      ? {
-        Icon: draggable ? Grab : AddV2,
-        menuItems: menuItemsForTemplates(block, (
-          event: any,
-          block2,
-          template,
-          callback,
-        ) => {
-          mutations.pipelines.update.mutate({
-            event,
-            onSuccess: () => {
-              callback && callback?.();
-            },
-            payload: {
-              block: {
-                configuration: {
-                  templates: {
-                    [template.uuid]: template,
-                  },
-                },
-                groups: [block2.uuid],
-                uuid: generateUUID(),
+  const after: any = useMemo(() => {
+    const editorApp =
+      Object.values(apps ?? {})?.find(app => app?.app?.type === AppTypeEnum.EDITOR);
+
+    return {
+      className: !isGroup && !editorApp && stylesBlockNode.showOnHover,
+      uuid: node.id,
+      ...(ItemTypeEnum.NODE === node?.type
+        ? {
+          Icon: draggable ? Grab : AddV2,
+          menuItems: menuItemsForTemplates(block, (
+            event: any,
+            block2,
+            template,
+            callback,
+          ) => {
+            mutations.pipelines.update.mutate({
+              event,
+              onSuccess: () => {
+                callback && callback?.();
               },
-            },
-          });
+              payload: {
+                block: {
+                  configuration: {
+                    templates: {
+                      [template.uuid]: template,
+                    },
+                  },
+                  groups: [block2.uuid],
+                  uuid: generateUUID(),
+                },
+              },
+            });
+          }),
+        }
+        : {
+          Icon: ip => {
+            const Icon = draggable ? Grab : Code;
+
+            return <Icon {...ip}
+              colorName={editorApp ? 'green' : undefined}
+            />;
+          },
+          onClick: (event: MouseEvent) => {
+            event.preventDefault();
+            if (editorApp) {
+              const rect = editorApp?.ref?.current?.getBoundingClientRect() ?? {};
+              let x = ((rect?.left ?? 0) / 2) - (rect?.width ?? 0);
+              let y = ((rect?.top ?? 0) / 2) + ((rect?.height ?? 0) / 2);
+
+              x *= -1;
+              y *= -1;
+
+              x = Math.min(0, x);
+              y = Math.min(0, y);
+
+              console.log(rect, x, y);
+
+              transformState?.current?.handlePanning?.current?.((event ?? null) as any, {
+                x,
+                y,
+              });
+            } else {
+              openEditor(event as any);
+            }
+          },
         }),
-      }
-      : {
-        Icon: draggable ? Grab : Code,
-        onClick: (event: MouseEvent) => {
-          event.preventDefault();
-          openEditor();
-        },
-      }),
-  }), [draggable, block, node, isGroup, openEditor,
-    mutations]);
+    };
+  }, [draggable, block, node, isGroup, openEditor, apps, mutations, transformState]);
+  console.log(apps);
 
   const before = useMemo(() => ({
     Icon: (iconProps) => (

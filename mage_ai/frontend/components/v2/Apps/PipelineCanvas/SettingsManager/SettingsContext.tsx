@@ -1,4 +1,5 @@
 import React, { createContext } from 'react';
+import { ZoomPanStateType } from '@mana/hooks/useZoomPan';
 import { SettingsManagerType } from '../interfaces';
 import { MenuGroupType } from '@mana/components/Menu/interfaces';
 import { LayoutConfigType } from '@components/v2/Canvas/interfaces';
@@ -8,6 +9,7 @@ interface SettingsContextType {
   layoutConfigs?: SettingsManagerType['layoutConfigs'];
   layoutConfigsRef: React.MutableRefObject<LayoutConfigType[]>;
   selectedGroupsRef: SettingsManagerType['selectedGroupsRef'];
+  transformState: React.MutableRefObject<ZoomPanStateType>;
 }
 export const SettingsContext = createContext<SettingsContextType | undefined>(undefined);
 

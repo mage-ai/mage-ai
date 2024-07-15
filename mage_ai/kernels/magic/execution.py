@@ -1,3 +1,4 @@
+import ast
 import json
 import time
 from asyncio import Event as AsyncEvent
@@ -5,7 +6,7 @@ from contextlib import redirect_stdout
 from multiprocessing import Queue
 from queue import Empty
 from threading import Event, Thread
-from typing import Dict, Iterable, Optional
+from typing import Any, Dict, Iterable, Optional
 
 from mage_ai.errors.models import ErrorDetails
 from mage_ai.kernels.magic.constants import ExecutionStatus, ResultType
@@ -22,14 +23,68 @@ def is_debug():
     return True and is_debug_base()
 
 
-def check_queue(queue):
+def set_node_line_numbers(node: ast.AST, lineno: int, col_offset: int):
+    for n in ast.walk(node):
+        if isinstance(n, ast.AST):
+            n.lineno = lineno
+            n.col_offset = col_offset
+
+
+def modify_and_execute(code_block: str, globals: Dict[str, Any], local_variables: Dict[str, Any]):
+    # Parse the provided code block
+    parsed_code = ast.parse(code_block)
+    if not parsed_code.body:
+        raise ValueError('Empty code block provided')
+
+    last_statement = parsed_code.body[-1]
+
+    lineno = last_statement.lineno
+    col_offset = last_statement.col_offset
+
+    if isinstance(last_statement, ast.Expr):
+        assignment = ast.Assign(
+            targets=[
+                ast.Name(id='__output__', ctx=ast.Store(), lineno=lineno, col_offset=col_offset)
+            ],
+            value=last_statement.value,
+            lineno=lineno,
+            col_offset=col_offset,
+        )
+        parsed_code.body[-1] = assignment
+    elif isinstance(last_statement, ast.Assign):
+        target = last_statement.targets[0]
+        if isinstance(target, ast.Name):
+            assignment = ast.Assign(
+                targets=[
+                    ast.Name(
+                        id='__output__', ctx=ast.Store(), lineno=lineno, col_offset=col_offset
+                    )
+                ],
+                value=ast.Name(id=target.id, ctx=ast.Load(), lineno=lineno, col_offset=col_offset),
+                lineno=lineno,
+                col_offset=col_offset,
+            )
+            parsed_code.body.append(assignment)
+    else:
+        pass
+
+    modified_code = ast.Module(body=parsed_code.body, type_ignores=[])
+
+    try:
+        exec(compile(modified_code, '<string>', 'exec'), globals)
+    except Exception as err:
+        print(f'Error during code execution: {err}')
+
+    local_variables.update({key: value for key, value in globals.items() if key != '__builtins__'})
+
+
+def check_queue(queue: Queue):
     items = []
     try:
         while True:
             items.append(queue.get_nowait())
     except Empty:
         pass
-    # Put back the items
     for item in items:
         queue.put(item)
 
@@ -52,7 +107,6 @@ def read_stdout_continuously(
         if output:
             if is_debug():
                 print(f'[SRT] Debug: Captured output: {output}')
-            # Just enqueue it or else it’ll resolve to None
             result = ExecutionResult.load(
                 data_type=DataType.TEXT_PLAIN,
                 output=output,
@@ -103,7 +157,7 @@ async def execute_code_async(
     queue: Queue,
     stop_events: Iterable[AsyncEvent],
     message: str,
-    process_details: Dict,
+    process_details: Dict[str, Any],
     context: Optional[ProcessContext] = None,
     main_queue: Optional[FasterQueue] = None,
     output_file: Optional[str] = None,
@@ -111,21 +165,15 @@ async def execute_code_async(
     process = ProcessDetails.load(**process_details)
 
     exec_globals = {}
-    code_lines = message.split('\n')
-    last_output = None
+    local_variables = {}
     stop_event_read = Event()
 
     if is_debug():
-        print(f'Code lines: {code_lines}')
+        print(f'Executing full code block: {message}')
 
     try:
-        if is_debug():
-            print('Executing full code block.')
-
-        compiled_code = compile(message, '<string>', 'exec')
         async_stdout = AsyncStdout()  # Initialize the custom stdout
 
-        # Start a background thread to read from async_stdout
         reader_thread = Thread(
             target=read_stdout_continuously,
             args=(
@@ -141,9 +189,8 @@ async def execute_code_async(
         )
         reader_thread.start()
 
-        # Use the custom stdout in place of sys.stdout
         with redirect_stdout(async_stdout):
-            exec(compiled_code, exec_globals)
+            modify_and_execute(message, exec_globals, local_variables)
             if any(stop_event.is_set() for stop_event in stop_events):
                 raise StopAsyncIteration
 
@@ -156,25 +203,13 @@ async def execute_code_async(
                 )
             )
 
-        stop_event_read.set()  # Signal the reader thread to stop
-        reader_thread.join(timeout=FLUSH_INTERVAL * 2)  # Make sure reader thread finishes
-
-        last_expr = code_lines[-1].strip()  # Get the last expression for evaluation
-        if is_debug():
-            print(f'Last expression: {last_expr}')
-
-        # Evaluate only the last expression if it's not a comment
-        if last_expr and not last_expr.startswith('#'):
-            compiled_expr = compile(last_expr, '<string>', 'eval')
-            output = eval(compiled_expr, exec_globals)
-            if output is not None:  # Only print if there is output
-                # print(output)
-                last_output = output  # Keep track of the last output
+        stop_event_read.set()
+        reader_thread.join(timeout=FLUSH_INTERVAL * 2)
 
         while check_queue(queue):
             time.sleep(FLUSH_INTERVAL)
 
-        final_output = last_output if 'last_output' in locals() else None
+        final_output = local_variables.get('__output__')
         if final_output is not None:
             result = ExecutionResult.load(
                 output=final_output,
@@ -185,7 +220,6 @@ async def execute_code_async(
             )
             queue.put(result)
 
-            # Save last expression output to the file
             if output_file and result.output is not None:
                 with open(output_file, 'a') as file:
                     file.write(json.dumps(result.to_dict()) + '\n')

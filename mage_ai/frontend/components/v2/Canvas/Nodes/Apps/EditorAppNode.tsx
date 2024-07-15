@@ -25,11 +25,12 @@ import BlockType from '@interfaces/BlockType';
 import { getBlockColor } from '@mana/themes/blocks';
 import { FileType } from '@components/v2/IDE/interfaces';
 import { AppConfigType } from '@components/v2/Apps/interfaces';
+import { AppNodeType } from '../../interfaces';
 
 const PADDING_HORIZONTAL = 16;
 
 type EditorAppNodeProps = {
-  app?: AppConfigType
+  app?: AppNodeType;
   block: BlockType;
   containerRef?: React.RefObject<HTMLElement | undefined> | undefined;
   fileRef?: React.MutableRefObject<FileType | undefined> | undefined;
@@ -382,7 +383,7 @@ function EditorAppNode({
 
         <OutputGroups
           {...rest}
-          consumerID={`${app.uuid}/output`}
+          consumerID={`${app.id}/output`}
           hideTimer
           setHandleOnMessage={setHandleOnMessage}
         />
