@@ -80,7 +80,6 @@ function calculatePosition(
   fromPosition.y += fromRect.offset?.y ?? 0;
   toPosition.x += toRect.offset?.x ?? 0;
   toPosition.y += toRect.offset?.y ?? 0;
-  console.log(fromRect.offset, toRect.offset, fromPosition, toPosition);
 
   const { x: startX, y: startY } = fromPosition;
   const { x: endX, y: endY } = toPosition;

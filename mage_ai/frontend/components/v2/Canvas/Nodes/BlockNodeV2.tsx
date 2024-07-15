@@ -328,8 +328,7 @@ function BlockNode({
         columnGap={8}
         justifyContent="space-between"
         padding={6}
-
-        templateColumns="1fr"
+        templateColumns="1fr 1fr"
         templateRows="1fr"
       >
         <Grid
@@ -348,19 +347,18 @@ function BlockNode({
           </Text>
         </Grid>
 
-        {downstreamInGroup && (
-          <Grid
-            alignItems="center"
-            autoColumns="auto"
-            autoFlow="column"
-            columnGap={8}
-            justifyContent="end"
-            templateColumns="max-content"
-            templateRows="1fr"
-          >
-            <Circle backgroundColor={downstreamInGroup?.[0]?.colorName ?? 'gray'} size={12} />
-          </Grid>
-        )}
+        <Grid
+          alignItems="center"
+          autoColumns="auto"
+          autoFlow="column"
+          columnGap={8}
+          justifyContent="end"
+          templateColumns="max-content"
+          templateRows="1fr"
+        >
+          {downstreamInGroup &&
+            <Circle backgroundColor={downstreamInGroup?.[0]?.colorName ?? 'gray'} size={12} />}
+        </Grid>
       </Grid>
     );
   }

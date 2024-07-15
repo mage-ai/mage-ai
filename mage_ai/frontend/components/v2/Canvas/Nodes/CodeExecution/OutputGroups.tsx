@@ -1,4 +1,6 @@
 import EventStreamType, { ExecutionResultType } from '@interfaces/EventStreamType';
+import Tag from '@mana/components/Tag';
+import { executionDone } from '@components/v2/ExecutionManager/utils';
 import ExecutionOutput, { ExecutionOutputProps } from './ExecutionOutput';
 import Grid from '@mana/components/Grid';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
@@ -21,6 +23,7 @@ export type OutputGroupsType = {
 type OutputGroupsProps = {
   children?: React.ReactNode;
   consumerID: string;
+  hideTimer?: boolean;
   role?: ElementRoleEnum;
   styles?: React.CSSProperties;
 } & OutputGroupsType;
@@ -29,6 +32,7 @@ const OutputGroups: React.FC<OutputGroupsProps> = ({
   children,
   consumerID,
   handleContextMenu,
+  hideTimer,
   onMount,
   role,
   setHandleOnMessage,
@@ -37,6 +41,7 @@ const OutputGroups: React.FC<OutputGroupsProps> = ({
 }: OutputGroupsProps) => {
   const scrollableDivRef = useRef<HTMLDivElement>(null);
 
+  const [executing, setExecuting] = useState<boolean>(false);
   const [resultMapping, setResultMapping] = useState<Record<string, ExecutionResultType>>({});
   const resultsGroupedByMessageRequestUUID = useMemo(
     () => groupBy(Object.values(resultMapping ?? {}),
@@ -52,6 +57,9 @@ const OutputGroups: React.FC<OutputGroupsProps> = ({
     setHandleOnMessage && setHandleOnMessage?.(consumerID, (event: EventStreamType) => {
       DEBUG.codeExecution.output
         && console.log('event.result', JSON.stringify(event.result, null, 2));
+
+      const done = executionDone(event);
+      setExecuting(!done);
 
       const { result } = event;
       setResultMapping((prev) => ({
@@ -76,6 +84,8 @@ const OutputGroups: React.FC<OutputGroupsProps> = ({
 
   return (
     <div className={stylesOutput.outputContainer} role={role} style={styles}>
+      {!hideTimer && executing && <Tag right statusVariant timer top />}
+
       {children}
 
       <Scrollbar

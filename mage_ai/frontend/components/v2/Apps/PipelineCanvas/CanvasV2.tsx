@@ -2032,7 +2032,6 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
                     {outputMemo}
                     {nodesMemo}
                     {selectedGroupNode}
-                    {console.log(rectsMapping, rectsMappingRef?.current)}
                     <LineManagerV2
                       controls={controlsForLines}
                       rectsMapping={{

@@ -7,10 +7,12 @@ import { PaddingVerticalEnum } from '@mana/themes/interactive';
 import { baseXs } from '../../styles/typography';
 
 type StyleProps = {
+  bottom?: boolean;
   className?: string;
   inverted?: boolean;
   left?: boolean;
   passthrough?: boolean;
+  right?: boolean;
   secondary?: boolean;
   statusVariant?: boolean;
   style?: React.CSSProperties;
@@ -48,11 +50,14 @@ const StatusTag = styled.div<StyleProps>`
   justify-content: center;
   padding: 6px;
 
-  ${({ left, top }) => (left || top) && `
+  ${({ bottom, left, right, top }) => (bottom || left || right || top) && `
     position: absolute;
     z-index: 7;
-    ${left ? 'left: -12px;' : ''}
-    ${top ? 'top: -12px;' : ''}
+    ${bottom ? 'bottom: 0;' : ''}
+    ${left ? 'left: 0;' : ''}
+    ${right ? 'right: 0;' : ''}
+    ${top ? 'top: 0;' : ''}
+    transform: translate(${left ? '-80%' : right ? '80%' : '0px'}, ${top ? '-80%' : bottom ? '80%' : '0px'});
   `}
 `;
 

@@ -1,43 +1,25 @@
 import Button, { ButtonGroup } from '@mana/elements/Button';
 import { executionDone } from '@components/v2/ExecutionManager/utils';
 import Tag from '@mana/components/Tag';
-import { ThemeContext } from 'styled-components';
 import { AppSubtypeEnum, AppTypeEnum } from '@components/v2/Apps/constants';
-import DragWrapper from '../DragWrapper';
-import stylesBuilder from '@styles/scss/apps/Canvas/Pipelines/Builder.module.scss';
-import { isEmptyObject } from '@utils/hash';
-import { buildOutputNode } from '@components/v2/Apps/PipelineCanvas/utils/items';
-import { setNested } from '@utils/hash';
-import { ModelContext } from '@components/v2/Apps/PipelineCanvas/ModelManager/ModelContext';
 import EventStreamType from '@interfaces/EventStreamType';
 import Link from '@mana/elements/Link';
-import html2canvas from 'html2canvas';
 import React, { useContext, useEffect, useMemo, useRef, useState } from 'react';
 import TextInput from '@mana/elements/Input/TextInput';
 import moment from 'moment';
 import stylesAppNode from '@styles/scss/components/Canvas/Nodes/DraggableAppNode.module.scss';
 import stylesEditor from '@styles/scss/components/Canvas/Nodes/Apps/Editor.module.scss';
-import useAppEventsHandler, { CustomAppEventEnum } from '../../../Apps/PipelineCanvas/useAppEventsHandler';
 import Grid from '@mana/components/Grid';
 import Text from '@mana/elements/Text';
 import useApp from '../../../Apps/Editor/useApp';
-import { DEBUG } from '@components/v2/utils/debug';
-import { DragAndDropType } from '../types';
 import OutputGroups, { OutputGroupsType } from '../CodeExecution/OutputGroups';
 import { EditorContainerStyled } from './index.style';
-import { ExecutionManagerType } from '../../../ExecutionManager/interfaces';
-import { Minimize, Chat, BlockGenericV2, PlayButtonFilled } from '@mana/icons';
-import { NodeWrapper } from '../NodeWrapper';
 import { TooltipAlign, TooltipWrapper, TooltipDirection, TooltipJustify } from '@context/Tooltip';
-import { areEqualRects, areDraggableStylesEqual } from '../equals';
 import { convertToMillisecondsTimestamp } from '@utils/date';
-import { draggableProps } from '../draggable/utils';
-import { setupDraggableHandlers } from '../utils';
-import { CanvasNodeType } from '../interfaces';
 import {
   ArrowsAdjustingFrameSquare, DiamondShared, AppVersions, IdentityTag, Menu, PanelCollapseLeft,
   PanelCollapseRight, Builder, AddV2, Grab, GroupV2, Comment, Conversation, Save,
-  CloseV2,
+  CloseV2, BlockGenericV2, PlayButtonFilled,
 } from '@mana/icons';
 import BlockType from '@interfaces/BlockType';
 import { getBlockColor } from '@mana/themes/blocks';
@@ -401,6 +383,7 @@ function EditorAppNode({
         <OutputGroups
           {...rest}
           consumerID={`${app.uuid}/output`}
+          hideTimer
           setHandleOnMessage={setHandleOnMessage}
         />
       </Grid>
