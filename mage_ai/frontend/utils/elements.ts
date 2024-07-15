@@ -145,16 +145,13 @@ const isInViewport = (element: HTMLElement | null): boolean => {
   );
 };
 
-export const isElementReallyVisible = (element: HTMLElement | null): boolean => {
-  return isElementVisible(element) && isInViewport(element);
-};
+export const isElementReallyVisible = (element: HTMLElement | null): boolean => isElementVisible(element) && isInViewport(element);
 
 function getChildrenTotalHeight(element: HTMLElement): number {
   let totalHeight = 0;
 
   element.childNodes.forEach((child) => {
     if (child instanceof HTMLElement) {
-      console.log('height', child, child.offsetHeight);
       totalHeight += child.offsetHeight;
     }
   });
@@ -176,7 +173,6 @@ function getChildrenBoundingWidth(element: HTMLElement): number {
     if (rect.right > boundingRight) {
       boundingRight = rect.right;
     }
-    console.log('width', child, rect.left, rect.right, boundingLeft, boundingRight)
   });
 
   return boundingRight - boundingLeft;

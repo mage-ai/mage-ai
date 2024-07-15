@@ -4,8 +4,9 @@ import { RenderContextMenuOptions } from '@mana/hooks/useContextMenu';
 import BlockNodeV2, { BADGE_HEIGHT, PADDING_VERTICAL } from '../../Canvas/Nodes/BlockNodeV2';
 import PortalNode from '../../Canvas/Nodes/PortalNode';
 import Grid from '@mana/components/Grid';
-import useAppEventsHandler, { CustomAppEvent, CustomAppEventEnum } from './useAppEventsHandler';
+import useAppEventsHandler, { CustomAppEventEnum } from './useAppEventsHandler';
 import Text from '@mana/elements/Text';
+import { getChildrenDimensions } from '@utils/elements';
 import {
   OpenInSidekick, OpenInSidekickLeft, ArrowsAdjustingFrameSquare, SearchV2,
   ArrowsPointingInFromAllCorners, TreeWithArrowsDown, Undo,
@@ -46,8 +47,6 @@ import { deepCopyArray, equals, indexBy, unique, uniqueArray } from '@utils/arra
 import { getNewUUID } from '@utils/string';
 import { deepCopy, isEmptyObject } from '@utils/hash';
 import { WithOnMount } from '@mana/hooks/useWithOnMount';
-import PipelineType from '@interfaces/PipelineType';
-import { CommandType } from '@mana/events/interfaces';
 import { AppConfigType } from '../interfaces';
 import { buildOutputNode } from './utils/items';
 import { buildAppNode } from './AppManager/utils';
@@ -314,14 +313,11 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
     type: ItemTypeEnum,
     index: number,
   ): ShadowNodeType {
-    // console.log(`[Canvas:${type}] renderNodeData:`, block.uuid);
-
     let nodeRef = nodeRefs.current[block.uuid];
     if (!nodeRef) {
       nodeRef = createRef();
       nodeRefs.current[block.uuid] = nodeRef;
     }
-
     const node = {
       block,
       id: block.uuid,
@@ -346,7 +342,6 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
               rectRefs.current[appNode.id] = createRef();
             }
 
-
             onCloseRef.current = () => {
               delete appNodeRefs.current[block.uuid];
               setAppNodes(prev => {
@@ -369,8 +364,6 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
 
               return d;
             });
-
-
           }}
           showOutput={(
             channel: string,
@@ -1697,16 +1690,68 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
         ItemTypeEnum,
         (AppNodeType | BlockType | FrameworkType | OutputNodeType)[],
       ]) => {
-      items?.forEach((item: AppNodeType | BlockType | FrameworkType | OutputNodeType) => {
+      const rects = [];
+
+      items?.forEach((
+        item: AppNodeType | BlockType | FrameworkType | OutputNodeType,
+        idx: number,
+      ) => {
         let itemUUID = (item as any)?.uuid ?? (item as any)?.id;
         const nodeID = (item as any)?.uuid ?? (item as any)?.id;
+        let rect = rectsMapping?.[nodeID] ?? {
+          left: undefined,
+          top: undefined,
+        };
 
         if ([ItemTypeEnum.APP, ItemTypeEnum.OUTPUT].includes(nodeType)) {
           itemUUID = (item as any)?.block?.uuid;
+        }
+
+        let dragRef = dragRefs.current[nodeID];
+        if (!dragRef) {
+          dragRef = createRef();
+          dragRefs.current[nodeID] = dragRef;
+        }
+
+        if ([ItemTypeEnum.APP, ItemTypeEnum.OUTPUT].includes(nodeType)) {
+          const rectg = getSelectedGroupRectFromRefs();
+
+          const rectb = rectsMappingRef.current[itemUUID];
+          const rectp = idx > 0 ? rects[idx - 1] : {
+            left: (rectg?.left ?? 0) + rectg?.width,
+            top: (rectg?.top ?? 0),
+          };
+
+          rect = {
+            id: nodeID,
+            left: rectp.left + (PADDING_VERTICAL * 2),
+            top: rectp.top
+              + (idx > 0
+                  ? (rectp.height ?? rectb.height) + + (PADDING_VERTICAL * 2)
+                  : 0),
+          };
+
+          if (rectp?.id && dragRefs?.current?.[rectp?.id]) {
+            const el = dragRefs?.current?.[rectp?.id]?.current;
+            const dims = getChildrenDimensions(el);
+            if (rect.height) {
+              rect.height = dims.height;
+            }
+            if (rect.width) {
+              rect.width = dims.width;
+            }
+          }
+
+          console.log(nodeID, rect);
+
+          rectsMappingRef.current[nodeID] = rect;
+          rects.push({ ...rectb, ...rect });
+
           arr.push(
             <WithOnMount
               key={`${itemUUID}:${nodeID}:${nodeType}`}
               onMount={() => {
+                console.log(dragRef?.current?.getBoundingClientRect());
                 if (ItemTypeEnum.APP === nodeType) {
                   appNodeRefs?.current?.[itemUUID]?.render?.(dragRef);
                 } else {
@@ -1718,21 +1763,11 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
           );
         }
 
-        let dragRef = dragRefs.current[nodeID];
-        if (!dragRef) {
-          dragRef = createRef();
-          dragRefs.current[nodeID] = dragRef;
-        }
-        const rect = rectsMapping?.[nodeID] ?? {
-          left: undefined,
-          top: undefined,
-        };
         const node = {
           block: items,
           id: nodeID,
           type: nodeType,
         } as NodeType;
-
 
         arr.push(
           <DragWrapper
@@ -1747,6 +1782,7 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
     });
 
     return arr;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [rectsMapping]);
 
   const nodesMemo = useMemo(() => renderNodeComponents({

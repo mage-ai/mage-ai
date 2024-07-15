@@ -62,7 +62,8 @@ $enter-duration: 3s;
 .dragWrapper {
   z-index: 3;
 
-  &.app {
+  &.app,
+  &.output {
     z-index: 4;
   }
 

@@ -7,7 +7,7 @@
 
   backdrop-filter: saturate(100%) blur(20px);
   padding: var(--padding-base);
-  position: fixed;
+  position: absolute;
   z-index: 1000;
 
   &.hide {

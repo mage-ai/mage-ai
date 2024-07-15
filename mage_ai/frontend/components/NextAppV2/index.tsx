@@ -57,7 +57,7 @@ function NextAppV2({
       <ThemeProvider theme={theme}>
         <MenuProvider>
           <LayoutProvider router={router} theme={theme}>
-            <ContextProvider router={router} theme={theme as ThemeType}>
+            <ContextProvider main router={router} theme={theme as ThemeType}>
               <HeaderPortal headerRef={headerRef} />
               <Component {...rest} />
             </ContextProvider >

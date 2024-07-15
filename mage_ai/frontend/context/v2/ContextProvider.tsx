@@ -7,15 +7,16 @@ import { TooltipProvider } from '../Tooltip';
 
 function ContextProvider({
   children,
+  main,
   theme,
-}: { children: React.ReactNode, router?: any, theme: ThemeType }) {
+}: { children: React.ReactNode, main?: boolean, router?: any, theme: ThemeType }) {
   const queryClient = new QueryClient();
 
   return (
     <ThemeProvider theme={theme}>
       <QueryClientProvider client={queryClient}>
         <APIMutationProvider>
-          <TooltipProvider>
+          <TooltipProvider main={main}>
             {children}
           </TooltipProvider>
         </APIMutationProvider>

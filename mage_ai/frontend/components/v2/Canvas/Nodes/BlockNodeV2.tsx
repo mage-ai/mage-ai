@@ -72,6 +72,8 @@ function BlockNode({
   const onCloseOutputRef = useRef<() => void>(null);
   const onCloseAppRef = useRef<() => void>(null);
   const executionResultMappingRef = useRef<Record<string, ExecutionResultType>>({});
+  const launchOutputCallbackOnceRef = useRef<() => void>(null);
+
   const outputGroupsProps = useMemo(() => ({
     onMount: () => {
       updateOutputResults();
@@ -186,8 +188,14 @@ function BlockNode({
       setExecuting(true);
     };
 
-    launchOutput(channel, () => {
+    launchOutputCallbackOnceRef.current = () => {
       getFile(event, execute);
+    };
+    launchOutput(channel, () => {
+      if (launchOutputCallbackOnceRef.current) {
+        launchOutputCallbackOnceRef.current();
+      }
+      launchOutputCallbackOnceRef.current = null;
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [block, node, executeCode]);

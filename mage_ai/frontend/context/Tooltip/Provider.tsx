@@ -7,9 +7,10 @@ import { ThemeContext } from 'styled-components';
 
 interface TooltipProviderProps {
   children: React.ReactNode;
+  main?: boolean;
 }
 
-export const TooltipProvider: React.FC<TooltipProviderProps> = ({ children }) => {
+export const TooltipProvider: React.FC<TooltipProviderProps> = ({ children, main }) => {
   const themeContext = useContext(ThemeContext);
 
   const timeoutRef = useRef(null);
@@ -34,23 +35,31 @@ export const TooltipProvider: React.FC<TooltipProviderProps> = ({ children }) =>
     showTooltipRef.current = showTooltipOptions;
     const ContextProvider = dynamic(() => import('../v2/ContextProvider'));
 
+    if (!tooltipRootRef?.current) {
+      tooltipRootRef.current = document.createElement('div');
+      tooltipRootRef.current.className = 'tooltip-root';
+      tooltipRootRef.current.id = String(Number(new Date()));
+      document.body.appendChild(tooltipRootRef.current);
+    }
+
     tooltipRenderRef.current ||= createRoot(tooltipRootRef.current);
 
-    showTimeoutRef.current = setTimeout(() => {
-      tooltipRenderRef.current.render(
-        <ContextProvider theme={themeContext}>
-          <TooltipContent
-            layout={layout}
-            options={showTooltipOptions}
-            optionsPrev={optionsPrev}
-            ref={tooltipContentRef}
-          >
-            {content}
-          </TooltipContent >
-        </ContextProvider>,
-      );
-      tooltipVisibleRef.current = true;
-    }, tooltipVisibleRef.current ? 0 : 1000);
+    // showTimeoutRef.current = setTimeout(() => {
+    // }, tooltipVisibleRef.current ? 0 : 1000);
+
+    tooltipRenderRef.current.render(
+      <ContextProvider theme={themeContext}>
+        <TooltipContent
+          layout={layout}
+          options={showTooltipOptions}
+          optionsPrev={optionsPrev}
+          ref={tooltipContentRef}
+        >
+          {content}
+        </TooltipContent >
+      </ContextProvider>,
+    );
+    tooltipVisibleRef.current = true;
   }
 
   function hideTooltip(delay?: number): void {
@@ -146,11 +155,21 @@ export const TooltipProvider: React.FC<TooltipProviderProps> = ({ children }) =>
     document.addEventListener('mousedown', handleMouseDown, true);
     document.addEventListener('mousemove', handleMouseMove, true);
 
+    const renderer = tooltipRenderRef.current;
+    const root = tooltipRootRef.current;
+
     return () => {
       document.removeEventListener('focusout', handleMouseMove);
       document.removeEventListener('keydown', handleKeyDown);
       document.removeEventListener('mousedown', handleMouseDown);
       document.removeEventListener('mousemove', handleMouseMove);
+
+      if (renderer) {
+        renderer.unmount();
+      }
+      if (root) {
+        document.body.removeChild(root);
+      }
     };
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -159,7 +178,6 @@ export const TooltipProvider: React.FC<TooltipProviderProps> = ({ children }) =>
   return (
     <TooltipContext.Provider value={{ hideTooltip, showTooltip }}>
       {children}
-      <div ref={tooltipRootRef} />
     </TooltipContext.Provider>
   );
 };

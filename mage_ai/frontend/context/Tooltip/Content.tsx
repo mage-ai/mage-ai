@@ -1,10 +1,16 @@
 import React, { useEffect } from 'react';
 import styles from '@styles/scss/components/Tooltip/TooltipContent.module.scss';
-import { TooltipDirection, ShowTooltipOptionsType, TooltipJustify, TooltipAlign, TooltipLayout, TooltipContentType } from './Context';
+import { TooltipDirection, ShowTooltipOptionsType, TooltipJustify, TooltipAlign, TooltipLayout,
+  TooltipContentType } from './Context';
+import { RectType } from '@mana/shared/interfaces';
 
 type TooltipContentProps = {
   children: TooltipContentType;
   layout: TooltipLayout;
+  offset?: {
+    x: number;
+    y: number;
+  };
   options: ShowTooltipOptionsType;
   optionsPrev?: ShowTooltipOptionsType;
 };
@@ -27,8 +33,18 @@ function updateTooltipPosition(
   offsetY: number = 0,
 ): void {
   const { pageX, pageY, width, height } = getElementPageCoordinates(targetElement);
-  const tooltipX = pageX + offsetX; // Allow custom horizontal offset
-  const tooltipY = pageY + height + offsetY; // Allow custom vertical offset
+
+  let xoff = pageX;
+  let yoff = pageY;
+
+  if (xoff) {
+    xoff = xoff - offsetX;
+  }
+  if (yoff) {
+    yoff = yoff - offsetY;
+  }
+  const tooltipX = xoff; // Allow custom horizontal offset
+  const tooltipY = yoff + height; // Allow custom vertical offset
 
   tooltipElement.style.position = 'absolute';
   tooltipElement.style.left = `${tooltipX}px`;
@@ -61,6 +77,7 @@ function showTooltip(
 function TooltipContent({
   children,
   layout,
+  offset,
   options,
   optionsPrev,
 }: TooltipContentProps, ref: React.MutableRefObject<HTMLDivElement>) {
@@ -122,13 +139,12 @@ function TooltipContent({
         translateY = maxY - position.y;
       }
 
-      showTooltip(wrapperRef.current, ref.current);
+      showTooltip(wrapperRef.current, ref.current, offset?.x, offset?.y);
       ref.current.style.transform = `translate(${translateX}px, ${translateY}px)`;
       ref.current.classList.remove(styles.hide);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [align, justify]);
-
   return (
     <div
       className={[
