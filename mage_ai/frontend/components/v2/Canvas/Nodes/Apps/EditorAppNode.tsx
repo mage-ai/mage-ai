@@ -23,7 +23,7 @@ import Text from '@mana/elements/Text';
 import useApp from '../../../Apps/Editor/useApp';
 import { DEBUG } from '@components/v2/utils/debug';
 import { DragAndDropType } from '../types';
-import OutputGroups from '../CodeExecution/OutputGroups';
+import OutputGroups, { OutputGroupsType } from '../CodeExecution/OutputGroups';
 import { EditorContainerStyled } from './index.style';
 import { ExecutionManagerType } from '../../../ExecutionManager/interfaces';
 import { Minimize, Chat, BlockGenericV2, PlayButtonFilled } from '@mana/icons';
@@ -49,10 +49,10 @@ const PADDING_HORIZONTAL = 16;
 type EditorAppNodeProps = {
   app?: AppConfigType
   block: BlockType;
+  containerRef?: React.RefObject<HTMLElement | undefined> | undefined;
   fileRef?: React.MutableRefObject<FileType | undefined> | undefined;
   height?: number;
   submitCodeExecution: (event: any) => void;
-  setHandleOnMessage?: (consumerID: string, handler: (event: EventStreamType) => void) => void;
   onClose: () => void;
   width?: number;
 };
@@ -60,14 +60,15 @@ type EditorAppNodeProps = {
 function EditorAppNode({
   app,
   block,
+  containerRef,
   submitCodeExecution,
   fileRef,
   height,
   onClose,
   setHandleOnMessage,
   width,
-}: EditorAppNodeProps) {
-  const nodeRef = useRef<HTMLDivElement>(null);
+  ...rest
+}: EditorAppNodeProps & OutputGroupsType) {
   const [asideBeforeOpen, setAsideBeforeOpen] = React.useState(false);
   const [executing, setExecuting] = useState<boolean>(false);
 
@@ -118,11 +119,11 @@ function EditorAppNode({
       style: {},
     },
     onMountEditor: () => {
-      if (nodeRef?.current) {
+      if (containerRef?.current) {
         // This is required or else a preview of the node won’t be available when dragging.
-        nodeRef.current.style.opacity = '1';
-        nodeRef.current.style.visibility = 'visible';
-        nodeRef.current.style.display = 'block';
+        containerRef.current.style.opacity = '1';
+        containerRef.current.style.visibility = 'visible';
+        containerRef.current.style.display = 'block';
       }
     },
     skipInitialFetch: true,
@@ -377,7 +378,7 @@ function EditorAppNode({
               <Grid autoFlow="column" columnGap={8} justifyContent="start" templateColumns="auto">
                 <Link
                   onClick={() => overrideServerContentFromLocal()}
-                  preventDet
+                  preventDefault
                   xsmall
                 >
                   Save local
@@ -385,9 +386,9 @@ function EditorAppNode({
 
                 <Link
                   onClick={event => {
-                    event.preventDefault();
                     overrideLocalContentFromServer();
                   }}
+                  preventDefault
                   xsmall
                 >
                   Restore from server
@@ -398,6 +399,7 @@ function EditorAppNode({
         )}
 
         <OutputGroups
+          {...rest}
           consumerID={`${app.uuid}/output`}
           setHandleOnMessage={setHandleOnMessage}
         />

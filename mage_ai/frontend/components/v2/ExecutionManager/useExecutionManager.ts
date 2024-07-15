@@ -316,23 +316,21 @@ export default function useExecutionManager({
       output_dir?: string;
       source?: string;
     }, opts?: {
-      future?: boolean;
       onError?: (response: ResponseType) => void;
       onSuccess?: (data: { code_execution: ProcessDetailsType }) => void;
-    }) => [string, () => any];
+    }) => string;
   } {
     const executeCode = (message: string, payload?: {
       message_request_uuid?: string;
       output_dir?: string;
       source?: string;
     }, opts?: {
-      future?: boolean;
       onError?: (response: ResponseType) => void;
       onSuccess?: (data: { code_execution: ProcessDetailsType }) => void;
-    }): [string, () => any] => {
+    }): string => {
       const messageRequestUUID = newMessageRequestUUID();
 
-      const future = () => mutants.create.mutate({
+      mutants.create.mutate({
         onError: (response: ResponseType) => {
           opts?.onError && opts?.onError?.(response);
         },
@@ -350,11 +348,7 @@ export default function useExecutionManager({
         } as ProcessDetailsType,
       });
 
-      if (!opts?.future) {
-        future();
-      }
-
-      return [messageRequestUUID, future];
+      return messageRequestUUID;
     };
 
     return {

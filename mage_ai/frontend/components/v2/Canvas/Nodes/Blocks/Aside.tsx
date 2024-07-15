@@ -7,7 +7,6 @@ import { AsideType } from '../types';
 function Aside({
   Icon,
   baseColorName,
-  buttonRef,
   className,
   menuItems,
   loading,
@@ -36,7 +35,6 @@ function Aside({
         Icon={() => el}
         basic
         className={className}
-        containerRef={buttonRef}
         loading={loading}
         loadingColorName={baseColorName}
         onClick={(event: React.MouseEvent<HTMLElement, MouseEvent>) => {
@@ -50,7 +48,6 @@ function Aside({
   }, [
     Icon,
     baseColorName,
-    buttonRef,
     className,
     loading,
     menuItems,

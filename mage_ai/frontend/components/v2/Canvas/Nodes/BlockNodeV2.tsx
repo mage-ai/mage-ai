@@ -62,6 +62,8 @@ function BlockNode({
   const connectionErrorRef = useRef(null);
   const connectionStatusRef = useRef<ServerConnectionStatusType>(null);
   const handleOnMessageRef = useRef<Record<string, (event: EventStreamType) => void>>({});
+  const handleResultMappingUpdateRef =
+    useRef<Record<string, (resultMapping: Record<string, ExecutionResultType>) => void>>({});
 
   const appRef = useRef<AppConfigType>(null);
   const outputRef = useRef<OutputNodeType>(null);
@@ -69,9 +71,18 @@ function BlockNode({
   const outputRootRef = useRef<Root>(null);
   const onCloseOutputRef = useRef<() => void>(null);
   const onCloseAppRef = useRef<() => void>(null);
-  const executionResultMappingRef = useRef<{
-    [key: string]: ExecutionResultType;
-  }>({});
+  const executionResultMappingRef = useRef<Record<string, ExecutionResultType>>({});
+  const outputGroupsProps = useMemo(() => ({
+    onMount: () => {
+      updateOutputResults();
+    },
+    setHandleOnMessage: (consumerID, handler) => {
+      handleOnMessageRef.current[consumerID] = handler;
+    },
+    setResultMappingUpdate: (consumerID, handler) => {
+      handleResultMappingUpdateRef.current[consumerID] = handler;
+    },
+  }), []);
 
   // APIs
   const fileRef = useRef<FileType>(null);
@@ -94,6 +105,15 @@ function BlockNode({
   const { executeCode } = useExecuteCode(channel, STEAM_OUTPUT_DIR);
   const { subscribe, unsubscribe } = useRegistration(channel, STEAM_OUTPUT_DIR);
 
+  function updateOutputResults() {
+    executionResultMappingRef.current =
+      indexBy(fileRef.current?.output ?? [], r => r.result_id);
+
+    Object.values(handleResultMappingUpdateRef.current ?? {}).forEach(
+      handler => handler(executionResultMappingRef.current ?? {}),
+    );
+  }
+
   function getFile(event: any, callback?: () => void) {
     const { configuration } = block ?? {};
     const { file } = configuration ?? {};
@@ -103,8 +123,7 @@ function BlockNode({
       id: file?.path,
       onSuccess: ({ data }) => {
         fileRef.current = data?.browser_item;
-        executionResultMappingRef.current =
-          indexBy(fileRef.current?.output ?? {}, r => r.result_id);
+        updateOutputResults();
 
         updateFileCache({
           server: data?.browser_item,
@@ -153,7 +172,7 @@ function BlockNode({
 
     const execute = () => {
       const message = getCode();
-      const [, future] = executeCode(message, {
+      executeCode(message, {
         output_dir: file?.path ?? null,
         source: block.uuid,
       }, {
@@ -164,16 +183,11 @@ function BlockNode({
         },
       });
 
-      future();
       setExecuting(true);
     };
 
     launchOutput(channel, () => {
-      if (getCode()?.length >= 1) {
-        execute();
-      } else {
-        getFile(event, execute);
-      }
+      getFile(event, execute);
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [block, node, executeCode]);
@@ -263,9 +277,15 @@ function BlockNode({
                   mutations.files.update.mutate({
                     event,
                     id: file?.path,
-                    onSuccess: () => {
+                    onSuccess: ({ data }) => {
                       removeContextMenu(event);
-                      executionResultMappingRef.current = {};
+                      fileRef.current = data?.browser_item;
+                      fileRef.current.output = [];
+                      updateOutputResults();
+
+                      updateFileCache({
+                        server: data?.browser_item,
+                      });
                     },
                     payload: {
                       output: [],
@@ -277,17 +297,14 @@ function BlockNode({
                 },
                 uuid: 'Delete output',
               },
-              { divider: true },
             ], {
               reduceItems: (i1) => i1,
             });
           }}
         >
           <OutputGroups
+            {...outputGroupsProps}
             consumerID={outputNode.id}
-            setHandleOnMessage={(consumerID, handler) => {
-              handleOnMessageRef.current[consumerID] = handler;
-            }}
           />
         </div>
       </ContextProvider>,
@@ -306,14 +323,12 @@ function BlockNode({
     appRootRef.current.render(
       <ContextProvider theme={themeContext}>
         <EditorAppNode
+          {...outputGroupsProps}
           app={app}
           block={block}
           fileRef={opts?.fileRef ?? fileRef}
           onClose={() => {
             closeEditorApp();
-          }}
-          setHandleOnMessage={(consumerID, handler) => {
-            handleOnMessageRef.current[consumerID] = handler;
           }}
           submitCodeExecution={submitCodeExecution}
         />
@@ -371,6 +386,8 @@ function BlockNode({
       outputRootRef.current = null;
 
       executionResultMappingRef.current = {};
+      handleOnMessageRef.current = {};
+      handleResultMappingUpdateRef.current = {};
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

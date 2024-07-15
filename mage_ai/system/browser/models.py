@@ -82,7 +82,7 @@ class Item(BaseDataClass):
 
     async def set_output(self, output: List[Dict], namespace: str):
         if len(output) == 0:
-            await safe_delete_dir_async(self.output_dir(namespace))
+            await safe_delete_dir_async(self.output_dir(namespace), verbose=True)
 
     async def get_content(self) -> Optional[str]:
         if self.content is None:

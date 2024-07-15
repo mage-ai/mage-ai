@@ -161,7 +161,7 @@ function Button({
         loading && styles.loading,
       ].filter(Boolean).join(' ')}
       ref={containerRef}
-      role={ElementRoleEnum.BUTTON}
+      // role={ElementRoleEnum.BUTTON}
     >
       <div className={[styles.overlay].filter(Boolean).join(' ')} />
       <div className={[styles.loader].filter(Boolean).join(' ')}>
