@@ -384,6 +384,9 @@ function BlockNode({
               operationType: EventOperationEnum.DRAG_START,
             });
           }}
+          onWheel={event => {
+            event.stopPropagation();
+          }}
           role={ElementRoleEnum.DRAGGABLE}
         >
           <OutputGroups

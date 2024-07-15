@@ -1897,7 +1897,10 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
 
         const element = dragRefs.current[node.id].current;
         if (element) {
+          const recte = element?.getBoundingClientRect();
           element.style.transform = `translate(${left}px, ${top}px)`;
+          node.rect.height = recte.height;
+          node.rect.width = recte.width;
         }
 
         rectsMappingRef.current[node.id] = node.rect;

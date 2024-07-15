@@ -23,13 +23,19 @@ export const TooltipProvider: React.FC<TooltipProviderProps> = ({ children, main
   const tooltipContentRef = useRef<HTMLDivElement | null>(null);
   const tooltipVisibleRef = useRef<boolean>(false);
 
+  function resetTimers() {
+    clearTimeout(timeoutRef.current);
+    clearTimeout(showTimeoutRef.current);
+    timeoutRef.current = null;
+    showTimeoutRef.current = null;
+  }
+
   function showTooltip(
     content: TooltipContentType,
     layout: TooltipLayout,
     showTooltipOptions?: ShowTooltipOptionsType,
   ): void {
-    clearTimeout(timeoutRef.current);
-    clearTimeout(showTimeoutRef.current);
+    resetTimers();
 
     const optionsPrev = showTooltipRef.current;
     showTooltipRef.current = showTooltipOptions;
@@ -44,36 +50,40 @@ export const TooltipProvider: React.FC<TooltipProviderProps> = ({ children, main
 
     tooltipRenderRef.current ||= createRoot(tooltipRootRef.current);
 
-    // showTimeoutRef.current = setTimeout(() => {
-    // }, tooltipVisibleRef.current ? 0 : 1000);
+    showTimeoutRef.current = setTimeout(() => {
+      // console.log('showTooltip');
+      resetTimers();
 
-    tooltipRenderRef.current.render(
-      <ContextProvider theme={themeContext}>
-        <TooltipContent
-          layout={layout}
-          options={showTooltipOptions}
-          optionsPrev={optionsPrev}
-          ref={tooltipContentRef}
-        >
-          {content}
-        </TooltipContent >
-      </ContextProvider>,
-    );
-    tooltipVisibleRef.current = true;
+      tooltipRenderRef.current.render(
+        <ContextProvider theme={themeContext}>
+          <TooltipContent
+            layout={layout}
+            options={showTooltipOptions}
+            optionsPrev={optionsPrev}
+            ref={tooltipContentRef}
+          >
+            {content}
+          </TooltipContent >
+        </ContextProvider>,
+      );
+      tooltipVisibleRef.current = true;
+    }, tooltipVisibleRef.current ? 0 : 2000);
   }
 
   function hideTooltip(delay?: number): void {
-    clearTimeout(timeoutRef.current);
-
     timeoutRef.current = setTimeout(() => {
-      showTooltipRef.current = null;
-      tooltipContentRef.current = null;
-      tooltipVisibleRef.current = false;
+      // console.log('hideTooltip');
+      resetTimers();
 
       if (tooltipRenderRef.current) {
         tooltipRenderRef.current.render(null);
       }
-    }, delay ?? 500);
+
+      showTooltipRef.current = null;
+      tooltipContentRef.current = null;
+
+      tooltipVisibleRef.current = false;
+    }, delay ?? 1000);
   }
 
   useEffect(() => {
@@ -106,7 +116,9 @@ export const TooltipProvider: React.FC<TooltipProviderProps> = ({ children, main
         || !showTooltipRef?.current?.hideOn?.includes(HideTooltipReason.LEAVE)
       ) return;
 
-      if (!isInside(event)) {
+      if (!isInside(event) && !timeoutRef.current) {
+        // console.log('MOUSEMOVE');
+        showTimeoutRef.current = null;
         hideTooltip();
       }
     };

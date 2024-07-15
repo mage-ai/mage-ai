@@ -468,7 +468,7 @@ export default function BlockNodeComponent({
               {isEmptyObject(block?.configuration?.templates) && (
                 <PanelRows padding={false}>
                   <Grid justifyItems="start" padding={12} rowGap={4} templateColumns="auto" >
-                    {contentCode && (
+                    {false && contentCode && (
                       <TooltipWrapper
                         align={TooltipAlign.START}
                         horizontalDirection={TooltipDirection.LEFT}
@@ -490,7 +490,7 @@ export default function BlockNodeComponent({
                         </Text>
                       </TooltipWrapper>
                     )}
-                    {!contentCode && (
+                    {(
                       <Text semibold xsmall>
                         Custom code
                       </Text>
