@@ -1,4 +1,5 @@
 import React, { createRef, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import { BADGE_HEIGHT, PADDING_VERTICAL } from '../../../Canvas/Nodes/BlockNodeV2';
 import { getUpDownstreamColors } from '../../../Canvas/Nodes/Blocks/utils';
 import stylesPipelineBuilder from '@styles/scss/apps/Canvas/Pipelines/Builder.module.scss';
 import { ModelContext } from '../ModelManager/ModelContext';
@@ -19,7 +20,7 @@ import { GroupUUIDEnum } from '@interfaces/PipelineExecutionFramework/types';
 import { LayoutManagerType } from '../interfaces';
 import { LINE_CLASS_NAME } from '../utils/display';
 import { DEBUG } from '../../../utils/debug';
-import { ignoreKeys, objectSize, selectKeys } from '@utils/hash';
+import { deepCopy, ignoreKeys, objectSize, selectKeys } from '@utils/hash';
 import { calculateBoundingBox } from '@components/v2/Canvas/utils/layout/shared';
 import { FrameworkType } from '@interfaces/PipelineExecutionFramework/interfaces';
 
@@ -32,6 +33,12 @@ const ORDER = {
   [ItemTypeEnum.OUTPUT]: 1,
 };
 
+export type UpdateLinesType = (
+  mapping: Record<string, RectType>,
+  groupRectArg: RectType,
+  opts?: { replace: boolean },
+) => void;
+
 function getLineID(upstream: string, downstream: string) {
   return [upstream, downstream].join('->');
 }
@@ -41,12 +48,14 @@ export default function LineManagerV2({
   controls: controlsProp,
   rectsMapping,
   selectedGroupRect,
+  updateLinesRef,
   visible,
 }: {
   animate?: boolean;
   controls?: any;
   rectsMapping: Record<string, RectType>;
   selectedGroupRect: RectType;
+  updateLinesRef?: React.MutableRefObject<UpdateLinesType>;
   visible?: boolean;
 }) {
   const { blockMappingRef, blocksByGroupRef, groupMappingRef, outputsRef } = useContext(ModelContext);
@@ -115,8 +124,20 @@ export default function LineManagerV2({
       });
     }
 
-    const fromRect = rectup;
-    const toRect = rectdn;
+    const fromRect = {
+      ...deepCopy(rectup),
+      offset: {
+        x: 0,
+        y: 0,
+      },
+    };
+    const toRect = {
+      ...deepCopy(rectdn),
+      offset: {
+        x: 0,
+        y: 0,
+      },
+    };
 
     const positions = {
       [LayoutConfigDirectionEnum.VERTICAL]: [
@@ -129,54 +150,95 @@ export default function LineManagerV2({
       ],
     };
 
+    let frpos = null;
+    let topos = null;
+
     // Determine relative positions dynamically
+    // if downstream rect’s left is completely on the right side
+    if (rectdn.left > rectup.left + rectup.width) {
+      // positions[LayoutConfigDirectionEnum.HORIZONTAL][1] = 'left';
+      frpos = 'right';
+      topos = 'left';
+
+      fromRect.offset.x = -PADDING_VERTICAL;
+      toRect.offset.x = PADDING_VERTICAL;
+    } else {
+      frpos = 'left';
+      topos = 'right';
+
+      fromRect.offset.x = PADDING_VERTICAL;
+      toRect.offset.x = -PADDING_VERTICAL;
+    }
+
     if (rectdn.top < rectup.top) {
       // rectdn is above rect
-      positions[LayoutConfigDirectionEnum.VERTICAL] = ['top', 'bottom'];
-      positions[LayoutConfigDirectionEnum.HORIZONTAL] = ['right', 'bottom'];
-
-      // if downstream rect’s left is within the upstream’s left and right
-      if (rectdn.left > rectup.left && rectdn.left < rectup.left + rectup.width) {
-        positions[LayoutConfigDirectionEnum.VERTICAL][1] = 'left';
+      // positions[LayoutConfigDirectionEnum.VERTICAL] = ['top', 'bottom'];
+      // positions[LayoutConfigDirectionEnum.HORIZONTAL] = ['right', 'bottom'];
+      if (!topos) {
+        topos = 'bottom';
+        toRect.offset.y = -PADDING_VERTICAL;
       }
 
-      if (rectdn.left > rectup.left + rectup.width) {
-        positions[LayoutConfigDirectionEnum.HORIZONTAL][1] = 'left';
+      if (rectdn.top + rectdn.height < rectup.top) {
+        // rectdn is completely above rectup
+        frpos = 'top';
+        topos = 'bottom';
+        fromRect.offset.y = PADDING_VERTICAL;
+        toRect.offset.y = -PADDING_VERTICAL;
       }
     } else if (rectdn.top > rectup.top) {
       // rectdn is below rect
-      positions[LayoutConfigDirectionEnum.VERTICAL] = ['bottom', 'top'];
-      positions[LayoutConfigDirectionEnum.HORIZONTAL] = ['right', 'top'];
+      // positions[LayoutConfigDirectionEnum.VERTICAL] = ['bottom', 'top'];
+      // positions[LayoutConfigDirectionEnum.HORIZONTAL] = ['right', 'top'];
+      if (!topos) {
+        topos = 'top';
+        toRect.offset.y = PADDING_VERTICAL;
+      }
 
       // if downstream rect’s left is within the upstream’s left and right
-      if (rectdn.left > rectup.left && rectdn.left < rectup.left + rectup.width) {
-        positions[LayoutConfigDirectionEnum.VERTICAL][1] = 'left';
-      }
+      // if (rectdn.left > rectup.left && rectdn.left < rectup.left + rectup.width) {
+      //   positions[LayoutConfigDirectionEnum.VERTICAL][1] = 'left';
+      // }
 
-      if (rectdn.left > rectup.left + rectup.width) {
-        positions[LayoutConfigDirectionEnum.HORIZONTAL][1] = 'left';
+      // if (rectdn.left > rectup.left + rectup.width) {
+      //   positions[LayoutConfigDirectionEnum.HORIZONTAL][1] = 'left';
+      // }
+
+      if (rectdn.top > rectup.top + rectup.height) {
+        // rectdn is completely below rectup
+        frpos = 'bottom';
+        topos = 'top';
+        fromRect.offset.y = -PADDING_VERTICAL;
+        toRect.offset.y = PADDING_VERTICAL;
       }
     }
 
-    if (rectdn.left < rectup.left) {
-      // rectdn is to the left of rect
-      positions[LayoutConfigDirectionEnum.HORIZONTAL] = ['left', 'right'];
-    } else if (rectdn.left > rectup.left) {
-      // rectdn is to the right of rect
-      positions[LayoutConfigDirectionEnum.HORIZONTAL] = ['right', 'left'];
+    if (ItemTypeEnum.OUTPUT === rectdn.type) {
+      topos = 'top';
+      toRect.offset.y = PADDING_VERTICAL;
+      toRect.offset.x = (-toRect.width / 2) + PADDING_VERTICAL;
     }
+
+    // if (rectdn.left < rectup.left) {
+    //   // rectdn is to the left of rect
+    //   positions[LayoutConfigDirectionEnum.HORIZONTAL] = ['left', 'right'];
+    // } else if (rectdn.left > rectup.left) {
+    //   // rectdn is to the right of rect
+    //   positions[LayoutConfigDirectionEnum.HORIZONTAL] = ['right', 'left'];
+    // }
 
     const layoutConfig = getLayoutConfig();
     const { direction, display, style } = {
       ...layoutConfig,
       ...opts,
     };
-    const [fromPosition, toPosition] = positions[direction];
+    // const [fromPosition, toPosition] = positions[direction];
 
     const pathDOpts = {
-      curveControl: isOutput ? 0.5 : 0,
-      fromPosition,
-      toPosition,
+      // curveControl: isOutput ? 0.5 : 0,
+      curveControl: 0,
+      fromPosition: frpos,
+      toPosition: topos,
     } as any;
     const dvalue = getPathD(pathDOpts, fromRect, toRect);
 
@@ -221,6 +283,8 @@ export default function LineManagerV2({
           paths[type][rectup.id].push(linePath);
         });
     });
+
+    // console.log('paths', paths);
 
     setLinesBlock((prev) => {
       const val = {
@@ -298,7 +362,7 @@ export default function LineManagerV2({
 
     paths.push(
       <motion.path
-        animate={controlsProp ?? controls}
+        animate={ controlsProp ?? controls}
         className={stylesPipelineBuilder.path}
         custom={{
           index,
@@ -349,8 +413,6 @@ export default function LineManagerV2({
       [ItemTypeEnum.OUTPUT]: [],
     } as any;
 
-    console.log(mapping);
-
     const selectedGroup = selectedGroupsRef?.current?.[selectedGroupsRef?.current?.length - 1];
     const groupRect = groupRectArg ?? mapping?.[selectedGroup?.id];
 
@@ -366,6 +428,16 @@ export default function LineManagerV2({
       ...(mapping ?? {}),
       ...((groupRect && !allRectsAreInGroup) ? { [groupRect.id]: groupRect } : {}),
     });
+
+    const outputNodesByBlockUUID = Object.values(mapping ?? {}).reduce((acc, node) => ({
+      ...acc,
+      ...(ItemTypeEnum.OUTPUT === node.type ? {
+        [node.block.uuid]: [
+          ...(acc?.[node.block.uuid] ?? []),
+          node,
+        ],
+      } : {}),
+    }), {});
 
     // console.log('lines', values)
 
@@ -414,16 +486,12 @@ export default function LineManagerV2({
       } else if (ItemTypeEnum.BLOCK === rectdn?.type) {
         const { block: blockdn } = rectdn;
 
-        if (LayoutDisplayEnum.DETAILED === getLayoutConfig()?.display) {
-          const outputs = Object.values(outputsRef?.current?.[rectdn?.id] ?? {});
-          if (outputs?.length > 0) {
-            outputs?.forEach((output: OutputNodeType) => {
-              DEBUG.lines.manager && console.log('line.output', output, rectdn);
-
-              pairsByType[output.type].push([rectdn, output]);
-            });
-          }
-        }
+        const outputNodes = outputNodesByBlockUUID?.[blockdn.uuid] ?? [];
+        outputNodes?.forEach((output: OutputNodeType) => {
+          DEBUG.lines.manager && console.log('line.output', output, rectdn);
+          pairsByType[output.type].push([rectdn, output]);
+          // console.log(rectdn, output, pairsByType);
+        });
 
         (blockdn as any)?.upstream_blocks?.forEach((upuuid: string) => {
           const rectup = mapping?.[upuuid];
@@ -487,6 +555,8 @@ export default function LineManagerV2({
   }, [animate, controls]);
 
   useEffect(() => {
+    updateLinesRef.current = updateLines;
+
     updateLines(rectsMapping, selectedGroupRect, {
       replace: true,
     });
@@ -501,7 +571,8 @@ export default function LineManagerV2({
       clearTimeout(timeout);
       timeoutRef.current = null;
     };
-  }, [controlsProp, rectsMapping, selectedGroupRect, startAnimating, updateLines, visible]);
+  }, [controlsProp, rectsMapping, selectedGroupRect, startAnimating, updateLines,
+    updateLinesRef, visible]);
 
   return (
     <>

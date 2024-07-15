@@ -26,7 +26,7 @@ import {
 import BlockType from '@interfaces/BlockType';
 import { useDrop } from 'react-dnd';
 import CanvasContainer, { GRID_SIZE } from './index.style';
-import LineManagerV2, { ANIMATION_DURATION as ANIMATION_DURATION_LINES, EASING } from './Lines/LineManagerV2';
+import LineManagerV2, { UpdateLinesType, ANIMATION_DURATION as ANIMATION_DURATION_LINES, EASING } from './Lines/LineManagerV2';
 import DragWrapper from '../../Canvas/Nodes/DragWrapper';
 import HeaderUpdater from '../../Layout/Header/Updater';
 import PipelineExecutionFrameworkType,
@@ -109,7 +109,10 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
   const imageDataRef = useRef<string>(null);
   const wrapperRef = useRef(null);
   const timeoutRef = useRef(null);
+  const timeoutUpdateAppRectsRef = useRef(null);
+  const timeoutUpdateOutputRectsRef = useRef(null);
   const nodesToBeRenderedRef = useRef<Record<string, boolean>>({});
+  const updateLinesRef = useRef<UpdateLinesType>(null);
 
   const [isAnimating, setIsAnimating] = useState(true);
   const animationTimeoutRef = useRef(null);
@@ -580,6 +583,7 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
   }
 
   function handleLineTransitions() {
+    console.log('handleLineTransitions');
     controlsForLines.start(({
       index,
       isOutput,
@@ -1694,6 +1698,7 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
         item: AppNodeType | BlockType | FrameworkType | OutputNodeType,
         idx: number,
       ) => {
+        let block = item;
         let itemUUID = (item as any)?.uuid ?? (item as any)?.id;
         const nodeID = (item as any)?.uuid ?? (item as any)?.id;
         let rect = rectsmap?.[nodeID] ?? {
@@ -1702,7 +1707,8 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
         };
 
         if ([ItemTypeEnum.APP, ItemTypeEnum.OUTPUT].includes(nodeType)) {
-          itemUUID = (item as any)?.block?.uuid;
+          block = (item as any)?.block;
+          itemUUID = block?.uuid;
         }
 
         let dragRef = dragRefs.current[nodeID];
@@ -1754,26 +1760,57 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
             <WithOnMount
               key={`${itemUUID}:${nodeID}:${nodeType}`}
               onMount={() => {
+                const updateRects = (toRef) => {
+                  clearTimeout(toRef.current);
+
+                  const el = getClosestChildRole(dragRef?.current, [ElementRoleEnum.CONTENT]);
+                  const rt = el?.getBoundingClientRect() ?? dragRef?.current?.getBoundingClientRect?.();
+
+                  if (rt?.height > 0 && rt?.width > 0) {
+                    const rect2 = {
+                      ...rectsMappingRef.current[nodeID],
+                      ...rect,
+                      block,
+                      height: rt?.height ?? rect?.height ?? 0,
+                      width: rt?.width ?? rect?.width ?? 0,
+                    };
+                    rectsMappingRef.current[nodeID] = rect2;
+
+                    updateLinesRef?.current?.(
+                      {
+                        [nodeID]: rect2,
+                        [block.uuid]: rectsMappingRef.current[block.uuid],
+                      },
+                      { ...getSelectedGroupRectFromRefs() },
+                      { replace: false },
+                    );
+
+                    setTimeout(() => {
+                      handleLineTransitions();
+                    }, 1);
+                  } else {
+                    toRef.current = setTimeout(() => {
+                      updateRects(toRef);
+                    }, 300);
+                  }
+                };
+
                 if (ItemTypeEnum.APP === nodeType) {
                   appNodeRefs?.current?.[itemUUID]?.render?.(dragRef);
+
+                  clearTimeout(timeoutUpdateAppRectsRef.current);
+                  timeoutUpdateAppRectsRef.current =
+                    setTimeout(() => updateRects(timeoutUpdateAppRectsRef.current), 100);
                 } else {
                   const {
                     render,
                   } = outputNodeRefs?.current?.[itemUUID] ?? {};
                   render?.(item as OutputNodeType, dragRef);
+
+                  clearTimeout(timeoutUpdateOutputRectsRef.current);
+                  timeoutUpdateOutputRectsRef.current =
+                    setTimeout(() => updateRects(timeoutUpdateOutputRectsRef.current), 100);
                 }
-                setTimeout(() => {
-                  const el = getClosestChildRole(dragRef?.current, [ElementRoleEnum.CONTENT]);
-                  const rt = el?.getBoundingClientRect() ?? dragRef?.current?.getBoundingClientRect?.();
-                  console.log(itemUUID, nodeID, rt);
-                  setRectsMapping(prev => ({
-                    ...prev,
-                    [nodeID]: {
-                      ...rt,
-                      block: item?.block,
-                    },
-                  }));
-                }, 1000);
               }}
               uuid={`${itemUUID}:${nodeID}`}
             />,
@@ -1781,7 +1818,7 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
         }
 
         const node = {
-          block: items,
+          block,
           id: nodeID,
           type: nodeType,
         } as NodeType;
@@ -1856,6 +1893,7 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
         node.rect = node.rect ?? item.rect;
         node.rect.left = left;
         node.rect.top = top;
+        node.rect.block = { uuid: item.block.uuid };
 
         const element = dragRefs.current[node.id].current;
         if (element) {
@@ -1994,15 +2032,15 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
                     {outputMemo}
                     {nodesMemo}
                     {selectedGroupNode}
-
+                    {console.log(rectsMapping, rectsMappingRef?.current)}
                     <LineManagerV2
                       controls={controlsForLines}
-                      outputNodes={outputNodes}
                       rectsMapping={{
                         ...rectsMapping,
                         ...rectsMappingRef?.current,
                       }}
                       selectedGroupRect={selectedGroupRect}
+                      updateLinesRef={updateLinesRef}
                     />
                   </div>
                 </motion.div>
