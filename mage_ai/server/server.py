@@ -225,7 +225,7 @@ def replace_base_path(base_path: str) -> str:
                 with open(filepath, encoding='utf-8') as f:
                     s = f.read()
                 s = s.replace(BASE_PATH_PLACEHOLDER, base_path)
-                s = s.replace('src:url(/fonts', f'src:url(/{base_path}/fonts')
+                s = s.replace("src: url('/fonts", f"src:url('/{base_path}/fonts")
                 s = s.replace('href="/favicon.ico"', f'href="/{base_path}/favicon.ico"')
                 # replace favicon
                 with open(filepath, 'w', encoding='utf-8') as f:
