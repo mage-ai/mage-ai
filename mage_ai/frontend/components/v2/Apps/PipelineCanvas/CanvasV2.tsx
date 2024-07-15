@@ -1,4 +1,5 @@
 import React, { createRef, useEffect, useMemo, useRef, useState, startTransition, useCallback } from 'react';
+import { get, update } from './cache';
 import { findLargestUnoccupiedSpace } from '@utils/rects';
 import { snapToGrid } from '../../Canvas/utils/snapToGrid';
 import { handleSaveAsImage } from './utils/images';
@@ -1715,8 +1716,11 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
         }
 
         if ([ItemTypeEnum.APP, ItemTypeEnum.OUTPUT].includes(nodeType)) {
+          const cache = get(`${executionFrameworkUUID}:${pipelineUUID}`) ?? {};
           if (nodeID in rectsMappingRef?.current) {
             rect = rectsMappingRef.current[nodeID];
+          } else if (nodeID in cache) {
+            rect = cache[nodeID];
           } else {
             const rectg = getSelectedGroupRectFromRefs();
             const bbox = canvasRef?.current?.getBoundingClientRect();
@@ -1730,8 +1734,10 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
 
             const rects = Object.values(rectsMappingRef.current ?? {}).map(r => ({
               ...r,
-              height: ItemTypeEnum.APP === r.type ? 1120 : ItemTypeEnum.OUTPUT === r.type ? 418 : r.height,
-              width: ItemTypeEnum.APP === r.type ? 620 : ItemTypeEnum.OUTPUT === r.type ? 400 : r.width,
+              height: ItemTypeEnum.APP === r.type
+                ? 1120 : ItemTypeEnum.OUTPUT === r.type ? 418 : r.height,
+              width: ItemTypeEnum.APP === r.type
+                ? 620 : ItemTypeEnum.OUTPUT === r.type ? 400 : r.width,
             })) as any[];
             const lrg =
               findLargestUnoccupiedSpace(
@@ -1845,6 +1851,9 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
         }
 
         rectsMappingRef.current[node.id] = node.rect;
+        update(`${executionFrameworkUUID}:${pipelineUUID}`, {
+          [node.id]: node.rect,
+        });
         return undefined;
       },
     }), [],
