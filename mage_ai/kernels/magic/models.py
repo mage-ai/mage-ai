@@ -21,17 +21,22 @@ from mage_ai.shared.models import BaseDataClass
 
 @dataclass
 class ProcessDetails(BaseDataClass):
+    data: Optional[List[Dict]] = field(default_factory=list)
     exitcode: Optional[int] = None
     is_alive: Optional[bool] = None
+    internal_state: Optional[str] = None
     message: Optional[str] = None
     message_request_uuid: Optional[str] = None
     message_uuid: Optional[str] = None
+    output_file: Optional[str] = None
     pid: Optional[int] = None
+    pid_spawn: Optional[int] = None
     source: Optional[str] = None
     stream: Optional[str] = None
     timestamp: Optional[int] = field(
         default_factory=lambda: int(datetime.utcnow().timestamp() * 1000)
     )
+    timestamp_end: Optional[int] = None
     uuid: Optional[str] = None
 
 
@@ -95,9 +100,7 @@ class ProcessContext(BaseDataClass):
 
 class Kernel(KernelBase):
     def __init__(self, *args, kernel_id: Optional[str] = None, **kwargs):
-        super().__init__(
-            None, *args, kernel_id=kernel_id or 'magic', kernel_name='python3', **kwargs
-        )
+        super().__init__(*args, kernel_id=kernel_id or 'magic', kernel_name='python3', **kwargs)
         self._processes_hydrated = False
 
     @property
@@ -115,6 +118,25 @@ class Kernel(KernelBase):
                 # In case the process ends and no longer exists
                 continue
         return processes
+
+    @property
+    def state(self) -> Optional[str]:
+        return self.kernel.get_state()
+
+    def is_ready(self) -> Optional[bool]:
+        return self.kernel.is_ready()
+
+    def is_alive(self) -> Optional[bool]:
+        return self.kernel.is_alive()
+
+    def is_closed(self) -> Optional[bool]:
+        return self.kernel.is_closed()
+
+    def is_running(self) -> Optional[bool]:
+        return self.kernel.is_running()
+
+    def is_terminated(self) -> Optional[bool]:
+        return self.kernel.is_terminated()
 
     def process_status(self, process: SpawnProcess) -> ProcessStatus:
         if process.is_alive() and process.pid:
@@ -151,3 +173,6 @@ class Kernel(KernelBase):
 
         self._processes = kernel_processes
         self._processes_hydrated = True
+
+    def get_process_details(self) -> List[Any]:
+        return self.kernel.processes or []

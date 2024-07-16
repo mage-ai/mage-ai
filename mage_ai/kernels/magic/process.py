@@ -2,9 +2,11 @@ import asyncio
 from asyncio import Event as AsyncEvent
 from datetime import datetime
 from multiprocessing import Queue
-from multiprocessing.pool import AsyncResult
+from multiprocessing.pool import CLOSE, INIT, RUN, TERMINATE, AsyncResult
 from typing import Any, Callable, Dict, Iterable, Mapping, Optional, Protocol, Union
 from uuid import uuid4
+
+import psutil
 
 from mage_ai.kernels.magic.execution import execute_code_async
 from mage_ai.kernels.magic.models import ProcessContext, ProcessDetails
@@ -63,6 +65,7 @@ class ProcessBase:
         stream: Optional[str] = None,
         **kwargs,
     ):
+        self.internal_state = INIT
         self.message = message
         self.message_request_uuid = message_request_uuid
         self.message_uuid = uuid4().hex
@@ -72,7 +75,11 @@ class ProcessBase:
         self.stream = stream
         self.stop_event = None
         self.timestamp = None
+        self.timestamp_end = None
         self.uuid = uuid
+
+        self._pid = None
+        self._pid_data = []
 
         if is_debug():
             print(f'[Process.__init__] Initialized process with UUID: {self.uuid}')
@@ -92,16 +99,20 @@ class ProcessBase:
     @property
     def details(self) -> ProcessDetails:
         return ProcessDetails.load(
+            data=self._pid_data,
             exitcode=self.exitcode,
+            internal_state=self.internal_state,
             is_alive=self.is_alive,
             message=self.message,
             message_request_uuid=self.message_request_uuid,
             message_uuid=self.message_uuid,
             output_file=self.output_file,
+            pid=self.pid,
+            pid_spawn=self._pid,
             source=self.source,
             stream=self.stream,
-            pid=self.pid,
             timestamp=self.timestamp,
+            timestamp_end=self.timestamp_end,
             uuid=self.uuid,
         )
 
@@ -118,6 +129,13 @@ class ProcessBase:
         timestamp: Optional[float] = None,
     ):
         self.stop_event = AsyncEvent()
+
+        def process_apply_async_callback(*args, **kwargs):
+            self.timestamp_end = datetime.utcnow().timestamp() * 1000
+            self.internal_state = CLOSE
+            self._pid_data.append(psutil.Process(self._pid).as_dict())
+
+        pids0 = [pr.pid for pr in pool._pool]
         self.result = pool.apply_async(
             execute_message,
             args=[
@@ -131,7 +149,16 @@ class ProcessBase:
                 self.output_file,
             ],
             kwds={},
+            callback=process_apply_async_callback,
         )
+        pids1 = [pr.pid for pr in pool._pool if pr.pid not in pids0]
+        self._pid = (pids1 + pids0)[0]
+
+        if self._pid:
+            self._pid_data.append(psutil.Process(self._pid).as_dict())
+
+        self.internal_state = RUN
+
         now = datetime.utcnow().timestamp()
         self.timestamp = int(now * 1000)
 
@@ -141,6 +168,8 @@ class ProcessBase:
     def terminate(self):
         if self.stop_event is not None:
             self.stop_event.set()
+            self.timestamp_end = datetime.utcnow().timestamp() * 1000
+            self.internal_state = TERMINATE
 
 
 class Process(ProcessBase):

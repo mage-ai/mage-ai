@@ -54,6 +54,7 @@ export type BlockNodeProps = {
   executing?: boolean;
   groupSelection?: boolean;
   index?: number;
+  loading?: boolean;
   openEditor: (event: any) => void;
   node: NodeItemType
   onMount?: (port: PortType, portRef: React.RefObject<HTMLDivElement>) => void;
@@ -71,6 +72,7 @@ export default function BlockNodeComponent({
   groupSelection,
   executing,
   handlers,
+  loading,
   node,
   dragRef,
   index: indexProp,
@@ -203,10 +205,10 @@ export default function BlockNodeComponent({
           ? 'green'
           : 'blue',
     buttonRef: buttonBeforeRef,
-    loading: executing,
+    loading: executing || loading,
     className: stylesBlockNode.beforeButton,
     onClick: submitCodeExecution,
-  }), [buttonBeforeRef, status, submitCodeExecution, executing]);
+  }), [buttonBeforeRef, status, submitCodeExecution, executing, loading]);
 
   const badge = useMemo(() => ItemTypeEnum.NODE === node?.type
     ? {

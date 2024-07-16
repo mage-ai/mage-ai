@@ -52,5 +52,8 @@ KernelProcessPolicy.allow_query(
         constants.DETAIL,
         constants.LIST,
     ],
+    scopes=[
+        OauthScope.CLIENT_PRIVATE,
+    ],
     condition=lambda policy: policy.has_at_least_viewer_role(),
 )

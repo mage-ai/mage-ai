@@ -4,8 +4,9 @@ from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
 from multiprocessing import Event, Pool, Queue
 from multiprocessing.managers import SyncManager
+from multiprocessing.pool import CLOSE, INIT, RUN, TERMINATE
 from queue import Empty
-from typing import List, Optional, cast
+from typing import Any, List, Optional, cast
 
 from mage_ai.kernels.magic.models import Kernel as KernelDetails
 from mage_ai.kernels.magic.models import ProcessContext
@@ -67,12 +68,42 @@ class Kernel:
             args=(self.read_queue, self.write_queue, self.stop_event), start=True
         )
 
-    @property
-    def details(self) -> KernelDetails:
+    async def get_details(self) -> KernelDetails:
         return KernelDetails(
+            self,
             kernel_id=self.uuid,
-            processes=getattr(self.pool, '_pool', []) if self.pool is not None else [],
+            processes=self.get_processes(),
         )
+
+    def get_processes(self) -> List[Any]:
+        processes = getattr(self.pool, '_pool', []) if self.pool is not None else []
+        return processes
+
+    def get_state(self) -> Optional[str]:
+        # Pool.INIT
+        # Pool.RUN
+        # Pool.CLOSE
+        # Pool.TERMINATE
+        if self.pool is None:
+            return ''
+
+        pool: Any = self.pool
+        return str(pool._state)
+
+    def is_alive(self) -> Optional[bool]:
+        return self.is_ready() is True and (self.get_state() == INIT or self.is_running() is True)
+
+    def is_ready(self) -> Optional[bool]:
+        return not self.is_terminated() and not self.is_closed()
+
+    def is_running(self) -> Optional[bool]:
+        return self.get_state() == RUN
+
+    def is_closed(self) -> Optional[bool]:
+        return self.get_state() == CLOSE
+
+    def is_terminated(self) -> Optional[bool]:
+        return self.get_state() == TERMINATE
 
     def force_terminate(self):
         if self.pool is not None:
@@ -98,9 +129,15 @@ class Kernel:
         if is_debug():
             print('[Manager.start_processes]', now - (timestamp or 0))
 
+        self.processes = [pr for pr in self.processes if pr.internal_state is not CLOSE]
+
         process = Process(
-          self.uuid, message, message_request_uuid=message_request_uuid,
-          output_file=output_file, source=source, stream=stream
+            self.uuid,
+            message,
+            message_request_uuid=message_request_uuid,
+            output_file=output_file,
+            source=source,
+            stream=stream,
         )
         if (
             self.pool is not None

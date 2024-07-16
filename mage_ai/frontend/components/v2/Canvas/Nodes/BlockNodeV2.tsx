@@ -162,6 +162,7 @@ function BlockNode({
   const isGroup =
     useMemo(() => !type || [BlockTypeEnum.GROUP, BlockTypeEnum.PIPELINE].includes(type), [type]);
   const [executing, setExecuting] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   // Controls
   const timerStatusRef = useRef(null);
@@ -191,6 +192,9 @@ function BlockNode({
     mutations.files.detail.mutate({
       event,
       id: file?.path,
+      onError: () => {
+        setLoading(false);
+      },
       onSuccess: ({ data }) => {
         fileRef.current = data?.browser_item;
         updateOutputResults();
@@ -246,25 +250,29 @@ function BlockNode({
         output_dir: file?.path ?? null,
         source: block.uuid,
       }, {
-        future: true,
         onError: () => {
           getClosestRole(event.target as HTMLElement, [ElementRoleEnum.BUTTON]);
           setExecuting(false);
+          setLoading(false);
+        },
+        onSuccess: () => {
+          setLoading(false);
         },
       });
-
-      setExecuting(true);
     };
 
     launchOutputCallbackOnceRef.current = () => {
       getFile(event, execute);
     };
+
     launchOutput(channel, () => {
       if (launchOutputCallbackOnceRef.current) {
         launchOutputCallbackOnceRef.current();
       }
       launchOutputCallbackOnceRef.current = null;
     });
+
+    setLoading(true);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [block, node, executeCode]);
 
@@ -553,6 +561,7 @@ function BlockNode({
         dragRef={dragRef}
         executing={executing}
         groupSelection={groupSelection}
+        loading={loading}
         node={node}
         openEditor={launchEditorApp}
         submitCodeExecution={submitCodeExecution}

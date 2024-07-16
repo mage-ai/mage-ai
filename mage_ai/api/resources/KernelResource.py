@@ -21,9 +21,10 @@ class KernelResource(GenericResource):
         kernels = []
 
         if KERNEL_MAGIC:
-            for kernel_details in KernelManager.get_kernels():
-                await kernel_details.hydrate_processes()
-                kernels.append(kernel_details)
+            for kernel_details in await KernelManager.get_kernels():
+                if kernel_details is not None:
+                    await kernel_details.hydrate_processes()
+                    kernels.append(kernel_details)
 
         if Project().is_feature_enabled(FeatureUUID.AUTOMATIC_KERNEL_CLEANUP):
             # Only do this every minute
@@ -51,11 +52,11 @@ class KernelResource(GenericResource):
 
     @classmethod
     @safe_db_query
-    def member(cls, pk, user, **kwargs):
+    async def member(cls, pk, user, **kwargs):
         if KERNEL_MAGIC:
             if pk in KernelManager.kernels:
                 kernel = KernelManager.get_kernel(pk, existing_only=True)
-                return cls(kernel.details, user, **kwargs)
+                return cls(await kernel.get_details(), user, **kwargs)
 
         kernel_fallback = None
         kernels_by_id = {}

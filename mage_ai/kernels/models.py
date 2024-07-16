@@ -106,6 +106,7 @@ class KernelBase:
 @dataclass
 class KernelProcess(BaseDataClass, Delegator):
     active: Optional[bool] = None
+    alive: Optional[bool] = None
     cmdline: Optional[str] = None
     connection_file: Optional[str] = None
     connections: Optional[List[PConn]] = None
@@ -121,7 +122,9 @@ class KernelProcess(BaseDataClass, Delegator):
     pid: Optional[int] = None
     ppid: Optional[int] = None
     process: Optional[Process] = None
+    running: Optional[bool] = None
     status: Optional[Union[ProcessStatus, str]] = None
+    status_raw: Optional[str] = None
     username: Optional[str] = None
 
     def __post_init__(self):
@@ -202,32 +205,54 @@ class Kernel:
         self._kernel_name = value
 
     @property
-    def processes(self) -> Optional[List[KernelProcess]]:
+    def processes(self) -> Optional[List[Any]]:
         return []
+
+    @property
+    def state(self) -> Optional[str]:
+        return None
+
+    def is_ready(self) -> Optional[bool]:
+        return None
+
+    def is_alive(self) -> Optional[bool]:
+        return None
+
+    def is_closed(self) -> Optional[bool]:
+        return None
+
+    def is_running(self) -> Optional[bool]:
+        return None
+
+    def is_terminated(self) -> Optional[bool]:
+        return None
 
     async def prepare_usage(self):
         pass
 
-    def is_ready(self) -> bool:
-        return True
-
-    def is_alive(self) -> bool:
-        return True
-
     def interrupt(self) -> bool:
-        return True
+        return False
 
     def restart(self) -> bool:
-        return True
+        return False
 
     def start(self) -> bool:
-        return True
+        return False
+
+    def get_process_details(self) -> List[Any]:
+        return []
 
     def to_dict(self) -> Dict:
         return dict(
             alive=self.is_alive(),
+            closed=self.is_closed(),
             id=self.kernel_id,
             name=self.kernel_name,
+            process_details=self.get_process_details(),
             processes=self.processes,
+            ready=self.is_ready(),
+            running=self.is_running(),
+            state=self.state,
+            terminated=self.is_terminated(),
             usage=self.usage,
         )
