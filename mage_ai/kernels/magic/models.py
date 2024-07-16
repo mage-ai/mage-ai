@@ -25,6 +25,7 @@ class ProcessDetails(BaseDataClass):
     exitcode: Optional[int] = None
     is_alive: Optional[bool] = None
     internal_state: Optional[str] = None
+    kernel_uuid: Optional[str] = None
     message: Optional[str] = None
     message_request_uuid: Optional[str] = None
     message_uuid: Optional[str] = None

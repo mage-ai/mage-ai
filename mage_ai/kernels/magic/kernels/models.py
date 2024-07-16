@@ -6,7 +6,7 @@ from multiprocessing import Event, Pool, Queue
 from multiprocessing.managers import SyncManager
 from multiprocessing.pool import CLOSE, INIT, RUN, TERMINATE
 from queue import Empty
-from typing import Any, List, Optional, cast
+from typing import Any, Dict, List, Optional, cast
 
 from mage_ai.kernels.magic.models import Kernel as KernelDetails
 from mage_ai.kernels.magic.models import ProcessContext
@@ -134,6 +134,7 @@ class Kernel:
         process = Process(
             self.uuid,
             message,
+            kernel_uuid=self.uuid,
             message_request_uuid=message_request_uuid,
             output_file=output_file,
             source=source,
@@ -251,3 +252,11 @@ class Kernel:
         if self.pool is not None:
             await asyncio.get_event_loop().run_in_executor(self.executor, self.pool.terminate)
             await asyncio.get_event_loop().run_in_executor(self.executor, self.pool.join)
+
+    def to_dict(self) -> Dict:
+        return dict(
+            active=self.active,
+            num_processes=self.num_processes,
+            processes=self.processes,
+            uuid=self.uuid,
+        )

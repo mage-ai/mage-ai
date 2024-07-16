@@ -59,6 +59,7 @@ class ProcessBase:
         uuid: str,
         message: str,
         *args,
+        kernel_uuid: Optional[str] = None,
         message_request_uuid: Optional[str] = None,
         output_file: Optional[str] = None,
         source: Optional[str] = None,
@@ -66,6 +67,7 @@ class ProcessBase:
         **kwargs,
     ):
         self.internal_state = INIT
+        self.kernel_uuid = kernel_uuid
         self.message = message
         self.message_request_uuid = message_request_uuid
         self.message_uuid = uuid4().hex
@@ -103,6 +105,7 @@ class ProcessBase:
             exitcode=self.exitcode,
             internal_state=self.internal_state,
             is_alive=self.is_alive,
+            kernel_uuid=self.kernel_uuid,
             message=self.message,
             message_request_uuid=self.message_request_uuid,
             message_uuid=self.message_uuid,
