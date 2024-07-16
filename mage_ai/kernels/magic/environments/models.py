@@ -4,7 +4,7 @@ import asyncio
 import json
 import os
 import pickle
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Any, Dict, List, Optional
 
 import joblib
@@ -12,7 +12,6 @@ import joblib
 from mage_ai.kernels.magic.environments.enums import EnvironmentType, EnvironmentUUID
 from mage_ai.kernels.magic.environments.utils import decrypt_secret, encrypt_secret
 from mage_ai.settings.repo import get_repo_path, get_variables_dir
-from mage_ai.shared.array import flatten
 from mage_ai.shared.dates import now
 from mage_ai.shared.files import (
     exists_async,
@@ -37,8 +36,8 @@ ENVIRONMENT_VARIABLES_FILENAME = 'environment_variables.joblib'
 class Environment(BaseDataClass):
     type: EnvironmentType
     uuid: str
-    environment_variables: Optional[Dict] = field(default_factory=dict)
-    variables: Optional[Dict] = field(default_factory=dict)
+    environment_variables: Optional[Dict] = None
+    variables: Optional[Dict] = None
 
     @classmethod
     def get_default(cls) -> Environment:
@@ -76,37 +75,65 @@ class Environment(BaseDataClass):
 
 
 @dataclass
+class ExecutionOutput(BaseDataClass):
+    id: str
+    messages: Optional[List[Dict]] = None
+    environment: Optional[Environment] = None
+    output: Optional[Any] = None
+
+    def __post_init__(self):
+        self.serialize_attribute_class('environment', Environment)
+
+
+@dataclass
 class OutputManager(BaseDataClass):
     namespace: str
     path: str
     uuid: str
 
     @classmethod
-    async def get_all_messages(
-        cls, namespace: str, path: str, limit: Optional[int] = 10
-    ) -> List[Dict]:
-        absolute_path = os.path.join(get_variables_dir(), namespace, path)
+    async def load_with_messages(
+        cls, path: str, namespace: str, limit: Optional[int] = 10
+    ) -> List[ExecutionOutput]:
+        absolute_path = os.path.join(get_variables_dir(), path, namespace)
         paths = sorted(os.listdir(absolute_path), key=lambda x: x.lower())[:limit]
-        list_of_messages = await asyncio.gather(*[
-            cls.deserialize_output(os.path.join(absolute_path, fpath)) for fpath in paths
+
+        execution_outputs = await asyncio.gather(*[
+            cls.deserialize_output(os.path.join(absolute_path, fpath), namespace=namespace)
+            for fpath in paths
         ])
-        return flatten(list_of_messages)
+        return execution_outputs
 
     @classmethod
-    async def deserialize_output(cls, path: str) -> List[Dict]:
-        path = os.path.join(path, MESSAGES_FILENAME)
-        if await exists_async(path):
-            text = await read_async(path)
+    async def deserialize_output(cls, path: str, namespace: str) -> ExecutionOutput:
+        file_path = os.path.join(path, MESSAGES_FILENAME)
+        arr = []
+        if await exists_async(file_path):
+            text = await read_async(file_path)
             if text:
-                return [json.loads(line) for line in text.split('\n') if line.strip()]
-        return []
+                for line in text.split('\n'):
+                    if line.strip():
+                        data = json.loads(line)
+                        arr.append(data)
+
+        env_type, env_uuid = os.path.split(namespace)
+        environment = Environment.load(type=env_type, uuid=env_uuid)
+
+        return ExecutionOutput.load(
+            id=os.path.basename(path),
+            messages=arr,
+            environment=environment,
+        )
 
     @property
     def absolute_path(self) -> str:
-        return os.path.join(get_variables_dir(), self.namespace, self.path, self.uuid)
+        return os.path.join(get_variables_dir(), self.path, self.namespace, self.uuid)
 
-    async def get_messages(self, limit: Optional[int] = 10) -> List[Dict]:
-        return await self.deserialize_output(os.path.join(self.absolute_path, MESSAGES_FILENAME))
+    async def get_messages(self, limit: Optional[int] = 10) -> ExecutionOutput:
+        return await self.deserialize_output(
+            os.path.join(self.absolute_path, MESSAGES_FILENAME),
+            self.namespace,
+        )
 
     async def delete(self, if_empty: Optional[bool] = None) -> None:
         if await exists_async(self.absolute_path) and (

@@ -1,0 +1,35 @@
+from mage_ai.api.errors import ApiError
+from mage_ai.api.resources.GenericResource import GenericResource
+from mage_ai.kernels.magic.environments.models import OutputManager
+from mage_ai.shared.path_fixer import remove_base_repo_directory_name
+
+
+class ExecutionOutputResource(GenericResource):
+    @classmethod
+    async def collection(cls, query, _meta, user, **kwargs):
+        path = query.get('path')
+        if path:
+            path = path[0]
+
+        if path is None:
+            raise ApiError({
+                **ApiError.RESOURCE_INVALID,
+                **dict(message='Path query parameter is required'),
+            })
+
+        namespace = query.get('namespace')
+        if namespace:
+            namespace = namespace[0]
+
+        if namespace is None:
+            raise ApiError({
+                **ApiError.RESOURCE_INVALID,
+                **dict(message='Namespace query parameter is required'),
+            })
+
+        outputs = await OutputManager.load_with_messages(
+            remove_base_repo_directory_name(path),
+            namespace,
+        )
+
+        return cls.build_result_set(outputs, user, **kwargs)

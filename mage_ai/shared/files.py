@@ -100,9 +100,9 @@ def find_directory(top_level_path: str, comparator: Callable) -> str:
 
 def get_absolute_paths_from_all_files(
     starting_full_path_directory: str,
-    comparator: Callable = None,
+    comparator: Optional[Callable] = None,
     include_hidden_files: bool = False,
-    parse_values: Callable = None,
+    parse_values: Optional[Callable] = None,
 ) -> List[Tuple[str, int, str]]:
     dir_path = os.path.join(starting_full_path_directory, './**/*')
 
@@ -119,6 +119,38 @@ def get_absolute_paths_from_all_files(
             arr.append(parse_values(value) if parse_values else value)
 
     return arr
+
+
+async def get_file_info(
+    filename: str, parse_values: Optional[Callable] = None
+) -> Tuple[str, int, str]:
+    absolute_path = os.path.abspath(filename)
+    async with aiofiles.open(filename, 'rb') as f:
+        stats = await f.stat()
+        value = (absolute_path, stats.st_size, round(stats.st_mtime))
+        return parse_values(value) if parse_values else value
+
+
+async def get_absolute_paths_from_all_files_async(
+    starting_full_path_directory: str,
+    comparator: Optional[Callable] = None,
+    include_hidden_files: bool = False,
+    parse_values: Optional[Callable] = None,
+) -> List[Tuple[str, int, str]]:
+    dir_path = os.path.join(starting_full_path_directory, './**/*')
+
+    tasks = []
+    for filename in glob.iglob(dir_path, recursive=True):
+        absolute_path = os.path.abspath(filename)
+
+        if (
+            os.path.isfile(absolute_path)
+            and (not include_hidden_files or not absolute_path.startswith('.'))
+            and (not comparator or comparator(absolute_path))
+        ):
+            tasks.append(get_file_info(absolute_path, parse_values))
+
+    return await asyncio.gather(*tasks)
 
 
 def find_file_from_another_file_path(file_path: str, comparator) -> str:

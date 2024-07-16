@@ -1,5 +1,6 @@
+import * as osPath from 'path';
 import BlockNodeComponent, { BADGE_HEIGHT, PADDING_VERTICAL } from './BlockNode';
-import { EnvironmentTypeEnum, EnvironmentUUIDEnum, EnvironmentType } from '@interfaces/CodeExecutionType';
+import { EnvironmentTypeEnum, EnvironmentUUIDEnum, EnvironmentType, ExecutionOutputType } from '@interfaces/CodeExecutionType';
 import Circle from '@mana/elements/Circle';
 import { getUpDownstreamColors } from './Blocks/utils';
 import { ModelContext } from '@components/v2/Apps/PipelineCanvas/ModelManager/ModelContext';
@@ -167,7 +168,7 @@ function BlockNode({
       });
     },
     onMount: () => {
-      // updateOutputResults();
+      updateOutputResults();
     },
     setHandleOnMessage: (consumerID, handler) => {
       handleOnMessageRef.current[consumerID] = handler;
@@ -225,6 +226,35 @@ function BlockNode({
     },
   });
 
+  const executionOutputs = useMutate({
+    resource: 'execution_outputs',
+  });
+
+  function updateOutputResults() {
+    executionOutputs.list.mutate({
+      onSuccess: ({ data }) => {
+        const xo: ExecutionOutputType[] = data.execution_outputs ?? [];
+        executionResultMappingRef.current = xo.reduce((acc1, { messages }) => ({
+          ...acc1,
+          ...(messages ?? []).reduce((acc2, result) => ({
+            ...acc2,
+            [result.result_id]: result,
+          }), {}),
+        }), {});
+
+        Object.values(handleResultMappingUpdateRef.current ?? {}).forEach(
+          handler => handler(executionResultMappingRef.current ?? {}),
+        );
+      },
+      query: {
+        namespace: encodeURIComponent(
+          [codeExecutionEnvironment.type, codeExecutionEnvironment.uuid].join(osPath.sep),
+        ),
+        path: encodeURIComponent(fileRef.current?.path),
+      },
+    });
+  }
+
   const interruptExecution = useCallback((opts?: {
     onError?: () => void;
     onSuccess?: () => void;
@@ -252,15 +282,6 @@ function BlockNode({
   const { executeCode } = useExecuteCode(channel, STEAM_OUTPUT_DIR);
   const { subscribe, unsubscribe } = useRegistration(channel, STEAM_OUTPUT_DIR);
 
-  function updateOutputResults() {
-    executionResultMappingRef.current =
-      indexBy(fileRef.current?.output ?? [], r => r.result_id);
-
-    Object.values(handleResultMappingUpdateRef.current ?? {}).forEach(
-      handler => handler(executionResultMappingRef.current ?? {}),
-    );
-  }
-
   function getFile(event: any, callback?: () => void) {
     const { configuration } = block ?? {};
     const { file } = configuration ?? {};
@@ -274,7 +295,7 @@ function BlockNode({
       },
       onSuccess: ({ data }) => {
         fileRef.current = data?.browser_item;
-        // updateOutputResults();
+        updateOutputResults();
 
         const fmodel = data?.browser_item;
         updateFileCache({
