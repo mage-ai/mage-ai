@@ -15,7 +15,7 @@ from mage_ai.data_preparation.models.pipeline import Pipeline as PipelineBase
 from mage_ai.frameworks.execution.models.block.adapter import Block
 from mage_ai.frameworks.execution.models.enums import ExecutionFrameworkUUID
 from mage_ai.settings.repo import get_repo_path
-from mage_ai.shared.files import find_files_with_criteria, remove_subpath
+from mage_ai.shared.files import find_files_with_criteria
 from mage_ai.shared.models import DelegatorTarget
 
 
@@ -43,7 +43,7 @@ class Pipeline(DelegatorTarget):
         config = await asyncio.to_thread(yaml.safe_load, content)
 
         uuid = os.path.basename(dir_name)
-        repo_path = remove_subpath(dir_name, os.path.join(PIPELINES_FOLDER, uuid))
+        repo_path = dir_name.split(os.path.join(PIPELINES_FOLDER, uuid))[0]
         pipeline = PipelineBase(repo_path=repo_path, uuid=uuid)
         pipeline.load_config(config)
 

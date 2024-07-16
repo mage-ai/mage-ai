@@ -1,6 +1,6 @@
 import Ansi from 'ansi-to-react';
 import React, { FC, memo, useRef, useState } from 'react';
-
+import { motion, useDragControls } from 'framer-motion';
 import Button, { ButtonGroup } from '@mana/elements/Button';
 import Divider from '@mana/elements/Divider';
 import Grid from '@mana/components/Grid';
@@ -29,6 +29,7 @@ const ErrorManager: FC<ErrorManagerProps> = memo(function ErrorManager({
   errorRef,
   retry,
 }: ErrorManagerProps) {
+  const controls = useDragControls();
   const position = randomSample(POSITIONS);
   const {
     error,
@@ -42,20 +43,28 @@ const ErrorManager: FC<ErrorManagerProps> = memo(function ErrorManager({
   const message = error?.message ?? clientError?.message;
   const type = error?.type ?? clientError?.type;
 
+  function startDrag(event) {
+    // Doesn’t do anything...
+    // controls.start(event);
+  }
+
   return (
-    <>
-      <div className={[
-        styles.errorManager,
-        styles[position],
-      ].filter(Boolean).join(' ')}>
+    <div onPointerDown={startDrag}>
+      <motion.div
+        className={[
+          styles.errorManager,
+          styles[position],
+        ].filter(Boolean).join(' ')}
+        dragControls={controls}
+      >
         <Grid
           borderColor="redmd"
           borders
           className={styles.errorContainer}
-          padding={24}
           rowGap={12}
           style={{
             borderWidth: 2,
+            padding: 24,
           }}
           templateColumns="auto"
           templateRows="auto auto"
@@ -143,8 +152,8 @@ const ErrorManager: FC<ErrorManagerProps> = memo(function ErrorManager({
             </ButtonGroup>
           </Grid>
         </Grid>
-      </div>
-    </>
+      </motion.div>
+    </div>
   );
 });
 

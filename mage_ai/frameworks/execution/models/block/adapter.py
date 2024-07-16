@@ -68,8 +68,9 @@ class Block(DelegatorTarget):
 
     async def to_dict_async(self, *args, **kwargs) -> Dict:
         config = self.configuration or {}
-        config['file'] = Item.load(
-          path=get_absolute_path(self.file.file_path)).to_dict() if self.file else None
+        config['file'] = (
+            Item.load(path=get_absolute_path(self.file.file_path)).to_dict() if self.file else None
+        )
 
         return dict(
             configuration=config,

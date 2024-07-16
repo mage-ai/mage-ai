@@ -56,6 +56,7 @@ import { buildOutputNode } from './utils/items';
 import { buildAppNode } from './AppManager/utils';
 import { ElementRoleEnum } from '@mana/shared/types';
 import { GroupUUIDEnum } from '@interfaces/PipelineExecutionFramework/types';
+import { hyphensToSnake } from '@utils/url';
 
 const ENTER_ANIMATION_START_THRESHOLD = 0.6;
 const CHANGE_BLOCKS_ANIMATION_DURATION = 5;
@@ -91,8 +92,8 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
   containerRef,
   // dragEnabled,
   // dropEnabled,
-  executionFrameworkUUID,
-  pipelineUUID,
+  executionFrameworkUUID: executionFrameworkUUIDProp,
+  pipelineUUID: pipelineUUIDProp,
   removeContextMenu,
   renderContextMenu,
   setDragEnabled,
@@ -103,6 +104,11 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
   useExecuteCode,
   useRegistration,
 }: PipelineCanvasV2Props) => {
+  const executionFrameworkUUID =
+    useMemo(() => hyphensToSnake(executionFrameworkUUIDProp), [executionFrameworkUUIDProp]);
+  const pipelineUUID =
+    useMemo(() => hyphensToSnake(pipelineUUIDProp), [pipelineUUIDProp]);
+
   // Refs
   const nodeRefs = useRef<Record<string, React.MutableRefObject<HTMLElement>>>({});
   const dragRefs = useRef<Record<string, React.MutableRefObject<HTMLDivElement>>>({});
@@ -296,7 +302,7 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
   const blocksRef = useRef<BlockType[]>(null);
   const groupsRef = useRef<FrameworkType[]>(null);
   const appNodeRefs = useRef<Record<string, {
-    render: (ref?: React.RefObject<HTMLDivElement>) => void;
+    render: (node: AppNodeType, ref?: React.RefObject<HTMLDivElement>) => void;
   }>>({});
   const outputNodeRefs = useRef<Record<string, {
     render: (node: OutputNodeType, ref?: React.RefObject<HTMLDivElement>) => void;
@@ -1198,7 +1204,7 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
       update: {
         onSuccess: (p1, p2) => {
           updateLocalResources(p1);
-          // setPipeline(p1);
+          setPipeline(p1);
 
           const b1 = p1?.blocks;
           const b2 = p2?.blocks;
@@ -1837,8 +1843,7 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
             key={nodeID}
             rect={rect}
             ref={dragRef}
-          >
-          </DragWrapper>,
+          />,
         );
       });
     });

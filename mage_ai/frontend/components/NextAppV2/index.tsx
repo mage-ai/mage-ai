@@ -3,7 +3,7 @@ import Head from '@mana/elements/Head';
 import HeaderPortal from '../v2/Layout/Header/Portal';
 import ThemeType from '@mana/themes/interfaces';
 import { AppProps } from 'next/app';
-import { LayoutProvider } from '@context/v2/Layout';
+
 import { LayoutVersionEnum } from '@utils/layouts';
 import { MenuProvider } from '@context/v2/Menu';
 import { ModeEnum } from '@mana/themes/modes';
@@ -56,12 +56,10 @@ function NextAppV2({
 
       <ThemeProvider theme={theme}>
         <MenuProvider>
-          <LayoutProvider router={router} theme={theme}>
-            <ContextProvider main router={router} theme={theme as ThemeType}>
-              <HeaderPortal headerRef={headerRef} />
-              <Component {...rest} />
-            </ContextProvider >
-          </LayoutProvider   >
+          <ContextProvider main router={router} theme={theme as ThemeType}>
+            <HeaderPortal headerRef={headerRef} />
+            <Component {...rest} />
+          </ContextProvider >
         </MenuProvider>
       </ThemeProvider>
     </>

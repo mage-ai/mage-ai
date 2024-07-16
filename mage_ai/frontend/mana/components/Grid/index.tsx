@@ -8,6 +8,7 @@ type GridProps = {
   baseRight?: boolean;
   bordersBottom?: boolean;
   children?: React.ReactNode | Element | Element[] | React.ReactNode[] | any | any[];
+  onContextMenu?: (event: any) => void;
   id?: string;
   smallBottom?: boolean;
   smallTop?: boolean;
@@ -16,11 +17,9 @@ type GridProps = {
 
 function Grid({ children, id, onContextMenu, ...props }: GridProps, ref: React.Ref<any>) {
   return (
-    <div onContextMenu={onContextMenu}>
-      <Styled ref={ref} {...props} id={id}>
-        {children && (children as React.ReactNode)}
-      </Styled >
-    </div>
+    <Styled ref={ref} {...props} id={id} onContextMenu={onContextMenu}>
+      {children && (children as React.ReactNode)}
+    </Styled >
   );
 }
 

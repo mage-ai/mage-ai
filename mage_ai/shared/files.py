@@ -323,15 +323,3 @@ async def find_files_with_criteria(
 
     await asyncio.gather(*tasks)
     return files_with_criteria
-
-
-def remove_subpath(full_path: str, subpath: str) -> str:
-    """
-    Remove a specified subpath from the full path.
-    """
-    # Convert paths to use consistent separators if necessary
-    full_path = str(Path(full_path).resolve())
-    subpath = str(Path(subpath).resolve())
-
-    # Replace subpath with an empty string if it exists within the full path
-    return full_path.replace(subpath, '')

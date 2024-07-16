@@ -1,5 +1,6 @@
 import ast
 import json
+import os
 import time
 from asyncio import Event as AsyncEvent
 from contextlib import redirect_stdout
@@ -70,12 +71,16 @@ def modify_and_execute(code_block: str, globals: Dict[str, Any], local_variables
 
     modified_code = ast.Module(body=parsed_code.body, type_ignores=[])
 
+    error = None
     try:
         exec(compile(modified_code, '<string>', 'exec'), globals)
     except Exception as err:
-        print(f'Error during code execution: {err}')
+        error = err
 
     local_variables.update({key: value for key, value in globals.items() if key != '__builtins__'})
+
+    if error:
+        raise error
 
 
 def check_queue(queue: Queue):
@@ -190,7 +195,23 @@ async def execute_code_async(
         reader_thread.start()
 
         with redirect_stdout(async_stdout):
-            modify_and_execute(message, exec_globals, local_variables)
+            try:
+                modify_and_execute(message, exec_globals, local_variables)
+            except Exception as err:
+                result = ExecutionResult.load(
+                    error=ErrorDetails.from_current_error(err),
+                    process=process,
+                    status=ExecutionStatus.ERROR,
+                    type=ResultType.STATUS,
+                    uuid=uuid,
+                )
+                if output_file:
+                    with open(output_file, 'a') as file:
+                        file.write(json.dumps(result.to_dict()) + '\n')
+                        file.flush()
+
+                queue.put(result)
+
             if any(stop_event.is_set() for stop_event in stop_events):
                 raise StopAsyncIteration
 
@@ -224,6 +245,9 @@ async def execute_code_async(
                 with open(output_file, 'a') as file:
                     file.write(json.dumps(result.to_dict()) + '\n')
                     file.flush()
+
+        if output_file and os.path.exists(output_file) and os.path.getsize(output_file) == 0:
+            os.remove(output_file)
 
         queue.put(
             ExecutionResult.load(

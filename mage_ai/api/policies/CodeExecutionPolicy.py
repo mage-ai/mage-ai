@@ -36,6 +36,7 @@ CodeExecutionPolicy.allow_read(
 
 CodeExecutionPolicy.allow_write(
     [
+        'environment',
         'message',
         'message_request_uuid',
         'output_dir',

@@ -80,7 +80,7 @@ export const APIMutationProvider: React.FC<APIMutationProviderProps> = ({
             {!target.content && <Loading />}
             {target.content}
           </div>,
-          document.body
+          document.body,
         )}
       </>
     </APIMutationContext.Provider>

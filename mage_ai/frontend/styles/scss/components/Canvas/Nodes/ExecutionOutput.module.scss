@@ -18,16 +18,16 @@
     border-color: var(--colors-yellowmd);
   }
   &.ready {
-    border-color: var(--borders-color-base-hover);
+    border-color: var(--colors-greenmd);
   }
   &.restarted {
     border-color: var(--borders-color-base-default);
   }
   &.running {
-    border-color: var(--colors-greenmd);
+    border-color: var(--colors-greenlo);
   }
   &.success {
-    border-color: var(--colors-green);
+    border-color: var(--colors-greenmd);
   }
   &.terminated {
     border-color: var(--colors-rosenmd);
