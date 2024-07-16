@@ -10,6 +10,7 @@ import { MenuItemType } from '@mana/components/Menu/interfaces';
 import { ModelManagerType } from '@components/v2/Apps/PipelineCanvas/interfaces';
 
 export type UpdateBlockRequestType = (event: ClientEventType | Event, key: string, value: any, opts?: {
+  callback?: () => void;
   delay?: number;
 }) => void;
 export type SharedBlockProps = {

@@ -26,6 +26,7 @@ import { getBlockColor } from '@mana/themes/blocks';
 import { FileType } from '@components/v2/IDE/interfaces';
 import { AppConfigType } from '@components/v2/Apps/interfaces';
 import { AppNodeType } from '../../interfaces';
+import { onSuccess } from '@api/cleaner/utils/response';
 
 const PADDING_HORIZONTAL = 16;
 
@@ -39,7 +40,10 @@ type EditorAppNodeProps = {
     onError?: () => void;
     onSuccess?: () => void;
   }) => void;
-  submitCodeExecution: (event: any) => void;
+  submitCodeExecution: (event: any, opts?: {
+    onError?: () => void;
+    onSuccess?: () => void;
+  }) => void;
   onClose: () => void;
   width?: number;
 };
@@ -59,6 +63,7 @@ function EditorAppNode({
 }: EditorAppNodeProps & OutputGroupsType) {
   const [asideBeforeOpen, setAsideBeforeOpen] = React.useState(false);
   const [executing, setExecuting] = useState<boolean>(false);
+  const [loading, setLoading] = useState(false);
   const [loadingKernelMutation, setLoadingKernelMutation] = useState<boolean>(false);
 
   const { configuration } = block ?? {};
@@ -164,14 +169,20 @@ function EditorAppNode({
               backgroundcolor={baseColor}
               basic
               bordercolor={baseColor}
-              loading={loadingKernelMutation}
+              loading={loadingKernelMutation || loading}
               onClick={executing ? () => {
                 setLoadingKernelMutation(true);
                 interruptExecution({
                   onError: () => setLoadingKernelMutation(false),
                   onSuccess: () => setLoadingKernelMutation(false),
                 });
-              } : submitCodeExecution}
+              } : (event) => {
+                setLoading(true);
+                submitCodeExecution(event, {
+                  onError: () => setLoading(false),
+                  onSuccess: () => setLoading(false),
+                });
+              }}
               small
             />
           </div>
@@ -398,6 +409,7 @@ function EditorAppNode({
           {...rest}
           consumerID={`${app.id}/output`}
           hideTimer
+          onlyShowWithContent
           setHandleOnMessage={setHandleOnMessage}
         />
       </Grid>

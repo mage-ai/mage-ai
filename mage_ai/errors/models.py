@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from typing import List, Optional
 
 from mage_ai.errors.constants import ErrorCode
+from mage_ai.errors.utils import serialize_error
 from mage_ai.shared.environments import is_debug
 from mage_ai.shared.models import BaseDataClass
 
@@ -25,12 +26,15 @@ class ErrorDetails(BaseDataClass):
             tb_str = ''.join(traceback.format_exception(exc_type, exc_value, exc_tb))
             print(f'Exception type: {exc_type.__name__ if exc_type else None}')
             print(f'Exception message: {exc_value}')
+            print(errors)
             print('Stack trace:')
             print(tb_str)
 
+        data = serialize_error(error)
+
         return cls.load(
             code=ErrorCode.CODE_500,
-            errors=errors,
-            message=str(error),
-            type=exc_type.__name__ if exc_type else None,
+            errors=data['stacktrace_formatted'],
+            message=data['message_formatted'],
+            type=data['type'],
         )

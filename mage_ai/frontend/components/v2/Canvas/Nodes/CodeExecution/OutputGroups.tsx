@@ -24,6 +24,8 @@ type OutputGroupsProps = {
   children?: React.ReactNode;
   consumerID: string;
   hideTimer?: boolean;
+  minHeight?: number | string;
+  onlyShowWithContent?: boolean;
   role?: ElementRoleEnum;
   styles?: React.CSSProperties;
 } & OutputGroupsType;
@@ -33,7 +35,9 @@ const OutputGroups: React.FC<OutputGroupsProps> = ({
   consumerID,
   handleContextMenu,
   hideTimer,
+  minHeight = 200,
   onMount,
+  onlyShowWithContent,
   role,
   setHandleOnMessage,
   setResultMappingUpdate,
@@ -82,8 +86,19 @@ const OutputGroups: React.FC<OutputGroupsProps> = ({
     resultsGroupedByMessageRequestUUID ?? {},
   )?.sort(), [resultsGroupedByMessageRequestUUID]);
 
+  if (onlyShowWithContent && (keys?.length ?? 0) === 0) {
+    return null;
+  }
+
   return (
-    <div className={stylesOutput.outputContainer} role={role} style={styles}>
+    <div
+      className={stylesOutput.outputContainer}
+      role={role}
+      style={{
+        ...styles,
+        minHeight,
+      }}
+    >
       {!hideTimer && executing && <Tag right statusVariant timer top />}
 
       {children}

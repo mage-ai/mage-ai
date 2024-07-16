@@ -4,4 +4,32 @@
   border-style: var(--borders-style);
   border-width: var(--borders-width);
   padding: var(--padding-sm);
+
+  &.cancelled {
+    border-color: var(--colors-yellow);
+  }
+  &.error {
+    border-color: var(--colors-redmd);
+  }
+  &.failure {
+    border-color: var(--colors-redlos);
+  }
+  &.interrupted {
+    border-color: var(--colors-yellowmd);
+  }
+  &.ready {
+    border-color: var(--borders-color-base-hover);
+  }
+  &.restarted {
+    border-color: var(--borders-color-base-default);
+  }
+  &.running {
+    border-color: var(--colors-greenmd);
+  }
+  &.success {
+    border-color: var(--colors-green);
+  }
+  &.terminated {
+    border-color: var(--colors-rosenmd);
+  }
 }

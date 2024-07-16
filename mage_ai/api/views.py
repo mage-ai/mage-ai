@@ -6,10 +6,11 @@ from typing import Dict, List, Optional, Tuple, Union
 
 import simplejson
 
-from mage_ai.api.errors import ApiError, format_and_colorize_stacktrace
+from mage_ai.api.errors import ApiError
 from mage_ai.api.logging import debug, error, info
 from mage_ai.api.operations.base import BaseOperation
 from mage_ai.api.operations.constants import CREATE, DELETE, DETAIL, LIST, UPDATE
+from mage_ai.errors.utils import format_and_colorize_stacktrace
 from mage_ai.services.tracking.metrics import increment, timing
 from mage_ai.shared.parsers import encode_complex
 
@@ -70,12 +71,14 @@ async def execute_operation(
             **tags,
         )
         if http_error_codes:
-            error = ApiError(dict(
-                code=ApiError.INTERNAL_SERVER_ERROR['code'],
-                errors=traceback.format_tb(err.__traceback__),
-                message=repr(err),
-                type=ApiError.INTERNAL_SERVER_ERROR['type'],
-            ))
+            error = ApiError(
+                dict(
+                    code=ApiError.INTERNAL_SERVER_ERROR['code'],
+                    errors=traceback.format_tb(err.__traceback__),
+                    message=repr(err),
+                    type=ApiError.INTERNAL_SERVER_ERROR['type'],
+                )
+            )
             return __render_error(
                 handler,
                 error.to_dict(),
@@ -230,8 +233,8 @@ def __render_error(handler, error: Dict, http_error_codes: Optional[bool] = None
         handler.set_status(error_code) if error_code else None
 
     error['errors'], error['message'] = format_and_colorize_stacktrace(
-      error.get('errors') or [],
-      error.get('message') or '',
+        error.get('errors') or [],
+        error.get('message') or '',
     )
 
     handler.write(

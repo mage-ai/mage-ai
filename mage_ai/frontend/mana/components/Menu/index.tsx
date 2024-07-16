@@ -619,6 +619,7 @@ function MenuController({
         // console.log(position, previousPosition, item)
 
         // Need to add this or else useMutate can’t automatically add loading state.
+        event.preventDefault();
         item?.onClick({
           ...event,
           target: itemsRef?.current?.[item?.uuid]?.current,

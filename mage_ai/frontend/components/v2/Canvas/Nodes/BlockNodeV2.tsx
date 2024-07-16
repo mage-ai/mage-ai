@@ -283,7 +283,10 @@ function BlockNode({
   const getCode = useCallback(() =>
     getFileCache(file?.path)?.client?.file?.content, [file]);
 
-  const submitCodeExecution = useCallback((event: React.MouseEvent<HTMLElement>) => {
+  const submitCodeExecution = useCallback((event: React.MouseEvent<HTMLElement>, opts?: {
+    onError?: () => void;
+    onSuccess?: () => void;
+  }) => {
     handleSubscribe('BlockNode');
 
     const execute = () => {
@@ -296,9 +299,11 @@ function BlockNode({
           getClosestRole(event.target as HTMLElement, [ElementRoleEnum.BUTTON]);
           setExecuting(false);
           setLoading(false);
+          opts?.onError?.();
         },
         onSuccess: () => {
           setLoading(false);
+          opts?.onSuccess?.();
         },
       });
     };
@@ -318,7 +323,8 @@ function BlockNode({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [block, node, executeCode]);
 
-  function updateBlock(event: any, key: string, value: any) {
+  function updateBlock(event: any, key: string, value: any, opts?: any) {
+    const id = event.currentTarget.id;
     clearTimeout(timeoutRef.current);
 
     timeoutRef.current = setTimeout(() => {
@@ -334,6 +340,11 @@ function BlockNode({
         },
         onSuccess: () => {
           ref?.current?.classList?.remove(stylesBlockNode.loading);
+          opts?.callback && opts?.callback?.();
+          setTimeout(() => {
+            const el = document.getElementById(id);
+            el?.focus();
+          }, 500);
         },
         payload: {
           block: setNested({
@@ -401,7 +412,7 @@ function BlockNode({
         >
           <Circle backgroundColor={modeColor ?? groupColor} size={12} />
 
-          <Text small>
+          <Text monospace secondary small>
             {block?.name ?? block?.uuid}
           </Text>
         </Grid>

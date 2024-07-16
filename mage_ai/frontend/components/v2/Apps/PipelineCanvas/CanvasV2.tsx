@@ -1198,7 +1198,7 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
       update: {
         onSuccess: (p1, p2) => {
           updateLocalResources(p1);
-          setPipeline(p1);
+          // setPipeline(p1);
 
           const b1 = p1?.blocks;
           const b2 = p2?.blocks;

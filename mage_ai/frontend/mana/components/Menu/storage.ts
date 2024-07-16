@@ -1,10 +1,11 @@
 import { MenuGroupType } from '@mana/components/Menu/interfaces';
+import { hyphensToSnake } from '@utils/url';
 import { get, remove, set } from '@storage/localStorage';
 
 const BASE_KEY = 'menu-items-cache';
 
 function cacheKey(uuid: string): string {
-  return `${BASE_KEY}-${uuid}`;
+  return `${BASE_KEY}-${hyphensToSnake(uuid)}`;
 }
 
 export function getCache(uuid: string): MenuGroupType[] | null {

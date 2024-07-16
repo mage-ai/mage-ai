@@ -1,4 +1,5 @@
 import EventStreamType, { ResultType, ExecutionResultType, ExecutionStatusEnum } from '@interfaces/EventStreamType';
+import Ansi from 'ansi-to-react';
 import useAppEventsHandler, { CustomAppEventEnum } from '../../../Apps/PipelineCanvas/useAppEventsHandler';
 import Grid from '@mana/components/Grid';
 import React, { useMemo } from 'react';
@@ -37,12 +38,18 @@ function ExecutionOutput({
     min: null,
   }), [results]);
 
-  const outputs = useMemo(() => results?.reduce(
-    (acc: React.ReactNode[], result: ExecutionResultType,
+  const {
+    outputs,
+    status,
+  } = useMemo(() => results?.reduce(
+    (acc: {
+      outputs: React.ReactNode[];
+      status: ExecutionStatusEnum;
+    }, result: ExecutionResultType,
     ) => {
       const {
         data_type,
-        error: resultError,
+        error,
         output,
         output_text: outputText,
         process: resultProcess,
@@ -53,90 +60,124 @@ function ExecutionOutput({
         uuid: resultUuid,
       } = result;
 
-      if (ResultType.STATUS === resultType) {
+      if (ResultType.STATUS === resultType && ExecutionStatusEnum.ERROR !== status) {
+        acc.status = status;
         return acc;
       }
 
       const {
-        exitcode,
-        is_alive,
-        message,
+        // exitcode,
+        // is_alive,
+        // message,
         message_request_uuid: groupUUID,
         message_uuid,
         pid,
         timestamp: processTimestamp,
         uuid: processUuid,
       } = resultProcess;
-      const {
-        code,
-        errors,
-        message: resultMessage,
-        type: errorType,
-      } = resultError ?? {};
 
-      const isFinalOutput = ResultType.DATA === resultType
-        && ExecutionStatusEnum.SUCCESS === status;
+      if (error) {
+        const code = error?.code;
+        const errors = error?.errors;
+        const message = error?.message;
+        const type = error?.type;
 
-      return acc.concat(
-        <TooltipWrapper
-          align={TooltipAlign.END}
-          horizontalDirection={TooltipDirection.RIGHT}
-          justify={TooltipJustify.CENTER}
-          key={resultID}
-          tooltip={
+        acc.status = ExecutionStatusEnum.ERROR;
+
+        acc.outputs.push(
+          <Grid
+            key={resultID}
+            rowGap={12}
+            templateColumns="auto"
+            templateRows="auto auto"
+          >
+            <Text monospace semibold small>
+              <Ansi>{String(message)}</Ansi>
+            </Text>
+
+            {[code, type].map((val) => val && (
+              <Text key={val} monospace small>
+                <Ansi>{String(val)}</Ansi>
+              </Text>
+            ))}
+
+            {errors?.length >= 1 && (
+              <pre style={{
+                whiteSpace: 'break-spaces',
+              }}>
+                <Text
+                  inline
+                  monospace
+                  small
+                >
+                  {errors?.map((line: string) => (
+                    <Ansi key={line}>{line}</Ansi>
+                  ))}
+                </Text>
+              </pre>
+            )}
+          </Grid>,
+        );
+      } else {
+        const isFinalOutput = ResultType.DATA === resultType
+          && ExecutionStatusEnum.SUCCESS === status;
+
+        acc.outputs.push(
+          <TooltipWrapper
+            align={TooltipAlign.END}
+            horizontalDirection={TooltipDirection.RIGHT}
+            justify={TooltipJustify.CENTER}
+            key={resultID}
+            tooltip={
+              <Grid
+                columnGap={8}
+                data-message-request-uuid={groupUUID}
+                templateColumns="auto 1fr"
+              >
+                <Text monospace muted
+                  small
+                  style={{
+                    pointerEvents: 'none',
+                  }}
+                >
+                  [{isFinalOutput ? 'output' : (acc?.length ?? 0)}]
+                </Text>
+                <Text monospace secondary small>
+                  {displayLocalOrUtcTime(
+                    moment(timestamp).format(DATE_FORMAT_LONG_MS),
+                    displayLocalTimezone,
+                    DATE_FORMAT_LONG_MS,
+                  )}
+                </Text>
+              </Grid >
+            }
+          >
             <Grid
               columnGap={8}
               data-message-request-uuid={groupUUID}
-              templateColumns="auto 1fr"
+              templateColumns="1fr"
             >
-              <Text monospace muted
+              <Text
+                monospace
                 small
                 style={{
                   pointerEvents: 'none',
                 }}
               >
-                [{isFinalOutput ? 'output' : (acc?.length ?? 0)}]
-              </Text>
-              <Text monospace secondary small>
-                {displayLocalOrUtcTime(
-                  moment(timestamp).format(DATE_FORMAT_LONG_MS),
-                  displayLocalTimezone,
-                  DATE_FORMAT_LONG_MS,
-                )}
+                {outputText}
               </Text>
             </Grid >
-          }
-        >
-          <Grid
-            columnGap={8}
-            data-message-request-uuid={groupUUID}
-            templateColumns="1fr"
-          >
-            <Text
-              monospace
-              small
-              style={{
-                pointerEvents: 'none',
-              }}
-            >
-              {outputText}
-            </Text>
-          </Grid >
-        </TooltipWrapper>,
-      );
-    }, []), [displayLocalTimezone, results]);
+          </TooltipWrapper>,
+        );
+      }
+
+      return acc;
+    }, {
+      outputs: [],
+      status: null,
+    }), [displayLocalTimezone, results]);
 
   const runtime = useMemo(() => (timestamps?.max ?? 0) - (timestamps?.min ?? 0), [timestamps]);
-
-  // const { convertEvent, dispatchAppEvent } = useAppEventsHandler(null, {
-  //   [CustomAppEventEnum.APP_STARTED]: handleAppChanged,
-  //   [CustomAppEventEnum.APP_STOPPED]: handleAppChanged,
-  //   [CustomAppEventEnum.APP_UPDATED]: handleAppChanged,
-  //   [CustomAppEventEnum.NODE_LAYOUTS_CHANGED]: handleNodeLayoutsChanged,
-  //   [CustomAppEventEnum.SAVE_AS_IMAGE]: () => handleSaveAsImage(
-  //     canvasRef, wrapperRef, itemsRef, imageDataRef,
-  //   ),
-  // });
 
   return (
     <div
@@ -157,7 +198,12 @@ function ExecutionOutput({
             </Text>
           </Grid>
 
-          <Grid className={styles.executionOutputGroup}>
+          <Grid
+            className={[
+              styles.executionOutputGroup,
+              styles[status],
+            ].filter(Boolean).join(' ')}
+          >
             {outputs}
           </Grid>
 
