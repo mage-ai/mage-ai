@@ -5,9 +5,12 @@ class ExecutionStatus(str, Enum):
     CANCELLED = 'cancelled'
     ERROR = 'error'
     FAILURE = 'failure'
+    INTERRUPTED = 'interrupted'
     READY = 'ready'
+    RESTARTED = 'restarted'
     RUNNING = 'running'
     SUCCESS = 'success'
+    TERMINATED = 'terminated'
 
 
 class EventStreamType(str, Enum):

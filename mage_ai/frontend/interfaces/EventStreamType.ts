@@ -1,6 +1,12 @@
 import { DataTypeEnum } from './KernelOutputType';
 import { ErrorDetailsType } from './ErrorsType';
 
+export enum KernelOperation {
+  INTERRUPT = 'interrupt',
+  RESTART = 'restart',
+  TERMINATE = 'terminate',
+}
+
 // https://developer.mozilla.org/docs/Web/API/EventSource/readyState
 export enum EventSourceReadyState {
   CONNECTING = 0,
@@ -22,11 +28,15 @@ export enum EventStreamTypeEnum {
 }
 
 export enum ExecutionStatusEnum {
+  CANCELLED = 'cancelled',
   ERROR = 'error',
   FAILURE = 'failure',
+  INTERRUPTED = 'interrupted',
   READY = 'ready',
+  RESTARTED = 'restarted',
   RUNNING = 'running',
   SUCCESS = 'success',
+  TERMINATED = 'terminated',
 }
 
 export enum ServerConnectionStatusType {

@@ -583,7 +583,6 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
   }
 
   function handleLineTransitions() {
-    console.log('handleLineTransitions');
     controlsForLines.start(({
       index,
       isOutput,

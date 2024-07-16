@@ -18,7 +18,7 @@ import { TooltipAlign, TooltipWrapper, TooltipDirection, TooltipJustify } from '
 import { convertToMillisecondsTimestamp } from '@utils/date';
 import {
   ArrowsAdjustingFrameSquare, DiamondShared, AppVersions, IdentityTag, Menu, PanelCollapseLeft,
-  PanelCollapseRight, Builder, AddV2, Grab, GroupV2, Comment, Conversation, Save,
+  PanelCollapseRight, Builder, AddV2, Grab, GroupV2, Comment, Conversation, Save, Pause,
   CloseV2, BlockGenericV2, PlayButtonFilled,
 } from '@mana/icons';
 import BlockType from '@interfaces/BlockType';
@@ -35,6 +35,10 @@ type EditorAppNodeProps = {
   containerRef?: React.RefObject<HTMLElement | undefined> | undefined;
   fileRef?: React.MutableRefObject<FileType | undefined> | undefined;
   height?: number;
+  interruptExecution?: (opts?: {
+    onError?: () => void;
+    onSuccess?: () => void;
+  }) => void;
   submitCodeExecution: (event: any) => void;
   onClose: () => void;
   width?: number;
@@ -47,6 +51,7 @@ function EditorAppNode({
   submitCodeExecution,
   fileRef,
   height,
+  interruptExecution,
   onClose,
   setHandleOnMessage,
   width,
@@ -54,6 +59,7 @@ function EditorAppNode({
 }: EditorAppNodeProps & OutputGroupsType) {
   const [asideBeforeOpen, setAsideBeforeOpen] = React.useState(false);
   const [executing, setExecuting] = useState<boolean>(false);
+  const [loadingKernelMutation, setLoadingKernelMutation] = useState<boolean>(false);
 
   const { configuration } = block ?? {};
   const file = fileRef?.current ?? configuration?.file;
@@ -152,13 +158,20 @@ function EditorAppNode({
 
           <div style={{ position: 'relative' }}>
             {executing && <Tag left statusVariant timer top />}
+
             <Button
-              Icon={PlayButtonFilled}
+              Icon={executing ? Pause : PlayButtonFilled}
               backgroundcolor={baseColor}
               basic
               bordercolor={baseColor}
-              loading={executing}
-              onClick={submitCodeExecution}
+              loading={loadingKernelMutation}
+              onClick={executing ? () => {
+                setLoadingKernelMutation(true);
+                interruptExecution({
+                  onError: () => setLoadingKernelMutation(false),
+                  onSuccess: () => setLoadingKernelMutation(false),
+                });
+              } : submitCodeExecution}
               small
             />
           </div>

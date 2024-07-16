@@ -11,7 +11,8 @@ import OutputGroups from './CodeExecution/OutputGroups';
 import BlockType, { BlockTypeEnum } from '@interfaces/BlockType';
 import ContextProvider from '@context/v2/ContextProvider';
 import EditorAppNode from './Apps/EditorAppNode';
-import EventStreamType, { ExecutionResultType, ServerConnectionStatusType } from '@interfaces/EventStreamType';
+import EventStreamType, { ExecutionResultType, ExecutionStatusEnum, ServerConnectionStatusType,
+  KernelOperation, ResultType } from '@interfaces/EventStreamType';
 import React, { useState, useCallback, useContext, useMemo, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import stylesBlockNode from '@styles/scss/components/Canvas/Nodes/BlockNode.module.scss';
@@ -27,6 +28,7 @@ import { createRoot, Root } from 'react-dom/client';
 import { executionDone } from '@components/v2/ExecutionManager/utils';
 import { getClosestRole } from '@utils/elements';
 import { getFileCache, updateFileCache } from '../../IDE/cache';
+import { useMutate } from '@context/APIMutation';
 import { setNested } from '@utils/hash';
 import { SettingsContext } from '@components/v2/Apps/PipelineCanvas/SettingsManager/SettingsContext';
 import Divider from '@mana/elements/Divider';
@@ -156,7 +158,47 @@ function BlockNode({
 
   // APIs
   const fileRef = useRef<FileType>(null);
+
+  const [loadingKernelMutation, setLoadingKernelMutation] = useState(false);
+  const kernelProcess = useMutate({
+    id: block.uuid,
+    resource: 'kernel_processes',
+  }, {
+    handlers: {
+      update: {
+        onError: () => {
+          setLoadingKernelMutation(false);
+        },
+        onSuccess: () => {
+          setLoadingKernelMutation(false);
+
+          Object.values(handleOnMessageRef.current ?? {}).forEach(handler => handler({
+            result: {
+              process: {
+                uuid: block.uuid,
+              },
+              status: ExecutionStatusEnum.INTERRUPTED,
+              type: ResultType.STATUS,
+            } as ExecutionResultType,
+          } as EventStreamType));
+        },
+      },
+    },
+  });
   const { mutations } = useContext(ModelContext);
+
+  const interruptExecution = useCallback((opts?: {
+    onError?: () => void;
+    onSuccess?: () => void;
+  }) => {
+    setLoadingKernelMutation(true);
+    kernelProcess.update.mutate({
+      ...opts,
+      payload: {
+        [KernelOperation.INTERRUPT]: true,
+      },
+    });
+  }, [kernelProcess]);
 
   // Attributes
   const isGroup =
@@ -428,6 +470,7 @@ function BlockNode({
           app={appNode}
           block={block}
           fileRef={opts?.fileRef ?? fileRef}
+          interruptExecution={interruptExecution}
           onClose={() => {
             closeEditorApp();
           }}
@@ -561,7 +604,9 @@ function BlockNode({
         dragRef={dragRef}
         executing={executing}
         groupSelection={groupSelection}
+        interruptExecution={interruptExecution}
         loading={loading}
+        loadingKernelMutation={loadingKernelMutation}
         node={node}
         openEditor={launchEditorApp}
         submitCodeExecution={submitCodeExecution}
