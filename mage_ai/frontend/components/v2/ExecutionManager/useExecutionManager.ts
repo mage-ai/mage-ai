@@ -5,6 +5,7 @@ import EventStreamType, {
   EventSourceReadyState,
   ReadyStateToServerConnectionStatus,
 } from '@interfaces/EventStreamType';
+import { EnvironmentTypeEnum, EnvironmentUUIDEnum, EnvironmentType } from '@interfaces/CodeExecutionType';
 import { APIErrorType } from '@context/APIMutation/Context';
 import { DEBUG } from '../utils/debug';
 import { ResponseType, MutationFetchArgumentsType } from '@api/interfaces';
@@ -312,6 +313,7 @@ export default function useExecutionManager({
   // message_request_uuid: a unique identifier for the message; this is kept consistent throughout the code execution lifecycle.
   function useExecuteCode(channel: string, stream?: string): {
     executeCode: (message: string, payload?: {
+      environment?: EnvironmentType;
       message_request_uuid?: string;
       output_dir?: string;
       source?: string;
@@ -321,6 +323,7 @@ export default function useExecutionManager({
     }) => string;
   } {
     const executeCode = (message: string, payload?: {
+      environment?: EnvironmentType;
       message_request_uuid?: string;
       output_dir?: string;
       source?: string;
@@ -338,10 +341,9 @@ export default function useExecutionManager({
           opts?.onSuccess && opts?.onSuccess?.(data);
         },
         payload: {
+          ...payload,
           message,
           message_request_uuid: payload?.message_request_uuid ?? messageRequestUUID,
-          output_dir: payload?.output_dir,
-          source: payload?.source,
           stream,
           timestamp: Number(new Date()),
           uuid: channel, // This cannot change or no messages will be received

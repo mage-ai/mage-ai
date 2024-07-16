@@ -4,10 +4,10 @@ import React, { FC, memo, useRef, useState } from 'react';
 import Button, { ButtonGroup } from '@mana/elements/Button';
 import Divider from '@mana/elements/Divider';
 import Grid from '@mana/components/Grid';
-import Text from '@oracle/elements/Text';
+import Text from '@mana/elements/Text';
 import styles from '@styles/scss/components/Error/API/ErrorManager.module.scss';
 import { APIErrorType, APIMutationContextType } from './Context';
-import { AlertTriangle } from '@mana/icons';
+import { AISparkle, AlertTriangle, Insights, Monitor } from '@mana/icons';
 import { randomSample } from '@utils/array';
 
 const POSITIONS = [
@@ -49,13 +49,14 @@ const ErrorManager: FC<ErrorManagerProps> = memo(function ErrorManager({
         styles[position],
       ].filter(Boolean).join(' ')}>
         <Grid
-          backgroundColor="blacklo"
-          base
-          borderColor="red"
+          borderColor="redmd"
           borders
           className={styles.errorContainer}
-          padding={12}
+          padding={24}
           rowGap={12}
+          style={{
+            borderWidth: 2,
+          }}
           templateColumns="auto"
           templateRows="auto auto"
           width="max-content"
@@ -65,22 +66,26 @@ const ErrorManager: FC<ErrorManagerProps> = memo(function ErrorManager({
             templateColumns="auto"
             templateRows="auto auto"
           >
-            <Text bold monospace>
-              {errorRef?.current?.message}
-            </Text>
+            <AlertTriangle colorName="yellow" />
+
+            {errorRef?.current?.message && (
+              <Text monospace secondary semibold small>
+                <Ansi>{errorRef?.current?.message}</Ansi>
+              </Text>
+            )}
 
             {[code, type, message, errors?.length >= 1]?.some(Boolean) && <Divider />}
 
             {[code, type, message].map((val) => val && (
-              <Text key={val} monospace>
+              <Text key={val} monospace small>
                 <Ansi>{String(val)}</Ansi>
               </Text>
             ))}
 
-            {[code, type, message]?.some(Boolean) && <Divider short />}
+            {[errors?.length > 0]?.some(Boolean) && <Divider short />}
 
             {errors?.length >= 1 && clientError && (
-              <Text monospace>
+              <Text monospace small>
                 <pre style={{
                   whiteSpace: 'pre-wrap',
                 }}>
@@ -88,6 +93,7 @@ const ErrorManager: FC<ErrorManagerProps> = memo(function ErrorManager({
                 </pre>
               </Text>
             )}
+
             {errors?.length >= 1 && !clientError && (
               <pre style={{
                 whiteSpace: 'break-spaces',
@@ -95,6 +101,7 @@ const ErrorManager: FC<ErrorManagerProps> = memo(function ErrorManager({
                 <Text
                   inline
                   monospace
+                  small
                 >
                   {errors?.map((line: string) => (
                     <Ansi key={line}>{line}</Ansi>
@@ -106,19 +113,33 @@ const ErrorManager: FC<ErrorManagerProps> = memo(function ErrorManager({
 
           <Divider />
 
-          <Grid templateColumns="min-content">
+          <Grid
+            autoFlow="column"
+            justifyContent="space-between"
+            templateColumns="min-content"
+          >
             <ButtonGroup>
-              <Button Icon={AlertTriangle} basic onClick={dismissError} small>
+              <Button basic onClick={dismissError} small>
                 Dismiss error
               </Button>
 
               {false &&
-                <Button Icon={AlertTriangle} basic onClick={(event: any) => {
+                <Button basic onClick={(event: any) => {
                   retry(event);
                 }} small>
                   Retry request
                 </Button>
               }
+            </ButtonGroup>
+
+            <ButtonGroup>
+              <Button Icon={Monitor} basic disabled small>
+                Fix error
+              </Button>
+
+              <Button Icon={Insights} basic disabled small>
+                Explain error
+              </Button>
             </ButtonGroup>
           </Grid>
         </Grid>

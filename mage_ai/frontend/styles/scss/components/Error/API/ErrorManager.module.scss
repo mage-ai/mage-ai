@@ -1,3 +1,5 @@
+@use '../../../abstracts/mixins' as *;
+
 .errorManager {
   position: fixed;
   z-index: 1000;
@@ -37,6 +39,8 @@
   }
 
   .errorContainer {
+    @include gradient(0deg, #000000E6, #000000E6, 0%, 100%);
+    background-color: var(--colors-graylo);
     backdrop-filter: var(--menus-blur-base);
     max-width: calc(100vw - 2 * var(--padding-base));
   }

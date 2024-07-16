@@ -1,4 +1,5 @@
 import BlockNodeComponent, { BADGE_HEIGHT, PADDING_VERTICAL } from './BlockNode';
+import { EnvironmentTypeEnum, EnvironmentUUIDEnum, EnvironmentType } from '@interfaces/CodeExecutionType';
 import Circle from '@mana/elements/Circle';
 import { getUpDownstreamColors } from './Blocks/utils';
 import { ModelContext } from '@components/v2/Apps/PipelineCanvas/ModelManager/ModelContext';
@@ -324,6 +325,11 @@ function BlockNode({
   const getCode = useCallback(() =>
     getFileCache(file?.path)?.client?.file?.content, [file]);
 
+  const codeExecutionEnvironment = useMemo(() => ({
+    type: block?.pipeline?.uuid ? EnvironmentTypeEnum.PIPELINE : EnvironmentTypeEnum.CODE,
+    uuid: block?.pipeline?.uuid ?? EnvironmentUUIDEnum.EXECUTION,
+  }), [block]);
+
   const submitCodeExecution = useCallback((event: React.MouseEvent<HTMLElement>, opts?: {
     onError?: () => void;
     onSuccess?: () => void;
@@ -333,6 +339,7 @@ function BlockNode({
     const execute = () => {
       const message = getCode();
       executeCode(message, {
+        environment: codeExecutionEnvironment,
         output_dir: file?.path ?? null,
         source: block.uuid,
       }, {
@@ -362,7 +369,7 @@ function BlockNode({
 
     setLoading(true);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [block, node, executeCode]);
+  }, [block, node, executeCode, codeExecutionEnvironment]);
 
   function updateBlock(event: any, key: string, value: any, opts?: any) {
     const id = event.currentTarget.id;

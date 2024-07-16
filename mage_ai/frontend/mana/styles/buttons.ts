@@ -27,8 +27,8 @@ const shared = css<StyleProps>`
   position: relative;
   z-index: 1;
 
-  ${({ aslink, basic, bordercolor, grouped, header, plain, primary, secondary, theme, wrap }) =>
-    !plain &&
+  ${({ aslink, basic, bordercolor, disabled, grouped, header, plain, primary, secondary, theme, wrap }) =>
+    !plain && !disabled &&
     outlineHover({
       borderColor: theme.fonts.color.text.inverted,
       outlineColor: header
@@ -70,6 +70,8 @@ const shared = css<StyleProps>`
   `}
 
   ${({ disabled }) => disabled && `
+    cursor: not-allowed;
+
     &:hover {
       cursor: not-allowed;
     }
@@ -109,8 +111,11 @@ const shared = css<StyleProps>`
     )};
   border-radius: ${({ aslink, plain, theme, wrap }) =>
     !plain && theme.borders.radius[(wrap && aslink) ? 'xs' : 'base']};
-  color: ${({ primary, secondary, theme }) =>
-    primary || secondary ? theme.fonts.color.text.inverted : theme.fonts.color.text.base};
+
+  color: ${({ disabled, primary, secondary, theme }) =>
+  disabled
+    ? theme.fonts.color.text.muted
+    : primary || secondary ? theme.fonts.color.text.inverted : theme.fonts.color.text.base};
 
   font-style: ${({ theme }) => theme.fonts.style.base};
 
@@ -120,10 +125,11 @@ const shared = css<StyleProps>`
     primary || secondary ? theme.fonts.weight.bold : theme.fonts.weight.semiBold};
   line-height: ${({ small, theme }) => theme.buttons.font.lineHeight[small ? 'sm' : 'base']}px;
 
-  ${({ basic, backgroundcolor, grouped, plain, primary, secondary, theme, wrap }) =>
+  ${({ basic, backgroundcolor, disabled, grouped, plain, primary, secondary, theme, wrap }) =>
     !grouped &&
     !plain &&
     !wrap &&
+    !disabled &&
     `
     &:hover {
       background-color: ${(theme.colors?.[backgroundcolor] ?? backgroundcolor) ?? primary
@@ -137,12 +143,12 @@ const shared = css<StyleProps>`
     }
   `}
 
-  ${({ loading }) => loading && `
+  ${({ disabled, loading }) => loading && !disabled && `
     cursor: wait;
   `}
 
-  ${({ loading }) =>
-    !loading &&
+  ${({ disabled, loading }) =>
+    !loading && !disabled &&
     `
     &:hover {
       cursor: pointer;

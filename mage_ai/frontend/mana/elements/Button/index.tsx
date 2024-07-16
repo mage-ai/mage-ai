@@ -106,6 +106,12 @@ function Button({
     }
   });
 
+  const iconProps = {
+    inverted: !props?.disabled && (primary || secondary),
+    muted: props?.disabled,
+    small,
+  };
+
   const el = (
     // @ts-ignore
     <HTMLTag
@@ -139,7 +145,7 @@ function Button({
         },
       } : {})}
     >
-      {Icon && <Icon inverted={primary || secondary} small={small} />}
+      {Icon && <Icon {...iconProps} />}
 
       {children}
 
@@ -149,7 +155,7 @@ function Button({
         </Tag>
       )}
 
-      {IconAfter && <IconAfter inverted={primary || secondary} small={small} />}
+      {IconAfter && <IconAfter {...iconProps} />}
     </HTMLTag>
   );
 
