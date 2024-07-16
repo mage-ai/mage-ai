@@ -197,7 +197,7 @@ function BlockNode({
   }, [handleContextMenu, removeContextMenu]);
 
   // APIs
-  const fileRef = useRef<FileType>(null);
+  const fileRef = useRef<FileType>(file);
 
   const [loadingKernelMutation, setLoadingKernelMutation] = useState(false);
   const kernelProcess = useMutate({
@@ -590,7 +590,7 @@ function BlockNode({
       });
     }, onCloseAppRef);
 
-    if (fileRef.current ?? false) {
+    if (fileRef.current?.path && fileRef.current?.content) {
       render();
     } else {
       getFile(event, () => render());

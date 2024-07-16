@@ -47,6 +47,7 @@ class ExecutionResult(BaseDataClass):
     result_id: str = field(default_factory=lambda: uuid4().hex)
     data_type: Optional[DataType] = None
     error: Optional[ErrorDetails] = None
+    metadata: Optional[Dict] = None
     output: Optional[Any] = None
     process: Optional[ProcessDetails] = None
     status: Optional[ExecutionStatus] = None

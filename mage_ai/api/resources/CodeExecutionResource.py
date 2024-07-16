@@ -13,15 +13,11 @@ class CodeExecutionResource(GenericResource):
             error.message = 'UUID is required'
             raise error
 
-        environment = payload.get('environment', None)
-        if environment is None:
-            environment = Environment.get_default()
-        else:
-            environment = Environment.load(**environment)
+        environment = Environment.load(**(payload.get('environment') or {}))
 
         kernel = KernelManager.get_kernel(uuid, num_processes=payload.get('num_processes', None))
 
-        process = environment.run_process(
+        process = await environment.run_process(
             kernel,
             message=payload.get('message', ''),
             message_request_uuid=payload.get('message_request_uuid'),

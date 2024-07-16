@@ -10,6 +10,7 @@ from typing import Any, Dict, List, Optional
 import joblib
 
 from mage_ai.kernels.magic.environments.enums import EnvironmentType, EnvironmentUUID
+from mage_ai.kernels.magic.environments.pipeline import Pipeline
 from mage_ai.kernels.magic.environments.utils import decrypt_secret, encrypt_secret
 from mage_ai.settings.repo import get_repo_path, get_variables_dir
 from mage_ai.shared.dates import now
@@ -34,23 +35,21 @@ ENVIRONMENT_VARIABLES_FILENAME = 'environment_variables.joblib'
 
 @dataclass
 class Environment(BaseDataClass):
-    type: EnvironmentType
-    uuid: str
     environment_variables: Optional[Dict] = None
+    type: Optional[EnvironmentType] = EnvironmentType.CODE
+    uuid: Optional[str] = EnvironmentUUID.EXECUTION
     variables: Optional[Dict] = None
 
-    @classmethod
-    def get_default(cls) -> Environment:
-        return cls(
-            uuid=EnvironmentUUID.EXECUTION,
-            type=EnvironmentType.CODE,
-        )
+    def __post_init__(self):
+        self.serialize_attribute_enum('type', EnvironmentType)
 
     @property
     def namespace(self) -> str:
-        return os.path.join(self.type, self.uuid)
+        if self.type and self.uuid:
+            return os.path.join(str(self.type), self.uuid)
+        return ''
 
-    def run_process(
+    async def run_process(
         self,
         kernel: Any,
         message: str,
@@ -64,12 +63,25 @@ class Environment(BaseDataClass):
             uuid=(message_request_uuid or str(now(True))),
         )
 
-        process = kernel.run(
-            message,
-            message_request_uuid=message_request_uuid,
-            output_manager=output_manager,
-            **(process_options or {}),
-        )
+        if EnvironmentType.PIPELINE == self.type and self.uuid:
+            process = await Pipeline(
+                self.uuid,
+                kernel,
+                output_manager,
+                environment_variables=self.environment_variables,
+                variables=self.variables,
+            ).run_process(
+                message,
+                message_request_uuid=message_request_uuid,
+                **(process_options or {}),
+            )
+        else:
+            process = kernel.run(
+                message,
+                message_request_uuid=message_request_uuid,
+                output_manager=output_manager,
+                **(process_options or {}),
+            )
 
         return process
 
@@ -109,8 +121,13 @@ class OutputManager(BaseDataClass):
         cls, path: str, namespace: str, limit: Optional[int] = None
     ) -> List[ExecutionOutput]:
         absolute_path = os.path.join(get_variables_dir(), path, namespace)
+        if not await exists_async(absolute_path):
+            return []
 
-        paths = sorted(os.listdir(absolute_path), key=lambda x: x.lower())
+        paths = sorted(
+            [fp for fp in os.listdir(absolute_path) if not fp.startswith('.')],
+            key=lambda x: x.lower(),
+        )
         if limit is not None:
             paths = paths[:limit]
 

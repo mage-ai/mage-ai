@@ -1,8 +1,9 @@
 import ast
 import asyncio
 import json
+import os
 from asyncio import Event as AsyncEvent
-from contextlib import redirect_stdout
+from contextlib import contextmanager, redirect_stdout
 from multiprocessing import Queue
 from queue import Empty
 from threading import Event
@@ -21,7 +22,7 @@ FLUSH_INTERVAL = 0.1
 
 
 def is_debug():
-    return True and is_debug_base()
+    return True or is_debug_base()
 
 
 def set_node_line_numbers(node: ast.AST, lineno: int, col_offset: int):
@@ -31,7 +32,12 @@ def set_node_line_numbers(node: ast.AST, lineno: int, col_offset: int):
             n.col_offset = col_offset
 
 
-def modify_and_execute(code_block: str, globals: Dict[str, Any], local_variables: Dict[str, Any]):
+def modify_and_execute(
+    code_block: str,
+    local_variables,
+    execution_globals: Optional[Dict[str, Any]] = None,
+) -> Dict[str, Any]:
+    execution_globals = execution_globals or {}
     # Parse the provided code block
     parsed_code = ast.parse(code_block)
     if not parsed_code.body:
@@ -73,14 +79,21 @@ def modify_and_execute(code_block: str, globals: Dict[str, Any], local_variables
 
     error = None
     try:
-        exec(compile(modified_code, '<string>', 'exec'), globals)
+        exec(
+            compile(modified_code, '<string>', 'exec'),
+            execution_globals,
+        )
     except Exception as err:
         error = err
 
-    local_variables.update({key: value for key, value in globals.items() if key != '__builtins__'})
+    local_variables.update({
+        key: value for key, value in (execution_globals or {}).items() if key != '__builtins__'
+    })
 
     if error:
         raise error
+
+    return local_variables
 
 
 def check_queue(queue: Queue):
@@ -150,6 +163,17 @@ async def read_stdout_continuously(
         main_queue.put(uuid)
 
 
+@contextmanager
+def temporary_env(env: Dict[str, str]):
+    old_env = os.environ.copy()
+    os.environ.update(env)
+    try:
+        yield
+    finally:
+        os.environ.clear()
+        os.environ.update(old_env)
+
+
 async def execute_code_async(
     uuid: str,
     queue: Queue,
@@ -159,10 +183,12 @@ async def execute_code_async(
     context: Optional[ProcessContext] = None,
     main_queue: Optional[FasterQueue] = None,
     output_manager_config: Optional[Dict[str, str]] = None,
+    **kwargs,
 ) -> None:
     process = ProcessDetails.load(**process_details)
 
-    exec_globals = {}
+    print(message)
+
     local_variables = {}
     stop_event_read = Event()
     output_manager = OutputManager.load(**output_manager_config) if output_manager_config else None
@@ -188,7 +214,13 @@ async def execute_code_async(
 
         with redirect_stdout(async_stdout):
             try:
-                modify_and_execute(message, exec_globals, local_variables)
+                environment_variables = kwargs.get('environment_variables') or {}
+                with temporary_env(environment_variables):
+                    local_variables = modify_and_execute(
+                        message,
+                        local_variables,
+                        execution_globals=kwargs.get('execution_globals', {}) or {},
+                    )
             except Exception as err:
                 result = ExecutionResult.load(
                     error=ErrorDetails.from_current_error(err),
@@ -221,19 +253,34 @@ async def execute_code_async(
         while check_queue(queue):
             await asyncio.sleep(FLUSH_INTERVAL)
 
+        success_result_options = kwargs.get('success_result_options') or None
         final_output = local_variables.get('__output__')
-        if final_output is not None:
-            result = ExecutionResult.load(
+        if final_output is not None or success_result_options is not None:
+            result_options = dict(
                 output=final_output,
                 process=process,
                 status=ExecutionStatus.SUCCESS,
                 type=ResultType.DATA,
                 uuid=uuid,
             )
+
+            if success_result_options is not None:
+                result_options.update(success_result_options)
+
+            result = ExecutionResult.load(**result_options)
             queue.put(result)
 
             if output_manager and result.output is not None:
                 await output_manager.append_message(json.dumps(result.to_dict()) + '\n')
+
+        if output_manager:
+            store_locals = kwargs.get('store_locals', False)
+            if local_variables and store_locals:
+                await output_manager.store_local_variables(local_variables)
+
+            store_output = kwargs.get('store_output', False)
+            if final_output and store_output:
+                await output_manager.store_output(final_output)
 
         if output_manager:
             await output_manager.delete(if_empty=True)

@@ -32,7 +32,7 @@ def execute_message(
     process_details: Dict,
     context: Optional[ProcessContext] = None,
     main_queue: Optional[Any] = None,
-    output_manager: Optional[OutputManager] = None,
+    **kwargs,
 ) -> None:
     if is_debug():
         print(f'[Process.execute_code:{uuid}] Executing code: {message}')
@@ -47,7 +47,7 @@ def execute_message(
                 process_details,
                 context,
                 main_queue,
-                output_manager.to_dict() if output_manager else None,
+                **kwargs,
             )
         )
     except Exception as err:
@@ -80,6 +80,9 @@ class ProcessBase:
         self.timestamp = None
         self.timestamp_end = None
         self.uuid = uuid
+
+        self.callback = kwargs.get('callback')
+        self.execution_options = kwargs.get('execution_options')
 
         self._pid = None
         self._pid_data = []
@@ -139,6 +142,9 @@ class ProcessBase:
             self.internal_state = CLOSE
             self._pid_data.append(psutil.Process(self._pid).as_dict())
 
+            if self.callback:
+                self.callback(self)
+
         pids0 = [pr.pid for pr in pool._pool]
         self.result = pool.apply_async(
             execute_message,
@@ -150,9 +156,13 @@ class ProcessBase:
                 self.to_dict(),
                 context,
                 None,
-                self.output_manager,
             ],
-            kwds={},
+            kwds={
+                **dict(
+                    output_manager=self.output_manager.to_dict() if self.output_manager else None,
+                ),
+                **(self.execution_options or {}),
+            },
             callback=process_apply_async_callback,
         )
         pids1 = [pr.pid for pr in pool._pool if pr.pid not in pids0]

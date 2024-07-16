@@ -8,10 +8,9 @@ from multiprocessing.pool import CLOSE, INIT, RUN, TERMINATE
 from queue import Empty
 from typing import Any, Dict, List, Optional, cast
 
-from mage_ai.kernels.magic.environments.models import OutputManager
 from mage_ai.kernels.magic.models import Kernel as KernelDetails
 from mage_ai.kernels.magic.models import ProcessContext
-from mage_ai.kernels.magic.process import Process, ProcessBase
+from mage_ai.kernels.magic.process import Process
 from mage_ai.kernels.magic.threads.reader import ReaderThread
 from mage_ai.shared.queues import Queue as FasterQueue
 
@@ -115,45 +114,46 @@ class Kernel:
             except Exception as e:
                 print(f'[Kernel] Error during force termination: {e}')
 
-    def run(
-        self,
-        message: str,
-        message_request_uuid: Optional[str] = None,
-        output_manager: Optional[OutputManager] = None,
-        source: Optional[str] = None,
-        stream: Optional[str] = None,
-    ) -> ProcessBase:
-        now = datetime.utcnow().timestamp()
-
+    def build_process(self, message: str, **kwargs) -> Process:
         self.processes = [pr for pr in self.processes if pr.internal_state is not CLOSE]
 
         process = Process(
             self.uuid,
             message,
             kernel_uuid=self.uuid,
-            message_request_uuid=message_request_uuid,
-            output_manager=output_manager,
-            source=source,
-            stream=stream,
+            **kwargs,
         )
+
+        return process
+
+    def run(self, *args, **kwargs) -> Process:
+        process = self.build_process(*args, **kwargs)
+        return self.run_process(process)
+
+    def run_process(self, process: Process) -> Process:
         if (
             self.pool is not None
             and self.read_queue is not None
             and self.stop_event_pool is not None
         ):
-            process.start(
-                self.pool,
-                self.read_queue,
-                self.stop_event_pool,
-                context=ProcessContext(
+            context = (
+                ProcessContext(
                     lock=self.lock,
                     shared_dict=self.shared_dict,
                     shared_list=self.shared_list,
                 )
                 if self.shared_dict and self.shared_list
-                else None,
-                timestamp=now,
+                else None
             )
+
+            process.start(
+                self.pool,
+                self.read_queue,
+                self.stop_event_pool,
+                context=context,
+                timestamp=datetime.utcnow().timestamp(),
+            )
+
             self.processes.append(process)
 
         return process
