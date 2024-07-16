@@ -1,8 +1,9 @@
 import NextLink from 'next/link';
+import { snakeToHyphens } from '@utils/url';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { MutateFunction, useMutation } from 'react-query';
 import { useRouter } from 'next/router';
-
+import { PipelineExecutionFrameworkUUIDEnum } from '@interfaces/PipelineExecutionFramework/types';
 import AIControlPanel from '@components/AI/ControlPanel';
 import BrowseTemplates from '@components/CustomTemplates/BrowseTemplates';
 import Button from '@oracle/elements/Button';
@@ -713,6 +714,25 @@ function PipelineListPage() {
     uuid: 'AI_modal',
   });
 
+  const [createRAG] = useMutation(
+    (payload: any) => api.pipelines.execution_frameworks.useCreate(
+      PipelineExecutionFrameworkUUIDEnum.RAG)(payload),
+    {
+      onSuccess: (response: any) => onSuccess(
+        response, {
+          callback: ({ pipeline: model }) => {
+            window.location.href =
+              `/v2/pipelines/${snakeToHyphens(model.uuid)}/builder/${model.execution_framework}`;
+          },
+          onErrorCallback: (response, errors) => setErrors({
+            errors,
+            response,
+          }),
+        },
+      ),
+    },
+  );
+
   const newPipelineButtonMenuItems = useMemo(() => getNewPipelineButtonMenuItems(
     createPipeline,
     {
@@ -727,6 +747,7 @@ function PipelineListPage() {
           showAIModal();
         }
       },
+      createRAG,
       showBrowseTemplates,
       showCreatePipelineModal,
       showImportPipelineModal,
@@ -734,6 +755,7 @@ function PipelineListPage() {
   ), [
     createPipeline,
     project,
+    createRAG,
     showAIModal,
     showBrowseTemplates,
     showConfigureProjectModal,

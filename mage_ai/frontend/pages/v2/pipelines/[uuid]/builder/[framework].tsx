@@ -6,9 +6,11 @@ import { NextPageContext } from 'next';
 import { PipelineExecutionFrameworkUUIDEnum } from '@interfaces/PipelineExecutionFramework/types';
 
 const Builder = dynamic(() => import('@components/v2/Layout/Pipelines/Detail/Builder'), { ssr: false });
-const Detail = dynamic(() => import('@components/v2/Layout/Pipelines/Detail'), { ssr: false });
 
-function PipelineDetailPage({ slug }: { slug: string[] }) {
+function PipelineDetailPage({ framework, uuid }: {
+  framework: PipelineExecutionFrameworkUUIDEnum;
+  uuid: string;
+}) {
   const {
     teardown,
     useExecuteCode,
@@ -18,34 +20,20 @@ function PipelineDetailPage({ slug }: { slug: string[] }) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => () => teardown(), []);
 
-  if (slug?.length >= 1) {
-    const uuid: string = slug[0];
-    const pageName = slug[1];
-    let frameworkUUID: string = null;
-
-    if (slug.length >= 3 && slug[2] === PipelineExecutionFrameworkUUIDEnum.RAG) {
-      frameworkUUID = String(slug[2]) as string;
-    }
-
-    const Layout = pageName === 'builder' ? Builder : Detail;
-    return (
-      <Layout
-        // @ts-ignore
-        frameworkUUID={frameworkUUID ?? undefined}
-        useExecuteCode={useExecuteCode}
-        useRegistration={useRegistration}
-        uuid={uuid ?? undefined}
-      />
-    );
-  }
-
-  return <div />;
+  return (
+    <Builder
+      frameworkUUID={framework}
+      useExecuteCode={useExecuteCode}
+      useRegistration={useRegistration}
+      uuid={uuid}
+    />
+  );
 }
 
 PipelineDetailPage.getInitialProps = async (ctx: NextPageContext) => {
-  const { slug } = ctx.query;
+  const { framework, uuid } = ctx.query;
   return {
-    slug,
+    framework, uuid,
   };
 };
 

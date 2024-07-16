@@ -37,6 +37,7 @@ import {
   REQUIRE_USER_PERMISSIONS_COOKIE_PROPERTIES,
 } from '@utils/session';
 import { SheetProvider } from '@context/Sheet/SheetProvider';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ThemeType } from '@oracle/styles/themes/constants';
 import { addPageHistory } from '@storage/CommandCenter/utils';
 import { getCurrentTheme } from '@oracle/styles/themes/utils';
@@ -294,6 +295,8 @@ function MyApp(props: MyAppProps & AppProps) {
     return appMemo;
   }
 
+  const queryClient = new QueryClient();
+
   return (
     <>
       <KeyboardContext.Provider value={keyboardContextValue}>
@@ -302,20 +305,21 @@ function MyApp(props: MyAppProps & AppProps) {
             <ModalProvider>
               <SheetProvider>
                 <ErrorProvider>
-                  <Head defaultTitle={defaultTitle} title={title}>
-                    <meta
+                  <QueryClientProvider client={queryClient}>
+                    <Head defaultTitle={defaultTitle} title={title}>
+                      <meta
                       content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=0"
                       name="viewport"
                     />
-                  </Head>
+                    </Head>
 
-                  <LoadingBar color={RED} ref={refLoadingBar} />
+                    <LoadingBar color={RED} ref={refLoadingBar} />
 
-                  {/* @ts-ignore */}
-                  <Component {...pageProps} />
+                    {/* @ts-ignore */}
+                    <Component {...pageProps} />
 
-                  {isDemoApp && (
-                    <Banner
+                    {isDemoApp && (
+                      <Banner
                       linkProps={{
                         href: 'https://github.com/mage-ai/mage-ai',
                         label: 'GET MAGE',
@@ -327,8 +331,10 @@ function MyApp(props: MyAppProps & AppProps) {
                       }}
                     />
                   )}
-                  {shouldShowCommandCenter && <CommandCenter />}
-                  {!shouldShowCommandCenter && <div id={COMMAND_CENTER_ROOT_ID} />}
+                    {shouldShowCommandCenter && <CommandCenter />}
+                    {!shouldShowCommandCenter && <div id={COMMAND_CENTER_ROOT_ID} />}
+
+                  </QueryClientProvider>
                 </ErrorProvider>
               </SheetProvider>
             </ModalProvider>
