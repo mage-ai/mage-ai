@@ -244,15 +244,19 @@ async def execute_code_async(
             ),
         )
     except Exception as err:
-        queue.put(
-            ExecutionResult.load(
-                error=ErrorDetails.from_current_error(err),
-                process=process,
-                status=ExecutionStatus.ERROR,
-                type=ResultType.STATUS,
-                uuid=uuid,
-            ),
+        result = ExecutionResult.load(
+            error=ErrorDetails.from_current_error(err),
+            process=process,
+            status=ExecutionStatus.ERROR,
+            type=ResultType.STATUS,
+            uuid=uuid,
         )
+        if output_file:
+            with open(output_file, 'a') as file:
+                file.write(json.dumps(result.to_dict()) + '\n')
+                file.flush()
+
+        queue.put(result)
     finally:
         if main_queue is not None:
             main_queue.put(uuid)

@@ -66,6 +66,8 @@ class Item(BaseDataClass):
         if not await exists_async(file_path):
             return []
         text = await read_async(file_path)
+        if not text:
+            return []
         return [json.loads(line) for line in text.split('\n') if line.strip()]
 
     async def get_output(self, namespace: str, limit: Optional[int] = 10) -> Optional[List[Dict]]:
