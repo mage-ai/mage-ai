@@ -17,8 +17,11 @@ export interface EnvironmentType {
 }
 
 export interface ExecutionOutputType {
+  absolute_path: string;
   environment: EnvironmentType;
-  id: string;
   messages: ExecutionResultType[];
+  namespace: string;
   output: any;
+  path: string;
+  uuid: string;
 }

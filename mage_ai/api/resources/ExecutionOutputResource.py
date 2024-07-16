@@ -33,3 +33,43 @@ class ExecutionOutputResource(GenericResource):
         )
 
         return cls.build_result_set(outputs, user, **kwargs)
+
+    @classmethod
+    async def member(cls, pk, user, **kwargs):
+        query = kwargs.get('query') or {}
+
+        path = query.get('path')
+        if path:
+            path = path[0]
+
+        if path is None:
+            raise ApiError({
+                **ApiError.RESOURCE_INVALID,
+                **dict(message='Path query parameter is required'),
+            })
+
+        namespace = query.get('namespace')
+        if namespace:
+            namespace = namespace[0]
+
+        if namespace is None:
+            raise ApiError({
+                **ApiError.RESOURCE_INVALID,
+                **dict(message='Namespace query parameter is required'),
+            })
+
+        om = OutputManager.load(
+            namespace=namespace, path=remove_base_repo_directory_name(path), uuid=pk
+        )
+        if not await om.exists():
+            raise ApiError({
+                **ApiError.RESOURCE_NOT_FOUND,
+                **dict(message=f'Output {om.absolute_path} not found'),
+            })
+
+        model = await om.build_output()
+
+        return cls(model, user, **kwargs)
+
+    async def delete(self, **kwargs):
+        return await self.model.delete()

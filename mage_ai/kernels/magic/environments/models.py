@@ -4,7 +4,7 @@ import asyncio
 import json
 import os
 import pickle
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional
 
 import joblib
@@ -76,13 +76,26 @@ class Environment(BaseDataClass):
 
 @dataclass
 class ExecutionOutput(BaseDataClass):
-    id: str
-    messages: Optional[List[Dict]] = None
+    uuid: str
+    namespace: str
+    path: str
+    absolute_path: Optional[str] = None
     environment: Optional[Environment] = None
+    messages: Optional[List[Dict]] = field(default_factory=list)
     output: Optional[Any] = None
 
     def __post_init__(self):
         self.serialize_attribute_class('environment', Environment)
+        if not self.environment and self.namespace:
+            env_type, env_uuid = os.path.split(self.namespace)
+            self.environment = Environment.load(type=env_type, uuid=env_uuid)
+
+    async def delete(self):
+        await OutputManager.load(
+            namespace=self.namespace,
+            path=self.path,
+            uuid=self.uuid,
+        ).delete()
 
 
 @dataclass
@@ -93,46 +106,50 @@ class OutputManager(BaseDataClass):
 
     @classmethod
     async def load_with_messages(
-        cls, path: str, namespace: str, limit: Optional[int] = 10
+        cls, path: str, namespace: str, limit: Optional[int] = None
     ) -> List[ExecutionOutput]:
         absolute_path = os.path.join(get_variables_dir(), path, namespace)
-        paths = sorted(os.listdir(absolute_path), key=lambda x: x.lower())[:limit]
+
+        paths = sorted(os.listdir(absolute_path), key=lambda x: x.lower())
+        if limit is not None:
+            paths = paths[:limit]
 
         execution_outputs = await asyncio.gather(*[
-            cls.deserialize_output(os.path.join(absolute_path, fpath), namespace=namespace)
+            cls.load(
+                namespace=namespace,
+                path=path,
+                uuid=os.path.basename(fpath),
+            ).build_output()
             for fpath in paths
         ])
         return execution_outputs
 
-    @classmethod
-    async def deserialize_output(cls, path: str, namespace: str) -> ExecutionOutput:
-        file_path = os.path.join(path, MESSAGES_FILENAME)
-        arr = []
+    async def build_output(self) -> ExecutionOutput:
+        file_path = os.path.join(self.absolute_path, MESSAGES_FILENAME)
+        messages = []
         if await exists_async(file_path):
             text = await read_async(file_path)
             if text:
                 for line in text.split('\n'):
                     if line.strip():
                         data = json.loads(line)
-                        arr.append(data)
-
-        env_type, env_uuid = os.path.split(namespace)
-        environment = Environment.load(type=env_type, uuid=env_uuid)
+                        messages.append(data)
 
         return ExecutionOutput.load(
-            id=os.path.basename(path),
-            messages=arr,
-            environment=environment,
+            absolute_path=self.absolute_path,
+            messages=messages,
+            namespace=self.namespace,
+            path=self.path,
+            uuid=self.uuid,
         )
 
     @property
     def absolute_path(self) -> str:
         return os.path.join(get_variables_dir(), self.path, self.namespace, self.uuid)
 
-    async def get_messages(self, limit: Optional[int] = 10) -> ExecutionOutput:
-        return await self.deserialize_output(
-            os.path.join(self.absolute_path, MESSAGES_FILENAME),
-            self.namespace,
+    async def exists(self) -> bool:
+        return await exists_async(self.absolute_path) and not await getsize_async(
+            self.absolute_path
         )
 
     async def delete(self, if_empty: Optional[bool] = None) -> None:
