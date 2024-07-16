@@ -83,7 +83,8 @@ function MenuItemBase({
 ) {
   const timeoutRef = useRef(null);
   const [debouncer, cancel] = useDebounce();
-  const { Icon, description, divider, items, keyboardShortcuts, label, onClick, uuid } = item;
+  const { Icon, description, disabled,
+    divider, items, keyboardShortcuts, label, onClick, uuid } = item;
   const itemsCount = useMemo(() => items?.length || 0, [items]);
 
   useEffect(() => {
@@ -117,7 +118,7 @@ function MenuItemBase({
   const before = Icon ? Icon(iconProps) : undefined;
 
   const noHover = (!onClick && !items?.length) ? 'true' : undefined;
-  const isHeading = !onClick && !items?.length && !divider;
+  const isHeading = !disabled && !onClick && !items?.length && !divider;
 
   const el = (
     <MenuItemStyled>
@@ -192,6 +193,7 @@ function MenuItemBase({
         {onClick && (
           <Button
             asLink
+            disabled={disabled}
             motion
             onClick={e => {
               e.preventDefault();

@@ -22,6 +22,7 @@ export interface ItemType {
 export interface MenuItemType {
   Icon?: ({ ...props }: any) => any;
   description?: (() => string) | string;
+  disabled?: boolean;
   divider?: boolean;
   items?: MenuItemType[];
   keyboardShortcuts?: KeyboardTextGroupType;

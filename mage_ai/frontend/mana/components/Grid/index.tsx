@@ -14,11 +14,13 @@ type GridProps = {
   uuid?: string;
 } & WithStylesProp;
 
-function Grid({ children, id, ...props }: GridProps, ref: React.Ref<any>) {
+function Grid({ children, id, onContextMenu, ...props }: GridProps, ref: React.Ref<any>) {
   return (
-    <Styled ref={ref} {...props} id={id}>
-      {children && (children as React.ReactNode)}
-    </Styled >
+    <div onContextMenu={onContextMenu}>
+      <Styled ref={ref} {...props} id={id}>
+        {children && (children as React.ReactNode)}
+      </Styled >
+    </div>
   );
 }
 

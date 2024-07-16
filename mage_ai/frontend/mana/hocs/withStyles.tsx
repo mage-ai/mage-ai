@@ -58,6 +58,7 @@ export type WithStylesProp = {
   children?: React.ReactNode | Element | Element[] | React.ReactNode[] | any | any[];
   className?: string;
   id?: string;
+  onContextMenu?: (event: React.MouseEvent) => void;
   role?: ElementRoleEnum;
   uuid?: string;
 } & ElementType &
@@ -86,7 +87,7 @@ export function withStyles<P extends object = WithStylesProp>(styles: any, props
   } = propsHOC || ({} as HOCProps);
 
   return React.forwardRef<any, P & WithStylesProp>(function StyledComponent(
-    { children, className, id, role, uuid, ...props }: P & WithStylesProp,
+    { children, className, id, onContextMenu, role, uuid, ...props }: P & WithStylesProp,
     ref: any,
   ) {
     const divRef = useRef<HTMLDivElement>(null);
@@ -132,6 +133,7 @@ export function withStyles<P extends object = WithStylesProp>(styles: any, props
         {...propsExtracted}
         className={classNames}
         id={id}
+        onContextMenu={onContextMenu}
         // @ts-ignore
         ref={mergeRefs(divRef, ref)}
         role={role}

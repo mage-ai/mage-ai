@@ -22,7 +22,7 @@ import { ElementRoleEnum } from '@mana/shared/types';
 import { EventContext } from '../../Apps/PipelineCanvas/Events/EventContext';
 import { FileType } from '@components/v2/IDE/interfaces';
 import { AppNodeType, NodeType, OutputNodeType } from '../interfaces';
-import { CloseV2, CopyV2, OpenInSidekick, Trash } from '@mana/icons';
+import { AISparkle, CloseV2, CopyV2, Monitor, OpenInSidekick, Trash, Insights } from '@mana/icons';
 import { ThemeContext } from 'styled-components';
 import { createRoot, Root } from 'react-dom/client';
 import { executionDone } from '@components/v2/ExecutionManager/utils';
@@ -90,6 +90,12 @@ function BlockNode({
   const executionResultMappingRef = useRef<Record<string, ExecutionResultType>>({});
   const launchOutputCallbackOnceRef = useRef<() => void>(null);
 
+  const { mutations } = useContext(ModelContext);
+
+  const { handleContextMenu, removeContextMenu, setSelectedGroup,
+    useExecuteCode, useRegistration,
+  } = useContext(EventContext);
+
   const outputGroupsProps = useMemo(() => ({
     handleContextMenu: (event: any, resultsInit: ExecutionResultType[]) => {
       event.preventDefault();
@@ -109,8 +115,9 @@ function BlockNode({
             removeContextMenu(event2);
             const results: ExecutionResultType[] = sortByKey(resultsInit ?? [],
               (result: ExecutionResultType) => result?.timestamp);
-            const text = results?.map((result: ExecutionResultType) =>
-              (result?.output_text ?? '')?.trim() ?? '').join('\n');
+            const text = results?.map((result: ExecutionResultType) => result?.error
+              ? JSON.stringify(result?.error ?? '', null, 2)
+              : (result?.output_text ?? '')?.trim() ?? '').join('\n');
             copyToClipboard(text);
           },
           uuid: 'Copy output',
@@ -141,6 +148,23 @@ function BlockNode({
           },
           uuid: 'Delete output',
         },
+        { divider: true },
+        {
+          Icon: AISparkle,
+          items: [
+            {
+              Icon: Monitor,
+              disabled: true,
+              uuid: 'Fix error',
+            },
+            {
+              Icon: Insights,
+              disabled: true,
+              uuid: 'Explain error',
+            },
+          ],
+          uuid: 'AI Sidekick',
+        },
       ], {
         reduceItems: (i1) => i1,
       });
@@ -154,7 +178,25 @@ function BlockNode({
     setResultMappingUpdate: (consumerID, handler) => {
       handleResultMappingUpdateRef.current[consumerID] = handler;
     },
-  }), [file, handleContextMenu, removeContextMenu]);
+  }), [file, handleContextMenu, removeContextMenu, mutations]);
+
+  const handleEditorContextMenu = useCallback((event: any) => {
+    event.preventDefault();
+    event.stopPropagation();
+
+    handleContextMenu(event, [
+      {
+        Icon: CloseV2,
+        onClick: (event2: ClientEventType) => {
+          removeContextMenu(event2);
+          closeEditorApp();
+        },
+        uuid: 'Close editor',
+      },
+    ], {
+      reduceItems: (i1) => i1,
+    });
+  }, [handleContextMenu, removeContextMenu]);
 
   // APIs
   const fileRef = useRef<FileType>(null);
@@ -185,7 +227,6 @@ function BlockNode({
       },
     },
   });
-  const { mutations } = useContext(ModelContext);
 
   const interruptExecution = useCallback((opts?: {
     onError?: () => void;
@@ -208,10 +249,6 @@ function BlockNode({
 
   // Controls
   const timerStatusRef = useRef(null);
-
-  const { handleContextMenu, removeContextMenu, setSelectedGroup,
-    useExecuteCode, useRegistration,
-  } = useContext(EventContext);
 
   // Methods
   const channel = useMemo(() => block.uuid, [block]);
@@ -241,8 +278,12 @@ function BlockNode({
         fileRef.current = data?.browser_item;
         updateOutputResults();
 
+        const fmodel = data?.browser_item;
         updateFileCache({
-          server: data?.browser_item,
+          server: fmodel,
+          ...(getCode() ? {} : {
+            client: fmodel,
+          }),
         });
         callback && callback?.();
       },
@@ -477,14 +518,15 @@ function BlockNode({
     appRootRef.current.render(
       <ContextProvider theme={themeContext}>
         <EditorAppNode
-          {...outputGroupsProps}
           app={appNode}
           block={block}
           fileRef={opts?.fileRef ?? fileRef}
+          handleContextMenu={handleEditorContextMenu}
           interruptExecution={interruptExecution}
           onClose={() => {
             closeEditorApp();
           }}
+          outputGroupsProps={outputGroupsProps}
           submitCodeExecution={submitCodeExecution}
         />
       </ContextProvider>,

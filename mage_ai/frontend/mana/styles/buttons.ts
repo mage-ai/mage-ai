@@ -9,6 +9,7 @@ export type StyleProps = {
   backgroundcolor?: string;
   basic?: boolean;
   bordercolor?: string;
+  disabled?: boolean;
   grouped?: boolean | string;
   header?: boolean;
   loading?: boolean;
@@ -66,6 +67,12 @@ const shared = css<StyleProps>`
           ? theme.buttons.border.color.basic.default
           : theme.buttons.border.color.base.default)
     };
+  `}
+
+  ${({ disabled }) => disabled && `
+    &:hover {
+      cursor: not-allowed;
+    }
   `}
 
   ${({ aslink, basic, grouped, plain, primary, secondary, theme }) =>

@@ -88,7 +88,7 @@ export default function useApp(props: AppLoaderProps & {
   }
 
   async function updateLocalContent(item: FileType) {
-    DEBUG.editor.app && console.log('updateLocalContent', item)
+    DEBUG.editor.app && console.log('updateLocalContent', item);
 
     if (!item) {
       DEBUG.editor.app && console.log('No item to update.', item);
