@@ -126,26 +126,22 @@ function BlockNode({
         {
           Icon: Trash,
           onClick: (event: ClientEventType) => {
-            mutations.files.update.mutate({
-              event,
-              id: file?.path,
-              onSuccess: ({ data }) => {
-                removeContextMenu(event);
-                fileRef.current = data?.browser_item;
-                fileRef.current.output = [];
-                updateOutputResults();
+            alert('DELETE /execution_outputs/:id');
 
-                updateFileCache({
-                  server: data?.browser_item,
-                });
-              },
-              payload: {
-                output: [],
-              },
-              query: {
-                output_namespace: STEAM_OUTPUT_DIR,
-              },
-            });
+            // mutations.files.update.mutate({
+            //   event,
+            //   id: file?.path,
+            //   onSuccess: ({ data }) => {
+            //     removeContextMenu(event);
+            //     fileRef.current = data?.browser_item;
+            //     fileRef.current.output = [];
+            //     updateOutputResults();
+
+            //     updateFileCache({
+            //       server: data?.browser_item,
+            //     });
+            //   },
+            // });
           },
           uuid: 'Delete output',
         },
@@ -171,7 +167,7 @@ function BlockNode({
       });
     },
     onMount: () => {
-      updateOutputResults();
+      // updateOutputResults();
     },
     setHandleOnMessage: (consumerID, handler) => {
       handleOnMessageRef.current[consumerID] = handler;
@@ -269,15 +265,16 @@ function BlockNode({
     const { configuration } = block ?? {};
     const { file } = configuration ?? {};
 
+    console.log('GET /execution_outputs/:id');
+
     mutations.files.detail.mutate({
-      event,
       id: file?.path,
       onError: () => {
         setLoading(false);
       },
       onSuccess: ({ data }) => {
         fileRef.current = data?.browser_item;
-        updateOutputResults();
+        // updateOutputResults();
 
         const fmodel = data?.browser_item;
         updateFileCache({
@@ -287,9 +284,6 @@ function BlockNode({
           }),
         });
         callback && callback?.();
-      },
-      query: {
-        output_namespace: STEAM_OUTPUT_DIR,
       },
     });
   }
@@ -307,6 +301,7 @@ function BlockNode({
 
   function handleSubscribe(consumerID: string) {
     handleOnMessageRef.current[consumerIDRef.current] = (event: EventStreamType) => {
+      console.log(event);
       if (event?.result) {
         executionResultMappingRef.current[event.result.result_id] = event?.result;
       }
@@ -340,7 +335,7 @@ function BlockNode({
       const message = getCode();
       executeCode(message, {
         environment: codeExecutionEnvironment,
-        output_dir: file?.path ?? null,
+        output_path: file?.path ?? null,
         source: block.uuid,
       }, {
         onError: () => {
@@ -460,7 +455,7 @@ function BlockNode({
         >
           <Circle backgroundColor={modeColor ?? groupColor} size={12} />
 
-          <Text monospace secondary small>
+          <Text small>
             {block?.name ?? block?.uuid}
           </Text>
         </Grid>

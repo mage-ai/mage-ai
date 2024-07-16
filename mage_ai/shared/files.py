@@ -199,24 +199,34 @@ async def safe_delete_dir_async(output_dir: str, verbose: bool = False):
 
 
 def makedirs_sync(path: str):
-    os.makedirs(path, exist_ok=True)
+    try:
+        os.makedirs(path, exist_ok=True)
+    except FileExistsError:
+        pass
 
 
 async def makedirs_async(path: str):
     loop = asyncio.get_running_loop()
-    await loop.run_in_executor(None, os.makedirs, path, exist_ok=True)
+    await loop.run_in_executor(None, makedirs_sync, path)
 
 
 async def write_async(
-    path: str, data: Optional[str] = None, overwrite: Optional[bool] = None
+    path: str,
+    data: Optional[str] = None,
+    overwrite: Optional[bool] = None,
+    mode: Optional[Any] = None,
+    flush: Optional[bool] = None,
 ) -> bool:
     if not overwrite and await exists_async(path):
         raise Exception(f'File already exists at {path}, cannot overwrite unless forced.')
 
     try:
+        mode = mode or 'w'
         await makedirs_async(os.path.dirname(path))
-        async with aiofiles.open(path, 'w') as file:
+        async with aiofiles.open(path, mode) as file:
             await file.write('' if data is None else data)
+            if flush:
+                await file.flush()
         return True
     except Exception as err:
         if is_debug():
@@ -235,6 +245,11 @@ async def delete_async(path: str, ignore_exists: Optional[bool] = None) -> bool:
         if is_debug():
             print(f'[ERROR] files.delete_async: {err}')
     return False
+
+
+async def getsize_async(path: str) -> int:
+    loop = asyncio.get_event_loop()
+    return await loop.run_in_executor(None, os.path.getsize, path)
 
 
 async def exists_async(path: str) -> bool:

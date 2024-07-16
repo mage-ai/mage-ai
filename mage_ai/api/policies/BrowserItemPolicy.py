@@ -69,7 +69,6 @@ BrowserItemPolicy.allow_write(
     [
         'content',
         'name',
-        'output',
         'path',
     ],
     scopes=[
@@ -109,18 +108,4 @@ BrowserItemPolicy.allow_query(
         OperationType.LIST,
     ],
     condition=lambda policy: policy.has_at_least_editor_role_and_notebook_edit_access(),
-)
-
-BrowserItemPolicy.allow_query(
-    [
-        'output_namespace',
-    ],
-    scopes=[
-        OauthScope.CLIENT_PRIVATE,
-    ],
-    on_action=[
-        OperationType.DETAIL,
-        OperationType.UPDATE,
-    ],
-    condition=lambda policy: policy.has_at_least_editor_role_and_pipeline_edit_access(),
 )

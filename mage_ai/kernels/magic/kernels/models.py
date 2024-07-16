@@ -8,11 +8,11 @@ from multiprocessing.pool import CLOSE, INIT, RUN, TERMINATE
 from queue import Empty
 from typing import Any, Dict, List, Optional, cast
 
+from mage_ai.kernels.magic.environments.models import OutputManager
 from mage_ai.kernels.magic.models import Kernel as KernelDetails
 from mage_ai.kernels.magic.models import ProcessContext
 from mage_ai.kernels.magic.process import Process, ProcessBase
 from mage_ai.kernels.magic.threads.reader import ReaderThread
-from mage_ai.shared.environments import is_debug
 from mage_ai.shared.queues import Queue as FasterQueue
 
 DEFAULT_NUM_PROCESSES = 1
@@ -119,15 +119,11 @@ class Kernel:
         self,
         message: str,
         message_request_uuid: Optional[str] = None,
-        output_file: Optional[str] = None,
+        output_manager: Optional[OutputManager] = None,
         source: Optional[str] = None,
         stream: Optional[str] = None,
-        timestamp: Optional[float] = None,
     ) -> ProcessBase:
         now = datetime.utcnow().timestamp()
-
-        if is_debug():
-            print('[Manager.start_processes]', now - (timestamp or 0))
 
         self.processes = [pr for pr in self.processes if pr.internal_state is not CLOSE]
 
@@ -136,7 +132,7 @@ class Kernel:
             message,
             kernel_uuid=self.uuid,
             message_request_uuid=message_request_uuid,
-            output_file=output_file,
+            output_manager=output_manager,
             source=source,
             stream=stream,
         )

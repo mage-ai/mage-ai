@@ -5,7 +5,7 @@ import EventStreamType, {
   EventSourceReadyState,
   ReadyStateToServerConnectionStatus,
 } from '@interfaces/EventStreamType';
-import { EnvironmentTypeEnum, EnvironmentUUIDEnum, EnvironmentType } from '@interfaces/CodeExecutionType';
+import { EnvironmentType } from '@interfaces/CodeExecutionType';
 import { APIErrorType } from '@context/APIMutation/Context';
 import { DEBUG } from '../utils/debug';
 import { ResponseType, MutationFetchArgumentsType } from '@api/interfaces';
@@ -315,7 +315,7 @@ export default function useExecutionManager({
     executeCode: (message: string, payload?: {
       environment?: EnvironmentType;
       message_request_uuid?: string;
-      output_dir?: string;
+      output_path?: string;
       source?: string;
     }, opts?: {
       onError?: (response: ResponseType) => void;
@@ -325,7 +325,7 @@ export default function useExecutionManager({
     const executeCode = (message: string, payload?: {
       environment?: EnvironmentType;
       message_request_uuid?: string;
-      output_dir?: string;
+      output_path?: string;
       source?: string;
     }, opts?: {
       onError?: (response: ResponseType) => void;

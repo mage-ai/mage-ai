@@ -57,11 +57,7 @@ class BrowserItemResource(GenericResource):
                 parse_values=__parse_values,
             )
 
-        return cls.build_result_set(
-            items,
-            user,
-            **kwargs,
-        )
+        return cls.build_result_set(items, user, **kwargs)
 
     @classmethod
     def get_model(cls, pk, **kwargs) -> Item:
@@ -75,13 +71,6 @@ class BrowserItemResource(GenericResource):
                 **ApiError.RESOURCE_NOT_FOUND,
                 **dict(message=f'Item at path {pk} not found.'),
             })
-
-        query = kwargs.get('query', {})
-        output_namespace = query.get('output_namespace', [None])
-        if output_namespace:
-            output_namespace = output_namespace[0]
-            if output_namespace:
-                await item.get_output(output_namespace)
 
         await item.get_content()
 

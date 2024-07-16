@@ -61,6 +61,7 @@ JWT_SECRET = os.getenv('JWT_SECRET', 'materia')
 # Used for generating download tokens
 JWT_DOWNLOAD_SECRET = os.getenv('JWT_DOWNLOAD_SECRET', generate_jwt_secret())
 
+EXECUTION_OUTPUT_VARIABLES_SECRET_KEY = os.getenv('EXECUTION_OUTPUT_VARIABLES_SECRET_KEY')
 
 # -------------------------
 # Notebook and Terminal Edit Access

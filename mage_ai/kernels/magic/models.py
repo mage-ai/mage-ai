@@ -14,6 +14,7 @@ from mage_ai.kernels.constants import ProcessStatus
 from mage_ai.kernels.default.models import KernelProcess
 from mage_ai.kernels.default.utils import get_process_info
 from mage_ai.kernels.magic.constants import EventStreamType, ExecutionStatus, ResultType
+from mage_ai.kernels.magic.environments.models import OutputManager
 from mage_ai.kernels.models import Kernel as KernelBase
 from mage_ai.server.kernel_output_parser import DataType
 from mage_ai.shared.models import BaseDataClass
@@ -29,7 +30,7 @@ class ProcessDetails(BaseDataClass):
     message: Optional[str] = None
     message_request_uuid: Optional[str] = None
     message_uuid: Optional[str] = None
-    output_file: Optional[str] = None
+    output_manager: Optional[OutputManager] = None
     pid: Optional[int] = None
     pid_spawn: Optional[int] = None
     source: Optional[str] = None

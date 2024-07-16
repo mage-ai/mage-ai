@@ -1,16 +1,16 @@
 import ast
+import asyncio
 import json
-import os
-import time
 from asyncio import Event as AsyncEvent
 from contextlib import redirect_stdout
 from multiprocessing import Queue
 from queue import Empty
-from threading import Event, Thread
+from threading import Event
 from typing import Any, Dict, Iterable, Optional
 
 from mage_ai.errors.models import ErrorDetails
 from mage_ai.kernels.magic.constants import ExecutionStatus, ResultType
+from mage_ai.kernels.magic.environments.models import OutputManager
 from mage_ai.kernels.magic.models import ExecutionResult, ProcessContext, ProcessDetails
 from mage_ai.kernels.magic.stdout import AsyncStdout
 from mage_ai.server.kernel_output_parser import DataType
@@ -94,18 +94,16 @@ def check_queue(queue: Queue):
         queue.put(item)
 
 
-def read_stdout_continuously(
+async def read_stdout_continuously(
     uuid: str,
     queue: Queue,
     process: ProcessDetails,
     async_stdout: AsyncStdout,
     stop_event: Event,
     main_queue: Optional[FasterQueue] = None,
-    output_file: Optional[str] = None,
+    output_manager_config: Optional[Dict[str, str]] = None,
 ) -> None:
-    file = None
-    if output_file:
-        file = open(output_file, 'a')
+    output_manager = OutputManager.load(**output_manager_config) if output_manager_config else None
 
     while not stop_event.is_set():
         output = async_stdout.get_output()
@@ -125,11 +123,10 @@ def read_stdout_continuously(
             if main_queue is not None:
                 main_queue.put(uuid)
 
-            if file:
-                file.write(json.dumps(result.to_dict()) + '\n')
-                file.flush()
+            if output_manager:
+                await output_manager.append_message(json.dumps(result.to_dict()) + '\n')
 
-        time.sleep(FLUSH_INTERVAL / 2)
+        await asyncio.sleep(FLUSH_INTERVAL / 2)
 
     output = async_stdout.get_output()
     if output:
@@ -146,15 +143,11 @@ def read_stdout_continuously(
         )
         queue.put(result)
 
-        if file:
-            file.write(json.dumps(result.to_dict()) + '\n')
-            file.flush()
+        if output_manager:
+            await output_manager.append_message(json.dumps(result.to_dict()) + '\n')
 
     if main_queue is not None:
         main_queue.put(uuid)
-
-    if file:
-        file.close()
 
 
 async def execute_code_async(
@@ -165,13 +158,14 @@ async def execute_code_async(
     process_details: Dict[str, Any],
     context: Optional[ProcessContext] = None,
     main_queue: Optional[FasterQueue] = None,
-    output_file: Optional[str] = None,
+    output_manager_config: Optional[Dict[str, str]] = None,
 ) -> None:
     process = ProcessDetails.load(**process_details)
 
     exec_globals = {}
     local_variables = {}
     stop_event_read = Event()
+    output_manager = OutputManager.load(**output_manager_config) if output_manager_config else None
 
     if is_debug():
         print(f'Executing full code block: {message}')
@@ -179,20 +173,18 @@ async def execute_code_async(
     try:
         async_stdout = AsyncStdout()  # Initialize the custom stdout
 
-        reader_thread = Thread(
-            target=read_stdout_continuously,
-            args=(
+        # Start the coroutine to read stdout continuously
+        reader_task = asyncio.create_task(
+            read_stdout_continuously(
                 uuid,
                 queue,
                 process,
                 async_stdout,
                 stop_event_read,
                 main_queue,
-                output_file,
-            ),
-            daemon=True,
+                output_manager_config,
+            )
         )
-        reader_thread.start()
 
         with redirect_stdout(async_stdout):
             try:
@@ -205,10 +197,9 @@ async def execute_code_async(
                     type=ResultType.STATUS,
                     uuid=uuid,
                 )
-                if output_file:
-                    with open(output_file, 'a') as file:
-                        file.write(json.dumps(result.to_dict()) + '\n')
-                        file.flush()
+
+                if output_manager:
+                    await output_manager.append_message(json.dumps(result.to_dict()) + '\n')
 
                 queue.put(result)
 
@@ -225,10 +216,10 @@ async def execute_code_async(
             )
 
         stop_event_read.set()
-        reader_thread.join(timeout=FLUSH_INTERVAL * 2)
+        await reader_task
 
         while check_queue(queue):
-            time.sleep(FLUSH_INTERVAL)
+            await asyncio.sleep(FLUSH_INTERVAL)
 
         final_output = local_variables.get('__output__')
         if final_output is not None:
@@ -241,13 +232,11 @@ async def execute_code_async(
             )
             queue.put(result)
 
-            if output_file and result.output is not None:
-                with open(output_file, 'a') as file:
-                    file.write(json.dumps(result.to_dict()) + '\n')
-                    file.flush()
+            if output_manager and result.output is not None:
+                await output_manager.append_message(json.dumps(result.to_dict()) + '\n')
 
-        if output_file and os.path.exists(output_file) and os.path.getsize(output_file) == 0:
-            os.remove(output_file)
+        if output_manager:
+            await output_manager.delete(if_empty=True)
 
         queue.put(
             ExecutionResult.load(
@@ -275,10 +264,9 @@ async def execute_code_async(
             type=ResultType.STATUS,
             uuid=uuid,
         )
-        if output_file:
-            with open(output_file, 'a') as file:
-                file.write(json.dumps(result.to_dict()) + '\n')
-                file.flush()
+
+        if output_manager and result.output is not None:
+            await output_manager.append_message(json.dumps(result.to_dict()) + '\n')
 
         queue.put(result)
     finally:

@@ -8,6 +8,7 @@ from uuid import uuid4
 
 import psutil
 
+from mage_ai.kernels.magic.environments.models import OutputManager
 from mage_ai.kernels.magic.execution import execute_code_async
 from mage_ai.kernels.magic.models import ProcessContext, ProcessDetails
 from mage_ai.shared.environments import is_debug
@@ -31,7 +32,7 @@ def execute_message(
     process_details: Dict,
     context: Optional[ProcessContext] = None,
     main_queue: Optional[Any] = None,
-    output_file: Optional[str] = None,
+    output_manager: Optional[OutputManager] = None,
 ) -> None:
     if is_debug():
         print(f'[Process.execute_code:{uuid}] Executing code: {message}')
@@ -46,7 +47,7 @@ def execute_message(
                 process_details,
                 context,
                 main_queue,
-                output_file,
+                output_manager.to_dict() if output_manager else None,
             )
         )
     except Exception as err:
@@ -61,7 +62,7 @@ class ProcessBase:
         *args,
         kernel_uuid: Optional[str] = None,
         message_request_uuid: Optional[str] = None,
-        output_file: Optional[str] = None,
+        output_manager: Optional[OutputManager] = None,
         source: Optional[str] = None,
         stream: Optional[str] = None,
         **kwargs,
@@ -71,7 +72,7 @@ class ProcessBase:
         self.message = message
         self.message_request_uuid = message_request_uuid
         self.message_uuid = uuid4().hex
-        self.output_file = output_file
+        self.output_manager = output_manager
         self.result = None
         self.source = source
         self.stream = stream
@@ -109,7 +110,7 @@ class ProcessBase:
             message=self.message,
             message_request_uuid=self.message_request_uuid,
             message_uuid=self.message_uuid,
-            output_file=self.output_file,
+            output_manager=self.output_manager,
             pid=self.pid,
             pid_spawn=self._pid,
             source=self.source,
@@ -149,7 +150,7 @@ class ProcessBase:
                 self.to_dict(),
                 context,
                 None,
-                self.output_file,
+                self.output_manager,
             ],
             kwds={},
             callback=process_apply_async_callback,

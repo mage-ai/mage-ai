@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-import asyncio
-import json
 import os
 from dataclasses import dataclass
 from pathlib import Path
@@ -12,14 +10,7 @@ from mage_ai.data_preparation.models.constants import (
     BlockLanguage,
 )
 from mage_ai.data_preparation.models.file import File
-from mage_ai.settings.repo import get_variables_dir
-from mage_ai.shared.array import flatten
-from mage_ai.shared.files import (
-    delete_async,
-    exists_async,
-    read_async,
-    safe_delete_dir_async,
-)
+from mage_ai.shared.files import delete_async, exists_async, read_async
 from mage_ai.shared.models import BaseDataClass
 from mage_ai.shared.path_fixer import remove_base_repo_directory_name
 
@@ -54,35 +45,6 @@ class Item(BaseDataClass):
                 )
             else:
                 self.serialize_attribute_enum('language', BlockLanguage)
-
-    def output_dir(self, namespace: str) -> str:
-        return os.path.join(
-            get_variables_dir(),
-            namespace,
-            self.relative_path if self.relative_path else '',
-        )
-
-    async def deserialize_output(self, file_path: str) -> List[Dict]:
-        if not await exists_async(file_path):
-            return []
-        text = await read_async(file_path)
-        return [json.loads(line) for line in text.split('\n') if line.strip()]
-
-    async def get_output(self, namespace: str, limit: Optional[int] = 10) -> Optional[List[Dict]]:
-        if self.output is None and await exists_async(self.output_dir(namespace)):
-            file_paths = sorted(os.listdir(self.output_dir(namespace)), key=lambda x: x.lower())[
-                :limit
-            ]
-            output = await asyncio.gather(*[
-                self.deserialize_output(os.path.join(self.output_dir(namespace), file_path))
-                for file_path in file_paths
-            ])
-            self.output = flatten(output)
-        return self.output
-
-    async def set_output(self, output: List[Dict], namespace: str):
-        if len(output) == 0:
-            await safe_delete_dir_async(self.output_dir(namespace), verbose=True)
 
     async def get_content(self) -> Optional[str]:
         if self.content is None:
