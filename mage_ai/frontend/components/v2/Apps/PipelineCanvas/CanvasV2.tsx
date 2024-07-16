@@ -45,7 +45,7 @@ import { SettingsProvider } from './SettingsManager/SettingsContext';
 import { ShadowNodeType, ShadowRenderer } from '@mana/hooks/useShadowRender';
 import { ZoomPanStateType } from '@mana/hooks/useZoomPan';
 import { buildDependencies } from './utils/pipelines';
-import { getCache } from '@mana/components/Menu/storage';
+import { getCache, updateCache } from '@mana/components/Menu/storage';
 import { useMutate } from '@context/APIMutation';
 import { deepCopyArray, equals, indexBy, unique, uniqueArray } from '@utils/array';
 import { getNewUUID } from '@utils/string';
@@ -55,6 +55,7 @@ import { AppConfigType } from '../interfaces';
 import { buildOutputNode } from './utils/items';
 import { buildAppNode } from './AppManager/utils';
 import { ElementRoleEnum } from '@mana/shared/types';
+import { GroupUUIDEnum } from '@interfaces/PipelineExecutionFramework/types';
 
 const ENTER_ANIMATION_START_THRESHOLD = 0.6;
 const CHANGE_BLOCKS_ANIMATION_DURATION = 5;
@@ -1056,7 +1057,7 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
     phaseRef.current += 1;
   });
 
-  function setSelectedGroup(block: FrameworkType) {
+  const setSelectedGroup = useCallback((block: FrameworkType) => {
     // Invoked from within a node component and not from the header; need to update header.
     const groups = [...(selectedGroupsRef.current ?? [])].map(g => ({
       ...g,
@@ -1095,7 +1096,8 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
         },
       },
     });
-  }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   function renderLayoutUpdates(callbackBeforeUpdateState?: () => void) {
     const currentGroup = getCurrentGroup();
@@ -1463,10 +1465,17 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
 
       // [WARNING]: The above needs to run 1st
       if (selectedGroupsRef.current === null) {
-        setSelectedGroupsRef.current(getCache([framework.uuid, pipeline.uuid].join(':')));
+        const key = [framework.uuid, pipeline.uuid].join(':');
+        const cache = getCache(key);
+        if (cache) {
+          setSelectedGroupsRef.current(cache);
+        } else {
+          updateCache(key, [groupMappingRef?.current?.[GroupUUIDEnum.DATA_PREPARATION]]);
+        }
       }
     }
-  }, [framework, frameworkMutants, pipeline, pipelineMutants, updateLocalResources]);
+  }, [framework, frameworkMutants, pipeline, pipelineMutants, updateLocalResources,
+    setSelectedGroup]);
 
   useEffect(() => {
     if ((framework ?? false) && (pipeline ?? false)) {
@@ -1479,7 +1488,7 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
         pipeline,
       });
     }
-  }, [defaultGroups, framework, pipeline]);
+  }, [defaultGroups, framework, pipeline, setSelectedGroup]);
 
   // Cleanup
   useEffect(() => {

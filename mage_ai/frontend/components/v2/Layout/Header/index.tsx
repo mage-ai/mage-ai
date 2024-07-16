@@ -213,7 +213,7 @@ export function Header({
         </Grid>
       </Button >
     </Grid>
-  ), [buttonProps, gridProps, iconProps, navTag, title, appHistory, version])
+  ), [buttonProps, gridProps, iconProps, navTag, title, appHistory, version]);
 
   return (
     <>
