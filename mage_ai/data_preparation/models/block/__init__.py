@@ -1485,24 +1485,26 @@ class Block(
 
             try:
                 if not run_all_blocks:
-                    not_executed_upstream_blocks = list(
-                        filter(
-                            lambda b: b.status == BlockStatus.NOT_EXECUTED,
-                            self.upstream_blocks,
-                        )
-                    )
-                    all_upstream_is_dbt = all([
-                        BlockType.DBT == b.type for b in not_executed_upstream_blocks
-                    ])
-                    if not all_upstream_is_dbt and len(not_executed_upstream_blocks) > 0:
-                        upstream_block_uuids = list(
-                            map(lambda b: b.uuid, not_executed_upstream_blocks)
-                        )
-                        raise Exception(
-                            f"Block {self.uuid}'s upstream blocks have not been executed yet. "
-                            f'Please run upstream blocks {upstream_block_uuids} '
-                            'before running the current block.'
-                        )
+                    pass
+                    # not_executed_upstream_blocks = list(
+                    #     filter(
+                    #         lambda b: b.status == BlockStatus.NOT_EXECUTED,
+                    #         self.upstream_blocks,
+                    #     )
+                    # )
+                    # all_upstream_is_dbt = all([
+                    #     BlockType.DBT == b.type for b in not_executed_upstream_blocks
+                    # ])
+                    # if not all_upstream_is_dbt and len(not_executed_upstream_blocks) > 0:
+                    #     upstream_block_uuids = list(
+                    #         map(lambda b: b.uuid, not_executed_upstream_blocks)
+                    #     )
+                    #     raise Exception(
+                    #         f"Block {self.uuid}'s upstream blocks have not been executed yet. "
+                    #         f'Please run upstream blocks {upstream_block_uuids} '
+                    #         'before running the current block.'
+                    #     )
+
                 global_vars = self.enrich_global_vars(
                     global_vars,
                     dynamic_block_index=dynamic_block_index,

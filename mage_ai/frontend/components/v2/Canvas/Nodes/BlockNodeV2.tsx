@@ -24,7 +24,7 @@ import { ElementRoleEnum } from '@mana/shared/types';
 import { EventContext } from '../../Apps/PipelineCanvas/Events/EventContext';
 import { FileType } from '@components/v2/IDE/interfaces';
 import { AppNodeType, NodeType, OutputNodeType } from '../interfaces';
-import { AISparkle, CloseV2, CopyV2, Monitor, OpenInSidekick, Trash, Insights } from '@mana/icons';
+import { AISparkle, DeleteCircle, CopyV2, Monitor, OpenInSidekick, Delete, Explain } from '@mana/icons';
 import { ThemeContext } from 'styled-components';
 import { createRoot, Root } from 'react-dom/client';
 import { executionDone } from '@components/v2/ExecutionManager/utils';
@@ -112,7 +112,7 @@ function BlockNode({
       event.stopPropagation();
       handleContextMenu(event, [
         {
-          Icon: CloseV2,
+          Icon: DeleteCircle,
           onClick: (event2: ClientEventType) => {
             removeContextMenu(event2);
             closeOutput();
@@ -133,7 +133,7 @@ function BlockNode({
           uuid: 'Copy output',
         },
         {
-          Icon: Trash,
+          Icon: Delete,
           onClick: (event: ClientEventType) => {
             executionOutputs.delete.mutate({
               event,
@@ -162,7 +162,7 @@ function BlockNode({
               uuid: 'Fix error',
             },
             {
-              Icon: Insights,
+              Icon: Explain,
               disabled: true,
               uuid: 'Explain error',
             },
@@ -182,7 +182,7 @@ function BlockNode({
     setResultMappingUpdate: (consumerID, handler) => {
       handleResultMappingUpdateRef.current[consumerID] = handler;
     },
-  }), [file, handleContextMenu, removeContextMenu, executionOutputs, codeExecutionEnvironment]);
+  }), [handleContextMenu, removeContextMenu, executionOutputs, codeExecutionEnvironment, updateOutputResults]);
 
   const handleEditorContextMenu = useCallback((event: any) => {
     event.preventDefault();
@@ -190,7 +190,7 @@ function BlockNode({
 
     handleContextMenu(event, [
       {
-        Icon: CloseV2,
+        Icon: DeleteCircle,
         onClick: (event2: ClientEventType) => {
           removeContextMenu(event2);
           closeEditorApp();
@@ -636,7 +636,7 @@ function BlockNode({
           });
         } else {
           items.push({
-            Icon: Trash,
+            Icon: Delete,
             onClick: (event: ClientEventType) => {
               event?.preventDefault();
 
