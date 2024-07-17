@@ -32,7 +32,13 @@ function ItemRow({
     metadata,
     subtitle,
     title,
-  } = item || {};
+  } = item || {
+    description: '',
+    display_settings_by_attribute: null,
+    metadata: null,
+    subtitle: '',
+    title: '',
+  };
   const {
     description: descriptionDisplaySettings,
     subtitle: subtitleDisplaySettings,
