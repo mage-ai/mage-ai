@@ -1,9 +1,11 @@
 import EventStreamType, { ResultType, ExecutionResultType, ExecutionStatusEnum } from '@interfaces/EventStreamType';
+import { useMutate } from '@context/APIMutation';
 import Ansi from 'ansi-to-react';
 import useAppEventsHandler, { CustomAppEventEnum } from '../../../Apps/PipelineCanvas/useAppEventsHandler';
 import Grid from '@mana/components/Grid';
-import React, { useMemo } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import Text from '@mana/elements/Text';
+import Link from '@mana/elements/Link';
 import moment from 'moment';
 import styles from '@styles/scss/components/Canvas/Nodes/ExecutionOutput.module.scss';
 import { DATE_FORMAT_LONG_MS } from '@utils/date';
@@ -12,6 +14,8 @@ import { convertToMillisecondsTimestamp, dateFormatLongFromUnixTimestamp } from 
 import { displayLocalOrUtcTime } from '@components/Triggers/utils';
 import { formatDurationFromEpoch, isNumeric } from '@utils/string';
 import { shouldDisplayLocalTimezone } from '@components/settings/workspace/utils';
+import { ExecutionOutputType } from '@interfaces/CodeExecutionType';
+import Loading from '@mana/components/Loading';
 
 export type ExecutionOutputProps = {
   first?: boolean;
@@ -31,7 +35,24 @@ function ExecutionOutput({
   const displayLocalTimezone = shouldDisplayLocalTimezone();
   const error = useMemo(() => results?.find(result => ExecutionStatusEnum.ERROR === result.status), [results]);
   const success = useMemo(() => results?.find(result => ExecutionStatusEnum.SUCCESS === result.status), [results]);
-  const output = useMemo(() => results?.find(result => ResultType.OUTPUT === result.type), [results]);
+  const hasOutput = useMemo(() => results?.find(result => ResultType.OUTPUT === result.type), [results]);
+
+  const [executionOutput, setExecutionOutput] = useState<ExecutionOutputType>(null);
+  const [loading, setLoading] = useState<boolean>(false);
+
+  const {
+    id,
+    namespace,
+    path,
+  } = useMemo(() => ({
+    id: success?.process?.message_request_uuid,
+    ...success?.metadata,
+  }), [success]);
+
+  const mutants = useMutate({
+    id,
+    resource: 'execution_outputs',
+  });
 
   const timestamps = useMemo(() => results?.reduce((acc, result) => ({
     max: acc.max === null ? result.timestamp : Math.max(acc.max, result.timestamp),
@@ -181,6 +202,29 @@ function ExecutionOutput({
     }), [displayLocalTimezone, results]);
 
   const runtime = useMemo(() => (timestamps?.max ?? 0) - (timestamps?.min ?? 0), [timestamps]);
+  const fetchOutput = useCallback(() => {
+    setLoading(true);
+
+    mutants.detail.mutate({
+      onError: ({ data }) => {
+        setLoading(false);
+      },
+      onSuccess: ({ data }) => {
+        setLoading(false);
+        setExecutionOutput(data?.execution_output);
+      },
+      query: {
+        namespace: encodeURIComponent(namespace),
+        path: encodeURIComponent(path),
+      },
+    });
+  }, [mutants, namespace, path]);
+
+  useEffect(() => {
+    if (!executionOutput && last && !loading) {
+      fetchOutput();
+    }
+  }, [fetchOutput, loading, last, executionOutput]);
 
   return (
     <div
@@ -206,15 +250,43 @@ function ExecutionOutput({
               styles.executionOutputGroup,
               styles[status],
             ].filter(Boolean).join(' ')}
+            style={{
+              minHeight: hasOutput ? 40 : undefined,
+            }}
           >
-            {outputs}
-          </Grid>
+            {!executionOutput?.output && outputs}
 
-          <Grid autoFlow="column" columnGap={8} justifyContent="end">
-            <Text monospace muted small>
-              {formatDurationFromEpoch(runtime)}
+            <Text monospace small>
+              <pre style={{
+                whiteSpace: 'pre-wrap',
+              }}>
+                <Ansi>
+                  {executionOutput?.output && JSON.stringify(executionOutput?.output, null, 2)}
+                </Ansi>
+              </pre>
             </Text>
           </Grid>
+
+          <div>
+            <div style={{ height: 4 }}>
+              {loading && <Loading position="absolute" />}
+            </div>
+
+            <Grid autoFlow="column" columnGap={8} justifyContent="space-between">
+              {hasOutput && !executionOutput ? (
+                <Link
+                  onClick={() => fetchOutput()}
+                  xsmall
+                >
+                  Load output
+                </Link>
+              ) : <div />}
+
+              <Text monospace muted small>
+                {formatDurationFromEpoch(runtime)}
+              </Text>
+            </Grid>
+          </div>
         </Grid>
       }
     </div>

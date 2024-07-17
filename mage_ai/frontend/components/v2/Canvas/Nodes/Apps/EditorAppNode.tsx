@@ -3,6 +3,7 @@ import { RenderContextMenuOptions } from '@mana/hooks/useContextMenu';
 import { MenuItemType } from '@mana/components/Menu/interfaces';
 import { ClientEventType, EventOperationEnum } from '@mana/shared/interfaces';
 import { executionDone } from '@components/v2/ExecutionManager/utils';
+import { KEY_ENTER, KEY_CODE_META } from '@utils/hooks/keyboardShortcuts/constants';
 import Tag from '@mana/components/Tag';
 import { AppSubtypeEnum, AppTypeEnum } from '@components/v2/Apps/constants';
 import EventStreamType from '@interfaces/EventStreamType';
@@ -10,6 +11,7 @@ import Link from '@mana/elements/Link';
 import React, { useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { executeCode } from '../../../IDE/actions';
 import TextInput from '@mana/elements/Input/TextInput';
+import KeyboardTextGroup from '@mana/elements/Text/Keyboard/Group';
 import moment from 'moment';
 import stylesAppNode from '@styles/scss/components/Canvas/Nodes/DraggableAppNode.module.scss';
 import stylesEditor from '@styles/scss/components/Canvas/Nodes/Apps/Editor.module.scss';
@@ -176,15 +178,15 @@ function EditorAppNode({
       >
         <Grid
           columnGap={PADDING_HORIZONTAL / 2}
-          style={{ gridTemplateColumns: 'auto auto 1fr auto' }}
+          style={{ gridTemplateColumns: 'auto 1fr auto' }}
           templateRows="1fr"
         >
-          <Button
+          {/* <Button
             Icon={asideBeforeOpen ? PanelCollapseLeft : BlockGenericV2}
             basic={asideBeforeOpen}
             onClick={() => setAsideBeforeOpen(prev => !prev)}
             small
-          />
+          /> */}
 
           <div style={{ position: 'relative' }}>
             {executing && <Tag left statusVariant timer top />}
@@ -209,6 +211,12 @@ function EditorAppNode({
                 });
               }}
               small
+              tag={(
+                <KeyboardTextGroup
+                  textGroup={[[KEY_CODE_META, KEY_ENTER]]}
+                  xsmall
+                />
+              )}
             />
           </div>
 

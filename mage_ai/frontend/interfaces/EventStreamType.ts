@@ -69,6 +69,10 @@ export interface ProcessDetailsType {
 export interface ExecutionResultType {
   data_type: DataTypeEnum;
   error?: ErrorDetailsType;
+  metadata?: {
+    namespace: string;
+    path: string;
+  };
   output: string | null;
   output_text?: string;
   process: ProcessDetailsType;

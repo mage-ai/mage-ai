@@ -217,4 +217,20 @@
       position: relative;
     }
   }
+
+  path {
+      stroke: yellow;
+      stroke-width: 2;
+      fill: none;
+      stroke-dasharray: 4; /* Creates the dashed pattern */
+      stroke-dashoffset: 0; /* Initial offset */
+      animation: dash 1s linear infinite;
+  }
+
+  @keyframes dash {
+      to {
+          stroke-dashoffset: -20; /* Negative value to animate the dash off the path */
+      }
+  }
+
 }
