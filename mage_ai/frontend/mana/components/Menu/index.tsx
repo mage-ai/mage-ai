@@ -205,7 +205,7 @@ function MenuItemBase({
             <motion.div
               variants={{
                 closed: {
-                  opacity: 0.6,
+                  opacity: 1,
                   x: -2,
                 },
                 open: {

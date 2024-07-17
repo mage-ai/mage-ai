@@ -2,6 +2,8 @@ import * as osPath from 'path';
 import BlockNodeComponent, { BADGE_HEIGHT, PADDING_VERTICAL } from './BlockNode';
 import { EnvironmentTypeEnum, EnvironmentUUIDEnum, EnvironmentType, ExecutionOutputType } from '@interfaces/CodeExecutionType';
 import Circle from '@mana/elements/Circle';
+import { menuItemsForTemplates } from './utils';
+import { generateUUID } from '@utils/uuids/generator';
 import { getUpDownstreamColors } from './Blocks/utils';
 import { ModelContext } from '@components/v2/Apps/PipelineCanvas/ModelManager/ModelContext';
 import Grid from '@mana/components/Grid';
@@ -24,7 +26,7 @@ import { ElementRoleEnum } from '@mana/shared/types';
 import { EventContext } from '../../Apps/PipelineCanvas/Events/EventContext';
 import { FileType } from '@components/v2/IDE/interfaces';
 import { AppNodeType, NodeType, OutputNodeType } from '../interfaces';
-import { AISparkle, DeleteCircle, CopyV2, Monitor, OpenInSidekick, Delete, Explain } from '@mana/icons';
+import { AISparkle, DeleteCircle, CopyV2, Monitor, OpenInSidekick, Delete, Explain, AddBlock } from '@mana/icons';
 import { ThemeContext } from 'styled-components';
 import { createRoot, Root } from 'react-dom/client';
 import { executionDone } from '@components/v2/ExecutionManager/utils';
@@ -182,7 +184,8 @@ function BlockNode({
     setResultMappingUpdate: (consumerID, handler) => {
       handleResultMappingUpdateRef.current[consumerID] = handler;
     },
-  }), [handleContextMenu, removeContextMenu, executionOutputs, codeExecutionEnvironment, updateOutputResults]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }), [handleContextMenu, removeContextMenu, executionOutputs, codeExecutionEnvironment]);
 
   const handleEditorContextMenu = useCallback((event: any) => {
     event.preventDefault();
@@ -617,23 +620,64 @@ function BlockNode({
         executing && stylesBlockNode.executing,
       ].filter(Boolean).join(' ')}
       onContextMenu={(event: any) => {
-        if (groupSelection || event.metaKey) return;
+        if (event.metaKey) return;
 
         event.preventDefault();
         event.stopPropagation();
 
         const items = [];
 
-        if (isGroup) {
-          items.push({
-            Icon: OpenInSidekick,
-            onClick: (event: ClientEventType) => {
-              event?.preventDefault();
-              setSelectedGroup(block);
-              removeContextMenu(event);
+        if (groupSelection) {
+          items.push(...[
+            {
+              Icon: AddBlock,
+              uuid: 'Add block from template',
             },
-            uuid: `Teleport into ${block?.name}`,
-          });
+            ...menuItemsForTemplates(block, (
+              event: any,
+              block2,
+              template,
+              callback,
+              payloadArg,
+            ) => {
+              const payload = {
+                ...payloadArg,
+                groups: [block2.uuid],
+                uuid: generateUUID(),
+              };
+
+              if (template?.uuid) {
+                payload.configuration = {
+                  templates: {
+                    [template.uuid]: template,
+                  },
+                };
+              }
+
+              mutations.pipelines.update.mutate({
+                event,
+                onSuccess: (event) => {
+                  callback && callback?.();
+                  removeContextMenu(event);
+                },
+                payload: {
+                  block: payload,
+                },
+              });
+            }),
+          ]);
+        } else if (isGroup) {
+          items.push(...[
+            {
+              Icon: OpenInSidekick,
+              onClick: (event: ClientEventType) => {
+                event?.preventDefault();
+                setSelectedGroup(block);
+                removeContextMenu(event);
+              },
+              uuid: `Teleport into ${block?.name}`,
+            },
+          ]);
         } else {
           items.push({
             Icon: Delete,

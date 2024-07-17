@@ -203,35 +203,39 @@ export default function BlockGroupOverview({
     return (
       <Grid rowGap={12}>
         {childBlocksMemo}
-        {!childBlocksMemo && blocks?.map((block2) => (
-          <PanelRows key={block2.uuid} padding={false}>
-            <Grid justifyItems="start" padding={12} rowGap={4} templateColumns="auto" >
+        {!childBlocksMemo && (
+          <PanelRows  padding={false}>
+            {/* <Grid justifyItems="start" padding={12} rowGap={4} templateColumns="auto" >
               <Text semibold xsmall>
                 Custom code
               </Text>
-            </Grid>
-            <Grid
-                alignItems="stretch"
-                baseLeft
-                baseRight
-                columnGap={8}
-                justifyContent="space-between"
-                smallBottom
-                smallTop
-                style={{
-                  gridTemplateColumns: 'minmax(0px, max-content) auto',
-                }}
-              >
-              <Text secondary small>
-                {block2?.name ?? block2?.uuid}
-              </Text>
+            </Grid> */}
+            {blocks?.map((block2) => (
+              <Grid
+                  alignItems="stretch"
+                  baseLeft
+                  baseRight
+                  columnGap={8}
+                  justifyContent="space-between"
+                  key={block2.uuid}
+                  smallBottom
+                  smallTop
+                  style={{
+                    gridTemplateColumns: 'minmax(0px, max-content) auto',
+                  }}
+                >
+                <Text secondary small>
+                  {block2?.name ?? block2?.uuid}
+                </Text>
 
-              <Text secondary small>
-                {BLOCK_TYPE_NAME_MAPPING[block2?.type ?? '']}
-              </Text>
-            </Grid>
+                <Text secondary small>
+                  {BLOCK_TYPE_NAME_MAPPING[block2?.type ?? '']}
+                </Text>
+              </Grid>
+
+            ))}
           </PanelRows>
-        ))}
+        )}
       </Grid >
     );
   }

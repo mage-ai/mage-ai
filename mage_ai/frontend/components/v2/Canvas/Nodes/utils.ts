@@ -223,9 +223,8 @@ export function menuItemsForTemplates(block, handleOnClick) {
     }
 
     arr.push({
-      description: () => 'Run custom code snippet for performing Retrieval-Augmented Generation '
-        + '(RAG) operations.',
-      label: () => 'Custom code...',
+      description: () => 'Execute your own custom code.',
+      label: () => 'Custom code',
       onClick: (event: any, _item, callback?: () => void) => {
         handleOnClick(event, block, null, callback, {
           color,
