@@ -16,13 +16,14 @@ from mage_ai.kernels.magic.models import ExecutionResult, ProcessContext, Proces
 from mage_ai.kernels.magic.stdout import AsyncStdout
 from mage_ai.server.kernel_output_parser import DataType
 from mage_ai.shared.environments import is_debug as is_debug_base
+from mage_ai.shared.hash import merge_dict
 from mage_ai.shared.queues import Queue as FasterQueue
 
 FLUSH_INTERVAL = 0.1
 
 
 def is_debug():
-    return True or is_debug_base()
+    return False and is_debug_base()
 
 
 def set_node_line_numbers(node: ast.AST, lineno: int, col_offset: int):
@@ -35,6 +36,7 @@ def set_node_line_numbers(node: ast.AST, lineno: int, col_offset: int):
 def modify_and_execute(
     code_block: str,
     local_variables,
+    stdout_redirect: AsyncStdout,
     execution_globals: Optional[Dict[str, Any]] = None,
 ) -> Dict[str, Any]:
     execution_globals = execution_globals or {}
@@ -81,7 +83,7 @@ def modify_and_execute(
     try:
         exec(
             compile(modified_code, '<string>', 'exec'),
-            execution_globals,
+            merge_dict(execution_globals, dict(stdout_redirect=stdout_redirect)),
         )
     except Exception as err:
         error = err
@@ -182,16 +184,16 @@ async def execute_code_async(
     process_details: Dict[str, Any],
     context: Optional[ProcessContext] = None,
     main_queue: Optional[FasterQueue] = None,
-    output_manager_config: Optional[Dict[str, str]] = None,
     **kwargs,
 ) -> None:
     process = ProcessDetails.load(**process_details)
 
-    print(message)
-
     local_variables = {}
     stop_event_read = Event()
-    output_manager = OutputManager.load(**output_manager_config) if output_manager_config else None
+    output_manager_config = kwargs.get('output_manager')
+    output_manager = None
+    if output_manager_config and isinstance(output_manager_config, dict):
+        output_manager = OutputManager.load(**output_manager_config)
 
     if is_debug():
         print(f'Executing full code block: {message}')
@@ -219,6 +221,7 @@ async def execute_code_async(
                     local_variables = modify_and_execute(
                         message,
                         local_variables,
+                        stdout_redirect=async_stdout,
                         execution_globals=kwargs.get('execution_globals', {}) or {},
                     )
             except Exception as err:
@@ -255,6 +258,7 @@ async def execute_code_async(
 
         success_result_options = kwargs.get('success_result_options') or None
         final_output = local_variables.get('__output__')
+
         if final_output is not None or success_result_options is not None:
             result_options = dict(
                 output=final_output,

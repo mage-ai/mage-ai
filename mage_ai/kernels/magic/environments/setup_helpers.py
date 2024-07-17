@@ -26,15 +26,18 @@ def execute(**kwargs):
 
     block = pipeline.get_block(block_uuid, block_type)
 
-    block._content = kwargs.get('message')
+    code = kwargs.get('code')
+    stdout_redirect = kwargs.get('stdout_redirect')
     variables = kwargs.get('variables') or {}
 
     block.execute_with_callback(
+        build_block_output_stdout=lambda x: stdout_redirect,
+        custom_code=code,
         execution_partition=variables.get('execution_partition'),
         global_vars=variables,
         override_outputs=False,
         store_variables=True,
         update_status=False,
         verify_output=False,
-        from_notebook=True,
+        from_notebook=False,
     )

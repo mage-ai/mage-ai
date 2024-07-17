@@ -1,3 +1,62 @@
+api:
+  description: 'Fetch data from an external API'
+  name: 'API Data Loader'
+  path: data_loaders/ingest/api.py
+  type: data_loader
+  inputs:
+    number:
+      style:
+        input_type: number
+      type: text_field
+    text:
+      style:
+        monospace: true
+      type: text_field
+  variables:
+    endpoint:
+      description: 'API Endpoint URL'
+      name: 'Endpoint URL'
+      input: text
+      required: true
+      types:
+        - string
+    auth_token:
+      description: 'Authentication Token for the API' # Optional if the API requires authentication
+      name: 'Authentication Token'
+      input: text
+      required: false
+      types:
+        - string
+    # params:
+    #   description: 'Query parameters as a JSON object'
+    #   name: 'Query Parameters'
+    #   input: text
+    #   required: false
+    #   types:
+    #     - dictionary
+    # headers:
+    #   description: 'Custom headers as a JSON object'
+    #   name: 'Custom Headers'
+    #   input: text
+    #   required: false
+    #   types:
+    #     - dictionary
+    method:
+      description: 'HTTP method to use (GET, POST, etc.)'
+      name: 'HTTP Method'
+      input: text
+      required: true
+      types:
+        - string
+      value: 'GET'  # Default value as GET
+    timeout:
+      description: 'Request timeout in seconds'
+      name: 'Timeout'
+      input: number
+      required: false
+      types:
+        - integer
+      value: 30  # Default value of 30 seconds
 files:
   description: 'Load files'
   name: 'Local file loader'

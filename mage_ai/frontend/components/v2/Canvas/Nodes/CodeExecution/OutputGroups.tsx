@@ -113,8 +113,8 @@ const OutputGroups: React.FC<OutputGroupsProps> = ({
               handleContextMenu={handleContextMenu}
               key={mrUUID}
               last={idx === keys.length - 1}
+              messageRequestUUID={mrUUID}
               results={resultsGroupedByMessageRequestUUID[mrUUID]}
-              uuid={mrUUID}
             />
           ))}
         </Grid>

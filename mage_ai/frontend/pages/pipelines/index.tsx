@@ -736,6 +736,7 @@ function PipelineListPage() {
   const newPipelineButtonMenuItems = useMemo(() => getNewPipelineButtonMenuItems(
     createPipeline,
     {
+      createRAG,
       showAIModal: () => {
         if (!project?.openai_api_key) {
           showConfigureProjectModal({
@@ -747,7 +748,6 @@ function PipelineListPage() {
           showAIModal();
         }
       },
-      createRAG,
       showBrowseTemplates,
       showCreatePipelineModal,
       showImportPipelineModal,

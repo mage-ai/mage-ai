@@ -45,7 +45,10 @@ class Pipeline:
         executions = [
             'initialize_database()',
             'reload_modules(message)',
-            'execute(**execution_variables)',
+            'code = """',
+            message.replace('"""', '\\"\\"\\"'),
+            '"""',
+            'execute(code=code, stdout_redirect=stdout_redirect, **execution_variables)',
         ]
         postprocess = []
 
@@ -75,7 +78,7 @@ class Pipeline:
             '\n'.join(code),
             message_request_uuid=message_request_uuid,
             output_manager=self.output_manager,
-            callback=lambda x: print('WTFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF', x),
+            callback=lambda x: print('Execution finished...', x),
             execution_options=dict(
                 environment_variable=self.environment_variables,
                 execution_globals=dict(
@@ -91,12 +94,15 @@ class Pipeline:
                 store_locals=True,
                 store_output=True,
                 success_result_options=dict(
+                    data_type=ResultType.OUTPUT,
                     metadata=dict(
+                        block_path=self.output_manager.path,
+                        block_type=block_type,
+                        block_uuid=block_uuid,
                         execution_partition=variables.get('execution_partition'),
                         pipeline_uuid=self.uuid,
                     ),
                     output='This is the output from the success result options.',
-                    type=ResultType.OUTPUT,
                 ),
             ),
             **(process_options or {}),

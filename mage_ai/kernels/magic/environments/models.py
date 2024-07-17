@@ -46,7 +46,7 @@ class Environment(BaseDataClass):
     @property
     def namespace(self) -> str:
         if self.type and self.uuid:
-            return os.path.join(str(self.type), self.uuid)
+            return os.path.join(EnvironmentType.from_value(self.type), self.uuid)
         return ''
 
     async def run_process(
@@ -162,17 +162,14 @@ class OutputManager(BaseDataClass):
 
     @property
     def absolute_path(self) -> str:
-        return os.path.join(get_variables_dir(), self.path, self.namespace, self.uuid)
+        path = os.path.join(get_variables_dir(), self.path, self.namespace, self.uuid)
+        return path
 
     async def exists(self) -> bool:
-        return await exists_async(self.absolute_path) and not await getsize_async(
-            self.absolute_path
-        )
+        return await exists_async(self.absolute_path)
 
     async def delete(self, if_empty: Optional[bool] = None) -> None:
-        if await exists_async(self.absolute_path) and (
-            not if_empty or not await getsize_async(self.absolute_path)
-        ):
+        if await self.exists() and (not if_empty or not await getsize_async(self.absolute_path)):
             await safe_delete_dir_async(self.absolute_path)
 
     async def append_message(self, data: str, filename: Optional[str] = None) -> None:

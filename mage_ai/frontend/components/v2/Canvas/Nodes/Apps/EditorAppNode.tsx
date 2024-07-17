@@ -86,14 +86,14 @@ function EditorAppNode({
   const appOptions = {
     configurations: {
       dimension: {
-        height: Math.max(height ?? 0, 400),
-        width: Math.max(width ?? 0, 400),
+        height: 600,
+        width: 400,
       },
-      folding: false,
-      glyphMargin: false,
-      lineDecorationsWidth: PADDING_HORIZONTAL,
-      lineNumbers: 'off',
-      lineNumbersMinChars: 0,
+      folding: true,
+      glyphMargin: true,
+      // lineDecorationsWidth: PADDING_HORIZONTAL,
+      lineNumbers: 'on',
+      // lineNumbersMinChars: 0,
     },
     file: file ?? {
       ...configuration?.file_source,
@@ -416,6 +416,9 @@ function EditorAppNode({
         onlyShowWithContent
         setHandleOnMessage={outputGroupsProps.setHandleOnMessage}
         setResultMappingUpdate={outputGroupsProps.setResultMappingUpdate}
+        styles={{
+          maxWidth: 600,
+        }}
       />
     </Grid>
   );

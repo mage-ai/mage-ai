@@ -72,6 +72,11 @@ function BlockNode({
   const { configuration, name, type } = block;
   const { file } = configuration ?? {};
 
+  const codeExecutionEnvironment = useMemo(() => ({
+    type: block?.pipeline?.uuid ? EnvironmentTypeEnum.PIPELINE : EnvironmentTypeEnum.CODE,
+    uuid: block?.pipeline?.uuid ?? EnvironmentUUIDEnum.EXECUTION,
+  }), [block]);
+
   const consumerIDRef = useRef<string>(null);
   const timeoutRef = useRef(null);
   const connectionErrorRef = useRef(null);
@@ -98,8 +103,11 @@ function BlockNode({
     useExecuteCode, useRegistration,
   } = useContext(EventContext);
 
+  const executionOutputs = useMutate({
+    resource: 'execution_outputs',
+  });
   const outputGroupsProps = useMemo(() => ({
-    handleContextMenu: (event: any, resultsInit: ExecutionResultType[]) => {
+    handleContextMenu: (event: any, messageRequestUUID: string, resultsInit: ExecutionResultType[]) => {
       event.preventDefault();
       event.stopPropagation();
       handleContextMenu(event, [
@@ -127,22 +135,20 @@ function BlockNode({
         {
           Icon: Trash,
           onClick: (event: ClientEventType) => {
-            alert('DELETE /execution_outputs/:id');
-
-            // mutations.files.update.mutate({
-            //   event,
-            //   id: file?.path,
-            //   onSuccess: ({ data }) => {
-            //     removeContextMenu(event);
-            //     fileRef.current = data?.browser_item;
-            //     fileRef.current.output = [];
-            //     updateOutputResults();
-
-            //     updateFileCache({
-            //       server: data?.browser_item,
-            //     });
-            //   },
-            // });
+            executionOutputs.delete.mutate({
+              event,
+              id: messageRequestUUID,
+              onSuccess: () => {
+                removeContextMenu(event);
+                updateOutputResults();
+              },
+              query: {
+                namespace: encodeURIComponent(
+                  [codeExecutionEnvironment.type, codeExecutionEnvironment.uuid].join(osPath.sep),
+                ),
+                path: encodeURIComponent(fileRef.current?.path),
+              },
+            });
           },
           uuid: 'Delete output',
         },
@@ -176,7 +182,7 @@ function BlockNode({
     setResultMappingUpdate: (consumerID, handler) => {
       handleResultMappingUpdateRef.current[consumerID] = handler;
     },
-  }), [file, handleContextMenu, removeContextMenu, mutations]);
+  }), [file, handleContextMenu, removeContextMenu, executionOutputs, codeExecutionEnvironment]);
 
   const handleEditorContextMenu = useCallback((event: any) => {
     event.preventDefault();
@@ -224,10 +230,6 @@ function BlockNode({
         },
       },
     },
-  });
-
-  const executionOutputs = useMutate({
-    resource: 'execution_outputs',
   });
 
   function updateOutputResults() {
@@ -340,11 +342,6 @@ function BlockNode({
 
   const getCode = useCallback(() =>
     getFileCache(file?.path)?.client?.file?.content, [file]);
-
-  const codeExecutionEnvironment = useMemo(() => ({
-    type: block?.pipeline?.uuid ? EnvironmentTypeEnum.PIPELINE : EnvironmentTypeEnum.CODE,
-    uuid: block?.pipeline?.uuid ?? EnvironmentUUIDEnum.EXECUTION,
-  }), [block]);
 
   const submitCodeExecution = useCallback((event: React.MouseEvent<HTMLElement>, opts?: {
     onError?: () => void;
@@ -518,6 +515,9 @@ function BlockNode({
             {...outputGroupsProps}
             consumerID={outputNode.id}
             role={ElementRoleEnum.CONTENT}
+            styles={{
+              maxWidth: 400,
+            }}
           >
             <div ref={outputPortalRef} />
             <Divider compact />

@@ -160,7 +160,7 @@ from mage_ai.shared.utils import clean_name as clean_name_orig
 from mage_ai.shared.utils import is_spark_env
 
 # from mage_ai.system.memory.manager import MemoryManager
-from mage_ai.system.memory.wrappers import execute_with_memory_tracking
+# from mage_ai.system.memory.wrappers import execute_with_memory_tracking
 from mage_ai.system.models import ResourceUsage
 
 PYTHON_COMMAND = 'python3'
@@ -2136,23 +2136,23 @@ class Block(
                 if global_vars:
                     global_vars.update(part_index=part_index)
 
-        if MEMORY_MANAGER_V2:
-            log_message_prefix = self.uuid
-            if self.pipeline:
-                log_message_prefix = f'{self.pipeline_uuid}:{log_message_prefix}'
-            log_message_prefix = f'[{log_message_prefix}:execute_block_function]'
+        # if MEMORY_MANAGER_V2:
+        #     log_message_prefix = self.uuid
+        #     if self.pipeline:
+        #         log_message_prefix = f'{self.pipeline_uuid}:{log_message_prefix}'
+        #     log_message_prefix = f'[{log_message_prefix}:execute_block_function]'
 
-            output, self.resource_usage = execute_with_memory_tracking(
-                block_function_updated,
-                args=input_vars,
-                kwargs=global_vars
-                if has_kwargs and global_vars is not None and len(global_vars) != 0
-                else None,
-                logger=logger,
-                logging_tags=logging_tags,
-                log_message_prefix=log_message_prefix,
-            )
-        elif has_kwargs and global_vars is not None and len(global_vars) != 0:
+        #     output, self.resource_usage = execute_with_memory_tracking(
+        #         block_function_updated,
+        #         args=input_vars,
+        #         kwargs=global_vars
+        #         if has_kwargs and global_vars is not None and len(global_vars) != 0
+        #         else None,
+        #         logger=logger,
+        #         logging_tags=logging_tags,
+        #         log_message_prefix=log_message_prefix,
+        #     )
+        if has_kwargs and global_vars is not None and len(global_vars) != 0:
             output = block_function_updated(*input_vars, **global_vars)
         else:
             output = block_function_updated(*input_vars)

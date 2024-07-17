@@ -16,17 +16,17 @@ import { shouldDisplayLocalTimezone } from '@components/settings/workspace/utils
 export type ExecutionOutputProps = {
   first?: boolean;
   last?: boolean;
-  handleContextMenu?: (event: React.MouseEvent<HTMLDivElement>, results: ExecutionResultType[]) => void;
+  handleContextMenu?: (event: React.MouseEvent<HTMLDivElement>, messageRequestUUID: string, results: ExecutionResultType[]) => void;
+  messageRequestUUID: string;
   results: ExecutionResultType[];
-  uuid: string;
 };
 
 function ExecutionOutput({
   first,
   last,
   handleContextMenu,
+  messageRequestUUID,
   results,
-  uuid,
 }: ExecutionOutputProps, ref: React.ForwardedRef<HTMLDivElement>) {
   const displayLocalTimezone = shouldDisplayLocalTimezone();
 
@@ -181,7 +181,7 @@ function ExecutionOutput({
 
   return (
     <div
-      onContextMenu={handleContextMenu ? event => handleContextMenu(event, results) : undefined}
+      onContextMenu={handleContextMenu ? event => handleContextMenu(event, messageRequestUUID, results) : undefined}
       ref={ref}
     >
       {outputs?.length > 0 &&
