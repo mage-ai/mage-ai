@@ -26,7 +26,8 @@ import {
 import BlockType from '@interfaces/BlockType';
 import { useDrop } from 'react-dnd';
 import CanvasContainer, { GRID_SIZE } from './index.style';
-import LineManagerV2, { UpdateLinesType, ANIMATION_DURATION as ANIMATION_DURATION_LINES, EASING } from './Lines/LineManagerV2';
+import LineManagerV2, { UpdateLinesType, ANIMATION_DURATION as ANIMATION_DURATION_LINES,
+  getLineID, EASING } from './Lines/LineManagerV2';
 import DragWrapper from '../../Canvas/Nodes/DragWrapper';
 import HeaderUpdater from '../../Layout/Header/Updater';
 import PipelineExecutionFrameworkType,
@@ -394,7 +395,16 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
             }
 
             onCloseRef.current = () => {
+              const id = getLineID(block.uuid, outputNode.id);
+              const el = document.getElementById(id);
+              if (el) {
+                el.style.display = 'none';
+                el.style.opacity = '0';
+                el.style.strokeDasharray = '0';
+              }
+
               delete outputNodeRefs.current[block.uuid];
+
               setOutputNodes(prev => {
                 delete prev[block.uuid];
                 return prev;
@@ -404,7 +414,17 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
             outputNodeRefs.current[block.uuid] ||= {
               render: null,
             };
-            outputNodeRefs.current[block.uuid].render = render;
+            outputNodeRefs.current[block.uuid].render = (n, m) => {
+              const id = getLineID(block.uuid, outputNode.id);
+              const el = document.getElementById(id);
+              if (el) {
+                el.style.display = '';
+                el.style.opacity = '';
+                el.style.strokeDasharray = '';
+              }
+
+              render(n, m);
+            };
 
             setOutputNodes(prev => ({
               ...prev,

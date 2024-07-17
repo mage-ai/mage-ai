@@ -62,6 +62,7 @@ function EditorAppNode({
   height,
   interruptExecution,
   outputGroupsProps,
+  onClose,
   setHandleOnMessage,
   submitCodeExecution,
   width,
@@ -204,9 +205,12 @@ function EditorAppNode({
           <TextInput basic placeholder="/" style={{ paddingBottom: 8, paddingTop: 8 }} />
 
           <Button
-            Icon={afterOpen ? PanelCollapseRight : Menu}
-            basic={afterOpen}
-            onClick={() => setAfterOpen(prev => !prev)}
+            // Icon={afterOpen ? PanelCollapseRight : Menu}
+            // basic={afterOpen}
+            // onClick={() => setAfterOpen(prev => !prev)}
+            Icon={CloseV2}
+            basic
+            onClick={() => onClose()}
             small
           />
         </Grid>

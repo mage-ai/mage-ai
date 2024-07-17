@@ -16,6 +16,7 @@ export enum EventSourceReadyState {
 
 export enum ResultType {
   DATA = 'data',
+  OUTPUT = 'output',
   STATUS = 'status',
   STDOUT = 'stdout',
 }

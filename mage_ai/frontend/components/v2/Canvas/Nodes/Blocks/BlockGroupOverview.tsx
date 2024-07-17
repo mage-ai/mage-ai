@@ -5,6 +5,7 @@ import PanelRows from '@mana/elements/PanelRows';
 import Text from '@mana/elements/Text';
 import { FrameworkType, PipelineExecutionFrameworkBlockType } from '@interfaces/PipelineExecutionFramework/interfaces';
 import { LayoutDisplayEnum } from '../../types';
+import { BLOCK_TYPE_NAME_MAPPING, LANGUAGE_DISPLAY_MAPPING } from '@interfaces/BlockType';
 import { ModelContext } from '@components/v2/Apps/PipelineCanvas/ModelManager/ModelContext';
 import { SettingsContext } from '@components/v2/Apps/PipelineCanvas/SettingsManager/SettingsContext';
 import { getBlockColor } from '@mana/themes/blocks';
@@ -75,7 +76,7 @@ export default function BlockGroupOverview({
           required,
           uuid: templateUUID,
           variables: vars,
-        }
+        };
       });
 
       if (templatesHydrated?.length >= 1) {
@@ -87,6 +88,10 @@ export default function BlockGroupOverview({
 
     const grouped = Object.entries(groupBy(arr, ({ name }) => name) ?? {});
     const sorted = sortByKey(grouped, ([k, v]) => sum(v.map(({ invalid }) => invalid)));
+
+    if (sorted.length === 0) {
+      return null;
+    }
 
     return sorted?.map(([templateName, blocks2]) => (
       <Grid
@@ -198,6 +203,35 @@ export default function BlockGroupOverview({
     return (
       <Grid rowGap={12}>
         {childBlocksMemo}
+        {!childBlocksMemo && blocks?.map((block2) => (
+          <PanelRows key={block2.uuid} padding={false}>
+            <Grid justifyItems="start" padding={12} rowGap={4} templateColumns="auto" >
+              <Text semibold xsmall>
+                Custom code
+              </Text>
+            </Grid>
+            <Grid
+                alignItems="stretch"
+                baseLeft
+                baseRight
+                columnGap={8}
+                justifyContent="space-between"
+                smallBottom
+                smallTop
+                style={{
+                  gridTemplateColumns: 'minmax(0px, max-content) auto',
+                }}
+              >
+              <Text secondary small>
+                {block2?.name ?? block2?.uuid}
+              </Text>
+
+              <Text secondary small>
+                {BLOCK_TYPE_NAME_MAPPING[block2?.type ?? '']}
+              </Text>
+            </Grid>
+          </PanelRows>
+        ))}
       </Grid >
     );
   }

@@ -324,7 +324,6 @@ function BlockNode({
 
   function handleSubscribe(consumerID: string) {
     handleOnMessageRef.current[consumerIDRef.current] = (event: EventStreamType) => {
-      console.log(event);
       if (event?.result) {
         executionResultMappingRef.current[event.result.result_id] = event?.result;
       }
@@ -421,7 +420,7 @@ function BlockNode({
     delete handleOnMessageRef.current?.[outputRef?.current?.id];
     outputRootRef?.current && outputRootRef?.current?.unmount();
     outputRootRef.current = null;
-    onCloseOutputRef && onCloseOutputRef?.current?.();
+    onCloseOutputRef.current();
   }
 
   function closeEditorApp() {
@@ -516,7 +515,7 @@ function BlockNode({
             consumerID={outputNode.id}
             role={ElementRoleEnum.CONTENT}
             styles={{
-              maxWidth: 400,
+              maxWidth: 500,
             }}
           >
             <div ref={outputPortalRef} />
@@ -606,16 +605,6 @@ function BlockNode({
       clearTimeout(timeout);
       timeoutRef.current = null;
       unsubscribe(consumerID);
-
-      closeEditorApp();
-      appRootRef.current = null;
-
-      closeOutput();
-      outputRootRef.current = null;
-
-      executionResultMappingRef.current = {};
-      handleOnMessageRef.current = {};
-      handleResultMappingUpdateRef.current = {};
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

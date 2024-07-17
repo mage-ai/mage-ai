@@ -94,7 +94,7 @@ class Pipeline:
                 store_locals=True,
                 store_output=True,
                 success_result_options=dict(
-                    data_type=ResultType.OUTPUT,
+                    data_type=None,
                     metadata=dict(
                         block_path=self.output_manager.path,
                         block_type=block_type,
@@ -103,6 +103,7 @@ class Pipeline:
                         pipeline_uuid=self.uuid,
                     ),
                     output='This is the output from the success result options.',
+                    type=ResultType.OUTPUT,
                 ),
             ),
             **(process_options or {}),

@@ -39,7 +39,7 @@ export type UpdateLinesType = (
   opts?: { replace: boolean },
 ) => void;
 
-function getLineID(upstream: string, downstream: string) {
+export function getLineID(upstream: string, downstream: string) {
   return [upstream, downstream].join('->');
 }
 
@@ -365,8 +365,10 @@ export default function LineManagerV2({
         animate={ controlsProp ?? controls}
         className={stylesPipelineBuilder.path}
         custom={{
+          from: rectup,
           index,
           isOutput,
+          to: rectdn,
         }}
         d={dvalue}
         data-index={index}
