@@ -14,7 +14,7 @@ const SHARED_STYLES = {
   zIndex: -9999,
 };
 
-interface NodeData {
+export interface NodeData {
   computedStyle: CSSStyleDeclaration;
   rect: RectType;
 }

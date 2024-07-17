@@ -90,7 +90,7 @@ function EditorAppNode({
   const appOptions = {
     configurations: {
       dimension: {
-        height: 600,
+        height: 500,
         width: 400,
       },
       folding: true,

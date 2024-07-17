@@ -1,9 +1,9 @@
 import EventStreamType, { ResultType, ExecutionResultType, ExecutionStatusEnum } from '@interfaces/EventStreamType';
-import { useMutate } from '@context/APIMutation';
+
 import Ansi from 'ansi-to-react';
 import useAppEventsHandler, { CustomAppEventEnum } from '../../../Apps/PipelineCanvas/useAppEventsHandler';
 import Grid from '@mana/components/Grid';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Text from '@mana/elements/Text';
 import Link from '@mana/elements/Link';
 import moment from 'moment';
@@ -18,20 +18,32 @@ import { ExecutionOutputType } from '@interfaces/CodeExecutionType';
 import Loading from '@mana/components/Loading';
 
 export type ExecutionOutputProps = {
+  executionOutput?: ExecutionOutputType;
   first?: boolean;
   last?: boolean;
   handleContextMenu?: (event: React.MouseEvent<HTMLDivElement>, messageRequestUUID: string, results: ExecutionResultType[]) => void;
   messageRequestUUID: string;
+  fetchOutput?: (messageRequestUUID: string, opts: {
+    onError: () => void;
+    onSuccess: (executionOutput: ExecutionOutputType) => void;
+    query: {
+      namespace: string;
+      path: string;
+    };
+  }) => void;
   results: ExecutionResultType[];
 };
 
 function ExecutionOutput({
+  executionOutput: executionOutputProp,
+  fetchOutput,
   first,
   last,
   handleContextMenu,
   messageRequestUUID,
   results,
 }: ExecutionOutputProps, ref: React.ForwardedRef<HTMLDivElement>) {
+  const timeoutRef = useRef(null);
   const displayLocalTimezone = shouldDisplayLocalTimezone();
   const error = useMemo(() => results?.find(result => ExecutionStatusEnum.ERROR === result.status), [results]);
   const success = useMemo(() => results?.find(result => ExecutionStatusEnum.SUCCESS === result.status), [results]);
@@ -48,11 +60,6 @@ function ExecutionOutput({
     id: success?.process?.message_request_uuid,
     ...success?.metadata,
   }), [success]);
-
-  const mutants = useMutate({
-    id,
-    resource: 'execution_outputs',
-  });
 
   const timestamps = useMemo(() => results?.reduce((acc, result) => ({
     max: acc.max === null ? result.timestamp : Math.max(acc.max, result.timestamp),
@@ -202,11 +209,11 @@ function ExecutionOutput({
     }), [displayLocalTimezone, results]);
 
   const runtime = useMemo(() => (timestamps?.max ?? 0) - (timestamps?.min ?? 0), [timestamps]);
-  const fetchOutput = useCallback(() => {
+  const getOutput = useCallback(() => {
     setLoading(true);
 
-    mutants.detail.mutate({
-      onError: ({ data }) => {
+    fetchOutput(id, {
+      onError: () => {
         setLoading(false);
       },
       onSuccess: ({ data }) => {
@@ -218,13 +225,13 @@ function ExecutionOutput({
         path: encodeURIComponent(path),
       },
     });
-  }, [mutants, namespace, path]);
+  }, [fetchOutput, id, namespace, path]);
 
   useEffect(() => {
-    if (!executionOutput && last && !loading) {
-      fetchOutput();
+    if (executionOutputProp && !executionOutput) {
+      setExecutionOutput(executionOutputProp);
     }
-  }, [fetchOutput, loading, last, executionOutput]);
+  }, [executionOutput, executionOutputProp]);
 
   return (
     <div
@@ -275,7 +282,7 @@ function ExecutionOutput({
             <Grid autoFlow="column" columnGap={8} justifyContent="space-between">
               {hasOutput && !executionOutput ? (
                 <Link
-                  onClick={() => fetchOutput()}
+                  onClick={() => getOutput()}
                   xsmall
                 >
                   Load output

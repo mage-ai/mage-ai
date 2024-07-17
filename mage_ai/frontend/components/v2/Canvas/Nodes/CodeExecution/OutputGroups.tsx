@@ -1,14 +1,16 @@
-import EventStreamType, { ExecutionResultType } from '@interfaces/EventStreamType';
+import EventStreamType, { ExecutionStatusEnum, ExecutionResultType, ResultType } from '@interfaces/EventStreamType';
+import { useMutate } from '@context/APIMutation';
 import Tag from '@mana/components/Tag';
 import { executionDone } from '@components/v2/ExecutionManager/utils';
 import ExecutionOutput, { ExecutionOutputProps } from './ExecutionOutput';
 import Grid from '@mana/components/Grid';
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Scrollbar from '@mana/elements/Scrollbar';
 import stylesOutput from '@styles/scss/components/Canvas/Nodes/OutputGroups.module.scss';
 import { DEBUG } from '@components/v2/utils/debug';
 import { groupBy, indexBy } from '@utils/array';
 import { ElementRoleEnum } from '@mana/shared/types';
+import { ExecutionOutputType } from '@interfaces/CodeExecutionType';
 
 export type OutputGroupsType = {
   handleContextMenu?: ExecutionOutputProps['handleContextMenu'];
@@ -46,11 +48,39 @@ const OutputGroups: React.FC<OutputGroupsProps> = ({
   const scrollableDivRef = useRef<HTMLDivElement>(null);
 
   const [executing, setExecuting] = useState<boolean>(false);
+  const [executionOutputMapping, setExecutionOutputMapping] =
+    useState<Record<string, ExecutionOutputType>>({});
   const [resultMapping, setResultMapping] = useState<Record<string, ExecutionResultType>>({});
   const resultsGroupedByMessageRequestUUID = useMemo(
     () => groupBy(Object.values(resultMapping ?? {}),
       (result: ExecutionResultType) => result.process.message_request_uuid),
     [resultMapping]);
+
+  const keys = useMemo(() => Object.keys(
+    resultsGroupedByMessageRequestUUID ?? {},
+  )?.sort(), [resultsGroupedByMessageRequestUUID]);
+
+  const mutants = useMutate({
+    resource: 'execution_outputs',
+  });
+
+  const fetchOutput = useCallback((id, opts) => {
+    mutants.detail.mutate({
+      ...opts,
+      id,
+      onSuccess: ({ data }) => {
+        const xo = data?.execution_output;
+        setExecutionOutputMapping((prev) => ({
+          ...prev,
+          [xo.uuid]: xo,
+        }));
+        if (opts?.onSuccess) {
+          opts.onSuccess(xo);
+        }
+      },
+    });
+
+  }, [mutants.detail]);
 
   useEffect(() => {
     setResultMappingUpdate && setResultMappingUpdate?.(
@@ -66,10 +96,30 @@ const OutputGroups: React.FC<OutputGroupsProps> = ({
       setExecuting(!done);
 
       const { result } = event;
-      setResultMapping((prev) => ({
-        ...prev,
-        [result.result_id]: result,
-      }));
+      setResultMapping((prev) => {
+        const total = {
+          ...prev,
+          [result.result_id]: result,
+        };
+
+        if (done) {
+          const results = Object.values(total ?? {})?.filter(
+            r => r.process?.message_request_uuid === result.process?.message_request_uuid);
+
+          const resultOutput = results?.find(result => ExecutionStatusEnum.SUCCESS === result.status
+            && ResultType.OUTPUT === result.type);
+          if (resultOutput) {
+            fetchOutput(resultOutput.process.message_request_uuid, {
+              query: {
+                namespace: resultOutput.metadata.namespace,
+                path: resultOutput.metadata.path,
+              },
+            });
+          }
+        }
+
+        return total;
+      });
     });
 
     onMount && onMount?.(consumerID);
@@ -81,10 +131,6 @@ const OutputGroups: React.FC<OutputGroupsProps> = ({
       top: scrollableDivRef.current.scrollHeight,
     });
   }, [resultsGroupedByMessageRequestUUID]);
-
-  const keys = useMemo(() => Object.keys(
-    resultsGroupedByMessageRequestUUID ?? {},
-  )?.sort(), [resultsGroupedByMessageRequestUUID]);
 
   if (onlyShowWithContent && (keys?.length ?? 0) === 0) {
     return null;
@@ -107,16 +153,21 @@ const OutputGroups: React.FC<OutputGroupsProps> = ({
         autoHorizontalPadding ref={scrollableDivRef} style={{ maxHeight: 400, overflow: 'auto' }}
       >
         <Grid rowGap={8} templateRows="min-content">
-          {keys?.map((mrUUID: string, idx: number) => (
-            <ExecutionOutput
-              first={idx === 0}
-              handleContextMenu={handleContextMenu}
-              key={mrUUID}
-              last={idx === keys.length - 1}
-              messageRequestUUID={mrUUID}
-              results={resultsGroupedByMessageRequestUUID[mrUUID]}
-            />
-          ))}
+          {keys?.map((mrUUID: string, idx: number) => {
+            const last = idx === keys.length - 1;
+            return (
+              <ExecutionOutput
+                executionOutput={executionOutputMapping?.[mrUUID]}
+                fetchOutput={fetchOutput}
+                first={idx === 0}
+                handleContextMenu={handleContextMenu}
+                key={mrUUID}
+                last={last}
+                messageRequestUUID={mrUUID}
+                results={resultsGroupedByMessageRequestUUID[mrUUID]}
+              />
+            );
+          })}
         </Grid>
       </Scrollbar>
     </div>

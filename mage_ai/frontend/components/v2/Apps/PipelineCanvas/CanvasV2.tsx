@@ -638,9 +638,8 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
   ) {
     const __animate = () => {
       clearTimeout(timeoutInitialAnimationRef.current);
-      console.log(rectsMap, rectsMappingRef);
       if (Object.values(rectsMap ?? {}).length === 0 && Object.values(rectsMappingRef?.current ?? {}).length === 0) {
-        timeoutInitialAnimationRef.current = setTimeout(__animate, 1000);
+        timeoutInitialAnimationRef.current = setTimeout(__animate, 100);
         return;
       }
 
@@ -1237,7 +1236,8 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
           handleNodeTransfer={(node: ShadowNodeType, data: NodeData, element: HTMLElement) => {
             nodesToBeRenderedRef.current[node.id] = true;
 
-            if (newBlockCallbackAnimationRef.current && node.id in newBlockCallbackAnimationRef.current) {
+            if (newBlockCallbackAnimationRef.current
+              && node.id in newBlockCallbackAnimationRef.current) {
               newBlockCallbackAnimationRef.current[node.id] = true;
             }
           }}
@@ -2015,10 +2015,13 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
           { ...getSelectedGroupRectFromRefs() },
           {
             callback: () => {
-              handleLineTransitions();
               newBlockCallbackAnimationRef.current = null;
             },
             replace: false,
+            shouldAnimate: (rectup, rectdn) =>
+              // console.log(rectup, rectdn, newBlockCallbackAnimationRef.current ?? {});
+               (newBlockCallbackAnimationRef.current ?? {})?.[rectdn.id]
+            ,
           },
         );
 

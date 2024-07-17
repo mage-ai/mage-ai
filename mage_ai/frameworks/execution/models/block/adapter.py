@@ -7,7 +7,7 @@ from mage_ai.data_preparation.models.block import Block as BlockBase
 from mage_ai.data_preparation.models.constants import BlockType
 from mage_ai.data_preparation.models.pipeline import Pipeline as PipelineBase
 from mage_ai.frameworks.execution.models.block.models import Configuration
-from mage_ai.shared.array import find, flatten
+from mage_ai.shared.array import flatten
 from mage_ai.shared.hash import extract
 from mage_ai.shared.models import DelegatorTarget
 from mage_ai.shared.utils import get_absolute_path
@@ -65,20 +65,24 @@ class Block(DelegatorTarget):
         # Add the new block to an existing block’s downstream if the block is in the same group
         # and has no other downstream blocks.
         if block.groups:
-            # groups = await pipeline.get_framework_groups()
             blocks_list = await asyncio.gather(*[
                 pipeline.get_blocks_in_group(group_uuid) for group_uuid in block.groups
             ])
             blocks = flatten(blocks_list)
 
             if len(blocks) == 0:
-                # If current group has 0 blocks, then look into an upstream sibling group and
-                # find a block with no downstream blocks.
-                pass
+                groups = await pipeline.get_framework_groups()
+                groups_current = [g for g in groups if g.uuid in block.groups]
 
-            block2 = find(lambda b: not b.downstream_blocks, blocks)
-            if block2:
-                upstream_block_uuids.append(block2.uuid)
+                groups_up = flatten([g.upstream_blocks for g in groups_current])
+                group_blocks = await asyncio.gather(*[
+                    pipeline.get_blocks_in_group(guuid) for guuid in groups_up
+                ])
+                blocks += flatten(group_blocks)
+
+            for blockup in blocks:
+                if not blockup.downstream_blocks:
+                    upstream_block_uuids.append(blockup.uuid)
 
         await pipeline.add_block(block, upstream_block_uuids=upstream_block_uuids)
 

@@ -130,7 +130,18 @@ export type MutationStatusMappingType = {
   [OperationTypeEnum.UPDATE]: MutationStatusEnum;
 };
 
+interface AbortControllerType {
+  abort: () => void;
+}
+
 export interface MutateType {
+  abortController: {
+    create: AbortControllerType;
+    delete: AbortControllerType;
+    detail: AbortControllerType;
+    list: AbortControllerType;
+    update: AbortControllerType;
+  };
   create: MutatationType;
   delete: MutatationType;
   detail: MutatationType;

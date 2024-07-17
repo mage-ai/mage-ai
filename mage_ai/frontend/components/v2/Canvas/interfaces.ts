@@ -26,6 +26,7 @@ export interface OffsetType {
 }
 
 export interface RectType extends RectTypeBase {
+  animate?: boolean;
   block?: BlockType;
   children?: RectType[];
   diff?: RectType;

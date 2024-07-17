@@ -38,7 +38,8 @@ export type UpdateLinesType = (
   groupRectArg: RectType,
   opts?: {
     callback?: () => void;
-    replace: boolean;
+    replace?: boolean;
+    shouldAnimate: (rectup: RectType, rectdn: RectType) => boolean;
   },
 ) => void;
 
@@ -262,7 +263,9 @@ export default function LineManagerV2({
     [ItemTypeEnum.OUTPUT]?: [RectType, RectType][],
   }, opts?: {
     replace?: boolean;
-  }) {
+    shouldAnimate: (rectup: RectType, rectdn: RectType) => boolean;
+  }): LinePathType[] {
+    const linePaths = [];
     const paths = {
       [ItemTypeEnum.BLOCK]: {},
       [ItemTypeEnum.NODE]: {},
@@ -280,10 +283,19 @@ export default function LineManagerV2({
         ].join('_');
       })?.forEach(
         ([rectup, rectdn], index: number) => {
-          const linePath = renderLine(rectup, rectdn, index, getLayoutConfig());
+          const linePath = renderLine(
+            rectup,
+            rectdn,
+            index,
+            {
+              layout: getLayoutConfig(),
+              shouldAnimate: opts?.shouldAnimate,
+            },
+          );
 
           paths[type][rectup.id] ||= [];
           paths[type][rectup.id].push(linePath);
+          linePaths.push(linePath);
         });
     });
 
@@ -310,6 +322,8 @@ export default function LineManagerV2({
       };
       return val;
     });
+
+    return linePaths;
   }
 
   const renderLine = useCallback((
@@ -317,9 +331,12 @@ export default function LineManagerV2({
     rectdn: RectType,
     index: number,
     opts?: {
-      direction?: LayoutConfigType['direction'];
-      display?: LayoutConfigType['display'];
-      style?: LayoutConfigType['style'];
+      layout?: {
+        direction?: LayoutConfigType['direction'];
+        display?: LayoutConfigType['display'];
+        style?: LayoutConfigType['style'];
+      };
+      shouldAnimate?: (rectup: RectType, rectdn: RectType) => boolean;
     },
   ): LinePathType => {
     const paths = [];
@@ -331,7 +348,7 @@ export default function LineManagerV2({
       isOutput,
       lineID,
       toRect,
-    } = prepareLinePathProps(rectup, rectdn, opts);
+    } = prepareLinePathProps(rectup, rectdn, opts?.layout);
 
     // console.log(lineID, fromRect?.left, fromRect?.top, toRect?.left, toRect?.top)
 
@@ -363,11 +380,14 @@ export default function LineManagerV2({
       lineRef?.current?.classList?.remove(stylesPipelineBuilder.exit);
     }
 
+    const shouldAnimate = opts?.shouldAnimate && opts?.shouldAnimate?.(rectup, rectdn);
+    // console.log(rectup, rectdn, shouldAnimate, opts);
     paths.push(
       <motion.path
-        animate={ controlsProp ?? controls}
+        animate={shouldAnimate ? controls : (controlsProp ?? controls)}
         className={stylesPipelineBuilder.path}
         custom={{
+          animate: shouldAnimate,
           from: rectup,
           index,
           isOutput,
@@ -396,6 +416,7 @@ export default function LineManagerV2({
     const keys = ['left', 'top', 'width', 'height'];
 
     return {
+      animate: shouldAnimate,
       id: lineID,
       key: [
         keys?.map(key => Math.round(fromRect?.[key])).map(String).join(':'),
@@ -412,7 +433,8 @@ export default function LineManagerV2({
     groupRectArg: RectType,
     opts?: {
       callback?: () => void;
-      replace: boolean;
+      replace?: boolean;
+      shouldAnimate?: (rectup: RectType, rectdn: RectType) => boolean;
     },
   ) => {
     const pairsByType = {
@@ -521,38 +543,45 @@ export default function LineManagerV2({
       }
     });
 
-    renderPaths(pairsByType, opts);
+    const linePaths = renderPaths(pairsByType, {
+      replace: opts?.replace,
+      shouldAnimate: opts?.shouldAnimate,
+    });
+
+    if (linePaths?.some(r => r.animate)) {
+      startAnimating(true);
+    }
+
     opts?.callback && opts?.callback?.();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const startAnimating = useCallback(() => {
-    if (animate) {
-      controls.stop();
-      controls.set({
-        opacity: 0,
-        pathLength: 0,
-      });
-
+  const startAnimating = useCallback((override?: boolean) => {
+    if (animate || override) {
       timeoutRef.current = setTimeout(() => {
         clearTimeout(timeoutRef.current);
         timeoutRef.current = null;
 
-        controls.set({
+        controls.stop();
+        controls.set(({ animate }) => animate ? {
           opacity: 0,
           pathLength: 0,
+        } : {
+          opacity: 1,
+          pathLength: 1,
         });
         controls.start(({
+          animate,
           index,
           isOutput,
         }) => ({
           ease: EASING,
           opacity: 1,
           pathLength: 1,
-          transition: {
+          transition: animate ? {
             delay: (index * ANIMATION_DURATION) + (isOutput ? 1 : 0.5),
             duration: isOutput ? 0.1 : ANIMATION_DURATION * ((100 - index) / 100),
-          },
+          } : { duration: 0 },
         }));
       }, 100);
     } else {

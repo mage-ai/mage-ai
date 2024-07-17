@@ -305,6 +305,8 @@ export function useMutate(
       }).catch((error) => {
         args?.onError && args?.onError?.(error, args, opts);
         return reject(error);
+      }).finally(() => {
+        delete abortControllerRef.current[operation];
       });
     });
   }
@@ -361,7 +363,6 @@ export function useMutate(
       && now - (checkpointRef?.current?.[operation] ?? 0) < throttleRef?.current?.[operation]) {
       return Promise.resolve(null);
     }
-
     if (automaticAbort && abortControllerRef?.current?.[operation]) {
       console.log(`[useMutate] Aborting ${operation} for ${resource}`, args);
       abortControllerRef?.current?.[operation].abort();
@@ -427,6 +428,7 @@ export function useMutate(
 
   // @ts-ignore
   return {
+    abortController: abortControllerRef.current,
     create: mutationCreate,
     delete: mutationDelete,
     detail: mutationDetail,
