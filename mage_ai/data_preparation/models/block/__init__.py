@@ -1692,6 +1692,11 @@ class Block(
         run_sensors: bool = True,
         update_status: bool = True,
         parallel: bool = True,
+        execution_partition: Optional[str] = None,
+        override_outputs: Optional[bool] = None,
+        store_variables: Optional[bool] = None,
+        verify_output: Optional[bool] = None,
+        from_notebook: Optional[bool] = None,
     ) -> None:
         if parallel:
             loop = asyncio.get_event_loop()
@@ -1702,10 +1707,14 @@ class Block(
                     analyze_outputs=analyze_outputs,
                     build_block_output_stdout=build_block_output_stdout,
                     custom_code=custom_code,
-                    from_notebook=not run_sensors,
+                    from_notebook=from_notebook if from_notebook else not run_sensors,
                     global_vars=global_vars,
                     run_all_blocks=run_all_blocks,
                     update_status=update_status,
+                    execution_partition=execution_partition,
+                    override_outputs=override_outputs,
+                    store_variables=store_variables,
+                    verify_output=verify_output,
                 ),
             )
         else:
@@ -1713,10 +1722,14 @@ class Block(
                 analyze_outputs=analyze_outputs,
                 build_block_output_stdout=build_block_output_stdout,
                 custom_code=custom_code,
-                from_notebook=not run_sensors,
+                from_notebook=from_notebook if from_notebook else not run_sensors,
                 global_vars=global_vars,
                 run_all_blocks=run_all_blocks,
                 update_status=update_status,
+                execution_partition=execution_partition,
+                override_outputs=override_outputs,
+                store_variables=store_variables,
+                verify_output=verify_output,
             )
 
     def _validate_execution(self, decorated_functions, input_vars):

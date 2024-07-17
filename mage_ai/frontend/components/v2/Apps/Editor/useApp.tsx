@@ -4,7 +4,7 @@ import dynamic from 'next/dynamic';
 import useToolbarsHook from './Toolbars/useToolbars';
 import { AppLoaderProps, AppLoaderResultType } from '../interfaces';
 import { FileCacheType, getFileCache, isStale, updateFileCache } from '../../IDE/cache';
-import { FileType } from '../../IDE/interfaces';
+import { FileType, IDEProps } from '../../IDE/interfaces';
 import { MutateType } from '@api/interfaces';
 import { useMutate } from '@context/APIMutation';
 import { DEBUG } from '@components/v2/utils/debug';
@@ -15,12 +15,7 @@ const MaterialIDE = dynamic(() => import('@components/v2/IDE'), {
 });
 
 export default function useApp(props: AppLoaderProps & {
-  editor?: {
-    containerClassName?: string;
-    editorClassName?: string;
-    persistResourceOnUnmount?: boolean;
-    style?: React.CSSProperties;
-  },
+  editor?:IDEProps,
   onMountEditor?: (editor: any) => void;
   skipInitialFetch?: boolean;
   useToolbars?: boolean;
@@ -220,7 +215,7 @@ export default function useApp(props: AppLoaderProps & {
         />
       ),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [app, main, editor?.persistResourceOnUnmount, onMountEditor],
+    [app, main, editor, onMountEditor],
   );
 
   const {

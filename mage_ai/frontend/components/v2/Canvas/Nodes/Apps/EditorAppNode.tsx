@@ -8,6 +8,7 @@ import { AppSubtypeEnum, AppTypeEnum } from '@components/v2/Apps/constants';
 import EventStreamType from '@interfaces/EventStreamType';
 import Link from '@mana/elements/Link';
 import React, { useContext, useEffect, useMemo, useRef, useState } from 'react';
+import { executeCode } from '../../../IDE/actions';
 import TextInput from '@mana/elements/Input/TextInput';
 import moment from 'moment';
 import stylesAppNode from '@styles/scss/components/Canvas/Nodes/DraggableAppNode.module.scss';
@@ -21,7 +22,7 @@ import { TooltipAlign, TooltipWrapper, TooltipDirection, TooltipJustify } from '
 import { convertToMillisecondsTimestamp } from '@utils/date';
 import {
   ArrowsAdjustingFrameSquare, DiamondShared, AppVersions, IdentityTag, Menu, PanelCollapseLeft,
-  PanelCollapseRight, Builder, AddV2, Grab, GroupV2, Comment, Conversation, Save, Pause,
+  PanelCollapseRight, Builder, AddV2, Grab, GroupV2, Comment, Conversation, Save, DeleteCircle,
   CloseV2, BlockGenericV2, PlayButtonFilled,
 } from '@mana/icons';
 import BlockType from '@interfaces/BlockType';
@@ -113,6 +114,15 @@ function EditorAppNode({
       containerClassName: [
         stylesEditor.editorContainer,
       ].filter(Boolean).join(' '),
+      editorActions: [
+        executeCode(() => {
+          setLoading(true);
+          submitCodeExecution(null, {
+            onError: () => setLoading(false),
+            onSuccess: () => setLoading(false),
+          });
+        }),
+      ],
       editorClassName: [
         stylesEditor.editorMain,
       ].filter(Boolean).join(' '),
@@ -180,10 +190,10 @@ function EditorAppNode({
             {executing && <Tag left statusVariant timer top />}
 
             <Button
-              Icon={executing ? Pause : PlayButtonFilled}
-              backgroundcolor={baseColor}
+              Icon={executing ? DeleteCircle : PlayButtonFilled}
+              backgroundcolor={!executing ? baseColor : undefined}
               basic
-              bordercolor={baseColor}
+              bordercolor={executing ? (baseColor ?? 'gray') : undefined}
               loading={loadingKernelMutation || loading}
               onClick={executing ? () => {
                 setLoadingKernelMutation(true);

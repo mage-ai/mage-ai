@@ -1,6 +1,19 @@
 import { ExecutionResultType } from '@interfaces/EventStreamType';
 import { LanguageEnum } from './languages/constants';
 
+export type IDEProps = {
+  containerClassName?: string;
+  configurations?: any;
+  editorActions?: any[];
+  editorClassName?: string;
+  eventListeners?: EventListeners;
+  onMountEditor?: (editor: any) => void;
+  persistManagerOnUnmount?: boolean;
+  persistResourceOnUnmount?: boolean;
+  style?: React.CSSProperties;
+  theme?: IDEThemeEnum;
+};
+
 export interface CodeResources {
   main: {
     language: LanguageEnum;

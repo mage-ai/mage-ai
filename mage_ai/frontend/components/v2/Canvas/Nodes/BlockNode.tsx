@@ -20,7 +20,7 @@ import TemplateConfigurations from './Blocks/TemplateConfigurations';
 import Text from '@mana/elements/Text';
 import stylesBlockNode from '@styles/scss/components/Canvas/Nodes/BlockNode.module.scss';
 import stylesGradient from '@styles/scss/elements/GradientContainer.module.scss';
-import { Add, Code, Grab, PipeIconVertical, PlayButtonFilled, Pause, Infinite } from '@mana/icons';
+import { Add, Code, Grab, PipeIconVertical, PlayButtonFilled, DeleteCircle, Infinite } from '@mana/icons';
 import { AppTypeEnum, AppSubtypeEnum } from '../../Apps/constants';
 import { AsideType, DragAndDropHandlersType, SharedBlockProps } from './types';
 import { BlockNode } from './interfaces';
@@ -196,12 +196,13 @@ export default function BlockNodeComponent({
 
   const before = useMemo(() => ({
     Icon: (iconProps) => executing
-    ? <Pause {...iconProps} />
+    ? <DeleteCircle {...iconProps} />
     : <PlayButtonFilled {...iconProps} />,
     baseColorName:
       StatusTypeEnum.FAILED === status
         ? 'red'
         : colorNames?.base,
+    borderColor: executing ? (colorNames?.base ?? 'gray') : undefined,
     buttonRef: buttonBeforeRef,
     loading: loadingKernelMutation || (loading && !executing),
     onClick: executing ? interruptExecution : submitCodeExecution,

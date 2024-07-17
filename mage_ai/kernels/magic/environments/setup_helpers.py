@@ -1,17 +1,13 @@
-def initialize_database():
+async def execute(**kwargs):
+    from mage_ai.data_preparation.models.pipeline import Pipeline
     from mage_ai.orchestration.db import db_connection
+    from mage_ai.utils.code import build_reload_modules_code
 
     db_connection.start_session()
 
-
-def reload_modules(message: str):
-    from mage_ai.utils.code import build_reload_modules_code
+    message = kwargs.get('message') or ''
 
     exec(build_reload_modules_code(message))
-
-
-def execute(**kwargs):
-    from mage_ai.data_preparation.models.pipeline import Pipeline
 
     pipeline_uuid = kwargs.get('pipeline_uuid')
     pipeline = Pipeline.get(pipeline_uuid, all_projects=True)
@@ -26,18 +22,15 @@ def execute(**kwargs):
 
     block = pipeline.get_block(block_uuid, block_type)
 
-    code = kwargs.get('code')
-    stdout_redirect = kwargs.get('stdout_redirect')
     variables = kwargs.get('variables') or {}
 
-    block.execute_with_callback(
-        build_block_output_stdout=lambda x: stdout_redirect,
-        custom_code=code,
+    await block.execute(
+        custom_code=message,
         execution_partition=variables.get('execution_partition'),
+        from_notebook=False,
         global_vars=variables,
         override_outputs=False,
         store_variables=True,
         update_status=False,
         verify_output=False,
-        from_notebook=False,
     )

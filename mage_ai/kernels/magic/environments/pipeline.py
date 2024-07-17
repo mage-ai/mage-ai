@@ -1,15 +1,10 @@
-import inspect
 import os
 from datetime import datetime, timedelta
 from typing import Any, Dict, Optional
 
 from mage_ai.data_preparation.variable_manager import get_global_variables
 from mage_ai.kernels.magic.constants import ResultType
-from mage_ai.kernels.magic.environments.setup_helpers import (
-    execute,
-    initialize_database,
-    reload_modules,
-)
+from mage_ai.kernels.magic.environments.setup_helpers import execute
 from mage_ai.shared.constants import ENV_DEV
 from mage_ai.shared.path_fixer import remove_repo_names
 from mage_ai.shared.strings import singularize
@@ -36,25 +31,6 @@ class Pipeline:
         message_request_uuid: Optional[str] = None,
         **process_options,
     ):
-        code = []
-        preprocess = [
-            initialize_database,
-            reload_modules,
-            execute,
-        ]
-        executions = [
-            'initialize_database()',
-            'reload_modules(message)',
-            'code = """',
-            message.replace('"""', '\\"\\"\\"'),
-            '"""',
-            'execute(code=code, stdout_redirect=stdout_redirect, **execution_variables)',
-        ]
-        postprocess = []
-
-        for func in preprocess + executions + postprocess:
-            code.append(func if isinstance(func, str) else inspect.getsource(func))
-
         if self.environment_variables:
             await self.output_manager.store_environment_variables(self.environment_variables)
 
@@ -75,32 +51,32 @@ class Pipeline:
         block_uuid = os.path.splitext(block_filename)[0]
 
         process = self.kernel.build_process(
-            '\n'.join(code),
+            None,
             message_request_uuid=message_request_uuid,
             output_manager=self.output_manager,
             callback=lambda x: print('Execution finished...', x),
             execution_options=dict(
+                execute=execute,
                 environment_variable=self.environment_variables,
-                execution_globals=dict(
+                execution_variables=dict(
+                    block_type=block_type,
+                    block_uuid=block_uuid,
                     message=message,
-                    execution_variables=dict(
-                        block_type=block_type,
-                        block_uuid=block_uuid,
-                        message=message,
-                        pipeline_uuid=self.uuid,
-                        variables=variables,
-                    ),
+                    pipeline_uuid=self.uuid,
+                    variables=variables,
                 ),
                 store_locals=True,
                 store_output=True,
                 success_result_options=dict(
                     data_type=None,
                     metadata=dict(
-                        block_path=self.output_manager.path,
                         block_type=block_type,
                         block_uuid=block_uuid,
                         execution_partition=variables.get('execution_partition'),
+                        namespace=self.output_manager.namespace,
+                        path=self.output_manager.path,
                         pipeline_uuid=self.uuid,
+                        uuid=self.output_manager.uuid,
                     ),
                     output='This is the output from the success result options.',
                     type=ResultType.OUTPUT,

@@ -26,7 +26,7 @@ import { ElementRoleEnum } from '@mana/shared/types';
 import { EventContext } from '../../Apps/PipelineCanvas/Events/EventContext';
 import { FileType } from '@components/v2/IDE/interfaces';
 import { AppNodeType, NodeType, OutputNodeType } from '../interfaces';
-import { AISparkle, DeleteCircle, CopyV2, Monitor, OpenInSidekick, Delete, Explain, AddBlock } from '@mana/icons';
+import { AISparkle, DeleteCircle, CopyV2, Monitor, OpenInSidekick, Delete, Explain, AddBlock, Builder, Lightning } from '@mana/icons';
 import { ThemeContext } from 'styled-components';
 import { createRoot, Root } from 'react-dom/client';
 import { executionDone } from '@components/v2/ExecutionManager/utils';
@@ -108,6 +108,11 @@ function BlockNode({
   const executionOutputs = useMutate({
     resource: 'execution_outputs',
   });
+
+  function setHandleOnMessage(consumerID, handler) {
+    handleOnMessageRef.current[consumerID] = handler;
+  }
+
   const outputGroupsProps = useMemo(() => ({
     handleContextMenu: (event: any, messageRequestUUID: string, resultsInit: ExecutionResultType[]) => {
       event.preventDefault();
@@ -178,9 +183,7 @@ function BlockNode({
     onMount: () => {
       updateOutputResults();
     },
-    setHandleOnMessage: (consumerID, handler) => {
-      handleOnMessageRef.current[consumerID] = handler;
-    },
+    setHandleOnMessage,
     setResultMappingUpdate: (consumerID, handler) => {
       handleResultMappingUpdateRef.current[consumerID] = handler;
     },
@@ -300,7 +303,6 @@ function BlockNode({
       },
       onSuccess: ({ data }) => {
         fileRef.current = data?.browser_item;
-        updateOutputResults();
 
         const fmodel = data?.browser_item;
         updateFileCache({
@@ -371,16 +373,20 @@ function BlockNode({
       });
     };
 
-    launchOutputCallbackOnceRef.current = () => {
-      getFile(event, execute);
-    };
+    if (!outputRootRef.current) {
+      launchOutputCallbackOnceRef.current = () => {
+        getFile(event, execute);
+      };
 
-    launchOutput(channel, () => {
-      if (launchOutputCallbackOnceRef.current) {
-        launchOutputCallbackOnceRef.current();
-      }
-      launchOutputCallbackOnceRef.current = null;
-    });
+      launchOutput(channel, () => {
+        if (launchOutputCallbackOnceRef.current) {
+          launchOutputCallbackOnceRef.current();
+        }
+        launchOutputCallbackOnceRef.current = null;
+      });
+    } else {
+      execute();
+    }
 
     setLoading(true);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -490,7 +496,12 @@ function BlockNode({
           templateRows="1fr"
         >
           {downstreamInGroup &&
-            <Circle backgroundColor={downstreamInGroup?.[0]?.colorName ?? 'gray'} size={12} />}
+            <Circle
+              backgroundColor={downstreamInGroup?.[0]?.colorName ?? undefined}
+              borderColor={!downstreamInGroup?.[0]?.colorName ? 'gray' : undefined}
+              size={12}
+            />
+          }
         </Grid>
       </Grid>
     );
@@ -552,6 +563,7 @@ function BlockNode({
             closeEditorApp();
           }}
           outputGroupsProps={outputGroupsProps}
+          setHandleOnMessage={setHandleOnMessage}
           submitCodeExecution={submitCodeExecution}
         />
       </ContextProvider>,
@@ -679,24 +691,44 @@ function BlockNode({
             },
           ]);
         } else {
-          items.push({
-            Icon: Delete,
-            onClick: (event: ClientEventType) => {
-              event?.preventDefault();
-
-              mutations.pipelines.update.mutate({
-                event,
-                onSuccess: () => {
-                  removeContextMenu(event);
-                },
-                payload: (pipeline) => ({
-                  ...pipeline,
-                  blocks: pipeline?.blocks?.filter((b: BlockType) => b.uuid !== block.uuid),
-                }),
-              });
+          items.push(...[
+            {
+              Icon: Lightning,
+              onClick: (event: ClientEventType) => {
+                event?.preventDefault();
+                submitCodeExecution(event);
+                removeContextMenu(event);
+              },
+              uuid: 'Execute code',
             },
-            uuid: `Remove ${name} from pipeline`,
-          });
+            {
+              Icon: Builder,
+              onClick: (event: ClientEventType) => {
+                event?.preventDefault();
+                launchEditorApp(event);
+                removeContextMenu(event);
+              },
+              uuid: 'Open code editor',
+            },
+            {
+              Icon: Delete,
+              onClick: (event: ClientEventType) => {
+                event?.preventDefault();
+
+                mutations.pipelines.update.mutate({
+                  event,
+                  onSuccess: () => {
+                    removeContextMenu(event);
+                  },
+                  payload: (pipeline) => ({
+                    ...pipeline,
+                    blocks: pipeline?.blocks?.filter((b: BlockType) => b.uuid !== block.uuid),
+                  }),
+                });
+              },
+              uuid: 'Remove from pipeline',
+            },
+          ]);
         }
 
         handleContextMenu(event, items, {

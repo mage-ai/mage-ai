@@ -2,29 +2,17 @@ import { useEffect, useMemo, useRef } from 'react';
 
 import Loading from '@mana/components/Loading';
 import { EventListeners, addListeners, addListenersForDiff } from './events/addListeners';
+import addEditorActions from './actions/addEditorActions';
 import useManager from './useManager';
 import { ContainerStyled, IDEStyled } from './index.style';
-import { ResourceType } from './interfaces';
+import { IDEProps, ResourceType } from './interfaces';
 import { IDEThemeEnum } from './themes/interfaces';
-
-type IDEProps = {
-  containerClassName?: string;
-  configurations?: any;
-  editorClassName?: string;
-  eventListeners?: EventListeners;
-  onMountEditor?: (editor: any) => void;
-  persistManagerOnUnmount?: boolean;
-  persistResourceOnUnmount?: boolean;
-  resource: ResourceType;
-  style?: React.CSSProperties;
-  theme?: IDEThemeEnum;
-  uuid: string;
-};
 
 function MateriaIDE({
   configurations: configurationsOverride,
   containerClassName,
   editorClassName,
+  editorActions,
   eventListeners,
   onMountEditor,
   persistManagerOnUnmount,
@@ -33,7 +21,10 @@ function MateriaIDE({
   style,
   theme: themeSelected,
   uuid,
-}: IDEProps) {
+}: IDEProps & {
+  resource: ResourceType;
+  uuid: string;
+}) {
   const editorContainerRef = useRef(null);
   const diffEditorRef = useRef(null);
   const editorRef = useRef(null);
@@ -67,6 +58,7 @@ function MateriaIDE({
           editorRef.current = manager.getEditor();
           if (editorRef?.current) {
             addListeners(editorRef?.current, eventListeners);
+            addEditorActions(manager.getMonaco(), editorRef?.current, editorActions);
             onMountEditor && onMountEditor?.(editorRef.current);
           }
         }
@@ -96,7 +88,8 @@ function MateriaIDE({
         }
       }
     };
-  }, [eventListeners, manager, onMountEditor, persistManagerOnUnmount, persistResourceOnUnmount]);
+  }, [eventListeners, editorActions, manager, onMountEditor, persistManagerOnUnmount,
+    persistResourceOnUnmount]);
 
   return (
     <ContainerStyled ref={containerRef}>

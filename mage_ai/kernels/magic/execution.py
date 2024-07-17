@@ -1,5 +1,6 @@
 import ast
 import asyncio
+import inspect
 import json
 import os
 from asyncio import Event as AsyncEvent
@@ -7,7 +8,7 @@ from contextlib import contextmanager, redirect_stdout
 from multiprocessing import Queue
 from queue import Empty
 from threading import Event
-from typing import Any, Dict, Iterable, Optional
+from typing import Any, Callable, Dict, Iterable, Optional
 
 from mage_ai.errors.models import ErrorDetails
 from mage_ai.kernels.magic.constants import ExecutionStatus, ResultType
@@ -15,15 +16,13 @@ from mage_ai.kernels.magic.environments.models import OutputManager
 from mage_ai.kernels.magic.models import ExecutionResult, ProcessContext, ProcessDetails
 from mage_ai.kernels.magic.stdout import AsyncStdout
 from mage_ai.server.kernel_output_parser import DataType
-from mage_ai.shared.environments import is_debug as is_debug_base
-from mage_ai.shared.hash import merge_dict
 from mage_ai.shared.queues import Queue as FasterQueue
 
 FLUSH_INTERVAL = 0.1
 
 
 def is_debug():
-    return False and is_debug_base()
+    return False
 
 
 def set_node_line_numbers(node: ast.AST, lineno: int, col_offset: int):
@@ -33,63 +32,72 @@ def set_node_line_numbers(node: ast.AST, lineno: int, col_offset: int):
             n.col_offset = col_offset
 
 
-def modify_and_execute(
+async def modify_and_execute(
     code_block: str,
     local_variables,
-    stdout_redirect: AsyncStdout,
-    execution_globals: Optional[Dict[str, Any]] = None,
+    execute: Optional[Callable] = None,
+    execution_variables: Optional[Dict[str, Any]] = None,
 ) -> Dict[str, Any]:
-    execution_globals = execution_globals or {}
-    # Parse the provided code block
-    parsed_code = ast.parse(code_block)
-    if not parsed_code.body:
-        raise ValueError('Empty code block provided')
+    execution_variables = execution_variables or {}
 
-    last_statement = parsed_code.body[-1]
+    modified_code = None
+    if code_block:
+        # Parse the provided code block
+        parsed_code = ast.parse(code_block)
+        if not parsed_code.body:
+            raise ValueError('Empty code block provided')
 
-    lineno = last_statement.lineno
-    col_offset = last_statement.col_offset
+        last_statement = parsed_code.body[-1]
 
-    if isinstance(last_statement, ast.Expr):
-        assignment = ast.Assign(
-            targets=[
-                ast.Name(id='__output__', ctx=ast.Store(), lineno=lineno, col_offset=col_offset)
-            ],
-            value=last_statement.value,
-            lineno=lineno,
-            col_offset=col_offset,
-        )
-        parsed_code.body[-1] = assignment
-    elif isinstance(last_statement, ast.Assign):
-        target = last_statement.targets[0]
-        if isinstance(target, ast.Name):
+        lineno = last_statement.lineno
+        col_offset = last_statement.col_offset
+
+        if isinstance(last_statement, ast.Expr):
             assignment = ast.Assign(
                 targets=[
                     ast.Name(
                         id='__output__', ctx=ast.Store(), lineno=lineno, col_offset=col_offset
                     )
                 ],
-                value=ast.Name(id=target.id, ctx=ast.Load(), lineno=lineno, col_offset=col_offset),
+                value=last_statement.value,
                 lineno=lineno,
                 col_offset=col_offset,
             )
-            parsed_code.body.append(assignment)
-    else:
-        pass
+            parsed_code.body[-1] = assignment
+        elif isinstance(last_statement, ast.Assign):
+            target = last_statement.targets[0]
+            if isinstance(target, ast.Name):
+                assignment = ast.Assign(
+                    targets=[
+                        ast.Name(
+                            id='__output__', ctx=ast.Store(), lineno=lineno, col_offset=col_offset
+                        )
+                    ],
+                    value=ast.Name(
+                        id=target.id, ctx=ast.Load(), lineno=lineno, col_offset=col_offset
+                    ),
+                    lineno=lineno,
+                    col_offset=col_offset,
+                )
+                parsed_code.body.append(assignment)
+        else:
+            pass
 
-    modified_code = ast.Module(body=parsed_code.body, type_ignores=[])
+        modified_code = ast.Module(body=parsed_code.body, type_ignores=[])
 
     error = None
     try:
-        exec(
-            compile(modified_code, '<string>', 'exec'),
-            merge_dict(execution_globals, dict(stdout_redirect=stdout_redirect)),
-        )
+        if modified_code:
+            exec(compile(modified_code, '<string>', 'exec'), execution_variables)
+        elif execute:
+            res = execute(**execution_variables)
+            if res and inspect.isawaitable(res):
+                res = await res
     except Exception as err:
         error = err
 
     local_variables.update({
-        key: value for key, value in (execution_globals or {}).items() if key != '__builtins__'
+        key: value for key, value in (execution_variables or {}).items() if key != '__builtins__'
     })
 
     if error:
@@ -218,11 +226,14 @@ async def execute_code_async(
             try:
                 environment_variables = kwargs.get('environment_variables') or {}
                 with temporary_env(environment_variables):
-                    local_variables = modify_and_execute(
+                    execution_variables = kwargs.get('execution_variables') or {}
+                    execute = kwargs.get('execute')
+
+                    local_variables = await modify_and_execute(
                         message,
                         local_variables,
-                        stdout_redirect=async_stdout,
-                        execution_globals=kwargs.get('execution_globals', {}) or {},
+                        execute=execute,
+                        execution_variables=execution_variables,
                     )
             except Exception as err:
                 result = ExecutionResult.load(
