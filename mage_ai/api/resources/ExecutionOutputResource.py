@@ -1,4 +1,5 @@
 from mage_ai.api.errors import ApiError
+from mage_ai.api.operations.constants import MetaKey
 from mage_ai.api.resources.GenericResource import GenericResource
 from mage_ai.kernels.magic.environments.models import OutputManager
 from mage_ai.shared.path_fixer import remove_base_repo_directory_name
@@ -68,6 +69,11 @@ class ExecutionOutputResource(GenericResource):
             })
 
         model = await om.build_output()
+        limit = kwargs.get('meta', {}).get(MetaKey.LIMIT)
+        await model.load_output(
+            sample=bool(limit),
+            sample_count=limit,
+        )
 
         return cls(model, user, **kwargs)
 

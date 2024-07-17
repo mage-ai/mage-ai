@@ -9,10 +9,14 @@ from typing import Any, Dict, List, Optional
 
 import joblib
 
+from mage_ai.data_preparation.models.block.outputs import get_output_data_async
+from mage_ai.data_preparation.models.variables.constants import VariableType
 from mage_ai.kernels.magic.environments.enums import EnvironmentType, EnvironmentUUID
 from mage_ai.kernels.magic.environments.pipeline import Pipeline
 from mage_ai.kernels.magic.environments.utils import decrypt_secret, encrypt_secret
+from mage_ai.settings.platform import get_repo_paths_for_file_path
 from mage_ai.settings.repo import get_repo_path, get_variables_dir
+from mage_ai.shared.array import find
 from mage_ai.shared.dates import now
 from mage_ai.shared.files import (
     exists_async,
@@ -87,13 +91,26 @@ class Environment(BaseDataClass):
 
 
 @dataclass
+class VariableOutput(BaseDataClass):
+    data: List[Any]
+    uuid: str
+    partition: Optional[str] = None
+    type: Optional[VariableType] = None
+    types: Optional[List[VariableType]] = None
+
+    def __post_init__(self):
+        self.serialize_attribute_enum('type', VariableType)
+        self.serialize_attribute_enums('types', VariableType)
+
+
+@dataclass
 class ExecutionOutput(BaseDataClass):
     uuid: str
     namespace: str
     path: str
     absolute_path: Optional[str] = None
     environment: Optional[Environment] = None
-    messages: Optional[List[Dict]] = field(default_factory=list)
+    messages: Optional[List[Any]] = field(default_factory=list)
     output: Optional[Any] = None
 
     def __post_init__(self):
@@ -101,6 +118,10 @@ class ExecutionOutput(BaseDataClass):
         if not self.environment and self.namespace:
             env_type, env_uuid = os.path.split(self.namespace)
             self.environment = Environment.load(type=env_type, uuid=env_uuid)
+        if self.messages:
+            from mage_ai.kernels.magic.models import ExecutionResult
+
+            self.messages = [ExecutionResult.load(**m) for m in self.messages]
 
     async def delete(self):
         await OutputManager.load(
@@ -108,6 +129,50 @@ class ExecutionOutput(BaseDataClass):
             path=self.path,
             uuid=self.uuid,
         ).delete()
+
+    async def load_output(
+        self,
+        max_results: Optional[int] = None,
+        sample: Optional[bool] = None,
+        sample_count: Optional[int] = None,
+    ) -> Any:
+        from mage_ai.kernels.magic.constants import ExecutionStatus, ResultType
+
+        message = find(
+            lambda x: ExecutionStatus.SUCCESS == x.status and ResultType.OUTPUT == x.type,
+            self.messages,
+        )
+
+        if not message:
+            return None
+
+        if self.environment and EnvironmentType.PIPELINE == self.environment.type:
+            from mage_ai.data_preparation.models.pipeline import Pipeline
+
+            metadata = message.metadata or {}
+            path = metadata.get('path') or ''
+            full_path = get_repo_paths_for_file_path(path).get('full_path') or ''
+
+            pipeline_uuid = metadata.get('pipeline_uuid')
+            pipeline = await Pipeline.get_async(
+                pipeline_uuid, repo_path=full_path, all_projects=not full_path
+            )
+
+            block_type = metadata.get('block_type') or ''
+            block_uuid = metadata.get('block_uuid') or ''
+            block = pipeline.get_block(block_uuid, block_type)
+
+            execution_partition = metadata.get('execution_partition')
+
+            outputs = await get_output_data_async(
+                block,
+                block_uuid=block_uuid,
+                execution_partition=execution_partition,
+                max_results=max_results,
+                sample=sample,
+                sample_count=sample_count,
+            )
+            self.output = [VariableOutput.load(**m) for m in outputs]
 
 
 @dataclass

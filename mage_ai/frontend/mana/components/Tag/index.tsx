@@ -57,7 +57,7 @@ const StatusTag = styled.div<StyleProps>`
     ${left ? 'left: 0;' : ''}
     ${right ? 'right: 0;' : ''}
     ${top ? 'top: 0;' : ''}
-    transform: translate(${left ? '-80%' : right ? '80%' : '0px'}, ${top ? '-80%' : bottom ? '80%' : '0px'});
+    transform: translate(${left ? '-70%' : right ? '70%' : '0px'}, ${top ? '-70%' : bottom ? '70%' : '0px'});
   `}
 `;
 
