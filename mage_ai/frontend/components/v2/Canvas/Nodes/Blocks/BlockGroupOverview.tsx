@@ -1,4 +1,7 @@
 import Circle from '@mana/elements/Circle';
+import BlockType from '@interfaces/BlockType';
+import { MenuItemType } from '@mana/components/Menu/interfaces';
+import { EventContext } from '../../../Apps/PipelineCanvas/Events/EventContext';
 import GradientContainer from '@mana/elements/Gradient';
 import Grid from '@mana/components/Grid';
 import PanelRows from '@mana/elements/PanelRows';
@@ -17,13 +20,16 @@ import { useContext, useMemo } from 'react';
 
 type BlockOverviewProps = {
   block: FrameworkType;
+  buildContextMenuItemsForGroupBlock: (block: BlockType) => MenuItemType[];
 };
 
 export default function BlockGroupOverview({
   block,
+  buildContextMenuItemsForGroupBlock,
 }: BlockOverviewProps) {
   const { blockMappingRef, blocksByGroupRef, groupMappingRef } = useContext(ModelContext);
   const { layoutConfigs, selectedGroupsRef } = useContext(SettingsContext);
+  const { handleContextMenu } = useContext(EventContext);
   const layoutConfig = layoutConfigs?.current?.[selectedGroupsRef?.current?.length - 1];
   const detailLayout = LayoutDisplayEnum.DETAILED === layoutConfig?.current?.display;
 
@@ -290,6 +296,11 @@ export default function BlockGroupOverview({
         return (
           <GradientContainer
             key={uuid2}
+            onContextMenu={(event: any) => {
+              event.preventDefault();
+              event.stopPropagation();
+              handleContextMenu(event, buildContextMenuItemsForGroupBlock(group1));
+            }}
             variant={error ? 'error' : undefined}
           >
             <Grid

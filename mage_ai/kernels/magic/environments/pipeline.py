@@ -1,10 +1,10 @@
 import os
 from datetime import datetime, timedelta
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, Union
 
 from mage_ai.data_preparation.variable_manager import get_global_variables
 from mage_ai.kernels.magic.constants import ResultType
-from mage_ai.kernels.magic.environments.setup_helpers import execute
+from mage_ai.kernels.magic.environments.setup_helpers import execute, get_block
 from mage_ai.shared.constants import ENV_DEV
 from mage_ai.shared.path_fixer import remove_repo_names
 from mage_ai.shared.strings import singularize
@@ -50,6 +50,24 @@ class Pipeline:
         # meteoric_quantum
         block_uuid = os.path.splitext(block_filename)[0]
 
+        execution_variables = dict(
+            block_type=block_type,
+            block_uuid=block_uuid,
+            message=message,
+            pipeline_uuid=self.uuid,
+            variables=variables,
+        )
+
+        block = await get_block(**execution_variables)
+        if block.configuration and block.configuration.get('templates'):
+            templates = block.configuration.get('templates')
+            for value in (templates or {}).values():
+                vars = execution_variables.get('variables', {}) or {}
+                if not isinstance(vars, dict):
+                    vars = {}
+                vars.update(value.get('variables', {}) or {})
+                execution_variables['variables'] = vars
+
         process = self.kernel.build_process(
             None,
             message_request_uuid=message_request_uuid,
@@ -58,13 +76,7 @@ class Pipeline:
             execution_options=dict(
                 execute=execute,
                 environment_variable=self.environment_variables,
-                execution_variables=dict(
-                    block_type=block_type,
-                    block_uuid=block_uuid,
-                    message=message,
-                    pipeline_uuid=self.uuid,
-                    variables=variables,
-                ),
+                execution_variables=execution_variables,
                 store_locals=True,
                 store_output=True,
                 success_result_options=dict(
@@ -87,7 +99,7 @@ class Pipeline:
 
         return self.kernel.run_process(process)
 
-    async def __hydrate_variables(self) -> Dict[str, Any]:
+    async def __hydrate_variables(self) -> Dict[str, Union[Any, Dict]]:
         # Add default trigger runtime variables so the code can run successfully.
         global_vars = get_global_variables(self.uuid)
         global_vars['env'] = ENV_DEV

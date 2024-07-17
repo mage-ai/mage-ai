@@ -48,7 +48,7 @@ import { ZoomPanStateType } from '@mana/hooks/useZoomPan';
 import { buildDependencies } from './utils/pipelines';
 import { getCache, updateCache } from '@mana/components/Menu/storage';
 import { useMutate } from '@context/APIMutation';
-import { deepCopyArray, equals, indexBy, unique, uniqueArray } from '@utils/array';
+import { deepCopyArray, reverseArray, indexBy, unique, uniqueArray } from '@utils/array';
 import { getNewUUID } from '@utils/string';
 import { deepCopy, isEmptyObject } from '@utils/hash';
 import { WithOnMount } from '@mana/hooks/useWithOnMount';
@@ -1084,35 +1084,71 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
   });
 
   const setSelectedGroup = useCallback((block: FrameworkType) => {
+    const grps = [];
+    const grpslevels = deepCopyArray(groupsByLevelRef?.current ?? []);
+    reverseArray(grpslevels)?.forEach((groups, level) => {
+      const grp = groups.find(g => g.uuid === block?.uuid);
+      console.log(groups, level, grp);
+      if (grp) {
+        grps.push({
+          ...deepCopy(groupMappingRef.current?.[grp.uuid]),
+        });
+      } else if (grps.length > 0) {
+        const grpcur = grps[grps.length - 1];
+        const parent = groups?.find(g => g?.children?.findIndex(c => c.uuid === grpcur.uuid) >= 0);
+        console.log(grps, level, grpcur, parent);
+        if (parent) {
+          grps.push(deepCopy(groupMappingRef.current?.[parent.uuid]));
+        }
+      }
+    });
+
+    const groupsNext = [];
+    reverseArray([...grps]).forEach((g, i) => {
+      if (i === 0) {
+        g.index = groupsByLevelRef.current?.[0]?.findIndex(c => c.uuid === g?.uuid);
+      } else {
+        const parent  = groupsNext[groupsNext.length - 1];
+        g.groups = [parent];
+        g.index = parent.children.findIndex(c => c.uuid === g.uuid);
+      }
+
+      groupsNext.push({
+        ...g,
+        level: i,
+      });
+    });
+
     // Invoked from within a node component and not from the header; need to update header.
-    const groups = [...(selectedGroupsRef.current ?? [])].map(g => ({
-      ...g,
-      ...groupMappingRef.current?.[g.uuid],
-    }));
-    const parentIndex =
-      groups?.findIndex(g => !!(g as any).children?.find(i => i.uuid === block?.uuid));
+    // const groups = [...(selectedGroupsRef.current ?? [])].map(g => ({
+    //   ...g,
+    //   ...groupMappingRef.current?.[g.uuid],
+    // }));
+    // const parentIndex =
+    //   groups?.findIndex(g => !!(g as any).children?.find(i => i.uuid === block?.uuid));
 
-    let index = null;
-    let parent = null;
-    let groups2 = [...groups];
-    if (parentIndex >= 0) {
-      groups2 = groups2.slice(0, parentIndex + 1);
-      parent = groups[parentIndex];
-      index = parent.children.findIndex(i => i.uuid === block?.uuid);
-    }
+    // let index = null;
+    // let parent = null;
+    // let groups2 = [...groups];
+    // if (parentIndex >= 0) {
+    //   groups2 = groups2.slice(0, parentIndex + 1);
+    //   parent = groups[parentIndex];
+    //   index = parent.children.findIndex(i => i.uuid === block?.uuid);
+    // }
 
-    const groupsNext = [
-      ...groups2,
-      {
-        groups: parent ? [parent] : [],
-        index,
-        level: groups2?.length ?? 0,
-        uuid: block?.uuid,
-      },
-    ].filter(g => g?.uuid)?.map(g => ({
-      ...g,
-      ...groupMappingRef.current?.[g.uuid],
-    })) as MenuGroupType[];
+    // const groupsNext = [
+    //   ...groups2,
+    //   {
+    //     groups: parent ? [parent] : [],
+    //     index,
+    //     level: groups2?.length ?? 0,
+    //     uuid: block?.uuid,
+    //   },
+    // ].filter(g => g?.uuid)?.map(g => ({
+    //   ...g,
+    //   ...groupMappingRef.current?.[g.uuid],
+    // })) as MenuGroupType[];
+
     setSelectedGroupsRef.current(groupsNext);
 
     dispatchAppEvent(CustomAppEventEnum.UPDATE_HEADER_NAVIGATION, {

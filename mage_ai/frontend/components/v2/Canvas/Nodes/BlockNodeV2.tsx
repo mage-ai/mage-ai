@@ -26,7 +26,7 @@ import { ElementRoleEnum } from '@mana/shared/types';
 import { EventContext } from '../../Apps/PipelineCanvas/Events/EventContext';
 import { FileType } from '@components/v2/IDE/interfaces';
 import { AppNodeType, NodeType, OutputNodeType } from '../interfaces';
-import { AISparkle, DeleteCircle, CopyV2, Monitor, OpenInSidekick, Delete, Explain, AddBlock, Builder, Lightning } from '@mana/icons';
+import { AISparkle, DeleteCircle, CopyV2, Monitor, OpenInSidekick, Delete, Explain, AddBlock, Code, Lightning } from '@mana/icons';
 import { ThemeContext } from 'styled-components';
 import { createRoot, Root } from 'react-dom/client';
 import { executionDone } from '@components/v2/ExecutionManager/utils';
@@ -647,6 +647,62 @@ function BlockNode({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const buildContextMenuItemsForGroupBlock = useCallback((block2: BlockType) => [
+    {
+      uuid: block2?.name ?? block2?.uuid,
+    },
+    {
+      Icon: AddBlock,
+      items: menuItemsForTemplates(block2, (
+        event: any,
+        block3,
+        template,
+        callback,
+        payloadArg,
+      ) => {
+        const payload = {
+          ...payloadArg,
+          groups: [block3.uuid],
+          uuid: generateUUID(),
+        };
+
+        if (template?.uuid) {
+          payload.configuration = {
+            templates: {
+              [template.uuid]: template,
+            },
+          };
+        }
+
+        mutations.pipelines.update.mutate({
+          event,
+          onSuccess: (event) => {
+            callback && callback?.();
+            removeContextMenu(event);
+          },
+          payload: {
+            block: payload,
+          },
+        });
+      }),
+      uuid: 'Add block from template',
+    },
+    ...(groupSelection || (selectedGroupsRef?.current?.length >= 3
+      && selectedGroupsRef?.current?.[selectedGroupsRef?.current?.length - 1]?.uuid === block2?.uuid
+    ) ? [] : [
+      { divider: true },
+      {
+        Icon: OpenInSidekick,
+        onClick: (event: ClientEventType) => {
+          event?.preventDefault();
+          setSelectedGroup(block2);
+          removeContextMenu(event);
+        },
+        uuid: 'Teleport into group',
+      },
+    ]),
+  ], [mutations.pipelines.update, groupSelection, removeContextMenu, setSelectedGroup]);
+
   return (
     <div
       className={[
@@ -662,70 +718,21 @@ function BlockNode({
 
         const items = [];
 
-        if (groupSelection) {
-          items.push(...[
-            {
-              Icon: AddBlock,
-              uuid: 'Add block from template',
-            },
-            ...menuItemsForTemplates(block, (
-              event: any,
-              block2,
-              template,
-              callback,
-              payloadArg,
-            ) => {
-              const payload = {
-                ...payloadArg,
-                groups: [block2.uuid],
-                uuid: generateUUID(),
-              };
-
-              if (template?.uuid) {
-                payload.configuration = {
-                  templates: {
-                    [template.uuid]: template,
-                  },
-                };
-              }
-
-              mutations.pipelines.update.mutate({
-                event,
-                onSuccess: (event) => {
-                  callback && callback?.();
-                  removeContextMenu(event);
-                },
-                payload: {
-                  block: payload,
-                },
-              });
-            }),
-          ]);
-        } else if (isGroup) {
-          items.push(...[
-            {
-              Icon: OpenInSidekick,
-              onClick: (event: ClientEventType) => {
-                event?.preventDefault();
-                setSelectedGroup(block);
-                removeContextMenu(event);
-              },
-              uuid: `Teleport into ${block?.name}`,
-            },
-          ]);
+        if (isGroup) {
+          items.push(...buildContextMenuItemsForGroupBlock(block));
         } else {
           items.push(...[
             {
               Icon: Lightning,
               onClick: (event: ClientEventType) => {
                 event?.preventDefault();
-                submitCodeExecution(event);
+                submitCodeExecution(event as any);
                 removeContextMenu(event);
               },
               uuid: 'Execute code',
             },
             {
-              Icon: Builder,
+              Icon: Code,
               onClick: (event: ClientEventType) => {
                 event?.preventDefault();
                 launchEditorApp(event);
@@ -764,6 +771,7 @@ function BlockNode({
         {...rest}
         apps={apps}
         block={block}
+        buildContextMenuItemsForGroupBlock={buildContextMenuItemsForGroupBlock}
         code={fileRef.current?.content}
         dragRef={dragRef}
         executing={executing}

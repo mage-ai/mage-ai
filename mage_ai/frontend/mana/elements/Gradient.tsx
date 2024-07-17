@@ -22,6 +22,7 @@ type InnerProps = {
 type OutterProps = {
   gradientBackground?: string;
   motionProps?: any;
+  onContextMenu?: (event: React.MouseEvent<HTMLDivElement, MouseEvent>) => void;
   role?: ElementRoleEnum;
   style?: React.CSSProperties;
 };
@@ -39,6 +40,7 @@ export function GradientContainer({
   direction = 'to top right',
   motionProps,
   noBorder,
+  onContextMenu,
   role,
   variant,
   style,
@@ -63,8 +65,9 @@ export function GradientContainer({
         className || '',
         direction && borderColors?.length >= 2
           ? styles[`gradient-background-${direction.replace(' ', '-')}-${borderColors[0]}-${borderColors[1]}`]
-          : undefined
+          : undefined,
       ].join(' ')}
+      onContextMenu={onContextMenu}
       ref={ref}
       role={role}
       style={style}

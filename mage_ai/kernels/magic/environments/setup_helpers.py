@@ -1,4 +1,4 @@
-async def execute(**kwargs):
+async def get_block(**kwargs):
     from mage_ai.data_preparation.models.pipeline import Pipeline
     from mage_ai.orchestration.db import db_connection
     from mage_ai.utils.code import build_reload_modules_code
@@ -20,9 +20,14 @@ async def execute(**kwargs):
     if not block_uuid or not block_type:
         raise ValueError('block_uuid and block_type are required')
 
-    block = pipeline.get_block(block_uuid, block_type)
+    return pipeline.get_block(block_uuid, block_type)
 
+
+async def execute(**kwargs):
+    message = kwargs.get('message') or ''
     variables = kwargs.get('variables') or {}
+
+    block = await get_block(**kwargs)
 
     await block.execute(
         custom_code=message,

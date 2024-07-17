@@ -41,6 +41,7 @@ import { isEmptyObject } from '@utils/hash';
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { ElementRoleEnum } from '@mana/shared/types';
 import { AppConfigType } from '@components/v2/Apps/interfaces';
+import { MenuItemType } from '@mana/components/Menu/interfaces';
 
 export const BADGE_HEIGHT = 37;
 export const PADDING_VERTICAL = 12;
@@ -61,12 +62,14 @@ export type BlockNodeProps = {
   node: NodeItemType
   onMount?: (port: PortType, portRef: React.RefObject<HTMLDivElement>) => void;
   submitCodeExecution: (event: React.MouseEvent<HTMLElement>) => void;
+  buildContextMenuItemsForGroupBlock: (block: BlockType) => MenuItemType[];
   timerStatusRef?: React.RefObject<HTMLDivElement>;
 } & BlockNode;
 
 export default function BlockNodeComponent({
   apps,
   block,
+  buildContextMenuItemsForGroupBlock,
   buttonBeforeRef,
   code: contentCode,
   collapsed,
@@ -126,7 +129,7 @@ export default function BlockNodeComponent({
       uuid: node.id,
       ...(ItemTypeEnum.NODE === node?.type
         ? {
-          Icon: ip => <Add {...ip} colorName="white" />,
+            Icon: ip => <Add {...ip} colorName="white" />,
           // borderColor: !draggable && colorNames?.base && 'white',
           menuItems: menuItemsForTemplates(block, (
             event: any,
@@ -461,7 +464,10 @@ export default function BlockNodeComponent({
           />
         </div>
         {!groupSelection && (isGroup
-          ? <BlockGroupOverview block={block as FrameworkType} />
+          ? <BlockGroupOverview
+            block={block as FrameworkType}
+            buildContextMenuItemsForGroupBlock={buildContextMenuItemsForGroupBlock}
+          />
           : (
             <Grid rowGap={8} templateRows="auto">
               {connectionRows}

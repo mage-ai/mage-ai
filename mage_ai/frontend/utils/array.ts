@@ -306,3 +306,7 @@ export function deepCopyArray<T>(obj: T): T {
 
   return copiedObj;
 }
+
+export function reverseArray<T>(arr: T[]): T[] {
+    return [...arr].reverse();
+}
