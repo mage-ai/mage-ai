@@ -36,7 +36,10 @@ const ORDER = {
 export type UpdateLinesType = (
   mapping: Record<string, RectType>,
   groupRectArg: RectType,
-  opts?: { replace: boolean },
+  opts?: {
+    callback?: () => void;
+    replace: boolean;
+  },
 ) => void;
 
 export function getLineID(upstream: string, downstream: string) {
@@ -407,7 +410,10 @@ export default function LineManagerV2({
   const updateLines = useCallback((
     mapping: Record<string, RectType>,
     groupRectArg: RectType,
-    opts?: { replace: boolean },
+    opts?: {
+      callback?: () => void;
+      replace: boolean;
+    },
   ) => {
     const pairsByType = {
       [ItemTypeEnum.BLOCK]: [],
@@ -441,7 +447,7 @@ export default function LineManagerV2({
       } : {}),
     }), {});
 
-    // console.log('lines', values)
+    // console.log('lines', values);
 
     values?.forEach((rectdn: RectType) => {
       // Lines for groups
@@ -516,6 +522,7 @@ export default function LineManagerV2({
     });
 
     renderPaths(pairsByType, opts);
+    opts?.callback && opts?.callback?.();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

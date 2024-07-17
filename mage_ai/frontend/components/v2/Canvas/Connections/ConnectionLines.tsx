@@ -5,7 +5,7 @@ import { RectType } from '@mana/shared/interfaces';
 
 export function linePathKey(linePaths: Record<string, LinePathType>): string {
   const arr = Object.values(linePaths ?? {})?.map(lp => lp.key);
-  return arr.filter(Boolean).sort().join('--')
+  return arr.filter(Boolean).sort().join('--');
 }
 
 export type LinePathType = {
@@ -34,6 +34,7 @@ export const ConnectionLines: React.FC<ConnectionLinesProps> = ({
     style={{
       height: '100%',
       left: 0,
+      overflow: 'visible',
       pointerEvents: 'none',
       position: 'absolute',
       top: 0,
@@ -44,32 +45,3 @@ export const ConnectionLines: React.FC<ConnectionLinesProps> = ({
     {Object.values(linePaths ?? {})?.flatMap(lps => lps.flatMap(p => p.paths ?? []))}
   </motion.svg>
 );
-
-function areEqual(prevProps, nextProps) {
-  const lines1 = Object.values(prevProps?.linePaths ?? {}) ?? [];
-  const lines2 = Object.values(nextProps?.linePaths ?? {}) ?? [];
-  const keys1 = linePathKey(prevProps?.linePaths);
-  const keys2 = linePathKey(nextProps?.linePaths);
-
-  // console.log(
-  //   ['keys1', keys1],
-  //   ['keys2', keys2],
-  //   keys1 === keys2,
-  //   prevProps, nextProps,
-  // );
-
-  // console.log(
-  //   prevProps, nextProps,
-  //   lines1?.length === lines2?.length,
-  //   prevProps.zIndex === nextProps.zIndex,
-  //   prevProps.id === nextProps.id,
-  //   keys1 === keys2,
-  // )
-
-  return (
-    lines1?.length === lines2?.length &&
-    prevProps.zIndex === nextProps.zIndex &&
-    prevProps.id === nextProps.id &&
-    keys1 === keys2
-  );
-}

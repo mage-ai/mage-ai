@@ -5,6 +5,7 @@ import os
 from typing import Any, Dict, List, Optional
 
 import yaml
+from typing_extensions import Union
 
 from mage_ai.data_preparation.models.constants import (
     PIPELINES_FOLDER,
@@ -13,7 +14,10 @@ from mage_ai.data_preparation.models.constants import (
 )
 from mage_ai.data_preparation.models.pipeline import Pipeline as PipelineBase
 from mage_ai.frameworks.execution.models.block.adapter import Block
-from mage_ai.frameworks.execution.models.enums import ExecutionFrameworkUUID
+from mage_ai.frameworks.execution.models.block.base import BlockExecutionFramework
+from mage_ai.frameworks.execution.models.enums import ExecutionFrameworkUUID, GroupUUID
+from mage_ai.frameworks.execution.models.pipeline.base import PipelineExecutionFramework
+from mage_ai.frameworks.execution.models.pipeline.utils import get_framework
 from mage_ai.settings.repo import get_repo_path
 from mage_ai.shared.files import find_files_with_criteria
 from mage_ai.shared.models import DelegatorTarget
@@ -94,6 +98,21 @@ class Pipeline(DelegatorTarget):
             and info.get('dir_name') is not None
         ])
         return [pipeline for pipeline in pipelines if pipeline is not None]
+
+    async def get_framework(self) -> Union[PipelineExecutionFramework, None]:
+        if not self.execution_framework:
+            return None
+        return await get_framework(self.execution_framework)
+
+    async def get_framework_groups(self) -> List[BlockExecutionFramework]:
+        framework = await self.get_framework()
+        if not framework:
+            return []
+        return framework.get_blocks()
+
+    async def get_blocks_in_group(self, uuid: GroupUUID) -> List[Block]:
+        blocks = await self.get_blocks(refresh=True)
+        return [block for block in blocks if block.groups and uuid in block.groups]
 
     async def get_pipeline(self, refresh: Optional[bool] = None) -> PipelineBase:
         if self.pipeline and not refresh:

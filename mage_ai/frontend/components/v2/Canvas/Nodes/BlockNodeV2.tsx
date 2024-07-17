@@ -464,7 +464,8 @@ function BlockNode({
     appNodeRef.current = null;
     appRootRef.current = null;
 
-    onCloseAppRef?.curent && onCloseAppRef?.current?.();
+    onCloseAppRef.current && onCloseAppRef.current();
+
     setApps(prev => {
       const data = { ...prev };
       delete data[appRef?.current?.id];

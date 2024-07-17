@@ -21,12 +21,12 @@ RAG = PipelineExecutionFramework.load(
             description=DATA_PREPARATION.description,
             type=BlockType.PIPELINE,
         ),
-        # BlockExecutionFramework.load(
-        #     uuid=INFERENCE.uuid,
-        #     groups=[GroupUUID.INFERENCE],
-        #     description=INFERENCE.description,
-        #     type=BlockType.PIPELINE,
-        # ),
+        BlockExecutionFramework.load(
+            uuid=INFERENCE.uuid,
+            groups=[GroupUUID.INFERENCE],
+            description=INFERENCE.description,
+            type=BlockType.PIPELINE,
+        ),
     ],
     pipelines=[
         DATA_PREPARATION,

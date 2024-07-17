@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any, List, Optional
 
-from mage_ai.data_preparation.models.constants import PipelineType
+from mage_ai.data_preparation.models.constants import BlockType, PipelineType
 from mage_ai.frameworks.execution.models.base import BaseExecutionFramework
 from mage_ai.frameworks.execution.models.block.base import BlockExecutionFramework
 from mage_ai.shared.array import flatten
@@ -29,4 +29,12 @@ class PipelineExecutionFramework(BaseExecutionFramework):
                 arr += flatten([
                     framework.get_pipelines(level=level) for framework in self.pipelines
                 ])
+        return arr
+
+    def get_blocks(self) -> List[BlockExecutionFramework]:
+        arr = []
+        for pipeline in self.get_pipelines():
+            for block in pipeline.blocks or []:
+                if BlockType.GROUP == block.type:
+                    arr.append(block)
         return arr

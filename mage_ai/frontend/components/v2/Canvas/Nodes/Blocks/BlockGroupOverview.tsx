@@ -323,11 +323,12 @@ export default function BlockGroupOverview({
                   size={12}
                 />
 
-                <Text italic={!required} medium secondary small>
+                <Text italic={!required && ((blocks?.length ?? 0) === 0 && (blocks2?.length ?? 0) === 0)} medium secondary small>
                   {blocks?.length >= 1
                     ? pluralize('block', blocks?.length ?? 0)
                     : blocks2?.length > 0
-                      ? `${vcount}/${rcount}`
+                      ? pluralize('block', blocks2?.length ?? 0)
+                        // `${vcount}/${rcount}`
                       : (required ? 'Required' : 'Optional')}
                 </Text >
               </Grid>

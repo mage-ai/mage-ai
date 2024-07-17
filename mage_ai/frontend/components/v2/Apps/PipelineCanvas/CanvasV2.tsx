@@ -43,7 +43,7 @@ import { ModelProvider } from './ModelManager/ModelContext';
 import { EventProvider } from './Events/EventContext';
 import { RemoveContextMenuType, RenderContextMenuType } from '@mana/hooks/useContextMenu';
 import { SettingsProvider } from './SettingsManager/SettingsContext';
-import { ShadowNodeType, ShadowRenderer } from '@mana/hooks/useShadowRender';
+import { NodeData, ShadowNodeType, ShadowRenderer } from '@mana/hooks/useShadowRender';
 import { ZoomPanStateType } from '@mana/hooks/useZoomPan';
 import { buildDependencies } from './utils/pipelines';
 import { getCache, updateCache } from '@mana/components/Menu/storage';
@@ -119,6 +119,8 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
   const timeoutRef = useRef(null);
   const timeoutUpdateAppRectsRef = useRef(null);
   const timeoutUpdateOutputRectsRef = useRef(null);
+  const timeoutInitialAnimationRef = useRef(null);
+
   const nodesToBeRenderedRef = useRef<Record<string, boolean>>({});
   const updateLinesRef = useRef<UpdateLinesType>(null);
 
@@ -141,6 +143,7 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
   const animationProgress = useMotionValue(0);
   const animationInitialProgress = useMotionValue(0);
   const animationChangeBlocksProgress = useMotionValue(0);
+  const newBlockCallbackAnimationRef = useRef(null);
 
   const phaseRef = useRef(0);
   const controllersRef = useRef<Record<string, any>>({});
@@ -267,7 +270,7 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
     }),
     defaultLayoutConfig({
       childrenLayout: defaultLayoutConfig({
-        direction: LayoutConfigDirectionEnum.VERTICAL,
+        direction: LayoutConfigDirectionEnum.HORIZONTAL,
         display: LayoutDisplayEnum.DETAILED,
         grid: {
           columns: 5,
@@ -288,7 +291,7 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
           ],
         },
       }),
-      direction: LayoutConfigDirectionEnum.VERTICAL,
+      direction: LayoutConfigDirectionEnum.HORIZONTAL,
       display: LayoutDisplayEnum.DETAILED,
       style: LayoutStyleEnum.TREE,
     }),
@@ -610,6 +613,7 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
   }
 
   function handleLineTransitions() {
+    console.log('handleLineTransitions');
     controlsForLines.start(({
       index,
       isOutput,
@@ -632,33 +636,44 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
     currentGroupUUID: string,
     rectsMap: Record<string, RectType>,
   ) {
-    const nextGroupRectCur = rectsMap?.[currentGroupUUID];
-    const xorigin = (nextGroupRectCur?.left ?? 0);
-    const yorigin = (nextGroupRectCur?.top ?? 0);
-    exitOriginX.current = xorigin;
-    exitOriginY.current = yorigin;
-    scopeEnter.current.style.transformOrigin = `${xorigin}px ${yorigin}px`;
+    const __animate = () => {
+      clearTimeout(timeoutInitialAnimationRef.current);
+      console.log(rectsMap, rectsMappingRef);
+      if (Object.values(rectsMap ?? {}).length === 0 && Object.values(rectsMappingRef?.current ?? {}).length === 0) {
+        timeoutInitialAnimationRef.current = setTimeout(__animate, 1000);
+        return;
+      }
 
-    resetLineTransitions();
+      const nextGroupRectCur = rectsMap?.[currentGroupUUID];
+      const xorigin = (nextGroupRectCur?.left ?? 0);
+      const yorigin = (nextGroupRectCur?.top ?? 0);
+      exitOriginX.current = xorigin;
+      exitOriginY.current = yorigin;
+      scopeEnter.current.style.transformOrigin = `${xorigin}px ${yorigin}px`;
 
-    animationInitialProgress.set(0);
-    animate(animationInitialProgress, 1, {
-      delay: 1,
-      duration: INITIAL_ANIMATION_DURATION,
-      onUpdate: (latest) => {
-        if (latest >= 1) {
-          scopeEnter.current.style.opacity = '';
-          scopeEnter.current.style.transform = '';
-          scopeEnter.current.style.transformOrigin = '';
+      resetLineTransitions();
 
-          animationTimeoutRef.current = setTimeout(() => {
-            setIsAnimating(false);
-          }, INITIAL_ANIMATION_DURATION);
+      animationInitialProgress.set(0);
+      animate(animationInitialProgress, 1, {
+        delay: 1,
+        duration: INITIAL_ANIMATION_DURATION,
+        onUpdate: (latest) => {
+          if (latest >= 1) {
+            scopeEnter.current.style.opacity = '';
+            scopeEnter.current.style.transform = '';
+            scopeEnter.current.style.transformOrigin = '';
 
-          handleLineTransitions();
-        }
-      },
-    });
+            animationTimeoutRef.current = setTimeout(() => {
+              setIsAnimating(false);
+            }, INITIAL_ANIMATION_DURATION);
+
+            handleLineTransitions();
+          }
+        },
+      });
+    };
+
+    __animate();
   }
 
   function isReadyToAnimateEnterSequences(latest: number) {
@@ -1219,8 +1234,12 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
           handleDataCapture={({ data, id }, { rect }) => {
             updateRects({ [id]: { data, rect } });
           }}
-          handleNodeTransfer={(node: ShadowNodeType) => {
+          handleNodeTransfer={(node: ShadowNodeType, data: NodeData, element: HTMLElement) => {
             nodesToBeRenderedRef.current[node.id] = true;
+
+            if (newBlockCallbackAnimationRef.current && node.id in newBlockCallbackAnimationRef.current) {
+              newBlockCallbackAnimationRef.current[node.id] = true;
+            }
           }}
           nodes={shadowNodes}
           uuid={getNewUUID(3, 'clock')}
@@ -1265,16 +1284,18 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
           const b1 = p1?.blocks;
           const b2 = p2?.blocks;
 
-          // console.log('Pipeline updated', b1?.length, b2?.length);
+          console.log('Pipeline updated', b1, b2);
           if (b1?.length ?? 0 !== b2?.length ?? 0) {
-            // const b1map = indexBy(b1, b => b.uuid);
-            // const b2map = indexBy(b2, b => b.uuid);
-            // const bnew = b1.filter(b => !b2map[b.uuid]);
-            // const bdel = b2.filter(b => !b1map[b.uuid]);
+            if (b1?.length > b2?.length) {
+              newBlockCallbackAnimationRef.current = {};
+              b1?.forEach((binner: BlockType) => {
+                if (!b2?.find(b2 => b2.uuid === binner.uuid)) {
+                  newBlockCallbackAnimationRef.current[binner.uuid] = false;
+                }
+              });
+            }
 
-            renderLayoutUpdates(() => {
-              // handleAnimateChangeBlocks(bnew, bdel);
-            });
+            renderLayoutUpdates();
           }
         },
       },
@@ -1984,6 +2005,27 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
     }), [],
   );
   connectDrop(canvasRef);
+
+  useEffect(() => {
+    if (newBlockCallbackAnimationRef.current !== null) {
+      const entries = Object.entries(newBlockCallbackAnimationRef.current);
+      if (entries.length > 0 && entries?.every(([id, val]) => val && id in rectsMapping)) {
+        updateLinesRef?.current?.(
+          rectsMapping,
+          { ...getSelectedGroupRectFromRefs() },
+          {
+            callback: () => {
+              handleLineTransitions();
+              newBlockCallbackAnimationRef.current = null;
+            },
+            replace: false,
+          },
+        );
+
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [handleLineTransitions, rectsMapping]);
 
   return (
     <div
