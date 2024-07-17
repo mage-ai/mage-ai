@@ -20,7 +20,7 @@ import TemplateConfigurations from './Blocks/TemplateConfigurations';
 import Text from '@mana/elements/Text';
 import stylesBlockNode from '@styles/scss/components/Canvas/Nodes/BlockNode.module.scss';
 import stylesGradient from '@styles/scss/elements/GradientContainer.module.scss';
-import { AddV2, Code, Grab, PipeIconVertical, PlayButtonFilled, Pause, Infinite } from '@mana/icons';
+import { AddBlock, Code, Grab, PipeIconVertical, PlayButtonFilled, Pause, Infinite } from '@mana/icons';
 import { AppTypeEnum, AppSubtypeEnum } from '../../Apps/constants';
 import { AsideType, DragAndDropHandlersType, SharedBlockProps } from './types';
 import { BlockNode } from './interfaces';
@@ -126,7 +126,8 @@ export default function BlockNodeComponent({
       uuid: node.id,
       ...(ItemTypeEnum.NODE === node?.type
         ? {
-          Icon: draggable ? Grab : AddV2,
+          Icon: ip => <AddBlock {...ip} colorName={colorNames?.base ?? 'white'} />,
+          borderColor: !draggable && colorNames?.base && 'white',
           menuItems: menuItemsForTemplates(block, (
             event: any,
             block2,
@@ -167,6 +168,7 @@ export default function BlockNodeComponent({
               colorName={editorApp ? 'green' : undefined}
             />;
           },
+          borderColor: editorApp ? 'green' : undefined,
           onClick: (event: MouseEvent) => {
             event.preventDefault();
             if (editorApp) {

@@ -10,6 +10,7 @@ function Aside({
   className,
   menuItems,
   loading,
+  borderColor,
   onClick,
   uuid,
 }: AsideType, ref: React.Ref<HTMLButtonElement>) {
@@ -17,8 +18,9 @@ function Aside({
     const el = (
       <Grid
         alignItems="center"
-        backgroundColor={baseColorName ? baseColorName?.toLowerCase() : undefined}
-        borders={baseColorName ? false : true}
+        backgroundColor={borderColor ? undefined : (baseColorName ? baseColorName?.toLowerCase() : undefined)}
+        borderColor={borderColor}
+        borders={borderColor ? true : (baseColorName ? false : true)}
         bordersTransparent={baseColorName ? true : false}
         justifyContent="center"
         ref={ref}
@@ -48,6 +50,7 @@ function Aside({
   }, [
     Icon,
     baseColorName,
+    borderColor,
     className,
     loading,
     menuItems,

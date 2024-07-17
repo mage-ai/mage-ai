@@ -47,6 +47,7 @@ export type DragAndDropType = DraggableType & DroppableType;
 export type AsideType = {
   Icon?: IconType;
   baseColorName?: string;
+  borderColor?: string;
   buttonRef: React.RefObject<HTMLDivElement>;
   className?: string;
   loading?: boolean;
