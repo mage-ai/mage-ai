@@ -159,6 +159,29 @@ function BlockNode({
           },
           uuid: 'Delete output',
         },
+        {
+          Icon: Delete,
+          onClick: (event: ClientEventType) => {
+            executionOutputs.delete.mutate({
+              event,
+              id: messageRequestUUID,
+              onSuccess: () => {
+                removeContextMenu(event);
+                updateOutputResults();
+              },
+              payload: {
+                all: true,
+              },
+              query: {
+                namespace: encodeURIComponent(
+                  [codeExecutionEnvironment.type, codeExecutionEnvironment.uuid].join(osPath.sep),
+                ),
+                path: encodeURIComponent(fileRef.current?.path),
+              },
+            });
+          },
+          uuid: 'Delete all outputs',
+        },
         { divider: true },
         {
           Icon: AISparkle,

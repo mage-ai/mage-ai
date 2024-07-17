@@ -206,6 +206,16 @@ class OutputManager(BaseDataClass):
         ])
         return execution_outputs
 
+    @classmethod
+    async def delete_output_batch(cls, path: str, namespace: str):
+        path = os.path.join(
+            get_variables_dir(),
+            path,
+            namespace,
+        )
+        if await exists_async(path):
+            await safe_delete_dir_async(path)
+
     async def build_output(self) -> ExecutionOutput:
         file_path = os.path.join(self.absolute_path, MESSAGES_FILENAME)
         messages = []

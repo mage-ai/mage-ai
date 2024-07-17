@@ -44,3 +44,10 @@ ExecutionOutputPolicy.allow_query(
     on_action=[OperationType.DETAIL, OperationType.DELETE, OperationType.LIST],
     scopes=[OauthScope.CLIENT_PRIVATE],
 )
+
+ExecutionOutputPolicy.allow_write(
+    ['all'],
+    condition=lambda policy: policy.has_at_least_editor_role_and_pipeline_edit_access(),
+    on_action=[OperationType.DELETE],
+    scopes=[OauthScope.CLIENT_PRIVATE],
+)

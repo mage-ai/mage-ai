@@ -1,3 +1,5 @@
+from typing import Dict
+
 from mage_ai.api.errors import ApiError
 from mage_ai.api.operations.constants import MetaKey
 from mage_ai.api.resources.GenericResource import GenericResource
@@ -77,5 +79,8 @@ class ExecutionOutputResource(GenericResource):
 
         return cls(model, user, **kwargs)
 
-    async def delete(self, **kwargs):
-        return await self.model.delete()
+    async def delete(self, payload: Dict, **kwargs):
+        if payload.get('all'):
+            await OutputManager.delete_output_batch(self.model.path, self.model.namespace)
+        else:
+            await self.model.delete()

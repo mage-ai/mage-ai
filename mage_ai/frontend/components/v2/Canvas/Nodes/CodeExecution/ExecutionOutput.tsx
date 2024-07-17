@@ -29,6 +29,9 @@ function ExecutionOutput({
   results,
 }: ExecutionOutputProps, ref: React.ForwardedRef<HTMLDivElement>) {
   const displayLocalTimezone = shouldDisplayLocalTimezone();
+  const error = useMemo(() => results?.find(result => ExecutionStatusEnum.ERROR === result.status), [results]);
+  const success = useMemo(() => results?.find(result => ExecutionStatusEnum.SUCCESS === result.status), [results]);
+  const output = useMemo(() => results?.find(result => ResultType.OUTPUT === result.type), [results]);
 
   const timestamps = useMemo(() => results?.reduce((acc, result) => ({
     max: acc.max === null ? result.timestamp : Math.max(acc.max, result.timestamp),
@@ -48,16 +51,16 @@ function ExecutionOutput({
     }, result: ExecutionResultType,
     ) => {
       const {
-        data_type,
+        // data_type,
         error,
-        output,
+        // output,
         output_text: outputText,
         process: resultProcess,
         result_id: resultID,
         status,
         timestamp,
         type: resultType,
-        uuid: resultUuid,
+        // uuid: resultUuid,
       } = result;
 
       if (ResultType.STATUS === resultType && ExecutionStatusEnum.ERROR !== status) {
@@ -70,10 +73,10 @@ function ExecutionOutput({
         // is_alive,
         // message,
         message_request_uuid: groupUUID,
-        message_uuid,
-        pid,
-        timestamp: processTimestamp,
-        uuid: processUuid,
+        // message_uuid,
+        // pid,
+        // timestamp: processTimestamp,
+        // uuid: processUuid,
       } = resultProcess;
 
       if (error) {
