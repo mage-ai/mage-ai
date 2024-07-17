@@ -373,6 +373,7 @@ function BlockNode({
   const submitCodeExecution = useCallback((event: React.MouseEvent<HTMLElement>, opts?: {
     onError?: () => void;
     onSuccess?: () => void;
+    openOutput?: boolean;
   }) => {
     handleSubscribe('BlockNode');
 
@@ -396,7 +397,7 @@ function BlockNode({
       });
     };
 
-    if (!outputRootRef.current) {
+    if (opts?.openOutput && !outputRootRef.current) {
       launchOutputCallbackOnceRef.current = () => {
         getFile(event, execute);
       };
@@ -452,7 +453,7 @@ function BlockNode({
     delete handleOnMessageRef.current?.[outputRef?.current?.id];
     outputRootRef?.current && outputRootRef?.current?.unmount();
     outputRootRef.current = null;
-    onCloseOutputRef.current();
+    onCloseOutputRef?.current && onCloseOutputRef?.current?.();
   }
 
   function closeEditorApp() {
@@ -463,7 +464,7 @@ function BlockNode({
     appNodeRef.current = null;
     appRootRef.current = null;
 
-    onCloseAppRef && onCloseAppRef?.current?.();
+    onCloseAppRef?.curent && onCloseAppRef?.current?.();
     setApps(prev => {
       const data = { ...prev };
       delete data[appRef?.current?.id];
@@ -482,7 +483,8 @@ function BlockNode({
       blockMapping: blockMappingRef?.current,
       groupMapping: groupMappingRef?.current,
     });
-    return (
+    const label = block?.name ?? block?.uuid;
+    return label && (
       <Grid
         alignItems="center"
         autoColumns="auto"
@@ -505,7 +507,7 @@ function BlockNode({
           <Circle backgroundColor={modeColor ?? groupColor} size={12} />
 
           <Text small>
-            {block?.name ?? block?.uuid}
+            {label}
           </Text>
         </Grid>
 
@@ -726,7 +728,9 @@ function BlockNode({
               Icon: Lightning,
               onClick: (event: ClientEventType) => {
                 event?.preventDefault();
-                submitCodeExecution(event as any);
+                submitCodeExecution(event as any, {
+                  openOutput: true,
+                });
                 removeContextMenu(event);
               },
               uuid: 'Execute code',
@@ -748,6 +752,8 @@ function BlockNode({
                 mutations.pipelines.update.mutate({
                   event,
                   onSuccess: () => {
+                    closeEditorApp();
+                    closeOutput();
                     removeContextMenu(event);
                   },
                   payload: (pipeline) => ({
@@ -781,7 +787,9 @@ function BlockNode({
         loadingKernelMutation={loadingKernelMutation}
         node={node}
         openEditor={launchEditorApp}
-        submitCodeExecution={submitCodeExecution}
+        submitCodeExecution={event => submitCodeExecution(event, {
+          openOutput: true,
+        })}
         timerStatusRef={timerStatusRef}
         updateBlock={updateBlock}
       />

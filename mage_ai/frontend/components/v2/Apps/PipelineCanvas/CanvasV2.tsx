@@ -1088,7 +1088,7 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
     const grpslevels = deepCopyArray(groupsByLevelRef?.current ?? []);
     reverseArray(grpslevels)?.forEach((groups, level) => {
       const grp = groups.find(g => g.uuid === block?.uuid);
-      console.log(groups, level, grp);
+
       if (grp) {
         grps.push({
           ...deepCopy(groupMappingRef.current?.[grp.uuid]),
@@ -1096,7 +1096,7 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
       } else if (grps.length > 0) {
         const grpcur = grps[grps.length - 1];
         const parent = groups?.find(g => g?.children?.findIndex(c => c.uuid === grpcur.uuid) >= 0);
-        console.log(grps, level, grpcur, parent);
+
         if (parent) {
           grps.push(deepCopy(groupMappingRef.current?.[parent.uuid]));
         }

@@ -83,7 +83,7 @@ export default function TemplateConfigurations({
           type: typeOfInput,
         } = inputs?.[input] ?? {} as InteractionInputType;
 
-        const value = variableFromUser?.value ?? defaultValue ?? '';
+        const value = variableFromUser ?? defaultValue ?? '';
 
         return (
           <label key={variableUUID}>
@@ -131,7 +131,7 @@ export default function TemplateConfigurations({
                   ].some(varType => types?.includes(varType))}
                   onChange={(event) => updateBlock(
                     event as any,
-                    `configuration.templates.${uuid}.variables.${variableUUID}.value`,
+                    `configuration.templates.${uuid}.variables.${variableUUID}`,
                     event?.target?.value,
                   )}
                   onClick={(event: React.MouseEvent<HTMLInputElement>) => {

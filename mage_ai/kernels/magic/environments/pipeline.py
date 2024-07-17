@@ -62,11 +62,14 @@ class Pipeline:
         if block.configuration and block.configuration.get('templates'):
             templates = block.configuration.get('templates')
             for value in (templates or {}).values():
-                vars = execution_variables.get('variables', {}) or {}
-                if not isinstance(vars, dict):
-                    vars = {}
-                vars.update(value.get('variables', {}) or {})
-                execution_variables['variables'] = vars
+                vars = value.get('variables', {}) or {}
+                for key, value in vars.items():
+                    execution_variables['variables'] = (
+                        execution_variables.get('variables', {}) or {}
+                    )
+                    if not isinstance(execution_variables['variables'], dict):
+                        execution_variables['variables'] = {}
+                    execution_variables['variables'][key] = value
 
         process = self.kernel.build_process(
             None,
