@@ -230,8 +230,8 @@ export default function NavigationButtonGroup({
           wrap
         >
           <Grid
-            alignItems='center'
-            autoFlow='column'
+            alignItems="center"
+            autoFlow="column"
             className={[
               stylesNavigation.grid,
               selected ? stylesNavigation['selected'] : '',
@@ -269,7 +269,7 @@ export default function NavigationButtonGroup({
           gridTemplateColumns: '',
         }}
       >
-        <Grid alignItems='center' autoColumns='min-content' autoFlow='column' height='100%'>
+        <Grid alignItems="center" autoColumns="min-content" autoFlow="column" height="100%">
           {buttons}
         </Grid>
       </div>

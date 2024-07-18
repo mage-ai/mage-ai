@@ -48,10 +48,10 @@ function PipelineBuilder({ frameworkUUID, uuid, ...props }: PipelineDetailProps)
   return (
     <DetailLayout loadEditorServices>
       <div className={[stylesHeader.content, stylesPipelineBuilder.container].join(' ')}>
-        <Grid autoColumns='auto' height='inherit' templateRows='auto 1fr auto' width='100%'>
+        <Grid autoColumns="auto" height="inherit" templateRows="auto 1fr auto" width="100%">
           <div />
 
-          <Grid autoRows='auto' height='inherit' templateColumns='auto 1fr' width='100%'>
+          <Grid autoRows="auto" height="inherit" templateColumns="auto 1fr" width="100%">
             <div />
 
             <Canvas {...props} executionFrameworkUUID={frameworkUUID} pipelineUUID={uuid} />

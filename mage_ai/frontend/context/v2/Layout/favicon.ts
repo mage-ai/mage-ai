@@ -6,7 +6,7 @@ export enum FaviconStatusEnum {
 }
 
 export const changeFavicon = (iconURL: string) => {
-  const link: HTMLLinkElement | null = document.querySelector("link[rel*='icon']");
+  const link: HTMLLinkElement | null = document.querySelector('link[rel*=\'icon\']');
 
   if (link) {
     link.href = iconURL;

@@ -120,18 +120,18 @@ export default function BlockGroupOverview({
               return (
                 <GradientContainer key={uuid3} variant={error ? 'error-reverse' : undefined}>
                   <Grid
-                    alignItems='center'
+                    alignItems="center"
                     columnGap={8}
                     padding={12}
-                    templateColumns='1fr 1fr'
-                    templateRows='1fr'
+                    templateColumns="1fr 1fr"
+                    templateRows="1fr"
                   >
                     <Grid
-                      alignItems='center'
+                      alignItems="center"
                       columnGap={8}
-                      justifyItems='start'
-                      templateColumns='auto'
-                      templateRows='1fr'
+                      justifyItems="start"
+                      templateColumns="auto"
+                      templateRows="1fr"
                     >
                       <Text medium secondary={!valid} small>
                         {block3?.name ?? block3?.uuid}
@@ -139,11 +139,11 @@ export default function BlockGroupOverview({
                     </Grid>
 
                     <Grid
-                      alignItems='center'
+                      alignItems="center"
                       columnGap={8}
-                      justifyItems='end'
-                      templateColumns='auto'
-                      templateRows='1fr'
+                      justifyItems="end"
+                      templateColumns="auto"
+                      templateRows="1fr"
                     >
                       {valid ? (
                         <Circle
@@ -172,12 +172,12 @@ export default function BlockGroupOverview({
       <Grid rowGap={8}>
         <PanelRows padding={false}>
           <Grid
-            alignItems='center'
+            alignItems="center"
             padding={16}
             rowGap={8}
             style={{ maxWidth: 400 }}
-            templateColumns='1fr'
-            templateRows='1fr'
+            templateColumns="1fr"
+            templateRows="1fr"
           >
             {configuration?.metadata?.required && (
               <Text italic secondary small>
@@ -211,11 +211,11 @@ export default function BlockGroupOverview({
             </Grid> */}
             {blocks?.map(block2 => (
               <Grid
-                alignItems='stretch'
+                alignItems="stretch"
                 baseLeft
                 baseRight
                 columnGap={8}
-                justifyContent='space-between'
+                justifyContent="space-between"
                 key={block2.uuid}
                 smallBottom
                 smallTop
@@ -296,18 +296,18 @@ export default function BlockGroupOverview({
             variant={error ? 'error' : undefined}
           >
             <Grid
-              alignItems='center'
+              alignItems="center"
               columnGap={8}
               padding={12}
-              templateColumns='1fr 1fr'
-              templateRows='1fr'
+              templateColumns="1fr 1fr"
+              templateRows="1fr"
             >
               <Grid
-                alignItems='center'
+                alignItems="center"
                 columnGap={8}
-                justifyItems='start'
-                templateColumns='auto 1fr'
-                templateRows='1fr'
+                justifyItems="start"
+                templateColumns="auto 1fr"
+                templateRows="1fr"
               >
                 <Circle
                   backgroundColor={valid ? colorName?.base : undefined}
@@ -333,11 +333,11 @@ export default function BlockGroupOverview({
               </Grid>
 
               <Grid
-                alignItems='center'
+                alignItems="center"
                 columnGap={8}
-                justifyItems='end'
-                templateColumns='auto'
-                templateRows='1fr'
+                justifyItems="end"
+                templateColumns="auto"
+                templateRows="1fr"
               >
                 <Text medium secondary={!valid} small>
                   {name ?? uuid2}

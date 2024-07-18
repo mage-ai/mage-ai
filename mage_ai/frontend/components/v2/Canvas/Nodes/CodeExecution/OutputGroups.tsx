@@ -167,7 +167,7 @@ const OutputGroups: React.FC<OutputGroupsProps> = ({
         ref={scrollableDivRef}
         style={{ maxHeight: 400, overflow: 'auto' }}
       >
-        <Grid rowGap={8} templateRows='min-content'>
+        <Grid rowGap={8} templateRows="min-content">
           {keys?.map((mrUUID: string, idx: number) => {
             const last = idx === keys.length - 1;
             return (

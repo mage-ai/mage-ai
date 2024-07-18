@@ -561,7 +561,7 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
           />
 
           <div id={connectionLinesRootID.current} />
-          <div id='dynamic-components-root' ref={dynamicRootRef} />
+          <div id="dynamic-components-root" ref={dynamicRootRef} />
 
           <SettingsProvider
             activeLevel={activeLevel}

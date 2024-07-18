@@ -102,7 +102,7 @@ function MateriaIDE({
 
   return (
     <ContainerStyled ref={containerRef}>
-      <Loading className='ide-loading' />
+      <Loading className="ide-loading" />
 
       <IDEStyled className={['ide-container', containerClassName ?? ''].filter(Boolean).join(' ')}>
         <div

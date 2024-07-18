@@ -22,7 +22,7 @@ function Markdown({
       <ReactMarkdown
         components={{
           a: ({ children, href }) => (
-            <Link href={href} inline target='_blank' {...rest?.a}>
+            <Link href={href} inline target="_blank" {...rest?.a}>
               {children}
             </Link>
           ),
@@ -30,7 +30,7 @@ function Markdown({
             const match = /language-(\w+)/.exec(className || '');
             return !inline && match ? (
               <SyntaxHighlighter
-                PreTag='div'
+                PreTag="div"
                 language={match[1]}
                 style={CodeStyle}
                 {...props}

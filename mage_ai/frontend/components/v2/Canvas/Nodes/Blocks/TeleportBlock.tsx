@@ -75,10 +75,10 @@ export default function TeleportGroup({
       wrap
     >
       <Grid
-        alignItems='start'
+        alignItems="start"
         borderColor={colorName}
         borders
-        height='inherit'
+        height="inherit"
         padding={12}
         style={{
           backgroundColor: 'var(--backgrounds-body)',

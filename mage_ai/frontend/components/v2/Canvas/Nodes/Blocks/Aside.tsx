@@ -11,14 +11,14 @@ function Aside(
   const element = useMemo(() => {
     const el = (
       <Grid
-        alignItems='center'
+        alignItems="center"
         backgroundColor={
           borderColor ? undefined : baseColorName ? baseColorName?.toLowerCase() : undefined
         }
         borderColor={borderColor}
         borders={borderColor ? true : baseColorName ? false : true}
         bordersTransparent={baseColorName ? true : false}
-        justifyContent='center'
+        justifyContent="center"
         ref={ref}
         style={{
           height: 32,

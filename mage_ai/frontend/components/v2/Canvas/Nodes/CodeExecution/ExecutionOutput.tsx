@@ -148,7 +148,7 @@ function ExecutionOutput(
             acc.status = ExecutionStatusEnum.ERROR;
 
             acc.outputs.push(
-              <Grid key={resultID} rowGap={12} templateColumns='auto' templateRows='auto auto'>
+              <Grid key={resultID} rowGap={12} templateColumns="auto" templateRows="auto auto">
                 <Text monospace semibold small>
                   <Ansi>{String(message)}</Ansi>
                 </Text>
@@ -189,7 +189,7 @@ function ExecutionOutput(
                   <Grid
                     columnGap={8}
                     data-message-request-uuid={groupUUID}
-                    templateColumns='auto 1fr'
+                    templateColumns="auto 1fr"
                   >
                     <Text
                       monospace
@@ -211,7 +211,7 @@ function ExecutionOutput(
                   </Grid>
                 }
               >
-                <Grid columnGap={8} data-message-request-uuid={groupUUID} templateColumns='1fr'>
+                <Grid columnGap={8} data-message-request-uuid={groupUUID} templateColumns="1fr">
                   <Text
                     monospace
                     small
@@ -272,7 +272,7 @@ function ExecutionOutput(
     >
       {outputs?.length > 0 && (
         <Grid paddingBottom={last ? 6 : 0} paddingTop={first ? 6 : 0} rowGap={4}>
-          <Grid autoFlow='column' columnGap={8} justifyContent='space-between'>
+          <Grid autoFlow="column" columnGap={8} justifyContent="space-between">
             <Text monospace muted xsmall>
               {isNumeric(timestamps.min)
                 ? dateFormatLongFromUnixTimestamp(
@@ -307,9 +307,9 @@ function ExecutionOutput(
           </Grid>
 
           <div>
-            <div style={{ height: 4 }}>{loading && <Loading position='absolute' />}</div>
+            <div style={{ height: 4 }}>{loading && <Loading position="absolute" />}</div>
 
-            <Grid autoFlow='column' columnGap={8} justifyContent='space-between'>
+            <Grid autoFlow="column" columnGap={8} justifyContent="space-between">
               {hasOutput && !executionOutput ? (
                 <Link onClick={() => getOutput()} xsmall>
                   Load output

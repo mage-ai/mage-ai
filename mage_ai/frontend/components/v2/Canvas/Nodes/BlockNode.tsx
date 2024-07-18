@@ -157,7 +157,7 @@ export default function BlockNodeComponent({
       uuid: node.id,
       ...(ItemTypeEnum.NODE === node?.type
         ? {
-            Icon: ip => <Add {...ip} colorName='white' />,
+            Icon: ip => <Add {...ip} colorName="white" />,
             // borderColor: !draggable && colorNames?.base && 'white',
             menuItems: menuItemsForTemplates(
               block,
@@ -190,7 +190,7 @@ export default function BlockNodeComponent({
           }
         : {
             Icon: ip => {
-              const Icon = draggable ? Grab : Code;
+              const Icon = Code;
 
               return <Icon {...ip} colorName={editorApp ? 'green' : undefined} />;
             },
@@ -218,7 +218,7 @@ export default function BlockNodeComponent({
             },
           }),
     };
-  }, [draggable, block, node, isGroup, openEditor, apps, mutations, transformState]);
+  }, [block, node, isGroup, openEditor, apps, mutations, transformState]);
 
   const before = useMemo(
     () => ({
@@ -246,12 +246,12 @@ export default function BlockNodeComponent({
     () =>
       ItemTypeEnum.NODE === node?.type
         ? {
-            Icon: collapsed ? Infinite : PipeIconVertical,
+            Icon: PipeIconVertical,
             baseColorName: colorNames?.base || 'purple',
             label: String(name || uuid || ''),
           }
         : undefined,
-    [node, name, uuid, collapsed, colorNames],
+    [node, name, uuid, colorNames],
   );
 
   const label = String(name || uuid || '');
@@ -355,35 +355,35 @@ export default function BlockNodeComponent({
       outputColorName?: string;
     }) => (
       <Grid
-        alignItems='center'
-        autoColumns='auto'
-        autoFlow='column'
+        alignItems="center"
+        autoColumns="auto"
+        autoFlow="column"
         columnGap={8}
-        justifyContent='space-between'
-        templateColumns='1fr'
-        templateRows='1fr'
+        justifyContent="space-between"
+        templateColumns="1fr"
+        templateRows="1fr"
       >
         <Grid
-          alignItems='center'
-          autoColumns='auto'
-          autoFlow='column'
+          alignItems="center"
+          autoColumns="auto"
+          autoFlow="column"
           columnGap={8}
-          justifyContent='start'
+          justifyContent="start"
           templateColumns={badgeFullWidth ? (inputColorName ? 'auto 1fr' : '1fr') : 'max-content'}
-          templateRows='1fr'
+          templateRows="1fr"
         >
           {inputColorName && <Circle backgroundColor={inputColorName} size={12} />}
           {badgeBase}
         </Grid>
         {(afterArg || outputColorName) && (
           <Grid
-            alignItems='center'
-            autoColumns='auto'
-            autoFlow='column'
+            alignItems="center"
+            autoColumns="auto"
+            autoFlow="column"
             columnGap={8}
-            justifyContent='end'
-            templateColumns='max-content'
-            templateRows='1fr'
+            justifyContent="end"
+            templateColumns="max-content"
+            templateRows="1fr"
           >
             {afterArg && <Aside {...afterArg} />}
             {outputColorName && <Circle backgroundColor={outputColorName} size={12} />}
@@ -409,9 +409,8 @@ export default function BlockNodeComponent({
             />
           ))}
         </PanelRows>
-
-        // eslint-disable-next-line react-hooks/exhaustive-deps
       ),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [draggable, node, inputOutputPairs, onMount],
   );
 
@@ -440,7 +439,7 @@ export default function BlockNodeComponent({
   const titleRow = useMemo(
     () => (
       <Grid
-        alignItems='center'
+        alignItems="center"
         className={stylesBlockNode.showOnHoverContainer}
         columnGap={12}
         id={`${node.id}-title`}
@@ -449,7 +448,7 @@ export default function BlockNodeComponent({
           before || after ? '1fr' : '',
           before && after ? 'auto' : '',
         ].join(' ')}
-        templateRows='1fr'
+        templateRows="1fr"
       >
         {before && <Aside {...before} />}
 
@@ -472,8 +471,8 @@ export default function BlockNodeComponent({
           // minWidth: 300,
         }}
       >
-        <Grid templateRows='auto'>
-          <Grid rowGap={8} templateRows='auto'>
+        <Grid templateRows="auto">
+          <Grid rowGap={8} templateRows="auto">
             {badge &&
               buildBadgeRow({
                 after,
@@ -485,7 +484,7 @@ export default function BlockNodeComponent({
             <Loading
               // colorName={colorNames?.hi}
               // colorNameAlt={colorNames?.md}
-              position='absolute'
+              position="absolute"
             />
           </div>
           {!groupSelection &&
@@ -495,12 +494,12 @@ export default function BlockNodeComponent({
                 buildContextMenuItemsForGroupBlock={buildContextMenuItemsForGroupBlock}
               />
             ) : (
-              <Grid rowGap={8} templateRows='auto'>
+              <Grid rowGap={8} templateRows="auto">
                 {connectionRows}
                 {templateConfigurations}
                 {isEmptyObject(block?.configuration?.templates) && (
                   <PanelRows padding={false}>
-                    <Grid justifyItems='start' padding={12} rowGap={4} templateColumns='auto'>
+                    <Grid justifyItems="start" padding={12} rowGap={4} templateColumns="auto">
                       {false && contentCode && (
                         <TooltipWrapper
                           align={TooltipAlign.START}
@@ -532,11 +531,11 @@ export default function BlockNodeComponent({
                       }
                     </Grid>
                     <Grid
-                      alignItems='stretch'
+                      alignItems="stretch"
                       baseLeft
                       baseRight
                       columnGap={8}
-                      justifyContent='space-between'
+                      justifyContent="space-between"
                       smallBottom
                       smallTop
                       style={{

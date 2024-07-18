@@ -190,20 +190,20 @@ export function Header(
         >
           <Grid
             {...gridProps}
-            alignItems='center'
+            alignItems="center"
             columnGap={12}
             paddingRight={title ?? false ? 8 : undefined}
           >
             {!version || !appHistory ? <CaretDown {...iconProps} /> : <CaretLeft {...iconProps} />}
 
             {(navTag || !version) && (
-              <NavTag role='tag'>
+              <NavTag role="tag">
                 {!navTag && !version ? <>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</> : navTag}
               </NavTag>
             )}
 
             {title && version ? (
-              <Text nowrap role='title' semibold>
+              <Text nowrap role="title" semibold>
                 {title}
               </Text>
             ) : (
@@ -258,7 +258,7 @@ export function Header(
               <TextInput
                 Icon={ip => <SearchV3 {...ip} {...iconProps} />}
                 basic
-                placeholder='Command Center for data...'
+                placeholder="Command Center for data..."
                 small
                 style={{
                   height: 40,
@@ -279,8 +279,8 @@ export function Header(
                 gridTemplateColumns: '',
               }}
             >
-              <Grid {...gridProps} alignItems='center' columnGap={10}>
-                <MageAvatar size={24} variant='a' />
+              <Grid {...gridProps} alignItems="center" columnGap={10}>
+                <MageAvatar size={24} variant="a" />
                 Sorceress
                 <CaretDown {...iconProps} />
               </Grid>

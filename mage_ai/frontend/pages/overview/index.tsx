@@ -350,7 +350,7 @@ function OverviewPage({ tab }: { tab?: TimePeriodEnum }) {
                   <Text warning>
                     Read{' '}
                     <Link
-                      href='https://help.openai.com/en/articles/4936850-where-do-i-find-my-secret-api-key'
+                      href="https://help.openai.com/en/articles/4936850-where-do-i-find-my-secret-api-key"
                       openNewWindow
                     >
                       OpenAI’s documentation
@@ -454,7 +454,7 @@ function OverviewPage({ tab }: { tab?: TimePeriodEnum }) {
         addButtonMenuOpen={addButtonMenuOpen}
         addButtonMenuRef={newPipelineButtonMenuRef}
         isLoading={isLoadingCreatePipeline}
-        label='New pipeline'
+        label="New pipeline"
         menuItems={newPipelineButtonMenuItems}
         onClick={() => setAddButtonMenuOpen(prevOpenState => !prevOpenState)}
         onClickCallback={() => setAddButtonMenuOpen(false)}
@@ -466,10 +466,10 @@ function OverviewPage({ tab }: { tab?: TimePeriodEnum }) {
   const utcTooltipEl = useMemo(
     () =>
       displayLocalTimezone ? (
-        <Spacing ml='4px'>
+        <Spacing ml="4px">
           <Tooltip
             {...SHARED_UTC_TOOLTIP_PROPS}
-            label='Please note that these counts are based on UTC time.'
+            label="Please note that these counts are based on UTC time."
           />
         </Spacing>
       ) : null,
@@ -673,10 +673,10 @@ def d(df):
   }, []);
 
   return (
-    <Dashboard errors={errors} setErrors={setErrors} title='Overview' uuid='overview/index'>
+    <Dashboard errors={errors} setErrors={setErrors} title="Overview" uuid="overview/index">
       <PageSectionHeader backgroundColor={dark.background.panel} ref={refSubheader}>
         <Spacing py={2}>
-          <FlexContainer alignItems='center'>
+          <FlexContainer alignItems="center">
             <Spacing ml={3}>{addButtonEl}</Spacing>
             <ButtonTabs
               onClickTab={({ uuid }) => {
@@ -695,7 +695,7 @@ def d(df):
           leftOffset={VERTICAL_NAVIGATION_WIDTH - 1}
           pageBlockLayoutTemplate={pageBlockLayoutTemplate}
           topOffset={HEADER_HEIGHT + refSubheader?.current?.getBoundingClientRect()?.height}
-          uuid='overview/dashboard'
+          uuid="overview/dashboard"
         />
       )}
 
@@ -721,7 +721,7 @@ def d(df):
 
             <Spacing mt={2}>
               <Spacing ml={2}>
-                <FlexContainer alignItems='center'>
+                <FlexContainer alignItems="center">
                   <Text bold large>
                     {isValidatingMonitorStats ? '--' : formatNumber(totalPipelineRunCount)} total
                     pipeline runs
@@ -751,7 +751,7 @@ def d(df):
           </Spacing>
 
           <Spacing {...SHARED_WIDGET_SPACING_PROPS}>
-            <FlexContainer alignItems='center' justifyContent='center'>
+            <FlexContainer alignItems="center" justifyContent="center">
               <Widget
                 pipelineRuns={pipelineRunsWithoutDeletedPipelines}
                 pipelineType={ALL_PIPELINE_RUNS_TYPE}
@@ -762,7 +762,7 @@ def d(df):
           </Spacing>
 
           <Spacing {...SHARED_WIDGET_SPACING_PROPS}>
-            <FlexContainer alignItems='center' justifyContent='center'>
+            <FlexContainer alignItems="center" justifyContent="center">
               <Widget
                 pipelineRuns={integrationPipelineRuns}
                 pipelineType={PipelineTypeEnum.INTEGRATION}

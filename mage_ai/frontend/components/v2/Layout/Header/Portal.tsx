@@ -11,7 +11,7 @@ export default function HeaderPortal({
   const { initialize } = useLayout();
 
   return (
-    <WithOnMount onMount={() => initialize({ headerRef })} uuid='HeaderPortal'>
+    <WithOnMount onMount={() => initialize({ headerRef })} uuid="HeaderPortal">
       <header className={stylesHeader.header} ref={headerRef} />
     </WithOnMount>
   );

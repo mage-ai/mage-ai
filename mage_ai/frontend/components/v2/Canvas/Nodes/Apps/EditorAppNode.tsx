@@ -176,7 +176,7 @@ function EditorAppNode({
       style={{
         gridTemplateRows: 'auto auto 1fr auto',
       }}
-      templateColumns='auto'
+      templateColumns="auto"
     >
       <Grid
         onContextMenu={(event: any) => handleContextMenu?.(event)}
@@ -184,12 +184,12 @@ function EditorAppNode({
         style={{
           gridTemplateRows: 'auto auto 1fr auto',
         }}
-        templateColumns='auto'
+        templateColumns="auto"
       >
         <Grid
           columnGap={PADDING_HORIZONTAL / 2}
           style={{ gridTemplateColumns: 'auto 1fr auto' }}
-          templateRows='1fr'
+          templateRows="1fr"
         >
           {/* <Button
             Icon={asideBeforeOpen ? PanelCollapseLeft : BlockGenericV2}
@@ -229,7 +229,7 @@ function EditorAppNode({
             />
           </div>
 
-          <TextInput basic placeholder='/' style={{ paddingBottom: 8, paddingTop: 8 }} />
+          <TextInput basic placeholder="/" style={{ paddingBottom: 8, paddingTop: 8 }} />
 
           <Button
             // Icon={afterOpen ? PanelCollapseRight : Menu}
@@ -243,16 +243,16 @@ function EditorAppNode({
         </Grid>
 
         <Grid
-          autoFlow='column'
-          backgroundColor='graylo'
+          autoFlow="column"
+          backgroundColor="graylo"
           borders
           columnGap={40}
-          justifyContent='start'
+          justifyContent="start"
           paddingBottom={6}
           paddingLeft={PADDING_HORIZONTAL}
           paddingRight={PADDING_HORIZONTAL}
           paddingTop={6}
-          templateRows='auto'
+          templateRows="auto"
         >
           {[
             {
@@ -298,7 +298,7 @@ function EditorAppNode({
                 Icon={iconPropsInit => Icon && <Icon {...{ ...iconPropsInit, ...iconProps }} />}
                 anchor={anchor}
                 basic
-                data-loading-style='inline'
+                data-loading-style="inline"
                 href={href}
                 // loading
                 onClick={onClick ?? undefined}
@@ -316,30 +316,30 @@ function EditorAppNode({
           ))}
         </Grid>
 
-        <Grid borders style={{ overflow: 'hidden' }} templateRows='auto 1fr'>
+        <Grid borders style={{ overflow: 'hidden' }} templateRows="auto 1fr">
           <Grid
-            autoFlow='column'
-            backgroundColor='graylo'
+            autoFlow="column"
+            backgroundColor="graylo"
             bordersBottom
             columnGap={10}
-            justifyContent='start'
+            justifyContent="start"
             paddingBottom={18}
             paddingLeft={PADDING_HORIZONTAL}
             paddingRight={PADDING_HORIZONTAL}
             paddingTop={18}
-            templateColumns='1fr auto'
-            templateRows='auto'
+            templateColumns="1fr auto"
+            templateRows="auto"
           >
             <Grid
-              autoFlow='column'
+              autoFlow="column"
               columnGap={PADDING_HORIZONTAL}
-              justifyContent='start'
-              templateRows='auto'
+              justifyContent="start"
+              templateRows="auto"
             >
               <Button
-                Icon={iconProps => <DiamondShared {...iconProps} colorName='yellow' />}
+                Icon={iconProps => <DiamondShared {...iconProps} colorName="yellow" />}
                 basic
-                grouped='true'
+                grouped="true"
                 onClick={event => alert('DiamondShared')}
                 small
               />
@@ -365,15 +365,15 @@ function EditorAppNode({
             {toolbars?.top}
 
             <Grid
-              autoFlow='column'
+              autoFlow="column"
               columnGap={PADDING_HORIZONTAL * 2}
-              justifyContent='start'
-              templateRows='auto'
+              justifyContent="start"
+              templateRows="auto"
             >
               <Button
                 Icon={iconProps => <IdentityTag {...iconProps} secondary />}
                 basic
-                grouped='true'
+                grouped="true"
                 onClick={event => alert('IdentityTag')}
                 small
               />
@@ -381,7 +381,7 @@ function EditorAppNode({
               <Button
                 Icon={iconProps => <AppVersions {...iconProps} secondary />}
                 basic
-                grouped='true'
+                grouped="true"
                 onClick={event => alert('AppVersions')}
                 small
               />
@@ -411,7 +411,7 @@ function EditorAppNode({
 
               <br />
 
-              <Grid autoFlow='column' columnGap={8} justifyContent='start' templateColumns='auto'>
+              <Grid autoFlow="column" columnGap={8} justifyContent="start" templateColumns="auto">
                 <Link onClick={() => overrideServerContentFromLocal()} preventDefault xsmall>
                   Save local
                 </Link>

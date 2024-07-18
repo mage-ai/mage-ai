@@ -2146,9 +2146,9 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
           style={{ opacity: opacityInterstitial }}
         >
           <Grid
-            alignItems='center'
+            alignItems="center"
             className={stylesPipelineBuilder.content}
-            justifyItems='center'
+            justifyItems="center"
             padding={24}
             rowGap={16}
           >

@@ -638,7 +638,7 @@ function PipelineListPage() {
                   <Text warning>
                     Read{' '}
                     <Link
-                      href='https://help.openai.com/en/articles/4936850-where-do-i-find-my-secret-api-key'
+                      href="https://help.openai.com/en/articles/4936850-where-do-i-find-my-secret-api-key"
                       openNewWindow
                     >
                       OpenAI’s documentation
@@ -1282,7 +1282,7 @@ function PipelineListPage() {
             </Text>,
             <NextLink
               as={`/pipelines/${uuid}`}
-              href='/pipelines/[pipeline]'
+              href="/pipelines/[pipeline]"
               key={`pipeline_name_${idx}`}
               passHref
             >
@@ -1328,13 +1328,13 @@ function PipelineListPage() {
             <Text default={schedulesCount === 0} key={`pipeline_trigger_count_${idx}`} monospace>
               {schedulesCount}
             </Text>,
-            <Flex flex={1} justifyContent='flex-end' key={`chevron_icon_${idx}`}>
+            <Flex flex={1} justifyContent="flex-end" key={`chevron_icon_${idx}`}>
               <Button
                 {...sharedOpenButtonProps}
                 onClick={() => {
                   downloadPipeline({ pipelineUUID: uuid });
                 }}
-                title='Download (keep folder structure)'
+                title="Download (keep folder structure)"
               >
                 <Save default size={2 * UNIT} />
               </Button>
@@ -1344,7 +1344,7 @@ function PipelineListPage() {
                 onClick={() => {
                   router.push('/pipelines/[pipeline]', `/pipelines/${uuid}`);
                 }}
-                title='Detail'
+                title="Detail"
               >
                 <Open default size={2 * UNIT} />
               </Button>
@@ -1354,7 +1354,7 @@ function PipelineListPage() {
                 onClick={() => {
                   router.push('/pipelines/[pipeline]/logs', `/pipelines/${uuid}/logs`);
                 }}
-                title='Logs'
+                title="Logs"
               >
                 <File default size={2 * UNIT} />
               </Button>
@@ -1365,7 +1365,7 @@ function PipelineListPage() {
         sortableColumnIndexes={sortableColumnIndexes}
         sortedColumn={sortedColumnInit}
         stickyHeader
-        uuid='pipelines_table'
+        uuid="pipelines_table"
       />
     ),
     [
@@ -1416,7 +1416,7 @@ function PipelineListPage() {
     const limit = query?.[MetaQueryEnum.LIMIT];
 
     return (
-      <FlexContainer alignItems='center'>
+      <FlexContainer alignItems="center">
         <Text muted small>
           Per page
         </Text>
@@ -1488,14 +1488,14 @@ function PipelineListPage() {
       errors={errors}
       setErrors={setErrors}
       subheaderChildren={
-        <FlexContainer alignItems='center' justifyContent='space-between'>
+        <FlexContainer alignItems="center" justifyContent="space-between">
           {toolbarEl}
 
           {limitMemo}
         </FlexContainer>
       }
-      title='Pipelines'
-      uuid='pipelines/index'
+      title="Pipelines"
+      uuid="pipelines/index"
     >
       {operationHistoryEnabled && (
         <Spacing px={PADDING_UNITS} ref={refButtonTabs}>

@@ -135,14 +135,14 @@ function MenuItemBase(
     <MenuItemStyled>
       <Grid rowGap={4}>
         <Grid
-          alignItems='center'
+          alignItems="center"
           columnGap={16}
-          justifyContent='space-between'
+          justifyContent="space-between"
           templateColumns={['1fr', 'auto'].filter(Boolean).join(' ')}
-          templateRows='1fr'
+          templateRows="1fr"
         >
           <Grid
-            alignItems='center'
+            alignItems="center"
             columnGap={8}
             templateColumns={[before && 'auto', '1fr'].filter(Boolean).join(' ')}
           >
@@ -211,7 +211,7 @@ function MenuItemBase(
               onClick?.(e as ClientEventType, item, () => onClickCallback());
             }}
             plain
-            width='100%'
+            width="100%"
           >
             <motion.div
               variants={{
@@ -497,7 +497,7 @@ function Menu({
       }}
     >
       <MenuContent
-        animate='open'
+        animate="open"
         initial={level > 0 ? 'open' : 'closed'}
         variants={{
           closed: {
@@ -515,7 +515,7 @@ function Menu({
         }}
       >
         <motion.div
-          animate='open'
+          animate="open"
           initial={level === 1 ? 'closed' : 'open'}
           variants={{
             open: {

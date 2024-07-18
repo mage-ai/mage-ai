@@ -31,7 +31,7 @@ export default function TemplateConfigurations({
 
   return (
     <PanelRows padding={false}>
-      <Grid justifyItems='start' padding={12} rowGap={4} templateColumns='auto'>
+      <Grid justifyItems="start" padding={12} rowGap={4} templateColumns="auto">
         <TooltipWrapper
           align={TooltipAlign.END}
           justify={TooltipJustify.END}
@@ -86,11 +86,11 @@ export default function TemplateConfigurations({
           return (
             <label key={variableUUID}>
               <Grid
-                alignItems='stretch'
+                alignItems="stretch"
                 baseLeft
                 baseRight
                 columnGap={8}
-                justifyContent='space-between'
+                justifyContent="space-between"
                 smallBottom
                 smallTop
                 style={{
@@ -114,8 +114,8 @@ export default function TemplateConfigurations({
 
                 {InteractionInputTypeEnum.TEXT_FIELD === typeOfInput && (
                   <TextInput
-                    align='right'
-                    autoComplete='off'
+                    align="right"
+                    autoComplete="off"
                     basic
                     blendWithText
                     defaultValue={value}

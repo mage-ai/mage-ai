@@ -569,23 +569,23 @@ function BlockNode(
     return (
       label && (
         <Grid
-          alignItems='center'
-          autoColumns='auto'
-          autoFlow='column'
+          alignItems="center"
+          autoColumns="auto"
+          autoFlow="column"
           columnGap={8}
-          justifyContent='space-between'
+          justifyContent="space-between"
           padding={6}
-          templateColumns='1fr 1fr'
-          templateRows='1fr'
+          templateColumns="1fr 1fr"
+          templateRows="1fr"
         >
           <Grid
-            alignItems='center'
-            autoColumns='auto'
-            autoFlow='column'
+            alignItems="center"
+            autoColumns="auto"
+            autoFlow="column"
             columnGap={8}
-            justifyContent='start'
-            templateColumns='auto'
-            templateRows='1fr'
+            justifyContent="start"
+            templateColumns="auto"
+            templateRows="1fr"
           >
             <Circle backgroundColor={modeColor ?? groupColor} size={12} />
 
@@ -593,13 +593,13 @@ function BlockNode(
           </Grid>
 
           <Grid
-            alignItems='center'
-            autoColumns='auto'
-            autoFlow='column'
+            alignItems="center"
+            autoColumns="auto"
+            autoFlow="column"
             columnGap={8}
-            justifyContent='end'
-            templateColumns='max-content'
-            templateRows='1fr'
+            justifyContent="end"
+            templateColumns="max-content"
+            templateRows="1fr"
           >
             {downstreamInGroup && (
               <Circle

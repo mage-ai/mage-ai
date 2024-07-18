@@ -364,13 +364,13 @@ export default function LineManagerV2({
       if (colors?.length >= 2) {
         paths.push(
           <defs key={`${gradientID}-defs`}>
-            <linearGradient id={gradientID} x1='0%' x2='100%' y1='0%' y2='0%'>
+            <linearGradient id={gradientID} x1="0%" x2="100%" y1="0%" y2="0%">
               <stop
-                offset='0%'
+                offset="0%"
                 style={{ stopColor: `var(--colors-${colors[1]})`, stopOpacity: 1 }}
               />
               <stop
-                offset='100%'
+                offset="100%"
                 style={{ stopColor: `var(--colors-${colors[0]})`, stopOpacity: 1 }}
               />
             </linearGradient>
@@ -402,7 +402,7 @@ export default function LineManagerV2({
           }}
           d={dvalue}
           data-index={index}
-          fill='none'
+          fill="none"
           id={lineID}
           initial={{
             opacity: 0,

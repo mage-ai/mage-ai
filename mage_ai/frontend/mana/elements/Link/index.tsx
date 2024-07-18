@@ -84,7 +84,7 @@ export default function Link({
         ]
           .filter(Boolean)
           .join(' ')}
-        initial='initial'
+        initial="initial"
         onClick={handleClick}
         role={role}
         variants={blinkAnimation}

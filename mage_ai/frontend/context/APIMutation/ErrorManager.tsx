@@ -45,7 +45,7 @@ const ErrorManager: FC<ErrorManagerProps> = memo(function ErrorManager({
         dragControls={controls}
       >
         <Grid
-          borderColor='redmd'
+          borderColor="redmd"
           borders
           className={styles.errorContainer}
           rowGap={12}
@@ -53,12 +53,12 @@ const ErrorManager: FC<ErrorManagerProps> = memo(function ErrorManager({
             borderWidth: 2,
             padding: 24,
           }}
-          templateColumns='auto'
-          templateRows='auto auto'
-          width='max-content'
+          templateColumns="auto"
+          templateRows="auto auto"
+          width="max-content"
         >
-          <Grid rowGap={12} templateColumns='auto' templateRows='auto auto'>
-            <AlertTriangle colorName='yellow' />
+          <Grid rowGap={12} templateColumns="auto" templateRows="auto auto">
+            <AlertTriangle colorName="yellow" />
 
             {errorRef?.current?.message && (
               <Text monospace secondary semibold small>
@@ -106,7 +106,7 @@ const ErrorManager: FC<ErrorManagerProps> = memo(function ErrorManager({
 
           <Divider />
 
-          <Grid autoFlow='column' justifyContent='space-between' templateColumns='min-content'>
+          <Grid autoFlow="column" justifyContent="space-between" templateColumns="min-content">
             <ButtonGroup>
               <Button basic onClick={dismissError} small>
                 Dismiss error
