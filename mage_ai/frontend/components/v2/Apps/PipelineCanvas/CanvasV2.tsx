@@ -2012,7 +2012,15 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
               type: nodeType,
             } as NodeType;
 
-            arr.push(<DragWrapper item={node} key={nodeID} rect={rect} ref={dragRef} />);
+            arr.push(
+              <DragWrapper
+                item={node}
+                key={nodeID}
+                rect={rect}
+                rectsMappingRef={rectsMappingRef}
+                ref={dragRef}
+              />,
+            );
           },
         );
       },

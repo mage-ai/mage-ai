@@ -32,6 +32,7 @@ export enum ExecutionStatusEnum {
   CANCELLED = 'cancelled',
   ERROR = 'error',
   FAILURE = 'failure',
+  INIT = 'init',
   INTERRUPTED = 'interrupted',
   READY = 'ready',
   RESTARTED = 'restarted',
@@ -39,6 +40,15 @@ export enum ExecutionStatusEnum {
   SUCCESS = 'success',
   TERMINATED = 'terminated',
 }
+
+export const STATUS_DISPLAY_TEXT = {
+  [ExecutionStatusEnum.CANCELLED]: 'cancelling',
+  [ExecutionStatusEnum.INIT]: 'initializing',
+  [ExecutionStatusEnum.INTERRUPTED]: 'interrupting',
+  [ExecutionStatusEnum.RESTARTED]: 'restarting',
+  [ExecutionStatusEnum.SUCCESS]: 'succeeded',
+  [ExecutionStatusEnum.TERMINATED]: 'terminating',
+};
 
 export enum ServerConnectionStatusType {
   CLOSED = 'closed', // 2

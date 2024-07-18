@@ -7,7 +7,6 @@ import { ItemTypeEnum } from '../types';
 import { NodeItemType, PortType, RectType } from '../interfaces';
 import { motion, useAnimation } from 'framer-motion';
 import { useDrag, useDrop } from 'react-dnd';
-import useWithOnMount from '@mana/hooks/useWithOnMount';
 
 export type DragWrapperType = {
   draggable?: boolean;
@@ -28,6 +27,7 @@ type DragWrapperProps = {
   item?: NodeItemType;
   onContextMenu?: (event: any) => void;
   rect?: RectType;
+  rectsMappingRef: React.MutableRefObject<Record<string, RectType>>;
   style?: any;
 } & DragWrapperType;
 
@@ -38,17 +38,29 @@ export function getStyles(
     groupSelection,
     isDragging,
     rect,
+    rectsMappingRef,
   }: {
     draggable: boolean;
     groupSelection?: boolean;
     isDragging: boolean;
     rect?: RectType;
+    rectsMappingRef: React.MutableRefObject<Record<string, RectType>>;
   },
 ): CSSProperties {
   const { type } = node;
-  rect = rect ?? node?.rect;
-  const { height, left, top, width } = rect || ({} as RectType);
+
+  const { height, left, top, width } = {
+    height: undefined,
+    left: undefined,
+    top: undefined,
+    width: undefined,
+    ...node?.rect,
+    ...rect,
+    ...rectsMappingRef?.current[node.id],
+  } as any;
   const transform = `translate3d(${left ?? 0}px, ${top ?? 0}px, 0)`;
+
+  // console.log(left, top, height, width);
 
   return {
     WebkitTransform: transform,
@@ -60,13 +72,10 @@ export function getStyles(
     transform,
     ...(draggable ? { cursor: 'move' } : {}),
     ...(isDragging
-      ? ItemTypeEnum.APP === type
-        ? { height: rect?.height ?? undefined, opacity: 0 }
-        : { height: 0, opacity: 0 }
+      ? { height: 0, opacity: 0 }
       : ItemTypeEnum.NODE === type
         ? {
-            height: rect?.height ?? undefined,
-            // minHeight: rect?.height === Infinity || rect?.height === -Infinity ? 0 : rect?.height ?? 0,
+            height,
           }
         : {}),
     ...(width ?? false ? { minWidth: width } : {}),
@@ -87,6 +96,7 @@ function DragWrapper(
     item,
     onContextMenu,
     rect,
+    rectsMappingRef,
     style,
   }: DragWrapperProps,
   ref: React.MutableRefObject<HTMLDivElement>,
@@ -179,6 +189,7 @@ function DragWrapper(
                 groupSelection,
                 isDragging,
                 rect,
+                rectsMappingRef,
               }),
             }
       }

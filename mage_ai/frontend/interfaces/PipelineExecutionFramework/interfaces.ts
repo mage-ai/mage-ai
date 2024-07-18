@@ -1,8 +1,3 @@
-import BlockType, { BlockTypeEnum } from '../BlockType';
-import { ConfigurationType as BaseConfigurationType } from '../ChartBlockType';
-import { GroupUUIDEnum, PipelineExecutionFrameworkUUIDEnum } from './types';
-import { PipelineTypeEnum } from '../PipelineType';
-
 export type ConfigurationType = {
   metadata?: {
     required?: boolean;

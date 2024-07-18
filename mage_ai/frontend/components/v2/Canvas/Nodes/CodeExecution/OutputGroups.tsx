@@ -2,7 +2,9 @@ import EventStreamType, {
   ExecutionStatusEnum,
   ExecutionResultType,
   ResultType,
+  STATUS_DISPLAY_TEXT,
 } from '@interfaces/EventStreamType';
+import Text from '@mana/elements/Text';
 import { useMutate } from '@context/v2/APIMutation';
 import Tag from '@mana/components/Tag';
 import { executionDone } from '@components/v2/ExecutionManager/utils';
@@ -11,11 +13,9 @@ import Grid from '@mana/components/Grid';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Scrollbar from '@mana/elements/Scrollbar';
 import stylesOutput from '@styles/scss/components/Canvas/Nodes/OutputGroups.module.scss';
-import { DEBUG } from '@components/v2/utils/debug';
-import { groupBy, indexBy } from '@utils/array';
+import { groupBy } from '@utils/array';
 import { ElementRoleEnum } from '@mana/shared/types';
 import { ExecutionOutputType } from '@interfaces/CodeExecutionType';
-import { objectSize } from '@utils/hash';
 
 export type OutputGroupsType = {
   handleContextMenu?: ExecutionOutputProps['handleContextMenu'];
@@ -53,9 +53,11 @@ const OutputGroups: React.FC<OutputGroupsProps> = ({
   const scrollableDivRef = useRef<HTMLDivElement>(null);
 
   const scrollDown = useCallback(() => {
-    scrollableDivRef?.current?.scrollTo({
-      top: scrollableDivRef?.current.scrollHeight,
-    });
+    setTimeout(() => {
+      scrollableDivRef?.current?.scrollTo({
+        top: scrollableDivRef?.current.scrollHeight,
+      });
+    }, 100);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -68,11 +70,11 @@ const OutputGroups: React.FC<OutputGroupsProps> = ({
   const setResultMapping = useCallback((data) => {
     setResultMappingState(prev => {
       const next = typeof data === 'function' ? data(prev) : data;
-      const more = objectSize(next ?? {}) > objectSize(prev ?? {});
+      // const more = objectSize(next ?? {}) > objectSize(prev ?? {});
 
-      if (more) {
-        scrollDown();
-      }
+      // if (more) {
+      //   scrollDown();
+      // }
 
       resultsGroupedByMessageRequestUUIDRef.current = groupBy(
         Object.values(next ?? {}),
@@ -82,7 +84,8 @@ const OutputGroups: React.FC<OutputGroupsProps> = ({
 
       return next;
     });
-  }, [scrollDown]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const [executionOutputMapping, setExecutionOutputMappingState] = useState<
     Record<string, ExecutionOutputType>
@@ -131,6 +134,8 @@ const OutputGroups: React.FC<OutputGroupsProps> = ({
 
     setHandleOnMessage &&
       setHandleOnMessage?.(consumerID, (event: EventStreamType) => {
+        console.log(event);
+
         const done = executionDone(event);
         setExecuting(!done);
 
@@ -163,6 +168,8 @@ const OutputGroups: React.FC<OutputGroupsProps> = ({
 
           return total;
         });
+
+        scrollDown();
       });
 
     onMount && onMount?.(consumerID, () => {
@@ -171,11 +178,17 @@ const OutputGroups: React.FC<OutputGroupsProps> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [scrollDown]);
 
-  if (onlyShowWithContent && (keysRef.current?.length ?? 0) === 0) {
-    return null;
-  }
+  const statusRecent = useMemo(() => {
+    if (!executing) return;
 
-  return (
+    const key = keysRef.current?.[keysRef.current?.length - 1];
+    const results = resultsGroupedByMessageRequestUUIDRef.current?.[key];
+    const arr = results?.filter(r => ResultType.STATUS === r.type);
+
+    return arr?.[arr.length - 1];
+  }, [executing]);
+
+  return onlyShowWithContent && (keysRef.current?.length ?? 0) === 0 ? null : (
     <div
       className={stylesOutput.outputContainer}
       role={role}
@@ -193,9 +206,10 @@ const OutputGroups: React.FC<OutputGroupsProps> = ({
         ref={scrollableDivRef}
         style={{ maxHeight: 400, overflow: 'auto' }}
       >
-        <Grid rowGap={8} templateRows="min-content">
+        <Grid rowGap={16} templateRows="min-content">
           {keysRef.current?.map((mrUUID: string, idx: number) => {
             const last = idx === keysRef.current.length - 1;
+
             return (
               <ExecutionOutput
                 executionOutput={executionOutputMapping?.[mrUUID]}
@@ -209,6 +223,14 @@ const OutputGroups: React.FC<OutputGroupsProps> = ({
               />
             );
           })}
+
+          {statusRecent && (
+            <Grid paddingBottom={6}>
+              <Text italic monospace muted warning xsmall>
+                {STATUS_DISPLAY_TEXT[statusRecent?.status] ?? statusRecent?.status}...
+              </Text>
+            </Grid>
+          )}
         </Grid>
       </Scrollbar>
     </div>
