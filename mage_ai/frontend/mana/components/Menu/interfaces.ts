@@ -5,18 +5,18 @@ import { KeyboardTextGroupType } from '../../elements/Text/Keyboard/types';
 
 export type ItemClickHandler = (
   event: MouseEvent,
-  group?: MenuGroupType,
-  handleGroupSelection?: (event: MouseEvent, groups: MenuGroupType[]) => void,
+  group?: any,
+  handleGroupSelection?: (event: MouseEvent, groups: any[]) => void,
 ) => void;
 
-export interface ItemDetailType extends FileType {
-  items?: ItemType;
-  parent?: ItemDetailType;
-  type: ItemTypeEnum;
+export interface ItemDetailType extends any {
+  items?: any;
+  parent?: any;
+  type: any;
 }
 
 export interface ItemType {
-  [key: string]: ItemType | ItemDetailType;
+  [key: string]: any | any;
 }
 
 export interface MenuItemType {
@@ -24,19 +24,19 @@ export interface MenuItemType {
   description?: (() => string) | string;
   disabled?: boolean;
   divider?: boolean;
-  items?: MenuItemType[];
-  keyboardShortcuts?: KeyboardTextGroupType;
+  items?: any[];
+  keyboardShortcuts?: any;
   label?: (() => string) | string;
   onClick?: (
-    event?: ClientEventType | CustomEvent,
-    item?: MenuItemType,
+    event?: any | any,
+    item?: any,
     callback?: () => void,
   ) => void;
   uuid?: string;
 }
 
-export interface MenuGroupType extends MenuItemType {
-  groups?: MenuGroupType[];
+export interface MenuGroupType extends any {
+  groups?: any[];
   index?: number;
   level: number;
   uuid?: string;

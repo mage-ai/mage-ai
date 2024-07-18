@@ -2,26 +2,26 @@ import { ItemClickHandler, MenuGroupType } from '@mana/components/Menu/interface
 import { MenuItemType } from '@mana/hooks/useContextMenu';
 
 export interface HeaderProps {
-  appHistory?: MenuItemType[];
+  appHistory?: any[];
   buildInterAppNavItems?: (
-    itemsPrevious: MenuItemType[],
+    itemsPrevious: any[],
     opts: {
       router: any;
     },
-  ) => MenuItemType[];
+  ) => any[];
   buildIntraAppNavItems?: (
-    onClick: ItemClickHandler,
+    onClick: any,
     opts?: {
       includeChildren?: boolean;
     },
-  ) => MenuItemType[];
+  ) => any[];
   cacheKey?: string;
-  globalNavItems?: MenuItemType[];
-  interAppNavItems?: MenuItemType[];
-  intraAppNavItems?: MenuItemType[];
+  globalNavItems?: any[];
+  interAppNavItems?: any[];
+  intraAppNavItems?: any[];
   navTag?: string;
   router?: any;
-  selectedIntraAppNavItems?: MenuGroupType[];
+  selectedIntraAppNavItems?: any[];
   selectedNavItem?: string;
   title?: string;
   version?: number;

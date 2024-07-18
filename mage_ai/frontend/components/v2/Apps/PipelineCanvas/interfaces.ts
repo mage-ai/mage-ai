@@ -39,80 +39,80 @@ import { CustomAppEventEnum } from './enums';
 import { MenuGroupType } from '@mana/components/Menu/interfaces';
 
 export type ItemElementsType = Record<
-  ItemTypeEnum,
+  any,
   Record<string, React.RefObject<HTMLDivElement | HTMLElement>>
 >;
 export type ItemElementsRefType = React.MutableRefObject<ItemElementsType>;
 export type SetActiveLevelType = (level?: number) => void;
-export type LayoutConfigRefType = React.MutableRefObject<LayoutConfigType>;
+export type LayoutConfigRefType = React.MutableRefObject<any>;
 export type ActiveLevelRefType = React.MutableRefObject<number>;
 export type ItemIDsByLevelRef = React.MutableRefObject<string[][]>;
 
 export type AppHandlerType = {
   blocks: {
-    update: MutateType['update'];
+    update: any['update'];
   };
-  browserItems: MutateType;
-  executionFrameworks: MutateType;
-  pipelines: MutateType;
+  browserItems: any;
+  executionFrameworks: any;
+  pipelines: any;
 };
 
 export type AppHandlersRefType = React.MutableRefObject<AppHandlerType>;
 
-export type ActiveApps = Record<string, AppNodeType[]>;
+export type ActiveApps = Record<string, any[]>;
 
-export type LayoutConfigRef = React.MutableRefObject<LayoutConfigType>;
+export type LayoutConfigRef = React.MutableRefObject<any>;
 
 export interface AppManagerType {
   appsRef: React.MutableRefObject<ActiveApps>;
-  startApp: (event: ClientEventType, app: AppConfigType) => void;
-  stopApp: (event: ClientEventType, app: AppConfigType) => void;
+  startApp: (event: any, app: AppConfigType) => void;
+  stopApp: (event: any, app: AppConfigType) => void;
 }
 
 export interface ModelManagerType {
   activeLevel: React.MutableRefObject<number>;
-  blockMappingRef: React.MutableRefObject<BlockMappingType>;
-  groupMappingRef: React.MutableRefObject<GroupMappingType>;
+  blockMappingRef: React.MutableRefObject<any>;
+  groupMappingRef: React.MutableRefObject<any>;
   appHandlersRef: AppHandlersRefType;
-  blocksByGroupRef: React.MutableRefObject<BlocksByGroupType>;
-  executionFramework: PipelineExecutionFrameworkType;
-  groupsByLevelRef: React.MutableRefObject<GroupLevelType>;
-  itemsRef: React.MutableRefObject<ItemMappingType>;
-  mutateModels: (payload?: ModelMappingType) => ModelMappingType;
-  onItemChangeRef: React.MutableRefObject<(payload: NodeItemType) => void>;
-  onModelChangeRef: React.MutableRefObject<(payload: PipelineExecutionFrameworkType) => void>;
-  outputsRef?: React.MutableRefObject<OutputMappingType>;
-  pipeline: PipelineExecutionFrameworkType;
-  portsRef: React.MutableRefObject<PortMappingType>;
-  updateNodeItems: (items: ItemMappingType) => void;
-  updatePorts: (ports: PortMappingType) => void;
+  blocksByGroupRef: React.MutableRefObject<any>;
+  executionFramework: any;
+  groupsByLevelRef: React.MutableRefObject<any>;
+  itemsRef: React.MutableRefObject<any>;
+  mutateModels: (payload?: any) => any;
+  onItemChangeRef: React.MutableRefObject<(payload: any) => void>;
+  onModelChangeRef: React.MutableRefObject<(payload: any) => void>;
+  outputsRef?: React.MutableRefObject<any>;
+  pipeline: any;
+  portsRef: React.MutableRefObject<any>;
+  updateNodeItems: (items: any) => void;
+  updatePorts: (ports: any) => void;
 }
 
 export interface EventManagerType {
-  gridDimensions: React.MutableRefObject<RectType>;
-  handleContextMenu: RenderContextMenuType;
+  gridDimensions: React.MutableRefObject<any>;
+  handleContextMenu: any;
   handleDoubleClick: (event: React.MouseEvent) => void;
-  handleDragEnd: (event: ClientEventType) => void;
-  handleDragStart: (event: ClientEventType) => void;
-  handleMouseDown: (event: ClientEventType) => void;
-  onDragInit: (node: NodeItemType, monitor: DropTargetMonitor) => void;
+  handleDragEnd: (event: any) => void;
+  handleDragStart: (event: any) => void;
+  handleMouseDown: (event: any) => void;
+  onDragInit: (node: any, monitor: DropTargetMonitor) => void;
   onDragging: (args: {
     clientOffset: XYCoord;
     currentOffset: XYCoord;
     differenceFromInitialOffset: XYCoord;
     initialClientOffset: XYCoord;
     initialOffset: XYCoord;
-    itemType: ItemTypeEnum;
-    item: NodeItemType;
+    itemType: any;
+    item: any;
   }) => void;
-  onDropBlock: (item: NodeItemType, monitor: DropTargetMonitor) => void;
-  onDropPort: (dragTarget: NodeItemType, dropTarget: NodeItemType) => void;
+  onDropBlock: (item: any, monitor: DropTargetMonitor) => void;
+  onDropPort: (dragTarget: any, dropTarget: any) => void;
   resetAfterDrop: () => void;
   setSnapToGridOnDrag: (value: boolean) => void;
   setSnapToGridOnDrop: (value: boolean) => void;
   snapToGridOnDrag: boolean;
   snapToGridOnDrop: boolean;
-  submitEventOperation: (event: ClientEventType, opts?: EventOperationOptionsType) => void;
+  submitEventOperation: (event: any, opts?: any) => void;
 }
 
 export type LayoutManagerType = {
@@ -126,7 +126,7 @@ export type ItemManagerType = {
 export interface SettingsManagerType {
   activeLevel: React.MutableRefObject<number>;
   controls: any;
-  layoutConfigs: React.MutableRefObject<LayoutConfigRef[]>;
+  layoutConfigs: React.MutableRefObject<any[]>;
   selectedGroupsRef: React.MutableRefObject<MenuGroupType[]>;
 }
 
@@ -141,18 +141,18 @@ export type SubscriberType = AppManagerType &
 export interface CustomEventDetail {
   app?: AppConfigType;
   block?: BlockType;
-  event?: ClientEventType;
+  event?: any;
   eventStreams?: Record<string, Record<string, EventStreamType>>;
-  item?: NodeItemType;
+  item?: any;
   manager?: SubscriberType;
-  node?: NodeItemType;
-  nodes?: NodeItemType[];
-  nodesUpdated?: NodeItemType[];
+  node?: any;
+  nodes?: any[];
+  nodesUpdated?: any[];
   options?: {
-    args?: EventOperationOptionsType['args'];
-    kwargs?: EventOperationOptionsType['kwargs'];
+    args?: any['args'];
+    kwargs?: any['kwargs'];
   };
-  output?: OutputNodeType;
+  output?: any;
 }
 export interface CustomAppEvent extends CustomEvent {
   detail: CustomEventDetail;

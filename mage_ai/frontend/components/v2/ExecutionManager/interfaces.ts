@@ -4,7 +4,7 @@ import EventStreamType, {
   ServerConnectionStatusType,
 } from '@interfaces/EventStreamType';
 
-type ExecuteCodeResult = [ProcessDetailsType, () => void];
+type ExecuteCodeResult = [any, () => void];
 
 export interface ConsumerOperations {
   executeCode: (
@@ -19,23 +19,23 @@ export interface ConsumerOperations {
 
 export interface EventSourceHandlers {
   onError?: (error: Event) => void;
-  onMessage?: (event: EventStreamType) => void;
-  onOpen?: (status: ServerConnectionStatusType, event?: Event) => void;
+  onMessage?: (event: any) => void;
+  onOpen?: (status: any, event?: Event) => void;
 }
 
 export interface ExecuteCodeHook {
   executeCode: (
     message: string,
     payload?: {
-      environment?: EnvironmentType;
+      environment?: any;
       message_request_uuid?: string;
       output_path?: string;
       source?: string;
       stream?: string;
     },
     opts?: {
-      onError?: (response: ResponseType) => void;
-      onSuccess?: (data: { code_execution: ProcessDetailsType }) => void;
+      onError?: (response: any) => void;
+      onSuccess?: (data: { code_execution: any }) => void;
     },
   ) => [string, () => void];
   messageRequestUUID: string;

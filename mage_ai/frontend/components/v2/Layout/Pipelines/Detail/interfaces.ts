@@ -2,7 +2,7 @@ import { ExecutionManagerType } from '../../../ExecutionManager/interfaces';
 
 export interface PipelineDetailProps {
   frameworkUUID?: string;
-  useExecuteCode: ExecutionManagerType['useExecuteCode'];
-  useRegistration: ExecutionManagerType['useRegistration'];
+  useExecuteCode: any;
+  useRegistration: any;
   uuid?: string;
 }

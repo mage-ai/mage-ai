@@ -10,7 +10,7 @@ import { MenuItemType } from '@mana/components/Menu/interfaces';
 import { ModelManagerType } from '@components/v2/Apps/PipelineCanvas/interfaces';
 
 export type UpdateBlockRequestType = (
-  event: ClientEventType | Event,
+  event: any | Event,
   key: string,
   value: any,
   opts?: {
@@ -19,44 +19,44 @@ export type UpdateBlockRequestType = (
   },
 ) => void;
 export type SharedBlockProps = {
-  block?: BlockType;
+  block?: any;
   updateBlock: UpdateBlockRequestType;
 };
 
 export type DragAndDropHandlersType = {
   handlers?: {
-    onDragEnd?: (event: ClientEventType) => void;
-    onDragStart?: (event: ClientEventType) => void;
-    onDrop: (dragTarget: NodeItemType, dropTarget: NodeItemType) => void;
-    onMouseDown?: (event: ClientEventType) => void;
-    onMouseLeave?: (event: ClientEventType) => void;
-    onMouseOver?: (event: ClientEventType) => void;
-    onMouseUp?: (event: ClientEventType) => void;
+    onDragEnd?: (event: any) => void;
+    onDragStart?: (event: any) => void;
+    onDrop: (dragTarget: any, dropTarget: any) => void;
+    onMouseDown?: (event: any) => void;
+    onMouseLeave?: (event: any) => void;
+    onMouseOver?: (event: any) => void;
+    onMouseUp?: (event: any) => void;
   };
 };
 
 export type DraggableType = {
-  canDrag?: (item: DragItem) => boolean;
+  canDrag?: (item: any) => boolean;
   connectDrag?: (dragRef: React.MutableRefObject<HTMLDivElement>) => void;
   draggable?: boolean;
-  draggingNode?: NodeItemType;
+  draggingNode?: any;
   nodeRef?: React.RefObject<HTMLDivElement>;
-} & DragAndDropHandlersType;
+} & any;
 
 export type DroppableType = {
   droppable?: boolean;
-} & DragAndDropHandlersType;
+} & any;
 
-export type DragAndDropType = DraggableType & DroppableType;
+export type DragAndDropType = any & any;
 
 export type AsideType = {
-  Icon?: IconType;
+  Icon?: any;
   baseColorName?: string;
   borderColor?: string;
   buttonRef: React.RefObject<HTMLDivElement>;
   className?: string;
   loading?: boolean;
-  menuItems: MenuItemType[];
+  menuItems: any[];
   onClick?: (event: React.MouseEvent<HTMLElement>) => void;
   uuid?: string;
 };
@@ -67,11 +67,11 @@ export type AsidesType = {
 };
 
 export type TitleConfigType = {
-  asides?: AsidesType;
-  badge?: BadgeType;
-  inputConnection?: ConnectionType;
+  asides?: any;
+  badge?: any;
+  inputConnection?: any;
   label?: string;
-  outputConnection?: ConnectionType;
+  outputConnection?: any;
 };
 
 type BorderType = {
@@ -83,9 +83,9 @@ export type BorderConfigType = {
 };
 
 export type ConfigurationOptionType = {
-  asides?: AsidesType;
-  connecton?: ConnectionType;
-  interaction?: InteractionConfigType;
+  asides?: any;
+  connecton?: any;
+  interaction?: any;
   label?: string;
   value?: string;
 };
@@ -96,20 +96,20 @@ export type InteractionConfigType = {
 };
 
 export type BlockNodeWrapperProps = {
-  Wrapper?: React.FC<NodeWrapperProps>;
+  Wrapper?: React.FC<any>;
   appHandlersRef: React.MutableRefObject<any>;
   loading?: boolean;
   models?: {
-    blocksByGroup: React.RefObject<ModelManagerType['blocksByGroupRef']>;
+    blocksByGroup: React.RefObject<any>;
   };
-  onMountPort?: (port: PortType, portRef: React.RefObject<HTMLDivElement>) => void;
+  onMountPort?: (port: any, portRef: React.RefObject<HTMLDivElement>) => void;
   selected?: boolean;
-  submitEventOperation: SubmitEventOperationType;
-  useExecuteCode: ExecutionManagerType['useExecuteCode'];
-  useRegistration: ExecutionManagerType['useRegistration'];
+  submitEventOperation: any;
+  useExecuteCode: any;
+  useRegistration: any;
   version?: number | string;
-} & NodeWrapperProps &
-  CanvasNodeType &
-  BlockNode;
+} & any &
+  any &
+  any;
 
-export type SharedWrapperProps = BlockNodeWrapperProps & NodeWrapperProps;
+export type SharedWrapperProps = any & any;

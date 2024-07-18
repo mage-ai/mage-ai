@@ -41,23 +41,23 @@ import { ClientEventType } from '@mana/shared/interfaces';
 // "status": 400
 export type AxiosErrorType = {
   response: {
-    data: { error: ErrorDetailsType } | Record<string, any>;
+    data: any | Record<string, any>;
   };
-} & AxiosError;
+} & any;
 
 export type ResourceType = Record<string, any>;
 
 export type ResponseType = {
-  data?: Record<string, ResourceType>;
+  data?: Record<string, any>;
   metadata?: Record<string, any>;
 };
 
 export type ErrorResponseType = {
-  error?: ErrorDetailsType;
+  error?: any;
 };
 
 export type OnSuccessHandlerType = (
-  response: any | ResponseType,
+  response: any | any,
   variables?: any,
   context?: any,
 ) => Promise<unknown> | unknown;
@@ -87,10 +87,10 @@ export interface ResourceHandlersType {
 }
 
 export type IDArgsType = {
-  id?: string;
-  idParent?: string;
-  resource?: string;
-  resourceParent?: string;
+  id?: any;
+  idParent?: any;
+  resource?: any;
+  resourceParent?: any;
 };
 
 export type ArgsValueOrFunctionType =
@@ -98,16 +98,16 @@ export type ArgsValueOrFunctionType =
   | ((args: Record<string, any>) => Record<string, any>);
 
 export type MutateFunctionArgsType = {
-  event?: ClientEventType | any;
+  event?: any | any;
   meta?: ArgsValueOrFunctionType;
   payload?: ArgsValueOrFunctionType;
   query?: ArgsValueOrFunctionType;
-} & IDArgsType &
-  HandlersType;
+} & any &
+  any;
 
 export type MutateFunctionType = (
-  args?: MutateFunctionArgsType,
-) => Promise<ResourceType | ResourceType[]>;
+  args?: any,
+) => Promise<any | any[]>;
 
 export type MutatationType = {
   data: any;
@@ -128,11 +128,11 @@ export type MutatationType = {
 export type ModelsType = Record<string, any | any[]>;
 
 export type MutationStatusMappingType = {
-  [OperationTypeEnum.CREATE]: MutationStatusEnum;
-  [OperationTypeEnum.DELETE]: MutationStatusEnum;
-  [OperationTypeEnum.DETAIL]: MutationStatusEnum;
-  [OperationTypeEnum.LIST]: MutationStatusEnum;
-  [OperationTypeEnum.UPDATE]: MutationStatusEnum;
+  [any.CREATE]: any;
+  [any.DELETE]: any;
+  [any.DETAIL]: any;
+  [any.LIST]: any;
+  [any.UPDATE]: any;
 };
 
 interface AbortControllerType {
@@ -147,22 +147,22 @@ export interface MutateType {
     list: AbortControllerType;
     update: AbortControllerType;
   };
-  create: MutatationType;
-  delete: MutatationType;
-  detail: MutatationType;
-  getModel: (uuid?: string) => ResourceType;
-  getModels: () => ResourceType[];
-  list: MutatationType;
-  modelsRef: React.MutableRefObject<ModelsType>;
+  create: any;
+  delete: any;
+  detail: any;
+  getModel: (uuid?: string) => any;
+  getModels: () => any[];
+  list: any;
+  modelsRef: React.MutableRefObject<any>;
   setModel: (
-    model: ResourceType | ((prev: ResourceType) => ResourceType),
+    model: any | ((prev: any) => any),
     uuid?: string,
-  ) => ResourceType;
+  ) => any;
   setModels: (
-    models: ResourceType[] | ((prev: ResourceType[]) => ResourceType[]),
-  ) => ResourceType[];
-  status: MutationStatusMappingType;
-  update: MutatationType;
+    models: any[] | ((prev: any[]) => any[]),
+  ) => any[];
+  status: any;
+  update: any;
 }
 
 export interface URLOptionsType {

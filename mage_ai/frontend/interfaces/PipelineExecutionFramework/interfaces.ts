@@ -7,34 +7,33 @@ export type ConfigurationType = {
   metadata?: {
     required?: boolean;
   };
-} & BaseConfigurationType;
+} & any;
 
-export type FrameworkType = (PipelineExecutionFrameworkBlockType &
-  PipelineExecutionFrameworkType) & {
-  downstream_blocks?: (GroupUUIDEnum | PipelineExecutionFrameworkUUIDEnum)[];
-  children?: FrameworkType[];
-  upstream_blocks?: (GroupUUIDEnum | PipelineExecutionFrameworkUUIDEnum)[];
+export type FrameworkType = (any & any) & {
+  downstream_blocks?: any[];
+  children?: any[];
+  upstream_blocks?: any[];
 };
 
-export type PipelineExecutionFrameworkBlockType = BlockType & {
-  blocks: PipelineExecutionFrameworkBlockType[];
-  configuration?: ConfigurationType;
+export type PipelineExecutionFrameworkBlockType = any & {
+  blocks: any[];
+  configuration?: any;
   name?: string;
-  downstream_blocks?: (GroupUUIDEnum | PipelineExecutionFrameworkUUIDEnum)[];
-  groups?: (GroupUUIDEnum | PipelineExecutionFrameworkUUIDEnum)[];
-  type?: BlockTypeEnum;
-  upstream_blocks?: (GroupUUIDEnum | PipelineExecutionFrameworkUUIDEnum)[];
-  uuid: GroupUUIDEnum | PipelineExecutionFrameworkUUIDEnum;
+  downstream_blocks?: any[];
+  groups?: any[];
+  type?: any;
+  upstream_blocks?: any[];
+  uuid: any;
 };
 
 type PipelineExecutionFrameworkType = {
-  blocks: PipelineExecutionFrameworkBlockType[];
-  execution_framework?: PipelineExecutionFrameworkUUIDEnum;
-  groups?: (GroupUUIDEnum | PipelineExecutionFrameworkUUIDEnum)[];
-  pipelines?: PipelineExecutionFrameworkType[];
+  blocks: any[];
+  execution_framework?: any;
+  groups?: any[];
+  pipelines?: any[];
   name?: string;
-  type: PipelineTypeEnum.EXECUTION_FRAMEWORK;
-  uuid: GroupUUIDEnum | PipelineExecutionFrameworkUUIDEnum;
+  type: any;
+  uuid: any;
 };
 
 export default PipelineExecutionFrameworkType;

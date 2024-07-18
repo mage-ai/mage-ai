@@ -3,10 +3,10 @@ import { EventEnum, KeyEnum } from './enums';
 interface KeyType {
   altKey?: boolean;
   ctrlKey?: boolean;
-  key?: KeyEnum;
+  key?: any;
   metaKey?: boolean;
   shiftKey?: boolean;
-  type?: EventEnum;
+  type?: any;
 }
 export type KeyboardPositionType = number[];
 
@@ -17,13 +17,13 @@ export interface CustomKeyboardEventType extends KeyType {
 }
 
 export interface PredicateType extends KeyType {
-  predicates?: PredicateType[];
+  predicates?: any[];
   present?: boolean;
 }
 
 export interface CommandType {
-  handler: (event: CustomKeyboardEventType) => void;
-  predicate: PredicateType;
+  handler: (event: any) => void;
+  predicate: any;
   priority?: number;
   uuid?: string;
 }
@@ -41,20 +41,20 @@ export type KeyboardDetailType = {
 
 export class CustomEvent<T = any> extends Event {
   detail: T;
-  constructor(type: EventEnum, detail: T) {
+  constructor(type: any, detail: T) {
     super(type);
     this.detail = detail || ({} as T);
   }
 }
 
 export class CustomKeyboardEvent extends CustomEvent {
-  public key: KeyEnum;
-  public type: EventEnum;
+  public key: any;
+  public type: any;
 
-  constructor(type: EventEnum, detail: KeyboardDetailType, args?: any | any[]) {
+  constructor(type: any, detail: any, args?: any | any[]) {
     super(type, detail);
     [this.key] = Array.isArray(args) ? args : [args];
   }
 }
 
-export type EventSubscription = Record<string | EventEnum, any>;
+export type EventSubscription = Record<string | any, any>;

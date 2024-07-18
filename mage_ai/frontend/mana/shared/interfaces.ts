@@ -18,125 +18,49 @@ export enum EventOperationEnum {
   MUTATE_MODEL_BLOCK = 'mutate.model.block',
 }
 
-export type EventControlType = {
-  preventDefault?: boolean;
-  preventDefaultCondition?: (event: ClientEventType) => boolean;
-  stopPropagation?: boolean;
-  stopPropagationCondition?: (event: ClientEventType) => boolean;
-};
+export type EventControlType = any;
 
 export interface RectType {
   block?: any;
-  bottom?: number;
-  children?: RectType[];
-  height?: number;
-  id?: string;
-  left: number;
-  parent?: RectType;
-  right?: number;
-  top: number;
-  upstream?: RectType[];
-  width?: number;
-  zIndex?: number;
+  bottom?: any;
+  children?: any[];
+  height?: any;
+  id?: any;
+  left: any;
+  parent?: any;
+  right?: any;
+  top: any;
+  upstream?: any[];
+  width?: any;
+  zIndex?: any;
 }
 
-export type ClientEventType = {
-  button?: ButtonEnum;
-  control?: EventControlType;
-  data?:
-    | Record<string, BlockType | any>
-    | {
-        app?: any;
-        block?: BlockType;
-        node?: any;
-        nodes?: any[];
-      };
-  handle?: HandleOperationType;
-  operationTarget?:
-    | HTMLElement
-    | React.RefObject<HTMLElement>
-    | React.RefObject<HTMLDivElement>
-    | React.RefObject<Element>
-    | null;
-  operationType?: EventOperationEnum;
-} & Event &
-  MouseEvent &
-  TouchEvent &
-  KeyboardEvent &
-  React.MouseEvent &
-  React.TouchEvent;
+export type ClientEventType = any;
 
-export type HandleOperationType = (event: ClientEventType) => boolean;
+export type HandleOperationType = any;
 
-export type ClientEventCallbackType = {
-  handle?: HandleOperationType;
-  uuid?: number | string;
-};
+export type ClientEventCallbackType = any;
 
 export interface EventStackEntryType {
-  callback: ClientEventCallbackType;
-  event: ClientEventType;
+  callback: any;
+  event: any;
 }
 
 export interface FileType {
-  content?: string;
-  extension?: string;
-  language?: LanguageEnum;
-  modified_timestamp?: number;
-  name: string;
-  path: string;
-  relative_path?: string;
-  size: number;
+  content?: any;
+  extension?: any;
+  language?: any;
+  modified_timestamp?: any;
+  name: any;
+  path: any;
+  relative_path?: any;
+  size: any;
 }
 
 export interface EventOperationOptionsType {
   args?: any[];
-  kwargs?: {
-    boundingContainer?: DOMRect;
-    classNames?: string[];
-    computedStyle?: CSSStyleDeclaration;
-    conditions?: {
-      block?: {
-        groups?: string[];
-        type?: BlockTypeEnum;
-      };
-      level?: number;
-      type?: NodeItemType['type'];
-    }[];
-    defaultGroups?: MenuGroupType[];
-    groups?: MenuGroupType[];
-    layoutConfig?: LayoutConfigType;
-    level?: number;
-    process?: {
-      message: string;
-      message_request_uuid: string;
-      uuid: string;
-    };
-    rect?: {
-      height?: number;
-      left?: number;
-      top?: number;
-      width?: number;
-      offset?: {
-        height?: number;
-        left?: number;
-        top?: number;
-        width?: number;
-      };
-    };
-    redraw?: boolean;
-    styles?: string;
-  };
-  handler?: (
-    event: ClientEventType,
-    handlers: Record<string, MutateType>,
-    callbacks: {
-      removeContextMenu: RemoveContextMenuType;
-      renderContextMenu: RenderContextMenuType;
-    },
-  ) => void;
+  kwargs?: any;
+  handler?: any;
 }
-export type SubmitEventOperationType = (
-  event: ClientEventType,
-  opts?: EventOperationOptionsType,
-) => void;
+
+export type SubmitEventOperationType = any;
