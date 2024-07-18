@@ -19,7 +19,7 @@ import { objectSize } from '@utils/hash';
 
 export type OutputGroupsType = {
   handleContextMenu?: ExecutionOutputProps['handleContextMenu'];
-  onMount?: (consumerID: string) => void;
+  onMount?: (consumerID: string, callback?: () => void) => void;
   setHandleOnMessage?: (consumerID: string, handler: (event: EventStreamType) => void) => void;
   setResultMappingUpdate?: (
     consumerID: string,
@@ -53,45 +53,56 @@ const OutputGroups: React.FC<OutputGroupsProps> = ({
   const scrollableDivRef = useRef<HTMLDivElement>(null);
 
   const scrollDown = useCallback(() => {
-    scrollableDivRef.current?.scrollTo({
-      top: scrollableDivRef.current.scrollHeight,
+    scrollableDivRef?.current?.scrollTo({
+      top: scrollableDivRef?.current.scrollHeight,
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const [executing, setExecuting] = useState<boolean>(false);
-  const [executionOutputMapping, setExecutionOutputMapping] = useState<
-    Record<string, ExecutionOutputType>
-  >({});
-  const [resultMapping, setResultMappingState] = useState<Record<string, ExecutionResultType>>({});
+
+  const resultsGroupedByMessageRequestUUIDRef = useRef<Record<string, ExecutionResultType[]>>({});
+  const keysRef = useRef<string[]>([]);
+
+  const [, setResultMappingState] = useState<Record<string, ExecutionResultType>>({});
   const setResultMapping = useCallback((data) => {
     setResultMappingState(prev => {
       const next = typeof data === 'function' ? data(prev) : data;
-      const more = objectSize(next) > objectSize(prev);
+      const more = objectSize(next ?? {}) > objectSize(prev ?? {});
 
       if (more) {
         scrollDown();
       }
 
+      resultsGroupedByMessageRequestUUIDRef.current = groupBy(
+        Object.values(next ?? {}),
+        (result: ExecutionResultType) => result.process.message_request_uuid,
+      );
+      keysRef.current = Object.keys(resultsGroupedByMessageRequestUUIDRef.current ?? {})?.sort();
+
       return next;
     });
-
-
   }, [scrollDown]);
 
-  const resultsGroupedByMessageRequestUUID = useMemo(
-    () =>
-      groupBy(
-        Object.values(resultMapping ?? {}),
-        (result: ExecutionResultType) => result.process.message_request_uuid,
-      ),
-    [resultMapping],
-  );
+  const [executionOutputMapping, setExecutionOutputMappingState] = useState<
+    Record<string, ExecutionOutputType>
+  >({});
 
-  const keys = useMemo(
-    () => Object.keys(resultsGroupedByMessageRequestUUID ?? {})?.sort(),
-    [resultsGroupedByMessageRequestUUID],
-  );
+  const setExecutionOutputMapping = useCallback((uuid, exout: ExecutionOutputType) => {
+    setExecutionOutputMappingState(prev => ({
+      ...prev,
+      [uuid]: exout,
+    }));
+
+    const key = keysRef.current?.[keysRef.current?.length - 1];
+    const results = resultsGroupedByMessageRequestUUIDRef.current?.[key];
+    const ids = results?.map(r => String(r.process?.message_request_uuid)) ?? [];
+
+    if (ids.includes(key)) {
+      scrollDown();
+    }
+
+  }, [scrollDown]);
 
   const mutants = useMutate({
     resource: 'execution_outputs',
@@ -104,26 +115,15 @@ const OutputGroups: React.FC<OutputGroupsProps> = ({
         id,
         onSuccess: ({ data }) => {
           const xo = data?.execution_output;
-          setExecutionOutputMapping(prev => ({
-            ...prev,
-            [xo.uuid]: xo,
-          }));
+          setExecutionOutputMapping(xo.uuid, xo);
 
           if (opts?.onSuccess) {
             opts.onSuccess(xo);
           }
-
-          const key = keys?.[keys?.length - 1];
-          const results = resultsGroupedByMessageRequestUUID?.[key];
-          const ids = results?.map(r => String(r.process?.message_request_uuid)) ?? [];
-
-          if (ids.includes(key)) {
-            scrollDown();
-          }
         },
       });
     },
-    [mutants.detail, keys, scrollDown, resultsGroupedByMessageRequestUUID],
+    [mutants.detail, setExecutionOutputMapping],
   );
 
   useEffect(() => {
@@ -131,9 +131,6 @@ const OutputGroups: React.FC<OutputGroupsProps> = ({
 
     setHandleOnMessage &&
       setHandleOnMessage?.(consumerID, (event: EventStreamType) => {
-        DEBUG.codeExecution.output &&
-          console.log('event.result', JSON.stringify(event.result, null, 2));
-
         const done = executionDone(event);
         setExecuting(!done);
 
@@ -146,13 +143,14 @@ const OutputGroups: React.FC<OutputGroupsProps> = ({
 
           if (done) {
             const results = Object.values(total ?? {})?.filter(
-              r => r.process?.message_request_uuid === result.process?.message_request_uuid,
+              (r: ExecutionResultType) =>
+              r.process?.message_request_uuid === result.process?.message_request_uuid,
             );
 
             const resultOutput = results?.find(
-              result =>
+              (result: ExecutionResultType) =>
                 ExecutionStatusEnum.SUCCESS === result.status && ResultType.OUTPUT === result.type,
-            );
+            ) as ExecutionResultType;
             if (resultOutput) {
               fetchOutput(resultOutput.process.message_request_uuid, {
                 query: {
@@ -167,11 +165,13 @@ const OutputGroups: React.FC<OutputGroupsProps> = ({
         });
       });
 
-    onMount && onMount?.(consumerID);
+    onMount && onMount?.(consumerID, () => {
+      scrollDown();
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [scrollDown]);
 
-  if (onlyShowWithContent && (keys?.length ?? 0) === 0) {
+  if (onlyShowWithContent && (keysRef.current?.length ?? 0) === 0) {
     return null;
   }
 
@@ -194,8 +194,8 @@ const OutputGroups: React.FC<OutputGroupsProps> = ({
         style={{ maxHeight: 400, overflow: 'auto' }}
       >
         <Grid rowGap={8} templateRows="min-content">
-          {keys?.map((mrUUID: string, idx: number) => {
-            const last = idx === keys.length - 1;
+          {keysRef.current?.map((mrUUID: string, idx: number) => {
+            const last = idx === keysRef.current.length - 1;
             return (
               <ExecutionOutput
                 executionOutput={executionOutputMapping?.[mrUUID]}
@@ -205,7 +205,7 @@ const OutputGroups: React.FC<OutputGroupsProps> = ({
                 key={mrUUID}
                 last={last}
                 messageRequestUUID={mrUUID}
-                results={resultsGroupedByMessageRequestUUID[mrUUID]}
+                results={resultsGroupedByMessageRequestUUIDRef.current[mrUUID]}
               />
             );
           })}

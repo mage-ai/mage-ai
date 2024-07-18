@@ -1,21 +1,17 @@
-import Button, { ButtonProps } from '@mana/elements/Button';
+import useCustomEventHandler from '@mana/events/useCustomEventHandler';
 import DashedDivider from '@mana/elements/Divider/DashedDivider';
 import Grid from '@mana/components/Grid';
 import Link from '@mana/elements/Link';
 import { useMenuManager } from '@mana/components/Menu/MenuManager';
-import Text from '@mana/elements/Text';
 import stylesHeader from '@styles/scss/layouts/Header/Header.module.scss';
 import stylesNavigation from '@styles/scss/components/Menu/NavigationButtonGroup.module.scss';
 import { Code, Builder, CaretDown, CaretLeft } from '@mana/icons';
 import { ItemClickHandler, MenuGroupType } from './interfaces';
 import { LayoutDirectionEnum } from '@mana/components/Menu/types';
 import { MenuItemType } from '@mana/hooks/useContextMenu';
-import { equals, sortByKey } from '@utils/array';
 import { getCache, deleteCache, updateCache } from './storage';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import useKeyboardShortcuts, {
-  KeyboardShortcutsProps,
-} from '../../hooks/shortcuts/useKeyboardShortcuts';
+import useKeyboardShortcuts from '../../hooks/shortcuts/useKeyboardShortcuts';
 
 type NavigationButtonGroupProps = {
   buildGroups?: (onClick: ItemClickHandler) => MenuItemType[];
@@ -100,9 +96,9 @@ export default function NavigationButtonGroup({
     [cacheKey, buildGroups, groupsProp, handleSelectGroup, groups],
   );
 
-  // useAppEventsHandler({} as any, {
-  //   UPDATE_HEADER_NAVIGATION: handleNavigationUpdate,
-  // });
+  useCustomEventHandler({} as any, {
+    UPDATE_HEADER_NAVIGATION: handleNavigationUpdate,
+  });
 
   const openMenu = useCallback(
     (idx?: number) => {

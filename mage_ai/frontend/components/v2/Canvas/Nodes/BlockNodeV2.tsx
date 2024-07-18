@@ -249,8 +249,8 @@ function BlockNode(
           },
         );
       },
-      onMount: () => {
-        updateOutputResults();
+      onMount: (id: string, callback?: () => void) => {
+        updateOutputResults(callback);
       },
       setHandleOnMessage,
       setResultMappingUpdate: (consumerID, handler) => {
@@ -321,7 +321,7 @@ function BlockNode(
     },
   );
 
-  function updateOutputResults() {
+  function updateOutputResults(callback?: () => void) {
     executionOutputs.list.mutate({
       onSuccess: ({ data }) => {
         const xo: ExecutionOutputType[] = data.execution_outputs ?? [];
@@ -342,6 +342,8 @@ function BlockNode(
         Object.values(handleResultMappingUpdateRef.current ?? {}).forEach(handler =>
           handler(executionResultMappingRef.current ?? {}),
         );
+
+        callback && callback?.();
       },
       query: {
         namespace: encodeURIComponent(
