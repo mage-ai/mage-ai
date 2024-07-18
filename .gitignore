@@ -191,4 +191,3 @@ package.json
 test.py
 test/
 test_data*
-yarn.lock

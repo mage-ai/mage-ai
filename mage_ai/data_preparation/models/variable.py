@@ -24,7 +24,7 @@ from mage_ai.data_preparation.models.constants import (
     DATAFRAME_SAMPLE_MAX_COLUMNS,
     VARIABLE_DIR,
 )
-from mage_ai.data_preparation.models.utils import (  # dask_from_pandas,
+from mage_ai.data_preparation.models.utils import (
     AMBIGUOUS_COLUMN_TYPES,
     STRING_SERIALIZABLE_COLUMN_TYPES,
     apply_transform_pandas,
@@ -1160,7 +1160,6 @@ class Variable:
             else:
                 column_types = column_types_raw
 
-            # ddf = dask_from_pandas(df)
             if should_deserialize_pandas(column_types):
                 df = apply_transform_pandas(
                     df,
@@ -1393,7 +1392,6 @@ class Variable:
                 except Exception:
                     pass
 
-            # ddf = dask_from_pandas(df_output)
             df_output_serialized = apply_transform_pandas(
                 df_output,
                 lambda row: serialize_columns(row, column_types_to_test),
