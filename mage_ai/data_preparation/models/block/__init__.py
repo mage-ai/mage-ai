@@ -364,7 +364,6 @@ class Block(
         executor_config: Dict = None,
         executor_type: ExecutorType = ExecutorType.LOCAL_PYTHON,
         extension_uuid: str = None,
-        groups: List[str] = None,
         status: BlockStatus = BlockStatus.NOT_EXECUTED,
         pipeline=None,
         replicated_block: str = None,
