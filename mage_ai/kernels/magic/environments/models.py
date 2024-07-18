@@ -151,7 +151,13 @@ class ExecutionOutput(BaseDataClass):
 
             metadata = message.metadata or {}
             path = metadata.get('path') or ''
-            full_path = get_repo_paths_for_file_path(path).get('full_path') or ''
+            full_path = (
+                get_repo_paths_for_file_path(
+                    path,
+                    mage_projects_only=True,
+                ).get('full_path')
+                or ''
+            )
 
             pipeline_uuid = metadata.get('pipeline_uuid')
             pipeline = await Pipeline.get_async(
