@@ -2,12 +2,13 @@
 {% block imports %}
 import requests
 import json
+from typing import List, Dict
 {{ super() -}}
 {% endblock %}
 
 {% block content %}
 @data_loader
-def ingest_api_data(*args, **kwargs):
+def ingest_api_data(*args, **kwargs) -> List[Dict]:
     """
     Template for loading data from an API.
     Fetch data from external API using the provided configurations.
@@ -34,18 +35,18 @@ def ingest_api_data(*args, **kwargs):
     if auth_token:
         headers['Authorization'] = f"Bearer {auth_token}"
 
-    try:
-        response = requests.request(
-            method=method,
-            url=endpoint,
-            headers=headers,
-            timeout=timeout
-        )
-        response.raise_for_status()  # Check for HTTP errors
-        try:
-            return response.json()  # Try to parse JSON response
-        except json.JSONDecodeError:
-            return response.text  # Fallback to plain text response
-    except requests.RequestException as e:
-        raise Exception(f'API request failed: {e}')
+    data = []
+    response = requests.request(
+        method=method,
+        url=endpoint or  '',
+        headers=headers,
+        timeout=timeout
+    )
+    response.raise_for_status()
+
+    res = response.json()
+    if res:
+        data.append(res)
+
+    return data
 {% endblock %}

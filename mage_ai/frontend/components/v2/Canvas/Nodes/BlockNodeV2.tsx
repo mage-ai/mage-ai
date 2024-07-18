@@ -67,12 +67,14 @@ type BlockNodeType = {
   showApp?: (
     appConfig: AppConfigType,
     render: (appNode: AppNodeType, mountRef: React.MutableRefObject<HTMLDivElement>) => void,
-    onCloseRef: React.MutableRefObject<() => void>,
+    remove: (callback?: () => void) => void,
+    setOnRemove: (onRemove: () => void) => void,
   ) => void;
   showOutput?: (
     channel: string,
     render: (outputNode: OutputNodeType, mountRef: React.MutableRefObject<HTMLDivElement>) => void,
-    onCloseRef: React.MutableRefObject<() => void>,
+    remove: (callback?: () => void) => void,
+    setOnRemove: (onRemove: () => void) => void,
   ) => void;
 };
 
@@ -383,8 +385,6 @@ function BlockNode(
     const { configuration } = block ?? {};
     const { file } = configuration ?? {};
 
-    console.log('GET /execution_outputs/:id');
-
     mutations.files.detail.mutate({
       id: file?.path,
       onError: () => {
@@ -530,14 +530,19 @@ function BlockNode(
     }, 1000);
   }
 
-  function closeOutput() {
+  function closeOutput(callback?: () => void) {
     delete handleOnMessageRef.current?.[outputRef?.current?.id];
     outputRootRef?.current && outputRootRef?.current?.unmount();
     outputRootRef.current = null;
-    onCloseOutputRef?.current && onCloseOutputRef?.current?.();
+
+    if (callback) {
+      callback();
+    } else if (onCloseOutputRef?.current) {
+      onCloseOutputRef?.current?.();
+    }
   }
 
-  function closeEditorApp() {
+  function closeEditorApp(callback?: () => void) {
     delete handleOnMessageRef.current?.[appRef?.current?.id];
     delete handleOnMessageRef.current?.[`${appRef?.current?.id}/output`];
     appRootRef?.current && appRootRef?.current?.unmount();
@@ -545,7 +550,11 @@ function BlockNode(
     appNodeRef.current = null;
     appRootRef.current = null;
 
-    onCloseAppRef.current && onCloseAppRef.current();
+    if (callback) {
+      callback();
+    } else if (onCloseAppRef?.current) {
+      onCloseAppRef?.current?.();
+    }
 
     setApps(prev => {
       const data = { ...prev };
@@ -695,7 +704,8 @@ function BlockNode(
           renderOutput(mountRef, outputNode);
           callback && callback?.();
         },
-        onCloseOutputRef,
+        closeOutput,
+        onRemove => onCloseOutputRef.current = onRemove,
       );
     }
   }
@@ -717,7 +727,8 @@ function BlockNode(
             fileRef,
           });
         },
-        onCloseAppRef,
+        closeEditorApp,
+        onRemove => onCloseAppRef.current = onRemove,
       );
 
     if (fileRef.current?.path && fileRef.current?.content) {

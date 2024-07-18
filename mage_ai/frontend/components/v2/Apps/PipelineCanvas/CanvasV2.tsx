@@ -357,6 +357,7 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
     Record<
       string,
       {
+        remove: () => void;
         render: (node: AppNodeType, ref?: React.RefObject<HTMLDivElement>) => void;
       }
     >
@@ -365,6 +366,7 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
     Record<
       string,
       {
+        remove: () => void;
         render: (node: OutputNodeType, ref?: React.RefObject<HTMLDivElement>) => void;
       }
     >
@@ -417,22 +419,31 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
           showApp={(
             appConfig: AppConfigType,
             render: (appNode: AppNodeType, ref?: React.RefObject<HTMLDivElement>) => void,
-            onCloseRef: React.MutableRefObject<() => void>,
+            remove: (callback?: () => void) => void,
+            setOnRemove: (onRemove: () => void) => void,
           ) => {
             const appNode = buildAppNode(node as NodeType, appConfig);
             if (!rectRefs.current[appNode.id]) {
               rectRefs.current[appNode.id] = createRef();
             }
 
-            onCloseRef.current = () => {
+            appNodeRefs.current[block.uuid] ||= {
+              remove: null,
+              render: null,
+            };
+
+            const handleRemove = () => {
               delete appNodeRefs.current[block.uuid];
               setAppNodes(prev => {
                 delete prev[block.uuid]?.[appNode.id];
                 return prev;
               });
             };
+            setOnRemove && setOnRemove(handleRemove);
+            appNodeRefs.current[block.uuid].remove = () => {
+              remove ? remove(handleRemove) : handleRemove();
+            };
 
-            appNodeRefs.current[block.uuid] ||= { render: null };
             appNodeRefs.current[block.uuid].render = render;
 
             setAppNodes(prev => {
@@ -453,14 +464,20 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
               outputNode: OutputNodeType,
               mountRef: React.MutableRefObject<HTMLDivElement>,
             ) => void,
-            onCloseRef: React.MutableRefObject<() => void>,
+            remove: (callback?: () => void) => void,
+            setOnRemove: (onRemove: () => void) => void,
           ) => {
             const outputNode = buildOutputNode(node as NodeType, block, { uuid: channel });
             if (!rectRefs.current[outputNode.id]) {
               rectRefs.current[outputNode.id] = createRef();
             }
 
-            onCloseRef.current = () => {
+            outputNodeRefs.current[block.uuid] ||= {
+              remove: null,
+              render: null,
+            };
+
+            const handleRemove = () => {
               const id = getLineID(block.uuid, outputNode.id);
               const el = document.getElementById(id);
               if (el) {
@@ -476,10 +493,11 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
                 return prev;
               });
             };
-
-            outputNodeRefs.current[block.uuid] ||= {
-              render: null,
+            setOnRemove && setOnRemove(handleRemove);
+            outputNodeRefs.current[block.uuid].remove = () => {
+              remove ? remove(handleRemove) : handleRemove();
             };
+
             outputNodeRefs.current[block.uuid].render = (n, m) => {
               const id = getLineID(block.uuid, outputNode.id);
               const el = document.getElementById(id);
@@ -671,7 +689,6 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
   }
 
   function handleLineTransitions() {
-    console.log('handleLineTransitions');
     controlsForLines.start(({ index, isOutput }) => ({
       ease: EASING,
       opacity: 1,
@@ -1092,6 +1109,16 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
   }
 
   const setSelectedGroupsRef = useRef((groupsArg: MenuGroupType[]) => {
+    // Close apps and outputs
+    Object.values(appNodeRefs.current ?? {})
+      .concat(Object.values(outputNodeRefs.current ?? {}))
+      .map(({ remove }) => {
+        remove();
+      });
+
+    appNodeRefs.current = {};
+    outputNodeRefs.current = {};
+
     const prevGroup = deepCopy(getCurrentGroup());
     const prevParent = deepCopy(getParentGroup());
     const prevSiblings = deepCopyArray(getCurrentGroupSiblings());
@@ -1327,7 +1354,6 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
             const b1 = p1?.blocks;
             const b2 = p2?.blocks;
 
-            console.log('Pipeline updated', b1, b2);
             if (b1?.length ?? 0 !== b2?.length ?? 0) {
               if (b1?.length > b2?.length) {
                 newBlockCallbackAnimationRef.current = {};
