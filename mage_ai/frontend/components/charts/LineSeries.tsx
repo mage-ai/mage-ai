@@ -11,7 +11,7 @@ import { Tooltip, defaultStyles, withTooltip } from '@visx/tooltip';
 import { WithTooltipProvidedProps } from '@visx/tooltip/lib/enhancers/withTooltip';
 import { curveBasis } from '@visx/curve';
 import { localPoint } from '@visx/event';
-import { range } from 'lodash';
+import { range } from '@utils/array';
 import { scaleLinear, scaleOrdinal, scaleTime } from '@visx/scale';
 
 import FlexContainer from '@oracle/components/FlexContainer';

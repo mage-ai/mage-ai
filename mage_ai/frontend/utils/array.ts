@@ -221,9 +221,10 @@ export function arrayIncludesArray(arr1, arr2) {
   return result;
 }
 
-export function range(numberOfItems) {
-  if (isNumeric(numberOfItems) && numberOfItems >= 1) {
-    return Array(numberOfItems).fill(0);
+export function range(numberOfItems: number, endIndex?: number): number[] {
+  const num = (endIndex ?? false) ? (endIndex - numberOfItems) : numberOfItems;
+  if (isNumeric(num) && num >= 1) {
+    return Array(num).fill(0).map((_, i) => i + ((endIndex ?? false) ? numberOfItems : 0));
   }
   return [];
 }
