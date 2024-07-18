@@ -3,7 +3,7 @@ import styled from 'styled-components';
 import base, { StyleProps, baseFontFamily, monospaceFontFamily } from '../../styles/typography';
 import borders from '../../styles/borders';
 
-type MarkdownProps = StyleProps;
+type MarkdownProps = any;
 
 export type MarkdownType = {
   a?: MarkdownProps;

@@ -30,7 +30,7 @@ import { EditorContainerStyled } from './index.style';
 import { ExecutionManagerType } from '../../../ExecutionManager/interfaces';
 import { Minimize, Chat, BlockGenericV2, PlayButtonFilled } from '@mana/icons';
 import { NodeWrapper } from '../NodeWrapper';
-import { TooltipAlign, TooltipWrapper, TooltipDirection, TooltipJustify } from '@context/Tooltip';
+import { TooltipAlign, TooltipWrapper, TooltipDirection, TooltipJustify } from '@context/v2/Tooltip';
 import { areEqualRects, areDraggableStylesEqual } from '../equals';
 import { convertToMillisecondsTimestamp } from '@utils/date';
 import { draggableProps } from '../draggable/utils';

@@ -3,7 +3,6 @@ import React, { useState } from 'react';
 import styles from '@styles/scss/elements/Link/Link.module.scss';
 import { motion } from 'framer-motion';
 import { TextProps, buildTextStyleProps } from '../Text';
-import { ElementRoleEnum } from '@mana/shared/types';
 
 type LinkProps = {
   activeColorOnHover?: boolean;
@@ -15,7 +14,7 @@ type LinkProps = {
   motionProps?: any;
   onClick?: (e: React.MouseEvent<HTMLAnchorElement>) => void;
   preventDefault?: boolean;
-  role?: ElementRoleEnum;
+  role?: any;
   target?: string;
   wrap?: boolean;
 } & TextProps;

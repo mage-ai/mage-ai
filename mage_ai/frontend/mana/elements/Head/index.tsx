@@ -1,7 +1,8 @@
 import NextHead from 'next/head';
-import { STYLE_ROOT_ID } from '@context/v2/Style';
 import { ThemeContext } from 'styled-components';
 import { useContext } from 'react';
+
+const STYLE_ROOT_ID = 'dynamic-style-root';
 
 type HeadProps = {
   children?: any;

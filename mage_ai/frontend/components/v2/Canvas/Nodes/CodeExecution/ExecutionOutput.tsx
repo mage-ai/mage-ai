@@ -5,9 +5,6 @@ import EventStreamType, {
 } from '@interfaces/EventStreamType';
 
 import Ansi from 'ansi-to-react';
-import useAppEventsHandler, {
-  CustomAppEventEnum,
-} from '../../../Apps/PipelineCanvas/useAppEventsHandler';
 import Grid from '@mana/components/Grid';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Text from '@mana/elements/Text';
@@ -15,7 +12,7 @@ import Link from '@mana/elements/Link';
 import moment from 'moment';
 import styles from '@styles/scss/components/Canvas/Nodes/ExecutionOutput.module.scss';
 import { DATE_FORMAT_LONG_MS } from '@utils/date';
-import { TooltipAlign, TooltipWrapper, TooltipDirection, TooltipJustify } from '@context/Tooltip';
+import { TooltipAlign, TooltipWrapper, TooltipDirection, TooltipJustify } from '@context/v2/Tooltip';
 import { convertToMillisecondsTimestamp, dateFormatLongFromUnixTimestamp } from '@utils/date';
 import { displayLocalOrUtcTime } from '@components/Triggers/utils';
 import { formatDurationFromEpoch, isNumeric } from '@utils/string';

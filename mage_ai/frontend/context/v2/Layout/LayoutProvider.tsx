@@ -1,5 +1,5 @@
-import Header from '@components/v2/Layout/Header';
-import { HeaderProps } from '@components/v2/Layout/Header/interfaces';
+import Header from './Header';
+import { HeaderProps } from './Header/interfaces';
 import React, { useRef, useState } from 'react';
 import ThemeType from '@mana/themes/interfaces';
 import { FaviconStatusEnum, changeFavicon } from './favicon';
@@ -41,34 +41,6 @@ export const LayoutProvider = ({ children, router, theme }: LayoutProviderProps)
     };
 
     setHeaderData(headerRef.current);
-
-    // const element = document.getElementById(HEADER_ROOT_ID);
-    // if (!element) return;
-    // headerRootRef.current ||= createRoot(element);
-    // headerRootRef.current.render(
-    //   <ContextProvider router={router} theme={theme}>
-    //     <Header {...headerRef.current} router={router} />
-    //   </ContextProvider  >
-    // );
-
-    // console.log(kwargs, headerContainerRef.current,
-    //   headerContainerRef?.current?.querySelectorAll('[role="title"]')
-    // )
-
-    // const title = headerContainerRef?.current?.querySelector('[role="title"]') as HTMLElement;
-    // if (title) {
-    //   title.innerText = headerRef.current.title;
-    // }
-    // const tag = headerContainerRef?.current?.querySelector('[role="tag"]') as HTMLElement;
-    // if (tag) {
-    //   tag.innerText = headerRef.current.navTag;
-    // }
-    // const buttons = headerContainerRef?.current?.querySelectorAll('[role="button"]');
-    // buttons?.forEach((button: HTMLDivElement) => {
-    //   button?.getAttribute?.('data-uuid') === headerRef.current.selectedNavItem
-    //     ? button.classList.add(stylesHeader.selected)
-    //     : button.classList.remove(stylesHeader.selected);
-    // });
   }
 
   function setPage(

@@ -1,16 +1,15 @@
 import React, { useEffect, useRef } from 'react';
 import useDebounce from '@utils/hooks/useDebounce';
-import { CommandType, CustomKeyboardEventType, PredicateType } from '../../events/interfaces';
 import { EventEnum } from '../../events/enums';
 import { sortByKey } from '@utils/array';
 import { isEqual, selectKeys } from '@utils/hash';
 import { DEBUG } from '../../utils/debug';
 
-type KeyMapType = Record<string, CustomKeyboardEventType[]>;
+type KeyMapType = Record<string, any[]>;
 
 export interface KeyboardShortcutsType {
   deregisterCommands: () => void;
-  registerCommands: (commands: Record<string, CommandType>, metadata?: Record<string, any>) => void;
+  registerCommands: (commands: Record<string, any>, metadata?: Record<string, any>) => void;
 }
 
 export interface KeyboardShortcutsProps {
@@ -21,10 +20,10 @@ export interface KeyboardShortcutsProps {
 export default function useKeyboardShortcuts({
   target,
   timeout = 1000,
-}: KeyboardShortcutsProps): KeyboardShortcutsType {
+}: KeyboardShortcutsProps): any {
   const [debouncer, cancel] = useDebounce();
 
-  const commandsRef = useRef<Record<string, CommandType>>({});
+  const commandsRef = useRef<Record<string, any>>({});
   const shouldClearAllRef = useRef<boolean>(false);
   const metadataRef = useRef<Record<string, any>>({});
   const timeoutRef = useRef(null);
@@ -37,9 +36,9 @@ export default function useKeyboardShortcuts({
     [EventEnum.KEYDOWN]: {} as KeyMapType,
     [EventEnum.KEYUP]: {} as KeyMapType,
   });
-  const eventsSeriesRef = useRef<CustomKeyboardEventType[][]>([]);
+  const eventsSeriesRef = useRef<any[][]>([]);
 
-  function registerCommands(commands: Record<string, CommandType>, metadata?: Record<string, any>) {
+  function registerCommands(commands: Record<string, any>, metadata?: Record<string, any>) {
     commandsRef.current = commands;
     metadataRef.current = metadata;
   }
@@ -61,14 +60,14 @@ export default function useKeyboardShortcuts({
     timeoutRef.current = setTimeout(clearAll, timeout);
   }
 
-  function validatePredicate(predicate: PredicateType, events: CustomKeyboardEventType[]): boolean {
+  function validatePredicate(predicate: any, events: any[]): boolean {
     const { key, predicates, present, type = EventEnum.KEYDOWN } = predicate;
 
     DEBUG.keyboard.shortcuts &&
       console.log(predicates, present, key, type, events, metadataRef.current);
 
     if (predicates?.length) {
-      return predicates?.every((pred: PredicateType, position: number) =>
+      return predicates?.every((pred: any, position: number) =>
         validatePredicate(pred, [events[position]]),
       );
     } else if (present) {
@@ -97,7 +96,7 @@ export default function useKeyboardShortcuts({
     );
   }
 
-  function executeCommands(event: CustomKeyboardEventType) {
+  function executeCommands(event: any) {
     DEBUG.keyboard.shortcuts && console.log('commands', Object.keys(commandsRef.current ?? {}));
     DEBUG.keyboard.shortcuts && console.log('series', eventsSeriesRef.current);
     DEBUG.keyboard.shortcuts && console.log('history', eventsHistoryRef.current);
@@ -105,7 +104,7 @@ export default function useKeyboardShortcuts({
     const commandsToExecute = {};
 
     Object.entries(commandsRef?.current ?? {})?.forEach(
-      ([uuid, command]: [string, CommandType]) => {
+      ([uuid, command]: [string, any]) => {
         if (!command?.predicate || !command?.handler) return;
 
         let valid = false;
@@ -120,14 +119,14 @@ export default function useKeyboardShortcuts({
 
         if (predicates.length >= 2) {
           valid = predicates.every(
-            (predicate: PredicateType, position: number) =>
+            (predicate: any, position: number) =>
               position >= events?.length && validatePredicate(predicate, events[position]),
           );
         } else {
-          valid = events.some((arr1: CustomKeyboardEventType[]) =>
+          valid = events.some((arr1: any[]) =>
             predicates.length === 1
               ? validatePredicate(command.predicate, arr1)
-              : arr1?.some((event: CustomKeyboardEventType) =>
+              : arr1?.some((event: any) =>
                   validatePredicate(command.predicate, [event]),
                 ),
           );
@@ -155,31 +154,31 @@ export default function useKeyboardShortcuts({
     }
   }
 
-  function buildKey(eventInit: KeyboardEvent, eventType: EventEnum): CustomKeyboardEventType {
+  function buildKey(event3: KeyboardEvent, eventType: any) {
     return {
-      altKey: eventInit.altKey,
-      ctrlKey: eventInit.ctrlKey,
-      key: eventInit.key,
-      metaKey: eventInit.metaKey,
-      shiftKey: eventInit.shiftKey,
+      altKey: event3.altKey,
+      ctrlKey: event3.ctrlKey,
+      key: event3.key,
+      metaKey: event3.metaKey,
+      shiftKey: event3.shiftKey,
       timestamp: Number(new Date()),
       type: eventType,
-    } as CustomKeyboardEventType;
+    } as any;
   }
 
   function buildEventSeries() {
-    const events: CustomKeyboardEventType[] = [];
+    const events: any[] = [];
 
     Object.values(eventsRef?.current ?? {}).forEach((map: KeyMapType) => {
-      Object.values(map).forEach((keys: CustomKeyboardEventType[]) => {
-        events.push(sortByKey(keys, (event: CustomKeyboardEventType) => event.timestamp)[0]);
+      Object.values(map).forEach((keys: any[]) => {
+        events.push(sortByKey(keys, (event: any) => event.timestamp)[0]);
       });
     });
 
     return events;
   }
 
-  function updateState(event: CustomKeyboardEventType) {
+  function updateState(event: any) {
     const { key, type } = event;
 
     eventsHistoryRef.current[type][key] ||= [];
@@ -208,7 +207,7 @@ export default function useKeyboardShortcuts({
       EventEnum.KEYDOWN === eventInit.type
         ? EventEnum.KEYDOWN
         : EventEnum.KEYUP === eventInit.type
-          ? EventEnum.KEYUP
+        ? EventEnum.KEYUP
           : undefined,
     );
 

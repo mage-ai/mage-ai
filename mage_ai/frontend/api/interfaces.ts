@@ -1,9 +1,3 @@
-import { AxiosError } from 'axios';
-import { ErrorDetailsType } from '@interfaces/ErrorsType';
-import { OperationTypeEnum } from './constants';
-import { MutationStatusEnum } from './enums';
-import { ClientEventType } from '@mana/shared/interfaces';
-
 // "message": "Request failed with status code 400",
 // "name": "AxiosError",
 // "config": {
@@ -127,13 +121,7 @@ export type MutatationType = {
 
 export type ModelsType = Record<string, any | any[]>;
 
-export type MutationStatusMappingType = {
-  [any.CREATE]: any;
-  [any.DELETE]: any;
-  [any.DETAIL]: any;
-  [any.LIST]: any;
-  [any.UPDATE]: any;
-};
+export type MutationStatusMappingType = any;
 
 interface AbortControllerType {
   abort: () => void;

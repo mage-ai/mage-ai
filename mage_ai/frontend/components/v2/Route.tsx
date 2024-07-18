@@ -86,7 +86,7 @@ export default function Route(WrappedComponent: any) {
       // the state instance of auth that has been rehydrated in browser after mount
       // @ts-ignore
       return (
-        <WrappedComponent auth={this.state.auth} {...ignoreKeys(propsWithoutAuth, ['auth'])} />
+        <WrappedComponent auth={this.state.auth} {...ignoreKeys(this.props, ['auth'])} />
       );
     }
   };

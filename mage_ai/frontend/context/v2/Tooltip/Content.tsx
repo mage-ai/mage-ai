@@ -8,7 +8,6 @@ import {
   TooltipLayout,
   TooltipContentType,
 } from './Context';
-import { RectType } from '@mana/shared/interfaces';
 
 type TooltipContentProps = {
   children: TooltipContentType;

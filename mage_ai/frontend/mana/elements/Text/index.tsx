@@ -1,7 +1,7 @@
 import React from 'react';
 
 import styles from '@styles/scss/components/Text/Text.module.scss';
-import { ElementType, extractProps } from '../../shared/types';
+import { extractProps } from '../../shared/props';
 import { hyphenateCamelCase } from '@utils/string';
 
 export type TextProps = {
@@ -10,6 +10,7 @@ export type TextProps = {
   inline?: boolean;
   maxWidth?: number;
   nowrap?: boolean;
+  role?: string;
   small?: boolean;
   underline?: boolean;
   xsmall?: boolean;
@@ -28,7 +29,7 @@ export type TextProps = {
   secondary?: boolean;
   success?: boolean;
   warning?: boolean;
-} & ElementType;
+};
 
 export function buildTextStyleProps({
   className: classNameProp,

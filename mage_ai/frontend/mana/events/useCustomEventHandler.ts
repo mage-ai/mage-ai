@@ -1,11 +1,10 @@
-import { CustomEvent, CustomKeyboardEvent, DetailType, EventSubscription } from './interfaces';
 import { DEBUG } from '../utils/debug';
 import { EventEnum } from './enums';
 import { useCallback, useEffect, useRef } from 'react';
 
-type DispatchCustomEvent = (type: EventEnum, detail?: DetailType, args?: any | any[]) => void;
+type DispatchCustomEvent = (type: EventEnum, detail?: any, args?: any | any[]) => void;
 type CustomEventHandlerOptions = {
-  baseEvent?: typeof CustomEvent | typeof CustomKeyboardEvent;
+  baseEvent?: any;
   eventListenerTarget?: {
     addEventListener: (type: string, handler: (event: CustomEvent) => void) => void;
     removeEventListener: (type: string, handler: (event: CustomEvent) => void) => void;
@@ -18,14 +17,14 @@ export interface CustomEventHandler {
 
 export default function useCustomEventHandler(
   client: any,
-  subscriptions?: EventSubscription,
+  subscriptions?: Record<any, (event: CustomEvent) => void>,
   options?: CustomEventHandlerOptions,
 ): CustomEventHandler {
-  const subscriptionsRef = useRef<EventSubscription>({});
+  const subscriptionsRef = useRef<any>({});
 
   const dispatchCustomEvent = useCallback(
-    (type: EventEnum, detail?: DetailType, args?: any | any[]) => {
-      function _dispatch(type: EventEnum, detail?: DetailType, args?: any | any[]) {
+    (type: EventEnum, detail?: any, args?: any | any[]) => {
+      function _dispatch(type: EventEnum, detail?: any, args?: any | any[]) {
         if (typeof window === 'undefined') return;
 
         const EventClass = options?.baseEvent ?? CustomEvent;
@@ -61,12 +60,12 @@ export default function useCustomEventHandler(
       options?.eventListenerTarget ?? typeof window !== 'undefined' ? window : null;
 
     Object.entries(subs ?? {})?.forEach(([type, handle]) => {
-      subscriber?.addEventListener(type as any, handle);
+      subscriber?.addEventListener(type as any, handle as any);
     });
 
     return () => {
       Object.entries(subs ?? {})?.forEach(([type, handle]) => {
-        subscriber?.removeEventListener(type as any, handle);
+        subscriber?.removeEventListener(type as any, handle as any);
       });
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps

@@ -3,12 +3,18 @@ import { SearchV3, ChatV2, Code, DocumentIcon, Builder, CaretDown, CaretLeft } f
 import Grid from '@mana/components/Grid';
 import stylesHeader from '@styles/scss/layouts/Header/Header.module.scss';
 import stylesPipelineBuilder from '@styles/scss/pages/PipelineBuilder/PipelineBuilder.module.scss';
-import { PipelineDetailProps } from '../interfaces';
 import { useContext, useEffect } from 'react';
 import { LayoutContext } from '@context/v2/Layout';
 import DetailLayout from '../DetailLayout';
 
-const Canvas = dynamic(() => import('../../../../Apps/PipelineCanvas'), { ssr: false });
+interface PipelineDetailProps {
+  frameworkUUID?: string;
+  useExecuteCode: any;
+  useRegistration: any;
+  uuid?: string;
+}
+
+const Canvas = dynamic(() => import('@components/v2/Apps/PipelineCanvas'), { ssr: false });
 
 function PipelineBuilder({ frameworkUUID, uuid, ...props }: PipelineDetailProps) {
   const { header, page } = useContext(LayoutContext);

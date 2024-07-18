@@ -93,13 +93,13 @@ export function prependArray(value, arrArg) {
   return newArray;
 }
 
-export function sortByKey(arr, sort, opts: any = {}) {
+export function sortByKey(arr: any, sort: any, opts: any = {}) {
   const { ascending = true, absoluteValue = false } = opts;
 
   const sortingFunc =
     typeof sort === 'string' || typeof sort === 'number'
-      ? val => (absoluteValue ? Math.abs(dig(val, sort)) : dig(val, sort))
-      : val => (absoluteValue ? Math.abs(sort(val)) : sort(val));
+      ? (val: any) => (absoluteValue ? Math.abs(dig(val, sort as any)) : dig(val, sort as any))
+      : (val: any) => (absoluteValue ? Math.abs(sort(val)) : sort(val));
 
   return [...arr].sort((a, b) => {
     let sortingOrder = 0;

@@ -3,7 +3,6 @@ import Grid from '@mana/components/Grid';
 import Link from '@mana/elements/Link';
 import useAppEventsHandler, {
   CustomAppEvent,
-  CustomAppEventEnum,
 } from '@components/v2/Apps/PipelineCanvas/useAppEventsHandler';
 import { ElementRoleEnum } from '@mana/shared/types';
 import { LayoutConfigDirectionEnum } from '../../types';

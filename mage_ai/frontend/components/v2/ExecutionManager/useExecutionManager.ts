@@ -6,12 +6,11 @@ import EventStreamType, {
   ReadyStateToServerConnectionStatus,
 } from '@interfaces/EventStreamType';
 import { EnvironmentType } from '@interfaces/CodeExecutionType';
-import { APIErrorType } from '@context/APIMutation/Context';
-import { DEBUG } from '../utils/debug';
+import { APIErrorType } from '@context/v2/APIMutation/Context';
 import { ResponseType, MutationFetchArgumentsType } from '@api/interfaces';
 import { closeConnection } from './utils';
 import { getEventStreamsUrl } from '@api/utils/url';
-import { useMutate } from '@context/APIMutation';
+import { useMutate } from '@context/v2/APIMutation';
 import { newMessageRequestUUID } from '@utils/events';
 import { useRef } from 'react';
 import {
@@ -56,7 +55,7 @@ function debugLog(message: any, ...args: any[]) {
   if (Array.isArray(args) && args.length > 0) {
     arr.push(...args);
   }
-  DEBUG.codeExecution.manager && console.log(...arr);
+  false && console.log(...arr);
 }
 
 export default function useExecutionManager(
@@ -148,7 +147,7 @@ export default function useExecutionManager(
         const { onError, onOpen } = { ...opts, ...optsInternal };
 
         onopenRef.current = (event: Event) => {
-          DEBUG.codeExecution.manager && debugLog('useEventStreams.onopen', eventSource, event);
+          debugLog('useEventStreams.onopen', eventSource, event);
 
           const status = ServerConnectionStatusType.OPEN;
           // setStatus(channel, stream, status);
@@ -295,8 +294,7 @@ export default function useExecutionManager(
   } {
     const subscribe = (consumer: string, options: EventSourceHandlers) => {
       const map = Object.keys(channelsRef?.current?.[channel]?.streams?.[stream]?.consumers ?? {});
-      DEBUG.codeExecution.manager &&
-        debugLog('useRegistration.subscribe.before', channel, stream, consumer, options, map);
+      debugLog('useRegistration.subscribe.before', channel, stream, consumer, options, map);
 
       setNested(channelsRef?.current ?? {}, [channel, 'options'].join('.'), options);
       setNested(
@@ -320,8 +318,7 @@ export default function useExecutionManager(
       });
 
       const map2 = Object.keys(channelsRef?.current?.[channel]?.streams?.[stream]?.consumers ?? {});
-      DEBUG.codeExecution.manager &&
-        debugLog('useRegistration.subscribe.after', channel, stream, consumer, options, map2);
+      debugLog('useRegistration.subscribe.after', channel, stream, consumer, options, map2);
     };
 
     const unsubscribe = (consumer: string) => {
@@ -420,8 +417,7 @@ export default function useExecutionManager(
 
     const consumers = channelsRef?.current?.[channel]?.streams[stream]?.consumers ?? {};
 
-    DEBUG.codeExecution.manager &&
-      debugLog(
+    debugLog(
         'useEventStreams.onmessage',
         event,
         eventData,
@@ -437,12 +433,12 @@ export default function useExecutionManager(
   function handleOnOpen(event: Event) {
     const eventSource = event.target as EventSource;
     onopenRef?.current && onopenRef?.current?.(event);
-    DEBUG.codeExecution.manager && debugLog('useEventStreams.onopen', eventSource);
+    ebugLog('useEventStreams.onopen', eventSource);
   }
 
   function handleOnError(event: Event) {
     onerrorRef?.current && onerrorRef?.current?.(event);
-    DEBUG.codeExecution.manager && debugLog('useEventStreams.onerror', event);
+    ebugLog('useEventStreams.onerror', event);
   }
 
   function connectEventSource(channel: string, stream: string): EventSource | null {
@@ -542,10 +538,10 @@ export default function useExecutionManager(
   function teardown() {
     if (!hasOpenConnections()) return;
 
-    DEBUG.codeExecution.manager && debugLog('Tearing down...');
+    debugLog('Tearing down...');
     Object.keys(eventSourcesRef?.current).forEach(uuid => {
       closeEventSourceConnection(uuid);
-      DEBUG.codeExecution.manager && debugLog(`Closed event stream connection for ${uuid}`);
+      debugLog(`Closed event stream connection for ${uuid}`);
     });
   }
 

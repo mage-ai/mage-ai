@@ -45,7 +45,7 @@ export const TooltipProvider: React.FC<TooltipProviderProps> = ({ children, main
 
     const optionsPrev = showTooltipRef.current;
     showTooltipRef.current = showTooltipOptions;
-    const ContextProvider = dynamic(() => import('../v2/ContextProvider'));
+    const ContextProvider = dynamic(() => import('../ContextProvider'));
 
     if (!tooltipRootRef?.current) {
       tooltipRootRef.current = document.createElement('div');

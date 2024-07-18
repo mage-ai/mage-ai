@@ -39,6 +39,7 @@ function Markdown({
                 {String(code ?? '').replace(/\n$/, '')}
               </SyntaxHighlighter>
             ) : (
+
               <Text inline monospace style={{ whiteSpace: 'pre' }} {...props} {...rest?.code}>
                 {children}
               </Text>

@@ -1,5 +1,5 @@
 import React, { useContext } from 'react';
-import { HeaderProps } from '@components/v2/Layout/Header/interfaces';
+import { HeaderProps } from './Header/interfaces';
 
 type HeaderType = {
   setHeader?: (header: HeaderProps) => void;

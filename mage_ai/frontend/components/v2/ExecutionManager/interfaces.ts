@@ -1,9 +1,3 @@
-import { EnvironmentType } from '@interfaces/CodeExecutionType';
-import EventStreamType, {
-  ProcessDetailsType,
-  ServerConnectionStatusType,
-} from '@interfaces/EventStreamType';
-
 type ExecuteCodeResult = [any, () => void];
 
 export interface ConsumerOperations {

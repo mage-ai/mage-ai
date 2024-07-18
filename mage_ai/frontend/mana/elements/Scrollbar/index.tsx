@@ -8,7 +8,7 @@ type ScrollbarProps = {
   children: React.ReactNode;
 } & ScrollbarsStyledProps;
 
-const ScrollbarStyled = styled.div<{ autoHorizontalPadding: boolean; isOverflowing: boolean }>`
+const ScrollbarStyled = styled.div<{ autoHorizontalPadding: boolean; isOverflowing: boolean, hideXscrollbar?: boolean }>`
   ${scrollbars}
 
   ${({

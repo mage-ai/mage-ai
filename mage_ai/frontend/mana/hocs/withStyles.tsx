@@ -1,12 +1,12 @@
 import React, { useImperativeHandle, useRef } from 'react';
-import { ElementRoleEnum, ElementType, extractProps } from '@mana/shared/types';
+import { extractProps } from '../shared/props';
 import { styleClassNames } from '@mana/shared/utils';
 
 type HOCProps = {
-  HTMLTag?: keyof JSX.IntrinsicElements;
-  PropTypes?: React.WeakValidationMap<any>;
-  classNames?: string[];
-  allowDynamicStyles?: boolean;
+  HTMLTag?: any;
+  PropTypes?: any;
+  classNames?: any;
+  allowDynamicStyles?:  any;
 };
 
 export type GridType = {
@@ -55,13 +55,13 @@ export type GridType = {
 };
 
 export type WithStylesProp = {
-  children?: React.ReactNode | Element | Element[] | React.ReactNode[] | any | any[];
+  children?: any;
   className?: string;
   id?: string;
   onContextMenu?: (event: React.MouseEvent) => void;
-  role?: ElementRoleEnum;
+  role?: any;
   uuid?: string;
-} & ElementType &
+} & any &
   React.CSSProperties &
   GridType;
 

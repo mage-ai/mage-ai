@@ -97,4 +97,4 @@ export function TooltipWrapper({
 
 export { TooltipAlign, TooltipDirection, TooltipJustify };
 
-export default React.memo(TooltipWrapper);
+export default TooltipWrapper;

@@ -1,5 +1,4 @@
 import { hyphenateCamelCase } from '@utils/string';
-import { RectType } from './interfaces';
 
 export function styleClassNames(
   styles: Record<string, boolean | number | string>,
@@ -44,8 +43,8 @@ export function getAbsoluteRect(
     includeParents?: boolean;
   },
 ): {
-  parents: RectType[];
-  rect: RectType;
+  parents: any[];
+  rect: any;
 } {
   const rect = {
     ...element.getBoundingClientRect(),

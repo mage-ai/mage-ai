@@ -9,7 +9,6 @@ import Loading from '../../components/Loading';
 import Tag from '../../components/Tag';
 import buttons, { StyleProps, sm as buttonsSm } from '../../styles/buttons';
 import useWithLogging, { WithLoggingProps } from '../../hooks/useWithLogging';
-import { ElementRoleEnum } from '../../shared/types';
 
 type ButtonStyleProps = {
   Icon?: ({ ...props }: any) => any;
@@ -166,7 +165,7 @@ function Button({
       {...dataProps}
       className={[styles.container, loading && styles.loading].filter(Boolean).join(' ')}
       ref={containerRef}
-      role={ElementRoleEnum.BUTTON}
+      role="button"
     >
       <div className={[styles.overlay].filter(Boolean).join(' ')} />
       <div className={[styles.loader].filter(Boolean).join(' ')}>

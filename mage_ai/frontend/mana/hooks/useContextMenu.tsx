@@ -1,45 +1,43 @@
 import Menu, { MenuProps } from '../components/Menu';
 import React, { useContext, useEffect, useMemo, useRef } from 'react';
 import useKeyboardNavigation from './useKeyboardNavigation';
-import { CustomKeyboardEvent } from '../events/interfaces';
 import { KeyEnum } from '../events/enums';
-import { ClientEventType as ClientEventTypeT } from '../shared/interfaces';
 import { MenuItemType as MenuItemTypeT } from '../components/Menu/interfaces';
 import { ThemeContext, ThemeProvider } from 'styled-components';
 import { createRoot, Root } from 'react-dom/client';
 
 export type RenderContextMenuOptions = {
-  contained?: boolean;
-  direction?: MenuProps['direction'];
-  handleEscape?: (event: CustomKeyboardEvent) => void;
-  onClose?: MenuProps['onClose'];
-  openItems?: MenuProps['openItems'];
-  position?: MenuProps['position'];
-  rects?: MenuProps['rects'];
-  reduceItems?: (newItems: MenuItemType[], existingItems: MenuItemType[]) => MenuItemType[];
+  contained?: any;
+  direction?: any;
+  handleEscape?: any;
+  onClose?: any;
+  openItems?: any;
+  position?: any;
+  rects?: any;
+  reduceItems?: any;
 };
 
 export type RenderContextMenuType = (
-  event: ClientEventTypeT,
-  items?: MenuItemTypeT[],
-  opts?: RenderContextMenuOptions,
+  event: any,
+  items?: any,
+  opts?: any,
 ) => void;
 export type RemoveContextMenuType = (
-  event: ClientEventTypeT,
-  opts?: { conditionally?: boolean },
+  event: any,
+  opts?: any,
 ) => void;
 
-export type MenuItemType = MenuItemTypeT;
-export type ClientEventType = ClientEventTypeT;
+export type MenuItemType = any;
+export type ClientEventType = any;
 
 export interface ContextMenuType {
   contextMenu: JSX.Element;
-  removeContextMenu: RemoveContextMenuType;
-  renderContextMenu: RenderContextMenuType;
-  shouldPassControl: (event: ClientEventType) => boolean;
-  showMenu: (items: MenuItemType[], opts?: RenderContextMenuOptions) => void;
-  hideMenu: () => void;
-  teardown: () => void;
+  removeContextMenu: any;
+  renderContextMenu: any;
+  shouldPassControl: any;
+  showMenu: any;
+  hideMenu: any;
+  teardown: any;
 }
 
 export type ContextMenuProps = {

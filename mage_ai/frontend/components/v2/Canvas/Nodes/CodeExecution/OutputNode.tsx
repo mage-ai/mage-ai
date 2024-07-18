@@ -11,10 +11,7 @@ import { draggableProps } from '../draggable/utils';
 import { nodeClassNames, setupDraggableHandlers } from '../utils';
 import { useDrag } from 'react-dnd';
 import useDispatchMounted from '../useDispatchMounted';
-import { DEBUG } from '@components/v2/utils/debug';
 import { selectKeys } from '@utils/hash';
-import { CustomAppEventEnum } from '@components/v2/Apps/PipelineCanvas/enums';
-import { CustomAppEvent } from '@components/v2/Apps/PipelineCanvas/useAppEventsHandler';
 
 type OutputNodeProps = {
   className?: string;

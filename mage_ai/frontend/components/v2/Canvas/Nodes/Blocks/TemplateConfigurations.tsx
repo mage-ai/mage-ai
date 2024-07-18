@@ -13,7 +13,7 @@ import {
   InteractionInputTypeEnum,
 } from '@interfaces/InteractionType';
 import TextInput from '@mana/elements/Input/TextInput';
-import { TooltipAlign, TooltipWrapper, TooltipDirection, TooltipJustify } from '@context/Tooltip';
+import { TooltipAlign, TooltipWrapper, TooltipDirection, TooltipJustify } from '@context/v2/Tooltip';
 
 export default function TemplateConfigurations({
   block,

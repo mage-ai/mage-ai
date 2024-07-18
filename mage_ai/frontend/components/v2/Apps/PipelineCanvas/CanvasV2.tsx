@@ -62,7 +62,7 @@ import LineManagerV2, {
   EASING,
 } from './Lines/LineManagerV2';
 import DragWrapper from '../../Canvas/Nodes/DragWrapper';
-import HeaderUpdater from '../../Layout/Header/Updater';
+import HeaderUpdater from '@context/v2/Layout/Header/Updater';
 import PipelineExecutionFrameworkType, {
   FrameworkType,
   PipelineExecutionFrameworkBlockType,
@@ -89,7 +89,7 @@ import { NodeData, ShadowNodeType, ShadowRenderer } from '@mana/hooks/useShadowR
 import { ZoomPanStateType } from '@mana/hooks/useZoomPan';
 import { buildDependencies } from './utils/pipelines';
 import { getCache, updateCache } from '@mana/components/Menu/storage';
-import { useMutate } from '@context/APIMutation';
+import { useMutate } from '@context/v2/APIMutation';
 import { deepCopyArray, reverseArray, indexBy, unique, uniqueArray } from '@utils/array';
 import { getNewUUID } from '@utils/string';
 import { deepCopy, isEmptyObject } from '@utils/hash';
@@ -106,13 +106,10 @@ const CHANGE_BLOCKS_ANIMATION_DURATION = 5;
 const ANIMATION_DURATION = 1;
 const INITIAL_ANIMATION_DURATION = 0.2;
 
-type ModelsType = Record<
-  string,
-  {
-    blocks: BlockType[];
-    groups: FrameworkType[];
-  }
->;
+type ModelsType = {
+  blocks: BlockType[];
+  groups: FrameworkType[];
+};
 
 export type PipelineCanvasV2Props = {
   canvasRef: React.RefObject<HTMLDivElement>;
@@ -261,8 +258,6 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
     return val0;
   });
 
-  const { dispatchAppEvent } = useAppEventsHandler({ executionFramework: framework, pipeline });
-
   // console.log(
   //   [l0, t0, w0, h0],
   //   [loff, toff, woff, hoff],
@@ -380,7 +375,12 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
   const [appNodes, setAppNodes] = useState<Record<string, Record<string, AppNodeType>>>({});
   const [outputNodes, setOutputNodes] = useState<Record<string, OutputNodeType>>({});
   const [rectsMapping, setRectsMapping] = useState<Record<string, RectType>>({});
-  const [renderer, setRenderer] = useState<React.ReactNode>(null);
+  const [renderer, setRenderer] = useState<any>(null);
+
+  // Resources
+  const [pipeline, setPipeline] = useState<PipelineExecutionFrameworkType>(null);
+  const [framework, setFramework] = useState<PipelineExecutionFrameworkType>(null);
+  const { dispatchAppEvent } = useAppEventsHandler({ executionFramework: framework, pipeline });
 
   function getCurrentGroup() {
     const groups = selectedGroupsRef?.current ?? [];
@@ -658,7 +658,7 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
         }
 
         if (latest >= 1) {
-          Object.values(clones ?? {}).forEach(clone => clone && clone?.remove());
+          Object.values(clones ?? {}).forEach(clone => clone && (clone as Element)?.remove());
           animationTimeoutRef.current = setTimeout(() => {
             setIsAnimating(false);
           }, CHANGE_BLOCKS_ANIMATION_DURATION);
@@ -1290,10 +1290,6 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
         }) as any,
     );
   }
-
-  // Resources
-  const [pipeline, setPipeline] = useState<PipelineExecutionFrameworkType>(null);
-  const [framework, setFramework] = useState<PipelineExecutionFrameworkType>(null);
 
   const updateLocalResources = useCallback(
     (pipelineArg: PipelineExecutionFrameworkType) => {

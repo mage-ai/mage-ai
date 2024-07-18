@@ -20,7 +20,7 @@ import Text from '@mana/elements/Text';
 import useApp from '../../../Apps/Editor/useApp';
 import OutputGroups, { OutputGroupsType } from '../CodeExecution/OutputGroups';
 import { EditorContainerStyled } from './index.style';
-import { TooltipAlign, TooltipWrapper, TooltipDirection, TooltipJustify } from '@context/Tooltip';
+import { TooltipAlign, TooltipWrapper, TooltipDirection, TooltipJustify } from '@context/v2/Tooltip';
 import { convertToMillisecondsTimestamp } from '@utils/date';
 import {
   ArrowsAdjustingFrameSquare,

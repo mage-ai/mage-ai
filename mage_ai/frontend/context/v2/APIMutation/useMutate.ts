@@ -239,12 +239,10 @@ export function useMutate(
     const { id: idUse, idParent: idParentUse } = getIDs(args) ?? {};
 
     const urlArg: string = buildUrl(
-      ...[
-        resourceParent ?? resource,
-        idParentUse ?? idUse,
-        resourceParent ? resource : null,
-        resourceParent ? idUse : null,
-      ],
+      resourceParent ?? resource,
+      idParentUse ?? idUse,
+      resourceParent ? resource : null,
+      resourceParent ? idUse : null,
     );
 
     const { responseType = ResponseTypeEnum.JSON, signal = null } =

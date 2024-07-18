@@ -1,11 +1,3 @@
-import BlockType, { BlockTypeEnum } from '@interfaces/BlockType';
-import { MenuGroupType } from '@mana/components/Menu/interfaces';
-import React from 'react';
-import { ButtonEnum, LanguageEnum } from './enums';
-import { MutateType } from '@api/interfaces';
-import { RemoveContextMenuType, RenderContextMenuType } from '../hooks/useContextMenu';
-import { LayoutConfigType, NodeItemType } from '@components/v2/Canvas/interfaces';
-
 export enum EventOperationEnum {
   APP_START = 'app.start',
   CONTEXT_MENU_OPEN = 'context_menu.open',

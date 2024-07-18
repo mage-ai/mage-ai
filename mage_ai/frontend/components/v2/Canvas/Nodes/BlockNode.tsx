@@ -10,7 +10,7 @@ import {
   HideTooltipReason,
   TooltipLayout,
   useTooltip,
-} from '@context/Tooltip/Context';
+} from '@context/v2/Tooltip/Context';
 import useDispatchMounted from './useDispatchMounted';
 import { AnimatePresence, cubicBezier } from 'framer-motion';
 import Badge from '@mana/elements/Badge';
@@ -50,7 +50,7 @@ import { AppNodeType, NodeItemType, PortType } from '../interfaces';
 import { ModelContext } from '@components/v2/Apps/PipelineCanvas/ModelManager/ModelContext';
 import { SettingsContext } from '@components/v2/Apps/PipelineCanvas/SettingsManager/SettingsContext';
 import { StatusTypeEnum, BlockTypeEnum, LANGUAGE_DISPLAY_MAPPING } from '@interfaces/BlockType';
-import { TooltipWrapper } from '@context/Tooltip';
+import { TooltipWrapper } from '@context/v2/Tooltip';
 import { borderConfigs, blockColorNames } from './presentation';
 import { buildEvent } from './utils';
 import { groupValidation } from './Blocks/utils';

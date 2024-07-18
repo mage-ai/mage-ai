@@ -6,12 +6,12 @@ export type IDEProps = {
   configurations?: any;
   editorActions?: any[];
   editorClassName?: string;
-  eventListeners?: EventListeners;
+  eventListeners?: any;
   onMountEditor?: (editor: any) => void;
   persistManagerOnUnmount?: boolean;
   persistResourceOnUnmount?: boolean;
   style?: React.CSSProperties;
-  theme?: IDEThemeEnum;
+  theme?: any;
 };
 
 export interface CodeResources {

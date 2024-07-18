@@ -22,7 +22,7 @@ export function commentLine(): (monaco: any) => EditorAction {
     keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.Slash],
     label: 'Comment line',
     precondition: null,
-    run: (editor, args1) => {
+    run: (editor) => {
       // console.log('WTFFFFFFFFFFFFFFFFFFFFFFFFFFf', actions['editor.action.commentLine']);
       // actions['editor.action.commentLine'].run();
       // editor.getAction('editor.action.addCommentLine').run().then((args2) => console.log(args1, args2));

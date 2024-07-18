@@ -54,7 +54,7 @@ export type UpdateLinesType = (
   opts?: {
     callback?: () => void;
     replace?: boolean;
-    shouldAnimate: (rectup: RectType, rectdn: RectType) => boolean;
+    shouldAnimate?: (rectup: RectType, rectdn: RectType) => boolean;
   },
 ) => void;
 

@@ -6,8 +6,7 @@ import Text from '../../elements/Text';
 import useCustomEventHandler from '../../events/useCustomEventHandler';
 import useDebounce from '@utils/hooks/useDebounce';
 import { AnimatePresence, Variants, motion, cubicBezier } from 'framer-motion';
-import { CaretRight } from '@mana/icons';
-import { CustomKeyboardEvent } from '../../events/interfaces';
+// import { CaretRight } from '@mana/icons';
 import { HEADER_Z_INDEX } from '@components/constants';
 import { LayoutDirectionEnum } from './types';
 import { MenuItemType } from './interfaces';
@@ -21,7 +20,6 @@ import {
   MenuItemStyled,
 } from './index.style';
 import { UNIT } from '@mana/themes/spaces';
-import { ClientEventType, RectType } from '@mana/shared/interfaces';
 import { PortalProvider, usePortals } from '@context/v2/Portal';
 import { EventEnum, KeyEnum } from '@mana/events/enums';
 
@@ -48,11 +46,11 @@ export type MenuProps = {
     row: number;
   }[];
   parentItemRef?: React.RefObject<HTMLDivElement>;
-  position?: RectType;
+  position?: any;
   rects?: {
-    bounding?: RectType;
-    container?: RectType;
-    offset?: RectType;
+    bounding?: any;
+    container?: any;
+    offset?: any;
   };
   removePortals: (level: number) => void;
   renderChildrenRefs: React.MutableRefObject<
@@ -167,7 +165,7 @@ function MenuItemBase(
               />
             )}
 
-            {itemsCount >= 1 && <CaretRight size={12} />}
+            {/* {itemsCount >= 1 && <CaretRight size={12} />} */}
           </Grid>
         </Grid>
 
@@ -208,7 +206,7 @@ function MenuItemBase(
             motion
             onClick={e => {
               e.preventDefault();
-              onClick?.(e as ClientEventType, item, () => onClickCallback());
+              onClick?.(e as any, item, () => onClickCallback());
             }}
             plain
             width="100%"
@@ -626,7 +624,7 @@ function MenuController({
   );
 
   const handleKeyDown = useCallback(
-    (event: CustomKeyboardEvent) => {
+    (event: any) => {
       const {
         position,
         previousPosition,

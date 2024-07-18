@@ -6,28 +6,16 @@ import { useMenuManager } from '@mana/components/Menu/MenuManager';
 import Text from '@mana/elements/Text';
 import stylesHeader from '@styles/scss/layouts/Header/Header.module.scss';
 import stylesNavigation from '@styles/scss/components/Menu/NavigationButtonGroup.module.scss';
-import useAppEventsHandler, {
-  CustomAppEvent,
-  CustomAppEventEnum,
-} from '@components/v2/Apps/PipelineCanvas/useAppEventsHandler';
-import { Code, Builder, CaretDown, CaretLeft } from '@mana/icons';
+// import { Code, Builder, CaretDown, CaretLeft } from '@mana/icons';
 import { ItemClickHandler, MenuGroupType } from './interfaces';
 import { LayoutDirectionEnum } from '@mana/components/Menu/types';
 import { MenuItemType } from '@mana/hooks/useContextMenu';
 import { equals, sortByKey } from '@utils/array';
 import { getCache, deleteCache, updateCache } from './storage';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { DEBUG } from '@components/v2/utils/debug';
 import useKeyboardShortcuts, {
   KeyboardShortcutsProps,
 } from '../../hooks/shortcuts/useKeyboardShortcuts';
-import { EventEnum, KeyEnum } from '../../events/enums';
-import useCustomEventHandler from '../../events/useCustomEventHandler';
-import {
-  CustomKeyboardEvent,
-  KeyboardPositionType,
-  KeyboardDetailType,
-} from '../../events/interfaces';
 
 type NavigationButtonGroupProps = {
   buildGroups?: (onClick: ItemClickHandler) => MenuItemType[];
@@ -93,7 +81,7 @@ export default function NavigationButtonGroup({
   );
 
   const handleNavigationUpdate = useCallback(
-    (event: CustomAppEvent) => {
+    (event: any) => {
       const { defaultGroups } = event?.detail?.options?.kwargs ?? {};
 
       let groups0 = [];
@@ -112,9 +100,9 @@ export default function NavigationButtonGroup({
     [cacheKey, buildGroups, groupsProp, handleSelectGroup, groups],
   );
 
-  useAppEventsHandler({} as any, {
-    [CustomAppEventEnum.UPDATE_HEADER_NAVIGATION]: handleNavigationUpdate,
-  });
+  // useAppEventsHandler({} as any, {
+  //   UPDATE_HEADER_NAVIGATION: handleNavigationUpdate,
+  // });
 
   const openMenu = useCallback(
     (idx?: number) => {
@@ -158,7 +146,7 @@ export default function NavigationButtonGroup({
             }
           },
           predicate: {
-            key: KeyEnum.ARROWDOWN,
+            key: 'ARROWDOWN',
             metaKey: true,
           },
         },
@@ -251,7 +239,7 @@ export default function NavigationButtonGroup({
           >
             {(typeof labelUse === 'function' ? labelUse?.() : labelUse) || uuidUse}
 
-            {(selected || initial) && <CaretDown secondary size={10} />}
+            {/* {(selected || initial) && <CaretDown secondary size={10} />} */}
           </Grid>
         </Link>,
       );

@@ -4,7 +4,7 @@ export default function DetailLayout({
   children,
   loadEditorServices,
 }: {
-  children: React.ReactNode;
+  children: any;
   loadEditorServices?: boolean;
 }) {
   const phaseRef = useRef(0);
@@ -22,7 +22,7 @@ export default function DetailLayout({
     }
 
     const disposeManager = async () => {
-      await import('../../../IDE/Manager').then(mod => {
+      await import('@components/v2/IDE/Manager').then(mod => {
         mod.Manager.dispose();
       });
     };

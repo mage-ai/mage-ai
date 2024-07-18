@@ -1,6 +1,5 @@
 import React, { useCallback, useRef, useEffect, useState, useMemo } from 'react';
 import { DEBUG } from '@mana/utils/debug';
-import { RectType } from '@mana/shared/interfaces';
 import { WithOnMount } from './useWithOnMount';
 
 const SHARED_STYLES = {
@@ -15,32 +14,33 @@ const SHARED_STYLES = {
 };
 
 export interface NodeData {
-  computedStyle: CSSStyleDeclaration;
-  rect: RectType;
+  computedStyle: any;
+  rect: any;
 }
 
 export interface ShadowNodeType {
-  component: React.ReactNode;
-  data?: any;
-  id: string;
-  maxAttempts?: number;
-  onCapture?: (node: ShadowNodeType, data: NodeData, element: HTMLElement) => void;
-  pollInterval?: number;
-  ref?: React.MutableRefObject<HTMLElement>;
-  shouldCapture?: (node: ShadowNodeType, element: HTMLElement) => boolean;
-  targetRef?: (node: ShadowNodeType) => React.MutableRefObject<HTMLElement>;
-  waitUntil?: (node: ShadowNodeType) => boolean;
+  component: any;
+  data?:any;
+  id: any;
+  maxAttempts?:any;
+  onCapture?:any;
+  pollInterval?:any;
+  ref?:any;
+  shouldCapture?:any;
+  targetRef?:any;
+  waitUntil?: any;
 }
 
 interface ShadowRendererType {
-  nodes: ShadowNodeType[];
-  handleDataCapture: (node: ShadowNodeType, data: NodeData) => void;
-  handleNodeTransfer?: (node: ShadowNodeType, data: NodeData, element: HTMLElement) => void;
-  maxAttempts?: number;
-  pollInterval?: number;
-  renderNode?: (node: ShadowNodeType) => React.ReactNode | null;
-  uuid?: string;
-  waitUntil?: (nodes: ShadowNodeType[]) => boolean;
+  children?: any;
+  nodes: any;
+  handleDataCapture: any;
+  handleNodeTransfer?: any;
+  maxAttempts?: any;
+  pollInterval?: any;
+  renderNode?: any;
+  uuid?: any;
+  waitUntil?: any;
 }
 
 export function ShadowRenderer({
@@ -51,7 +51,7 @@ export function ShadowRenderer({
   pollInterval = 50,
   uuid,
   waitUntil,
-}: ShadowRendererType) {
+}: ShadowRendererType): any {
   const attemptsRef = useRef(0);
   const portalRef = useRef<HTMLDivElement>(null);
   const renderRef = useRef(0);

@@ -70,7 +70,7 @@ function ToolbarTop({
           </Text>
 
           <ButtonGroup>
-            <Button asLink loading={loading} onClick={() => overrideServerContentFromLocal()} small>
+            <Button asLink loading={loading} onClick={(event) => overrideServerContentFromLocal(event as any)} small>
               Save local
             </Button>
             <Button

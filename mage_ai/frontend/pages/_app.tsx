@@ -45,7 +45,7 @@ import { gridTheme as gridThemeDefault, theme as stylesTheme } from '@styles/the
 import { isDemo } from '@utils/environment';
 import { queryFromUrl, queryString, redirectToUrl } from '@utils/url';
 
-const NextAppV2 = dynamic(() => import('@components/NextAppV2'));
+const NextAppV2 = dynamic(() => import('@components/v2/Layout/App'));
 
 const COMMAND_CENTER_ROOT_ID = 'command-center-root';
 

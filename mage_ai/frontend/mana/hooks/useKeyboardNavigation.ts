@@ -1,25 +1,20 @@
 import React, { useEffect, useRef } from 'react';
 import useCustomEventHandler from '../events/useCustomEventHandler';
 import useKeyboardShortcuts, { KeyboardShortcutsProps } from './shortcuts/useKeyboardShortcuts';
-import {
-  CommandType,
-  CustomKeyboardEvent,
-  KeyboardPositionType,
-  KeyboardDetailType,
-} from '../events/interfaces';
 import { DEBUG } from '../utils/debug';
 import { EventEnum, KeyEnum } from '../events/enums';
 import { MenuItemType } from '../components/Menu/interfaces';
 import { range } from '@utils/array';
 
+type CustomKeyboardEventType = any;
 interface RegisterItemsOptions {
-  commands?: Record<string, CommandType>;
-  position?: KeyboardPositionType;
+  commands?: any;
+  position?: any;
 }
 
 export interface KeyboardNavigationProps {
   itemFilter?: (item: any) => boolean;
-  target: KeyboardShortcutsProps['target'];
+  target: any;
 }
 
 export default function useKeyboardNavigation({
@@ -31,7 +26,7 @@ export default function useKeyboardNavigation({
   resetPosition: () => void;
 } {
   const itemsRef = useRef<MenuItemType[]>(null);
-  const positionRef = useRef<KeyboardPositionType>(null);
+  const positionRef = useRef<any>(null);
   const timeoutRef = useRef<any>(null);
 
   const { dispatchCustomEvent } = useCustomEventHandler(
@@ -40,11 +35,11 @@ export default function useKeyboardNavigation({
       [EventEnum.SET_KEYBOARD_NAVIGATION_POSITION]: handleSetPosition,
     },
     {
-      baseEvent: CustomKeyboardEvent,
+      baseEvent: CustomEvent,
     },
   );
 
-  function handleSetPosition(event: CustomKeyboardEvent) {
+  function handleSetPosition(event: any) {
     clearTimeout(timeoutRef.current);
     timeoutRef.current = setTimeout(() => {
       positionRef.current = [null];
@@ -143,7 +138,7 @@ export default function useKeyboardNavigation({
         previousPosition: positionPrevious,
         previousTarget: item,
         target: getCurrentItem()?.item,
-      } as KeyboardDetailType,
+      } as any,
       [key],
     );
   }
@@ -164,7 +159,7 @@ export default function useKeyboardNavigation({
             {
               position: positionRef.current,
               target: getCurrentItem()?.item,
-            } as KeyboardDetailType,
+            } as any,
             [KeyEnum.ENTER],
           );
         },

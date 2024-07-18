@@ -9,7 +9,6 @@ import { ExecutorTypeEnum } from '@interfaces/ExecutorType';
 import { IntegrationDestinationEnum, IntegrationSourceEnum } from './IntegrationSourceType';
 import { GroupUUIDEnum } from './PipelineExecutionFramework/types';
 import { InteractionVariableType, InteractionInputType } from './InteractionType';
-import { FileType } from '@mana/shared/interfaces';
 
 export enum TagEnum {
   CONDITION = 'condition',
@@ -295,7 +294,7 @@ export interface TemplateType {
 }
 
 export interface ConfigurationType extends BaseConfigurationType {
-  file?: FileType;
+  file?: any;
   dynamic?:
     | any
     | boolean

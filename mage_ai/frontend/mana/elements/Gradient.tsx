@@ -2,7 +2,6 @@ import React from 'react';
 import styles from '@styles/scss/elements/GradientContainer.module.scss';
 import { motion } from 'framer-motion';
 import { withStyles } from '../hocs/withStyles';
-import { ElementRoleEnum } from '@mana/shared/types';
 
 type Direction =
   | 'to bottom left'
@@ -23,7 +22,7 @@ type OutterProps = {
   gradientBackground?: string;
   motionProps?: any;
   onContextMenu?: (event: React.MouseEvent<HTMLDivElement, MouseEvent>) => void;
-  role?: ElementRoleEnum;
+  role?: any;
   style?: React.CSSProperties;
 };
 

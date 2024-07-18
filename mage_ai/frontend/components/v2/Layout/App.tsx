@@ -1,6 +1,6 @@
 import ContextProvider from '@context/v2/ContextProvider';
 import Head from '@mana/elements/Head';
-import HeaderPortal from '../v2/Layout/Header/Portal';
+import HeaderPortal from '@context/v2/Layout/Header/Portal';
 import ThemeType from '@mana/themes/interfaces';
 import { AppProps } from 'next/app';
 
@@ -12,7 +12,7 @@ import { ThemeSettingsType } from '@mana/themes/interfaces';
 import { getTheme, getThemeSettings } from '@mana/themes/utils';
 import { useEffect, useRef } from 'react';
 
-function NextAppV2({
+function App({
   Component,
   pageProps: {
     defaultTitle,
@@ -66,4 +66,4 @@ function NextAppV2({
   );
 }
 
-export default NextAppV2;
+export default App;

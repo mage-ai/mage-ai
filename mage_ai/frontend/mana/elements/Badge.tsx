@@ -1,11 +1,10 @@
 import Text from './Text';
 import Grid from '../components/Grid';
-import { IconType } from '../icons/types';
 import styles from '@styles/scss/elements/Badge.module.scss';
 import { withStyles } from '../hocs/withStyles';
 
 export type BadgeType = {
-  Icon?: IconType;
+  Icon?: any;
   baseColorName?: string;
   label?: string;
   short?: boolean;
