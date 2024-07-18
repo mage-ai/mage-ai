@@ -148,11 +148,36 @@ class PipelineExecutionFramework(BaseExecutionFramework):
         3. Set the block dependencies for block instances
         4. Set the block configurations for block instances
         """
+
         blocks_with_group = [b for b in blocks_by_uuid.values() if b.groups]
         blocks_by_group = group_by(lambda b: b.groups[0], blocks_with_group)
 
         flatten_blocks = self.flatten_block_groups()
         flatten_block_groups_by_uuid = {b['block_group'].uuid: b for b in flatten_blocks}
+
+        def find_upstream_blocks(block_group: str):
+            upstream_blocks = []
+            upstream_block_groups = block_group.get('upstream_block_groups', [])
+            for guuid in upstream_block_groups:
+                if guuid in blocks_by_group:
+                    upstream_blocks.append(blocks_by_group[guuid])
+                elif guuid in flatten_block_groups_by_uuid:
+                    upstream_blocks.append(
+                        find_upstream_blocks(flatten_block_groups_by_uuid[guuid]))
+
+            return list(set(flatten(upstream_blocks)))
+
+        def find_downstream_blocks(block_group: str):
+            downstream_blocks = []
+            downstream_block_groups = block_group.get('downstream_block_groups', [])
+            for guuid in downstream_block_groups:
+                if guuid in blocks_by_group:
+                    downstream_blocks.append(blocks_by_group[guuid])
+                elif guuid in flatten_block_groups_by_uuid:
+                    downstream_blocks.append(
+                        find_downstream_blocks(flatten_block_groups_by_uuid[guuid]))
+
+            return list(set(flatten(downstream_blocks)))
 
         for b in blocks_with_group:
             block_group = flatten_block_groups_by_uuid.get(b.groups[0])
@@ -165,15 +190,7 @@ class PipelineExecutionFramework(BaseExecutionFramework):
                 if block_group_configuration else dict(),
             )
             if block_group['upstream_block_groups']:
-                b.upstream_blocks = flatten([
-                    blocks_by_group[guuid]
-                    for guuid in block_group['upstream_block_groups']
-                    if guuid in blocks_by_group
-                ])
+                b.upstream_blocks = find_upstream_blocks(block_group)
 
             if block_group['downstream_block_groups']:
-                b.downstream_blockse = flatten([
-                    blocks_by_group[guuid]
-                    for guuid in block_group['downstream_block_groups']
-                    if guuid in blocks_by_group
-                ])
+                b.downstream_blocks = find_downstream_blocks(block_group)
