@@ -228,14 +228,16 @@ def __render_error(handler, error: Dict, http_error_codes: Optional[bool] = None
 
     error_code = 200
 
-    if error is not None and http_error_codes:
+    if error is not None and isinstance(error, dict) and http_error_codes:
         error_code = error.get('code', 500)
         handler.set_status(error_code) if error_code else None
 
-    error['errors'], error['message'] = format_and_colorize_stacktrace(
-        error.get('errors') or [],
-        error.get('message') or '',
-    )
+        errs, msg = format_and_colorize_stacktrace(
+            error.get('errors') or [],
+            error.get('message') or '',
+        )
+        error['errors'] = errs
+        error['message'] = msg
 
     handler.write(
         dict(
