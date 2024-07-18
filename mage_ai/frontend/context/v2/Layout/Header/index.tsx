@@ -78,7 +78,7 @@ export function Header(
       {
         Icon: Code,
         onClick: () => {
-          router.push('/v2/test');
+          router.push('/v2/apps/editor');
         },
         uuid: 'code',
       },
