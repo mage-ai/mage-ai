@@ -904,26 +904,8 @@ class Pipeline:
 
             block_class = BlockFactory.block_class_from_type(
                 block_type, language=language, pipeline=self
-            )(
-                c.get('name'),
-                c.get('uuid'),
-                block_type,
-                block_color=c.get('color'),
-                configuration=c.get('configuration'),
-                content=c.get('content'),
-                executor_config=c.get('executor_config'),
-                executor_type=c.get('executor_type', ExecutorType.LOCAL_PYTHON),
-                extension_uuid=c.get('extension_uuid'),
-                groups=c.get('groups'),
-                has_callback=c.get('has_callback'),
-                language=c.get('language'),
-                pipeline=self,
-                replicated_block=c.get('replicated_block'),
-                repo_config=self.repo_config,
-                retry_config=c.get('retry_config'),
-                status=c.get('status'),
-                timeout=c.get('timeout'),
             )
+
             if block_class and callable(block_class):
                 block_config = dict(
                     block_color=c.get('color'),
@@ -1026,7 +1008,7 @@ class Pipeline:
         all_blocks,
         execution_framework: str = None,
     ):
-        blocks_by_uuid = {b.uuid: b for b in blocks}
+        blocks_by_uuid = {b.uuid: b for b in blocks if b is not None}
 
         if execution_framework is not None and ExecutionFrameworkUUID.has_value(
             execution_framework
