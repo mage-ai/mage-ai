@@ -1,3 +1,4 @@
+import range from 'lodash/range';
 import { UNIT } from '@oracle/styles/units/spacing';
 
 export const SMALLEST_SCREEN_WIDTH = 400;
