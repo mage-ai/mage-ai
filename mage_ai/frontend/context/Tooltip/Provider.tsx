@@ -1,7 +1,13 @@
 import React, { useContext, useEffect, useRef } from 'react';
 import TooltipContent from './Content';
 import dynamic from 'next/dynamic';
-import { HideTooltipReason, ShowTooltipOptionsType, TooltipContext, TooltipContentType, TooltipLayout } from './Context';
+import {
+  HideTooltipReason,
+  ShowTooltipOptionsType,
+  TooltipContext,
+  TooltipContentType,
+  TooltipLayout,
+} from './Context';
 import { Root, createRoot } from 'react-dom/client';
 import { ThemeContext } from 'styled-components';
 
@@ -50,24 +56,27 @@ export const TooltipProvider: React.FC<TooltipProviderProps> = ({ children, main
 
     tooltipRenderRef.current ||= createRoot(tooltipRootRef.current);
 
-    showTimeoutRef.current = setTimeout(() => {
-      // console.log('showTooltip');
-      resetTimers();
+    showTimeoutRef.current = setTimeout(
+      () => {
+        // console.log('showTooltip');
+        resetTimers();
 
-      tooltipRenderRef.current.render(
-        <ContextProvider theme={themeContext}>
-          <TooltipContent
-            layout={layout}
-            options={showTooltipOptions}
-            optionsPrev={optionsPrev}
-            ref={tooltipContentRef}
-          >
-            {content}
-          </TooltipContent >
-        </ContextProvider>,
-      );
-      tooltipVisibleRef.current = true;
-    }, tooltipVisibleRef.current ? 0 : 2000);
+        tooltipRenderRef.current.render(
+          <ContextProvider theme={themeContext}>
+            <TooltipContent
+              layout={layout}
+              options={showTooltipOptions}
+              optionsPrev={optionsPrev}
+              ref={tooltipContentRef}
+            >
+              {content}
+            </TooltipContent>
+          </ContextProvider>,
+        );
+        tooltipVisibleRef.current = true;
+      },
+      tooltipVisibleRef.current ? 0 : 2000,
+    );
   }
 
   function hideTooltip(delay?: number): void {
@@ -92,29 +101,28 @@ export const TooltipProvider: React.FC<TooltipProviderProps> = ({ children, main
       if (!wrapperRef) return false;
 
       const { height, left, top, width } = wrapperRef?.current?.getBoundingClientRect() ?? {};
-      const { height: heightt, left: leftt, top: topt, width: widtht } =
-        tooltipContentRef?.current?.getBoundingClientRect() ?? {};
+      const {
+        height: heightt,
+        left: leftt,
+        top: topt,
+        width: widtht,
+      } = tooltipContentRef?.current?.getBoundingClientRect() ?? {};
       const { pageX, pageY } = event;
 
       return (
-        pageX >= left &&
-        pageX <= left + width &&
-        pageY >= top &&
-        pageY <= top + height
-      ) || (
-          pageX >= leftt &&
-          pageX <= leftt + widtht &&
-          pageY >= topt &&
-          pageY <= topt + heightt
-        );
+        (pageX >= left && pageX <= left + width && pageY >= top && pageY <= top + height) ||
+        (pageX >= leftt && pageX <= leftt + widtht && pageY >= topt && pageY <= topt + heightt)
+      );
     };
 
     const handleMouseMove = (event: MouseEvent) => {
-      if (!tooltipVisibleRef?.current
-        || !showTooltipRef?.current
-        || !showTooltipRef?.current?.hideOn?.length
-        || !showTooltipRef?.current?.hideOn?.includes(HideTooltipReason.LEAVE)
-      ) return;
+      if (
+        !tooltipVisibleRef?.current ||
+        !showTooltipRef?.current ||
+        !showTooltipRef?.current?.hideOn?.length ||
+        !showTooltipRef?.current?.hideOn?.includes(HideTooltipReason.LEAVE)
+      )
+        return;
 
       if (!isInside(event) && !timeoutRef.current) {
         // console.log('MOUSEMOVE');
@@ -126,10 +134,12 @@ export const TooltipProvider: React.FC<TooltipProviderProps> = ({ children, main
     const handleMouseDown = (event: MouseEvent) => {
       clearTimeout(showTimeoutRef.current);
 
-      if (!tooltipVisibleRef?.current
-        || !showTooltipRef?.current
-        || !showTooltipRef?.current?.hideOn?.includes(HideTooltipReason.CLICK)
-      ) return;
+      if (
+        !tooltipVisibleRef?.current ||
+        !showTooltipRef?.current ||
+        !showTooltipRef?.current?.hideOn?.includes(HideTooltipReason.CLICK)
+      )
+        return;
 
       if (!isInside(event)) {
         hideTooltip(0);
@@ -137,25 +147,31 @@ export const TooltipProvider: React.FC<TooltipProviderProps> = ({ children, main
     };
 
     const handleFocusOut = (event: FocusEvent) => {
-      if (!tooltipVisibleRef?.current
-        || !showTooltipRef?.current
-        || !showTooltipRef?.current?.hideOn?.includes(HideTooltipReason.BLUR)
-      ) return;
+      if (
+        !tooltipVisibleRef?.current ||
+        !showTooltipRef?.current ||
+        !showTooltipRef?.current?.hideOn?.includes(HideTooltipReason.BLUR)
+      )
+        return;
 
       const { wrapperRef } = showTooltipRef.current;
 
-      if ([wrapperRef, tooltipContentRef].some(
-        el => el?.current && !el?.current.contains(event.relatedTarget as Node),
-      )) {
+      if (
+        [wrapperRef, tooltipContentRef].some(
+          el => el?.current && !el?.current.contains(event.relatedTarget as Node),
+        )
+      ) {
         hideTooltip(0);
       }
     };
 
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (!tooltipVisibleRef?.current
-        || !showTooltipRef?.current
-        || !showTooltipRef?.current?.hideOn?.includes(HideTooltipReason.ESCAPE)
-      ) return;
+      if (
+        !tooltipVisibleRef?.current ||
+        !showTooltipRef?.current ||
+        !showTooltipRef?.current?.hideOn?.includes(HideTooltipReason.ESCAPE)
+      )
+        return;
 
       if (event.key === 'Escape') {
         hideTooltip(0);

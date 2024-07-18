@@ -388,6 +388,6 @@ export default function base(
     suggestOnTriggerCharacters: true, // true
     renderLineHighlight: 'all', // 'none' | 'gutter' | 'line' | 'all'
     renderLineHighlightOnlyWhenFocus: true, // false
-    ...rest
+    ...rest,
   };
 }

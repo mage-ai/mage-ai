@@ -20,7 +20,8 @@ type OutputNodeProps = {
   className?: string;
   node: OutputNodeType;
   nodeRef: React.RefObject<HTMLDivElement>;
-} & CanvasNodeType & OutputGroupsType;
+} & CanvasNodeType &
+  OutputGroupsType;
 
 const OutputNode: React.FC<OutputNodeProps> = ({
   className,
@@ -33,25 +34,29 @@ const OutputNode: React.FC<OutputNodeProps> = ({
 }: OutputNodeProps) => {
   const block = node.block;
 
-  const [{ isDragging }, connectDrag] = useDrag(() => ({
-    collect: (monitor) => ({
-      isDragging: monitor.isDragging(),
+  const [{ isDragging }, connectDrag] = useDrag(
+    () => ({
+      collect: monitor => ({
+        isDragging: monitor.isDragging(),
+      }),
+      item: node,
+      type: node.type,
     }),
-    item: node,
-    type: node.type,
-  }), [node]);
+    [node],
+  );
 
   const draggingHandlers = setupDraggableHandlers(handlers, node, nodeRef, block);
 
-  const sharedProps = useMemo(() => draggableProps({
-    classNames: [
-    ],
-    draggable,
-    excludeClassNames: [
-      styles.container,
-    ],
-    node,
-  }), [draggable, node]);
+  const sharedProps = useMemo(
+    () =>
+      draggableProps({
+        classNames: [],
+        draggable,
+        excludeClassNames: [styles.container],
+        node,
+      }),
+    [draggable, node],
+  );
 
   useDispatchMounted(node, nodeRef);
 
@@ -60,11 +65,13 @@ const OutputNode: React.FC<OutputNodeProps> = ({
       {...sharedProps}
       className={[
         className,
-        (sharedProps.className || []),
+        sharedProps.className || [],
         // Class names reserved for the SettingsManager to determine what is visible
         // based on the selected groups.
         ...nodeClassNames(node),
-      ].filter(Boolean).join(' ')}
+      ]
+        .filter(Boolean)
+        .join(' ')}
       connectDrag={connectDrag}
       handlers={draggingHandlers}
       node={node}
@@ -74,11 +81,14 @@ const OutputNode: React.FC<OutputNodeProps> = ({
       <OutputGroups
         {...props}
         node={node}
-        styles={selectKeys(getStyles(node, {
-          draggable,
-          isDragging,
-          rect,
-        }), ['height', 'opacity'])}
+        styles={selectKeys(
+          getStyles(node, {
+            draggable,
+            isDragging,
+            rect,
+          }),
+          ['height', 'opacity'],
+        )}
       />
     </NodeWrapper>
   );

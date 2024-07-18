@@ -33,7 +33,9 @@ export function draggableProps({
       loading && styles.loading,
       requiredGroup && styles.requiredGroup,
       ...(classNames ?? []),
-    ]?.filter(cn => Boolean(cn) && (!excludeClassNames || !excludeClassNames.includes(cn)))?.join(' '),
+    ]
+      ?.filter(cn => Boolean(cn) && (!excludeClassNames || !excludeClassNames.includes(cn)))
+      ?.join(' '),
     draggable,
     droppable,
     role: ElementRoleEnum.BLOCK,

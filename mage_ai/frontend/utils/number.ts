@@ -1,4 +1,4 @@
-export const formatNumber = (value) => {
+export const formatNumber = value => {
   const [integer, float] = String(value).split('.');
   return `${integer.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}${float ? `.${float}` : ''}`;
 };
@@ -27,9 +27,7 @@ export function getPercentage(number) {
     return '';
   }
 
-  const percentage = (number === 1 || number === 0)
-    ? (number * 100)
-    : (number * 100).toFixed(2);
+  const percentage = number === 1 || number === 0 ? number * 100 : (number * 100).toFixed(2);
 
   return `${percentage}%`;
 }

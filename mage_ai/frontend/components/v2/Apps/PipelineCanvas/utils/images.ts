@@ -3,7 +3,7 @@ import html2canvas from 'html2canvas';
 import { calculateBoundingBox } from '@components/v2/Canvas/utils/rect';
 
 export async function handleSaveAsImage(canvasRef, wrapperRef, rectsMapping, imageDataRef) {
-  const generateImage = async (boundingBox) => {
+  const generateImage = async boundingBox => {
     const wrapper = wrapperRef.current;
 
     if (!wrapper) return;
@@ -14,7 +14,7 @@ export async function handleSaveAsImage(canvasRef, wrapperRef, rectsMapping, ima
     wrapper.style.display = 'block';
 
     // Adding a slight delay to ensure the node is fully rendered
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    await new Promise(resolve => setTimeout(resolve, 1000));
 
     // Get bounding box dimensions
     const { width, height } = boundingBox;
@@ -52,13 +52,12 @@ export async function handleSaveAsImage(canvasRef, wrapperRef, rectsMapping, ima
     wrapper.style.transform = originalTransform;
   };
 
-  const boundingBox =
-    calculateBoundingBox(Object.values(rectsMapping ?? {}));
+  const boundingBox = calculateBoundingBox(Object.values(rectsMapping ?? {}));
 
-  boundingBox.left -= boundingBox.width * 0.25
-  boundingBox.width *= 1.5
-  boundingBox.top -= boundingBox.height * 0.25
-  boundingBox.height *= 1.5
+  boundingBox.left -= boundingBox.width * 0.25;
+  boundingBox.width *= 1.5;
+  boundingBox.top -= boundingBox.height * 0.25;
+  boundingBox.height *= 1.5;
 
   generateImage(canvasRef.current.getBoundingClientRect());
 }

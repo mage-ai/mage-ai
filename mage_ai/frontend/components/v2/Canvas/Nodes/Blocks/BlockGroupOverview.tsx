@@ -6,7 +6,10 @@ import GradientContainer from '@mana/elements/Gradient';
 import Grid from '@mana/components/Grid';
 import PanelRows from '@mana/elements/PanelRows';
 import Text from '@mana/elements/Text';
-import { FrameworkType, PipelineExecutionFrameworkBlockType } from '@interfaces/PipelineExecutionFramework/interfaces';
+import {
+  FrameworkType,
+  PipelineExecutionFrameworkBlockType,
+} from '@interfaces/PipelineExecutionFramework/interfaces';
 import { LayoutDisplayEnum } from '../../types';
 import { BLOCK_TYPE_NAME_MAPPING, LANGUAGE_DISPLAY_MAPPING } from '@interfaces/BlockType';
 import { ModelContext } from '@components/v2/Apps/PipelineCanvas/ModelManager/ModelContext';
@@ -37,8 +40,11 @@ export default function BlockGroupOverview({
   const groups = 'children' in (block ?? {}) ? (block as { children: any[] }).children : [];
 
   const templatesForGroup = useMemo(() => (configuration as any)?.templates ?? {}, [configuration]);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  const blocks = useMemo(() => Object.values(blocksByGroupRef?.current?.[uuid] ?? {}) ?? [], [uuid]);
+  const blocks = useMemo(
+    () => Object.values(blocksByGroupRef?.current?.[uuid] ?? {}) ?? [],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [uuid],
+  );
 
   const childBlocksMemo = useMemo(() => {
     const blocksWithCustomCode = [];
@@ -53,37 +59,37 @@ export default function BlockGroupOverview({
       const valid = false;
 
       const templates = block2?.configuration?.templates ?? {};
-      const templatesHydrated = Object.entries(templates ?? {}).map(([templateUUID, { variables }]) => {
-        const {
-          name: templateName,
-          variables: templateVars,
-        } = templatesForGroup[templateUUID] ?? {};
+      const templatesHydrated = Object.entries(templates ?? {}).map(
+        ([templateUUID, { variables }]) => {
+          const { name: templateName, variables: templateVars } =
+            templatesForGroup[templateUUID] ?? {};
 
-        const vars = Object.entries(templateVars ?? {}).map(([varUUID, varConf]) => {
-          const required = (varConf as any)?.required;
-          const value = variables[varUUID] ?? varConf[varUUID];
-          const valid = !required || value !== undefined;
+          const vars = Object.entries(templateVars ?? {}).map(([varUUID, varConf]) => {
+            const required = (varConf as any)?.required;
+            const value = variables[varUUID] ?? varConf[varUUID];
+            const valid = !required || value !== undefined;
+            return {
+              description: (varConf as any)?.description,
+              name: (varConf as any)?.name,
+              required,
+              uuid: varUUID,
+              valid,
+              value,
+            };
+          });
+          const invalid = vars?.filter(({ valid }) => !valid)?.length ?? 0;
+          const required = vars?.filter(({ required }) => required)?.length ?? 0;
+
           return {
-            description: (varConf as any)?.description,
-            name: (varConf as any)?.name,
+            block: block2,
+            invalid,
+            name: templateName,
             required,
-            uuid: varUUID,
-            valid,
-            value,
+            uuid: templateUUID,
+            variables: vars,
           };
-        });
-        const invalid = vars?.filter(({ valid }) => !valid)?.length ?? 0;
-        const required = vars?.filter(({ required }) => required)?.length ?? 0;
-
-        return {
-          block: block2,
-          invalid,
-          name: templateName,
-          required,
-          uuid: templateUUID,
-          variables: vars,
-        };
-      });
+        },
+      );
 
       if (templatesHydrated?.length >= 1) {
         arr.push(...templatesHydrated);
@@ -100,74 +106,62 @@ export default function BlockGroupOverview({
     }
 
     return sorted?.map(([templateName, blocks2]) => (
-      <Grid
-        key={templateName}
-        rowGap={8}
-      >
+      <Grid key={templateName} rowGap={8}>
         <Text secondary xsmall>
           {templateName}
-        </Text  >
+        </Text>
 
         <PanelRows padding={false}>
-          {sortByKey(blocks2, ({ invalid }) => invalid)?.map(({
-            block: block3,
-            invalid,
-            name: name3,
-            uuid: uuid3,
-          }) => {
-            const error = invalid >= 1;
-            const valid = !error;
+          {sortByKey(blocks2, ({ invalid }) => invalid)?.map(
+            ({ block: block3, invalid, name: name3, uuid: uuid3 }) => {
+              const error = invalid >= 1;
+              const valid = !error;
 
-            return (
-              <GradientContainer
-                key={uuid3}
-                variant={error ? 'error-reverse' : undefined}
-              >
-                <Grid
-                  alignItems="center"
-                  columnGap={8}
-                  padding={12}
-                  templateColumns="1fr 1fr"
-                  templateRows="1fr"
-                >
+              return (
+                <GradientContainer key={uuid3} variant={error ? 'error-reverse' : undefined}>
                   <Grid
-                    alignItems="center"
+                    alignItems='center'
                     columnGap={8}
-                    justifyItems="start"
-                    templateColumns="auto"
-                    templateRows="1fr"
+                    padding={12}
+                    templateColumns='1fr 1fr'
+                    templateRows='1fr'
                   >
+                    <Grid
+                      alignItems='center'
+                      columnGap={8}
+                      justifyItems='start'
+                      templateColumns='auto'
+                      templateRows='1fr'
+                    >
+                      <Text medium secondary={!valid} small>
+                        {block3?.name ?? block3?.uuid}
+                      </Text>
+                    </Grid>
 
-                    <Text medium secondary={!valid} small>
-                      {block3?.name ?? block3?.uuid}
-                    </Text>
-                  </Grid>
-
-                  <Grid
-                    alignItems="center"
-                    columnGap={8}
-                    justifyItems="end"
-                    templateColumns="auto"
-                    templateRows="1fr"
-                  >
-                    {valid ?
-                      (
+                    <Grid
+                      alignItems='center'
+                      columnGap={8}
+                      justifyItems='end'
+                      templateColumns='auto'
+                      templateRows='1fr'
+                    >
+                      {valid ? (
                         <Circle
                           backgroundColor={valid ? 'green' : undefined}
-                          borderColor={valid ? undefined : (error ? 'red' : 'gray')}
+                          borderColor={valid ? undefined : error ? 'red' : 'gray'}
                           size={12}
                         />
-                      )
-                      : (
+                      ) : (
                         <Text medium secondary small>
                           Missing {pluralize('variable', invalid)}
-                        </Text >
+                        </Text>
                       )}
+                    </Grid>
                   </Grid>
-                </Grid>
-              </GradientContainer>
-            );
-          })}
+                </GradientContainer>
+              );
+            },
+          )}
         </PanelRows>
       </Grid>
     ));
@@ -178,14 +172,13 @@ export default function BlockGroupOverview({
       <Grid rowGap={8}>
         <PanelRows padding={false}>
           <Grid
-            alignItems="center"
+            alignItems='center'
             padding={16}
             rowGap={8}
             style={{ maxWidth: 400 }}
-            templateColumns="1fr"
-            templateRows="1fr"
+            templateColumns='1fr'
+            templateRows='1fr'
           >
-
             {configuration?.metadata?.required && (
               <Text italic secondary small>
                 This operation is required.
@@ -210,26 +203,26 @@ export default function BlockGroupOverview({
       <Grid rowGap={12}>
         {childBlocksMemo}
         {!childBlocksMemo && (
-          <PanelRows  padding={false}>
+          <PanelRows padding={false}>
             {/* <Grid justifyItems="start" padding={12} rowGap={4} templateColumns="auto" >
               <Text semibold xsmall>
                 Custom code
               </Text>
             </Grid> */}
-            {blocks?.map((block2) => (
+            {blocks?.map(block2 => (
               <Grid
-                  alignItems="stretch"
-                  baseLeft
-                  baseRight
-                  columnGap={8}
-                  justifyContent="space-between"
-                  key={block2.uuid}
-                  smallBottom
-                  smallTop
-                  style={{
-                    gridTemplateColumns: 'minmax(0px, max-content) auto',
-                  }}
-                >
+                alignItems='stretch'
+                baseLeft
+                baseRight
+                columnGap={8}
+                justifyContent='space-between'
+                key={block2.uuid}
+                smallBottom
+                smallTop
+                style={{
+                  gridTemplateColumns: 'minmax(0px, max-content) auto',
+                }}
+              >
                 <Text secondary small>
                   {block2?.name ?? block2?.uuid}
                 </Text>
@@ -238,11 +231,10 @@ export default function BlockGroupOverview({
                   {BLOCK_TYPE_NAME_MAPPING[block2?.type ?? '']}
                 </Text>
               </Grid>
-
             ))}
           </PanelRows>
         )}
-      </Grid >
+      </Grid>
     );
   }
 
@@ -258,7 +250,7 @@ export default function BlockGroupOverview({
         const blocks2 = [];
 
         if (group2?.children?.length > 0) {
-          group2?.children?.forEach((g3) => {
+          group2?.children?.forEach(g3 => {
             const group3 = groupMappingRef?.current?.[g3.uuid];
             const stats = groupValidation(group3, blocksByGroupRef?.current);
 
@@ -304,50 +296,57 @@ export default function BlockGroupOverview({
             variant={error ? 'error' : undefined}
           >
             <Grid
-              alignItems="center"
+              alignItems='center'
               columnGap={8}
               padding={12}
-              templateColumns="1fr 1fr"
-              templateRows="1fr"
+              templateColumns='1fr 1fr'
+              templateRows='1fr'
             >
               <Grid
-                alignItems="center"
+                alignItems='center'
                 columnGap={8}
-                justifyItems="start"
-                templateColumns="auto 1fr"
-                templateRows="1fr"
+                justifyItems='start'
+                templateColumns='auto 1fr'
+                templateRows='1fr'
               >
                 <Circle
                   backgroundColor={valid ? colorName?.base : undefined}
-                  borderColor={valid ? undefined : (error ? 'red' : 'gray')}
+                  borderColor={valid ? undefined : error ? 'red' : 'gray'}
                   size={12}
                 />
 
-                <Text italic={!required && ((blocks?.length ?? 0) === 0 && (blocks2?.length ?? 0) === 0)} medium secondary small>
+                <Text
+                  italic={!required && (blocks?.length ?? 0) === 0 && (blocks2?.length ?? 0) === 0}
+                  medium
+                  secondary
+                  small
+                >
                   {blocks?.length >= 1
                     ? pluralize('block', blocks?.length ?? 0)
                     : blocks2?.length > 0
                       ? pluralize('block', blocks2?.length ?? 0)
-                        // `${vcount}/${rcount}`
-                      : (required ? 'Required' : 'Optional')}
-                </Text >
+                      : // `${vcount}/${rcount}`
+                        required
+                        ? 'Required'
+                        : 'Optional'}
+                </Text>
               </Grid>
 
               <Grid
-                alignItems="center"
+                alignItems='center'
                 columnGap={8}
-                justifyItems="end"
-                templateColumns="auto"
-                templateRows="1fr"
+                justifyItems='end'
+                templateColumns='auto'
+                templateRows='1fr'
               >
                 <Text medium secondary={!valid} small>
                   {name ?? uuid2}
                 </Text>
               </Grid>
             </Grid>
-          </GradientContainer  >
+          </GradientContainer>
         );
       })}
-    </PanelRows  >
+    </PanelRows>
   );
 }

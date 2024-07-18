@@ -10,10 +10,7 @@ type KeyMapType = Record<string, CustomKeyboardEventType[]>;
 
 export interface KeyboardShortcutsType {
   deregisterCommands: () => void;
-  registerCommands: (
-    commands: Record<string, CommandType>,
-    metadata?: Record<string, any>,
-  ) => void;
+  registerCommands: (commands: Record<string, CommandType>, metadata?: Record<string, any>) => void;
 }
 
 export interface KeyboardShortcutsProps {
@@ -67,7 +64,8 @@ export default function useKeyboardShortcuts({
   function validatePredicate(predicate: PredicateType, events: CustomKeyboardEventType[]): boolean {
     const { key, predicates, present, type = EventEnum.KEYDOWN } = predicate;
 
-    DEBUG.keyboard.shortcuts && console.log(predicates, present, key, type, events, metadataRef.current);
+    DEBUG.keyboard.shortcuts &&
+      console.log(predicates, present, key, type, events, metadataRef.current);
 
     if (predicates?.length) {
       return predicates?.every((pred: PredicateType, position: number) =>
@@ -130,8 +128,8 @@ export default function useKeyboardShortcuts({
             predicates.length === 1
               ? validatePredicate(command.predicate, arr1)
               : arr1?.some((event: CustomKeyboardEventType) =>
-                validatePredicate(command.predicate, [event]),
-              ),
+                  validatePredicate(command.predicate, [event]),
+                ),
           );
         }
 

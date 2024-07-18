@@ -18,13 +18,13 @@ export function displayable(
   node: NodeItemType,
   conditions: EventOperationOptionsType['kwargs']['conditions'],
 ): boolean {
-  return conditions?.some(
-    (condition) => Object.entries(flattenObject(condition)).every(([key, value]) => {
+  return conditions?.some(condition =>
+    Object.entries(flattenObject(condition)).every(([key, value]) => {
       if ((value ?? undefined) === undefined) return true;
 
       const nodeValue = dig(node, key);
       const valid = Array.isArray(value)
-        ? value.every((v) => nodeValue.includes(v))
+        ? value.every(v => nodeValue.includes(v))
         : String(value) === String(nodeValue);
 
       // console.log(node, key, valid);

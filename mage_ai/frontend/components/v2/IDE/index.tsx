@@ -31,14 +31,17 @@ function MateriaIDE({
   const managerRef = useRef(null);
   const containerRef = useRef(null);
 
-  const wrapperSettings = useMemo(() => ({
-    options: {
-      configurations: {
-        ...configurationsOverride,
-        theme: themeSelected,
+  const wrapperSettings = useMemo(
+    () => ({
+      options: {
+        configurations: {
+          ...configurationsOverride,
+          theme: themeSelected,
+        },
       },
-    },
-  }), [configurationsOverride, themeSelected]);
+    }),
+    [configurationsOverride, themeSelected],
+  );
   const manager = useManager(uuid, resource, {
     wrapper: wrapperSettings,
   });
@@ -88,24 +91,29 @@ function MateriaIDE({
         }
       }
     };
-  }, [eventListeners, editorActions, manager, onMountEditor, persistManagerOnUnmount,
-    persistResourceOnUnmount]);
+  }, [
+    eventListeners,
+    editorActions,
+    manager,
+    onMountEditor,
+    persistManagerOnUnmount,
+    persistResourceOnUnmount,
+  ]);
 
   return (
     <ContainerStyled ref={containerRef}>
-      <Loading className="ide-loading" />
+      <Loading className='ide-loading' />
 
-      <IDEStyled
-        className={[
-          'ide-container',
-          containerClassName ?? '',
-        ].filter(Boolean).join(' ')}
-      >
-        <div className={editorClassName} ref={editorContainerRef} style={style ?? { height: '100vh' }} />
+      <IDEStyled className={['ide-container', containerClassName ?? ''].filter(Boolean).join(' ')}>
+        <div
+          className={editorClassName}
+          ref={editorContainerRef}
+          style={style ?? { height: '100vh' }}
+        />
       </IDEStyled>
 
       <div id={`monaco-suggest-application-root-${uuid}`} />
-    </ContainerStyled >
+    </ContainerStyled>
   );
 }
 

@@ -9,11 +9,18 @@ import React from 'react';
 import Tag from '@mana/components/Tag';
 import styles from '@styles/scss/components/Canvas/Nodes/BlockNode.module.scss';
 import { AnimatePresence, cubicBezier, motion, useAnimation } from 'framer-motion';
-import useAppEventsHandler, { CustomAppEvent, CustomAppEventEnum } from '../../Apps/PipelineCanvas/useAppEventsHandler';
+import useAppEventsHandler, {
+  CustomAppEvent,
+  CustomAppEventEnum,
+} from '../../Apps/PipelineCanvas/useAppEventsHandler';
 import stylesButton from '@styles/scss/elements/Button/Button.module.scss';
 import { AppNodeType, NodeType, OutputNodeType, PortType, RectType } from '../interfaces';
 import { BlockNodeWrapperProps } from './types';
-import { ClientEventType, EventOperationEnum, SubmitEventOperationType } from '@mana/shared/interfaces';
+import {
+  ClientEventType,
+  EventOperationEnum,
+  SubmitEventOperationType,
+} from '@mana/shared/interfaces';
 import { DEBUG } from '@components/v2/utils/debug';
 import { FileType } from '../../IDE/interfaces';
 import { ModelContext } from '@components/v2/Apps/PipelineCanvas/ModelManager/ModelContext';
@@ -58,7 +65,10 @@ export const BlockNodeWrapper: React.FC<BlockNodeType> = ({
   const layoutConfig = layoutConfigs?.current?.[activeLevel?.current - 1]?.current;
   const { outputsRef } = useContext(ModelContext);
   const selectedGroup = selectedGroupsRef?.current?.[activeLevel?.current - 1];
-  const blockInSelectedGroup = useMemo(() => block?.groups?.includes(selectedGroup?.uuid), [block, selectedGroup]);
+  const blockInSelectedGroup = useMemo(
+    () => block?.groups?.includes(selectedGroup?.uuid),
+    [block, selectedGroup],
+  );
   const outputsClosedRef = useRef(null);
   const handleAnimationCompleteRef = useRef(null);
 
@@ -85,9 +95,7 @@ export const BlockNodeWrapper: React.FC<BlockNodeType> = ({
 
   // console.log('render');
   // Hooks
-  const {
-    executeCode,
-  } = useExecuteCode((block as any)?.uuid, (block as any)?.uuid);
+  const { executeCode } = useExecuteCode((block as any)?.uuid, (block as any)?.uuid);
   const { subscribe, unsubscribe } = useRegistration((block as any)?.uuid, (block as any)?.uuid);
   const consumerID = useMemo(() => [String(node.id), 'main'].join(':'), [node]);
 
@@ -150,7 +158,8 @@ export const BlockNodeWrapper: React.FC<BlockNodeType> = ({
     const rect = curr ?? prev;
     const diff = rect?.diff;
 
-    const init = (node.version === 0 || ItemStatusEnum.READY !== node.status) && phaseRef.current <= 1;
+    const init =
+      (node.version === 0 || ItemStatusEnum.READY !== node.status) && phaseRef.current <= 1;
 
     nodeRef.current.style.height = `${rect.height}px`;
     nodeRef.current.style.width = `${rect.width}px`;
@@ -167,18 +176,17 @@ export const BlockNodeWrapper: React.FC<BlockNodeType> = ({
       dispatchAppEvent(CustomAppEventEnum.NODE_DISPLAYED, { node, nodes });
     }
 
-    const easing = cubicBezier(.35, .17, .3, .86);
+    const easing = cubicBezier(0.35, 0.17, 0.3, 0.86);
     controls.set({
       opacity: 0,
       scale: 0.9,
       ...(LayoutConfigDirectionEnum.HORIZONTAL === layoutConfig?.direction
         ? {
-          translateX: 16,
-        }
+            translateX: 16,
+          }
         : {
-          translateY: 16,
-        }
-      ),
+            translateY: 16,
+          }),
     });
     controls.start({
       opacity: 1,
@@ -216,18 +224,17 @@ export const BlockNodeWrapper: React.FC<BlockNodeType> = ({
     const mapping = indexBy(nodes, item => item.id);
     if (!(node.id in mapping)) return;
 
-    const easing = cubicBezier(.86, .3, .17, .35);
+    const easing = cubicBezier(0.86, 0.3, 0.17, 0.35);
     controls.set({
       opacity: 1,
       scale: 1,
       ...(LayoutConfigDirectionEnum.HORIZONTAL === layoutConfig?.direction
         ? {
-          translateX: 0,
-        }
+            translateX: 0,
+          }
         : {
-          translateY: 0,
-        }
-      ),
+            translateY: 0,
+          }),
     });
     controls.start({
       opacity: 0,
@@ -240,7 +247,6 @@ export const BlockNodeWrapper: React.FC<BlockNodeType> = ({
       translateX: 16,
       translateY: 16,
     });
-
 
     dispatchAppEvent(CustomAppEventEnum.NODE_DISMISSED, {
       node,
@@ -264,18 +270,17 @@ export const BlockNodeWrapper: React.FC<BlockNodeType> = ({
       if (level === node?.level && file?.path && blockInSelectedGroup) {
         appHandlersRef.current.browserItems.detail.mutate({
           id: file?.path,
-          onSuccess: (resp) => {
+          onSuccess: resp => {
             const itemf = resp?.data?.browser_item;
             updateFileCache({ server: itemf });
 
             const eventStreams = itemf?.output?.reduce(
-              (acc, result) => setNested(
-                acc,
-                [result.process.message_request_uuid, result.result_id].join('.'),
-                {
+              (acc, result) =>
+                setNested(acc, [result.process.message_request_uuid, result.result_id].join('.'), {
                   result,
-                },
-              ), {});
+                }),
+              {},
+            );
 
             if (!isEmptyObject(eventStreams)) {
               const outputNode = {
@@ -309,8 +314,16 @@ export const BlockNodeWrapper: React.FC<BlockNodeType> = ({
       clearTimeout(timeout);
       timeoutRef.current = null;
     };
-  }, [block, node, consumerID, file, blockInSelectedGroup, activeLevel,
-    appHandlersRef, dispatchAppEvent, unsubscribe,
+  }, [
+    block,
+    node,
+    consumerID,
+    file,
+    blockInSelectedGroup,
+    activeLevel,
+    appHandlersRef,
+    dispatchAppEvent,
+    unsubscribe,
   ]);
 
   useEffect(() => {
@@ -356,156 +369,170 @@ export const BlockNodeWrapper: React.FC<BlockNodeType> = ({
     });
   }
 
-  const submitCodeExecution = useCallback((event: React.MouseEvent<HTMLElement>) => {
-    handleSubscribe();
+  const submitCodeExecution = useCallback(
+    (event: React.MouseEvent<HTMLElement>) => {
+      handleSubscribe();
 
-    const execute = () => {
-      const message = getCode();
-      const [messageRequestUUID, future] = executeCode(message, {
-        output_dir: file?.path ?? null,
-        source: node.id,
-      }, {
-        future: true, onError: () => {
-          updateStyles(false);
-          clearTimeout(timeoutRef.current);
-        },
-      });
-
-      const outputNode = buildOutputNode(node, block, {
-        message,
-        message_request_uuid: messageRequestUUID,
-        uuid: (block as any)?.uuid,
-      });
-
-      // setOutputNodes((prev) => prev === null ? [outputNode] : prev);
-
-      updateStyles(true);
-
-      future();
-
-      let loops = 0;
-      const now = Number(new Date());
-      const updateTimerStatus = () => {
-        let diff = (Number(new Date()) - now) / 1000;
-        if (loops >= 600) {
-          diff = Math.round(diff);
-        }
-
-        if (timerStatusRef?.current) {
-          timerStatusRef.current.innerText =
-            formatNumberToDuration(diff * 1000);
-        }
-        loops++;
-        timeoutRef.current = setTimeout(
-          updateTimerStatus,
-          diff <= 60 * 1000 && loops <= 60 * 10 ? 100 : 1000,
+      const execute = () => {
+        const message = getCode();
+        const [messageRequestUUID, future] = executeCode(
+          message,
+          {
+            output_dir: file?.path ?? null,
+            source: node.id,
+          },
+          {
+            future: true,
+            onError: () => {
+              updateStyles(false);
+              clearTimeout(timeoutRef.current);
+            },
+          },
         );
-      };
 
-      clearTimeout(timeoutRef.current);
-      timeoutRef.current = setTimeout(
-        updateTimerStatus,
-        0,
-      );
-    };
-
-    if (outputsClosedRef?.current) {
-      setOutputNodes(outputsClosedRef.current);
-    }
-
-    if (getCode()?.length >= 1) {
-      execute();
-    } else {
-      appHandlersRef.current.browserItems.detail.mutate({
-        id: file.path,
-        onSuccess: (data: { browser_item: FileType }) => {
-          updateFileCache({ client: data?.browser_item });
-          execute();
-        },
-      });
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [block, consumerID, node, executeCode]);
-
-  const updateBlock = useCallback((
-    event: ClientEventType | Event, key: string, value: any) => {
-    submitEventOperation(
-      buildEvent(
-        event as any,
-        EventOperationEnum.MUTATE_MODEL_BLOCK,
-        node, nodeRef, block,
-      ), {
-      handler: (e, { blocks }) => {
-        blocks.update.mutate({
-          event,
-          onError: () => {
-            nodeRef.current.classList.remove(styles.loading);
-          },
-          onStart: () => {
-            nodeRef.current.classList.add(styles.loading);
-          },
-          onSuccess: () => {
-            nodeRef.current.classList.remove(styles.loading);
-          },
-          payload: setNested({ ...(block as any) }, key, value),
+        const outputNode = buildOutputNode(node, block, {
+          message,
+          message_request_uuid: messageRequestUUID,
+          uuid: (block as any)?.uuid,
         });
-      },
-    });
-  }, [block, node, nodeRef, submitEventOperation]);
 
-  const onMount = useCallback((port: PortType, portRef: React.RefObject<HTMLDivElement>) => {
-    if (!(port?.id in portElementRefs.current)) {
-      portElementRefs.current[port?.id] = {
-        port,
-        portRef,
+        // setOutputNodes((prev) => prev === null ? [outputNode] : prev);
+
+        updateStyles(true);
+
+        future();
+
+        let loops = 0;
+        const now = Number(new Date());
+        const updateTimerStatus = () => {
+          let diff = (Number(new Date()) - now) / 1000;
+          if (loops >= 600) {
+            diff = Math.round(diff);
+          }
+
+          if (timerStatusRef?.current) {
+            timerStatusRef.current.innerText = formatNumberToDuration(diff * 1000);
+          }
+          loops++;
+          timeoutRef.current = setTimeout(
+            updateTimerStatus,
+            diff <= 60 * 1000 && loops <= 60 * 10 ? 100 : 1000,
+          );
+        };
+
+        clearTimeout(timeoutRef.current);
+        timeoutRef.current = setTimeout(updateTimerStatus, 0);
       };
-      onMountPort(port, portRef);
-    }
-  }, [onMountPort]);
+
+      if (outputsClosedRef?.current) {
+        setOutputNodes(outputsClosedRef.current);
+      }
+
+      if (getCode()?.length >= 1) {
+        execute();
+      } else {
+        appHandlersRef.current.browserItems.detail.mutate({
+          id: file.path,
+          onSuccess: (data: { browser_item: FileType }) => {
+            updateFileCache({ client: data?.browser_item });
+            execute();
+          },
+        });
+      }
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [block, consumerID, node, executeCode],
+  );
+
+  const updateBlock = useCallback(
+    (event: ClientEventType | Event, key: string, value: any) => {
+      submitEventOperation(
+        buildEvent(event as any, EventOperationEnum.MUTATE_MODEL_BLOCK, node, nodeRef, block),
+        {
+          handler: (e, { blocks }) => {
+            blocks.update.mutate({
+              event,
+              onError: () => {
+                nodeRef.current.classList.remove(styles.loading);
+              },
+              onStart: () => {
+                nodeRef.current.classList.add(styles.loading);
+              },
+              onSuccess: () => {
+                nodeRef.current.classList.remove(styles.loading);
+              },
+              payload: setNested({ ...(block as any) }, key, value),
+            });
+          },
+        },
+      );
+    },
+    [block, node, nodeRef, submitEventOperation],
+  );
+
+  const onMount = useCallback(
+    (port: PortType, portRef: React.RefObject<HTMLDivElement>) => {
+      if (!(port?.id in portElementRefs.current)) {
+        portElementRefs.current[port?.id] = {
+          port,
+          portRef,
+        };
+        onMountPort(port, portRef);
+      }
+    },
+    [onMountPort],
+  );
 
   // Components
-  const sharedProps = useMemo(() => draggableProps({
-    classNames: [
-      // node?.status && styles[node?.status],
-      // styles.collapsed,
-      // styles.loading,
-    ],
-    draggable,
-    droppable,
-    emptyGroup,
-    node,
-    requiredGroup,
-  }), [draggable, droppable, requiredGroup, emptyGroup, node]);
+  const sharedProps = useMemo(
+    () =>
+      draggableProps({
+        classNames: [
+          // node?.status && styles[node?.status],
+          // styles.collapsed,
+          // styles.loading,
+        ],
+        draggable,
+        droppable,
+        emptyGroup,
+        node,
+        requiredGroup,
+      }),
+    [draggable, droppable, requiredGroup, emptyGroup, node],
+  );
 
-  const blockNode = useMemo(() => (
-    <BlockNodeComponent
-      activeLevel={activeLevel}
-      block={block}
-      buttonBeforeRef={buttonBeforeRef}
-      draggable={draggable}
-      handlers={draggingHandlers}
-      index={indexProp}
-      node={node}
-      nodeRef={nodeRef}
-      onMount={onMount}
-      submitCodeExecution={submitCodeExecution}
-      submitEventOperation={submitEventOperation}
-      timerStatusRef={timerStatusRef}
-      updateBlock={updateBlock}
-    />
-  ), [
-    activeLevel,
-    block,
-    draggable,
-    draggingHandlers,
-    indexProp,
-    node,
-    nodeRef,
-    onMount,
-    submitCodeExecution,
-    submitEventOperation,
-    updateBlock,
-  ]);
+  const blockNode = useMemo(
+    () => (
+      <BlockNodeComponent
+        activeLevel={activeLevel}
+        block={block}
+        buttonBeforeRef={buttonBeforeRef}
+        draggable={draggable}
+        handlers={draggingHandlers}
+        index={indexProp}
+        node={node}
+        nodeRef={nodeRef}
+        onMount={onMount}
+        submitCodeExecution={submitCodeExecution}
+        submitEventOperation={submitEventOperation}
+        timerStatusRef={timerStatusRef}
+        updateBlock={updateBlock}
+      />
+    ),
+    [
+      activeLevel,
+      block,
+      draggable,
+      draggingHandlers,
+      indexProp,
+      node,
+      nodeRef,
+      onMount,
+      submitCodeExecution,
+      submitEventOperation,
+      updateBlock,
+    ],
+  );
 
   const outputNodesMemo = useMemo(() => {
     if (activeLevel.current !== node?.level) return;
@@ -514,9 +541,7 @@ export const BlockNodeWrapper: React.FC<BlockNodeType> = ({
 
     outputNodes?.forEach((output: OutputNodeType) => {
       const props2 = draggableProps({
-        classNames: [
-          styles.nodeWrapper,
-        ],
+        classNames: [styles.nodeWrapper],
         draggable: true,
         droppable: false,
         node: output,
@@ -528,7 +553,9 @@ export const BlockNodeWrapper: React.FC<BlockNodeType> = ({
           className={[
             props2.className,
             // styles.hide,
-          ].filter(Boolean).join(' ')}
+          ]
+            .filter(Boolean)
+            .join(' ')}
           handleOnMessageRef={handleOnMessageRef}
           handlers={draggingHandlers}
           key={output.id}
@@ -542,20 +569,23 @@ export const BlockNodeWrapper: React.FC<BlockNodeType> = ({
     return arr;
   }, [node, outputNodes, draggingHandlers, handleOnMessageRef, activeLevel]);
 
-  const runtime = useMemo(() => (
-    <Tag
-      className={styles['display-if-executing']}
-      ref={timerStatusRef}
-      statusVariant
-      style={{
-        left: -10,
-        position: 'absolute',
-        top: -10,
-        zIndex: 7,
-      }}
-    />
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  ), []);
+  const runtime = useMemo(
+    () => (
+      <Tag
+        className={styles['display-if-executing']}
+        ref={timerStatusRef}
+        statusVariant
+        style={{
+          left: -10,
+          position: 'absolute',
+          top: -10,
+          zIndex: 7,
+        }}
+      />
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    ),
+    [],
+  );
 
   if (Wrapper) {
     return (
@@ -575,11 +605,13 @@ export const BlockNodeWrapper: React.FC<BlockNodeType> = ({
           // This causes a flicker when adding or removing blocks,
           // DO NOT ADD A CLASS THAT HIDES THIS COMPONENT!!!
           // styles.hide,
-          (sharedProps.className || []),
+          sharedProps.className || [],
           // Class names reserved for the SettingsManager to determine what is visible
           // based on the selected groups.
           ...nodeClassNames(node),
-        ].filter(Boolean).join(' ')}
+        ]
+          .filter(Boolean)
+          .join(' ')}
         handlers={draggingHandlers}
         node={node}
         nodeRef={nodeRef}
@@ -615,7 +647,10 @@ export const BlockNodeWrapper: React.FC<BlockNodeType> = ({
   return (
     <div
       {...draggableProps({
-        classNames: [styles.nodeWrapper], draggable: true, droppable: false, node,
+        classNames: [styles.nodeWrapper],
+        draggable: true,
+        droppable: false,
+        node,
       })}
       ref={nodeRef}
     >

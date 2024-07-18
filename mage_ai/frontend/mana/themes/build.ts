@@ -110,7 +110,10 @@ export default function buildTheme(themeSettings?: ThemeSettingsType): ThemeType
     ...elements,
     colors: {
       ...combiner.colors,
-      ...Object.entries(combiner.colors).reduce((acc, [key, value]) => ({ ...acc, [key.toLowerCase()]: value }), {}),
+      ...Object.entries(combiner.colors).reduce(
+        (acc, [key, value]) => ({ ...acc, [key.toLowerCase()]: value }),
+        {},
+      ),
     },
   };
 }

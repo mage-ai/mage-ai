@@ -1,16 +1,35 @@
 import React from 'react';
 import EventStreamType from '@interfaces/EventStreamType';
-import { MenuItemType, RenderContextMenuOptions, RemoveContextMenuType, RenderContextMenuType } from '@mana/hooks/useContextMenu';
+import {
+  MenuItemType,
+  RenderContextMenuOptions,
+  RemoveContextMenuType,
+  RenderContextMenuType,
+} from '@mana/hooks/useContextMenu';
 import type { DropTargetMonitor, XYCoord } from 'react-dnd';
-import PipelineExecutionFrameworkType, { ConfigurationType, FrameworkType } from '@interfaces/PipelineExecutionFramework/interfaces';
+import PipelineExecutionFrameworkType, {
+  ConfigurationType,
+  FrameworkType,
+} from '@interfaces/PipelineExecutionFramework/interfaces';
 import { MutateType } from '@api/interfaces';
 import BlockType, { TemplateType } from '@interfaces/BlockType';
 import {
-  AppNodeType, DragItem, NodeItemType, NodeType, RectType, PortType, LayoutConfigType,
-  PortMappingType, ItemMappingType, BlocksByGroupType, ModelMappingType, GroupLevelType,
-  BlockMappingType, OutputMappingType,
+  AppNodeType,
+  DragItem,
+  NodeItemType,
+  NodeType,
+  RectType,
+  PortType,
+  LayoutConfigType,
+  PortMappingType,
+  ItemMappingType,
+  BlocksByGroupType,
+  ModelMappingType,
+  GroupLevelType,
+  BlockMappingType,
+  OutputMappingType,
   GroupMappingType,
-  OutputNodeType
+  OutputNodeType,
 } from '../../Canvas/interfaces';
 import { ClientEventType } from '@mana/shared/interfaces';
 import { AppConfigType } from '../interfaces';
@@ -19,8 +38,11 @@ import { ItemTypeEnum } from '@components/v2/Canvas/types';
 import { CustomAppEventEnum } from './enums';
 import { MenuGroupType } from '@mana/components/Menu/interfaces';
 
-export type ItemElementsType = Record<ItemTypeEnum, Record<string, React.RefObject<HTMLDivElement | HTMLElement>>>;
-export type ItemElementsRefType = React.MutableRefObject<ItemElementsType>
+export type ItemElementsType = Record<
+  ItemTypeEnum,
+  Record<string, React.RefObject<HTMLDivElement | HTMLElement>>
+>;
+export type ItemElementsRefType = React.MutableRefObject<ItemElementsType>;
 export type SetActiveLevelType = (level?: number) => void;
 export type LayoutConfigRefType = React.MutableRefObject<LayoutConfigType>;
 export type ActiveLevelRefType = React.MutableRefObject<number>;
@@ -94,7 +116,7 @@ export interface EventManagerType {
 }
 
 export type LayoutManagerType = {
-  itemElementsRef: React.MutableRefObject<ItemElementsType>
+  itemElementsRef: React.MutableRefObject<ItemElementsType>;
 };
 
 export type ItemManagerType = {
@@ -108,13 +130,18 @@ export interface SettingsManagerType {
   selectedGroupsRef: React.MutableRefObject<MenuGroupType[]>;
 }
 
-export type SubscriberType = AppManagerType & EventManagerType & LayoutManagerType
-  & ModelManagerType & NodeItemType & ItemManagerType & SettingsManagerType;
+export type SubscriberType = AppManagerType &
+  EventManagerType &
+  LayoutManagerType &
+  ModelManagerType &
+  NodeItemType &
+  ItemManagerType &
+  SettingsManagerType;
 
 export interface CustomEventDetail {
   app?: AppConfigType;
   block?: BlockType;
-  event?: ClientEventType
+  event?: ClientEventType;
   eventStreams?: Record<string, Record<string, EventStreamType>>;
   item?: NodeItemType;
   manager?: SubscriberType;
@@ -134,4 +161,4 @@ export interface CustomAppEvent extends CustomEvent {
 export type SubscriptionType = {
   handler: (event: CustomAppEvent) => void;
   type: CustomAppEventEnum;
-}
+};

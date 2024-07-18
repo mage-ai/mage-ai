@@ -6,6 +6,4 @@ export default function useContentManager() {
   //   () => getFileCache(file?.path) || ({} as FileCacheType),
   //   [file],
   // );
-
-
 }

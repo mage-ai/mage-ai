@@ -2,7 +2,12 @@ import PipelineExecutionFrameworkType, {
   FrameworkType,
 } from '@interfaces/PipelineExecutionFramework/interfaces';
 import BlockType, { BlockTypeEnum } from '@interfaces/BlockType';
-import { BlockMappingType, BlocksByGroupType, GroupMappingType, GroupLevelType } from '../../../Canvas/interfaces';
+import {
+  BlockMappingType,
+  BlocksByGroupType,
+  GroupMappingType,
+  GroupLevelType,
+} from '../../../Canvas/interfaces';
 import { GroupUUIDEnum } from '@interfaces/PipelineExecutionFramework/types';
 import { extractNestedBlocks } from '@utils/models/pipeline';
 import { indexBy, flattenArray, uniqueArray } from '@utils/array';
@@ -39,13 +44,9 @@ export function buildDependencies(
       ? executionFramework?.pipelines ?? []
       : stack1.shift();
 
-    pipesInLevel?.forEach((pipe1) => {
+    pipesInLevel?.forEach(pipe1 => {
       const dependencies = {};
-      pipe1?.blocks?.forEach(({
-        downstream_blocks: dnb,
-        upstream_blocks: upb,
-        uuid: uuid1,
-      }) => {
+      pipe1?.blocks?.forEach(({ downstream_blocks: dnb, upstream_blocks: upb, uuid: uuid1 }) => {
         dependencies[uuid1] = {
           dn: [],
           up: [],
@@ -66,19 +67,15 @@ export function buildDependencies(
 
       const pipes = pipe1?.pipelines ?? [];
       if (pipes?.length >= 1) {
-        pipes.forEach((pipe2) => {
-          const {
-            dn,
-            up,
-          } = dependencies[pipe2.uuid] || {};
+        pipes.forEach(pipe2 => {
+          const { dn, up } = dependencies[pipe2.uuid] || {};
 
           pipesToAddToStack.push({
             ...pipe2,
             downstream_blocks: uniqueArray(dn),
-            groups: uniqueArray([
-              ...(pipe2.groups ?? []),
-              ...(pipe1.groups ?? []),
-            ]).filter(groupID => groupID !== pipe2.uuid),
+            groups: uniqueArray([...(pipe2.groups ?? []), ...(pipe1.groups ?? [])]).filter(
+              groupID => groupID !== pipe2.uuid,
+            ),
             upstream_blocks: uniqueArray(up),
           });
         });
@@ -104,35 +101,47 @@ export function buildDependencies(
   const pipesLast = levels[levels.length - 1] ?? [];
   const pipesMapping = indexBy(pipesLast, ({ uuid }) => uuid);
   const blocksLastLevel = [];
-  pipesLast?.forEach((pipe) => {
+  pipesLast?.forEach(pipe => {
     const { downstream_blocks: dn, upstream_blocks: up } = pipe;
     const blocks = pipe?.blocks ?? [];
 
     if (blocks?.length >= 1) {
-      blocks.forEach((block) => {
+      blocks.forEach(block => {
         if (!block?.downstream_blocks && dn?.length >= 1) {
           // If block has no downstream blocks, it can have a downstream to a block in another group.
-          dn.forEach((groupUUID) => {
+          dn.forEach(groupUUID => {
             const groupOther = pipesMapping[groupUUID];
             groupOther?.blocks?.forEach((blockOther: FrameworkType) => {
               if (!blockOther?.upstream_blocks) {
                 block.downstream_blocks ||= [];
-                block.downstream_blocks = uniqueArray([...block.downstream_blocks, blockOther.uuid]) as any;
+                block.downstream_blocks = uniqueArray([
+                  ...block.downstream_blocks,
+                  blockOther.uuid,
+                ]) as any;
                 blockOther.upstream_blocks ||= [];
-                blockOther.upstream_blocks = uniqueArray([...blockOther.upstream_blocks, block.uuid]) as any;
+                blockOther.upstream_blocks = uniqueArray([
+                  ...blockOther.upstream_blocks,
+                  block.uuid,
+                ]) as any;
               }
             });
           });
         } else if (!block?.upstream_blocks) {
           // If block has no upstream blocks, it can have an upstream to a block in another group.
-          up.forEach((groupUUID) => {
+          up.forEach(groupUUID => {
             const groupOther = pipesMapping[groupUUID];
             groupOther?.blocks?.forEach((blockOther: FrameworkType) => {
               if (!blockOther?.downstream_blocks) {
                 block.upstream_blocks ||= [];
-                block.upstream_blocks = uniqueArray([...block.upstream_blocks, blockOther.uuid]) as any;
+                block.upstream_blocks = uniqueArray([
+                  ...block.upstream_blocks,
+                  blockOther.uuid,
+                ]) as any;
                 blockOther.downstream_blocks ||= [];
-                blockOther.downstream_blocks = uniqueArray([...blockOther.downstream_blocks, block.uuid]) as any;
+                blockOther.downstream_blocks = uniqueArray([
+                  ...blockOther.downstream_blocks,
+                  block.uuid,
+                ]) as any;
               }
             });
           });
@@ -151,10 +160,10 @@ export function buildDependencies(
   // Remove unused attributes in the groups
   const groupMapping1 = {} as GroupMappingType;
   const groupsByLevel1 = [];
-  levels.forEach((groups) => {
+  levels.forEach(groups => {
     const groupsInLevel = [];
 
-    groups.forEach((group) => {
+    groups.forEach(group => {
       const group2 = selectKeys(group, [
         'configuration',
         'description',
@@ -176,13 +185,14 @@ export function buildDependencies(
   groupsByLevel1.reverse().forEach((groups: FrameworkType[], idx: number) => {
     const groupsInLevel = [];
 
-    groups.forEach((group) => {
+    groups.forEach(group => {
       const group2 = { ...group };
 
       if (idx >= 1) {
         const groupsInPrevLevel = groupsByLevel[0];
-        group2.children =
-          groupsInPrevLevel?.filter?.((groupPrev: FrameworkType) => groupPrev?.groups?.includes(group2.uuid));
+        group2.children = groupsInPrevLevel?.filter?.((groupPrev: FrameworkType) =>
+          groupPrev?.groups?.includes(group2.uuid),
+        );
       }
 
       groupsInLevel.push(group2);
@@ -190,10 +200,15 @@ export function buildDependencies(
 
     groupsByLevel.unshift(groupsInLevel);
   });
-  const groupMapping = indexBy(groupsByLevel.flatMap(groups => groups?.map(g => ({
-    ...groupMapping1[g.uuid],
-    ...g,
-  }))), g => g.uuid);
+  const groupMapping = indexBy(
+    groupsByLevel.flatMap(groups =>
+      groups?.map(g => ({
+        ...groupMapping1[g.uuid],
+        ...g,
+      })),
+    ),
+    g => g.uuid,
+  );
 
   // Get all the blocks from the user’s pipeline
   const pipelinesMapping = indexBy(extractNestedPipelines(pipeline), ({ uuid }) => uuid);
@@ -270,10 +285,12 @@ function blocksToGroupMapping(blocks: BlockType[]): BlocksByGroupType {
   return mapping as BlocksByGroupType;
 }
 
-function extractNestedPipelines(pipeline: PipelineExecutionFrameworkType): PipelineExecutionFrameworkType[] {
+function extractNestedPipelines(
+  pipeline: PipelineExecutionFrameworkType,
+): PipelineExecutionFrameworkType[] {
   const pipes = [];
 
-  pipeline?.pipelines?.forEach((pipe) => {
+  pipeline?.pipelines?.forEach(pipe => {
     pipes.push(pipe);
     pipes.push(...extractNestedPipelines(pipe));
   });

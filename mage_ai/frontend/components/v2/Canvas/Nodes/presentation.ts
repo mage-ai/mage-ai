@@ -8,11 +8,7 @@ export function getModeColorName(blocks: BlockType[]): ColorNameType {
   if (!blocks?.length) return;
 
   const typeCounts = Object.entries(
-    countOccurrences(
-      flattenArray(
-        blocks?.map(b => b?.type) ?? []
-      )
-    ) ?? {},
+    countOccurrences(flattenArray(blocks?.map(b => b?.type) ?? [])) ?? {},
   )?.map(([type, count]) => ({ count, type }));
 
   const modeTypes = sortByKey(typeCounts, ({ count }) => count, { ascending: false });
@@ -21,7 +17,7 @@ export function getModeColorName(blocks: BlockType[]): ColorNameType {
   return getBlockColor(modeType as BlockTypeEnum, { getColorName: true })?.names;
 }
 
-export const blockColorNames = (node) => {
+export const blockColorNames = node => {
   const type = node?.block?.type;
   if (!type || [BlockTypeEnum.GROUP, BlockTypeEnum.PIPELINE].includes(type)) {
     return getBlockColor(type ?? BlockTypeEnum.GROUP, { getColorName: true })?.names;
@@ -30,7 +26,9 @@ export const blockColorNames = (node) => {
   if (ItemTypeEnum.NODE === node?.type) {
     // Use the color of the most common block type in the group.
     const typeCounts = Object.entries(
-      countOccurrences(flattenArray((node as NodeType)?.items?.map(i => (i as NodeItemType)?.block?.type) || [])) ?? {},
+      countOccurrences(
+        flattenArray((node as NodeType)?.items?.map(i => (i as NodeItemType)?.block?.type) || []),
+      ) ?? {},
     )?.map(([type, count]) => ({ type, count }));
 
     const modeTypes = sortByKey(typeCounts, ({ count }) => count, { ascending: false });

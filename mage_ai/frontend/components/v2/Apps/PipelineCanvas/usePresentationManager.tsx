@@ -1,8 +1,21 @@
 import React, { createRef, useRef } from 'react';
 import update from 'immutability-helper';
 import { ConnectionLines } from '../../Canvas/Connections/ConnectionLines';
-import { DragItem, NodeItemType, NodeType, RectType, PortType, LayoutConfigType, ModelMappingType } from '../../Canvas/interfaces';
-import { ItemTypeEnum, LayoutConfigDirectionEnum, LayoutConfigDirectionOriginEnum, PortSubtypeEnum } from '../../Canvas/types';
+import {
+  DragItem,
+  NodeItemType,
+  NodeType,
+  RectType,
+  PortType,
+  LayoutConfigType,
+  ModelMappingType,
+} from '../../Canvas/interfaces';
+import {
+  ItemTypeEnum,
+  LayoutConfigDirectionEnum,
+  LayoutConfigDirectionOriginEnum,
+  PortSubtypeEnum,
+} from '../../Canvas/types';
 import { LayoutManagerType } from './useLayoutManager';
 import { ModelManagerType } from './useModelManager';
 import { createRoot, Root } from 'react-dom/client';
@@ -24,23 +37,37 @@ type PresentationManagerProps = {
   mutateModels: ModelManagerType['mutateModels'];
   portsRef: ModelManagerType['portsRef'];
   updateNodeItems: ModelManagerType['updateNodeItems'];
-  itemElementsRef: React.MutableRefObject<Record<string, Record<string, React.RefObject<HTMLDivElement>>>>;
+  itemElementsRef: React.MutableRefObject<
+    Record<string, Record<string, React.RefObject<HTMLDivElement>>>
+  >;
 };
 
 export type PresentationManagerType = {
   connectionLinesPathRef: React.MutableRefObject<
-    Record<string, Record<string, {
-      handleUpdatePath: (item: NodeItemType) => void;
-      pathRef: React.RefObject<SVGPathElement>;
-    }>>>;
+    Record<
+      string,
+      Record<
+        string,
+        {
+          handleUpdatePath: (item: NodeItemType) => void;
+          pathRef: React.RefObject<SVGPathElement>;
+        }
+      >
+    >
+  >;
   connectionLinesRootID: React.MutableRefObject<string>;
   itemDraggingRef: React.MutableRefObject<NodeItemType | null>;
   itemsMetadataRef: React.MutableRefObject<Record<string, any>>;
 
   onMountPort: (port: PortType, portRef: React.RefObject<HTMLDivElement>) => void;
-  renderConnectionLines: (opts?: {
-    layout?: LayoutConfigType | undefined; modelMapping?: ModelMappingType | undefined;
-  } | undefined) => React.ReactNode;
+  renderConnectionLines: (
+    opts?:
+      | {
+          layout?: LayoutConfigType | undefined;
+          modelMapping?: ModelMappingType | undefined;
+        }
+      | undefined,
+  ) => React.ReactNode;
   updateItemsMetadata: (data?: { version?: number }) => void;
 };
 
@@ -55,8 +82,6 @@ export default function usePresentationManager({
   // Updates the itemsReftems,
   updateNodeItems,
 }: PresentationManagerProps): PresentationManagerType {
-
-
   const connectionLinesRootID = useRef<string>(buildConnectionLinesRootID('nodes'));
   const connectionLineRootRef = useRef<React.MutableRefObject<Root>>(null);
   const connectionLinesPathRef = useRef<
@@ -97,7 +122,7 @@ export default function usePresentationManager({
     const port = update(item, {
       rect: {
         $set: {
-          height: (rect?.height ?? 0),
+          height: rect?.height ?? 0,
           left: (rect?.left ?? 0) + (rectDef?.left ?? 0),
           offset: {
             left: portRef?.current?.offsetLeft,
@@ -105,7 +130,7 @@ export default function usePresentationManager({
           },
           top: (rect?.top ?? 0) + (rectDef?.top ?? 0),
           version: rectVersion,
-          width: (rect?.width ?? 0),
+          width: rect?.width ?? 0,
         },
       },
     });
@@ -129,7 +154,8 @@ export default function usePresentationManager({
     const isVertical = LayoutConfigDirectionEnum.VERTICAL === direction;
     const isReverse =
       (origin ?? false) &&
-      origin && [LayoutConfigDirectionOriginEnum.BOTTOM, LayoutConfigDirectionOriginEnum.RIGHT].includes(
+      origin &&
+      [LayoutConfigDirectionOriginEnum.BOTTOM, LayoutConfigDirectionOriginEnum.RIGHT].includes(
         origin,
       );
 
@@ -215,7 +241,9 @@ export default function usePresentationManager({
       // port.rect
       const rect2Port =
         port2Override?.rect ??
-        itemElementsRef?.current?.port?.[(port2 ?? { id: 'null' }).id]?.current?.getBoundingClientRect();
+        itemElementsRef?.current?.port?.[
+          (port2 ?? { id: 'null' }).id
+        ]?.current?.getBoundingClientRect();
       // node.rect
       // const rect2Node =
       //   itemElementsRef?.current?.node?.[node2.id]?.current?.getBoundingClientRect();
@@ -342,20 +370,19 @@ export default function usePresentationManager({
       if (colors?.length >= 2) {
         paths[gradientID] = (
           <defs key={`${gradientID}-defs`}>
-            <linearGradient id={gradientID} x1="0%" x2="100%" y1="0%" y2="0%">
+            <linearGradient id={gradientID} x1='0%' x2='100%' y1='0%' y2='0%'>
               <stop
-                offset="0%"
+                offset='0%'
                 style={{ stopColor: `var(--colors-${colors[1]})`, stopOpacity: 1 }}
               />
               <stop
-                offset="100%"
+                offset='100%'
                 style={{ stopColor: `var(--colors-${colors[0]})`, stopOpacity: 1 }}
               />
             </linearGradient>
           </defs>
         );
       }
-
 
       if (typeof fromValues?.id !== 'undefined' && typeof toValues?.id !== 'undefined') {
         const pathRef =
@@ -376,7 +403,7 @@ export default function usePresentationManager({
         paths[portIDsCombined] = (
           <path
             d={dValueForPath}
-            fill="none"
+            fill='none'
             id={portIDsCombined}
             key={`${portIDsCombined}-path`}
             ref={pathRef}
@@ -409,7 +436,9 @@ export default function usePresentationManager({
     });
 
     (connectionLineRootRef as { current: any }).current ||= createRoot(element);
-    (connectionLineRootRef.current as any).render(<ConnectionLines>{Object.values(paths)}</ConnectionLines>);
+    (connectionLineRootRef.current as any).render(
+      <ConnectionLines>{Object.values(paths)}</ConnectionLines>,
+    );
   }
 
   return {

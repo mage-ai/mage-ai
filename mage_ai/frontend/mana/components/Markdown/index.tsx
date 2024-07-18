@@ -11,7 +11,10 @@ import { PluggableList } from 'react-markdown/lib/react-markdown';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { cb as CodeStyle } from 'react-syntax-highlighter/dist/esm/styles/prism';
 
-function Markdown({ children, ...rest }: {
+function Markdown({
+  children,
+  ...rest
+}: {
   children: string;
 } & MarkdownType) {
   return (
@@ -19,7 +22,7 @@ function Markdown({ children, ...rest }: {
       <ReactMarkdown
         components={{
           a: ({ children, href }) => (
-            <Link href={href} inline target="_blank" {...rest?.a}>
+            <Link href={href} inline target='_blank' {...rest?.a}>
               {children}
             </Link>
           ),
@@ -27,7 +30,7 @@ function Markdown({ children, ...rest }: {
             const match = /language-(\w+)/.exec(className || '');
             return !inline && match ? (
               <SyntaxHighlighter
-                PreTag="div"
+                PreTag='div'
                 language={match[1]}
                 style={CodeStyle}
                 {...props}
@@ -36,13 +39,7 @@ function Markdown({ children, ...rest }: {
                 {String(code ?? '').replace(/\n$/, '')}
               </SyntaxHighlighter>
             ) : (
-              <Text
-                inline
-                monospace
-                style={{ whiteSpace: 'pre' }}
-                {...props}
-                {...rest?.code}
-              >
+              <Text inline monospace style={{ whiteSpace: 'pre' }} {...props} {...rest?.code}>
                 {children}
               </Text>
             );
@@ -52,15 +49,43 @@ function Markdown({ children, ...rest }: {
               {children}
             </Text>
           ),
-          h1: ({ children }) => <Headline h={1} {...rest?.h1}>{children}</Headline>,
-          h2: ({ children }) => <Headline h={2} {...rest?.h2}>{children}</Headline>,
-          h3: ({ children }) => <Headline h={3} {...rest?.h3}>{children}</Headline>,
-          h4: ({ children }) => <Headline h={4} {...rest?.h4}>{children}</Headline>,
-          h5: ({ children }) => <Headline h={5} {...rest?.h5}>{children}</Headline>,
+          h1: ({ children }) => (
+            <Headline h={1} {...rest?.h1}>
+              {children}
+            </Headline>
+          ),
+          h2: ({ children }) => (
+            <Headline h={2} {...rest?.h2}>
+              {children}
+            </Headline>
+          ),
+          h3: ({ children }) => (
+            <Headline h={3} {...rest?.h3}>
+              {children}
+            </Headline>
+          ),
+          h4: ({ children }) => (
+            <Headline h={4} {...rest?.h4}>
+              {children}
+            </Headline>
+          ),
+          h5: ({ children }) => (
+            <Headline h={5} {...rest?.h5}>
+              {children}
+            </Headline>
+          ),
           hr: () => <Divider {...rest?.hr} />,
           p: ({ children }) => <Text {...rest?.p}>{children}</Text>,
-          pre: ({ children }) => <Text pre {...rest?.pre}>{children}</Text>,
-          span: ({ children }) => <Text inline {...rest?.span}>{children}</Text>,
+          pre: ({ children }) => (
+            <Text pre {...rest?.pre}>
+              {children}
+            </Text>
+          ),
+          span: ({ children }) => (
+            <Text inline {...rest?.span}>
+              {children}
+            </Text>
+          ),
           strong: ({ children }) => (
             <Text bold inline {...rest?.strong}>
               {children}

@@ -1,6 +1,9 @@
 import React, { useEffect, useRef } from 'react';
 
-export default function DetailLayout({ children, loadEditorServices }: {
+export default function DetailLayout({
+  children,
+  loadEditorServices,
+}: {
   children: React.ReactNode;
   loadEditorServices?: boolean;
 }) {

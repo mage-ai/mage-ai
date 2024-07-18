@@ -1,7 +1,10 @@
 import BlockType, { BlockTypeEnum } from '@interfaces/BlockType';
 import Grid from '@mana/components/Grid';
 import Link from '@mana/elements/Link';
-import useAppEventsHandler, { CustomAppEvent, CustomAppEventEnum } from '@components/v2/Apps/PipelineCanvas/useAppEventsHandler';
+import useAppEventsHandler, {
+  CustomAppEvent,
+  CustomAppEventEnum,
+} from '@components/v2/Apps/PipelineCanvas/useAppEventsHandler';
 import { ElementRoleEnum } from '@mana/shared/types';
 import { LayoutConfigDirectionEnum } from '../../types';
 import { MenuGroupType } from '@mana/components/Menu/interfaces';
@@ -32,7 +35,8 @@ export default function TeleportGroup({
   const { activeLevel, layoutConfigs, selectedGroupsRef } = useContext(SettingsContext);
   const layoutConfig = layoutConfigs?.current?.[selectedGroupsRef?.current?.length - 1];
   const { convertEvent, dispatchAppEvent } = useAppEventsHandler({ block } as any);
-  const { blockMappingRef, blocksByGroupRef, groupMappingRef, groupsByLevelRef } = useContext(ModelContext);
+  const { blockMappingRef, blocksByGroupRef, groupMappingRef, groupsByLevelRef } =
+    useContext(ModelContext);
   const { setSelectedGroup } = useContext(EventContext);
   const groupsInLevel = groupsByLevelRef?.current?.[activeLevel?.current - 2];
   const group = groupMappingRef?.current?.[selectedGroup?.uuid];
@@ -41,19 +45,21 @@ export default function TeleportGroup({
   const parentGroups = groupsInLevel?.filter(({ uuid }) => block?.groups?.includes(uuid));
   const groupsInParent = parentGroups?.flatMap(({ children }) => children ?? []);
 
-  const {
-    downstreamInGroup,
-    upstreamInGroup,
-  } = getUpDownstreamColors(block, groupsInLevel, blocksByGroupRef?.current, {
-    blockMapping: blockMappingRef?.current,
-    groupMapping: groupMappingRef?.current,
-  });
+  const { downstreamInGroup, upstreamInGroup } = getUpDownstreamColors(
+    block,
+    groupsInLevel,
+    blocksByGroupRef?.current,
+    {
+      blockMapping: blockMappingRef?.current,
+      groupMapping: groupMappingRef?.current,
+    },
+  );
 
   const isup = upstreamInGroup?.length > 0;
   const isdn = downstreamInGroup?.length > 0;
 
-  const colorName =
-    getBlockColor(block?.type ?? BlockTypeEnum.GROUP, { getColorName: true })?.names?.base;
+  const colorName = getBlockColor(block?.type ?? BlockTypeEnum.GROUP, { getColorName: true })?.names
+    ?.base;
 
   return (
     <Link
@@ -69,10 +75,10 @@ export default function TeleportGroup({
       wrap
     >
       <Grid
-        alignItems="start"
+        alignItems='start'
         borderColor={colorName}
         borders
-        height="inherit"
+        height='inherit'
         padding={12}
         style={{
           backgroundColor: 'var(--backgrounds-body)',
@@ -83,7 +89,7 @@ export default function TeleportGroup({
           inputColorName: isup && upstreamInGroup?.[0]?.colorName,
           outputColorName: isdn && downstreamInGroup?.[0]?.colorName,
         })}
-      </Grid >
+      </Grid>
     </Link>
   );
 }

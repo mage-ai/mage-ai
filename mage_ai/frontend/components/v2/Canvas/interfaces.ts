@@ -1,11 +1,19 @@
 import BlockType from '@interfaces/BlockType';
 import { RectType as RectTypeBase } from '@mana/shared/interfaces';
 import PipelineType from '@interfaces/PipelineType';
-import { FrameworkType, PipelineExecutionFrameworkBlockType } from '@interfaces/PipelineExecutionFramework/interfaces';
+import {
+  FrameworkType,
+  PipelineExecutionFrameworkBlockType,
+} from '@interfaces/PipelineExecutionFramework/interfaces';
 import { GroupUUIDEnum } from '@interfaces/PipelineExecutionFramework/types';
 import {
-  LayoutStyleEnum, LayoutVerticalAlignmentEnum, LayoutHorizontalAlignmentEnum,
-  ItemStatusEnum, RectTransformationScopeEnum, TransformRectTypeEnum, LayoutDisplayEnum,
+  LayoutStyleEnum,
+  LayoutVerticalAlignmentEnum,
+  LayoutHorizontalAlignmentEnum,
+  ItemStatusEnum,
+  RectTransformationScopeEnum,
+  TransformRectTypeEnum,
+  LayoutDisplayEnum,
 } from './types';
 import { AppConfigType } from '../Apps/interfaces';
 import { ZoomPanStateType } from '@mana/hooks/useZoomPan';
@@ -50,7 +58,7 @@ interface BaseItem {
 
 export interface OutputNodeType extends DragItem {
   eventStreams?: Record<string, Record<string, EventStreamType>>;
-  process?: ProcessDetailsType | { message: string, message_request_uuid: string };
+  process?: ProcessDetailsType | { message: string; message_request_uuid: string };
 }
 
 export interface DragItem extends BaseItem {

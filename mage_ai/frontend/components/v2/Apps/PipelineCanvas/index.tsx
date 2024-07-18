@@ -10,7 +10,10 @@ import { getClosestRole } from '@utils/elements';
 import { useEffect, useRef, useState } from 'react';
 import { DEBUG } from '@components/v2/utils/debug';
 
-export default function PipelineBuilder({ loading, ...props }: BuilderCanvasProps & {
+export default function PipelineBuilder({
+  loading,
+  ...props
+}: BuilderCanvasProps & {
   loading?: boolean;
 }) {
   const canvasRef = useRef<HTMLDivElement>(null);
@@ -77,10 +80,7 @@ export default function PipelineBuilder({ loading, ...props }: BuilderCanvasProp
     setZoomPanDisabledState(value);
   }
 
-  DEBUG.dragging && console.log(
-    ['dragEnabled', dragEnabled],
-    ['dropEnabled', dropEnabled],
-  );
+  DEBUG.dragging && console.log(['dragEnabled', dragEnabled], ['dropEnabled', dropEnabled]);
 
   useEffect(() => {
     const handleMouseDown = (event: MouseEvent) => {
@@ -88,10 +88,9 @@ export default function PipelineBuilder({ loading, ...props }: BuilderCanvasProp
       removeContextMenu(event as ClientEventType, { conditionally: true });
 
       const targetElement = event.target as HTMLElement;
-      const hasRole = dragEnabled
-        && getClosestRole(targetElement, [
-          dragEnabled && ElementRoleEnum.DRAGGABLE,
-        ].filter(Boolean));
+      const hasRole =
+        dragEnabled &&
+        getClosestRole(targetElement, [dragEnabled && ElementRoleEnum.DRAGGABLE].filter(Boolean));
 
       DEBUG.dragging && console.log('handleMouseDown', targetElement, hasRole);
       if (hasRole) {
@@ -108,11 +107,15 @@ export default function PipelineBuilder({ loading, ...props }: BuilderCanvasProp
       if (shouldPassControl(event as ClientEventType)) return;
 
       const targetElement = event.target as HTMLElement;
-      const hasRole = dragEnabled
-        && getClosestRole(targetElement, [
-          dragEnabled && ElementRoleEnum.DRAGGABLE,
-          dropEnabled && ElementRoleEnum.DROPPABLE,
-        ].filter(Boolean));
+      const hasRole =
+        dragEnabled &&
+        getClosestRole(
+          targetElement,
+          [
+            dragEnabled && ElementRoleEnum.DRAGGABLE,
+            dropEnabled && ElementRoleEnum.DROPPABLE,
+          ].filter(Boolean),
+        );
 
       if (hasRole) {
         setZoomPanDisabled(false);

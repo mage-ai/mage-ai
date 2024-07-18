@@ -43,15 +43,21 @@ export interface RectType {
 export type ClientEventType = {
   button?: ButtonEnum;
   control?: EventControlType;
-  data?: Record<string, BlockType | any> | {
-    app?: any;
-    block?: BlockType;
-    node?: any;
-    nodes?: any[];
-  };
+  data?:
+    | Record<string, BlockType | any>
+    | {
+        app?: any;
+        block?: BlockType;
+        node?: any;
+        nodes?: any[];
+      };
   handle?: HandleOperationType;
-  operationTarget?: HTMLElement | React.RefObject<HTMLElement> | React.RefObject<HTMLDivElement>
-  | React.RefObject<Element> | null;
+  operationTarget?:
+    | HTMLElement
+    | React.RefObject<HTMLElement>
+    | React.RefObject<HTMLDivElement>
+    | React.RefObject<Element>
+    | null;
   operationType?: EventOperationEnum;
 } & Event &
   MouseEvent &

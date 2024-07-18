@@ -31,7 +31,8 @@ export default function useOutputManager(): OutputManagerType {
     subscribeToEvents: (onMessage: (event: EventStreamType) => void) => void,
     onMount: () => void,
   ) {
-    DEBUG.codeExecution.manager && console.log('[OutputManager] Adding group...', messageRequestUUID);
+    DEBUG.codeExecution.manager &&
+      console.log('[OutputManager] Adding group...', messageRequestUUID);
 
     if (!containerRef.current) {
       DEBUG.codeExecution.manager && console.error('[OutputManager] containerRef is missing');
@@ -39,8 +40,8 @@ export default function useOutputManager(): OutputManagerType {
     }
 
     if (messageRequestUUID in (elementsRef?.current ?? {})) {
-      DEBUG.codeExecution.manager
-        && console.error('[OutputManager] Group already exists', elementsRef.current);
+      DEBUG.codeExecution.manager &&
+        console.error('[OutputManager] Group already exists', elementsRef.current);
       return;
     }
 
@@ -59,10 +60,11 @@ export default function useOutputManager(): OutputManagerType {
           ref={groupsRef.current[messageRequestUUID]}
           subscribeToEvents={subscribeToEvents}
         />
-      </ContextProvider >,
+      </ContextProvider>,
     );
 
-    DEBUG.codeExecution.manager && console.log('[OutputManager] Group added...', messageRequestUUID);
+    DEBUG.codeExecution.manager &&
+      console.log('[OutputManager] Group added...', messageRequestUUID);
   }
 
   function removeGroup(uuid: string) {

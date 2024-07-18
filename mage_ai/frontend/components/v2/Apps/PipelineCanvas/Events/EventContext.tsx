@@ -8,7 +8,9 @@ import BlockType from '@interfaces/BlockType';
 
 interface EventContextType {
   handleContextMenu?: (
-    event: ClientEventType, items?: MenuItemType[], opts?: RenderContextMenuOptions,
+    event: ClientEventType,
+    items?: MenuItemType[],
+    opts?: RenderContextMenuOptions,
   ) => void;
   handleMouseDown: (event: MouseEvent) => void;
   removeContextMenu: RemoveContextMenuType;
@@ -23,11 +25,6 @@ interface EventProvider extends EventContextType {
   children: React.ReactNode;
 }
 
-export const EventProvider: React.FC<EventProvider> = ({
-  children,
-  ...props
-}: EventProvider) => (
-  <EventContext.Provider value={props}>
-    {children}
-  </EventContext.Provider>
+export const EventProvider: React.FC<EventProvider> = ({ children, ...props }: EventProvider) => (
+  <EventContext.Provider value={props}>{children}</EventContext.Provider>
 );

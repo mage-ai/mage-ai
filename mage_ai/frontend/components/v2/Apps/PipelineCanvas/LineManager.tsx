@@ -1,4 +1,12 @@
-import React, { createRef, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import React, {
+  createRef,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { getUpDownstreamColors } from '../../Canvas/Nodes/Blocks/utils';
 import stylesBuilder from '@styles/scss/apps/Canvas/Pipelines/Builder.module.scss';
 import { ModelContext } from './ModelManager/ModelContext';
@@ -6,10 +14,17 @@ import { cubicBezier, motion, useAnimation, useAnimate } from 'framer-motion';
 import { SettingsContext } from './SettingsManager/SettingsContext';
 import useAppEventsHandler, { CustomAppEvent, CustomAppEventEnum } from './useAppEventsHandler';
 import { nodeClassNames } from '../../Canvas/Nodes/utils';
-import { ConnectionLines, LinePathType, linePathKey } from '../../Canvas/Connections/ConnectionLines';
+import {
+  ConnectionLines,
+  LinePathType,
+  linePathKey,
+} from '../../Canvas/Connections/ConnectionLines';
 import {
   LayoutStyleEnum,
-  ItemStatusEnum, LayoutDisplayEnum, LayoutConfigDirectionEnum, ItemTypeEnum
+  ItemStatusEnum,
+  LayoutDisplayEnum,
+  LayoutConfigDirectionEnum,
+  ItemTypeEnum,
 } from '../../Canvas/types';
 import { LayoutConfigType, NodeItemType, OutputNodeType } from '@components/v2/Canvas/interfaces';
 import { getBlockColor } from '@mana/themes/blocks';
@@ -27,7 +42,7 @@ const ORDER = {
   [ItemTypeEnum.NODE]: 0,
   [ItemTypeEnum.BLOCK]: 1,
   [ItemTypeEnum.OUTPUT]: 1,
-}
+};
 
 function getLineID(nodeID: string, downstreamID: string) {
   return [nodeID, downstreamID].join('->');
@@ -35,24 +50,21 @@ function getLineID(nodeID: string, downstreamID: string) {
 
 export default function LineManager() {
   const { activeLevel, layoutConfigs, selectedGroupsRef } = useContext(SettingsContext);
-  const { blocksByGroupRef, groupMappingRef, groupsByLevelRef, outputsRef } = useContext(ModelContext);
+  const { blocksByGroupRef, groupMappingRef, groupsByLevelRef, outputsRef } =
+    useContext(ModelContext);
   const selectedGroup = selectedGroupsRef?.current?.[selectedGroupsRef?.current?.length - 1];
   const layoutConfig = layoutConfigs?.current?.[activeLevel?.current];
   const { direction, display, style } = layoutConfig?.current ?? {};
   const [ready, setState] = useState(false);
   const readyRef = useRef(false);
   const controls = useAnimation();
-  const [scope, animate] = useAnimate()
+  const [scope, animate] = useAnimate();
 
   const lineMappingRef = useRef({});
   const timeoutRef = useRef(null);
-  const lineRefs = useRef<Record<
-    ItemTypeEnum,
-    Record<
-      string,
-      React.MutableRefObject<SVGPathElement>
-    >
-  >>({} as any);
+  const lineRefs = useRef<
+    Record<ItemTypeEnum, Record<string, React.MutableRefObject<SVGPathElement>>>
+  >({} as any);
 
   const [linesBlock, setLinesBlock] = useState<Record<string, LinePathType[]>>({});
   const [linesNode, setLinesNode] = useState<Record<string, LinePathType[]>>({});
@@ -104,10 +116,13 @@ export default function LineManager() {
           DEBUG.lines.manager && console.log('selectedGroup', selectedGroup);
 
           // Don’t draw lines if blocks aren’t in the same active group.
-          if (!(block as any)?.groups?.some(
-            (guuid: GroupUUIDEnum) => block2?.groups?.includes(guuid)
-              && (!selectedGroup || selectedGroup?.uuid === guuid)
-          )) {
+          if (
+            !(block as any)?.groups?.some(
+              (guuid: GroupUUIDEnum) =>
+                block2?.groups?.includes(guuid) &&
+                (!selectedGroup || selectedGroup?.uuid === guuid),
+            )
+          ) {
             return;
           }
 
@@ -121,13 +136,16 @@ export default function LineManager() {
     });
   }
 
-  function renderPaths(pairsByType: {
-    [ItemTypeEnum.BLOCK]?: [NodeItemType, NodeItemType][],
-    [ItemTypeEnum.NODE]?: [NodeItemType, NodeItemType][],
-    [ItemTypeEnum.OUTPUT]?: [NodeItemType, NodeItemType][],
-  }, opts?: {
-    replace?: boolean;
-  }) {
+  function renderPaths(
+    pairsByType: {
+      [ItemTypeEnum.BLOCK]?: [NodeItemType, NodeItemType][];
+      [ItemTypeEnum.NODE]?: [NodeItemType, NodeItemType][];
+      [ItemTypeEnum.OUTPUT]?: [NodeItemType, NodeItemType][];
+    },
+    opts?: {
+      replace?: boolean;
+    },
+  ) {
     const paths = {
       [ItemTypeEnum.BLOCK]: {},
       [ItemTypeEnum.NODE]: {},
@@ -142,16 +160,17 @@ export default function LineManager() {
           LayoutConfigDirectionEnum.VERTICAL === direction
             ? pair[0]?.rect?.top
             : pair[0]?.rect?.left,
-        ].join('_')
-      })?.forEach(
-        ([node, node2], index: number) => {
-          const linePath = renderLine(node, node2, index, {
-            direction, display, style
-          });
-
-          paths[type][node.id] ||= []
-          paths[type][node.id].push(linePath)
+        ].join('_');
+      })?.forEach(([node, node2], index: number) => {
+        const linePath = renderLine(node, node2, index, {
+          direction,
+          display,
+          style,
         });
+
+        paths[type][node.id] ||= [];
+        paths[type][node.id].push(linePath);
+      });
     });
 
     if (opts?.replace) {
@@ -171,7 +190,7 @@ export default function LineManager() {
         return val;
       });
     } else {
-      setLinesBlock((prev) => {
+      setLinesBlock(prev => {
         const val = {
           ...prev,
           ...paths[ItemTypeEnum.BLOCK],
@@ -179,7 +198,7 @@ export default function LineManager() {
         lineMappingRef.current[ItemTypeEnum.BLOCK] = val;
         return val;
       });
-      setLinesNode((prev) => {
+      setLinesNode(prev => {
         const val = {
           ...prev,
           ...paths[ItemTypeEnum.NODE],
@@ -187,7 +206,7 @@ export default function LineManager() {
         lineMappingRef.current[ItemTypeEnum.NODE] = val;
         return val;
       });
-      setLinesOutput((prev) => {
+      setLinesOutput(prev => {
         const val = {
           ...prev,
           ...paths[ItemTypeEnum.OUTPUT],
@@ -217,16 +236,16 @@ export default function LineManager() {
       node?.rect?.left,
       node?.rect?.top,
       node?.rect?.width,
-      node?.rect?.height
+      node?.rect?.height,
     );
     const rect2 = new DOMRect(
       node2?.rect?.left,
       node2?.rect?.top,
       node2?.rect?.width,
-      node2?.rect?.height
+      node2?.rect?.height,
     );
 
-    DEBUG.lines.manager && console.log(node.id, node?.rect?.height, rect?.height)
+    DEBUG.lines.manager && console.log(node.id, node?.rect?.height, rect?.height);
 
     const colors = [];
 
@@ -234,17 +253,19 @@ export default function LineManager() {
       colors.push('greenmd');
     } else {
       [block, block2]?.forEach(b => {
-        const color = getBlockColor(
-          (b as any)?.type ?? BlockTypeEnum.GROUP, { getColorName: true },
-        )?.names?.base;
+        const color = getBlockColor((b as any)?.type ?? BlockTypeEnum.GROUP, { getColorName: true })
+          ?.names?.base;
 
-        if ((!color || colors.includes(color))
-          && (BlockTypeEnum.GROUP === block2?.type || !block2?.type)
+        if (
+          (!color || colors.includes(color)) &&
+          (BlockTypeEnum.GROUP === block2?.type || !block2?.type)
         ) {
           const groupsInLevel = groupsByLevelRef?.current?.[activeLevel?.current - 2];
-          const {
-            downstreamInGroup
-          } = getUpDownstreamColors(block, groupsInLevel, blocksByGroupRef?.current);
+          const { downstreamInGroup } = getUpDownstreamColors(
+            block,
+            groupsInLevel,
+            blocksByGroupRef?.current,
+          );
           colors.push(...(downstreamInGroup?.map(g => g.colorName) ?? []));
         } else if (color && !colors.includes(color)) {
           colors.push(color);
@@ -256,14 +277,8 @@ export default function LineManager() {
     const toRect = rect2;
 
     const positions = {
-      [LayoutConfigDirectionEnum.VERTICAL]: [
-        'bottom',
-        'top',
-      ],
-      [LayoutConfigDirectionEnum.HORIZONTAL]: [
-        'right',
-        'left',
-      ],
+      [LayoutConfigDirectionEnum.VERTICAL]: ['bottom', 'top'],
+      [LayoutConfigDirectionEnum.HORIZONTAL]: ['right', 'left'],
     };
 
     // Determine relative positions dynamically
@@ -323,14 +338,11 @@ export default function LineManager() {
   ): LinePathType {
     const paths = [];
 
-    const {
-      colors,
-      dvalue,
-      fromRect,
-      isOutput,
-      lineID,
-      toRect,
-    } = prepareLinePathProps(node, node2, opts);
+    const { colors, dvalue, fromRect, isOutput, lineID, toRect } = prepareLinePathProps(
+      node,
+      node2,
+      opts,
+    );
 
     // console.log(lineID, fromRect?.left, fromRect?.top, toRect?.left, toRect?.top)
 
@@ -339,17 +351,14 @@ export default function LineManager() {
     if (colors?.length >= 2) {
       paths.push(
         <defs key={`${gradientID}-defs`}>
-          <linearGradient id={gradientID} x1="0%" x2="100%" y1="0%" y2="0%">
+          <linearGradient id={gradientID} x1='0%' x2='100%' y1='0%' y2='0%'>
+            <stop offset='0%' style={{ stopColor: `var(--colors-${colors[1]})`, stopOpacity: 1 }} />
             <stop
-              offset="0%"
-              style={{ stopColor: `var(--colors-${colors[1]})`, stopOpacity: 1 }}
-            />
-            <stop
-              offset="100%"
+              offset='100%'
               style={{ stopColor: `var(--colors-${colors[0]})`, stopOpacity: 1 }}
             />
           </linearGradient>
-        </defs>
+        </defs>,
       );
     }
 
@@ -373,28 +382,27 @@ export default function LineManager() {
         }}
         d={dvalue}
         data-index={index}
-        fill="none"
+        fill='none'
         id={lineID}
         key={lineID}
         onAnimationComplete={() => {
           if (lineRef?.current?.classList?.contains(stylesBuilder.exit)) {
-            setLinesBlock((prev) => ignoreKeys(prev, [node.id]));
-            setLinesNode((prev) => ignoreKeys(prev, [node.id]));
-            setLinesOutput((prev) => ignoreKeys(prev, [node.id]));
+            setLinesBlock(prev => ignoreKeys(prev, [node.id]));
+            setLinesNode(prev => ignoreKeys(prev, [node.id]));
+            setLinesOutput(prev => ignoreKeys(prev, [node.id]));
           }
         }}
         ref={r => {
-          scope.current = r
-          lineRef.current = r
+          scope.current = r;
+          lineRef.current = r;
         }}
-        stroke={colors?.length >= 2
-          ? `url(#${gradientID})`
-          : `var(--colors-${colors[0] ?? 'gray'})`
+        stroke={
+          colors?.length >= 2 ? `url(#${gradientID})` : `var(--colors-${colors[0] ?? 'gray'})`
         }
         style={{
           strokeWidth: isOutput ? 2 : 1.5,
         }}
-      />
+      />,
     );
 
     const keys = ['left', 'top', 'width', 'height'];
@@ -407,8 +415,14 @@ export default function LineManager() {
     return {
       id: lineID,
       key: [
-        keys?.map(key => Math.round(fromRect?.[key])).map(String).join(':'),
-        keys?.map(key => Math.round(toRect?.[key])).map(String).join(':'),
+        keys
+          ?.map(key => Math.round(fromRect?.[key]))
+          .map(String)
+          .join(':'),
+        keys
+          ?.map(key => Math.round(toRect?.[key]))
+          .map(String)
+          .join(':'),
       ].join('->'),
       paths,
       source: node,
@@ -430,22 +444,19 @@ export default function LineManager() {
 
       clearTimeout(timeoutRef.current);
 
-      const easing = cubicBezier(.35, .17, .3, .86);
+      const easing = cubicBezier(0.35, 0.17, 0.3, 0.86);
       timeoutRef.current = setTimeout(() => {
         const duration = 0.5;
         controls.set({
           opacity: 0,
           pathLength: 0,
         });
-        controls.start(({
-          index,
-          isOutput,
-        }) => ({
+        controls.start(({ index, isOutput }) => ({
           ease: easing,
           opacity: 1,
           pathLength: 1,
           transition: {
-            delay: (index * duration) + (isOutput ? 1 : 0.5),
+            delay: index * duration + (isOutput ? 1 : 0.5),
             duration: isOutput ? 0.1 : duration * ((100 - index) / 100),
           },
         }));
@@ -464,9 +475,7 @@ export default function LineManager() {
     const { node, output } = detail;
 
     renderPaths({
-      [ItemTypeEnum.OUTPUT]: [
-        [node, output],
-      ],
+      [ItemTypeEnum.OUTPUT]: [[node, output]],
     });
   }
 
@@ -477,13 +486,9 @@ export default function LineManager() {
       const lines = lineRefs.current?.[type];
 
       Object.values(mapping).forEach((linePaths: LinePathType[]) => {
-        linePaths.forEach((linePath) => {
-          [node, output].filter(Boolean).forEach((item) => {
-            const {
-              id: lineID,
-              source,
-              target,
-            } = linePath;
+        linePaths.forEach(linePath => {
+          [node, output].filter(Boolean).forEach(item => {
+            const { id: lineID, source, target } = linePath;
 
             if (![source.id, target.id].includes(item.id)) return;
 
@@ -496,9 +501,7 @@ export default function LineManager() {
             //   item.id,
             // );
 
-            const {
-              dvalue,
-            } = prepareLinePathProps(
+            const { dvalue } = prepareLinePathProps(
               source.id === item.id ? item : source,
               target.id === item.id ? item : target,
             );
@@ -534,7 +537,7 @@ export default function LineManager() {
 
   useAppEventsHandler({ lineRefs } as any, {
     [CustomAppEventEnum.CLOSE_OUTPUT]: ({ detail: { node, output } }: CustomAppEvent) => {
-      setLinesOutput((prev) => ignoreKeys(prev, [getLineID(node.id, output.id)]));
+      setLinesOutput(prev => ignoreKeys(prev, [getLineID(node.id, output.id)]));
     },
     [CustomAppEventEnum.NODE_DISPLAYED]: handleLayoutChange,
     [CustomAppEventEnum.NODE_DISMISSED]: handleNodeDismissed,
@@ -550,18 +553,9 @@ export default function LineManager() {
 
   return (
     <div className={stylesBuilder.lineManager}>
-      <ConnectionLines
-        linePaths={linesBlock}
-        zIndex={BASE_Z_INDEX + ORDER[ItemTypeEnum.BLOCK]}
-      />
-      <ConnectionLines
-        linePaths={linesNode}
-        zIndex={BASE_Z_INDEX + ORDER[ItemTypeEnum.NODE]}
-      />
-      <ConnectionLines
-        linePaths={linesOutput}
-        zIndex={BASE_Z_INDEX + ORDER[ItemTypeEnum.OUTPUT]}
-      />
-    </div  >
+      <ConnectionLines linePaths={linesBlock} zIndex={BASE_Z_INDEX + ORDER[ItemTypeEnum.BLOCK]} />
+      <ConnectionLines linePaths={linesNode} zIndex={BASE_Z_INDEX + ORDER[ItemTypeEnum.NODE]} />
+      <ConnectionLines linePaths={linesOutput} zIndex={BASE_Z_INDEX + ORDER[ItemTypeEnum.OUTPUT]} />
+    </div>
   );
 }

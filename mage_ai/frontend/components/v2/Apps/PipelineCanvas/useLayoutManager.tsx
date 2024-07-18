@@ -5,8 +5,21 @@ import { ItemMappingType, ModelMappingType, NodeItemType, RectType } from '../..
 import { ZoomPanStateType } from '@mana/hooks/useZoomPan';
 import { layoutItemsInGroups, transformRects } from '../../Canvas/utils/rect';
 import { startTransition, useEffect, useRef } from 'react';
-import { ItemElementsType, ItemIDsByLevelRef, LayoutManagerType, ModelManagerType, SettingsManagerType } from './interfaces';
-import { ItemStatusEnum, RectTransformationScopeEnum, ItemTypeEnum, LayoutConfigDirectionOriginEnum, LayoutConfigDirectionEnum, TransformRectTypeEnum } from '../../Canvas/types';
+import {
+  ItemElementsType,
+  ItemIDsByLevelRef,
+  LayoutManagerType,
+  ModelManagerType,
+  SettingsManagerType,
+} from './interfaces';
+import {
+  ItemStatusEnum,
+  RectTransformationScopeEnum,
+  ItemTypeEnum,
+  LayoutConfigDirectionOriginEnum,
+  LayoutConfigDirectionEnum,
+  TransformRectTypeEnum,
+} from '../../Canvas/types';
 import { calculateBoundingBox } from '../../Canvas/utils/rect';
 import { flattenArray, indexBy, sortByKey, sum } from '@utils/array';
 import { validateFiniteNumber } from '@utils/number';
@@ -36,34 +49,50 @@ export default function useLayoutManager({
   itemsRef,
 }: LayoutManagerProps) {
   // The only client publishing this message is the SettingsManager.
-  const { dispatchAppEvent } = useAppEventsHandler({
-    itemElementsRef,
-    uuid: 'LayoutManager',
-  } as any, {
-    [CustomAppEventEnum.UPDATE_NODE_LAYOUTS]: updateLayoutOfItems,
-  });
+  const { dispatchAppEvent } = useAppEventsHandler(
+    {
+      itemElementsRef,
+      uuid: 'LayoutManager',
+    } as any,
+    {
+      [CustomAppEventEnum.UPDATE_NODE_LAYOUTS]: updateLayoutOfItems,
+    },
+  );
 
   function rectTransformations({ activeLevel, layoutConfigs, selectedGroupsRef }) {
     const layoutConfig = layoutConfigs?.current?.[activeLevel?.current]?.current ?? {};
 
     const layoutStyle = layoutConfig?.layoutStyle ?? LayoutStyleEnum.WAVE;
     const direction = layoutConfig?.direction || LayoutConfigDirectionEnum.HORIZONTAL;
-    const directionOp = LayoutConfigDirectionEnum.HORIZONTAL === direction
-      ? LayoutConfigDirectionEnum.VERTICAL
-      : LayoutConfigDirectionEnum.HORIZONTAL;
+    const directionOp =
+      LayoutConfigDirectionEnum.HORIZONTAL === direction
+        ? LayoutConfigDirectionEnum.VERTICAL
+        : LayoutConfigDirectionEnum.HORIZONTAL;
 
     const layoutStyleTransformations = [];
 
-    const shiftRight = (factor: number = 2) => (rects: RectType[]) => Math.max(
-      40,
-      validateFiniteNumber(typeof window !== 'undefined'
-        ? (window.innerWidth - calculateBoundingBox(rects).width) / factor : 0),
-    );
-    const shiftDown = (factor: number = 2) => (rects: RectType[]) => Math.max(
-      40,
-      validateFiniteNumber(typeof window !== 'undefined'
-        ? (window.innerHeight - calculateBoundingBox(rects).height) / factor : 0),
-    );
+    const shiftRight =
+      (factor: number = 2) =>
+      (rects: RectType[]) =>
+        Math.max(
+          40,
+          validateFiniteNumber(
+            typeof window !== 'undefined'
+              ? (window.innerWidth - calculateBoundingBox(rects).width) / factor
+              : 0,
+          ),
+        );
+    const shiftDown =
+      (factor: number = 2) =>
+      (rects: RectType[]) =>
+        Math.max(
+          40,
+          validateFiniteNumber(
+            typeof window !== 'undefined'
+              ? (window.innerHeight - calculateBoundingBox(rects).height) / factor
+              : 0,
+          ),
+        );
 
     const shift = {
       options: (rects: RectType[]) => ({
@@ -114,7 +143,7 @@ export default function useLayoutManager({
             },
           },
         }),
-        layoutOptions: { amplitude: 200, wavelength: 100 }
+        layoutOptions: { amplitude: 200, wavelength: 100 },
       }),
       type: TransformRectTypeEnum.LAYOUT_WAVE,
     };
@@ -153,9 +182,7 @@ export default function useLayoutManager({
     };
 
     if (layoutConfig?.rectTransformations) {
-      layoutConfig?.rectTransformations?.forEach(({
-        type,
-      }) => {
+      layoutConfig?.rectTransformations?.forEach(({ type }) => {
         if (TransformRectTypeEnum.LAYOUT_TREE === type) {
           layoutStyleTransformations.push(tree);
         } else if (TransformRectTypeEnum.LAYOUT_WAVE === type) {
@@ -171,10 +198,12 @@ export default function useLayoutManager({
     let defaultTrans = false;
     if (!layoutStyleTransformations?.length) {
       defaultTrans = true;
-      layoutStyleTransformations.push(...[
-        tree,
-        // ...treecon,
-      ]);
+      layoutStyleTransformations.push(
+        ...[
+          tree,
+          // ...treecon,
+        ],
+      );
     }
 
     const mindims = {
@@ -201,260 +230,263 @@ export default function useLayoutManager({
         return !group?.uuid || rect?.parent?.block?.uuid === group?.uuid;
       };
 
-      transformers.push(...[
-        // reset,
-        {
-          conditionSelf: (rect: RectType) => !activeGroupConditionSelf(rect)
-            || rect?.children?.length === 0,
-          options: () => ({
-            defaultRect: (rect: RectType) => {
-              const element = itemElementsRef?.current?.[rect?.type]?.[rect?.id]?.current;
-              const content = element && getClosestChildRole(element, ElementRoleEnum.CONTENT);
-              if (content) {
-                // const contentRect = content?.getBoundingClientRect();
-                const ogstyles = {};
-                ['height', 'width', 'min-height', 'min-width'].forEach((stylename) => {
-                  ogstyles[stylename] = element?.style?.[stylename];
-                  element.style[stylename] = '';
-                });
-                const contentRectWOS = content?.getBoundingClientRect();
-                ['height', 'width', 'min-height', 'min-width'].forEach((stylename) => {
-                  element.style[stylename] = ogstyles[stylename];
-                });
+      transformers.push(
+        ...([
+          // reset,
+          {
+            conditionSelf: (rect: RectType) =>
+              !activeGroupConditionSelf(rect) || rect?.children?.length === 0,
+            options: () => ({
+              defaultRect: (rect: RectType) => {
+                const element = itemElementsRef?.current?.[rect?.type]?.[rect?.id]?.current;
+                const content = element && getClosestChildRole(element, ElementRoleEnum.CONTENT);
+                if (content) {
+                  // const contentRect = content?.getBoundingClientRect();
+                  const ogstyles = {};
+                  ['height', 'width', 'min-height', 'min-width'].forEach(stylename => {
+                    ogstyles[stylename] = element?.style?.[stylename];
+                    element.style[stylename] = '';
+                  });
+                  const contentRectWOS = content?.getBoundingClientRect();
+                  ['height', 'width', 'min-height', 'min-width'].forEach(stylename => {
+                    element.style[stylename] = ogstyles[stylename];
+                  });
 
-                return {
-                  height: contentRectWOS?.height,
-                  width: contentRectWOS?.width,
-                };
-              }
+                  return {
+                    height: contentRectWOS?.height,
+                    width: contentRectWOS?.width,
+                  };
+                }
 
-              return {};
-            },
-          }),
-          scope: RectTransformationScopeEnum.SELF,
-          type: TransformRectTypeEnum.FIT_TO_SELF,
-        },
-        {
-          conditionSelf: activeGroupConditionChild,
-          options: () => ({ layout: { direction: directionOp } }),
-          scope: RectTransformationScopeEnum.CHILDREN,
-          type: TransformRectTypeEnum.LAYOUT_GRID,
-        },
-        // {
-        //   options: () => ({
-        //     layout: update(layoutConfig, {
-        //       gap: {
-        //         $set: {
-        //           column: 40,
-        //           row: 40,
-        //         },
-        //       },
-        //     }),
-        //   }),
-        //   scope: RectTransformationScopeEnum.CHILDREN,
-        //   type: TransformRectTypeEnum.LAYOUT_RECTANGLE,
-        // },
-        {
-          conditionSelf: activeGroupConditionSelf,
-          options: (rects: RectType[]) => ({
-            offset: {
-              left: 0,
-              top: Math.max(
-                ...flattenArray(rects?.map(rect => rect.children)).map(
-                  (rect) => {
-                    const val = (rect?.inner?.badge?.height ?? 0) +
+                return {};
+              },
+            }),
+            scope: RectTransformationScopeEnum.SELF,
+            type: TransformRectTypeEnum.FIT_TO_SELF,
+          },
+          {
+            conditionSelf: activeGroupConditionChild,
+            options: () => ({ layout: { direction: directionOp } }),
+            scope: RectTransformationScopeEnum.CHILDREN,
+            type: TransformRectTypeEnum.LAYOUT_GRID,
+          },
+          // {
+          //   options: () => ({
+          //     layout: update(layoutConfig, {
+          //       gap: {
+          //         $set: {
+          //           column: 40,
+          //           row: 40,
+          //         },
+          //       },
+          //     }),
+          //   }),
+          //   scope: RectTransformationScopeEnum.CHILDREN,
+          //   type: TransformRectTypeEnum.LAYOUT_RECTANGLE,
+          // },
+          {
+            conditionSelf: activeGroupConditionSelf,
+            options: (rects: RectType[]) => ({
+              offset: {
+                left: 0,
+                top: Math.max(
+                  ...flattenArray(rects?.map(rect => rect.children)).map(rect => {
+                    const val =
+                      (rect?.inner?.badge?.height ?? 0) +
                       (rect?.inner?.badge?.offset?.top ?? 0) +
                       (rect?.inner?.title?.height ?? 0) +
                       (rect?.inner?.title?.offset?.top ?? 0);
 
                     return validateFiniteNumber(val) ?? 0;
-                  }
+                  }),
                 ),
-              ),
-            },
-            padding: {
-              bottom: 12,
-              left: 12,
-              right: 12,
-              top: 24,
-            },
-          }),
-          scope: RectTransformationScopeEnum.SELF,
-          type: TransformRectTypeEnum.FIT_TO_CHILDREN,
-        },
-        // mindims,
-        // ...layoutStyleTransformations,
-        // ...(defaultTrans ? [{
-        //   ...wave,
-        //   ...wavecon,
-        // }] : []),
-        // {
-        //   options: () => ({
-        //     layout: update(layoutConfig, {
-        //       gap: {
-        //         $set: {
-        //           column: 120,
-        //           row: 120,
-        //         },
-        //       },
-        //     }),
-        //   }),
-        //   type: TransformRectTypeEnum.LAYOUT_RECTANGLE,
-        // },
+              },
+              padding: {
+                bottom: 12,
+                left: 12,
+                right: 12,
+                top: 24,
+              },
+            }),
+            scope: RectTransformationScopeEnum.SELF,
+            type: TransformRectTypeEnum.FIT_TO_CHILDREN,
+          },
+          // mindims,
+          // ...layoutStyleTransformations,
+          // ...(defaultTrans ? [{
+          //   ...wave,
+          //   ...wavecon,
+          // }] : []),
+          // {
+          //   options: () => ({
+          //     layout: update(layoutConfig, {
+          //       gap: {
+          //         $set: {
+          //           column: 120,
+          //           row: 120,
+          //         },
+          //       },
+          //     }),
+          //   }),
+          //   type: TransformRectTypeEnum.LAYOUT_RECTANGLE,
+          // },
 
-        ...(LAYOUT_STYLE_MAPPING[layoutStyle] ?? [wave]),
-        {
           ...(LAYOUT_STYLE_MAPPING[layoutStyle] ?? [wave]),
-          condition: (rects: RectType[]) => {
-            const box = calculateBoundingBox(rects);
-            return box?.width > canvasRef?.current?.getBoundingClientRect()?.width;
+          {
+            ...(LAYOUT_STYLE_MAPPING[layoutStyle] ?? [wave]),
+            condition: (rects: RectType[]) => {
+              const box = calculateBoundingBox(rects);
+              return box?.width > canvasRef?.current?.getBoundingClientRect()?.width;
+            },
+            options: () => ({ layout: { direction: LayoutConfigDirectionEnum.VERTICAL } }),
           },
-          options: () => ({ layout: { direction: LayoutConfigDirectionEnum.VERTICAL } }),
-        },
-        {
-          // conditionSelf: (rect: RectType) => rect?.children?.length === 0,
-          options: (rects: RectType[]) => ({
-            offset: {
-              left: shiftRight()(rects),
-              top: shiftDown()(rects),
-            },
-          }),
-          type: TransformRectTypeEnum.SHIFT,
-        },
-        {
-          options: () => ({
-            boundingBox: canvasRef?.current?.getBoundingClientRect(),
-            layout: {
-              direction: LayoutConfigDirectionEnum.VERTICAL,
-            },
-          }),
-          type: TransformRectTypeEnum.ALIGN_WITHIN_VIEWPORT,
-        },
-        // {
-        //   conditionSelf: (rect: RectType) => rect?.children?.length <= 4,
-        //   options: (rects: RectType[]) => ({
-        //     offset: {
-        //       ...(LayoutConfigDirectionEnum.VERTICAL === direction ? { left: shiftRight(1.85)(rects) } : {}),
-        //       ...(LayoutConfigDirectionEnum.HORIZONTAL === direction ? { top: shiftDown(1.85)(rects) } : {}),
-        //     },
-        //   }),
-        //   type: TransformRectTypeEnum.SHIFT,
-        // },
-        {
-          conditionSelf: activeGroupConditionChild,
-          scope: RectTransformationScopeEnum.CHILDREN,
-          type: TransformRectTypeEnum.SHIFT_INTO_PARENT,
-        },
-        {
-          conditionSelf: activeGroupConditionChild,
-          scope: RectTransformationScopeEnum.CHILDREN,
-          type: TransformRectTypeEnum.ALIGN_CHILDREN,
-        },
-      ] as RectTransformationType[]);
+          {
+            // conditionSelf: (rect: RectType) => rect?.children?.length === 0,
+            options: (rects: RectType[]) => ({
+              offset: {
+                left: shiftRight()(rects),
+                top: shiftDown()(rects),
+              },
+            }),
+            type: TransformRectTypeEnum.SHIFT,
+          },
+          {
+            options: () => ({
+              boundingBox: canvasRef?.current?.getBoundingClientRect(),
+              layout: {
+                direction: LayoutConfigDirectionEnum.VERTICAL,
+              },
+            }),
+            type: TransformRectTypeEnum.ALIGN_WITHIN_VIEWPORT,
+          },
+          // {
+          //   conditionSelf: (rect: RectType) => rect?.children?.length <= 4,
+          //   options: (rects: RectType[]) => ({
+          //     offset: {
+          //       ...(LayoutConfigDirectionEnum.VERTICAL === direction ? { left: shiftRight(1.85)(rects) } : {}),
+          //       ...(LayoutConfigDirectionEnum.HORIZONTAL === direction ? { top: shiftDown(1.85)(rects) } : {}),
+          //     },
+          //   }),
+          //   type: TransformRectTypeEnum.SHIFT,
+          // },
+          {
+            conditionSelf: activeGroupConditionChild,
+            scope: RectTransformationScopeEnum.CHILDREN,
+            type: TransformRectTypeEnum.SHIFT_INTO_PARENT,
+          },
+          {
+            conditionSelf: activeGroupConditionChild,
+            scope: RectTransformationScopeEnum.CHILDREN,
+            type: TransformRectTypeEnum.ALIGN_CHILDREN,
+          },
+        ] as RectTransformationType[]),
+      );
     } else if (LayoutDisplayEnum.SIMPLE === layoutConfig?.display) {
-      transformers.push(...[
-        // {
-        //   ...tree,
-        //   condition: (rects: RectType[]) => {
-        //     const box = calculateBoundingBox(rects);
-        //     return box?.width > canvasRef?.current?.getBoundingClientRect()?.width;
-        //   },
-        //   options: () => ({ layout: { direction: LayoutConfigDirectionEnum.HORIZONTAL } }),
-        // },
-        // {
-        //   ...wave,
-        //   condition: (rects: RectType[]) => {
-        //     const box = calculateBoundingBox(rects);
-        //     return box?.height > canvasRef?.current?.getBoundingClientRect()?.height;
-        //   },
-        //   options: () => ({ layout: { direction: LayoutConfigDirectionEnum.VERTICAL } }),
-        // },
-        {
-          ...wave,
-          condition: (rects: RectType[]) => {
-            const box = calculateBoundingBox(rects);
-            return 0.75 > (box?.height / canvasRef?.current?.getBoundingClientRect()?.height);
-          },
-          options: () => ({
-            layout: update(layoutConfig ?? {}, {
-              gap: {
-                $set: {
-                  column: 40,
-                  row: 40,
+      transformers.push(
+        ...([
+          // {
+          //   ...tree,
+          //   condition: (rects: RectType[]) => {
+          //     const box = calculateBoundingBox(rects);
+          //     return box?.width > canvasRef?.current?.getBoundingClientRect()?.width;
+          //   },
+          //   options: () => ({ layout: { direction: LayoutConfigDirectionEnum.HORIZONTAL } }),
+          // },
+          // {
+          //   ...wave,
+          //   condition: (rects: RectType[]) => {
+          //     const box = calculateBoundingBox(rects);
+          //     return box?.height > canvasRef?.current?.getBoundingClientRect()?.height;
+          //   },
+          //   options: () => ({ layout: { direction: LayoutConfigDirectionEnum.VERTICAL } }),
+          // },
+          {
+            ...wave,
+            condition: (rects: RectType[]) => {
+              const box = calculateBoundingBox(rects);
+              return 0.75 > box?.height / canvasRef?.current?.getBoundingClientRect()?.height;
+            },
+            options: () => ({
+              layout: update(layoutConfig ?? {}, {
+                gap: {
+                  $set: {
+                    column: 40,
+                    row: 40,
+                  },
                 },
-              },
-            } as any),
-            layoutOptions: { amplitude: 400, wavelength: 100 },
-          }),
-        },
-        {
-          ...tree,
-          condition: (rects: RectType[]) => {
-            const box = calculateBoundingBox(rects);
-            return 0.75 < (box?.height / canvasRef?.current?.getBoundingClientRect()?.height);
+              } as any),
+              layoutOptions: { amplitude: 400, wavelength: 100 },
+            }),
           },
-          options: () => ({
-            layout: update(layoutConfig ?? {}, {
-              gap: {
-                $set: {
-                  column: 40,
-                  row: 40,
+          {
+            ...tree,
+            condition: (rects: RectType[]) => {
+              const box = calculateBoundingBox(rects);
+              return 0.75 < box?.height / canvasRef?.current?.getBoundingClientRect()?.height;
+            },
+            options: () => ({
+              layout: update(layoutConfig ?? {}, {
+                gap: {
+                  $set: {
+                    column: 40,
+                    row: 40,
+                  },
                 },
+              } as any),
+            }),
+          },
+          {
+            condition: (rects: RectType[]) => {
+              const box = calculateBoundingBox(rects);
+              return box?.width < canvasRef?.current?.getBoundingClientRect()?.width;
+            },
+            options: () => ({
+              boundingBox: canvasRef?.current?.getBoundingClientRect(),
+              layout: {
+                direction: LayoutConfigDirectionEnum.HORIZONTAL,
               },
-            } as any),
-          }),
-        },
-        {
-          condition: (rects: RectType[]) => {
-            const box = calculateBoundingBox(rects);
-            return box?.width < canvasRef?.current?.getBoundingClientRect()?.width;
+            }),
+            type: TransformRectTypeEnum.ALIGN_WITHIN_VIEWPORT,
           },
-          options: () => ({
-            boundingBox: canvasRef?.current?.getBoundingClientRect(),
-            layout: {
-              direction: LayoutConfigDirectionEnum.HORIZONTAL,
+          {
+            condition: (rects: RectType[]) => {
+              const box = calculateBoundingBox(rects);
+              return box?.height < canvasRef?.current?.getBoundingClientRect()?.height;
             },
-          }),
-          type: TransformRectTypeEnum.ALIGN_WITHIN_VIEWPORT,
-        },
-        {
-          condition: (rects: RectType[]) => {
-            const box = calculateBoundingBox(rects);
-            return box?.height < canvasRef?.current?.getBoundingClientRect()?.height;
+            options: () => ({
+              boundingBox: canvasRef?.current?.getBoundingClientRect(),
+              layout: {
+                direction: LayoutConfigDirectionEnum.VERTICAL,
+              },
+            }),
+            type: TransformRectTypeEnum.ALIGN_WITHIN_VIEWPORT,
           },
-          options: () => ({
-            boundingBox: canvasRef?.current?.getBoundingClientRect(),
-            layout: {
-              direction: LayoutConfigDirectionEnum.VERTICAL,
+          {
+            condition: (rects: RectType[]) => {
+              const box = calculateBoundingBox(rects);
+              return box?.height > canvasRef?.current?.getBoundingClientRect()?.height;
             },
-          }),
-          type: TransformRectTypeEnum.ALIGN_WITHIN_VIEWPORT,
-        },
-        {
-          condition: (rects: RectType[]) => {
-            const box = calculateBoundingBox(rects);
-            return box?.height > canvasRef?.current?.getBoundingClientRect()?.height;
+            options: (rects: RectType[]) => ({
+              offset: {
+                top: shiftDown(0.5)(rects),
+              },
+            }),
+            type: TransformRectTypeEnum.SHIFT,
           },
-          options: (rects: RectType[]) => ({
-            offset: {
-              top: shiftDown(0.5)(rects),
+          {
+            condition: (rects: RectType[]) => {
+              const box = calculateBoundingBox(rects);
+              return box?.width > canvasRef?.current?.getBoundingClientRect()?.width;
             },
-          }),
-          type: TransformRectTypeEnum.SHIFT,
-        },
-        {
-          condition: (rects: RectType[]) => {
-            const box = calculateBoundingBox(rects);
-            return box?.width > canvasRef?.current?.getBoundingClientRect()?.width;
+            options: (rects: RectType[]) => ({
+              offset: {
+                top: shiftRight(0.5)(rects),
+              },
+            }),
+            type: TransformRectTypeEnum.SHIFT,
           },
-          options: (rects: RectType[]) => ({
-            offset: {
-              top: shiftRight(0.5)(rects),
-            },
-          }),
-          type: TransformRectTypeEnum.SHIFT,
-        },
-      ] as RectTransformationType[]);
+        ] as RectTransformationType[]),
+      );
     }
 
     DEBUG.layoutManager && console.log('transformers', transformers);
@@ -475,9 +507,8 @@ export default function useLayoutManager({
 
     // Don’t do any level filtering here, it’ll be done at the Canvas level.
     // Update the layout of items across every level.
-    const arrs = nodesFiltered?.length > 0
-      ? [nodesFiltered.map(item => item.id)]
-      : itemIDsByLevelRef?.current;
+    const arrs =
+      nodesFiltered?.length > 0 ? [nodesFiltered.map(item => item.id)] : itemIDsByLevelRef?.current;
 
     const itemsByNodeID = {};
     const rectsInitial = {};
@@ -510,7 +541,7 @@ export default function useLayoutManager({
             itemsByNodeID[node.id].push(arr);
           }
 
-          node.items = arr
+          node.items = arr;
 
           if ((conditions ?? []).length === 0 || displayable(node, conditions)) {
             nodes.push(node);
@@ -520,36 +551,39 @@ export default function useLayoutManager({
 
       const rects: RectType[] = [];
       const rectsPrev = {};
-      nodes?.forEach((node) => {
+      nodes?.forEach(node => {
         rectsPrev[node.id] = { ...node.rect };
 
-        const itemsDisplayable =
-          [...(node?.items ?? [])].filter(item => !conditions || displayable(item, conditions));
+        const itemsDisplayable = [...(node?.items ?? [])].filter(
+          item => !conditions || displayable(item, conditions),
+        );
 
         const nodeRect = {
           ...node?.rect,
           block: node.block,
-          children: itemsDisplayable?.reduce((acc, item2: NodeType) => {
-            if (!item2) return acc;
+          children:
+            itemsDisplayable?.reduce((acc, item2: NodeType) => {
+              if (!item2) return acc;
 
-            const item2a = { ...(itemsRef?.current?.[item2?.id] ?? {} as NodeType) };
-            if (!item2a) return acc;
+              const item2a = { ...(itemsRef?.current?.[item2?.id] ?? ({} as NodeType)) };
+              if (!item2a) return acc;
 
-            rectsPrev[item2a.id] = { ...item2a.rect };
+              rectsPrev[item2a.id] = { ...item2a.rect };
 
-            return acc.concat({
-              ...item2a.rect,
-              id: item2a.id,
-              left: null,
-              top: null,
-              upstream: (item2a as NodeType)?.upstream?.reduce((acc3: RectType[], id3: string) => {
-                const item3 = { ...(itemsRef?.current?.[id3]) };
-                if (!item3) return acc3;
+              return acc.concat({
+                ...item2a.rect,
+                id: item2a.id,
+                left: null,
+                top: null,
+                upstream:
+                  (item2a as NodeType)?.upstream?.reduce((acc3: RectType[], id3: string) => {
+                    const item3 = { ...itemsRef?.current?.[id3] };
+                    if (!item3) return acc3;
 
-                return acc3.concat({ ...item3.rect, id: id3, left: null, top: null });
-              }, []) ?? [],
-            });
-          }, []) ?? [],
+                    return acc3.concat({ ...item3.rect, id: id3, left: null, top: null });
+                  }, []) ?? [],
+              });
+            }, []) ?? [],
           diff: node?.rect,
           id: node.id,
           type: node.type,
@@ -577,7 +611,6 @@ export default function useLayoutManager({
           el.style.height = '';
           el.style.minWidth = '';
           el.style.minHeight = '';
-
         }
 
         rects.push(nodeRect);
@@ -609,7 +642,9 @@ export default function useLayoutManager({
 
         node?.items?.forEach((i2: any, idx: number) => {
           const rect2 = { ...(rect?.children?.[idx] as RectType) };
-          const item2 = { ...(itemsRef?.current?.[typeof i2 === 'string' ? i2 : i2.id] as NodeType) };
+          const item2 = {
+            ...(itemsRef?.current?.[typeof i2 === 'string' ? i2 : i2.id] as NodeType),
+          };
 
           // if (conditions && !displayable(item2, conditions)) return;
           // console.log(item2, conditions)
@@ -655,19 +690,20 @@ export default function useLayoutManager({
         });
       });
 
-      (DEBUG.layout || DEBUG.layoutManager) && console.log('[LayoutManager] updateLayoutItems:', nodesTransformed);
+      (DEBUG.layout || DEBUG.layoutManager) &&
+        console.log('[LayoutManager] updateLayoutItems:', nodesTransformed);
     });
 
     const items = [];
-    Object.values(itemsUpdated).forEach((item) => {
+    Object.values(itemsUpdated).forEach(item => {
       const itemPrev = itemsRef?.current?.[item.id];
       const rectPrev = rectsInitial[item?.id] ?? { ...itemPrev?.rect };
 
       item.rect.diff = {
-        height: (rectPrev?.height ?? 0),
-        left: (rectPrev?.left ?? 0),
-        top: (rectPrev?.top ?? 0),
-        width: (rectPrev?.width ?? 0),
+        height: rectPrev?.height ?? 0,
+        left: rectPrev?.left ?? 0,
+        top: rectPrev?.top ?? 0,
+        width: rectPrev?.width ?? 0,
       };
       item.version = (itemPrev?.version ?? -1) + 1;
       if (ItemStatusEnum.PENDING_LAYOUT === item?.status) {

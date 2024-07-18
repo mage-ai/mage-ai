@@ -10,13 +10,7 @@ import { APIErrorType, APIMutationContextType } from './Context';
 import { AISparkle, AlertTriangle, Insights, Monitor } from '@mana/icons';
 import { randomSample } from '@utils/array';
 
-const POSITIONS = [
-  'bottomLeft',
-  'bottomRight',
-  'right',
-  'topLeft',
-  'topRight',
-];
+const POSITIONS = ['bottomLeft', 'bottomRight', 'right', 'topLeft', 'topRight'];
 
 type ErrorManagerProps = {
   dismissError: APIMutationContextType['dismissError'];
@@ -31,12 +25,8 @@ const ErrorManager: FC<ErrorManagerProps> = memo(function ErrorManager({
 }: ErrorManagerProps) {
   const controls = useDragControls();
   const position = randomSample(POSITIONS);
-  const {
-    error,
-  } = errorRef?.current?.response?.data ?? {};
-  const {
-    error: clientError,
-  } = errorRef?.current?.client ?? {};
+  const { error } = errorRef?.current?.response?.data ?? {};
+  const { error: clientError } = errorRef?.current?.client ?? {};
 
   const code = error?.code;
   const errors = error?.errors ?? clientError?.errors;
@@ -51,14 +41,11 @@ const ErrorManager: FC<ErrorManagerProps> = memo(function ErrorManager({
   return (
     <div onPointerDown={startDrag}>
       <motion.div
-        className={[
-          styles.errorManager,
-          styles[position],
-        ].filter(Boolean).join(' ')}
+        className={[styles.errorManager, styles[position]].filter(Boolean).join(' ')}
         dragControls={controls}
       >
         <Grid
-          borderColor="redmd"
+          borderColor='redmd'
           borders
           className={styles.errorContainer}
           rowGap={12}
@@ -66,16 +53,12 @@ const ErrorManager: FC<ErrorManagerProps> = memo(function ErrorManager({
             borderWidth: 2,
             padding: 24,
           }}
-          templateColumns="auto"
-          templateRows="auto auto"
-          width="max-content"
+          templateColumns='auto'
+          templateRows='auto auto'
+          width='max-content'
         >
-          <Grid
-            rowGap={12}
-            templateColumns="auto"
-            templateRows="auto auto"
-          >
-            <AlertTriangle colorName="yellow" />
+          <Grid rowGap={12} templateColumns='auto' templateRows='auto auto'>
+            <AlertTriangle colorName='yellow' />
 
             {errorRef?.current?.message && (
               <Text monospace secondary semibold small>
@@ -85,36 +68,37 @@ const ErrorManager: FC<ErrorManagerProps> = memo(function ErrorManager({
 
             {[code, type, message, errors?.length >= 1]?.some(Boolean) && <Divider />}
 
-            {[code, type, message].map((val) => val && (
-              <Text key={val} monospace small>
-                <Ansi>{String(val)}</Ansi>
-              </Text>
-            ))}
+            {[code, type, message].map(
+              val =>
+                val && (
+                  <Text key={val} monospace small>
+                    <Ansi>{String(val)}</Ansi>
+                  </Text>
+                ),
+            )}
 
             {[errors?.length > 0]?.some(Boolean) && <Divider short />}
 
             {errors?.length >= 1 && clientError && (
               <Text monospace small>
-                <pre style={{
-                  whiteSpace: 'pre-wrap',
-                }}>
+                <pre
+                  style={{
+                    whiteSpace: 'pre-wrap',
+                  }}
+                >
                   <Ansi>{errors?.join('\n')}</Ansi>
                 </pre>
               </Text>
             )}
 
             {errors?.length >= 1 && !clientError && (
-              <pre style={{
-                whiteSpace: 'break-spaces',
-              }}>
-                <Text
-                  inline
-                  monospace
-                  small
-                >
-                  {errors?.map((line: string) => (
-                    <Ansi key={line}>{line}</Ansi>
-                  ))}
+              <pre
+                style={{
+                  whiteSpace: 'break-spaces',
+                }}
+              >
+                <Text inline monospace small>
+                  {errors?.map((line: string) => <Ansi key={line}>{line}</Ansi>)}
                 </Text>
               </pre>
             )}
@@ -122,23 +106,23 @@ const ErrorManager: FC<ErrorManagerProps> = memo(function ErrorManager({
 
           <Divider />
 
-          <Grid
-            autoFlow="column"
-            justifyContent="space-between"
-            templateColumns="min-content"
-          >
+          <Grid autoFlow='column' justifyContent='space-between' templateColumns='min-content'>
             <ButtonGroup>
               <Button basic onClick={dismissError} small>
                 Dismiss error
               </Button>
 
-              {false &&
-                <Button basic onClick={(event: any) => {
-                  retry(event);
-                }} small>
+              {false && (
+                <Button
+                  basic
+                  onClick={(event: any) => {
+                    retry(event);
+                  }}
+                  small
+                >
                   Retry request
                 </Button>
-              }
+              )}
             </ButtonGroup>
 
             <ButtonGroup>

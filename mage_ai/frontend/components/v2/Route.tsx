@@ -12,6 +12,7 @@ import AuthToken from '@api/utils/AuthToken';
 import { COOKIE_KEY } from '@api/utils/token';
 import { REQUIRE_USER_AUTHENTICATION } from '@utils/session';
 import { queryString, redirectToUrl } from '@utils/url';
+import { ignoreKeys } from '@utils/hash';
 
 export type AuthProps = {
   mode: ModeEnum;
@@ -84,8 +85,9 @@ export default function Route(WrappedComponent: any) {
       // AuthToken, the existing props.auth is a flattened auth, we want to use
       // the state instance of auth that has been rehydrated in browser after mount
       // @ts-ignore
-      const { auth, ...propsWithoutAuth } = this.props;
-      return <WrappedComponent auth={this.state.auth} {...propsWithoutAuth} />;
+      return (
+        <WrappedComponent auth={this.state.auth} {...ignoreKeys(propsWithoutAuth, ['auth'])} />
+      );
     }
   };
 }

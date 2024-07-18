@@ -4,13 +4,17 @@ import { AppConfigType } from '../interfaces';
 import { useEffect, useRef } from 'react';
 import { buildAppNode } from './AppManager/utils';
 import { AppNodeType, NodeType } from '@components/v2/Canvas/interfaces';
-import { CustomAppEventEnum, } from './enums';
+import { CustomAppEventEnum } from './enums';
 import { AppManagerType } from './interfaces';
 import useAppEventsHandler, { CustomAppEvent } from './useAppEventsHandler';
 import { unique } from '@utils/array';
 import { DEBUG } from '@components/v2/utils/debug';
 
-export default function useAppManager({ activeLevel }: { activeLevel: React.MutableRefObject<number> }) {
+export default function useAppManager({
+  activeLevel,
+}: {
+  activeLevel: React.MutableRefObject<number>;
+}) {
   const appsRef = useRef<Record<string, AppNodeType[]>>({});
 
   const handleStartApp = (event: CustomAppEvent) => {
@@ -22,7 +26,7 @@ export default function useAppManager({ activeLevel }: { activeLevel: React.Muta
     const { node: appNode } = data;
     appNode?.upstream?.forEach((nodeID: string) => {
       const apps = [];
-      appsRef?.current?.[nodeID]?.forEach((child) => {
+      appsRef?.current?.[nodeID]?.forEach(child => {
         const childCopy = { ...child, rect: { ...child.rect } };
         if (appNode?.id === childCopy?.id) {
           childCopy.rect = { ...appNode.rect };
@@ -41,13 +45,14 @@ export default function useAppManager({ activeLevel }: { activeLevel: React.Muta
     const { data } = event as ClientEventType;
     const { app, node: appNode } = data;
 
-    DEBUG.appManager && console.log('handleStopApp.start', appNode, appNode.upstream, appsRef.current);
+    DEBUG.appManager &&
+      console.log('handleStopApp.start', appNode, appNode.upstream, appsRef.current);
 
     const mapping = {};
     const entries = [...Object.entries(appsRef?.current ?? {})];
 
     entries?.forEach(([nodeID, apps]: [string, AppNodeType[]]) => {
-      apps?.forEach((child) => {
+      apps?.forEach(child => {
         if (child?.id === appNode?.id) {
           delete appsRef.current[nodeID];
         } else {
@@ -58,7 +63,8 @@ export default function useAppManager({ activeLevel }: { activeLevel: React.Muta
     });
     appsRef.current = mapping;
 
-    DEBUG.appManager && console.log('handleStopApp.end', appNode, appNode.upstream, appsRef.current);
+    DEBUG.appManager &&
+      console.log('handleStopApp.end', appNode, appNode.upstream, appsRef.current);
 
     dispatchAppEvent(CustomAppEventEnum.APP_STOPPED, {
       event: convertEvent(event, {
@@ -68,14 +74,17 @@ export default function useAppManager({ activeLevel }: { activeLevel: React.Muta
     });
   }
 
-  const { convertEvent, dispatchAppEvent } = useAppEventsHandler({
-    appsRef,
-    startApp,
-  } as any, {
-    [CustomAppEventEnum.START_APP]: handleStartApp,
-    [CustomAppEventEnum.STOP_APP]: handleStopApp,
-    [CustomAppEventEnum.APP_RECT_UPDATED]: handleAppRectUpdated,
-  });
+  const { convertEvent, dispatchAppEvent } = useAppEventsHandler(
+    {
+      appsRef,
+      startApp,
+    } as any,
+    {
+      [CustomAppEventEnum.START_APP]: handleStartApp,
+      [CustomAppEventEnum.STOP_APP]: handleStopApp,
+      [CustomAppEventEnum.APP_RECT_UPDATED]: handleAppRectUpdated,
+    },
+  );
 
   function startApp(event: ClientEventType, app: AppConfigType) {
     const { node } = event.data;
@@ -84,11 +93,12 @@ export default function useAppManager({ activeLevel }: { activeLevel: React.Muta
     let eventType = null;
     const level = activeLevel?.current;
     let appNode = appsRef?.current?.[node?.id]?.find(
-      (appNode) => appNode?.app?.uuid === app?.uuid && appNode?.level === level);
+      appNode => appNode?.app?.uuid === app?.uuid && appNode?.level === level,
+    );
 
     // If app is already started, update it’s location to move next to where the event originated.
     if (appNode) {
-      const rect = (event?.target as HTMLElement)?.getBoundingClientRect()
+      const rect = (event?.target as HTMLElement)?.getBoundingClientRect();
       appNode.rect = rect;
 
       eventType = CustomAppEventEnum.APP_UPDATED;
@@ -100,10 +110,10 @@ export default function useAppManager({ activeLevel }: { activeLevel: React.Muta
       eventType = CustomAppEventEnum.APP_STARTED;
     }
 
-    appsRef.current[node.id] = unique([
-      ...(appsRef?.current?.[node.id] ?? []),
-      appNode,
-    ], ({ id }) => id);
+    appsRef.current[node.id] = unique(
+      [...(appsRef?.current?.[node.id] ?? []), appNode],
+      ({ id }) => id,
+    );
 
     dispatchAppEvent(eventType, { event });
   }

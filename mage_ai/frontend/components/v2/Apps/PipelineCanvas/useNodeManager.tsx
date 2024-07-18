@@ -75,7 +75,7 @@ export default function useNodeManager({
               rect={rect}
               submitEventOperation={submitEventOperation}
             />
-          </ThemeProvider>
+          </ThemeProvider>,
         );
         item = updatedItem; // Update the item reference
       };
@@ -104,7 +104,13 @@ export default function useNodeManager({
       newElement.addEventListener('updateComponent', updateListener as EventListener);
 
       // Add to dynamic roots array
-      dynamicRoots.current.push({ id: item.id, element: newElement, root: newElementRoot, item, updateListener });
+      dynamicRoots.current.push({
+        id: item.id,
+        element: newElement,
+        root: newElementRoot,
+        item,
+        updateListener,
+      });
     }
   };
 
@@ -124,7 +130,10 @@ export default function useNodeManager({
     if (dynamicRootIndex > -1) {
       const rootToRemove = dynamicRoots.current[dynamicRootIndex];
       if (rootToRemove && dynamicRootRef.current) {
-        rootToRemove.element.removeEventListener('updateComponent', rootToRemove.updateListener as EventListener);
+        rootToRemove.element.removeEventListener(
+          'updateComponent',
+          rootToRemove.updateListener as EventListener,
+        );
         rootToRemove.root.unmount();
         dynamicRootRef.current.removeChild(rootToRemove.element);
         dynamicRoots.current.splice(dynamicRootIndex, 1);
@@ -137,7 +146,10 @@ export default function useNodeManager({
     while (dynamicRoots.current.length > 0) {
       const lastDynamicRoot = dynamicRoots.current.pop();
       if (lastDynamicRoot && dynamicRootRef.current) {
-        lastDynamicRoot.element.removeEventListener('updateComponent', lastDynamicRoot.updateListener as EventListener);
+        lastDynamicRoot.element.removeEventListener(
+          'updateComponent',
+          lastDynamicRoot.updateListener as EventListener,
+        );
         lastDynamicRoot.root.unmount();
         dynamicRootRef.current.removeChild(lastDynamicRoot.element);
       }
@@ -145,7 +157,7 @@ export default function useNodeManager({
   };
 
   onItemChangeRef.current = (item: NodeItemType) => {
-    console.log('Adding', item)
+    console.log('Adding', item);
     addNewComponent(item);
   };
 
@@ -164,16 +176,12 @@ export default function useNodeManager({
     //     // When the component mounts, it takes care of the rest.
     //   }
     // });
-
     // pipelinePrev.blocks.forEach((block) => {
     //   const blockIndex = pipeline.blocks.findIndex((b) => b.uuid === block.uuid);
     //   if (blockIndex === -1) {
     //     const item = itemsRef.current[block.uuid];
-
     //     if (!item) return;
-
     //     removeComponentById(item?.id);
-
     //     const element = itemElementsRef?.current?.[item.type]?.[item.id]?.current;
     //     if (element) {
     //       element.style.width = '0px';
@@ -182,7 +190,6 @@ export default function useNodeManager({
     //       element.style.opacity = '0';
     //       element.style.display = 'none';
     //     }
-
     //     delete itemsRef?.current[item.id];
     //     updateLayoutOfItems();
     //   }

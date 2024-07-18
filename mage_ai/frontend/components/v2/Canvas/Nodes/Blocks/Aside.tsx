@@ -4,25 +4,21 @@ import MenuManager from '@mana/components/Menu/MenuManager';
 import Button from '@mana/elements/Button';
 import { AsideType } from '../types';
 
-function Aside({
-  Icon,
-  baseColorName,
-  className,
-  menuItems,
-  loading,
-  borderColor,
-  onClick,
-  uuid,
-}: AsideType, ref: React.Ref<HTMLButtonElement>) {
+function Aside(
+  { Icon, baseColorName, className, menuItems, loading, borderColor, onClick, uuid }: AsideType,
+  ref: React.Ref<HTMLButtonElement>,
+) {
   const element = useMemo(() => {
     const el = (
       <Grid
-        alignItems="center"
-        backgroundColor={borderColor ? undefined : (baseColorName ? baseColorName?.toLowerCase() : undefined)}
+        alignItems='center'
+        backgroundColor={
+          borderColor ? undefined : baseColorName ? baseColorName?.toLowerCase() : undefined
+        }
         borderColor={borderColor}
-        borders={borderColor ? true : (baseColorName ? false : true)}
+        borders={borderColor ? true : baseColorName ? false : true}
         bordersTransparent={baseColorName ? true : false}
-        justifyContent="center"
+        justifyContent='center'
         ref={ref}
         style={{
           height: 32,
@@ -32,8 +28,8 @@ function Aside({
         {Icon ? <Icon inverted={baseColorName === 'green'} size={14} /> : null}
       </Grid>
     );
-    return (menuItems || onClick)
-      ? <Button
+    return menuItems || onClick ? (
+      <Button
         Icon={() => el}
         basic
         className={className}
@@ -46,23 +42,14 @@ function Aside({
           }
         }}
         wrap
-      /> : el;
-  }, [
-    Icon,
-    baseColorName,
-    borderColor,
-    className,
-    loading,
-    menuItems,
-    onClick,
-    ref,
-  ]);
+      />
+    ) : (
+      el
+    );
+  }, [Icon, baseColorName, borderColor, className, loading, menuItems, onClick, ref]);
 
   return (
-    <MenuManager
-      items={menuItems}
-      uuid={uuid}
-    >
+    <MenuManager items={menuItems} uuid={uuid}>
       {element}
     </MenuManager>
   );

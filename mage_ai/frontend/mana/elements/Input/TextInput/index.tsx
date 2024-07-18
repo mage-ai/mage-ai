@@ -27,48 +27,47 @@ const InputStyled = styled.input<InputStyleProps>`
   ${inputs}
 `;
 
-function TextInput({
-  Icon,
-  defaultValue,
-  italic,
-  number,
-  onChange,
-  onClick,
-  required,
-  id,
-  name,
-  small,
-  ...props
-}: InputProps, ref: React.Ref<HTMLInputElement>) {
+function TextInput(
+  {
+    Icon,
+    defaultValue,
+    italic,
+    number,
+    onChange,
+    onClick,
+    required,
+    id,
+    name,
+    small,
+    ...props
+  }: InputProps,
+  ref: React.Ref<HTMLInputElement>,
+) {
   const iconSizeRef = useRef<number>(16);
   const [value, setValue] = useState(defaultValue);
 
   return (
-    <div className={[
-      styles.container,
-      Icon && styles.withIcon,
-    ].filter(Boolean).join(' ')}>
+    <div className={[styles.container, Icon && styles.withIcon].filter(Boolean).join(' ')}>
       {Icon && (
-        <div
-          className={[
-            styles.icon,
-          ].filter(Boolean).join(' ')}
-        >
+        <div className={[styles.icon].filter(Boolean).join(' ')}>
           {Icon((iconProps: { size?: number }) => {
             iconSizeRef.current = iconProps?.size ?? iconSizeRef.current;
             return <Icon {...iconProps} size={iconSizeRef.current} />;
           })}
-        </div >
+        </div>
       )}
 
       <InputStyled
         {...props}
-        className={[
-          styles.input,
-          Icon && styles[`with-icon-size-${iconSizeRef.current}`],
-        ].filter(Boolean).join(' ')}
+        className={[styles.input, Icon && styles[`with-icon-size-${iconSizeRef.current}`]]
+          .filter(Boolean)
+          .join(' ')}
         id={id}
-        italic={(italic && typeof italic === 'function') ? (italic as (val: any) => boolean)?.(value) : italic}
+        italic={
+          italic && typeof italic === 'function'
+            ? (italic as (val: any) => boolean)?.(value)
+            : italic
+        }
         name={name}
         onChange={event => {
           setValue(event.target.value);

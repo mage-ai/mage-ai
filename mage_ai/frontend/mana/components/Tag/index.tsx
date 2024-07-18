@@ -50,7 +50,9 @@ const StatusTag = styled.div<StyleProps>`
   justify-content: center;
   padding: 6px;
 
-  ${({ bottom, left, right, top }) => (bottom || left || right || top) && `
+  ${({ bottom, left, right, top }) =>
+    (bottom || left || right || top) &&
+    `
     position: absolute;
     z-index: 7;
     ${bottom ? 'bottom: 0;' : ''}
@@ -91,16 +93,19 @@ function Timer() {
   return <div ref={timerRef} />;
 }
 
-function Tag({
-  children,
-  statusVariant,
-  timer,
-  ...props
-}: { children?: React.ReactNode | string | number } & StyleProps, ref: React.Ref<HTMLDivElement>) {
+function Tag(
+  {
+    children,
+    statusVariant,
+    timer,
+    ...props
+  }: { children?: React.ReactNode | string | number } & StyleProps,
+  ref: React.Ref<HTMLDivElement>,
+) {
   const El = statusVariant ? StatusTag : TagStyled;
   return (
     <El {...props} ref={ref}>
-      {timer ? <Timer />  : children}
+      {timer ? <Timer /> : children}
     </El>
   );
 }

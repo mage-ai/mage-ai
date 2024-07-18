@@ -6,9 +6,13 @@ function appInstanceID(nodeID: string, app: AppConfigType): string {
   return [nodeID, app.type, app.subtype, app.uuid].join(':');
 }
 
-export function buildAppNode(node: NodeType, app: AppConfigType, opts?: {
-  level?: number;
-}): AppNodeType {
+export function buildAppNode(
+  node: NodeType,
+  app: AppConfigType,
+  opts?: {
+    level?: number;
+  },
+): AppNodeType {
   return {
     app,
     block: node?.block,

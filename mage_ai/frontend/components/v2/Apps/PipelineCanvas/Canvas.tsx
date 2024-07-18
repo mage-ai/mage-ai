@@ -11,10 +11,15 @@ import HeaderUpdater from '../../Layout/Header/Updater';
 import PipelineExecutionFrameworkType from '@interfaces/PipelineExecutionFramework/interfaces';
 import type { DropTargetMonitor } from 'react-dnd';
 import {
-  LayoutConfigType, DragItem, ModelMappingType, NodeItemType, RectType,
-  NodeType, FlatItemType,
+  LayoutConfigType,
+  DragItem,
+  ModelMappingType,
+  NodeItemType,
+  RectType,
+  NodeType,
+  FlatItemType,
   AppNodeType,
-  OutputNodeType
+  OutputNodeType,
 } from '../../Canvas/interfaces';
 import useEventManager from './useEventManager';
 import useLayoutManager from './useLayoutManager';
@@ -23,7 +28,12 @@ import { SettingsProvider } from './SettingsManager/SettingsContext';
 import { ModelProvider } from './ModelManager/ModelContext';
 import usePresentationManager, { PresentationManagerType } from './usePresentationManager';
 import { DragLayer } from '../../Canvas/Layers/DragLayer';
-import { ItemTypeEnum, LayoutConfigDirectionOriginEnum, LayoutConfigDirectionEnum, LayoutDisplayEnum } from '../../Canvas/types';
+import {
+  ItemTypeEnum,
+  LayoutConfigDirectionOriginEnum,
+  LayoutConfigDirectionEnum,
+  LayoutDisplayEnum,
+} from '../../Canvas/types';
 import { RemoveContextMenuType, RenderContextMenuType } from '@mana/hooks/useContextMenu';
 import { ZoomPanStateType } from '@mana/hooks/useZoomPan';
 import { MenuGroupType } from '@mana/components/Menu/interfaces';
@@ -32,7 +42,13 @@ import { useDrop } from 'react-dnd';
 import { createRef, useEffect, useMemo, useRef, useState, startTransition } from 'react';
 import useItemManager from './useItemManager';
 import useDynamicDebounce from '@utils/hooks/useDebounce';
-import { AppManagerType, LayoutManagerType, ItemElementsType, EventManagerType, ModelManagerType } from './interfaces';
+import {
+  AppManagerType,
+  LayoutManagerType,
+  ItemElementsType,
+  EventManagerType,
+  ModelManagerType,
+} from './interfaces';
 import { groupBy, unique, sortByKey, flattenArray } from '@utils/array';
 import useNodeManager from './useNodeManager';
 import useAppManager from './useAppManager';
@@ -117,26 +133,27 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
     [CustomAppEventEnum.APP_STOPPED]: handleAppChanged,
     [CustomAppEventEnum.APP_UPDATED]: handleAppChanged,
     [CustomAppEventEnum.NODE_LAYOUTS_CHANGED]: handleNodeLayoutsChanged,
-    [CustomAppEventEnum.SAVE_AS_IMAGE]: () => handleSaveAsImage(
-      canvasRef, wrapperRef, itemsRef, imageDataRef
-    ),
+    [CustomAppEventEnum.SAVE_AS_IMAGE]: () =>
+      handleSaveAsImage(canvasRef, wrapperRef, itemsRef, imageDataRef),
   });
 
   function handleAppChanged({ detail: { manager } }: CustomAppEvent) {
     const mapping = {};
     const rects = [];
 
-    Object.values((manager as AppManagerType)?.appsRef?.current ?? {})?.forEach((appNodes: AppNodeType[]) => {
-      appNodes?.forEach((appNode: AppNodeType) => {
-        const { id, rect } = appNode;
-        const { left, top, width, height } = rect ?? {};
+    Object.values((manager as AppManagerType)?.appsRef?.current ?? {})?.forEach(
+      (appNodes: AppNodeType[]) => {
+        appNodes?.forEach((appNode: AppNodeType) => {
+          const { id, rect } = appNode;
+          const { left, top, width, height } = rect ?? {};
 
-        const flat = [String(id), left, top, width, height];
+          const flat = [String(id), left, top, width, height];
 
-        rects.push(flat);
-        mapping[flat[0]] = appNode;
-      });
-    });
+          rects.push(flat);
+          mapping[flat[0]] = appNode;
+        });
+      },
+    );
 
     DEBUG.apps && console.log('handleAppChanged', { mapping, rects });
     DEBUG.state && console.log('setAppRects', rects);
@@ -181,10 +198,7 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
       ...(data?.defaultGroups ? { defaultGroups: data?.defaultGroups } : {}),
       executionFramework: data?.executionFramework ?? prev?.executionFramework,
       groupsByLevel: data?.groupsByLevel ?? prev?.groupsByLevel,
-      handleMenuItemClick: (
-        event: MouseEvent,
-        groups: MenuGroupType[],
-      ) => {
+      handleMenuItemClick: (event: MouseEvent, groups: MenuGroupType[]) => {
         dispatchAppEvent(CustomAppEventEnum.UPDATE_SETTINGS, {
           event: convertEvent(event),
           options: {
@@ -234,11 +248,7 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
 
   const { onMountItem } = useItemManager({ itemElementsRef, itemsRef });
 
-  const {
-    addNewComponent,
-    dynamicRootRef,
-    removeComponentById,
-  } = useNodeManager({
+  const { addNewComponent, dynamicRootRef, removeComponentById } = useNodeManager({
     itemRects,
     itemElementsRef,
     dragEnabled,
@@ -324,8 +334,13 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
   const [, connectDrop] = useDrop(
     () => ({
       // https://react-dnd.github.io/react-dnd/docs/api/use-drop
-      accept: [ItemTypeEnum.APP, ItemTypeEnum.BLOCK, ItemTypeEnum.NODE, ItemTypeEnum.OUTPUT,
-      ItemTypeEnum.PORT],
+      accept: [
+        ItemTypeEnum.APP,
+        ItemTypeEnum.BLOCK,
+        ItemTypeEnum.NODE,
+        ItemTypeEnum.OUTPUT,
+        ItemTypeEnum.PORT,
+      ],
       canDrop: (node: NodeItemType, monitor: DropTargetMonitor) => {
         if (!monitor.isOver({ shallow: true })) {
           return false;
@@ -383,17 +398,18 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
         const itemM = itemsRef?.current?.[node.id];
         const el = itemElementsRef.current[node.type][node.id].current.getBoundingClientRect();
 
-        DEBUG.dragging && console.log(
-          'onDrop',
-          item?.id,
-          delta,
-          [leftOffset, topOffset],
-          [left, top],
-          el,
-          itemM?.rect,
-          item?.rect,
-          node?.rect,
-        );
+        DEBUG.dragging &&
+          console.log(
+            'onDrop',
+            item?.id,
+            delta,
+            [leftOffset, topOffset],
+            [left, top],
+            el,
+            itemM?.rect,
+            item?.rect,
+            node?.rect,
+          );
 
         const element = itemElementsRef.current[node.type][node.id].current;
         if (element) {
@@ -430,24 +446,31 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
   );
   connectDrop(canvasRef);
 
-  const handlers = useMemo(() => ({
-    appHandlersRef,
-    handlers: {
-      onDragEnd: handleDragEnd,
-      onDragStart: handleDragStart,
-      onDrop: onDropPort,
-      onMouseDown: handleMouseDown,
-    },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }), [])
+  const handlers = useMemo(
+    () => ({
+      appHandlersRef,
+      handlers: {
+        onDragEnd: handleDragEnd,
+        onDragStart: handleDragStart,
+        onDrop: onDropPort,
+        onMouseDown: handleMouseDown,
+      },
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }),
+    [appHandlersRef, handleDragEnd, handleDragStart, handleMouseDown, onDropPort],
+  );
 
-  const outputPortalsMemo = useMemo(() => outputIDs?.map((id: string) => {
-    const key = `output-${id}`;
-    const portalRef = outputPortalRefs.current[key] || createRef();
-    outputPortalRefs.current[key] = portalRef;
+  const outputPortalsMemo = useMemo(
+    () =>
+      outputIDs?.map((id: string) => {
+        const key = `output-${id}`;
+        const portalRef = outputPortalRefs.current[key] || createRef();
+        outputPortalRefs.current[key] = portalRef;
 
-    return <PortalNode id={key} key={key} ref={portalRef} />;
-  }), [outputIDs]);
+        return <PortalNode id={key} key={key} ref={portalRef} />;
+      }),
+    [outputIDs],
+  );
 
   const nodesMemo = useMemo(() => {
     const nodes = [];
@@ -456,20 +479,16 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
     itemRects?.forEach((arr: [string, number, number, number, number]) => {
       DEBUG.layout && console.log('[Canvas] Rendering itemRects', arr);
 
-      const [
-        id,
-        left,
-        top,
-        width,
-        height,
-      ] = arr;
+      const [id, left, top, width, height] = arr;
 
       const item = itemsRef.current[id];
       if (!item) return;
 
-      const draggable = dragEnabled && activeLevel?.current === item?.level
-        && (LayoutDisplayEnum.SIMPLE !== layoutConfigs?.[item?.level]?.current?.display
-          || ItemTypeEnum?.NODE === item?.type);
+      const draggable =
+        dragEnabled &&
+        activeLevel?.current === item?.level &&
+        (LayoutDisplayEnum.SIMPLE !== layoutConfigs?.[item?.level]?.current?.display ||
+          ItemTypeEnum?.NODE === item?.type);
 
       const index = order[item.level]?.length ?? 0;
       order[item.level] = [...(order[item.level] ?? []), id];
@@ -492,7 +511,7 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
           submitEventOperation={submitEventOperation}
           useExecuteCode={useExecuteCode}
           useRegistration={useRegistration}
-        />
+        />,
       );
     });
 
@@ -542,7 +561,7 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
           />
 
           <div id={connectionLinesRootID.current} />
-          <div id="dynamic-components-root" ref={dynamicRootRef} />
+          <div id='dynamic-components-root' ref={dynamicRootRef} />
 
           <SettingsProvider
             activeLevel={activeLevel}
@@ -561,23 +580,21 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
 
               {nodesMemo}
 
-              {appRects?.rects?.map((arr) => {
-                const [
-                  id,
-                  left,
-                  top,
-                  width,
-                  height,
-                ] = arr;
+              {appRects?.rects?.map(arr => {
+                const [id, left, top, width, height] = arr;
                 const appNode = appRects?.mapping?.[id];
                 if (!appNode) return;
-                DEBUG.apps && console.log('appRect rendering', id, left, top, width, height, appNode);
+                DEBUG.apps &&
+                  console.log('appRect rendering', id, left, top, width, height, appNode);
 
                 return (
                   <DraggableAppNode
                     {...handlers}
-                    blocks={(appNode?.upstream?.map(
-                      (id: string) => itemsRef?.current?.[id]?.block as BlockType) as BlockType[])}
+                    blocks={
+                      appNode?.upstream?.map(
+                        (id: string) => itemsRef?.current?.[id]?.block as BlockType,
+                      ) as BlockType[]
+                    }
                     draggable={dragEnabled}
                     key={appNode.id}
                     node={appNode}
@@ -594,7 +611,7 @@ const BuilderCanvas: React.FC<BuilderCanvasProps> = ({
               })}
 
               {outputPortalsMemo}
-            </ModelProvider >
+            </ModelProvider>
           </SettingsProvider>
         </CanvasContainer>
       </div>

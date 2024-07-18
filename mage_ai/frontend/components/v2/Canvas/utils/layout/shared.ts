@@ -11,16 +11,15 @@ export function isDebug() {
   return DEBUG.rects && false;
 }
 
-export function centerRectOnScreen(boundingBox: RectType, rectBase: RectType, rects: RectType[]): RectType[] {
+export function centerRectOnScreen(
+  boundingBox: RectType,
+  rectBase: RectType,
+  rects: RectType[],
+): RectType[] {
   if (boundingBox && rectBase) {
     const centerRect = rects.find(rect => rect.id === rectBase.id);
 
-    const {
-      left,
-      height,
-      top,
-      width,
-    } = centerRect;
+    const { left, height, top, width } = centerRect;
     const xcenter = (boundingBox.width - width) / 2;
     const ycenter = (boundingBox.height - height) / 2;
 
@@ -80,10 +79,12 @@ export function calculateBoundingBox(rects: RectType[]): RectType {
 
   const minLeft = Math.min(...rects.map(rect => validateFiniteNumber(rect.left)));
   const minTop = Math.min(...rects.map(rect => validateFiniteNumber(rect.top)));
-  const maxRight = Math.max(...rects.map(
-    rect => validateFiniteNumber(rect.left) + (validateFiniteNumber(rect.width) ?? 0)));
-  const maxBottom = Math.max(...rects.map(
-    rect => validateFiniteNumber(rect.top) + (validateFiniteNumber(rect.height) ?? 0)));
+  const maxRight = Math.max(
+    ...rects.map(rect => validateFiniteNumber(rect.left) + (validateFiniteNumber(rect.width) ?? 0)),
+  );
+  const maxBottom = Math.max(
+    ...rects.map(rect => validateFiniteNumber(rect.top) + (validateFiniteNumber(rect.height) ?? 0)),
+  );
 
   const width = validateFiniteNumber(maxRight - minLeft);
   const height = validateFiniteNumber(maxBottom - minTop);
@@ -126,19 +127,28 @@ export function applyRectDiff(rect: RectType, diff: RectType, dimensions?: boole
 }
 
 export function logMessageForRects(rects: RectType[]): string {
-  const format = (val: number) => ((val ?? null) !== null && !isNaN(val))
-    ? padString(String(Math.round(val)), 6, ' ') : '     -';
+  const format = (val: number) =>
+    (val ?? null) !== null && !isNaN(val) ? padString(String(Math.round(val)), 6, ' ') : '     -';
 
-  return rects.map((copy) =>
-    '|   ' + padString(String(copy.id).slice(0, 20), 20, ' ') + ': ' + (
-      [copy.left, copy.top, copy.width, copy.height].map(v => format(v ?? 0)).join(', ')),
-  ).join('\n');
+  return rects
+    .map(
+      copy =>
+        '|   ' +
+        padString(String(copy.id).slice(0, 20), 20, ' ') +
+        ': ' +
+        [copy.left, copy.top, copy.width, copy.height].map(v => format(v ?? 0)).join(', '),
+    )
+    .join('\n');
 }
 
 export function formatKeyValue(k, v, level?: number): string {
-  return `${padString(k.slice(0, 20), 20, ' ')}: ${typeof v === 'function'
-    ? '__func__'
-    : typeof v === 'object' && (v ?? false) && isObject(v)
-      ? Object.entries(v ?? {}).map(([k2, v2]) => `${k2}=${v2}`).join(',')
-      : v}`;
+  return `${padString(k.slice(0, 20), 20, ' ')}: ${
+    typeof v === 'function'
+      ? '__func__'
+      : typeof v === 'object' && (v ?? false) && isObject(v)
+        ? Object.entries(v ?? {})
+            .map(([k2, v2]) => `${k2}=${v2}`)
+            .join(',')
+        : v
+  }`;
 }

@@ -9,9 +9,6 @@ function CanvasPage() {
   return <PipelineBuilder />;
 }
 
-CanvasPage.getInitialProps = async () => ({
-
-  });
-
+CanvasPage.getInitialProps = async () => ({});
 
 export default Route(CanvasPage);

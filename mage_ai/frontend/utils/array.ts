@@ -143,7 +143,7 @@ export function uniqueArray(arrArg) {
   return [...new Set(arrArg)];
 }
 
-export function unique(arrArg: any[], compare: ((item: any) => any)) {
+export function unique(arrArg: any[], compare: (item: any) => any) {
   const map = indexBy(arrArg, compare);
 
   return arrArg.reduce((acc, item) => {
@@ -250,7 +250,7 @@ export function standardDeviation(arr, usePopulation = false) {
   const mean = arr.reduce((acc, val) => acc + val, 0) / arr.length;
   return Math.sqrt(
     arr.reduce((acc, val) => acc.concat((val - mean) ** 2), []).reduce((acc, val) => acc + val, 0) /
-    (arr.length - (usePopulation ? 0 : 1)),
+      (arr.length - (usePopulation ? 0 : 1)),
   );
 }
 
@@ -308,5 +308,5 @@ export function deepCopyArray<T>(obj: T): T {
 }
 
 export function reverseArray<T>(arr: T[]): T[] {
-    return [...arr].reverse();
+  return [...arr].reverse();
 }

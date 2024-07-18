@@ -6,7 +6,7 @@ import { withStyles } from '../hocs/withStyles';
 type PanelProps = {
   padding?: boolean;
   skipIndexes?: number[];
-}
+};
 
 const Panel = withStyles(styles, {
   HTMLTag: 'div',
@@ -20,10 +20,16 @@ const Row = withStyles<{
   classNames: ['row'],
 });
 
-function PanelRows({ children, padding = true, skipIndexes, ...props }: { children: React.ReactNode } & PanelProps) {
-  const arr = React.Children.map(children, (child, index) => skipIndexes && skipIndexes?.includes(index)
-    ? child
-    : (
+function PanelRows({
+  children,
+  padding = true,
+  skipIndexes,
+  ...props
+}: { children: React.ReactNode } & PanelProps) {
+  const arr = React.Children.map(children, (child, index) =>
+    skipIndexes && skipIndexes?.includes(index) ? (
+      child
+    ) : (
       <Row
         {...props}
         className={[padding ? styles.padding : ''].filter(Boolean).join(' ')}
@@ -31,14 +37,13 @@ function PanelRows({ children, padding = true, skipIndexes, ...props }: { childr
       >
         {child}
       </Row>
-    ));
+    ),
+  );
 
   return (
     <LayoutGroup>
-      <Panel>
-        {arr}
-      </Panel >
-    </LayoutGroup >
+      <Panel>{arr}</Panel>
+    </LayoutGroup>
   );
 }
 

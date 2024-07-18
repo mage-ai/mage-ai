@@ -3,10 +3,7 @@ import { LayoutConfigDirectionEnum } from '../../types';
 import { RectType } from '@mana/shared/interfaces';
 import { isDebug } from './shared';
 
-function pattern3(
-  rects: RectType[],
-  layout?: LayoutConfigType,
-): RectType[] {
+function pattern3(rects: RectType[], layout?: LayoutConfigType): RectType[] {
   const { direction = LayoutConfigDirectionEnum.HORIZONTAL, gap, options } = layout ?? {};
   const { amplitude = 40, wavelength = 100 } = options ?? {};
 
@@ -103,15 +100,19 @@ function pattern3(
 
   // Ensure no obstruction between connected upstream and downstream rects
   function isObstructed(upstreamRect: RectType, downstreamRect: RectType): boolean {
-    const minLevel = levels.get(upstreamRect.id) !== undefined ? (levels.get(upstreamRect.id) as number) + 1 : 0;
-    const maxLevel = levels.get(downstreamRect.id) !== undefined ? (levels.get(downstreamRect.id) as number) : 0;
+    const minLevel =
+      levels.get(upstreamRect.id) !== undefined ? (levels.get(upstreamRect.id) as number) + 1 : 0;
+    const maxLevel =
+      levels.get(downstreamRect.id) !== undefined ? (levels.get(downstreamRect.id) as number) : 0;
 
     for (let level = minLevel; level < maxLevel; level++) {
       const rectsAtLevel = sortedRects.filter(r => levels.get(r.id) === level);
       for (const rect of rectsAtLevel) {
         if (direction === LayoutConfigDirectionEnum.HORIZONTAL) {
           if (
-            upstreamRect.left !== undefined && rect.left !== undefined && downstreamRect.left !== undefined &&
+            upstreamRect.left !== undefined &&
+            rect.left !== undefined &&
+            downstreamRect.left !== undefined &&
             upstreamRect.left < rect.left &&
             rect.left < downstreamRect.left &&
             Math.min(upstreamRect.top ?? 0, downstreamRect.top ?? 0) < (rect.top ?? 0) &&
@@ -121,7 +122,9 @@ function pattern3(
           }
         } else {
           if (
-            upstreamRect.top !== undefined && rect.top !== undefined && downstreamRect.top !== undefined &&
+            upstreamRect.top !== undefined &&
+            rect.top !== undefined &&
+            downstreamRect.top !== undefined &&
             upstreamRect.top < rect.top &&
             rect.top < downstreamRect.top &&
             Math.min(upstreamRect.left ?? 0, downstreamRect.left ?? 0) < (rect.left ?? 0) &&
@@ -183,7 +186,7 @@ function pattern2(
             return parentLevel + 1;
           }
           return 0;
-        })
+        }),
       );
       levels.set(item.id, lvl);
     }
@@ -213,11 +216,14 @@ function pattern2(
 
       if (direction === LayoutConfigDirectionEnum.HORIZONTAL) {
         left = accumulatedWidth;
-        top = amplitude * Math.sin(((2 * Math.PI) / wavelength) * left) + level * (rect.height + gapRow);
+        top =
+          amplitude * Math.sin(((2 * Math.PI) / wavelength) * left) +
+          level * (rect.height + gapRow);
         accumulatedWidth += rect.width + gapCol;
       } else {
         top = accumulatedHeight;
-        left = amplitude * Math.sin(((2 * Math.PI) / wavelength) * top) + level * (rect.width + gapCol);
+        left =
+          amplitude * Math.sin(((2 * Math.PI) / wavelength) * top) + level * (rect.width + gapCol);
         accumulatedHeight += rect.height + gapRow;
       }
 
@@ -278,4 +284,4 @@ export default {
   pattern1,
   pattern2,
   pattern3,
-}
+};

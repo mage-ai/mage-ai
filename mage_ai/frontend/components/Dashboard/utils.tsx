@@ -10,14 +10,15 @@ import { generateUUID } from '@utils/uuids/generator';
 import { PipelineTypeEnum } from '@interfaces/PipelineType';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { randomNameGenerator } from '@utils/string';
-import { PipelineExecutionFrameworkUUIDEnum, FRAMEWORK_NAME_MAPPING } from '@interfaces/PipelineExecutionFramework/types';
+import {
+  PipelineExecutionFrameworkUUIDEnum,
+  FRAMEWORK_NAME_MAPPING,
+} from '@interfaces/PipelineExecutionFramework/types';
 
 const ICON_SIZE = UNIT * 1.5;
 
 export const getNewPipelineButtonMenuItems = (
-  createPipeline: (
-    reqBody: { pipeline: { name: string, type?: PipelineTypeEnum } },
-  ) => void,
+  createPipeline: (reqBody: { pipeline: { name: string; type?: PipelineTypeEnum } }) => void,
   opts?: {
     createRAG: any;
     showAIModal?: () => void;

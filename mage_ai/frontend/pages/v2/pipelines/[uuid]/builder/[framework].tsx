@@ -5,17 +5,18 @@ import useExecutionManager from '@components/v2/ExecutionManager/useExecutionMan
 import { NextPageContext } from 'next';
 import { PipelineExecutionFrameworkUUIDEnum } from '@interfaces/PipelineExecutionFramework/types';
 
-const Builder = dynamic(() => import('@components/v2/Layout/Pipelines/Detail/Builder'), { ssr: false });
+const Builder = dynamic(() => import('@components/v2/Layout/Pipelines/Detail/Builder'), {
+  ssr: false,
+});
 
-function PipelineDetailPage({ framework, uuid }: {
+function PipelineDetailPage({
+  framework,
+  uuid,
+}: {
   framework: PipelineExecutionFrameworkUUIDEnum;
   uuid: string;
 }) {
-  const {
-    teardown,
-    useExecuteCode,
-    useRegistration,
-  } = useExecutionManager();
+  const { teardown, useExecuteCode, useRegistration } = useExecutionManager();
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => () => teardown(), []);
@@ -33,7 +34,8 @@ function PipelineDetailPage({ framework, uuid }: {
 PipelineDetailPage.getInitialProps = async (ctx: NextPageContext) => {
   const { framework, uuid } = ctx.query;
   return {
-    framework, uuid,
+    framework,
+    uuid,
   };
 };
 

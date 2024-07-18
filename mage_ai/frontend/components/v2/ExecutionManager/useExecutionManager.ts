@@ -14,9 +14,11 @@ import { getEventStreamsUrl } from '@api/utils/url';
 import { useMutate } from '@context/APIMutation';
 import { newMessageRequestUUID } from '@utils/events';
 import { useRef } from 'react';
-import { ConsumerOperations as ConsumerOperationsT,
+import {
+  ConsumerOperations as ConsumerOperationsT,
   EventSourceHandlers as EventSourceHandlersT,
-  ExecutionManagerType } from './interfaces';
+  ExecutionManagerType,
+} from './interfaces';
 import { setNested } from '@utils/hash';
 
 export type ConsumerOperations = ConsumerOperationsT;
@@ -24,21 +26,30 @@ export type EventSourceHandlers = EventSourceHandlersT;
 
 const MAX_OPEN_CONNECTIONS = 1000;
 type QueueFunction = (opts?: EventSourceHandlers) => void;
-type ConsumerMapping = Record<string, {
-  options: EventSourceHandlers;
-}>;
-type StreamMapping = Record<string, {
-  consumers: ConsumerMapping;
-  errors: Event[];
-  events: EventStreamType[];
-  messages: Record<string, ProcessDetailsType>;
-  options: EventSourceHandlers;
-  status?: ServerConnectionStatusType;
-}>;
-type ChannelMapping = Record<string, {
-  options: EventSourceHandlers;
-  streams: StreamMapping;
-}>;
+type ConsumerMapping = Record<
+  string,
+  {
+    options: EventSourceHandlers;
+  }
+>;
+type StreamMapping = Record<
+  string,
+  {
+    consumers: ConsumerMapping;
+    errors: Event[];
+    events: EventStreamType[];
+    messages: Record<string, ProcessDetailsType>;
+    options: EventSourceHandlers;
+    status?: ServerConnectionStatusType;
+  }
+>;
+type ChannelMapping = Record<
+  string,
+  {
+    options: EventSourceHandlers;
+    streams: StreamMapping;
+  }
+>;
 
 function debugLog(message: any, ...args: any[]) {
   const arr = [`[CodeExecutionManager] ${message}`];
@@ -48,15 +59,16 @@ function debugLog(message: any, ...args: any[]) {
   DEBUG.codeExecution.manager && console.log(...arr);
 }
 
-export default function useExecutionManager({
-  autoReconnect,
-  maxConnectionAttempts,
-  throttle,
-}: {
-  autoReconnect?: boolean;
-  maxConnectionAttempts?: number;
-  throttle?: number;
-} = {
+export default function useExecutionManager(
+  {
+    autoReconnect,
+    maxConnectionAttempts,
+    throttle,
+  }: {
+    autoReconnect?: boolean;
+    maxConnectionAttempts?: number;
+    throttle?: number;
+  } = {
     autoReconnect: true,
     maxConnectionAttempts: 10,
     throttle: 1000,
@@ -84,24 +96,32 @@ export default function useExecutionManager({
   // API
   const responseErrorsRef = useRef<APIErrorType[]>([]);
 
-  const mutants = useMutate({ resource: 'code_executions' }, {
-    disableAbort: true,
-    handlers: {
-      create: {
-        onError: (error: APIErrorType, args?: MutationFetchArgumentsType) => {
-          debugLog('mutants.onError', [error, args]);
-          responseErrorsRef.current.push(error);
-        },
-        onSuccess: (result: ProcessDetailsType, variables?: any) => {
-          debugLog('mutants.create.onSuccess', [result, variables]);
-          // executionsRef.current.push(result as ProcessDetailsType);
+  const mutants = useMutate(
+    { resource: 'code_executions' },
+    {
+      disableAbort: true,
+      handlers: {
+        create: {
+          onError: (error: APIErrorType, args?: MutationFetchArgumentsType) => {
+            debugLog('mutants.onError', [error, args]);
+            responseErrorsRef.current.push(error);
+          },
+          onSuccess: (result: ProcessDetailsType, variables?: any) => {
+            debugLog('mutants.create.onSuccess', [result, variables]);
+            // executionsRef.current.push(result as ProcessDetailsType);
+          },
         },
       },
     },
-  });
+  );
 
   function processQueue() {
-    debugLog('processQueue', connectionQueueRef.current.length, throttle, queueProcessingTimeoutRef.current);
+    debugLog(
+      'processQueue',
+      connectionQueueRef.current.length,
+      throttle,
+      queueProcessingTimeoutRef.current,
+    );
     if (connectionQueueRef.current.length === 0) {
       clearTimeout(queueProcessingTimeoutRef.current);
       queueProcessingTimeoutRef.current = null;
@@ -109,7 +129,9 @@ export default function useExecutionManager({
     }
 
     if (getOpenConnections()?.length >= MAX_OPEN_CONNECTIONS) {
-      debugLog(`Max open connections reached: ${getOpenConnections()?.length} of ${MAX_OPEN_CONNECTIONS}`);
+      debugLog(
+        `Max open connections reached: ${getOpenConnections()?.length} of ${MAX_OPEN_CONNECTIONS}`,
+      );
       debugLog(`Emptying ${connectionQueueRef.current.length} connection requests from the queue.`);
       connectionQueueRef.current = [];
       return;
@@ -123,10 +145,7 @@ export default function useExecutionManager({
   function registerStream(channel: string, stream: string, options?: EventSourceHandlers) {
     const connect = (opts?: EventSourceHandlers) => {
       const handle = (optsInternal: EventSourceHandlers) => {
-        const {
-          onError,
-          onOpen,
-        } = { ...opts, ...optsInternal };
+        const { onError, onOpen } = { ...opts, ...optsInternal };
 
         onopenRef.current = (event: Event) => {
           DEBUG.codeExecution.manager && debugLog('useEventStreams.onopen', eventSource, event);
@@ -138,7 +157,9 @@ export default function useExecutionManager({
 
         onerrorRef.current = (error: Event) => {
           console.error(
-            `EventSource for channel ${channel} and stream ${stream} failed with error`, error);
+            `EventSource for channel ${channel} and stream ${stream} failed with error`,
+            error,
+          );
 
           closeEventSourceConnection(channel);
           onError && onError?.(error);
@@ -221,22 +242,30 @@ export default function useExecutionManager({
 
     if (channel in eventSourcesRef.current && stream in channelsRef.current[channel].streams) {
       false &&
-        debugLog(`Connection already exists for channel ${channel} and stream ${stream} is already registered.`);
+        debugLog(
+          `Connection already exists for channel ${channel} and stream ${stream} is already registered.`,
+        );
       return;
     } else if (getOpenConnections().length >= MAX_OPEN_CONNECTIONS) {
-      debugLog(`Max open connections reached: ${getOpenConnections()?.length} of ${MAX_OPEN_CONNECTIONS}`);
+      debugLog(
+        `Max open connections reached: ${getOpenConnections()?.length} of ${MAX_OPEN_CONNECTIONS}`,
+      );
       return;
     }
 
     connect();
   }
 
-  function addToStream(channel: string, stream: string, args: {
-    error?: Event;
-    event?: EventStreamType;
-    message?: ProcessDetailsType;
-    status?: ServerConnectionStatusType;
-  }) {
+  function addToStream(
+    channel: string,
+    stream: string,
+    args: {
+      error?: Event;
+      event?: EventStreamType;
+      message?: ProcessDetailsType;
+      status?: ServerConnectionStatusType;
+    },
+  ) {
     if (!(channel in channelsRef.current) || !(stream in channelsRef.current[channel].streams)) {
       return;
     }
@@ -257,21 +286,19 @@ export default function useExecutionManager({
     }
   }
 
-  function useRegistration(channel: string, stream: string): {
+  function useRegistration(
+    channel: string,
+    stream: string,
+  ): {
     subscribe: (consumer: string, handlers: EventSourceHandlers) => void;
     unsubscribe: (consumer: string) => void;
   } {
-
     const subscribe = (consumer: string, options: EventSourceHandlers) => {
       const map = Object.keys(channelsRef?.current?.[channel]?.streams?.[stream]?.consumers ?? {});
-      DEBUG.codeExecution.manager && debugLog('useRegistration.subscribe.before',
-        channel, stream, consumer, options, map);
+      DEBUG.codeExecution.manager &&
+        debugLog('useRegistration.subscribe.before', channel, stream, consumer, options, map);
 
-      setNested(
-        channelsRef?.current ?? {},
-        [channel, 'options'].join('.'),
-        options,
-      );
+      setNested(channelsRef?.current ?? {}, [channel, 'options'].join('.'), options);
       setNested(
         channelsRef?.current ?? {},
         [channel, 'streams', stream, 'options'].join('.'),
@@ -293,8 +320,8 @@ export default function useExecutionManager({
       });
 
       const map2 = Object.keys(channelsRef?.current?.[channel]?.streams?.[stream]?.consumers ?? {});
-      DEBUG.codeExecution.manager && debugLog('useRegistration.subscribe.after',
-        channel, stream, consumer, options, map2);
+      DEBUG.codeExecution.manager &&
+        debugLog('useRegistration.subscribe.after', channel, stream, consumer, options, map2);
     };
 
     const unsubscribe = (consumer: string) => {
@@ -311,26 +338,37 @@ export default function useExecutionManager({
   // source: where it originated from
   // stream: a grouping under channel but all within the same connection
   // message_request_uuid: a unique identifier for the message; this is kept consistent throughout the code execution lifecycle.
-  function useExecuteCode(channel: string, stream?: string): {
-    executeCode: (message: string, payload?: {
-      environment?: EnvironmentType;
-      message_request_uuid?: string;
-      output_path?: string;
-      source?: string;
-    }, opts?: {
-      onError?: (response: ResponseType) => void;
-      onSuccess?: (data: { code_execution: ProcessDetailsType }) => void;
-    }) => string;
+  function useExecuteCode(
+    channel: string,
+    stream?: string,
+  ): {
+    executeCode: (
+      message: string,
+      payload?: {
+        environment?: EnvironmentType;
+        message_request_uuid?: string;
+        output_path?: string;
+        source?: string;
+      },
+      opts?: {
+        onError?: (response: ResponseType) => void;
+        onSuccess?: (data: { code_execution: ProcessDetailsType }) => void;
+      },
+    ) => string;
   } {
-    const executeCode = (message: string, payload?: {
-      environment?: EnvironmentType;
-      message_request_uuid?: string;
-      output_path?: string;
-      source?: string;
-    }, opts?: {
-      onError?: (response: ResponseType) => void;
-      onSuccess?: (data: { code_execution: ProcessDetailsType }) => void;
-    }): string => {
+    const executeCode = (
+      message: string,
+      payload?: {
+        environment?: EnvironmentType;
+        message_request_uuid?: string;
+        output_path?: string;
+        source?: string;
+      },
+      opts?: {
+        onError?: (response: ResponseType) => void;
+        onSuccess?: (data: { code_execution: ProcessDetailsType }) => void;
+      },
+    ): string => {
       const messageRequestUUID = newMessageRequestUUID();
 
       mutants.create.mutate({
@@ -382,10 +420,14 @@ export default function useExecutionManager({
 
     const consumers = channelsRef?.current?.[channel]?.streams[stream]?.consumers ?? {};
 
-    DEBUG.codeExecution.manager
-      && debugLog('useEventStreams.onmessage', event, eventData,
+    DEBUG.codeExecution.manager &&
+      debugLog(
+        'useEventStreams.onmessage',
+        event,
+        eventData,
         channelsRef?.current?.[channel],
-        Object.keys(consumers ?? {}));
+        Object.keys(consumers ?? {}),
+      );
 
     Object.values(consumers ?? {})?.forEach(({ options }) => {
       options?.onMessage?.(eventData);
@@ -412,11 +454,13 @@ export default function useExecutionManager({
         return eventSource;
       } else {
         const streamCount = Object.keys(channelsRef.current[channel]?.streams ?? {}).length;
-        const consumerCount = Object.keys(channelsRef.current[channel]?.streams?.[stream]?.consumers ?? {}).length;
+        const consumerCount = Object.keys(
+          channelsRef.current[channel]?.streams?.[stream]?.consumers ?? {},
+        ).length;
 
         debugLog(
           `Closing inactive connection for channel ${channel} with ${streamCount} ` +
-          `streams and ${consumerCount} consumers`,
+            `streams and ${consumerCount} consumers`,
         );
         closeEventSourceConnection(channel);
         eventSource = null;
@@ -490,15 +534,16 @@ export default function useExecutionManager({
   }
 
   function getOpenConnections(): EventSource[] {
-    return Object.values(
-      eventSourcesRef?.current ?? [])?.filter(es => (es ?? false) && es?.readyState === EventSourceReadyState.OPEN);
+    return Object.values(eventSourcesRef?.current ?? [])?.filter(
+      es => (es ?? false) && es?.readyState === EventSourceReadyState.OPEN,
+    );
   }
 
   function teardown() {
     if (!hasOpenConnections()) return;
 
     DEBUG.codeExecution.manager && debugLog('Tearing down...');
-    Object.keys(eventSourcesRef?.current).forEach((uuid) => {
+    Object.keys(eventSourcesRef?.current).forEach(uuid => {
       closeEventSourceConnection(uuid);
       DEBUG.codeExecution.manager && debugLog(`Closed event stream connection for ${uuid}`);
     });

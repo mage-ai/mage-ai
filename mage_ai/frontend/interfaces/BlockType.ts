@@ -297,15 +297,15 @@ export interface TemplateType {
 export interface ConfigurationType extends BaseConfigurationType {
   file?: FileType;
   dynamic?:
-  | any
-  | boolean
-  | {
-    batch_settings?: BatchSettingsType;
-    modes?: DynamicModeEnum[];
-    parent?: boolean | string[];
-    reduce_output?: boolean | string[];
-    reduce_output_upstream?: string[];
-  };
+    | any
+    | boolean
+    | {
+        batch_settings?: BatchSettingsType;
+        modes?: DynamicModeEnum[];
+        parent?: boolean | string[];
+        reduce_output?: boolean | string[];
+        reduce_output_upstream?: string[];
+      };
   templates?: Record<string, TemplateType>;
   variables?: {
     downstream?: Record<string, VariableSettingsType>;

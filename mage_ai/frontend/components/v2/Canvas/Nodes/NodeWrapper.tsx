@@ -52,12 +52,11 @@ export function getStyles(
         : { height: 0, opacity: 0 }
       : ItemTypeEnum.NODE === type
         ? {
-          height: rect?.height ?? undefined,
-          // minHeight: rect?.height === Infinity || rect?.height === -Infinity ? 0 : rect?.height ?? 0,
-        }
-        : {}
-    ),
-    ...((width ?? false) ? { minWidth: width } : {}),
+            height: rect?.height ?? undefined,
+            // minHeight: rect?.height === Infinity || rect?.height === -Infinity ? 0 : rect?.height ?? 0,
+          }
+        : {}),
+    ...(width ?? false ? { minWidth: width } : {}),
   };
 }
 
@@ -139,18 +138,16 @@ export const NodeWrapper: FC<NodeWrapperProps> = memo(function NodeWrapper({
 
   return (
     <div
-      className={[
-        styles.nodeWrapper,
-        className ?? '',
-      ].join(' ')}
+      className={[styles.nodeWrapper, className ?? ''].join(' ')}
       onDragEnd={draggable && onDragEnd ? event => onDragEnd?.(event as any) : undefined}
       onDragStart={draggable && onDragStart ? event => onDragStart?.(event as any) : undefined}
-      onMouseDown={draggable && onMouseDown
-        ? event => {
-          DEBUG.dragging && console.log('NodeWrapper.onMouseDown', event);
-          onMouseDown?.(event as any);
-        }
-        : undefined
+      onMouseDown={
+        draggable && onMouseDown
+          ? event => {
+              DEBUG.dragging && console.log('NodeWrapper.onMouseDown', event);
+              onMouseDown?.(event as any);
+            }
+          : undefined
       }
       // THESE WILL DISABLE the style opacity of the wrapper.
       // onMouseLeave={onMouseLeave ? event => onMouseLeave?.(event as any) : undefined}

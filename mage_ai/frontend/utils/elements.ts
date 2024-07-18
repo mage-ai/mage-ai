@@ -78,7 +78,10 @@ export function buildSetFunction(updateFunction) {
   return setObject;
 }
 
-export function getClosestRole(element: HTMLElement | null, roles: string | string[]): HTMLElement | null {
+export function getClosestRole(
+  element: HTMLElement | null,
+  roles: string | string[],
+): HTMLElement | null {
   const elements = (Array.isArray(roles) ? roles : [roles]).reduce((acc, role) => {
     const el = element?.closest('[role]')?.getAttribute('role')?.split(' ').includes(role)
       ? element.closest('[role]')
@@ -90,7 +93,10 @@ export function getClosestRole(element: HTMLElement | null, roles: string | stri
   return elements?.[0] || null;
 }
 
-export function getClosestChildRole(element: HTMLElement | null, roles: string | string[]): HTMLElement | null {
+export function getClosestChildRole(
+  element: HTMLElement | null,
+  roles: string | string[],
+): HTMLElement | null {
   if (!element) return null;
 
   const roleArray = Array.isArray(roles) ? roles : [roles];
@@ -114,7 +120,11 @@ export const isElementVisible = (element: HTMLElement | null): boolean => {
     const style = window.getComputedStyle(element);
 
     // Check for display, visibility, and opacity
-    if (style.display === 'none' || style.visibility === 'hidden' || parseFloat(style.opacity) === 0) {
+    if (
+      style.display === 'none' ||
+      style.visibility === 'hidden' ||
+      parseFloat(style.opacity) === 0
+    ) {
       return false;
     }
 
@@ -145,12 +155,13 @@ const isInViewport = (element: HTMLElement | null): boolean => {
   );
 };
 
-export const isElementReallyVisible = (element: HTMLElement | null): boolean => isElementVisible(element) && isInViewport(element);
+export const isElementReallyVisible = (element: HTMLElement | null): boolean =>
+  isElementVisible(element) && isInViewport(element);
 
 function getChildrenTotalHeight(element: HTMLElement): number {
   let totalHeight = 0;
 
-  element.childNodes.forEach((child) => {
+  element.childNodes.forEach(child => {
     if (child instanceof HTMLElement) {
       totalHeight += child.offsetHeight;
     }
@@ -165,7 +176,7 @@ function getChildrenBoundingWidth(element: HTMLElement): number {
   let boundingLeft = Infinity;
   let boundingRight = -Infinity;
 
-  children.forEach((child) => {
+  children.forEach(child => {
     const rect = child.getBoundingClientRect();
     if (rect.left < boundingLeft) {
       boundingLeft = rect.left;

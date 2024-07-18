@@ -3,9 +3,25 @@ import tree from './layout/tree';
 import update from 'immutability-helper';
 import wave from './layout/wave';
 import { DEBUG } from '@components/v2/utils/debug';
-import { DEFAULT_LAYOUT_CONFIG, centerRectOnScreen, formatKeyValue, logMessageForRects } from './layout/shared';
-import { DragItem, LayoutConfigType, NodeItemType, NodeType, RectType, RectTransformationType } from '../interfaces';
-import { LayoutConfigDirectionEnum, TransformRectTypeEnum, RectTransformationScopeEnum } from '../types';
+import {
+  DEFAULT_LAYOUT_CONFIG,
+  centerRectOnScreen,
+  formatKeyValue,
+  logMessageForRects,
+} from './layout/shared';
+import {
+  DragItem,
+  LayoutConfigType,
+  NodeItemType,
+  NodeType,
+  RectType,
+  RectTransformationType,
+} from '../interfaces';
+import {
+  LayoutConfigDirectionEnum,
+  TransformRectTypeEnum,
+  RectTransformationScopeEnum,
+} from '../types';
 import { applyRectDiff, getRectDiff } from './layout/shared';
 import { indexBy, deepCopyArray as deepCopy, range } from '@utils/array';
 import { isDebug as isDebugBase } from '@utils/environment';
@@ -67,8 +83,10 @@ export function transformRects(
     const { rectTransformations: rectTransformationsNested } = styleOptions ?? {};
 
     const debugLog = (stage: string, arr1: RectType[], opts?: any) => {
-      const format = (val: number) => ((val ?? null) !== null && !isNaN(val))
-        ? padString(String(Math.round(val)), 6, ' ') : '     -';
+      const format = (val: number) =>
+        (val ?? null) !== null && !isNaN(val)
+          ? padString(String(Math.round(val)), 6, ' ')
+          : '     -';
 
       const arr = deepCopyArray(arr1).map(r => ({
         ...r,
@@ -82,53 +100,45 @@ export function transformRects(
       const tag = `${stageNumber}. ${type}:${stage}` + (initialScope ? ` (${initialScope})` : '');
       const tags = [
         layout,
-        ignoreKeys(opts, [
-          'boundingBox',
-          'layout',
-          'offset',
-          'rect',
-        ]),
-        ignoreKeys(transformation, [
-          'initialScope',
-          'options',
-        ]),
-        (boundingBox ? {
-          'box.bound': [
-            boundingBox.left,
-            boundingBox.top,
-            boundingBox.width,
-            boundingBox.height,
-          ].map(format).join(', '),
-        } : {}),
-        (rectsBox ? {
-          'box.rects': [
-            rectsBox.left,
-            rectsBox.top,
-            rectsBox.width,
-            rectsBox.height,
-          ].map(format).join(', '),
-        } : {}),
-        (offset ? {
-          'offset': [
-            offset.left,
-            offset.top,
-            offset.width,
-            offset.height,
-          ].map(format).join(', '),
-        } : {}),
-        (rectBase ? {
-          'rectBase': [
-            rectBase.left,
-            rectBase.top,
-            rectBase.width,
-            rectBase.height,
-          ].map(format).join(', '),
-        } : {}),
+        ignoreKeys(opts, ['boundingBox', 'layout', 'offset', 'rect']),
+        ignoreKeys(transformation, ['initialScope', 'options']),
+        boundingBox
+          ? {
+              'box.bound': [
+                boundingBox.left,
+                boundingBox.top,
+                boundingBox.width,
+                boundingBox.height,
+              ]
+                .map(format)
+                .join(', '),
+            }
+          : {},
+        rectsBox
+          ? {
+              'box.rects': [rectsBox.left, rectsBox.top, rectsBox.width, rectsBox.height]
+                .map(format)
+                .join(', '),
+            }
+          : {},
+        offset
+          ? {
+              offset: [offset.left, offset.top, offset.width, offset.height].map(format).join(', '),
+            }
+          : {},
+        rectBase
+          ? {
+              rectBase: [rectBase.left, rectBase.top, rectBase.width, rectBase.height]
+                .map(format)
+                .join(', '),
+            }
+          : {},
       ].flatMap(o => Object.entries(o ?? {}));
 
-      const args = tags?.map(([k, v]) =>
-        `|   ${formatKeyValue(k, v, 0)}`,
-      )?.sort()?.join('\n');
+      const args = tags
+        ?.map(([k, v]) => `|   ${formatKeyValue(k, v, 0)}`)
+        ?.sort()
+        ?.join('\n');
 
       let text = logMessageForRects(arr);
 
@@ -139,19 +149,32 @@ export function transformRects(
       if (!DEBUG.rects) return;
 
       if (opts?.rectsOnly) {
-        console.log('| '
-          + stage
-          + `\n| ${range(10).map(() => '-').join('')}\n`
-          + text
-          + `\n| ${range(10).map(() => '-').join('')}\n`,
+        console.log(
+          '| ' +
+            stage +
+            `\n| ${range(10)
+              .map(() => '-')
+              .join('')}\n` +
+            text +
+            `\n| ${range(10)
+              .map(() => '-')
+              .join('')}\n`,
         );
       } else {
-        console.log(tag
-          + `\n${range(100).map(() => '-').join('')}\n`
-          + text
-          + `\n${range(100).map(() => '-').join('')}\n`
-          + args
-          + `\n${range(100).map(() => '=').join('')}\n`);
+        console.log(
+          tag +
+            `\n${range(100)
+              .map(() => '-')
+              .join('')}\n` +
+            text +
+            `\n${range(100)
+              .map(() => '-')
+              .join('')}\n` +
+            args +
+            `\n${range(100)
+              .map(() => '=')
+              .join('')}\n`,
+        );
       }
     };
 
@@ -182,7 +205,7 @@ export function transformRects(
 
     if (RectTransformationScopeEnum.CHILDREN === scope) {
       const arr = [];
-      rects.forEach((rect) => {
+      rects.forEach(rect => {
         let rectChildren = [...(rect.children || [])] || [];
         const count1 = rectChildren?.length;
 
@@ -190,7 +213,10 @@ export function transformRects(
         if (conditionSelf) {
           rcsnap = deepCopy(rectChildren);
           rectChildren = rectChildren.filter(r => conditionSelf(r));
-          debugLog(`condition_self(${rect.id}).start: ${rectChildren.length}/${rcsnap.length}`, rectChildren);
+          debugLog(
+            `condition_self(${rect.id}).start: ${rectChildren.length}/${rcsnap.length}`,
+            rectChildren,
+          );
         }
 
         if (rectChildren.length > 0) {
@@ -199,13 +225,13 @@ export function transformRects(
             parent: rect,
           })) as RectType[];
 
-          rc = transformRects(rc, [{
-            ...ignoreKeys(transformation, [
-              'condition', 'conditionSelf', 'scope',
-            ]),
-            initialRect: rect,
-            initialScope: scope,
-          }]) as RectType[];
+          rc = transformRects(rc, [
+            {
+              ...ignoreKeys(transformation, ['condition', 'conditionSelf', 'scope']),
+              initialRect: rect,
+              initialScope: scope,
+            },
+          ]) as RectType[];
 
           if (conditionSelf) {
             const rcmap = indexBy(rc, r => r.id);
@@ -219,7 +245,7 @@ export function transformRects(
           if (rect.children?.length !== count1) {
             throw new Error(
               `Rect ${rect.id} started with ${count1} ` +
-              `children but ended with ${rect.children?.length} children after transformation.`,
+                `children but ended with ${rect.children?.length} children after transformation.`,
             );
           }
         }
@@ -228,15 +254,20 @@ export function transformRects(
       });
       rects = deepCopyArray(arr);
     } else if (RectTransformationScopeEnum.SELF === scope) {
-      rects = deepCopyArray(rects)?.map((rect) => ({
+      rects = deepCopyArray(rects)?.map(rect => ({
         ...rect,
-        ...transformRects([rect], [{
-          ...transformation,
-          scope: undefined,
-        }])[0],
+        ...transformRects(
+          [rect],
+          [
+            {
+              ...transformation,
+              scope: undefined,
+            },
+          ],
+        )[0],
       }));
     } else if (TransformRectTypeEnum.RESET === type) {
-      rects = deepCopyArray(rects).map((rect) => ({
+      rects = deepCopyArray(rects).map(rect => ({
         ...rect,
         left: 0,
         top: 0,
@@ -244,11 +275,13 @@ export function transformRects(
     } else if (TransformRectTypeEnum.LAYOUT_TREE === type) {
       rects = tree.pattern1(deepCopyArray(rects), layout ?? {}, {
         // Doesn‘t work yet; the nodes are out of order in terms of its dependencies.
-        ...(rectTransformationsNested ? {
-          rectTransformations: {
-            level: arr => transformRects(arr, rectTransformationsNested),
-          },
-        } : {}),
+        ...(rectTransformationsNested
+          ? {
+              rectTransformations: {
+                level: arr => transformRects(arr, rectTransformationsNested),
+              },
+            }
+          : {}),
       });
     } else if (TransformRectTypeEnum.LAYOUT_WAVE === type) {
       rects = wave.pattern3(deepCopyArray(rects), layout);
@@ -260,8 +293,8 @@ export function transformRects(
       rects = shiftRectsIntoBoundingBox(deepCopyArray(rects), parent);
     } else if (TransformRectTypeEnum.ALIGN_WITHIN_VIEWPORT === type) {
       const box = calculateBoundingBox(deepCopyArray(rects));
-      const xoff = (boundingBox.width / 2) - (box.width / 2);
-      const yoff = (boundingBox.height / 2) - (box.height / 2);
+      const xoff = boundingBox.width / 2 - box.width / 2;
+      const yoff = boundingBox.height / 2 - box.height / 2;
       rects = deepCopyArray(rects).map(rect => {
         if (LayoutConfigDirectionEnum.HORIZONTAL === layout?.direction) {
           rect.left += xoff;
@@ -271,42 +304,46 @@ export function transformRects(
         return rect;
       });
     } else if (TransformRectTypeEnum.ALIGN_CHILDREN === type) {
-      rects = deepCopyArray(rects).map((rect) => {
+      rects = deepCopyArray(rects).map(rect => {
         const { parent } = rect;
         const diff = {
-          left: (validateFiniteNumber(parent?.offset?.left) ?? 0)
-            + (validateFiniteNumber(parent?.padding?.left) ?? 0),
-          top: (validateFiniteNumber(parent?.offset?.top) ?? 0)
-            + (validateFiniteNumber(parent?.padding?.top) ?? 0),
+          left:
+            (validateFiniteNumber(parent?.offset?.left) ?? 0) +
+            (validateFiniteNumber(parent?.padding?.left) ?? 0),
+          top:
+            (validateFiniteNumber(parent?.offset?.top) ?? 0) +
+            (validateFiniteNumber(parent?.padding?.top) ?? 0),
         };
 
         return applyRectDiff(rect, diff);
       });
     } else if (TransformRectTypeEnum.FIT_TO_CHILDREN === type) {
-      rects = deepCopyArray(rects).map((rect) => {
+      rects = deepCopyArray(rects).map(rect => {
         const box = calculateBoundingBox(rect?.children?.length >= 1 ? rect.children : [rect]);
 
         return {
           ...rect,
-          height: validateFiniteNumber(box.height)
-            + validateFiniteNumber(padding?.top ?? 0)
-            + validateFiniteNumber(padding?.bottom ?? 0)
-            + validateFiniteNumber(offset?.top ?? 0),
+          height:
+            validateFiniteNumber(box.height) +
+            validateFiniteNumber(padding?.top ?? 0) +
+            validateFiniteNumber(padding?.bottom ?? 0) +
+            validateFiniteNumber(offset?.top ?? 0),
           offset,
           padding,
-          width: validateFiniteNumber(box.width)
-            + validateFiniteNumber(padding?.left ?? 0)
-            + validateFiniteNumber(padding?.right ?? 0)
-            + validateFiniteNumber(offset?.left ?? 0),
+          width:
+            validateFiniteNumber(box.width) +
+            validateFiniteNumber(padding?.left ?? 0) +
+            validateFiniteNumber(padding?.right ?? 0) +
+            validateFiniteNumber(offset?.left ?? 0),
         };
       });
     } else if (TransformRectTypeEnum.FIT_TO_SELF === type) {
-      rects = deepCopyArray(rects).map((rect) => {
+      rects = deepCopyArray(rects).map(rect => {
         const rectPrev = defaultRect?.(rect);
-        return ({ ...rect, ...rectPrev });
+        return { ...rect, ...rectPrev };
       });
     } else if (TransformRectTypeEnum.PAD === type) {
-      rects = deepCopyArray(rects).map((rect) => ({ ...rect, padding }));
+      rects = deepCopyArray(rects).map(rect => ({ ...rect, padding }));
     } else if (TransformRectTypeEnum.SHIFT === type) {
       rects = shiftRectsByDiffRect(deepCopyArray(rects), offset ?? { left: 0, top: 0 });
     } else if (TransformRectTypeEnum.MIN_DIMENSIONS === type) {
@@ -371,8 +408,8 @@ export function transformRects(
       if (rect.children?.length !== rectp.children?.length) {
         throw new Error(
           `Rect ${rect.id} started with ${rectp?.children?.length} ` +
-          `children but ended with ${rect?.children?.length} children after transformation ` +
-          `going from stage ${stage - 1} to stage ${stage}`,
+            `children but ended with ${rect?.children?.length} children after transformation ` +
+            `going from stage ${stage - 1} to stage ${stage}`,
         );
       }
     });
@@ -385,8 +422,10 @@ function shiftRectsIntoBoundingBox(rects: RectType[], boundingBox: RectType): Re
   // This function shifts a list of rectangles to fit within a specified bounding box.
   const groupBoundingBox = calculateBoundingBox(rects);
 
-  const offsetX = validateFiniteNumber(boundingBox.left) - validateFiniteNumber(groupBoundingBox.left);
-  const offsetY = validateFiniteNumber(boundingBox.top) - validateFiniteNumber(groupBoundingBox.top);
+  const offsetX =
+    validateFiniteNumber(boundingBox.left) - validateFiniteNumber(groupBoundingBox.left);
+  const offsetY =
+    validateFiniteNumber(boundingBox.top) - validateFiniteNumber(groupBoundingBox.top);
 
   return rects.map(rect => ({
     ...rect,
@@ -472,12 +511,10 @@ export function layoutItemsInTreeFormation(
 function layoutItemsInNodeGroup(nodes: NodeType[], layout: LayoutConfigType) {
   const groupsMapping: Record<string, NodeType> = {};
 
-  const {
-    node: transformRect = (rect: RectType) => ({ ...rect }) as RectType,
-  } = layout?.transformRect || {};
-  const {
-    item: defaultRect = (item: NodeItemType) => ({ ...item?.rect }) as RectType,
-  } = layout?.defaultRect || {};
+  const { node: transformRect = (rect: RectType) => ({ ...rect }) as RectType } =
+    layout?.transformRect || {};
+  const { item: defaultRect = (item: NodeItemType) => ({ ...item?.rect }) as RectType } =
+    layout?.defaultRect || {};
 
   nodes?.forEach((node: NodeType) => {
     const { items = [] } = node;
@@ -494,25 +531,25 @@ function layoutItemsInNodeGroup(nodes: NodeType[], layout: LayoutConfigType) {
     const offsetTopMax =
       items2?.length >= 1
         ? Math.max(
-          ...items2.map(
-            (item: DragItem) =>
-              (item?.rect?.inner?.badge?.height ?? 0) +
-              (item?.rect?.inner?.badge?.offset?.top ?? 0) +
-              (item?.rect?.inner?.title?.height ?? 0) +
-              (item?.rect?.inner?.title?.offset?.top ?? 0),
-          ),
-        )
+            ...items2.map(
+              (item: DragItem) =>
+                (item?.rect?.inner?.badge?.height ?? 0) +
+                (item?.rect?.inner?.badge?.offset?.top ?? 0) +
+                (item?.rect?.inner?.title?.height ?? 0) +
+                (item?.rect?.inner?.title?.offset?.top ?? 0),
+            ),
+          )
         : 0;
     const offsetLeftMax =
       items2?.length >= 1
         ? Math.max(
-          ...items2.map((item: DragItem) =>
-            Math.max(
-              item?.rect?.inner?.badge?.offset?.left ?? 0,
-              item?.rect?.inner?.title?.offset?.left ?? 0,
+            ...items2.map((item: DragItem) =>
+              Math.max(
+                item?.rect?.inner?.badge?.offset?.left ?? 0,
+                item?.rect?.inner?.title?.offset?.left ?? 0,
+              ),
             ),
-          ),
-        )
+          )
         : 0;
 
     false && isDebugBase() && console.log(items2, offsetTopMax, offsetLeftMax);
@@ -606,30 +643,36 @@ function centerRectsInBoundingBox(rects: RectType[], box: RectType): RectType[] 
   const offsetTop = (box.height - boxSmall.height) / 2;
   const offsetLeft = (box.width - boxSmall.width) / 2;
   console.log(box, boxSmall, offsetTop, offsetLeft);
-  return rects.map(rect => applyRectDiff(rect, {
-    left: offsetLeft,
-    top: offsetTop,
-  }));
+  return rects.map(rect =>
+    applyRectDiff(rect, {
+      left: offsetLeft,
+      top: offsetTop,
+    }),
+  );
 }
 
 function shiftRectsByDiffRect(rects: RectType[], rectDiff: RectType) {
   return rects.map(rect => applyRectDiff(rect, rectDiff));
 }
 
-function addPaddingToRectInsideBox(rects: RectType[], box: RectType, pad: {
-  bottom: number;
-  left: number;
-  right: number;
-  top: number;
-}) {
+function addPaddingToRectInsideBox(
+  rects: RectType[],
+  box: RectType,
+  pad: {
+    bottom: number;
+    left: number;
+    right: number;
+    top: number;
+  },
+) {
   return rects?.map((rect: RectType) => ({
     ...rect,
     left: Math.min(
-      ((box.left ?? 0) + box.width) - pad.right,
+      (box.left ?? 0) + box.width - pad.right,
       Math.max((box.left ?? 0) + pad.left, rect.left),
     ),
     top: Math.min(
-      ((box.top ?? 0) + box.height) - pad.bottom,
+      (box.top ?? 0) + box.height - pad.bottom,
       Math.max((box.top ?? 0) + pad.top, rect.top),
     ),
   }));
@@ -653,7 +696,7 @@ function layoutRectsInSpiral(rects: RectType[], layout?: LayoutConfigType): Rect
   const horizontalAspectRatio = 1.5; // Moderate horizontal elongation
   const verticalAspectRatio = 1 / horizontalAspectRatio; // Moderate vertical elongation
 
-  rectsCopy.forEach((rect) => {
+  rectsCopy.forEach(rect => {
     let x: number;
     let y: number;
     let overlap: boolean;
@@ -662,13 +705,31 @@ function layoutRectsInSpiral(rects: RectType[], layout?: LayoutConfigType): Rect
 
     do {
       // Calculate the elongated position based on angle and radius
-      x = radius * Math.cos(angle) * (direction === LayoutConfigDirectionEnum.HORIZONTAL ? horizontalAspectRatio : verticalAspectRatio);
-      y = radius * Math.sin(angle) * (direction === LayoutConfigDirectionEnum.VERTICAL ? horizontalAspectRatio : verticalAspectRatio);
+      x =
+        radius *
+        Math.cos(angle) *
+        (direction === LayoutConfigDirectionEnum.HORIZONTAL
+          ? horizontalAspectRatio
+          : verticalAspectRatio);
+      y =
+        radius *
+        Math.sin(angle) *
+        (direction === LayoutConfigDirectionEnum.VERTICAL
+          ? horizontalAspectRatio
+          : verticalAspectRatio);
 
       left = Math.max(0, halfWidth + x - rect.width / 2);
       top = Math.max(0, halfHeight + y - rect.height / 2);
 
-      overlap = positionedRects.some((posRect) => !(left + rect.width < posRect.left || left > posRect.left + posRect.width || top + rect.height < posRect.top || top > posRect.top + posRect.height));
+      overlap = positionedRects.some(
+        posRect =>
+          !(
+            left + rect.width < posRect.left ||
+            left > posRect.left + posRect.width ||
+            top + rect.height < posRect.top ||
+            top > posRect.top + posRect.height
+          ),
+      );
 
       if (overlap || left < 0 || top < 0) {
         // If there is overlap or the rect goes out of bounds, adjust the angle and radius
@@ -689,7 +750,10 @@ function layoutRectsInSpiral(rects: RectType[], layout?: LayoutConfigType): Rect
 }
 
 function moveItemsIntoNode(node) {
-  const rects = shiftRectsIntoBoundingBox(node.items.map(i => i.rect), node.rect);
+  const rects = shiftRectsIntoBoundingBox(
+    node.items.map(i => i.rect),
+    node.rect,
+  );
   return {
     ...node,
     items: rects.map((rect, idx) => ({ ...node.items[idx], rect })),
@@ -776,8 +840,12 @@ export function calculateBoundingBox(rects: RectType[]): RectType {
 
   const minLeft = Math.min(...rects.map(rect => validateFiniteNumber(rect.left)));
   const minTop = Math.min(...rects.map(rect => validateFiniteNumber(rect.top)));
-  const maxRight = Math.max(...rects.map(rect => validateFiniteNumber(rect.left) + (validateFiniteNumber(rect.width) ?? 0)));
-  const maxBottom = Math.max(...rects.map(rect => validateFiniteNumber(rect.top) + (validateFiniteNumber(rect.height) ?? 0)));
+  const maxRight = Math.max(
+    ...rects.map(rect => validateFiniteNumber(rect.left) + (validateFiniteNumber(rect.width) ?? 0)),
+  );
+  const maxBottom = Math.max(
+    ...rects.map(rect => validateFiniteNumber(rect.top) + (validateFiniteNumber(rect.height) ?? 0)),
+  );
 
   const width = validateFiniteNumber(maxRight - minLeft);
   const height = validateFiniteNumber(maxBottom - minTop);
@@ -871,7 +939,10 @@ function getRectsFromLayout(layout: LayoutConfigType): {
 }
 
 export function findRectAtPoint(x, y, rects) {
-  return rects.find(({ left, top, width, height }) => x >= left && x <= left + width && y >= top && y <= top + height);
+  return rects.find(
+    ({ left, top, width, height }) =>
+      x >= left && x <= left + width && y >= top && y <= top + height,
+  );
 }
 
 function layoutRectsInGrid(
@@ -884,7 +955,10 @@ function layoutRectsInGrid(
     };
   },
 ): RectType[] {
-  const { gap, direction = LayoutConfigDirectionEnum.HORIZONTAL } = { ...DEFAULT_LAYOUT_CONFIG, ...layout };
+  const { gap, direction = LayoutConfigDirectionEnum.HORIZONTAL } = {
+    ...DEFAULT_LAYOUT_CONFIG,
+    ...layout,
+  };
   const { column: gapCol, row: gapRow } = gap;
   const { containerRect } = getRectsFromLayout(layout || {});
 
@@ -908,8 +982,8 @@ function layoutRectsInGrid(
       determinedLevels.set(item.id, 0);
     } else {
       const level = Math.max(
-        ...item.upstream.map((rect) => {
-          const parentItem = rects.find((i) => i.id === rect.id);
+        ...item.upstream.map(rect => {
+          const parentItem = rects.find(i => i.id === rect.id);
           if (parentItem) {
             const parentLevel = determineLevel(parentItem);
             const children = childrenMapping.get(parentItem) || [];
@@ -930,7 +1004,7 @@ function layoutRectsInGrid(
 
   // Group items by levels
   const levelGroups: Map<number, RectType[]> = new Map();
-  rects.forEach((item) => {
+  rects.forEach(item => {
     const level = determinedLevels.get(item.id);
     if (!levelGroups.has(level)) {
       levelGroups.set(level, []);

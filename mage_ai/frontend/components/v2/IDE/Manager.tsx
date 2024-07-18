@@ -90,10 +90,10 @@ class Manager {
     workspace?: boolean[];
     wrapper?: boolean[];
   } = {
-      languageServer: [],
-      workspace: [],
-      wrapper: [],
-    };
+    languageServer: [],
+    workspace: [],
+    wrapper: [],
+  };
   private timeout: any = null;
   private uuid: string = null;
   private wrapper: any | null = null;
@@ -150,8 +150,8 @@ class Manager {
     if (!(uuid ?? false)) {
       console.error(
         '[WARNING] Editor manager is being initialized without a UUID, ' +
-        'you must use a UUID or else the same instance will be reused.'
-      )
+          'you must use a UUID or else the same instance will be reused.',
+      );
     }
     debugLog(Manager.instances);
 
@@ -334,8 +334,8 @@ class Manager {
     await Manager.loadServices();
 
     this.onCompletions.wrapper = () => wrapper?.onComplete?.();
-    this.onCompletions.languageServer =
-      () => !languageServer?.enabled || languageServer?.onComplete?.();
+    this.onCompletions.languageServer = () =>
+      !languageServer?.enabled || languageServer?.onComplete?.();
     this.onCompletions.workspace = () => workspace?.onComplete?.();
 
     await this.initializeWrapper(
@@ -343,11 +343,12 @@ class Manager {
         ...wrapper,
         languageServer,
       },
-      async (languageServerClientWrapper: any) => await this.startLanguageServer(
-        languageServerClientWrapper,
-        async (languageClient: any) => await this.initializeWorkspace(languageClient, workspace),
-        languageServer,
-      ),
+      async (languageServerClientWrapper: any) =>
+        await this.startLanguageServer(
+          languageServerClientWrapper,
+          async (languageClient: any) => await this.initializeWorkspace(languageClient, workspace),
+          languageServer,
+        ),
     );
     await this.isCompleted();
   }
@@ -581,13 +582,14 @@ class Manager {
 
     return {
       id: this.uuid,
-      languageClientConfig: (!languageServer?.enabled || this.isLanguageServerInitialized())
-        ? null
-        : {
-          ...languageClientConfig,
-          languageId: this.language,
-          name: `mage-lsp-${this.language}`,
-        },
+      languageClientConfig:
+        !languageServer?.enabled || this.isLanguageServerInitialized()
+          ? null
+          : {
+              ...languageClientConfig,
+              languageId: this.language,
+              name: `mage-lsp-${this.language}`,
+            },
       loggerConfig,
       wrapperConfig: {
         editorAppConfig: {

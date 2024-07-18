@@ -18,10 +18,6 @@ export function getBlockConnectionUUID(block: BlockType) {
     .join('-');
 }
 
-
 export function buildPortIDFromBlockToBlock(fromBlock: BlockType, toBlock: BlockType) {
-  return buildPortID(
-    getBlockConnectionUUID(fromBlock),
-    getBlockConnectionUUID(toBlock),
-  );
+  return buildPortID(getBlockConnectionUUID(fromBlock), getBlockConnectionUUID(toBlock));
 }

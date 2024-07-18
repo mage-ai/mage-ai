@@ -37,8 +37,8 @@ const CircleStyle = styled.div<LoadingProps>`
     z-index: ${position === 'relative' ? 1 : 2};
 
     .loader {
-      height: ${(typeof height === 'number' ? `${height}px` : height || '14px')};
-      width: ${(typeof width === 'number' ? `${width}px` : width || '14px')};
+      height: ${typeof height === 'number' ? `${height}px` : height || '14px'};
+      width: ${typeof width === 'number' ? `${width}px` : width || '14px'};
       border-radius: 50%;
       background: conic-gradient(${color || dig(theme.colors, colorName ?? 'statuses.success')} 270deg, transparent 0);
       mask: radial-gradient(
@@ -66,8 +66,9 @@ const LoadingStyleBlocks = styled.div<LoadingProps>`
 
   ${({ color, theme, vertical, width }) => `
 
-    ${vertical
-      ? `
+    ${
+      vertical
+        ? `
       .loader {
         display: inline-flex;
         gap: 2px;
@@ -76,8 +77,9 @@ const LoadingStyleBlocks = styled.div<LoadingProps>`
       .loader:before,
       .loader:after {
         content: "";
-        width: ${typeof width === 'string' ? width : typeof width === 'number' ? `${width}px` : '12px'
-      };
+        width: ${
+          typeof width === 'string' ? width : typeof width === 'number' ? `${width}px` : '12px'
+        };
         aspect-ratio: 1;
         box-shadow: 0 0 0 1.5px inset ${color || theme.colors.typography.text.base};
         animation: l4 1.5s infinite;
@@ -96,7 +98,7 @@ const LoadingStyleBlocks = styled.div<LoadingProps>`
         100%   {transform: scaleY(var(--s,1)) translateY(0) rotate(90deg)}
       }
     `
-      : `
+        : `
       .loader {
         display: inline-flex;
         gap: 2px;
@@ -104,8 +106,9 @@ const LoadingStyleBlocks = styled.div<LoadingProps>`
       .loader:before,
       .loader:after {
         content: "";
-        width: ${typeof width === 'string' ? width : typeof width === 'number' ? `${width}px` : '12px'
-      };
+        width: ${
+          typeof width === 'string' ? width : typeof width === 'number' ? `${width}px` : '12px'
+        };
         aspect-ratio: 1;
         box-shadow: 0 0 0 1.5px inset ${color || theme.colors.typography.text.base};
         animation: l4 1.5s infinite;
@@ -247,23 +250,27 @@ const RepeatingBarStyle = styled.div<LoadingProps>`
   .loader {
     height: ${height || 2}px;
     width: inherit;
-    --c:no-repeat linear-gradient(${color ??
-      colorName
-      ? theme.colors[colorName]
-      : theme.colors.statuses.success} 0 0);
-    background: var(--c),var(--c), ${colorLight ??
-      (colorNameAlt || colorName)
-      ? theme.colors[colorNameAlt || colorName]
-      : theme.colors.statuses.successHi};
+    --c:no-repeat linear-gradient(${
+      color ?? colorName ? theme.colors[colorName] : theme.colors.statuses.success
+    } 0 0);
+    background: var(--c),var(--c), ${
+      colorLight ?? (colorNameAlt || colorName)
+        ? theme.colors[colorNameAlt || colorName]
+        : theme.colors.statuses.successHi
+    };
     background-size: 60% 100%;
     animation: l16 3s infinite;
     position: ${position || 'relative'};
 
-    ${position === 'fixed' ? `
+    ${
+      position === 'fixed'
+        ? `
       left: 0;
       top: 0;
       z-index: 1;
-      ` : ''}
+      `
+        : ''
+    }
   }
 
   @keyframes l16 {
@@ -278,7 +285,7 @@ function Loading(
   { circle, className, loadingStyle = LoadingStyleEnum.DEFAULT, ...props }: LoadingProps,
   ref: React.Ref<HTMLDivElement>,
 ) {
-  const element = <div className="loader" />;
+  const element = <div className='loader' />;
   let LoadingStyle = RepeatingBarStyle;
 
   if (LoadingStyleEnum.BLOCKS === loadingStyle) {

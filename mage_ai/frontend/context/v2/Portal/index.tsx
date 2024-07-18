@@ -21,27 +21,27 @@ interface PortalProviderProps {
   containerRef?: MutableRefObject<HTMLElement | null>;
 }
 
-export const PortalProvider: React.FC<PortalProviderProps> = ({
-  children,
-  containerRef,
-}) => {
+export const PortalProvider: React.FC<PortalProviderProps> = ({ children, containerRef }) => {
   const [portals, setPortals] = useState<Record<number, ReactNode>>({});
 
   const addPortal = useCallback((level: number, element: ReactNode) => {
-    setPortals((prevPortals) => ({
+    setPortals(prevPortals => ({
       ...prevPortals,
       [level]: element,
     }));
   }, []);
 
   const removePortalsFromLevel = useCallback((level: number) => {
-    setPortals((prevPortals) => {
+    setPortals(prevPortals => {
       const newPortals = Object.keys(prevPortals)
-        .filter((key) => parseInt(key) < level)
-        .reduce((acc, key) => {
-          acc[parseInt(key)] = prevPortals[parseInt(key)];
-          return acc;
-        }, {} as Record<number, ReactNode>);
+        .filter(key => parseInt(key) < level)
+        .reduce(
+          (acc, key) => {
+            acc[parseInt(key)] = prevPortals[parseInt(key)];
+            return acc;
+          },
+          {} as Record<number, ReactNode>,
+        );
       return newPortals;
     });
   }, []);
@@ -50,9 +50,7 @@ export const PortalProvider: React.FC<PortalProviderProps> = ({
     <PortalContext.Provider value={{ portals, addPortal, removePortalsFromLevel }}>
       {children}
       {Object.entries(portals).map(
-        ([key, portal]) =>
-          containerRef?.current &&
-          createPortal(portal, containerRef.current)
+        ([key, portal]) => containerRef?.current && createPortal(portal, containerRef.current),
       )}
     </PortalContext.Provider>
   );

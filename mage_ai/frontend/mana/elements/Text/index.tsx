@@ -42,11 +42,7 @@ export function buildTextStyleProps({
   props: any;
 } {
   const arr = [
-    small
-      ? styles.small
-      : xsmall
-        ? styles.xsmall
-        : styles.text,
+    small ? styles.small : xsmall ? styles.xsmall : styles.text,
     classNameProp || '',
     nowrap && styles.nowrap,
   ].filter(Boolean);
@@ -85,10 +81,7 @@ export function buildTextStyleProps({
 }
 
 export default function Text({ children, inline, pre, ...rest }: TextProps) {
-  const {
-    classNames,
-    props,
-  } = buildTextStyleProps(rest as TextProps);
+  const { classNames, props } = buildTextStyleProps(rest as TextProps);
 
   let El = 'p';
   if (pre) {

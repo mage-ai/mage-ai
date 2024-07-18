@@ -1,4 +1,10 @@
-import { DEFAULT_LAYOUT_CONFIG, applyRectDiff, calculateBoundingBox, getRectDiff, isDebug } from './shared';
+import {
+  DEFAULT_LAYOUT_CONFIG,
+  applyRectDiff,
+  calculateBoundingBox,
+  getRectDiff,
+  isDebug,
+} from './shared';
 import { LayoutConfigType } from '../../interfaces';
 import { LayoutConfigDirectionEnum } from '../../types';
 import { RectType } from '@mana/shared/interfaces';

@@ -6,19 +6,12 @@ type HeadlineProps = {
   h: 1 | 2 | 3 | 4 | 5;
 };
 
-const Headline = ({
-  children,
-  h = 1,
-  ...props
-}: HeadlineProps) => {
+const Headline = ({ children, h = 1, ...props }: HeadlineProps) => {
   const El = `h${h}`;
 
   return (
     <El
-      className={[
-        styles[`h${h}`],
-        props.className,
-      ].filter(Boolean).join(' ')}
+      className={[styles[`h${h}`], props.className].filter(Boolean).join(' ')}
       {...(props as any)}
     >
       {children}

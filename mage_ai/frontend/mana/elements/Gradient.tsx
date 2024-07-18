@@ -32,26 +32,29 @@ const GradientContainerInner = withStyles<InnerProps>(styles, {
   classNames: ['gradient-inner'],
 });
 
-export function GradientContainer({
-  backgroundColor,
-  borderColors,
-  children,
-  className,
-  direction = 'to top right',
-  motionProps,
-  noBorder,
-  onContextMenu,
-  role,
-  variant,
-  style,
-}: OutterProps &
-  InnerProps & {
-    borderColors?: string[];
-    className?: string;
-    direction?: Direction;
-    noBorder?: boolean;
-    variant?: 'error' | 'error-reverse';
-  }, ref: React.RefObject<HTMLDivElement>) {
+export function GradientContainer(
+  {
+    backgroundColor,
+    borderColors,
+    children,
+    className,
+    direction = 'to top right',
+    motionProps,
+    noBorder,
+    onContextMenu,
+    role,
+    variant,
+    style,
+  }: OutterProps &
+    InnerProps & {
+      borderColors?: string[];
+      className?: string;
+      direction?: Direction;
+      noBorder?: boolean;
+      variant?: 'error' | 'error-reverse';
+    },
+  ref: React.RefObject<HTMLDivElement>,
+) {
   const noInner = noBorder || variant;
 
   return (
@@ -64,7 +67,9 @@ export function GradientContainer({
         variant && styles[`variant-${variant}`],
         className || '',
         direction && borderColors?.length >= 2
-          ? styles[`gradient-background-${direction.replace(' ', '-')}-${borderColors[0]}-${borderColors[1]}`]
+          ? styles[
+              `gradient-background-${direction.replace(' ', '-')}-${borderColors[0]}-${borderColors[1]}`
+            ]
           : undefined,
       ].join(' ')}
       onContextMenu={onContextMenu}
@@ -73,7 +78,11 @@ export function GradientContainer({
       style={style}
     >
       {/* @ts-ignore */}
-      {!noInner && <GradientContainerInner backgroundColor={backgroundColor}>{children}</GradientContainerInner>}
+      {!noInner && (
+        <GradientContainerInner backgroundColor={backgroundColor}>
+          {children}
+        </GradientContainerInner>
+      )}
       {noInner && children}
     </motion.div>
   );

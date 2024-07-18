@@ -93,16 +93,21 @@ export type IDArgsType = {
   resourceParent?: string;
 };
 
-export type ArgsValueOrFunctionType = Record<string, any> | ((args: Record<string, any>) => Record<string, any>);
+export type ArgsValueOrFunctionType =
+  | Record<string, any>
+  | ((args: Record<string, any>) => Record<string, any>);
 
 export type MutateFunctionArgsType = {
   event?: ClientEventType | any;
   meta?: ArgsValueOrFunctionType;
   payload?: ArgsValueOrFunctionType;
   query?: ArgsValueOrFunctionType;
-} & IDArgsType & HandlersType;
+} & IDArgsType &
+  HandlersType;
 
-export type MutateFunctionType = (args?: MutateFunctionArgsType) => Promise<ResourceType | ResourceType[]>;
+export type MutateFunctionType = (
+  args?: MutateFunctionArgsType,
+) => Promise<ResourceType | ResourceType[]>;
 
 export type MutatationType = {
   data: any;
@@ -149,8 +154,13 @@ export interface MutateType {
   getModels: () => ResourceType[];
   list: MutatationType;
   modelsRef: React.MutableRefObject<ModelsType>;
-  setModel: (model: ResourceType | ((prev: ResourceType) => ResourceType), uuid?: string) => ResourceType;
-  setModels: (models: ResourceType[] | ((prev: ResourceType[]) => ResourceType[])) => ResourceType[];
+  setModel: (
+    model: ResourceType | ((prev: ResourceType) => ResourceType),
+    uuid?: string,
+  ) => ResourceType;
+  setModels: (
+    models: ResourceType[] | ((prev: ResourceType[]) => ResourceType[]),
+  ) => ResourceType[];
   status: MutationStatusMappingType;
   update: MutatationType;
 }

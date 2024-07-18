@@ -23,27 +23,30 @@ export default function useCustomEventHandler(
 ): CustomEventHandler {
   const subscriptionsRef = useRef<EventSubscription>({});
 
-  const dispatchCustomEvent = useCallback((type: EventEnum, detail?: DetailType, args?: any | any[]) => {
-    function _dispatch(
-      type: EventEnum,
-      detail?: DetailType,
-      args?: any | any[],
-    ) {
-      if (typeof window === 'undefined') return;
+  const dispatchCustomEvent = useCallback(
+    (type: EventEnum, detail?: DetailType, args?: any | any[]) => {
+      function _dispatch(type: EventEnum, detail?: DetailType, args?: any | any[]) {
+        if (typeof window === 'undefined') return;
 
-      const EventClass = options?.baseEvent ?? CustomEvent;
-      const event = new EventClass(type, detail, args);
+        const EventClass = options?.baseEvent ?? CustomEvent;
+        const event = new EventClass(type, detail, args);
 
-      DEBUG.events.handler && console.log('dispatchCustomEvent:', detail?.dispatcher, event);
+        DEBUG.events.handler && console.log('dispatchCustomEvent:', detail?.dispatcher, event);
 
-      window.dispatchEvent(event as CustomEvent);
-    }
+        window.dispatchEvent(event as CustomEvent);
+      }
 
-    _dispatch(type, {
-      ...detail,
-      dispatcher: client,
-    }, args)
-  }, [client, options]);
+      _dispatch(
+        type,
+        {
+          ...detail,
+          dispatcher: client,
+        },
+        args,
+      );
+    },
+    [client, options],
+  );
 
   useEffect(() => {
     Object.entries(subscriptions ?? {})?.forEach(([type, handler]) => {

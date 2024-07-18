@@ -12,9 +12,7 @@ import { isDebug } from '@utils/environment';
 
 const ROOT_ID = 'api-mutation-root';
 
-export const APIMutationProvider: React.FC<APIMutationProviderProps> = ({
-  children,
-}) => {
+export const APIMutationProvider: React.FC<APIMutationProviderProps> = ({ children }) => {
   const themeContext = useContext(ThemeContext);
   const errorRef = useRef<APIErrorType>(null);
   const errorElementRef = useRef<HTMLElement | null>(null);
@@ -45,15 +43,20 @@ export const APIMutationProvider: React.FC<APIMutationProviderProps> = ({
   }
 
   function renderError(error: APIErrorType, retry?: (event: any) => void) {
-    const element = errorElementRef?.current
-      || (errorElementRef.current = document.getElementById(ROOT_ID));
+    const element =
+      errorElementRef?.current || (errorElementRef.current = document.getElementById(ROOT_ID));
     (rootRef as { current: any }).current ||= createRoot(element);
     dismissError();
 
     errorRef.current = error;
     (rootRef.current as any).render(
       <ThemeProvider theme={themeContext}>
-        <ErrorManager dismissError={dismissError} errorRef={errorRef} key={String(new Date())} retry={retry} />
+        <ErrorManager
+          dismissError={dismissError}
+          errorRef={errorRef}
+          key={String(new Date())}
+          retry={retry}
+        />
       </ThemeProvider>,
     );
 
@@ -61,27 +64,31 @@ export const APIMutationProvider: React.FC<APIMutationProviderProps> = ({
   }
 
   return (
-    <APIMutationContext.Provider value={{ dismissError, dismissTarget, renderError, renderTarget } as any}>
+    <APIMutationContext.Provider
+      value={{ dismissError, dismissTarget, renderError, renderTarget } as any}
+    >
       <>
         {children}
         <div id={ROOT_ID} />
 
-        {target && LoadingStyle.INLINE !== loadingStyle && ReactDOM.createPortal(
-          <div
-            className={styles.target}
-            ref={targetRef}
-            style={{
-              height: target?.content ? 'inherit' : 2,
-              left: target.rect.left,
-              top: target.rect.top + target.rect.height,
-              width: target.rect.width,
-            }}
-          >
-            {!target.content && <Loading />}
-            {target.content}
-          </div>,
-          document.body,
-        )}
+        {target &&
+          LoadingStyle.INLINE !== loadingStyle &&
+          ReactDOM.createPortal(
+            <div
+              className={styles.target}
+              ref={targetRef}
+              style={{
+                height: target?.content ? 'inherit' : 2,
+                left: target.rect.left,
+                top: target.rect.top + target.rect.height,
+                width: target.rect.width,
+              }}
+            >
+              {!target.content && <Loading />}
+              {target.content}
+            </div>,
+            document.body,
+          )}
       </>
     </APIMutationContext.Provider>
   );

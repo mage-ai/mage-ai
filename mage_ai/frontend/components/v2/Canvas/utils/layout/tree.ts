@@ -1,4 +1,10 @@
-import { DEFAULT_LAYOUT_CONFIG, applyRectDiff, calculateBoundingBox, getRectDiff, isDebug } from './shared';
+import {
+  DEFAULT_LAYOUT_CONFIG,
+  applyRectDiff,
+  calculateBoundingBox,
+  getRectDiff,
+  isDebug,
+} from './shared';
 import { LayoutConfigType } from '../../interfaces';
 import { LayoutConfigDirectionEnum } from '../../types';
 import { RectType } from '@mana/shared/interfaces';
@@ -176,7 +182,7 @@ function pattern1(
 
     if (patternAll || patternPer) {
       const pattern = patternPer
-        ? (patternPer?.[relativeLevel] ?? patternPer?.[String(relativeLevel)]) ?? patternAll
+        ? patternPer?.[relativeLevel] ?? patternPer?.[String(relativeLevel)] ?? patternAll
         : patternAll;
 
       rectsinner2 = pattern(rectsinner2);
@@ -215,7 +221,6 @@ function pattern1(
     dimensionsByLevel2[String(idx)] = box;
   });
 
-
   // Vertical:
   // - Align row horizontally
   // - Align row items vertically
@@ -223,40 +228,50 @@ function pattern1(
   // - Align column vertically
   // - Align column items horizontally
 
-  (transformedNestedRects ? levelItems3 : levelItems2).forEach((rects: RectType[], level: number) => {
-    const levelKey = String(level);
+  (transformedNestedRects ? levelItems3 : levelItems2).forEach(
+    (rects: RectType[], level: number) => {
+      const levelKey = String(level);
 
-    let rects3 = [];
+      let rects3 = [];
 
-    const rectLvl = (transformedNestedRects ? dimensionsByLevel2 : dimensionsByLevel)[levelKey];
-    const maxDim = isHorizontal
-      ? { top: rectLvl.top + (maxHeight - rectLvl.height) / 2 }
-      : { left: rectLvl.left + (maxWidth - rectLvl.width) / 2 };
-    const rectMax = { ...rectLvl, ...maxDim };
-    const diff = getRectDiff(rectLvl, rectMax);
+      const rectLvl = (transformedNestedRects ? dimensionsByLevel2 : dimensionsByLevel)[levelKey];
+      const maxDim = isHorizontal
+        ? { top: rectLvl.top + (maxHeight - rectLvl.height) / 2 }
+        : { left: rectLvl.left + (maxWidth - rectLvl.width) / 2 };
+      const rectMax = { ...rectLvl, ...maxDim };
+      const diff = getRectDiff(rectLvl, rectMax);
 
-    isDebug() &&
-      console.log(`[${direction}:${level}]`, 'rectLvl', rectLvl, 'rectMax', rectMax, 'diff', diff);
-    const rects2 = rects.map(rect => applyRectDiff(rect, diff));
+      isDebug() &&
+        console.log(
+          `[${direction}:${level}]`,
+          'rectLvl',
+          rectLvl,
+          'rectMax',
+          rectMax,
+          'diff',
+          diff,
+        );
+      const rects2 = rects.map(rect => applyRectDiff(rect, diff));
 
-    // Align row items vertically / Align column items horizontally
-    const maxDim2: {
-      height?: number;
-      width?: number;
-    } = isHorizontal
+      // Align row items vertically / Align column items horizontally
+      const maxDim2: {
+        height?: number;
+        width?: number;
+      } = isHorizontal
         ? rects2.reduce((max, rect) => ({ width: Math.max(max.width, rect.width) }), { width: 0 })
         : rects2.reduce((max, rect) => ({ height: Math.max(max.height, rect.height) }), {
-          height: 0,
-        });
+            height: 0,
+          });
 
-    rects3 = rects2.map(rect => ({
-      ...rect,
-      left: isHorizontal ? rect.left + (maxDim2.width - rect.width) / 2 : rect.left,
-      top: isHorizontal ? rect.top : rect.top + (maxDim2.height - rect.height) / 2,
-    }));
+      rects3 = rects2.map(rect => ({
+        ...rect,
+        left: isHorizontal ? rect.left + (maxDim2.width - rect.width) / 2 : rect.left,
+        top: isHorizontal ? rect.top : rect.top + (maxDim2.height - rect.height) / 2,
+      }));
 
-    positionedItems[levelKey] = rects3;
-  });
+      positionedItems[levelKey] = rects3;
+    },
+  );
 
   // Center the entire layout within its container
   const rects4 = flattenArray(Object.values(positionedItems));

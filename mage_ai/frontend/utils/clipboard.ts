@@ -4,15 +4,15 @@ export function copyToClipboard(text: string) {
       () => {
         // console.log('Text copied to clipboard');
       },
-      (err) => {
+      err => {
         console.error('Failed to copy text: ', err);
-      }
+      },
     );
   } else {
     // Fallback for browsers that do not support the Clipboard API
     const textArea = document.createElement('textarea');
     textArea.value = text;
-    textArea.style.position = 'fixed';  // Prevent scrolling to bottom of the page in MS Edge
+    textArea.style.position = 'fixed'; // Prevent scrolling to bottom of the page in MS Edge
     document.body.appendChild(textArea);
     textArea.focus();
     textArea.select();

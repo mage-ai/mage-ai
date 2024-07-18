@@ -37,10 +37,11 @@ export function WithOnMount({
         return;
       }
 
-      if (phaseRef.current === 0
-        && onMount
-        && (!waitUntil || waitUntil(withRef ? mountRef : null))
-        && (!withRef || mountRef?.current)
+      if (
+        phaseRef.current === 0 &&
+        onMount &&
+        (!waitUntil || waitUntil(withRef ? mountRef : null)) &&
+        (!withRef || mountRef?.current)
       ) {
         DEBUG.hooks.withOnMount && console.log(`[WithOnMount:${uuid}:${phaseRef.current}]`);
 
@@ -68,9 +69,7 @@ export function WithOnMount({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [maxAttempts, onMount, pollInterval]);
 
-  return withRef
-    ? <div ref={mountRef}>{children}</div>
-    : <>{children}</>;
+  return withRef ? <div ref={mountRef}>{children}</div> : <>{children}</>;
 }
 
 export default function useWithOnMount({

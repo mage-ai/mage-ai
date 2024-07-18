@@ -1,7 +1,10 @@
 import BlockType, { BlockTypeEnum, TemplateType } from '@interfaces/BlockType';
 import { ColorNameType, getBlockColor } from '@mana/themes/blocks';
 import PipelineType from '@interfaces/PipelineType';
-import { FrameworkType, PipelineExecutionFrameworkBlockType } from '@interfaces/PipelineExecutionFramework/interfaces';
+import {
+  FrameworkType,
+  PipelineExecutionFrameworkBlockType,
+} from '@interfaces/PipelineExecutionFramework/interfaces';
 import update from 'immutability-helper';
 import { generateUUID } from '@utils/uuids/generator';
 import { ButtonEnum } from '@mana/shared/enums';
@@ -19,7 +22,7 @@ import { pluralize } from '@utils/string';
 
 export function nodeClassNames(node: NodeItemType): string[] {
   const { block } = node ?? {};
-  const groups = (block ?? false) ? ('groups' in block ? ((block as any)?.groups ?? []) : []) : [];
+  const groups = block ?? false ? ('groups' in block ? (block as any)?.groups ?? [] : []) : [];
 
   return [
     ...(groups ?? []).map(groupClassName),
@@ -57,10 +60,7 @@ function blockTypeClassName(blockType: string): string {
 }
 
 export function extractNestedBlocks(group: FrameworkType): BlockType[] {
-  const blocks = [
-    ...(group as any)?.children?.map(extractNestedBlocks),
-    ...(group as any)?.blocks,
-  ];
+  const blocks = [...(group as any)?.children?.map(extractNestedBlocks), ...(group as any)?.blocks];
 
   return flattenArray(blocks) as BlockType[];
 }
@@ -93,7 +93,6 @@ export function setupDraggableHandlers(
   item: NodeItemType,
   itemRef: DraggableType['itemRef'],
   block: BlockType,
-
 ) {
   const { onMouseDown, onMouseLeave, onMouseOver, onMouseUp } = handlers;
 
@@ -135,8 +134,9 @@ export function getColorNamesFromItems(items: NodeType[]): ColorNameType[] {
     if (ItemTypeEnum.NODE === item?.type) {
       // Use the color of the most common block type in the group.
       const typeCounts = Object.entries(
-        countOccurrences(flattenArray(
-          (item as NodeType)?.items?.map((i: NodeItemType) => i?.block?.type) || [])) ?? {},
+        countOccurrences(
+          flattenArray((item as NodeType)?.items?.map((i: NodeItemType) => i?.block?.type) || []),
+        ) ?? {},
       )?.map(([type, count]) => ({ count, type }));
 
       const modeTypes = sortByKey(typeCounts, ({ count }) => count, { ascending: false });
@@ -148,7 +148,7 @@ export function getColorNamesFromItems(items: NodeType[]): ColorNameType[] {
 
     const c = getBlockColor(item?.block?.type as BlockTypeEnum, { getColorName: true });
 
-    return c && c?.names ? c?.names : { base: 'gray' } as ColorNameType;
+    return c && c?.names ? c?.names : ({ base: 'gray' } as ColorNameType);
   }) as ColorNameType[];
 }
 
@@ -178,9 +178,10 @@ export function getDraggableStyles(
     ...(isDragging
       ? { height: 0, opacity: 0 }
       : {
-        minHeight: rect?.height === Infinity || rect?.height === -Infinity ? 0 : rect?.height ?? 0,
-      }),
-    ...((width ?? false) ? { minWidth: width } : {}),
+          minHeight:
+            rect?.height === Infinity || rect?.height === -Infinity ? 0 : rect?.height ?? 0,
+        }),
+    ...(width ?? false ? { minWidth: width } : {}),
   };
 
   DEBUG.dragging && console.log('getDraggableStyles', styles);
@@ -195,26 +196,25 @@ export function menuItemsForTemplates(block, handleOnClick) {
     const blockTypes = {};
 
     const arr = [];
-    Object.entries(configuration?.templates ?? {})?.forEach(
-      ([templateUUID, template]) => {
-        arr.push({
-          description: () => template?.description,
-          label: () => template?.name || templateUUID,
-          onClick: (event: any, _item, callback?: () => void) => {
-            handleOnClick(event, block, template, callback);
-          },
-          uuid: templateUUID,
-        });
+    Object.entries(configuration?.templates ?? {})?.forEach(([templateUUID, template]) => {
+      arr.push({
+        description: () => template?.description,
+        label: () => template?.name || templateUUID,
+        onClick: (event: any, _item, callback?: () => void) => {
+          handleOnClick(event, block, template, callback);
+        },
+        uuid: templateUUID,
+      });
 
-        blockTypes[template.type] ||= 0;
-        blockTypes[template.type] += 1;
-      },
-    );
+      blockTypes[template.type] ||= 0;
+      blockTypes[template.type] += 1;
+    });
 
     const color = randomSample(['pink', 'teal']);
     let path = '';
-    let modeType =
-      sortByKey(Object.entries(blockTypes ?? {}), ([, count]) => count, { ascending: false })?.[0]?.[0];
+    let modeType = sortByKey(Object.entries(blockTypes ?? {}), ([, count]) => count, {
+      ascending: false,
+    })?.[0]?.[0];
     if (modeType) {
       path = `${pluralize(modeType, 2, false, true)}/default.jinja`;
     } else {
@@ -245,23 +245,25 @@ export function menuItemsForTemplates(block, handleOnClick) {
     if (children) {
       const arr = [];
 
-      return flattenArray(children?.map((child) => {
-        const items = extractTemplatesFromChidlren(child);
-        if (!items?.length) return [];
+      return flattenArray(
+        children?.map(child => {
+          const items = extractTemplatesFromChidlren(child);
+          if (!items?.length) return [];
 
-        return [
-          ...(arr.length >= 1 ? [{ divider: true }] : []),
-          {
-            items,
-            uuid: child?.name || child?.uuid,
-            // Count of templates; doesn’t look great right now...
-            // uuid: `${child?.name || child?.uuid} templates`
-            //   + (items?.length >= 1
-            //     ? ` (${items.length})`
-            //     : ''),
-          },
-        ];
-      }));
+          return [
+            ...(arr.length >= 1 ? [{ divider: true }] : []),
+            {
+              items,
+              uuid: child?.name || child?.uuid,
+              // Count of templates; doesn’t look great right now...
+              // uuid: `${child?.name || child?.uuid} templates`
+              //   + (items?.length >= 1
+              //     ? ` (${items.length})`
+              //     : ''),
+            },
+          ];
+        }),
+      );
     }
 
     return extractTemplatesFromItem(block);
@@ -278,12 +280,9 @@ export function handleClickGroupMenu(
   submitEventOperation: SubmitEventOperationType,
   itemRef: any,
 ) {
-  const menuItems = menuItemsForTemplates(itemClicked?.block, (event: any, block, template) => handleGroupTemplateSelect(
-    event,
-    block,
-    template,
-    submitEventOperation,
-  ));
+  const menuItems = menuItemsForTemplates(itemClicked?.block, (event: any, block, template) =>
+    handleGroupTemplateSelect(event, block, template, submitEventOperation),
+  );
 
   submitEventOperation(
     update(event, {
@@ -298,12 +297,7 @@ export function handleClickGroupMenu(
     }),
     {
       args: itemClicked?.block
-        ? [
-          [
-            ...(menuItems?.length >= 1 ? [{ uuid: 'Templates' }] : []),
-            ...menuItems,
-          ],
-        ]
+        ? [[...(menuItems?.length >= 1 ? [{ uuid: 'Templates' }] : []), ...menuItems]]
         : [],
       kwargs: {
         // boundingContainer: itemRef?.current?.getBoundingClientRect(),

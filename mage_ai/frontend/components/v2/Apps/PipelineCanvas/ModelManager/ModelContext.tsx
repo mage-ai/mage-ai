@@ -20,11 +20,6 @@ interface ModelProvider extends ModelContextType {
   children: React.ReactNode;
 }
 
-export const ModelProvider: React.FC<ModelProvider> = ({
-  children,
-  ...props
-}: ModelProvider) => (
-  <ModelContext.Provider value={props}>
-    {children}
-  </ModelContext.Provider>
+export const ModelProvider: React.FC<ModelProvider> = ({ children, ...props }: ModelProvider) => (
+  <ModelContext.Provider value={props}>{children}</ModelContext.Provider>
 );

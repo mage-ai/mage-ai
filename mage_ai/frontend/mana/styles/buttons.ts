@@ -27,15 +27,28 @@ const shared = css<StyleProps>`
   position: relative;
   z-index: 1;
 
-  ${({ aslink, basic, bordercolor, disabled, grouped, header, plain, primary, secondary, theme, wrap }) =>
-    !plain && !disabled &&
+  ${({
+    aslink,
+    basic,
+    bordercolor,
+    disabled,
+    grouped,
+    header,
+    plain,
+    primary,
+    secondary,
+    theme,
+    wrap,
+  }) =>
+    !plain &&
+    !disabled &&
     outlineHover({
       borderColor: theme.fonts.color.text.inverted,
       outlineColor: header
         ? 'var(--colors-green)'
-        : (aslink && wrap)
+        : aslink && wrap
           ? theme.colors.blueText
-          : (theme.colors?.[bordercolor] ?? bordercolor) ?? primary
+          : theme.colors?.[bordercolor] ?? bordercolor ?? primary
             ? theme.buttons.outline.color.primary.hover
             : secondary
               ? theme.buttons.outline.color.secondary.hover
@@ -52,24 +65,30 @@ const shared = css<StyleProps>`
     border: none !important;
   `}
 
-  ${({ aslink, basic, grouped, header, plain }) => !aslink && !grouped && !plain && (basic || header) && borders}
+  ${({ aslink, basic, grouped, header, plain }) =>
+    !aslink && !grouped && !plain && (basic || header) && borders}
   ${({ aslink, basic, bordercolor, grouped, plain, primary, secondary, theme }) =>
     !aslink &&
     !grouped &&
     !plain &&
     basic &&
     `
-    border-color: ${(theme.colors?.[bordercolor] ?? bordercolor) ?? (primary
-      ? theme.buttons.border.color.primary.default
-      : secondary
-        ? theme.buttons.border.color.secondary.default
-        : basic
-          ? theme.buttons.border.color.basic.default
-          : theme.buttons.border.color.base.default)
+    border-color: ${
+      theme.colors?.[bordercolor] ??
+      bordercolor ??
+      (primary
+        ? theme.buttons.border.color.primary.default
+        : secondary
+          ? theme.buttons.border.color.secondary.default
+          : basic
+            ? theme.buttons.border.color.basic.default
+            : theme.buttons.border.color.base.default)
     };
   `}
 
-  ${({ disabled }) => disabled && `
+  ${({ disabled }) =>
+    disabled &&
+    `
     cursor: not-allowed;
 
     &:hover {
@@ -83,22 +102,24 @@ const shared = css<StyleProps>`
     (aslink || basic) &&
     `
     &:hover {
-      border-color: ${primary
-      ? theme.buttons.border.color.primary.hover
-      : secondary
-        ? theme.buttons.border.color.secondary.hover
-        : aslink || basic
-          ? theme.buttons.border.color.basic.hover
-          : theme.buttons.border.color.base.hover
-    };
+      border-color: ${
+        primary
+          ? theme.buttons.border.color.primary.hover
+          : secondary
+            ? theme.buttons.border.color.secondary.hover
+            : aslink || basic
+              ? theme.buttons.border.color.basic.hover
+              : theme.buttons.border.color.base.hover
+      };
     }
   `}
 
   ${({ basic, grouped }) => !grouped && !basic && bordersTransparent}
 
   background-color: ${({ aslink, backgroundcolor, basic, plain, primary, secondary, theme }) =>
-    (theme.colors?.[backgroundcolor] ?? backgroundcolor) ?? (
-      !plain &&
+    theme.colors?.[backgroundcolor] ??
+    backgroundcolor ??
+    (!plain &&
       (aslink
         ? 'transparent'
         : primary
@@ -107,15 +128,16 @@ const shared = css<StyleProps>`
             ? theme.colors.backgrounds.button.secondary.default
             : basic
               ? theme.colors.backgrounds.button.basic.default
-              : theme.colors.backgrounds.button.base.default)
-    )};
+              : theme.colors.backgrounds.button.base.default))};
   border-radius: ${({ aslink, plain, theme, wrap }) =>
-    !plain && theme.borders.radius[(wrap && aslink) ? 'xs' : 'base']};
+    !plain && theme.borders.radius[wrap && aslink ? 'xs' : 'base']};
 
   color: ${({ disabled, primary, secondary, theme }) =>
-  disabled
-    ? theme.fonts.color.text.muted
-    : primary || secondary ? theme.fonts.color.text.inverted : theme.fonts.color.text.base};
+    disabled
+      ? theme.fonts.color.text.muted
+      : primary || secondary
+        ? theme.fonts.color.text.inverted
+        : theme.fonts.color.text.base};
 
   font-style: ${({ theme }) => theme.fonts.style.base};
 
@@ -132,23 +154,28 @@ const shared = css<StyleProps>`
     !disabled &&
     `
     &:hover {
-      background-color: ${(theme.colors?.[backgroundcolor] ?? backgroundcolor) ?? primary
-      ? theme.colors.backgrounds.button.primary.hover
-      : secondary
-        ? theme.colors.backgrounds.button.secondary.hover
-        : basic
-          ? theme.colors.backgrounds.button.basic.hover
-          : theme.colors.backgrounds.button.base.hover
-    };
+      background-color: ${
+        theme.colors?.[backgroundcolor] ?? backgroundcolor ?? primary
+          ? theme.colors.backgrounds.button.primary.hover
+          : secondary
+            ? theme.colors.backgrounds.button.secondary.hover
+            : basic
+              ? theme.colors.backgrounds.button.basic.hover
+              : theme.colors.backgrounds.button.base.hover
+      };
     }
   `}
 
-  ${({ disabled, loading }) => loading && !disabled && `
+  ${({ disabled, loading }) =>
+    loading &&
+    !disabled &&
+    `
     cursor: wait;
   `}
 
   ${({ disabled, loading }) =>
-    !loading && !disabled &&
+    !loading &&
+    !disabled &&
     `
     &:hover {
       cursor: pointer;
@@ -179,7 +206,8 @@ export const sm = css<StyleProps>`
 
   font-size: ${({ theme }) => theme.fonts.size.sm};
   padding: ${({ aslink, basic, grouped, plain, theme, tag, wrap }) =>
-    !plain && !wrap &&
+    !plain &&
+    !wrap &&
     (typeof tag !== 'undefined'
       ? theme.buttons.padding.sm
       : aslink

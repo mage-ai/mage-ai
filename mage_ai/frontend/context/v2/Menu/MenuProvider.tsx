@@ -2,7 +2,7 @@ import { useRef } from 'react';
 import { MenuContext } from './MenuContext';
 import useContextMenu, { ContextMenuProps } from '@mana/hooks/useContextMenu';
 
-export const MENU_CONTEXT_PORTAL_ID = 'menu-context-portal'
+export const MENU_CONTEXT_PORTAL_ID = 'menu-context-portal';
 
 interface MenuProviderProps {
   children: React.ReactNode;
@@ -13,11 +13,13 @@ export const MenuProvider = ({ children }: MenuProviderProps) => {
   const useMenu = (kwargs: ContextMenuProps) => useContextMenu(kwargs);
 
   return (
-    <MenuContext.Provider value={{
-      portalID: MENU_CONTEXT_PORTAL_ID,
-      portalRef,
-      useMenu,
-    }}>
+    <MenuContext.Provider
+      value={{
+        portalID: MENU_CONTEXT_PORTAL_ID,
+        portalRef,
+        useMenu,
+      }}
+    >
       {children}
 
       <div id={MENU_CONTEXT_PORTAL_ID} ref={portalRef} />

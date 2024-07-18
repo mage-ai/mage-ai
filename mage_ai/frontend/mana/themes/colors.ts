@@ -234,7 +234,8 @@ const Colors = {
     [ModeEnum.LIGHT]: '#148EFF',
     [ModeEnum.MODE3]: '#148EFF',
   },
-  azureLo: { // 10%
+  azureLo: {
+    // 10%
     [ModeEnum.DARK]: '#1F6BFF1A',
     [ModeEnum.LIGHT]: '#1F6BFF1A',
     [ModeEnum.MODE3]: '#1F6BFF1A',

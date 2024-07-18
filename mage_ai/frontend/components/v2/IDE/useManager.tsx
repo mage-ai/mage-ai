@@ -20,11 +20,7 @@ function useManager(uuid: string, resource: ResourceType, opts?: any): any {
     workspace: false,
     wrapper: false,
   });
-  const {
-    languageServer,
-    workspace,
-    wrapper,
-  } = opts ?? {};
+  const { languageServer, workspace, wrapper } = opts ?? {};
 
   const [fetchItems] = useMutation(
     (query?: {
@@ -63,15 +59,16 @@ function useManager(uuid: string, resource: ResourceType, opts?: any): any {
 
         await managerRef.current.initialize(resource, {
           ...opts,
-          ...(languageServer?.enabled ?
-            {
-              languageServer: {
-                ...languageServer,
-                onComplete: () => {
-                  setCompletions(prev => ({ ...prev, languageServer: true }));
+          ...(languageServer?.enabled
+            ? {
+                languageServer: {
+                  ...languageServer,
+                  onComplete: () => {
+                    setCompletions(prev => ({ ...prev, languageServer: true }));
+                  },
                 },
               }
-            } : {}),
+            : {}),
           workspace: {
             ...workspace,
             onComplete: () => {

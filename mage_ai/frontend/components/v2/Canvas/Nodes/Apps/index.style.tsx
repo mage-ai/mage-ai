@@ -1,7 +1,6 @@
 import styled from 'styled-components';
 
-export const EditorContainerStyled = styled.div`
-  `;
+export const EditorContainerStyled = styled.div``;
 // .monaco-editor  {
 //   .margin {
 //     width: 0px !important;

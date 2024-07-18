@@ -42,10 +42,7 @@ export default function Link({
   wrap,
   ...rest
 }: LinkProps) {
-  const {
-    classNames,
-    props,
-  } = buildTextStyleProps(rest as TextProps);
+  const { classNames, props } = buildTextStyleProps(rest as TextProps);
 
   const [isBlinking, setIsBlinking] = useState(false);
 
@@ -70,9 +67,11 @@ export default function Link({
         {...props}
         {...{
           ...motionProps,
-          ...(useMotion && !motionProps ? {
-            animate: isBlinking ? 'blink' : 'initial',
-          } : {}),
+          ...(useMotion && !motionProps
+            ? {
+                animate: isBlinking ? 'blink' : 'initial',
+              }
+            : {}),
         }}
         className={[
           styles.link,
@@ -82,8 +81,10 @@ export default function Link({
           className ?? '',
           display ? styles[display] : '',
           classNames ?? '',
-        ].filter(Boolean).join(' ')}
-        initial="initial"
+        ]
+          .filter(Boolean)
+          .join(' ')}
+        initial='initial'
         onClick={handleClick}
         role={role}
         variants={blinkAnimation}

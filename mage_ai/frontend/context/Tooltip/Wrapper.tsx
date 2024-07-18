@@ -1,5 +1,12 @@
 import React, { useCallback, useRef } from 'react';
-import { TooltipDirection, TooltipJustify, TooltipAlign, HideTooltipReason, TooltipLayout, useTooltip } from './Context';
+import {
+  TooltipDirection,
+  TooltipJustify,
+  TooltipAlign,
+  HideTooltipReason,
+  TooltipLayout,
+  useTooltip,
+} from './Context';
 
 export function TooltipWrapper({
   align,
@@ -26,37 +33,51 @@ export function TooltipWrapper({
   const { showTooltip } = useTooltip();
   const wrapperRef = useRef<HTMLDivElement>(null);
 
-  const handleShowTooltip = useCallback((event: React.FocusEvent | React.MouseEvent) => {
-    const target = event.target as Element;
+  const handleShowTooltip = useCallback(
+    (event: React.FocusEvent | React.MouseEvent) => {
+      const target = event.target as Element;
 
-    if (target instanceof HTMLElement) {
-      const rect = target.getBoundingClientRect();
-      const x = rect.left;
-      const y = rect.top;
+      if (target instanceof HTMLElement) {
+        const rect = target.getBoundingClientRect();
+        const x = rect.left;
+        const y = rect.top;
 
-      const hideOn = [HideTooltipReason.BLUR, HideTooltipReason.CLICK, HideTooltipReason.ESCAPE];
+        const hideOn = [HideTooltipReason.BLUR, HideTooltipReason.CLICK, HideTooltipReason.ESCAPE];
 
-      if (!showOnClick) {
-        hideOn.push(HideTooltipReason.LEAVE);
+        if (!showOnClick) {
+          hideOn.push(HideTooltipReason.LEAVE);
+        }
+
+        showTooltip(
+          tooltip,
+          {
+            align,
+            horizontalDirection,
+            justify,
+            position: position ?? { x, y },
+            verticalDirection,
+          },
+          {
+            event,
+            hideOn,
+            style: tooltipStyle,
+            wrapperRef: wrapperRef,
+          },
+        );
       }
-
-      showTooltip(tooltip, {
-        align,
-        horizontalDirection,
-        justify,
-        position: position ?? { x, y },
-        verticalDirection,
-      }, {
-        event,
-        hideOn,
-        style: tooltipStyle,
-        wrapperRef: wrapperRef,
-      });
-    }
-  }, [align, justify, position, showOnClick, showTooltip, tooltip, tooltipStyle,
-    horizontalDirection,
-    verticalDirection,
-  ]);
+    },
+    [
+      align,
+      justify,
+      position,
+      showOnClick,
+      showTooltip,
+      tooltip,
+      tooltipStyle,
+      horizontalDirection,
+      verticalDirection,
+    ],
+  );
 
   if (hide) {
     return children;
@@ -65,7 +86,7 @@ export function TooltipWrapper({
   return (
     <div
       onClick={showOnClick ? handleShowTooltip : undefined}
-      onMouseEnter={(showOnHover || !showOnClick) ? handleShowTooltip : undefined}
+      onMouseEnter={showOnHover || !showOnClick ? handleShowTooltip : undefined}
       ref={wrapperRef}
       style={style}
     >
@@ -74,10 +95,6 @@ export function TooltipWrapper({
   );
 }
 
-export {
-  TooltipAlign,
-  TooltipDirection,
-  TooltipJustify,
-};
+export { TooltipAlign, TooltipDirection, TooltipJustify };
 
 export default React.memo(TooltipWrapper);

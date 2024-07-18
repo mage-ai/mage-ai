@@ -92,13 +92,13 @@ export function withStyles<P extends object = WithStylesProp>(styles: any, props
   ) {
     const divRef = useRef<HTMLDivElement>(null);
 
-    const data = Object.entries(
-      props ?? {},
-    )?.filter(([key]) => key?.startsWith('data-'))?.reduce((acc, [key, value]) => {
-      acc[key] = value;
-      delete props[key];
-      return acc;
-    }, {});
+    const data = Object.entries(props ?? {})
+      ?.filter(([key]) => key?.startsWith('data-'))
+      ?.reduce((acc, [key, value]) => {
+        acc[key] = value;
+        delete props[key];
+        return acc;
+      }, {});
 
     // Expose the divRef to the parent component through the ref
     useImperativeHandle(ref, () => divRef.current, []);
@@ -116,10 +116,10 @@ export function withStyles<P extends object = WithStylesProp>(styles: any, props
     // Build additional dynamic styles if allowed
     const dynamicStyles = allowDynamicStyles
       ? {
-        fill: props.fill,
-        stroke: props.stroke,
-        strokeWidth: props.strokeWidth,
-      }
+          fill: props.fill,
+          stroke: props.stroke,
+          strokeWidth: props.strokeWidth,
+        }
       : {};
 
     const propsExtracted = extractProps(props);

@@ -21,9 +21,5 @@ export const SettingsProvider: React.FC<SettingsProvider> = ({
   children,
   ...props
 }: SettingsProvider) => (
-  <SettingsContext.Provider
-    value={props}
-  >
-    {children}
-  </SettingsContext.Provider>
+  <SettingsContext.Provider value={props}>{children}</SettingsContext.Provider>
 );

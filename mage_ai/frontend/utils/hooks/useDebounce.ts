@@ -1,6 +1,10 @@
 import { useRef, useCallback } from 'react';
 
-export type DebouncerType = <T extends (...args: any[]) => void>(fn: T, delay: number, ...args: Parameters<T>) => void;
+export type DebouncerType = <T extends (...args: any[]) => void>(
+  fn: T,
+  delay: number,
+  ...args: Parameters<T>
+) => void;
 export type CancelType = () => void;
 
 // A Hook that returns a debouncer function

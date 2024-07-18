@@ -55,13 +55,13 @@ const CSS = css<ButtonStyleProps>`
   ${({ width }) => width && `width: ${width};`}
 `;
 
-const ButtonStyled = styled(motion.button) <ButtonStyleProps>`
+const ButtonStyled = styled(motion.button)<ButtonStyleProps>`
   ${CSS}
 
   display: grid;
 `;
 
-const AStyled = styled(motion.a) <ButtonStyleProps>`
+const AStyled = styled(motion.a)<ButtonStyleProps>`
   ${CSS}
 
   align-items: center;
@@ -95,7 +95,7 @@ function Button({
   wrap,
   ...props
 }: ButtonProps) {
-  const islink = (anchor || asLink || linkProps);
+  const islink = anchor || asLink || linkProps;
   const HTMLTag = islink ? AStyled : ButtonStyled;
 
   const dataProps = {};
@@ -116,7 +116,7 @@ function Button({
     // @ts-ignore
     <HTMLTag
       {...props}
-      {...((asLink || linkProps) ? { href: href ?? linkProps?.href ?? '#' } : {})}
+      {...(asLink || linkProps ? { href: href ?? linkProps?.href ?? '#' } : {})}
       {...(motion ? { whileTap: { scale: 0.97 } } : {})}
       aslink={asLink ? 'true' : undefined}
       basic={basic ? 'true' : undefined}
@@ -137,13 +137,15 @@ function Button({
       tag={tag}
       target={target}
       wrap={wrap ? 'true' : undefined}
-      {...((!islink && !wrap) ? {
-        // whileHover: { scale: 1.2 },
-        // whileFocus
-        whileTap: {
-          scale: 0.95,
-        },
-      } : {})}
+      {...(!islink && !wrap
+        ? {
+            // whileHover: { scale: 1.2 },
+            // whileFocus
+            whileTap: {
+              scale: 0.95,
+            },
+          }
+        : {})}
     >
       {Icon && <Icon {...iconProps} />}
 
@@ -162,31 +164,23 @@ function Button({
   return (
     <div
       {...dataProps}
-      className={[
-        styles.container,
-        loading && styles.loading,
-      ].filter(Boolean).join(' ')}
+      className={[styles.container, loading && styles.loading].filter(Boolean).join(' ')}
       ref={containerRef}
       role={ElementRoleEnum.BUTTON}
     >
       <div className={[styles.overlay].filter(Boolean).join(' ')} />
       <div className={[styles.loader].filter(Boolean).join(' ')}>
-        <Loading circle colorName={loadingColorName === 'blue'
-          ? 'white'
-          : loadingColorName} />
+        <Loading circle colorName={loadingColorName === 'blue' ? 'white' : loadingColorName} />
       </div>
 
       {linkProps?.href && (
-        <NextLink
-          as={linkProps.as}
-          href={linkProps.href}
-        >
+        <NextLink as={linkProps.as} href={linkProps.href}>
           {el}
         </NextLink>
       )}
 
       {!linkProps?.href && el}
-    </div >
+    </div>
   );
 }
 

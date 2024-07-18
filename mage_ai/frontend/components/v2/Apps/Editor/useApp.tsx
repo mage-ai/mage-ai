@@ -14,12 +14,14 @@ const MaterialIDE = dynamic(() => import('@components/v2/IDE'), {
   ssr: false,
 });
 
-export default function useApp(props: AppLoaderProps & {
-  editor?:IDEProps,
-  onMountEditor?: (editor: any) => void;
-  skipInitialFetch?: boolean;
-  useToolbars?: boolean;
-}): {
+export default function useApp(
+  props: AppLoaderProps & {
+    editor?: IDEProps;
+    onMountEditor?: (editor: any) => void;
+    skipInitialFetch?: boolean;
+    useToolbars?: boolean;
+  },
+): {
   editor: {
     getValue: () => string;
   };
@@ -104,57 +106,60 @@ export default function useApp(props: AppLoaderProps & {
     setStale(isStale(item.path));
   }
 
-  const mutants = useMutate({
-    resource: 'browser_items',
-  }, {
-    handlers: {
-      detail: {
-        onSuccess: (item: FileType) => {
-          setOriginal(item);
+  const mutants = useMutate(
+    {
+      resource: 'browser_items',
+    },
+    {
+      handlers: {
+        detail: {
+          onSuccess: (item: FileType) => {
+            setOriginal(item);
 
-          let staleUpdated = false;
-          if (clientRef.current) {
-            // If cache exists client side, don’t update it; only update the server cache.
-            updateFileCache({ server: item });
-          } else {
-            // If cache doesn’t exist client side, set it. This is done typically when the file
-            // is opened for the very first time.
-            updateLocalContent(item);
-            staleUpdated = true;
-          }
-
-          if (!client?.file) {
-            setMainState(item);
-          }
-
-          if (item) {
-            // If it already exists, don’t update it.
-            if (contentRef?.current === null) {
-              contentRef.current = item.content;
-              editorRef?.current?.setValue?.(contentRef.current);
+            let staleUpdated = false;
+            if (clientRef.current) {
+              // If cache exists client side, don’t update it; only update the server cache.
+              updateFileCache({ server: item });
+            } else {
+              // If cache doesn’t exist client side, set it. This is done typically when the file
+              // is opened for the very first time.
+              updateLocalContent(item);
+              staleUpdated = true;
             }
-            !staleUpdated && setStale(isStale(item.path));
-          }
-          phaseRef.current += 1;
+
+            if (!client?.file) {
+              setMainState(item);
+            }
+
+            if (item) {
+              // If it already exists, don’t update it.
+              if (contentRef?.current === null) {
+                contentRef.current = item.content;
+                editorRef?.current?.setValue?.(contentRef.current);
+              }
+              !staleUpdated && setStale(isStale(item.path));
+            }
+            phaseRef.current += 1;
+          },
         },
-      },
-      update: {
-        onSuccess: (item: FileType) => {
-          updateFileCache({ server: item });
-          setMainState(item);
+        update: {
+          onSuccess: (item: FileType) => {
+            updateFileCache({ server: item });
+            setMainState(item);
 
-          if (item) {
-            if (contentRef?.current === null) {
-              contentRef.current = item.content;
-              editorRef?.current?.setValue?.(contentRef.current);
+            if (item) {
+              if (contentRef?.current === null) {
+                contentRef.current = item.content;
+                editorRef?.current?.setValue?.(contentRef.current);
+              }
+              setStale(isStale(item.path));
             }
-            setStale(isStale(item.path));
-          }
-          phaseRef.current += 1;
+            phaseRef.current += 1;
+          },
         },
       },
     },
-  });
+  );
 
   function overrideServerContentFromLocal(event: MouseEvent) {
     updateServerContent(event, main, {
@@ -218,11 +223,7 @@ export default function useApp(props: AppLoaderProps & {
     [app, main, editor, onMountEditor],
   );
 
-  const {
-    inputRef,
-    overrideLocalContentFromServer,
-    saveCurrentContent,
-  } = useToolbarsHook({
+  const { inputRef, overrideLocalContentFromServer, saveCurrentContent } = useToolbarsHook({
     ...props,
     resource: {
       main,
@@ -234,19 +235,20 @@ export default function useApp(props: AppLoaderProps & {
   });
 
   const top = useMemo(
-    () => !useToolbars && (
-      <ToolbarsTop
-        {...props}
-        loading={mutants.update.isLoading}
-        resource={{
-          main,
-          original,
-        }}
-        stale={stale}
-        updateLocalContent={updateLocalContent}
-        updateServerContent={updateServerContent}
-      />
-    ),
+    () =>
+      !useToolbars && (
+        <ToolbarsTop
+          {...props}
+          loading={mutants.update.isLoading}
+          resource={{
+            main,
+            original,
+          }}
+          stale={stale}
+          updateLocalContent={updateLocalContent}
+          updateServerContent={updateServerContent}
+        />
+      ),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [mutants.update.isLoading, main, original, props, stale, useToolbars],
   );
@@ -259,14 +261,14 @@ export default function useApp(props: AppLoaderProps & {
     mutate: mutants,
     toolbars: useToolbars
       ? {
-        inputRef,
-        main,
-        original,
-        overrideLocalContentFromServer,
-        overrideServerContentFromLocal,
-        saveCurrentContent,
-        stale,
-      }
+          inputRef,
+          main,
+          original,
+          overrideLocalContentFromServer,
+          overrideServerContentFromLocal,
+          saveCurrentContent,
+          stale,
+        }
       : { top },
   };
 }

@@ -16,7 +16,7 @@ const Head = ({ children, defaultTitle = 'Mage Pro', title }: HeadProps) => {
     <NextHead>
       <title>{title ? `${title} | ${defaultTitle}` : defaultTitle}</title>
 
-      <link href="/favicon-pro.ico" rel="icon" />
+      <link href='/favicon-pro.ico' rel='icon' />
 
       <style>{`
         html body {

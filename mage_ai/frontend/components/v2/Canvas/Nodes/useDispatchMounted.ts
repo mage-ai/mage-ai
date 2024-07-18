@@ -1,6 +1,9 @@
 import React, { useEffect, useRef } from 'react';
 import update from 'immutability-helper';
-import useAppEventsHandler, { CustomAppEvent, CustomAppEventEnum } from '../../Apps/PipelineCanvas/useAppEventsHandler';
+import useAppEventsHandler, {
+  CustomAppEvent,
+  CustomAppEventEnum,
+} from '../../Apps/PipelineCanvas/useAppEventsHandler';
 import { NodeType } from '../interfaces';
 import { DEBUG } from '@components/v2/utils/debug';
 
@@ -21,7 +24,7 @@ export default function useDispatchMounted(
   useEffect(() => {
     if (phaseRef.current === 0 && nodeRef?.current) {
       const dispatchMounted = (event?: any) => {
-        clearTimeout(timeoutRef.current)
+        clearTimeout(timeoutRef.current);
 
         if (phaseRef.current >= 1) return;
 
@@ -29,24 +32,27 @@ export default function useDispatchMounted(
           typeof window !== 'undefined' && window.getComputedStyle(nodeRef.current);
 
         if (computedStyle) {
-          clearTimeout(timeoutRef.current)
+          clearTimeout(timeoutRef.current);
           phaseRef.current += 1;
 
-          dispatchAppEvent((opts?.eventType ?? CustomAppEventEnum.NODE_MOUNTED) as CustomAppEventEnum, {
-            event: update(event ?? {}, {
-              data: {
-                $set: {
-                  node,
+          dispatchAppEvent(
+            (opts?.eventType ?? CustomAppEventEnum.NODE_MOUNTED) as CustomAppEventEnum,
+            {
+              event: update(event ?? {}, {
+                data: {
+                  $set: {
+                    node,
+                  },
                 },
+                operationTarget: {
+                  $set: nodeRef,
+                },
+              }) as any,
+              options: {
+                kwargs: { computedStyle },
               },
-              operationTarget: {
-                $set: nodeRef,
-              },
-            }) as any,
-            options: {
-              kwargs: { computedStyle },
             },
-          });
+          );
 
           DEBUG?.node?.[node?.type] && console.log(`Node ${node?.type} mounted`, node.id);
           if (opts?.onMount) {

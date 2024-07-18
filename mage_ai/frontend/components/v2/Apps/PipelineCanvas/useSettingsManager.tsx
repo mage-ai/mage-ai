@@ -5,15 +5,34 @@ import stylesOutput from '@styles/scss/components/Canvas/Nodes/OutputGroups.modu
 import stylesBuilder from '@styles/scss/apps/Canvas/Pipelines/Builder.module.scss';
 import { LayoutConfigType, NodeItemType } from '../../Canvas/interfaces';
 import BlockType from '@interfaces/BlockType';
-import { LINE_CLASS_NAME, buildContainerClassName, displayable, extractContainerClassNames } from './utils/display';
-import { levelClassName, groupClassName, nodeTypeClassName, statusClassName, uuidClassName } from '../../Canvas/Nodes/utils';
+import {
+  LINE_CLASS_NAME,
+  buildContainerClassName,
+  displayable,
+  extractContainerClassNames,
+} from './utils/display';
+import {
+  levelClassName,
+  groupClassName,
+  nodeTypeClassName,
+  statusClassName,
+  uuidClassName,
+} from '../../Canvas/Nodes/utils';
 import useAppEventsHandler, { CustomAppEvent, CustomAppEventEnum } from './useAppEventsHandler';
 import { STYLE_ROOT_ID } from '@context/v2/Style';
 import { getCache } from '@mana/components/Menu/storage';
-import { LayoutConfigRef, ModelManagerType, SettingsManagerType, SubscriberType } from './interfaces';
 import {
-  ItemTypeEnum, ItemStatusEnum, ITEM_TYPES,
-  LayoutConfigDirectionEnum, LayoutConfigDirectionOriginEnum,
+  LayoutConfigRef,
+  ModelManagerType,
+  SettingsManagerType,
+  SubscriberType,
+} from './interfaces';
+import {
+  ItemTypeEnum,
+  ItemStatusEnum,
+  ITEM_TYPES,
+  LayoutConfigDirectionEnum,
+  LayoutConfigDirectionOriginEnum,
   LayoutDisplayEnum,
   LayoutStyleEnum,
 } from '../../Canvas/types';
@@ -77,38 +96,46 @@ export default function useSettingsManager({
 
   const validLevels = useRef<number[]>(null);
   const layoutConfigs = useRef<LayoutConfigRef[]>([
-    useRef<LayoutConfigType>(defaultLayoutConfig({
-      direction: LayoutConfigDirectionEnum.VERTICAL,
-    })),
-    useRef<LayoutConfigType>(defaultLayoutConfig({
-      direction: LayoutConfigDirectionEnum.VERTICAL,
-    })),
-    useRef<LayoutConfigType>(defaultLayoutConfig({
-      direction: LayoutConfigDirectionEnum.HORIZONTAL,
-      display: LayoutDisplayEnum.SIMPLE,
-      style: LayoutStyleEnum.WAVE,
-    })),
-    useRef<LayoutConfigType>(defaultLayoutConfig({
-      direction: LayoutConfigDirectionEnum.HORIZONTAL,
-      display: LayoutDisplayEnum.DETAILED,
-      style: LayoutStyleEnum.WAVE,
-    })),
+    useRef<LayoutConfigType>(
+      defaultLayoutConfig({
+        direction: LayoutConfigDirectionEnum.VERTICAL,
+      }),
+    ),
+    useRef<LayoutConfigType>(
+      defaultLayoutConfig({
+        direction: LayoutConfigDirectionEnum.VERTICAL,
+      }),
+    ),
+    useRef<LayoutConfigType>(
+      defaultLayoutConfig({
+        direction: LayoutConfigDirectionEnum.HORIZONTAL,
+        display: LayoutDisplayEnum.SIMPLE,
+        style: LayoutStyleEnum.WAVE,
+      }),
+    ),
+    useRef<LayoutConfigType>(
+      defaultLayoutConfig({
+        direction: LayoutConfigDirectionEnum.HORIZONTAL,
+        display: LayoutDisplayEnum.DETAILED,
+        style: LayoutStyleEnum.WAVE,
+      }),
+    ),
   ]);
 
-  const {
-    convertEvent,
-    dispatchAppEvent,
-  } = useAppEventsHandler({
-    activeLevel,
-    layoutConfigs,
-    selectedGroupsRef,
-  } as SubscriberType, {
-    [CustomAppEventEnum.TELEPORT_INTO_BLOCK]: teleportIntoBlock,
-    [CustomAppEventEnum.UPDATE_DISPLAY]: filterNodesToBeMounted,
-    [CustomAppEventEnum.NODE_MOUNTED_PREVIOUSLY]: handleNodeMountedPreviously,
-    [CustomAppEventEnum.UPDATE_SETTINGS]: updateLocalSettings,
-    [CustomAppEventEnum.UPDATE_CACHE_ITEMS]: updateCache,
-  });
+  const { convertEvent, dispatchAppEvent } = useAppEventsHandler(
+    {
+      activeLevel,
+      layoutConfigs,
+      selectedGroupsRef,
+    } as SubscriberType,
+    {
+      [CustomAppEventEnum.TELEPORT_INTO_BLOCK]: teleportIntoBlock,
+      [CustomAppEventEnum.UPDATE_DISPLAY]: filterNodesToBeMounted,
+      [CustomAppEventEnum.NODE_MOUNTED_PREVIOUSLY]: handleNodeMountedPreviously,
+      [CustomAppEventEnum.UPDATE_SETTINGS]: updateLocalSettings,
+      [CustomAppEventEnum.UPDATE_CACHE_ITEMS]: updateCache,
+    },
+  );
 
   // TODO: fix local settings
   // const settings = get(builderLocalStorageKey(pipelineUUID));
@@ -132,16 +159,19 @@ export default function useSettingsManager({
 
   function updateCache({ detail }: CustomAppEvent) {
     update(pipelineUUID, {
-      items: detail?.nodes?.reduce((acc, { id, rect, status, version }) => ({
-        ...acc,
-        [id]: {
-          rect: {
-            ...rect,
+      items: detail?.nodes?.reduce(
+        (acc, { id, rect, status, version }) => ({
+          ...acc,
+          [id]: {
+            rect: {
+              ...rect,
+            },
+            status,
+            version,
           },
-          status,
-          version,
-        },
-      }), {}),
+        }),
+        {},
+      ),
     });
   }
 
@@ -151,15 +181,13 @@ export default function useSettingsManager({
     const { options } = event?.detail ?? {};
     const kwargs = options?.kwargs ?? {};
 
-    DEBUG.settings.manager && console.log('updateLocalSettings', event)
+    DEBUG.settings.manager && console.log('updateLocalSettings', event);
 
-    let level = null
+    let level = null;
     if ('groups' in kwargs) {
       const { groups } = kwargs;
       selectedGroupsRef.current = groups;
-      level = groups.length >= 1
-        ? groups[groups.length - 1].level + 1
-        : 0;
+      level = groups.length >= 1 ? groups[groups.length - 1].level + 1 : 0;
     } else if ('level' in kwargs) {
       level = kwargs.level;
     }
@@ -207,12 +235,12 @@ export default function useSettingsManager({
     levelPrevious !== null &&
       containerRef?.current?.classList.remove(stylesBuilder[`level-${levelPrevious}-active`]);
 
-    let level: number = levelArg ?? (activeLevel?.current ?? 0);
+    let level: number = levelArg ?? activeLevel?.current ?? 0;
     if (validLevels?.current?.length >= 1) {
       const idx = validLevels.current.findIndex(i => i === level);
       level = validLevels.current[idx + 1] ?? validLevels.current[0];
     } else {
-      level += (levelArg === null ? 1 : 0);
+      level += levelArg === null ? 1 : 0;
       if (level >= validLevels?.current?.length) {
         level = 0;
       }
@@ -241,10 +269,7 @@ export default function useSettingsManager({
 
   function buildDisplayableConditions() {
     const cnsets = [];
-    const cnbase = [
-      levelClassName(activeLevel?.current),
-      statusClassName(ItemStatusEnum.READY),
-    ];
+    const cnbase = [levelClassName(activeLevel?.current), statusClassName(ItemStatusEnum.READY)];
     const level = activeLevel.current;
     const conditions = [];
 
@@ -257,11 +282,7 @@ export default function useSettingsManager({
         const count = blocksInGroup.length;
 
         // Default
-        cnsets.push([
-          ...cnbase,
-          groupClassName(group?.uuid),
-          nodeTypeClassName(ItemTypeEnum.NODE),
-        ]);
+        cnsets.push([...cnbase, groupClassName(group?.uuid), nodeTypeClassName(ItemTypeEnum.NODE)]);
         conditions.push({
           block: {
             groups: [group.uuid],
@@ -273,11 +294,7 @@ export default function useSettingsManager({
         // Group has blocks
         if (count >= 1) {
           ITEM_TYPES.forEach(type => {
-            cnsets.push([
-              ...cnbase,
-              groupClassName(group?.uuid),
-              nodeTypeClassName(type),
-            ]);
+            cnsets.push([...cnbase, groupClassName(group?.uuid), nodeTypeClassName(type)]);
           });
           conditions.push({
             block: {
@@ -315,10 +332,7 @@ export default function useSettingsManager({
       }
     } else {
       // If nothing selected, then its level 0
-      cnsets.push([
-        ...cnbase,
-        nodeTypeClassName(ItemTypeEnum.NODE),
-      ]);
+      cnsets.push([...cnbase, nodeTypeClassName(ItemTypeEnum.NODE)]);
       conditions.push({
         level,
         type: ItemTypeEnum.NODE,
@@ -479,10 +493,9 @@ export default function useSettingsManager({
   }
 
   function addContainerClassNames(classNames?: string[]) {
-    [
-      ...(classNames ?? []),
-      ...defaultStylesAndContainerClassNames().classNames
-    ].forEach(cn => containerRef?.current?.classList.add(cn));
+    [...(classNames ?? []), ...defaultStylesAndContainerClassNames().classNames].forEach(cn =>
+      containerRef?.current?.classList.add(cn),
+    );
   }
 
   function setStyles(styles?: string) {
@@ -496,9 +509,9 @@ export default function useSettingsManager({
   }
 
   function resetContainerClassNames() {
-    extractContainerClassNames(
-      [...((containerRef?.current?.classList ?? []) as string[])],
-    )?.forEach(cn => {
+    extractContainerClassNames([
+      ...((containerRef?.current?.classList ?? []) as string[]),
+    ])?.forEach(cn => {
       containerRef?.current?.classList?.remove(cn);
     });
   }
@@ -507,8 +520,9 @@ export default function useSettingsManager({
     const block = blockArg ?? event?.detail?.block;
 
     const groups = [...(selectedGroupsRef.current ?? [])];
-    const parentIndex =
-      groups?.findIndex(g => !!(g as any).children?.find(i => i.uuid === block?.uuid));
+    const parentIndex = groups?.findIndex(
+      g => !!(g as any).children?.find(i => i.uuid === block?.uuid),
+    );
 
     let index = null;
     let parent = null;

@@ -99,7 +99,6 @@ export function getBlockColor(
       hi: baseName ? `${baseName}hi` : null,
       lo: baseName ? `${baseName}lo` : null,
       md: baseName ? `${baseName}md` : null,
-
     },
   };
 }

@@ -3,7 +3,14 @@ import Markdown from '@mana/components/Markdown';
 import { generateUUID } from '@utils/uuids/generator';
 import { LayoutDirectionEnum } from '@mana/components/Menu/types';
 import Tag from '@mana/components/Tag';
-import { TooltipDirection, TooltipJustify, TooltipAlign, HideTooltipReason, TooltipLayout, useTooltip } from '@context/Tooltip/Context';
+import {
+  TooltipDirection,
+  TooltipJustify,
+  TooltipAlign,
+  HideTooltipReason,
+  TooltipLayout,
+  useTooltip,
+} from '@context/Tooltip/Context';
 import useDispatchMounted from './useDispatchMounted';
 import { AnimatePresence, cubicBezier } from 'framer-motion';
 import Badge from '@mana/elements/Badge';
@@ -20,12 +27,23 @@ import TemplateConfigurations from './Blocks/TemplateConfigurations';
 import Text from '@mana/elements/Text';
 import stylesBlockNode from '@styles/scss/components/Canvas/Nodes/BlockNode.module.scss';
 import stylesGradient from '@styles/scss/elements/GradientContainer.module.scss';
-import { Add, Code, Grab, PipeIconVertical, PlayButtonFilled, DeleteCircle, Infinite } from '@mana/icons';
+import {
+  Add,
+  Code,
+  Grab,
+  PipeIconVertical,
+  PlayButtonFilled,
+  DeleteCircle,
+  Infinite,
+} from '@mana/icons';
 import { AppTypeEnum, AppSubtypeEnum } from '../../Apps/constants';
 import { AsideType, DragAndDropHandlersType, SharedBlockProps } from './types';
 import { BlockNode } from './interfaces';
 import { EventOperationEnum } from '@mana/shared/interfaces';
-import { FrameworkType, PipelineExecutionFrameworkBlockType } from '@interfaces/PipelineExecutionFramework/interfaces';
+import {
+  FrameworkType,
+  PipelineExecutionFrameworkBlockType,
+} from '@interfaces/PipelineExecutionFramework/interfaces';
 import { GroupUUIDEnum } from '@interfaces/PipelineExecutionFramework/types';
 import { ItemStatusEnum, ItemTypeEnum, LayoutConfigDirectionEnum, PortSubtypeEnum } from '../types';
 import { AppNodeType, NodeItemType, PortType } from '../interfaces';
@@ -59,11 +77,12 @@ export type BlockNodeProps = {
   loading?: boolean;
   loadingKernelMutation?: boolean;
   openEditor: (event: any) => void;
-  node: NodeItemType
+  node: NodeItemType;
   onMount?: (port: PortType, portRef: React.RefObject<HTMLDivElement>) => void;
   submitCodeExecution: (event: React.MouseEvent<HTMLElement>) => void;
   buildContextMenuItemsForGroupBlock: (block: BlockType) => MenuItemType[];
   timerStatusRef?: React.RefObject<HTMLDivElement>;
+  updateBlock: (block: BlockType) => void;
 } & BlockNode;
 
 export default function BlockNodeComponent({
@@ -72,154 +91,168 @@ export default function BlockNodeComponent({
   buildContextMenuItemsForGroupBlock,
   buttonBeforeRef,
   code: contentCode,
-  collapsed,
-  draggable,
   groupSelection,
   executing,
-  handlers,
   interruptExecution,
   loading,
   loadingKernelMutation,
   node,
-  dragRef,
   index: indexProp,
   onMount,
   openEditor,
   submitCodeExecution,
-  submitEventOperation,
-  timerStatusRef,
   updateBlock,
 }: BlockNodeProps & DragAndDropHandlersType & SharedBlockProps) {
   const { name, status, type, uuid } = block;
 
   const { blocksByGroupRef, groupMappingRef, mutations } = useContext(ModelContext);
-  const groups = useMemo(() => block?.groups?.map(
-    guuid => groupMappingRef?.current?.[guuid]), [block, groupMappingRef]);
+  const groups = useMemo(
+    () => block?.groups?.map(guuid => groupMappingRef?.current?.[guuid]),
+    [block, groupMappingRef],
+  );
 
   const { layoutConfigs, selectedGroupsRef, transformState } = useContext(SettingsContext);
   const layoutConfig = layoutConfigs?.current?.[selectedGroupsRef?.current?.length - 1];
 
   const selectedGroup =
-    groupMappingRef?.current?.[selectedGroupsRef?.current?.[selectedGroupsRef?.current?.length - 1]?.uuid];
-  const isSiblingGroup = selectedGroup?.uuid !== block?.uuid &&
+    groupMappingRef?.current?.[
+      selectedGroupsRef?.current?.[selectedGroupsRef?.current?.length - 1]?.uuid
+    ];
+  const isSiblingGroup =
+    selectedGroup?.uuid !== block?.uuid &&
     selectedGroup?.groups?.some((guuid: string) => block?.groups?.includes(guuid as GroupUUIDEnum));
 
-  const isGroup =
-    useMemo(() => !type || [BlockTypeEnum.GROUP, BlockTypeEnum.PIPELINE].includes(type), [type]);
-  const isSelectedGroup = useMemo(() => selectedGroup?.uuid === block?.uuid, [block, selectedGroup]);
-  const blocksInGroup = useMemo(() => isGroup
-    && Object.values(blocksByGroupRef?.current?.[block?.uuid] ?? {}),
-    [isGroup, blocksByGroupRef, block]);
+  const isGroup = useMemo(
+    () => !type || [BlockTypeEnum.GROUP, BlockTypeEnum.PIPELINE].includes(type),
+    [type],
+  );
+  const isSelectedGroup = useMemo(
+    () => selectedGroup?.uuid === block?.uuid,
+    [block, selectedGroup],
+  );
+  const blocksInGroup = useMemo(
+    () => isGroup && Object.values(blocksByGroupRef?.current?.[block?.uuid] ?? {}),
+    [isGroup, blocksByGroupRef, block],
+  );
 
   const { error, required, valid } = useMemo(
-    () => isGroup ? groupValidation(block as FrameworkType, blocksByGroupRef?.current) : {
-      error: false,
-      required: false,
-      valid: true,
-    }, [block, blocksByGroupRef, isGroup]);
+    () =>
+      isGroup
+        ? groupValidation(block as FrameworkType, blocksByGroupRef?.current)
+        : {
+            error: false,
+            required: false,
+            valid: true,
+          },
+    [block, blocksByGroupRef, isGroup],
+  );
 
   const colorNames = blockColorNames(node);
   const borders = borderConfigs(node);
   const after: any = useMemo(() => {
-    const editorApp =
-      Object.values(apps ?? {})?.find(app => app?.app?.type === AppTypeEnum.EDITOR);
+    const editorApp = Object.values(apps ?? {})?.find(app => app?.app?.type === AppTypeEnum.EDITOR);
 
     return {
       className: !isGroup && !editorApp && stylesBlockNode.showOnHover,
       uuid: node.id,
       ...(ItemTypeEnum.NODE === node?.type
         ? {
-            Icon: ip => <Add {...ip} colorName="white" />,
-          // borderColor: !draggable && colorNames?.base && 'white',
-          menuItems: menuItemsForTemplates(block, (
-            event: any,
-            block2,
-            template,
-            callback,
-            payloadArg,
-          ) => {
-            const payload = {
-              ...payloadArg,
-              groups: [block2.uuid],
-              uuid: generateUUID(),
-            };
+            Icon: ip => <Add {...ip} colorName='white' />,
+            // borderColor: !draggable && colorNames?.base && 'white',
+            menuItems: menuItemsForTemplates(
+              block,
+              (event: any, block2, template, callback, payloadArg) => {
+                const payload = {
+                  ...payloadArg,
+                  groups: [block2.uuid],
+                  uuid: generateUUID(),
+                };
 
-            if (template?.uuid) {
-              payload.configuration = {
-                templates: {
-                  [template.uuid]: template,
-                },
-              };
-            }
+                if (template?.uuid) {
+                  payload.configuration = {
+                    templates: {
+                      [template.uuid]: template,
+                    },
+                  };
+                }
 
-            mutations.pipelines.update.mutate({
-              event,
-              onSuccess: () => {
-                callback && callback?.();
+                mutations.pipelines.update.mutate({
+                  event,
+                  onSuccess: () => {
+                    callback && callback?.();
+                  },
+                  payload: {
+                    block: payload,
+                  },
+                });
               },
-              payload: {
-                block: payload,
-              },
-            });
-          }),
-        }
+            ),
+          }
         : {
-          Icon: ip => {
-            const Icon = draggable ? Grab : Code;
+            Icon: ip => {
+              const Icon = draggable ? Grab : Code;
 
-            return <Icon {...ip}
-              colorName={editorApp ? 'green' : undefined}
-            />;
-          },
-          borderColor: editorApp ? 'green' : undefined,
-          onClick: (event: MouseEvent) => {
-            event.preventDefault();
-            if (editorApp) {
-              const rect = editorApp?.ref?.current?.getBoundingClientRect() ?? {};
-              let x = ((rect?.left ?? 0) / 2) - (rect?.width ?? 0);
-              let y = ((rect?.top ?? 0) / 2) + ((rect?.height ?? 0) / 2);
+              return <Icon {...ip} colorName={editorApp ? 'green' : undefined} />;
+            },
+            borderColor: editorApp ? 'green' : undefined,
+            onClick: (event: MouseEvent) => {
+              event.preventDefault();
+              if (editorApp) {
+                const rect = editorApp?.ref?.current?.getBoundingClientRect() ?? {};
+                let x = (rect?.left ?? 0) / 2 - (rect?.width ?? 0);
+                let y = (rect?.top ?? 0) / 2 + (rect?.height ?? 0) / 2;
 
-              x *= -1;
-              y *= -1;
+                x *= -1;
+                y *= -1;
 
-              x = Math.min(0, x);
-              y = Math.min(0, y);
+                x = Math.min(0, x);
+                y = Math.min(0, y);
 
-              transformState?.current?.handlePanning?.current?.((event ?? null) as any, {
-                x,
-                y,
-              });
-            } else {
-              openEditor(event as any);
-            }
-          },
-        }),
+                transformState?.current?.handlePanning?.current?.((event ?? null) as any, {
+                  x,
+                  y,
+                });
+              } else {
+                openEditor(event as any);
+              }
+            },
+          }),
     };
   }, [draggable, block, node, isGroup, openEditor, apps, mutations, transformState]);
 
-  const before = useMemo(() => ({
-    Icon: (iconProps) => executing
-    ? <DeleteCircle {...iconProps} />
-    : <PlayButtonFilled {...iconProps} />,
-    baseColorName:
-      StatusTypeEnum.FAILED === status
-        ? 'red'
-        : colorNames?.base,
-    borderColor: executing ? (colorNames?.base ?? 'gray') : undefined,
-    buttonRef: buttonBeforeRef,
-    loading: loadingKernelMutation || (loading && !executing),
-    onClick: executing ? interruptExecution : submitCodeExecution,
-  }), [buttonBeforeRef, colorNames, status, submitCodeExecution, executing, loading,
-    loadingKernelMutation, interruptExecution]);
+  const before = useMemo(
+    () => ({
+      Icon: iconProps =>
+        executing ? <DeleteCircle {...iconProps} /> : <PlayButtonFilled {...iconProps} />,
+      baseColorName: StatusTypeEnum.FAILED === status ? 'red' : colorNames?.base,
+      borderColor: executing ? colorNames?.base ?? 'gray' : undefined,
+      buttonRef: buttonBeforeRef,
+      loading: loadingKernelMutation || (loading && !executing),
+      onClick: executing ? interruptExecution : submitCodeExecution,
+    }),
+    [
+      buttonBeforeRef,
+      colorNames,
+      status,
+      submitCodeExecution,
+      executing,
+      loading,
+      loadingKernelMutation,
+      interruptExecution,
+    ],
+  );
 
-  const badge = useMemo(() => ItemTypeEnum.NODE === node?.type
-    ? {
-      Icon: collapsed ? Infinite : PipeIconVertical,
-      baseColorName: colorNames?.base || 'purple',
-      label: String(name || uuid || ''),
-    }
-    : undefined
-    , [node, name, uuid, collapsed, colorNames]);
+  const badge = useMemo(
+    () =>
+      ItemTypeEnum.NODE === node?.type
+        ? {
+            Icon: collapsed ? Infinite : PipeIconVertical,
+            baseColorName: colorNames?.base || 'purple',
+            label: String(name || uuid || ''),
+          }
+        : undefined,
+    [node, name, uuid, collapsed, colorNames],
+  );
 
   const label = String(name || uuid || '');
 
@@ -254,17 +287,12 @@ export default function BlockNodeComponent({
     const colors = borders?.map(b => b?.baseColorName) ?? [];
 
     if (error) {
-      colors.unshift(...['red', (colors?.[0] ?? 'red')]);
+      colors.unshift(...['red', colors?.[0] ?? 'red']);
     }
 
     const arr = [
       colors?.length >= 2
-        ? stylesGradient[
-        [
-          'gradient-background-to-top-right',
-          ...colors?.slice?.(0, 2),
-        ].join('-')
-        ]
+        ? stylesGradient[['gradient-background-to-top-right', ...colors?.slice?.(0, 2)].join('-')]
         : '',
     ].filter(Boolean);
 
@@ -275,112 +303,107 @@ export default function BlockNodeComponent({
     return arr;
   }, [borders, error]);
 
-  const badgeBase = useMemo(() => badge &&
-    <TooltipWrapper
-      align={TooltipAlign.START}
-      hide={block?.type && ![BlockTypeEnum.GROUP, BlockTypeEnum.PIPELINE].includes(block?.type)}
-      horizontalDirection={TooltipDirection.LEFT}
-      justify={TooltipJustify.CENTER}
-      tooltip={
-        <Grid rowGap={16}>
-          <Grid rowGap={8}>
-            <Text semibold>
-              {block?.name || block?.uuid}
-            </Text >
-            {block?.description &&
-              <Text secondary>
-                {block?.description}
-              </Text>
-            }
-          </Grid>
-          {blocksInGroup?.length > 0 && (
-            <Grid rowGap={8}>
-              <Text semibold small>
-                Blocks
-              </Text>
+  const badgeBase = useMemo(
+    () =>
+      badge && (
+        <TooltipWrapper
+          align={TooltipAlign.START}
+          hide={block?.type && ![BlockTypeEnum.GROUP, BlockTypeEnum.PIPELINE].includes(block?.type)}
+          horizontalDirection={TooltipDirection.LEFT}
+          justify={TooltipJustify.CENTER}
+          tooltip={
+            <Grid rowGap={16}>
               <Grid rowGap={8}>
-                {blocksInGroup?.map(b => (
-                  <Text key={b.uuid} monospace secondary small>
-                    {b.name || b.uuid}
-                  </Text>
-                ))}
+                <Text semibold>{block?.name || block?.uuid}</Text>
+                {block?.description && <Text secondary>{block?.description}</Text>}
               </Grid>
+              {blocksInGroup?.length > 0 && (
+                <Grid rowGap={8}>
+                  <Text semibold small>
+                    Blocks
+                  </Text>
+                  <Grid rowGap={8}>
+                    {blocksInGroup?.map(b => (
+                      <Text key={b.uuid} monospace secondary small>
+                        {b.name || b.uuid}
+                      </Text>
+                    ))}
+                  </Grid>
+                </Grid>
+              )}
             </Grid>
-          )}
-        </Grid>
-      }
-      tooltipStyle={{ maxWidth: 400 }}
-      verticalDirection={TooltipDirection.UP}
-    >
-      <Badge {...badge} />
-    </TooltipWrapper>
-    , [badge, block, blocksInGroup]);
-
-  const buildBadgeRow = useCallback(({
-    after: afterArg,
-    badgeFullWidth = true,
-    inputColorName,
-    outputColorName,
-  }: {
-    after?: AsideType;
-    badgeFullWidth?: boolean;
-    inputColorName?: string;
-    outputColorName?: string;
-  }) => (
-    <Grid
-      alignItems="center"
-      autoColumns="auto"
-      autoFlow="column"
-      columnGap={8}
-      justifyContent="space-between"
-      templateColumns="1fr"
-      templateRows="1fr"
-    >
-      <Grid
-        alignItems="center"
-        autoColumns="auto"
-        autoFlow="column"
-        columnGap={8}
-        justifyContent="start"
-        templateColumns={badgeFullWidth
-          ? inputColorName
-            ? 'auto 1fr'
-            : '1fr'
-          : 'max-content'}
-        templateRows="1fr"
-      >
-        {inputColorName && <Circle backgroundColor={inputColorName} size={12} />}
-        {badgeBase}
-      </Grid>
-      {(afterArg || outputColorName) && (
-        <Grid
-          alignItems="center"
-          autoColumns="auto"
-          autoFlow="column"
-          columnGap={8}
-          justifyContent="end"
-          templateColumns="max-content"
-          templateRows="1fr"
+          }
+          tooltipStyle={{ maxWidth: 400 }}
+          verticalDirection={TooltipDirection.UP}
         >
-          {afterArg && <Aside {...afterArg} />}
-          {outputColorName && <Circle backgroundColor={outputColorName} size={12} />}
+          <Badge {...badge} />
+        </TooltipWrapper>
+      ),
+    [badge, block, blocksInGroup],
+  );
+
+  const buildBadgeRow = useCallback(
+    ({
+      after: afterArg,
+      badgeFullWidth = true,
+      inputColorName,
+      outputColorName,
+    }: {
+      after?: AsideType;
+      badgeFullWidth?: boolean;
+      inputColorName?: string;
+      outputColorName?: string;
+    }) => (
+      <Grid
+        alignItems='center'
+        autoColumns='auto'
+        autoFlow='column'
+        columnGap={8}
+        justifyContent='space-between'
+        templateColumns='1fr'
+        templateRows='1fr'
+      >
+        <Grid
+          alignItems='center'
+          autoColumns='auto'
+          autoFlow='column'
+          columnGap={8}
+          justifyContent='start'
+          templateColumns={badgeFullWidth ? (inputColorName ? 'auto 1fr' : '1fr') : 'max-content'}
+          templateRows='1fr'
+        >
+          {inputColorName && <Circle backgroundColor={inputColorName} size={12} />}
+          {badgeBase}
         </Grid>
-      )}
-    </Grid>
-  ), [badgeBase]);
+        {(afterArg || outputColorName) && (
+          <Grid
+            alignItems='center'
+            autoColumns='auto'
+            autoFlow='column'
+            columnGap={8}
+            justifyContent='end'
+            templateColumns='max-content'
+            templateRows='1fr'
+          >
+            {afterArg && <Aside {...afterArg} />}
+            {outputColorName && <Circle backgroundColor={outputColorName} size={12} />}
+          </Grid>
+        )}
+      </Grid>
+    ),
+    [badgeBase],
+  );
 
   const connectionRows = useMemo(
     () =>
-      ItemTypeEnum.BLOCK === node?.type && inputOutputPairs?.length >= 1 && (
+      ItemTypeEnum.BLOCK === node?.type &&
+      inputOutputPairs?.length >= 1 && (
         <PanelRows>
           {inputOutputPairs?.map(({ input, output }) => (
             <Connection
               draggable={draggable}
-              handlers={handlers}
               input={input as PortType}
-              key={[input ? input?.id : '', output ? output?.id : ''].join(
-                ':',
-              )}
+              key={[input ? input?.id : '', output ? output?.id : ''].join(':')}
               onMount={onMount}
               output={output as PortType}
             />
@@ -389,25 +412,27 @@ export default function BlockNodeComponent({
 
         // eslint-disable-next-line react-hooks/exhaustive-deps
       ),
-    [draggable, handlers, node, inputOutputPairs, onMount],
+    [draggable, node, inputOutputPairs, onMount],
   );
 
   const templateConfigurations = useMemo(
     () =>
-      ((groups ?? block?.frameworks) ?? [])?.map(
+      (groups ?? block?.frameworks ?? [])?.map(
         (group: PipelineExecutionFrameworkBlockType) =>
           !isEmptyObject(group?.configuration?.templates) &&
           Object.entries(group?.configuration?.templates || {})?.map(
-            ([uuid, template]) => block?.configuration?.templates?.[uuid] && (
-              <TemplateConfigurations
-                block={block}
-                group={group}
-                key={uuid}
-                template={template}
-                updateBlock={updateBlock}
-                uuid={uuid}
-              />
-            )),
+            ([uuid, template]) =>
+              block?.configuration?.templates?.[uuid] && (
+                <TemplateConfigurations
+                  block={block}
+                  group={group}
+                  key={uuid}
+                  template={template}
+                  updateBlock={updateBlock}
+                  uuid={uuid}
+                />
+              ),
+          ),
       ),
     [block, groups, updateBlock],
   );
@@ -415,7 +440,7 @@ export default function BlockNodeComponent({
   const titleRow = useMemo(
     () => (
       <Grid
-        alignItems="center"
+        alignItems='center'
         className={stylesBlockNode.showOnHoverContainer}
         columnGap={12}
         id={`${node.id}-title`}
@@ -424,7 +449,7 @@ export default function BlockNodeComponent({
           before || after ? '1fr' : '',
           before && after ? 'auto' : '',
         ].join(' ')}
-        templateRows="1fr"
+        templateRows='1fr'
       >
         {before && <Aside {...before} />}
 
@@ -438,156 +463,164 @@ export default function BlockNodeComponent({
     [after, before, label, node],
   );
 
-  const main = useMemo(() => (
-    <div
-      className={[
-        stylesBlockNode.blockNode,
-      ]?.filter(Boolean)?.join(' ')}
-      style={{
-        height: 'fit-content',
-        // minWidth: 300,
-      }}
-    >
-      <Grid templateRows="auto">
-        <Grid rowGap={8} templateRows="auto">
-          {badge && buildBadgeRow({
-            after,
-            badgeFullWidth: !inputs?.length && isGroup,
-          })}
-          {!badge && titleRow}
-        </Grid>
-        <div className={stylesBlockNode.loader}>
-          <Loading
-            // colorName={colorNames?.hi}
-            // colorNameAlt={colorNames?.md}
-            position="absolute"
-          />
-        </div>
-        {!groupSelection && (isGroup
-          ? <BlockGroupOverview
-            block={block as FrameworkType}
-            buildContextMenuItemsForGroupBlock={buildContextMenuItemsForGroupBlock}
-          />
-          : (
-            <Grid rowGap={8} templateRows="auto">
-              {connectionRows}
-              {templateConfigurations}
-              {isEmptyObject(block?.configuration?.templates) && (
-                <PanelRows padding={false}>
-                  <Grid justifyItems="start" padding={12} rowGap={4} templateColumns="auto" >
-                    {false && contentCode && (
-                      <TooltipWrapper
-                        align={TooltipAlign.START}
-                        horizontalDirection={TooltipDirection.LEFT}
-                        justify={TooltipJustify.START}
-                        tooltip={contentCode && (
-                          <Markdown
-                            code={{ monospace: true, small: true }}
-                            pre={{ monospace: true, small: true }}
-                            span={{ monospace: true, small: true }}
-                          >
-                            {`${'```'}python
+  const main = useMemo(
+    () => (
+      <div
+        className={[stylesBlockNode.blockNode]?.filter(Boolean)?.join(' ')}
+        style={{
+          height: 'fit-content',
+          // minWidth: 300,
+        }}
+      >
+        <Grid templateRows='auto'>
+          <Grid rowGap={8} templateRows='auto'>
+            {badge &&
+              buildBadgeRow({
+                after,
+                badgeFullWidth: !inputs?.length && isGroup,
+              })}
+            {!badge && titleRow}
+          </Grid>
+          <div className={stylesBlockNode.loader}>
+            <Loading
+              // colorName={colorNames?.hi}
+              // colorNameAlt={colorNames?.md}
+              position='absolute'
+            />
+          </div>
+          {!groupSelection &&
+            (isGroup ? (
+              <BlockGroupOverview
+                block={block as FrameworkType}
+                buildContextMenuItemsForGroupBlock={buildContextMenuItemsForGroupBlock}
+              />
+            ) : (
+              <Grid rowGap={8} templateRows='auto'>
+                {connectionRows}
+                {templateConfigurations}
+                {isEmptyObject(block?.configuration?.templates) && (
+                  <PanelRows padding={false}>
+                    <Grid justifyItems='start' padding={12} rowGap={4} templateColumns='auto'>
+                      {false && contentCode && (
+                        <TooltipWrapper
+                          align={TooltipAlign.START}
+                          horizontalDirection={TooltipDirection.LEFT}
+                          justify={TooltipJustify.START}
+                          tooltip={
+                            contentCode && (
+                              <Markdown
+                                code={{ monospace: true, small: true }}
+                                pre={{ monospace: true, small: true }}
+                                span={{ monospace: true, small: true }}
+                              >
+                                {`${'```'}python
   ${contentCode}
   ${'```'}`}
-                          </Markdown>
-                        )}
-                      >
+                              </Markdown>
+                            )
+                          }
+                        >
+                          <Text semibold xsmall>
+                            Custom code
+                          </Text>
+                        </TooltipWrapper>
+                      )}
+                      {
                         <Text semibold xsmall>
                           Custom code
                         </Text>
-                      </TooltipWrapper>
-                    )}
-                    {(
-                      <Text semibold xsmall>
-                        Custom code
+                      }
+                    </Grid>
+                    <Grid
+                      alignItems='stretch'
+                      baseLeft
+                      baseRight
+                      columnGap={8}
+                      justifyContent='space-between'
+                      smallBottom
+                      smallTop
+                      style={{
+                        gridTemplateColumns: 'minmax(0px, max-content) auto',
+                      }}
+                    >
+                      <Text secondary small>
+                        Language
                       </Text>
-                    )}
-                  </Grid>
-                  <Grid
-                    alignItems="stretch"
-                    baseLeft
-                    baseRight
-                    columnGap={8}
-                    justifyContent="space-between"
-                    smallBottom
-                    smallTop
-                    style={{
-                      gridTemplateColumns: 'minmax(0px, max-content) auto',
-                    }}
-                  >
-                    <Text secondary small>
-                      Language
-                    </Text>
 
-                    <Text secondary small>
-                      {LANGUAGE_DISPLAY_MAPPING[block?.language] ?? ''}
-                    </Text>
-                  </Grid>
-                </PanelRows>
-              )}
-              {BlockTypeEnum.PIPELINE === block?.type && <div />}
-            </Grid>
-          ))}
-      </Grid>
-    </div>
-  ), [badge, buildBadgeRow, block, connectionRows, templateConfigurations, titleRow, after, contentCode,
-    isGroup, inputs, groupSelection],
+                      <Text secondary small>
+                        {LANGUAGE_DISPLAY_MAPPING[block?.language] ?? ''}
+                      </Text>
+                    </Grid>
+                  </PanelRows>
+                )}
+                {BlockTypeEnum.PIPELINE === block?.type && <div />}
+              </Grid>
+            ))}
+        </Grid>
+      </div>
+    ),
+    [
+      badge,
+      buildContextMenuItemsForGroupBlock,
+      buildBadgeRow,
+      block,
+      connectionRows,
+      templateConfigurations,
+      titleRow,
+      after,
+      contentCode,
+      isGroup,
+      inputs,
+      groupSelection,
+    ],
   );
 
-  const renderNodeAsGroupSelection = useMemo(() =>
-    isSelectedGroup && (block?.children?.length > 0 || blocksInGroup?.length > 0), [
-      isSelectedGroup, block, blocksInGroup,
-    ]);
+  const renderNodeAsGroupSelection = useMemo(
+    () => isSelectedGroup && (block?.children?.length > 0 || blocksInGroup?.length > 0),
+    [isSelectedGroup, block, blocksInGroup],
+  );
 
-  const content = useMemo(() => (
-    <GradientContainer
-      // Only use gradient borders when block selected
-      className={[
-        ...classNames,
-      ]?.filter(Boolean)?.join(' ')}
-      // motionProps={motionProps}
-      role={ElementRoleEnum.CONTENT}
-      style={{
-        height: renderNodeAsGroupSelection
-          ? '100%'
-          : 'fit-content',
-        minWidth: isGroup ? 320 : undefined,
-        position: 'relative',
-        width: renderNodeAsGroupSelection
-          ? '100%'
-          : 'fit-content',
-      }}
-    >
-      {main}
-    </GradientContainer >
-  ), [renderNodeAsGroupSelection, classNames, main, isGroup,
-  ]);
+  const content = useMemo(
+    () => (
+      <GradientContainer
+        // Only use gradient borders when block selected
+        className={[...classNames]?.filter(Boolean)?.join(' ')}
+        // motionProps={motionProps}
+        role={ElementRoleEnum.CONTENT}
+        style={{
+          height: renderNodeAsGroupSelection ? '100%' : 'fit-content',
+          minWidth: isGroup ? 320 : undefined,
+          position: 'relative',
+          width: renderNodeAsGroupSelection ? '100%' : 'fit-content',
+        }}
+      >
+        {main}
+      </GradientContainer>
+    ),
+    [renderNodeAsGroupSelection, classNames, main, isGroup],
+  );
 
   // console.log(block.uuid, isSiblingGroup);
 
-  const teleportBlock = useMemo(() => (
-    <TeleportBlock
-      block={block}
-      buildBadgeRow={buildBadgeRow}
-      index={indexProp}
-      node={node}
-      role={ElementRoleEnum.CONTENT}
-      selectedGroup={selectedGroup}
-    />
-  ), [block, buildBadgeRow, indexProp, node, selectedGroup]);
+  const teleportBlock = useMemo(
+    () => (
+      <TeleportBlock
+        block={block}
+        buildBadgeRow={buildBadgeRow}
+        index={indexProp}
+        node={node}
+        role={ElementRoleEnum.CONTENT}
+        selectedGroup={selectedGroup}
+      />
+    ),
+    [block, buildBadgeRow, indexProp, node, selectedGroup],
+  );
 
   if (isSiblingGroup) return teleportBlock;
 
   return (
     <>
-      {executing && (
-        <Tag
-          left
-          statusVariant
-          timer
-          top
-        />
-      )}
+      {executing && <Tag left statusVariant timer top />}
       {isSiblingGroup && teleportBlock}
       {!isSiblingGroup && content}
     </>

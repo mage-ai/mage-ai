@@ -7,18 +7,57 @@ import {
   ModelManagerType,
   EventManagerType,
   LayoutManagerType,
-  ActiveLevelRefType, AppHandlersRefType, LayoutConfigRefType, ItemIDsByLevelRef,
+  ActiveLevelRefType,
+  AppHandlersRefType,
+  LayoutConfigRefType,
+  ItemIDsByLevelRef,
 } from './interfaces';
 import {
-  TreeWithArrowsDown, OpenInSidekick,
-  Select, SearchV2, CubeWithArrowDown, PaginateArrowRight, BatchSquaresStacked, Table, Circle, BranchAlt, Monitor, Undo,
-  ArrowsAdjustingFrameSquare, Check, Group, TemplateShapes, Trash, GroupV2, ArrowsPointingInFromAllCorners,
-  CloseV2, CopyV2,
+  TreeWithArrowsDown,
+  OpenInSidekick,
+  Select,
+  SearchV2,
+  CubeWithArrowDown,
+  PaginateArrowRight,
+  BatchSquaresStacked,
+  Table,
+  Circle,
+  BranchAlt,
+  Monitor,
+  Undo,
+  ArrowsAdjustingFrameSquare,
+  Check,
+  Group,
+  TemplateShapes,
+  Trash,
+  GroupV2,
+  ArrowsPointingInFromAllCorners,
+  CloseV2,
+  CopyV2,
 } from '@mana/icons';
-import { ClientEventType, EventOperationEnum, EventOperationOptionsType } from '@mana/shared/interfaces';
+import {
+  ClientEventType,
+  EventOperationEnum,
+  EventOperationOptionsType,
+} from '@mana/shared/interfaces';
 import { ItemTypeEnum, LayoutConfigDirectionEnum, TransformRectTypeEnum } from '../../Canvas/types';
-import { MenuItemType, RenderContextMenuOptions, RemoveContextMenuType, RenderContextMenuType } from '@mana/hooks/useContextMenu';
-import { NodeItemType, PortType, RectType, ItemMappingType, PortMappingType, ModelMappingType, LayoutConfigType, NodeType, OutputNodeType } from '../../Canvas/interfaces';
+import {
+  MenuItemType,
+  RenderContextMenuOptions,
+  RemoveContextMenuType,
+  RenderContextMenuType,
+} from '@mana/hooks/useContextMenu';
+import {
+  NodeItemType,
+  PortType,
+  RectType,
+  ItemMappingType,
+  PortMappingType,
+  ModelMappingType,
+  LayoutConfigType,
+  NodeType,
+  OutputNodeType,
+} from '../../Canvas/interfaces';
 import { PresentationManagerType } from './usePresentationManager';
 import { XYCoord } from 'react-dnd';
 import { ZoomPanStateType } from '@mana/hooks/useZoomPan';
@@ -45,7 +84,9 @@ type EventManagerProps = {
   connectionLinesPathRef: PresentationManagerType['connectionLinesPathRef'];
   containerRef: React.MutableRefObject<HTMLDivElement>;
   itemDraggingRef: React.MutableRefObject<NodeItemType | null>;
-  itemElementsRef: React.MutableRefObject<Record<string, Record<string, React.RefObject<HTMLDivElement>>>>;
+  itemElementsRef: React.MutableRefObject<
+    Record<string, Record<string, React.RefObject<HTMLDivElement>>>
+  >;
   itemsRef: React.MutableRefObject<ItemMappingType>;
   itemIDsByLevelRef: ItemIDsByLevelRef;
   mutateModels: ModelManagerType['mutateModels'];
@@ -103,17 +144,23 @@ export default function useEventManager({
     containerRef?.current?.classList.add(stylesBuilder.dragging);
   }
 
-  const { convertEvent, dispatchAppEvent } = useAppEventsHandler({
-    gridDimensions,
-  } as any, {
-    [CustomAppEventEnum.NODE_DROPPED]: onDropBlock,
-    [CustomAppEventEnum.START_DRAGGING]: handleStartDragging,
-  });
+  const { convertEvent, dispatchAppEvent } = useAppEventsHandler(
+    {
+      gridDimensions,
+    } as any,
+    {
+      [CustomAppEventEnum.NODE_DROPPED]: onDropBlock,
+      [CustomAppEventEnum.START_DRAGGING]: handleStartDragging,
+    },
+  );
 
-  function updateNodeLayouts(event?: MouseEvent, opts?: {
-    layoutConfig?: LayoutConfigType;
-    level?: number;
-  }) {
+  function updateNodeLayouts(
+    event?: MouseEvent,
+    opts?: {
+      layoutConfig?: LayoutConfigType;
+      level?: number;
+    },
+  ) {
     dispatchAppEvent(CustomAppEventEnum.UPDATE_SETTINGS, {
       event: convertEvent(event ?? {}),
       options: {
@@ -217,11 +264,7 @@ export default function useEventManager({
     //   });
     // }
 
-    if ([
-      ItemTypeEnum.BLOCK,
-      ItemTypeEnum.NODE,
-      ItemTypeEnum.OUTPUT,
-    ].includes(itemType)) {
+    if ([ItemTypeEnum.BLOCK, ItemTypeEnum.NODE, ItemTypeEnum.OUTPUT].includes(itemType)) {
       const xy = finalCoords(item?.rect?.left + x, item?.rect?.top + y);
 
       const item2 = update(item, {
@@ -274,7 +317,7 @@ export default function useEventManager({
 
   function submitEventOperation(event: ClientEventType, opts?: EventOperationOptionsType) {
     if (opts?.handler) {
-      opts?.handler(event, (appHandlersRef.current as unknown) as Record<string, MutateType>, {
+      opts?.handler(event, appHandlersRef.current as unknown as Record<string, MutateType>, {
         removeContextMenu,
         renderContextMenu,
       });
@@ -310,14 +353,13 @@ export default function useEventManager({
     items?: MenuItemType[],
     opts?: RenderContextMenuOptions,
   ) {
-
     const { data } = event;
     removeContextMenu(event);
 
     const rects = [];
     const itemsToTest = [];
 
-    Object.values(itemsRef?.current ?? {})?.forEach((item) => {
+    Object.values(itemsRef?.current ?? {})?.forEach(item => {
       itemsToTest.push(item);
       const outputs = Object.values(outputsRef?.current?.[item?.id] ?? {}) ?? [];
       outputs?.length >= 1 && itemsToTest.push(...(outputs ?? []));
@@ -350,15 +392,15 @@ export default function useEventManager({
 
       let translate = [0, 0];
       if (translateMatch) {
-        translate = translateMatch ? translateMatch[1].split(',').map(val => parseFloat(val.trim())) : [0, 0];
-
+        translate = translateMatch
+          ? translateMatch[1].split(',').map(val => parseFloat(val.trim()))
+          : [0, 0];
       }
 
       let scale = 1;
       if (scaleMatch) {
         scale = scaleMatch ? parseFloat(scaleMatch[1]) : 1;
       }
-
 
       return { translate, scale };
     };
@@ -380,8 +422,10 @@ export default function useEventManager({
       };
     };
 
-
-    const [x1, y1] = applyTransform(event, parseTransform(transformState?.current?.transform?.current)).translate;
+    const [x1, y1] = applyTransform(
+      event,
+      parseTransform(transformState?.current?.transform?.current),
+    ).translate;
     const rect = rects?.length >= 1 ? findRectAtPoint(x1, y1, rects) : null;
 
     const target = rect ? rect.item : null;
@@ -389,47 +433,51 @@ export default function useEventManager({
     const menuItems = [];
 
     if (target && ItemTypeEnum.OUTPUT === target?.type) {
-      menuItems.push(...[
-        {
-          Icon: CloseV2,
-          onClick: (event: ClientEventType) => {
-            removeContextMenu(event);
-            dispatchAppEvent(CustomAppEventEnum.CLOSE_OUTPUT, {
-              event,
-              node: target.node,
-              output: target,
-            });
+      menuItems.push(
+        ...[
+          {
+            Icon: CloseV2,
+            onClick: (event: ClientEventType) => {
+              removeContextMenu(event);
+              dispatchAppEvent(CustomAppEventEnum.CLOSE_OUTPUT, {
+                event,
+                node: target.node,
+                output: target,
+              });
+            },
+            uuid: 'Close output',
           },
-          uuid: 'Close output',
-        },
-        {
-          Icon: CopyV2,
-          onClick: (event2: ClientEventType) => {
-            removeContextMenu(event2);
-            const targetElement = event?.target as HTMLElement;
-            const mruuid = targetElement?.getAttribute('data-message-request-uuid');
-            const events = sortByKey(
-              Object.values(target?.eventStreams?.[mruuid] ?? {}) ?? [],
-              ({ result }) => result?.timestamp,
-            );
-            const text = events?.map(({ result }) => (result?.output_text ?? '')?.trim() ?? '').join('\n');
-            copyToClipboard(text);
+          {
+            Icon: CopyV2,
+            onClick: (event2: ClientEventType) => {
+              removeContextMenu(event2);
+              const targetElement = event?.target as HTMLElement;
+              const mruuid = targetElement?.getAttribute('data-message-request-uuid');
+              const events = sortByKey(
+                Object.values(target?.eventStreams?.[mruuid] ?? {}) ?? [],
+                ({ result }) => result?.timestamp,
+              );
+              const text = events
+                ?.map(({ result }) => (result?.output_text ?? '')?.trim() ?? '')
+                .join('\n');
+              copyToClipboard(text);
+            },
+            uuid: 'Copy output',
           },
-          uuid: 'Copy output',
-        },
-        {
-          Icon: Trash,
-          onClick: (event: ClientEventType) => {
-            removeContextMenu(event);
-            dispatchAppEvent(CustomAppEventEnum.CLOSE_OUTPUT, {
-              event,
-              node: target,
-            });
+          {
+            Icon: Trash,
+            onClick: (event: ClientEventType) => {
+              removeContextMenu(event);
+              dispatchAppEvent(CustomAppEventEnum.CLOSE_OUTPUT, {
+                event,
+                node: target,
+              });
+            },
+            uuid: 'Delete output',
           },
-          uuid: 'Delete output',
-        },
-        { divider: true },
-      ]);
+          { divider: true },
+        ],
+      );
     } else {
       menuItems.push({
         Icon: Select,
@@ -441,130 +489,142 @@ export default function useEventManager({
       });
     }
 
-    menuItems.push(...(items ?? [
-      {
-        Icon: SearchV2,
-        items: [
-          {
-            Icon: iconProps => <Undo {...iconProps} secondary />,
-            onClick: (event: ClientEventType) => {
-              event?.preventDefault();
-              removeContextMenu(event ?? null);
-              transformState?.current?.handleZoom?.current?.((event ?? null) as any, 1);
-              startTransition(() => {
-                setZoomPanDisabled(false);
-              });
+    menuItems.push(
+      ...(items ?? [
+        {
+          Icon: SearchV2,
+          items: [
+            {
+              Icon: iconProps => <Undo {...iconProps} secondary />,
+              onClick: (event: ClientEventType) => {
+                event?.preventDefault();
+                removeContextMenu(event ?? null);
+                transformState?.current?.handleZoom?.current?.((event ?? null) as any, 1);
+                startTransition(() => {
+                  setZoomPanDisabled(false);
+                });
+              },
+              uuid:
+                (transformState?.current?.zoom?.current ?? 1) === 1
+                  ? 'Default zoom'
+                  : 'Zoom to 100%',
             },
-            uuid:
-              (transformState?.current?.zoom?.current ?? 1) === 1 ? 'Default zoom' : 'Zoom to 100%',
-          },
-          {
-            Icon: ArrowsAdjustingFrameSquare,
-            onClick: (event: ClientEventType) => {
-              event?.preventDefault();
-              removeContextMenu(event ?? null);
-              transformState?.current?.handlePanning?.current?.((event ?? null) as any, {
-                x: 0,
-                y: 0,
-              });
-              startTransition(() => {
-                setZoomPanDisabled(false);
-              });
+            {
+              Icon: ArrowsAdjustingFrameSquare,
+              onClick: (event: ClientEventType) => {
+                event?.preventDefault();
+                removeContextMenu(event ?? null);
+                transformState?.current?.handlePanning?.current?.((event ?? null) as any, {
+                  x: 0,
+                  y: 0,
+                });
+                startTransition(() => {
+                  setZoomPanDisabled(false);
+                });
+              },
+              uuid: 'Reset view',
             },
-            uuid: 'Reset view',
-          },
-          {
-            Icon: ArrowsPointingInFromAllCorners,
-            onClick: (event: ClientEventType) => {
-              event.preventDefault();
-              removeContextMenu(event);
-              transformState?.current?.handlePanning?.current?.((event ?? null) as any, {
-                xPercent: 0.5,
-                yPercent: 0.5,
-              });
-              startTransition(() => {
-                setZoomPanDisabled(false);
-              });
-            },
-            uuid: 'Center view',
-          },
-        ],
-        uuid: 'View controls',
-      },
-      {
-        Icon: GroupV2,
-        items: [
-          ...[
-            [LayoutConfigDirectionEnum.VERTICAL, 'Vertical layout', CubeWithArrowDown],
-            [LayoutConfigDirectionEnum.HORIZONTAL, 'Horizontal layout', PaginateArrowRight],
-          ].map(([direction, uuid, icon]) => {
-            const selected =
-              (layoutConfig?.current?.direction ?? LayoutConfigDirectionEnum.HORIZONTAL) === direction;
-            const Icon = selected ? Check : icon;
-
-            return {
-              Icon: (props: IconProps) => <Icon {...props} colorName={selected ? 'green' : undefined} />,
+            {
+              Icon: ArrowsPointingInFromAllCorners,
               onClick: (event: ClientEventType) => {
                 event.preventDefault();
-                updateNodeLayouts(event, {
-                  layoutConfig: {
-                    direction: direction as LayoutConfigDirectionEnum,
-                  },
-                });
                 removeContextMenu(event);
-              },
-              uuid,
-            };
-          }),
-          ...Object.entries({
-            [TransformRectTypeEnum.LAYOUT_GRID]: ['Square layout', BatchSquaresStacked],
-            [TransformRectTypeEnum.LAYOUT_RECTANGLE]: ['Rows and column layout', Table],
-            [TransformRectTypeEnum.LAYOUT_SPIRAL]: ['Spiral layout', Circle],
-            [TransformRectTypeEnum.LAYOUT_TREE]: ['Tree layout', BranchAlt],
-            [TransformRectTypeEnum.LAYOUT_WAVE]: ['Wave layout', Monitor],
-          }).map(([value, arr]) => {
-            const selected =
-              layoutConfig?.current?.rectTransformations?.find(({ type }) => type === value);
-            const uuid = arr[0];
-            const Icon = selected ? Check : arr[1];
-
-            return {
-              Icon: (props: IconProps) => <Icon {...props} colorName={selected ? 'green' : undefined} />,
-              onClick: (event: ClientEventType) => {
-                event.preventDefault();
-                updateNodeLayouts(event, {
-                  layoutConfig: {
-                    rectTransformations: [{
-                      type: value as TransformRectTypeEnum,
-                    }],
-                  },
+                transformState?.current?.handlePanning?.current?.((event ?? null) as any, {
+                  xPercent: 0.5,
+                  yPercent: 0.5,
                 });
-                removeContextMenu(event);
+                startTransition(() => {
+                  setZoomPanDisabled(false);
+                });
               },
-              uuid,
-            };
-          }),
-        ],
-        uuid: 'Customize block layout',
-      },
-      // { divider: true },
-      // {
-      //   uuid: 'Groupings',
-      // },
-      // ...buildMenuItemGroupsForPipelineFramework(),
-      { divider: true },
-      {
-        Icon: TreeWithArrowsDown,
-        onClick: (event: ClientEventType) => {
-          event?.preventDefault();
-          removeContextMenu(event);
-          dispatchAppEvent(CustomAppEventEnum.SAVE_AS_IMAGE, {
-            event,
-          });
+              uuid: 'Center view',
+            },
+          ],
+          uuid: 'View controls',
         },
-        uuid: 'Save pipeline as image',
-      },
-    ]));
+        {
+          Icon: GroupV2,
+          items: [
+            ...[
+              [LayoutConfigDirectionEnum.VERTICAL, 'Vertical layout', CubeWithArrowDown],
+              [LayoutConfigDirectionEnum.HORIZONTAL, 'Horizontal layout', PaginateArrowRight],
+            ].map(([direction, uuid, icon]) => {
+              const selected =
+                (layoutConfig?.current?.direction ?? LayoutConfigDirectionEnum.HORIZONTAL) ===
+                direction;
+              const Icon = selected ? Check : icon;
+
+              return {
+                Icon: (props: IconProps) => (
+                  <Icon {...props} colorName={selected ? 'green' : undefined} />
+                ),
+                onClick: (event: ClientEventType) => {
+                  event.preventDefault();
+                  updateNodeLayouts(event, {
+                    layoutConfig: {
+                      direction: direction as LayoutConfigDirectionEnum,
+                    },
+                  });
+                  removeContextMenu(event);
+                },
+                uuid,
+              };
+            }),
+            ...Object.entries({
+              [TransformRectTypeEnum.LAYOUT_GRID]: ['Square layout', BatchSquaresStacked],
+              [TransformRectTypeEnum.LAYOUT_RECTANGLE]: ['Rows and column layout', Table],
+              [TransformRectTypeEnum.LAYOUT_SPIRAL]: ['Spiral layout', Circle],
+              [TransformRectTypeEnum.LAYOUT_TREE]: ['Tree layout', BranchAlt],
+              [TransformRectTypeEnum.LAYOUT_WAVE]: ['Wave layout', Monitor],
+            }).map(([value, arr]) => {
+              const selected = layoutConfig?.current?.rectTransformations?.find(
+                ({ type }) => type === value,
+              );
+              const uuid = arr[0];
+              const Icon = selected ? Check : arr[1];
+
+              return {
+                Icon: (props: IconProps) => (
+                  <Icon {...props} colorName={selected ? 'green' : undefined} />
+                ),
+                onClick: (event: ClientEventType) => {
+                  event.preventDefault();
+                  updateNodeLayouts(event, {
+                    layoutConfig: {
+                      rectTransformations: [
+                        {
+                          type: value as TransformRectTypeEnum,
+                        },
+                      ],
+                    },
+                  });
+                  removeContextMenu(event);
+                },
+                uuid,
+              };
+            }),
+          ],
+          uuid: 'Customize block layout',
+        },
+        // { divider: true },
+        // {
+        //   uuid: 'Groupings',
+        // },
+        // ...buildMenuItemGroupsForPipelineFramework(),
+        { divider: true },
+        {
+          Icon: TreeWithArrowsDown,
+          onClick: (event: ClientEventType) => {
+            event?.preventDefault();
+            removeContextMenu(event);
+            dispatchAppEvent(CustomAppEventEnum.SAVE_AS_IMAGE, {
+              event,
+            });
+          },
+          uuid: 'Save pipeline as image',
+        },
+      ]),
+    );
 
     if (target) {
       if (ItemTypeEnum.NODE === target?.type) {
@@ -573,117 +633,123 @@ export default function useEventManager({
           selectedGroupsRef?.current[selectedGroupsRef?.current?.length - 1]?.uuid;
 
         if (block?.uuid !== selectedUUID) {
-          menuItems.unshift(...[
+          menuItems.unshift(
+            ...[
+              {
+                Icon: OpenInSidekick,
+                onClick: (event: ClientEventType) => {
+                  event?.preventDefault();
+
+                  dispatchAppEvent(CustomAppEventEnum.TELEPORT_INTO_BLOCK, {
+                    block,
+                    event: convertEvent(event),
+                  });
+
+                  removeContextMenu(event);
+                },
+                uuid: `Teleport into ${block?.name}`,
+              },
+              { divider: true },
+            ],
+          );
+        }
+      } else if (
+        target?.type === ItemTypeEnum.BLOCK &&
+        ![BlockTypeEnum.GROUP, BlockTypeEnum.PIPELINE].includes(target?.block?.type)
+      ) {
+        menuItems.push(
+          ...[
+            { divider: true },
             {
-              Icon: OpenInSidekick,
+              Icon: Trash,
               onClick: (event: ClientEventType) => {
                 event?.preventDefault();
 
-                dispatchAppEvent(CustomAppEventEnum.TELEPORT_INTO_BLOCK, {
-                  block,
-                  event: convertEvent(event),
+                // const itemRemoved = itemsRef?.current?.[target?.id];
+                // if (itemRemoved) {
+                //   itemRemoved.rect = {
+                //     ...itemRemoved?.rect,
+                //     diff: itemRemoved?.rect,
+                //     height: 0,
+                //     left: 0,
+                //     top: 0,
+                //     width: 0,
+                //   };
+
+                //   const element = itemElementsRef?.current?.[target.type]?.[target.id]?.current;
+                //   if (element) {
+                //     const rect = element.getBoundingClientRect();
+                //     itemRemoved.rect.diff.height = rect.height;
+                //     itemRemoved.rect.diff.width = rect.width;
+
+                //     element.style.width = '0px';
+                //     element.style.height = '0px';
+                //     element.style.visibility = 'hidden';
+                //     element.style.opacity = '0';
+                //     element.style.display = 'none';
+
+                //     delete itemElementsRef.current[target.type][target.id];
+                //   }
+
+                //   if (itemRemoved?.node) {
+                //     const node = itemsRef.current[itemRemoved.node.id] as NodeType;
+
+                //     const rects1 = [];
+                //     const rects2 = [];
+
+                //     itemRemoved?.node?.items?.forEach((item1: any) => {
+                //       if (!item1) return;
+                //       const item2 = itemsRef.current[typeof item1 === 'string' ? item1 : item1?.id];
+                //       if (!item2) return;
+
+                //       rects1.push(item2.rect);
+                //       if (itemRemoved?.id !== item2?.id) {
+                //         rects2.push(item2.rect);
+                //       }
+                //     });
+
+                //     const box1 = calculateBoundingBox(rects1);
+                //     const box2 = calculateBoundingBox(rects2);
+
+                //     const diffHeight = box1.height - box2.height;
+                //     const diffWidth = box1.width - box2.width;
+
+                //     const rect = node?.rect;
+                //     node.rect = {
+                //       ...node.rect,
+                //       diff: rect,
+                //       height: rect.height -= diffHeight,
+                //       width: rect.width -= diffWidth,
+                //     };
+                //     node.items = node?.items?.filter(
+                //       (item: any) => (typeof item === 'string' ? item : item.id) !== itemRemoved.id
+                //     );
+
+                //     itemsRef.current[node.id] = node;
+                //   }
+
+                //   delete itemsRef.current[itemRemoved.id];
+                // }
+
+                // updateNodeLayouts();
+
+                appHandlersRef.current?.pipelines.update.mutate({
+                  event,
+                  onSuccess: () => {
+                    removeContextMenu(event);
+                  },
+                  payload: pipeline => ({
+                    ...pipeline,
+                    blocks: pipeline?.blocks?.filter(
+                      (block: BlockType) => block.uuid !== target.block.uuid,
+                    ),
+                  }),
                 });
-
-                removeContextMenu(event);
               },
-              uuid: `Teleport into ${block?.name}`,
+              uuid: `Remove ${target?.block?.name} from pipeline`,
             },
-            { divider: true },
-          ]);
-        }
-      } else if (target?.type === ItemTypeEnum.BLOCK && ![
-        BlockTypeEnum.GROUP,
-        BlockTypeEnum.PIPELINE,
-      ].includes(target?.block?.type)) {
-        menuItems.push(...[
-          { divider: true },
-          {
-            Icon: Trash,
-            onClick: (event: ClientEventType) => {
-              event?.preventDefault();
-
-              // const itemRemoved = itemsRef?.current?.[target?.id];
-              // if (itemRemoved) {
-              //   itemRemoved.rect = {
-              //     ...itemRemoved?.rect,
-              //     diff: itemRemoved?.rect,
-              //     height: 0,
-              //     left: 0,
-              //     top: 0,
-              //     width: 0,
-              //   };
-
-              //   const element = itemElementsRef?.current?.[target.type]?.[target.id]?.current;
-              //   if (element) {
-              //     const rect = element.getBoundingClientRect();
-              //     itemRemoved.rect.diff.height = rect.height;
-              //     itemRemoved.rect.diff.width = rect.width;
-
-              //     element.style.width = '0px';
-              //     element.style.height = '0px';
-              //     element.style.visibility = 'hidden';
-              //     element.style.opacity = '0';
-              //     element.style.display = 'none';
-
-              //     delete itemElementsRef.current[target.type][target.id];
-              //   }
-
-              //   if (itemRemoved?.node) {
-              //     const node = itemsRef.current[itemRemoved.node.id] as NodeType;
-
-              //     const rects1 = [];
-              //     const rects2 = [];
-
-              //     itemRemoved?.node?.items?.forEach((item1: any) => {
-              //       if (!item1) return;
-              //       const item2 = itemsRef.current[typeof item1 === 'string' ? item1 : item1?.id];
-              //       if (!item2) return;
-
-              //       rects1.push(item2.rect);
-              //       if (itemRemoved?.id !== item2?.id) {
-              //         rects2.push(item2.rect);
-              //       }
-              //     });
-
-              //     const box1 = calculateBoundingBox(rects1);
-              //     const box2 = calculateBoundingBox(rects2);
-
-              //     const diffHeight = box1.height - box2.height;
-              //     const diffWidth = box1.width - box2.width;
-
-              //     const rect = node?.rect;
-              //     node.rect = {
-              //       ...node.rect,
-              //       diff: rect,
-              //       height: rect.height -= diffHeight,
-              //       width: rect.width -= diffWidth,
-              //     };
-              //     node.items = node?.items?.filter(
-              //       (item: any) => (typeof item === 'string' ? item : item.id) !== itemRemoved.id
-              //     );
-
-              //     itemsRef.current[node.id] = node;
-              //   }
-
-              //   delete itemsRef.current[itemRemoved.id];
-              // }
-
-              // updateNodeLayouts();
-
-              appHandlersRef.current?.pipelines.update.mutate({
-                event,
-                onSuccess: () => {
-                  removeContextMenu(event);
-                },
-                payload: (pipeline) => ({
-                  ...pipeline,
-                  blocks: pipeline?.blocks?.filter((block: BlockType) => block.uuid !== target.block.uuid),
-                }),
-              });
-            },
-            uuid: `Remove ${target?.block?.name} from pipeline`,
-          },
-        ]);
+          ],
+        );
       }
     }
 
@@ -701,8 +767,9 @@ export default function useEventManager({
   function buildMenuItemGroupsForPipelineFramework() {
     return (itemIDsByLevelRef?.current ?? []).map((ids: string[], level: number) => {
       const items = sortByKey(
-        ids?.map((id: string) =>
-          itemsRef.current?.[id])?.filter(i => ItemTypeEnum.BLOCK === i?.type),
+        ids
+          ?.map((id: string) => itemsRef.current?.[id])
+          ?.filter(i => ItemTypeEnum.BLOCK === i?.type),
         ({ block, title, id }) => block?.name || title || block?.uuid || id,
       );
 
@@ -804,10 +871,7 @@ export default function useEventManager({
     const { node } = clientEvent.data;
     const { rect } = options?.kwargs ?? {};
 
-    const {
-      left,
-      top,
-    } = rect;
+    const { left, top } = rect;
 
     // const portsUpdated = {
     //   ...portsRef.current,

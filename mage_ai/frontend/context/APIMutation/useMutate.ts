@@ -40,12 +40,7 @@ export function useMutate(
     urlParser?: URLOptionsType;
   },
 ): MutateType {
-  const {
-    id,
-    idParent,
-    resource,
-    resourceParent,
-  } = argsInit;
+  const { id, idParent, resource, resourceParent } = argsInit;
   const context = useContext(APIMutationContext);
 
   const {
@@ -54,10 +49,7 @@ export function useMutate(
     subscribeToStatusUpdates,
     throttle: throttleProp,
   } = opts || {};
-  const {
-    disableEncodeURIComponent,
-    disableHyphenCase,
-  } = opts?.urlParser ?? {};
+  const { disableEncodeURIComponent, disableHyphenCase } = opts?.urlParser ?? {};
 
   const { handlers: resourceHandlers, parse } = opts || {};
   const resourceName = singularize(resource);
@@ -131,15 +123,18 @@ export function useMutate(
     return modelsRef.current[resourceName];
   }
 
-  function setModels(models: ResourceType[] | ((prev: ResourceType[]) => ResourceType[])): ResourceType[] {
-    const model2 = typeof models === 'function'
-      ? models(modelsRef.current[resource])
-      : models;
+  function setModels(
+    models: ResourceType[] | ((prev: ResourceType[]) => ResourceType[]),
+  ): ResourceType[] {
+    const model2 = typeof models === 'function' ? models(modelsRef.current[resource]) : models;
     modelsRef.current[resource] = model2;
     return modelsRef.current[resource];
   }
 
-  function preprocessPayload({ id, payload }: { payload?: ArgsValueOrFunctionType } & IDArgsType = {}): {
+  function preprocessPayload({
+    id,
+    payload,
+  }: { payload?: ArgsValueOrFunctionType } & IDArgsType = {}): {
     [key: string]: any;
   } {
     const modelPrev = getModel(id);
@@ -158,9 +153,7 @@ export function useMutate(
       idParent,
       ...variables,
     };
-    const {
-      id: idUse,
-    } = ids ?? {};
+    const { id: idUse } = ids ?? {};
 
     const { data } = response || {};
 
@@ -193,26 +186,29 @@ export function useMutate(
     const { message, name, stack } = (error ?? {}) as any;
 
     if (context && context?.renderError) {
-      context?.renderError({
-        client: {
-          error: {
-            errors: stack && stack?.split('\n')?.map(String),
-            message: message && String(message),
-            type: name && String(name),
+      context?.renderError(
+        {
+          client: {
+            error: {
+              errors: stack && stack?.split('\n')?.map(String),
+              message: message && String(message),
+              type: name && String(name),
+            },
           },
+          message,
+          ...error,
         },
-        message,
-        ...error,
-      }, (event: MouseEvent) => {
-        const reqs = requests.current[operation] ?? [];
-        const args = reqs.pop();
+        (event: MouseEvent) => {
+          const reqs = requests.current[operation] ?? [];
+          const args = reqs.pop();
 
-        if (args) {
-          wrapMutation(operation, { ...args, event })
-            .then(handleResponse)
-            .catch(err => handleError(err, operation));
-        }
-      });
+          if (args) {
+            wrapMutation(operation, { ...args, event })
+              .then(handleResponse)
+              .catch(err => handleError(err, operation));
+          }
+        },
+      );
     }
 
     handleStatusUpdate();
@@ -223,10 +219,7 @@ export function useMutate(
     id?: string;
     idParent?: string;
   } {
-    const {
-      id: idUse = undefined,
-      idParent: idParentUse = undefined,
-    } = {
+    const { id: idUse = undefined, idParent: idParentUse = undefined } = {
       ...args,
       ...argsInit,
     };
@@ -243,33 +236,31 @@ export function useMutate(
     opts: FetcherOptionsType = {},
   ): Promise<any> {
     const idArgs = getIDs(args) ?? {};
-    const {
-      id: idUse,
-      idParent: idParentUse,
-    } = getIDs(args) ?? {};
+    const { id: idUse, idParent: idParentUse } = getIDs(args) ?? {};
 
-    const urlArg: string = buildUrl(...[
-      resourceParent ?? resource,
-      idParentUse ?? idUse,
-      resourceParent ? resource : null,
-      resourceParent ? idUse : null,
-    ]);
+    const urlArg: string = buildUrl(
+      ...[
+        resourceParent ?? resource,
+        idParentUse ?? idUse,
+        resourceParent ? resource : null,
+        resourceParent ? idUse : null,
+      ],
+    );
 
-    const {
-      responseType = ResponseTypeEnum.JSON,
-      signal = null,
-    } = opts || {} as FetcherOptionsType;
+    const { responseType = ResponseTypeEnum.JSON, signal = null } =
+      opts || ({} as FetcherOptionsType);
 
     const { data, headers, method, queryString, url } = preprocess(urlArg, {
       ...opts,
       body: preprocessPayload({ ...args, ...idArgs }),
-      method: OperationTypeEnum.CREATE === operation
-        ? 'POST'
-        : OperationTypeEnum.DELETE === operation
-          ? 'DELETE'
-          : OperationTypeEnum.UPDATE === operation
-            ? 'PUT'
-            : 'GET',
+      method:
+        OperationTypeEnum.CREATE === operation
+          ? 'POST'
+          : OperationTypeEnum.DELETE === operation
+            ? 'DELETE'
+            : OperationTypeEnum.UPDATE === operation
+              ? 'PUT'
+              : 'GET',
       query: addMetaQuery(args),
     });
 
@@ -278,36 +269,40 @@ export function useMutate(
         args?.onStart();
       }
 
-      return axios.request({
-        data: data.body,
-        headers,
-        method,
-        onDownloadProgress: opts?.onDownloadProgress
-          ? e =>
-            opts.onDownloadProgress(e, {
-              body: opts?.body,
-              query: opts?.query,
-            })
-          : null,
-        onUploadProgress: opts?.onUploadProgress
-          ? e =>
-            opts.onUploadProgress(e, {
-              body: opts?.body,
-              query: opts?.query,
-            })
-          : null,
-        responseType,
-        signal,
-        url: queryString ? `${url}?${queryString}` : url,
-      }).then((data) => {
-        args?.onSuccess && args?.onSuccess?.(data, args, opts);
-        return resolve(data);
-      }).catch((error) => {
-        args?.onError && args?.onError?.(error, args, opts);
-        return reject(error);
-      }).finally(() => {
-        delete abortControllerRef.current[operation];
-      });
+      return axios
+        .request({
+          data: data.body,
+          headers,
+          method,
+          onDownloadProgress: opts?.onDownloadProgress
+            ? e =>
+                opts.onDownloadProgress(e, {
+                  body: opts?.body,
+                  query: opts?.query,
+                })
+            : null,
+          onUploadProgress: opts?.onUploadProgress
+            ? e =>
+                opts.onUploadProgress(e, {
+                  body: opts?.body,
+                  query: opts?.query,
+                })
+            : null,
+          responseType,
+          signal,
+          url: queryString ? `${url}?${queryString}` : url,
+        })
+        .then(data => {
+          args?.onSuccess && args?.onSuccess?.(data, args, opts);
+          return resolve(data);
+        })
+        .catch(error => {
+          args?.onError && args?.onError?.(error, args, opts);
+          return reject(error);
+        })
+        .finally(() => {
+          delete abortControllerRef.current[operation];
+        });
     });
   }
 
@@ -343,8 +338,8 @@ export function useMutate(
     if (!id) return id;
 
     const handlers = [
-      (url: string) => disableHyphenCase ? url : hyphensToSnake(url),
-      (url: string) => disableEncodeURIComponent ? url : encodeURIComponent(url),
+      (url: string) => (disableHyphenCase ? url : hyphensToSnake(url)),
+      (url: string) => (disableEncodeURIComponent ? url : encodeURIComponent(url)),
     ];
     return handlers.reduce((acc, handler) => handler(acc), id as string);
   }
@@ -359,8 +354,10 @@ export function useMutate(
       checkpointRef.current[operation] = now;
     }
 
-    if (operation in (throttleRef?.current ?? {})
-      && now - (checkpointRef?.current?.[operation] ?? 0) < throttleRef?.current?.[operation]) {
+    if (
+      operation in (throttleRef?.current ?? {}) &&
+      now - (checkpointRef?.current?.[operation] ?? 0) < throttleRef?.current?.[operation]
+    ) {
       return Promise.resolve(null);
     }
     if (automaticAbort && abortControllerRef?.current?.[operation]) {
@@ -375,14 +372,11 @@ export function useMutate(
     requests.current[operation].push(request);
 
     if (args?.event) {
-      const eventTarget = (args?.event?.target as HTMLElement);
-      const target = eventTarget ? getClosestChildRole(
-        eventTarget,
-        [ElementRoleEnum.BUTTON],
-      ) ?? getClosestRole(
-        eventTarget,
-        [ElementRoleEnum.BUTTON],
-      ) : null;
+      const eventTarget = args?.event?.target as HTMLElement;
+      const target = eventTarget
+        ? getClosestChildRole(eventTarget, [ElementRoleEnum.BUTTON]) ??
+          getClosestRole(eventTarget, [ElementRoleEnum.BUTTON])
+        : null;
       if (target) {
         const rect = target.getBoundingClientRect();
         context.renderTarget({
@@ -393,7 +387,7 @@ export function useMutate(
       }
     }
 
-    return fetch(...request as [any, any], { signal });
+    return fetch(...(request as [any, any]), { signal });
   }
 
   const fnCreate = useMutation(augmentHandlers(OperationTypeEnum.CREATE));

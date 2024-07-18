@@ -18,7 +18,7 @@ function Test() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  return <div>Test</div>
+  return <div>Test</div>;
 }
 
 Test.getInitialProps = async () => ({});

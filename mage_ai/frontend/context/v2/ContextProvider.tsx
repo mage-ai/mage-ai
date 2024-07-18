@@ -11,7 +11,12 @@ function ContextProvider({
   main,
   router,
   theme,
-}: { children: React.ReactNode, main?: boolean, router?: any, theme: ThemeType }) {
+}: {
+  children: React.ReactNode;
+  main?: boolean;
+  router?: any;
+  theme: ThemeType;
+}) {
   const queryClient = new QueryClient();
 
   return (
@@ -19,9 +24,7 @@ function ContextProvider({
       <LayoutProvider router={router} theme={theme}>
         <QueryClientProvider client={queryClient}>
           <APIMutationProvider>
-            <TooltipProvider main={main}>
-              {children}
-            </TooltipProvider>
+            <TooltipProvider main={main}>{children}</TooltipProvider>
           </APIMutationProvider>
         </QueryClientProvider>
       </LayoutProvider>

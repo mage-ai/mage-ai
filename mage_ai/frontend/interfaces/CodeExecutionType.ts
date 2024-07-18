@@ -5,7 +5,7 @@ export enum EnvironmentTypeEnum {
   PIPELINE = 'pipeline',
 }
 
-export enum EnvironmentUUIDEnum  {
+export enum EnvironmentUUIDEnum {
   EXECUTION = 'execution',
 }
 

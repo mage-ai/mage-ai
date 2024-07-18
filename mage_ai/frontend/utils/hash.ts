@@ -166,7 +166,11 @@ export function objectSize(obj) {
 
 type FlattenedObject = { [key: string]: any };
 
-export function flattenObject(obj: Record<string, any>, parentKey = '', res: FlattenedObject = {}): FlattenedObject {
+export function flattenObject(
+  obj: Record<string, any>,
+  parentKey = '',
+  res: FlattenedObject = {},
+): FlattenedObject {
   for (const key in obj) {
     if (obj.hasOwnProperty(key)) {
       const newKey = parentKey ? `${parentKey}.${key}` : key;

@@ -1,8 +1,23 @@
 import React, { createRef, useRef } from 'react';
 import update from 'immutability-helper';
 import { ConnectionLines } from '../../Canvas/Connections/ConnectionLines';
-import { DragItem, NodeItemType, NodeType, RectType, PortType, LayoutConfigType, ModelMappingType, AppNodeType } from '../../Canvas/interfaces';
-import { ItemStatusEnum, ItemTypeEnum, LayoutConfigDirectionEnum, LayoutConfigDirectionOriginEnum, PortSubtypeEnum } from '../../Canvas/types';
+import {
+  DragItem,
+  NodeItemType,
+  NodeType,
+  RectType,
+  PortType,
+  LayoutConfigType,
+  ModelMappingType,
+  AppNodeType,
+} from '../../Canvas/interfaces';
+import {
+  ItemStatusEnum,
+  ItemTypeEnum,
+  LayoutConfigDirectionEnum,
+  LayoutConfigDirectionOriginEnum,
+  PortSubtypeEnum,
+} from '../../Canvas/types';
 import { createRoot, Root } from 'react-dom/client';
 import { getBlockColor } from '@mana/themes/blocks';
 import { getPathD } from '../../Canvas/Connections/utils';
@@ -24,7 +39,7 @@ export default function useItemManager({
   itemElementsRef: ItemElementsRefType;
   itemsRef: React.MutableRefObject<Record<string, NodeItemType>>;
 }): {
-  onMountItem: (item: DragItem, itemRef: React.RefObject<HTMLDivElement>) => void,
+  onMountItem: (item: DragItem, itemRef: React.RefObject<HTMLDivElement>) => void;
 } {
   const itemMetadataRef = useRef<Record<string, Record<string, any>>>({});
   const [debouncer, cancelDebounce] = useDynamicDebounce();
@@ -36,16 +51,22 @@ export default function useItemManager({
     onMountItem(node, operationTarget as React.RefObject<HTMLDivElement>);
   };
 
-  const { convertEvent, dispatchAppEvent } = useAppEventsHandler({
-    itemElementsRef,
-    itemMetadataRef,
-    itemsRef,
-  } as any, {
-    [CustomAppEventEnum.NODE_MOUNTED]: handleNodeMounted,
-  });
+  const { convertEvent, dispatchAppEvent } = useAppEventsHandler(
+    {
+      itemElementsRef,
+      itemMetadataRef,
+      itemsRef,
+    } as any,
+    {
+      [CustomAppEventEnum.NODE_MOUNTED]: handleNodeMounted,
+    },
+  );
 
   // Stage 2: Initial setup of components on mount.
-  function onMountItem(item: NodeType, itemRef: React.RefObject<HTMLDivElement> | React.RefObject<HTMLElement>) {
+  function onMountItem(
+    item: NodeType,
+    itemRef: React.RefObject<HTMLDivElement> | React.RefObject<HTMLElement>,
+  ) {
     const { id, type } = item;
     itemElementsRef.current ||= {} as ItemElementsType;
     itemElementsRef.current[type] ||= {};
@@ -114,18 +135,20 @@ export default function useItemManager({
           const child = getClosestChildRole(itemRef?.current, ElementRoleEnum.CONTENT);
           if (child) {
             const rectChild = child?.getBoundingClientRect() as RectType;
-            const h1 = Math.ceil(item?.rect?.height)
-            const h2 = Math.ceil(rectChild.height)
-            const w1 = Math.ceil(item?.rect?.width)
-            const w2 = Math.ceil(rectChild.width)
+            const h1 = Math.ceil(item?.rect?.height);
+            const h2 = Math.ceil(rectChild.height);
+            const w1 = Math.ceil(item?.rect?.width);
+            const w2 = Math.ceil(rectChild.width);
 
-            DEBUG.itemManager && console.log('SAME?',
-              item.id,
-              [h1, w1],
-              [h2, w2],
-              Math.abs(h1 - h2) <= 2,
-              Math.abs(w1 - w2) <= 2,
-            );
+            DEBUG.itemManager &&
+              console.log(
+                'SAME?',
+                item.id,
+                [h1, w1],
+                [h2, w2],
+                Math.abs(h1 - h2) <= 2,
+                Math.abs(w1 - w2) <= 2,
+              );
 
             // 2 is for border width
             same = Math.abs(h1 - h2) <= 2 && Math.abs(w1 - w2) <= 2;
@@ -139,8 +162,14 @@ export default function useItemManager({
         if (same) {
           const rectsPrev = itemMetadataRef?.current?.[item.id]?.rects;
           if (rectsPrev?.length >= 1) {
-            DEBUG.itemManager && console.log('[onMountItem] rects are equal', item.id, itemPrev?.rect, item?.rect);
-            DEBUG.itemManager && console.log('[onMountItem] Number of times mounted:', item.id, rectsPrev?.length ?? 0);
+            DEBUG.itemManager &&
+              console.log('[onMountItem] rects are equal', item.id, itemPrev?.rect, item?.rect);
+            DEBUG.itemManager &&
+              console.log(
+                '[onMountItem] Number of times mounted:',
+                item.id,
+                rectsPrev?.length ?? 0,
+              );
 
             item.status = ItemStatusEnum.READY;
 
@@ -172,12 +201,7 @@ export default function useItemManager({
     } else if ([ItemTypeEnum.APP].includes(type)) {
       const node = itemsRef?.current?.[item?.upstream?.[0]];
       if (!node) return;
-      const {
-        height = 0,
-        left = 0,
-        top = 0,
-        width = 0,
-      } = node?.rect ?? {};
+      const { height = 0, left = 0, top = 0, width = 0 } = node?.rect ?? {};
       item.rect.left = left + width + 20;
       item.rect.top = top + 20;
 
@@ -186,16 +210,19 @@ export default function useItemManager({
       }
 
       dispatchAppEvent(CustomAppEventEnum.APP_RECT_UPDATED, {
-        event: update({}, {
-          data: {
-            $set: {
-              node: item,
+        event: update(
+          {},
+          {
+            data: {
+              $set: {
+                node: item,
+              },
+            },
+            operationTarget: {
+              $set: itemRef,
             },
           },
-          operationTarget: {
-            $set: itemRef,
-          },
-        }) as any,
+        ) as any,
       });
     } else if ([ItemTypeEnum.OUTPUT].includes(type)) {
       dispatchAppEvent(CustomAppEventEnum.OUTPUT_UPDATED, {

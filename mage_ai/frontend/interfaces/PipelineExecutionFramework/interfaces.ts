@@ -9,7 +9,8 @@ export type ConfigurationType = {
   };
 } & BaseConfigurationType;
 
-export type FrameworkType = (PipelineExecutionFrameworkBlockType & PipelineExecutionFrameworkType) & {
+export type FrameworkType = (PipelineExecutionFrameworkBlockType &
+  PipelineExecutionFrameworkType) & {
   downstream_blocks?: (GroupUUIDEnum | PipelineExecutionFrameworkUUIDEnum)[];
   children?: FrameworkType[];
   upstream_blocks?: (GroupUUIDEnum | PipelineExecutionFrameworkUUIDEnum)[];

@@ -9,7 +9,10 @@ import useToolbars, { ToolbarsType } from '../useToolbars';
 import { KEY_SYMBOL_META, KEY_SYMBOL_ENTER } from '@utils/hooks/keyboardShortcuts/constants';
 import { Save, PlayButtonFilled } from '@mana/icons';
 
-function ToolbarTop({ loading, ...props }: {
+function ToolbarTop({
+  loading,
+  ...props
+}: {
   loading?: boolean;
 } & ToolbarsType) {
   const {
@@ -23,12 +26,12 @@ function ToolbarTop({ loading, ...props }: {
 
   return (
     <Grid
-      alignItems="stretch"
+      alignItems='stretch'
       columnGap={8}
       paddingBottom={8}
       paddingTop={8}
       templateColumns={stale ? 'auto auto 1fr' : 'auto 1fr'}
-      templateRows="auto"
+      templateRows='auto'
     >
       {!stale && (
         <ButtonGroup>

@@ -26,7 +26,6 @@ export default function DashedDivider({
         height: vertical ? '100%' : height,
         width: vertical ? height : width,
       }}
-    >
-    </div>
+    ></div>
   );
 }

@@ -94,7 +94,8 @@ export const MarkdownContainer = styled.div<MarkdownType>`
     }
   }
 
-  ul, ol {
+  ul,
+  ol {
     margin-bottom: 0;
     padding-left: 0;
   }
@@ -112,7 +113,8 @@ export const MarkdownContainer = styled.div<MarkdownType>`
       border-bottom-width: var(--borders-width);
     }
 
-    th, td {
+    th,
+    td {
       padding: 0;
     }
   }

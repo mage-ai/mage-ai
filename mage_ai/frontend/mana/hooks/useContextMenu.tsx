@@ -61,11 +61,7 @@ export default function useContextMenu({
   const contextMenuRef = useRef<HTMLDivElement | null>(null);
   const contextMenuRootRef = useRef<Root | null>(null);
 
-  const {
-    itemsRef,
-    registerItems,
-    resetPosition,
-  } = useKeyboardNavigation({
+  const { itemsRef, registerItems, resetPosition } = useKeyboardNavigation({
     itemFilter: keyboardNavigationItemFilter,
     target: contextMenuRootRef,
   });
@@ -92,15 +88,8 @@ export default function useContextMenu({
     contextMenuRootRef?.current?.render([]);
   }
 
-  function showMenu(
-    items: MenuItemType[],
-    opts?: RenderContextMenuOptions,
-  ) {
-    renderContextMenu(
-      null,
-      items ?? itemsRef.current,
-      opts,
-    );
+  function showMenu(items: MenuItemType[], opts?: RenderContextMenuOptions) {
+    renderContextMenu(null, items ?? itemsRef.current, opts);
   }
 
   function removeContextMenu(event: ClientEventType, opts?: { conditionally?: boolean }) {
@@ -120,37 +109,35 @@ export default function useContextMenu({
     items: MenuItemType[],
     opts?: RenderContextMenuOptions,
   ) {
-    const {
-      contained,
-      handleEscape,
-      openItems,
-      position,
-    } = opts ?? {};
+    const { contained, handleEscape, openItems, position } = opts ?? {};
 
-    if (!contained && (getContainer() && event && !isEventInContainer(event))) return;
+    if (!contained && getContainer() && event && !isEventInContainer(event)) return;
 
     event?.preventDefault();
 
-    const render = (root: Root) => root.render(
-      <ThemeProvider theme={themeContext}>
-        {/* @ts-ignore */}
-        <Menu
-          {...opts}
-          contained={contained}
-          event={event}
-          items={items}
-          keyboardNavigationItemFilter={keyboardNavigationItemFilter}
-          openItems={openItems}
-          position={position ?? {
-            left: event?.pageX,
-            top: event?.pageY,
-          }}
-          small
-          standardMenu={useAsStandardMenu}
-          uuid={uuid}
-        />
-      </ThemeProvider>,
-    );
+    const render = (root: Root) =>
+      root.render(
+        <ThemeProvider theme={themeContext}>
+          {/* @ts-ignore */}
+          <Menu
+            {...opts}
+            contained={contained}
+            event={event}
+            items={items}
+            keyboardNavigationItemFilter={keyboardNavigationItemFilter}
+            openItems={openItems}
+            position={
+              position ?? {
+                left: event?.pageX,
+                top: event?.pageY,
+              }
+            }
+            small
+            standardMenu={useAsStandardMenu}
+            uuid={uuid}
+          />
+        </ThemeProvider>,
+      );
 
     if (!contextMenuRootRef?.current) {
       contextMenuRootRef.current = createRoot(contextMenuRef.current as any);
@@ -158,17 +145,21 @@ export default function useContextMenu({
     render(contextMenuRootRef.current);
 
     registerItems(items, {
-      ...(openItems ? {
-        position: openItems?.map(({ row }) => row),
-      } : {}),
-      ...(handleEscape ? {
-        commands: {
-          escape: {
-            handler: handleEscape,
-            predicate: { key: KeyEnum.ESCAPE },
-          },
-        },
-      } : {}),
+      ...(openItems
+        ? {
+            position: openItems?.map(({ row }) => row),
+          }
+        : {}),
+      ...(handleEscape
+        ? {
+            commands: {
+              escape: {
+                handler: handleEscape,
+                predicate: { key: KeyEnum.ESCAPE },
+              },
+            },
+          }
+        : {}),
     });
   }
 

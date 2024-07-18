@@ -3,23 +3,32 @@ import styled from 'styled-components';
 
 import scrollbars, { InnerStyled, ScrollbarsStyledProps } from '../../styles/scrollbars';
 
-type ScrollbarProps = { autoHorizontalPadding?: boolean, children: React.ReactNode } & ScrollbarsStyledProps;
+type ScrollbarProps = {
+  autoHorizontalPadding?: boolean;
+  children: React.ReactNode;
+} & ScrollbarsStyledProps;
 
-const ScrollbarStyled = styled.div<{ autoHorizontalPadding: boolean, isOverflowing: boolean }>`
+const ScrollbarStyled = styled.div<{ autoHorizontalPadding: boolean; isOverflowing: boolean }>`
   ${scrollbars}
 
-  ${({ autoHorizontalPadding, isOverflowing, theme: { scrollbars: { width } } }) => autoHorizontalPadding && `
+  ${({
+    autoHorizontalPadding,
+    isOverflowing,
+    theme: {
+      scrollbars: { width },
+    },
+  }) =>
+    autoHorizontalPadding &&
+    `
     padding-left: ${width.track}px;
     padding-right: ${isOverflowing ? 0 : width.track}px;
   `};
 `;
 
-function Scrollbar({
-  autoHorizontalPadding,
-  children,
-  hideXscrollbar,
-  ...props
-}: ScrollbarProps, ref: React.RefObject<HTMLDivElement>) {
+function Scrollbar(
+  { autoHorizontalPadding, children, hideXscrollbar, ...props }: ScrollbarProps,
+  ref: React.RefObject<HTMLDivElement>,
+) {
   const [isOverflowing, setIsOverflowing] = useState(false);
   const innerRef = useRef<HTMLDivElement>(null);
   const outterRef = useRef<HTMLDivElement>(null);

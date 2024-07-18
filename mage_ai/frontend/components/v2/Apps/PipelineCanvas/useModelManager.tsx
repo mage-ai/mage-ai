@@ -1,11 +1,24 @@
-import PipelineExecutionFrameworkType, { ConfigurationType, FrameworkType } from '@interfaces/PipelineExecutionFramework/interfaces';
+import PipelineExecutionFrameworkType, {
+  ConfigurationType,
+  FrameworkType,
+} from '@interfaces/PipelineExecutionFramework/interfaces';
 import { get } from './cache';
 import { ItemStatusEnum } from '../../Canvas/types';
 import { AppHandlerType, AppHandlersRefType } from './interfaces';
 import {
-  AppNodeType, BlockGroupType, BlockMappingType, BlocksByGroupType, GroupLevelType, GroupMappingType, ItemMappingType,
-  ModelMappingType, NodeItemType, NodeType, OutputNodeType,
-  PortMappingType, PortType
+  AppNodeType,
+  BlockGroupType,
+  BlockMappingType,
+  BlocksByGroupType,
+  GroupLevelType,
+  GroupMappingType,
+  ItemMappingType,
+  ModelMappingType,
+  NodeItemType,
+  NodeType,
+  OutputNodeType,
+  PortMappingType,
+  PortType,
 } from '../../Canvas/interfaces';
 import { ItemTypeEnum } from '../../Canvas/types';
 import { GroupUUIDEnum } from '@interfaces/PipelineExecutionFramework/types';
@@ -64,7 +77,8 @@ export default function useModelManager({
   const timeoutRef = useRef(null);
 
   const [pipeline, setPipelineState] = useState<PipelineExecutionFrameworkType>(null);
-  const [executionFramework, setExecutionFramework] = useState<PipelineExecutionFrameworkType>(null);
+  const [executionFramework, setExecutionFramework] =
+    useState<PipelineExecutionFrameworkType>(null);
 
   const pready = useRef<boolean>(false);
   const fready = useRef<boolean>(false);
@@ -72,7 +86,13 @@ export default function useModelManager({
   function setPipeline(pipelineUpdated: PipelineType) {
     appHandlersRef.current.blocks = {
       update: {
-        mutate: ({ event, onError, onStart, onSuccess, payload: block }: MutateFunctionArgsType) => {
+        mutate: ({
+          event,
+          onError,
+          onStart,
+          onSuccess,
+          payload: block,
+        }: MutateFunctionArgsType) => {
           const model = setPipelineBlock(pipelineUpdated as PipelineType, block as BlockType);
 
           clearTimeout(timeoutRef.current);
@@ -96,61 +116,67 @@ export default function useModelManager({
     setPipelineState(() => pipelineUpdated as PipelineExecutionFrameworkType);
   }
 
-  const pipelineMutants = useMutate({
-    id: pipelineUUID,
-    idParent: executionFrameworkUUID,
-    resource: 'pipelines',
-    resourceParent: 'execution_frameworks',
-  }, {
-    handlers: {
-      detail: {
-        onSuccess: (data) => {
-          setPipeline(data);
-          pready.current = true;
+  const pipelineMutants = useMutate(
+    {
+      id: pipelineUUID,
+      idParent: executionFrameworkUUID,
+      resource: 'pipelines',
+      resourceParent: 'execution_frameworks',
+    },
+    {
+      handlers: {
+        detail: {
+          onSuccess: data => {
+            setPipeline(data);
+            pready.current = true;
+          },
         },
-      },
-      update: {
-        onSuccess: (pipeline2, pipeline2Prev) => {
-          // console.log('modelManager.0')
+        update: {
+          onSuccess: (pipeline2, pipeline2Prev) => {
+            // console.log('modelManager.0')
 
-          const b1 = pipeline2?.blocks?.length;
-          const b2 = pipeline2Prev?.blocks?.length ?? 0;
-          if (b1 !== b2) {
-            const removed = pipeline2Prev
-              .blocks
-              .filter((b) => !pipeline2.blocks.find((b2) => b2.uuid === b.uuid));
+            const b1 = pipeline2?.blocks?.length;
+            const b2 = pipeline2Prev?.blocks?.length ?? 0;
+            if (b1 !== b2) {
+              const removed = pipeline2Prev.blocks.filter(
+                b => !pipeline2.blocks.find(b2 => b2.uuid === b.uuid),
+              );
 
-            initializeModels(executionFramework, pipeline2, {
-              modelsUpdated: {
-                blocks: {
-                  removed,
+              initializeModels(executionFramework, pipeline2, {
+                modelsUpdated: {
+                  blocks: {
+                    removed,
+                  },
                 },
-              },
-            }).then(() => {
-              // console.log('modelManager.1')
-              setPipeline(pipeline2)
-            });
-          } else {
-            setPipeline(pipeline2);
-          }
+              }).then(() => {
+                // console.log('modelManager.1')
+                setPipeline(pipeline2);
+              });
+            } else {
+              setPipeline(pipeline2);
+            }
+          },
         },
       },
     },
-  });
+  );
 
-  const executionFrameworkMutants = useMutate({
-    id: executionFrameworkUUID,
-    resource: 'execution_frameworks',
-  }, {
-    handlers: {
-      detail: {
-        onSuccess: (data) => {
-          setExecutionFramework(data);
-          fready.current = true;
+  const executionFrameworkMutants = useMutate(
+    {
+      id: executionFrameworkUUID,
+      resource: 'execution_frameworks',
+    },
+    {
+      handlers: {
+        detail: {
+          onSuccess: data => {
+            setExecutionFramework(data);
+            fready.current = true;
+          },
         },
       },
     },
-  });
+  );
   const browserItemMutants = useMutate({
     resource: 'browser_items',
   });
@@ -240,7 +266,7 @@ export default function useModelManager({
         });
 
         // Level 3: all of it
-        blockGroupsByLevel.push(blockGroupsByLevel.reduce((acc, bg) => acc.concat(bg)))
+        blockGroupsByLevel.push(blockGroupsByLevel.reduce((acc, bg) => acc.concat(bg)));
 
         const itemMapping = {};
         const portMapping = {};
@@ -258,17 +284,16 @@ export default function useModelManager({
 
         // Initialize all models for all levels.
         blockGroupsByLevel?.forEach((blockGroups: BlockGroupType[], level: number) => {
-          const {
-            items,
-            nodes,
-          } = createItemsFromBlockGroups(blockGroups, {
+          const { items, nodes } = createItemsFromBlockGroups(blockGroups, {
             level,
           });
 
           const itemsIDs = [];
           items.concat(nodes)?.forEach((item: NodeType) => {
             if (item?.block?.groups) {
-              item.block.frameworks = item.block.groups.map((id: GroupUUIDEnum) => groupMapping[id]);
+              item.block.frameworks = item.block.groups.map(
+                (id: GroupUUIDEnum) => groupMapping[id],
+              );
             }
             // item.version = itemVersionRef.current;
 
@@ -315,7 +340,8 @@ export default function useModelManager({
 
             // Apps
             item.apps = opts?.appsRef?.current?.[item.id]?.filter(
-              (app: AppNodeType) => app?.level === level);
+              (app: AppNodeType) => app?.level === level,
+            );
 
             // Output
             item.outputs = Object.values(outputsRef.current?.[item.id] ?? {}) ?? [];
@@ -343,18 +369,23 @@ export default function useModelManager({
             }
           });
 
-          Object.entries(ports ?? {})?.forEach(([id, { ports }]: [string, {
-            ports: PortType[];
-          }]) => {
-            itemMapping[id] = {
-              ...itemMapping[id],
-              ports,
-            };
+          Object.entries(ports ?? {})?.forEach(
+            ([id, { ports }]: [
+              string,
+              {
+                ports: PortType[];
+              },
+            ]) => {
+              itemMapping[id] = {
+                ...itemMapping[id],
+                ports,
+              };
 
-            ports?.forEach(port => {
-              portMapping[port.id] = port;
-            });
-          });
+              ports?.forEach(port => {
+                portMapping[port.id] = port;
+              });
+            },
+          );
         });
 
         blockMappingRef.current = blockMapping;
@@ -382,9 +413,17 @@ export default function useModelManager({
         //   nodesUpdated: nodesRequireUpdate,
         // });
 
-        setOutputIDs([...new Set(items?.reduce((acc, { block }) => [
-          BlockTypeEnum.GROUP, BlockTypeEnum.PIPELINE
-        ].includes((block as BlockType)?.type) ? acc : acc.concat((block as BlockType)?.uuid), []))]);
+        setOutputIDs([
+          ...new Set(
+            items?.reduce(
+              (acc, { block }) =>
+                [BlockTypeEnum.GROUP, BlockTypeEnum.PIPELINE].includes((block as BlockType)?.type)
+                  ? acc
+                  : acc.concat((block as BlockType)?.uuid),
+              [],
+            ),
+          ),
+        ]);
 
         setHeaderData({
           executionFramework: executionFramework2,

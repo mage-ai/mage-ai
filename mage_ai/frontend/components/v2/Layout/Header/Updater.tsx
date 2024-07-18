@@ -1,6 +1,9 @@
 import React, { useEffect } from 'react';
 import { BatchPipeline, PipelineV3, BlockGenericV2Partial } from '@mana/icons';
-import { FrameworkType, PipelineExecutionFrameworkBlockType } from '@interfaces/PipelineExecutionFramework/interfaces';
+import {
+  FrameworkType,
+  PipelineExecutionFrameworkBlockType,
+} from '@interfaces/PipelineExecutionFramework/interfaces';
 import { ItemClickHandler, MenuGroupType, MenuItemType } from '@mana/components/Menu/interfaces';
 import { useLayout } from '@context/v2/Layout';
 
@@ -34,11 +37,13 @@ function menuItemsForBlock(
     const isSelected = selectedGroup?.uuid === uuid;
 
     return {
-      description: isSelected && selectedParentGroup
-        ? `Go back to ${(selectedParentGroup as any)?.name ?? selectedParentGroup?.uuid}`
-        : description,
-      items: (block1 as any)?.children?.map(
-        (block2: Block, index3: number) => menuItemsForBlock(block2,
+      description:
+        isSelected && selectedParentGroup
+          ? `Go back to ${(selectedParentGroup as any)?.name ?? selectedParentGroup?.uuid}`
+          : description,
+      items: (block1 as any)?.children?.map((block2: Block, index3: number) =>
+        menuItemsForBlock(
+          block2,
           (event: MouseEvent, item: MenuGroupType) => {
             onClick2(event, {
               ...item,
@@ -49,16 +54,18 @@ function menuItemsForBlock(
               } as MenuGroupType),
             });
           },
-          level2 + 1, index3,
+          level2 + 1,
+          index3,
           selectedGroupsRef2,
         ),
       ),
       label: name || uuid,
-      onClick: (event: MouseEvent, item: MenuItemType) => onClick2(event, {
-        ...item,
-        index: index2,
-        level: level2,
-      } as MenuGroupType),
+      onClick: (event: MouseEvent, item: MenuItemType) =>
+        onClick2(event, {
+          ...item,
+          index: index2,
+          level: level2,
+        } as MenuGroupType),
       uuid,
     };
   }
@@ -81,7 +88,9 @@ export default function HeaderUpdater({
   pipeline: FrameworkType;
   selectedGroupsRef?: React.MutableRefObject<MenuGroupType[]>;
 }) {
-  const { header: { setHeader } } = useLayout();
+  const {
+    header: { setHeader },
+  } = useLayout();
 
   useEffect(() => {
     const buildIntraAppNavItems = (onClickBase: ItemClickHandler) => {
@@ -93,23 +102,14 @@ export default function HeaderUpdater({
 
       (groupsByLevel as MenuItemType[][]).forEach((groups: MenuItemType[], index: number) => {
         menuItems.push({
-          Icon: index === 0
-            ? PipelineV3
-            : index === 1
-              ? BatchPipeline
-              : BlockGenericV2Partial,
+          Icon: index === 0 ? PipelineV3 : index === 1 ? BatchPipeline : BlockGenericV2Partial,
           items: groups.map((group: MenuItemType, index2: number) => {
-            const {
-              children,
-              description,
-              name,
-              uuid,
-            } = group as any;
+            const { children, description, name, uuid } = group as any;
 
             return {
               description,
-              items: children?.map(
-                (block: Block, index3: number) => menuItemsForBlock(
+              items: children?.map((block: Block, index3: number) =>
+                menuItemsForBlock(
                   block,
                   (event: MouseEvent, item: MenuGroupType) => {
                     onClick(event, {
@@ -140,11 +140,7 @@ export default function HeaderUpdater({
               uuid,
             } as any;
           }) as MenuItemType[],
-          label: index === 0
-            ? `${fname} pipelines`
-            : index === 1
-              ? 'Stages'
-              : 'Operations',
+          label: index === 0 ? `${fname} pipelines` : index === 1 ? 'Stages' : 'Operations',
           uuid: `level-${index}-grouping`,
         });
       });
@@ -159,7 +155,14 @@ export default function HeaderUpdater({
       title: (pipeline as any)?.name || (pipeline as any)?.uuid,
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [defaultGroups, executionFramework, groupsByLevel, handleMenuItemClick, pipeline, selectedGroupsRef]);
+  }, [
+    defaultGroups,
+    executionFramework,
+    groupsByLevel,
+    handleMenuItemClick,
+    pipeline,
+    selectedGroupsRef,
+  ]);
 
   return <div />;
 }

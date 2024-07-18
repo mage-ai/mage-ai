@@ -1,7 +1,12 @@
 import React, { useEffect, useRef } from 'react';
 import useCustomEventHandler from '../events/useCustomEventHandler';
 import useKeyboardShortcuts, { KeyboardShortcutsProps } from './shortcuts/useKeyboardShortcuts';
-import { CommandType, CustomKeyboardEvent, KeyboardPositionType, KeyboardDetailType } from '../events/interfaces';
+import {
+  CommandType,
+  CustomKeyboardEvent,
+  KeyboardPositionType,
+  KeyboardDetailType,
+} from '../events/interfaces';
 import { DEBUG } from '../utils/debug';
 import { EventEnum, KeyEnum } from '../events/enums';
 import { MenuItemType } from '../components/Menu/interfaces';
@@ -29,11 +34,15 @@ export default function useKeyboardNavigation({
   const positionRef = useRef<KeyboardPositionType>(null);
   const timeoutRef = useRef<any>(null);
 
-  const { dispatchCustomEvent } = useCustomEventHandler('useKeyboardNavigation', {
-    [EventEnum.SET_KEYBOARD_NAVIGATION_POSITION]: handleSetPosition,
-  }, {
-    baseEvent: CustomKeyboardEvent,
-  });
+  const { dispatchCustomEvent } = useCustomEventHandler(
+    'useKeyboardNavigation',
+    {
+      [EventEnum.SET_KEYBOARD_NAVIGATION_POSITION]: handleSetPosition,
+    },
+    {
+      baseEvent: CustomKeyboardEvent,
+    },
+  );
 
   function handleSetPosition(event: CustomKeyboardEvent) {
     clearTimeout(timeoutRef.current);
@@ -127,12 +136,16 @@ export default function useKeyboardNavigation({
 
     DEBUG.keyboard.navigation && console.log('position.end', positionRef.current, positionPrevious);
 
-    dispatchCustomEvent(EventEnum.KEYDOWN, {
-      position: positionRef.current,
-      previousPosition: positionPrevious,
-      previousTarget: item,
-      target: getCurrentItem()?.item,
-    } as KeyboardDetailType, [key]);
+    dispatchCustomEvent(
+      EventEnum.KEYDOWN,
+      {
+        position: positionRef.current,
+        previousPosition: positionPrevious,
+        previousTarget: item,
+        target: getCurrentItem()?.item,
+      } as KeyboardDetailType,
+      [key],
+    );
   }
 
   function registerItems(items: MenuItemType[], opts?: RegisterItemsOptions) {
@@ -146,10 +159,14 @@ export default function useKeyboardNavigation({
       },
       enter: {
         handler: () => {
-          dispatchCustomEvent(EventEnum.KEYDOWN, {
-            position: positionRef.current,
-            target: getCurrentItem()?.item,
-          } as KeyboardDetailType, [KeyEnum.ENTER]);
+          dispatchCustomEvent(
+            EventEnum.KEYDOWN,
+            {
+              position: positionRef.current,
+              target: getCurrentItem()?.item,
+            } as KeyboardDetailType,
+            [KeyEnum.ENTER],
+          );
         },
         predicate: { key: KeyEnum.ENTER, metaKey: false },
       },

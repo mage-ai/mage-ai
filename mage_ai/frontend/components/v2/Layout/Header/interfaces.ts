@@ -3,12 +3,18 @@ import { MenuItemType } from '@mana/hooks/useContextMenu';
 
 export interface HeaderProps {
   appHistory?: MenuItemType[];
-  buildInterAppNavItems?: (itemsPrevious: MenuItemType[], opts: {
-    router: any;
-  }) => MenuItemType[];
-  buildIntraAppNavItems?: (onClick: ItemClickHandler, opts?: {
-    includeChildren?: boolean;
-  }) => MenuItemType[];
+  buildInterAppNavItems?: (
+    itemsPrevious: MenuItemType[],
+    opts: {
+      router: any;
+    },
+  ) => MenuItemType[];
+  buildIntraAppNavItems?: (
+    onClick: ItemClickHandler,
+    opts?: {
+      includeChildren?: boolean;
+    },
+  ) => MenuItemType[];
   cacheKey?: string;
   globalNavItems?: MenuItemType[];
   interAppNavItems?: MenuItemType[];

@@ -11,9 +11,9 @@ export function styleClassNames(
   }: {
     [key: string]: boolean | number | string | any;
   } = {
-      className: '',
-      uuid: '',
-    },
+    className: '',
+    uuid: '',
+  },
 ): string {
   const arr: string[] = classNames || [];
 

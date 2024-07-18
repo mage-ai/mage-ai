@@ -6,9 +6,7 @@ export function executeCode(handler: () => void): (monaco: any) => EditorAction 
     contextMenuOrder: 1.5,
     id: 'executeCode',
     keybindingContext: null,
-    keybindings: [
-      monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter,
-    ],
+    keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter],
     label: 'Execude code',
     precondition: null,
     run: () => handler(),
@@ -21,9 +19,7 @@ export function commentLine(): (monaco: any) => EditorAction {
     contextMenuOrder: 1.6,
     id: 'commentLine',
     keybindingContext: null,
-    keybindings: [
-      monaco.KeyMod.CtrlCmd | monaco.KeyCode.Slash,
-    ],
+    keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.Slash],
     label: 'Comment line',
     precondition: null,
     run: (editor, args1) => {
@@ -176,7 +172,6 @@ export function commentLine(): (monaco: any) => EditorAction {
 // Tab
 // Unknown
 // UpArrow
-
 
 // editor.unfold
 // editor.unfoldRecursively

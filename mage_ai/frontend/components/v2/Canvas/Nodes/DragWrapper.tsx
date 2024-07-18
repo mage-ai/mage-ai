@@ -65,30 +65,32 @@ export function getStyles(
         : { height: 0, opacity: 0 }
       : ItemTypeEnum.NODE === type
         ? {
-          height: rect?.height ?? undefined,
-          // minHeight: rect?.height === Infinity || rect?.height === -Infinity ? 0 : rect?.height ?? 0,
-        }
-        : {}
-    ),
-    ...((width ?? false) ? { minWidth: width } : {}),
+            height: rect?.height ?? undefined,
+            // minHeight: rect?.height === Infinity || rect?.height === -Infinity ? 0 : rect?.height ?? 0,
+          }
+        : {}),
+    ...(width ?? false ? { minWidth: width } : {}),
     ...(groupSelection ? { height, width } : {}),
   };
 }
 
-function DragWrapper({
-  children,
-  draggable,
-  droppable,
-  droppableItemTypes,
-  eventHandlers,
-  groupSelection,
-  handleDrop,
-  isAnimating,
-  item,
-  onContextMenu,
-  rect,
-  style,
-}: DragWrapperProps, ref: React.MutableRefObject<HTMLDivElement>) {
+function DragWrapper(
+  {
+    children,
+    draggable,
+    droppable,
+    droppableItemTypes,
+    eventHandlers,
+    groupSelection,
+    handleDrop,
+    isAnimating,
+    item,
+    onContextMenu,
+    rect,
+    style,
+  }: DragWrapperProps,
+  ref: React.MutableRefObject<HTMLDivElement>,
+) {
   const controls = useAnimation();
   const refInternal = useRef(null);
   const dragRef = ref ?? refInternal;
@@ -150,29 +152,36 @@ function DragWrapper({
 
   return (
     <motion.div
-      {...Object.entries(
-        eventHandlers ?? {},
-      ).reduce((acc, [k, v]: [string, (event: any) => void]) => ({
-        ...acc,
-        [k]: draggable && v ? v : undefined,
-      }), {})}
+      {...Object.entries(eventHandlers ?? {}).reduce(
+        (acc, [k, v]: [string, (event: any) => void]) => ({
+          ...acc,
+          [k]: draggable && v ? v : undefined,
+        }),
+        {},
+      )}
       animate={controls}
       className={[
         stylesBlockNode.dragWrapper,
         groupSelection && stylesBlockNode.groupSelection,
         stylesBlockNode[item?.type],
-      ].filter(Boolean).join(' ')}
+      ]
+        .filter(Boolean)
+        .join(' ')}
       onContextMenu={onContextMenu}
       ref={dragRef}
       role={[ElementRoleEnum.DRAGGABLE].join(' ')}
-      style={isAnimating ? style : {
-        ...getStyles(item, {
-          draggable,
-          groupSelection,
-          isDragging,
-          rect,
-        }),
-      }}
+      style={
+        isAnimating
+          ? style
+          : {
+              ...getStyles(item, {
+                draggable,
+                groupSelection,
+                isDragging,
+                rect,
+              }),
+            }
+      }
     >
       {children}
     </motion.div>
@@ -180,10 +189,14 @@ function DragWrapper({
 }
 
 export function areEqual(p1: DragWrapperProps, p2: DragWrapperProps) {
-  return p1.rect.left === p2.rect.left && p1.rect.top === p2.rect.top
-    && p1.rect.width === p2.rect.width && p1.rect.height === p2.rect.height
-    && p1?.groupSelection === p2?.groupSelection
-    && p1?.isAnimating === p2?.isAnimating;
+  return (
+    p1.rect.left === p2.rect.left &&
+    p1.rect.top === p2.rect.top &&
+    p1.rect.width === p2.rect.width &&
+    p1.rect.height === p2.rect.height &&
+    p1?.groupSelection === p2?.groupSelection &&
+    p1?.isAnimating === p2?.isAnimating
+  );
 }
 
 export default React.memo(React.forwardRef(DragWrapper), areEqual);

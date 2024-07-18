@@ -308,9 +308,9 @@ function MyApp(props: MyAppProps & AppProps) {
                   <QueryClientProvider client={queryClient}>
                     <Head defaultTitle={defaultTitle} title={title}>
                       <meta
-                      content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=0"
-                      name="viewport"
-                    />
+                        content='width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=0'
+                        name='viewport'
+                      />
                     </Head>
 
                     <LoadingBar color={RED} ref={refLoadingBar} />
@@ -320,20 +320,19 @@ function MyApp(props: MyAppProps & AppProps) {
 
                     {isDemoApp && (
                       <Banner
-                      linkProps={{
-                        href: 'https://github.com/mage-ai/mage-ai',
-                        label: 'GET MAGE',
-                      }}
-                      localStorageHideKey={LOCAL_STORAGE_KEY_HIDE_PUBLIC_DEMO_WARNING}
-                      textProps={{
-                        message: 'Public demo. Do not add private credentials.',
-                        warning: true,
-                      }}
-                    />
-                  )}
+                        linkProps={{
+                          href: 'https://github.com/mage-ai/mage-ai',
+                          label: 'GET MAGE',
+                        }}
+                        localStorageHideKey={LOCAL_STORAGE_KEY_HIDE_PUBLIC_DEMO_WARNING}
+                        textProps={{
+                          message: 'Public demo. Do not add private credentials.',
+                          warning: true,
+                        }}
+                      />
+                    )}
                     {shouldShowCommandCenter && <CommandCenter />}
                     {!shouldShowCommandCenter && <div id={COMMAND_CENTER_ROOT_ID} />}
-
                   </QueryClientProvider>
                 </ErrorProvider>
               </SheetProvider>

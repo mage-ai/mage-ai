@@ -19,7 +19,7 @@ function Grid({ children, id, onContextMenu, ...props }: GridProps, ref: React.R
   return (
     <Styled ref={ref} {...props} id={id} onContextMenu={onContextMenu}>
       {children && (children as React.ReactNode)}
-    </Styled >
+    </Styled>
   );
 }
 

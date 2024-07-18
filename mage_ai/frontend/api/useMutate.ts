@@ -36,21 +36,15 @@ export default function useMutate(
     subscribeToStatusUpdates?: boolean;
   },
 ): MutateType {
-  const {
-    callbackOnEveryRequest,
-    subscribeToStatusUpdates,
-    throttle = 1000,
-  } = opts || {};
-  const {
-    disableEncodeURIComponent,
-    disableHyphenCase,
-  } = opts?.urlParser ?? {};
+  const { callbackOnEveryRequest, subscribeToStatusUpdates, throttle = 1000 } = opts || {};
+  const { disableEncodeURIComponent, disableHyphenCase } = opts?.urlParser ?? {};
 
   const apiEndpoint = dig(api, endpoint);
   const { handlers: resourceHandlers, parse } = opts || {};
 
   const endpoints = typeof endpoint === 'string' ? endpoint.split('.') : endpoint;
-  const [resourceNamePlural, parentResourceName] = endpoints?.length >= 2 ? endpoints : [endpoints[0], null];
+  const [resourceNamePlural, parentResourceName] =
+    endpoints?.length >= 2 ? endpoints : [endpoints[0], null];
   const resourceName: string = singularize(resourceNamePlural) as string;
   const isChildResource: boolean = endpoints?.length >= 2;
 
@@ -111,11 +105,12 @@ export default function useMutate(
           modelsRef.current[key] = data[key];
         }
 
-        onSuccess && onSuccess?.(
-          typeof parse === 'function' ? parse(data) : data?.[resourceKey(operation)],
-          variables,
-          context,
-        );
+        onSuccess &&
+          onSuccess?.(
+            typeof parse === 'function' ? parse(data) : data?.[resourceKey(operation)],
+            variables,
+            context,
+          );
 
         handleStatusUpdate([response, variables, context]);
       },
@@ -131,35 +126,38 @@ export default function useMutate(
 
   function handleArgs(id?: string | string[]): string | string[] {
     const handlers = [
-      (url: string) => disableHyphenCase ? url : hyphensToSnake(url),
-      (url: string) => disableEncodeURIComponent ? url : encodeURIComponent(url),
+      (url: string) => (disableHyphenCase ? url : hyphensToSnake(url)),
+      (url: string) => (disableEncodeURIComponent ? url : encodeURIComponent(url)),
     ];
 
     if (Array.isArray(id)) {
-      return id.map((i) => handlers.reduce((acc, handler) => handler(acc), i));
+      return id.map(i => handlers.reduce((acc, handler) => handler(acc), i));
     }
 
     return handlers.reduce((acc, handler) => handler(acc), id as string);
   }
 
   function preprocessArgs(args?: MutateFunctionArgsType): any | any[] {
-    return (Array.isArray(args?.id) ? handleArgs(args?.id) : [args?.id]?.map(handleArgs));
+    return Array.isArray(args?.id) ? handleArgs(args?.id) : [args?.id]?.map(handleArgs);
   }
 
   function wrapMutation(mutate: () => any) {
-    return new Promise((resolve) => {
+    return new Promise(resolve => {
       queueRef.current.push(mutate);
 
       if (timeoutRef.current) {
         queueRef.current.push(() => resolve(mutate()));
       } else {
-        timeoutRef.current = setTimeout(() => {
-          while (queueRef.current.length) {
-            const func = queueRef.current.shift();
-            func && func();
-          }
-          timeoutRef.current = null;
-        }, queueRef.current.length === 1 ? 0 : throttle);
+        timeoutRef.current = setTimeout(
+          () => {
+            while (queueRef.current.length) {
+              const func = queueRef.current.shift();
+              func && func();
+            }
+            timeoutRef.current = null;
+          },
+          queueRef.current.length === 1 ? 0 : throttle,
+        );
 
         if (!timeoutRef.current) {
           resolve(mutate());
@@ -170,47 +168,50 @@ export default function useMutate(
 
   const fnCreate = useMutation({
     ...augmentHandlers(OperationTypeEnum.CREATE, resourceHandlers?.create || {}),
-    mutationFn: (args?: MutateFunctionArgsType) => wrapMutation(() => {
-      const url: string = buildUrl(...[
-        parentResourceName ?? resourceNamePlural,
-        preprocessArgs(args)[0] ?? null,
-        resourceNamePlural ?? null,
-        null,
-        addMetaQuery(args),
-      ]);
+    mutationFn: (args?: MutateFunctionArgsType) =>
+      wrapMutation(() => {
+        const url: string = buildUrl(
+          ...[
+            parentResourceName ?? resourceNamePlural,
+            preprocessArgs(args)[0] ?? null,
+            resourceNamePlural ?? null,
+            null,
+            addMetaQuery(args),
+          ],
+        );
 
-      return buildFetchV2(url, { body: preprocessPayload(args), method: 'POST' });
-    }),
+        return buildFetchV2(url, { body: preprocessPayload(args), method: 'POST' });
+      }),
   });
 
   const fnDelete = useMutation({
     ...augmentHandlers(OperationTypeEnum.DELETE, resourceHandlers?.delete || {}),
-    mutationFn: (args?: MutateFunctionArgsType) => wrapMutation(() => apiEndpoint.useDelete(
-      ...preprocessArgs(args),
-      addMetaQuery(args),
-    )),
+    mutationFn: (args?: MutateFunctionArgsType) =>
+      wrapMutation(() => apiEndpoint.useDelete(...preprocessArgs(args), addMetaQuery(args))),
   });
   const fnDetail = useMutation({
     ...augmentHandlers(OperationTypeEnum.DETAIL, resourceHandlers?.detail || {}),
-    mutationFn: (args?: MutateFunctionArgsType) => wrapMutation(() =>
-      apiEndpoint.detailAsync(...preprocessArgs(args), addMetaQuery(args)),
-    ),
+    mutationFn: (args?: MutateFunctionArgsType) =>
+      wrapMutation(() => apiEndpoint.detailAsync(...preprocessArgs(args), addMetaQuery(args))),
   });
   const fnList = useMutation({
     ...augmentHandlers(OperationTypeEnum.LIST, resourceHandlers?.list || {}),
-    mutationFn: (args?: MutateFunctionArgsType) => wrapMutation(() => apiEndpoint.listAsync(
-      ...[
-        ...(isChildResource ? (Array.isArray(args?.id) ? args?.id : [args?.id]) : []),
-        addMetaQuery(args),
-      ],
-    )),
+    mutationFn: (args?: MutateFunctionArgsType) =>
+      wrapMutation(() =>
+        apiEndpoint.listAsync(
+          ...[
+            ...(isChildResource ? (Array.isArray(args?.id) ? args?.id : [args?.id]) : []),
+            addMetaQuery(args),
+          ],
+        ),
+      ),
   });
   const fnUpdate = useMutation({
     ...augmentHandlers(OperationTypeEnum.UPDATE, resourceHandlers?.update || {}),
-    mutationFn: (args?: MutateFunctionArgsType) => wrapMutation(() => apiEndpoint.useUpdate(
-      ...preprocessArgs(args),
-      addMetaQuery(args),
-    )(preprocessPayload(args))),
+    mutationFn: (args?: MutateFunctionArgsType) =>
+      wrapMutation(() =>
+        apiEndpoint.useUpdate(...preprocessArgs(args), addMetaQuery(args))(preprocessPayload(args)),
+      ),
   });
 
   function handleStatusUpdate(context: any) {

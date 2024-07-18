@@ -1,7 +1,13 @@
 import React, { useEffect } from 'react';
 import styles from '@styles/scss/components/Tooltip/TooltipContent.module.scss';
-import { TooltipDirection, ShowTooltipOptionsType, TooltipJustify, TooltipAlign, TooltipLayout,
-  TooltipContentType } from './Context';
+import {
+  TooltipDirection,
+  ShowTooltipOptionsType,
+  TooltipJustify,
+  TooltipAlign,
+  TooltipLayout,
+  TooltipContentType,
+} from './Context';
 import { RectType } from '@mana/shared/interfaces';
 
 type TooltipContentProps = {
@@ -16,7 +22,10 @@ type TooltipContentProps = {
 };
 
 function getElementPageCoordinates(element: Element): {
-  pageX: number, pageY: number, width: number, height: number
+  pageX: number;
+  pageY: number;
+  width: number;
+  height: number;
 } {
   const rect = element.getBoundingClientRect();
   const scrollLeft = window.pageXOffset || document.documentElement.scrollLeft;
@@ -74,18 +83,11 @@ function showTooltip(
   };
 }
 
-function TooltipContent({
-  children,
-  layout,
-  offset,
-  options,
-  optionsPrev,
-}: TooltipContentProps, ref: React.MutableRefObject<HTMLDivElement>) {
-  const {
-    event,
-    style,
-    wrapperRef,
-  } = options;
+function TooltipContent(
+  { children, layout, offset, options, optionsPrev }: TooltipContentProps,
+  ref: React.MutableRefObject<HTMLDivElement>,
+) {
+  const { event, style, wrapperRef } = options;
   const {
     align = TooltipAlign.START,
     justify = TooltipJustify.START,
@@ -97,7 +99,12 @@ function TooltipContent({
   useEffect(() => {
     if (ref?.current && wrapperRef?.current) {
       const { pageX: x, pageY: y } = (event ?? {}) as MouseEvent;
-      const { height: heighte, left: lefte, top: tope, width: widthe } = ref?.current?.getBoundingClientRect();
+      const {
+        height: heighte,
+        left: lefte,
+        top: tope,
+        width: widthe,
+      } = ref?.current?.getBoundingClientRect();
       const {
         height = 0,
         left = 0,
@@ -122,7 +129,7 @@ function TooltipContent({
       if (justify === TooltipJustify.START) {
         translateY = TooltipDirection.UP === verticalDirection ? -(heighte + height) : -heighte;
       } else if (justify === TooltipJustify.CENTER) {
-        translateY = -(height + ((heighte - height) / 2));
+        translateY = -(height + (heighte - height) / 2);
       } else if (justify === TooltipJustify.END) {
         translateY = 0;
       }
@@ -147,10 +154,7 @@ function TooltipContent({
   }, [align, justify]);
   return (
     <div
-      className={[
-        styles.tooltipContent,
-        styles.hide,
-      ].join(' ')}
+      className={[styles.tooltipContent, styles.hide].join(' ')}
       ref={ref}
       style={{
         ...style,

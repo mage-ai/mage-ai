@@ -1,4 +1,4 @@
-export function pauseEvent(e){
+export function pauseEvent(e) {
   if (e.stopPropagation) {
     e.stopPropagation();
   }

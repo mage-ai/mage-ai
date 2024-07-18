@@ -49,8 +49,8 @@ function NextAppV2({
     <>
       <Head defaultTitle={defaultTitle} title={title}>
         <meta
-          content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=0"
-          name="viewport"
+          content='width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=0'
+          name='viewport'
         />
       </Head>
 
@@ -59,7 +59,7 @@ function NextAppV2({
           <ContextProvider main router={router} theme={theme as ThemeType}>
             <HeaderPortal headerRef={headerRef} />
             <Component {...rest} />
-          </ContextProvider >
+          </ContextProvider>
         </MenuProvider>
       </ThemeProvider>
     </>

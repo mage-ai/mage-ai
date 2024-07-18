@@ -36,12 +36,14 @@ export type AppLoaderProps = {
 
 export type AppLoaderResultType = {
   main: JSX.Element | any;
-  toolbars?: {
-    bottom?: JSX.Element;
-    left?: JSX.Element;
-    right?: JSX.Element;
-    top?: JSX.Element;
-  } | Record<string, any>;
+  toolbars?:
+    | {
+        bottom?: JSX.Element;
+        left?: JSX.Element;
+        right?: JSX.Element;
+        top?: JSX.Element;
+      }
+    | Record<string, any>;
 };
 
 export type AddAppFunctionOptionsType = {

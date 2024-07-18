@@ -9,10 +9,15 @@ import { ExecutionManagerType } from '../../ExecutionManager/interfaces';
 import { MenuItemType } from '@mana/components/Menu/interfaces';
 import { ModelManagerType } from '@components/v2/Apps/PipelineCanvas/interfaces';
 
-export type UpdateBlockRequestType = (event: ClientEventType | Event, key: string, value: any, opts?: {
-  callback?: () => void;
-  delay?: number;
-}) => void;
+export type UpdateBlockRequestType = (
+  event: ClientEventType | Event,
+  key: string,
+  value: any,
+  opts?: {
+    callback?: () => void;
+    delay?: number;
+  },
+) => void;
 export type SharedBlockProps = {
   block?: BlockType;
   updateBlock: UpdateBlockRequestType;
@@ -92,7 +97,7 @@ export type InteractionConfigType = {
 
 export type BlockNodeWrapperProps = {
   Wrapper?: React.FC<NodeWrapperProps>;
-  appHandlersRef: React.MutableRefObject<any>,
+  appHandlersRef: React.MutableRefObject<any>;
   loading?: boolean;
   models?: {
     blocksByGroup: React.RefObject<ModelManagerType['blocksByGroupRef']>;
@@ -103,6 +108,8 @@ export type BlockNodeWrapperProps = {
   useExecuteCode: ExecutionManagerType['useExecuteCode'];
   useRegistration: ExecutionManagerType['useRegistration'];
   version?: number | string;
-} & NodeWrapperProps & CanvasNodeType & BlockNode;
+} & NodeWrapperProps &
+  CanvasNodeType &
+  BlockNode;
 
 export type SharedWrapperProps = BlockNodeWrapperProps & NodeWrapperProps;

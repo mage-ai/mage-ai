@@ -24,7 +24,7 @@ export interface ShadowNodeType {
   data?: any;
   id: string;
   maxAttempts?: number;
-  onCapture?: (node: ShadowNodeType, data: NodeData, element: HTMLElement) => void,
+  onCapture?: (node: ShadowNodeType, data: NodeData, element: HTMLElement) => void;
   pollInterval?: number;
   ref?: React.MutableRefObject<HTMLElement>;
   shouldCapture?: (node: ShadowNodeType, element: HTMLElement) => boolean;
@@ -85,20 +85,22 @@ export function ShadowRenderer({
     clearTimeout(timeoutRef.current);
     timeoutRef.current = null;
 
-    DEBUG.hooks.shadow && console.log(
-      `[shadow:${uuid}:${renderRef.current}] attempting: `,
-      `${attemptsRef.current} / ${maxAttempts}`,
-    );
+    DEBUG.hooks.shadow &&
+      console.log(
+        `[shadow:${uuid}:${renderRef.current}] attempting: `,
+        `${attemptsRef.current} / ${maxAttempts}`,
+      );
 
     if (attemptsRef.current < maxAttempts && (!waitUntil || waitUntil(nodes))) {
       attemptsRef.current = null;
 
-      DEBUG.hooks.shadow && console.log(
-        `[shadow:${uuid}:${renderRef.current}] rendering:`,
-        attemptsRef.current,
-        nodes?.length,
-        nodes?.map(n => n.id),
-      );
+      DEBUG.hooks.shadow &&
+        console.log(
+          `[shadow:${uuid}:${renderRef.current}] rendering:`,
+          attemptsRef.current,
+          nodes?.length,
+          nodes?.map(n => n.id),
+        );
 
       renderRef.current += 1;
 
@@ -106,11 +108,13 @@ export function ShadowRenderer({
         <div key={`shadow-portal-${uuid}`}>
           <div
             id={`shadow-portal-${uuid}`}
-            style={{
-              ...SHARED_STYLES,
-              height: 0,
-              width: 0,
-            } as React.CSSProperties}
+            style={
+              {
+                ...SHARED_STYLES,
+                height: 0,
+                width: 0,
+              } as React.CSSProperties
+            }
           >
             <div ref={portalRef} />
           </div>
@@ -148,7 +152,12 @@ export function ShadowRenderer({
   return main;
 }
 
-function ShadowContainer({ nodes, handleDataCapture, handleNodeTransfer, uuid }: {
+function ShadowContainer({
+  nodes,
+  handleDataCapture,
+  handleNodeTransfer,
+  uuid,
+}: {
   nodes: ShadowRendererType['nodes'];
   handleDataCapture: ShadowRendererType['handleDataCapture'];
   handleNodeTransfer?: ShadowRendererType['handleNodeTransfer'];
@@ -184,13 +193,17 @@ function ShadowContainer({ nodes, handleDataCapture, handleNodeTransfer, uuid }:
   }, []);
 
   const containerMemo = useMemo(() => {
-    DEBUG.hooks.shadow && console.log(`[hook:${uuid}] rendering:`, nodes?.length, nodes?.map(n => n.id));
+    DEBUG.hooks.shadow &&
+      console.log(
+        `[hook:${uuid}] rendering:`,
+        nodes?.length,
+        nodes?.map(n => n.id),
+      );
 
     function captureData(node: ShadowNodeType, element: HTMLElement) {
       const report = () => {
         clearTimeout(timeoutRefs.current[node.id]);
-        const computedStyle =
-          typeof window !== 'undefined' && window.getComputedStyle(element);
+        const computedStyle = typeof window !== 'undefined' && window.getComputedStyle(element);
 
         if (!computedStyle) {
           timeoutRefs.current[node.id] = setTimeout(report, 100);
@@ -233,9 +246,8 @@ function ShadowContainer({ nodes, handleDataCapture, handleNodeTransfer, uuid }:
           });
 
           if (handleNodeTransfer) {
-            DEBUG.hooks.shadow && console.log(
-              `[hook:${uuid}] handleNodeTransfer:`, data.rect, elementRef.current,
-            );
+            DEBUG.hooks.shadow &&
+              console.log(`[hook:${uuid}] handleNodeTransfer:`, data.rect, elementRef.current);
             handleNodeTransfer?.(node, data, element);
           }
         };
@@ -263,13 +275,8 @@ function ShadowContainer({ nodes, handleDataCapture, handleNodeTransfer, uuid }:
           return (
             <WithOnMount
               key={[node.id, uuid].filter(Boolean).join(':')}
-              onMount={(ref) => {
-                const {
-                  maxAttempts = 10,
-                  pollInterval = 50,
-                  shouldCapture,
-                  waitUntil,
-                } = node;
+              onMount={ref => {
+                const { maxAttempts = 10, pollInterval = 50, shouldCapture, waitUntil } = node;
                 attemptsRef.current[node.id] = 0;
 
                 const process = () => {
@@ -277,27 +284,35 @@ function ShadowContainer({ nodes, handleDataCapture, handleNodeTransfer, uuid }:
                   clearTimeout(timeoutWaitUntilRefs.current[node.id]);
                   timeoutWaitUntilRefs.current[node.id] = null;
 
-                  if (attemptsRef.current[node.id] < maxAttempts && (!waitUntil || waitUntil(node))) {
+                  if (
+                    attemptsRef.current[node.id] < maxAttempts &&
+                    (!waitUntil || waitUntil(node))
+                  ) {
                     attemptsRef.current[node.id] = null;
 
                     const element = node.ref ? node.ref.current : ref.current;
                     const capture = !shouldCapture || shouldCapture(node, element);
                     if (capture) {
-                      DEBUG.hooks.shadow && console.log(`[hook:${uuid}:${node.id}] onMount:`, capture, element);
+                      DEBUG.hooks.shadow &&
+                        console.log(`[hook:${uuid}:${node.id}] onMount:`, capture, element);
                       captureData(node, element);
                     }
 
                     return;
                   }
 
-                  if (attemptsRef.current[node.id] !== null
-                    && attemptsRef.current[node.id] < maxAttempts) {
+                  if (
+                    attemptsRef.current[node.id] !== null &&
+                    attemptsRef.current[node.id] < maxAttempts
+                  ) {
                     timeoutWaitUntilRefs.current[node.id] = setTimeout(process, pollInterval);
                     return;
                   }
 
-                  if (attemptsRef.current[node.id] !== null
-                    && attemptsRef.current[node.id] >= maxAttempts) {
+                  if (
+                    attemptsRef.current[node.id] !== null &&
+                    attemptsRef.current[node.id] >= maxAttempts
+                  ) {
                     console.error(
                       `[hook:${uuid}] failed to wait for ${node.id} attempts:`,
                       attemptsRef.current[node.id],
@@ -306,22 +321,20 @@ function ShadowContainer({ nodes, handleDataCapture, handleNodeTransfer, uuid }:
                 };
 
                 timeoutWaitUntilRefs.current[node.id] = setTimeout(
-                  process, waitUntil ? pollInterval : 0,
+                  process,
+                  waitUntil ? pollInterval : 0,
                 );
               }}
               uuid={uuid}
               withRef={!node.ref}
             >
-              <div data-node-id={node.id}>
-                {node.component}
-              </div>
+              <div data-node-id={node.id}>{node.component}</div>
             </WithOnMount>
           );
         })}
       </div>
     );
   }, [handleDataCapture, handleNodeTransfer, nodes, uuid]);
-
 
   return containerMemo;
 }

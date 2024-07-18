@@ -98,7 +98,6 @@ export const ReadyStateToServerConnectionStatus = {
   [EventSourceReadyState.OPEN]: ServerConnectionStatusType.OPEN,
 };
 
-
 // {
 //   "event_uuid": "b442e0cca7da42c1818e1a45978f8b2e",
 //   "timestamp": 1719840843822,

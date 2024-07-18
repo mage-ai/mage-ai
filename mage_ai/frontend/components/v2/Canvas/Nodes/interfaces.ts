@@ -1,4 +1,10 @@
-import { AppNodeType, NodeItemType, OutputNodeType, RectType, LayoutConfigType } from '../interfaces';
+import {
+  AppNodeType,
+  NodeItemType,
+  OutputNodeType,
+  RectType,
+  LayoutConfigType,
+} from '../interfaces';
 import { DragAndDropType } from './types';
 
 export type CanvasNodeType = {
@@ -16,4 +22,4 @@ export type BlockNode = {
   index?: number;
   node: NodeItemType;
   submitEventOperation?: (event: Event, options?: { args: any[] }) => void;
-}
+};

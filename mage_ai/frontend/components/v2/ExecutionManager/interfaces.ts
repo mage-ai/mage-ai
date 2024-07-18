@@ -7,10 +7,13 @@ import EventStreamType, {
 type ExecuteCodeResult = [ProcessDetailsType, () => void];
 
 export interface ConsumerOperations {
-  executeCode: (message: string, opts?: {
-    connect?: boolean;
-    future?: boolean;
-  }) => ExecuteCodeResult;
+  executeCode: (
+    message: string,
+    opts?: {
+      connect?: boolean;
+      future?: boolean;
+    },
+  ) => ExecuteCodeResult;
   unsubscribe: () => void;
 }
 
@@ -21,16 +24,20 @@ export interface EventSourceHandlers {
 }
 
 export interface ExecuteCodeHook {
-  executeCode: (message: string, payload?: {
-    environment?: EnvironmentType;
-    message_request_uuid?: string;
-    output_path?: string;
-    source?: string;
-    stream?: string;
-  }, opts?: {
-    onError?: (response: ResponseType) => void;
-    onSuccess?: (data: { code_execution: ProcessDetailsType }) => void;
-  }) => [string, () => void];
+  executeCode: (
+    message: string,
+    payload?: {
+      environment?: EnvironmentType;
+      message_request_uuid?: string;
+      output_path?: string;
+      source?: string;
+      stream?: string;
+    },
+    opts?: {
+      onError?: (response: ResponseType) => void;
+      onSuccess?: (data: { code_execution: ProcessDetailsType }) => void;
+    },
+  ) => [string, () => void];
   messageRequestUUID: string;
 }
 

@@ -5,12 +5,18 @@ import { buildUUIDForLevel } from './levels';
 import { selectKeys } from '@utils/hash';
 import { indexBy } from '@utils/array';
 
-export type PortsByItemType = Record<string, {
-  item: NodeItemType;
-  ports: PortType[];
-}>;
+export type PortsByItemType = Record<
+  string,
+  {
+    item: NodeItemType;
+    ports: PortType[];
+  }
+>;
 
-export function createPortsByItem(items: NodeItemType[], opts?: { level?: number }): PortsByItemType {
+export function createPortsByItem(
+  items: NodeItemType[],
+  opts?: { level?: number },
+): PortsByItemType {
   const { level } = opts || {};
   const keys = ['downstream', 'id', 'type', 'upstream'];
   const itemsMapping = indexBy(items, ({ id }) => id);
@@ -24,35 +30,31 @@ export function createPortsByItem(items: NodeItemType[], opts?: { level?: number
       type: ItemTypeEnum.PORT,
     };
 
-    const outputs: PortType[] = downstream?.map((blockID: string, index: number) => {
-      const target = itemsMapping[blockID];
+    const outputs: PortType[] =
+      downstream?.map((blockID: string, index: number) => {
+        const target = itemsMapping[blockID];
 
-      return {
-        ...props,
-        id: buildUUIDForLevel(buildPortIDFromBlockToBlock(
-          block,
-          target?.block,
-        ), level),
-        index,
-        subtype: PortSubtypeEnum.OUTPUT,
-        target,
-      };
-    }) ?? [];
+        return {
+          ...props,
+          id: buildUUIDForLevel(buildPortIDFromBlockToBlock(block, target?.block), level),
+          index,
+          subtype: PortSubtypeEnum.OUTPUT,
+          target,
+        };
+      }) ?? [];
 
-    const inputs: PortType[] = upstream?.map((blockID: string, index: number) => {
-      const target = itemsMapping[blockID];
+    const inputs: PortType[] =
+      upstream?.map((blockID: string, index: number) => {
+        const target = itemsMapping[blockID];
 
-      return {
-        ...props,
-        id: buildUUIDForLevel(buildPortIDFromBlockToBlock(
-          block,
-          target?.block,
-        ), level),
-        index,
-        subtype: PortSubtypeEnum.INPUT,
-        target,
-      };
-    }) ?? [];
+        return {
+          ...props,
+          id: buildUUIDForLevel(buildPortIDFromBlockToBlock(block, target?.block), level),
+          index,
+          subtype: PortSubtypeEnum.INPUT,
+          target,
+        };
+      }) ?? [];
 
     return {
       ...acc,

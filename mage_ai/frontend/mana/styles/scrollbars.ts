@@ -65,7 +65,9 @@ const base = css<ScrollbarsStyledProps>`
     }
   `}
 
-  ${({ showY }) => showY && `
+  ${({ showY }) =>
+    showY &&
+    `
     overflow-y: visible;
   `}
 `;

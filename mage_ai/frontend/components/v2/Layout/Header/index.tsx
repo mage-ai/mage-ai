@@ -18,52 +18,60 @@ import { unique } from '@utils/array';
 
 export const HEADER_ROOT_ID = 'v2-header-root';
 
-export function Header({
-  appHistory,
-  buildInterAppNavItems,
-  buildIntraAppNavItems,
-  cacheKey,
-  globalNavItems,
-  interAppNavItems,
-  intraAppNavItems,
-  navTag,
-  router,
-  selectedNavItem,
-  title,
-  version,
-}: HeaderProps, ref: React.MutableRefObject<HTMLDivElement | null>) {
+export function Header(
+  {
+    appHistory,
+    buildInterAppNavItems,
+    buildIntraAppNavItems,
+    cacheKey,
+    globalNavItems,
+    interAppNavItems,
+    intraAppNavItems,
+    navTag,
+    router,
+    selectedNavItem,
+    title,
+    version,
+  }: HeaderProps,
+  ref: React.MutableRefObject<HTMLDivElement | null>,
+) {
   // console.log('Header render');
   const headerRef = useRef<HTMLDivElement | null>(ref?.current);
 
-  const {
-    contextMenu,
-  } = useContextMenu({
+  const { contextMenu } = useContextMenu({
     containerRef: headerRef,
     useAsStandardMenu: true,
     uuid: 'main-header',
   });
 
-  const buttonProps = useMemo(() => ({
-    className: [
-      stylesHeader.button,
-    ].join(' '),
-    // motion: true,
-    small: true,
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }), []);
+  const buttonProps = useMemo(
+    () => ({
+      className: [stylesHeader.button].join(' '),
+      // motion: true,
+      small: true,
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }),
+    [],
+  );
 
-  const gridProps = useMemo(() => ({
-    autoColumns: 'min-content',
-    autoFlow: 'column',
-    columnGap: 10,
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }), []);
+  const gridProps = useMemo(
+    () => ({
+      autoColumns: 'min-content',
+      autoFlow: 'column',
+      columnGap: 10,
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }),
+    [],
+  );
 
-  const iconProps = useMemo(() => ({
-    className: stylesHeader.buttonIcon,
-    size: 16,
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }), []);
+  const iconProps = useMemo(
+    () => ({
+      className: stylesHeader.buttonIcon,
+      size: 16,
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }),
+    [],
+  );
 
   const interAppItems = useMemo(() => {
     const itemsDefault = [
@@ -112,34 +120,33 @@ export function Header({
     },
   ];
 
-  const renderNavItems = (items: (MenuItemType & {
-    placeholder?: boolean;
-  })[]) => unique(items, ({ uuid }) => uuid)?.map(({
-    Icon,
-    label,
-    placeholder,
-    uuid,
-    ...rest
-  }) => (
-    <nav key={uuid}>
-      <Button
-        {...buttonProps}
-        {...rest}
-        Icon={ip => Icon ? <Icon {...ip} {...iconProps} /> : null}
-        className={[
-          ...(buttonProps?.className?.split(' ') ?? []),
-          selectedNavItem === uuid ? stylesHeader.selected : '',
-        ].filter(Boolean).join(' ')}
-        data-uuid={uuid}
-        style={{
-          gridTemplateColumns: '',
-        }}
-      >
-        {placeholder && <div style={{ width: iconProps?.size }} />}
-        {label && label?.()}
-      </Button>
-    </nav>
-  ));
+  const renderNavItems = (
+    items: (MenuItemType & {
+      placeholder?: boolean;
+    })[],
+  ) =>
+    unique(items, ({ uuid }) => uuid)?.map(({ Icon, label, placeholder, uuid, ...rest }) => (
+      <nav key={uuid}>
+        <Button
+          {...buttonProps}
+          {...rest}
+          Icon={ip => (Icon ? <Icon {...ip} {...iconProps} /> : null)}
+          className={[
+            ...(buttonProps?.className?.split(' ') ?? []),
+            selectedNavItem === uuid ? stylesHeader.selected : '',
+          ]
+            .filter(Boolean)
+            .join(' ')}
+          data-uuid={uuid}
+          style={{
+            gridTemplateColumns: '',
+          }}
+        >
+          {placeholder && <div style={{ width: iconProps?.size }} />}
+          {label && label?.()}
+        </Button>
+      </nav>
+    ));
 
   const intraAppItemsMemo = useMemo(() => {
     const hasItems = intraAppNavItems?.length >= 1 || buildIntraAppNavItems;
@@ -170,57 +177,48 @@ export function Header({
         )}
       </Grid>
     );
-  }, [buttonProps, cacheKey,
-    intraAppNavItems, buildIntraAppNavItems, gridProps, version]);
+  }, [buttonProps, cacheKey, intraAppNavItems, buildIntraAppNavItems, gridProps, version]);
 
-  const appHistoryNavMemo = useMemo(() => (
-    <Grid
-      {...gridProps}
-      paddingBottom={6}
-      paddingTop={6}
-    >
-      <Button
-        {...buttonProps}
-        style={{
-          gridTemplateColumns: '',
-        }}
-      >
-        <Grid
-          {...gridProps}
-          alignItems="center"
-          columnGap={12}
-          paddingRight={(title ?? false) ? 8 : undefined}
+  const appHistoryNavMemo = useMemo(
+    () => (
+      <Grid {...gridProps} paddingBottom={6} paddingTop={6}>
+        <Button
+          {...buttonProps}
+          style={{
+            gridTemplateColumns: '',
+          }}
         >
-          {(!version || !appHistory)
-            ? <CaretDown {...iconProps} />
-            : <CaretLeft {...iconProps} />
-          }
+          <Grid
+            {...gridProps}
+            alignItems='center'
+            columnGap={12}
+            paddingRight={title ?? false ? 8 : undefined}
+          >
+            {!version || !appHistory ? <CaretDown {...iconProps} /> : <CaretLeft {...iconProps} />}
 
-          {(navTag || !version) &&
-            <NavTag role="tag">
-              {!navTag && !version
-                ? <>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</>
-                : navTag
-              }
-            </NavTag >
-          }
+            {(navTag || !version) && (
+              <NavTag role='tag'>
+                {!navTag && !version ? <>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</> : navTag}
+              </NavTag>
+            )}
 
-          {(title && version) ?
-            <Text nowrap role="title" semibold>
-              {title}
-            </Text>
-            : <div style={{ width: 120 }} />}
-        </Grid>
-      </Button >
-    </Grid>
-  ), [buttonProps, gridProps, iconProps, navTag, title, appHistory, version]);
+            {title && version ? (
+              <Text nowrap role='title' semibold>
+                {title}
+              </Text>
+            ) : (
+              <div style={{ width: 120 }} />
+            )}
+          </Grid>
+        </Button>
+      </Grid>
+    ),
+    [buttonProps, gridProps, iconProps, navTag, title, appHistory, version],
+  );
 
   return (
     <>
-      <header
-        className={stylesHeader.header}
-        ref={headerRef}
-      >
+      <header className={stylesHeader.header} ref={headerRef}>
         <Grid
           {...gridProps}
           paddingLeft={10}
@@ -231,17 +229,15 @@ export function Header({
               interAppItems && 'min-content',
               'minmax(0, 1fr)',
               'min-content',
-            ].filter(Boolean).join(' '),
+            ]
+              .filter(Boolean)
+              .join(' '),
           }}
         >
           {appHistoryNavMemo}
 
           {interAppItems?.length && (
-            <Grid
-              {...gridProps}
-              paddingBottom={6}
-              paddingTop={6}
-            >
+            <Grid {...gridProps} paddingBottom={6} paddingTop={6}>
               {renderNavItems(interAppItems)}
             </Grid>
           )}
@@ -262,7 +258,7 @@ export function Header({
               <TextInput
                 Icon={ip => <SearchV3 {...ip} {...iconProps} />}
                 basic
-                placeholder="Command Center for data..."
+                placeholder='Command Center for data...'
                 small
                 style={{
                   height: 40,
@@ -274,11 +270,7 @@ export function Header({
             </Grid>
           </Scrollbar>
 
-          <Grid
-            {...gridProps}
-            paddingBottom={6}
-            paddingTop={6}
-          >
+          <Grid {...gridProps} paddingBottom={6} paddingTop={6}>
             {renderNavItems(globalItems)}
 
             <Button
@@ -287,23 +279,17 @@ export function Header({
                 gridTemplateColumns: '',
               }}
             >
-              <Grid
-                {...gridProps}
-                alignItems="center"
-                columnGap={10}
-              >
-                <MageAvatar size={24} variant="a" />
-
+              <Grid {...gridProps} alignItems='center' columnGap={10}>
+                <MageAvatar size={24} variant='a' />
                 Sorceress
-
                 <CaretDown {...iconProps} />
               </Grid>
-            </Button >
+            </Button>
           </Grid>
-        </Grid >
+        </Grid>
 
         <DashedDivider />
-      </header >
+      </header>
       {contextMenu}
     </>
   );

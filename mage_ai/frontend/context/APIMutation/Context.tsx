@@ -90,15 +90,18 @@ export type TargetType = {
 export interface APIMutationContextType {
   dismissError: () => void;
   dismissTarget: (target?: TargetType) => void;
-  renderError: (error: APIErrorType & {
-    client: {
-      error: {
-        errors: string[];
-        message: string;
-        type: string;
+  renderError: (
+    error: APIErrorType & {
+      client: {
+        error: {
+          errors: string[];
+          message: string;
+          type: string;
+        };
       };
-    };
-  }, request: (event: MouseEvent) => void) => void;
+    },
+    request: (event: MouseEvent) => void,
+  ) => void;
   renderTarget: (target: TargetType) => void;
 }
 

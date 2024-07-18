@@ -52,12 +52,12 @@ const base = css<StyleProps>`
   ${({ monospace }) => monospace && monospaceFontFamily}
   ${({ monospace }) => !monospace && baseFontFamily}
 
-  color: ${({ blue, inverted, muted, secondary, theme }) => theme.icons.color[[
-    blue && 'blue',
-    inverted && 'inverted',
-    muted && 'muted',
-    secondary && 'secondary',
-  ].find(Boolean) ?? 'base']};
+  color: ${({ blue, inverted, muted, secondary, theme }) =>
+    theme.icons.color[
+      [blue && 'blue', inverted && 'inverted', muted && 'muted', secondary && 'secondary'].find(
+        Boolean,
+      ) ?? 'base'
+    ]};
 
   font-size: ${({ small, theme, xsmall }) =>
     small ? theme.fonts.size.sm : xsmall ? theme.fonts.size.xs : theme.fonts.size.base};
