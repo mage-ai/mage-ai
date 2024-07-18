@@ -98,6 +98,15 @@ services:
       - server_spark
   py:
     <<: *server_settings
+    environment:
+      - DYNAMIC_BLOCKS_VERSION=0
+      - KERNEL_MANAGER=0
+      - MEMORY_MANAGER_PANDAS_VERSION=0
+      - MEMORY_MANAGER_POLARS_VERSION=0
+      - MEMORY_MANAGER_VERSION=0
+      - REQUIRE_USER_AUTHENTICATION=0
+      - REQUIRE_USER_PERMISSIONS=0
+      - VARIABLE_DATA_OUTPUT_META_CACHE=0
     ports: []
   lsp:
     build:
