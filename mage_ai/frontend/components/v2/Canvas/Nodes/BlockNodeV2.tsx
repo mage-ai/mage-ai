@@ -624,7 +624,7 @@ function BlockNode(
             handleMouseDown({
               ...event,
               operationType: EventOperationEnum.DRAG_START,
-            });
+            } as any);
           }}
           onWheel={event => {
             event.stopPropagation();

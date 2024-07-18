@@ -13,7 +13,7 @@ import {
 } from '../../../Canvas/types';
 import { RectTransformationType } from '../../../Canvas/interfaces';
 import { RectType } from '@mana/shared/interfaces';
-import { calculateBoundingBox } from '../../../Canvas/utils/rect';
+import { calculateBoundingBox } from '../../../Canvas/utils/layout/shared';
 import { flattenArray } from '@utils/array';
 import { validateFiniteNumber } from '@utils/number';
 import { padString } from '@utils/string';

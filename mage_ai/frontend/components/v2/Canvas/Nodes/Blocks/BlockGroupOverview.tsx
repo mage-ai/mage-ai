@@ -60,13 +60,13 @@ export default function BlockGroupOverview({
 
       const templates = block2?.configuration?.templates ?? {};
       const templatesHydrated = Object.entries(templates ?? {}).map(
-        ([templateUUID, { variables }]) => {
+        ([templateUUID, tpl]) => {
           const { name: templateName, variables: templateVars } =
             templatesForGroup[templateUUID] ?? {};
 
           const vars = Object.entries(templateVars ?? {}).map(([varUUID, varConf]) => {
             const required = (varConf as any)?.required;
-            const value = variables[varUUID] ?? varConf[varUUID];
+            const value = (tpl as any)?.variables[varUUID] ?? varConf[varUUID];
             const valid = !required || value !== undefined;
             return {
               description: (varConf as any)?.description,
@@ -216,7 +216,7 @@ export default function BlockGroupOverview({
                 baseRight
                 columnGap={8}
                 justifyContent="space-between"
-                key={block2.uuid}
+                key={(block2 as any).uuid}
                 smallBottom
                 smallTop
                 style={{
@@ -224,11 +224,11 @@ export default function BlockGroupOverview({
                 }}
               >
                 <Text secondary small>
-                  {block2?.name ?? block2?.uuid}
+                  {(block2 as any)?.name ?? (block2 as any)?.uuid}
                 </Text>
 
                 <Text secondary small>
-                  {BLOCK_TYPE_NAME_MAPPING[block2?.type ?? '']}
+                  {BLOCK_TYPE_NAME_MAPPING[(block2 as any)?.type ?? '']}
                 </Text>
               </Grid>
             ))}

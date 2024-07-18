@@ -88,47 +88,6 @@ export function buildEvent(
   }) as any;
 }
 
-export function setupDraggableHandlers(
-  handlers: DragAndDropHandlersType['handlers'],
-  item: NodeItemType,
-  itemRef: DraggableType['itemRef'],
-  block: BlockType,
-) {
-  const { onMouseDown, onMouseLeave, onMouseOver, onMouseUp } = handlers;
-
-  function handleMouseDown(event: ClientEventType) {
-    event.stopPropagation();
-    const event2 = buildEvent(event, EventOperationEnum.DRAG_START, item, itemRef, block);
-
-    DEBUG.dragging && console.log('BlockNodeWrapper.handleMouseDown', event2, onMouseDown);
-
-    onMouseDown && onMouseDown?.(event2);
-  }
-
-  function handleMouseLeave(event: ClientEventType) {
-    DEBUG.dragging && console.log('handleMouseLeave', event);
-    onMouseLeave && onMouseLeave?.(buildEvent(event, null, item, itemRef, block));
-  }
-
-  function handleMouseOver(event: ClientEventType) {
-    DEBUG.dragging && console.log('handleMouseOver', event);
-    onMouseOver && onMouseOver?.(buildEvent(event, null, item, itemRef, block));
-  }
-
-  function handleMouseUp(event: ClientEventType) {
-    DEBUG.dragging && console.log('handleMouseUp', event);
-    onMouseUp && onMouseUp?.(buildEvent(event, EventOperationEnum.DRAG_END, item, itemRef, block));
-  }
-
-  return {
-    ...handlers,
-    onMouseDown: handleMouseDown,
-    onMouseLeave: handleMouseLeave,
-    onMouseOver,
-    onMouseUp: handleMouseUp,
-  };
-}
-
 export function getColorNamesFromItems(items: NodeType[]): ColorNameType[] {
   return items?.map?.((item: NodeType) => {
     if (ItemTypeEnum.NODE === item?.type) {
@@ -152,42 +111,6 @@ export function getColorNamesFromItems(items: NodeType[]): ColorNameType[] {
   }) as ColorNameType[];
 }
 
-export function getDraggableStyles(
-  rect: RectType,
-  {
-    draggable,
-    isDragging,
-  }: {
-    draggable?: boolean;
-    isDragging?: boolean;
-  },
-): CSSProperties {
-  const { left, top, width, zIndex } = rect || ({} as RectType);
-  const transform = `translate3d(${left ?? 0}px, ${top ?? 0}px, 0)`;
-
-  const styles = {
-    WebkitTransform: transform,
-    // backgroundColor: canDrop ? (isOverCurrent ? 'blue' : backgroundColor) : backgroundColor,
-    // border: '1px dashed gray',
-    // IE fallback: hide the real node using CSS when dragging
-    // because IE will ignore our custom "empty image" drag preview.
-    position: 'absolute',
-    transform,
-    zIndex,
-    ...(draggable ? { cursor: 'move' } : {}),
-    ...(isDragging
-      ? { height: 0, opacity: 0 }
-      : {
-          minHeight:
-            rect?.height === Infinity || rect?.height === -Infinity ? 0 : rect?.height ?? 0,
-        }),
-    ...(width ?? false ? { minWidth: width } : {}),
-  };
-
-  DEBUG.dragging && console.log('getDraggableStyles', styles);
-
-  return styles;
-}
 
 export function menuItemsForTemplates(block, handleOnClick) {
   function extractTemplatesFromItem(block: FrameworkType) {
@@ -196,7 +119,7 @@ export function menuItemsForTemplates(block, handleOnClick) {
     const blockTypes = {};
 
     const arr = [];
-    Object.entries(configuration?.templates ?? {})?.forEach(([templateUUID, template]) => {
+    Object.entries(configuration?.templates ?? {})?.forEach(([templateUUID, template]: [string, PipelineExecutionFrameworkBlockType]) => {
       arr.push({
         description: () => template?.description,
         label: () => template?.name || templateUUID,

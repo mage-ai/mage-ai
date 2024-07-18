@@ -1,14 +1,3 @@
-import BlockType from '@interfaces/BlockType';
-import { NodeWrapperProps } from './NodeWrapper';
-import { IconType } from '@mana/icons/types';
-import { BadgeType } from '@mana/elements/Badge';
-import { PortType, ConnectionType, DragItem, NodeItemType, LayoutConfigType } from '../interfaces';
-import { BlockNode, CanvasNodeType } from './interfaces';
-import { ClientEventType, SubmitEventOperationType } from '@mana/shared/interfaces';
-import { ExecutionManagerType } from '../../ExecutionManager/interfaces';
-import { MenuItemType } from '@mana/components/Menu/interfaces';
-import { ModelManagerType } from '@components/v2/Apps/PipelineCanvas/interfaces';
-
 export type UpdateBlockRequestType = (
   event: any | Event,
   key: string,
@@ -56,7 +45,7 @@ export type AsideType = {
   buttonRef: React.RefObject<HTMLDivElement>;
   className?: string;
   loading?: boolean;
-  menuItems: any[];
+  menuItems?: any[];
   onClick?: (event: React.MouseEvent<HTMLElement>) => void;
   uuid?: string;
 };

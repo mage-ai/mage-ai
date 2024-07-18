@@ -82,7 +82,7 @@ export type BlockNodeProps = {
   submitCodeExecution: (event: React.MouseEvent<HTMLElement>) => void;
   buildContextMenuItemsForGroupBlock: (block: BlockType) => MenuItemType[];
   timerStatusRef?: React.RefObject<HTMLDivElement>;
-  updateBlock: (block: BlockType) => void;
+  updateBlock: (event: any, key: string, value: any, opts?: any) => void;
 } & BlockNode;
 
 export default function BlockNodeComponent({
@@ -323,7 +323,7 @@ export default function BlockNodeComponent({
                     Blocks
                   </Text>
                   <Grid rowGap={8}>
-                    {blocksInGroup?.map(b => (
+                    {blocksInGroup?.map((b: any) => (
                       <Text key={b.uuid} monospace secondary small>
                         {b.name || b.uuid}
                       </Text>
@@ -394,25 +394,25 @@ export default function BlockNodeComponent({
     [badgeBase],
   );
 
-  const connectionRows = useMemo(
-    () =>
-      ItemTypeEnum.BLOCK === node?.type &&
-      inputOutputPairs?.length >= 1 && (
-        <PanelRows>
-          {inputOutputPairs?.map(({ input, output }) => (
-            <Connection
-              draggable={draggable}
-              input={input as PortType}
-              key={[input ? input?.id : '', output ? output?.id : ''].join(':')}
-              onMount={onMount}
-              output={output as PortType}
-            />
-          ))}
-        </PanelRows>
-      ),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [draggable, node, inputOutputPairs, onMount],
-  );
+  // const connectionRows = useMemo(
+  //   () =>
+  //     ItemTypeEnum.BLOCK === node?.type &&
+  //     inputOutputPairs?.length >= 1 && (
+  //       <PanelRows>
+  //         {inputOutputPairs?.map(({ input, output }) => (
+  //           <Connection
+  //             draggable={draggable}
+  //             input={input as PortType}
+  //             key={[input ? input?.id : '', output ? output?.id : ''].join(':')}
+  //             onMount={onMount}
+  //             output={output as PortType}
+  //           />
+  //         ))}
+  //       </PanelRows>
+  //     ),
+  //   // eslint-disable-next-line react-hooks/exhaustive-deps
+  //   [draggable, node, inputOutputPairs, onMount],
+  // );
 
   const templateConfigurations = useMemo(
     () =>
@@ -495,7 +495,7 @@ export default function BlockNodeComponent({
               />
             ) : (
               <Grid rowGap={8} templateRows="auto">
-                {connectionRows}
+                {/* {connectionRows} */}
                 {templateConfigurations}
                 {isEmptyObject(block?.configuration?.templates) && (
                   <PanelRows padding={false}>
@@ -563,7 +563,7 @@ export default function BlockNodeComponent({
       buildContextMenuItemsForGroupBlock,
       buildBadgeRow,
       block,
-      connectionRows,
+      // connectionRows,
       templateConfigurations,
       titleRow,
       after,

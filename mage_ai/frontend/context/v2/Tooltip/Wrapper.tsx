@@ -29,7 +29,7 @@ export function TooltipWrapper({
   style?: React.CSSProperties;
   tooltip: React.ReactNode;
   tooltipStyle?: React.CSSProperties;
-} & TooltipLayout) {
+} & TooltipLayout): any {
   const { showTooltip } = useTooltip();
   const wrapperRef = useRef<HTMLDivElement>(null);
 

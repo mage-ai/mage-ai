@@ -41,7 +41,7 @@ export interface RegistrationHook {
 }
 
 export interface ExecutionManagerType {
-  useExecuteCode: (channel: string, stream?: string) => ExecuteCodeHook;
+  useExecuteCode: any;
   useRegistration: (channel: string, stream?: string) => RegistrationHook;
   teardown: () => void;
 }

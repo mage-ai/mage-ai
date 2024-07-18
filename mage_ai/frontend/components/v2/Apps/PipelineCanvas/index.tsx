@@ -1,4 +1,4 @@
-import PipelineCanvasV2, { PipelineCanvasV2Props } from './CanvasV2';
+import PipelineCanvasV2, { CanvasProps } from './CanvasV2';
 import useContextMenu from '@mana/hooks/useContextMenu';
 import { ClientEventType } from '@mana/shared/interfaces';
 import { DndProvider } from 'react-dnd';
@@ -12,7 +12,7 @@ import { DEBUG } from '@components/v2/utils/debug';
 export default function PipelineBuilder({
   loading,
   ...props
-}: PipelineCanvasV2Props & {
+}: CanvasProps & {
   loading?: boolean;
 }) {
   const canvasRef = useRef<HTMLDivElement>(null);

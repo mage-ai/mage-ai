@@ -1,6 +1,6 @@
 import { saveAs } from 'file-saver'; // Import the file-saver library
 import html2canvas from 'html2canvas';
-import { calculateBoundingBox } from '@components/v2/Canvas/utils/rect';
+import { calculateBoundingBox } from '@components/v2/Canvas/utils/layout/shared';
 
 export async function handleSaveAsImage(canvasRef, wrapperRef, rectsMapping, imageDataRef) {
   const generateImage = async boundingBox => {

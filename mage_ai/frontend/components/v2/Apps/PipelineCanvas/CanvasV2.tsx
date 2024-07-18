@@ -111,14 +111,19 @@ type ModelsType = {
   groups: FrameworkType[];
 };
 
+export type CanvasProps = {
+  executionFrameworkUUID: string;
+  pipelineUUID: string;
+  useExecuteCode: ExecutionManagerType['useExecuteCode'];
+  useRegistration: ExecutionManagerType['useRegistration'];
+};
+
 export type PipelineCanvasV2Props = {
   canvasRef: React.RefObject<HTMLDivElement>;
   containerRef: React.RefObject<HTMLDivElement>;
   defaultActiveLevel?: number;
   dragEnabled?: boolean;
   dropEnabled?: boolean;
-  executionFrameworkUUID: string;
-  pipelineUUID: string;
   removeContextMenu: RemoveContextMenuType;
   renderContextMenu: RenderContextMenuType;
   setDragEnabled: (value: boolean) => void;
@@ -126,9 +131,7 @@ export type PipelineCanvasV2Props = {
   setZoomPanDisabled: (value: boolean) => void;
   snapToGridOnDrop?: boolean;
   transformState: React.MutableRefObject<ZoomPanStateType>;
-  useExecuteCode: ExecutionManagerType['useExecuteCode'];
-  useRegistration: ExecutionManagerType['useRegistration'];
-};
+} & CanvasProps;
 
 const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
   canvasRef,

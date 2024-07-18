@@ -14,7 +14,7 @@ interface PipelineDetailProps {
   uuid?: string;
 }
 
-const Canvas = dynamic(() => import('@components/v2/Apps/PipelineCanvas'), { ssr: false });
+const PipelineCanvas = dynamic(() => import('@components/v2/Apps/PipelineCanvas'), { ssr: false });
 
 function PipelineBuilder({ frameworkUUID, uuid, ...props }: PipelineDetailProps) {
   const { header, page } = useContext(LayoutContext);
@@ -59,8 +59,7 @@ function PipelineBuilder({ frameworkUUID, uuid, ...props }: PipelineDetailProps)
 
           <Grid autoRows="auto" height="inherit" templateColumns="auto 1fr" width="100%">
             <div />
-
-            <Canvas {...props} executionFrameworkUUID={frameworkUUID} pipelineUUID={uuid} />
+            <PipelineCanvas {...props} executionFrameworkUUID={frameworkUUID} pipelineUUID={uuid} />
           </Grid>
 
           <div />

@@ -98,7 +98,6 @@ export default function useExecutionManager(
   const mutants = useMutate(
     { resource: 'code_executions' },
     {
-      disableAbort: true,
       handlers: {
         create: {
           onError: (error: APIErrorType, args?: MutationFetchArgumentsType) => {
@@ -433,12 +432,12 @@ export default function useExecutionManager(
   function handleOnOpen(event: Event) {
     const eventSource = event.target as EventSource;
     onopenRef?.current && onopenRef?.current?.(event);
-    ebugLog('useEventStreams.onopen', eventSource);
+    debugLog('useEventStreams.onopen', eventSource);
   }
 
   function handleOnError(event: Event) {
     onerrorRef?.current && onerrorRef?.current?.(event);
-    ebugLog('useEventStreams.onerror', event);
+    debugLog('useEventStreams.onerror', event);
   }
 
   function connectEventSource(channel: string, stream: string): EventSource | null {
@@ -519,7 +518,7 @@ export default function useExecutionManager(
       delete channelsRef.current[uuid];
     }
 
-    const eventSource = getEventSource(uuid, undefined);
+    const eventSource = getEventSource(uuid);
     if (!eventSource) return;
     closeConnection(eventSource);
     delete eventSourcesRef.current[uuid];

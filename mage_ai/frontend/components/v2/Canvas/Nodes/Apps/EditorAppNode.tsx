@@ -47,7 +47,6 @@ import { getBlockColor } from '@mana/themes/blocks';
 import { FileType } from '@components/v2/IDE/interfaces';
 import { AppConfigType } from '@components/v2/Apps/interfaces';
 import { AppNodeType } from '../../interfaces';
-import { onSuccess } from '@api/cleaner/utils/response';
 
 const PADDING_HORIZONTAL = 16;
 
@@ -282,7 +281,7 @@ function EditorAppNode({
             //   uuid: 'Close',
             //   onClick: onClose,
             // },
-          ].map(({ Icon, anchor, label, description, href, iconProps, target, uuid, onClick }) => (
+          ].map(({ Icon, description, iconProps, uuid, onClick }) => (
             <TooltipWrapper
               align={TooltipAlign.END}
               horizontalDirection={TooltipDirection.DOWN}
@@ -290,25 +289,22 @@ function EditorAppNode({
               key={uuid}
               tooltip={
                 <Text secondary small>
-                  {description ?? label?.() ?? uuid}
+                  {description ?? uuid}
                 </Text>
               }
             >
               <Button
                 Icon={iconPropsInit => Icon && <Icon {...{ ...iconPropsInit, ...iconProps }} />}
-                anchor={anchor}
                 basic
                 data-loading-style="inline"
-                href={href}
                 // loading
                 onClick={onClick ?? undefined}
                 small
                 style={{ background: 'none', border: 'none' }}
-                target={target}
               >
-                {label && (
+                {uuid && (
                   <Text medium small>
-                    {label()}
+                    {uuid}
                   </Text>
                 )}
               </Button>

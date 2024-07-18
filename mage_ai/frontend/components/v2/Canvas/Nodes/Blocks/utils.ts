@@ -72,8 +72,8 @@ export function getUpDownstreamColors(
     groupsInParent?.forEach((bgroup: BlockType) => {
       const bgroupBlocks = Object.values(blocksByGroup?.[bgroup?.uuid] ?? {}) ?? [];
 
-      if (bgroup?.children?.length > 0) {
-        bgroup?.children?.forEach(gchild => {
+      if ((bgroup as PipelineExecutionFrameworkBlockType)?.children?.length > 0) {
+        (bgroup as PipelineExecutionFrameworkBlockType)?.children?.forEach(gchild => {
           bgroupBlocks.push(...(Object.values(blocksByGroup?.[gchild.uuid] ?? {}) ?? []));
         });
       }

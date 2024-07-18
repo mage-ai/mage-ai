@@ -15,6 +15,7 @@ type LinkProps = {
   onClick?: (e: React.MouseEvent<HTMLAnchorElement>) => void;
   preventDefault?: boolean;
   role?: any;
+  style?: React.CSSProperties;
   target?: string;
   wrap?: boolean;
 } & TextProps;
@@ -38,6 +39,7 @@ export default function Link({
   onClick,
   preventDefault = true,
   role,
+  style,
   wrap,
   ...rest
 }: LinkProps) {

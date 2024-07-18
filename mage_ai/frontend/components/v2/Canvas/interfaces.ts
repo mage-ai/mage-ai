@@ -85,6 +85,7 @@ export interface PortType extends DragItem {
 
 export interface AppNodeType extends DragItem {
   app: any;
+  ref?: React.MutableRefObject<any>;
 }
 
 export interface NodeType extends DragItem {

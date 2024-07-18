@@ -196,7 +196,7 @@ function ExecutionOutput(
                         pointerEvents: 'none',
                       }}
                     >
-                      [{isFinalOutput ? 'output' : acc?.length ?? 0}]
+                      [{isFinalOutput ? 'output' : acc?.outputs?.length ?? 0}]
                     </Text>
                     <Text monospace secondary small>
                       {displayLocalOrUtcTime(
@@ -241,9 +241,9 @@ function ExecutionOutput(
       onError: () => {
         setLoading(false);
       },
-      onSuccess: ({ data }) => {
+      onSuccess: (eoutput) => {
         setLoading(false);
-        setExecutionOutput(data?.execution_output);
+        setExecutionOutput(eoutput);
       },
       query: {
         namespace: encodeURIComponent(namespace),

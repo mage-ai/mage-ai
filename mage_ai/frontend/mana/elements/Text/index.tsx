@@ -12,6 +12,7 @@ export type TextProps = {
   nowrap?: boolean;
   role?: string;
   small?: boolean;
+  style?: React.CSSProperties;
   underline?: boolean;
   xsmall?: boolean;
   // Below alter the class names
