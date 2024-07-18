@@ -15,6 +15,7 @@ import { DEBUG } from '@components/v2/utils/debug';
 import { groupBy, indexBy } from '@utils/array';
 import { ElementRoleEnum } from '@mana/shared/types';
 import { ExecutionOutputType } from '@interfaces/CodeExecutionType';
+import { objectSize } from '@utils/hash';
 
 export type OutputGroupsType = {
   handleContextMenu?: ExecutionOutputProps['handleContextMenu'];
@@ -51,11 +52,33 @@ const OutputGroups: React.FC<OutputGroupsProps> = ({
 }: OutputGroupsProps) => {
   const scrollableDivRef = useRef<HTMLDivElement>(null);
 
+  const scrollDown = useCallback(() => {
+    scrollableDivRef.current?.scrollTo({
+      top: scrollableDivRef.current.scrollHeight,
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const [executing, setExecuting] = useState<boolean>(false);
   const [executionOutputMapping, setExecutionOutputMapping] = useState<
     Record<string, ExecutionOutputType>
   >({});
-  const [resultMapping, setResultMapping] = useState<Record<string, ExecutionResultType>>({});
+  const [resultMapping, setResultMappingState] = useState<Record<string, ExecutionResultType>>({});
+  const setResultMapping = useCallback((data) => {
+    setResultMappingState(prev => {
+      const next = typeof data === 'function' ? data(prev) : data;
+      const more = objectSize(next) > objectSize(prev);
+
+      if (more) {
+        scrollDown();
+      }
+
+      return next;
+    });
+
+
+  }, [scrollDown]);
+
   const resultsGroupedByMessageRequestUUID = useMemo(
     () =>
       groupBy(
@@ -85,13 +108,22 @@ const OutputGroups: React.FC<OutputGroupsProps> = ({
             ...prev,
             [xo.uuid]: xo,
           }));
+
           if (opts?.onSuccess) {
             opts.onSuccess(xo);
+          }
+
+          const key = keys?.[keys?.length - 1];
+          const results = resultsGroupedByMessageRequestUUID?.[key];
+          const ids = results?.map(r => String(r.process?.message_request_uuid)) ?? [];
+
+          if (ids.includes(key)) {
+            scrollDown();
           }
         },
       });
     },
-    [mutants.detail],
+    [mutants.detail, keys, scrollDown, resultsGroupedByMessageRequestUUID],
   );
 
   useEffect(() => {
@@ -138,12 +170,6 @@ const OutputGroups: React.FC<OutputGroupsProps> = ({
     onMount && onMount?.(consumerID);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  useEffect(() => {
-    scrollableDivRef.current?.scrollTo({
-      top: scrollableDivRef.current.scrollHeight,
-    });
-  }, [resultsGroupedByMessageRequestUUID]);
 
   if (onlyShowWithContent && (keys?.length ?? 0) === 0) {
     return null;

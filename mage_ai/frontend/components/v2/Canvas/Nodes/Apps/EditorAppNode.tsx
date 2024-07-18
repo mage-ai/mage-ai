@@ -224,7 +224,7 @@ function EditorAppNode({
                     }
               }
               small
-              tag={<KeyboardTextGroup textGroup={[[KEY_CODE_META, KEY_ENTER]]} xsmall />}
+              tag={!executing && <KeyboardTextGroup textGroup={[[KEY_CODE_META, KEY_ENTER]]} xsmall />}
             />
           </div>
 
