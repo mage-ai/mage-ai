@@ -1695,6 +1695,10 @@ class Block(
         parallel: bool = True,
         **kwargs,
     ) -> None:
+        if not kwargs or 'from_notebook' not in kwargs:
+            kwargs = kwargs or {}
+            kwargs['from_notebook'] = not run_sensors
+
         if parallel:
             loop = asyncio.get_event_loop()
             await loop.run_in_executor(
@@ -1704,7 +1708,6 @@ class Block(
                     analyze_outputs=analyze_outputs,
                     build_block_output_stdout=build_block_output_stdout,
                     custom_code=custom_code,
-                    from_notebook=not run_sensors,
                     global_vars=global_vars,
                     run_all_blocks=run_all_blocks,
                     update_status=update_status,
@@ -1716,7 +1719,6 @@ class Block(
                 analyze_outputs=analyze_outputs,
                 build_block_output_stdout=build_block_output_stdout,
                 custom_code=custom_code,
-                from_notebook=not run_sensors,
                 global_vars=global_vars,
                 run_all_blocks=run_all_blocks,
                 update_status=update_status,

@@ -6,7 +6,7 @@ import { useMenuManager } from '@mana/components/Menu/MenuManager';
 import Text from '@mana/elements/Text';
 import stylesHeader from '@styles/scss/layouts/Header/Header.module.scss';
 import stylesNavigation from '@styles/scss/components/Menu/NavigationButtonGroup.module.scss';
-// import { Code, Builder, CaretDown, CaretLeft } from '@mana/icons';
+import { Code, Builder, CaretDown, CaretLeft } from '@mana/icons';
 import { ItemClickHandler, MenuGroupType } from './interfaces';
 import { LayoutDirectionEnum } from '@mana/components/Menu/types';
 import { MenuItemType } from '@mana/hooks/useContextMenu';
@@ -239,7 +239,7 @@ export default function NavigationButtonGroup({
           >
             {(typeof labelUse === 'function' ? labelUse?.() : labelUse) || uuidUse}
 
-            {/* {(selected || initial) && <CaretDown secondary size={10} />} */}
+            {(selected || initial) && <CaretDown secondary size={10} />}
           </Grid>
         </Link>,
       );

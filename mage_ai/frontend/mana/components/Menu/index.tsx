@@ -6,7 +6,7 @@ import Text from '../../elements/Text';
 import useCustomEventHandler from '../../events/useCustomEventHandler';
 import useDebounce from '@utils/hooks/useDebounce';
 import { AnimatePresence, Variants, motion, cubicBezier } from 'framer-motion';
-// import { CaretRight } from '@mana/icons';
+import { CaretRight } from '@mana/icons';
 import { HEADER_Z_INDEX } from '@components/constants';
 import { LayoutDirectionEnum } from './types';
 import { MenuItemType } from './interfaces';
@@ -165,7 +165,7 @@ function MenuItemBase(
               />
             )}
 
-            {/* {itemsCount >= 1 && <CaretRight size={12} />} */}
+            {itemsCount >= 1 && <CaretRight size={12} />}
           </Grid>
         </Grid>
 
