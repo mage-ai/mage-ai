@@ -6,6 +6,7 @@ import Ansi from 'ansi-to-react';
 import Text from '@mana/elements/Text';
 import { isObject } from '@utils/hash';
 import { countOccurrences, sortByKey } from '@utils/array';
+import { isJsonString } from '@utils/string';
 
 interface ExecutionOutputProps {
   containerRect: DOMRect;
@@ -46,28 +47,90 @@ export default function ExecutionOutput({
           if (isObject(sample)) {
             data.forEach((data2) => {
               if (columns.length === 0) {
-                columns.push(...Object.keys(data2).map(key => key));
+                columns.push(...Object.keys(data2).map(key => ({
+                  key,
+                  uuid: key,
+                })));
               }
 
-              rows.push(columns.map((key: string) => {
-                const val2 = data2[key];
-                if (Array.isArray(val2) || isObject(val2)) {
-                  return JSON.stringify(val2, null, 2);
+              rows.push(columns.map(({ key }, idx) => {
+                let val2 = data2[key];
+
+                if (isJsonString(val2)) {
+                  val2 = JSON.parse(val2);
                 }
+
+                if (Array.isArray(val2) || isObject(val2)) {
+                  if (!columns[idx].data?.type) {
+                    columns[idx].data = {
+                      ...columns[idx].data,
+                      type: Array.isArray(val2)
+                        ? VariableTypeEnum.ITERABLE
+                        : VariableTypeEnum.DICTIONARY_COMPLEX,
+                    };
+                  }
+                }
+
                 return val2;
               }));
             });
           } else if (Array.isArray(data)) {
             if (columns.length === 0) {
-              columns.push(...data?.map((_, i) => `col${i}`));
+              columns.push(...data?.map((_, index: number) => ({
+                key: index,
+                uuid: `col ${index}`,
+              })));
             }
-            rows.push(data);
+
+            rows.push(columns.map(({ key }, idx) => {
+              let val2 = data[key];
+
+              if (isJsonString(val2)) {
+                val2 = JSON.parse(val2);
+              }
+
+              if (Array.isArray(val2) || isObject(val2)) {
+                if (!columns[idx].data?.type) {
+                  columns[idx].data = {
+                    ...columns[idx].data,
+                    type: Array.isArray(val2)
+                      ? VariableTypeEnum.ITERABLE
+                      : VariableTypeEnum.DICTIONARY_COMPLEX,
+                  };
+                }
+              }
+
+              return val2;
+            }));
           }
         } else if (isObject(data)) {
           if (columns.length === 0) {
-            columns.push(...Object.keys(data).map(key => key));
+            columns.push(...Object.keys(data).map(key => ({
+              key,
+              uuid: key,
+            })));
           }
-          rows.push(columns.map((key: string) => data[key]));
+
+          rows.push(columns.map(({ key }, idx: number) => {
+            let val2 = data[key];
+
+            if (isJsonString(val2)) {
+              val2 = JSON.parse(val2);
+            }
+
+            if (Array.isArray(val2) || isObject(val2)) {
+              if (!columns[idx].data?.type) {
+                columns[idx].data = {
+                  ...columns[idx].data,
+                  type: Array.isArray(val2)
+                    ? VariableTypeEnum.ITERABLE
+                    : VariableTypeEnum.DICTIONARY_COMPLEX,
+                };
+              }
+            }
+
+            return val2;
+          }));
         }
       });
 

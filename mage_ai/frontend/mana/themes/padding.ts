@@ -1,4 +1,5 @@
 export enum PaddingEnum {
+  LG = 16,
   BASE = 12,
   SM = 8,
   XS = 4,

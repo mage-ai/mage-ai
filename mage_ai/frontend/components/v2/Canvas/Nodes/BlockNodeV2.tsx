@@ -667,7 +667,7 @@ function BlockNode(
             consumerID={outputNode.id}
             role={ElementRoleEnum.CONTENT}
             styles={{
-              maxWidth: 500,
+              maxWidth: 600,
             }}
           >
             {renderOutputPortalContent()}

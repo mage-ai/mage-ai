@@ -1,9 +1,5 @@
-import Grid from '@mana/components/Grid';
-import Link from '@mana/elements/Link';
-import NextLink from 'next/link';
 import React, { useCallback, useEffect, useMemo, useRef } from 'react';
-import Scrollbar from '@mana/elements/Scrollbar';
-import Text from '@mana/elements/Text';
+import List from '@mana/elements/List';
 import scrollbars from '@mana/styles/scrollbars';
 import styled from 'styled-components';
 import { PaddingEnum } from '@mana/themes/padding';
@@ -19,6 +15,7 @@ import { isJsonString } from '@utils/string';
 import { isObject } from '@utils/hash';
 import { randomSample, range, sum, transpose } from '@utils/array';
 import { useSticky } from 'react-table-sticky';
+import { VariableTypeEnum } from '@interfaces/CodeExecutionType';
 
 const BASE_ROW_HEIGHT = 20;
 const DEFAULT_COLUMN_WIDTH = BASE_ROW_HEIGHT;
@@ -50,13 +47,20 @@ type TableProps = {
 } & SharedProps;
 
 interface ColumnSetting {
-  widthMinimum?: number;
-  widthPercentage?: number;
+  data?: {
+    type?: VariableTypeEnum;
+  };
+  layout?: {
+    width?: {
+      percentage?: number;
+      minimum?: number;
+    };
+  };
   uuid: string;
 }
 
 type DataTableProps = {
-  columns: string[];
+  columns: ColumnSetting[];
 } & SharedProps;
 
 const Styles = styled.div`
@@ -83,14 +87,14 @@ const Styles = styled.div`
       .td.td-index-column {
         ${gradientBackground('0deg', '#0000004D', '#0000004D', 0, 100, 'graylo')}
         backdrop-filter: blur(20px);
-        color: var(--fonts-color-text-muted);
+        color: var(--fonts-color-text-base);
         left: 0;
         position: sticky;
         z-index: 2;
       }
 
     .th {
-      color: var(--fonts-color-text-muted);
+      color: var(--fonts-color-text-base);
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
@@ -115,9 +119,8 @@ const Styles = styled.div`
       word-break: break-word;
     }
 
-
     .td {
-      color: var(--fonts-color-text-base);
+      color: var(--fonts-color-text-secondary);
 
       &.td-monospace {
         font-family: var(--fonts-family-monospace-regular);
@@ -155,11 +158,18 @@ function estimateCellHeight({
     original.forEach((val, idx) => {
       const wLimit = columnWidths[idx + indexes[idx]];
 
-      const vals = String(val).trim().split('\n');
-
       let numberOfLines = 0;
+      let woffset = 0;
+      const vals = [];
+      if (Array.isArray(val)) {
+        vals.push(...val.map(v => String(v).trim().split('\n')));
+        woffset += PaddingEnum.LG * 2;
+      } else {
+        vals.push(...String(val).trim().split('\n'));
+      }
+
       vals.forEach((v) => {
-        const wTotal = String(v).length * WIDTH_OF_SINGLE_CHARACTER_REGULAR_SM;
+        const wTotal = (String(v).length * WIDTH_OF_SINGLE_CHARACTER_REGULAR_SM) + woffset;
         numberOfLines += Math.ceil(wTotal / wLimit);
       });
 
@@ -252,10 +262,19 @@ function Table({ ...props }: TableProps) {
 
     rows.forEach((values, idxRow) => {
       columns.forEach(({ index }, idx) => {
-        const val = index
-          ? String(idxRow).length
-          : String(values[idx - indexes[idx]] ?? '').length;
-        widths[idx] = Math.max(widths[idx], val) + (PaddingEnum.XS * 2);
+        const val1 = index
+          ? String(idxRow)
+          : String(values[idx - indexes[idx]] ?? '');
+
+        let size = 0;
+        if (typeof val1 === 'string') {
+          size = val1.trim().length;
+        } else if (Array.isArray(val1)) {
+          size = Math.max(...(val1 as string[]).map(v => String(v).trim().length));
+          size += PaddingEnum.LG * 2;
+        }
+
+        widths[idx] = Math.max(widths[idx], size) + (PaddingEnum.XS * 2);
       });
     });
 
@@ -263,7 +282,6 @@ function Table({ ...props }: TableProps) {
   }, [columns, indexes, rows]);
 
   const columnWidths = useMemo(() => {
-    const MIN_WIDTH = 80;
     let widthOffset = 0;
 
     const initialWidths = columns.map((col, idx) => {
@@ -271,6 +289,8 @@ function Table({ ...props }: TableProps) {
         widthOffset += indexColumnWidth;
         return indexColumnWidth;
       }
+
+      // const min = MIN_WIDTH + ()
 
       const width = columnWidthsRaw[idx] * WIDTH_OF_SINGLE_CHARACTER_REGULAR_SM;
       return width < MIN_WIDTH ? MIN_WIDTH : width;
@@ -305,8 +325,6 @@ function Table({ ...props }: TableProps) {
       width: defaultColumnWidth,
     };
   }, [columnWidths, indexColumnWidth, width]);
-
-  console.log('rowsProcessed', columns);
 
   const {
     getTableBodyProps, getTableProps, headerGroups, prepareRow, rows: rowsProcessed,
@@ -356,11 +374,13 @@ function Table({ ...props }: TableProps) {
             } else {
               cellValue = original[idx - indexes[idx]];
 
-              console.log(cellValue);
-
-              if (Array.isArray(cellValue) || typeof cellValue === 'object') {
+              if (Array.isArray(cellValue)) {
+                cellValue = (
+                  <List item={cellValue?.map(v => v?.replace(/\n/g, '\\n'))} monospace secondary small />
+                );
+              } else if (typeof cellValue === 'object') {
                 try {
-                  cellValue = JSON.stringify(cellValue);
+                  cellValue = JSON.stringify(cellValue, null, 2);
                 } catch {
                   cellValue = 'Error: cannot display value';
                 }
@@ -373,6 +393,8 @@ function Table({ ...props }: TableProps) {
               cellValueDisplay = 'False';
             } else if (cellValue === null || cellValue === 'null') {
               cellValueDisplay = 'None';
+            } if (typeof cellValue === 'string') {
+              cellValueDisplay = cellValue.replace(/\n/g, '\\n');
             } else {
               cellValueDisplay = cellValue;
             }
@@ -508,8 +530,9 @@ function DataTable({
 }: DataTableProps) {
   const columns = useMemo(() => buildIndexColumns(1).concat(
     columnsProp?.map(col => ({
-      Header: String(col),
-      accessor: () => String(col),
+      ...col,
+      Header: String(col.uuid),
+      accessor: () => String(col.uuid),
     })) as {
       Header: string;
       accessor: (row: any, i: number) => string;
@@ -521,7 +544,6 @@ function DataTable({
     <Styles
       style={{
         height: boundingBox.height,
-        // overflow: 'hidden',
         width: boundingBox.width,
       }}
     >

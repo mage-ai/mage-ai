@@ -1,0 +1,11 @@
+.list {
+  &.ol,
+  &.ul {
+    color: var(--fonts-color-text-muted);
+    padding-left: var(--padding-vertical-lg);
+  }
+
+  .li {
+
+  }
+}

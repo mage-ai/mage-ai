@@ -5,7 +5,7 @@ import { extractProps } from '../../shared/props';
 import { hyphenateCamelCase } from '@utils/string';
 
 export type TextProps = {
-  children: React.ReactNode | string | any;
+  children?: React.ReactNode | string | any;
   className?: string;
   inline?: boolean;
   maxWidth?: number;
