@@ -26,7 +26,10 @@
 
 .base {
   color: var(--link-color-base) !important;
-  text-decoration: underline;
+
+  &:hover {
+    text-decoration: underline;
+  }
 }
 
 .wrap {

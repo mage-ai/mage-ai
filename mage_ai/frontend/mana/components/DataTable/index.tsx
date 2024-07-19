@@ -23,6 +23,7 @@ import { useSticky } from 'react-table-sticky';
 const BASE_ROW_HEIGHT = 20;
 const DEFAULT_COLUMN_WIDTH = BASE_ROW_HEIGHT;
 export const WIDTH_OF_SINGLE_CHARACTER_REGULAR_SM = 10;
+const MIN_WIDTH = 80;
 
 type SharedProps = {
   boundingBox: RectType;
@@ -55,7 +56,7 @@ interface ColumnSetting {
 }
 
 type DataTableProps = {
-  columns: ColumnSetting[];
+  columns: string[];
 } & SharedProps;
 
 const Styles = styled.div`
@@ -262,22 +263,31 @@ function Table({ ...props }: TableProps) {
   }, [columns, indexes, rows]);
 
   const columnWidths = useMemo(() => {
+    const MIN_WIDTH = 80;
     let widthOffset = 0;
-    const total = columns.reduce((acc, col, idx) => {
+
+    const initialWidths = columns.map((col, idx) => {
       if (col.index) {
         widthOffset += indexColumnWidth;
+        return indexColumnWidth;
       }
 
-      return acc + (
-        col.index ? 0 : (columnWidthsRaw[idx] * WIDTH_OF_SINGLE_CHARACTER_REGULAR_SM)
-      );
-    }, 0);
+      const width = columnWidthsRaw[idx] * WIDTH_OF_SINGLE_CHARACTER_REGULAR_SM;
+      return width < MIN_WIDTH ? MIN_WIDTH : width;
+    });
 
-    const den = width - widthOffset;
+    const totalInitialWidths = initialWidths.reduce((acc, width) => acc + width, 0);
+    const remainingWidth = width - widthOffset;
+    const scaleFactor = remainingWidth / totalInitialWidths;
 
-    return columns.map((col, idx) => col.index
-      ? indexColumnWidth
-      : ((columnWidthsRaw[idx] * WIDTH_OF_SINGLE_CHARACTER_REGULAR_SM) / total) * den);
+    return columns.map((col, idx) => {
+      if (col.index) {
+        return indexColumnWidth;
+      }
+
+      const newWidth = initialWidths[idx] * scaleFactor;
+      return newWidth < MIN_WIDTH ? MIN_WIDTH : newWidth;
+    });
   }, [columns, columnWidthsRaw, indexColumnWidth, width]);
 
   const defaultColumn = useMemo(() => {
@@ -295,6 +305,8 @@ function Table({ ...props }: TableProps) {
       width: defaultColumnWidth,
     };
   }, [columnWidths, indexColumnWidth, width]);
+
+  console.log('rowsProcessed', columns);
 
   const {
     getTableBodyProps, getTableProps, headerGroups, prepareRow, rows: rowsProcessed,
@@ -343,6 +355,8 @@ function Table({ ...props }: TableProps) {
               cellStyle.textAlign = 'center';
             } else {
               cellValue = original[idx - indexes[idx]];
+
+              console.log(cellValue);
 
               if (Array.isArray(cellValue) || typeof cellValue === 'object') {
                 try {

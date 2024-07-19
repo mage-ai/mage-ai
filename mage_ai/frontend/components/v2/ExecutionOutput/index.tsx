@@ -40,19 +40,34 @@ export default function ExecutionOutput({
         type,
         uuid,
       }) => {
-        if (Array.isArray(data)) {
-          if (columns.length === 0) {
-            columns.push(...data?.map((_, i) => `col${i}`));
+        if (Array.isArray(data) && data?.length > 0) {
+          const sample = data?.[0];
+
+          if (isObject(sample)) {
+            data.forEach((data2) => {
+              if (columns.length === 0) {
+                columns.push(...Object.keys(data2).map(key => key));
+              }
+
+              rows.push(columns.map((key: string) => {
+                const val2 = data2[key];
+                if (Array.isArray(val2) || isObject(val2)) {
+                  return JSON.stringify(val2, null, 2);
+                }
+                return val2;
+              }));
+            });
+          } else if (Array.isArray(data)) {
+            if (columns.length === 0) {
+              columns.push(...data?.map((_, i) => `col${i}`));
+            }
+            rows.push(data);
           }
-          rows.push(data);
         } else if (isObject(data)) {
           if (columns.length === 0) {
-            columns.push(...Object.keys(data).map(key => ({
-              Header: key,
-              accessor: () => key,
-            })));
+            columns.push(...Object.keys(data).map(key => key));
           }
-          rows.push(columns.map(({ accessor }) => data[accessor()]));
+          rows.push(columns.map((key: string) => data[key]));
         }
       });
 

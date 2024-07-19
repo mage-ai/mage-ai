@@ -637,3 +637,27 @@ embedding_ensembles:
       required: true
       types:
         - list
+
+### spacy_embeddings.py
+
+spacy_embeddings:
+  description: 'Generate embeddings using SpaCy models.'
+  name: 'Spacy'
+  path: transformers/embeddings/spacy_embeddings.py
+  type: transformer
+  inputs:
+    text:
+      style:
+        input_type: null
+        multiline: false
+        monospace: false
+      type: text_field
+  variables:
+    model_name:
+      description: 'Name of the pre-trained SpaCy model.'
+      name: 'Model name'
+      input: text
+      required: true
+      types:
+        - string
+      value: 'en_core_web_sm'  # Default value

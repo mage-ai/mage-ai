@@ -83,6 +83,7 @@ export type BlockNodeProps = {
   buildContextMenuItemsForGroupBlock: (block: BlockType) => MenuItemType[];
   timerStatusRef?: React.RefObject<HTMLDivElement>;
   updateBlock: (event: any, key: string, value: any, opts?: any) => void;
+  teleportIntoBlock: (event: any, target: any) => void;
 } & BlockNode;
 
 export default function BlockNodeComponent({
@@ -102,6 +103,7 @@ export default function BlockNodeComponent({
   openEditor,
   submitCodeExecution,
   updateBlock,
+  teleportIntoBlock,
 }: BlockNodeProps & DragAndDropHandlersType & SharedBlockProps) {
   const { name, status, type, uuid } = block;
 
@@ -426,6 +428,7 @@ export default function BlockNodeComponent({
                   block={block}
                   group={group}
                   key={uuid}
+                  teleportIntoBlock={teleportIntoBlock}
                   template={template}
                   updateBlock={updateBlock}
                   uuid={uuid}
@@ -433,7 +436,7 @@ export default function BlockNodeComponent({
               ),
           ),
       ),
-    [block, groups, updateBlock],
+    [block, groups, updateBlock, teleportIntoBlock],
   );
 
   const titleRow = useMemo(
@@ -492,6 +495,7 @@ export default function BlockNodeComponent({
               <BlockGroupOverview
                 block={block as FrameworkType}
                 buildContextMenuItemsForGroupBlock={buildContextMenuItemsForGroupBlock}
+                teleportIntoBlock={teleportIntoBlock}
               />
             ) : (
               <Grid rowGap={8} templateRows="auto">
@@ -567,6 +571,7 @@ export default function BlockNodeComponent({
       // connectionRows,
       templateConfigurations,
       titleRow,
+      teleportIntoBlock,
       after,
       contentCode,
       isGroup,

@@ -4,6 +4,7 @@ import { MenuItemType } from '@mana/components/Menu/interfaces';
 import { EventContext } from '../../../Apps/PipelineCanvas/Events/EventContext';
 import GradientContainer from '@mana/elements/Gradient';
 import Grid from '@mana/components/Grid';
+import Link from '@mana/elements/Link';
 import PanelRows from '@mana/elements/PanelRows';
 import Text from '@mana/elements/Text';
 import {
@@ -24,11 +25,13 @@ import { useContext, useMemo } from 'react';
 type BlockOverviewProps = {
   block: FrameworkType;
   buildContextMenuItemsForGroupBlock: (block: BlockType) => MenuItemType[];
+  teleportIntoBlock: (event: any, target: any) => void;
 };
 
 export default function BlockGroupOverview({
   block,
   buildContextMenuItemsForGroupBlock,
+  teleportIntoBlock,
 }: BlockOverviewProps) {
   const { blockMappingRef, blocksByGroupRef, groupMappingRef } = useContext(ModelContext);
   const { layoutConfigs, selectedGroupsRef } = useContext(SettingsContext);
@@ -339,9 +342,16 @@ export default function BlockGroupOverview({
                 templateColumns="auto"
                 templateRows="1fr"
               >
-                <Text medium secondary={!valid} small>
+                <Link
+                  medium
+                  onClick={event => teleportIntoBlock(event, group2)}
+                  preventDefault
+                  secondary={!valid}
+                  small
+                  wrap
+                >
                   {name ?? uuid2}
-                </Text>
+                </Link>
               </Grid>
             </Grid>
           </GradientContainer>

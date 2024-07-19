@@ -160,7 +160,7 @@ export function menuItemsForTemplates(block, handleOnClick) {
       uuid: 'custom',
     });
 
-    return arr;
+    return sortByKey(arr, t => t.label());
   }
 
   function extractTemplatesFromChidlren(block: FrameworkType) {

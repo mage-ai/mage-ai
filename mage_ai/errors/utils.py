@@ -1,33 +1,24 @@
 import sys
 import traceback
-from contextlib import contextmanager
-from io import StringIO
-from typing import Callable, Dict, Optional
+from typing import Dict
 
 
-@contextmanager
-def capture_error(error_callback: Optional[Callable] = None):
-    # Create a StringIO object to capture the error
-    error_capture = StringIO()
-    original_stderr = sys.stderr
-    sys.stderr = error_capture
-
-    try:
-        yield
-    except Exception as err:
-        if error_callback:
-            error_callback(serialize_error(err))
-    finally:
-        sys.stderr = original_stderr
+def filter_traceback(stacktrace, code_filename='<string>'):
+    filtered_stacktrace = []
+    for line in stacktrace:
+        if code_filename in line:
+            filtered_stacktrace.append(line)
+    return filtered_stacktrace
 
 
 def serialize_error(error: Exception) -> Dict:
     exc_type, exc_value, exc_tb = sys.exc_info()
 
-    # stacktrace = traceback.format_exc().splitlines()
-    stacktrace = traceback.format_tb(error.__traceback__)
+    # Capture the full traceback (all frames leading to the error)
+    stacktrace = traceback.format_exception(exc_type, exc_value, exc_tb)
     message = repr(error)
     stacktrace_formatted, message_formatted = format_and_colorize_stacktrace(stacktrace, message)
+
     return dict(
         error=error,
         message=message,
@@ -43,12 +34,9 @@ def format_and_colorize_stacktrace(stacktrace, message):
     red = '\033[91m'
     green = '\033[92m'
     yellow = '\033[93m'
-    # blue = '\033[94m'
-    # magenta = '\033[95m'
     cyan = '\033[96m'
     bright_black = '\033[90m'
     bold = '\033[1m'
-    # underline = '\033[4m'
     reset = '\033[0m'
     error_msg_color = '\033[91m'
 
@@ -73,6 +61,6 @@ def format_and_colorize_stacktrace(stacktrace, message):
         else:
             formatted_lines.append(f'{bright_black}{line}{reset}')
 
-    formatted_message = f'{error_msg_color}{message}{reset}' if message else ''
+    formatted_lines.append(f'{error_msg_color}{message}{reset}')
 
-    return formatted_lines, formatted_message
+    return formatted_lines, message

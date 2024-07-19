@@ -60,6 +60,7 @@ import { setNested } from '@utils/hash';
 import { SettingsContext } from '@components/v2/Apps/PipelineCanvas/SettingsManager/SettingsContext';
 import Divider from '@mana/elements/Divider';
 import { gridTemplateColumns } from 'styled-system';
+import { FrameworkType, PipelineExecutionFrameworkBlockType } from '@interfaces/PipelineExecutionFramework/interfaces';
 
 type BlockNodeType = {
   block: BlockType;
@@ -772,6 +773,16 @@ function BlockNode(
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const teleportIntoBlock = useCallback((
+    event: ClientEventType,
+    target: BlockType | PipelineExecutionFrameworkBlockType | FrameworkType,
+  ) => {
+    event?.preventDefault();
+    setSelectedGroup(target);
+    removeContextMenu(event);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const buildContextMenuItemsForGroupBlock = useCallback(
     (block2: BlockType) => [
       {
@@ -818,17 +829,13 @@ function BlockNode(
             { divider: true },
             {
               Icon: OpenInSidekick,
-              onClick: (event: ClientEventType) => {
-                event?.preventDefault();
-                setSelectedGroup(block2);
-                removeContextMenu(event);
-              },
+              onClick: event => teleportIntoBlock(event, block2),
               uuid: 'Teleport into group',
             },
           ]),
     ],
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [mutations.pipelines.update, groupSelection, removeContextMenu, setSelectedGroup],
+    [mutations.pipelines.update, groupSelection, removeContextMenu, setSelectedGroup, teleportIntoBlock],
   );
 
   return (
@@ -922,6 +929,7 @@ function BlockNode(
             openOutput: true,
           })
         }
+        teleportIntoBlock={teleportIntoBlock}
         timerStatusRef={timerStatusRef}
         updateBlock={updateBlock}
       />

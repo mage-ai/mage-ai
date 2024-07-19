@@ -106,7 +106,7 @@ function EditorAppNode({
     configurations: {
       dimension: {
         height: 500,
-        width: 400,
+        width: 600,
       },
       folding: true,
       glyphMargin: true,

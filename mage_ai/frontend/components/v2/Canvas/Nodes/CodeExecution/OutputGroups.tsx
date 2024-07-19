@@ -190,8 +190,6 @@ const OutputGroups: React.FC<OutputGroupsProps> = ({
     return arr?.[arr.length - 1];
   }, [executing]);
 
-  const maxHeight = 1000;
-
   return onlyShowWithContent && (keysRef.current?.length ?? 0) === 0 ? null : (
     <div
       className={stylesOutput.outputContainer}
@@ -210,7 +208,7 @@ const OutputGroups: React.FC<OutputGroupsProps> = ({
         hideX
         ref={scrollableDivRef}
         showY
-        style={{ maxHeight, overflow: 'auto' }}
+        style={{ maxHeight: 600, overflow: 'auto' }}
       >
         <Grid rowGap={16} templateRows="min-content">
           {keysRef.current?.map((mrUUID: string, idx: number) => {

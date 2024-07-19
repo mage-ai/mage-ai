@@ -30,7 +30,7 @@ export default function useCustomEventHandler(
 
         const EventClass = options?.baseEvent ?? CustomAppEvent;
         const event = new EventClass(type, detail, args);
-        console.log('dispatchCustomEvent:', type, detail, args, event);
+        // console.log('dispatchCustomEvent:', type, detail, args, event);
 
         DEBUG.events.handler && console.log('dispatchCustomEvent:', detail?.dispatcher, event);
 

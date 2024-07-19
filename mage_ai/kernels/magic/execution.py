@@ -3,6 +3,7 @@ import asyncio
 import inspect
 import json
 import os
+import traceback
 from asyncio import Event as AsyncEvent
 from contextlib import contextmanager, redirect_stdout
 from multiprocessing import Queue
@@ -11,6 +12,7 @@ from threading import Event
 from typing import Any, Callable, Dict, Iterable, Optional
 
 from mage_ai.errors.models import ErrorDetails
+from mage_ai.errors.utils import filter_traceback
 from mage_ai.kernels.magic.constants import ExecutionStatus, ResultType
 from mage_ai.kernels.magic.environments.models import OutputManager
 from mage_ai.kernels.magic.models import ExecutionResult, ProcessContext, ProcessDetails
@@ -28,8 +30,10 @@ def is_debug():
 def set_node_line_numbers(node: ast.AST, lineno: int, col_offset: int):
     for n in ast.walk(node):
         if isinstance(n, ast.AST):
-            n.lineno = lineno
-            n.col_offset = col_offset
+            if hasattr(n, 'lineno'):
+                n.lineno = lineno
+            if hasattr(n, 'col_offset'):
+                n.col_offset = col_offset
 
 
 async def modify_and_execute(
@@ -94,7 +98,10 @@ async def modify_and_execute(
             if res and inspect.isawaitable(res):
                 res = await res
     except Exception as err:
-        error = err
+        tb = traceback.format_exception(type(err), err, err.__traceback__)
+        filtered_tb = filter_traceback(tb)
+        error_message = f"Caught an error in executed code:\n{''.join(filtered_tb)}"
+        raise Exception(error_message) from err
 
     local_variables.update({
         key: value for key, value in (execution_variables or {}).items() if key != '__builtins__'

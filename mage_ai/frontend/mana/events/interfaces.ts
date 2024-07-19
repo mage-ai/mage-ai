@@ -53,18 +53,12 @@ const supportsKeyboardEvent = typeof KeyboardEvent !== 'undefined';
 // Extend KeyboardEvent and add custom properties
 export class CustomKeyboardEvent<T = any> extends (supportsKeyboardEvent ? KeyboardEvent : Event) {
   detail: T;
+  key: any;
 
-  constructor(type: string, init: KeyboardEventInit & { detail?: T; key?: any } = {}) {
-    super(type, init);
-    const { detail, key } = init;
+  constructor(type: any, detail: T, args?: any[]) {
+    super(type);
     this.detail = detail || ({} as T);
-    if (key !== undefined) {
-      // If key is provided, override the base class key property
-      Object.defineProperty(this, 'key', {
-        value: key,
-        enumerable: true,
-      });
-    }
+    [this.key] = args ?? [];
   }
 }
 

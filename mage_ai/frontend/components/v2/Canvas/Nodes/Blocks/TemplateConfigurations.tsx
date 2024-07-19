@@ -19,11 +19,13 @@ export default function TemplateConfigurations({
   block,
   group,
   template,
+  teleportIntoBlock,
   updateBlock,
   uuid,
 }: {
   group: PipelineExecutionFrameworkBlockType;
   template: TemplateType;
+  teleportIntoBlock: (event: any, target: any) => void;
   uuid: string;
 } & SharedBlockProps) {
   const { inputs, variables } = group?.configuration?.templates?.[uuid] ?? {};

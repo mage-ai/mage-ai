@@ -1,5 +1,3 @@
-import sys
-import traceback
 from dataclasses import dataclass
 from typing import List, Optional
 
@@ -18,23 +16,18 @@ class ErrorDetails(BaseDataClass):
 
     @classmethod
     def from_current_error(cls, error: Exception):
-        exc_type, exc_value, exc_tb = sys.exc_info()
-        errors = traceback.format_exception(exc_type, exc_value, exc_tb)
+        data = serialize_error(error)
 
         if is_debug():
-            exc_type, exc_value, exc_tb = sys.exc_info()
-            tb_str = ''.join(traceback.format_exception(exc_type, exc_value, exc_tb))
-            print(f'Exception type: {exc_type.__name__ if exc_type else None}')
-            print(f'Exception message: {exc_value}')
-            print(errors)
-            print('Stack trace:')
+            tb_str = ''.join(data.get('stacktrace_formatted', []))
+            print(f'Exception type: {data["type"]}')
+            print(f'Exception message: {data["message"]}')
+            print('Filtered stack trace:')
             print(tb_str)
-
-        data = serialize_error(error)
 
         return cls.load(
             code=ErrorCode.CODE_500,
-            errors=data['stacktrace_formatted'],
-            message=data['message_formatted'],
-            type=data['type'],
+            errors=data.get('stacktrace_formatted'),
+            message=data.get('message_formatted'),
+            type=data.get('type'),
         )
