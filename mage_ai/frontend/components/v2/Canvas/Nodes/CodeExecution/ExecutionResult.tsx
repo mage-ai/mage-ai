@@ -135,6 +135,20 @@ function ExecutionResult(
             // uuid: processUuid,
           } = resultProcess;
 
+          if (ResultType.OUTPUT === resultType) {
+            if (executionOutput) {
+              return acc;
+            } else {
+              return acc.concat(
+                <Grid alignItems="center" columnGap={8} data-message-request-uuid={groupUUID} templateColumns="1fr" templateRows="auto">
+                  <Link onClick={() => getOutput()} xsmall>
+                    Load output
+                  </Link>
+                </Grid>,
+              );
+            }
+          }
+
           const isFinalOutput =
             ResultType.DATA === resultType && ExecutionStatusEnum.SUCCESS === status;
 
@@ -185,7 +199,7 @@ function ExecutionResult(
           );
         }, [],
       ),
-    [displayLocalTimezone, results],
+    [displayLocalTimezone, executionOutput, results],
   );
 
   const runtime = useMemo(() => (timestamps?.max ?? 0) - (timestamps?.min ?? 0), [timestamps]);
@@ -234,7 +248,7 @@ function ExecutionResult(
       }
       ref={ref}
     >
-      {resultsInformation?.length > 0 && (
+      {(resultsInformation?.length > 0 || executionOutput) && (
         <Grid paddingBottom={last ? 6 : 0} paddingTop={first ? 6 : 0} rowGap={4}>
           <Grid autoFlow="column" columnGap={8} justifyContent="space-between">
             <Text monospace muted xsmall>
@@ -263,7 +277,7 @@ function ExecutionResult(
                 styles.executionOutputGroupContainer,
               ].filter(Boolean).join(' ')}
               style={{
-                minHeight: hasOutput ? 40 : undefined,
+                minHeight: hasOutput ? 32 : undefined,
               }}
             >
               {resultsInformation}
@@ -275,7 +289,6 @@ function ExecutionResult(
                 const type = error?.type;
 
                 return (
-
                   <Grid key={resultID} rowGap={12} templateColumns="auto" templateRows="auto auto">
                     <Text monospace semibold small>
                       <Ansi>{String(message)}</Ansi>
@@ -304,12 +317,6 @@ function ExecutionResult(
                   </Grid>
                 );
               })}
-
-              {hasOutput && !executionOutput && (
-                <Link onClick={() => getOutput()} xsmall>
-                  Load output
-                </Link>
-              )}
             </Grid>
           </Scrollbar>
 
