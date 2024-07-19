@@ -255,8 +255,8 @@ export function standardDeviation(arr, usePopulation = false) {
   );
 }
 
-export function randomSample(items) {
-  return items[Math.floor(Math.random() * items.length)];
+export function randomSample(items, count?: number) {
+  return items[Math.floor(Math.random() * (count ?? items.length))];
 }
 
 export function intersection(arr1: any[], arr2: any[], parser?: (item: any) => any): any[] {

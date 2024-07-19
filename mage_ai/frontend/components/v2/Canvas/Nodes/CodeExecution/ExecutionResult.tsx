@@ -22,6 +22,7 @@ import { ExecutionOutputType } from '@interfaces/CodeExecutionType';
 import Loading from '@mana/components/Loading';
 
 export type ExecutionResultProps = {
+  containerRect?: DOMRect;
   executionOutput?: ExecutionOutputType;
   first?: boolean;
   last?: boolean;
@@ -48,6 +49,7 @@ export type ExecutionResultProps = {
 
 function ExecutionResult(
   {
+    containerRect,
     executionOutput: executionOutputProp,
     fetchOutput,
     first,
@@ -266,8 +268,6 @@ function ExecutionResult(
             >
               {resultsInformation}
 
-              {executionOutput && <ExecutionOutput executionOutput={executionOutput} />}
-
               {resultsErrors && resultsErrors?.map(({ error, result_id: resultID }) => {
                 const code = error?.code;
                 const errors = error?.errors;
@@ -291,35 +291,37 @@ function ExecutionResult(
                       )}
 
                     {errors?.length >= 1 && (
-                    <pre
-                          style={{
-                            whiteSpace: 'break-spaces',
-                          }}
-                        >
-                      <Text inline monospace small>
-                        {errors?.map((line: string) => <Ansi key={line}>{line}</Ansi>)}
-                      </Text>
-                    </pre>
-                      )}
+                      <pre
+                        style={{
+                          whiteSpace: 'break-spaces',
+                        }}
+                      >
+                        <Text inline monospace small>
+                          {errors?.map((line: string) => <Ansi key={line}>{line}</Ansi>)}
+                        </Text>
+                      </pre>
+                    )}
                   </Grid>
                 );
               })}
+
+              {hasOutput && !executionOutput && (
+                <Link onClick={() => getOutput()} xsmall>
+                  Load output
+                </Link>
+              )}
             </Grid>
           </Scrollbar>
+
+          {executionOutput && <ExecutionOutput containerRect={containerRect} executionOutput={executionOutput} />}
 
           <div>
             <div style={{ height: 4 }}>{loading && <Loading position="absolute" />}</div>
 
             <Grid autoFlow="column" columnGap={8} justifyContent="space-between">
-              {hasOutput && !executionOutput ? (
-                <Link onClick={() => getOutput()} xsmall>
-                  Load output
-                </Link>
-              ) : (
-                <div />
-              )}
+              <div />
 
-              <Text monospace muted small>
+              <Text monospace muted xsmall>
                 {formatDurationFromEpoch(runtime)}
               </Text>
             </Grid>

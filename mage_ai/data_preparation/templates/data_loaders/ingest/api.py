@@ -40,5 +40,5 @@ def ingest_api_data(*args, **kwargs) -> List[Dict]:
     )
     response.raise_for_status()
 
-    return response.json()
+    return [response.json()]
 {% endblock %}

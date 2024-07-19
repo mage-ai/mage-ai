@@ -174,7 +174,7 @@ const OutputGroups: React.FC<OutputGroupsProps> = ({
       scrollDown();
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [scrollDown]);
+  }, []);
 
   const statusRecent = useMemo(() => {
     if (!executing) return;
@@ -185,6 +185,8 @@ const OutputGroups: React.FC<OutputGroupsProps> = ({
 
     return arr?.[arr.length - 1];
   }, [executing]);
+
+  const maxHeight = 1000;
 
   return onlyShowWithContent && (keysRef.current?.length ?? 0) === 0 ? null : (
     <div
@@ -204,7 +206,7 @@ const OutputGroups: React.FC<OutputGroupsProps> = ({
         hideX
         ref={scrollableDivRef}
         showY
-        style={{ maxHeight: 400, overflow: 'auto' }}
+        style={{ maxHeight, overflow: 'auto' }}
       >
         <Grid rowGap={16} templateRows="min-content">
           {keysRef.current?.map((mrUUID: string, idx: number) => {
@@ -212,6 +214,7 @@ const OutputGroups: React.FC<OutputGroupsProps> = ({
 
             return (
               <ExecutionResult
+                containerRect={scrollableDivRef.current?.getBoundingClientRect()}
                 executionOutput={executionOutputMapping?.[mrUUID]}
                 fetchOutput={fetchOutput}
                 first={idx === 0}

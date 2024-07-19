@@ -18,10 +18,10 @@ export interface RectType {
   children?: any[];
   height?: any;
   id?: any;
-  left: any;
+  left?: any;
   parent?: any;
   right?: any;
-  top: any;
+  top?: any;
   upstream?: any[];
   width?: any;
   zIndex?: any;

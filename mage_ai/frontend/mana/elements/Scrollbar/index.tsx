@@ -71,6 +71,9 @@ function Scrollbar(
       autoHorizontalPadding={autoHorizontalPadding}
       hideXscrollbar={hideXscrollbar}
       isOverflowing={isOverflowing}
+      onWheel={(e) => {
+        e.stopPropagation();
+      }}
       ref={ref || outterRef}
     >
       <InnerStyled ref={innerRef}>{children}</InnerStyled>

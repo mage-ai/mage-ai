@@ -1,6 +1,9 @@
 import { BackgroundsType, ColorsType } from './colors';
 import { BorderRadius } from './borders';
 
+export const SCROLLBAR_THUMB_WIDTH = 4;
+export const SCROLLBAR_TRACK_WIDTH = 6;
+
 export interface ScrollbarsType {
   background: BackgroundsType['scrollbar'];
   border: {
@@ -25,8 +28,8 @@ export default function build(colors: ColorsType): ScrollbarsType {
       },
     },
     width: {
-      thumb: 4,
-      track: 6,
+      thumb: SCROLLBAR_THUMB_WIDTH,
+      track: SCROLLBAR_TRACK_WIDTH,
     },
   };
 }

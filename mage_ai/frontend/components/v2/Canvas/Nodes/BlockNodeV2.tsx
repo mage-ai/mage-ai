@@ -151,6 +151,8 @@ function BlockNode(
         resultsInit: ExecutionResultType[],
         executionOutput?: ExecutionOutputType,
       ) => {
+        if (event.metaKey) return;
+
         event.preventDefault();
         event.stopPropagation();
         handleContextMenu(
@@ -599,8 +601,6 @@ function BlockNode(
       ?? modeColor ?? groupColor;
     const bdnc = getBlockColor(bdn?.type, { getColorName: true })?.names?.base
       ?? downstreamInGroup?.[0]?.colorName;
-
-    console.log(bup, bdn, block);
 
     return (
       label && (
