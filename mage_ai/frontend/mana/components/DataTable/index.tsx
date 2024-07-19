@@ -20,9 +20,9 @@ import { isObject } from '@utils/hash';
 import { randomSample, range, sum, transpose } from '@utils/array';
 import { useSticky } from 'react-table-sticky';
 
-const BASE_ROW_HEIGHT = 20 + (PaddingEnum.XS * 2);
+const BASE_ROW_HEIGHT = 20;
 const DEFAULT_COLUMN_WIDTH = BASE_ROW_HEIGHT;
-export const WIDTH_OF_SINGLE_CHARACTER_MONOSPACE = 10;
+export const WIDTH_OF_SINGLE_CHARACTER_REGULAR_SM = 10;
 
 type SharedProps = {
   boundingBox: RectType;
@@ -93,6 +93,10 @@ const Styles = styled.div`
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
+
+      &.th-monospace {
+        font-family: var(--fonts-family-monospace-regular);
+      }
     }
 
     .th,
@@ -106,11 +110,17 @@ const Styles = styled.div`
       line-height: var(--fonts-lineheight-sm);
       margin: 0;
       padding: var(--padding-xs);
-      word-break: break-all;
+      white-space: break-spaces;
+      word-break: break-word;
     }
+
 
     .td {
       color: var(--fonts-color-text-base);
+
+      &.td-monospace {
+        font-family: var(--fonts-family-monospace-regular);
+      }
     }
 
     &.sticky {
@@ -144,11 +154,11 @@ function estimateCellHeight({
     original.forEach((val, idx) => {
       const wLimit = columnWidths[idx + indexes[idx]];
 
-      const vals = String(val).split('\n');
+      const vals = String(val).trim().split('\n');
 
       let numberOfLines = 0;
       vals.forEach((v) => {
-        const wTotal = String(v).length * WIDTH_OF_SINGLE_CHARACTER_MONOSPACE;
+        const wTotal = String(v).length * WIDTH_OF_SINGLE_CHARACTER_REGULAR_SM;
         numberOfLines += Math.ceil(wTotal / wLimit);
       });
 
@@ -156,8 +166,7 @@ function estimateCellHeight({
     });
   }
 
-
-  return Math.max(...heights, BASE_ROW_HEIGHT);
+  return Math.max(...heights, BASE_ROW_HEIGHT) + (PaddingEnum.XS * 2) + 2;
 }
 
 function getVariableListHeight(
@@ -230,7 +239,7 @@ function Table({ ...props }: TableProps) {
 
   const rowCount = useMemo(() => rows.length, [rows]);
   const indexColumnWidth =
-    useMemo(() => (String(rowCount).length * WIDTH_OF_SINGLE_CHARACTER_MONOSPACE) + (PaddingEnum.XS * 2), [rowCount]);
+    useMemo(() => (String(rowCount).length * WIDTH_OF_SINGLE_CHARACTER_REGULAR_SM) + (PaddingEnum.XS * 2), [rowCount]);
 
   const indexes =
     columns.reduce((acc, col, idx) => acc.concat(
@@ -260,7 +269,7 @@ function Table({ ...props }: TableProps) {
       }
 
       return acc + (
-        col.index ? 0 : (columnWidthsRaw[idx] * WIDTH_OF_SINGLE_CHARACTER_MONOSPACE)
+        col.index ? 0 : (columnWidthsRaw[idx] * WIDTH_OF_SINGLE_CHARACTER_REGULAR_SM)
       );
     }, 0);
 
@@ -268,7 +277,7 @@ function Table({ ...props }: TableProps) {
 
     return columns.map((col, idx) => col.index
       ? indexColumnWidth
-      : ((columnWidthsRaw[idx] * WIDTH_OF_SINGLE_CHARACTER_MONOSPACE) / total) * den);
+      : ((columnWidthsRaw[idx] * WIDTH_OF_SINGLE_CHARACTER_REGULAR_SM) / total) * den);
   }, [columns, columnWidthsRaw, indexColumnWidth, width]);
 
   const defaultColumn = useMemo(() => {
@@ -357,7 +366,10 @@ function Table({ ...props }: TableProps) {
             return (
               <div
                 {...cellProps}
-                className={`td ${settings?.index ? 'td-index-column' : ''}`}
+                className={[
+                  `td ${settings?.index ? 'td-index-column' : ''}`,
+                  'td-monospace',
+                ].filter(Boolean).join(' ')}
                 key={`${idx}-${cellValue}`}
                 style={cellStyle}
               >
@@ -428,7 +440,7 @@ function Table({ ...props }: TableProps) {
       return (
         <div
           {...columnProps}
-          className="th"
+          className="th th-monospace"
           key={column.id}
           style={columnStyle}
           title={settings.index ? 'Row number' : undefined}

@@ -30,7 +30,7 @@ export default function ExecutionOutput({
     }
 
     const types = countOccurrences(output?.map(o => o.type));
-    const typeMode = sortByKey(Object.entries(types), t => t[1])[0][0];
+    const typeMode = sortByKey(Object.entries(types), t => t?.[1])?.[0]?.[0];
 
     if (VariableTypeEnum.ITERABLE === typeMode) {
       const columns = [];
@@ -67,7 +67,7 @@ export default function ExecutionOutput({
           columns={columns}
           rect={{
             height: maxHeight,
-            width: 600,
+            width: 1200,
           }}
           rows={rows}
         />

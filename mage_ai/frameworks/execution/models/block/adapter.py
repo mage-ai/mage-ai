@@ -39,7 +39,6 @@ class Block(DelegatorTarget):
                     template = configuration.templates[template_uuid]
                     if template:
                         payload.update(template.setup_block_config(payload))
-                        print('CHECK2', payload)
 
         if not payload.get('type'):
             raise Exception('Block type is required')

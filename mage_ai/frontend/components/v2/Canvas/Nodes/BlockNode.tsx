@@ -540,6 +540,7 @@ export default function BlockNodeComponent({
                       smallTop
                       style={{
                         gridTemplateColumns: 'minmax(0px, max-content) auto',
+                        minWidth: 240,
                       }}
                     >
                       <Text secondary small>

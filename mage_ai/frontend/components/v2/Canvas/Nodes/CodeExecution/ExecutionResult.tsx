@@ -119,6 +119,18 @@ function ExecutionResult(
     [results],
   );
 
+  const status = useMemo(() => {
+    if (resultsErrors?.length > 0) {
+      return ExecutionStatusEnum.ERROR;
+    }
+
+    if (success) {
+      return ExecutionStatusEnum.SUCCESS;
+    }
+
+    return results?.find(r => ResultType.STATUS === r.type)?.status;
+  }, [results, resultsErrors, success]);
+
   const resultsInformation = useMemo(
     () =>
       results?.reduce(
@@ -133,7 +145,7 @@ function ExecutionResult(
             output_text: outputText,
             process: resultProcess,
             result_id: resultID,
-            status,
+            status: resultStatus,
             timestamp,
             type: resultType,
             // uuid: resultUuid,
@@ -157,9 +169,14 @@ function ExecutionResult(
           if (ResultType.OUTPUT === resultType) {
             if (executionOutput) {
               return acc;
-            } else {
+            } else if (ExecutionStatusEnum.ERROR !== status) {
               return acc.concat(
-                <Grid alignItems="center" columnGap={8} data-message-request-uuid={groupUUID} templateColumns="1fr" templateRows="auto">
+                <Grid alignItems="center"
+                  columnGap={8}
+                  data-message-request-uuid={groupUUID}
+                  templateColumns="1fr"
+                  templateRows="auto"
+                >
                   <Link onClick={() => getOutput()} xsmall>
                     Load output
                   </Link>
@@ -169,7 +186,7 @@ function ExecutionResult(
           }
 
           const isFinalOutput =
-            ResultType.DATA === resultType && ExecutionStatusEnum.SUCCESS === status;
+            ResultType.DATA === resultType && ExecutionStatusEnum.SUCCESS === resultStatus;
 
           return acc.concat(
             <TooltipWrapper
@@ -218,7 +235,7 @@ function ExecutionResult(
           );
         }, [],
       ),
-    [displayLocalTimezone, executionOutput, getOutput, results],
+    [displayLocalTimezone, executionOutput, getOutput, results, status],
   );
 
   const runtime = useMemo(() => (timestamps?.max ?? 0) - (timestamps?.min ?? 0), [timestamps]);
@@ -229,18 +246,6 @@ function ExecutionResult(
     }
   }, [executionOutput, executionOutputProp]);
 
-  const status = useMemo(() => {
-    if (resultsErrors?.length > 0) {
-      return ExecutionStatusEnum.ERROR;
-    }
-
-    if (success) {
-      return ExecutionStatusEnum.SUCCESS;
-    }
-
-    return results?.find(r => ResultType.STATUS === r.type)?.status;
-  }, [results, resultsErrors, success]);
-
   return (
     <div
       onContextMenu={
@@ -250,7 +255,7 @@ function ExecutionResult(
       }
       ref={ref}
     >
-      {(resultsInformation?.length > 0 || executionOutput) && (
+      {(resultsInformation?.length > 0 || executionOutput || resultsErrors?.length > 0) && (
         <Grid paddingBottom={last ? 6 : 0} paddingTop={first ? 6 : 0} rowGap={4}>
           <Grid autoFlow="column" columnGap={8} justifyContent="space-between">
             <Text monospace muted xsmall>
@@ -265,7 +270,7 @@ function ExecutionResult(
             </Text>
           </Grid>
 
-          {resultsInformation?.length > 0 && (
+          {(resultsInformation?.length > 0 || resultsErrors?.length > 0) && (
             <Scrollbar
               autoHorizontalPadding
               className={[
