@@ -1,13 +1,14 @@
 import { DEBUG } from '../utils/debug';
 import { EventEnum } from './enums';
+import { CustomAppEvent } from './interfaces';
 import { useCallback, useEffect, useRef } from 'react';
 
 type DispatchCustomEvent = (type: EventEnum, detail?: any, args?: any | any[]) => void;
 type CustomEventHandlerOptions = {
   baseEvent?: any;
   eventListenerTarget?: {
-    addEventListener: (type: string, handler: (event: CustomEvent) => void) => void;
-    removeEventListener: (type: string, handler: (event: CustomEvent) => void) => void;
+    addEventListener: (type: string, handler: (event: CustomAppEvent) => void) => void;
+    removeEventListener: (type: string, handler: (event: CustomAppEvent) => void) => void;
   };
 };
 
@@ -17,7 +18,7 @@ export interface CustomEventHandler {
 
 export default function useCustomEventHandler(
   client: any,
-  subscriptions?: Record<any, (event: CustomEvent) => void>,
+  subscriptions?: Record<any, (event: CustomAppEvent) => void>,
   options?: CustomEventHandlerOptions,
 ): CustomEventHandler {
   const subscriptionsRef = useRef<any>({});
@@ -27,12 +28,13 @@ export default function useCustomEventHandler(
       function _dispatch(type: EventEnum, detail?: any, args?: any | any[]) {
         if (typeof window === 'undefined') return;
 
-        const EventClass = options?.baseEvent ?? CustomEvent;
+        const EventClass = options?.baseEvent ?? CustomAppEvent;
         const event = new EventClass(type, detail, args);
+        console.log('dispatchCustomEvent:', type, detail, args, event);
 
         DEBUG.events.handler && console.log('dispatchCustomEvent:', detail?.dispatcher, event);
 
-        window.dispatchEvent(event as CustomEvent);
+        window.dispatchEvent(event as CustomAppEvent);
       }
 
       _dispatch(
@@ -49,7 +51,7 @@ export default function useCustomEventHandler(
 
   useEffect(() => {
     Object.entries(subscriptions ?? {})?.forEach(([type, handler]) => {
-      const handle = (event: CustomEvent) => {
+      const handle = (event: CustomAppEvent) => {
         handler(event);
       };
       subscriptionsRef.current[type] = handle;
@@ -60,12 +62,12 @@ export default function useCustomEventHandler(
       options?.eventListenerTarget ?? typeof window !== 'undefined' ? window : null;
 
     Object.entries(subs ?? {})?.forEach(([type, handle]) => {
-      subscriber?.addEventListener(type as any, handle as any);
+      subscriber?.addEventListener(type as EventEnum, handle as any);
     });
 
     return () => {
       Object.entries(subs ?? {})?.forEach(([type, handle]) => {
-        subscriber?.removeEventListener(type as any, handle as any);
+        subscriber?.removeEventListener(type as EventEnum, handle as any);
       });
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps

@@ -1,9 +1,12 @@
+.executionOutputGroupContainer {
+  padding: var(--padding-sm);
+}
+
 .executionOutputGroup {
   border-color: var(--colors-greenmd);
   border-radius: var(--borders-radius-sm);
   border-style: var(--borders-style);
   border-width: var(--borders-width);
-  padding: var(--padding-sm);
 
   &.cancelled {
     border-color: var(--colors-yellow);

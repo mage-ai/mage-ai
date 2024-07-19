@@ -1,4 +1,4 @@
-import { ExecutionOutputType } from '@interfaces/CodeExecutionType';
+import { ExecutionOutputType, VariableTypeEnum } from '@interfaces/CodeExecutionType';
 import Ansi from 'ansi-to-react';
 import Text from '@mana/elements/Text';
 
@@ -10,6 +10,7 @@ export default function ExecutionOutput({
   executionOutput,
 }: ExecutionOutputProps) {
   const { output } = executionOutput;
+
   return (
     <div>
       <Text monospace small>

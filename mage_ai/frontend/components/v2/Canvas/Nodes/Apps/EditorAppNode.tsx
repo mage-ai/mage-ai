@@ -347,7 +347,7 @@ function EditorAppNode({
                   <Grid rowGap={PADDING_HORIZONTAL / 2}>
                     <Button asLink onClick={event => alert('Edit')}>
                       <Text monospace small>
-                        {block?.configuration?.file_source?.path}
+                        {file?.path ?? block?.configuration?.file_source?.path}
                       </Text>
                     </Button>
                   </Grid>

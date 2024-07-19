@@ -5,10 +5,12 @@ import scrollbars, { InnerStyled, ScrollbarsStyledProps } from '../../styles/scr
 
 type ScrollbarProps = {
   autoHorizontalPadding?: boolean;
+  className?: string;
   children: React.ReactNode;
 } & ScrollbarsStyledProps;
 
-const ScrollbarStyled = styled.div<{ autoHorizontalPadding: boolean; isOverflowing: boolean, hideXscrollbar?: boolean }>`
+const ScrollbarStyled =
+  styled.div<{ autoHorizontalPadding: boolean; isOverflowing: boolean, hideXscrollbar?: boolean }>`
   ${scrollbars}
 
   ${({

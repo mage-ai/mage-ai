@@ -12,6 +12,7 @@ import { MenuItemType } from '@mana/hooks/useContextMenu';
 import { getCache, deleteCache, updateCache } from './storage';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import useKeyboardShortcuts from '../../hooks/shortcuts/useKeyboardShortcuts';
+import { KeyEnum } from '@mana/events/enums';
 
 type NavigationButtonGroupProps = {
   buildGroups?: (onClick: ItemClickHandler) => MenuItemType[];
@@ -138,11 +139,11 @@ export default function NavigationButtonGroup({
                 index = selectedGroupsByLevel?.length - 1;
               }
               selectedButtonIndexRef.current = index;
-              openMenu();
             }
+            openMenu();
           },
           predicate: {
-            key: 'ARROWDOWN',
+            key: KeyEnum.ARROWDOWN,
             metaKey: true,
           },
         },

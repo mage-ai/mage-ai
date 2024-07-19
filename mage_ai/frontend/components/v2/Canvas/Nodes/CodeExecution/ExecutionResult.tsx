@@ -3,6 +3,7 @@ import EventStreamType, {
   ExecutionResultType,
   ExecutionStatusEnum,
 } from '@interfaces/EventStreamType';
+import Scrollbar from '@mana/elements/Scrollbar';
 import ExecutionOutput from '../../../ExecutionOutput';
 import Ansi from 'ansi-to-react';
 import Grid from '@mana/components/Grid';
@@ -56,10 +57,9 @@ function ExecutionResult(
   }: ExecutionResultProps,
   ref: React.ForwardedRef<HTMLDivElement>,
 ) {
-  const timeoutRef = useRef(null);
   const displayLocalTimezone = shouldDisplayLocalTimezone();
-  const error = useMemo(
-    () => results?.find(result => ExecutionStatusEnum.ERROR === result.status),
+  const resultsErrors = useMemo(
+    () => results?.filter(result => ExecutionStatusEnum.ERROR === result.status),
     [results],
   );
   const success = useMemo(
@@ -97,14 +97,11 @@ function ExecutionResult(
     [results],
   );
 
-  const { outputs, status } = useMemo(
+  const resultsInformation = useMemo(
     () =>
       results?.reduce(
         (
-          acc: {
-            outputs: React.ReactNode[];
-            status: ExecutionStatusEnum;
-          },
+          acc: React.ReactNode[],
           result: ExecutionResultType,
         ) => {
           const {
@@ -120,8 +117,7 @@ function ExecutionResult(
             // uuid: resultUuid,
           } = result;
 
-          if (ResultType.STATUS === resultType && ExecutionStatusEnum.ERROR !== status) {
-            acc.status = status;
+          if (ResultType.STATUS === resultType) {
             return acc;
           }
 
@@ -136,99 +132,55 @@ function ExecutionResult(
             // uuid: processUuid,
           } = resultProcess;
 
-          if (error) {
-            const code = error?.code;
-            const errors = error?.errors;
-            const message = error?.message;
-            const type = error?.type;
+          const isFinalOutput =
+            ResultType.DATA === resultType && ExecutionStatusEnum.SUCCESS === status;
 
-            acc.status = ExecutionStatusEnum.ERROR;
-
-            acc.outputs.push(
-              <Grid key={resultID} rowGap={12} templateColumns="auto" templateRows="auto auto">
-                <Text monospace semibold small>
-                  <Ansi>{String(message)}</Ansi>
-                </Text>
-
-                {[code, type].map(
-                  val =>
-                    val && (
-                      <Text key={val} monospace small>
-                        <Ansi>{String(val)}</Ansi>
-                      </Text>
-                    ),
-                )}
-
-                {errors?.length >= 1 && (
-                  <pre
-                    style={{
-                      whiteSpace: 'break-spaces',
-                    }}
-                  >
-                    <Text inline monospace small>
-                      {errors?.map((line: string) => <Ansi key={line}>{line}</Ansi>)}
-                    </Text>
-                  </pre>
-                )}
-              </Grid>,
-            );
-          } else {
-            const isFinalOutput =
-              ResultType.DATA === resultType && ExecutionStatusEnum.SUCCESS === status;
-
-            acc.outputs.push(
-              <TooltipWrapper
-                align={TooltipAlign.END}
-                horizontalDirection={TooltipDirection.RIGHT}
-                justify={TooltipJustify.CENTER}
-                key={resultID}
-                tooltip={
-                  <Grid
-                    columnGap={8}
-                    data-message-request-uuid={groupUUID}
-                    templateColumns="auto 1fr"
-                  >
-                    <Text
-                      monospace
-                      muted
-                      small
-                      style={{
-                        pointerEvents: 'none',
-                      }}
-                    >
-                      [{isFinalOutput ? 'output' : acc?.outputs?.length ?? 0}]
-                    </Text>
-                    <Text monospace secondary small>
-                      {displayLocalOrUtcTime(
-                        moment(timestamp).format(DATE_FORMAT_LONG_MS),
-                        displayLocalTimezone,
-                        DATE_FORMAT_LONG_MS,
-                      )}
-                    </Text>
-                  </Grid>
-                }
-              >
-                <Grid columnGap={8} data-message-request-uuid={groupUUID} templateColumns="1fr">
+          return acc.concat(
+            <TooltipWrapper
+              align={TooltipAlign.END}
+              horizontalDirection={TooltipDirection.RIGHT}
+              justify={TooltipJustify.CENTER}
+              key={resultID}
+              tooltip={
+                <Grid
+                  columnGap={8}
+                  data-message-request-uuid={groupUUID}
+                  templateColumns="auto 1fr"
+                >
                   <Text
                     monospace
+                    muted
                     small
                     style={{
                       pointerEvents: 'none',
                     }}
                   >
-                    {outputText}
+                    [{isFinalOutput ? 'output' : acc?.length ?? 0}]
+                  </Text>
+                  <Text monospace secondary small>
+                    {displayLocalOrUtcTime(
+                      moment(timestamp).format(DATE_FORMAT_LONG_MS),
+                      displayLocalTimezone,
+                      DATE_FORMAT_LONG_MS,
+                    )}
                   </Text>
                 </Grid>
-              </TooltipWrapper>,
-            );
-          }
-
-          return acc;
-        },
-        {
-          outputs: [],
-          status: null,
-        },
+              }
+            >
+              <Grid columnGap={8} data-message-request-uuid={groupUUID} templateColumns="1fr">
+                <Text
+                  monospace
+                  small
+                  style={{
+                    pointerEvents: 'none',
+                  }}
+                >
+                  {outputText}
+                </Text>
+              </Grid>
+            </TooltipWrapper>,
+          );
+        }, [],
       ),
     [displayLocalTimezone, results],
   );
@@ -258,6 +210,18 @@ function ExecutionResult(
     }
   }, [executionOutput, executionOutputProp]);
 
+  const status = useMemo(() => {
+    if (resultsErrors?.length > 0) {
+      return ExecutionStatusEnum.ERROR;
+    }
+
+    if (success) {
+      return ExecutionStatusEnum.SUCCESS;
+    }
+
+    return results?.find(r => ResultType.STATUS === r.type)?.status;
+  }, [results, resultsErrors, success]);
+
   return (
     <div
       onContextMenu={
@@ -267,7 +231,7 @@ function ExecutionResult(
       }
       ref={ref}
     >
-      {outputs?.length > 0 && (
+      {resultsInformation?.length > 0 && (
         <Grid paddingBottom={last ? 6 : 0} paddingTop={first ? 6 : 0} rowGap={4}>
           <Grid autoFlow="column" columnGap={8} justifyContent="space-between">
             <Text monospace muted xsmall>
@@ -282,15 +246,65 @@ function ExecutionResult(
             </Text>
           </Grid>
 
-          <Grid
-            className={[styles.executionOutputGroup, styles[status]].filter(Boolean).join(' ')}
-            style={{
-              minHeight: hasOutput ? 40 : undefined,
-            }}
+          <Scrollbar
+            autoHorizontalPadding
+            className={[
+              styles.executionOutputGroup,
+              styles[status],
+            ].filter(Boolean).join(' ')}
+            hideY
+            hideYscrollbar
           >
-            {!executionOutput?.output && outputs}
-            {executionOutput && <ExecutionOutput executionOutput={executionOutput} />}
-          </Grid>
+            <Grid
+              className={[
+                styles.executionOutputGroupContainer,
+              ].filter(Boolean).join(' ')}
+              style={{
+                minHeight: hasOutput ? 40 : undefined,
+              }}
+            >
+              {resultsInformation}
+
+              {executionOutput && <ExecutionOutput executionOutput={executionOutput} />}
+
+              {resultsErrors && resultsErrors?.map(({ error, id: resultID }) => {
+                const code = error?.code;
+                const errors = error?.errors;
+                const message = error?.message;
+                const type = error?.type;
+
+                return (
+
+                  <Grid key={resultID} rowGap={12} templateColumns="auto" templateRows="auto auto">
+                    <Text monospace semibold small>
+                      <Ansi>{String(message)}</Ansi>
+                    </Text>
+
+                    {[code, type].map(
+                        val =>
+                          val && (
+                            <Text key={val} monospace small>
+                              <Ansi>{String(val)}</Ansi>
+                            </Text>
+                          ),
+                      )}
+
+                    {errors?.length >= 1 && (
+                    <pre
+                          style={{
+                            whiteSpace: 'break-spaces',
+                          }}
+                        >
+                      <Text inline monospace small>
+                        {errors?.map((line: string) => <Ansi key={line}>{line}</Ansi>)}
+                      </Text>
+                    </pre>
+                      )}
+                  </Grid>
+                );
+              })}
+            </Grid>
+          </Scrollbar>
 
           <div>
             <div style={{ height: 4 }}>{loading && <Loading position="absolute" />}</div>

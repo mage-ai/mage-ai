@@ -2017,7 +2017,6 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
                 item={node}
                 key={nodeID}
                 rect={rect}
-                rectsMappingRef={rectsMappingRef}
                 ref={dragRef}
               />,
             );

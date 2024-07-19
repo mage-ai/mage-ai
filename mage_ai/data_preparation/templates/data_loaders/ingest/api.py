@@ -22,9 +22,6 @@ def ingest_api_data(*args, **kwargs) -> List[Dict]:
         auth_token (str): Authentication token for the API.
         method (str): HTTP method to use (GET, POST, etc.).
         timeout (int): Request timeout in seconds.
-
-    Yields:
-        dict: Parsed JSON content from API response or plain text content.
     """
     endpoint = kwargs.get('endpoint')
     auth_token = kwargs.get('auth_token')
@@ -35,7 +32,6 @@ def ingest_api_data(*args, **kwargs) -> List[Dict]:
     if auth_token:
         headers['Authorization'] = f"Bearer {auth_token}"
 
-    data = []
     response = requests.request(
         method=method,
         url=endpoint or  '',
@@ -44,9 +40,5 @@ def ingest_api_data(*args, **kwargs) -> List[Dict]:
     )
     response.raise_for_status()
 
-    res = response.json()
-    if res:
-        data.append(res)
-
-    return data
+    return response.json()
 {% endblock %}

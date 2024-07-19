@@ -1,4 +1,5 @@
 import * as osPath from 'path';
+import { removeANSI, removASCII } from '@utils/string';
 import { getBlockColor } from '@mana/themes/blocks';
 import BlockNodeComponent, { BADGE_HEIGHT, PADDING_VERTICAL } from './BlockNode';
 import {
@@ -172,9 +173,11 @@ function BlockNode(
                 );
                 const text = results
                   ?.map((result: ExecutionResultType) =>
-                    result?.error
-                      ? JSON.stringify(result?.error ?? '', null, 2)
-                      : (result?.output_text ?? '')?.trim() ?? '',
+                    removASCII(removeANSI(
+                      result?.error
+                        ? JSON.stringify(result?.error ?? '', null, 2)
+                        : (result?.output_text ?? '')?.trim() ?? '',
+                    )),
                   )
                   .join('\n');
                 copyToClipboard(text);

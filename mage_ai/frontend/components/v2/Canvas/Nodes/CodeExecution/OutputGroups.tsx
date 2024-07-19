@@ -201,7 +201,9 @@ const OutputGroups: React.FC<OutputGroupsProps> = ({
 
       <Scrollbar
         autoHorizontalPadding
+        hideX
         ref={scrollableDivRef}
+        showY
         style={{ maxHeight: 400, overflow: 'auto' }}
       >
         <Grid rowGap={16} templateRows="min-content">

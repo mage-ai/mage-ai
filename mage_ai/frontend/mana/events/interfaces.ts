@@ -39,7 +39,7 @@ export type KeyboardDetailType = {
   target?: KeyboardPositionTargetType;
 } & DetailType;
 
-export class CustomEvent<T = any> extends Event {
+export class CustomAppEvent<T = any> extends Event {
   detail: T;
   constructor(type: any, detail: T) {
     super(type);
@@ -47,12 +47,13 @@ export class CustomEvent<T = any> extends Event {
   }
 }
 
-export class CustomKeyboardEvent extends CustomEvent {
-  public key: any;
-  public type: any;
+export class CustomKeyboardEvent<T = any>  extends KeyboardEvent {
+  detail: any;
+  key: any;
 
   constructor(type: any, detail: any, args?: any | any[]) {
-    super(type, detail);
+    super(type);
+    this.detail = detail || ({} as T);
     [this.key] = Array.isArray(args) ? args : [args];
   }
 }

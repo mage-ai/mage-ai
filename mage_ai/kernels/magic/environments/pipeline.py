@@ -93,7 +93,7 @@ class Pipeline:
                         pipeline_uuid=self.uuid,
                         uuid=self.output_manager.uuid,
                     ),
-                    output=f'{block.uuid} output for pipeline {self.uuid}',
+                    output='',
                     type=ResultType.OUTPUT,
                 ),
             ),

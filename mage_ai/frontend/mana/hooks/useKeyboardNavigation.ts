@@ -3,6 +3,7 @@ import useCustomEventHandler from '../events/useCustomEventHandler';
 import useKeyboardShortcuts, { KeyboardShortcutsProps } from './shortcuts/useKeyboardShortcuts';
 import { DEBUG } from '../utils/debug';
 import { EventEnum, KeyEnum } from '../events/enums';
+import { CustomAppEvent, CustomKeyboardEvent } from '../events/interfaces';
 import { MenuItemType } from '../components/Menu/interfaces';
 import { range } from '@utils/array';
 
@@ -35,7 +36,7 @@ export default function useKeyboardNavigation({
       [EventEnum.SET_KEYBOARD_NAVIGATION_POSITION]: handleSetPosition,
     },
     {
-      baseEvent: CustomEvent,
+      baseEvent: CustomKeyboardEvent,
     },
   );
 

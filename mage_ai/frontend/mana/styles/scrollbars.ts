@@ -4,18 +4,40 @@ import { transition } from '../styles/mixins';
 
 export type ScrollbarsStyledProps = {
   flexbox?: boolean;
+  hideX?: boolean;
   hideXscrollbar?: boolean;
+  hideY?: boolean;
+  hideYscrollbar?: boolean;
+  showX?: boolean;
   showY?: boolean;
   style?: React.CSSProperties;
 };
 
 const base = css<ScrollbarsStyledProps>`
   height: inherit;
-  overflow-x: auto;
-  overflow-y: auto;
+
+  ${({
+    hideX, hideY, showX, showY,
+  }) => `
+    overflow-x: ${hideX ? 'hidden' : showX ? 'scroll' : 'auto'};
+    overflow-y: ${hideY ? 'hidden' : showY ? 'scroll' : 'auto'};
+  `}
 
   ${({ hideXscrollbar }) =>
     hideXscrollbar &&
+    `
+    // for Internet Explorer, Edge
+    -ms-overflow-style: none;
+    // for Firefox
+    scrollbar-width: none;
+    // for Chrome, Safari, and Opera
+    ::-webkit-scrollbar {
+      display: none;
+    }
+  `}
+
+  ${({ hideYscrollbar }) =>
+    hideYscrollbar &&
     `
     // for Internet Explorer, Edge
     -ms-overflow-style: none;
@@ -63,12 +85,6 @@ const base = css<ScrollbarsStyledProps>`
     ::-webkit-scrollbar-track:hover {
       background: ${background.track.hover};
     }
-  `}
-
-  ${({ showY }) =>
-    showY &&
-    `
-    overflow-y: visible;
   `}
 `;
 
