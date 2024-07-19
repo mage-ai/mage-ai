@@ -149,6 +149,7 @@ function BlockNode(
         event: any,
         messageRequestUUID: string,
         resultsInit: ExecutionResultType[],
+        executionOutput?: ExecutionOutputType,
       ) => {
         event.preventDefault();
         event.stopPropagation();
@@ -167,19 +168,25 @@ function BlockNode(
               Icon: CopyV2,
               onClick: (event2: ClientEventType) => {
                 removeContextMenu(event2);
-                const results: ExecutionResultType[] = sortByKey(
-                  resultsInit ?? [],
-                  (result: ExecutionResultType) => result?.timestamp,
-                );
-                const text = results
-                  ?.map((result: ExecutionResultType) =>
-                    removASCII(removeANSI(
-                      result?.error
-                        ? JSON.stringify(result?.error ?? '', null, 2)
-                        : (result?.output_text ?? '')?.trim() ?? '',
-                    )),
-                  )
-                  .join('\n');
+                let text = '';
+
+                if (executionOutput && executionOutput?.output) {
+                  text = JSON.stringify(executionOutput?.output, null, 2);
+                } else {
+                  const results: ExecutionResultType[] = sortByKey(
+                    resultsInit ?? [],
+                    (result: ExecutionResultType) => result?.timestamp,
+                  );
+                  text = results
+                    ?.map((result: ExecutionResultType) =>
+                      removASCII(removeANSI(
+                        result?.error
+                          ? JSON.stringify(result?.error ?? '', null, 2)
+                          : (result?.output_text ?? '')?.trim() ?? '',
+                      )),
+                    )
+                    .join('\n');
+                }
                 copyToClipboard(text);
               },
               uuid: 'Copy output',

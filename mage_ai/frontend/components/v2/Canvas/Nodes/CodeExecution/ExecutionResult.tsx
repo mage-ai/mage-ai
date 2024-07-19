@@ -29,6 +29,7 @@ export type ExecutionResultProps = {
     event: React.MouseEvent<HTMLDivElement>,
     messageRequestUUID: string,
     results: ExecutionResultType[],
+    executionOutput?: ExecutionOutputType,
   ) => void;
   messageRequestUUID: string;
   fetchOutput?: (
@@ -226,7 +227,7 @@ function ExecutionResult(
     <div
       onContextMenu={
         handleContextMenu
-          ? event => handleContextMenu(event, messageRequestUUID, results)
+          ? event => handleContextMenu(event, messageRequestUUID, results, executionOutput)
           : undefined
       }
       ref={ref}
@@ -267,7 +268,7 @@ function ExecutionResult(
 
               {executionOutput && <ExecutionOutput executionOutput={executionOutput} />}
 
-              {resultsErrors && resultsErrors?.map(({ error, id: resultID }) => {
+              {resultsErrors && resultsErrors?.map(({ error, result_id: resultID }) => {
                 const code = error?.code;
                 const errors = error?.errors;
                 const message = error?.message;

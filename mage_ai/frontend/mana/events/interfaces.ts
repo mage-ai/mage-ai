@@ -47,14 +47,24 @@ export class CustomAppEvent<T = any> extends Event {
   }
 }
 
-export class CustomKeyboardEvent<T = any>  extends KeyboardEvent {
-  detail: any;
-  key: any;
+// Check if the environment supports KeyboardEvent
+const supportsKeyboardEvent = typeof KeyboardEvent !== 'undefined';
 
-  constructor(type: any, detail: any, args?: any | any[]) {
-    super(type);
+// Extend KeyboardEvent and add custom properties
+export class CustomKeyboardEvent<T = any> extends (supportsKeyboardEvent ? KeyboardEvent : Event) {
+  detail: T;
+
+  constructor(type: string, init: KeyboardEventInit & { detail?: T; key?: any } = {}) {
+    super(type, init);
+    const { detail, key } = init;
     this.detail = detail || ({} as T);
-    [this.key] = Array.isArray(args) ? args : [args];
+    if (key !== undefined) {
+      // If key is provided, override the base class key property
+      Object.defineProperty(this, 'key', {
+        value: key,
+        enumerable: true,
+      });
+    }
   }
 }
 
