@@ -3,7 +3,7 @@ import EventStreamType, {
   ExecutionResultType,
   ExecutionStatusEnum,
 } from '@interfaces/EventStreamType';
-
+import ExecutionOutput from '../../../ExecutionOutput';
 import Ansi from 'ansi-to-react';
 import Grid from '@mana/components/Grid';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -20,7 +20,7 @@ import { shouldDisplayLocalTimezone } from '@components/settings/workspace/utils
 import { ExecutionOutputType } from '@interfaces/CodeExecutionType';
 import Loading from '@mana/components/Loading';
 
-export type ExecutionOutputProps = {
+export type ExecutionResultProps = {
   executionOutput?: ExecutionOutputType;
   first?: boolean;
   last?: boolean;
@@ -44,7 +44,7 @@ export type ExecutionOutputProps = {
   results: ExecutionResultType[];
 };
 
-function ExecutionOutput(
+function ExecutionResult(
   {
     executionOutput: executionOutputProp,
     fetchOutput,
@@ -53,7 +53,7 @@ function ExecutionOutput(
     handleContextMenu,
     messageRequestUUID,
     results,
-  }: ExecutionOutputProps,
+  }: ExecutionResultProps,
   ref: React.ForwardedRef<HTMLDivElement>,
 ) {
   const timeoutRef = useRef(null);
@@ -289,18 +289,7 @@ function ExecutionOutput(
             }}
           >
             {!executionOutput?.output && outputs}
-
-            <Text monospace small>
-              <pre
-                style={{
-                  whiteSpace: 'pre-wrap',
-                }}
-              >
-                <Ansi>
-                  {executionOutput?.output && JSON.stringify(executionOutput?.output, null, 2)}
-                </Ansi>
-              </pre>
-            </Text>
+            {executionOutput && <ExecutionOutput executionOutput={executionOutput} />}
           </Grid>
 
           <div>
@@ -326,4 +315,4 @@ function ExecutionOutput(
   );
 }
 
-export default React.forwardRef(ExecutionOutput);
+export default React.forwardRef(ExecutionResult);

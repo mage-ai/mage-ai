@@ -1,4 +1,5 @@
 import * as osPath from 'path';
+import { getBlockColor } from '@mana/themes/blocks';
 import BlockNodeComponent, { BADGE_HEIGHT, PADDING_VERTICAL } from './BlockNode';
 import {
   EnvironmentTypeEnum,
@@ -57,6 +58,7 @@ import { useMutate } from '@context/v2/APIMutation';
 import { setNested } from '@utils/hash';
 import { SettingsContext } from '@components/v2/Apps/PipelineCanvas/SettingsManager/SettingsContext';
 import Divider from '@mana/elements/Divider';
+import { gridTemplateColumns } from 'styled-system';
 
 type BlockNodeType = {
   block: BlockType;
@@ -577,6 +579,19 @@ function BlockNode(
       },
     );
     const label = block?.name ?? block?.uuid;
+
+    const blocksup = block?.upstream_blocks?.map(buuid => blockMappingRef?.current?.[buuid]);
+    const blocksdn = block?.downstream_blocks?.map(buuid => blockMappingRef?.current?.[buuid]);
+
+    const bup = blocksup?.[0];
+    const bdn = blocksdn?.[0];
+    const bupc = getBlockColor(bup?.type, { getColorName: true })?.names?.base
+      ?? modeColor ?? groupColor;
+    const bdnc = getBlockColor(bdn?.type, { getColorName: true })?.names?.base
+      ?? downstreamInGroup?.[0]?.colorName;
+
+    console.log(bup, bdn, block);
+
     return (
       label && (
         <Grid
@@ -586,39 +601,33 @@ function BlockNode(
           columnGap={8}
           justifyContent="space-between"
           padding={6}
-          templateColumns="1fr 1fr"
+          templateColumns="1fr 1fr 1fr"
           templateRows="1fr"
         >
-          <Grid
-            alignItems="center"
-            autoColumns="auto"
-            autoFlow="column"
-            columnGap={8}
-            justifyContent="start"
-            templateColumns="auto"
-            templateRows="1fr"
-          >
-            <Circle backgroundColor={modeColor ?? groupColor} size={12} />
-
-            <Text small>{label}</Text>
+          <Grid alignItems="center" autoFlow="column" columnGap={6} justifyContent="start">
+            <Circle backgroundColor={bupc} size={12} />
+            {bup && (
+              <Text secondary xsmall>
+                {bup?.name ?? bup?.uuid}
+              </Text>
+            )}
           </Grid>
 
-          <Grid
-            alignItems="center"
-            autoColumns="auto"
-            autoFlow="column"
-            columnGap={8}
-            justifyContent="end"
-            templateColumns="max-content"
-            templateRows="1fr"
-          >
-            {downstreamInGroup && (
-              <Circle
-                backgroundColor={downstreamInGroup?.[0]?.colorName ?? undefined}
-                borderColor={!downstreamInGroup?.[0]?.colorName ? 'gray' : undefined}
-                size={12}
-              />
+          <Grid alignItems="center" autoFlow="column" columnGap={6} justifyContent="center">
+            <Text xsmall>{label}</Text>
+          </Grid>
+
+          <Grid alignItems="center" autoFlow="column" columnGap={6} justifyContent="end">
+            {bdn && (
+              <Text secondary xsmall>
+                {bdn?.name ?? bdn?.uuid}
+              </Text>
             )}
+            <Circle
+              backgroundColor={bdnc ?? undefined}
+              borderColor={!bdnc ? 'gray' : undefined}
+              size={12}
+            />
           </Grid>
         </Grid>
       )
@@ -650,7 +659,7 @@ function BlockNode(
               maxWidth: 500,
             }}
           >
-            <div ref={outputPortalRef} />
+            {renderOutputPortalContent()}
             <Divider compact />
           </OutputGroups>
         </div>
@@ -906,9 +915,6 @@ function BlockNode(
         timerStatusRef={timerStatusRef}
         updateBlock={updateBlock}
       />
-
-      {outputPortalRef?.current &&
-        createPortal(renderOutputPortalContent(), outputPortalRef.current)}
     </div>
   );
 }

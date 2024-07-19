@@ -27,7 +27,6 @@ type DragWrapperProps = {
   item?: NodeItemType;
   onContextMenu?: (event: any) => void;
   rect?: RectType;
-  rectsMappingRef: React.MutableRefObject<Record<string, RectType>>;
   style?: any;
 } & DragWrapperType;
 
@@ -38,13 +37,11 @@ export function getStyles(
     groupSelection,
     isDragging,
     rect,
-    rectsMappingRef,
   }: {
     draggable: boolean;
     groupSelection?: boolean;
     isDragging: boolean;
     rect?: RectType;
-    rectsMappingRef: React.MutableRefObject<Record<string, RectType>>;
   },
 ): CSSProperties {
   const { type } = node;
@@ -56,7 +53,6 @@ export function getStyles(
     width: undefined,
     ...node?.rect,
     ...rect,
-    ...rectsMappingRef?.current[node.id],
   } as any;
   const transform = `translate3d(${left ?? 0}px, ${top ?? 0}px, 0)`;
 
@@ -96,7 +92,6 @@ function DragWrapper(
     item,
     onContextMenu,
     rect,
-    rectsMappingRef,
     style,
   }: DragWrapperProps,
   ref: React.MutableRefObject<HTMLDivElement>,
@@ -189,7 +184,6 @@ function DragWrapper(
                 groupSelection,
                 isDragging,
                 rect,
-                rectsMappingRef,
               }),
             }
       }

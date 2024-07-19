@@ -8,7 +8,7 @@ import Text from '@mana/elements/Text';
 import { useMutate } from '@context/v2/APIMutation';
 import Tag from '@mana/components/Tag';
 import { executionDone } from '@components/v2/ExecutionManager/utils';
-import ExecutionOutput, { ExecutionOutputProps } from './ExecutionOutput';
+import ExecutionResult, { ExecutionResultProps } from './ExecutionResult';
 import Grid from '@mana/components/Grid';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Scrollbar from '@mana/elements/Scrollbar';
@@ -18,7 +18,7 @@ import { ElementRoleEnum } from '@mana/shared/types';
 import { ExecutionOutputType } from '@interfaces/CodeExecutionType';
 
 export type OutputGroupsType = {
-  handleContextMenu?: ExecutionOutputProps['handleContextMenu'];
+  handleContextMenu?: ExecutionResultProps['handleContextMenu'];
   onMount?: (consumerID: string, callback?: () => void) => void;
   setHandleOnMessage?: (consumerID: string, handler: (event: EventStreamType) => void) => void;
   setResultMappingUpdate?: (
@@ -134,8 +134,6 @@ const OutputGroups: React.FC<OutputGroupsProps> = ({
 
     setHandleOnMessage &&
       setHandleOnMessage?.(consumerID, (event: EventStreamType) => {
-        console.log(event);
-
         const done = executionDone(event);
         setExecuting(!done);
 
@@ -211,7 +209,7 @@ const OutputGroups: React.FC<OutputGroupsProps> = ({
             const last = idx === keysRef.current.length - 1;
 
             return (
-              <ExecutionOutput
+              <ExecutionResult
                 executionOutput={executionOutputMapping?.[mrUUID]}
                 fetchOutput={fetchOutput}
                 first={idx === 0}
