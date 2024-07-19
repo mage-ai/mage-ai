@@ -83,7 +83,26 @@ function ExecutionResult(
       ...success?.metadata,
     }),
     [success],
+
   );
+
+  const getOutput = useCallback(() => {
+    setLoading(true);
+
+    fetchOutput(id, {
+      onError: () => {
+        setLoading(false);
+      },
+      onSuccess: (eoutput) => {
+        setLoading(false);
+        setExecutionOutput(eoutput);
+      },
+      query: {
+        namespace: encodeURIComponent(namespace),
+        path: encodeURIComponent(path),
+      },
+    });
+  }, [fetchOutput, id, namespace, path]);
 
   const timestamps = useMemo(
     () =>
@@ -203,23 +222,6 @@ function ExecutionResult(
   );
 
   const runtime = useMemo(() => (timestamps?.max ?? 0) - (timestamps?.min ?? 0), [timestamps]);
-  const getOutput = useCallback(() => {
-    setLoading(true);
-
-    fetchOutput(id, {
-      onError: () => {
-        setLoading(false);
-      },
-      onSuccess: (eoutput) => {
-        setLoading(false);
-        setExecutionOutput(eoutput);
-      },
-      query: {
-        namespace: encodeURIComponent(namespace),
-        path: encodeURIComponent(path),
-      },
-    });
-  }, [fetchOutput, id, namespace, path]);
 
   useEffect(() => {
     if (executionOutputProp && !executionOutput) {

@@ -433,6 +433,9 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
             };
 
             const handleRemove = () => {
+              update(`${executionFrameworkUUID}:${pipelineUUID}`, {
+                [appNode.id]: null,
+              });
               delete appNodeRefs.current[block.uuid];
               setAppNodes(prev => {
                 delete prev[block.uuid]?.[appNode.id];
@@ -478,6 +481,9 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
             };
 
             const handleRemove = () => {
+              update(`${executionFrameworkUUID}:${pipelineUUID}`, {
+                [outputNode.id]: null,
+              });
               const id = getLineID(block.uuid, outputNode.id);
               const el = document.getElementById(id);
               if (el) {

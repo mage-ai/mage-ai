@@ -124,6 +124,9 @@ const OutputGroups: React.FC<OutputGroupsProps> = ({
             opts.onSuccess(xo);
           }
         },
+        query: {
+          _limit: 10,
+        },
       });
     },
     [mutants.detail, setExecutionOutputMapping],

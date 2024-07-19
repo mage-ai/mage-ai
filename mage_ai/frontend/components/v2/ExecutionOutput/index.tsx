@@ -69,7 +69,7 @@ export default function ExecutionOutput({
             height: maxHeight,
             width: 600,
           }}
-          rows={rows.slice(0, 600)}
+          rows={rows}
         />
       );
     }
