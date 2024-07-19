@@ -1,5 +1,9 @@
 #!/bin/sh
 
-bash ./frontend/scripts/clean.sh
+# Get the current working directory
+CWD=$(pwd)/mage_ai/frontend
 
-NODE_ENV=production yarn export_prod
+bash "$CWD/mage_ai/frontend/scripts/clean.sh" "$CWD"
+
+
+NODE_ENV=production yarn --cwd "$CWD" export_prod
