@@ -60,29 +60,6 @@ sentence:
         - boolean
       value: true  # Default value
 
-
-sentence_spacy:
-  description: 'Tokenize text into sentences using spaCy.'
-  name: 'Sentence tokenization using spaCy.'
-  path: transformers/tokenization/sentence_spacy.py
-  type: transformer
-  inputs:
-    document_data:
-      style:
-        input_type: null
-        multiline: false
-        monospace: false
-      type: tuple
-  variables:
-    language:
-      description: 'Language for which the sentence tokenizer should be used.'
-      name: 'Language'
-      input: text
-      required: true
-      types:
-        - string
-      value: "en"  # Default to English
-
 ### character.yaml
 
 character:
@@ -184,44 +161,6 @@ subword:
       types:
         - string
       value: "split"  # Default value
-
-stopword_spacy:
-  description: 'Tokenize text and remove stopwords to keep only meaningful words using spaCy.'
-  name: 'Stopword removal using spaCy.'
-  path: transformers/tokenization/stopword_spacy.py
-  type: transformer
-  inputs:
-    document_data:
-      style:
-        input_type: null
-        multiline: false
-        monospace: false
-      type: tuple
-  variables:
-    language:
-      description: 'Language for which the stopwords should be considered.'
-      name: 'Language'
-      input: text
-      required: true
-      types:
-        - string
-      value: "en"  # Default to English
-    custom_stopwords:
-      description: 'Custom stopwords to be removed during tokenization.'
-      name: 'Custom Stopwords'
-      input: list
-      required: false
-      types:
-        - string
-      value: []  # Default empty list
-    case_sensitive:
-      description: 'Boolean flag to indicate if stopword removal should be case-sensitive.'
-      name: 'Case Sensitive'
-      input: boolean
-      required: false
-      types:
-        - boolean
-      value: false  # Default to case-insensitive
 
 ### regular_expression.yaml
 
@@ -341,28 +280,6 @@ lemmatization:
         - boolean
       value: true  # Default value
 
-lemmatization_spacy:
-  description: 'Lemmatize text to reduce words to their base or root form using spaCy.'
-  name: 'Lemmatization using spaCy.'
-  path: transformers/tokenization/lemmatization_spacy.py
-  type: transformer
-  inputs:
-    chunks_arr:
-      style:
-        input_type: null
-        multiline: false
-        monospace: false
-      type: nested_list
-  variables:
-    language:
-      description: 'Language for which the lemmatizer should be used.'
-      name: 'Language'
-      input: text
-      required: true
-      types:
-        - string
-      value: "en"  # Default to English
-
 ### stopword.yaml
 
 stopword:
@@ -402,6 +319,119 @@ stopword:
         - boolean
       value: false  # Default value
 
+### lemmatization.yaml
+
+lemmatization_spacy:
+  description: 'Lemmatize text to reduce words to their base or root form using spaCy.'
+  name: 'Lemmatization using spaCy.'
+  path: transformers/tokenization/lemmatization_spacy.py
+  type: transformer
+  inputs:
+    text:
+      style:
+        input_type: null
+        multiline: false
+        monospace: false
+      type: text_field
+  variables:
+    language:
+      description: 'Language of the text for accurate lemmatization.'
+      name: 'Language'
+      input: text
+      required: true
+      types:
+        - string
+      value: "en"
+    handle_stopwords:
+      description: 'Whether to handle stopwords during lemmatization.'
+      name: 'Handle stopwords'
+      input: text
+      required: false
+      types:
+        - boolean
+      value: false  # Default value
+    use_pos_tags:
+      description: 'Use part-of-speech (POS) tags for better lemmatization accuracy.'
+      name: 'Use POS tags'
+      input: text
+      required: false
+      types:
+        - boolean
+      value: true  # Default value
+
+### stopword.yaml
+
+stopword_spacy:
+  description: 'Tokenize text and remove stopwords to keep only meaningful words using spaCy.'
+  name: 'Stopword removal using spaCy.'
+  path: transformers/tokenization/stopword_spacy.py
+  type: transformer
+  inputs:
+    text:
+      style:
+        input_type: null
+        multiline: false
+        monospace: false
+      type: text_field
+  variables:
+    language:
+      description: 'Language of the text for efficient stopword removal.'
+      name: 'Language'
+      input: text
+      required: true
+      types:
+        - string
+      value: "en"  # Default to English
+    custom_stopwords:
+      description: 'Custom list of stopwords to remove.'
+      name: 'Custom stopwords'
+      input: text
+      required: false
+      types:
+        - list
+      value: []
+    case_sensitive:
+      description: 'Perform case-sensitive stopword removal.'
+      name: 'Case sensitive'
+      input: text
+      required: false
+      types:
+        - boolean
+      value: false  # Default to case-insensitive
+
+### sentence.yaml
+
+sentence_spacy:
+  description: 'Tokenize text into sentences using spaCy.'
+  name: 'Sentence tokenization using spaCy.'
+  path: transformers/tokenization/sentence_spacy.py
+  type: transformer
+  inputs:
+    text:
+      style:
+        input_type: null
+        multiline: false
+        monospace: false
+      type: text_field
+  variables:
+    language:
+      description: 'Language of the text for accurate sentence segmentation.'
+      name: 'Language'
+      input: text
+      required: true
+      types:
+        - string
+      value: "en"  # Default to English
+    strip_whitespace:
+      description: 'Remove leading and trailing whitespace from each sentence.'
+      name: 'Strip whitespace'
+      input: text
+      required: false
+      types:
+        - boolean
+      value: true  # Default value
+
+### part_of_speech.yaml
 
 part_of_speech_spacy:
   description: 'Perform part of speech tagging on text using spaCy.'
@@ -409,15 +439,15 @@ part_of_speech_spacy:
   path: transformers/tokenization/part_of_speech_spacy.py
   type: transformer
   inputs:
-    document_data:
+    text:
       style:
         input_type: null
         multiline: false
         monospace: false
-      type: tuple
+      type: text_field
   variables:
     language:
-      description: 'Language for which the part of speech tagger should be used.'
+      description: 'Language of the text for accurate part of speech tagging.'
       name: 'Language'
       input: text
       required: true
