@@ -281,7 +281,7 @@ function EditorAppNode({
             //   uuid: 'Close',
             //   onClick: onClose,
             // },
-          ].map(({ Icon, description, iconProps, label, uuid, onClick }) => (
+          ].map(({ Icon, description, iconProps, label, uuid, onClick }: any) => (
             <TooltipWrapper
               align={TooltipAlign.END}
               horizontalDirection={TooltipDirection.DOWN}

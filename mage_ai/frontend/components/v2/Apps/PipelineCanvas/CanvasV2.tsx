@@ -7,7 +7,7 @@ import React, {
   startTransition,
   useCallback,
 } from 'react';
-import { get, update } from './cache';
+import { get, update, remove as removeFromCache } from './cache';
 import { findLargestUnoccupiedSpace } from '@utils/rects';
 import { snapToGrid } from '../../Canvas/utils/snapToGrid';
 import { handleSaveAsImage } from './utils/images';
@@ -433,9 +433,7 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
             };
 
             const handleRemove = () => {
-              update(`${executionFrameworkUUID}:${pipelineUUID}`, {
-                [appNode.id]: null,
-              });
+              removeFromCache(`${executionFrameworkUUID}:${pipelineUUID}`, appNode.id);
               delete appNodeRefs.current[block.uuid];
               setAppNodes(prev => {
                 delete prev[block.uuid]?.[appNode.id];
@@ -481,9 +479,7 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
             };
 
             const handleRemove = () => {
-              update(`${executionFrameworkUUID}:${pipelineUUID}`, {
-                [outputNode.id]: null,
-              });
+              removeFromCache(`${executionFrameworkUUID}:${pipelineUUID}`, outputNode.id);
               const id = getLineID(block.uuid, outputNode.id);
               const el = document.getElementById(id);
               if (el) {
@@ -2098,7 +2094,7 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
         top += topOffset;
 
         const node = { ...item };
-        node.rect = node.rect ?? item.rect;
+        node.rect = node.rect ?? item.rect ?? {};
         node.rect.left = left;
         node.rect.top = top;
         node.rect.block = { uuid: item.block.uuid };
