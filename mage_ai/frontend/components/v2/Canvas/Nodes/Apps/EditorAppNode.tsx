@@ -396,7 +396,7 @@ function EditorAppNode({
                 maxWidth: 500,
               }}
             >
-              <Text muted xsmall>
+              <Text secondary xsmall>
                 Content was last saved{' '}
                 <Text inline warning xsmall>
                   {lastModified}

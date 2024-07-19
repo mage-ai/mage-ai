@@ -70,7 +70,7 @@ export default function List({ asRows, children, itemClassName, items, ol, parse
             styles.item,
             itemClassName && itemClassName(val2),
           ].filter(Boolean).join(' ')}
-          key={`${hashCode(val2)}-${index}`}
+          key={`${hashCode(String(val2 ?? ''))}-${index}`}
         >
           <Text {...rest}>
             {val2}
