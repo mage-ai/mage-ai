@@ -199,7 +199,7 @@ function ExecutionResult(
           );
         }, [],
       ),
-    [displayLocalTimezone, executionOutput, results],
+    [displayLocalTimezone, executionOutput, getOutput, results],
   );
 
   const runtime = useMemo(() => (timestamps?.max ?? 0) - (timestamps?.min ?? 0), [timestamps]);
@@ -263,38 +263,39 @@ function ExecutionResult(
             </Text>
           </Grid>
 
-          <Scrollbar
-            autoHorizontalPadding
-            className={[
-              styles.executionOutputGroup,
-              styles[status],
-            ].filter(Boolean).join(' ')}
-            hideY
-            hideYscrollbar
-          >
-            <Grid
+          {resultsInformation?.length > 0 && (
+            <Scrollbar
+              autoHorizontalPadding
               className={[
-                styles.executionOutputGroupContainer,
+                styles.executionOutputGroup,
+                styles[status],
               ].filter(Boolean).join(' ')}
-              style={{
-                minHeight: hasOutput ? 32 : undefined,
-              }}
+              hideY
+              hideYscrollbar
             >
-              {resultsInformation}
+              <Grid
+                className={[
+                  styles.executionOutputGroupContainer,
+                ].filter(Boolean).join(' ')}
+                style={{
+                  minHeight: hasOutput ? 32 : undefined,
+                }}
+              >
+                {resultsInformation}
 
-              {resultsErrors && resultsErrors?.map(({ error, result_id: resultID }) => {
-                const code = error?.code;
-                const errors = error?.errors;
-                const message = error?.message;
-                const type = error?.type;
+                {resultsErrors && resultsErrors?.map(({ error, result_id: resultID }) => {
+                  const code = error?.code;
+                  const errors = error?.errors;
+                  const message = error?.message;
+                  const type = error?.type;
 
-                return (
-                  <Grid key={resultID} rowGap={12} templateColumns="auto" templateRows="auto auto">
-                    <Text monospace semibold small>
-                      <Ansi>{String(message)}</Ansi>
-                    </Text>
+                  return (
+                    <Grid key={resultID} rowGap={12} templateColumns="auto" templateRows="auto auto">
+                      <Text monospace semibold small>
+                        <Ansi>{String(message)}</Ansi>
+                      </Text>
 
-                    {[code, type].map(
+                      {[code, type].map(
                         val =>
                           val && (
                             <Text key={val} monospace small>
@@ -303,22 +304,23 @@ function ExecutionResult(
                           ),
                       )}
 
-                    {errors?.length >= 1 && (
-                      <pre
-                        style={{
-                          whiteSpace: 'break-spaces',
-                        }}
-                      >
-                        <Text inline monospace small>
-                          {errors?.map((line: string) => <Ansi key={line}>{line}</Ansi>)}
-                        </Text>
-                      </pre>
-                    )}
-                  </Grid>
-                );
-              })}
-            </Grid>
-          </Scrollbar>
+                      {errors?.length >= 1 && (
+                        <pre
+                          style={{
+                            whiteSpace: 'break-spaces',
+                          }}
+                        >
+                          <Text inline monospace small>
+                            {errors?.map((line: string) => <Ansi key={line}>{line}</Ansi>)}
+                          </Text>
+                        </pre>
+                      )}
+                    </Grid>
+                  );
+                })}
+              </Grid>
+            </Scrollbar>
+          )}
 
           {executionOutput && <ExecutionOutput containerRect={containerRect} executionOutput={executionOutput} />}
 

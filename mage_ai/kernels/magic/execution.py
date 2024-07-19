@@ -244,6 +244,15 @@ async def execute_code_async(
                         execute=execute,
                         execution_variables=execution_variables,
                     )
+
+                    queue.put(
+                        ExecutionResult.load(
+                            process=process,
+                            status=ExecutionStatus.RUNNING,
+                            type=ResultType.STATUS,
+                            uuid=uuid,
+                        )
+                    )
             except Exception as err:
                 result = ExecutionResult.load(
                     error=ErrorDetails.from_current_error(err),

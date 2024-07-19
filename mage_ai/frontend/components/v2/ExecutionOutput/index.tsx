@@ -56,20 +56,20 @@ export default function ExecutionOutput({
         }
       });
 
-      const maxHeight = Math.max(containerRect?.height ?? 0, 1000);
+      const maxHeight = Math.max(containerRect?.height ?? 0, 600);
 
       return (
         <DataTable
           boundingBox={{
-            height: maxHeight,
-            width: containerRect?.width - (SCROLLBAR_TRACK_WIDTH * 3),
+            height: maxHeight - SCROLLBAR_TRACK_WIDTH - 2,
+            width: containerRect?.width - (SCROLLBAR_TRACK_WIDTH * 2) - 2,
           }}
           columns={columns}
           rect={{
             height: maxHeight,
-            width: 1000,
+            width: 600,
           }}
-          rows={rows.slice(0, 1000)}
+          rows={rows.slice(0, 600)}
         />
       );
     }
