@@ -1,8 +1,8 @@
 ### tf_idf.py
 
 tf_idf:
-  description: 'Convert text into numerical representation by computing the importance of words in documents.'
-  name: 'Tf-idf'
+  description: 'Term frequency-inverse document frequency: convert text into numerical representation by computing the importance of words in documents.'
+  name: 'TF-IDF'
   path: transformers/embeddings/tf_idf.py
   type: transformer
   inputs:
@@ -135,7 +135,7 @@ glove:
 
 fasttext:
   description: 'Extend Word2Vec by considering subword information, which helps in handling out-of-vocabulary words.'
-  name: 'Fasttext'
+  name: 'fastText'
   path: transformers/embeddings/fasttext.py
   type: transformer
   inputs:
@@ -182,7 +182,7 @@ fasttext:
 
 bert:
   description: 'A transformer-based model that provides contextual embeddings by considering the entire sentence.'
-  name: 'Bert'
+  name: 'BERT'
   path: transformers/embeddings/bert.py
   type: transformer
   inputs:
@@ -213,7 +213,7 @@ bert:
 
 roberta:
   description: 'An optimized version of BERT with better performance on various NLP tasks.'
-  name: 'Roberta'
+  name: 'RoBERTa'
   path: transformers/embeddings/roberta.py
   type: transformer
   inputs:
@@ -244,7 +244,7 @@ roberta:
 
 gpt:
   description: 'Generates embeddings using a generative model pre-trained on a large corpus.'
-  name: 'Gpt'
+  name: 'Generative Pre-trained Transformer'
   path: transformers/embeddings/gpt.py
   type: transformer
   inputs:
@@ -305,8 +305,8 @@ t5:
 ### sentence_bert.py
 
 sentence_bert:
-  description: 'Modifies BERT to derive semantically meaningful sentence embeddings.'
-  name: 'Sentence Bert'
+  description: 'Sentence-BERT models like all-mpnet-base-v2 provide high-quality sentence embeddings that capture semantic meaning. They are widely used for text similarity tasks in RAG.'
+  name: 'Sentence-BERT'
   path: transformers/embeddings/sentence_bert.py
   type: transformer
   inputs:
@@ -355,113 +355,6 @@ universal_sentence_encoder:
       required: true
       types:
         - string
-
-### sbert.py
-
-sbert:
-  description: 'Sentence-BERT models like all-mpnet-base-v2 provide high-quality sentence embeddings that capture semantic meaning. They are widely used for text similarity tasks in RAG.'
-  name: 'Sbert'
-  path: transformers/embeddings/sbert.py
-  type: transformer
-  inputs:
-    text:
-      style:
-        input_type: null
-        multiline: false
-        monospace: false
-      type: text_field
-  variables:
-    model_name:
-      description: 'Name of the pre-trained SBERT model.'
-      name: 'Model name'
-      input: text
-      required: true
-      types:
-        - string
-    max_length:
-      description: 'Maximum length of the input sequences.'
-      name: 'Max length'
-      input: text
-      required: false
-      types:
-        - integer
-      value: 128  # Default value
-
-### openai_ada.py
-
-openai_ada:
-  description: "OpenAI's text-embedding-ada-002 model is a popular choice for creating embeddings in RAG applications. It provides good performance and is easy to use via API."
-  name: 'Openai ada'
-  path: transformers/embeddings/openai_ada.py
-  type: transformer
-  inputs:
-    text:
-      style:
-        input_type: null
-        multiline: false
-        monospace: false
-      type: text_field
-  variables:
-    model_name:
-      description: 'Name of the OpenAI Ada model.'
-      name: 'Model name'
-      input: text
-      required: true
-      types:
-        - string
-    api_key:
-      description: 'API key for accessing OpenAI services.'
-      name: 'Api key'
-      input: text
-      required: true
-      types:
-        - string
-    max_length:
-      description: 'Maximum length of the input sequences.'
-      name: 'Max length'
-      input: text
-      required: false
-      types:
-        - integer
-      value: 2048  # Default value
-
-### cohere_embed.py
-
-cohere_embed:
-  description: 'Cohere offers powerful embedding models like embed-english-v3.0 that support asymmetric semantic search for improved RAG performance when comparing queries to longer documents.'
-  name: 'Cohere embed'
-  path: transformers/embeddings/cohere_embed.py
-  type: transformer
-  inputs:
-    text:
-      style:
-        input_type: null
-        multiline: false
-        monospace: false
-      type: text_field
-  variables:
-    model_name:
-      description: 'Name of the Cohere embedding model.'
-      name: 'Model name'
-      input: text
-      required: true
-      types:
-        - string
-    api_key:
-      description: 'API key for accessing Cohere services.'
-      name: 'Api key'
-      input: text
-      required: true
-      types:
-        - string
-    max_length:
-      description: 'Maximum length of the input sequences.'
-      name: 'Max length'
-      input: text
-      required: false
-      types:
-        - integer
-      value: 512  # Default value
 
 ### domain_specific_fine_tuned.py
 
@@ -641,8 +534,8 @@ embedding_ensembles:
 ### spacy_embeddings.py
 
 spacy_embeddings:
-  description: 'Generate embeddings using SpaCy models.'
-  name: 'Spacy'
+  description: 'Generate embeddings using spaCy models.'
+  name: 'spaCy embeddings'
   path: transformers/embeddings/spacy_embeddings.py
   type: transformer
   inputs:
@@ -661,3 +554,79 @@ spacy_embeddings:
       types:
         - string
       value: 'en_core_web_sm'  # Default value
+
+### openai_ada.py
+
+openai_ada:
+  description: "OpenAI's text-embedding-ada-002 model is a popular choice for creating embeddings in RAG applications. It provides good performance and is easy to use via API."
+  name: 'OpenAI'
+  path: transformers/embeddings/api/openai_ada.py
+  type: transformer
+  inputs:
+    text:
+      style:
+        input_type: null
+        multiline: false
+        monospace: false
+      type: text_field
+  variables:
+    model_name:
+      description: 'Name of the OpenAI Ada model.'
+      name: 'Model name'
+      input: text
+      required: true
+      types:
+        - string
+    api_key:
+      description: 'API key for accessing OpenAI services.'
+      name: 'Api key'
+      input: text
+      required: true
+      types:
+        - string
+    max_length:
+      description: 'Maximum length of the input sequences.'
+      name: 'Max length'
+      input: text
+      required: false
+      types:
+        - integer
+      value: 2048  # Default value
+
+### cohere_embed.py
+
+cohere_embed:
+  description: 'Cohere offers powerful embedding models like embed-english-v3.0 that support asymmetric semantic search for improved RAG performance when comparing queries to longer documents.'
+  name: 'Cohere embed'
+  path: transformers/embeddings/api/cohere_embed.py
+  type: transformer
+  inputs:
+    text:
+      style:
+        input_type: null
+        multiline: false
+        monospace: false
+      type: text_field
+  variables:
+    model_name:
+      description: 'Name of the Cohere embedding model.'
+      name: 'Model name'
+      input: text
+      required: true
+      types:
+        - string
+    api_key:
+      description: 'API key for accessing Cohere services.'
+      name: 'Api key'
+      input: text
+      required: true
+      types:
+        - string
+    max_length:
+      description: 'Maximum length of the input sequences.'
+      name: 'Max length'
+      input: text
+      required: false
+      types:
+        - integer
+      value: 512  # Default value
