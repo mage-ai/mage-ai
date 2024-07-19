@@ -128,15 +128,6 @@ async def read_stdout_continuously(
 ) -> None:
     output_manager = OutputManager.load(**output_manager_config) if output_manager_config else None
 
-    queue.put(
-        ExecutionResult.load(
-            process=process,
-            status=ExecutionStatus.RUNNING,
-            type=ResultType.STATUS,
-            uuid=uuid,
-        )
-    )
-
     while not stop_event.is_set():
         output = async_stdout.get_output()
         if output:
@@ -234,7 +225,7 @@ async def execute_code_async(
         queue.put(
             ExecutionResult.load(
                 process=process,
-                status=ExecutionStatus.INIT,
+                status=ExecutionStatus.RUNNING,
                 type=ResultType.STATUS,
                 uuid=uuid,
             )

@@ -281,7 +281,7 @@ function EditorAppNode({
             //   uuid: 'Close',
             //   onClick: onClose,
             // },
-          ].map(({ Icon, description, iconProps, uuid, onClick }) => (
+          ].map(({ Icon, description, iconProps, label, uuid, onClick }) => (
             <TooltipWrapper
               align={TooltipAlign.END}
               horizontalDirection={TooltipDirection.DOWN}
@@ -302,9 +302,9 @@ function EditorAppNode({
                 small
                 style={{ background: 'none', border: 'none' }}
               >
-                {uuid && (
+                {label && (
                   <Text medium small>
-                    {uuid}
+                    {label?.()}
                   </Text>
                 )}
               </Button>

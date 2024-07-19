@@ -73,8 +73,7 @@ class ExecutionOutputResource(GenericResource):
         model = await om.build_output()
         limit = kwargs.get('meta', {}).get(MetaKey.LIMIT)
         await model.load_output(
-            sample=bool(limit),
-            sample_count=limit,
+            limit=int(limit) if limit is not None else None,
         )
 
         return cls(model, user, **kwargs)

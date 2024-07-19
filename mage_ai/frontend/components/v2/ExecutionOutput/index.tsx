@@ -56,7 +56,7 @@ export default function ExecutionOutput({
         }
       });
 
-      const maxHeight = Math.max(containerRect?.height ?? 0, 600);
+      const maxHeight = Math.min(Math.max(containerRect?.height ?? 0, 600), 600);
 
       return (
         <DataTable

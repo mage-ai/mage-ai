@@ -132,9 +132,7 @@ class ExecutionOutput(BaseDataClass):
 
     async def load_output(
         self,
-        max_results: Optional[int] = None,
-        sample: Optional[bool] = None,
-        sample_count: Optional[int] = None,
+        limit: Optional[int] = None,
     ) -> Any:
         from mage_ai.kernels.magic.constants import ExecutionStatus, ResultType
 
@@ -169,14 +167,11 @@ class ExecutionOutput(BaseDataClass):
             block = pipeline.get_block(block_uuid, block_type)
 
             execution_partition = metadata.get('execution_partition')
-
             outputs = await get_output_data_async(
                 block,
                 block_uuid=block_uuid,
                 execution_partition=execution_partition,
-                max_results=max_results,
-                sample=sample,
-                sample_count=sample_count,
+                limit=limit,
             )
             self.output = [VariableOutput.load(**m) for m in outputs]
 

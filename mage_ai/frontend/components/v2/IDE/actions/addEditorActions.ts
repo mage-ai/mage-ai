@@ -7,6 +7,8 @@ export default function addEditorActions(
   editorActions: ActionBuilderType[],
 ) {
   (editorActions ?? [])
-    .concat([commentLine()])
+    .concat([
+      // commentLine(),
+    ])
     ?.forEach(builder => editor.addAction(builder(monaco)));
 }

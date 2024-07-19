@@ -125,7 +125,8 @@ const OutputGroups: React.FC<OutputGroupsProps> = ({
           }
         },
         query: {
-          _limit: 10,
+          _limit: 100,
+          ...opts?.query,
         },
       });
     },

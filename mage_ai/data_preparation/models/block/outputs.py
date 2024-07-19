@@ -727,16 +727,13 @@ async def get_output_data_async(
     block: Any,
     block_uuid: Optional[str] = None,
     execution_partition: Optional[str] = None,
-    max_results: Optional[int] = None,
     input_data_types: Optional[List[InputDataType]] = None,
+    limit: Optional[int] = None,
     read_batch_settings: Optional[BatchSettings] = None,
     read_chunks: Optional[List[ChunkKeyTypeUnion]] = None,
-    sample: Optional[bool] = None,
-    sample_count: Optional[int] = None,
 ) -> List[Any]:
     variable_uuids = block.get_variables_by_block(
         block_uuid=block_uuid,
-        max_results=max_results,
         partition=execution_partition,
     )
 
@@ -749,18 +746,17 @@ async def get_output_data_async(
             read_batch_settings=read_batch_settings,
             read_chunks=read_chunks,
         )
-        for variable_uuid in variable_uuids
+        for variable_uuid in (variable_uuids[:limit] if limit else variable_uuids)
     ]
 
     async def __read(
         variable_object,
         block=block,
-        sample=sample,
-        sample_count=sample_count,
+        limit=limit,
     ):
         data = await variable_object.read_data_async(
-            sample=sample,
-            sample_count=sample_count,
+            sample=bool(limit),
+            sample_count=limit,
             spark=block.get_spark_session(),
         )
 
