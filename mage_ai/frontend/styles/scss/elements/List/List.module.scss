@@ -5,7 +5,13 @@
     padding-left: var(--padding-vertical-lg);
   }
 
-  .li {
+  &.row {
+    .item:not(:first-child) {
+      border-top: var(--borders-width) var(--borders-style) var(--borders-color-base-default);
+    }
+  }
+
+  .item {
 
   }
 }

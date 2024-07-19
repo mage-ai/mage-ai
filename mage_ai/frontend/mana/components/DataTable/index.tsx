@@ -16,6 +16,7 @@ import { isObject } from '@utils/hash';
 import { randomSample, range, sum, transpose } from '@utils/array';
 import { useSticky } from 'react-table-sticky';
 import { VariableTypeEnum } from '@interfaces/CodeExecutionType';
+import { flatten } from 'lodash';
 
 const BASE_ROW_HEIGHT = 20;
 const DEFAULT_COLUMN_WIDTH = BASE_ROW_HEIGHT;
@@ -114,7 +115,6 @@ const Styles = styled.div`
       font-weight: var(--fonts-weight-regular);
       line-height: var(--fonts-lineheight-sm);
       margin: 0;
-      padding: var(--padding-xs);
       white-space: break-spaces;
       word-break: break-word;
     }
@@ -124,6 +124,10 @@ const Styles = styled.div`
 
       &.td-monospace {
         font-family: var(--fonts-family-monospace-regular);
+      }
+
+      .td-list-item {
+        padding: var(--padding-xs);
       }
     }
 
@@ -155,29 +159,61 @@ function estimateCellHeight({
   const heights = [];
 
   if (Array.isArray(original)) {
+    let hoffset = 0;
+
     original.forEach((val, idx) => {
       const wLimit = columnWidths[idx + indexes[idx]];
 
-      let numberOfLines = 0;
+      const numberOfLines = [];
       let woffset = 0;
+
       const vals = [];
       if (Array.isArray(val)) {
-        vals.push(...val.map(v => String(v).trim().split('\n')));
-        woffset += PaddingEnum.LG * 2;
+        let hasObject = false;
+
+        vals.push(...val.map(v => {
+          let val2 = v;
+
+          if (isObject(v)) {
+            val2 = JSON.stringify(v, null, 2);
+            hasObject = true;
+          }
+
+          return String(val2).split('\n');
+        }));
+
+        // Border top and vertical padding
+        hoffset += (val.length * (PaddingEnum.XS * 2)) + 1;
+        woffset += hasObject ? 0 : PaddingEnum.LG * 2;
       } else {
-        vals.push(...String(val).trim().split('\n'));
+        vals.push(...String(val).split('\n'));
       }
 
+      const ws = [];
       vals.forEach((v) => {
-        const wTotal = (String(v).length * WIDTH_OF_SINGLE_CHARACTER_REGULAR_SM) + woffset;
-        numberOfLines += Math.ceil(wTotal / wLimit);
+        const nlines = [];
+        const wsinner = [];
+        (Array.isArray(v) ? v : [v]).forEach((v2) => {
+          const wTotal = (String(v2).length * WIDTH_OF_SINGLE_CHARACTER_REGULAR_SM) + woffset;
+          wsinner.push(wTotal);
+          nlines.push(Math.ceil(wTotal / wLimit));
+        });
+
+        ws.push(wsinner);
+        numberOfLines.push(nlines);
       });
 
-      heights.push(numberOfLines * BASE_ROW_HEIGHT);
+      heights.push((sum(flatten(numberOfLines)) * BASE_ROW_HEIGHT) + hoffset);
+
+      // console.log(idx, val, vals, wLimit, numberOfLines, ws, heights, heights[idx]);
     });
   }
 
-  return Math.max(...heights, BASE_ROW_HEIGHT) + (PaddingEnum.XS * 2) + 2;
+  const height = Math.max(...heights, BASE_ROW_HEIGHT) + (PaddingEnum.XS * 2) + 2;
+
+  // console.log(original, height, heights);
+
+  return height;
 }
 
 function getVariableListHeight(
@@ -365,6 +401,7 @@ function Table({ ...props }: TableProps) {
 
             let cellValue = cell.render('Cell');
             let cellValueDisplay = cellValue;
+            cellStyle.padding = 'var(--padding-xs)';
             cellStyle.width = columnWidths[idx];
 
             if (settings?.index) {
@@ -375,8 +412,17 @@ function Table({ ...props }: TableProps) {
               cellValue = original[idx - indexes[idx]];
 
               if (Array.isArray(cellValue)) {
+                cellStyle.padding = '';
                 cellValue = (
-                  <List item={cellValue?.map(v => v?.replace(/\n/g, '\\n'))} monospace secondary small />
+                  <List
+                    asRows
+                    itemClassName={() => 'td-list-item'}
+                    items={cellValue}
+                    monospace
+                    parseItems
+                    secondary
+                    small
+                  />
                 );
               } else if (typeof cellValue === 'object') {
                 try {
@@ -462,6 +508,7 @@ function Table({ ...props }: TableProps) {
 
       const colWidth = columnWidths[idx];
       columnStyle.minWidth = colWidth;
+      columnStyle.padding = 'var(--padding-xs)';
       columnStyle.width = colWidth;
 
       if (settings.index) {

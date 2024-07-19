@@ -145,7 +145,7 @@ function MenuItemBase(
             templateColumns={[before && 'auto', '1fr'].filter(Boolean).join(' ')}
           >
             {before}
-            <Text bold={isHeading} muted={!!noHover} small={small}>
+            <Text bold={isHeading} secondary={!!noHover} small={small}>
               {(typeof label === 'function' ? label?.() : label) || uuid}
             </Text>
           </Grid>
@@ -170,7 +170,7 @@ function MenuItemBase(
         </Grid>
 
         {description && (
-          <Text maxWidth={400} muted small={!small} xsmall={small}>
+          <Text maxWidth={400} secondary small={!small} xsmall={small}>
             {typeof description === 'function' ? description?.() : description}
           </Text>
         )}

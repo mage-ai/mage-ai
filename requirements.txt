@@ -167,4 +167,3 @@ spacy==3.7.5
 torch==2.2.2
 transformers==4.39.3
 voyageai==0.2.2
-WARNING: Requirement

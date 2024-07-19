@@ -60,7 +60,7 @@
     .buttonIcon {
       @include mixins.transition-fast;
 
-      fill: var(--colors-whitelo);
+      fill: var(--fonts-color-text-secondary);
     }
   }
 }

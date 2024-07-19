@@ -48,6 +48,7 @@
   color: var(--fonts-color-text-base);
   margin: 0;
   white-space: break-spaces;
+  word-break: break-word;
 
   &.nowrap {
     white-space: nowrap;
