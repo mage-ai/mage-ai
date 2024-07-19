@@ -1,4 +1,25 @@
+annoy==1.17.3
+anthropic==0.25.1
+bs4==0.0.2
+cohere==5.3.2
+en_core_web_lg @ https://github.com/explosion/spacy-models/releases/download/en_core_web_lg-3.7.1/en_core_web_lg-3.7.1-py3-none-any.whl
+faiss-cpu==1.8.0
+gensim==4.3.2
+hnswlib==0.8.0
+neo4j==5.19.0
 nltk
+nltk==3.8.1  # python -m nltk.downloader stopwords punkt wordnet
+openai==1.25.0
+pgvector==0.2.5
+pytextrank==3.3.0
+replicate==0.25.2
+# scann
+sentence-transformers==2.6.1
+sentencepiece==0.2.0
 spacy
+spacy>=3.0.0,<4.0.0
 torch
+torch==2.2.2
 transformers
+transformers==4.39.3
+voyageai==0.2.2
