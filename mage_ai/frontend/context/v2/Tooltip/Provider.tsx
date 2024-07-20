@@ -69,7 +69,7 @@ export const TooltipProvider: React.FC<TooltipProviderProps> = ({ children, main
               optionsPrev={optionsPrev}
               ref={tooltipContentRef}
             >
-              {typeof content === 'function' ? content({} as any, {} as any) : content}
+              {content}
             </TooltipContent>
           </ContextProvider>,
         );

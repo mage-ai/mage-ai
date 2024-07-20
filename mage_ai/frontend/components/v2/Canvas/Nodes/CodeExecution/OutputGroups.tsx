@@ -149,17 +149,30 @@ const OutputGroups: React.FC<OutputGroupsProps> = ({
     executingRef.current = !done;
 
     if (statusRef?.current) {
-      const resultStatus = sortByKey(
-        resultsGroupedByMessageRequestUUIDRef.current?.[result.process.message_request_uuid]?.filter(
-          (r: ExecutionResultType) => r.type === ResultType.STATUS,
-        ),
+      const arr = sortByKey(
+        resultsGroupedByMessageRequestUUIDRef.current?.[result.process.message_request_uuid],
         (r: ExecutionResultType) => r.timestamp,
         { ascending: false },
+      );
+      const resultStatus = arr?.filter(
+        (r: ExecutionResultType) => r.type === ResultType.STATUS,
       )?.[0];
 
       if (done) {
         statusRef.current.innerText = '';
         statusRef.current.style.display = 'none';
+
+        const resultOutput: ExecutionResultType = arr?.find(
+          (r: ExecutionResultType) => ExecutionStatusEnum.SUCCESS === r.status && ResultType.OUTPUT === r.type
+        );
+        if (resultOutput) {
+          fetchOutput(resultOutput.process.message_request_uuid, {
+            query: {
+              namespace: resultOutput.metadata.namespace,
+              path: resultOutput.metadata.path,
+            },
+          });
+        }
       } else if (resultStatus) {
         statusRef.current.innerText =
           `${capitalize(STATUS_DISPLAY_TEXT[resultStatus?.status] ?? resultStatus?.status)}...`;
@@ -185,13 +198,16 @@ const OutputGroups: React.FC<OutputGroupsProps> = ({
             ...executionOutputMappingRef.current,
             [xo.uuid]: xo,
           };
+          renderResults();
 
           const key = keysRef.current?.[keysRef.current?.length - 1];
           const results = resultsGroupedByMessageRequestUUIDRef.current?.[key];
           const ids = results?.map(r => String(r.process?.message_request_uuid)) ?? [];
 
           if (ids.includes(key)) {
-            scrollDown();
+            timeoutScrollRef.current = setTimeout(() => {
+              scrollDown(true);
+            }, 100);
           }
 
           if (opts?.onSuccess) {
@@ -213,10 +229,13 @@ const OutputGroups: React.FC<OutputGroupsProps> = ({
         resultsQueueRef.current.push(result);
         if (timeoutRef.current === null) {
           timeoutRef.current = setTimeout(handleResults, 100);
+          scrollDown(true);
         }
         scrollDown(true);
       });
-      scrollDown(true);
+      timeoutScrollRef.current = setTimeout(() => {
+        scrollDown(true);
+      }, 100);
     });
 
     setHandleOnMessage(consumerID, (event: EventStreamType) => {
@@ -225,18 +244,11 @@ const OutputGroups: React.FC<OutputGroupsProps> = ({
       resultsQueueRef.current.push(result);
       if (timeoutRef.current === null) {
         timeoutRef.current = setTimeout(handleResults, 100);
+        scrollDown(true);
       }
-
-      if (ExecutionStatusEnum.SUCCESS === result.status && ResultType.OUTPUT === result.type) {
-        fetchOutput(result.process.message_request_uuid, {
-          query: {
-            namespace: result.metadata.namespace,
-            path: result.metadata.path,
-          },
-        });
-      }
-
-      scrollDown(true);
+      timeoutScrollRef.current = setTimeout(() => {
+        scrollDown(true);
+      }, 100);
     });
 
     onMount && onMount?.(consumerID, () => {

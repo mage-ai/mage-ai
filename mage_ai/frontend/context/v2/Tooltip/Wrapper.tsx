@@ -28,7 +28,7 @@ export function TooltipWrapper({
   showOnClick?: boolean;
   showOnHover?: boolean;
   style?: React.CSSProperties;
-  tooltip: React.ReactNode | ((event: any, props: { hideTooltip: () => void }) => React.ReactNode);
+  tooltip: React.ReactNode;
   tooltipStyle?: React.CSSProperties;
 } & TooltipLayout): any {
   const { hideTooltip, showTooltip } = useTooltip();

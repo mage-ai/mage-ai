@@ -39,7 +39,7 @@ export type TooltipLayout = {
   verticalDirection?: TooltipDirection;
 };
 
-export type TooltipContentType = ReactNode | ((event: any, props: { hideTooltip: () => void }) => React.ReactNode);
+export type TooltipContentType = ReactNode;
 export type ShowTooltipOptionsType = {
   event?: React.FocusEvent | React.MouseEvent;
   hideOn?: HideTooltipReason[];
