@@ -16,6 +16,7 @@ import stylesOutput from '@styles/scss/components/Canvas/Nodes/OutputGroups.modu
 import { groupBy } from '@utils/array';
 import { ElementRoleEnum } from '@mana/shared/types';
 import { ExecutionOutputType } from '@interfaces/CodeExecutionType';
+import { capitalize } from '@utils/string';
 
 export type OutputGroupsType = {
   handleContextMenu?: ExecutionResultProps['handleContextMenu'];
@@ -232,7 +233,7 @@ const OutputGroups: React.FC<OutputGroupsProps> = ({
           {statusRecent && (
             <Grid paddingBottom={6}>
               <Text italic monospace muted warning xsmall>
-                {STATUS_DISPLAY_TEXT[statusRecent?.status] ?? statusRecent?.status}...
+                {capitalize(STATUS_DISPLAY_TEXT[statusRecent?.status] ?? statusRecent?.status)}...
               </Text>
             </Grid>
           )}

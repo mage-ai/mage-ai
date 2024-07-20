@@ -3,7 +3,6 @@ import asyncio
 import inspect
 import json
 import os
-import traceback
 from asyncio import Event as AsyncEvent
 from contextlib import contextmanager, redirect_stdout
 from multiprocessing import Queue
@@ -12,7 +11,7 @@ from threading import Event
 from typing import Any, Callable, Dict, Iterable, Optional
 
 from mage_ai.errors.models import ErrorDetails
-from mage_ai.errors.utils import filter_traceback
+from mage_ai.errors.utils import USER_CODE_MARKER
 from mage_ai.kernels.magic.constants import ExecutionStatus, ResultType
 from mage_ai.kernels.magic.environments.models import OutputManager
 from mage_ai.kernels.magic.models import ExecutionResult, ProcessContext, ProcessDetails
@@ -27,6 +26,14 @@ def is_debug():
     return False
 
 
+def __filter_traceback(stacktrace, code_filename='<string>'):
+    filtered_stacktrace = []
+    for line in stacktrace:
+        if code_filename in line:
+            filtered_stacktrace.append(line)
+    return filtered_stacktrace
+
+
 def set_node_line_numbers(node: ast.AST, lineno: int, col_offset: int):
     for n in ast.walk(node):
         if isinstance(n, ast.AST):
@@ -36,7 +43,7 @@ def set_node_line_numbers(node: ast.AST, lineno: int, col_offset: int):
                 n.col_offset = col_offset
 
 
-async def modify_and_execute(
+async def __modify_and_execute(
     code_block: str,
     local_variables,
     execute: Optional[Callable] = None,
@@ -91,17 +98,16 @@ async def modify_and_execute(
 
     error = None
     try:
-        if modified_code:
-            exec(compile(modified_code, '<string>', 'exec'), execution_variables)
-        elif execute:
+        # This takes precedence.
+        if execute:
             res = execute(**execution_variables)
             if res and inspect.isawaitable(res):
                 res = await res
+        elif modified_code:
+            modified_code = f'{USER_CODE_MARKER}\n{modified_code}'
+            exec(compile(modified_code, '<string>', 'exec'), execution_variables)
     except Exception as err:
-        tb = traceback.format_exception(type(err), err, err.__traceback__)
-        filtered_tb = filter_traceback(tb)
-        error_message = f"Caught an error in executed code:\n{''.join(filtered_tb)}"
-        raise Exception(error_message) from err
+        error = err
 
     local_variables.update({
         key: value for key, value in (execution_variables or {}).items() if key != '__builtins__'
@@ -124,7 +130,7 @@ def check_queue(queue: Queue):
         queue.put(item)
 
 
-async def read_stdout_continuously(
+async def __read_stdout_continuously(
     uuid: str,
     queue: Queue,
     process: ProcessDetails,
@@ -181,7 +187,7 @@ async def read_stdout_continuously(
 
 
 @contextmanager
-def temporary_env(env: Dict[str, str]):
+def __temporary_env(env: Dict[str, str]):
     old_env = os.environ.copy()
     os.environ.update(env)
     try:
@@ -218,7 +224,7 @@ async def execute_code_async(
 
         # Start the coroutine to read stdout continuously
         reader_task = asyncio.create_task(
-            read_stdout_continuously(
+            __read_stdout_continuously(
                 uuid,
                 queue,
                 process,
@@ -232,7 +238,7 @@ async def execute_code_async(
         queue.put(
             ExecutionResult.load(
                 process=process,
-                status=ExecutionStatus.RUNNING,
+                status=ExecutionStatus.INIT,
                 type=ResultType.STATUS,
                 uuid=uuid,
             )
@@ -241,11 +247,20 @@ async def execute_code_async(
         with redirect_stdout(async_stdout):
             try:
                 environment_variables = kwargs.get('environment_variables') or {}
-                with temporary_env(environment_variables):
+                with __temporary_env(environment_variables):
                     execution_variables = kwargs.get('execution_variables') or {}
                     execute = kwargs.get('execute')
 
-                    local_variables = await modify_and_execute(
+                    queue.put(
+                        ExecutionResult.load(
+                            process=process,
+                            status=ExecutionStatus.RUNNING,
+                            type=ResultType.STATUS,
+                            uuid=uuid,
+                        )
+                    )
+
+                    local_variables = await __modify_and_execute(
                         message,
                         local_variables,
                         execute=execute,
@@ -253,7 +268,7 @@ async def execute_code_async(
                     )
             except Exception as err:
                 result = ExecutionResult.load(
-                    error=ErrorDetails.from_current_error(err),
+                    error=ErrorDetails.from_current_error(err, message),
                     process=process,
                     status=ExecutionStatus.ERROR,
                     type=ResultType.STATUS,
@@ -327,7 +342,7 @@ async def execute_code_async(
     except StopAsyncIteration as err:
         queue.put(
             ExecutionResult.load(
-                error=ErrorDetails.from_current_error(err),
+                error=ErrorDetails.from_current_error(err, message),
                 process=process,
                 status=ExecutionStatus.CANCELLED,
                 type=ResultType.STATUS,
@@ -336,7 +351,7 @@ async def execute_code_async(
         )
     except Exception as err:
         result = ExecutionResult.load(
-            error=ErrorDetails.from_current_error(err),
+            error=ErrorDetails.from_current_error(err, message),
             process=process,
             status=ExecutionStatus.ERROR,
             type=ResultType.STATUS,

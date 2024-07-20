@@ -63,10 +63,16 @@ export default function useExecutionManager(
     autoReconnect,
     maxConnectionAttempts,
     throttle,
+    onError,
+    onMessage: onMessageProp,
+    onSuccess,
   }: {
     autoReconnect?: boolean;
     maxConnectionAttempts?: number;
     throttle?: number;
+    onError?: (event: Event) => void
+    onMessage?: (event: EventStreamType) => void
+    onSuccess?: (event: Event) => void
   } = {
     autoReconnect: true,
     maxConnectionAttempts: 10,
@@ -409,6 +415,10 @@ export default function useExecutionManager(
     // console.log('Target stream :', eventData.result.process.stream, stream);
 
     onmessageRef?.current && onmessageRef?.current?.(event);
+
+    if (onMessageProp) {
+      onMessageProp?.(eventData);
+    }
 
     // setEvents(channel, stream, eventData);
 

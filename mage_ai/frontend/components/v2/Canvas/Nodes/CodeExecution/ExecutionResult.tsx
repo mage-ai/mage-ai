@@ -174,6 +174,7 @@ function ExecutionResult(
                 <Grid alignItems="center"
                   columnGap={8}
                   data-message-request-uuid={groupUUID}
+                  key={resultID}
                   templateColumns="1fr"
                   templateRows="auto"
                 >
@@ -291,34 +292,41 @@ function ExecutionResult(
                 {resultsInformation}
 
                 {resultsErrors && resultsErrors?.map(({ error, result_id: resultID }) => {
-                  const code = error?.code;
-                  const errors = error?.errors;
-                  const message = error?.message;
-                  const type = error?.type;
+                  const {
+                    code_context_formatted: stacktrace,
+                    message_formatted: message,
+                    type,
+                  } = error ?? {};
 
                   return (
                     <Grid key={resultID} rowGap={12} templateColumns="auto" templateRows="auto auto">
-                      <Text monospace semibold small>
-                        <Ansi>{String(message)}</Ansi>
-                      </Text>
+                      <Grid key={resultID} rowGap={6} templateColumns="auto" templateRows="auto auto">
+                        <Text monospace secondary semibold small>
+                          {/* ValueError */}
+                          <Ansi>{String(type)}</Ansi>
+                        </Text>
 
-                      {[code, type].map(
-                        val =>
-                          val && (
-                            <Text key={val} monospace small>
-                              <Ansi>{String(val)}</Ansi>
-                            </Text>
-                          ),
-                      )}
+                        {/* too many values to unpack (expected 4) */}
+                        {[message].map(
+                          (val, idx) =>
+                            val && (
+                              <Text key={`${resultID}-${val}-${idx}`} monospace small>
+                                <Ansi>{String(val)}</Ansi>
+                              </Text>
+                            ),
+                        )}
+                      </Grid>
 
-                      {errors?.length >= 1 && (
+                      {stacktrace?.length >= 1 && (
                         <pre
                           style={{
                             whiteSpace: 'break-spaces',
                           }}
                         >
                           <Text inline monospace small>
-                            {errors?.map((line: string) => <Ansi key={line}>{line}</Ansi>)}
+                            <Ansi>
+                              {stacktrace?.join('\n')}
+                            </Ansi>
                           </Text>
                         </pre>
                       )}

@@ -314,6 +314,7 @@ function BlockNode(
       handlers: {
         update: {
           onError: () => {
+            setExecuting(false);
             setLoadingKernelMutation(false);
           },
           onSuccess: () => {

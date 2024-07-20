@@ -10,12 +10,11 @@ import { ModeEnum } from '@mana/themes/modes';
 import { ThemeProvider } from 'styled-components';
 import { ThemeSettingsType } from '@mana/themes/interfaces';
 import { getTheme, getThemeSettings } from '@mana/themes/utils';
-import { useEffect, useRef } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 
 function App({
   Component,
   pageProps: {
-    defaultTitle,
     mode: modeProp,
     themeSettings: themeSettingsProp,
     title,
@@ -25,7 +24,6 @@ function App({
   router,
 }: AppProps & {
   pageProps: {
-    defaultTitle?: string;
     mode?: ModeEnum;
     title?: string;
     themeSettings?: Record<string, ThemeSettingsType>;
@@ -46,14 +44,11 @@ function App({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const headMemo = useMemo(() => <Head title={title ?? 'Mage Pro'} />, [title]);
+
   return (
     <>
-      <Head defaultTitle={defaultTitle} title={title}>
-        <meta
-          content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=0"
-          name="viewport"
-        />
-      </Head>
+      {headMemo}
 
       <ThemeProvider theme={theme}>
         <MenuProvider>

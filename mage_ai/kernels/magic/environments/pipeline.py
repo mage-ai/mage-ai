@@ -3,6 +3,7 @@ from datetime import datetime, timedelta
 from typing import Any, Dict, Optional, Union
 
 from mage_ai.data_preparation.variable_manager import get_global_variables
+from mage_ai.errors.utils import USER_CODE_MARKER
 from mage_ai.kernels.magic.constants import ResultType
 from mage_ai.kernels.magic.environments.setup_helpers import execute, get_block
 from mage_ai.shared.constants import ENV_DEV
@@ -53,7 +54,7 @@ class Pipeline:
         execution_variables = dict(
             block_type=block_type,
             block_uuid=block_uuid,
-            message=message,
+            message=f'{USER_CODE_MARKER}\n{message}',
             pipeline_uuid=self.uuid,
             variables=variables,
         )
@@ -72,7 +73,7 @@ class Pipeline:
                     execution_variables['variables'][key] = value
 
         process = self.kernel.build_process(
-            None,
+            message,
             message_request_uuid=message_request_uuid,
             output_manager=self.output_manager,
             callback=lambda x: print('Execution finished...', x),

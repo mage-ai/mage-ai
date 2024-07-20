@@ -24,7 +24,7 @@ export const LayoutProvider = ({ children, router, theme }: LayoutProviderProps)
   const headerRootRef = useRef<Root>(null);
   const headerRef = useRef<HeaderProps>(headerData);
   const pageRef = useRef<PageProps>({
-    title: 'Mage Pro',
+    title: null,
   });
 
   function initialize({ headerRef, page }) {
@@ -51,18 +51,27 @@ export const LayoutProvider = ({ children, router, theme }: LayoutProviderProps)
       success?: boolean;
     },
   ) {
-    const status = page?.busy
-      ? FaviconStatusEnum.BUSY
-      : page?.error
-        ? FaviconStatusEnum.ERROR
-        : page?.notice
-          ? FaviconStatusEnum.NOTICE
-          : page?.success
-            ? FaviconStatusEnum.SUCCESS
-            : undefined;
+    if ([
+      'busy',
+      'error',
+      'notice',
+      'success',
+    ].some(key => key in (page ?? {}))) {
+      const status = page?.busy
+        ? FaviconStatusEnum.BUSY
+        : page?.error
+          ? FaviconStatusEnum.ERROR
+          : page?.notice
+            ? FaviconStatusEnum.NOTICE
+            : page?.success
+              ? FaviconStatusEnum.SUCCESS
+              : undefined;
 
-    if (status ?? false) {
-      changeFavicon(`/favicon-${status}.png`);
+      if (status ?? false) {
+        changeFavicon(`/images/favicons/${status}.png`);
+      } else {
+        changeFavicon('/images/favicons/pro.ico');
+      }
     }
 
     if (page?.title) {

@@ -227,17 +227,7 @@ def replace_base_path(base_path: str) -> str:
                     s = f.read()
                 s = s.replace(BASE_PATH_PLACEHOLDER, base_path)
                 s = s.replace("src: url('/fonts", f"src:url('/{base_path}/fonts")
-
-                for fn in [
-                    'favicon-busy.png',
-                    'favicon-error.png',
-                    'favicon-notification.png',
-                    'favicon-pro.ico',
-                    'favicon-success.png',
-                    'favicon.ico',
-                ]:
-                    s = s.replace(f'href="/{fn}"', f'href="/{base_path}/{fn}"')
-
+                s = s.replace('href="/favicon.ico"', f'href="/{base_path}/favicon.ico"')
                 # replace favicon
                 with open(filepath, 'w', encoding='utf-8') as f:
                     f.write(s)
@@ -289,7 +279,6 @@ def make_app(
         (r'/triggers', MainPageHandler),
         (r'/manage', MainPageHandler),
         (r'/manage/(.*)', MainPageHandler),
-        (r'/v2', MainPageHandler),
         (r'/v2/(.*)', MainPageHandler),
         (r'/templates', MainPageHandler),
         (r'/version-control', MainPageHandler),

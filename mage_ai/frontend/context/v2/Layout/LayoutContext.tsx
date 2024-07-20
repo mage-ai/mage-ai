@@ -8,7 +8,7 @@ type HeaderType = {
 export type PageProps = {
   busy?: boolean;
   error?: boolean;
-  notice?: string;
+  notice?: boolean;
   success?: boolean;
   title?: string;
 };

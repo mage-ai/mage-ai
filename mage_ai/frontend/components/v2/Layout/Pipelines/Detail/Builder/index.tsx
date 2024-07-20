@@ -6,6 +6,7 @@ import stylesPipelineBuilder from '@styles/scss/pages/PipelineBuilder/PipelineBu
 import { useContext, useEffect } from 'react';
 import { LayoutContext } from '@context/v2/Layout';
 import DetailLayout from '../DetailLayout';
+import { FRAMEWORK_NAME_MAPPING } from 'interfaces/PipelineExecutionFramework/types';
 
 interface PipelineDetailProps {
   frameworkUUID?: string;
@@ -44,8 +45,7 @@ function PipelineBuilder({ frameworkUUID, uuid, ...props }: PipelineDetailProps)
       });
 
       page?.setPage && page?.setPage?.({
-        success: true,
-        title: 'Ultra Mage',
+        title: FRAMEWORK_NAME_MAPPING[frameworkUUID] ?? frameworkUUID,
       });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps

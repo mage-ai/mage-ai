@@ -211,7 +211,10 @@ function EditorAppNode({
                   ? () => {
                       setLoadingKernelMutation(true);
                       interruptExecution({
-                        onError: () => setLoadingKernelMutation(false),
+                        onError: () => {
+                          setExecuting(false);
+                          setLoadingKernelMutation(false);
+                        },
                         onSuccess: () => setLoadingKernelMutation(false),
                       });
                     }

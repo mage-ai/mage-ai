@@ -1,6 +1,8 @@
+import { LayoutContext } from '@context/v2/Layout';
 import React, {
   createRef,
   useEffect,
+  useContext,
   useMemo,
   useRef,
   useState,
@@ -150,6 +152,7 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
   useExecuteCode,
   useRegistration,
 }: PipelineCanvasV2Props) => {
+  const { page } = useContext(LayoutContext);
   const executionFrameworkUUID = useMemo(
     () => hyphensToSnake(executionFrameworkUUIDProp),
     [executionFrameworkUUIDProp],
@@ -157,6 +160,7 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
   const pipelineUUID = useMemo(() => hyphensToSnake(pipelineUUIDProp), [pipelineUUIDProp]);
 
   // Refs
+  const pageTitleRef = useRef<string>(null);
   const nodeRefs = useRef<Record<string, React.MutableRefObject<HTMLElement>>>({});
   const dragRefs = useRef<Record<string, React.MutableRefObject<HTMLDivElement>>>({});
   const rectRefs = useRef<Record<string, React.MutableRefObject<RectType>>>({});
@@ -1155,6 +1159,14 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
     });
 
     phaseRef.current += 1;
+
+    page?.setPage?.({
+      busy: false,
+      error: false,
+      notice: false,
+      success: false,
+      title: pageTitleRef.current,
+    });
   });
 
   const setSelectedGroup = useCallback((block: FrameworkType) => {
@@ -1347,7 +1359,13 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
     {
       automaticAbort: false,
       handlers: {
-        detail: { onSuccess: setPipeline },
+        detail: {
+          onSuccess: (model) => {
+            setPipeline(model);
+            pageTitleRef.current = model?.name ?? model?.name;
+            page?.setPage?.({ title: pageTitleRef.current });
+          },
+        },
         update: {
           onSuccess: (p1, p2) => {
             updateLocalResources(p1);
@@ -1368,6 +1386,15 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
 
               renderLayoutUpdates();
             }
+
+            pageTitleRef.current = p1?.name ?? p1?.name;
+            page?.setPage?.({
+              busy: false,
+              error: false,
+              notice: false,
+              success: false,
+              title: pageTitleRef.current,
+            });
           },
         },
       },
