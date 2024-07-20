@@ -184,7 +184,11 @@ class OutputManager(BaseDataClass):
 
     @classmethod
     async def load_with_messages(
-        cls, path: str, namespace: str, limit: Optional[int] = None
+        cls,
+        path: str,
+        namespace: str,
+        limit: Optional[int] = None,
+        reverse: bool = True,
     ) -> List[ExecutionOutput]:
         absolute_path = os.path.join(get_variables_dir(), path, namespace)
         if not await exists_async(absolute_path):
@@ -193,9 +197,11 @@ class OutputManager(BaseDataClass):
         paths = sorted(
             [fp for fp in os.listdir(absolute_path) if not fp.startswith('.')],
             key=lambda x: x.lower(),
+            reverse=reverse,
         )
+
         if limit is not None:
-            paths = paths[:limit]
+            paths = paths[: int(limit)]
 
         execution_outputs = await asyncio.gather(*[
             cls.load(

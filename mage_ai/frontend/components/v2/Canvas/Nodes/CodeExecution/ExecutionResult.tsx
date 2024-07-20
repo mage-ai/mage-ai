@@ -1,3 +1,4 @@
+import { useInView } from "framer-motion"
 import EventStreamType, {
   ResultType,
   ExecutionResultType,
@@ -23,13 +24,14 @@ import Loading from '@mana/components/Loading';
 
 export type ExecutionResultProps = {
   containerRect?: DOMRect;
+  executing?: boolean;
   executionOutput?: ExecutionOutputType;
   first?: boolean;
   last?: boolean;
   handleContextMenu?: (
     event: React.MouseEvent<HTMLDivElement>,
-    messageRequestUUID: string,
-    results: ExecutionResultType[],
+    messageRequestUUID?: string,
+    results?: ExecutionResultType[],
     executionOutput?: ExecutionOutputType,
   ) => void;
   messageRequestUUID: string;
@@ -50,6 +52,7 @@ export type ExecutionResultProps = {
 function ExecutionResult(
   {
     containerRect,
+    executing,
     executionOutput: executionOutputProp,
     fetchOutput,
     first,
@@ -60,6 +63,11 @@ function ExecutionResult(
   }: ExecutionResultProps,
   ref: React.ForwardedRef<HTMLDivElement>,
 ) {
+  const inViewRef = useRef<HTMLDivElement>(null);
+  const isInView = useInView(inViewRef);
+  const heightRef = useRef<number>(null);
+  const scrollbarInnerRef = useRef<HTMLDivElement>(null);
+
   const displayLocalTimezone = shouldDisplayLocalTimezone();
   const resultsErrors = useMemo(
     () => results?.filter(result => ExecutionStatusEnum.ERROR === result.status),
@@ -131,115 +139,120 @@ function ExecutionResult(
     return results?.find(r => ResultType.STATUS === r.type)?.status;
   }, [results, resultsErrors, success]);
 
-  const resultsInformation = useMemo(
-    () =>
-      results?.reduce(
-        (
-          acc: React.ReactNode[],
-          result: ExecutionResultType,
-        ) => {
-          const {
-            // data_type,
-            error,
-            // output,
-            output_text: outputText,
-            process: resultProcess,
-            result_id: resultID,
-            status: resultStatus,
-            timestamp,
-            type: resultType,
-            // uuid: resultUuid,
-          } = result;
+  const resultsInformation = useMemo(() => results?.reduce(
+      (
+        acc: React.ReactNode[],
+        result: ExecutionResultType,
+      ) => {
+        const {
+          // data_type,
+          error,
+          // output,
+          output_text: outputText,
+          process: resultProcess,
+          result_id: resultID,
+          status: resultStatus,
+          timestamp,
+          type: resultType,
+          // uuid: resultUuid,
+        } = result;
 
-          if (ResultType.STATUS === resultType) {
+        if (ResultType.STATUS === resultType) {
+          return acc;
+        }
+
+        const {
+          // exitcode,
+          // is_alive,
+          // message,
+          message_request_uuid: groupUUID,
+          // message_uuid,
+          // pid,
+          // timestamp: processTimestamp,
+          // uuid: processUuid,
+        } = resultProcess;
+
+        if (ResultType.OUTPUT === resultType) {
+          if (executionOutput) {
             return acc;
+          } else if (ExecutionStatusEnum.ERROR !== status) {
+            return acc.concat(
+              <Grid alignItems="center"
+                columnGap={8}
+                data-message-request-uuid={groupUUID}
+                key={resultID}
+                templateColumns="1fr"
+                templateRows="auto"
+              >
+                <Link onClick={() => getOutput()} xsmall>
+                  Load output
+                </Link>
+              </Grid>,
+            );
           }
+        }
 
-          const {
-            // exitcode,
-            // is_alive,
-            // message,
-            message_request_uuid: groupUUID,
-            // message_uuid,
-            // pid,
-            // timestamp: processTimestamp,
-            // uuid: processUuid,
-          } = resultProcess;
+        const isFinalOutput =
+          ResultType.DATA === resultType && ExecutionStatusEnum.SUCCESS === resultStatus;
 
-          if (ResultType.OUTPUT === resultType) {
-            if (executionOutput) {
-              return acc;
-            } else if (ExecutionStatusEnum.ERROR !== status) {
-              return acc.concat(
-                <Grid alignItems="center"
-                  columnGap={8}
-                  data-message-request-uuid={groupUUID}
-                  key={resultID}
-                  templateColumns="1fr"
-                  templateRows="auto"
-                >
-                  <Link onClick={() => getOutput()} xsmall>
-                    Load output
-                  </Link>
-                </Grid>,
-              );
-            }
-          }
-
-          const isFinalOutput =
-            ResultType.DATA === resultType && ExecutionStatusEnum.SUCCESS === resultStatus;
-
-          return acc.concat(
-            <TooltipWrapper
-              align={TooltipAlign.END}
-              horizontalDirection={TooltipDirection.RIGHT}
-              justify={TooltipJustify.CENTER}
-              key={resultID}
-              tooltip={
-                <Grid
-                  columnGap={8}
-                  data-message-request-uuid={groupUUID}
-                  templateColumns="auto 1fr"
-                >
-                  <Text
-                    monospace
-                    muted
-                    small
-                    style={{
-                      pointerEvents: 'none',
-                    }}
-                  >
-                    [{isFinalOutput ? 'output' : acc?.length ?? 0}]
-                  </Text>
-                  <Text monospace secondary small>
-                    {displayLocalOrUtcTime(
-                      moment(timestamp).format(DATE_FORMAT_LONG_MS),
-                      displayLocalTimezone,
-                      DATE_FORMAT_LONG_MS,
-                    )}
-                  </Text>
-                </Grid>
-              }
-            >
-              <Grid columnGap={8} data-message-request-uuid={groupUUID} templateColumns="1fr">
-                <Text
-                  monospace
-                  small
-                  style={{
-                    pointerEvents: 'none',
-                  }}
-                >
-                  {outputText}
-                </Text>
-              </Grid>
-            </TooltipWrapper>,
-          );
-        }, [],
-      ),
-    [displayLocalTimezone, executionOutput, getOutput, results, status],
+        return acc.concat(
+          <span key={resultID} data-message-request-uuid={groupUUID}>
+            [{isFinalOutput ? 'output' : acc?.length ?? 0}]
+            {outputText}
+          </span>
+        );
+      }, [],
+    ), [displayLocalTimezone, executionOutput, getOutput, results, status],
   );
 
+  // <TooltipWrapper
+  //   align={TooltipAlign.END}
+  //   horizontalDirection={TooltipDirection.RIGHT}
+  //   justify={TooltipJustify.CENTER}
+  //   key={resultID}
+  //   tooltip={
+  //     <Grid
+  //       columnGap={8}
+  //       data-message-request-uuid={groupUUID}
+  //       templateColumns="auto 1fr"
+  //     >
+  //       <Text
+  //         monospace
+  //         muted
+  //         small
+  //         style={{
+  //           pointerEvents: 'none',
+  //         }}
+  //       >
+
+  //       </Text>
+  //       <Text monospace secondary small>
+  //         {displayLocalOrUtcTime(
+  //           moment(timestamp).format(DATE_FORMAT_LONG_MS),
+  //           displayLocalTimezone,
+  //           DATE_FORMAT_LONG_MS,
+  //         )}
+  //       </Text>
+  //     </Grid>
+  //   }
+  // >
+
+  // </TooltipWrapper>,
   const runtime = useMemo(() => (timestamps?.max ?? 0) - (timestamps?.min ?? 0), [timestamps]);
+
+  useEffect(() => {
+    if (!executing) {
+      heightRef.current = Math.max(
+        Math.min(
+          heightRef.current,
+          scrollbarInnerRef?.current?.getBoundingClientRect()?.height ?? 0,
+          isInView ? inViewRef?.current?.getBoundingClientRect()?.height : 0,
+        ),
+        20 * (resultsInformation?.length ?? 0),
+        heightRef.current ?? 0,
+      );
+    }
+  }, [executing, isInView, resultsInformation]);
 
   useEffect(() => {
     if (executionOutputProp && !executionOutput) {
@@ -299,10 +312,15 @@ function ExecutionResult(
           ? event => handleContextMenu(event, messageRequestUUID, results, executionOutput)
           : undefined
       }
-      ref={ref}
+      ref={inViewRef}
     >
       {(resultsInformation?.length > 0 || executionOutput || resultsErrors?.length > 0) && (
-        <Grid paddingBottom={last ? 6 : 0} paddingTop={first ? 6 : 0} rowGap={4}>
+        <Grid
+          paddingBottom={last ? 6 : 0}
+          paddingTop={first ? 6 : 0}
+          ref={ref}
+          rowGap={4}
+        >
           <Grid autoFlow="column" columnGap={8} justifyContent="space-between">
             <Text monospace muted xsmall>
               {isNumeric(timestamps.min)
@@ -325,6 +343,10 @@ function ExecutionResult(
               ].filter(Boolean).join(' ')}
               hideY
               hideYscrollbar
+              innerRef={scrollbarInnerRef}
+              style={{
+                minHeight: heightRef.current,
+              }}
             >
               <Grid
                 className={[
@@ -334,14 +356,15 @@ function ExecutionResult(
                   minHeight: hasOutput ? 32 : undefined,
                 }}
               >
-                {resultsInformation}
+                {(executing || isInView) && resultsInformation}
 
                 {!executionOutput && errorMemo}
               </Grid>
             </Scrollbar>
           )}
 
-          {executionOutput && <ExecutionOutput containerRect={containerRect} executionOutput={executionOutput} />}
+          {executionOutput
+            && <ExecutionOutput containerRect={containerRect} executionOutput={executionOutput} />}
 
           {(executionOutput && resultsErrors?.length > 0) && (
             <Scrollbar
@@ -366,17 +389,19 @@ function ExecutionResult(
             </Scrollbar>
           )}
 
-          <div>
-            <div style={{ height: 4 }}>{loading && <Loading position="absolute" />}</div>
+          {!executing && (
+            <div>
+              <div style={{ height: 4 }}>{loading && <Loading position="absolute" />}</div>
 
-            <Grid autoFlow="column" columnGap={8} justifyContent="space-between">
-              <div />
+              <Grid autoFlow="column" columnGap={8} justifyContent="space-between">
+                <div />
 
-              <Text monospace muted xsmall>
-                {formatDurationFromEpoch(runtime)}
-              </Text>
-            </Grid>
-          </div>
+                <Text monospace muted xsmall>
+                  {formatDurationFromEpoch(runtime)}
+                </Text>
+              </Grid>
+            </div>
+          )}
         </Grid>
       )}
     </div>

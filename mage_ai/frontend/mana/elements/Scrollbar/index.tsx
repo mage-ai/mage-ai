@@ -6,7 +6,8 @@ import scrollbars, { InnerStyled, ScrollbarsStyledProps } from '../../styles/scr
 type ScrollbarProps = {
   autoHorizontalPadding?: boolean;
   className?: string;
-  children: React.ReactNode;
+  children?: React.ReactNode;
+  scrollbarInnerRef?: React.RefObject<HTMLDivElement>;
 } & ScrollbarsStyledProps;
 
 const ScrollbarStyled =
@@ -28,12 +29,13 @@ const ScrollbarStyled =
 `;
 
 function Scrollbar(
-  { autoHorizontalPadding, children, hideXscrollbar, ...props }: ScrollbarProps,
+  { autoHorizontalPadding, children, hideXscrollbar, scrollbarInnerRef, ...props }: ScrollbarProps,
   ref: React.RefObject<HTMLDivElement>,
 ) {
   const [isOverflowing, setIsOverflowing] = useState(false);
-  const innerRef = useRef<HTMLDivElement>(null);
+  const innerRefInternal = useRef<HTMLDivElement>(null);
   const outterRef = useRef<HTMLDivElement>(null);
+  const innerRef = scrollbarInnerRef || innerRefInternal;
 
   useEffect(() => {
     if (autoHorizontalPadding) {
@@ -76,7 +78,9 @@ function Scrollbar(
       }}
       ref={ref || outterRef}
     >
-      <InnerStyled ref={innerRef}>{children}</InnerStyled>
+      <InnerStyled ref={innerRef}>
+        {children}
+        </InnerStyled>
     </ScrollbarStyled>
   );
 }

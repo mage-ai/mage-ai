@@ -1,6 +1,6 @@
 import { ExecutionOutputType, VariableTypeEnum } from '@interfaces/CodeExecutionType';
 import { SCROLLBAR_TRACK_WIDTH } from '@mana/themes/scrollbars';
-import DataTable from '@mana/components/DataTable';
+import DataTable from '@mana/components/Table/DataTable';
 import { useMemo } from 'react';
 import Ansi from 'ansi-to-react';
 import Text from '@mana/elements/Text';

@@ -150,8 +150,8 @@ function BlockNode(
     () => ({
       handleContextMenu: (
         event: any,
-        messageRequestUUID: string,
-        resultsInit: ExecutionResultType[],
+        messageRequestUUID?: string,
+        resultsInit?: ExecutionResultType[],
         executionOutput?: ExecutionOutputType,
       ) => {
         if (event.metaKey) return;
@@ -169,101 +169,103 @@ function BlockNode(
               },
               uuid: 'Close output',
             },
-            {
-              Icon: CopyV2,
-              onClick: (event2: ClientEventType) => {
-                removeContextMenu(event2);
-                let text = '';
+            ...((messageRequestUUID && resultsInit) ? [
+              {
+                Icon: CopyV2,
+                onClick: (event2: ClientEventType) => {
+                  removeContextMenu(event2);
+                  let text = '';
 
-                if (executionOutput && executionOutput?.output) {
-                  text = JSON.stringify(executionOutput?.output, null, 2);
-                } else {
-                  const results: ExecutionResultType[] = sortByKey(
-                    resultsInit ?? [],
-                    (result: ExecutionResultType) => result?.timestamp,
-                  );
-                  text = results
-                    ?.map((result: ExecutionResultType) =>
-                      removASCII(removeANSI(
-                        result?.error
-                          ? JSON.stringify(result?.error ?? '', null, 2)
-                          : (result?.output_text ?? '')?.trim() ?? '',
-                      )),
-                    )
-                    .join('\n');
-                }
-                copyToClipboard(text);
-              },
-              uuid: 'Copy output',
-            },
-            {
-              Icon: Delete,
-              onClick: (event: ClientEventType) => {
-                executionOutputs.delete.mutate({
-                  event,
-                  id: messageRequestUUID,
-                  onSuccess: () => {
-                    removeContextMenu(event);
-                    updateOutputResults();
-                    renderLineRef?.current?.({
-                      ...dragRef?.current?.getBoundingClientRect(),
-                      ...node?.rect,
-                    });
-                  },
-                  query: {
-                    namespace: encodeURIComponent(
-                      [codeExecutionEnvironment.type, codeExecutionEnvironment.uuid].join(
-                        osPath.sep,
-                      ),
-                    ),
-                    path: encodeURIComponent(fileRef.current?.path),
-                  },
-                });
-              },
-              uuid: 'Delete output',
-            },
-            {
-              Icon: Delete,
-              onClick: (event: ClientEventType) => {
-                executionOutputs.delete.mutate({
-                  event,
-                  id: messageRequestUUID,
-                  onSuccess: () => {
-                    removeContextMenu(event);
-                    updateOutputResults();
-                  },
-                  payload: {
-                    all: true,
-                  },
-                  query: {
-                    namespace: encodeURIComponent(
-                      [codeExecutionEnvironment.type, codeExecutionEnvironment.uuid].join(
-                        osPath.sep,
-                      ),
-                    ),
-                    path: encodeURIComponent(fileRef.current?.path),
-                  },
-                });
-              },
-              uuid: 'Delete all outputs',
-            },
-            { divider: true },
-            {
-              Icon: AISparkle,
-              items: [
-                {
-                  Icon: Monitor,
-                  disabled: true,
-                  uuid: 'Fix error',
+                  if (executionOutput && executionOutput?.output) {
+                    text = JSON.stringify(executionOutput?.output, null, 2);
+                  } else {
+                    const results: ExecutionResultType[] = sortByKey(
+                      resultsInit ?? [],
+                      (result: ExecutionResultType) => result?.timestamp,
+                    );
+                    text = results
+                      ?.map((result: ExecutionResultType) =>
+                        removASCII(removeANSI(
+                          result?.error
+                            ? JSON.stringify(result?.error ?? '', null, 2)
+                            : (result?.output_text ?? '')?.trim() ?? '',
+                        )),
+                      )
+                      .join('\n');
+                  }
+                  copyToClipboard(text);
                 },
-                {
-                  Icon: Explain,
-                  disabled: true,
-                  uuid: 'Explain error',
+                uuid: 'Copy output',
+              },
+              {
+                Icon: Delete,
+                onClick: (event: ClientEventType) => {
+                  executionOutputs.delete.mutate({
+                    event,
+                    id: messageRequestUUID,
+                    onSuccess: () => {
+                      removeContextMenu(event);
+                      updateOutputResults();
+                      renderLineRef?.current?.({
+                        ...dragRef?.current?.getBoundingClientRect(),
+                        ...node?.rect,
+                      });
+                    },
+                    query: {
+                      namespace: encodeURIComponent(
+                        [codeExecutionEnvironment.type, codeExecutionEnvironment.uuid].join(
+                          osPath.sep,
+                        ),
+                      ),
+                      path: encodeURIComponent(fileRef.current?.path),
+                    },
+                  });
                 },
-              ],
-              uuid: 'AI Sidekick',
-            },
+                uuid: 'Delete output',
+              },
+              {
+                Icon: Delete,
+                onClick: (event: ClientEventType) => {
+                  executionOutputs.delete.mutate({
+                    event,
+                    id: messageRequestUUID,
+                    onSuccess: () => {
+                      removeContextMenu(event);
+                      updateOutputResults();
+                    },
+                    payload: {
+                      all: true,
+                    },
+                    query: {
+                      namespace: encodeURIComponent(
+                        [codeExecutionEnvironment.type, codeExecutionEnvironment.uuid].join(
+                          osPath.sep,
+                        ),
+                      ),
+                      path: encodeURIComponent(fileRef.current?.path),
+                    },
+                  });
+                },
+                uuid: 'Delete all outputs',
+              },
+              { divider: true },
+              {
+                Icon: AISparkle,
+                items: [
+                  {
+                    Icon: Monitor,
+                    disabled: true,
+                    uuid: 'Fix error',
+                  },
+                  {
+                    Icon: Explain,
+                    disabled: true,
+                    uuid: 'Explain error',
+                  },
+                ],
+                uuid: 'AI Sidekick',
+              },
+            ] : []),
           ],
           {
             reduceItems: i1 => i1,
@@ -372,6 +374,8 @@ function BlockNode(
           [codeExecutionEnvironment.type, codeExecutionEnvironment.uuid].join(osPath.sep),
         ),
         path: encodeURIComponent(fileRef.current?.path),
+        _limit: 10,
+        '_order_by[]': '-timestamp',
       },
     });
   }

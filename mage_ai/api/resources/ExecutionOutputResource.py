@@ -9,7 +9,7 @@ from mage_ai.shared.path_fixer import remove_base_repo_directory_name
 
 class ExecutionOutputResource(GenericResource):
     @classmethod
-    async def collection(cls, query, _meta, user, **kwargs):
+    async def collection(cls, query, meta, user, **kwargs):
         path = query.get('path')
         if path:
             path = path[0]
@@ -30,9 +30,13 @@ class ExecutionOutputResource(GenericResource):
                 **dict(message='Namespace query parameter is required'),
             })
 
+        print(meta, meta.get(MetaKey.LIMIT))
+
         outputs = await OutputManager.load_with_messages(
             remove_base_repo_directory_name(path),
             namespace,
+            limit=meta.get(MetaKey.LIMIT),
+            reverse=True,
         )
 
         return cls.build_result_set(outputs, user, **kwargs)
