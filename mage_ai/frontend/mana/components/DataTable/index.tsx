@@ -129,6 +129,12 @@ const Styles = styled.div`
       .td-list-item {
         padding: var(--padding-xs);
       }
+
+      .json-object {
+        ${scrollbars}
+        overflow-x: scroll;
+        padding: 0;
+      }
     }
 
     &.sticky {
@@ -298,12 +304,17 @@ function Table({ ...props }: TableProps) {
 
     rows.forEach((values, idxRow) => {
       columns.forEach(({ index }, idx) => {
-        const val1 = index
+        let val1 = index
           ? String(idxRow)
-          : String(values[idx - indexes[idx]] ?? '');
+          : String(values[idx] ?? '');
 
         let size = 0;
-        if (typeof val1 === 'string') {
+        if (isJsonString(val1) || isObject(val1)) {
+          val1 = isObject(val1) ? JSON.stringify(val1, null, 2) : val1;
+          val1.split('\n').forEach((line) => {
+            size = Math.max(size, line.trim().length);
+          });
+        } else if (typeof val1 === 'string') {
           size = val1.trim().length;
         } else if (Array.isArray(val1)) {
           size = Math.max(...(val1 as string[]).map(v => String(v).trim().length));
@@ -315,7 +326,9 @@ function Table({ ...props }: TableProps) {
     });
 
     return widths;
-  }, [columns, indexes, rows]);
+  }, [columns, rows]);
+
+  // console.log('columnWidthsRaw', columnWidthsRaw);
 
   const columnWidths = useMemo(() => {
     let widthOffset = 0;
@@ -400,7 +413,8 @@ function Table({ ...props }: TableProps) {
             };
 
             let cellValue = cell.render('Cell');
-            let cellValueDisplay = cellValue;
+            let cellValueDisplay = null;
+
             cellStyle.padding = 'var(--padding-xs)';
             cellStyle.width = columnWidths[idx];
 
@@ -408,12 +422,27 @@ function Table({ ...props }: TableProps) {
               cellStyle.left = 0;
               cellStyle.position = 'sticky';
               cellStyle.textAlign = 'center';
+              cellValueDisplay = cellValue;
             } else {
               cellValue = original[idx - indexes[idx]];
 
-              if (Array.isArray(cellValue)) {
+              if (isObject(cellValue) && !Array.isArray(cellValue)) {
+                // console.log(0);
+                try {
+                  cellValueDisplay = (
+                    <pre className="json-object">
+                      {JSON.stringify(cellValue, null, 2)}
+                    </pre>
+                  );
+                } catch(error) {
+                  console.error(error)
+                  cellValueDisplay = String(cellValue);
+                }
+              } else if (Array.isArray(cellValue)) {
+                // console.log(1);
                 cellStyle.padding = '';
-                cellValue = (
+
+                cellValueDisplay = (
                   <List
                     asRows
                     itemClassName={() => 'td-list-item'}
@@ -424,25 +453,22 @@ function Table({ ...props }: TableProps) {
                     small
                   />
                 );
-              } else if (typeof cellValue === 'object') {
-                try {
-                  cellValue = JSON.stringify(cellValue, null, 2);
-                } catch {
-                  cellValue = 'Error: cannot display value';
-                }
+              } else if (cellValue === true) {
+                // console.log(2);
+                cellValueDisplay = 'True';
+              } else if (cellValue === false) {
+                // console.log(3);
+                cellValueDisplay = 'False';
+              } else if (cellValue === null || cellValue === 'null') {
+                // console.log(4);
+                cellValueDisplay = 'None';
+              } else if (typeof cellValue === 'string') {
+                // console.log(5);
+                cellValueDisplay = cellValue.replace(/\n/g, '\\n');
+              } else {
+                // console.log(6);
+                cellValueDisplay = cellValue;
               }
-            }
-
-            if (cellValue === true) {
-              cellValueDisplay = 'True';
-            } else if (cellValue === false) {
-              cellValueDisplay = 'False';
-            } else if (cellValue === null || cellValue === 'null') {
-              cellValueDisplay = 'None';
-            } if (typeof cellValue === 'string') {
-              cellValueDisplay = cellValue.replace(/\n/g, '\\n');
-            } else {
-              cellValueDisplay = cellValue;
             }
 
             return (
@@ -452,12 +478,10 @@ function Table({ ...props }: TableProps) {
                   `td ${settings?.index ? 'td-index-column' : ''}`,
                   'td-monospace',
                 ].filter(Boolean).join(' ')}
-                key={`${idx}-${cellValue}`}
+                key={`${idx}-${String(cellValue)}`}
                 style={cellStyle}
               >
-                {typeof cellValueDisplay === 'object' ? (
-                  cellValueDisplay
-                ) : cellValueDisplay}
+                {cellValueDisplay}
               </div>
             );
           })}

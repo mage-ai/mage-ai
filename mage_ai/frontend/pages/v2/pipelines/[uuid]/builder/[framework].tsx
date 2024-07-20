@@ -27,6 +27,7 @@ function PipelineDetailPage({
     error: boolean;
     notice: boolean;
     success: boolean;
+    title?: string;
   }>(null);
   const titleRef = useRef<string>(null);
 
@@ -88,6 +89,7 @@ function PipelineDetailPage({
           error: Boolean(error),
           notice,
           success,
+          title: undefined,
         };
         if (errorRef.current) {
           pageStatus.title = errorRef.current.exception;
