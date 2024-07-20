@@ -1,8 +1,8 @@
 elasticsearch:
   description: 'Elasticsearch is a distributed, RESTful search and analytics engine. It has native support for vector fields, enabling approximate k-NN search on dense vectors.'
   name: 'Elasticsearch'
-  path: data_exporters/vector_databases/elasticsearch.py
-  type: data_exporter
+  path: data_loaders/iterative_retrieval/elasticsearch.py
+  type: data_loader
   inputs:
     text:
       style:
@@ -41,3 +41,11 @@ elasticsearch:
       types:
         - string
       value: embedding
+    chunk_column:
+      description: 'The name of the column that contains the chunk text.'
+      name: 'Chunk column name'
+      input: text
+      required: false
+      types:
+        - string
+      value: chunk

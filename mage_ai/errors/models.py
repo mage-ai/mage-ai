@@ -23,4 +23,8 @@ class ErrorDetails(BaseDataClass):
     def from_current_error(cls, error: Exception, code: Optional[str] = None):
         data = serialize_error(error, code)
 
-        return cls.load(**data)
+        model = cls.load(**data)
+        if model.error:
+            model.error = str(model.error)
+
+        return model

@@ -17,7 +17,9 @@ export function getModeColorName(blocks: BlockType[]): ColorNameType {
   return getBlockColor(modeType as BlockTypeEnum, { getColorName: true })?.names;
 }
 
-export const blockColorNames = node => {
+export const blockColorNames = (node): ColorNameType & {
+  contrast?: { inverted?: string; monotone?: string };
+} => {
   const type = node?.block?.type;
   if (!type || [BlockTypeEnum.GROUP, BlockTypeEnum.PIPELINE].includes(type)) {
     return getBlockColor(type ?? BlockTypeEnum.GROUP, { getColorName: true })?.names;

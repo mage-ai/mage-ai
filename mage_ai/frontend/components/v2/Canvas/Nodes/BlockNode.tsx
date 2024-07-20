@@ -225,7 +225,9 @@ export default function BlockNodeComponent({
   const before = useMemo(
     () => ({
       Icon: iconProps =>
-        executing ? <DeleteCircle {...iconProps} colorName={colorNames?.contrast?.monotone} /> : <PlayButtonFilled {...iconProps} colorName={colorNames?.contrast?.monotone} />,
+        executing ?
+        <DeleteCircle {...iconProps} colorName={executing ? colorNames?.base : colorNames?.contrast?.monotone} /> :
+        <PlayButtonFilled {...iconProps} colorName={executing ? colorNames?.base : colorNames?.contrast?.monotone} />,
       baseColorName: StatusTypeEnum.FAILED === status ? 'red' : colorNames?.base,
       borderColor: executing ? colorNames?.base ?? 'gray' : undefined,
       buttonRef: buttonBeforeRef,
