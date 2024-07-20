@@ -274,7 +274,6 @@ function MyApp(props: MyAppProps & AppProps) {
         Component={Component}
         pageProps={{
           ...pageProps,
-          defaultTitle,
           themeSettings: pageProps?.themeSettings,
           title,
           version: (props?.version || props?.pageProps?.version) as any,
