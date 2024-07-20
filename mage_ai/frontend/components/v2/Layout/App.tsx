@@ -32,7 +32,6 @@ function App({
     version?: LayoutVersionEnum;
   };
 }) {
-  console.log('App render');
   const headerRef = useRef(null);
 
   const themeSettings = (themeSettingsProp?.[version] || getThemeSettings()) as ThemeSettingsType;
