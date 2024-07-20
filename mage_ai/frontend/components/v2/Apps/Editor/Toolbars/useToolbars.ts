@@ -14,6 +14,7 @@ export type ToolbarsType = {
       content?: string;
       path?: string;
     },
+    opts?: any,
   ) => void;
 } & AppLoaderProps;
 
@@ -27,10 +28,10 @@ export default function useToolbars({
   const { main, original } = resource;
 
   const saveCurrentContent = useCallback(
-    (event: MouseEvent) => {
+    (event: MouseEvent, opts?: any) => {
       updateServerContent(event, main, {
         path: inputRef?.current?.value || main?.path,
-      });
+      }, opts);
     },
     [main, updateServerContent],
   );

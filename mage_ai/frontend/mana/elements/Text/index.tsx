@@ -5,6 +5,7 @@ import { extractProps } from '../../shared/props';
 import { hyphenateCamelCase } from '@utils/string';
 
 export type TextProps = {
+  colorName?: string;
   children?: React.ReactNode | string | any;
   className?: string;
   inline?: boolean;
@@ -33,6 +34,7 @@ export type TextProps = {
 };
 
 export function buildTextStyleProps({
+  colorName,
   className: classNameProp,
   maxWidth,
   nowrap,
@@ -47,6 +49,7 @@ export function buildTextStyleProps({
     small ? styles.small : xsmall ? styles.xsmall : styles.text,
     classNameProp || '',
     nowrap && styles.nowrap,
+    colorName && styles[`color-${colorName.toLowerCase()}`],
   ].filter(Boolean);
 
   Object.entries(props || {}).forEach(([key, value]) => {

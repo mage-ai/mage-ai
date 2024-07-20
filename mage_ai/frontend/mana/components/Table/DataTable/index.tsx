@@ -16,19 +16,13 @@ import { useSticky } from 'react-table-sticky';
 import { estimateCellHeight, getVariableListHeight, buildIndexColumns, BASE_ROW_HEIGHT,
 DEFAULT_COLUMN_WIDTH, WIDTH_OF_SINGLE_CHARACTER_REGULAR_SM, MIN_WIDTH} from '../utils';
 import { ContainerStyled } from './index.style';
+import { Column } from '../interfaces';
 
 type SharedProps = {
   boundingBox: RectType;
   rect: RectType
   rows: Row[];
 };
-
-interface Column {
-  Header: string;
-  accessor: (row: any, i: number) => string | number;
-  index?: boolean;
-  sticky?: string;
-}
 
 type Row = (boolean
   | string

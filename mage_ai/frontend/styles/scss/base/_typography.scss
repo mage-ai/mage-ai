@@ -1,3 +1,13 @@
+@use '../abstracts/helpers' as *;
+
+@mixin colors() {
+  @each $value in $colors-names {
+    &.color-#{$value} {
+      color: var(--colors-#{$value});
+    }
+  }
+}
+
 @mixin base-font-family {
   font-family: var(--fonts-family-base-regular);
 
@@ -45,6 +55,8 @@
 }
 
 @mixin base-styles {
+  @include colors();
+
   color: var(--fonts-color-text-base);
   margin: 0;
   white-space: break-spaces;

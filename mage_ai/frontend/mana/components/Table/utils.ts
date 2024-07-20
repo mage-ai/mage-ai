@@ -14,6 +14,7 @@ import { hashCode, isJsonString } from '@utils/string';
 import { isObject } from '@utils/hash';
 import { randomSample, range, sum, transpose, flattenArray } from '@utils/array';
 import { useSticky } from 'react-table-sticky';
+import { Column } from './interfaces';
 
 export const BASE_ROW_HEIGHT = 20;
 export const DEFAULT_COLUMN_WIDTH = BASE_ROW_HEIGHT;

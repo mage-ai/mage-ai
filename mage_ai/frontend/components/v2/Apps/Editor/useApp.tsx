@@ -80,7 +80,7 @@ export default function useApp(
     updateLocalCache();
   }
 
-  function onDidChangeModelContent() {
+  function onDidChangeModelContent(data: any) {
     updateLocalCache();
   }
 
@@ -175,6 +175,7 @@ export default function useApp(
       content?: string;
       path?: string;
     },
+    opts?: any,
   ) {
     mutants.update.mutate({
       event,
@@ -183,6 +184,7 @@ export default function useApp(
         content: payload?.content || getContent(),
         path: payload?.path || item.path,
       },
+      ...opts,
     });
   }
 
@@ -203,8 +205,11 @@ export default function useApp(
           {...editor}
           configurations={app?.options?.configurations}
           eventListeners={{
-            onDidChangeModelContent,
             ...editor?.eventListeners,
+            onDidChangeModelContent: (data: any) => {
+              onDidChangeModelContent(data);
+              editor?.eventListeners?.onDidChangeModelContent?.(data);
+            },
           }}
           onMountEditor={(editor: any) => {
             editorRef.current = editor;

@@ -1,4 +1,7 @@
 import Button, { ButtonGroup } from '@mana/elements/Button';
+import colors from '@mana/themes/colors';
+import { getFileCache, isStale, updateFileCache } from '../../../IDE/cache';
+import { contrastRatio } from '@utils/colors';
 import { RenderContextMenuOptions } from '@mana/hooks/useContextMenu';
 import { MenuItemType } from '@mana/components/Menu/interfaces';
 import { ClientEventType, EventOperationEnum } from '@mana/shared/interfaces';
@@ -9,7 +12,7 @@ import { AppSubtypeEnum, AppTypeEnum } from '@components/v2/Apps/constants';
 import EventStreamType from '@interfaces/EventStreamType';
 import Link from '@mana/elements/Link';
 import React, { useContext, useEffect, useMemo, useRef, useState } from 'react';
-import { executeCode } from '../../../IDE/actions';
+import { executeCode, interruptCodeExecution, saveContent as saveContentAction } from '../../../IDE/actions';
 import TextInput from '@mana/elements/Input/TextInput';
 import KeyboardTextGroup from '@mana/elements/Text/Keyboard/Group';
 import moment from 'moment';
@@ -89,9 +92,15 @@ function EditorAppNode({
   const [loading, setLoading] = useState(false);
   const [loadingKernelMutation, setLoadingKernelMutation] = useState<boolean>(false);
   const [afterOpen, setAfterOpen] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const saveStatusRef = useRef<HTMLElement>(null);
 
   const { configuration } = block ?? {};
-  const file = fileRef?.current ?? configuration?.file;
+  const file = useMemo(() => (fileRef?.current ?? configuration?.file) ?? {
+    ...configuration?.file_source,
+    path: configuration?.file_path,
+  }, [configuration]);
+  const [stale, setStale] = useState(isStale(file?.path));
 
   useEffect(() => {
     setHandleOnMessage &&
@@ -114,10 +123,7 @@ function EditorAppNode({
       lineNumbers: 'on',
       // lineNumbersMinChars: 0,
     },
-    file: file ?? {
-      ...configuration?.file_source,
-      path: configuration?.file_path,
-    },
+    file,
   };
   const { main, toolbars } = useApp({
     app: {
@@ -137,9 +143,25 @@ function EditorAppNode({
             onSuccess: () => setLoading(false),
           });
         }),
+        interruptCodeExecution(() => {
+          setLoadingKernelMutation(true);
+          interruptExecution({
+            onError: () => {
+              setExecuting(false);
+              setLoadingKernelMutation(false);
+            },
+            onSuccess: () => setLoadingKernelMutation(false),
+          });
+        }),
+        saveContentAction(() => {
+          saveContent(null);
+        }),
       ],
       editorClassName: [stylesEditor.editorMain].filter(Boolean).join(' '),
       eventListeners: {
+        onDidChangeModelContent: () => {
+          setStale(isStale(file?.path));
+        },
         onMouseDown: (editor: any, { event }) => {
           event.stopPropagation();
         },
@@ -163,10 +185,27 @@ function EditorAppNode({
     overrideLocalContentFromServer,
     overrideServerContentFromLocal,
     saveCurrentContent,
-    stale,
   } = toolbars ?? ({} as any);
 
-  const baseColor = getBlockColor(block?.type, { getColorName: true })?.names?.base;
+  function saveContent(event?: any) {
+    setSaving(true);
+    saveCurrentContent(null, {
+      onError: () => {
+        setSaving(false);
+      },
+      onSuccess: ({ data: { browser_item: model } }) => {
+        updateFileCache({ client: model, server: model });
+        setStale(isStale(model?.path));
+        setSaving(false);
+      },
+    });
+  }
+
+  const colorNames = getBlockColor(block?.type, { getColorName: true })?.names;
+  const baseColor = colorNames?.base;
+  const baseColorHex = colors?.[baseColor]?.dark;
+  const contrastColorName =
+    contrastRatio(baseColorHex, colors?.white?.dark) < 4.5 ? 'black' : 'white';
   const lastModified = useMemo(() => {
     if (original?.modified_timestamp) {
       return moment(convertToMillisecondsTimestamp(original?.modified_timestamp ?? 0)).fromNow();
@@ -206,7 +245,7 @@ function EditorAppNode({
             {executing && <Tag left statusVariant timer top />}
 
             <Button
-              Icon={executing ? DeleteCircle : PlayButtonFilled}
+              Icon={ip => executing ? <DeleteCircle {...ip} colorName={contrastColorName} /> : <PlayButtonFilled {...ip} colorName={contrastColorName} />}
               backgroundcolor={!executing ? baseColor : undefined}
               // basic
               bordercolor={executing ? (baseColor ?? 'gray') : 'transparent'}
@@ -232,10 +271,18 @@ function EditorAppNode({
                     }
               }
               small
-              tag={<KeyboardTextGroup textGroup={[[KEY_CODE_META, executing ? KEY_ESCAPE : KEY_ENTER]]} xsmall />}
+              tag={<KeyboardTextGroup
+                colorName={contrastColorName}
+                textGroup={[[KEY_CODE_META, executing ? KEY_ESCAPE : KEY_ENTER]]}
+                xsmall
+              />}
+              tagProps={{
+                style: {
+                  backgroundColor: colors?.[`${contrastColorName}lo`]?.dark,
+                },
+              }}
             />
           </div>
-
           <TextInput basic placeholder="/" style={{ paddingBottom: 8, paddingTop: 8 }} />
 
           <Button
@@ -251,14 +298,12 @@ function EditorAppNode({
 
         <Grid
           autoFlow="column"
+          alignItems="center"
           backgroundColor="graylo"
           borders
-          columnGap={40}
+          columnGap={12}
           justifyContent="start"
-          paddingBottom={6}
-          paddingLeft={PADDING_HORIZONTAL}
-          paddingRight={PADDING_HORIZONTAL}
-          paddingTop={6}
+          padding={6}
           templateRows="auto"
         >
           {[
@@ -267,8 +312,9 @@ function EditorAppNode({
               description: stale
                 ? `You have unsaved changes. Content was modified ${lastModified}.`
                 : 'Save current file content.',
-              iconProps: stale ? { colorName: 'red' } : {},
-              onClick: saveCurrentContent,
+              iconProps: stale ? { colorName: 'yellow' } : {},
+              loading: saving,
+              onClick: saveContent,
               uuid: 'Save',
             },
             // {
@@ -289,7 +335,7 @@ function EditorAppNode({
             //   uuid: 'Close',
             //   onClick: onClose,
             // },
-          ].map(({ Icon, description, iconProps, label, uuid, onClick }: any) => (
+          ].map(({ Icon, description, iconProps, label, loading, uuid, onClick }: any) => (
             <TooltipWrapper
               align={TooltipAlign.END}
               horizontalDirection={TooltipDirection.DOWN}
@@ -302,13 +348,12 @@ function EditorAppNode({
               }
             >
               <Button
-                Icon={iconPropsInit => Icon && <Icon {...{ ...iconPropsInit, ...iconProps }} />}
-                basic
+                Icon={ip => <Icon {...{ ...ip, ...iconProps }} />}
                 data-loading-style="inline"
-                // loading
+                loading={loading}
                 onClick={onClick ?? undefined}
                 small
-                style={{ background: 'none', border: 'none' }}
+                basic
               >
                 {label && (
                   <Text medium small>
@@ -318,6 +363,12 @@ function EditorAppNode({
               </Button>
             </TooltipWrapper>
           ))}
+
+          {stale && getFileCache(file?.path)?.server?.updatedAt && (
+            <Text monospace muted xsmall warning>
+              Last saved {moment(getFileCache(file?.path)?.server?.updatedAt).fromNow()}
+            </Text>
+          )}
         </Grid>
 
         <Grid borders style={{ overflow: 'hidden' }} templateRows="auto 1fr">
@@ -340,13 +391,13 @@ function EditorAppNode({
               justifyContent="start"
               templateRows="auto"
             >
-              <Button
+              {/* <Button
                 Icon={iconProps => <DiamondShared {...iconProps} colorName="yellow" />}
                 basic
                 grouped="true"
                 onClick={event => alert('DiamondShared')}
                 small
-              />
+              /> */}
               <TooltipWrapper
                 align={TooltipAlign.END}
                 horizontalDirection={TooltipDirection.DOWN}
@@ -374,7 +425,7 @@ function EditorAppNode({
               justifyContent="start"
               templateRows="auto"
             >
-              <Button
+              {/* <Button
                 Icon={iconProps => <IdentityTag {...iconProps} secondary />}
                 basic
                 grouped="true"
@@ -388,7 +439,7 @@ function EditorAppNode({
                 grouped="true"
                 onClick={event => alert('AppVersions')}
                 small
-              />
+              /> */}
             </Grid>
           </Grid>
 

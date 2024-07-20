@@ -1,4 +1,5 @@
 import { css } from 'styled-components';
+import { contrastRatio } from '@utils/colors';
 import { UNIT } from '../themes/spaces';
 import borders, { bordersTransparent } from './borders';
 import text, { StyleProps as TextStyleProps } from './typography';
@@ -30,6 +31,7 @@ const shared = css<StyleProps>`
   ${({
     aslink,
     basic,
+    backgroundcolor,
     bordercolor,
     disabled,
     grouped,
@@ -48,13 +50,15 @@ const shared = css<StyleProps>`
         ? 'var(--colors-green)'
         : aslink && wrap
           ? theme.colors.blueText
-          : theme.colors?.[bordercolor] ?? bordercolor ?? primary
-            ? theme.buttons.outline.color.primary.hover
-            : secondary
-              ? theme.buttons.outline.color.secondary.hover
-              : aslink || basic
-                ? theme.buttons.outline.color.basic.hover
-                : theme.buttons.outline.color.base.hover,
+          : backgroundcolor
+            ? contrastRatio(theme.colors[backgroundcolor], theme.colors.white) < 1.5 ? theme.colors.blacklo : theme.colors.whitelo
+            : theme.colors?.[bordercolor] ?? bordercolor ?? primary
+              ? theme.buttons.outline.color.primary.hover
+              : secondary
+                ? theme.buttons.outline.color.secondary.hover
+                : aslink || basic
+                  ? theme.buttons.outline.color.basic.hover
+                  : theme.buttons.outline.color.base.hover,
       outlineOffset: wrap ? 0 : grouped ? UNIT : undefined,
       outlineWidth: wrap ? 0 : undefined,
     })}
@@ -155,13 +159,14 @@ const shared = css<StyleProps>`
     `
     &:hover {
       background-color: ${
-        theme.colors?.[backgroundcolor] ?? backgroundcolor ?? primary
+        theme.colors?.[backgroundcolor + 'hi'] ?? backgroundcolor ??
+        (primary
           ? theme.colors.backgrounds.button.primary.hover
           : secondary
             ? theme.colors.backgrounds.button.secondary.hover
             : basic
               ? theme.colors.backgrounds.button.basic.hover
-              : theme.colors.backgrounds.button.base.hover
+              : theme.colors.backgrounds.button.base.hover)
       };
     }
   `}

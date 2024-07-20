@@ -4,7 +4,7 @@ export function executeCode(handler: () => void): (monaco: any) => EditorAction 
   return (monaco: any) => ({
     contextMenuGroupId: 'navigation',
     contextMenuOrder: 1.5,
-    id: 'executeCode',
+    id: 'mage-executeCode',
     keybindingContext: null,
     keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter],
     label: 'Execude code',
@@ -13,29 +13,32 @@ export function executeCode(handler: () => void): (monaco: any) => EditorAction 
   });
 }
 
-export function commentLine(): (monaco: any) => EditorAction {
+export function interruptCodeExecution(handler: () => void): (monaco: any) => EditorAction {
   return (monaco: any) => ({
     contextMenuGroupId: 'navigation',
-    contextMenuOrder: 1.6,
-    id: 'commentLine',
+    contextMenuOrder: 1.5,
+    id: 'mage-interruptCodeExecution',
     keybindingContext: null,
-    keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.Slash],
-    label: 'Comment line',
+    keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.Escape],
+    label: 'Interrupt code execution',
     precondition: null,
-    run: (editor) => {
-      // console.log('WTFFFFFFFFFFFFFFFFFFFFFFFFFFf', actions['editor.action.commentLine']);
-      // actions['editor.action.commentLine'].run();
-      // editor.getAction('editor.action.addCommentLine').run().then((args2) => console.log(args1, args2));
-      // console.log(editor.getAction('editor.action.commentLine').run,
-      //   editor.trigger('wtffffffffff', 'editor.action.commentLine'),
-      // );
-      editor.trigger('anyString', 'editor.action.commentLine', null);
-      editor.trigger('anyString', 'editor.action.addCommentLine', null);
-      // editor.trigger('anyString', 'editor.action.outdentLines', null);
-      // editor.getModel().getLineContent(editor.getPosition().lineNumber)
-    },
+    run: () => handler(),
   });
 }
+
+export function saveContent(handler: () => void): (monaco: any) => EditorAction {
+  return (monaco: any) => ({
+    contextMenuGroupId: 'navigation',
+    contextMenuOrder: 1.5,
+    id: 'mage-saveContent',
+    keybindingContext: null,
+    keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS],
+    label: 'Save content',
+    precondition: null,
+    run: () => handler(),
+  });
+}
+
 
 // https://microsoft.github.io/monaco-editor/typedoc/enums/KeyCode.html
 // ABNT_C1

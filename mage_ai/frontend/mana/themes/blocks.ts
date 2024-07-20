@@ -1,12 +1,18 @@
 import ThemeType from './interfaces';
+import colors from '@mana/themes/colors';
 import { BlockColorEnum, BlockTypeEnum } from '@interfaces/BlockType';
 import { COLOR_NAMES } from './colors';
+import { contrastRatio } from '@utils/colors';
 
 export type ColorNameType = {
   base: string;
   hi: string;
   lo: string;
   md: string;
+  contrast?: {
+    inverted?: string;
+    monotone?: string;
+  };
 };
 
 export function getBlockColor(
@@ -90,7 +96,7 @@ export function getBlockColor(
     baseName = 'purple';
   }
 
-  return {
+  const info = {
     accent,
     accentDark,
     accentLight,
@@ -99,6 +105,21 @@ export function getBlockColor(
       hi: baseName ? `${baseName}hi` : null,
       lo: baseName ? `${baseName}lo` : null,
       md: baseName ? `${baseName}md` : null,
+      contrast: {
+        inverted: null,
+        monotone: null,
+      },
     },
   };
+
+  const cr = contrastRatio(colors?.[info?.names?.base]?.dark, colors?.white?.dark) < 4.5
+    ? 'black'
+    : 'white';
+
+  info.names.contrast = {
+    inverted: cr === 'black' ? 'white' : 'black',
+    monotone: cr,
+  };
+
+  return info
 }

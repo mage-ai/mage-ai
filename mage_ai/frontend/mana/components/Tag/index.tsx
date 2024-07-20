@@ -6,7 +6,8 @@ import styled from 'styled-components';
 import { PaddingVerticalEnum } from '@mana/themes/interactive';
 import { baseXs } from '../../styles/typography';
 
-type StyleProps = {
+export type TagProps = {
+  backgroundColor?: string;
   bottom?: boolean;
   className?: string;
   inverted?: boolean;
@@ -20,7 +21,7 @@ type StyleProps = {
   top?: boolean;
 };
 
-const TagStyled = styled.div<StyleProps>`
+const TagStyled = styled.div<TagProps>`
   ${baseXs}
 
   background-color: ${({ inverted, secondary, theme }) =>
@@ -39,7 +40,7 @@ const TagStyled = styled.div<StyleProps>`
   pointer-events: ${({ passthrough }) => (passthrough ? 'inherit' : 'auto')};
 `;
 
-const StatusTag = styled.div<StyleProps>`
+const StatusTag = styled.div<TagProps>`
   align-items: center;
   background-color: var(--colors-green);
   border-radius: 8px;
@@ -99,7 +100,7 @@ function Tag(
     statusVariant,
     timer,
     ...props
-  }: { children?: React.ReactNode | string | number } & StyleProps,
+  }: { children?: React.ReactNode | string | number } & TagProps,
   ref: React.Ref<HTMLDivElement>,
 ) {
   const El = statusVariant ? StatusTag : TagStyled;

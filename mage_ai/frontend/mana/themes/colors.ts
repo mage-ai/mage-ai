@@ -911,6 +911,13 @@ const ColorsDerived = {
   },
 };
 
-const ColorsAll = { ...Colors, ...ColorsDerived };
+const ColorsAll = {
+  ...Colors,
+  ...(Object.entries(Colors).reduce((acc, [key, value]) => ({
+    ...acc,
+    [key.toLowerCase()]: value,
+  }), {})),
+  ...ColorsDerived,
+};
 
 export default ColorsAll;

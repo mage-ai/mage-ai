@@ -91,7 +91,7 @@ const OutputGroups: React.FC<OutputGroupsProps> = ({
 
     resultsRootRef.current ||= createRoot(resultsMountRef.current);
     resultsRootRef.current.render(
-      <ContextProvider theme={theme}>
+      <ContextProvider theme={theme as any}>
         {!hideTimer && executingRef.current && <Tag right statusVariant timer top />}
 
         {keysRef.current?.map((mrUUID: string, idx: number) => {
@@ -182,7 +182,7 @@ const OutputGroups: React.FC<OutputGroupsProps> = ({
 
     renderResults({
       executing: executingRef.current,
-    })
+    });
     timeoutRef.current = null;
   }
 
@@ -207,7 +207,7 @@ const OutputGroups: React.FC<OutputGroupsProps> = ({
           if (ids.includes(key)) {
             timeoutScrollRef.current = setTimeout(() => {
               scrollDown(true);
-            }, 100);
+            }, 1000);
           }
 
           if (opts?.onSuccess) {
@@ -235,7 +235,7 @@ const OutputGroups: React.FC<OutputGroupsProps> = ({
       });
       timeoutScrollRef.current = setTimeout(() => {
         scrollDown(true);
-      }, 100);
+      }, 1000);
     });
 
     setHandleOnMessage(consumerID, (event: EventStreamType) => {
@@ -243,19 +243,25 @@ const OutputGroups: React.FC<OutputGroupsProps> = ({
 
       resultsQueueRef.current.push(result);
       if (timeoutRef.current === null) {
-        timeoutRef.current = setTimeout(handleResults, 100);
+        timeoutRef.current = setTimeout(handleResults, 10);
         scrollDown(true);
       }
       timeoutScrollRef.current = setTimeout(() => {
         scrollDown(true);
-      }, 100);
+      }, 1000);
     });
 
-    onMount && onMount?.(consumerID, () => {
+    if (onMount) {
+      onMount?.(consumerID, () => {
+        timeoutScrollRef.current = setTimeout(() => {
+          scrollDown();
+        }, 1000);
+      });
+    } else {
       timeoutScrollRef.current = setTimeout(() => {
         scrollDown();
-      }, 100);
-    });
+      }, 1000);
+    }
 
     const ts = timeoutRef.current;
     const tss = timeoutScrollRef.current;

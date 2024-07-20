@@ -59,11 +59,13 @@ function MateriaIDE({
           }
         } else {
           editorRef.current = manager.getEditor();
-          if (editorRef?.current) {
-            addListeners(editorRef?.current, eventListeners);
-            addEditorActions(manager.getMonaco(), editorRef?.current, editorActions);
-            onMountEditor && onMountEditor?.(editorRef.current);
-          }
+          setTimeout(() => {
+            if (editorRef?.current) {
+              addListeners(editorRef?.current, eventListeners);
+              addEditorActions(manager.getMonaco(), editorRef?.current, editorActions);
+              onMountEditor && onMountEditor?.(editorRef.current);
+            }
+          }, 1000);
         }
       };
 

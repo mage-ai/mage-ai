@@ -6,7 +6,7 @@ import { motion } from 'framer-motion';
 
 import ButtonGroup from './Group';
 import Loading from '../../components/Loading';
-import Tag from '../../components/Tag';
+import Tag, { TagProps } from '../../components/Tag';
 import buttons, { StyleProps, sm as buttonsSm } from '../../styles/buttons';
 import useWithLogging, { WithLoggingProps } from '../../hooks/useWithLogging';
 
@@ -34,6 +34,7 @@ export type ButtonProps = {
   plain?: boolean;
   motion?: boolean;
   style?: React.CSSProperties;
+  tagProps?: TagProps;
   target?: string;
   href?: string;
 } & ButtonStyleProps &
@@ -90,6 +91,7 @@ function Button({
   small,
   style,
   tag,
+  tagProps,
   target,
   wrap,
   ...props
@@ -151,7 +153,7 @@ function Button({
       {children}
 
       {tag && (
-        <Tag inverted={primary || secondary} passthrough secondary={basic}>
+        <Tag inverted={primary || secondary} passthrough secondary={basic} {...tagProps}>
           {tag}
         </Tag>
       )}
