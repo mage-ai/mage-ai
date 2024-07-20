@@ -196,48 +196,22 @@ function ExecutionResult(
           ResultType.DATA === resultType && ExecutionStatusEnum.SUCCESS === resultStatus;
 
         return acc.concat(
-          <span key={resultID} data-message-request-uuid={groupUUID}>
-            [{isFinalOutput ? 'output' : acc?.length ?? 0}]
+          <pre key={resultID}
+            data-index={acc?.length ?? 0}
+            data-message-request-uuid={groupUUID}
+            data-timestamp={displayLocalOrUtcTime(
+            moment(timestamp).format(DATE_FORMAT_LONG_MS),
+            displayLocalTimezone,
+            DATE_FORMAT_LONG_MS,
+          )}>
             {outputText}
-          </span>
+          </pre>
         );
       }, [],
     ), [displayLocalTimezone, executionOutput, getOutput, results, status],
   );
 
-  // <TooltipWrapper
-  //   align={TooltipAlign.END}
-  //   horizontalDirection={TooltipDirection.RIGHT}
-  //   justify={TooltipJustify.CENTER}
-  //   key={resultID}
-  //   tooltip={
-  //     <Grid
-  //       columnGap={8}
-  //       data-message-request-uuid={groupUUID}
-  //       templateColumns="auto 1fr"
-  //     >
-  //       <Text
-  //         monospace
-  //         muted
-  //         small
-  //         style={{
-  //           pointerEvents: 'none',
-  //         }}
-  //       >
 
-  //       </Text>
-  //       <Text monospace secondary small>
-  //         {displayLocalOrUtcTime(
-  //           moment(timestamp).format(DATE_FORMAT_LONG_MS),
-  //           displayLocalTimezone,
-  //           DATE_FORMAT_LONG_MS,
-  //         )}
-  //       </Text>
-  //     </Grid>
-  //   }
-  // >
-
-  // </TooltipWrapper>,
   const runtime = useMemo(() => (timestamps?.max ?? 0) - (timestamps?.min ?? 0), [timestamps]);
 
   useEffect(() => {

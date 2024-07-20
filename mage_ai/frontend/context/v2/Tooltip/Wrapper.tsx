@@ -1,3 +1,4 @@
+import { isEventInside } from '@mana/utils/elements';
 import React, { useCallback, useRef } from 'react';
 import {
   TooltipDirection,
@@ -27,10 +28,10 @@ export function TooltipWrapper({
   showOnClick?: boolean;
   showOnHover?: boolean;
   style?: React.CSSProperties;
-  tooltip: React.ReactNode;
+  tooltip: React.ReactNode | ((event: any, props: { hideTooltip: () => void }) => React.ReactNode);
   tooltipStyle?: React.CSSProperties;
 } & TooltipLayout): any {
-  const { showTooltip } = useTooltip();
+  const { hideTooltip, showTooltip } = useTooltip();
   const wrapperRef = useRef<HTMLDivElement>(null);
 
   const handleShowTooltip = useCallback(
@@ -49,6 +50,7 @@ export function TooltipWrapper({
         }
 
         showTooltip(
+          // () => typeof tooltip == 'function' ? tooltip(event, { hideTooltip }) : tooltip,
           tooltip,
           {
             align,
@@ -60,6 +62,7 @@ export function TooltipWrapper({
           {
             event,
             hideOn,
+            renderOnMouseMove: true,
             style: tooltipStyle,
             wrapperRef: wrapperRef,
           },
@@ -87,6 +90,7 @@ export function TooltipWrapper({
     <div
       onClick={showOnClick ? handleShowTooltip : undefined}
       onMouseEnter={showOnHover || !showOnClick ? handleShowTooltip : undefined}
+      // onMouseMove={typeof content == 'function' ? handleShowTooltip : undefined}
       ref={wrapperRef}
       style={style}
     >

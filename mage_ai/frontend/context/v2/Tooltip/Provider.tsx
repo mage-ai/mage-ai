@@ -62,14 +62,14 @@ export const TooltipProvider: React.FC<TooltipProviderProps> = ({ children, main
         resetTimers();
 
         tooltipRenderRef.current.render(
-          <ContextProvider theme={themeContext}>
+          <ContextProvider theme={themeContext as any}>
             <TooltipContent
               layout={layout}
               options={showTooltipOptions}
               optionsPrev={optionsPrev}
               ref={tooltipContentRef}
             >
-              {content}
+              {typeof content === 'function' ? content({} as any, {} as any) : content}
             </TooltipContent>
           </ContextProvider>,
         );

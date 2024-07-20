@@ -1,6 +1,15 @@
+@use '../../../base/typography' as text;
 .executionOutputGroupContainer {
   padding-bottom: var(--padding-sm);
   padding-top: var(--padding-sm);
+
+  pre {
+    @include text.monospace-sm;
+    color: var(--colors-rosemd);
+    column-gap: var(--padding-xs);
+    display: grid;
+    grid-template-columns: auto 1fr;
+  }
 }
 
 .executionOutputGroup {
