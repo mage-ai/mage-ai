@@ -1,6 +1,7 @@
 import styled, { css } from 'styled-components';
 import { UNIT } from '../../themes/spaces';
 import { gradientBackground } from '../../styles/mixins';
+import scrollbars from '../../styles/scrollbars';
 import { motion } from 'framer-motion';
 
 const DIVIDER_SPACE = 2;
@@ -62,7 +63,9 @@ export const MenuStyled = styled(motion.div)<MenuStyledProps>`
     z-index: ${zIndex || 1};
   `}
 
+  max-height: 100vh;
   min-width: ${MENU_MIN_WIDTH}px;
+  overflow: hidden;
   position: fixed;
   width: max-content;
 
@@ -72,7 +75,9 @@ export const MenuStyled = styled(motion.div)<MenuStyledProps>`
 `;
 
 export const MenuContent = styled(motion.nav)`
-  overflow: hidden;
+  ${scrollbars}
+  max-height: inherit;
+  overflow-y: auto;
 
   ${({ theme }) => `
     backdrop-filter: ${theme.menus.blur.base};
@@ -80,6 +85,9 @@ export const MenuContent = styled(motion.nav)`
   `}
 
   ${gradientBackground('0deg', '#0000004D', '#0000004D', 0, 100, 'graylo')}
+`;
+
+export const MenuContentScroll = styled(motion.div)`
 `;
 
 export const MenuItemContainerStyled = styled.div<{

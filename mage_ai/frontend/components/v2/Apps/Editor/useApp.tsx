@@ -204,6 +204,7 @@ export default function useApp(
           configurations={app?.options?.configurations}
           eventListeners={{
             onDidChangeModelContent,
+            ...editor?.eventListeners,
           }}
           onMountEditor={(editor: any) => {
             editorRef.current = editor;

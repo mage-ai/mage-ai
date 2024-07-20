@@ -52,6 +52,7 @@ const OutputGroups: React.FC<OutputGroupsProps> = ({
   styles,
 }: OutputGroupsProps) => {
   const scrollableDivRef = useRef<HTMLDivElement>(null);
+  const statusRef = useRef<HTMLElement>(null);
 
   const scrollDown = useCallback(() => {
     setTimeout(() => {
@@ -172,6 +173,19 @@ const OutputGroups: React.FC<OutputGroupsProps> = ({
           return total;
         });
 
+        if (statusRef?.current) {
+          if (done) {
+            statusRef.current.innerText = '';
+            statusRef.current.style.display = 'none';
+          } else if (event?.result?.status
+            && ResultType.STATUS === event?.result?.type
+          ) {
+            statusRef.current.innerText =
+              `${capitalize(STATUS_DISPLAY_TEXT[statusRecent?.status] ?? statusRecent?.status)}...`;
+            statusRef.current.style.display = 'block';
+          }
+        }
+
         scrollDown();
       });
 
@@ -182,14 +196,12 @@ const OutputGroups: React.FC<OutputGroupsProps> = ({
   }, []);
 
   const statusRecent = useMemo(() => {
-    if (!executing) return;
-
     const key = keysRef.current?.[keysRef.current?.length - 1];
     const results = resultsGroupedByMessageRequestUUIDRef.current?.[key];
     const arr = results?.filter(r => ResultType.STATUS === r.type);
 
     return arr?.[arr.length - 1];
-  }, [executing]);
+  }, []);
 
   return onlyShowWithContent && (keysRef.current?.length ?? 0) === 0 ? null : (
     <div
@@ -230,13 +242,11 @@ const OutputGroups: React.FC<OutputGroupsProps> = ({
             );
           })}
 
-          {statusRecent && (
-            <Grid paddingBottom={6}>
-              <Text italic monospace muted warning xsmall>
-                {capitalize(STATUS_DISPLAY_TEXT[statusRecent?.status] ?? statusRecent?.status)}...
-              </Text>
-            </Grid>
-          )}
+          <Grid style={{ display: 'none' }} paddingBottom={6}>
+            <Text italic monospace muted ref={statusRef} warning xsmall>
+              {capitalize(STATUS_DISPLAY_TEXT[statusRecent?.status] ?? statusRecent?.status)}...
+            </Text>
+          </Grid>
         </Grid>
       </Scrollbar>
     </div>

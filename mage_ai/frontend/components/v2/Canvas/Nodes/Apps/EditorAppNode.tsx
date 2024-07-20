@@ -139,6 +139,11 @@ function EditorAppNode({
         }),
       ],
       editorClassName: [stylesEditor.editorMain].filter(Boolean).join(' '),
+      eventListeners: {
+        onMouseDown: (editor: any, { event }) => {
+          event.stopPropagation();
+        },
+      },
       persistResourceOnUnmount: true,
       style: {},
     },

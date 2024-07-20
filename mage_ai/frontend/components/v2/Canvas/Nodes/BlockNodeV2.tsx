@@ -56,7 +56,7 @@ import { executionDone } from '@components/v2/ExecutionManager/utils';
 import { getClosestRole } from '@utils/elements';
 import { getFileCache, updateFileCache } from '../../IDE/cache';
 import { useMutate } from '@context/v2/APIMutation';
-import { setNested } from '@utils/hash';
+import { objectSize, setNested } from '@utils/hash';
 import { SettingsContext } from '@components/v2/Apps/PipelineCanvas/SettingsManager/SettingsContext';
 import Divider from '@mana/elements/Divider';
 import { gridTemplateColumns } from 'styled-system';
@@ -67,6 +67,7 @@ type BlockNodeType = {
   dragRef?: React.MutableRefObject<HTMLDivElement>;
   index?: number;
   groupSelection?: boolean;
+  recentlyAddedBlocksRef?: React.MutableRefObject<Record<string, boolean>>;
   node: NodeType;
   showApp?: (
     appConfig: AppConfigType,
@@ -85,7 +86,7 @@ type BlockNodeType = {
 const STEAM_OUTPUT_DIR = 'code_executions';
 
 function BlockNode(
-  { block, dragRef, node, groupSelection, showApp, showOutput, ...rest }: BlockNodeType,
+  { block, dragRef, node, groupSelection, showApp, recentlyAddedBlocksRef, showOutput, ...rest }: BlockNodeType,
   ref: React.MutableRefObject<HTMLElement>,
 ) {
   const themeContext = useContext(ThemeContext);
@@ -107,6 +108,7 @@ function BlockNode(
 
   const consumerIDRef = useRef<string>(null);
   const timeoutRef = useRef(null);
+  const timeoutLaunchEditorAppOnMountRef = useRef(null);
   const connectionErrorRef = useRef(null);
   const connectionStatusRef = useRef<ServerConnectionStatusType>(null);
   const handleOnMessageRef = useRef<Record<string, (event: EventStreamType) => void>>({});
@@ -764,12 +766,26 @@ function BlockNode(
 
   useEffect(() => {
     consumerIDRef.current = block.uuid;
+
+    if (block?.uuid in (recentlyAddedBlocksRef?.current ?? {})
+      && objectSize(block?.configuration?.templates ?? {}) === 0
+    ) {
+      timeoutLaunchEditorAppOnMountRef.current = setTimeout(() => {
+        launchEditorApp(null);
+      }, 1000);
+    }
+
     const consumerID = consumerIDRef.current;
     const timeout = timeoutRef.current;
+    const timeoutLaunch = timeoutLaunchEditorAppOnMountRef.current;
 
     return () => {
       clearTimeout(timeout);
+      clearTimeout(timeoutLaunch);
+
       timeoutRef.current = null;
+      timeoutLaunchEditorAppOnMountRef.current = null;
+
       unsubscribe(consumerID);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps

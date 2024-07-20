@@ -82,7 +82,7 @@ export function buildTextStyleProps({
   };
 }
 
-export default function Text({ children, inline, pre, ...rest }: TextProps) {
+function Text({ children, inline, pre, ...rest }: TextProps, ref: React.RefObject<HTMLElement>) {
   const { classNames, props } = buildTextStyleProps(rest as TextProps);
 
   let El = 'p';
@@ -93,8 +93,10 @@ export default function Text({ children, inline, pre, ...rest }: TextProps) {
   }
 
   return (
-    <El {...props} className={classNames}>
+    <El {...props} className={classNames} ref={ref}>
       {children}
     </El>
   );
 }
+
+export default React.forwardRef(Text);

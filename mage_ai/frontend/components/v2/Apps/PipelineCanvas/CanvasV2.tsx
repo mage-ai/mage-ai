@@ -81,6 +81,7 @@ import {
   RectType,
   OutputNodeType,
   AppNodeType,
+  NodeItemType,
 } from '@components/v2/Canvas/interfaces';
 import { MenuGroupType, MenuItemType } from '@mana/components/Menu/interfaces';
 import { ModelProvider } from './ModelManager/ModelContext';
@@ -173,6 +174,7 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
 
   const nodesToBeRenderedRef = useRef<Record<string, boolean>>({});
   const updateLinesRef = useRef<UpdateLinesType>(null);
+  const renderLineRef = useRef<(rect: RectType) => void>(null);
 
   const [isAnimating, setIsAnimating] = useState(true);
   const animationTimeoutRef = useRef(null);
@@ -419,6 +421,7 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
           index={index}
           key={block.uuid}
           node={node as NodeType}
+          recentlyAddedBlocksRef={newBlockCallbackAnimationRef}
           ref={nodeRef}
           showApp={(
             appConfig: AppConfigType,
@@ -1712,7 +1715,7 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
     const childrenInGroup = indexBy(group?.children ?? [], c => c.uuid);
     const blocksInGroup = blocksByGroupRef?.current?.[uuid] ?? {};
     return Object.values(rects ?? rectsMappingRef?.current ?? {})?.filter(
-      r => blocksInGroup?.[r.id] || childrenInGroup?.[r.id],
+      r => r?.id && (blocksInGroup?.[r.id] || childrenInGroup?.[r.id]),
     );
   }
 
@@ -1754,6 +1757,13 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
         }}
       >
         <DragWrapper
+          draggable={false}
+          dragConstraintsRef={containerRef}
+          eventHandlers={{
+            onDragStart: handleDragStart,
+            onDrag: handleDragging,
+            onDragEnd: handleDragEnd,
+          }}
           groupSelection
           item={node}
           rect={
@@ -1777,6 +1787,71 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAnimating, selectedGroupRect]);
 
+  function handleDragStart(
+    event: any,
+    info: any,
+    data: {
+      item: NodeItemType;
+      rect: RectType;
+      ref: React.MutableRefObject<HTMLDivElement>;
+    },
+  ) {
+    const { item, rect, ref } = data;
+  }
+
+  function handleDragging(
+    event: any,
+    info: any,
+    data: {
+      item: NodeItemType;
+      rect: RectType;
+      ref: React.MutableRefObject<HTMLDivElement>;
+    },
+  ) {
+    const { item, rect } = data;
+
+    renderLineRef?.current?.({
+      ...item,
+      ...item?.rect,
+      ...rect,
+      left: info.point.x,
+      top: info.point.y,
+    });
+  }
+
+  function handleDragEnd(
+    event: any,
+    info: any,
+    data: {
+      item: NodeItemType;
+      rect: RectType;
+      ref: React.MutableRefObject<HTMLDivElement>;
+    },
+  ) {
+    const { item, rect } = data;
+
+    const rect2 = {
+      ...item,
+      ...item?.rect,
+      ...rect,
+      id: item?.id,
+      left: info.point.x,
+      top: info.point.y,
+    };
+
+    rectsMappingRef.current[item.id] = rect2;
+    const rectd = { [item.id]: rect2 };
+
+    update(`${executionFrameworkUUID}:${pipelineUUID}`, rectd);
+
+    setRectsMapping(prev => ({ ...prev, ...rectd }));
+    updateLinesRef?.current?.(
+      rectd,
+      { ...getSelectedGroupRectFromRefs() },
+      { replace: false },
+    );
+  }
+
   function handleMouseDown(event: ClientEventType) {
     const { handle, operationType } = event;
 
@@ -1785,16 +1860,23 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
     }
 
     const draggable = getClosestRole(event.target, [ElementRoleEnum.DRAGGABLE]);
-
-    if (EventOperationEnum.DRAG_START === operationType) {
+    if (draggable) {
       setZoomPanDisabled(true);
       setDragEnabled(true);
       setDropEnabled(true);
-    } else {
-      setZoomPanDisabled(false);
-      setDragEnabled(false);
-      setDropEnabled(false);
     }
+  }
+
+  function handleMouseUp(event: ClientEventType) {
+    const { handle, operationType } = event;
+
+    if (handle) {
+      handle?.(event);
+    }
+
+    setZoomPanDisabled(false);
+    setDragEnabled(false);
+    setDropEnabled(false);
   }
 
   function handleContextMenu(
@@ -1917,6 +1999,12 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
               left: undefined,
               top: undefined,
             };
+            let dragConstraintsRef = containerRef;
+            const draggable = [
+              ItemTypeEnum.APP,
+              // ItemTypeEnum.BLOCK,
+              ItemTypeEnum.OUTPUT,
+            ].includes(nodeType);
 
             if ([ItemTypeEnum.APP, ItemTypeEnum.OUTPUT].includes(nodeType)) {
               block = (item as any)?.block;
@@ -1927,6 +2015,10 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
             if (!dragRef) {
               dragRef = createRef();
               dragRefs.current[nodeID] = dragRef;
+            }
+
+            if (ItemTypeEnum.BLOCK === nodeType) {
+              dragConstraintsRef = dragRefs?.current?.[getCurrentGroup()?.uuid];
             }
 
             if ([ItemTypeEnum.APP, ItemTypeEnum.OUTPUT].includes(nodeType)) {
@@ -2043,6 +2135,14 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
 
             arr.push(
               <DragWrapper
+                draggable={draggable}
+                dragConstraintsRef={dragConstraintsRef}
+                eventHandlers={{
+                  onDrag: handleDragging,
+                  onDragEnd: handleDragEnd,
+                  onDragStart: handleDragStart,
+                  onMouseDown: handleMouseDown,
+                }}
                 item={node}
                 key={nodeID}
                 rect={rect}
@@ -2085,68 +2185,68 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
     [outputNodes, renderNodeComponents],
   );
 
-  const [, connectDrop] = useDrop(
-    () => ({
-      // https://react-dnd.github.io/react-dnd/docs/api/use-drop
-      accept: [ItemTypeEnum.APP, ItemTypeEnum.OUTPUT],
-      drop: (item: NodeType, monitor) => {
-        // console.log('start', itemsRef.current)
-        const delta = monitor.getDifferenceFromInitialOffset() as {
-          x: number;
-          y: number;
-        };
+  // const [, connectDrop] = useDrop(
+  //   () => ({
+  //     // https://react-dnd.github.io/react-dnd/docs/api/use-drop
+  //     accept: [ItemTypeEnum.APP, ItemTypeEnum.OUTPUT],
+  //     drop: (item: NodeType, monitor) => {
+  //       // console.log('start', itemsRef.current)
+  //       const delta = monitor.getDifferenceFromInitialOffset() as {
+  //         x: number;
+  //         y: number;
+  //       };
 
-        // let left = Math.round(node?.rect?.left + delta.x);
-        // let top = Math.round(node?.rect?.top + delta.y);
-        let left = Math.round((item?.rect?.left ?? 0) + delta.x);
-        let top = Math.round((item?.rect?.top ?? 0) + delta.y);
+  //       // let left = Math.round(node?.rect?.left + delta.x);
+  //       // let top = Math.round(node?.rect?.top + delta.y);
+  //       let left = Math.round((item?.rect?.left ?? 0) + delta.x);
+  //       let top = Math.round((item?.rect?.top ?? 0) + delta.y);
 
-        let leftOffset = 0;
-        let topOffset = 0;
+  //       let leftOffset = 0;
+  //       let topOffset = 0;
 
-        if (snapToGridOnDrop) {
-          // TODO (dangerous): This doesn’t apply to the ports; need to handle that separately.
-          const [xSnapped, ySnapped] = snapToGrid(
-            {
-              x: left,
-              y: top,
-            },
-            { height: GRID_SIZE, width: GRID_SIZE },
-          );
-          leftOffset = xSnapped - left;
-          topOffset = ySnapped - top;
-        }
+  //       if (snapToGridOnDrop) {
+  //         // TODO (dangerous): This doesn’t apply to the ports; need to handle that separately.
+  //         const [xSnapped, ySnapped] = snapToGrid(
+  //           {
+  //             x: left,
+  //             y: top,
+  //           },
+  //           { height: GRID_SIZE, width: GRID_SIZE },
+  //         );
+  //         leftOffset = xSnapped - left;
+  //         topOffset = ySnapped - top;
+  //       }
 
-        left += leftOffset;
-        top += topOffset;
+  //       left += leftOffset;
+  //       top += topOffset;
 
-        const node = { ...item };
-        node.rect = node.rect ?? item.rect ?? {};
-        node.rect.left = left;
-        node.rect.top = top;
-        node.rect.block = { uuid: item.block.uuid };
+  //       const node = { ...item };
+  //       node.rect = node.rect ?? item.rect ?? {};
+  //       node.rect.left = left;
+  //       node.rect.top = top;
+  //       node.rect.block = { uuid: item.block.uuid };
 
-        const element = dragRefs.current[node.id].current;
-        if (element) {
-          const recte = element?.getBoundingClientRect();
-          element.style.transform = `translate(${left}px, ${top}px)`;
-          node.rect.height = recte.height;
-          node.rect.width = recte.width;
-        }
+  //       const element = dragRefs.current[node.id].current;
+  //       if (element) {
+  //         const recte = element?.getBoundingClientRect();
+  //         element.style.transform = `translate(${left}px, ${top}px)`;
+  //         node.rect.height = recte.height;
+  //         node.rect.width = recte.width;
+  //       }
 
-        rectsMappingRef.current[node.id] = node.rect;
-        const rectd = {
-          [node.id]: node.rect,
-        };
-        update(`${executionFrameworkUUID}:${pipelineUUID}`, rectd);
-        setRectsMapping(prev => ({ ...prev, ...rectd }));
+  //       rectsMappingRef.current[node.id] = node.rect;
+  //       const rectd = {
+  //         [node.id]: node.rect,
+  //       };
+  //       update(`${executionFrameworkUUID}:${pipelineUUID}`, rectd);
+  //       setRectsMapping(prev => ({ ...prev, ...rectd }));
 
-        return undefined;
-      },
-    }),
-    [],
-  );
-  connectDrop(canvasRef);
+  //       return undefined;
+  //     },
+  //   }),
+  //   [],
+  // );
+  // connectDrop(canvasRef);
 
   useEffect(() => {
     if (newBlockCallbackAnimationRef.current !== null) {
@@ -2193,6 +2293,7 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
           });
         }}
         onMouseDown={e => handleMouseDown(e as any)}
+        onMouseUp={e => handleMouseUp(e as any)}
         ref={canvasRef}
         style={{
           height: 'inherit',
@@ -2282,8 +2383,10 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
                     {outputMemo}
                     {nodesMemo}
                     {selectedGroupNode}
+
                     <LineManagerV2
                       controls={controlsForLines}
+                      renderLineRef={renderLineRef}
                       rectsMapping={{
                         ...rectsMapping,
                         ...rectsMappingRef?.current,

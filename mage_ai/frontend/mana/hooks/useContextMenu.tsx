@@ -113,6 +113,8 @@ export default function useContextMenu({
 
     event?.preventDefault();
 
+    // console.log(event?.pageX, event?.pageY, opts)
+
     const render = (root: Root) =>
       root.render(
         <ThemeProvider theme={themeContext}>

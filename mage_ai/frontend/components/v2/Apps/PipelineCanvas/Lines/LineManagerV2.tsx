@@ -65,13 +65,15 @@ export function getLineID(upstream: string, downstream: string) {
 export default function LineManagerV2({
   animate,
   controls: controlsProp,
+  renderLineRef,
   rectsMapping,
   selectedGroupRect,
   updateLinesRef,
   visible,
 }: {
   animate?: boolean;
-  controls?: any;
+  controls?: any
+  renderLineRef?: React.MutableRefObject<(rect: RectType) => void>;
   rectsMapping: Record<string, RectType>;
   selectedGroupRect: RectType;
   updateLinesRef?: React.MutableRefObject<UpdateLinesType>;
@@ -378,10 +380,18 @@ export default function LineManagerV2({
         );
       }
 
-      lineRefs.current[rectdn?.type] ||= {};
-      lineRefs.current[rectdn?.type][lineID] ||= createRef();
+      lineRefs.current[rectdn?.id] ||= {};
+      let lineRef = lineRefs.current[rectdn?.id][rectup?.id]?.ref;
 
-      const lineRef = lineRefs.current[rectdn.type][lineID];
+      if (!lineRef) {
+        lineRef = createRef();
+        lineRefs.current[rectdn.id][rectup.id] = {
+          from: rectup,
+          id: lineID,
+          ref: lineRef,
+          to: rectdn,
+        };
+      }
 
       if (lineRef?.current) {
         lineRef?.current?.classList?.remove(stylesPipelineBuilder.exit);
@@ -452,6 +462,7 @@ export default function LineManagerV2({
         shouldAnimate?: (rectup: RectType, rectdn: RectType) => boolean;
       },
     ) => {
+      // console.log(rectsMapping)
       const pairsByType = {
         [ItemTypeEnum.BLOCK]: [],
         [ItemTypeEnum.NODE]: [],
@@ -572,6 +583,8 @@ export default function LineManagerV2({
         }
       });
 
+      // console.log('pairsByType', pairsByType);
+
       const linePaths = renderPaths(pairsByType, {
         replace: opts?.replace,
         shouldAnimate: opts?.shouldAnimate,
@@ -628,7 +641,34 @@ export default function LineManagerV2({
     [animate, controls],
   );
 
+  function renderLineForRect(rect: RectType) {
+    Object.entries(lineRefs?.current ?? {})?.forEach(([uuid, mapping]) => {
+      const arr = [];
+
+      if (uuid === rect.id) {
+        // The current rect is the downsstream;
+        arr.push(...Object.values(mapping ?? {}));
+      } else if (mapping?.[rect.id]) {
+        // The current rect is the upstream;
+        arr.push(mapping?.[rect.id]);
+      }
+
+      arr?.forEach(({
+        from,
+        to,
+        ref,
+      }) => {
+        const dvalue = prepareLinePathProps(
+          rect?.id === from?.id ? rect : from,
+          rect?.id === to?.id ? rect : to,
+        ).dvalue;
+        ref.current.setAttribute('d', dvalue);
+      });
+    });
+  }
+
   useEffect(() => {
+    renderLineRef.current = renderLineForRect;
     updateLinesRef.current = updateLines;
 
     updateLines(rectsMapping, selectedGroupRect, {
@@ -648,6 +688,7 @@ export default function LineManagerV2({
   }, [
     controlsProp,
     rectsMapping,
+    renderLineRef,
     selectedGroupRect,
     startAnimating,
     updateLines,

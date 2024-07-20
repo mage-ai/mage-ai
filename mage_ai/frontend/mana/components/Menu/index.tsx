@@ -15,6 +15,7 @@ import {
   MenuContent,
   ItemContent,
   DividerStyled,
+  MenuContentScroll,
   MenuItemContainerStyled,
   MenuStyled,
   MenuItemStyled,
@@ -426,6 +427,15 @@ function Menu({
       pos.left += xoff;
       pos.top += yoff;
 
+      const ymax = window.innerHeight;
+      if (pos.top + hmenu > ymax) {
+        pos.top = (ymax - hmenu);
+      }
+
+      if (pos.top < 0) {
+        pos.top = 0;
+      }
+
       containerRef.current.style.left = `${pos.left}px`;
       containerRef.current.style.top = `${pos.top}px`;
       containerRef.current.style.opacity = '1';
@@ -433,6 +443,11 @@ function Menu({
       containerRef.current.style.zIndex = `${HEADER_Z_INDEX + 100}`;
 
       containerRectRef.current = containerRef.current.getBoundingClientRect();
+
+      // console.log(containerRectRef.current,
+      //   window.innerHeight,
+      //   window.innerWidth,
+      // )
 
       if (openItems?.length >= 1) {
         const row = openItems?.[0]?.row;
@@ -512,7 +527,7 @@ function Menu({
           },
         }}
       >
-        <motion.div
+        <MenuContentScroll
           animate="open"
           initial={level === 1 ? 'closed' : 'open'}
           variants={{
@@ -557,7 +572,7 @@ function Menu({
                 </div>
               );
             })}
-        </motion.div>
+        </MenuContentScroll>
       </MenuContent>
 
       {children}
