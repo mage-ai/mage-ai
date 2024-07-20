@@ -5,10 +5,10 @@ import { COLOR_NAMES } from './colors';
 import { contrastRatio } from '@utils/colors';
 
 export type ColorNameType = {
-  base: string;
-  hi: string;
-  lo: string;
-  md: string;
+  base?: string;
+  hi?: string;
+  lo?: string;
+  md?: string;
   contrast?: {
     inverted?: string;
     monotone?: string;
