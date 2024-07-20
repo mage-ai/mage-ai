@@ -49,14 +49,14 @@ export default function Route(WrappedComponent: any) {
         auth,
       };
 
-      if (REQUIRE_USER_AUTHENTICATION(ctx) && auth.isExpired) {
-        console.log('OAuth token has expired.');
-        const query = {
-          ...ctx.query,
-          redirect_url: ctx.asPath,
-        };
-        redirectToUrl(`/sign-in?${queryString(query)}`, ctx.res);
-      }
+      // if (REQUIRE_USER_AUTHENTICATION(ctx) && auth.isExpired) {
+      //   console.log('OAuth token has expired.');
+      //   const query = {
+      //     ...ctx.query,
+      //     redirect_url: ctx.asPath,
+      //   };
+      //   redirectToUrl(`/sign-in?${queryString(query)}`, ctx.res);
+      // }
 
       if (WrappedComponent.getInitialProps) {
         const wrappedProps = await WrappedComponent.getInitialProps(initialProps);

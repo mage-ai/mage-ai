@@ -268,8 +268,8 @@ function MyApp(props: MyAppProps & AppProps) {
     [commandCenterEnabled, requireUserAuthentication],
   );
 
-  const appMemo = useMemo(
-    () => (
+  if (props?.version === 'v2' || props?.pageProps?.version === 'v2') {
+    return (
       <NextAppV2
         Component={Component}
         pageProps={{
@@ -281,18 +281,7 @@ function MyApp(props: MyAppProps & AppProps) {
         }}
         router={router}
       />
-    ),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [],
-  );
-
-  const useV2 = useMemo(
-    () => props?.version === 'v2' || props?.pageProps?.version === 'v2',
-    [props?.version, props?.pageProps?.version],
-  );
-
-  if (useV2) {
-    return appMemo;
+    );
   }
 
   const queryClient = new QueryClient();

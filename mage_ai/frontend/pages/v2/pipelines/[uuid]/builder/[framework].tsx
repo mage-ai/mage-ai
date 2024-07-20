@@ -1,9 +1,10 @@
 import React, { useEffect } from 'react';
-import Route from '@components/v2/Route';
+import PrivateRoute from '@components/shared/PrivateRoute';
 import dynamic from 'next/dynamic';
 import useExecutionManager from '@components/v2/ExecutionManager/useExecutionManager';
 import { NextPageContext } from 'next';
 import { PipelineExecutionFrameworkUUIDEnum } from '@interfaces/PipelineExecutionFramework/types';
+import { LayoutVersionEnum } from '@utils/layouts';
 
 const Builder = dynamic(() => import('@components/v2/Layout/Pipelines/Detail/Builder'), {
   ssr: false,
@@ -36,7 +37,8 @@ PipelineDetailPage.getInitialProps = async (ctx: NextPageContext) => {
   return {
     framework,
     uuid,
+    version: LayoutVersionEnum.V2,
   };
 };
 
-export default Route(PipelineDetailPage);
+export default PrivateRoute(PipelineDetailPage);

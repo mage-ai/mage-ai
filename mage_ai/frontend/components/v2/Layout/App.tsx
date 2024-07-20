@@ -32,6 +32,7 @@ function App({
     version?: LayoutVersionEnum;
   };
 }) {
+  console.log('App render');
   const headerRef = useRef(null);
 
   const themeSettings = (themeSettingsProp?.[version] || getThemeSettings()) as ThemeSettingsType;
@@ -43,7 +44,8 @@ function App({
       document.body.removeAttribute('data-theme');
       document.body.setAttribute('data-theme', mode);
     }
-  }, [mode]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <>

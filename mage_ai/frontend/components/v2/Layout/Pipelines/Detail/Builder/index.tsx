@@ -21,7 +21,7 @@ function PipelineBuilder({ frameworkUUID, uuid, ...props }: PipelineDetailProps)
 
   useEffect(() => {
     if (frameworkUUID && uuid) {
-      header.setHeader({
+      header?.setHeader && header?.setHeader?.({
         buildInterAppNavItems: (items, { router }) => [
           {
             Icon: Builder,
@@ -43,7 +43,7 @@ function PipelineBuilder({ frameworkUUID, uuid, ...props }: PipelineDetailProps)
         version: 0,
       });
 
-      page.setPage({
+      page?.setPage && page?.setPage?.({
         success: true,
         title: 'Ultra Mage',
       });

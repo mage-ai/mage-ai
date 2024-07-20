@@ -35,7 +35,7 @@ export function Header(
   }: HeaderProps,
   ref: React.MutableRefObject<HTMLDivElement | null>,
 ) {
-  // console.log('Header render');
+  console.log('Header render');
   const headerRef = useRef<HTMLDivElement | null>(ref?.current);
 
   const { contextMenu } = useContextMenu({

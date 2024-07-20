@@ -1,7 +1,8 @@
-import Route from '@components/v2/Route';
+import PrivateRoute from '@components/shared/PrivateRoute';
 import dynamic from 'next/dynamic';
+import { LayoutVersionEnum } from '@utils/layouts';
 
-function Home() {
+function EditorApp() {
   const AppsManager = dynamic(() => import('@components/v2/Apps/Manager'), {
     ssr: false,
   });
@@ -9,4 +10,8 @@ function Home() {
   return <AppsManager />;
 }
 
-export default Route(Home);
+EditorApp.getInitialProps = async () => ({
+  version: LayoutVersionEnum.V2,
+});
+
+export default PrivateRoute(EditorApp);
