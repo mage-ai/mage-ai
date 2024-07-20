@@ -196,6 +196,7 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
   const animationInitialProgress = useMotionValue(0);
   const animationChangeBlocksProgress = useMotionValue(0);
   const newBlockCallbackAnimationRef = useRef(null);
+  const animateLineRef = useRef<(to: string, from?: string, opts?: { stop?: boolean }) => void>(null);
 
   const phaseRef = useRef(0);
   const controllersRef = useRef<Record<string, any>>({});
@@ -509,12 +510,14 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
 
             outputNodeRefs.current[block.uuid].render = (n, m) => {
               const id = getLineID(block.uuid, outputNode.id);
-              const el = document.getElementById(id);
-              if (el) {
-                el.style.display = '';
-                el.style.opacity = '';
-                el.style.strokeDasharray = '';
-              }
+              [id, `${id}-background`].forEach(i => {
+                const el = document.getElementById(i);
+                if (el) {
+                  el.style.display = '';
+                  el.style.opacity = '';
+                  el.style.strokeDasharray = '';
+                }
+              });
 
               render(n, m);
             };
@@ -1832,6 +1835,7 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
 
     const rect2 = {
       ...item,
+      ...rectsMappingRef?.current?.[item.id],
       ...item?.rect,
       ...rect,
       id: item?.id,
@@ -2303,9 +2307,12 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
         }}
       >
         <motion.div
-          className={[stylesPipelineBuilder.interstitial, stylesPipelineBuilder.hide].join(' ')}
+          className={[
+            stylesPipelineBuilder.interstitial,
+            // stylesPipelineBuilder.hide,
+          ].join(' ')}
           ref={interstitialRef}
-          style={{ opacity: opacityInterstitial }}
+          style={{ opacity: 1 }}
         >
           <Grid
             alignItems="center"
@@ -2347,9 +2354,11 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
               }}
             >
               <EventProvider
+                animateLineRef={animateLineRef}
                 handleContextMenu={handleContextMenu}
                 handleMouseDown={handleMouseDown}
                 removeContextMenu={removeContextMenu}
+                renderLineRef={renderLineRef}
                 setSelectedGroup={setSelectedGroup}
                 useExecuteCode={useExecuteCode}
                 useRegistration={useRegistration}
@@ -2385,6 +2394,7 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
                     {selectedGroupNode}
 
                     <LineManagerV2
+                      animateLineRef={animateLineRef}
                       controls={controlsForLines}
                       renderLineRef={renderLineRef}
                       rectsMapping={{

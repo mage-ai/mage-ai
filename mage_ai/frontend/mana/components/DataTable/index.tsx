@@ -11,7 +11,7 @@ import { UNIT } from '@mana/themes/spaces';
 import { VariableSizeList } from 'react-window';
 import { createDatasetTabRedirectLink } from '@components/utils';
 import { gradientBackground } from '../../styles/mixins';
-import { isJsonString } from '@utils/string';
+import { hashCode, isJsonString } from '@utils/string';
 import { isObject } from '@utils/hash';
 import { randomSample, range, sum, transpose } from '@utils/array';
 import { useSticky } from 'react-table-sticky';
@@ -21,7 +21,7 @@ import { flatten } from 'lodash';
 const BASE_ROW_HEIGHT = 20;
 const DEFAULT_COLUMN_WIDTH = BASE_ROW_HEIGHT;
 export const WIDTH_OF_SINGLE_CHARACTER_REGULAR_SM = 10;
-const MIN_WIDTH = 80;
+const MIN_WIDTH = 100;
 
 type SharedProps = {
   boundingBox: RectType;
@@ -132,7 +132,7 @@ const Styles = styled.div`
 
       .json-object {
         ${scrollbars}
-        overflow-x: scroll;
+        overflow-x: auto;
         padding: 0;
       }
     }
@@ -306,12 +306,21 @@ function Table({ ...props }: TableProps) {
       columns.forEach(({ index }, idx) => {
         let val1 = index
           ? String(idxRow)
-          : String(values[idx] ?? '');
+          : values[idx - indexes[idx]] ?? '';
+
+        // console.log(idx, val1, typeof values[idx], Array.isArray(val1) && val1.some(isObject))
 
         let size = 0;
-        if (isJsonString(val1) || isObject(val1)) {
+        if ((Array.isArray(val1) && val1.some(isObject))) {
+          val1?.forEach((val2) => {
+            val2 = isObject(val2) ? JSON.stringify(val2, null, 2) : val2;
+            String(val2 ?? '').split('\n').forEach((line) => {
+              size = Math.max(size, line.trim().length);
+            });
+          });
+        } else if (isJsonString(val1) || isObject(val1)) {
           val1 = isObject(val1) ? JSON.stringify(val1, null, 2) : val1;
-          val1.split('\n').forEach((line) => {
+          String(val1 ?? '').split('\n').forEach((line) => {
             size = Math.max(size, line.trim().length);
           });
         } else if (typeof val1 === 'string') {
@@ -326,7 +335,7 @@ function Table({ ...props }: TableProps) {
     });
 
     return widths;
-  }, [columns, rows]);
+  }, [columns, indexes, rows]);
 
   // console.log('columnWidthsRaw', columnWidthsRaw);
 
@@ -338,8 +347,6 @@ function Table({ ...props }: TableProps) {
         widthOffset += indexColumnWidth;
         return indexColumnWidth;
       }
-
-      // const min = MIN_WIDTH + ()
 
       const width = columnWidthsRaw[idx] * WIDTH_OF_SINGLE_CHARACTER_REGULAR_SM;
       return width < MIN_WIDTH ? MIN_WIDTH : width;
@@ -430,7 +437,10 @@ function Table({ ...props }: TableProps) {
                 // console.log(0);
                 try {
                   cellValueDisplay = (
-                    <pre className="json-object">
+                    <pre
+                      className="json-object"
+                      style={{ paddingRight: MIN_WIDTH }}
+                    >
                       {JSON.stringify(cellValue, null, 2)}
                     </pre>
                   );
@@ -439,19 +449,30 @@ function Table({ ...props }: TableProps) {
                   cellValueDisplay = String(cellValue);
                 }
               } else if (Array.isArray(cellValue)) {
-                // console.log(1);
                 cellStyle.padding = '';
+
+                const isObjArr = cellValue.some(o => !Array.isArray(o) && isObject(o));
 
                 cellValueDisplay = (
                   <List
                     asRows
                     itemClassName={() => 'td-list-item'}
-                    items={cellValue}
+                    items={!isObjArr ? cellValue : undefined}
                     monospace
                     parseItems
                     secondary
                     small
-                  />
+                  >
+                    {isObjArr && cellValue?.map((val1, idx1: number) => (
+                      <pre
+                        className="json-object"
+                        key={`${hashCode(String(val1))}-${idx}-${idx1}`}
+                        style={{ paddingRight: MIN_WIDTH }}
+                      >
+                        {JSON.stringify(val1, null, 2)}
+                      </pre>
+                    ))}
+                  </List>
                 );
               } else if (cellValue === true) {
                 // console.log(2);

@@ -64,6 +64,7 @@ export function getLineID(upstream: string, downstream: string) {
 
 export default function LineManagerV2({
   animate,
+  animateLineRef,
   controls: controlsProp,
   renderLineRef,
   rectsMapping,
@@ -72,6 +73,7 @@ export default function LineManagerV2({
   visible,
 }: {
   animate?: boolean;
+  animateLineRef?: React.MutableRefObject<(to: string, from?: string, opts?: { stop?: boolean }) => void>;
   controls?: any
   renderLineRef?: React.MutableRefObject<(rect: RectType) => void>;
   rectsMapping: Record<string, RectType>;
@@ -382,6 +384,7 @@ export default function LineManagerV2({
 
       lineRefs.current[rectdn?.id] ||= {};
       let lineRef = lineRefs.current[rectdn?.id][rectup?.id]?.ref;
+      let lineBackgroundRef = lineRefs.current[rectdn?.id][rectup?.id]?.backgroundRef;
 
       if (!lineRef) {
         lineRef = createRef();
@@ -393,26 +396,58 @@ export default function LineManagerV2({
         };
       }
 
+      if (!lineBackgroundRef) {
+        lineBackgroundRef = createRef();
+        lineRefs.current[rectdn.id][rectup.id].backgroundRef = lineBackgroundRef;
+      }
+
       if (lineRef?.current) {
         lineRef?.current?.classList?.remove(stylesPipelineBuilder.exit);
       }
 
       const shouldAnimate = opts?.shouldAnimate && opts?.shouldAnimate?.(rectup, rectdn);
       // console.log(rectup, rectdn, shouldAnimate, opts);
+
+      const pathProps = {
+        animate: shouldAnimate ? controls : controlsProp ?? controls,
+        custom: {
+          animate: shouldAnimate,
+          from: rectup,
+          index,
+          isOutput,
+          to: rectdn,
+        },
+        d: dvalue,
+        style: {
+          fill: 'none',
+          stroke: colors?.length >= 2 ? `url(#${gradientID})` : `var(--colors-${colors[0] ?? 'gray'})`,
+          strokeWidth: isOutput ? 2 : 1.5,
+        },
+        'data-index': index,
+      };
+
       paths.push(
         <motion.path
-          animate={shouldAnimate ? controls : controlsProp ?? controls}
-          className={stylesPipelineBuilder.path}
-          custom={{
-            animate: shouldAnimate,
-            from: rectup,
-            index,
-            isOutput,
-            to: rectdn,
-          }}
-          d={dvalue}
-          data-index={index}
-          fill="none"
+          {...pathProps}
+          className={[
+            stylesPipelineBuilder.path,
+            stylesPipelineBuilder.background,
+            stylesPipelineBuilder[`${rectup.type}-${rectdn.type}`],
+          ].join(' ')}
+          id={`${lineID}-background`}
+          key={`${lineID}-background`}
+          ref={lineBackgroundRef}
+        />
+      );
+
+      paths.push(
+        <motion.path
+          {...pathProps}
+          className={[
+            stylesPipelineBuilder.path,
+            stylesPipelineBuilder.line,
+            stylesPipelineBuilder[`${rectup.type}-${rectdn.type}`],
+          ].join(' ')}
           id={lineID}
           initial={{
             opacity: 0,
@@ -420,12 +455,6 @@ export default function LineManagerV2({
           }}
           key={lineID}
           ref={lineRef}
-          stroke={
-            colors?.length >= 2 ? `url(#${gradientID})` : `var(--colors-${colors[0] ?? 'gray'})`
-          }
-          style={{
-            strokeWidth: isOutput ? 2 : 1.5,
-          }}
         />,
       );
 
@@ -641,7 +670,28 @@ export default function LineManagerV2({
     [animate, controls],
   );
 
+  function animateLine(to: string, from?: string, opts?: { stop?: boolean }) {
+    const linesMapping = lineRefs?.current?.[to];
+
+    // console.log('animateLine', to, from, linesMapping)
+    if (from) {
+      const {
+        backgroundRef,
+        ref,
+      } = linesMapping?.[from] ?? {};
+
+      let startFunc = 'add';
+      if (opts?.stop) {
+        startFunc = 'remove';
+      }
+
+      backgroundRef?.current?.classList[startFunc](stylesPipelineBuilder.animateFlow);
+      ref?.current?.classList[startFunc](stylesPipelineBuilder.animateFlow);
+    }
+  }
+
   function renderLineForRect(rect: RectType) {
+    // console.log(rect, lineRefs?.current, lineRefs?.current?.[rect.id])
     Object.entries(lineRefs?.current ?? {})?.forEach(([uuid, mapping]) => {
       const arr = [];
 
@@ -655,19 +705,27 @@ export default function LineManagerV2({
 
       arr?.forEach(({
         from,
+        backgroundRef,
         to,
         ref,
       }) => {
         const dvalue = prepareLinePathProps(
-          rect?.id === from?.id ? rect : from,
-          rect?.id === to?.id ? rect : to,
+          rect?.id === from?.id ? { ...from, ...rect, } : from,
+          rect?.id === to?.id ? { ...to, ...rect } : to,
         ).dvalue;
+
+        // console.log(rect.id, from, to)
+
         ref.current.setAttribute('d', dvalue);
+        if (backgroundRef?.current) {
+          backgroundRef.current.setAttribute('d', dvalue);
+        }
       });
     });
   }
 
   useEffect(() => {
+    animateLineRef.current = animateLine;
     renderLineRef.current = renderLineForRect;
     updateLinesRef.current = updateLines;
 
@@ -686,6 +744,7 @@ export default function LineManagerV2({
       timeoutRef.current = null;
     };
   }, [
+    animateLineRef,
     controlsProp,
     rectsMapping,
     renderLineRef,

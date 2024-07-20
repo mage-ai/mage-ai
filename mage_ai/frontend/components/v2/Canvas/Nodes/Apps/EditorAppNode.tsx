@@ -3,7 +3,7 @@ import { RenderContextMenuOptions } from '@mana/hooks/useContextMenu';
 import { MenuItemType } from '@mana/components/Menu/interfaces';
 import { ClientEventType, EventOperationEnum } from '@mana/shared/interfaces';
 import { executionDone } from '@components/v2/ExecutionManager/utils';
-import { KEY_ENTER, KEY_CODE_META } from '@utils/hooks/keyboardShortcuts/constants';
+import { KEY_ENTER, KEY_CODE_META, KEY_ESCAPE } from '@utils/hooks/keyboardShortcuts/constants';
 import Tag from '@mana/components/Tag';
 import { AppSubtypeEnum, AppTypeEnum } from '@components/v2/Apps/constants';
 import EventStreamType from '@interfaces/EventStreamType';
@@ -208,8 +208,8 @@ function EditorAppNode({
             <Button
               Icon={executing ? DeleteCircle : PlayButtonFilled}
               backgroundcolor={!executing ? baseColor : undefined}
-              basic
-              bordercolor={executing ? baseColor ?? 'gray' : undefined}
+              // basic
+              bordercolor={executing ? (baseColor ?? 'gray') : 'transparent'}
               loading={loadingKernelMutation || loading}
               onClick={
                 executing
@@ -232,7 +232,7 @@ function EditorAppNode({
                     }
               }
               small
-              tag={!executing ? <KeyboardTextGroup textGroup={[[KEY_CODE_META, KEY_ENTER]]} xsmall /> : undefined}
+              tag={<KeyboardTextGroup textGroup={[[KEY_CODE_META, executing ? KEY_ESCAPE : KEY_ENTER]]} xsmall />}
             />
           </div>
 

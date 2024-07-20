@@ -39,13 +39,12 @@ export default function List({ asRows, children, itemClassName, items, ol, parse
   const El = asRows
     ? RowStyled
     : (ol && !ul) ? OrderedStyled : UnorderedStyled;
+  const ItemEl = asRows ? 'div' : ListItemStyled;
 
   const itemsDisplay = useMemo(() => {
     if ((items?.length ?? 0) === 0) return;
 
     if (!parseItems) return items;
-
-    const ItemEl = asRows ? 'div' : ListItemStyled;
 
     return items?.map((v, index: number) => {
       let val2 = v;
@@ -78,20 +77,22 @@ export default function List({ asRows, children, itemClassName, items, ol, parse
         </ItemEl>
       );
     });
-  }, [asRows, itemClassName, items, parseItems, rest]);
+  }, [ItemEl, itemClassName, items, parseItems, rest]);
 
   return (
     <El>
       {itemsDisplay}
 
-      {children && React.Children.map(children, (child, index: number) => (
-        <ListItemStyled
-          className={styles.item}
-          key={`${(child as React.ReactElement)?.key ?? index}`}
-        >
-          {child}
-        </ListItemStyled>
-      ))}
+      {children && React.Children.map(children, (child, index: number) => {
+        return (
+          <ItemEl
+            className={styles.item}
+            key={`${(child as React.ReactElement)?.key ?? index}`}
+          >
+            {child}
+          </ItemEl>
+        );
+      })}
     </El>
   );
 }

@@ -247,6 +247,51 @@ function ExecutionResult(
     }
   }, [executionOutput, executionOutputProp]);
 
+  const errorMemo = useMemo(() => {
+    return resultsErrors && resultsErrors?.map(({ error, result_id: resultID }) => {
+      const {
+        code_context_formatted: stacktrace,
+        message_formatted: message,
+        type,
+      } = error ?? {};
+
+      return (
+        <Grid key={resultID} rowGap={12} templateColumns="auto" templateRows="auto auto">
+          <Grid key={resultID} rowGap={6} templateColumns="auto" templateRows="auto auto">
+            <Text monospace secondary semibold small>
+              {/* ValueError */}
+              <Ansi>{String(type)}</Ansi>
+            </Text>
+
+            {/* too many values to unpack (expected 4) */}
+            {[message].map(
+              (val, idx) =>
+                val && (
+                  <Text key={`${resultID}-${val}-${idx}`} monospace small>
+                    <Ansi>{String(val)}</Ansi>
+                  </Text>
+                ),
+            )}
+          </Grid>
+
+          {stacktrace?.length >= 1 && (
+            <pre
+              style={{
+                whiteSpace: 'break-spaces',
+              }}
+            >
+              <Text inline monospace small>
+                <Ansi>
+                  {stacktrace?.join('\n')}
+                </Ansi>
+              </Text>
+            </pre>
+          )}
+        </Grid>
+      );
+    });
+  }, [resultsErrors]);
+
   return (
     <div
       onContextMenu={
@@ -271,7 +316,7 @@ function ExecutionResult(
             </Text>
           </Grid>
 
-          {(resultsInformation?.length > 0 || resultsErrors?.length > 0) && (
+          {(resultsInformation?.length > 0 || (!executionOutput && resultsErrors?.length > 0)) && (
             <Scrollbar
               autoHorizontalPadding
               className={[
@@ -291,53 +336,35 @@ function ExecutionResult(
               >
                 {resultsInformation}
 
-                {resultsErrors && resultsErrors?.map(({ error, result_id: resultID }) => {
-                  const {
-                    code_context_formatted: stacktrace,
-                    message_formatted: message,
-                    type,
-                  } = error ?? {};
-
-                  return (
-                    <Grid key={resultID} rowGap={12} templateColumns="auto" templateRows="auto auto">
-                      <Grid key={resultID} rowGap={6} templateColumns="auto" templateRows="auto auto">
-                        <Text monospace secondary semibold small>
-                          {/* ValueError */}
-                          <Ansi>{String(type)}</Ansi>
-                        </Text>
-
-                        {/* too many values to unpack (expected 4) */}
-                        {[message].map(
-                          (val, idx) =>
-                            val && (
-                              <Text key={`${resultID}-${val}-${idx}`} monospace small>
-                                <Ansi>{String(val)}</Ansi>
-                              </Text>
-                            ),
-                        )}
-                      </Grid>
-
-                      {stacktrace?.length >= 1 && (
-                        <pre
-                          style={{
-                            whiteSpace: 'break-spaces',
-                          }}
-                        >
-                          <Text inline monospace small>
-                            <Ansi>
-                              {stacktrace?.join('\n')}
-                            </Ansi>
-                          </Text>
-                        </pre>
-                      )}
-                    </Grid>
-                  );
-                })}
+                {!executionOutput && errorMemo}
               </Grid>
             </Scrollbar>
           )}
 
           {executionOutput && <ExecutionOutput containerRect={containerRect} executionOutput={executionOutput} />}
+
+          {(executionOutput && resultsErrors?.length > 0) && (
+            <Scrollbar
+              autoHorizontalPadding
+              className={[
+                styles.executionOutputGroup,
+                styles[status],
+              ].filter(Boolean).join(' ')}
+              hideY
+              hideYscrollbar
+            >
+              <Grid
+                className={[
+                  styles.executionOutputGroupContainer,
+                ].filter(Boolean).join(' ')}
+                style={{
+                  minHeight: hasOutput ? 32 : undefined,
+                }}
+              >
+                {errorMemo}
+              </Grid>
+            </Scrollbar>
+          )}
 
           <div>
             <div style={{ height: 4 }}>{loading && <Loading position="absolute" />}</div>

@@ -1,55 +1,62 @@
 {% extends "data_exporters/default.jinja" %}
 {% block imports %}
+from typing import Dict, List, Tuple, Union
+
+import numpy as np
 from elasticsearch import Elasticsearch
-from typing import List, Tuple, Union
 
 {{ super() -}}
 {% endblock %}
 
 {% block content %}
 @data_exporter
-def elasticsearch(document_data: Tuple[str, str, str, List[str], List[Union[float, int]]], *args, **kwargs):
+def elasticsearch(
+    documents: List[Dict[str, Union[Dict, List[int], np.ndarray, str]]], *args, **kwargs,
+):
     """
     Exports document data to an Elasticsearch database.
-
-    Args:
-        document_data (Tuple[str, str, str, List[str], List[Union[float, int]]]):
-            Tuple containing document_id, chunk_text, tokens, and embeddings.
     """
-    document_id, chunk_text, _, _, embeddings = document_data
-    connection_string = kwargs['connection_string']
 
-    es = Elasticsearch([connection_string])
+    connection_string = kwargs.get('connection_string', 'http://localhost:9200')
+    index_name = kwargs.get('index_name', 'documents')
+    number_of_shards = kwargs.get('number_of_shards', 1)
+    number_of_replicas = kwargs.get('number_of_replicas', 0)
+    vector_column_name = kwargs.get('vector_column_name', 'embedding')
 
-    # Check if the index exists, and create it with vector settings if it doesn't
-    if not es.indices.exists(index="documents"):
-        es.indices.create(index="documents", body={
-            "settings": {
-                "index": {
-                    "knn": True
-                }
-            },
-            "mappings": {
-                "properties": {
-                    "document_id": {"type": "keyword"},
-                    # "document_content": {"type": "text"},
-                    "chunk_text": {"type": "text"},
-                    # "tokens": {"type": "text"},
-                    "embeddings": {
-                        "type": "dense_vector",
-                        "dims": len(embeddings)  # Number of dimensions should match your embeddings size
-                    }
-                }
-            }
-        })
+    dimensions = kwargs.get('dimensions')
+    if dimensions is None and len(documents) > 0:
+        document = documents[0]
+        dimensions = len(document.get(vector_column_name) or [])
 
-    document = {
-        "document_id": document_id,
-        # "document_content": document_content,
-        "chunk_text": chunk_text,
-        # "tokens": tokens,
-        "embeddings": embeddings
-    }
+    es_client = Elasticsearch(connection_string)
 
-    es.index(index="documents", id=document_id, body=document)
+    print(f'Connecting to Elasticsearch at {connection_string}')
+
+    index_settings = dict(
+        settings=dict(
+            number_of_shards=number_of_shards,
+            number_of_replicas=number_of_replicas,
+        ),
+        mappings=dict(
+            properties=dict(
+                chunk=dict(type='text'),
+                document_id=dict(type='text'),
+                embedding=dict(type='dense_vector', dims=dimensions),
+            ),
+        ),
+    )
+
+    if not es_client.indices.exists(index=index_name):
+        es_client.indices.create(index=index_name)
+        print('Index created with properties:', index_settings)
+        print('Embedding dimensions:', dimensions)
+
+    print(f'Indexing {len(documents)} documents to Elasticsearch index {index_name}')
+    for document in documents:
+        print(f'Indexing document {document["document_id"]}')
+
+        if isinstance(document[vector_column_name], np.ndarray):
+            document[vector_column_name] = document[vector_column_name].tolist()
+
+        es_client.index(index=index_name, document=document)
 {% endblock %}

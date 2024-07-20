@@ -62,9 +62,12 @@ $enter-duration: 3s;
 .dragWrapper {
   z-index: 3;
 
-  &.app,
+  &.app {
+    z-index: 6;
+  }
+
   &.output {
-    z-index: 4;
+    z-index: 5;
   }
 
   &.groupSelection {

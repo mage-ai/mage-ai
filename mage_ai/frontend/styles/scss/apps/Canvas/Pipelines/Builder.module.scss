@@ -217,20 +217,48 @@
       position: relative;
     }
   }
+}
 
-  path {
-      stroke: yellow;
-      stroke-width: 2;
-      fill: none;
-      stroke-dasharray: 4; /* Creates the dashed pattern */
-      stroke-dashoffset: 0; /* Initial offset */
-      animation: dash 1s linear infinite;
+@keyframes dash-base {
+  to {
+    stroke-dashoffset: -10; /* Same as stroke-dasharray for continuous flow */
+  }
+}
+
+@keyframes dash-to-output {
+  to {
+    stroke-dashoffset: -2; /* Complete cycle of dash and gap proportions */
+  }
+}
+
+.line {
+  &.animateFlow {
+    animation: dash-base 10s linear infinite;
+    fill: none;
+    stroke-dasharray: 5, 5; /* Equal lengths of dash and gap */
+    stroke-dashoffset: 0;
+
+    &.block-output {
+      animation: dash-to-output 0.5s linear infinite;
+      stroke-dasharray: 1, 1;
+    }
+  }
+}
+
+.background {
+  @include hide;
+
+  fill: none;
+
+  &.animateFlow {
+    @include show;
   }
 
-  @keyframes dash {
-      to {
-          stroke-dashoffset: -20; /* Negative value to animate the dash off the path */
-      }
+  &.block-block {
+    opacity: 0.99;
   }
 
+  &.block-output {
+    opacity: 0.5;
+  }
 }

@@ -323,7 +323,7 @@ stopword:
 
 lemmatization_spacy:
   description: 'Lemmatize text to reduce words to their base or root form using spaCy.'
-  name: 'Lemmatization using spaCy.'
+  name: 'Lemmatization (spaCy)'
   path: transformers/tokenization/lemmatization_spacy.py
   type: transformer
   inputs:
@@ -363,7 +363,7 @@ lemmatization_spacy:
 
 stopword_spacy:
   description: 'Tokenize text and remove stopwords to keep only meaningful words using spaCy.'
-  name: 'Stopword removal using spaCy.'
+  name: 'Stopword removal (spaCy)'
   path: transformers/tokenization/stopword_spacy.py
   type: transformer
   inputs:
@@ -403,7 +403,7 @@ stopword_spacy:
 
 sentence_spacy:
   description: 'Tokenize text into sentences using spaCy.'
-  name: 'Sentence tokenization using spaCy.'
+  name: 'Sentence tokenization (spaCy)'
   path: transformers/tokenization/sentence_spacy.py
   type: transformer
   inputs:
@@ -435,7 +435,7 @@ sentence_spacy:
 
 part_of_speech_spacy:
   description: 'Perform part of speech tagging on text using spaCy.'
-  name: 'Part of speech tagging using spaCy.'
+  name: 'Part of speech (spaCy)'
   path: transformers/tokenization/part_of_speech_spacy.py
   type: transformer
   inputs:

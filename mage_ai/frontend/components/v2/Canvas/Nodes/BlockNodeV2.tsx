@@ -90,7 +90,7 @@ function BlockNode(
   ref: React.MutableRefObject<HTMLElement>,
 ) {
   const themeContext = useContext(ThemeContext);
-  const { handleMouseDown } = useContext(EventContext);
+  const { animateLineRef, handleMouseDown, renderLineRef } = useContext(EventContext);
   const { selectedGroupsRef } = useContext(SettingsContext);
   const { blockMappingRef, blocksByGroupRef, groupMappingRef, groupsByLevelRef } =
     useContext(ModelContext);
@@ -205,6 +205,10 @@ function BlockNode(
                   onSuccess: () => {
                     removeContextMenu(event);
                     updateOutputResults();
+                    renderLineRef?.current?.({
+                      ...dragRef?.current?.getBoundingClientRect(),
+                      ...node?.rect,
+                    });
                   },
                   query: {
                     namespace: encodeURIComponent(
@@ -443,7 +447,9 @@ function BlockNode(
       if (event?.result) {
         executionResultMappingRef.current[event.result.result_id] = event?.result;
       }
-      setExecuting(!executionDone(event));
+      const done = executionDone(event);
+      setExecuting(!done);
+      animateLineRef?.current?.(outputRef?.current?.id, block.uuid, { stop: done });
     };
 
     subscribe(consumerID, {
@@ -508,6 +514,9 @@ function BlockNode(
       }
 
       setLoading(true);
+      if (outputRef?.current) {
+        animateLineRef?.current?.(outputRef?.current?.id, block.uuid);
+      }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [block, node, executeCode, codeExecutionEnvironment],
