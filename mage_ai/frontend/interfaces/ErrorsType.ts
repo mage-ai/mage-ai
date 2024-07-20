@@ -8,15 +8,15 @@ export enum ErrorCodeEnum {
 
 export interface ErrorDetailsType {
   code?: string;
-  error: {
-    type: string;
-    message: string;
-    traceback: string[];
+  error?: {
+    type?: string;
+    message?: string;
+    traceback?: string[];
   };
-  exception: string;
-  code_context: string[];
-  code_context_formatted: string[];
-  line_number: number;
+  exception?: string | any;
+  code_context?: string[];
+  code_context_formatted?: string[];
+  line_number?: number;
   message?: string;
   message_formatted?: string;
   stacktrace?: string[];
