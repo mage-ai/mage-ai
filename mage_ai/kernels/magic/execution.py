@@ -244,21 +244,21 @@ async def execute_code_async(
             )
         )
 
+        queue.put(
+            ExecutionResult.load(
+                process=process,
+                status=ExecutionStatus.RUNNING,
+                type=ResultType.STATUS,
+                uuid=uuid,
+            )
+        )
+
         with redirect_stdout(async_stdout):
             try:
                 environment_variables = kwargs.get('environment_variables') or {}
                 with __temporary_env(environment_variables):
                     execution_variables = kwargs.get('execution_variables') or {}
                     execute = kwargs.get('execute')
-
-                    queue.put(
-                        ExecutionResult.load(
-                            process=process,
-                            status=ExecutionStatus.RUNNING,
-                            type=ResultType.STATUS,
-                            uuid=uuid,
-                        )
-                    )
 
                     local_variables = await __modify_and_execute(
                         message,
