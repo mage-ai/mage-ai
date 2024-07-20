@@ -26,7 +26,7 @@ pgvector:
 elasticsearch:
   description: 'Elasticsearch is a distributed, RESTful search and analytics engine. It has native support for vector fields, enabling approximate k-NN search on dense vectors.'
   name: 'Elasticsearch'
-  path: data_exporters/vector_databases/elasticsearch_vector.py
+  path: data_exporters/vector_databases/elasticsearch.py
   type: data_exporter
   inputs:
     text:
