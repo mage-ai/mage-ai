@@ -209,14 +209,20 @@ const OutputGroups: React.FC<OutputGroupsProps> = ({
 
   useEffect(() => {
     setResultMappingUpdate(consumerID, (mapping) => {
-      resultMappingRef.current = mapping;
-      setTimeout(renderResults, 100);
+      Object.values(mapping).forEach((result) => {
+        resultsQueueRef.current.push(result);
+        if (timeoutRef.current === null) {
+          timeoutRef.current = setTimeout(handleResults, 100);
+        }
+        scrollDown(true);
+      });
+      scrollDown(true);
     });
 
     setHandleOnMessage(consumerID, (event: EventStreamType) => {
       const { result } = event;
-      resultsQueueRef.current.push(result);
 
+      resultsQueueRef.current.push(result);
       if (timeoutRef.current === null) {
         timeoutRef.current = setTimeout(handleResults, 100);
       }
@@ -258,7 +264,10 @@ const OutputGroups: React.FC<OutputGroupsProps> = ({
         stylesOutput.outputContainer,
         onlyShowWithContent && (keysRef.current?.length ?? 0) === 0 && stylesOutput.hide,
       ].filter(Boolean).join(' ')}
-      onContextMenu={objectSize(resultMappingRef?.current ?? {}) === 0 ? e => handleContextMenu(e) : undefined}
+      onContextMenu={!onlyShowWithContent && objectSize(resultMappingRef?.current ?? {}) === 0
+        ? e => handleContextMenu(e)
+        : undefined
+      }
       ref={containerRef}
       role={role}
       style={{

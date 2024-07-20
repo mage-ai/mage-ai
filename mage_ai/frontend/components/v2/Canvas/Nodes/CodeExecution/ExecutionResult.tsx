@@ -242,14 +242,11 @@ function ExecutionResult(
 
   useEffect(() => {
     if (!executing) {
-      heightRef.current = Math.max(
-        Math.min(
-          heightRef.current,
-          scrollbarInnerRef?.current?.getBoundingClientRect()?.height ?? 0,
-          isInView ? inViewRef?.current?.getBoundingClientRect()?.height : 0,
-        ),
+      heightRef.current = Math.min(
+        heightRef.current ?? Infinity,
+        scrollbarInnerRef?.current?.getBoundingClientRect()?.height ?? Infinity,
+        isInView ? inViewRef?.current?.getBoundingClientRect()?.height : Infinity,
         20 * (resultsInformation?.length ?? 0),
-        heightRef.current ?? 0,
       );
     }
   }, [executing, isInView, resultsInformation]);

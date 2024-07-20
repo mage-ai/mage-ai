@@ -140,7 +140,7 @@ export default function ExecutionOutput({
         <DataTable
           boundingBox={{
             height: maxHeight - SCROLLBAR_TRACK_WIDTH - 2,
-            width: containerRect?.width - (SCROLLBAR_TRACK_WIDTH * 2) - 2,
+            width: (containerRect?.width ?? 0) - (SCROLLBAR_TRACK_WIDTH * 2) - 2,
           }}
           columns={columns}
           rect={{
