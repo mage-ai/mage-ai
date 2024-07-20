@@ -279,6 +279,7 @@ def make_app(
         (r'/triggers', MainPageHandler),
         (r'/manage', MainPageHandler),
         (r'/manage/(.*)', MainPageHandler),
+        (r'/v2/(.*)', MainPageHandler),
         (r'/templates', MainPageHandler),
         (r'/version-control', MainPageHandler),
         (r'/event-streams/(?P<uuid>[\w\-\%2f/\.]+)', EventStreamHandler),
