@@ -1,7 +1,7 @@
 import { FeatureUUIDEnum } from '@interfaces/ProjectType';
 import { test as base, expect } from '@playwright/test';
 import { TSettingFeaturesToDisable,
-  // enableSettings
+  enableSettings
 } from './utils';
 
 export const test = base.extend<{
@@ -33,7 +33,7 @@ export const test = base.extend<{
      */
     await expect(page.getByRole('button', { name: 'New' })).toBeVisible();
 
-    // await enableSettings(page, settingFeaturesToDisable);
+    await enableSettings(page, settingFeaturesToDisable);
 
     // Use subsequent tests.
     await use(page);
