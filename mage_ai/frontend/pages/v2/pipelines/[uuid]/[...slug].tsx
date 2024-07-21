@@ -28,7 +28,16 @@ function PipelineDetailPage({
   const { changeRoute, header, page } = useContext(LayoutContext);
 
   const [pipeline, setPipeline] = useState<PipelineType>(null);
-  const [frameworkUUID] = useMemo(() => slug, [slug]);
+
+  const [frameworkUUID] = useMemo(() => {
+    let arr = (slug ?? []);
+    if (!Array.isArray(arr)) {
+      arr = [arr];
+    }
+
+    return arr;
+  }, [slug]);
+
   const mutants = useMutate(
     {
       id: uuid,
@@ -206,7 +215,11 @@ function PipelineDetailPage({
 }
 
 PipelineDetailPage.getInitialProps = async (ctx: NextPageContext) => {
-  const { slug, uuid } = ctx.query;
+  const { slug, uuid } = ctx.query ?? {
+    slug: [],
+    uuid: null,
+  };
+
   return {
     slug,
     uuid,

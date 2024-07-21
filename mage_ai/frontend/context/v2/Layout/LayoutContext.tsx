@@ -19,7 +19,7 @@ type PageType = {
 } & PageProps;
 
 export interface LayoutContextType {
-  changeRoute: (route: RouteType, opts?: {
+  changeRoute: (appRoute: RouteType, opts?: {
     appendOnly?: boolean;
     transitionOnly?: boolean;
   }) => void;

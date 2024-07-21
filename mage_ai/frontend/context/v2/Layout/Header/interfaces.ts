@@ -18,11 +18,7 @@ export interface HeaderProps {
   interAppNavItems?: any[];
   intraAppNavItems?: any[];
   navTag?: string;
-  routeHistory?: {
-    header: { title: string };
-    page: { title: string };
-    route: RouteType;
-  }[];
+  routeHistory?: RouteType[];
   router?: any;
   selectedIntraAppNavItems?: any[];
   selectedNavItem?: string;

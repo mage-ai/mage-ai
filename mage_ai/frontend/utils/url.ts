@@ -1,20 +1,8 @@
 import Router from 'next/router';
 import { ServerResponse } from 'http';
 
-export type ParseUrlResult = {
-  [key: string]: string | string[] | undefined;
-  slug?: string[];
-  query?: { [key: string]: string };
-  hash?: string;
-};
+export type ParseUrlResult = any;
 
-/**
- * Parse the URL with a given template
- *
- * @param {string} url - The URL to parse.
- * @param {string} template - The template to base the parsing on.
- * @returns {ParseUrlResult} - An object containing the extracted URL segments.
- */
 export function parseDynamicUrl(url: string, template: string): ParseUrlResult {
   const parsedUrl = new URL(url, window.location.origin);
   const pathname = parsedUrl.pathname;

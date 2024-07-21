@@ -60,6 +60,10 @@ export const LayoutProvider = ({ children, router, theme }: LayoutProviderProps)
       const appRoute = routeHistoryRef.current[routeHistoryRef.current.length - 1];
       appRouteBackwardsRef.current = appRoute;
 
+      if (!appRoute) {
+        return;
+      }
+
       const { route } = appRoute;
       router.replace({
         pathname: route.pathname,
