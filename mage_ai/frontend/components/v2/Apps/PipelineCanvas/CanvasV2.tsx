@@ -1,4 +1,5 @@
 import { LayoutContext } from '@context/v2/Layout';
+import { useRouter } from 'next/router';
 import React, {
   createRef,
   useEffect,
@@ -64,7 +65,6 @@ import LineManagerV2, {
   EASING,
 } from './Lines/LineManagerV2';
 import DragWrapper from '../../Canvas/Nodes/DragWrapper';
-import HeaderUpdater from '@context/v2/Layout/Header/Updater';
 import PipelineExecutionFrameworkType, {
   FrameworkType,
   PipelineExecutionFrameworkBlockType,
@@ -93,7 +93,7 @@ import { ZoomPanStateType } from '@mana/hooks/useZoomPan';
 import { buildDependencies } from './utils/pipelines';
 import { getCache, updateCache } from '@mana/components/Menu/storage';
 import { useMutate } from '@context/v2/APIMutation';
-import { deepCopyArray, reverseArray, indexBy, unique, uniqueArray } from '@utils/array';
+import { deepCopyArray, reverseArray, indexBy, unique, uniqueArray, range } from '@utils/array';
 import { getNewUUID } from '@utils/string';
 import { deepCopy, isEmptyObject } from '@utils/hash';
 import { WithOnMount } from '@mana/hooks/useWithOnMount';
@@ -102,7 +102,7 @@ import { buildOutputNode } from './utils/items';
 import { buildAppNode } from './AppManager/utils';
 import { ElementRoleEnum } from '@mana/shared/types';
 import { GroupUUIDEnum } from '@interfaces/PipelineExecutionFramework/types';
-import { hyphensToSnake } from '@utils/url';
+import { hyphensToSnake, snakeToHyphens, parseDynamicUrl } from '@utils/url';
 
 const ENTER_ANIMATION_START_THRESHOLD = 0.6;
 const CHANGE_BLOCKS_ANIMATION_DURATION = 5;
@@ -115,8 +115,10 @@ type ModelsType = {
 };
 
 export type CanvasProps = {
-  executionFrameworkUUID: string;
-  pipelineUUID: string;
+  framework: PipelineExecutionFrameworkType;
+  pipeline: {
+    uuid: string;
+  };
   useExecuteCode: ExecutionManagerType['useExecuteCode'];
   useRegistration: ExecutionManagerType['useRegistration'];
 };
@@ -139,10 +141,8 @@ export type PipelineCanvasV2Props = {
 const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
   canvasRef,
   containerRef,
-  // dragEnabled,
-  // dropEnabled,
-  executionFrameworkUUID: executionFrameworkUUIDProp,
-  pipelineUUID: pipelineUUIDProp,
+  framework,
+  pipeline: pipelineProp,
   removeContextMenu,
   renderContextMenu,
   setDragEnabled,
@@ -154,11 +154,9 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
   useRegistration,
 }: PipelineCanvasV2Props) => {
   const { page } = useContext(LayoutContext);
-  const executionFrameworkUUID = useMemo(
-    () => hyphensToSnake(executionFrameworkUUIDProp),
-    [executionFrameworkUUIDProp],
-  );
-  const pipelineUUID = useMemo(() => hyphensToSnake(pipelineUUIDProp), [pipelineUUIDProp]);
+  const router = useRouter();
+
+  const pipelineUUID = useMemo(() => hyphensToSnake(pipelineProp?.uuid), [pipelineProp?.uuid]);
 
   // Refs
   const pageTitleRef = useRef<string>(null);
@@ -390,9 +388,7 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
   const [renderer, setRenderer] = useState<any>(null);
 
   // Resources
-  const [pipeline, setPipeline] = useState<PipelineExecutionFrameworkType>(null);
-  const [framework, setFramework] = useState<PipelineExecutionFrameworkType>(null);
-  const { dispatchAppEvent } = useAppEventsHandler({ executionFramework: framework, pipeline });
+  const [pipeline, setPipeline] = useState<any>(pipelineProp);
 
   function getCurrentGroup() {
     const groups = selectedGroupsRef?.current ?? [];
@@ -441,7 +437,7 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
             };
 
             const handleRemove = () => {
-              removeFromCache(`${executionFrameworkUUID}:${pipelineUUID}`, appNode.id);
+              removeFromCache(`${framework.uuid}:${pipelineUUID}`, appNode.id);
               delete appNodeRefs.current[block.uuid];
               setAppNodes(prev => {
                 delete prev[block.uuid]?.[appNode.id];
@@ -487,7 +483,7 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
             };
 
             const handleRemove = () => {
-              removeFromCache(`${executionFrameworkUUID}:${pipelineUUID}`, outputNode.id);
+              removeFromCache(`${framework.uuid}:${pipelineUUID}`, outputNode.id);
               const id = getLineID(block.uuid, outputNode.id);
               const el = document.getElementById(id);
               if (el) {
@@ -1120,7 +1116,54 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
     );
   }
 
-  const setSelectedGroupsRef = useRef((groupsArg: MenuGroupType[]) => {
+  const setSelectedGroup = useCallback((block: FrameworkType) => {
+    setSelectedGroupsRef.current(block);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const setSelectedGroupsRef = useRef((block: FrameworkType) => {
+    const groupsNext = [block];
+
+    let groupUUIDs = groupsNext[0]?.groups ?? [];
+    while (groupUUIDs.length > 0) {
+      const gup = groupUUIDs.map(guuid => groupMappingRef?.current?.[guuid])?.[0];
+      if (gup) {
+        groupsNext.unshift(gup);
+        groupUUIDs = gup?.groups ?? [];
+      } else {
+        groupUUIDs = [];
+      }
+    }
+
+    const uuidsNext = groupsNext.map(g => snakeToHyphens(g.uuid));
+
+    const { uuid } = router?.query ?? {};
+    router.replace(
+      {
+        pathname: '/v2/pipelines/[uuid]/[...slug]',
+        query: {
+          slug: [snakeToHyphens(framework?.uuid)].concat(uuidsNext).filter(Boolean),
+          uuid,
+        },
+      },
+      `/v2/pipelines/${pipeline?.uuid}/${framework?.uuid}/${uuidsNext.join('/')}`,
+    );
+  });
+
+  const handleIntraAppRouteChange = useRef((pathname) => {
+    const { slug } = parseDynamicUrl(pathname, '/v2/pipelines/[uuid]/[...slug]');
+    const uuids = (Array.isArray(slug) ? slug : [slug])?.map(
+      path => hyphensToSnake(path))?.filter(pk => pk !== framework?.uuid);
+
+    const groupsArg = uuids.reduce((acc, uuid: string, idx: number) => {
+      const group = groupsByLevelRef.current?.[idx]?.find(g => g.uuid === uuid);
+      return acc.concat(group);
+    }, []);
+    const missing = groupsArg.findIndex(g => !(g ?? false));
+    if (missing >= 0) {
+      groupsArg.splice(missing);
+    }
+
     // Close apps and outputs
     Object.values(appNodeRefs.current ?? {})
       .concat(Object.values(outputNodeRefs.current ?? {}))
@@ -1174,84 +1217,6 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
       title: pageTitleRef.current,
     });
   });
-
-  const setSelectedGroup = useCallback((block: FrameworkType) => {
-    const grps = [];
-    const grpslevels = deepCopyArray(groupsByLevelRef?.current ?? []);
-    reverseArray(grpslevels)?.forEach((groups, level) => {
-      const grp = groups.find(g => g.uuid === block?.uuid);
-
-      if (grp) {
-        grps.push({
-          ...deepCopy(groupMappingRef.current?.[grp.uuid]),
-        });
-      } else if (grps.length > 0) {
-        const grpcur = grps[grps.length - 1];
-        const parent = groups?.find(g => g?.children?.findIndex(c => c.uuid === grpcur.uuid) >= 0);
-
-        if (parent) {
-          grps.push(deepCopy(groupMappingRef.current?.[parent.uuid]));
-        }
-      }
-    });
-
-    const groupsNext = [];
-    reverseArray([...grps]).forEach((g, i) => {
-      if (i === 0) {
-        g.index = groupsByLevelRef.current?.[0]?.findIndex(c => c.uuid === g?.uuid);
-      } else {
-        const parent = groupsNext[groupsNext.length - 1];
-        g.groups = [parent];
-        g.index = parent.children.findIndex(c => c.uuid === g.uuid);
-      }
-
-      groupsNext.push({
-        ...g,
-        level: i,
-      });
-    });
-
-    // Invoked from within a node component and not from the header; need to update header.
-    // const groups = [...(selectedGroupsRef.current ?? [])].map(g => ({
-    //   ...g,
-    //   ...groupMappingRef.current?.[g.uuid],
-    // }));
-    // const parentIndex =
-    //   groups?.findIndex(g => !!(g as any).children?.find(i => i.uuid === block?.uuid));
-
-    // let index = null;
-    // let parent = null;
-    // let groups2 = [...groups];
-    // if (parentIndex >= 0) {
-    //   groups2 = groups2.slice(0, parentIndex + 1);
-    //   parent = groups[parentIndex];
-    //   index = parent.children.findIndex(i => i.uuid === block?.uuid);
-    // }
-
-    // const groupsNext = [
-    //   ...groups2,
-    //   {
-    //     groups: parent ? [parent] : [],
-    //     index,
-    //     level: groups2?.length ?? 0,
-    //     uuid: block?.uuid,
-    //   },
-    // ].filter(g => g?.uuid)?.map(g => ({
-    //   ...g,
-    //   ...groupMappingRef.current?.[g.uuid],
-    // })) as MenuGroupType[];
-
-    setSelectedGroupsRef.current(groupsNext);
-
-    dispatchAppEvent(CustomAppEventEnum.UPDATE_HEADER_NAVIGATION, {
-      options: {
-        kwargs: {
-          defaultGroups: groupsNext,
-        },
-      },
-    });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   function renderLayoutUpdates(callbackBeforeUpdateState?: () => void) {
     const currentGroup = getCurrentGroup();
@@ -1358,7 +1323,7 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
   const pipelineMutants = useMutate(
     {
       id: pipelineUUID,
-      idParent: executionFrameworkUUID,
+      idParent: framework.uuid,
       resource: 'pipelines',
       resourceParent: 'execution_frameworks',
     },
@@ -1407,21 +1372,7 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
     },
   );
 
-  const frameworkMutants = useMutate(
-    {
-      id: executionFrameworkUUID,
-      resource: 'execution_frameworks',
-    },
-    {
-      automaticAbort: false,
-      handlers: {
-        detail: { onSuccess: setFramework },
-      },
-    },
-  );
-  const fileMutants = useMutate({
-    resource: 'browser_items',
-  });
+  const fileMutants = useMutate({ resource: 'browser_items' });
 
   // Models
   function shouldRenderSelectedGroupSelection(): boolean {
@@ -1647,55 +1598,29 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
   }
 
   useEffect(() => {
-    if (framework === null && frameworkMutants.detail.isIdle) {
-      frameworkMutants.detail.mutate();
-    }
+    const handleRouteChange = (args: any) => handleIntraAppRouteChange?.current(args);
 
-    if (pipeline === null && pipelineMutants.detail.isIdle) {
+    if (!(pipeline ?? false)) {
       pipelineMutants.detail.mutate();
+    } else if ([blocksByGroupRef, blockMappingRef, groupMappingRef, groupsByLevelRef].every(r => !r.current)) {
+      updateLocalResources(pipeline);
     }
 
-    if ((framework ?? false) && (pipeline ?? false)) {
-      if (
-        [blocksByGroupRef, blockMappingRef, groupMappingRef, groupsByLevelRef].every(
-          r => !r.current,
-        )
-      ) {
-        updateLocalResources(pipeline);
-      }
+    if (!selectedGroupsRef?.current) {
+      handleRouteChange(router.asPath);
+    }
 
-      // [WARNING]: The above needs to run 1st
-      if (selectedGroupsRef.current === null) {
-        const key = [framework.uuid, pipeline.uuid].join(':');
-        const cache = getCache(key);
-        if (cache) {
-          setSelectedGroupsRef.current(cache);
-        } else {
-          updateCache(key, [groupMappingRef?.current?.[GroupUUIDEnum.DATA_PREPARATION]]);
-        }
-      }
+    router.events.on('routeChangeComplete', handleRouteChange);
+
+    return () => {
+      router.events.off('routeChangeComplete', handleRouteChange);
     }
   }, [
-    framework,
-    frameworkMutants,
     pipeline,
     pipelineMutants,
-    updateLocalResources,
     setSelectedGroup,
+    updateLocalResources,
   ]);
-
-  useEffect(() => {
-    if ((framework ?? false) && (pipeline ?? false)) {
-      setHeaderData({
-        ...(defaultGroups ? { defaultGroups } : {}),
-        executionFramework: framework,
-        groupsByLevel: groupsByLevelRef.current ?? [],
-        handleMenuItemClick: (_event: MouseEvent, groups: MenuGroupType[]) =>
-          setSelectedGroupsRef.current(groups),
-        pipeline,
-      });
-    }
-  }, [defaultGroups, framework, pipeline, setSelectedGroup]);
 
   // Cleanup
   useEffect(() => {
@@ -1846,7 +1771,7 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
     rectsMappingRef.current[item.id] = rect2;
     const rectd = { [item.id]: rect2 };
 
-    update(`${executionFrameworkUUID}:${pipelineUUID}`, rectd);
+    update(`${framework.uuid}:${pipelineUUID}`, rectd);
 
     setRectsMapping(prev => ({ ...prev, ...rectd }));
     updateLinesRef?.current?.(
@@ -2026,7 +1951,7 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
             }
 
             if ([ItemTypeEnum.APP, ItemTypeEnum.OUTPUT].includes(nodeType)) {
-              const cache = get(`${executionFrameworkUUID}:${pipelineUUID}`) ?? {};
+              const cache = get(`${framework.uuid}:${pipelineUUID}`) ?? {};
               if (nodeID in rectsMappingRef?.current) {
                 rect = rectsMappingRef.current[nodeID];
               } else if (nodeID in cache) {
@@ -2430,8 +2355,6 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
           </SettingsProvider>
         </CanvasContainer>
       </div>
-
-      {headerData && <HeaderUpdater {...(headerData as any)} />}
     </div>
   );
 };

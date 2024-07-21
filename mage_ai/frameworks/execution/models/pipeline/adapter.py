@@ -28,11 +28,13 @@ class Pipeline(DelegatorTarget):
         self,
         uuid: str,
         execution_framework: Optional[ExecutionFrameworkUUID] = None,
+        framework: Optional[PipelineExecutionFramework] = None,
         pipeline: Optional[PipelineBase] = None,
     ):
         super().__init__(pipeline)
 
         self.execution_framework = execution_framework
+        self.framework = framework
         self.pipeline = pipeline
         self.uuid = uuid
 
@@ -40,7 +42,9 @@ class Pipeline(DelegatorTarget):
         self.pipelines = None
 
     @classmethod
-    async def load_config_from_content(cls, content: str, dir_name: str) -> Optional[Pipeline]:
+    async def load_config_from_content(
+        cls, content: str, dir_name: str, framework: Optional[PipelineExecutionFramework] = None
+    ) -> Optional[Pipeline]:
         if not content or not dir_name:
             return
 
@@ -60,6 +64,7 @@ class Pipeline(DelegatorTarget):
             )
             if pipeline is not None
             else None,
+            framework=framework,
             pipeline=pipeline,
         )
 
@@ -67,6 +72,7 @@ class Pipeline(DelegatorTarget):
     async def load_pipelines(
         cls,
         execution_framework_uuids: Optional[List[ExecutionFrameworkUUID]] = None,
+        framework: Optional[PipelineExecutionFramework] = None,
         repo_paths: Optional[List[str]] = None,
         uuids: Optional[List[str]] = None,
     ) -> List[Pipeline]:
@@ -80,6 +86,12 @@ class Pipeline(DelegatorTarget):
         if uuids is not None:
             criteria['uuid'] = uuids
 
+        if execution_framework_uuids is None:
+            execution_framework_uuids = []
+
+        if framework is not None:
+            execution_framework_uuids.append(ExecutionFrameworkUUID.from_value(framework.uuid))
+
         if execution_framework_uuids is not None:
             fuuids: List[str] = [str(e.value) for e in execution_framework_uuids]
             criteria['execution_framework'] = fuuids
@@ -90,6 +102,7 @@ class Pipeline(DelegatorTarget):
             cls.load_config_from_content(
                 content=info.get('content') or '',
                 dir_name=info.get('dir_name') or '',
+                framework=framework,
             )
             for info in result
             if info
@@ -100,6 +113,9 @@ class Pipeline(DelegatorTarget):
         return [pipeline for pipeline in pipelines if pipeline is not None]
 
     async def get_framework(self) -> Union[PipelineExecutionFramework, None]:
+        if self.framework:
+            return self.framework
+
         if not self.execution_framework:
             return None
         return await get_framework(self.execution_framework)
@@ -149,7 +165,11 @@ class Pipeline(DelegatorTarget):
         return await Block.create(payload['uuid'], self, payload)
 
     async def to_dict_async(
-        self, *args, include_pipelines: Optional[bool] = None, **kwargs
+        self,
+        *args,
+        include_framework: Optional[bool] = None,
+        include_pipelines: Optional[bool] = None,
+        **kwargs,
     ) -> Dict:
         await self.get_pipeline()
         await self.get_blocks()
@@ -179,6 +199,14 @@ class Pipeline(DelegatorTarget):
                 )
                 for pipeline in self.pipelines
             ])
+
+        if include_framework:
+            framework = await self.get_framework()
+            if framework:
+                data['framework'] = await framework.to_dict_async(
+                    ignore_empty=True,
+                    include_templates=True,
+                )
 
         return data
 

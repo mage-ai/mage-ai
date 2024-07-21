@@ -17,14 +17,27 @@ class PipelineExecutionFrameworkPresenter(BasePresenter):
     ]
 
     async def prepare_present(self, **kwargs) -> Dict:
+        display_format = kwargs.get('format')
+
         return await self.resource.model.to_dict_async(
-            include_pipelines=kwargs['format'] in [OperationType.DETAIL, OperationType.UPDATE],
+            include_framework=display_format in [OperationType.DETAIL],
+            include_pipelines=display_format in [OperationType.DETAIL, OperationType.UPDATE],
         )
 
 
 PipelineExecutionFrameworkPresenter.register_formats(
     [
         OperationType.DETAIL,
+    ],
+    PipelineExecutionFrameworkPresenter.default_attributes
+    + [
+        'framework',
+        'pipelines',
+    ],
+)
+
+PipelineExecutionFrameworkPresenter.register_formats(
+    [
         OperationType.UPDATE,
     ],
     PipelineExecutionFrameworkPresenter.default_attributes

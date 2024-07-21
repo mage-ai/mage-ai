@@ -41,8 +41,18 @@ PipelineExecutionFrameworkPolicy.allow_actions(
 PipelineExecutionFrameworkPolicy.allow_read(
     PipelineExecutionFrameworkPresenter.default_attributes + ['pipelines'],
     on_action=[
-        OperationType.DETAIL,
         OperationType.LIST,
+    ],
+    scopes=[
+        OauthScope.CLIENT_PRIVATE,
+    ],
+    condition=lambda policy: policy.has_at_least_viewer_role(),
+)
+
+PipelineExecutionFrameworkPolicy.allow_read(
+    PipelineExecutionFrameworkPresenter.default_attributes + ['framework', 'pipelines'],
+    on_action=[
+        OperationType.DETAIL,
     ],
     scopes=[
         OauthScope.CLIENT_PRIVATE,

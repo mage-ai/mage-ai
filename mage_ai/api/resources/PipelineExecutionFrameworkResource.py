@@ -36,7 +36,7 @@ class PipelineExecutionFrameworkResource(GenericResource):
             })
 
         pipelines = await Pipeline.load_pipelines(
-            execution_framework_uuids=[parent_model.uuid],
+            framework=parent_model,
             uuids=[pk],
         )
 

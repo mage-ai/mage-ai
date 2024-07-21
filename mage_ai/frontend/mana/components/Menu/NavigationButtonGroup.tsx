@@ -1,4 +1,5 @@
 import useCustomEventHandler from '@mana/events/useCustomEventHandler';
+import { useRouter } from 'next/router';
 import DashedDivider from '@mana/elements/Divider/DashedDivider';
 import Grid from '@mana/components/Grid';
 import Link from '@mana/elements/Link';
@@ -9,26 +10,23 @@ import { Code, Builder, CaretDown, CaretLeft } from '@mana/icons';
 import { ItemClickHandler, MenuGroupType } from './interfaces';
 import { LayoutDirectionEnum } from '@mana/components/Menu/types';
 import { MenuItemType } from '@mana/hooks/useContextMenu';
-import { getCache, deleteCache, updateCache } from './storage';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import useKeyboardShortcuts from '../../hooks/shortcuts/useKeyboardShortcuts';
 import { KeyEnum } from '@mana/events/enums';
 
 type NavigationButtonGroupProps = {
   buildGroups?: (onClick: ItemClickHandler) => MenuItemType[];
-  cacheKey?: string;
   groups?: MenuItemType[];
 };
 export default function NavigationButtonGroup({
   buildGroups,
-  cacheKey,
   groups: groupsProp,
 }: NavigationButtonGroupProps) {
+  const router = useRouter();
+
   const containerRef = useRef<HTMLDivElement>(null);
   const selectedButtonIndexRef = useRef<number | null>(null);
-  const [selectedGroupsByLevel, setSelectedGroupsByLevel] = useState<MenuGroupType[]>(
-    cacheKey ? (getCache(cacheKey) ?? [])?.filter(Boolean) : [],
-  );
+  const [selectedGroupsByLevel, setSelectedGroupsByLevel] = useState<MenuGroupType[]>([]);
 
   const { deregisterCommands, registerCommands } = useKeyboardShortcuts({
     target: containerRef,
@@ -42,7 +40,7 @@ export default function NavigationButtonGroup({
       }
     },
     ref: containerRef,
-    uuid: `NavigationButtonGroup-${cacheKey}`,
+    uuid: 'NavigationButtonGroup',
   });
 
   const handleSelectGroup = useCallback(
@@ -51,25 +49,20 @@ export default function NavigationButtonGroup({
       item: MenuGroupType,
       handleGroupSelection?: (event: MouseEvent, groups: MenuGroupType[]) => void,
     ) => {
-      const { groups, level, uuid } = item;
+      // const { groups, level, uuid } = item;
 
-      let items = [...(groups?.reverse() ?? []), item];
-      if (selectedGroupsByLevel?.[selectedGroupsByLevel?.length - 1]?.uuid === uuid) {
-        items = items.slice(0, level);
-      }
+      // let items = [...(groups?.reverse() ?? []), item];
+      // if (selectedGroupsByLevel?.[selectedGroupsByLevel?.length - 1]?.uuid === uuid) {
+      //   items = items.slice(0, level);
+      // }
 
-      setSelectedGroupsByLevel(items);
-      if (items?.length >= 1) {
-        updateCache(cacheKey, items);
-      } else {
-        deleteCache(cacheKey);
-      }
+      // setSelectedGroupsByLevel(items);
 
-      handleGroupSelection(event, items);
-      selectedButtonIndexRef.current = null;
-      handleToggleMenu({ items: null, openItems: null });
+      // handleGroupSelection(event, items);
+      // selectedButtonIndexRef.current = null;
+      // handleToggleMenu({ items: null, openItems: null });
     },
-    [cacheKey, handleToggleMenu, selectedGroupsByLevel],
+    [handleToggleMenu, selectedGroupsByLevel],
   );
 
   const groups = useMemo(
@@ -90,11 +83,10 @@ export default function NavigationButtonGroup({
       const arr = (defaultGroups ?? [])?.map(g => groups0?.find(grp => grp.uuid === g.uuid) ?? g);
 
       if (arr?.every(Boolean)) {
-        updateCache(cacheKey, arr);
         setSelectedGroupsByLevel(arr);
       }
     },
-    [cacheKey, buildGroups, groupsProp, handleSelectGroup, groups],
+    [buildGroups, groupsProp, handleSelectGroup, groups],
   );
 
   useCustomEventHandler({} as any, {
@@ -157,6 +149,19 @@ export default function NavigationButtonGroup({
       deregisterCommands();
     };
   }, [deregisterCommands, openMenu, registerCommands, selectedGroupsByLevel]);
+
+  useEffect(() => {
+    const handleRouteChange = (url: string) => {
+      const { query } = router;
+      const { slug, uuid } = query;
+    };
+
+    router.events.on('routeChangeStart', handleRouteChange);
+
+    return () => {
+      router.events.off('routeChangeStart', handleRouteChange);
+    };
+  }, [router.events]);
 
   const buttons = useMemo(() => {
     const defaultState = selectedGroupsByLevel === null;

@@ -1,6 +1,62 @@
 import Router from 'next/router';
 import { ServerResponse } from 'http';
 
+export type ParseUrlResult = {
+  [key: string]: string | string[] | undefined;
+  slug?: string[];
+  query?: { [key: string]: string };
+  hash?: string;
+};
+
+/**
+ * Parse the URL with a given template
+ *
+ * @param {string} url - The URL to parse.
+ * @param {string} template - The template to base the parsing on.
+ * @returns {ParseUrlResult} - An object containing the extracted URL segments.
+ */
+export function parseDynamicUrl(url: string, template: string): ParseUrlResult {
+  const parsedUrl = new URL(url, window.location.origin);
+  const pathname = parsedUrl.pathname;
+
+  // Remove any empty segments caused by leading/trailing slashes
+  const urlSegments = pathname.split('/').filter(segment => segment);
+  const templateSegments = template.split('/').filter(segment => segment);
+
+  const result: ParseUrlResult = {};
+
+  templateSegments.forEach((segment, index) => {
+    if (segment.startsWith('[') && segment.endsWith(']')) {
+      const key = segment.slice(1, -1);
+
+      // Handling catch-all segment [...slug]
+      if (key.startsWith('...')) {
+        const slugKey = key.slice(3);
+        result[slugKey] = urlSegments.slice(index);
+      } else {
+        result[key] = urlSegments[index];
+      }
+    }
+  });
+
+  // Extract query parameters
+  const query: { [key: string]: string } = {};
+  parsedUrl.searchParams.forEach((value, key) => {
+    query[key] = value;
+  });
+
+  if (Object.keys(query).length > 0) {
+    result.query = query;
+  }
+
+  // Extract hash
+  if (parsedUrl.hash) {
+    result.hash = parsedUrl.hash.substring(1); // Remove leading '#'
+  }
+
+  return result;
+}
+
 export function queryFromUrl(url: string = null): any {
   const query = {};
   let urlToTest = url;

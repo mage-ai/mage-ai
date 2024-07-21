@@ -1,20 +1,16 @@
+import Loading from '@mana/components/Loading';
 import PipelineCanvasV2, { CanvasProps } from './CanvasV2';
 import useContextMenu from '@mana/hooks/useContextMenu';
 import { ClientEventType } from '@mana/shared/interfaces';
+import { DEBUG } from '@components/v2/utils/debug';
 import { DndProvider } from 'react-dnd';
 import { ElementRoleEnum } from '@mana/shared/types';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { ZoomPanStateType, useZoomPan } from '@mana/hooks/useZoomPan';
 import { getClosestRole } from '@utils/elements';
 import { useEffect, useRef, useState } from 'react';
-import { DEBUG } from '@components/v2/utils/debug';
 
-export default function PipelineBuilder({
-  loading,
-  ...props
-}: CanvasProps & {
-  loading?: boolean;
-}) {
+export default function PipelineBuilder({ framework, ...props }: CanvasProps) {
   const canvasRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const disabledRef = useRef(false);
@@ -62,15 +58,11 @@ export default function PipelineBuilder({
 
   const { contextMenu, renderContextMenu, removeContextMenu, shouldPassControl } = useContextMenu({
     container: containerRef.current,
-    uuid: 'pipeline-builder-canvas',
+    uuid: 'v2/pipelines/canvas',
   });
 
   useZoomPan(zoomPanStateRef, {
     roles: [ElementRoleEnum.DRAGGABLE],
-    // initialPosition: {
-    //   xPercent: 0.5,
-    //   yPercent: 0.5,
-    // },
   });
 
   function setZoomPanDisabled(value: boolean) {
@@ -142,19 +134,24 @@ export default function PipelineBuilder({
   return (
     <>
       <DndProvider backend={HTML5Backend}>
-        <PipelineCanvasV2
-          {...props}
-          canvasRef={canvasRef}
-          containerRef={containerRef}
-          dragEnabled={dragEnabled}
-          dropEnabled={dropEnabled}
-          removeContextMenu={removeContextMenu}
-          renderContextMenu={renderContextMenu}
-          setDragEnabled={setDragEnabled}
-          setDropEnabled={setDropEnabled}
-          setZoomPanDisabled={setZoomPanDisabled}
-          transformState={zoomPanStateRef}
-        />
+        {!framework && <Loading />}
+
+        {framework && (
+          <PipelineCanvasV2
+            {...props}
+            canvasRef={canvasRef}
+            containerRef={containerRef}
+            dragEnabled={dragEnabled}
+            dropEnabled={dropEnabled}
+            framework={framework}
+            removeContextMenu={removeContextMenu}
+            renderContextMenu={renderContextMenu}
+            setDragEnabled={setDragEnabled}
+            setDropEnabled={setDropEnabled}
+            setZoomPanDisabled={setZoomPanDisabled}
+            transformState={zoomPanStateRef}
+          />
+        )}
       </DndProvider>
 
       {contextMenu}

@@ -15,7 +15,7 @@ import { ignoreKeys, selectKeys } from '@utils/hash';
 
 export function buildDependencies(
   executionFramework: PipelineExecutionFrameworkType,
-  pipeline: PipelineExecutionFrameworkType,
+  pipeline?: PipelineExecutionFrameworkType,
 ): {
   blockMapping: BlockMappingType;
   blocksByGroup: BlocksByGroupType;

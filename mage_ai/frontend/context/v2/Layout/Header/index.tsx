@@ -254,18 +254,23 @@ export function Header(
 
               {intraAppItemsMemo}
 
-              <TextInput
-                Icon={ip => <SearchV3 {...ip} {...iconProps} />}
-                basic
-                placeholder="Command Center for data..."
-                small
-                style={{
-                  height: 40,
-                  minWidth: 400,
-                }}
-              />
+              {false
+                ? (
+                  <TextInput
+                    Icon={ip => <SearchV3 {...ip} {...iconProps} />}
+                    basic
+                    placeholder="Command Center for data..."
+                    small
+                    style={{
+                      height: 40,
+                      minWidth: 400,
+                    }}
+                  />
+                )
+                : <div />
+              }
 
-              <DashedDivider vertical />
+              {/* <DashedDivider vertical /> */}
             </Grid>
           </Scrollbar>
 
