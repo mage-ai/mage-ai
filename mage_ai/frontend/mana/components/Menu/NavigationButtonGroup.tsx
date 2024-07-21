@@ -1,32 +1,30 @@
-import useCustomEventHandler from '@mana/events/useCustomEventHandler';
-import { useRouter } from 'next/router';
 import DashedDivider from '@mana/elements/Divider/DashedDivider';
 import Grid from '@mana/components/Grid';
 import Link from '@mana/elements/Link';
-import { useMenuManager } from '@mana/components/Menu/MenuManager';
 import stylesHeader from '@styles/scss/layouts/Header/Header.module.scss';
 import stylesNavigation from '@styles/scss/components/Menu/NavigationButtonGroup.module.scss';
-import { Code, Builder, CaretDown, CaretLeft } from '@mana/icons';
-import { ItemClickHandler, MenuGroupType } from './interfaces';
+import useCustomEventHandler from '@mana/events/useCustomEventHandler';
+import useKeyboardShortcuts from '../../hooks/shortcuts/useKeyboardShortcuts';
+import { CaretDown } from '@mana/icons';
+import { MenuGroupType } from './interfaces';
+import { KeyEnum } from '@mana/events/enums';
 import { LayoutDirectionEnum } from '@mana/components/Menu/types';
 import { MenuItemType } from '@mana/hooks/useContextMenu';
+import { PipelineExecutionFrameworkUUIDEnum } from '@interfaces/PipelineExecutionFramework/types';
+import { hyphensToSnake, snakeToHyphens, parseDynamicUrl } from '@utils/url';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import useKeyboardShortcuts from '../../hooks/shortcuts/useKeyboardShortcuts';
-import { KeyEnum } from '@mana/events/enums';
+import { useMenuManager } from '@mana/components/Menu/MenuManager';
+import { useRouter } from 'next/router';
 
 type NavigationButtonGroupProps = {
-  buildGroups?: (onClick: ItemClickHandler) => MenuItemType[];
   groups?: MenuItemType[];
 };
-export default function NavigationButtonGroup({
-  buildGroups,
-  groups: groupsProp,
-}: NavigationButtonGroupProps) {
+export default function NavigationButtonGroup({ groups }: NavigationButtonGroupProps) {
   const router = useRouter();
 
   const containerRef = useRef<HTMLDivElement>(null);
   const selectedButtonIndexRef = useRef<number | null>(null);
-  const [selectedGroupsByLevel, setSelectedGroupsByLevel] = useState<MenuGroupType[]>([]);
+  const [selectedGroupsByLevel, setSelectedGroupsByLevel] = useState<MenuGroupType[]>(null);
 
   const { deregisterCommands, registerCommands } = useKeyboardShortcuts({
     target: containerRef,
@@ -41,56 +39,6 @@ export default function NavigationButtonGroup({
     },
     ref: containerRef,
     uuid: 'NavigationButtonGroup',
-  });
-
-  const handleSelectGroup = useCallback(
-    (
-      event: MouseEvent,
-      item: MenuGroupType,
-      handleGroupSelection?: (event: MouseEvent, groups: MenuGroupType[]) => void,
-    ) => {
-      // const { groups, level, uuid } = item;
-
-      // let items = [...(groups?.reverse() ?? []), item];
-      // if (selectedGroupsByLevel?.[selectedGroupsByLevel?.length - 1]?.uuid === uuid) {
-      //   items = items.slice(0, level);
-      // }
-
-      // setSelectedGroupsByLevel(items);
-
-      // handleGroupSelection(event, items);
-      // selectedButtonIndexRef.current = null;
-      // handleToggleMenu({ items: null, openItems: null });
-    },
-    [handleToggleMenu, selectedGroupsByLevel],
-  );
-
-  const groups = useMemo(
-    () => (buildGroups ? buildGroups(handleSelectGroup) : groupsProp ?? []),
-    [buildGroups, groupsProp, handleSelectGroup],
-  );
-
-  const handleNavigationUpdate = useCallback(
-    (event: any) => {
-      const { defaultGroups } = event?.detail?.options?.kwargs ?? {};
-
-      let groups0 = [];
-      if (groups?.length > 0) {
-        groups0 = [...groups];
-      } else {
-        groups0 = [...(buildGroups ? buildGroups(handleSelectGroup) : groupsProp ?? [])];
-      }
-      const arr = (defaultGroups ?? [])?.map(g => groups0?.find(grp => grp.uuid === g.uuid) ?? g);
-
-      if (arr?.every(Boolean)) {
-        setSelectedGroupsByLevel(arr);
-      }
-    },
-    [buildGroups, groupsProp, handleSelectGroup, groups],
-  );
-
-  useCustomEventHandler({} as any, {
-    UPDATE_HEADER_NAVIGATION: handleNavigationUpdate,
   });
 
   const openMenu = useCallback(
@@ -151,17 +99,40 @@ export default function NavigationButtonGroup({
   }, [deregisterCommands, openMenu, registerCommands, selectedGroupsByLevel]);
 
   useEffect(() => {
-    const handleRouteChange = (url: string) => {
-      const { query } = router;
-      const { slug, uuid } = query;
+    const handleRouteChange = (pathname: string) => {
+      const { slug } = parseDynamicUrl(pathname, '/v2/pipelines/[uuid]/[...slug]');
+      const uuids = (Array.isArray(slug) ? slug : [slug])?.map(
+        path => hyphensToSnake(path))?.filter(pk => pk !== PipelineExecutionFrameworkUUIDEnum.RAG);
+
+      const groupsNext = [];
+      uuids.forEach((uuid, level: number) => {
+        const arr = (level === 0 ? groups[level] : groupsNext[level - 1])?.items;
+        if (arr?.length > 0) {
+          const group = arr?.find(g => g.uuid === uuid);
+          groupsNext.push(group);
+        } else {
+          groupsNext.push(null);
+        }
+      });
+
+      const missing = groupsNext.findIndex(g => !(g ?? false));
+      if (missing >= 0) {
+        groupsNext.splice(missing);
+      }
+
+      setSelectedGroupsByLevel(groupsNext);
     };
+
+    if (selectedGroupsByLevel === null) {
+      handleRouteChange(router.asPath);
+    }
 
     router.events.on('routeChangeStart', handleRouteChange);
 
     return () => {
       router.events.off('routeChangeStart', handleRouteChange);
     };
-  }, [router.events]);
+  }, [groups, selectedGroupsByLevel]);
 
   const buttons = useMemo(() => {
     const defaultState = selectedGroupsByLevel === null;

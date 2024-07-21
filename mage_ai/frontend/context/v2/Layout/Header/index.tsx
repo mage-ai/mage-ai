@@ -169,8 +169,6 @@ export function Header(
 
         {hasItems && (
           <NavigationButtonGroup
-            buildGroups={buildIntraAppNavItems}
-            cacheKey={cacheKey}
             groups={intraAppNavItems}
           />
         )}

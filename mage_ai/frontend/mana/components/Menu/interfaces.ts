@@ -27,6 +27,7 @@ export interface MenuItemType {
     item?: any,
     callback?: () => void,
   ) => void;
+  parent?: any;
   uuid?: string;
 }
 

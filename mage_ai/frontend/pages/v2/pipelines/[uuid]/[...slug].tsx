@@ -1,4 +1,5 @@
 import EventStreamType, { ExecutionStatusEnum, ResultType } from '@interfaces/EventStreamType';
+import { useRouter } from 'next/router';
 import PrivateRoute from '@components/shared/PrivateRoute';
 import React, { useContext, useEffect, useMemo, useRef, useState } from 'react';
 import dynamic from 'next/dynamic';
@@ -23,6 +24,7 @@ function PipelineDetailPage({
   slug: (PipelineExecutionFrameworkUUIDEnum | GroupUUIDEnum)[];
   uuid: string;
 }) {
+  const router = useRouter();
   const { header, page } = useContext(LayoutContext);
 
   const [pipeline, setPipeline] = useState<PipelineType>(null);
@@ -40,27 +42,26 @@ function PipelineDetailPage({
         detail: {
           onSuccess: (model: PipelineType) => {
             header?.setHeader?.({
-              intraAppNavItems: buildIntraAppNavItems({ framework: model?.framework }),
-              buildInterAppNavItems: (items, { router }) => [
+              intraAppNavItems: buildIntraAppNavItems({
+                framework: model?.framework,
+                router,
+              }),
+              interAppNavItems: [
                 {
                   Icon: PipeIconVertical,
-                  onClick: () => {
-                    router.push({
-                      pathname: '/pipelines',
-                    });
+                  route: {
+                    pathname: '/pipelines',
                   },
                   uuid: 'pipelines',
                 },
                 {
                   Icon: Builder,
-                  onClick: () => {
-                    router.push({
-                      pathname: '/v2/pipelines/[uuid]/[...slug]',
-                      query: {
-                        slug: [model?.framework.uuid],
-                        uuid,
-                      },
-                    });
+                  route: {
+                    pathname: '/v2/pipelines/[uuid]/[...slug]',
+                    query: {
+                      slug: [model?.framework.uuid],
+                      uuid,
+                    },
                   },
                   uuid: 'frameworks',
                 },

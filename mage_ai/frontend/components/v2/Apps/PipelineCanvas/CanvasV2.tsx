@@ -103,6 +103,7 @@ import { buildAppNode } from './AppManager/utils';
 import { ElementRoleEnum } from '@mana/shared/types';
 import { GroupUUIDEnum } from '@interfaces/PipelineExecutionFramework/types';
 import { hyphensToSnake, snakeToHyphens, parseDynamicUrl } from '@utils/url';
+import { buildNewPathsFromBlock, getGroupsFromPath } from '../utils/routing';
 
 const ENTER_ANIMATION_START_THRESHOLD = 0.6;
 const CHANGE_BLOCKS_ANIMATION_DURATION = 5;
@@ -1122,20 +1123,7 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
   }, []);
 
   const setSelectedGroupsRef = useRef((block: FrameworkType) => {
-    const groupsNext = [block];
-
-    let groupUUIDs = groupsNext[0]?.groups ?? [];
-    while (groupUUIDs.length > 0) {
-      const gup = groupUUIDs.map(guuid => groupMappingRef?.current?.[guuid])?.[0];
-      if (gup) {
-        groupsNext.unshift(gup);
-        groupUUIDs = gup?.groups ?? [];
-      } else {
-        groupUUIDs = [];
-      }
-    }
-
-    const uuidsNext = groupsNext.map(g => snakeToHyphens(g.uuid));
+    const uuidsNext = buildNewPathsFromBlock(block, groupMappingRef?.current);
 
     const { uuid } = router?.query ?? {};
     router.replace(
@@ -1146,23 +1134,12 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
           uuid,
         },
       },
-      `/v2/pipelines/${pipeline?.uuid}/${framework?.uuid}/${uuidsNext.join('/')}`,
+      `/v2/pipelines/${uuid}/${framework?.uuid}/${uuidsNext.join('/')}`,
     );
   });
 
   const handleIntraAppRouteChange = useRef((pathname) => {
-    const { slug } = parseDynamicUrl(pathname, '/v2/pipelines/[uuid]/[...slug]');
-    const uuids = (Array.isArray(slug) ? slug : [slug])?.map(
-      path => hyphensToSnake(path))?.filter(pk => pk !== framework?.uuid);
-
-    const groupsArg = uuids.reduce((acc, uuid: string, idx: number) => {
-      const group = groupsByLevelRef.current?.[idx]?.find(g => g.uuid === uuid);
-      return acc.concat(group);
-    }, []);
-    const missing = groupsArg.findIndex(g => !(g ?? false));
-    if (missing >= 0) {
-      groupsArg.splice(missing);
-    }
+    const groupsArg = getGroupsFromPath(pathname, framework, groupsByLevelRef?.current);
 
     // Close apps and outputs
     Object.values(appNodeRefs.current ?? {})
