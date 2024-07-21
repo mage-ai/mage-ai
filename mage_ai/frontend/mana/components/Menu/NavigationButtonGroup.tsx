@@ -99,7 +99,7 @@ export default function NavigationButtonGroup({ groups }: NavigationButtonGroupP
   }, [deregisterCommands, openMenu, registerCommands, selectedGroupsByLevel]);
 
   useEffect(() => {
-    const handleRouteChange = (pathname: string) => {
+    const handleRouteChangeComplete = (pathname: string) => {
       const { slug } = parseDynamicUrl(pathname, '/v2/pipelines/[uuid]/[...slug]');
       const uuids = (Array.isArray(slug) ? slug : [slug])?.map(
         path => hyphensToSnake(path))?.filter(pk => pk !== PipelineExecutionFrameworkUUIDEnum.RAG);
@@ -124,13 +124,13 @@ export default function NavigationButtonGroup({ groups }: NavigationButtonGroupP
     };
 
     if (selectedGroupsByLevel === null) {
-      handleRouteChange(router.asPath);
+      handleRouteChangeComplete(router.asPath);
     }
 
-    router.events.on('routeChangeStart', handleRouteChange);
+    router.events.on('routeChangeComplete', handleRouteChangeComplete);
 
     return () => {
-      router.events.off('routeChangeStart', handleRouteChange);
+      router.events.off('routeChangeComplete', handleRouteChangeComplete);
     };
   }, [groups, selectedGroupsByLevel]);
 

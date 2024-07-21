@@ -21,7 +21,7 @@ export function getGroupsFromPath(pathname: string, framework: { uuid: PipelineE
 }
 
 export function buildNewPathsFromBlock(block: BlockType, groupMapping: Record<string, FrameworkType>): string[] {
-  const groupsNext = [block];
+  let groupsNext = [block];
 
   let groupUUIDs = groupsNext[0]?.groups ?? [];
   while (groupUUIDs.length > 0) {
@@ -34,7 +34,12 @@ export function buildNewPathsFromBlock(block: BlockType, groupMapping: Record<st
     }
   }
 
-  const uuidsNext = groupsNext.map(g => snakeToHyphens(g.uuid));
+  const missing = groupsNext.findIndex(g => !(g ?? false));
+  if (missing >= 0) {
+    groupsNext.splice(missing);
+  }
+
+  const uuidsNext = groupsNext.filter(g => g.uuid).map(g => snakeToHyphens(g.uuid));
 
   return uuidsNext;
 }

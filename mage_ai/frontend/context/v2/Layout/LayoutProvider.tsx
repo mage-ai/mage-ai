@@ -1,12 +1,14 @@
 import Header from './Header';
 import { HeaderProps } from './Header/interfaces';
-import React, { useRef, useState } from 'react';
+import React, { useCallback, useRef, useState } from 'react';
 import ThemeType from '@mana/themes/interfaces';
 import { FaviconStatusEnum, changeFavicon } from './favicon';
 import { LayoutContext, PageProps } from './LayoutContext';
 import { Root, createRoot } from 'react-dom/client';
 import { createPortal } from 'react-dom';
 import { useMenuContext } from '../Menu';
+import { RouteType } from '@mana/shared/interfaces';
+import { selectKeys } from '@utils/hash';
 
 interface LayoutProviderProps {
   children: React.ReactNode;
@@ -23,9 +25,11 @@ export const LayoutProvider = ({ children, router, theme }: LayoutProviderProps)
   const useMenu = useMenuContext();
   const headerRootRef = useRef<Root>(null);
   const headerRef = useRef<HeaderProps>(headerData);
-  const pageRef = useRef<PageProps>({
-    title: null,
-  });
+  const pageRef = useRef<PageProps>({ title: null });
+
+  const [routeHistory, setRouteHistory] = useState<RouteType[]>([]);
+  const routeHistoryRef = useRef<RouteType[]>([]);
+  const appRouteBackwardsRef = useRef<RouteType>(null);
 
   function initialize({ headerRef, page }) {
     setHeaderPortalRef(headerRef);
@@ -42,6 +46,50 @@ export const LayoutProvider = ({ children, router, theme }: LayoutProviderProps)
 
     setHeaderData(headerRef.current);
   }
+
+  const changeRoute = useCallback((appRoute?: RouteType, opts?: {
+    appendOnly?: boolean;
+    transitionOnly?: boolean;
+  }) => {
+    const { appendOnly, transitionOnly } = opts ?? {};
+
+    if (!appRoute) {
+      // Remove 1, then use the new last one.
+      routeHistoryRef.current = routeHistoryRef.current.slice(0, routeHistoryRef.current.length - 1);
+
+      const appRoute = routeHistoryRef.current[routeHistoryRef.current.length - 1];
+      appRouteBackwardsRef.current = appRoute;
+
+      const { route } = appRoute;
+      router.replace({
+        pathname: route.pathname,
+        query: route.params,
+      }, route.href);
+
+
+      setRouteHistory(routeHistoryRef.current);
+      return;
+    }
+
+    if (transitionOnly || !appendOnly) {
+      const { route } = appRoute;
+      router.replace({
+        pathname: route.pathname,
+        query: route.params,
+      }, route.href);
+    }
+
+    if (appRouteBackwardsRef.current) {
+      appRouteBackwardsRef.current = null;
+      return;
+    } else if (appendOnly || !transitionOnly) {
+      routeHistoryRef.current.push({
+        ...appRoute,
+        timestamp: Number(new Date()),
+      });
+      setRouteHistory(routeHistoryRef.current);
+    }
+  }, []);
 
   function setPage(
     page: PageProps & {
@@ -84,6 +132,7 @@ export const LayoutProvider = ({ children, router, theme }: LayoutProviderProps)
   return (
     <LayoutContext.Provider
       value={{
+        changeRoute,
         header: {
           ...headerRef.current,
           setHeader,
@@ -102,6 +151,7 @@ export const LayoutProvider = ({ children, router, theme }: LayoutProviderProps)
               ...headerRef?.current,
               ...headerData,
             }}
+            routeHistory={routeHistory}
             router={router}
           />,
           headerPortalRef?.current,

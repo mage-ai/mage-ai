@@ -56,3 +56,21 @@ export interface EventOperationOptionsType {
 }
 
 export type SubmitEventOperationType = any;
+
+interface AppRouteType {
+  Icon?: ({ ...props }: any) => any;
+  description?: string;
+  name?: string;
+  uuid?: string;
+}
+
+export interface RouteType {
+  app?: AppRouteType;
+  route: {
+    pathname?: string;
+    href: string;
+    params?: Record<string, string | string[]>;
+    query?: Record<string, string | string[]>;
+  };
+  timestamp?: number;
+}

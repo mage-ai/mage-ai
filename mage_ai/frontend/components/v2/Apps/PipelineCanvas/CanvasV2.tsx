@@ -22,6 +22,7 @@ import useAppEventsHandler, { CustomAppEventEnum } from './useAppEventsHandler';
 import Text from '@mana/elements/Text';
 import { getChildrenDimensions, getClosestChildRole, getClosestRole } from '@utils/elements';
 import {
+  BatchPipeline, PipelineV3, BlockGenericV2Partial,
   OpenInSidekick,
   OpenInSidekickLeft,
   ArrowsAdjustingFrameSquare,
@@ -95,7 +96,7 @@ import { getCache, updateCache } from '@mana/components/Menu/storage';
 import { useMutate } from '@context/v2/APIMutation';
 import { deepCopyArray, reverseArray, indexBy, unique, uniqueArray, range } from '@utils/array';
 import { getNewUUID } from '@utils/string';
-import { deepCopy, isEmptyObject } from '@utils/hash';
+import { deepCopy, isEmptyObject, selectKeys } from '@utils/hash';
 import { WithOnMount } from '@mana/hooks/useWithOnMount';
 import { AppConfigType } from '../interfaces';
 import { buildOutputNode } from './utils/items';
@@ -154,7 +155,7 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
   useExecuteCode,
   useRegistration,
 }: PipelineCanvasV2Props) => {
-  const { page } = useContext(LayoutContext);
+  const { changeRoute, page } = useContext(LayoutContext);
   const router = useRouter();
 
   const pipelineUUID = useMemo(() => hyphensToSnake(pipelineProp?.uuid), [pipelineProp?.uuid]);
@@ -1124,21 +1125,48 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
 
   const setSelectedGroupsRef = useRef((block: FrameworkType) => {
     const uuidsNext = buildNewPathsFromBlock(block, groupMappingRef?.current);
-
     const { uuid } = router?.query ?? {};
-    router.replace(
-      {
-        pathname: '/v2/pipelines/[uuid]/[...slug]',
-        query: {
+
+    changeRoute({
+      route: {
+        href: `/v2/pipelines/${uuid}/${framework?.uuid}/${uuidsNext.join('/')}`,
+        params: {
           slug: [snakeToHyphens(framework?.uuid)].concat(uuidsNext).filter(Boolean),
           uuid,
         },
+        pathname: '/v2/pipelines/[uuid]/[...slug]',
       },
-      `/v2/pipelines/${uuid}/${framework?.uuid}/${uuidsNext.join('/')}`,
-    );
+    } as any, { transitionOnly: true });
   });
 
-  const handleIntraAppRouteChange = useRef((pathname) => {
+  const updateRouteHistory = useRef((pathname: string) => {
+    const group = selectedGroupsRef?.current?.[selectedGroupsRef?.current?.length - 1];
+    if (!group?.uuid) return;
+
+    const uuidsNext = buildNewPathsFromBlock(group, groupMappingRef?.current);
+    const { uuid } = router?.query ?? {};
+
+    changeRoute({
+      app: {
+        Icon: selectedGroupsRef?.current?.length === 1
+          ? PipelineV3
+          : selectedGroupsRef?.current?.length === 2
+            ? BatchPipeline
+            : BlockGenericV2Partial,
+        ...selectKeys(group ?? {}, ['description', 'name', 'uuid']),
+      },
+      route: {
+        href: `/v2/pipelines/${uuid}/${framework?.uuid}/${uuidsNext.join('/')}`,
+        params: {
+          slug: [snakeToHyphens(framework?.uuid)].concat(uuidsNext).filter(Boolean),
+          uuid,
+        },
+        pathname: '/v2/pipelines/[uuid]/[...slug]',
+      },
+    } as any, { appendOnly: true });
+  });
+
+  const handleIntraAppRouteChange = useRef((pathname: string) => {
     const groupsArg = getGroupsFromPath(pathname, framework, groupsByLevelRef?.current);
 
     // Close apps and outputs
@@ -1575,7 +1603,8 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
   }
 
   useEffect(() => {
-    const handleRouteChange = (args: any) => handleIntraAppRouteChange?.current(args);
+    const handleRouteChangeComplete = (args: any) => updateRouteHistory?.current(args);
+    const handleRouteChangeStart = (args: any) => handleIntraAppRouteChange?.current(args);
 
     if (!(pipeline ?? false)) {
       pipelineMutants.detail.mutate();
@@ -1584,13 +1613,16 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
     }
 
     if (!selectedGroupsRef?.current) {
-      handleRouteChange(router.asPath);
+      handleRouteChangeStart(router.asPath);
+      handleRouteChangeComplete(router.asPath);
     }
 
-    router.events.on('routeChangeComplete', handleRouteChange);
+    router.events.on('routeChangeStart', handleRouteChangeStart);
+    router.events.on('routeChangeComplete', handleRouteChangeComplete);
 
     return () => {
-      router.events.off('routeChangeComplete', handleRouteChange);
+      router.events.off('routeChangeStart', handleRouteChangeStart);
+      router.events.off('routeChangeComplete', handleRouteChangeComplete);
     }
   }, [
     pipeline,

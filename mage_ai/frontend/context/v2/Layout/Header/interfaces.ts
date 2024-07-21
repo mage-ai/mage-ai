@@ -1,8 +1,6 @@
-import { ItemClickHandler, MenuGroupType } from '@mana/components/Menu/interfaces';
-import { MenuItemType } from '@mana/hooks/useContextMenu';
+import { RouteType } from '@mana/shared/interfaces';
 
 export interface HeaderProps {
-  appHistory?: any[];
   buildInterAppNavItems?: (
     itemsPrevious: any[],
     opts: {
@@ -20,6 +18,11 @@ export interface HeaderProps {
   interAppNavItems?: any[];
   intraAppNavItems?: any[];
   navTag?: string;
+  routeHistory?: {
+    header: { title: string };
+    page: { title: string };
+    route: RouteType;
+  }[];
   router?: any;
   selectedIntraAppNavItems?: any[];
   selectedNavItem?: string;

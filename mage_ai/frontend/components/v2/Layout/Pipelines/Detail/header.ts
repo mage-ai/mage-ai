@@ -4,12 +4,13 @@ import { hyphensToSnake, snakeToHyphens, parseDynamicUrl } from '@utils/url';
 import { buildNewPathsFromBlock, getGroupsFromPath } from '@components/v2/Apps/utils/routing';
 import { MenuItemType } from '@mana/components/Menu/interfaces';
 import { buildDependencies } from '../../../Apps/PipelineCanvas/utils/pipelines';
-import { deepCopy } from '@utils/hash';
+import { deepCopy, selectKeys } from '@utils/hash';
 import PipelineExecutionFrameworkType, {
   FrameworkType,
   PipelineExecutionFrameworkBlockType,
 } from '@interfaces/PipelineExecutionFramework/interfaces';
 import { cleanName } from '@utils/string';
+import { RouteType } from '@mana/shared/interfaces';
 
 type Block = FrameworkType & PipelineExecutionFrameworkBlockType;
 
@@ -18,9 +19,9 @@ function menuItemsForBlock(
   level: number,
   index: number,
   parent: MenuItemType,
-  opts: { router: any },
+  opts: { changeRoute: any },
 ) {
-  const { router } = opts ?? {};
+  const { changeRoute } = opts ?? {};
   const groupMapping = {};
 
   let groupup = parent;
@@ -37,17 +38,17 @@ function menuItemsForBlock(
     onClick: (event: any) => {
       const uuidsNext = buildNewPathsFromBlock(block, groupMapping);
 
-      const { uuid } = router?.query ?? {};
-      router.replace(
-        {
-          pathname: '/v2/pipelines/[uuid]/[...slug]',
+      const { uuid } = changeRoute?.query ?? {};
+      changeRoute({
+        route: {
+          href: `/v2/pipelines/${uuid}/${PipelineExecutionFrameworkUUIDEnum.RAG}/${uuidsNext.join('/')}`,
           query: {
             slug: [snakeToHyphens(PipelineExecutionFrameworkUUIDEnum.RAG)].concat(uuidsNext).filter(Boolean),
             uuid,
           },
+          pathname: '/v2/pipelines/[uuid]/[...slug]',
         },
-        `/v2/pipelines/${uuid}/${PipelineExecutionFrameworkUUIDEnum.RAG}/${uuidsNext.join('/')}`,
-      );
+      }, { transitionOnly: true });
     },
     parent,
   };
@@ -64,11 +65,11 @@ function menuItemsForBlock(
 }
 
 export function buildIntraAppNavItems({
+  changeRoute,
   framework,
-  router,
 }: {
+  changeRoute: (route: RouteType) => void;
   framework: PipelineExecutionFrameworkType;
-  router: any;
 }) {
   const menuItems: MenuItemType[] = [];
   const { groupsByLevel } = buildDependencies(framework);
@@ -83,7 +84,7 @@ export function buildIntraAppNavItems({
       uuid: cleanName(label),
     };
     const items = groups.map((group: MenuItemType, index: number) => menuItemsForBlock(
-      group, level, index, deepCopy(parent), { router },
+      group, level, index, deepCopy(parent), { changeRoute },
     )) as MenuItemType[];
 
     menuItems.push({

@@ -25,7 +25,7 @@ function PipelineDetailPage({
   uuid: string;
 }) {
   const router = useRouter();
-  const { header, page } = useContext(LayoutContext);
+  const { changeRoute, header, page } = useContext(LayoutContext);
 
   const [pipeline, setPipeline] = useState<PipelineType>(null);
   const [frameworkUUID] = useMemo(() => slug, [slug]);
@@ -43,10 +43,10 @@ function PipelineDetailPage({
           onSuccess: (model: PipelineType) => {
             header?.setHeader?.({
               intraAppNavItems: buildIntraAppNavItems({
+                changeRoute,
                 framework: model?.framework,
-                router,
               }),
-              interAppNavItems: [
+              buildInterAppNavItems: () => [
                 {
                   Icon: PipeIconVertical,
                   route: {

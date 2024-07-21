@@ -2,11 +2,9 @@ import Button from '@mana/elements/Button';
 import DashedDivider from '@mana/elements/Divider/DashedDivider';
 import Grid from '@mana/components/Grid';
 import MageAvatar from '@mana/icons/avatars';
-import NavTag from '@mana/components/Tag/NavTag';
 import NavigationButtonGroup from '@mana/components/Menu/NavigationButtonGroup';
 import React, { useMemo, useRef } from 'react';
 import Scrollbar from '@mana/elements/Scrollbar';
-import Text from '@mana/elements/Text';
 import TextInput from '@mana/elements/Input/TextInput';
 import stylesHeader from '@styles/scss/layouts/Header/Header.module.scss';
 import useContextMenu from '@mana/hooks/useContextMenu';
@@ -15,12 +13,12 @@ import { MenuItemType } from '@mana/hooks/useContextMenu';
 import { SearchV3, ChatV2, Code, DocumentIcon, CaretDown, CaretLeft } from '@mana/icons';
 import { getUser } from '@utils/session';
 import { unique } from '@utils/array';
+import RouteNavigation from './RouteNavigation';
 
 export const HEADER_ROOT_ID = 'v2-header-root';
 
 export function Header(
   {
-    appHistory,
     buildInterAppNavItems,
     buildIntraAppNavItems,
     cacheKey,
@@ -28,6 +26,7 @@ export function Header(
     interAppNavItems,
     intraAppNavItems,
     navTag,
+    routeHistory,
     router,
     selectedNavItem,
     title,
@@ -176,43 +175,6 @@ export function Header(
     );
   }, [buttonProps, cacheKey, intraAppNavItems, buildIntraAppNavItems, gridProps, version]);
 
-  const appHistoryNavMemo = useMemo(
-    () => (
-      <Grid {...gridProps} paddingBottom={6} paddingTop={6}>
-        <Button
-          {...buttonProps}
-          style={{
-            gridTemplateColumns: '',
-          }}
-        >
-          <Grid
-            {...gridProps}
-            alignItems="center"
-            columnGap={12}
-            paddingRight={title ?? false ? 8 : undefined}
-          >
-            {!version || !appHistory ? <CaretDown {...iconProps} /> : <CaretLeft {...iconProps} />}
-
-            {(navTag || !version) && (
-              <NavTag role="tag">
-                {!navTag && !version ? <>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</> : navTag}
-              </NavTag>
-            )}
-
-            {title && version ? (
-              <Text nowrap role="title" semibold>
-                {title}
-              </Text>
-            ) : (
-              <div style={{ width: 120 }} />
-            )}
-          </Grid>
-        </Button>
-      </Grid>
-    ),
-    [buttonProps, gridProps, iconProps, navTag, title, appHistory, version],
-  );
-
   return (
     <>
       <header className={stylesHeader.header} ref={headerRef}>
@@ -222,7 +184,7 @@ export function Header(
           paddingRight={10}
           style={{
             gridTemplateColumns: [
-              appHistoryNavMemo && 'min-content',
+              'min-content',
               interAppItems && 'min-content',
               'minmax(0, 1fr)',
               'min-content',
@@ -231,7 +193,17 @@ export function Header(
               .join(' '),
           }}
         >
-          {appHistoryNavMemo}
+          <Grid {...gridProps} paddingBottom={6} paddingTop={6}>
+            <RouteNavigation
+              buttonProps={buttonProps}
+              gridProps={gridProps}
+              iconProps={iconProps}
+              navTag={navTag}
+              routeHistory={routeHistory}
+              selectedNavItem={selectedNavItem}
+              title={title}
+            />
+          </Grid>
 
           {interAppItems?.length && (
             <Grid {...gridProps} paddingBottom={6} paddingTop={6}>

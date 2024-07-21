@@ -1,5 +1,6 @@
 import React, { useContext } from 'react';
 import { HeaderProps } from './Header/interfaces';
+import { RouteType } from '@mana/shared/interfaces';
 
 type HeaderType = {
   setHeader?: (header: HeaderProps) => void;
@@ -18,12 +19,17 @@ type PageType = {
 } & PageProps;
 
 export interface LayoutContextType {
+  changeRoute: (route: RouteType, opts?: {
+    appendOnly?: boolean;
+    transitionOnly?: boolean;
+  }) => void;
   header?: HeaderType;
   initialize?: (props: { headerRef: React.RefObject<HTMLDivElement> }) => void;
   page?: PageType;
 }
 
 export const LayoutContext = React.createContext<LayoutContextType>({
+  changeRoute: () => null,
   header: {},
   initialize: null,
   page: {},
