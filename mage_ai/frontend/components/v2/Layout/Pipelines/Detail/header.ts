@@ -11,6 +11,7 @@ import PipelineExecutionFrameworkType, {
 } from '@interfaces/PipelineExecutionFramework/interfaces';
 import { cleanName } from '@utils/string';
 import { RouteType } from '@mana/shared/interfaces';
+import PipelineType from '@interfaces/PipelineType';
 
 type Block = FrameworkType & PipelineExecutionFrameworkBlockType;
 
@@ -19,9 +20,9 @@ function menuItemsForBlock(
   level: number,
   index: number,
   parent: MenuItemType,
-  opts: { changeRoute: any },
+  opts: { changeRoute: any, pipeline: PipelineType },
 ) {
-  const { changeRoute } = opts ?? {};
+  const { changeRoute, pipeline } = opts ?? {};
   const groupMapping = {};
 
   let groupup = parent;
@@ -41,10 +42,10 @@ function menuItemsForBlock(
       const { uuid } = changeRoute?.query ?? {};
       changeRoute({
         route: {
-          href: `/v2/pipelines/${uuid}/${PipelineExecutionFrameworkUUIDEnum.RAG}/${uuidsNext.join('/')}`,
+          href: `/v2/pipelines/${pipeline?.uuid}/${PipelineExecutionFrameworkUUIDEnum.RAG}/${uuidsNext.join('/')}`,
           query: {
             slug: [snakeToHyphens(PipelineExecutionFrameworkUUIDEnum.RAG)].concat(uuidsNext).filter(Boolean),
-            uuid,
+            uuid: pipeline?.uuid,
           },
           pathname: '/v2/pipelines/[uuid]/[...slug]',
         },
@@ -67,9 +68,11 @@ function menuItemsForBlock(
 export function buildIntraAppNavItems({
   changeRoute,
   framework,
+  pipeline,
 }: {
   changeRoute: (route: RouteType) => void;
   framework: PipelineExecutionFrameworkType;
+    pipeline: PipelineType;
 }) {
   const menuItems: MenuItemType[] = [];
   const { groupsByLevel } = buildDependencies(framework);
@@ -84,7 +87,7 @@ export function buildIntraAppNavItems({
       uuid: cleanName(label),
     };
     const items = groups.map((group: MenuItemType, index: number) => menuItemsForBlock(
-      group, level, index, deepCopy(parent), { changeRoute },
+      group, level, index, deepCopy(parent), { changeRoute, pipeline },
     )) as MenuItemType[];
 
     menuItems.push({

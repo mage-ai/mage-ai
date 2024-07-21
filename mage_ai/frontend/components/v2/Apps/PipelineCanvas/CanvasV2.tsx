@@ -1603,8 +1603,14 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
   }
 
   useEffect(() => {
-    const handleRouteChangeComplete = (args: any) => updateRouteHistory?.current(args);
-    const handleRouteChangeStart = (args: any) => handleIntraAppRouteChange?.current(args);
+    const handleRouteChangeComplete = (args: any) => {
+      if (!args?.startsWith(`/v2/pipelines/${pipeline?.uuid}`)) return;
+      updateRouteHistory?.current(args);
+    };
+    const handleRouteChangeStart = (args: any) => {
+      if (!args?.startsWith(`/v2/pipelines/${pipeline?.uuid}`)) return;
+      handleIntraAppRouteChange?.current(args);
+    };
 
     if (!(pipeline ?? false)) {
       pipelineMutants.detail.mutate();

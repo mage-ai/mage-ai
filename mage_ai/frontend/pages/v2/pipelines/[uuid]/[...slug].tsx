@@ -54,23 +54,21 @@ function PipelineDetailPage({
               intraAppNavItems: buildIntraAppNavItems({
                 changeRoute,
                 framework: model?.framework,
+                pipeline,
               }),
               buildInterAppNavItems: () => [
                 {
                   Icon: PipeIconVertical,
-                  route: {
-                    pathname: '/pipelines',
+                  linkProps: {
+                    href: '/pipelines',
                   },
                   uuid: 'pipelines',
                 },
                 {
                   Icon: Builder,
-                  route: {
-                    pathname: '/v2/pipelines/[uuid]/[...slug]',
-                    query: {
-                      slug: [model?.framework.uuid],
-                      uuid,
-                    },
+                  linkProps: {
+                    href: '/v2/pipelines/[uuid]/[...slug]',
+                    as: `/v2/pipelines/${pipeline?.uuid}/${slug?.join('/')}`,
                   },
                   uuid: 'frameworks',
                 },
