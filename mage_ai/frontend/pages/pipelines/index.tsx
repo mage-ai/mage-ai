@@ -696,7 +696,9 @@ function PipelineListPage() {
       onSuccess: (response: any) =>
         onSuccess(response, {
           callback: ({ pipeline: model }) => {
-            window.location.href = `/v2/pipelines/${snakeToHyphens(model.uuid)}/builder/${model.execution_framework}`;
+            router.push(
+              `/v2/pipelines/${snakeToHyphens(model.uuid)}/builder/${model.execution_framework}`,
+            );
           },
           onErrorCallback: (response, errors) =>
             setErrors({
