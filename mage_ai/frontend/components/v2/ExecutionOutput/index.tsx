@@ -211,7 +211,7 @@ export default function ExecutionOutput({
   }, [output]);
 
   return (
-    <div>
+    <Grid rowGap={8} templateColumns={1} autoFlow="row" paddingTop={4}>
       {(stats.columns !== null || stats.rows !== null) && (
         <Grid columnGap={8} templateColumns="max-content" templateRow="1fr" justifyContent="start" autoFlow="column">
           {stats.rows !== null && (
@@ -237,6 +237,6 @@ export default function ExecutionOutput({
       )}
 
       {outputMemo}
-    </div>
+    </Grid>
   );
 }
