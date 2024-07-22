@@ -64,7 +64,7 @@ function ExecutionResult(
   ref: React.ForwardedRef<HTMLDivElement>,
 ) {
   const inViewRef = useRef<HTMLDivElement>(null);
-  const isInView = useInView(inViewRef);
+  const isInView = useInView(ref as any ?? inViewRef);
   const heightRef = useRef<number>(null);
   const scrollbarInnerRef = useRef<HTMLDivElement>(null);
 
@@ -172,29 +172,6 @@ function ExecutionResult(
           // uuid: processUuid,
         } = resultProcess;
 
-        if (ResultType.OUTPUT === resultType) {
-          if (executionOutput) {
-            return acc;
-          } else if (ExecutionStatusEnum.ERROR !== status) {
-            return acc.concat(
-              <Grid alignItems="center"
-                columnGap={8}
-                data-message-request-uuid={groupUUID}
-                key={resultID}
-                templateColumns="1fr"
-                templateRows="auto"
-              >
-                <Link onClick={() => getOutput()} xsmall>
-                  Load output
-                </Link>
-              </Grid>,
-            );
-          }
-        }
-
-        const isFinalOutput =
-          ResultType.DATA === resultType && ExecutionStatusEnum.SUCCESS === resultStatus;
-
         return acc.concat(
           <pre key={resultID}
             data-index={acc?.length ?? 0}
@@ -210,7 +187,6 @@ function ExecutionResult(
       }, [],
     ), [displayLocalTimezone, executionOutput, getOutput, results, status],
   );
-
 
   const runtime = useMemo(() => (timestamps?.max ?? 0) - (timestamps?.min ?? 0), [timestamps]);
 
@@ -285,7 +261,7 @@ function ExecutionResult(
       }
       ref={inViewRef}
     >
-      {(resultsInformation?.length > 0 || executionOutput || resultsErrors?.length > 0) && (
+      {(resultsInformation?.length > 0 || (!executionOutput && resultsErrors?.length > 0) || (!executionOutput && hasOutput)) && (
         <Grid
           paddingBottom={last ? 6 : 0}
           paddingTop={first ? 6 : 0}
@@ -305,7 +281,7 @@ function ExecutionResult(
             </Text>
           </Grid>
 
-          {(resultsInformation?.length > 0 || (!executionOutput && resultsErrors?.length > 0)) && (
+          {(resultsInformation?.length > 0 || (!executionOutput && resultsErrors?.length > 0) || (!executionOutput && hasOutput)) && (
             <Scrollbar
               autoHorizontalPadding
               className={[
@@ -328,6 +304,19 @@ function ExecutionResult(
                 }}
               >
                 {(executing || isInView) && resultsInformation}
+
+                {hasOutput && (
+                  <Grid alignItems="center"
+                    columnGap={8}
+                    data-message-request-uuid={messageRequestUUID}
+                    templateColumns="1fr"
+                    templateRows="auto"
+                  >
+                    <Link onClick={() => getOutput()} xsmall>
+                      Load output
+                    </Link>
+                  </Grid>
+                )}
 
                 {!executionOutput && errorMemo}
               </Grid>
@@ -360,19 +349,17 @@ function ExecutionResult(
             </Scrollbar>
           )}
 
-          {!executing && (
-            <div>
-              <div style={{ height: 4 }}>{loading && <Loading position="absolute" />}</div>
+          <div>
+            <div style={{ height: 4 }}>{loading && <Loading position="absolute" />}</div>
 
-              <Grid autoFlow="column" columnGap={8} justifyContent="space-between">
-                <div />
+            <Grid autoFlow="column" columnGap={8} justifyContent="space-between">
+              <div />
 
-                <Text monospace muted xsmall>
-                  {formatDurationFromEpoch(runtime)}
-                </Text>
-              </Grid>
-            </div>
-          )}
+              <Text monospace muted xsmall>
+                {formatDurationFromEpoch(runtime)}
+              </Text>
+            </Grid>
+          </div>
         </Grid>
       )}
     </div>

@@ -23,7 +23,13 @@ import { capitalize } from '@utils/string';
 import { objectSize } from '@utils/hash';
 
 export type OutputGroupsType = {
-  handleContextMenu?: ExecutionResultProps['handleContextMenu'];
+  handleContextMenu?: (
+    event: React.MouseEvent<HTMLDivElement>,
+    messageRequestUUID?: string,
+    results?: ExecutionResultType[],
+    executionOutput?: ExecutionOutputType,
+    resultElementRefs?: React.MutableRefObject<Record<string, React.MutableRefObject<HTMLDivElement>>>,
+  ) => void;
   onMount?: (consumerID: string, callback?: () => void) => void;
   setHandleOnMessage?: (consumerID: string, handler: (event: EventStreamType) => void) => void;
   setResultMappingUpdate?: (
@@ -61,6 +67,7 @@ const OutputGroups: React.FC<OutputGroupsProps> = ({
   const resultsMountRef = useRef(null);
   const resultsRootRef = useRef(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const resultElementRefs = useRef<Record<string, React.MutableRefObject<HTMLDivElement>>>({});
 
   const scrollableDivRef = useRef<HTMLDivElement>(null);
   const statusRef = useRef<HTMLElement>(null);
@@ -97,6 +104,8 @@ const OutputGroups: React.FC<OutputGroupsProps> = ({
         {keysRef.current?.map((mrUUID: string, idx: number) => {
           const last = idx === keysRef.current.length - 1;
 
+          resultElementRefs.current[mrUUID] ||= createRef();
+
           return (
             <ExecutionResult
               containerRect={scrollableDivRef.current?.getBoundingClientRect()}
@@ -104,16 +113,19 @@ const OutputGroups: React.FC<OutputGroupsProps> = ({
               executionOutput={executionOutputMappingRef.current?.[mrUUID]}
               fetchOutput={fetchOutput}
               first={idx === 0}
-              handleContextMenu={handleContextMenu}
+              handleContextMenu={(a, b, c, d) => {
+                handleContextMenu(a, b, c, d, resultElementRefs);
+              }}
               key={mrUUID}
               last={last}
               messageRequestUUID={mrUUID}
+              ref={resultElementRefs.current[mrUUID]}
               results={resultsGroupedByMessageRequestUUIDRef.current[mrUUID]}
             />
           );
         })}
 
-        <Grid style={{ display: 'none' }} paddingBottom={6}>
+        <Grid style={{ height: 20 }} paddingBottom={6}>
           <Text italic monospace muted ref={statusRef} warning xsmall />
         </Grid>
       </ContextProvider>
@@ -159,24 +171,25 @@ const OutputGroups: React.FC<OutputGroupsProps> = ({
       )?.[0];
 
       if (done) {
-        statusRef.current.innerText = '';
-        statusRef.current.style.display = 'none';
+        // statusRef.current.innerText = '';
+        // statusRef.current.style.display = 'none';
+        statusRef.current.classList.add(stylesOutput.fadeOut);
 
-        const resultOutput: ExecutionResultType = arr?.find(
-          (r: ExecutionResultType) => ExecutionStatusEnum.SUCCESS === r.status && ResultType.OUTPUT === r.type
-        );
-        if (resultOutput) {
-          fetchOutput(resultOutput.process.message_request_uuid, {
-            query: {
-              namespace: resultOutput.metadata.namespace,
-              path: resultOutput.metadata.path,
-            },
-          });
-        }
+        // const resultOutput: ExecutionResultType = arr?.find(
+        //   (r: ExecutionResultType) => ExecutionStatusEnum.SUCCESS === r.status && ResultType.OUTPUT === r.type
+        // );
+        // if (resultOutput) {
+        //   fetchOutput(resultOutput.process.message_request_uuid, {
+        //     query: {
+        //       namespace: resultOutput.metadata.namespace,
+        //       path: resultOutput.metadata.path,
+        //     },
+        //   });
+        // }
       } else if (resultStatus) {
+        statusRef.current.classList.remove(stylesOutput.fadeOut);
         statusRef.current.innerText =
           `${capitalize(STATUS_DISPLAY_TEXT[resultStatus?.status] ?? resultStatus?.status)}...`;
-        statusRef.current.style.display = 'block';
       }
     }
 
@@ -284,7 +297,7 @@ const OutputGroups: React.FC<OutputGroupsProps> = ({
         onlyShowWithContent && (keysRef.current?.length ?? 0) === 0 && stylesOutput.hide,
       ].filter(Boolean).join(' ')}
       onContextMenu={!onlyShowWithContent && objectSize(resultMappingRef?.current ?? {}) === 0
-        ? e => handleContextMenu(e)
+        ? e => handleContextMenu(e, null, null, null, resultElementRefs)
         : undefined
       }
       ref={containerRef}

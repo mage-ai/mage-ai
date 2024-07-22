@@ -2069,7 +2069,6 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
       }),
     [blocks, groups, renderNodeComponents, rectsMapping],
   );
-  console.log(relatedNodes)
   const relatedNodesMemo = useMemo(
     () =>
       renderNodeComponents(rectsMappingRef?.current, {

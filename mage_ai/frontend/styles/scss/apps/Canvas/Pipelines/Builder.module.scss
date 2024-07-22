@@ -241,8 +241,14 @@
     &.app-output,
     &.block-output {
       animation: dash-to-output 0.5s linear infinite;
+      opacity: 1;
       stroke-dasharray: 1, 1;
     }
+  }
+
+  &.app-output,
+  &.block-output {
+    opacity: 0.3;
   }
 }
 
@@ -261,6 +267,6 @@
 
   &.app-output,
   &.block-output {
-    opacity: 0.5;
+    opacity: 0.3;
   }
 }

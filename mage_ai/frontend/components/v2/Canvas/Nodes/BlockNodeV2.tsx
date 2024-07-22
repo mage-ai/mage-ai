@@ -72,7 +72,7 @@ type BlockNodeType = {
   recentlyAddedBlocksRef?: React.MutableRefObject<Record<string, boolean>>;
   node: NodeType;
   showApp?: (
-    config: AppConfigType,
+    config: any,
     render: (appNode: AppNodeType, mountRef: React.MutableRefObject<HTMLDivElement>) => void,
     remove: (callback?: () => void) => void,
     setOnRemove: (onRemove: () => void) => void,
@@ -212,6 +212,7 @@ function BlockNode(
         messageRequestUUID?: string,
         resultsInit?: ExecutionResultType[],
         executionOutput?: ExecutionOutputType,
+        resultElementRefs?: React.MutableRefObject<Record<string, React.MutableRefObject<HTMLDivElement>>>,
       ) => {
         if (event.metaKey) return;
 
@@ -269,6 +270,14 @@ function BlockNode(
                         ...dragRef?.current?.getBoundingClientRect(),
                         ...node?.rect,
                       });
+
+                      if (resultElementRefs?.current?.[messageRequestUUID]) {
+                        resultElementRefs.current[messageRequestUUID].current.remove();
+                        resultElementRefs.current[messageRequestUUID].current = null;
+                        delete resultElementRefs.current[messageRequestUUID];
+                      }
+
+                      animateLineRef?.current?.(outputNodeRef?.current?.id, null, { stop: true });
                     },
                     query: {
                       namespace: encodeURIComponent(
@@ -291,6 +300,16 @@ function BlockNode(
                     onSuccess: () => {
                       removeContextMenu(event);
                       updateOutputResults();
+
+                      if (resultElementRefs?.current) {
+                        Object.keys(resultElementRefs.current ?? {}).forEach((key) => {
+                          resultElementRefs.current[key].current.remove();
+                          resultElementRefs.current[key].current = null;
+                          delete resultElementRefs.current[key];
+                        });
+                      }
+
+                      animateLineRef?.current?.(outputNodeRef?.current?.id, null, { stop: true });
                     },
                     payload: {
                       all: true,

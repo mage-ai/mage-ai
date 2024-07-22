@@ -197,9 +197,9 @@ export default function BlockNodeComponent({
             Icon: ip => {
               const Icon = Code;
 
-              return <Icon {...ip} colorName={editorApp ? 'green' : undefined} />;
+              return <Icon {...ip} colorName={editorApp ? 'white' : undefined} />;
             },
-            borderColor: editorApp ? 'green' : undefined,
+            borderColor: editorApp ? 'white' : undefined,
             onClick: (event: MouseEvent) => {
               event.preventDefault();
               if (editorApp) {

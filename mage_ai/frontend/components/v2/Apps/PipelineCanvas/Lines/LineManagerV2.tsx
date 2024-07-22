@@ -602,7 +602,7 @@ export default function LineManagerV2({
           const outputNodes = outputNodesByBlockUUID?.[blockdn.uuid] ?? [];
           outputNodes?.forEach((output: OutputNodeType) => {
             pairsByType[output.type].push([rectdn, output]);
-            console.log('OUTPUT', rectdn, output, pairsByType);
+            // console.log('OUTPUT', rectdn, output, pairsByType);
           });
 
           (blockdn as any)?.upstream_blocks?.forEach((upuuid: string) => {
@@ -689,7 +689,7 @@ export default function LineManagerV2({
   function animateLine(to: string, from?: string, opts?: { stop?: boolean }) {
     const linesMapping = lineRefs?.current?.[to];
 
-    console.log('animateLine', to, from, linesMapping)
+    // console.log('animateLine', to, from, linesMapping)
     const arr = [];
     if (from) {
       arr.push(...Object.values(linesMapping?.[from] ?? {}));
@@ -745,12 +745,6 @@ export default function LineManagerV2({
 
         const dvalue = prepareLinePathProps(from2, to2).dvalue;
 
-        lineRefs.current[uuid]
-        console.log(
-          rect, from0, from, from2,
-          to0, to, to2,
-        )
-
         ref.current.setAttribute('d', dvalue);
         if (backgroundRef?.current) {
           backgroundRef.current.setAttribute('d', dvalue);
@@ -790,7 +784,7 @@ export default function LineManagerV2({
     visible,
   ]);
 
-  console.log('ConnectionLines', linesBlock, linesNode, linesOutput)
+  // console.log('ConnectionLines', linesBlock, linesNode, linesOutput)
 
   return (
     <>
