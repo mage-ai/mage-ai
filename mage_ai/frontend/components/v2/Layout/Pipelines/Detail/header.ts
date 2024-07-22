@@ -39,7 +39,6 @@ function menuItemsForBlock(
     onClick: (event: any) => {
       const uuidsNext = buildNewPathsFromBlock(block, groupMapping);
 
-      const { uuid } = changeRoute?.query ?? {};
       changeRoute({
         route: {
           href: `/v2/pipelines/${pipeline?.uuid}/${PipelineExecutionFrameworkUUIDEnum.RAG}/${uuidsNext.join('/')}`,

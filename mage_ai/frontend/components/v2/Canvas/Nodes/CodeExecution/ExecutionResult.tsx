@@ -303,7 +303,7 @@ function ExecutionResult(
                   minHeight: hasOutput ? 32 : undefined,
                 }}
               >
-                {(executing || isInView) && resultsInformation}
+                {resultsInformation}
 
                 {hasOutput && (
                   <Grid alignItems="center"

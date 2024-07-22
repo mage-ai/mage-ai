@@ -35,7 +35,10 @@ from mage_ai.data_preparation.models.utils import (
     is_basic_iterable,
     is_primitive,
 )
-from mage_ai.data_preparation.models.variables.constants import VariableType
+from mage_ai.data_preparation.models.variables.constants import (
+    VariableAggregateDataType,
+    VariableType,
+)
 from mage_ai.server.kernel_output_parser import DataType
 from mage_ai.settings.server import MEMORY_MANAGER_V2
 from mage_ai.shared.hash import merge_dict
@@ -727,27 +730,40 @@ async def get_output_data_async(
     block: Any,
     block_uuid: Optional[str] = None,
     execution_partition: Optional[str] = None,
+    include_statistics: Optional[bool] = False,
     input_data_types: Optional[List[InputDataType]] = None,
     limit: Optional[int] = None,
     read_batch_settings: Optional[BatchSettings] = None,
     read_chunks: Optional[List[ChunkKeyTypeUnion]] = None,
-) -> List[Any]:
+) -> Union[List[Any], Tuple[List[Any], List[Any]]]:
     variable_uuids = block.get_variables_by_block(
         block_uuid=block_uuid,
         partition=execution_partition,
     )
 
-    variable_objects = [
-        block.get_variable_object(
-            block_uuid=block_uuid,
-            partition=execution_partition,
-            variable_uuid=variable_uuid,
-            input_data_types=input_data_types,
-            read_batch_settings=read_batch_settings,
-            read_chunks=read_chunks,
+    variable_objects = []
+    stats = []
+
+    for variable_uuid in variable_uuids[:limit] if limit else variable_uuids:
+        variable_objects.append(
+            block.get_variable_object(
+                block_uuid=block_uuid,
+                partition=execution_partition,
+                variable_uuid=variable_uuid,
+                input_data_types=input_data_types,
+                read_batch_settings=read_batch_settings,
+                read_chunks=read_chunks,
+            )
         )
-        for variable_uuid in (variable_uuids[:limit] if limit else variable_uuids)
-    ]
+        if include_statistics:
+            stats.append(
+                block.get_variable_aggregate_cache(
+                    variable_uuid,
+                    VariableAggregateDataType.STATISTICS,
+                    infer_group_type=False,
+                    partition=execution_partition,
+                )
+            )
 
     async def __read(
         variable_object,
@@ -768,4 +784,10 @@ async def get_output_data_async(
             uuid=variable_object.uuid,
         )
 
-    return await asyncio.gather(*[__read(variable_object) for variable_object in variable_objects])
+    output = await asyncio.gather(*[
+        __read(variable_object) for variable_object in variable_objects
+    ])
+
+    if include_statistics:
+        return output, stats
+    return output

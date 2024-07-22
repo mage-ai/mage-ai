@@ -35,6 +35,10 @@ export interface EnvironmentType {
 
 export interface OutputType {
   data: string[];
+  statistics: {
+    original_column_count?: number;
+    original_row_count: number;
+  }[];
   type: VariableTypeEnum;
   uuid: string;
 }

@@ -10,6 +10,7 @@ from typing import Any, Dict, List, Optional
 import joblib
 
 from mage_ai.data_preparation.models.block.outputs import get_output_data_async
+from mage_ai.data_preparation.models.variables.cache import VariableAggregateCache
 from mage_ai.data_preparation.models.variables.constants import VariableType
 from mage_ai.kernels.magic.environments.enums import EnvironmentType, EnvironmentUUID
 from mage_ai.kernels.magic.environments.pipeline import Pipeline
@@ -95,12 +96,14 @@ class VariableOutput(BaseDataClass):
     data: List[Any]
     uuid: str
     partition: Optional[str] = None
+    statistics: Optional[VariableAggregateCache] = None
     type: Optional[VariableType] = None
     types: Optional[List[VariableType]] = None
 
     def __post_init__(self):
         self.serialize_attribute_enum('type', VariableType)
         self.serialize_attribute_enums('types', VariableType)
+        self.serialize_attribute_class('statistics', VariableAggregateCache)
 
 
 @dataclass
@@ -167,13 +170,17 @@ class ExecutionOutput(BaseDataClass):
             block = pipeline.get_block(block_uuid, block_type)
 
             execution_partition = metadata.get('execution_partition')
-            outputs = await get_output_data_async(
+            outputs, stats = await get_output_data_async(
                 block,
                 block_uuid=block_uuid,
                 execution_partition=execution_partition,
+                include_statistics=True,
                 limit=limit,
             )
-            self.output = [VariableOutput.load(**m) for m in outputs]
+
+            self.output = [
+                VariableOutput.load(**o, statistics=stats) for o, s in zip(outputs, stats)
+            ]
 
 
 @dataclass

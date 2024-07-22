@@ -54,7 +54,7 @@ function PipelineDetailPage({
               intraAppNavItems: buildIntraAppNavItems({
                 changeRoute,
                 framework: model?.framework,
-                pipeline,
+                pipeline: model,
               }),
               buildInterAppNavItems: () => [
                 {
