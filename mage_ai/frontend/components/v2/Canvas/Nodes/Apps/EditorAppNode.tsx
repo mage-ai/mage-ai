@@ -1,10 +1,8 @@
-import Button, { ButtonGroup } from '@mana/elements/Button';
+import Button from '@mana/elements/Button';
 import colors from '@mana/themes/colors';
 import { getFileCache, isStale, updateFileCache } from '../../../IDE/cache';
 import { contrastRatio } from '@utils/colors';
-import { RenderContextMenuOptions } from '@mana/hooks/useContextMenu';
-import { MenuItemType } from '@mana/components/Menu/interfaces';
-import { ClientEventType, EventOperationEnum } from '@mana/shared/interfaces';
+import { ClientEventType } from '@mana/shared/interfaces';
 import { executionDone } from '@components/v2/ExecutionManager/utils';
 import { KEY_ENTER, KEY_CODE_META, KEY_ESCAPE } from '@utils/hooks/keyboardShortcuts/constants';
 import Tag from '@mana/components/Tag';
@@ -26,29 +24,14 @@ import { EditorContainerStyled } from './index.style';
 import { TooltipAlign, TooltipWrapper, TooltipDirection, TooltipJustify } from '@context/v2/Tooltip';
 import { convertToMillisecondsTimestamp } from '@utils/date';
 import {
-  ArrowsAdjustingFrameSquare,
-  DiamondShared,
-  AppVersions,
-  IdentityTag,
-  Menu,
-  PanelCollapseLeft,
-  PanelCollapseRight,
-  Builder,
-  AddV2,
-  Grab,
-  GroupV2,
-  Comment,
-  Conversation,
   Save,
   DeleteCircle,
   CloseV2,
-  BlockGenericV2,
   PlayButtonFilled,
 } from '@mana/icons';
 import BlockType from '@interfaces/BlockType';
 import { getBlockColor } from '@mana/themes/blocks';
 import { FileType } from '@components/v2/IDE/interfaces';
-import { AppConfigType } from '@components/v2/Apps/interfaces';
 import { AppNodeType } from '../../interfaces';
 
 const PADDING_HORIZONTAL = 16;
@@ -217,7 +200,7 @@ function EditorAppNode({
       className={[stylesAppNode.appNodeContainer].join(' ')}
       rowGap={PADDING_HORIZONTAL / 2}
       style={{
-        gridTemplateRows: 'auto auto 1fr auto',
+        gridTemplateRows: 'auto auto 1fr',
       }}
       templateColumns="auto"
     >
@@ -243,7 +226,6 @@ function EditorAppNode({
 
           <div style={{ position: 'relative' }}>
             {executing && <Tag left statusVariant timer top />}
-
             <Button
               Icon={ip => executing ? <DeleteCircle {...ip} colorName={contrastColorName} /> : <PlayButtonFilled {...ip} colorName={contrastColorName} />}
               backgroundcolor={!executing ? baseColor : undefined}
@@ -486,7 +468,7 @@ function EditorAppNode({
         )}
       </Grid>
 
-      <OutputGroups
+      {/* <OutputGroups
         consumerID={`${app.id}/output`}
         handleContextMenu={outputGroupsProps.handleContextMenu}
         hideTimer
@@ -497,7 +479,7 @@ function EditorAppNode({
         styles={{
           maxWidth: 600,
         }}
-      />
+      /> */}
     </Grid>
   );
 }

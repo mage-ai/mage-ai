@@ -60,11 +60,13 @@ import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { ElementRoleEnum } from '@mana/shared/types';
 import { AppConfigType } from '@components/v2/Apps/interfaces';
 import { MenuItemType } from '@mana/components/Menu/interfaces';
+import { CommandType } from '@mana/events/interfaces';
 
 export const BADGE_HEIGHT = 37;
 export const PADDING_VERTICAL = 12;
 
 export type BlockNodeProps = {
+  commands?: Record<string, CommandType>;
   apps?: Record<string, AppNodeType>;
   block: BlockType | PipelineExecutionFrameworkBlockType;
   buttonBeforeRef?: React.RefObject<HTMLDivElement>;
@@ -87,6 +89,7 @@ export type BlockNodeProps = {
 } & BlockNode;
 
 export default function BlockNodeComponent({
+  commands,
   apps,
   block,
   buildContextMenuItemsForGroupBlock,
@@ -427,6 +430,7 @@ export default function BlockNodeComponent({
             ([uuid, template]) =>
               block?.configuration?.templates?.[uuid] && (
                 <TemplateConfigurations
+                  commands={commands}
                   block={block}
                   group={group}
                   key={uuid}
@@ -438,7 +442,7 @@ export default function BlockNodeComponent({
               ),
           ),
       ),
-    [block, groups, updateBlock, teleportIntoBlock],
+    [commands, block, groups, updateBlock, teleportIntoBlock],
   );
 
   const titleRow = useMemo(

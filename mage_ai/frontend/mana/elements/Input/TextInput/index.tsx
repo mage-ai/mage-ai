@@ -1,9 +1,11 @@
 import React, { useRef, useState } from 'react';
+import { CommandType } from '@mana/events/interfaces';
 import styles from '@styles/scss/elements/Input/TextInput.module.scss';
 import styled from 'styled-components';
 
 import inputs, { StyleProps } from '../../../styles/inputs';
 import { IconProps } from '@mana/elements/Icon';
+import { validatePredicate } from '@mana/hooks/shortcuts/utils';
 
 type InputStyleProps = {
   onChange?: (event: React.ChangeEvent<HTMLInputElement>) => void;
@@ -11,6 +13,7 @@ type InputStyleProps = {
 
 type InputProps = {
   Icon?: (props?: any) => any;
+  commands?: Record<string, CommandType>;
   autoComplete?: string;
   defaultValue?: string;
   id?: string;
@@ -76,6 +79,19 @@ function TextInput(
           }
         }}
         onClick={onClick}
+        onKeyDown={(event) => {
+          if (props.commands) {
+            console.log(props.commands, event)
+            Object.values(props?.commands ?? {})?.forEach(({
+              handler,
+              predicate,
+            }) => {
+              if (validatePredicate(predicate, [event])) {
+                handler(event);
+              }
+            });
+          }
+        }}
         ref={ref}
         required={required}
         small={small}

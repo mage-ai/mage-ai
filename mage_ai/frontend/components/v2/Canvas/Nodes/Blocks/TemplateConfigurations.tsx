@@ -1,4 +1,5 @@
 import PanelRows from '@mana/elements/PanelRows';
+import { CommandType } from '@mana/events/interfaces';
 import Grid from '@mana/components/Grid';
 import Text from '@mana/elements/Text';
 import { SharedBlockProps } from '../types';
@@ -16,6 +17,7 @@ import TextInput from '@mana/elements/Input/TextInput';
 import { TooltipAlign, TooltipWrapper, TooltipDirection, TooltipJustify } from '@context/v2/Tooltip';
 
 export default function TemplateConfigurations({
+  commands,
   block,
   group,
   template,
@@ -23,6 +25,7 @@ export default function TemplateConfigurations({
   updateBlock,
   uuid,
 }: {
+  commands?: Record<string, CommandType>;
   group: PipelineExecutionFrameworkBlockType;
   template: TemplateType;
   teleportIntoBlock: (event: any, target: any) => void;
@@ -120,6 +123,7 @@ export default function TemplateConfigurations({
                     autoComplete="off"
                     basic
                     blendWithText
+                    commands={commands}
                     defaultValue={value}
                     id={[block?.uuid, uuid, variableUUID]?.filter(Boolean).join('-')}
                     italicPlaceholder

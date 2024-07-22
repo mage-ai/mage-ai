@@ -360,22 +360,15 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
   const groupsByLevelRef = useRef<GroupLevelType>(null);
   const blocksRef = useRef<BlockType[]>(null);
   const groupsRef = useRef<FrameworkType[]>(null);
-  const appNodeRefs = useRef<
+
+  const relatedNodeRefs = useRef<
     Record<
       string,
-      {
-        remove: () => void;
-        render: (node: AppNodeType, ref?: React.RefObject<HTMLDivElement>) => void;
-      }
-    >
-  >({});
-  const outputNodeRefs = useRef<
-    Record<
-      string,
-      {
+      Record<ItemTypeEnum, {
+        node: any;
         remove: () => void;
         render: (node: OutputNodeType, ref?: React.RefObject<HTMLDivElement>) => void;
-      }
+      }>
     >
   >({});
   // This is the one that gets updates; rectRefs keeps a running list of all rects.
@@ -384,8 +377,7 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
   // State store
   const [defaultGroups, setDefaultGroups] = useState<any>(null);
   const [models, setModels] = useState<ModelsType>(null);
-  const [appNodes, setAppNodes] = useState<Record<string, Record<string, AppNodeType>>>({});
-  const [outputNodes, setOutputNodes] = useState<Record<string, OutputNodeType>>({});
+  const [relatedNodes, setRelatedNodes] = useState<Record<string, Record<ItemTypeEnum, AppNodeType | OutputNodeType>>>({});
   const [rectsMapping, setRectsMapping] = useState<Record<string, RectType>>({});
   const [renderer, setRenderer] = useState<any>(null);
 
@@ -413,6 +405,65 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
       type,
     };
 
+    const showRelatedNotes = (type: ItemTypeEnum) => (
+      nodeOps: Record<string, any>,
+      render: (
+        nodeItem: OutputNodeType | AppNodeType,
+        mountRef: React.MutableRefObject<HTMLDivElement>,
+      ) => void,
+      remove: (callback?: () => void) => void,
+      setOnRemove: (onRemove: () => void) => void,
+    ) => {
+
+      const nodeItem = ItemTypeEnum.APP === type
+        ? buildAppNode({
+          ...(node as NodeType),
+          block,
+        }, nodeOps)
+        : buildOutputNode({
+          ...(node as NodeType),
+          block,
+        }, block, nodeOps as any);
+      if (!rectRefs.current[nodeItem.id]) {
+        rectRefs.current[nodeItem.id] = createRef();
+      }
+
+      relatedNodeRefs.current ||= {};
+      relatedNodeRefs.current[block.uuid] ||= {} as any;
+      relatedNodeRefs.current[block.uuid][nodeItem.type] ||= {
+        node: nodeItem,
+        remove: null,
+        render: null,
+      };
+
+      const handleRemove = () => {
+        removeFromCache(`${framework.uuid}:${pipelineUUID}`, nodeItem.id);
+
+        delete relatedNodeRefs?.current?.[block.uuid]?.[nodeItem.type];
+
+        setRelatedNodes(prev => {
+          delete prev?.[block.uuid]?.[nodeItem.type];
+          return prev;
+        });
+      };
+      setOnRemove && setOnRemove(handleRemove);
+      relatedNodeRefs.current[block.uuid][nodeItem.type].remove = () => {
+        remove ? remove(handleRemove) : handleRemove();
+      };
+
+      relatedNodeRefs.current[block.uuid][nodeItem.type].render = (node2, mountRef) => {
+        render(node2, mountRef);
+      };
+
+      setRelatedNodes(prev => ({
+        ...prev,
+        [block.uuid]: {
+          ...prev?.[block.uuid],
+          [nodeItem.type]: nodeItem,
+        },
+      }));
+    };
+
     return {
       component: (
         <BlockNodeV2
@@ -422,109 +473,8 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
           node={node as NodeType}
           recentlyAddedBlocksRef={newBlockCallbackAnimationRef}
           ref={nodeRef}
-          showApp={(
-            appConfig: AppConfigType,
-            render: (appNode: AppNodeType, ref?: React.RefObject<HTMLDivElement>) => void,
-            remove: (callback?: () => void) => void,
-            setOnRemove: (onRemove: () => void) => void,
-          ) => {
-            const appNode = buildAppNode(node as NodeType, appConfig);
-            if (!rectRefs.current[appNode.id]) {
-              rectRefs.current[appNode.id] = createRef();
-            }
-
-            appNodeRefs.current[block.uuid] ||= {
-              remove: null,
-              render: null,
-            };
-
-            const handleRemove = () => {
-              removeFromCache(`${framework.uuid}:${pipelineUUID}`, appNode.id);
-              delete appNodeRefs.current[block.uuid];
-              setAppNodes(prev => {
-                delete prev[block.uuid]?.[appNode.id];
-                return prev;
-              });
-            };
-            setOnRemove && setOnRemove(handleRemove);
-            appNodeRefs.current[block.uuid].remove = () => {
-              remove ? remove(handleRemove) : handleRemove();
-            };
-
-            appNodeRefs.current[block.uuid].render = render;
-
-            setAppNodes(prev => {
-              const d = {
-                ...prev,
-                [block.uuid]: {
-                  ...(prev[block.uuid] ?? {}),
-                  [appNode.id]: appNode,
-                },
-              };
-
-              return d;
-            });
-          }}
-          showOutput={(
-            channel: string,
-            render: (
-              outputNode: OutputNodeType,
-              mountRef: React.MutableRefObject<HTMLDivElement>,
-            ) => void,
-            remove: (callback?: () => void) => void,
-            setOnRemove: (onRemove: () => void) => void,
-          ) => {
-            const outputNode = buildOutputNode(node as NodeType, block, { uuid: channel });
-            if (!rectRefs.current[outputNode.id]) {
-              rectRefs.current[outputNode.id] = createRef();
-            }
-
-            outputNodeRefs.current[block.uuid] ||= {
-              remove: null,
-              render: null,
-            };
-
-            const handleRemove = () => {
-              removeFromCache(`${framework.uuid}:${pipelineUUID}`, outputNode.id);
-              const id = getLineID(block.uuid, outputNode.id);
-              const el = document.getElementById(id);
-              if (el) {
-                el.style.display = 'none';
-                el.style.opacity = '0';
-                el.style.strokeDasharray = '0';
-              }
-
-              delete outputNodeRefs.current[block.uuid];
-
-              setOutputNodes(prev => {
-                delete prev[block.uuid];
-                return prev;
-              });
-            };
-            setOnRemove && setOnRemove(handleRemove);
-            outputNodeRefs.current[block.uuid].remove = () => {
-              remove ? remove(handleRemove) : handleRemove();
-            };
-
-            outputNodeRefs.current[block.uuid].render = (n, m) => {
-              const id = getLineID(block.uuid, outputNode.id);
-              [id, `${id}-background`].forEach(i => {
-                const el = document.getElementById(i);
-                if (el) {
-                  el.style.display = '';
-                  el.style.opacity = '';
-                  el.style.strokeDasharray = '';
-                }
-              });
-
-              render(n, m);
-            };
-
-            setOutputNodes(prev => ({
-              ...prev,
-              [block.uuid]: outputNode,
-            }));
-          }}
+          showApp={showRelatedNotes(ItemTypeEnum.APP)}
+          showOutput={showRelatedNotes(ItemTypeEnum.OUTPUT)}
         />
       ),
       data: {
@@ -1170,14 +1120,9 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
     const groupsArg = getGroupsFromPath(pathname, framework, groupsByLevelRef?.current);
 
     // Close apps and outputs
-    Object.values(appNodeRefs.current ?? {})
-      .concat(Object.values(outputNodeRefs.current ?? {}))
-      .map(({ remove }) => {
-        remove();
-      });
+    Object.values(relatedNodeRefs.current ?? {}).forEach(map => Object.values(map).forEach(({ remove }) => remove()));
 
-    appNodeRefs.current = {};
-    outputNodeRefs.current = {};
+    relatedNodeRefs.current = {};
 
     const prevGroup = deepCopy(getCurrentGroup());
     const prevParent = deepCopy(getParentGroup());
@@ -1604,11 +1549,11 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
 
   useEffect(() => {
     const handleRouteChangeComplete = (args: any) => {
-      if (!args?.startsWith(`/v2/pipelines/${pipeline?.uuid}`)) return;
+      if (!hyphensToSnake(args ?? '')?.startsWith(hyphensToSnake(`/v2/pipelines/${pipeline?.uuid}`))) return;
       updateRouteHistory?.current(args);
     };
     const handleRouteChangeStart = (args: any) => {
-      if (!args?.startsWith(`/v2/pipelines/${pipeline?.uuid}`)) return;
+      if (!hyphensToSnake(args ?? '')?.startsWith(hyphensToSnake(`/v2/pipelines/${pipeline?.uuid}`))) return;
       handleIntraAppRouteChange?.current(args);
     };
 
@@ -1701,7 +1646,7 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
       >
         <DragWrapper
           draggable={false}
-          dragConstraintsRef={containerRef}
+          // dragConstraintsRef={containerRef}
           eventHandlers={{
             onDragStart: handleDragStart,
             onDrag: handleDragging,
@@ -1753,13 +1698,17 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
   ) {
     const { item, rect } = data;
 
-    renderLineRef?.current?.({
+    const rectCurrent = dragRefs.current[item.id]?.current?.getBoundingClientRect();
+    const rectFinal = {
       ...item,
-      ...item?.rect,
       ...rect,
-      left: info.point.x,
-      top: info.point.y,
-    });
+      height: rectCurrent?.height,
+      left: rectCurrent?.left,
+      top: rectCurrent?.top,
+      width: rectCurrent?.width,
+    };
+
+    renderLineRef?.current?.(rectFinal);
   }
 
   function handleDragEnd(
@@ -1773,18 +1722,18 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
   ) {
     const { item, rect } = data;
 
-    const rect2 = {
+    const rectCurrent = dragRefs.current[item.id]?.current?.getBoundingClientRect();
+    const rectFinal = {
       ...item,
-      ...rectsMappingRef?.current?.[item.id],
-      ...item?.rect,
       ...rect,
-      id: item?.id,
-      left: info.point.x,
-      top: info.point.y,
+      height: rectCurrent?.height,
+      left: rectCurrent?.left,
+      top: rectCurrent?.top,
+      width: rectCurrent?.width,
     };
 
-    rectsMappingRef.current[item.id] = rect2;
-    const rectd = { [item.id]: rect2 };
+    rectsMappingRef.current[item.id] = rectFinal;
+    const rectd = { [item.id]: rectFinal };
 
     update(`${framework.uuid}:${pipelineUUID}`, rectd);
 
@@ -2004,7 +1953,10 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
                 rect.type = nodeType;
                 rect.id = nodeID;
 
-                rectsMappingRef.current[nodeID] = rect;
+                rectsMappingRef.current[nodeID] = {
+                  ...rect,
+                  block,
+                };
               }
 
               arr.push(
@@ -2048,7 +2000,11 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
                     };
 
                     if (ItemTypeEnum.APP === nodeType) {
-                      appNodeRefs?.current?.[itemUUID]?.render?.(item as AppNodeType, dragRef);
+                      const { render } = relatedNodeRefs?.current?.[itemUUID]?.[nodeType] ?? {};
+                      render?.(
+                        item as OutputNodeType,
+                        dragRef,
+                      );
 
                       clearTimeout(timeoutUpdateAppRectsRef.current);
                       timeoutUpdateAppRectsRef.current = setTimeout(
@@ -2056,8 +2012,11 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
                         100,
                       );
                     } else {
-                      const { render } = outputNodeRefs?.current?.[itemUUID] ?? {};
-                      render?.(item as OutputNodeType, dragRef);
+                      const { render } = relatedNodeRefs?.current?.[itemUUID]?.[nodeType] ?? {};
+                      render?.(
+                        item as OutputNodeType,
+                        dragRef,
+                      );
 
                       clearTimeout(timeoutUpdateOutputRectsRef.current);
                       timeoutUpdateOutputRectsRef.current = setTimeout(
@@ -2080,7 +2039,7 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
             arr.push(
               <DragWrapper
                 draggable={draggable}
-                dragConstraintsRef={dragConstraintsRef}
+                // dragConstraintsRef={dragConstraintsRef}
                 eventHandlers={{
                   onDrag: handleDragging,
                   onDragEnd: handleDragEnd,
@@ -2110,23 +2069,14 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
       }),
     [blocks, groups, renderNodeComponents, rectsMapping],
   );
-
-  const appsMemo = useMemo(
+  console.log(relatedNodes)
+  const relatedNodesMemo = useMemo(
     () =>
       renderNodeComponents(rectsMappingRef?.current, {
-        [ItemTypeEnum.APP]: Object.values(appNodes ?? {}).flatMap(appmaps =>
-          Object.values(appmaps ?? {}),
-        ),
+        [ItemTypeEnum.APP]: Object.values(relatedNodes ?? {}).map(map => map?.[ItemTypeEnum.APP]).filter(Boolean),
+        [ItemTypeEnum.OUTPUT]: Object.values(relatedNodes ?? {}).map(map => map?.[ItemTypeEnum.OUTPUT]).filter(Boolean),
       }),
-    [appNodes, renderNodeComponents],
-  );
-
-  const outputMemo = useMemo(
-    () =>
-      renderNodeComponents(rectsMappingRef?.current, {
-        [ItemTypeEnum.OUTPUT]: Object.values(outputNodes ?? {}),
-      }),
-    [outputNodes, renderNodeComponents],
+    [relatedNodes, renderNodeComponents],
   );
 
   // const [, connectDrop] = useDrop(
@@ -2328,10 +2278,9 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
                   }
                 >
                   <div>
-                    {appsMemo}
-                    {outputMemo}
                     {nodesMemo}
                     {selectedGroupNode}
+                    {relatedNodesMemo}
 
                     <LineManagerV2
                       animateLineRef={animateLineRef}

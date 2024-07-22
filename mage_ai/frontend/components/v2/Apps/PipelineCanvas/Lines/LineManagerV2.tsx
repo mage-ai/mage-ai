@@ -44,6 +44,7 @@ export const ANIMATION_DURATION = 0.2;
 const BASE_Z_INDEX = 1;
 const ORDER = {
   [ItemTypeEnum.NODE]: 0,
+  [ItemTypeEnum.APP]: 1,
   [ItemTypeEnum.BLOCK]: 1,
   [ItemTypeEnum.OUTPUT]: 1,
 };
@@ -97,6 +98,7 @@ export default function LineManagerV2({
     Record<ItemTypeEnum, Record<string, React.MutableRefObject<SVGPathElement>>>
   >({} as any);
 
+  const [linesApp, setLinesApp] = useState<Record<string, LinePathType[]>>({});
   const [linesBlock, setLinesBlock] = useState<Record<string, LinePathType[]>>({});
   const [linesNode, setLinesNode] = useState<Record<string, LinePathType[]>>({});
   const [linesOutput, setLinesOutput] = useState<Record<string, LinePathType[]>>({});
@@ -231,11 +233,11 @@ export default function LineManagerV2({
         }
       }
 
-      if (ItemTypeEnum.OUTPUT === rectdn.type) {
-        topos = 'top';
-        toRect.offset.y = PADDING_VERTICAL;
-        toRect.offset.x = -toRect.width / 2 + PADDING_VERTICAL;
-      }
+      // if (ItemTypeEnum.OUTPUT === rectdn.type) {
+      //   topos = 'top';
+      //   toRect.offset.y = PADDING_VERTICAL;
+      //   toRect.offset.x = -toRect.width / 2 + PADDING_VERTICAL;
+      // }
 
       // if (rectdn.left < rectup.left) {
       //   // rectdn is to the left of rect
@@ -275,6 +277,7 @@ export default function LineManagerV2({
 
   function renderPaths(
     pairsByType: {
+      [ItemTypeEnum.APP]?: [RectType, RectType][];
       [ItemTypeEnum.BLOCK]?: [RectType, RectType][];
       [ItemTypeEnum.NODE]?: [RectType, RectType][];
       [ItemTypeEnum.OUTPUT]?: [RectType, RectType][];
@@ -286,6 +289,7 @@ export default function LineManagerV2({
   ): LinePathType[] {
     const linePaths = [];
     const paths = {
+      [ItemTypeEnum.APP]: {},
       [ItemTypeEnum.BLOCK]: {},
       [ItemTypeEnum.NODE]: {},
       [ItemTypeEnum.OUTPUT]: {},
@@ -314,6 +318,13 @@ export default function LineManagerV2({
 
     // console.log('paths', paths);
 
+    setLinesApp(prev => {
+      const val = {
+        ...(opts?.replace ? {} : prev),
+        ...paths[ItemTypeEnum.APP],
+      };
+      return val;
+    });
     setLinesBlock(prev => {
       const val = {
         ...(opts?.replace ? {} : prev),
@@ -389,12 +400,17 @@ export default function LineManagerV2({
       if (!lineRef) {
         lineRef = createRef();
         lineRefs.current[rectdn.id][rectup.id] = {
-          from: rectup,
-          id: lineID,
-          ref: lineRef,
-          to: rectdn,
+          from: null,
+          id: null,
+          ref: null,
+          to: null,
         };
       }
+
+      lineRefs.current[rectdn.id][rectup.id].from = rectup;
+      lineRefs.current[rectdn.id][rectup.id].id = lineID;
+      lineRefs.current[rectdn.id][rectup.id].ref = lineRef;
+      lineRefs.current[rectdn.id][rectup.id].to = rectdn;
 
       if (!lineBackgroundRef) {
         lineBackgroundRef = createRef();
@@ -450,8 +466,8 @@ export default function LineManagerV2({
           ].join(' ')}
           id={lineID}
           initial={{
-            opacity: 0,
-            pathLength: 0,
+            // opacity: 0,
+            // pathLength: 0,
           }}
           key={lineID}
           ref={lineRef}
@@ -493,6 +509,7 @@ export default function LineManagerV2({
     ) => {
       // console.log(rectsMapping)
       const pairsByType = {
+        [ItemTypeEnum.APP]: [],
         [ItemTypeEnum.BLOCK]: [],
         [ItemTypeEnum.NODE]: [],
         [ItemTypeEnum.OUTPUT]: [],
@@ -579,14 +596,13 @@ export default function LineManagerV2({
 
             pairsByType[rectdn.type].push([rectup2, rectdn]);
           });
-        } else if (ItemTypeEnum.BLOCK === rectdn?.type) {
+        } else if ([ItemTypeEnum.APP, ItemTypeEnum.BLOCK].includes(rectdn?.type)) {
           const { block: blockdn } = rectdn;
 
           const outputNodes = outputNodesByBlockUUID?.[blockdn.uuid] ?? [];
           outputNodes?.forEach((output: OutputNodeType) => {
-            DEBUG.lines.manager && console.log('line.output', output, rectdn);
             pairsByType[output.type].push([rectdn, output]);
-            // console.log(rectdn, output, pairsByType);
+            console.log('OUTPUT', rectdn, output, pairsByType);
           });
 
           (blockdn as any)?.upstream_blocks?.forEach((upuuid: string) => {
@@ -673,12 +689,18 @@ export default function LineManagerV2({
   function animateLine(to: string, from?: string, opts?: { stop?: boolean }) {
     const linesMapping = lineRefs?.current?.[to];
 
-    // console.log('animateLine', to, from, linesMapping)
+    console.log('animateLine', to, from, linesMapping)
+    const arr = [];
     if (from) {
+      arr.push(...Object.values(linesMapping?.[from] ?? {}));
+    } else {
+      arr.push(...Object.values(linesMapping ?? {}));
+    }
+    arr?.forEach((target) => {
       const {
         backgroundRef,
         ref,
-      } = linesMapping?.[from] ?? {};
+      } = target ?? {};
 
       let startFunc = 'add';
       if (opts?.stop) {
@@ -687,10 +709,10 @@ export default function LineManagerV2({
 
       backgroundRef?.current?.classList[startFunc](stylesPipelineBuilder.animateFlow);
       ref?.current?.classList[startFunc](stylesPipelineBuilder.animateFlow);
-    }
+    });
   }
 
-  function renderLineForRect(rect: RectType) {
+  const renderLineForRect = useCallback((rect: RectType) => {
     // console.log(rect, lineRefs?.current, lineRefs?.current?.[rect.id])
     Object.entries(lineRefs?.current ?? {})?.forEach(([uuid, mapping]) => {
       const arr = [];
@@ -704,17 +726,30 @@ export default function LineManagerV2({
       }
 
       arr?.forEach(({
-        from,
+        from: from0,
         backgroundRef,
-        to,
+        to: to0,
         ref,
       }) => {
-        const dvalue = prepareLinePathProps(
-          rect?.id === from?.id ? { ...from, ...rect, } : from,
-          rect?.id === to?.id ? { ...to, ...rect } : to,
-        ).dvalue;
+        const from = {
+          ...from0,
+          ...rectsMapping?.[from0?.id],
+        };
+        const to = {
+          ...to0,
+          ...rectsMapping?.[to0?.id],
+        };
 
-        // console.log(rect.id, from, to)
+        const from2 = rect?.id === from?.id ? { ...from, ...rect, } : from;
+        const to2 = rect?.id === to?.id ? { ...to, ...rect } : to;
+
+        const dvalue = prepareLinePathProps(from2, to2).dvalue;
+
+        lineRefs.current[uuid]
+        console.log(
+          rect, from0, from, from2,
+          to0, to, to2,
+        )
 
         ref.current.setAttribute('d', dvalue);
         if (backgroundRef?.current) {
@@ -722,7 +757,7 @@ export default function LineManagerV2({
         }
       });
     });
-  }
+  }, [rectsMapping]);
 
   useEffect(() => {
     animateLineRef.current = animateLine;
@@ -755,8 +790,11 @@ export default function LineManagerV2({
     visible,
   ]);
 
+  console.log('ConnectionLines', linesBlock, linesNode, linesOutput)
+
   return (
     <>
+      <ConnectionLines linePaths={linesApp} zIndex={BASE_Z_INDEX + ORDER[ItemTypeEnum.APP]} />
       <ConnectionLines linePaths={linesBlock} zIndex={BASE_Z_INDEX + ORDER[ItemTypeEnum.BLOCK]} />
       <ConnectionLines linePaths={linesNode} zIndex={BASE_Z_INDEX + ORDER[ItemTypeEnum.NODE]} />
       <ConnectionLines linePaths={linesOutput} zIndex={BASE_Z_INDEX + ORDER[ItemTypeEnum.OUTPUT]} />

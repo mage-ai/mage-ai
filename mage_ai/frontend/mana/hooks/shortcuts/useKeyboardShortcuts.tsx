@@ -2,10 +2,10 @@ import React, { useEffect, useRef } from 'react';
 import useDebounce from '@utils/hooks/useDebounce';
 import { EventEnum } from '../../events/enums';
 import { sortByKey } from '@utils/array';
+import { validatePredicate } from './utils';
 import { isEqual, selectKeys } from '@utils/hash';
 import { DEBUG } from '../../utils/debug';
-
-type KeyMapType = Record<string, any[]>;
+import { KeyMapType } from './interfaces'
 
 export interface KeyboardShortcutsType {
   deregisterCommands: () => void;
@@ -60,42 +60,6 @@ export default function useKeyboardShortcuts({
     timeoutRef.current = setTimeout(clearAll, timeout);
   }
 
-  function validatePredicate(predicate: any, events: any[]): boolean {
-    const { key, predicates, present, type = EventEnum.KEYDOWN } = predicate;
-
-    DEBUG.keyboard.shortcuts &&
-      console.log(predicates, present, key, type, events, metadataRef.current);
-
-    if (predicates?.length) {
-      return predicates?.every((pred: any, position: number) =>
-        validatePredicate(pred, [events[position]]),
-      );
-    } else if (present) {
-      return key in (eventsHistoryRef?.current?.[type] ?? {});
-    }
-
-    const keys = ['altKey', 'ctrlKey', 'key', 'metaKey', 'shiftKey', 'type'];
-    const event = events?.[0] ?? false;
-
-    return (
-      event &&
-      isEqual(
-        selectKeys(
-          {
-            altKey: false,
-            ctrlKey: false,
-            metaKey: false,
-            shiftKey: false,
-            type,
-            ...predicate,
-          },
-          keys,
-        ),
-        selectKeys(event, keys),
-      )
-    );
-  }
-
   function executeCommands(event: any) {
     DEBUG.keyboard.shortcuts && console.log('commands', Object.keys(commandsRef.current ?? {}));
     DEBUG.keyboard.shortcuts && console.log('series', eventsSeriesRef.current);
@@ -125,9 +89,9 @@ export default function useKeyboardShortcuts({
         } else {
           valid = events.some((arr1: any[]) =>
             predicates.length === 1
-              ? validatePredicate(command.predicate, arr1)
+              ? validatePredicate(command.predicate, arr1, eventsHistoryRef.current)
               : arr1?.some((event: any) =>
-                  validatePredicate(command.predicate, [event]),
+                  validatePredicate(command.predicate, [event], eventsHistoryRef.current),
                 ),
           );
         }

@@ -1,4 +1,6 @@
 import * as osPath from 'path';
+import { getLineID } from '@components/v2/Apps/PipelineCanvas/Lines/LineManagerV2';
+import { EventEnum, KeyEnum } from '@mana/events/enums';
 import { removeANSI, removASCII } from '@utils/string';
 import { getBlockColor } from '@mana/themes/blocks';
 import BlockNodeComponent, { BADGE_HEIGHT, PADDING_VERTICAL } from './BlockNode';
@@ -70,13 +72,13 @@ type BlockNodeType = {
   recentlyAddedBlocksRef?: React.MutableRefObject<Record<string, boolean>>;
   node: NodeType;
   showApp?: (
-    appConfig: AppConfigType,
+    config: AppConfigType,
     render: (appNode: AppNodeType, mountRef: React.MutableRefObject<HTMLDivElement>) => void,
     remove: (callback?: () => void) => void,
     setOnRemove: (onRemove: () => void) => void,
   ) => void;
   showOutput?: (
-    channel: string,
+    config: any,
     render: (outputNode: OutputNodeType, mountRef: React.MutableRefObject<HTMLDivElement>) => void,
     remove: (callback?: () => void) => void,
     setOnRemove: (onRemove: () => void) => void,
@@ -117,9 +119,10 @@ function BlockNode(
   >({});
 
   const [apps, setApps] = useState<Record<string, AppNodeType>>({});
-  const appRef = useRef<AppNodeType>(null);
-  const appNodeRef = useRef<React.RefObject<HTMLElement>>(null);
-  const outputRef = useRef<OutputNodeType>(null);
+  const appNodeRef = useRef<AppNodeType>(null);
+  const appMountRef = useRef<React.RefObject<HTMLElement>>(null);
+  const appOpenRef = useRef<boolean>(false);
+  const outputNodeRef = useRef<OutputNodeType>(null);
   const appRootRef = useRef<Root>(null);
   const outputRootRef = useRef<Root>(null);
   const outputPortalRef = useRef<HTMLDivElement>(null);
@@ -144,6 +147,62 @@ function BlockNode(
 
   function setHandleOnMessage(consumerID, handler) {
     handleOnMessageRef.current[consumerID] = handler;
+  }
+
+  function hideLinesToOutput(opts?: {
+    editorOnly?: boolean;
+  }) {
+    const appNode = appNodeRef.current;
+    const outputNode = outputNodeRef.current;
+    if (outputNode) {
+      const ids = [];
+
+      if (!opts?.editorOnly) {
+        ids.push(getLineID(block.uuid, outputNode.id));
+      }
+
+      if (appNode && appOpenRef.current) {
+        ids.push(getLineID(appNode.id, outputNode.id));
+      }
+
+      ids.filter(Boolean).forEach((id) => {
+        [id, `${id}-background`].forEach(i => {
+          const el = document.getElementById(i);
+
+          if (el) {
+            el.style.display = 'none';
+            el.style.opacity = '0';
+            el.style.strokeDasharray = '0';
+          }
+        });
+      });
+    }
+  }
+
+  function showLinesToOutput() {
+    const appNode = appNodeRef.current;
+    const outputNode = outputNodeRef.current;
+    if (outputNode) {
+      const ids = [
+        getLineID(block.uuid, outputNode.id),
+      ];
+
+      if (appNode && appOpenRef.current) {
+        ids.push(getLineID(appNode.id, outputNode.id));
+      }
+
+      ids.filter(Boolean).forEach((id) => {
+        [id, `${id}-background`].forEach(i => {
+          const el = document.getElementById(i);
+
+          if (el) {
+            el.style.display = '';
+            el.style.opacity = '';
+            el.style.strokeDasharray = '';
+          }
+        });
+      });
+    }
   }
 
   const outputGroupsProps = useMemo(
@@ -274,6 +333,8 @@ function BlockNode(
       },
       onMount: (id: string, callback?: () => void) => {
         updateOutputResults(callback);
+
+        showLinesToOutput();
       },
       setHandleOnMessage,
       setResultMappingUpdate: (consumerID, handler) => {
@@ -453,7 +514,7 @@ function BlockNode(
       }
       const done = executionDone(event);
       setExecuting(!done);
-      animateLineRef?.current?.(outputRef?.current?.id, block.uuid, { stop: done });
+      animateLineRef?.current?.(outputNodeRef?.current?.id, null, { stop: done });
     };
 
     subscribe(consumerID, {
@@ -473,12 +534,16 @@ function BlockNode(
       opts?: {
         onError?: () => void;
         onSuccess?: () => void;
-        openOutput?: boolean;
       },
     ) => {
       handleSubscribe('BlockNode');
 
       const execute = () => {
+        if (outputNodeRef?.current) {
+          animateLineRef?.current?.(outputNodeRef?.current?.id);
+          showLinesToOutput();
+        }
+
         const message = getCode();
         executeCode(
           message,
@@ -502,7 +567,7 @@ function BlockNode(
         );
       };
 
-      if (opts?.openOutput && !outputRootRef.current) {
+      if (!outputRootRef.current) {
         launchOutputCallbackOnceRef.current = () => {
           getFile(event, execute);
         };
@@ -518,13 +583,19 @@ function BlockNode(
       }
 
       setLoading(true);
-      if (outputRef?.current) {
-        animateLineRef?.current?.(outputRef?.current?.id, block.uuid);
-      }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [block, node, executeCode, codeExecutionEnvironment],
   );
+
+  const commands = useMemo(() => ({
+    executeCode: {
+      handler: (event: any) => {
+        submitCodeExecution(event);
+      },
+      predicate: { key: KeyEnum.ENTER, metaKey: true },
+    },
+  }), [submitCodeExecution]);
 
   function updateBlock(event: any, key: string, value: any, opts?: any) {
     const id = event.currentTarget.id;
@@ -564,9 +635,13 @@ function BlockNode(
   }
 
   function closeOutput(callback?: () => void) {
-    delete handleOnMessageRef.current?.[outputRef?.current?.id];
+    hideLinesToOutput();
+
+    delete handleOnMessageRef.current?.[outputNodeRef?.current?.id];
     outputRootRef?.current && outputRootRef?.current?.unmount();
+
     outputRootRef.current = null;
+    outputNodeRef.current = null;
 
     if (callback) {
       callback();
@@ -576,11 +651,13 @@ function BlockNode(
   }
 
   function closeEditorApp(callback?: () => void) {
-    delete handleOnMessageRef.current?.[appRef?.current?.id];
-    delete handleOnMessageRef.current?.[`${appRef?.current?.id}/output`];
+    hideLinesToOutput({ editorOnly: true });
+
+    delete handleOnMessageRef.current?.[appNodeRef?.current?.id];
+    delete handleOnMessageRef.current?.[`${appNodeRef?.current?.id}/output`];
     appRootRef?.current && appRootRef?.current?.unmount();
 
-    appNodeRef.current = null;
+    appMountRef.current = null;
     appRootRef.current = null;
 
     if (callback) {
@@ -591,9 +668,12 @@ function BlockNode(
 
     setApps(prev => {
       const data = { ...prev };
-      delete data[appRef?.current?.id];
+      delete data[appNodeRef?.current?.id];
       return data;
     });
+
+    // DO THIS LAST
+    appOpenRef.current = false;
   }
 
   function renderOutputPortalContent() {
@@ -662,7 +742,7 @@ function BlockNode(
   }
 
   function renderOutput(mountRef: React.RefObject<HTMLElement>, outputNode: OutputNodeType) {
-    outputRef.current = outputNode;
+    outputNodeRef.current = outputNode;
     outputRootRef.current = createRoot(mountRef.current);
     outputRootRef.current.render(
       <ContextProvider theme={themeContext}>
@@ -702,8 +782,8 @@ function BlockNode(
       fileRef?: React.MutableRefObject<FileType>;
     },
   ) {
-    appRef.current = appNode;
-    appNodeRef.current = mountRef;
+    appNodeRef.current = appNode;
+    appMountRef.current = mountRef;
 
     appRootRef.current = createRoot(mountRef.current);
     appRootRef.current.render(
@@ -728,9 +808,11 @@ function BlockNode(
       ...prev,
       [appNode.id]: {
         ...appNode,
-        ref: appNodeRef.current,
+        ref: appMountRef.current,
       },
     }));
+
+    appOpenRef.current = true;
   }
 
   function launchOutput(channel: string, callback?: () => void) {
@@ -738,7 +820,7 @@ function BlockNode(
       callback && callback?.();
     } else {
       showOutput(
-        channel,
+        { uuid: channel },
         (outputNode: OutputNodeType, mountRef: React.RefObject<HTMLDivElement>) => {
           renderOutput(mountRef, outputNode);
           callback && callback?.();
@@ -895,9 +977,7 @@ function BlockNode(
                 Icon: Lightning,
                 onClick: (event: ClientEventType) => {
                   event?.preventDefault();
-                  submitCodeExecution(event as any, {
-                    openOutput: true,
-                  });
+                  submitCodeExecution(event as any);
                   removeContextMenu(event);
                 },
                 uuid: 'Execute code',
@@ -943,6 +1023,7 @@ function BlockNode(
     >
       <BlockNodeComponent
         {...rest}
+        commands={commands}
         apps={apps}
         block={block}
         buildContextMenuItemsForGroupBlock={buildContextMenuItemsForGroupBlock}
@@ -955,11 +1036,7 @@ function BlockNode(
         loadingKernelMutation={loadingKernelMutation}
         node={node}
         openEditor={launchEditorApp}
-        submitCodeExecution={event =>
-          submitCodeExecution(event, {
-            openOutput: true,
-          })
-        }
+        submitCodeExecution={submitCodeExecution}
         teleportIntoBlock={teleportIntoBlock}
         timerStatusRef={timerStatusRef}
         updateBlock={updateBlock}

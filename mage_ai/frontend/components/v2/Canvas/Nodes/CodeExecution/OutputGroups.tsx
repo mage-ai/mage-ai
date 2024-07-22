@@ -92,7 +92,7 @@ const OutputGroups: React.FC<OutputGroupsProps> = ({
     resultsRootRef.current ||= createRoot(resultsMountRef.current);
     resultsRootRef.current.render(
       <ContextProvider theme={theme as any}>
-        {!hideTimer && executingRef.current && <Tag right statusVariant timer top />}
+        {/* {!hideTimer && executingRef.current && <Tag right statusVariant timer top />} */}
 
         {keysRef.current?.map((mrUUID: string, idx: number) => {
           const last = idx === keysRef.current.length - 1;
@@ -271,6 +271,7 @@ const OutputGroups: React.FC<OutputGroupsProps> = ({
       clearTimeout(tss)
       timeoutRef.current = null;
       timeoutScrollRef.current = null;
+      executingRef.current = false;
     }
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
