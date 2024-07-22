@@ -45,6 +45,7 @@ ExecutionOutputPolicy.allow_query(
     scopes=[OauthScope.CLIENT_PRIVATE],
 )
 
+
 ExecutionOutputPolicy.allow_write(
     ['all'],
     condition=lambda policy: policy.has_at_least_editor_role_and_pipeline_edit_access(),

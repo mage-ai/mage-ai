@@ -30,8 +30,6 @@ class ExecutionOutputResource(GenericResource):
                 **dict(message='Namespace query parameter is required'),
             })
 
-        print(meta, meta.get(MetaKey.LIMIT))
-
         outputs = await OutputManager.load_with_messages(
             remove_base_repo_directory_name(path),
             namespace,

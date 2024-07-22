@@ -1,4 +1,6 @@
-import { createRoot } from 'react-dom/client';
+import { createRoot, Root } from 'react-dom/client';
+import { EventEnum } from '@mana/events/enums';
+import useCustomEventHandler from '@mana/events/useCustomEventHandler';
 import { ThemeContext } from 'styled-components';
 import ContextProvider from '@context/v2/ContextProvider';
 import EventStreamType, {
@@ -25,16 +27,17 @@ import { objectSize } from '@utils/hash';
 export type OutputGroupsType = {
   handleContextMenu?: (
     event: React.MouseEvent<HTMLDivElement>,
-    messageRequestUUID?: string,
-    results?: ExecutionResultType[],
-    executionOutput?: ExecutionOutputType,
-    resultElementRefs?: React.MutableRefObject<Record<string, React.MutableRefObject<HTMLDivElement>>>,
+    executionOutput: ExecutionOutputType,
+    opts?: {
+      onDelete: (xo: ExecutionOutputType) => void;
+      onDeleteAll: () => void;
+    },
   ) => void;
   onMount?: (consumerID: string, callback?: () => void) => void;
   setHandleOnMessage?: (consumerID: string, handler: (event: EventStreamType) => void) => void;
-  setResultMappingUpdate?: (
+  setExecutionOutputsUpdate?: (
     consumerID: string,
-    handler: (resultMapping: Record<string, ExecutionResultType>) => void,
+    handler: (mapping: Record<string, ExecutionOutputType>) => void,
   ) => void;
 };
 
@@ -58,25 +61,25 @@ const OutputGroups: React.FC<OutputGroupsProps> = ({
   onlyShowWithContent,
   role,
   setHandleOnMessage,
-  setResultMappingUpdate,
+  setExecutionOutputsUpdate,
   styles,
 }: OutputGroupsProps) => {
   const mutants = useMutate({ resource: 'execution_outputs' });
   const theme = useContext(ThemeContext);
 
-  const resultsMountRef = useRef(null);
-  const resultsRootRef = useRef(null);
+  const outputMountRef = useRef(null);
+  const resultRootsRef = useRef<Record<string, {
+    node: Element;
+    root: Root;
+  }>>({});
+
   const containerRef = useRef<HTMLDivElement>(null);
   const resultElementRefs = useRef<Record<string, React.MutableRefObject<HTMLDivElement>>>({});
 
   const scrollableDivRef = useRef<HTMLDivElement>(null);
   const statusRef = useRef<HTMLElement>(null);
-  const resultsQueueRef = useRef<ExecutionResultType[]>([]);
-  const queueIndexRef = useRef<number>(0);
   const timeoutRef = useRef(null);
   const timeoutScrollRef = useRef(null);
-  const resultsGroupedByMessageRequestUUIDRef = useRef<Record<string, ExecutionResultType[]>>({});
-  const keysRef = useRef<string[]>([]);
 
   const scrollDown = useCallback((instant?: boolean) => {
     if (instant && scrollableDivRef?.current) {
@@ -89,7 +92,6 @@ const OutputGroups: React.FC<OutputGroupsProps> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const resultMappingRef = useRef<Record<string, ExecutionResultType>>({});
   const executionOutputMappingRef = useRef<Record<string, ExecutionOutputType>>({});
   const executingRef = useRef<boolean>(false);
 
@@ -100,21 +102,8 @@ const OutputGroups: React.FC<OutputGroupsProps> = ({
         onSuccess: ({ data }) => {
           const xo = data?.execution_output;
 
-          executionOutputMappingRef.current = {
-            ...executionOutputMappingRef.current,
-            [xo.uuid]: xo,
-          };
+          executionOutputMappingRef.current[xo.uuid] = xo;
           renderResults();
-
-          const key = keysRef.current?.[keysRef.current?.length - 1];
-          const results = resultsGroupedByMessageRequestUUIDRef.current?.[key];
-          const ids = results?.map(r => String(r.process?.message_request_uuid)) ?? [];
-
-          if (ids.includes(key)) {
-            timeoutScrollRef.current = setTimeout(() => {
-              scrollDown(true);
-            }, 1000);
-          }
 
           if (opts?.onSuccess) {
             opts.onSuccess(xo);
@@ -126,151 +115,140 @@ const OutputGroups: React.FC<OutputGroupsProps> = ({
     [mutants.detail],
   );
 
+  const contextMenuProps = useMemo(() => ({
+    onDelete: (xo) => {
+      resultRootsRef.current[xo.uuid]?.root?.render(null);
+      resultRootsRef.current[xo.uuid]?.root?.unmount();
+      resultRootsRef.current[xo.uuid]?.node?.remove();
+      delete resultRootsRef.current[xo.uuid];
+      delete executionOutputMappingRef.current[xo.uuid];
+    },
+    onDeleteAll: () => {
+      Object.values(resultRootsRef.current ?? {})?.forEach(({
+        node,
+        root,
+      }) => {
+        root?.render(null);
+        root?.unmount();
+        node?.remove();
+      });
+
+      executionOutputMappingRef.current = {};
+      resultRootsRef.current = {};
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }), []);
+
   function renderResults(opts?: { executing?: boolean }) {
-    containerRef?.current?.classList?.remove(stylesOutput.hide);
+    const xos = getExecutionOutputs(true);
+    const xosn = xos?.length ?? 0;
 
-    resultsRootRef.current ||= createRoot(resultsMountRef.current);
-    resultsRootRef.current.render(
-      <ContextProvider theme={theme as any}>
-        {/* {!hideTimer && executingRef.current && <Tag right statusVariant timer top />} */}
+    xos?.forEach((xo: ExecutionOutputType, idx: number) => {
+      if (resultRootsRef?.current?.[xo.uuid]) return;
 
-        {keysRef.current?.map((mrUUID: string, idx: number) => {
-          const last = idx === keysRef.current.length - 1;
+      const node = document.createElement('div');
+      outputMountRef.current.appendChild(node);
 
-          resultElementRefs.current[mrUUID] ||= createRef();
+      resultRootsRef.current[xo.uuid] = {
+        node,
+        root: createRoot(node),
+      };
 
-          return (
-            <ExecutionResult
-              containerRect={scrollableDivRef.current?.getBoundingClientRect()}
-              executing={opts?.executing}
-              executionOutput={executionOutputMappingRef.current?.[mrUUID]}
-              fetchOutput={fetchOutput}
-              first={idx === 0}
-              handleContextMenu={(a, b, c, d) => {
-                handleContextMenu(a, b, c, d, resultElementRefs);
-              }}
-              key={mrUUID}
-              last={last}
-              messageRequestUUID={mrUUID}
-              ref={resultElementRefs.current[mrUUID]}
-              results={resultsGroupedByMessageRequestUUIDRef.current[mrUUID]}
-            />
-          );
-        })}
-
-        <Grid style={{ height: 20 }} paddingBottom={6}>
-          <Text italic monospace muted ref={statusRef} warning xsmall />
-        </Grid>
-      </ContextProvider>
-    );
+      resultRootsRef.current[xo.uuid].root.render(
+        <ContextProvider theme={theme as any}>
+          <ExecutionResult
+            containerRect={scrollableDivRef.current?.getBoundingClientRect()}
+            executing={opts?.executing}
+            executionOutput={xo}
+            fetchOutput={fetchOutput}
+            first={idx === 0}
+            handleContextMenu={(a, b) => {
+              handleContextMenu(a, b, contextMenuProps);
+            }}
+            key={xo.uuid}
+            last={idx === xosn - 1}
+            ref={resultElementRefs.current[xo.uuid]}
+          />
+        </ContextProvider>
+      );
+    });
   }
 
-  function handleResults() {
-    const results = resultsQueueRef.current.slice(
-      queueIndexRef.current, resultsQueueRef.current.length + 1);
+  const { dispatchCustomEvent } = useCustomEventHandler({
+    executionOutputMappingRef,
+  });
 
-    if (results.length === 0) return;
-
-    const result = results[results.length - 1];
-    queueIndexRef.current = resultsQueueRef.current.length;
-
-    resultMappingRef.current = {
-      ...resultMappingRef.current,
-      ...indexBy(results, (r: ExecutionResultType) => r.result_id),
+  function appendResultForOutput(result: ExecutionResultType) {
+    const uuid = result?.process?.message_request_uuid;
+    executionOutputMappingRef.current[uuid] ||= {
+      messages: [],
+      messagesMapping: {},
+      namespace: null,
+      path: null,
+      uuid: uuid,
     };
-
-    resultsGroupedByMessageRequestUUIDRef.current = groupBy(
-      Object.values(resultMappingRef.current ?? {}),
-      (result: ExecutionResultType) => result.process.message_request_uuid,
-    );
-    keysRef.current = Object.keys(resultsGroupedByMessageRequestUUIDRef.current ?? {})?.sort();
-
-    const done = executionDone({ result } as any);
-
-    if (done) {
-      resultsQueueRef.current = [];
-      queueIndexRef.current = 0;
+    if (!(result.result_id in executionOutputMappingRef.current[uuid].messagesMapping)) {
+      executionOutputMappingRef.current[uuid].messages.push(result);
+      executionOutputMappingRef.current[uuid].messagesMapping[result.result_id] = result;
     }
-    executingRef.current = !done;
+  }
 
-    if (statusRef?.current) {
-      const arr = sortByKey(
-        resultsGroupedByMessageRequestUUIDRef.current?.[result.process.message_request_uuid],
-        (r: ExecutionResultType) => r.timestamp,
-        { ascending: false },
-      );
-      const resultStatus = arr?.filter(
-        (r: ExecutionResultType) => r.type === ResultType.STATUS,
-      )?.[0];
+  function getExecutionOutputs(ascending: boolean = false): ExecutionOutputType[] {
+    return sortByKey(
+      Object.entries(executionOutputMappingRef.current ?? {}),
+      ([uuid]) => uuid,
+      { ascending },
+    ).map(([_, value]) => value);
+  }
 
-      if (done) {
-        // statusRef.current.innerText = '';
-        // statusRef.current.style.display = 'none';
-        statusRef.current.classList.add(stylesOutput.fadeOut);
+  function updateExecutionStatus(result: ExecutionResultType) {
 
-        // Don’t auto fetch outputs.
-        // const resultOutput: ExecutionResultType = arr?.find(
-        //   (r: ExecutionResultType) => ExecutionStatusEnum.SUCCESS === r.status && ResultType.OUTPUT === r.type
-        // );
-        // if (resultOutput) {
-        //   fetchOutput(resultOutput.process.message_request_uuid, {
-        //     query: {
-        //       namespace: resultOutput.metadata.namespace,
-        //       path: resultOutput.metadata.path,
-        //     },
-        //   });
-        // }
-      } else if (resultStatus) {
-        statusRef.current.classList.remove(stylesOutput.fadeOut);
-        statusRef.current.innerText =
-          `${capitalize(STATUS_DISPLAY_TEXT[resultStatus?.status] ?? resultStatus?.status)}...`;
-      }
+    const xo = executionOutputMappingRef.current[result?.process?.message_request_uuid];
+    executingRef.current = xo?.messages?.every((r) => !executionDone({ result: r } as any));
+
+    if (executingRef.current) {
+      statusRef?.current?.classList?.remove(stylesOutput.fadeOut);
+      statusRef.current.innerText =
+        `${capitalize(STATUS_DISPLAY_TEXT[result?.status] ?? result?.status)}...`;
+    } else {
+      statusRef?.current?.classList?.add(stylesOutput.fadeOut);
+      statusRef.current.innerText = '';
     }
-
-    renderResults({
-      executing: executingRef.current,
-    });
-    timeoutRef.current = null;
   }
 
   useEffect(() => {
-    setResultMappingUpdate(consumerID, (mapping) => {
-      Object.values(mapping).forEach((result) => {
-        resultsQueueRef.current.push(result);
-        if (timeoutRef.current === null) {
-          timeoutRef.current = setTimeout(handleResults, 100);
-          scrollDown(true);
-        }
-        scrollDown(true);
-      });
-      timeoutScrollRef.current = setTimeout(() => {
-        scrollDown(true);
-      }, 1000);
+    setExecutionOutputsUpdate(consumerID, (mapping: Record<string, ExecutionOutputType>) => {
+      Object.entries(mapping ?? {}).forEach(([uuid, xo]) => {
+        executionOutputMappingRef.current[uuid] = {
+          ...executionOutputMappingRef.current[uuid],
+          ...xo,
+        };
+      })
     });
 
     setHandleOnMessage(consumerID, (event: EventStreamType) => {
       const { result } = event;
 
-      resultsQueueRef.current.push(result);
-      if (timeoutRef.current === null) {
-        timeoutRef.current = setTimeout(handleResults, 10);
-        scrollDown(true);
-      }
-      timeoutScrollRef.current = setTimeout(() => {
-        scrollDown(true);
-      }, 1000);
+      appendResultForOutput(result);
+      updateExecutionStatus(result);
+      renderResults({ executing: executingRef.current });
+      dispatchCustomEvent(EventEnum.EVENT_STREAM_MESSAGE, {
+        executionOutput: executionOutputMappingRef.current[result?.process?.message_request_uuid],
+        result,
+      });
+      scrollDown(true);
     });
 
-    if (onMount) {
-      onMount?.(consumerID, () => {
-        timeoutScrollRef.current = setTimeout(() => {
-          scrollDown();
-        }, 1000);
-      });
-    } else {
+    const scroll = () => {
       timeoutScrollRef.current = setTimeout(() => {
         scrollDown();
       }, 1000);
+    };
+
+    if (onMount) {
+      onMount?.(consumerID, () => scroll());
+    } else {
+      scroll();
     }
 
     const ts = timeoutRef.current;
@@ -291,12 +269,8 @@ const OutputGroups: React.FC<OutputGroupsProps> = ({
     <div
       className={[
         stylesOutput.outputContainer,
-        onlyShowWithContent && (keysRef.current?.length ?? 0) === 0 && stylesOutput.hide,
       ].filter(Boolean).join(' ')}
-      onContextMenu={!onlyShowWithContent && objectSize(resultMappingRef?.current ?? {}) === 0
-        ? e => handleContextMenu(e, null, null, null, resultElementRefs)
-        : undefined
-      }
+      onContextMenu={e => handleContextMenu(e, null, contextMenuProps)}
       ref={containerRef}
       role={role}
       style={{
@@ -313,7 +287,11 @@ const OutputGroups: React.FC<OutputGroupsProps> = ({
         showY
         style={{ maxHeight: 600, overflow: 'auto', width: 600 }}
       >
-        <Grid ref={resultsMountRef} rowGap={16} templateRows="min-content" />
+        <Grid ref={outputMountRef} rowGap={16} templateRows="min-content" />
+
+        <Grid style={{ height: 20 }} paddingBottom={6}>
+          <Text italic monospace muted ref={statusRef} warning xsmall />
+        </Grid>
       </Scrollbar>
     </div>
   );

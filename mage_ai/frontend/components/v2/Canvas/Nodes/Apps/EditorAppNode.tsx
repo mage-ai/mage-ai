@@ -228,8 +228,7 @@ function EditorAppNode({
             {executing && <Tag left statusVariant timer top />}
             <Button
               Icon={ip => executing ? <DeleteCircle {...ip} colorName={contrastColorName} /> : <PlayButtonFilled {...ip} colorName={contrastColorName} />}
-              backgroundcolor={!executing ? baseColor : undefined}
-              // basic
+              backgroundcolor={!executing ? baseColor : 'red'}
               bordercolor={executing ? (baseColor ?? 'gray') : 'transparent'}
               loading={loadingKernelMutation || loading}
               onClick={
@@ -430,7 +429,7 @@ function EditorAppNode({
           </Grid>
         </Grid>
 
-        {stale && (
+        {false && (
           <Grid borders padding={16}>
             <div
               style={{

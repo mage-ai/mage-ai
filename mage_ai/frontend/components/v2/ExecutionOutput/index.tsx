@@ -1,12 +1,14 @@
+import Ansi from 'ansi-to-react';
+import Badge from '@mana/elements/Badge';
+import DataTable from '@mana/components/Table/DataTable';
+import Grid from '@mana/components/Grid';
+import Text from '@mana/elements/Text';
 import { ExecutionOutputType, VariableTypeEnum } from '@interfaces/CodeExecutionType';
 import { SCROLLBAR_TRACK_WIDTH } from '@mana/themes/scrollbars';
-import DataTable from '@mana/components/Table/DataTable';
-import { useMemo } from 'react';
-import Ansi from 'ansi-to-react';
-import Text from '@mana/elements/Text';
-import { isObject } from '@utils/hash';
 import { countOccurrences, sortByKey } from '@utils/array';
-import { isJsonString } from '@utils/string';
+import { isJsonString, pluralize } from '@utils/string';
+import { isObject } from '@utils/hash';
+import { useMemo } from 'react';
 
 interface ExecutionOutputProps {
   containerRect: DOMRect;
@@ -184,8 +186,59 @@ export default function ExecutionOutput({
     });
   }, [containerRect, executionOutput]);
 
+  const {
+    columns,
+    rows,
+  } = useMemo(() => {
+    let columns = null;
+    let rows = null;
+
+    output?.forEach((o) => {
+      o?.statistics?.forEach((s) => {
+        if ('original_column_count' in s) {
+          columns = columns === null ? 0 : columns;
+          columns += s?.original_column_count ?? 0;
+        }
+
+        if ('original_row_count' in s) {
+          rows = rows === null ? 0 : rows;
+          rows += s?.original_row_count ?? 0;
+        }
+      });
+    });
+
+    return {
+      columns,
+      rows,
+    };
+  }, [output]);
+
   return (
     <div>
+      {(columns !== null || rows !== null) && (
+        <Grid columnGap={8} templateColumns="max-content" templateRow="1fr" justifyContent="start" autoFlow="column">
+          {rows !== null && (
+            <Badge
+              borderColorName="gray"
+              label={pluralize('row', rows)}
+              semibold={false}
+              secondary
+              xsmall
+            />
+          )}
+
+          {columns !== null && (
+            <Badge
+              borderColorName="gray"
+              label={pluralize('column', columns)}
+              semibold={false}
+              secondary
+              xsmall
+            />
+          )}
+        </Grid>
+      )}
+
       {outputMemo}
     </div>
   );

@@ -11,10 +11,6 @@
   box-shadow: 8px 8px 4px 8px var(--modal-box-shadow-base);
   min-width: 400px;
 
-  &.hide {
-    display: none;
-  }
-
   .fadeOut {
     opacity: 0;
     transition: opacity 0.3s ease-out;

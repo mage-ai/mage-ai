@@ -136,6 +136,7 @@ class ExecutionOutput(BaseDataClass):
     async def load_output(
         self,
         limit: Optional[int] = None,
+        statistics_only: Optional[bool] = None,
     ) -> Any:
         from mage_ai.kernels.magic.constants import ExecutionStatus, ResultType
 
@@ -176,6 +177,7 @@ class ExecutionOutput(BaseDataClass):
                 execution_partition=execution_partition,
                 include_statistics=True,
                 limit=limit,
+                statistics_only=statistics_only,
             )
 
             self.output = [

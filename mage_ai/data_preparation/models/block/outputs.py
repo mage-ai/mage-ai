@@ -735,6 +735,7 @@ async def get_output_data_async(
     limit: Optional[int] = None,
     read_batch_settings: Optional[BatchSettings] = None,
     read_chunks: Optional[List[ChunkKeyTypeUnion]] = None,
+    statistics_only: Optional[bool] = None,
 ) -> Union[List[Any], Tuple[List[Any], List[Any]]]:
     variable_uuids = block.get_variables_by_block(
         block_uuid=block_uuid,
@@ -755,7 +756,7 @@ async def get_output_data_async(
                 read_chunks=read_chunks,
             )
         )
-        if include_statistics:
+        if include_statistics or statistics_only:
             stats.append(
                 block.get_variable_aggregate_cache(
                     variable_uuid,
@@ -784,10 +785,22 @@ async def get_output_data_async(
             uuid=variable_object.uuid,
         )
 
-    output = await asyncio.gather(*[
-        __read(variable_object) for variable_object in variable_objects
-    ])
+    output = []
 
-    if include_statistics:
+    if statistics_only:
+        for vo in variable_objects:
+            output.append(
+                dict(
+                    data=None,
+                    uuid=vo.uuid,
+                )
+            )
+    else:
+        output = await asyncio.gather(*[
+            __read(variable_object) for variable_object in variable_objects
+        ])
+
+    if include_statistics or statistics_only:
         return output, stats
+
     return output

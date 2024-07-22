@@ -1,4 +1,5 @@
 export enum EventEnum {
+  EVENT_STREAM_MESSAGE = 'event-stream-message',
   KEYDOWN = 'keydown',
   KEYUP = 'keyup',
   MOUSEENTER = 'mouseenter',

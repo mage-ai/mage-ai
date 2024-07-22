@@ -44,9 +44,10 @@ export interface OutputType {
 }
 
 export interface ExecutionOutputType {
-  absolute_path: string;
-  environment: EnvironmentType;
+  absolute_path?: string;
+  environment?: EnvironmentType;
   messages: ExecutionResultType[];
+  messagesMapping?: Record<string, ExecutionResultType>;
   namespace: string;
   output?: OutputType[];
   path: string;

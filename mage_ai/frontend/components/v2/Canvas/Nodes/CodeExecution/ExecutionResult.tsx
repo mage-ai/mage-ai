@@ -1,4 +1,6 @@
 import { useInView } from "framer-motion"
+import { EventEnum } from '@mana/events/enums';
+import useCustomEventHandler from '@mana/events/useCustomEventHandler';
 import EventStreamType, {
   ResultType,
   ExecutionResultType,
@@ -30,11 +32,8 @@ export type ExecutionResultProps = {
   last?: boolean;
   handleContextMenu?: (
     event: React.MouseEvent<HTMLDivElement>,
-    messageRequestUUID?: string,
-    results?: ExecutionResultType[],
-    executionOutput?: ExecutionOutputType,
+    executionOutput: ExecutionOutputType,
   ) => void;
-  messageRequestUUID: string;
   fetchOutput?: (
     messageRequestUUID: string,
     opts: {
@@ -46,7 +45,6 @@ export type ExecutionResultProps = {
       };
     },
   ) => void;
-  results: ExecutionResultType[];
 };
 
 function ExecutionResult(
@@ -58,32 +56,32 @@ function ExecutionResult(
     first,
     last,
     handleContextMenu,
-    messageRequestUUID,
-    results,
   }: ExecutionResultProps,
   ref: React.ForwardedRef<HTMLDivElement>,
 ) {
-  const inViewRef = useRef<HTMLDivElement>(null);
-  const isInView = useInView(ref as any ?? inViewRef);
-  const heightRef = useRef<number>(null);
   const scrollbarInnerRef = useRef<HTMLDivElement>(null);
-
   const displayLocalTimezone = shouldDisplayLocalTimezone();
-  const resultsErrors = useMemo(
-    () => results?.filter(result => ExecutionStatusEnum.ERROR === result.status),
-    [results],
-  );
-  const success = useMemo(
-    () => results?.find(result => ExecutionStatusEnum.SUCCESS === result.status),
-    [results],
-  );
-  const hasOutput = useMemo(
-    () => results?.find(result => ResultType.OUTPUT === result.type),
-    [results],
-  );
 
-  const [executionOutput, setExecutionOutput] = useState<ExecutionOutputType>(null);
+  const [counter, setCounter] = useState<number>(0);
   const [loading, setLoading] = useState<boolean>(false);
+  const [executionOutput, setExecutionOutput] = useState<ExecutionOutputType>(executionOutputProp);
+
+  useCustomEventHandler({}, {
+    [EventEnum.EVENT_STREAM_MESSAGE]: ({ detail }: CustomEvent) => {
+      const { executionOutput: xo, result } = detail;
+      if (executionOutputProp?.uuid === xo.uuid) {
+        setCounter(Number(new Date()));
+        setExecutionOutput(xo);
+      }
+    },
+  });
+
+  const results = executionOutput?.messages ?? [];
+  const resultsErrors = results?.filter(result => ExecutionStatusEnum.ERROR === result.status);
+  const success = results?.find(result => ExecutionStatusEnum.SUCCESS === result.status);
+  const hasOutputNotLoaded = results?.some(r => ResultType.OUTPUT === r.type);
+  const hasOutput = executionOutput?.output?.some(o => o?.data);
+  const hasError = resultsErrors?.length > 0;
 
   const { id, namespace, path } = useMemo(
     () => ({
@@ -91,7 +89,6 @@ function ExecutionResult(
       ...success?.metadata,
     }),
     [success],
-
   );
 
   const getOutput = useCallback(() => {
@@ -139,73 +136,30 @@ function ExecutionResult(
     return results?.find(r => ResultType.STATUS === r.type)?.status;
   }, [results, resultsErrors, success]);
 
-  const resultsInformation = useMemo(() => results?.reduce(
-      (
-        acc: React.ReactNode[],
-        result: ExecutionResultType,
-      ) => {
-        const {
-          // data_type,
-          error,
-          // output,
-          output_text: outputText,
-          process: resultProcess,
-          result_id: resultID,
-          status: resultStatus,
-          timestamp,
-          type: resultType,
-          // uuid: resultUuid,
-        } = result;
-
-        if (ResultType.STATUS === resultType) {
-          return acc;
-        }
-
-        const {
-          // exitcode,
-          // is_alive,
-          // message,
-          message_request_uuid: groupUUID,
-          // message_uuid,
-          // pid,
-          // timestamp: processTimestamp,
-          // uuid: processUuid,
-        } = resultProcess;
-
-        return acc.concat(
-          <pre key={resultID}
-            data-index={acc?.length ?? 0}
-            data-message-request-uuid={groupUUID}
-            data-timestamp={displayLocalOrUtcTime(
-            moment(timestamp).format(DATE_FORMAT_LONG_MS),
-            displayLocalTimezone,
-            DATE_FORMAT_LONG_MS,
-          )}>
-            {outputText}
-          </pre>
-        );
-      }, [],
-    ), [displayLocalTimezone, executionOutput, getOutput, results, status],
-  );
+  const resultsDisplay = results?.filter(r => r?.output ?? r?.output_text);
+  const resultsDisplayMemo = useMemo(() => resultsDisplay?.map(({
+    output_text: outputText,
+    process: {
+      message_request_uuid: groupUUID,
+    },
+    result_id: resultID,
+    status: resultStatus,
+    timestamp,
+    type: resultType,
+  }, idx) => (
+    <pre key={resultID}
+      data-index={idx}
+      data-message-request-uuid={groupUUID}
+      data-timestamp={displayLocalOrUtcTime(
+      moment(timestamp).format(DATE_FORMAT_LONG_MS),
+      displayLocalTimezone,
+      DATE_FORMAT_LONG_MS,
+    )}>
+      {outputText}
+    </pre>
+  )), [displayLocalTimezone, resultsDisplay]);
 
   const runtime = useMemo(() => (timestamps?.max ?? 0) - (timestamps?.min ?? 0), [timestamps]);
-
-  useEffect(() => {
-    if (!executing) {
-      heightRef.current = Math.min(
-        heightRef.current ?? Infinity,
-        scrollbarInnerRef?.current?.getBoundingClientRect()?.height ?? Infinity,
-        isInView ? inViewRef?.current?.getBoundingClientRect()?.height : Infinity,
-        20 * (resultsInformation?.length ?? 0),
-      );
-    }
-  }, [executing, isInView, resultsInformation]);
-
-  useEffect(() => {
-    if (executionOutputProp && !executionOutput) {
-      setExecutionOutput(executionOutputProp);
-    }
-  }, [executionOutput, executionOutputProp]);
 
   const errorMemo = useMemo(() => {
     return resultsErrors && resultsErrors?.map(({ error, result_id: resultID }) => {
@@ -254,14 +208,15 @@ function ExecutionResult(
 
   return (
     <div
+      key={counter}
       onContextMenu={
         handleContextMenu
-          ? event => handleContextMenu(event, messageRequestUUID, results, executionOutput)
+          ? event => handleContextMenu(event, executionOutput)
           : undefined
       }
-      ref={inViewRef}
+      ref={ref}
     >
-      {(resultsInformation?.length > 0 || (!executionOutput && resultsErrors?.length > 0) || (!executionOutput && hasOutput)) && (
+      {(resultsDisplay?.length > 0 || hasError || (hasOutput || hasOutputNotLoaded)) && (
         <Grid
           paddingBottom={last ? 6 : 0}
           paddingTop={first ? 6 : 0}
@@ -281,52 +236,48 @@ function ExecutionResult(
             </Text>
           </Grid>
 
-          {(resultsInformation?.length > 0 || (!executionOutput && resultsErrors?.length > 0) || (!executionOutput && hasOutput)) && (
-            <Scrollbar
-              autoHorizontalPadding
+          <Scrollbar
+            autoHorizontalPadding
+            className={[
+              styles.executionOutputGroup,
+            ].filter(Boolean).join(' ')}
+            hideY
+            hideYscrollbar
+            innerRef={scrollbarInnerRef}
+          >
+            <Grid
               className={[
-                styles.executionOutputGroup,
-                styles[status],
+                styles.executionOutputGroupContainer,
               ].filter(Boolean).join(' ')}
-              hideY
-              hideYscrollbar
-              innerRef={scrollbarInnerRef}
-              style={{
-                minHeight: heightRef.current,
-              }}
             >
-              <Grid
-                className={[
-                  styles.executionOutputGroupContainer,
-                ].filter(Boolean).join(' ')}
-                style={{
-                  minHeight: hasOutput ? 32 : undefined,
-                }}
-              >
-                {resultsInformation}
+              {resultsDisplayMemo}
 
-                {hasOutput && (
-                  <Grid alignItems="center"
-                    columnGap={8}
-                    data-message-request-uuid={messageRequestUUID}
-                    templateColumns="1fr"
-                    templateRows="auto"
-                  >
-                    <Link onClick={() => getOutput()} xsmall>
-                      Load output
+              {hasOutputNotLoaded && (
+                <Grid alignItems="center"
+                  alignContent="center"
+                  columnGap={8}
+                  data-message-request-uuid={executionOutput?.uuid}
+                  templateColumns="1fr"
+                  templateRows="auto"
+                  style={{
+                    height: 20,
+                  }}
+                >
+                  {loading ? <Loading position="absolute" /> : (
+                    <Link onClick={() => getOutput()} monospace small>
+                      Load output results
                     </Link>
-                  </Grid>
-                )}
+                  )}
+                </Grid>
+              )}
 
-                {!executionOutput && errorMemo}
-              </Grid>
-            </Scrollbar>
-          )}
+              {!hasOutput && errorMemo}
+            </Grid>
+          </Scrollbar>
 
-          {executionOutput
-            && <ExecutionOutput containerRect={containerRect} executionOutput={executionOutput} />}
+          <ExecutionOutput containerRect={containerRect} executionOutput={executionOutput} />
 
-          {(executionOutput && resultsErrors?.length > 0) && (
+          {hasOutput && hasError && (
             <Scrollbar
               autoHorizontalPadding
               className={[
@@ -340,9 +291,6 @@ function ExecutionResult(
                 className={[
                   styles.executionOutputGroupContainer,
                 ].filter(Boolean).join(' ')}
-                style={{
-                  minHeight: hasOutput ? 32 : undefined,
-                }}
               >
                 {errorMemo}
               </Grid>
@@ -350,8 +298,6 @@ function ExecutionResult(
           )}
 
           <div>
-            <div style={{ height: 4 }}>{loading && <Loading position="absolute" />}</div>
-
             <Grid autoFlow="column" columnGap={8} justifyContent="space-between">
               <div />
 

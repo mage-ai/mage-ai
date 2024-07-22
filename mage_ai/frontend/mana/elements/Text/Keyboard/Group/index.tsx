@@ -27,7 +27,7 @@ function KeyboardTextGroup({ textGroup, ...props }: KeyboardTextGroupProps) {
           <Text
             {...props}
             key={`key-text-plus-${previousKeys?.length}-${keyText}-${idx1}-${idx2}`}
-            muted
+            {...(props?.colorName ? {} : { muted: true })}
           >
             +
           </Text>,

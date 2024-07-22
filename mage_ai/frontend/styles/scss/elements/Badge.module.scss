@@ -4,6 +4,7 @@
 
 .badge {
   @include backgrounds.background-colors();
+  @include borders.border-colors();
   @include borders.shared();
   @include grid.base();
 

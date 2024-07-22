@@ -114,8 +114,9 @@ function BlockNode(
   const connectionErrorRef = useRef(null);
   const connectionStatusRef = useRef<ServerConnectionStatusType>(null);
   const handleOnMessageRef = useRef<Record<string, (event: EventStreamType) => void>>({});
-  const handleResultMappingUpdateRef = useRef<
-    Record<string, (resultMapping: Record<string, ExecutionResultType>) => void>
+
+  const handleExecutionOutputsMappingUpdateRef = useRef<
+    Record<string, (mapping: Record<string, ExecutionOutputType>) => void>
   >({});
 
   const [apps, setApps] = useState<Record<string, AppNodeType>>({});
@@ -128,7 +129,7 @@ function BlockNode(
   const outputPortalRef = useRef<HTMLDivElement>(null);
   const onCloseOutputRef = useRef<() => void>(null);
   const onCloseAppRef = useRef<() => void>(null);
-  const executionResultMappingRef = useRef<Record<string, ExecutionResultType>>({});
+  const executionOutputsMappingRef = useRef<Record<string, ExecutionOutputType>>({});
   const launchOutputCallbackOnceRef = useRef<() => void>(null);
 
   const { mutations } = useContext(ModelContext);
@@ -145,7 +146,7 @@ function BlockNode(
     resource: 'execution_outputs',
   });
 
-  function setHandleOnMessage(consumerID, handler) {
+  function setHandleOnMessage(consumerID: string, handler) {
     handleOnMessageRef.current[consumerID] = handler;
   }
 
@@ -209,10 +210,11 @@ function BlockNode(
     () => ({
       handleContextMenu: (
         event: any,
-        messageRequestUUID?: string,
-        resultsInit?: ExecutionResultType[],
-        executionOutput?: ExecutionOutputType,
-        resultElementRefs?: React.MutableRefObject<Record<string, React.MutableRefObject<HTMLDivElement>>>,
+        executionOutput: ExecutionOutputType,
+        opts?: {
+          onDelete: (xo: ExecutionOutputType) => void;
+          onDeleteAll: () => void;
+        },
       ) => {
         if (event.metaKey) return;
 
@@ -229,7 +231,7 @@ function BlockNode(
               },
               uuid: 'Close output',
             },
-            ...((messageRequestUUID && resultsInit) ? [
+            ...((executionOutput?.uuid && executionOutput?.messages) ? [
               {
                 Icon: CopyV2,
                 onClick: (event2: ClientEventType) => {
@@ -240,7 +242,7 @@ function BlockNode(
                     text = JSON.stringify(executionOutput?.output, null, 2);
                   } else {
                     const results: ExecutionResultType[] = sortByKey(
-                      resultsInit ?? [],
+                      executionOutput?.messages ?? [],
                       (result: ExecutionResultType) => result?.timestamp,
                     );
                     text = results
@@ -262,7 +264,7 @@ function BlockNode(
                 onClick: (event: ClientEventType) => {
                   executionOutputs.delete.mutate({
                     event,
-                    id: messageRequestUUID,
+                    id: executionOutput?.uuid,
                     onSuccess: () => {
                       removeContextMenu(event);
                       updateOutputResults();
@@ -271,11 +273,7 @@ function BlockNode(
                         ...node?.rect,
                       });
 
-                      if (resultElementRefs?.current?.[messageRequestUUID]) {
-                        resultElementRefs.current[messageRequestUUID].current.remove();
-                        resultElementRefs.current[messageRequestUUID].current = null;
-                        delete resultElementRefs.current[messageRequestUUID];
-                      }
+                      opts?.onDelete?.(executionOutput);
 
                       animateLineRef?.current?.(outputNodeRef?.current?.id, null, { stop: true });
                     },
@@ -296,20 +294,11 @@ function BlockNode(
                 onClick: (event: ClientEventType) => {
                   executionOutputs.delete.mutate({
                     event,
-                    id: messageRequestUUID,
+                    id: executionOutput?.uuid,
                     onSuccess: () => {
                       removeContextMenu(event);
                       updateOutputResults();
-
-                      if (resultElementRefs?.current) {
-                        Object.keys(resultElementRefs.current ?? {}).forEach((key) => {
-                          resultElementRefs.current[key].current.remove();
-                          resultElementRefs.current[key].current = null;
-                          delete resultElementRefs.current[key];
-                        });
-                      }
-
-                      animateLineRef?.current?.(outputNodeRef?.current?.id, null, { stop: true });
+                      opts?.onDeleteAll?.();
                     },
                     payload: {
                       all: true,
@@ -356,8 +345,8 @@ function BlockNode(
         showLinesToOutput();
       },
       setHandleOnMessage,
-      setResultMappingUpdate: (consumerID, handler) => {
-        handleResultMappingUpdateRef.current[consumerID] = handler;
+      setExecutionOutputsUpdate: (consumerID: string, handler: (mapping: Record<string, ExecutionOutputType>) => void) => {
+        handleExecutionOutputsMappingUpdateRef.current[consumerID] = handler;
       },
     }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -429,22 +418,10 @@ function BlockNode(
     executionOutputs.list.mutate({
       onSuccess: ({ data }) => {
         const xo: ExecutionOutputType[] = data.execution_outputs ?? [];
-        executionResultMappingRef.current = xo.reduce(
-          (acc1, { messages }) => ({
-            ...acc1,
-            ...(messages ?? []).reduce(
-              (acc2, result) => ({
-                ...acc2,
-                [result.result_id]: result,
-              }),
-              {},
-            ),
-          }),
-          {},
-        );
+        executionOutputsMappingRef.current = indexBy(xo, xo => xo.uuid);
 
-        Object.values(handleResultMappingUpdateRef.current ?? {}).forEach(handler =>
-          handler(executionResultMappingRef.current ?? {}),
+        Object.values(handleExecutionOutputsMappingUpdateRef.current ?? {}).forEach(handler =>
+          handler(executionOutputsMappingRef.current ?? {}),
         );
 
         callback && callback?.();
@@ -454,6 +431,7 @@ function BlockNode(
           [codeExecutionEnvironment.type, codeExecutionEnvironment.uuid].join(osPath.sep),
         ),
         path: encodeURIComponent(fileRef.current?.path),
+        _format: 'with_output_statistics',
         _limit: 10,
         '_order_by[]': '-timestamp',
       },
@@ -526,10 +504,22 @@ function BlockNode(
     connectionStatusRef.current = status;
   }
 
+  function appendResultForOutput(result) {
+    executionOutputsMappingRef.current[result.result_id] ||= {
+      messages: [],
+      namespace: encodeURIComponent(
+        [codeExecutionEnvironment.type, codeExecutionEnvironment.uuid].join(osPath.sep),
+      ),
+      path: encodeURIComponent(fileRef.current?.path),
+      uuid: result.result_id,
+    };
+    executionOutputsMappingRef.current[result.result_id].messages.push(result);
+  }
+
   function handleSubscribe(consumerID: string) {
     handleOnMessageRef.current[consumerIDRef.current] = (event: EventStreamType) => {
       if (event?.result) {
-        executionResultMappingRef.current[event.result.result_id] = event?.result;
+        appendResultForOutput(event?.result);
       }
       const done = executionDone(event);
       setExecuting(!done);
