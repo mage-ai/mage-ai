@@ -73,13 +73,13 @@ type BlockNodeType = {
   node: NodeType;
   showApp?: (
     config: any,
-    render: (appNode: AppNodeType, mountRef: React.MutableRefObject<HTMLDivElement>) => void,
+    render: (node: any, mountRef: React.MutableRefObject<HTMLDivElement>) => void,
     remove: (callback?: () => void) => void,
     setOnRemove: (onRemove: () => void) => void,
   ) => void;
   showOutput?: (
     config: any,
-    render: (outputNode: OutputNodeType, mountRef: React.MutableRefObject<HTMLDivElement>) => void,
+    render: (node: any, mountRef: React.MutableRefObject<HTMLDivElement>) => void,
     remove: (callback?: () => void) => void,
     setOnRemove: (onRemove: () => void) => void,
   ) => void;

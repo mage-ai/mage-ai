@@ -93,6 +93,39 @@ const OutputGroups: React.FC<OutputGroupsProps> = ({
   const executionOutputMappingRef = useRef<Record<string, ExecutionOutputType>>({});
   const executingRef = useRef<boolean>(false);
 
+  const fetchOutput = useCallback(
+    (id: string, opts: any) => {
+      mutants.detail.mutate({
+        id,
+        onSuccess: ({ data }) => {
+          const xo = data?.execution_output;
+
+          executionOutputMappingRef.current = {
+            ...executionOutputMappingRef.current,
+            [xo.uuid]: xo,
+          };
+          renderResults();
+
+          const key = keysRef.current?.[keysRef.current?.length - 1];
+          const results = resultsGroupedByMessageRequestUUIDRef.current?.[key];
+          const ids = results?.map(r => String(r.process?.message_request_uuid)) ?? [];
+
+          if (ids.includes(key)) {
+            timeoutScrollRef.current = setTimeout(() => {
+              scrollDown(true);
+            }, 1000);
+          }
+
+          if (opts?.onSuccess) {
+            opts.onSuccess(xo);
+          }
+        },
+        query: opts?.query,
+      });
+    },
+    [mutants.detail],
+  );
+
   function renderResults(opts?: { executing?: boolean }) {
     containerRef?.current?.classList?.remove(stylesOutput.hide);
 
@@ -175,6 +208,7 @@ const OutputGroups: React.FC<OutputGroupsProps> = ({
         // statusRef.current.style.display = 'none';
         statusRef.current.classList.add(stylesOutput.fadeOut);
 
+        // Don’t auto fetch outputs.
         // const resultOutput: ExecutionResultType = arr?.find(
         //   (r: ExecutionResultType) => ExecutionStatusEnum.SUCCESS === r.status && ResultType.OUTPUT === r.type
         // );
@@ -198,43 +232,6 @@ const OutputGroups: React.FC<OutputGroupsProps> = ({
     });
     timeoutRef.current = null;
   }
-
-  const fetchOutput = useCallback(
-    (id: string, opts: any) => {
-      mutants.detail.mutate({
-        ...opts,
-        id,
-        onSuccess: ({ data }) => {
-          const xo = data?.execution_output;
-
-          executionOutputMappingRef.current = {
-            ...executionOutputMappingRef.current,
-            [xo.uuid]: xo,
-          };
-          renderResults();
-
-          const key = keysRef.current?.[keysRef.current?.length - 1];
-          const results = resultsGroupedByMessageRequestUUIDRef.current?.[key];
-          const ids = results?.map(r => String(r.process?.message_request_uuid)) ?? [];
-
-          if (ids.includes(key)) {
-            timeoutScrollRef.current = setTimeout(() => {
-              scrollDown(true);
-            }, 1000);
-          }
-
-          if (opts?.onSuccess) {
-            opts.onSuccess(xo);
-          }
-        },
-        query: {
-          _limit: 100,
-          ...opts?.query,
-        },
-      });
-    },
-    [mutants.detail],
-  );
 
   useEffect(() => {
     setResultMappingUpdate(consumerID, (mapping) => {
