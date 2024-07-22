@@ -1,4 +1,5 @@
 import * as osPath from 'path';
+import { newMessageRequestUUID } from '@utils/events';
 import { getLineID } from '@components/v2/Apps/PipelineCanvas/Lines/LineManagerV2';
 import { EventEnum, KeyEnum } from '@mana/events/enums';
 import { removeANSI, removASCII } from '@utils/string';
@@ -115,10 +116,6 @@ function BlockNode(
   const connectionStatusRef = useRef<ServerConnectionStatusType>(null);
   const handleOnMessageRef = useRef<Record<string, (event: EventStreamType) => void>>({});
 
-  const handleExecutionOutputsMappingUpdateRef = useRef<
-    Record<string, (mapping: Record<string, ExecutionOutputType>) => void>
-  >({});
-
   const [apps, setApps] = useState<Record<string, AppNodeType>>({});
   const appNodeRef = useRef<AppNodeType>(null);
   const appMountRef = useRef<React.RefObject<HTMLElement>>(null);
@@ -126,10 +123,8 @@ function BlockNode(
   const outputNodeRef = useRef<OutputNodeType>(null);
   const appRootRef = useRef<Root>(null);
   const outputRootRef = useRef<Root>(null);
-  const outputPortalRef = useRef<HTMLDivElement>(null);
   const onCloseOutputRef = useRef<() => void>(null);
   const onCloseAppRef = useRef<() => void>(null);
-  const executionOutputsMappingRef = useRef<Record<string, ExecutionOutputType>>({});
   const launchOutputCallbackOnceRef = useRef<() => void>(null);
 
   const { mutations } = useContext(ModelContext);
@@ -267,7 +262,6 @@ function BlockNode(
                     id: executionOutput?.uuid,
                     onSuccess: () => {
                       removeContextMenu(event);
-                      updateOutputResults();
                       renderLineRef?.current?.({
                         ...dragRef?.current?.getBoundingClientRect(),
                         ...node?.rect,
@@ -297,7 +291,6 @@ function BlockNode(
                     id: executionOutput?.uuid,
                     onSuccess: () => {
                       removeContextMenu(event);
-                      updateOutputResults();
                       opts?.onDeleteAll?.();
                     },
                     payload: {
@@ -339,15 +332,7 @@ function BlockNode(
           },
         );
       },
-      onMount: (id: string, callback?: () => void) => {
-        updateOutputResults(callback);
-
-        showLinesToOutput();
-      },
       setHandleOnMessage,
-      setExecutionOutputsUpdate: (consumerID: string, handler: (mapping: Record<string, ExecutionOutputType>) => void) => {
-        handleExecutionOutputsMappingUpdateRef.current[consumerID] = handler;
-      },
     }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [handleContextMenu, removeContextMenu, executionOutputs, codeExecutionEnvironment],
@@ -413,30 +398,6 @@ function BlockNode(
       },
     },
   );
-
-  function updateOutputResults(callback?: () => void) {
-    executionOutputs.list.mutate({
-      onSuccess: ({ data }) => {
-        const xo: ExecutionOutputType[] = data.execution_outputs ?? [];
-        executionOutputsMappingRef.current = indexBy(xo, xo => xo.uuid);
-
-        Object.values(handleExecutionOutputsMappingUpdateRef.current ?? {}).forEach(handler =>
-          handler(executionOutputsMappingRef.current ?? {}),
-        );
-
-        callback && callback?.();
-      },
-      query: {
-        namespace: encodeURIComponent(
-          [codeExecutionEnvironment.type, codeExecutionEnvironment.uuid].join(osPath.sep),
-        ),
-        path: encodeURIComponent(fileRef.current?.path),
-        _format: 'with_output_statistics',
-        _limit: 10,
-        '_order_by[]': '-timestamp',
-      },
-    });
-  }
 
   const interruptExecution = useCallback(
     (opts?: { onError?: () => void; onSuccess?: () => void }) => {
@@ -504,23 +465,8 @@ function BlockNode(
     connectionStatusRef.current = status;
   }
 
-  function appendResultForOutput(result) {
-    executionOutputsMappingRef.current[result.result_id] ||= {
-      messages: [],
-      namespace: encodeURIComponent(
-        [codeExecutionEnvironment.type, codeExecutionEnvironment.uuid].join(osPath.sep),
-      ),
-      path: encodeURIComponent(fileRef.current?.path),
-      uuid: result.result_id,
-    };
-    executionOutputsMappingRef.current[result.result_id].messages.push(result);
-  }
-
   function handleSubscribe(consumerID: string) {
     handleOnMessageRef.current[consumerIDRef.current] = (event: EventStreamType) => {
-      if (event?.result) {
-        appendResultForOutput(event?.result);
-      }
       const done = executionDone(event);
       setExecuting(!done);
       animateLineRef?.current?.(outputNodeRef?.current?.id, null, { stop: done });
@@ -545,6 +491,8 @@ function BlockNode(
         onSuccess?: () => void;
       },
     ) => {
+      const messageRequestUUID = newMessageRequestUUID();
+
       handleSubscribe('BlockNode');
 
       const execute = () => {
@@ -558,6 +506,7 @@ function BlockNode(
           message,
           {
             environment: codeExecutionEnvironment,
+            message_request_uuid: messageRequestUUID,
             output_path: file?.path ?? null,
             source: block.uuid,
           },
@@ -578,10 +527,14 @@ function BlockNode(
 
       if (!outputRootRef.current) {
         launchOutputCallbackOnceRef.current = () => {
+          console.log('execute once')
           getFile(event, execute);
         };
 
-        launchOutput(channel, () => {
+        launchOutput({
+          message_request_uuid: messageRequestUUID,
+          uuid: channel,
+        }, () => {
           if (launchOutputCallbackOnceRef.current) {
             launchOutputCallbackOnceRef.current();
           }
@@ -750,9 +703,15 @@ function BlockNode(
     );
   }
 
-  function renderOutput(mountRef: React.RefObject<HTMLElement>, outputNode: OutputNodeType) {
+  function renderOutput(
+    mountRef: React.RefObject<HTMLElement>,
+    outputNode: OutputNodeType,
+    uuid?: string,
+    callback?: () => void,
+  ) {
     outputNodeRef.current = outputNode;
     outputRootRef.current = createRoot(mountRef.current);
+
     outputRootRef.current.render(
       <ContextProvider theme={themeContext}>
         <div
@@ -770,6 +729,18 @@ function BlockNode(
           <OutputGroups
             {...outputGroupsProps}
             consumerID={outputNode.id}
+            executionOutput={{
+              messages: [],
+              namespace: encodeURIComponent(
+                [codeExecutionEnvironment.type, codeExecutionEnvironment.uuid].join(osPath.sep),
+              ),
+              path: encodeURIComponent(fileRef.current?.path),
+              uuid,
+            }}
+            onMount={() => {
+              showLinesToOutput();
+              callback && callback();
+            }}
             role={ElementRoleEnum.CONTENT}
             styles={{
               maxWidth: 800,
@@ -824,15 +795,17 @@ function BlockNode(
     appOpenRef.current = true;
   }
 
-  function launchOutput(channel: string, callback?: () => void) {
+  function launchOutput(output?: {
+    message_request_uuid: string;
+    uuid: string;
+  }, callback?: () => void) {
     if (outputRootRef.current) {
       callback && callback?.();
     } else {
       showOutput(
-        { uuid: channel },
+        output,
         (outputNode: OutputNodeType, mountRef: React.RefObject<HTMLDivElement>) => {
-          renderOutput(mountRef, outputNode);
-          callback && callback?.();
+          renderOutput(mountRef, outputNode, output?.message_request_uuid, callback);
         },
         closeOutput,
         onRemove => onCloseOutputRef.current = onRemove,

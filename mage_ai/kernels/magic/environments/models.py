@@ -27,6 +27,7 @@ from mage_ai.shared.files import (
     safe_delete_dir_async,
     write_async,
 )
+from mage_ai.shared.hash import ignore_keys_with_blank_values
 from mage_ai.shared.models import BaseDataClass
 from mage_ai.shared.path_fixer import remove_base_repo_directory_name
 
@@ -104,6 +105,14 @@ class VariableOutput(BaseDataClass):
         self.serialize_attribute_enum('type', VariableType)
         self.serialize_attribute_enums('types', VariableType)
         self.serialize_attribute_class('statistics', VariableAggregateCache)
+
+    def to_dict(self, *args, **kwargs) -> Dict:
+        data = super().to_dict(*args, **kwargs)
+        if 'statistics' in data:
+            data['statistics'] = [
+                ignore_keys_with_blank_values(stats) for stats in data['statistics'] if stats
+            ]
+        return data
 
 
 @dataclass

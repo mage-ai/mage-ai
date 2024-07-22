@@ -11,6 +11,7 @@ class ErrorDetails(BaseDataClass):
     code_context: Optional[List[str]] = None
     code_context_formatted: Optional[List[str]] = None
     error: Optional[Any] = None
+    errors: Optional[List[Any]] = None
     exception: Optional[str] = None
     line_number: Optional[int] = None
     message: Optional[str] = None

@@ -23,6 +23,7 @@ import { formatDurationFromEpoch, isNumeric } from '@utils/string';
 import { shouldDisplayLocalTimezone } from '@components/settings/workspace/utils';
 import { ExecutionOutputType } from '@interfaces/CodeExecutionType';
 import Loading from '@mana/components/Loading';
+import { unique } from "@utils/array";
 
 export type ExecutionResultProps = {
   containerRect?: DOMRect;
@@ -76,20 +77,17 @@ function ExecutionResult(
     },
   });
 
-  const results = executionOutput?.messages ?? [];
+  const results = unique(executionOutput?.messages ?? [], r => r.result_id);
   const resultsErrors = results?.filter(result => ExecutionStatusEnum.ERROR === result.status);
   const success = results?.find(result => ExecutionStatusEnum.SUCCESS === result.status);
   const hasOutputNotLoaded = results?.some(r => ResultType.OUTPUT === r.type);
   const hasOutput = executionOutput?.output?.some(o => o?.data);
   const hasError = resultsErrors?.length > 0;
 
-  const { id, namespace, path } = useMemo(
-    () => ({
-      id: success?.process?.message_request_uuid,
-      ...success?.metadata,
-    }),
-    [success],
-  );
+  const { id, namespace, path } = {
+    id: success?.process?.message_request_uuid,
+    ...success?.metadata,
+  };
 
   const getOutput = useCallback(() => {
     setLoading(true);
@@ -109,35 +107,19 @@ function ExecutionResult(
     });
   }, [fetchOutput, id, namespace, path]);
 
-  const timestamps = useMemo(
-    () =>
-      results?.reduce(
-        (acc, result) => ({
-          max: acc.max === null ? result.timestamp : Math.max(acc.max, result.timestamp),
-          min: acc.min === null ? result.timestamp : Math.min(acc.min, result.timestamp),
-        }),
-        {
-          max: null,
-          min: null,
-        },
-      ),
-    [results],
+  const timestamps = results?.reduce(
+    (acc, result) => ({
+      max: acc.max === null ? result.timestamp : Math.max(acc.max, result.timestamp),
+      min: acc.min === null ? result.timestamp : Math.min(acc.min, result.timestamp),
+    }),
+    {
+      max: null,
+      min: null,
+    },
   );
 
-  const status = useMemo(() => {
-    if (resultsErrors?.length > 0) {
-      return ExecutionStatusEnum.ERROR;
-    }
-
-    if (success) {
-      return ExecutionStatusEnum.SUCCESS;
-    }
-
-    return results?.find(r => ResultType.STATUS === r.type)?.status;
-  }, [results, resultsErrors, success]);
-
   const resultsDisplay = results?.filter(r => r?.output ?? r?.output_text);
-  const resultsDisplayMemo = useMemo(() => resultsDisplay?.map(({
+  const resultsDisplayMemo = resultsDisplay?.map(({
     output_text: outputText,
     process: {
       message_request_uuid: groupUUID,
@@ -157,54 +139,52 @@ function ExecutionResult(
     )}>
       {outputText}
     </pre>
-  )), [displayLocalTimezone, resultsDisplay]);
+  ));
 
-  const runtime = useMemo(() => (timestamps?.max ?? 0) - (timestamps?.min ?? 0), [timestamps]);
+  const runtime = (timestamps?.max ?? 0) - (timestamps?.min ?? 0);
 
-  const errorMemo = useMemo(() => {
-    return resultsErrors && resultsErrors?.map(({ error, result_id: resultID }) => {
-      const {
-        code_context_formatted: stacktrace,
-        message_formatted: message,
-        type,
-      } = error ?? {};
+  const errorMemo = resultsErrors && resultsErrors?.map(({ error, result_id: resultID }) => {
+    const {
+      code_context_formatted: stacktrace,
+      message_formatted: message,
+      type,
+    } = error ?? {};
 
-      return (
-        <Grid key={resultID} rowGap={12} templateColumns="auto" templateRows="auto auto">
-          <Grid key={resultID} rowGap={6} templateColumns="auto" templateRows="auto auto">
-            <Text monospace secondary semibold small>
-              {/* ValueError */}
-              <Ansi>{String(type)}</Ansi>
-            </Text>
+    return (
+      <Grid key={resultID} rowGap={12} templateColumns="auto" templateRows="auto auto">
+        <Grid key={resultID} rowGap={6} templateColumns="auto" templateRows="auto auto">
+          <Text monospace secondary semibold small>
+            {/* ValueError */}
+            <Ansi>{String(type)}</Ansi>
+          </Text>
 
-            {/* too many values to unpack (expected 4) */}
-            {[message].map(
-              (val, idx) =>
-                val && (
-                  <Text key={`${resultID}-${val}-${idx}`} monospace small>
-                    <Ansi>{String(val)}</Ansi>
-                  </Text>
-                ),
-            )}
-          </Grid>
-
-          {stacktrace?.length >= 1 && (
-            <pre
-              style={{
-                whiteSpace: 'break-spaces',
-              }}
-            >
-              <Text inline monospace small>
-                <Ansi>
-                  {stacktrace?.join('\n')}
-                </Ansi>
-              </Text>
-            </pre>
+          {/* too many values to unpack (expected 4) */}
+          {[message].map(
+            (val, idx) =>
+              val && (
+                <Text key={`${resultID}-${val}-${idx}`} monospace small>
+                  <Ansi>{String(val)}</Ansi>
+                </Text>
+              ),
           )}
         </Grid>
-      );
-    });
-  }, [resultsErrors]);
+
+        {stacktrace?.length >= 1 && (
+          <pre
+            style={{
+              whiteSpace: 'break-spaces',
+            }}
+          >
+            <Text inline monospace small>
+              <Ansi>
+                {stacktrace?.join('\n')}
+              </Ansi>
+            </Text>
+          </pre>
+        )}
+      </Grid>
+    );
+  });
 
   return (
     <div

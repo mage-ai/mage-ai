@@ -186,21 +186,18 @@ export default function ExecutionOutput({
     });
   }, [containerRect, executionOutput]);
 
-  const {
-    columns,
-    rows,
-  } = useMemo(() => {
+  const stats = useMemo(() => {
     let columns = null;
     let rows = null;
 
     output?.forEach((o) => {
       o?.statistics?.forEach((s) => {
-        if ('original_column_count' in s) {
+        if ((s.original_column_count ?? null) !== null) {
           columns = columns === null ? 0 : columns;
           columns += s?.original_column_count ?? 0;
         }
 
-        if ('original_row_count' in s) {
+        if ((s.original_row_count ?? null) !== null) {
           rows = rows === null ? 0 : rows;
           rows += s?.original_row_count ?? 0;
         }
@@ -215,22 +212,22 @@ export default function ExecutionOutput({
 
   return (
     <div>
-      {(columns !== null || rows !== null) && (
+      {(stats.columns !== null || stats.rows !== null) && (
         <Grid columnGap={8} templateColumns="max-content" templateRow="1fr" justifyContent="start" autoFlow="column">
-          {rows !== null && (
+          {stats.rows !== null && (
             <Badge
               borderColorName="gray"
-              label={pluralize('row', rows)}
+              label={pluralize('row', stats.rows)}
               semibold={false}
               secondary
               xsmall
             />
           )}
 
-          {columns !== null && (
+          {stats.columns !== null && (
             <Badge
               borderColorName="gray"
-              label={pluralize('column', columns)}
+              label={pluralize('column', stats.columns)}
               semibold={false}
               secondary
               xsmall

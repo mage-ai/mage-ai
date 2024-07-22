@@ -33,17 +33,14 @@ export type OutputGroupsType = {
       onDeleteAll: () => void;
     },
   ) => void;
-  onMount?: (consumerID: string, callback?: () => void) => void;
+  onMount?: () => void;
   setHandleOnMessage?: (consumerID: string, handler: (event: EventStreamType) => void) => void;
-  setExecutionOutputsUpdate?: (
-    consumerID: string,
-    handler: (mapping: Record<string, ExecutionOutputType>) => void,
-  ) => void;
 };
 
 type OutputGroupsProps = {
   children?: React.ReactNode;
   consumerID: string;
+  executionOutput?: ExecutionOutputType;
   hideTimer?: boolean;
   minHeight?: number | string;
   onlyShowWithContent?: boolean;
@@ -54,16 +51,15 @@ type OutputGroupsProps = {
 const OutputGroups: React.FC<OutputGroupsProps> = ({
   children,
   consumerID,
+  executionOutput,
   handleContextMenu,
-  hideTimer,
   minHeight = 200,
   onMount,
-  onlyShowWithContent,
   role,
   setHandleOnMessage,
-  setExecutionOutputsUpdate,
   styles,
 }: OutputGroupsProps) => {
+  const phaseRef = useRef<number>(0);
   const mutants = useMutate({ resource: 'execution_outputs' });
   const theme = useContext(ThemeContext);
 
@@ -75,6 +71,7 @@ const OutputGroups: React.FC<OutputGroupsProps> = ({
 
   const containerRef = useRef<HTMLDivElement>(null);
   const resultElementRefs = useRef<Record<string, React.MutableRefObject<HTMLDivElement>>>({});
+  const resultsDeliveredRefs = useRef<Record<string, ExecutionResultType>>({});
 
   const scrollableDivRef = useRef<HTMLDivElement>(null);
   const statusRef = useRef<HTMLElement>(null);
@@ -93,6 +90,7 @@ const OutputGroups: React.FC<OutputGroupsProps> = ({
   }, []);
 
   const executionOutputMappingRef = useRef<Record<string, ExecutionOutputType>>({});
+
   const executingRef = useRef<boolean>(false);
 
   const fetchOutput = useCallback(
@@ -180,17 +178,15 @@ const OutputGroups: React.FC<OutputGroupsProps> = ({
 
   function appendResultForOutput(result: ExecutionResultType) {
     const uuid = result?.process?.message_request_uuid;
+
     executionOutputMappingRef.current[uuid] ||= {
       messages: [],
-      messagesMapping: {},
       namespace: null,
       path: null,
-      uuid: uuid,
+      uuid,
     };
-    if (!(result.result_id in executionOutputMappingRef.current[uuid].messagesMapping)) {
-      executionOutputMappingRef.current[uuid].messages.push(result);
-      executionOutputMappingRef.current[uuid].messagesMapping[result.result_id] = result;
-    }
+
+    executionOutputMappingRef.current[uuid].messages.push(result);
   }
 
   function getExecutionOutputs(ascending: boolean = false): ExecutionOutputType[] {
@@ -202,7 +198,6 @@ const OutputGroups: React.FC<OutputGroupsProps> = ({
   }
 
   function updateExecutionStatus(result: ExecutionResultType) {
-
     const xo = executionOutputMappingRef.current[result?.process?.message_request_uuid];
     executingRef.current = xo?.messages?.every((r) => !executionDone({ result: r } as any));
 
@@ -217,39 +212,49 @@ const OutputGroups: React.FC<OutputGroupsProps> = ({
   }
 
   useEffect(() => {
-    setExecutionOutputsUpdate(consumerID, (mapping: Record<string, ExecutionOutputType>) => {
-      Object.entries(mapping ?? {}).forEach(([uuid, xo]) => {
-        executionOutputMappingRef.current[uuid] = {
-          ...executionOutputMappingRef.current[uuid],
-          ...xo,
-        };
-      })
-    });
+    if (phaseRef.current === 0 && executionOutput) {
+      mutants.list.mutate({
+        onSuccess: ({ data }) => {
+          const xos: ExecutionOutputType[] = data.execution_outputs ?? [];
+          xos.forEach((xo) => {
+            const { uuid } = xo;
+            executionOutputMappingRef.current[uuid] = xo;
+          });
+
+          if (!(executionOutput.uuid in executionOutputMappingRef.current)) {
+            executionOutputMappingRef.current[executionOutput.uuid] = executionOutput;
+          }
+
+          renderResults();
+
+          onMount && onMount?.();
+        },
+        query: {
+          '_order_by[]': '-timestamp',
+          _format: 'with_output_statistics',
+          _limit: 40,
+          namespace: executionOutput?.namespace,
+          path: executionOutput?.path,
+        },
+      });
+
+      phaseRef.current = 1;
+    }
 
     setHandleOnMessage(consumerID, (event: EventStreamType) => {
       const { result } = event;
 
       appendResultForOutput(result);
       updateExecutionStatus(result);
+
       renderResults({ executing: executingRef.current });
+
       dispatchCustomEvent(EventEnum.EVENT_STREAM_MESSAGE, {
         executionOutput: executionOutputMappingRef.current[result?.process?.message_request_uuid],
         result,
       });
       scrollDown(true);
     });
-
-    const scroll = () => {
-      timeoutScrollRef.current = setTimeout(() => {
-        scrollDown();
-      }, 1000);
-    };
-
-    if (onMount) {
-      onMount?.(consumerID, () => scroll());
-    } else {
-      scroll();
-    }
 
     const ts = timeoutRef.current;
     const tss = timeoutScrollRef.current;
