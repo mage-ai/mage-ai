@@ -1968,8 +1968,8 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
                 <WithOnMount
                   key={`${itemUUID}:${nodeID}:${nodeType}`}
                   onMount={() => {
-                    const updateRects = toRef => {
-                      clearTimeout(toRef.current);
+                    const updateRects = (timeoutRef: React.MutableRefObject<any>) => {
+                      clearTimeout(timeoutRef.current);
 
                       const el = getClosestChildRole(dragRef?.current, [ElementRoleEnum.CONTENT]);
                       const rt =
@@ -1998,8 +1998,8 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
                           handleLineTransitions();
                         }, 1);
                       } else {
-                        toRef.current = setTimeout(() => {
-                          updateRects(toRef);
+                        timeoutRef.current = setTimeout(() => {
+                          updateRects(timeoutRef);
                         }, 300);
                       }
                     };
@@ -2013,7 +2013,7 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
 
                       clearTimeout(timeoutUpdateAppRectsRef.current);
                       timeoutUpdateAppRectsRef.current = setTimeout(
-                        () => updateRects(timeoutUpdateAppRectsRef.current),
+                        () => updateRects(timeoutUpdateAppRectsRef),
                         100,
                       );
                     } else {
@@ -2025,7 +2025,7 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
 
                       clearTimeout(timeoutUpdateOutputRectsRef.current);
                       timeoutUpdateOutputRectsRef.current = setTimeout(
-                        () => updateRects(timeoutUpdateOutputRectsRef.current),
+                        () => updateRects(timeoutUpdateOutputRectsRef),
                         100,
                       );
                     }
