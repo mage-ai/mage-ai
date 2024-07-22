@@ -84,10 +84,9 @@ function ExecutionResult(
   const hasOutput = executionOutput?.output?.some(o => o?.data);
   const hasError = resultsErrors?.length > 0;
 
-  const { id, namespace, path } = {
-    id: success?.process?.message_request_uuid,
-    ...success?.metadata,
-  };
+  const id = success?.process?.message_request_uuid;
+  const namespace = success?.metadata?.namespace;
+  const path = success?.metadata?.path;
 
   const getOutput = useCallback(() => {
     setLoading(true);
