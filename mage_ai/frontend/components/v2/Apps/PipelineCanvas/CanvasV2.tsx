@@ -377,7 +377,8 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
   // State store
   const [defaultGroups, setDefaultGroups] = useState<any>(null);
   const [models, setModels] = useState<ModelsType>(null);
-  const [relatedNodes, setRelatedNodes] = useState<Record<string, Record<ItemTypeEnum, AppNodeType | OutputNodeType>>>({});
+  const [appNodes, setAppNodes] = useState<Record<string, AppNodeType>>({});
+  const [outputNodes, setOutputNodes] = useState<Record<string, OutputNodeType>>({});
   const [rectsMapping, setRectsMapping] = useState<Record<string, RectType>>({});
   const [renderer, setRenderer] = useState<any>(null);
 
@@ -436,12 +437,19 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
         render: null,
       };
 
+      let func = null;
+      if (ItemTypeEnum.OUTPUT === type) {
+        func = setOutputNodes;
+      } else if (ItemTypeEnum.APP === type) {
+        func = setAppNodes;
+      }
+
       const handleRemove = () => {
         removeFromCache(`${framework.uuid}:${pipelineUUID}`, nodeItem.id);
 
         delete relatedNodeRefs?.current?.[block.uuid]?.[nodeItem.type];
 
-        setRelatedNodes(prev => {
+        func && func(prev => {
           delete prev?.[block.uuid]?.[nodeItem.type];
           return prev;
         });
@@ -455,12 +463,9 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
         render(node2, mountRef);
       };
 
-      setRelatedNodes(prev => ({
+      func && func(prev => ({
         ...prev,
-        [block.uuid]: {
-          ...prev?.[block.uuid],
-          [nodeItem.type]: nodeItem,
-        },
+        [block.uuid]: nodeItem,
       }));
     };
 
@@ -2069,13 +2074,19 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
       }),
     [blocks, groups, renderNodeComponents, rectsMapping],
   );
-  const relatedNodesMemo = useMemo(
+  const appNodesMemo = useMemo(
     () =>
       renderNodeComponents(rectsMappingRef?.current, {
-        [ItemTypeEnum.APP]: Object.values(relatedNodes ?? {}).map(map => map?.[ItemTypeEnum.APP]).filter(Boolean),
-        [ItemTypeEnum.OUTPUT]: Object.values(relatedNodes ?? {}).map(map => map?.[ItemTypeEnum.OUTPUT]).filter(Boolean),
+        [ItemTypeEnum.APP]: Object.values(appNodes ?? {}),
       }),
-    [relatedNodes, renderNodeComponents],
+    [appNodes, renderNodeComponents],
+  );
+  const outputNodesMemo = useMemo(
+    () =>
+      renderNodeComponents(rectsMappingRef?.current, {
+        [ItemTypeEnum.OUTPUT]: Object.values(outputNodes ?? {}),
+      }),
+    [outputNodes, renderNodeComponents],
   );
 
   // const [, connectDrop] = useDrop(
@@ -2279,7 +2290,8 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
                   <div>
                     {nodesMemo}
                     {selectedGroupNode}
-                    {relatedNodesMemo}
+                    {appNodesMemo}
+                    {outputNodesMemo}
 
                     <LineManagerV2
                       animateLineRef={animateLineRef}

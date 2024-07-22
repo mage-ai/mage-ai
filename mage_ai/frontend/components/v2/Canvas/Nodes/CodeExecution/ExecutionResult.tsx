@@ -27,10 +27,7 @@ import { unique } from "@utils/array";
 
 export type ExecutionResultProps = {
   containerRect?: DOMRect;
-  executing?: boolean;
   executionOutput?: ExecutionOutputType;
-  first?: boolean;
-  last?: boolean;
   handleContextMenu?: (
     event: React.MouseEvent<HTMLDivElement>,
     executionOutput: ExecutionOutputType,
@@ -46,17 +43,16 @@ export type ExecutionResultProps = {
       };
     },
   ) => void;
+  scrollbarRef: React.RefObject<HTMLDivElement>;
 };
 
 function ExecutionResult(
   {
     containerRect,
-    executing,
     executionOutput: executionOutputProp,
     fetchOutput,
-    first,
-    last,
     handleContextMenu,
+    scrollbarRef,
   }: ExecutionResultProps,
   ref: React.ForwardedRef<HTMLDivElement>,
 ) {
@@ -73,6 +69,10 @@ function ExecutionResult(
       if (executionOutputProp?.uuid === xo.uuid) {
         setCounter(Number(new Date()));
         setExecutionOutput(xo);
+
+        if (scrollbarRef?.current) {
+          scrollbarRef.current.scrollTop = scrollbarRef?.current?.scrollHeight;
+        }
       }
     },
   });
@@ -196,12 +196,7 @@ function ExecutionResult(
       ref={ref}
     >
       {(resultsDisplay?.length > 0 || hasError || (hasOutput || hasOutputNotLoaded)) && (
-        <Grid
-          paddingBottom={last ? 6 : 0}
-          paddingTop={first ? 6 : 0}
-          ref={ref}
-          rowGap={4}
-        >
+        <Grid ref={ref} rowGap={4}>
           <Grid autoFlow="column" columnGap={8} justifyContent="space-between">
             <Text monospace muted xsmall>
               {isNumeric(timestamps.min)

@@ -71,23 +71,11 @@ const OutputGroups: React.FC<OutputGroupsProps> = ({
 
   const containerRef = useRef<HTMLDivElement>(null);
   const resultElementRefs = useRef<Record<string, React.MutableRefObject<HTMLDivElement>>>({});
-  const resultsDeliveredRefs = useRef<Record<string, ExecutionResultType>>({});
 
-  const scrollableDivRef = useRef<HTMLDivElement>(null);
+  const scrollbarRef = useRef<HTMLDivElement>(null);
   const statusRef = useRef<HTMLElement>(null);
   const timeoutRef = useRef(null);
   const timeoutScrollRef = useRef(null);
-
-  const scrollDown = useCallback((instant?: boolean) => {
-    if (instant && scrollableDivRef?.current) {
-      scrollableDivRef.current.scrollTop = scrollableDivRef?.current?.scrollHeight;
-    } else {
-      scrollableDivRef?.current?.scrollTo({
-        top: scrollableDivRef?.current.scrollHeight,
-      });
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   const executionOutputMappingRef = useRef<Record<string, ExecutionOutputType>>({});
 
@@ -155,17 +143,14 @@ const OutputGroups: React.FC<OutputGroupsProps> = ({
       resultRootsRef.current[xo.uuid].root.render(
         <ContextProvider theme={theme as any}>
           <ExecutionResult
-            containerRect={scrollableDivRef.current?.getBoundingClientRect()}
-            executing={opts?.executing}
+            containerRect={scrollbarRef.current?.getBoundingClientRect()}
             executionOutput={xo}
             fetchOutput={fetchOutput}
-            first={idx === 0}
             handleContextMenu={(a, b) => {
               handleContextMenu(a, b, contextMenuProps);
             }}
-            key={xo.uuid}
-            last={idx === xosn - 1}
             ref={resultElementRefs.current[xo.uuid]}
+            scrollbarRef={scrollbarRef}
           />
         </ContextProvider>
       );
@@ -253,7 +238,6 @@ const OutputGroups: React.FC<OutputGroupsProps> = ({
         executionOutput: executionOutputMappingRef.current[result?.process?.message_request_uuid],
         result,
       });
-      scrollDown(true);
     });
 
     const ts = timeoutRef.current;
@@ -288,11 +272,11 @@ const OutputGroups: React.FC<OutputGroupsProps> = ({
       <Scrollbar
         autoHorizontalPadding
         hideX
-        ref={scrollableDivRef}
+        ref={scrollbarRef}
         showY
         style={{ maxHeight: 600, overflow: 'auto', width: 600 }}
       >
-        <Grid ref={outputMountRef} rowGap={16} templateRows="min-content" />
+        <Grid ref={outputMountRef} rowGap={6} paddingTop={6} paddingBottom={6} templateRows="min-content" />
 
         <Grid style={{ height: 20 }} paddingBottom={6}>
           <Text italic monospace muted ref={statusRef} warning xsmall />
