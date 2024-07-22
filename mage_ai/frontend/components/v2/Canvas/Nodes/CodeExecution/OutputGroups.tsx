@@ -24,6 +24,11 @@ import { ExecutionOutputType } from '@interfaces/CodeExecutionType';
 import { capitalize } from '@utils/string';
 import { objectSize } from '@utils/hash';
 
+export const DEFAULT_RECT = {
+  height: 600,
+  width: 600,
+};
+
 export type OutputGroupsType = {
   handleContextMenu?: (
     event: React.MouseEvent<HTMLDivElement>,
@@ -274,7 +279,7 @@ const OutputGroups: React.FC<OutputGroupsProps> = ({
         hideX
         ref={scrollbarRef}
         showY
-        style={{ maxHeight: 600, overflow: 'auto', width: 600 }}
+        style={{ maxHeight: DEFAULT_RECT.height, overflow: 'auto', width: DEFAULT_RECT.width }}
       >
         <Grid ref={outputMountRef} rowGap={6} paddingTop={6} paddingBottom={6} templateRows="min-content" />
 

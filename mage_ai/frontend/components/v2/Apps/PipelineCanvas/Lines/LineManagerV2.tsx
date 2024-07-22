@@ -745,7 +745,7 @@ export default function LineManagerV2({
 
         const dvalue = prepareLinePathProps(from2, to2).dvalue;
 
-        ref.current.setAttribute('d', dvalue);
+        ref?.current?.setAttribute?.('d', dvalue);
         if (backgroundRef?.current) {
           backgroundRef.current.setAttribute('d', dvalue);
         }

@@ -34,6 +34,10 @@ import { getBlockColor } from '@mana/themes/blocks';
 import { FileType } from '@components/v2/IDE/interfaces';
 import { AppNodeType } from '../../interfaces';
 
+export const DEFAULT_RECT = {
+  height: 500,
+  width: 600,
+}
 const PADDING_HORIZONTAL = 16;
 
 type EditorAppNodeProps = {
@@ -96,10 +100,7 @@ function EditorAppNode({
 
   const appOptions = {
     configurations: {
-      dimension: {
-        height: 500,
-        width: 600,
-      },
+      dimension: DEFAULT_RECT,
       folding: true,
       glyphMargin: true,
       // lineDecorationsWidth: PADDING_HORIZONTAL,

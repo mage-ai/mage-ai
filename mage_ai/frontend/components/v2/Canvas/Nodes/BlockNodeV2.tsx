@@ -527,7 +527,6 @@ function BlockNode(
 
       if (!outputRootRef.current) {
         launchOutputCallbackOnceRef.current = () => {
-          console.log('execute once')
           getFile(event, execute);
         };
 

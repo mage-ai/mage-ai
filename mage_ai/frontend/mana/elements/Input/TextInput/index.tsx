@@ -81,7 +81,6 @@ function TextInput(
         onClick={onClick}
         onKeyDown={(event) => {
           if (props.commands) {
-            console.log(props.commands, event)
             Object.values(props?.commands ?? {})?.forEach(({
               handler,
               predicate,
