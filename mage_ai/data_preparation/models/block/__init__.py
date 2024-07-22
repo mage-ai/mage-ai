@@ -2160,8 +2160,23 @@ class Block(
         #         logging_tags=logging_tags,
         #         log_message_prefix=log_message_prefix,
         #     )
-        if has_kwargs and global_vars is not None and len(global_vars) != 0:
-            output = block_function_updated(*input_vars, **global_vars)
+
+        template_variables = {}
+        if self.configuration and self.configuration.get('templates') and self.groups:
+            templates = self.configuration.get('templates', {}) or {}
+            for template in templates.values():
+                variables = template.get('variables', {})
+                if variables:
+                    for key, value in variables.items():
+                        template_variables[key] = value
+
+        runtime_variables = {
+            **(global_vars or {}),
+            **(template_variables or {}),
+        }
+
+        if has_kwargs and runtime_variables is not None and len(runtime_variables) != 0:
+            output = block_function_updated(*input_vars, **runtime_variables)
         else:
             output = block_function_updated(*input_vars)
 
