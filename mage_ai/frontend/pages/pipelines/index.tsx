@@ -1121,16 +1121,21 @@ function PipelineListPage() {
           })
         }
         onDoubleClickRow={(rowIndex: number) => {
-          router.push(
-            '/pipelines/[pipeline]/edit',
-            `/pipelines/${pipelinesInner[rowIndex].uuid}/edit`,
-          );
+          if (selectedPipeline?.execution_framework === PipelineExecutionFrameworkUUIDEnum.RAG) {
+            router.push(
+              `/v2/pipelines/${snakeToHyphens(selectedPipeline?.uuid)}/${snakeToHyphens(selectedPipeline?.execution_framework)}`,
+            );
+          } else {
+            router.push(
+              '/pipelines/[pipeline]/edit',
+              `/pipelines/${pipelinesInner[rowIndex].uuid}/edit`,
+            );
+          }
         }}
         ref={refTable}
         renderRightClickMenuItems={(rowIndex: number) => {
           const selectedPipeline = pipelinesInner[rowIndex];
-
-          return [
+          const rightClickMenuItems = [
             {
               label: () => 'Edit description',
               onClick: () =>
@@ -1222,6 +1227,20 @@ function PipelineListPage() {
               uuid: 'delete',
             },
           ];
+
+          if (selectedPipeline?.execution_framework === PipelineExecutionFrameworkUUIDEnum.RAG) {
+            rightClickMenuItems.unshift({
+              label: () => 'Go to RAG pipeline canvas',
+              onClick: () => {
+                router.push(
+                  `/v2/pipelines/${snakeToHyphens(selectedPipeline?.uuid)}/${snakeToHyphens(selectedPipeline?.execution_framework)}`,
+                );
+              },
+              uuid: 'rag_pipeline_canvas',
+            });
+          }
+
+          return rightClickMenuItems;
         }}
         rightClickMenuHeight={36 * 7}
         rightClickMenuWidth={UNIT * 30}
