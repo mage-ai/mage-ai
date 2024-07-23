@@ -143,6 +143,25 @@ function DragWrapper({
 
   const { onDragStart, onDrag, onDragEnd, onMouseDown } = handlers;
 
+  const dragHandlers = useMemo(() => ({
+    onDragEnd: (event, info) => onDragEnd(event, info, {
+      item,
+      rect,
+      ref: dragRef,
+    }),
+    onPointerUp: (event) => onDragEnd(event, null, {
+      item,
+      rect,
+      ref: dragRef,
+    }),
+    onPointerDown: event => onDragStart(event, null, {
+      item,
+      rect,
+      ref: dragRef,
+    }),
+    onMouseDown: event => onMouseDown?.({ ...event, target: dragRef.current }),
+  }), [onDragEnd, onDragStart, onMouseDown, rect]);
+
   const startDrag = useCallback((event: any, {
     bottom = false,
     right = false,
@@ -265,6 +284,7 @@ function DragWrapper({
 
   return (
     <motion.div
+      {...dragHandlers}
       className={[
         stylesBlockNode.dragWrapper,
         groupSelection && stylesBlockNode.groupSelection,
@@ -274,22 +294,6 @@ function DragWrapper({
       dragControls={dragControls}
       dragMomentum={false}
       dragPropagation={false}
-      onDragEnd={(event, info) => onDragEnd(event, info, {
-        item,
-        rect,
-        ref: dragRef,
-      })}
-      onPointerUp={(event) => onDragEnd(event, null, {
-        item,
-        rect,
-        ref: dragRef,
-      })}
-      onPointerDown={event => onDragStart(event, null, {
-        item,
-        rect,
-        ref: dragRef,
-      })}
-      onMouseDown={event => onMouseDown?.({ ...event, target: dragRef.current })}
       initial={draggable && !item?.rect ? {
         translateX: rect?.left,
         translateY: rect?.top,
