@@ -27,6 +27,11 @@ export interface RectType {
   zIndex?: any;
 }
 
+export interface XYType {
+  x?: number;
+  y?: number;
+}
+
 export type ClientEventType = any;
 
 export type HandleOperationType = any;

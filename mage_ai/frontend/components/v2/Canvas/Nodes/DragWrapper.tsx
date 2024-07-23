@@ -1,47 +1,41 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useMemo, useCallback, useState } from 'react';
 import stylesBlockNode from '@styles/scss/components/Canvas/Nodes/BlockNode.module.scss';
-import type { DragSourceMonitor, DropTargetMonitor } from 'react-dnd';
-import { CSSProperties } from 'react';
 import { ElementRoleEnum } from '@mana/shared/types';
-import { ItemTypeEnum } from '../types';
-import { NodeItemType, PortType, RectType } from '../interfaces';
-import { motion, useAnimation } from 'framer-motion';
-import { useDrag, useDrop } from 'react-dnd';
+import { NodeItemType } from '../interfaces';
+import { RectType, XYType } from '@mana/shared/interfaces';
+import { getStyles } from './draggable/utils';
+import { motion, useMotionValueEvent, useDragControls, useMotionValue, useTransform } from 'framer-motion';
 
-type XY = {
-  x: number;
-  y: number;
-};
 type DragInfo = {
-  delta: XY;
-  offset: XY;
-  point: XY;
-  velocity: XY;
+  delta?: XYType;
+  offset?: XYType;
+  point?: XYType;
+  velocity?: XYType;
 };
+
+interface EventHandlersType {
+  onDrag?: (event: any, info: DragInfo, data: {
+    item: NodeItemType;
+    rect: RectType;
+    ref: React.MutableRefObject<HTMLDivElement>;
+  }) => void;
+  onDragEnd?: (event: any, info: DragInfo, data: {
+    item: NodeItemType;
+    rect: RectType;
+    ref: React.MutableRefObject<HTMLDivElement>;
+  }) => void;
+  onDragStart?: (event: any, info: DragInfo, data: {
+    item: NodeItemType;
+    rect: RectType;
+    ref: React.MutableRefObject<HTMLDivElement>;
+  }) => void;
+  onMouseDown?: (event: any) => void;
+  pauseZoomPan?: (event: any) => void;
+}
 
 export type DragWrapperType = {
   draggable?: boolean;
-  droppable?: boolean;
-  droppableItemTypes?: ItemTypeEnum[];
-  eventHandlers?: {
-    onDrag?: (event: any, info: DragInfo, data: {
-      item: NodeItemType;
-      rect: RectType;
-      ref: React.MutableRefObject<HTMLDivElement>;
-    }) => void;
-    onDragEnd?: (event: any, info: DragInfo, data: {
-      item: NodeItemType;
-      rect: RectType;
-      ref: React.MutableRefObject<HTMLDivElement>;
-    }) => void;
-    onDragStart?: (event: any, info: DragInfo, data: {
-      item: NodeItemType;
-      rect: RectType;
-      ref: React.MutableRefObject<HTMLDivElement>;
-    }) => void;
-    onMouseDown?: (event: any) => void;
-  };
-  handleDrop?: (dragTarget: NodeItemType, dropTarget: NodeItemType) => void;
+  eventHandlers?: EventHandlersType;
 };
 
 type DragWrapperProps = {
@@ -52,202 +46,251 @@ type DragWrapperProps = {
   item?: NodeItemType;
   onContextMenu?: (event: any) => void;
   rect?: RectType;
+  resizable?: boolean;
   style?: any;
 } & DragWrapperType;
 
-export function getStyles(
-  node: NodeItemType,
-  {
-    draggable,
-    groupSelection,
-    rect,
-  }: {
-    draggable?: boolean;
-    groupSelection?: boolean;
-    rect?: RectType;
-  },
-): CSSProperties {
-  const { type } = node;
-
-  const { height, left, top, width } = {
-    height: undefined,
-    left: undefined,
-    top: undefined,
-    width: undefined,
-    ...rect,
-  } as any;
-  const transform = `translate3d(${left ?? 0}px, ${top ?? 0}px, 0)`;
-
-  // console.log(left, top, height, width);
-
-  return {
-    WebkitTransform: transform,
-    // backgroundColor: canDrop ? (isOverCurrent ? 'blue' : backgroundColor) : backgroundColor,
-    // border: '1px dashed gray',
-    // IE fallback: hide the real node using CSS when dragging
-    // because IE will ignore our custom "empty image" drag preview.
-    position: 'absolute',
-    transform,
-    ...(ItemTypeEnum.NODE === type
-      ? {
-          height,
-        }
-      : {}),
-    ...(width ?? false ? { minWidth: width } : {}),
-    ...(groupSelection ? { height, width } : {}),
-    // ...(draggable ? { cursor: 'move' } : {}),
-  };
-}
-
-function DragWrapper(
-  {
-    children,
-    dragConstraintsRef,
-    draggable,
-    droppable,
-    droppableItemTypes,
-    eventHandlers,
-    groupSelection,
-    handleDrop,
-    isAnimating,
-    item,
-    onContextMenu,
-    rect,
-    style,
-  }: DragWrapperProps,
-  ref: React.MutableRefObject<HTMLDivElement>,
-) {
+function DragWrapper({
+  children,
+  dragConstraintsRef,
+  draggable,
+  eventHandlers,
+  groupSelection,
+  isAnimating,
+  item,
+  onContextMenu,
+  rect,
+  resizable,
+  style,
+}: DragWrapperProps, ref: React.MutableRefObject<HTMLDivElement>) {
   const refInternal = useRef(null);
   const dragRef = ref ?? refInternal;
+  const resizeHandleTopRef = useRef(null);
 
-  // const [{ isDragging }, connectDrag, preview] = useDrag(
-  //   () => ({
-  //     collect: (monitor: DragSourceMonitor) => ({ isDragging: monitor.isDragging() }),
-  //     isDragging: (monitor: DragSourceMonitor) => {
-  //       const draggingItem = monitor.getItem() as NodeItemType;
-  //       return draggingItem.id === item.id;
-  //     },
-  //     item: {
-  //       ...item,
-  //       rect,
-  //     },
-  //     type: item.type,
-  //   }),
-  //   [draggable, item],
-  // );
+  const draggingRef = useRef(false);
+  const timeoutRef = useRef(null);
 
-  // const [, connectDrop] = useDrop(
-  //   () => ({
-  //     accept: droppableItemTypes ?? [],
-  //     canDrop: (itemDrop: NodeItemType, monitor: DropTargetMonitor) => {
-  //       if (!droppable) return false;
-  //       if (!monitor.isOver({ shallow: true })) return false;
+  const controlsPosition = useDragControls();
+  const controlsSize = useDragControls();
 
-  //       if (ItemTypeEnum.BLOCK === itemDrop.type) {
-  //         return itemDrop.id !== item.id;
-  //       } else if (ItemTypeEnum.PORT === itemDrop.type) {
-  //         return (itemDrop as PortType).parent.id !== item.id;
-  //       }
+  const handleX = useMotionValue(0);
+  const handleY = useMotionValue(0);
+  const handleTranslateY = useTransform(handleY, value => -value);
 
-  //       return false;
-  //     },
-  //     collect: monitor => ({
-  //       canDrop: monitor.canDrop(),
-  //       isOverCurrent: monitor.isOver({ shallow: true }),
-  //     }),
-  //     drop: (dragTarget: NodeItemType) => handleDrop?.(dragTarget, item),
-  //   }),
-  //   [droppable, droppableItemTypes, handleDrop, item],
-  // );
+  const heightTransform = useTransform(handleY, value => (rect?.height ?? 0) - value);
 
-  // useEffect(() => {
-  //   preview(dragRef.current as Element);
-  //   // eslint-disable-next-line react-hooks/exhaustive-deps
-  // }, []);
+  const [isDragging, setIsDragging] = useState(false);
 
-  // This needs to always connect without any conditionals or else it’ll never connect after mount.
-  // connectDrop(dragRef);
-  // connectDrag(dragRef);
+  const wrapperStyles = useMemo(() => getStyles(item, {
+    draggable,
+    groupSelection,
+    rect,
+  }), [draggable, item]);
 
-  // console.log(
-  //   `[DragWrapper:${item.id}]`,
-  //   rect?.left, rect?.top, rect?.width, rect?.height,
-  //   isAnimating, style,
-  // );
+  const handlers: EventHandlersType = useMemo(() => ((draggable || resizable) ? Object.entries(eventHandlers ?? {}).reduce(
+    (acc, [k, v]: [string, (event: any, info: DragInfo, data: {
+      item: NodeItemType;
+      rect: RectType;
+      ref: React.MutableRefObject<HTMLDivElement>;
+    }) => void]) => ({
+      ...acc,
+      [k]: (draggable || resizable) && v ? (evt: any, info: DragInfo) => v(
+        evt,
+        info,
+        {
+          item,
+          rect,
+          ref: dragRef,
+        },
+      ) : undefined,
+    }),
+    {},
+  ) : {
+    onDragStart: undefined,
+    onDrag: undefined,
+    onDragEnd: undefined,
+  }), [draggable, eventHandlers, resizable]);
+
+  const { onDragStart, onDrag, onDragEnd } = handlers;
+
+  const startDrag = useCallback((event: any) => {
+    event.preventDefault();
+    controlsSize.start(event);
+    onDragStart(event, null, {
+      item,
+      rect,
+      ref: dragRef,
+    });
+
+    handleY.set(0);
+
+    // translateXStartRef.current = rect?.left ?? 0;
+    // translateYStartRef.current = rect?.top ?? 0;
+
+    // dragRef.current.style.transformOrigin = `${rect?.left}px ${rect?.top}px`;
+    // dragRef.current.style.transform = `translate(${handleX.get()}px, ${handleY.get()}px)`
+    // resizeHandleTopRef.current.style.transformOrigin = dragRef.current.style.transformOrigin;
+
+    console.log(
+      'start',
+      dragRef.current.style.transform,
+      dragRef.current.style.transformOrigin,
+      // translateXTransform.get(),
+      // translateYTransform.get(),
+      resizeHandleTopRef.current.style.transformOrigin,
+    )
+
+    draggingRef.current = true;
+    setIsDragging(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [onDragStart, item, rect]);
+
+  useMotionValueEvent(handleY, 'change', (latest: number) => {
+    // clearTimeout(timeoutRef.current);
+
+    dragRef.current.style.transform =
+      `translate(${rect?.left}px, ${rect?.top + latest}px)`;
+
+    // if (draggingRef.current) {
+    //   timeoutRef.current = setTimeout(() => {
+    //     draggingRef.current = false;
+    //     setIsDragging(false);
+    //     endDrag(null);
+    //   }, 1000);
+    // }
+
+    // dragRef.current.style.transformOrigin = `${rect?.left}px ${rect?.top}px`;
+    // dragRef.current.style.transform = `translate(${handleX.get()}px, ${handleY.get()}px)`
+    // resizeHandleTopRef.current.style.transformOrigin = dragRef.current.style.transformOrigin;
+
+    console.log(
+      'dragging',
+      dragRef.current.style.transform,
+      dragRef.current.style.transformOrigin,
+      // translateXTransform.get(),
+      // translateXTransform.get(),
+      resizeHandleTopRef.current.style.transformOrigin,
+    )
+
+    onDrag(null, {
+      delta: {
+        y: latest,
+      }
+    }, {
+      item,
+      rect,
+      ref: dragRef,
+    });
+  });
+
+  const endDrag = useCallback((event: any) => {
+    onDragEnd(event, null, {
+      item,
+      rect,
+      ref: dragRef,
+    });
+
+    // dragRef.current.style.height = `${heightTransform.get()}px`;
+    // dragRef.current.style.transformOrigin = '';
+
+    draggingRef.current = false;
+    setIsDragging(false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [onDragEnd, item, rect]);
 
   return (
     <motion.div
-      {...(draggable ? Object.entries(eventHandlers ?? {}).reduce(
-        (acc, [k, v]: [string, (event: any, info: DragInfo, data: {
-          item: NodeItemType;
-          rect: RectType;
-          ref: React.MutableRefObject<HTMLDivElement>;
-        }) => void]) => ({
-          ...acc,
-          [k]: draggable && v ? (e, i) => v(
-            e,
-            i,
-            {
-              item,
-              rect,
-              ref: dragRef,
-            },
-          ) : undefined,
-        }),
-        {},
-      ) : {})}
-      drag={draggable}
-      dragConstraints={dragConstraintsRef}
+      // {...handlers}
       className={[
         stylesBlockNode.dragWrapper,
         groupSelection && stylesBlockNode.groupSelection,
         stylesBlockNode[item?.type],
-      ]
-        .filter(Boolean)
-        .join(' ')}
-      onMouseDown={event => {
-        // console.log(dragConstraintsRef?.current?.getBoundingClientRect())
-        // event.stopPropagation();
-        eventHandlers?.onMouseDown?.({
-          ...event,
-          target: dragRef.current,
-        });
-      }}
-      onContextMenu={onContextMenu}
+      ].filter(Boolean).join(' ')}
       initial={draggable && !item?.rect ? {
         translateX: rect?.left,
         translateY: rect?.top,
       } : undefined}
+      onContextMenu={onContextMenu}
+      role={[draggable && ElementRoleEnum.DRAGGABLE].filter(Boolean).join(' ')}
       ref={dragRef}
-      role={[
-        draggable && ElementRoleEnum.DRAGGABLE,
-      ].filter(Boolean).join(' ')}
-      style={
-        isAnimating
-          ? style
-          : {
-              ...getStyles(item, {
-                draggable,
-                groupSelection,
-                rect,
-              }),
-            }
-      }
-      whileDrag={{
-        opacity: 1,
-        scale: 1,
+      style={{
+        ...(isAnimating ? style : wrapperStyles),
+        ...(isDragging ? {
+          height: heightTransform,
+          // translateX: translateXTransform,
+          // translateY: translateYTransform,
+        } : {}),
       }}
-      // dragSnapToOrigin
-      // dragElastic={0.5}
-      dragMomentum={false}
-      dragPropagation={false}
-      // dragTransition={{
-      //   bounceDamping: 10,
-      //   bounceStiffness: 100,
-      //   min: 0,
-      //   timeConstant: 750,
-      // }}
     >
+      <motion.div
+        // {...handlers}
+        // drag={false && draggable && !resizingRef.current}
+        // dragSnapToOrigin
+        // dragElastic={0.5}
+        // dragTransition={{
+        //   bounceDamping: 10,
+        //   bounceStiffness: 100,
+        //   min: 0,
+        //   timeConstant: 750,
+        // }}
+        dragConstraints={dragConstraintsRef}
+        dragControls={controlsPosition}
+        dragMomentum={false}
+        dragPropagation={false}
+        onMouseDown={event => {
+          eventHandlers?.onMouseDown?.({
+            ...event,
+            target: dragRef.current,
+          });
+        }}
+        // initial={draggable && !item?.rect ? {
+        //   translateX: rect?.left,
+        //   translateY: rect?.top,
+        // } : undefined}
+        role={[draggable && ElementRoleEnum.DRAGGABLE].filter(Boolean).join(' ')}
+        // style={getStyles(item, {
+        //   draggable,
+        //   groupSelection,
+        //   rect,
+        // })}
+        whileDrag={{
+          opacity: 1,
+          scale: 1,
+        }}
+      />
+      {resizable && <motion.div
+        className={[
+          stylesBlockNode.resizeHandle,
+          stylesBlockNode.top,
+        ].filter(Boolean).join(' ')}
+        drag="y"
+        dragControls={controlsSize}
+        dragMomentum={false}
+        dragPropagation={false}
+        onDragEnd={endDrag}
+        onPointerDown={startDrag}
+        ref={resizeHandleTopRef}
+        role={[
+          draggable && ElementRoleEnum.DRAGGABLE,
+        ].filter(Boolean).join(' ')}
+        style={{
+          originX: 0.5,
+          originY: 0.5,
+          translateY: handleTranslateY,
+          x: handleX,
+          y: handleY,
+        }}
+        whileDrag={{
+          opacity: 0.3,
+          scaleY: 0.1,
+          transition: {
+            duration: 0,
+          }
+        }}
+        whileHover={{ scaleY: 3 }}
+        whileTap={{ opacity: 1, scaleY: 0.5 }}
+      />}
+
       {children}
     </motion.div>
   );
@@ -255,13 +298,14 @@ function DragWrapper(
 
 export function areEqual(p1: DragWrapperProps, p2: DragWrapperProps) {
   return (
-    p1.rect.left === p2.rect.left &&
-    p1.rect.top === p2.rect.top &&
-    p1.rect.width === p2.rect.width &&
-    p1.rect.height === p2.rect.height &&
-    p1?.groupSelection === p2?.groupSelection &&
-    p1?.isAnimating === p2?.isAnimating &&
-    p1?.draggable === p2?.draggable
+    p1.rect.left === p2.rect.left
+    && p1.rect.top === p2.rect.top
+    && p1.rect.width === p2.rect.width
+    && p1.rect.height === p2.rect.height
+    && p1?.groupSelection === p2?.groupSelection
+    && p1?.isAnimating === p2?.isAnimating
+    && p1?.draggable === p2?.draggable
+    && p1?.resizable === p2?.resizable
   );
 }
 

@@ -78,3 +78,18 @@ $enter-duration: 3s;
     height: inherit;
   }
 }
+
+.resizeHandle {
+  background-color: red;
+  height: 8px;
+  opacity: 0.5;
+  position: absolute;
+  z-index: 6;
+
+  &.top {
+    left: 0;
+    right: 0;
+    top: 0;
+    width: 100%;
+  }
+}

@@ -547,9 +547,13 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
     const group = getCurrentGroup();
     const rect = buildSelectedGroupRect(group?.uuid, rects ?? rectsMappingRef?.current);
 
+    const rectState = rectsMappingRef?.current?.[group?.uuid];
+
+    console.log('GROUP', rect, rectState)
+
     return {
       ...rect,
-      ...(rectsMappingRef?.current?.[group?.id] ?? {}),
+      ...(rectState ?? {}),
     };
   }
 
@@ -1651,7 +1655,7 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
       >
         <DragWrapper
           draggable={false}
-          // dragConstraintsRef={containerRef}
+          dragConstraintsRef={containerRef}
           eventHandlers={{
             onDragStart: handleDragStart,
             onDrag: handleDragging,
@@ -1666,6 +1670,7 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
             }
           }
           ref={dragRef}
+          resizable
         >
           <BlockNodeV2
             block={block as any}
@@ -1690,6 +1695,7 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
     },
   ) {
     const { item, rect, ref } = data;
+    // console.log('handleDragStart', info, item, rect, ref);
   }
 
   function handleDragging(
@@ -1712,6 +1718,8 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
       top: rectCurrent?.top,
       width: rectCurrent?.width,
     };
+
+    // console.log('handleDragging', info, item, rect, rectFinal);
 
     renderLineRef?.current?.(rectFinal);
   }
@@ -1736,6 +1744,7 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
       top: rectCurrent?.top,
       width: rectCurrent?.width,
     };
+    // console.log('handleDragEnd', info, item, rect, rectFinal);
 
     rectsMappingRef.current[item.id] = rectFinal;
     const rectd = { [item.id]: rectFinal };
@@ -1760,8 +1769,8 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
     const draggable = getClosestRole(event.target, [ElementRoleEnum.DRAGGABLE]);
     if (draggable) {
       setZoomPanDisabled(true);
-      setDragEnabled(true);
-      setDropEnabled(true);
+      // setDragEnabled(true);
+      // setDropEnabled(true);
     }
   }
 
@@ -2044,7 +2053,7 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
             arr.push(
               <DragWrapper
                 draggable={draggable}
-                // dragConstraintsRef={dragConstraintsRef}
+                dragConstraintsRef={dragConstraintsRef}
                 eventHandlers={{
                   onDrag: handleDragging,
                   onDragEnd: handleDragEnd,
@@ -2055,6 +2064,7 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
                 key={nodeID}
                 rect={rect}
                 ref={dragRef}
+                resizable
               />,
             );
           },
