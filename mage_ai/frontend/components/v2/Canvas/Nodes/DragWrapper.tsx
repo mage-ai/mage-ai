@@ -131,14 +131,14 @@ function DragWrapper({
     // dragRef.current.style.transform = `translate(${handleX.get()}px, ${handleY.get()}px)`
     // resizeHandleTopRef.current.style.transformOrigin = dragRef.current.style.transformOrigin;
 
-    console.log(
-      'start',
-      dragRef.current.style.transform,
-      dragRef.current.style.transformOrigin,
-      // translateXTransform.get(),
-      // translateYTransform.get(),
-      resizeHandleTopRef.current.style.transformOrigin,
-    )
+    // console.log(
+    //   'start',
+    //   dragRef.current.style.transform,
+    //   dragRef.current.style.transformOrigin,
+    //   // translateXTransform.get(),
+    //   // translateYTransform.get(),
+    //   resizeHandleTopRef.current.style.transformOrigin,
+    // )
 
     draggingRef.current = true;
     setIsDragging(true);
@@ -163,14 +163,14 @@ function DragWrapper({
     // dragRef.current.style.transform = `translate(${handleX.get()}px, ${handleY.get()}px)`
     // resizeHandleTopRef.current.style.transformOrigin = dragRef.current.style.transformOrigin;
 
-    console.log(
-      'dragging',
-      dragRef.current.style.transform,
-      dragRef.current.style.transformOrigin,
-      // translateXTransform.get(),
-      // translateXTransform.get(),
-      resizeHandleTopRef.current.style.transformOrigin,
-    )
+    // console.log(
+    //   'dragging',
+    //   dragRef.current.style.transform,
+    //   dragRef.current.style.transformOrigin,
+    //   // translateXTransform.get(),
+    //   // translateXTransform.get(),
+    //   resizeHandleTopRef.current.style.transformOrigin,
+    // )
 
     onDrag(null, {
       delta: {

@@ -80,13 +80,14 @@ $enter-duration: 3s;
 }
 
 .resizeHandle {
-  background-color: red;
+  background-color: transparent;
   height: 8px;
   opacity: 0.5;
   position: absolute;
   z-index: 6;
 
   &.top {
+    cursor: ns-resize;
     left: 0;
     right: 0;
     top: 0;

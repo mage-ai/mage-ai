@@ -549,8 +549,6 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
 
     const rectState = rectsMappingRef?.current?.[group?.uuid];
 
-    console.log('GROUP', rect, rectState)
-
     return {
       ...rect,
       ...(rectState ?? {}),
