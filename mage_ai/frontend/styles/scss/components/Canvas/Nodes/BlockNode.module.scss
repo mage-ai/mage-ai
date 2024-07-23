@@ -62,11 +62,11 @@ $enter-duration: 3s;
 .dragWrapper {
   z-index: 3;
 
-  &.app {
+  &.output {
     z-index: 6;
   }
 
-  &.output {
+  &.app {
     z-index: 5;
   }
 
@@ -105,4 +105,8 @@ $enter-duration: 3s;
     top: 0;
     width: 16px;
   }
+}
+
+.appendedChildElement {
+  height: inherit;
 }

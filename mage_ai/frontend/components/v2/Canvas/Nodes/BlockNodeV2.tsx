@@ -117,15 +117,30 @@ function BlockNode(
   const handleOnMessageRef = useRef<Record<string, (event: EventStreamType) => void>>({});
 
   const [apps, setApps] = useState<Record<string, AppNodeType>>({});
-  const appNodeRef = useRef<AppNodeType>(null);
-  const appMountRef = useRef<React.RefObject<HTMLElement>>(null);
+
+  // Status
   const appOpenRef = useRef<boolean>(false);
+
+  // Models
+  const appNodeRef = useRef<AppNodeType>(null);
   const outputNodeRef = useRef<OutputNodeType>(null);
+  const launchOutputCallbackOnceRef = useRef<() => void>(null);
+
+  // Roots
   const appRootRef = useRef<Root>(null);
   const outputRootRef = useRef<Root>(null);
-  const onCloseOutputRef = useRef<() => void>(null);
+
+  // Open/Close callbacks
   const onCloseAppRef = useRef<() => void>(null);
-  const launchOutputCallbackOnceRef = useRef<() => void>(null);
+  const onCloseOutputRef = useRef<() => void>(null);
+
+  // Appended child element to mount root onto
+  const appAppendedChildElementRef = useRef<HTMLDivElement>(null);
+  const outputAppendedChildElementRef = useRef<HTMLDivElement>(null);
+
+  // Element attached to root
+  const appMountRef = useRef<React.RefObject<HTMLElement>>(null);
+  const outputMountRef = useRef<React.RefObject<HTMLElement>>(null);
 
   const { mutations } = useContext(ModelContext);
 
@@ -616,8 +631,11 @@ function BlockNode(
 
     delete handleOnMessageRef.current?.[appNodeRef?.current?.id];
     delete handleOnMessageRef.current?.[`${appNodeRef?.current?.id}/output`];
-    appRootRef?.current && appRootRef?.current?.unmount();
 
+    appRootRef?.current && appRootRef?.current?.unmount();
+    appAppendedChildElementRef?.current?.remove();
+
+    appAppendedChildElementRef.current = null;
     appMountRef.current = null;
     appRootRef.current = null;
 
@@ -709,8 +727,9 @@ function BlockNode(
     callback?: () => void,
   ) {
     outputNodeRef.current = outputNode;
-    outputRootRef.current = createRoot(mountRef.current);
+    outputMountRef.current = mountRef;
 
+    outputRootRef.current = createRoot(mountRef.current);
     outputRootRef.current.render(
       <ContextProvider theme={themeContext}>
         <div
@@ -764,9 +783,13 @@ function BlockNode(
     appNodeRef.current = appNode;
     appMountRef.current = mountRef;
 
-    appRootRef.current = createRoot(mountRef.current);
+    appAppendedChildElementRef.current = document.createElement('div');
+    appAppendedChildElementRef.current.className = stylesBlockNode.appendedChildElement;
+    mountRef.current.appendChild(appAppendedChildElementRef.current);
+
+    appRootRef.current = createRoot(appAppendedChildElementRef.current);
     appRootRef.current.render(
-      <ContextProvider theme={themeContext}>
+      <ContextProvider theme={themeContext as any}>
         <EditorAppNode
           app={appNode}
           block={block}

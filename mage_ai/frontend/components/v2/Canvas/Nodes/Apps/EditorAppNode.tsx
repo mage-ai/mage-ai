@@ -1,28 +1,27 @@
 import Button from '@mana/elements/Button';
-import colors from '@mana/themes/colors';
-import { getFileCache, isStale, updateFileCache } from '../../../IDE/cache';
-import { contrastRatio } from '@utils/colors';
-import { ClientEventType } from '@mana/shared/interfaces';
-import { executionDone } from '@components/v2/ExecutionManager/utils';
-import { KEY_ENTER, KEY_CODE_META, KEY_ESCAPE } from '@utils/hooks/keyboardShortcuts/constants';
-import Tag from '@mana/components/Tag';
-import { AppSubtypeEnum, AppTypeEnum } from '@components/v2/Apps/constants';
 import EventStreamType from '@interfaces/EventStreamType';
-import Link from '@mana/elements/Link';
-import React, { useContext, useEffect, useMemo, useRef, useState } from 'react';
-import { executeCode, interruptCodeExecution, saveContent as saveContentAction } from '../../../IDE/actions';
-import TextInput from '@mana/elements/Input/TextInput';
+import Grid from '@mana/components/Grid';
 import KeyboardTextGroup from '@mana/elements/Text/Keyboard/Group';
+import React, { useContext, useEffect, useMemo, useRef, useState } from 'react';
+import Tag from '@mana/components/Tag';
+import Text from '@mana/elements/Text';
+import TextInput from '@mana/elements/Input/TextInput';
+import colors from '@mana/themes/colors';
 import moment from 'moment';
 import stylesAppNode from '@styles/scss/components/Canvas/Nodes/DraggableAppNode.module.scss';
 import stylesEditor from '@styles/scss/components/Canvas/Nodes/Apps/Editor.module.scss';
-import Grid from '@mana/components/Grid';
-import Text from '@mana/elements/Text';
 import useApp from '../../../Apps/Editor/useApp';
-import OutputGroups, { OutputGroupsType } from '../CodeExecution/OutputGroups';
+import { AppSubtypeEnum, AppTypeEnum } from '@components/v2/Apps/constants';
+import { ClientEventType } from '@mana/shared/interfaces';
 import { EditorContainerStyled } from './index.style';
+import { KEY_ENTER, KEY_CODE_META, KEY_ESCAPE } from '@utils/hooks/keyboardShortcuts/constants';
+import { OutputGroupsType } from '../CodeExecution/OutputGroups';
 import { TooltipAlign, TooltipWrapper, TooltipDirection, TooltipJustify } from '@context/v2/Tooltip';
+import { contrastRatio } from '@utils/colors';
 import { convertToMillisecondsTimestamp } from '@utils/date';
+import { executeCode, interruptCodeExecution, saveContent as saveContentAction } from '../../../IDE/actions';
+import { executionDone } from '@components/v2/ExecutionManager/utils';
+import { getFileCache, isStale, updateFileCache } from '../../../IDE/cache';
 import {
   Save,
   DeleteCircle,
@@ -100,7 +99,7 @@ function EditorAppNode({
 
   const appOptions = {
     configurations: {
-      dimension: DEFAULT_RECT,
+      // dimension: DEFAULT_RECT,
       folding: true,
       glyphMargin: true,
       // lineDecorationsWidth: PADDING_HORIZONTAL,
@@ -199,6 +198,8 @@ function EditorAppNode({
   return (
     <Grid
       className={[stylesAppNode.appNodeContainer].join(' ')}
+      height="inherit"
+      onContextMenu={(event: any) => handleContextMenu?.(event)}
       rowGap={PADDING_HORIZONTAL / 2}
       style={{
         gridTemplateRows: 'auto auto 1fr',
@@ -206,280 +207,221 @@ function EditorAppNode({
       templateColumns="auto"
     >
       <Grid
-        onContextMenu={(event: any) => handleContextMenu?.(event)}
-        rowGap={PADDING_HORIZONTAL / 2}
-        style={{
-          gridTemplateRows: 'auto auto 1fr auto',
-        }}
-        templateColumns="auto"
+        columnGap={PADDING_HORIZONTAL / 2}
+        style={{ gridTemplateColumns: 'auto 1fr auto' }}
+        templateRows="1fr"
       >
-        <Grid
-          columnGap={PADDING_HORIZONTAL / 2}
-          style={{ gridTemplateColumns: 'auto 1fr auto' }}
-          templateRows="1fr"
-        >
-          {/* <Button
-            Icon={asideBeforeOpen ? PanelCollapseLeft : BlockGenericV2}
-            basic={asideBeforeOpen}
-            onClick={() => setAsideBeforeOpen(prev => !prev)}
-            small
-          /> */}
+        {/* <Button
+          Icon={asideBeforeOpen ? PanelCollapseLeft : BlockGenericV2}
+          basic={asideBeforeOpen}
+          onClick={() => setAsideBeforeOpen(prev => !prev)}
+          small
+        /> */}
 
-          <div style={{ position: 'relative' }}>
-            {executing && <Tag left statusVariant timer top />}
-            <Button
-              Icon={ip => executing ? <DeleteCircle {...ip} colorName={contrastColorName} /> : <PlayButtonFilled {...ip} colorName={contrastColorName} />}
-              backgroundcolor={!executing ? baseColor : 'red'}
-              bordercolor={executing ? (baseColor ?? 'gray') : 'transparent'}
-              loading={loadingKernelMutation || loading}
-              onClick={
-                executing
-                  ? () => {
-                      setLoadingKernelMutation(true);
-                      interruptExecution({
-                        onError: () => {
-                          setExecuting(false);
-                          setLoadingKernelMutation(false);
-                        },
-                        onSuccess: () => setLoadingKernelMutation(false),
-                      });
-                    }
-                  : event => {
-                      setLoading(true);
-                      submitCodeExecution(event, {
-                        onError: () => setLoading(false),
-                        onSuccess: () => setLoading(false),
-                      });
-                    }
-              }
-              small
-              tag={<KeyboardTextGroup
-                colorName={contrastColorName}
-                textGroup={[[KEY_CODE_META, executing ? KEY_ESCAPE : KEY_ENTER]]}
-                xsmall
-              />}
-              tagProps={{
-                style: {
-                  backgroundColor: colors?.[`${contrastColorName}lo`]?.dark,
-                },
-              }}
-            />
-          </div>
-          <TextInput basic placeholder="/" style={{ paddingBottom: 8, paddingTop: 8 }} />
-
+        <div style={{ position: 'relative' }}>
+          {executing && <Tag left statusVariant timer top />}
           <Button
-            // Icon={afterOpen ? PanelCollapseRight : Menu}
-            // basic={afterOpen}
-            // onClick={() => setAfterOpen(prev => !prev)}
-            Icon={CloseV2}
-            basic
-            onClick={() => onClose()}
+            Icon={ip => executing ? <DeleteCircle {...ip} colorName={contrastColorName} /> : <PlayButtonFilled {...ip} colorName={contrastColorName} />}
+            backgroundcolor={!executing ? baseColor : 'red'}
+            bordercolor={executing ? (baseColor ?? 'gray') : 'transparent'}
+            loading={loadingKernelMutation || loading}
+            onClick={
+              executing
+                ? () => {
+                    setLoadingKernelMutation(true);
+                    interruptExecution({
+                      onError: () => {
+                        setExecuting(false);
+                        setLoadingKernelMutation(false);
+                      },
+                      onSuccess: () => setLoadingKernelMutation(false),
+                    });
+                  }
+                : event => {
+                    setLoading(true);
+                    submitCodeExecution(event, {
+                      onError: () => setLoading(false),
+                      onSuccess: () => setLoading(false),
+                    });
+                  }
+            }
             small
+            tag={<KeyboardTextGroup
+              colorName={contrastColorName}
+              textGroup={[[KEY_CODE_META, executing ? KEY_ESCAPE : KEY_ENTER]]}
+              xsmall
+            />}
+            tagProps={{
+              style: {
+                backgroundColor: colors?.[`${contrastColorName}lo`]?.dark,
+              },
+            }}
           />
-        </Grid>
+        </div>
+        <TextInput basic placeholder="/" style={{ paddingBottom: 8, paddingTop: 8 }} />
 
+        <Button
+          // Icon={afterOpen ? PanelCollapseRight : Menu}
+          // basic={afterOpen}
+          // onClick={() => setAfterOpen(prev => !prev)}
+          Icon={CloseV2}
+          basic
+          onClick={() => onClose()}
+          small
+        />
+      </Grid>
+
+      <Grid
+        autoFlow="column"
+        alignItems="center"
+        backgroundColor="graylo"
+        borders
+        columnGap={12}
+        justifyContent="start"
+        padding={6}
+        templateRows="auto"
+      >
+        {[
+          {
+            Icon: Save,
+            description: stale
+              ? `You have unsaved changes. Content was modified ${lastModified}.`
+              : 'Save current file content.',
+            iconProps: stale ? { colorName: 'yellow' } : {},
+            loading: saving,
+            onClick: saveContent,
+            uuid: 'Save',
+          },
+          // {
+          //   Icon: Conversation,
+          //   uuid: 'Chat',
+          //   description: 'Get support in the community channel on Slack',
+          //   href: 'https://mage.ai/chat', target: '_blank', anchor: 'true',
+          // },
+          // {
+          //   Icon: Comment,
+          //   description: 'Add a comment to the pipeline or for a specific block',
+          //   uuid: 'Comment',
+          //   onClick: event => alert('Comment'),
+          // },
+          // {
+          //   Icon: CloseV2,
+          //   description: 'Close app',
+          //   uuid: 'Close',
+          //   onClick: onClose,
+          // },
+        ].map(({ Icon, description, iconProps, label, loading, uuid, onClick }: any) => (
+          <TooltipWrapper
+            align={TooltipAlign.END}
+            horizontalDirection={TooltipDirection.DOWN}
+            justify={TooltipJustify.END}
+            key={uuid}
+            tooltip={
+              <Text secondary small>
+                {description ?? uuid}
+              </Text>
+            }
+          >
+            <Button
+              Icon={ip => <Icon {...{ ...ip, ...iconProps }} />}
+              data-loading-style="inline"
+              loading={loading}
+              onClick={onClick ?? undefined}
+              small
+              basic
+            >
+              {label && (
+                <Text medium small>
+                  {label?.()}
+                </Text>
+              )}
+            </Button>
+          </TooltipWrapper>
+        ))}
+
+        {stale && getFileCache(file?.path)?.server?.updatedAt && (
+          <Text monospace muted xsmall warning>
+            Last saved {moment(getFileCache(file?.path)?.server?.updatedAt).fromNow()}
+          </Text>
+        )}
+      </Grid>
+
+      <Grid borders style={{ overflow: 'hidden' }} templateRows="auto 1fr">
         <Grid
           autoFlow="column"
-          alignItems="center"
           backgroundColor="graylo"
-          borders
-          columnGap={12}
+          bordersBottom
+          columnGap={10}
           justifyContent="start"
-          padding={6}
+          paddingBottom={18}
+          paddingLeft={PADDING_HORIZONTAL}
+          paddingRight={PADDING_HORIZONTAL}
+          paddingTop={18}
+          templateColumns="1fr auto"
           templateRows="auto"
         >
-          {[
-            {
-              Icon: Save,
-              description: stale
-                ? `You have unsaved changes. Content was modified ${lastModified}.`
-                : 'Save current file content.',
-              iconProps: stale ? { colorName: 'yellow' } : {},
-              loading: saving,
-              onClick: saveContent,
-              uuid: 'Save',
-            },
-            // {
-            //   Icon: Conversation,
-            //   uuid: 'Chat',
-            //   description: 'Get support in the community channel on Slack',
-            //   href: 'https://mage.ai/chat', target: '_blank', anchor: 'true',
-            // },
-            // {
-            //   Icon: Comment,
-            //   description: 'Add a comment to the pipeline or for a specific block',
-            //   uuid: 'Comment',
-            //   onClick: event => alert('Comment'),
-            // },
-            // {
-            //   Icon: CloseV2,
-            //   description: 'Close app',
-            //   uuid: 'Close',
-            //   onClick: onClose,
-            // },
-          ].map(({ Icon, description, iconProps, label, loading, uuid, onClick }: any) => (
+          <Grid
+            autoFlow="column"
+            columnGap={PADDING_HORIZONTAL}
+            justifyContent="start"
+            templateRows="auto"
+          >
+            {/* <Button
+              Icon={iconProps => <DiamondShared {...iconProps} colorName="yellow" />}
+              basic
+              grouped="true"
+              onClick={event => alert('DiamondShared')}
+              small
+            /> */}
             <TooltipWrapper
               align={TooltipAlign.END}
               horizontalDirection={TooltipDirection.DOWN}
               justify={TooltipJustify.END}
-              key={uuid}
               tooltip={
-                <Text secondary small>
-                  {description ?? uuid}
-                </Text>
+                <Grid rowGap={PADDING_HORIZONTAL / 2}>
+                  <Button asLink onClick={event => alert('Edit')}>
+                    <Text monospace small>
+                      {file?.path ?? block?.configuration?.file_source?.path}
+                    </Text>
+                  </Button>
+                </Grid>
               }
             >
-              <Button
-                Icon={ip => <Icon {...{ ...ip, ...iconProps }} />}
-                data-loading-style="inline"
-                loading={loading}
-                onClick={onClick ?? undefined}
-                small
-                basic
-              >
-                {label && (
-                  <Text medium small>
-                    {label?.()}
-                  </Text>
-                )}
-              </Button>
+              <Text monospace secondary small>
+                {block?.name ?? block?.uuid}
+              </Text>
             </TooltipWrapper>
-          ))}
+          </Grid>
+          {toolbars?.top}
 
-          {stale && getFileCache(file?.path)?.server?.updatedAt && (
-            <Text monospace muted xsmall warning>
-              Last saved {moment(getFileCache(file?.path)?.server?.updatedAt).fromNow()}
-            </Text>
-          )}
-        </Grid>
-
-        <Grid borders style={{ overflow: 'hidden' }} templateRows="auto 1fr">
           <Grid
             autoFlow="column"
-            backgroundColor="graylo"
-            bordersBottom
-            columnGap={10}
+            columnGap={PADDING_HORIZONTAL * 2}
             justifyContent="start"
-            paddingBottom={18}
-            paddingLeft={PADDING_HORIZONTAL}
-            paddingRight={PADDING_HORIZONTAL}
-            paddingTop={18}
-            templateColumns="1fr auto"
             templateRows="auto"
           >
-            <Grid
-              autoFlow="column"
-              columnGap={PADDING_HORIZONTAL}
-              justifyContent="start"
-              templateRows="auto"
-            >
-              {/* <Button
-                Icon={iconProps => <DiamondShared {...iconProps} colorName="yellow" />}
-                basic
-                grouped="true"
-                onClick={event => alert('DiamondShared')}
-                small
-              /> */}
-              <TooltipWrapper
-                align={TooltipAlign.END}
-                horizontalDirection={TooltipDirection.DOWN}
-                justify={TooltipJustify.END}
-                tooltip={
-                  <Grid rowGap={PADDING_HORIZONTAL / 2}>
-                    <Button asLink onClick={event => alert('Edit')}>
-                      <Text monospace small>
-                        {file?.path ?? block?.configuration?.file_source?.path}
-                      </Text>
-                    </Button>
-                  </Grid>
-                }
-              >
-                <Text monospace secondary small>
-                  {block?.name ?? block?.uuid}
-                </Text>
-              </TooltipWrapper>
-            </Grid>
-            {toolbars?.top}
+            {/* <Button
+              Icon={iconProps => <IdentityTag {...iconProps} secondary />}
+              basic
+              grouped="true"
+              onClick={event => alert('IdentityTag')}
+              small
+            />
 
-            <Grid
-              autoFlow="column"
-              columnGap={PADDING_HORIZONTAL * 2}
-              justifyContent="start"
-              templateRows="auto"
-            >
-              {/* <Button
-                Icon={iconProps => <IdentityTag {...iconProps} secondary />}
-                basic
-                grouped="true"
-                onClick={event => alert('IdentityTag')}
-                small
-              />
-
-              <Button
-                Icon={iconProps => <AppVersions {...iconProps} secondary />}
-                basic
-                grouped="true"
-                onClick={event => alert('AppVersions')}
-                small
-              /> */}
-            </Grid>
-          </Grid>
-
-          <Grid className={stylesAppNode.codeContainer}>
-            <EditorContainerStyled>{main}</EditorContainerStyled>
+            <Button
+              Icon={iconProps => <AppVersions {...iconProps} secondary />}
+              basic
+              grouped="true"
+              onClick={event => alert('AppVersions')}
+              small
+            /> */}
           </Grid>
         </Grid>
 
-        {false && (
-          <Grid borders padding={16}>
-            <div
-              style={{
-                maxWidth: 500,
-              }}
-            >
-              <Text secondary xsmall>
-                Content was last saved{' '}
-                <Text inline warning xsmall>
-                  {lastModified}
-                </Text>{' '}
-                and the server content is different from the current local content. Save the current
-                content or reset it with the server content.
-              </Text>
-
-              <br />
-
-              <Grid autoFlow="column" columnGap={8} justifyContent="start" templateColumns="auto">
-                <Link onClick={() => overrideServerContentFromLocal()} preventDefault xsmall>
-                  Save local
-                </Link>
-
-                <Link
-                  onClick={event => {
-                    overrideLocalContentFromServer();
-                  }}
-                  preventDefault
-                  xsmall
-                >
-                  Restore from server
-                </Link>
-              </Grid>
-            </div>
-          </Grid>
-        )}
+        <Grid className={stylesAppNode.codeContainer}>
+          <EditorContainerStyled>{main}</EditorContainerStyled>
+        </Grid>
       </Grid>
-
-      {/* <OutputGroups
-        consumerID={`${app.id}/output`}
-        handleContextMenu={outputGroupsProps.handleContextMenu}
-        hideTimer
-        onMount={outputGroupsProps.onMount}
-        onlyShowWithContent
-        setHandleOnMessage={outputGroupsProps.setHandleOnMessage}
-        setResultMappingUpdate={outputGroupsProps.setResultMappingUpdate}
-        styles={{
-          maxWidth: 600,
-        }}
-      /> */}
     </Grid>
   );
 }

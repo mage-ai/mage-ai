@@ -37,7 +37,11 @@ export function getStyles(
     // because IE will ignore our custom "empty image" drag preview.
     position: 'absolute',
     transform,
-    ...(ItemTypeEnum.NODE === type
+    ...([
+      ItemTypeEnum.APP,
+      ItemTypeEnum.NODE,
+      // ItemTypeEnum.OUTPUT,
+    ].includes(type)
       ? {
           height,
         }

@@ -44,8 +44,10 @@ type DragWrapperProps = {
   groupSelection?: boolean;
   isAnimating?: boolean;
   item?: NodeItemType;
+  mountRootRef?: React.MutableRefObject<HTMLDivElement>;
   onContextMenu?: (event: any) => void;
   rect?: RectType;
+  rectsMappingRef?: React.MutableRefObject<Record<string, RectType>>;
   resizable?: boolean;
   resizeConstraints?: {
     maximum?: RectType;
@@ -62,12 +64,18 @@ function DragWrapper({
   groupSelection,
   isAnimating,
   item,
+  mountRootRef,
   onContextMenu,
-  rect,
+  rect: rectProp,
+  rectsMappingRef,
   resizable,
   resizeConstraints,
   style,
 }: DragWrapperProps, ref: React.MutableRefObject<HTMLDivElement>) {
+  const rect = rectsMappingRef?.current?.[item?.id] ?? rectProp;
+  // console.log('rect.width', item?.id, rectProp?.width, rectsMappingRef?.current?.[item?.id]?.width, rect?.width);
+  // console.log('rect.height', item?.id, rectProp?.height, rectsMappingRef?.current?.[item?.id]?.height, rect?.height);
+
   const refInternal = useRef(null);
   const dragRef = ref ?? refInternal;
 
@@ -395,6 +403,8 @@ function DragWrapper({
           whileTap={{ opacity: 0.2, scaleX: 0.5 }}
         />
       )}
+
+      {mountRootRef && <div ref={mountRootRef} />}
 
       {children}
     </motion.div>

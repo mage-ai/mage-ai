@@ -105,6 +105,8 @@ import { ElementRoleEnum } from '@mana/shared/types';
 import { GroupUUIDEnum } from '@interfaces/PipelineExecutionFramework/types';
 import { hyphensToSnake, snakeToHyphens, parseDynamicUrl } from '@utils/url';
 import { buildNewPathsFromBlock, getGroupsFromPath } from '../utils/routing';
+import { DEFAULT_RECT } from '@components/v2/Canvas/Nodes/Apps/EditorAppNode';
+import { DEFAULT_RECT as DEFAULT_RECT_OUTPUT } from '@components/v2/Canvas/Nodes/CodeExecution/OutputGroups';
 
 const ENTER_ANIMATION_START_THRESHOLD = 0.6;
 const CHANGE_BLOCKS_ANIMATION_DURATION = 5;
@@ -164,6 +166,7 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
   const pageTitleRef = useRef<string>(null);
   const nodeRefs = useRef<Record<string, React.MutableRefObject<HTMLElement>>>({});
   const dragRefs = useRef<Record<string, React.MutableRefObject<HTMLDivElement>>>({});
+  const mountRootRefs = useRef<Record<string, React.MutableRefObject<HTMLDivElement>>>({});
   const rectRefs = useRef<Record<string, React.MutableRefObject<RectType>>>({});
   const imageDataRef = useRef<string>(null);
   const wrapperRef = useRef(null);
@@ -1638,6 +1641,12 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
       dragRefs.current[block.uuid] = dragRef;
     }
 
+    let mountRootRef = mountRootRefs.current[block.uuid];
+    if (!mountRootRef) {
+      mountRootRef = createRef();
+      mountRootRefs.current[block.uuid] = mountRootRef;
+    }
+
     let nodeRef = nodeRefs.current[block.uuid];
     if (!nodeRef) {
       nodeRef = createRef();
@@ -1665,6 +1674,7 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
             onDrag: handleDragging,
             onDragEnd: handleDragEnd,
           }}
+          mountRootRef={mountRootRef}
           groupSelection
           item={node}
           rect={
@@ -1674,7 +1684,7 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
             }
           }
           ref={dragRef}
-          resizable
+          resizable={false}
         >
           <BlockNodeV2
             block={block as any}
@@ -1748,6 +1758,7 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
       top: rectCurrent?.top,
       width: rectCurrent?.width,
     };
+
     // console.log('handleDragEnd', info, item, rect, rectFinal);
 
     rectsMappingRef.current[item.id] = rectFinal;
@@ -1916,6 +1927,10 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
               // ItemTypeEnum.BLOCK,
               ItemTypeEnum.OUTPUT,
             ].includes(nodeType);
+            const resizable = [
+              ItemTypeEnum.APP,
+              ItemTypeEnum.OUTPUT,
+            ].includes(nodeType);
 
             if ([ItemTypeEnum.APP, ItemTypeEnum.OUTPUT].includes(nodeType)) {
               block = (item as any)?.block;
@@ -1926,6 +1941,12 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
             if (!dragRef) {
               dragRef = createRef();
               dragRefs.current[nodeID] = dragRef;
+            }
+
+            let mountRootRef = mountRootRefs.current[nodeID];
+            if (!mountRootRef) {
+              mountRootRef = createRef();
+              mountRootRefs.current[nodeID] = mountRootRef;
             }
 
             if (ItemTypeEnum.BLOCK === nodeType) {
@@ -1939,42 +1960,31 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
               } else if (nodeID in cache) {
                 rect = cache[nodeID];
               } else {
+                rect = {
+                  ...(ItemTypeEnum.APP === nodeType ? DEFAULT_RECT : DEFAULT_RECT_OUTPUT)
+                }
                 const rectg = getSelectedGroupRectFromRefs();
-                const bbox = canvasRef?.current?.getBoundingClientRect();
+                const rectp = rectsMappingRef?.current?.[block.uuid];
+                const midx = rectg?.left + (rectg?.width / 2);
+                const midy = rectg?.top + (rectg?.height / 2);
 
-                const box = {
-                  height: bbox?.height - PADDING_VERTICAL,
-                  left: 0 + PADDING_VERTICAL,
-                  top: 52 + PADDING_VERTICAL,
-                  width: bbox?.width - PADDING_VERTICAL,
-                };
+                if (rectp?.left < midx) {
+                  rect.left = rectg?.left - PADDING_VERTICAL;
+                } else {
+                  rect.left = rectg?.left + rectg?.width + PADDING_VERTICAL;
+                }
 
-                const rects = Object.values(rectsMappingRef.current ?? {}).map(r => ({
-                  ...r,
-                  height:
-                    ItemTypeEnum.APP === r.type
-                      ? 1120
-                      : ItemTypeEnum.OUTPUT === r.type
-                        ? 418
-                        : r.height,
-                  width:
-                    ItemTypeEnum.APP === r.type
-                      ? 620
-                      : ItemTypeEnum.OUTPUT === r.type
-                        ? 400
-                        : r.width,
-                })) as any[];
-                const lrg = findLargestUnoccupiedSpace(rectg as any, rects, box as any) as RectType;
+                if (rectp?.top < midy) {
+                  rect.top = rectg?.top - PADDING_VERTICAL;
+                } else {
+                  rect.top = rectg?.top + rectg?.height + PADDING_VERTICAL;
+                }
 
-                rect.left = lrg.left;
-                rect.top = lrg.top;
+                rect.block = block;
                 rect.type = nodeType;
                 rect.id = nodeID;
 
-                rectsMappingRef.current[nodeID] = {
-                  ...rect,
-                  block,
-                };
+                rectsMappingRef.current[nodeID] = rect;
               }
 
               arr.push(
@@ -2022,6 +2032,7 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
                       render?.(
                         item as OutputNodeType,
                         dragRef,
+                        // mountRootRef,
                       );
 
                       clearTimeout(timeoutUpdateAppRectsRef.current);
@@ -2034,6 +2045,7 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
                       render?.(
                         item as OutputNodeType,
                         dragRef,
+                        // mountRootRef,
                       );
 
                       clearTimeout(timeoutUpdateOutputRectsRef.current);
@@ -2066,9 +2078,14 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
                 }}
                 item={node}
                 key={nodeID}
+                mountRootRef={mountRootRef}
                 rect={rect}
+                rectsMappingRef={[
+                  ItemTypeEnum.APP,
+                  ItemTypeEnum.OUTPUT,
+                ].includes(nodeType) ? rectsMappingRef : undefined}
                 ref={dragRef}
-                resizable
+                resizable={resizable}
               />,
             );
           },
