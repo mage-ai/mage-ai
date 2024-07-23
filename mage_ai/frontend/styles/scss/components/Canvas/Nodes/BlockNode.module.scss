@@ -1,3 +1,4 @@
+@use '../../../abstracts/variables' as *;
 @use '../../../base/borders';
 @use '../../../base/grid';
 @use './mixins' as *;
@@ -107,7 +108,49 @@ $enter-duration: 3s;
   }
 }
 
-.appendedChildElement {
+.inheritDimensions {
   height: inherit;
   width: inherit;
+}
+
+.outputContainerHeader,
+.outputContainer {
+  backdrop-filter: blur(#{$modal-blur-base});
+  background: var(--modal-background-color-base);
+  border-color: var(--borders-color-base-default);
+  border-left-width: var(--borders-width);
+  border-right-width: var(--borders-width);
+  border-style: var(--borders-style);
+}
+
+.outputContainerHeader {
+  border-top-left-radius: var(--borders-radius-md);
+  border-top-right-radius: var(--borders-radius-md);
+  border-top-width: var(--borders-width);
+  border-bottom: var(--borders-width) var(--borders-style) var(--colors-graylo);
+  position: absolute;
+  transform: translateY(-100%);
+  width: 100%;
+}
+
+.outputContainer {
+  @include borders.border-colors();
+
+  border-bottom-left-radius: var(--borders-radius-md);
+  border-bottom-right-radius: var(--borders-radius-md);
+  border-bottom-width: var(--borders-width);
+  box-shadow: 8px 8px 4px 8px var(--modal-box-shadow-base);
+  overflow: hidden;
+
+  .fadeOut {
+    opacity: 0;
+    transition: opacity 0.3s ease-out;
+  }
+}
+
+.outputScrollContainer {
+  // Border widths
+  max-height: calc(100% - 2px);
+  overflow: auto;
+  width: 100%;
 }

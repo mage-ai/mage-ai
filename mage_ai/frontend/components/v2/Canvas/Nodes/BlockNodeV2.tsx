@@ -1,4 +1,6 @@
 import * as osPath from 'path';
+import { TooltipAlign, TooltipWrapper, TooltipDirection, TooltipJustify } from '@context/v2/Tooltip';
+import Button from '@mana/elements/Button';
 import { newMessageRequestUUID } from '@utils/events';
 import { getLineID } from '@components/v2/Apps/PipelineCanvas/Lines/LineManagerV2';
 import { ShowNodeType } from '@components/v2/Apps/PipelineCanvas/interfaces';
@@ -53,6 +55,8 @@ import {
   AddBlock,
   Code,
   Lightning,
+  Save, CloseV2, PlayButtonFilled,
+  Trash
 } from '@mana/icons';
 import { ThemeContext } from 'styled-components';
 import { createRoot, Root } from 'react-dom/client';
@@ -211,6 +215,34 @@ function BlockNode(
     }
   }
 
+  const deleteAllOutputs = useCallback((event: ClientEventType, executionOutput?: ExecutionOutputType, opts?: {
+    onDelete: (xo: ExecutionOutputType) => void;
+  }) => {
+    executionOutputs.delete.mutate({
+      event,
+      id: executionOutput?.uuid,
+      onSuccess: () => {
+        removeContextMenu(event);
+        renderLineRef?.current?.({
+          ...dragRef?.current?.getBoundingClientRect(),
+          ...node?.rect,
+        });
+
+        opts?.onDelete?.(executionOutput);
+
+        animateLineRef?.current?.(outputNodeRef?.current?.id, null, { stop: true });
+      },
+      query: {
+        namespace: encodeURIComponent(
+          [codeExecutionEnvironment.type, codeExecutionEnvironment.uuid].join(
+            osPath.sep,
+          ),
+        ),
+        path: encodeURIComponent(fileRef.current?.path),
+      },
+    });
+  }, [codeExecutionEnvironment, executionOutputs, node, removeContextMenu]);
+
   const outputGroupsProps = useMemo(
     () => ({
       handleContextMenu: (
@@ -266,31 +298,7 @@ function BlockNode(
               },
               {
                 Icon: Delete,
-                onClick: (event: ClientEventType) => {
-                  executionOutputs.delete.mutate({
-                    event,
-                    id: executionOutput?.uuid,
-                    onSuccess: () => {
-                      removeContextMenu(event);
-                      renderLineRef?.current?.({
-                        ...dragRef?.current?.getBoundingClientRect(),
-                        ...node?.rect,
-                      });
-
-                      opts?.onDelete?.(executionOutput);
-
-                      animateLineRef?.current?.(outputNodeRef?.current?.id, null, { stop: true });
-                    },
-                    query: {
-                      namespace: encodeURIComponent(
-                        [codeExecutionEnvironment.type, codeExecutionEnvironment.uuid].join(
-                          osPath.sep,
-                        ),
-                      ),
-                      path: encodeURIComponent(fileRef.current?.path),
-                    },
-                  });
-                },
+                onClick: (event: any) => deleteAllOutputs(event, executionOutput, opts),
                 uuid: 'Delete output',
               },
               {
@@ -609,8 +617,11 @@ function BlockNode(
     hideLinesToOutput();
 
     delete handleOnMessageRef.current?.[outputNodeRef?.current?.id];
-    outputRootRef?.current && outputRootRef?.current?.unmount();
 
+    outputRootRef?.current && outputRootRef?.current?.unmount();
+    outputAppendedChildElementRef?.current?.remove();
+
+    outputAppendedChildElementRef.current = null;
     outputRootRef.current = null;
     outputNodeRef.current = null;
 
@@ -676,39 +687,103 @@ function BlockNode(
     return (
       label && (
         <Grid
-          alignItems="center"
-          autoColumns="auto"
-          autoFlow="column"
-          columnGap={8}
-          justifyContent="space-between"
-          padding={6}
-          templateColumns="1fr 1fr 1fr"
-          templateRows="1fr"
+          autoFlow="row"
+          className={stylesBlockNode.outputContainerHeader}
+          templateColumns="1fr"
         >
-          <Grid alignItems="center" autoFlow="column" columnGap={6} justifyContent="start">
-            <Circle backgroundColor={bupc} size={12} />
-            {bup && (
-              <Text secondary xsmall>
-                {bup?.name ?? bup?.uuid}
-              </Text>
-            )}
+          <Grid
+            alignItems="center"
+            autoColumns="auto"
+            autoFlow="column"
+            columnGap={8}
+            justifyContent="space-between"
+            padding={6}
+            templateColumns="1fr 1fr 1fr"
+            templateRows="1fr"
+          >
+            <Grid alignItems="center" autoFlow="column" columnGap={6} justifyContent="start">
+              <Circle backgroundColor={bupc} size={12} />
+              {bup && (
+                <Text secondary xsmall>
+                  {bup?.name ?? bup?.uuid}
+                </Text>
+              )}
+            </Grid>
+
+            <Grid alignItems="center" autoFlow="column" columnGap={6} justifyContent="center">
+              <Text xsmall>{label}</Text>
+            </Grid>
+
+            <Grid alignItems="center" autoFlow="column" columnGap={6} justifyContent="end">
+              {bdn && (
+                <Text secondary xsmall>
+                  {bdn?.name ?? bdn?.uuid}
+                </Text>
+              )}
+              <Circle
+                backgroundColor={bdnc ?? undefined}
+                borderColor={!bdnc ? 'gray' : undefined}
+                size={12}
+              />
+            </Grid>
           </Grid>
 
-          <Grid alignItems="center" autoFlow="column" columnGap={6} justifyContent="center">
-            <Text xsmall>{label}</Text>
-          </Grid>
-
-          <Grid alignItems="center" autoFlow="column" columnGap={6} justifyContent="end">
-            {bdn && (
-              <Text secondary xsmall>
-                {bdn?.name ?? bdn?.uuid}
-              </Text>
-            )}
-            <Circle
-              backgroundColor={bdnc ?? undefined}
-              borderColor={!bdnc ? 'gray' : undefined}
-              size={12}
-            />
+          <Grid
+            alignItems="center"
+            justifyContent="start"
+            columnGap={12}
+            padding={6}
+            autoFlow="column"
+            templateRows="1fr"
+          >
+            {[
+              {
+                Icon: PlayButtonFilled,
+                label: 'Run',
+                onClick: submitCodeExecution,
+                // description: '...',
+                // iconProps: stale ? { colorName: 'yellow' } : {},
+                // loading: saving,
+                // onClick: saveContent,
+              },
+              {
+                Icon: Code,
+                label: 'Edit code',
+                onClick: launchEditorApp,
+                // description: '...',
+              },
+              {
+                Icon: Trash,
+                label: 'Delete outputs',
+                onClick: (event: any) => deleteAllOutputs(event),
+                // description: '...',
+                // onClick: event => alert('Comment'),
+              },
+              {
+                Icon: CloseV2,
+                label: 'Close app',
+                onClick: () => closeOutput(),
+                // description: '...',
+                // onClick: onClose,
+              },
+            ].map(({ Icon, description, iconProps, label, loading, uuid, onClick }: any) => (
+              <Button
+                Icon={ip => <Icon {...{ ...ip, size: 12 }} />}
+                data-loading-style="inline"
+                key={uuid ?? typeof label === 'function' ? label?.() : label}
+                loading={loading}
+                onClick={onClick ?? undefined}
+                small
+                basic
+                wrap
+              >
+                {label && (
+                  <Text secondary xsmall>
+                    {typeof label === 'function' ? label?.() : label}
+                  </Text>
+                )}
+              </Button>
+            ))}
           </Grid>
         </Grid>
       )
@@ -724,10 +799,19 @@ function BlockNode(
     outputNodeRef.current = outputNode;
     outputMountRef.current = mountRef;
 
-    outputRootRef.current = createRoot(mountRef.current);
+    outputAppendedChildElementRef.current = document.createElement('div');
+    outputAppendedChildElementRef.current.className = stylesBlockNode.inheritDimensions;
+    mountRef.current.appendChild(outputAppendedChildElementRef.current);
+
+    outputRootRef.current = createRoot(outputAppendedChildElementRef.current);
     outputRootRef.current.render(
       <ContextProvider theme={themeContext as any}>
+        {renderOutputPortalContent()}
         <div
+          className={[
+            stylesBlockNode.outputContainer,
+            stylesBlockNode.inheritDimensions,
+          ].join(' ')}
           onMouseDown={event => {
             handleMouseDown({
               ...event,
@@ -755,14 +839,7 @@ function BlockNode(
               callback && callback();
             }}
             role={ElementRoleEnum.CONTENT}
-            styles={{
-              maxWidth: 800,
-              minWidth: 600,
-            }}
-          >
-            {renderOutputPortalContent()}
-            <Divider compact />
-          </OutputGroups>
+          />
         </div>
       </ContextProvider>,
     );
@@ -779,7 +856,7 @@ function BlockNode(
     appMountRef.current = mountRef;
 
     appAppendedChildElementRef.current = document.createElement('div');
-    appAppendedChildElementRef.current.className = stylesBlockNode.appendedChildElement;
+    appAppendedChildElementRef.current.className = stylesBlockNode.inheritDimensions;
     mountRef.current.appendChild(appAppendedChildElementRef.current);
 
     appRootRef.current = createRoot(appAppendedChildElementRef.current);

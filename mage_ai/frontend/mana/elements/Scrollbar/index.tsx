@@ -8,6 +8,7 @@ type ScrollbarProps = {
   className?: string;
   children?: React.ReactNode;
   innerRef?: React.RefObject<HTMLDivElement>;
+  onPointerDownCapture?: React.PointerEventHandler<HTMLDivElement>;
 } & ScrollbarsStyledProps;
 
 const ScrollbarStyled =

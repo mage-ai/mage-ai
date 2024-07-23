@@ -22,12 +22,7 @@ import { convertToMillisecondsTimestamp } from '@utils/date';
 import { executeCode, interruptCodeExecution, saveContent as saveContentAction } from '../../../IDE/actions';
 import { executionDone } from '@components/v2/ExecutionManager/utils';
 import { getFileCache, isStale, updateFileCache } from '../../../IDE/cache';
-import {
-  Save,
-  DeleteCircle,
-  CloseV2,
-  PlayButtonFilled,
-} from '@mana/icons';
+import { Save, DeleteCircle, CloseV2, PlayButtonFilled } from '@mana/icons';
 import BlockType from '@interfaces/BlockType';
 import { getBlockColor } from '@mana/themes/blocks';
 import { FileType } from '@components/v2/IDE/interfaces';

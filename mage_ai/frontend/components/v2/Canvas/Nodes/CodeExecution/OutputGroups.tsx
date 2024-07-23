@@ -17,7 +17,7 @@ import ExecutionResult, { ExecutionResultProps } from './ExecutionResult';
 import Grid from '@mana/components/Grid';
 import React, { createRef, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import Scrollbar from '@mana/elements/Scrollbar';
-import stylesOutput from '@styles/scss/components/Canvas/Nodes/OutputGroups.module.scss';
+import stylesBlockNode from '@styles/scss/components/Canvas/Nodes/BlockNode.module.scss';
 import { groupBy, indexBy, sortByKey } from '@utils/array';
 import { ElementRoleEnum } from '@mana/shared/types';
 import { ExecutionOutputType } from '@interfaces/CodeExecutionType';
@@ -192,11 +192,11 @@ const OutputGroups: React.FC<OutputGroupsProps> = ({
     executingRef.current = xo?.messages?.every((r) => !executionDone({ result: r } as any));
 
     if (executingRef.current) {
-      statusRef?.current?.classList?.remove(stylesOutput.fadeOut);
+      statusRef?.current?.classList?.remove(stylesBlockNode.fadeOut);
       statusRef.current.innerText =
         `${capitalize(STATUS_DISPLAY_TEXT[result?.status] ?? result?.status)}...`;
     } else {
-      statusRef?.current?.classList?.add(stylesOutput.fadeOut);
+      statusRef?.current?.classList?.add(stylesBlockNode.fadeOut);
       statusRef.current.innerText = '';
     }
   }
@@ -259,27 +259,29 @@ const OutputGroups: React.FC<OutputGroupsProps> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  function cancelDrag(event: any) {
+    event.stopPropagation();
+  }
+
   return (
     <div
       className={[
-        stylesOutput.outputContainer,
+        stylesBlockNode.inheritDimensions,
       ].filter(Boolean).join(' ')}
       onContextMenu={e => handleContextMenu(e, null, contextMenuProps)}
       ref={containerRef}
       role={role}
-      style={{
-        ...styles,
-        minHeight,
-      }}
+      style={styles}
     >
       {children}
 
       <Scrollbar
         autoHorizontalPadding
+        className={stylesBlockNode.outputScrollContainer}
         hideX
+        onPointerDownCapture={cancelDrag}
         ref={scrollbarRef}
         showY
-        style={{ maxHeight: DEFAULT_RECT.height, overflow: 'auto', width: DEFAULT_RECT.width }}
       >
         <Grid ref={outputMountRef} rowGap={6} paddingTop={6} paddingBottom={6} templateRows="min-content" />
 
