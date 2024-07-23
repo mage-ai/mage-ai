@@ -3,7 +3,10 @@ import { snakeToHyphens } from '@utils/url';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { MutateFunction, useMutation } from 'react-query';
 import { useRouter } from 'next/router';
-import { PipelineExecutionFrameworkUUIDEnum } from '@interfaces/PipelineExecutionFramework/types';
+import {
+  FRAMEWORK_NAME_MAPPING,
+  PipelineExecutionFrameworkUUIDEnum,
+} from '@interfaces/PipelineExecutionFramework/types';
 import AIControlPanel from '@components/AI/ControlPanel';
 import BrowseTemplates from '@components/CustomTemplates/BrowseTemplates';
 import Button from '@oracle/elements/Button';
@@ -1250,6 +1253,7 @@ function PipelineListPage() {
             blocks,
             created_at: createdAt,
             description,
+            execution_framework: executionFramework,
             schedules,
             tags,
             type,
@@ -1313,7 +1317,10 @@ function PipelineListPage() {
               {description}
             </Text>,
             <Text bold={isInvalid} danger={isInvalid} key={`pipeline_type_${idx}`}>
-              {isInvalid ? capitalize(PIPELINE_TYPE_INVALID) : PIPELINE_TYPE_LABEL_MAPPING[type]}
+              {isInvalid
+                ? capitalize(PIPELINE_TYPE_INVALID)
+                : (executionFramework ? FRAMEWORK_NAME_MAPPING[executionFramework] : PIPELINE_TYPE_LABEL_MAPPING[type])
+              }
             </Text>,
             <Text
               key={`pipeline_updated_at_${idx}`}
