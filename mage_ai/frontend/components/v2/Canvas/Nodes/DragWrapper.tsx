@@ -143,7 +143,7 @@ function DragWrapper({
 
   const { onDragStart, onDrag, onDragEnd, onMouseDown } = handlers;
 
-  const dragHandlers = useMemo(() => ({
+  const dragHandlers = useMemo(() => draggable ? ({
     onDragEnd: (event, info) => onDragEnd(event, info, {
       item,
       rect,
@@ -160,7 +160,7 @@ function DragWrapper({
       ref: dragRef,
     }),
     onMouseDown: event => onMouseDown?.({ ...event, target: dragRef.current }),
-  }), [onDragEnd, onDragStart, onMouseDown, rect]);
+  }) : {}, [draggable, onDragEnd, onDragStart, onMouseDown, rect]);
 
   const startDrag = useCallback((event: any, {
     bottom = false,

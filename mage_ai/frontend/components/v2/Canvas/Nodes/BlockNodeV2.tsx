@@ -742,7 +742,6 @@ function BlockNode(
           <OutputGroups
             {...outputGroupsProps}
             consumerID={outputNode.id}
-            dragControls={outputDragControls}
             executionOutput={{
               messages: [],
               namespace: encodeURIComponent(
