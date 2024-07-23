@@ -227,7 +227,7 @@
 
 @keyframes dash-to-output {
   to {
-    stroke-dashoffset: -2; /* Complete cycle of dash and gap proportions */
+    stroke-dashoffset: -1000; /* Complete cycle of dash and gap proportions */
   }
 }
 
@@ -240,9 +240,11 @@
 
     &.app-output,
     &.block-output {
-      animation: dash-to-output 0.5s linear infinite;
+      animation: dash-to-output 1s linear infinite;
       opacity: 1;
-      stroke-dasharray: 1, 1;
+      stroke-dasharray: 50 50;
+      stroke-dashoffset: 0;
+      stroke-width: 1;
     }
   }
 
