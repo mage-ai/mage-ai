@@ -1124,6 +1124,7 @@ function PipelineListPage() {
           })
         }
         onDoubleClickRow={(rowIndex: number) => {
+          const selectedPipeline = pipelinesInner[rowIndex];
           if (selectedPipeline?.execution_framework === PipelineExecutionFrameworkUUIDEnum.RAG) {
             router.push(
               `/v2/pipelines/${snakeToHyphens(selectedPipeline?.uuid)}/${snakeToHyphens(selectedPipeline?.execution_framework)}`,
@@ -1131,7 +1132,7 @@ function PipelineListPage() {
           } else {
             router.push(
               '/pipelines/[pipeline]/edit',
-              `/pipelines/${pipelinesInner[rowIndex].uuid}/edit`,
+              `/pipelines/${selectedPipeline?.uuid}/edit`,
             );
           }
         }}
@@ -1150,7 +1151,7 @@ function PipelineListPage() {
                 } else {
                   router.push(
                     '/pipelines/[pipeline]/edit',
-                    `/pipelines/${pipelinesInner[rowIndex].uuid}/edit`,
+                    `/pipelines/${selectedPipeline?.uuid}/edit`,
                   );
                 }
               },
