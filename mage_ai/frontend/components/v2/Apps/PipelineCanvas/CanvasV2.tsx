@@ -1644,6 +1644,9 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
       nodeRefs.current[block.uuid] = nodeRef;
     }
 
+    const groupRectOriginal = buildSelectedGroupRect(block?.uuid, rectsMappingRef?.current);
+    // console.log(groupRectOriginal, selectedGroupRect)
+
     return (
       <WithOnMount
         key={block?.uuid}
@@ -1654,6 +1657,9 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
         <DragWrapper
           draggable={false}
           dragConstraintsRef={containerRef}
+          resizeConstraints={{
+            minimum: groupRectOriginal,
+          }}
           eventHandlers={{
             onDragStart: handleDragStart,
             onDrag: handleDragging,

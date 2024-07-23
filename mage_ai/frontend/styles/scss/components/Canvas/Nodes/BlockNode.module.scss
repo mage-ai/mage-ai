@@ -80,17 +80,29 @@ $enter-duration: 3s;
 }
 
 .resizeHandle {
-  background-color: transparent;
-  height: 8px;
-  opacity: 0.5;
+  background-color: var(--borders-color-base-default);
+  border-radius: 8px;
+  opacity: 0;
   position: absolute;
   z-index: 6;
 
-  &.top {
+  &.bottom {
+    bottom: 0;
     cursor: ns-resize;
+    height: 16px;
     left: 0;
+    margin-bottom: -8px;
+    right: 0;
+    width: 100%;
+  }
+
+  &.right {
+    bottom: 0;
+    cursor: ew-resize;
+    height: 100%;
+    margin-right: -8px;
     right: 0;
     top: 0;
-    width: 100%;
+    width: 16px;
   }
 }

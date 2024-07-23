@@ -47,6 +47,10 @@ type DragWrapperProps = {
   onContextMenu?: (event: any) => void;
   rect?: RectType;
   resizable?: boolean;
+  resizeConstraints?: {
+    maximum?: RectType;
+    minimum?: RectType;
+  };
   style?: any;
 } & DragWrapperType;
 
@@ -61,23 +65,38 @@ function DragWrapper({
   onContextMenu,
   rect,
   resizable,
+  resizeConstraints,
   style,
 }: DragWrapperProps, ref: React.MutableRefObject<HTMLDivElement>) {
   const refInternal = useRef(null);
   const dragRef = ref ?? refInternal;
-  const resizeHandleTopRef = useRef(null);
 
   const draggingRef = useRef(false);
   const timeoutRef = useRef(null);
 
   const controlsPosition = useDragControls();
-  const controlsSize = useDragControls();
+  const controlsBottom = useDragControls();
+  const controlsRight = useDragControls();
 
   const handleX = useMotionValue(0);
   const handleY = useMotionValue(0);
+  const handleTranslateX = useTransform(handleX, value => -value);
   const handleTranslateY = useTransform(handleY, value => -value);
 
-  const heightTransform = useTransform(handleY, value => (rect?.height ?? 0) - value);
+  const heightTransform = useTransform(handleY, value => {
+    const vmin = resizeConstraints?.minimum?.height ?? 0;
+    const vnew = (rect?.height ?? 0) + value;
+
+    return vnew < vmin ? vmin : vnew;
+  });
+  const widthTransform = useTransform(handleX, value => {
+    const vmin = resizeConstraints?.minimum?.width ?? 0;
+    const vnew = (rect?.width ?? 0) + value;
+
+    // console.log(vmin, vnew, vnew < vmin ? vmin : vnew)
+
+    return vnew < vmin ? vmin : vnew;
+  });
 
   const [isDragging, setIsDragging] = useState(false);
 
@@ -113,15 +132,22 @@ function DragWrapper({
 
   const { onDragStart, onDrag, onDragEnd } = handlers;
 
-  const startDrag = useCallback((event: any) => {
+  const startDrag = useCallback((event: any, {
+    bottom = false,
+    right = false,
+  }) => {
     event.preventDefault();
-    controlsSize.start(event);
+
+    bottom && controlsBottom.start(event);
+    right && controlsRight.start(event);
+
     onDragStart(event, null, {
       item,
       rect,
       ref: dragRef,
     });
 
+    handleX.set(0);
     handleY.set(0);
 
     // translateXStartRef.current = rect?.left ?? 0;
@@ -129,7 +155,6 @@ function DragWrapper({
 
     // dragRef.current.style.transformOrigin = `${rect?.left}px ${rect?.top}px`;
     // dragRef.current.style.transform = `translate(${handleX.get()}px, ${handleY.get()}px)`
-    // resizeHandleTopRef.current.style.transformOrigin = dragRef.current.style.transformOrigin;
 
     // console.log(
     //   'start',
@@ -137,7 +162,6 @@ function DragWrapper({
     //   dragRef.current.style.transformOrigin,
     //   // translateXTransform.get(),
     //   // translateYTransform.get(),
-    //   resizeHandleTopRef.current.style.transformOrigin,
     // )
 
     draggingRef.current = true;
@@ -145,11 +169,35 @@ function DragWrapper({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [onDragStart, item, rect]);
 
+  function isWidthMinimum() {
+    return widthTransform.get() < (resizeConstraints?.minimum?.width ?? 0);
+  }
+
+  function isHeightMinimum() {
+    return heightTransform.get() < (resizeConstraints?.minimum?.height ?? 0);
+  }
+
+  useMotionValueEvent(handleX, 'change', (latest: number) => {
+    dragRef.current.style.transform =
+      `translate(${rect?.left}px, ${rect?.top}px)`;
+
+    onDrag(null, {
+      delta: {
+        y: latest,
+      }
+    }, {
+      item,
+      rect,
+      ref: dragRef,
+    });
+  });
+
   useMotionValueEvent(handleY, 'change', (latest: number) => {
     // clearTimeout(timeoutRef.current);
 
+    // Add latest if resising upwards (top) or left (left)
     dragRef.current.style.transform =
-      `translate(${rect?.left}px, ${rect?.top + latest}px)`;
+      `translate(${rect?.left}px, ${rect?.top}px)`;
 
     // if (draggingRef.current) {
     //   timeoutRef.current = setTimeout(() => {
@@ -161,7 +209,6 @@ function DragWrapper({
 
     // dragRef.current.style.transformOrigin = `${rect?.left}px ${rect?.top}px`;
     // dragRef.current.style.transform = `translate(${handleX.get()}px, ${handleY.get()}px)`
-    // resizeHandleTopRef.current.style.transformOrigin = dragRef.current.style.transformOrigin;
 
     // console.log(
     //   'dragging',
@@ -169,7 +216,6 @@ function DragWrapper({
     //   dragRef.current.style.transformOrigin,
     //   // translateXTransform.get(),
     //   // translateXTransform.get(),
-    //   resizeHandleTopRef.current.style.transformOrigin,
     // )
 
     onDrag(null, {
@@ -189,6 +235,14 @@ function DragWrapper({
       rect,
       ref: dragRef,
     });
+
+    // if (isHeightMinimum()) {
+    //   handleY.set(0);
+    // }
+
+    // if (isWidthMinimum()) {
+    //   handleX.set(0);
+    // }
 
     // dragRef.current.style.height = `${heightTransform.get()}px`;
     // dragRef.current.style.transformOrigin = '';
@@ -217,6 +271,7 @@ function DragWrapper({
         ...(isAnimating ? style : wrapperStyles),
         ...(isDragging ? {
           height: heightTransform,
+          width: widthTransform,
           // translateX: translateXTransform,
           // translateY: translateYTransform,
         } : {}),
@@ -258,38 +313,88 @@ function DragWrapper({
           scale: 1,
         }}
       />
-      {resizable && <motion.div
-        className={[
-          stylesBlockNode.resizeHandle,
-          stylesBlockNode.top,
-        ].filter(Boolean).join(' ')}
-        drag="y"
-        dragControls={controlsSize}
-        dragMomentum={false}
-        dragPropagation={false}
-        onDragEnd={endDrag}
-        onPointerDown={startDrag}
-        ref={resizeHandleTopRef}
-        role={[
-          draggable && ElementRoleEnum.DRAGGABLE,
-        ].filter(Boolean).join(' ')}
-        style={{
-          originX: 0.5,
-          originY: 0.5,
-          translateY: handleTranslateY,
-          x: handleX,
-          y: handleY,
-        }}
-        whileDrag={{
-          opacity: 0.3,
-          scaleY: 0.1,
-          transition: {
-            duration: 0,
-          }
-        }}
-        whileHover={{ scaleY: 3 }}
-        whileTap={{ opacity: 1, scaleY: 0.5 }}
-      />}
+
+      {resizable && (
+        <motion.div
+          className={[
+            stylesBlockNode.resizeHandle,
+            stylesBlockNode.bottom,
+          ].filter(Boolean).join(' ')}
+          drag="y"
+          dragControls={controlsBottom}
+          dragMomentum={false}
+          dragPropagation={false}
+          initial={{ opacity: 0 }}
+          onDragEnd={(event) => {
+            // console.log('END');
+            endDrag(event);
+          }}
+          onPointerUp={(event) => {
+            // console.log('UP');
+            endDrag(event);
+          }}
+          onPointerDown={(event: any) => startDrag(event, { bottom: true })}
+          role={[
+            resizable && ElementRoleEnum.DRAGGABLE,
+          ].filter(Boolean).join(' ')}
+          style={{
+            originX: 0.5,
+            originY: 0.5,
+            translateY: handleTranslateY,
+            y: handleY,
+          }}
+          whileDrag={{
+            opacity: 0.0,
+            scaleY: 0.1,
+            transition: {
+              duration: 0,
+            }
+          }}
+          whileHover={{ opacity: 0.3, scaleY: 1 }}
+          whileTap={{ opacity: 0.2, scaleY: 0.5 }}
+        />
+      )}
+
+      {resizable && (
+        <motion.div
+          className={[
+            stylesBlockNode.resizeHandle,
+            stylesBlockNode.right,
+          ].filter(Boolean).join(' ')}
+          drag="x"
+          dragControls={controlsRight}
+          dragMomentum={false}
+          dragPropagation={false}
+          initial={{ opacity: 0 }}
+          onDragEnd={(event) => {
+            // console.log('END');
+            endDrag(event);
+          }}
+          onPointerUp={(event) => {
+            // console.log('UP');
+            endDrag(event);
+          }}
+          onPointerDown={(event: any) => startDrag(event, { right: true })}
+          role={[
+            resizable && ElementRoleEnum.DRAGGABLE,
+          ].filter(Boolean).join(' ')}
+          style={{
+            originX: 0.5,
+            originY: 0.5,
+            translateX: handleTranslateX,
+            x: handleX,
+          }}
+          whileDrag={{
+            opacity: 0.0,
+            scaleX: 0.1,
+            transition: {
+              duration: 0,
+            }
+          }}
+          whileHover={{ opacity: 0.3, scaleX: 1 }}
+          whileTap={{ opacity: 0.2, scaleX: 0.5 }}
+        />
+      )}
 
       {children}
     </motion.div>
@@ -302,6 +407,10 @@ export function areEqual(p1: DragWrapperProps, p2: DragWrapperProps) {
     && p1.rect.top === p2.rect.top
     && p1.rect.width === p2.rect.width
     && p1.rect.height === p2.rect.height
+    && p1?.resizeConstraints?.minimum?.left === p2?. resizeConstraints?.minimum?.left
+    && p1?.resizeConstraints?.minimum?.top === p2?. resizeConstraints?.minimum?.top
+    && p1?.resizeConstraints?.minimum?.width === p2?. resizeConstraints?.minimum?.width
+    && p1?.resizeConstraints?.minimum?.height === p2?. resizeConstraints?.minimum?.height
     && p1?.groupSelection === p2?.groupSelection
     && p1?.isAnimating === p2?.isAnimating
     && p1?.draggable === p2?.draggable
