@@ -422,6 +422,7 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
       nodeOps: Record<string, any>,
       render: (
         nodeItem: OutputNodeType | AppNodeType,
+        wrapperRef: React.MutableRefObject<HTMLDivElement>,
         mountRef: React.MutableRefObject<HTMLDivElement>,
       ) => void,
       remove: (callback?: () => void) => void,
