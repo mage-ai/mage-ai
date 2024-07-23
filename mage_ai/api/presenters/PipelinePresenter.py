@@ -17,6 +17,7 @@ class PipelinePresenter(BasePresenter):
         'created_at',
         'data_integration',
         'description',
+        'execution_framework',
         'executor_config',
         'executor_count',
         'executor_type',
@@ -101,7 +102,7 @@ class PipelinePresenter(BasePresenter):
         elif constants.UPDATE == display_format:
             data = self.model.to_dict(include_extensions=include_extensions)
         else:
-            data = self.model.to_dict()
+            data = self.model.to_dict(include_execution_framework=True)
             if self.model.history:
                 data.update(history=[h.to_dict() for h in self.model.history])
 
