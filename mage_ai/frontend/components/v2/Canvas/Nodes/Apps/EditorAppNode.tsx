@@ -43,6 +43,7 @@ type EditorAppNodeProps = {
   app?: AppNodeType;
   block: BlockType;
   containerRef?: React.RefObject<HTMLElement | undefined> | undefined;
+  dragControls?: any;
   fileRef?: React.MutableRefObject<FileType | undefined> | undefined;
   height?: number;
   handleContextMenu?: (event: ClientEventType) => void;
@@ -63,6 +64,7 @@ function EditorAppNode({
   app,
   block,
   containerRef,
+  dragControls,
   fileRef,
   handleContextMenu,
   height,
@@ -195,6 +197,16 @@ function EditorAppNode({
     }
   }, [original?.modified_timestamp]);
 
+  function startDrag(event: any) {
+    // console.log('startDrag', event, dragControls, dragControls?.start);
+    // dragControls?.start(event);
+  }
+
+  function cancelDrag(event: any) {
+    // console.log('CANCEL', event);
+    event.stopPropagation();
+  }
+
   return (
     <Grid
       className={[stylesAppNode.appNodeContainer].join(' ')}
@@ -208,6 +220,7 @@ function EditorAppNode({
     >
       <Grid
         columnGap={PADDING_HORIZONTAL / 2}
+        onPointerDownCapture={cancelDrag}
         style={{ gridTemplateColumns: 'auto 1fr auto' }}
         templateRows="1fr"
       >
@@ -276,8 +289,10 @@ function EditorAppNode({
         alignItems="center"
         backgroundColor="graylo"
         borders
+        className={stylesAppNode.dragger}
         columnGap={12}
         justifyContent="start"
+        onPointerDown={startDrag}
         padding={6}
         templateRows="auto"
       >
@@ -346,7 +361,11 @@ function EditorAppNode({
         )}
       </Grid>
 
-      <Grid borders style={{ overflow: 'hidden' }} templateRows="auto 1fr">
+      <Grid
+        borders style={{ overflow: 'hidden' }}
+        onPointerDownCapture={cancelDrag}
+        templateRows="auto 1fr"
+      >
         <Grid
           autoFlow="column"
           backgroundColor="graylo"
@@ -392,6 +411,7 @@ function EditorAppNode({
               </Text>
             </TooltipWrapper>
           </Grid>
+
           {toolbars?.top}
 
           <Grid

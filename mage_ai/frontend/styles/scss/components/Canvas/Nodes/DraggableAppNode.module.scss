@@ -25,3 +25,9 @@
   min-width: 600px;
   overflow: hidden;
 }
+
+.dragger {
+  &:hover {
+    cursor: move;
+  }
+}

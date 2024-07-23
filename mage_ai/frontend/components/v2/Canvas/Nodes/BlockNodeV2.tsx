@@ -1,6 +1,7 @@
 import * as osPath from 'path';
 import { newMessageRequestUUID } from '@utils/events';
 import { getLineID } from '@components/v2/Apps/PipelineCanvas/Lines/LineManagerV2';
+import { ShowNodeType } from '@components/v2/Apps/PipelineCanvas/interfaces';
 import { EventEnum, KeyEnum } from '@mana/events/enums';
 import { removeANSI, removASCII } from '@utils/string';
 import { getBlockColor } from '@mana/themes/blocks';
@@ -64,6 +65,7 @@ import { SettingsContext } from '@components/v2/Apps/PipelineCanvas/SettingsMana
 import Divider from '@mana/elements/Divider';
 import { gridTemplateColumns } from 'styled-system';
 import { FrameworkType, PipelineExecutionFrameworkBlockType } from '@interfaces/PipelineExecutionFramework/interfaces';
+import { useDragControls } from 'framer-motion';
 
 type BlockNodeType = {
   block: BlockType;
@@ -72,18 +74,8 @@ type BlockNodeType = {
   groupSelection?: boolean;
   recentlyAddedBlocksRef?: React.MutableRefObject<Record<string, boolean>>;
   node: NodeType;
-  showApp?: (
-    config: any,
-    render: (node: any, mountRef: React.MutableRefObject<HTMLDivElement>) => void,
-    remove: (callback?: () => void) => void,
-    setOnRemove: (onRemove: () => void) => void,
-  ) => void;
-  showOutput?: (
-    config: any,
-    render: (node: any, mountRef: React.MutableRefObject<HTMLDivElement>) => void,
-    remove: (callback?: () => void) => void,
-    setOnRemove: (onRemove: () => void) => void,
-  ) => void;
+  showApp?: ShowNodeType;
+  showOutput?: ShowNodeType;
 };
 
 const STEAM_OUTPUT_DIR = 'code_executions';
@@ -92,6 +84,9 @@ function BlockNode(
   { block, dragRef, node, groupSelection, showApp, recentlyAddedBlocksRef, showOutput, ...rest }: BlockNodeType,
   ref: React.MutableRefObject<HTMLElement>,
 ) {
+  const appDragControls = useDragControls();
+  const outputDragControls = useDragControls();
+
   const themeContext = useContext(ThemeContext);
   const { animateLineRef, handleMouseDown, renderLineRef } = useContext(EventContext);
   const { selectedGroupsRef } = useContext(SettingsContext);
@@ -731,7 +726,7 @@ function BlockNode(
 
     outputRootRef.current = createRoot(mountRef.current);
     outputRootRef.current.render(
-      <ContextProvider theme={themeContext}>
+      <ContextProvider theme={themeContext as any}>
         <div
           onMouseDown={event => {
             handleMouseDown({
@@ -747,6 +742,7 @@ function BlockNode(
           <OutputGroups
             {...outputGroupsProps}
             consumerID={outputNode.id}
+            dragControls={outputDragControls}
             executionOutput={{
               messages: [],
               namespace: encodeURIComponent(
@@ -793,6 +789,7 @@ function BlockNode(
         <EditorAppNode
           app={appNode}
           block={block}
+          dragControls={appDragControls}
           fileRef={opts?.fileRef ?? fileRef}
           handleContextMenu={handleEditorContextMenu}
           interruptExecution={interruptExecution}
@@ -831,6 +828,9 @@ function BlockNode(
         },
         closeOutput,
         onRemove => onCloseOutputRef.current = onRemove,
+        {
+          dragControls: outputDragControls,
+        },
       );
     }
   }
@@ -854,6 +854,9 @@ function BlockNode(
         },
         closeEditorApp,
         onRemove => onCloseAppRef.current = onRemove,
+        {
+          dragControls: appDragControls,
+        },
       );
 
     if (fileRef.current?.path && fileRef.current?.content) {

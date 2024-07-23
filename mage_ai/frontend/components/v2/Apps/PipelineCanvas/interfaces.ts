@@ -162,3 +162,13 @@ export type SubscriptionType = {
   handler: (event: CustomAppEvent) => void;
   type: CustomAppEventEnum;
 };
+
+export type ShowNodeType = (
+  config: any,
+  render: (node: any, mountRef: React.MutableRefObject<HTMLDivElement>) => void,
+  remove: (callback?: () => void) => void,
+  setOnRemove: (onRemove: () => void) => void,
+  opts?: {
+    dragControls?: any;
+  },
+) => void;

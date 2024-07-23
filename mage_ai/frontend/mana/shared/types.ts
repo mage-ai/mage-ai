@@ -10,6 +10,7 @@ export enum ElementRoleEnum {
   DROPPABLE = 'droppable',
   PANNABLE = 'pannable',
   PIPELINE = 'pipeline',
+  RESIZEABLE = 'resizable',
   SCROLLABLE = 'scrollable',
   ZOOMABLE = 'zoomable',
 }

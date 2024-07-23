@@ -40,7 +40,7 @@ export function getStyles(
     ...([
       ItemTypeEnum.APP,
       ItemTypeEnum.NODE,
-      // ItemTypeEnum.OUTPUT,
+      ItemTypeEnum.OUTPUT,
     ].includes(type)
       ? {
           height,

@@ -36,6 +36,7 @@ import {
   motion,
   animate,
   useAnimation,
+  useDragControls,
   useMotionValue,
   useMotionValueEvent,
   useTransform,
@@ -98,7 +99,7 @@ import { deepCopyArray, reverseArray, indexBy, unique, uniqueArray, range } from
 import { getNewUUID } from '@utils/string';
 import { deepCopy, isEmptyObject, selectKeys } from '@utils/hash';
 import { WithOnMount } from '@mana/hooks/useWithOnMount';
-import { AppConfigType } from '../interfaces';
+import { ShowNodeType } from './interfaces';
 import { buildOutputNode } from './utils/items';
 import { buildAppNode } from './AppManager/utils';
 import { ElementRoleEnum } from '@mana/shared/types';
@@ -179,6 +180,10 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
   const updateLinesRef = useRef<UpdateLinesType>(null);
   const renderLineRef = useRef<(rect: RectType) => void>(null);
 
+  // Dragging
+  const dragControlsRef = useRef<Record<string, any>>({});
+
+  // Animations
   const [isAnimating, setIsAnimating] = useState(true);
   const animationTimeoutRef = useRef(null);
   const activeAnimationRef = useRef({
@@ -417,8 +422,10 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
       ) => void,
       remove: (callback?: () => void) => void,
       setOnRemove: (onRemove: () => void) => void,
+      opts?: {
+        dragControls?: any;
+      },
     ) => {
-
       const nodeItem = ItemTypeEnum.APP === type
         ? buildAppNode({
           ...(node as NodeType),
@@ -448,6 +455,8 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
       }
 
       const handleRemove = () => {
+        dragRefs?.current?.[nodeItem.id]?.current?.classList.add(stylesPipelineBuilder.hide);
+
         removeFromCache(`${framework.uuid}:${pipelineUUID}`, nodeItem.id);
 
         delete relatedNodeRefs?.current?.[block.uuid]?.[nodeItem.type];
@@ -465,6 +474,10 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
       relatedNodeRefs.current[block.uuid][nodeItem.type].render = (node2, mountRef) => {
         render(node2, mountRef);
       };
+
+      if (opts?.dragControls) {
+        dragControlsRef.current[nodeItem.id] = opts.dragControls;
+      }
 
       func && func(prev => ({
         ...prev,
@@ -1931,6 +1944,7 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
               ItemTypeEnum.APP,
               ItemTypeEnum.OUTPUT,
             ].includes(nodeType);
+            const resizeConstraints = { minimum: { width: 200, height: 100 } };
 
             if ([ItemTypeEnum.APP, ItemTypeEnum.OUTPUT].includes(nodeType)) {
               block = (item as any)?.block;
@@ -1954,6 +1968,8 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
             }
 
             if ([ItemTypeEnum.APP, ItemTypeEnum.OUTPUT].includes(nodeType)) {
+              resizeConstraints.minimum = { ...rect };
+
               const cache = get(`${framework.uuid}:${pipelineUUID}`) ?? {};
               if (nodeID in rectsMappingRef?.current) {
                 rect = rectsMappingRef.current[nodeID];
@@ -2018,6 +2034,8 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
                         );
 
                         setTimeout(() => {
+                          dragRef?.current?.classList.remove(stylesPipelineBuilder.hide);
+
                           handleLineTransitions();
                         }, 1);
                       } else {
@@ -2068,8 +2086,9 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
 
             arr.push(
               <DragWrapper
-                draggable={draggable}
                 dragConstraintsRef={dragConstraintsRef}
+                draggable={draggable}
+                dragControlsRef={dragControlsRef}
                 eventHandlers={{
                   onDrag: handleDragging,
                   onDragEnd: handleDragEnd,
@@ -2085,6 +2104,7 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
                   ItemTypeEnum.OUTPUT,
                 ].includes(nodeType) ? rectsMappingRef : undefined}
                 ref={dragRef}
+                resizeConstraints={resizeConstraints}
                 resizable={resizable}
               />,
             );
