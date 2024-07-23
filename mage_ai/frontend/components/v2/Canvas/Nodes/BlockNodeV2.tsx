@@ -730,60 +730,96 @@ function BlockNode(
 
           <Grid
             alignItems="center"
-            justifyContent="start"
+            justifyContent="space-between"
             columnGap={12}
-            padding={6}
             autoFlow="column"
             templateRows="1fr"
           >
-            {[
-              {
-                Icon: PlayButtonFilled,
-                label: 'Run',
-                onClick: submitCodeExecution,
-                // description: '...',
-                // iconProps: stale ? { colorName: 'yellow' } : {},
-                // loading: saving,
-                // onClick: saveContent,
-              },
-              {
-                Icon: Code,
-                label: 'Edit code',
-                onClick: launchEditorApp,
-                // description: '...',
-              },
-              {
-                Icon: Trash,
-                label: 'Delete outputs',
-                onClick: (event: any) => deleteAllOutputs(event),
-                // description: '...',
-                // onClick: event => alert('Comment'),
-              },
-              {
-                Icon: CloseV2,
-                label: 'Close app',
-                onClick: () => closeOutput(),
-                // description: '...',
-                // onClick: onClose,
-              },
-            ].map(({ Icon, description, iconProps, label, loading, uuid, onClick }: any) => (
-              <Button
-                Icon={ip => <Icon {...{ ...ip, size: 12 }} />}
-                data-loading-style="inline"
-                key={uuid ?? typeof label === 'function' ? label?.() : label}
-                loading={loading}
-                onClick={onClick ?? undefined}
-                small
-                basic
-                wrap
-              >
-                {label && (
-                  <Text secondary xsmall>
-                    {typeof label === 'function' ? label?.() : label}
-                  </Text>
-                )}
-              </Button>
-            ))}
+            <Grid
+              alignItems="center"
+              justifyContent="start"
+              columnGap={12}
+              padding={6}
+              autoFlow="column"
+              templateRows="1fr"
+            >
+              {[
+                {
+                  Icon: PlayButtonFilled,
+                  label: 'Run',
+                  onClick: submitCodeExecution,
+                  // description: '...',
+                  // iconProps: stale ? { colorName: 'yellow' } : {},
+                  // loading: saving,
+                  // onClick: saveContent,
+                },
+                {
+                  Icon: Code,
+                  label: 'Edit code',
+                  onClick: launchEditorApp,
+                  // description: '...',
+                },
+                {
+                  Icon: Trash,
+                  label: 'Delete outputs',
+                  onClick: (event: any) => deleteAllOutputs(event),
+                  // description: '...',
+                  // onClick: event => alert('Comment'),
+                },
+              ].map(({ Icon, description, iconProps, label, loading, uuid, onClick }: any) => (
+                <Button
+                  Icon={ip => <Icon {...{ ...ip, size: 12 }} />}
+                  data-loading-style="inline"
+                  key={uuid ?? typeof label === 'function' ? label?.() : label}
+                  loading={loading}
+                  onClick={onClick ?? undefined}
+                  small
+                  basic
+                  wrap
+                >
+                  {label && (
+                    <Text secondary xsmall>
+                      {typeof label === 'function' ? label?.() : label}
+                    </Text>
+                  )}
+                </Button>
+              ))}
+            </Grid>
+            <Grid
+              alignItems="center"
+              justifyContent="start"
+              columnGap={12}
+              padding={6}
+              autoFlow="column"
+              templateRows="1fr"
+            >
+              {[
+                {
+                  Icon: CloseV2,
+                  label: 'Close app',
+                  onClick: () => closeOutput(),
+                  // description: '...',
+                  // onClick: onClose,
+                },
+              ].map(({ Icon, description, iconProps, label, loading, uuid, onClick }: any) => (
+                <Button
+                  Icon={ip => <Icon {...{ ...ip, size: 12 }} />}
+                  data-loading-style="inline"
+                  key={uuid ?? typeof label === 'function' ? label?.() : label}
+                  loading={loading}
+                  onClick={onClick ?? undefined}
+                  small
+                  basic
+                  wrap
+                >
+                  {label && (
+                    <Text secondary xsmall>
+                      {typeof label === 'function' ? label?.() : label}
+                    </Text>
+                  )}
+                </Button>
+              ))}
+            </Grid>
           </Grid>
         </Grid>
       )
@@ -799,11 +835,12 @@ function BlockNode(
     outputNodeRef.current = outputNode;
     outputMountRef.current = mountRef;
 
-    outputAppendedChildElementRef.current = document.createElement('div');
-    outputAppendedChildElementRef.current.className = stylesBlockNode.inheritDimensions;
-    mountRef.current.appendChild(outputAppendedChildElementRef.current);
+    // outputAppendedChildElementRef.current = document.createElement('div');
+    // outputAppendedChildElementRef.current.className = stylesBlockNode.inheritDimensions;
+    // mountRef.current.appendChild(outputAppendedChildElementRef.current);
+    // outputRootRef.current = createRoot(outputAppendedChildElementRef.current);
 
-    outputRootRef.current = createRoot(outputAppendedChildElementRef.current);
+    outputRootRef.current = createRoot(mountRef.current);
     outputRootRef.current.render(
       <ContextProvider theme={themeContext as any}>
         {renderOutputPortalContent()}
@@ -855,11 +892,12 @@ function BlockNode(
     appNodeRef.current = appNode;
     appMountRef.current = mountRef;
 
-    appAppendedChildElementRef.current = document.createElement('div');
-    appAppendedChildElementRef.current.className = stylesBlockNode.inheritDimensions;
-    mountRef.current.appendChild(appAppendedChildElementRef.current);
+    // appAppendedChildElementRef.current = document.createElement('div');
+    // appAppendedChildElementRef.current.className = stylesBlockNode.inheritDimensions;
+    // mountRef.current.appendChild(appAppendedChildElementRef.current);
+    // appRootRef.current = createRoot(appAppendedChildElementRef.current);
 
-    appRootRef.current = createRoot(appAppendedChildElementRef.current);
+    appRootRef.current = createRoot(mountRef.current);
     appRootRef.current.render(
       <ContextProvider theme={themeContext as any}>
         <EditorAppNode
@@ -899,8 +937,12 @@ function BlockNode(
     } else {
       showOutput(
         output,
-        (outputNode: OutputNodeType, mountRef: React.RefObject<HTMLDivElement>) => {
-          renderOutput(mountRef, outputNode, output?.message_request_uuid, callback);
+        (
+          node: OutputNodeType,
+          wrapperRef: React.MutableRefObject<HTMLDivElement>,
+          mountRef: React.MutableRefObject<HTMLDivElement>,
+        ) => {
+          renderOutput(mountRef, node, output?.message_request_uuid, callback);
         },
         closeOutput,
         onRemove => onCloseOutputRef.current = onRemove,
@@ -923,8 +965,12 @@ function BlockNode(
     const render = () =>
       showApp(
         app,
-        (appNode: AppNodeType, mountRef: React.RefObject<HTMLDivElement>) => {
-          renderEditorApp(mountRef, appNode, {
+        (
+          node: AppNodeType,
+          wrapperRef: React.MutableRefObject<HTMLDivElement>,
+          mountRef: React.MutableRefObject<HTMLDivElement>,
+        ) => {
+          renderEditorApp(mountRef, node, {
             fileRef,
           });
         },

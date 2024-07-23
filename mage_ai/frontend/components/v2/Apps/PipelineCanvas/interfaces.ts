@@ -165,7 +165,11 @@ export type SubscriptionType = {
 
 export type ShowNodeType = (
   config: any,
-  render: (node: any, mountRef: React.MutableRefObject<HTMLDivElement>) => void,
+  render: (
+    node: any,
+    wrapperRef: React.MutableRefObject<HTMLDivElement>,
+    mountRef: React.MutableRefObject<HTMLDivElement>,
+  ) => void,
   remove: (callback?: () => void) => void,
   setOnRemove: (onRemove: () => void) => void,
   opts?: {

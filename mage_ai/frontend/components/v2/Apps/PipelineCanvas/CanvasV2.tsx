@@ -375,7 +375,11 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
       Record<ItemTypeEnum, {
         node: any;
         remove: () => void;
-        render: (node: OutputNodeType, ref?: React.RefObject<HTMLDivElement>) => void;
+        render: (
+          node: OutputNodeType,
+          nodeRef?: React.RefObject<HTMLDivElement>,
+          mountRef?: React.RefObject<HTMLDivElement>,
+        ) => void;
       }>
     >
   >({});
@@ -471,8 +475,8 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
         remove ? remove(handleRemove) : handleRemove();
       };
 
-      relatedNodeRefs.current[block.uuid][nodeItem.type].render = (node2, mountRef) => {
-        render(node2, mountRef);
+      relatedNodeRefs.current[block.uuid][nodeItem.type].render = (node2, nodeRef, mountRef) => {
+        render(node2, nodeRef, mountRef);
       };
 
       if (opts?.dragControls) {
@@ -512,7 +516,8 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
         return valid;
       },
       targetRef: (node: ShadowNodeType) => dragRefs.current[node.id],
-      waitUntil: (node: ShadowNodeType) => dragRefs.current?.[node.id]?.current !== null,
+      waitUntil: (node: ShadowNodeType) => dragRefs.current?.[node.id]?.current !== null
+        && mountRootRefs.current?.[node.id]?.current !== null,
     };
   }
 
@@ -2014,7 +2019,9 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
                       const rt =
                         el?.getBoundingClientRect() ?? dragRef?.current?.getBoundingClientRect?.();
 
-                      if (rt?.height > 0 && rt?.width > 0) {
+                      const mountRef = mountRootRef?.current?.[nodeID];
+
+                      if (rt?.height > 0 && rt?.width > 0 && mountRef?.current) {
                         const rect2 = {
                           ...rectsMappingRef.current[nodeID],
                           ...rect,
@@ -2050,7 +2057,7 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
                       render?.(
                         item as OutputNodeType,
                         dragRef,
-                        // mountRootRef,
+                        mountRootRefs.current[nodeID],
                       );
 
                       clearTimeout(timeoutUpdateAppRectsRef.current);
@@ -2063,7 +2070,7 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
                       render?.(
                         item as OutputNodeType,
                         dragRef,
-                        // mountRootRef,
+                        mountRootRefs.current[nodeID],
                       );
 
                       clearTimeout(timeoutUpdateOutputRectsRef.current);

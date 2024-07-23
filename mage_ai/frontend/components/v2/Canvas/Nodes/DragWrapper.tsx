@@ -398,8 +398,14 @@ function DragWrapper({
         />
       )}
 
-      {mountRootRef && <div ref={mountRootRef} />}
-
+      {mountRootRef &&
+        <div
+          className={[
+            !children && stylesBlockNode.inheritDimensions,
+          ].filter(Boolean).join(' ')}
+          ref={mountRootRef}
+        />
+      }
       {children}
     </motion.div>
   );
