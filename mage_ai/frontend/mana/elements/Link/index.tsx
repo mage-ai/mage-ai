@@ -39,7 +39,6 @@ export default function Link({
   onClick,
   preventDefault = true,
   role,
-  style,
   wrap,
   ...rest
 }: LinkProps) {

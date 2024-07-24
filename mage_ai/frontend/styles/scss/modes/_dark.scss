@@ -137,6 +137,7 @@
   --link-color-base: #{colors.$link-color-base};
   --link-color-hover: #{colors.$link-color-hover};
   --menus-background-base-default: #{colors.$menus-background-base-default};
+  --menus-background-gradient-default: #{colors.$menus-background-gradient-default};
   --menus-background-contained-default: #{colors.$menus-background-contained-default};
   --menus-blur-base: #{colors.$menus-blur-base};
   --scrollbars-background-thumb-default: #{colors.$scrollbars-background-thumb-default};
@@ -145,4 +146,5 @@
   --scrollbars-background-track-hover: #{colors.$scrollbars-background-track-hover};
   --modal-background-color-base: #{colors.$modal-background-color-base};
   --modal-box-shadow-base: #{colors.$modal-box-shadow-base};
+  --header-background-color-base: #{colors.$header-background-color-base};
 }

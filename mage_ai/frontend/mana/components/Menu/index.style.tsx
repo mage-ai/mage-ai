@@ -1,6 +1,6 @@
 import styled, { css } from 'styled-components';
 import { UNIT } from '../../themes/spaces';
-import { gradientBackground } from '../../styles/mixins';
+import { gradientBackground, gradientBackgroundVars } from '../../styles/mixins';
 import scrollbars from '../../styles/scrollbars';
 import { motion } from 'framer-motion';
 
@@ -84,7 +84,14 @@ export const MenuContent = styled(motion.nav)`
     border-radius: ${theme.menus.border.radius.base};
   `}
 
-  ${gradientBackground('0deg', '#0000004D', '#0000004D', 0, 100, 'graylo')}
+  ${gradientBackgroundVars(
+    '0deg',
+    'var(--menus-background-gradient-default)',
+    'var(--menus-background-gradient-default)',
+    0,
+    100,
+    'var(--menus-background-base-default'
+  )}
 `;
 
 export const MenuContentScroll = styled(motion.div)`

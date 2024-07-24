@@ -18,10 +18,12 @@ import { useRouter } from 'next/router';
 
 type NavigationButtonGroupProps = {
   groups?: MenuItemType[];
+  uuid?: string;
 };
-export default function NavigationButtonGroup({ groups }: NavigationButtonGroupProps) {
+export default function NavigationButtonGroup({ groups, uuid }: NavigationButtonGroupProps) {
   const router = useRouter();
 
+  const contextMenuRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const selectedButtonIndexRef = useRef<number | null>(null);
   const [selectedGroupsByLevel, setSelectedGroupsByLevel] = useState<MenuGroupType[]>(null);
@@ -30,7 +32,9 @@ export default function NavigationButtonGroup({ groups }: NavigationButtonGroupP
     target: containerRef,
   });
 
-  const { handleToggleMenu, menu } = useMenuManager({
+  const contextMenuID = 'NavigationButtonGroup';
+  const { handleToggleMenu } = useMenuManager({
+    contextMenuRef,
     direction: LayoutDirectionEnum.RIGHT,
     onClose: (levelToClose: number) => {
       if (levelToClose === 0) {
@@ -38,7 +42,7 @@ export default function NavigationButtonGroup({ groups }: NavigationButtonGroupP
       }
     },
     ref: containerRef,
-    uuid: 'NavigationButtonGroup',
+    uuid: uuid ?? contextMenuID,
   });
 
   const openMenu = useCallback(
@@ -187,7 +191,9 @@ export default function NavigationButtonGroup({ groups }: NavigationButtonGroupP
           secondary
           semibold={!done || beforeSelected}
           small
-          success={beforeSelected}
+          style={{
+            color: beforeSelected ? 'var(--backgrounds-button-secondary-default)' : undefined,
+          }}
           wrap
         >
           <Grid
@@ -235,7 +241,11 @@ export default function NavigationButtonGroup({ groups }: NavigationButtonGroupP
         </Grid>
       </div>
 
-      {menu}
+      <div id={[
+        uuid,
+        contextMenuID,
+        'menu-manager-context-menu',
+      ].filter(Boolean).join(':')} ref={contextMenuRef} />
     </>
   );
 }

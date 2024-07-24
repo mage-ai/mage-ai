@@ -15,7 +15,7 @@ interface RegisterItemsOptions {
 
 export interface KeyboardNavigationProps {
   itemFilter?: (item: any) => boolean;
-  target: any;
+  target: React.MutableRefObject<any>;
 }
 
 export default function useKeyboardNavigation({

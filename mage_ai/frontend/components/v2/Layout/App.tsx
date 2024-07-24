@@ -9,8 +9,8 @@ import { MenuProvider } from '@context/v2/Menu';
 import { ModeEnum } from '@mana/themes/modes';
 import { ThemeProvider } from 'styled-components';
 import { ThemeSettingsType } from '@mana/themes/interfaces';
-import { getTheme, getThemeSettings } from '@mana/themes/utils';
-import { useEffect, useMemo, useRef } from 'react';
+import { getTheme, getThemeSettings, setThemeSettings } from '@mana/themes/utils';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 function App({
   Component,
@@ -30,19 +30,32 @@ function App({
     version?: LayoutVersionEnum;
   };
 }) {
+  console.log('AppV2 render');
+
   const headerRef = useRef(null);
 
-  const themeSettings = (themeSettingsProp?.[version] || getThemeSettings()) as ThemeSettingsType;
-  const theme = themeSettings?.theme || getTheme({ theme: themeSettings });
-  const mode = themeSettings?.mode || modeProp || ModeEnum.DARK;
+  const [themeSettings, setThemeSettingsState] = useState<ThemeSettingsType | null>(
+    (themeSettingsProp?.[version] || getThemeSettings()) as ThemeSettingsType,
+  );
+  const updateThemeSettings = useCallback((settings: ThemeSettingsType) => {
+    setThemeSettings(settings)
+    setThemeSettingsState(settings);
+  }, []);
+
+  const theme = useMemo(() => themeSettings?.theme || getTheme({ theme: themeSettings }), [
+    themeSettings,
+  ]);
+  const mode = useMemo(() => themeSettings?.mode || modeProp || ModeEnum.DARK, [
+    modeProp,
+    themeSettings,
+  ]);
 
   useEffect(() => {
     if (typeof document !== 'undefined') {
       document.body.removeAttribute('data-theme');
       document.body.setAttribute('data-theme', mode);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [mode]);
 
   const headMemo = useMemo(() => <Head title={title ?? 'Mage Pro'} />, [title]);
 
@@ -52,9 +65,13 @@ function App({
 
       <ThemeProvider theme={theme}>
         <MenuProvider>
-          <ContextProvider main router={router} theme={theme as ThemeType}>
+          <ContextProvider
+            main
+            router={router} theme={theme as ThemeType}
+            updateThemeSettings={updateThemeSettings}
+          >
             <HeaderPortal headerRef={headerRef} />
-            <Component {...rest} />
+            <Component {...rest} updateThemeSettings={updateThemeSettings} />
           </ContextProvider>
         </MenuProvider>
       </ThemeProvider>

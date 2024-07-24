@@ -1,19 +1,22 @@
 import Button from '@mana/elements/Button';
+import { ThemeSettingsType } from '@mana/themes/interfaces';
 import DashedDivider from '@mana/elements/Divider/DashedDivider';
 import Grid from '@mana/components/Grid';
 import MageAvatar from '@mana/icons/avatars';
 import NavigationButtonGroup from '@mana/components/Menu/NavigationButtonGroup';
 import React, { useMemo, useRef } from 'react';
+import RouteNavigation from './RouteNavigation';
 import Scrollbar from '@mana/elements/Scrollbar';
 import TextInput from '@mana/elements/Input/TextInput';
 import stylesHeader from '@styles/scss/layouts/Header/Header.module.scss';
 import useContextMenu from '@mana/hooks/useContextMenu';
 import { HeaderProps } from './interfaces';
 import { MenuItemType } from '@mana/hooks/useContextMenu';
-import { SearchV3, ChatV2, Code, DocumentIcon, CaretDown, CaretLeft } from '@mana/icons';
+import { ModeEnum } from '@mana/themes/modes';
+import { SearchV3, ChatV2, Code, DocumentIcon, CaretDown, CaretLeft, Dark } from '@mana/icons';
 import { getUser } from '@utils/session';
+import { setThemeSettings } from '@mana/themes/utils';
 import { unique } from '@utils/array';
-import RouteNavigation from './RouteNavigation';
 
 export const HEADER_ROOT_ID = 'v2-header-root';
 
@@ -30,17 +33,19 @@ export function Header(
     router,
     selectedNavItem,
     title,
+    uuid,
+    updateThemeSettings,
     version,
   }: HeaderProps,
   ref: React.MutableRefObject<HTMLDivElement | null>,
 ) {
   const headerRef = useRef<HTMLDivElement | null>(ref?.current);
 
-  const { contextMenu } = useContextMenu({
-    containerRef: headerRef,
-    useAsStandardMenu: true,
-    uuid: 'main-header',
-  });
+  // const { contextMenu } = useContextMenu({
+  //   containerRef: headerRef,
+  //   useAsStandardMenu: true,
+  //   uuid,
+  // });
 
   const buttonProps = useMemo(
     () => ({
@@ -98,6 +103,18 @@ export function Header(
   }, [version, router, interAppNavItems, buildInterAppNavItems]);
 
   const globalItems = globalNavItems ?? [
+    {
+      Icon: Dark,
+      onClick: () => {
+        updateThemeSettings(({ mode }) => ({
+          mode: ModeEnum.LIGHT === mode ? ModeEnum.DARK : ModeEnum.LIGHT,
+        }));
+      },
+      style: {
+        gridTemplateColumns: '',
+      },
+      uuid: 'Change theme mode',
+    },
     {
       Icon: ChatV2,
       linkProps: { href: 'https://www.mage.ai/chat' },
@@ -169,11 +186,12 @@ export function Header(
         {hasItems && (
           <NavigationButtonGroup
             groups={intraAppNavItems}
+            uuid={uuid}
           />
         )}
       </Grid>
     );
-  }, [buttonProps, cacheKey, intraAppNavItems, buildIntraAppNavItems, gridProps, version]);
+  }, [buttonProps, cacheKey, intraAppNavItems, buildIntraAppNavItems, gridProps, uuid, version]);
 
   return (
     <>
@@ -202,6 +220,7 @@ export function Header(
               routeHistory={routeHistory}
               selectedNavItem={selectedNavItem}
               title={title}
+              uuid={uuid}
             />
           </Grid>
 
@@ -264,7 +283,7 @@ export function Header(
 
         <DashedDivider />
       </header>
-      {contextMenu}
+      {/* {contextMenu} */}
     </>
   );
 }

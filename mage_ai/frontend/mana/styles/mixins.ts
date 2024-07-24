@@ -71,6 +71,40 @@ export const gradientBackground = (
   );
 `;
 
+export const gradientBackgroundVars = (
+  angle: string,
+  startColorVar: string,
+  endColorVar: string,
+  startPercentage?: number,
+  endPercentage?: number,
+  backgroundColorVar?: string,
+) => css`
+  background: -webkit-linear-gradient(
+    ${angle},
+    ${startColorVar} ${startPercentage || 0}%,
+    ${endColorVar} ${endPercentage || 100}%,
+    ${backgroundColorVar})
+  );
+  background: -moz-linear-gradient(
+    ${angle},
+    ${startColorVar} ${startPercentage || 0}%,
+    ${endColorVar} ${endPercentage || 100}%,
+    ${backgroundColorVar})
+  );
+  background: -o-linear-gradient(
+    ${angle},
+    ${startColorVar} ${startPercentage || 0}%,
+    ${endColorVar} ${endPercentage || 100}%,
+    ${backgroundColorVar})
+  );
+  background: linear-gradient(
+    ${angle},
+    ${startColorVar} ${startPercentage || 0}%,
+    ${endColorVar} ${endPercentage || 100}%,
+    ${backgroundColorVar})
+  );
+`;
+
 type OutlineHoverProps = {
   active?: boolean;
   borderColor?: string;

@@ -1,9 +1,10 @@
 import Header from './Header';
+import { ThemeSettingsType } from '@mana/themes/interfaces';
 import { HeaderProps } from './Header/interfaces';
 import React, { useCallback, useRef, useState } from 'react';
 import ThemeType from '@mana/themes/interfaces';
 import { FaviconStatusEnum, changeFavicon } from './favicon';
-import { LayoutContext, PageProps } from './LayoutContext';
+import { LayoutContext, LayoutContextType, PageProps } from './LayoutContext';
 import { Root, createRoot } from 'react-dom/client';
 import { createPortal } from 'react-dom';
 import { useMenuContext } from '../Menu';
@@ -14,9 +15,10 @@ interface LayoutProviderProps {
   children: React.ReactNode;
   router?: any;
   theme?: ThemeType;
+  updateThemeSettings: LayoutContextType['updateThemeSettings'];
 }
 
-export const LayoutProvider = ({ children, router, theme }: LayoutProviderProps) => {
+export const LayoutProvider = ({ children, router, theme, updateThemeSettings }: LayoutProviderProps) => {
   const [headerPortalRef, setHeaderPortalRef] = useState(null);
   const [headerData, setHeaderData] = useState<HeaderProps>({} as HeaderProps);
 
@@ -146,6 +148,7 @@ export const LayoutProvider = ({ children, router, theme }: LayoutProviderProps)
           ...pageRef.current,
           setPage,
         },
+        updateThemeSettings,
       }}
     >
       {headerPortalRef?.current &&
@@ -157,6 +160,7 @@ export const LayoutProvider = ({ children, router, theme }: LayoutProviderProps)
             }}
             routeHistory={routeHistory}
             router={router}
+            updateThemeSettings={updateThemeSettings}
           />,
           headerPortalRef?.current,
         )}

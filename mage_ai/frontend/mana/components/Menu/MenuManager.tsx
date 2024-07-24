@@ -7,6 +7,7 @@ import { LayoutDirectionEnum } from '@mana/components/Menu/types';
 
 type UseMenuManagerProps = {
   contained?: boolean;
+  contextMenuRef?: React.MutableRefObject<HTMLDivElement>;
   direction?: LayoutDirectionEnum;
   onClose?: (level: number) => void;
   ref?: React.RefObject<HTMLDivElement>;
@@ -15,15 +16,16 @@ type UseMenuManagerProps = {
 
 export function useMenuManager({
   contained,
+  contextMenuRef,
   direction = LayoutDirectionEnum.LEFT,
   onClose,
   ref,
   uuid,
 }: UseMenuManagerProps) {
-  const { portalRef, useMenu } = useContext(MenuContext);
-
   const containerInternalRef = useRef<HTMLDivElement | null>(null);
   const containerRef = (ref || containerInternalRef) as React.RefObject<HTMLDivElement>;
+
+  const { portalRef, useMenu } = useContext(MenuContext);
   const { contextMenu, showMenu, hideMenu } = useMenu({
     containerRef,
     uuid,
@@ -53,8 +55,9 @@ export function useMenuManager({
         //   top: rectAbsolute?.top - parent?.top,
         // };
 
-        showMenu(items, {
-          // contained,
+        const showOptions = {
+          containerRef,
+          contextMenuRef,
           direction,
           onClose,
           openItems,
@@ -72,18 +75,21 @@ export function useMenuManager({
               top: 0,
             },
           },
-        });
+        };
+
+        showMenu(items, showOptions, uuid);
       } else {
-        hideMenu();
+        hideMenu(uuid);
       }
     },
-    [containerRef, direction, hideMenu, onClose, showMenu],
+    [containerRef, direction, hideMenu, onClose, showMenu, uuid],
   );
 
   return {
     containerRef,
+    contextMenu,
     handleToggleMenu,
-    menu: contained ? contextMenu : createPortal(contextMenu, portalRef.current),
+    portalRef,
   };
 }
 
@@ -91,6 +97,7 @@ function MenuManager(
   {
     children,
     className,
+    contained,
     items,
     open: openProp,
     openItems,
@@ -112,10 +119,17 @@ function MenuManager(
   },
   ref: React.RefObject<HTMLDivElement>,
 ) {
+  const contextMenuRef = useRef<HTMLDivElement>(null);
+
   const [openInternal, setOpenState] = useState(openProp);
   const open = useMemo(() => isOpen ?? openInternal, [openInternal, isOpen]);
 
-  const { containerRef, handleToggleMenu, menu } = useMenuManager({
+  const {
+    containerRef,
+    handleToggleMenu,
+    portalRef,
+  } = useMenuManager({
+    contextMenuRef,
     onClose: (level: number) => {
       if (handleOpen) {
         handleOpen(level === 0, level);
@@ -134,9 +148,10 @@ function MenuManager(
     });
   }, [handleToggleMenu, handleOpen, items, openItems, open]);
 
+  const contextMenu = <div id={`menu-manager-${rest.uuid}`} ref={contextMenuRef} />;
+
   return (
     <>
-      {menu}
       <div
         className={className}
         onClick={event => {
@@ -151,6 +166,8 @@ function MenuManager(
       >
         {children}
       </div>
+
+      {contained ? createPortal(contextMenu, portalRef.current) : contextMenu}
     </>
   );
 }

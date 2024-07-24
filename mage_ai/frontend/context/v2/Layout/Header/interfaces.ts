@@ -1,4 +1,5 @@
 import { RouteType } from '@mana/shared/interfaces';
+import { SetThemeSettingsType } from '@mana/themes/interfaces';
 
 export interface HeaderProps {
   buildInterAppNavItems?: (
@@ -23,5 +24,7 @@ export interface HeaderProps {
   selectedIntraAppNavItems?: any[];
   selectedNavItem?: string;
   title?: string;
+  updateThemeSettings?: SetThemeSettingsType;
+  uuid?: string;
   version?: number;
 }

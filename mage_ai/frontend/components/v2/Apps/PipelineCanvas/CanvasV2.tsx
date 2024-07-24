@@ -14,7 +14,7 @@ import { get, update, remove as removeFromCache } from './cache';
 import { findLargestUnoccupiedSpace } from '@utils/rects';
 import { snapToGrid } from '../../Canvas/utils/snapToGrid';
 import { handleSaveAsImage } from './utils/images';
-import { RenderContextMenuOptions } from '@mana/hooks/useContextMenu';
+import { ContextMenuType, RenderContextMenuOptions } from '@mana/hooks/useContextMenu';
 import BlockNodeV2, { BADGE_HEIGHT, PADDING_VERTICAL } from '../../Canvas/Nodes/BlockNodeV2';
 import PortalNode from '../../Canvas/Nodes/PortalNode';
 import Grid from '@mana/components/Grid';
@@ -125,18 +125,19 @@ export type CanvasProps = {
   pipeline: {
     uuid: string;
   };
+  shouldPassControl: ContextMenuType['shouldPassControl'];
   useExecuteCode: ExecutionManagerType['useExecuteCode'];
   useRegistration: ExecutionManagerType['useRegistration'];
+  containerRef: React.RefObject<HTMLDivElement>;
+  removeContextMenu: RemoveContextMenuType;
+  renderContextMenu: RenderContextMenuType;
 };
 
 export type PipelineCanvasV2Props = {
   canvasRef: React.RefObject<HTMLDivElement>;
-  containerRef: React.RefObject<HTMLDivElement>;
   defaultActiveLevel?: number;
   dragEnabled?: boolean;
   dropEnabled?: boolean;
-  removeContextMenu: RemoveContextMenuType;
-  renderContextMenu: RenderContextMenuType;
   setDragEnabled: (value: boolean) => void;
   setDropEnabled: (value: boolean) => void;
   setZoomPanDisabled: (value: boolean) => void;
@@ -1927,9 +1928,14 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
               const rects = getSelectedGroupRects();
               const rect = calculateBoundingBox(rects);
               const box = canvasRef.current?.getBoundingClientRect();
+              let x = -(rect?.left ?? 0) + (box?.width ?? 0);
+              let y = -(rect?.top ?? 0) + (box?.height ?? 0);
+              x = x > 0 ? 0 : x;
+              y = y > 0 ? 0 : y;
+              console.log(x, y)
               transformState?.current?.handlePanning?.current?.((event ?? null) as any, {
-                x: Math.max((rect?.left ?? 0), 0),
-                y: Math.max((rect?.top ?? 0), 0),
+                x,
+                y,
               });
               startTransition(() => {
                 setZoomPanDisabled(false);

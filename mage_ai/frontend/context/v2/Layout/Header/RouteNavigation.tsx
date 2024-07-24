@@ -19,8 +19,11 @@ function RouteNavigation({
   routeHistory,
   selectedNavItem,
   title,
+  uuid,
 }, ref: React.Ref<HTMLDivElement>) {
   const { changeRoute } = useContext(LayoutContext);
+
+  const contextMenuRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
   const { deregisterCommands, registerCommands } = useKeyboardShortcuts({
@@ -29,7 +32,8 @@ function RouteNavigation({
 
   const emptyHistory = useMemo(() => (routeHistory?.length ?? 0) === 0, [routeHistory]);
 
-  const { handleToggleMenu, menu } = useMenuManager({
+  const contextMenuID = 'RouteNavigation';
+  const { handleToggleMenu } = useMenuManager({
     direction: LayoutDirectionEnum.RIGHT,
     onClose: (levelToClose: number) => {
       if (levelToClose === 0) {
@@ -37,7 +41,7 @@ function RouteNavigation({
       }
     },
     ref: containerRef,
-    uuid: 'NavigationButtonGroup',
+    uuid: uuid ?? contextMenuID,
   });
 
   useEffect(() => {
@@ -56,7 +60,7 @@ function RouteNavigation({
         },
       },
       {
-        uuid: 'NavigationButtonGroup',
+        uuid: 'RouteNavigation',
       },
     );
 
@@ -134,7 +138,11 @@ function RouteNavigation({
         </Button>
       </div>
 
-      {menu}
+      <div id={[
+        uuid,
+        contextMenuID,
+        'menu-manager-context-menu',
+      ].filter(Boolean).join(':')} ref={contextMenuRef} />
     </>
   );
 }

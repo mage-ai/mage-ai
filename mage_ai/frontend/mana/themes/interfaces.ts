@@ -43,3 +43,6 @@ export default interface ThemeType {
   padding: PaddingType;
   scrollbars: ScrollbarsType;
 }
+
+export type SetThemeSettingsType =
+  (themeSettings: ThemeSettingsType | ((prev: ThemeSettingsType) => ThemeSettingsType)) => void;

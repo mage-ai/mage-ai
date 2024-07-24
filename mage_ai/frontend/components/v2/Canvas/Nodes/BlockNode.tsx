@@ -162,7 +162,7 @@ export default function BlockNodeComponent({
       uuid: node.id,
       ...(ItemTypeEnum.NODE === node?.type
         ? {
-            Icon: ip => <Add {...ip} colorName="white" />,
+            Icon: ip => <Add {...ip} />,
             // borderColor: !draggable && colorNames?.base && 'white',
             menuItems: menuItemsForTemplates(
               block,

@@ -1,6 +1,7 @@
 import React, { useContext } from 'react';
 import { HeaderProps } from './Header/interfaces';
 import { RouteType } from '@mana/shared/interfaces';
+import { ThemeSettingsType } from '@mana/themes/interfaces';
 
 type HeaderType = {
   setHeader?: (header: HeaderProps) => void;
@@ -26,6 +27,7 @@ export interface LayoutContextType {
   header?: HeaderType;
   initialize?: (props: { headerRef: React.RefObject<HTMLDivElement> }) => void;
   page?: PageType;
+  updateThemeSettings: HeaderProps['updateThemeSettings'];
 }
 
 export const LayoutContext = React.createContext<LayoutContextType>({
@@ -33,6 +35,7 @@ export const LayoutContext = React.createContext<LayoutContextType>({
   header: {},
   initialize: null,
   page: {},
+  updateThemeSettings: () => null,
 });
 
 export const useLayout = () => useContext(LayoutContext);

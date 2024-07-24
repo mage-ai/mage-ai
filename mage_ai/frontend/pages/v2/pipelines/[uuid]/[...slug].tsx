@@ -1,5 +1,5 @@
 import EventStreamType, { ExecutionStatusEnum, ResultType } from '@interfaces/EventStreamType';
-import { useRouter } from 'next/router';
+import { MenuContext } from '@context/v2/Menu';
 import PrivateRoute from '@components/shared/PrivateRoute';
 import React, { useContext, useEffect, useMemo, useRef, useState } from 'react';
 import dynamic from 'next/dynamic';
@@ -24,8 +24,11 @@ function PipelineDetailPage({
   slug: (PipelineExecutionFrameworkUUIDEnum | GroupUUIDEnum)[];
   uuid: string;
 }) {
-  const router = useRouter();
+  const contextMenuRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+
   const { changeRoute, header, page } = useContext(LayoutContext);
+  const { removeContextMenu, renderContextMenu, shouldPassControl, useMenu } = useContext(MenuContext);
 
   const [pipeline, setPipeline] = useState<PipelineType>(null);
 
@@ -37,6 +40,15 @@ function PipelineDetailPage({
 
     return arr;
   }, [slug]);
+
+  const contextMenuUUID =
+    useMemo(() => [uuid, ...(Array.isArray(slug) ? slug : [slug])].join('/'), [slug, uuid]);
+
+  const { hideMenu } = useMenu({
+    containerRef,
+    contextMenuRef,
+    uuid: contextMenuUUID,
+  });
 
   const mutants = useMutate(
     {
@@ -55,6 +67,7 @@ function PipelineDetailPage({
                 changeRoute,
                 framework: model?.framework,
                 pipeline: model,
+                hideMenu: () => hideMenu('NavigationButtonGroup'),
               }),
               buildInterAppNavItems: () => [
                 {
@@ -78,6 +91,7 @@ function PipelineDetailPage({
               navTag: (model?.framework as any)?.name ?? (model?.framework as any)?.uuid?.toUpperCase(),
               selectedNavItem: 'frameworks',
               title: model.name ?? model.uuid,
+              uuid: contextMenuUUID,
               version: 1,
             });
 
@@ -104,7 +118,7 @@ function PipelineDetailPage({
   }>(null);
   const titleRef = useRef<string>(null);
 
-  const { teardown, useExecuteCode, useRegistration } = useExecutionManager({
+  const { teardown: teardownEx, useExecuteCode, useRegistration } = useExecutionManager({
     onMessage: (event: EventStreamType) => {
       if (!titleRef.current) {
         titleRef.current = page.title;
@@ -197,18 +211,27 @@ function PipelineDetailPage({
 
     return () => {
       disposeManager();
-      teardown();
+      // teardown();
+      teardownEx();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pipeline]);
 
   return (
-    <PipelineDetail
-      framework={pipeline?.framework as PipelineExecutionFrameworkType}
-      pipeline={pipeline}
-      useExecuteCode={useExecuteCode}
-      useRegistration={useRegistration}
-    />
+    <>
+      <PipelineDetail
+        framework={pipeline?.framework as PipelineExecutionFrameworkType}
+        pipeline={pipeline}
+        useExecuteCode={useExecuteCode}
+        useRegistration={useRegistration}
+        containerRef={containerRef}
+        renderContextMenu={renderContextMenu}
+        removeContextMenu={removeContextMenu}
+        shouldPassControl={shouldPassControl}
+      />
+
+      <div id={['pipeline-detail', contextMenuUUID].join(':')} ref={contextMenuRef} />
+    </>
   );
 }
 

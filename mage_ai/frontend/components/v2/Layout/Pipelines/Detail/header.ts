@@ -12,6 +12,7 @@ import PipelineExecutionFrameworkType, {
 import { cleanName } from '@utils/string';
 import { RouteType } from '@mana/shared/interfaces';
 import PipelineType from '@interfaces/PipelineType';
+import { RemoveContextMenuType } from '@mana/hooks/useContextMenu';
 
 type Block = FrameworkType & PipelineExecutionFrameworkBlockType;
 
@@ -20,7 +21,11 @@ function menuItemsForBlock(
   level: number,
   index: number,
   parent: MenuItemType,
-  opts: { changeRoute: any, pipeline: PipelineType },
+  opts: {
+    changeRoute: any;
+    pipeline: PipelineType;
+    hideMenu: () => void;
+  },
 ) {
   const { changeRoute, pipeline } = opts ?? {};
   const groupMapping = {};
@@ -39,7 +44,7 @@ function menuItemsForBlock(
     onClick: (event: any) => {
       const uuidsNext = buildNewPathsFromBlock(block, groupMapping);
 
-      // console.log(block.uuid, block.uuid, uuidsNext)
+      opts.hideMenu();
 
       changeRoute({
         route: {
@@ -70,10 +75,12 @@ export function buildIntraAppNavItems({
   changeRoute,
   framework,
   pipeline,
+  hideMenu,
 }: {
   changeRoute: (route: RouteType) => void;
   framework: PipelineExecutionFrameworkType;
   pipeline: PipelineType;
+  hideMenu: () => void;
 }) {
   const menuItems: MenuItemType[] = [];
   const { groupsByLevel } = buildDependencies(framework);
@@ -88,7 +95,7 @@ export function buildIntraAppNavItems({
       uuid: cleanName(label),
     };
     const items = groups.map((group: MenuItemType, index: number) => menuItemsForBlock(
-      group, level, index, deepCopy(parent), { changeRoute, pipeline },
+      group, level, index, deepCopy(parent), { changeRoute, pipeline, hideMenu },
     )) as MenuItemType[];
 
     menuItems.push({

@@ -2,7 +2,7 @@
 
 .header {
   backdrop-filter: var(--menus-blur-base);
-  background-color: var(--colors-blackhi);
+  background-color: var(--header-background-color-base);
   height: var(--header-height);
   left: 0;
   position: fixed;
@@ -26,11 +26,11 @@
 
     &:focus {
       box-shadow: none;
-      color: var(--colors-greenmd) !important;
+      color: var(--backgrounds-button-secondary-hover) !important;
       outline: none !important;
 
       .buttonIcon {
-        fill: var(--colors-greenmd);
+        fill: var(--backgrounds-button-secondary-hover);
       }
     }
 
@@ -38,22 +38,22 @@
       border-color: var(--backgrounds-body) !important;
       box-shadow:
         0 0 0 var(--borders-outline-offset) var(--backgrounds-body),
-        0 0 0 var(--borders-outline-total) var(--colors-green);
-      color: var(--colors-green) !important;
+        0 0 0 var(--borders-outline-total) var(--backgrounds-button-secondary-default);
+      color: var(--backgrounds-button-secondary-default) !important;
 
       .buttonIcon {
-        fill: var(--colors-green);
+        fill: var(--backgrounds-button-secondary-default);
       }
     }
 
     &:active,
     &.selected {
       box-shadow: none !important;
-      border-color: var(--colors-green) !important;
-      color: var(--colors-green) !important;
+      border-color: var(--backgrounds-button-secondary-default) !important;
+      color: var(--backgrounds-button-secondary-default) !important;
 
       .buttonIcon {
-        fill: var(--colors-green);
+        fill: var(--backgrounds-button-secondary-default);
       }
     }
 
