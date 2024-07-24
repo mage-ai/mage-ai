@@ -18,7 +18,7 @@ function getThemeSettingsCache(ctx?: any): ThemeSettingsType {
       themeSettings = cookie[KEY];
     }
   } else {
-    themeSettings = Cookies.get(KEY, SHARED_OPTS);
+    themeSettings = Cookies.get(KEY);
   }
 
   if (typeof themeSettings === 'string') {

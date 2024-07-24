@@ -195,13 +195,11 @@ function MyApp(props: MyAppProps & AppProps) {
 
   const val = Cookies.get(
     REQUIRE_USER_AUTHENTICATION_COOKIE_KEY,
-    REQUIRE_USER_AUTHENTICATION_COOKIE_PROPERTIES,
   );
   const noValue = typeof val === 'undefined' || val === null || !REQUIRE_USER_AUTHENTICATION();
 
   const valPermissions = Cookies.get(
     REQUIRE_USER_PERMISSIONS_COOKIE_KEY,
-    REQUIRE_USER_PERMISSIONS_COOKIE_PROPERTIES,
   );
   const noValuePermissions =
     typeof valPermissions === 'undefined' || valPermissions === null || !REQUIRE_USER_PERMISSIONS();
@@ -224,7 +222,7 @@ function MyApp(props: MyAppProps & AppProps) {
     ) {
       Cookies.set(
         REQUIRE_USER_AUTHENTICATION_COOKIE_KEY,
-        requireUserAuthentication,
+        String(requireUserAuthentication),
         REQUIRE_USER_AUTHENTICATION_COOKIE_PROPERTIES,
       );
     }
@@ -236,7 +234,7 @@ function MyApp(props: MyAppProps & AppProps) {
     ) {
       Cookies.set(
         REQUIRE_USER_PERMISSIONS_COOKIE_KEY,
-        requireUserPermissions,
+        String(requireUserPermissions),
         REQUIRE_USER_PERMISSIONS_COOKIE_PROPERTIES,
       );
     }
