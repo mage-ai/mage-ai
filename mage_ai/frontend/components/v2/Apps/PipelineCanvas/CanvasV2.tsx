@@ -177,6 +177,10 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
   const timeoutUpdateAppRectsRef = useRef(null);
   const timeoutUpdateOutputRectsRef = useRef(null);
   const timeoutInitialAnimationRef = useRef(null);
+  const throttleTransitionsRef = useRef(null);
+  const transitionCancelled = useRef(false);
+  const viewUUIDPrev = useRef<string>(null);
+  const viewUUIDNext = useRef<string>(null);
 
   const nodesToBeRenderedRef = useRef<Record<string, boolean>>({});
   const updateLinesRef = useRef<UpdateLinesType>(null);
@@ -465,11 +469,11 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
       }
 
       const handleRemove = () => {
-        console.log('HANDLE REMOVE', nodeItem.id)
         dragRefs?.current?.[nodeItem.id]?.current?.classList.add(
           stylesPipelineBuilder.hiddenOffscreen);
 
-        removeFromCache(`${framework.uuid}:${pipelineUUID}`, nodeItem.id);
+        // Don’t do this or else it’s removed and going back to it will show it in the default location.
+        // removeFromCache(`${framework.uuid}:${pipelineUUID}`, nodeItem.id);
 
         delete relatedNodeRefs?.current?.[block.uuid]?.[nodeItem.type];
 
@@ -689,8 +693,11 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
   }
 
   function handleLineTransitions() {
-    // console.log('handleLineTransitions')
-    animationOperationsRef.current.animateLineTransitions();
+    if (transitionCancelled.current) {
+      resetLineTransitions();
+    } else {
+      animationOperationsRef.current.animateLineTransitions();
+    }
   }
 
   function resetLineTransitions() {
@@ -920,6 +927,12 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
     });
   }
 
+  function removeExitPlaneChildren() {
+    if (scopeExit?.current) {
+      (scopeExit?.current as any)?.replaceChildren();
+    }
+  }
+
   function handleTransitions(
     currentGroupUUID: string,
     rectsMap: Record<string, RectType>,
@@ -990,13 +1003,22 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
       animationHandler = handleAnimationSlide;
 
       let right = null;
+      let indexNext = -1;
+      let indexPrev = -1;
       if (parentNext && parentPrev) {
         const menuGroupParentPrev = groupsPrev?.find(g => g.uuid === parentPrev?.uuid);
         const menuGroupParentNext = groupsNext?.find(g => g.uuid === parentNext?.uuid);
         right = menuGroupParentNext?.index > menuGroupParentPrev?.index;
+        console.log(
+          menuGroupParentPrev,
+          menuGroupParentNext,
+        )
       } else {
-        right = menuGroupNext?.index > menuGroupPrev?.index;
+        indexNext = groupsByLevelRef?.current?.[0]?.findIndex(g => g?.uuid === menuGroupNext?.uuid)
+        indexNext = groupsByLevelRef?.current?.[0]?.findIndex(g => g?.uuid === menuGroupPrev?.uuid)
+        right = indexNext > indexPrev;
       }
+
 
       const xExit = (groupRectPrev?.width ?? 0) * (right ? 1 : -1);
 
@@ -1076,6 +1098,8 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
           }, ANIMATION_DURATION);
 
           handleLineTransitions();
+
+          removeExitPlaneChildren();
         }
       },
     });
@@ -1149,7 +1173,7 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
     } as any, { appendOnly: true });
   });
 
-  const handleIntraAppRouteChange = useRef((pathname: string) => {
+  const handleIntraAppRouteChange = useRef((pathname: string, vuuid: string) => {
     const groupsArg = getGroupsFromPath(pathname, framework, groupsByLevelRef?.current);
 
     // Close apps and outputs
@@ -1188,7 +1212,7 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
           nodesToBeRenderedRef.current[currentGroup?.uuid] = false;
         }
       }
-    });
+    }, vuuid);
 
     phaseRef.current += 1;
 
@@ -1201,7 +1225,7 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
     });
   });
 
-  function renderLayoutUpdates(callbackBeforeUpdateState?: () => void) {
+  function renderLayoutUpdates(callbackBeforeUpdateState?: () => void, vuuid?: string) {
     const currentGroup = getCurrentGroup();
     const siblingGroups = getCurrentGroupSiblings();
 
@@ -1258,6 +1282,7 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
         ),
       );
 
+      transitionCancelled.current = false;
       setRenderer(
         <ShadowRenderer
           handleDataCapture={({ data, id }, { rect }) => {
@@ -1272,6 +1297,17 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
             ) {
               newBlockCallbackAnimationRef.current[node.id] = true;
             }
+          }}
+          operationUUID={vuuid}
+          shouldCancel={(opuuid) => {
+            const cancelled = opuuid !== viewUUIDPrev.current;
+            if (cancelled) {
+              removeExitPlaneChildren();
+              resetLineTransitions();
+              transitionCancelled.current = cancelled;
+            }
+
+            return cancelled;
           }}
           nodes={shadowNodes}
           uuid={getNewUUID(3, 'clock')}
@@ -1584,13 +1620,20 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
     const handleRouteChangeComplete = (args: any) => {
       if (!hyphensToSnake(args ?? '')?.startsWith(hyphensToSnake(`/v2/pipelines/${pipeline?.uuid}`))) return;
       updateRouteHistory?.current(args);
-      resetLineTransitions();
     };
 
     const handleRouteChangeStart = (args: any) => {
-      if (!hyphensToSnake(args ?? '')?.startsWith(hyphensToSnake(`/v2/pipelines/${pipeline?.uuid}`))) return;
-      handleIntraAppRouteChange?.current(args);
-      resetLineTransitions();
+      const path = hyphensToSnake(args ?? '');
+      if (!path?.startsWith(hyphensToSnake(`/v2/pipelines/${pipeline?.uuid}`))) return;
+      clearTimeout(throttleTransitionsRef.current);
+      const vuuid = `${path}:${Number(new Date())}`;
+      viewUUIDPrev.current = vuuid;
+      viewUUIDNext.current = null;
+
+      throttleTransitionsRef.current = setTimeout(() => {
+        handleIntraAppRouteChange?.current(args, vuuid);
+        resetLineTransitions();
+      }, 300);
     };
 
     if (!(pipeline ?? false)) {
@@ -1925,6 +1968,7 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
         const portalRef = portalRefs.current[key] || createRef();
         portalRefs.current[key] = portalRef;
 
+
         return <PortalNode id={key} key={key} ref={portalRef} />;
       }),
     [blocks],
@@ -2048,19 +2092,19 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
                         );
 
                         const rect2 = {
+                          block,
                           ...rectsMappingRef.current[nodeID],
                           ...rect,
-                          block,
-                          height: rect1?.height ?? rect?.height ?? 0,
-                          width: rect1?.width ?? rect?.width ?? 0,
                         };
+                        rect2.height = rect1?.height || rect?.height || rect2?.height || 0;
+                        rect2.width = rect1?.width || rect?.width || rect2?.width || 0;
                         rectsMappingRef.current[nodeID] = rect2;
 
                         const map = {
                           [block.uuid]: rectsMappingRef.current[block.uuid],
                         };
-                        const oNode = relatedNodeRefs.current[block.uuid][ItemTypeEnum.OUTPUT];
-                        const aNode = relatedNodeRefs.current[block.uuid][ItemTypeEnum.APP];
+                        const oNode = relatedNodeRefs?.current?.[block.uuid]?.[ItemTypeEnum.OUTPUT];
+                        const aNode = relatedNodeRefs?.current?.[block.uuid]?.[ItemTypeEnum.APP];
                         [oNode, aNode].filter(Boolean).forEach(({ id, rect }: NodeItemType) => {
                           map[id] = rect;
                         })

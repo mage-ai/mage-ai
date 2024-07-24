@@ -749,7 +749,7 @@ export default function LineManagerV2({
     });
   }
 
-  const renderLineForRect = useCallback((rect: RectType) => {
+  const renderLineForRect = useCallback((rect: RectType, rectMap?: Record<string, RectType>) => {
     // console.log(rect, lineRefs?.current, lineRefs?.current?.[rect.id])
     Object.entries(lineRefs?.current ?? {})?.forEach(([uuid, mapping]) => {
       const arr = [];
@@ -771,10 +771,12 @@ export default function LineManagerV2({
         const from = {
           ...from0,
           ...rectsMapping?.[from0?.id],
+          ...rectMap?.[from0?.id],
         };
         const to = {
           ...to0,
           ...rectsMapping?.[to0?.id],
+          ...rectMap?.[to0?.id],
         };
 
         const from2 = rect?.id === from?.id ? { ...from, ...rect, } : from;

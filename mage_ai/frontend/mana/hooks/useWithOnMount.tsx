@@ -1,5 +1,5 @@
 import { DEBUG } from '@mana/utils/debug';
-import { useEffect, useRef } from 'react';
+import { useEffect, useLayoutEffect, useRef } from 'react';
 
 export type OnMountType = {
   children?: React.ReactNode;
@@ -8,6 +8,7 @@ export type OnMountType = {
   pollInterval?: number;
   uuid?: string;
   waitUntil?: (ref?: React.RefObject<HTMLElement>) => boolean;
+  strict?: boolean;
 };
 
 export function WithOnMount({
@@ -18,6 +19,7 @@ export function WithOnMount({
   maxAttempts = 10,
   pollInterval = 100,
   withRef,
+  strict = true,
 }: OnMountType & { withRef?: boolean }) {
   const phaseRef = useRef(0);
   const attemptsRef = useRef(0);
@@ -25,7 +27,7 @@ export function WithOnMount({
 
   const mountRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
+  (strict ? useLayoutEffect : useEffect)(() => {
     if (attemptsRef.current >= maxAttempts) return;
 
     const check = () => {

@@ -22,6 +22,7 @@ export interface ShadowNodeType {
   component: any;
   data?:any;
   id: any;
+  isActive?: (node: ShadowNodeType, data: NodeData, child: any) => boolean;
   maxAttempts?:any;
   onCapture?:any;
   pollInterval?:any;
@@ -37,6 +38,8 @@ interface ShadowRendererType {
   handleDataCapture: any;
   handleNodeTransfer?: any;
   maxAttempts?: any;
+  operationUUID?: string;
+  shouldCancel?: (opuuid: string) => boolean;
   pollInterval?: any;
   renderNode?: any;
   uuid?: any;
@@ -44,11 +47,13 @@ interface ShadowRendererType {
 }
 
 export function ShadowRenderer({
-  nodes,
   handleDataCapture,
   handleNodeTransfer,
   maxAttempts = 10,
+  nodes,
   pollInterval = 50,
+  operationUUID,
+  shouldCancel,
   uuid,
   waitUntil,
 }: ShadowRendererType): any {
@@ -122,6 +127,8 @@ export function ShadowRenderer({
           <ShadowContainer
             handleDataCapture={handleDataCapture}
             handleNodeTransfer={handleNodeTransfer}
+            operationUUID={operationUUID}
+            shouldCancel={shouldCancel}
             nodes={nodes}
             uuid={uuid}
           />
@@ -142,6 +149,7 @@ export function ShadowRenderer({
         nodes?.map(n => n.id),
       );
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [uuid, handleDataCapture, handleNodeTransfer, nodes, waitUntil, maxAttempts, pollInterval]);
 
   useEffect(() => {
@@ -156,9 +164,13 @@ function ShadowContainer({
   nodes,
   handleDataCapture,
   handleNodeTransfer,
+  operationUUID,
+  shouldCancel  ,
   uuid,
 }: {
   nodes: ShadowRendererType['nodes'];
+  operationUUID: ShadowRendererType['operationUUID'];
+  shouldCancel: ShadowRendererType['shouldCancel'];
   handleDataCapture: ShadowRendererType['handleDataCapture'];
   handleNodeTransfer?: ShadowRendererType['handleNodeTransfer'];
   uuid?: string;
@@ -171,6 +183,8 @@ function ShadowContainer({
   const timeoutTargetRefs = useRef<Record<string, any>>({});
   const timeoutWaitUntilRefs = useRef<Record<string, any>>({});
   const timeoutRefs = useRef<Record<string, any>>({});
+
+  const cancelledRef = useRef(false);
 
   useEffect(() => {
     const timeoutTargets = Object.values(timeoutTargetRefs.current ?? {}) ?? [];
@@ -203,6 +217,9 @@ function ShadowContainer({
     function captureData(node: ShadowNodeType, element: HTMLElement) {
       const report = () => {
         clearTimeout(timeoutRefs.current[node.id]);
+
+        if (cancelledRef.current) return;
+
         const computedStyle = typeof window !== 'undefined' && window.getComputedStyle(element);
 
         if (!computedStyle) {
@@ -224,7 +241,7 @@ function ShadowContainer({
 
         completedNodesRefs.current[node.id] = data;
 
-        const { targetRef } = node;
+        const { isActive, targetRef } = node;
 
         const renderTarget = () => {
           const elementRef = targetRef(node);
@@ -240,14 +257,21 @@ function ShadowContainer({
           DEBUG.hooks.shadow && console.log(`[hook:${uuid}] targetRef.children:`, children);
 
           children?.forEach(child => {
-            if (child instanceof Node) {
+            const cancel = cancelledRef.current || shouldCancel && shouldCancel(operationUUID);
+            if (cancel) {
+              cancelledRef.current = true;
+              return;
+            }
+
+            if (child instanceof Node
+              && (!isActive || isActive(node, data, child))
+            ) {
               elementRef.current.replaceChildren(child.firstChild);
             }
           });
 
           if (handleNodeTransfer) {
-            DEBUG.hooks.shadow &&
-              console.log(`[hook:${uuid}] handleNodeTransfer:`, data.rect, elementRef.current);
+            // console.log(`[hook:${uuid}] handleNodeTransfer:`, data.rect, elementRef.current, element);
             handleNodeTransfer?.(node, data, element);
           }
         };
@@ -334,6 +358,7 @@ function ShadowContainer({
         })}
       </div>
     );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [handleDataCapture, handleNodeTransfer, nodes, uuid]);
 
   return containerMemo;

@@ -73,7 +73,7 @@ export function buildIntraAppNavItems({
 }: {
   changeRoute: (route: RouteType) => void;
   framework: PipelineExecutionFrameworkType;
-    pipeline: PipelineType;
+  pipeline: PipelineType;
 }) {
   const menuItems: MenuItemType[] = [];
   const { groupsByLevel } = buildDependencies(framework);

@@ -15,7 +15,7 @@ interface EventContextType {
   ) => void;
   handleMouseDown: (event: MouseEvent) => void;
   removeContextMenu: RemoveContextMenuType;
-  renderLineRef: React.MutableRefObject<(rect: RectType) => void>;
+  renderLineRef: React.MutableRefObject<(rect: RectType, rectMapping?: Record<string, RectType>) => void>;
   setSelectedGroup: (group: FrameworkType | BlockType) => void;
   useExecuteCode: ExecutionManagerType['useExecuteCode'];
   useRegistration: ExecutionManagerType['useRegistration'];

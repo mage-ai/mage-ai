@@ -131,6 +131,10 @@ $enter-duration: 3s;
   position: absolute;
   transform: translateY(-100%);
   width: 100%;
+
+  &:hover {
+    cursor: move;
+  }
 }
 
 .outputContainer {

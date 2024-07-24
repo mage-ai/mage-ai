@@ -194,17 +194,21 @@ function BlockNode(
     const appNode = appNodeRef.current;
     const outputNode = outputNodeRef.current;
     if (outputNode) {
-      const ids = [
-        getLineID(block.uuid, outputNode.id),
+      const idrects = [
+        [getLineID(block.uuid, outputNode.id), {
+          ...dragRef?.current?.getBoundingClientRect(),
+          ...node?.rect,
+        }],
       ];
 
       if (appNode && appOpenRef.current) {
-        ids.push(getLineID(appNode.id, outputNode.id));
+        idrects.push([
+          getLineID(appNode.id, outputNode.id),
+          rectsMappingRef?.current?.[appNode.id],
+        ]);
       }
 
-      console.log('SHOWWWWWWWWWWWWWWWWWWWWWWWW LINESSSSSSSSSSSSSSSSSS', ids)
-
-      ids.filter(Boolean).forEach((id) => {
+      idrects.filter(Boolean).forEach(([id, rect]) => {
         [id, `${id}-background`].forEach(i => {
           const el = document.getElementById(i);
 
@@ -213,6 +217,10 @@ function BlockNode(
             el.style.opacity = '';
             el.style.strokeDasharray = '';
           }
+
+          renderLineRef?.current?.(rect, {
+            [outputNode.id]: rectsMappingRef?.current?.[outputNode.id],
+          });
         });
       });
     }
@@ -520,7 +528,6 @@ function BlockNode(
       handleSubscribe('BlockNode');
 
       const execute = () => {
-        console.log('ANIMATEEEEEEEEEEEEEEEEEEEE', outputNodeRef?.current, appNodeRef?.current)
         if (outputNodeRef?.current) {
           animateLineRef?.current?.(outputNodeRef?.current?.id, block?.uuid);
           if (appNodeRef?.current) {
@@ -888,13 +895,6 @@ function BlockNode(
               );
 
               showLinesToOutput();
-
-              console.log('FROM BLOCK', {
-                [outputNode.id]: rectsMappingRef?.current?.[outputNode.id],
-                [block.uuid]: rectsMappingRef?.current?.[block.uuid],
-              },
-              { ...getSelectedGroupRectFromRefs() },
-              { replace: false })
             }}
             role={ElementRoleEnum.CONTENT}
           />
