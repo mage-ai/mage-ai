@@ -140,10 +140,10 @@ function Button({
       wrap={wrap ? 'true' : undefined}
       {...(!islink && !wrap
         ? {
-            // whileHover: { scale: 1.2 },
+            // whileHover: { scale: 1.1 },
             // whileFocus
             whileTap: {
-              scale: 0.95,
+              scale: 0.99,
             },
           }
         : {})}

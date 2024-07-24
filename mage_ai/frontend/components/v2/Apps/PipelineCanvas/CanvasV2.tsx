@@ -142,6 +142,7 @@ export type PipelineCanvasV2Props = {
   setZoomPanDisabled: (value: boolean) => void;
   snapToGridOnDrop?: boolean;
   transformState: React.MutableRefObject<ZoomPanStateType>;
+  wrapperRef: React.RefObject<HTMLDivElement>;
 } & CanvasProps;
 
 const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
@@ -158,6 +159,7 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
   transformState,
   useExecuteCode,
   useRegistration,
+  wrapperRef,
 }: PipelineCanvasV2Props) => {
   const { changeRoute, page } = useContext(LayoutContext);
   const router = useRouter();
@@ -172,7 +174,6 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
   const mountRootRefs = useRef<Record<string, React.MutableRefObject<HTMLDivElement>>>({});
   const rectRefs = useRef<Record<string, React.MutableRefObject<RectType>>>({});
   const imageDataRef = useRef<string>(null);
-  const wrapperRef = useRef(null);
   const timeoutRef = useRef(null);
   const timeoutUpdateAppRectsRef = useRef(null);
   const timeoutUpdateOutputRectsRef = useRef(null);
@@ -1922,9 +1923,13 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
             onClick: (event: ClientEventType) => {
               event.preventDefault();
               removeContextMenu(event);
+
+              const rects = getSelectedGroupRects();
+              const rect = calculateBoundingBox(rects);
+              const box = canvasRef.current?.getBoundingClientRect();
               transformState?.current?.handlePanning?.current?.((event ?? null) as any, {
-                xPercent: 0.5,
-                yPercent: 0.5,
+                x: Math.max((rect?.left ?? 0), 0),
+                y: Math.max((rect?.top ?? 0), 0),
               });
               startTransition(() => {
                 setZoomPanDisabled(false);
@@ -1933,7 +1938,7 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
             uuid: 'Center view',
           },
         ],
-        uuid: 'View controls',
+        uuid: 'Navigation',
       },
       { divider: true },
       {

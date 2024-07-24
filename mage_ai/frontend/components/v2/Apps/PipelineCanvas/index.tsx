@@ -12,6 +12,7 @@ import { useEffect, useRef, useState } from 'react';
 
 export default function PipelineBuilder({ framework, ...props }: CanvasProps) {
   const canvasRef = useRef<HTMLDivElement>(null);
+  const wrapperRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const disabledRef = useRef(false);
   const handlePanning = useRef<
@@ -39,7 +40,7 @@ export default function PipelineBuilder({ framework, ...props }: CanvasProps) {
   const zoomPanStateRef = useRef<ZoomPanStateType>({
     container: containerRef,
     disabled: disabledRef,
-    element: canvasRef,
+    element: wrapperRef,
     handlePanning,
     handleZoom,
     originX,
@@ -150,6 +151,7 @@ export default function PipelineBuilder({ framework, ...props }: CanvasProps) {
             setDropEnabled={setDropEnabled}
             setZoomPanDisabled={setZoomPanDisabled}
             transformState={zoomPanStateRef}
+            wrapperRef={wrapperRef}
           />
         )}
       </DndProvider>

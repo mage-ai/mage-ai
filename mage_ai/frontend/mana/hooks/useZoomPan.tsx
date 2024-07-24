@@ -107,7 +107,9 @@ export const useZoomPan = (
 
     const updateTransform = () => {
       transformRef.current = `translate(${originX.current}px, ${originY.current}px) scale(${scale.current})`;
+      element.style.transformOrigin = '0px 0px';
       element.style.transform = transformRef.current;
+      // console.log(element.style.transformOrigin, element.style.transform)
     };
 
     handlePanning.current = (
@@ -152,6 +154,17 @@ export const useZoomPan = (
         x = Math.max(xMin, Math.min(xMax, newX));
         y = Math.max(yMin, Math.min(yMax, newY));
       }
+
+      const ymax = containerRect?.height ?? 0;
+      const ydif = (elementRect?.height ?? 0) / newScale;
+      y = y < ydif - ymax ? ydif - ymax : y;
+
+      const xmax = containerRect?.width ?? 0;
+      const xdif = (elementRect?.width ?? 0) / newScale;
+      x = x < xdif - xmax ? xdif - xmax : x;
+
+      x = x > 0 ? 0 : x;
+      y = y > 0 ? 0 : y;
 
       return {
         x,
