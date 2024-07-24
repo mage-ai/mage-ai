@@ -1,4 +1,5 @@
 import NextHead from 'next/head';
+import { useRouter } from 'next/router';
 
 type HeadProps = {
   children?: any;
@@ -6,14 +7,18 @@ type HeadProps = {
   title?: string;
 };
 
-const Head = ({ children, defaultTitle = 'Mage', title }: HeadProps) => (
-  <NextHead>
-    <link href="/favicon.ico" rel="icon" />
+const Head = ({ children, defaultTitle = 'Mage', title }: HeadProps) => {
+  const router = useRouter();
 
-    <title>{title ? `${title} | ${defaultTitle}` : defaultTitle}</title>
+  return (
+    <NextHead>
+      <link href={`${router.basePath}/favicon.ico`} rel="icon" />
 
-    {children}
-  </NextHead>
-);
+      <title>{title ? `${title} | ${defaultTitle}` : defaultTitle}</title>
+
+      {children}
+    </NextHead>
+  );
+};
 
 export default Head;
