@@ -24,6 +24,8 @@ import { UNIT } from '@mana/themes/spaces';
 import { PortalProvider, usePortals } from '@context/v2/Portal';
 import { EventEnum, KeyEnum } from '@mana/events/enums';
 
+const DEBUG = false;
+
 export type MenuProps = {
   above?: boolean;
   addPortal: (
@@ -371,70 +373,97 @@ function Menu({
         width: position?.width ?? 0,
       };
 
+      DEBUG && console.log(
+        0,
+        pos,
+        container,
+        bounding,
+        offset,
+        menu,
+      )
+
       const padding = UNIT;
       const right = bounding.left + bounding.width;
       const bottom = bounding.top + bounding.height;
 
+      DEBUG && console.log(1, right, bottom)
+
       const hmenu = menu?.height ?? 0;
       const wmenu = menu?.width ?? 0;
 
+      DEBUG && console.log(2, hmenu, wmenu)
+
       let xoff = offset?.left ?? 0;
+      let xoffi = 0;
+
       let yoff = offset?.top ?? 0;
+      let yoffi = 0;
+
+      DEBUG && console.log(3, xoff, yoff, direction)
 
       if (contained) {
-        // if (LayoutDirectionEnum.LEFT === direction) {
-        //   xoff -= (wmenu - (container?.width ?? 0));
-        // } else {
-        //   xoff += (wmenu - (container?.width ?? 0));
-        // }
-        // if (above) {
-        //   yoff -= (hmenu + (container?.height ?? 0));
-        // } else {
-        //   yoff += (container?.height ?? 0);
-        // }
-      } else {
         if (above) {
+          yoffi -= (hmenu + (container?.height ?? 0));
         } else {
-          let xoffi = 0;
-          if (LayoutDirectionEnum.LEFT === direction) {
-            xoffi -= wmenu ?? 0;
-          } else {
-            if (level >= 1) {
-              xoffi += (container?.width ?? 0) + padding;
-            } else {
-            }
-          }
-
-          if (pos.left + xoffi <= 0) {
-            if (LayoutDirectionEnum.LEFT === direction) {
-              if (level === 0) {
-                xoffi = -(container?.width ?? 0);
-              } else {
-                xoffi += wmenu + (container?.width ?? 0) + padding;
-              }
-
-              directionRef.current = LayoutDirectionEnum.RIGHT;
-            }
-          }
-
-          xoff += xoffi;
-
-          yoff += container?.height ?? 0;
-          yoff += level === 0 ? padding / 2 : 0;
+          yoffi += (container?.height ?? 0);
         }
+
+        if (LayoutDirectionEnum.LEFT === direction) {
+          xoffi -= (wmenu - (container?.width ?? 0));
+        } else if (level >= 1) {
+          xoffi += (container?.width ?? 0) + padding;
+        }
+
+        DEBUG && console.log(4, xoffi)
+      } else {
+        if (LayoutDirectionEnum.LEFT === direction) {
+          xoffi -= wmenu ?? 0;
+        } else if (level >= 1) {
+          xoffi += (container?.width ?? 0) + padding;
+        }
+
+        DEBUG && console.log(4, xoffi)
+
+        if (pos.left + xoffi <= 0) {
+          if (LayoutDirectionEnum.LEFT === direction) {
+            if (level === 0) {
+              xoffi = -(container?.width ?? 0);
+            } else {
+              xoffi += wmenu + (container?.width ?? 0) + padding;
+            }
+
+            directionRef.current = LayoutDirectionEnum.RIGHT;
+          }
+        }
+
       }
+
+      DEBUG && console.log(5, xoffi)
+      xoff += xoffi;
+      DEBUG && console.log(6, xoff)
+
+      yoff += container?.height ?? 0;
+      yoff += level === 0 ? padding / 2 : 0;
+
+      DEBUG && console.log(7, yoff)
 
       pos.left += xoff;
       pos.top += yoff;
+
+      DEBUG && console.log(8, pos)
 
       const ymax = window.innerHeight;
       if (pos.top + hmenu > ymax) {
         pos.top = (ymax - hmenu);
       }
 
+      DEBUG && console.log(9, pos)
+
       if (pos.top < 0) {
         pos.top = 0;
       }
+
+      DEBUG && console.log(10, pos)
 
       containerRef.current.style.left = `${pos.left}px`;
       containerRef.current.style.top = `${pos.top}px`;
@@ -444,10 +473,7 @@ function Menu({
 
       containerRectRef.current = containerRef.current.getBoundingClientRect();
 
-      // console.log(containerRectRef.current,
-      //   window.innerHeight,
-      //   window.innerWidth,
-      // )
+      DEBUG && console.log(11, containerRectRef.current)
 
       if (openItems?.length >= 1) {
         const row = openItems?.[0]?.row;

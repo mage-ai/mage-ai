@@ -11,14 +11,16 @@ export const MenuContext = React.createContext<{
   renderContextMenu: ContextMenuType['renderContextMenu'];
   shouldPassControl: ContextMenuType['shouldPassControl'];
   showMenu: ContextMenuType['showMenu'];
+  teardown: ContextMenuType['teardown'];
   useMenu: (kwargs?: any) => {
     contextMenu?: any;
     contextMenuRef: ContextMenuType['contextMenuRef'];
+    hideMenu: ContextMenuType['hideMenu'];
     removeContextMenu: ContextMenuType['removeContextMenu'];
     renderContextMenu: ContextMenuType['renderContextMenu'];
     shouldPassControl: ContextMenuType['shouldPassControl'];
     showMenu: ContextMenuType['showMenu'];
-    hideMenu: ContextMenuType['hideMenu'];
+    teardown: ContextMenuType['teardown'];
   };
 }>({
   contextMenu: null,
@@ -30,14 +32,16 @@ export const MenuContext = React.createContext<{
   renderContextMenu: () => null,
   shouldPassControl: () => null,
   showMenu: () => null,
+  teardown: () => null,
   useMenu: () => ({
     contextMenu: null,
     contextMenuRef: null,
+    hideMenu: () => null,
     removeContextMenu: () => null,
     renderContextMenu: () => null,
     shouldPassControl: () => null,
     showMenu: () => null,
-    hideMenu: () => null,
+    teardown: () => null,
   }),
 });
 

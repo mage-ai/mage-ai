@@ -30,7 +30,7 @@ function App({
     version?: LayoutVersionEnum;
   };
 }) {
-  console.log('AppV2 render');
+  // console.log('AppV2 render');
 
   const headerRef = useRef(null);
 

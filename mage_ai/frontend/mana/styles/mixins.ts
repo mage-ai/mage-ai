@@ -83,25 +83,25 @@ export const gradientBackgroundVars = (
     ${angle},
     ${startColorVar} ${startPercentage || 0}%,
     ${endColorVar} ${endPercentage || 100}%,
-    ${backgroundColorVar})
+    ${backgroundColorVar}
   );
   background: -moz-linear-gradient(
     ${angle},
     ${startColorVar} ${startPercentage || 0}%,
     ${endColorVar} ${endPercentage || 100}%,
-    ${backgroundColorVar})
+    ${backgroundColorVar}
   );
   background: -o-linear-gradient(
     ${angle},
     ${startColorVar} ${startPercentage || 0}%,
     ${endColorVar} ${endPercentage || 100}%,
-    ${backgroundColorVar})
+    ${backgroundColorVar}
   );
   background: linear-gradient(
     ${angle},
     ${startColorVar} ${startPercentage || 0}%,
     ${endColorVar} ${endPercentage || 100}%,
-    ${backgroundColorVar})
+    ${backgroundColorVar}
   );
 `;
 

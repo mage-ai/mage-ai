@@ -3,7 +3,7 @@
 
 .tooltipContent {
   @include borders.base();
-  @include mixins.gradient(0deg, var(--colors-blackmd), var(--colors-blackmd));
+  @include mixins.gradient(0deg, var(--menus-background-gradient-default), var(--menus-background-gradient-default));
 
   backdrop-filter: saturate(100%) blur(20px);
   padding: var(--padding-base);

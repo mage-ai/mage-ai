@@ -80,17 +80,17 @@ export const MenuContent = styled(motion.nav)`
   overflow-y: auto;
 
   ${({ theme }) => `
-    backdrop-filter: ${theme.menus.blur.base};
     border-radius: ${theme.menus.border.radius.base};
   `}
 
+  backdrop-filter: blur(var(--modal-blur-base));
   ${gradientBackgroundVars(
     '0deg',
     'var(--menus-background-gradient-default)',
     'var(--menus-background-gradient-default)',
     0,
     100,
-    'var(--menus-background-base-default'
+    'var(--menus-background-base-default)'
   )}
 `;
 

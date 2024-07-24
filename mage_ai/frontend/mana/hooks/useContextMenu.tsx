@@ -60,8 +60,11 @@ export default function useContextMenu({
   uuid: uuidBase,
 }: ContextMenuProps): ContextMenuType {
   const activeRef = useRef<string>(null);
-
+  const activeContainerRef = useRef<HTMLDivElement>(null);
   const contextMenuRef = useRef<HTMLDivElement | null>(null);
+
+  const renderContextMenuOptionsRef = useRef<Record<string, RenderContextMenuOptions>>({});
+
   const menuRefs = useRef<Record<string, React.MutableRefObject<HTMLDivElement>>>({
     [uuidBase]: contextMenuRef,
   });
@@ -84,10 +87,7 @@ export default function useContextMenu({
 
   const getContainer = (uuid: string) => containerRefs?.current?.[uuid]?.current ?? container;
 
-  const rootID = useCallback((uuid: string) => `context-menu-root-${uuid}`, []);
-
   function isEventInContainer(event: ClientEventType, containerArg?: HTMLElement, uuid?: string): boolean {
-    console.log('IS EVENT IN CONTAINER MENU', event, containerArg, getContainer(uuid ?? uuidBase), container, containerRefBase, containerRefs.current, uuid, uuidBase)
     return event && (containerArg ?? getContainer(uuid ?? uuidBase))?.contains(event.target as Node);
   }
 
@@ -100,7 +100,7 @@ export default function useContextMenu({
   }
 
   function hideMenu(uuid?: string) {
-    console.log('HIDE', uuid, menuRootRefs?.current?.[uuid])
+    // console.log('HIDE', uuid, menuRootRefs?.current?.[uuid])
     menuRootRefs?.current?.[uuid ?? uuidBase]?.render([]);
   }
 
@@ -114,7 +114,7 @@ export default function useContextMenu({
   function removeContextMenu(event: ClientEventType, opts?: {
     conditionally?: boolean;
   }, uuid?: string) {
-    console.log('REMOVE')
+    // console.log('REMOVE')
     const id = uuid ?? uuidBase;
 
     if (opts?.conditionally && event && isEventInContextMenu(event, null, id)) return;
@@ -127,6 +127,7 @@ export default function useContextMenu({
     delete menuRootRefs.current[id];
 
     activeRef.current = null;
+    activeContainerRef.current = null;
 
     resetPosition();
   }
@@ -146,17 +147,27 @@ export default function useContextMenu({
       uuid,
     } = opts ?? {};
     const id = uuid ?? uuidBase;
-    activeRef.current = id;
+
+    if (activeRef.current !== id) {
+      removeContextMenu(event, null, activeRef.current);
+    }
 
     if (uuid) {
       containerRefs.current[uuid] = containerRef;
       menuRefs.current[uuid] = contextMenuRef;
     }
 
-    console.log(event, items, opts, event && !isEventInContainer(event, null, id))
     if (!contained && event && !isEventInContainer(event, null, id)) return;
 
     event && event?.preventDefault();
+
+    activeRef.current = id;
+    activeContainerRef.current = getContainer(id);
+    renderContextMenuOptionsRef.current[id] = {
+      contained,
+      handleEscape,
+      position,
+    };
 
     const render = (root: Root) =>
       root.render(
@@ -184,16 +195,12 @@ export default function useContextMenu({
 
     const menuElement = menuRefs.current?.[id]?.current ?? menuRefs.current[uuidBase]?.current;
 
-    console.log('RENDER',
-      uuidBase, 'uuidBase',
-      id, 'id',
-      menuElement, 'menuElement',
-      contextMenuRef, 'contextMenuRef',
-      items, 'items',
-      menuRefs.current, 'menuRefs.current',
-      menuRootRefs.current, 'menuRootRefs.current',
-      containerRefs.current, 'containerRefs.current',
-    )
+    // console.log(
+    //   'useContextMenu.renderContextMenu',
+    //   id,
+    //   menuElement,
+    //   menuElement?.getBoundingClientRect(),
+    // )
 
     menuRootRefs.current[id] ||= createRoot(menuElement as any);
     menuItemsRefs.current[uuid] = items;
@@ -234,8 +241,24 @@ export default function useContextMenu({
 
   useEffect(() => {
     const handleDocumentClick = (event: any) => {
-      const node = document.getElementById(rootID(activeRef.current));
-      if (node && !node?.contains(event.target as Node)) {
+      if (!activeRef.current) return;
+
+      const menu = menuRefs.current?.[activeRef.current]?.current;
+      const contained = renderContextMenuOptionsRef.current?.[activeRef.current]?.contained;
+
+      // console.log(
+      //   'userContextMenu.handleDocumentClick',
+      //   event,
+      //   activeRef.current,
+      //   contained,
+      //   activeContainerRef.current?.contains(event.target as Node),
+      //   menu?.contains(event.target as Node),
+      // );
+
+      if ([
+        menu,
+        contained ? activeContainerRef.current : null,
+      ].filter(Boolean).every(node => !node?.contains(event.target as Node))) {
         removeContextMenu(event, null, activeRef.current);
       }
     };

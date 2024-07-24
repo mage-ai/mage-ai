@@ -315,22 +315,22 @@ export default function BlockNodeComponent({
         <TooltipWrapper
           align={TooltipAlign.START}
           hide={block?.type && ![BlockTypeEnum.GROUP, BlockTypeEnum.PIPELINE].includes(block?.type)}
-          horizontalDirection={TooltipDirection.LEFT}
-          justify={TooltipJustify.CENTER}
+          horizontalDirection={TooltipDirection.RIGHT}
+          justify={TooltipJustify.START}
           tooltip={
             <Grid rowGap={16}>
               <Grid rowGap={8}>
-                <Text semibold>{block?.name || block?.uuid}</Text>
-                {block?.description && <Text secondary>{block?.description}</Text>}
+                <Text semibold small>{block?.name || block?.uuid}</Text>
+                {block?.description && <Text secondary small>{block?.description}</Text>}
               </Grid>
               {blocksInGroup?.length > 0 && (
                 <Grid rowGap={8}>
-                  <Text semibold small>
+                  <Text semibold xsmall>
                     Blocks
                   </Text>
                   <Grid rowGap={8}>
                     {blocksInGroup?.map((b: any) => (
-                      <Text key={b.uuid} monospace secondary small>
+                      <Text key={b.uuid} monospace secondary xsmall>
                         {b.name || b.uuid}
                       </Text>
                     ))}

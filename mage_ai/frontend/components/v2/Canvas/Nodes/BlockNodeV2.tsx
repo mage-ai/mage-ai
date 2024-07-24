@@ -1104,7 +1104,7 @@ function BlockNode(
               event,
               onSuccess: event => {
                 callback && callback?.();
-                removeContextMenu(event);
+                // removeContextMenu(event);
               },
               payload: {
                 block: payload,

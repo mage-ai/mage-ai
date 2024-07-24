@@ -1,4 +1,5 @@
 import React, { useMemo, useRef } from 'react';
+import { LayoutDirectionEnum } from '@mana/components/Menu/types';
 import Grid from '@mana/components/Grid';
 import MenuManager from '@mana/components/Menu/MenuManager';
 import Button from '@mana/elements/Button';
@@ -49,7 +50,10 @@ function Aside(
   }, [Icon, baseColorName, borderColor, className, loading, menuItems, onClick, ref]);
 
   return (
-    <MenuManager items={menuItems} uuid={uuid}>
+    <MenuManager
+      items={menuItems}
+      uuid={uuid}
+    >
       {element}
     </MenuManager>
   );

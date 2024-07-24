@@ -1,9 +1,9 @@
 import DashedDivider from '@mana/elements/Divider/DashedDivider';
+import { createPortal } from 'react-dom';
 import Grid from '@mana/components/Grid';
 import Link from '@mana/elements/Link';
 import stylesHeader from '@styles/scss/layouts/Header/Header.module.scss';
 import stylesNavigation from '@styles/scss/components/Menu/NavigationButtonGroup.module.scss';
-import useCustomEventHandler from '@mana/events/useCustomEventHandler';
 import useKeyboardShortcuts from '../../hooks/shortcuts/useKeyboardShortcuts';
 import { CaretDown } from '@mana/icons';
 import { MenuGroupType } from './interfaces';
@@ -28,12 +28,8 @@ export default function NavigationButtonGroup({ groups, uuid }: NavigationButton
   const selectedButtonIndexRef = useRef<number | null>(null);
   const [selectedGroupsByLevel, setSelectedGroupsByLevel] = useState<MenuGroupType[]>(null);
 
-  const { deregisterCommands, registerCommands } = useKeyboardShortcuts({
-    target: containerRef,
-  });
-
   const contextMenuID = 'NavigationButtonGroup';
-  const { handleToggleMenu } = useMenuManager({
+  const { handleToggleMenu, portalRef } = useMenuManager({
     contextMenuRef,
     direction: LayoutDirectionEnum.RIGHT,
     onClose: (levelToClose: number) => {
@@ -43,6 +39,9 @@ export default function NavigationButtonGroup({ groups, uuid }: NavigationButton
     },
     ref: containerRef,
     uuid: uuid ?? contextMenuID,
+  });
+  const { deregisterCommands, registerCommands } = useKeyboardShortcuts({
+    target: containerRef,
   });
 
   const openMenu = useCallback(
@@ -241,11 +240,14 @@ export default function NavigationButtonGroup({ groups, uuid }: NavigationButton
         </Grid>
       </div>
 
-      <div id={[
-        uuid,
-        contextMenuID,
-        'menu-manager-context-menu',
-      ].filter(Boolean).join(':')} ref={contextMenuRef} />
+      {createPortal(
+        <div id={[
+          uuid,
+          contextMenuID,
+          'menu-manager-context-menu',
+        ].filter(Boolean).join(':')} ref={contextMenuRef} />,
+        portalRef.current,
+      )}
     </>
   );
 }

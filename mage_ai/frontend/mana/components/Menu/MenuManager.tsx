@@ -17,7 +17,7 @@ type UseMenuManagerProps = {
 export function useMenuManager({
   contained,
   contextMenuRef,
-  direction = LayoutDirectionEnum.LEFT,
+  direction,
   onClose,
   ref,
   uuid,
@@ -26,7 +26,7 @@ export function useMenuManager({
   const containerRef = (ref || containerInternalRef) as React.RefObject<HTMLDivElement>;
 
   const { portalRef, useMenu } = useContext(MenuContext);
-  const { contextMenu, showMenu, hideMenu } = useMenu({
+  const { contextMenu, showMenu, hideMenu, teardown } = useMenu({
     containerRef,
     uuid,
   });
@@ -43,7 +43,13 @@ export function useMenuManager({
       }[];
     }) => {
       if ((items?.length ?? 0) > 0) {
-        const rectAbsolute = containerRef?.current?.getBoundingClientRect();
+        const rectc = containerRef?.current?.getBoundingClientRect();
+        const rectAbsolute = {
+          height: rectc?.height,
+          left: rectc?.left,
+          top: rectc?.top,
+          width: rectc?.width,
+        };
         const {
           parents,
           // rect: rectRelative,
@@ -55,7 +61,15 @@ export function useMenuManager({
         //   top: rectAbsolute?.top - parent?.top,
         // };
 
+        // console.log(
+        //   'MenuManager.handleToggleMenu',
+        //   containerRef?.current,
+        //   containerRef?.current?.getBoundingClientRect(),
+        //   rectAbsolute,
+        // )
+
         const showOptions = {
+          contained,
           containerRef,
           contextMenuRef,
           direction,
@@ -82,7 +96,7 @@ export function useMenuManager({
         hideMenu(uuid);
       }
     },
-    [containerRef, direction, hideMenu, onClose, showMenu, uuid],
+    [contained, containerRef, direction, hideMenu, onClose, showMenu, uuid],
   );
 
   return {
@@ -90,6 +104,7 @@ export function useMenuManager({
     contextMenu,
     handleToggleMenu,
     portalRef,
+    teardown,
   };
 }
 
@@ -121,32 +136,23 @@ function MenuManager(
 ) {
   const contextMenuRef = useRef<HTMLDivElement>(null);
 
-  const [openInternal, setOpenState] = useState(openProp);
-  const open = useMemo(() => isOpen ?? openInternal, [openInternal, isOpen]);
-
   const {
     containerRef,
     handleToggleMenu,
     portalRef,
+    teardown,
   } = useMenuManager({
+    contained: true,
     contextMenuRef,
-    onClose: (level: number) => {
-      if (handleOpen) {
-        handleOpen(level === 0, level);
-      } else if (level === 0) {
-        setOpenState(false);
-      }
-    },
     ref,
     ...rest,
   });
 
   useEffect(() => {
-    handleToggleMenu({
-      items: open ? items : null,
-      openItems,
-    });
-  }, [handleToggleMenu, handleOpen, items, openItems, open]);
+    return () => {
+      teardown();
+    };
+  }, [teardown]);
 
   const contextMenu = <div id={`menu-manager-${rest.uuid}`} ref={contextMenuRef} />;
 
@@ -156,18 +162,17 @@ function MenuManager(
         className={className}
         onClick={event => {
           event.preventDefault();
-          if (handleOpen) {
-            handleOpen(prev => !prev, 0);
-          } else {
-            setOpenState(prev => !prev);
-          }
+          handleToggleMenu({
+            items,
+            openItems,
+          });
         }}
         ref={containerRef}
       >
         {children}
       </div>
 
-      {contained ? createPortal(contextMenu, portalRef.current) : contextMenu}
+      {contained ? contextMenu : createPortal(contextMenu, portalRef.current)}
     </>
   );
 }

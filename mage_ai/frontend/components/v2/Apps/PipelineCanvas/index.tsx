@@ -99,8 +99,6 @@ export default function PipelineBuilder({
 
       if (shouldPassControl(event as ClientEventType)) return;
 
-      console.log('WTFFFFFFFFFFFFFFFFFFFF', shouldPassControl(event as ClientEventType))
-
       const targetElement = event.target as HTMLElement;
       const hasRole =
         dragEnabled &&

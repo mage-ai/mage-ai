@@ -107,6 +107,7 @@ export const MenuProvider = ({ children }: MenuProviderProps) => {
         renderContextMenu,
         shouldPassControl,
         showMenu,
+        teardown,
         useMenu,
       }}
     >
