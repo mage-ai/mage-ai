@@ -10,6 +10,7 @@ export function linePathKey(linePaths: Record<string, LinePathType>): string {
 
 export type LinePathType = {
   animate?: boolean;
+  defs?: any[];
   id: string;
   key: string;
   paths: React.ReactNode[];

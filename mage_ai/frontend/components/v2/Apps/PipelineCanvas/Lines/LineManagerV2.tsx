@@ -301,6 +301,10 @@ export default function LineManagerV2({
       [ItemTypeEnum.OUTPUT]: {},
     };
     const defs = {};
+    const childUUIDs = indexBy(
+      selectedGroupsRef?.current?.[selectedGroupsRef.current?.length - 1]?.children ?? [],
+      c => c.uuid,
+    );
 
     Object.entries(pairsByType ?? {})?.forEach(([type, pairs]) => {
       sortByKey(pairs, (pair: [RectType, RectType]) => {
@@ -319,8 +323,14 @@ export default function LineManagerV2({
 
         defs[rectup.id] = linePath.defs;
 
-        paths[type][rectup.id] ||= [];
-        paths[type][rectup.id].push(linePath);
+        let key = type;
+        if (childUUIDs?.[rectup.id]) {
+          key = ItemTypeEnum.BLOCK;
+        }
+
+        paths[key][rectup.id] ||= [];
+        paths[key][rectup.id].push(linePath);
+
         linePaths.push(linePath);
       });
     });
@@ -856,8 +866,8 @@ export default function LineManagerV2({
         {Object.values(pathDefs ?? {}).flatMap(defs => defs)}
       </svg>
       <ConnectionLines linePaths={linesApp} zIndex={BASE_Z_INDEX + ORDER[ItemTypeEnum.APP]} />
-      <ConnectionLines linePaths={linesBlock} zIndex={1} />
-      <ConnectionLines linePaths={linesNode} zIndex={2} />
+      <ConnectionLines linePaths={linesBlock} zIndex={2} />
+      <ConnectionLines linePaths={linesNode} zIndex={1} />
       <ConnectionLines linePaths={linesOutput} zIndex={BASE_Z_INDEX + ORDER[ItemTypeEnum.OUTPUT]} />
     </>
   );

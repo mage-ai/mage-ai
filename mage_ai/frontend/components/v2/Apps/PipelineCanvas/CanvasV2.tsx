@@ -328,7 +328,7 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
         direction: LayoutConfigDirectionEnum.HORIZONTAL,
         display: LayoutDisplayEnum.DETAILED,
         options: { amplitude: 20, wavelength: 10 },
-        style: LayoutStyleEnum.WAVE,
+        style: LayoutStyleEnum.GRID,
       }),
       direction: LayoutConfigDirectionEnum.VERTICAL,
       display: LayoutDisplayEnum.DETAILED,
