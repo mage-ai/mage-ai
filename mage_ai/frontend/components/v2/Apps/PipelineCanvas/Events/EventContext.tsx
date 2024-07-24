@@ -19,6 +19,15 @@ interface EventContextType {
   setSelectedGroup: (group: FrameworkType | BlockType) => void;
   useExecuteCode: ExecutionManagerType['useExecuteCode'];
   useRegistration: ExecutionManagerType['useRegistration'];
+  updateLinesRef: React.MutableRefObject<(
+    mapping: Record<string, RectType>,
+    groupRectArg: RectType,
+    opts?: {
+      callback?: () => void;
+      replace?: boolean;
+      shouldAnimate?: (rectup: RectType, rectdn: RectType) => boolean;
+    },
+  ) => void>;
 }
 
 export const EventContext = createContext<EventContextType | undefined>(undefined);

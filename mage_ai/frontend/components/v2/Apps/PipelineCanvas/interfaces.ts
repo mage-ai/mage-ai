@@ -169,6 +169,7 @@ export type ShowNodeType = (
     node: any,
     wrapperRef: React.MutableRefObject<HTMLDivElement>,
     mountRef: React.MutableRefObject<HTMLDivElement>,
+    onMount?: () => void,
   ) => void,
   remove: (callback?: () => void) => void,
   setOnRemove: (onRemove: () => void) => void,

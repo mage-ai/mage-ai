@@ -1,6 +1,7 @@
 import React, { createContext } from 'react';
 import { ModelManagerType } from '../interfaces';
 import { MutateType } from '@api/interfaces';
+import { RectType } from '@mana/shared/interfaces';
 
 interface ModelContextType {
   blocksByGroupRef: ModelManagerType['blocksByGroupRef'];
@@ -13,6 +14,7 @@ interface ModelContextType {
     pipelines: MutateType;
   };
   outputsRef?: ModelManagerType['outputsRef'];
+  rectsMappingRef: React.MutableRefObject<Record<string, RectType>>;
 }
 export const ModelContext = createContext<ModelContextType | undefined>(undefined);
 

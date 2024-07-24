@@ -88,6 +88,7 @@ export default function LineManagerV2({
 
   const controls = useAnimation();
   const timeoutRef = useRef<any>(null);
+  const timeoutAnimateLineRef = useRef<any>(null);
 
   function getLayoutConfig() {
     const layoutConfig = layoutConfigsRef?.current?.[selectedGroupsRef?.current?.length - 1];
@@ -453,6 +454,7 @@ export default function LineManagerV2({
           id={`${lineID}-background`}
           key={`${lineID}-background`}
           ref={lineBackgroundRef}
+          // transition={{ ease: EASING }}
         />
       );
 
@@ -471,6 +473,7 @@ export default function LineManagerV2({
           }}
           key={lineID}
           ref={lineRef}
+          // transition={{ ease: EASING }}
         />,
       );
 
@@ -507,7 +510,6 @@ export default function LineManagerV2({
         shouldAnimate?: (rectup: RectType, rectdn: RectType) => boolean;
       },
     ) => {
-      // console.log(rectsMapping)
       const pairsByType = {
         [ItemTypeEnum.APP]: [],
         [ItemTypeEnum.BLOCK]: [],
@@ -689,26 +691,41 @@ export default function LineManagerV2({
   function animateLine(to: string, from?: string, opts?: { stop?: boolean }) {
     const linesMapping = lineRefs?.current?.[to];
 
-    // console.log('animateLine', to, from, linesMapping)
     const arr = [];
     if (from) {
       arr.push(...Object.values(linesMapping?.[from] ?? {}));
     } else {
       arr.push(...Object.values(linesMapping ?? {}));
     }
-    arr?.forEach((target) => {
-      const {
-        backgroundRef,
-        ref,
-      } = target ?? {};
 
+    console.log('animateLine', to, from, linesMapping, arr)
+
+    arr?.forEach((target) => {
       let startFunc = 'add';
       if (opts?.stop) {
         startFunc = 'remove';
       }
 
-      backgroundRef?.current?.classList[startFunc](stylesPipelineBuilder.animateFlow);
-      ref?.current?.classList[startFunc](stylesPipelineBuilder.animateFlow);
+      let tries = 10;
+
+      const work = () => {
+        clearTimeout(timeoutAnimateLineRef.current);
+
+        const id = getLineID(from, to)
+        const el = document.getElementById(id);
+        const bg = document.getElementById(`${id}-background`);
+
+        el && el.classList[startFunc](stylesPipelineBuilder.animateFlow);
+        bg && bg.classList[startFunc](stylesPipelineBuilder.animateFlow);
+
+        if (!el && !bg && tries > 0) {
+          timeoutAnimateLineRef.current = setTimeout(work, 300);
+        } else {
+          timeoutAnimateLineRef.current = null;
+        }
+      };
+
+      timeoutAnimateLineRef.current = setTimeout(work, 0);
     });
   }
 

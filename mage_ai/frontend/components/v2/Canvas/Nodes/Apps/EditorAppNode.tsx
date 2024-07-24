@@ -1,4 +1,5 @@
 import Button from '@mana/elements/Button';
+import { ElementRoleEnum } from '@mana/shared/types';
 import EventStreamType from '@interfaces/EventStreamType';
 import Grid from '@mana/components/Grid';
 import KeyboardTextGroup from '@mana/elements/Text/Keyboard/Group';
@@ -42,6 +43,7 @@ type EditorAppNodeProps = {
   fileRef?: React.MutableRefObject<FileType | undefined> | undefined;
   height?: number;
   handleContextMenu?: (event: ClientEventType) => void;
+  onMount?: () => void;
   outputGroupsProps?: OutputGroupsType;
   interruptExecution?: (opts?: { onError?: () => void; onSuccess?: () => void }) => void;
   submitCodeExecution: (
@@ -66,6 +68,7 @@ function EditorAppNode({
   interruptExecution,
   outputGroupsProps,
   onClose,
+  onMount,
   setHandleOnMessage,
   submitCodeExecution,
   width,
@@ -86,13 +89,14 @@ function EditorAppNode({
   const [stale, setStale] = useState(isStale(file?.path));
 
   useEffect(() => {
+    onMount && onMount?.();
+
     setHandleOnMessage &&
       setHandleOnMessage?.(app.id, (event: EventStreamType) => {
         const done = executionDone(event);
         setExecuting(!done);
       });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [onMount, setExecuting]);
 
   const appOptions = {
     configurations: {
@@ -207,6 +211,7 @@ function EditorAppNode({
       className={[stylesAppNode.appNodeContainer].join(' ')}
       height="inherit"
       onContextMenu={(event: any) => handleContextMenu?.(event)}
+      role={ElementRoleEnum.CONTENT}
       rowGap={PADDING_HORIZONTAL / 2}
       style={{
         gridTemplateRows: 'auto auto 1fr',

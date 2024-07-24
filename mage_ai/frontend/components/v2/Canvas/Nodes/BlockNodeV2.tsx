@@ -1,4 +1,5 @@
 import * as osPath from 'path';
+import { WithOnMount } from '@mana/hooks/useWithOnMount';
 import { TooltipAlign, TooltipWrapper, TooltipDirection, TooltipJustify } from '@context/v2/Tooltip';
 import Button from '@mana/elements/Button';
 import { newMessageRequestUUID } from '@utils/events';
@@ -92,9 +93,9 @@ function BlockNode(
   const outputDragControls = useDragControls();
 
   const themeContext = useContext(ThemeContext);
-  const { animateLineRef, handleMouseDown, renderLineRef } = useContext(EventContext);
-  const { selectedGroupsRef } = useContext(SettingsContext);
-  const { blockMappingRef, blocksByGroupRef, groupMappingRef, groupsByLevelRef } =
+  const { animateLineRef, handleMouseDown, renderLineRef, updateLinesRef } = useContext(EventContext);
+  const { getSelectedGroupRectFromRefs, selectedGroupsRef } = useContext(SettingsContext);
+  const { blockMappingRef, blocksByGroupRef, groupMappingRef, groupsByLevelRef, rectsMappingRef } =
     useContext(ModelContext);
 
   const { configuration, name, type } = block;
@@ -200,6 +201,8 @@ function BlockNode(
       if (appNode && appOpenRef.current) {
         ids.push(getLineID(appNode.id, outputNode.id));
       }
+
+      console.log('SHOWWWWWWWWWWWWWWWWWWWWWWWW LINESSSSSSSSSSSSSSSSSS', ids)
 
       ids.filter(Boolean).forEach((id) => {
         [id, `${id}-background`].forEach(i => {
@@ -487,7 +490,10 @@ function BlockNode(
     handleOnMessageRef.current[consumerIDRef.current] = (event: EventStreamType) => {
       const done = executionDone(event);
       setExecuting(!done);
-      animateLineRef?.current?.(outputNodeRef?.current?.id, null, { stop: done });
+      animateLineRef?.current?.(outputNodeRef?.current?.id, block?.uuid, { stop: done });
+      if (appNodeRef?.current) {
+        animateLineRef?.current?.(outputNodeRef?.current?.id, appNodeRef?.current?.id, { stop: done });
+      }
     };
 
     subscribe(consumerID, {
@@ -514,8 +520,12 @@ function BlockNode(
       handleSubscribe('BlockNode');
 
       const execute = () => {
+        console.log('ANIMATEEEEEEEEEEEEEEEEEEEE', outputNodeRef?.current, appNodeRef?.current)
         if (outputNodeRef?.current) {
-          animateLineRef?.current?.(outputNodeRef?.current?.id);
+          animateLineRef?.current?.(outputNodeRef?.current?.id, block?.uuid);
+          if (appNodeRef?.current) {
+            animateLineRef?.current?.(outputNodeRef?.current?.id, appNodeRef?.current?.id);
+          }
           showLinesToOutput();
         }
 
@@ -759,13 +769,6 @@ function BlockNode(
                   onClick: launchEditorApp,
                   // description: '...',
                 },
-                {
-                  Icon: Trash,
-                  label: 'Delete outputs',
-                  onClick: (event: any) => deleteAllOutputs(event),
-                  // description: '...',
-                  // onClick: event => alert('Comment'),
-                },
               ].map(({ Icon, description, iconProps, label, loading, uuid, onClick }: any) => (
                 <Button
                   Icon={ip => <Icon {...{ ...ip, size: 12 }} />}
@@ -874,6 +877,24 @@ function BlockNode(
             onMount={() => {
               showLinesToOutput();
               callback && callback();
+
+              updateLinesRef?.current?.(
+                {
+                  [outputNode.id]: rectsMappingRef?.current?.[outputNode.id],
+                  [block.uuid]: rectsMappingRef?.current?.[block.uuid],
+                },
+                { ...getSelectedGroupRectFromRefs() },
+                { replace: false },
+              );
+
+              showLinesToOutput();
+
+              console.log('FROM BLOCK', {
+                [outputNode.id]: rectsMappingRef?.current?.[outputNode.id],
+                [block.uuid]: rectsMappingRef?.current?.[block.uuid],
+              },
+              { ...getSelectedGroupRectFromRefs() },
+              { replace: false })
             }}
             role={ElementRoleEnum.CONTENT}
           />
@@ -888,6 +909,7 @@ function BlockNode(
     opts?: {
       fileRef?: React.MutableRefObject<FileType>;
     },
+    onMount?: () => void,
   ) {
     appNodeRef.current = appNode;
     appMountRef.current = mountRef;
@@ -909,6 +931,30 @@ function BlockNode(
           interruptExecution={interruptExecution}
           onClose={() => {
             closeEditorApp();
+          }}
+          onMount={() => {
+            onMount && onMount();
+
+            updateLinesRef.current(
+              {
+                [appNode.id]: rectsMappingRef?.current?.[appNode.id],
+                [block.uuid]: rectsMappingRef?.current?.[block.uuid],
+              },
+              { ...getSelectedGroupRectFromRefs() },
+              { replace: false },
+            );
+
+            showLinesToOutput();
+
+            console.log('FROM BLOCK EDIIIITOR',
+              updateLinesRef,
+              {
+                [appNode.id]: rectsMappingRef?.current?.[appNode.id],
+                [block.uuid]: rectsMappingRef?.current?.[block.uuid],
+              },
+              { ...getSelectedGroupRectFromRefs() },
+              { replace: false },
+            )
           }}
           outputGroupsProps={outputGroupsProps}
           setHandleOnMessage={setHandleOnMessage}
@@ -941,8 +987,12 @@ function BlockNode(
           node: OutputNodeType,
           wrapperRef: React.MutableRefObject<HTMLDivElement>,
           mountRef: React.MutableRefObject<HTMLDivElement>,
+          onMount?: () => void,
         ) => {
-          renderOutput(mountRef, node, output?.message_request_uuid, callback);
+          renderOutput(mountRef, node, output?.message_request_uuid, () => {
+            onMount && onMount();
+            callback && callback();
+          });
         },
         closeOutput,
         onRemove => onCloseOutputRef.current = onRemove,
@@ -969,10 +1019,11 @@ function BlockNode(
           node: AppNodeType,
           wrapperRef: React.MutableRefObject<HTMLDivElement>,
           mountRef: React.MutableRefObject<HTMLDivElement>,
+          onMount?: () => void,
         ) => {
           renderEditorApp(mountRef, node, {
             fileRef,
-          });
+          }, onMount);
         },
         closeEditorApp,
         onRemove => onCloseAppRef.current = onRemove,

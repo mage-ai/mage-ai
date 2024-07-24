@@ -670,6 +670,7 @@ function MenuController({
         onClose && onClose?.(0);
       } else if (KeyEnum.ENTER === event.key && item && item?.onClick) {
         if (!triggeredOnClickRef.current) {
+          // console.log(item, position)
           triggeredOnClickRef.current = true;
           // console.log(position, previousPosition, item)
 
@@ -681,8 +682,8 @@ function MenuController({
               target: itemsRef?.current?.[item?.uuid]?.current,
             },
             item,
-            () => removePortals(0),
           );
+          removePortals(0);
           // clearTimeout(timeoutRef.current);
           // timeoutRef.current = setTimeout(() => {
           //   triggeredOnClickRef.current = false;

@@ -108,6 +108,7 @@ import { hyphensToSnake, snakeToHyphens, parseDynamicUrl } from '@utils/url';
 import { buildNewPathsFromBlock, getGroupsFromPath } from '../utils/routing';
 import { DEFAULT_RECT } from '@components/v2/Canvas/Nodes/Apps/EditorAppNode';
 import { DEFAULT_RECT as DEFAULT_RECT_OUTPUT } from '@components/v2/Canvas/Nodes/CodeExecution/OutputGroups';
+import useWaitUntilAttempt from '@mana/hooks/useWaitUntilAttempt';
 
 const ENTER_ANIMATION_START_THRESHOLD = 0.6;
 const CHANGE_BLOCKS_ANIMATION_DURATION = 5;
@@ -160,6 +161,7 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
 }: PipelineCanvasV2Props) => {
   const { changeRoute, page } = useContext(LayoutContext);
   const router = useRouter();
+  const waitUntilAttempt = useWaitUntilAttempt();
 
   const pipelineUUID = useMemo(() => hyphensToSnake(pipelineProp?.uuid), [pipelineProp?.uuid]);
 
@@ -379,6 +381,7 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
           node: OutputNodeType,
           nodeRef?: React.RefObject<HTMLDivElement>,
           mountRef?: React.RefObject<HTMLDivElement>,
+          onMount?: () => void,
         ) => void;
       }>
     >
@@ -424,6 +427,7 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
         nodeItem: OutputNodeType | AppNodeType,
         wrapperRef: React.MutableRefObject<HTMLDivElement>,
         mountRef: React.MutableRefObject<HTMLDivElement>,
+        onMount?: () => void,
       ) => void,
       remove: (callback?: () => void) => void,
       setOnRemove: (onRemove: () => void) => void,
@@ -460,7 +464,9 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
       }
 
       const handleRemove = () => {
-        dragRefs?.current?.[nodeItem.id]?.current?.classList.add(stylesPipelineBuilder.hide);
+        console.log('HANDLE REMOVE', nodeItem.id)
+        dragRefs?.current?.[nodeItem.id]?.current?.classList.add(
+          stylesPipelineBuilder.hiddenOffscreen);
 
         removeFromCache(`${framework.uuid}:${pipelineUUID}`, nodeItem.id);
 
@@ -476,8 +482,8 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
         remove ? remove(handleRemove) : handleRemove();
       };
 
-      relatedNodeRefs.current[block.uuid][nodeItem.type].render = (node2, nodeRef, mountRef) => {
-        render(node2, nodeRef, mountRef);
+      relatedNodeRefs.current[block.uuid][nodeItem.type].render = (node2, nodeRef, mountRef, onMount) => {
+        render(node2, nodeRef, mountRef, onMount);
       };
 
       if (opts?.dragControls) {
@@ -1580,10 +1586,13 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
     const handleRouteChangeComplete = (args: any) => {
       if (!hyphensToSnake(args ?? '')?.startsWith(hyphensToSnake(`/v2/pipelines/${pipeline?.uuid}`))) return;
       updateRouteHistory?.current(args);
+      resetLineTransitions();
     };
+
     const handleRouteChangeStart = (args: any) => {
       if (!hyphensToSnake(args ?? '')?.startsWith(hyphensToSnake(`/v2/pipelines/${pipeline?.uuid}`))) return;
       handleIntraAppRouteChange?.current(args);
+      resetLineTransitions();
     };
 
     if (!(pipeline ?? false)) {
@@ -1836,7 +1845,7 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
           {
             Icon: iconProps => <Undo {...iconProps} secondary />,
             onClick: (event: ClientEventType) => {
-              event?.preventDefault();
+              typeof event === 'object' && 'preventDefault' in event && event?.preventDefault();
               removeContextMenu(event ?? null);
               transformState?.current?.handleZoom?.current?.((event ?? null) as any, 1);
               startTransition(() => {
@@ -2013,75 +2022,77 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
                 <WithOnMount
                   key={`${itemUUID}:${nodeID}:${nodeType}`}
                   onMount={() => {
-                    const updateRects = (timeoutRef: React.MutableRefObject<any>) => {
-                      clearTimeout(timeoutRef.current);
+                    waitUntilAttempt({
+                      uuid: `${itemUUID}:${nodeID}:${nodeType}:onMount`,
+                      pollInterval: 20,
+                      maxAttempts: 100,
+                      waitUntil: () => {
+                        const el = getClosestChildRole(dragRef?.current, [ElementRoleEnum.CONTENT]);
+                        const rt =
+                          el?.getBoundingClientRect() ?? dragRef?.current?.getBoundingClientRect?.();
+                        const mountRef = mountRootRef?.current?.[nodeID];
 
-                      const el = getClosestChildRole(dragRef?.current, [ElementRoleEnum.CONTENT]);
-                      const rt =
-                        el?.getBoundingClientRect() ?? dragRef?.current?.getBoundingClientRect?.();
+                        return [
+                          rt?.height > 0
+                            && rt?.width > 0
+                            && (mountRef?.current ?? false) !== false,
+                          rt,
+                        ];
+                      },
+                      onAttempt: (rect1) => {
+                        dragRefs?.current?.[nodeID]?.current?.classList.remove(
+                          stylesPipelineBuilder.hiddenOffscreen);
 
-                      const mountRef = mountRootRef?.current?.[nodeID];
+                        relatedNodeRefs?.current?.[itemUUID]?.[nodeType]?.render?.(
+                          item as any,
+                          dragRef,
+                          mountRootRefs.current[nodeID],
+                        );
 
-                      if (rt?.height > 0 && rt?.width > 0 && mountRef?.current) {
                         const rect2 = {
                           ...rectsMappingRef.current[nodeID],
                           ...rect,
                           block,
-                          height: rt?.height ?? rect?.height ?? 0,
-                          width: rt?.width ?? rect?.width ?? 0,
+                          height: rect1?.height ?? rect?.height ?? 0,
+                          width: rect1?.width ?? rect?.width ?? 0,
                         };
                         rectsMappingRef.current[nodeID] = rect2;
 
-                        updateLinesRef?.current?.(
-                          {
-                            [nodeID]: rect2,
-                            [block.uuid]: rectsMappingRef.current[block.uuid],
+                        const map = {
+                          [block.uuid]: rectsMappingRef.current[block.uuid],
+                        };
+                        const oNode = relatedNodeRefs.current[block.uuid][ItemTypeEnum.OUTPUT];
+                        const aNode = relatedNodeRefs.current[block.uuid][ItemTypeEnum.APP];
+                        [oNode, aNode].filter(Boolean).forEach(({ id, rect }: NodeItemType) => {
+                          map[id] = rect;
+                        })
+
+                        updateLinesRef?.current?.(map, deepCopy(getSelectedGroupRectFromRefs()), {
+                          replace: false,
+                        });
+
+                        waitUntilAttempt({
+                          uuid: `${itemUUID}:${nodeID}:${nodeType}:handleLineTransitions`,
+                          pollInterval: 20,
+                          maxAttempts: 100,
+                          waitUntil: () => {
+                            const ready = [
+                              oNode && [block.uuid, (oNode as NodeItemType)?.id],
+                              aNode && [block.uuid, (aNode as NodeItemType)?.id],
+                            ].filter(Boolean).every(([from, to]) => {
+                              const id = getLineID(from, to);
+                              return !!document.getElementById(id);
+                            });
+
+                            return [ready]
                           },
-                          { ...getSelectedGroupRectFromRefs() },
-                          { replace: false },
-                        );
-
-                        setTimeout(() => {
-                          dragRef?.current?.classList.remove(stylesPipelineBuilder.hide);
-
-                          handleLineTransitions();
-                        }, 1);
-                      } else {
-                        timeoutRef.current = setTimeout(() => {
-                          updateRects(timeoutRef);
-                        }, 300);
-                      }
-                    };
-
-                    if (ItemTypeEnum.APP === nodeType) {
-                      const { render } = relatedNodeRefs?.current?.[itemUUID]?.[nodeType] ?? {};
-                      render?.(
-                        item as OutputNodeType,
-                        dragRef,
-                        mountRootRefs.current[nodeID],
-                      );
-
-                      clearTimeout(timeoutUpdateAppRectsRef.current);
-                      timeoutUpdateAppRectsRef.current = setTimeout(
-                        () => updateRects(timeoutUpdateAppRectsRef),
-                        100,
-                      );
-                    } else {
-                      const { render } = relatedNodeRefs?.current?.[itemUUID]?.[nodeType] ?? {};
-                      render?.(
-                        item as OutputNodeType,
-                        dragRef,
-                        mountRootRefs.current[nodeID],
-                      );
-
-                      clearTimeout(timeoutUpdateOutputRectsRef.current);
-                      timeoutUpdateOutputRectsRef.current = setTimeout(
-                        () => updateRects(timeoutUpdateOutputRectsRef),
-                        100,
-                      );
-                    }
+                          onAttempt: () => {
+                            handleLineTransitions();
+                          },
+                        });
+                      },
+                    });
                   }}
-                  uuid={`${itemUUID}:${nodeID}`}
                 />,
               );
             }
@@ -2298,6 +2309,7 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
 
         <CanvasContainer ref={containerRef}>
           <SettingsProvider
+            getSelectedGroupRectFromRefs={getSelectedGroupRectFromRefs}
             layoutConfigsRef={layoutConfigsRef}
             selectedGroupsRef={selectedGroupsRef}
             transformState={transformState}
@@ -2311,6 +2323,7 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
                 files: fileMutants,
                 pipelines: pipelineMutants,
               }}
+              rectsMappingRef={rectsMappingRef}
             >
               <EventProvider
                 animateLineRef={animateLineRef}
@@ -2321,6 +2334,7 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
                 setSelectedGroup={setSelectedGroup}
                 useExecuteCode={useExecuteCode}
                 useRegistration={useRegistration}
+                updateLinesRef={updateLinesRef}
               >
                 <motion.div
                   className={[
