@@ -1,4 +1,3 @@
-// @ts-ignore
 import Cookies from 'js-cookie';
 
 import {
@@ -15,13 +14,30 @@ export const PATH: string = COOKIE_PATH;
 export const SHARED_OPTS: any = SHARED_COOKIE_PROPERTIES;
 
 export function getToken(): string | undefined {
-  return Cookies.get(COOKIE_KEY, SHARED_OPTS);
+  return Cookies.get(COOKIE_KEY);
 }
 
-export function removeToken() {
-  Cookies.remove(COOKIE_KEY, SHARED_OPTS);
+export function removeToken(basePath?: string) {
+  Cookies.remove(
+    COOKIE_KEY,
+    {
+      ...SHARED_OPTS,
+      path: basePath || PATH,
+    },
+  );
 }
 
-export function setToken(token: string) {
-  Cookies.set(COOKIE_KEY, token, { ...SHARED_OPTS, expires: 30 });
+export function setToken(
+  token: string,
+  basePath?: string,
+) {
+  Cookies.set(
+    COOKIE_KEY,
+    token,
+    {
+      ...SHARED_OPTS,
+      expires: 30,
+      path: basePath || PATH,
+    },
+  );
 }

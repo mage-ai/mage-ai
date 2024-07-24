@@ -57,26 +57,31 @@ function SignForm({
             },
           }) => {
             setUser(user);
-            AuthToken.storeToken(token, () => {
-              let url: string = `${router.basePath}/`;
-              const query = queryFromUrl(window.location.href);
+            const basePath = router.basePath;
+            AuthToken.storeToken(
+              token,
+              () => {
+                let url: string = `${router.basePath}/`;
+                const query = queryFromUrl(window.location.href);
 
-              if (typeof window !== 'undefined') {
-                const qs = queryString(
-                  ignoreKeys(
-                    query,
-                    ['redirect_url', 'access_token', 'provider'],
-                  ),
-                );
-                if (query.redirect_url) {
-                  url = `${query.redirect_url}?${qs}`;
+                if (typeof window !== 'undefined') {
+                  const qs = queryString(
+                    ignoreKeys(
+                      query,
+                      ['redirect_url', 'access_token', 'provider'],
+                    ),
+                  );
+                  if (query.redirect_url) {
+                    url = `${query.redirect_url}?${qs}`;
+                  }
+
+                  window.location.href = url;
+                } else {
+                  router.push(url);
                 }
-
-                window.location.href = url;
-              } else {
-                router.push(url);
-              }
-            });
+              },
+              basePath,
+            );
           },
           onErrorCallback: ({ error }) => {
             setError(error);
@@ -86,9 +91,10 @@ function SignForm({
     },
   );
 
-  const create = useCallback(payload => AuthToken.logout(() => createRequest(payload)), [
-    createRequest,
-  ]);
+  const create = useCallback(payload => AuthToken.logout(
+    () => createRequest(payload),
+    router.basePath,
+  ), [createRequest, router.basePath]);
 
   const { data: dataOauths } = api.oauths.list({
     redirect_uri: typeof window !== 'undefined' ? encodeURIComponent(window.location.href) : '',

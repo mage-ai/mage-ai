@@ -33,7 +33,6 @@ export const REQUIRE_USER_AUTHENTICATION = (ctx: any = null) => {
   } else {
     val = Cookies.get(
       REQUIRE_USER_AUTHENTICATION_COOKIE_KEY,
-      REQUIRE_USER_AUTHENTICATION_COOKIE_PROPERTIES,
     );
   }
 
@@ -53,7 +52,6 @@ export const REQUIRE_USER_PERMISSIONS = (ctx: any = null) => {
   } else {
     val = Cookies.get(
       REQUIRE_USER_PERMISSIONS_COOKIE_KEY,
-      REQUIRE_USER_PERMISSIONS_COOKIE_PROPERTIES,
     );
   }
 
@@ -81,7 +79,7 @@ export function getGroup(ctx: any = undefined): GroupType | { id?: string } | un
 
   // @ts-ignore
   const group = ls.get(CURRENT_GROUP_LOCAL_STORAGE_KEY);
-  const groupId = Cookies.get(CURRENT_GROUP_ID_COOKIE_KEY, SHARED_OPTS);
+  const groupId = Cookies.get(CURRENT_GROUP_ID_COOKIE_KEY);
 
   if (group && groupId) {
     return group;

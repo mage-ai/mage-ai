@@ -17,7 +17,7 @@ export function getCurrentTheme(ctx: any, invertedTheme = 1) {
     const cookie = ServerCookie(ctx);
     currentTheme = cookie[LOCAL_STORAGE_KEY_THEME];
   } else {
-    currentTheme = Cookies.get(LOCAL_STORAGE_KEY_THEME, SHARED_OPTS);
+    currentTheme = Cookies.get(LOCAL_STORAGE_KEY_THEME);
   }
 
   if (Number(currentTheme) === invertedTheme) {
@@ -47,7 +47,7 @@ export function setCurrentTheme(theme) {
 }
 
 export function toggleTheme() {
-  const currentTheme = Cookies.get(LOCAL_STORAGE_KEY_THEME, SHARED_OPTS);
+  const currentTheme = Cookies.get(LOCAL_STORAGE_KEY_THEME);
 
   return setCurrentTheme(
     Number(currentTheme) === LOCAL_STORAGE_KEY_THEME_DARK || currentTheme === null

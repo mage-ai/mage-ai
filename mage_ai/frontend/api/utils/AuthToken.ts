@@ -1,6 +1,7 @@
 import jwtDecode from 'jwt-decode';
 import ls from 'local-storage';
 
+import { COOKIE_PATH } from '@utils/cookies/constants';
 import { getToken, removeToken, setToken } from './token';
 import { removeUser } from '@utils/session';
 import { redirectToUrl } from '@utils/url';
@@ -52,18 +53,25 @@ export default class AuthToken {
     return authToken.isValid;
   }
 
-  static async storeToken(token: string, callback: any = null) {
-    setToken(token);
+  static async storeToken(
+    token: string,
+    callback: any = null,
+    basePath: string = COOKIE_PATH,
+  ) {
+    setToken(token, basePath);
     if (callback) {
       await callback();
     }
   }
 
-  static async logout(callback: any = null) {
+  static async logout(
+    callback: any = null,
+    basePath: string = COOKIE_PATH,
+  ) {
     // @ts-ignore
     ls.clear();
     removeUser();
-    removeToken();
+    removeToken(basePath);
 
     try {
       if (callback) {

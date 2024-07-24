@@ -115,6 +115,7 @@
     "@storybook/addon-links": "^7.4.2",
     "@storybook/nextjs": "^7.4.2",
     "@storybook/react": "^7.4.2",
+    "@types/js-cookie": "^3.0.6",
     "@types/lodash": "4.14.112",
     "@types/lodash-es": "4.14.2",
     "@types/node": "17.0.34",
