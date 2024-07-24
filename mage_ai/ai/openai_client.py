@@ -6,6 +6,7 @@ import openai
 from langchain.chains import LLMChain
 from langchain.llms import OpenAI
 from langchain.prompts import PromptTemplate
+from openai import OpenAI as OpenAILib
 
 from mage_ai.ai.ai_client import AIClient
 from mage_ai.data_cleaner.transformer_actions.constants import ActionType, Axis
@@ -19,56 +20,62 @@ from mage_ai.io.base import DataSource
 from mage_ai.orchestration.ai.config import OpenAIConfig
 
 CLASSIFICATION_FUNCTION_NAME = "classify_description"
-TEMPLATE_CLASSIFICATION_FUNCTION = [
+tools = [
     {
-        "name": CLASSIFICATION_FUNCTION_NAME,
-        "description": "Classify the code description provided into following properties.",
-        "parameters": {
-            "type": "object",
-            "properties": {
-                BlockType.__name__: {
-                    "type": "string",
-                    "description": "Type of the code block. It either "
-                                   "loads data from a source, export data to a source "
-                                   "or transform data from one format to another.",
-                    "enum": [f"{BlockType.__name__}__data_exporter",
-                             f"{BlockType.__name__}__data_loader",
-                             f"{BlockType.__name__}__transformer"]
+        "type": "function",
+        "function": {
+            "name": CLASSIFICATION_FUNCTION_NAME,
+            "description": "Classify the code description provided into following properties.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    BlockType.__name__: {
+                        "type": "string",
+                        "description": "Type of the code block. It either "
+                                       "loads data from a source, export data to a source "
+                                       "or transform data from one format to another.",
+                        "enum": [f"{BlockType.__name__}__data_exporter",
+                                 f"{BlockType.__name__}__data_loader",
+                                 f"{BlockType.__name__}__transformer"]
+                    },
+                    BlockLanguage.__name__: {
+                        "type": "string",
+                        "description": "Programming language of the code block. "
+                                       f"Default value is {BlockLanguage.__name__}__python.",
+                        "enum": [f"{BlockLanguage.__name__}__{type.name.lower()}"
+                                 for type in BlockLanguage]
+                    },
+                    PipelineType.__name__: {
+                        "type": "string",
+                        "description": "Type of pipeline to build. Default value is "
+                                       f"{PipelineType.__name__}__python if pipeline type "
+                                       "is not mentioned in the description.",
+                        "enum": [f"{PipelineType.__name__}__{type.name.lower()}"
+                                 for type in PipelineType]
+                    },
+                    ActionType.__name__: {
+                        "type": "string",
+                        "description": f"If {BlockType.__name__} is transformer, "
+                                       f"{ActionType.__name__} specifies what kind "
+                                       "of action the code performs.",
+                        "enum": [f"{ActionType.__name__}__{type.name.lower()}"
+                                 for type in ActionType]
+                    },
+                    DataSource.__name__: {
+                        "type": "string",
+                        "description": f"If {BlockType.__name__} is data_loader or "
+                                       f"data_exporter, {DataSource.__name__} field specify "
+                                       "where the data loads from or exports to.",
+                        "enum": [f"{DataSource.__name__}__{type.name.lower()}"
+                                 for type in DataSource]
+                    },
                 },
-                BlockLanguage.__name__: {
-                    "type": "string",
-                    "description": "Programming language of the code block. "
-                                   f"Default value is {BlockLanguage.__name__}__python.",
-                    "enum": [f"{BlockLanguage.__name__}__{type.name.lower()}"
-                             for type in BlockLanguage]
-                },
-                PipelineType.__name__: {
-                    "type": "string",
-                    "description": "Type of pipeline to build. Default value is "
-                                   f"{PipelineType.__name__}__python if pipeline type "
-                                   "is not mentioned in the description.",
-                    "enum": [f"{PipelineType.__name__}__{type.name.lower()}"
-                             for type in PipelineType]
-                },
-                ActionType.__name__: {
-                    "type": "string",
-                    "description": f"If {BlockType.__name__} is transformer, "
-                                   f"{ActionType.__name__} specifies what kind "
-                                   "of action the code performs.",
-                    "enum": [f"{ActionType.__name__}__{type.name.lower()}" for type in ActionType]
-                },
-                DataSource.__name__: {
-                    "type": "string",
-                    "description": f"If {BlockType.__name__} is data_loader or "
-                                   f"data_exporter, {DataSource.__name__} field specify "
-                                   "where the data loads from or exports to.",
-                    "enum": [f"{DataSource.__name__}__{type.name.lower()}" for type in DataSource]
-                },
+                "required": [BlockType.__name__, BlockLanguage.__name__, PipelineType.__name__],
             },
-            "required": [BlockType.__name__, BlockLanguage.__name__, PipelineType.__name__],
-        },
-    }
+        }
+    },
 ]
+GPT_MODEL = "gpt-4o"
 
 
 class OpenAIClient(AIClient):
@@ -78,6 +85,22 @@ class OpenAIClient(AIClient):
             open_ai_config.openai_api_key or os.getenv('OPENAI_API_KEY')
         openai.api_key = openai_api_key
         self.llm = OpenAI(openai_api_key=openai_api_key, temperature=0)
+        self.openai_client = OpenAILib()
+
+    def __chat_completion_request(self, messages):
+        try:
+            response = self.openai_client.chat.completions.create(
+                model=GPT_MODEL,
+                messages=messages,
+                tools=tools,
+                tool_choice={
+                    "type": "function", "function": {"name": CLASSIFICATION_FUNCTION_NAME}},
+            )
+            return response
+        except Exception as e:
+            print("Unable to generate ChatCompletion response")
+            print(f"Exception: {e}")
+            return e
 
     async def inference_with_prompt(
             self,
@@ -109,6 +132,11 @@ class OpenAIClient(AIClient):
         chain = LLMChain(llm=self.llm, prompt=filled_prompt)
         if is_json_response:
             resp = await chain.arun(variable_values)
+            # If the model response didn't start with
+            # '{' and end with '}' follwing in the JSON format,
+            # then we will add '{' and '}' to make it JSON format.
+            if not resp.startswith('{') and not resp.endswith('}'):
+                resp = f'{{{resp.strip()}}}'
             if resp:
                 try:
                     return json.loads(resp)
@@ -122,6 +150,10 @@ class OpenAIClient(AIClient):
     def __parse_argument_value(self, value: str) -> str:
         if value is None:
             return None
+        # If model returned value does not contain '__' as we suggested in the tools
+        # then return the value as it is.
+        if '__' not in value:
+            return value
         return value.lower().split('__')[1]
 
     def __load_template_params(self, function_args: json):
@@ -155,15 +187,10 @@ class OpenAIClient(AIClient):
             self,
             block_description: str):
         messages = [{'role': 'user', 'content': block_description}]
-        response = await openai.ChatCompletion.acreate(
-            model='gpt-3.5-turbo-0613',
-            messages=messages,
-            functions=TEMPLATE_CLASSIFICATION_FUNCTION,
-            function_call={'name': CLASSIFICATION_FUNCTION_NAME},  # explicitly set function call
-        )
-        response_message = response['choices'][0]['message']
-        if response_message.get('function_call'):
-            function_args = json.loads(response_message['function_call']['arguments'])
+        response = self.__chat_completion_request(messages)
+        arguments = response.choices[0].message.tool_calls[0].function.arguments
+        if arguments:
+            function_args = json.loads(arguments)
             block_type, block_language, pipeline_type, config = self.__load_template_params(
                 function_args)
             output = {}
