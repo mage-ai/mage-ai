@@ -331,8 +331,8 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
       childrenLayout: defaultLayoutConfig({
         direction: LayoutConfigDirectionEnum.HORIZONTAL,
         display: LayoutDisplayEnum.DETAILED,
-        options: { amplitude: 20, wavelength: 10 },
-        style: LayoutStyleEnum.GRID,
+        options: { amplitude: 300, wavelength: 0 },
+        style: LayoutStyleEnum.WAVE,
       }),
       direction: LayoutConfigDirectionEnum.VERTICAL,
       display: LayoutDisplayEnum.DETAILED,
@@ -1005,20 +1005,26 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
       let right = null;
       let indexNext = -1;
       let indexPrev = -1;
+
       if (parentNext && parentPrev) {
-        const menuGroupParentPrev = groupsPrev?.find(g => g.uuid === parentPrev?.uuid);
-        const menuGroupParentNext = groupsNext?.find(g => g.uuid === parentNext?.uuid);
-        right = menuGroupParentNext?.index > menuGroupParentPrev?.index;
-        console.log(
-          menuGroupParentPrev,
-          menuGroupParentNext,
-        )
+        // const menuGroupParentPrev = groupsPrev?.find(g => g.uuid === parentPrev?.uuid);
+        // const menuGroupParentNext = groupsNext?.find(g => g.uuid === parentNext?.uuid);
+        // Where are the parent’s positioned in their parents?
+
+        groupsByLevelRef?.current?.forEach((groups) => {
+          if (indexNext >= 0 && indexPrev >= 0) {
+            right = indexNext > indexPrev;
+            return;
+          }
+
+          indexNext = groups?.findIndex(g => g?.uuid === menuGroupNext?.uuid);
+          indexPrev = groups?.findIndex(g => g?.uuid === menuGroupPrev?.uuid);
+        });
       } else {
         indexNext = groupsByLevelRef?.current?.[0]?.findIndex(g => g?.uuid === menuGroupNext?.uuid)
-        indexNext = groupsByLevelRef?.current?.[0]?.findIndex(g => g?.uuid === menuGroupPrev?.uuid)
-        right = indexNext > indexPrev;
+        indexPrev = groupsByLevelRef?.current?.[0]?.findIndex(g => g?.uuid === menuGroupPrev?.uuid)
       }
-
+      right = indexNext > indexPrev;
 
       const xExit = (groupRectPrev?.width ?? 0) * (right ? 1 : -1);
 
