@@ -72,8 +72,10 @@ export default function LineManagerV2({
   selectedGroupRect,
   updateLinesRef,
   visible,
+  setAnimationOperations
 }: {
   animate?: boolean;
+  setAnimationOperations: (ops: Record<string, any>) => void;
   animateLineRef?: React.MutableRefObject<(to: string, from?: string, opts?: { stop?: boolean }) => void>;
   controls?: any
   renderLineRef?: React.MutableRefObject<(rect: RectType) => void>;
@@ -103,6 +105,7 @@ export default function LineManagerV2({
   const [linesBlock, setLinesBlock] = useState<Record<string, LinePathType[]>>({});
   const [linesNode, setLinesNode] = useState<Record<string, LinePathType[]>>({});
   const [linesOutput, setLinesOutput] = useState<Record<string, LinePathType[]>>({});
+  const [pathDefs, setPathDefs] = useState<Record<string, any[]>>({});
 
   const prepareLinePathProps = useCallback(
     (
@@ -121,7 +124,7 @@ export default function LineManagerV2({
       const { block: block2 } = rectdn;
       const isOutput = ItemTypeEnum.OUTPUT === rectdn?.type;
 
-      const colors = [];
+      let colors = [];
 
       if (isOutput) {
         colors.push('greenmd');
@@ -150,6 +153,8 @@ export default function LineManagerV2({
           }
         });
       }
+
+      colors = uniqueArray(colors);
 
       const fromRect = {
         ...deepCopy(rectup),
@@ -295,6 +300,7 @@ export default function LineManagerV2({
       [ItemTypeEnum.NODE]: {},
       [ItemTypeEnum.OUTPUT]: {},
     };
+    const defs = {};
 
     Object.entries(pairsByType ?? {})?.forEach(([type, pairs]) => {
       sortByKey(pairs, (pair: [RectType, RectType]) => {
@@ -311,6 +317,8 @@ export default function LineManagerV2({
           shouldAnimate: opts?.shouldAnimate,
         });
 
+        defs[rectup.id] = linePath.defs;
+
         paths[type][rectup.id] ||= [];
         paths[type][rectup.id].push(linePath);
         linePaths.push(linePath);
@@ -319,6 +327,7 @@ export default function LineManagerV2({
 
     // console.log('paths', paths);
 
+    setPathDefs(defs);
     setLinesApp(prev => {
       const val = {
         ...(opts?.replace ? {} : prev),
@@ -376,21 +385,21 @@ export default function LineManagerV2({
       // console.log(lineID, fromRect?.left, fromRect?.top, toRect?.left, toRect?.top)
 
       const gradientID = `${lineID}-grad`;
+      const defs = [];
 
       if (colors?.length >= 2) {
-        paths.push(
-          <defs key={`${gradientID}-defs`}>
-            <linearGradient id={gradientID} x1="0%" x2="100%" y1="0%" y2="0%">
-              <stop
-                offset="0%"
-                style={{ stopColor: `var(--colors-${colors[1]})`, stopOpacity: 1 }}
-              />
-              <stop
-                offset="100%"
-                style={{ stopColor: `var(--colors-${colors[0]})`, stopOpacity: 1 }}
-              />
-            </linearGradient>
-          </defs>,
+        defs.push(
+          <defs
+            dangerouslySetInnerHTML={{
+              __html: `
+                <linearGradient id="${gradientID}" x1="0%" x2="100%" y1="0%" y2="0%">
+                  <stop offset="0%" style="stop-color: var(--colors-${colors[1]}); stop-opacity: 1" />
+                  <stop offset="100%" style="stop-color: var(--colors-${colors[0]}); stop-opacity: 1" />
+                </linearGradient>
+              `,
+            }}
+            key={`${gradientID}-defs`}
+          />
         );
       }
 
@@ -468,8 +477,8 @@ export default function LineManagerV2({
           ].join(' ')}
           id={lineID}
           initial={{
-            // opacity: 0,
-            // pathLength: 0,
+            opacity: 0,
+            pathLength: 0,
           }}
           key={lineID}
           ref={lineRef}
@@ -481,6 +490,7 @@ export default function LineManagerV2({
 
       return {
         animate: shouldAnimate,
+        defs,
         id: lineID,
         key: [
           keys
@@ -698,7 +708,7 @@ export default function LineManagerV2({
       arr.push(...Object.values(linesMapping ?? {}));
     }
 
-    console.log('animateLine', to, from, linesMapping, arr)
+    // console.log('animateLine', to, from, linesMapping, arr)
 
     arr?.forEach((target) => {
       let startFunc = 'add';
@@ -770,10 +780,44 @@ export default function LineManagerV2({
     });
   }, [rectsMapping]);
 
+  function animateLineTransitions(opts?: {
+    duration?: number;
+    preset?: 'blocks' | 'lines';
+    reset?: boolean;
+  }) {
+    // blocks
+    // transition: { duration: CHANGE_BLOCKS_ANIMATION_DURATION * latest },
+    // translateX: 0,
+    // translateY: 0,
+
+    const cntrl = controlsProp ?? controls;
+
+    if (opts?.reset) {
+      cntrl.set({ opacity: 0, pathLength: 0 });
+    } else {
+      cntrl.start(({ index, isOutput }) => ({
+        ease: EASING,
+        opacity: 1,
+        pathLength: 1,
+        transition: {
+          delay: index * ANIMATION_DURATION + (isOutput ? 1 : 0.5),
+          duration: isOutput ? 0.1 : ANIMATION_DURATION * ((100 - index) / 100),
+        },
+      }));
+    }
+  }
+
   useEffect(() => {
     animateLineRef.current = animateLine;
     renderLineRef.current = renderLineForRect;
     updateLinesRef.current = updateLines;
+
+    setAnimationOperations({
+      animateLine,
+      animateLineTransitions,
+      renderLineForRect,
+      updateLines,
+    });
 
     updateLines(rectsMapping, selectedGroupRect, {
       replace: true,
@@ -799,15 +843,21 @@ export default function LineManagerV2({
     updateLines,
     updateLinesRef,
     visible,
+    setAnimationOperations,
   ]);
 
-  // console.log('ConnectionLines', linesBlock, linesNode, linesOutput)
+  // console.log('ConnectionLines', linesBlock, linesNode, linesOutput, linesApp,
+  //   Object.values(pathDefs ?? {}).flatMap(defs => defs),
+  // );
 
   return (
     <>
+      <svg>
+        {Object.values(pathDefs ?? {}).flatMap(defs => defs)}
+      </svg>
       <ConnectionLines linePaths={linesApp} zIndex={BASE_Z_INDEX + ORDER[ItemTypeEnum.APP]} />
-      <ConnectionLines linePaths={linesBlock} zIndex={BASE_Z_INDEX + ORDER[ItemTypeEnum.BLOCK]} />
-      <ConnectionLines linePaths={linesNode} zIndex={BASE_Z_INDEX + ORDER[ItemTypeEnum.NODE]} />
+      <ConnectionLines linePaths={linesBlock} zIndex={1} />
+      <ConnectionLines linePaths={linesNode} zIndex={2} />
       <ConnectionLines linePaths={linesOutput} zIndex={BASE_Z_INDEX + ORDER[ItemTypeEnum.OUTPUT]} />
     </>
   );

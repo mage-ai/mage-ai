@@ -207,6 +207,7 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
   const animationChangeBlocksProgress = useMotionValue(0);
   const newBlockCallbackAnimationRef = useRef(null);
   const animateLineRef = useRef<(to: string, from?: string, opts?: { stop?: boolean }) => void>(null);
+  const animationOperationsRef = useRef<Record<string, (opts?: any) => void>>({});
 
   const phaseRef = useRef(0);
   const controllersRef = useRef<Record<string, any>>({});
@@ -602,101 +603,98 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
     // rotate: [0, 0, 270, 270, 0],
     // borderRadius: ["20%", "20%", "50%", "50%", "20%"],
 
-    setIsAnimating(true);
+    // setIsAnimating(true);
 
-    const clones = {};
-    (bdel ?? [])?.forEach(block => {
-      const clone = dragRefs.current?.[block.uuid]?.current?.firstChild.cloneNode(true);
-      if (clone) {
-        clones[block.uuid] = clone;
-      }
-      scopeEnter.current.appendChild(clone);
-    });
+    // const clones = {};
+    // (bdel ?? [])?.forEach(block => {
+    //   const clone = dragRefs.current?.[block.uuid]?.current?.firstChild.cloneNode(true);
+    //   if (clone) {
+    //     clones[block.uuid] = clone;
+    //   }
+    //   scopeEnter.current.appendChild(clone);
+    // });
 
-    const groupRect = deepCopy(getSelectedGroupRectFromRefs());
-    activeAnimationRef.current.changeBlocks.groupRect = {
-      animate: null,
-      initial: groupRect,
-    };
+    // const groupRect = deepCopy(getSelectedGroupRectFromRefs());
+    // activeAnimationRef.current.changeBlocks.groupRect = {
+    //   animate: null,
+    //   initial: groupRect,
+    // };
 
-    opacityBlockChange.set(0);
-    scaleBlockChange.set(0);
-    translateXBlockChange.set(0);
-    translateYBlockChange.set(0);
+    // opacityBlockChange.set(0);
+    // scaleBlockChange.set(0);
+    // translateXBlockChange.set(0);
+    // translateYBlockChange.set(0);
 
-    animationChangeBlocksProgress.set(0);
-    animate(animationChangeBlocksProgress, 1, {
-      duration: CHANGE_BLOCKS_ANIMATION_DURATION,
-      onUpdate: latest => {
-        const { ready, rect, x, y } = isReadyToAnimateEnterSequences(latest);
+    // animationChangeBlocksProgress.set(0);
+    // animate(animationChangeBlocksProgress, 1, {
+    //   duration: CHANGE_BLOCKS_ANIMATION_DURATION,
+    //   onUpdate: latest => {
+    //     const { ready, rect, x, y } = isReadyToAnimateEnterSequences(latest);
 
-        if (ready) {
-          if (!activeAnimationRef.current.changeBlocks.groupRect.animate) {
-            activeAnimationRef.current.changeBlocks.add = bnew;
-            activeAnimationRef.current.changeBlocks.remove = clones;
-            activeAnimationRef.current.changeBlocks.groupRect.animate = rect;
+    //     if (ready) {
+    //       if (!activeAnimationRef.current.changeBlocks.groupRect.animate) {
+    //         activeAnimationRef.current.changeBlocks.add = bnew;
+    //         activeAnimationRef.current.changeBlocks.remove = clones;
+    //         activeAnimationRef.current.changeBlocks.groupRect.animate = rect;
 
-            const controls = controllersRef?.current?.[groupRect.id];
-            controls?.set({
-              translateX: rect?.left - groupRect.left,
-              translateY: rect?.top - groupRect.top,
-            });
-            controlsForLines.start(() => ({
-              transition: {
-                duration: CHANGE_BLOCKS_ANIMATION_DURATION * latest,
-              },
-              translateX: 0,
-              translateY: 0,
-            }));
-          }
+    //         const controls = controllersRef?.current?.[groupRect.id];
+    //         controls?.set({
+    //           translateX: rect?.left - groupRect.left,
+    //           translateY: rect?.top - groupRect.top,
+    //         });
+    //         controlsForLines.start(() => ({
+    //           transition: {
+    //             duration: CHANGE_BLOCKS_ANIMATION_DURATION * latest,
+    //           },
+    //           translateX: 0,
+    //           translateY: 0,
+    //         }));
+    //       }
 
-          // (bnew ?? [])?.forEach(block => {
-          //   const brect = rectsMappingRef.current[block.uuid];
-          //   const ctrls = controllersRef.current[block.uuid];
-          //   if (!ctrls) return;
+    //       // (bnew ?? [])?.forEach(block => {
+    //       //   const brect = rectsMappingRef.current[block.uuid];
+    //       //   const ctrls = controllersRef.current[block.uuid];
+    //       //   if (!ctrls) return;
 
-          //   ctrls.set({
-          //     opacity: latest,
-          //     scale: latest,
-          //     x: 100 * (1 - latest),
-          //     y: 100 * (1 - latest),
-          //   });
-          // });
+    //       //   ctrls.set({
+    //       //     opacity: latest,
+    //       //     scale: latest,
+    //       //     x: 100 * (1 - latest),
+    //       //     y: 100 * (1 - latest),
+    //       //   });
+    //       // });
 
-          // Object.entries(clones ?? {})?.forEach(([buuid, clone]) => {
-          //   // const brect = rectsMappingRef.current[block.uuid];
-          //   // const ctrls = controllersRef.current[block.uuid];
-          //   // if (!ctrls) return;
+    //       // Object.entries(clones ?? {})?.forEach(([buuid, clone]) => {
+    //       //   // const brect = rectsMappingRef.current[block.uuid];
+    //       //   // const ctrls = controllersRef.current[block.uuid];
+    //       //   // if (!ctrls) return;
 
-          //   clone.style.opacity = `${1 - latest}`;
-          //   clone.style.transform = `scale(${1 - latest}) translate(${100 * latest}px, ${100 * latest}px)`;
-          // });
-        }
+    //       //   clone.style.opacity = `${1 - latest}`;
+    //       //   clone.style.transform = `scale(${1 - latest}) translate(${100 * latest}px, ${100 * latest}px)`;
+    //       // });
+    //     }
 
-        if (latest >= 1) {
-          Object.values(clones ?? {}).forEach(clone => clone && (clone as Element)?.remove());
-          animationTimeoutRef.current = setTimeout(() => {
-            setIsAnimating(false);
-          }, CHANGE_BLOCKS_ANIMATION_DURATION);
-        }
-      },
-    });
+    //     if (latest >= 1) {
+    //       Object.values(clones ?? {}).forEach(clone => clone && (clone as Element)?.remove());
+    //       animationTimeoutRef.current = setTimeout(() => {
+    //         setIsAnimating(false);
+    //       }, CHANGE_BLOCKS_ANIMATION_DURATION);
+    //     }
+    //   },
+    // });
+  }
+
+  function setAnimationOperations(ops: Record<string, () => void>) {
+    animationOperationsRef.current = ops;
   }
 
   function handleLineTransitions() {
-    controlsForLines.start(({ index, isOutput }) => ({
-      ease: EASING,
-      opacity: 1,
-      pathLength: 1,
-      transition: {
-        delay: index * ANIMATION_DURATION_LINES + (isOutput ? 1 : 0.5),
-        duration: isOutput ? 0.1 : ANIMATION_DURATION_LINES * ((100 - index) / 100),
-      },
-    }));
+    // console.log('handleLineTransitions')
+    animationOperationsRef.current.animateLineTransitions();
   }
 
   function resetLineTransitions() {
-    controlsForLines.set({ opacity: 0, pathLength: 0 });
+    animationOperationsRef.current.animateLineTransitions({ reset: true });
   }
 
   function handleInitialTransition(currentGroupUUID: string, rectsMap: Record<string, RectType>) {
@@ -2345,14 +2343,14 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
                   style={
                     phaseRef.current < 2
                       ? {
-                          opacity: opacityInit,
+                        ...((opacityInit ?? false) ? { opacity: opacityInit } : {}),
                           scale: scaleInit,
                           translateX: translateXInit,
                           translateY: translateYInit,
                         }
                       : isAnimating
                         ? {
-                            opacity: opacityEnter,
+                          ...((opacityEnter ?? false) ? { opacity: opacityEnter } : {}),
                             scale: scaleEnter,
                             translateX: translateXEnter,
                             translateY: translateYEnter,
@@ -2375,6 +2373,7 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
                         ...rectsMappingRef?.current,
                       }}
                       selectedGroupRect={selectedGroupRect}
+                      setAnimationOperations={setAnimationOperations}
                       updateLinesRef={updateLinesRef}
                     />
                   </div>
