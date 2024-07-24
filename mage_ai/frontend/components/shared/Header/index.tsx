@@ -186,7 +186,7 @@ function Header({
         .catch(() => {
           redirectToUrl('/');
         });
-    });
+    }, router.basePath);
   };
 
   const breadcrumbProjects = [];
