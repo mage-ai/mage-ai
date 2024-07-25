@@ -1,5 +1,4 @@
 import Button from '@mana/elements/Button';
-import { ThemeSettingsType } from '@mana/themes/interfaces';
 import DashedDivider from '@mana/elements/Divider/DashedDivider';
 import Grid from '@mana/components/Grid';
 import MageAvatar from '@mana/icons/avatars';
@@ -273,8 +272,7 @@ export function Header(
               }}
             >
               <Grid {...gridProps} alignItems="center" columnGap={10}>
-                <MageAvatar size={24} variant="a" />
-                Sorceress
+                <MageAvatar size={30} variant="a" />
                 <CaretDown {...iconProps} />
               </Grid>
             </Button>

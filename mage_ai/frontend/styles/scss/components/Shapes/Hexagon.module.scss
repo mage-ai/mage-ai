@@ -1,0 +1,73 @@
+.hexagon {
+  width: var(--hexagon-width, 100px); /* Using CSS custom properties for flexible width */
+  height: calc(var(--hexagon-width, 100px) * 0.5773); /* Calculating height based on width */
+  background-color: transparent;
+  position: relative;
+  margin: var(--hexagon-margin, 0); /* Flexible margin */
+
+  &:before,
+  &:after {
+    content: "";
+    position: absolute;
+    width: 0;
+    border-left: calc(var(--hexagon-width, 100px) / 2) solid transparent;
+    border-right: calc(var(--hexagon-width, 100px) / 2) solid transparent;
+  }
+
+  &:before {
+    bottom: 100%;
+    border-bottom: calc(var(--hexagon-width, 100px) * 0.2886) solid var(--hexagon-color, #3498db); /* Flexible color */
+  }
+
+  &:after {
+    top: 100%;
+    border-top: calc(var(--hexagon-width, 100px) * 0.2886) solid var(--hexagon-color, #3498db); /* Flexible color */
+  }
+
+  .hexagonInner {
+    width: var(--hexagon-width, 100px);
+    height: calc(var(--hexagon-width, 100px) * 0.5773);
+    background: var(--hexagon-color, #3498db);
+    position: absolute;
+    top: 0;
+    left: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    clip-path: polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%);
+  }
+
+  .hexagonInner:before,
+  .hexagonInner:after {
+    content: "";
+    position: absolute;
+    width: 0;
+    border-left: calc(var(--hexagon-width, 100px) / 2) solid transparent;
+    border-right: calc(var(--hexagon-width, 100px) / 2) solid transparent;
+  }
+
+  .hexagonInner:before {
+    bottom: 100%;
+    border-bottom: calc(var(--hexagon-width, 100px) * 0.2886) solid var(--hexagon-color, #3498db);
+  }
+
+  .hexagonInner:after {
+    top: 100%;
+    border-top: calc(var(--hexagon-width, 100px) * 0.2886) solid var(--hexagon-color, #3498db);
+  }
+
+  .hexagonContent {
+    width: 100%; /* Full width inside the hexagon */
+    height: 100%; /* Full height inside the hexagon */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--hexagon-text-color, white); /* Flexible text color */
+    text-align: center;
+    padding: var(--hexagon-padding, 5px); /* Flexible padding */
+    background-size: cover;
+    background-position: center;
+    box-sizing: border-box;
+  }
+}
