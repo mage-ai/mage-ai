@@ -49,10 +49,11 @@ export const MenuProvider = ({ children }: MenuProviderProps) => {
       items: MenuItemType[],
       opts?: RenderContextMenuOptions,
     ) {
+      console.log('MenuProvider.renderContextMenu', uuid, opts);
       renderContextMenu(event, items, {
         ...opts,
         containerRef,
-        contextMenuRef: contextMenuRefs.current[uuid],
+        contextMenuRef: opts?.contextMenuRef ?? contextMenuRefs.current[uuid],
         uuid,
       });
     }
@@ -70,8 +71,8 @@ export const MenuProvider = ({ children }: MenuProviderProps) => {
       teardown(uuid);
     }
 
-    function __showMenu(items: MenuItemType[], opts?: RenderContextMenuOptions) {
-      showMenu(items, opts, uuid);
+    function __showMenu(items?: MenuItemType[], opts?: RenderContextMenuOptions) {
+      __renderContextMenu(null, items, opts);
     }
 
     function __hideMenu() {

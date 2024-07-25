@@ -9,6 +9,8 @@ function Aside(
   { Icon, baseColorName, className, menuItems, loading, borderColor, onClick, uuid }: AsideType,
   ref: React.Ref<HTMLButtonElement>,
 ) {
+  // console.log('Aside', uuid, menuItems)
+
   const element = useMemo(() => {
     const el = (
       <Grid
@@ -37,7 +39,8 @@ function Aside(
         loading={loading}
         loadingColorName={baseColorName}
         onClick={(event: React.MouseEvent<HTMLElement, MouseEvent>) => {
-          if (onClick) {
+          console.log('Aside onClick', uuid, menuItems)
+          if (onClick && !menuItems) {
             event.preventDefault();
             onClick && onClick?.(event);
           }
@@ -49,14 +52,20 @@ function Aside(
     );
   }, [Icon, baseColorName, borderColor, className, loading, menuItems, onClick, ref]);
 
-  return (
-    <MenuManager
-      items={menuItems}
-      uuid={uuid}
-    >
-      {element}
-    </MenuManager>
-  );
+  if (menuItems) {
+    return (
+      <MenuManager
+        contained
+        className={`aside-menu-manager-${uuid}`}
+        items={menuItems}
+        uuid={uuid}
+      >
+        {element}
+      </MenuManager>
+    );
+  }
+
+  return element;
 }
 
 export default React.forwardRef(Aside);

@@ -345,23 +345,23 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
         direction: LayoutConfigDirectionEnum.HORIZONTAL,
         display: LayoutDisplayEnum.DETAILED,
         grid: {
-          columns: 5,
+          columns: 2,
         },
         style: LayoutStyleEnum.TREE,
-        styleOptions: {
-          rectTransformations: [
-            {
-              options: () => ({
-                layout: {
-                  direction: LayoutConfigDirectionEnum.HORIZONTAL,
-                  gap: { column: 40, row: 40 },
-                  options: { amplitude: 200, wavelength: 100 },
-                },
-              }),
-              type: TransformRectTypeEnum.LAYOUT_WAVE,
-            },
-          ],
-        },
+        // styleOptions: {
+        //   rectTransformations: [
+        //     {
+        //       options: () => ({
+        //         layout: {
+        //           direction: LayoutConfigDirectionEnum.HORIZONTAL,
+        //           gap: { column: 40, row: 40 },
+        //           options: { amplitude: 200, wavelength: 100 },
+        //         },
+        //       }),
+        //       type: TransformRectTypeEnum.LAYOUT_WAVE,
+        //     },
+        //   ],
+        // },
       }),
       direction: LayoutConfigDirectionEnum.HORIZONTAL,
       display: LayoutDisplayEnum.DETAILED,
@@ -1382,7 +1382,9 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
                 });
               }
 
-              renderLayoutUpdates();
+              viewUUIDPrev.current = getNewUUID(3, 'ts');
+              viewUUIDNext.current = viewUUIDPrev.current;
+              renderLayoutUpdates(() => null, viewUUIDNext.current);
             }
 
             pageTitleRef.current = p1?.name ?? p1?.name;

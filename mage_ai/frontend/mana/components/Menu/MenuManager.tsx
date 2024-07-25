@@ -134,13 +134,14 @@ function MenuManager(
   },
   ref: React.RefObject<HTMLDivElement>,
 ) {
+  const phaseRef = useRef(0);
   const contextMenuRef = useRef<HTMLDivElement>(null);
 
   const {
     containerRef,
     handleToggleMenu,
     portalRef,
-    teardown,
+    // teardown,
   } = useMenuManager({
     contained: true,
     contextMenuRef,
@@ -149,19 +150,28 @@ function MenuManager(
   });
 
   useEffect(() => {
+    const phase = phaseRef.current;
+    phaseRef.current += 1;
     return () => {
-      teardown();
+      if (phase > 0) {
+        console.log('MenuManager.teardown', contextMenuRef.current, rest?.uuid, phase);
+        contextMenuRef.current = null;
+      }
     };
-  }, [teardown]);
+  }, []);
 
-  const contextMenu = <div id={`menu-manager-${rest.uuid}`} ref={contextMenuRef} />;
+  const contextMenu = <div id={`menu-manager-${rest.uuid}`} ref={contextMenuRef} style={contained ? {
+    position: 'absolute',
+  } : {}} />;
 
   return (
-    <>
+    <div style={{ position: 'relative' }}>
       <div
         className={className}
         onClick={event => {
           event.preventDefault();
+          event.stopPropagation();
+          console.log('MenuManager.onClick', items);
           handleToggleMenu({
             items,
             openItems,
@@ -172,8 +182,11 @@ function MenuManager(
         {children}
       </div>
 
-      {contained ? contextMenu : createPortal(contextMenu, portalRef.current)}
-    </>
+      {contained
+        ? contextMenu
+        : createPortal(contextMenu, portalRef.current)
+      }
+    </div>
   );
 }
 

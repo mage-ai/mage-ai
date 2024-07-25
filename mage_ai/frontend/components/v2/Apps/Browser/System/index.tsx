@@ -45,7 +45,7 @@ function SystemBrowser({ app, operations }: AppLoaderProps, ref: React.Ref<HTMLD
   const addPanel = app?.operations?.[OperationTypeEnum.ADD_PANEL]?.effect as AddPanelOperationType;
   const removeApp = operations?.[OperationTypeEnum.REMOVE_APP]?.effect;
 
-  const { contextMenu, renderContextMenu, removeContextMenu } = useContextMenu({
+  const { contextMenuRef, renderContextMenu, removeContextMenu } = useContextMenu({
     containerRef,
     uuid: appUUID,
   });
@@ -198,7 +198,8 @@ function SystemBrowser({ app, operations }: AppLoaderProps, ref: React.Ref<HTMLD
     <Scrollbar ref={containerRef} style={{ overflow: 'auto' }}>
       {mutants.list.isLoading && <Loading />}
       <div id={rootID} />
-      {contextMenu}
+
+      <div ref={contextMenuRef} />
     </Scrollbar>
   );
 }

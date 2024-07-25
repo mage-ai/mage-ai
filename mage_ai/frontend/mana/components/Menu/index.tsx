@@ -23,8 +23,10 @@ import {
 import { UNIT } from '@mana/themes/spaces';
 import { PortalProvider, usePortals } from '@context/v2/Portal';
 import { EventEnum, KeyEnum } from '@mana/events/enums';
+import { RectType } from '@mana/shared/interfaces';
+import useWaitUntilAttempt from '@mana/hooks/useWaitUntilAttempt';
 
-const DEBUG = false;
+const DEBUG = true;
 
 export type MenuProps = {
   above?: boolean;
@@ -257,9 +259,11 @@ function Menu({
   standardMenu,
   uuid,
 }: MenuProps) {
+  const waitUntilAttempt = useWaitUntilAttempt();
+
   const directionRef = useRef<LayoutDirectionEnum>(direction);
   const containerRef = useRef(null);
-  const containerRectRef = useRef<DOMRect | null>(null);
+  const containerRectRef = useRef<RectType | null>(null);
   const itemExpandedRef = useRef(null);
   const itemsElementRef = useRef(null);
   const timeoutRef = useRef<ReturnType<typeof setTimeout>>();
@@ -302,13 +306,23 @@ function Menu({
           itemsRef={itemsRef}
           level={nextLevel}
           parentItemRef={itemInnerRef}
-          position={rect}
+          position={{
+            left: rect.left,
+            top: contained
+              ? rect.top
+              : rect.top,
+          }}
           rects={{
             bounding: rects?.bounding,
             container: rect,
             offset: {
-              left: 0,
-              top: -rect.height,
+              left: contained
+                ? containerRectRef.current.width
+                : containerRectRef.current.left - rect.left,
+              top: contained
+                ? rect.top - (containerRectRef.current.top)
+                : 0,
+              //   : rect.top - (containerRectRef.current.top),
             },
           }}
           removePortals={removePortals}
@@ -360,122 +374,151 @@ function Menu({
   }, [level, removePortals]);
 
   useEffect(() => {
-    const computedStyle =
-      typeof window !== 'undefined' && window.getComputedStyle(containerRef.current);
+    const { container, bounding, offset } = rects ?? {};
+    const menu = containerRef?.current?.getBoundingClientRect();
+    const pos = {
+      height: position?.height ?? 0,
+      left: position?.left ?? 0,
+      top: position?.top ?? 0,
+      width: position?.width ?? 0,
+    };
 
-    if (computedStyle && containerRef.current) {
-      const { container, bounding, offset } = rects ?? {};
-      const menu = containerRef?.current?.getBoundingClientRect();
-      const pos = {
-        height: position?.height ?? 0,
-        left: position?.left ?? 0,
-        top: position?.top ?? 0,
-        width: position?.width ?? 0,
-      };
+    DEBUG && console.log(
+      0,
+      level,
+      uuid,
+      pos,
+      container,
+      bounding,
+      offset,
+      menu,
+    )
 
-      DEBUG && console.log(
-        0,
-        pos,
-        container,
-        bounding,
-        offset,
-        menu,
-      )
+    const padding = UNIT;
+    const right = bounding.left + bounding.width;
+    const bottom = bounding.top + bounding.height;
 
-      const padding = UNIT;
-      const right = bounding.left + bounding.width;
-      const bottom = bounding.top + bounding.height;
+    DEBUG && console.log(1, right, bottom)
 
-      DEBUG && console.log(1, right, bottom)
+    const hmenu = menu?.height ?? 0;
+    const wmenu = menu?.width ?? 0;
 
-      const hmenu = menu?.height ?? 0;
-      const wmenu = menu?.width ?? 0;
+    DEBUG && console.log(2, hmenu, wmenu)
 
-      DEBUG && console.log(2, hmenu, wmenu)
+    let xoff = offset?.left ?? 0;
+    let xoffi = 0;
 
-      let xoff = offset?.left ?? 0;
-      let xoffi = 0;
+    let yoff = offset?.top ?? 0;
+    let yoffi = 0;
 
-      let yoff = offset?.top ?? 0;
-      let yoffi = 0;
+    DEBUG && console.log(3, xoff, yoff, direction, above)
 
-      DEBUG && console.log(3, xoff, yoff, direction)
+    if (contained) {
+      if (LayoutDirectionEnum.LEFT === direction) {
+        xoffi -= (wmenu - (container?.width ?? 0));
+      } else if (level >= 1) {
+        xoffi += padding;
+      }
 
-      if (contained) {
-        if (above) {
-          yoffi -= (hmenu + (container?.height ?? 0));
-        } else {
-          yoffi += (container?.height ?? 0);
-        }
+      DEBUG && console.log(4, xoffi)
 
-        if (LayoutDirectionEnum.LEFT === direction) {
-          xoffi -= (wmenu - (container?.width ?? 0));
-        } else if (level >= 1) {
-          xoffi += (container?.width ?? 0) + padding;
-        }
-
-        DEBUG && console.log(4, xoffi)
+      if (above) {
+        yoffi -= (hmenu + (container?.height ?? 0));
       } else {
+        yoffi -= 0;
+      }
+
+      DEBUG && console.log(5, yoffi)
+    } else {
+      if (LayoutDirectionEnum.LEFT === direction) {
+        xoffi -= wmenu ?? 0;
+      } else if (level >= 1) {
+        xoffi += (container.width ?? 0) + padding;
+      }
+
+      DEBUG && console.log(4, xoffi)
+
+      if (pos.left + xoffi <= 0) {
         if (LayoutDirectionEnum.LEFT === direction) {
-          xoffi -= wmenu ?? 0;
-        } else if (level >= 1) {
-          xoffi += (container?.width ?? 0) + padding;
-        }
-
-        DEBUG && console.log(4, xoffi)
-
-        if (pos.left + xoffi <= 0) {
-          if (LayoutDirectionEnum.LEFT === direction) {
-            if (level === 0) {
-              xoffi = -(container?.width ?? 0);
-            } else {
-              xoffi += wmenu + (container?.width ?? 0) + padding;
-            }
-
-            directionRef.current = LayoutDirectionEnum.RIGHT;
+          if (level === 0) {
+            xoffi = -(container?.width ?? 0);
+          } else {
+            xoffi += wmenu + (container?.width ?? 0) + padding;
           }
+
+          directionRef.current = LayoutDirectionEnum.RIGHT;
         }
-
       }
 
-      DEBUG && console.log(5, xoffi)
-      xoff += xoffi;
-      DEBUG && console.log(6, xoff)
+      if (above) {
 
-      yoff += container?.height ?? 0;
-      yoff += level === 0 ? padding / 2 : 0;
-
-      DEBUG && console.log(7, yoff)
-
-      pos.left += xoff;
-      pos.top += yoff;
-
-      DEBUG && console.log(8, pos)
-
-      const ymax = window.innerHeight;
-      if (pos.top + hmenu > ymax) {
-        pos.top = (ymax - hmenu);
+      } else {
+        if (level === 0) {
+          yoffi += (container?.height ?? 0) + padding;
+        }
       }
+    }
 
-      DEBUG && console.log(9, pos)
+    // yoffi += container?.height ?? 0;
+    // yoffi += level === 0 ? padding / 2 : 0;
 
-      if (pos.top < 0) {
-        pos.top = 0;
-      }
+    DEBUG && console.log(5, yoffi)
 
-      DEBUG && console.log(10, pos)
+    xoff += xoffi;
+    DEBUG && console.log(6, xoff)
 
+    yoff += yoffi;
+    DEBUG && console.log(7, yoff)
+
+    // const ymax = window.innerHeight;
+    // if ((pos.top + yoff) + hmenu > ymax) {
+    //   yoff = (ymax - hmenu) - pos.top;
+    // }
+    // if (pos.top + yoff < 0) {
+    //   yoff = -pos.top;
+    // }
+
+    DEBUG && console.log(8, yoff)
+
+    pos.left += xoff;
+    pos.top += yoff;
+
+    DEBUG && console.log(9, pos)
+
+    containerRef.current.style.opacity = '1';
+    containerRef.current.style.visibility = 'visible';
+    containerRef.current.style.zIndex = `${HEADER_Z_INDEX + 100}`;
+
+    DEBUG && console.log(10, pos, contained, level, xoff, yoff)
+
+    if (contained) {
+      containerRef.current.style.transform = `translate(${xoff}px, ${yoff}px)`;
+    } else {
       containerRef.current.style.left = `${pos.left}px`;
       containerRef.current.style.top = `${pos.top}px`;
-      containerRef.current.style.opacity = '1';
-      containerRef.current.style.visibility = 'visible';
-      containerRef.current.style.zIndex = `${HEADER_Z_INDEX + 100}`;
+    }
 
-      containerRectRef.current = containerRef.current.getBoundingClientRect();
+    DEBUG && console.log(11,
+      containerRef.current.style.left,
+      containerRef.current.style.top,
+      containerRef.current.style.transform,
+    );
 
-      DEBUG && console.log(11, containerRectRef.current)
+    containerRectRef.current = containerRef.current.getBoundingClientRect();
 
-      if (openItems?.length >= 1) {
+    DEBUG && console.log(12, containerRectRef.current)
+
+    renderChildrenRefs.current[level] = {
+      hideChildren,
+      renderChildren: (event, item) => {
+        renderChildItems(item, itemsRef?.current?.[item?.uuid], {
+          event: event as any,
+        });
+      },
+    };
+
+    if (openItems?.length >= 1) {
+      const positionChildren = () => {
         const row = openItems?.[0]?.row;
         const openItem = items?.[row];
         if (openItem) {
@@ -485,14 +528,31 @@ function Menu({
         }
       }
 
-      renderChildrenRefs.current[level] = {
-        hideChildren,
-        renderChildren: (event, item) => {
-          renderChildItems(item, itemsRef?.current?.[item?.uuid], {
-            event: event as any,
-          });
-        },
-      };
+      setTimeout(() => {
+        waitUntilAttempt({
+          abortIfInvalid: false,
+          maxAttempts: 100,
+          onAttempt: positionChildren,
+          pollInterval: 10,
+          uuid: `menu-item-${uuid}`,
+          waitUntil: () => {
+            const ready = items.every(item => {
+              const el = itemsRef.current[item.uuid]?.current;
+              return el && typeof window !== 'undefined' && window.getComputedStyle(el);
+            });
+
+            if (ready
+              && containerRef.current
+              && typeof window !== 'undefined'
+              && window.getComputedStyle(containerRef.current)
+            ) {
+              return [true];
+            }
+
+            return [false];
+          },
+        });
+      }, 300);
     }
 
     const timeout = timeoutRef.current;
@@ -528,11 +588,10 @@ function Menu({
       contained={contained ? 'true' : undefined}
       ref={containerRef}
       style={{
-        left: 0,
         opacity: 0,
-        top: 0,
         visibility: 'hidden',
         zIndex: -1,
+        ...((!contained || level > 0) ? { left: 0, top: 0 } : {})
       }}
     >
       <MenuContent

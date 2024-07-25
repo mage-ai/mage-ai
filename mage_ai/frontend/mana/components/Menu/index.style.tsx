@@ -4,7 +4,7 @@ import { gradientBackground, gradientBackgroundVars } from '../../styles/mixins'
 import scrollbars from '../../styles/scrollbars';
 import { motion } from 'framer-motion';
 
-const DIVIDER_SPACE = 2;
+export const DIVIDER_SPACE = 2;
 export const MENU_ITEM_HEIGHT = 35;
 export const MENU_MIN_WIDTH = UNIT * 40;
 
@@ -63,9 +63,14 @@ export const MenuStyled = styled(motion.div)<MenuStyledProps>`
     z-index: ${zIndex || 1};
   `}
 
-  max-height: 100vh;
+  ${({ theme }) => `
+    border-bottom: 1px solid var(--colors-graymd);
+    border-bottom-left-radius: ${theme.menus.border.radius.base};
+    border-bottom-right-radius: ${theme.menus.border.radius.base};
+    max-height: calc(100vh - (2px + ${theme.header.base.height}px));
+  `}
+
   min-width: ${MENU_MIN_WIDTH}px;
-  overflow: hidden;
   position: fixed;
   width: max-content;
 
@@ -120,9 +125,7 @@ export const MenuItemContainerStyled = styled.div<{
   ${({ last, theme }) =>
     last &&
     `
-    border-bottom: 1px solid var(--colors-graymd);
-    border-bottom-left-radius: ${theme.menus.border.radius.base};
-    border-bottom-right-radius: ${theme.menus.border.radius.base};
+
   `}
 
   &.focusing {
@@ -163,7 +166,6 @@ export const ItemContent = styled.div<{
   ${({ first }) =>
     first &&
     `
-    margin-top: ${DIVIDER_SPACE}px;
 
     &:hover {
       border-top-color: transparent;
@@ -173,7 +175,6 @@ export const ItemContent = styled.div<{
   ${({ last }) =>
     last &&
     `
-    margin-bottom: ${DIVIDER_SPACE}px;
 
     &:hover {
       border-bottom-color: transparent;
