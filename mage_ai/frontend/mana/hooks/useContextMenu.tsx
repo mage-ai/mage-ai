@@ -124,7 +124,7 @@ export default function useContextMenu({
 
     const menuRoot = menuRootRefs?.current?.[id];
     if (menuRoot) {
-      menuRoot.render();
+      menuRoot.render([]);
     }
 
     // DO NOT DO THIS
