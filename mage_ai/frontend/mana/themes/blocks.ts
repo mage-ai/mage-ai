@@ -1,5 +1,5 @@
 import ThemeType from './interfaces';
-import colors from '@mana/themes/colors';
+import { Colors } from '@mana/themes/colors';
 import { BlockColorEnum, BlockTypeEnum } from '@interfaces/BlockType';
 import { COLOR_NAMES } from './colors';
 import { contrastRatio } from '@utils/colors';
@@ -112,13 +112,24 @@ export function getBlockColor(
     },
   };
 
-  const cr = contrastRatio(colors?.[info?.names?.base]?.dark, colors?.white?.dark) < 4.5
-    ? 'black'
-    : 'white';
+  const baseDark = Colors?.[info?.names?.base]?.dark;
+  const baseWhite = Colors?.white?.dark;
+  const baseBlack = Colors?.black?.dark;
+  const ratioWhite = contrastRatio(baseDark, baseWhite);
+  const ratioBlack = contrastRatio(baseDark, baseBlack);
+
+  // console.log(
+  //   colors,
+  //   baseDark,
+  //   baseWhite,
+  //   baseBlack,
+  //   ratioWhite,
+  //   ratioBlack,
+  // );
 
   info.names.contrast = {
-    inverted: cr === 'black' ? 'white' : 'black',
-    monotone: cr,
+    inverted: ratioWhite > ratioBlack ? baseBlack : baseWhite,
+    monotone: ratioWhite > ratioBlack ? baseWhite : baseBlack,
   };
 
   return info

@@ -18,7 +18,7 @@ import { getClosestRole } from '@utils/elements';
 import { ElementRoleEnum } from '@mana/shared/types';
 import { ClientEventType } from '@mana/shared/interfaces';
 import { DEBUG } from '../../utils/debug';
-import { pluralize } from '@utils/string';
+import { pluralize, titleize } from '@utils/string';
 
 export function nodeClassNames(node: NodeItemType): string[] {
   const { block } = node ?? {};
@@ -124,7 +124,10 @@ export function menuItemsForTemplates(block, handleOnClick) {
         description: () => template?.description,
         label: () => template?.name || templateUUID,
         onClick: (event: any, _item, callback?: () => void) => {
-          handleOnClick(event, block, template, callback);
+          handleOnClick(event, block, {
+            ...template,
+            uuid: templateUUID,
+          }, callback);
         },
         uuid: templateUUID,
       });
@@ -238,6 +241,8 @@ export function handleGroupTemplateSelect(
 ) {
   submitEventOperation(event, {
     handler: (e, { pipelines }, { removeContextMenu }) => {
+      const uuid = generateUUID();
+
       pipelines.update.mutate({
         event: e,
         onSuccess: () => {
@@ -254,7 +259,8 @@ export function handleGroupTemplateSelect(
                 },
               },
               groups: [block.uuid],
-              uuid: generateUUID(),
+              name: titleize(uuid),
+              uuid,
             },
           ],
         }),

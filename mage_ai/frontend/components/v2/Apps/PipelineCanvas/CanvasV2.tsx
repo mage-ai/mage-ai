@@ -1382,9 +1382,12 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
                 });
               }
 
-              viewUUIDPrev.current = getNewUUID(3, 'ts');
-              viewUUIDNext.current = viewUUIDPrev.current;
-              renderLayoutUpdates(() => null, viewUUIDNext.current);
+              // Let any menus have a chance to unmount.
+              setTimeout(() => {
+                viewUUIDPrev.current = getNewUUID(3, 'ts');
+                viewUUIDNext.current = viewUUIDPrev.current;
+                renderLayoutUpdates(() => null, viewUUIDNext.current);
+              }, 100);
             }
 
             pageTitleRef.current = p1?.name ?? p1?.name;

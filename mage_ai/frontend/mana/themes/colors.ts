@@ -228,7 +228,7 @@ export interface ColorsType extends ColorsDerivedType {
   whiteHi: string;
 }
 
-const Colors = {
+export const Colors = {
   azure: {
     [ModeEnum.DARK]: '#148EFF',
     [ModeEnum.LIGHT]: '#148EFF',
