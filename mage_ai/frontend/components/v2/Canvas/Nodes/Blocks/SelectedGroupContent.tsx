@@ -60,7 +60,7 @@ export default function SelectedGroupContent({
               isRequired && 'auto',
             ].filter(Boolean).join(' ')}
           >
-            <Grid autoFlow="column" columnGap={24} style={{ gridTemplateColumns: 'repeat(max-content)' }}>
+            <Grid columnGap={24} style={{ gridTemplateColumns: 'repeat(3, max-content)' }}>
               <Grid alignItems="center" justifyContent="start" autoFlow="column" columnGap={6}>
                 <BlockGeneric secondary size={14} />
 

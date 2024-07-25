@@ -31,7 +31,9 @@ export type ZoomPanStateType = {
       },
     ) => void
   >;
-  handleZoom: React.MutableRefObject<(event: WheelEvent, scaleOverride?: number) => void>;
+  handleZoom: React.MutableRefObject<(event: WheelEvent, scaleOverride?: number, opts?: {
+    isTrackPad?: boolean;
+  }) => void>;
   originX: React.MutableRefObject<number>;
   originY: React.MutableRefObject<number>;
   phase: React.MutableRefObject<number>;
@@ -69,7 +71,7 @@ export const useZoomPan = (
     zoomSensitivity?: number;
   },
 ): BoundaryType => {
-  const { initialPosition, maxScale = 4, minScale = 0.01, roles, zoomSensitivity = 0.5 } = opts;
+  const { initialPosition, maxScale = 4, minScale = 0.01, roles, zoomSensitivity = 2.5 } = opts;
 
   const disabledRef = stateRef.current.disabled;
   const containerRef = stateRef.current.container;
@@ -186,15 +188,21 @@ export const useZoomPan = (
       }
     }
 
-    handleZoom.current = (event?: WheelEvent, scaleOverride?: number) => {
+    handleZoom.current = (event?: WheelEvent, scaleOverride?: number, opts?: {
+      isTouchPad?: boolean;
+    }) => {
       const oldScale = scale.current;
 
+      const minScaleUse = Math.max((widthViewport / widthContainer), (heightViewport / heightContainer), minScale);
       let newScale = null;
       if (scaleOverride ?? false) {
         newScale = scaleOverride;
       } else {
-        const delta = (-event.deltaY / 500) * zoomSensitivity;
-        newScale = Math.min(Math.max(minScale, scale.current + delta), maxScale);
+        const delta = (-event.deltaY / 500) * (opts?.isTouchPad
+          ? 1
+          : zoomSensitivity
+        );
+        newScale = Math.min(Math.max(minScaleUse, scale.current + delta), maxScale);
       }
 
       const scaleRatio = newScale / oldScale;
@@ -214,6 +222,7 @@ export const useZoomPan = (
       handleDirection(xNew, yNew);
 
       const limited = enforceLimits(originX.current, originY.current, newScale);
+
       originX.current = limited.x;
       originY.current = limited.y;
 
@@ -230,9 +239,15 @@ export const useZoomPan = (
 
       const isZooming = event.metaKey || event.ctrlKey;
       const isPanningHorizontally = !isZooming && event.shiftKey;
+      // This will never be true if they are zooming...
+      const isTouchPad = (event as any).wheelDeltaY
+        ? (event as any).wheelDeltaY === -3 * event.deltaY
+        : event.deltaMode === 0;
 
-      if (isZooming) {
-        handleZoom.current(event);
+      if (!isTouchPad && isZooming) {
+        handleZoom.current(event, null, {
+          isTouchPad,
+        });
       } else {
         const xNew = (originX.current -= event.deltaX);
         const yNew = (originY.current -= event.deltaY);
@@ -240,9 +255,11 @@ export const useZoomPan = (
 
         const limited = enforceLimits(xNew, yNew, scale.current);
 
-        if (isPanningHorizontally) {
+        if (isPanningHorizontally || isTouchPad) {
           originX.current = limited.x;
-        } else {
+        }
+
+        if (!isPanningHorizontally || isTouchPad) {
           originY.current = limited.y;
         }
 
@@ -313,6 +330,7 @@ export const useZoomPan = (
     window.addEventListener('mouseup', handleMouseUp);
     element.addEventListener('touchend', handleTouchEnd);
     element.addEventListener('wheel', handleWheel);
+    element.addEventListener('mousewheel', handleWheel);
     element.addEventListener('touchstart', handleTouchStart, { passive: true });
     element.addEventListener('touchmove', handleTouchMove, { passive: true });
 
@@ -324,6 +342,7 @@ export const useZoomPan = (
 
     return () => {
       element.removeEventListener('wheel', handleWheel);
+      element.removeEventListener('mousewheel', handleWheel);
       element.removeEventListener('mousedown', handleMouseDown);
       element.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('mouseup', handleMouseUp);
