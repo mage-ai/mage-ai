@@ -26,7 +26,7 @@ import { EventEnum, KeyEnum } from '@mana/events/enums';
 import { RectType } from '@mana/shared/interfaces';
 import useWaitUntilAttempt from '@mana/hooks/useWaitUntilAttempt';
 
-const DEBUG = true;
+const DEBUG = false;
 
 export type MenuProps = {
   above?: boolean;

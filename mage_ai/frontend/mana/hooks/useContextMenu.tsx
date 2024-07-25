@@ -83,7 +83,7 @@ export default function useContextMenu({
 
   const { itemsRef, registerItems, resetPosition } = useKeyboardNavigation({
     itemFilter: keyboardNavigationItemFilter,
-    target: menuRootRefs.current[uuidBase],
+    target: containerRefBase,
   });
 
   const themeContext = useContext(ThemeContext);
