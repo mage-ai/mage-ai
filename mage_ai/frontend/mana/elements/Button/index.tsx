@@ -7,7 +7,7 @@ import { motion } from 'framer-motion';
 import ButtonGroup from './Group';
 import Loading from '../../components/Loading';
 import Tag, { TagProps } from '../../components/Tag';
-import buttons, { StyleProps, sm as buttonsSm } from '../../styles/buttons';
+import buttonsBase, { StyleProps, sm as buttonsSm } from '../../styles/buttons';
 import useWithLogging, { WithLoggingProps } from '../../hooks/useWithLogging';
 
 type ButtonStyleProps = {
@@ -50,7 +50,7 @@ const cssRow = css<ButtonStyleProps>`
 `;
 
 const CSS = css<ButtonStyleProps>`
-  ${({ small }) => (small ? buttonsSm : buttons)}
+  ${({ small }) => (small ? buttonsSm : buttonsBase)}
   ${cssRow}
   ${({ width }) => width && `width: ${width};`}
 `;
@@ -165,7 +165,11 @@ function Button({
   return (
     <div
       {...dataProps}
-      className={[styles.container, loading && styles.loading].filter(Boolean).join(' ')}
+      className={[
+        styles.container,
+        loading && styles.loading,
+        small && styles.small,
+      ].filter(Boolean).join(' ')}
       ref={containerRef}
       role="button"
     >

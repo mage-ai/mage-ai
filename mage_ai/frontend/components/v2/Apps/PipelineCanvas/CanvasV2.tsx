@@ -15,7 +15,7 @@ import { findLargestUnoccupiedSpace } from '@utils/rects';
 import { snapToGrid } from '../../Canvas/utils/snapToGrid';
 import { handleSaveAsImage } from './utils/images';
 import { ContextMenuType, RenderContextMenuOptions } from '@mana/hooks/useContextMenu';
-import BlockNodeV2, { BADGE_HEIGHT, PADDING_VERTICAL } from '../../Canvas/Nodes/BlockNodeV2';
+import BlockNodeV2, { BADGE_HEIGHT, PADDING_VERTICAL, SELECTED_GROUP_NODE_MIN_WIDTH } from '../../Canvas/Nodes/BlockNodeV2';
 import PortalNode from '../../Canvas/Nodes/PortalNode';
 import Grid from '@mana/components/Grid';
 import useAppEventsHandler, { CustomAppEventEnum } from './useAppEventsHandler';
@@ -566,7 +566,9 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
       upstream: unique(upstreams ?? [], r => r.id)?.filter(up => !blocksInGroup?.[up.id]),
     };
 
-    const yoff = BADGE_HEIGHT + PADDING_VERTICAL;
+    groupRect.width = Math.max(groupRect.width, SELECTED_GROUP_NODE_MIN_WIDTH);
+
+    const yoff = (BADGE_HEIGHT + PADDING_VERTICAL) * 2;
     groupRect.left -= GROUP_NODE_PADDING;
     groupRect.top -= GROUP_NODE_PADDING + yoff;
     groupRect.width += GROUP_NODE_PADDING * 2;

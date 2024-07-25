@@ -64,8 +64,8 @@ export const MenuStyled = styled(motion.div)<MenuStyledProps>`
   `}
 
   ${({ theme }) => `
-    border-radius: ${theme.menus.border.radius.base};
-    border-radius: ${theme.menus.border.radius.base};
+    border-radius: var(--menus-border-radius-base);
+    border-radius: var(--menus-border-radius-base);
     max-height: calc(100vh - (2px + ${theme.header.base.height}px));
     overflow: hidden;
   `}
@@ -113,13 +113,13 @@ export const MenuItemContainerStyled = styled.div<{
   ${({ first, theme }) =>
     first &&
     `
-    margin-top: ${theme.menus.border.radius.base};
+    margin-top: var(--menus-border-radius-base);
   `}
 
   ${({ last, theme }) =>
     last &&
     `
-    margin-bottom: ${theme.menus.border.radius.base};
+    margin-bottom: var(--menus-border-radius-base);
   `}
 
   &.focusing {
@@ -147,13 +147,13 @@ export const MenuItemContainerStyled = styled.div<{
 
 export const BorderTop = styled.div`
   ${({ theme }) => `
-    border-top-left-radius: ${theme.menus.border.radius.base};
-    border-top-right-radius: ${theme.menus.border.radius.base};
+    border-top-left-radius: var(--menus-border-radius-base);
+    border-top-right-radius: var(--menus-border-radius-base);
     border-top: 1px solid var(--colors-graymd);
     border-left: 1px solid var(--colors-graymd);
     border-right: 1px solid var(--colors-graymd);
     top: 0;
-    height: ${theme.menus.border.radius.base};
+    height: var(--menus-border-radius-base);
     overflow: hidden;
     position: fixed;
     width: 100%;
@@ -163,13 +163,13 @@ export const BorderTop = styled.div`
 export const BorderBottom = styled.div`
   ${({ theme }) => `
 
-    border-bottom-left-radius: ${theme.menus.border.radius.base};
-    border-bottom-right-radius: ${theme.menus.border.radius.base};
+    border-bottom-left-radius: var(--menus-border-radius-base);
+    border-bottom-right-radius: var(--menus-border-radius-base);
     border-bottom: 1px solid var(--colors-graymd);
     border-left: 1px solid var(--colors-graymd);
     border-right: 1px solid var(--colors-graymd);
     bottom: 0;
-    height: ${theme.menus.border.radius.base};
+    height: var(--menus-border-radius-base);
     overflow: hidden;
     position: fixed;
     width: 100%;

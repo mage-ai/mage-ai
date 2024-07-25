@@ -133,8 +133,6 @@ const shared = css<StyleProps>`
             : basic
               ? theme.colors.backgrounds.button.basic.default
               : theme.colors.backgrounds.button.base.default))};
-  border-radius: ${({ aslink, plain, theme, wrap }) =>
-    !plain && theme.borders.radius[wrap && aslink ? 'xs' : 'base']};
 
   color: ${({ disabled, primary, secondary, theme }) =>
     disabled
@@ -190,6 +188,8 @@ const shared = css<StyleProps>`
 
 const base = css<StyleProps>`
   ${shared}
+  border-radius: ${({ aslink, plain, theme, wrap }) =>
+    !plain && theme.borders.radius[wrap && aslink ? 'xs' : 'base']};
   font-size: ${({ theme }) => theme.fonts.size.base};
   padding: ${({ aslink, basic, grouped, plain, theme, wrap }) =>
     !plain &&
@@ -236,11 +236,10 @@ export const sm = css<StyleProps>`
 
   ${({ basic, grouped, plain, theme, wrap }) =>
     grouped &&
-    !basic &&
     !plain &&
     !wrap &&
     `
-    border-radius: ${theme.borders.radius.sm};
+    border-radius: ${theme.borders.radius.sm} !important;
   `}
 `;
 

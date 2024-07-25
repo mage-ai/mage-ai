@@ -578,11 +578,11 @@ const ColorsDerived = {
         }),
       },
       basic: {
-        default: {
-          [ModeEnum.DARK]: 'transparent',
-          [ModeEnum.LIGHT]: 'transparent',
-          [ModeEnum.MODE3]: 'transparent',
-        },
+        default: convert({
+          [ModeEnum.DARK]: 'grayLo',
+          [ModeEnum.LIGHT]: 'grayLo',
+          [ModeEnum.MODE3]: 'grayLo',
+        }),
         hover: convert({
           [ModeEnum.DARK]: 'whiteHi',
           [ModeEnum.LIGHT]: 'whiteHi',

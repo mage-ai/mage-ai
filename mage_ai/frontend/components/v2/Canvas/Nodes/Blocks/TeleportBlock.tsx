@@ -18,44 +18,20 @@ import { useContext, useEffect, useMemo, useRef } from 'react';
 
 export default function TeleportGroup({
   block,
-  buildBadgeRow,
+  BuildBadgeRow,
   index: indexProp,
   role,
   node,
   selectedGroup,
 }: {
   block: BlockType;
-  buildBadgeRow: (props: { inputColorName?: string; outputColorName?: string }) => JSX.Element;
+  BuildBadgeRow: (props: { inputColorName?: string; outputColorName?: string }) => JSX.Element;
   index?: number;
   node?: NodeItemType;
   role?: ElementRoleEnum;
   selectedGroup: MenuGroupType;
 }) {
-  const { activeLevel, layoutConfigs, selectedGroupsRef } = useContext(SettingsContext);
-  const layoutConfig = layoutConfigs?.current?.[selectedGroupsRef?.current?.length - 1];
-  const { convertEvent, dispatchAppEvent } = useAppEventsHandler({ block } as any);
-  const { blockMappingRef, blocksByGroupRef, groupMappingRef, groupsByLevelRef } =
-    useContext(ModelContext);
   const { setSelectedGroup } = useContext(EventContext);
-  const groupsInLevel = groupsByLevelRef?.current?.[activeLevel?.current - 2];
-  const group = groupMappingRef?.current?.[selectedGroup?.uuid];
-  const groupBlocks = Object.values(blocksByGroupRef?.current?.[group?.uuid] ?? {});
-
-  const parentGroups = groupsInLevel?.filter(({ uuid }) => block?.groups?.includes(uuid));
-  const groupsInParent = parentGroups?.flatMap(({ children }) => children ?? []);
-
-  const { downstreamInGroup, upstreamInGroup } = getUpDownstreamColors(
-    block,
-    groupsInLevel,
-    blocksByGroupRef?.current,
-    {
-      blockMapping: blockMappingRef?.current,
-      groupMapping: groupMappingRef?.current,
-    },
-  );
-
-  const isup = upstreamInGroup?.length > 0;
-  const isdn = downstreamInGroup?.length > 0;
 
   const colorName = getBlockColor(block?.type ?? BlockTypeEnum.GROUP, { getColorName: true })?.names
     ?.base;
@@ -84,10 +60,7 @@ export default function TeleportGroup({
           minWidth: 200,
         }}
       >
-        {buildBadgeRow({
-          inputColorName: isup && upstreamInGroup?.[0]?.colorName,
-          outputColorName: isdn && downstreamInGroup?.[0]?.colorName,
-        })}
+        <BuildBadgeRow isGroup />
       </Grid>
     </Link>
   );

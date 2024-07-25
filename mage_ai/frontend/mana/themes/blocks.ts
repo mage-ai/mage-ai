@@ -17,6 +17,29 @@ export type ColorNameType = {
   };
 };
 
+export function getContrastColor(colorName: string): ColorNameType['contrast'] {
+  const { mode = ModeEnum.DARK } = getThemeSettings() ?? {};
+  const baseDark = Colors?.[colorName]?.[mode];
+  const baseWhite = Colors?.white?.[mode];
+  const baseBlack = Colors?.black?.[mode];
+  const ratioWhite = contrastRatio(baseDark, baseWhite);
+  const ratioBlack = contrastRatio(baseDark, baseBlack);
+
+  // console.log(
+  //   colors,
+  //   baseDark,
+  //   baseWhite,
+  //   baseBlack,
+  //   ratioWhite,
+  //   ratioBlack,
+  // );
+
+  return {
+    inverted: ratioWhite > ratioBlack ? 'black' : 'white',
+    monotone: ratioWhite > ratioBlack ? 'white' : 'black',
+  };
+}
+
 export function getBlockColor(
   blockType: BlockTypeEnum,
   props?: {
@@ -114,26 +137,7 @@ export function getBlockColor(
     },
   };
 
-  const { mode = ModeEnum.DARK } = getThemeSettings() ?? {};
-  const baseDark = Colors?.[info?.names?.base]?.[mode];
-  const baseWhite = Colors?.white?.[mode];
-  const baseBlack = Colors?.black?.[mode];
-  const ratioWhite = contrastRatio(baseDark, baseWhite);
-  const ratioBlack = contrastRatio(baseDark, baseBlack);
-
-  // console.log(
-  //   colors,
-  //   baseDark,
-  //   baseWhite,
-  //   baseBlack,
-  //   ratioWhite,
-  //   ratioBlack,
-  // );
-
-  info.names.contrast = {
-    inverted: ratioWhite > ratioBlack ? 'black' : 'white',
-    monotone: ratioWhite > ratioBlack ? 'white' : 'black',
-  };
+  info.names.contrast = getContrastColor(info?.names?.base);
 
   // console.log(info);
 

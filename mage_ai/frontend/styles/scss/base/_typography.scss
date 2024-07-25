@@ -119,7 +119,7 @@
 @mixin base-sm {
   @include base;
   font-size: var(--fonts-size-sm);
-  line-height: var(--fonts-lineheight-base);
+  line-height: var(--fonts-lineheight-sm);
 }
 
 @mixin base-xs {

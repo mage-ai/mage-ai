@@ -50,14 +50,14 @@ export default function build(colors: ColorsType): InputsType {
     },
     padding: {
       horizontal: {
-        base: PaddingVerticalEnum.LG,
-        sm: PaddingVerticalEnum.LG,
-        xs: PaddingVerticalEnum.XS,
+        base: `${PaddingVerticalEnum.LG}px`,
+        sm: `${PaddingVerticalEnum.LG}px`,
+        xs: `${PaddingVerticalEnum.XS}px`,
       },
       vertical: {
-        base: PaddingVerticalEnum.BASE,
-        sm: PaddingVerticalEnum.SM,
-        xs: PaddingVerticalEnum.XS,
+        base: `${PaddingVerticalEnum.BASE}px`,
+        sm: `${PaddingVerticalEnum.SM}px`,
+        xs: `${PaddingVerticalEnum.XS}px`,
       },
     },
     placeholder: {

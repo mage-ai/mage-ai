@@ -9,7 +9,7 @@ import { ShowNodeType } from '@components/v2/Apps/PipelineCanvas/interfaces';
 import { EventEnum, KeyEnum } from '@mana/events/enums';
 import { removeANSI, removASCII } from '@utils/string';
 import { getBlockColor } from '@mana/themes/blocks';
-import BlockNodeComponent, { BADGE_HEIGHT, PADDING_VERTICAL } from './BlockNode';
+import BlockNodeComponent, { BADGE_HEIGHT, PADDING_VERTICAL, SELECTED_GROUP_NODE_MIN_WIDTH } from './BlockNode';
 import {
   EnvironmentTypeEnum,
   EnvironmentUUIDEnum,
@@ -1240,4 +1240,4 @@ function areEqual(p1: BlockNodeType, p2: BlockNodeType) {
 
 export default React.memo(React.forwardRef(BlockNode), areEqual);
 
-export { BADGE_HEIGHT, PADDING_VERTICAL };
+export { BADGE_HEIGHT, PADDING_VERTICAL, SELECTED_GROUP_NODE_MIN_WIDTH };

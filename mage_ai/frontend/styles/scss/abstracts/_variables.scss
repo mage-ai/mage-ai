@@ -10,9 +10,9 @@ $borders-style: solid;
 $borders-width: 1px;
 $buttons-grid-column-gap-base: 8;
 $buttons-grid-column-gap-sm: 6;
-$buttons-padding-base: 13px 14px;
-$buttons-padding-sm: 12px 13px;
-$buttons-padding-xs: 6px 8px;
+$buttons-padding-base: 12px 14px; // 1px minus for the border
+$buttons-padding-sm: 11px 13px; // 1px minus for the border
+$buttons-padding-xs: 5px 8px; // 1px minus for the border
 $fonts-family-base-black: Inter Black, sans-serif;
 $fonts-family-base-bold: Inter Bold, sans-serif;
 $fonts-family-base-lightfont: Inter Light, sans-serif;
@@ -30,7 +30,7 @@ $fonts-family-monospace-semibold: Fira Code SemiBold, monospace;
 $fonts-lineheight-base: normal;
 $fonts-lineheight-md: 144%;
 $fonts-lineheight-monospace: 160%;
-$fonts-lineheight-sm: 20px;
+$fonts-lineheight-sm: 16px;
 $fonts-lineheight-xs: 125%;
 $fonts-size-base: 16px;
 $fonts-size-sm: 14px;

@@ -36,7 +36,7 @@ const TagStyled = styled.div<TagProps>`
   cursor: inherit;
   display: inline-block;
   font-family: ${({ theme }) => theme.fonts.family.base.semiBold};
-  padding: 4px ${PaddingVerticalEnum.XS};
+  padding: 4px ${PaddingVerticalEnum.XS}px;
   pointer-events: ${({ passthrough }) => (passthrough ? 'inherit' : 'auto')};
 `;
 

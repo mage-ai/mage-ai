@@ -10,6 +10,9 @@ export type BadgeType = {
   className?: string;
   label?: string;
   short?: boolean;
+  before?: any;
+  after?: any;
+  templateColumns?: string;
 } & TextProps;
 
 const BadgeStyled = withStyles(styles, {
@@ -17,7 +20,14 @@ const BadgeStyled = withStyles(styles, {
   classNames: ['badge'],
 });
 
-export default function Badge({ Icon, baseColorName, borderColorName, className, label, short, ...textProps }: BadgeType) {
+export default function Badge({ Icon, baseColorName, borderColorName, before, after, className, label, short, templateColumns, ...textProps }: BadgeType) {
+  const tcolunns = templateColumns
+    ?? [
+      before && 'auto',
+      Icon && 'auto',
+      '1fr',
+      after && 'auto',
+    ].filter(Boolean).join(' ');
   return (
     <Grid templateColumnsMaxContent={short}>
       <BadgeStyled
@@ -28,11 +38,13 @@ export default function Badge({ Icon, baseColorName, borderColorName, className,
           borderColorName && styles[`border-color-${borderColorName}`],
         ].filter(Boolean).join(' ')}
         columnGap={10}
-        templateColumns={Icon ? 'auto 1fr' : '1fr'}
+        templateColumns={tcolunns}
         templateRows="1fr"
       >
+        {before}
         {Icon && <Icon colorName={baseColorName} size={16} />}
-        <Text semibold {...textProps}>{label}</Text>
+        <Text semibold {...textProps} style={{ lineHeight: '26px' }}>{label}</Text>
+        {after}
       </BadgeStyled>
     </Grid>
   );

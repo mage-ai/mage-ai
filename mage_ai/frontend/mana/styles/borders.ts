@@ -2,10 +2,11 @@ import { css } from 'styled-components';
 
 type BorderStyledProps = {
   muted?: boolean;
+  small?: boolean;
 };
 
 const shared = css`
-  border-radius: ${({ theme }) => theme.borders.radius.base};
+  border-radius: ${({ small, theme }) => theme.borders.radius[small ? 'sm' : 'base']};
   border-style: ${({ theme }) => theme.borders.style};
   border-width: ${({ theme }) => theme.borders.width};
 `;

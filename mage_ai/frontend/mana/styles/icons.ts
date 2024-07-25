@@ -14,18 +14,24 @@ export type StyleProps = {
   small?: boolean;
   stroke?: string;
   style?: any;
+  success?: boolean;
   useStroke?: boolean;
   viewBox?: string;
   width?: number;
   xsmall?: boolean;
+  warning?: boolean;
+  error?: boolean;
 };
 
 const icons = css<StyleProps>`
-  ${({ color, colorName, fill, inverted, muted, secondary, theme, useStroke }) =>
+  ${({ color, colorName, fill, inverted, muted, secondary, theme, useStroke, ...rest }) =>
     !useStroke &&
     `
     fill: ${
       [
+        rest?.error && 'var(--colors-statuses-error)',
+        rest?.success && 'var(--colors-statuses-success)',
+        rest?.warning && 'var(--colors-statuses-success)',
         typeof colorName !== 'undefined' && theme.colors[colorName],
         typeof color !== 'undefined' && color,
         fill ??
@@ -37,11 +43,14 @@ const icons = css<StyleProps>`
     };
   `}
 
-  ${({ color, colorName, inverted, stroke, muted, secondary, theme, useStroke }) =>
+  ${({ color, colorName, inverted, stroke, muted, secondary, theme, useStroke, ...rest }) =>
     useStroke &&
     `
     stroke: ${
       [
+        rest?.error && 'var(--colors-statuses-error)',
+        rest?.success && 'var(--colors-statuses-success)',
+        rest?.warning && 'var(--colors-statuses-warning)',
         typeof colorName !== 'undefined' && theme.colors[colorName],
         typeof color !== 'undefined' && color,
         stroke ??

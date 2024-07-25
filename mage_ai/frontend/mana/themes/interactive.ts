@@ -1,7 +1,7 @@
 export enum PaddingVerticalEnum {
-  BASE = '13px',
-  LG = '16px',
-  MD = '12px',
-  SM = '8px',
-  XS = '6px',
+  BASE = 13,
+  LG = 16,
+  MD = 12,
+  SM = 8,
+  XS = 6,
 }

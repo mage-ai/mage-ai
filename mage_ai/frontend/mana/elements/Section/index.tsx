@@ -8,6 +8,9 @@ type SectionProps = {
   id?: string;
   muted?: boolean;
   stretch?: boolean;
+  small?: boolean;
+  style?: React.CSSProperties;
+  withBackground?: boolean;
 };
 
 const SectionStyled = styled.section<SectionProps>`
@@ -15,6 +18,11 @@ const SectionStyled = styled.section<SectionProps>`
   ${padding}
 
   height: ${({ stretch }) => (stretch ? '100%' : 'inherit')};
+
+  ${({ withBackground }) => withBackground && `
+    background-color: var(--menus-background-base-default);
+    border-color: var(--borders-color-button-base-default);
+  `}
 `;
 
 function Section({ children, ...props }: SectionProps, ref: React.Ref<HTMLDivElement>) {
