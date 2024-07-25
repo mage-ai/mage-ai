@@ -1,11 +1,14 @@
-import os
+import yaml
 
 from mage_ai.data_preparation.models.constants import BlockType
+from mage_ai.frameworks.execution.llm.rag.blocks.export.templates import vector_database
 from mage_ai.frameworks.execution.models.block.base import BlockExecutionFramework
-from mage_ai.frameworks.execution.models.block.models import Configuration, Metadata
+from mage_ai.frameworks.execution.models.block.models import (
+    Configuration,
+    Metadata,
+    Template,
+)
 from mage_ai.frameworks.execution.models.enums import GroupUUID
-
-templates_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'templates')
 
 KNOWLEDGE_GRAPH = BlockExecutionFramework.load(
     uuid=GroupUUID.KNOWLEDGE_GRAPH,
@@ -14,7 +17,6 @@ KNOWLEDGE_GRAPH = BlockExecutionFramework.load(
         'entities and concepts in the data.'
     ),
     type=BlockType.GROUP,
-    templates_dir=templates_dir,
     upstream_blocks=[],
     downstream_blocks=[],
 )
@@ -25,8 +27,13 @@ VECTOR_DATABASE = BlockExecutionFramework.load(
         'of data.'
     ),
     type=BlockType.GROUP,
-    templates_dir=templates_dir,
-    configuration=Configuration.load(metadata=Metadata.load(required=True)),
+    configuration=Configuration.load(
+        metadata=Metadata.load(required=True),
+        templates={
+            k: Template(**v) if isinstance(v, dict) else v
+            for k, v in yaml.safe_load(vector_database.TEMPLATES).items()
+        },
+    ),
     upstream_blocks=[],
     downstream_blocks=[],
 )

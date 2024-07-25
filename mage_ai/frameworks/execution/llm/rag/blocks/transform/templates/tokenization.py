@@ -1,3 +1,4 @@
+TEMPLATES = """
 ### word.yaml
 
 word:
@@ -454,3 +455,4 @@ part_of_speech_spacy:
       types:
         - string
       value: "en"  # Default to English
+"""

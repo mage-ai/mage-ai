@@ -1,3 +1,4 @@
+TEMPLATES = """
 api:
   description: 'Fetch data from an external API'
   name: 'API Data Loader'
@@ -140,3 +141,4 @@ github:
       types:
         - string
       value: ".py" # Default value
+"""

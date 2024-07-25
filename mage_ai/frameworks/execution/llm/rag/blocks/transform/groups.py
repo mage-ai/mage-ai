@@ -1,11 +1,18 @@
-import os
+import yaml
 
 from mage_ai.data_preparation.models.constants import BlockType
+from mage_ai.frameworks.execution.llm.rag.blocks.transform.templates import (
+    chunking,
+    embed,
+    tokenization,
+)
 from mage_ai.frameworks.execution.models.block.base import BlockExecutionFramework
-from mage_ai.frameworks.execution.models.block.models import Configuration, Metadata
+from mage_ai.frameworks.execution.models.block.models import (
+    Configuration,
+    Metadata,
+    Template,
+)
 from mage_ai.frameworks.execution.models.enums import GroupUUID
-
-templates_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'templates')
 
 CLEANING = BlockExecutionFramework.load(
     uuid=GroupUUID.CLEANING,
@@ -14,7 +21,6 @@ CLEANING = BlockExecutionFramework.load(
         'and irrelevant information from the loaded data.'
     ),
     type=BlockType.GROUP,
-    templates_dir=templates_dir,
     upstream_blocks=[],
     downstream_blocks=[GroupUUID.ENRICH],
 )
@@ -26,7 +32,6 @@ ENRICH = BlockExecutionFramework.load(
         'for retrieval.'
     ),
     type=BlockType.GROUP,
-    templates_dir=templates_dir,
     upstream_blocks=[GroupUUID.CLEANING],
     downstream_blocks=[GroupUUID.CHUNKING],
 )
@@ -38,8 +43,13 @@ CHUNKING = BlockExecutionFramework.load(
         'efficient processing and retrieval.'
     ),
     type=BlockType.GROUP,
-    templates_dir=templates_dir,
-    configuration=Configuration.load(metadata=Metadata.load(required=True)),
+    configuration=Configuration.load(
+        metadata=Metadata.load(required=True),
+        templates={
+            k: Template(**v) if isinstance(v, dict) else v
+            for k, v in yaml.safe_load(chunking.TEMPLATES).items()
+        },
+    ),
     upstream_blocks=[GroupUUID.ENRICH],
     downstream_blocks=[GroupUUID.TOKENIZATION],
 )
@@ -51,8 +61,13 @@ TOKENIZATION = BlockExecutionFramework.load(
         'processing and analysis.'
     ),
     type=BlockType.GROUP,
-    templates_dir=templates_dir,
-    configuration=Configuration.load(metadata=Metadata.load(required=True)),
+    configuration=Configuration.load(
+        metadata=Metadata.load(required=True),
+        templates={
+            k: Template(**v) if isinstance(v, dict) else v
+            for k, v in yaml.safe_load(tokenization.TEMPLATES).items()
+        },
+    ),
     upstream_blocks=[GroupUUID.CHUNKING],
     downstream_blocks=[GroupUUID.EMBED],
 )
@@ -64,8 +79,13 @@ EMBED = BlockExecutionFramework.load(
         'semantic meaning.'
     ),
     type=BlockType.GROUP,
-    templates_dir=templates_dir,
-    configuration=Configuration.load(metadata=Metadata.load(required=True)),
+    configuration=Configuration.load(
+        metadata=Metadata.load(required=True),
+        templates={
+            k: Template(**v) if isinstance(v, dict) else v
+            for k, v in yaml.safe_load(embed.TEMPLATES).items()
+        },
+    ),
     upstream_blocks=[GroupUUID.TOKENIZATION],
     downstream_blocks=[],
 )

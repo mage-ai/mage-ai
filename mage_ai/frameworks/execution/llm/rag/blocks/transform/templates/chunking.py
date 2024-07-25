@@ -1,3 +1,4 @@
+TEMPLATES = """
 ### Fixed
 fixed:
   description: 'Load fixed-size chunks from text.'
@@ -232,3 +233,4 @@ n_gram:
       types:
         - integer
       value: 3  # Default value
+"""

@@ -1,8 +1,6 @@
 from dataclasses import dataclass, field
 from typing import Dict, Optional
 
-import yaml
-
 from mage_ai.data_preparation.models.block.settings.dynamic.models import (
     DynamicConfiguration,
 )
@@ -72,15 +70,3 @@ class Configuration(BaseDataClass):
             self.templates = {
                 k: Template(**v) if isinstance(v, dict) else v for k, v in self.templates.items()
             }
-
-    def load_templates(self, configuration_path: str):
-        self.templates = self.templates or {}
-        with open(configuration_path, 'r') as file:
-            template_configurations = yaml.safe_load(file)
-            self.templates.update({
-                k: Template.load(
-                  configuration_path=configuration_path,
-                  uuid=k,
-                  **v,
-                ) for k, v in template_configurations.items()
-            })

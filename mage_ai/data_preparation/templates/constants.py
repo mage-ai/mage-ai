@@ -759,7 +759,7 @@ def __build_templates_ai() -> List[Dict[str, Any]]:
                         dict(
                             block_type=template.type,
                             description=template.description,
-                            groups=[pipeline.uuid, block.uuid] + additional_groups,
+                            groups=[pipeline.name, block.name] + additional_groups,
                             language=BlockLanguage.PYTHON,
                             name=template.name,
                             path=template.path,

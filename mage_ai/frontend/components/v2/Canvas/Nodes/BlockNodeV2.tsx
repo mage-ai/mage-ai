@@ -945,16 +945,6 @@ function BlockNode(
             );
 
             showLinesToOutput();
-
-            console.log('FROM BLOCK EDIIIITOR',
-              updateLinesRef,
-              {
-                [appNode.id]: rectsMappingRef?.current?.[appNode.id],
-                [block.uuid]: rectsMappingRef?.current?.[block.uuid],
-              },
-              { ...getSelectedGroupRectFromRefs() },
-              { replace: false },
-            )
           }}
           outputGroupsProps={outputGroupsProps}
           setHandleOnMessage={setHandleOnMessage}

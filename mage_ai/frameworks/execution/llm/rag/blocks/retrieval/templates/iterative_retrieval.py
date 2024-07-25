@@ -1,3 +1,4 @@
+TEMPLATES = """
 elasticsearch:
   description: 'Elasticsearch is a distributed, RESTful search and analytics engine. It has native support for vector fields, enabling approximate k-NN search on dense vectors.'
   name: 'Elasticsearch'
@@ -49,3 +50,4 @@ elasticsearch:
       types:
         - string
       value: chunk
+"""

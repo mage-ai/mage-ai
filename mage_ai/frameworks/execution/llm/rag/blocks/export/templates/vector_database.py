@@ -1,3 +1,4 @@
+TEMPLATES = """
 ### pgvector.py
 
 pgvector:
@@ -191,3 +192,4 @@ pinecone:
       required: true
       types:
         - string
+"""

@@ -1,3 +1,4 @@
+TEMPLATES = """
 ### tf_idf.py
 
 tf_idf:
@@ -630,3 +631,4 @@ cohere_embed:
       types:
         - integer
       value: 512  # Default value
+"""
