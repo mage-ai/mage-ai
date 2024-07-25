@@ -1,4 +1,5 @@
 import * as osPath from 'path';
+import stylesPipelineBuilder from '@styles/scss/apps/Canvas/Pipelines/Builder.module.scss';
 import { WithOnMount } from '@mana/hooks/useWithOnMount';
 import { TooltipAlign, TooltipWrapper, TooltipDirection, TooltipJustify } from '@context/v2/Tooltip';
 import Button from '@mana/elements/Button';
@@ -125,6 +126,10 @@ function BlockNode(
   const appNodeRef = useRef<AppNodeType>(null);
   const outputNodeRef = useRef<OutputNodeType>(null);
   const launchOutputCallbackOnceRef = useRef<() => void>(null);
+
+  // Drag wrapper
+  const appWrapperRef = useRef<HTMLDivElement>(null);
+  const outputWrapperRef = useRef<HTMLDivElement>(null);
 
   // Roots
   const appRootRef = useRef<Root>(null);
@@ -633,12 +638,15 @@ function BlockNode(
   function closeOutput(callback?: () => void) {
     hideLinesToOutput();
 
+    outputWrapperRef.current.classList.add(stylesPipelineBuilder.hiddenOffscreen);
+
     delete handleOnMessageRef.current?.[outputNodeRef?.current?.id];
 
     outputRootRef?.current && outputRootRef?.current?.unmount();
     outputAppendedChildElementRef?.current?.remove();
 
     outputAppendedChildElementRef.current = null;
+    outputWrapperRef.current = null;
     outputRootRef.current = null;
     outputNodeRef.current = null;
 
@@ -652,6 +660,8 @@ function BlockNode(
   function closeEditorApp(callback?: () => void) {
     hideLinesToOutput({ editorOnly: true });
 
+    appWrapperRef.current.classList.add(stylesPipelineBuilder.hiddenOffscreen);
+
     delete handleOnMessageRef.current?.[appNodeRef?.current?.id];
     delete handleOnMessageRef.current?.[`${appNodeRef?.current?.id}/output`];
 
@@ -659,6 +669,7 @@ function BlockNode(
     appAppendedChildElementRef?.current?.remove();
 
     appAppendedChildElementRef.current = null;
+    appWrapperRef.current = null;
     appMountRef.current = null;
     appRootRef.current = null;
 
@@ -837,11 +848,13 @@ function BlockNode(
   }
 
   function renderOutput(
+    wrapperRef: React.MutableRefObject<HTMLDivElement>,
     mountRef: React.RefObject<HTMLElement>,
     outputNode: OutputNodeType,
     uuid?: string,
     callback?: () => void,
   ) {
+    outputWrapperRef.current = wrapperRef.current;
     outputNodeRef.current = outputNode;
     outputMountRef.current = mountRef;
 
@@ -904,6 +917,7 @@ function BlockNode(
   }
 
   function renderEditorApp(
+    wrapperRef: React.MutableRefObject<HTMLDivElement>,
     mountRef: React.RefObject<HTMLElement>,
     appNode: AppNodeType,
     opts?: {
@@ -911,6 +925,7 @@ function BlockNode(
     },
     onMount?: () => void,
   ) {
+    appWrapperRef.current = wrapperRef.current;
     appNodeRef.current = appNode;
     appMountRef.current = mountRef;
 
@@ -945,6 +960,14 @@ function BlockNode(
             );
 
             showLinesToOutput();
+
+            setApps(prev => ({
+              ...prev,
+              [appNode.id]: {
+                ...appNode,
+                ref: appMountRef.current,
+              },
+            }));
           }}
           outputGroupsProps={outputGroupsProps}
           setHandleOnMessage={setHandleOnMessage}
@@ -953,13 +976,9 @@ function BlockNode(
       </ContextProvider>,
     );
 
-    setApps(prev => ({
-      ...prev,
-      [appNode.id]: {
-        ...appNode,
-        ref: appMountRef.current,
-      },
-    }));
+    if (onCloseAppRef.current) {
+      onCloseAppRef.current();
+    }
 
     appOpenRef.current = true;
   }
@@ -979,7 +998,7 @@ function BlockNode(
           mountRef: React.MutableRefObject<HTMLDivElement>,
           onMount?: () => void,
         ) => {
-          renderOutput(mountRef, node, output?.message_request_uuid, () => {
+          renderOutput(wrapperRef, mountRef, node, output?.message_request_uuid, () => {
             onMount && onMount();
             callback && callback();
           });
@@ -1011,7 +1030,7 @@ function BlockNode(
           mountRef: React.MutableRefObject<HTMLDivElement>,
           onMount?: () => void,
         ) => {
-          renderEditorApp(mountRef, node, {
+          renderEditorApp(wrapperRef, mountRef, node, {
             fileRef,
           }, onMount);
         },

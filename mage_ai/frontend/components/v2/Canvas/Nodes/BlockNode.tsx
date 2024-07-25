@@ -110,6 +110,8 @@ export default function BlockNodeComponent({
 }: BlockNodeProps & DragAndDropHandlersType & SharedBlockProps) {
   const { name, status, type, uuid } = block;
 
+  const [loadingApp, setLoadingApp] = useState(false);
+
   const { blocksByGroupRef, groupMappingRef, mutations } = useContext(ModelContext);
   const groups = useMemo(
     () => block?.groups?.map(guuid => groupMappingRef?.current?.[guuid]),
@@ -154,13 +156,14 @@ export default function BlockNodeComponent({
 
   const colorNames = blockColorNames(node);
   const borders = borderConfigs(node);
+
+  const editorApp = useMemo(() => Object.values(apps ?? {})?.find(app => app?.type === ItemTypeEnum.APP), [apps]);
+
   const after: any = useMemo(() => {
     if (ItemTypeEnum.NODE === node?.type) return;
 
-    const editorApp = Object.values(apps ?? {})?.find(app => app?.app?.type === AppTypeEnum.EDITOR);
-
     return {
-      className: !isGroup && !editorApp && stylesBlockNode.showOnHover,
+      className: !isGroup && !(editorApp || loadingApp) && stylesBlockNode.showOnHover,
       uuid: node.id,
       ...(ItemTypeEnum.NODE === node?.type
         ? {
@@ -201,6 +204,7 @@ export default function BlockNodeComponent({
 
               return <Icon {...ip} secondary={editorApp ? true : false} />;
             },
+            loading: loadingApp,
             onClick: (event: MouseEvent) => {
               event.preventDefault();
               if (editorApp) {
@@ -220,11 +224,12 @@ export default function BlockNodeComponent({
                 });
               } else {
                 openEditor(event as any);
+                setLoadingApp(true);
               }
             },
           }),
     };
-  }, [block, node, isGroup, openEditor, apps, mutations, transformState]);
+  }, [block, node, isGroup, openEditor, apps, mutations, transformState, editorApp, loadingApp]);
 
   const before = useMemo(
     () => ({
@@ -612,7 +617,11 @@ export default function BlockNodeComponent({
     [renderNodeAsGroupSelection, classNames, main, isGroup],
   );
 
-  // console.log(block.uuid, isSiblingGroup);
+  useEffect(() => {
+    if (loadingApp && editorApp) {
+      setLoadingApp(false);
+    }
+  }, [loadingApp, editorApp]);
 
   const teleportBlock = useMemo(
     () => (

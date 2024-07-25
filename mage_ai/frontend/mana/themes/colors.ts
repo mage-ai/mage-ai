@@ -830,8 +830,8 @@ const ColorsDerived = {
     }),
     secondary: convert({
       [ModeEnum.DARK]: 'whiteMd',
-      [ModeEnum.LIGHT]: 'blackMd',
-      [ModeEnum.MODE3]: 'blackMd',
+      [ModeEnum.LIGHT]: 'black',
+      [ModeEnum.MODE3]: 'black',
     }),
   },
   outline: {

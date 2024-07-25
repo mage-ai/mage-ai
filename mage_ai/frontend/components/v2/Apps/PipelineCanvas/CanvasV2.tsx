@@ -471,8 +471,7 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
       }
 
       const handleRemove = () => {
-        dragRefs?.current?.[nodeItem.id]?.current?.classList.add(
-          stylesPipelineBuilder.hiddenOffscreen);
+        dragRefs.current[nodeItem.id].current.classList.add(stylesPipelineBuilder.hiddenOffscreen);
 
         // Don’t do this or else it’s removed and going back to it will show it in the default location.
         // removeFromCache(`${framework.uuid}:${pipelineUUID}`, nodeItem.id);
@@ -2104,9 +2103,6 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
                         ];
                       },
                       onAttempt: (rect1) => {
-                        dragRefs?.current?.[nodeID]?.current?.classList.remove(
-                          stylesPipelineBuilder.hiddenOffscreen);
-
                         relatedNodeRefs?.current?.[itemUUID]?.[nodeType]?.render?.(
                           item as any,
                           dragRef,
@@ -2140,10 +2136,20 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
                           pollInterval: 20,
                           maxAttempts: 100,
                           waitUntil: () => {
-                            const ready = [
-                              oNode && [block.uuid, (oNode as NodeItemType)?.id],
-                              aNode && [block.uuid, (aNode as NodeItemType)?.id],
-                            ].filter(Boolean).every(([from, to]) => {
+                            dragRefs?.current?.[nodeID]?.current?.classList.remove(
+                              stylesPipelineBuilder.hiddenOffscreen);
+                            const hasClass = !dragRefs.current[nodeID].current.classList
+                              .contains(stylesPipelineBuilder.hiddenOffscreen);
+
+                            const checks = [];
+                            if (oNode) {
+                              checks.push([block.uuid, (oNode as NodeItemType)?.id]);
+                              if (aNode) {
+                                checks.push([(aNode as NodeItemType)?.id, (oNode as NodeItemType)?.id]);
+                              }
+                            }
+
+                            const ready = hasClass && checks.filter(Boolean).every(([from, to]) => {
                               const id = getLineID(from, to);
                               return !!document.getElementById(id);
                             });
