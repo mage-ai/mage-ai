@@ -202,9 +202,11 @@ export default function useContextMenu({
 
     const menuElement = menuRefs.current?.[id]?.current ?? menuRefs.current[uuidBase]?.current;
 
-    menuRootRefs.current[id] = createRoot(menuElement as any);
-    // if (!menuRootRefs.current[id]) {
-    // }
+    try {
+      menuRootRefs.current[id] = createRoot(menuElement as any);
+    } catch {
+
+    }
 
     DEBUG && console.log(
       'useContextMenu.renderContextMenu',

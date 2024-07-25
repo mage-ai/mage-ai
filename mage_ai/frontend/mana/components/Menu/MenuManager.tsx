@@ -73,6 +73,7 @@ export function useMenuManager({
           containerRef,
           contextMenuRef,
           direction,
+          handleEscape: () => hideMenu(uuid),
           onClose,
           openItems,
           position: rectAbsolute,
@@ -177,7 +178,7 @@ function MenuManager(
         onClick={event => {
           event.preventDefault();
           event.stopPropagation();
-          console.log('MenuManager.onClick', items);
+          // console.log('MenuManager.onClick', items);
           handleToggleMenu({
             items,
             openItems,

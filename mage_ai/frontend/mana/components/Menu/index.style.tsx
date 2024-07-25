@@ -1,6 +1,6 @@
 import styled, { css } from 'styled-components';
 import { UNIT } from '../../themes/spaces';
-import { gradientBackground, gradientBackgroundVars } from '../../styles/mixins';
+import { gradientBackgroundVars } from '../../styles/mixins';
 import scrollbars from '../../styles/scrollbars';
 import { motion } from 'framer-motion';
 
@@ -64,10 +64,10 @@ export const MenuStyled = styled(motion.div)<MenuStyledProps>`
   `}
 
   ${({ theme }) => `
-    border-bottom: 1px solid var(--colors-graymd);
-    border-bottom-left-radius: ${theme.menus.border.radius.base};
-    border-bottom-right-radius: ${theme.menus.border.radius.base};
+    border-radius: ${theme.menus.border.radius.base};
+    border-radius: ${theme.menus.border.radius.base};
     max-height: calc(100vh - (2px + ${theme.header.base.height}px));
+    overflow: hidden;
   `}
 
   min-width: ${MENU_MIN_WIDTH}px;
@@ -83,10 +83,6 @@ export const MenuContent = styled(motion.nav)`
   ${scrollbars}
   max-height: inherit;
   overflow-y: auto;
-
-  ${({ theme }) => `
-    border-radius: ${theme.menus.border.radius.base};
-  `}
 
   backdrop-filter: blur(var(--modal-blur-base));
   ${gradientBackgroundVars(
@@ -117,15 +113,13 @@ export const MenuItemContainerStyled = styled.div<{
   ${({ first, theme }) =>
     first &&
     `
-    border-top: 1px solid var(--colors-graymd);
-    border-top-left-radius: ${theme.menus.border.radius.base};
-    border-top-right-radius: ${theme.menus.border.radius.base};
+    margin-top: ${theme.menus.border.radius.base};
   `}
 
   ${({ last, theme }) =>
     last &&
     `
-
+    margin-bottom: ${theme.menus.border.radius.base};
   `}
 
   &.focusing {
@@ -149,6 +143,37 @@ export const MenuItemContainerStyled = styled.div<{
       cursor: default;
     }
   }
+`;
+
+export const BorderTop = styled.div`
+  ${({ theme }) => `
+    border-top-left-radius: ${theme.menus.border.radius.base};
+    border-top-right-radius: ${theme.menus.border.radius.base};
+    border-top: 1px solid var(--colors-graymd);
+    border-left: 1px solid var(--colors-graymd);
+    border-right: 1px solid var(--colors-graymd);
+    top: 0;
+    height: ${theme.menus.border.radius.base};
+    overflow: hidden;
+    position: fixed;
+    width: 100%;
+  `}
+`;
+
+export const BorderBottom = styled.div`
+  ${({ theme }) => `
+
+    border-bottom-left-radius: ${theme.menus.border.radius.base};
+    border-bottom-right-radius: ${theme.menus.border.radius.base};
+    border-bottom: 1px solid var(--colors-graymd);
+    border-left: 1px solid var(--colors-graymd);
+    border-right: 1px solid var(--colors-graymd);
+    bottom: 0;
+    height: ${theme.menus.border.radius.base};
+    overflow: hidden;
+    position: fixed;
+    width: 100%;
+  `}
 `;
 
 export const ItemContent = styled.div<{

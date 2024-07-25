@@ -206,6 +206,39 @@ function EditorAppNode({
     event.stopPropagation();
   }
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const subheaderItems = useMemo(() => [
+    // {
+    //   Icon: Save,
+    //   description: stale
+    //     ? `You have unsaved changes. Content was modified ${lastModified}.`
+    //     : 'Save current file content.',
+    //   iconProps: stale ? { color: 'var(--colors-statuses-warning)' } : {},
+    //   loading: saving,
+    //   onClick: saveContent,
+    //   uuid: 'Save',
+    // },
+    // {
+    //   Icon: Conversation,
+    //   uuid: 'Chat',
+    //   description: 'Get support in the community channel on Slack',
+    //   href: 'https://mage.ai/chat', target: '_blank', anchor: 'true',
+    // },
+    // {
+    //   Icon: Comment,
+    //   description: 'Add a comment to the pipeline or for a specific block',
+    //   uuid: 'Comment',
+    //   onClick: event => alert('Comment'),
+    // },
+    // {
+    //   Icon: CloseV2,
+    //   description: 'Close app',
+    //   uuid: 'Close',
+    //   onClick: onClose,
+    // },
+  ], []);
+
+
   return (
     <Grid
       className={[stylesAppNode.appNodeContainer].join(' ')}
@@ -214,14 +247,16 @@ function EditorAppNode({
       role={ElementRoleEnum.CONTENT}
       rowGap={PADDING_HORIZONTAL / 2}
       style={{
-        gridTemplateRows: 'auto auto 1fr',
+        gridTemplateRows: 'auto 1fr',
       }}
       templateColumns="auto"
     >
       <Grid
+        alignItems="center"
         columnGap={PADDING_HORIZONTAL / 2}
+        justifyContent="space-between"
         onPointerDownCapture={cancelDrag}
-        style={{ gridTemplateColumns: 'auto 1fr auto' }}
+        style={{ gridTemplateColumns: '1fr auto' }}
         templateRows="1fr"
       >
         {/* <Button
@@ -231,47 +266,84 @@ function EditorAppNode({
           small
         /> */}
 
-        <div style={{ position: 'relative' }}>
-          {executing && <Tag left statusVariant timer top />}
-          <Button
-            Icon={ip => executing ? <DeleteCircle {...ip} colorName={contrastColorName} /> : <PlayButtonFilled {...ip} colorName={contrastColorName} />}
-            backgroundcolor={!executing ? baseColor : 'red'}
-            bordercolor={executing ? (baseColor ?? 'gray') : 'transparent'}
-            loading={loadingKernelMutation || loading}
-            onClick={
-              executing
-                ? () => {
-                    setLoadingKernelMutation(true);
-                    interruptExecution({
-                      onError: () => {
-                        setExecuting(false);
-                        setLoadingKernelMutation(false);
-                      },
-                      onSuccess: () => setLoadingKernelMutation(false),
-                    });
-                  }
-                : event => {
-                    setLoading(true);
-                    submitCodeExecution(event, {
-                      onError: () => setLoading(false),
-                      onSuccess: () => setLoading(false),
-                    });
-                  }
+        <Grid
+          alignItems="center"
+          autoFlow="column"
+          columnGap={PADDING_HORIZONTAL / 2}
+          justifyContent="start"
+          templateRows="1fr"
+        >
+          <div style={{ position: 'relative' }}>
+            {executing && <Tag left statusVariant timer top />}
+            <Button
+              Icon={ip => executing ? <DeleteCircle {...ip} colorName={contrastColorName} /> : <PlayButtonFilled {...ip} colorName={contrastColorName} />}
+              backgroundcolor={!executing ? baseColor : 'red'}
+              bordercolor={executing ? (baseColor ?? 'gray') : 'transparent'}
+              loading={loadingKernelMutation || loading}
+              onClick={
+                executing
+                  ? () => {
+                      setLoadingKernelMutation(true);
+                      interruptExecution({
+                        onError: () => {
+                          setExecuting(false);
+                          setLoadingKernelMutation(false);
+                        },
+                        onSuccess: () => setLoadingKernelMutation(false),
+                      });
+                    }
+                  : event => {
+                      setLoading(true);
+                      submitCodeExecution(event, {
+                        onError: () => setLoading(false),
+                        onSuccess: () => setLoading(false),
+                      });
+                    }
+              }
+              small
+              tag={<KeyboardTextGroup
+                colorName={contrastColorName}
+                textGroup={[[KEY_CODE_META, executing ? KEY_ESCAPE : KEY_ENTER]]}
+                xsmall
+              />}
+              tagProps={{
+                style: {
+                  backgroundColor: colors?.[`${contrastColorName}lo`]?.dark,
+                },
+              }}
+            />
+          </div>
+
+          <TooltipWrapper
+            align={TooltipAlign.END}
+            horizontalDirection={TooltipDirection.DOWN}
+            justify={TooltipJustify.END}
+            tooltip={
+              <Text secondary small>
+                You have unsaved changes. Content was modified {lastModified}.
+                Save current file content.
+
+              </Text>
             }
-            small
-            tag={<KeyboardTextGroup
-              colorName={contrastColorName}
-              textGroup={[[KEY_CODE_META, executing ? KEY_ESCAPE : KEY_ENTER]]}
-              xsmall
-            />}
-            tagProps={{
-              style: {
-                backgroundColor: colors?.[`${contrastColorName}lo`]?.dark,
-              },
-            }}
-          />
-        </div>
-        <TextInput basic placeholder="/" style={{ paddingBottom: 8, paddingTop: 8 }} />
+          >
+            <Button
+              Icon={ip => <Save {...ip} color={stale ? 'var(--colors-statuses-warning)' : undefined } />}
+              data-loading-style="inline"
+              loading={saving}
+              onClick={saveContent}
+              small
+              basic
+            />
+          </TooltipWrapper>
+
+          {stale && getFileCache(file?.path)?.server?.updatedAt && (
+            <Text monospace muted xsmall warning>
+              Last saved {moment(getFileCache(file?.path)?.server?.updatedAt).fromNow()}
+            </Text>
+          )}
+
+        </Grid>
+        {/* <TextInput basic placeholder="/" style={{ paddingBottom: 8, paddingTop: 8 }} /> */}
 
         <Button
           // Icon={afterOpen ? PanelCollapseRight : Menu}
@@ -284,91 +356,57 @@ function EditorAppNode({
         />
       </Grid>
 
-      <Grid
-        autoFlow="column"
-        alignItems="center"
-        backgroundColor="graylo"
-        borders
-        className={stylesAppNode.dragger}
-        columnGap={12}
-        justifyContent="start"
-        onPointerDown={startDrag}
-        padding={6}
-        templateRows="auto"
-      >
-        {[
-          {
-            Icon: Save,
-            description: stale
-              ? `You have unsaved changes. Content was modified ${lastModified}.`
-              : 'Save current file content.',
-            iconProps: stale ? { colorName: 'yellow' } : {},
-            loading: saving,
-            onClick: saveContent,
-            uuid: 'Save',
-          },
-          // {
-          //   Icon: Conversation,
-          //   uuid: 'Chat',
-          //   description: 'Get support in the community channel on Slack',
-          //   href: 'https://mage.ai/chat', target: '_blank', anchor: 'true',
-          // },
-          // {
-          //   Icon: Comment,
-          //   description: 'Add a comment to the pipeline or for a specific block',
-          //   uuid: 'Comment',
-          //   onClick: event => alert('Comment'),
-          // },
-          // {
-          //   Icon: CloseV2,
-          //   description: 'Close app',
-          //   uuid: 'Close',
-          //   onClick: onClose,
-          // },
-        ].map(({ Icon, description, iconProps, label, loading, uuid, onClick }: any) => (
-          <TooltipWrapper
-            align={TooltipAlign.END}
-            horizontalDirection={TooltipDirection.DOWN}
-            justify={TooltipJustify.END}
-            key={uuid}
-            tooltip={
-              <Text secondary small>
-                {description ?? uuid}
-              </Text>
-            }
-          >
-            <Button
-              Icon={ip => <Icon {...{ ...ip, ...iconProps }} />}
-              data-loading-style="inline"
-              loading={loading}
-              onClick={onClick ?? undefined}
-              small
-              basic
-            >
-              {label && (
-                <Text medium small>
-                  {label?.()}
+      {subheaderItems?.length > 0 && (
+        <Grid
+          autoFlow="column"
+          alignItems="center"
+          borders
+          columnGap={12}
+          justifyContent="start"
+          padding={6}
+          style={{
+            backgroundColor: 'var(--menus-background-contained-default)',
+          }}
+          templateRows="auto"
+        >
+          {subheaderItems?.map(({ Icon, description, iconProps, label, loading, uuid, onClick }: any) => (
+            <TooltipWrapper
+              align={TooltipAlign.END}
+              horizontalDirection={TooltipDirection.DOWN}
+              justify={TooltipJustify.END}
+              key={uuid}
+              tooltip={
+                <Text secondary small>
+                  {description ?? uuid}
                 </Text>
-              )}
-            </Button>
-          </TooltipWrapper>
-        ))}
-
-        {stale && getFileCache(file?.path)?.server?.updatedAt && (
-          <Text monospace muted xsmall warning>
-            Last saved {moment(getFileCache(file?.path)?.server?.updatedAt).fromNow()}
-          </Text>
-        )}
-      </Grid>
-
+              }
+            >
+              <Button
+                Icon={ip => <Icon {...{ ...ip, ...iconProps }} />}
+                data-loading-style="inline"
+                loading={loading}
+                onClick={onClick ?? undefined}
+                small
+                basic
+              >
+                {label && (
+                  <Text medium small>
+                    {label?.()}
+                  </Text>
+                )}
+              </Button>
+            </TooltipWrapper>
+          ))}
+        </Grid>
+      )}
       <Grid
         borders style={{ overflow: 'hidden' }}
-        onPointerDownCapture={cancelDrag}
+        className={stylesAppNode.dragger}
+        onPointerDown={startDrag}
         templateRows="auto 1fr"
       >
         <Grid
           autoFlow="column"
-          backgroundColor="graylo"
           bordersBottom
           columnGap={10}
           justifyContent="start"
@@ -376,6 +414,9 @@ function EditorAppNode({
           paddingLeft={PADDING_HORIZONTAL}
           paddingRight={PADDING_HORIZONTAL}
           paddingTop={18}
+          style={{
+            backgroundColor: 'var(--menus-background-contained-default)',
+          }}
           templateColumns="1fr auto"
           templateRows="auto"
         >

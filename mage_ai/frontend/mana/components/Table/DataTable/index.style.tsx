@@ -1,11 +1,18 @@
-import { gradientBackground } from '../../../styles/mixins';
+import { gradientBackgroundVars } from '../../../styles/mixins';
 import scrollbars from '@mana/styles/scrollbars';
 import styled from 'styled-components';
 
 export const ContainerStyled = styled.div`
   .header {
-    ${gradientBackground('0deg', '#0000004D', '#0000004D', 0, 100, 'graylo')}
-    backdrop-filter: blur(20px);
+    backdrop-filter: blur(var(--modal-blur-base));
+    ${gradientBackgroundVars(
+      '0deg',
+      'var(--menus-background-gradient-default)',
+      'var(--menus-background-gradient-default)',
+      0,
+      100,
+      'var(--menus-background-base-default)'
+    )}
     left: 0;
     overflow: hidden;
     position: sticky;
@@ -24,8 +31,15 @@ export const ContainerStyled = styled.div`
 
     .tr {
       .td.td-index-column {
-        ${gradientBackground('0deg', '#0000004D', '#0000004D', 0, 100, 'graylo')}
-        backdrop-filter: blur(20px);
+        backdrop-filter: blur(var(--modal-blur-base));
+        ${gradientBackgroundVars(
+          '0deg',
+          'var(--menus-background-gradient-default)',
+          'var(--menus-background-gradient-default)',
+          0,
+          100,
+          'var(--menus-background-base-default)'
+        )}
         color: var(--fonts-color-text-base);
         left: 0;
         position: sticky;

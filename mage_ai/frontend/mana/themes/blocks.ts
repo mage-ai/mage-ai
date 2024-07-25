@@ -3,6 +3,8 @@ import { Colors } from '@mana/themes/colors';
 import { BlockColorEnum, BlockTypeEnum } from '@interfaces/BlockType';
 import { COLOR_NAMES } from './colors';
 import { contrastRatio } from '@utils/colors';
+import { getThemeSettings } from '@mana/themes/utils';
+import { ModeEnum } from './modes';
 
 export type ColorNameType = {
   base?: string;
@@ -112,9 +114,10 @@ export function getBlockColor(
     },
   };
 
-  const baseDark = Colors?.[info?.names?.base]?.dark;
-  const baseWhite = Colors?.white?.dark;
-  const baseBlack = Colors?.black?.dark;
+  const { mode = ModeEnum.DARK } = getThemeSettings() ?? {};
+  const baseDark = Colors?.[info?.names?.base]?.[mode];
+  const baseWhite = Colors?.white?.[mode];
+  const baseBlack = Colors?.black?.[mode];
   const ratioWhite = contrastRatio(baseDark, baseWhite);
   const ratioBlack = contrastRatio(baseDark, baseBlack);
 
@@ -128,9 +131,11 @@ export function getBlockColor(
   // );
 
   info.names.contrast = {
-    inverted: ratioWhite > ratioBlack ? baseBlack : baseWhite,
-    monotone: ratioWhite > ratioBlack ? baseWhite : baseBlack,
+    inverted: ratioWhite > ratioBlack ? 'black' : 'white',
+    monotone: ratioWhite > ratioBlack ? 'white' : 'black',
   };
+
+  // console.log(info);
 
   return info
 }

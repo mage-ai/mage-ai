@@ -8,6 +8,7 @@ export type ScrollbarsStyledProps = {
   hideXscrollbar?: boolean;
   hideY?: boolean;
   hideYscrollbar?: boolean;
+  nested?: boolean;
   showX?: boolean;
   showY?: boolean;
   style?: React.CSSProperties;
@@ -50,6 +51,7 @@ const base = css<ScrollbarsStyledProps>`
   `}
 
   ${({
+    nested,
     theme: {
       scrollbars: { background, border, width },
     },
@@ -65,25 +67,25 @@ const base = css<ScrollbarsStyledProps>`
     ::-webkit-scrollbar-thumb {
       ${transition}
 
-      background: ${background.thumb.default};
+      background: ${background['thumb' + (nested ? 'Nested' : '')].default};
       border-radius: ${border.radius.thumb};
     }
 
     ::-webkit-scrollbar-thumb:hover {
-      background: ${background.thumb.hover};
+      background: ${background['thumb' + (nested ? 'Nested' : '')].hover};
     }
 
     ::-webkit-scrollbar-corner {
-      background: ${background.track.default};
+      background: ${background['track' + (nested ? 'Nested' : '')].default};
     }
 
     ::-webkit-scrollbar-track {
-      background: ${background.track.default};
+      background: ${background['track' + (nested ? 'Nested' : '')].default};
       border-radius: ${border.radius.track};
     }
 
     ::-webkit-scrollbar-track:hover {
-      background: ${background.track.hover};
+      background: ${background['track' + (nested ? 'Nested' : '')].hover};
     }
   `}
 `;

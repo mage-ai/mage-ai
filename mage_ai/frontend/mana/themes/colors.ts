@@ -530,6 +530,16 @@ export const Colors = {
     [ModeEnum.LIGHT]: '#1B00661A',
     [ModeEnum.MODE3]: '#FFFFFF1A',
   },
+  monotone: {
+    [ModeEnum.DARK]: '#FFFFFF',
+    [ModeEnum.LIGHT]: '#000000',
+    [ModeEnum.MODE3]: '#A1A1A1',
+  },
+  inverted: {
+    [ModeEnum.DARK]: '#000000',
+    [ModeEnum.LIGHT]: '#FFFFFF',
+    [ModeEnum.MODE3]: '#A1A1A1',
+  },
 };
 
 function convert(mapping: ModeType): ModeType {
@@ -674,6 +684,30 @@ const ColorsDerived = {
           [ModeEnum.DARK]: 'grayMd',
           [ModeEnum.LIGHT]: 'blueMd',
           [ModeEnum.MODE3]: 'blueMd',
+        }),
+      },
+      thumbNested: {
+        default: convert({
+          [ModeEnum.DARK]: '#34404C33',
+          [ModeEnum.LIGHT]: '#FFFFFF33',
+          [ModeEnum.MODE3]: '#FFFFFF33',
+        }),
+        hover: convert({
+          [ModeEnum.DARK]: '#FFFFFF1A',
+          [ModeEnum.LIGHT]: '#FFFFFF1A',
+          [ModeEnum.MODE3]: '#FFFFFF1A',
+        }),
+      },
+      trackNested: {
+        default: convert({
+          [ModeEnum.DARK]: '#34404C1A',
+          [ModeEnum.LIGHT]: '#0500FF1A',
+          [ModeEnum.MODE3]: '#4776FF1A',
+        }),
+        hover: convert({
+          [ModeEnum.DARK]: '#34404C33',
+          [ModeEnum.LIGHT]: '#0500FF33',
+          [ModeEnum.MODE3]: '#4776FF33',
         }),
       },
     },

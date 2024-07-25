@@ -13,7 +13,9 @@ import { MenuItemType } from './interfaces';
 import {
   DividerContainer,
   MenuContent,
+  BorderTop,
   ItemContent,
+  BorderBottom,
   DividerStyled,
   MenuContentScroll,
   MenuItemContainerStyled,
@@ -97,7 +99,8 @@ function MenuItemBase(
 ) {
   const timeoutRef = useRef(null);
   const [debouncer, cancel] = useDebounce();
-  const { Icon, description, disabled, divider, items, keyboardShortcuts, label, onClick, uuid } =
+  const { Icon, description, disabled, divider, items, keyboardShortcuts, label, onClick,
+    linkProps, uuid } =
     item;
   const itemsCount = useMemo(() => items?.length || 0, [items]);
 
@@ -131,7 +134,7 @@ function MenuItemBase(
   };
   const before = Icon ? Icon(iconProps) : undefined;
 
-  const noHover = !onClick && !items?.length ? 'true' : undefined;
+  const noHover = !onClick && !linkProps && !items?.length ? 'true' : undefined;
   const isHeading = !disabled && !onClick && !items?.length && !divider;
 
   const el = (
@@ -203,8 +206,8 @@ function MenuItemBase(
       ref={ref}
     >
       <ItemContent first={first} last={last} noHover={noHover}>
-        {!onClick && el}
-        {onClick && (
+        {!onClick && !linkProps && el}
+        {(onClick || linkProps) && (
           <Button
             asLink
             disabled={disabled}
@@ -609,6 +612,8 @@ function Menu({
           },
         }}
       >
+        <BorderTop />
+
         <MenuContentScroll
           animate="open"
           initial={level === 1 ? 'closed' : 'open'}
@@ -655,6 +660,8 @@ function Menu({
               );
             })}
         </MenuContentScroll>
+
+        <BorderBottom />
       </MenuContent>
 
       {children}

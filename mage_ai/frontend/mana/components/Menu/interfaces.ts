@@ -22,6 +22,10 @@ export interface MenuItemType {
   items?: any[];
   keyboardShortcuts?: any;
   label?: (() => string) | string;
+  linkProps?: {
+    href: string;
+    as?: string;
+  };
   onClick?: (
     event?: any | any,
     item?: any,

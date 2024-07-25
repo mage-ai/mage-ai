@@ -39,7 +39,7 @@ function Aside(
         loading={loading}
         loadingColorName={baseColorName}
         onClick={(event: React.MouseEvent<HTMLElement, MouseEvent>) => {
-          console.log('Aside onClick', uuid, menuItems)
+          // console.log('Aside onClick', uuid, menuItems)
           if (onClick && !menuItems) {
             event.preventDefault();
             onClick && onClick?.(event);

@@ -323,6 +323,7 @@ function DataTable({
 
   return (
     <ContainerStyled
+      nested
       style={{
         height: boundingBox.height,
         width: boundingBox.width,

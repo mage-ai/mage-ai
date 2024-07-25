@@ -49,7 +49,7 @@ export const MenuProvider = ({ children }: MenuProviderProps) => {
       items: MenuItemType[],
       opts?: RenderContextMenuOptions,
     ) {
-      console.log('MenuProvider.renderContextMenu', uuid, opts);
+      // console.log('MenuProvider.renderContextMenu', uuid, opts);
       renderContextMenu(event, items, {
         ...opts,
         containerRef,
