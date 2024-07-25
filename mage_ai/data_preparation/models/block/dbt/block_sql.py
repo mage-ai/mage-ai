@@ -259,18 +259,20 @@ class DBTBlockSQL(DBTBlock, ProjectPlatformAccessible):
                         self.type,
                     )
             # if not found create the block
-            block = block or self.build_dbt_block(
-                block_class=DBTBlock,
-                block_dict=dict(
-                    block_type=self.type,
-                    configuration=dict(file_path=node['file_path']),
-                    language=self.language,
-                    name=uuid,
-                    pipeline=self.pipeline,
-                    uuid=uuid,
-                ),
-                node=node,
-            )
+            if not block:
+                block = self.build_dbt_block(
+                    block_class=DBTBlock,
+                    block_dict=dict(
+                        block_type=self.type,
+                        configuration=dict(file_path=os.path.join(project_dir, node['file_path'])),
+                        language=self.language,
+                        name=uuid,
+                        pipeline=self.pipeline,
+                        uuid=uuid,
+                    ),
+                    node=node,
+                )
+                block.set_default_configurations()
             # reset upstream dbt blocks
             block.upstream_blocks = [
                 block
