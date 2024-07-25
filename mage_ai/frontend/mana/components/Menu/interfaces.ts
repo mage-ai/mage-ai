@@ -19,6 +19,7 @@ export interface MenuItemType {
   description?: (() => string) | string;
   disabled?: boolean;
   divider?: boolean;
+  italic?: boolean;
   items?: any[];
   keyboardShortcuts?: any;
   label?: (() => string) | string;

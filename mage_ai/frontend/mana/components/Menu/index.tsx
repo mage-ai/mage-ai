@@ -100,7 +100,7 @@ function MenuItemBase(
   const timeoutRef = useRef(null);
   const [debouncer, cancel] = useDebounce();
   const { Icon, description, disabled, divider, items, keyboardShortcuts, label, onClick,
-    linkProps, uuid } =
+    italic, linkProps, uuid } =
     item;
   const itemsCount = useMemo(() => items?.length || 0, [items]);
 
@@ -128,14 +128,16 @@ function MenuItemBase(
     );
   }
 
+  const noHover = !onClick && !linkProps && !items?.length ? 'true' : undefined;
+  const isHeading = !disabled && !onClick && !items?.length && !divider;
+
   const iconProps = {
-    secondary: true,
+    muted: disabled,
+    secondary: !disabled,
     size: small ? 12 : undefined,
   };
   const before = Icon ? Icon(iconProps) : undefined;
 
-  const noHover = !onClick && !linkProps && !items?.length ? 'true' : undefined;
-  const isHeading = !disabled && !onClick && !items?.length && !divider;
 
   const el = (
     <MenuItemStyled>
@@ -153,7 +155,7 @@ function MenuItemBase(
             templateColumns={[before && 'auto', '1fr'].filter(Boolean).join(' ')}
           >
             {before}
-            <Text bold={isHeading} secondary={!!noHover} small={small}>
+            <Text bold={isHeading} italic={italic} secondary={!!noHover} small={isHeading || small}>
               {(typeof label === 'function' ? label?.() : label) || uuid}
             </Text>
           </Grid>

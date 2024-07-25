@@ -56,6 +56,7 @@ function SignForm({
               user,
             },
           }) => {
+            console.log('user', user)
             setUser(user);
             AuthToken.storeToken(token, () => {
               let url: string = `${router.basePath}/`;
@@ -104,7 +105,7 @@ function SignForm({
     dataOauths,
   ]);
 
-  const { 
+  const {
     access_token: accessTokenFromURL,
     provider,
   } = queryFromUrl() || {};

@@ -155,6 +155,8 @@ export default function BlockNodeComponent({
   const colorNames = blockColorNames(node);
   const borders = borderConfigs(node);
   const after: any = useMemo(() => {
+    if (ItemTypeEnum.NODE === node?.type) return;
+
     const editorApp = Object.values(apps ?? {})?.find(app => app?.app?.type === AppTypeEnum.EDITOR);
 
     return {
