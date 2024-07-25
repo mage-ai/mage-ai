@@ -1,4 +1,4 @@
-import React, { useEffect, useContext, useRef, useState, useCallback, useMemo } from 'react';
+import React, { createRef, useEffect, useContext, useRef, useState, useCallback, useMemo } from 'react';
 import { MenuContext } from '@context/v2/Menu';
 import { MenuItemType } from '@mana/hooks/useContextMenu';
 import { createPortal } from 'react-dom';
@@ -135,30 +135,36 @@ function MenuManager(
   ref: React.RefObject<HTMLDivElement>,
 ) {
   const phaseRef = useRef(0);
-  const contextMenuRef = useRef<HTMLDivElement>(null);
+  const [contextMenuRef, setContextMenuRef] = useState<React.MutableRefObject<HTMLDivElement | null>>(createRef());
 
   const {
     containerRef,
     handleToggleMenu,
     portalRef,
-    // teardown,
+    teardown,
   } = useMenuManager({
-    contained: true,
+    contained,
     contextMenuRef,
     ref,
     ...rest,
   });
 
-  useEffect(() => {
-    const phase = phaseRef.current;
-    phaseRef.current += 1;
-    return () => {
-      if (phase > 0) {
-        console.log('MenuManager.teardown', contextMenuRef.current, rest?.uuid, phase);
-        contextMenuRef.current = null;
-      }
-    };
-  }, []);
+  // useEffect(() => {
+  //   const phase = phaseRef.current;
+
+  //   if (phase === 0 && contextMenuRef.current === null) {
+  //     setContextMenuRef(createRef());
+  //   }
+
+  //   phaseRef.current += 1;
+  //   return () => {
+  //     if (phase > 0) {
+  //       console.log('MenuManager.teardown', contextMenuRef.current, rest?.uuid, phase);
+  //       teardown();
+  //       phaseRef.current = 0;
+  //     }
+  //   };
+  // }, []);
 
   const contextMenu = <div id={`menu-manager-${rest.uuid}`} ref={contextMenuRef} style={contained ? {
     position: 'absolute',

@@ -6,7 +6,7 @@ import { MenuItemType as MenuItemTypeT } from '../components/Menu/interfaces';
 import { ThemeContext, ThemeProvider } from 'styled-components';
 import { createRoot, Root } from 'react-dom/client';
 
-const DEBUG = true;
+const DEBUG = false;
 
 export type RenderContextMenuOptions = {
   contained?: any;
@@ -36,6 +36,7 @@ export type MenuItemType = any;
 export type ClientEventType = any;
 
 export interface ContextMenuType {
+  contextMenu?: any;
   contextMenuRef: React.MutableRefObject<HTMLDivElement>;
   removeContextMenu: any;
   renderContextMenu: any;
@@ -201,15 +202,16 @@ export default function useContextMenu({
 
     const menuElement = menuRefs.current?.[id]?.current ?? menuRefs.current[uuidBase]?.current;
 
-    if (!menuRootRefs.current[id]) {
-      menuRootRefs.current[id] = createRoot(menuElement as any);
-    }
+    menuRootRefs.current[id] = createRoot(menuElement as any);
+    // if (!menuRootRefs.current[id]) {
+    // }
 
     DEBUG && console.log(
       'useContextMenu.renderContextMenu',
       'id', id,
       'uuid', uuid,
       'opts', opts,
+      'root', menuRootRefs.current[id],
       'contextMenuRef.current', contextMenuRef?.current,
       'menuElement', menuElement,
     )

@@ -55,7 +55,7 @@ function Aside(
   if (menuItems) {
     return (
       <MenuManager
-        contained
+        // contained
         className={`aside-menu-manager-${uuid}`}
         items={menuItems}
         uuid={uuid}
