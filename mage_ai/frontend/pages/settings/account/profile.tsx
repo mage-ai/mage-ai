@@ -1,23 +1,14 @@
-import { useMemo } from 'react';
-
-import Panel from '@oracle/components/Panel';
 import UserDetail, { ObjectTypeEnum } from '@components/users/UserDetail';
 import PrivateRoute from '@components/shared/PrivateRoute';
 import SettingsDashboard from '@components/settings/Dashboard';
-import Spacing from '@oracle/elements/Spacing';
-import UserEditForm from '@components/users/edit/Form';
-import api from '@api';
-import { PADDING_UNITS } from '@oracle/styles/units/spacing';
+import useGetUser from '@utils/hooks/useGetUser';
 import {
   SECTION_ITEM_UUID_PROFILE,
   SECTION_UUID_ACCOUNT,
 } from '@components/settings/Dashboard/constants';
-import { getUser } from '@utils/session';
 
 function ProfilePage() {
-  const { id } = getUser() || {};
-  // const { data, mutate: fetchUser } = api.users.detail(id);
-  // const user = data?.user;
+  const { id } = useGetUser() || {};
 
   return (
     <SettingsDashboard

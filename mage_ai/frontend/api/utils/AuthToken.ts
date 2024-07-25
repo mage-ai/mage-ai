@@ -70,7 +70,7 @@ export default class AuthToken {
   ) {
     // @ts-ignore
     ls.clear();
-    removeUser();
+    removeUser(basePath);
     removeToken(basePath);
 
     try {

@@ -1,8 +1,8 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import useWebSocket from 'react-use-websocket';
 import { useMutation } from 'react-query';
+import { useRouter } from 'next/router';
 
-import AuthToken from '@api/utils/AuthToken';
 import Button from '@oracle/elements/Button';
 import Checkbox from '@oracle/elements/Checkbox';
 import FlexContainer from '@oracle/components/FlexContainer';
@@ -22,7 +22,6 @@ import {
   PanelStyle,
   TerminalStyle,
 } from './GitActions.style';
-import { OAUTH2_APPLICATION_CLIENT_ID } from '@api/constants';
 import { getWebSocket } from '@api/utils/url';
 import { onSuccess } from '@api/utils/response';
 import { remove } from '@utils/array';
@@ -46,6 +45,7 @@ function GitActions({
   branch,
   fetchBranch,
 }: GitActionsProps) {
+  const router = useRouter();
   const [payload, setPayload] = useState<any>();
   const [confirmMessage, setConfirmMessage] = useState<string>();
   const [action, setAction] = useState<string>();
@@ -188,7 +188,7 @@ function GitActions({
     }
   }, [action, isValidating, updateStatus]);
   
-  const user = useMemo(() => getUser() || {}, []);
+  const user = useMemo(() => getUser(router?.basePath) || {}, [router?.basePath]);
   const sharedWebsocketData = useMemo(() => {
     const params = {
       term_name: user?.id ? `git_${user?.id}` : 'git',

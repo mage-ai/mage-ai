@@ -113,7 +113,7 @@ function TriggerDetail({
     project,
   } = useProject();
   const router = useRouter();
-  const isViewerRole = isViewer();
+  const isViewerRole = isViewer(router?.basePath);
   const displayLocalTimezone = shouldDisplayLocalTimezone();
 
   const blocksMapping =

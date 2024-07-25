@@ -73,7 +73,8 @@ function RetryButton({
   setShowConfirmationId: (showConfirmationId: number) => void;
   showConfirmationId: number;
 }) {
-  const isViewerRole = isViewer();
+  const router = useRouter();
+  const isViewerRole = isViewer(router?.basePath);
   const {
     id: pipelineRunId,
     pipeline_schedule_id: pipelineScheduleId,
@@ -280,7 +281,7 @@ function PipelineRunsTable({
   setErrors,
 }: PipelineRunsTableProps) {
   const router = useRouter();
-  const isViewerRole = isViewer();
+  const isViewerRole = isViewer(router?.basePath);
   const displayLocalTimezone = shouldDisplayLocalTimezone();
   const deleteButtonRefs = useRef({});
   const [cancelingRunId, setCancelingRunId] = useState<number>(null);

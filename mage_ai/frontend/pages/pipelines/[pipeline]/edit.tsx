@@ -1664,7 +1664,7 @@ function PipelineDetailPage({
         const { uuid } = resp.data.pipeline;
 
         if (pipelineUUID !== uuid) {
-          window.location.href = `${router.basePath}/pipelines/${uuid}/edit`;
+          window.location.href = `${router?.basePath}/pipelines/${uuid}/edit`;
         } else {
           fetchFiles();
           if (type !== pipeline?.type) {

@@ -72,8 +72,8 @@ function GlobalHookDetail({
   uuid: globalHookUUID,
 }: GlobalHookDetailProps) {
   const displayLocalTimezone = shouldDisplayLocalTimezone();
-  const currentUser = getUser();
   const router = useRouter();
+  const currentUser = getUser(router?.basePath);
   const componentUUID = `GlobalHookDetail/${globalHookUUID}`;
   const themeContext: ThemeType = useContext(ThemeContext);
 

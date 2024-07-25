@@ -65,7 +65,7 @@ function PipelineSchedules({
   pipeline: pipelineProp,
 }: PipelineSchedulesProp) {
   const router = useRouter();
-  const isViewerRole = isViewer();
+  const isViewerRole = isViewer(router?.basePath);
   const pipelineUUID = pipelineProp.uuid;
 
   const { data } = api.pipelines.detail(pipelineUUID, {

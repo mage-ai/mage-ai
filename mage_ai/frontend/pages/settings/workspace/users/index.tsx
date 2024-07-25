@@ -27,7 +27,7 @@ function UsersListPage() {
   const {
     id: currentUserID,
     owner: isOwner,
-  } = getUser() || {};
+  } = getUser(router?.basePath) || {};
 
   const { data } = api.users.list({}, {
     revalidateOnFocus: false,

@@ -59,7 +59,7 @@ export function goToWithQuery(query, opts: GoToWithQueryProps = {}) {
 
   let newUrl = `${href.split('?')[0]}${qString}`;
 
-  const basePath = Router.router.basePath;
+  const basePath = Router.router?.basePath;
   if (basePath && newUrl.startsWith(basePath)) {
     newUrl = newUrl.replace(basePath, '');
   }

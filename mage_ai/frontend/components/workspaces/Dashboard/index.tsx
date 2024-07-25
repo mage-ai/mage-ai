@@ -2,10 +2,10 @@ import React, { useMemo } from 'react';
 import Dashboard from '@components/Dashboard';
 import ErrorsType from '@interfaces/ErrorsType';
 import api from '@api';
+import useGetUser from '@utils/hooks/useGetUser';
 import { BreadcrumbType } from '@components/shared/Header';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { WorkspacesPageNameEnum, buildNavigationItems } from './constants';
-import { getUser } from '@utils/session';
 
 type WorkspacesDashboardProps = {
   before?: any;
@@ -36,7 +36,7 @@ function WorkspacesDashboard({
     [dataStatus],
   );
 
-  const user = getUser() || {};
+  const user = useGetUser() || {};
 
   return (
     <Dashboard

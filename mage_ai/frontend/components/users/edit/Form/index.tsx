@@ -13,6 +13,7 @@ import Text from '@oracle/elements/Text';
 import TextInput from '@oracle/elements/Inputs/TextInput';
 import UserType from '@interfaces/UserType';
 import api from '@api';
+import useGetUser from '@utils/hooks/useGetUser';
 import usePrevious from '@utils/usePrevious';
 import { ProjectTypeEnum } from '@interfaces/ProjectType';
 import {
@@ -22,7 +23,6 @@ import {
   UserFieldType,
 } from './constants';
 import { find, remove } from '@utils/array';
-import { getUser } from '@utils/session';
 import { isEmptyObject, selectKeys } from '@utils/hash';
 import { onSuccess } from '@api/utils/response';
 
@@ -56,7 +56,7 @@ function UserEditForm({
   const [profile, setProfile] = useState<UserType>(null);
   const {
     owner: isOwner,
-  } = getUser() || {};
+  } = useGetUser() || {};
 
   const { data: serverStatus } = api.statuses.list();
   const {

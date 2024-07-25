@@ -11,6 +11,7 @@ import KernelOutputType, { DataTypeEnum } from '@interfaces/KernelOutputType';
 import Spacing from '@oracle/elements/Spacing';
 import Terminal from '@components/Terminal';
 import useContextMenu from '@utils/useContextMenu';
+import useGetUser from '@utils/hooks/useGetUser';
 import { CachedItemType } from './constants';
 import { ApplicationExpansionUUIDEnum, CommandCenterStateEnum } from '@interfaces/CommandCenterType';
 import { CUSTOM_EVENT_NAME_APPLICATION_STATE_CHANGED } from '@utils/events/constants';
@@ -22,7 +23,6 @@ import { Terminal as TerminalIcon } from '@oracle/icons';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { cleanName, randomNameGenerator } from '@utils/string';
 import { getItems, setItems } from './storage';
-import { getUser } from '@utils/session';
 import { getWebSocket } from '@api/utils/url';
 import { keysPresentAndKeysRecent } from '@utils/hooks/keyboardShortcuts/utils';
 import { pushAtIndex } from '@utils/array';
@@ -48,7 +48,7 @@ export default function useTerminal({
   tabs: JSX.Element;
   terminal: JSX.Element;
 } {
-  const user = getUser() || { id: '__NO_ID__' };
+  const user = useGetUser() || { id: '__NO_ID__' };
   const token = useMemo(() => new AuthToken(), []);
   const oauthWebsocketData = useMemo(() => ({
     api_key: OAUTH2_APPLICATION_CLIENT_ID,

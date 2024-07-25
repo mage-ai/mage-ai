@@ -256,7 +256,7 @@ function TriggersTable({
       ]);
     }
 
-    if (!isViewer()) {
+    if (!isViewer(router?.basePath)) {
       columnFlex.push(...[null]);
       columns.push(...[
         {
@@ -578,7 +578,7 @@ function TriggersTable({
                   );
                 }
 
-                if (!isViewer()) {
+                if (!isViewer(router?.basePath)) {
                   rows.push(
                     <FlexContainer key={`edit_delete_buttons_${idx}`}>
                       <Button
