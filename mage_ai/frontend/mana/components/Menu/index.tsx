@@ -459,9 +459,6 @@ function Menu({
       }
     }
 
-    // yoffi += container?.height ?? 0;
-    // yoffi += level === 0 ? padding / 2 : 0;
-
     DEBUG && console.log(5, yoffi)
 
     xoff += xoffi;
@@ -470,10 +467,10 @@ function Menu({
     yoff += yoffi;
     DEBUG && console.log(7, yoff)
 
-    // const ymax = window.innerHeight;
-    // if ((pos.top + yoff) + hmenu > ymax) {
-    //   yoff = (ymax - hmenu) - pos.top;
-    // }
+    const ymax = window.innerHeight;
+    if ((pos.top + yoff) + hmenu > ymax) {
+      yoff = (ymax - hmenu) - pos.top;
+    }
     // if (pos.top + yoff < 0) {
     //   yoff = -pos.top;
     // }
