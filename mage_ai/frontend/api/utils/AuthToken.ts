@@ -2,8 +2,13 @@ import jwtDecode from 'jwt-decode';
 import ls from 'local-storage';
 
 import { COOKIE_PATH } from '@utils/cookies/constants';
+import {
+  CURRENT_USER_LOCAL_STORAGE_KEY,
+  getCurrentUserLocalStorageKey,
+  removeUser,
+} from '@utils/session';
 import { getToken, removeToken, setToken } from './token';
-import { removeUser } from '@utils/session';
+import { isJsonString } from '@utils/string';
 import { redirectToUrl } from '@utils/url';
 
 export type DecodedToken = {
@@ -68,8 +73,23 @@ export default class AuthToken {
     callback: any = null,
     basePath: string = COOKIE_PATH,
   ) {
+    const localStorageItems = typeof window !== 'undefined'
+    ? window.localStorage
+    : {} as { [key: string]: string };
+    const currentUserLocalStorageKey = getCurrentUserLocalStorageKey(basePath);
+    const otherUserLocalStorageItems = Object.entries(localStorageItems).filter(
+      ([key, _]) => key.endsWith(CURRENT_USER_LOCAL_STORAGE_KEY) && key !== currentUserLocalStorageKey);
+
     // @ts-ignore
     ls.clear();
+
+    // Put back user profiles in local storage for other accounts that may be logged into Mage
+    // on different clusters in the same browser (same domain, but different base paths).
+    otherUserLocalStorageItems.forEach(([key, val]) => {
+      const parsedVal = isJsonString(val) ? JSON.parse(val) : val;
+      // @ts-ignore
+      ls.set(key, parsedVal);
+    });
     removeUser(basePath);
     removeToken(basePath);
 

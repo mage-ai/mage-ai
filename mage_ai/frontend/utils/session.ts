@@ -67,7 +67,7 @@ export const CURRENT_GROUP_LOCAL_STORAGE_KEY: string = 'current_group';
 export const CURRENT_GROUP_MEMBERSHIP_LOCAL_STORAGE_KEY: string = 'current_group_membership';
 export const CURRENT_USER_LOCAL_STORAGE_KEY: string = 'current_user';
 
-const getCurrentUserLocalStorageKey = (basePath?: string) => (
+export const getCurrentUserLocalStorageKey = (basePath?: string) => (
   basePath
     ? `${basePath}_${CURRENT_USER_LOCAL_STORAGE_KEY}`
     : CURRENT_USER_LOCAL_STORAGE_KEY
