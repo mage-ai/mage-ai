@@ -150,6 +150,8 @@ class DBTBlockSQL(DBTBlock, ProjectPlatformAccessible):
             List[DBTBlockSQL]: THe upstream dbt graph as DBTBlocksSQL objects
         """
         # Get upstream nodes via dbt list
+        if self.configuration and self.configuration.get('file_source'):
+            project_dir = self.configuration['file_source'].get('project_path')
         with Profiles(
             self.project_path,
             self.pipeline.variables if self.pipeline else {},
@@ -190,10 +192,8 @@ class DBTBlockSQL(DBTBlock, ProjectPlatformAccessible):
                     )
                 ]
 
-        # transform List into dict and remove unnecessary fields
-        file_path = self.file_path
-        path_parts = file_path.split(os.sep)
-        project_dir = path_parts[0]
+        if not project_dir:
+            project_dir = self.project_path
 
         nodes_default = {
             node['unique_id']: {
@@ -259,18 +259,20 @@ class DBTBlockSQL(DBTBlock, ProjectPlatformAccessible):
                         self.type,
                     )
             # if not found create the block
-            block = block or self.build_dbt_block(
-                block_class=DBTBlock,
-                block_dict=dict(
-                    block_type=self.type,
-                    configuration=dict(file_path=node['file_path']),
-                    language=self.language,
-                    name=uuid,
-                    pipeline=self.pipeline,
-                    uuid=uuid,
-                ),
-                node=node,
-            )
+            if not block:
+                block = self.build_dbt_block(
+                    block_class=DBTBlock,
+                    block_dict=dict(
+                        block_type=self.type,
+                        configuration=dict(file_path=node['file_path']),
+                        language=self.language,
+                        name=uuid,
+                        pipeline=self.pipeline,
+                        uuid=uuid,
+                    ),
+                    node=node,
+                )
+                block.set_default_configurations()
             # reset upstream dbt blocks
             block.upstream_blocks = [
                 block
