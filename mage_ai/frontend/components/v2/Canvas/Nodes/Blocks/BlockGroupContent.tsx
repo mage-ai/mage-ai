@@ -123,11 +123,14 @@ export default function BlockGroupContent({
       </Grid>
 
       {(blocks?.length ?? 0) === 0 && (!selected || ((block as FrameworkType)?.children ?? 0) === 0) && (
-        <Section small style={{ maxWidth: (selected ? SELECTED_GROUP_NODE_MIN_WIDTH : GROUP_NODE_MIN_WIDTH) - (PADDING_VERTICAL * 2) }} withBackground>
+        <Section small withBackground>
           <Text
             secondary
             small
-            style={{ lineHeight: 'var(--fonts-lineheight-md)' }}
+            maxWidth={(selected ? SELECTED_GROUP_NODE_MIN_WIDTH : GROUP_NODE_MIN_WIDTH) - (PADDING_VERTICAL * 2)}
+            style={{
+              lineHeight: 'var(--fonts-lineheight-md)',
+            }}
           >
             {description}
           </Text>

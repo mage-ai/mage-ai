@@ -23,7 +23,6 @@ const ErrorManager: FC<ErrorManagerProps> = memo(function ErrorManager({
   errorRef,
   retry,
 }: ErrorManagerProps) {
-  const controls = useDragControls();
   const position = randomSample(POSITIONS);
   const { error } = errorRef?.current?.response?.data ?? {};
   const { error: clientError } = errorRef?.current?.client ?? {};
@@ -33,111 +32,113 @@ const ErrorManager: FC<ErrorManagerProps> = memo(function ErrorManager({
   const message = error?.message ?? clientError?.message;
   const type = error?.type ?? clientError?.type;
 
-  function startDrag(event) {
-    // Doesn’t do anything...
-    // controls.start(event);
-  }
-
   return (
-    <div onPointerDown={startDrag}>
-      <motion.div
-        className={[styles.errorManager, styles[position]].filter(Boolean).join(' ')}
-        dragControls={controls}
+    <motion.div
+      className={[
+        styles.errorManager,
+        // styles[position],
+        // styles.bottomLeft,
+      ].filter(Boolean).join(' ')}
+      drag
+      dragMomentum={false}
+      dragPropagation={false}
+      onPointerDown={event => {
+        event.stopPropagation();
+      }}
+    >
+      <Grid
+        borderColor="redmd"
+        borders
+        className={styles.errorContainer}
+        rowGap={12}
+        style={{
+          borderWidth: 2,
+          padding: 24,
+        }}
+        templateColumns="auto"
+        templateRows="auto auto"
+        width="max-content"
       >
-        <Grid
-          borderColor="redmd"
-          borders
-          className={styles.errorContainer}
-          rowGap={12}
-          style={{
-            borderWidth: 2,
-            padding: 24,
-          }}
-          templateColumns="auto"
-          templateRows="auto auto"
-          width="max-content"
-        >
-          <Grid rowGap={12} templateColumns="auto" templateRows="auto auto">
-            <AlertTriangle colorName="yellow" />
+        <Grid rowGap={12} templateColumns="auto" templateRows="auto auto">
+          <AlertTriangle colorName="yellow" />
 
-            {errorRef?.current?.message && (
-              <Text monospace secondary semibold small>
-                <Ansi>{errorRef?.current?.message}</Ansi>
-              </Text>
-            )}
+          {errorRef?.current?.message && (
+            <Text monospace secondary semibold small>
+              <Ansi>{errorRef?.current?.message}</Ansi>
+            </Text>
+          )}
 
-            {[code, type, message, errors?.length >= 1]?.some(Boolean) && <Divider />}
+          {[code, type, message, errors?.length >= 1]?.some(Boolean) && <Divider />}
 
-            {[code, type, message].map(
-              val =>
-                val && (
-                  <Text key={val} monospace small>
-                    <Ansi>{String(val)}</Ansi>
-                  </Text>
-                ),
-            )}
+          {[code, type, message].map(
+            val =>
+              val && (
+                <Text key={val} monospace small>
+                  <Ansi>{String(val)}</Ansi>
+                </Text>
+              ),
+          )}
 
-            {[errors?.length > 0]?.some(Boolean) && <Divider short />}
+          {[errors?.length > 0]?.some(Boolean) && <Divider short />}
 
-            {errors?.length >= 1 && clientError && (
-              <Text monospace small>
-                <pre
-                  style={{
-                    whiteSpace: 'pre-wrap',
-                  }}
-                >
-                  <Ansi>{errors?.join('\n')}</Ansi>
-                </pre>
-              </Text>
-            )}
-
-            {errors?.length >= 1 && !clientError && (
+          {errors?.length >= 1 && clientError && (
+            <Text monospace small>
               <pre
                 style={{
-                  whiteSpace: 'break-spaces',
+                  whiteSpace: 'pre-wrap',
                 }}
               >
-                <Text inline monospace small>
-                  {errors?.map((line: string) => <Ansi key={line}>{line}</Ansi>)}
-                </Text>
+                <Ansi>{errors?.join('\n')}</Ansi>
               </pre>
-            )}
-          </Grid>
+            </Text>
+          )}
 
-          <Divider />
-
-          <Grid autoFlow="column" justifyContent="space-between" templateColumns="min-content">
-            <ButtonGroup>
-              <Button basic onClick={dismissError} small>
-                Dismiss error
-              </Button>
-
-              {false && (
-                <Button
-                  basic
-                  onClick={(event: any) => {
-                    retry(event);
-                  }}
-                  small
-                >
-                  Retry request
-                </Button>
-              )}
-            </ButtonGroup>
-
-            <ButtonGroup>
-              <Button Icon={Monitor} basic disabled small>
-                Fix error
-              </Button>
-
-              <Button Icon={Insights} basic disabled small>
-                Explain error
-              </Button>
-            </ButtonGroup>
-          </Grid>
+          {errors?.length >= 1 && !clientError && (
+            <pre
+              style={{
+                whiteSpace: 'break-spaces',
+              }}
+            >
+              <Text inline monospace small>
+                {errors?.map((line: string) => <Ansi key={line}>{line}</Ansi>)}
+              </Text>
+            </pre>
+          )}
         </Grid>
-      </motion.div>
-    </div>
+
+        <Divider />
+
+        <Grid autoFlow="column" justifyContent="space-between" templateColumns="min-content">
+          <ButtonGroup>
+            <Button basic onClick={dismissError} small>
+              Dismiss error
+            </Button>
+
+            {false && (
+              <Button
+                basic
+                onClick={(event: any) => {
+                  retry(event);
+                }}
+                small
+              >
+                Retry request
+              </Button>
+            )}
+          </ButtonGroup>
+
+          <ButtonGroup>
+            <Button Icon={Monitor} basic disabled small>
+              Fix error
+            </Button>
+
+            <Button Icon={Insights} basic disabled small>
+              Explain error
+            </Button>
+          </ButtonGroup>
+        </Grid>
+      </Grid>
+    </motion.div>
   );
 });
 

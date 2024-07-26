@@ -8,6 +8,7 @@ export enum ElementRoleEnum {
   CONTENT = 'content',
   DRAGGABLE = 'draggable',
   DROPPABLE = 'droppable',
+  MODAL = 'modal',
   PANNABLE = 'pannable',
   PIPELINE = 'pipeline',
   RESIZEABLE = 'resizable',

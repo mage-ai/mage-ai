@@ -457,7 +457,7 @@ function EditorAppNode({
                 </Grid>
               }
             >
-              <Text semibold small>
+              <Text semibold>
                 {block?.name ?? block?.uuid}
               </Text>
             </TooltipWrapper>

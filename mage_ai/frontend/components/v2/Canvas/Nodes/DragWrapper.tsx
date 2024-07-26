@@ -4,7 +4,10 @@ import { ElementRoleEnum } from '@mana/shared/types';
 import { NodeItemType } from '../interfaces';
 import { RectType, XYType } from '@mana/shared/interfaces';
 import { getStyles } from './draggable/utils';
-import { motion, useMotionValueEvent, useDragControls, useMotionValue, useTransform } from 'framer-motion';
+import { cubicBezier, animate, motion, useMotionValueEvent, useDragControls, useMotionValue, useTransform } from 'framer-motion';
+
+export const EASING = cubicBezier(0.35, 0.17, 0.3, 0.86);
+const BLOCK_ENTER_ANIMATION_DURATION = 0.3;
 
 type DragInfo = {
   delta?: XYType;
@@ -50,6 +53,7 @@ type DragWrapperProps = {
   rect?: RectType;
   rectsMappingRef?: React.MutableRefObject<Record<string, RectType>>;
   resizable?: boolean;
+  entering?: boolean;
   resizeConstraints?: {
     maximum?: RectType;
     minimum?: RectType;
@@ -61,6 +65,7 @@ function DragWrapper({
   children,
   dragConstraintsRef,
   dragControlsRef,
+  entering,
   draggable,
   eventHandlers,
   groupSelection,
@@ -75,11 +80,16 @@ function DragWrapper({
   style,
 }: DragWrapperProps, ref: React.MutableRefObject<HTMLDivElement>) {
   const rect = rectsMappingRef?.current?.[item?.id] ?? rectProp;
+  const phaseRef = useRef(0);
   // console.log('rect.width', item?.id, rectProp?.width, rectsMappingRef?.current?.[item?.id]?.width, rect?.width);
   // console.log('rect.height', item?.id, rectProp?.height, rectsMappingRef?.current?.[item?.id]?.height, rect?.height);
 
   const refInternal = useRef(null);
   const dragRef = ref ?? refInternal;
+
+  const enterProgress = useMotionValue(entering ? 0 : 1);
+  const enterOpacity = useTransform(enterProgress, [0, 1], [0, 1]);
+  const enterScale = useTransform(enterProgress, [0, 1], [0.8, 1]);
 
   const draggingRef = useRef(false);
   const timeoutRef = useRef(null);
@@ -287,6 +297,19 @@ function DragWrapper({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [onDragEnd, item, rect]);
 
+  useEffect(() => {
+    if (entering && phaseRef.current === 0) {
+      animate(enterProgress, 1, {
+        delay: BLOCK_ENTER_ANIMATION_DURATION * 2,
+        duration: BLOCK_ENTER_ANIMATION_DURATION,
+        ease: EASING,
+      });
+      phaseRef.current = 1;
+    }
+  }, []);
+
+  // console.log(entering)
+
   return (
     <motion.div
       {...dragHandlers}
@@ -315,6 +338,10 @@ function DragWrapper({
           width: widthTransform,
           // translateX: translateXTransform,
           // translateY: translateYTransform,
+        } : {}),
+        ...(entering ? {
+          opacity: enterOpacity,
+          // scale: enterScale,
         } : {}),
       }}
       whileDrag={{

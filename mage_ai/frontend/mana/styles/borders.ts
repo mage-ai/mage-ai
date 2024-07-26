@@ -5,7 +5,7 @@ type BorderStyledProps = {
   small?: boolean;
 };
 
-const shared = css`
+const shared = css<BorderStyledProps>`
   border-radius: ${({ small, theme }) => theme.borders.radius[small ? 'sm' : 'base']};
   border-style: ${({ theme }) => theme.borders.style};
   border-width: ${({ theme }) => theme.borders.width};

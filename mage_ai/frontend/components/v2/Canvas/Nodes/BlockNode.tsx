@@ -302,36 +302,6 @@ export default function BlockNodeComponent({
             {!badge && incolor && <Circle backgroundColor={incolor} size={12} />}
 
             {badge && (
-              <TooltipWrapper
-                align={TooltipAlign.START}
-                hide={block?.type && ![BlockTypeEnum.GROUP, BlockTypeEnum.PIPELINE].includes(block?.type)}
-                horizontalDirection={TooltipDirection.RIGHT}
-                justify={TooltipJustify.START}
-                tooltip={
-                  <Grid rowGap={16}>
-                    <Grid rowGap={8}>
-                      <Text semibold small>{block?.name || block?.uuid}</Text>
-                      {block?.description && <Text secondary small>{block?.description}</Text>}
-                    </Grid>
-                    {blocksInGroup?.length > 0 && (
-                      <Grid rowGap={8}>
-                        <Text semibold xsmall>
-                          Blocks
-                        </Text>
-                        <Grid rowGap={8}>
-                          {blocksInGroup?.map((b: any) => (
-                            <Text key={b.uuid} monospace secondary xsmall>
-                              {b.name || b.uuid}
-                            </Text>
-                          ))}
-                        </Grid>
-                      </Grid>
-                    )}
-                  </Grid>
-                }
-                tooltipStyle={{ maxWidth: 400 }}
-                verticalDirection={TooltipDirection.UP}
-              >
               <Badge
                 after={afterEl}
                 before={incolor && <Circle backgroundColor={incolor} size={12} />}
@@ -342,9 +312,8 @@ export default function BlockNodeComponent({
               >
                 {children2}
               </Badge>
-            </TooltipWrapper>
-          )}
-        </Grid>
+            )}
+          </Grid>
 
         {!badge && afterEl}
       </Grid>

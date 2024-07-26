@@ -143,11 +143,11 @@ export function ShadowRenderer({
     }
 
     if (attemptsRef.current !== null && attemptsRef.current >= maxAttempts) {
-      console.error(
-        `[shadow:${uuid}:${renderRef.current}] failed to render within ${attemptsRef.current} attempts:`,
-        nodes?.length,
-        nodes?.map(n => n.id),
-      );
+      // console.error(
+      //   `[shadow:${uuid}:${renderRef.current}] failed to render within ${attemptsRef.current} attempts:`,
+      //   nodes?.length,
+      //   nodes?.map(n => n.id),
+      // );
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [uuid, handleDataCapture, handleNodeTransfer, nodes, waitUntil, maxAttempts, pollInterval]);
@@ -337,10 +337,10 @@ function ShadowContainer({
                     attemptsRef.current[node.id] !== null &&
                     attemptsRef.current[node.id] >= maxAttempts
                   ) {
-                    console.error(
-                      `[hook:${uuid}] failed to wait for ${node.id} attempts:`,
-                      attemptsRef.current[node.id],
-                    );
+                    // console.error(
+                    //   `[hook:${uuid}] failed to wait for ${node.id} attempts:`,
+                    //   attemptsRef.current[node.id],
+                    // );
                   }
                 };
 

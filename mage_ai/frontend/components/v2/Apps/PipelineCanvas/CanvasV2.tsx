@@ -116,6 +116,8 @@ const CHANGE_BLOCKS_ANIMATION_DURATION = 5;
 const ANIMATION_DURATION = 1;
 const INITIAL_ANIMATION_DURATION = 0.2;
 
+const BLOCK_EXIT_ANIMATION_DURATION = 0.5;
+
 type ModelsType = {
   blocks: BlockType[];
   groups: FrameworkType[];
@@ -223,6 +225,12 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
   const portalRefs = useRef<Record<string, React.MutableRefObject<HTMLDivElement>>>({});
 
   const opacityInterstitial = useMotionValue(0);
+
+  const opacityBlockEnter = useMotionValue(0);
+  const opacityBlockExit = useMotionValue(1);
+
+  const blockEnterRef = useRef<string>(null);
+  const blockExitRef = useRef<string>(null);
 
   const opacityInit = useTransform(() => animationInitialProgress.get());
   const scaleInit = useTransform(() => 0.8 + 0.2 * animationInitialProgress.get());
@@ -343,12 +351,12 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
     }),
     defaultLayoutConfig({
       childrenLayout: defaultLayoutConfig({
-        direction: LayoutConfigDirectionEnum.VERTICAL,
+        direction: LayoutConfigDirectionEnum.HORIZONTAL,
         display: LayoutDisplayEnum.DETAILED,
         grid: {
           columns: 5,
         },
-        style: LayoutStyleEnum.TREE,
+        style: LayoutStyleEnum.GRID,
         styleOptions: {
           rectTransformations: [
             {
@@ -1392,25 +1400,35 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
       ...blockAPI,
       create: {
         ...blockAPI.create,
-        mutate: (args1, args2) => blockAPI.create.mutate({
-          ...args1,
-          onSuccess: (resp) => {
-            const { data }= resp;
-            args1?.onSuccess && args1.onSuccess(resp);
-            onBlockCountChange(data.block.pipeline, data.block);
-          },
-        }, args2),
+        mutate: (args1, args2) => {
+          blockAPI.create.mutate({
+            ...args1,
+            onSuccess: (resp) => {
+              const { data } = resp;
+              opacityBlockEnter.set(0);
+              blockEnterRef.current = data.block.uuid;
+              args1?.onSuccess && args1.onSuccess(resp);
+              onBlockCountChange(data.block.pipeline, data.block);
+            },
+          }, args2);
+        },
       },
       delete: {
         ...blockAPI.delete,
-        mutate: (args1, args2) => blockAPI.delete.mutate({
-          ...args1,
-          onSuccess: (resp) => {
-            const { data } =  resp;
-            args1?.onSuccess && args1.onSuccess(resp);
-            onBlockCountChange(data.block.pipeline, data.block);
-          },
-        }, args2),
+        mutate: ({ id: blockUUID, ...args1 }, args2) => {
+          blockExitRef.current = blockUUID;
+          opacityBlockExit.set(1);
+
+          blockAPI.delete.mutate({
+            ...args1,
+            id: blockUUID,
+            onSuccess: (resp) => {
+              const { data } = resp;
+              args1?.onSuccess && args1.onSuccess(resp);
+              onBlockCountChange(data.block.pipeline, data.block);
+            },
+          }, args2);
+        },
       },
     };
   }, [blockAPI]);
@@ -2166,7 +2184,7 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
                     waitUntilAttempt({
                       uuid: `${itemUUID}:${nodeID}:${nodeType}:onMount`,
                       pollInterval: 500,
-                      maxAttempts: 4,
+                      maxAttempts: 1,
                       waitUntil: () => {
                         const el = getClosestChildRole(dragRef?.current, [ElementRoleEnum.CONTENT]);
                         const rt =
@@ -2214,7 +2232,7 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
                         waitUntilAttempt({
                           uuid: `${itemUUID}:${nodeID}:${nodeType}:handleLineTransitions`,
                           pollInterval: 500,
-                          maxAttempts: 4,
+                          maxAttempts: 1,
                           waitUntil: () => {
                             dragRefs?.current?.[nodeID]?.current?.classList.remove(
                               stylesPipelineBuilder.hiddenOffscreen);
@@ -2267,6 +2285,7 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
                 item={node}
                 key={nodeID}
                 mountRootRef={mountRootRef}
+                entering={blockEnterRef.current === block.uuid}
                 rect={rect}
                 rectsMappingRef={[
                   ItemTypeEnum.APP,
