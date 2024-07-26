@@ -110,7 +110,7 @@ export default function BlockGroupOverview({
 
     return sorted?.map(([templateName, blocks2]) => (
       <Grid key={templateName} rowGap={8}>
-        <Text secondary xsmall>
+        <Text medium secondary small>
           {templateName}
         </Text>
 
@@ -171,30 +171,31 @@ export default function BlockGroupOverview({
   }, [blocks, templatesForGroup]);
 
   if (!blocks?.length && !groups?.length) {
-    return (
-      <Grid rowGap={8}>
-        <PanelRows padding={false}>
-          <Grid
-            alignItems="center"
-            padding={16}
-            rowGap={8}
-            style={{ maxWidth: 400 }}
-            templateColumns="1fr"
-            templateRows="1fr"
-          >
-            {configuration?.metadata?.required && (
-              <Text italic secondary small>
-                This operation is required.
-              </Text>
-            )}
+    return;
+    // return (
+    //   <Grid rowGap={8}>
+    //     <PanelRows padding={false}>
+    //       <Grid
+    //         alignItems="center"
+    //         padding={16}
+    //         rowGap={8}
+    //         style={{ maxWidth: 400 }}
+    //         templateColumns="1fr"
+    //         templateRows="1fr"
+    //       >
+    //         {configuration?.metadata?.required && (
+    //           <Text italic secondary small>
+    //             This operation is required.
+    //           </Text>
+    //         )}
 
-            <Text secondary small>
-              {description}
-            </Text>
-          </Grid>
-        </PanelRows>
-      </Grid>
-    );
+    //         <Text secondary small>
+    //           {description}
+    //         </Text>
+    //       </Grid>
+    //     </PanelRows>
+    //   </Grid>
+    // );
   }
 
   if (detailLayout) {
@@ -220,17 +221,19 @@ export default function BlockGroupOverview({
                 columnGap={8}
                 justifyContent="space-between"
                 key={(block2 as any).uuid}
-                smallBottom
-                smallTop
+                paddingBottom={11}
+                paddingLeft={12}
+                paddingRight={12}
+                paddingTop={11}
                 style={{
                   gridTemplateColumns: 'minmax(0px, max-content) auto',
                 }}
               >
-                <Text secondary small>
+                <Text  medium secondary small>
                   {(block2 as any)?.name ?? (block2 as any)?.uuid}
                 </Text>
 
-                <Text secondary small>
+                <Text medium secondary small>
                   {BLOCK_TYPE_NAME_MAPPING[(block2 as any)?.type ?? '']}
                 </Text>
               </Grid>

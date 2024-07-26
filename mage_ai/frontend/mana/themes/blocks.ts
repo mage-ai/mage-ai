@@ -137,6 +137,7 @@ export function getBlockColor(
     },
   };
 
+  // @ts-ignore
   info.names.contrast = getContrastColor(info?.names?.base);
 
   // console.log(info);

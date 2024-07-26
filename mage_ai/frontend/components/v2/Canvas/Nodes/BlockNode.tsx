@@ -369,7 +369,15 @@ export default function BlockNodeComponent({
               menuItems={menuItemsForTemplates}
               selected={isSelectedGroup}
               teleportIntoBlock={teleportIntoBlock}
-            />
+            >
+              {!isSelectedGroup && (block?.children?.length ?? 0) === 0 && (
+                <BlockGroupOverview
+                  block={block as FrameworkType}
+                  buildContextMenuItemsForGroupBlock={buildContextMenuItemsForGroupBlock}
+                  teleportIntoBlock={teleportIntoBlock}
+                />
+              )}
+            </BlockGroupContent>
           )
       : (
           <Grid templateRows="auto" rowGap={8}>
@@ -494,45 +502,38 @@ export default function BlockNodeComponent({
               })}
             </Grid>
 
+            <Grid rowGap={8} templateRows="auto">
+              {templateConfigurations}
+              {isEmptyObject(block?.configuration?.templates) && (
+                <PanelRows padding={false}>
+                  <Grid
+                    alignItems="stretch"
+                    baseLeft
+                    baseRight
+                    columnGap={8}
+                    justifyContent="space-between"
+                    paddingBottom={11}
+                    paddingLeft={12}
+                    paddingRight={12}
+                    paddingTop={11}
+                    style={{
+                      gridTemplateColumns: 'minmax(0px, max-content) auto',
+                      minWidth: 240,
+                    }}
+                  >
+                    <Text medium secondary small>
+                      Language
+                    </Text>
 
-            {!groupSelection &&
-              (isGroup ? (
-                <BlockGroupOverview
-                  block={block as FrameworkType}
-                  buildContextMenuItemsForGroupBlock={buildContextMenuItemsForGroupBlock}
-                  teleportIntoBlock={teleportIntoBlock}
-                />
-              ) : (
-                <Grid rowGap={8} templateRows="auto">
-                  {templateConfigurations}
-                  {isEmptyObject(block?.configuration?.templates) && (
-                    <PanelRows padding={false}>
-                      <Grid
-                        alignItems="stretch"
-                        baseLeft
-                        baseRight
-                        columnGap={8}
-                        justifyContent="space-between"
-                        smallBottom
-                        smallTop
-                        style={{
-                          gridTemplateColumns: 'minmax(0px, max-content) auto',
-                          minWidth: 240,
-                        }}
-                      >
-                        <Text secondary small>
-                          Language
-                        </Text>
+                    <Text medium secondary small>
+                      {LANGUAGE_DISPLAY_MAPPING[block?.language] ?? ''}
+                    </Text>
+                  </Grid>
+                </PanelRows>
+              )}
 
-                        <Text secondary small>
-                          {LANGUAGE_DISPLAY_MAPPING[block?.language] ?? ''}
-                        </Text>
-                      </Grid>
-                    </PanelRows>
-                  )}
-                  {BlockTypeEnum.PIPELINE === block?.type && <div />}
-                </Grid>
-              ))}
+              {BlockTypeEnum.PIPELINE === block?.type && <div />}
+            </Grid>
           </Grid>
         )}
     </div>,

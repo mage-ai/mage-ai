@@ -38,6 +38,7 @@ type BlockGroupContentProps = {
   blockGroupStatusRef?: React.MutableRefObject<HTMLDivElement>;
   block: BlockType;
   blocks?: BlockType[];
+  children?: any;
   menuItems?: MenuItemType[];
   selected?: boolean;
   teleportIntoBlock: (event: any, target: any) => void;
@@ -48,6 +49,7 @@ export default function BlockGroupContent({
   blockGroupStatusRef,
   block,
   blocks,
+  children,
   menuItems,
   selected,
   teleportIntoBlock,
@@ -111,7 +113,7 @@ export default function BlockGroupContent({
             {isRequired && (
               <Grid alignItems="center" columnGap={8} justifyContent="start" autoFlow="column">
                 {blocks?.length > 0 ? <StatusComplete size={16} success /> : <DeleteCircle size={16} error />}
-                <Text secondary semibold small>
+                <Text secondary medium small>
                   {blocks?.length > 0 ? 'Reqs met' : 'Reqs not met'}
                 </Text>
               </Grid>
@@ -123,9 +125,10 @@ export default function BlockGroupContent({
       </Grid>
 
       {(blocks?.length ?? 0) === 0 && (!selected || ((block as FrameworkType)?.children ?? 0) === 0) && (
-        <Section small withBackground>
+        <Section small style={{ padding: 16 }}>
           <Text
             secondary
+            medium
             small
             maxWidth={(selected ? SELECTED_GROUP_NODE_MIN_WIDTH : GROUP_NODE_MIN_WIDTH) - (PADDING_VERTICAL * 2)}
             style={{
@@ -136,6 +139,8 @@ export default function BlockGroupContent({
           </Text>
         </Section>
       )}
+
+      {children}
     </Grid>
   )
 }
