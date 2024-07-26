@@ -21,7 +21,7 @@ const SectionStyled = styled.section<SectionProps>`
 
   ${({ withBackground }) => withBackground && `
     background-color: var(--menus-background-base-default);
-    border-color: var(--borders-color-button-base-default);
+    border-color: var(--borders-color-muted-default);
   `}
 `;
 

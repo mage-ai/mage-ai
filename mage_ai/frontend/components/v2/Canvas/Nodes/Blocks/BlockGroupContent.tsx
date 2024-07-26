@@ -27,6 +27,11 @@ import { groupValidation } from './utils';
 import { pluralize } from '@utils/string';
 import { useContext, useMemo } from 'react';
 import Button from '@mana/elements/Button';
+import {
+  GROUP_NODE_MIN_WIDTH,
+  SELECTED_GROUP_NODE_MIN_WIDTH,
+  PADDING_VERTICAL,
+} from './constants'
 
 type BlockGroupContentProps = {
   BuildBadgeRow?: any;
@@ -49,9 +54,6 @@ export default function BlockGroupContent({
 }: BlockGroupContentProps) {
   const { configuration, description } = block;
   const isRequired = (configuration as ConfigurationType)?.metadata?.required;
-
-  const errors = useMemo(() => [], []);
-  const runs = useMemo(() => [], []);
 
   const actionButton = useMemo(() => {
     const button = (
@@ -119,6 +121,18 @@ export default function BlockGroupContent({
 
         {actionButton}
       </Grid>
+
+      {(blocks?.length ?? 0) === 0 && (!selected || ((block as FrameworkType)?.children ?? 0) === 0) && (
+        <Section small style={{ maxWidth: (selected ? SELECTED_GROUP_NODE_MIN_WIDTH : GROUP_NODE_MIN_WIDTH) - (PADDING_VERTICAL * 2) }} withBackground>
+          <Text
+            secondary
+            small
+            style={{ lineHeight: 'var(--fonts-lineheight-xs)' }}
+          >
+            {description}
+          </Text>
+        </Section>
+      )}
     </Grid>
   )
 }

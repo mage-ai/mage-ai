@@ -3,18 +3,31 @@ from typing import Dict
 from mage_ai.api.operations.constants import OperationType
 from mage_ai.api.presenters.BasePresenter import BasePresenter
 
+WRITEABLE_ATTRIBUTES = [
+    'cache_block_output_in_memory',
+    'concurrency_config',
+    'description',
+    'execution_framework',
+    'executor_config',
+    'executor_count',
+    'executor_type',
+    'name',
+    'notification_config',
+    'remote_variables_dir',
+    'retry_config',
+    'run_pipeline_in_one_process',
+    'settings',
+    'settings',
+    'spark_config',
+    'tags',
+    'type',
+    'uuid',
+    'variables',
+]
+
 
 class PipelineExecutionFrameworkPresenter(BasePresenter):
-    default_attributes = [
-        'blocks',
-        'description',
-        'execution_framework',
-        'name',
-        'tags',
-        'type',
-        'uuid',
-        'variables',
-    ]
+    default_attributes = WRITEABLE_ATTRIBUTES + ['blocks']
 
     async def prepare_present(self, **kwargs) -> Dict:
         display_format = kwargs.get('format')

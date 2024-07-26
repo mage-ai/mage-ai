@@ -1,14 +1,11 @@
 from __future__ import annotations
 
-# import asyncio
 from typing import Any, Dict, Optional
 
 from mage_ai.data_preparation.models.block import Block as BlockBase
 from mage_ai.data_preparation.models.constants import BlockType
 from mage_ai.data_preparation.models.pipeline import Pipeline as PipelineBase
 from mage_ai.frameworks.execution.models.block.models import Configuration
-
-# from mage_ai.shared.array import flatten
 from mage_ai.shared.hash import extract
 from mage_ai.shared.models import DelegatorTarget
 from mage_ai.shared.utils import get_absolute_path
@@ -26,7 +23,7 @@ class Block(DelegatorTarget):
         self.pipeline_child = pipeline
 
     @classmethod
-    async def create(cls, uuid: str, pipeline: Any, payload: Dict[str, Any]) -> Block:
+    def preprocess_config(cls, uuid: str, pipeline: Any, payload: Dict[str, Any]) -> Dict:
         configuration_payload = payload.get('configuration', {})
 
         if 'templates' in configuration_payload:
@@ -43,13 +40,38 @@ class Block(DelegatorTarget):
         if not payload.get('type'):
             raise Exception('Block type is required')
 
-        block_base = BlockBase.create(
-            payload.get('name') or uuid,
-            block_type=payload['type'],
+        upstream_block_uuids = []
+        if 'upstream_blocks' in payload:
+            upstream_block_uuids = payload.pop('upstream_blocks')
+
+        return dict(
+            name=payload.get('name'),
             repo_path=pipeline.repo_path,
-            pipeline=pipeline,
+            upstream_block_uuids=upstream_block_uuids,
+            uuid=uuid,
             **extract(
                 payload,
+                [
+                    'config',
+                    'configuration',
+                    'groups',
+                    'type',
+                ],
+            ),
+        )
+
+    @classmethod
+    async def create(cls, uuid: str, pipeline: Any, payload: Dict[str, Any]) -> Block:
+        config = cls.preprocess_config(uuid, pipeline, payload)
+
+        block_base = BlockBase.create(
+            config.get('name') or config.get('uuid') or '',
+            block_type=config['type'],
+            repo_path=config['repo_path'],
+            pipeline=pipeline,
+            upstream_block_uuids=config['upstream_block_uuids'],
+            **extract(
+                config,
                 [
                     'config',
                     'configuration',
@@ -61,11 +83,9 @@ class Block(DelegatorTarget):
         if BlockType.PIPELINE == block.type:
             await block.create_pipeline_child()
 
-        upstream_block_uuids = []
-
         # Add the new block to an existing block’s downstream if the block is in the same group
         # and has no other downstream blocks.
-        # if block.groups:
+        # if not upstream_block_uuids and block.groups:
         #     blocks_list = await asyncio.gather(*[
         #         pipeline.get_blocks_in_group(group_uuid) for group_uuid in block.groups
         #     ])
@@ -85,26 +105,36 @@ class Block(DelegatorTarget):
         #         if not blockup.downstream_blocks:
         #             upstream_block_uuids.append(blockup.uuid)
 
-        await pipeline.add_block(block, upstream_block_uuids=upstream_block_uuids)
+        await pipeline.add_block(block, upstream_block_uuids=config.get('upstream_block_uuids'))
 
         return block
 
     async def create_pipeline_child(self):
         self.pipeline_child = PipelineBase.create(self.name or self.uuid, self.repo_path)
 
-    async def to_dict_async(self, *args, **kwargs) -> Dict:
+    async def to_dict_async(
+        self, *args, include_pipeline: Optional[bool] = None, **kwargs
+    ) -> Dict:
         config = self.configuration or {}
         config['file'] = (
             Item.load(path=get_absolute_path(self.file.file_path)).to_dict() if self.file else None
         )
 
-        return dict(
+        data = dict(
+            color=self.color,
             configuration=config,
-            downstream_blocks=[b.uuid for b in (self.downstream_blocks or [])],
+            downstream_blocks=self.downstream_block_uuids or [],
+            executor_config=self.executor_config,
+            executor_type=self.executor_type,
             groups=self.groups,
             language=self.language,
             name=self.name,
             type=self.type,
-            upstream_blocks=[b.uuid for b in (self.upstream_blocks or [])],
+            upstream_blocks=self.upstream_block_uuids or [],
             uuid=self.uuid,
         )
+
+        if include_pipeline and self.pipeline:
+            data['pipeline'] = await self.pipeline.to_dict_async()
+
+        return data

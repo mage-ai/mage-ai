@@ -9,7 +9,7 @@ import {
 import { generateUUID } from '@utils/uuids/generator';
 import { PipelineTypeEnum } from '@interfaces/PipelineType';
 import { UNIT } from '@oracle/styles/units/spacing';
-import { randomNameGenerator, titleize } from '@utils/string';
+import { randomNameGenerator, capitalize } from '@utils/string';
 import {
   PipelineExecutionFrameworkUUIDEnum,
   FRAMEWORK_NAME_MAPPING,
@@ -84,7 +84,7 @@ export const getNewPipelineButtonMenuItems = (
       onClick: () => {
         opts?.createRAG?.({
           pipeline: {
-            name: titleize(generateUUID()),
+            name: capitalize(generateUUID()),
           },
         });
       },

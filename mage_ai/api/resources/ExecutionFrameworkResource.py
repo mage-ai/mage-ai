@@ -1,3 +1,4 @@
+import urllib.parse
 from typing import Optional
 
 from mage_ai.api.errors import ApiError
@@ -29,12 +30,12 @@ class ExecutionFrameworkResource(GenericResource):
 
     @classmethod
     async def get_model(cls, pk: str, **kwargs) -> Optional[PipelineExecutionFramework]:
-        model = await get_framework(pk)
+        model = await get_framework(urllib.parse.unquote(pk))
         return model
 
     @classmethod
     async def member(cls, pk, user, **kwargs):
-        model = cls.get_model(pk, **kwargs)
+        model = cls.get_model(urllib.parse.unquote(pk), **kwargs)
 
         if not model:
             raise ApiError(ApiError.RESOURCE_NOT_FOUND)

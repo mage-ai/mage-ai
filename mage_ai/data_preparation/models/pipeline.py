@@ -1019,8 +1019,9 @@ class Pipeline:
             )
 
             framework = EXECUTION_FRAMEWORKS_BY_UUID.get(execution_framework)
-            framework.initialize_block_instances(blocks_by_uuid)
-            return blocks_by_uuid
+            if framework:
+                framework.initialize_block_instances(blocks_by_uuid, configs)
+                return blocks_by_uuid
 
         all_blocks_by_uuid = {b.uuid: b for b in all_blocks}
 

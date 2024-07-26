@@ -2,13 +2,13 @@ from __future__ import annotations
 
 from collections import deque
 from dataclasses import dataclass
-from typing import Any, List, Optional
+from typing import Any, Dict, List, Optional
 
 from mage_ai.data_preparation.models.constants import BlockType, PipelineType
 from mage_ai.frameworks.execution.models.base import BaseExecutionFramework
 from mage_ai.frameworks.execution.models.block.base import BlockExecutionFramework
-from mage_ai.shared.array import flatten
-from mage_ai.shared.hash import group_by, merge_dict
+from mage_ai.shared.array import flatten, unique_by
+from mage_ai.shared.hash import group_by, index_by, merge_dict
 
 
 @dataclass
@@ -144,7 +144,7 @@ class PipelineExecutionFramework(BaseExecutionFramework):
 
         return block_groups
 
-    def initialize_block_instances(self, blocks_by_uuid):
+    def initialize_block_instances(self, blocks_by_uuid, block_configs: List[Dict[str, Any]]):
         """
         Initialize the block instances by Enforcing block settings with the framework.
 
@@ -153,6 +153,41 @@ class PipelineExecutionFramework(BaseExecutionFramework):
         3. Set the block dependencies for block instances
         4. Set the block configurations for block instances
         """
+
+        # At the end, add the intra-group dependencies back.
+        block_configs_mapping = index_by(lambda x: x['uuid'], block_configs or [])
+        intra_group_deps = {}
+        for uuid, block_dict in block_configs_mapping.items():
+            group_uuids = block_dict.get('groups') or []
+            if len(group_uuids) == 0:
+                continue
+
+            dnb = []
+            upb = []
+
+            for buuid in block_dict.get('downstream_blocks') or []:
+                dblock = block_configs_mapping.get(buuid)
+                if (
+                    dblock
+                    and dblock.get('groups')
+                    and any([guuid in dblock.get('groups') for guuid in group_uuids])
+                ):
+                    blk = blocks_by_uuid.get(buuid)
+                    if blk:
+                        dnb.append(blk)
+
+            for buuid in block_dict.get('upstream_blocks') or []:
+                dblock = block_configs_mapping.get(buuid)
+                if (
+                    dblock
+                    and dblock.get('groups')
+                    and any([guuid in dblock.get('groups') for guuid in group_uuids])
+                ):
+                    blk = blocks_by_uuid.get(buuid)
+                    if blk:
+                        upb.append(blk)
+
+            intra_group_deps[uuid] = dict(downstream_blocks=dnb, upstream_blocks=upb)
 
         blocks_with_group = [b for b in blocks_by_uuid.values() if b.groups]
         blocks_by_group = group_by(lambda b: b.groups[0], blocks_with_group)
@@ -202,6 +237,19 @@ class PipelineExecutionFramework(BaseExecutionFramework):
 
             if block_group['downstream_block_groups']:
                 b.downstream_blocks = find_downstream_blocks(block_group)
+
+            # Add the intra-group dependencies
+            deps = intra_group_deps.get(b.uuid) or {}
+            if deps and deps.get('downstream_blocks'):
+                b.downstream_blocks = unique_by(
+                    (b.downstream_blocks or []) + deps.get('downstream_blocks', []),
+                    lambda blk: blk.uuid,
+                )
+            if deps and deps.get('upstream_blocks'):
+                b.upstream_blocks = unique_by(
+                    (b.upstream_blocks or []) + deps.get('upstream_blocks', []),
+                    lambda blk: blk.uuid,
+                )
 
     def get_blocks(self) -> List[BlockExecutionFramework]:
         arr = []

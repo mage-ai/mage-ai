@@ -1,21 +1,21 @@
 from mage_ai.api.oauth_scope import OauthScope
 from mage_ai.api.operations.constants import OperationType
 from mage_ai.api.policies.BasePolicy import BasePolicy
-from mage_ai.api.presenters.PipelineExecutionFrameworkPresenter import (
+from mage_ai.api.presenters.BlockExecutionFrameworkPresenter import (
     WRITEABLE_ATTRIBUTES,
-    PipelineExecutionFrameworkPresenter,
+    BlockExecutionFrameworkPresenter,
 )
 from mage_ai.orchestration.constants import Entity
 
 
-class PipelineExecutionFrameworkPolicy(BasePolicy):
+class BlockExecutionFrameworkPolicy(BasePolicy):
     @property
     def entity(self):
         # Adjust the entity to reflect the KernelProcess's entity, if applicable
         return Entity.ANY, None
 
 
-PipelineExecutionFrameworkPolicy.allow_actions(
+BlockExecutionFrameworkPolicy.allow_actions(
     [
         OperationType.DETAIL,
         OperationType.LIST,
@@ -26,7 +26,7 @@ PipelineExecutionFrameworkPolicy.allow_actions(
     condition=lambda policy: policy.has_at_least_viewer_role(),
 )
 
-PipelineExecutionFrameworkPolicy.allow_actions(
+BlockExecutionFrameworkPolicy.allow_actions(
     [
         OperationType.CREATE,
         OperationType.DELETE,
@@ -39,8 +39,8 @@ PipelineExecutionFrameworkPolicy.allow_actions(
 )
 
 
-PipelineExecutionFrameworkPolicy.allow_read(
-    PipelineExecutionFrameworkPresenter.default_attributes + ['pipelines'],
+BlockExecutionFrameworkPolicy.allow_read(
+    BlockExecutionFrameworkPresenter.default_attributes,
     on_action=[
         OperationType.LIST,
     ],
@@ -50,8 +50,8 @@ PipelineExecutionFrameworkPolicy.allow_read(
     condition=lambda policy: policy.has_at_least_viewer_role(),
 )
 
-PipelineExecutionFrameworkPolicy.allow_read(
-    PipelineExecutionFrameworkPresenter.default_attributes + ['framework', 'pipelines'],
+BlockExecutionFrameworkPolicy.allow_read(
+    BlockExecutionFrameworkPresenter.default_attributes,
     on_action=[
         OperationType.DETAIL,
     ],
@@ -61,8 +61,8 @@ PipelineExecutionFrameworkPolicy.allow_read(
     condition=lambda policy: policy.has_at_least_viewer_role(),
 )
 
-PipelineExecutionFrameworkPolicy.allow_read(
-    PipelineExecutionFrameworkPresenter.default_attributes + ['pipelines'],
+BlockExecutionFrameworkPolicy.allow_read(
+    BlockExecutionFrameworkPresenter.default_attributes,
     on_action=[
         OperationType.CREATE,
         OperationType.DELETE,
@@ -74,16 +74,8 @@ PipelineExecutionFrameworkPolicy.allow_read(
     condition=lambda policy: policy.has_at_least_editor_role_and_pipeline_edit_access(),
 )
 
-PipelineExecutionFrameworkPolicy.allow_write(
-    [
-        'clone_pipeline_uuid',
-        'custom_template_uuid',
-        'description',
-        'name',
-        'tags',
-        'type',
-        'uuid',
-    ],
+BlockExecutionFrameworkPolicy.allow_write(
+    WRITEABLE_ATTRIBUTES,
     on_action=[
         OperationType.CREATE,
     ],
@@ -93,7 +85,7 @@ PipelineExecutionFrameworkPolicy.allow_write(
     condition=lambda policy: policy.has_at_least_editor_role_and_pipeline_edit_access(),
 )
 
-PipelineExecutionFrameworkPolicy.allow_write(
+BlockExecutionFrameworkPolicy.allow_write(
     WRITEABLE_ATTRIBUTES,
     on_action=[
         OperationType.UPDATE,

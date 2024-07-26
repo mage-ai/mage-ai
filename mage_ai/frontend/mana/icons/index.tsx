@@ -656,6 +656,23 @@ export const Code = useWithIcon(
   },
 );
 
+export const CodeV2 = useWithIcon(
+  [
+    {
+      d: 'M10.6654 12L14.6654 8L10.6654 4M5.33203 4L1.33203 8L5.33203 12',
+      strokeOpacity: '1',
+      strokeWidth: '1.6',
+      strokeLinecap: 'round',
+      strokeLinejoin: 'round',
+      useStroke: true,
+    },
+  ],
+  {
+    fill: 'none',
+    viewBox: '0 0 16 16',
+  },
+);
+
 export const Column = useWithIcon(
   [
     {
@@ -4048,6 +4065,7 @@ export default {
   CloseWindowFilled,
   Cluster,
   Code,
+  CodeV2,
   CollapseWindow,
   CollapseWindowFilled,
   Column,

@@ -8,9 +8,16 @@ import { newMessageRequestUUID } from '@utils/events';
 import { getLineID } from '@components/v2/Apps/PipelineCanvas/Lines/LineManagerV2';
 import { ShowNodeType } from '@components/v2/Apps/PipelineCanvas/interfaces';
 import { EventEnum, KeyEnum } from '@mana/events/enums';
-import { removeANSI, removASCII } from '@utils/string';
+import { removeANSI, removASCII, capitalize } from '@utils/string';
 import { getBlockColor } from '@mana/themes/blocks';
-import BlockNodeComponent, { BADGE_HEIGHT, PADDING_VERTICAL, SELECTED_GROUP_NODE_MIN_WIDTH } from './BlockNode';
+import BlockNodeComponent from './BlockNode';
+import {
+  BADGE_HEIGHT,
+  PADDING_VERTICAL,
+  BLOCK_NODE_MIN_WIDTH,
+  GROUP_NODE_MIN_WIDTH,
+  SELECTED_GROUP_NODE_MIN_WIDTH,
+} from './Blocks/constants'
 import {
   EnvironmentTypeEnum,
   EnvironmentUUIDEnum,
@@ -55,7 +62,7 @@ import {
   OpenInSidekick,
   Delete,
   Explain,
-  AddBlock,
+  AddV2UpsideDown,
   Code,
   Lightning,
   CloseV2, PlayButtonFilled,
@@ -83,6 +90,7 @@ type BlockNodeType = {
   getParentOnMessageHandler?: (groupUUID: string) => (event: EventStreamType, block: BlockType) => void;
   recentlyAddedBlocksRef?: React.MutableRefObject<Record<string, boolean>>;
   node: NodeType;
+  pipelineUUID: string;
   showApp?: ShowNodeType;
   showOutput?: ShowNodeType;
 };
@@ -91,7 +99,7 @@ const STEAM_OUTPUT_DIR = 'code_executions';
 
 function BlockNode(
   { block, dragRef, node, groupSelection, showApp, recentlyAddedBlocksRef, showOutput,
-    setHandleOnChildMessage,
+    setHandleOnChildMessage, pipelineUUID,
     getParentOnMessageHandler,
     ...rest }: BlockNodeType,
   ref: React.MutableRefObject<HTMLElement>,
@@ -100,7 +108,8 @@ function BlockNode(
   const outputDragControls = useDragControls();
 
   const themeContext = useContext(ThemeContext);
-  const { animateLineRef, handleMouseDown, renderLineRef, updateLinesRef } = useContext(EventContext);
+  const { animateLineRef, handleMouseDown, onBlockCountChange,
+    renderLineRef, updateLinesRef } = useContext(EventContext);
   const { getSelectedGroupRectFromRefs, selectedGroupsRef } = useContext(SettingsContext);
   const { blockMappingRef, blocksByGroupRef, groupMappingRef, groupsByLevelRef, rectsMappingRef } =
     useContext(ModelContext);
@@ -624,7 +633,6 @@ function BlockNode(
         if (getParentOnMessageHandler) {
           block?.groups?.forEach((guuid: string) => {
             const handler = getParentOnMessageHandler(guuid);
-            console.log(guuid, handler);
             handler && handler(event, block);
         });
         }
@@ -720,8 +728,9 @@ function BlockNode(
     timeoutRef.current = setTimeout(() => {
       clearTimeout(timeoutRef.current);
 
-      mutations.pipelines.update.mutate({
+      mutations.blocks.update.mutate({
         event,
+        id: encodeURIComponent(block.uuid),
         onError: () => {
           ref?.current?.classList?.remove(stylesBlockNode.loading);
         },
@@ -740,7 +749,6 @@ function BlockNode(
           block: setNested(
             {
               configuration: block.configuration,
-              uuid: block.uuid,
             },
             key,
             value,
@@ -1208,43 +1216,47 @@ function BlockNode(
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const buildMenuItemsForTemplates = useCallback((block2: BlockType) => menuItemsForTemplates(
+    block2,
+    (event: any, block3, template, callback, payloadArg) => {
+      const blocks = Object.values(blocksByGroupRef?.current?.[block3.uuid] ?? {}) ?? [];
+      const upb = blocks.find(b => ((b as BlockType)?.downstream_blocks?.length ?? 0) === 0);
+
+      const payload = {
+        groups: [block3.uuid],
+        upstream_blocks: upb ? [(upb as BlockType).uuid] : [],
+        name: capitalize(generateUUID()),
+        ...payloadArg,
+      };
+
+      if (template?.uuid) {
+        payload.configuration = {
+          templates: {
+            [template.uuid]: template,
+          },
+        };
+      }
+
+      mutations.blocks.create.mutate({
+        event,
+        onSuccess: () => {
+          callback && callback?.();
+          removeContextMenu(event);
+        },
+        payload,
+      });
+    },
+  ), [mutations.blocks.create, removeContextMenu, blocksByGroupRef]);
+
   const buildContextMenuItemsForGroupBlock = useCallback(
     (block2: BlockType) => [
       {
         uuid: block2?.name ?? block2?.uuid,
       },
       {
-        Icon: AddBlock,
-        items: menuItemsForTemplates(
-          block2,
-          (event: any, block3, template, callback, payloadArg) => {
-            const payload = {
-              ...payloadArg,
-              groups: [block3.uuid],
-              uuid: generateUUID(),
-            };
-
-            if (template?.uuid) {
-              payload.configuration = {
-                templates: {
-                  [template.uuid]: template,
-                },
-              };
-            }
-
-            mutations.pipelines.update.mutate({
-              event,
-              onSuccess: event => {
-                callback && callback?.();
-                removeContextMenu(event);
-              },
-              payload: {
-                block: payload,
-              },
-            });
-          },
-        ),
-        uuid: 'Add block from template',
+        Icon: AddV2UpsideDown,
+        items: buildMenuItemsForTemplates(block2),
+        uuid: 'Add block',
       },
       ...(groupSelection ||
       (selectedGroupsRef?.current?.length >= 3 &&
@@ -1260,7 +1272,7 @@ function BlockNode(
           ]),
     ],
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [mutations.pipelines.update, groupSelection, removeContextMenu, setSelectedGroup, teleportIntoBlock],
+    [mutations.blocks, groupSelection, removeContextMenu, setSelectedGroup, teleportIntoBlock, buildMenuItemsForTemplates],
   );
 
   return (
@@ -1308,17 +1320,15 @@ function BlockNode(
                 onClick: (event: ClientEventType) => {
                   event?.preventDefault();
 
-                  mutations.pipelines.update.mutate({
+                  mutations.blocks.delete.mutate({
                     event,
-                    onSuccess: () => {
+                    id: encodeURIComponent(block.uuid),
+                    onSuccess: ({ data }) => {
                       closeEditorApp();
                       closeOutput();
+                      console.log('REMOVEEEEEEEEEEEEEEEEEEEEEEEEEEE')
                       removeContextMenu(event);
                     },
-                    payload: pipeline => ({
-                      ...pipeline,
-                      blocks: pipeline?.blocks?.filter((b: BlockType) => b.uuid !== block.uuid),
-                    }),
                   });
                 },
                 uuid: 'Remove from pipeline',
@@ -1346,6 +1356,7 @@ function BlockNode(
         groupSelection={groupSelection}
         interruptExecution={interruptExecution}
         loading={loading}
+        menuItemsForTemplates={buildMenuItemsForTemplates(block)}
         loadingKernelMutation={loadingKernelMutation}
         node={node}
         openEditor={launchEditorApp}

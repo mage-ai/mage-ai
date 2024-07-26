@@ -346,7 +346,7 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
         direction: LayoutConfigDirectionEnum.HORIZONTAL,
         display: LayoutDisplayEnum.DETAILED,
         grid: {
-          columns: 2,
+          columns: 5,
         },
         style: LayoutStyleEnum.TREE,
         // styleOptions: {
@@ -512,6 +512,7 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
           index={index}
           key={block.uuid}
           node={node as NodeType}
+          pipelineUUID={pipelineUUID}
           recentlyAddedBlocksRef={newBlockCallbackAnimationRef}
           ref={nodeRef}
           showApp={showRelatedNotes(ItemTypeEnum.APP)}
@@ -1280,8 +1281,6 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
     // Need to clear this our shouldCapture in ShadowNodeType won’t execute.
     rectsMappingRef.current = {};
 
-    console.log(vuuid, viewUUIDNext.current)
-
     if (blocks?.length > 0 || groups?.length > 0) {
       const shadowNodes = [];
 
@@ -1352,6 +1351,67 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
     },
     [framework],
   );
+
+  function onBlockCountChange(pipelineArg: PipelineExecutionFrameworkType, block: BlockType, deleted?: boolean) {
+    updateLocalResources(pipelineArg);
+    setPipeline(pipelineArg);
+
+    if (!deleted) {
+      newBlockCallbackAnimationRef.current = {};
+      newBlockCallbackAnimationRef.current[block.uuid] = false;
+
+      // Let any menus have a chance to unmount.
+      setTimeout(() => {
+        viewUUIDPrev.current = getNewUUID(3, 'ts');
+        viewUUIDNext.current = viewUUIDPrev.current;
+        renderLayoutUpdates(() => null, viewUUIDNext.current);
+      }, 100);
+    }
+
+    pageTitleRef.current = pipelineArg?.name;
+    page?.setPage?.({
+      busy: false,
+      error: false,
+      notice: false,
+      success: false,
+      title: pageTitleRef.current,
+    });
+  }
+
+  const blockAPI = useMutate({
+    idParent: pipelineUUID,
+    resource: 'blocks',
+    resourceParent: 'pipeline_execution_frameworks',
+  }, {
+    automaticAbort: false,
+  });
+  const blockMutants = useMemo(() => {
+    return {
+      ...blockAPI,
+      create: {
+        ...blockAPI.create,
+        mutate: (args1, args2) => blockAPI.create.mutate({
+          ...args1,
+          onSuccess: (resp) => {
+            const { data }= resp;
+            args1?.onSuccess && args1.onSuccess(resp);
+            onBlockCountChange(data.block.pipeline, data.block);
+          },
+        }, args2),
+      },
+      delete: {
+        ...blockAPI.delete,
+        mutate: (args1, args2) => blockAPI.delete.mutate({
+          ...args1,
+          onSuccess: (resp) => {
+            const { data } =  resp;
+            args1?.onSuccess && args1.onSuccess(resp);
+            onBlockCountChange(data.block.pipeline, data.block);
+          },
+        }, args2),
+      },
+    };
+  }, [blockAPI]);
 
   const pipelineMutants = useMutate(
     {
@@ -1782,6 +1842,7 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
             }}
             key={block.uuid}
             node={node as NodeType}
+            pipelineUUID={pipelineUUID}
             ref={nodeRef}
           />
         </DragWrapper>
@@ -2402,6 +2463,7 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
               groupMappingRef={groupMappingRef}
               groupsByLevelRef={groupsByLevelRef}
               mutations={{
+                blocks: blockMutants,
                 files: fileMutants,
                 pipelines: pipelineMutants,
               }}
@@ -2411,6 +2473,7 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
                 animateLineRef={animateLineRef}
                 handleContextMenu={handleContextMenu}
                 handleMouseDown={handleMouseDown}
+                onBlockCountChange={onBlockCountChange}
                 removeContextMenu={removeContextMenu}
                 renderLineRef={renderLineRef}
                 setSelectedGroup={setSelectedGroup}

@@ -1,8 +1,11 @@
 import React, { createContext } from 'react';
+import PipelineExecutionFrameworkType, {
+  FrameworkType,
+  PipelineExecutionFrameworkBlockType,
+} from '@interfaces/PipelineExecutionFramework/interfaces';
 import { ClientEventType, RectType } from '@mana/shared/interfaces';
 import { MenuItemType } from '@mana/components/Menu/interfaces';
 import { RenderContextMenuOptions, RemoveContextMenuType } from '@mana/hooks/useContextMenu';
-import { FrameworkType } from '@interfaces/PipelineExecutionFramework/interfaces';
 import { ExecutionManagerType } from '../../../ExecutionManager/interfaces';
 import BlockType from '@interfaces/BlockType';
 
@@ -14,6 +17,7 @@ interface EventContextType {
     opts?: RenderContextMenuOptions,
   ) => void;
   handleMouseDown: (event: MouseEvent) => void;
+  onBlockCountChange: (pipeline: PipelineExecutionFrameworkType, block: BlockType, deleted?: boolean) => void;
   removeContextMenu: RemoveContextMenuType;
   renderLineRef: React.MutableRefObject<(rect: RectType, rectMapping?: Record<string, RectType>) => void>;
   setSelectedGroup: (group: FrameworkType | BlockType) => void;

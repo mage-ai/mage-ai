@@ -26,7 +26,7 @@ export default function TeleportGroup({
   isGroup,
 }: {
   block: BlockType;
-  BuildBadgeRow: (props: { inputColorName?: string; outputColorName?: string }) => JSX.Element;
+  BuildBadgeRow: (props: { inputColorName?: string; , isGroup?: boolean, outputColorName?: string }) => JSX.Element;
   index?: number;
   node?: NodeItemType;
   role?: ElementRoleEnum;

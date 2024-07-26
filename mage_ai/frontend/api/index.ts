@@ -119,6 +119,7 @@ export const CODE_EXECUTIONS: 'code_executions' = 'code_executions';
 
 // v2
 export const EXECUTION_FRAMEWORKS: 'execution_frameworks' = 'execution_frameworks';
+export const PIPELINE_EXECUTION_FRAMEWORKS: 'pipeline_execution_frameworks' = 'pipeline_execution_frameworks';
 export const EXECUTION_OUTPUTS: 'execution_outputs' = 'execution_outputs';
 export const KERNEL_PROCESSES: 'kernel_processes' = 'kernel_processes';
 
@@ -229,6 +230,7 @@ const RESOURCES_PAIRS_ARRAY: any[][] = [
   [EXECUTION_OUTPUTS],
   [KERNEL_PROCESSES],
   [PIPELINES, EXECUTION_FRAMEWORKS],
+  [BLOCKS, PIPELINE_EXECUTION_FRAMEWORKS],
 ];
 
 // @ts-ignore

@@ -93,7 +93,7 @@ class Pipeline(DelegatorTarget):
             execution_framework_uuids.append(ExecutionFrameworkUUID.from_value(framework.uuid))
 
         if execution_framework_uuids is not None:
-            fuuids: List[str] = [str(e.value) for e in execution_framework_uuids]
+            fuuids: List[str] = [value for value in execution_framework_uuids]
             criteria['execution_framework'] = fuuids
 
         result = await find_files_with_criteria(directories, criteria)
@@ -139,8 +139,11 @@ class Pipeline(DelegatorTarget):
     async def get_blocks(self, refresh: Optional[bool] = None) -> List[Block]:
         if self.blocks and not refresh:
             return self.blocks
-        pipeline = await self.get_pipeline()
-        self.blocks = [Block(block=block) for block in pipeline.blocks_by_uuid.values()]
+        await self.get_pipeline(refresh=refresh)
+        self.blocks = [
+            Block(block=block, pipeline=self.pipeline)
+            for block in self.pipeline.blocks_by_uuid.values()
+        ]
 
         return self.blocks
 
@@ -162,7 +165,7 @@ class Pipeline(DelegatorTarget):
         return self.pipelines
 
     async def create_block(self, payload: Dict) -> Block:
-        return await Block.create(payload['uuid'], self, payload)
+        return await Block.create(payload.get('uuid', payload.get('name')), self, payload)
 
     async def to_dict_async(
         self,
@@ -171,8 +174,7 @@ class Pipeline(DelegatorTarget):
         include_pipelines: Optional[bool] = None,
         **kwargs,
     ) -> Dict:
-        await self.get_pipeline()
-        await self.get_blocks()
+        await self.get_blocks(refresh=True)
 
         data = dict(
             description=self.description,
@@ -215,7 +217,7 @@ class Pipeline(DelegatorTarget):
         pipeline.add_block(block.block, *args, **kwargs)
 
     async def remove_block(self, block: Block, *args, **kwargs):
-        self.delete_block(block.block, force=True)
+        self.delete_block(block.block, commit=True, force=True)
 
     async def update_block_configuration(self, block: Block, configuration: Dict):
         if not self.pipeline:
