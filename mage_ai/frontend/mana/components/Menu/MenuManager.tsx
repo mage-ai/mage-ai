@@ -4,6 +4,7 @@ import { MenuItemType } from '@mana/hooks/useContextMenu';
 import { createPortal } from 'react-dom';
 import { getAbsoluteRect } from '@mana/shared/utils';
 import { LayoutDirectionEnum } from '@mana/components/Menu/types';
+import { ElementRoleEnum } from '@mana/shared/types';
 
 type UseMenuManagerProps = {
   contained?: boolean;
@@ -184,6 +185,7 @@ function MenuManager(
             openItems,
           });
         }}
+        role={ElementRoleEnum.BUTTON}
         ref={containerRef}
       >
         {children}

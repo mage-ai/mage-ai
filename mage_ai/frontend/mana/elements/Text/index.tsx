@@ -21,6 +21,7 @@ export type TextProps = {
   blue?: boolean;
   bold?: boolean;
   inverted?: boolean;
+  error?: boolean;
   italic?: boolean;
   light?: boolean;
   medium?: boolean;
@@ -39,6 +40,9 @@ export function buildTextStyleProps({
   maxWidth,
   nowrap,
   small,
+  success,
+  error,
+  warning,
   xsmall,
   ...props
 }: TextProps): {
@@ -50,6 +54,9 @@ export function buildTextStyleProps({
     classNameProp || '',
     nowrap && styles.nowrap,
     colorName && styles[`color-${colorName.toLowerCase()}`],
+    success && styles.success,
+    error && styles.error,
+    warning && styles.warning,
   ].filter(Boolean);
 
   Object.entries(props || {}).forEach(([key, value]) => {

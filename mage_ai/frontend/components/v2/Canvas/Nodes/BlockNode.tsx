@@ -1,6 +1,6 @@
 import Aside from './Blocks/Aside';
 import { getUpDownstreamColors } from './Blocks/utils';
-import SelectedGroupContent from './Blocks/SelectedGroupContent';
+import BlockGroupContent from './Blocks/BlockGroupContent';
 import Markdown from '@mana/components/Markdown';
 import { generateUUID } from '@utils/uuids/generator';
 import { LayoutDirectionEnum } from '@mana/components/Menu/types';
@@ -89,6 +89,7 @@ export type BlockNodeProps = {
   buildContextMenuItemsForGroupBlock: (block: BlockType) => MenuItemType[];
   timerStatusRef?: React.RefObject<HTMLDivElement>;
   updateBlock: (event: any, key: string, value: any, opts?: any) => void;
+  blockGroupStatusRef?: React.MutableRefObject<HTMLDivElement>;
   teleportIntoBlock: (event: any, target: any) => void;
 } & BlockNode;
 
@@ -101,6 +102,7 @@ export default function BlockNodeComponent({
   code: contentCode,
   groupSelection,
   executing,
+  blockGroupStatusRef,
   interruptExecution,
   loading,
   loadingKernelMutation,
@@ -533,14 +535,15 @@ export default function BlockNodeComponent({
           // minWidth: 300,
         }}
       >
-        {isSelectedGroup ?
+        {isGroup ?
           (
-            <SelectedGroupContent
+            <BlockGroupContent
               BuildBadgeRow={({ fullWidth, ...rest }) => badge && BuildBadgeRow({
                 after,
                 badgeFullWidth: fullWidth || (!inputs?.length && isGroup),
                 ...rest,
               })}
+              blockGroupStatusRef={blockGroupStatusRef}
               block={block as FrameworkType}
               blocks={blocksInGroup as BlockType[]}
               menuItems={menuItemsForTemplates(
@@ -571,6 +574,8 @@ export default function BlockNodeComponent({
                   });
                 },
               )}
+              selected={isSelectedGroup}
+              teleportIntoBlock={teleportIntoBlock}
             />
           )
       : (
@@ -668,6 +673,7 @@ ${'```'}`}
       buildContextMenuItemsForGroupBlock,
       BuildBadgeRow,
       blocksInGroup,
+      blockGroupStatusRef,
       isSelectedGroup,
       selectedGroup,
       block,
@@ -677,6 +683,7 @@ ${'```'}`}
       teleportIntoBlock,
       after,
       contentCode,
+      teleportIntoBlock,
       isGroup,
       inputs,
       groupSelection,
@@ -715,27 +722,24 @@ ${'```'}`}
     }
   }, [loadingApp, editorApp]);
 
-  const teleportBlock = useMemo(
-    () => (
-      <TeleportBlock
-        block={block}
-        BuildBadgeRow={BuildBadgeRow}
-        index={indexProp}
-        node={node}
-        role={ElementRoleEnum.CONTENT}
-        selectedGroup={selectedGroup}
-      />
-    ),
-    [block, BuildBadgeRow, indexProp, node, selectedGroup],
-  );
-
-  if (isSiblingGroup) return teleportBlock;
+  // const teleportBlock = useMemo(
+  //   () =>
+  //   <TeleportBlock
+  //     block={block}
+  //     BuildBadgeRow={BuildBadgeRow}
+  //     index={indexProp}
+  //     node={node}
+  //     role={ElementRoleEnum.CONTENT}
+  //     selectedGroup={selectedGroup}
+  //   />
+  //   ,
+  //   [block, BuildBadgeRow, indexProp, node, selectedGroup, isGroup],
+  // );
 
   return (
     <>
       {executing && <Tag left statusVariant timer top />}
-      {isSiblingGroup && teleportBlock}
-      {!isSiblingGroup && content}
+      {content}
     </>
   );
 }

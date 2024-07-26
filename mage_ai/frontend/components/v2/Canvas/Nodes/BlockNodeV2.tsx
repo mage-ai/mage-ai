@@ -1,4 +1,5 @@
 import * as osPath from 'path';
+import { ErrorDetailsType } from '@interfaces/ErrorsType';
 import stylesPipelineBuilder from '@styles/scss/apps/Canvas/Pipelines/Builder.module.scss';
 import { WithOnMount } from '@mana/hooks/useWithOnMount';
 import { TooltipAlign, TooltipWrapper, TooltipDirection, TooltipJustify } from '@context/v2/Tooltip';
@@ -57,12 +58,12 @@ import {
   AddBlock,
   Code,
   Lightning,
-  Save, CloseV2, PlayButtonFilled,
-  Trash
+  CloseV2, PlayButtonFilled,
+  AlertTriangle, BlockGeneric, PlayButton,
 } from '@mana/icons';
 import { ThemeContext } from 'styled-components';
 import { createRoot, Root } from 'react-dom/client';
-import { executionDone } from '@components/v2/ExecutionManager/utils';
+import { executionDone, errorFromResults } from '@components/v2/ExecutionManager/utils';
 import { getClosestRole } from '@utils/elements';
 import { getFileCache, updateFileCache } from '../../IDE/cache';
 import { useMutate } from '@context/v2/APIMutation';
@@ -78,6 +79,8 @@ type BlockNodeType = {
   dragRef?: React.MutableRefObject<HTMLDivElement>;
   index?: number;
   groupSelection?: boolean;
+  setHandleOnChildMessage?: (handler: (event: EventStreamType, block: BlockType) => void) => void;
+  getParentOnMessageHandler?: (groupUUID: string) => (event: EventStreamType, block: BlockType) => void;
   recentlyAddedBlocksRef?: React.MutableRefObject<Record<string, boolean>>;
   node: NodeType;
   showApp?: ShowNodeType;
@@ -87,7 +90,10 @@ type BlockNodeType = {
 const STEAM_OUTPUT_DIR = 'code_executions';
 
 function BlockNode(
-  { block, dragRef, node, groupSelection, showApp, recentlyAddedBlocksRef, showOutput, ...rest }: BlockNodeType,
+  { block, dragRef, node, groupSelection, showApp, recentlyAddedBlocksRef, showOutput,
+    setHandleOnChildMessage,
+    getParentOnMessageHandler,
+    ...rest }: BlockNodeType,
   ref: React.MutableRefObject<HTMLElement>,
 ) {
   const appDragControls = useDragControls();
@@ -118,6 +124,21 @@ function BlockNode(
   const handleOnMessageRef = useRef<Record<string, (event: EventStreamType) => void>>({});
 
   const [apps, setApps] = useState<Record<string, AppNodeType>>({});
+
+  // Child blocks
+  const statusByBlockRef = useRef<Record<string, {
+    error?: ErrorDetailsType;
+    executing?: boolean;
+  }>>({});
+  const executionResultsByBlockRef = useRef<Record<
+    string,
+    Record<
+      string,
+      Record<string, ExecutionResultType>
+    >
+  >>({});
+  const blockGroupStatusRef = useRef<HTMLDivElement>(null);
+  const blockGroupStatusRootRef = useRef<Root>(null);
 
   // Status
   const appOpenRef = useRef<boolean>(false);
@@ -499,6 +520,92 @@ function BlockNode(
     connectionStatusRef.current = status;
   }
 
+  function renderBlockGroupStatus() {
+    if (!blockGroupStatusRootRef.current) {
+      blockGroupStatusRootRef.current = createRoot(blockGroupStatusRef.current);
+    }
+
+    const blocks = Object.values(blocksByGroupRef?.current?.[block.uuid] ?? {}) ?? [];
+    const errors = [];
+    const runs = [];
+
+    Object.entries(statusByBlockRef.current ?? {}).forEach(([buuid, {
+      error,
+      executing,
+    }]) => {
+      if (error) {
+        errors.push(error);
+      }
+      if (executing) {
+        runs.push({ uuid: buuid });
+      }
+    })
+
+    blockGroupStatusRootRef.current.render(
+      <ContextProvider theme={themeContext as any}>
+        <Grid columnGap={24} style={{ gridTemplateColumns: 'repeat(3, max-content)' }}>
+          <Grid alignItems="center" justifyContent="start" autoFlow="column" columnGap={6}>
+            <BlockGeneric secondary size={14} />
+
+            <Text secondary semibold small>
+              {blocks?.length ?? 0}
+            </Text>
+          </Grid>
+
+          <Grid alignItems="center" justifyContent="start" autoFlow="column" columnGap={6}>
+            <AlertTriangle error={errors?.length > 0} muted={errors?.length === 0} size={14} />
+
+            <Text error={errors?.length > 0} muted={errors?.length === 0} semibold small>
+              {errors?.length ?? 0}
+            </Text>
+          </Grid>
+
+          <Grid alignItems="center" justifyContent="start" autoFlow="column" columnGap={6}>
+            <PlayButton muted={runs?.length === 0} success={runs?.length > 0} size={14} />
+
+            <Text muted={runs?.length === 0} success={runs?.length > 0} semibold small>
+              {runs?.length ?? 0}
+            </Text>
+          </Grid>
+        </Grid>
+      </ContextProvider>,
+    );
+  }
+
+  function updateChildBlockStatuses(event: EventStreamType, block2: BlockType) {
+    Object.entries(executionResultsByBlockRef?.current ?? {}).forEach(([buuid, resultsByMessageRequestUUID]) => {
+      Object.values(resultsByMessageRequestUUID ?? {}).forEach((resultsByResultID) => {
+        const results = Object.values(resultsByResultID ?? {}) ?? [];
+        statusByBlockRef.current[buuid] ||= {
+          error: null,
+          executing: false,
+        }
+        statusByBlockRef.current[buuid].error = errorFromResults(results);
+        if (block2?.uuid === buuid) {
+          statusByBlockRef.current[buuid].executing = !executionDone(event);
+        }
+      });
+    });
+
+    renderBlockGroupStatus();
+  }
+
+  function handleChildMessages(event: EventStreamType, block2: BlockType) {
+    const result = event?.result;
+    if (result) {
+      executionResultsByBlockRef.current[block2.uuid] ||= {};
+
+      const mruuid = result.process.message_request_uuid
+      if (!executionResultsByBlockRef.current[block2.uuid]?.[mruuid]) {
+        // Reset it if its a new message set
+        executionResultsByBlockRef.current[block2.uuid][mruuid] = {};
+      }
+      executionResultsByBlockRef.current[block2.uuid][mruuid][result.result_id] = result;
+    }
+
+    updateChildBlockStatuses(event, block2);
+  }
+
   function handleSubscribe(consumerID: string) {
     handleOnMessageRef.current[consumerIDRef.current] = (event: EventStreamType) => {
       const done = executionDone(event);
@@ -513,6 +620,14 @@ function BlockNode(
       onError: handleError,
       onMessage: (event: EventStreamType) => {
         Object.values(handleOnMessageRef.current ?? {}).forEach(handler => handler(event));
+
+        if (getParentOnMessageHandler) {
+          block?.groups?.forEach((guuid: string) => {
+            const handler = getParentOnMessageHandler(guuid);
+            console.log(guuid, handler);
+            handler && handler(event, block);
+        });
+        }
       },
       onOpen: handleOpen,
     });
@@ -638,7 +753,7 @@ function BlockNode(
   function closeOutput(callback?: () => void) {
     hideLinesToOutput();
 
-    outputWrapperRef.current.classList.add(stylesPipelineBuilder.hiddenOffscreen);
+    outputWrapperRef?.current?.classList?.add(stylesPipelineBuilder.hiddenOffscreen);
 
     delete handleOnMessageRef.current?.[outputNodeRef?.current?.id];
 
@@ -660,7 +775,7 @@ function BlockNode(
   function closeEditorApp(callback?: () => void) {
     hideLinesToOutput({ editorOnly: true });
 
-    appWrapperRef.current.classList.add(stylesPipelineBuilder.hiddenOffscreen);
+    appWrapperRef?.current?.classList?.add(stylesPipelineBuilder.hiddenOffscreen);
 
     delete handleOnMessageRef.current?.[appNodeRef?.current?.id];
     delete handleOnMessageRef.current?.[`${appNodeRef?.current?.id}/output`];
@@ -1051,6 +1166,14 @@ function BlockNode(
   useEffect(() => {
     consumerIDRef.current = block.uuid;
 
+    if (isGroup) {
+      renderBlockGroupStatus();
+    }
+
+    if (setHandleOnChildMessage) {
+      setHandleOnChildMessage(handleChildMessages);
+    }
+
     if (block?.uuid in (recentlyAddedBlocksRef?.current ?? {})
       && objectSize(block?.configuration?.templates ?? {}) === 0
     ) {
@@ -1215,6 +1338,7 @@ function BlockNode(
         commands={commands}
         apps={apps}
         block={block}
+        blockGroupStatusRef={blockGroupStatusRef}
         buildContextMenuItemsForGroupBlock={buildContextMenuItemsForGroupBlock}
         code={fileRef.current?.content}
         dragRef={dragRef}

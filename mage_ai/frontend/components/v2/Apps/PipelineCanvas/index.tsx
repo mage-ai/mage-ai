@@ -64,6 +64,10 @@ export default function PipelineBuilder({
   const [, setZoomPanDisabledState] = useState(false);
 
   useZoomPan(zoomPanStateRef, {
+    // initialPosition: {
+    //   xPercent: 0.5,
+    //   yPercent: 0.5,
+    // },
     roles: [ElementRoleEnum.DRAGGABLE],
   });
 
@@ -83,7 +87,10 @@ export default function PipelineBuilder({
       const targetElement = event.target as HTMLElement;
       const hasRole =
         dragEnabled &&
-        getClosestRole(targetElement, [dragEnabled && ElementRoleEnum.DRAGGABLE].filter(Boolean));
+        getClosestRole(targetElement, [
+          dragEnabled && ElementRoleEnum.DRAGGABLE,
+          ElementRoleEnum.BUTTON,
+        ].filter(Boolean));
 
       DEBUG.dragging && console.log('handleMouseDown', targetElement, hasRole);
       if (hasRole) {

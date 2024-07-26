@@ -78,6 +78,9 @@
   &.secondary {
     color: var(--fonts-color-text-secondary);
   }
+  &.error {
+    color: var(--colors-statuses-error);
+  }
   &.warning {
     color: var(--fonts-color-text-warning);
   }

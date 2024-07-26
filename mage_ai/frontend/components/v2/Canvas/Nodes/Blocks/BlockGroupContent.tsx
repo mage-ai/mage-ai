@@ -12,6 +12,7 @@ import Link from '@mana/elements/Link';
 import PanelRows from '@mana/elements/PanelRows';
 import Text from '@mana/elements/Text';
 import {
+  ConfigurationType,
   FrameworkType,
   PipelineExecutionFrameworkBlockType,
 } from '@interfaces/PipelineExecutionFramework/interfaces';
@@ -27,14 +28,57 @@ import { pluralize } from '@utils/string';
 import { useContext, useMemo } from 'react';
 import Button from '@mana/elements/Button';
 
-export default function SelectedGroupContent({
+type BlockGroupContentProps = {
+  BuildBadgeRow?: any;
+  blockGroupStatusRef?: React.MutableRefObject<HTMLDivElement>;
+  block: BlockType;
+  blocks?: BlockType[];
+  menuItems?: MenuItemType[];
+  selected?: boolean;
+  teleportIntoBlock: (event: any, target: any) => void;
+};
+
+export default function BlockGroupContent({
   BuildBadgeRow,
+  blockGroupStatusRef,
   block,
   blocks,
   menuItems,
-}) {
+  selected,
+  teleportIntoBlock,
+}: BlockGroupContentProps) {
   const { configuration, description } = block;
-  const isRequired = configuration?.metadata?.required;
+  const isRequired = (configuration as ConfigurationType)?.metadata?.required;
+
+  const errors = useMemo(() => [], []);
+  const runs = useMemo(() => [], []);
+
+  const actionButton = useMemo(() => {
+    const button = (
+      <Button
+        Icon={selected ? ip => <AddV2UpsideDown {...ip} size={16} /> : undefined}
+        onClick={selected ? undefined : (event: any) => teleportIntoBlock(event, block)}
+        small
+      >
+        {selected ? 'Add block' : 'Go'}
+      </Button>
+    );
+
+    if (!selected) {
+      return button;
+    }
+
+    return (
+      <MenuManager
+        className={`aside-menu-manager-${block.uuid}`}
+        direction={LayoutDirectionEnum.LEFT}
+        items={menuItems}
+        uuid={block.uuid}
+      >
+        {button}
+      </MenuManager>
+    );
+  }, [block, menuItems, selected, teleportIntoBlock]);
 
   return (
     <Grid rowGap={8}>
@@ -60,31 +104,7 @@ export default function SelectedGroupContent({
               isRequired && 'auto',
             ].filter(Boolean).join(' ')}
           >
-            <Grid columnGap={24} style={{ gridTemplateColumns: 'repeat(3, max-content)' }}>
-              <Grid alignItems="center" justifyContent="start" autoFlow="column" columnGap={6}>
-                <BlockGeneric secondary size={14} />
-
-                <Text secondary semibold small>
-                  {blocks?.length ?? 0}
-                </Text>
-              </Grid>
-
-              <Grid alignItems="center" justifyContent="start" autoFlow="column" columnGap={6}>
-                <AlertTriangle secondary size={14} />
-
-                <Text secondary semibold small>
-                  {blocks?.length ?? 0}
-                </Text>
-              </Grid>
-
-              <Grid alignItems="center" justifyContent="start" autoFlow="column" columnGap={6}>
-                <PlayButton secondary size={14} />
-
-                <Text secondary semibold small>
-                  {blocks?.length ?? 0}
-                </Text>
-              </Grid>
-            </Grid>
+            <div ref={blockGroupStatusRef} />
 
             {isRequired && (
               <Grid alignItems="center" columnGap={8} justifyContent="start" autoFlow="column">
@@ -97,19 +117,7 @@ export default function SelectedGroupContent({
           </Grid>
         </Section>
 
-        <MenuManager
-          className={`aside-menu-manager-${block.uuid}`}
-          direction={LayoutDirectionEnum.LEFT}
-          items={menuItems}
-          uuid={block.uuid}
-        >
-          <Button
-            Icon={ip => <AddV2UpsideDown {...ip} size={16} />}
-            small
-          >
-            Add block
-          </Button>
-        </MenuManager>
+        {actionButton}
       </Grid>
     </Grid>
   )

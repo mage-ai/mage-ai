@@ -23,6 +23,7 @@ export default function TeleportGroup({
   role,
   node,
   selectedGroup,
+  isGroup,
 }: {
   block: BlockType;
   BuildBadgeRow: (props: { inputColorName?: string; outputColorName?: string }) => JSX.Element;
@@ -30,6 +31,7 @@ export default function TeleportGroup({
   node?: NodeItemType;
   role?: ElementRoleEnum;
   selectedGroup: MenuGroupType;
+  isGroup?: boolean;
 }) {
   const { setSelectedGroup } = useContext(EventContext);
 

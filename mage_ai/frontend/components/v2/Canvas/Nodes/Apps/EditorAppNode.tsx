@@ -336,9 +336,9 @@ function EditorAppNode({
             />
           </TooltipWrapper>
 
-          {stale && getFileCache(file?.path)?.server?.updatedAt && (
+          {stale && getFileCache(file?.path)?.client?.cachedAt && (
             <Text monospace muted xsmall warning>
-              Last saved {moment(getFileCache(file?.path)?.server?.updatedAt).fromNow()}
+              Last saved {moment(getFileCache(file?.path)?.client?.cachedAt).fromNow()}
             </Text>
           )}
 

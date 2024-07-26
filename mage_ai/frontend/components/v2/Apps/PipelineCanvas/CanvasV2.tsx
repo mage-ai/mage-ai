@@ -1,4 +1,5 @@
 import { LayoutContext } from '@context/v2/Layout';
+import EventStreamType from '@interfaces/EventStreamType';
 import { useRouter } from 'next/router';
 import React, {
   createRef,
@@ -403,6 +404,7 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
   const [outputNodes, setOutputNodes] = useState<Record<string, OutputNodeType>>({});
   const [rectsMapping, setRectsMapping] = useState<Record<string, RectType>>({});
   const [renderer, setRenderer] = useState<any>(null);
+  const handleOnMessageByGroupRef = useRef<Record<string, (event: EventStreamType, block2: BlockType) => void>>({});
 
   // Resources
   const [pipeline, setPipeline] = useState<any>(pipelineProp);
@@ -506,6 +508,7 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
       component: (
         <BlockNodeV2
           block={block as any}
+          getParentOnMessageHandler={guuid => handleOnMessageByGroupRef.current[guuid]}
           index={index}
           key={block.uuid}
           node={node as NodeType}
@@ -1277,6 +1280,8 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
     // Need to clear this our shouldCapture in ShadowNodeType won’t execute.
     rectsMappingRef.current = {};
 
+    console.log(vuuid, viewUUIDNext.current)
+
     if (blocks?.length > 0 || groups?.length > 0) {
       const shadowNodes = [];
 
@@ -1772,6 +1777,9 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
           <BlockNodeV2
             block={block as any}
             groupSelection
+            setHandleOnChildMessage={(handler: (event: EventStreamType, block2: BlockType) => void) => {
+              handleOnMessageByGroupRef.current[block.uuid] = handler;
+            }}
             key={block.uuid}
             node={node as NodeType}
             ref={nodeRef}
@@ -1864,6 +1872,8 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
       handle?.(event);
     }
 
+    // console.log('handleMouseDown!!!!!!!!!!!', event);
+
     const draggable = getClosestRole(event.target, [ElementRoleEnum.DRAGGABLE]);
     if (draggable) {
       setZoomPanDisabled(true);
@@ -1938,7 +1948,7 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
               let y = -(rect?.top ?? 0) + (box?.height ?? 0);
               x = x > 0 ? 0 : x;
               y = y > 0 ? 0 : y;
-              console.log(x, y)
+              // console.log(x, y)
               transformState?.current?.handlePanning?.current?.((event ?? null) as any, {
                 x,
                 y,

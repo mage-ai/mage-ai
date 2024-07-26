@@ -28,10 +28,10 @@ export default function useWaitUntilAttempt() {
 
     const timeout = timeout0Ref.current.timeouts.pop() || timeout1Ref.current.timeouts.pop();
 
-    function process() {
+    function process(timeoutInner) {
       // console.log('process', uuid)
-      clearTimeout(timeout.current);
-      timeout.current = null;
+      clearTimeout(timeoutInner?.current);
+      timeoutInner.current = null;
       attemptsRef.current[uuid] -= 1;
 
       const limitReached = attemptsRef.current[uuid] <= 0;
@@ -43,13 +43,13 @@ export default function useWaitUntilAttempt() {
       if (ready || (limitReached && !abortIfInvalid)) {
         onAttempt(data);
       } else {
-        timeout.current = setTimeout(() => {
-          process();
+        timeoutInner.current = setTimeout(() => {
+          process(timeoutInner);
         }, pollInterval);
       }
     }
 
-    process();
+    process(timeout);
   }
 
   return handler;

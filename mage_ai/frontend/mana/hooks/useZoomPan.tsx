@@ -233,7 +233,7 @@ export const useZoomPan = (
       if (disabledRef.current || roles?.some(role => hasRole(event.target as HTMLElement, role)))
         return;
 
-      event.preventDefault();
+      // event.preventDefault();
 
       panning.current.active = false;
 
@@ -329,8 +329,8 @@ export const useZoomPan = (
     element.addEventListener('mousemove', handleMouseMove);
     window.addEventListener('mouseup', handleMouseUp);
     element.addEventListener('touchend', handleTouchEnd);
-    element.addEventListener('wheel', handleWheel);
-    element.addEventListener('mousewheel', handleWheel);
+    element.addEventListener('wheel', handleWheel, { passive: true });
+    element.addEventListener('mousewheel', handleWheel, { passive: true });
     element.addEventListener('touchstart', handleTouchStart, { passive: true });
     element.addEventListener('touchmove', handleTouchMove, { passive: true });
 

@@ -5,6 +5,7 @@ import EventStreamType, {
   ServerConnectionStatusType,
   EventStreamResponseType,
   EventSourceReadyState,
+  ExecutionResultType,
 } from '@interfaces/EventStreamType';
 
 export function closeConnection(eventSource: EventSource): ServerConnectionStatusType {
@@ -27,4 +28,8 @@ export function executionDone(event: EventStreamType): boolean {
     ].includes(status) ||
     (ExecutionStatusEnum.READY === status && type === ResultType.STATUS)
   );
+}
+
+export function errorFromResults(results: ExecutionResultType[]): ExecutionResultType {
+  return results?.find(result => ExecutionStatusEnum.ERROR === result.status);
 }
