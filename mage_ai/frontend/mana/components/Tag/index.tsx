@@ -1,7 +1,6 @@
 import React, { useEffect, useRef } from 'react';
-import { useAnimationFrame } from 'framer-motion';
 
-import { formatDurationFromEpoch } from '@utils/string';
+import Timer from '../Timer';
 import styled from 'styled-components';
 import { PaddingVerticalEnum } from '@mana/themes/interactive';
 import { baseXs } from '../../styles/typography';
@@ -63,36 +62,6 @@ const StatusTag = styled.div<TagProps>`
     transform: translate(${left ? '-70%' : right ? '70%' : '0px'}, ${top ? '-70%' : bottom ? '70%' : '0px'});
   `}
 `;
-
-function Timer() {
-  const timerRef = useRef(null);
-  const initTimeRef = useRef<number>(null);
-
-  useAnimationFrame(() => {
-    if (!initTimeRef.current) return;
-
-    const now = Number(new Date());
-    let diff = (now - initTimeRef.current) / 1000;
-    if (diff >= 60 * 1000) {
-      diff = Math.round(diff);
-    }
-    if (timerRef?.current) {
-      timerRef.current.innerText = formatDurationFromEpoch(diff * 1000);
-    }
-  });
-
-  useEffect(() => {
-    if (!initTimeRef.current) {
-      initTimeRef.current = Number(new Date());
-    }
-
-    return () => {
-      initTimeRef.current = null;
-    };
-  }, []);
-
-  return <div ref={timerRef} />;
-}
 
 function Tag(
   {

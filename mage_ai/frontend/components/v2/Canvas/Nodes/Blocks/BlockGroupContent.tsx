@@ -127,7 +127,7 @@ export default function BlockGroupContent({
           <Text
             secondary
             small
-            style={{ lineHeight: 'var(--fonts-lineheight-xs)' }}
+            style={{ lineHeight: 'var(--fonts-lineheight-md)' }}
           >
             {description}
           </Text>

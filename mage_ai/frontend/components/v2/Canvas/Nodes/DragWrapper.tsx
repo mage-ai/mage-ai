@@ -296,6 +296,7 @@ function DragWrapper({
         stylesBlockNode[item?.type],
       ].filter(Boolean).join(' ')}
       drag={draggable}
+      // dragConstraintsRef={dragConstraintsRef}
       dragControls={dragControls}
       dragMomentum={false}
       dragPropagation={false}

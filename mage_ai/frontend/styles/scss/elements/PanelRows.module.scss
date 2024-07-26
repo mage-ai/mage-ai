@@ -1,19 +1,17 @@
 @use '../base/gradients';
 
-$border-radius: 4px;
-
 .panel {
   overflow: hidden;
   position: relative;
 
   .row:first-child {
-    border-top-left-radius: $border-radius;
-    border-top-right-radius: $border-radius;
+    border-top-left-radius: var(--borders-radius-sm);
+    border-top-right-radius: var(--borders-radius-sm);
   }
 
   .row:last-child {
-    border-bottom-left-radius: $border-radius;
-    border-bottom-right-radius: $border-radius;
+    border-bottom-left-radius: var(--borders-radius-sm);
+    border-bottom-right-radius: var(--borders-radius-sm);
     border-bottom-width: var(--borders-width);
   }
 }

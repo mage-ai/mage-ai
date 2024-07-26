@@ -343,26 +343,26 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
     }),
     defaultLayoutConfig({
       childrenLayout: defaultLayoutConfig({
-        direction: LayoutConfigDirectionEnum.HORIZONTAL,
+        direction: LayoutConfigDirectionEnum.VERTICAL,
         display: LayoutDisplayEnum.DETAILED,
         grid: {
           columns: 5,
         },
         style: LayoutStyleEnum.TREE,
-        // styleOptions: {
-        //   rectTransformations: [
-        //     {
-        //       options: () => ({
-        //         layout: {
-        //           direction: LayoutConfigDirectionEnum.HORIZONTAL,
-        //           gap: { column: 40, row: 40 },
-        //           options: { amplitude: 200, wavelength: 100 },
-        //         },
-        //       }),
-        //       type: TransformRectTypeEnum.LAYOUT_WAVE,
-        //     },
-        //   ],
-        // },
+        styleOptions: {
+          rectTransformations: [
+            {
+              options: () => ({
+                layout: {
+                  direction: LayoutConfigDirectionEnum.HORIZONTAL,
+                  gap: { column: 40, row: 40 },
+                  options: { amplitude: 200, wavelength: 100 },
+                },
+              }),
+              type: TransformRectTypeEnum.LAYOUT_WAVE,
+            },
+          ],
+        },
       }),
       direction: LayoutConfigDirectionEnum.HORIZONTAL,
       display: LayoutDisplayEnum.DETAILED,
@@ -1354,7 +1354,6 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
 
   function onBlockCountChange(pipelineArg: PipelineExecutionFrameworkType, block: BlockType, deleted?: boolean) {
     updateLocalResources(pipelineArg);
-    setPipeline(pipelineArg);
 
     if (!deleted) {
       newBlockCallbackAnimationRef.current = {};
@@ -1376,6 +1375,9 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
       success: false,
       title: pageTitleRef.current,
     });
+
+    // No need for this if we’re just adding and removing blocks.
+    // setPipeline(pipelineArg);
   }
 
   const blockAPI = useMutate({
@@ -1697,13 +1699,13 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
 
   useEffect(() => {
     const handleRouteChangeComplete = (args: any) => {
-      if (!hyphensToSnake(args ?? '')?.startsWith(hyphensToSnake(`/v2/pipelines/${pipeline?.uuid}`))) return;
+      if (!hyphensToSnake(args ?? '')?.startsWith(hyphensToSnake(`/v2/pipelines/${pipelineUUID}`))) return;
       updateRouteHistory?.current(args);
     };
 
     const handleRouteChangeStart = (args: any) => {
       const path = hyphensToSnake(args ?? '');
-      if (!path?.startsWith(hyphensToSnake(`/v2/pipelines/${pipeline?.uuid}`))) return;
+      if (!path?.startsWith(hyphensToSnake(`/v2/pipelines/${pipelineUUID}`))) return;
       clearTimeout(throttleTransitionsRef.current);
       const vuuid = `${path}:${Number(new Date())}`;
       viewUUIDPrev.current = vuuid;
@@ -1885,7 +1887,7 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
       width: rectCurrent?.width,
     };
 
-    // console.log('handleDragging', info, item, rect, rectFinal);
+    console.log('handleDragging', info, item, rect, rectFinal);
 
     renderLineRef?.current?.(rectFinal);
   }
@@ -2154,14 +2156,17 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
                 rectsMappingRef.current[nodeID] = rect;
               }
 
+              rect.left = Math.max(PADDING_VERTICAL, rect.left);
+              rect.top = Math.max(200, rect.top);
+
               arr.push(
                 <WithOnMount
                   key={`${itemUUID}:${nodeID}:${nodeType}`}
                   onMount={() => {
                     waitUntilAttempt({
                       uuid: `${itemUUID}:${nodeID}:${nodeType}:onMount`,
-                      pollInterval: 20,
-                      maxAttempts: 100,
+                      pollInterval: 500,
+                      maxAttempts: 4,
                       waitUntil: () => {
                         const el = getClosestChildRole(dragRef?.current, [ElementRoleEnum.CONTENT]);
                         const rt =
@@ -2189,6 +2194,8 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
                         };
                         rect2.height = rect1?.height || rect?.height || rect2?.height || 0;
                         rect2.width = rect1?.width || rect?.width || rect2?.width || 0;
+                        rect2.left = Math.max(PADDING_VERTICAL, rect2.left);
+                        rect2.top = Math.max(200, rect2.top);
                         rectsMappingRef.current[nodeID] = rect2;
 
                         const map = {
@@ -2206,8 +2213,8 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
 
                         waitUntilAttempt({
                           uuid: `${itemUUID}:${nodeID}:${nodeType}:handleLineTransitions`,
-                          pollInterval: 20,
-                          maxAttempts: 100,
+                          pollInterval: 500,
+                          maxAttempts: 4,
                           waitUntil: () => {
                             dragRefs?.current?.[nodeID]?.current?.classList.remove(
                               stylesPipelineBuilder.hiddenOffscreen);
@@ -2521,6 +2528,7 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
                       }}
                       selectedGroupRect={selectedGroupRect}
                       setAnimationOperations={setAnimationOperations}
+                      transformState={transformState}
                       updateLinesRef={updateLinesRef}
                     />
                   </div>

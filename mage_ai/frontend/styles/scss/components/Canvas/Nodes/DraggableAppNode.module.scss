@@ -16,7 +16,7 @@
   background: var(--modal-background-color-base);
   border-radius: (--borders-radius-md);
   box-shadow: 8px 8px 4px 8px var(--modal-box-shadow-base);
-  padding: var(--padding-sm);
+  padding: var(--padding-base);
   z-index: 10;
 }
 
@@ -24,6 +24,11 @@
   min-height: 300px;
   min-width: 600px;
   overflow: hidden;
+}
+
+.content {
+  border: var(--borders-width) var(--borders-style) var(--borders-color-base-default);
+  border-radius: var(--borders-radius-sm);
 }
 
 .dragger {

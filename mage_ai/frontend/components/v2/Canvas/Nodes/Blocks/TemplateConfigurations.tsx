@@ -1,4 +1,5 @@
 import PanelRows from '@mana/elements/PanelRows';
+import stylesBlockNode from '@styles/scss/components/Canvas/Nodes/BlockNode.module.scss';
 import { CommandType } from '@mana/events/interfaces';
 import Grid from '@mana/components/Grid';
 import Text from '@mana/elements/Text';
@@ -17,6 +18,7 @@ import TextInput from '@mana/elements/Input/TextInput';
 import { TooltipAlign, TooltipWrapper, TooltipDirection, TooltipJustify } from '@context/v2/Tooltip';
 
 export default function TemplateConfigurations({
+  colorNames,
   commands,
   block,
   group,
@@ -25,6 +27,7 @@ export default function TemplateConfigurations({
   updateBlock,
   uuid,
 }: {
+    colorNames?: any;
   commands?: Record<string, CommandType>;
   group: PipelineExecutionFrameworkBlockType;
   template: TemplateType;
@@ -36,28 +39,19 @@ export default function TemplateConfigurations({
 
   return (
     <PanelRows padding={false}>
-      <Grid justifyItems="start" padding={12} rowGap={4} templateColumns="auto">
-        <TooltipWrapper
-          align={TooltipAlign.END}
-          justify={TooltipJustify.END}
-          tooltip={
-            <Grid rowGap={8}>
-              <Text semibold small>
-                {template?.name || uuid}
-              </Text>
-              {template?.description && (
-                <Text secondary small>
-                  {template?.description}
-                </Text>
-              )}
-            </Grid>
-          }
-          tooltipStyle={{ maxWidth: 400 }}
-        >
-          <Text semibold xsmall>
-            {template?.name || uuid}
-          </Text>
-        </TooltipWrapper>
+      <Grid padding={12} rowGap={4} justifyItems="stretch"  justifyContent="space-between" alignItems="center" templateRows="1fr" templateColumns="1fr auto" height="100%">
+        <Text secondary semibold small>
+          {template?.name || uuid}
+        </Text>
+
+        <div>
+          <Loading
+            circle
+            className={stylesBlockNode.loader}
+            // colorName={colorNames?.hi}
+            // colorNameAlt={colorNames?.md}
+          />
+        </div>
       </Grid>
 
       {Object.entries(variables ?? {})?.map(
@@ -107,7 +101,7 @@ export default function TemplateConfigurations({
                   horizontalDirection={TooltipDirection.LEFT}
                   style={{ alignContent: 'center', justifySelf: 'stretch', maxWidth: 300 }}
                   tooltip={
-                    <Text secondary xsmall>
+                    <Text secondary small>
                       {description}
                     </Text>
                   }

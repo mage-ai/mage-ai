@@ -1,4 +1,5 @@
 import Section from '@mana/elements/Section';
+import { formatDurationFromEpoch } from '@utils/string';
 import Aside from './Blocks/Aside';
 import Button from '@mana/elements/Button';
 import { getUpDownstreamColors } from './Blocks/utils';
@@ -41,6 +42,8 @@ import {
   PlayButtonFilled,
   DeleteCircle,
   Infinite,
+  StatusComplete,
+  Lightning,
 } from '@mana/icons';
 import { AppTypeEnum, AppSubtypeEnum } from '../../Apps/constants';
 import { AsideType, DragAndDropHandlersType, SharedBlockProps } from './types';
@@ -62,7 +65,7 @@ import { buildEvent } from './utils';
 import { groupValidation } from './Blocks/utils';
 import { menuItemsForTemplates } from './utils';
 import { isEmptyObject } from '@utils/hash';
-import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { ElementRoleEnum } from '@mana/shared/types';
 import { AppConfigType } from '@components/v2/Apps/interfaces';
 import { MenuItemType } from '@mana/components/Menu/interfaces';
@@ -75,6 +78,7 @@ import {
   GROUP_NODE_MIN_WIDTH,
   SELECTED_GROUP_NODE_MIN_WIDTH,
 } from './Blocks/constants'
+import Timer from '@mana/components/Timer';
 
 export type BlockNodeProps = {
   commands?: Record<string, CommandType>;
@@ -89,7 +93,7 @@ export type BlockNodeProps = {
   interruptExecution: () => void;
   loading?: boolean;
   loadingKernelMutation?: boolean;
-  openEditor: (event: any) => void;
+  openEditor: (event: any, callback?: () => void) => void;
   node: NodeItemType;
   onMount?: (port: PortType, portRef: React.RefObject<HTMLDivElement>) => void;
   submitCodeExecution: (event: React.MouseEvent<HTMLElement>) => void;
@@ -124,6 +128,7 @@ export default function BlockNodeComponent({
   teleportIntoBlock,
 }: BlockNodeProps & DragAndDropHandlersType & SharedBlockProps) {
   const { name, status, type, uuid } = block;
+  const timeRef = useRef<number>(null);
 
   const [loadingApp, setLoadingApp] = useState(false);
 
@@ -364,12 +369,13 @@ export default function BlockNodeComponent({
                   teleportIntoBlock={teleportIntoBlock}
                   template={template}
                   updateBlock={updateBlock}
+                  colorNames={colorNames}
                   uuid={uuid}
                 />
               ),
           ),
       ),
-    [commands, block, groups, updateBlock, teleportIntoBlock],
+    [colorNames, commands, block, groups, updateBlock, teleportIntoBlock],
   );
 
   const main = useMemo(
@@ -397,7 +403,7 @@ export default function BlockNodeComponent({
             />
           )
       : (
-          <Grid templateRows="auto">
+          <Grid templateRows="auto" rowGap={8}>
             <Grid rowGap={8} templateRows="auto">
               <Grid columnGap={8} templateColumns="1fr auto">
                 <Badge
@@ -415,23 +421,34 @@ export default function BlockNodeComponent({
                     /> :
                     <PlayButton
                       {...iconProps}
-                      colorName={executing ? colorNames?.base : undefined}
+                      colorName={executing ? colorNames?.base : colorNames?.contrast?.monotone}
                       size={16}
                     />
                   }
-                  backgroundcolor={StatusTypeEnum.FAILED === status ? 'red' : undefined}
-                  bordercolor={executing ? colorNames?.base ?? 'gray' : undefined}
+                  backgroundcolor={executing ? 'transparent' : colorNames?.base}
+                  color={executing ? undefined : colorNames?.contrast?.monotone}
                   loading={loadingKernelMutation || (loading && !executing)}
                   onClick={executing ? interruptExecution : submitCodeExecution}
                   small
+                  style={{
+                    borderColor: executing ? `var(--colors-${colorNames?.base})` : 'transparent',
+                  }}
                 >
-                  {executing ? 'Stop' : 'Run'}
+                  {executing ? '' : 'Run'}
                 </Button>
               </Grid>
 
               <Grid columnGap={8} templateColumns="1fr auto">
-                {/* <div ref={blockGroupStatusRef} /> */}
                 <Section small withBackground>
+                  <Grid columnGap={8} padding={4} templateColumns="auto 1fr">
+                    {!executing && timeRef.current ? <StatusComplete success size={16} /> : <Lightning muted={!executing} warning={executing} size={16} />}
+
+                    <Text muted={!executing && !timeRef.current} semibold small>
+                      {executing && <Timer onChange={value => timeRef.current = value } /> }
+                      {!executing && timeRef.current && formatDurationFromEpoch(timeRef.current)}
+                      {!executing && !timeRef.current && 'Not run yet'}
+                    </Text>
+                  </Grid>
                 </Section>
 
                 <Button
@@ -454,7 +471,7 @@ export default function BlockNodeComponent({
                         y,
                       });
                     } else {
-                      openEditor(event as any);
+                      openEditor(event as any, () => setLoadingApp(false));
                       setLoadingApp(true);
                     }
                   }}
@@ -472,37 +489,43 @@ export default function BlockNodeComponent({
                 const isdn = block?.downstream_blocks?.includes(buuid);
                 return (
                   <Section key={buuid} small withBackground>
-                    <Circle
-                      backgroundColor={isup ? color : undefined}
-                      border={isup ? undefined : 'var(--fonts-color-text-secondary)'}
-                      size={12}
-                    />
+                    <Grid
+                      columnGap={10} alignItems="center" justifyContent="space-between" autoFlow="column" templateRows="1fr"
+                      paddingLeft={4}
+                      paddingRight={4}
+                      paddingTop={3}
+                      paddingBottom={3}
+                    >
+                      <Grid columnGap={10} alignItems="center" justifyContent="start" templateColumns="auto 1fr" templateRows="1fr">
+                        <Circle
+                          backgroundColor={isup ? color : undefined}
+                          border={isup ? undefined : 'var(--borders-width) var(--borders-style) var(--fonts-color-text-secondary)'}
+                          size={12}
+                        />
 
-                    <Text secondary small>
-                      {isup ? block2?.name ?? block2?.uuid : 'Block'}
-                    </Text>
+                        <Text secondary small>
+                          {isup ? block2?.name ?? block2?.uuid : ''}
+                        </Text>
+                      </Grid>
 
-                    <Text secondary small>
-                      {isdn ? block2?.name ?? block2?.uuid : 'Block'}
-                    </Text>
+                      <Grid columnGap={10} alignItems="center" justifyContent="end" templateColumns="1fr auto" templateRows="1fr">
+                        <Text secondary small>
+                          {isdn ? block2?.name ?? block2?.uuid : ''}
+                        </Text>
 
-                    <Circle
-                      backgroundColor={isdn ? color : undefined}
-                      border={isdn ? undefined : 'var(--fonts-color-text-secondary)'}
-                      size={12}
-                    />
+                        <Circle
+                          backgroundColor={isdn ? color : undefined}
+                          border={isdn ? undefined : 'var(--borders-width) var(--borders-style) var(--fonts-color-text-secondary)'}
+                          size={12}
+                        />
+                      </Grid>
+                    </Grid>
                   </Section>
                 );
               })}
             </Grid>
 
-            <div className={stylesBlockNode.loader}>
-              <Loading
-                // colorName={colorNames?.hi}
-                // colorNameAlt={colorNames?.md}
-                position="absolute"
-              />
-            </div>
+
             {!groupSelection &&
               (isGroup ? (
                 <BlockGroupOverview
@@ -591,12 +614,6 @@ export default function BlockNodeComponent({
     [renderNodeAsGroupSelection, classNames, main, isGroup],
   );
 
-  useEffect(() => {
-    if (loadingApp && editorApp) {
-      setLoadingApp(false);
-    }
-  }, [loadingApp, editorApp]);
-
   // const teleportBlock = useMemo(
   //   () =>
   //   <TeleportBlock
@@ -613,7 +630,6 @@ export default function BlockNodeComponent({
 
   return (
     <>
-      {executing && <Tag left statusVariant timer top />}
       {content}
     </>
   );

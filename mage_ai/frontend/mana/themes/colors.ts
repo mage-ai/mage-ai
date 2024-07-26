@@ -825,8 +825,8 @@ const ColorsDerived = {
     }),
     muted: convert({
       [ModeEnum.DARK]: 'whiteLo',
-      [ModeEnum.LIGHT]: 'blackLo',
-      [ModeEnum.MODE3]: 'blackLo',
+      [ModeEnum.LIGHT]: 'blackMd',
+      [ModeEnum.MODE3]: 'blackMd',
     }),
     secondary: convert({
       [ModeEnum.DARK]: 'whiteMd',

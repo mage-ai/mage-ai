@@ -31,12 +31,13 @@ const icons = css<StyleProps>`
       [
         rest?.error && 'var(--colors-statuses-error)',
         rest?.success && 'var(--colors-statuses-success)',
-        rest?.warning && 'var(--colors-statuses-success)',
+        rest?.warning && 'var(--colors-statuses-warning)',
+        muted && 'var(--fonts-color-text-muted)',
         typeof colorName !== 'undefined' && theme.colors[colorName],
         typeof color !== 'undefined' && color,
         fill ??
           theme.icons.color[
-            [inverted && 'inverted', muted && 'muted', secondary && 'secondary'].find(Boolean) ??
+            [inverted && 'inverted', secondary && 'secondary'].find(Boolean) ??
               'base'
           ],
       ].filter(Boolean)[0]
@@ -51,11 +52,12 @@ const icons = css<StyleProps>`
         rest?.error && 'var(--colors-statuses-error)',
         rest?.success && 'var(--colors-statuses-success)',
         rest?.warning && 'var(--colors-statuses-warning)',
+        muted && 'var(--fonts-color-text-muted)',
         typeof colorName !== 'undefined' && theme.colors[colorName],
         typeof color !== 'undefined' && color,
         stroke ??
           theme.icons.color[
-            [inverted && 'inverted', muted && 'muted', secondary && 'secondary'].find(Boolean) ??
+            [inverted && 'inverted', secondary && 'secondary'].find(Boolean) ??
               'base'
           ],
       ].filter(Boolean)[0]

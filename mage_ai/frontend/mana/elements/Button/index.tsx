@@ -173,7 +173,7 @@ function Button({
       ref={containerRef}
       role="button"
     >
-      <div className={[styles.overlay].filter(Boolean).join(' ')} />
+      <div className={[styles.overlay, small && styles.small].filter(Boolean).join(' ')} />
       <div className={[styles.loader].filter(Boolean).join(' ')}>
         <Loading circle colorName={loadingColorName === 'blue' ? 'white' : loadingColorName} />
       </div>

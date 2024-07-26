@@ -10,6 +10,7 @@ import React, {
 import { BADGE_HEIGHT, PADDING_VERTICAL } from '../../../Canvas/Nodes/BlockNodeV2';
 import { getUpDownstreamColors } from '../../../Canvas/Nodes/Blocks/utils';
 import stylesPipelineBuilder from '@styles/scss/apps/Canvas/Pipelines/Builder.module.scss';
+import { ZoomPanStateType } from '@mana/hooks/useZoomPan';
 import { ModelContext } from '../ModelManager/ModelContext';
 import { cubicBezier, motion, useAnimation, useAnimate } from 'framer-motion';
 import { SettingsContext } from '../SettingsManager/SettingsContext';
@@ -39,6 +40,7 @@ import { deepCopy, ignoreKeys, objectSize, selectKeys } from '@utils/hash';
 import { calculateBoundingBox } from '@components/v2/Canvas/utils/layout/shared';
 import { FrameworkType } from '@interfaces/PipelineExecutionFramework/interfaces';
 
+const APP_ENABLED = false;
 export const EASING = cubicBezier(0.35, 0.17, 0.3, 0.86);
 export const ANIMATION_DURATION = 0.2;
 const BASE_Z_INDEX = 1;
@@ -70,6 +72,7 @@ export default function LineManagerV2({
   renderLineRef,
   rectsMapping,
   selectedGroupRect,
+  transformState,
   updateLinesRef,
   visible,
   setAnimationOperations
@@ -81,6 +84,7 @@ export default function LineManagerV2({
   renderLineRef?: React.MutableRefObject<(rect: RectType) => void>;
   rectsMapping: Record<string, RectType>;
   selectedGroupRect: RectType;
+  transformState: React.MutableRefObject<ZoomPanStateType>;
   updateLinesRef?: React.MutableRefObject<UpdateLinesType>;
   visible?: boolean;
 }) {
@@ -618,7 +622,10 @@ export default function LineManagerV2({
 
             pairsByType[rectdn.type].push([rectup2, rectdn]);
           });
-        } else if ([ItemTypeEnum.APP, ItemTypeEnum.BLOCK].includes(rectdn?.type)) {
+        } else if ([
+          APP_ENABLED && ItemTypeEnum.APP,
+          ItemTypeEnum.BLOCK,
+        ].filter(Boolean).includes(rectdn?.type)) {
           const { block: blockdn } = rectdn;
 
           const outputNodes = outputNodesByBlockUUID?.[blockdn.uuid] ?? [];
@@ -782,6 +789,16 @@ export default function LineManagerV2({
         const from2 = rect?.id === from?.id ? { ...from, ...rect, } : from;
         const to2 = rect?.id === to?.id ? { ...to, ...rect } : to;
 
+        if (from2.id === rect.id) {
+          from2.top -= (transformState?.current?.originY?.current ?? 0);
+          from2.left -= (transformState?.current?.originX?.current ?? 0);
+        } else if (to2.id === rect.id) {
+          to2.top -= (transformState?.current?.originY?.current ?? 0);
+          to2.left -= (transformState?.current?.originX?.current ?? 0);
+        }
+
+        // console.log(from2, to2, transformState.current)
+
         const dvalue = prepareLinePathProps(from2, to2).dvalue;
 
         ref?.current?.setAttribute?.('d', dvalue);
@@ -867,7 +884,8 @@ export default function LineManagerV2({
       <svg>
         {Object.values(pathDefs ?? {}).flatMap(defs => defs)}
       </svg>
-      <ConnectionLines linePaths={linesApp} zIndex={BASE_Z_INDEX + ORDER[ItemTypeEnum.APP]} />
+      {APP_ENABLED && <ConnectionLines linePaths={linesApp} zIndex={BASE_Z_INDEX + ORDER[ItemTypeEnum.APP]} />}
+
       <ConnectionLines linePaths={linesBlock} zIndex={2} />
       <ConnectionLines linePaths={linesNode} zIndex={1} />
       <ConnectionLines linePaths={linesOutput} zIndex={BASE_Z_INDEX + ORDER[ItemTypeEnum.OUTPUT]} />

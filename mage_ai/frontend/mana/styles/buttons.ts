@@ -10,6 +10,7 @@ export type StyleProps = {
   backgroundcolor?: string;
   basic?: boolean;
   bordercolor?: string;
+  color?: string;
   disabled?: boolean;
   grouped?: boolean | string;
   header?: boolean;
@@ -134,12 +135,14 @@ const shared = css<StyleProps>`
               ? theme.colors.backgrounds.button.basic.default
               : theme.colors.backgrounds.button.base.default))};
 
-  color: ${({ disabled, primary, secondary, theme }) =>
+  color: ${({ color, disabled, primary, secondary, theme }) =>
     disabled
       ? theme.fonts.color.text.muted
-      : primary || secondary
-        ? theme.fonts.color.text.inverted
-        : theme.fonts.color.text.base};
+      : color
+        ? color
+        : primary || secondary
+          ? theme.fonts.color.text.inverted
+          : theme.fonts.color.text.base};
 
   font-style: ${({ theme }) => theme.fonts.style.base};
 

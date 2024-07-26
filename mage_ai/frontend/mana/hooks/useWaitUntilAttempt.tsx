@@ -29,7 +29,7 @@ export default function useWaitUntilAttempt() {
     const timeout = timeout0Ref.current.timeouts.pop() || timeout1Ref.current.timeouts.pop();
 
     function process(timeoutInner) {
-      // console.log('process', uuid)
+      console.log('process', uuid)
       clearTimeout(timeoutInner?.current);
       timeoutInner.current = null;
       attemptsRef.current[uuid] -= 1;

@@ -23,7 +23,7 @@ import { convertToMillisecondsTimestamp } from '@utils/date';
 import { executeCode, interruptCodeExecution, saveContent as saveContentAction } from '../../../IDE/actions';
 import { executionDone } from '@components/v2/ExecutionManager/utils';
 import { getFileCache, isStale, updateFileCache } from '../../../IDE/cache';
-import { Save, DeleteCircle, CloseV2, PlayButtonFilled } from '@mana/icons';
+import { Save, DeleteCircle, CloseV2, PlayButton } from '@mana/icons';
 import BlockType from '@interfaces/BlockType';
 import { getBlockColor } from '@mana/themes/blocks';
 import { FileType } from '@components/v2/IDE/interfaces';
@@ -276,9 +276,11 @@ function EditorAppNode({
           <div style={{ position: 'relative' }}>
             {executing && <Tag left statusVariant timer top />}
             <Button
-              Icon={ip => executing ? <DeleteCircle {...ip} colorName={contrastColorName} /> : <PlayButtonFilled {...ip} colorName={contrastColorName} />}
-              backgroundcolor={!executing ? baseColor : 'red'}
-              bordercolor={executing ? (baseColor ?? 'gray') : 'transparent'}
+              Icon={ip => executing
+                ? <DeleteCircle {...ip} colorName={baseColor} />
+                : <PlayButton {...ip} colorName={contrastColorName} />
+              }
+              backgroundcolor={!executing ? baseColor : 'transparent'}
               loading={loadingKernelMutation || loading}
               onClick={
                 executing
@@ -301,11 +303,16 @@ function EditorAppNode({
                     }
               }
               small
-              tag={<KeyboardTextGroup
-                colorName={contrastColorName}
-                textGroup={[[KEY_CODE_META, executing ? KEY_ESCAPE : KEY_ENTER]]}
-                xsmall
-              />}
+              style={{
+                borderColor: executing ? `var(--colors-${baseColor})` : 'transparent',
+              }}
+              tag={
+                <KeyboardTextGroup
+                  colorName={executing ? undefined : contrastColorName}
+                  textGroup={[[KEY_CODE_META, executing ? KEY_ESCAPE : KEY_ENTER]]}
+                  xsmall
+                />
+              }
               tagProps={{
                 style: {
                   backgroundColor: colors?.[`${contrastColorName}lo`]?.dark,
@@ -400,8 +407,11 @@ function EditorAppNode({
         </Grid>
       )}
       <Grid
-        borders style={{ overflow: 'hidden' }}
-        className={stylesAppNode.dragger}
+        style={{ overflow: 'hidden' }}
+        className={[
+          stylesAppNode.content,
+          stylesAppNode.dragger,
+        ].join(' ')}
         onPointerDown={startDrag}
         templateRows="auto 1fr"
       >

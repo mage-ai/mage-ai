@@ -745,15 +745,13 @@ function BlockNode(
             el?.focus();
           }, 500);
         },
-        payload: {
-          block: setNested(
-            {
-              configuration: block.configuration,
-            },
-            key,
-            value,
-          ),
-        },
+        payload: setNested(
+          {
+            configuration: block.configuration,
+          },
+          key,
+          value,
+        ),
       });
     }, 1000);
   }
@@ -896,7 +894,7 @@ function BlockNode(
             >
               {[
                 {
-                  Icon: PlayButtonFilled,
+                  Icon: PlayButton,
                   label: 'Run',
                   onClick: submitCodeExecution,
                   // description: '...',
@@ -1135,7 +1133,7 @@ function BlockNode(
     }
   }
 
-  function launchEditorApp(event: any) {
+  function launchEditorApp(event: any, callback?: () => void) {
     if (appRootRef.current) return;
 
     const app = {
@@ -1155,7 +1153,10 @@ function BlockNode(
         ) => {
           renderEditorApp(wrapperRef, mountRef, node, {
             fileRef,
-          }, onMount);
+          }, () => {
+            onMount && onMount();
+            callback && callback();
+          });
         },
         closeEditorApp,
         onRemove => onCloseAppRef.current = onRemove,
@@ -1326,7 +1327,6 @@ function BlockNode(
                     onSuccess: ({ data }) => {
                       closeEditorApp();
                       closeOutput();
-                      console.log('REMOVEEEEEEEEEEEEEEEEEEEEEEEEEEE')
                       removeContextMenu(event);
                     },
                   });
