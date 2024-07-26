@@ -306,7 +306,7 @@ function EditorAppNode({
               style={{
                 borderColor: executing ? `var(--colors-${baseColor})` : 'transparent',
               }}
-              tag={
+              tag={!executing &&
                 <KeyboardTextGroup
                   colorName={executing ? undefined : contrastColorName}
                   textGroup={[[KEY_CODE_META, executing ? KEY_ESCAPE : KEY_ENTER]]}
@@ -457,7 +457,7 @@ function EditorAppNode({
                 </Grid>
               }
             >
-              <Text monospace secondary small>
+              <Text semibold small>
                 {block?.name ?? block?.uuid}
               </Text>
             </TooltipWrapper>
