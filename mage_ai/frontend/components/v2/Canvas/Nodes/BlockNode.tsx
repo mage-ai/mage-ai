@@ -130,7 +130,8 @@ export default function BlockNodeComponent({
   const { name, status, type, uuid } = block;
   const timeRef = useRef<number>(null);
 
-  const [loadingApp, setLoadingApp] = useState(false);
+  // const [loadingApp, setLoadingApp] = useState(false);
+  const loadingApp = false;
 
   const { blocksByGroupRef, groupMappingRef, mutations, blockMappingRef, groupsByLevelRef } = useContext(ModelContext);
   const groups = useMemo(
@@ -448,8 +449,8 @@ export default function BlockNodeComponent({
                         y,
                       });
                     } else {
-                      openEditor(event as any, () => setLoadingApp(false));
-                      setLoadingApp(true);
+                      openEditor(event as any);
+                      // setLoadingApp(true);
                     }
                   }}
                   loading={loadingApp}

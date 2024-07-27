@@ -15,6 +15,7 @@ export type RenderContextMenuOptions = {
   direction?: any;
   handleEscape?: any;
   onClose?: any;
+  onClickCallback?: any;
   openItems?: any;
   position?: any;
   rects?: any;
@@ -118,7 +119,7 @@ export default function useContextMenu({
     conditionally?: boolean;
   }, uuid?: string) {
     const id = uuid ?? uuidBase;
-    DEBUG && console.log('REMOVE', id)
+    DEBUG && console.log('REMOVE', id, opts, menuRootRefs?.current)
 
     if (opts?.conditionally && event && isEventInContextMenu(event, null, id)) return;
 

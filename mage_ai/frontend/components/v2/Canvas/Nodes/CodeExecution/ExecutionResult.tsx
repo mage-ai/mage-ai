@@ -194,6 +194,9 @@ function ExecutionResult(
           : undefined
       }
       ref={ref}
+      style={{
+        maxWidth: 'calc(100vw - 32px)',
+      }}
     >
       {(resultsDisplay?.length > 0 || hasError || (hasOutput || hasOutputNotLoaded)) && (
         <Grid ref={ref} rowGap={4}>

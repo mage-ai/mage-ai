@@ -1,22 +1,19 @@
-import Row from '../Row';
 import React, { useCallback, useEffect, useMemo, useRef } from 'react';
+import Row from '../Row';
+import { Column } from '../interfaces';
+import { ContainerStyled } from './index.style';
 import { PaddingEnum } from '@mana/themes/padding';
 import { RectType } from '@mana/shared/interfaces';
 import { SCROLLBAR_TRACK_WIDTH } from '../../../themes/scrollbars';
-import { TAB_REPORTS } from '@components/datasets/overview/constants';
-import { TableHeaderProps, useBlockLayout, useTable } from 'react-table';
 import { UNIT } from '@mana/themes/spaces';
 import { VariableSizeList } from 'react-window';
 import { VariableTypeEnum } from '@interfaces/CodeExecutionType';
-import { createDatasetTabRedirectLink } from '@components/utils';
-import { hashCode, isJsonString } from '@utils/string';
+import { isJsonString } from '@utils/string';
 import { isObject } from '@utils/hash';
-import { randomSample, range, sum, transpose, flattenArray } from '@utils/array';
+import { useBlockLayout, useTable } from 'react-table';
 import { useSticky } from 'react-table-sticky';
 import { estimateCellHeight, getVariableListHeight, buildIndexColumns, BASE_ROW_HEIGHT,
 DEFAULT_COLUMN_WIDTH, WIDTH_OF_SINGLE_CHARACTER_REGULAR_SM, MIN_WIDTH} from '../utils';
-import { ContainerStyled } from './index.style';
-import { Column } from '../interfaces';
 
 type SharedProps = {
   boundingBox: RectType;
@@ -221,8 +218,9 @@ function Table({ ...props }: TableProps) {
         }}
         outerRef={refListOuter}
         style={{
-          overflow: 'hidden',
-          width: rect?.width,
+          overflow: 'visible',
+          width: 'auto',
+          // width: rect?.width,
         }}
       >
         {renderRow}
@@ -279,6 +277,8 @@ function Table({ ...props }: TableProps) {
     );
   }), [columns, columnWidths, headerGroups]);
 
+  console.log(columns)
+
   return (
     <div
       {...getTableProps()}
@@ -294,7 +294,7 @@ function Table({ ...props }: TableProps) {
         {...getTableBodyProps()}
         className="body"
       >
-        <div className="header" ref={refHeader} style={{ width: rect.width }}>
+        <div className="header" ref={refHeader}>
           {headerMemo}
         </div>
         {variableListMemo}

@@ -19,7 +19,7 @@ export function WithOnMount({
   maxAttempts = 10,
   pollInterval = 100,
   withRef,
-  strict = true,
+  strict = false,
 }: OnMountType & { withRef?: boolean }) {
   const phaseRef = useRef(0);
   const attemptsRef = useRef(0);

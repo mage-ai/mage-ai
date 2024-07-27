@@ -48,7 +48,8 @@ type DragWrapperProps = {
   groupSelection?: boolean;
   isAnimating?: boolean;
   item?: NodeItemType;
-  mountRootRef?: React.MutableRefObject<HTMLDivElement>;
+  mountRef?: React.MutableRefObject<HTMLDivElement>;
+  renderChildren?: (rect: RectType, mountRef: React.MutableRefObject<HTMLDivElement>) => void;
   onContextMenu?: (event: any) => void;
   rect?: RectType;
   rectsMappingRef?: React.MutableRefObject<Record<string, RectType>>;
@@ -71,13 +72,14 @@ function DragWrapper({
   groupSelection,
   isAnimating,
   item,
-  mountRootRef,
+  renderChildren,
   onContextMenu,
   rect: rectProp,
   rectsMappingRef,
   resizable,
   resizeConstraints,
   style,
+  mountRef,
 }: DragWrapperProps, ref: React.MutableRefObject<HTMLDivElement>) {
   const rect = rectsMappingRef?.current?.[item?.id] ?? rectProp;
   const phaseRef = useRef(0);
@@ -298,13 +300,19 @@ function DragWrapper({
   }, [onDragEnd, item, rect]);
 
   useEffect(() => {
-    if (entering && phaseRef.current === 0) {
-      animate(enterProgress, 1, {
-        delay: BLOCK_ENTER_ANIMATION_DURATION * 2,
-        duration: BLOCK_ENTER_ANIMATION_DURATION,
-        ease: EASING,
-      });
-      phaseRef.current = 1;
+    if (phaseRef.current === 0) {
+      if (renderChildren && mountRef?.current) {
+        renderChildren(rect, mountRef)
+        phaseRef.current = 1;
+      }
+
+      if (entering) {
+        animate(enterProgress, 1, {
+          delay: BLOCK_ENTER_ANIMATION_DURATION * 2,
+          duration: BLOCK_ENTER_ANIMATION_DURATION,
+          ease: EASING,
+        });
+      }
     }
   }, []);
 
@@ -344,10 +352,10 @@ function DragWrapper({
           // scale: enterScale,
         } : {}),
       }}
-      whileDrag={{
-        opacity: 0.9,
-        scale: 1,
-      }}
+      // whileDrag={{
+      //   opacity: 0.9,
+      //   scale: 1,
+      // }}
     >
       {resizable && (
         <motion.div
@@ -431,14 +439,15 @@ function DragWrapper({
         />
       )}
 
-      {mountRootRef &&
+      {mountRef &&
         <div
           className={[
             !children && stylesBlockNode.inheritDimensions,
           ].filter(Boolean).join(' ')}
-          ref={mountRootRef}
+          ref={mountRef}
         />
       }
+
       {children}
     </motion.div>
   );

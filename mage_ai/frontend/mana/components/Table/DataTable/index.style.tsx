@@ -14,7 +14,6 @@ export const ContainerStyled = styled.div`
       'var(--menus-background-base-default)'
     )}
     left: 0;
-    overflow: hidden;
     position: sticky;
     top: 0;
     z-index: 1;
@@ -94,7 +93,6 @@ export const ContainerStyled = styled.div`
     }
 
     .header {
-      overflow: hidden;
     }
   }
 `;

@@ -46,93 +46,106 @@ export default function ExecutionOutput({
         if (Array.isArray(data) && data?.length > 0) {
           const sample = data?.[0];
 
-          if (isObject(sample)) {
-            data.forEach((data2) => {
-              if (columns.length === 0) {
-                columns.push(...Object.keys(data2).map(key => ({
+          if (!Array.isArray(sample) && isObject(sample)) {
+            if (columns.length === 0) {
+              Object.entries(sample ?? {}).forEach(([key, val2]) => {
+                const col: {
+                  data?: {
+                    type?: VariableTypeEnum;
+                  };
+                  key: string;
+                  uuid: string;
+                } = {
                   key,
                   uuid: key,
-                })));
-              }
-
-              rows.push(columns.map(({ key }, idx) => {
-                let val2 = data2[key];
+                };
 
                 if (isJsonString(val2)) {
                   val2 = JSON.parse(val2);
                 }
 
                 if (Array.isArray(val2) || isObject(val2)) {
-                  if (!columns[idx].data?.type) {
-                    columns[idx].data = {
-                      ...columns[idx].data,
-                      type: Array.isArray(val2)
-                        ? VariableTypeEnum.ITERABLE
-                        : VariableTypeEnum.DICTIONARY_COMPLEX,
-                    };
-                  }
+                  col.data = {
+                    type: Array.isArray(val2)
+                      ? VariableTypeEnum.ITERABLE
+                      : VariableTypeEnum.DICTIONARY_COMPLEX,
+                  };
                 }
 
-                return val2;
-              }));
-            });
-          } else if (Array.isArray(data)) {
-            if (columns.length === 0) {
-              columns.push(...data?.map((_, index: number) => ({
-                key: index,
-                uuid: `col ${index}`,
-              })));
+                columns.push(val2);
+              });
             }
 
-            rows.push(columns.map(({ key }, idx) => {
-              let val2 = data[key];
+            data.forEach((data2) => {
+              const row = columns.map(({ key }) => data2[key]);
+
+              rows.push(row);
+            });
+          } else if (Array.isArray(sample)) {
+            if (columns.length === 0) {
+              columns.push(...sample?.map((val2, colIdx: number) => {
+                const col: {
+                  data?: {
+                    type?: VariableTypeEnum;
+                  };
+                  key: number;
+                  uuid: string;
+                } = {
+                  key: colIdx,
+                  uuid: `col ${colIdx}`,
+                };
+
+                if (isJsonString(val2)) {
+                  val2 = JSON.parse(val2);
+                }
+
+                if (Array.isArray(val2) || isObject(val2)) {
+                  col.data = {
+                    type: Array.isArray(val2)
+                      ? VariableTypeEnum.ITERABLE
+                      : VariableTypeEnum.DICTIONARY_COMPLEX,
+                  };
+                }
+
+                return col;
+              }));
+            }
+
+            rows.push(...data);
+          }
+        } else if (isObject(data)) {
+          if (columns.length === 0) {
+            Object.entries(data ?? {}).forEach(([key, val2]) => {
+              const col: {
+                data?: {
+                  type?: VariableTypeEnum;
+                };
+                key: string;
+                uuid: string;
+              } = {
+                key,
+                uuid: key,
+              };
 
               if (isJsonString(val2)) {
                 val2 = JSON.parse(val2);
               }
 
               if (Array.isArray(val2) || isObject(val2)) {
-                if (!columns[idx].data?.type) {
-                  columns[idx].data = {
-                    ...columns[idx].data,
-                    type: Array.isArray(val2)
-                      ? VariableTypeEnum.ITERABLE
-                      : VariableTypeEnum.DICTIONARY_COMPLEX,
-                  };
-                }
-              }
-
-              return val2;
-            }));
-          }
-        } else if (isObject(data)) {
-          if (columns.length === 0) {
-            columns.push(...Object.keys(data).map(key => ({
-              key,
-              uuid: key,
-            })));
-          }
-
-          rows.push(columns.map(({ key }, idx: number) => {
-            let val2 = data[key];
-
-            if (isJsonString(val2)) {
-              val2 = JSON.parse(val2);
-            }
-
-            if (Array.isArray(val2) || isObject(val2)) {
-              if (!columns[idx].data?.type) {
-                columns[idx].data = {
-                  ...columns[idx].data,
+                col.data = {
                   type: Array.isArray(val2)
                     ? VariableTypeEnum.ITERABLE
                     : VariableTypeEnum.DICTIONARY_COMPLEX,
                 };
               }
-            }
 
-            return val2;
-          }));
+              columns.push(val2);
+            });
+          }
+
+          const row = columns.map(({ key }) => data[key]);
+
+          rows.push(row);
         }
       });
 

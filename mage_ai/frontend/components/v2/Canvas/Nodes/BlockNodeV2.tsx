@@ -33,7 +33,7 @@ import Grid from '@mana/components/Grid';
 import Text from '@mana/elements/Text';
 import { copyToClipboard } from '@utils/clipboard';
 import { indexBy, sortByKey } from '@utils/array';
-import { ClientEventType, EventOperationEnum } from '@mana/shared/interfaces';
+import { ClientEventType, EventOperationEnum, RectType } from '@mana/shared/interfaces';
 import OutputGroups from './CodeExecution/OutputGroups';
 import BlockType, { BlockTypeEnum } from '@interfaces/BlockType';
 import ContextProvider from '@context/v2/ContextProvider';
@@ -151,6 +151,7 @@ function BlockNode(
 
   // Status
   const appOpenRef = useRef<boolean>(false);
+  const outputOpenRef = useRef<boolean>(false);
 
   // Models
   const appNodeRef = useRef<AppNodeType>(null);
@@ -174,8 +175,8 @@ function BlockNode(
   const outputAppendedChildElementRef = useRef<HTMLDivElement>(null);
 
   // Element attached to root
-  const appMountRef = useRef<React.RefObject<HTMLElement>>(null);
-  const outputMountRef = useRef<React.RefObject<HTMLElement>>(null);
+  const appMountRef = useRef<HTMLDivElement>(null);
+  const outputMountRef = useRef<HTMLDivElement>(null);
 
   const { mutations } = useContext(ModelContext);
 
@@ -519,13 +520,11 @@ function BlockNode(
   }
 
   function handleError(error: Event) {
-    console.log('[BlockNodeWrapper] connection.error:', error);
     connectionErrorRef.current = error;
     console.error('[BlockNodeWrapper] connection.error:', error);
   }
 
   function handleOpen(status: ServerConnectionStatusType) {
-    console.log('[BlockNodeWrapper] connection.status:', status);
     connectionStatusRef.current = status;
   }
 
@@ -692,17 +691,19 @@ function BlockNode(
         launchOutputCallbackOnceRef.current = () => {
           getFile(event, execute);
         };
+      }
 
-        launchOutput({
-          message_request_uuid: messageRequestUUID,
-          uuid: channel,
-        }, () => {
-          if (launchOutputCallbackOnceRef.current) {
-            launchOutputCallbackOnceRef.current();
-          }
-          launchOutputCallbackOnceRef.current = null;
-        });
-      } else {
+      launchOutput({
+        message_request_uuid: messageRequestUUID,
+        uuid: channel,
+      }, () => {
+        if (launchOutputCallbackOnceRef.current) {
+          launchOutputCallbackOnceRef.current();
+        }
+        launchOutputCallbackOnceRef.current = null;
+      });
+
+      if (outputRootRef.current) {
         execute();
       }
 
@@ -761,21 +762,27 @@ function BlockNode(
 
     outputWrapperRef?.current?.classList?.add(stylesPipelineBuilder.hiddenOffscreen);
 
-    delete handleOnMessageRef.current?.[outputNodeRef?.current?.id];
+    // delete handleOnMessageRef.current?.[outputNodeRef?.current?.id];
 
-    outputRootRef?.current && outputRootRef?.current?.unmount();
-    outputAppendedChildElementRef?.current?.remove();
+    outputRootRef?.current.render(null);
+    // setTimeout(() => {
+    //   outputRootRef?.current?.unmount();
+    //   outputRootRef.current = null;
+    // }, 1);
+    // outputAppendedChildElementRef?.current?.remove();
 
-    outputAppendedChildElementRef.current = null;
-    outputWrapperRef.current = null;
-    outputRootRef.current = null;
-    outputNodeRef.current = null;
+    // outputAppendedChildElementRef.current = null;
+    // outputWrapperRef.current = null;
+    // outputRootRef.current = null;
+    // outputNodeRef.current = null;
 
     if (callback) {
       callback();
     } else if (onCloseOutputRef?.current) {
       onCloseOutputRef?.current?.();
     }
+
+    outputOpenRef.current = false;
   }
 
   function closeEditorApp(callback?: () => void) {
@@ -783,16 +790,16 @@ function BlockNode(
 
     appWrapperRef?.current?.classList?.add(stylesPipelineBuilder.hiddenOffscreen);
 
-    delete handleOnMessageRef.current?.[appNodeRef?.current?.id];
-    delete handleOnMessageRef.current?.[`${appNodeRef?.current?.id}/output`];
+    // delete handleOnMessageRef.current?.[appNodeRef?.current?.id];
+    // delete handleOnMessageRef.current?.[`${appNodeRef?.current?.id}/output`];
 
-    appRootRef?.current && appRootRef?.current?.unmount();
-    appAppendedChildElementRef?.current?.remove();
+    appRootRef?.current && appRootRef?.current?.render(null);
+    // appAppendedChildElementRef?.current?.remove();
 
-    appAppendedChildElementRef.current = null;
-    appWrapperRef.current = null;
-    appMountRef.current = null;
-    appRootRef.current = null;
+    // appAppendedChildElementRef.current = null;
+    // appWrapperRef.current = null;
+    // appMountRef.current = null;
+    // appRootRef.current = null;
 
     if (callback) {
       callback();
@@ -800,11 +807,11 @@ function BlockNode(
       onCloseAppRef?.current?.();
     }
 
-    setApps(prev => {
-      const data = { ...prev };
-      delete data[appNodeRef?.current?.id];
-      return data;
-    });
+    // setApps(prev => {
+    //   const data = { ...prev };
+    //   delete data[appNodeRef?.current?.id];
+    //   return data;
+    // });
 
     // DO THIS LAST
     appOpenRef.current = false;
@@ -969,23 +976,30 @@ function BlockNode(
   }
 
   function renderOutput(
-    wrapperRef: React.MutableRefObject<HTMLDivElement>,
-    mountRef: React.RefObject<HTMLElement>,
-    outputNode: OutputNodeType,
-    uuid?: string,
-    callback?: () => void,
+    node?: OutputNodeType,
+    wrapperRef?: React.MutableRefObject<HTMLDivElement>,
+    opts?: {
+      onMount?: () => void;
+      rect?: RectType;
+    },
   ) {
-    outputWrapperRef.current = wrapperRef.current;
-    outputNodeRef.current = outputNode;
-    outputMountRef.current = mountRef;
+    if (wrapperRef && wrapperRef.current) {
+      outputWrapperRef.current = wrapperRef.current;
+    }
+    if (node) {
+      outputNodeRef.current = node;
+    }
+
+    // outputWrapperRef.current = wrapperRef.current;
+    // outputNodeRef.current = outputNode;
+    // outputMountRef.current = mountRef;
 
     // outputAppendedChildElementRef.current = document.createElement('div');
     // outputAppendedChildElementRef.current.className = stylesBlockNode.inheritDimensions;
     // mountRef.current.appendChild(outputAppendedChildElementRef.current);
     // outputRootRef.current = createRoot(outputAppendedChildElementRef.current);
 
-    outputRootRef.current = createRoot(mountRef.current);
-    outputRootRef.current.render(
+    const el = (
       <ContextProvider theme={themeContext as any}>
         {renderOutputPortalContent()}
         <div
@@ -1006,135 +1020,165 @@ function BlockNode(
         >
           <OutputGroups
             {...outputGroupsProps}
-            consumerID={outputNode.id}
+            consumerID={outputNodeRef.current.id}
             executionOutput={{
               messages: [],
               namespace: encodeURIComponent(
                 [codeExecutionEnvironment.type, codeExecutionEnvironment.uuid].join(osPath.sep),
               ),
               path: encodeURIComponent(fileRef.current?.path),
-              uuid,
+              uuid: outputNodeRef.current.process.message_request_uuid,
             }}
             onMount={() => {
+              opts?.onMount && opts?.onMount?.();
+
               showLinesToOutput();
-              callback && callback();
 
               updateLinesRef?.current?.(
                 {
-                  [outputNode.id]: rectsMappingRef?.current?.[outputNode.id],
+                  [outputNodeRef.current.id]: rectsMappingRef?.current?.[outputNodeRef.current.id],
                   [block.uuid]: rectsMappingRef?.current?.[block.uuid],
                 },
                 { ...getSelectedGroupRectFromRefs() },
                 { replace: false },
               );
-
-              showLinesToOutput();
             }}
             role={ElementRoleEnum.CONTENT}
           />
         </div>
-      </ContextProvider>,
+      </ContextProvider>
     );
+
+    if (!outputRootRef.current) {
+      outputRootRef.current = createRoot(outputMountRef.current);
+    }
+    outputRootRef.current.render(el);
+
+    outputWrapperRef?.current?.classList?.remove(stylesPipelineBuilder.hiddenOffscreen);
+    outputOpenRef.current = true;
   }
 
   function renderEditorApp(
-    wrapperRef: React.MutableRefObject<HTMLDivElement>,
-    mountRef: React.RefObject<HTMLElement>,
-    appNode: AppNodeType,
+    node?: AppNodeType,
+    wrapperRef?: React.MutableRefObject<HTMLDivElement>,
     opts?: {
-      fileRef?: React.MutableRefObject<FileType>;
+      onMount?: () => void;
+      rect?: RectType;
     },
-    onMount?: () => void,
   ) {
-    appWrapperRef.current = wrapperRef.current;
-    appNodeRef.current = appNode;
-    appMountRef.current = mountRef;
+    if (wrapperRef && wrapperRef.current) {
+      appWrapperRef.current = wrapperRef.current;
+    }
+    if (node) {
+      appNodeRef.current = node;
+    }
+
+    // appMountRef.current = mountRef;
 
     // appAppendedChildElementRef.current = document.createElement('div');
     // appAppendedChildElementRef.current.className = stylesBlockNode.inheritDimensions;
     // mountRef.current.appendChild(appAppendedChildElementRef.current);
     // appRootRef.current = createRoot(appAppendedChildElementRef.current);
 
-    appRootRef.current = createRoot(mountRef.current);
-    appRootRef.current.render(
+    // DON’T DO THIS or else you get the error about undefined left.
+    // if (onCloseAppRef.current) {
+    //   onCloseAppRef.current();
+    // }
+
+    const el = (
       <ContextProvider theme={themeContext as any}>
         <EditorAppNode
-          app={appNode}
+          app={appNodeRef.current}
           block={block}
           dragControls={appDragControls}
-          fileRef={opts?.fileRef ?? fileRef}
+          fileRef={fileRef}
           handleContextMenu={handleEditorContextMenu}
           interruptExecution={interruptExecution}
           onClose={() => {
             closeEditorApp();
           }}
           onMount={() => {
-            onMount && onMount();
-
-            updateLinesRef.current(
-              {
-                [appNode.id]: rectsMappingRef?.current?.[appNode.id],
-                [block.uuid]: rectsMappingRef?.current?.[block.uuid],
-              },
-              { ...getSelectedGroupRectFromRefs() },
-              { replace: false },
-            );
-
-            showLinesToOutput();
-
-            setApps(prev => ({
-              ...prev,
-              [appNode.id]: {
-                ...appNode,
-                ref: appMountRef.current,
-              },
-            }));
+            opts?.onMount && opts?.onMount?.();
           }}
           outputGroupsProps={outputGroupsProps}
           setHandleOnMessage={setHandleOnMessage}
           submitCodeExecution={submitCodeExecution}
         />
-      </ContextProvider>,
+      </ContextProvider>
     );
 
-    if (onCloseAppRef.current) {
-      onCloseAppRef.current();
+    if (!appRootRef.current) {
+      appRootRef.current = createRoot(appMountRef.current);
     }
 
+    appRootRef.current.render(el);
     appOpenRef.current = true;
+    appWrapperRef?.current?.classList?.remove(stylesPipelineBuilder.hiddenOffscreen);
+
+    // return el;
+
+    // setApps(prev => ({
+    //   ...prev,
+    //   [appNode.id]: {
+    //     ...appNode,
+    //     ref: appMountRef.current,
+    //   },
+    // }));
   }
 
-  function launchOutput(output?: {
+  function launchOutput(outputProcess?: {
     message_request_uuid: string;
     uuid: string;
   }, callback?: () => void) {
     if (outputRootRef.current) {
-      callback && callback?.();
-    } else {
-      showOutput(
-        output,
-        (
-          node: OutputNodeType,
-          wrapperRef: React.MutableRefObject<HTMLDivElement>,
-          mountRef: React.MutableRefObject<HTMLDivElement>,
-          onMount?: () => void,
-        ) => {
-          renderOutput(wrapperRef, mountRef, node, output?.message_request_uuid, () => {
-            onMount && onMount();
-            callback && callback();
-          });
+      renderOutput(null, null, {
+        onMount: () => {
+          callback && callback?.();
         },
-        closeOutput,
-        onRemove => onCloseOutputRef.current = onRemove,
-        {
-          dragControls: outputDragControls,
+      });
+      return;
+    };
+
+    const __render = (
+      node: OutputNodeType,
+      wrapperRef: React.MutableRefObject<HTMLDivElement>,
+      {
+        onMount,
+        rect,
+      },
+    ) => {
+      renderOutput(node, wrapperRef, {
+        rect,
+        onMount: () => {
+          onMount && onMount();
+          callback && callback();
         },
-      );
-    }
+      });
+    };
+
+    showOutput(
+      {
+        process: outputProcess,
+      },
+      outputMountRef,
+      __render,
+      closeOutput,
+      onRemove => onCloseOutputRef.current = onRemove,
+      {
+        dragControls: outputDragControls,
+      },
+    );
   }
 
   function launchEditorApp(event: any, callback?: () => void) {
-    if (appRootRef.current) return;
+    if (appRootRef.current) {
+      renderEditorApp(null, null, {
+        onMount: () => {
+          callback && callback?.();
+        },
+      });
+      return;
+    };
 
     const app = {
       subtype: AppSubtypeEnum.CANVAS,
@@ -1142,33 +1186,40 @@ function BlockNode(
       uuid: [block.uuid, AppTypeEnum.EDITOR, AppSubtypeEnum.CANVAS].join(':'),
     };
 
-    const render = () =>
+    const __render = (
+      node: AppNodeType,
+      wrapperRef: React.MutableRefObject<HTMLDivElement>,
+      {
+        onMount,
+        rect,
+      },
+    ) => {
+      renderEditorApp(node, wrapperRef, {
+        rect,
+        onMount: () => {
+          onMount && onMount();
+          callback && callback();
+        },
+      });
+    }
+    const __show = () =>
       showApp(
         app,
-        (
-          node: AppNodeType,
-          wrapperRef: React.MutableRefObject<HTMLDivElement>,
-          mountRef: React.MutableRefObject<HTMLDivElement>,
-          onMount?: () => void,
-        ) => {
-          renderEditorApp(wrapperRef, mountRef, node, {
-            fileRef,
-          }, () => {
-            onMount && onMount();
-            callback && callback();
-          });
-        },
+        appMountRef,
+        __render,
         closeEditorApp,
-        onRemove => onCloseAppRef.current = onRemove,
+        onRemove => {
+          onCloseAppRef.current = onRemove;
+        },
         {
           dragControls: appDragControls,
         },
       );
 
     if (fileRef.current?.path && fileRef.current?.content) {
-      render();
+      __show();
     } else {
-      getFile(event, () => render());
+      getFile(event, __show);
     }
   }
 
@@ -1241,8 +1292,8 @@ function BlockNode(
       mutations.blocks.create.mutate({
         event,
         onSuccess: () => {
-          callback && callback?.();
           removeContextMenu(event);
+          callback && callback?.();
         },
         payload,
       });

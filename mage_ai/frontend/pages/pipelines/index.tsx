@@ -700,7 +700,7 @@ function PipelineListPage() {
         onSuccess(response, {
           callback: ({ pipeline: model }) => {
             router.push(
-              `/v2/pipelines/${snakeToHyphens(model.uuid)}/${snakeToHyphens(model.execution_framework)}`,
+              `/v2/pipelines/${snakeToHyphens(model.uuid)}/${snakeToHyphens(model.execution_framework)}/data-preparation`,
             );
           },
           onErrorCallback: (response, errors) =>

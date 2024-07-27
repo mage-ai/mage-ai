@@ -37,6 +37,7 @@ const TagStyled = styled.div<TagProps>`
   font-family: ${({ theme }) => theme.fonts.family.base.semiBold};
   padding: 4px ${PaddingVerticalEnum.XS}px;
   pointer-events: ${({ passthrough }) => (passthrough ? 'inherit' : 'auto')};
+  white-space: nowrap;
 `;
 
 const StatusTag = styled.div<TagProps>`
@@ -49,6 +50,7 @@ const StatusTag = styled.div<TagProps>`
   font-size: var(--fonts-size-xs);
   justify-content: center;
   padding: 6px;
+  white-space: nowrap;
 
   ${({ bottom, left, right, top }) =>
     (bottom || left || right || top) &&

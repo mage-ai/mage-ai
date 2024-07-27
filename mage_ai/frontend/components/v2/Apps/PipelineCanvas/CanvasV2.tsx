@@ -391,13 +391,17 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
     Record<
       string,
       Record<ItemTypeEnum, {
+        mountRef: React.MutableRefObject<HTMLDivElement>;
         node: any;
         remove: () => void;
         render: (
-          node: OutputNodeType,
-          nodeRef?: React.RefObject<HTMLDivElement>,
-          mountRef?: React.RefObject<HTMLDivElement>,
-          onMount?: () => void,
+          nodeItem: OutputNodeType | AppNodeType,
+          wrapperRef: React.MutableRefObject<HTMLDivElement>,
+          opts?: {
+            mountRef: React.MutableRefObject<HTMLDivElement>;
+            onMount?: (node: any) => void;
+            rect?: RectType;
+          },
         ) => void;
       }>
     >
@@ -440,11 +444,14 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
 
     const showRelatedNotes = (type: ItemTypeEnum) => (
       nodeOps: Record<string, any>,
+      mountRef: React.MutableRefObject<HTMLDivElement>,
       render: (
         nodeItem: OutputNodeType | AppNodeType,
         wrapperRef: React.MutableRefObject<HTMLDivElement>,
-        mountRef: React.MutableRefObject<HTMLDivElement>,
-        onMount?: () => void,
+        opts?: {
+          onMount?: () => void,
+          rect?: RectType;
+        },
       ) => void,
       remove: (callback?: () => void) => void,
       setOnRemove: (onRemove: () => void) => void,
@@ -471,6 +478,7 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
         node: nodeItem,
         remove: null,
         render: null,
+        mountRef: null,
       };
 
       let func = null;
@@ -498,9 +506,15 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
         remove ? remove(handleRemove) : handleRemove();
       };
 
-      relatedNodeRefs.current[block.uuid][nodeItem.type].render = (node2, nodeRef, mountRef, onMount) => {
-        render(node2, nodeRef, mountRef, onMount);
-      };
+      relatedNodeRefs.current[block.uuid][nodeItem.type].mountRef = mountRef;
+      relatedNodeRefs.current[block.uuid][nodeItem.type].render = (
+        nodeItem: OutputNodeType | AppNodeType,
+        wrapperRef: React.MutableRefObject<HTMLDivElement>,
+        opts?: {
+          onMount?: () => void,
+          rect?: RectType;
+        },
+      ) => render(nodeItem, wrapperRef, opts);
 
       if (opts?.dragControls) {
         dragControlsRef.current[nodeItem.id] = opts.dragControls;
@@ -541,8 +555,7 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
         return valid;
       },
       targetRef: (node: ShadowNodeType) => dragRefs.current[node.id],
-      waitUntil: (node: ShadowNodeType) => dragRefs.current?.[node.id]?.current !== null
-        && mountRootRefs.current?.[node.id]?.current !== null,
+      waitUntil: (node: ShadowNodeType) => dragRefs.current?.[node.id]?.current !== null,
     };
   }
 
@@ -1809,11 +1822,11 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
       dragRefs.current[block.uuid] = dragRef;
     }
 
-    let mountRootRef = mountRootRefs.current[block.uuid];
-    if (!mountRootRef) {
-      mountRootRef = createRef();
-      mountRootRefs.current[block.uuid] = mountRootRef;
-    }
+    // let mountRootRef = mountRootRefs.current[block.uuid];
+    // if (!mountRootRef) {
+    //   mountRootRef = createRef();
+    //   mountRootRefs.current[block.uuid] = mountRootRef;
+    // }
 
     let nodeRef = nodeRefs.current[block.uuid];
     if (!nodeRef) {
@@ -1842,7 +1855,7 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
             onDrag: handleDragging,
             onDragEnd: handleDragEnd,
           }}
-          mountRootRef={mountRootRef}
+          // mountRootRef={mountRootRef}
           groupSelection
           item={node}
           rect={
@@ -1905,8 +1918,6 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
       width: rectCurrent?.width,
     };
 
-    console.log('handleDragging', info, item, rect, rectFinal);
-
     renderLineRef?.current?.(rectFinal);
   }
 
@@ -1938,12 +1949,12 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
 
     update(`${framework.uuid}:${pipelineUUID}`, rectd);
 
-    setRectsMapping(prev => ({ ...prev, ...rectd }));
-    updateLinesRef?.current?.(
-      rectd,
-      { ...getSelectedGroupRectFromRefs() },
-      { replace: false },
-    );
+    // setRectsMapping(prev => ({ ...prev, ...rectd }));
+    // updateLinesRef?.current?.(
+    //   rectd,
+    //   { ...getSelectedGroupRectFromRefs() },
+    //   { replace: false },
+    // );
   }
 
   function handleMouseDown(event: ClientEventType) {
@@ -2128,15 +2139,18 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
               dragRefs.current[nodeID] = dragRef;
             }
 
-            let mountRootRef = mountRootRefs.current[nodeID];
-            if (!mountRootRef) {
-              mountRootRef = createRef();
-              mountRootRefs.current[nodeID] = mountRootRef;
-            }
+            // let mountRootRef = mountRootRefs.current[nodeID];
+            // if (!mountRootRef) {
+            //   mountRootRef = createRef();
+            //   mountRootRefs.current[nodeID] = mountRootRef;
+            // }
 
             if (ItemTypeEnum.BLOCK === nodeType) {
               dragConstraintsRef = dragRefs?.current?.[getCurrentGroup()?.uuid];
             }
+
+            let renderChildren = null;
+            let mountRef = null;
 
             if ([ItemTypeEnum.APP, ItemTypeEnum.OUTPUT].includes(nodeType)) {
               resizeConstraints.minimum = { ...rect };
@@ -2177,89 +2191,104 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
               rect.left = Math.max(PADDING_VERTICAL, rect.left);
               rect.top = Math.max(200, rect.top);
 
+              mountRef = relatedNodeRefs?.current?.[itemUUID]?.[nodeType]?.mountRef;
+              renderChildren = (
+                rectParent: RectType,
+                mountingRef: React.MutableRefObject<HTMLDivElement>,
+              ) => relatedNodeRefs?.current?.[itemUUID]?.[nodeType]?.render?.(
+                  item as any,
+                  dragRef,
+                  {
+                    mountRef: mountingRef,
+                    onMount: () => null,
+                    rect: rectParent,
+                  },
+                );
+
               arr.push(
                 <WithOnMount
                   key={`${itemUUID}:${nodeID}:${nodeType}`}
                   onMount={() => {
-                    waitUntilAttempt({
-                      uuid: `${itemUUID}:${nodeID}:${nodeType}:onMount`,
-                      pollInterval: 500,
-                      maxAttempts: 1,
-                      waitUntil: () => {
-                        const el = getClosestChildRole(dragRef?.current, [ElementRoleEnum.CONTENT]);
-                        const rt =
-                          el?.getBoundingClientRect() ?? dragRef?.current?.getBoundingClientRect?.();
-                        const mountRef = mountRootRef?.current?.[nodeID];
+                    // waitUntilAttempt({
+                    //   uuid: `${itemUUID}:${nodeID}:${nodeType}:onMount`,
+                    //   pollInterval: 100,
+                    //   maxAttempts: 40,
+                    //   waitUntil: () => {
+                    //     const el = getClosestChildRole(dragRef?.current, [ElementRoleEnum.CONTENT]);
+                    //     const rt =
+                    //       el?.getBoundingClientRect() ?? dragRef?.current?.getBoundingClientRect?.();
+                    //     const mountRef = mountRootRef?.current?.[nodeID];
 
-                        return [
-                          rt?.height > 0
-                            && rt?.width > 0
-                            && (mountRef?.current ?? false) !== false,
-                          rt,
-                        ];
-                      },
-                      onAttempt: (rect1) => {
-                        relatedNodeRefs?.current?.[itemUUID]?.[nodeType]?.render?.(
-                          item as any,
-                          dragRef,
-                          mountRootRefs.current[nodeID],
-                        );
+                    //     return [
+                    //       rt?.height > 0
+                    //         && rt?.width > 0
+                    //         && (mountRef?.current ?? false) !== false,
+                    //       rt,
+                    //     ];
+                    //   },
+                    //   onAttempt: (rect1) => {
+                    //     relatedNodeRefs?.current?.[itemUUID]?.[nodeType]?.render?.(
+                    //       item as any,
+                    //       dragRef,
+                    //       mountRootRefs.current[nodeID],
+                    //     );
 
-                        const rect2 = {
-                          block,
-                          ...rectsMappingRef.current[nodeID],
-                          ...rect,
-                        };
-                        rect2.height = rect1?.height || rect?.height || rect2?.height || 0;
-                        rect2.width = rect1?.width || rect?.width || rect2?.width || 0;
-                        rect2.left = Math.max(PADDING_VERTICAL, rect2.left);
-                        rect2.top = Math.max(200, rect2.top);
-                        rectsMappingRef.current[nodeID] = rect2;
+                    //     const rect2 = {
+                    //       block,
+                    //       ...rectsMappingRef.current[nodeID],
+                    //       ...rect,
+                    //     };
+                    //     rect2.height = rect1?.height || rect?.height || rect2?.height || 0;
+                    //     rect2.width = rect1?.width || rect?.width || rect2?.width || 0;
+                    //     rect2.left = Math.max(PADDING_VERTICAL, rect2?.left ?? PADDING_VERTICAL);
+                    //     rect2.top = Math.max(200, rect2?.top ?? 200);
 
-                        const map = {
-                          [block.uuid]: rectsMappingRef.current[block.uuid],
-                        };
-                        const oNode = relatedNodeRefs?.current?.[block.uuid]?.[ItemTypeEnum.OUTPUT];
-                        const aNode = relatedNodeRefs?.current?.[block.uuid]?.[ItemTypeEnum.APP];
-                        [oNode, aNode].filter(Boolean).forEach(({ id, rect }: NodeItemType) => {
-                          map[id] = rect;
-                        })
+                    //     rectsMappingRef.current[nodeID] = rect2;
 
-                        updateLinesRef?.current?.(map, deepCopy(getSelectedGroupRectFromRefs()), {
-                          replace: false,
-                        });
+                    //     const map = {
+                    //       [block.uuid]: rectsMappingRef.current[block.uuid],
+                    //     };
+                    //     const oNode = relatedNodeRefs?.current?.[block.uuid]?.[ItemTypeEnum.OUTPUT];
+                    //     const aNode = relatedNodeRefs?.current?.[block.uuid]?.[ItemTypeEnum.APP];
+                    //     [oNode, aNode].filter(Boolean).forEach(({ id, rect }: NodeItemType) => {
+                    //       map[id] = rect;
+                    //     })
 
-                        waitUntilAttempt({
-                          uuid: `${itemUUID}:${nodeID}:${nodeType}:handleLineTransitions`,
-                          pollInterval: 500,
-                          maxAttempts: 1,
-                          waitUntil: () => {
-                            dragRefs?.current?.[nodeID]?.current?.classList.remove(
-                              stylesPipelineBuilder.hiddenOffscreen);
-                            const hasClass = !dragRefs.current[nodeID].current.classList
-                              .contains(stylesPipelineBuilder.hiddenOffscreen);
+                    //     updateLinesRef?.current?.(map, deepCopy(getSelectedGroupRectFromRefs()), {
+                    //       replace: false,
+                    //     });
 
-                            const checks = [];
-                            if (oNode) {
-                              checks.push([block.uuid, (oNode as NodeItemType)?.id]);
-                              if (aNode) {
-                                checks.push([(aNode as NodeItemType)?.id, (oNode as NodeItemType)?.id]);
-                              }
-                            }
+                    //     waitUntilAttempt({
+                    //       uuid: `${itemUUID}:${nodeID}:${nodeType}:handleLineTransitions`,
+                    //       pollInterval: 100,
+                    //       maxAttempts: 40,
+                    //       waitUntil: () => {
+                    //         dragRefs?.current?.[nodeID]?.current?.classList.remove(
+                    //           stylesPipelineBuilder.hiddenOffscreen);
+                    //         const hasClass = !dragRefs.current[nodeID].current.classList
+                    //           .contains(stylesPipelineBuilder.hiddenOffscreen);
 
-                            const ready = hasClass && checks.filter(Boolean).every(([from, to]) => {
-                              const id = getLineID(from, to);
-                              return !!document.getElementById(id);
-                            });
+                    //         const checks = [];
+                    //         if (oNode) {
+                    //           checks.push([block.uuid, (oNode as NodeItemType)?.id]);
+                    //           if (aNode) {
+                    //             checks.push([(aNode as NodeItemType)?.id, (oNode as NodeItemType)?.id]);
+                    //           }
+                    //         }
 
-                            return [ready]
-                          },
-                          onAttempt: () => {
-                            handleLineTransitions();
-                          },
-                        });
-                      },
-                    });
+                    //         const ready = hasClass && checks.filter(Boolean).every(([from, to]) => {
+                    //           const id = getLineID(from, to);
+                    //           return !!document.getElementById(id);
+                    //         });
+
+                    //         return [ready]
+                    //       },
+                    //       onAttempt: () => {
+                    //         handleLineTransitions();
+                    //       },
+                    //     });
+                    //   },
+                    // });
                   }}
                 />,
               );
@@ -2284,8 +2313,9 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
                 }}
                 item={node}
                 key={nodeID}
-                mountRootRef={mountRootRef}
+                mountRef={mountRef}
                 entering={blockEnterRef.current === block.uuid}
+                renderChildren={renderChildren}
                 rect={rect}
                 rectsMappingRef={[
                   ItemTypeEnum.APP,

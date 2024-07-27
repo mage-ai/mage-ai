@@ -64,27 +64,23 @@ const OutputGroups: React.FC<OutputGroupsProps> = ({
   setHandleOnMessage,
   styles,
 }: OutputGroupsProps) => {
-  const phaseRef = useRef<number>(0);
   const mutants = useMutate({ resource: 'execution_outputs' });
   const theme = useContext(ThemeContext);
 
+  const phaseRef = useRef<number>(0);
   const outputMountRef = useRef(null);
-  const resultRootsRef = useRef<Record<string, {
-    node: Element;
-    root: Root;
-  }>>({});
-
-  const containerRef = useRef<HTMLDivElement>(null);
   const resultElementRefs = useRef<Record<string, React.MutableRefObject<HTMLDivElement>>>({});
-
+  const containerRef = useRef<HTMLDivElement>(null);
   const scrollbarRef = useRef<HTMLDivElement>(null);
   const statusRef = useRef<HTMLElement>(null);
   const timeoutRef = useRef(null);
   const timeoutScrollRef = useRef(null);
-
   const executionOutputMappingRef = useRef<Record<string, ExecutionOutputType>>({});
-
   const executingRef = useRef<boolean>(false);
+  const resultRootsRef = useRef<Record<string, {
+    node: Element;
+    root: Root;
+  }>>({});
 
   const fetchOutput = useCallback(
     (id: string, opts: any) => {
@@ -248,12 +244,33 @@ const OutputGroups: React.FC<OutputGroupsProps> = ({
     const ts = timeoutRef.current;
     const tss = timeoutScrollRef.current;
 
+    const roots = resultRootsRef.current;
+
     return () => {
       clearTimeout(ts)
       clearTimeout(tss)
+
+      containerRef.current = null;
+      executingRef.current = false;
+      executionOutputMappingRef.current = {};
+      outputMountRef.current = null;
+      phaseRef.current = 0;
+      resultElementRefs.current = {};
+      scrollbarRef.current = null;
+      statusRef.current = null;
       timeoutRef.current = null;
       timeoutScrollRef.current = null;
-      executingRef.current = false;
+
+      Object.values(roots ?? {})?.forEach(({
+        node,
+        root,
+      }) => {
+        root?.render(null);
+        setTimeout(() => {
+          root?.unmount();
+          node?.remove();
+        }, 1);
+      });
     }
 
     // eslint-disable-next-line react-hooks/exhaustive-deps

@@ -36,12 +36,14 @@ export function useMenuManager({
     ({
       items,
       openItems,
+      onClickCallback,
     }: {
       items?: MenuItemType[];
       openItems?: {
         column: number;
         row: number;
       }[];
+      onClickCallback?: (item: MenuItemType) => void;
     }) => {
       if ((items?.length ?? 0) > 0) {
         const rectc = containerRef?.current?.getBoundingClientRect();
@@ -76,6 +78,7 @@ export function useMenuManager({
           direction,
           handleEscape: () => hideMenu(uuid),
           onClose,
+          onClickCallback,
           openItems,
           position: rectAbsolute,
           rects: {
@@ -105,6 +108,7 @@ export function useMenuManager({
     containerRef,
     contextMenu,
     handleToggleMenu,
+    hideMenu: () => hideMenu(uuid),
     portalRef,
     teardown,
   };
@@ -143,7 +147,7 @@ function MenuManager(
     containerRef,
     handleToggleMenu,
     portalRef,
-    teardown,
+    hideMenu
   } = useMenuManager({
     contained,
     contextMenuRef,
@@ -183,6 +187,9 @@ function MenuManager(
           handleToggleMenu({
             items,
             openItems,
+            onClickCallback: (item) => {
+              hideMenu();
+            },
           });
         }}
         role={ElementRoleEnum.BUTTON}

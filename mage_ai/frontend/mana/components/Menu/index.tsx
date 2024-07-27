@@ -68,6 +68,7 @@ export type MenuProps = {
   >;
   small?: boolean;
   standardMenu?: boolean;
+  onClickCallback?: (item: any) => void;
   uuid: string;
 };
 
@@ -78,7 +79,7 @@ type ItemProps = {
   last?: boolean;
   item: MenuItemType;
   small?: boolean;
-  onClickCallback?: () => void;
+  onClickCallback?: (item: any) => void;
   handleMouseEnter?: (event: MouseEvent) => void;
   handleMouseLeave?: (event: MouseEvent) => void;
 };
@@ -256,6 +257,7 @@ function Menu({
   level,
   openItems,
   parentItemRef,
+  onClickCallback,
   position,
   rects,
   removePortals,
@@ -306,6 +308,7 @@ function Menu({
           addPortal={addPortal}
           contained={contained}
           direction={directionRef.current}
+          onClickCallback={onClickCallback}
           directionPrevious={direction}
           items={item?.items}
           itemsRef={itemsRef}
@@ -356,6 +359,7 @@ function Menu({
     },
     [
       standardMenu,
+      onClickCallback,
       uuid,
       addPortal,
       removePortals,
@@ -644,6 +648,7 @@ function Menu({
                     contained={contained}
                     defaultOpen={openItems?.[0]?.row === idx}
                     first={idx === 0}
+                    onClickCallback={onClickCallback}
                     handleMouseEnter={event => {
                       hideChildren();
                       if (item?.items?.length >= 1) {
@@ -675,6 +680,7 @@ function Menu({
 
 function MenuController({
   items,
+  onClickCallback,
   keyboardNavigationItemFilter,
   onClose,
   portalRef,
@@ -774,6 +780,8 @@ function MenuController({
             },
             item,
           );
+
+          onClickCallback && onClickCallback?.(item);
           removePortals(0);
           // clearTimeout(timeoutRef.current);
           // timeoutRef.current = setTimeout(() => {
@@ -805,7 +813,7 @@ function MenuController({
         }
       }
     },
-    [items, keyboardNavigationItemFilter, onClose, removePortals],
+    [items, keyboardNavigationItemFilter, onClose, removePortals, onClickCallback],
   );
 
   dispatchEventRef.current = useCustomEventHandler(portalRef, {
@@ -831,6 +839,7 @@ function MenuController({
     <Menu
       {...props}
       addPortal={addPortalHandler}
+      onClickCallback={onClickCallback}
       items={items}
       itemsRef={itemsRef}
       level={0}
