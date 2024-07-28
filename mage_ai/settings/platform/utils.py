@@ -20,6 +20,7 @@ def get_pipeline_from_platform(
     repo_path: str = None,
     mapping: Dict = None,
     use_repo_path: bool = False,
+    materialize_execution_framework: bool = False,
 ):
     from mage_ai.data_preparation.models.pipeline import Pipeline
     from mage_ai.settings.repo import get_repo_path
@@ -27,7 +28,10 @@ def get_pipeline_from_platform(
     if not project_platform_activated():
         repo_path = repo_path or get_repo_path()
         return Pipeline.get(
-            pipeline_uuid, check_if_exists=check_if_exists, repo_path=repo_path
+            pipeline_uuid,
+            check_if_exists=check_if_exists,
+            repo_path=repo_path,
+            materialize_execution_framework=materialize_execution_framework,
         )
 
     if not mapping:
@@ -43,6 +47,7 @@ def get_pipeline_from_platform(
         all_projects=False if repo_path else True,
         repo_path=repo_path,
         use_repo_path=use_repo_path,
+        materialize_execution_framework=materialize_execution_framework,
     )
 
 
@@ -109,14 +114,18 @@ def get_pipeline_config_path(
 
     full_paths = [
         repo_path_active,
-    ] + [fp for fp in full_paths_for_all_projects(
-                        context_data=context_data,
-                        repo_paths_all=repo_paths_all)
-         if fp != repo_path_active]
+    ] + [
+        fp
+        for fp in full_paths_for_all_projects(
+            context_data=context_data, repo_paths_all=repo_paths_all
+        )
+        if fp != repo_path_active
+    ]
 
     match_config_path = None
     match_repo_path = None
     for full_path in full_paths:
+
         def __select(fn: str, path_relative=path_relative):
             return str(fn).endswith(path_relative)
 
@@ -148,6 +157,9 @@ def full_paths_for_all_projects(
             context_data=context_data,
             mage_projects_only=True,
         )
-    return [d.get(
-        'full_path',
-    ) for d in repo_paths_all.values()]
+    return [
+        d.get(
+            'full_path',
+        )
+        for d in repo_paths_all.values()
+    ]
