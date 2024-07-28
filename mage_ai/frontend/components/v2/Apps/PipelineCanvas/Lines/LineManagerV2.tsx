@@ -460,7 +460,8 @@ export default function LineManagerV2({
         d: dvalue,
         style: {
           fill: 'none',
-          stroke: colors?.length >= 2 ? `url(#${gradientID})` : `var(--colors-${colors[0] ?? 'gray'})`,
+          // stroke: colors?.length >= 2 ? `url(#${gradientID})` : `var(--colors-${colors[0] ?? 'gray'})`,
+          stroke: `var(--colors-${colors[0] ?? 'azure'}`,
           strokeWidth: isOutput ? 2 : 1.5,
         },
         'data-index': index,
