@@ -101,6 +101,7 @@ class Pipeline:
         description: str = None,
         tags: List[str] = None,
         execution_framework: Optional[str] = None,
+        materialize_execution_framework: bool = False,
     ):
         self.block_configs = []
         self.blocks_by_uuid = {}
@@ -117,6 +118,7 @@ class Pipeline:
         self.name = None
         self.notification_config = dict()
         self.execution_framework = execution_framework
+        self.materialize_execution_framework = materialize_execution_framework
 
         # For multi project
         warn_for_repo_path(repo_path)
@@ -457,6 +459,7 @@ class Pipeline:
         all_projects: bool = False,
         context_data: Dict = None,
         use_repo_path: bool = False,
+        materialize_execution_framework: bool = False,
     ):
         warn_for_repo_path(repo_path)
 
@@ -477,6 +480,7 @@ class Pipeline:
             repo_config=repo_config,
             context_data=context_data,
             use_repo_path=use_repo_path,
+            materialize_execution_framework=materialize_execution_framework,
         )
         if PipelineType.INTEGRATION == pipeline.type:
             from mage_ai.data_preparation.models.pipelines.integration_pipeline import (
@@ -588,6 +592,7 @@ class Pipeline:
         all_projects: bool = False,
         context_data: Dict = None,
         use_repo_path: bool = False,
+        materialize_execution_framework: bool = False,
     ):
         warn_for_repo_path(repo_path)
 
@@ -648,6 +653,7 @@ class Pipeline:
                 config=config,
                 repo_config=repo_config,
                 use_repo_path=use_repo_path,
+                materialize_execution_framework=materialize_execution_framework,
             )
         return pipeline
 
@@ -1010,9 +1016,8 @@ class Pipeline:
     ):
         blocks_by_uuid = {b.uuid: b for b in blocks if b is not None}
 
-        if execution_framework is not None and ExecutionFrameworkUUID.has_value(
-            execution_framework
-        ):
+        if self.materialize_execution_framework and execution_framework is not None \
+                and ExecutionFrameworkUUID.has_value(execution_framework):
             # Enforce the block execution dependencies with the execution framework
             from mage_ai.frameworks.execution.constants import (
                 EXECUTION_FRAMEWORKS_BY_UUID,

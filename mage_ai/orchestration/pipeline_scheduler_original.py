@@ -1317,7 +1317,12 @@ def retry_pipeline_run(
     repo_path: str,
 ) -> 'PipelineRun':
     pipeline_uuid = pipeline_run['pipeline_uuid']
-    pipeline = Pipeline.get(pipeline_uuid, check_if_exists=True, repo_path=repo_path)
+    pipeline = Pipeline.get(
+        pipeline_uuid,
+        check_if_exists=True,
+        repo_path=repo_path,
+        materialize_execution_framework=True,
+    )
     if pipeline is None or not pipeline.is_valid_pipeline(pipeline.dir_path):
         raise Exception(f'Pipeline {pipeline_uuid} is not a valid pipeline.')
 
