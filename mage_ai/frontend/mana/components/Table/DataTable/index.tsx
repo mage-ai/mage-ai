@@ -320,7 +320,7 @@ function DataTable({
       <Table
         {...rest}
         boundingBox={boundingBox}
-        columns={columns}
+        columns={columns as (Column & ColumnSetting)[]}
         rows={rows}
       />
     </ContainerStyled>

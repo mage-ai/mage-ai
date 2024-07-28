@@ -217,7 +217,7 @@ function MenuItemBase(
             motion
             onClick={e => {
               e.preventDefault();
-              onClick?.(e as any, item, () => onClickCallback());
+              onClick?.(e as any, item, () => onClickCallback(item));
             }}
             plain
             width="100%"
