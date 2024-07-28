@@ -19,7 +19,7 @@ import { Column, ColumnSetting } from './interfaces';
 export const BASE_ROW_HEIGHT = 20;
 export const DEFAULT_COLUMN_WIDTH = BASE_ROW_HEIGHT;
 export const WIDTH_OF_SINGLE_CHARACTER_REGULAR_SM = 10;
-export const MIN_WIDTH = 100;
+export const MIN_WIDTH = 160;
 
 export function estimateCellHeight({
   original,
@@ -55,9 +55,11 @@ export function estimateCellHeight({
       const isDict = VariableTypeEnum.DICTIONARY_COMPLEX === data?.type && isObject(val);
       if (isDict) {
         vals.push('{');
+        vals.push('{');
         Object.entries(val ?? {}).forEach(([key, value]) => {
           vals.push(`  ${key}: ${value},`);
         });
+        vals.push('}');
         vals.push('}');
       } else if (Array.isArray(val)) {
         let hasObject = false;

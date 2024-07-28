@@ -88,17 +88,24 @@ function Table({ ...props }: TableProps) {
         // console.log(data)
 
         let size = 0;
-        if (Array.isArray(val1) && VariableTypeEnum.DICTIONARY_COMPLEX === data?.type) {
-          val1?.forEach((val2) => {
+        let dataType = data?.type;
+        if (VariableTypeEnum.ITERABLE === dataType && Array.isArray(val1)) {
+          const sample = val1?.[0];
+          if (sample && isObject(sample)) {
+            dataType = VariableTypeEnum.DICTIONARY_COMPLEX;
+          }
+        }
+
+        // console.log(dataType, Array.isArray(val1), isObject(val1?.[0]))
+
+        if (VariableTypeEnum.DICTIONARY_COMPLEX === dataType) {
+          const valArr = Array.isArray(val1) ? val1 : [val1];
+
+          valArr?.forEach((val2) => {
             val2 = isObject(val2) ? JSON.stringify(val2, null, 2) : val2;
             String(val2 ?? '').split('\n').forEach((line) => {
               size = Math.max(size, line.trim().length);
             });
-          });
-        } else if (VariableTypeEnum.DICTIONARY_COMPLEX === data?.type) {
-          val1 = isObject(val1) ? JSON.stringify(val1, null, 2) : val1;
-          String(val1 ?? '').split('\n').forEach((line) => {
-            size = Math.max(size, line.trim().length);
           });
         } else if (typeof val1 === 'string') {
           size = val1.trim().length;
@@ -106,6 +113,8 @@ function Table({ ...props }: TableProps) {
           size = Math.max(...(val1 as string[]).map(v => String(v).trim().length));
           size += PaddingEnum.LG * 2;
         }
+
+        // console.log(columns, idxRow, idx, widths, val1)
 
         widths[idx] = Math.max(widths[idx], size) + (PaddingEnum.XS * 2);
       });
@@ -142,6 +151,8 @@ function Table({ ...props }: TableProps) {
       return newWidth < MIN_WIDTH ? MIN_WIDTH : newWidth;
     });
   }, [columns, columnWidthsRaw, indexColumnWidth, width]);
+
+  // console.log(columnWidths)
 
   const defaultColumn = useMemo(() => {
     const widthAdjusted = width

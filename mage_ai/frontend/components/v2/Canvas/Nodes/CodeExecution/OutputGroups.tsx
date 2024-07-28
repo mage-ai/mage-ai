@@ -26,7 +26,7 @@ import { objectSize } from '@utils/hash';
 
 export const DEFAULT_RECT = {
   height: 600,
-  width: 600,
+  width: 800,
 };
 
 export type OutputGroupsType = {

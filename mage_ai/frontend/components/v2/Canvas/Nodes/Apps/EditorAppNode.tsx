@@ -370,6 +370,7 @@ function EditorAppNode({
           borders
           columnGap={12}
           justifyContent="start"
+          onPointerDownCapture={cancelDrag}
           padding={6}
           style={{
             backgroundColor: 'var(--menus-background-contained-default)',
@@ -406,13 +407,13 @@ function EditorAppNode({
           ))}
         </Grid>
       )}
+
       <Grid
         style={{ overflow: 'hidden' }}
         className={[
           stylesAppNode.content,
           stylesAppNode.dragger,
         ].join(' ')}
-        onPointerDown={startDrag}
         templateRows="auto 1fr"
       >
         <Grid
@@ -420,6 +421,7 @@ function EditorAppNode({
           bordersBottom
           columnGap={10}
           justifyContent="start"
+          onPointerDown={startDrag}
           paddingBottom={18}
           paddingLeft={PADDING_HORIZONTAL}
           paddingRight={PADDING_HORIZONTAL}
@@ -489,7 +491,10 @@ function EditorAppNode({
           </Grid>
         </Grid>
 
-        <Grid className={stylesAppNode.codeContainer}>
+        <Grid
+          className={stylesAppNode.codeContainer}
+          onPointerDownCapture={cancelDrag}
+        >
           <EditorContainerStyled>{main}</EditorContainerStyled>
         </Grid>
       </Grid>

@@ -688,14 +688,14 @@ const ColorsDerived = {
       },
       thumbNested: {
         default: convert({
-          [ModeEnum.DARK]: '#34404C33',
-          [ModeEnum.LIGHT]: '#FFFFFF33',
-          [ModeEnum.MODE3]: '#FFFFFF33',
+          [ModeEnum.DARK]: 'whiteLo',
+          [ModeEnum.LIGHT]: 'blackLo',
+          [ModeEnum.MODE3]: 'blackLo',
         }),
         hover: convert({
-          [ModeEnum.DARK]: '#FFFFFF1A',
-          [ModeEnum.LIGHT]: '#FFFFFF1A',
-          [ModeEnum.MODE3]: '#FFFFFF1A',
+          [ModeEnum.DARK]: 'whiteMd',
+          [ModeEnum.LIGHT]: 'blackMd',
+          [ModeEnum.MODE3]: 'blackMd',
         }),
       },
       trackNested: {

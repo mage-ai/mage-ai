@@ -78,6 +78,7 @@ export const ContainerStyled = styled.div`
 
       .json-object {
         ${scrollbars}
+        overflow-y: hidden;
         overflow-x: auto;
         padding: 0;
       }
