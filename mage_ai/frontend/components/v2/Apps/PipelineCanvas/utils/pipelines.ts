@@ -11,7 +11,7 @@ import {
 import { GroupUUIDEnum } from '@interfaces/PipelineExecutionFramework/types';
 import { extractNestedBlocks } from '@utils/models/pipeline';
 import { indexBy, flattenArray, uniqueArray } from '@utils/array';
-import { ignoreKeys, selectKeys } from '@utils/hash';
+import { ignoreKeys, objectSize, selectKeys } from '@utils/hash';
 
 export function buildDependencies(
   executionFramework: PipelineExecutionFrameworkType,
@@ -223,10 +223,12 @@ export function buildDependencies(
   //   blocks will be pointing to another group.
   // 2. Get the group that’s being pointed to.
   // 3. Get the block UUIDs from the pointed group.
-  // 4. Add the blocks’ UUID to the current blocks’s upstream and downstream blocks.
+  // 3b. Only do this if there is 1 block in the group.
 
   Object.entries(blockMapping ?? {})?.forEach(([blockUUID, block]: [string, BlockType]) => {
     block?.groups?.forEach((groupUUID: GroupUUIDEnum) => {
+      if (objectSize(blocksByGroup[groupUUID] ?? {}) > 1) return;
+
       const group = groupMapping[groupUUID];
 
       const dn = group?.downstream_blocks ?? [];

@@ -4,19 +4,14 @@ import styled from 'styled-components';
 
 export const ContainerStyled = styled.div`
   .header {
-    backdrop-filter: blur(var(--modal-blur-base));
-    ${gradientBackgroundVars(
-      '0deg',
-      'var(--menus-background-gradient-default)',
-      'var(--menus-background-gradient-default)',
-      0,
-      100,
-      'var(--menus-background-base-default)'
-    )}
     left: 0;
     position: sticky;
     top: 0;
     z-index: 1;
+
+    .th {
+      background-color: var(--backgrounds-menu-base-default);
+    }
   }
 
   .table {
@@ -90,9 +85,6 @@ export const ContainerStyled = styled.div`
 
     &.sticky {
       overflow: auto;
-    }
-
-    .header {
     }
   }
 `;

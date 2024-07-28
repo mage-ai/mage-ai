@@ -12,7 +12,7 @@ import { isDebug } from '@utils/environment';
 
 const ROOT_ID = 'api-mutation-root';
 
-export const APIMutationProvider: React.FC<APIMutationProviderProps> = ({ children }) => {
+export const APIMutationProvider: React.FC<APIMutationProviderProps> = ({ base, children }) => {
   const themeContext = useContext(ThemeContext);
   const errorRef = useRef<APIErrorType>(null);
   const errorElementRef = useRef<HTMLElement | null>(null);
@@ -43,9 +43,9 @@ export const APIMutationProvider: React.FC<APIMutationProviderProps> = ({ childr
   }
 
   function renderError(error: APIErrorType, retry?: (event: any) => void) {
-    const element =
-      errorElementRef?.current || (errorElementRef.current = document.getElementById(ROOT_ID));
-    (rootRef as { current: any }).current ||= createRoot(element);
+    errorElementRef.current = document.getElementById(ROOT_ID);
+
+    (rootRef as { current: any }).current ||= createRoot(errorElementRef.current);
     dismissError();
 
     errorRef.current = error;
@@ -69,7 +69,7 @@ export const APIMutationProvider: React.FC<APIMutationProviderProps> = ({ childr
     >
       <>
         {children}
-        <div id={ROOT_ID} />
+        {base && <div id={ROOT_ID} />}
 
         {target &&
           LoadingStyle.INLINE !== loadingStyle &&

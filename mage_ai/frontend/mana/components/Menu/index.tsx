@@ -648,7 +648,6 @@ function Menu({
                     contained={contained}
                     defaultOpen={openItems?.[0]?.row === idx}
                     first={idx === 0}
-                    onClickCallback={onClickCallback}
                     handleMouseEnter={event => {
                       hideChildren();
                       if (item?.items?.length >= 1) {
@@ -659,7 +658,10 @@ function Menu({
                     }}
                     item={item}
                     last={idx === itemsCount - 1}
-                    onClickCallback={() => removePortals(0)}
+                    onClickCallback={() => {
+                      removePortals(0);
+                      onClickCallback && onClickCallback(item);
+                    }}
                     ref={itemRef}
                     small={small}
                   />

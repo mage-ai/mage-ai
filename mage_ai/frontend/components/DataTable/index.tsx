@@ -686,7 +686,8 @@ function Table({ ...props }: TableProps) {
                   columnStyle.width = maxWidthOfIndexColumns[idx];
                   columnStyle.minWidth = maxWidthOfIndexColumns[idx];
                 } else {
-                  columnStyle.color = (themeContext || dark).content.default;
+                  // @ts-ignore
+                  columnStyle.color = (themeContext || dark)?.content?.default;
                   columnStyle.padding = UNIT * 1;
                   columnStyle.minWidth = defaultColumn.width;
                 }

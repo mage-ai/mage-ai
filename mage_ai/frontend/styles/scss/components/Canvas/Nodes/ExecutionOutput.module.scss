@@ -5,7 +5,7 @@
 
   pre {
     @include text.monospace-sm;
-    color: var(--colors-rosemd);
+    color: var(--fonts-color-code-base);
     column-gap: var(--padding-xs);
     display: grid;
     grid-template-columns: auto 1fr;

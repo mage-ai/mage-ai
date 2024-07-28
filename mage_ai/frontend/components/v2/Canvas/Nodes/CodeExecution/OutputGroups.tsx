@@ -187,13 +187,15 @@ const OutputGroups: React.FC<OutputGroupsProps> = ({
     const xo = executionOutputMappingRef.current[result?.process?.message_request_uuid];
     executingRef.current = xo?.messages?.every((r) => !executionDone({ result: r } as any));
 
-    if (executingRef.current) {
-      statusRef?.current?.classList?.remove(stylesBlockNode.fadeOut);
-      statusRef.current.innerText =
-        `${capitalize(STATUS_DISPLAY_TEXT[result?.status] ?? result?.status)}...`;
-    } else {
-      statusRef?.current?.classList?.add(stylesBlockNode.fadeOut);
-      statusRef.current.innerText = '';
+    if (statusRef?.current) {
+      if (executingRef.current) {
+        statusRef?.current?.classList?.remove(stylesBlockNode.fadeOut);
+        statusRef.current.innerText =
+          `${capitalize(STATUS_DISPLAY_TEXT[result?.status] ?? result?.status)}...`;
+      } else {
+        statusRef?.current?.classList?.add(stylesBlockNode.fadeOut);
+        statusRef.current.innerText = '';
+      }
     }
   }
 
@@ -265,7 +267,12 @@ const OutputGroups: React.FC<OutputGroupsProps> = ({
         node,
         root,
       }) => {
-        root?.render(null);
+        try {
+          root?.render(null);
+        } catch(error) {
+          console.error(error);
+        }
+
         setTimeout(() => {
           root?.unmount();
           node?.remove();

@@ -461,6 +461,8 @@ export default function BlockNodeComponent({
               </Grid>
 
               {(block?.upstream_blocks ?? []).concat(block?.downstream_blocks ?? []).map((buuid: string) => {
+
+                // console.log(block.uuid, block, buuid, block.upstream_blocks, block.downstream_blocks)
                 const block2 = blockMappingRef?.current?.[buuid];
                 const color = getBlockColor(block2?.type, { getColorName: true })?.names?.base;
                 const isup = block?.upstream_blocks?.includes(buuid);

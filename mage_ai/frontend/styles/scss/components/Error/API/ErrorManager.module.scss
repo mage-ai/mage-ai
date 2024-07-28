@@ -39,9 +39,9 @@
   }
 
   .errorContainer {
-    @include gradient(0deg, #000000E6, #000000E6, 0%, 100%);
-    background-color: var(--colors-graylo);
-    backdrop-filter: var(--menus-blur-base);
+    @include gradient(0deg, var(--menus-background-gradient-default), var(--menus-background-gradient-default), 0%, 100%);
+    background-color: var(--menus-background-base-default);
+    backdrop-filter: blur(var(--modal-blur-base));
     max-width: calc(100vw - 2 * var(--padding-base));
   }
 }

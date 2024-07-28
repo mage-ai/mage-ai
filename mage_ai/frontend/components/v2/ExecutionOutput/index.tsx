@@ -43,8 +43,19 @@ export default function ExecutionOutput({
         type,
         uuid,
       }) => {
+        // console.log(
+        //   Array.isArray(data),
+        //   data?.length > 0,
+        // )
+
         if (Array.isArray(data) && data?.length > 0) {
           const sample = data?.[0];
+
+          // console.log(
+          //   'array', Array.isArray(sample),
+          //   'object', isObject(sample),
+          //   'sample', sample,
+          // )
 
           if (!Array.isArray(sample) && isObject(sample)) {
             if (columns.length === 0) {
@@ -72,8 +83,10 @@ export default function ExecutionOutput({
                   };
                 }
 
-                columns.push(val2);
+                columns.push(col);
               });
+
+              // console.log('columns', columns)
             }
 
             data.forEach((data2) => {
@@ -139,7 +152,7 @@ export default function ExecutionOutput({
                 };
               }
 
-              columns.push(val2);
+              columns.push(col);
             });
           }
 
@@ -148,6 +161,10 @@ export default function ExecutionOutput({
           rows.push(row);
         }
       });
+
+      // console.log('output', output)
+      // console.log('columns', columns)
+      // console.log('rows', rows)
 
       const maxHeight = Math.min(Math.max(containerRect?.height ?? 0, 600), 600);
 
@@ -160,7 +177,7 @@ export default function ExecutionOutput({
           columns={columns}
           rect={{
             height: maxHeight,
-            width: 1200,
+            width: typeof window !== 'undefined' ? window.innerWidth : 0,
           }}
           rows={rows}
         />
@@ -230,7 +247,8 @@ export default function ExecutionOutput({
           {stats.rows !== null && (
             <Badge
               borderColorName="gray"
-              label={pluralize('row', stats.rows)}
+              inline
+              label={pluralize('row', stats.rows, true)}
               semibold={false}
               secondary
               xsmall
@@ -240,7 +258,8 @@ export default function ExecutionOutput({
           {stats.columns !== null && (
             <Badge
               borderColorName="gray"
-              label={pluralize('column', stats.columns)}
+              inline
+              label={pluralize('column', stats.columns, true)}
               semibold={false}
               secondary
               xsmall

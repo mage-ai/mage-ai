@@ -55,7 +55,10 @@ class BlockExecutionFrameworkResource(GenericResource):
         await parent_model.add_block(
             block, upstream_block_uuids=config.get('upstream_block_uuids', [])
         )
-        return cls(block, user, **kwargs)
+        resource = cls(block, user, **kwargs)
+        await parent_model.get_pipeline(refresh=True)
+        resource.model.pipeline = parent_model
+        return resource
 
     async def update(self, payload, **kwargs):
         parent_model = kwargs.get('parent_model')
@@ -71,4 +74,5 @@ class BlockExecutionFrameworkResource(GenericResource):
         kwargs['query']['force'] = [True]
         await res.delete(**kwargs)
         if parent_model:
-            self.model.pipeline = await parent_model.get_pipeline(refresh=True)
+            await parent_model.get_pipeline(refresh=True)
+            self.model.pipeline = parent_model

@@ -1,6 +1,7 @@
 import BlockType from '@interfaces/BlockType';
 import { DEBUG } from '@components/v2/utils/debug';
 import { FrameworkType } from '@interfaces/PipelineExecutionFramework/interfaces';
+import { HEADER_HEIGHT } from '@context/v2/Layout/Header/index.style';
 import { ItemTypeEnum, LayoutDisplayEnum, LayoutStyleEnum } from '../../../Canvas/types';
 import { LayoutConfigType } from '../../../Canvas/interfaces';
 import { MenuGroupType } from '@mana/components/Menu/interfaces';
@@ -204,7 +205,13 @@ export function buildRectTransformations({
     return conditionalDirections ? conditionallySwitchDirections(pattern ?? [wave]) : pattern;
   };
 
-  const boundingBox = viewportRef?.current?.getBoundingClientRect();
+  const bbox = viewportRef?.current?.getBoundingClientRect()
+  const boundingBox = {
+    left: bbox?.left || 0,
+    top: (bbox?.top || 0) + HEADER_HEIGHT,
+    width: bbox?.width || 0,
+    height: (bbox?.height || 0) - HEADER_HEIGHT,
+  };
 
   const viewportAlignment = [
     {
@@ -392,6 +399,15 @@ export function buildRectTransformations({
       type: TransformRectTypeEnum.CENTER,
     } as RectTransformationType);
   }
+
+  transformers.push({
+    options: (rects: RectType[]) => ({
+      boundingBox,
+      offset: { top: HEADER_HEIGHT },
+    }),
+    scope: RectTransformationScopeEnum.SELF,
+    type: TransformRectTypeEnum.SHIFT,
+  })
 
   return transformers;
 }

@@ -8,12 +8,14 @@ import { ThemeProvider } from 'styled-components';
 import { TooltipProvider } from './Tooltip';
 
 function ContextProvider({
+  base = false,
   children,
   main,
   router,
   theme,
   updateThemeSettings,
 }: {
+  base?: boolean
   children: React.ReactNode;
   main?: boolean;
   router?: any;
@@ -26,7 +28,7 @@ function ContextProvider({
     <ThemeProvider theme={theme}>
       <LayoutProvider router={router} theme={theme} updateThemeSettings={updateThemeSettings}>
         <QueryClientProvider client={queryClient}>
-          <APIMutationProvider>
+          <APIMutationProvider base={base}>
             <TooltipProvider main={main}>{children}</TooltipProvider>
           </APIMutationProvider>
         </QueryClientProvider>

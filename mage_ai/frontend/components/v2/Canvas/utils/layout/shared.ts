@@ -8,7 +8,7 @@ import { padString } from '@utils/string';
 export const GROUP_NODE_PADDING = 16;
 
 export function isDebug() {
-  return DEBUG.rects && false;
+  return DEBUG.rects;
 }
 
 export function centerRectOnScreen(

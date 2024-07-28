@@ -12,6 +12,7 @@ import joblib
 from mage_ai.data_preparation.models.block.outputs import get_output_data_async
 from mage_ai.data_preparation.models.variables.cache import VariableAggregateCache
 from mage_ai.data_preparation.models.variables.constants import VariableType
+from mage_ai.kernels.magic.environments.base import BaseEnvironment
 from mage_ai.kernels.magic.environments.enums import EnvironmentType, EnvironmentUUID
 from mage_ai.kernels.magic.environments.pipeline import Pipeline
 from mage_ai.kernels.magic.environments.utils import decrypt_secret, encrypt_secret
@@ -41,6 +42,8 @@ ENVIRONMENT_VARIABLES_FILENAME = 'environment_variables.joblib'
 
 @dataclass
 class Environment(BaseDataClass):
+    code_after: Optional[str] = None
+    code_before: Optional[str] = None
     environment_variables: Optional[Dict] = None
     type: Optional[EnvironmentType] = EnvironmentType.CODE
     uuid: Optional[str] = EnvironmentUUID.EXECUTION
@@ -69,25 +72,23 @@ class Environment(BaseDataClass):
             uuid=(message_request_uuid or str(now(True))),
         )
 
+        env_class = BaseEnvironment
         if EnvironmentType.PIPELINE == self.type and self.uuid:
-            process = await Pipeline(
-                self.uuid,
-                kernel,
-                output_manager,
-                environment_variables=self.environment_variables,
-                variables=self.variables,
-            ).run_process(
-                message,
-                message_request_uuid=message_request_uuid,
-                **(process_options or {}),
-            )
-        else:
-            process = kernel.run(
-                message,
-                message_request_uuid=message_request_uuid,
-                output_manager=output_manager,
-                **(process_options or {}),
-            )
+            env_class = Pipeline
+
+        process = await env_class(
+            self.uuid or '',
+            kernel,
+            output_manager,
+            message,
+            environment_variables=self.environment_variables,
+            code_after=self.code_after,
+            code_before=self.code_before,
+            variables=self.variables,
+        ).run_process(
+            message_request_uuid=message_request_uuid,
+            **(process_options or {}),
+        )
 
         return process
 
@@ -122,6 +123,7 @@ class ExecutionOutput(BaseDataClass):
     path: str
     absolute_path: Optional[str] = None
     environment: Optional[Environment] = None
+    limit: Optional[int] = None
     messages: Optional[List[Any]] = field(default_factory=list)
     output: Optional[Any] = None
 
@@ -149,6 +151,7 @@ class ExecutionOutput(BaseDataClass):
     ) -> Any:
         from mage_ai.kernels.magic.constants import ExecutionStatus, ResultType
 
+        limit = limit or self.limit
         message = find(
             lambda x: ExecutionStatus.SUCCESS == x.status and ResultType.OUTPUT == x.type,
             self.messages,
@@ -241,7 +244,7 @@ class OutputManager(BaseDataClass):
         if await exists_async(path):
             await safe_delete_dir_async(path)
 
-    async def build_output(self) -> ExecutionOutput:
+    async def build_output(self, limit: Optional[int] = None) -> ExecutionOutput:
         file_path = os.path.join(self.absolute_path, MESSAGES_FILENAME)
         messages = []
         if await exists_async(file_path):
@@ -254,6 +257,7 @@ class OutputManager(BaseDataClass):
 
         return ExecutionOutput.load(
             absolute_path=self.absolute_path,
+            limit=int(limit) if limit is not None else None,
             messages=messages,
             namespace=self.namespace,
             path=self.path,

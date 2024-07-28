@@ -78,6 +78,7 @@ export interface APIErrorType {
 }
 
 export type APIMutationProviderProps = {
+  base?: boolean;
   children: React.ReactNode;
 };
 

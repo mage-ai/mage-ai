@@ -66,17 +66,8 @@ class ExecutionOutputResource(GenericResource):
         om = OutputManager.load(
             namespace=namespace, path=remove_base_repo_directory_name(path), uuid=pk
         )
-        if not await om.exists():
-            raise ApiError({
-                **ApiError.RESOURCE_NOT_FOUND,
-                **dict(message=f'Output {om.absolute_path} not found'),
-            })
-
-        model = await om.build_output()
         limit = kwargs.get('meta', {}).get(MetaKey.LIMIT)
-        await model.load_output(
-            limit=int(limit) if limit is not None else None,
-        )
+        model = await om.build_output(limit=limit)
 
         return cls(model, user, **kwargs)
 

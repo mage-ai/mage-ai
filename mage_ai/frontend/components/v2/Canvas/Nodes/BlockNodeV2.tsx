@@ -493,12 +493,16 @@ function BlockNode(
   const { executeCode } = useExecuteCode(channel, STEAM_OUTPUT_DIR);
   const { subscribe, unsubscribe } = useRegistration(channel, STEAM_OUTPUT_DIR);
 
-  function getFile(event: any, callback?: () => void) {
+  function getFilePath(): string {
     const { configuration } = block ?? {};
     const { file } = configuration ?? {};
 
+    return fileRef.current?.path ?? file?.path;
+  }
+
+  function getFile(event: any, callback?: () => void) {
     mutations.files.detail.mutate({
-      id: file?.path,
+      id: getFilePath(),
       onError: () => {
         setLoading(false);
       },
@@ -640,7 +644,7 @@ function BlockNode(
     });
   }
 
-  const getCode = useCallback(() => getFileCache(file?.path)?.client?.file?.content, [file]);
+  const getCode = useCallback(() => getFileCache(getFilePath())?.client?.file?.content, [file]);
 
   const submitCodeExecution = useCallback(
     (
@@ -669,7 +673,7 @@ function BlockNode(
           {
             environment: codeExecutionEnvironment,
             message_request_uuid: messageRequestUUID,
-            output_path: file?.path ?? null,
+            output_path: getFilePath(),
             source: block.uuid,
           },
           {
@@ -764,7 +768,7 @@ function BlockNode(
 
     // delete handleOnMessageRef.current?.[outputNodeRef?.current?.id];
 
-    outputRootRef?.current.render(null);
+    outputRootRef?.current?.render(null);
     // setTimeout(() => {
     //   outputRootRef?.current?.unmount();
     //   outputRootRef.current = null;
@@ -978,6 +982,7 @@ function BlockNode(
   function renderOutput(
     node?: OutputNodeType,
     wrapperRef?: React.MutableRefObject<HTMLDivElement>,
+    mountRef?: React.MutableRefObject<HTMLDivElement>,
     opts?: {
       onMount?: () => void;
       rect?: RectType;
@@ -985,6 +990,9 @@ function BlockNode(
   ) {
     if (wrapperRef && wrapperRef.current) {
       outputWrapperRef.current = wrapperRef.current;
+    }
+    if (mountRef && mountRef.current) {
+      outputMountRef.current = mountRef.current;
     }
     if (node) {
       outputNodeRef.current = node;
@@ -1026,22 +1034,12 @@ function BlockNode(
               namespace: encodeURIComponent(
                 [codeExecutionEnvironment.type, codeExecutionEnvironment.uuid].join(osPath.sep),
               ),
-              path: encodeURIComponent(fileRef.current?.path),
+              path: encodeURIComponent(getFilePath()),
               uuid: outputNodeRef.current.process.message_request_uuid,
             }}
             onMount={() => {
               opts?.onMount && opts?.onMount?.();
 
-              showLinesToOutput();
-
-              updateLinesRef?.current?.(
-                {
-                  [outputNodeRef.current.id]: rectsMappingRef?.current?.[outputNodeRef.current.id],
-                  [block.uuid]: rectsMappingRef?.current?.[block.uuid],
-                },
-                { ...getSelectedGroupRectFromRefs() },
-                { replace: false },
-              );
             }}
             role={ElementRoleEnum.CONTENT}
           />
@@ -1053,14 +1051,25 @@ function BlockNode(
       outputRootRef.current = createRoot(outputMountRef.current);
     }
     outputRootRef.current.render(el);
+    outputOpenRef.current = true;
 
     outputWrapperRef?.current?.classList?.remove(stylesPipelineBuilder.hiddenOffscreen);
-    outputOpenRef.current = true;
+    showLinesToOutput();
+
+    updateLinesRef?.current?.(
+      {
+        [outputNodeRef.current.id]: rectsMappingRef?.current?.[outputNodeRef.current.id],
+        [block.uuid]: rectsMappingRef?.current?.[block.uuid],
+      },
+      { ...getSelectedGroupRectFromRefs() },
+      { replace: false },
+    );
   }
 
   function renderEditorApp(
     node?: AppNodeType,
     wrapperRef?: React.MutableRefObject<HTMLDivElement>,
+    mountRef?: React.MutableRefObject<HTMLDivElement>,
     opts?: {
       onMount?: () => void;
       rect?: RectType;
@@ -1068,6 +1077,9 @@ function BlockNode(
   ) {
     if (wrapperRef && wrapperRef.current) {
       appWrapperRef.current = wrapperRef.current;
+    }
+    if (mountRef && mountRef.current) {
+      appMountRef.current = mountRef.current;
     }
     if (node) {
       appNodeRef.current = node;
@@ -1130,8 +1142,10 @@ function BlockNode(
     message_request_uuid: string;
     uuid: string;
   }, callback?: () => void) {
-    if (outputRootRef.current) {
-      renderOutput(null, null, {
+    // console.log('launchOutput', outputRootRef.current, outputWrapperRef.current);
+
+    if (outputRootRef.current && outputMountRef.current) {
+      renderOutput(null, null, null, {
         onMount: () => {
           callback && callback?.();
         },
@@ -1142,12 +1156,15 @@ function BlockNode(
     const __render = (
       node: OutputNodeType,
       wrapperRef: React.MutableRefObject<HTMLDivElement>,
+      mountRef: React.MutableRefObject<HTMLDivElement>,
       {
         onMount,
         rect,
       },
     ) => {
-      renderOutput(node, wrapperRef, {
+      // console.log('__render', node, wrapperRef.current);
+
+      renderOutput(node, wrapperRef, mountRef, {
         rect,
         onMount: () => {
           onMount && onMount();
@@ -1160,7 +1177,6 @@ function BlockNode(
       {
         process: outputProcess,
       },
-      outputMountRef,
       __render,
       closeOutput,
       onRemove => onCloseOutputRef.current = onRemove,
@@ -1171,8 +1187,8 @@ function BlockNode(
   }
 
   function launchEditorApp(event: any, callback?: () => void) {
-    if (appRootRef.current) {
-      renderEditorApp(null, null, {
+    if (appRootRef.current && appMountRef.current) {
+      renderEditorApp(null, null, null, {
         onMount: () => {
           callback && callback?.();
         },
@@ -1189,12 +1205,13 @@ function BlockNode(
     const __render = (
       node: AppNodeType,
       wrapperRef: React.MutableRefObject<HTMLDivElement>,
+      mountRef: React.MutableRefObject<HTMLDivElement>,
       {
         onMount,
         rect,
       },
     ) => {
-      renderEditorApp(node, wrapperRef, {
+      renderEditorApp(node, wrapperRef, mountRef, {
         rect,
         onMount: () => {
           onMount && onMount();
@@ -1205,7 +1222,6 @@ function BlockNode(
     const __show = () =>
       showApp(
         app,
-        appMountRef,
         __render,
         closeEditorApp,
         onRemove => {
@@ -1216,7 +1232,7 @@ function BlockNode(
         },
       );
 
-    if (fileRef.current?.path && fileRef.current?.content) {
+    if (getFilePath() && fileRef.current?.content) {
       __show();
     } else {
       getFile(event, __show);
@@ -1272,7 +1288,10 @@ function BlockNode(
     block2,
     (event: any, block3, template, callback, payloadArg) => {
       const blocks = Object.values(blocksByGroupRef?.current?.[block3.uuid] ?? {}) ?? [];
-      const upb = blocks.find(b => ((b as BlockType)?.downstream_blocks?.length ?? 0) === 0);
+      const upb = blocks?.length === 1
+        ? blocks[0]
+        : blocks?.find(b => ((b as BlockType)?.downstream_blocks?.length ?? 0) === 0);
+      // console.log(blocks)
 
       const payload = {
         groups: [block3.uuid],

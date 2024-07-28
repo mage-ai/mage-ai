@@ -66,6 +66,7 @@ function App({
       <ThemeProvider theme={theme}>
         <MenuProvider>
           <ContextProvider
+            base
             main
             router={router} theme={theme as ThemeType}
             updateThemeSettings={updateThemeSettings}

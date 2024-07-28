@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 import Row from '../Row';
-import { Column } from '../interfaces';
+import { Column, ColumnSetting } from '../interfaces';
 import { ContainerStyled } from './index.style';
 import { PaddingEnum } from '@mana/themes/padding';
 import { RectType } from '@mana/shared/interfaces';
@@ -29,21 +29,8 @@ type Row = (boolean
 )[];
 
 type TableProps = {
-  columns: Column[];
+  columns: (Column & ColumnSetting)[];
 } & SharedProps;
-
-interface ColumnSetting {
-  data?: {
-    type?: VariableTypeEnum;
-  };
-  layout?: {
-    width?: {
-      percentage?: number;
-      minimum?: number;
-    };
-  };
-  uuid: string;
-}
 
 type DataTableProps = {
   columns: ColumnSetting[];
@@ -92,22 +79,23 @@ function Table({ ...props }: TableProps) {
     const widths = columns.map(() => 0);
 
     rows.forEach((values, idxRow) => {
-      columns.forEach(({ index }, idx) => {
+      columns.forEach(({ data, index }, idx) => {
         let val1 = index
           ? String(idxRow)
           : values[idx - indexes[idx]] ?? '';
 
         // console.log(idx, val1, typeof values[idx], Array.isArray(val1) && val1.some(isObject))
+        // console.log(data)
 
         let size = 0;
-        if ((Array.isArray(val1) && val1.some(isObject))) {
+        if (Array.isArray(val1) && VariableTypeEnum.DICTIONARY_COMPLEX === data?.type) {
           val1?.forEach((val2) => {
             val2 = isObject(val2) ? JSON.stringify(val2, null, 2) : val2;
             String(val2 ?? '').split('\n').forEach((line) => {
               size = Math.max(size, line.trim().length);
             });
           });
-        } else if (isJsonString(val1) || isObject(val1)) {
+        } else if (VariableTypeEnum.DICTIONARY_COMPLEX === data?.type) {
           val1 = isObject(val1) ? JSON.stringify(val1, null, 2) : val1;
           String(val1 ?? '').split('\n').forEach((line) => {
             size = Math.max(size, line.trim().length);
@@ -204,12 +192,14 @@ function Table({ ...props }: TableProps) {
       <VariableSizeList
         estimatedItemSize={BASE_ROW_HEIGHT}
         height={getVariableListHeight(rowsProcessed, {
+          columns,
           columnWidths,
           indexes,
         })}
         itemCount={rowCount}
         itemSize={(idx: number) => {
           const size = estimateCellHeight(rowsProcessed[idx], {
+            columns,
             columnWidths,
             indexes,
           });
@@ -226,7 +216,7 @@ function Table({ ...props }: TableProps) {
         {renderRow}
       </VariableSizeList>
     ),
-    [renderRow, rowCount, rowsProcessed, indexes, columnWidths, rect],
+    [columns, renderRow, rowCount, rowsProcessed, indexes, columnWidths, rect],
   );
 
   const headerMemo = useMemo(() => headerGroups.map((headerGroup, groupIdx) => {
@@ -277,8 +267,6 @@ function Table({ ...props }: TableProps) {
     );
   }), [columns, columnWidths, headerGroups]);
 
-  console.log(columns)
-
   return (
     <div
       {...getTableProps()}
@@ -294,7 +282,7 @@ function Table({ ...props }: TableProps) {
         {...getTableBodyProps()}
         className="body"
       >
-        <div className="header" ref={refHeader}>
+        <div className="header" ref={refHeader} style={{ width }}>
           {headerMemo}
         </div>
         {variableListMemo}

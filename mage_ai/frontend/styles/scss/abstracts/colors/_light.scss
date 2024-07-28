@@ -79,7 +79,7 @@ $backgrounds-input-base-active: radial-gradient(155.7% 118.3% at 22.25% 145.77%,
 $backgrounds-input-base-default: radial-gradient(155.7% 118.3% at 22.25% 145.77%, rgba(42, 76, 255, 0.08) 0%, rgba(42, 76, 255, 0.00) 100%), rgba(42, 76, 255, 0.10);
 $backgrounds-input-base-focus: radial-gradient(155.7% 118.3% at 22.25% 145.77%, rgba(42, 76, 255, 0.08) 0%, rgba(42, 76, 255, 0.00) 100%), rgba(42, 76, 255, 0.10);
 $backgrounds-input-base-hover: radial-gradient(155.7% 118.3% at 22.25% 145.77%, rgba(42, 76, 255, 0.08) 0%, rgba(42, 76, 255, 0.00) 100%), rgba(42, 76, 255, 0.10);
-$backgrounds-menu-base-default: #BBAFDAB3;
+$backgrounds-menu-base-default: $colors-grayhi;
 $backgrounds-menu-contained-default: #BBAFDA;
 $backgrounds-scrollbar-thumb-default: #BBAFDA;
 $backgrounds-scrollbar-thumb-hover: #1B006699;
@@ -171,6 +171,7 @@ $colors-typography-text-blue: #1F6BFF;
 $colors-typography-text-inverted: #FFFFFF;
 $colors-typography-text-muted: $colors-blackmd;
 $fonts-color-button-base: #130048;
+$fonts-color-code-base: $colors-pink;
 $fonts-color-text-base: #000000;
 $fonts-color-text-blue: #1F6BFF;
 $fonts-color-text-inverted: #FFFFFF;

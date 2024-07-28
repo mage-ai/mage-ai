@@ -23,7 +23,7 @@ function pattern1(
 ): RectType[] {
   const { direction, gap, grid, options } = { ...DEFAULT_LAYOUT_CONFIG, ...layout };
   const { column: gapCol, row: gapRow } = gap;
-  const maxItemsPerLevel = grid?.columns ?? Infinity;
+  const maxItemsPerLevel = grid?.columns ?? 99999;
 
   const stagger = options?.stagger ?? 0;
 
@@ -71,6 +71,8 @@ function pattern1(
 
   items.forEach(determineLevel);
 
+  isDebug() && console.log(levels)
+
   // Collect items by level
   const levelItems: Map<number, RectType[]> = new Map();
   items.forEach(item => {
@@ -90,6 +92,9 @@ function pattern1(
     maxLevelHeights.set(level, Math.max(maxLevelHeights.get(level), item.height));
   });
 
+  isDebug() && console.log(levelItems)
+  isDebug() && console.log(maxLevelWidths, maxLevelHeights)
+
   const isHorizontal = direction === LayoutConfigDirectionEnum.HORIZONTAL;
   const dimensionsByLevel = [];
 
@@ -99,7 +104,8 @@ function pattern1(
   // Position items level by level
   let currentRow = 0;
   levelItems.forEach((rects: RectType[], level: number) => {
-    const maxItemsInThisLevel = Math.ceil(rects.length / maxItemsPerLevel);
+    const maxItemsInThisLevel = Math.min(rects.length, maxItemsPerLevel);
+    isDebug() && console.log('maxItemsInThisLevel', level, maxItemsInThisLevel)
     const levelKey = String(level);
     const mod = level % 3;
     const factor = mod === 0 ? 0 : mod === 1 ? 1 : -1;
@@ -168,6 +174,12 @@ function pattern1(
     0,
   );
 
+  isDebug() && console.log(
+    'positionedItems', positionedItems,
+    'maxWidth', maxWidth,
+    'maxHeight', maxHeight,
+  )
+
   const rects1 = flattenArray(Object.values(positionedItems));
   const levelItems2: Map<number, RectType[]> = new Map();
   const levelItems3: Map<number, RectType[]> = new Map();
@@ -234,40 +246,68 @@ function pattern1(
 
       let rects3 = [];
 
-      const rectLvl = (transformedNestedRects ? dimensionsByLevel2 : dimensionsByLevel)[levelKey];
-      const maxDim = isHorizontal
-        ? { top: rectLvl.top + (maxHeight - rectLvl.height) / 2 }
-        : { left: rectLvl.left + (maxWidth - rectLvl.width) / 2 };
-      const rectMax = { ...rectLvl, ...maxDim };
-      const diff = getRectDiff(rectLvl, rectMax);
+      const bboxForCurrentLevel =
+        (transformedNestedRects ? dimensionsByLevel2 : dimensionsByLevel)[levelKey];
+
+      const rectMaxForCurrentLevel = {
+        height: Math.max(...rects.map(r => r.height)),
+        width: Math.max(...rects.map(r => r.width)),
+      };
+
+      const rectMaxAllLevels = {
+        height: maxHeight,
+        width: maxWidth
+      };
+
+      // Layout direction: Horizontal (items in the same level (row) are side by side horizontally)
+      //   Vertical align items in the same row.
+      //   Horizontal align the entire row within the bounding box of the max width across all rows.
+      // Layout direction: Vertical (items in the same level (column) are stacked vertically)
+      //   Horizontal align items in the same column.
+      //   Vertical align the entire column within the bounding box of the max height across all columns.
+
+      // Align items within the same level
+      const rects2 = rects.map((rect, itemIndex: number) => {
+        const { width, height } = rect;
+        const rectPrev = itemIndex > 0 ? rects[itemIndex - 1] : null;
+        return {
+          ...rect,
+          left: isHorizontal
+            ? itemIndex > 0 ? rectPrev.left + rectPrev.width + gapCol : rect.left
+            : bboxForCurrentLevel.left + ((rectMaxForCurrentLevel.width - width) / 2),
+          top: isHorizontal
+            ? bboxForCurrentLevel.top + ((rectMaxForCurrentLevel.height - height) / 2)
+            : itemIndex > 0 ? rectPrev.top + rectPrev.height + gapCol : rect.top,
+        };
+      });
+
+      // Align the entire level within the bounding box of the max width across all levels
+      const bboxForPreviousLevel = level > 0
+        ? calculateBoundingBox(positionedItems[String(level - 1)])
+        : {};
+      rects3 = rects2.map(rect => {
+        const { width, height } = rect;
+        return {
+          ...rect,
+          left: isHorizontal
+            ? (rect.left - bboxForCurrentLevel.left) + ((rectMaxAllLevels.width - bboxForCurrentLevel.width) / 2)
+            : level > 0 ? (bboxForPreviousLevel.left + bboxForPreviousLevel.width + gapCol) : rect.left,
+          top: isHorizontal
+            ? level > 0 ? (bboxForPreviousLevel.top + bboxForPreviousLevel.height + gapRow) : rect.top
+            : (rect.top - bboxForCurrentLevel.top) + ((rectMaxAllLevels.height - bboxForCurrentLevel.height) / 2),
+        };
+      });
 
       isDebug() &&
         console.log(
           `[${direction}:${level}]`,
-          'rectLvl',
-          rectLvl,
-          'rectMax',
-          rectMax,
-          'diff',
-          diff,
+          'bboxForCurrentLevel', bboxForCurrentLevel,
+          'bboxForPreviousLevel', bboxForPreviousLevel,
+          'rectMaxForCurrentLevel', rectMaxForCurrentLevel,
+          'rectMaxAllLevels', rectMaxAllLevels,
+          'rects2', rects2,
+          'rects3', rects3,
         );
-      const rects2 = rects.map(rect => applyRectDiff(rect, diff));
-
-      // Align row items vertically / Align column items horizontally
-      const maxDim2: {
-        height?: number;
-        width?: number;
-      } = isHorizontal
-        ? rects2.reduce((max, rect) => ({ width: Math.max(max.width, rect.width) }), { width: 0 })
-        : rects2.reduce((max, rect) => ({ height: Math.max(max.height, rect.height) }), {
-            height: 0,
-          });
-
-      rects3 = rects2.map(rect => ({
-        ...rect,
-        left: isHorizontal ? rect.left + (maxDim2.width - rect.width) / 2 : rect.left,
-        top: isHorizontal ? rect.top : rect.top + (maxDim2.height - rect.height) / 2,
-      }));
 
       positionedItems[levelKey] = rects3;
     },

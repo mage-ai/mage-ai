@@ -165,10 +165,10 @@ export type SubscriptionType = {
 
 export type ShowNodeType = (
   nodeOps: Record<string, any>,
-  mountRef: React.MutableRefObject<HTMLDivElement>,
   render: (
     nodeItem: OutputNodeType | AppNodeType,
     wrapperRef: React.MutableRefObject<HTMLDivElement>,
+    mountRef: React.MutableRefObject<HTMLDivElement>,
     opts?: {
       onMount?: () => void,
       rect?: RectType;

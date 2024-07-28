@@ -27,6 +27,8 @@ export enum EnvironmentUUIDEnum {
 }
 
 export interface EnvironmentType {
+  code_after?: string;
+  code_before?: string;
   environment_variables?: Record<string, string>;
   type: EnvironmentTypeEnum;
   uuid: string | EnvironmentUUIDEnum;

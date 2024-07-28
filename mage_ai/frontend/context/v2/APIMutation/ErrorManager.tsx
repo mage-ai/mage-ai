@@ -60,7 +60,7 @@ const ErrorManager: FC<ErrorManagerProps> = memo(function ErrorManager({
         width="max-content"
       >
         <Grid rowGap={12} templateColumns="auto" templateRows="auto auto">
-          <AlertTriangle colorName="yellow" />
+          <AlertTriangle error size={32} />
 
           {errorRef?.current?.message && (
             <Text monospace secondary semibold small>

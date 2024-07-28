@@ -44,14 +44,26 @@ def set_node_line_numbers(node: ast.AST, lineno: int, col_offset: int):
 
 
 async def __modify_and_execute(
-    code_block: str,
+    code_main: str,
     local_variables,
+    code_after: Optional[str] = None,
+    code_before: Optional[str] = None,
     execute: Optional[Callable] = None,
     execution_variables: Optional[Dict[str, Any]] = None,
 ) -> Dict[str, Any]:
     execution_variables = execution_variables or {}
 
     modified_code = None
+    code_block = '\n\n'.join([
+        code
+        for code in [
+            code_before,
+            code_main,
+            code_after,
+        ]
+        if code and len(code) > 0
+    ])
+
     if code_block:
         # Parse the provided code block
         parsed_code = ast.parse(code_block)
@@ -104,8 +116,14 @@ async def __modify_and_execute(
             if res and inspect.isawaitable(res):
                 res = await res
         elif modified_code:
-            modified_code = f'{USER_CODE_MARKER}\n{modified_code}'
-            exec(compile(modified_code, '<string>', 'exec'), execution_variables)
+            exec(
+                compile(
+                    f'{USER_CODE_MARKER}\n{modified_code}',
+                    '<string>',
+                    'exec',
+                ),
+                execution_variables,
+            )
     except Exception as err:
         error = err
 
@@ -263,6 +281,8 @@ async def execute_code_async(
                     local_variables = await __modify_and_execute(
                         message,
                         local_variables,
+                        code_after=kwargs.get('code_after'),
+                        code_before=kwargs.get('code_before'),
                         execute=execute,
                         execution_variables=execution_variables,
                     )

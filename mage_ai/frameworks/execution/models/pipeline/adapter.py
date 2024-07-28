@@ -142,7 +142,7 @@ class Pipeline(DelegatorTarget):
         await self.get_pipeline(refresh=refresh)
         self.blocks = [
             Block(block=block, pipeline=self.pipeline)
-            for block in self.pipeline.blocks_by_uuid.values()
+            for block in (self.pipeline.blocks_by_uuid.values() if self.pipeline else [])
         ]
 
         return self.blocks

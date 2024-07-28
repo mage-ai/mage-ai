@@ -38,6 +38,7 @@ export type ExecutionResultProps = {
       onError: () => void;
       onSuccess: (executionOutput: ExecutionOutputType) => void;
       query: {
+        _limit: number;
         namespace: string;
         path: string;
       };
@@ -100,6 +101,7 @@ function ExecutionResult(
         setExecutionOutput(eoutput);
       },
       query: {
+        _limit: 100,
         namespace: encodeURIComponent(namespace),
         path: encodeURIComponent(path),
       },

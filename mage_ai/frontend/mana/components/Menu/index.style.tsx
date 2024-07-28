@@ -80,9 +80,9 @@ export const MenuStyled = styled(motion.div)<MenuStyledProps>`
 `;
 
 export const MenuContent = styled(motion.nav)`
-  ${scrollbars}
+  height: inherit;
   max-height: inherit;
-  overflow-y: auto;
+  overflow: hidden;
 
   backdrop-filter: blur(var(--modal-blur-base));
   ${gradientBackgroundVars(
@@ -96,6 +96,8 @@ export const MenuContent = styled(motion.nav)`
 `;
 
 export const MenuContentScroll = styled(motion.div)`
+  ${scrollbars}
+  max-height: inherit;
 `;
 
 export const MenuItemContainerStyled = styled.div<{

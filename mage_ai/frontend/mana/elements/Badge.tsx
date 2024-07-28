@@ -8,6 +8,7 @@ export type BadgeType = {
   baseColorName?: string;
   borderColorName?: string;
   className?: string;
+  inline?: boolean;
   label?: string;
   short?: boolean;
   before?: any;
@@ -20,7 +21,7 @@ const BadgeStyled = withStyles(styles, {
   classNames: ['badge'],
 });
 
-export default function Badge({ Icon, baseColorName, borderColorName, before, after, className, label, short, templateColumns, ...textProps }: BadgeType) {
+export default function Badge({ Icon, baseColorName, borderColorName, before, after, className, inline, label, short, templateColumns, ...textProps }: BadgeType) {
   const tcolunns = templateColumns
     ?? [
       before && 'auto',
@@ -36,6 +37,7 @@ export default function Badge({ Icon, baseColorName, borderColorName, before, af
         className={[
           className,
           borderColorName && styles[`border-color-${borderColorName}`],
+          (textProps?.small || textProps?.xsmall) && styles.small,
         ].filter(Boolean).join(' ')}
         columnGap={10}
         templateColumns={tcolunns}
@@ -43,7 +45,14 @@ export default function Badge({ Icon, baseColorName, borderColorName, before, af
       >
         {before}
         {Icon && <Icon colorName={baseColorName} size={16} />}
-        <Text semibold {...textProps} style={{ lineHeight: '26px' }}>{label}</Text>
+        <Text
+          semibold {...textProps}
+          style={inline ? {} : {
+            lineHeight: '26px',
+          }}
+        >
+          {label}
+        </Text>
         {after}
       </BadgeStyled>
     </Grid>

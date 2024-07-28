@@ -14,7 +14,7 @@ import { hashCode, isJsonString } from '@utils/string';
 import { isObject } from '@utils/hash';
 import { randomSample, range, sum, transpose, flattenArray } from '@utils/array';
 import { useSticky } from 'react-table-sticky';
-import { Column } from './interfaces';
+import { Column, ColumnSetting } from './interfaces';
 
 export const BASE_ROW_HEIGHT = 20;
 export const DEFAULT_COLUMN_WIDTH = BASE_ROW_HEIGHT;
@@ -30,9 +30,11 @@ export function estimateCellHeight({
     [key: string]: string | number | (string | number)[];
   };
 }, {
+  columns,
   columnWidths,
   indexes,
 }: {
+  columns: (Column & ColumnSetting)[];
   columnWidths: number[];
   indexes: number[];
 }) {
@@ -42,13 +44,22 @@ export function estimateCellHeight({
     let hoffset = 0;
 
     original.forEach((val, idx) => {
-      const wLimit = columnWidths[idx + indexes[idx]];
+      const columnIndex = idx + indexes[idx];
+      const { data } = columns[columnIndex];
+      const wLimit = columnWidths[columnIndex];
 
       const numberOfLines = [];
       let woffset = 0;
 
       const vals = [];
-      if (Array.isArray(val)) {
+      const isDict = VariableTypeEnum.DICTIONARY_COMPLEX === data?.type && isObject(val);
+      if (isDict) {
+        vals.push('{');
+        Object.entries(val ?? {}).forEach(([key, value]) => {
+          vals.push(`  ${key}: ${value},`);
+        });
+        vals.push('}');
+      } else if (Array.isArray(val)) {
         let hasObject = false;
 
         vals.push(...val.map(v => {
@@ -73,10 +84,11 @@ export function estimateCellHeight({
       vals.forEach((v) => {
         const nlines = [];
         const wsinner = [];
+
         (Array.isArray(v) ? v : [v]).forEach((v2) => {
           const wTotal = (String(v2).length * WIDTH_OF_SINGLE_CHARACTER_REGULAR_SM) + woffset;
           wsinner.push(wTotal);
-          nlines.push(Math.ceil(wTotal / wLimit));
+          nlines.push(isDict ? 1 : Math.ceil(wTotal / wLimit));
         });
 
         ws.push(wsinner);
@@ -104,14 +116,17 @@ export function getVariableListHeight(
     };
   }[],
   {
+    columns,
     columnWidths,
     indexes,
   }: {
+    columns: (Column & ColumnSetting)[];
     columnWidths: number[];
     indexes: number[];
   },
 ) {
   return sum(rows.map((row) => estimateCellHeight(row, {
+    columns,
     columnWidths,
     indexes,
   })));

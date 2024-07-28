@@ -70,7 +70,8 @@ from mage_ai.data_preparation.shared.secrets import (
 from mage_ai.data_preparation.shared.utils import get_template_vars
 from mage_ai.data_preparation.templates.utils import copy_template_directory
 from mage_ai.data_preparation.variable_manager import VariableManager
-from mage_ai.frameworks.execution.models.enums import ExecutionFrameworkUUID
+
+# from mage_ai.frameworks.execution.models.enums import ExecutionFrameworkUUID
 from mage_ai.orchestration.constants import Entity
 from mage_ai.orchestration.notification.config import NotificationConfig
 from mage_ai.orchestration.notification.sender import NotificationSender
@@ -1010,18 +1011,18 @@ class Pipeline:
     ):
         blocks_by_uuid = {b.uuid: b for b in blocks if b is not None}
 
-        if execution_framework is not None and ExecutionFrameworkUUID.has_value(
-            execution_framework
-        ):
-            # Enforce the block execution dependencies with the execution framework
-            from mage_ai.frameworks.execution.constants import (
-                EXECUTION_FRAMEWORKS_BY_UUID,
-            )
+        # if execution_framework is not None and ExecutionFrameworkUUID.has_value(
+        #     execution_framework
+        # ):
+        #     # Enforce the block execution dependencies with the execution framework
+        #     from mage_ai.frameworks.execution.constants import (
+        #         EXECUTION_FRAMEWORKS_BY_UUID,
+        #     )
 
-            framework = EXECUTION_FRAMEWORKS_BY_UUID.get(execution_framework)
-            if framework:
-                framework.initialize_block_instances(blocks_by_uuid, configs)
-                return blocks_by_uuid
+        #     framework = EXECUTION_FRAMEWORKS_BY_UUID.get(execution_framework)
+        #     if framework:
+        #         framework.initialize_block_instances(blocks_by_uuid, configs)
+        #         return blocks_by_uuid
 
         all_blocks_by_uuid = {b.uuid: b for b in all_blocks}
 

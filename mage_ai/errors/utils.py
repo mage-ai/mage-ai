@@ -8,11 +8,11 @@ USER_CODE_MARKER = '# __MAGER_CODE_MARKER__'
 def format_and_colorize_stacktrace(stacktrace, message):
     # Define colors
     red = '\033[91m'
-    green = '\033[92m'
-    yellow = '\033[93m'
-    # blue = '\033[34m'
-    # magenta = '\033[35m'
-    cyan = '\033[96m'
+    # green = '\033[92m'
+    # yellow = '\033[93m'
+    blue = '\033[34m'
+    magenta = '\033[35m'
+    cyan = '\033[36m'
     bright_black = '\033[90m'
     # bright_red = '\033[91m'
     # bright_green = '\033[92m'
@@ -35,8 +35,8 @@ def format_and_colorize_stacktrace(stacktrace, message):
             rest = ', '.join(parts[2:])
 
             formatted_line = (
-                f'{green}{filename_part}{reset}, {yellow}{line_number_part}{reset}, '
-                f'{cyan}{rest}{reset}'
+                f'{blue}{filename_part}{reset}, {cyan}{line_number_part}{reset}, '
+                f'{magenta}{rest}{reset}'
             )
             formatted_lines.append(formatted_line)
         elif line.startswith('Traceback'):
@@ -63,7 +63,7 @@ def format_code_context(code_context, error_lineno):
     if not code_context:
         return []
 
-    cyan = '\033[96m'
+    magenta = '\033[35m'
     red = '\033[91m'
     reset = '\033[0m'
 
@@ -74,7 +74,7 @@ def format_code_context(code_context, error_lineno):
         if line_number == error_lineno:
             formatted_context.append(f'{red}{prefix}{line}{reset}')
         else:
-            formatted_context.append(f'{cyan}{prefix}{line}{reset}')
+            formatted_context.append(f'{magenta}{prefix}{line}{reset}')
 
     return formatted_context
 

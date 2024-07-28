@@ -351,26 +351,26 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
     }),
     defaultLayoutConfig({
       childrenLayout: defaultLayoutConfig({
-        direction: LayoutConfigDirectionEnum.HORIZONTAL,
+        direction: LayoutConfigDirectionEnum.VERTICAL,
         display: LayoutDisplayEnum.DETAILED,
-        grid: {
-          columns: 5,
-        },
-        style: LayoutStyleEnum.GRID,
-        styleOptions: {
-          rectTransformations: [
-            {
-              options: () => ({
-                layout: {
-                  direction: LayoutConfigDirectionEnum.HORIZONTAL,
-                  gap: { column: 40, row: 40 },
-                  options: { amplitude: 200, wavelength: 100 },
-                },
-              }),
-              type: TransformRectTypeEnum.LAYOUT_WAVE,
-            },
-          ],
-        },
+        // grid: {
+        //   columns: 5,
+        // },
+        style: LayoutStyleEnum.TREE,
+        // styleOptions: {
+        //   rectTransformations: [
+        //     {
+        //       options: () => ({
+        //         layout: {
+        //           direction: LayoutConfigDirectionEnum.HORIZONTAL,
+        //           gap: { column: 40, row: 40 },
+        //           options: { amplitude: 200, wavelength: 100 },
+        //         },
+        //       }),
+        //       type: TransformRectTypeEnum.LAYOUT_WAVE,
+        //     },
+        //   ],
+        // },
       }),
       direction: LayoutConfigDirectionEnum.HORIZONTAL,
       display: LayoutDisplayEnum.DETAILED,
@@ -397,8 +397,8 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
         render: (
           nodeItem: OutputNodeType | AppNodeType,
           wrapperRef: React.MutableRefObject<HTMLDivElement>,
+          mountRef: React.MutableRefObject<HTMLDivElement>,
           opts?: {
-            mountRef: React.MutableRefObject<HTMLDivElement>;
             onMount?: (node: any) => void;
             rect?: RectType;
           },
@@ -444,10 +444,10 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
 
     const showRelatedNotes = (type: ItemTypeEnum) => (
       nodeOps: Record<string, any>,
-      mountRef: React.MutableRefObject<HTMLDivElement>,
       render: (
         nodeItem: OutputNodeType | AppNodeType,
         wrapperRef: React.MutableRefObject<HTMLDivElement>,
+        mountRef: React.MutableRefObject<HTMLDivElement>,
         opts?: {
           onMount?: () => void,
           rect?: RectType;
@@ -478,7 +478,6 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
         node: nodeItem,
         remove: null,
         render: null,
-        mountRef: null,
       };
 
       let func = null;
@@ -506,24 +505,42 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
         remove ? remove(handleRemove) : handleRemove();
       };
 
-      relatedNodeRefs.current[block.uuid][nodeItem.type].mountRef = mountRef;
       relatedNodeRefs.current[block.uuid][nodeItem.type].render = (
         nodeItem: OutputNodeType | AppNodeType,
         wrapperRef: React.MutableRefObject<HTMLDivElement>,
+        mountRef: React.MutableRefObject<HTMLDivElement>,
         opts?: {
           onMount?: () => void,
           rect?: RectType;
         },
-      ) => render(nodeItem, wrapperRef, opts);
+      ) => render(nodeItem, wrapperRef, mountRef, opts);
 
       if (opts?.dragControls) {
         dragControlsRef.current[nodeItem.id] = opts.dragControls;
       }
 
-      func && func(prev => ({
-        ...prev,
-        [block.uuid]: nodeItem,
-      }));
+      const wrapperRef = dragRefs.current[nodeItem.id];
+      const mountRootRef = mountRootRefs.current[nodeItem.id];
+      // console.log(
+      //   'show',
+      //   nodeItem,
+      //   wrapperRef?.current,
+      //   mountRootRef?.current,
+      // );
+
+      if (wrapperRef?.current && mountRootRef?.current) {
+        relatedNodeRefs.current[block.uuid][nodeItem.type].render(
+          nodeItem,
+          wrapperRef,
+          mountRootRef,
+          opts,
+        );
+      } else {
+        func && func((prev: any) => ({
+          ...prev,
+          [block.uuid]: nodeItem,
+        }));
+      }
     };
 
     return {
@@ -1369,6 +1386,7 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
       blockMappingRef.current = blockMapping;
       groupMappingRef.current = groupMapping;
       groupsByLevelRef.current = groupsByLevel;
+      // console.log(pipelineArg?.blocks, blocksByGroupRef.current, blockMappingRef.current)s
     },
     [framework],
   );
@@ -1695,6 +1713,7 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
       // console.log(`start:\n${logMessageForRects(rectsUse)}`);
 
       const centerRect = groupRect ?? rectsUse?.find(r => r?.block?.uuid === group?.uuid);
+      // console.log('centerRect', centerRect)
 
       const transformations = buildRectTransformations({
         centerRect,
@@ -2139,18 +2158,17 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
               dragRefs.current[nodeID] = dragRef;
             }
 
-            // let mountRootRef = mountRootRefs.current[nodeID];
-            // if (!mountRootRef) {
-            //   mountRootRef = createRef();
-            //   mountRootRefs.current[nodeID] = mountRootRef;
-            // }
+            let mountRootRef = mountRootRefs.current[nodeID];
+            if (!mountRootRef) {
+              mountRootRef = createRef();
+              mountRootRefs.current[nodeID] = mountRootRef;
+            }
 
             if (ItemTypeEnum.BLOCK === nodeType) {
               dragConstraintsRef = dragRefs?.current?.[getCurrentGroup()?.uuid];
             }
 
             let renderChildren = null;
-            let mountRef = null;
 
             if ([ItemTypeEnum.APP, ItemTypeEnum.OUTPUT].includes(nodeType)) {
               resizeConstraints.minimum = { ...rect };
@@ -2191,15 +2209,14 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
               rect.left = Math.max(PADDING_VERTICAL, rect.left);
               rect.top = Math.max(200, rect.top);
 
-              mountRef = relatedNodeRefs?.current?.[itemUUID]?.[nodeType]?.mountRef;
               renderChildren = (
                 rectParent: RectType,
-                mountingRef: React.MutableRefObject<HTMLDivElement>,
+                mountingRef?: React.MutableRefObject<HTMLDivElement>,
               ) => relatedNodeRefs?.current?.[itemUUID]?.[nodeType]?.render?.(
                   item as any,
                   dragRef,
+                  mountingRef ?? mountRootRefs.current[nodeID],
                   {
-                    mountRef: mountingRef,
                     onMount: () => null,
                     rect: rectParent,
                   },
@@ -2313,7 +2330,7 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
                 }}
                 item={node}
                 key={nodeID}
-                mountRef={mountRef}
+                mountRef={mountRootRef}
                 entering={blockEnterRef.current === block.uuid}
                 renderChildren={renderChildren}
                 rect={rect}

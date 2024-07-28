@@ -17,10 +17,12 @@ class Block(DelegatorTarget):
         self,
         block: BlockBase,
         pipeline: Optional[PipelineBase] = None,
+        pipeline_adapter: Optional[Any] = None,
     ):
         super().__init__(block)
         self.block = block
         self.pipeline_child = pipeline
+        self.pipeline_adapter = pipeline_adapter
 
     @classmethod
     def preprocess_config(cls, uuid: str, pipeline: Any, payload: Dict[str, Any]) -> Dict:
@@ -61,14 +63,14 @@ class Block(DelegatorTarget):
         )
 
     @classmethod
-    async def create(cls, uuid: str, pipeline: Any, payload: Dict[str, Any]) -> Block:
-        config = cls.preprocess_config(uuid, pipeline, payload)
+    async def create(cls, uuid: str, pipeline_adapter: Any, payload: Dict[str, Any]) -> Block:
+        config = cls.preprocess_config(uuid, pipeline_adapter, payload)
 
         block_base = BlockBase.create(
             config.get('name') or config.get('uuid') or '',
             block_type=config['type'],
             repo_path=config['repo_path'],
-            pipeline=pipeline,
+            pipeline=pipeline_adapter,
             upstream_block_uuids=config['upstream_block_uuids'],
             **extract(
                 config,
@@ -79,33 +81,13 @@ class Block(DelegatorTarget):
                 ],
             ),
         )
-        block = cls(block=block_base)
+        block = cls(block=block_base, pipeline_adapter=pipeline_adapter)
         if BlockType.PIPELINE == block.type:
             await block.create_pipeline_child()
 
-        # Add the new block to an existing block’s downstream if the block is in the same group
-        # and has no other downstream blocks.
-        # if not upstream_block_uuids and block.groups:
-        #     blocks_list = await asyncio.gather(*[
-        #         pipeline.get_blocks_in_group(group_uuid) for group_uuid in block.groups
-        #     ])
-        #     blocks = flatten(blocks_list)
-
-        #     if len(blocks) == 0:
-        #         groups = await pipeline.get_framework_groups()
-        #         groups_current = [g for g in groups if g.uuid in block.groups]
-
-        #         groups_up = flatten([g.upstream_blocks for g in groups_current])
-        #         group_blocks = await asyncio.gather(*[
-        #             pipeline.get_blocks_in_group(guuid) for guuid in groups_up
-        #         ])
-        #         blocks += flatten(group_blocks)
-
-        #     for blockup in blocks:
-        #         if not blockup.downstream_blocks:
-        #             upstream_block_uuids.append(blockup.uuid)
-
-        await pipeline.add_block(block, upstream_block_uuids=config.get('upstream_block_uuids'))
+        await pipeline_adapter.add_block(
+            block, upstream_block_uuids=config.get('upstream_block_uuids')
+        )
 
         return block
 
@@ -138,3 +120,15 @@ class Block(DelegatorTarget):
             data['pipeline'] = await self.pipeline.to_dict_async()
 
         return data
+
+    async def get_upstream_blocks(self):
+        # Add the new block to an existing block’s downstream if the block is in the same group
+        # and has no other downstream blocks.
+        if not self.groups or self.upstream_blocks or not self.pipeline_adapter:
+            return self.upstream_blocks
+
+        framework = await self.pipeline_adapter.get_framework()
+        blocks_by_uuid = self.pipeline_adapter.blocks_by_uuid.copy()
+        framework.initialize_block_instances(blocks_by_uuid)
+
+        return blocks_by_uuid[self.uuid].upstream_blocks

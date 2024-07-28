@@ -1,5 +1,6 @@
 from typing import Dict
 
+from mage_ai.api.operations.constants import OperationType
 from mage_ai.api.presenters.BasePresenter import BasePresenter
 
 
@@ -16,6 +17,9 @@ class ExecutionOutputPresenter(BasePresenter):
 
     async def prepare_present(self, **kwargs) -> Dict:
         display_format = kwargs.get('format')
+
+        if display_format != OperationType.DELETE:
+            await self.resource.model.load_output()
 
         if display_format == 'with_output_statistics':
             await self.resource.model.load_output(statistics_only=True)

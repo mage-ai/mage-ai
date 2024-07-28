@@ -43,7 +43,7 @@ export async function handleSaveAsImage(canvasRef, wrapperRef, rectsMapping, ima
 
     const imageData = canvas.toDataURL('image/png', 1.0); // Ensure maximum quality
     imageDataRef.current = imageData;
-    console.log('Generated Image:', imageData); // For debugging
+    // console.log('Generated Image:', imageData); // For debugging
 
     // Optional: Save the final image
     saveAs(imageData, 'CapturedImage.png');

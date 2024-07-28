@@ -745,7 +745,7 @@ async def get_output_data_async(
     variable_objects = []
     stats = []
 
-    for variable_uuid in variable_uuids[:limit] if limit else variable_uuids:
+    for variable_uuid in variable_uuids:
         variable_objects.append(
             block.get_variable_object(
                 block_uuid=block_uuid,
@@ -772,10 +772,18 @@ async def get_output_data_async(
         limit=limit,
     ):
         data = await variable_object.read_data_async(
-            sample=bool(limit),
             sample_count=limit,
+            limit_parts=limit,
             spark=block.get_spark_session(),
         )
+
+        if (
+            VariableType.ITERABLE == variable_object.variable_type
+            and limit
+            and isinstance(data, list)
+            and len(data) > limit
+        ):
+            data = data[:limit]
 
         return dict(
             data=data,

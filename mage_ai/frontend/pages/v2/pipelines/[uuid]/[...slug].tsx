@@ -175,11 +175,8 @@ function PipelineDetailPage({
           error: Boolean(error),
           notice,
           success,
-          title: undefined,
+          title: errorRef.current ? errorRef.current.exception : titleRef.current,
         };
-        if (errorRef.current) {
-          pageStatus.title = errorRef.current.exception;
-        }
 
         page?.setPage && page?.setPage?.(pageStatus);
         statusRef.current = pageStatus;
