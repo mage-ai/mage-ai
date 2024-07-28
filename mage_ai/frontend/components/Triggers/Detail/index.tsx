@@ -1003,7 +1003,7 @@ function TriggerDetail({
                 />
               </Spacing>
             </Spacing>
-          )}\
+          )}
 
           <Spacing my={UNITS_BETWEEN_SECTIONS}>
             <Spacing px={PADDING_UNITS}>

@@ -32,22 +32,27 @@ export default function ExecutionOutput({
       output = [output];
     }
 
+    const hasData = output?.some(outp => outp && 'data' in outp);
+    if (!hasData) return;
+
     const types = countOccurrences(output?.map(o => o.type));
     const typeMode = sortByKey(Object.entries(types), t => t?.[1])?.[0]?.[0];
 
-    if (VariableTypeEnum.ITERABLE === typeMode) {
-      const columns = [];
-      const rows = [];
-      output?.forEach(({
-        data,
-        type,
-        uuid,
-      }) => {
-        // console.log(
-        //   Array.isArray(data),
-        //   data?.length > 0,
-        // )
+    const columns = [];
+    const rows = [];
+    const columnsByRow = [];
+    hasData && output?.forEach(({
+      data,
+      type,
+      uuid,
+    }) => {
+      // console.log(
+      //   Array.isArray(data),
+      //   data?.length > 0,
+      // )
+      if (!(data ?? false)) return;
 
+      if (VariableTypeEnum.ITERABLE === typeMode) {
         if (Array.isArray(data) && data?.length > 0) {
           const sample = data?.[0];
 
@@ -159,30 +164,50 @@ export default function ExecutionOutput({
           const row = columns.map(({ key }) => data[key]);
 
           rows.push(row);
+        } else {
+          columnsByRow.push({
+            key: 0,
+            uuid: 'output',
+          });
+          rows.push([data]);
         }
-      });
+      } else {
+        columnsByRow.push({
+          key: 0,
+          uuid: 'output',
+        });
+        rows.push([data]);
+      }
+    });
 
-      // console.log('output', output)
-      // console.log('columns', columns)
-      // console.log('rows', rows)
-
-      const maxHeight = Math.min(Math.max(containerRect?.height ?? 0, 600), 600);
-
-      return (
-        <DataTable
-          boundingBox={{
-            height: maxHeight - SCROLLBAR_TRACK_WIDTH - 2,
-            width: (containerRect?.width ?? 0) - (SCROLLBAR_TRACK_WIDTH * 2) - 2,
-          }}
-          columns={columns}
-          rect={{
-            height: maxHeight,
-            width: typeof window !== 'undefined' ? window.innerWidth : 0,
-          }}
-          rows={rows}
-        />
-      );
+    if (columns.length === 0 && columnsByRow.length > 0) {
+      columns.push(columnsByRow[0]);
     }
+
+    // console.log('output', output)
+    // console.log('columns', columns)
+    // console.log('rows', rows)
+
+    const maxHeight = Math.min(Math.max(containerRect?.height ?? 0, 600), 600);
+
+    return (
+      <DataTable
+        boundingBox={{
+          left: 0,
+          top: 0,
+          height: maxHeight - SCROLLBAR_TRACK_WIDTH - 2,
+          width: (containerRect?.width ?? 0) - (SCROLLBAR_TRACK_WIDTH * 2) - 2,
+        }}
+        columns={columns}
+        rect={{
+          left: 0,
+          top: 0,
+          height: maxHeight,
+          width: typeof window !== 'undefined' ? window.innerWidth : 0,
+        }}
+        rows={rows}
+      />
+    );
 
     return output?.map(({
       data,
