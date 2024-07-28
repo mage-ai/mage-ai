@@ -20,6 +20,7 @@ def get_pipeline_from_platform(
     repo_path: str = None,
     mapping: Dict = None,
     use_repo_path: bool = False,
+    materialize_execution_framework: bool = False,
 ):
     from mage_ai.data_preparation.models.pipeline import Pipeline
     from mage_ai.settings.repo import get_repo_path
@@ -27,7 +28,10 @@ def get_pipeline_from_platform(
     if not project_platform_activated():
         repo_path = repo_path or get_repo_path()
         return Pipeline.get(
-            pipeline_uuid, check_if_exists=check_if_exists, repo_path=repo_path
+            pipeline_uuid,
+            check_if_exists=check_if_exists,
+            repo_path=repo_path,
+            materialize_execution_framework=materialize_execution_framework,
         )
 
     if not mapping:
@@ -43,6 +47,7 @@ def get_pipeline_from_platform(
         all_projects=False if repo_path else True,
         repo_path=repo_path,
         use_repo_path=use_repo_path,
+        materialize_execution_framework=materialize_execution_framework,
     )
 
 
