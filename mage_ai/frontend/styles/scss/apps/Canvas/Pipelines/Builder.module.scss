@@ -101,6 +101,15 @@
   }
 }
 
+.captured {
+  opacity: 0;
+
+  &.transferred {
+    opacity: 1;
+  }
+}
+
+
 .hide {
   @include hide;
 }

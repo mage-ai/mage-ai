@@ -2,6 +2,8 @@
 @use '../../abstracts/mixins' as *;
 
 $button-height: 44px;
+$button-width: 64px;
+$top: calc(var(--header-height) + var(--padding-container));
 $width: 300px;
 
 @mixin shared-position {
@@ -14,6 +16,7 @@ $width: 300px;
   -moz-user-select: none;
   -ms-user-select: none;
   -webkit-user-select: none;
+
   align-items: center;
   background: none;
   border: none;
@@ -21,18 +24,31 @@ $width: 300px;
   cursor: pointer;
   display: grid;
   grid-auto-flow: column;
+  grid-template-columns: 1fr auto;
   outline: none;
   padding: var(--padding-base) !important;
   position: absolute;
-  grid-template-columns: 1fr auto;
+}
+
+.buttonNavClosed {
+  @include shared-position;
+  height: $button-height;
+  top: $top;
+  width: $button-width;
+  z-index: 12;
 }
 
 .nav {
   @include shared-position;
 
   bottom: var(--padding-container);
-  top: calc(var(--header-height) + var(--padding-container));
+  pointer-events: none;
   width: $width;
+  top: $top;
+}
+
+.navOpen {
+  pointer-events: all;
 }
 
 .svgBorder {
@@ -51,7 +67,6 @@ $width: 300px;
 .background {
   @include gradient(0deg, var(--menus-background-gradient-default), var(--menus-background-gradient-default), 0%, 100%);
   /* background: linear-gradient(180deg, #0055ff 0%, rgb(0, 153, 255) 100%); */
-  /* background-color: var(--menus-background-base-default); */
 
   backdrop-filter: saturate(200%) blur(10px);
   border-radius: var(--borders-radius-button) !important;
@@ -63,10 +78,21 @@ $width: 300px;
 }
 
 .backgroundInactive {
-  @include borders.base;
   clip-path: none !important;
   height: $button-height;
-  width: 64px;
+  width: $button-width;
+}
+
+.backgroundBorder {
+  @include borders.base();
+  @include shared-position;
+
+  border-radius: var(--borders-radius-button) !important;
+  height: $button-height;
+  pointer-events: none;
+  top: $top;
+  width: $button-width;
+  z-index: 11;
 }
 
 .ul,
@@ -86,36 +112,6 @@ $width: 300px;
   list-style: none;
   margin-bottom: 20px;
   display: flex;
-  align-items: center;
-  cursor: pointer;
-}
-
-.icon {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  flex: 40px 0;
-  margin-right: 20px;
-}
-
-.text {
-  border-radius: 5px;
-  width: 200px;
-  height: 20px;
-  flex: 1;
-}
-
-.refresh {
-  padding: 10px;
-  position: absolute;
-  background: rgba(0, 0, 0, 0.4);
-  border-radius: 10px;
-  width: 20px;
-  height: 20px;
-  top: 10px;
-  right: 10px;
-  display: flex;
-  justify-content: center;
   align-items: center;
   cursor: pointer;
 }

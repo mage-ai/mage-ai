@@ -563,16 +563,30 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
       },
       id: block.uuid,
       onCapture: (_node: ShadowNodeType, _data: any, element: HTMLElement) => {
-        element.classList.add('captured');
+        element.classList.add(stylesPipelineBuilder.captured);
+        element.classList.remove(stylesPipelineBuilder.transferred);
       },
       ref: nodeRef,
       shouldCapture: (_node: ShadowNodeType, element: HTMLElement) => {
         const valid = !rectsMappingRef.current?.[block.uuid];
+
         // console.log('shouldCapture', block.uuid, valid);
+
+        if (valid) {
+          element.classList.add(stylesPipelineBuilder.captured);
+          element.classList.remove(stylesPipelineBuilder.transferred);
+        }
+
         return valid;
       },
       targetRef: (node: ShadowNodeType) => dragRefs.current[node.id],
-      waitUntil: (node: ShadowNodeType) => dragRefs.current?.[node.id]?.current !== null,
+      waitUntil: (node: ShadowNodeType) => {
+        const element = dragRefs.current?.[node.id]?.current;
+        const rect = element?.getBoundingClientRect();
+        const valid = (element ?? false) && (rect ?? false);
+
+        return valid;
+      },
     };
   }
 
@@ -1348,6 +1362,8 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
             ) {
               newBlockCallbackAnimationRef.current[node.id] = true;
             }
+
+            setTimeout(() => element.classList.add(stylesPipelineBuilder.transferred), 100);
           }}
           operationUUID={vuuid}
           shouldCancel={(opuuid) => {

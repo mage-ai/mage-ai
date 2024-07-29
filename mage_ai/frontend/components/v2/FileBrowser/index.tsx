@@ -5,10 +5,11 @@ import stylesFileBrowser from '@styles/scss/components/FileBrowser/FileBrowser.m
 import { CUBIC } from "@mana/animations/ease";
 import { MenuToggle } from "./MenuToggle";
 import { Navigation } from "./Navigation";
-import { motion, sync, useCycle } from "framer-motion";
+import { motion, sync, useCycle, useAnimation } from "framer-motion";
 import { useDimensions } from "./use-dimensions";
 import { FileBrowserApp } from "../Apps/catalog";
 import ContextProvider from "@context/v2/ContextProvider";
+import { opacity } from "html2canvas/dist/types/css/property-descriptors/opacity";
 
 const SystemBrowser = dynamic(() => import('../Apps/Browser/System'), { ssr: false });
 const AppsManager = dynamic(() => import('@components/v2/Apps/Manager'), {
@@ -29,6 +30,41 @@ const buildPath = (width, height, radius) => `
   Q0,0 ${radius},0
   Z
 `;
+
+const backgroundBorderVariants = {
+  open: {
+    opacity: 0,
+    transition: {
+      duration: ANIMATION_DURATION * 0.5,
+      ease: CUBIC,
+    },
+  },
+  closed: {
+    opacity: 1,
+    transition: {
+      delay: ANIMATION_DURATION * 0.5,
+      duration: ANIMATION_DURATION * 0.5,
+      ease: CUBIC,
+    },
+  },
+};
+
+const buttonVariants = {
+  open: {
+    opacity: 0,
+    pointerEvents: 'none',
+    transition: {
+      duration: 0,
+    },
+  },
+  closed: {
+    opacity: 1,
+    pointerEvents: 'all',
+    transition: {
+      duration: 0,
+    },
+  },
+};
 
 const borderVariants = {
   open: {
@@ -76,6 +112,9 @@ export default function FileBrowser() {
   const openRef = useRef(false);
   const phaseRef = useRef(0);
   const observerRef = useRef(null);
+  const svgRef = useRef(null);
+
+  const controls = useAnimation();
 
   const [dimensions, setDimensions] = useState(null);
   const [isOpen, toggleOpenCycle] = useCycle(false, true);
@@ -83,6 +122,10 @@ export default function FileBrowser() {
 
   const toggleOpen = useCallback(() => {
     openRef.current = !openRef.current;
+    if (openRef.current) {
+      containerRef.current.classList.add(stylesFileBrowser.navOpen);
+    }
+
     toggleOpenCycle();
 
     if (!fileBrowserRootRef.current) {
@@ -93,7 +136,22 @@ export default function FileBrowser() {
         </ContextProvider>
       );
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  function updatePathDimensions() {
+    if (containerRef.current && borderRef.current) {
+      const rect = containerRef.current.getBoundingClientRect();
+
+      svgRef.current.setAttribute('height', rect.height);
+      svgRef.current.setAttribute('width', rect.width);
+
+      borderRef.current.setAttribute(
+        'd',
+        buildPath(rect.width, rect.height, 8),
+      );
+    }
+  }
 
   useEffect(() => {
     if (phaseRef.current === 0 && containerRef.current) {
@@ -126,10 +184,11 @@ export default function FileBrowser() {
       setDimensions({ height, width });
       setSidebar(
         <motion.div
-          className={stylesFileBrowser.background}
+          className={[stylesFileBrowser.background, stylesFileBrowser.backgroundInactive].join(' ')}
           onAnimationComplete={() => {
             if (!openRef.current) {
               backgroundRef.current.classList.add(stylesFileBrowser.backgroundInactive);
+              containerRef.current.classList.remove(stylesFileBrowser.navOpen);
             }
           }}
           onAnimationStart={() => {
@@ -149,13 +208,7 @@ export default function FileBrowser() {
       );
 
       observerRef.current = new ResizeObserver(observedElements => {
-        if (containerRef.current && borderRef.current) {
-          const rect = containerRef.current.getBoundingClientRect();
-          borderRef.current.setAttribute(
-            'd',
-            buildPath(rect.width, rect.height, 12),
-          );
-        }
+        updatePathDimensions();
       });
       observerRef.current.observe(document.body);
 
@@ -165,7 +218,21 @@ export default function FileBrowser() {
     return () => {
       phaseRef.current = 0;
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    if (isOpen) {
+      updatePathDimensions();
+
+      controls.stop();
+      controls.start(borderVariants.open);
+    } else {
+      controls.stop();
+      controls.start(borderVariants.closed);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen]);
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const fileBrowserMemo = useMemo(() => <SystemBrowser app={FileBrowserApp()} />, []);
@@ -174,46 +241,64 @@ export default function FileBrowser() {
 
   return (
     <>
+      <motion.div
+        animate={isOpen ? 'open' : 'closed'}
+        className={stylesFileBrowser.backgroundBorder}
+        variants={backgroundBorderVariants}
+      />
+
+      <motion.button
+        animate={isOpen ? 'open' : 'closed'}
+        className={[
+          stylesFileBrowser.button,
+          stylesFileBrowser.buttonNavClosed,
+        ].join(' ')}
+        onClick={toggleOpen}
+        variants={buttonVariants}
+        whileHover={{ scale: 1.1 }}
+        whileTap={{ scale: 0.9 }}
+      />
+
       <motion.nav
         animate={isOpen ? 'open' : 'closed'}
-        className={stylesFileBrowser.nav}
-        // custom={dimensions}
+        className={[
+          stylesFileBrowser.nav,
+        ].filter(Boolean).join(' ')}
+        custom={dimensions}
         initial={false}
         ref={containerRef}
       >
         {sidebar}
 
-        {/* <Navigation /> */}
-
         <MenuToggle toggle={() => toggleOpen()} />
-
+        {/* <Navigation /> */}
       </motion.nav>
 
-      {dimensions?.height && dimensions?.width && (
-        <motion.svg
-          className={stylesFileBrowser.svgBorder}
-          height={dimensions.height}
-          width={dimensions.width}
-          xmlns="http://www.w3.org/2000/svg"
-        >
-          <motion.path
-            animate={isOpen ? "open" : "closed"}
-            d={buildPath(dimensions.width, dimensions.height, 12)}
-            fill="transparent"
-            initial={false}
-            // onAnimationComplete={() => {
-            //   borderRef.current.classList.add(stylesFileBrowser.borderInactive);
-            // }}
-            // onAnimationStart={() => {
-            //   borderRef.current.classList.remove(stylesFileBrowser.borderInactive);
-            // }}
-            ref={borderRef}
-            stroke="var(--borders-color-base-default)"
-            strokeWidth="var(--borders-width)"
-            variants={borderVariants}
-          />
-        </motion.svg>
-      )}
+      <motion.svg
+        className={stylesFileBrowser.svgBorder}
+        height={dimensions?.height}
+        width={dimensions?.width}
+        ref={svgRef}
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <motion.path
+          // animate={isOpen ? "open" : "closed"}
+          animate={controls}
+          d={buildPath(dimensions?.width, dimensions?.height, 8)}
+          fill="transparent"
+          initial={false}
+          // onAnimationComplete={() => {
+          //   borderRef.current.classList.add(stylesFileBrowser.borderInactive);
+          // }}
+          // onAnimationStart={() => {
+          //   borderRef.current.classList.remove(stylesFileBrowser.borderInactive);
+          // }}
+          ref={borderRef}
+          stroke="var(--borders-color-base-default)"
+          strokeWidth="var(--borders-width)"
+          // variants={borderVariants}
+        />
+      </motion.svg>
     </>
   );
 }

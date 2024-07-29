@@ -207,7 +207,12 @@ function PipelineDetailPage({
     };
 
     return () => {
-      disposeManager();
+      try {
+        disposeManager();
+      } catch (error) {
+        console.error(error);
+      }
+
       // teardown();
       teardownEx();
     };

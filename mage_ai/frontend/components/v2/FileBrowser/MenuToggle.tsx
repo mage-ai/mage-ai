@@ -157,8 +157,6 @@ export const MenuToggle = ({ toggle }) => (
     className={stylesFileBrowser.button}
     onClick={toggle}
     variants={buttonVariants}
-    // whileHover={{ scale: 1.1 }}
-    // whileTap={{ scale: 0.9 }}
   >
     <Icon fill="none" size={20} viewBox="0 0 24 24">
       <PathStyle variants={pathVariants1} />

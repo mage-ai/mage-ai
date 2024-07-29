@@ -52,8 +52,6 @@ function SystemBrowser({ app, operations }: AppLoaderProps, ref: React.Ref<HTMLD
   });
 
   function renderItems(items: ItemDetailType[]) {
-    console.log('wtf')
-
     if (!itemsRootRef?.current) {
       const node = document.getElementById(rootID);
       try {
@@ -176,11 +174,8 @@ function SystemBrowser({ app, operations }: AppLoaderProps, ref: React.Ref<HTMLD
     },
   });
 
-
-  console.log(mutants.list.isPending, filePathsRef.current)
   useEffect(() => {
     if (!filePathsRef.current && !mutants.list.isPending) {
-      console.log('fetchinggggggggggggggggggg')
       mutants.list.mutate({
         query: {
           exclude_pattern: COMMON_EXCLUDE_PATTERNS,

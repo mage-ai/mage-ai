@@ -58,6 +58,13 @@ api:
       types:
         - integer
       value: 30  # Default value of 30 seconds
+    parser:
+      description: Parse the API response using dot notation.
+      name: Parser
+      input: text
+      required: false
+      types:
+        - string
 files:
   description: 'Load files'
   name: 'Local file loader'

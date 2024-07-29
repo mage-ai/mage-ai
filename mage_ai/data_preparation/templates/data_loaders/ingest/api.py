@@ -3,6 +3,8 @@
 import requests
 import json
 from typing import List, Dict
+
+from mage_ai.shared.hash import dig
 {{ super() -}}
 {% endblock %}
 
@@ -27,6 +29,7 @@ def ingest_api_data(*args, **kwargs) -> List[Dict]:
     auth_token = kwargs.get('auth_token')
     method = kwargs.get('method', 'GET')
     timeout = kwargs.get('timeout', 30)
+    parser = kwargs.get('parser')
 
     headers = {}
     if auth_token:
@@ -39,6 +42,10 @@ def ingest_api_data(*args, **kwargs) -> List[Dict]:
         timeout=timeout
     )
     response.raise_for_status()
+    result = response.json()
 
-    return [response.json()]
+    if parser:
+        result = dig(result, parser)
+
+    return [result]
 {% endblock %}

@@ -267,13 +267,15 @@ function ShadowContainer({
               && (!isActive || isActive(node, data, child))
             ) {
               elementRef.current.replaceChildren(child.firstChild);
+
+              if (handleNodeTransfer) {
+                DEBUG.hooks.shadow
+                  && console.log(`[hook:${uuid}] handleNodeTransfer:`, data.rect, elementRef.current, element);
+
+                handleNodeTransfer?.(node, data, element);
+              }
             }
           });
-
-          if (handleNodeTransfer) {
-            // console.log(`[hook:${uuid}] handleNodeTransfer:`, data.rect, elementRef.current, element);
-            handleNodeTransfer?.(node, data, element);
-          }
         };
 
         if (targetRef ?? false) {
