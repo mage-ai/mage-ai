@@ -11,7 +11,7 @@ export const Header = styled.header<{
   justify-content: space-between;
 
   ${({ theme }) => `
-    grid-column-gap: ${theme.padding.base}px;
+    grid-column-gap: ${theme.padding.sm}px;
     padding-left: ${theme.padding.sm}px;
     padding-right: ${theme.padding.sm}px;
   `}
