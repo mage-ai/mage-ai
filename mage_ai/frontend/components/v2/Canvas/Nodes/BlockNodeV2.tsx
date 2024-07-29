@@ -1244,13 +1244,15 @@ function BlockNode(
       setHandleOnChildMessage(handleChildMessages);
     }
 
-    if (block?.uuid in (recentlyAddedBlocksRef?.current ?? {})
-      && objectSize(block?.configuration?.templates ?? {}) === 0
-    ) {
-      timeoutLaunchEditorAppOnMountRef.current = setTimeout(() => {
-        launchEditorApp(null);
-      }, 1000);
-    }
+    // This will auto-launch the editor app for blocks without templates from their groups.
+    // This gets annoying when adding existing blocks from the file browser.
+    // if (block?.uuid in (recentlyAddedBlocksRef?.current ?? {})
+    //   && objectSize(block?.configuration?.templates ?? {}) === 0
+    // ) {
+    //   timeoutLaunchEditorAppOnMountRef.current = setTimeout(() => {
+    //     launchEditorApp(null);
+    //   }, 1000);
+    // }
 
     const consumerID = consumerIDRef.current;
     const timeout = timeoutRef.current;

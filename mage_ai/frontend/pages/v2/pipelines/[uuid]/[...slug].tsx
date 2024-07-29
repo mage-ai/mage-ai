@@ -63,8 +63,10 @@ function PipelineDetailPage({
       handlers: {
         detail: {
           onSuccess: (model: PipelineType) => {
+            const hasFramework = model?.framework?.blocks?.length > 0;
+
             header?.setHeader?.({
-              intraAppNavItems: model?.framework
+              intraAppNavItems: hasFramework
                 ? buildIntraAppNavItems({
                   changeRoute,
                   framework: model?.framework,
@@ -72,7 +74,7 @@ function PipelineDetailPage({
                   hideMenu: () => hideMenu('NavigationButtonGroup'),
                 })
                 : null,
-              buildInterAppNavItems: () => [
+              buildInterAppNavItems: (items) => [
                 {
                   Icon: PipeIconVertical,
                   linkProps: {
@@ -88,10 +90,10 @@ function PipelineDetailPage({
                   },
                   uuid: 'canvas',
                 },
-                // ...items,
+                ...items,
               ],
               cacheKey: [model.uuid, model?.framework.uuid].join(':'),
-              navTag: model?.framework
+              navTag: hasFramework
                 ? (model?.framework as any)?.name ?? (model?.framework as any)?.uuid?.toUpperCase()
                 : capitalizeRemoveUnderscoreLower(model?.type ?? '') || 'Pipeline',
               selectedNavItem: 'canvas',
@@ -101,7 +103,7 @@ function PipelineDetailPage({
             });
 
             page?.setPage?.({
-              title: model?.framework
+              title: hasFramework
                 ? FRAMEWORK_NAME_MAPPING[model?.framework.uuid] ?? model?.framework.uuid
                 : model.name ?? model.uuid,
             });

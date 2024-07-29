@@ -76,40 +76,60 @@ class Pipeline(DelegatorTarget):
         repo_paths: Optional[List[str]] = None,
         uuids: Optional[List[str]] = None,
     ) -> List[Pipeline]:
-        directories = [
-            os.path.join(repo_path, PIPELINES_FOLDER)
-            for repo_path in (repo_paths or [get_repo_path(root_project=False)])
-        ]
+        pipelines = []
 
-        criteria = {}
+        if (framework and framework.uuid == ExecutionFrameworkUUID.STANDARD) or (
+            execution_framework_uuids
+            and ExecutionFrameworkUUID.STANDARD in execution_framework_uuids
+        ):
+            base_pipelines = await asyncio.gather(*[
+                PipelineBase.get_async(uuid, all_projects=True) for uuid in uuids or []
+            ])
+            for base_pipeline in base_pipelines:
+                pipelines.append(
+                    cls(
+                        uuid=base_pipeline.uuid,
+                        execution_framework=ExecutionFrameworkUUID.STANDARD,
+                        framework=framework,
+                        pipeline=base_pipeline,
+                    )
+                )
+        else:
+            directories = [
+                os.path.join(repo_path, PIPELINES_FOLDER)
+                for repo_path in (repo_paths or [get_repo_path(root_project=False)])
+            ]
 
-        if uuids is not None:
-            criteria['uuid'] = uuids
+            criteria = {}
 
-        if execution_framework_uuids is None:
-            execution_framework_uuids = []
+            if uuids is not None:
+                criteria['uuid'] = uuids
 
-        if framework is not None:
-            execution_framework_uuids.append(ExecutionFrameworkUUID.from_value(framework.uuid))
+            if execution_framework_uuids is None:
+                execution_framework_uuids = []
 
-        if execution_framework_uuids is not None:
-            fuuids: List[str] = [value for value in execution_framework_uuids]
-            criteria['execution_framework'] = fuuids
+            if framework is not None:
+                execution_framework_uuids.append(ExecutionFrameworkUUID.from_value(framework.uuid))
 
-        result = await find_files_with_criteria(directories, criteria)
+            if execution_framework_uuids is not None:
+                fuuids: List[str] = [value for value in execution_framework_uuids]
+                criteria['execution_framework'] = fuuids
 
-        pipelines = await asyncio.gather(*[
-            cls.load_config_from_content(
-                content=info.get('content') or '',
-                dir_name=info.get('dir_name') or '',
-                framework=framework,
-            )
-            for info in result
-            if info
-            and isinstance(info, dict)
-            and info.get('content') is not None
-            and info.get('dir_name') is not None
-        ])
+            result = await find_files_with_criteria(directories, criteria)
+
+            pipelines = await asyncio.gather(*[
+                cls.load_config_from_content(
+                    content=info.get('content') or '',
+                    dir_name=info.get('dir_name') or '',
+                    framework=framework,
+                )
+                for info in result
+                if info
+                and isinstance(info, dict)
+                and info.get('content') is not None
+                and info.get('dir_name') is not None
+            ])
+
         return [pipeline for pipeline in pipelines if pipeline is not None]
 
     async def get_framework(self) -> Union[PipelineExecutionFramework, None]:

@@ -38,7 +38,12 @@ class ExecutionFrameworkResource(GenericResource):
         model = cls.get_model(urllib.parse.unquote(pk), **kwargs)
 
         if not model:
-            raise ApiError(ApiError.RESOURCE_NOT_FOUND)
+            raise ApiError({
+                **ApiError.RESOURCE_NOT_FOUND,
+                **{
+                    'messagemessage': f'Execution framework for {pk} not found.',
+                },
+            })
 
         return cls(model, user, **kwargs)
 

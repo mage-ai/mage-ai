@@ -21,7 +21,8 @@ class PipelineExecutionFrameworkResource(GenericResource):
             raise ApiError(ApiError.RESOURCE_NOT_FOUND)
 
         pipelines = await Pipeline.load_pipelines(
-            execution_framework_uuids=[parent_model.uuid] if parent_model is not None else None
+            execution_framework_uuids=[parent_model.uuid] if parent_model is not None else None,
+            framework=parent_model,
         )
         return cls.build_result_set(
             pipelines,
@@ -36,6 +37,7 @@ class PipelineExecutionFrameworkResource(GenericResource):
         ]
         pipelines = await Pipeline.load_pipelines(
             execution_framework_uuids=execution_framework_uuids,
+            framework=kwargs.get('framework'),
             uuids=[urllib.parse.unquote(pk)],
         )
         return pipelines[0] if pipelines and len(pipelines) >= 1 else None
@@ -51,7 +53,12 @@ class PipelineExecutionFrameworkResource(GenericResource):
                 },
             })
 
-        model = await cls.get_model(pk, execution_framework_uuids=[parent_model.uuid], **kwargs)
+        model = await cls.get_model(
+            pk,
+            execution_framework_uuids=[parent_model.uuid],
+            framework=parent_model,
+            **kwargs,
+        )
 
         if not model:
             raise ApiError({
