@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import dynamic from 'next/dynamic';
-
+import { executeCode, interruptCodeExecution, saveContent as saveContentAction } from '../../IDE/actions';
 import useToolbarsHook from './Toolbars/useToolbars';
 import { AppLoaderProps, AppLoaderResultType } from '../interfaces';
 import { FileCacheType, getFileCache, isStale, updateFileCache } from '../../IDE/cache';
@@ -16,6 +16,7 @@ const MaterialIDE = dynamic(() => import('@components/v2/IDE'), {
 
 export default function useApp(
   props: AppLoaderProps & {
+    actions?: Record<string, any>;
     editor?: IDEProps;
     onMountEditor?: (editor: any) => void;
     skipInitialFetch?: boolean;
@@ -30,7 +31,7 @@ export default function useApp(
   const contentRef = useRef<string>(null);
   const editorRef = useRef<any>(null);
 
-  const { app, editor, onMountEditor, skipInitialFetch, useToolbars } = props;
+  const { actions, app, editor, onMountEditor, skipInitialFetch, useToolbars } = props;
 
   if (!app?.uuid) {
     console.error('App UUID is required.');
@@ -198,35 +199,46 @@ export default function useApp(
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [client, file, skipInitialFetch]);
 
-  const mainApp = useMemo(
-    () =>
-      (clientRef?.current || main?.content || phaseRef.current >= 1) && (
-        <MaterialIDE
-          {...editor}
-          configurations={app?.options?.configurations}
-          eventListeners={{
-            ...editor?.eventListeners,
-            onDidChangeModelContent: (data: any) => {
-              onDidChangeModelContent(data);
-              editor?.eventListeners?.onDidChangeModelContent?.(data);
-            },
-          }}
-          onMountEditor={(editor: any) => {
-            editorRef.current = editor;
-            onMountEditor && onMountEditor?.(editor);
-          }}
-          persistManagerOnUnmount
-          persistResourceOnUnmount={editor?.persistResourceOnUnmount}
-          resource={{
-            main,
-            // Diff editor doesn’t show diff colors yet, don’t use it for now.
-            // original,
-          }}
-          uuid={app?.uuid}
-        />
-      ),
+  const mainApp = useMemo(() => {
+    return (clientRef?.current || main?.content || phaseRef.current >= 1) && (
+      <MaterialIDE
+        {...editor}
+        editorActions={[
+          executeCode(() => {
+            actions?.executeCode?.();
+          }),
+          interruptCodeExecution(() => {
+            actions?.interruptCodeExecution?.();
+          }),
+          saveContentAction(() => {
+            actions?.saveContent?.();
+          }),
+        ]}
+        configurations={app?.options?.configurations}
+        eventListeners={{
+          ...editor?.eventListeners,
+          onDidChangeModelContent: (data: any) => {
+            onDidChangeModelContent(data);
+            editor?.eventListeners?.onDidChangeModelContent?.(data);
+          },
+        }}
+        onMountEditor={(editor: any) => {
+          editorRef.current = editor;
+          onMountEditor && onMountEditor?.(editor);
+        }}
+        persistManagerOnUnmount
+        persistResourceOnUnmount={editor?.persistResourceOnUnmount}
+        resource={{
+          main,
+          // Diff editor doesn’t show diff colors yet, don’t use it for now.
+          // original,
+        }}
+        uuid={app?.uuid}
+      />
+    );
+  },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [app, main, editor, onMountEditor],
+    [actions, app, main, editor, onMountEditor],
   );
 
   const { inputRef, overrideLocalContentFromServer, saveCurrentContent } = useToolbarsHook({

@@ -6,7 +6,7 @@ export default function appLoader(appType: AppTypeEnum, appSubtype: AppSubtypeEn
       [AppSubtypeEnum.SYSTEM]: null,
     },
     [AppTypeEnum.EDITOR]: {
-      [AppSubtypeEnum.IDE]: import('../Editor/useApp').then(module => module.default),
+      [AppSubtypeEnum.IDE]: import('../Editor/useEditorAppNode').then(module => module.default),
     },
   };
   return mapping?.[appType]?.[appSubtype] || {};

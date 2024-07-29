@@ -23,7 +23,7 @@ function AppManagerLayout({
           columnGap={12}
           height="inherit"
           ref={containerRef}
-          row={2}
+          row={1}
           templateRows="1fr"
           width="inherit"
         />

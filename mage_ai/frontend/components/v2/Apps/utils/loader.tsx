@@ -8,7 +8,7 @@ export default async function appLoader(appType: AppTypeEnum, appSubtype: AppSub
       [AppSubtypeEnum.SYSTEM]: null,
     },
     [AppTypeEnum.EDITOR]: {
-      [AppSubtypeEnum.IDE]: import('../Editor/useApp'),
+      [AppSubtypeEnum.IDE]: import('../Editor/useEditorAppNode'),
     },
   };
 
