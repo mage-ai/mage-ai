@@ -1,3 +1,5 @@
+@use '../../abstracts/mixins' as *;
+
 .container {
   &.expanded {
     visibility: visible;
@@ -30,4 +32,34 @@
   overflow: hidden;
   pointer-events: none;
   z-index: -1;
+}
+
+.appToolbar {
+  align-items: center;
+  display: grid;
+  justify-content: center;
+  position: fixed;
+  width: inherit;
+  z-index: var(--header-z-index);
+}
+
+.appToolbarBottom {
+  bottom: var(--padding-container);
+}
+
+.appToolbarInner {
+  @include gradient(0deg, var(--menus-background-gradient-default), var(--menus-background-gradient-default), 0%, 100%);
+
+  align-items: center;
+  background-color: var(--menus-background-base-default);
+  backdrop-filter: blur(var(--modal-blur-base));
+  border-color: var(--borders-color-base-default);
+  border-radius: var(--borders-radius-button);
+  border-style: var(--borders-style);
+  border-width: var(--borders-width);
+  display: grid;
+  grid-auto-flow: column;
+  grid-column-gap: var(--padding-xs);
+  justify-content: center;
+  padding: var(--padding-xs);
 }

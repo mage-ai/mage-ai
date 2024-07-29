@@ -1,4 +1,5 @@
 import { LayoutContext } from '@context/v2/Layout';
+import { createPortal } from 'react-dom';
 import EventStreamType from '@interfaces/EventStreamType';
 import { useRouter } from 'next/router';
 import React, {
@@ -15,12 +16,14 @@ import { get, update, remove as removeFromCache } from './cache';
 import { findLargestUnoccupiedSpace } from '@utils/rects';
 import { snapToGrid } from '../../Canvas/utils/snapToGrid';
 import { handleSaveAsImage } from './utils/images';
+import stylesPipelineBuilderPage from '@styles/scss/pages/PipelineBuilder/PipelineBuilder.module.scss';
 import { ContextMenuType, RenderContextMenuOptions } from '@mana/hooks/useContextMenu';
 import BlockNodeV2, { BADGE_HEIGHT, PADDING_VERTICAL, SELECTED_GROUP_NODE_MIN_WIDTH } from '../../Canvas/Nodes/BlockNodeV2';
 import PortalNode from '../../Canvas/Nodes/PortalNode';
 import Grid from '@mana/components/Grid';
 import useAppEventsHandler, { CustomAppEventEnum } from './useAppEventsHandler';
 import Text from '@mana/elements/Text';
+import Button, { ButtonGroup } from '@mana/elements/Button';
 import { getChildrenDimensions, getClosestChildRole, getClosestRole } from '@utils/elements';
 import {
   BatchPipeline, PipelineV3, BlockGenericV2Partial,
@@ -31,6 +34,8 @@ import {
   ArrowsPointingInFromAllCorners,
   TreeWithArrowsDown,
   Undo,
+  ZoomIn,
+  ZoomOut,
 } from '@mana/icons';
 import stylesPipelineBuilder from '@styles/scss/apps/Canvas/Pipelines/Builder.module.scss';
 import {
@@ -110,6 +115,7 @@ import { buildNewPathsFromBlock, getGroupsFromPath } from '../utils/routing';
 import { DEFAULT_RECT } from '@components/v2/Canvas/Nodes/Apps/EditorAppNode';
 import { DEFAULT_RECT as DEFAULT_RECT_OUTPUT } from '@components/v2/Canvas/Nodes/CodeExecution/OutputGroups';
 import useWaitUntilAttempt from '@mana/hooks/useWaitUntilAttempt';
+import Divider from '@mana/elements/Divider';
 
 const ENTER_ANIMATION_START_THRESHOLD = 0.6;
 const CHANGE_BLOCKS_ANIMATION_DURATION = 5;
@@ -124,6 +130,7 @@ type ModelsType = {
 };
 
 export type CanvasProps = {
+  appToolbarRef?: React.MutableRefObject<HTMLDivElement>;
   framework: PipelineExecutionFrameworkType;
   pipeline: {
     uuid: string;
@@ -142,6 +149,7 @@ export type PipelineCanvasV2Props = {
   defaultActiveLevel?: number;
   dragEnabled?: boolean;
   dropEnabled?: boolean;
+  onZoomPanStateChangeRef: React.MutableRefObject<(state: ZoomPanStateType) => void>;
   setDragEnabled: (value: boolean) => void;
   setDropEnabled: (value: boolean) => void;
   setZoomPanDisabled: (value: boolean) => void;
@@ -150,9 +158,11 @@ export type PipelineCanvasV2Props = {
 } & CanvasProps;
 
 const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
+  appToolbarRef,
   canvasRef,
   containerRef,
   framework,
+  onZoomPanStateChangeRef,
   pipeline: pipelineProp,
   removeContextMenu,
   renderContextMenu,
@@ -186,6 +196,7 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
   const transitionCancelled = useRef(false);
   const viewUUIDPrev = useRef<string>(null);
   const viewUUIDNext = useRef<string>(null);
+  const zoomDetailRef = useRef<HTMLSpanElement>(null);
 
   const nodesToBeRenderedRef = useRef<Record<string, boolean>>({});
   const updateLinesRef = useRef<UpdateLinesType>(null);
@@ -2454,7 +2465,97 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
   // );
   // connectDrop(canvasRef);
 
+  const appToolbarMemo = useMemo(() => {
+    const buttonProps = {
+      basic: true,
+      bordercolor: 'transparent',
+      small: true,
+    };
+
+    return (
+      <div className={stylesPipelineBuilderPage.appToolbarInner}>
+        <Button
+          {...buttonProps}
+          Icon={ZoomOut}
+          onClick={(event: any) => {
+            event.preventDefault();
+            transformState?.current?.handleZoom?.current?.((event ?? null) as any, transformState?.current?.scale?.current - 0.5);
+          }}
+        />
+
+        <Button
+          {...buttonProps}
+          Icon={Undo}
+          onClick={(event: any) => {
+            event.preventDefault();
+            transformState?.current?.handleZoom?.current?.((event ?? null) as any, 1);
+          }}
+        >
+          <span ref={zoomDetailRef}>
+            Reset zoom
+          </span>
+        </Button>
+
+        <Button
+          {...buttonProps}
+          Icon={ZoomIn}
+          onClick={(event: any) => {
+            event.preventDefault();
+            transformState?.current?.handleZoom?.current?.((event ?? null) as any, transformState?.current?.scale?.current + 0.5);
+          }}
+        />
+
+        <Divider vertical />
+
+        <Button
+          {...buttonProps}
+          Icon={ArrowsAdjustingFrameSquare}
+          onClick={(event: any) => {
+            event.preventDefault();
+            transformState?.current?.handlePanning?.current?.((event ?? null) as any, {
+              x: 0,
+              y: 0,
+            });
+          }}
+        >
+          Reset view
+        </Button>
+
+        <Button
+          {...buttonProps}
+          Icon={ArrowsPointingInFromAllCorners}
+          onClick={(event: any) => {
+            event.preventDefault();
+
+            const rects = getSelectedGroupRects();
+            const rect = calculateBoundingBox(rects);
+            const box = canvasRef.current?.getBoundingClientRect();
+            let x = -(rect?.left ?? 0) + (box?.width ?? 0);
+            let y = -(rect?.top ?? 0) + (box?.height ?? 0);
+            x = x > 0 ? 0 : x;
+            y = y > 0 ? 0 : y;
+
+            transformState?.current?.handlePanning?.current?.((event ?? null) as any, {
+              x,
+              y,
+            });
+          }}
+        >
+          Center view
+        </Button>
+      </div>
+    );
+  }, []);
+
   useEffect(() => {
+    if (!onZoomPanStateChangeRef.current) {
+      onZoomPanStateChangeRef.current = (state: ZoomPanStateType) => {
+        if (zoomDetailRef.current) {
+          zoomDetailRef.current.innerText = `${Math.round(state.scale.current * 100)}%`;
+        }
+      };
+    }
+
     if (newBlockCallbackAnimationRef.current !== null) {
       const entries = Object.entries(newBlockCallbackAnimationRef.current);
       if (entries.length > 0 && entries?.every(([id, val]) => val && id in rectsMapping)) {
@@ -2477,7 +2578,7 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
   }, [handleLineTransitions, rectsMapping]);
 
   return (
-
+    <>
       <div
         onContextMenu={e => handleContextMenu(e as any)}
         onDoubleClick={() => {
@@ -2630,6 +2731,9 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
           </SettingsProvider>
         </CanvasContainer>
       </div>
+
+      {appToolbarRef?.current && createPortal(appToolbarMemo, appToolbarRef.current)}
+    </>
   );
 };
 

@@ -46,7 +46,7 @@ export default function build(colors: ColorsType): ButtonsType {
       column: {
         gap: {
           base: 8,
-          sm: 6,
+          sm: 8,
         },
       },
     },

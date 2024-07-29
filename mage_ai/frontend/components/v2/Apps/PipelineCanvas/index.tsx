@@ -62,12 +62,14 @@ export default function PipelineBuilder({
   const [dragEnabled, setDragEnabled] = useState(false);
   const [dropEnabled, setDropEnabled] = useState(false);
   const [, setZoomPanDisabledState] = useState(false);
+  const onZoomPanStateChangeRef = useRef<(state: ZoomPanStateType) => void>(null);
 
   useZoomPan(zoomPanStateRef, {
     // initialPosition: {
     //   xPercent: 0.5,
     //   yPercent: 0.5,
     // },
+    onStateChange: onZoomPanStateChangeRef.current,
     roles: [ElementRoleEnum.DRAGGABLE],
   });
 
@@ -152,6 +154,7 @@ export default function PipelineBuilder({
           dragEnabled={dragEnabled}
           dropEnabled={dropEnabled}
           framework={framework}
+          onZoomPanStateChangeRef={onZoomPanStateChangeRef}
           removeContextMenu={removeContextMenu}
           renderContextMenu={renderContextMenu}
           setDragEnabled={setDragEnabled}

@@ -2,7 +2,7 @@ import { ColorsType } from './colors';
 import { ModeType } from './modes';
 
 export enum BorderRadius {
-  BASE = '12px',
+  BASE = '8px',
   ROUND = '40px',
   SM = '6px',
   XS = '2px',

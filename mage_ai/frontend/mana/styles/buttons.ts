@@ -14,6 +14,7 @@ export type StyleProps = {
   disabled?: boolean;
   grouped?: boolean | string;
   header?: boolean;
+  motion?: boolean;
   loading?: boolean;
   plain?: boolean;
   primary?: boolean;

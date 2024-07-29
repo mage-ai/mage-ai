@@ -66,12 +66,12 @@ export const useZoomPan = (
     };
     maxScale?: number;
     minScale?: number;
-    onStateChange?: (state: any) => void;
+    onStateChange?: (state: ZoomPanStateType) => void;
     roles?: string[];
     zoomSensitivity?: number;
   },
 ): BoundaryType => {
-  const { initialPosition, maxScale = 4, minScale = 0.01, roles, zoomSensitivity = 2.5 } = opts;
+  const { initialPosition, maxScale = 4, minScale = 0.01, roles, zoomSensitivity = 2.5, onStateChange } = opts;
 
   const disabledRef = stateRef.current.disabled;
   const containerRef = stateRef.current.container;
@@ -111,6 +111,10 @@ export const useZoomPan = (
       transformRef.current = `translate(${originX.current}px, ${originY.current}px) scale(${scale.current})`;
       element.style.transformOrigin = '0px 0px';
       element.style.transform = transformRef.current;
+
+      if (onStateChange) {
+        onStateChange(stateRef.current);
+      }
       // console.log(element.style.transformOrigin, element.style.transform)
     };
 
@@ -204,6 +208,9 @@ export const useZoomPan = (
         );
         newScale = Math.min(Math.max(minScaleUse, scale.current + delta), maxScale);
       }
+      if (newScale < minScaleUse || isNaN(newScale)) {
+        newScale = minScaleUse;
+      }
 
       const scaleRatio = newScale / oldScale;
 
@@ -222,6 +229,7 @@ export const useZoomPan = (
       handleDirection(xNew, yNew);
 
       const limited = enforceLimits(originX.current, originY.current, newScale);
+
 
       originX.current = limited.x;
       originY.current = limited.y;
