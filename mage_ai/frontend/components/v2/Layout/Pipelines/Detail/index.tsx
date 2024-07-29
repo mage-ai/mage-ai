@@ -347,16 +347,9 @@ function PipelineBuilder({ pipeline, removeContextMenu, renderContextMenu, ...re
 
     return {
       drag: false,
-      // dragControls,
-      // dragMomentum
-      // dragPropagation
-      // initial
-      // role
-      // style
-      // onDrag
-      // onDragEnd
-      // onPointerUp
-      onPointerDown: (event: any) => {
+      onMouseDown: (event: any) => {
+        if (event.button === 2) return;
+
         handleDragStart(event, {
           item,
           ...opts,

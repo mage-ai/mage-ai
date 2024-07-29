@@ -6,6 +6,7 @@ export type StyledProps = {
   margin?: number;
   top?: number;
   zIndex?: number;
+  width?: number;
 };
 
 export const Styled = styled.div<StyledProps>`

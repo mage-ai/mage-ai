@@ -19,6 +19,7 @@ type DragHandlers = {
   onDragEnd?: (event: any, info: DragInfo) => void;
   onPointerUp?: (event: any) => void;
   onPointerDown?: (event: any) => void;
+  onMouseDown?: (event: any) => void;
 };
 
 type DragSettings = {

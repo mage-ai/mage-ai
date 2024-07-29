@@ -249,7 +249,7 @@ export function buildRectTransformations({
   if (LayoutDisplayEnum.DETAILED === layoutConfig?.display) {
     const activeGroupConditionSelf = (rect: RectType) => {
       const group = selectedGroup;
-      return !group?.uuid || (rect?.block?.uuid === group?.uuid && rect?.children?.length > 0);
+      return (!group?.uuid || rect?.block?.uuid === group?.uuid) && rect?.children?.length > 0;
     };
     const activeGroupConditionChild = (rect: RectType) => {
       const group = selectedGroup;

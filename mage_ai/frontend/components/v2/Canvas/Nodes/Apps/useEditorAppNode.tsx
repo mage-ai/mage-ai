@@ -524,7 +524,7 @@ export default function useEditorAppNode({
         style={{ overflow: 'hidden' }}
         className={[
           stylesAppNode.content,
-          dragDisabled && stylesAppNode.dragger,
+          !dragDisabled && stylesAppNode.dragger,
         ].filter(Boolean).join(' ')}
         templateRows="auto 1fr"
       >
