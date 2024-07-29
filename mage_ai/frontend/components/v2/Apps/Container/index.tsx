@@ -95,7 +95,7 @@ function AppContainer(
           }}
         >
           {toolbars?.top && (
-            <Grid autoFlow="column" columnGap={12} templateColumns="1fr">
+            <Grid autoFlow="column" columnGap={8} templateColumns="1fr">
               {/* @ts-ignore */}
               {toolbars?.top}
             </Grid>

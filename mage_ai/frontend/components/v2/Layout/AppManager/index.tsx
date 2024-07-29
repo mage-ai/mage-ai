@@ -13,19 +13,23 @@ function AppManagerLayout({
       <Grid
         height="100%"
         overflow="visible"
-        padding={12}
         templateColumns="auto-fill"
         templateRows="1fr"
         width="100%"
+        style={{
+          padding: 'var(--padding-container)',
+        }}
       >
         <Grid
           autoFlow="column"
-          columnGap={12}
           height="inherit"
           ref={containerRef}
           row={1}
           templateRows="1fr"
           width="inherit"
+          style={{
+            gridColumnGap: 'var(--padding-container)',
+          }}
         />
       </Grid>
     </div>

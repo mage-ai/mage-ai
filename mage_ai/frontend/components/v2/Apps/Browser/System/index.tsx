@@ -81,31 +81,52 @@ function SystemBrowser({
                 removeContextMenu(event);
 
                 if (ItemTypeEnum.FILE === itemClicked?.type) {
-                  import('../../../IDE/Manager').then((mod: any) => {
-                    const Manager = mod.Manager;
+                  // import('../../../IDE/Manager').then((mod: any) => {
+                  //   const Manager = mod.Manager;
 
-                    if (!Manager?.isResourceOpen?.(itemClicked?.path)) {
-                      addPanel({
-                        apps: [
-                          (appProps?: AppConfigType) =>
-                            mergeDeep(
-                              {
-                                operations: {
-                                  [OperationTypeEnum.REMOVE_APP]: { effect: removeApp },
-                                },
-                                options: {
-                                  file: itemClicked,
-                                },
-                                subtype: AppSubtypeEnum.IDE,
-                                type: AppTypeEnum.EDITOR,
-                                uuid: itemClicked?.name,
-                              },
-                              appProps,
-                            ),
-                        ],
-                        uuid: `panel-${itemClicked?.name}`,
-                      });
-                    }
+                  //   if (!Manager?.isResourceOpen?.(itemClicked?.path)) {
+                  //     addPanel({
+                  //       apps: [
+                  //         (appProps?: AppConfigType) =>
+                  //           mergeDeep(
+                  //             {
+                  //               operations: {
+                  //                 [OperationTypeEnum.REMOVE_APP]: { effect: removeApp },
+                  //               },
+                  //               options: {
+                  //                 file: itemClicked,
+                  //               },
+                  //               subtype: AppSubtypeEnum.IDE,
+                  //               type: AppTypeEnum.EDITOR,
+                  //               uuid: itemClicked?.name,
+                  //             },
+                  //             appProps,
+                  //           ),
+                  //       ],
+                  //       uuid: `panel-${itemClicked?.name}`,
+                  //     });
+                  //   }
+                  // });
+
+                  addPanel({
+                    apps: [
+                      (appProps?: AppConfigType) =>
+                        mergeDeep(
+                          {
+                            operations: {
+                              [OperationTypeEnum.REMOVE_APP]: { effect: removeApp },
+                            },
+                            options: {
+                              file: itemClicked,
+                            },
+                            subtype: AppSubtypeEnum.IDE,
+                            type: AppTypeEnum.EDITOR,
+                            uuid: itemClicked?.name,
+                          },
+                          appProps,
+                        ),
+                    ],
+                    uuid: `panel-${itemClicked?.name}`,
                   });
                 }
               }}

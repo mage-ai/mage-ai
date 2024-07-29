@@ -46,6 +46,7 @@ export type EditorAppNodeProps = {
   onMount?: () => void;
   outputGroupsProps?: OutputGroupsType;
   interruptExecution?: (opts?: { onError?: () => void; onSuccess?: () => void }) => void;
+  skipInitialFetch?: boolean;
   submitCodeExecution?: (
     event: any,
     opts?: {
@@ -70,6 +71,7 @@ export default function useEditorAppNode({
   onClose,
   onMount,
   setHandleOnMessage,
+  skipInitialFetch = true,
   submitCodeExecution,
   width,
 }: EditorAppNodeProps & OutputGroupsType) {
@@ -169,7 +171,7 @@ export default function useEditorAppNode({
         containerRef.current.style.display = 'block';
       }
     },
-    skipInitialFetch: true,
+    skipInitialFetch,
     useToolbars: true,
   });
   const {
@@ -252,7 +254,10 @@ export default function useEditorAppNode({
       columnGap={PADDING_HORIZONTAL / 2}
       justifyContent="space-between"
       onPointerDownCapture={cancelDrag}
-      style={{ gridTemplateColumns: '1fr auto' }}
+      templateColumns={[
+        '1fr',
+        onClose && 'auto',
+      ].filter(Boolean).join(' ')}
       templateRows="1fr"
     >
       {/* <Button
@@ -364,9 +369,101 @@ export default function useEditorAppNode({
     </Grid>
   );
 
+  const subheaderMemo = (
+    <Grid
+      autoFlow="column"
+      bordersBottom
+      columnGap={10}
+      justifyContent="start"
+      onPointerDown={dragDisabled ? undefined : startDrag}
+      paddingBottom={18}
+      paddingLeft={PADDING_HORIZONTAL}
+      paddingRight={PADDING_HORIZONTAL}
+      paddingTop={18}
+      style={{
+        backgroundColor: 'var(--menus-background-contained-default)',
+      }}
+      templateColumns="1fr auto"
+      templateRows="auto"
+    >
+      <Grid
+        autoFlow="column"
+        columnGap={PADDING_HORIZONTAL}
+        justifyContent="start"
+        templateRows="auto"
+      >
+        {/* <Button
+          Icon={iconProps => <DiamondShared {...iconProps} colorName="yellow" />}
+          basic
+          grouped="true"
+          onClick={event => alert('DiamondShared')}
+          small
+        /> */}
+        {block && (
+          <TooltipWrapper
+            align={TooltipAlign.END}
+            horizontalDirection={TooltipDirection.DOWN}
+            justify={TooltipJustify.END}
+            tooltip={
+              <Grid rowGap={PADDING_HORIZONTAL / 2}>
+                <Button asLink onClick={event => alert('Edit')}>
+                  <Text monospace small>
+                    {file?.path ?? block?.configuration?.file_source?.path}
+                  </Text>
+                </Button>
+              </Grid>
+            }
+          >
+            <Text monospace={!block?.name} medium small>
+              {block?.name ?? block?.uuid ?? file?.path}
+            </Text>
+          </TooltipWrapper>
+        )}
+        {!block && (
+          <Text monospace small>
+            {file?.path}
+          </Text>
+        )}
+      </Grid>
+
+      {toolbars?.top}
+
+      <Grid
+        autoFlow="column"
+        columnGap={PADDING_HORIZONTAL * 2}
+        justifyContent="start"
+        templateRows="auto"
+      >
+        {/* <Button
+          Icon={iconProps => <IdentityTag {...iconProps} secondary />}
+          basic
+          grouped="true"
+          onClick={event => alert('IdentityTag')}
+          small
+        />
+
+        <Button
+          Icon={iconProps => <AppVersions {...iconProps} secondary />}
+          basic
+          grouped="true"
+          onClick={event => alert('AppVersions')}
+          small
+        /> */}
+      </Grid>
+    </Grid>
+  );
+
   const wrapperMemo = ({
     main: mainApp,
+    subheader,
     toolbars: toolbarsApp,
+  }: {
+    main?: any;
+    subheader?: any;
+    toolbars?: {
+      bottom?: any;
+      top?: any;
+    };
   }) => (
     <Grid
       className={[stylesAppNode.appNodeContainer].join(' ')}
@@ -434,80 +531,7 @@ export default function useEditorAppNode({
         ].filter(Boolean).join(' ')}
         templateRows="auto 1fr"
       >
-        <Grid
-          autoFlow="column"
-          bordersBottom
-          columnGap={10}
-          justifyContent="start"
-          onPointerDown={dragDisabled ? undefined : startDrag}
-          paddingBottom={18}
-          paddingLeft={PADDING_HORIZONTAL}
-          paddingRight={PADDING_HORIZONTAL}
-          paddingTop={18}
-          style={{
-            backgroundColor: 'var(--menus-background-contained-default)',
-          }}
-          templateColumns="1fr auto"
-          templateRows="auto"
-        >
-          <Grid
-            autoFlow="column"
-            columnGap={PADDING_HORIZONTAL}
-            justifyContent="start"
-            templateRows="auto"
-          >
-            {/* <Button
-              Icon={iconProps => <DiamondShared {...iconProps} colorName="yellow" />}
-              basic
-              grouped="true"
-              onClick={event => alert('DiamondShared')}
-              small
-            /> */}
-            <TooltipWrapper
-              align={TooltipAlign.END}
-              horizontalDirection={TooltipDirection.DOWN}
-              justify={TooltipJustify.END}
-              tooltip={
-                <Grid rowGap={PADDING_HORIZONTAL / 2}>
-                  <Button asLink onClick={event => alert('Edit')}>
-                    <Text monospace small>
-                      {file?.path ?? block?.configuration?.file_source?.path}
-                    </Text>
-                  </Button>
-                </Grid>
-              }
-            >
-              <Text semibold>
-                {block?.name ?? block?.uuid}
-              </Text>
-            </TooltipWrapper>
-          </Grid>
-
-          {toolbars?.top}
-
-          <Grid
-            autoFlow="column"
-            columnGap={PADDING_HORIZONTAL * 2}
-            justifyContent="start"
-            templateRows="auto"
-          >
-            {/* <Button
-              Icon={iconProps => <IdentityTag {...iconProps} secondary />}
-              basic
-              grouped="true"
-              onClick={event => alert('IdentityTag')}
-              small
-            />
-
-            <Button
-              Icon={iconProps => <AppVersions {...iconProps} secondary />}
-              basic
-              grouped="true"
-              onClick={event => alert('AppVersions')}
-              small
-            /> */}
-          </Grid>
-        </Grid>
+        {subheader}
 
         <Grid
           className={stylesAppNode.codeContainer}
@@ -521,6 +545,7 @@ export default function useEditorAppNode({
 
   return {
     main,
+    subheader: subheaderMemo,
     toolbars: {
       top: toolbarTopMemo,
     },
