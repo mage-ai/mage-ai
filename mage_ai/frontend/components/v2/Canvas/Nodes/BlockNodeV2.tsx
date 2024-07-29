@@ -1,11 +1,12 @@
 import * as osPath from 'path';
+import { ConnectionLines } from '@components/v2/Canvas/Connections/ConnectionLines';
 import { ErrorDetailsType } from '@interfaces/ErrorsType';
 import stylesPipelineBuilder from '@styles/scss/apps/Canvas/Pipelines/Builder.module.scss';
 import { WithOnMount } from '@mana/hooks/useWithOnMount';
 import { TooltipAlign, TooltipWrapper, TooltipDirection, TooltipJustify } from '@context/v2/Tooltip';
 import Button from '@mana/elements/Button';
 import { newMessageRequestUUID } from '@utils/events';
-import { getLineID } from '@components/v2/Apps/PipelineCanvas/Lines/LineManagerV2';
+import { buildPaths, getLineID, prepareLinePathProps } from '@components/v2/Apps/PipelineCanvas/Lines/utils';
 import { ShowNodeType } from '@components/v2/Apps/PipelineCanvas/interfaces';
 import { EventEnum, KeyEnum } from '@mana/events/enums';
 import { removeANSI, removASCII, capitalize } from '@utils/string';
@@ -90,6 +91,7 @@ type BlockNodeType = {
   getParentOnMessageHandler?: (groupUUID: string) => (event: EventStreamType, block: BlockType) => void;
   recentlyAddedBlocksRef?: React.MutableRefObject<Record<string, boolean>>;
   node: NodeType;
+  linePathPortalRef?: React.MutableRefObject<HTMLDivElement>;
   pipelineUUID: string;
   showApp?: ShowNodeType;
   showOutput?: ShowNodeType;
@@ -100,7 +102,7 @@ const STEAM_OUTPUT_DIR = 'code_executions';
 function BlockNode(
   { block, dragRef, node, groupSelection, showApp, recentlyAddedBlocksRef, showOutput,
     setHandleOnChildMessage, pipelineUUID,
-    getParentOnMessageHandler,
+    getParentOnMessageHandler, linePathPortalRef,
     ...rest }: BlockNodeType,
   ref: React.MutableRefObject<HTMLElement>,
 ) {
@@ -110,7 +112,8 @@ function BlockNode(
   const themeContext = useContext(ThemeContext);
   const { animateLineRef, handleMouseDown, onBlockCountChange,
     renderLineRef, updateLinesRef } = useContext(EventContext);
-  const { getSelectedGroupRectFromRefs, selectedGroupsRef } = useContext(SettingsContext);
+  const { layoutConfigs, selectedGroupsRef } = useContext(SettingsContext);
+  const layoutConfig = layoutConfigs?.current?.[Math.max(selectedGroupsRef?.current?.length - 1, 0)];
   const { blockMappingRef, blocksByGroupRef, groupMappingRef, groupsByLevelRef, rectsMappingRef } =
     useContext(ModelContext);
 
@@ -1345,96 +1348,137 @@ function BlockNode(
     [mutations.blocks, groupSelection, removeContextMenu, setSelectedGroup, teleportIntoBlock, buildMenuItemsForTemplates],
   );
 
+  const linePathsMemo = useMemo(() => {
+    if (block?.groups?.length > 0
+      || !block?.type
+      || [BlockTypeEnum.GROUP].includes(block?.type)
+      || !block?.downstream_blocks?.length
+    ) return;
+
+    const rectup = node?.rect ?? rectsMappingRef?.current?.[block.uuid];
+    const linePaths = {};
+
+    console.log(block.uuid, rectup)
+
+    if (!rectup) return;
+
+    block?.downstream_blocks?.forEach((buuid: string, idx: number) => {
+      const rectdn = rectsMappingRef?.current?.[buuid];
+      console.log(buuid, rectdn)
+      if (!rectdn) return;
+
+      const linePath = buildPaths(
+        rectup,
+        rectdn,
+        idx,
+        {
+          blocksByGroup: blocksByGroupRef?.current,
+          blockMapping: blockMappingRef?.current,
+          groupMapping: groupMappingRef?.current,
+          layout: layoutConfig?.current,
+          visibleByDefault: true,
+        },
+      );
+      linePaths[linePath.id] = [linePath];
+    });
+
+    return <ConnectionLines linePaths={linePaths} />;
+  }, [block, node, rectsMappingRef.current]);
+
   return (
-    <div
-      className={[
-        stylesBlockNode.blockNodeWrapper,
-        groupSelection && stylesBlockNode.groupSelection,
-        executing && stylesBlockNode.executing,
-      ]
-        .filter(Boolean)
-        .join(' ')}
-      onContextMenu={(event: any) => {
-        if (event.metaKey) return;
+    <>
+      <div
+        className={[
+          stylesBlockNode.blockNodeWrapper,
+          groupSelection && stylesBlockNode.groupSelection,
+          executing && stylesBlockNode.executing,
+        ]
+          .filter(Boolean)
+          .join(' ')}
+        onContextMenu={(event: any) => {
+          if (event.metaKey) return;
 
-        event.preventDefault();
-        event.stopPropagation();
+          event.preventDefault();
+          event.stopPropagation();
 
-        const items = [];
+          const items = [];
 
-        if (isGroup) {
-          items.push(...buildContextMenuItemsForGroupBlock(block));
-        } else {
-          items.push(
-            ...[
-              {
-                Icon: Lightning,
-                onClick: (event: ClientEventType) => {
-                  event?.preventDefault();
-                  submitCodeExecution(event as any);
-                  removeContextMenu(event);
+          if (isGroup) {
+            items.push(...buildContextMenuItemsForGroupBlock(block));
+          } else {
+            items.push(
+              ...[
+                {
+                  Icon: Lightning,
+                  onClick: (event: ClientEventType) => {
+                    event?.preventDefault();
+                    submitCodeExecution(event as any);
+                    removeContextMenu(event);
+                  },
+                  uuid: 'Execute code',
                 },
-                uuid: 'Execute code',
-              },
-              {
-                Icon: Code,
-                onClick: (event: ClientEventType) => {
-                  event?.preventDefault();
-                  launchEditorApp(event);
-                  removeContextMenu(event);
+                {
+                  Icon: Code,
+                  onClick: (event: ClientEventType) => {
+                    event?.preventDefault();
+                    launchEditorApp(event);
+                    removeContextMenu(event);
+                  },
+                  uuid: 'Open code editor',
                 },
-                uuid: 'Open code editor',
-              },
-              {
-                Icon: Delete,
-                onClick: (event: ClientEventType) => {
-                  event?.preventDefault();
+                {
+                  Icon: Delete,
+                  onClick: (event: ClientEventType) => {
+                    event?.preventDefault();
 
-                  mutations.blocks.delete.mutate({
-                    event,
-                    id: encodeURIComponent(block.uuid),
-                    onSuccess: ({ data }) => {
-                      closeEditorApp();
-                      closeOutput();
-                      removeContextMenu(event);
-                    },
-                  });
+                    mutations.blocks.delete.mutate({
+                      event,
+                      id: encodeURIComponent(block.uuid),
+                      onSuccess: ({ data }) => {
+                        closeEditorApp();
+                        closeOutput();
+                        removeContextMenu(event);
+                      },
+                    });
+                  },
+                  uuid: 'Remove from pipeline',
                 },
-                uuid: 'Remove from pipeline',
-              },
-            ],
-          );
-        }
+              ],
+            );
+          }
 
-        handleContextMenu(event, items, {
-          reduceItems: i1 => i1,
-        });
-      }}
-      ref={ref as React.RefObject<HTMLDivElement>}
-    >
-      <BlockNodeComponent
-        {...rest}
-        commands={commands}
-        apps={apps}
-        block={block}
-        blockGroupStatusRef={blockGroupStatusRef}
-        buildContextMenuItemsForGroupBlock={buildContextMenuItemsForGroupBlock}
-        code={fileRef.current?.content}
-        dragRef={dragRef}
-        executing={executing}
-        groupSelection={groupSelection}
-        interruptExecution={interruptExecution}
-        loading={loading}
-        menuItemsForTemplates={buildMenuItemsForTemplates(block)}
-        loadingKernelMutation={loadingKernelMutation}
-        node={node}
-        openEditor={launchEditorApp}
-        submitCodeExecution={submitCodeExecution}
-        teleportIntoBlock={teleportIntoBlock}
-        timerStatusRef={timerStatusRef}
-        updateBlock={updateBlock}
-      />
-    </div>
+          handleContextMenu(event, items, {
+            reduceItems: i1 => i1,
+          });
+        }}
+        ref={ref as React.RefObject<HTMLDivElement>}
+      >
+        <BlockNodeComponent
+          {...rest}
+          commands={commands}
+          apps={apps}
+          block={block}
+          blockGroupStatusRef={blockGroupStatusRef}
+          buildContextMenuItemsForGroupBlock={buildContextMenuItemsForGroupBlock}
+          code={fileRef.current?.content}
+          dragRef={dragRef}
+          executing={executing}
+          groupSelection={groupSelection}
+          interruptExecution={interruptExecution}
+          loading={loading}
+          menuItemsForTemplates={buildMenuItemsForTemplates(block)}
+          loadingKernelMutation={loadingKernelMutation}
+          node={node}
+          openEditor={launchEditorApp}
+          submitCodeExecution={submitCodeExecution}
+          teleportIntoBlock={teleportIntoBlock}
+          timerStatusRef={timerStatusRef}
+          updateBlock={updateBlock}
+        />
+
+        {linePathPortalRef?.current && linePathsMemo && createPortal(linePathsMemo, linePathPortalRef.current)}
+      </div>
+    </>
   );
 }
 

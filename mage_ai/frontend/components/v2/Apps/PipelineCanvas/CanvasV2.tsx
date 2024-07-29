@@ -69,9 +69,9 @@ import CanvasContainer, { GRID_SIZE } from './index.style';
 import LineManagerV2, {
   UpdateLinesType,
   ANIMATION_DURATION as ANIMATION_DURATION_LINES,
-  getLineID,
   EASING,
 } from './Lines/LineManagerV2';
+import { getLineID } from './Lines/utils';
 import DragWrapper from '../../Canvas/Nodes/DragWrapper';
 import PipelineExecutionFrameworkType, {
   FrameworkType,
@@ -206,6 +206,7 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
   const viewUUIDPrev = useRef<string>(null);
   const viewUUIDNext = useRef<string>(null);
   const zoomDetailRef = useRef<HTMLSpanElement>(null);
+  const blockLinePathsPortalRef = useRef<HTMLDivElement>(null);
 
   const nodesToBeRenderedRef = useRef<Record<string, boolean>>({});
   const updateLinesRef = useRef<UpdateLinesType>(null);
@@ -575,6 +576,7 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
           getParentOnMessageHandler={guuid => handleOnMessageByGroupRef.current[guuid]}
           index={index}
           key={block.uuid}
+          linePathPortalRef={blockLinePathsPortalRef}
           node={node as NodeType}
           pipelineUUID={pipelineUUID}
           recentlyAddedBlocksRef={newBlockCallbackAnimationRef}
@@ -1321,7 +1323,7 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
 
     const blocks = [];
 
-    const layoutConfig = layoutConfigsRef.current?.[selectedGroupsRef.current?.length - 1];
+    const layoutConfig = layoutConfigsRef.current?.[Math.max(selectedGroupsRef.current?.length - 1, 0)];
     const visibleBlocks = layoutConfig?.visibleBlocks ?? [];
     if (!visibleBlocks || visibleBlocks?.includes(VisibleBlocksEnum.CHILDREN_OF_SELECTED_GROUP)) {
       blocks.push(...(
@@ -1590,7 +1592,7 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
 
   // Models
   function shouldRenderSelectedGroupSelection(): boolean {
-    const selectedGroup = selectedGroupsRef.current?.[selectedGroupsRef.current?.length - 1];
+    const selectedGroup = selectedGroupsRef.current?.[Math.max(selectedGroupsRef.current?.length - 1, 0)];
     const group = groupMappingRef.current?.[selectedGroup?.uuid];
     const blocksInGroup = blocksByGroupRef?.current?.[selectedGroup?.uuid] ?? {};
     const isValidGroup =
@@ -1635,8 +1637,8 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
         groups.push({ ...g });
       });
 
-      const layoutConfig = layoutConfigsRef.current?.[selectedGroupsRef.current?.length - 1];
-      const selectedGroup = selectedGroupsRef.current?.[selectedGroupsRef.current?.length - 1];
+      const layoutConfig = layoutConfigsRef.current?.[Math.max(selectedGroupsRef.current?.length - 1, 0)];
+      const selectedGroup = selectedGroupsRef.current?.[Math.max(selectedGroupsRef.current?.length - 1, 0)];
       const group = groupMappingRef.current?.[selectedGroup?.uuid];
       const blocksInGroup = blocksByGroupRef?.current?.[selectedGroup?.uuid] ?? {};
       const isValidGroup = shouldRenderSelectedGroupSelection();
@@ -2446,74 +2448,6 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
     [outputNodes, renderNodeComponents],
   );
 
-  // const blocksAllMemo = useMemo(() =>
-  //   renderNodeComponents(rectsMappingAllBlocks, {
-  //     [ItemTypeEnum.BLOCK]: Object.values(blockMappingRef.current ?? {}),
-  //   }), [rectsMappingAllBlocks]);
-
-  // const [, connectDrop] = useDrop(
-  //   () => ({
-  //     // https://react-dnd.github.io/react-dnd/docs/api/use-drop
-  //     accept: [ItemTypeEnum.APP, ItemTypeEnum.OUTPUT],
-  //     drop: (item: NodeType, monitor) => {
-  //       // console.log('start', itemsRef.current)
-  //       const delta = monitor.getDifferenceFromInitialOffset() as {
-  //         x: number;
-  //         y: number;
-  //       };
-
-  //       // let left = Math.round(node?.rect?.left + delta.x);
-  //       // let top = Math.round(node?.rect?.top + delta.y);
-  //       let left = Math.round((item?.rect?.left ?? 0) + delta.x);
-  //       let top = Math.round((item?.rect?.top ?? 0) + delta.y);
-
-  //       let leftOffset = 0;
-  //       let topOffset = 0;
-
-  //       if (snapToGridOnDrop) {
-  //         // TODO (dangerous): This doesn’t apply to the ports; need to handle that separately.
-  //         const [xSnapped, ySnapped] = snapToGrid(
-  //           {
-  //             x: left,
-  //             y: top,
-  //           },
-  //           { height: GRID_SIZE, width: GRID_SIZE },
-  //         );
-  //         leftOffset = xSnapped - left;
-  //         topOffset = ySnapped - top;
-  //       }
-
-  //       left += leftOffset;
-  //       top += topOffset;
-
-  //       const node = { ...item };
-  //       node.rect = node.rect ?? item.rect ?? {};
-  //       node.rect.left = left;
-  //       node.rect.top = top;
-  //       node.rect.block = { uuid: item.block.uuid };
-
-  //       const element = dragRefs.current[node.id].current;
-  //       if (element) {
-  //         const recte = element?.getBoundingClientRect();
-  //         element.style.transform = `translate(${left}px, ${top}px)`;
-  //         node.rect.height = recte.height;
-  //         node.rect.width = recte.width;
-  //       }
-
-  //       rectsMappingRef.current[node.id] = node.rect;
-  //       const rectd = {
-  //         [node.id]: node.rect,
-  //       };
-  //       update(`${executionFrameworkUUID}:${pipelineUUID}`, rectd);
-  //       setRectsMapping(prev => ({ ...prev, ...rectd }));
-
-  //       return undefined;
-  //     },
-  //   }),
-  //   [],
-  // );
-  // connectDrop(canvasRef);
-
   const appToolbarMemo = useMemo(() => {
     const buttonProps = {
       basic: true,
@@ -2743,6 +2677,7 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
 
                     <LineManagerV2
                       animateLineRef={animateLineRef}
+                      blockPortalRef={blockLinePathsPortalRef}
                       controls={controlsForLines}
                       renderLineRef={renderLineRef}
                       rectsMapping={{

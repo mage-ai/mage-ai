@@ -19,31 +19,39 @@ export type LinePathType = {
 };
 
 type ConnectionLinesProps = {
+  children?: React.ReactNode;
   linePaths?: Record<string, LinePathType[]>;
   id?: string;
   zIndex?: number;
 };
 
-export const ConnectionLines: React.FC<ConnectionLinesProps> = ({
+function ConnectionLinesBase({
+  children,
   id,
   linePaths,
   zIndex,
-}: ConnectionLinesProps) => (
-  <motion.svg
-    className={[styles.connectionLines]?.join(' ')}
-    id={id}
-    initial
-    style={{
-      height: '100%',
-      left: 0,
-      overflow: 'visible',
-      pointerEvents: 'none',
-      position: 'absolute',
-      top: 0,
-      width: '100%',
-      zIndex,
-    }}
-  >
-    {Object.values(linePaths ?? {})?.flatMap(lps => lps.flatMap(p => p.paths ?? []))}
-  </motion.svg>
-);
+}: ConnectionLinesProps, ref) {
+  return (
+    <motion.svg
+      className={[styles.connectionLines]?.join(' ')}
+      id={id}
+      initial
+      ref={ref}
+      style={{
+        height: '100%',
+        left: 0,
+        overflow: 'visible',
+        pointerEvents: 'none',
+        position: 'absolute',
+        top: 0,
+        width: '100%',
+        zIndex,
+      }}
+    >
+      {Object.values(linePaths ?? {})?.flatMap(lps => lps.flatMap(p => p.paths ?? []))}
+      {children}
+    </motion.svg>
+  );
+}
+
+export const ConnectionLines = React.forwardRef(ConnectionLinesBase);
