@@ -1855,10 +1855,10 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
         rectsUse = rectsUse?.filter(r => !rectsVisTrans?.find(rt => rt.id === r.id));
       }
 
-      console.log('rectsVisTrans', rectsVisTrans?.map(r => ({
-        ...ignoreKeys(r, ['block']),
-        upstream: r?.upstream?.map(u => ignoreKeys(u, ['block'])),
-      })));
+      // console.log('rectsVisTrans', rectsVisTrans?.map(r => ({
+      //   ...ignoreKeys(r, ['block']),
+      //   upstream: r?.upstream?.map(u => ignoreKeys(u, ['block'])),
+      // })));
 
       const transformations = buildRectTransformations({
         centerRect,
@@ -1876,19 +1876,10 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
       DEBUG.rects && console.log(`end:\n${logMessageForRects(tfs)}`);
 
       if (rectsVisTrans?.length > 0) {
-        const bbox = layoutConfig?.viewportRef?.current?.getBoundingClientRect() ?? {};
-        const rectCenter = {
-          height: 1,
-          left: (bbox.left ?? 0) + ((bbox?.width ?? 0) / 2),
-          top: (bbox.top ?? 0) + ((bbox?.height ?? 0) / 2),
-          width: 1,
-        };
-
-        DEBUG.rects && console.log('rectCenter', rectCenter);
+        // const bbox = layoutConfig?.viewportRef?.current?.getBoundingClientRect() ?? {};
 
         const trans3 = buildRectTransformations({
-          centerRect: rectCenter,
-          disableAlignments: false,
+          disableAlignments: true,
           layoutConfig: (rectsVisTrans?.length > 0
             ? layoutConfig?.blocksAndGroupsLayout
             : layoutConfig
@@ -1926,13 +1917,13 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
         ...indexBy(rectsToStore, r => r.id),
         ...indexBy(rectsVisTrans, r => r.id),
       };
+      onUpdateRects && onUpdateRects(rectsMappingRef.current);
 
       if (blocks?.length > 0 || groups?.length > 0) {
         if (
           (blocks?.length > 0 && blocks?.every(b => (rectsMappingRef.current ?? {})?.[b.uuid])) ||
           (groups?.length > 0 && groups?.every(g => (rectsMappingRef.current ?? {})?.[g.uuid]))
         ) {
-          onUpdateRects && onUpdateRects(rectsMappingRef.current);
           setRectsMapping(rectsMappingRef.current);
         }
       }

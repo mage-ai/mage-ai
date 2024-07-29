@@ -1,4 +1,8 @@
 import AppManagerLayout from '../../AppManager';
+import { CUBIC } from '@mana/animations/ease';
+import { KeyEnum } from '@mana/events/enums';
+import useKeyboardShortcuts from '@mana/hooks/shortcuts/useKeyboardShortcuts';
+import AnimatedBorder, { SVG_XY_OFFSET } from '@components/v2/shared/AnimatedBorder';
 import { Root, createRoot } from 'react-dom/client';
 import { motion } from 'framer-motion';
 import TeleportBlock from '@components/v2/Canvas/Nodes/Blocks/TeleportBlock';
@@ -14,7 +18,7 @@ import { doesRectIntersect } from '@utils/rects';
 import useManager from '@components/v2/Apps/useManager';
 import { CanvasProps } from '@components/v2/Apps/PipelineCanvas/CanvasV2';
 import { PanelType } from '@components/v2/Apps/interfaces';
-import { useCallback, useMemo, useRef } from 'react';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { ItemType } from '@components/v2/Apps/Browser/System/interfaces';
 import BlockType, { BlockTypeEnum } from '@interfaces/BlockType';
 import { useAnimationControls, useDragControls } from 'framer-motion';
@@ -33,6 +37,11 @@ interface PipelineDetailProps {
 const PipelineCanvas = dynamic(() => import('@components/v2/Apps/PipelineCanvas'), { ssr: false });
 
 function PipelineBuilder({ pipeline, removeContextMenu, renderContextMenu, ...rest }: PipelineDetailProps & CanvasProps) {
+  const dropzoneRef = useRef<HTMLDivElement>(null);
+  const dropzoneMountRef = useRef<HTMLDivElement>(null);
+  const dropzoneRootRef = useRef<Root>(null);
+  const activeDropzoneRef = useRef<RectType>(null);
+
   const appToolbarRef = useRef<HTMLDivElement>(null);
   const appManagerContainerRef = useRef<HTMLDivElement>(null);
   const appManagerWrapperRef = useRef<HTMLDivElement>(null);
@@ -52,6 +61,10 @@ function PipelineBuilder({ pipeline, removeContextMenu, renderContextMenu, ...re
 
   const dragControls = useDragControls();
   const animationControls = useAnimationControls();
+
+  const { deregisterCommands, registerCommands } = useKeyboardShortcuts({
+    target: draggableItemElementRef,
+  });
 
   function hide(refs: React.MutableRefObject<HTMLDivElement>[]) {
     refs?.forEach((ref) => {
@@ -101,29 +114,50 @@ function PipelineBuilder({ pipeline, removeContextMenu, renderContextMenu, ...re
     rectsMappingRef.current = rectsMapping;
   }
 
+  function resetDropzone() {
+    dropzoneMountRef?.current
+      && dropzoneMountRef?.current?.classList?.add?.(stylesPipelineBuilderPage.hidden);
+
+    activeDropzoneRef.current = null;
+
+    if (dropzoneRootRef?.current) {
+      dropzoneRootRef.current.render(null);
+    }
+  }
+
   function resetDragging() {
     animationControls.set({
       x: 0,
       y: 0
     });
+
+    draggableItemElementRef.current.style.display = 'none';
     draggableItemElementRef.current.style.opacity = '0';
+    draggableItemElementRef.current.style.pointerEvents = 'none';
     draggableItemElementRef.current.style.transform = 'translate(0px, 0px)';
     draggableItemElementRef.current.style.transformOrigin = '0 0';
+    draggableItemElementRef.current.style.visibility = 'hidden';
+
+    resetDropzone();
   }
 
-  function handleDragEnd(event: any, info: DragInfo) {
-    event.preventDefault();
-    event.stopPropagation();
-
+  function getItemRect(event: any, info?: DragInfo) {
     const x = info?.point?.x ?? event?.pageX ?? {};
     const y = info?.point?.y ?? event?.pageY ?? {};
+
     const itemRect = draggableItemElementRef.current?.getBoundingClientRect();
     const rect = {
       height: itemRect?.height,
       left: x - (itemRect?.width / 2),
       top: y - (itemRect?.height / 2),
       width: itemRect?.width,
-    }
+    };
+
+    return rect;
+  }
+
+  function getIntersectingData(selectedItem: any, event: any, info?: DragInfo) {
+    const rect = getItemRect(event, info);
 
     const intersectingRect =
       Object.values(rectsMappingRef.current ?? {}).find(r => doesRectIntersect(r as RectType, rect));
@@ -131,12 +165,12 @@ function PipelineBuilder({ pipeline, removeContextMenu, renderContextMenu, ...re
     const block = {
       configuration: {
         file_source: {
-          path: selectedItemRef?.current?.item?.path,
+          path: selectedItem?.item?.path,
         },
       },
-      language: selectedItemRef?.current?.item?.language,
-      name: selectedItemRef?.current?.block?.name,
-      type: selectedItemRef?.current?.block?.type,
+      language: selectedItem?.item?.language,
+      name: selectedItem?.block?.name,
+      type: selectedItem?.block?.type,
     } as any;
 
     if (intersectingRect && intersectingRect?.block) {
@@ -151,17 +185,89 @@ function PipelineBuilder({ pipeline, removeContextMenu, renderContextMenu, ...re
       }
     }
 
-    Object
-      .values(onItemDropHandlersRef.current ?? {})
-      .forEach(handler => handler(event, selectedItemRef?.current?.item, block));
-
-    handlePointerUp(event);
-    selectedItemRef.current = null;
+    return {
+      block,
+      intersectingRect,
+      rect,
+    };
   }
 
-  function handlePointerUp(event: any) {
-    event.preventDefault();
-    event.stopPropagation();
+  function handleDragging(event: any, info: DragInfo) {
+    if (!selectedItemRef.current) return;
+    const {
+      block,
+      intersectingRect,
+    } = getIntersectingData(selectedItemRef.current, event, info);
+
+    if (intersectingRect) {
+      if (!activeDropzoneRef.current
+        || ['left', 'top', 'width', 'height'].some(key => activeDropzoneRef.current[key] !== intersectingRect[key])
+      ) {
+        dropzoneMountRef?.current
+          && dropzoneMountRef?.current?.classList?.remove?.(stylesPipelineBuilderPage.hidden);
+
+        if (!dropzoneRootRef.current) {
+          dropzoneRootRef.current = createRoot(dropzoneMountRef.current);
+        }
+
+        const padding = 80;
+        let height = intersectingRect?.height ?? 0;
+        let width =  intersectingRect?.width ?? 0;
+        width += SVG_XY_OFFSET / 2;
+
+        let left = intersectingRect?.left ?? 0;
+        let top = intersectingRect?.top ?? 0;
+        left -= padding / 2;
+        left -= SVG_XY_OFFSET / 2;
+        top -= padding / 2;
+        top -= SVG_XY_OFFSET / 2;
+
+        dropzoneRootRef.current.render(
+          <AnimatedBorder
+            padding={padding}
+            ref={dropzoneRef}
+            left={left}
+            top={top}
+            height={height}
+            transition={{
+              duration: 1,
+              ease: CUBIC,
+            }}
+            width={width}
+            zIndex={15}
+          />
+        );
+      }
+      activeDropzoneRef.current = intersectingRect;
+    } else if (activeDropzoneRef.current) {
+      resetDropzone();
+    }
+  }
+
+  function handleDragEnd(event: any, info: DragInfo) {
+    if (!selectedItemRef.current) return;
+
+    handlePointerUp(event, info);
+  }
+
+  function handlePointerUp(event: any, info?: DragInfo) {
+    if (!selectedItemRef.current) return;
+
+    event?.preventDefault();
+    event?.stopPropagation();
+
+    const selectedItem = selectedItemRef.current;
+    selectedItemRef.current = null;
+
+    const {
+      block,
+    } = getIntersectingData(selectedItem, event, info);
+
+    // console.log(rectsMappingRef.current, intersectingRect, rect, onItemDropHandlersRef.current)
+
+    Object
+      .values(onItemDropHandlersRef.current ?? {})
+      .forEach(handler => handler(event, selectedItem?.item, block));
 
     if (draggableItemRootRef.current) {
       draggableItemRootRef.current.render(null);
@@ -207,12 +313,20 @@ function PipelineBuilder({ pipeline, removeContextMenu, renderContextMenu, ...re
     dragControls.start(event);
     resetDragging();
 
+    draggableItemElementRef.current.style.display = '';
+    draggableItemElementRef.current.style.opacity = '1';
+    draggableItemElementRef.current.style.pointerEvents = 'all';
+    draggableItemElementRef.current.style.visibility = 'visible';
+
     setTimeout(() => {
       const { height, width } = draggableItemElementRef.current.getBoundingClientRect();
       const { pageX, pageY } = event;
+
+      // draggableItemElementRef.current.style.transform = 'translate(0px, 0px)';
+      // draggableItemElementRef.current.style.transformOrigin = '0 0';
+
       draggableItemElementRef.current.style.left = `${pageX - width / 2}px`;
       draggableItemElementRef.current.style.top = `${pageY - height / 2}px`;
-      draggableItemElementRef.current.style.opacity = '1';
     }, 1);
   }
 
@@ -252,8 +366,27 @@ function PipelineBuilder({ pipeline, removeContextMenu, renderContextMenu, ...re
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  useEffect(() => {
+    registerCommands({
+      escape: {
+        handler: (event: any) => {
+          selectedItemRef.current = null;
+          resetDragging();
+          handlePointerUp(event);
+        },
+        predicate: { key: KeyEnum.ESCAPE },
+      },
+    })
+
+    return () => {
+      deregisterCommands();
+    }
+  }, []);
+
   return (
     <div className={[stylesHeader.content, stylesPipelineBuilderPage.container].join(' ')}>
+      <div ref={dropzoneMountRef} />
+
       <motion.div
         animate={animationControls}
         className={[
@@ -263,6 +396,7 @@ function PipelineBuilder({ pipeline, removeContextMenu, renderContextMenu, ...re
         dragControls={dragControls}
         dragMomentum={false}
         dragPropagation={false}
+        onDrag={handleDragging}
         onDragEnd={handleDragEnd}
         onPointerUp={handlePointerUp}
         ref={draggableItemElementRef}

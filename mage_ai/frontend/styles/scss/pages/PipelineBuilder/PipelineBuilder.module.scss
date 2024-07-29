@@ -69,3 +69,11 @@
   position: absolute;
   z-index: 13;
 }
+
+.hidden {
+  display: none;
+  opacity: 0;
+  pointer-events: none;
+  visibility: hidden;
+  z-index: -1;
+}
