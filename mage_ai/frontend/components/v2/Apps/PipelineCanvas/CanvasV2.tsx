@@ -134,6 +134,7 @@ export type CanvasProps = {
   containerRef: React.RefObject<HTMLDivElement>;
   removeContextMenu: RemoveContextMenuType;
   renderContextMenu: RenderContextMenuType;
+  wrapperRef: React.RefObject<HTMLDivElement>;
 };
 
 export type PipelineCanvasV2Props = {
@@ -146,7 +147,6 @@ export type PipelineCanvasV2Props = {
   setZoomPanDisabled: (value: boolean) => void;
   snapToGridOnDrop?: boolean;
   transformState: React.MutableRefObject<ZoomPanStateType>;
-  wrapperRef: React.RefObject<HTMLDivElement>;
 } & CanvasProps;
 
 const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
@@ -2477,16 +2477,7 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
   }, [handleLineTransitions, rectsMapping]);
 
   return (
-    <div
-      className={stylesPipelineBuilder.wrapper}
-      ref={wrapperRef}
-      style={{
-        height: '100vh',
-        overflow: 'visible',
-        position: 'relative',
-        width: '100vw',
-      }}
-    >
+
       <div
         onContextMenu={e => handleContextMenu(e as any)}
         onDoubleClick={() => {
@@ -2639,7 +2630,6 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
           </SettingsProvider>
         </CanvasContainer>
       </div>
-    </div>
   );
 };
 

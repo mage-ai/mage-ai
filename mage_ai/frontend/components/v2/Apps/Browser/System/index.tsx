@@ -1,7 +1,6 @@
 import React, { useContext, useEffect, useMemo, useRef, useState } from 'react';
+import { RemoveContextMenuType, RenderContextMenuType } from '@mana/hooks/useContextMenu';
 import { createRoot } from 'react-dom/client';
-
-import DeferredRenderer from '@mana/components/DeferredRenderer';
 import Item from './Item/index';
 import Loading from '@mana/components/Loading';
 import Scrollbar from '@mana/elements/Scrollbar';
@@ -27,13 +26,22 @@ import {
   KEY_CODE_CONTROL,
 } from '@utils/hooks/keyboardShortcuts/constants';
 import { FileType } from '@components/v2/IDE/interfaces';
-import useContextMenu from '@mana/hooks/useContextMenu';
 import ContextProvider from '@context/v2/ContextProvider';
 import { getTheme } from '@mana/themes/utils';
 // @ts-ignore
 // import Worker from 'worker-loader!@public/workers/worker.ts';
 
-function SystemBrowser({ app, operations }: AppLoaderProps, ref: React.Ref<HTMLDivElement>) {
+type SystemBrowserProps = {
+  removeContextMenu: RemoveContextMenuType;
+  renderContextMenu: RenderContextMenuType;
+};
+
+function SystemBrowser({
+  app,
+  operations,
+  removeContextMenu,
+  renderContextMenu,
+}: SystemBrowserProps & AppLoaderProps, ref: React.Ref<HTMLDivElement>) {
   const containerRef = useRef(null);
   const theme = getTheme();
 
@@ -45,11 +53,6 @@ function SystemBrowser({ app, operations }: AppLoaderProps, ref: React.Ref<HTMLD
 
   const addPanel = app?.operations?.[OperationTypeEnum.ADD_PANEL]?.effect as AddPanelOperationType;
   const removeApp = operations?.[OperationTypeEnum.REMOVE_APP]?.effect;
-
-  const { contextMenuRef, renderContextMenu, removeContextMenu } = useContextMenu({
-    containerRef,
-    uuid: appUUID,
-  });
 
   function renderItems(items: ItemDetailType[]) {
     if (!itemsRootRef?.current) {
@@ -107,7 +110,7 @@ function SystemBrowser({ app, operations }: AppLoaderProps, ref: React.Ref<HTMLD
                 }
               }}
               onContextMenu={(event: any) => {
-                renderContextMenu(event, [
+                const menuItems = [
                   { uuid: 'New file', Icon: Settings },
                   { uuid: 'New folder' },
                   { divider: true },
@@ -149,7 +152,16 @@ function SystemBrowser({ app, operations }: AppLoaderProps, ref: React.Ref<HTMLD
                     uuid: 'Projects',
                     items: [{ uuid: 'New Mage project' }, { uuid: 'New dbt project' }],
                   },
-                ]);
+                ];
+
+                renderContextMenu(event, menuItems, {
+                  handleEscape: (event2: any) => {
+                    removeContextMenu(event2 as any);
+                  },
+                  rects: {
+                    bounding: containerRef.current.getBoundingClientRect(),
+                  },
+                });
               }}
               themeContext={theme}
             />
@@ -195,9 +207,8 @@ function SystemBrowser({ app, operations }: AppLoaderProps, ref: React.Ref<HTMLD
   return (
     <Scrollbar ref={containerRef} style={{ overflow: 'auto' }}>
       {mutants.list.isPending && <Loading />}
-      <div id={rootID} />
 
-      <div ref={contextMenuRef} />
+      <div id={rootID} />
     </Scrollbar>
   );
 }

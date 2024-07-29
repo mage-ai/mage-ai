@@ -16,7 +16,7 @@ export const FolderStyled = styled.div<FolderStyledProps>`
   ${({ theme, uuid }) => `
     .${childClassName(uuid)} {
       &:hover {
-        background-color: ${theme.colors.backgrounds.button.base.hover};
+        background-color: var(--colors-graymd);
         cursor: pointer;
 
         -moz-user-select: none; /* Firefox */

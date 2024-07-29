@@ -9,3 +9,25 @@
     visibility: hidden;
   }
 }
+
+.appManager {
+  height: calc(100vh - var(--header-height));
+  overflow: visible;
+  position: absolute;
+  top: var(--header-height);
+  width: 100vw;
+}
+
+.active {
+  opacity: 1;
+  overflow: visible;
+  pointer-events: all;
+  z-index: 1;
+}
+
+.inactive {
+  opacity: 0.3;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: -1;
+}

@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
 import { createRef, useContext, useRef, useState } from 'react';
+import { ThemeContext, ThemeProvider } from 'styled-components';
 import dynamic from 'next/dynamic';
 import { createRoot } from 'react-dom/client';
 
@@ -13,10 +14,11 @@ import { DefaultPanel } from './catalog';
 import { Dark, Menu, PanelCollapseLeft } from '@mana/icons';
 import { updateClassnames, upsertRootElement } from './utils';
 import styles from '@styles/scss/apps/Manager/Manager.module.scss';
-import ContextProvider from '@context/v2/ContextProvider';
 
 function Manager() {
   const phaseRef = useRef(0);
+
+  const themeContext = useContext(ThemeContext);
   const containerRef = useRef(null);
   const refCells = useRef({});
   const refRoots = useRef({});
@@ -88,7 +90,7 @@ function Manager() {
           });
 
           refRoots.current[uuid].render(
-            <ContextProvider>
+            <ThemeProvider theme={themeContext}>
               <AppLayout
                 apps={[app]}
                 operations={{
@@ -98,7 +100,7 @@ function Manager() {
                   },
                 }}
               />
-            </ContextProvider>,
+            </ThemeProvider>,
           );
 
           updateLayout();

@@ -16,10 +16,10 @@ export default function PipelineBuilder({
   removeContextMenu,
   shouldPassControl,
   containerRef,
+  wrapperRef,
   ...props
 }: CanvasProps) {
   const canvasRef = useRef<HTMLDivElement>(null);
-  const wrapperRef = useRef<HTMLDivElement>(null);
   const disabledRef = useRef(false);
   const handlePanning = useRef<
     (

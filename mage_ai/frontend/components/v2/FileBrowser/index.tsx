@@ -1,24 +1,19 @@
+import ContextProvider from "@context/v2/ContextProvider";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { ElementRoleEnum } from '@mana/shared/types';
-import { createRoot } from 'react-dom/client';
 import dynamic from 'next/dynamic';
 import stylesFileBrowser from '@styles/scss/components/FileBrowser/FileBrowser.module.scss';
 import { CUBIC } from "@mana/animations/ease";
-import { MenuToggle } from "./MenuToggle";
-import { Navigation } from "./Navigation";
-import { motion, sync, useCycle, useAnimation, useMotionValue, useMotionValueEvent, useTransform } from "framer-motion";
-import { useDimensions } from "./use-dimensions";
+import { ElementRoleEnum } from '@mana/shared/types';
 import { FileBrowserApp } from "../Apps/catalog";
-import ContextProvider from "@context/v2/ContextProvider";
-import { opacity } from "html2canvas/dist/types/css/property-descriptors/opacity";
+import { MenuToggle } from "./MenuToggle";
+import { OperationTypeEnum } from '../Apps/interfaces';
+import { createRoot } from 'react-dom/client';
+import { motion, sync, useCycle, useAnimation, useMotionValue, useMotionValueEvent, useTransform } from "framer-motion";
 
 const NAV_MIN_WIDTH = 300;
 const SVG_BORDER_RADIUS = 12;
 
 const SystemBrowser = dynamic(() => import('../Apps/Browser/System'), { ssr: false });
-const AppsManager = dynamic(() => import('@components/v2/Apps/Manager'), {
-  ssr: false,
-});
 
 const ANIMATION_DURATION = 0.5;
 
@@ -105,7 +100,11 @@ const fileBrowserVariants = {
   },
 };
 
-export default function FileBrowser() {
+export default function FileBrowser({
+  addPanel,
+  removeContextMenu,
+  renderContextMenu,
+}) {
   const backgroundRef = useRef(null);
   const borderRef = useRef(null);
   const containerRef = useRef(null);
@@ -131,6 +130,20 @@ export default function FileBrowser() {
   const [dimensions, setDimensions] = useState(null);
   const [isOpen, toggleOpenCycle] = useCycle(false, true);
   const [sidebar, setSidebar] = useState(null);
+
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const fileBrowserMemo = useMemo(() =>
+    <SystemBrowser
+      app={FileBrowserApp({
+        operations: {
+          [OperationTypeEnum.ADD_PANEL]: {
+            effect: addPanel,
+          },
+        },
+      })}
+      removeContextMenu={removeContextMenu}
+      renderContextMenu={renderContextMenu}
+  />, []);
 
   const toggleOpen = useCallback(() => {
     openRef.current = !openRef.current;
@@ -242,11 +255,6 @@ export default function FileBrowser() {
     controls.start(isOpen ? borderVariants.open : borderVariants.closed);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen]);
-
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  const fileBrowserMemo = useMemo(() => <SystemBrowser app={FileBrowserApp()} />, []);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  const appsManagerMemo = useMemo(() => <AppsManager />, []);
 
   const startDrag = useCallback((event: any) => {
     event.preventDefault();
