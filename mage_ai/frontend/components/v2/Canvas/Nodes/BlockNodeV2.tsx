@@ -1281,8 +1281,7 @@ function BlockNode(
     event?.preventDefault();
     setSelectedGroup(target);
     removeContextMenu(event);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [setSelectedGroup, removeContextMenu]);
 
   const buildMenuItemsForTemplates = useCallback((block2: BlockType) => menuItemsForTemplates(
     block2,

@@ -551,7 +551,6 @@ export default function BlockNodeComponent({
       editorApp,
       teleportIntoBlock,
       contentCode,
-      teleportIntoBlock,
       isGroup,
       inputs,
       menuItemsForTemplates,
