@@ -1,5 +1,11 @@
 import { RectType as RectTypeBase } from '@mana/shared/interfaces';
 
+export enum VisibleBlocksEnum {
+  ALL_ANY_LEVEL = 'all_any_level',
+  CHILDREN_OF_SELECTED_GROUP = 'children_of_selected_group',
+  WITHOUT_GROUPS = 'without_groups',
+}
+
 export interface OffsetType {
   left?: any;
   top?: any;
@@ -137,6 +143,7 @@ export interface LayoutConfigType {
   };
   transformStateRef?: React.MutableRefObject<any>;
   viewportRef?: React.MutableRefObject<any>;
+  visibleBlocks?: VisibleBlocksEnum[];
 }
 
 export interface ConnectionType {

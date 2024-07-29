@@ -90,6 +90,7 @@ import {
   OutputNodeType,
   AppNodeType,
   NodeItemType,
+  VisibleBlocksEnum,
 } from '@components/v2/Canvas/interfaces';
 import { MenuGroupType, MenuItemType } from '@mana/components/Menu/interfaces';
 import { ModelProvider } from './ModelManager/ModelContext';
@@ -344,6 +345,10 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
       rectTransformations: null,
       style: LayoutStyleEnum.WAVE,
       viewportRef: canvasRef,
+      visibleBlocks: [
+        VisibleBlocksEnum.CHILDREN_OF_SELECTED_GROUP,
+        VisibleBlocksEnum.WITHOUT_GROUPS,
+      ],
       ...override,
     };
   }
@@ -434,6 +439,7 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
   const [appNodes, setAppNodes] = useState<Record<string, AppNodeType>>({});
   const [outputNodes, setOutputNodes] = useState<Record<string, OutputNodeType>>({});
   const [rectsMapping, setRectsMapping] = useState<Record<string, RectType>>({});
+  const [rectsMappingBlocks, setRectsMappingBlocks] = useState<Record<string, RectType>>({});
   const [renderer, setRenderer] = useState<any>(null);
   const handleOnMessageByGroupRef = useRef<Record<string, (event: EventStreamType, block2: BlockType) => void>>({});
 
@@ -1313,8 +1319,23 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
     const currentGroup = getCurrentGroup();
     const siblingGroups = getCurrentGroupSiblings();
 
-    const blocks = (Object.values(blocksByGroupRef.current?.[currentGroup?.uuid] ?? {}) ??
-      []) as BlockType[];
+    const blocks = [];
+
+    const layoutConfig = layoutConfigsRef.current?.[selectedGroupsRef.current?.length - 1];
+    const visibleBlocks = layoutConfig?.visibleBlocks ?? [];
+    if (!visibleBlocks || visibleBlocks?.includes(VisibleBlocksEnum.CHILDREN_OF_SELECTED_GROUP)) {
+      blocks.push(...(
+        (Object.values(blocksByGroupRef.current?.[currentGroup?.uuid] ?? {}) ?? []) as BlockType[]
+      ));
+    }
+
+    const allBlocks = (Object.values(blockMappingRef.current ?? {}) ?? []) as BlockType[];
+    if (visibleBlocks?.includes(VisibleBlocksEnum.ALL_ANY_LEVEL)) {
+      blocks.push(...allBlocks);
+    }
+    if (visibleBlocks?.includes(VisibleBlocksEnum.WITHOUT_GROUPS)) {
+      blocks.push(...allBlocks.filter(b => (b?.groups?.length ?? 0) === 0));
+    }
 
     const groupsForEmptySelection = [];
     if (!currentGroup) {
@@ -2424,6 +2445,11 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
       }),
     [outputNodes, renderNodeComponents],
   );
+
+  // const blocksAllMemo = useMemo(() =>
+  //   renderNodeComponents(rectsMappingAllBlocks, {
+  //     [ItemTypeEnum.BLOCK]: Object.values(blockMappingRef.current ?? {}),
+  //   }), [rectsMappingAllBlocks]);
 
   // const [, connectDrop] = useDrop(
   //   () => ({
