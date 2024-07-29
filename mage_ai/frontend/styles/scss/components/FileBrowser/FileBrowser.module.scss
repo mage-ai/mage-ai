@@ -30,20 +30,30 @@ $width: 300px;
   position: absolute;
 }
 
-.buttonNavClosed {
+.buttonFloater {
   @include shared-position;
+
   height: $button-height;
   top: $top;
   width: $button-width;
-  z-index: 12;
+
+  .buttonNavClosed {
+    pointerEvents: all;
+    z-index: 12;
+  }
+
+  .buttonNavOpen {
+    pointer-events: none;
+    z-index: -1;
+  }
 }
+
 
 .nav {
   @include shared-position;
 
   bottom: var(--padding-container);
   pointer-events: none;
-  width: $width;
   top: $top;
 }
 
@@ -56,7 +66,6 @@ $width: 300px;
 
   bottom: var(--padding-container);
   top: calc(var(--header-height) + var(--padding-container));
-  width: $width;
   pointer-events: none;
 }
 
@@ -69,12 +78,20 @@ $width: 300px;
   /* background: linear-gradient(180deg, #0055ff 0%, rgb(0, 153, 255) 100%); */
 
   backdrop-filter: saturate(200%) blur(10px);
-  border-radius: var(--borders-radius-button) !important;
+  border-color: transparent;
+  border-radius: var(--borders-radius-base);
+  border-style: var(--borders-style);
+  border-width: var(--borders-width);
+  bottom: 0;
   left: 0;
   position: absolute;
   top: 0;
-  bottom: 0;
   width: inherit;
+}
+
+.backgroundActive {
+  /* @include borders.base; */
+  /* clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%); */
 }
 
 .backgroundInactive {
@@ -120,4 +137,26 @@ $width: 300px;
   position: absolute;
   top: $button-height;
   width: 100%;
+}
+
+.resizeHandle {
+  background-color: var(--borders-color-base-default);
+  border-radius: 8px;
+  opacity: 1;
+  position: absolute;
+  z-index: 12;
+
+  &.right {
+    bottom: 0;
+    cursor: ew-resize;
+    height: 100%;
+    margin-right: -8px;
+    right: 0;
+    top: 0;
+    width: 16px;
+  }
+}
+
+.hide {
+  display: none;
 }

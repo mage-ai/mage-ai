@@ -145,7 +145,7 @@ const buttonVariants = {
     width: 64,
   },
   open: {
-    width: 300,
+    width: '100%',
     transition: {
       ease: CUBIC,
     },
@@ -154,7 +154,7 @@ const buttonVariants = {
 
 export const MenuToggle = ({ toggle }) => (
   <motion.button
-    className={stylesFileBrowser.button}
+    className={[stylesFileBrowser.button].join(' ')}
     onClick={toggle}
     variants={buttonVariants}
   >

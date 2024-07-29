@@ -11,14 +11,14 @@ export type StyleProps = {
   opacity?: number;
   secondary?: boolean;
   size?: number;
-  small?: boolean;
+  small?: boolean | string;
   stroke?: string;
   style?: any;
   success?: boolean;
   useStroke?: boolean;
   viewBox?: string;
   width?: number;
-  xsmall?: boolean;
+  xsmall?: boolean | string;
   warning?: boolean;
   error?: boolean;
 };
