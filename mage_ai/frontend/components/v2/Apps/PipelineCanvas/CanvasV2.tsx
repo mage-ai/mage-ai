@@ -106,7 +106,7 @@ import { getCache, updateCache } from '@mana/components/Menu/storage';
 import { useMutate } from '@context/v2/APIMutation';
 import { deepCopyArray, reverseArray, indexBy, unique, uniqueArray, range } from '@utils/array';
 import { getNewUUID } from '@utils/string';
-import { deepCopy, isEmptyObject, selectKeys } from '@utils/hash';
+import { deepCopy, ignoreKeys, isEmptyObject, selectKeys } from '@utils/hash';
 import { WithOnMount } from '@mana/hooks/useWithOnMount';
 import { ShowNodeType } from './interfaces';
 import { buildOutputNode } from './utils/items';
@@ -1854,6 +1854,11 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
         rectsVisTrans.push(...transformRects(rectsVis as RectType[], transVis));
         rectsUse = rectsUse?.filter(r => !rectsVisTrans?.find(rt => rt.id === r.id));
       }
+
+      console.log('rectsVisTrans', rectsVisTrans?.map(r => ({
+        ...ignoreKeys(r, ['block']),
+        upstream: r?.upstream?.map(u => ignoreKeys(u, ['block'])),
+      })));
 
       const transformations = buildRectTransformations({
         centerRect,

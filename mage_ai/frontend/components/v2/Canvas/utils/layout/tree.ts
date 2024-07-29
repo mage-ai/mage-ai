@@ -8,7 +8,7 @@ import {
 import { LayoutConfigType } from '../../interfaces';
 import { LayoutConfigDirectionEnum } from '../../types';
 import { RectType } from '@mana/shared/interfaces';
-import { range, flattenArray, indexBy } from '@utils/array';
+import { range, flattenArray, indexBy, sortByKey } from '@utils/array';
 import { objectSize } from '@utils/hash';
 
 function pattern1(
@@ -33,6 +33,14 @@ function pattern1(
   const maxLevelHeights: Map<number, number> = new Map();
   const childrenMapping: Map<RectType, RectType[]> = new Map();
   const visited = new Set<number | string>();
+  const itemsWithDownstreams: Record<string, Record<string, RectType>> = {};
+
+  items?.forEach(item => {
+    item?.upstream?.forEach(uprect => {
+      itemsWithDownstreams[uprect.id] ||= {};
+      itemsWithDownstreams[uprect.id][item.id] = item;
+    });
+  });
 
   // Determine the levels for each item
   function determineLevel(item: RectType): number {
@@ -101,6 +109,16 @@ function pattern1(
   const rectIDsByRelativeLevel = {};
   const rectIDsByActualLevel = {};
 
+  const totalNumberOfDownstreamItems = (item) => {
+    const downstreamItems = itemsWithDownstreams[item.id];
+    if (!downstreamItems) {
+      return 0;
+    }
+    return Object.keys(downstreamItems).reduce((acc, key) => {
+      return acc + totalNumberOfDownstreamItems(downstreamItems[key]);
+    }, Object.keys(downstreamItems).length);
+  };
+
   // Position items level by level
   let currentRow = 0;
   levelItems.forEach((rects: RectType[], level: number) => {
@@ -111,7 +129,20 @@ function pattern1(
     const factor = mod === 0 ? 0 : mod === 1 ? 1 : -1;
     const offset = stagger * factor;
 
-    rects.forEach((item, idx: number) => {
+    // Reorder the rects in the level based on the total number of downstream items so that we can
+    // try to prevent criss crossing of lines.
+    const rectsSorted = sortByKey(rects, r => {
+      const val = totalNumberOfDownstreamItems(r);
+      // console.log('totalNumberOfDownstreamItems', r.id, val);
+
+      return val;
+    }, {
+      ascending: true,
+    });
+
+    // console.log('rectsSorted', rectsSorted)
+
+    rectsSorted.forEach((item, idx: number) => {
       const relativeLevel = Math.floor(idx / maxItemsPerLevel);
       const row = currentRow + relativeLevel;
       const positionInRow = idx % maxItemsPerLevel;
