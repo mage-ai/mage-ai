@@ -1,15 +1,6 @@
-import { IconProps } from '@mana/elements/Icon';
+import  { SearchAppType } from './SearchApplication';
 import { RouteType } from '@mana/shared/interfaces';
 import { SetThemeSettingsType } from '@mana/themes/interfaces';
-import React from 'react';
-
-export interface SearchAppType {
-  Icon?: (iconProps: IconProps) => any;
-  inputRef?: React.MutableRefObject<HTMLInputElement>;
-  onChange: (query: string) => void;
-  placeholder?: string;
-  setMountRef?: (ref: React.MutableRefObject<HTMLDivElement>) => void;
-}
 
 export interface HeaderProps {
   buildInterAppNavItems?: (

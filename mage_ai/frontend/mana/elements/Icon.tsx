@@ -5,7 +5,6 @@ import { motion } from 'framer-motion';
 export type IconProps = {
   children?: any;
   size?: number;
-  variants?: any;
 } & StyleProps;
 
 export const SVGStyle = styled(motion.svg)<IconProps>`

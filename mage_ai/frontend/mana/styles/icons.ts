@@ -19,6 +19,7 @@ export type StyleProps = {
   viewBox?: string;
   width?: number;
   xsmall?: boolean | string;
+  variants?: any;
   warning?: boolean;
   error?: boolean;
 };

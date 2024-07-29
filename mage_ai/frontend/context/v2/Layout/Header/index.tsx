@@ -5,13 +5,13 @@ import Grid from '@mana/components/Grid';
 import NavigationButtonGroup from '@mana/components/Menu/NavigationButtonGroup';
 import React, { useMemo, useRef } from 'react';
 import RouteNavigation from './RouteNavigation';
+import SearchApplication from './SearchApplication';
 import Scrollbar from '@mana/elements/Scrollbar';
-import TextInput from '@mana/elements/Input/TextInput';
 import stylesHeader from '@styles/scss/layouts/Header/Header.module.scss';
 import { HeaderProps } from './interfaces';
 import { MenuItemType } from '@mana/hooks/useContextMenu';
 import { ModeEnum } from '@mana/themes/modes';
-import { SearchV3, ChatV2, Code, DocumentIcon, CaretDown, CaretLeft, Dark } from '@mana/icons';
+import { ChatV2, Code, DocumentIcon, Dark } from '@mana/icons';
 import { unique } from '@utils/array';
 
 export const HEADER_ROOT_ID = 'v2-header-root';
@@ -236,23 +236,9 @@ export function Header(
 
               {intraAppItemsMemo}
 
-              {false
-                ? (
-                  <TextInput
-                    Icon={ip => <SearchV3 {...ip} {...iconProps} />}
-                    basic
-                    placeholder="Command Center for data..."
-                    small
-                    style={{
-                      height: 40,
-                      minWidth: 400,
-                    }}
-                  />
-                )
-                : <div />
-              }
+              <SearchApplication enabled={(searchApp ?? false) ? true : false} {...(searchApp ?? {})} />
 
-              {/* <DashedDivider vertical /> */}
+              {searchApp && <DashedDivider vertical />}
             </Grid>
           </Scrollbar>
 

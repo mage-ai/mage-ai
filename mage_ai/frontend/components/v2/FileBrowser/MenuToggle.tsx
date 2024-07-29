@@ -1,11 +1,10 @@
-import * as React from "react";
-import Icon, { PathStyle } from "@mana/elements/Icon";
-import { CUBIC } from "@mana/animations/ease";
 import Button from "@mana/elements/Button";
+import Icon, { PathStyle } from "@mana/elements/Icon";
+import React, { useMemo } from "react";
+import stylesFileBrowser from '@styles/scss/components/FileBrowser/FileBrowser.module.scss';
+import { CUBIC } from "@mana/animations/ease";
 import { CaretDown } from "@mana/icons";
 import { motion } from "framer-motion";
-import stylesFileBrowser from '@styles/scss/components/FileBrowser/FileBrowser.module.scss';
-import { opacity } from "html2canvas/dist/types/css/property-descriptors/opacity";
 
 const arrowVariants1 = {
   open: {
@@ -152,58 +151,72 @@ const buttonVariants = {
   },
 };
 
-export const MenuToggle = ({ toggle }) => (
-  <motion.button
-    className={[stylesFileBrowser.button].join(' ')}
-    onClick={toggle}
-    variants={buttonVariants}
-  >
-    <Icon fill="none" size={20} viewBox="0 0 24 24">
-      <PathStyle variants={pathVariants1} />
-      <PathStyle variants={pathVariants2} transition={{ duration: 0.1, ease: CUBIC }} />
-      <PathStyle variants={pathVariants3} transition={{ duration: 0.1, ease: CUBIC }} />
-      <PathStyle variants={pathVariants4} />
-    </Icon>
+export const MenuToggle = ({ toggle }) => {
+  const iconMemo = useMemo(() => {
+    const path1 = <PathStyle variants={pathVariants1} />;
+    const path2 = <PathStyle variants={pathVariants2} transition={{ duration: 0.1, ease: CUBIC }} />;
+    const path3 = <PathStyle variants={pathVariants3} transition={{ duration: 0.1, ease: CUBIC }} />;
+    const path4 = <PathStyle variants={pathVariants4} />;
 
-    <motion.div
-      style={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        height: 12,
-        width: 12,
-      }}
-      variants={iconVariantsA}
-    >
-      <Icon
-        fill="none"
-        size={12}
-        viewBox="0 0 24 24"
-      >
-        <PathStyle useStroke stroke="transparent" variants={iconVariants1} />
-        <PathStyle useStroke stroke="transparent" variants={iconVariants2} />
+    return (
+      <Icon fill="none" size={20} viewBox="0 0 24 24">
+        {path1}
+        {path2}
+        {path3}
+        {path4}
       </Icon>
-    </motion.div>
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-    <motion.div
-      style={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        height: 20,
-        width: 20,
-      }}
-      // variants={arrowVariants1}
-      variants={iconVariantsB}
+  return (
+    <motion.button
+      className={[stylesFileBrowser.button].join(' ')}
+      onClick={toggle}
+      variants={buttonVariants}
     >
-      <Icon
-        fill="none"
-        size={20}
-        viewBox="0 0 24 24"
+      {iconMemo}
+
+      <motion.div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          height: 12,
+          width: 12,
+        }}
+        variants={iconVariantsA}
       >
-        <PathStyle useStroke stroke="transparent" variants={iconVariants1} />
-        <PathStyle useStroke stroke="transparent" variants={iconVariants2} />
-      </Icon>
-    </motion.div>
-  </motion.button>
-);
+        <Icon
+          fill="none"
+          size={12}
+          viewBox="0 0 24 24"
+        >
+          <PathStyle useStroke stroke="transparent" variants={iconVariants1} />
+          <PathStyle useStroke stroke="transparent" variants={iconVariants2} />
+        </Icon>
+      </motion.div>
+
+      <motion.div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          height: 20,
+          width: 20,
+        }}
+        // variants={arrowVariants1}
+        variants={iconVariantsB}
+      >
+        <Icon
+          fill="none"
+          size={20}
+          viewBox="0 0 24 24"
+        >
+          <PathStyle useStroke stroke="transparent" variants={iconVariants1} />
+          <PathStyle useStroke stroke="transparent" variants={iconVariants2} />
+        </Icon>
+      </motion.div>
+    </motion.button>
+  );
+};
