@@ -1,0 +1,117 @@
+@use '../../base/borders' as borders;
+@use '../../abstracts/mixins' as *;
+
+$width: 300px;
+
+@mixin shared-position {
+  left: var(--padding-container);
+  position: fixed;
+  z-index: var(--header-z-index);
+}
+
+.button {
+  -moz-user-select: none;
+  -ms-user-select: none;
+  -webkit-user-select: none;
+  align-items: center;
+  background: none;
+  border: none;
+  column-gap: 8px;
+  cursor: pointer;
+  display: grid;
+  grid-auto-flow: column;
+  outline: none;
+  padding: var(--padding-base) !important;
+  position: absolute;
+}
+
+.nav {
+  @include shared-position;
+
+  bottom: var(--padding-container);
+  top: calc(var(--header-height) + var(--padding-container));
+  width: $width;
+}
+
+.svgBorder {
+  @include shared-position;
+
+  bottom: var(--padding-container);
+  top: calc(var(--header-height) + var(--padding-container));
+  width: $width;
+  pointer-events: none;
+}
+
+
+.background {
+  @include gradient(0deg, var(--menus-background-gradient-default), var(--menus-background-gradient-default), 0%, 100%);
+  /* background: linear-gradient(180deg, #0055ff 0%, rgb(0, 153, 255) 100%); */
+  background-color: var(--menus-background-base-default);
+
+  backdrop-filter: blur(var(--modal-blur-base));
+  border-radius: var(--borders-radius-button) !important;
+  left: 0;
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: inherit;
+}
+
+.backgroundInactive {
+  @include borders.base;
+
+  clip-path: none !important;
+  height: 44px;
+  width: 64px;
+}
+
+.ul,
+.li {
+  margin: 0;
+  padding: 0;
+}
+
+.ul {
+  padding: 25px;
+  position: absolute;
+  top: 100px;
+  width: 230px;
+}
+
+.li {
+  list-style: none;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+}
+
+.icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  flex: 40px 0;
+  margin-right: 20px;
+}
+
+.text {
+  border-radius: 5px;
+  width: 200px;
+  height: 20px;
+  flex: 1;
+}
+
+.refresh {
+  padding: 10px;
+  position: absolute;
+  background: rgba(0, 0, 0, 0.4);
+  border-radius: 10px;
+  width: 20px;
+  height: 20px;
+  top: 10px;
+  right: 10px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+}

@@ -6,6 +6,7 @@
   --borders-outline-width: #{$borders-outline-width};
   --borders-outline-total: #{$borders-outline-total};
   --borders-radius-base: #{$borders-radius-base};
+  --borders-radius-button: #{$borders-radius-button};
   --borders-radius-round: #{$borders-radius-round};
   --borders-radius-md: #{$borders-radius-md};
   --borders-radius-sm: #{$borders-radius-sm};
@@ -50,6 +51,7 @@
   --grid-gutter-width-sm: #{$grid-gutter-width-sm};
   --grid-gutter-width-xs: #{$grid-gutter-width-xs};
   --header-height: #{$header-height};
+  --header-z-index: #{$header-z-index};
   --icons-size-base: #{$icons-size-base};
   --icons-size-sm: #{$icons-size-sm};
   --icons-size-xs: #{$icons-size-xs};
@@ -65,6 +67,7 @@
   --menus-padding-base: #{$menus-padding-base};
   --modal-blur-base: #{$modal-blur-base};
   --padding-base: #{$padding-base};
+  --padding-container: #{$padding-container};
   --padding-sm: #{$padding-sm};
   --padding-vertical-lg: #{$padding-vertical-lg};
   --padding-vertical-base: #{$padding-vertical-base};

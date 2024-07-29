@@ -24,7 +24,7 @@ export type StyleProps = {
 } & TextStyleProps;
 
 const shared = css<StyleProps>`
-  ${({ aslink, plain }) => !plain && (aslink ? transitionFast : transition)}
+  ${({ aslink, plain, motion }) => !motion && !plain && (aslink ? transitionFast : transition)}
   ${text}
   position: relative;
   z-index: 1;

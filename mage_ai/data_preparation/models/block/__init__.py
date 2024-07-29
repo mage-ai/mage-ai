@@ -1022,10 +1022,7 @@ class Block(
 
             if BlockType.DBT == block.type and block.language == BlockLanguage.SQL:
                 upstream_dbt_blocks = block.upstream_dbt_blocks() or []
-                upstream_dbt_blocks_by_uuid = {
-                    block.uuid: block
-                    for block in upstream_dbt_blocks
-                }
+                upstream_dbt_blocks_by_uuid = {block.uuid: block for block in upstream_dbt_blocks}
                 pipeline.blocks_by_uuid.update(upstream_dbt_blocks_by_uuid)
                 pipeline.validate('A cycle was formed while adding a block')
                 pipeline.save()

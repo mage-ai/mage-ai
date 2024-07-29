@@ -37,6 +37,9 @@ export type ButtonProps = {
   tagProps?: TagProps;
   target?: string;
   href?: string;
+  variants?: any;
+  whileHover?: any;
+  whileTap?: any;
 } & ButtonStyleProps &
   WithLoggingProps;
 
@@ -79,6 +82,7 @@ function Button({
   asLink,
   basic,
   children,
+  className,
   containerRef,
   href,
   linkProps,
@@ -121,6 +125,7 @@ function Button({
       {...(motion ? { whileTap: { scale: 0.97 } } : {})}
       aslink={asLink ? 'true' : undefined}
       basic={basic ? 'true' : undefined}
+      className={className}
       loading={loading ? 'true' : undefined}
       plain={plain ? 'true' : undefined}
       primary={primary ? 'true' : undefined}

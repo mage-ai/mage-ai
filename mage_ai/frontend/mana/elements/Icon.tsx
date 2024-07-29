@@ -1,32 +1,34 @@
 import styled from 'styled-components';
 import icons, { StyleProps, svg } from '../styles/icons';
+import { motion } from 'framer-motion';
 
 export type IconProps = {
   children?: any;
   size?: number;
+  variants?: any;
 } & StyleProps;
 
-export const SVGStyle = styled.svg<IconProps>`
+export const SVGStyle = styled(motion.svg)<IconProps>`
   ${svg}
 `;
 
-export const CircleStyle = styled.circle<StyleProps>`
+export const CircleStyle = styled(motion.circle)<StyleProps>`
   ${icons}
 `;
 
-export const MaskStyle = styled.mask<StyleProps>`
+export const MaskStyle = styled(motion.mask)<StyleProps>`
   ${icons}
 `;
 
-export const PathStyle = styled.path<StyleProps>`
+export const PathStyle = styled(motion.path)<StyleProps>`
   ${icons}
 `;
 
-export const RectStyle = styled.rect<StyleProps>`
+export const RectStyle = styled(motion.rect)<StyleProps>`
   ${icons}
 `;
 
-export const EllipseStyle = styled.ellipse<StyleProps>`
+export const EllipseStyle = styled(motion.ellipse)<StyleProps>`
   ${icons}
 `;
 

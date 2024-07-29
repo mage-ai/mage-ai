@@ -142,7 +142,7 @@ function RouteNavigation({
         uuid,
         contextMenuID,
         'menu-manager-context-menu',
-      ].filter(Boolean).join(':')} ref={contextMenuRef} />
+      ].filter(Boolean).join(':')} ref={contextMenuRef} style={{ position: 'absolute' }} />
     </>
   );
 }

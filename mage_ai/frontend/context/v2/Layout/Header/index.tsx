@@ -212,6 +212,8 @@ export function Header(
               title={title}
               uuid={uuid}
             />
+
+            <DashedDivider vertical />
           </Grid>
 
           {interAppItems?.length && (

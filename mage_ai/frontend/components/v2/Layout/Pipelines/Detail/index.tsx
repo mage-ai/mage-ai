@@ -5,6 +5,7 @@ import stylesHeader from '@styles/scss/layouts/Header/Header.module.scss';
 import stylesPipelineBuilder from '@styles/scss/pages/PipelineBuilder/PipelineBuilder.module.scss';
 import PipelineType from '@interfaces/PipelineType';
 import { CanvasProps } from '@components/v2/Apps/PipelineCanvas/CanvasV2';
+import FileBrowser from '@components/v2/FileBrowser';
 
 interface PipelineDetailProps {
   framework: PipelineExecutionFrameworkType;
@@ -18,6 +19,8 @@ const PipelineCanvas = dynamic(() => import('@components/v2/Apps/PipelineCanvas'
 function PipelineBuilder(props: PipelineDetailProps & CanvasProps) {
   return (
     <div className={[stylesHeader.content, stylesPipelineBuilder.container].join(' ')}>
+      <FileBrowser />
+
       <Grid autoColumns="auto" height="inherit" templateRows="auto 1fr auto" width="100%">
         <div />
 
