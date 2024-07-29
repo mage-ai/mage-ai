@@ -921,7 +921,8 @@ class PipelineScheduler:
             **tags,
         )
 
-        if memory_usage and memory_usage >= MEMORY_USAGE_MAXIMUM:
+        if memory_usage and memory_usage >= MEMORY_USAGE_MAXIMUM and \
+                ExecutorFactory.get_default_executor_type() == ExecutorType.LOCAL_PYTHON:
             self.memory_usage_failure(tags=tags)
 
 
