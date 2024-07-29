@@ -27,6 +27,7 @@ export function Header(
     navTag,
     routeHistory,
     router,
+    searchApp,
     selectedNavItem,
     title,
     uuid,
