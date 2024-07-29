@@ -22,7 +22,7 @@ type DragHandlers = {
 };
 
 type DragSettings = {
-  drag?: string | boolean;
+  drag?: any;
   dragControls?: any;
   dragMomentum?: boolean;
   dragPropagation?: boolean;
