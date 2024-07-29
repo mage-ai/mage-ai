@@ -6,6 +6,7 @@ import { LayoutProvider } from './Layout';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ThemeProvider } from 'styled-components';
 import { TooltipProvider } from './Tooltip';
+import { getTheme } from '@mana/themes/utils';
 
 function ContextProvider({
   base = false,
@@ -19,13 +20,13 @@ function ContextProvider({
   children: React.ReactNode;
   main?: boolean;
   router?: any;
-  theme: ThemeType;
+  theme?: ThemeType;
   updateThemeSettings?: SetThemeSettingsType;
 }) {
   const queryClient = new QueryClient();
 
   return (
-    <ThemeProvider theme={theme}>
+    <ThemeProvider theme={theme ?? getTheme()}>
       <LayoutProvider router={router} theme={theme} updateThemeSettings={updateThemeSettings}>
         <QueryClientProvider client={queryClient}>
           <APIMutationProvider base={base}>

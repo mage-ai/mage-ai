@@ -122,7 +122,7 @@ function Item({ app, item, onClick, onContextMenu, themeContext }: ItemProps) {
       if (pipelineCount) {
         return <DiamondShared fill={blockIconColor} small />;
       } else if (BlockIcon) {
-        return <BlockIcon color={blockIconColor} size={folderNameForBlock && !isFolder ? 8 : 12} />;
+        return <BlockIcon color={blockIconColor} size={folderNameForBlock && !isFolder ? 8 : 8} />;
       }
     }
 
@@ -197,7 +197,7 @@ function Item({ app, item, onClick, onContextMenu, themeContext }: ItemProps) {
       itemsRootRef.current.render(
         <ThemeProvider theme={themeContext}>
           <Grid alignItems='center' ref={itemsRef} rowGap={0} uuid={itemsClassName(uuid)}>
-            <DeferredRenderer
+            {/* <DeferredRenderer
               fallback={
                 <ThemeProvider theme={themeContext}>
                   <div style={{ display: 'flex' }}>
@@ -208,17 +208,17 @@ function Item({ app, item, onClick, onContextMenu, themeContext }: ItemProps) {
               }
               idleTimeout={1}
             >
-              {values?.map((item: ItemDetailType) => (
-                <Item
-                  app={app}
-                  item={item}
-                  key={item.name}
-                  onClick={onClick}
-                  onContextMenu={onContextMenu}
-                  themeContext={themeContext}
-                />
-              ))}
-            </DeferredRenderer>
+            </DeferredRenderer> */}
+            {values?.map((item: ItemDetailType) => (
+              <Item
+                app={app}
+                item={item}
+                key={item.name}
+                onClick={onClick}
+                onContextMenu={onContextMenu}
+                themeContext={themeContext}
+              />
+            ))}
           </Grid>
         </ThemeProvider>,
       );
@@ -287,7 +287,7 @@ function Item({ app, item, onClick, onContextMenu, themeContext }: ItemProps) {
             <div id={iconActionRootID(uuid)}>{buildIconAction()}</div>
             <div id={iconRootID(uuid)}>{buildIcon()}</div>
             {name && (
-              <Text blue={isFolder} monospace muted={!isFolder} small>
+              <Text blue={isFolder} secondary={!isFolder} small>
                 {String(name)}
               </Text>
             )}

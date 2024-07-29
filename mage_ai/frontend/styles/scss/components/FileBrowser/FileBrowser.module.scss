@@ -1,6 +1,7 @@
 @use '../../base/borders' as borders;
 @use '../../abstracts/mixins' as *;
 
+$button-height: 44px;
 $width: 300px;
 
 @mixin shared-position {
@@ -23,6 +24,7 @@ $width: 300px;
   outline: none;
   padding: var(--padding-base) !important;
   position: absolute;
+  grid-template-columns: 1fr auto;
 }
 
 .nav {
@@ -42,13 +44,16 @@ $width: 300px;
   pointer-events: none;
 }
 
+.borderInactive {
+  display: none;
+}
 
 .background {
   @include gradient(0deg, var(--menus-background-gradient-default), var(--menus-background-gradient-default), 0%, 100%);
   /* background: linear-gradient(180deg, #0055ff 0%, rgb(0, 153, 255) 100%); */
-  background-color: var(--menus-background-base-default);
+  /* background-color: var(--menus-background-base-default); */
 
-  backdrop-filter: blur(var(--modal-blur-base));
+  backdrop-filter: saturate(200%) blur(10px);
   border-radius: var(--borders-radius-button) !important;
   left: 0;
   position: absolute;
@@ -59,9 +64,8 @@ $width: 300px;
 
 .backgroundInactive {
   @include borders.base;
-
   clip-path: none !important;
-  height: 44px;
+  height: $button-height;
   width: 64px;
 }
 
@@ -114,4 +118,10 @@ $width: 300px;
   justify-content: center;
   align-items: center;
   cursor: pointer;
+}
+
+.fileBrowser {
+  position: absolute;
+  top: $button-height;
+  width: 100%;
 }

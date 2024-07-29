@@ -68,7 +68,8 @@ function App({
           <ContextProvider
             base
             main
-            router={router} theme={theme as ThemeType}
+            router={router}
+            theme={theme as ThemeType}
             updateThemeSettings={updateThemeSettings}
           >
             <HeaderPortal headerRef={headerRef} />
