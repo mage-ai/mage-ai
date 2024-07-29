@@ -141,8 +141,11 @@ export type CanvasProps = {
   containerRef: React.RefObject<HTMLDivElement>;
   removeContextMenu: RemoveContextMenuType;
   renderContextMenu: RenderContextMenuType;
-  wrapperRef: React.RefObject<HTMLDivElement>;
 };
+
+export type CanvasType = {
+  wrapperRef: React.RefObject<HTMLDivElement>;
+} & CanvasProps;
 
 export type PipelineCanvasV2Props = {
   canvasRef: React.RefObject<HTMLDivElement>;
@@ -155,7 +158,7 @@ export type PipelineCanvasV2Props = {
   setZoomPanDisabled: (value: boolean) => void;
   snapToGridOnDrop?: boolean;
   transformState: React.MutableRefObject<ZoomPanStateType>;
-} & CanvasProps;
+} & CanvasType;
 
 const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
   appToolbarRef,

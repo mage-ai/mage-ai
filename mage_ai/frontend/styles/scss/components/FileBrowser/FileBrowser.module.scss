@@ -98,6 +98,16 @@ $width: 300px;
   clip-path: none !important;
   height: $button-height;
   width: $button-width;
+
+  .fileBrowser {
+    display: none;
+  }
+}
+
+.fileBrowser {
+  position: absolute;
+  top: $button-height;
+  width: 100%;
 }
 
 .backgroundBorder {
@@ -131,12 +141,6 @@ $width: 300px;
   display: flex;
   align-items: center;
   cursor: pointer;
-}
-
-.fileBrowser {
-  position: absolute;
-  top: $button-height;
-  width: 100%;
 }
 
 .resizeHandle {

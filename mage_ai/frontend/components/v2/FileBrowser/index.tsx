@@ -113,12 +113,14 @@ export default function FileBrowser({
   const openRef = useRef(false);
   const phaseRef = useRef(0);
   const observerRef = useRef(null);
-  const svgRef = useRef(null);
   const draggingRef = useRef(false);
-
   const widthStartRef = useRef(NAV_MIN_WIDTH);
 
+  const svgRef = useRef<any>(null);
+  const resizeHandleRef = useRef<HTMLDivElement>(null);
+
   const controls = useAnimation();
+  const controlsSidebar = useAnimation();
   const handleX = useMotionValue(0);
   const handleTranslateX = useTransform(handleX, value => -value);
   const widthTransform = useTransform(handleX, latest => {
@@ -127,9 +129,7 @@ export default function FileBrowser({
     return val;
   });
 
-  const [dimensions, setDimensions] = useState(null);
   const [isOpen, toggleOpenCycle] = useCycle(false, true);
-  const [sidebar, setSidebar] = useState(null);
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const fileBrowserMemo = useMemo(() =>
@@ -177,65 +177,6 @@ export default function FileBrowser({
 
   useEffect(() => {
     if (phaseRef.current === 0 && containerRef.current) {
-      const height = containerRef.current.offsetHeight;
-      const width = containerRef.current.offsetWidth;
-
-      const sidebarVariants = {
-        open: () => ({
-          // clipPath: `circle(${opts?.height * 2 + 200}px at -40px -40px)`,
-          clipPath: `inset(0px ${width * -2}px ${height * -3}px 0px)`,
-          transition: {
-            duration: ANIMATION_DURATION,
-            restDelta: 2,
-            stiffness: 20,
-            type: "spring",
-          }
-        }),
-        closed: () => ({
-          // clipPath: "circle(100px at 0px 0px)",
-          clipPath: `inset(0px ${width - 64}px ${height - 44}px 0px)`,
-          transition: {
-            damping: 40,
-            duration: ANIMATION_DURATION,
-            stiffness: 400,
-            type: "spring",
-          }
-        }),
-      };
-
-      setDimensions({ height, width });
-      setSidebar(
-        <motion.div
-          className={[stylesFileBrowser.background, stylesFileBrowser.backgroundInactive].join(' ')}
-          onAnimationComplete={() => {
-            // svgRef.current.classList.add(stylesFileBrowser.hide);
-
-            if (openRef.current) {
-              backgroundRef.current.classList.add(stylesFileBrowser.backgroundActive);
-            } else {
-              backgroundRef.current.classList.add(stylesFileBrowser.backgroundInactive);
-              backgroundRef.current.classList.remove(stylesFileBrowser.backgroundActive);
-              containerRef.current.classList.remove(stylesFileBrowser.navOpen);
-            }
-          }}
-          onAnimationStart={() => {
-            // svgRef.current.classList.remove(stylesFileBrowser.hide);
-
-            if (openRef.current) {
-              backgroundRef.current.classList.remove(stylesFileBrowser.backgroundInactive);
-            }
-          }}
-          ref={backgroundRef}
-          variants={sidebarVariants}
-        >
-          <motion.div
-            className={stylesFileBrowser.fileBrowser}
-            ref={fileBrowserRef}
-            variants={fileBrowserVariants}
-          />
-        </motion.div>
-      );
-
       observerRef.current = new ResizeObserver(observedElements => {
         if (containerRef?.current) {
           updatePathDimensions(containerRef.current.getBoundingClientRect().width);
@@ -249,6 +190,7 @@ export default function FileBrowser({
     const handleClickOutside = (event: any) => {
       if (containerRef.current && !containerRef.current.contains(event.target) && openRef.current) {
         toggleOpen();
+        resizeHandleRef.current && resizeHandleRef.current.classList.add(stylesFileBrowser.hide);
       }
     };
 
@@ -262,8 +204,33 @@ export default function FileBrowser({
   }, []);
 
   useEffect(() => {
-    updatePathDimensions(containerRef.current.getBoundingClientRect().width);
-    controls.start(isOpen ? borderVariants.open : borderVariants.closed);
+    if (isOpen) {
+      resizeHandleRef.current && resizeHandleRef.current.classList.remove(stylesFileBrowser.hide);
+    }
+    if (containerRef.current) {
+      const { height, width } = containerRef.current.getBoundingClientRect();
+      updatePathDimensions(width);
+
+      controls.start(isOpen ? borderVariants.open : borderVariants.closed);
+
+      controlsSidebar.start(isOpen ? {
+        clipPath: `inset(0px ${width * -2}px ${height * -3}px 0px)`,
+        transition: {
+          duration: ANIMATION_DURATION,
+          restDelta: 2,
+          stiffness: 20,
+          type: "spring",
+        }
+      } : {
+        clipPath: `inset(0px ${width - 64}px ${height - 44}px 0px)`,
+        transition: {
+          damping: 40,
+          duration: ANIMATION_DURATION,
+          stiffness: 400,
+          type: "spring",
+        }
+      });
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen]);
 
@@ -306,14 +273,41 @@ export default function FileBrowser({
         className={[
           stylesFileBrowser.nav,
         ].filter(Boolean).join(' ')}
-        custom={dimensions}
         initial={false}
         ref={containerRef}
         style={{
           width: widthTransform,
         }}
       >
-        {sidebar}
+        <motion.div
+          animate={controlsSidebar}
+          className={[stylesFileBrowser.background, stylesFileBrowser.backgroundInactive].join(' ')}
+          onAnimationComplete={() => {
+            // svgRef.current.classList.add(stylesFileBrowser.hide);
+
+            if (openRef.current) {
+              backgroundRef.current.classList.add(stylesFileBrowser.backgroundActive);
+            } else {
+              backgroundRef.current.classList.add(stylesFileBrowser.backgroundInactive);
+              backgroundRef.current.classList.remove(stylesFileBrowser.backgroundActive);
+              containerRef.current.classList.remove(stylesFileBrowser.navOpen);
+            }
+          }}
+          onAnimationStart={() => {
+            // svgRef.current.classList.remove(stylesFileBrowser.hide);
+
+            if (openRef.current) {
+              backgroundRef.current.classList.remove(stylesFileBrowser.backgroundInactive);
+            }
+          }}
+          ref={backgroundRef}
+        >
+          <motion.div
+            className={stylesFileBrowser.fileBrowser}
+            ref={fileBrowserRef}
+            variants={fileBrowserVariants}
+          />
+        </motion.div>
 
         <MenuToggle toggle={() => toggleOpen()} />
         {/* <Navigation /> */}
@@ -327,6 +321,7 @@ export default function FileBrowser({
           dragMomentum={false}
           dragPropagation={false}
           initial={{ opacity: 0 }}
+          ref={resizeHandleRef}
           onDragEnd={endDrag}
           onPointerUp={endDrag}
           onPointerDown={(event: any) => {

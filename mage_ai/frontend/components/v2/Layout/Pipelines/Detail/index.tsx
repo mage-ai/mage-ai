@@ -5,6 +5,7 @@ import PipelineExecutionFrameworkType from '@interfaces/PipelineExecutionFramewo
 import PipelineType from '@interfaces/PipelineType';
 import dynamic from 'next/dynamic';
 import stylesHeader from '@styles/scss/layouts/Header/Header.module.scss';
+import stylesPipelineBuilder from '@styles/scss/apps/Canvas/Pipelines/Builder.module.scss';
 import stylesPipelineBuilderPage from '@styles/scss/pages/PipelineBuilder/PipelineBuilder.module.scss';
 import useManager from '@components/v2/Apps/useManager';
 import { CanvasProps } from '@components/v2/Apps/PipelineCanvas/CanvasV2';
@@ -26,23 +27,31 @@ function PipelineBuilder({ removeContextMenu, renderContextMenu, ...rest }: Pipe
   const appManagerWrapperRef = useRef<HTMLDivElement>(null);
   const canvasWrapperRef = useRef<HTMLDivElement>(null);
 
+  function hide(refs: React.MutableRefObject<HTMLDivElement>[]) {
+    refs?.forEach((ref) => {
+      ref.current.classList.remove(stylesPipelineBuilderPage.active);
+      ref.current.classList.add(stylesPipelineBuilderPage.inactive);
+    });
+  }
+
+  function show(refs: React.MutableRefObject<HTMLDivElement>[]) {
+    refs?.forEach((ref) => {
+      ref.current.classList.add(stylesPipelineBuilderPage.active);
+      ref.current.classList.remove(stylesPipelineBuilderPage.inactive);
+    });
+  }
+
   function handleAddPanel(panel: PanelType, count: number) {
     if (count > 0) {
-      appManagerWrapperRef.current.classList.add(stylesPipelineBuilderPage.active);
-      appManagerWrapperRef.current.classList.remove(stylesPipelineBuilderPage.inactive);
-
-      canvasWrapperRef.current.classList.add(stylesPipelineBuilderPage.inactive);
-      canvasWrapperRef.current.classList.remove(stylesPipelineBuilderPage.active);
+      show([appManagerWrapperRef]);
+      hide([appToolbarRef, canvasWrapperRef]);
     }
   }
 
   function handleRemovePanel(panel: PanelType, count: number) {
     if (count === 0) {
-      appManagerWrapperRef.current.classList.remove(stylesPipelineBuilderPage.active);
-      appManagerWrapperRef.current.classList.add(stylesPipelineBuilderPage.inactive);
-
-      canvasWrapperRef.current.classList.remove(stylesPipelineBuilderPage.inactive);
-      canvasWrapperRef.current.classList.add(stylesPipelineBuilderPage.active);
+      hide([appManagerWrapperRef]);
+      show([appToolbarRef, canvasWrapperRef]);
     }
   }
 
@@ -77,7 +86,7 @@ function PipelineBuilder({ removeContextMenu, renderContextMenu, ...rest }: Pipe
 
       <div
         className={[
-          stylesPipelineBuilderPage.wrapper,
+          stylesPipelineBuilder.wrapper,
           stylesPipelineBuilderPage.active,
         ].filter(Boolean).join(' ')}
         ref={canvasWrapperRef}
