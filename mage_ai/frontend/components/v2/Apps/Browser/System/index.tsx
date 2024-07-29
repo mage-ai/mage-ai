@@ -13,7 +13,7 @@ import {
   OperationTypeEnum,
 } from '../../interfaces';
 import { AppSubtypeEnum, AppTypeEnum } from '../../constants';
-import { ItemDetailType } from './interfaces';
+import { DragSettingsType, ItemDetailType } from './interfaces';
 import { ItemTypeEnum } from './enums';
 import { Settings } from '@mana/icons';
 import { groupFilesByDirectory } from './utils/grouping';
@@ -32,12 +32,14 @@ import { getTheme } from '@mana/themes/utils';
 // import Worker from 'worker-loader!@public/workers/worker.ts';
 
 type SystemBrowserProps = {
+  itemDragSettings?: DragSettingsType;
   removeContextMenu: RemoveContextMenuType;
   renderContextMenu: RenderContextMenuType;
 };
 
 function SystemBrowser({
   app,
+  itemDragSettings,
   operations,
   removeContextMenu,
   renderContextMenu,
@@ -72,6 +74,7 @@ function SystemBrowser({
           {Object.values(groups || {}).map((item: ItemDetailType, idx: number) => (
             <Item
               app={app}
+              dragSettings={itemDragSettings}
               item={item as ItemDetailType}
               key={`${item.name}-${idx}`}
               onClick={(event: any, itemClicked) => {

@@ -2,19 +2,12 @@ import React, { useEffect, useRef, useMemo, useCallback, useState } from 'react'
 import stylesBlockNode from '@styles/scss/components/Canvas/Nodes/BlockNode.module.scss';
 import { ElementRoleEnum } from '@mana/shared/types';
 import { NodeItemType } from '../interfaces';
-import { RectType, XYType } from '@mana/shared/interfaces';
+import { RectType, XYType, DragInfo } from '@mana/shared/interfaces';
 import { getStyles } from './draggable/utils';
 import { cubicBezier, animate, motion, useMotionValueEvent, useDragControls, useMotionValue, useTransform } from 'framer-motion';
 
 export const EASING = cubicBezier(0.35, 0.17, 0.3, 0.86);
 const BLOCK_ENTER_ANIMATION_DURATION = 0.3;
-
-type DragInfo = {
-  delta?: XYType;
-  offset?: XYType;
-  point?: XYType;
-  velocity?: XYType;
-};
 
 interface EventHandlersType {
   onDrag?: (event: any, info: DragInfo, data: {

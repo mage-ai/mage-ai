@@ -12,6 +12,13 @@ export enum EventOperationEnum {
 
 export type EventControlType = any;
 
+export interface DragInfo {
+  delta?: XYType;
+  offset?: XYType;
+  point?: XYType;
+  velocity?: XYType;
+}
+
 export interface RectType {
   block?: any;
   bottom?: any;

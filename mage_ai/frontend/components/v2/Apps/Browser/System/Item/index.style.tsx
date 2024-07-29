@@ -1,3 +1,4 @@
+import { motion } from 'framer-motion';
 import styled from 'styled-components';
 
 export function childClassName(uuid: string): string {
@@ -12,7 +13,7 @@ export type FolderStyledProps = {
   uuid: string;
 };
 
-export const FolderStyled = styled.div<FolderStyledProps>`
+export const FolderStyled = styled(motion.div)<FolderStyledProps>`
   ${({ theme, uuid }) => `
     .${childClassName(uuid)} {
       &:hover {
