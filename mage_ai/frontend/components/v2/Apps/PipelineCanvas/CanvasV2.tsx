@@ -51,9 +51,11 @@ import {
   applyRectDiff,
   calculateBoundingBox,
   getRectDiff,
+  logMessageForRects,
   GROUP_NODE_PADDING,
 } from '../../Canvas/utils/layout/shared';
 import { transformRects } from '../../Canvas/utils/rect';
+import { shiftRectsIntoBoundingBox } from '../../Canvas/utils/layout/shared';
 import { ClientEventType, EventOperationEnum } from '@mana/shared/interfaces';
 import {
   TransformRectTypeEnum,
@@ -118,6 +120,7 @@ import { DEFAULT_RECT as DEFAULT_RECT_OUTPUT } from '@components/v2/Canvas/Nodes
 import useWaitUntilAttempt from '@mana/hooks/useWaitUntilAttempt';
 import Divider from '@mana/elements/Divider';
 import { ItemType } from '../Browser/System/interfaces';
+import { DEBUG } from '@components/v2/utils/debug';
 
 const ENTER_ANIMATION_START_THRESHOLD = 0.6;
 const CHANGE_BLOCKS_ANIMATION_DURATION = 5;
@@ -337,7 +340,7 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
   // Settings
   const [headerData, setHeaderData] = useState<any>(null);
   function defaultLayoutConfig(override?: Partial<LayoutConfigType>) {
-    return {
+    const layout = {
       containerRef,
       direction: LayoutConfigDirectionEnum.VERTICAL,
       display: LayoutDisplayEnum.SIMPLE,
@@ -351,6 +354,24 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
         VisibleBlocksEnum.WITHOUT_GROUPS,
       ],
       ...override,
+    };
+
+    return {
+      ...layout,
+      blockLayout: {
+        ...layout,
+        direction: LayoutConfigDirectionEnum.VERTICAL,
+        display: LayoutDisplayEnum.DETAILED,
+        gap: { column: 120, row: 120 },
+        style: LayoutStyleEnum.TREE,
+      },
+      blocksAndGroupsLayout: {
+        ...layout,
+        direction: LayoutConfigDirectionEnum.HORIZONTAL,
+        display: LayoutDisplayEnum.DETAILED,
+        options: { amplitude: 400, wavelength: 300 },
+        style: LayoutStyleEnum.WAVE,
+      },
     };
   }
   const layoutConfigsRef = useRef<LayoutConfigType[]>([
@@ -1393,6 +1414,7 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
       setRenderer(
         <ShadowRenderer
           handleDataCapture={({ data, id }, { rect }) => {
+            // console.log('handleDataCapture', id, data, rect)
             updateRects({ [id]: { data, rect } });
           }}
           handleNodeTransfer={(node: ShadowNodeType, data: NodeData, element: HTMLElement) => {
@@ -1691,8 +1713,10 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
         blockNodeMapping,
       );
 
+      const visibleBlocks = layoutConfig?.visibleBlocks ?? [];
+
       const rectsmap = indexBy(rects1, r => r?.id);
-      const rects = rects1?.map(rect => {
+      let rects = rects1?.map(rect => {
         const { block } = rect;
         return {
           ...rect,
@@ -1742,6 +1766,25 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
         };
       });
 
+      if (visibleBlocks?.length > 0) {
+        rects = rects.map(rect => {
+          const { block } = rect;
+
+          if (block?.upstream_blocks?.length > 0) {
+            const shouldChangeUpstream = visibleBlocks?.includes(VisibleBlocksEnum.ALL_ANY_LEVEL)
+              || (visibleBlocks?.includes(VisibleBlocksEnum.WITHOUT_GROUPS) && (block?.groups?.length ?? 0) === 0);
+
+            if (shouldChangeUpstream) {
+              rect.upstream = block.upstream_blocks.map((buuid: string) => rectsmap[buuid]);
+            }
+          }
+
+          return rect;
+        });
+      }
+
+      DEBUG.rects && console.log('rects block mapping', rects);
+
       let rectsUse = rects;
       let groupRect = null;
       if (isValidGroup && layoutConfig?.childrenLayout) {
@@ -1777,28 +1820,107 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
         rectsUse = rects;
       }
 
-      // console.log(`start:\n${logMessageForRects(rectsUse)}`);
+      DEBUG.rects && console.log(`start:\n${logMessageForRects(rectsUse)}`);
 
       const centerRect = groupRect ?? rectsUse?.find(r => r?.block?.uuid === group?.uuid);
       // console.log('centerRect', centerRect)
 
+      const transVis = [];
+      const rectsVis = [];
+      if (visibleBlocks?.includes(VisibleBlocksEnum.ALL_ANY_LEVEL)) {
+        transVis.push(...buildRectTransformations({
+          disableAlignments: true,
+          layoutConfig: layoutConfig?.blockLayout ?? layoutConfig,
+          // Need to include this or the FIT_TO_CHILDREN transformation’s condition is evaluated
+          // to true, and the FIT_TO_CHILDREN transaformation may increase the height of rects
+          // even if they don’t have children.
+          selectedGroup,
+        }));
+        rectsVis.push(...rects);
+      } else if (visibleBlocks?.includes(VisibleBlocksEnum.WITHOUT_GROUPS)) {
+        transVis.push(...buildRectTransformations({
+          disableAlignments: true,
+          layoutConfig: layoutConfig?.blockLayout ?? layoutConfig,
+          // Need to include this or the FIT_TO_CHILDREN transformation’s condition is evaluated
+          // to true, and the FIT_TO_CHILDREN transaformation may increase the height of rects
+          // even if they don’t have children.
+          selectedGroup,
+        }));
+        rectsVis.push(...rects?.filter(r => (r?.block?.groups?.length ?? 0) === 0));
+      }
+
+      let rectsVisTrans = [];
+      if (rectsVis?.length > 0 && transVis?.length > 0) {
+        rectsVisTrans.push(...transformRects(rectsVis as RectType[], transVis));
+        rectsUse = rectsUse?.filter(r => !rectsVisTrans?.find(rt => rt.id === r.id));
+      }
+
       const transformations = buildRectTransformations({
         centerRect,
-        conditionalDirections: (blocks?.length ?? 0) === 0,
+        conditionalDirections: (blocks?.filter(
+          b => !rectsVisTrans?.map(r => r?.block?.uuid)?.includes(b.uuid),
+        )?.length ?? 0) === 0,
         disableAlignments: !!centerRect,
         layoutConfig,
         selectedGroup,
       });
+
       let tfs = transformRects(rectsUse, transformations);
-      // console.log(`end:\n${logMessageForRects(tfs)}`);
+
+      DEBUG.rects && console.log(`end:\n${logMessageForRects(rectsVisTrans || [])}`);
+      DEBUG.rects && console.log(`end:\n${logMessageForRects(tfs)}`);
+
+      if (rectsVisTrans?.length > 0) {
+        const bbox = layoutConfig?.viewportRef?.current?.getBoundingClientRect() ?? {};
+        const rectCenter = {
+          height: 1,
+          left: (bbox.left ?? 0) + ((bbox?.width ?? 0) / 2),
+          top: (bbox.top ?? 0) + ((bbox?.height ?? 0) / 2),
+          width: 1,
+        };
+
+        DEBUG.rects && console.log('rectCenter', rectCenter);
+
+        const trans3 = buildRectTransformations({
+          centerRect: rectCenter,
+          disableAlignments: false,
+          layoutConfig: (rectsVisTrans?.length > 0
+            ? layoutConfig?.blocksAndGroupsLayout
+            : layoutConfig
+          ) ?? layoutConfig,
+          selectedGroup,
+        });
+        const rectsInTheirBoundingBox = transformRects([
+          {
+            ...calculateBoundingBox(tfs as RectType[]),
+            id: tfs.map(r => r.id).join('|'),
+            upstream: [],
+          },
+          {
+            ...calculateBoundingBox(rectsVisTrans as RectType[]),
+            id: rectsVisTrans.map(r => r.id).join('|'),
+            upstream: [],
+          },
+        ], trans3);
+        // Update the rects with groups and all the other blocks
+        // based on their bounding box positions.
+        tfs = shiftRectsIntoBoundingBox(tfs, rectsInTheirBoundingBox[0]);
+        rectsVisTrans = shiftRectsIntoBoundingBox(rectsVisTrans, rectsInTheirBoundingBox[1]);
+      }
+
+      let rectsToStore = [...tfs];
 
       if (groupRect) {
-        const grouptf = tfs.find(r => r.id === groupRect.id);
+        const grouptf = rectsToStore.find(r => r.id === groupRect.id);
         const diff = getRectDiff(groupRect, grouptf);
         const items = groupRect?.items?.map(r => applyRectDiff(r, diff));
-        tfs = tfs.concat(...(items ?? [])).filter(r => r.id !== groupRect.id);
+        rectsToStore = rectsToStore.concat(...(items ?? [])).filter(r => r.id !== groupRect.id);
       }
-      rectsMappingRef.current = indexBy(tfs, r => r.id);
+
+      rectsMappingRef.current = {
+        ...indexBy(rectsToStore, r => r.id),
+        ...indexBy(rectsVisTrans, r => r.id),
+      };
 
       if (blocks?.length > 0 || groups?.length > 0) {
         if (

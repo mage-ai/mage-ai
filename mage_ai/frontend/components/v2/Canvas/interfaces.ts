@@ -112,6 +112,8 @@ export interface RectTransformationType {
 }
 
 export interface LayoutConfigType {
+  blockLayout?: LayoutConfigType;
+  blocksAndGroupsLayout?: LayoutConfigType;
   childrenLayout?: any;
   containerRef?: React.MutableRefObject<any>;
   defaultRect?: {

@@ -11,13 +11,29 @@ export function isDebug() {
   return DEBUG.rects;
 }
 
+export function shiftRectsIntoBoundingBox(rects: RectType[], boundingBox: RectType): RectType[] {
+  // This function shifts a list of rectangles to fit within a specified bounding box.
+  const groupBoundingBox = calculateBoundingBox(rects);
+
+  const offsetX =
+    validateFiniteNumber(boundingBox.left) - validateFiniteNumber(groupBoundingBox.left);
+  const offsetY =
+    validateFiniteNumber(boundingBox.top) - validateFiniteNumber(groupBoundingBox.top);
+
+  return rects.map(rect => ({
+    ...rect,
+    left: validateFiniteNumber(rect.left) + validateFiniteNumber(offsetX),
+    top: validateFiniteNumber(rect.top) + validateFiniteNumber(offsetY),
+  }));
+}
+
 export function centerRectOnScreen(
   boundingBox: RectType,
   rectBase: RectType,
   rects: RectType[],
 ): RectType[] {
   if (boundingBox && rectBase) {
-    const centerRect = rects.find(rect => rect.id === rectBase.id);
+    const centerRect = rects.find(rect => rect.id === rectBase.id) ?? rectBase;
 
     const { left, height, top, width } = centerRect;
     const xcenter = (boundingBox.width - width) / 2;

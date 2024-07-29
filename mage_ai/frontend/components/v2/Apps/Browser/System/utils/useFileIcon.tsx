@@ -75,8 +75,6 @@ export default function useFileIcon({
       filePathToUse?.split?.(osPath.sep)?.find?.(key => {
         const keySingle = singularize(key);
 
-        console.log(filePathToUse, key, keySingle, ALL_BLOCK_TYPES_MAPPING, keySingle in ALL_BLOCK_TYPES_MAPPING)
-
         return keySingle in ALL_BLOCK_TYPES_MAPPING;
       }),
       [filePathToUse],
@@ -101,15 +99,15 @@ export default function useFileIcon({
     [blockType, folderNameForBlock, isFolder, name],
   );
 
-  console.log(
-    uuid,
-    name,
-    folderNameForBlock,
-    folderNameForBlock && singularize(folderNameForBlock),
-    isFolder,
-    validBlockFileExtension(name),
-    validBlockFromFilename(name, blockType),
-  )
+  // console.log(
+  //   uuid,
+  //   name,
+  //   folderNameForBlock,
+  //   folderNameForBlock && singularize(folderNameForBlock),
+  //   isFolder,
+  //   validBlockFileExtension(name),
+  //   validBlockFromFilename(name, blockType),
+  // )
 
   const color = useMemo(
     () => (folderNameForBlock ? getBlockColor?.(blockType, { theme })?.accent : null),

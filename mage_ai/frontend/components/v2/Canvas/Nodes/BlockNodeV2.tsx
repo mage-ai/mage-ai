@@ -1355,17 +1355,17 @@ function BlockNode(
       || !block?.downstream_blocks?.length
     ) return;
 
-    const rectup = node?.rect ?? rectsMappingRef?.current?.[block.uuid];
+    const rectup = rectsMappingRef?.current?.[block.uuid] ?? node?.rect;
     const linePaths = {};
-
-    console.log(block.uuid, rectup)
 
     if (!rectup) return;
 
     block?.downstream_blocks?.forEach((buuid: string, idx: number) => {
       const rectdn = rectsMappingRef?.current?.[buuid];
-      console.log(buuid, rectdn)
+
       if (!rectdn) return;
+
+      // console.log(block?.uuid, buuid, rectup, rectdn)
 
       const linePath = buildPaths(
         rectup,

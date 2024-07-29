@@ -1,5 +1,6 @@
 import BlockType from '@interfaces/BlockType';
 import { DEBUG } from '@components/v2/utils/debug';
+import { PADDING_VERTICAL } from '../../../Canvas/Nodes/BlockNodeV2';
 import { FrameworkType } from '@interfaces/PipelineExecutionFramework/interfaces';
 import { HEADER_HEIGHT } from '@context/v2/Layout/Header/index.style';
 import { ItemTypeEnum, LayoutDisplayEnum, LayoutStyleEnum } from '../../../Canvas/types';
@@ -65,6 +66,15 @@ export function buildRectTransformations({
   selectedGroup?: MenuGroupType;
 }): RectTransformationType[] {
   const layoutStyle = layoutConfig?.style ?? LayoutStyleEnum.WAVE;
+  const gap = {
+    column: layoutConfig?.gap?.column ?? 40,
+    row: layoutConfig?.gap?.row ?? 40,
+  };
+  const waveOptions = {
+    amplitude: layoutConfig?.options?.amplitude ?? 300,
+    wavelength: layoutConfig?.options?.wavelength ?? 100,
+  };
+
   const direction = layoutConfig?.direction || LayoutConfigDirectionEnum.HORIZONTAL;
   const directionOp =
     LayoutConfigDirectionEnum.HORIZONTAL === direction
@@ -101,7 +111,7 @@ export function buildRectTransformations({
     options: () => ({
       layout: {
         ...(layoutConfig ?? {}),
-        gap: { column: 40, row: 40 },
+        gap,
         options: {
           horizontalAlignment: LayoutHorizontalAlignmentEnum.CENTER,
           stagger: 40,
@@ -116,8 +126,10 @@ export function buildRectTransformations({
     options: () => ({
       layout: {
         ...(layoutConfig ?? {}),
-        gap: { column: 40, row: 40 },
-        options: { amplitude: 200, wavelength: 100 },
+        gap,
+        options: {
+          ...waveOptions,
+        },
       },
     }),
     type: TransformRectTypeEnum.LAYOUT_WAVE,
@@ -126,7 +138,7 @@ export function buildRectTransformations({
     options: () => ({
       layout: {
         ...(layoutConfig ?? {}),
-        gap: { column: 40, row: 40 },
+        gap,
       },
     }),
     type: TransformRectTypeEnum.LAYOUT_GRID,
@@ -135,7 +147,7 @@ export function buildRectTransformations({
     options: () => ({
       layout: {
         ...(layoutConfig ?? {}),
-        gap: { column: 40, row: 40 },
+        gap,
         options: { angleStep: Math.PI / 12, initialAngle: Math.PI / 6 },
       },
     }),
@@ -185,8 +197,10 @@ export function buildRectTransformations({
             options: () => ({
               layout: {
                 ...(layoutConfig ?? {}),
-                gap: { column: 40, row: 40 },
-                options: { amplitude: 400, wavelength: 100 },
+                gap,
+                options: {
+                  ...waveOptions,
+                },
               },
             }),
           },
@@ -403,7 +417,7 @@ export function buildRectTransformations({
   transformers.push({
     options: (rects: RectType[]) => ({
       boundingBox,
-      offset: { top: HEADER_HEIGHT },
+      offset: { left: PADDING_VERTICAL, top: HEADER_HEIGHT + PADDING_VERTICAL },
     }),
     scope: RectTransformationScopeEnum.SELF,
     type: TransformRectTypeEnum.SHIFT,

@@ -8,6 +8,7 @@ import {
   formatKeyValue,
   calculateBoundingBox,
   logMessageForRects,
+  shiftRectsIntoBoundingBox,
 } from './layout/shared';
 import {
   DragItem,
@@ -414,22 +415,6 @@ export function transformRects(
   }
 
   return results;
-}
-
-function shiftRectsIntoBoundingBox(rects: RectType[], boundingBox: RectType): RectType[] {
-  // This function shifts a list of rectangles to fit within a specified bounding box.
-  const groupBoundingBox = calculateBoundingBox(rects);
-
-  const offsetX =
-    validateFiniteNumber(boundingBox.left) - validateFiniteNumber(groupBoundingBox.left);
-  const offsetY =
-    validateFiniteNumber(boundingBox.top) - validateFiniteNumber(groupBoundingBox.top);
-
-  return rects.map(rect => ({
-    ...rect,
-    left: validateFiniteNumber(rect.left) + validateFiniteNumber(offsetX),
-    top: validateFiniteNumber(rect.top) + validateFiniteNumber(offsetY),
-  }));
 }
 
 function shiftRectsByDiffRect(rects: RectType[], rectDiff: RectType) {

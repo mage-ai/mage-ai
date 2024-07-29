@@ -270,15 +270,25 @@ function pattern1(
       const rects2 = rects.map((rect, itemIndex: number) => {
         const { width, height } = rect;
         const rectPrev = itemIndex > 0 ? rects[itemIndex - 1] : null;
-        return {
+        const rectF = {
           ...rect,
           left: isHorizontal
-            ? itemIndex > 0 ? rectPrev.left + rectPrev.width + gapCol : rect.left
+            ? itemIndex > 0 ? rectPrev.left + rectPrev.width : rect.left
             : bboxForCurrentLevel.left + ((rectMaxForCurrentLevel.width - width) / 2),
           top: isHorizontal
             ? bboxForCurrentLevel.top + ((rectMaxForCurrentLevel.height - height) / 2)
-            : itemIndex > 0 ? rectPrev.top + rectPrev.height + gapCol : rect.top,
+            : itemIndex > 0 ? rectPrev.top + rectPrev.height : rect.top,
         };
+
+        if (itemIndex > 0) {
+          if (isHorizontal) {
+            rectF.left = rectF.left + gapCol;
+          } else {
+            rectF.top = rectF.top + gapRow;
+          }
+        }
+
+        return rectF;
       });
 
       // Align the entire level within the bounding box of the max width across all levels
@@ -287,15 +297,25 @@ function pattern1(
         : {};
       rects3 = rects2.map(rect => {
         const { width, height } = rect;
-        return {
+        const rectF = {
           ...rect,
           left: isHorizontal
             ? (rect.left - bboxForCurrentLevel.left) + ((rectMaxAllLevels.width - bboxForCurrentLevel.width) / 2)
-            : level > 0 ? (bboxForPreviousLevel.left + bboxForPreviousLevel.width + gapCol) : rect.left,
+            : level > 0 ? (bboxForPreviousLevel.left + bboxForPreviousLevel.width) : rect.left,
           top: isHorizontal
-            ? level > 0 ? (bboxForPreviousLevel.top + bboxForPreviousLevel.height + gapRow) : rect.top
+            ? level > 0 ? (bboxForPreviousLevel.top + bboxForPreviousLevel.height) : rect.top
             : (rect.top - bboxForCurrentLevel.top) + ((rectMaxAllLevels.height - bboxForCurrentLevel.height) / 2),
         };
+
+        if (level > 0) {
+          if (isHorizontal) {
+            rectF.top += gapRow;
+          } else {
+            rectF.left += gapCol;
+          }
+        }
+
+        return rectF;
       });
 
       isDebug() &&
@@ -307,6 +327,8 @@ function pattern1(
           'rectMaxAllLevels', rectMaxAllLevels,
           'rects2', rects2,
           'rects3', rects3,
+          'gapCol', gapCol,
+          'gapRow', gapRow,
         );
 
       positionedItems[levelKey] = rects3;
