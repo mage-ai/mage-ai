@@ -9,6 +9,8 @@ import { MenuToggle } from "./MenuToggle";
 import { OperationTypeEnum } from '../Apps/interfaces';
 import { createRoot } from 'react-dom/client';
 import { motion, sync, useCycle, useAnimation, useMotionValue, useMotionValueEvent, useTransform } from "framer-motion";
+import { RemoveContextMenuType, RenderContextMenuType } from '@mana/hooks/useContextMenu';
+import { DragSettingsType } from '../Apps/Browser/System/interfaces';
 
 const NAV_MIN_WIDTH = 300;
 const SVG_BORDER_RADIUS = 12;
@@ -102,8 +104,14 @@ const fileBrowserVariants = {
 
 export default function FileBrowser({
   addPanel,
+  itemDragSettings,
   removeContextMenu,
   renderContextMenu,
+}: {
+    addPanel?: any;
+  itemDragSettings?: DragSettingsType;
+  removeContextMenu: RemoveContextMenuType;
+  renderContextMenu: RenderContextMenuType;
 }) {
   const backgroundRef = useRef(null);
   const borderRef = useRef(null);
@@ -131,7 +139,6 @@ export default function FileBrowser({
 
   const [isOpen, toggleOpenCycle] = useCycle(false, true);
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   const fileBrowserMemo = useMemo(() =>
     <SystemBrowser
       app={FileBrowserApp({
@@ -141,9 +148,10 @@ export default function FileBrowser({
           },
         },
       })}
+      itemDragSettings={itemDragSettings}
       removeContextMenu={removeContextMenu}
       renderContextMenu={renderContextMenu}
-  />, []);
+  />, [addPanel, itemDragSettings, removeContextMenu, renderContextMenu]);
 
   const toggleOpen = useCallback(() => {
     openRef.current = !openRef.current;

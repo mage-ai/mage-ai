@@ -1,10 +1,12 @@
 import BlockType, { BlockTypeEnum } from '@interfaces/BlockType';
+import Badge, { BadgeType} from '@mana/elements/Badge';
 import Grid from '@mana/components/Grid';
 import Link from '@mana/elements/Link';
 import useAppEventsHandler, {
   CustomAppEvent,
 } from '@components/v2/Apps/PipelineCanvas/useAppEventsHandler';
 import { ElementRoleEnum } from '@mana/shared/types';
+import Circle from '@mana/elements/Circle';
 import { LayoutConfigDirectionEnum } from '../../types';
 import { MenuGroupType } from '@mana/components/Menu/interfaces';
 import { ModelContext } from '@components/v2/Apps/PipelineCanvas/ModelManager/ModelContext';
@@ -23,47 +25,63 @@ export default function TeleportGroup({
   role,
   node,
   selectedGroup,
+  setSelectedGroup,
   isGroup,
 }: {
   block: BlockType;
-  BuildBadgeRow: (props: { inputColorName?: string, isGroup?: boolean, outputColorName?: string }) => JSX.Element;
+  BuildBadgeRow?: (props: { inputColorName?: string, isGroup?: boolean, outputColorName?: string }) => JSX.Element;
   index?: number;
   node?: NodeItemType;
   role?: ElementRoleEnum;
-  selectedGroup: MenuGroupType;
+  selectedGroup?: MenuGroupType;
+  setSelectedGroup?: (block: BlockType) => void;
   isGroup?: boolean;
 }) {
-  const { setSelectedGroup } = useContext(EventContext);
-
   const colorName = getBlockColor(block?.type ?? BlockTypeEnum.GROUP, { getColorName: true })?.names
     ?.base;
 
-  return (
-    <Link
-      onClick={(event: any) => {
-        event.preventDefault();
-        setSelectedGroup(block);
-      }}
-      role={role}
+  const el = (
+    <Grid
+      alignItems="start"
+      borderColor={colorName}
+      borders
+      height="inherit"
+      padding={12}
       style={{
-        height: 'inherit',
-        width: 'inherit',
+        backgroundColor: 'var(--backgrounds-body)',
+        minWidth: 200,
       }}
-      wrap
     >
-      <Grid
-        alignItems="start"
-        borderColor={colorName}
-        borders
-        height="inherit"
-        padding={12}
-        style={{
-          backgroundColor: 'var(--backgrounds-body)',
-          minWidth: 200,
-        }}
-      >
-        <BuildBadgeRow isGroup />
-      </Grid>
-    </Link>
+      {BuildBadgeRow && <BuildBadgeRow isGroup />}
+      {!BuildBadgeRow && (
+        <Badge
+          after={<Circle borderColor={colorName} size={12} />}
+          before={<Circle backgroundColor={colorName} size={12} />}
+          baseColorName={colorName}
+          label={block?.name ?? block?.uuid}
+        />
+      )}
+    </Grid>
   );
+
+  if (setSelectedGroup) {
+    return (
+      <Link
+        onClick={(event: any) => {
+          event.preventDefault();
+          setSelectedGroup(block);
+        }}
+        role={role}
+        style={{
+          height: 'inherit',
+          width: 'inherit',
+        }}
+        wrap
+      >
+        {el}
+      </Link>
+    );
+  }
+
+  return el;
 }

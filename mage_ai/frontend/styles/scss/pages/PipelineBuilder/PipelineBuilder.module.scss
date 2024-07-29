@@ -34,6 +34,10 @@
   z-index: -1;
 }
 
+.hidden {
+  /* display: none; */
+}
+
 .appToolbar {
   align-items: center;
   display: grid;
@@ -62,4 +66,9 @@
   grid-column-gap: var(--padding-xs);
   justify-content: center;
   padding: var(--padding-xs);
+}
+
+.draggableItem {
+  position: absolute;
+  z-index: 13;
 }

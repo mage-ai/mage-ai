@@ -9,6 +9,7 @@ import { ExecutorTypeEnum } from '@interfaces/ExecutorType';
 import { IntegrationDestinationEnum, IntegrationSourceEnum } from './IntegrationSourceType';
 import { GroupUUIDEnum } from './PipelineExecutionFramework/types';
 import { InteractionVariableType, InteractionInputType } from './InteractionType';
+import { indexBy } from '@utils/array';
 
 export enum TagEnum {
   CONDITION = 'condition',
@@ -76,13 +77,24 @@ export const ALL_BLOCK_TYPES_WITH_SINGULAR_FOLDERS = {
   [BlockTypeEnum.DBT]: BlockTypeEnum.DBT,
 };
 
-export const ALL_BLOCK_TYPES = Object.entries(BlockTypeEnum).reduce(
-  (acc, [k, v]) => ({
-    ...acc,
-    [v]: k,
-  }),
-  {},
-);
+export const ALL_BLOCK_TYPES = [
+  BlockTypeEnum.CALLBACK,
+  BlockTypeEnum.CHART,
+  BlockTypeEnum.CONDITIONAL,
+  BlockTypeEnum.CUSTOM,
+  BlockTypeEnum.DATA_EXPORTER,
+  BlockTypeEnum.DATA_LOADER,
+  BlockTypeEnum.DBT,
+  BlockTypeEnum.EXTENSION,
+  BlockTypeEnum.GLOBAL_DATA_PRODUCT,
+  BlockTypeEnum.PIPELINE,
+  BlockTypeEnum.GROUP,
+  BlockTypeEnum.SCRATCHPAD,
+  BlockTypeEnum.SENSOR,
+  BlockTypeEnum.MARKDOWN,
+  BlockTypeEnum.TRANSFORMER,
+];
+export const ALL_BLOCK_TYPES_MAPPING = indexBy(ALL_BLOCK_TYPES, t => t);
 
 export const SIDEKICK_BLOCK_TYPES = [
   BlockTypeEnum.CALLBACK,

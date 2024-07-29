@@ -1,3 +1,4 @@
+import * as osPath from 'path';
 import { useMemo } from 'react';
 import {
   validBlockFileExtension,
@@ -24,7 +25,7 @@ import {
 
 import { getBlockColor } from '@mana/themes/blocks';
 import FileType, { FOLDER_NAME_CHARTS, FOLDER_NAME_PIPELINES } from '@interfaces/FileType';
-import { ALL_BLOCK_TYPES, BlockTypeEnum } from '@interfaces/BlockType';
+import { ALL_BLOCK_TYPES_MAPPING, BlockTypeEnum } from '@interfaces/BlockType';
 
 import { getFileExtension, getFullPath } from '../utils';
 import { singularize } from '@utils/string';
@@ -71,21 +72,26 @@ export default function useFileIcon({
 
   const folderNameForBlock = useMemo(
     () =>
-      uuid?.split?.('/')?.find?.(key => {
+      filePathToUse?.split?.(osPath.sep)?.find?.(key => {
         const keySingle = singularize(key);
 
-        return keySingle in ALL_BLOCK_TYPES;
+        console.log(filePathToUse, key, keySingle, ALL_BLOCK_TYPES_MAPPING, keySingle in ALL_BLOCK_TYPES_MAPPING)
+
+        return keySingle in ALL_BLOCK_TYPES_MAPPING;
       }),
-    [uuid],
+      [filePathToUse],
   );
+
   const blockType = useMemo(
     () => (folderNameForBlock ? singularize(folderNameForBlock) : null),
     [folderNameForBlock],
   );
+
   const isFirstParentFolderForBlock = useMemo(
     () => isFolder && folderNameForBlock && folderNameForBlock === name,
     [folderNameForBlock, isFolder, name],
   );
+
   const isBlockFile = useMemo(
     () =>
       folderNameForBlock &&
@@ -94,6 +100,16 @@ export default function useFileIcon({
       validBlockFromFilename(name, blockType),
     [blockType, folderNameForBlock, isFolder, name],
   );
+
+  console.log(
+    uuid,
+    name,
+    folderNameForBlock,
+    folderNameForBlock && singularize(folderNameForBlock),
+    isFolder,
+    validBlockFileExtension(name),
+    validBlockFromFilename(name, blockType),
+  )
 
   const color = useMemo(
     () => (folderNameForBlock ? getBlockColor?.(blockType, { theme })?.accent : null),
@@ -112,7 +128,6 @@ export default function useFileIcon({
     [
       children,
       disabledProp,
-      ,
       filePathToUse,
       folderNameForBlock,
       isFileDisabled,
@@ -181,6 +196,7 @@ export default function useFileIcon({
   return {
     BlockIcon,
     Icon,
+    blockType,
     color,
     folderNameForBlock,
     iconColor,

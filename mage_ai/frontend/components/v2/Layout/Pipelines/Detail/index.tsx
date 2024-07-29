@@ -1,4 +1,7 @@
 import AppManagerLayout from '../../AppManager';
+import { Root, createRoot } from 'react-dom/client';
+import { motion } from 'framer-motion';
+import TeleportBlock from '@components/v2/Canvas/Nodes/Blocks/TeleportBlock';
 import FileBrowser from '@components/v2/FileBrowser';
 import Grid from '@mana/components/Grid';
 import PipelineExecutionFrameworkType from '@interfaces/PipelineExecutionFramework/interfaces';
@@ -10,7 +13,12 @@ import stylesPipelineBuilderPage from '@styles/scss/pages/PipelineBuilder/Pipeli
 import useManager from '@components/v2/Apps/useManager';
 import { CanvasProps } from '@components/v2/Apps/PipelineCanvas/CanvasV2';
 import { PanelType } from '@components/v2/Apps/interfaces';
-import { useMemo, useRef } from 'react';
+import { useCallback, useMemo, useRef } from 'react';
+import { ItemType } from '@components/v2/Apps/Browser/System/interfaces';
+import { BlockTypeEnum } from '@interfaces/BlockType';
+import { useDragControls } from 'framer-motion';
+import ContextProvider from '@context/v2/ContextProvider';
+import { capitalizeRemoveUnderscoreLower, removeExtensionFromFilename } from '@utils/string';
 
 interface PipelineDetailProps {
   framework: PipelineExecutionFrameworkType;
@@ -26,6 +34,11 @@ function PipelineBuilder({ removeContextMenu, renderContextMenu, ...rest }: Pipe
   const appManagerContainerRef = useRef<HTMLDivElement>(null);
   const appManagerWrapperRef = useRef<HTMLDivElement>(null);
   const canvasWrapperRef = useRef<HTMLDivElement>(null);
+  const draggableItemRef = useRef<HTMLDivElement>(null);
+  const draggableItemRootRef = useRef<Root>(null);
+  const draggingItemRef = useRef<any>(null);
+
+  const dragControls = useDragControls();
 
   function hide(refs: React.MutableRefObject<HTMLDivElement>[]) {
     refs?.forEach((ref) => {
@@ -68,11 +81,117 @@ function PipelineBuilder({ removeContextMenu, renderContextMenu, ...rest }: Pipe
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }), []);
 
+  function handleDragEnd(event, info) {
+    event.preventDefault();
+    event.stopPropagation();
+
+    console.log('ADD', event, info, draggingItemRef.current)
+
+    handlePointerUp(event);
+    draggingItemRef.current = null;
+  }
+
+  function handlePointerUp(event: any) {
+    // draggableItemRef.current.classList.add(stylesPipelineBuilderPage.hidden);
+    if (draggableItemRootRef.current) {
+      draggableItemRootRef.current.render(null);
+    }
+  }
+
+  function handleDragStart(event: any, info, opts?: any) {
+    const {
+      blockType,
+      isBlockFile,
+      isFolder,
+      item,
+      path,
+    } = opts || {};
+
+    const block = {
+      ...item,
+      name: capitalizeRemoveUnderscoreLower(removeExtensionFromFilename(item?.name ?? item?.uuid)),
+      type: blockType,
+    };
+
+    if (!draggableItemRootRef.current) {
+      draggableItemRootRef.current = createRoot(draggableItemRef.current);
+    }
+    console.log(draggableItemRootRef.current)
+    draggableItemRootRef.current.render(
+      <ContextProvider>
+        <TeleportBlock
+          block={block}
+          node={{
+            block,
+          }}
+        />
+      </ContextProvider>,
+    );
+
+    draggingItemRef.current = item;
+    // draggableItemRef.current.classList.remove(stylesPipelineBuilderPage.hidden);
+
+    dragControls.start(event, {
+      snapToCursor: true,
+    });
+  }
+
+  const itemDragSettingsMemo = useCallback((item: ItemType, opts?: {
+    blockType?: BlockTypeEnum;
+    isBlockFile?: boolean;
+    isFolder?: boolean;
+    path?: string;
+  }) => {
+    const {
+      blockType,
+      isBlockFile,
+      isFolder,
+      path,
+    } = opts || {};
+
+    if (!isBlockFile) return;
+
+    return {
+      drag: false,
+      // dragControls,
+      // dragMomentum
+      // dragPropagation
+      // initial
+      // role
+      // style
+      // onDrag
+      // onDragEnd
+      // onPointerUp
+      onPointerDown: (event: any, info) => {
+        handleDragStart(event, info, {
+          item,
+          ...opts,
+        });
+      },
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   return (
     <div className={[stylesHeader.content, stylesPipelineBuilderPage.container].join(' ')}>
+      <motion.div
+        className={[
+          stylesPipelineBuilderPage.draggableItem,
+          // stylesPipelineBuilderPage.hidden,
+        ].join(' ')}
+        drag
+        dragControls={dragControls}
+        dragMomentum={false}
+        dragPropagation={false}
+        onDragEnd={handleDragEnd}
+        onPointerUp={handlePointerUp}
+        ref={draggableItemRef}
+      />
+
       <FileBrowser
         {...sharedProps}
         addPanel={addPanel}
+        itemDragSettings={itemDragSettingsMemo}
       />
 
       <div

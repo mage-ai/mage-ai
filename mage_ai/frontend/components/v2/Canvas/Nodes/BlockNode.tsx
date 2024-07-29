@@ -110,7 +110,6 @@ export default function BlockNodeComponent({
   apps,
   block,
   buildContextMenuItemsForGroupBlock,
-  buttonBeforeRef,
   code: contentCode,
   groupSelection,
   executing,
@@ -120,7 +119,6 @@ export default function BlockNodeComponent({
   loadingKernelMutation,
   node,
   index: indexProp,
-  onMount,
   menuItemsForTemplates,
   openEditor,
   submitCodeExecution,
@@ -587,6 +585,7 @@ export default function BlockNodeComponent({
     [renderNodeAsGroupSelection, classNames, main, isGroup],
   );
 
+  // const { setSelectedGroup } = useContext(EventContext);
   // const teleportBlock = useMemo(
   //   () =>
   //   <TeleportBlock
@@ -596,6 +595,7 @@ export default function BlockNodeComponent({
   //     node={node}
   //     role={ElementRoleEnum.CONTENT}
   //     selectedGroup={selectedGroup}
+  //     setSelectedGroup={setSelectedGroup}
   //   />
   //   ,
   //   [block, BuildBadgeRow, indexProp, node, selectedGroup, isGroup],

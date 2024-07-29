@@ -57,6 +57,7 @@ function Item({ app, dragSettings, item, onClick, onContextMenu, themeContext }:
   const {
     BlockIcon,
     Icon,
+    blockType,
     color: blockIconColor,
     folderNameForBlock,
     iconColor,
@@ -263,11 +264,28 @@ function Item({ app, dragSettings, item, onClick, onContextMenu, themeContext }:
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+
+  console.log(dragSettings ? dragSettings(
+    item as ItemType,
+    {
+      blockType,
+      isBlockFile,
+      isFolder,
+      path,
+    },
+  ) : {})
+
   return (
-    <FolderStyled
-      {...(dragSettings ?? {})}
-      uuid={uuid}
-    >
+    // ts-ignore
+    <FolderStyled {...(dragSettings ? dragSettings(
+      item as ItemType,
+      {
+        blockType,
+        isBlockFile,
+        isFolder,
+        path,
+      },
+    ) : {})} uuid={uuid}>
       <Grid
         columnGap={0}
         onClick={(event: React.MouseEvent<HTMLDivElement>) => {
@@ -289,8 +307,11 @@ function Item({ app, dragSettings, item, onClick, onContextMenu, themeContext }:
 
         <NameStyled>
           <Grid alignItems='center' columnGap={8} templateColumns='auto auto 1fr'>
-            <div id={iconActionRootID(uuid)}>{buildIconAction()}</div>
-            <div id={iconRootID(uuid)}>{buildIcon()}</div>
+            {buildIcon
+              ? <div id={iconRootID(uuid)}>{buildIcon()}</div>
+              : <div id={iconActionRootID(uuid)}>{buildIconAction()}</div>
+            }
+
             {name && (
               <Text blue={isFolder} secondary={!isFolder} small>
                 {String(name)}
