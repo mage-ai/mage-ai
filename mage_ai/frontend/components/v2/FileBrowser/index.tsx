@@ -237,14 +237,25 @@ export default function FileBrowser({
       );
 
       observerRef.current = new ResizeObserver(observedElements => {
-        updatePathDimensions(containerRef.current.getBoundingClientRect().width);
+        if (containerRef?.current) {
+          updatePathDimensions(containerRef.current.getBoundingClientRect().width);
+        }
       });
       observerRef.current.observe(document.body);
 
       phaseRef.current = 1;
     }
 
+    const handleClickOutside = (event: any) => {
+      if (containerRef.current && !containerRef.current.contains(event.target) && openRef.current) {
+        toggleOpen();
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+
     return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
       phaseRef.current = 0;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
