@@ -1058,15 +1058,6 @@ function BlockNode(
 
     outputWrapperRef?.current?.classList?.remove(stylesPipelineBuilder.hiddenOffscreen);
     showLinesToOutput();
-
-    updateLinesRef?.current?.(
-      {
-        [outputNodeRef.current.id]: rectsMappingRef?.current?.[outputNodeRef.current.id],
-        [block.uuid]: rectsMappingRef?.current?.[block.uuid],
-      },
-      { ...getSelectedGroupRectFromRefs() },
-      { replace: false },
-    );
   }
 
   function renderEditorApp(

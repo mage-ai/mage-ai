@@ -1,6 +1,6 @@
 import ThemeType from './interfaces';
 import { Colors } from '@mana/themes/colors';
-import { BlockColorEnum, BlockTypeEnum } from '@interfaces/BlockType';
+import BlockType, { BlockColorEnum, BlockTypeEnum } from '@interfaces/BlockType';
 import { COLOR_NAMES } from './colors';
 import { contrastRatio } from '@utils/colors';
 import { getThemeSettings } from '@mana/themes/utils';
@@ -48,6 +48,7 @@ export function getBlockColor(
     isSelected?: boolean;
     theme?: ThemeType;
   },
+  block?: BlockType,
 ): {
   accent?: string;
   accentDark?: string;
@@ -62,7 +63,9 @@ export function getBlockColor(
   let accentLight = colors?.typography?.text?.muted;
   let baseName = '';
 
-  if (isSelected) {
+  if (block?.color) {
+    baseName = block?.color;
+  } else if (isSelected) {
   } else if (BlockTypeEnum.TRANSFORMER === blockType || blockColor === BlockColorEnum.PURPLE) {
     baseName = 'purple';
     accent = colors?.purple;

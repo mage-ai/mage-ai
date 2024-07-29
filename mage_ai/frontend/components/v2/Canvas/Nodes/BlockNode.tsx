@@ -79,6 +79,7 @@ import {
   SELECTED_GROUP_NODE_MIN_WIDTH,
 } from './Blocks/constants'
 import Timer from '@mana/components/Timer';
+import { range } from '@utils/array';
 
 export type BlockNodeProps = {
   commands?: Record<string, CommandType>;
@@ -346,6 +347,65 @@ export default function BlockNodeComponent({
     [colorNames, commands, block, groups, updateBlock, teleportIntoBlock],
   );
 
+  const inputOutputMemo = useMemo(() => {
+    const count = Math.max(block?.upstream_blocks?.length ?? 0, block?.downstream_blocks?.length ?? 0);
+
+    return range(count).map((idx: number) => {
+      const [upitem, dnitem] = [
+        block?.upstream_blocks?.[idx],
+        block?.downstream_blocks?.[idx],
+      ].map((buuid: string) => {
+        if (!buuid) return null;
+
+        const block2 = blockMappingRef?.current?.[buuid];
+        const color = getBlockColor(block2?.type, { getColorName: true }, block)?.names?.base;
+        return {
+          ...block2,
+          color,
+        };
+      });
+
+      return (
+        <Section key={[upitem?.uuid, dnitem?.uuid].filter(Boolean).join('->')} small withBackground>
+          <Grid
+            columnGap={16} alignItems="center" justifyContent="space-between" autoFlow="column" templateRows="1fr"
+            paddingLeft={4}
+            paddingRight={4}
+            paddingTop={3}
+            paddingBottom={3}
+          >
+            <Grid columnGap={10} alignItems="center" justifyContent="start" templateColumns="auto 1fr" templateRows="1fr">
+              <Circle
+                backgroundColor={upitem?.color ?? undefined}
+                border={upitem?.color ? undefined : 'var(--borders-width) var(--borders-style) var(--fonts-color-text-secondary)'}
+                size={12}
+              />
+
+              <Text secondary small>
+                {upitem?.name ?? upitem?.uuid ?? ''}
+              </Text>
+            </Grid>
+
+            <Grid columnGap={10} alignItems="center" justifyContent="end" templateColumns="1fr auto" templateRows="1fr">
+              <Text secondary small>
+                {dnitem?.name ?? dnitem?.uuid ?? ''}
+              </Text>
+
+              <Circle
+                backgroundColor={dnitem?.color ?? undefined}
+                border={dnitem?.color ? undefined : 'var(--borders-width) var(--borders-style) var(--fonts-color-text-secondary)'}
+                size={12}
+              />
+            </Grid>
+          </Grid>
+        </Section>
+      );
+    })
+  }, [
+    block,
+    blockMappingRef?.current,
+  ]);
+
   const main = useMemo(
     () =>
       <div
@@ -458,49 +518,7 @@ export default function BlockNodeComponent({
                 </Button>
               </Grid>
 
-              {(block?.upstream_blocks ?? []).concat(block?.downstream_blocks ?? []).map((buuid: string) => {
-
-                // console.log(block.uuid, block, buuid, block.upstream_blocks, block.downstream_blocks)
-                const block2 = blockMappingRef?.current?.[buuid];
-                const color = getBlockColor(block2?.type, { getColorName: true })?.names?.base;
-                const isup = block?.upstream_blocks?.includes(buuid);
-                const isdn = block?.downstream_blocks?.includes(buuid);
-                return (
-                  <Section key={buuid} small withBackground>
-                    <Grid
-                      columnGap={10} alignItems="center" justifyContent="space-between" autoFlow="column" templateRows="1fr"
-                      paddingLeft={4}
-                      paddingRight={4}
-                      paddingTop={3}
-                      paddingBottom={3}
-                    >
-                      <Grid columnGap={10} alignItems="center" justifyContent="start" templateColumns="auto 1fr" templateRows="1fr">
-                        <Circle
-                          backgroundColor={isup ? color : undefined}
-                          border={isup ? undefined : 'var(--borders-width) var(--borders-style) var(--fonts-color-text-secondary)'}
-                          size={12}
-                        />
-
-                        <Text secondary small>
-                          {isup ? block2?.name ?? block2?.uuid : ''}
-                        </Text>
-                      </Grid>
-
-                      <Grid columnGap={10} alignItems="center" justifyContent="end" templateColumns="1fr auto" templateRows="1fr">
-                        <Text secondary small>
-                          {isdn ? block2?.name ?? block2?.uuid : ''}
-                        </Text>
-
-                        <Circle
-                          backgroundColor={isdn ? color : undefined}
-                          border={isdn ? undefined : 'var(--borders-width) var(--borders-style) var(--fonts-color-text-secondary)'}
-                          size={12}
-                        />
-                      </Grid>
-                    </Grid>
-                  </Section>
-                );
-              })}
+              {inputOutputMemo}
             </Grid>
 
             <Grid rowGap={8} templateRows="auto">
