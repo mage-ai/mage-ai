@@ -34,10 +34,6 @@
   z-index: -1;
 }
 
-.hidden {
-  /* display: none; */
-}
-
 .appToolbar {
   align-items: center;
   display: grid;
@@ -69,6 +65,7 @@
 }
 
 .draggableItem {
+  pointer-events: none;
   position: absolute;
   z-index: 13;
 }

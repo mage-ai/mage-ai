@@ -1,10 +1,31 @@
-interface Rect {
+import { RectType } from "@mana/shared/interfaces";
+
+interface Rect extends RectType {
   left: number;
   top: number;
   width: number;
   height: number;
   type?: string;
 }
+
+export function doesRectIntersect(rect1: RectType, rect2: RectType): boolean {
+  return !(
+    rect1.left >= rect2.left + rect2.width ||
+    rect1.left + rect1.width <= rect2.left ||
+    rect1.top >= rect2.top + rect2.height ||
+    rect1.top + rect1.height <= rect2.top
+  );
+}
+
+export function doesPointIntersectRect(point: { x: number; y: number }, rect: Rect): boolean {
+  return (
+    point.x >= rect.left &&
+    point.x <= rect.left + rect.width &&
+    point.y >= rect.top &&
+    point.y <= rect.top + rect.height
+  );
+}
+
 
 export function findLargestUnoccupiedSpace(mainRect: Rect, rects: Rect[], boundingBox: Rect): Rect {
   const { left: mainLeft, top: mainTop, width: mainWidth, height: mainHeight } = mainRect;

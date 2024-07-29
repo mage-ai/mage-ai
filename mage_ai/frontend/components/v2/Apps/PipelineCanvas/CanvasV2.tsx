@@ -116,6 +116,7 @@ import { DEFAULT_RECT } from '@components/v2/Canvas/Nodes/Apps/EditorAppNode';
 import { DEFAULT_RECT as DEFAULT_RECT_OUTPUT } from '@components/v2/Canvas/Nodes/CodeExecution/OutputGroups';
 import useWaitUntilAttempt from '@mana/hooks/useWaitUntilAttempt';
 import Divider from '@mana/elements/Divider';
+import { ItemType } from '../Browser/System/interfaces';
 
 const ENTER_ANIMATION_START_THRESHOLD = 0.6;
 const CHANGE_BLOCKS_ANIMATION_DURATION = 5;
@@ -144,6 +145,8 @@ export type CanvasProps = {
 };
 
 export type CanvasType = {
+  setOnItemDrop?: (uuid: string, handler: (event: any, item: ItemType, block?: BlockType) => void) => void;
+  onUpdateRects?: (rectsMapping: Record<string, RectType>) => void;
   wrapperRef: React.RefObject<HTMLDivElement>;
 } & CanvasProps;
 
@@ -165,12 +168,14 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
   canvasRef,
   containerRef,
   framework,
+  onUpdateRects,
   onZoomPanStateChangeRef,
   pipeline: pipelineProp,
   removeContextMenu,
   renderContextMenu,
   setDragEnabled,
   setDropEnabled,
+  setOnItemDrop,
   setZoomPanDisabled,
   snapToGridOnDrop = false,
   transformState,
@@ -1494,6 +1499,15 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
     };
   }, [blockAPI]);
 
+  function handleOnItemDrop(event: any, item: ItemType, block?: BlockType) {
+    if (block) {
+      blockMutants.create.mutate({
+        event,
+        payload: block,
+      });
+    }
+  }
+
   const pipelineMutants = useMutate(
     {
       id: pipelineUUID,
@@ -1768,6 +1782,7 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
           (blocks?.length > 0 && blocks?.every(b => (rectsMappingRef.current ?? {})?.[b.uuid])) ||
           (groups?.length > 0 && groups?.every(g => (rectsMappingRef.current ?? {})?.[g.uuid]))
         ) {
+          onUpdateRects && onUpdateRects(rectsMappingRef.current);
           setRectsMapping(rectsMappingRef.current);
         }
       }
@@ -1808,6 +1823,10 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
       handleRouteChangeComplete(router.asPath);
     }
 
+    if (setOnItemDrop) {
+      setOnItemDrop('Canvas', handleOnItemDrop);
+    }
+
     router.events.on('routeChangeStart', handleRouteChangeStart);
     router.events.on('routeChangeComplete', handleRouteChangeComplete);
 
@@ -1818,6 +1837,7 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
   }, [
     pipeline,
     pipelineMutants,
+    setOnItemDrop,
     setSelectedGroup,
     updateLocalResources,
   ]);

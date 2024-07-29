@@ -17,8 +17,8 @@ export interface ItemType {
 type DragHandlers = {
   onDrag?: (event: any, info: DragInfo) => void;
   onDragEnd?: (event: any, info: DragInfo) => void;
-  onPointerUp?: (event: any, info: DragInfo) => void;
-  onPointerDown?: (event: any, info: DragInfo) => void;
+  onPointerUp?: (event: any) => void;
+  onPointerDown?: (event: any) => void;
 };
 
 type DragSettings = {

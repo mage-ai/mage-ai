@@ -264,17 +264,6 @@ function Item({ app, dragSettings, item, onClick, onContextMenu, themeContext }:
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-
-  console.log(dragSettings ? dragSettings(
-    item as ItemType,
-    {
-      blockType,
-      isBlockFile,
-      isFolder,
-      path,
-    },
-  ) : {})
-
   return (
     // ts-ignore
     <FolderStyled {...(dragSettings ? dragSettings(

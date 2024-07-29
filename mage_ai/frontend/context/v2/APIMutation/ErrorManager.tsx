@@ -37,7 +37,7 @@ const ErrorManager: FC<ErrorManagerProps> = memo(function ErrorManager({
       className={[
         styles.errorManager,
         // styles[position],
-        // styles.bottomLeft,
+        styles.topLeft,
       ].filter(Boolean).join(' ')}
       drag
       dragMomentum={false}
