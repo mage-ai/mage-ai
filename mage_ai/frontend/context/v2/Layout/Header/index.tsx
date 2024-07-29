@@ -72,9 +72,12 @@ export function Header(
       {
         Icon: Code,
         onClick: () => {
-          router.push('/v2/apps/editor');
+          router.push({
+            pathname: '/v2/apps/coder',
+            query: router.query,
+          });
         },
-        uuid: 'code',
+        uuid: 'coder',
       },
     ];
     const items: (MenuItemType & {

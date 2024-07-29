@@ -42,6 +42,7 @@ export type EditorAppNodeProps = {
   onMount?: () => void;
   outputGroupsProps?: OutputGroupsType;
   interruptExecution?: (opts?: { onError?: () => void; onSuccess?: () => void }) => void;
+  setHandleOnMessage?: (appId: string, handleOnMessage: (event: EventStreamType) => void) => void;
   skipInitialFetch?: boolean;
   submitCodeExecution?: (
     event: any,

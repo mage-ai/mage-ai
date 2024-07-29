@@ -14,6 +14,7 @@ import { buildIntraAppNavItems } from '@components/v2/Layout/Pipelines/Detail/he
 import { useMutate } from '@context/v2/APIMutation';
 import PipelineExecutionFrameworkType from '@interfaces/PipelineExecutionFramework/interfaces';
 import PipelineType from '@interfaces/PipelineType';
+import { capitalizeRemoveUnderscoreLower } from '@utils/string';
 
 const PipelineDetail = dynamic(() => import('@components/v2/Layout/Pipelines/Detail'), { ssr: false });
 
@@ -63,12 +64,14 @@ function PipelineDetailPage({
         detail: {
           onSuccess: (model: PipelineType) => {
             header?.setHeader?.({
-              intraAppNavItems: buildIntraAppNavItems({
-                changeRoute,
-                framework: model?.framework,
-                pipeline: model,
-                hideMenu: () => hideMenu('NavigationButtonGroup'),
-              }),
+              intraAppNavItems: model?.framework
+                ? buildIntraAppNavItems({
+                  changeRoute,
+                  framework: model?.framework,
+                  pipeline: model,
+                  hideMenu: () => hideMenu('NavigationButtonGroup'),
+                })
+                : null,
               buildInterAppNavItems: () => [
                 {
                   Icon: PipeIconVertical,
@@ -83,20 +86,24 @@ function PipelineDetailPage({
                     href: '/v2/pipelines/[uuid]/[...slug]',
                     as: `/v2/pipelines/${pipeline?.uuid}/${slug?.join('/')}`,
                   },
-                  uuid: 'frameworks',
+                  uuid: 'canvas',
                 },
                 // ...items,
               ],
               cacheKey: [model.uuid, model?.framework.uuid].join(':'),
-              navTag: (model?.framework as any)?.name ?? (model?.framework as any)?.uuid?.toUpperCase(),
-              selectedNavItem: 'frameworks',
+              navTag: model?.framework
+                ? (model?.framework as any)?.name ?? (model?.framework as any)?.uuid?.toUpperCase()
+                : capitalizeRemoveUnderscoreLower(model?.type ?? '') || 'Pipeline',
+              selectedNavItem: 'canvas',
               title: model.name ?? model.uuid,
               uuid: contextMenuUUID,
               version: 1,
             });
 
             page?.setPage?.({
-              title: FRAMEWORK_NAME_MAPPING[model?.framework.uuid] ?? model?.framework.uuid,
+              title: model?.framework
+                ? FRAMEWORK_NAME_MAPPING[model?.framework.uuid] ?? model?.framework.uuid
+                : model.name ?? model.uuid,
             });
 
             setPipeline(model);

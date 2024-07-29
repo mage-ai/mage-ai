@@ -1,9 +1,11 @@
 export enum PipelineExecutionFrameworkUUIDEnum {
   RAG = 'rag',
+  STANDARD = 'standard',
 }
 
 export const FRAMEWORK_NAME_MAPPING = {
   [PipelineExecutionFrameworkUUIDEnum.RAG]: 'Retrieval Augmented Generation',
+  [PipelineExecutionFrameworkUUIDEnum.STANDARD]: 'Standard',
 };
 
 export enum GroupUUIDEnum {
