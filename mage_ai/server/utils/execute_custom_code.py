@@ -1,4 +1,3 @@
-import asyncio
 import base64
 import json
 import logging
@@ -28,7 +27,7 @@ if 'context' not in globals():
     context = dict()
 
 
-async def send_status_update(
+def send_status_update(
     message: str,
     progress: Optional[float] = None,
     uuid: Optional[str] = ' Status',
@@ -60,7 +59,7 @@ async def send_status_update(
     )
 
 
-async def task(
+def run_task(
     block: Any,
     execute_kwargs: Dict[str, Any],
     callback: Optional[Callable[..., None]] = None,
@@ -72,7 +71,7 @@ async def task(
     output_dict = block.execute_with_callback(**execute_kwargs)
 
     if callback:
-        await callback(block)
+        callback(block)
 
     if bool('{run_tests}'):
         block.run_tests(
@@ -100,7 +99,7 @@ async def task(
     return output
 
 
-async def run_tasks(
+def run_tasks(
     block: Any,
     settings: List[Dict[str, Any]],
     options: Dict[str, Any],
@@ -108,16 +107,17 @@ async def run_tasks(
     blocks_count = len(settings)
     blocks_completed = []
 
-    async def __callback(block, blocks_completed=blocks_completed, blocks_count=blocks_count):
+    def __callback(block, blocks_completed=blocks_completed, blocks_count=blocks_count):
         blocks_completed.append(block)
-        await send_status_update(
+        send_status_update(
             f'{len(blocks_completed)} of {blocks_count} dynamic child blocks completed.',
             progress=len(blocks_completed) / blocks_count,
         )
 
-    # Create a list of coroutine objects directly
-    tasks = [
-        task(
+    send_status_update(f'Running {blocks_count} dynamic child blocks...')
+
+    for dynamic_block_index, config in enumerate(settings):
+        run_task(
             block,
             merge_dict(options, config),
             callback=__callback,
@@ -126,15 +126,9 @@ async def run_tasks(
             global_vars=options.get('global_vars'),
             logger=options.get('logger'),
         )
-        for dynamic_block_index, config in enumerate(settings)
-    ]
-
-    await send_status_update(f'Running {blocks_count} dynamic child blocks...')
-
-    return await asyncio.gather(*tasks)
 
 
-async def execute_custom_code():
+def execute_custom_code():
     block_uuid = '{block_uuid}'
     run_incomplete_upstream = bool('{run_incomplete_upstream}')
     run_upstream = bool('{run_upstream}')
@@ -212,7 +206,7 @@ async def execute_custom_code():
                 **options,
             )[: int('{DATAFRAME_SAMPLE_COUNT_PREVIEW}')]
         with MemoryManager(scope_uuid='dynamic_blocks', process_uuid='execute_with_callback'):
-            block_output['output'] = await run_tasks(block, settings, options)
+            block_output['output'] = run_tasks(block, settings, options)
             block.aggregate_summary_info()
     else:
         block_output = block.execute_with_callback(**options)

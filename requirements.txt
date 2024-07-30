@@ -20,7 +20,6 @@ ipykernel==6.15.0
 ipython==8.10.0
 itsdangerous~=1.1.0
 joblib>=1.1.0
-jupyter-server-proxy==3.2.4
 jupyter-server==1.23.5
 jupyter_client==7.4.4
 ldap3==2.9.1
