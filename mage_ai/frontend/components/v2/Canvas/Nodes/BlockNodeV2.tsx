@@ -1442,7 +1442,7 @@ function BlockNode(
 
     const rectup = rectsMappingRef?.current?.[block.uuid] ?? node?.rect;
 
-    if (!rectup) return;
+    if (!rectup || ['left', 'height', 'top', 'width'].some(key => !(key in rectup ?? {}))) return;
 
     const svgs = [];
 
@@ -1460,6 +1460,7 @@ function BlockNode(
         lineRefs.current[lineID] ||= createRef();
       }
 
+      // console.log(rectup, rectup.id, rectdn, rectdn.id)
       const linePath = buildPaths(
         rectup,
         rectdn,
@@ -1490,7 +1491,7 @@ function BlockNode(
     (block?.downstream_blocks ?? [])?.forEach((buuid: string, idx: number) => {
       const rectdn = rectsMappingRef?.current?.[buuid];
 
-      if (!rectdn) return;
+      if (!rectdn || ['left', 'height', 'top', 'width'].some(key => !(key in rectdn ?? {}))) return;
 
       svgs.push(__build(
         rectdn, idx,

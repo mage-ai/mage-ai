@@ -421,6 +421,9 @@ export function buildPaths(
       width: Math.abs(startX2 - endX2),
     };
 
+    foDims.height = isNaN(foDims.height) ? 0 : foDims.height;
+    foDims.width = isNaN(foDims.width) ? 0 : foDims.width;
+
     if (foDims.height < 14) {
       const yoff = 14 - foDims.height;
       foDims.height = 14;

@@ -122,18 +122,116 @@ export function getPathD(
   return `M${startX},${startY} C${x1},${y1} ${x2},${y2} ${endX},${endY}`;
 }
 
-export function parsePathD(d: string): any {
-  // Use regular expression to extract the values from the d attribute
-  const pathRegex =
-    /M\s*([\d.]+),([\d.]+)\s*C\s*([\d.]+),([\d.]+)\s*([\d.]+),([\d.]+)\s*([\d.]+),([\d.]+)/;
-  const match = pathRegex.exec(d);
+// export function parsePathD(d) {
+//   const commandParams = {
+//     // Specifies the number of parameters expected for each command type
+//     'M': 2, 'm': 2,
+//     'L': 2, 'l': 2,
+//     'H': 1, 'h': 1,
+//     'V': 1, 'v': 1,
+//     'C': 6, 'c': 6,
+//     'S': 4, 's': 4,
+//     'Q': 4, 'q': 4,
+//     'T': 2, 't': 2,
+//     'A': 7, 'a': 7,
+//     'Z': 0, 'z': 0
+//   };
 
-  if (!match) {
-    throw new Error('Invalid path data');
+//   const tokens = d.match(/[MmLlHhVvCcSsQqTtAaZz]|[\-+]?[\d.]+(?:e[\-+]?[\d.]+)?/g);
+//   if (!tokens) {
+//     console.error('Failed to parse path data:', d);
+//     return [];
+//   }
+
+//   const commands = [];
+//   let currentParams = [];
+//   tokens.forEach(token => {
+//     if (token in commandParams) {
+//       if (currentParams.length > 0) {
+//         commands.push(currentParams);
+//       }
+//       currentParams = [token];
+//     } else {
+//       currentParams.push(parseFloat(token));
+//       const expectedParamCount = commandParams[currentParams[0]];
+//       if (currentParams.length - 1 === expectedParamCount) {
+//         commands.push(currentParams);
+//         // For implicit command repetition: continue with the same command if param numbers match
+//         if(['M', 'm', 'L', 'l', 'T', 't'].includes(currentParams[0])) {
+//             // Save the repeated command separately for clarity
+//             currentParams = [currentParams[0]];
+//         } else {
+//             currentParams = [];
+//         }
+//       }
+//     }
+//   });
+//   // Add trailing command if there’s an unterminated one at the end
+//   if (currentParams.length > 0 && currentParams.length - 1 === commandParams[currentParams[0]]) {
+//     commands.push(currentParams);
+//   }
+
+//   return commands.map(cmdArray => {
+//     const cmd = cmdArray[0];
+//     const params = cmdArray.slice(1);
+//     return { command: cmd, params: params };
+//   });
+// }
+
+export function parsePathD(d) {
+  const commands = d.match(/[a-zA-Z][^a-zA-Z]*/g);
+
+  if (!commands) {
+    console.error('Failed to parse path data:', d);
+    return null;
   }
 
-  // We know the structure of the path data, so we can map the captured groups
-  const [, startX, startY, x1, y1, x2, y2, endX, endY] = match.map(Number);
+  let parsedData = {
+    startX: null,
+    startY: null,
+    x1: null, y1: null, // First control point for C
+    x2: null, y2: null, // Second control point for C
+    endX: null,
+    endY: null,
+  };
 
-  return { startX, startY, x1, y1, x2, y2, endX, endY };
+  commands.forEach((cmd) => {
+    const type = cmd.charAt(0);
+    const nums = cmd.slice(1).trim().split(/[ ,]+/).map(Number);
+
+    switch (type) {
+      case 'M':
+        parsedData.startX = nums[0];
+        parsedData.startY = nums[1];
+        break;
+      case 'C':
+        parsedData.x1 = nums[0];
+        parsedData.y1 = nums[1];
+        parsedData.x2 = nums[2];
+        parsedData.y2 = nums[3];
+        parsedData.endX = nums[4];
+        parsedData.endY = nums[5];
+        break;
+      case 'L':
+      case 'H':
+      case 'V':
+      case 'S':
+      case 'Q':
+      case 'T':
+      case 'A':
+        // These commands may adjust endX and endY but are not handled in this simplified example
+        // H and V only modify one axis, which we'll need to manage if compact path data is expected
+        // L, S, Q, T, A have different parameter needs
+        console.warn(`Command ${type} is recognized but not processed for this shape`);
+        break;
+      case 'Z':
+        // Closes the path; no change to data structure required
+        break;
+      default:
+        console.error(`Unknown command '${type}' encountered`);
+        break;
+    }
+  });
+
+  return parsedData.startX !== null ? parsedData : null;
 }

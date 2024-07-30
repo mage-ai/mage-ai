@@ -1,4 +1,5 @@
 import { LayoutContext } from '@context/v2/Layout';
+import { MultiSelectionContext } from '@context/v2/MultiSelection';
 import { createPortal } from 'react-dom';
 import EventStreamType from '@interfaces/EventStreamType';
 import { useRouter } from 'next/router';
@@ -189,6 +190,13 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
   wrapperRef,
 }: PipelineCanvasV2Props) => {
   const { changeRoute, page } = useContext(LayoutContext);
+  const { useRegistration: useMultiSelection } = useContext(MultiSelectionContext);
+  const {
+    clearSelection,
+    deregister,
+    register,
+  } = useMultiSelection('PipelineCanvas');
+
   const router = useRouter();
   const waitUntilAttempt = useWaitUntilAttempt();
 
@@ -829,7 +837,9 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
       const yorigin = nextGroupRectCur?.top ?? 0;
       exitOriginX.current = xorigin;
       exitOriginY.current = yorigin;
-      scopeEnter.current.style.transformOrigin = `${xorigin}px ${yorigin}px`;
+      if (scopeEnter.current) {
+        scopeEnter.current.style.transformOrigin = `${xorigin}px ${yorigin}px`;
+      }
 
       resetLineTransitions();
 
@@ -1946,6 +1956,36 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
       };
       onUpdateRects && onUpdateRects(rectsMappingRef.current);
 
+      register(
+        containerRef,
+        Object.entries(rectsMappingRef.current ?? {}).reduce((acc, [uuid, rect]) => ({
+          ...acc,
+          [uuid]: {
+            item: rect,
+            rect,
+          },
+        }), {}),
+        (
+          event,
+          item,
+          matchItems,
+        ) => {
+          // console.log('onSelectItem', event, item, matchItems);
+        },
+        {
+          onActivated: () => {
+            setZoomPanDisabled(true);
+          },
+          onHighlightItem: (
+            event,
+            item,
+            matchItems,
+          ) => {
+            // console.log('onHighlightItem', event, item, matchItems);
+          },
+        }
+      );
+
       if (blocks?.length > 0 || groups?.length > 0) {
         if (
           (blocks?.length > 0 && blocks?.every(b => (rectsMappingRef.current ?? {})?.[b.uuid])) ||
@@ -1973,6 +2013,8 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
       const vuuid = `${path}:${Number(new Date())}`;
       viewUUIDPrev.current = vuuid;
       viewUUIDNext.current = null;
+
+      clearSelection();
 
       throttleTransitionsRef.current = setTimeout(() => {
         handleIntraAppRouteChange?.current(args, vuuid);

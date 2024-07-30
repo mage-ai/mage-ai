@@ -7,6 +7,7 @@ import { AppProps } from 'next/app';
 import { LayoutVersionEnum } from '@utils/layouts';
 import { MenuProvider } from '@context/v2/Menu';
 import { ModeEnum } from '@mana/themes/modes';
+import { MultiSelectionProvider } from '@context/v2/MultiSelection';
 import { ThemeProvider } from 'styled-components';
 import { ThemeSettingsType } from '@mana/themes/interfaces';
 import { getTheme, getThemeSettings, setThemeSettings } from '@mana/themes/utils';
@@ -72,8 +73,10 @@ function App({
             theme={theme as ThemeType}
             updateThemeSettings={updateThemeSettings}
           >
-            <HeaderPortal headerRef={headerRef} />
-            <Component {...rest} updateThemeSettings={updateThemeSettings} />
+            <MultiSelectionProvider>
+              <HeaderPortal headerRef={headerRef} />
+              <Component {...rest} updateThemeSettings={updateThemeSettings} />
+            </MultiSelectionProvider>
           </ContextProvider>
         </MenuProvider>
       </ThemeProvider>
