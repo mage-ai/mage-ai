@@ -1297,6 +1297,8 @@ function BlockNode(
     const timeout = timeoutRef.current;
     const timeoutLaunch = timeoutLaunchEditorAppOnMountRef.current;
 
+    resetDragging();
+
     phaseRef.current += 1;
 
     return () => {
@@ -1590,6 +1592,7 @@ function BlockNode(
                 />,
                 <motion.foreignObject
                   animate={foreignObjectAnimation}
+                  className={stylesPipelineBuilder.hidden}
                   key="foreign-object-loader-upstream"
                   ref={foreignObjectUpstreamRef as any}
                   style={{
@@ -1604,6 +1607,7 @@ function BlockNode(
                   <Loading circle />
                 </motion.foreignObject>,
                 <motion.foreignObject
+                  className={stylesPipelineBuilder.hidden}
                   animate={foreignObjectAnimation}
                   key="foreign-object-loader-downstream"
                   ref={foreignObjectDownstreamRef as any}
@@ -1721,8 +1725,18 @@ function BlockNode(
       mutations.blocks.update.mutate({
         event,
         id: encodeURIComponent(block.uuid),
+        onStart: () => {
+          (draggingUpstreamRef.current
+            ? foreignObjectUpstreamRef
+            : foreignObjectDownstreamRef
+          )?.current?.classList.remove(stylesPipelineBuilder.hidden);
+        },
         onError: () => {
           resetDragging();
+          (draggingUpstreamRef.current
+            ? foreignObjectUpstreamRef
+            : foreignObjectDownstreamRef
+          )?.current?.classList.add(stylesPipelineBuilder.hidden);
         },
         payload: {
           [key]: unique((block[key] ?? []).concat(block2.uuid), buuid => buuid),
@@ -1750,8 +1764,18 @@ function BlockNode(
       mutations.blocks.update.mutate({
         event,
         id: encodeURIComponent(block.uuid),
+        onStart: () => {
+          (draggingUpstreamRef.current
+            ? foreignObjectUpstreamRef
+            : foreignObjectDownstreamRef
+          )?.current?.classList.remove(stylesPipelineBuilder.hidden);
+        },
         onError: () => {
           resetDragging();
+          (draggingUpstreamRef.current
+            ? foreignObjectUpstreamRef
+            : foreignObjectDownstreamRef
+          )?.current?.classList.add(stylesPipelineBuilder.hidden);
         },
         payload: {
           [key]: unique((block[key] ?? []).concat(block2.uuid), buuid => buuid),
