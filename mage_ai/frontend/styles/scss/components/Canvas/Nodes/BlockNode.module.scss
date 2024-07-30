@@ -62,6 +62,7 @@ $enter-duration: 3s;
 }
 
 .dragWrapper {
+  border-radius: var(--borders-radius-base);
   z-index: 3;
 
   &.output {
@@ -83,7 +84,7 @@ $enter-duration: 3s;
 
 .resizeHandle {
   background-color: var(--borders-color-base-default);
-  border-radius: 8px;
+  border-radius: var(--borders-radius-base);
   opacity: 0;
   position: absolute;
   z-index: 6;

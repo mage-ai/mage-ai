@@ -317,3 +317,8 @@
 .blockLinePaths {
   z-index: 5;
 }
+
+.multiSelected {
+  box-shadow: 0 0 0 var(--padding-sm) var(--backgrounds-body),
+    0 0 0 var(--padding-container) var(--multi-select-border-color-base);
+}

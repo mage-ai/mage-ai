@@ -1970,11 +1970,18 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
           item,
           matchItems,
         ) => {
-          // console.log('onSelectItem', event, item, matchItems);
+          dragRefs?.current?.[item?.item?.id]?.current?.classList?.add(
+            stylesPipelineBuilder.multiSelected,
+          );
         },
         {
           onActivated: () => {
             setZoomPanDisabled(true);
+          },
+          onDeselectItem: (event, item) => {
+            dragRefs?.current?.[item?.item?.id]?.current?.classList?.remove(
+              stylesPipelineBuilder.multiSelected,
+            );
           },
           onHighlightItem: (
             event,

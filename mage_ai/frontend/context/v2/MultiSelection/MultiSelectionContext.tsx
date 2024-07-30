@@ -1,6 +1,8 @@
 import { RectType } from '@mana/shared/interfaces';
 import React, { useContext } from 'react';
 
+type ItemsType = Record<string, SelectableItemType>;
+
 export interface SelectableItemType {
   getRect?: () => RectType;
   item: any;
@@ -17,6 +19,7 @@ export interface MultiSelectionContextHandlers {
     onSelectItem: MultiSelectionContextClientType['onSelectItem'],
     opts?: {
       onActivated?: MultiSelectionContextClientType['onActivated'],
+      onDeselectItem?: MultiSelectionContextClientType['onDeselectItem'],
       onHighlightItem?: MultiSelectionContextClientType['onHighlightItem'],
     },
   ) => void;
@@ -30,9 +33,10 @@ export type OnSelectItemType = (
 
 export interface MultiSelectionContextClientType {
   containerRef: React.MutableRefObject<HTMLElement | HTMLDivElement>;
-  items: Record<string, SelectableItemType>;
+  items: ItemsType;
   onSelectItem: OnSelectItemType;
   onActivated?: (event: KeyboardEvent) => void,
+  onDeselectItem?: (event: MouseEvent | KeyboardEvent, item: SelectableItemType) => void;
   onHighlightItem?: OnSelectItemType;
 }
 

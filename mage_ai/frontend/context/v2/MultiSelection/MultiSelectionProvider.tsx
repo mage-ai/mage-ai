@@ -5,6 +5,7 @@ import { useEffect, useRef } from 'react';
 import { MultiSelectionContext, MultiSelectionContextClientType,
   MultiSelectionContextHandlers, SelectableItemType
 } from './MultiSelectionContext';
+import { objectSize } from '@utils/hash';
 
 interface MultiSelectionProviderProps {
   children: React.ReactNode;
@@ -53,7 +54,7 @@ export function MultiSelectionProvider({ children }: MultiSelectionProviderProps
     Record<string, SelectableItemType>
   >>({});
 
-  function getRect(event: MouseEvent) {
+  function getSelectionRect(event: MouseEvent) {
     const {
       pageX: x1,
       pageY: y1,
@@ -76,7 +77,7 @@ export function MultiSelectionProvider({ children }: MultiSelectionProviderProps
       event.preventDefault()
       event.stopPropagation();
 
-      const rect = getRect(event);
+      const selectionRect = getSelectionRect(event);
 
       Object.entries(clientRefs.current ?? {}).forEach(([clientID, {
         containerRef,
@@ -96,8 +97,7 @@ export function MultiSelectionProvider({ children }: MultiSelectionProviderProps
             rect,
           } = selectableItem;
           const rectTest = rect ?? getRect?.() ?? itemRef?.current?.getBoundingClientRect();
-
-          if (doesRectIntersect(rect, rectTest)) {
+          if (doesRectIntersect(selectionRect, rectTest)) {
             highlightedItemsRef.current[clientID][uuid] = selectableItem;
 
             if (onHighlightItem) {
@@ -110,45 +110,51 @@ export function MultiSelectionProvider({ children }: MultiSelectionProviderProps
       });
     };
 
-    const startHighlighting = (event: MouseEvent) => {
+    const handleMouseDown = (event: MouseEvent) => {
       if (event.button === 2) return;
 
       event.preventDefault()
       event.stopPropagation();
 
-      document.addEventListener('mousemove', highlighting);
-
-      startEventRef.current = event;
       mouseDownActiveRef.current = true;
+      startEventRef.current = event;
 
-      animateBox.start({
-        x: xTransform.get(),
-        y: yTransform.get(),
-        width: widthTransform.get(),
-        height: heightTransform.get(),
-        display: 'block',
+      if (shiftKeyActiveRef.current) {
+        document.addEventListener('mousemove', highlighting);
+        animateBox.start({
+          display: 'block',
+          height: heightTransform.get(),
+          width: widthTransform.get(),
+          x: xTransform.get(),
+          y: yTransform.get(),
+        });
 
-      });
-      dragControls.start(event as PointerEvent, { snapToCursor: true });
-      handleX.set(event.pageX);
-      handleY.set(event.pageY);
+        dragControls.start(event as PointerEvent, { snapToCursor: true });
+        handleX.set(event.pageX);
+        handleY.set(event.pageY);
+      }
     };
 
-    const stopHighlighting = (event: MouseEvent) => {
+    const handleMouseUp = (event: MouseEvent) => {
       endEventRef.current = event;
       mouseDownActiveRef.current = false;
 
-      document.removeEventListener('mousedown', startHighlighting);
       document.removeEventListener('mousemove', highlighting);
       animateBox.set({
         display: 'none',
+        height: 0,
+        width: 0,
       });
 
-      const rect = getRect(endEventRef.current);
+      const isDeselectClick = shiftKeyActiveRef.current
+        && startEventRef.current?.target === endEventRef.current.target;
+
+      const selectionRect = getSelectionRect(endEventRef.current);
 
       Object.entries(clientRefs.current ?? {}).forEach(([clientID, {
         containerRef,
         items,
+        onDeselectItem,
         onSelectItem,
       }]) => {
         if (containerRef
@@ -163,35 +169,53 @@ export function MultiSelectionProvider({ children }: MultiSelectionProviderProps
           } = selectableItem;
           const rectTest = rect ?? getRect?.() ?? itemRef?.current?.getBoundingClientRect();
 
-          if (doesRectIntersect(rect, rectTest)) {
+          if (doesRectIntersect(selectionRect, rectTest)) {
             selectedItemsRef.current[clientID] ||= {};
-            selectedItemsRef.current[clientID][uuid] = selectableItem;
 
-            if (onSelectItem) {
-              onSelectItem(event, selectableItem, selectedItemsRef.current[clientID]);
+            if (isDeselectClick && uuid in selectedItemsRef.current[clientID]) {
+              delete selectedItemsRef.current[clientID][uuid];
+              if (onDeselectItem) {
+                onDeselectItem(event, selectableItem);
+              }
+            } else {
+              selectedItemsRef.current[clientID][uuid] = selectableItem;
+
+              if (onSelectItem) {
+                onSelectItem(event, selectableItem, selectedItemsRef.current[clientID]);
+              }
             }
           }
         });
       });
     };
 
-    const shiftDown = (event: KeyboardEvent) => {
+    const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === KeyEnum.SHIFT) {
         if (!shiftKeyActiveRef.current) {
-          document.addEventListener('mousedown', startHighlighting);
-
           Object
             .values(clientRefs.current ?? {})
             .forEach(({ onActivated }) => onActivated && onActivated(event));
         }
         shiftKeyActiveRef.current = true;
       }
+
+      if (event.key === KeyEnum.ESCAPE) {
+        Object
+          .entries(clientRefs.current ?? {})
+          .forEach(([uuid, { onDeselectItem }]) => {
+            const items = selectedItemsRef.current[uuid];
+
+            if (objectSize(items) > 0 && onDeselectItem) {
+              Object.values(items ?? {}).map(item => onDeselectItem(event, item));
+            }
+
+            delete selectedItemsRef.current[uuid];
+          });
+      }
     };
 
     const shiftUp = (event: KeyboardEvent) => {
       if (event.key === KeyEnum.SHIFT) {
-        document.removeEventListener('mousedown', startHighlighting);
-
         if (!mouseDownActiveRef.current) {
           document.removeEventListener('mousemove', highlighting);
         }
@@ -200,14 +224,16 @@ export function MultiSelectionProvider({ children }: MultiSelectionProviderProps
       }
     };
 
-    document.addEventListener('keydown', shiftDown);
+    document.addEventListener('keydown', handleKeyDown);
     document.addEventListener('keyup', shiftUp);
-    document.addEventListener('mouseup', stopHighlighting);
+    document.addEventListener('mouseup', handleMouseUp);
+    document.addEventListener('mousedown', handleMouseDown);
 
     return () => {
-      document.removeEventListener('keydown', shiftDown);
+      document.removeEventListener('keydown', handleKeyDown);
       document.removeEventListener('keyup', shiftUp);
-      document.removeEventListener('mouseup', stopHighlighting);
+      document.removeEventListener('mouseup', handleMouseUp);
+      document.removeEventListener('mousedown', handleMouseDown);
     };
   }, []);
 
@@ -226,6 +252,7 @@ export function MultiSelectionProvider({ children }: MultiSelectionProviderProps
         opts?: {
           onActivated?: MultiSelectionContextClientType['onActivated'],
           onHighlightItem?: MultiSelectionContextClientType['onHighlightItem'],
+          onDeselectItem?: MultiSelectionContextClientType['onDeselectItem'],
         },
       ) => {
         clientRefs.current[uuid] = {
