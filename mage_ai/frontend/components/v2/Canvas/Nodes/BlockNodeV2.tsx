@@ -151,10 +151,10 @@ function BlockNode(
 
   const phaseRef = useRef(0);
   const lineRefs = useRef<Record<string, React.MutableRefObject<SVGElement>>>({});
-  const lineUpstreamRef = useRef<React.MutableRefObject<any>>(null);
-  const lineDownstreamRef = useRef<React.MutableRefObject<any>>(null);
-  const portUpstreamRef = useRef<React.MutableRefObject<any>>(null);
-  const portDownstreamRef = useRef<React.MutableRefObject<any>>(null);
+  const lineUpstreamRef = useRef<any>(null);
+  const lineDownstreamRef = useRef<any>(null);
+  const portUpstreamRef = useRef<any>(null);
+  const portDownstreamRef = useRef<any>(null);
   const dragControlsUp = useDragControls();
   const dragControlsDn = useDragControls();
   const addingBlockDependencyRef = useRef<BlockType>(null);
@@ -1446,7 +1446,7 @@ function BlockNode(
 
     const svgs = [];
 
-    const __build = (rectdn, idx, onContextMenu, lineRef?: React.MutableRefObject<any>, style?: any) => {
+    const __build = (rectdn, idx, onContextMenu, lineRef?: any, style?: any) => {
       // console.log(block?.uuid, buuid, rectup, rectdn)
 
       const { lineID } = prepareLinePathProps(rectup, rectdn, {
