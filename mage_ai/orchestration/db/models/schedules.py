@@ -98,6 +98,7 @@ class PipelineSchedule(PipelineScheduleProjectPlatformMixin, BaseModel):
     token = Column(String(255), index=True, default=None)
     repo_path = Column(String(255))
     settings = Column(JSON)
+    workspace_name = Column(String(255), default=None)
     global_data_product_uuid = Column(String(255), index=True, default=None)
 
     backfills = relationship('Backfill', back_populates='pipeline_schedule')
@@ -834,6 +835,10 @@ class PipelineRun(PipelineRunProjectPlatformMixin, BaseModel):
     def pipeline_type(self) -> PipelineType:
         pipeline = self.pipeline
         return pipeline.type if pipeline is not None else None
+
+    @property
+    def workspace_name(self) -> String:
+        return self.pipeline_schedule.workspace_name
 
     @property
     def logs(self) -> List[Dict]:
