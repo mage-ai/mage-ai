@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useMemo, useCallback, useState } from 'react'
 import stylesBlockNode from '@styles/scss/components/Canvas/Nodes/BlockNode.module.scss';
 import { ElementRoleEnum } from '@mana/shared/types';
 import { NodeItemType } from '../interfaces';
-import { ItemTypeEnum } from '../Types';
+import { ItemTypeEnum } from '../types';
 import { RectType, XYType, DragInfo } from '@mana/shared/interfaces';
 import { getStyles } from './draggable/utils';
 import { cubicBezier, animate, motion, useMotionValueEvent, useDragControls, useMotionValue, useTransform } from 'framer-motion';
