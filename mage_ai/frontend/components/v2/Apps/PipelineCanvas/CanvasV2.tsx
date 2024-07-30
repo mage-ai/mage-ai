@@ -38,6 +38,8 @@ import {
   ZoomIn,
   ZoomOut,
   DeleteCircle,
+  Lightning,
+  Code,
 } from '@mana/icons';
 import stylesPipelineBuilder from '@styles/scss/apps/Canvas/Pipelines/Builder.module.scss';
 import {
@@ -221,6 +223,8 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
   const viewUUIDNext = useRef<string>(null);
   const zoomDetailRef = useRef<HTMLSpanElement>(null);
   const blockLinePathsPortalRef = useRef<HTMLDivElement>(null);
+  const submitCodeExecutionRef = useRef<Record<string, (handler: any) => void>>({});
+  const launchEditorAppRef = useRef<Record<string, (handler: any) => void>>({});
 
   const nodesToBeRenderedRef = useRef<Record<string, boolean>>({});
   const updateLinesRef = useRef<UpdateLinesType>(null);
@@ -615,6 +619,12 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
           ref={nodeRef}
           showApp={showRelatedNotes(ItemTypeEnum.APP)}
           showOutput={showRelatedNotes(ItemTypeEnum.OUTPUT)}
+          setSubmitCodeExecution={handler => {
+            submitCodeExecutionRef.current[block.uuid] = handler;
+          }}
+          setLaunchEditorApp={handler => {
+            launchEditorAppRef.current[block.uuid] = handler;
+          }}
           transformState={transformState}
         />
       ),
@@ -2364,12 +2374,46 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
 
     if (objectSize(getSelectedItems()) > 0) {
       const count = objectSize(getSelectedItems());
+      const blocks = Object.values(getSelectedItems() ?? {}).map(item => item?.item?.block);
       menuItems.push(...[
         { divider: true },
         {
+          Icon: Lightning,
+          onClick: (event: MouseEvent) => {
+            event?.preventDefault();
+
+            blocks?.forEach(block => {
+              const handler = submitCodeExecutionRef.current?.[block?.uuid];
+              if (handler) {
+                handler(event);
+              }
+            });
+
+            removeContextMenu(event);
+          },
+          uuid: `Execude code from all ${count} ${pluralize('block', count, false, true)}`,
+        },
+        {
+          Icon: Code,
+          onClick: (event: ClientEventType) => {
+            event?.preventDefault();
+
+            blocks?.forEach(block => {
+              const handler = launchEditorAppRef.current?.[block?.uuid];
+              if (handler) {
+                handler(event);
+              }
+            });
+
+            removeContextMenu(event);
+          },
+          uuid: 'Open code editor for all selected blocks',
+        },
+        {
           Icon: DeleteCircle,
           onClick: (event: MouseEvent) => {
-            const blocks = Object.values(getSelectedItems() ?? {}).map(item => item?.item?.block);
+            event?.preventDefault();
+
             blockAPI.delete.mutate({
               event,
               id: encodeURIComponent(blocks[0].uuid),
@@ -2508,8 +2552,8 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
                 rectsMappingRef.current[nodeID] = rect;
               }
 
-              rect.left = Math.max(PADDING_VERTICAL, rect.left);
-              rect.top = Math.max(200, rect.top);
+              rect.left = Math.max(PADDING_VERTICAL * 2, rect.left) ?? (PADDING_VERTICAL * 2);
+              rect.top = Math.max(400, rect.top) ?? 400;
 
               renderChildren = (
                 rectParent: RectType,

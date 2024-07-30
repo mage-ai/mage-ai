@@ -117,9 +117,10 @@ $enter-duration: 3s;
 
 .outputContainerHeader,
 .outputContainer {
-  @include gradient(0deg, var(--menus-background-gradient-default), var(--menus-background-gradient-default), 0%, 100%);
-  background-color: var(--menus-background-base-default);
+  /* @include gradient(0deg, var(--menus-background-gradient-default), var(--menus-background-gradient-default), 0%, 100%);
+  background-color: var(--menus-background-base-default); */
   backdrop-filter: blur(var(--modal-blur-base));
+  background-color: var(--backgrounds-body);
 
   border-color: var(--borders-color-base-default);
   border-left-width: var(--borders-width);

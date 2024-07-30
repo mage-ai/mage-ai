@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useMemo, useCallback, useState } from 'react'
 import stylesBlockNode from '@styles/scss/components/Canvas/Nodes/BlockNode.module.scss';
 import { ElementRoleEnum } from '@mana/shared/types';
 import { NodeItemType } from '../interfaces';
+import { ItemTypeEnum } from '../Types';
 import { RectType, XYType, DragInfo } from '@mana/shared/interfaces';
 import { getStyles } from './draggable/utils';
 import { cubicBezier, animate, motion, useMotionValueEvent, useDragControls, useMotionValue, useTransform } from 'framer-motion';
@@ -324,10 +325,13 @@ function DragWrapper({
       dragControls={dragControls}
       dragMomentum={false}
       dragPropagation={false}
-      initial={draggable && !item?.rect ? {
+      initial={draggable && !item?.rect && (rect?.left ?? false) && (rect?.top ?? false) ? {
         translateX: rect?.left,
         translateY: rect?.top,
-      } : undefined}
+      } : [ItemTypeEnum.APP, ItemTypeEnum.OUTPUT].includes(item?.type) ? {
+        translateX: 160,
+        translateY: 240,
+      } : {}}
       onContextMenu={onContextMenu}
       role={[draggable && ElementRoleEnum.DRAGGABLE].filter(Boolean).join(' ')}
       ref={dragRef}

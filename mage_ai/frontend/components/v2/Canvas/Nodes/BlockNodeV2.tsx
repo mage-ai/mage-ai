@@ -98,6 +98,8 @@ type BlockNodeType = {
   dragRef?: React.MutableRefObject<HTMLDivElement>;
   index?: number;
   groupSelection?: boolean;
+  setSubmitCodeExecution?: (handler: any) => void;
+  setLaunchEditorApp?: (handler: any) => void;
   setHandleOnChildMessage?: (handler: (event: EventStreamType, block: BlockType) => void) => void;
   getParentOnMessageHandler?: (groupUUID: string) => (event: EventStreamType, block: BlockType) => void;
   recentlyAddedBlocksRef?: React.MutableRefObject<Record<string, boolean>>;
@@ -115,6 +117,7 @@ function BlockNode(
   { block, dragRef, node, groupSelection, showApp, recentlyAddedBlocksRef, showOutput,
     setHandleOnChildMessage, pipelineUUID,
     getParentOnMessageHandler, linePathPortalRef, transformState,
+    setSubmitCodeExecution, setLaunchEditorApp,
     ...rest }: BlockNodeType,
   ref: React.MutableRefObject<HTMLElement>,
 ) {
@@ -1281,6 +1284,13 @@ function BlockNode(
 
     if (setHandleOnChildMessage) {
       setHandleOnChildMessage(handleChildMessages);
+    }
+
+    if (setSubmitCodeExecution) {
+      setSubmitCodeExecution(event => submitCodeExecution(event as any));
+    }
+    if (setLaunchEditorApp) {
+      setLaunchEditorApp(event => launchEditorApp(event as any));
     }
 
     // This will auto-launch the editor app for blocks without templates from their groups.
