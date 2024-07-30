@@ -74,6 +74,8 @@ export function MultiSelectionProvider({ children }: MultiSelectionProviderProps
 
   useEffect(() => {
     const highlighting = (event: MouseEvent) => {
+      if (event.button === 2) return;
+
       event.preventDefault()
       event.stopPropagation();
 
@@ -136,6 +138,8 @@ export function MultiSelectionProvider({ children }: MultiSelectionProviderProps
     };
 
     const handleMouseUp = (event: MouseEvent) => {
+      if (event.button === 2) return;
+
       endEventRef.current = event;
       mouseDownActiveRef.current = false;
 
@@ -146,8 +150,7 @@ export function MultiSelectionProvider({ children }: MultiSelectionProviderProps
         width: 0,
       });
 
-      const isDeselectClick = shiftKeyActiveRef.current
-        && startEventRef.current?.target === endEventRef.current.target;
+      const isDeselectClick = startEventRef.current?.target === endEventRef.current.target;
 
       const selectionRect = getSelectionRect(endEventRef.current);
 
@@ -172,10 +175,19 @@ export function MultiSelectionProvider({ children }: MultiSelectionProviderProps
           if (doesRectIntersect(selectionRect, rectTest)) {
             selectedItemsRef.current[clientID] ||= {};
 
-            if (isDeselectClick && uuid in selectedItemsRef.current[clientID]) {
-              delete selectedItemsRef.current[clientID][uuid];
-              if (onDeselectItem) {
-                onDeselectItem(event, selectableItem);
+            if (isDeselectClick) {
+              if (shiftKeyActiveRef.current) {
+                if (uuid in selectedItemsRef.current[clientID]) {
+                  delete selectedItemsRef.current[clientID][uuid];
+                  if (onDeselectItem) {
+                    onDeselectItem(event, selectableItem);
+                  }
+                } else {
+                  selectedItemsRef.current[clientID][uuid] = selectableItem;
+                  if (onSelectItem) {
+                    onSelectItem(event, selectableItem, selectedItemsRef.current[clientID]);
+                  }
+                }
               }
             } else {
               selectedItemsRef.current[clientID][uuid] = selectableItem;
@@ -245,6 +257,7 @@ export function MultiSelectionProvider({ children }: MultiSelectionProviderProps
       deregister: () => {
         delete clientRefs.current[uuid];
       },
+      getSelectedItems: () => selectedItemsRef.current[uuid],
       register: (
         containerRef: MultiSelectionContextClientType['containerRef'],
         items: MultiSelectionContextClientType['items'],

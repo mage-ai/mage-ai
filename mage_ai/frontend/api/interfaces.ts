@@ -92,6 +92,7 @@ export type ArgsValueOrFunctionType =
   | ((args: Record<string, any>) => Record<string, any>);
 
 export type MutateFunctionArgsType = {
+  batch?: ArgsValueOrFunctionType;
   event?: any | any;
   meta?: ArgsValueOrFunctionType;
   payload?: ArgsValueOrFunctionType;

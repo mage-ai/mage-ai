@@ -36,3 +36,4 @@ class MetaKey(BaseEnum):
     LIMIT = '_limit'
     OFFSET = '_offset'
     ORDER_BY = '_order_by[]'
+    BATCH = '_batch'

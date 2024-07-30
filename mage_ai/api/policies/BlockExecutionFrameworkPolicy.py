@@ -95,3 +95,14 @@ BlockExecutionFrameworkPolicy.allow_write(
     ],
     condition=lambda policy: policy.has_at_least_editor_role_and_pipeline_edit_access(),
 )
+
+BlockExecutionFrameworkPolicy.allow_write(
+    'blocks',
+    on_action=[
+        OperationType.DELETE,
+    ],
+    scopes=[
+        OauthScope.CLIENT_PRIVATE,
+    ],
+    condition=lambda policy: policy.has_at_least_editor_role_and_pipeline_edit_access(),
+)

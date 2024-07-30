@@ -132,15 +132,26 @@ export function useMutate(
   }
 
   function preprocessPayload({
+    batch,
     id,
     payload,
-  }: { payload?: ArgsValueOrFunctionType } & IDArgsType = {}): {
+  }: {
+    batch?: ArgsValueOrFunctionType;
+    payload?: ArgsValueOrFunctionType;
+  } & IDArgsType = {}): {
     [key: string]: any;
   } {
     const modelPrev = getModel(id);
-    return {
+
+    const payloadData = {
       [resourceName]: typeof payload === 'function' ? payload(modelPrev) : payload,
     };
+
+    if (batch) {
+      payloadData[resource] = batch;
+    }
+
+    return payloadData;
   }
 
   function handleResponse(response: ResponseType, variables?: any, ctx?: any) {
@@ -248,9 +259,17 @@ export function useMutate(
     const { responseType = ResponseTypeEnum.JSON, signal = null } =
       opts || ({} as FetcherOptionsType);
 
+    const argsCombined = { ...args, ...idArgs };
+    const body = preprocessPayload(argsCombined);
+    const query = addMetaQuery(args) ?? {};
+
+    if ('batch' in argsCombined) {
+      query._batch = true;
+    }
+
     const { data, headers, method, queryString, url } = preprocess(urlArg, {
       ...opts,
-      body: preprocessPayload({ ...args, ...idArgs }),
+      body,
       method:
         OperationTypeEnum.CREATE === operation
           ? 'POST'
@@ -259,7 +278,7 @@ export function useMutate(
             : OperationTypeEnum.UPDATE === operation
               ? 'PUT'
               : 'GET',
-      query: addMetaQuery(args),
+      query,
     });
 
     return new Promise((resolve, reject) => {

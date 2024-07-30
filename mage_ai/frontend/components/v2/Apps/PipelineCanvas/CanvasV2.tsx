@@ -37,6 +37,7 @@ import {
   Undo,
   ZoomIn,
   ZoomOut,
+  DeleteCircle,
 } from '@mana/icons';
 import stylesPipelineBuilder from '@styles/scss/apps/Canvas/Pipelines/Builder.module.scss';
 import {
@@ -107,8 +108,8 @@ import { buildDependencies } from './utils/pipelines';
 import { getCache, updateCache } from '@mana/components/Menu/storage';
 import { useMutate } from '@context/v2/APIMutation';
 import { deepCopyArray, reverseArray, indexBy, unique, uniqueArray, range } from '@utils/array';
-import { getNewUUID } from '@utils/string';
-import { deepCopy, ignoreKeys, isEmptyObject, selectKeys } from '@utils/hash';
+import { getNewUUID, pluralize } from '@utils/string';
+import { deepCopy, ignoreKeys, isEmptyObject, objectSize, selectKeys } from '@utils/hash';
 import { WithOnMount } from '@mana/hooks/useWithOnMount';
 import { ShowNodeType } from './interfaces';
 import { buildOutputNode } from './utils/items';
@@ -194,6 +195,7 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
   const {
     clearSelection,
     deregister,
+    getSelectedItems,
     register,
   } = useMultiSelection('PipelineCanvas');
 
@@ -1538,7 +1540,9 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
       },
       delete: {
         ...blockAPI.delete,
-        mutate: ({ id: blockUUID, ...args1 }, args2) => {
+        mutate: ({ id: blockUUID, ...args1 }, args2, opts?: {
+          updateLayout?: boolean;
+        }) => {
           blockExitRef.current = blockUUID;
           opacityBlockExit.set(1);
 
@@ -1548,7 +1552,12 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
             onSuccess: (resp) => {
               const { data } = resp;
               args1?.onSuccess && args1.onSuccess(resp);
-              onBlockCountChange(data.block.pipeline, data.block);
+
+              if (opts?.updateLayout) {
+                onBlockCountChange(data.block.pipeline, data.block);
+              } else {
+                onBlockCountChange(data.block.pipeline, data.block);
+              }
             },
           }, args2);
         },
@@ -2069,6 +2078,7 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
       clearTimeout(timeout);
       animationTimeoutRef.current = null;
       timeoutRef.current = null;
+      deregister();
     };
   }, []);
 
@@ -2351,6 +2361,31 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
         uuid: 'Save pipeline as image',
       },
     ] as MenuItemType[];
+
+    if (objectSize(getSelectedItems()) > 0) {
+      const count = objectSize(getSelectedItems());
+      menuItems.push(...[
+        { divider: true },
+        {
+          Icon: DeleteCircle,
+          onClick: (event: MouseEvent) => {
+            const blocks = Object.values(getSelectedItems() ?? {}).map(item => item?.item?.block);
+            blockAPI.delete.mutate({
+              event,
+              id: encodeURIComponent(blocks[0].uuid),
+              batch: blocks,
+            }, {
+              onSuccess: ({ data }) => {
+                clearSelection();
+                removeContextMenu(event);
+                onBlockCountChange(data.block.pipeline, data.block);
+              },
+            });
+          },
+          uuid: `Remove ${count} selected ${pluralize('block', count, false, true)}`,
+        },
+      ]);
+    }
 
     const { reduceItems } = opts ?? {};
     if (items) {

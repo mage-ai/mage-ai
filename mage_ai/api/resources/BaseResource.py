@@ -9,6 +9,7 @@ import inflection
 from mage_ai import settings
 from mage_ai.api.errors import ApiError
 from mage_ai.api.mixins.result_set import ResultSetMixIn
+from mage_ai.api.operations.constants import MetaKey
 from mage_ai.api.resources.Resource import Resource
 from mage_ai.api.resources.shared import collective_loaders
 from mage_ai.api.result_set import ResultSet
@@ -330,6 +331,10 @@ class BaseResource(Resource, ResultSetMixIn):
                 self.result_set().context.data[k_name] = {}
             self.result_set().context.data[k_name][key] = loaded
         return loaded
+
+    def is_batch_request(self) -> bool:
+        meta = (self.model_options or {}).get('meta')
+        return meta is not None and bool(meta.get(MetaKey.BATCH))
 
     def __result_sets(self):
         return self.model_options.get('result_sets', {})

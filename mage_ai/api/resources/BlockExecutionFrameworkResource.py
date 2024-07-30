@@ -75,10 +75,22 @@ class BlockExecutionFrameworkResource(GenericResource):
 
     async def delete(self, **kwargs):
         parent_model = kwargs.get('parent_model')
-        res = BlockResource.member(self.model.uuid, self.current_user, **kwargs)
+
+        buuids = []
+        if self.is_batch_request():
+            payload = kwargs.get('payload')
+            if payload and payload.get('blocks'):
+                buuids += [b.get('uuid') for b in payload.get('blocks') or []]
+                buuids = [b for b in buuids if b and b != self.model.uuid]
+        buuids.append(self.model.uuid)
+
         kwargs['query'] = kwargs.get('query') or {}
         kwargs['query']['force'] = [True]
-        await res.delete(**kwargs)
+
+        for buuid in buuids:
+            res = BlockResource.member(buuid, self.current_user, **kwargs)
+            await res.delete(**kwargs)
+
         if parent_model:
             await parent_model.get_pipeline(refresh=True)
             self.model.pipeline = parent_model

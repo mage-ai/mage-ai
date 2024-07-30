@@ -1574,10 +1574,10 @@ function BlockNode(
                   dragControls={dragControlsUp}
                   key="up"
                   ref={portUpstreamRef as any}
-                  style={{
-                    x: handleXUp,
-                    y: handleYUp,
-                  }}
+                  // style={{
+                  //   x: handleXUp,
+                  //   y: handleYUp,
+                  // }}
                 />,
                 <motion.circle
                   {...circleProps}
@@ -1586,10 +1586,10 @@ function BlockNode(
                   dragControls={dragControlsDn}
                   key="down"
                   ref={portDownstreamRef as any}
-                  style={{
-                    x: handleXDn,
-                    y: handleYDn,
-                  }}
+                  // style={{
+                  //   x: handleXDn,
+                  //   y: handleYDn,
+                  // }}
                 />,
                 <motion.foreignObject
                   animate={foreignObjectAnimation}
@@ -1846,14 +1846,21 @@ function BlockNode(
       y: (top - height) - (transformState?.current?.originY?.current ?? 0),
     };
 
-    controls.start(event);
+    controls.start({
+      ...event,
+      pageX: dragStartPointRef.current.x,
+      pageY: dragStartPointRef.current.y,
+    }, { snapToCursor: true });
 
     [port, line].forEach((ref) => {
       ref?.classList?.remove(stylesPipelineBuilder.hidden);
     });
 
     if (phaseRef.current > 0) {
-      animation.set(dragStartPointRef.current);
+      animation.set({
+        x: dragStartPointRef.current.x,
+        y: dragStartPointRef.current.y,
+      });
       foreignObjectAnimation.set({
         opacity: 0,
         x: 0,
