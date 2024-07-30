@@ -1596,6 +1596,7 @@ function BlockNode(
                   key="foreign-object-loader-upstream"
                   ref={foreignObjectUpstreamRef as any}
                   style={{
+                    opacity: 0,
                     translateX: 0.5,
                     translateY: 0.5,
                     height: CIRCLE_SIZE,
@@ -1612,6 +1613,7 @@ function BlockNode(
                   key="foreign-object-loader-downstream"
                   ref={foreignObjectDownstreamRef as any}
                   style={{
+                    opacity: 0,
                     translateX: 0.5,
                     translateY: 0.5,
                     height: CIRCLE_SIZE,
@@ -1730,6 +1732,7 @@ function BlockNode(
             ? foreignObjectUpstreamRef
             : foreignObjectDownstreamRef
           )?.current?.classList.remove(stylesPipelineBuilder.hidden);
+          foreignObjectAnimation.set({ opacity: 1 });
         },
         onError: () => {
           resetDragging();
@@ -1737,6 +1740,10 @@ function BlockNode(
             ? foreignObjectUpstreamRef
             : foreignObjectDownstreamRef
           )?.current?.classList.add(stylesPipelineBuilder.hidden);
+          foreignObjectAnimation.set({ opacity: 0 });
+        },
+        onSuccess: () => {
+          foreignObjectAnimation.set({ opacity: 0 });
         },
         payload: {
           [key]: unique((block[key] ?? []).concat(block2.uuid), buuid => buuid),
@@ -1769,6 +1776,7 @@ function BlockNode(
             ? foreignObjectUpstreamRef
             : foreignObjectDownstreamRef
           )?.current?.classList.remove(stylesPipelineBuilder.hidden);
+          foreignObjectAnimation.set({ opacity: 1 });
         },
         onError: () => {
           resetDragging();
@@ -1776,6 +1784,10 @@ function BlockNode(
             ? foreignObjectUpstreamRef
             : foreignObjectDownstreamRef
           )?.current?.classList.add(stylesPipelineBuilder.hidden);
+          foreignObjectAnimation.set({ opacity: 0 });
+        },
+        onSuccess: () => {
+          foreignObjectAnimation.set({ opacity: 0 });
         },
         payload: {
           [key]: unique((block[key] ?? []).concat(block2.uuid), buuid => buuid),
@@ -1813,6 +1825,7 @@ function BlockNode(
         });
       });
       foreignObjectAnimation.set({
+        opacity: 0,
         x: 0,
         y: 0,
       });
@@ -1824,7 +1837,6 @@ function BlockNode(
     const line = draggingUpstreamRef.current ? lineUpstreamRef.current : lineDownstreamRef.current;
     const controls = draggingUpstreamRef.current ? dragControlsUp : dragControlsDn;
     const animation = draggingUpstreamRef.current ? upstreamAnimation : downstreamAnimation;
-    const foreignObject = draggingUpstreamRef.current ? foreignObjectUpstreamRef.current : foreignObjectDownstreamRef.current;
 
     const { left, width, top, height } = event?.target?.getBoundingClientRect();
 
@@ -1834,11 +1846,19 @@ function BlockNode(
     };
 
     controls.start(event);
-    animation.set(dragStartPointRef.current);
 
-    [port, line, foreignObject].forEach((ref) => {
+    [port, line].forEach((ref) => {
       ref?.classList?.remove(stylesPipelineBuilder.hidden);
     });
+
+    if (phaseRef.current > 0) {
+      animation.set(dragStartPointRef.current);
+      foreignObjectAnimation.set({
+        opacity: 0,
+        x: 0,
+        y: 0,
+      });
+    }
   }
 
   function startDragControlsUp(event) {
