@@ -199,14 +199,14 @@ function PipelineDetailPage({
     if (phaseRef.current === 0 && !pipeline) {
       mutants.detail.mutate();
 
-      const loadServices = async () => {
-        await import('@components/v2/IDE/Manager').then(mod => {
-          mod.Manager.loadServices();
-          phaseRef.current = 2;
-        });
-      };
+      // const loadServices = async () => {
+      //   await import('@components/v2/IDE/Manager').then(mod => {
+      //     mod.Manager.loadServices();
+      //     phaseRef.current = 2;
+      //   });
+      // };
 
-      loadServices();
+      // loadServices();
     }
 
     const disposeManager = async () => {

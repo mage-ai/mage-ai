@@ -180,11 +180,11 @@ function MenuItemBase(
           </Grid>
         </Grid>
 
-        {description && (
+        {description && (typeof description === 'function' ? description?.() : (
           <Text maxWidth={400} secondary small={!small} xsmall={small}>
-            {typeof description === 'function' ? description?.() : description}
+            {description}
           </Text>
-        )}
+        ))}
       </Grid>
     </MenuItemStyled>
   );

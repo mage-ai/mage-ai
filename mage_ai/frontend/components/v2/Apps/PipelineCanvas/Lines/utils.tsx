@@ -29,7 +29,7 @@ import {
 } from '../../../Canvas/types';
 import { LayoutConfigType, RectType, OutputNodeType, BlocksByGroupType, BlockMappingType, GroupMappingType } from '@components/v2/Canvas/interfaces';
 import { getBlockColor } from '@mana/themes/blocks';
-import { getPathD } from '../../../Canvas/Connections/utils';
+import { getPathD, parsePathD } from '../../../Canvas/Connections/utils';
 import { indexBy, sortByKey, unique, uniqueArray } from '@utils/array';
 import { BlockTypeEnum } from '@interfaces/BlockType';
 import { GroupUUIDEnum } from '@interfaces/PipelineExecutionFramework/types';
@@ -39,6 +39,7 @@ import { DEBUG } from '../../../utils/debug';
 import { deepCopy, ignoreKeys, objectSize, selectKeys } from '@utils/hash';
 import { calculateBoundingBox } from '@components/v2/Canvas/utils/layout/shared';
 import { FrameworkType } from '@interfaces/PipelineExecutionFramework/interfaces';
+import Loading from '@mana/components/Loading';
 
 export function getLineID(upstream: string, downstream: string) {
   return [upstream, downstream].join('->');
@@ -241,6 +242,7 @@ export function buildPaths(
       style?: LayoutConfigType['style'];
     };
     lineRefs?: React.MutableRefObject<Record<ItemTypeEnum, Record<string, React.MutableRefObject<SVGPathElement>>>>;
+    onContextMenu?: (event: any, lineID: string, foreignObjectRef: React.MutableRefObject<any>) => void;
     shouldAnimate?: (rectup: RectType, rectdn: RectType) => boolean;
     visibleByDefault?: boolean;
   },
@@ -369,6 +371,79 @@ export function buildPaths(
       // transition={{ ease: EASING }}
     />,
   );
+
+  // Must go last so that it’s placed over the line path.
+  if (opts?.onContextMenu) {
+    // From is on the left side
+    const [startX, endX] = fromRect.left + fromRect.width < toRect.left + toRect.width
+      ? [fromRect.left + fromRect.width, toRect.left]
+      // From is on the right side
+      : [toRect.left + toRect.width, fromRect.left];
+
+    // From is on the top side
+    const [startY, endY] = fromRect.top + fromRect.height < toRect.top + toRect.height
+      ? [fromRect.top + fromRect.height, toRect.top]
+      // From is on the bottom side
+      : [toRect.top + toRect.height, fromRect.top];
+
+    const rectDims = {
+      x: Math.min(startX, endX),
+      y: Math.min(startY, endY),
+      height: Math.abs(startY - endY),
+      width: Math.abs(startX - endX),
+    };
+
+
+    const foRef = createRef();
+    paths.push(
+      <rect
+        {...rectDims}
+        className={[
+          stylesPipelineBuilder.pathContextMenuOverlay,
+        ].join(' ')}
+        key={`${lineID}-context-menu-overlay`}
+        onContextMenu={opts?.onContextMenu ? event => opts?.onContextMenu?.(event, lineID, foRef) : undefined}
+        fill="transparent"
+        stroke="transparent"
+      />
+    );
+
+    const {
+      startX: startX2,
+      startY: startY2,
+      endX: endX2,
+      endY: endY2,
+    } = parsePathD(pathProps.d);
+    const foDims = {
+      x: Math.min(startX2, endX2),
+      y: Math.min(startY2, endY2),
+      height: Math.abs(startY2 - endY2),
+      width: Math.abs(startX2 - endX2),
+    };
+
+    if (foDims.height < 14) {
+      const yoff = 14 - foDims.height;
+      foDims.height = 14;
+      foDims.y -= (yoff / 2);
+    }
+
+    if (foDims.width < 14) {
+      const xoff = 14 - foDims.width;
+      foDims.width = 14;
+      foDims.x -= (xoff / 2);
+    }
+
+    paths.push(
+      <foreignObject
+        {...foDims}
+        className={stylesPipelineBuilder.pathContextMenuOverlayLoader}
+        key={`${lineID}-context-menu-overlay-loader`}
+        ref={foRef as any}
+      >
+        <Loading circle />
+      </foreignObject>
+    );
+  }
 
   const keys = ['left', 'top', 'width', 'height'];
 

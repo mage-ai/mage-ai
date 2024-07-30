@@ -76,8 +76,8 @@ export function getBlockColor(
     accentLight = colors?.yellowHi;
   } else if (BlockTypeEnum.DATA_LOADER === blockType || blockColor === BlockColorEnum.BLUE) {
     baseName = 'blue';
-    accent = colors?.blueText;
-    accentLight = colors?.blueHi;
+    accent = colors?.blue;
+    accentLight = colors?.blueMd;
   } else if (BlockTypeEnum.MARKDOWN === blockType) {
     baseName = 'sky';
     accent = colors?.sky;

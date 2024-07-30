@@ -27,6 +27,36 @@ export function shiftRectsIntoBoundingBox(rects: RectType[], boundingBox: RectTy
   }));
 }
 
+export function alignRectsInBoundingBox(rects: RectType[], boundingBox: RectType, scaleToFit: boolean = false): RectType[] {
+  if (rects.length === 0) {
+    return [];
+  }
+
+  const groupBoundingBox = calculateBoundingBox(rects);
+
+  let scaleX = 1;
+  let scaleY = 1;
+
+  if (scaleToFit) {
+    // Calculate scale factors to fit all rects proportionately within the bounding box
+    scaleX = boundingBox.width / groupBoundingBox.width;
+    scaleY = boundingBox.height / groupBoundingBox.height;
+  }
+
+  // Calculate the starting point to maintain rects centrally aligned within the bounding box
+  const startX = boundingBox.left + (boundingBox.width - groupBoundingBox.width * scaleX) / 2;
+  const startY = boundingBox.top + (boundingBox.height - groupBoundingBox.height * scaleY) / 2;
+
+  // Shift and scale each rect proportionately to fit within the bounding box
+  return rects.map(rect => ({
+    ...rect,
+    left: startX + (rect.left - groupBoundingBox.left) * scaleX,
+    top: startY + (rect.top - groupBoundingBox.top) * scaleY,
+    width: scaleToFit ? rect.width * scaleX : rect.width,
+    height: scaleToFit ? rect.height * scaleY : rect.height,
+  }));
+}
+
 export function centerRectOnScreen(
   boundingBox: RectType,
   rectBase: RectType,

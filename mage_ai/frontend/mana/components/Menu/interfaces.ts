@@ -1,3 +1,5 @@
+import React from "react";
+
 export type ItemClickHandler = (
   event: MouseEvent,
   group?: any,
@@ -16,7 +18,7 @@ export interface ItemType {
 
 export interface MenuItemType {
   Icon?: ({ ...props }: any) => any;
-  description?: (() => string) | string;
+  description?: (() => string | JSX.Element | React.ReactNode) | string;
   disabled?: boolean;
   divider?: boolean;
   italic?: boolean;

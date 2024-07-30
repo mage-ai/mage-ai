@@ -21,23 +21,28 @@ export type LinePathType = {
 type ConnectionLinesProps = {
   children?: React.ReactNode;
   linePaths?: Record<string, LinePathType[]>;
+  onContextMenu?: (event: any) => void;
   id?: string;
+  className?: string;
+  style?: React.CSSProperties;
   zIndex?: number;
 };
 
 function ConnectionLinesBase({
+  className,
   children,
   id,
   linePaths,
+  style,
   zIndex,
 }: ConnectionLinesProps, ref) {
   return (
     <motion.svg
-      className={[styles.connectionLines]?.join(' ')}
+      className={[className ?? styles.connectionLines]?.join(' ')}
       id={id}
       initial
       ref={ref}
-      style={{
+      style={style ?? {
         height: '100%',
         left: 0,
         overflow: 'visible',

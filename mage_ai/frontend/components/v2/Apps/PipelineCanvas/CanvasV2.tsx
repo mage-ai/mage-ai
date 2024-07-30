@@ -53,6 +53,7 @@ import {
   getRectDiff,
   logMessageForRects,
   GROUP_NODE_PADDING,
+  alignRectsInBoundingBox,
 } from '../../Canvas/utils/layout/shared';
 import { transformRects } from '../../Canvas/utils/rect';
 import { shiftRectsIntoBoundingBox } from '../../Canvas/utils/layout/shared';
@@ -1541,6 +1542,27 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
           }, args2);
         },
       },
+      update: {
+        ...blockAPI.update,
+        mutate: ({ id: blockUUID, ...args1 }, args2, opts?: {
+          updateLayout?: boolean;
+        }) => {
+          blockExitRef.current = blockUUID;
+          opacityBlockExit.set(1);
+
+          blockAPI.update.mutate({
+            ...args1,
+            id: blockUUID,
+            onSuccess: (resp) => {
+              const { data } = resp;
+              args1?.onSuccess && args1.onSuccess(resp);
+              if (opts?.updateLayout) {
+                onBlockCountChange(data.block.pipeline, data.block);
+              }
+            },
+          }, args2);
+        },
+      },
     };
   }, [blockAPI]);
 
@@ -1902,6 +1924,10 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
         // based on their bounding box positions.
         tfs = shiftRectsIntoBoundingBox(tfs, rectsInTheirBoundingBox[0]);
         rectsVisTrans = shiftRectsIntoBoundingBox(rectsVisTrans, rectsInTheirBoundingBox[1]);
+        const rectsCentered =
+          alignRectsInBoundingBox(tfs.concat(rectsVisTrans), layoutConfig?.viewportRef?.current?.getBoundingClientRect() ?? {});
+        tfs = rectsCentered.filter(r => tfs.find(rt => rt.id === r.id));
+        rectsVisTrans = rectsCentered.filter(r => rectsVisTrans.find(rt => rt.id === r.id));
       }
 
       let rectsToStore = [...tfs];
@@ -2795,7 +2821,6 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
 
                     <LineManagerV2
                       animateLineRef={animateLineRef}
-                      blockPortalRef={blockLinePathsPortalRef}
                       controls={controlsForLines}
                       renderLineRef={renderLineRef}
                       rectsMapping={{
@@ -2807,6 +2832,8 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
                       transformState={transformState}
                       updateLinesRef={updateLinesRef}
                     />
+
+                    <div className={stylesPipelineBuilder.blockLinePaths} ref={blockLinePathsPortalRef} />
                   </div>
                 </motion.div>
 

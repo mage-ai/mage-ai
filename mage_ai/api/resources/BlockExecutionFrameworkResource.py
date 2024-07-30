@@ -66,6 +66,12 @@ class BlockExecutionFrameworkResource(GenericResource):
             if payload.get('configuration'):
                 await parent_model.update_block_configuration(self.model, payload['configuration'])
                 await parent_model.get_blocks(refresh=True)
+            elif 'downstream_blocks' in payload:
+                await parent_model.update_downstream_blocks(
+                    self.model,
+                    payload['downstream_blocks'],
+                )
+                await parent_model.get_blocks(refresh=True)
 
     async def delete(self, **kwargs):
         parent_model = kwargs.get('parent_model')

@@ -239,6 +239,12 @@ class Pipeline(DelegatorTarget):
     async def remove_block(self, block: Block, *args, **kwargs):
         self.delete_block(block.block, commit=True, force=True)
 
+    async def update_downstream_blocks(self, block: Block, downstream_block_uuids: List[str]):
+        if not self.pipeline:
+            return
+        self.pipeline.update_block(block.block, downstream_block_uuids=downstream_block_uuids)
+        await self.pipeline.save_async(include_execution_framework=True)
+
     async def update_block_configuration(self, block: Block, configuration: Dict):
         if not self.pipeline:
             return

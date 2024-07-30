@@ -86,7 +86,27 @@
     pointer-events: none;
     position: absolute;
     width: 100%;
+  }
 
+  .blockConnectionLines {
+    left: 0;
+    overflow: visible;
+    position: absolute;
+    top: 0;
+    z-index: 2;
+  }
+
+  .pathContextMenuOverlay {
+    z-index: 2;
+  }
+
+  .pathContextMenuOverlayLoader {
+    @include hide;
+    pointer-events: none;
+
+    &.show {
+      @include show;
+    }
   }
 
   /* .level {
@@ -292,4 +312,8 @@
   &.block-output {
     opacity: 0.3;
   }
+}
+
+.blockLinePaths {
+  z-index: 5;
 }

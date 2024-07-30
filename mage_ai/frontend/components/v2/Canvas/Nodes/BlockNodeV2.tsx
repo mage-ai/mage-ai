@@ -46,7 +46,7 @@ import EventStreamType, {
   KernelOperation,
   ResultType,
 } from '@interfaces/EventStreamType';
-import React, { useState, useCallback, useContext, useMemo, useRef, useEffect } from 'react';
+import React, { useState, useCallback, useContext, useMemo, useRef, useEffect, createRef } from 'react';
 import { createPortal } from 'react-dom';
 import stylesBlockNode from '@styles/scss/components/Canvas/Nodes/BlockNode.module.scss';
 import { AppConfigType } from '../../Apps/interfaces';
@@ -68,6 +68,9 @@ import {
   Lightning,
   CloseV2, PlayButtonFilled,
   AlertTriangle, BlockGeneric, PlayButton,
+  BranchAlt,
+  ArrowRight,
+  PaginateArrowRight,
 } from '@mana/icons';
 import { ThemeContext } from 'styled-components';
 import { createRoot, Root } from 'react-dom/client';
@@ -136,6 +139,8 @@ function BlockNode(
   const handleOnMessageRef = useRef<Record<string, (event: EventStreamType) => void>>({});
 
   const [apps, setApps] = useState<Record<string, AppNodeType>>({});
+
+  const lineRefs = useRef<Record<string, React.MutableRefObject<SVGElement>>>({});
 
   // Child blocks
   const statusByBlockRef = useRef<Record<string, {
@@ -736,17 +741,19 @@ function BlockNode(
     timeoutRef.current = setTimeout(() => {
       clearTimeout(timeoutRef.current);
 
+      const elLoading = ref?.current;
+
       mutations.blocks.update.mutate({
         event,
         id: encodeURIComponent(block.uuid),
         onError: () => {
-          ref?.current?.classList?.remove(stylesBlockNode.loading);
+          elLoading?.classList?.remove(stylesBlockNode.loading);
         },
         onStart: () => {
-          ref?.current?.classList?.add(stylesBlockNode.loading);
+          elLoading?.classList?.add(stylesBlockNode.loading);
         },
         onSuccess: () => {
-          ref?.current?.classList?.remove(stylesBlockNode.loading);
+          elLoading?.classList?.remove(stylesBlockNode.loading);
           opts?.callback && opts?.callback?.();
           setTimeout(() => {
             const el = document.getElementById(id);
@@ -1341,6 +1348,56 @@ function BlockNode(
     [mutations.blocks, groupSelection, removeContextMenu, setSelectedGroup, teleportIntoBlock, buildMenuItemsForTemplates],
   );
 
+  const handleLinePathContextMenu = useCallback((
+    event, block, blockdn, lineID, foreignObjectRef
+  ) => {
+    event.preventDefault();
+    event.stopPropagation();
+
+    const color = getBlockColor(block?.type, { getColorName: true })?.names?.base;
+    const colordn = getBlockColor(blockdn?.type, { getColorName: true })?.names?.base;
+
+    handleContextMenu(event, [
+      {
+        Icon: BranchAlt,
+        description: () => (
+          <Grid autoFlow="column" columnGap={8} alignItems="center">
+            <Text colorName={color} secondary={!color} xsmall>
+              {block.name ?? block.uuid}
+            </Text>
+
+            <PaginateArrowRight secondary size={8} />
+
+            <Text colorName={colordn} secondary={!colordn} xsmall>
+              {blockdn?.name ?? blockdn?.uuid}
+            </Text>
+          </Grid>
+        ),
+        onClick: (eventClick) => {
+          const fo = foreignObjectRef?.current;
+          fo?.classList?.add(stylesPipelineBuilder.show);
+          mutations.blocks.update.mutate({
+            event: eventClick,
+            id: encodeURIComponent(block.uuid),
+            onError: () => {
+              fo?.classList?.remove(stylesPipelineBuilder.show);
+            },
+            onSuccess: () => {
+              fo?.classList?.remove(stylesPipelineBuilder.show);
+              removeContextMenu(event);
+            },
+            payload: {
+              downstream_blocks: block.downstream_blocks.filter(b => b !== blockdn.uuid),
+            },
+          }, {}, {
+            updateLayout: true,
+          });
+        },
+        uuid: 'Remove connection',
+      }
+    ]);
+  }, [block, handleContextMenu, removeContextMenu, mutations.blocks.update]);
+
   const linePathsMemo = useMemo(() => {
     if (block?.groups?.length > 0
       || !block?.type
@@ -1349,9 +1406,10 @@ function BlockNode(
     ) return;
 
     const rectup = rectsMappingRef?.current?.[block.uuid] ?? node?.rect;
-    const linePaths = {};
 
     if (!rectup) return;
+
+    const svgs = [];
 
     block?.downstream_blocks?.forEach((buuid: string, idx: number) => {
       const rectdn = rectsMappingRef?.current?.[buuid];
@@ -1369,14 +1427,30 @@ function BlockNode(
           blockMapping: blockMappingRef?.current,
           groupMapping: groupMappingRef?.current,
           layout: layoutConfig?.current,
+          onContextMenu: (event, lineID, foreignObjectRef) => handleLinePathContextMenu(
+            event, block, blockMappingRef.current?.[buuid], lineID, foreignObjectRef,
+          ),
           visibleByDefault: true,
         },
       );
-      linePaths[linePath.id] = [linePath];
+
+      lineRefs.current[linePath.id] ||= createRef();
+
+      svgs.push(
+        <ConnectionLines
+          className={stylesPipelineBuilder.blockConnectionLines}
+          style={{}}
+          key={linePath.id}
+          linePaths={{
+            [linePath.id]: [linePath],
+          }}
+          ref={lineRefs.current[linePath.id]}
+        />
+      );
     });
 
-    return <ConnectionLines linePaths={linePaths} />;
-  }, [block, node, rectsMappingRef.current]);
+    return <>{svgs}</>;
+  }, [block, node, rectsMappingRef.current, handleLinePathContextMenu, layoutConfig]);
 
   return (
     <>

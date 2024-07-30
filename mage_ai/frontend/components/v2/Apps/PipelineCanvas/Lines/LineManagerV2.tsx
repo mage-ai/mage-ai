@@ -65,7 +65,6 @@ export type UpdateLinesType = (
 export default function LineManagerV2({
   animate,
   animateLineRef,
-  blockPortalRef,
   controls: controlsProp,
   renderLineRef,
   rectsMapping,
@@ -76,7 +75,6 @@ export default function LineManagerV2({
   setAnimationOperations
 }: {
   animate?: boolean;
-  blockPortalRef?: React.MutableRefObject<HTMLDivElement>;
   setAnimationOperations: (ops: Record<string, any>) => void;
   animateLineRef?: React.MutableRefObject<(to: string, from?: string, opts?: { stop?: boolean }) => void>;
   controls?: any
@@ -612,7 +610,7 @@ export default function LineManagerV2({
       </svg>
       {APP_ENABLED && <ConnectionLines linePaths={linesApp} zIndex={BASE_Z_INDEX + ORDER[ItemTypeEnum.APP]} />}
 
-      <ConnectionLines linePaths={linesBlock} zIndex={2} ref={blockPortalRef} />
+      <ConnectionLines linePaths={linesBlock} zIndex={2} />
       <ConnectionLines linePaths={linesNode} zIndex={1} />
       <ConnectionLines linePaths={linesOutput} zIndex={BASE_Z_INDEX + ORDER[ItemTypeEnum.OUTPUT]} />
     </>
