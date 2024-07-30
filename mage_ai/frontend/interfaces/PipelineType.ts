@@ -146,6 +146,7 @@ export default interface PipelineType {
   executor_type?: ExecutorTypeEnum;
   execution_framework?: PipelineExecutionFrameworkUUIDEnum;
   extensions?: PipelineExtensionsType;
+  framework?: any;
   groups?: GroupUUIDEnum[];
   id?: number;
   metadata?: PipelineMetadataType;

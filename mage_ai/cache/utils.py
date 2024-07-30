@@ -6,6 +6,7 @@ from mage_ai.shared.hash import extract, merge_dict
 PIPELINE_KEYS = [
     'created_at',
     'description',
+    'execution_framework',
     'name',
     'tags',
     'type',

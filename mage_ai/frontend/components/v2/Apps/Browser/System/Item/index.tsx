@@ -8,7 +8,7 @@ import { AppConfigType } from '../../../interfaces';
 import Grid from '@mana/components/Grid';
 import DeferredRenderer from '@mana/components/DeferredRenderer';
 import Text from '@mana/elements/Text';
-import { ItemDetailType, ItemType } from '../interfaces';
+import { DragSettingsType, ItemDetailType, ItemType } from '../interfaces';
 import { LOCAL_STORAGE_KEY_FOLDERS_STATE, get, getSetUpdate } from '@storage/localStorage';
 import { getIconColorName, getFullPath } from '../utils';
 import useFileIcon from '../utils/useFileIcon';
@@ -29,6 +29,7 @@ const { DiamondShared, FileIcon, Circle, CaretDown, CaretRight } = icons;
 
 type ItemProps = {
   app: AppConfigType;
+  dragSettings?: DragSettingsType;
   item: ItemType | ItemDetailType;
   onClick?: (event: React.MouseEvent<HTMLDivElement>, item: ItemDetailType) => void;
   onContextMenu: (event: React.MouseEvent<HTMLDivElement>) => void;
@@ -47,7 +48,7 @@ function itemsRootID(uuid: string) {
   return `items-root-${uuid}`;
 }
 
-function Item({ app, item, onClick, onContextMenu, themeContext }: ItemProps) {
+function Item({ app, dragSettings, item, onClick, onContextMenu, themeContext }: ItemProps) {
   const { items, path, name } = item as ItemDetailType;
 
   const isFolder = useMemo(() => typeof items !== 'undefined' && items !== null, [items]);
@@ -56,6 +57,7 @@ function Item({ app, item, onClick, onContextMenu, themeContext }: ItemProps) {
   const {
     BlockIcon,
     Icon,
+    blockType,
     color: blockIconColor,
     folderNameForBlock,
     iconColor,
@@ -122,7 +124,7 @@ function Item({ app, item, onClick, onContextMenu, themeContext }: ItemProps) {
       if (pipelineCount) {
         return <DiamondShared fill={blockIconColor} small />;
       } else if (BlockIcon) {
-        return <BlockIcon color={blockIconColor} size={folderNameForBlock && !isFolder ? 8 : 12} />;
+        return <BlockIcon color={blockIconColor} size={folderNameForBlock && !isFolder ? 8 : 8} />;
       }
     }
 
@@ -197,7 +199,7 @@ function Item({ app, item, onClick, onContextMenu, themeContext }: ItemProps) {
       itemsRootRef.current.render(
         <ThemeProvider theme={themeContext}>
           <Grid alignItems='center' ref={itemsRef} rowGap={0} uuid={itemsClassName(uuid)}>
-            <DeferredRenderer
+            {/* <DeferredRenderer
               fallback={
                 <ThemeProvider theme={themeContext}>
                   <div style={{ display: 'flex' }}>
@@ -208,23 +210,24 @@ function Item({ app, item, onClick, onContextMenu, themeContext }: ItemProps) {
               }
               idleTimeout={1}
             >
-              {values?.map((item: ItemDetailType) => (
-                <Item
-                  app={app}
-                  item={item}
-                  key={item.name}
-                  onClick={onClick}
-                  onContextMenu={onContextMenu}
-                  themeContext={themeContext}
-                />
-              ))}
-            </DeferredRenderer>
+            </DeferredRenderer> */}
+            {values?.map((item: ItemDetailType) => (
+              <Item
+                app={app}
+                dragSettings={dragSettings}
+                item={item}
+                key={item.name}
+                onClick={onClick}
+                onContextMenu={onContextMenu}
+                themeContext={themeContext}
+              />
+            ))}
           </Grid>
         </ThemeProvider>,
       );
       renderedRef.current = true;
     }
-  }, [app, themeContext, uuid, items, buildLines, onClick, onContextMenu]);
+  }, [app, dragSettings, themeContext, uuid, items, buildLines, onClick, onContextMenu]);
 
   const renderUpdates = useCallback(() => {
     getSetUpdate(LOCAL_STORAGE_KEY_FOLDERS_STATE, {
@@ -262,7 +265,16 @@ function Item({ app, item, onClick, onContextMenu, themeContext }: ItemProps) {
   }, []);
 
   return (
-    <FolderStyled uuid={uuid}>
+    // ts-ignore
+    <FolderStyled {...(dragSettings ? dragSettings(
+      item as ItemType,
+      {
+        blockType,
+        isBlockFile,
+        isFolder,
+        path,
+      },
+    ) : {})} uuid={uuid}>
       <Grid
         columnGap={0}
         onClick={(event: React.MouseEvent<HTMLDivElement>) => {
@@ -284,10 +296,13 @@ function Item({ app, item, onClick, onContextMenu, themeContext }: ItemProps) {
 
         <NameStyled>
           <Grid alignItems='center' columnGap={8} templateColumns='auto auto 1fr'>
-            <div id={iconActionRootID(uuid)}>{buildIconAction()}</div>
-            <div id={iconRootID(uuid)}>{buildIcon()}</div>
+            {buildIcon
+              ? <div id={iconRootID(uuid)}>{buildIcon()}</div>
+              : <div id={iconActionRootID(uuid)}>{buildIconAction()}</div>
+            }
+
             {name && (
-              <Text blue={isFolder} monospace muted={!isFolder} small>
+              <Text blue={isFolder} secondary={!isFolder} small>
                 {String(name)}
               </Text>
             )}

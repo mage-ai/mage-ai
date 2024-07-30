@@ -100,9 +100,9 @@ def find_directory(top_level_path: str, comparator: Callable) -> str:
 
 def get_absolute_paths_from_all_files(
     starting_full_path_directory: str,
-    comparator: Callable = None,
+    comparator: Optional[Callable] = None,
     include_hidden_files: bool = False,
-    parse_values: Callable = None,
+    parse_values: Optional[Callable] = None,
 ) -> List[Tuple[str, int, str]]:
     dir_path = os.path.join(starting_full_path_directory, './**/*')
 
@@ -119,6 +119,38 @@ def get_absolute_paths_from_all_files(
             arr.append(parse_values(value) if parse_values else value)
 
     return arr
+
+
+async def get_file_info(
+    filename: str, parse_values: Optional[Callable] = None
+) -> Tuple[str, int, str]:
+    absolute_path = os.path.abspath(filename)
+    async with aiofiles.open(filename, 'rb') as f:
+        stats = await f.stat()
+        value = (absolute_path, stats.st_size, round(stats.st_mtime))
+        return parse_values(value) if parse_values else value
+
+
+async def get_absolute_paths_from_all_files_async(
+    starting_full_path_directory: str,
+    comparator: Optional[Callable] = None,
+    include_hidden_files: bool = False,
+    parse_values: Optional[Callable] = None,
+) -> List[Tuple[str, int, str]]:
+    dir_path = os.path.join(starting_full_path_directory, './**/*')
+
+    tasks = []
+    for filename in glob.iglob(dir_path, recursive=True):
+        absolute_path = os.path.abspath(filename)
+
+        if (
+            os.path.isfile(absolute_path)
+            and (not include_hidden_files or not absolute_path.startswith('.'))
+            and (not comparator or comparator(absolute_path))
+        ):
+            tasks.append(get_file_info(absolute_path, parse_values))
+
+    return await asyncio.gather(*tasks)
 
 
 def find_file_from_another_file_path(file_path: str, comparator) -> str:
@@ -199,24 +231,34 @@ async def safe_delete_dir_async(output_dir: str, verbose: bool = False):
 
 
 def makedirs_sync(path: str):
-    os.makedirs(path, exist_ok=True)
+    try:
+        os.makedirs(path, exist_ok=True)
+    except FileExistsError:
+        pass
 
 
 async def makedirs_async(path: str):
     loop = asyncio.get_running_loop()
-    await loop.run_in_executor(None, os.makedirs, path, exist_ok=True)
+    await loop.run_in_executor(None, makedirs_sync, path)
 
 
 async def write_async(
-    path: str, data: Optional[str] = None, overwrite: Optional[bool] = None
+    path: str,
+    data: Optional[str] = None,
+    overwrite: Optional[bool] = None,
+    mode: Optional[Any] = None,
+    flush: Optional[bool] = None,
 ) -> bool:
     if not overwrite and await exists_async(path):
         raise Exception(f'File already exists at {path}, cannot overwrite unless forced.')
 
     try:
+        mode = mode or 'w'
         await makedirs_async(os.path.dirname(path))
-        async with aiofiles.open(path, 'w') as file:
+        async with aiofiles.open(path, mode) as file:
             await file.write('' if data is None else data)
+            if flush:
+                await file.flush()
         return True
     except Exception as err:
         if is_debug():
@@ -235,6 +277,11 @@ async def delete_async(path: str, ignore_exists: Optional[bool] = None) -> bool:
         if is_debug():
             print(f'[ERROR] files.delete_async: {err}')
     return False
+
+
+async def getsize_async(path: str) -> int:
+    loop = asyncio.get_event_loop()
+    return await loop.run_in_executor(None, os.path.getsize, path)
 
 
 async def exists_async(path: str) -> bool:
@@ -323,15 +370,3 @@ async def find_files_with_criteria(
 
     await asyncio.gather(*tasks)
     return files_with_criteria
-
-
-def remove_subpath(full_path: str, subpath: str) -> str:
-    """
-    Remove a specified subpath from the full path.
-    """
-    # Convert paths to use consistent separators if necessary
-    full_path = str(Path(full_path).resolve())
-    subpath = str(Path(subpath).resolve())
-
-    # Replace subpath with an empty string if it exists within the full path
-    return full_path.replace(subpath, '')

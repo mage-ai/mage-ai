@@ -81,6 +81,7 @@ class PipelineScheduler:
         self.pipeline = get_pipeline_from_platform(
             pipeline_run.pipeline_uuid,
             repo_path=self.pipeline_schedule.repo_path if self.pipeline_schedule else None,
+            materialize_execution_framework=True,
         )
         # Get the list of integration stream if the pipeline is data integration pipeline
         self.streams = []
@@ -1318,7 +1319,12 @@ def retry_pipeline_run(
     repo_path: str,
 ) -> 'PipelineRun':
     pipeline_uuid = pipeline_run['pipeline_uuid']
-    pipeline = Pipeline.get(pipeline_uuid, check_if_exists=True, repo_path=repo_path)
+    pipeline = Pipeline.get(
+        pipeline_uuid,
+        check_if_exists=True,
+        repo_path=repo_path,
+        materialize_execution_framework=True,
+    )
     if pipeline is None or not pipeline.is_valid_pipeline(pipeline.dir_path):
         raise Exception(f'Pipeline {pipeline_uuid} is not a valid pipeline.')
 

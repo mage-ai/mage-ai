@@ -22,6 +22,7 @@ from mage_ai.api.operations.constants import (
     READ,
     UPDATE,
     WRITE,
+    MetaKey,
 )
 from mage_ai.api.parsers.BaseParser import BaseParser
 from mage_ai.api.presenters.BasePresenter import CustomDict, CustomList
@@ -610,7 +611,10 @@ class BaseOperation:
             )
 
         if DELETE == self.action:
-            await res.process_delete(**updated_options)
+            await res.process_delete(**{
+                **updated_options,
+                **dict(payload=self.__payload_for_resource()),
+            })
         elif DETAIL == self.action:
 
             def _build_authorize_query(
@@ -829,6 +833,13 @@ class BaseOperation:
 
     def __payload_for_resource(self):
         payload = self.payload.get(self.__resource_name_singular(), {})
+
+        if (
+            self.meta
+            and (self.meta or {}).get(MetaKey.BATCH)
+            and self.resource in (self.payload or {})
+        ):
+            payload[self.resource] = self.payload.get(self.resource)
 
         if self.files and self.files.get(FILE_KEY_NAME):
             payload_prev = ignore_keys(self.payload, [FILE_KEY_NAME])

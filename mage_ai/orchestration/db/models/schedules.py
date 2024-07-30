@@ -179,7 +179,11 @@ class PipelineSchedule(PipelineScheduleProjectPlatformMixin, BaseModel):
         if project_platform_activated():
             return self.pipeline_project_platform
 
-        return Pipeline.get(self.pipeline_uuid, repo_path=get_repo_path())
+        return Pipeline.get(
+            self.pipeline_uuid,
+            repo_path=get_repo_path(),
+            materialize_execution_framework=True,
+        )
 
     @property
     def pipeline_in_progress_runs_count(self) -> int:
@@ -828,7 +832,11 @@ class PipelineRun(PipelineRunProjectPlatformMixin, BaseModel):
         if project_platform_activated():
             return self.pipeline_project_platform
 
-        return Pipeline.get(self.pipeline_uuid, repo_path=get_repo_path())
+        return Pipeline.get(
+            self.pipeline_uuid,
+            repo_path=get_repo_path(),
+            materialize_execution_framework=True,
+        )
 
     @property
     def pipeline_type(self) -> PipelineType:

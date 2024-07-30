@@ -1,32 +1,63 @@
 import React from 'react';
 
 import styles from '@styles/scss/components/Text/Text.module.scss';
-import { ElementType, extractProps } from '../../shared/types';
+import { extractProps } from '../../shared/props';
 import { hyphenateCamelCase } from '@utils/string';
 
-type TextProps = {
-  children: React.ReactNode | string | any;
+export type TextProps = {
+  colorName?: string;
+  children?: React.ReactNode | string | any;
   className?: string;
   inline?: boolean;
+  maxWidth?: number;
+  nowrap?: boolean;
+  role?: string;
   small?: boolean;
+  style?: React.CSSProperties;
+  underline?: boolean;
   xsmall?: boolean;
   // Below alter the class names
   black?: boolean;
   blue?: boolean;
   bold?: boolean;
   inverted?: boolean;
+  error?: boolean;
   italic?: boolean;
   light?: boolean;
   medium?: boolean;
   monospace?: boolean;
   muted?: boolean;
+  pre?: boolean;
   semibold?: boolean;
   secondary?: boolean;
+  success?: boolean;
   warning?: boolean;
-} & ElementType;
+};
 
-function Text({ children, className: classNameProp, inline, small, xsmall, ...props }: TextProps) {
-  const arr = [small ? styles.small : xsmall ? styles.xsmall : styles.text, classNameProp || ''];
+export function buildTextStyleProps({
+  colorName,
+  className: classNameProp,
+  maxWidth,
+  nowrap,
+  small,
+  success,
+  error,
+  warning,
+  xsmall,
+  ...props
+}: TextProps): {
+  classNames: string;
+  props: any;
+} {
+  const arr = [
+    small ? styles.small : xsmall ? styles.xsmall : styles.text,
+    classNameProp || '',
+    nowrap && styles.nowrap,
+    colorName && styles[`color-${colorName.toLowerCase()}`],
+    success && styles.success,
+    error && styles.error,
+    warning && styles.warning,
+  ].filter(Boolean);
 
   Object.entries(props || {}).forEach(([key, value]) => {
     if (typeof value !== 'undefined') {
@@ -49,15 +80,33 @@ function Text({ children, className: classNameProp, inline, small, xsmall, ...pr
     .filter(value => typeof value !== 'undefined' && value !== null && String(value)?.length >= 1)
     .join(' ');
 
-  return inline ? (
-    <span {...extractProps(props)} className={classNames}>
+  const xprops = extractProps(props);
+  xprops.style = {
+    ...xprops.style,
+    maxWidth: maxWidth ? `${maxWidth}px` : undefined,
+  };
+
+  return {
+    classNames,
+    props: xprops,
+  };
+}
+
+function Text({ children, inline, pre, ...rest }: TextProps, ref: React.RefObject<HTMLElement>) {
+  const { classNames, props } = buildTextStyleProps(rest as TextProps);
+
+  let El = 'p';
+  if (pre) {
+    El = 'pre';
+  } else if (inline) {
+    El = 'span';
+  }
+
+  return (
+    <El {...props} className={classNames} ref={ref}>
       {children}
-    </span>
-  ) : (
-    <p {...extractProps(props)} className={classNames}>
-      {children}
-    </p>
+    </El>
   );
 }
 
-export default Text;
+export default React.forwardRef(Text);

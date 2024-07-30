@@ -26,5 +26,12 @@ else
   echo ".next directory does not exist.";
 fi &&
 
-yarn cache clean
-yarn install
+if [ -z "$1" ]; then
+  echo "No CWD provided. Using current directory as default."
+  CWD="."
+else
+  CWD=$1
+fi
+
+yarn --cwd "$CWD" cache clean
+yarn --cwd "$CWD" install

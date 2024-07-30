@@ -1,0 +1,245 @@
+### pgvector.py
+
+```python
+{% extends "data_exporters/default.jinja" %}
+{% block imports %}
+import psycopg2
+from typing import List, Tuple, Union
+
+{{ super() -}}
+{% endblock %}
+
+{% block content %}
+@data_exporter
+def pgvector(document_data: Tuple[str, str, str, List[str], List[Union[float, int]]], *args, **kwargs):
+    """
+    Exports document data to a Pgvector database.
+
+    Args:
+        document_data (Tuple[str, str, str, List[str], List[Union[float, int]]]):
+            Tuple containing document_id, document_content, chunk_text, tokens, and embeddings.
+    """
+    document_id, document_content, chunk_text, tokens, embeddings = document_data
+    connection_string = kwargs['connection_string']
+
+    conn = psycopg2.connect(connection_string)
+    cur = conn.cursor()
+
+    # Create table if not exists
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS documents (
+            document_id TEXT PRIMARY KEY,
+            -- document_content TEXT,
+            chunk_text TEXT,
+            -- tokens TEXT[],
+            embeddings FLOAT8[]
+        )
+    """)
+    conn.commit()
+
+    # Insert/Update the document
+    cur.execute("""
+        INSERT INTO documents (document_id, chunk_text, embeddings)
+        VALUES (%s, %s, %s)
+        ON CONFLICT (document_id) DO UPDATE
+        SET chunk_text = EXCLUDED.chunk_text,
+            embeddings = EXCLUDED.embeddings
+    """, (document_id, chunk_text, embeddings))
+
+    conn.commit()
+    cur.close()
+    conn.close()
+{% endblock %}
+```
+
+### elasticsearch.py
+
+```python
+{% extends "data_exporters/default.jinja" %}
+{% block imports %}
+from elasticsearch import Elasticsearch
+from typing import List, Tuple, Union
+
+{{ super() -}}
+{% endblock %}
+
+{% block content %}
+@data_exporter
+def elasticsearch(document_data: Tuple[str, str, str, List[str], List[Union[float, int]]], *args, **kwargs):
+    """
+    Exports document data to an Elasticsearch database.
+
+    Args:
+        document_data (Tuple[str, str, str, List[str], List[Union[float, int]]]):
+            Tuple containing document_id, document_content, chunk_text, tokens, and embeddings.
+    """
+    document_id, chunk_text, _, _, embeddings = document_data
+    connection_string = kwargs['connection_string']
+
+    es = Elasticsearch([connection_string])
+
+    document = {
+        "document_id": document_id,
+        # "document_content": document_content,
+        "chunk_text": chunk_text,
+        # "tokens": tokens,
+        "embeddings": embeddings
+    }
+
+    es.index(index="documents", id=document_id, body=document)
+{% endblock %}
+```
+
+### weaviate.py
+
+```python
+{% extends "data_exporters/default.jinja" %}
+{% block imports %}
+import weaviate
+from typing import List, Tuple, Union
+
+{{ super() -}}
+{% endblock %}
+
+{% block content %}
+@data_exporter
+def weaviate(document_data: Tuple[str, str, str, List[str], List[Union[float, int]]], *args, **kwargs):
+    """
+    Exports document data to a Weaviate database.
+
+    Args:
+        document_data (Tuple[str, str, str, List[str], List[Union[float, int]]]):
+            Tuple containing document_id, document_content, chunk_text, tokens, and embeddings.
+    """
+    document_id, chunk_text, _, _, embeddings = document_data
+    connection_string = kwargs['connection_string']
+
+    client = weaviate.Client(url=connection_string)
+
+    document = {
+        "document_id": document_id,
+        # "document_content": document_content,
+        "chunk_text": chunk_text,
+        # "tokens": tokens,
+        "embeddings": embeddings
+    }
+
+    client.data_object.create(document, class_name="Document")
+{% endblock %}
+```
+
+### chroma.py
+
+```python
+{% extends "data_exporters/default.jinja" %}
+{% block imports %}
+import chromadb
+from typing import List, Tuple, Union
+
+{{ super() -}}
+{% endblock %}
+
+{% block content %}
+@data_exporter
+def chroma(document_data: Tuple[str, str, str, List[str], List[Union[float, int]]], *args, **kwargs):
+    """
+    Exports document data to a Chroma database.
+
+    Args:
+        document_data (Tuple[str, str, str, List[str], List[Union[float, int]]]):
+            Tuple containing document_id, document_content, chunk_text, tokens, and embeddings.
+    """
+    document_id, chunk_text, _, _, embeddings = document_data
+    connection_string = kwargs['connection_string']
+
+    client = chromadb.Client(connection_string)
+
+    document = {
+        "document_id": document_id,
+        # "document_content": document_content,
+        "chunk_text": chunk_text,
+        # "tokens": tokens,
+        "embeddings": embeddings
+    }
+
+    collection = client.get_or_create_collection("documents")
+    collection.insert(document)
+{% endblock %}
+```
+
+### qdrant.py
+
+```python
+{% extends "data_exporters/default.jinja" %}
+{% block imports %}
+from qdrant_client import QdrantClient
+from typing import List, Tuple, Union
+
+{{ super() -}}
+{% endblock %}
+
+{% block content %}
+@data_exporter
+def qdrant(document_data: Tuple[str, str, str, List[str], List[Union[float, int]]], *args, **kwargs):
+    """
+    Exports document data to a Qdrant database.
+
+    Args:
+        document_data (Tuple[str, str, str, List[str], List[Union[float, int]]]):
+            Tuple containing document_id, document_content, chunk_text, tokens, and embeddings.
+    """
+    document_id, chunk_text, _, _, embeddings = document_data
+    connection_string = kwargs['connection_string']
+
+    client = QdrantClient(connection_string)
+
+    document = {
+        "document_id": document_id,
+        # "document_content": document_content,
+        "chunk_text": chunk_text,
+        # "tokens": tokens,
+        "embeddings": embeddings
+    }
+
+    client.upload("documents", [document])
+{% endblock %}
+```
+
+### pinecone.py
+
+```python
+{% extends "data_exporters/default.jinja" %}
+{% block imports %}
+import pinecone
+from typing import List, Tuple, Union
+
+{{ super() -}}
+{% endblock %}
+
+{% block content %}
+@data_exporter
+def pinecone(document_data: Tuple[str, str, str, List[str], List[Union[float, int]]], *args, **kwargs):
+    """
+    Exports document data to a Pinecone database.
+
+    Args:
+        document_data (Tuple[str, str, str, List[str], List[Union[float, int]]]):
+            Tuple containing document_id, document_content, chunk_text, tokens, and embeddings.
+    """
+    document_id, chunk_text, _, _, embeddings = document_data
+    connection_string = kwargs['connection_string']
+
+    pinecone.init(api_key=connection_string, environment="us-west1-gcp")
+    index = pinecone.Index("documents")
+
+    document = {
+        "document_id": document_id,
+        # "document_content": document_content,
+        "chunk_text": chunk_text,
+        # "tokens": tokens,
+        "embeddings": embeddings
+    }
+
+    index.upsert(vectors=[document])
+{% endblock %}
+```

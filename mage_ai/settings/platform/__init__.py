@@ -41,6 +41,7 @@ def activate_project(project_name: str, user=None) -> None:
         if user and ENABLE_USER_PROJECTS:
             from mage_ai.data_preparation.repo_manager import get_project_uuid
             from mage_ai.orchestration.db.models.utils import activate_project_for_user
+
             activate_project_for_user(user, get_project_uuid(), project_name)
 
         else:
@@ -67,9 +68,7 @@ def activate_project(project_name: str, user=None) -> None:
 
 # default repo_path will be the root project repo path if not provided downstream
 def build_repo_path_for_all_projects(
-    repo_path: str = None,
-    context_data: Dict = None,
-    mage_projects_only: bool = False
+    repo_path: str = None, context_data: Dict = None, mage_projects_only: bool = False
 ) -> Dict:
     # from mage_ai.shared.custom_logger import DX_PRINTER
     # DX_PRINTER.info('build repo path for all projects')
@@ -92,6 +91,18 @@ def build_repo_path_for_all_projects(
             root_project_name=root_project_name,
             root_project_full_path=root_project_path,
             uuid=project_name,
+        )
+
+    if len(settings) == 0:
+        from mage_ai.shared.path_fixer import remove_base_repo_directory_name
+
+        mapping[root_project_name] = dict(
+            full_path=root_project_path,
+            full_path_relative=remove_base_repo_directory_name(root_project_path),
+            path=root_project_name,
+            root_project_name=root_project_name,
+            root_project_full_path=root_project_path,
+            uuid=root_project_name,
         )
 
     return mapping
@@ -122,10 +133,17 @@ def repo_path_from_database_query_to_project_repo_path(
         query_arr_paths = []
         query_arr = dig(setting, ['database', 'query', key])
         if query_arr:
-            query_arr_paths = [os.path.join(*[part for part in [
-                os.path.dirname(base_repo_path()),
-                query_alias,
-            ] if len(part) >= 1]) for query_alias in query_arr]
+            query_arr_paths = [
+                os.path.join(*[
+                    part
+                    for part in [
+                        os.path.dirname(base_repo_path()),
+                        query_alias,
+                    ]
+                    if len(part) >= 1
+                ])
+                for query_alias in query_arr
+            ]
 
         paths = repo_paths[project_name]
         full_path = paths['full_path']
@@ -175,9 +193,9 @@ def get_repo_paths_for_file_path(
                 score += 2 + len(Path(path).parts)
 
             try:
-                if str(file_path).startswith(root_path) and \
-                        Path(file_path).relative_to(path_with_root):
-
+                if str(file_path).startswith(root_path) and Path(file_path).relative_to(
+                    path_with_root
+                ):
                     score += 1
             except ValueError:
                 try:
@@ -192,9 +210,9 @@ def get_repo_paths_for_file_path(
                 score += 2 + len(Path(path).parts)
 
             try:
-                if str(file_path).startswith(root_path_relative) and \
-                        Path(file_path).relative_to(path_with_root_path_relative):
-
+                if str(file_path).startswith(root_path_relative) and Path(file_path).relative_to(
+                    path_with_root_path_relative
+                ):
                     score += 1
             except ValueError:
                 try:
@@ -249,9 +267,11 @@ def build_active_project_repo_path(
 
     if no_active_project and active_project:
         __update_local_platform_settings(
-            dict(projects={
-                active_project['uuid']: dict(active=True),
-            }),
+            dict(
+                projects={
+                    active_project['uuid']: dict(active=True),
+                }
+            ),
             merge=True,
             repo_path=repo_path,
         )
@@ -383,10 +403,13 @@ def project_platform_settings(
     # from mage_ai.shared.custom_logger import DX_PRINTER
     # DX_PRINTER.info(f'project_platform_settings {repo_path} {id(context_data)} {context_data}')
     # DX_PRINTER.print_call_stack()
-    mapping = (__combined_platform_settings(
-        repo_path=repo_path,
-        mage_projects_only=mage_projects_only,
-    ) or {}).get('projects')
+    mapping = (
+        __combined_platform_settings(
+            repo_path=repo_path,
+            mage_projects_only=mage_projects_only,
+        )
+        or {}
+    ).get('projects')
 
     if mage_projects_only:
         select_keys = []
@@ -404,9 +427,12 @@ def update_settings(settings: Dict) -> Dict:
     projects = {}
     for project_name, project_settings in (settings.get('projects') or {}).items():
         uuid = project_settings.get('uuid') or project_name
-        projects[uuid] = extract(project_settings or {}, [
-            'path',
-        ])
+        projects[uuid] = extract(
+            project_settings or {},
+            [
+                'path',
+            ],
+        )
 
     settings['projects'] = projects
     content = yaml.dump(settings)

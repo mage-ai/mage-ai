@@ -96,8 +96,8 @@ export function selectKeys(
   }, {});
 }
 
-export const dig = (o, sArg) => {
-  let s = String(sArg);
+export const dig = (o, sArg: string | string[]) => {
+  let s = Array.isArray(sArg) ? sArg.join('.') : String(sArg);
 
   s = s.replace(/\[(\w+)\]/g, '.$1'); // convert indexes to properties
   s = s.replace(/^\./, ''); // strip a leading dot
@@ -113,25 +113,29 @@ export const dig = (o, sArg) => {
   return o;
 };
 
-export function setNested(obj, path, value) {
+export function setNested(obj: Record<string, any>, path: string, value: any): Record<string, any> {
   let schema = obj;
   const pList = path.split('.');
   const len = pList.length;
+
   for (let i = 0; i < len - 1; i++) {
     const elem = pList[i];
-    if (!schema[elem]) schema[elem] = {};
+    if (!schema.hasOwnProperty(elem) || typeof schema[elem] !== 'object' || schema[elem] === null) {
+      schema[elem] = {};
+    }
     schema = schema[elem];
   }
 
-  const valuePrev = schema[pList[len - 1]];
-  if (Array.isArray(value) && valuePrev && Array.isArray(valuePrev)) {
-    // @ts-ignore
-    schema[pList[len - 1]] = (valuePrev || []).concat(value);
+  const lastKey = pList[len - 1];
+  const valuePrev = schema[lastKey];
+
+  if (Array.isArray(value) && Array.isArray(valuePrev)) {
+    schema[lastKey] = valuePrev.concat(value);
   } else {
-    schema[pList[len - 1]] = value;
+    schema[lastKey] = value;
   }
 
-  return schema;
+  return obj;
 }
 
 // Deep merge two objects.
@@ -158,4 +162,44 @@ export function mergeDeep(target, ...sources) {
 
 export function objectSize(obj) {
   return obj ? Object.keys(obj).length : 0;
+}
+
+type FlattenedObject = { [key: string]: any };
+
+export function flattenObject(
+  obj: Record<string, any>,
+  parentKey = '',
+  res: FlattenedObject = {},
+): FlattenedObject {
+  for (const key in obj) {
+    if (obj.hasOwnProperty(key)) {
+      const newKey = parentKey ? `${parentKey}.${key}` : key;
+
+      if (typeof obj[key] === 'object' && obj[key] !== null && !Array.isArray(obj[key])) {
+        flattenObject(obj[key], newKey, res);
+      } else {
+        res[newKey] = obj[key];
+      }
+    }
+  }
+  return res;
+}
+
+export function deepCopy<T>(obj: T): T {
+  if (obj === null || typeof obj !== 'object') {
+    return obj;
+  }
+
+  if (Array.isArray(obj)) {
+    return obj.map(item => deepCopy(item)) as unknown as T;
+  }
+
+  const copiedObj: any = {};
+  for (const key in obj) {
+    if (obj.hasOwnProperty(key)) {
+      copiedObj[key] = deepCopy((obj as any)[key]);
+    }
+  }
+
+  return copiedObj;
 }

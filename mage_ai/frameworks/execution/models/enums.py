@@ -3,6 +3,7 @@ from mage_ai.shared.models import BaseEnum
 
 class ExecutionFrameworkUUID(BaseEnum):
     RAG = 'rag'
+    STANDARD = 'standard'
 
 
 class GroupUUID(BaseEnum):

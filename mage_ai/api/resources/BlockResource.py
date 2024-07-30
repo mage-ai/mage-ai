@@ -80,7 +80,7 @@ class BlockResource(GenericResource):
             start_idx = offset
             end_idx = start_idx + limit
 
-            results = total_results[start_idx:(end_idx + 1)]
+            results = total_results[start_idx : (end_idx + 1)]
 
             results_size = len(results)
             has_next = results_size > limit
@@ -173,9 +173,11 @@ class BlockResource(GenericResource):
                     language=language,
                 )
                 if dbt_block.file_path and dbt_block.file.exists():
-                    raise Exception('DBT model at that folder location already exists. \
+                    raise Exception(
+                        'DBT model at that folder location already exists. \
                         Please choose a different model name, or add a DBT model by \
-                        selecting single model from file.')
+                        selecting single model from file.'
+                    )
 
             block_attributes = dict(
                 color=payload.get('color'),
@@ -186,6 +188,7 @@ class BlockResource(GenericResource):
                 language=language,
                 pipeline=pipeline,
                 priority=payload.get('priority'),
+                groups=payload.get('groups', []),
                 upstream_block_uuids=payload.get('upstream_blocks', []),
             )
 
@@ -202,8 +205,8 @@ class BlockResource(GenericResource):
                 else:
                     error = ApiError.RESOURCE_INVALID.copy()
                     error.update(
-                        message=f'Replicated block {replicated_block_uuid} ' +
-                        f'does not exist in pipeline {pipeline.uuid}.',
+                        message=f'Replicated block {replicated_block_uuid} '
+                        + f'does not exist in pipeline {pipeline.uuid}.',
                     )
                     raise ApiError(error)
 
@@ -275,8 +278,10 @@ class BlockResource(GenericResource):
                 return self(block, user, **kwargs)
             else:
                 if extension_uuid:
-                    message = f'Block {pk} does not exist in pipeline {pipeline.uuid} ' \
+                    message = (
+                        f'Block {pk} does not exist in pipeline {pipeline.uuid} '
                         f'for extension {extension_uuid}.'
+                    )
                 else:
                     message = f'Block {pk} does not exist in pipeline {pipeline.uuid}.'
                 error.update(message=message)

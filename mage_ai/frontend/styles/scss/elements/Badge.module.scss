@@ -4,10 +4,16 @@
 
 .badge {
   @include backgrounds.background-colors();
+  @include borders.border-colors();
   @include borders.shared();
   @include grid.base();
 
   border-color: var(--colors-graylo);
-  border-radius: var(--borders-radius-sm);
-  padding: 6px;
+  border-radius: var(--borders-radius-sm) !important;
+  padding: var(--padding-xs) var(--padding-base);
+
+  &.small {
+    padding-left: var(--padding-xs) !important;
+    padding-right: var(--padding-xs) !important;
+  }
 }

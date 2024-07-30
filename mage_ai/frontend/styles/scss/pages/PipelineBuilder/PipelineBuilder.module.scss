@@ -1,8 +1,6 @@
-.container {
-  height: 100vh;
-  overflow: hidden;
-  width: 100vw;
+@use '../../abstracts/mixins' as *;
 
+.container {
   &.expanded {
     visibility: visible;
   }
@@ -12,4 +10,70 @@
     height: 0;
     visibility: hidden;
   }
+}
+
+.appManager {
+  height: calc(100vh - var(--header-height));
+  overflow: visible;
+  position: absolute;
+  top: var(--header-height);
+  width: 100vw;
+}
+
+.active {
+  opacity: 1;
+  overflow: visible;
+  pointer-events: all;
+  z-index: 1;
+}
+
+.inactive {
+  opacity: 0.1;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: -1;
+}
+
+.appToolbar {
+  align-items: center;
+  display: grid;
+  justify-content: center;
+  position: fixed;
+  width: inherit;
+  z-index: var(--header-z-index);
+}
+
+.appToolbarBottom {
+  bottom: var(--padding-container);
+}
+
+.appToolbarInner {
+  @include gradient(0deg, var(--menus-background-gradient-default), var(--menus-background-gradient-default), 0%, 100%);
+
+  align-items: center;
+  background-color: var(--menus-background-base-default);
+  backdrop-filter: blur(var(--modal-blur-base));
+  border-color: var(--borders-color-base-default);
+  border-radius: var(--borders-radius-button);
+  border-style: var(--borders-style);
+  border-width: var(--borders-width);
+  display: grid;
+  grid-auto-flow: column;
+  grid-column-gap: var(--padding-xs);
+  justify-content: center;
+  padding: var(--padding-xs);
+}
+
+.draggableItem {
+  pointer-events: none;
+  position: absolute;
+  z-index: 13;
+}
+
+.hidden {
+  display: none;
+  opacity: 0;
+  pointer-events: none;
+  visibility: hidden;
+  z-index: -1;
 }

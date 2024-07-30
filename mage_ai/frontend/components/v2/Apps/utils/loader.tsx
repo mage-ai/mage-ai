@@ -5,10 +5,10 @@ import { AppSubtypeEnum, AppTypeEnum } from '../constants';
 export default async function appLoader(appType: AppTypeEnum, appSubtype: AppSubtypeEnum) {
   const mapping = {
     [AppTypeEnum.BROWSER]: {
-      [AppSubtypeEnum.SYSTEM]: import('../Browser/useApp'),
+      [AppSubtypeEnum.SYSTEM]: null,
     },
     [AppTypeEnum.EDITOR]: {
-      [AppSubtypeEnum.IDE]: import('../Editor/useApp'),
+      [AppSubtypeEnum.IDE]: import('../Editor/useEditorAppNode'),
     },
   };
 

@@ -1,4 +1,6 @@
+import React from 'react';
 import styles from '@styles/scss/elements/GradientContainer.module.scss';
+import { motion } from 'framer-motion';
 import { withStyles } from '../hocs/withStyles';
 
 type Direction =
@@ -18,44 +20,71 @@ type InnerProps = {
 
 type OutterProps = {
   gradientBackground?: string;
+  motionProps?: any;
+  onContextMenu?: (event: React.MouseEvent<HTMLDivElement, MouseEvent>) => void;
+  role?: any;
+  style?: React.CSSProperties;
 };
-
-const GradientContainerOutter = withStyles<OutterProps>(styles, {
-  HTMLTag: 'div',
-  classNames: ['gradient-outter'],
-});
 
 const GradientContainerInner = withStyles<InnerProps>(styles, {
   HTMLTag: 'div',
   classNames: ['gradient-inner'],
 });
 
-export function GradientContainer({
-  backgroundColor,
-  borderColors,
-  children,
-  className,
-  direction = 'to top right',
-}: OutterProps &
-  InnerProps & {
-    borderColors?: string[];
-    className?: string;
-    direction?: Direction;
-  }) {
+export function GradientContainer(
+  {
+    backgroundColor,
+    borderColors,
+    children,
+    className,
+    direction = 'to top right',
+    motionProps,
+    noBorder,
+    onContextMenu,
+    role,
+    variant,
+    style,
+  }: OutterProps &
+    InnerProps & {
+      borderColors?: string[];
+      className?: string;
+      direction?: Direction;
+      noBorder?: boolean;
+      variant?: 'error' | 'error-reverse';
+    },
+  ref: React.RefObject<HTMLDivElement>,
+) {
+  const noInner = noBorder || variant;
+
   return (
     // @ts-ignore
-    <GradientContainerOutter
-      className={[styles['gradient-outter'], className || ''].join(' ')}
-      gradientBackground={
+    <motion.div
+      {...motionProps}
+      className={[
+        styles['gradient-outter'],
+        noInner && styles['noBorder'],
+        variant && styles[`variant-${variant}`],
+        className || '',
         direction && borderColors?.length >= 2
-          ? [direction.replace(' ', '-'), ...(borderColors || [])].join('-')
-          : undefined
-      }
+          ? styles[
+              `gradient-background-${direction.replace(' ', '-')}-${borderColors[0]}-${borderColors[1]}`
+            ]
+          : undefined,
+      ].join(' ')}
+      onContextMenu={onContextMenu}
+      ref={ref}
+      role={role}
+      style={style}
     >
       {/* @ts-ignore */}
-      <GradientContainerInner backgroundColor={backgroundColor}>{children}</GradientContainerInner>
-    </GradientContainerOutter>
+      {!noInner && (
+        <GradientContainerInner backgroundColor={backgroundColor}>
+          {children}
+        </GradientContainerInner>
+      )}
+      {noInner && children}
+    </motion.div>
   );
 }
 
-export default GradientContainer;
+export default React.forwardRef(GradientContainer);

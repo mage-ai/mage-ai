@@ -1,12 +1,12 @@
 import React, { useImperativeHandle, useRef } from 'react';
-import { ElementType, extractProps } from '@mana/shared/types';
+import { extractProps } from '../shared/props';
 import { styleClassNames } from '@mana/shared/utils';
 
 type HOCProps = {
-  HTMLTag?: keyof JSX.IntrinsicElements;
-  PropTypes?: React.WeakValidationMap<any>;
-  classNames?: string[];
-  allowDynamicStyles?: boolean;
+  HTMLTag?: any;
+  PropTypes?: any;
+  classNames?: any;
+  allowDynamicStyles?:  any;
 };
 
 export type GridType = {
@@ -19,10 +19,12 @@ export type GridType = {
   backgroundColor?: string;
   borders?: boolean;
   bordersTransparent?: boolean;
+  bordersBottom?: boolean;
   column?: number;
   columnEnd?: number;
   columnGap?: number;
   columnStart?: number;
+  data?: Record<string, any>;
   height?: number | string;
   justifyContent?: string;
   justifyItems?: string;
@@ -53,11 +55,13 @@ export type GridType = {
 };
 
 export type WithStylesProp = {
-  children?: React.ReactNode | Element | Element[] | React.ReactNode[] | any | any[];
+  children?: any;
   className?: string;
   id?: string;
+  onContextMenu?: (event: React.MouseEvent) => void;
+  role?: any;
   uuid?: string;
-} & ElementType &
+} & any &
   React.CSSProperties &
   GridType;
 
@@ -83,10 +87,18 @@ export function withStyles<P extends object = WithStylesProp>(styles: any, props
   } = propsHOC || ({} as HOCProps);
 
   return React.forwardRef<any, P & WithStylesProp>(function StyledComponent(
-    { children, className, id, uuid, ...props }: P & WithStylesProp,
+    { children, className, id, onContextMenu, role, uuid, ...props }: P & WithStylesProp,
     ref: any,
   ) {
     const divRef = useRef<HTMLDivElement>(null);
+
+    const data = Object.entries(props ?? {})
+      ?.filter(([key]) => key?.startsWith('data-'))
+      ?.reduce((acc, [key, value]) => {
+        acc[key] = value;
+        delete props[key];
+        return acc;
+      }, {});
 
     // Expose the divRef to the parent component through the ref
     useImperativeHandle(ref, () => divRef.current, []);
@@ -121,8 +133,11 @@ export function withStyles<P extends object = WithStylesProp>(styles: any, props
         {...propsExtracted}
         className={classNames}
         id={id}
+        onContextMenu={onContextMenu}
         // @ts-ignore
         ref={mergeRefs(divRef, ref)}
+        role={role}
+        {...data}
       >
         {children && (children as React.ReactNode)}
       </HTMLTag>

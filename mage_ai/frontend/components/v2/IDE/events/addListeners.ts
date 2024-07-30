@@ -55,7 +55,10 @@ export function addListeners(editor: any, eventListeners: EventListeners) {
 
   Object.entries(eventListeners).forEach(([eventName, listener]) => {
     if (eventName in editor) {
-      editor[eventName]((event: any) => listener(editor, event));
+      editor[eventName]((data: {
+        event: any;
+        target: any;
+      }) => listener(editor, data));
     }
   });
 }

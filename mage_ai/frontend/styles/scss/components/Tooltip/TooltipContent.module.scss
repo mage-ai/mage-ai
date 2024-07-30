@@ -1,0 +1,18 @@
+@use '../../abstracts/mixins';
+@use '../../base/borders';
+
+.tooltipContent {
+  @include borders.base();
+  @include mixins.gradient(0deg, var(--menus-background-gradient-default), var(--menus-background-gradient-default));
+
+  backdrop-filter: saturate(100%) blur(20px);
+  padding: var(--padding-base);
+  position: absolute;
+  z-index: 1000;
+
+  &.hide {
+    opacity: 0;
+    pointer-events: none;
+    visibility: hidden;
+  }
+}

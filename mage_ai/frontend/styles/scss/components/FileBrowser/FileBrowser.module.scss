@@ -1,0 +1,166 @@
+@use '../../base/borders' as borders;
+@use '../../abstracts/mixins' as *;
+
+$button-height: 44px;
+$button-width: 64px;
+$top: calc(var(--header-height) + var(--padding-container));
+$width: 300px;
+
+@mixin shared-position {
+  left: var(--padding-container);
+  position: fixed;
+  z-index: var(--header-z-index);
+}
+
+.button {
+  -moz-user-select: none;
+  -ms-user-select: none;
+  -webkit-user-select: none;
+
+  align-items: center;
+  background: none;
+  border: none;
+  column-gap: 8px;
+  cursor: pointer;
+  display: grid;
+  grid-auto-flow: column;
+  grid-template-columns: 1fr auto;
+  outline: none;
+  padding: var(--padding-base) !important;
+  position: absolute;
+}
+
+.buttonFloater {
+  @include shared-position;
+
+  height: $button-height;
+  top: $top;
+  width: $button-width;
+
+  .buttonNavClosed {
+    pointerEvents: all;
+    z-index: 12;
+  }
+
+  .buttonNavOpen {
+    pointer-events: none;
+    z-index: -1;
+  }
+}
+
+
+.nav {
+  @include shared-position;
+
+  bottom: var(--padding-container);
+  pointer-events: none;
+  top: $top;
+}
+
+.navOpen {
+  pointer-events: all;
+}
+
+.svgBorder {
+  @include shared-position;
+
+  bottom: var(--padding-container);
+  top: calc(var(--header-height) + var(--padding-container));
+  pointer-events: none;
+}
+
+.borderInactive {
+  display: none;
+}
+
+.background {
+  @include gradient(0deg, var(--menus-background-gradient-default), var(--menus-background-gradient-default), 0%, 100%);
+  /* background: linear-gradient(180deg, #0055ff 0%, rgb(0, 153, 255) 100%); */
+
+  backdrop-filter: saturate(200%) blur(10px);
+  border-color: transparent;
+  border-radius: var(--borders-radius-base);
+  border-style: var(--borders-style);
+  border-width: var(--borders-width);
+  bottom: 0;
+  left: 0;
+  position: absolute;
+  top: 0;
+  width: inherit;
+}
+
+.backgroundActive {
+  /* @include borders.base; */
+  /* clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%); */
+}
+
+.backgroundInactive {
+  clip-path: none !important;
+  height: $button-height;
+  width: $button-width;
+
+  .fileBrowser {
+    display: none;
+  }
+}
+
+.fileBrowser {
+  position: absolute;
+  top: $button-height;
+  width: 100%;
+}
+
+.backgroundBorder {
+  @include borders.base();
+  @include shared-position;
+
+  border-radius: var(--borders-radius-button) !important;
+  height: $button-height;
+  pointer-events: none;
+  top: $top;
+  width: $button-width;
+  z-index: 11;
+}
+
+.ul,
+.li {
+  margin: 0;
+  padding: 0;
+}
+
+.ul {
+  padding: 25px;
+  position: absolute;
+  top: 100px;
+  width: 230px;
+}
+
+.li {
+  list-style: none;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+}
+
+.resizeHandle {
+  background-color: var(--borders-color-base-default);
+  border-radius: 8px;
+  opacity: 1;
+  position: absolute;
+  z-index: 12;
+
+  &.right {
+    bottom: 0;
+    cursor: ew-resize;
+    height: 100%;
+    margin-right: -8px;
+    right: 0;
+    top: 0;
+    width: 16px;
+  }
+}
+
+.hide {
+  display: none;
+}

@@ -4,6 +4,7 @@ from mage_ai.data_preparation.models.project import Project
 from mage_ai.data_preparation.models.project.constants import FeatureUUID
 from mage_ai.data_preparation.templates.constants import (
     TEMPLATES,
+    TEMPLATES_AI,
     TEMPLATES_BY_UUID,
     TEMPLATES_ONLY_FOR_V2,
 )
@@ -23,6 +24,7 @@ class BlockTemplateResource(GenericResource):
 
         if show_all:
             arr += TEMPLATES_ONLY_FOR_V2.copy()
+            arr += TEMPLATES_AI.copy()
 
             if Project().is_feature_enabled(FeatureUUID.DATA_INTEGRATION_IN_BATCH_PIPELINE):
                 arr += get_templates()

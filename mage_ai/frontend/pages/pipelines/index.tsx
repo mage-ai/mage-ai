@@ -1,8 +1,12 @@
 import NextLink from 'next/link';
+import { snakeToHyphens } from '@utils/url';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { MutateFunction, useMutation } from 'react-query';
 import { useRouter } from 'next/router';
-
+import {
+  FRAMEWORK_NAME_MAPPING,
+  PipelineExecutionFrameworkUUIDEnum,
+} from '@interfaces/PipelineExecutionFramework/types';
 import AIControlPanel from '@components/AI/ControlPanel';
 import BrowseTemplates from '@components/CustomTemplates/BrowseTemplates';
 import Button from '@oracle/elements/Button';
@@ -110,17 +114,12 @@ const TAB_RECENT = {
 };
 const TAB_ALL = {
   Icon: PipelineV3,
-  label: (opts) => opts?.count ? `All pipelines › ${opts?.count || 0}` : 'All pipelines',
+  label: opts => (opts?.count ? `All pipelines › ${opts?.count || 0}` : 'All pipelines'),
   uuid: 'all',
 };
-const TABS = [
-  TAB_ALL,
-  TAB_RECENT,
-];
+const TABS = [TAB_ALL, TAB_RECENT];
 const QUERY_PARAM_TAB = 'tab';
-const NON_ARRAY_QUERY_KEYS = [
-  PipelineQueryEnum.SEARCH,
-];
+const NON_ARRAY_QUERY_KEYS = [PipelineQueryEnum.SEARCH];
 
 const sharedOpenButtonProps = {
   borderRadius: `${BORDER_RADIUS_SMALL}px`,
@@ -138,27 +137,29 @@ function PipelineListPage() {
   const refPaginate = useRef(null);
   const timeout = useRef(null);
 
-  const {
-    fetchProjects,
-    project,
-  } = useProject();
+  const { fetchProjects, project } = useProject();
 
   const [buttonTabsHeight, setButtonTabsHeight] = useState<number>(null);
 
   const [selectedPipeline, setSelectedPipeline] = useState<PipelineType>(null);
   const [searchText, setSearchTextState] = useState<string>(null);
-  const setSearchText = useCallback((searchQuery: string) => {
-    setSearchTextState(searchQuery);
+  const setSearchText = useCallback(
+    (searchQuery: string) => {
+      setSearchTextState(searchQuery);
 
-    clearTimeout(timeout.current);
+      clearTimeout(timeout.current);
 
-    timeout.current = setTimeout(() => goToWithQuery({
-      [MetaQueryEnum.OFFSET]: 0,
-      [PipelineQueryEnum.SEARCH]: searchQuery,
-    }), 500);
-  }, [
-    setSearchTextState,
-  ]);
+      timeout.current = setTimeout(
+        () =>
+          goToWithQuery({
+            [MetaQueryEnum.OFFSET]: 0,
+            [PipelineQueryEnum.SEARCH]: searchQuery,
+          }),
+        500,
+      );
+    },
+    [setSearchTextState],
+  );
 
   const [pipelinesEditing, setPipelinesEditing] = useState<{
     [uuid: string]: boolean;
@@ -166,113 +167,103 @@ function PipelineListPage() {
   const [errors, setErrors] = useState<ErrorsType>(null);
 
   const q = queryFromUrl();
-  const query = {
-    ...filterQuery(q, [
-      PipelineQueryEnum.SEARCH,
-      PipelineQueryEnum.STATUS,
-      PipelineQueryEnum.TAG,
-      PipelineQueryEnum.TYPE,
-      ...META_QUERY_KEYS,
-    ]),
-  };
+  const query = useMemo(
+    () => ({
+      ...filterQuery(q, [
+        PipelineQueryEnum.SEARCH,
+        PipelineQueryEnum.STATUS,
+        PipelineQueryEnum.TAG,
+        PipelineQueryEnum.TYPE,
+        ...META_QUERY_KEYS,
+      ]),
+    }),
+    [q],
+  );
 
-  const selectedTabUUID = useMemo(() => q?.[QUERY_PARAM_TAB], [
-    q,
-  ]);
+  const selectedTabUUID = useMemo(() => q?.[QUERY_PARAM_TAB], [q]);
 
   useEffect(() => {
     setButtonTabsHeight(refButtonTabs?.current?.getBoundingClientRect().height);
-  }, [
-    q,
-    refButtonTabs,
-  ]);
+  }, [q, refButtonTabs]);
 
   const displayLocalTimezone = useMemo(
     () => storeLocalTimezoneSetting(project?.features?.[FeatureUUIDEnum.LOCAL_TIMEZONE]),
     [project?.features],
   );
-  const operationHistoryEnabled =
-    useMemo(() => project?.features?.[FeatureUUIDEnum.OPERATION_HISTORY], [project]);
-  const timezoneTooltipProps = useMemo(() =>
-    displayLocalTimezone ? TIMEZONE_TOOLTIP_PROPS : {}
-  , [displayLocalTimezone]);
+  const operationHistoryEnabled = useMemo(
+    () => project?.features?.[FeatureUUIDEnum.OPERATION_HISTORY],
+    [project],
+  );
+  const timezoneTooltipProps = useMemo(
+    () => (displayLocalTimezone ? TIMEZONE_TOOLTIP_PROPS : {}),
+    [displayLocalTimezone],
+  );
 
-  const { data, mutate: fetchPipelines } = api.pipelines.list({
-    ...query,
-    include_schedules: 1,
-  }, {
-    revalidateOnFocus: false,
-  });
+  const { data, mutate: fetchPipelines } = api.pipelines.list(
+    {
+      ...query,
+      include_schedules: 1,
+    },
+    {
+      revalidateOnFocus: false,
+    },
+  );
 
   const fromHistoryDays = useMemo(() => q?.[PipelineQueryEnum.HISTORY_DAYS] || 7, [q]);
 
-  const {
-    data: dataPipelinesFromHistory,
-    mutate: fetchPipelinesFromHistory,
-  } = api.pipelines.list({
-    ...query,
-    [PipelineQueryEnum.HISTORY_DAYS]: isNumeric(fromHistoryDays)
-      ? Number(fromHistoryDays)
-      : fromHistoryDays,
-    include_schedules: 1,
-  }, {}, {
-    pauseFetch: !operationHistoryEnabled || !selectedTabUUID || TAB_RECENT.uuid !== selectedTabUUID,
-  });
-
-  const filterPipelinesBySearchText = useCallback(
-    (arr: PipelineType[]): PipelineType[] => arr,
-    [],
-  );
-
-  const pipelines: PipelineType[] = useMemo(
-    () => {
-      let pipelinesFiltered = filterPipelinesBySearchText(data?.pipelines || []);
-      if (q?.[PipelineQueryEnum.TAG]) {
-        const tagsFromQuery = q[PipelineQueryEnum.TAG];
-        pipelinesFiltered = pipelinesFiltered
-          .filter(({ tags }) => (
-            tags.some(t => tagsFromQuery.includes(t))
-              || (tags.length === 0 && tagsFromQuery.includes(PipelineQueryEnum.NO_TAGS))
-          ));
-      }
-
-      return pipelinesFiltered;
+  const { data: dataPipelinesFromHistory, mutate: fetchPipelinesFromHistory } = api.pipelines.list(
+    {
+      ...query,
+      [PipelineQueryEnum.HISTORY_DAYS]: isNumeric(fromHistoryDays)
+        ? Number(fromHistoryDays)
+        : fromHistoryDays,
+      include_schedules: 1,
     },
-    [
-      data,
-      filterPipelinesBySearchText,
-      q,
-    ],
+    {},
+    {
+      pauseFetch:
+        !operationHistoryEnabled || !selectedTabUUID || TAB_RECENT.uuid !== selectedTabUUID,
+    },
   );
+
+  const filterPipelinesBySearchText = useCallback((arr: PipelineType[]): PipelineType[] => arr, []);
+
+  const pipelines: PipelineType[] = useMemo(() => {
+    let pipelinesFiltered = filterPipelinesBySearchText(data?.pipelines || []);
+    if (q?.[PipelineQueryEnum.TAG]) {
+      const tagsFromQuery = q[PipelineQueryEnum.TAG];
+      pipelinesFiltered = pipelinesFiltered.filter(
+        ({ tags }) =>
+          tags.some(t => tagsFromQuery.includes(t)) ||
+          (tags.length === 0 && tagsFromQuery.includes(PipelineQueryEnum.NO_TAGS)),
+      );
+    }
+
+    return pipelinesFiltered;
+  }, [data, filterPipelinesBySearchText, q]);
 
   const pipelinesFromHistory: PipelineType[] = useMemo(
     () => filterPipelinesBySearchText(dataPipelinesFromHistory?.pipelines || []),
-    [
-      dataPipelinesFromHistory,
-      filterPipelinesBySearchText,
-    ]);
+    [dataPipelinesFromHistory, filterPipelinesBySearchText],
+  );
 
   const sortableColumnIndexes = useMemo(() => [1, 2, 3, 4, 5, 6, 8, 9], []);
   const sortColumnIndexQuery = q?.[SortQueryEnum.SORT_COL_IDX];
   const sortDirectionQuery = q?.[SortQueryEnum.SORT_DIRECTION];
-  const sortedColumnInit: SortedColumnType = useMemo(() => (sortColumnIndexQuery
-      ?
-        {
-          columnIndex: +sortColumnIndexQuery,
-          sortDirection: sortDirectionQuery || SortDirectionEnum.ASC,
-        }
-      : undefined
-  ), [sortColumnIndexQuery, sortDirectionQuery]);
+  const sortedColumnInit: SortedColumnType = useMemo(
+    () =>
+      sortColumnIndexQuery
+        ? {
+            columnIndex: +sortColumnIndexQuery,
+            sortDirection: sortDirectionQuery || SortDirectionEnum.ASC,
+          }
+        : undefined,
+    [sortColumnIndexQuery, sortDirectionQuery],
+  );
   const groupByQuery = q?.[PipelineQueryEnum.GROUP];
 
   const [downloadPipeline] = useMutation(
-    ({
-      pipelineUUID,
-      filesOnly = false,
-    }: {
-      pipelineUUID: string;
-      filesOnly?: boolean;
-    }) =>
+    ({ pipelineUUID, filesOnly = false }: { pipelineUUID: string; filesOnly?: boolean }) =>
       api.downloads.pipelines.useCreate(pipelineUUID)({
         download: { ignore_folder_structure: filesOnly },
       }),
@@ -296,18 +287,17 @@ function PipelineListPage() {
     if (query?.[PipelineQueryEnum.SEARCH] && searchText === null) {
       setSearchTextState(query?.[PipelineQueryEnum.SEARCH]);
     }
-  }, [
-    query,
-    searchText,
-    setSearchTextState,
-  ]);
+  }, [query, searchText, setSearchTextState]);
 
   useEffect(() => {
     let queryFinal = {};
 
     if (!sortColumnIndexQuery) {
       const sortColumnIndexFromStorage = get(LOCAL_STORAGE_KEY_PIPELINE_LIST_SORT_COL_IDX, null);
-      const sortDirectionFromStorage = get(LOCAL_STORAGE_KEY_PIPELINE_LIST_SORT_DIRECTION, SortDirectionEnum.ASC);
+      const sortDirectionFromStorage = get(
+        LOCAL_STORAGE_KEY_PIPELINE_LIST_SORT_DIRECTION,
+        SortDirectionEnum.ASC,
+      );
       if (sortColumnIndexFromStorage !== null) {
         queryFinal[SortQueryEnum.SORT_COL_IDX] = sortColumnIndexFromStorage;
         queryFinal[SortQueryEnum.SORT_DIRECTION] = sortDirectionFromStorage;
@@ -372,10 +362,12 @@ function PipelineListPage() {
 
       if (!isEmptyObject(filtersQuery)) {
         queryFinal = {};
-        Object.entries({
-          ...queryFinal,
-          ...filtersQuery,
-        } || {}).forEach(([k, v]) => {
+        Object.entries(
+          {
+            ...queryFinal,
+            ...filtersQuery,
+          } || {},
+        ).forEach(([k, v]) => {
           if (typeof v !== 'undefined' && v !== null) {
             queryFinal[k] = v;
           }
@@ -391,7 +383,7 @@ function PipelineListPage() {
         if (typeof v !== 'undefined' && v !== null) {
           // @ts-ignore
           if (META_QUERY_KEYS.includes(k) || NON_ARRAY_QUERY_KEYS.includes(k)) {
-              f[k] = v2;
+            f[k] = v2;
           } else {
             if (!Array.isArray(v2)) {
               // @ts-ignore
@@ -399,7 +391,7 @@ function PipelineListPage() {
             }
 
             if (v2 && Array.isArray(v2)) {
-              v2?.forEach((v3) => {
+              v2?.forEach(v3 => {
                 f[k][v3] = true;
               });
             }
@@ -429,33 +421,26 @@ function PipelineListPage() {
     displayErrorFromReadResponse(data, setErrors);
   }, [data]);
 
-  const useCreatePipelineMutation = (onSuccessCallback) => useMutation(
-    api.pipelines.useCreate(),
-    {
-      onSuccess: (response: any) => onSuccess(
-        response, {
-          callback: ({
-            pipeline: {
-              uuid,
-            },
-          }) => {
+  const useCreatePipelineMutation = onSuccessCallback =>
+    useMutation(api.pipelines.useCreate(), {
+      onSuccess: (response: any) =>
+        onSuccess(response, {
+          callback: ({ pipeline: { uuid } }) => {
             onSuccessCallback?.(uuid);
           },
-          onErrorCallback: (response, errors) => setErrors({
-            errors,
-            response,
-          }),
-        },
-      ),
-    },
-  );
+          onErrorCallback: (response, errors) =>
+            setErrors({
+              errors,
+              response,
+            }),
+        }),
+    });
   const [createPipeline, { isLoading: isLoadingCreate }]: [
     MutateFunction<any>,
     { isLoading: boolean },
-  ] = useCreatePipelineMutation((pipelineUUID: string) => router.push(
-    '/pipelines/[pipeline]/edit',
-    `/pipelines/${pipelineUUID}/edit`,
-  ));
+  ] = useCreatePipelineMutation((pipelineUUID: string) =>
+    router.push('/pipelines/[pipeline]/edit', `/pipelines/${pipelineUUID}/edit`),
+  );
   const [clonePipeline, { isLoading: isLoadingClone }]: [
     MutateFunction<any>,
     { isLoading: boolean },
@@ -465,17 +450,15 @@ function PipelineListPage() {
   });
 
   const [updatePipeline, { isLoading: isLoadingUpdate }] = useMutation(
-    (pipeline: PipelineType & {
-      status?: ScheduleStatusEnum;
-    }) => api.pipelines.useUpdate(pipeline.uuid)({ pipeline }),
+    (
+      pipeline: PipelineType & {
+        status?: ScheduleStatusEnum;
+      },
+    ) => api.pipelines.useUpdate(pipeline.uuid)({ pipeline }),
     {
-      onSuccess: (response: any) => onSuccess(
-        response, {
-          callback: ({
-            pipeline: {
-              uuid,
-            },
-          }) => {
+      onSuccess: (response: any) =>
+        onSuccess(response, {
+          callback: ({ pipeline: { uuid } }) => {
             setPipelinesEditing(prev => ({
               ...prev,
               [uuid]: false,
@@ -496,746 +479,811 @@ function PipelineListPage() {
               response,
             });
           },
-        },
-      ),
+        }),
     },
   );
   const [deletePipeline, { isLoading: isLoadingDelete }] = useMutation(
     (uuid: string) => api.pipelines.useDelete(uuid)(),
     {
-      onSuccess: (response: any) => onSuccess(
-        response, {
+      onSuccess: (response: any) =>
+        onSuccess(response, {
           callback: () => {
             fetchPipelines?.();
             fetchPipelinesFromHistory?.();
           },
-          onErrorCallback: (response, errors) => setErrors({
-            errors,
-            response,
-          }),
-        },
-      ),
+          onErrorCallback: (response, errors) =>
+            setErrors({
+              errors,
+              response,
+            }),
+        }),
     },
   );
 
-  const [showCreatePipelineModal, hideCreatePipelineModal] = useModal(({
-    pipelineType,
-  }: {
-    pipelineType: PipelineTypeEnum,
-  }) => (
-    <ConfigurePipeline
-      onClose={hideCreatePipelineModal}
-      onSave={({
-        name,
-        description,
-        tags,
-      }) => {
-        createPipeline({
-          pipeline: {
-            description,
-            name,
-            tags,
-            type: pipelineType,
-          },
-        });
-      }}
-      pipelineType={pipelineType}
-    />
-  ), {
-  }, [
-    createPipeline,
-  ], {
-    background: true,
-    disableEscape: true,
-    uuid: 'overview/create_pipeline',
-  });
-
-  const [showInputModal, hideInputModal] = useModal(({
-    pipeline,
-    pipelineDescription,
-    pipelineName,
-  }: {
-    pipeline?: PipelineType;
-    pipelineDescription?: string;
-    pipelineName?: string;
-  }) => (
-    <InputModal
-      isLoading={isLoadingUpdate}
-      minWidth={UNIT * 55}
-      noEmptyValue={!!pipelineName}
-      onClose={hideInputModal}
-      onSave={(value: string) => {
-        const pipelineToUse = pipeline || selectedPipeline;
-
-        if (pipelineToUse) {
-          const selectedPipelineUUID = pipelineToUse.uuid;
-          const pipelineUpdateRequestBody: PipelineType = {
-            uuid: selectedPipelineUUID,
-          };
-          if (pipelineName) {
-            pipelineUpdateRequestBody.name = value;
-          } else {
-            pipelineUpdateRequestBody.description = value;
-          }
-
-          setPipelinesEditing(prev => ({
-            ...prev,
-            [selectedPipelineUUID]: true,
-          }));
-          updatePipeline(pipelineUpdateRequestBody);
-        }
-      }}
-      textArea={!pipelineName}
-      title={pipelineName
-        ? 'Rename pipeline'
-        : `Edit description for ${pipeline?.uuid}`
-      }
-      value={pipelineName ? pipelineName : pipelineDescription}
-    />
-  ), {} , [
-    isLoadingUpdate,
-    selectedPipeline,
-  ], {
-    background: true,
-    uuid: 'rename_pipeline_and_save',
-  });
-
-  const [showImportPipelineModal, hideImportPipelineModal] = useModal(() => (
-    <UploadPipeline
-      fetchPipelines={fetchPipelines}
-      onCancel={hideImportPipelineModal}
-    />
-  ), {
-  }, [
-    fetchPipelines,
-  ], {
-    background: true,
-    uuid: 'upload_pipeline',
-  });
-
-  const [showBrowseTemplates, hideBrowseTemplates] = useModal(() => (
-    <ErrorProvider>
-      <BrowseTemplates
-        contained
-        onClickCustomTemplate={(customTemplate) => {
+  const [showCreatePipelineModal, hideCreatePipelineModal] = useModal(
+    ({ pipelineType }: { pipelineType: PipelineTypeEnum }) => (
+      <ConfigurePipeline
+        onClose={hideCreatePipelineModal}
+        onSave={({ name, description, tags }) => {
           createPipeline({
             pipeline: {
-              custom_template_uuid: customTemplate?.template_uuid,
-              name: randomNameGenerator(),
+              description,
+              name,
+              tags,
+              type: pipelineType,
             },
-          }).then(() => {
-            hideBrowseTemplates();
           });
         }}
-        showBreadcrumbs
-        tabs={[NAV_TAB_PIPELINES]}
+        pipelineType={pipelineType}
       />
-    </ErrorProvider>
-  ), {
-  }, [
-    createPipeline,
-  ], {
-    background: true,
-    uuid: 'browse_templates',
-  });
-
-  const [showConfigureProjectModal, hideConfigureProjectModal] = useModal(({
-    cancelButtonText,
-    header,
-    onCancel,
-    onSaveSuccess,
-  }: {
-    cancelButtonText?: string;
-    header?: any;
-    onCancel?: () => void;
-    onSaveSuccess?: (project: ProjectType) => void;
-  }) => (
-    <ErrorProvider>
-      <Preferences
-        cancelButtonText={cancelButtonText}
-        contained
-        header={(
-          <Spacing mb={UNITS_BETWEEN_SECTIONS}>
-            <Panel>
-              <Text warning>
-                You need to add an OpenAI API key to your project before you can
-                generate pipelines using AI.
-              </Text>
-
-              <Spacing mt={1}>
-                <Text warning>
-                  Read <Link
-                    href="https://help.openai.com/en/articles/4936850-where-do-i-find-my-secret-api-key"
-                    openNewWindow
-                  >
-                    OpenAI’s documentation
-                  </Link> to get your API key.
-                </Text>
-              </Spacing>
-            </Panel>
-          </Spacing>
-        )}
-        onCancel={() => {
-          onCancel?.();
-          hideConfigureProjectModal();
-        }}
-        onSaveSuccess={(project: ProjectType) => {
-          fetchProjects();
-          hideConfigureProjectModal();
-          onSaveSuccess?.(project);
-        }}
-      />
-    </ErrorProvider>
-  ), {
-  }, [
-    fetchProjects,
-  ], {
-    background: true,
-    uuid: 'configure_project',
-  });
-
-  const [showAIModal, hideAIModal] = useModal(() => (
-    <ErrorProvider>
-      <AIControlPanel
-        createPipeline={createPipeline}
-        isLoading={isLoadingCreate}
-        onClose={hideAIModal}
-      />
-    </ErrorProvider>
-  ), {
-  }, [
-    createPipeline,
-    isLoadingCreate,
-  ], {
-    background: true,
-    disableClickOutside: true,
-    disableCloseButton: true,
-    uuid: 'AI_modal',
-  });
-
-  const newPipelineButtonMenuItems = useMemo(() => getNewPipelineButtonMenuItems(
-    createPipeline,
+    ),
+    {},
+    [createPipeline],
     {
-      showAIModal: () => {
-        if (!project?.openai_api_key) {
-          showConfigureProjectModal({
-            onSaveSuccess: () => {
-              showAIModal();
-            },
-          });
-        } else {
-          showAIModal();
-        }
-      },
-      showBrowseTemplates,
-      showCreatePipelineModal,
-      showImportPipelineModal,
+      background: true,
+      disableEscape: true,
+      uuid: 'overview/create_pipeline',
     },
-  ), [
-    createPipeline,
-    project,
-    showAIModal,
-    showBrowseTemplates,
-    showConfigureProjectModal,
-    showCreatePipelineModal,
-    showImportPipelineModal,
-  ]);
+  );
 
-  const { data: dataTags } = api.tags.list();
-  const tags: TagType[] = useMemo(() => sortByKey(dataTags?.tags || [], ({ uuid }) => uuid), [
-    dataTags,
-  ]);
+  const [showInputModal, hideInputModal] = useModal(
+    ({
+      pipeline,
+      pipelineDescription,
+      pipelineName,
+    }: {
+      pipeline?: PipelineType;
+      pipelineDescription?: string;
+      pipelineName?: string;
+    }) => (
+      <InputModal
+        isLoading={isLoadingUpdate}
+        minWidth={UNIT * 55}
+        noEmptyValue={!!pipelineName}
+        onClose={hideInputModal}
+        onSave={(value: string) => {
+          const pipelineToUse = pipeline || selectedPipeline;
 
-  const toolbarEl = useMemo(() => (
-    <Toolbar
-      addButtonProps={{
-        isLoading: isLoadingCreate,
-        label: 'New',
-        menuItems: newPipelineButtonMenuItems,
-      }}
-      deleteRowProps={{
-        confirmationMessage: 'This is irreversible and will immediately delete everything associated \
-          with the pipeline, including its blocks, triggers, runs, logs, and history.',
-        isLoading: isLoadingDelete,
-        item: 'pipeline',
-        onDelete: () => {
-          if (typeof window !== 'undefined'
-            && window.confirm(
-              `Are you sure you want to delete pipeline ${selectedPipeline?.uuid}?`,
-            )
-          ) {
-            deletePipeline(selectedPipeline?.uuid);
+          if (pipelineToUse) {
+            const selectedPipelineUUID = pipelineToUse.uuid;
+            const pipelineUpdateRequestBody: PipelineType = {
+              uuid: selectedPipelineUUID,
+            };
+            if (pipelineName) {
+              pipelineUpdateRequestBody.name = value;
+            } else {
+              pipelineUpdateRequestBody.description = value;
+            }
+
+            setPipelinesEditing(prev => ({
+              ...prev,
+              [selectedPipelineUUID]: true,
+            }));
+            updatePipeline(pipelineUpdateRequestBody);
+          }
+        }}
+        textArea={!pipelineName}
+        title={pipelineName ? 'Rename pipeline' : `Edit description for ${pipeline?.uuid}`}
+        value={pipelineName ? pipelineName : pipelineDescription}
+      />
+    ),
+    {},
+    [isLoadingUpdate, selectedPipeline],
+    {
+      background: true,
+      uuid: 'rename_pipeline_and_save',
+    },
+  );
+
+  const [showImportPipelineModal, hideImportPipelineModal] = useModal(
+    () => <UploadPipeline fetchPipelines={fetchPipelines} onCancel={hideImportPipelineModal} />,
+    {},
+    [fetchPipelines],
+    {
+      background: true,
+      uuid: 'upload_pipeline',
+    },
+  );
+
+  const [showBrowseTemplates, hideBrowseTemplates] = useModal(
+    () => (
+      <ErrorProvider>
+        <BrowseTemplates
+          contained
+          onClickCustomTemplate={customTemplate => {
+            createPipeline({
+              pipeline: {
+                custom_template_uuid: customTemplate?.template_uuid,
+                name: randomNameGenerator(),
+              },
+            }).then(() => {
+              hideBrowseTemplates();
+            });
+          }}
+          showBreadcrumbs
+          tabs={[NAV_TAB_PIPELINES]}
+        />
+      </ErrorProvider>
+    ),
+    {},
+    [createPipeline],
+    {
+      background: true,
+      uuid: 'browse_templates',
+    },
+  );
+
+  const [showConfigureProjectModal, hideConfigureProjectModal] = useModal(
+    ({
+      cancelButtonText,
+      header,
+      onCancel,
+      onSaveSuccess,
+    }: {
+      cancelButtonText?: string;
+      header?: any;
+      onCancel?: () => void;
+      onSaveSuccess?: (project: ProjectType) => void;
+    }) => (
+      <ErrorProvider>
+        <Preferences
+          cancelButtonText={cancelButtonText}
+          contained
+          header={
+            <Spacing mb={UNITS_BETWEEN_SECTIONS}>
+              <Panel>
+                <Text warning>
+                  You need to add an OpenAI API key to your project before you can generate
+                  pipelines using AI.
+                </Text>
+
+                <Spacing mt={1}>
+                  <Text warning>
+                    Read{' '}
+                    <Link
+                      href="https://help.openai.com/en/articles/4936850-where-do-i-find-my-secret-api-key"
+                      openNewWindow
+                    >
+                      OpenAI’s documentation
+                    </Link>{' '}
+                    to get your API key.
+                  </Text>
+                </Spacing>
+              </Panel>
+            </Spacing>
+          }
+          onCancel={() => {
+            onCancel?.();
+            hideConfigureProjectModal();
+          }}
+          onSaveSuccess={(project: ProjectType) => {
+            fetchProjects();
+            hideConfigureProjectModal();
+            onSaveSuccess?.(project);
+          }}
+        />
+      </ErrorProvider>
+    ),
+    {},
+    [fetchProjects],
+    {
+      background: true,
+      uuid: 'configure_project',
+    },
+  );
+
+  const [showAIModal, hideAIModal] = useModal(
+    () => (
+      <ErrorProvider>
+        <AIControlPanel
+          createPipeline={createPipeline}
+          isLoading={isLoadingCreate}
+          onClose={hideAIModal}
+        />
+      </ErrorProvider>
+    ),
+    {},
+    [createPipeline, isLoadingCreate],
+    {
+      background: true,
+      disableClickOutside: true,
+      disableCloseButton: true,
+      uuid: 'AI_modal',
+    },
+  );
+
+  const [createRAG] = useMutation(
+    (payload: any) =>
+      api.pipelines.execution_frameworks.useCreate(PipelineExecutionFrameworkUUIDEnum.RAG)(payload),
+    {
+      onSuccess: (response: any) =>
+        onSuccess(response, {
+          callback: ({ pipeline: model }) => {
+            router.push(
+              `/v2/pipelines/${snakeToHyphens(model.uuid)}/${snakeToHyphens(model.execution_framework)}/data-preparation`,
+            );
+          },
+          onErrorCallback: (response, errors) =>
+            setErrors({
+              errors,
+              response,
+            }),
+        }),
+    },
+  );
+
+  const newPipelineButtonMenuItems = useMemo(
+    () =>
+      getNewPipelineButtonMenuItems(createPipeline, {
+        createRAG,
+        showAIModal: () => {
+          if (!project?.openai_api_key) {
+            showConfigureProjectModal({
+              onSaveSuccess: () => {
+                showAIModal();
+              },
+            });
+          } else {
+            showAIModal();
           }
         },
-      }}
-      extraActionButtonProps={{
-        Icon: Clone,
-        confirmationDescription: 'Cloning the selected pipeline will create a new pipeline with the same \
+        showBrowseTemplates,
+        showCreatePipelineModal,
+        showImportPipelineModal,
+      }),
+    [
+      createPipeline,
+      project,
+      createRAG,
+      showAIModal,
+      showBrowseTemplates,
+      showConfigureProjectModal,
+      showCreatePipelineModal,
+      showImportPipelineModal,
+    ],
+  );
+
+  const { data: dataTags } = api.tags.list();
+  const tags: TagType[] = useMemo(
+    () => sortByKey(dataTags?.tags || [], ({ uuid }) => uuid),
+    [dataTags],
+  );
+
+  const toolbarEl = useMemo(
+    () => (
+      <Toolbar
+        addButtonProps={{
+          isLoading: isLoadingCreate,
+          label: 'New',
+          menuItems: newPipelineButtonMenuItems,
+        }}
+        deleteRowProps={{
+          confirmationMessage:
+            'This is irreversible and will immediately delete everything associated \
+          with the pipeline, including its blocks, triggers, runs, logs, and history.',
+          isLoading: isLoadingDelete,
+          item: 'pipeline',
+          onDelete: () => {
+            if (
+              typeof window !== 'undefined' &&
+              window.confirm(`Are you sure you want to delete pipeline ${selectedPipeline?.uuid}?`)
+            ) {
+              deletePipeline(selectedPipeline?.uuid);
+            }
+          },
+        }}
+        extraActionButtonProps={{
+          Icon: Clone,
+          confirmationDescription:
+            'Cloning the selected pipeline will create a new pipeline with the same \
           configuration and code blocks. The blocks use the same block files as the original pipeline. \
           Pipeline triggers, runs, backfills, and logs are not copied over to the new pipeline.',
-        confirmationMessage: `Do you want to clone the pipeline ${selectedPipeline?.uuid}?`,
-        isLoading: isLoadingClone,
-        onClick: () => clonePipeline({
-          pipeline: { clone_pipeline_uuid: selectedPipeline?.uuid },
-        }),
-        openConfirmationDialogue: true,
-        tooltip: 'Clone pipeline',
-      }}
-      filterOptions={{
-        status: FILTERABLE_PIPELINE_STATUSES,
-        tag: [PipelineQueryEnum.NO_TAGS, ...tags.map(({ uuid }) => uuid)],
-        type: Object.values(PipelineTypeEnum),
-      }}
-      filterValueLabelMapping={{
-        status: FILTERABLE_PIPELINE_STATUSES.reduce(
-          (acc, cv) => ({ ...acc, [cv]: removeUnderscore(capitalize(cv)) }), {},
-        ),
-        tag: {
-          [PipelineQueryEnum.NO_TAGS]: 'No tags',
-          ...tags.reduce((acc, { uuid }) => ({
-            ...acc,
-            [uuid]: uuid,
-          }), {}),
-        },
-        type: PIPELINE_TYPE_LABEL_MAPPING,
-      }}
-      groupButtonProps={{
-        groupByLabel: groupByQuery,
-        menuItems: [
-          {
-            beforeIcon: groupByQuery === PipelineGroupingEnum.STATUS
-              ? <Check
-                fill={dark.content.default}
-                size={UNIT * 1.5}
-              />
-              : <Circle muted size={UNIT * 1.5} />
-            ,
-            label: () => capitalize(PipelineGroupingEnum.STATUS),
-            onClick: () => {
-              const val = groupByQuery === PipelineGroupingEnum.STATUS
-                ? null
-                : PipelineGroupingEnum.STATUS;
+          confirmationMessage: `Do you want to clone the pipeline ${selectedPipeline?.uuid}?`,
+          isLoading: isLoadingClone,
+          onClick: () =>
+            clonePipeline({
+              pipeline: { clone_pipeline_uuid: selectedPipeline?.uuid },
+            }),
+          openConfirmationDialogue: true,
+          tooltip: 'Clone pipeline',
+        }}
+        filterOptions={{
+          status: FILTERABLE_PIPELINE_STATUSES,
+          tag: [PipelineQueryEnum.NO_TAGS, ...tags.map(({ uuid }) => uuid)],
+          type: Object.values(PipelineTypeEnum),
+        }}
+        filterValueLabelMapping={{
+          status: FILTERABLE_PIPELINE_STATUSES.reduce(
+            (acc, cv) => ({ ...acc, [cv]: removeUnderscore(capitalize(cv)) }),
+            {},
+          ),
+          tag: {
+            [PipelineQueryEnum.NO_TAGS]: 'No tags',
+            ...tags.reduce(
+              (acc, { uuid }) => ({
+                ...acc,
+                [uuid]: uuid,
+              }),
+              {},
+            ),
+          },
+          type: PIPELINE_TYPE_LABEL_MAPPING,
+        }}
+        groupButtonProps={{
+          groupByLabel: groupByQuery,
+          menuItems: [
+            {
+              beforeIcon:
+                groupByQuery === PipelineGroupingEnum.STATUS ? (
+                  <Check fill={dark.content.default} size={UNIT * 1.5} />
+                ) : (
+                  <Circle muted size={UNIT * 1.5} />
+                ),
+              label: () => capitalize(PipelineGroupingEnum.STATUS),
+              onClick: () => {
+                const val =
+                  groupByQuery === PipelineGroupingEnum.STATUS ? null : PipelineGroupingEnum.STATUS;
 
-               if (!val) {
-                 setGroupBys({});
-               }
+                if (!val) {
+                  setGroupBys({});
+                }
 
-              goToWithQuery({
-                [PipelineQueryEnum.GROUP]: val,
-              }, {
-                pushHistory: true,
-              });
+                goToWithQuery(
+                  {
+                    [PipelineQueryEnum.GROUP]: val,
+                  },
+                  {
+                    pushHistory: true,
+                  },
+                );
+              },
+              uuid: 'Pipelines/GroupMenu/Status',
             },
-            uuid: 'Pipelines/GroupMenu/Status',
+            {
+              beforeIcon:
+                groupByQuery === PipelineGroupingEnum.TAG ? (
+                  <Check fill={dark.content.default} size={UNIT * 1.5} />
+                ) : (
+                  <Circle muted size={UNIT * 1.5} />
+                ),
+              label: () => capitalize(PipelineGroupingEnum.TAG),
+              onClick: () => {
+                const val =
+                  groupByQuery === PipelineGroupingEnum.TAG ? null : PipelineGroupingEnum.TAG;
+
+                if (!val) {
+                  setGroupBys({});
+                }
+
+                goToWithQuery(
+                  {
+                    [PipelineQueryEnum.GROUP]: val,
+                  },
+                  {
+                    pushHistory: true,
+                  },
+                );
+              },
+              uuid: 'Pipelines/GroupMenu/Tag',
+            },
+            {
+              beforeIcon:
+                groupByQuery === PipelineGroupingEnum.TYPE ? (
+                  <Check fill={dark.content.default} size={UNIT * 1.5} />
+                ) : (
+                  <Circle muted size={UNIT * 1.5} />
+                ),
+              label: () => capitalize(PipelineGroupingEnum.TYPE),
+              onClick: () => {
+                const val =
+                  groupByQuery === PipelineGroupingEnum.TYPE ? null : PipelineGroupingEnum.TYPE;
+
+                if (!val) {
+                  setGroupBys({});
+                }
+
+                goToWithQuery(
+                  {
+                    [PipelineQueryEnum.GROUP]: val,
+                  },
+                  {
+                    pushHistory: true,
+                  },
+                );
+              },
+              uuid: 'Pipelines/GroupMenu/Type',
+            },
+          ],
+        }}
+        moreActionsMenuItems={[
+          {
+            label: () => 'Rename pipeline',
+            onClick: () => showInputModal({ pipelineName: selectedPipeline?.name }),
+            uuid: 'Pipelines/MoreActionsMenu/Rename',
           },
           {
-            beforeIcon: groupByQuery === PipelineGroupingEnum.TAG
-              ? <Check
-                fill={dark.content.default}
-                size={UNIT * 1.5}
-              />
-              : <Circle muted size={UNIT * 1.5} />
-            ,
-            label: () => capitalize(PipelineGroupingEnum.TAG),
-            onClick: () => {
-              const val = groupByQuery === PipelineGroupingEnum.TAG
-                ? null
-                : PipelineGroupingEnum.TAG;
-
-               if (!val) {
-                 setGroupBys({});
-               }
-
-              goToWithQuery({
-                [PipelineQueryEnum.GROUP]: val,
-              }, {
-                pushHistory: true,
-              });
-            },
-            uuid: 'Pipelines/GroupMenu/Tag',
+            label: () => 'Edit description',
+            onClick: () =>
+              showInputModal({
+                pipeline: selectedPipeline,
+                pipelineDescription: selectedPipeline?.description,
+              }),
+            uuid: 'Pipelines/MoreActionsMenu/EditDescription',
           },
-          {
-            beforeIcon: groupByQuery === PipelineGroupingEnum.TYPE
-              ? <Check
-                fill={dark.content.default}
-                size={UNIT * 1.5}
-              />
-              : <Circle muted size={UNIT * 1.5} />
-            ,
-            label: () => capitalize(PipelineGroupingEnum.TYPE),
-            onClick: () => {
-              const val = groupByQuery === PipelineGroupingEnum.TYPE
-                ? null
-                : PipelineGroupingEnum.TYPE;
-
-               if (!val) {
-                 setGroupBys({});
-               }
-
-              goToWithQuery({
-                [PipelineQueryEnum.GROUP]: val,
-              }, {
-                pushHistory: true,
-              });
-            },
-            uuid: 'Pipelines/GroupMenu/Type',
-          },
-        ],
-      }}
-      moreActionsMenuItems={[
-        {
-          label: () => 'Rename pipeline',
-          onClick: () => showInputModal({ pipelineName: selectedPipeline?.name }),
-          uuid: 'Pipelines/MoreActionsMenu/Rename',
-        },
-        {
-          label: () => 'Edit description',
-          onClick: () => showInputModal({
-            pipeline: selectedPipeline,
-            pipelineDescription: selectedPipeline?.description,
-          }),
-          uuid: 'Pipelines/MoreActionsMenu/EditDescription',
-        },
-      ]}
-      onClickFilterDefaults={() => {
-        setFilters({});
-        setSearchTextState('');
-        fetchPipelines?.().then(() => {
-          goToWithQuery({
-            [MetaQueryEnum.LIMIT]: query?.[MetaQueryEnum.LIMIT] || ROW_LIMIT,
-            [PipelineQueryEnum.SEARCH]: '',
-          }, {
-            replaceParams: true,
-          });
-        });
-      }}
-      onFilterApply={(query, updatedQuery) => {
-        // @ts-ignore
-        if (Object.values(updatedQuery).every(arr => !arr?.length)) {
+        ]}
+        onClickFilterDefaults={() => {
           setFilters({});
+          setSearchTextState('');
+          fetchPipelines?.().then(() => {
+            goToWithQuery(
+              {
+                [MetaQueryEnum.LIMIT]: query?.[MetaQueryEnum.LIMIT] || ROW_LIMIT,
+                [PipelineQueryEnum.SEARCH]: '',
+              },
+              {
+                replaceParams: true,
+              },
+            );
+          });
+        }}
+        onFilterApply={(query, updatedQuery) => {
+          // @ts-ignore
+          if (Object.values(updatedQuery).every(arr => !arr?.length)) {
+            setFilters({});
+          }
+        }}
+        // @ts-ignore
+        query={query}
+        resetLimitOnFilterApply
+        searchProps={{
+          onChange: setSearchText,
+          value: searchText,
+        }}
+        selectedRowId={selectedPipeline?.uuid}
+        setSelectedRow={setSelectedPipeline}
+      />
+    ),
+    [
+      clonePipeline,
+      deletePipeline,
+      fetchPipelines,
+      groupByQuery,
+      isLoadingClone,
+      isLoadingCreate,
+      isLoadingDelete,
+      newPipelineButtonMenuItems,
+      query,
+      searchText,
+      selectedPipeline,
+      setSearchText,
+      showInputModal,
+      tags,
+    ],
+  );
+
+  const buildRowGroupInfo = useCallback(
+    (pipelinesInner: PipelineType[]) => {
+      const mapping = {};
+
+      pipelinesInner?.forEach((pipeline, idx: number) => {
+        let value = pipeline?.[groupByQuery];
+
+        if (PipelineGroupingEnum.STATUS === groupByQuery) {
+          const { schedules = [] } = pipeline || {};
+          // TODO (tommy dang): when is the pipeline status RETRY?
+          const schedulesCount = schedules.length;
+          const isActive = schedules.find(({ status }) => ScheduleStatusEnum.ACTIVE === status);
+          value = isActive
+            ? PipelineStatusEnum.ACTIVE
+            : schedulesCount >= 1
+              ? PipelineStatusEnum.INACTIVE
+              : PipelineStatusEnum.NO_SCHEDULES;
+        } else if (PipelineGroupingEnum.TAG === groupByQuery) {
+          const pt = pipeline?.tags;
+          if (pt) {
+            value = sortByKey(pipeline.tags, uuid => uuid).join(', ');
+          } else {
+            value = '';
+          }
         }
-      }}
-      // @ts-ignore
-      query={query}
-      resetLimitOnFilterApply
-      searchProps={{
-        onChange: setSearchText,
-        value: searchText,
-      }}
-      selectedRowId={selectedPipeline?.uuid}
-      setSelectedRow={setSelectedPipeline}
-    />
-  ), [
-    clonePipeline,
-    deletePipeline,
-    fetchPipelines,
-    groupByQuery,
-    isLoadingClone,
-    isLoadingCreate,
-    isLoadingDelete,
-    newPipelineButtonMenuItems,
-    query,
-    searchText,
-    selectedPipeline,
-    setSearchText,
-    showInputModal,
-    tags,
-  ]);
 
-  const buildRowGroupInfo = useCallback((pipelinesInner: PipelineType[]) => {
-    const mapping = {};
+        if (!mapping[value]) {
+          mapping[value] = [];
+        }
 
-    pipelinesInner?.forEach((pipeline, idx: number) => {
-      let value = pipeline?.[groupByQuery];
+        mapping[value].push(idx);
+      });
+
+      const arr = [];
+      const headers = [];
 
       if (PipelineGroupingEnum.STATUS === groupByQuery) {
-        const { schedules = [] } = pipeline || {};
-        // TODO (tommy dang): when is the pipeline status RETRY?
-        const schedulesCount = schedules.length;
-        const isActive = schedules.find(({ status }) => ScheduleStatusEnum.ACTIVE === status);
-        value = isActive
-          ? PipelineStatusEnum.ACTIVE
-          : schedulesCount >= 1 ? PipelineStatusEnum.INACTIVE : PipelineStatusEnum.NO_SCHEDULES;
-
+        Object.values(PipelineStatusEnum).forEach(val => {
+          arr.push(mapping[val]);
+          headers.push(capitalizeRemoveUnderscoreLower(val));
+        });
       } else if (PipelineGroupingEnum.TAG === groupByQuery) {
-        const pt = pipeline?.tags;
-        if (pt) {
-          value = sortByKey(pipeline.tags, uuid => uuid).join(', ');
-        } else {
-          value = '';
-        }
+        sortByKey(Object.keys(mapping), uuid => uuid).forEach((val: string) => {
+          arr.push(mapping[val]);
+          if (val) {
+            headers.push(
+              val.split(', ').map((v: string, idx: number) => (
+                <>
+                  <div
+                    key={`${v}-${idx}-spacing`}
+                    style={{
+                      marginLeft: idx >= 1 ? 4 : 0,
+                    }}
+                  />
+                  <Chip key={`${v}-${idx}`} small>
+                    <Text>{v}</Text>
+                  </Chip>
+                </>
+              )),
+            );
+          } else {
+            headers.push('No tags');
+          }
+        });
+      } else if (PipelineGroupingEnum.TYPE === groupByQuery) {
+        Object.values(PipelineTypeEnum).forEach(val => {
+          arr.push(mapping[val]);
+          headers.push(PIPELINE_TYPE_LABEL_MAPPING[val]);
+        });
       }
 
-      if (!mapping[value]) {
-        mapping[value] = [];
-      }
+      const headersFinal = [];
+      const arrFinal = [];
 
-      mapping[value].push(idx);
-    });
-
-    const arr = [];
-    const headers = [];
-
-    if (PipelineGroupingEnum.STATUS === groupByQuery) {
-      Object.values(PipelineStatusEnum).forEach((val) => {
-        arr.push(mapping[val]);
-        headers.push(capitalizeRemoveUnderscoreLower(val));
-      });
-    } else if (PipelineGroupingEnum.TAG === groupByQuery) {
-      sortByKey(Object.keys(mapping), uuid => uuid).forEach((val: string) => {
-        arr.push(mapping[val]);
-        if (val) {
-          headers.push(val.split(', ').map((v: string, idx: number) => (
-            <>
-              <div
-                key={`${v}-${idx}-spacing`}
-                style={{
-                  marginLeft: idx >= 1 ? 4 : 0,
-                }}
-              />
-              <Chip key={`${v}-${idx}`} small>
-                <Text>
-                  {v}
-                </Text>
-              </Chip>
-            </>
-          )));
-        } else {
-          headers.push('No tags');
+      arr?.forEach((rows, idx: number) => {
+        if (typeof rows !== 'undefined' && rows !== null && rows?.length >= 1) {
+          arrFinal.push(rows);
+          headersFinal.push(headers?.[idx]);
         }
       });
-    } else if (PipelineGroupingEnum.TYPE === groupByQuery) {
-      Object.values(PipelineTypeEnum).forEach((val) => {
-        arr.push(mapping[val]);
-        headers.push(PIPELINE_TYPE_LABEL_MAPPING[val]);
-      });
-    }
 
-    const headersFinal = [];
-    const arrFinal = [];
+      return {
+        rowGroupHeaders: headersFinal,
+        rowsGroupedByIndex: arrFinal,
+      };
+    },
+    [groupByQuery],
+  );
 
-    arr?.forEach((rows, idx: number) => {
-      if (typeof rows !== 'undefined' && rows !== null && rows?.length >= 1) {
-        arrFinal.push(rows);
-        headersFinal.push(headers?.[idx]);
-      }
-    });
-
-    return {
-      rowGroupHeaders: headersFinal,
-      rowsGroupedByIndex: arrFinal,
-    };
-  }, [
-    groupByQuery,
-  ]);
-
-  const {
-    rowGroupHeaders,
-    rowsGroupedByIndex,
-  } = useMemo(() => buildRowGroupInfo(pipelines), [
-    buildRowGroupInfo,
-    pipelines,
-  ]);
+  const { rowGroupHeaders, rowsGroupedByIndex } = useMemo(
+    () => buildRowGroupInfo(pipelines),
+    [buildRowGroupInfo, pipelines],
+  );
 
   const {
     rowGroupHeaders: rowGroupHeadersFromHistory,
     rowsGroupedByIndex: rowsGroupedByIndexFromHistory,
-  } = useMemo(() => buildRowGroupInfo(pipelinesFromHistory), [
-    buildRowGroupInfo,
-    pipelinesFromHistory,
-  ]);
+  } = useMemo(
+    () => buildRowGroupInfo(pipelinesFromHistory),
+    [buildRowGroupInfo, pipelinesFromHistory],
+  );
 
-  const renderTable = useCallback((
-    pipelinesInner: PipelineType[],
-    rowGroupHeadersInner: string[] | any[],
-    rowsGroupedByIndexInner: number[][],
-  ) => (
-    <Table
-      columnFlex={[null, null, null, 2, null, null, null, 1, null, null, null]}
-      columns={[
-        {
-          label: () => '',
-          uuid: 'action',
-        },
-        {
-          uuid: capitalize(PipelineGroupingEnum.STATUS),
-        },
-        {
-          uuid: 'Name',
-        },
-        {
-          uuid: 'Description',
-        },
-        {
-          uuid: capitalize(PipelineGroupingEnum.TYPE),
-        },
-        {
-          ...timezoneTooltipProps,
-          uuid: 'Updated at',
-        },
-        {
-          ...timezoneTooltipProps,
-          uuid: 'Created at',
-        },
-        {
-          uuid: 'Tags',
-        },
-        {
-          uuid: 'Blocks',
-        },
-        {
-          uuid: 'Triggers',
-        },
-        {
-          center: true,
-          label: () => '',
-          uuid: 'Actions',
-        },
-      ]}
-      isSelectedRow={(rowIndex: number) => pipelinesInner[rowIndex]?.uuid === selectedPipeline?.uuid}
-      localStorageKeySortColIdx={LOCAL_STORAGE_KEY_PIPELINE_LIST_SORT_COL_IDX}
-      localStorageKeySortDirection={LOCAL_STORAGE_KEY_PIPELINE_LIST_SORT_DIRECTION}
-      onClickRow={(rowIndex: number) => setSelectedPipeline(prev => {
-        const pipeline = pipelinesInner[rowIndex];
-
-        return (prev?.uuid !== pipeline?.uuid) ? pipeline : null;
-      })}
-      onDoubleClickRow={(rowIndex: number) => {
-        router.push(
-            '/pipelines/[pipeline]/edit',
-            `/pipelines/${pipelinesInner[rowIndex].uuid}/edit`,
-        );
-      }}
-      ref={refTable}
-      renderRightClickMenuItems={(rowIndex: number) => {
-        const selectedPipeline = pipelinesInner[rowIndex];
-
-        return [
+  const renderTable = useCallback(
+    (
+      pipelinesInner: PipelineType[],
+      rowGroupHeadersInner: string[] | any[],
+      rowsGroupedByIndexInner: number[][],
+    ) => (
+      <Table
+        columnFlex={[null, null, null, 2, null, null, null, 1, null, null, null]}
+        columns={[
           {
-            label: () => 'Edit description',
-            onClick: () => showInputModal({
-              pipeline: selectedPipeline,
-              pipelineDescription: selectedPipeline?.description,
-            }),
-            uuid: 'edit_description',
+            label: () => '',
+            uuid: 'action',
           },
           {
-            label: () => 'Rename',
-            onClick: () => showInputModal({
-              pipeline: selectedPipeline,
-              pipelineName: selectedPipeline?.name,
-            }),
-            uuid: 'rename',
+            uuid: capitalize(PipelineGroupingEnum.STATUS),
           },
           {
-            label: () => 'Clone',
-            onClick: () => clonePipeline({
-              pipeline: {
-                clone_pipeline_uuid: selectedPipeline?.uuid,
+            uuid: 'Name',
+          },
+          {
+            uuid: 'Description',
+          },
+          {
+            uuid: capitalize(PipelineGroupingEnum.TYPE),
+          },
+          {
+            ...timezoneTooltipProps,
+            uuid: 'Updated at',
+          },
+          {
+            ...timezoneTooltipProps,
+            uuid: 'Created at',
+          },
+          {
+            uuid: 'Tags',
+          },
+          {
+            uuid: 'Blocks',
+          },
+          {
+            uuid: 'Triggers',
+          },
+          {
+            center: true,
+            label: () => '',
+            uuid: 'Actions',
+          },
+        ]}
+        isSelectedRow={(rowIndex: number) =>
+          pipelinesInner[rowIndex]?.uuid === selectedPipeline?.uuid
+        }
+        localStorageKeySortColIdx={LOCAL_STORAGE_KEY_PIPELINE_LIST_SORT_COL_IDX}
+        localStorageKeySortDirection={LOCAL_STORAGE_KEY_PIPELINE_LIST_SORT_DIRECTION}
+        onClickRow={(rowIndex: number) =>
+          setSelectedPipeline(prev => {
+            const pipeline = pipelinesInner[rowIndex];
+
+            return prev?.uuid !== pipeline?.uuid ? pipeline : null;
+          })
+        }
+        onDoubleClickRow={(rowIndex: number) => {
+          const selectedPipeline = pipelinesInner[rowIndex];
+          if (selectedPipeline?.execution_framework === PipelineExecutionFrameworkUUIDEnum.RAG) {
+            router.push(
+              `/v2/pipelines/${snakeToHyphens(selectedPipeline?.uuid)}/${snakeToHyphens(selectedPipeline?.execution_framework)}`,
+            );
+          } else {
+            router.push(
+              '/pipelines/[pipeline]/edit',
+              `/pipelines/${selectedPipeline?.uuid}/edit`,
+            );
+          }
+        }}
+        ref={refTable}
+        renderRightClickMenuItems={(rowIndex: number) => {
+          const selectedPipeline = pipelinesInner[rowIndex];
+
+          return [
+            {
+              label: () => 'Open pipeline',
+              onClick: () => {
+                if (selectedPipeline?.execution_framework === PipelineExecutionFrameworkUUIDEnum.RAG) {
+                  router.push(
+                    `/v2/pipelines/${snakeToHyphens(selectedPipeline?.uuid)}/${snakeToHyphens(selectedPipeline?.execution_framework)}`,
+                  );
+                } else {
+                  router.push(
+                    '/pipelines/[pipeline]/edit',
+                    `/pipelines/${selectedPipeline?.uuid}/edit`,
+                  );
+                }
               },
-            }),
-            uuid: 'clone',
-          },
-          {
-            label: () => 'Download (keep folder structure)',
-            onClick: () => {
-              downloadPipeline({
-                filesOnly: false,
-                pipelineUUID: selectedPipeline?.uuid,
-              });
+              uuid: 'open_pipeline',
             },
-            uuid: 'download_keep_folder_structure',
-          },
-          {
-            label: () => 'Download (without folder structure)',
-            onClick: () => {
-              downloadPipeline({
-                filesOnly: true,
-                pipelineUUID: selectedPipeline?.uuid,
-              });
+            {
+              label: () => 'Edit description',
+              onClick: () =>
+                showInputModal({
+                  pipeline: selectedPipeline,
+                  pipelineDescription: selectedPipeline?.description,
+                }),
+              uuid: 'edit_description',
             },
-            uuid: 'download_without_folder_structure',
-          },
-          {
-            label: () => 'Add/Remove tags',
-            onClick: () => {
-              router.push(
-                '/pipelines/[pipeline]/settings',
-                `/pipelines/${selectedPipeline?.uuid}/settings`,
-              );
+            {
+              label: () => 'Rename',
+              onClick: () =>
+                showInputModal({
+                  pipeline: selectedPipeline,
+                  pipelineName: selectedPipeline?.name,
+                }),
+              uuid: 'rename',
             },
-            uuid: 'add_tags',
-          },
-          {
-            label: () => 'Create template',
-            onClick: () => {
-              router.push(
-                `/templates?object_type=${OBJECT_TYPE_PIPELINES}&new=1&pipeline_uuid=${selectedPipeline?.uuid}`,
-              );
+            {
+              label: () => 'Clone',
+              onClick: () =>
+                clonePipeline({
+                  pipeline: {
+                    clone_pipeline_uuid: selectedPipeline?.uuid,
+                  },
+                }),
+              uuid: 'clone',
             },
-            uuid: 'create_custom_template',
-          },
-          {
-            label: () => 'Create global data product',
-            onClick: () => {
-              router.push(
-                `/global-data-products?object_type=${GlobalDataProductObjectTypeEnum.PIPELINE}&new=1&object_uuid=${selectedPipeline?.uuid}`,
-              );
+            {
+              label: () => 'Download (keep folder structure)',
+              onClick: () => {
+                downloadPipeline({
+                  filesOnly: false,
+                  pipelineUUID: selectedPipeline?.uuid,
+                });
+              },
+              uuid: 'download_keep_folder_structure',
             },
-            uuid: 'create_global_data_product',
-          },
-          {
-            label: () => 'Delete',
-            onClick: () => {
-              if (typeof window !== 'undefined'
-                && window.confirm(
-                  `Are you sure you want to delete pipeline ${selectedPipeline?.uuid}?`,
-                )
-              ) {
-                deletePipeline(selectedPipeline?.uuid);
-              }
+            {
+              label: () => 'Download (without folder structure)',
+              onClick: () => {
+                downloadPipeline({
+                  filesOnly: true,
+                  pipelineUUID: selectedPipeline?.uuid,
+                });
+              },
+              uuid: 'download_without_folder_structure',
             },
-            uuid: 'delete',
-          },
-        ];
-      }}
-      rightClickMenuHeight={36 * 7}
-      rightClickMenuWidth={UNIT * 30}
-      rowGroupHeaders={rowGroupHeadersInner}
-      rows={pipelinesInner?.map((pipeline, idx) => {
-        const {
-          blocks,
-          created_at: createdAt,
-          description,
-          schedules,
-          tags,
-          type,
-          updated_at: updatedAt,
-          uuid,
-        } = pipeline;
-        const blocksCount = blocks.filter(({ type }) => BlockTypeEnum.SCRATCHPAD !== type).length;
-        const schedulesCount = schedules.length;
-        const isActive = schedules.find(({ status }) => ScheduleStatusEnum.ACTIVE === status);
-        const isInvalid = type as string === PIPELINE_TYPE_INVALID;
+            {
+              label: () => 'Add/Remove tags',
+              onClick: () => {
+                router.push(
+                  '/pipelines/[pipeline]/settings',
+                  `/pipelines/${selectedPipeline?.uuid}/settings`,
+                );
+              },
+              uuid: 'add_tags',
+            },
+            {
+              label: () => 'Create template',
+              onClick: () => {
+                router.push(
+                  `/templates?object_type=${OBJECT_TYPE_PIPELINES}&new=1&pipeline_uuid=${selectedPipeline?.uuid}`,
+                );
+              },
+              uuid: 'create_custom_template',
+            },
+            {
+              label: () => 'Create global data product',
+              onClick: () => {
+                router.push(
+                  `/global-data-products?object_type=${GlobalDataProductObjectTypeEnum.PIPELINE}&new=1&object_uuid=${selectedPipeline?.uuid}`,
+                );
+              },
+              uuid: 'create_global_data_product',
+            },
+            {
+              label: () => 'Delete',
+              onClick: () => {
+                if (
+                  typeof window !== 'undefined' &&
+                  window.confirm(
+                    `Are you sure you want to delete pipeline ${selectedPipeline?.uuid}?`,
+                  )
+                ) {
+                  deletePipeline(selectedPipeline?.uuid);
+                }
+              },
+              uuid: 'delete',
+            },
+          ];
+        }}
+        rightClickMenuHeight={36 * 7}
+        rightClickMenuWidth={UNIT * 30}
+        rowGroupHeaders={rowGroupHeadersInner}
+        rows={pipelinesInner?.map((pipeline, idx) => {
+          const {
+            blocks,
+            created_at: createdAt,
+            description,
+            execution_framework: executionFramework,
+            schedules,
+            tags,
+            type,
+            updated_at: updatedAt,
+            uuid,
+          } = pipeline;
+          const blocksCount = blocks.filter(({ type }) => BlockTypeEnum.SCRATCHPAD !== type).length;
+          const schedulesCount = schedules.length;
+          const isActive = schedules.find(({ status }) => ScheduleStatusEnum.ACTIVE === status);
+          const isInvalid = (type as string) === PIPELINE_TYPE_INVALID;
 
-        const tagsEl = (
-          <div key={`pipeline_tags_${idx}`}>
-            <TagsContainer
-              tags={tags?.map(tag => ({ uuid: tag }))}
-            />
-          </div>
-        );
+          const tagsEl = (
+            <div key={`pipeline_tags_${idx}`}>
+              <TagsContainer tags={tags?.map(tag => ({ uuid: tag }))} />
+            </div>
+          );
 
-        return [
-          (schedulesCount >= 1 || !!pipelinesEditing[uuid])
-            ? (
+          return [
+            schedulesCount >= 1 || !!pipelinesEditing[uuid] ? (
               <Button
                 iconOnly
                 loading={!!pipelinesEditing[uuid]}
                 noBackground
                 noBorder
                 noPadding
-                onClick={(e) => {
+                onClick={e => {
                   pauseEvent(e);
                   setPipelinesEditing(prev => ({
                     ...prev,
@@ -1243,194 +1291,158 @@ function PipelineListPage() {
                   }));
                   updatePipeline({
                     ...pipeline,
-                    status: isActive
-                      ? ScheduleStatusEnum.INACTIVE
-                      : ScheduleStatusEnum.ACTIVE,
+                    status: isActive ? ScheduleStatusEnum.INACTIVE : ScheduleStatusEnum.ACTIVE,
                   });
                 }}
               >
-                {isActive
-                  ? <Pause muted size={2 * UNIT} />
-                  : <PlayButtonFilled default size={2 * UNIT} />
-                }
+                {isActive ? (
+                  <Pause muted size={2 * UNIT} />
+                ) : (
+                  <PlayButtonFilled default size={2 * UNIT} />
+                )}
               </Button>
-            )
-            : null
-          ,
-          <Text
-            default={!isActive}
-            key={`pipeline_status_${idx}`}
-            monospace
-            success={!!isActive}
-          >
-            {isActive
-              ? ScheduleStatusEnum.ACTIVE
-              : schedulesCount >= 1 ? ScheduleStatusEnum.INACTIVE : 'no schedules'
-            }
-          </Text>,
-          <NextLink
-            as={`/pipelines/${uuid}`}
-            href="/pipelines/[pipeline]"
-            key={`pipeline_name_${idx}`}
-            passHref
-          >
-            <Link sameColorAsText>
-              {uuid}
-            </Link>
-          </NextLink>,
-          <Text
-            default
-            key={`pipeline_description_${idx}`}
-            preWrap
-            title={description}
-          >
-            {description}
-          </Text>,
-          <Text
-            bold={isInvalid}
-            danger={isInvalid}
-            key={`pipeline_type_${idx}`}
-          >
-            {isInvalid ? capitalize(PIPELINE_TYPE_INVALID) : PIPELINE_TYPE_LABEL_MAPPING[type]}
-          </Text>,
-          <Text
-            key={`pipeline_updated_at_${idx}`}
-            monospace
-            small
-            title={updatedAt ? utcStringToElapsedTime(updatedAt) : null}
-          >
-            {updatedAt
-              ? datetimeInLocalTimezone(
-                dateFormatLong(updatedAt, { includeSeconds: true, utcFormat: true }),
-                displayLocalTimezone,
-              )
-              : <>&#8212;</>}
-          </Text>,
-          <Text
-            key={`pipeline_created_at_${idx}`}
-            monospace
-            small
-            title={createdAt ? utcStringToElapsedTime(createdAt) : null}
-          >
-            {createdAt
-              ? datetimeInLocalTimezone(createdAt.slice(0, 19), displayLocalTimezone)
-              : <>&#8212;</>}
-          </Text>,
-          tagsEl,
-          <Text
-            default={blocksCount === 0}
-            key={`pipeline_block_count_${idx}`}
-            monospace
-          >
-            {blocksCount}
-          </Text>,
-          <Text
-            default={schedulesCount === 0}
-            key={`pipeline_trigger_count_${idx}`}
-            monospace
-          >
-            {schedulesCount}
-          </Text>,
-          <Flex
-            flex={1} justifyContent="flex-end"
-            key={`chevron_icon_${idx}`}
-          >
-            <Button
-              {...sharedOpenButtonProps}
-              onClick={() => {
-                downloadPipeline({ pipelineUUID: uuid });
-              }}
-              title="Download (keep folder structure)"
+            ) : null,
+            <Text default={!isActive} key={`pipeline_status_${idx}`} monospace success={!!isActive}>
+              {isActive
+                ? ScheduleStatusEnum.ACTIVE
+                : schedulesCount >= 1
+                  ? ScheduleStatusEnum.INACTIVE
+                  : 'no schedules'}
+            </Text>,
+            <NextLink
+              as={`/pipelines/${uuid}`}
+              href="/pipelines/[pipeline]"
+              key={`pipeline_name_${idx}`}
+              passHref
             >
-              <Save default size={2 * UNIT} />
-            </Button>
-            <Spacing mr={1} />
-            <Button
-              {...sharedOpenButtonProps}
-              onClick={() => {
-                router.push(
-                  '/pipelines/[pipeline]',
-                  `/pipelines/${uuid}`,
-                );
-              }}
-              title="Detail"
+              <Link sameColorAsText>{uuid}</Link>
+            </NextLink>,
+            <Text default key={`pipeline_description_${idx}`} preWrap title={description}>
+              {description}
+            </Text>,
+            <Text bold={isInvalid} danger={isInvalid} key={`pipeline_type_${idx}`}>
+              {isInvalid
+                ? capitalize(PIPELINE_TYPE_INVALID)
+                : (executionFramework ? FRAMEWORK_NAME_MAPPING[executionFramework] : PIPELINE_TYPE_LABEL_MAPPING[type])
+              }
+            </Text>,
+            <Text
+              key={`pipeline_updated_at_${idx}`}
+              monospace
+              small
+              title={updatedAt ? utcStringToElapsedTime(updatedAt) : null}
             >
-              <Open default size={2 * UNIT} />
-            </Button>
-            <Spacing mr={1} />
-            <Button
-              {...sharedOpenButtonProps}
-              onClick={() => {
-                router.push(
-                  '/pipelines/[pipeline]/logs',
-                  `/pipelines/${uuid}/logs`,
-                );
-              }}
-              title="Logs"
+              {updatedAt ? (
+                datetimeInLocalTimezone(
+                  dateFormatLong(updatedAt, { includeSeconds: true, utcFormat: true }),
+                  displayLocalTimezone,
+                )
+              ) : (
+                <>&#8212;</>
+              )}
+            </Text>,
+            <Text
+              key={`pipeline_created_at_${idx}`}
+              monospace
+              small
+              title={createdAt ? utcStringToElapsedTime(createdAt) : null}
             >
-              <File default size={2 * UNIT} />
-            </Button>
-          </Flex>,
-        ];
-      })}
-      rowsGroupedByIndex={rowsGroupedByIndexInner}
-      sortableColumnIndexes={sortableColumnIndexes}
-      sortedColumn={sortedColumnInit}
-      stickyHeader
-      uuid="pipelines_table"
-    />
-  ), [
-    clonePipeline,
-    deletePipeline,
-    downloadPipeline,
-    displayLocalTimezone,
-    pipelinesEditing,
-    router,
-    selectedPipeline,
-    setPipelinesEditing,
-    setSelectedPipeline,
-    showInputModal,
-    sortableColumnIndexes,
-    sortedColumnInit,
-    timezoneTooltipProps,
-    updatePipeline,
-  ]);
+              {createdAt ? (
+                datetimeInLocalTimezone(createdAt.slice(0, 19), displayLocalTimezone)
+              ) : (
+                <>&#8212;</>
+              )}
+            </Text>,
+            tagsEl,
+            <Text default={blocksCount === 0} key={`pipeline_block_count_${idx}`} monospace>
+              {blocksCount}
+            </Text>,
+            <Text default={schedulesCount === 0} key={`pipeline_trigger_count_${idx}`} monospace>
+              {schedulesCount}
+            </Text>,
+            <Flex flex={1} justifyContent="flex-end" key={`chevron_icon_${idx}`}>
+              <Button
+                {...sharedOpenButtonProps}
+                onClick={() => {
+                  downloadPipeline({ pipelineUUID: uuid });
+                }}
+                title="Download (keep folder structure)"
+              >
+                <Save default size={2 * UNIT} />
+              </Button>
+              <Spacing mr={1} />
+              <Button
+                {...sharedOpenButtonProps}
+                onClick={() => {
+                  router.push('/pipelines/[pipeline]', `/pipelines/${uuid}`);
+                }}
+                title="Detail"
+              >
+                <Open default size={2 * UNIT} />
+              </Button>
+              <Spacing mr={1} />
+              <Button
+                {...sharedOpenButtonProps}
+                onClick={() => {
+                  router.push('/pipelines/[pipeline]/logs', `/pipelines/${uuid}/logs`);
+                }}
+                title="Logs"
+              >
+                <File default size={2 * UNIT} />
+              </Button>
+            </Flex>,
+          ];
+        })}
+        rowsGroupedByIndex={rowsGroupedByIndexInner}
+        sortableColumnIndexes={sortableColumnIndexes}
+        sortedColumn={sortedColumnInit}
+        stickyHeader
+        uuid="pipelines_table"
+      />
+    ),
+    [
+      clonePipeline,
+      deletePipeline,
+      downloadPipeline,
+      displayLocalTimezone,
+      pipelinesEditing,
+      router,
+      selectedPipeline,
+      setPipelinesEditing,
+      setSelectedPipeline,
+      showInputModal,
+      sortableColumnIndexes,
+      sortedColumnInit,
+      timezoneTooltipProps,
+      updatePipeline,
+    ],
+  );
 
-  const pipelinesTableMemo = useMemo(() => renderTable(
-    pipelines,
-    rowGroupHeaders,
-    rowsGroupedByIndex,
-  ), [
-    pipelines,
-    renderTable,
-    rowGroupHeaders,
-    rowsGroupedByIndex,
-  ]);
+  const pipelinesTableMemo = useMemo(
+    () => renderTable(pipelines, rowGroupHeaders, rowsGroupedByIndex),
+    [pipelines, renderTable, rowGroupHeaders, rowsGroupedByIndex],
+  );
 
-  const pipelinesFromHistoryTableMemo = useMemo(() => renderTable(
-    pipelinesFromHistory,
-    rowGroupHeadersFromHistory,
-    rowsGroupedByIndexFromHistory,
-  ), [
-    pipelinesFromHistory,
-    renderTable,
-    rowGroupHeadersFromHistory,
-    rowsGroupedByIndexFromHistory,
-  ]);
+  const pipelinesFromHistoryTableMemo = useMemo(
+    () =>
+      renderTable(pipelinesFromHistory, rowGroupHeadersFromHistory, rowsGroupedByIndexFromHistory),
+    [pipelinesFromHistory, renderTable, rowGroupHeadersFromHistory, rowsGroupedByIndexFromHistory],
+  );
 
   const pipelinesCount = useMemo(() => pipelines?.length || 0, [pipelines]);
-  const pipelinesFromHistoryCount =
-    useMemo(() => pipelinesFromHistory?.length || 0, [pipelinesFromHistory]);
+  const pipelinesFromHistoryCount = useMemo(
+    () => pipelinesFromHistory?.length || 0,
+    [pipelinesFromHistory],
+  );
 
-  const showNoPipelinesForTab =
-    useMemo(() => ((!operationHistoryEnabled || TAB_ALL.uuid === selectedTabUUID) && !pipelinesCount)
-      || (operationHistoryEnabled && TAB_RECENT.uuid === selectedTabUUID && !pipelinesFromHistoryCount),
-    [
-      operationHistoryEnabled,
-      pipelinesCount,
-      pipelinesFromHistoryCount,
-      selectedTabUUID,
-    ]);
+  const showNoPipelinesForTab = useMemo(
+    () =>
+      ((!operationHistoryEnabled || TAB_ALL.uuid === selectedTabUUID) && !pipelinesCount) ||
+      (operationHistoryEnabled &&
+        TAB_RECENT.uuid === selectedTabUUID &&
+        !pipelinesFromHistoryCount),
+    [operationHistoryEnabled, pipelinesCount, pipelinesFromHistoryCount, selectedTabUUID],
+  );
 
   const limitMemo = useMemo(() => {
     const limit = query?.[MetaQueryEnum.LIMIT];
@@ -1445,19 +1457,22 @@ function PipelineListPage() {
 
         <Select
           compact
-          onChange={e => goToWithQuery({
-            [MetaQueryEnum.LIMIT]: e.target.value,
-            [MetaQueryEnum.OFFSET]: 0,
-          }, {
-            pushHistory: true,
-          })}
+          onChange={e =>
+            goToWithQuery(
+              {
+                [MetaQueryEnum.LIMIT]: e.target.value,
+                [MetaQueryEnum.OFFSET]: 0,
+              },
+              {
+                pushHistory: true,
+              },
+            )
+          }
           small
           value={limit}
         >
-          {limit && ((limit > (5 * ROW_LIMIT)) || (limit % ROW_LIMIT)) && (
-            <option value={limit}>
-              {limit}
-            </option>
+          {limit && (limit > 5 * ROW_LIMIT || limit % ROW_LIMIT) && (
+            <option value={limit}>{limit}</option>
           )}
           {range(5).map((i, idx) => {
             const val = (idx + 1) * ROW_LIMIT;
@@ -1471,9 +1486,7 @@ function PipelineListPage() {
         </Select>
       </FlexContainer>
     );
-  }, [
-    query,
-  ]);
+  }, [query]);
 
   const paginateMemo = useMemo(() => {
     let dataUse = data;
@@ -1489,7 +1502,7 @@ function PipelineListPage() {
       <Spacing p={PADDING_UNITS}>
         <Paginate
           maxPages={MAX_PAGES}
-          onUpdate={(p) => {
+          onUpdate={p => {
             const newPage = Number(p);
             goToWithQuery({
               [MetaQueryEnum.OFFSET]: newPage * limit,
@@ -1500,52 +1513,45 @@ function PipelineListPage() {
         />
       </Spacing>
     );
-  }, [
-    data,
-    dataPipelinesFromHistory,
-    operationHistoryEnabled,
-    query,
-    selectedTabUUID,
-  ]);
+  }, [data, dataPipelinesFromHistory, operationHistoryEnabled, query, selectedTabUUID]);
 
   return (
     <Dashboard
       errors={errors}
       setErrors={setErrors}
-      subheaderChildren={(
+      subheaderChildren={
         <FlexContainer alignItems="center" justifyContent="space-between">
           {toolbarEl}
 
           {limitMemo}
         </FlexContainer>
-      )}
+      }
       title="Pipelines"
       uuid="pipelines/index"
     >
       {operationHistoryEnabled && (
-        <Spacing
-          px={PADDING_UNITS}
-          ref={refButtonTabs}
-        >
+        <Spacing px={PADDING_UNITS} ref={refButtonTabs}>
           <ButtonTabs
             noPadding
-            onClickTab={({ uuid }) => goToWithQuery({
-              [QUERY_PARAM_TAB]: uuid,
-              [MetaQueryEnum.OFFSET]: 0,
-            }, {
-              pushHistory: true,
-            })}
+            onClickTab={({ uuid }) =>
+              goToWithQuery(
+                {
+                  [QUERY_PARAM_TAB]: uuid,
+                  [MetaQueryEnum.OFFSET]: 0,
+                },
+                {
+                  pushHistory: true,
+                },
+              )
+            }
             regularSizeText
             selectedTabUUID={selectedTabUUID}
-            tabs={TABS.map(({
+            tabs={TABS.map(({ Icon, label, uuid }) => ({
               Icon,
-              label,
-              uuid,
-            }) => ({
-              Icon,
-              label: () => label({
-                count: data?.metadata?.count,
-              }),
+              label: () =>
+                label({
+                  count: data?.metadata?.count,
+                }),
               uuid,
             }))}
             underlineStyle
@@ -1553,20 +1559,17 @@ function PipelineListPage() {
         </Spacing>
       )}
 
-      {showNoPipelinesForTab
-        ? (
-          <Spacing p={UNITS_BETWEEN_ITEMS_IN_SECTIONS}>
-            {!data
-              ?
-                <Spinner inverted large />
-              :
-                <Text bold default monospace muted>
-                  No pipelines available
-                </Text>
-            }
-          </Spacing>
-        ): null
-      }
+      {showNoPipelinesForTab ? (
+        <Spacing p={UNITS_BETWEEN_ITEMS_IN_SECTIONS}>
+          {!data ? (
+            <Spinner inverted large />
+          ) : (
+            <Text bold default monospace muted>
+              No pipelines available
+            </Text>
+          )}
+        </Spacing>
+      ) : null}
 
       <TableContainerStyle
         hide={showNoPipelinesForTab}
@@ -1574,19 +1577,14 @@ function PipelineListPage() {
         // 74 is the subheader height. 68 is the pagination bar height.
         maxHeight={`calc(100vh - ${HEADER_HEIGHT + 74 + (buttonTabsHeight || 44) + 68}px)`}
       >
-        {(!operationHistoryEnabled || TAB_ALL.uuid === selectedTabUUID)
-          && pipelinesTableMemo
-        }
+        {(!operationHistoryEnabled || TAB_ALL.uuid === selectedTabUUID) && pipelinesTableMemo}
 
-        {operationHistoryEnabled
-          && TAB_RECENT.uuid === selectedTabUUID
-          && pipelinesFromHistoryTableMemo
-        }
+        {operationHistoryEnabled &&
+          TAB_RECENT.uuid === selectedTabUUID &&
+          pipelinesFromHistoryTableMemo}
       </TableContainerStyle>
 
-      <div ref={refPaginate}>
-        {paginateMemo}
-      </div>
+      <div ref={refPaginate}>{paginateMemo}</div>
     </Dashboard>
   );
 }

@@ -1,147 +1,140 @@
-import React, { useContext, useEffect, useMemo, useRef } from 'react';
+import Menu, { MenuProps } from '../components/Menu';
+import React, { useCallback, useContext, useEffect, useMemo, useRef } from 'react';
+import useKeyboardNavigation from './useKeyboardNavigation';
+import { KeyEnum } from '../events/enums';
+import { MenuItemType as MenuItemTypeT } from '../components/Menu/interfaces';
 import { ThemeContext, ThemeProvider } from 'styled-components';
 import { createRoot, Root } from 'react-dom/client';
 
-import DeferredRenderer from '@mana/components/DeferredRenderer';
-import Menu from '../components/Menu';
-import useKeyboardShortcuts from './shortcuts/useKeyboardShortcuts';
-import { KeyEnum } from './shortcuts/types';
-import { ClientEventType as ClientEventTypeT } from '../shared/interfaces';
-import { MenuItemType as MenuItemTypeT } from '../components/Menu/interfaces';
-import { selectKeys } from '@utils/hash';
+const DEBUG = false;
 
 export type RenderContextMenuOptions = {
-  boundingContainer?: DOMRect;
+  contained?: any;
+  contextMenuRef?: React.MutableRefObject<HTMLDivElement>;
+  containerRef?: React.MutableRefObject<HTMLDivElement>;
+  direction?: any;
+  handleEscape?: any;
+  onClose?: any;
+  onClickCallback?: any;
+  openItems?: any;
+  position?: any;
+  rects?: any;
+  reduceItems?: any;
+  uuid?: string;
 };
 
 export type RenderContextMenuType = (
-  event: ClientEventTypeT,
-  items: MenuItemTypeT[],
-  opts?: RenderContextMenuOptions,
+  event: any,
+  items?: any,
+  opts?: any,
 ) => void;
 export type RemoveContextMenuType = (
-  event: ClientEventTypeT,
-  opts?: { conditionally?: boolean },
+  event: any,
+  opts?: any,
 ) => void;
 
-export type MenuItemType = MenuItemTypeT;
-export type ClientEventType = ClientEventTypeT;
+export type MenuItemType = any;
+export type ClientEventType = any;
 
+export interface ContextMenuType {
+  contextMenu?: any;
+  contextMenuRef: React.MutableRefObject<HTMLDivElement>;
+  removeContextMenu: any;
+  renderContextMenu: any;
+  shouldPassControl: any;
+  showMenu: (items: MenuItemType[], opts?: RenderContextMenuOptions, uuid?: string) => void;
+  hideMenu: any;
+  teardown: any;
+}
+
+export type ContextMenuProps = {
+  container?: HTMLDivElement;
+  containerRef?: React.RefObject<HTMLDivElement>;
+  useAsStandardMenu?: boolean;
+  uuid: string;
+};
+
+function keyboardNavigationItemFilter(item: MenuItemType): boolean {
+  return !item?.divider && (!!item?.onClick || item?.items?.length >= 1);
+}
 export default function useContextMenu({
   container,
-  uuid,
-}: {
-  container: React.MutableRefObject<HTMLDivElement | null>;
-  uuid: string;
-}): {
-  contextMenu: JSX.Element;
-  renderContextMenu: RenderContextMenuType;
-  removeContextMenu: RemoveContextMenuType;
-  shouldPassControl: (event: ClientEventType) => boolean;
-} {
+  containerRef: containerRefBase,
+  useAsStandardMenu,
+  uuid: uuidBase,
+}: ContextMenuProps): ContextMenuType {
+  const activeRef = useRef<string>(null);
+  const activeContainerRef = useRef<HTMLDivElement>(null);
   const contextMenuRef = useRef<HTMLDivElement | null>(null);
-  const contextMenuRootRef = useRef<Root | null>(null);
-  const itemsRef = useRef<MenuItemType[]>(null);
-  const positionRef = useRef<number[]>(null);
-  const themeContext = useContext(ThemeContext);
 
-  const rootID = useMemo(() => `context-menu-root-${uuid}`, [uuid]);
+  const renderContextMenuOptionsRef = useRef<Record<string, RenderContextMenuOptions>>({});
 
-  const { deregisterCommands, registerCommands } = useKeyboardShortcuts({
-    target: contextMenuRootRef,
+  const menuRefs = useRef<Record<string, React.MutableRefObject<HTMLDivElement>>>({
+    [uuidBase]: contextMenuRef,
+  });
+  const menuRootRefs = useRef<Record<string, Root>>({
+    [uuidBase]: null,
+  });
+  const menuItemsRefs = useRef<Record<string, MenuItemType[]>>({
+    [uuidBase]: null,
+  });
+  const containerRefs = useRef<Record<string, React.MutableRefObject<HTMLDivElement>>>({
+    [uuidBase]: containerRefBase,
   });
 
-  function isEventInContainer(event: ClientEventType): boolean {
-    return container?.current?.contains(event.target as Node);
+  const { itemsRef, registerItems, resetPosition } = useKeyboardNavigation({
+    itemFilter: keyboardNavigationItemFilter,
+    target: containerRefBase,
+  });
+
+  const themeContext = useContext(ThemeContext);
+
+  const getContainer = (uuid: string) => containerRefs?.current?.[uuid]?.current ?? container;
+
+  function isEventInContainer(event: ClientEventType, containerArg?: HTMLElement, uuid?: string): boolean {
+    return event && (containerArg ?? getContainer(uuid ?? uuidBase))?.contains(event.target as Node);
   }
 
-  function isEventInContextMenu(event: ClientEventType): boolean {
-    return contextMenuRef?.current?.contains(event.target as Node);
+  function isEventInContextMenu(event: ClientEventType, contextMenu?: HTMLDivElement, uuid?: string): boolean {
+    return event && (contextMenu ?? menuRefs?.current?.[uuid ?? uuidBase]?.current)?.contains(event.target as Node);
   }
 
-  function shouldPassControl(event: ClientEventType) {
-    return event.button === 2 && isEventInContainer(event);
+  function shouldPassControl(event: ClientEventType, uuid?: string) {
+    return event.button === 2 && event && isEventInContainer(event, null, uuid);
   }
 
-  function removeContextMenu(event: ClientEventType, opts?: { conditionally?: boolean }) {
-    if (opts?.conditionally && isEventInContextMenu(event)) return;
-
-    if (contextMenuRootRef?.current) {
-      contextMenuRootRef.current.unmount();
-      contextMenuRootRef.current = null;
-    }
-
-    itemsRef.current = null;
-    positionRef.current = [null];
-    deregisterCommands();
+  function hideMenu(uuid?: string) {
+    DEBUG && console.log('HIDE', uuid, menuRootRefs?.current?.[uuid])
+    menuRootRefs?.current?.[uuid ?? uuidBase]?.render([]);
   }
 
-  function filterItems(items: MenuItemType[]): MenuItemType[] {
-    return items?.filter(({ divider, onClick }: MenuItemType) => !divider && onClick);
-  }
-
-  function getCurrentItem(): {
-    item: MenuItemType;
-    items: MenuItemType[];
-  } {
-    if (!itemsRef?.current) return;
-
-    let item = null;
-    let items = filterItems(itemsRef?.current ? itemsRef?.current : []);
-
-    positionRef?.current?.forEach((y: number, x: number) => {
-      if (y === null) {
-        item = null;
-        return;
-      }
-
-      if (x >= 1 && item?.items?.length >= 1) {
-        const arr = filterItems(item?.items ?? []);
-        if (arr?.length >= 1) {
-          items = arr;
-        }
-      }
-      item = items?.[y];
+  function showMenu(items?: MenuItemType[], opts?: RenderContextMenuOptions, uuid?: string) {
+    renderContextMenu(null, items ?? itemsRef.current, {
+      ...opts,
+      uuid,
     });
-
-    return {
-      item,
-      items,
-    };
   }
 
-  function handlePositionChange({ x, y }: { x?: number; y?: number }) {
-    const { item, items } = getCurrentItem();
+  function removeContextMenu(event: ClientEventType, opts?: {
+    conditionally?: boolean;
+  }, uuid?: string) {
+    const id = uuid ?? uuidBase;
+    DEBUG && console.log('REMOVE', id, opts, menuRootRefs?.current)
 
-    if (x ?? false) {
-      if (x < 0 && positionRef.current.length >= 2) {
-        positionRef.current.pop();
-      } else if (x > 0) {
-        const ycur = positionRef.current[positionRef.current.length - 1];
-        const icur = items?.[ycur];
-        if (icur?.items?.length >= 1) {
-          positionRef.current.push(null);
-        }
-      }
+    if (opts?.conditionally && event && isEventInContextMenu(event, null, id)) return;
+
+    const menuRoot = menuRootRefs?.current?.[id];
+    if (menuRoot) {
+      menuRoot.render([]);
     }
 
-    if (y ?? false) {
-      let yNew =
-        positionRef.current[positionRef.current.length - 1] ??
-        (y > 0 ? -1 : item?.items?.length ?? 0);
-      yNew += y;
+    // DO NOT DO THIS
+    // delete menuRootRefs.current[id];
 
-      const count = items?.length ?? 0;
-      if (yNew < 0) {
-        yNew = 0;
-      } else if (count >= 1 && yNew >= count) {
-        yNew = count - 1;
-      }
+    activeRef.current = null;
+    activeContainerRef.current = null;
 
-      positionRef.current[positionRef.current.length - 1] = yNew;
-    }
-
-    console.log(getCurrentItem()?.item?.uuid);
+    resetPosition();
   }
 
   function renderContextMenu(
@@ -149,90 +142,161 @@ export default function useContextMenu({
     items: MenuItemType[],
     opts?: RenderContextMenuOptions,
   ) {
-    if (!container?.current || !isEventInContainer(event)) return;
+    const {
+      contained,
+      containerRef,
+      contextMenuRef,
+      handleEscape,
+      openItems,
+      position,
+      uuid,
+    } = opts ?? {};
+    const id = uuid ?? uuidBase;
 
-    event.preventDefault();
+    activeRef.current && hideMenu(activeRef.current);
+    uuid && hideMenu(uuid);
+    hideMenu(uuidBase);
+    activeRef.current && removeContextMenu(event, null, activeRef.current);
+    uuid && removeContextMenu(event, null, uuid);
+    removeContextMenu(event, null, uuidBase);
 
-    if (!contextMenuRootRef?.current && contextMenuRef.current) {
-      const node = contextMenuRef.current;
-      if (node) {
-        contextMenuRootRef.current = createRoot(node as any);
-      }
+    if (uuid) {
+      containerRefs.current[uuid] = containerRef;
+      menuRefs.current[uuid] = contextMenuRef;
     }
 
-    if (!contextMenuRootRef?.current) return;
+    if (!contained && event && !isEventInContainer(event, null, id)) return;
 
-    contextMenuRootRef.current.render(
-      <DeferredRenderer idleTimeout={1}>
+    event && event?.preventDefault();
+
+    activeRef.current = id;
+    activeContainerRef.current = getContainer(id);
+    renderContextMenuOptionsRef.current[id] = {
+      contained,
+      handleEscape,
+      position,
+    };
+
+    const render = (root: Root) =>
+      root.render(
         <ThemeProvider theme={themeContext}>
+          {/* @ts-ignore */}
           <Menu
-            boundingContainer={
-              opts?.boundingContainer ??
-              selectKeys(container?.current?.getBoundingClientRect() || {}, ['width', 'x', 'y'])
-            }
+            {...opts}
+            contained={contained}
             event={event}
             items={items}
+            keyboardNavigationItemFilter={keyboardNavigationItemFilter}
+            openItems={openItems}
+            position={
+              position ?? {
+                left: event?.pageX,
+                top: event?.pageY,
+              }
+            }
             small
-            uuid={uuid}
+            standardMenu={useAsStandardMenu}
+            uuid={id}
           />
-        </ThemeProvider>
-      </DeferredRenderer>,
-    );
+        </ThemeProvider>,
+      );
 
-    itemsRef.current = items;
-    positionRef.current = [null];
-    registerCommands({
-      down: {
-        handler: () => handlePositionChange({ y: 1 }),
-        predicate: { key: KeyEnum.ARROWDOWN },
-      },
-      enter: {
-        handler: () => {
-          const handle = getCurrentItem()?.item?.onClick;
-          handle && handle?.();
-        },
-        predicate: { key: KeyEnum.ENTER },
-      },
-      left: {
-        handler: () => handlePositionChange({ x: -1 }),
-        predicate: { key: KeyEnum.ARROWLEFT },
-      },
-      right: {
-        handler: () => handlePositionChange({ x: 1 }),
-        predicate: { key: KeyEnum.ARROWRIGHT },
-      },
-      up: {
-        handler: () => handlePositionChange({ y: -1 }),
-        predicate: { key: KeyEnum.ARROWUP },
-      },
+    const menuElement = menuRefs.current?.[id]?.current ?? menuRefs.current[uuidBase]?.current;
+
+    try {
+      menuRootRefs.current[id] = createRoot(menuElement as any);
+    } catch {
+
+    }
+
+    DEBUG && console.log(
+      'useContextMenu.renderContextMenu',
+      'id', id,
+      'uuid', uuid,
+      'opts', opts,
+      'root', menuRootRefs.current[id],
+      'contextMenuRef.current', contextMenuRef?.current,
+      'menuElement', menuElement,
+    )
+
+    menuItemsRefs.current[uuid] = items;
+    render(menuRootRefs.current[id]);
+
+    registerItems(items, {
+      ...(openItems
+        ? {
+            position: openItems?.map(({ row }) => row),
+          }
+        : {}),
+      ...(handleEscape
+        ? {
+            commands: {
+              escape: {
+                handler: handleEscape,
+                predicate: { key: KeyEnum.ESCAPE },
+              },
+            },
+          }
+        : {}),
+    });
+  }
+
+  function teardown(uuid?: string) {
+    const uuids = uuid ? [uuid] : Object.keys(menuRootRefs.current);
+
+    uuids.forEach((id) => {
+      const menuRoot = menuRootRefs.current?.[id];
+      menuRoot && menuRoot.unmount();
+
+      delete containerRefs.current[id];
+      delete menuItemsRefs.current[id];
+      delete menuRefs.current[id];
+      delete menuRootRefs.current[id];
     });
   }
 
   useEffect(() => {
     const handleDocumentClick = (event: any) => {
-      const node = document.getElementById(rootID);
-      if (node && !node?.contains(event.target as Node)) {
-        removeContextMenu(event);
-      }
+      Object.keys(menuRefs.current ?? {}).forEach(id => {
+        const menuRef = menuRefs.current?.[id];
+        const containerRef = containerRefs.current?.[id];
+        const contained = renderContextMenuOptionsRef.current?.[id]?.contained;
+
+        DEBUG && console.log(
+          'userContextMenu.handleDocumentClick',
+          'id', id,
+          'contained.option', contained,
+          'container', containerRef.current,
+          'container contains event', containerRef.current?.contains(event.target as Node),
+          'menuRef', menuRef,
+          'menu contains event', menuRef?.current?.contains(event.target as Node),
+        );
+
+        if ([
+          menuRef?.current,
+          contained ? containerRef.current : null,
+        ].filter(Boolean).every(node => !node?.contains(event.target as Node))) {
+          removeContextMenu(event, null, id);
+        }
+      });
     };
 
     document?.addEventListener('click', handleDocumentClick);
 
-    const menuRoot = contextMenuRootRef?.current;
     return () => {
       document?.removeEventListener('click', handleDocumentClick);
-      menuRoot && menuRoot.unmount();
-      contextMenuRootRef.current = null;
-      deregisterCommands();
     };
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [useAsStandardMenu]);
 
   return {
-    contextMenu: <div ref={contextMenuRef} />,
+    contextMenuRef: menuRefs.current[uuidBase],
+    hideMenu,
     removeContextMenu,
     renderContextMenu,
     shouldPassControl,
+    showMenu,
+    teardown,
   };
 }

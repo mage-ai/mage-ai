@@ -9,7 +9,7 @@
 
         &.gradient-background-#{$clean-direction}-#{$value1}-#{$value2} {
           background: linear-gradient($direction, var(--colors-#{$value1}), var(--colors-#{$value2}));
-          padding: var(--borders-outline-width); // Space for the border
+          padding: var(--borders-gradient-width); // Space for the border
         }
 
         &.gradient-border-#{$clean-direction}-#{$value1}-#{$value2} {

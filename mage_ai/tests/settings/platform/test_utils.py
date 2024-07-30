@@ -23,10 +23,13 @@ class PlatformUtilsTests(ProjectPlatformMixin, AsyncDBTestCase):
             pipeline.save()
 
             config_path, repo_path = get_pipeline_config_path(pipeline.uuid)
-            self.assertEqual(config_path, os.path.join(
-                settings['full_path'],
-                f'pipelines/{pipeline.uuid}/metadata.yaml',
-            ))
+            self.assertEqual(
+                config_path,
+                os.path.join(
+                    settings['full_path'],
+                    f'pipelines/{pipeline.uuid}/metadata.yaml',
+                ),
+            )
             self.assertEqual(repo_path, settings['full_path'])
 
     def test_get_pipeline_from_platform(self):
@@ -61,11 +64,14 @@ class PlatformUtilsTests(ProjectPlatformMixin, AsyncDBTestCase):
         self.assertTrue(error)
 
         with patch('mage_ai.settings.platform.utils.project_platform_activated', lambda: True):
-            self.assertEqual(pipeline.uuid, get_pipeline_from_platform(
+            self.assertEqual(
                 pipeline.uuid,
-                repo_path=full_path,
-                use_repo_path=True,
-            ).uuid)
+                get_pipeline_from_platform(
+                    pipeline.uuid,
+                    repo_path=full_path,
+                    use_repo_path=True,
+                ).uuid,
+            )
 
     def test_get_pipeline_from_platform_with_repo_path_and_default_mapping(self):
         self.initialize_settings(SETTINGS)
@@ -86,6 +92,7 @@ class PlatformUtilsTests(ProjectPlatformMixin, AsyncDBTestCase):
                     repo_path=os.path.join(base_repo_path(), 'mage_platform'),
                     all_projects=False,
                     use_repo_path=False,
+                    materialize_execution_framework=False,
                 )
 
     async def test_get_pipeline_from_platform_async(self):
@@ -125,11 +132,14 @@ class PlatformUtilsTests(ProjectPlatformMixin, AsyncDBTestCase):
         with patch('mage_ai.settings.platform.utils.project_platform_activated', lambda: True):
             self.assertEqual(
                 pipeline.uuid,
-                (await get_pipeline_from_platform_async(
-                    pipeline.uuid,
-                    repo_path=full_path,
-                    use_repo_path=True,
-                )).uuid)
+                (
+                    await get_pipeline_from_platform_async(
+                        pipeline.uuid,
+                        repo_path=full_path,
+                        use_repo_path=True,
+                    )
+                ).uuid,
+            )
 
     async def test_get_pipeline_from_platform_async_with_repo_path_and_default_mapping(self):
         self.initialize_settings(SETTINGS)

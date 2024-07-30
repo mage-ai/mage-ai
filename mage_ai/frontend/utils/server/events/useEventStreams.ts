@@ -13,6 +13,14 @@ import { onSuccess } from '@api/utils/response';
 import { isDebug } from '@utils/environment';
 import { getNewUUID } from '@utils/string';
 
+export type EventStreamsType = {
+  errors: Event[];
+  events: EventStreamType[];
+  loading?: boolean;
+  status: ServerConnectionStatusType;
+  sendMessage: (payload: { message: string }) => void;
+};
+
 export default function useEventStreams(
   uuid: string,
   {
@@ -25,14 +33,9 @@ export default function useEventStreams(
     autoReconnect: true,
     maxConnectionAttempts: 10,
   },
-): {
-  errors: Event[];
-  events: EventStreamType[];
+): EventStreamsType & {
   messages: ProcessDetailsType[];
-  status: ServerConnectionStatusType;
-  loading?: boolean;
   recentEvent?: EventStreamType;
-  sendMessage: (payload: { message: string }) => void;
 } {
   const connectionAttemptsRemainingRef = useRef(maxConnectionAttempts);
   const eventSourceRef = useRef(null);

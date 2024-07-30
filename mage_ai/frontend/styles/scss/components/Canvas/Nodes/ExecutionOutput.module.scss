@@ -1,0 +1,48 @@
+@use '../../../base/typography' as text;
+.executionOutputGroupContainer {
+  padding-bottom: var(--padding-sm);
+  padding-top: var(--padding-sm);
+
+  pre {
+    @include text.monospace-sm;
+    color: var(--fonts-color-code-base);
+    column-gap: var(--padding-xs);
+    display: grid;
+    grid-template-columns: auto 1fr;
+  }
+}
+
+.executionOutputGroup {
+  border-color: var(--colors-greenmd);
+  border-radius: var(--borders-radius-sm);
+  border-style: var(--borders-style);
+  border-width: var(--borders-width);
+
+  &.cancelled {
+    border-color: var(--colors-yellow);
+  }
+  &.error {
+    border-color: var(--colors-redmd);
+  }
+  &.failure {
+    border-color: var(--colors-redlos);
+  }
+  &.interrupted {
+    border-color: var(--colors-yellowmd);
+  }
+  &.ready {
+    border-color: var(--colors-greenmd);
+  }
+  &.restarted {
+    border-color: var(--borders-color-base-default);
+  }
+  &.running {
+    border-color: var(--colors-greenlo);
+  }
+  &.success {
+    border-color: var(--colors-greenmd);
+  }
+  &.terminated {
+    border-color: var(--colors-rosenmd);
+  }
+}

@@ -1,8 +1,9 @@
 import { MutateFunction, useMutation } from 'react-query';
+import { snakeToHyphens } from '@utils/url';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/router';
 import moment from 'moment';
-
+import { PipelineExecutionFrameworkUUIDEnum } from '@interfaces/PipelineExecutionFramework/types';
 import AIControlPanel from '@components/AI/ControlPanel';
 import AddButton from '@components/shared/AddButton';
 import BarStackChart from '@components/charts/BarStack';
@@ -399,10 +400,29 @@ function OverviewPage({ tab }: { tab?: TimePeriodEnum }) {
       uuid: 'AI_modal',
     },
   );
-
+  const [createRAG] = useMutation(
+    (payload: any) =>
+      api.pipelines.execution_frameworks.useCreate(PipelineExecutionFrameworkUUIDEnum.RAG)(payload),
+    {
+      onSuccess: (response: any) =>
+        onSuccess(response, {
+          callback: ({ pipeline: model }) => {
+            router.push(
+              `/v2/pipelines/${snakeToHyphens(model.uuid)}/${snakeToHyphens(model.execution_framework)}/data-preparation`,
+            );
+          },
+          onErrorCallback: (response, errors) =>
+            setErrors({
+              errors,
+              response,
+            }),
+        }),
+    },
+  );
   const newPipelineButtonMenuItems = useMemo(
     () =>
       getNewPipelineButtonMenuItems(createPipeline, {
+        createRAG,
         showAIModal: () => {
           if (!project?.openai_api_key) {
             showConfigureProjectModal({
@@ -420,6 +440,7 @@ function OverviewPage({ tab }: { tab?: TimePeriodEnum }) {
       }),
     [
       createPipeline,
+      createRAG,
       project,
       showAIModal,
       showBrowseTemplates,

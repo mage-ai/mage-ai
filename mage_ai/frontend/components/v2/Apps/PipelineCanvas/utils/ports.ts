@@ -1,65 +1,67 @@
-import BlockType from '@interfaces/BlockType';
-import {
-  ModelMappingType,
-  PortType,
-  ModelRefsType,
-  DragItem,
-  GroupMappingType,
-  ConnectionMappingType,
-  NodeItemMappingType,
-  ItemMappingType,
-  PortMappingType,
-  BlocksByGroupType,
-  NodeType,
-  RectType,
-} from '../../../Canvas/interfaces';
+import { NodeType, PortType, NodeItemType } from '../../../Canvas/interfaces';
 import { PortSubtypeEnum, ItemTypeEnum } from '../../../Canvas/types';
-import { createConnection } from '../../../Canvas/Connections/utils';
+import { buildPortIDFromBlockToBlock } from '../../../Canvas/Draggable/utils';
+import { buildUUIDForLevel } from './levels';
+import { selectKeys } from '@utils/hash';
+import { indexBy } from '@utils/array';
 
-export function createConnections(
-  ports: PortType[],
-  modelMappings: ModelMappingType,
-  opts?: {
-    level?: number;
-  },
-): ModelMappingType {
+export type PortsByItemType = Record<
+  string,
+  {
+    item: NodeItemType;
+    ports: PortType[];
+  }
+>;
+
+export function createPortsByItem(
+  items: NodeItemType[],
+  opts?: { level?: number },
+): PortsByItemType {
   const { level } = opts || {};
-  const { itemMapping } = modelMappings;
-  ports?.forEach((port: PortType) => {
-    let fromItemBlock = null;
-    let toItemBlock = null;
+  const keys = ['downstream', 'id', 'type', 'upstream'];
+  const itemsMapping = indexBy(items, ({ id }) => id);
 
-    if (PortSubtypeEnum.INPUT === port?.subtype) {
-      fromItemBlock = itemMapping?.[port?.target?.id]?.block;
-      toItemBlock = itemMapping?.[port?.parent?.id]?.block;
-    } else {
-      fromItemBlock = itemMapping?.[port?.parent?.id]?.block;
-      toItemBlock = itemMapping?.[port?.target?.id]?.block;
-    }
+  return items?.reduce((acc: PortsByItemType, item: NodeItemType) => {
+    const { block, downstream, upstream } = item as NodeType;
+    const props = {
+      block,
+      level,
+      parent: selectKeys(item, keys),
+      type: ItemTypeEnum.PORT,
+    };
 
-    const fromItem = itemMapping?.[(fromItemBlock as BlockType)?.uuid];
-    const toItem = itemMapping?.[(toItemBlock as BlockType)?.uuid];
+    const outputs: PortType[] =
+      downstream?.map((blockID: string, index: number) => {
+        const target = itemsMapping[blockID];
 
-    const fromPort = fromItem?.ports?.find(
-      p =>
-        p?.target?.block?.uuid === (toItemBlock as BlockType)?.uuid &&
-        p.subtype === PortSubtypeEnum.OUTPUT,
-    );
-    const toPort = toItem?.ports?.find(
-      p =>
-        p?.target?.block?.uuid === (fromItemBlock as BlockType)?.uuid &&
-        p.subtype === PortSubtypeEnum.INPUT,
-    );
+        return {
+          ...props,
+          id: buildUUIDForLevel(buildPortIDFromBlockToBlock(block, target?.block), level),
+          index,
+          subtype: PortSubtypeEnum.OUTPUT,
+          target,
+        };
+      }) ?? [];
 
-    if (fromPort) {
-      fromPort.rect = { ...fromItem.rect } as RectType;
-    }
-    if (toPort) {
-      toPort.rect = { ...toItem.rect } as RectType;
-    }
-  });
+    const inputs: PortType[] =
+      upstream?.map((blockID: string, index: number) => {
+        const target = itemsMapping[blockID];
 
-  return {
-    itemMapping,
-  };
+        return {
+          ...props,
+          id: buildUUIDForLevel(buildPortIDFromBlockToBlock(block, target?.block), level),
+          index,
+          subtype: PortSubtypeEnum.INPUT,
+          target,
+        };
+      }) ?? [];
+
+    return {
+      ...acc,
+      [item.id]: {
+        item,
+        ports: [...outputs, ...inputs],
+      },
+    };
+  }, {});
 }

@@ -33,9 +33,7 @@ def add_absolute_path(file_path: str, add_base_repo_path: bool = True) -> str:
                     # DBT v1 paths
                     full_path = os.path.join(repo_path, 'dbt', file_path)
                 else:
-                    full_path = find_directory(
-                        repo_path, lambda x: x.endswith(file_path)
-                    )
+                    full_path = find_directory(repo_path, lambda x: x.endswith(file_path))
 
     if full_path:
         # Remove the repo path

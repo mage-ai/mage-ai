@@ -7,9 +7,21 @@ export enum ErrorCodeEnum {
 }
 
 export interface ErrorDetailsType {
-  code?: ErrorCodeEnum;
+  code?: string | ErrorCodeEnum;
+  error?: {
+    type?: string;
+    message?: string;
+    traceback?: string[];
+  };
   errors?: string[];
+  exception?: string | any;
+  code_context?: string[];
+  code_context_formatted?: string[];
+  line_number?: number;
   message?: string;
+  message_formatted?: string;
+  stacktrace?: string[];
+  stacktrace_formatted?: string[];
   type?: string;
 }
 

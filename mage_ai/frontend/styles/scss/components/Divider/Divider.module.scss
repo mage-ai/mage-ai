@@ -17,8 +17,8 @@ $spacing: 12px;
     margin-top: $spacing;
 
     &.compact {
-      margin-bottom: $spacing;
-      margin-top: $spacing;
+      margin-bottom: 0;
+      margin-top: 0;
     }
   }
 
@@ -26,4 +26,11 @@ $spacing: 12px;
     height: 100%;
     width: 1px;
   }
+}
+
+.dashed-divider {
+  border-left: 0.5px dashed var(--colors-graymd);
+  border-right: 0.5px dashed var(--colors-graymd);
+  height: 40px;
+  width: 1px;
 }

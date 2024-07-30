@@ -27,7 +27,7 @@ ExecutionFrameworkPolicy.allow_actions(
 
 
 ExecutionFrameworkPolicy.allow_read(
-    ExecutionFrameworkPresenter.default_attributes,
+    ExecutionFrameworkPresenter.default_attributes + ['pipelines'],
     on_action=[
         OperationType.DETAIL,
         OperationType.LIST,

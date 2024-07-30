@@ -1,3 +1,4 @@
+import { motion } from 'framer-motion';
 import styled from 'styled-components';
 
 export function childClassName(uuid: string): string {
@@ -12,11 +13,11 @@ export type FolderStyledProps = {
   uuid: string;
 };
 
-export const FolderStyled = styled.div<FolderStyledProps>`
+export const FolderStyled = styled(motion.div)<FolderStyledProps>`
   ${({ theme, uuid }) => `
     .${childClassName(uuid)} {
       &:hover {
-        background-color: ${theme.colors.backgrounds.button.base.hover};
+        background-color: var(--colors-graymd);
         cursor: pointer;
 
         -moz-user-select: none; /* Firefox */

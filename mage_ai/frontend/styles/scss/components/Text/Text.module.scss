@@ -20,6 +20,6 @@
   }
 
   &.xsmall {
-    @include text.monospace-sm;
+    @include text.monospace-xs;
   }
 }

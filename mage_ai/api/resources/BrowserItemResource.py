@@ -57,11 +57,7 @@ class BrowserItemResource(GenericResource):
                 parse_values=__parse_values,
             )
 
-        return cls.build_result_set(
-            items,
-            user,
-            **kwargs,
-        )
+        return cls.build_result_set(items, user, **kwargs)
 
     @classmethod
     def get_model(cls, pk, **kwargs) -> Item:
@@ -77,6 +73,7 @@ class BrowserItemResource(GenericResource):
             })
 
         await item.get_content()
+
         return cls(item, user, **kwargs)
 
     @classmethod
@@ -89,8 +86,16 @@ class BrowserItemResource(GenericResource):
         await self.model.delete()
 
     async def update(self, payload, **kwargs):
+        query = kwargs.get('query', {})
+        output_namespace = query.get('output_namespace', [None])
+        if output_namespace:
+            output_namespace = output_namespace[0]
+
         if 'path' not in payload:
             payload['path'] = self.model.path
+
+        if 'output' in payload:
+            await self.model.set_output(payload['output'], output_namespace)
 
         try:
             await self.model.synchronize(Item.load(**payload))

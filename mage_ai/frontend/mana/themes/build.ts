@@ -5,6 +5,7 @@ import borders, { BordersType } from './borders';
 import buttons, { ButtonsType } from './buttons';
 import fonts, { FontsType } from './fonts';
 import grid, { GridType } from './grid';
+import header, { HeaderType } from './header';
 import icons, { IconsType } from './icons';
 import ide, { IDEType } from './ide';
 import inputs, { InputsType } from './inputs';
@@ -63,6 +64,7 @@ class Combiner implements CombinerType {
       | ColorsType
       | FontsType
       | GridType
+      | HeaderType
       | IconsType
       | IDEType
       | InputsType
@@ -91,6 +93,7 @@ export default function buildTheme(themeSettings?: ThemeSettingsType): ThemeType
     buttons,
     fonts,
     grid,
+    header,
     icons,
     ide,
     inputs,
@@ -108,6 +111,12 @@ export default function buildTheme(themeSettings?: ThemeSettingsType): ThemeType
 
   return {
     ...elements,
-    colors: combiner.colors,
+    colors: {
+      ...combiner.colors,
+      ...Object.entries(combiner.colors).reduce(
+        (acc, [key, value]) => ({ ...acc, [key.toLowerCase()]: value }),
+        {},
+      ),
+    },
   };
 }

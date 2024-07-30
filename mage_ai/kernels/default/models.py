@@ -64,12 +64,6 @@ class KernelProcess(KernelProcessBase):
 
 
 class KernelWrapper(KernelBase):
-    def __init__(self, kernel):
-        self.kernel = kernel
-        self.usage = None
-        self.active_kernels = None
-        self.inactive_kernels = None
-
     async def prepare_usage(self):
         try:
             client = self.kernel.client()
@@ -94,22 +88,14 @@ class KernelWrapper(KernelBase):
     def is_alive(self) -> bool:
         return self.kernel.is_alive()
 
-    @property
-    def kernel_id(self) -> str:
-        return self.kernel.kernel_id
-
-    @property
-    def kernel_name(self) -> str:
-        return self.kernel.kernel_name
-
-    def interrupt(self):
+    def interrupt(self) -> bool:
         interrupt_kernel()
         return True
 
-    def restart(self):
+    def restart(self) -> bool:
         restart_kernel()
         return True
 
-    def start(self):
+    def start(self) -> bool:
         start_kernel()
         return True

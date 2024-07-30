@@ -49,4 +49,52 @@ $directions: top, right, bottom, left;
     padding-right: var(--padding-xs);
     padding-top: var(--padding-xs);
   }
+
+  &.base-left-true {
+    padding-left: var(--padding-base);
+  }
+
+  &.base-right-true {
+    padding-right: var(--padding-base);
+  }
+
+  &.base-top-true {
+    padding-top: var(--padding-base);
+  }
+
+  &.base-bottom-true {
+    padding-bottom: var(--padding-base);
+  }
+
+  &.small-left-true {
+    padding-left: var(--padding-sm);
+  }
+
+  &.small-right-true {
+    padding-right: var(--padding-sm);
+  }
+
+  &.small-top-true {
+    padding-top: var(--padding-sm);
+  }
+
+  &.small-bottom-true {
+    padding-bottom: var(--padding-sm);
+  }
+
+  &.xsmall-left-true {
+    padding-left: var(--padding-xs);
+  }
+
+  &.xsmall-right-true {
+    padding-right: var(--padding-xs);
+  }
+
+  &.xsmall-top-true {
+    padding-top: var(--padding-xs);
+  }
+
+  &.xsmall-bottom-true {
+    padding-bottom: var(--padding-xs);
+  }
 }

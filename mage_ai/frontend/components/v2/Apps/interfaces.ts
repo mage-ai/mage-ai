@@ -1,4 +1,4 @@
-import { AppTypeEnum, AppSubtypeEnum } from './constants';
+import { AppTypeEnum, AppStatusEnum, AppSubtypeEnum } from './constants';
 
 export enum OperationTypeEnum {
   ADD_APP = 'add-app',
@@ -36,12 +36,14 @@ export type AppLoaderProps = {
 
 export type AppLoaderResultType = {
   main: JSX.Element | any;
-  toolbars?: {
-    bottom?: JSX.Element;
-    left?: JSX.Element;
-    right?: JSX.Element;
-    top?: JSX.Element;
-  };
+  toolbars?:
+    | {
+        bottom?: JSX.Element;
+        left?: JSX.Element;
+        right?: JSX.Element;
+        top?: JSX.Element;
+      }
+    | Record<string, any>;
 };
 
 export type AddAppFunctionOptionsType = {
@@ -66,11 +68,11 @@ export interface ToolbarsType {
 }
 
 export interface AppConfigType {
+  id?: string;
   layout?: AppLayoutType;
   operations?: OperationsType;
-  options?: {
-    [key: string]: any;
-  };
+  options?: Record<string, any>;
+  status?: AppStatusEnum;
   subtype?: AppSubtypeEnum;
   toolbars?: ToolbarsType;
   type?: AppTypeEnum;

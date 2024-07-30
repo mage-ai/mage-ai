@@ -2,7 +2,7 @@ import { ColorsType } from './colors';
 
 export enum IconSizeEnum {
   BASE = 20,
-  SM = 17,
+  SM = 16,
   XS = 12,
 }
 
@@ -10,6 +10,7 @@ export interface IconsType {
   color: {
     base: string;
     inverted: string;
+    muted: string;
   };
   size: {
     base: number;

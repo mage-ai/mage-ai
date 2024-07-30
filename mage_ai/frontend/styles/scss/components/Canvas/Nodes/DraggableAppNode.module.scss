@@ -1,0 +1,38 @@
+@use '../../../base/borders';
+@use '../../../abstracts/variables' as *;
+@use '../../../base/grid';
+@use './mixins' as *;
+
+.appNodeWrapper {
+  @include grid.base();
+}
+
+.appNodeContainer  {
+  @include borders.base();
+  @include borders.border-colors();
+  @include grid.base();
+
+  backdrop-filter: blur(#{$modal-blur-base});
+  background: var(--modal-background-color-base);
+  border-radius: (--borders-radius-md);
+  box-shadow: 8px 8px 4px 8px var(--modal-box-shadow-base);
+  padding: var(--padding-base);
+  z-index: 10;
+}
+
+.codeContainer {
+  min-height: 300px;
+  min-width: 600px;
+  overflow: hidden;
+}
+
+.content {
+  border: var(--borders-width) var(--borders-style) var(--borders-color-base-default);
+  border-radius: var(--borders-radius-sm);
+}
+
+.dragger {
+  &:hover {
+    cursor: move;
+  }
+}

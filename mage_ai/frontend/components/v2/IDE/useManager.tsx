@@ -16,10 +16,11 @@ function useManager(uuid: string, resource: ResourceType, opts?: any): any {
     workspace: boolean;
     wrapper: boolean;
   }>({
-    languageServer: false,
+    languageServer: opts?.languageServer?.enabled ? false : true,
     workspace: false,
     wrapper: false,
   });
+  const { languageServer, workspace, wrapper } = opts ?? {};
 
   const [fetchItems] = useMutation(
     (query?: {
@@ -58,12 +59,18 @@ function useManager(uuid: string, resource: ResourceType, opts?: any): any {
 
         await managerRef.current.initialize(resource, {
           ...opts,
-          languageServer: {
-            onComplete: () => {
-              setCompletions(prev => ({ ...prev, languageServer: true }));
-            },
-          },
+          ...(languageServer?.enabled
+            ? {
+                languageServer: {
+                  ...languageServer,
+                  onComplete: () => {
+                    setCompletions(prev => ({ ...prev, languageServer: true }));
+                  },
+                },
+              }
+            : {}),
           workspace: {
+            ...workspace,
             onComplete: () => {
               setCompletions(prev => ({ ...prev, workspace: true }));
             },
@@ -72,7 +79,7 @@ function useManager(uuid: string, resource: ResourceType, opts?: any): any {
             },
           },
           wrapper: {
-            ...opts?.wrapper?.options,
+            ...wrapper,
             onComplete: () => {
               setCompletions(prev => ({ ...prev, wrapper: true }));
 

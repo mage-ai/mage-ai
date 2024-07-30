@@ -1,0 +1,306 @@
+import { EditorAction } from './interfaces';
+
+export function executeCode(handler: () => void): (monaco: any) => EditorAction {
+  return (monaco: any) => ({
+    contextMenuGroupId: 'navigation',
+    contextMenuOrder: 1.5,
+    id: 'mage-executeCode',
+    keybindingContext: null,
+    keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter],
+    label: 'Execude code',
+    precondition: null,
+    run: () => handler(),
+  });
+}
+
+export function interruptCodeExecution(handler: () => void): (monaco: any) => EditorAction {
+  return (monaco: any) => ({
+    contextMenuGroupId: 'navigation',
+    contextMenuOrder: 1.5,
+    id: 'mage-interruptCodeExecution',
+    keybindingContext: null,
+    keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.Escape],
+    label: 'Interrupt code execution',
+    precondition: null,
+    run: () => handler(),
+  });
+}
+
+export function saveContent(handler: () => void): (monaco: any) => EditorAction {
+  return (monaco: any) => ({
+    contextMenuGroupId: 'navigation',
+    contextMenuOrder: 1.5,
+    id: 'mage-saveContent',
+    keybindingContext: null,
+    keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS],
+    label: 'Save content',
+    precondition: null,
+    run: () => handler(),
+  });
+}
+
+
+// https://microsoft.github.io/monaco-editor/typedoc/enums/KeyCode.html
+// ABNT_C1
+// ABNT_C2
+// Alt
+// AudioVolumeDown
+// AudioVolumeMute
+// AudioVolumeUp
+// Backquote
+// Backslash
+// Backspace
+// BracketLeft
+// BracketRight
+// BrowserBack
+// BrowserForward
+// BrowserHome
+// BrowserSearch
+// CapsLock
+// Clear
+// Comma
+// ContextMenu
+// Ctrl
+// Delete
+// DependsOnKbLayout
+// Digit0
+// Digit1
+// Digit2
+// Digit3
+// Digit4
+// Digit5
+// Digit6
+// Digit7
+// Digit8
+// Digit9
+// DownArrow
+// End
+// Enter
+// Equal
+// Escape
+// F1
+// F10
+// F11
+// F12
+// F13
+// F14
+// F15
+// F16
+// F17
+// F18
+// F19
+// F2
+// F20
+// F21
+// F22
+// F23
+// F24
+// F3
+// F4
+// F5
+// F6
+// F7
+// F8
+// F9
+// Home
+// Insert
+// IntlBackslash
+// KEY_IN_COMPOSITION
+// KeyA
+// KeyB
+// KeyC
+// KeyD
+// KeyE
+// KeyF
+// KeyG
+// KeyH
+// KeyI
+// KeyJ
+// KeyK
+// KeyL
+// KeyM
+// KeyN
+// KeyO
+// KeyP
+// KeyQ
+// KeyR
+// KeyS
+// KeyT
+// KeyU
+// KeyV
+// KeyW
+// KeyX
+// KeyY
+// KeyZ
+// LaunchApp2
+// LaunchMail
+// LaunchMediaPlayer
+// LeftArrow
+// MAX_VALUE
+// MediaPlayPause
+// MediaStop
+// MediaTrackNext
+// MediaTrackPrevious
+// Meta
+// Minus
+// NUMPAD_SEPARATOR
+// NumLock
+// Numpad0
+// Numpad1
+// Numpad2
+// Numpad3
+// Numpad4
+// Numpad5
+// Numpad6
+// Numpad7
+// Numpad8
+// Numpad9
+// NumpadAdd
+// NumpadDecimal
+// NumpadDivide
+// NumpadMultiply
+// NumpadSubtract
+// OEM_8
+// PageDown
+// PageUp
+// PauseBreak
+// Period
+// Quote
+// RightArrow
+// ScrollLock
+// Semicolon
+// Shift
+// Slash
+// Space
+// Tab
+// Unknown
+// UpArrow
+
+// editor.unfold
+// editor.unfoldRecursively
+// editor.fold
+// editor.foldRecursively
+// editor.foldAll
+// editor.unfoldAll
+// editor.foldAllBlockComments
+// editor.foldAllMarkerRegions
+// editor.unfoldAllMarkerRegions
+// editor.foldAllExcept
+// editor.unfoldAllExcept
+// editor.toggleFold
+// editor.gotoParentFold
+// editor.gotoPreviousFold
+// editor.gotoNextFold
+// editor.createFoldingRangeFromSelection
+// editor.removeManualFoldingRanges
+// editor.foldLevel1
+// editor.foldLevel2
+// editor.foldLevel3
+// editor.foldLevel4
+// editor.foldLevel5
+// editor.foldLevel6
+// editor.foldLevel7
+// editor.action.triggerSuggest
+// editor.action.resetSuggestSize
+// editor.action.showContextMenu
+// editor.action.openLink
+// editor.action.dirtydiff.previous
+// editor.action.dirtydiff.next
+// workbench.action.editor.previousChange
+// workbench.action.editor.nextChange
+// editor.action.toggleWordWrap
+// editor.action.formatDocument.none
+// editor.action.setSelectionAnchor
+// editor.action.selectToBracket
+// editor.action.jumpToBracket
+// editor.action.removeBrackets
+// editor.action.moveCarretLeftAction
+// editor.action.moveCarretRightAction
+// editor.action.transposeLetters
+// editor.action.clipboardCopyWithSyntaxHighlightingAction
+// editor.action.commentLine
+// editor.action.addCommentLine
+// editor.action.removeCommentLine
+// editor.action.blockComment
+// cursorUndo
+// cursorRedo
+// editor.action.pasteAs
+// editor.action.pasteAsText
+// actions.find
+// editor.action.startFindReplaceAction
+// editor.actions.findWithArgs
+// actions.findWithSelection
+// editor.action.nextMatchFindAction
+// editor.action.previousMatchFindAction
+// editor.action.nextSelectionMatchFindAction
+// editor.action.previousSelectionMatchFindAction
+// editor.action.fontZoomIn
+// editor.action.fontZoomOut
+// editor.action.fontZoomReset
+// editor.action.inlineSuggest.trigger
+// editor.action.marker.next
+// editor.action.marker.prev
+// editor.action.marker.nextInFiles
+// editor.action.marker.prevInFiles
+// editor.action.showHover
+// editor.action.showDefinitionPreviewHover
+// editor.action.indentationToSpaces
+// editor.action.indentationToTabs
+// editor.action.indentUsingTabs
+// editor.action.indentUsingSpaces
+// editor.action.changeTabDisplaySize
+// editor.action.detectIndentation
+// editor.action.reindentlines
+// editor.action.reindentselectedlines
+// editor.action.inPlaceReplace.up
+// editor.action.inPlaceReplace.down
+// expandLineSelection
+// editor.action.copyLinesUpAction
+// editor.action.copyLinesDownAction
+// editor.action.duplicateSelection
+// editor.action.moveLinesUpAction
+// editor.action.moveLinesDownAction
+// editor.action.sortLinesAscending
+// editor.action.sortLinesDescending
+// editor.action.removeDuplicateLines
+// editor.action.trimTrailingWhitespace
+// editor.action.deleteLines
+// editor.action.indentLines
+// editor.action.outdentLines
+// editor.action.insertLineBefore
+// editor.action.insertLineAfter
+// deleteAllLeft
+// deleteAllRight
+// editor.action.joinLines
+// editor.action.transpose
+// editor.action.transformToUppercase
+// editor.action.transformToLowercase
+// editor.action.transformToSnakecase
+// editor.action.transformToCamelcase
+// editor.action.transformToPascalcase
+// editor.action.transformToTitlecase
+// editor.action.transformToKebabcase
+// editor.action.insertCursorAbove
+// editor.action.insertCursorBelow
+// editor.action.insertCursorAtEndOfEachLineSelected
+// editor.action.addSelectionToNextFindMatch
+// editor.action.addSelectionToPreviousFindMatch
+// editor.action.moveSelectionToNextFindMatch
+// editor.action.moveSelectionToPreviousFindMatch
+// editor.action.selectHighlights
+// editor.action.addCursorsToBottom
+// editor.action.addCursorsToTop
+// editor.action.focusNextCursor
+// editor.action.focusPreviousCursor
+// editor.action.inlineEdit.trigger
+// editor.action.smartSelect.expand
+// editor.action.smartSelect.shrink
+// editor.action.forceRetokenize
+// editor.action.unicodeHighlight.disableHighlightingOfAmbiguousCharacters
+// editor.action.unicodeHighlight.disableHighlightingOfInvisibleCharacters
+// editor.action.unicodeHighlight.disableHighlightingOfNonBasicAsciiCharacters
+// editor.action.unicodeHighlight.showExcludeOptions
+// editor.action.wordHighlight.trigger
+// deleteInsideWord
+// editor.action.inspectTokens
+// editor.action.toggleHighContrast

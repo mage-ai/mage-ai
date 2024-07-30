@@ -1,3 +1,13 @@
+@use '../abstracts/helpers' as *;
+
+@mixin colors() {
+  @each $value in $colors-names {
+    &.color-#{$value} {
+      color: var(--colors-#{$value});
+    }
+  }
+}
+
 @mixin base-font-family {
   font-family: var(--fonts-family-base-regular);
 
@@ -45,8 +55,16 @@
 }
 
 @mixin base-styles {
+  @include colors();
+
   color: var(--fonts-color-text-base);
   margin: 0;
+  white-space: break-spaces;
+  word-break: break-word;
+
+  &.nowrap {
+    white-space: nowrap;
+  }
 
   &.inverted {
     color: var(--fonts-color-text-inverted);
@@ -54,14 +72,20 @@
   &.blue {
     color: var(--fonts-color-text-blue);
   }
-  &.secondary {
-    color: var(--colors-whitemd);
-  }
   &.muted {
-    color: var(--colors-whitelo);
+    color: var(--fonts-color-text-muted);
+  }
+  &.secondary {
+    color: var(--fonts-color-text-secondary);
+  }
+  &.error {
+    color: var(--colors-statuses-error);
   }
   &.warning {
     color: var(--fonts-color-text-warning);
+  }
+  &.success {
+    color: var(--colors-green);
   }
 
   font-size: var(--fonts-size-base);
@@ -83,7 +107,12 @@
   &.bold {
     font-weight: var(--fonts-weight-bold);
   }
+
+  &.underline {
+    text-decoration: underline;
+  }
 }
+
 @mixin base {
   @include base-styles;
   @include base-font-family;
@@ -93,7 +122,7 @@
 @mixin base-sm {
   @include base;
   font-size: var(--fonts-size-sm);
-  line-height: var(--fonts-lineheight-base);
+  line-height: var(--fonts-lineheight-sm);
 }
 
 @mixin base-xs {

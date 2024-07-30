@@ -56,6 +56,7 @@ RESPONSE_GENERATION = PipelineExecutionFramework.load(
 )
 
 INFERENCE = PipelineExecutionFramework.load(
+    pipeline_schedules=['API'],
     uuid=GroupUUID.INFERENCE,
     description=(
         'The process of handling user queries, retrieving relevant information, and generating '

@@ -37,6 +37,7 @@ import {
   REQUIRE_USER_PERMISSIONS_COOKIE_PROPERTIES,
 } from '@utils/session';
 import { SheetProvider } from '@context/Sheet/SheetProvider';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ThemeType } from '@oracle/styles/themes/constants';
 import { addPageHistory } from '@storage/CommandCenter/utils';
 import { getCurrentTheme } from '@oracle/styles/themes/utils';
@@ -44,7 +45,7 @@ import { gridTheme as gridThemeDefault, theme as stylesTheme } from '@styles/the
 import { isDemo } from '@utils/environment';
 import { queryFromUrl, queryString, redirectToUrl } from '@utils/url';
 
-const NextAppV2 = dynamic(() => import('@components/NextAppV2'));
+const NextAppV2 = dynamic(() => import('@components/v2/Layout/App'));
 
 const COMMAND_CENTER_ROOT_ID = 'command-center-root';
 
@@ -265,31 +266,22 @@ function MyApp(props: MyAppProps & AppProps) {
     [commandCenterEnabled, requireUserAuthentication],
   );
 
-  const appMemo = useMemo(
-    () => (
+  if (props?.version === 'v2' || props?.pageProps?.version === 'v2') {
+    return (
       <NextAppV2
         Component={Component}
         pageProps={{
-          defaultTitle,
+          ...pageProps,
           themeSettings: pageProps?.themeSettings,
           title,
           version: (props?.version || props?.pageProps?.version) as any,
         }}
         router={router}
       />
-    ),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [],
-  );
-
-  const useV2 = useMemo(
-    () => props?.version === 'v2' || props?.pageProps?.version === 'v2',
-    [props?.version, props?.pageProps?.version],
-  );
-
-  if (useV2) {
-    return appMemo;
+    );
   }
+
+  const queryClient = new QueryClient();
 
   return (
     <>
@@ -299,33 +291,35 @@ function MyApp(props: MyAppProps & AppProps) {
             <ModalProvider>
               <SheetProvider>
                 <ErrorProvider>
-                  <Head defaultTitle={defaultTitle} title={title}>
-                    <meta
-                      content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=0"
-                      name="viewport"
-                    />
-                  </Head>
+                  <QueryClientProvider client={queryClient}>
+                    <Head defaultTitle={defaultTitle} title={title}>
+                      <meta
+                        content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=0"
+                        name="viewport"
+                      />
+                    </Head>
 
-                  <LoadingBar color={RED} ref={refLoadingBar} />
+                    <LoadingBar color={RED} ref={refLoadingBar} />
 
-                  {/* @ts-ignore */}
-                  <Component {...pageProps} />
+                    {/* @ts-ignore */}
+                    <Component {...pageProps} />
 
-                  {isDemoApp && (
-                    <Banner
-                      linkProps={{
-                        href: 'https://github.com/mage-ai/mage-ai',
-                        label: 'GET MAGE',
-                      }}
-                      localStorageHideKey={LOCAL_STORAGE_KEY_HIDE_PUBLIC_DEMO_WARNING}
-                      textProps={{
-                        message: 'Public demo. Do not add private credentials.',
-                        warning: true,
-                      }}
-                    />
-                  )}
-                  {shouldShowCommandCenter && <CommandCenter />}
-                  {!shouldShowCommandCenter && <div id={COMMAND_CENTER_ROOT_ID} />}
+                    {isDemoApp && (
+                      <Banner
+                        linkProps={{
+                          href: 'https://github.com/mage-ai/mage-ai',
+                          label: 'GET MAGE',
+                        }}
+                        localStorageHideKey={LOCAL_STORAGE_KEY_HIDE_PUBLIC_DEMO_WARNING}
+                        textProps={{
+                          message: 'Public demo. Do not add private credentials.',
+                          warning: true,
+                        }}
+                      />
+                    )}
+                    {shouldShowCommandCenter && <CommandCenter />}
+                    {!shouldShowCommandCenter && <div id={COMMAND_CENTER_ROOT_ID} />}
+                  </QueryClientProvider>
                 </ErrorProvider>
               </SheetProvider>
             </ModalProvider>

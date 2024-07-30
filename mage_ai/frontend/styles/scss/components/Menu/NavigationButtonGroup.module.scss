@@ -1,0 +1,83 @@
+@use '../../abstracts/mixins';
+
+$height: 40px;
+
+@mixin after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: -10px; /* Adjust to control how far it extends beyond the boundary */
+  width: 40px; /* Width of the diagonal */
+  transform: skewX(-24deg); /* Create the diagonal effect */
+  z-index: -1; /* Ensure it is behind the button content */
+}
+
+@mixin bg {
+  bottom: 0;
+  content: "";
+  left: 0;
+  position: absolute;
+  right: 0; /* Adjust this value to control how far it extends beyond the boundary */
+  top: -40px;
+  width: calc(100% + 16px);
+  z-index: -1; /* Ensure it is behind the button content */
+}
+
+.grid {
+  height: 38px;
+  position: relative;
+}
+
+.button {
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+  overflow: hidden;
+}
+
+.diagnoal-line-container {
+  background-color: transparent;
+  border: none;
+  height: 38px; /* Height of the container */
+  outline: none;
+  position: relative;
+  width: 2px; /* Width of the container */
+
+  .diagonal-line {
+    background-color: transparent;
+    border: none;
+    outline: none;
+    position: absolute;
+    width: 2px; /* Thickness of the line */
+    height: 54px; /* Length of the diagonal */
+
+    top: -4px;
+    left: -2px;
+    transform: rotate(24deg); /* Rotate to make it diagonal */
+  }
+}
+
+.selected, .done {
+  position: relative;
+}
+
+/* .done::before {
+  @include bg;
+  background: linear-gradient(114deg, #1A1A1A 85%, transparent 85%);
+  top: -21px;
+}
+.done::after {
+  @include after;
+  background: linear-gradient(114deg, #1A1A1A 85%, transparent 85%);
+}
+
+.selected::before {
+  @include bg;
+  background: linear-gradient(114deg, #252D35 85%, transparent 85%);
+  width: calc(100% + 40px);
+}
+
+.selected::after {
+  @include after;
+  background: linear-gradient(114deg, #252D35 85%, transparent 85%);
+} */

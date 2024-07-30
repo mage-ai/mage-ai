@@ -78,6 +78,7 @@ from mage_ai.settings.platform import build_repo_path_for_all_projects
 from mage_ai.settings.platform.constants import project_platform_activated
 from mage_ai.settings.repo import get_repo_path
 from mage_ai.shared.array import find
+from mage_ai.shared.environments import is_debug
 from mage_ai.shared.hash import extract, ignore_keys, index_by, merge_dict
 from mage_ai.shared.io import safe_write, safe_write_async
 from mage_ai.shared.path_fixer import remove_base_repo_path
@@ -101,6 +102,7 @@ class Pipeline:
         description: str = None,
         tags: List[str] = None,
         execution_framework: Optional[str] = None,
+        materialize_execution_framework: bool = False,
     ):
         self.block_configs = []
         self.blocks_by_uuid = {}
@@ -117,6 +119,7 @@ class Pipeline:
         self.name = None
         self.notification_config = dict()
         self.execution_framework = execution_framework
+        self.materialize_execution_framework = materialize_execution_framework
 
         # For multi project
         warn_for_repo_path(repo_path)
@@ -457,6 +460,7 @@ class Pipeline:
         all_projects: bool = False,
         context_data: Dict = None,
         use_repo_path: bool = False,
+        materialize_execution_framework: bool = False,
     ):
         warn_for_repo_path(repo_path)
 
@@ -477,6 +481,7 @@ class Pipeline:
             repo_config=repo_config,
             context_data=context_data,
             use_repo_path=use_repo_path,
+            materialize_execution_framework=materialize_execution_framework,
         )
         if PipelineType.INTEGRATION == pipeline.type:
             from mage_ai.data_preparation.models.pipelines.integration_pipeline import (
@@ -588,6 +593,7 @@ class Pipeline:
         all_projects: bool = False,
         context_data: Dict = None,
         use_repo_path: bool = False,
+        materialize_execution_framework: bool = False,
     ):
         warn_for_repo_path(repo_path)
 
@@ -648,6 +654,7 @@ class Pipeline:
                 config=config,
                 repo_config=repo_config,
                 use_repo_path=use_repo_path,
+                materialize_execution_framework=materialize_execution_framework,
             )
         return pipeline
 
@@ -860,7 +867,7 @@ class Pipeline:
         self.load_config(self.get_config_from_yaml(), catalog=catalog)
 
     def load_config(self, config, catalog=None):
-        if not config:
+        if not config and is_debug():
             raise Exception(f'Invalid pipeline config: {config}')
         if catalog is None:
             self.data_integration = config.get('data_integration')
@@ -902,28 +909,31 @@ class Pipeline:
 
             language = c.get('language')
 
-            return BlockFactory.block_class_from_type(
+            block_class = BlockFactory.block_class_from_type(
                 block_type, language=language, pipeline=self
-            )(
-                c.get('name'),
-                c.get('uuid'),
-                block_type,
-                block_color=c.get('color'),
-                configuration=c.get('configuration'),
-                content=c.get('content'),
-                executor_config=c.get('executor_config'),
-                executor_type=c.get('executor_type', ExecutorType.LOCAL_PYTHON),
-                extension_uuid=c.get('extension_uuid'),
-                groups=c.get('groups'),
-                has_callback=c.get('has_callback'),
-                language=c.get('language'),
-                pipeline=self,
-                replicated_block=c.get('replicated_block'),
-                repo_config=self.repo_config,
-                retry_config=c.get('retry_config'),
-                status=c.get('status'),
-                timeout=c.get('timeout'),
             )
+
+            if block_class and callable(block_class):
+                block_config = dict(
+                    block_color=c.get('color'),
+                    configuration=c.get('configuration'),
+                    content=c.get('content'),
+                    executor_config=c.get('executor_config'),
+                    executor_type=c.get('executor_type', ExecutorType.LOCAL_PYTHON),
+                    extension_uuid=c.get('extension_uuid'),
+                    has_callback=c.get('has_callback'),
+                    language=c.get('language'),
+                    pipeline=self,
+                    replicated_block=c.get('replicated_block'),
+                    repo_config=self.repo_config,
+                    retry_config=c.get('retry_config'),
+                    status=c.get('status'),
+                    timeout=c.get('timeout'),
+                )
+                if c.get('groups'):
+                    block_config['groups'] = c.get('groups')
+
+                return block_class(c.get('name'), c.get('uuid'), block_type, **block_config)
 
         blocks = [build_shared_args_kwargs(c) for c in self.block_configs]
         callbacks = [build_shared_args_kwargs(c) for c in self.callback_configs]
@@ -1005,17 +1015,22 @@ class Pipeline:
         all_blocks,
         execution_framework: str = None,
     ):
-        blocks_by_uuid = {b.uuid: b for b in blocks}
+        blocks_by_uuid = {b.uuid: b for b in blocks if b is not None}
 
-        if execution_framework is not None and \
-           ExecutionFrameworkUUID.has_value(execution_framework):
+        if (
+            self.materialize_execution_framework
+            and execution_framework is not None
+            and ExecutionFrameworkUUID.has_value(execution_framework)
+        ):
             # Enforce the block execution dependencies with the execution framework
             from mage_ai.frameworks.execution.constants import (
                 EXECUTION_FRAMEWORKS_BY_UUID,
             )
+
             framework = EXECUTION_FRAMEWORKS_BY_UUID.get(execution_framework)
-            framework.initialize_block_instances(blocks_by_uuid)
-            return blocks_by_uuid
+            if framework:
+                framework.initialize_block_instances(blocks_by_uuid)
+                return blocks_by_uuid
 
         all_blocks_by_uuid = {b.uuid: b for b in all_blocks}
 
@@ -2413,6 +2428,7 @@ class Pipeline:
         block_uuid: str = None,
         extension_uuid: str = None,
         widget: bool = False,
+        include_execution_framework: Optional[bool] = None,
     ) -> None:
         blocks_current = sorted([b.uuid for b in self.blocks_by_uuid.values()])
 
@@ -2441,6 +2457,7 @@ class Pipeline:
             pipeline_dict = self.to_dict(
                 exclude_data_integration=True,
                 include_extensions=True,
+                include_execution_framework=include_execution_framework,
             )
         if not pipeline_dict:
             raise Exception('Writing empty pipeline metadata is prevented.')

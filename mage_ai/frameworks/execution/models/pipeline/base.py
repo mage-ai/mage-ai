@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from collections import deque
 from dataclasses import dataclass
-from typing import List, Optional
+from typing import Any, Dict, List, Optional
 
 from mage_ai.data_preparation.models.constants import BlockType, PipelineType
 from mage_ai.frameworks.execution.models.base import BaseExecutionFramework
@@ -14,6 +14,7 @@ from mage_ai.shared.hash import group_by, merge_dict
 @dataclass
 class PipelineExecutionFramework(BaseExecutionFramework):
     blocks: Optional[List[BlockExecutionFramework]] = None
+    pipeline_schedules: Optional[List[Any]] = None
     pipelines: Optional[List[PipelineExecutionFramework]] = None
     type: Optional[PipelineType] = PipelineType.EXECUTION_FRAMEWORK
 
@@ -119,10 +120,12 @@ class PipelineExecutionFramework(BaseExecutionFramework):
                     if pipeline_block and pipeline_block.upstream_blocks:
                         leaf_nodes_of_upstream_pipelines = []
                         for b in pipeline_block.upstream_blocks:
-                            leaf_nodes_of_upstream_pipelines += \
-                                pipeline_configs.get(b, dict()).get('leaf_nodes', [])
-                        block_group['upstream_block_groups'] = \
-                            [b.uuid for b in leaf_nodes_of_upstream_pipelines]
+                            leaf_nodes_of_upstream_pipelines += pipeline_configs.get(
+                                b, dict()
+                            ).get('leaf_nodes', [])
+                        block_group['upstream_block_groups'] = [
+                            b.uuid for b in leaf_nodes_of_upstream_pipelines
+                        ]
 
             if not block_group['downstream_block_groups']:
                 # Leaf node
@@ -132,14 +135,20 @@ class PipelineExecutionFramework(BaseExecutionFramework):
                     if pipeline_block and pipeline_block.downstream_blocks:
                         root_nodes_of_downstream_pipelines = []
                         for b in pipeline_block.downstream_blocks:
-                            root_nodes_of_downstream_pipelines += \
-                                pipeline_configs.get(b, dict()).get('root_nodes', [])
-                        block_group['downstream_block_groups'] = \
-                            [b.uuid for b in root_nodes_of_downstream_pipelines]
+                            root_nodes_of_downstream_pipelines += pipeline_configs.get(
+                                b, dict()
+                            ).get('root_nodes', [])
+                        block_group['downstream_block_groups'] = [
+                            b.uuid for b in root_nodes_of_downstream_pipelines
+                        ]
 
         return block_groups
 
-    def initialize_block_instances(self, blocks_by_uuid):
+    def initialize_block_instances(
+        self,
+        blocks_by_uuid: Dict[str, Any],
+        # block_configs: List[Dict[str, Any]],
+    ):
         """
         Initialize the block instances by Enforcing block settings with the framework.
 
@@ -148,6 +157,51 @@ class PipelineExecutionFramework(BaseExecutionFramework):
         3. Set the block dependencies for block instances
         4. Set the block configurations for block instances
         """
+
+        # At the end, add the intra-group dependencies back.
+        # block_configs_mapping = index_by(lambda x: x['uuid'], block_configs or [])
+        # intra_group_deps = {}
+        # for uuid, block_dict in block_configs_mapping.items():
+        #     group_uuids = block_dict.get('groups') or []
+        #     if len(group_uuids) == 0:
+        #         continue
+
+        #     dnb = []
+        #     upb = []
+
+        #     for buuid in block_dict.get('downstream_blocks') or []:
+        #         dblock = block_configs_mapping.get(buuid)
+        #         if (
+        #             dblock
+        #             and dblock.get('groups')
+        #             and any([guuid in dblock.get('groups') for guuid in group_uuids])
+        #         ):
+        #             blk = blocks_by_uuid.get(buuid)
+        #             if blk:
+        #                 dnb.append(blk)
+
+        #     for buuid in block_dict.get('upstream_blocks') or []:
+        #         dblock = block_configs_mapping.get(buuid)
+        #         if (
+        #             dblock
+        #             and dblock.get('groups')
+        #             and any([guuid in dblock.get('groups') for guuid in group_uuids])
+        #         ):
+        #             blk = blocks_by_uuid.get(buuid)
+        #             if blk:
+        #                 upb.append(blk)
+
+        #     intra_group_deps[uuid] = dict(downstream_blocks=dnb, upstream_blocks=upb)
+
+        # def __valid(b) -> bool:
+        #     if (
+        #         not b.groups
+        #         or len(b.upstream_blocks or []) > 0
+        #         or block_configs_mapping.get(b.uuid, {}).get('upstream_blocks')
+        #         # or b.uuid in intra_group_deps
+        #     ):
+        #         return False
+        #     return True
 
         blocks_with_group = [b for b in blocks_by_uuid.values() if b.groups]
         blocks_by_group = group_by(lambda b: b.groups[0], blocks_with_group)
@@ -163,7 +217,8 @@ class PipelineExecutionFramework(BaseExecutionFramework):
                     upstream_blocks.append(blocks_by_group[guuid])
                 elif guuid in flatten_block_groups_by_uuid:
                     upstream_blocks.append(
-                        find_upstream_blocks(flatten_block_groups_by_uuid[guuid]))
+                        find_upstream_blocks(flatten_block_groups_by_uuid[guuid])
+                    )
 
             return list(set(flatten(upstream_blocks)))
 
@@ -175,22 +230,51 @@ class PipelineExecutionFramework(BaseExecutionFramework):
                     downstream_blocks.append(blocks_by_group[guuid])
                 elif guuid in flatten_block_groups_by_uuid:
                     downstream_blocks.append(
-                        find_downstream_blocks(flatten_block_groups_by_uuid[guuid]))
+                        find_downstream_blocks(flatten_block_groups_by_uuid[guuid])
+                    )
 
             return list(set(flatten(downstream_blocks)))
 
+        # Preserve the dependencies of the blocks within a single group.
+
+        # Don’t add an upstream group’s blocks to a downstream group’s block’s upstream_blocks
+        # unless the downstream group’s block doesn’t have any upstream_blocks.
         for b in blocks_with_group:
             block_group = flatten_block_groups_by_uuid.get(b.groups[0])
             if not block_group:
                 continue
+
             block_group_configuration = block_group['block_group'].configuration
             b.configuration = merge_dict(
                 b.configuration or dict(),
                 block_group_configuration.to_dict(ignore_attributes=['templates'])
-                if block_group_configuration else dict(),
+                if block_group_configuration
+                else dict(),
             )
             if block_group['upstream_block_groups']:
                 b.upstream_blocks = find_upstream_blocks(block_group)
 
             if block_group['downstream_block_groups']:
                 b.downstream_blocks = find_downstream_blocks(block_group)
+
+        # for b in blocks_by_uuid.values():
+        #     # Add the intra-group dependencies
+        #     deps = intra_group_deps.get(b.uuid) or {}
+        #     if deps and deps.get('downstream_blocks'):
+        #         b.downstream_blocks = unique_by(
+        #             deps.get('downstream_blocks', []),
+        #             lambda blk: blk.uuid,
+        #         )
+        #     if deps and deps.get('upstream_blocks'):
+        #         b.upstream_blocks = unique_by(
+        #             deps.get('upstream_blocks', []),
+        #             lambda blk: blk.uuid,
+        #         )
+
+    def get_blocks(self) -> List[BlockExecutionFramework]:
+        arr = []
+        for pipeline in self.get_pipelines():
+            for block in pipeline.blocks or []:
+                if BlockType.GROUP == block.type:
+                    arr.append(block)
+        return arr
