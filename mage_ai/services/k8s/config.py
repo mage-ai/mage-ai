@@ -57,6 +57,7 @@ class K8sExecutorConfig(BaseConfig):
 
         service_account_name = DEFAULT_SERVICE_ACCOUNT_NAME
         affinity = None
+        node_selector = None
         tolerations = []
         volumes = []
         image_pull_secrets = {}
@@ -67,6 +68,9 @@ class K8sExecutorConfig(BaseConfig):
             if executor_config.pod.get('affinity'):
                 # Convert the affinity to a V1Affinity object
                 affinity = parse_affinity_config(executor_config.pod['affinity'])
+
+            if executor_config.pod.get('node_selector'):
+                node_selector = executor_config.pod['node_selector']
 
             if executor_config.pod.get('tolerations'):
                 tolerations += [V1Toleration(**e) for e in executor_config.pod['tolerations']]
@@ -118,6 +122,7 @@ class K8sExecutorConfig(BaseConfig):
             affinity=affinity,
             containers=[container],
             image_pull_secrets=image_pull_secrets,
+            node_selector=node_selector,
             restart_policy='Never',
             service_account_name=service_account_name,
             tolerations=tolerations,
