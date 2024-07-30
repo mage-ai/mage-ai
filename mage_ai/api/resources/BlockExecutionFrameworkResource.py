@@ -6,7 +6,6 @@ from mage_ai.api.errors import ApiError
 from mage_ai.api.resources.BlockResource import BlockResource
 from mage_ai.api.resources.GenericResource import GenericResource
 from mage_ai.frameworks.execution.models.block.adapter import Block
-from mage_ai.shared.array import find
 
 
 class BlockExecutionFrameworkResource(GenericResource):
@@ -21,10 +20,11 @@ class BlockExecutionFrameworkResource(GenericResource):
                 },
             })
 
-        blocks = await parent_model.get_blocks(refresh=True)
-        model = find(lambda block: block.uuid == urllib.parse.unquote(pk), blocks)
+        pipeline_base = await parent_model.get_pipeline(refresh=True)
+        uuid = urllib.parse.unquote(pk)
+        block = pipeline_base.get_block(uuid)
 
-        if not model:
+        if not block:
             raise ApiError({
                 **ApiError.RESOURCE_NOT_FOUND,
                 **{
@@ -32,6 +32,7 @@ class BlockExecutionFrameworkResource(GenericResource):
                 },
             })
 
+        model = Block(block, pipeline_base, parent_model)
         return cls(model, user, **kwargs)
 
     @classmethod
@@ -87,10 +88,14 @@ class BlockExecutionFrameworkResource(GenericResource):
         kwargs['query'] = kwargs.get('query') or {}
         kwargs['query']['force'] = [True]
 
-        for buuid in buuids:
-            res = BlockResource.member(buuid, self.current_user, **kwargs)
-            await res.delete(**kwargs)
-
         if parent_model:
+            pipeline_base = await parent_model.get_pipeline(refresh=True)
+
+            for buuid in buuids:
+                block = pipeline_base.get_block(buuid)
+                if block:
+                    res = BlockResource(block, self.current_user, **kwargs)
+                    await res.delete(**kwargs)
+
             await parent_model.get_pipeline(refresh=True)
             self.model.pipeline = parent_model

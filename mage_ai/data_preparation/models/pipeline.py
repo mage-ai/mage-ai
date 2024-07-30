@@ -78,6 +78,7 @@ from mage_ai.settings.platform import build_repo_path_for_all_projects
 from mage_ai.settings.platform.constants import project_platform_activated
 from mage_ai.settings.repo import get_repo_path
 from mage_ai.shared.array import find
+from mage_ai.shared.environments import is_debug
 from mage_ai.shared.hash import extract, ignore_keys, index_by, merge_dict
 from mage_ai.shared.io import safe_write, safe_write_async
 from mage_ai.shared.path_fixer import remove_base_repo_path
@@ -866,7 +867,7 @@ class Pipeline:
         self.load_config(self.get_config_from_yaml(), catalog=catalog)
 
     def load_config(self, config, catalog=None):
-        if not config:
+        if not config and is_debug():
             raise Exception(f'Invalid pipeline config: {config}')
         if catalog is None:
             self.data_integration = config.get('data_integration')

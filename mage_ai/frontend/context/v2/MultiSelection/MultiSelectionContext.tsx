@@ -13,6 +13,7 @@ export interface SelectableItemType {
 export interface MultiSelectionContextHandlers {
   clearSelection: () => void;
   deregister: () => void;
+  deselectItem: (itemID: string) => void;
   getSelectedItems: () => ItemsType;
   register: (
     containerRef: MultiSelectionContextClientType['containerRef'],

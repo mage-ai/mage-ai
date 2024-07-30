@@ -197,6 +197,7 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
   const {
     clearSelection,
     deregister,
+    deselectItem,
     getSelectedItems,
     register,
   } = useMultiSelection('PipelineCanvas');
@@ -1562,6 +1563,7 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
             onSuccess: (resp) => {
               const { data } = resp;
               args1?.onSuccess && args1.onSuccess(resp);
+              deselectItem(blockUUID);
 
               if (opts?.updateLayout) {
                 onBlockCountChange(data.block.pipeline, data.block);

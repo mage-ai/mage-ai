@@ -257,6 +257,9 @@ export function MultiSelectionProvider({ children }: MultiSelectionProviderProps
       deregister: () => {
         delete clientRefs.current[uuid];
       },
+      deselectItem: (itemID) => {
+        delete selectedItemsRef.current[uuid][itemID];
+      },
       getSelectedItems: () => selectedItemsRef.current[uuid],
       register: (
         containerRef: MultiSelectionContextClientType['containerRef'],
