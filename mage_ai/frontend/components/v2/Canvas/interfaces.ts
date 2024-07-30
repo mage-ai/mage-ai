@@ -1,4 +1,4 @@
-import { RectType as RectTypeBase } from '@mana/shared/interfaces';
+import { RectType as RectTypeBase, XYType } from '@mana/shared/interfaces';
 
 export enum VisibleBlocksEnum {
   ALL_ANY_LEVEL = 'all_any_level',
@@ -149,6 +149,7 @@ export interface LayoutConfigType {
 }
 
 export interface ConnectionType {
+  controlPoint?: XYType;
   curveControl?: any; // Controls the curvature of the line (0 for straight, higher for more curved)
   from: any; // ID of the source node
   fromItem?: any; // Reference to the source node

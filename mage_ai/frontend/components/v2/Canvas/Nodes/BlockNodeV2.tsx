@@ -1,6 +1,11 @@
 import * as osPath from 'path';
+import { ZoomPanStateType } from '@mana/hooks/useZoomPan';
+import Loading from '@mana/components/Loading';
+import { doesRectIntersect } from '@utils/rects';
+import { CIRCLE_PORT_SIZE } from './Blocks/constants';
 import { ConnectionLines } from '@components/v2/Canvas/Connections/ConnectionLines';
 import { ErrorDetailsType } from '@interfaces/ErrorsType';
+import { getPathD } from '../Connections/utils';
 import stylesPipelineBuilder from '@styles/scss/apps/Canvas/Pipelines/Builder.module.scss';
 import { WithOnMount } from '@mana/hooks/useWithOnMount';
 import { TooltipAlign, TooltipWrapper, TooltipDirection, TooltipJustify } from '@context/v2/Tooltip';
@@ -33,8 +38,8 @@ import { ModelContext } from '@components/v2/Apps/PipelineCanvas/ModelManager/Mo
 import Grid from '@mana/components/Grid';
 import Text from '@mana/elements/Text';
 import { copyToClipboard } from '@utils/clipboard';
-import { indexBy, sortByKey } from '@utils/array';
-import { ClientEventType, EventOperationEnum, RectType } from '@mana/shared/interfaces';
+import { indexBy, sortByKey, unique } from '@utils/array';
+import { ClientEventType, DragInfo, EventOperationEnum, RectType } from '@mana/shared/interfaces';
 import OutputGroups from './CodeExecution/OutputGroups';
 import BlockType, { BlockTypeEnum } from '@interfaces/BlockType';
 import ContextProvider from '@context/v2/ContextProvider';
@@ -83,7 +88,10 @@ import { SettingsContext } from '@components/v2/Apps/PipelineCanvas/SettingsMana
 import Divider from '@mana/elements/Divider';
 import { gridTemplateColumns } from 'styled-system';
 import { FrameworkType, PipelineExecutionFrameworkBlockType } from '@interfaces/PipelineExecutionFramework/interfaces';
-import { useDragControls } from 'framer-motion';
+import { motion, useAnimation, useDragControls, useMotionValue, useTransform } from 'framer-motion';
+import { CircleCell } from '@visx/heatmap/lib/heatmaps/HeatmapCircle';
+
+const CIRCLE_SIZE = 20;
 
 type BlockNodeType = {
   block: BlockType;
@@ -98,6 +106,7 @@ type BlockNodeType = {
   pipelineUUID: string;
   showApp?: ShowNodeType;
   showOutput?: ShowNodeType;
+  transformState: React.MutableRefObject<ZoomPanStateType>;
 };
 
 const STEAM_OUTPUT_DIR = 'code_executions';
@@ -105,7 +114,7 @@ const STEAM_OUTPUT_DIR = 'code_executions';
 function BlockNode(
   { block, dragRef, node, groupSelection, showApp, recentlyAddedBlocksRef, showOutput,
     setHandleOnChildMessage, pipelineUUID,
-    getParentOnMessageHandler, linePathPortalRef,
+    getParentOnMessageHandler, linePathPortalRef, transformState,
     ...rest }: BlockNodeType,
   ref: React.MutableRefObject<HTMLElement>,
 ) {
@@ -140,7 +149,30 @@ function BlockNode(
 
   const [apps, setApps] = useState<Record<string, AppNodeType>>({});
 
+  const phaseRef = useRef(0);
   const lineRefs = useRef<Record<string, React.MutableRefObject<SVGElement>>>({});
+  const lineUpstreamRef = useRef<React.MutableRefObject<any>>(null);
+  const lineDownstreamRef = useRef<React.MutableRefObject<any>>(null);
+  const portUpstreamRef = useRef<React.MutableRefObject<any>>(null);
+  const portDownstreamRef = useRef<React.MutableRefObject<any>>(null);
+  const dragControlsUp = useDragControls();
+  const dragControlsDn = useDragControls();
+  const addingBlockDependencyRef = useRef<BlockType>(null);
+  const draggingUpstreamRef = useRef(false);
+  const draggingDownstreamRef = useRef(false);
+  const upstreamAnimation = useAnimation();
+  const downstreamAnimation = useAnimation();
+  const animationLineUp = useAnimation();
+  const animationLineDn = useAnimation();
+  const dragStartPointRef = useRef({ x: 0, y: 0 });
+  const foreignObjectAnimation = useAnimation();
+  const foreignObjectUpstreamRef = useRef<HTMLDivElement>(null);
+  const foreignObjectDownstreamRef = useRef<HTMLDivElement>(null);
+
+  const handleXUp = useMotionValue(0);
+  const handleYUp = useMotionValue(0);
+  const handleXDn = useMotionValue(0);
+  const handleYDn = useMotionValue(0);
 
   // Child blocks
   const statusByBlockRef = useRef<Record<string, {
@@ -1265,6 +1297,8 @@ function BlockNode(
     const timeout = timeoutRef.current;
     const timeoutLaunch = timeoutLaunchEditorAppOnMountRef.current;
 
+    phaseRef.current += 1;
+
     return () => {
       clearTimeout(timeout);
       clearTimeout(timeoutLaunch);
@@ -1402,7 +1436,6 @@ function BlockNode(
     if (block?.groups?.length > 0
       || !block?.type
       || [BlockTypeEnum.GROUP].includes(block?.type)
-      || !block?.downstream_blocks?.length
     ) return;
 
     const rectup = rectsMappingRef?.current?.[block.uuid] ?? node?.rect;
@@ -1411,12 +1444,19 @@ function BlockNode(
 
     const svgs = [];
 
-    block?.downstream_blocks?.forEach((buuid: string, idx: number) => {
-      const rectdn = rectsMappingRef?.current?.[buuid];
-
-      if (!rectdn) return;
-
+    const __build = (rectdn, idx, onContextMenu, lineRef?: React.MutableRefObject<any>, style?: any) => {
       // console.log(block?.uuid, buuid, rectup, rectdn)
+
+      const { lineID } = prepareLinePathProps(rectup, rectdn, {
+        blocksByGroup: blocksByGroupRef?.current,
+        blockMapping: blockMappingRef?.current,
+        groupMapping: groupMappingRef?.current,
+        ...layoutConfig?.current,
+      });
+
+      if (!lineRef) {
+        lineRefs.current[lineID] ||= createRef();
+      }
 
       const linePath = buildPaths(
         rectup,
@@ -1427,30 +1467,367 @@ function BlockNode(
           blockMapping: blockMappingRef?.current,
           groupMapping: groupMappingRef?.current,
           layout: layoutConfig?.current,
-          onContextMenu: (event, lineID, foreignObjectRef) => handleLinePathContextMenu(
-            event, block, blockMappingRef.current?.[buuid], lineID, foreignObjectRef,
-          ),
+          lineRef: lineRef ?? lineRefs.current[lineID],
+          onContextMenu,
           visibleByDefault: true,
         },
       );
 
-      lineRefs.current[linePath.id] ||= createRef();
-
-      svgs.push(
+      return (
         <ConnectionLines
           className={stylesPipelineBuilder.blockConnectionLines}
-          style={{}}
+          style={style ?? {}}
           key={linePath.id}
           linePaths={{
             [linePath.id]: [linePath],
           }}
-          ref={lineRefs.current[linePath.id]}
         />
+      );
+    };
+
+    (block?.downstream_blocks ?? [])?.forEach((buuid: string, idx: number) => {
+      const rectdn = rectsMappingRef?.current?.[buuid];
+
+      if (!rectdn) return;
+
+      svgs.push(__build(
+        rectdn, idx,
+        (event, lineID, foreignObjectRef) => handleLinePathContextMenu(
+          event, block, blockMappingRef.current?.[buuid], lineID, foreignObjectRef)
+        ),
       );
     });
 
+    const color = getBlockColor(block?.type, { getColorName: true })?.names?.base;
+    const circleProps = {
+      cx: CIRCLE_SIZE,
+      cy: CIRCLE_SIZE,
+      r: CIRCLE_SIZE / 2,
+      stroke: 'none',
+      strokeWidth: 1,
+      fill: `var(--colors-${color?.toLowerCase()})`,
+    };
+    const motionProps = {
+      className: stylesPipelineBuilder.hidden,
+      drag: true,
+      dragMomentum: false,
+      dragPropogation: false,
+      onDrag: handleDragging,
+      onDragEnd: handleDragEnd,
+      onPointerUp: handlePointerUp,
+      whileDrag: {
+        cursor: 'grabbing',
+        // scale: [1.0],
+        // transition: {
+        //   duration: 2,
+        //   repeat: Infinity,
+        // },
+      },
+    };
+    const pathProps = {
+      className: stylesPipelineBuilder.hidden,
+      fill: 'none',
+      strokeWidth: 1.5,
+    };
+
+    svgs.push(
+      <ConnectionLines
+        className={stylesPipelineBuilder.blockConnectionLines}
+        key="ports"
+        style={{
+          zIndex: 6,
+        }}
+        linePaths={{
+          ports: [
+            {
+              key: 'ports',
+              id: 'ports',
+              paths: [
+                <motion.path
+                  {...pathProps}
+                  animate={animationLineUp}
+                  initial={{
+                    opacity: 0,
+                    pathLength: 0,
+                  }}
+                  key="lineup"
+                  ref={lineUpstreamRef as any}
+                />,
+                <motion.path
+                  {...pathProps}
+                  animate={animationLineDn}
+                  initial={{
+                    opacity: 0,
+                    pathLength: 0,
+                  }}
+                  key="linedn"
+                  ref={lineDownstreamRef as any}
+                />,
+                // If we want the circle on top, we need to put this here.
+                <motion.circle
+                  {...circleProps}
+                  {...motionProps}
+                  animate={upstreamAnimation}
+                  dragControls={dragControlsUp}
+                  key="up"
+                  ref={portUpstreamRef as any}
+                  style={{
+                    x: handleXUp,
+                    y: handleYUp,
+                  }}
+                />,
+                <motion.circle
+                  {...circleProps}
+                  {...motionProps}
+                  animate={downstreamAnimation}
+                  dragControls={dragControlsDn}
+                  key="down"
+                  ref={portDownstreamRef as any}
+                  style={{
+                    x: handleXDn,
+                    y: handleYDn,
+                  }}
+                />,
+                <motion.foreignObject
+                  animate={foreignObjectAnimation}
+                  key="foreign-object-loader-upstream"
+                  ref={foreignObjectUpstreamRef as any}
+                  style={{
+                    translateX: 0.5,
+                    translateY: 0.5,
+                    height: CIRCLE_SIZE,
+                    width: CIRCLE_SIZE,
+                    x: handleXUp,
+                    y: handleYUp,
+                  }}
+                >
+                  <Loading circle />
+                </motion.foreignObject>,
+                <motion.foreignObject
+                  animate={foreignObjectAnimation}
+                  key="foreign-object-loader-downstream"
+                  ref={foreignObjectDownstreamRef as any}
+                  style={{
+                    translateX: 0.5,
+                    translateY: 0.5,
+                    height: CIRCLE_SIZE,
+                    width: CIRCLE_SIZE,
+                    x: handleXDn,
+                    y: handleYDn,
+                  }}
+                >
+                  <Loading circle />
+                </motion.foreignObject>,
+              ],
+            },
+          ],
+        }}
+      />
+    );
+
     return <>{svgs}</>;
   }, [block, node, rectsMappingRef.current, handleLinePathContextMenu, layoutConfig]);
+
+  function getLineFromRect() {
+    let yoff = CIRCLE_PORT_SIZE / 2;
+
+    let xoff = draggingUpstreamRef.current ? CIRCLE_PORT_SIZE : CIRCLE_PORT_SIZE;
+
+    return {
+      left: (dragStartPointRef.current.x + xoff),
+      top: (dragStartPointRef.current.y + yoff),
+      width: CIRCLE_SIZE,
+      height: CIRCLE_SIZE,
+    };
+  }
+
+  function getToRect(event: any) {
+    return {
+      height: CIRCLE_SIZE,
+      left: event?.pageX,
+      top: event?.pageY,
+      width: CIRCLE_SIZE,
+    };
+  }
+
+  function getLinePathD(event: any) {
+    const rectFrom = getLineFromRect();
+    const rectTo = getToRect(event);
+
+    const dx = rectTo.left - rectFrom.left;
+    const dy = rectTo.top - rectFrom.top;
+    const distance = Math.sqrt(dx * dx + dy * dy);
+    const directionHorizontal = Math.abs(dx) > Math.abs(dy);
+    const denom = directionHorizontal ? window.innerWidth : window.innerHeight;
+
+    const adjustedCurveControl = Math.min(0.5, distance / denom); // Adjust curve based on distance, with a minimum value
+
+    let xoff = 0;
+    let yoff = 0;
+
+    return getPathD(
+      {
+        curveControl: adjustedCurveControl,
+        fromPosition: draggingUpstreamRef.current ? 'left' : 'right',
+        toPosition: directionHorizontal
+          ? (draggingUpstreamRef.current  ? 'right' : 'left')
+          : (draggingUpstreamRef.current  ? 'bottom' : 'top'),
+      },
+      rectFrom,
+      {
+        ...rectTo,
+        left: rectTo.left + xoff,
+        top: rectTo.top + yoff,
+      },
+    );
+  }
+
+  function handleDragging(event: any, info: DragInfo) {
+    if (!draggingUpstreamRef.current && !draggingDownstreamRef.current) return;
+
+    const animationLine = draggingUpstreamRef.current ? animationLineUp : animationLineDn;
+
+    const rectTo = getToRect(event);
+    const intersectingRect =
+      Object.values(rectsMappingRef.current ?? {}).find(r => doesRectIntersect(r as RectType, rectTo));
+
+    const block2 = intersectingRect ? intersectingRect.block : null;
+
+    let color = getBlockColor(block?.type, { getColorName: true })?.names?.base;
+    if (block2) {
+      color = getBlockColor(block2?.type, { getColorName: true })?.names?.base;
+    }
+
+    animationLine.set({
+      d: getLinePathD(event),
+      stroke: `var(--colors-${color?.toLowerCase()})`,
+      opacity: 1,
+      pathLength: 1,
+    });
+  }
+
+  function handleDragEnd(event: any, info: DragInfo) {
+    draggingUpstreamRef.current = false;
+    draggingDownstreamRef.current = false;
+
+    const rectTo = getToRect(event);
+    const intersectingRect =
+      Object.values(rectsMappingRef.current ?? {}).find(r => doesRectIntersect(r as RectType, rectTo));
+
+    const block2 = intersectingRect ? intersectingRect.block : null;
+    if (!addingBlockDependencyRef.current && block2 && block2?.uuid !== block.uuid) {
+      const key = draggingUpstreamRef.current ? 'upstream_blocks' : 'downstream_blocks';
+      addingBlockDependencyRef.current = block2;
+      mutations.blocks.update.mutate({
+        event,
+        id: encodeURIComponent(block.uuid),
+        onError: () => {
+          resetDragging();
+        },
+        payload: {
+          [key]: unique((block[key] ?? []).concat(block2.uuid), buuid => buuid),
+        },
+      }, {}, {
+        updateLayout: true,
+      });
+    }
+
+    resetDragging();
+  }
+
+  function handlePointerUp(event: any, info?: DragInfo) {;
+    draggingUpstreamRef.current = false;
+    draggingDownstreamRef.current = false;
+
+    const rectTo = getToRect(event);
+    const intersectingRect =
+      Object.values(rectsMappingRef.current ?? {}).find(r => doesRectIntersect(r as RectType, rectTo));
+
+    const block2 = intersectingRect ? intersectingRect.block : null;
+    if (!addingBlockDependencyRef.current && block2 && block2?.uuid !== block.uuid) {
+      const key = draggingUpstreamRef.current ? 'upstream_blocks' : 'downstream_blocks';
+      addingBlockDependencyRef.current = block2;
+      mutations.blocks.update.mutate({
+        event,
+        id: encodeURIComponent(block.uuid),
+        onError: () => {
+          resetDragging();
+        },
+        payload: {
+          [key]: unique((block[key] ?? []).concat(block2.uuid), buuid => buuid),
+        },
+      }, {}, {
+        updateLayout: true,
+      });
+    }
+
+    resetDragging();
+  }
+
+  function resetDragging() {
+    [portUpstreamRef, portUpstreamRef, lineUpstreamRef, lineDownstreamRef,
+      foreignObjectUpstreamRef, foreignObjectDownstreamRef,
+      ].forEach((portRef) => {
+      portRef?.current?.classList?.add(stylesPipelineBuilder.hidden);
+    });
+
+    draggingUpstreamRef.current = false;
+    draggingDownstreamRef.current = false;
+    addingBlockDependencyRef.current = null;
+
+    if (phaseRef.current > 0) {
+      [upstreamAnimation, downstreamAnimation].forEach((animation) => {
+        animation.set({
+          x: 0,
+          y: 0,
+        });
+      });
+      [animationLineUp, animationLineDn].forEach((animation) => {
+        animation.set({
+          opacity: 0,
+          pathLength: 0,
+        });
+      });
+      foreignObjectAnimation.set({
+        x: 0,
+        y: 0,
+      });
+    }
+  }
+
+  function handleDragStart(event: any) {
+    const port = draggingUpstreamRef.current ? portUpstreamRef.current : portDownstreamRef.current;
+    const line = draggingUpstreamRef.current ? lineUpstreamRef.current : lineDownstreamRef.current;
+    const controls = draggingUpstreamRef.current ? dragControlsUp : dragControlsDn;
+    const animation = draggingUpstreamRef.current ? upstreamAnimation : downstreamAnimation;
+    const foreignObject = draggingUpstreamRef.current ? foreignObjectUpstreamRef.current : foreignObjectDownstreamRef.current;
+
+    const { left, width, top, height } = event?.target?.getBoundingClientRect();
+
+    dragStartPointRef.current = {
+      x: (left - width) - (transformState?.current?.originX?.current ?? 0),
+      y: (top - height) - (transformState?.current?.originY?.current ?? 0),
+    };
+
+    controls.start(event);
+    animation.set(dragStartPointRef.current);
+
+    [port, line, foreignObject].forEach((ref) => {
+      ref?.classList?.remove(stylesPipelineBuilder.hidden);
+    });
+  }
+
+  function startDragControlsUp(event) {
+    resetDragging();
+    draggingUpstreamRef.current = true;
+    handleDragStart(event);
+  }
+
+  function startDragControlsDn(event) {
+    resetDragging();
+    draggingDownstreamRef.current = true;
+    handleDragStart(event);
+  }
 
   return (
     <>
@@ -1541,6 +1918,8 @@ function BlockNode(
           teleportIntoBlock={teleportIntoBlock}
           timerStatusRef={timerStatusRef}
           updateBlock={updateBlock}
+          dragControlsUp={startDragControlsUp}
+          dragControlsDn={startDragControlsDn}
         />
 
         {linePathPortalRef?.current && linePathsMemo && createPortal(linePathsMemo, linePathPortalRef.current)}

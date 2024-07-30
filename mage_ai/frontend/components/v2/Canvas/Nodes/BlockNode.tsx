@@ -1,4 +1,5 @@
 import Section from '@mana/elements/Section';
+import ConnectionPorts from './Blocks/ConnectionPorts';
 import { formatDurationFromEpoch } from '@utils/string';
 import Aside from './Blocks/Aside';
 import Button from '@mana/elements/Button';
@@ -104,6 +105,8 @@ export type BlockNodeProps = {
   blockGroupStatusRef?: React.MutableRefObject<HTMLDivElement>;
   teleportIntoBlock: (event: any, target: any) => void;
   menuItemsForTemplates: MenuItemType[];
+  dragControlsUp?: any;
+  dragControlsDn?: any;
 } & BlockNode;
 
 export default function BlockNodeComponent({
@@ -125,6 +128,8 @@ export default function BlockNodeComponent({
   submitCodeExecution,
   updateBlock,
   teleportIntoBlock,
+  dragControlsUp,
+  dragControlsDn,
 }: BlockNodeProps & DragAndDropHandlersType & SharedBlockProps) {
   const { name, status, type, uuid } = block;
   const timeRef = useRef<number>(null);
@@ -350,7 +355,14 @@ export default function BlockNodeComponent({
   const inputOutputMemo = useMemo(() => {
     const count = Math.max(block?.upstream_blocks?.length ?? 0, block?.downstream_blocks?.length ?? 0);
 
-    return range(count).map((idx: number) => {
+    return [
+      <ConnectionPorts
+        block={block}
+        key="empty-ports-for-dragging-and-connecting"
+        dragControlsUp={dragControlsUp}
+        dragControlsDn={dragControlsDn}
+      />
+    ].concat(range(count).map((idx: number) => {
       const [upitem, dnitem] = [
         block?.upstream_blocks?.[idx],
         block?.downstream_blocks?.[idx],
@@ -400,7 +412,7 @@ export default function BlockNodeComponent({
           </Grid>
         </Section>
       );
-    })
+    }));
   }, [
     block,
     blockMappingRef?.current,

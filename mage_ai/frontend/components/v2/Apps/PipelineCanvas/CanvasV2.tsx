@@ -605,6 +605,7 @@ const PipelineCanvasV2: React.FC<PipelineCanvasV2Props> = ({
           ref={nodeRef}
           showApp={showRelatedNotes(ItemTypeEnum.APP)}
           showOutput={showRelatedNotes(ItemTypeEnum.OUTPUT)}
+          transformState={transformState}
         />
       ),
       data: {
