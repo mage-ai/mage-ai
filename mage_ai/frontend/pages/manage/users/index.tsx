@@ -23,7 +23,7 @@ import { queryFromUrl } from '@utils/url';
 function UsersListPage() {
   const router = useRouter();
   const [errors, setErrors] = useState<ErrorsType>(null);
-  const { owner: isOwner } = getUser() || {};
+  const { owner: isOwner } = getUser(router?.basePath) || {};
   const [query, setQuery] = useState<{
     add_new_user: boolean;
     user_id: number;

@@ -1,4 +1,5 @@
 import { useCallback, useMemo, useRef, useState } from 'react';
+import { useRouter } from 'next/router';
 
 import AddButton from '@components/shared/AddButton';
 import Badge from '@oracle/components/Badge';
@@ -116,7 +117,8 @@ function Toolbar({
   setSelectedRow,
   showDivider,
 }: ToolbarProps) {
-  const isViewerRole = isViewer();
+  const router = useRouter();
+  const isViewerRole = isViewer(router?.basePath);
   const addButtonMenuRef = useRef(null);
   const filterButtonMenuRef = useRef(null);
   const groupButtonMenuRef = useRef(null);

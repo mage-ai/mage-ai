@@ -1,4 +1,5 @@
 import NextLink from 'next/link';
+import { useRouter } from 'next/router';
 
 import BackfillType, {
   BACKFILL_TYPE_DATETIME,
@@ -45,7 +46,8 @@ function BackfillsTable({
   pipeline,
   selectedRow,
 }: BackfillsTableProps) {
-  const isViewerRole = isViewer();
+  const router = useRouter();
+  const isViewerRole = isViewer(router?.basePath);
   const displayLocalTimezone = shouldDisplayLocalTimezone();
   const pipelineUUID = pipeline?.uuid;
   const timezoneTooltipProps = displayLocalTimezone ? TIMEZONE_TOOLTIP_PROPS : {};

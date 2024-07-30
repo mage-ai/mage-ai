@@ -56,12 +56,12 @@ function SignForm({
               user,
             },
           }) => {
-            setUser(user);
-            const basePath = router.basePath;
+            const basePath = router?.basePath;
+            setUser(user, basePath);
             AuthToken.storeToken(
               token,
               () => {
-                let url: string = `${router.basePath}/`;
+                let url: string = `${basePath}/`;
                 const query = queryFromUrl(window.location.href);
 
                 if (typeof window !== 'undefined') {
@@ -93,8 +93,8 @@ function SignForm({
 
   const create = useCallback(payload => AuthToken.logout(
     () => createRequest(payload),
-    router.basePath,
-  ), [createRequest, router.basePath]);
+    router?.basePath,
+  ), [createRequest, router?.basePath]);
 
   const { data: dataOauths } = api.oauths.list({
     redirect_uri: typeof window !== 'undefined' ? encodeURIComponent(window.location.href) : '',
@@ -254,7 +254,7 @@ function SignForm({
           px={PADDING_HORIZONTAL_UNITS}
           py={PADDING_HORIZONTAL_UNITS + 8}
         >
-          <BackgroundImageStyle src={`${router.basePath}/images/sessions/abstract.png`}>
+          <BackgroundImageStyle src={`${router?.basePath}/images/sessions/abstract.png`}>
             Sign in abstract image
           </BackgroundImageStyle>
         </Spacing>

@@ -37,7 +37,7 @@ function PipelineSettings({
               const { uuid } = resp.pipeline;
 
               if (pipelineUUID !== uuid) {
-                window.location.href = `${router.basePath}/pipelines/${uuid}/settings`;
+                window.location.href = `${router?.basePath}/pipelines/${uuid}/settings`;
               }
             }
           },

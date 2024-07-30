@@ -83,12 +83,11 @@ function UserDetail({
   onCancel,
   slug,
 }: UserDetailPageProps) {
+  const router = useRouter();
   const {
     id: currentUserID,
     owner: isOwner,
-  } = getUser() || {};
-
-  const router = useRouter();
+  } = getUser(router?.basePath) || {};
 
   const [afterHidden, setAfterHidden] = useState(true);
   const [addingObjectType, setAddingObjectType] = useState(null);
@@ -162,12 +161,12 @@ function UserDetail({
 
             if (String(objectServer?.id) === String(currentUserID)) {
               setUser({
-                ...getUser(),
+                ...getUser(router?.basePath),
                 avatar: objectServer?.avatar,
                 first_name: objectServer?.first_name,
                 last_name: objectServer?.last_name,
                 username: objectServer?.username,
-              });
+              }, router?.basePath);
             }
 
             toast.success(

@@ -12,7 +12,7 @@ const Head = ({ children, defaultTitle = 'Mage', title }: HeadProps) => {
 
   return (
     <NextHead>
-      <link href={`${router.basePath}/favicon.ico`} rel="icon" />
+      <link href={`${router?.basePath}/favicon.ico`} rel="icon" />
 
       <title>{title ? `${title} | ${defaultTitle}` : defaultTitle}</title>
 

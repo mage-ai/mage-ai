@@ -86,9 +86,9 @@ function BackfillDetail({
   setErrors,
   variables,
 }: BackfillDetailProps) {
-  const isViewerRole = isViewer();
-  const displayLocalTimezone = shouldDisplayLocalTimezone();
   const router = useRouter();
+  const isViewerRole = isViewer(router?.basePath);
+  const displayLocalTimezone = shouldDisplayLocalTimezone();
   const {
     block_uuid: blockUUID,
     end_datetime: endDatetime,

@@ -202,7 +202,7 @@ function Remote({
     {
       onSuccess: (response: any) => onSuccess(
         response, {
-          callback: () => window.location.href = `${router.basePath}/version-control`,
+          callback: () => window.location.href = `${router?.basePath}/version-control`,
           onErrorCallback: (response, errors) => {
             showError({
               errors,

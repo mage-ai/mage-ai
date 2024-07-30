@@ -81,7 +81,8 @@ function Header({
   });
 
   const themeContext = useContext(ThemeContext);
-  const userFromLocalStorage = getUser();
+  const router = useRouter();
+  const userFromLocalStorage = getUser(router?.basePath);
 
   const [commandCenterState, setCommandCenterState] = useState<CommandCenterStateEnum>(null);
   const [enableCommandCenterLoading, setEnableCommandCenterLoading] = useState<boolean>(false);
@@ -93,7 +94,6 @@ function Header({
   const menuRef = useRef(null);
   const projectRef = useRef(null);
   const refUserMenu = useRef(null);
-  const router = useRouter();
 
   const loggedIn = AuthToken.isLoggedIn();
   const {
@@ -186,7 +186,7 @@ function Header({
         .catch(() => {
           redirectToUrl('/');
         });
-    }, router.basePath);
+    }, router?.basePath);
   };
 
   const breadcrumbProjects = [];

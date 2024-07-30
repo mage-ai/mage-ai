@@ -11,7 +11,6 @@ import {
   SettingsWithKnobs,
 } from '@oracle/icons';
 import { PageNameEnum } from './constants';
-import { isViewer } from '@utils/session';
 
 export function buildNavigationItems(
   pageName: PageNameEnum,
@@ -97,7 +96,7 @@ export function buildNavigationItems(
     disabled: !pipelineUUID,
     id: PageNameEnum.EDIT,
     isSelected: () => PageNameEnum.EDIT === pageName,
-    label: () => isViewer() ? 'View pipeline': 'Edit pipeline',
+    label: () => 'Edit pipeline',
     linkProps: {
       as: `/pipelines/${pipelineUUID}/edit`,
       href: '/pipelines/[pipeline]/edit',

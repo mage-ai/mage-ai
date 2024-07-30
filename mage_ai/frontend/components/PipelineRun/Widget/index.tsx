@@ -116,7 +116,7 @@ function Widget({
             <Spacing px={5} py={10}>
               <FlexContainer alignItems="center" flexDirection="column">
                 <ImageStyle
-                  imageUrl={`${router.basePath}/images/blocks/grey_block.webp`}
+                  imageUrl={`${router?.basePath}/images/blocks/grey_block.webp`}
                 />
                 <Spacing mb={3} />
                 <Text large>

@@ -136,7 +136,7 @@ function Extensions({
                           <img
                             alt={name}
                             height={UNIT * 3}
-                            src={`${router.basePath}/images/extensions/${uuid}/logo.png`}
+                            src={`${router?.basePath}/images/extensions/${uuid}/logo.png`}
                             width={UNIT * 3}
                           />
                         </FlexContainer>

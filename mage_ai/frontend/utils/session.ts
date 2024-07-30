@@ -67,6 +67,12 @@ export const CURRENT_GROUP_LOCAL_STORAGE_KEY: string = 'current_group';
 export const CURRENT_GROUP_MEMBERSHIP_LOCAL_STORAGE_KEY: string = 'current_group_membership';
 export const CURRENT_USER_LOCAL_STORAGE_KEY: string = 'current_user';
 
+export const getCurrentUserLocalStorageKey = (basePath?: string) => (
+  basePath
+    ? `${basePath}_${CURRENT_USER_LOCAL_STORAGE_KEY}`
+    : CURRENT_USER_LOCAL_STORAGE_KEY
+);
+
 export function getGroup(ctx: any = undefined): GroupType | { id?: string } | undefined {
   if (ctx) {
     const cookie = ServerCookie(ctx);
@@ -99,19 +105,19 @@ export function removeGroup() {
   ls.remove(CURRENT_GROUP_LOCAL_STORAGE_KEY);
 }
 
-export function removeUser() {
+export function removeUser(basePath?: string) {
   // @ts-ignore
-  ls.remove(CURRENT_USER_LOCAL_STORAGE_KEY);
+  ls.remove(getCurrentUserLocalStorageKey(basePath));
 }
 
-export function getUser(): UserType | undefined {
+export function getUser(basePath?: string): UserType | undefined {
   // @ts-ignore
-  return ls.get(CURRENT_USER_LOCAL_STORAGE_KEY);
+  return ls.get(getCurrentUserLocalStorageKey(basePath));
 }
 
-export function setUser(user: UserType) {
+export function setUser(user: UserType, basePath?: string) {
   // @ts-ignore
-  ls.set(CURRENT_USER_LOCAL_STORAGE_KEY, user);
+  ls.set(getCurrentUserLocalStorageKey(basePath), user);
 }
 
 export function getGroupMembership(): GroupMembershipType | undefined {
@@ -135,8 +141,8 @@ export const isLoggedIn = (ctx: NextPageContext) => {
   return !!token;
 };
 
-export function isViewer(): boolean {
-  const user = getUser() || {};
+export function isViewer(basePath?: string): boolean {
+  const user = getUser(basePath) || {};
   return user.roles === RoleValueEnum.VIEWER ||
       user.project_access === UserAccessEnum.VIEWER;
 }
