@@ -106,7 +106,7 @@ type BlockNodeType = {
   pipelineUUID: string;
   showApp?: ShowNodeType;
   showOutput?: ShowNodeType;
-  transformState: React.MutableRefObject<ZoomPanStateType>;
+  transformState?: React.MutableRefObject<ZoomPanStateType>;
 };
 
 const STEAM_OUTPUT_DIR = 'code_executions';
