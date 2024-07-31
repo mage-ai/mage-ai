@@ -5,7 +5,7 @@ on:
 
 jobs:
   export-frontend:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-latest-m
     env:
       NODE_VERSION: '20.15.1'
     steps:
