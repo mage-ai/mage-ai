@@ -17,6 +17,7 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'yarn'
+          working-directory: mage_ai/frontend
 
       - name: Install Yarn
         run: npm install -g yarn
