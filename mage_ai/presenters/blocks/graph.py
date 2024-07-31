@@ -16,6 +16,7 @@ from mage_ai.data_preparation.models.constants import BlockType, PipelineType
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.orchestration.db.models.schedules import BlockRun, PipelineRun
 from mage_ai.shared.array import find
+from mage_ai.shared.environments import is_debug
 from mage_ai.shared.hash import extract, merge_dict
 
 MAX_BLOCKS_FOR_TREE = 100
@@ -49,18 +50,22 @@ def build_dynamic_blocks_for_block_runs(pipeline: Pipeline, block_runs: List[Blo
             if block.uuid not in copies_by_uuid:
                 copies_by_uuid[block.uuid] = []
             copies_by_uuid[block.uuid].append(block_run)
-            copies_by_uuid[block.uuid] = \
-                [br for br in copies_by_uuid[block.uuid] if br.block_uuid != block.uuid]
+            copies_by_uuid[block.uuid] = [
+                br for br in copies_by_uuid[block.uuid] if br.block_uuid != block.uuid
+            ]
 
     block_dicts_by_uuid = {}
     for block_uuid, block in pipeline.blocks_by_uuid.items():
-        block_dict = extract(block.to_dict(), [
-            'color',
-            'configuration',
-            'language',
-            'name',
-            'type',
-        ])
+        block_dict = extract(
+            block.to_dict(),
+            [
+                'color',
+                'configuration',
+                'language',
+                'name',
+                'type',
+            ],
+        )
         block_dict['downstream_blocks'] = []
         block_dict['upstream_blocks'] = []
 
@@ -79,20 +84,46 @@ def build_dynamic_blocks_for_block_runs(pipeline: Pipeline, block_runs: List[Blo
 
     # Add the copies as upstreams to the block dicts
     for block_uuid, block in pipeline.blocks_by_uuid.items():
-        uuids = []
+        uuids_with_copies = {}
         for upstream_block in block.upstream_blocks:
             uuid = upstream_block.uuid
-            if is_dynamic_block_child(upstream_block) and not should_reduce_output(upstream_block):
-                for br in (copies_by_uuid.get(uuid) or []):
-                    uuids.append(br.block_uuid)
-            else:
-                uuids.append(uuid)
+            uuids_with_copies[uuid] = []
 
-        uuids_to_update = [block_uuid]
-        uuids_to_update += [br.block_uuid for br in copies_by_uuid.get(block_uuid) or []]
-        for uuid in uuids_to_update:
-            if uuid in block_dicts_by_uuid:
-                block_dicts_by_uuid[uuid]['upstream_blocks'] = uuids
+            # If upstream block is a dynamic child block that doesn’t reduce output...
+            if is_dynamic_block_child(upstream_block) and not should_reduce_output(upstream_block):
+                # Add block run with block UUID a:0, a:1, a:n to uuids list
+                for br in copies_by_uuid.get(uuid) or []:
+                    uuids_with_copies[uuid] = sorted(uuids_with_copies[uuid] + [br.block_uuid])
+
+        if block_uuid in block_dicts_by_uuid:
+            for upuuid, upuuid_copies in uuids_with_copies.items():
+                block_dicts_by_uuid[block_uuid]['upstream_blocks'] = [upuuid] + upuuid_copies
+
+        uuid_copies_of_current_block = sorted([
+            br.block_uuid for br in copies_by_uuid.get(block_uuid) or []
+        ])
+
+        if is_debug():
+            print(uuid_copies_of_current_block, uuids_with_copies)
+
+        for idx, copy_uuid in enumerate(uuid_copies_of_current_block):
+            if copy_uuid not in block_dicts_by_uuid:
+                continue
+
+            upuuids = []
+            for upuuid, upuuid_copies in uuids_with_copies.items():
+                if len(upuuid_copies) == 0:
+                    upuuids.append(upuuid)
+                else:
+                    dynamic_idx = idx % len(upuuid_copies)
+                    upuuids.append(upuuid_copies[dynamic_idx])
+
+            if is_debug():
+                print(idx, copy_uuid, upuuids)
+
+            block_dicts_by_uuid[copy_uuid] = merge_dict(
+                block_dicts_by_uuid[copy_uuid], dict(upstream_blocks=upuuids.copy())
+            )
 
     # Add display information
     for uuid in block_dicts_by_uuid.keys():
@@ -126,11 +157,20 @@ def build_dynamic_blocks_for_block_runs(pipeline: Pipeline, block_runs: List[Blo
         elif dynamic_block_index is not None:
             description = str(dynamic_block_index)
 
-        block_dicts_by_uuid[uuid] = merge_dict(block_dicts_by_uuid[uuid], dict(
-            description=description,
-            tags=tags,
-            uuid=uuid,
-        ))
+        if is_debug():
+            print(uuid, block_dicts_by_uuid[uuid])
+
+        block_dicts_by_uuid[uuid] = merge_dict(
+            block_dicts_by_uuid[uuid],
+            dict(
+                description=description,
+                tags=tags,
+                uuid=uuid,
+            ),
+        )
+
+    if is_debug():
+        print(block_dicts_by_uuid)
 
     return block_dicts_by_uuid
 
@@ -284,9 +324,7 @@ def build_blocks_for_pipeline_run(pipeline_run: PipelineRun, block_uuids: List[s
                         if b_uuid not in sources_destinations_by_block_uuid:
                             sources_destinations_by_block_uuid[b_uuid] = []
 
-                        if source_destination not in \
-                                sources_destinations_by_block_uuid[b_uuid]:
-
+                        if source_destination not in sources_destinations_by_block_uuid[b_uuid]:
                             sources_destinations_by_block_uuid[b_uuid].append(
                                 source_destination,
                             )
@@ -333,26 +371,27 @@ def build_blocks_for_pipeline_run(pipeline_run: PipelineRun, block_uuids: List[s
                             block_run_block_uuid
                         ] = data
                     elif controller_block_uuid:
-                        if controller_block_uuid not in \
-                                data_integration_sets_by_uuid[original_block_uuid][
-                                    'children'
-                                ]:
-                            data_integration_sets_by_uuid[original_block_uuid][
-                                'children'
-                            ][controller_block_uuid] = []
-                        data_integration_sets_by_uuid[original_block_uuid][
-                            'children'
-                        ][controller_block_uuid].append(data)
+                        if (
+                            controller_block_uuid
+                            not in data_integration_sets_by_uuid[original_block_uuid]['children']
+                        ):
+                            data_integration_sets_by_uuid[original_block_uuid]['children'][
+                                controller_block_uuid
+                            ] = []
+                        data_integration_sets_by_uuid[original_block_uuid]['children'][
+                            controller_block_uuid
+                        ].append(data)
                 elif controller:
                     data_integration_sets_by_uuid[original_block_uuid]['controller'] = data
 
         block_dict['tags'] += block.tags()
 
         # This is primary used to show global hooks that run before the pipeline execution.
-        if metrics and \
-                metrics.get('upstream_blocks') and \
-                (not block or not is_dynamic_block_child(block)):
-
+        if (
+            metrics
+            and metrics.get('upstream_blocks')
+            and (not block or not is_dynamic_block_child(block))
+        ):
             block_dict['upstream_blocks'] = (block_dict.get('upstream_blocks') or []) + (
                 metrics.get('upstream_blocks') or []
             )
@@ -367,10 +406,12 @@ def build_blocks_for_pipeline_run(pipeline_run: PipelineRun, block_uuids: List[s
         controller = set_dict.get('controller') or {}
         controllers = set_dict.get('controllers') or {}
 
-        controllers_not_parallel = list(filter(
-            lambda x: not (x.get('metrics') or {}).get('run_in_parallel'),
-            controllers.values(),
-        ))
+        controllers_not_parallel = list(
+            filter(
+                lambda x: not (x.get('metrics') or {}).get('run_in_parallel'),
+                controllers.values(),
+            )
+        )
 
         # Start from the controller that has no downstream block uuids
         controller_child_end = find(
@@ -419,13 +460,17 @@ def build_blocks_for_pipeline_run(pipeline_run: PipelineRun, block_uuids: List[s
             controller_child_end_uuid = controller_child_end.get('uuid')
             children_end = children.get(controller_child_end_uuid) or []
 
-            block_dicts_by_uuid[original_block_uuid]['upstream_blocks'] = \
-                [d['uuid'] for d in children_end]
+            block_dicts_by_uuid[original_block_uuid]['upstream_blocks'] = [
+                d['uuid'] for d in children_end
+            ]
             blocks_to_not_override[original_block_uuid] = True
 
-            downstream_blocks = block_dicts_by_uuid[original_block_uuid].get(
-                'downstream_blocks',
-            ) or []
+            downstream_blocks = (
+                block_dicts_by_uuid[original_block_uuid].get(
+                    'downstream_blocks',
+                )
+                or []
+            )
             for down_uuid in downstream_blocks:
                 blocks_to_not_override[down_uuid] = True
 
@@ -505,8 +550,9 @@ def build_blocks_for_pipeline_run(pipeline_run: PipelineRun, block_uuids: List[s
 
         for up_uuid, uuids in upstream_block_uuids_to_replace.items():
             arr = block_dicts_by_uuid[block_uuid]['upstream_blocks']
-            block_dicts_by_uuid[block_uuid]['upstream_blocks'] = \
-                [uuid for uuid in arr if uuid != up_uuid] + uuids
+            block_dicts_by_uuid[block_uuid]['upstream_blocks'] = [
+                uuid for uuid in arr if uuid != up_uuid
+            ] + uuids
 
     # Adjust the runtime for these blocks because it has a start_at
     # but we don’t actually start running the block until later.
@@ -524,15 +570,16 @@ def build_blocks_for_pipeline_run(pipeline_run: PipelineRun, block_uuids: List[s
                 if block_run and block_run.started_at:
                     block_dict = block_dicts_by_uuid[controller_uuid]
                     downstream_started_ats = []
-                    for db_uuid in (block_dict.get('downstream_blocks') or []):
+                    for db_uuid in block_dict.get('downstream_blocks') or []:
                         db_block_run = block_mapping.get(db_uuid, {}).get('block_run')
                         if db_block_run and db_block_run.started_at:
                             downstream_started_ats.append(db_block_run.started_at)
 
                     if downstream_started_ats:
                         started_at_e = max(downstream_started_ats)
-                        block_dicts_by_uuid[controller_uuid]['runtime'] = \
+                        block_dicts_by_uuid[controller_uuid]['runtime'] = (
                             started_at_e.timestamp() - block_run.started_at.timestamp()
+                        )
 
     dynamic_blocks_beyond_1 = {}
     for base_uuid, count in dynamic_block_count_by_base_uuid.items():
@@ -576,8 +623,9 @@ def build_blocks_for_pipeline_run(pipeline_run: PipelineRun, block_uuids: List[s
                                 continue
 
                             arr = block_dicts_by_uuid[uuids_inner][key_to_remove_from]
-                            block_dicts_by_uuid[uuids_inner][key_to_remove_from] = \
-                                [i for i in arr if i != uuid]
+                            block_dicts_by_uuid[uuids_inner][key_to_remove_from] = [
+                                i for i in arr if i != uuid
+                            ]
 
                     block_dicts_by_uuid.pop(uuid, None)
 
