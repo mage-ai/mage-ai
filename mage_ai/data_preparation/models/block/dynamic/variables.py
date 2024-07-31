@@ -25,6 +25,7 @@ from mage_ai.data_preparation.models.variables.utils import (
 )
 from mage_ai.io.base import ExportWritePolicy
 from mage_ai.settings.server import DEBUG_MEMORY, MEMORY_MANAGER_V2
+from mage_ai.shared.environments import is_debug
 from mage_ai.shared.strings import to_ordinal_integers
 from mage_ai.system.memory.wrappers import execute_with_memory_tracking
 
@@ -125,7 +126,7 @@ class LazyVariableSet(Sequence):
 
     @property
     def lazy_child_data(self) -> Union[List[LazyVariable], LazyVariable]:
-        if len(self) == 2:
+        if len(self) == 1 or len(self) == 2:
             return self[0]
         return self.lazy_variables
 
@@ -665,9 +666,31 @@ def fetch_input_variables_for_dynamic_upstream_blocks(
             if reduce_output and block.type != BlockType.EXTENSION:
                 child_data = []
                 metadata = {}
-                for lazy_variable_set in lazy_variable_controller:
-                    child_data.append(lazy_variable_set.read_child_data())
-                    metadata.update(lazy_variable_set.read_metadata() or {})
+
+                for up_child_idx, pair in enumerate(lazy_variable_controller.render()):
+                    lz_data, md_data = pair
+                    child_data.append(lz_data)
+                    metadata.update(md_data)
+
+                    if is_debug():
+                        print(
+                            '[fetch_input_variables_for_dynamic_upstream_blocks.reduce_output] '
+                            f'upstream:{upstream_block.uuid}:{up_child_idx} -> '
+                            f'{block.uuid}:{dynamic_block_index}: '
+                            f'upstream_position_index:{upstream_position_index}, '
+                            f'output: {lz_data}, '
+                            f'kwargs: {md_data}'
+                        )
+
+                if is_debug():
+                    print(
+                        '[fetch_input_variables_for_dynamic_upstream_blocks.reduce_output] '
+                        f'upstream:{upstream_block.uuid} -> {block.uuid}:{dynamic_block_index}: '
+                        f'upstream_position_index:{upstream_position_index}, '
+                        f'output -> reduced: {child_data}, '
+                        f'kwargs -> reduced: {metadata}'
+                    )
+
                 input_vars.append(child_data)
                 kwargs_vars.append(metadata)
             else:
@@ -682,13 +705,15 @@ def fetch_input_variables_for_dynamic_upstream_blocks(
 
                 child_data_count = len(lazy_variable_controller)
                 if child_data_count > 0:
-                    print(
-                        '[fetch_input_variables_for_dynamic_upstream_blocks] '
-                        f'upstream:{upstream_block.uuid} -> {block.uuid}:{dynamic_block_index}: '
-                        f'upstream_position_index:{upstream_position_index}, '
-                        f'child_data_count:{child_data_count}, '
-                        f'dynamic_upstream_item_counts:{dynamic_upstream_item_counts}'
-                    )
+                    if is_debug():
+                        print(
+                            '[fetch_input_variables_for_dynamic_upstream_blocks] '
+                            f'upstream:{upstream_block.uuid} -> {block.uuid}:'
+                            f'{dynamic_block_index}: '
+                            f'upstream_position_index:{upstream_position_index}, '
+                            f'child_data_count:{child_data_count}, '
+                            f'dynamic_upstream_item_counts:{dynamic_upstream_item_counts}'
+                        )
 
                     index = calculate_dynamic_index_data_index(
                         dynamic_block_index,

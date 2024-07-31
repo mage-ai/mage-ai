@@ -1,5 +1,7 @@
 from typing import List
 
+from mage_ai.shared.environments import is_debug
+
 
 def calculate_dynamic_index_data_index(
     dynamic_block_index: int,
@@ -12,15 +14,16 @@ def calculate_dynamic_index_data_index(
     for i in range(upstream_index + 1, len(item_counts)):
         step_size *= item_counts[i]
 
-        print(
-            '[calculate_dynamic_index_data_index] '
-            f'dynamic_block_index: {dynamic_block_index}, '
-            f'upstream_index: {upstream_index}, '
-            f'child_data_count: {child_data_count}, '
-            f'item_counts: {item_counts}, '
-            f'i: {i}, '
-            f'step_size: {step_size}'
-        )
+        if is_debug():
+            print(
+                '[calculate_dynamic_index_data_index] '
+                f'dynamic_block_index: {dynamic_block_index}, '
+                f'upstream_index: {upstream_index}, '
+                f'child_data_count: {child_data_count}, '
+                f'item_counts: {item_counts}, '
+                f'i: {i}, '
+                f'step_size: {step_size}'
+            )
 
     if step_size == 0:
         return None
