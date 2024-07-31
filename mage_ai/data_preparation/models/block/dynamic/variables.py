@@ -143,12 +143,7 @@ class LazyVariableSet(Sequence):
             return None
 
         if isinstance(self.lazy_child_data, list):
-            from mage_ai.data_preparation.models.block.dynamic.utils import (
-                should_reduce_output,
-            )
-
-            if not should_reduce_output(self.block):
-                return [self.read_lazy_variable(data) for data in self.lazy_child_data]
+            return [self.read_lazy_variable(data) for data in self.lazy_child_data]
 
         return (
             self.read_lazy_variable(self.lazy_child_data)
@@ -682,7 +677,10 @@ def fetch_input_variables_for_dynamic_upstream_blocks(
                         lz_data = lazy_set.read_child_data()
                         md_data = lazy_set.read_metadata()
 
-                        child_data.append(lz_data)
+                        if isinstance(lz_data, list):
+                            child_data.extend(lz_data)
+                        else:
+                            child_data.append(lz_data)
                         metadata.update(md_data)
 
                         if is_debug() or is_test():
