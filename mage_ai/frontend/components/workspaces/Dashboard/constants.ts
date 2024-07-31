@@ -43,15 +43,15 @@ export function buildNavigationItems(
         href: '/manage/overview',
       },
     },
-    // {
-    //   Icon: Schedule,
-    //   id: WorkspacesPageNameEnum.PIPELINE_RUNS,
-    //   isSelected: () => WorkspacesPageNameEnum.PIPELINE_RUNS === pageName,
-    //   label: () => 'Pipeline runs',
-    //   linkProps: {
-    //     href: '/manage/pipeline-runs',
-    //   },
-    // },
+    {
+      Icon: Schedule,
+      id: WorkspacesPageNameEnum.PIPELINE_RUNS,
+      isSelected: () => WorkspacesPageNameEnum.PIPELINE_RUNS === pageName,
+      label: () => 'Pipeline runs',
+      linkProps: {
+        href: '/manage/pipeline-runs',
+      },
+    },
   ];
 
   if (owner) {

@@ -1,58 +1,30 @@
-import { MutateFunction, useMutation } from 'react-query';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useRouter } from 'next/router';
+import { useMutation } from 'react-query';
 import moment from 'moment';
 
-import AIControlPanel from '@components/AI/ControlPanel';
-import AddButton from '@components/shared/AddButton';
 import BarStackChart from '@components/charts/BarStack';
-import BlockLayout from '@components/BlockLayout';
-import BrowseTemplates from '@components/CustomTemplates/BrowseTemplates';
 import ButtonTabs, { TabType } from '@oracle/components/Tabs/ButtonTabs';
-import ConfigurePipeline from '@components/PipelineDetail/ConfigurePipeline';
-import Dashboard from '@components/Dashboard';
 import ErrorsType from '@interfaces/ErrorsType';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Headline from '@oracle/elements/Headline';
-import Link from '@oracle/elements/Link';
-import MetricsSummary from '@components/PipelineRun/MetricsSummary';
 import PageSectionHeader from '@components/shared/Sticky/PageSectionHeader';
-import Panel from '@oracle/components/Panel';
-import PipelineRunType from '@interfaces/PipelineRunType';
-import Preferences from '@components/settings/workspace/Preferences';
 import PrivateRoute from '@components/shared/PrivateRoute';
 import ProjectType, { FeatureUUIDEnum } from '@interfaces/ProjectType';
 import Spacing from '@oracle/elements/Spacing';
-import Spinner from '@oracle/components/Spinner';
 import Text from '@oracle/elements/Text';
 import Tooltip from '@oracle/components/Tooltip';
 import Widget from '@components/PipelineRun/Widget';
 import WorkspacesDashboard from '@components/workspaces/Dashboard';
 import api from '@api';
 import dark from '@oracle/styles/themes/dark';
-import {
-  AggregationFunctionEnum,
-  ChartStyleEnum,
-  ChartTypeEnum,
-  SortOrderEnum,
-  TimeIntervalEnum,
-  VARIABLE_NAME_GROUP_BY,
-  VARIABLE_NAME_METRICS,
-  VARIABLE_NAME_TIME_INTERVAL,
-  VARIABLE_NAME_Y_SORT_ORDER,
-} from '@interfaces/ChartBlockType';
-import { ALL_PIPELINE_RUNS_TYPE, PipelineTypeEnum } from '@interfaces/PipelineType';
+import { ALL_PIPELINE_RUNS_TYPE } from '@interfaces/PipelineType';
 import {
   BAR_STACK_COLORS,
   BAR_STACK_STATUSES,
   TOOLTIP_LEFT_OFFSET,
 } from '@components/Monitor/constants';
-import { BlockTypeEnum } from '@interfaces/BlockType';
-import { DataSourceEnum } from '@interfaces/BlockLayoutItemType';
-import { ErrorProvider } from '@context/Error';
-import { HEADER_HEIGHT } from '@components/shared/Header/index.style';
+import { LOCAL_STORAGE_KEY_OVERVIEW_TAB_SELECTED, set, get } from 'storage/localStorage';
 import { MonitorStatsEnum } from '@interfaces/MonitorStatsType';
-import { NAV_TAB_PIPELINES } from '@components/CustomTemplates/BrowseTemplates/constants';
 import { RunStatus } from '@interfaces/BlockRunType';
 import { SHARED_UTC_TOOLTIP_PROPS } from '@components/PipelineRun/shared/constants';
 import { TAB_URL_PARAM } from '@oracle/components/Tabs';
@@ -66,26 +38,13 @@ import {
   unixTimestampFromDate,
 } from '@utils/date';
 import { TIME_PERIOD_TABS, TAB_TODAY } from '@components/Dashboard/constants';
-import { UNITS_BETWEEN_SECTIONS } from '@oracle/styles/units/spacing';
-import { VERTICAL_NAVIGATION_WIDTH } from '@components/Dashboard/index.style';
 import { WorkspacesPageNameEnum } from '@components/workspaces/Dashboard/constants';
-import {
-  capitalize,
-  cleanName,
-  randomSimpleHashGenerator,
-  randomNameGenerator,
-} from '@utils/string';
+import { capitalize } from '@utils/string';
 import { formatNumber } from '@utils/number';
 import { getAllPipelineRunDataGrouped } from '@components/PipelineRun/shared/utils';
-import { getNewPipelineButtonMenuItems } from '@components/Dashboard/utils';
 import { goToWithQuery } from '@utils/routing';
-import { groupBy } from '@utils/array';
 import { onSuccess } from '@api/utils/response';
-import { queryFromUrl } from '@utils/url';
 import { storeLocalTimezoneSetting } from '@components/settings/workspace/utils';
-import { useModal } from '@context/Modal';
-import UploadPipeline from '@components/PipelineDetail/UploadPipeline';
-import { LOCAL_STORAGE_KEY_OVERVIEW_TAB_SELECTED, set, get } from 'storage/localStorage';
 
 const SHARED_WIDGET_SPACING_PROPS = {
   mt: 2,
@@ -100,9 +59,6 @@ function OverviewPage({ tab }: { tab?: TimePeriodEnum }) {
   const abortRef = useRef(null);
   const mountedRef = useRef(false);
   const refSubheader = useRef(null);
-
-  const q = queryFromUrl();
-  const router = useRouter();
 
   const allTabs = useMemo(() => TIME_PERIOD_TABS, []);
   const [selectedTab, setSelectedTabState] = useState<TabType>(
@@ -206,7 +162,7 @@ function OverviewPage({ tab }: { tab?: TimePeriodEnum }) {
     () => getAllPipelineRunDataGrouped(monitorStats, dateRange, true),
     [monitorStats, dateRange],
   );
-  const { pipelineRunCountByPipelineType, totalPipelineRunCount, ungroupedPipelineRunData } =
+  const { totalPipelineRunCount, ungroupedPipelineRunData } =
     allPipelineRunData;
 
   const selectedDateRange = useMemo(
@@ -217,7 +173,7 @@ function OverviewPage({ tab }: { tab?: TimePeriodEnum }) {
     [timePeriod],
   );
 
-  const { data: dataProjects, mutate: fetchProjects } = api.projects.list();
+  const { data: dataProjects } = api.projects.list();
   const project: ProjectType = useMemo(() => dataProjects?.projects?.[0], [dataProjects]);
   const displayLocalTimezone = useMemo(
     () => storeLocalTimezoneSetting(project?.features?.[FeatureUUIDEnum.LOCAL_TIMEZONE]),
