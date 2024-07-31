@@ -54,8 +54,29 @@ def reduce1_func(data1, data2, data3, *args, **kwargs):
 def reduce1_child1_func(data, *args, **kwargs):
     arr = []
     for item in data:
-        arr += [i for s in item for i in s]
+        if isinstance(item, list):
+            arr += [i for s in item for i in s]
+        else:
+            arr.append(item)
     return [arr]
+
+
+def func1(**kwargs):
+    return [
+        [
+            dict(partner_id=1, filename='name1.py'),
+            dict(partner_id=2, filename='name2.py'),
+            dict(partner_id=3, filename='name3.py'),
+        ],
+    ]
+
+
+def func2(data, **kwargs):
+    return data
+
+
+def func3(data, **kwargs):
+    return data
 
 
 class DynamicBlockVariableDataTest(BlockHelperTest):
@@ -188,6 +209,58 @@ class DynamicBlockVariableDataTest(BlockHelperTest):
             )
         )
         self.__run_with_configs(config, config_child)
+
+    @patch.multiple(
+        'mage_ai.settings.server',
+        DYNAMIC_BLOCKS_V2=True,
+        MEMORY_MANAGER_PANDAS_V2=True,
+        MEMORY_MANAGER_POLARS_V2=True,
+        MEMORY_MANAGER_V2=True,
+        VARIABLE_DATA_OUTPUT_META_CACHE=True,
+    )
+    def test_reduce_output_when_dynamic_child_returns_1_item(self):
+        config = dict(
+            dynamic=dict(
+                parent=True,
+            ),
+        )
+        config_child = dict(
+            dynamic=dict(
+                parent=False,
+                reduce_output=True,
+            )
+        )
+
+        block1 = self.create_block('block1', func=func1, configuration=config)
+        block2 = self.create_block('block2', func=func2, configuration=config_child)
+        block3 = self.create_block('block3', func=func3)
+        self.pipeline.add_block(block1)
+        self.pipeline.add_block(block2, upstream_block_uuids=[block1.uuid])
+        self.pipeline.add_block(block3, upstream_block_uuids=[block2.uuid])
+
+        block1.execute_sync()
+
+        for i in range(3):
+            block2.execute_sync(dynamic_block_index=i)
+        for i in range(1):
+            block3.execute_sync(dynamic_block_index=i)
+
+        reduce_output_data = [
+            block3.get_variable_object(
+                dynamic_block_index=0,
+                variable_uuid=f'output_{i}',
+            ).read_data()
+            for i in range(3)
+        ]
+
+        self.assertEqual(
+            reduce_output_data,
+            [
+                dict(partner_id=1, filename='name1.py'),
+                dict(partner_id=2, filename='name2.py'),
+                dict(partner_id=3, filename='name3.py'),
+            ],
+        )
 
     def __run_with_configs(
         self, config: Dict[str, Any], config_child: Optional[Dict[str, Any]] = None

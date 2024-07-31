@@ -25,7 +25,7 @@ from mage_ai.data_preparation.models.variables.utils import (
 )
 from mage_ai.io.base import ExportWritePolicy
 from mage_ai.settings.server import DEBUG_MEMORY, MEMORY_MANAGER_V2
-from mage_ai.shared.environments import is_debug
+from mage_ai.shared.environments import is_debug, is_test
 from mage_ai.shared.strings import to_ordinal_integers
 from mage_ai.system.memory.wrappers import execute_with_memory_tracking
 
@@ -126,14 +126,16 @@ class LazyVariableSet(Sequence):
 
     @property
     def lazy_child_data(self) -> Union[List[LazyVariable], LazyVariable]:
-        if len(self) == 1 or len(self) == 2:
+        if len(self) == 1:
             return self[0]
+
         return self.lazy_variables
 
     @property
     def lazy_metadata(self) -> Optional[LazyVariable]:
         if len(self) == 2:
             return self[1]
+
         return None
 
     def read_child_data(self) -> Any:
@@ -141,7 +143,12 @@ class LazyVariableSet(Sequence):
             return None
 
         if isinstance(self.lazy_child_data, list):
-            return [self.read_lazy_variable(data) for data in self.lazy_child_data]
+            from mage_ai.data_preparation.models.block.dynamic.utils import (
+                should_reduce_output,
+            )
+
+            if not should_reduce_output(self.block):
+                return [self.read_lazy_variable(data) for data in self.lazy_child_data]
 
         return (
             self.read_lazy_variable(self.lazy_child_data)
@@ -569,7 +576,9 @@ def get_outputs_for_dynamic_child(
     logging_tags: Optional[Dict] = None,
     sample: bool = False,
     sample_count: Optional[int] = None,
-) -> List[Tuple[List[Union[Dict, int, str, pd.DataFrame]], List[Dict]]]:
+) -> Union[
+    LazyVariableController, List[Tuple[List[Union[Dict, int, str, pd.DataFrame]], List[Dict]]]
+]:
     def func():
         # List[List[Variable]]
         list_of_lists_of_variables = __get_all_variable_objects_for_dynamic_child(
@@ -597,6 +606,7 @@ def get_outputs_for_dynamic_child(
         func,
         log_message_prefix=f'[{block.uuid}:get_outputs_for_dynamic_child]',
     )
+
     return result
 
 
@@ -667,22 +677,25 @@ def fetch_input_variables_for_dynamic_upstream_blocks(
                 child_data = []
                 metadata = {}
 
-                for up_child_idx, pair in enumerate(lazy_variable_controller.render()):
-                    lz_data, md_data = pair
-                    child_data.append(lz_data)
-                    metadata.update(md_data)
+                for lazy_set in lazy_variable_controller:
+                    if isinstance(lazy_set, LazyVariableSet):
+                        lz_data = lazy_set.read_child_data()
+                        md_data = lazy_set.read_metadata()
 
-                    if is_debug():
-                        print(
-                            '[fetch_input_variables_for_dynamic_upstream_blocks.reduce_output] '
-                            f'upstream:{upstream_block.uuid}:{up_child_idx} -> '
-                            f'{block.uuid}:{dynamic_block_index}: '
-                            f'upstream_position_index:{upstream_position_index}, '
-                            f'output: {lz_data}, '
-                            f'kwargs: {md_data}'
-                        )
+                        child_data.append(lz_data)
+                        metadata.update(md_data)
 
-                if is_debug():
+                        if is_debug() or is_test():
+                            print(
+                                '[fetch_input_variables_for_dynamic_upstream_blocks.reduce_output] '
+                                f'upstream:{upstream_block.uuid}: -> '
+                                f'{block.uuid}:{dynamic_block_index}: '
+                                f'upstream_position_index:{upstream_position_index}, '
+                                f'output: {lz_data}, '
+                                f'kwargs: {md_data}'
+                            )
+
+                if is_debug() or is_test():
                     print(
                         '[fetch_input_variables_for_dynamic_upstream_blocks.reduce_output] '
                         f'upstream:{upstream_block.uuid} -> {block.uuid}:{dynamic_block_index}: '
@@ -705,7 +718,7 @@ def fetch_input_variables_for_dynamic_upstream_blocks(
 
                 child_data_count = len(lazy_variable_controller)
                 if child_data_count > 0:
-                    if is_debug():
+                    if is_debug() or is_test():
                         print(
                             '[fetch_input_variables_for_dynamic_upstream_blocks] '
                             f'upstream:{upstream_block.uuid} -> {block.uuid}:'
