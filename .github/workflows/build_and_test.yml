@@ -120,7 +120,7 @@ jobs:
       - name: Set up Node
         uses: actions/setup-node@v3
         with:
-          node-version: "18.18.0"
+          node-version: "20.15.1"
       - name: Create Mage test project
         run: |
           Start-Process -Wait -FilePath "C:\Program Files\Git\unins000.exe" -ArgumentList "/SILENT"
