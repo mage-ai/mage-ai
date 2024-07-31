@@ -44,7 +44,6 @@ import { queryFromUrl } from '@utils/url';
 import { shouldDisplayLocalTimezone } from '@components/settings/workspace/utils';
 import { timeDifference, utcStringToElapsedTime } from '@utils/date';
 import { useKeyboardContext } from '@context/Keyboard';
-import { workspace } from 'vscode';
 
 const SHARED_DATE_FONT_PROPS = {
   monospace: true,
@@ -417,7 +416,7 @@ function PipelineRunsTable({
   if (workspaceFormatting) {
     columnFlex.push(1);
     columns.push({
-      uuid: 'Workspace',
+      uuid: 'Repo path',
     });
   }
 
@@ -549,9 +548,9 @@ function PipelineRunsTable({
               pipeline_schedule_name: pipelineScheduleName,
               pipeline_tags: pipelineTags,
               pipeline_uuid: pipelineUUID,
+              repo_path: repoPath,
               started_at: startedAt,
               status,
-              workspace_name: workspaceName,
             } = pipelineRun;
             deleteButtonRefs.current[id] = createRef();
             const disabled = !id && !status;
@@ -618,8 +617,8 @@ function PipelineRunsTable({
 
               if (workspaceFormatting) {
                 arr.push(
-                  <Text default key="row_workspace_name" monospace>
-                    {workspaceName}
+                  <Text default key="row_repo_path" monospace>
+                    {repoPath}
                   </Text>,
                 );
               }
@@ -749,8 +748,8 @@ function PipelineRunsTable({
 
               if (workspaceFormatting) {
                 arr.push(
-                  <Text default key="row_workspace_name" monospace>
-                    {workspaceName}
+                  <Text default key="row_repo_path" monospace>
+                    {repoPath}
                   </Text>,
                 );
               }

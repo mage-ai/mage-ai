@@ -58,7 +58,6 @@ export interface PipelineRunReqQueryParamsType {
   global_data_product_uuid?: string;
   include_pipeline_tags?: boolean;
   include_pipeline_uuids?: boolean;
-  include_workspace_name?: boolean;
   pipeline_uuid?: string;
   status?: RunStatusEnum;
 }
@@ -153,9 +152,9 @@ export default interface PipelineRunType {
   pipeline_schedule_type?: ScheduleTypeEnum;
   pipeline_tags?: string[];
   pipeline_uuid?: string;
+  repo_path?: string;
   started_at?: string;
   status?: RunStatusEnum;
   updated_at?: string;
   variables?: Obj;
-  workspace_name?: string;
 }

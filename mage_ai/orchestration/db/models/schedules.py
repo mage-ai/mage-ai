@@ -99,7 +99,6 @@ class PipelineSchedule(PipelineScheduleProjectPlatformMixin, BaseModel):
     token = Column(String(255), index=True, default=None)
     repo_path = Column(String(255))
     settings = Column(JSON)
-    workspace_name = Column(String(255), default=None)
     global_data_product_uuid = Column(String(255), index=True, default=None)
 
     backfills = relationship('Backfill', back_populates='pipeline_schedule')
@@ -286,8 +285,6 @@ class PipelineSchedule(PipelineScheduleProjectPlatformMixin, BaseModel):
     def create(self, **kwargs) -> 'PipelineSchedule':
         if 'token' not in kwargs:
             kwargs['token'] = uuid.uuid4().hex
-        if get_project_type() == ProjectType.SUB:
-            kwargs['workspace_name'] = get_repo_name()
         model = super().create(**kwargs)
         return model
 
@@ -840,8 +837,8 @@ class PipelineRun(PipelineRunProjectPlatformMixin, BaseModel):
         return pipeline.type if pipeline is not None else None
 
     @property
-    def workspace_name(self) -> str:
-        return self.pipeline_schedule.workspace_name
+    def repo_path(self) -> str:
+        return self.pipeline_schedule.repo_path
 
     @property
     def logs(self) -> List[Dict]:

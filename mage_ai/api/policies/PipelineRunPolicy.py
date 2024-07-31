@@ -54,6 +54,7 @@ PipelineRunPolicy.allow_read(PipelineRunPresenter.default_attributes + [
     'pipeline_schedule_type',
     'pipeline_tags',
     'pipeline_type',
+    'repo_path',
 ], scopes=[
     OauthScope.CLIENT_PRIVATE,
 ], on_action=[
