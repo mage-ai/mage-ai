@@ -48,6 +48,7 @@ from mage_ai.data_preparation.models.constants import (
     PipelineType,
 )
 from mage_ai.data_preparation.models.pipeline import Pipeline
+from mage_ai.data_preparation.repo_manager import ProjectType, get_project_type
 from mage_ai.data_preparation.models.project import Project
 from mage_ai.data_preparation.models.triggers import (
     ScheduleInterval,
@@ -70,7 +71,7 @@ from mage_ai.orchestration.db.models.schedules_project_platform import (
 from mage_ai.orchestration.db.models.tags import Tag, TagAssociation
 from mage_ai.server.kernel_output_parser import DataType
 from mage_ai.settings.platform import project_platform_activated
-from mage_ai.settings.repo import get_repo_path
+from mage_ai.settings.repo import get_repo_name, get_repo_path
 from mage_ai.shared.constants import ENV_PROD
 from mage_ai.shared.dates import compare
 from mage_ai.shared.hash import ignore_keys, index_by, merge_dict
@@ -285,6 +286,8 @@ class PipelineSchedule(PipelineScheduleProjectPlatformMixin, BaseModel):
     def create(self, **kwargs) -> 'PipelineSchedule':
         if 'token' not in kwargs:
             kwargs['token'] = uuid.uuid4().hex
+        if get_project_type() == ProjectType.SUB:
+            kwargs['workspace_name'] = get_repo_name()
         model = super().create(**kwargs)
         return model
 
