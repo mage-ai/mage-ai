@@ -1,0 +1,57 @@
+name: Export Frontend
+
+on:
+  workflow_dispatch:
+
+jobs:
+  export-frontend:
+    runs-on: ubuntu-latest
+    env:
+      NODE_VERSION: '20.15.1'
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'yarn'
+
+      - name: Install Yarn
+        run: npm install -g yarn
+
+      # - name: Set up SSH
+      #   uses: webfactory/ssh-agent@v0.5.3
+      #   with:
+      #     ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+      - name: Configure Git
+        run: |
+          git config user.email "ci@mage.ai"
+          git config user.name "GitHub Actions"
+
+      - name: Fetch and Checkout to Current Branch
+        run: |
+          git fetch origin
+          git checkout ${{ github.ref_name }}
+
+      - name: Build and Export
+        run: |
+          cd mage_ai/frontend
+          yarn install
+          yarn export_prod
+
+      - name: Build and Export Base Path Version
+        run: |
+          mv mage_ai/frontend/next_base_path.config.js mage_ai/frontend/next.config.js
+          cd mage_ai/frontend
+          yarn install
+          yarn export_prod_base_path
+
+      - name: Update Frontend Build
+        run: |
+          git add mage_ai/server/frontend_dist
+          git add mage_ai/server/frontend_dist_base_path_template
+          git commit -m "[CI] Update frontend build"
+          git push origin ${{ github.ref_name }}
