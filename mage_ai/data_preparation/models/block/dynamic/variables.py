@@ -677,16 +677,31 @@ def fetch_input_variables_for_dynamic_upstream_blocks(
                 # The first index is used to select which dynamic child to get data from
                 # the 2nd index is used to determine which value from the dynamic list to
                 # fetch as the input variable.
-                index = calculate_dynamic_index_data_index(
-                    dynamic_block_index,
-                    upstream_position_index,
-                    len(lazy_variable_controller),
-                    dynamic_upstream_item_counts,
-                )
-                pair = lazy_variable_controller.render(
-                    child_dynamic_block_index=dynamic_block_index,
-                )
-                child_data, metadata = pair
+                child_data = None
+                metadata = None
+
+                child_data_count = len(lazy_variable_controller)
+                if child_data_count > 0:
+                    print(
+                        '[fetch_input_variables_for_dynamic_upstream_blocks] '
+                        f'upstream:{upstream_block.uuid} -> {block.uuid}:{dynamic_block_index}: '
+                        f'upstream_position_index:{upstream_position_index}, '
+                        f'child_data_count:{child_data_count}, '
+                        f'dynamic_upstream_item_counts:{dynamic_upstream_item_counts}'
+                    )
+
+                    index = calculate_dynamic_index_data_index(
+                        dynamic_block_index,
+                        upstream_position_index,
+                        child_data_count,
+                        dynamic_upstream_item_counts,
+                    )
+                    if index is not None:
+                        pair = lazy_variable_controller.render(
+                            child_dynamic_block_index=dynamic_block_index,
+                        )
+                        child_data, metadata = pair
+
                 input_vars.append(child_data)
                 kwargs_vars.append(metadata)
         elif is_dynamic:

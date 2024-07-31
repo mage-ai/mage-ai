@@ -190,6 +190,7 @@ class DynamicChildItemCounter(DynamicItemCounter):
                         filename.extension
         2. If dynamic child block reduces output, the count is 1
         """
+        count = 0
 
         if (
             (not self.block.is_dynamic_v2 and should_reduce_output(self.block))
@@ -201,15 +202,19 @@ class DynamicChildItemCounter(DynamicItemCounter):
                 )
             )
         ) or self.block.should_reduce_output:
-            return 1
+            count = 1
+        elif self.part_uuids is not None:
+            count = len(self.part_uuids)
+        elif self.output is not None and isinstance(self.output, Iterable):
+            count = sum(1 for _ in self.output)
 
-        if self.part_uuids is not None:
-            return len(self.part_uuids)
+        print(
+            f'[DynamicChildItemCounter.item_count]: '
+            f'{self.block.uuid}:{self.dynamic_block_index}--{self.variable_uuid}:{self.partition} '
+            f'= {count}]'
+        )
 
-        if self.output is not None and isinstance(self.output, Iterable):
-            return sum(1 for _ in self.output)
-
-        return 0
+        return count
 
 
 class DynamicDuoItemCounter(DynamicItemCounter):
