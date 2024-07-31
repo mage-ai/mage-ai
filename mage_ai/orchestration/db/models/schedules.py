@@ -837,7 +837,7 @@ class PipelineRun(PipelineRunProjectPlatformMixin, BaseModel):
         return pipeline.type if pipeline is not None else None
 
     @property
-    def workspace_name(self) -> String:
+    def workspace_name(self) -> str:
         return self.pipeline_schedule.workspace_name
 
     @property

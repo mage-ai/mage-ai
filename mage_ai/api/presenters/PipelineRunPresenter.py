@@ -49,11 +49,18 @@ class PipelineRunPresenter(BasePresenter):
             if include_pipeline_tags:
                 include_pipeline_tags = include_pipeline_tags[0]
 
+            include_workspace_name = query.get('include_workspace_name', [False])
+            if include_workspace_name:
+                include_workspace_name = include_workspace_name[0]
+
             if include_pipeline_type or pipeline_type is not None:
                 additional_attributes.append('pipeline_type')
 
             if include_pipeline_tags:
                 additional_attributes.append('pipeline_tags')
+
+            if include_workspace_name:
+                additional_attributes.append('workspace_name')
 
             return data_to_display.to_dict(include_attributes=additional_attributes)
         elif constants.DETAIL == display_format:
@@ -94,6 +101,7 @@ PipelineRunPresenter.register_format(
         'pipeline_schedule_type',
         'pipeline_tags',
         'pipeline_type',
+        'workspace_name',
     ],
 )
 
