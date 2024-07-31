@@ -48,7 +48,6 @@ from mage_ai.data_preparation.models.constants import (
     PipelineType,
 )
 from mage_ai.data_preparation.models.pipeline import Pipeline
-from mage_ai.data_preparation.repo_manager import ProjectType, get_project_type
 from mage_ai.data_preparation.models.project import Project
 from mage_ai.data_preparation.models.triggers import (
     ScheduleInterval,
@@ -58,6 +57,7 @@ from mage_ai.data_preparation.models.triggers import (
     Trigger,
     add_or_update_trigger_for_pipeline_and_persist,
 )
+from mage_ai.data_preparation.repo_manager import ProjectType, get_project_type
 from mage_ai.data_preparation.variable_manager import get_global_variables
 from mage_ai.orchestration.db import db_connection, safe_db_query
 from mage_ai.orchestration.db.errors import ValidationError
