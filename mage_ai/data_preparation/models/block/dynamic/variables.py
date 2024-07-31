@@ -677,11 +677,11 @@ def fetch_input_variables_for_dynamic_upstream_blocks(
                         lz_data = lazy_set.read_child_data()
                         md_data = lazy_set.read_metadata()
 
-                        if isinstance(lz_data, list):
-                            child_data.extend(lz_data)
+                        if isinstance(lz_data, list) and not md_data:
+                            child_data += lz_data
                         else:
                             child_data.append(lz_data)
-                        metadata.update(md_data)
+                            metadata.update(md_data)
 
                         if is_debug() or is_test():
                             print(
