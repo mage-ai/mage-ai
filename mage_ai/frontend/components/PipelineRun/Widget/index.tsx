@@ -22,7 +22,6 @@ import { TAB_URL_PARAM } from '@oracle/components/Tabs';
 import {
   TIME_PERIOD_DISPLAY_MAPPING,
   TimePeriodEnum,
-  dateFormatLong,
   datetimeInLocalTimezone,
 } from '@utils/date';
 import { UNIT } from '@oracle/styles/units/spacing';
@@ -36,11 +35,13 @@ const MIN_HEIGHT = UNIT * 40;
 type WidgetProps = {
   pipelineType: PipelineTypeEnum | string;
   pipelineRuns: PipelineRunType[];
+  workspaceFormatting?: boolean;
 };
 
 function Widget({
   pipelineType,
   pipelineRuns = [],
+  workspaceFormatting = false,
 }: WidgetProps) {
   const router = useRouter();
   const q = queryFromUrl();
@@ -55,6 +56,7 @@ function Widget({
   const countDisplay = count === 0
     ? ''
     : `(${count})`;
+  const workspacePrefix = workspaceFormatting ? '/manage' : '';
 
   const utcTooltipEl = useMemo(() => (
     displayLocalTimezone
@@ -75,8 +77,8 @@ function Widget({
       footer={
         <FlexContainer alignItems="center" justifyContent="center">
           <NextLink
-            as={'/pipeline-runs?status=failed'}
-            href="/pipeline-runs"
+            as={`${workspacePrefix}/pipeline-runs?status=failed`}
+            href={`${workspacePrefix}/pipeline-runs`}
             passHref
           >
             <Link
@@ -132,31 +134,48 @@ function Widget({
         }) => (
           <RowStyle key={`pipeline_run_${pipelineRunId}`}>
             <FlexContainer alignItems="center">
-              <NextLink
-                as={`/pipelines/${pipelineUUID}`}
-                href="/pipelines/[pipeline]"
-                passHref
-              >
-                <Link monospace sameColorAsText small>
-                  {pipelineUUID}
-                </Link>
-              </NextLink>
+              {workspaceFormatting
+                ? <Text monospace small>{pipelineUUID}</Text>
+                : (
+                  <NextLink
+                    as={`/pipelines/${pipelineUUID}`}
+                    href="/pipelines/[pipeline]"
+                    passHref
+                  >
+                    <Link monospace sameColorAsText small>
+                      {pipelineUUID}
+                    </Link>
+                  </NextLink>
+                )
+              }
               <Text monospace small>
                 &nbsp;&#62;&nbsp;
               </Text>
-              <NextLink
-                as={`/pipelines/${pipelineUUID}/runs/${pipelineRunId}`}
-                href="/pipelines/[pipeline]/runs/[run]"
-                passHref
-              >
-                <Link danger monospace sameColorAsText small>
-                  Run created on&nbsp;
-                  {displayLocalTimezone
-                    ? datetimeInLocalTimezone(createdAt, displayLocalTimezone)
-                    : createdAt
-                  }
-                </Link>
-              </NextLink>
+              {workspaceFormatting
+                ? (
+                  <Text danger monospace small>
+                    Run created on&nbsp;
+                    {displayLocalTimezone
+                      ? datetimeInLocalTimezone(createdAt, displayLocalTimezone)
+                      : createdAt
+                    }
+                  </Text>
+                ) : (
+                  <NextLink
+                    as={`/pipelines/${pipelineUUID}/runs/${pipelineRunId}`}
+                    href="/pipelines/[pipeline]/runs/[run]"
+                    passHref
+                  >
+                    <Link danger monospace sameColorAsText small>
+                      Run created on&nbsp;
+                      {displayLocalTimezone
+                        ? datetimeInLocalTimezone(createdAt, displayLocalTimezone)
+                        : createdAt
+                      }
+                    </Link>
+                  </NextLink>
+                )
+              }
             </FlexContainer>
           </RowStyle>
         ))}

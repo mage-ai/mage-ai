@@ -836,6 +836,10 @@ class PipelineRun(PipelineRunProjectPlatformMixin, BaseModel):
         return pipeline.type if pipeline is not None else None
 
     @property
+    def repo_path(self) -> str:
+        return self.pipeline_schedule.repo_path
+
+    @property
     def logs(self) -> List[Dict]:
         """
         Retrieves logs for the pipeline and scheduler.

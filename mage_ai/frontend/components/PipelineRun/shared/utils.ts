@@ -69,6 +69,7 @@ const runStatusesToDisplaySet = new Set(RUN_STATUSES_TO_DISPLAY);
 export const getAllPipelineRunDataGrouped = (
   monitorStats: RunCountStatsType,
   dateRange: string[],
+  noPipelineType: boolean = false,
 ): {
   groupedPipelineRunData: GroupedPipelineRunDataType[];
   pipelineRunCountByPipelineType: GroupedPipelineRunCountType;
@@ -112,21 +113,8 @@ export const getAllPipelineRunDataGrouped = (
         const updatedStatsGrouped = {};
         const updatedStatsUngrouped = {};
 
-        Object.entries(dateStats).forEach(([pipelineType, pipelineTypeStats]) => {
-          const pipelineDoesNotExist = pipelineType === 'null' || pipelineType === null;
-          if (pipelineDoesNotExist) {
-            return;
-          }
-          if (date in obj.grouped && pipelineType in obj.grouped[date]) {
-            currentStatsGrouped[pipelineType] = { ...obj.grouped[date][pipelineType] };
-          }
-          updatedStatsGrouped[pipelineType] = {};
-          Object.entries(pipelineTypeStats).forEach(([status, num]: [RunStatus, number]) => {
-            const currentNumGrouped = currentStatsGrouped?.[pipelineType]?.[status]
-              ? currentStatsGrouped[pipelineType][status]
-              : 0;
-            updatedStatsGrouped[pipelineType][status] = currentNumGrouped + num;
-              
+        if (noPipelineType) {
+          Object.entries(dateStats).forEach(([status, num]: [RunStatus, number]) => {
             const currentNumUngrouped = currentStatsUngrouped?.[status]
               ? currentStatsUngrouped[status]
               : 0;
@@ -134,21 +122,51 @@ export const getAllPipelineRunDataGrouped = (
               ? updatedStatsUngrouped[status] + num
               : currentNumUngrouped + num;
 
-            if (runStatusesToDisplaySet.has(status)) {
-              totalPipelineRunCountByPipelineType[pipelineType][status] =
-                (totalPipelineRunCountByPipelineType[pipelineType][status] || 0) + num;
-            }
             totalPipelineRunCount += num;
           });
-          updatedGrouped[date][pipelineType] = {
-            ...currentStatsGrouped[pipelineType],
-            ...updatedStatsGrouped[pipelineType],
-          };
           updatedUngrouped[date] = {
             ...currentStatsUngrouped,
             ...updatedStatsUngrouped,
           };
-        });
+        } else {
+          Object.entries(dateStats).forEach(([pipelineType, pipelineTypeStats]) => {
+            const pipelineDoesNotExist = pipelineType === 'null' || pipelineType === null;
+            if (pipelineDoesNotExist) {
+              return;
+            }
+            if (date in obj.grouped && pipelineType in obj.grouped[date]) {
+              currentStatsGrouped[pipelineType] = { ...obj.grouped[date][pipelineType] };
+            }
+            updatedStatsGrouped[pipelineType] = {};
+            Object.entries(pipelineTypeStats).forEach(([status, num]: [RunStatus, number]) => {
+              const currentNumGrouped = currentStatsGrouped?.[pipelineType]?.[status]
+                ? currentStatsGrouped[pipelineType][status]
+                : 0;
+              updatedStatsGrouped[pipelineType][status] = currentNumGrouped + num;
+
+              const currentNumUngrouped = currentStatsUngrouped?.[status]
+                ? currentStatsUngrouped[status]
+                : 0;
+              updatedStatsUngrouped[status] = updatedStatsUngrouped?.[status]
+                ? updatedStatsUngrouped[status] + num
+                : currentNumUngrouped + num;
+
+              if (runStatusesToDisplaySet.has(status)) {
+                totalPipelineRunCountByPipelineType[pipelineType][status] =
+                  (totalPipelineRunCountByPipelineType[pipelineType][status] || 0) + num;
+              }
+              totalPipelineRunCount += num;
+            });
+            updatedGrouped[date][pipelineType] = {
+              ...currentStatsGrouped[pipelineType],
+              ...updatedStatsGrouped[pipelineType],
+            };
+            updatedUngrouped[date] = {
+              ...currentStatsUngrouped,
+              ...updatedStatsUngrouped,
+            };
+          });
+        }
       });
 
       return {

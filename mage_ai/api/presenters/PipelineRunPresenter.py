@@ -35,6 +35,7 @@ class PipelineRunPresenter(BasePresenter):
                 'pipeline_schedule_name',
                 'pipeline_schedule_token',
                 'pipeline_schedule_type',
+                'repo_path',
             ]
 
             include_pipeline_type = query.get('include_pipeline_type', [False])
@@ -94,6 +95,7 @@ PipelineRunPresenter.register_format(
         'pipeline_schedule_type',
         'pipeline_tags',
         'pipeline_type',
+        'repo_path',
     ],
 )
 
