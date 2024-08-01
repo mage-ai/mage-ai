@@ -57,11 +57,11 @@ jobs:
           git log -1
           git push origin update-frontend-${{ github.run_id }} --verbose
 
-      - name: Create Pull Request
-        uses: peter-evans/create-pull-request@v5
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          branch: update-frontend-${{ github.run_id }}
-          base: master
-          title: "[CI] Update frontend build"
-          body: "This PR updates the frontend build artifacts."
+      # - name: Create Pull Request
+      #   uses: peter-evans/create-pull-request@v5
+      #   with:
+      #     token: ${{ secrets.GITHUB_TOKEN }}
+      #     branch: update-frontend-${{ github.run_id }}
+      #     base: master
+      #     title: "[CI] Update frontend build"
+      #     body: "This PR updates the frontend build artifacts."
