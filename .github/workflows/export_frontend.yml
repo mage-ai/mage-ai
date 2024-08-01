@@ -50,11 +50,12 @@ jobs:
         run: |
           git checkout -b update-frontend-${{ github.run_id }}
           touch test.txt
+          git status
           git add test.txt
           git commit -m "[CI] Update frontend build"
           git status
           git log -1
-          git push origin update-frontend-${{ github.run_id }}
+          git push origin update-frontend-${{ github.run_id }} --verbose
 
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v5
