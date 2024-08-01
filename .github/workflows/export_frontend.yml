@@ -48,7 +48,7 @@ jobs:
         run: |
           git checkout -b update-frontend-${{ github.run_id }}
           touch test.txt
-          git add touch.txt
+          git add test.txt
           git commit -m "[CI] Update frontend build"
 
       - name: Push changes to new branch
