@@ -50,6 +50,8 @@ jobs:
           touch test.txt
           git add test.txt
           git commit -m "[CI] Update frontend build"
+          git status
+          git log -1
 
       - name: Push changes to new branch
         env:
