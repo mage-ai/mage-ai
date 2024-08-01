@@ -44,7 +44,9 @@ jobs:
       #     yarn export_prod_base_path
       #   working-directory: mage_ai/frontend/
 
-      - name: Update Frontend Build
+      - name: Push changes to new branch
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           git checkout -b update-frontend-${{ github.run_id }}
           touch test.txt
@@ -52,11 +54,6 @@ jobs:
           git commit -m "[CI] Update frontend build"
           git status
           git log -1
-
-      - name: Push changes to new branch
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
           git push origin update-frontend-${{ github.run_id }}
 
       - name: Create Pull Request
