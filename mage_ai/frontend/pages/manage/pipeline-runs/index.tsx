@@ -48,6 +48,7 @@ function RunListPage() {
     _limit: ROW_LIMIT,
     _offset: page * ROW_LIMIT,
     disable_retries_grouping: true,
+    include_all_pipeline_schedules: true,
   };
   if (q?.status) {
     pipelineRunsRequestQuery.status = q.status;

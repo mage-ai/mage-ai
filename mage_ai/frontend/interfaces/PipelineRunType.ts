@@ -56,6 +56,7 @@ export interface PipelineRunReqQueryParamsType {
   _offset?: number;
   disable_retries_grouping?: boolean;
   global_data_product_uuid?: string;
+  include_all_pipeline_schedules?: boolean;
   include_pipeline_tags?: boolean;
   include_pipeline_uuids?: boolean;
   pipeline_uuid?: string;

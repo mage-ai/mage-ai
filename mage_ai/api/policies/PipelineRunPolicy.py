@@ -102,6 +102,7 @@ PipelineRunPolicy.allow_query([
     'disable_retries_grouping',
     'end_timestamp',
     'global_data_product_uuid',
+    'include_all_pipeline_schedules',
     'include_pipeline_tags',
     'include_pipeline_type',
     'include_pipeline_uuids',

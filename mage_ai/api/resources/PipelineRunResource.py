@@ -98,6 +98,10 @@ class PipelineRunResource(DatabaseResource):
 
         repo_pipeline_schedule_ids = [s.id for s in PipelineSchedule.repo_query]
 
+        include_all_pipeline_schedules = query_arg.get('include_all_pipeline_schedules', [None])
+        if include_all_pipeline_schedules:
+            include_all_pipeline_schedules = include_all_pipeline_schedules[0]
+
         if status == PIPELINE_RUN_STATUS_LAST_RUN_FAILED:
             """
             The initial query below is used to get the last pipeline run retry
@@ -128,9 +132,11 @@ class PipelineRunResource(DatabaseResource):
         else:
             query = PipelineRun.query
 
+        if not include_all_pipeline_schedules:
+            query = query.filter(PipelineRun.pipeline_schedule_id.in_(repo_pipeline_schedule_ids))
+
         results = (
             query
-            .filter(PipelineRun.pipeline_schedule_id.in_(repo_pipeline_schedule_ids))
             .options(selectinload(PipelineRun.block_runs))
             .options(selectinload(PipelineRun.pipeline_schedule))
             .join(PipelineSchedule, PipelineRun.pipeline_schedule_id == PipelineSchedule.id)
