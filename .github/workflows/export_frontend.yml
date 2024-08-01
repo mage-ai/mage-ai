@@ -31,24 +31,24 @@ jobs:
           git fetch origin
           git checkout ${{ github.ref_name }}
 
-      - name: Build and Export
-        run: |
-          yarn install
-          yarn export_prod
-        working-directory: mage_ai/frontend/
+      # - name: Build and Export
+      #   run: |
+      #     yarn install
+      #     yarn export_prod
+      #   working-directory: mage_ai/frontend/
 
-      - name: Build and Export Base Path Version
-        run: |
-          mv next_base_path.config.js next.config.js
-          yarn install
-          yarn export_prod_base_path
-        working-directory: mage_ai/frontend/
+      # - name: Build and Export Base Path Version
+      #   run: |
+      #     mv next_base_path.config.js next.config.js
+      #     yarn install
+      #     yarn export_prod_base_path
+      #   working-directory: mage_ai/frontend/
 
       - name: Update Frontend Build
         run: |
           git checkout -b update-frontend-${{ github.run_id }}
-          git add mage_ai/server/frontend_dist
-          git add mage_ai/server/frontend_dist_base_path_template
+          touch test.txt
+          git add touch.txt
           git commit -m "[CI] Update frontend build"
 
       - name: Push changes to new branch
