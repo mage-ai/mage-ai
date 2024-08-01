@@ -143,6 +143,7 @@ function OverviewPage({ tab }: { tab?: TimePeriodEnum }) {
   const { data: dataPipelineRuns } = api.pipeline_runs.list(
     {
       _limit: 50,
+      include_all_pipeline_schedules: true,
       'order_by[]': 'created_at desc',
       start_timestamp: unixTimestampFromDate(startDateString),
       status: RunStatus.FAILED,
