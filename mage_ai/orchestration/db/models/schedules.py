@@ -57,7 +57,6 @@ from mage_ai.data_preparation.models.triggers import (
     Trigger,
     add_or_update_trigger_for_pipeline_and_persist,
 )
-from mage_ai.data_preparation.repo_manager import ProjectType, get_project_type
 from mage_ai.data_preparation.variable_manager import get_global_variables
 from mage_ai.orchestration.db import db_connection, safe_db_query
 from mage_ai.orchestration.db.errors import ValidationError
@@ -71,7 +70,7 @@ from mage_ai.orchestration.db.models.schedules_project_platform import (
 from mage_ai.orchestration.db.models.tags import Tag, TagAssociation
 from mage_ai.server.kernel_output_parser import DataType
 from mage_ai.settings.platform import project_platform_activated
-from mage_ai.settings.repo import get_repo_name, get_repo_path
+from mage_ai.settings.repo import get_repo_path
 from mage_ai.shared.constants import ENV_PROD
 from mage_ai.shared.dates import compare
 from mage_ai.shared.hash import ignore_keys, index_by, merge_dict
