@@ -21,11 +21,6 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
 
-      # - name: Set up SSH
-      #   uses: webfactory/ssh-agent@v0.5.3
-      #   with:
-      #     ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
-
       - name: Configure Git
         run: |
           git config user.email "ci@mage.ai"
@@ -51,7 +46,22 @@ jobs:
 
       - name: Update Frontend Build
         run: |
+          git checkout -b update-frontend-${{ github.run_id }}
           git add mage_ai/server/frontend_dist
           git add mage_ai/server/frontend_dist_base_path_template
           git commit -m "[CI] Update frontend build"
-          git push origin ${{ github.ref_name }}
+
+      - name: Push changes to new branch
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git push origin update-frontend-${{ github.run_id }}
+
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v5
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          branch: update-frontend-${{ github.run_id }}
+          base: master
+          title: "[CI] Update frontend build"
+          body: "This PR updates the frontend build artifacts."
