@@ -184,7 +184,6 @@ def reformat(df, action, **kwargs):
     columns = action['action_arguments']
     options = action['action_options']
     reformat_action = options['reformat']
-    df.loc[:, columns] = df[columns].replace(r'^\s*$', np.nan, regex=True)
 
     if reformat_action == 'caps_standardization':
         capitalization = options['capitalization']
@@ -193,6 +192,8 @@ def reformat(df, action, **kwargs):
                 df.loc[:, column] = df[columns][column].str.upper()
             else:
                 df.loc[:, column] = df[columns][column].str.lower()
+        # Convert empty strings to NaN for this action
+        df.loc[:, columns] = df[columns].replace(r'^\s*$', np.nan, regex=True)
     elif reformat_action == 'currency_to_num':
         for column in generate_string_cols(df, columns):
             clean_col = df[column].replace(CURRENCY_SYMBOLS, '', regex=True)
@@ -222,6 +223,9 @@ def reformat(df, action, **kwargs):
     elif reformat_action == 'trim':
         for column in columns:
             df[column] = df[column].str.strip()
+    else:
+        # Apply NaN replacement only for other actions
+        df.loc[:, columns] = df[columns].replace(r'^\s*$', np.nan, regex=True)
 
     return df
 
