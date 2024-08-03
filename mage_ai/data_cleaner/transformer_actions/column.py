@@ -1,3 +1,8 @@
+import logging
+
+import numpy as np
+import pandas as pd
+
 from mage_ai.data_cleaner.column_types.column_type_detector import find_syntax_errors
 from mage_ai.data_cleaner.column_types.constants import NUMBER_TYPES, ColumnType
 from mage_ai.data_cleaner.estimators.outlier_removal import OutlierRemover
@@ -15,11 +20,10 @@ from mage_ai.data_cleaner.transformer_actions.helpers import (
     get_time_window_str,
 )
 from mage_ai.data_cleaner.transformer_actions.udf.base import execute_udf
-from mage_ai.data_cleaner.transformer_actions.utils import clean_column_name, generate_string_cols
-import logging
-import pandas as pd
-import numpy as np
-
+from mage_ai.data_cleaner.transformer_actions.utils import (
+    clean_column_name,
+    generate_string_cols,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -215,6 +219,9 @@ def reformat(df, action, **kwargs):
             df.loc[:, column] = pd.to_datetime(
                 clean_col, infer_datetime_format=True, errors='coerce'
             )
+    elif reformat_action == 'trim':
+        for column in columns:
+            df[column] = df[column].str.strip()
 
     return df
 
