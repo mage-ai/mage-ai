@@ -489,6 +489,7 @@ Reformats values in column based on requested action. The currently supported re
     | "-  3.42032 CAD" | -3.42032       |                                                 |
     | "Rs - 100000.23" | -100000.23     | Negation after symbol is supported              |
 - Convert string to datetime (`reformat = 'date_time_conversion'`): Converts a string value representing a datetime to a `pandas.Timestamp` object if correctly formatted, else converts to `None`.
+- Trim whitespace (`reformat = 'trim'`): Removes leading and trailing whitespace from text columns.
 
 **Example**:
 ```python
@@ -508,6 +509,7 @@ build_transformer_action(
     - `'caps_standardization'` - standardize capitalization
     - `'currency_to_num'` - convert currency string to number
     - `'date_format_conversion'` - convert datetime string to `pandas.Timestamp`
+    - `'trim'` - remove leading and trailing whitespace from text columns
   - `capitalization` (optional): Specifies the capitalization strategy to use when standardizing capitalization. This argument is ignored unless `reformat = "caps_standardization"`. Options are `['lowercase', 'uppercase']`.
 
 ## Column Removal Actions
