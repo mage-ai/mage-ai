@@ -1,4 +1,4 @@
-import { isProduction } from '@utils/environment';
+import { isSecureProtocol } from '@utils/environment';
 
 export const COOKIE_DOMAIN: string = typeof window === 'undefined' ? null : window.location.hostname;
 export const COOKIE_PATH: string = '/';
@@ -7,7 +7,7 @@ export const SHARED_COOKIE_PROPERTIES: any = {
   domain: COOKIE_DOMAIN,
   path: COOKIE_PATH,
   sameSite: 'Strict',
-  secure: isProduction(),
+  secure: isSecureProtocol(),
 };
 
 export const COOKIE_KEY_INITIAL_AS_PATH = 'initial_as_path';
