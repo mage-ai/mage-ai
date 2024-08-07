@@ -266,6 +266,8 @@ def build_triggers(
 
             # Add flag to settings so frontend can detect triggers with invalid cron expressions
             if not trigger.has_valid_schedule_interval:
+                if not trigger.settings:
+                    trigger.settings = dict()
                 trigger.settings['invalid_schedule_interval'] = True
 
             triggers.append(trigger)
