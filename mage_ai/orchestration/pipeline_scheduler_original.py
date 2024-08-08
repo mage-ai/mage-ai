@@ -1610,21 +1610,13 @@ def schedule_all():
                     pipeline=pipeline,
                     repo_config=repo_config,
                 )
-                initial_pipeline_runs = [
-                    r
-                    for r in pipeline_schedule.pipeline_runs
-                    if r.status == PipelineRun.PipelineRunStatus.INITIAL
-                ]
+                initial_pipeline_runs = pipeline_schedule.initial_pipeline_runs
 
                 if not should_schedule and not initial_pipeline_runs:
                     lock.release_lock(lock_key)
                     continue
 
-                running_pipeline_runs = [
-                    r
-                    for r in pipeline_schedule.pipeline_runs
-                    if r.status == PipelineRun.PipelineRunStatus.RUNNING
-                ]
+                running_pipeline_run_count = pipeline_schedule.running_pipeline_run_count
 
                 if (
                     should_schedule
@@ -1646,7 +1638,7 @@ def schedule_all():
                         payload['metrics'] = dict(previous_runtimes=previous_runtimes)
 
                     if pipeline_schedule.get_settings().skip_if_previous_running and (
-                        initial_pipeline_runs or running_pipeline_runs
+                        initial_pipeline_runs or running_pipeline_run_count > 0
                     ):
                         # Cancel the pipeline run if previous pipeline runs haven't completed and
                         # skip_if_previous_running is enabled
@@ -1677,7 +1669,7 @@ def schedule_all():
                 # Enforce pipeline concurrency limit
                 pipeline_run_quota = None
                 if trigger_pipeline_run_limit is not None:
-                    pipeline_run_quota = trigger_pipeline_run_limit - len(running_pipeline_runs)
+                    pipeline_run_quota = trigger_pipeline_run_limit - running_pipeline_run_count
 
                 if pipeline_run_quota is None:
                     pipeline_run_quota = len(initial_pipeline_runs)
