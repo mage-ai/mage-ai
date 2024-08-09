@@ -202,7 +202,7 @@ class PipelineSchedule(PipelineScheduleProjectPlatformMixin, BaseModel):
     @property
     def pipeline_runs_count(self) -> int:
         return (
-            PipelineRun.query
+            PipelineRun.select(func.count(PipelineRun.id))
             .filter(
                 PipelineRun.pipeline_schedule_id == self.id,
             )
