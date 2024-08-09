@@ -211,9 +211,6 @@ class PipelineSchedule(PipelineScheduleProjectPlatformMixin, BaseModel):
 
     @property
     def initial_pipeline_runs(self) -> List:
-        if project_platform_activated():
-            return self.pipeline_runs_count_project_platform
-
         return (
             PipelineRun.query
             .filter(
