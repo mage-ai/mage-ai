@@ -71,6 +71,7 @@ class ActionType(str, Enum):
     UPDATE_VALUE = 'update_value'
     NORMALIZE = 'normalize'
     STANDARDIZE = 'standardize'
+    ONE_HOT_ENCODE = 'one_hot_encode'
 
 
 class Axis(str, Enum):
