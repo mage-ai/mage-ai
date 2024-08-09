@@ -191,6 +191,8 @@ class PipelineScheduleProjectPlatformMixin:
                     compare(current_execution_date, self.start_time.replace(tzinfo=pytz.UTC)) == -1:
                 return False
 
+            from mage_ai.orchestration.db.models.schedules import PipelineRun
+
             # If there is a pipeline_run with an execution_date the same as the
             # current_execution_date, then don’t schedule
             run_exists = PipelineRun.select(
