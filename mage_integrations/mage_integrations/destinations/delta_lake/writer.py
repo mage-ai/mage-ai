@@ -38,9 +38,9 @@ from pyarrow.lib import RecordBatchReader
 from mage_integrations.destinations.delta_lake.schema import delta_arrow_schema_from_pandas
 
 from deltalake._internal import DeltaDataChecker as _DeltaDataChecker
-from deltalake._internal import PyDeltaTableError
 from deltalake._internal import write_new_deltalake as _write_new_deltalake
-from deltalake.table import MAX_SUPPORTED_WRITER_VERSION, DeltaTable, DeltaTableProtocolError
+from deltalake.exceptions import DeltaError, DeltaProtocolError, TableNotFoundError
+from deltalake.table import MAX_SUPPORTED_PYARROW_WRITER_VERSION, DeltaTable
 
 try:
     import pandas as pd
@@ -98,7 +98,7 @@ def write_deltalake(
 
     This function only supports protocol version 1 currently. If an attempting
     to write to an existing table with a higher min_writer_version, this
-    function will throw DeltaTableProtocolError.
+    function will throw DeltaProtocolError.
 
     Note that this function does NOT register this table in a data catalog.
 
@@ -196,8 +196,8 @@ def write_deltalake(
         if partition_by:
             assert partition_by == table.metadata().partition_columns
 
-        if table.protocol().min_writer_version > MAX_SUPPORTED_WRITER_VERSION:
-            raise DeltaTableProtocolError(
+        if table.protocol().min_writer_version > MAX_SUPPORTED_PYARROW_WRITER_VERSION:
+            raise DeltaProtocolError(
                 "This table's min_writer_version is "
                 f"{table.protocol().min_writer_version}, "
                 "but this method only supports version 2."
@@ -332,7 +332,9 @@ def try_get_deltatable(
 ) -> Optional[DeltaTable]:
     try:
         return DeltaTable(table_uri, storage_options=storage_options)
-    except PyDeltaTableError as err:
+    except TableNotFoundError as err:
+        return None
+    except DeltaError as err:
         # TODO: There has got to be a better way...
         if "Not a Delta table" in str(err):
             return None
