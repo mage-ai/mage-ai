@@ -1,0 +1,8 @@
+{
+  "bucket": null,
+  "file_type": "parquet",
+  "object_key_path": null,
+  "table": null,
+  "date_partition_format": null,
+  "path_to_credentials_json_file": "/path/to/your/service/account/key.json"
+}
