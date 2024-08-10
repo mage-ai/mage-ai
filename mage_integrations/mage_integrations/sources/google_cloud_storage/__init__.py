@@ -30,10 +30,6 @@ class GoogleCloudStorage(Source):
     def file_type(self) -> str:
         return self.config.get('file_type')
 
-    @property
-    def object_key_path(self) -> str:
-        return self.config.get('object_key_path', '')
-
     def build_client(self):
         connection = GSCConnection(
             credentials_info=self.config.get('credentials_info'),
@@ -51,7 +47,7 @@ class GoogleCloudStorage(Source):
                 continue
 
             key = blob.name
-            parts = key.split('/')
+            parts = key.split('.')
             stream_id = '_'.join(parts[:-1])
 
             df = self.__build_df(key)
@@ -107,7 +103,7 @@ class GoogleCloudStorage(Source):
 
             streams.append(catalog_entry)
 
-            break
+            # break
 
         return Catalog(streams)
 
@@ -126,7 +122,7 @@ class GoogleCloudStorage(Source):
 
     def test_connection(self) -> None:
         client = self.build_client()
-        if not client.bucket_exists(self.bucket):
+        if not client.get_bucket(self.bucket).exists():
             raise Exception(f'Bucket {self.bucket} does not exist.')
         client.list_blobs(self.bucket)
 
