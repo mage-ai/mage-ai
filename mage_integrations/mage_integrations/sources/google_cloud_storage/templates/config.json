@@ -1,5 +1,5 @@
 {
-  "bucket": null,
+  "bucket": "",
   "file_type": "parquet",
   "path_to_credentials_json_file": "/path/to/your/service/account/key.json"
 }
