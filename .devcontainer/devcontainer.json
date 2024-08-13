@@ -1,0 +1,15 @@
+{
+	"name": "Python, HTML & Typescript",
+	"image": "mcr.microsoft.com/devcontainers/base:bookworm",
+	"features": {
+		"ghcr.io/devcontainers/features/docker-in-docker:2": {},
+		"ghcr.io/prulloac/devcontainer-features/bun:1": {},
+		"ghcr.io/devcontainers/features/node:1": {},
+		"ghcr.io/devcontainers/features/common-utils:2": {},
+		"ghcr.io/devcontainers/features/python:1": {"version": "3.10"},
+		"ghcr.io/devcontainers/features/github-cli:1": {},
+		"ghcr.io/jungaretti/features/make:1": {},
+		"ghcr.io/devcontainers-contrib/features/poetry:2": {}
+	},
+	"customizations": {"vscode": {"extensions": ["ms-python.python"]}},
+	"postCreateCommand": "poetry env use $(which python) && poetry install --no-root && make dev_env && cd ./mage_ai/frontend/ && yarn install &&  cd ../.. && make install-hooks && . .venv/bin/activate && pre-commit install"}

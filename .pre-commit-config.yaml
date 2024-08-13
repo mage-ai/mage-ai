@@ -37,7 +37,7 @@ repos:
     # assumes flake8 is installed in local virtual environment as dev dependency
     language: system
     types: [python]
-    exclude: "mage_integrations\/mage_integrations\/sources\/.*\/tap_.*\/*|mage_integrations\/mage_integrations\/destinations\/.*\/target_.*\/*"
+    exclude: "mage_integrations/mage_integrations/(sources/.*/tap_|destinations/.*/target_).*"
   # - id: black
   #   name: black
   #   entry: black
