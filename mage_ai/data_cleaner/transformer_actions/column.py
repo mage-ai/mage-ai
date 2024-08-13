@@ -119,7 +119,8 @@ def impute(df, action, **kwargs):
                 mode = df[column].mode().iloc[0]
                 if dtype == ColumnType.LIST:
                     df[column] = df[column].apply(
-                        lambda element: element if element not in [None, np.nan] else mode
+                        lambda element, mode=mode: element if element not in [
+                            None, np.nan] else mode
                     )
                 else:
                     df[columns] = df[columns].fillna(mode)
