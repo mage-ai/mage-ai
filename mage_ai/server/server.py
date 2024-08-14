@@ -345,11 +345,19 @@ def make_app(
         ),
         # Download resource
         (r'/api/downloads/(?P<token>[\w/%.-]+)', ApiResourceDownloadHandler),
+        # Override the APIs that contains file path
         (r'/api/(?P<resource>file_contents)/(?P<pk>.+)', ApiResourceDetailHandler),
         (
             r'/api/(?P<resource>pipelines)/(?P<pk>[\w\-\%2f\.]+)'
             r'/(?P<child>blocks)/(?P<child_pk>.+)',
-            ApiChildDetailHandler),
+            ApiChildDetailHandler
+        ),
+        (
+            r'/api/(?P<resource>files)/(?P<pk>.+)'
+            r'/(?P<child>file_versions)',
+            ApiChildListHandler
+        ),
+        # Generic API patterns
         (
             r'/api/(?P<resource>\w+)/(?P<pk>[\w\-\%2f\.]+)'
             r'/(?P<child>\w+)/(?P<child_pk>[\w\-\%2f\.]+)',
