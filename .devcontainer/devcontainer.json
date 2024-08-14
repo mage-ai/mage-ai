@@ -12,4 +12,4 @@
 		"ghcr.io/devcontainers-contrib/features/poetry:2": {}
 	},
 	"customizations": {"vscode": {"extensions": ["ms-python.python"]}},
-	"postCreateCommand": "poetry env use $(which python) && poetry install --no-root && make dev_env && cd ./mage_ai/frontend/ && yarn install &&  cd ../.. && make install-hooks && . .venv/bin/activate && pre-commit install"}
+	"postCreateCommand": "poetry config virtualenvs.in-project true && poetry env use $(which python) && poetry install --no-root && make dev_env && cd ./mage_ai/frontend/ && yarn install &&  cd ../.. && make install-hooks && . .venv/bin/activate && pre-commit install"}
