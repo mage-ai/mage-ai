@@ -1,3 +1,8 @@
+import logging
+
+import numpy as np
+import pandas as pd
+
 from mage_ai.data_cleaner.column_types.column_type_detector import find_syntax_errors
 from mage_ai.data_cleaner.column_types.constants import NUMBER_TYPES, ColumnType
 from mage_ai.data_cleaner.estimators.outlier_removal import OutlierRemover
@@ -15,11 +20,10 @@ from mage_ai.data_cleaner.transformer_actions.helpers import (
     get_time_window_str,
 )
 from mage_ai.data_cleaner.transformer_actions.udf.base import execute_udf
-from mage_ai.data_cleaner.transformer_actions.utils import clean_column_name, generate_string_cols
-import logging
-import pandas as pd
-import numpy as np
-
+from mage_ai.data_cleaner.transformer_actions.utils import (
+    clean_column_name,
+    generate_string_cols,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -115,7 +119,8 @@ def impute(df, action, **kwargs):
                 mode = df[column].mode().iloc[0]
                 if dtype == ColumnType.LIST:
                     df[column] = df[column].apply(
-                        lambda element: element if element not in [None, np.nan] else mode
+                        lambda element, mode=mode: element if element not in [
+                            None, np.nan] else mode
                     )
                 else:
                     df[columns] = df[columns].fillna(mode)
@@ -180,7 +185,6 @@ def reformat(df, action, **kwargs):
     columns = action['action_arguments']
     options = action['action_options']
     reformat_action = options['reformat']
-    df.loc[:, columns] = df[columns].replace(r'^\s*$', np.nan, regex=True)
 
     if reformat_action == 'caps_standardization':
         capitalization = options['capitalization']
@@ -189,6 +193,8 @@ def reformat(df, action, **kwargs):
                 df.loc[:, column] = df[columns][column].str.upper()
             else:
                 df.loc[:, column] = df[columns][column].str.lower()
+        # Convert empty strings to NaN for this action
+        df.loc[:, columns] = df[columns].replace(r'^\s*$', np.nan, regex=True)
     elif reformat_action == 'currency_to_num':
         for column in generate_string_cols(df, columns):
             clean_col = df[column].replace(CURRENCY_SYMBOLS, '', regex=True)
@@ -215,6 +221,12 @@ def reformat(df, action, **kwargs):
             df.loc[:, column] = pd.to_datetime(
                 clean_col, infer_datetime_format=True, errors='coerce'
             )
+    elif reformat_action == 'trim':
+        for column in columns:
+            df[column] = df[column].str.strip()
+    else:
+        # Apply NaN replacement only for other actions
+        df.loc[:, columns] = df[columns].replace(r'^\s*$', np.nan, regex=True)
 
     return df
 
