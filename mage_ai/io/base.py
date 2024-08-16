@@ -4,6 +4,7 @@ from enum import Enum
 from typing import IO, Any, Callable, Dict, Union
 
 import pandas as pd
+import polars as pl
 from pandas import DataFrame
 
 from mage_ai.io.constants import SQL_RESERVED_WORDS
@@ -190,7 +191,7 @@ class BaseFile(BaseIO):
 
     def _write(
         self,
-        df: DataFrame,
+        df,
         format: Union[FileFormat, str, None],
         output: Union[IO, os.PathLike, str],
         **kwargs,
@@ -218,7 +219,7 @@ class BaseFile(BaseIO):
                 raise ValueError('Cannot write HDF5 file to buffer of any type.')
             name = os.path.splitext(os.path.basename(output))[0]
             kwargs.setdefault('key', name)
-        elif format == FileFormat.PARQUET:
+        elif format == FileFormat.PARQUET and isinstance(df, DataFrame):
             if 'coerce_timestamps' not in kwargs:
                 kwargs['coerce_timestamps'] = 'ms'
                 kwargs['allow_truncated_timestamps'] = True
@@ -226,7 +227,7 @@ class BaseFile(BaseIO):
 
     def __get_writer(
         self,
-        df: DataFrame,
+        df,
         format: Union[FileFormat, str, None],
     ) -> Callable:
         """
@@ -239,15 +240,27 @@ class BaseFile(BaseIO):
         Returns:
             Callable: File writer method
         """
-        if format == FileFormat.CSV:
-            return df.to_csv
-        elif format == FileFormat.JSON:
-            return df.to_json
-        elif format == FileFormat.HDF5:
-            return df.to_hdf
-        elif format == FileFormat.XML:
-            return df.to_xml
-        return df.to_parquet
+        if isinstance(df, pl.DataFrame):  # polars DataFrame
+            if format == FileFormat.CSV:
+                return df.write_csv
+            elif format == FileFormat.JSON:
+                return df.write_json
+            elif format == FileFormat.HDF5:
+                return df.write_hdf5
+            elif format == FileFormat.XML:
+                return df.write_xml
+            return df.write_parquet
+
+        elif isinstance(df, DataFrame):  # pandas DataFrame
+            if format == FileFormat.CSV:
+                return df.to_csv
+            elif format == FileFormat.JSON:
+                return df.to_json
+            elif format == FileFormat.HDF5:
+                return df.to_hdf
+            elif format == FileFormat.XML:
+                return df.to_xml
+            return df.to_parquet
 
     def __del__(self):
         if self.verbose and self.printer.exists_previous_message:

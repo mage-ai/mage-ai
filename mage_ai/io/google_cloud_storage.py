@@ -1,6 +1,7 @@
 from io import BytesIO
 from typing import Union
 
+import polars as pl
 from google.cloud import storage
 from google.oauth2 import service_account
 from pandas import DataFrame
@@ -103,7 +104,7 @@ class GoogleCloudStorage(BaseFile):
 
     def export(
         self,
-        data: Union[DataFrame, str],
+        data: Union[DataFrame, pl.DataFrame, str],
         bucket_name: str,
         object_key: str,
         format: Union[FileFormat, str, None] = None,
@@ -127,7 +128,7 @@ class GoogleCloudStorage(BaseFile):
         ):
             bucket = self.client.get_bucket(bucket_name)
             blob = bucket.blob(object_key)
-            if isinstance(data, DataFrame):
+            if isinstance(data, DataFrame) or isinstance(data, pl.DataFrame):
                 buffer = BytesIO()
                 self._write(data, format, buffer, **kwargs)
                 buffer.seek(0)
