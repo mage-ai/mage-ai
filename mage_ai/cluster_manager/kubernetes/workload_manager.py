@@ -43,7 +43,7 @@ from mage_ai.services.k8s.constants import (
 )
 from mage_ai.settings import MAGE_SETTINGS_ENVIRONMENT_VARIABLES
 from mage_ai.shared.array import find
-from mage_ai.shared.hash import safe_dig
+from mage_ai.shared.hash import merge_dict, safe_dig
 
 
 class WorkloadManager:
@@ -391,6 +391,7 @@ class WorkloadManager:
             )
 
         pod_spec = self.pod_config.spec.to_dict() if self.pod_config else dict()
+        pod_labels = self.pod_config.metadata.labels or dict()
         stateful_set_template_spec = dict(
             imagePullSecrets=pod_spec.get('image_pull_secrets'),
             initContainers=init_containers,
@@ -410,7 +411,7 @@ class WorkloadManager:
                 'replicas': 1,
                 'minReadySeconds': 10,
                 'template': {
-                    'metadata': {'labels': {'app': name}},
+                    'metadata': merge_dict(pod_labels, {'labels': {'app': name}}),
                     'spec': stateful_set_template_spec,
                 },
                 'volumeClaimTemplates': [
