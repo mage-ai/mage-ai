@@ -104,7 +104,7 @@ class GoogleCloudStorage(BaseFile):
 
     def export(
         self,
-        data,
+        data: Union[DataFrame, pl.DataFrame, str],
         bucket_name: str,
         object_key: str,
         format: Union[FileFormat, str, None] = None,
