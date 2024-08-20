@@ -181,6 +181,24 @@ You may need to restart your Mage server for the changes to take effect.
 
 </AccordionGroup>
 
+### Configurable environment variables
+To configure the environment for Microsoft Azure Cloud and Microsoft Azure Gov Cloud sign-in, 
+you need to set the following environment variables:
+1. You can specify the `AZURE_HOST` URLs based on your environment:
+```plaintext
+AzurePublicCloudHostUrl = "https://login.microsoftonline.com/";
+AzureChinaHostUrl = "https://login.chinacloudapi.cn/";
+AzureGermanyHostUrl = "https://login.microsoftonline.de/";
+AzureGovernmentHostUrl = "https://login.microsoftonline.us/";
+```
+1. You can specify the `MICROSOFT_GRAPH_API_HOST` URLs based you your environment:
+```plaintext
+MICROSOFT_GRAPH_API_HOST="https://graph.microsoft.com/"
+MICROSOFT_GRAPH_API_HOST="https://graph.chinacloudapi.cn/"
+MICROSOFT_GRAPH_API_HOST="https://graph.microsoft.de/"
+MICROSOFT_GRAPH_API_HOST="https://graph.microsoft.us/"
+```
+
 ### Map AD role to Mage role
 
 <Note>
