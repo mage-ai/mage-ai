@@ -186,13 +186,13 @@ To configure the environment for Microsoft Azure Cloud and Microsoft Azure Gov C
 you need to set the following environment variables:
 1. You can specify the `AZURE_HOST` URLs based on your environment:
 ```
-AzurePublicCloudHostUrl = "https://login.microsoftonline.com/";
-AzureChinaHostUrl = "https://login.chinacloudapi.cn/";
-AzureGermanyHostUrl = "https://login.microsoftonline.de/";
-AzureGovernmentHostUrl = "https://login.microsoftonline.us/";
+AZURE_PUBLIC_CLOUD_HOST_URL="https://login.microsoftonline.com/"
+AZURE_CHINA_HOST_URL="https://login.chinacloudapi.cn/"
+AZURE_GERMANY_HOST_URL="https://login.microsoftonline.de/"
+AZURE_GOVERNMENT_HOST_URL="https://login.microsoftonline.us/"
 ```
 2. You can specify the `MICROSOFT_GRAPH_API_HOST` URLs based you your environment:
-```plaintext
+```
 MICROSOFT_GRAPH_API_HOST="https://graph.microsoft.com/"
 MICROSOFT_GRAPH_API_HOST="https://graph.chinacloudapi.cn/"
 MICROSOFT_GRAPH_API_HOST="https://graph.microsoft.de/"
