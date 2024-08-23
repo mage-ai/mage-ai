@@ -3,5 +3,6 @@
   "username": "",
   "password": "",
   "bucket": "",
-  "scope": ""
+  "scope": "",
+  "collection": ""
 }

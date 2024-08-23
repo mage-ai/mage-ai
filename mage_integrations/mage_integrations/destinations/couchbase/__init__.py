@@ -17,6 +17,13 @@ class Couchbase(Destination):
             username=self.config['username']
         )
 
+    def get_or_create_collection(self):
+        client = self.build_connection()
+        bucket = client.get_bucket(self.config['bucket'])
+        if not self.config['collection']:
+            return bucket.default_collection()
+        return bucket.collection(self.config['collection'])
+
     def export_batch_data(self, record_data: List[Dict], stream: str) -> None:
         pass
 
