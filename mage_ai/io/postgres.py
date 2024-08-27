@@ -166,13 +166,14 @@ class Postgres(BaseSQL):
         self,
         schema_name: str
     ) -> str:
+        clean_schema_name = schema_name.strip('"')
         return f"""
         DO $$
         BEGIN
             IF NOT EXISTS (
                 SELECT schema_name
                 FROM information_schema.schemata
-                WHERE schema_name = '{schema_name}'
+                WHERE schema_name = '{clean_schema_name}'
             ) THEN
                 EXECUTE 'CREATE SCHEMA {schema_name}';
             END IF;
