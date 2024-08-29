@@ -3,7 +3,7 @@ from enum import Enum
 ENV_DEV = 'dev'
 ENV_PROD = 'prod'
 ENV_STAGING = 'staging'
-ENV_TEST = 'test'
+ENV_TEST = 'test_mage'
 
 VALID_ENVS = frozenset([
     ENV_DEV,
