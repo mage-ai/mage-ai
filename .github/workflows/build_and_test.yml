@@ -16,6 +16,9 @@ on:
       - "requirements.txt"
       - "setup.py"
 
+env:
+  ENV: test_mage
+
 jobs:
   check-code-quality:
 

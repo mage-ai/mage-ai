@@ -17,7 +17,7 @@ def is_dev():
 
 
 def is_test():
-    return os.getenv('ENV', None) == 'test' or any('unittest' in v for v in sys.argv)
+    return os.getenv('ENV', None) == 'test_mage' or any('unittest' in v for v in sys.argv)
 
 
 def is_production():
