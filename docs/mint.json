@@ -320,15 +320,6 @@
               ]
             }
           ]
-        },
-        {
-          "group": "User defined permissions",
-          "icon": "fingerprint",
-          "pages": [
-            "authentication/permissions/overview",
-            "authentication/permissions/roles",
-            "authentication/permissions/permissions"
-          ]
         }
       ]
     },
@@ -496,13 +487,6 @@
           "icon": "chart-line-up-down",
           "pages": [
             "visualizations/dashboards"
-          ]
-        },
-        {
-          "group": "No-code interactions",
-          "icon": "universal-access",
-          "pages": [
-            "interactions/overview"
           ]
         },
         "development/updating-mage"
@@ -1214,4 +1198,3 @@
     }
   ]
 }
-
