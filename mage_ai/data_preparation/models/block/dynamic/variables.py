@@ -734,7 +734,7 @@ def fetch_input_variables_for_dynamic_upstream_blocks(
                     )
                     if index is not None:
                         pair = lazy_variable_controller.render(
-                            child_dynamic_block_index=dynamic_block_index,
+                            child_dynamic_block_index=index,
                         )
                         child_data, metadata = pair
 
