@@ -26,7 +26,7 @@ use Kafka locally:
    version: "2"
    services:
      zookeeper:
-       image: wurstmeister/zookeeper:3.4.6
+       image: wurstmeister/zookeeper
        ports:
          - "2181:2181"
      kafka:
@@ -45,7 +45,7 @@ use Kafka locally:
        volumes:
          - /var/run/docker.sock:/var/run/docker.sock
    ```
-4. Start Docker: `docker-compose up`
+4. Start Docker: `docker compose up`
 5. Start a terminal session in the running container:
    ```bash
    docker exec -i -t -u root $(docker ps | grep docker_kafka | cut -d' ' -f1) /bin/bash
@@ -62,14 +62,14 @@ use Kafka locally:
    ```bash
    $KAFKA_HOME/bin/kafka-console-producer.sh --broker-list kafka:9092 --topic=test
    ```
-9. Send messages to the topic named `test` by typing the following in the
+9. Send messages to the topic named `test` by typing the following JSON string in the
    terminal:
    ```bash
-   >hello
-   >this is a test
-   >test 1
-   >test 2
-   >test 3
+   >{ "hello": 1 }
+   >{ "this is a test": 1 }
+   >{ "test": 1 }
+   >{ "test": 2 }
+   >{ "test": 3 }
    ```
 10. Open another terminal and start a consumer on the topic named `test`:
 
@@ -80,11 +80,11 @@ $KAFKA_HOME/bin/kafka-console-consumer.sh --from-beginning --bootstrap-server ka
 11. The output should look something like this:
 
 ```bash
-hello
-test 1
-test 3
-this is a test
-test 2
+{ "hello": 1 }
+{ "this is a test": 1 }
+{ "test": 1 }
+{ "test": 2 }
+{ "test": 3 }
 ```
 
 <sub>
@@ -171,10 +171,12 @@ Start Mage using Docker. If you haven’t done this before, refer to the
    bootstrap_server: "localhost:9092"
    topic: test
    consumer_group: unique_consumer_group
+   include_metadata: false
+   api_version: 0.10.2
    batch_size: 100
    ```
    1. By default, the `bootstrap_server` is set to `localhost:9092`. If you’re
-      running Mage in a container, the `bootstrap_server` should be
+      running Mage in a docker container, the `bootstrap_server` should be
       `kafka:9093`.
    1. Messages are consumed from source in micro batch mode for better efficiency.
       The default batch size is 100. You can adjust the batch size in the source config.
@@ -214,9 +216,10 @@ the bottom, click the button <b>`Execute pipeline`</b> to test the pipeline.
 You should see an output like this:
 
 ```
-[streaming_pipeline_test] Start initializing kafka consumer.
-[streaming_pipeline_test] Finish initializing kafka consumer.
-[streaming_pipeline_test] Start consuming messages from kafka.
+[streaming_pipeline_test] [KafkaSource] Start initializing consumer.
+[streaming_pipeline_test] [KafkaSource] Finish initializing consumer.
+[streaming_pipeline_test] [KafkaSource] Test connection successfully.
+[streaming_pipeline_test] [KafkaSource] Start consuming messages in batches.
 ```
 
 ### Publish messages using Python
