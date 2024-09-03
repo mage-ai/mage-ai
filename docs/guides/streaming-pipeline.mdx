@@ -62,8 +62,8 @@ use Kafka locally:
    ```bash
    $KAFKA_HOME/bin/kafka-console-producer.sh --broker-list kafka:9092 --topic=test
    ```
-9. Send messages to the topic named `test` by typing the following JSON string in the
-   terminal:
+9. Send messages to the topic named `test` by typing the following JSON strings in the
+   terminal (Note that Kafka messages in Mage are assumed to be in JSON format):
    ```bash
    >{ "hello": 1 }
    >{ "this is a test": 1 }
