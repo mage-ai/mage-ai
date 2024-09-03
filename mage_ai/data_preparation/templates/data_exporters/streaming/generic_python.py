@@ -1,5 +1,5 @@
 from mage_ai.streaming.sinks.base_python import BasePythonSink
-from typing import Callable
+from typing import Callable, Dict, List
 
 if 'streaming_sink' not in globals():
     from mage_ai.data_preparation.decorators import streaming_sink
