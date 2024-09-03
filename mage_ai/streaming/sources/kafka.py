@@ -102,10 +102,18 @@ class KafkaSource(BaseSource):
             consumer_kwargs['sasl_plain_username'] = self.config.sasl_config.username
             consumer_kwargs['sasl_plain_password'] = self.config.sasl_config.password
 
-            if self.config.ssl_config is not None and self.config.ssl_config.cafile:
-                consumer_kwargs['ssl_cafile'] = self.config.ssl_config.cafile
-                consumer_kwargs[
-                    'ssl_check_hostname'] = self.config.ssl_config.check_hostname
+            if self.config.ssl_config:
+                if self.config.ssl_config.cafile:
+                    consumer_kwargs['ssl_cafile'] = self.config.ssl_config.cafile
+                if self.config.ssl_config.certfile:
+                    consumer_kwargs['ssl_certfile'] = self.config.ssl_config.certfile
+                if self.config.ssl_config.keyfile:
+                    consumer_kwargs['ssl_keyfile'] = self.config.ssl_config.keyfile
+                if self.config.ssl_config.password:
+                    consumer_kwargs['ssl_password'] = self.config.ssl_config.password
+                if self.config.ssl_config.check_hostname:
+                    consumer_kwargs[
+                        'ssl_check_hostname'] = self.config.ssl_config.check_hostname
         elif self.config.security_protocol == SecurityProtocol.SASL_PLAINTEXT:
             consumer_kwargs['security_protocol'] = SecurityProtocol.SASL_PLAINTEXT
             consumer_kwargs['sasl_mechanism'] = self.config.sasl_config.mechanism
