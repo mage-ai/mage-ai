@@ -1557,7 +1557,7 @@ class PipelineRun(PipelineRunProjectPlatformMixin, BaseModel):
         variables['execution_date'] = self.execution_date
         variables['execution_partition'] = self.execution_partition
         variables['pipeline_run_id'] = self.id
-        # variables['trigger_name'] = self.name
+        variables['trigger_name'] = self.name
 
         interval_end_datetime = variables.get('interval_end_datetime')
         interval_seconds = variables.get('interval_seconds')
