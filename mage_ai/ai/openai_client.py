@@ -187,7 +187,18 @@ class OpenAIClient(AIClient):
             self,
             block_description: str):
         messages = [{'role': 'user', 'content': block_description}]
+        # Fetch response form API call with retries
+        # retry __chat_completion_request twice.
+        # If it still returns error, raise error in find_block_params.
+        # If not error anymore, proceed with rest of the code change.
+        max_retries = 2
+        attempt = 0
         response = self.__chat_completion_request(messages)
+        while attempt <= max_retries and isinstance(response, Exception):
+            response = self.__chat_completion_request(messages)
+            attempt += 1
+        if isinstance(response, Exception):
+            raise Exception("Error in __chat_completion_request after retries: " + str(response))
         arguments = response.choices[0].message.tool_calls[0].function.arguments
         if arguments:
             function_args = json.loads(arguments)
