@@ -61,9 +61,9 @@ class DictLogger():
         )
 
         if error:
-            data['error'] = traceback.format_exc(),
-            data['error_stack'] = traceback.format_stack(),
-            data['error_stacktrace'] = str(error),
+            data['error'] = traceback.format_exc()
+            data['error_stack'] = traceback.format_stack()
+            data['error_stacktrace'] = str(error)
 
         msg = simplejson.dumps(
             merge_dict(self.logging_tags or dict(), merge_dict(kwargs, data)),
