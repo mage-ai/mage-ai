@@ -41,9 +41,7 @@ type TriggerInteractionsType = {
   pipeline: PipelineType;
   pipelineInteraction: PipelineInteractionType;
   pipelineSchedule: PipelineScheduleType;
-  setVariables: (prev: any) => {
-    [key: string]: any;
-  };
+  setVariables: (prev: any) => void;
   showSummary?: boolean;
   time?: TimeType;
   triggerTypes?: {
