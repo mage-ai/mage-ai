@@ -45,7 +45,15 @@ use Kafka locally:
        volumes:
          - /var/run/docker.sock:/var/run/docker.sock
    ```
-4. Start Docker: `docker compose up`
+4. Start Docker:
+   ```bash
+   docker-compose up
+   ```
+   If you encounter the error `command not found: docker-compose`,
+   try running the following command instead:
+   ```bash
+   docker compose up
+   ```
 5. Start a terminal session in the running container:
    ```bash
    docker exec -i -t -u root $(docker ps | grep docker_kafka | cut -d' ' -f1) /bin/bash
