@@ -196,6 +196,11 @@ export MAGE_PRESENTERS_DIRECTORY=$MAGE_PRESENTERS_DIRECTORY
 export SMTP_EMAIL=$SMTP_EMAIL
 export SMTP_PASSWORD=$SMTP_PASSWORD
 
+# Check if SERVICES is empty and set it to default services if it is
+if [ -z "$SERVICES" ]; then
+  SERVICES="server app"
+fi
+
 if command -v docker-compose &> /dev/null
 then
     # docker-compose exists
