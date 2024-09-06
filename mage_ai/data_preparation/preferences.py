@@ -37,15 +37,13 @@ ENV_VAR_TO_CONFIG_KEY = {
     GIT_SYNC_SUBMODULES: 'sync_submodules',
 }
 
-BOOLEAN_ENV_VARS = set(
-    [
-        GIT_SYNC_ON_PIPELINE_RUN,
-        GIT_SYNC_ON_START,
-        GIT_SYNC_ON_EXECUTOR_START,
-        GIT_SYNC_SUBMODULES,
-        GIT_ENABLE_GIT_INTEGRATION,
-    ]
-)
+BOOLEAN_ENV_VARS = set([
+    GIT_SYNC_ON_PIPELINE_RUN,
+    GIT_SYNC_ON_START,
+    GIT_SYNC_ON_EXECUTOR_START,
+    GIT_SYNC_SUBMODULES,
+    GIT_ENABLE_GIT_INTEGRATION,
+])
 
 
 def get_value_for_sync_config(env_var, value) -> bool:
@@ -67,10 +65,7 @@ def build_sync_config(project_sync_config: Dict) -> Dict:
     }
 
     # Read settings from settings backend
-    config_from_settings = {
-        k: get_settings_value(k)
-        for k in ENV_VAR_TO_CONFIG_KEY.keys()
-    }
+    config_from_settings = {k: get_settings_value(k) for k in ENV_VAR_TO_CONFIG_KEY.keys()}
 
     if any([v is not None for v in config_from_settings.values()]):
         # Map sync config keys to settings values
@@ -153,9 +148,7 @@ class Preferences:
 def get_preferences(repo_path=None, user: User = None) -> Preferences:
     default_preferences = Preferences(repo_path=repo_path)
     if user:
-        if user.preferences is None and os.path.exists(
-            default_preferences.preferences_file_path
-        ):
+        if user.preferences is None and os.path.exists(default_preferences.preferences_file_path):
             return default_preferences
         else:
             return Preferences(user=user, repo_path=repo_path)

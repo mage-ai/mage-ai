@@ -1,3 +1,5 @@
+from typing import Any, Union
+
 from mage_ai.api.presenters.BasePresenter import BasePresenter
 from mage_ai.data_preparation.shared.secrets import get_secret_value
 from mage_ai.settings.repo import get_repo_path
@@ -16,6 +18,7 @@ class SyncPresenter(BasePresenter):
         'ssh_private_key_secret_name',
         'ssh_public_key',
         'ssh_public_key_secret_name',
+        'sync_on_executor_start',
         'sync_on_pipeline_run',
         'sync_on_start',
         'sync_submodules',
@@ -24,7 +27,7 @@ class SyncPresenter(BasePresenter):
         'username',
     ]
 
-    def present(self, **kwargs):
+    async def prepare_present(self, **kwargs) -> Union[Any, None]:
         data = self.model
 
         def filter_invalid_secret_values(data):
