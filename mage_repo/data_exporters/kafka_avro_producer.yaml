@@ -1,0 +1,19 @@
+connector_type: kafka
+bootstrap_server: "dev-kafka.app.fintech.com:9094"
+topic: fintech.unify.hm.test
+api_version: 0.10.2
+
+# Uncomment the config below to use SSL config
+# security_protocol: "SSL"
+ssl_config:
+  cafile: "/home/src/mage_repo/utils/kafka-dev-cluster-ca.crt"
+  certfile: "/home/src/mage_repo/utils/ca.crt"
+  keyfile: "/home/src/mage_repo/utils/ca.key"
+  check_hostname: false
+
+# Uncomment the config below to use SASL_SSL config
+security_protocol: "SASL_SSL"
+sasl_config:
+  mechanism: "SCRAM-SHA-512"
+  username: svc-unify-mage-dev
+  password: olyXFlG5qhzHs0ITg3Q1b4stGc0BWlzC
