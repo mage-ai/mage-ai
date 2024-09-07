@@ -77,19 +77,19 @@ opentelemetry-exporter-prometheus==0.43b0
 opentelemetry-instrumentation-tornado==0.43b0
 opentelemetry-exporter-otlp==1.22.0
 opentelemetry-instrumentation-sqlalchemy==0.43b0
-oracledb==1.3.1
+oracledb==2.4.1
 pinotdb==5.1.0
 prometheus_client>=0.18.0
 psycopg2==2.9.3
 psycopg2-binary==2.9.3
 pyairtable==2.3.3
 pydruid==0.6.5
-pyodbc==4.0.35
+pyodbc==5.0.1
 redshift-connector==2.0.915
 lxml==4.9.4
 snowflake-connector-python==3.5.0
 sshtunnel==0.4.0
-tables==3.7.0
+tables==3.10.1
 trino~=0.326
 
 # Azure
@@ -106,7 +106,7 @@ elasticsearch==8.9.0
 influxdb_client==1.36.1
 kafka-python==2.0.2
 nats-py==2.6.0
-nkeys~=0.1.0
+nkeys~=0.2.0
 opensearch-py==2.0.0
 pika==1.3.1
 pymongo==4.3.3
@@ -134,7 +134,7 @@ gnupg==2.3.1
 google-analytics-data==0.14.2
 google-cloud-bigquery-storage==2.16.2
 httpx[http2]
-pendulum==2.1.0
+pendulum==3.0.0
 pymongo_schema==0.4.1
 python-magic==0.4.27
 redshift-connector~=2.0.915
