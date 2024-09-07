@@ -91,8 +91,8 @@ redshift-connector==2.0.915
 lxml==4.9.4
 snowflake-connector-python==3.5.0
 sshtunnel==0.4.0
-tables==3.7.0; python_version < '3.12'
-tables==3.10.1; python_version >= '3.12'
+tables==3.7.0; python_version < '3.11'
+tables==3.10.1; python_version >= '3.11'
 trino~=0.326
 
 # Azure
