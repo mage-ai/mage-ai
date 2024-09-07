@@ -30,6 +30,10 @@ class GoogleCloudStorage(Source):
     def file_type(self) -> str:
         return self.config.get('file_type')
 
+    @property
+    def prefix(self) -> str:
+        return self.config.get('prefix')
+
     def build_client(self):
         connection = GSCConnection(
             credentials_info=self.config.get('credentials_info'),
@@ -42,7 +46,7 @@ class GoogleCloudStorage(Source):
         client = self.build_client()
 
         streams = []
-        for blob in client.list_blobs(self.bucket):
+        for blob in client.list_blobs(self.bucket, prefix=self.prefix):
             if blob.size == 0:
                 continue
 
@@ -114,7 +118,7 @@ class GoogleCloudStorage(Source):
     ) -> Generator[List[Dict], None, None]:
         client = self.build_client()
 
-        for blob in client.list_blobs(self.bucket):
+        for blob in client.list_blobs(self.bucket, prefix=self.prefix):
             if blob.size == 0:
                 continue
             df = self.__build_df(blob.name)
