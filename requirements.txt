@@ -135,7 +135,8 @@ clickhouse_sqlalchemy
 deltalake==0.17.4
 facebook_business==17.0.2
 gnupg==2.3.1
-google-analytics-data==0.14.2
+google-analytics-data==0.14.2; python_version < '3.12'
+google-analytics-data==0.15.0; python_version >= '3.12'
 google-cloud-bigquery-storage==2.16.2
 httpx[http2]
 pendulum==2.1.0; python_version < '3.12'
