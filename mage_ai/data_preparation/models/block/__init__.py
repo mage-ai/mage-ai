@@ -878,7 +878,7 @@ class Block(
         relative_path: bool = False,
     ) -> str:
         file_extension = BLOCK_LANGUAGE_TO_FILE_EXTENSION[language]
-        block_directory = f'{block_type}s' if block_type != BlockType.CUSTOM else block_type
+        block_directory = block_type + 's' if block_type != BlockType.CUSTOM else block_type
 
         parts = []
         if not relative_path:
@@ -1193,7 +1193,7 @@ class Block(
 
     @classmethod
     def file_directory_name(self, block_type: BlockType) -> str:
-        return f'{block_type}s' if block_type != BlockType.CUSTOM else block_type
+        return block_type + 's' if block_type != BlockType.CUSTOM else block_type
 
     @classmethod
     def block_type_from_path(
@@ -1212,7 +1212,7 @@ class Block(
         for block_type in BlockType:
             if BlockType.CUSTOM == block_type and dir_name == block_type:
                 return BlockType.CUSTOM
-            elif dir_name == f'{block_type}s':
+            elif dir_name == block_type + 's':
                 return block_type
 
     @classmethod
