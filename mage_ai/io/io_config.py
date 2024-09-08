@@ -1,12 +1,20 @@
+try:
+    # breaking change introduced in python 3.11
+    from enum import StrEnum
+except ImportError:  # pragma: no cover
+    from enum import Enum  # pragma: no cover
+
+    class StrEnum(str, Enum):  # pragma: no cover
+        pass  # pragma: no cover
+
 import os
-from enum import Enum
 from pathlib import Path
 from typing import Any, Mapping, Optional, Union
 
 import yaml
 
 
-class IOConfigKeys(str, Enum):
+class IOConfigKeys(StrEnum):
     AWS = 'AWS'
     BIGQUERY = 'BigQuery'
     CLICKHOUSE = 'ClickHouse'

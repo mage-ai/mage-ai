@@ -1,9 +1,16 @@
-from enum import Enum
+try:
+    # breaking change introduced in python 3.11
+    from enum import StrEnum
+except ImportError:  # pragma: no cover
+    from enum import Enum  # pragma: no cover
+
+    class StrEnum(str, Enum):  # pragma: no cover
+        pass  # pragma: no cover
 
 INTERACTIONS_DIRECTORY_NAME = 'interactions'
 
 
-class InteractionInputType(str, Enum):
+class InteractionInputType(StrEnum):
     CHECKBOX = 'checkbox'
     CODE = 'code'
     DROPDOWN_MENU = 'dropdown_menu'
@@ -11,11 +18,11 @@ class InteractionInputType(str, Enum):
     TEXT_FIELD = 'text_field'
 
 
-class InteractionInputStyleInputType(str, Enum):
+class InteractionInputStyleInputType(StrEnum):
     NUMBER = 'number'
 
 
-class InteractionVariableType(str, Enum):
+class InteractionVariableType(StrEnum):
     BOOLEAN = 'boolean'
     DATE = 'date'
     DATETIME = 'datetime'

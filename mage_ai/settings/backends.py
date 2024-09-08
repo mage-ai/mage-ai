@@ -1,13 +1,21 @@
+try:
+    # breaking change introduced in python 3.11
+    from enum import StrEnum
+except ImportError:  # pragma: no cover
+    from enum import Enum  # pragma: no cover
+
+    class StrEnum(str, Enum):  # pragma: no cover
+        pass  # pragma: no cover
+
 import base64
 import logging
 import os
-from enum import Enum
 from typing import Optional
 
 logger = logging.getLogger(__name__)
 
 
-class BackendType(str, Enum):
+class BackendType(StrEnum):
     """
     Enum for the different types of settings backends.
     """

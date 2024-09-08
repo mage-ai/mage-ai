@@ -1,11 +1,19 @@
+try:
+    # breaking change introduced in python 3.11
+    from enum import StrEnum
+except ImportError:  # pragma: no cover
+    from enum import Enum  # pragma: no cover
+
+    class StrEnum(str, Enum):  # pragma: no cover
+        pass  # pragma: no cover
+
 from dataclasses import dataclass, field
-from enum import Enum
 from typing import List
 
 from mage_ai.services.spark.models.base import BaseSparkModel
 
 
-class ThreadState(str, Enum):
+class ThreadState(StrEnum):
     RUNNABLE = 'RUNNABLE'
     TIMED_WAITING = 'TIMED_WAITING'
     WAITING = 'WAITING'

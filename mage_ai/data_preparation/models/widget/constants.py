@@ -1,4 +1,11 @@
-from enum import Enum
+try:
+    # breaking change introduced in python 3.11
+    from enum import StrEnum
+except ImportError:  # pragma: no cover
+    from enum import Enum  # pragma: no cover
+
+    class StrEnum(str, Enum):  # pragma: no cover
+        pass  # pragma: no cover
 
 from dateutil.relativedelta import relativedelta
 
@@ -14,7 +21,7 @@ VARIABLE_NAME_X = 'x'
 VARIABLE_NAME_Y = 'y'
 
 
-class AggregationFunction(str, Enum):
+class AggregationFunction(StrEnum):
     AVERAGE = 'average'
     COUNT = 'count'
     COUNT_DISTINCT = 'count_distinct'
@@ -25,7 +32,7 @@ class AggregationFunction(str, Enum):
     SUM = 'sum'
 
 
-class TimeInterval(str, Enum):
+class TimeInterval(StrEnum):
     DAY = 'day'
     HOUR = 'hour'
     MINUTE = 'minute'
@@ -36,7 +43,7 @@ class TimeInterval(str, Enum):
     YEAR = 'year'
 
 
-class ChartType(str, Enum):
+class ChartType(StrEnum):
     BAR_CHART = 'bar chart'
     CUSTOM = 'custom'
     HISTOGRAM = 'histogram'

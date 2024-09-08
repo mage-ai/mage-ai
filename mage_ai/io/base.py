@@ -1,6 +1,14 @@
+try:
+    # breaking change introduced in python 3.11
+    from enum import StrEnum
+except ImportError:  # pragma: no cover
+    from enum import Enum  # pragma: no cover
+
+    class StrEnum(str, Enum):  # pragma: no cover
+        pass  # pragma: no cover
+
 import os
 from abc import ABC, abstractmethod
-from enum import Enum
 from typing import IO, Any, Callable, Dict, Union
 
 import pandas as pd
@@ -15,7 +23,7 @@ from mage_ai.shared.utils import clean_name
 QUERY_ROW_LIMIT = 10_000_000
 
 
-class DataSource(str, Enum):
+class DataSource(StrEnum):
     ALGOLIA = 'algolia'
     API = 'api'
     BIGQUERY = 'bigquery'
@@ -41,7 +49,7 @@ class DataSource(str, Enum):
     WEAVIATE = 'weaviate'
 
 
-class FileFormat(str, Enum):
+class FileFormat(StrEnum):
     CSV = 'csv'
     JSON = 'json'
     PARQUET = 'parquet'

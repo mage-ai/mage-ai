@@ -1,10 +1,18 @@
-from enum import Enum
+try:
+    # breaking change introduced in python 3.11
+    from enum import StrEnum
+except ImportError:  # pragma: no cover
+    from enum import Enum  # pragma: no cover
+
+    class StrEnum(str, Enum):  # pragma: no cover
+        pass  # pragma: no cover
+
 from typing import Callable, Dict, Union
 
 from mage_ai.orchestration.queue.queue_factory import QueueFactory
 
 
-class JobType(str, Enum):
+class JobType(StrEnum):
     BLOCK_RUN = 'block_run'
     PIPELINE_RUN = 'pipeline_run'
     INTEGRATION_STREAM = 'integration_stream'

@@ -1,4 +1,11 @@
-from enum import Enum
+try:
+    # breaking change introduced in python 3.11
+    from enum import StrEnum
+except ImportError:  # pragma: no cover
+    from enum import Enum  # pragma: no cover
+
+    class StrEnum(str, Enum):  # pragma: no cover
+        pass  # pragma: no cover
 
 CONFIG_JSON_FILE = 'config.json'
 DATAFRAME_COLUMN_TYPES_FILE = 'data_column_types.json'
@@ -14,7 +21,7 @@ MEDIA_IMAGE_VISUALIZATION_FILE = 'visualization.png'
 UBJSON_MODEL_FILENAME = 'model.ubj'
 
 
-class VariableType(str, Enum):
+class VariableType(StrEnum):
     CUSTOM_OBJECT = 'custom_object'
     DATAFRAME = 'dataframe'
     DATAFRAME_ANALYSIS = 'dataframe_analysis'
@@ -31,7 +38,7 @@ class VariableType(str, Enum):
     SPARK_DATAFRAME = 'spark_dataframe'
 
 
-class VariableAggregateDataType(str, Enum):
+class VariableAggregateDataType(StrEnum):
     INSIGHTS = 'insights'
     METADATA = 'metadata'
     RESOURCE_USAGE = 'resource_usage'
@@ -41,7 +48,7 @@ class VariableAggregateDataType(str, Enum):
     TYPE = 'type'
 
 
-class VariableAggregateDataTypeFilename(str, Enum):
+class VariableAggregateDataTypeFilename(StrEnum):
     INSIGHTS = f'{VariableAggregateDataType.INSIGHTS}.json'
     METADATA = f'{VariableAggregateDataType.METADATA}.json'
     RESOURCE_USAGE = f'{VariableAggregateDataType.RESOURCE_USAGE}.json'
@@ -67,6 +74,6 @@ JSON_SAMPLE_FILE = VariableAggregateDataTypeFilename.SAMPLE_DATA.value
 METADATA_FILE = VariableAggregateDataTypeFilename.TYPE.value
 
 
-class VariableAggregateSummaryGroupType(str, Enum):
+class VariableAggregateSummaryGroupType(StrEnum):
     DYNAMIC = 'dynamic'
     PARTS = 'parts'

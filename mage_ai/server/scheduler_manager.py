@@ -1,8 +1,16 @@
+try:
+    # breaking change introduced in python 3.11
+    from enum import StrEnum
+except ImportError:  # pragma: no cover
+    from enum import Enum  # pragma: no cover
+
+    class StrEnum(str, Enum):  # pragma: no cover
+        pass  # pragma: no cover
+
 import multiprocessing
 import time
 import traceback
 from contextlib import nullcontext
-from enum import Enum
 
 import newrelic.agent
 import sentry_sdk
@@ -68,7 +76,7 @@ class SchedulerManager:
     Singleton class to manage scheduler process.
     """
 
-    class SchedulerStatus(str, Enum):
+    class SchedulerStatus(StrEnum):
         RUNNING = 'running'
         STOPPED = 'stopped'
 

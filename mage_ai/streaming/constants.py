@@ -1,10 +1,17 @@
-from enum import Enum
+try:
+    # breaking change introduced in python 3.11
+    from enum import StrEnum
+except ImportError:  # pragma: no cover
+    from enum import Enum  # pragma: no cover
+
+    class StrEnum(str, Enum):  # pragma: no cover
+        pass  # pragma: no cover
 
 DEFAULT_BATCH_SIZE = 100
 DEFAULT_TIMEOUT_MS = 500
 
 
-class SourceType(str, Enum):
+class SourceType(StrEnum):
     ACTIVEMQ = 'activemq'
     AMAZON_SQS = 'amazon_sqs'
     AZURE_EVENT_HUB = 'azure_event_hub'
@@ -17,7 +24,7 @@ class SourceType(str, Enum):
     MONGODB = 'mongodb'
 
 
-class SinkType(str, Enum):
+class SinkType(StrEnum):
     ACTIVEMQ = 'activemq'
     AMAZON_S3 = 'amazon_s3'
     AZURE_DATA_LAKE = 'azure_data_lake'

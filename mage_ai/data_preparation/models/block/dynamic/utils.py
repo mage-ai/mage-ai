@@ -1,7 +1,15 @@
+try:
+    # breaking change introduced in python 3.11
+    from enum import StrEnum
+except ImportError:  # pragma: no cover
+    from enum import Enum  # pragma: no cover
+
+    class StrEnum(str, Enum):  # pragma: no cover
+        pass  # pragma: no cover
+
 import json
 import os
 from dataclasses import dataclass, field
-from enum import Enum
 from typing import Any, Dict, List, Optional, Tuple, Union
 
 import pandas as pd
@@ -42,7 +50,7 @@ from mage_ai.shared.hash import ignore_keys_with_blank_values
 from mage_ai.shared.models import BaseDataClass
 
 
-class DynamicBlockFlag(str, Enum):
+class DynamicBlockFlag(StrEnum):
     CLONE_OF_ORIGINAL = 'clone_of_original'
     DYNAMIC = 'dynamic'
     DYNAMIC_CHILD = 'dynamic_child'

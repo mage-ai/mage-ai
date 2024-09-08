@@ -1,7 +1,15 @@
+try:
+    # breaking change introduced in python 3.11
+    from enum import StrEnum
+except ImportError:  # pragma: no cover
+    from enum import Enum  # pragma: no cover
+
+    class StrEnum(str, Enum):  # pragma: no cover
+        pass  # pragma: no cover
+
 import inspect
 import os
 from dataclasses import dataclass
-from enum import Enum
 
 from mage_ai.shared.config import BaseConfig
 
@@ -10,7 +18,7 @@ GIT_SSH_PRIVATE_KEY_SECRET_NAME = 'mage_git_ssh_private_key_b64'
 GIT_SSH_PUBLIC_KEY_SECRET_NAME = 'mage_git_ssh_public_key_b64'
 
 
-class AuthType(str, Enum):
+class AuthType(StrEnum):
     SSH = 'ssh'
     HTTPS = 'https'
     OAUTH = 'oauth'

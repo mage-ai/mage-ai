@@ -1,4 +1,11 @@
-from enum import Enum
+try:
+    # breaking change introduced in python 3.11
+    from enum import StrEnum
+except ImportError:  # pragma: no cover
+    from enum import Enum  # pragma: no cover
+
+    class StrEnum(str, Enum):  # pragma: no cover
+        pass  # pragma: no cover
 
 ENV_DEV = 'dev'
 ENV_PROD = 'prod'
@@ -20,7 +27,7 @@ GCS_PREFIX = 'gs://'
 ENV_VAR_INSTANCE_TYPE = 'INSTANCE_TYPE'
 
 
-class InstanceType(str, Enum):
+class InstanceType(StrEnum):
     SERVER_AND_SCHEDULER = 'server_and_scheduler'
     SCHEDULER = 'scheduler'
     WEB_SERVER = 'web_server'

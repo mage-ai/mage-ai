@@ -1,5 +1,13 @@
+try:
+    # breaking change introduced in python 3.11
+    from enum import StrEnum
+except ImportError:  # pragma: no cover
+    from enum import Enum  # pragma: no cover
+
+    class StrEnum(str, Enum):  # pragma: no cover
+        pass  # pragma: no cover
+
 from dataclasses import dataclass, field
-from enum import Enum
 from typing import List
 
 from mage_ai.services.discord.config import DiscordConfig
@@ -12,7 +20,7 @@ from mage_ai.services.telegram.config import TelegramConfig
 from mage_ai.shared.config import BaseConfig
 
 
-class AlertOn(str, Enum):
+class AlertOn(StrEnum):
     PIPELINE_RUN_FAILURE = 'trigger_failure'
     PIPELINE_RUN_SUCCESS = 'trigger_success'
     PIPELINE_RUN_PASSED_SLA = 'trigger_passed_sla'

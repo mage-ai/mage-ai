@@ -93,10 +93,17 @@ f"{path_mac}"
 '{name} cool {number}'.format('Urza', 40)
 
 
-from enum import Enum
+try:
+    # breaking change introduced in python 3.11
+    from enum import StrEnum
+except ImportError:  # pragma: no cover
+    from enum import Enum  # pragma: no cover
+
+    class StrEnum(str, Enum):  # pragma: no cover
+        pass  # pragma: no cover
 
 
-class ExecutionStatus(str, Enum):
+class ExecutionStatus(StrEnum):
     CANCELLED = 'cancelled'
     ERROR = 'error'
     FAILURE = 'failure'

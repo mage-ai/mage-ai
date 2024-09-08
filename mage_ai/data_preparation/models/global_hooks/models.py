@@ -1,8 +1,16 @@
+try:
+    # breaking change introduced in python 3.11
+    from enum import StrEnum
+except ImportError:  # pragma: no cover
+    from enum import Enum  # pragma: no cover
+
+    class StrEnum(str, Enum):  # pragma: no cover
+        pass  # pragma: no cover
+
 import hashlib
 import os
 from dataclasses import dataclass, field, make_dataclass
 from datetime import datetime
-from enum import Enum
 from typing import Dict, List, Tuple, Union
 
 import yaml
@@ -44,7 +52,7 @@ from mage_ai.shared.models import BaseDataClass
 from mage_ai.shared.multi import run_parallel_multiple_args
 
 
-class HookOperation(str, Enum):
+class HookOperation(StrEnum):
     CREATE = OperationType.CREATE.value
     DELETE = OperationType.DELETE.value
     DETAIL = OperationType.DETAIL.value
@@ -54,18 +62,18 @@ class HookOperation(str, Enum):
     UPDATE_ANYWHERE = 'update_anywhere'
 
 
-class HookCondition(str, Enum):
+class HookCondition(StrEnum):
     FAILURE = 'failure'
     SUCCESS = 'success'
 
 
-class HookStrategy(str, Enum):
+class HookStrategy(StrEnum):
     BREAK = 'break'
     CONTINUE = 'continue'
     RAISE = 'raise'
 
 
-class HookStage(str, Enum):
+class HookStage(StrEnum):
     AFTER = 'after'
     BEFORE = 'before'
 

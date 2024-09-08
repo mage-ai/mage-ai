@@ -1,6 +1,14 @@
+try:
+    # breaking change introduced in python 3.11
+    from enum import StrEnum
+except ImportError:  # pragma: no cover
+    from enum import Enum  # pragma: no cover
+
+    class StrEnum(str, Enum):  # pragma: no cover
+        pass  # pragma: no cover
+
 import os
 from abc import ABC, abstractmethod
-from enum import Enum
 from pathlib import Path
 from typing import Any, Dict, Union
 
@@ -11,7 +19,7 @@ from mage_ai.data_preparation.shared.utils import get_template_vars
 from mage_ai.settings.repo import get_repo_path
 
 
-class ConfigKey(str, Enum):
+class ConfigKey(StrEnum):
     """
     List of configuration settings for use with data IO clients.
     """
@@ -333,7 +341,7 @@ class EnvironmentVariableLoader(BaseConfigLoader):
         return os.getenv(env_var)
 
 
-class VerboseConfigKey(str, Enum):
+class VerboseConfigKey(StrEnum):
     """
     Config key headers for the verbose configuration file format.
     """

@@ -1,9 +1,16 @@
-from enum import Enum
+try:
+    # breaking change introduced in python 3.11
+    from enum import StrEnum
+except ImportError:  # pragma: no cover
+    from enum import Enum  # pragma: no cover
+
+    class StrEnum(str, Enum):  # pragma: no cover
+        pass  # pragma: no cover
 
 DEFAULT_LIMIT = 10000
 
 
-class ChartDataSourceType(str, Enum):
+class ChartDataSourceType(StrEnum):
     BLOCK = 'block'
     BLOCK_RUNS = 'block_runs'
     CHART_CODE = 'chart_code'

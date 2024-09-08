@@ -1,7 +1,15 @@
+try:
+    # breaking change introduced in python 3.11
+    from enum import StrEnum
+except ImportError:  # pragma: no cover
+    from enum import Enum  # pragma: no cover
+
+    class StrEnum(str, Enum):  # pragma: no cover
+        pass  # pragma: no cover
+
 import inspect
 import typing
 from dataclasses import dataclass, make_dataclass
-from enum import Enum
 from functools import reduce
 from typing import Any, Dict, List, Optional, Type, Union
 
@@ -12,7 +20,7 @@ from mage_ai.shared.hash import merge_dict
 from mage_ai.shared.parsers import encode_complex
 
 
-class BaseEnum(str, Enum):
+class BaseEnum(StrEnum):
     @classmethod
     def has_value(cls, value: Union[Any, str]) -> bool:
         if isinstance(value, cls):

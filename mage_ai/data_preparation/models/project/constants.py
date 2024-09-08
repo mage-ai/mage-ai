@@ -1,7 +1,14 @@
-from enum import Enum
+try:
+    # breaking change introduced in python 3.11
+    from enum import StrEnum
+except ImportError:  # pragma: no cover
+    from enum import Enum  # pragma: no cover
+
+    class StrEnum(str, Enum):  # pragma: no cover
+        pass  # pragma: no cover
 
 
-class FeatureUUID(str, Enum):
+class FeatureUUID(StrEnum):
     ADD_NEW_BLOCK_V2 = 'add_new_block_v2'
     AUTOMATIC_KERNEL_CLEANUP = 'automatic_kernel_cleanup'
     CODE_BLOCK_V2 = 'code_block_v2'

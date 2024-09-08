@@ -1,4 +1,11 @@
-from enum import Enum
+try:
+    # breaking change introduced in python 3.11
+    from enum import StrEnum
+except ImportError:  # pragma: no cover
+    from enum import Enum  # pragma: no cover
+
+    class StrEnum(str, Enum):  # pragma: no cover
+        pass  # pragma: no cover
 
 from jupyter_client import KernelManager
 from jupyter_client.session import Session
@@ -6,7 +13,7 @@ from jupyter_client.session import Session
 from mage_ai.data_preparation.models.constants import PipelineType
 
 
-class KernelName(str, Enum):
+class KernelName(StrEnum):
     PYSPARK = 'pysparkkernel'
     PYTHON3 = 'python3'
 

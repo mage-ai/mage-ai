@@ -1,6 +1,14 @@
+try:
+    # breaking change introduced in python 3.11
+    from enum import StrEnum
+except ImportError:  # pragma: no cover
+    from enum import Enum  # pragma: no cover
+
+    class StrEnum(str, Enum):  # pragma: no cover
+        pass  # pragma: no cover
+
 from abc import abstractmethod
 from dataclasses import dataclass, field
-from enum import Enum
 from typing import Dict, List
 
 from mage_ai.data_preparation.models.project import Project
@@ -35,7 +43,7 @@ class ConnectionCredential(BaseDataClass):
             self.error = ErrorMessage.load(**self.error)
 
 
-class SetupStepStatus(str, Enum):
+class SetupStepStatus(StrEnum):
     COMPLETED = 'completed'
     ERROR = 'error'
     INCOMPLETE = 'incomplete'
@@ -137,7 +145,7 @@ class ComputeConnection(SetupStep):
 
 
 class ComputeService:
-    uuid = ComputeServiceUUID.STANDALONE_CLUSTER
+    service_uuid = ComputeServiceUUID.STANDALONE_CLUSTER
 
     def __init__(self, project: Project, with_clusters: bool = False):
         self.project = project
@@ -169,7 +177,7 @@ class ComputeService:
 
     @property
     def uuid(self) -> ComputeServiceUUID:
-        return self.__class__.uuid
+        return self.__class__.service_uuid
 
     @abstractmethod
     def active_cluster(self, **kwargs) -> Dict:

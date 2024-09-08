@@ -1,9 +1,16 @@
-from enum import Enum
+try:
+    # breaking change introduced in python 3.11
+    from enum import StrEnum
+except ImportError:  # pragma: no cover
+    from enum import Enum  # pragma: no cover
+
+    class StrEnum(str, Enum):  # pragma: no cover
+        pass  # pragma: no cover
 
 from mage_ai.data_preparation.models.constants import MAX_PRINT_OUTPUT_LINES
 
 
-class DataType(str, Enum):
+class DataType(StrEnum):
     DATA_FRAME = 'data_frame'
     IMAGE_PNG = 'image/png'
     PROGRESS = 'progress'  # Deprecated; can come from Great Expectations

@@ -1,4 +1,11 @@
-from enum import Enum
+try:
+    # breaking change introduced in python 3.11
+    from enum import StrEnum
+except ImportError:  # pragma: no cover
+    from enum import Enum  # pragma: no cover
+
+    class StrEnum(str, Enum):  # pragma: no cover
+        pass  # pragma: no cover
 
 DBT_DIRECTORY_NAME = 'dbt'
 
@@ -13,12 +20,12 @@ SKIP_LIMIT_ADAPTER_NAMES = [
 ]
 
 
-class Flag(str, Enum):
+class Flag(StrEnum):
     PROFILES_DIR = 'profiles-dir'
     PROJECT_DIR = 'project-dir'
 
 
-class LogLevel(str, Enum):
+class LogLevel(StrEnum):
     DEBUG = 'debug'
     INFO = 'info'
     WARN = 'warn'

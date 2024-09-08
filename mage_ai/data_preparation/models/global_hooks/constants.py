@@ -1,4 +1,11 @@
-from enum import Enum
+try:
+    # breaking change introduced in python 3.11
+    from enum import StrEnum
+except ImportError:  # pragma: no cover
+    from enum import Enum  # pragma: no cover
+
+    class StrEnum(str, Enum):  # pragma: no cover
+        pass  # pragma: no cover
 
 from mage_ai.authentication.permissions.constants import EntityName
 
@@ -30,7 +37,7 @@ RESTRICTED_RESOURCE_TYPES = [
 RESOURCE_TYPES = [en for en in EntityName if en not in DISABLED_RESOURCE_TYPES]
 
 
-class HookOutputKey(str, Enum):
+class HookOutputKey(StrEnum):
     ERROR = 'error'
     META = 'meta'
     METADATA = 'metadata'
@@ -40,7 +47,7 @@ class HookOutputKey(str, Enum):
     RESOURCES = 'resources'
 
 
-class HookInputKey(str, Enum):
+class HookInputKey(StrEnum):
     HOOK = 'hook'
     PROJECT = 'project'
     RESOURCE_ID = 'resource_id'
@@ -67,12 +74,12 @@ VALID_KEYS_FOR_INPUT_OUTPUT_DATA_ALL = \
 INTERNAL_DEFAULT_PREDICATE_VALUE = '__INTERNAL_DEFAULT_PREDICATE_VALUE__'
 
 
-class PredicateAndOrOperator(str, Enum):
+class PredicateAndOrOperator(StrEnum):
     AND = 'and'
     OR = 'or'
 
 
-class PredicateObjectType(str, Enum):
+class PredicateObjectType(StrEnum):
     ERROR = HookOutputKey.ERROR.value
     HOOK = HookInputKey.HOOK.value
     META = HookOutputKey.META.value
@@ -89,7 +96,7 @@ class PredicateObjectType(str, Enum):
     USER = HookInputKey.USER.value
 
 
-class PredicateOperator(str, Enum):
+class PredicateOperator(StrEnum):
     EQUALS = 'EQUALS'
     GREATER_THAN = 'GREATER_THAN'
     GREATER_THAN_OR_EQUALS = 'GREATER_THAN_OR_EQUALS'
@@ -102,7 +109,7 @@ class PredicateOperator(str, Enum):
     PRESENT = 'PRESENT'
 
 
-class PredicateValueDataType(str, Enum):
+class PredicateValueDataType(StrEnum):
     BOOLEAN = 'BOOLEAN'
     DICTIONARY = 'DICTIONARY'
     FLOAT = 'FLOAT'

@@ -1,8 +1,16 @@
+try:
+    # breaking change introduced in python 3.11
+    from enum import StrEnum
+except ImportError:  # pragma: no cover
+    from enum import Enum  # pragma: no cover
+
+    class StrEnum(str, Enum):  # pragma: no cover
+        pass  # pragma: no cover
+
 from dataclasses import dataclass
-from enum import Enum
 
 
-class SerializationMethod(str, Enum):
+class SerializationMethod(StrEnum):
     AVRO = 'AVRO'
     JSON = 'JSON'
     PROTOBUF = 'PROTOBUF'

@@ -1,4 +1,12 @@
-from enum import Enum
+try:
+    # breaking change introduced in python 3.11
+    from enum import StrEnum
+except ImportError:  # pragma: no cover
+    from enum import Enum  # pragma: no cover
+
+    class StrEnum(str, Enum):  # pragma: no cover
+        pass  # pragma: no cover
+
 from typing import Callable, Dict, List, Mapping
 
 from pandas import DataFrame, Series
@@ -19,7 +27,7 @@ class BadConversionError(Exception):
     pass
 
 
-class PandasTypes(str, Enum):
+class PandasTypes(StrEnum):
     """
     Internal datatypes defined by the pandas Public API
     """
