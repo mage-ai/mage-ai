@@ -1,4 +1,4 @@
-from mage_ai.shared import StrEnum
+from mage_ai.shared.enum import StrEnum
 
 
 class LLMUseCase(StrEnum):
