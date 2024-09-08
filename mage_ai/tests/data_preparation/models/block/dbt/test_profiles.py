@@ -85,7 +85,7 @@ target: dev
             lambda: MockUUID(),
         ):
             with Profiles(self.repo_path, self.variables) as profiles:
-                self.assertNotEquals(
+                self.assertNotEqual(
                     profiles.profiles_dir,
                     self.repo_path
                 )
