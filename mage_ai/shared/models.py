@@ -1,6 +1,6 @@
 try:
     # breaking change introduced in python 3.11
-    from enum import StrEnum
+    from enum import Enum, StrEnum
 except ImportError:  # pragma: no cover
     from enum import Enum  # pragma: no cover
 
