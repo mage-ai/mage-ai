@@ -22,8 +22,8 @@ class GitSyncTest(DBTestCase):
 
         git_sync.sync_data()
 
-        git_manager_instance_mock.reset_hard.called_once_with(branch='dev')
-        git_manager_instance_mock.submodules_update.not_called()
+        git_manager_instance_mock.reset_hard.assert_called_once_with(branch='dev')
+        git_manager_instance_mock.submodules_update.assert_not_called()
 
         with open(os.path.join(self.repo_path, '.preferences.yaml'), 'r') as f:
             preferences = yaml.safe_load(f)
@@ -42,8 +42,8 @@ class GitSyncTest(DBTestCase):
 
         git_sync.sync_data()
 
-        git_manager_instance_mock.reset_hard.called_once_with(branch='dev')
-        git_manager_instance_mock.submodules_update.called_once()
+        git_manager_instance_mock.reset_hard.assert_called_once_with(branch='dev')
+        git_manager_instance_mock.submodules_update.assert_called_once()
 
         with open(os.path.join(self.repo_path, '.preferences.yaml'), 'r') as f:
             preferences = yaml.safe_load(f)
@@ -63,7 +63,7 @@ class GitSyncTest(DBTestCase):
 
         git_sync.sync_data()
 
-        git_manager_instance_mock.reset_hard.called_once_with(branch='dev')
+        git_manager_instance_mock.reset_hard.assert_called_once_with(branch='dev')
 
         self.assertFalse(os.path.exists(preferences_file_path))
 
@@ -77,4 +77,4 @@ class GitSyncTest(DBTestCase):
 
         git_sync.reset()
 
-        git_manager_instance_mock.clone.called_once_with(sync_submodules=False)
+        git_manager_instance_mock.clone.assert_called_once_with(sync_submodules=False)
