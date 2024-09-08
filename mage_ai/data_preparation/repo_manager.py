@@ -1,9 +1,17 @@
+try:
+    # breaking change introduced in python 3.11
+    from enum import StrEnum
+except ImportError:  # pragma: no cover
+    from enum import Enum  # pragma: no cover
+
+    class StrEnum(str, Enum):  # pragma: no cover
+        pass  # pragma: no cover
+
 import json
 import logging
 import os
 import traceback
 import uuid
-from enum import Enum
 from typing import Dict, Optional
 from warnings import warn
 
@@ -36,7 +44,7 @@ yml.indent(mapping=2, sequence=2, offset=0)
 logger = logging.getLogger(__name__)
 
 
-class ProjectType(str, Enum):
+class ProjectType(StrEnum):
     MAIN = 'main'
     SUB = 'sub'
     STANDALONE = 'standalone'

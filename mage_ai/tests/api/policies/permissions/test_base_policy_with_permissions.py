@@ -1,5 +1,13 @@
+try:
+    # breaking change introduced in python 3.11
+    from enum import StrEnum
+except ImportError:  # pragma: no cover
+    from enum import Enum  # pragma: no cover
+
+    class StrEnum(str, Enum):  # pragma: no cover
+        pass  # pragma: no cover
+
 import secrets
-from enum import Enum
 from typing import Any, Callable, Dict, List, Union
 from unittest.mock import patch
 
@@ -25,7 +33,7 @@ from mage_ai.tests.api.operations.test_base import BaseApiTestCase
 from mage_ai.tests.api.policies.permissions.mixins import PermissionsMixin
 
 
-class TestSuite(str, Enum):
+class TestSuite(StrEnum):
     AUTHORIZED = 'AUTHORIZED'
     DISABLED = 'DISABLED'
     INVERSE = 'INVERSE'

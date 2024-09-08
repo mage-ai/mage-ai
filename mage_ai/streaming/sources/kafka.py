@@ -1,8 +1,16 @@
+try:
+    # breaking change introduced in python 3.11
+    from enum import StrEnum
+except ImportError:  # pragma: no cover
+    from enum import Enum  # pragma: no cover
+
+    class StrEnum(str, Enum):  # pragma: no cover
+        pass  # pragma: no cover
+
 import importlib
 import json
 import time
 from dataclasses import dataclass, field
-from enum import Enum
 from typing import Callable, Dict, List
 
 from kafka import KafkaConsumer, TopicPartition
@@ -13,7 +21,7 @@ from mage_ai.streaming.sources.base import BaseSource
 from mage_ai.streaming.sources.shared import SerDeConfig, SerializationMethod
 
 
-class SecurityProtocol(str, Enum):
+class SecurityProtocol(StrEnum):
     SASL_PLAINTEXT = 'SASL_PLAINTEXT'
     SASL_SSL = 'SASL_SSL'
     SSL = 'SSL'

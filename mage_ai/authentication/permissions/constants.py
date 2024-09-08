@@ -1,8 +1,11 @@
 try:
     # breaking change introduced in python 3.11
-    from enum import StrEnum
+    from enum import IntEnum, StrEnum
 except ImportError:  # pragma: no cover
     from enum import Enum  # pragma: no cover
+
+    class IntEnum(int, Enum):  # pragma: no cover
+        pass  # pragma: no cover
 
     class StrEnum(str, Enum):  # pragma: no cover
         pass  # pragma: no cover
@@ -116,7 +119,7 @@ RESERVED_ENTITY_NAMES = [
 ]
 
 
-class BaseEntityType(str, Enum):
+class BaseEntityType(StrEnum):
     pass
 
 
@@ -144,7 +147,7 @@ class PipelineEntityType(BaseEntityType):
     STREAMING = PipelineType.STREAMING.value
 
 
-class PermissionAccess(int, Enum):
+class PermissionAccess(IntEnum):
     OWNER = 1
     ADMIN = 2
     # Editor: list, detail, create, update, delete

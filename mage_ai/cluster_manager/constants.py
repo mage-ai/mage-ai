@@ -1,4 +1,11 @@
-from enum import Enum
+try:
+    # breaking change introduced in python 3.11
+    from enum import StrEnum
+except ImportError:  # pragma: no cover
+    from enum import Enum  # pragma: no cover
+
+    class StrEnum(str, Enum):  # pragma: no cover
+        pass  # pragma: no cover
 
 # ECS environment variables
 ECS_CLUSTER_NAME = 'ECS_CLUSTER_NAME'
@@ -29,7 +36,7 @@ GCP_BACKEND_CONFIG_ANNOTATION = 'cloud.google.com/backend-config'
 NODE_PORT_SERVICE_TYPE = 'NodePort'
 
 
-class ClusterType(str, Enum):
+class ClusterType(StrEnum):
     EMR = 'emr'
     ECS = 'ecs'
     CLOUD_RUN = 'cloud_run'

@@ -1,9 +1,18 @@
-from mage_ai.data_cleaner.column_types.constants import ColumnType
-from enum import Enum
-import pandas as pd
-import numpy as np
+try:
+    # breaking change introduced in python 3.11
+    from enum import StrEnum
+except ImportError:  # pragma: no cover
+    from enum import Enum  # pragma: no cover
+
+    class StrEnum(str, Enum):  # pragma: no cover
+        pass  # pragma: no cover
+
 import re
 
+import numpy as np
+import pandas as pd
+
+from mage_ai.data_cleaner.column_types.constants import ColumnType
 
 CONSTANT_IMPUTATION_DEFAULTS = {
     ColumnType.CATEGORY: 'missing',
@@ -34,7 +43,7 @@ INVALID_VALUE_PLACEHOLDERS = {
 }
 
 
-class ActionType(str, Enum):
+class ActionType(StrEnum):
     ADD = 'add'
     AVERAGE = 'average'
     CLEAN_COLUMN_NAME = 'clean_column_name'

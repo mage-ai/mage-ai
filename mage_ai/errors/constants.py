@@ -1,4 +1,11 @@
-from enum import Enum
+try:
+    # breaking change introduced in python 3.11
+    from enum import IntEnum
+except ImportError:  # pragma: no cover
+    from enum import Enum  # pragma: no cover
+
+    class IntEnum(int, Enum):  # pragma: no cover
+        pass  # pragma: no cover
 
 """
 - **400 Bad Request**: The server could not understand the request due to invalid syntax.
@@ -13,7 +20,7 @@ from enum import Enum
 """
 
 
-class ErrorCode(int, Enum):
+class ErrorCode(IntEnum):
     CODE_400 = 400
     CODE_401 = 401
     CODE_402 = 402

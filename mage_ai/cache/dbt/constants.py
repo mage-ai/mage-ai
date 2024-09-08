@@ -1,4 +1,11 @@
-from enum import Enum
+try:
+    # breaking change introduced in python 3.11
+    from enum import StrEnum
+except ImportError:  # pragma: no cover
+    from enum import Enum  # pragma: no cover
+
+    class StrEnum(str, Enum):  # pragma: no cover
+        pass  # pragma: no cover
 
 from mage_ai.data_preparation.models.constants import (
     BLOCK_TYPE_DIRECTORY_NAME,
@@ -19,7 +26,7 @@ PROJECT_FILENAME = 'dbt_project.yml'
 PROJECT_FILENAMES = [PROJECT_FILENAME, 'dbt_project.yaml']
 
 
-class FileType(str, Enum):
+class FileType(StrEnum):
     MODEL = 'model'
     PROFILES = 'profiles'
     PROJECT = 'project'

@@ -1,9 +1,16 @@
-import enum
+try:
+    # breaking change introduced in python 3.11
+    from enum import StrEnum
+except ImportError:  # pragma: no cover
+    from enum import Enum  # pragma: no cover
+
+    class StrEnum(str, Enum):  # pragma: no cover
+        pass  # pragma: no cover
 
 API_ENDPOINT = 'https://api.mage.ai/v1/usage_statistics'
 
 
-class EventNameType(str, enum.Enum):
+class EventNameType(StrEnum):
     API_ERROR = 'api_error'
     APPLICATION_ERROR = 'application_error'
     BLOCK_RUN_ENDED = 'block_run_ended'
@@ -13,14 +20,14 @@ class EventNameType(str, enum.Enum):
     USAGE_STATISTIC_CREATE = 'usage_statistic.create'
 
 
-class EventActionType(str, enum.Enum):
+class EventActionType(StrEnum):
     CREATE = 'create'
     DENY = 'deny'
     EXECUTE = 'execute'
     IMPRESSION = 'impression'
 
 
-class EventObjectType(str, enum.Enum):
+class EventObjectType(StrEnum):
     BLOCK = 'block'
     BLOCK_RUN = 'block_run'
     CHART = 'chart'

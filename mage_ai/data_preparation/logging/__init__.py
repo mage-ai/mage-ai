@@ -1,12 +1,20 @@
+try:
+    # breaking change introduced in python 3.11
+    from enum import StrEnum
+except ImportError:  # pragma: no cover
+    from enum import Enum  # pragma: no cover
+
+    class StrEnum(str, Enum):  # pragma: no cover
+        pass  # pragma: no cover
+
 from dataclasses import dataclass, field
-from enum import Enum
 from typing import Dict
 
 from mage_ai.shared.config import BaseConfig
 from mage_ai.shared.logger import LoggingLevel
 
 
-class LoggerType(str, Enum):
+class LoggerType(StrEnum):
     DEFAULT = 'file'
     S3 = 's3'
     GCS = 'gcs'
