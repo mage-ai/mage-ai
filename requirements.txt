@@ -129,6 +129,7 @@ dbt-spark==1.7.1
 dbt-sqlserver==1.7.4
 dbt-trino==1.7.1
 
+async-timeout==4.0.3
 attrs==17.4.0
 backoff
 clickhouse_sqlalchemy
