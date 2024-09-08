@@ -82,18 +82,18 @@ class ActionType(StrEnum):
     STANDARDIZE = 'standardize'
 
 
-class Axis(str, Enum):
+class Axis(StrEnum):
     COLUMN = 'column'
     ROW = 'row'
 
 
-class VariableType(str, Enum):
+class VariableType(StrEnum):
     FEATURE = 'feature'
     FEATURE_SET = 'feature_set'
     FEATURE_SET_VERSION = 'feature_set_version'
 
 
-class Operator(str, Enum):
+class Operator(StrEnum):
     CONTAINS = 'contains'
     NOT_CONTAINS = 'not contains'
     EQUALS = '=='
@@ -104,7 +104,7 @@ class Operator(str, Enum):
     LESS_THAN_OR_EQUALS = '<='
 
 
-class ImputationStrategy(str, Enum):
+class ImputationStrategy(StrEnum):
     AVERAGE = 'average'
     COLUMN = 'column'
     CONSTANT = 'constant'
