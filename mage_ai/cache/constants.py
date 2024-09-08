@@ -1,4 +1,11 @@
-from enum import Enum
+try:
+    # breaking change introduced in python 3.11
+    from enum import StrEnum
+except ImportError:  # pragma: no cover
+    from enum import Enum  # pragma: no cover
+
+    class StrEnum(str, Enum):  # pragma: no cover
+        pass  # pragma: no cover
 
 CACHE_KEY_BLOCKS_TO_PIPELINE_MAPPING = 'blocks_to_pipeline_mapping'
 CACHE_KEY_BLOCK_ACTION_OBJECTS_MAPPING = 'block_action_objects_mapping'
@@ -11,5 +18,5 @@ MAGE_CACHE_DIRECTORY_DEFAULT = '.cache'
 MAGE_CACHE_DIRECTORY_ENVIRONMENT_VARIABLE_NAME = 'MAGE_CACHE_DIRECTORY'
 
 
-class CacheItemType(str, Enum):
+class CacheItemType(StrEnum):
     DBT = 'dbt'

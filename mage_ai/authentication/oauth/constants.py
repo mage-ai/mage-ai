@@ -1,4 +1,12 @@
-from enum import Enum
+try:
+    # breaking change introduced in python 3.11
+    from enum import StrEnum
+except ImportError:  # pragma: no cover
+    from enum import Enum  # pragma: no cover
+
+    class StrEnum(str, Enum):  # pragma: no cover
+        pass  # pragma: no cover
+
 from typing import Optional
 
 from mage_ai.settings import get_settings_value
@@ -10,7 +18,7 @@ GITHUB_CLIENT_ID = '8577f13ddc81e2848b07'
 GITHUB_STATE = '1337'
 
 
-class ProviderName(str, Enum):
+class ProviderName(StrEnum):
     ACTIVE_DIRECTORY = 'active_directory'
     AZURE_DEVOPS = 'azure_devops'
     BITBUCKET = 'bitbucket'

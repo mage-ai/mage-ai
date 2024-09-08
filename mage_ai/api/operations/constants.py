@@ -1,4 +1,11 @@
-from enum import Enum
+try:
+    # breaking change introduced in python 3.11
+    from enum import StrEnum
+except ImportError:  # pragma: no cover
+    from enum import Enum  # pragma: no cover
+
+    class StrEnum(str, Enum):  # pragma: no cover
+        pass  # pragma: no cover
 
 ALL = 'all'
 CREATE = 'create'
@@ -20,7 +27,7 @@ META_KEY_ORDER_BY = '_order_by[]'
 COOKIE_PREFIX = '__COOKIE__'
 
 
-class OperationType(str, Enum):
+class OperationType(StrEnum):
     ALL = ALL
     CREATE = CREATE
     DELETE = DELETE

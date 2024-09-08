@@ -1,4 +1,11 @@
-from enum import Enum
+try:
+    # breaking change introduced in python 3.11
+    from enum import StrEnum
+except ImportError:  # pragma: no cover
+    from enum import Enum  # pragma: no cover
+
+    class StrEnum(str, Enum):  # pragma: no cover
+        pass  # pragma: no cover
 
 
 class OauthScope():
@@ -18,7 +25,7 @@ class OauthScope():
     TOKEN_SCOPES = []
 
 
-class OauthScopeType(str, Enum):
+class OauthScopeType(StrEnum):
     CLIENT_ALL = 'all'
     CLIENT_INTERNAL = 'internal'
     CLIENT_PRIVATE = 'private'

@@ -1,10 +1,17 @@
-from enum import Enum
+try:
+    # breaking change introduced in python 3.11
+    from enum import StrEnum
+except ImportError:  # pragma: no cover
+    from enum import Enum  # pragma: no cover
+
+    class StrEnum(str, Enum):  # pragma: no cover
+        pass  # pragma: no cover
 
 from mage_ai.api.operations.constants import OperationType
 from mage_ai.data_preparation.models.constants import BlockType, PipelineType
 
 
-class EntityName(str, Enum):
+class EntityName(StrEnum):
     ALL = 'ALL'
     ALL_EXCEPT_RESERVED = 'ALL_EXCEPT_RESERVED'
     AutocompleteItem = 'AutocompleteItem'
