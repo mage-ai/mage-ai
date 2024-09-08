@@ -1,13 +1,5 @@
-try:
-    # breaking change introduced in python 3.11
-    from enum import StrEnum
-except ImportError:  # pragma: no cover
-    from enum import Enum  # pragma: no cover
-
-    class StrEnum(str, Enum):  # pragma: no cover
-        pass  # pragma: no cover
-
 from mage_ai.data_preparation.models.constants import MAX_PRINT_OUTPUT_LINES
+from mage_ai.shared.enum import StrEnum
 
 
 class DataType(StrEnum):

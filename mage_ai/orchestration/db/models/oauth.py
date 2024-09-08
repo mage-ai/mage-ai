@@ -1,4 +1,3 @@
-import enum
 import re
 from datetime import datetime
 from typing import Callable, List, Union
@@ -31,6 +30,7 @@ from mage_ai.orchestration.db import db_connection, safe_db_query
 from mage_ai.orchestration.db.errors import ValidationError
 from mage_ai.orchestration.db.models.base import BaseModel
 from mage_ai.shared.array import find
+from mage_ai.shared.enum import IntEnum, StrEnum
 from mage_ai.shared.environments import is_test
 from mage_ai.shared.hash import group_by, merge_dict
 
@@ -299,7 +299,7 @@ class Role(BaseModel):
     user = relationship(User, back_populates='created_roles')
 
     # Default global roles created by Mage
-    class DefaultRole(str, enum.Enum):
+    class DefaultRole(StrEnum):
         OWNER = 'Owner'
         ADMIN = 'Admin'
         EDITOR = 'Editor'
@@ -561,7 +561,7 @@ class UserRole(BaseModel):
 
 
 class Permission(BaseModel):
-    class Access(int, enum.Enum):
+    class Access(IntEnum):
         OWNER = PermissionAccess.OWNER.value
         ADMIN = PermissionAccess.ADMIN.value
         EDITOR = PermissionAccess.EDITOR.value
@@ -841,11 +841,11 @@ class RolePermission(BaseModel):
 
 
 class Oauth2Application(BaseModel):
-    class AuthorizationGrantType(str, enum.Enum):
+    class AuthorizationGrantType(StrEnum):
         AUTHORIZATION_CODE = 'authorization-code'
         CLIENT_CREDENTIALS = 'client-credentials'
 
-    class ClientType(str, enum.Enum):
+    class ClientType(StrEnum):
         PRIVATE = 'private'
         PUBLIC = 'public'
 

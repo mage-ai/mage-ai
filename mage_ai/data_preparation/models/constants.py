@@ -1,17 +1,9 @@
-try:
-    # breaking change introduced in python 3.11
-    from enum import StrEnum
-except ImportError:  # pragma: no cover
-    from enum import Enum  # pragma: no cover
-
-    class StrEnum(str, Enum):  # pragma: no cover
-        pass  # pragma: no cover
-
 import os
 
 from mage_ai.data_preparation.models.variables.constants import (
     VariableAggregateDataType,
 )
+from mage_ai.shared.enum import StrEnum
 
 DATAFRAME_ANALYSIS_KEYS = frozenset([
     VariableAggregateDataType.INSIGHTS.value,

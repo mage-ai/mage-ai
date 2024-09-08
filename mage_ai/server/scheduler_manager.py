@@ -1,12 +1,3 @@
-try:
-    # breaking change introduced in python 3.11
-    from enum import StrEnum
-except ImportError:  # pragma: no cover
-    from enum import Enum  # pragma: no cover
-
-    class StrEnum(str, Enum):  # pragma: no cover
-        pass  # pragma: no cover
-
 import multiprocessing
 import time
 import traceback
@@ -25,6 +16,7 @@ from mage_ai.settings import (
     SERVER_LOGGING_FORMAT,
     SERVER_VERBOSITY,
 )
+from mage_ai.shared.enum import StrEnum
 from mage_ai.shared.logger import set_logging_format
 
 SCHEDULER_AUTO_RESTART_INTERVAL = 20_000  # in milliseconds

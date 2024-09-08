@@ -1,16 +1,8 @@
-try:
-    # breaking change introduced in python 3.11
-    from enum import StrEnum
-except ImportError:  # pragma: no cover
-    from enum import Enum  # pragma: no cover
-
-    class StrEnum(str, Enum):  # pragma: no cover
-        pass  # pragma: no cover
-
 from typing import Optional
 
 from mage_ai.settings import get_settings_value
 from mage_ai.settings.keys import GHE_HOSTNAME
+from mage_ai.shared.enum import StrEnum
 
 ACTIVE_DIRECTORY_CLIENT_ID = '51aec820-9d49-40a9-b046-17c1f28f620d'
 

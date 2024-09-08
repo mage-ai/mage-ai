@@ -1,12 +1,3 @@
-try:
-    # breaking change introduced in python 3.11
-    from enum import StrEnum
-except ImportError:  # pragma: no cover
-    from enum import Enum  # pragma: no cover
-
-    class StrEnum(str, Enum):  # pragma: no cover
-        pass  # pragma: no cover
-
 from dataclasses import dataclass, field
 from typing import List
 
@@ -14,6 +5,7 @@ from mage_ai.services.spark.models.applications import Application
 from mage_ai.services.spark.models.base import BaseSparkModel
 from mage_ai.services.spark.models.jobs import Job
 from mage_ai.services.spark.models.stages import StageAttempt
+from mage_ai.shared.enum import StrEnum
 
 
 class SqlStatus(StrEnum):

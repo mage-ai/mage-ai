@@ -1,12 +1,3 @@
-try:
-    # breaking change introduced in python 3.11
-    from enum import StrEnum
-except ImportError:  # pragma: no cover
-    from enum import Enum  # pragma: no cover
-
-    class StrEnum(str, Enum):  # pragma: no cover
-        pass  # pragma: no cover
-
 import json
 import os
 from dataclasses import dataclass, field
@@ -46,6 +37,7 @@ from mage_ai.data_preparation.models.utils import (
 from mage_ai.server.kernel_output_parser import DataType
 from mage_ai.shared.array import find
 from mage_ai.shared.custom_logger import DX_PRINTER
+from mage_ai.shared.enum import StrEnum
 from mage_ai.shared.hash import ignore_keys_with_blank_values
 from mage_ai.shared.models import BaseDataClass
 

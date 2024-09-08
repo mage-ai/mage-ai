@@ -1,17 +1,6 @@
-try:
-    # breaking change introduced in python 3.11
-    from enum import Enum, IntEnum, StrEnum
-except ImportError:  # pragma: no cover
-    from enum import Enum  # pragma: no cover
-
-    class IntEnum(int, Enum):  # pragma: no cover
-        pass  # pragma: no cover
-
-    class StrEnum(str, Enum):  # pragma: no cover
-        pass  # pragma: no cover
-
 from mage_ai.api.operations.constants import OperationType
 from mage_ai.data_preparation.models.constants import BlockType, PipelineType
+from mage_ai.shared.enum import IntEnum, StrEnum
 
 
 class EntityName(StrEnum):
@@ -187,7 +176,7 @@ class PermissionAccess(IntEnum):
     DISABLE_UNLESS_CONDITIONS = 1073741824
 
 
-class PermissionCondition(str, Enum):
+class PermissionCondition(StrEnum):
     HAS_NOTEBOOK_EDIT_ACCESS = 'HAS_NOTEBOOK_EDIT_ACCESS'
     HAS_PIPELINE_EDIT_ACCESS = 'HAS_PIPELINE_EDIT_ACCESS'
     USER_OWNS_ENTITY = 'USER_OWNS_ENTITY'

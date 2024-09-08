@@ -1,11 +1,4 @@
-try:
-    # breaking change introduced in python 3.11
-    from enum import IntEnum
-except ImportError:  # pragma: no cover
-    from enum import Enum  # pragma: no cover
-
-    class IntEnum(int, Enum):  # pragma: no cover
-        pass  # pragma: no cover
+from mage_ai.shared.enum import IntEnum
 
 """
 - **400 Bad Request**: The server could not understand the request due to invalid syntax.

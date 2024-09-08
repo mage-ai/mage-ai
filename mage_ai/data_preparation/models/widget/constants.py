@@ -1,13 +1,6 @@
-try:
-    # breaking change introduced in python 3.11
-    from enum import StrEnum
-except ImportError:  # pragma: no cover
-    from enum import Enum  # pragma: no cover
-
-    class StrEnum(str, Enum):  # pragma: no cover
-        pass  # pragma: no cover
-
 from dateutil.relativedelta import relativedelta
+
+from mage_ai.shared.enum import StrEnum
 
 VARIABLE_NAME_BUCKETS = 'buckets'
 VARIABLE_NAME_GROUP_BY = 'group_by'

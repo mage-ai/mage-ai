@@ -1,12 +1,3 @@
-try:
-    # breaking change introduced in python 3.11
-    from enum import StrEnum
-except ImportError:  # pragma: no cover
-    from enum import Enum  # pragma: no cover
-
-    class StrEnum(str, Enum):  # pragma: no cover
-        pass  # pragma: no cover
-
 import secrets
 from typing import Any, Callable, Dict, List, Union
 from unittest.mock import patch
@@ -27,6 +18,7 @@ from mage_ai.authentication.permissions.constants import (
 )
 from mage_ai.orchestration.db.models.oauth import Permission, Role, User, UserRole
 from mage_ai.shared.array import find
+from mage_ai.shared.enum import StrEnum
 from mage_ai.shared.hash import index_by, merge_dict
 from mage_ai.tests.api.mixins import BootstrapMixin
 from mage_ai.tests.api.operations.test_base import BaseApiTestCase

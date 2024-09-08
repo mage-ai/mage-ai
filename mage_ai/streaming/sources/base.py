@@ -1,20 +1,12 @@
-try:
-    # breaking change introduced in python 3.11
-    from enum import StrEnum
-except ImportError:  # pragma: no cover
-    from enum import Enum  # pragma: no cover
-
-    class StrEnum(str, Enum):  # pragma: no cover
-        pass  # pragma: no cover
-
 import json
 from abc import ABC, abstractmethod
 from typing import Callable, Dict
 
+from mage_ai.shared.enum import StrEnum
 from mage_ai.shared.environments import is_test
 
 
-class SourceConsumeMethod(str, Enum):
+class SourceConsumeMethod(StrEnum):
     BATCH_READ = 'BATCH_READ'
     READ = 'READ'
     READ_ASYNC = 'READ_ASYNC'

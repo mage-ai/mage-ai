@@ -1,12 +1,3 @@
-try:
-    # breaking change introduced in python 3.11
-    from enum import StrEnum
-except ImportError:  # pragma: no cover
-    from enum import Enum  # pragma: no cover
-
-    class StrEnum(str, Enum):  # pragma: no cover
-        pass  # pragma: no cover
-
 from abc import abstractmethod
 from dataclasses import dataclass, field
 from typing import Dict, List
@@ -18,6 +9,7 @@ from mage_ai.services.compute.constants import (
     ComputeManagementApplicationTab,
 )
 from mage_ai.services.spark.constants import ComputeServiceUUID
+from mage_ai.shared.enum import StrEnum
 from mage_ai.shared.hash import merge_dict
 from mage_ai.shared.models import BaseDataClass
 

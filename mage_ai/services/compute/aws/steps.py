@@ -1,12 +1,3 @@
-try:
-    # breaking change introduced in python 3.11
-    from enum import StrEnum
-except ImportError:  # pragma: no cover
-    from enum import Enum  # pragma: no cover
-
-    class StrEnum(str, Enum):  # pragma: no cover
-        pass  # pragma: no cover
-
 import os
 import socket
 from typing import List
@@ -34,6 +25,7 @@ from mage_ai.services.compute.models import (
     SetupStepStatus,
 )
 from mage_ai.services.ssh.aws.emr.constants import SSH_DEFAULTS
+from mage_ai.shared.enum import StrEnum
 from mage_ai.shared.hash import extract, merge_dict
 
 ERROR_MESSAGE_ACCESS_KEY_ID = ErrorMessage.load(

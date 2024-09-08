@@ -1,11 +1,4 @@
-try:
-    # breaking change introduced in python 3.11
-    from enum import StrEnum
-except ImportError:  # pragma: no cover
-    from enum import Enum  # pragma: no cover
-
-    class StrEnum(str, Enum):  # pragma: no cover
-        pass  # pragma: no cover
+from mage_ai.shared.enum import StrEnum
 
 CACHE_KEY_BLOCKS_TO_PIPELINE_MAPPING = 'blocks_to_pipeline_mapping'
 CACHE_KEY_BLOCK_ACTION_OBJECTS_MAPPING = 'block_action_objects_mapping'

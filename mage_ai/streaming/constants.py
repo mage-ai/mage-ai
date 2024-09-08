@@ -1,11 +1,4 @@
-try:
-    # breaking change introduced in python 3.11
-    from enum import StrEnum
-except ImportError:  # pragma: no cover
-    from enum import Enum  # pragma: no cover
-
-    class StrEnum(str, Enum):  # pragma: no cover
-        pass  # pragma: no cover
+from mage_ai.shared.enum import StrEnum
 
 DEFAULT_BATCH_SIZE = 100
 DEFAULT_TIMEOUT_MS = 500

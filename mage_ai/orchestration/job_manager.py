@@ -1,15 +1,7 @@
-try:
-    # breaking change introduced in python 3.11
-    from enum import StrEnum
-except ImportError:  # pragma: no cover
-    from enum import Enum  # pragma: no cover
-
-    class StrEnum(str, Enum):  # pragma: no cover
-        pass  # pragma: no cover
-
 from typing import Callable, Dict, Union
 
 from mage_ai.orchestration.queue.queue_factory import QueueFactory
+from mage_ai.shared.enum import StrEnum
 
 
 class JobType(StrEnum):

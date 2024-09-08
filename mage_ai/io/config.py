@@ -1,12 +1,3 @@
-try:
-    # breaking change introduced in python 3.11
-    from enum import StrEnum
-except ImportError:  # pragma: no cover
-    from enum import Enum  # pragma: no cover
-
-    class StrEnum(str, Enum):  # pragma: no cover
-        pass  # pragma: no cover
-
 import os
 from abc import ABC, abstractmethod
 from pathlib import Path
@@ -17,6 +8,7 @@ from jinja2 import Template
 
 from mage_ai.data_preparation.shared.utils import get_template_vars
 from mage_ai.settings.repo import get_repo_path
+from mage_ai.shared.enum import StrEnum
 
 
 class ConfigKey(StrEnum):

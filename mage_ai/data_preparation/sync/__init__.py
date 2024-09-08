@@ -1,17 +1,9 @@
-try:
-    # breaking change introduced in python 3.11
-    from enum import StrEnum
-except ImportError:  # pragma: no cover
-    from enum import Enum  # pragma: no cover
-
-    class StrEnum(str, Enum):  # pragma: no cover
-        pass  # pragma: no cover
-
 import inspect
 import os
 from dataclasses import dataclass
 
 from mage_ai.shared.config import BaseConfig
+from mage_ai.shared.enum import StrEnum
 
 GIT_ACCESS_TOKEN_SECRET_NAME = 'mage_git_access_token'
 GIT_SSH_PRIVATE_KEY_SECRET_NAME = 'mage_git_ssh_private_key_b64'

@@ -1,12 +1,3 @@
-try:
-    # breaking change introduced in python 3.11
-    from enum import StrEnum
-except ImportError:  # pragma: no cover
-    from enum import Enum  # pragma: no cover
-
-    class StrEnum(str, Enum):  # pragma: no cover
-        pass  # pragma: no cover
-
 import json
 import logging
 import os
@@ -33,6 +24,7 @@ from mage_ai.settings.repo import get_repo_path as get_repo_path_new
 from mage_ai.settings.repo import get_variables_dir
 from mage_ai.settings.repo import set_repo_path as set_repo_path_new
 from mage_ai.settings.utils import base_repo_path
+from mage_ai.shared.enum import StrEnum
 from mage_ai.shared.environments import is_debug
 from mage_ai.shared.yaml import load_yaml, trim_strings
 

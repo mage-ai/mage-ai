@@ -1,14 +1,6 @@
-try:
-    # breaking change introduced in python 3.11
-    from enum import StrEnum
-except ImportError:  # pragma: no cover
-    from enum import Enum  # pragma: no cover
-
-    class StrEnum(str, Enum):  # pragma: no cover
-        pass  # pragma: no cover
-
 from mage_ai.api.operations.constants import OperationType
 from mage_ai.orchestration.db.models.oauth import Permission
+from mage_ai.shared.enum import StrEnum
 
 
 class AttributeOperationType(StrEnum):

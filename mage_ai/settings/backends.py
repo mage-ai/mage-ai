@@ -1,16 +1,9 @@
-try:
-    # breaking change introduced in python 3.11
-    from enum import StrEnum
-except ImportError:  # pragma: no cover
-    from enum import Enum  # pragma: no cover
-
-    class StrEnum(str, Enum):  # pragma: no cover
-        pass  # pragma: no cover
-
 import base64
 import logging
 import os
 from typing import Optional
+
+from mage_ai.shared.enum import StrEnum
 
 logger = logging.getLogger(__name__)
 

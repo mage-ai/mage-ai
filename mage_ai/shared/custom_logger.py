@@ -1,18 +1,10 @@
-try:
-    # breaking change introduced in python 3.11
-    from enum import StrEnum
-except ImportError:  # pragma: no cover
-    from enum import Enum  # pragma: no cover
-
-    class StrEnum(str, Enum):  # pragma: no cover
-        pass  # pragma: no cover
-
 import inspect
 import logging
 
 import simplejson
 
 from mage_ai.data_preparation.models.constants import BlockType
+from mage_ai.shared.enum import StrEnum
 from mage_ai.shared.environments import is_deus_ex_machina
 from mage_ai.shared.parsers import encode_complex
 
