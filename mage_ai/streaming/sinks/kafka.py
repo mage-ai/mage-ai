@@ -89,8 +89,17 @@ class KafkaSink(BaseSink):
             kwargs['sasl_plain_username'] = self.config.sasl_config.username
             kwargs['sasl_plain_password'] = self.config.sasl_config.password
 
-            if self.config.ssl_config is not None and self.config.ssl_config.cafile:
-                kwargs['ssl_cafile'] = self.config.ssl_config.cafile
+            if self.config.ssl_config:
+                kwargs[
+                    'ssl_check_hostname'] = self.config.ssl_config.check_hostname
+                if self.config.ssl_config.cafile:
+                    kwargs['ssl_cafile'] = self.config.ssl_config.cafile
+                if self.config.ssl_config.certfile:
+                    kwargs['ssl_certfile'] = self.config.ssl_config.certfile
+                if self.config.ssl_config.keyfile:
+                    kwargs['ssl_keyfile'] = self.config.ssl_config.keyfile
+                if self.config.ssl_config.password:
+                    kwargs['ssl_password'] = self.config.ssl_config.password
 
         self.producer = KafkaProducer(**kwargs)
         self._print('Finish initializing producer.')
