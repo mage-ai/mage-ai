@@ -1006,6 +1006,12 @@ class Block(
 
         return extract_full_table_name(self.content)
 
+    def get_typed_content(
+        self,
+        content: str,
+    ) -> str:
+        return '@' + self.type + '\n' + content
+
     @classmethod
     def after_create(cls, block: 'Block', **kwargs) -> None:
         widget = kwargs.get('widget')
