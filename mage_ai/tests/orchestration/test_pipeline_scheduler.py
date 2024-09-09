@@ -441,6 +441,7 @@ class PipelineSchedulerTests(DBTestCase):
                 execution_partition=f'{pipeline_run.pipeline_schedule_id}',
                 event={},
                 pipeline_run_id=pipeline_run.id,
+                trigger_name='test_pipeline_2_trigger'
             ),
             dict(
                 pipeline_run_id=pipeline_run.id,
