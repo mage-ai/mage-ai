@@ -3,7 +3,6 @@ import logging
 import os
 import traceback
 import uuid
-from enum import Enum
 from typing import Dict, Optional
 from warnings import warn
 
@@ -25,6 +24,7 @@ from mage_ai.settings.repo import get_repo_path as get_repo_path_new
 from mage_ai.settings.repo import get_variables_dir
 from mage_ai.settings.repo import set_repo_path as set_repo_path_new
 from mage_ai.settings.utils import base_repo_path
+from mage_ai.shared.enum import StrEnum
 from mage_ai.shared.environments import is_debug
 from mage_ai.shared.yaml import load_yaml, trim_strings
 
@@ -36,7 +36,7 @@ yml.indent(mapping=2, sequence=2, offset=0)
 logger = logging.getLogger(__name__)
 
 
-class ProjectType(str, Enum):
+class ProjectType(StrEnum):
     MAIN = 'main'
     SUB = 'sub'
     STANDALONE = 'standalone'

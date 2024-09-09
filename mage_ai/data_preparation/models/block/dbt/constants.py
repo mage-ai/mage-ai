@@ -1,4 +1,4 @@
-from enum import Enum
+from mage_ai.shared.enum import StrEnum
 
 DBT_DIRECTORY_NAME = 'dbt'
 
@@ -13,12 +13,12 @@ SKIP_LIMIT_ADAPTER_NAMES = [
 ]
 
 
-class Flag(str, Enum):
+class Flag(StrEnum):
     PROFILES_DIR = 'profiles-dir'
     PROJECT_DIR = 'project-dir'
 
 
-class LogLevel(str, Enum):
+class LogLevel(StrEnum):
     DEBUG = 'debug'
     INFO = 'info'
     WARN = 'warn'

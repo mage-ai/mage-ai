@@ -1,7 +1,7 @@
-from enum import Enum
+from mage_ai.shared.enum import StrEnum
 
 
-class ExecutionStatus(str, Enum):
+class ExecutionStatus(StrEnum):
     CANCELLED = 'cancelled'
     ERROR = 'error'
     FAILURE = 'failure'
@@ -10,12 +10,12 @@ class ExecutionStatus(str, Enum):
     SUCCESS = 'success'
 
 
-class EventStreamType(str, Enum):
+class EventStreamType(StrEnum):
     EXECUTION = 'execution'
     TASK = 'task'
 
 
-class ResultType(str, Enum):
+class ResultType(StrEnum):
     DATA = 'data'
     STATUS = 'status'
     STDOUT = 'stdout'

@@ -107,7 +107,7 @@ class BlockHelperTest(BaseApiTestCase):
                 '\n'.join([
                     'from mage_ai.data.models.generator import DataGenerator',
                     'from mage_ai.data.tabular.mocks import create_dataframe',
-                    f'@{block.type}\n{content}',
+                    block.get_typed_content(content),
                 ])
             )
 

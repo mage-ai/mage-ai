@@ -1,9 +1,8 @@
-from enum import Enum
-
 from mage_ai.data_preparation.models.constants import MAX_PRINT_OUTPUT_LINES
+from mage_ai.shared.enum import StrEnum
 
 
-class DataType(str, Enum):
+class DataType(StrEnum):
     DATA_FRAME = 'data_frame'
     IMAGE_PNG = 'image/png'
     PROGRESS = 'progress'  # Deprecated; can come from Great Expectations

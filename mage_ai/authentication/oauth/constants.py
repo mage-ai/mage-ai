@@ -1,8 +1,8 @@
-from enum import Enum
 from typing import Optional
 
 from mage_ai.settings import get_settings_value
 from mage_ai.settings.keys import GHE_HOSTNAME
+from mage_ai.shared.enum import StrEnum
 
 ACTIVE_DIRECTORY_CLIENT_ID = '51aec820-9d49-40a9-b046-17c1f28f620d'
 
@@ -10,7 +10,7 @@ GITHUB_CLIENT_ID = '8577f13ddc81e2848b07'
 GITHUB_STATE = '1337'
 
 
-class ProviderName(str, Enum):
+class ProviderName(StrEnum):
     ACTIVE_DIRECTORY = 'active_directory'
     AZURE_DEVOPS = 'azure_devops'
     BITBUCKET = 'bitbucket'

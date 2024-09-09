@@ -1,4 +1,3 @@
-import enum
 import os
 import traceback
 from dataclasses import dataclass, field
@@ -12,6 +11,7 @@ from mage_ai.data_preparation.models.constants import PIPELINES_FOLDER
 from mage_ai.settings.repo import get_repo_path
 from mage_ai.shared.config import BaseConfig
 from mage_ai.shared.constants import VALID_ENVS
+from mage_ai.shared.enum import StrEnum
 from mage_ai.shared.hash import index_by
 from mage_ai.shared.io import safe_write
 from mage_ai.shared.yaml import load_yaml
@@ -19,12 +19,12 @@ from mage_ai.shared.yaml import load_yaml
 TRIGGER_FILE_NAME = 'triggers.yaml'
 
 
-class ScheduleStatus(str, enum.Enum):
+class ScheduleStatus(StrEnum):
     ACTIVE = 'active'
     INACTIVE = 'inactive'
 
 
-class ScheduleType(str, enum.Enum):
+class ScheduleType(StrEnum):
     API = 'api'
     EVENT = 'event'
     TIME = 'time'
@@ -37,7 +37,7 @@ SCHEDULE_TYPE_TO_LABEL = {
 }
 
 
-class ScheduleInterval(str, enum.Enum):
+class ScheduleInterval(StrEnum):
     ONCE = '@once'
     HOURLY = '@hourly'
     DAILY = '@daily'

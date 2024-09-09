@@ -1,4 +1,4 @@
-from enum import Enum
+from mage_ai.shared.enum import StrEnum
 
 # ECS environment variables
 ECS_CLUSTER_NAME = 'ECS_CLUSTER_NAME'
@@ -29,7 +29,7 @@ GCP_BACKEND_CONFIG_ANNOTATION = 'cloud.google.com/backend-config'
 NODE_PORT_SERVICE_TYPE = 'NodePort'
 
 
-class ClusterType(str, Enum):
+class ClusterType(StrEnum):
     EMR = 'emr'
     ECS = 'ecs'
     CLOUD_RUN = 'cloud_run'

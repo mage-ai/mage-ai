@@ -1,10 +1,9 @@
-from enum import Enum
-
 from mage_ai.data_preparation.models.constants import (
     BLOCK_TYPE_DIRECTORY_NAME,
     PIPELINES_FOLDER,
     BlockType,
 )
+from mage_ai.shared.enum import StrEnum
 from mage_ai.shared.hash import merge_dict
 
 IGNORE_DIRECTORY_NAMES = merge_dict(
@@ -19,7 +18,7 @@ PROJECT_FILENAME = 'dbt_project.yml'
 PROJECT_FILENAMES = [PROJECT_FILENAME, 'dbt_project.yaml']
 
 
-class FileType(str, Enum):
+class FileType(StrEnum):
     MODEL = 'model'
     PROFILES = 'profiles'
     PROJECT = 'project'

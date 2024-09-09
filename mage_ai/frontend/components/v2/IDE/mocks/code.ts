@@ -93,10 +93,10 @@ f"{path_mac}"
 '{name} cool {number}'.format('Urza', 40)
 
 
-from enum import Enum
+from mage_ai.shared.enum import StrEnum
 
 
-class ExecutionStatus(str, Enum):
+class ExecutionStatus(StrEnum):
     CANCELLED = 'cancelled'
     ERROR = 'error'
     FAILURE = 'failure'

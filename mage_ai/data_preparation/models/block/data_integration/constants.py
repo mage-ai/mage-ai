@@ -1,4 +1,4 @@
-from enum import Enum
+from mage_ai.shared.enum import StrEnum
 
 BLOCK_CATALOG_FILENAME = 'catalog.json'
 REPLICATION_METHOD_INCREMENTAL = 'INCREMENTAL'
@@ -81,6 +81,6 @@ MAX_QUERY_STRING_SIZE = 10 * MB_1
 VARIABLE_BOOKMARK_VALUES_KEY = '__bookmark_values__'
 
 
-class IngestMode(str, Enum):
+class IngestMode(StrEnum):
     DISK = 'disk'
     MEMORY = 'memory'

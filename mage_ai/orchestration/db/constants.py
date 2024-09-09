@@ -1,6 +1,6 @@
-from enum import Enum
+from mage_ai.shared.enum import StrEnum
 
 
-class DatabaseType(str, Enum):
+class DatabaseType(StrEnum):
     POSTGRESQL = 'postgresql'
     SQLITE = 'sqlite'

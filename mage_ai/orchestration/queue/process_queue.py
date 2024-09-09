@@ -2,7 +2,6 @@ import multiprocessing as mp
 import os
 import signal
 import time
-from enum import Enum
 from multiprocessing import Manager
 from typing import Callable, Dict
 
@@ -24,19 +23,20 @@ from mage_ai.settings import (
     SERVER_LOGGING_FORMAT,
     SERVER_VERBOSITY,
 )
+from mage_ai.shared.enum import StrEnum
 from mage_ai.shared.logger import set_logging_format
 
 LIVENESS_TIMEOUT_SECONDS = 300
 
 
-class JobStatus(str, Enum):
+class JobStatus(StrEnum):
     QUEUED = 'queued'
     RUNNING = 'running'  # Not used. The value for RUNNING job is process id.
     COMPLETED = 'completed'
     CANCELLED = 'cancelled'
 
 
-class QueueStatus(str, Enum):
+class QueueStatus(StrEnum):
     ACTIVE = 'active'
     INACTIVE = 'inactive'
 

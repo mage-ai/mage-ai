@@ -1,11 +1,11 @@
 from dataclasses import dataclass
-from enum import Enum
 from typing import Optional
 
+from mage_ai.shared.enum import StrEnum
 from mage_ai.shared.models import BaseDataClass
 
 
-class GlobalDataProductObjectType(str, Enum):
+class GlobalDataProductObjectType(StrEnum):
     BLOCK = 'block'
     PIPELINE = 'pipeline'
 

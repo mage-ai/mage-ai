@@ -1,6 +1,5 @@
 import asyncio
 import collections
-import enum
 import traceback
 import uuid
 from datetime import datetime, timedelta, timezone
@@ -73,6 +72,7 @@ from mage_ai.settings.platform import project_platform_activated
 from mage_ai.settings.repo import get_repo_path
 from mage_ai.shared.constants import ENV_PROD
 from mage_ai.shared.dates import compare
+from mage_ai.shared.enum import StrEnum
 from mage_ai.shared.hash import ignore_keys, index_by, merge_dict
 from mage_ai.shared.utils import clean_name
 
@@ -755,7 +755,7 @@ class PipelineSchedule(PipelineScheduleProjectPlatformMixin, BaseModel):
 
 
 class PipelineRun(PipelineRunProjectPlatformMixin, BaseModel):
-    class PipelineRunStatus(str, enum.Enum):
+    class PipelineRunStatus(StrEnum):
         INITIAL = 'initial'
         RUNNING = 'running'
         COMPLETED = 'completed'
@@ -1651,7 +1651,7 @@ class PipelineRun(PipelineRunProjectPlatformMixin, BaseModel):
 
 
 class BlockRun(BlockRunProjectPlatformMixin, BaseModel):
-    class BlockRunStatus(str, enum.Enum):
+    class BlockRunStatus(StrEnum):
         INITIAL = 'initial'
         QUEUED = 'queued'
         RUNNING = 'running'
@@ -1807,7 +1807,7 @@ class BlockRun(BlockRunProjectPlatformMixin, BaseModel):
 
 
 class EventMatcher(BaseModel):
-    class EventType(str, enum.Enum):
+    class EventType(StrEnum):
         AWS_EVENT = 'aws_event'
 
     event_type = Column(Enum(EventType), default=EventType.AWS_EVENT)
@@ -1908,7 +1908,7 @@ class EventMatcher(BaseModel):
 
 
 class Backfill(BaseModel):
-    class IntervalType(str, enum.Enum):
+    class IntervalType(StrEnum):
         SECOND = 'second'
         MINUTE = 'minute'
         HOUR = 'hour'
@@ -1918,7 +1918,7 @@ class Backfill(BaseModel):
         YEAR = 'year'
         CUSTOM = 'custom'
 
-    class Status(str, enum.Enum):
+    class Status(StrEnum):
         INITIAL = 'initial'
         RUNNING = 'running'
         COMPLETED = 'completed'

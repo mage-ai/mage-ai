@@ -1,9 +1,9 @@
 import os
-from enum import Enum
 
 from mage_ai.data_preparation.models.variables.constants import (
     VariableAggregateDataType,
 )
+from mage_ai.shared.enum import StrEnum
 
 DATAFRAME_ANALYSIS_KEYS = frozenset([
     VariableAggregateDataType.INSIGHTS.value,
@@ -31,12 +31,12 @@ VARIABLE_DIR = '.variables'
 PIPELINE_RUN_STATUS_LAST_RUN_FAILED = 'last_run_failed'
 
 
-class AIMode(str, Enum):
+class AIMode(StrEnum):
     OPEN_AI = 'open_ai'
     HUGGING_FACE = 'hugging_face'
 
 
-class BlockLanguage(str, Enum):
+class BlockLanguage(StrEnum):
     MARKDOWN = 'markdown'
     PYTHON = 'python'
     R = 'r'
@@ -44,14 +44,14 @@ class BlockLanguage(str, Enum):
     YAML = 'yaml'
 
 
-class BlockStatus(str, Enum):
+class BlockStatus(StrEnum):
     EXECUTED = 'executed'
     FAILED = 'failed'
     NOT_EXECUTED = 'not_executed'
     UPDATED = 'updated'
 
 
-class BlockType(str, Enum):
+class BlockType(StrEnum):
     CALLBACK = 'callback'
     CONDITIONAL = 'conditional'
     CHART = 'chart'
@@ -71,7 +71,7 @@ class BlockType(str, Enum):
     PIPELINE = 'pipeline'
 
 
-class BlockColor(str, Enum):
+class BlockColor(StrEnum):
     BLUE = 'blue'
     GREY = 'grey'
     PINK = 'pink'
@@ -80,12 +80,12 @@ class BlockColor(str, Enum):
     YELLOW = 'yellow'
 
 
-class CallbackStatus(str, Enum):
+class CallbackStatus(StrEnum):
     FAILURE = 'failure'
     SUCCESS = 'success'
 
 
-class ExecutorType(str, Enum):
+class ExecutorType(StrEnum):
     AZURE_CONTAINER_INSTANCE = 'azure_container_instance'
     ECS = 'ecs'
     GCP_CLOUD_RUN = 'gcp_cloud_run'
@@ -100,7 +100,7 @@ class ExecutorType(str, Enum):
         return executor_type.upper() in cls.__members__
 
 
-class PipelineType(str, Enum):
+class PipelineType(StrEnum):
     INTEGRATION = 'integration'
     DATABRICKS = 'databricks'
     PYTHON = 'python'
@@ -109,7 +109,7 @@ class PipelineType(str, Enum):
     EXECUTION_FRAMEWORK = 'execution_framework'
 
 
-class PipelineStatus(str, Enum):
+class PipelineStatus(StrEnum):
     ACTIVE = ('active',)  # At least one active trigger
     INACTIVE = ('inactive',)  # All inactive triggers
     NO_SCHEDULES = ('no_schedules',)  # No triggers

@@ -1,4 +1,4 @@
-from enum import Enum
+from mage_ai.shared.enum import StrEnum
 
 
 class OauthScope():
@@ -18,7 +18,7 @@ class OauthScope():
     TOKEN_SCOPES = []
 
 
-class OauthScopeType(str, Enum):
+class OauthScopeType(StrEnum):
     CLIENT_ALL = 'all'
     CLIENT_INTERNAL = 'internal'
     CLIENT_PRIVATE = 'private'

@@ -1,10 +1,10 @@
-from enum import Enum
 from typing import Callable, Dict, Union
 
 from mage_ai.orchestration.queue.queue_factory import QueueFactory
+from mage_ai.shared.enum import StrEnum
 
 
-class JobType(str, Enum):
+class JobType(StrEnum):
     BLOCK_RUN = 'block_run'
     PIPELINE_RUN = 'pipeline_run'
     INTEGRATION_STREAM = 'integration_stream'

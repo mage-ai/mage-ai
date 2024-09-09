@@ -1,10 +1,9 @@
-from enum import Enum
-
 from mage_ai.api.operations.constants import OperationType
 from mage_ai.data_preparation.models.constants import BlockType, PipelineType
+from mage_ai.shared.enum import IntEnum, StrEnum
 
 
-class EntityName(str, Enum):
+class EntityName(StrEnum):
     ALL = 'ALL'
     ALL_EXCEPT_RESERVED = 'ALL_EXCEPT_RESERVED'
     AutocompleteItem = 'AutocompleteItem'
@@ -109,7 +108,7 @@ RESERVED_ENTITY_NAMES = [
 ]
 
 
-class BaseEntityType(str, Enum):
+class BaseEntityType(StrEnum):
     pass
 
 
@@ -137,7 +136,7 @@ class PipelineEntityType(BaseEntityType):
     STREAMING = PipelineType.STREAMING.value
 
 
-class PermissionAccess(int, Enum):
+class PermissionAccess(IntEnum):
     OWNER = 1
     ADMIN = 2
     # Editor: list, detail, create, update, delete
@@ -177,7 +176,7 @@ class PermissionAccess(int, Enum):
     DISABLE_UNLESS_CONDITIONS = 1073741824
 
 
-class PermissionCondition(str, Enum):
+class PermissionCondition(StrEnum):
     HAS_NOTEBOOK_EDIT_ACCESS = 'HAS_NOTEBOOK_EDIT_ACCESS'
     HAS_PIPELINE_EDIT_ACCESS = 'HAS_PIPELINE_EDIT_ACCESS'
     USER_OWNS_ENTITY = 'USER_OWNS_ENTITY'

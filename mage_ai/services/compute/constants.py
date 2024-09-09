@@ -1,20 +1,20 @@
-from enum import Enum
+from mage_ai.shared.enum import StrEnum
 
 
-class ComputeConnectionActionUUID(str, Enum):
+class ComputeConnectionActionUUID(StrEnum):
     CREATE = 'CREATE'
     DELETE = 'DELETE'
     DESELECT = 'DESELECT'
     UPDATE = 'UPDATE'
 
 
-class ComputeConnectionState(str, Enum):
+class ComputeConnectionState(StrEnum):
     ACTIVE = 'ACTIVE'
     INACTIVE = 'INACTIVE'
     PENDING = 'PENDING'
 
 
-class ComputeManagementApplicationTab(str, Enum):
+class ComputeManagementApplicationTab(StrEnum):
     CLUSTERS = 'clusters'
     CONNECTION = 'connection'
     MONITORING = 'monitoring'
