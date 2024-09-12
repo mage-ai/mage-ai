@@ -24,5 +24,8 @@ use_tls: false
 # Optional: NKEY seed string
 # nkeys_seed_str: "SUAPAEYJQOQHJ4"
 
+# Optional: user credentials
+# user_credentials: "path/to/credentials.creds"
+
 # Optional: Consumer name for a durable consumer identifier, will use stream name if not provided
 consumer_name: "my_consumer"
