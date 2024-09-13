@@ -17,6 +17,7 @@ SQL_SOURCES = [
 SQL_SOURCES_MAPPING = index_by(get_uuid, SQL_SOURCES)
 
 SOURCES = sorted([
+    dict(name='Airtable'),
     dict(name='Amazon S3'),
     dict(name='Amplitude'),
     dict(name='Api'),
