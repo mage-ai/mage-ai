@@ -23,6 +23,9 @@ class PostgresConfig(BaseConfig):
     port: int = 5432
     unique_conflict_method: str = UNIQUE_CONFLICT_METHOD_IGNORE
     unique_constraints: List = field(default_factory=list)
+    allow_reserved_words: bool = False
+    auto_clean_name: bool = True
+    case_sensitive: bool = False
 
 
 class PostgresSink(BaseSink):
@@ -57,6 +60,9 @@ class PostgresSink(BaseSink):
             if_exists=ExportWritePolicy.APPEND,
             unique_conflict_method=self.config.unique_conflict_method,
             unique_constraints=self.config.unique_constraints,
+            allow_reserved_words=self.config.allow_reserved_words,
+            auto_clean_name=self.config.auto_clean_name,
+            case_sensitive=self.config.case_sensitive,
         )
 
     def destroy(self):
