@@ -16,6 +16,9 @@ class ConfigKey(StrEnum):
     List of configuration settings for use with data IO clients.
     """
 
+    AIRTABLE_ACCESS_TOKEN = "AIRTABLE_ACCESS_TOKEN"
+    AIRTABLE_BASE_ID = "AIRTABLE_BASE_ID"
+
     ALGOLIA_APP_ID = 'ALGOLIA_APP_ID'
     ALGOLIA_API_KEY = 'ALGOLIA_API_KEY'
     ALGOLIA_INDEX_NAME = 'ALGOLIA_INDEX_NAME'
