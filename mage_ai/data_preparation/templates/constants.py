@@ -21,7 +21,7 @@ GROUP_SHIFT = 'Shift'
 TEMPLATES = [
     dict(
         block_type=BlockType.DATA_LOADER,
-        groups=[GROUP_DATABASES],
+        description='Load a Table from Airtable App.',
         language=BlockLanguage.PYTHON,
         name='Airtable',
         path='data_loaders/airtable.py',
