@@ -21,6 +21,13 @@ GROUP_SHIFT = 'Shift'
 TEMPLATES = [
     dict(
         block_type=BlockType.DATA_LOADER,
+        groups=[GROUP_DATABASES],
+        language=BlockLanguage.PYTHON,
+        name='Airtable',
+        path='data_loaders/airtable.py',
+    ),
+    dict(
+        block_type=BlockType.DATA_LOADER,
         description='Load a Delta Table from Amazon S3.',
         groups=[GROUP_DELTA_LAKE],
         language=BlockLanguage.PYTHON,

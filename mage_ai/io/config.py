@@ -17,7 +17,6 @@ class ConfigKey(StrEnum):
     """
 
     AIRTABLE_ACCESS_TOKEN = "AIRTABLE_ACCESS_TOKEN"
-    AIRTABLE_BASE_ID = "AIRTABLE_BASE_ID"
 
     ALGOLIA_APP_ID = 'ALGOLIA_APP_ID'
     ALGOLIA_API_KEY = 'ALGOLIA_API_KEY'
@@ -341,6 +340,7 @@ class VerboseConfigKey(StrEnum):
     Config key headers for the verbose configuration file format.
     """
 
+    AIRTABLE = 'Airtable'
     ALGOLIA = 'Algolia'
     AWS = 'AWS'
     BIGQUERY = 'BigQuery'
@@ -359,6 +359,7 @@ class VerboseConfigKey(StrEnum):
 
 class ConfigFileLoader(BaseConfigLoader):
     KEY_MAP = {
+        ConfigKey.AIRTABLE_ACCESS_TOKEN: VerboseConfigKey.AIRTABLE,
         ConfigKey.ALGOLIA_APP_ID: (
             VerboseConfigKey.ALGOLIA, 'app_id'),
         ConfigKey.ALGOLIA_API_KEY: (
