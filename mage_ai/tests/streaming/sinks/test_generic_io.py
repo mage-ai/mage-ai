@@ -1,4 +1,4 @@
-import os
+from pathlib import Path
 from unittest.mock import ANY, MagicMock, call, patch
 
 import pandas as pd
@@ -52,33 +52,40 @@ TEST_DATABASES = [
 
 
 class GenericIOTests(TestCase):
-    @patch('mage_ai.streaming.sinks.generic_io.ConfigFileLoader')
+    def setUp(self):
+        super().setUp()
+        self.test_path = Path('./test')
+        self.test_config_path = self.test_path / 'io_config.yaml'
+        sample_yaml = """
+test_profile:
+  test_1: test_1
+"""
+        with self.test_config_path.open('w') as fout:
+            fout.write(sample_yaml)
+
+    def tearDown(self):
+        self.test_config_path.unlink()
+        super().tearDown()
+
     @patch('mage_ai.streaming.sinks.generic_io.importlib.import_module')
-    def test_init_client(self, mock_import_module, mock_config_loader):
-        first_db = True
+    def test_init_client(self, mock_import_module):
         for database in TEST_DATABASES:
-            mock_objects = self.__mock_objects(mock_import_module, mock_config_loader, database)
+            mock_objects = self.__mock_objects(mock_import_module, database)
 
             # Assertions
-            if first_db:
-                mock_config_loader.assert_called_once_with(
-                    os.path.join(self.repo_path, 'io_config.yaml'), 'test_profile')
-                mock_import_module.assert_called_once_with(database['module_path'])
-            mock_objects['io_class'].with_config.assert_called_once_with(
-                mock_objects['config_loader_instance'])
+            mock_import_module.assert_any_call(database['module_path'])
+            mock_objects['io_class'].with_config.assert_called_once()
             mock_objects['io_client'].open.assert_called_once()
 
             self.assertEqual(mock_objects['sink'].io_client, mock_objects['io_client'])
 
             del mock_objects['sink']
             mock_objects['io_client'].close.assert_called_once()
-            first_db = False
 
-    @patch('mage_ai.streaming.sinks.generic_io.ConfigFileLoader')
     @patch('mage_ai.streaming.sinks.generic_io.importlib.import_module')
-    def test_write(self, mock_import_module, mock_config_loader):
+    def test_write(self, mock_import_module):
         database = TEST_DATABASES[0]
-        mock_objects = self.__mock_objects(mock_import_module, mock_config_loader, database)
+        mock_objects = self.__mock_objects(mock_import_module, database)
 
         mock_objects['sink'].batch_write = MagicMock()
 
@@ -90,11 +97,10 @@ class GenericIOTests(TestCase):
         # Assertions
         mock_objects['sink'].batch_write.assert_called_once_with([message])
 
-    @patch('mage_ai.streaming.sinks.generic_io.ConfigFileLoader')
     @patch('mage_ai.streaming.sinks.generic_io.importlib.import_module')
-    def test_batch_write(self, mock_import_module, mock_config_loader):
+    def test_batch_write(self, mock_import_module):
         database = TEST_DATABASES[0]
-        mock_objects = self.__mock_objects(mock_import_module, mock_config_loader, database)
+        mock_objects = self.__mock_objects(mock_import_module, database)
         mock_objects['io_client'].export = MagicMock()
 
         # Test data
@@ -130,13 +136,12 @@ class GenericIOTests(TestCase):
             ]),
         )
 
-    def __mock_objects(self, mock_import_module, mock_config_loader, database):
+    def __mock_objects(self, mock_import_module, database):
         mock_io_module = MagicMock()
         mock_io_class = MagicMock()
         mock_io_client = MagicMock()
         mock_import_module.return_value = mock_io_module
         mock_io_class.with_config.return_value = mock_io_client
-        mock_config_loader_instance = mock_config_loader.return_value
         setattr(mock_io_module, database['class_name'], mock_io_class)
         generic_io_sink = GenericIOSink(dict(
             connector_type=database['connector_type'],
@@ -146,7 +151,6 @@ class GenericIOTests(TestCase):
             )
         ))
         return dict(
-            config_loader_instance=mock_config_loader_instance,
             io_module=mock_io_module,
             io_class=mock_io_class,
             io_client=mock_io_client,
