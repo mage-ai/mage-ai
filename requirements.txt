@@ -29,8 +29,8 @@ newrelic==8.8.0
 numpy>=1.22.0
 pandas>=1.3.0
 polars>=0.18.0, <0.19.2
-protobuf~=4.21.12; python_version < '3.12'
-protobuf~=4.25.4; python_version >= '3.12'
+protobuf~=4.21.12; python_version < '3.11'
+protobuf~=4.25.4; python_version >= '3.11'
 psutil==5.9.8
 pyarrow==14.0.1
 python-dateutil==2.8.2
