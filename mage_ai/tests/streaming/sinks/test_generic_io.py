@@ -54,7 +54,7 @@ TEST_DATABASES = [
 class GenericIOTests(TestCase):
     def setUp(self):
         super().setUp()
-        self.test_path = Path('./test')
+        self.test_path = Path(self.repo_path)
         self.test_config_path = self.test_path / 'io_config.yaml'
         sample_yaml = """
 test_profile:
