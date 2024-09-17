@@ -108,8 +108,7 @@ azure-storage-blob==12.14.1
 confluent-avro~=1.8.0
 elasticsearch==8.9.0
 influxdb_client==1.36.1
-kafka-python==2.0.2; python_version < '3.12'
-kafka-python @ git+https://github.com/dpkp/kafka-python.git ; python_version >= '3.12'
+kafka-python==2.0.2
 nats-py==2.6.0
 nkeys~=0.1.0; python_version < '3.12'
 nkeys~=0.2.0; python_version >= '3.12'
