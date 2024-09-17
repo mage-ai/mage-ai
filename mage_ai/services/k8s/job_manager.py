@@ -172,6 +172,8 @@ class JobManager():
             pod_spec.tolerations = mage_server_pod_spec.tolerations
         if not pod_spec.node_selector:
             pod_spec.node_selector = mage_server_pod_spec.node_selector
+        if not pod_spec.scheduler_name:
+            pod_spec.scheduler_name = mage_server_pod_spec.scheduler_name
         pod_spec.image_pull_secrets = pod_spec.image_pull_secrets if pod_spec.image_pull_secrets \
             else mage_server_pod_spec.image_pull_secrets
         return pod_spec
