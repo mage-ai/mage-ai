@@ -44,7 +44,7 @@ class Airtable(Source):
         """
         Load data from Source
         """
-        table_name = stream.tap_stream_id
+        table_name = stream.tap_stream_id.replace('_', ' ')
         client = self.build_client()
         table = client.table(table_name)
         rows = self.get_data(table)
