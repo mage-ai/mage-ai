@@ -151,7 +151,7 @@ setuptools.setup(
             'dbt-spark==1.7.1',
             'dbt-sqlserver==1.7.4',
             'dbt-trino==1.7.1',
-            'duckdb==0.9.2',
+            'duckdb==1.0.0',
             'elasticsearch==8.9.0',
             'google-api-core~=2.15.0',
             'google-api-python-client~=2.70.0',
