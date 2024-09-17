@@ -20,7 +20,7 @@ google-cloud-bigquery-storage==2.26.0; python_version >= '3.11'
 google-cloud-storage==2.5.0
 httpx==0.23.1
 httpx[http2]
-kafka-python==2.0.2
+kafka-python~=2.0.2
 mysql-connector-python~=8.2.0; python_version < '3.11'
 mysql-connector-python~=9.0.0; python_version >= '3.11'
 opensearch-py~=2.0.0

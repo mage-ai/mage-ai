@@ -169,9 +169,7 @@ setuptools.setup(
             'great-expectations==0.18.12',
             'gspread==5.7.2',
             'influxdb_client==1.36.1',
-            "kafka-python==2.0.2; python_version < '3.12'",
-            "kafka-python @ git+https://github.com/dpkp/kafka-python.git ; "
-            "python_version >= '3.12'",
+            'kafka-python==2.0.2',
             'kubernetes>=28.1.0',
             'langchain==0.1.6',
             'langchain_community<0.0.20',
