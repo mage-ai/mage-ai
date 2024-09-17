@@ -1,5 +1,11 @@
 import importlib
 import json
+import sys
+
+if sys.version_info >= (3, 12, 0):
+    import six
+    sys.modules['kafka.vendor.six.moves'] = six.moves
+
 import time
 from dataclasses import dataclass, field
 from typing import Callable, Dict, List

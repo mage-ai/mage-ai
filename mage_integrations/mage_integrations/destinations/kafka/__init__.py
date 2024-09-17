@@ -2,6 +2,11 @@ import argparse
 import ast
 import json
 import sys
+
+if sys.version_info >= (3, 12, 0):
+    import six
+    sys.modules['kafka.vendor.six.moves'] = six.moves
+
 from typing import Dict, List
 
 from kafka import KafkaConsumer, KafkaProducer
