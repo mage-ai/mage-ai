@@ -63,7 +63,7 @@ RUN if [ -z "$FEATURE_BRANCH" ] || [ "$FEATURE_BRANCH" = "null" ] ; then \
 
 
 ## Startup Script
-COPY --chmod=+x ./scripts/install_other_dependencies.py ./scripts/run_app.sh /app/
+COPY --chmod=0755 ./scripts/install_other_dependencies.py ./scripts/run_app.sh /app/
 
 ENV MAGE_DATA_DIR="/home/src/mage_data"
 ENV PYTHONPATH="${PYTHONPATH}:/home/src"
