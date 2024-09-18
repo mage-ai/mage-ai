@@ -44,7 +44,7 @@ setuptools.setup(
             'astor>=0.8.1',
             'langchain>=0.0.222',
             'langchain_community<0.0.20',
-            'openai>=1.0.0',
+            'openai==1.39.0',
         ],
         'azure': [
             'azure-eventhub==5.11.2',
@@ -170,7 +170,7 @@ setuptools.setup(
             'ldap3==2.9.1',
             'nats-py==2.6.0',
             'nkeys~=0.1.0',
-            'openai>=1.0.0',
+            'openai==1.39.0',
             'opensearch-py==2.0.0',
             'opentelemetry-api==1.22.0',
             'opentelemetry-exporter-prometheus==0.43b0',

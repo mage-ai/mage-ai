@@ -72,7 +72,7 @@ kubernetes>=28.1.0
 langchain==0.1.6; python_version >= '3.8'
 langchain_community<0.0.20
 mysql-connector-python~=8.2.0
-openai>=1.0.0
+openai==1.39.0
 opentelemetry-api==1.22.0
 opentelemetry-exporter-prometheus==0.43b0
 opentelemetry-instrumentation-tornado==0.43b0
