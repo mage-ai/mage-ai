@@ -42,7 +42,7 @@ setuptools.setup(
     extras_require={
         'ai': [
             'astor>=0.8.1',
-            'langchain>=0.0.222',
+            'langchain==0.1.6',
             'langchain_community<0.0.20',
             'openai==1.39.0',
         ],
