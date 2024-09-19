@@ -176,7 +176,7 @@ setuptools.setup(
             'opentelemetry-exporter-prometheus==0.43b0',
             'opentelemetry-instrumentation-tornado==0.43b0',
             'opentelemetry-exporter-otlp==1.22.0',
-            'opentelemetry-instrumentation-sqlalchemy==0.42b0',
+            'opentelemetry-instrumentation-sqlalchemy==0.43b0',
             'oracledb==1.3.1',
             'pika==1.3.1',
             'pinotdb==5.1.0',
