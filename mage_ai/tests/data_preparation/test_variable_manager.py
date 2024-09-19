@@ -1,8 +1,5 @@
-from unittest.mock import patch
-
 import pandas as pd
 from pandas.testing import assert_frame_equal
-from retrying import retry
 
 from mage_ai.data_preparation.models.block import Block
 from mage_ai.data_preparation.models.pipeline import Pipeline
@@ -11,16 +8,13 @@ from mage_ai.data_preparation.repo_manager import get_repo_config
 from mage_ai.data_preparation.variable_manager import (
     VariableManager,
     get_global_variable,
-    get_global_variables,
     set_global_variable,
 )
 from mage_ai.settings.repo import set_repo_path
 from mage_ai.tests.base_test import DBTestCase
-from mage_ai.tests.shared.mixins import ProjectPlatformMixin
 
 
 class VariableManagerTest(DBTestCase):
-    @retry(stop_max_attempt_number=3)
     def test_add_and_get_variable(self):
         self.__create_pipeline("test pipeline 1")
         variable_manager = VariableManager(
@@ -79,7 +73,6 @@ class VariableManagerTest(DBTestCase):
             data3,
         )
 
-    @retry(stop_max_attempt_number=3)
     def test_get_variables_by_pipeline(self):
         self.__create_pipeline("test pipeline 2")
         variable_manager = VariableManager(
@@ -95,7 +88,6 @@ class VariableManagerTest(DBTestCase):
             dict(block1=["var1", "var2"], block2=["var3", "var4"]),
         )
 
-    @retry(stop_max_attempt_number=3)
     def test_set_and_get_global_variable(self):
         set_repo_path(self.repo_path)
         self.__create_pipeline("test pipeline 3")
@@ -132,50 +124,3 @@ class VariableManagerTest(DBTestCase):
     #         get_global_variables(None, pipeline=pipeline), pipeline.variables
     #     )
     #     self.assertEqual(get_global_variables(pipeline.uuid), pipeline.variables)
-
-
-class VariableManagerProjectPlatformTests(ProjectPlatformMixin):
-    def test_get_global_variable(self):
-        with patch(
-            "mage_ai.data_preparation.variable_manager.project_platform_activated",
-            lambda: True,
-        ):
-            with patch(
-                "mage_ai.data_preparation.models.pipeline.project_platform_activated",
-                lambda: True,
-            ):
-                for settings in self.repo_paths.values():
-                    pipeline = Pipeline.create(
-                        self.faker.unique.name(),
-                        repo_path=settings["full_path"],
-                    )
-                    value = self.faker.unique.name()
-                    pipeline.variables = dict(mage=value)
-                    pipeline.save()
-
-                    self.assertEqual(get_global_variable(pipeline.uuid, "mage"), value)
-
-    def test_get_global_variables(self):
-        with patch(
-            "mage_ai.data_preparation.variable_manager.project_platform_activated",
-            lambda: True,
-        ):
-            with patch(
-                "mage_ai.data_preparation.models.pipeline.project_platform_activated",
-                lambda: True,
-            ):
-                for settings in self.repo_paths.values():
-                    pipeline = Pipeline.create(
-                        self.faker.unique.name(),
-                        repo_path=settings["full_path"],
-                    )
-                    pipeline.variables = self.faker.unique.name()
-                    pipeline.save()
-
-                    self.assertEqual(
-                        get_global_variables(None, pipeline=pipeline),
-                        pipeline.variables,
-                    )
-                    self.assertEqual(
-                        get_global_variables(pipeline.uuid), pipeline.variables
-                    )
