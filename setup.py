@@ -184,6 +184,7 @@ setuptools.setup(
             'protobuf~=4.21.12',
             'psycopg2-binary==2.9.3',
             'psycopg2==2.9.3',
+            'pyairtable==2.3.3',
             'pydruid==0.6.5',
             'pymongo==4.3.3',
             'pyodbc==4.0.35',
