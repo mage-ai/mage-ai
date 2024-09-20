@@ -1,0 +1,44 @@
+---
+title: "MQTT"
+---
+
+## Basic config
+
+```yaml
+
+connector_type: mqtt
+connection_host: localhost
+connection_port: 1883
+qos: 0
+topic: 'test/#'
+username: 'guest'
+password: 'guest'
+batch_size: 100
+timeout_ms: 500
+```
+
+
+## Persistent sessions
+
+```yaml
+qos: 1
+clean: false
+connection_properties:
+    session_expiry_interval: 600
+```
+
+## TLS Configuration
+
+Default config using System CA Certificates
+```yaml
+tls: true
+```
+
+Or specifying CA and certs
+```yaml
+tls: true
+tls_config:
+  ca_certs: "CARoot.pem"
+  certfile: "certificate.pem"
+  keyfile: "key.pem"
+```
