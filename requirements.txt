@@ -70,26 +70,30 @@ gspread==5.7.2
 kubernetes>=28.1.0
 langchain==0.1.6; python_version >= '3.8'
 langchain_community<0.0.20
-mysql-connector-python~=8.2.0
+mysql-connector-python~=8.2.0; python_version < '3.11'
+mysql-connector-python~=9.0.0; python_version >= '3.11'
 openai==1.39.0
 opentelemetry-api==1.22.0
 opentelemetry-exporter-prometheus==0.43b0
 opentelemetry-instrumentation-tornado==0.43b0
 opentelemetry-exporter-otlp==1.22.0
 opentelemetry-instrumentation-sqlalchemy==0.43b0
-oracledb==1.3.1
+oracledb==1.3.1; python_version < '3.12'
+oracledb==2.4.1; python_version >= '3.12'
 pinotdb==5.1.0
 prometheus_client>=0.18.0
 psycopg2==2.9.3
 psycopg2-binary==2.9.3
 pyairtable==2.3.3
 pydruid==0.6.5
-pyodbc==4.0.35
+pyodbc==4.0.35; python_version < '3.12'
+pyodbc==5.0.1; python_version >= '3.12'
 redshift-connector==2.0.915
 lxml==4.9.4
 snowflake-connector-python==3.5.0
 sshtunnel==0.4.0
-tables==3.7.0
+tables==3.7.0; python_version < '3.11'
+tables==3.10.1; python_version >= '3.11'
 trino~=0.326
 
 # Azure
@@ -106,7 +110,8 @@ elasticsearch==8.9.0
 influxdb_client==1.36.1
 kafka-python==2.0.2
 nats-py==2.6.0
-nkeys~=0.1.0
+nkeys~=0.1.0; python_version < '3.12'
+nkeys~=0.2.0; python_version >= '3.12'
 opensearch-py==2.0.0
 pika==1.3.1
 pymongo==4.3.3
@@ -125,16 +130,21 @@ dbt-spark==1.7.1
 dbt-sqlserver==1.7.4
 dbt-trino==1.7.1
 
-attrs==17.4.0
+async-timeout==4.0.3
+attrs==17.4.0; python_version < '3.12'
+attrs==24.2.0; python_version >= '3.12'
 backoff
 clickhouse_sqlalchemy
 deltalake==0.17.4
 facebook_business==17.0.2
 gnupg==2.3.1
-google-analytics-data==0.14.2
-google-cloud-bigquery-storage==2.16.2
+google-analytics-data==0.14.2; python_version < '3.11'
+google-analytics-data==0.15.0; python_version >= '3.11'
+google-cloud-bigquery-storage==2.16.2; python_version < '3.11'
+google-cloud-bigquery-storage==2.26.0; python_version >= '3.11'
 httpx[http2]
-pendulum==2.1.0
+pendulum==2.1.0; python_version < '3.12'
+pendulum==3.0.0; python_version >= '3.12'
 pymongo_schema==0.4.1
 python-magic==0.4.27
 redshift-connector~=2.0.915

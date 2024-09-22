@@ -42,16 +42,18 @@ tools = [
                         "type": "string",
                         "description": "Programming language of the code block. "
                                        f"Default value is {BlockLanguage.__name__}__python.",
-                        "enum": [f"{BlockLanguage.__name__}__{type.name.lower()}"
-                                 for type in BlockLanguage]
+                        "enum": [
+                            f"{BlockLanguage.__name__}__{type.name.lower()}"
+                            for type in BlockLanguage]
                     },
                     PipelineType.__name__: {
                         "type": "string",
                         "description": "Type of pipeline to build. Default value is "
                                        f"{PipelineType.__name__}__python if pipeline type "
                                        "is not mentioned in the description.",
-                        "enum": [f"{PipelineType.__name__}__{type.name.lower()}"
-                                 for type in PipelineType]
+                        "enum": [
+                            f"{PipelineType.__name__}__{type.name.lower()}"
+                            for type in PipelineType]
                     },
                     ActionType.__name__: {
                         "type": "string",
