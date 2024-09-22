@@ -1,12 +1,11 @@
-import logging
+from typing import Union
 
-from pandas import DataFrame
+import pandas as pd
+import polars as pl
 from pyairtable.api import Api
 
 from mage_ai.io.base import BaseIO
 from mage_ai.io.config import BaseConfigLoader, ConfigKey
-
-LOGGER = logging.getLogger(__name__)
 
 
 class Airtable(BaseIO):
@@ -62,7 +61,7 @@ class Airtable(BaseIO):
             base_id: str,
             table_name: str,
             **kwargs,
-    ) -> DataFrame:
+    ) -> pd.DataFrame:
         """
         Loads data from an Airtable table into a Pandas DataFrame.
 
@@ -91,9 +90,14 @@ class Airtable(BaseIO):
                 flattened_record.update(fields)
                 flattened_data.append(flattened_record)
 
-            return DataFrame(flattened_data)  # Create and return a DataFrame
+            return pd.DataFrame(flattened_data)  # Create and return a DataFrame
 
-    def export(self, df: DataFrame, *args, **kwargs) -> None:
+    def export(
+            self,
+            df: Union[pd.DataFrame, pl.DataFrame],
+            *args,
+            **kwargs
+    ) -> None:
         """
         Not implemented yet. This method is intended to export data to Airtable.
         """
