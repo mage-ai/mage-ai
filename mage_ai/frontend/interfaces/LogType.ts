@@ -32,9 +32,9 @@ export interface LogDataType {
   block_run_id?: number;
   block_type?: BlockTypeEnum;
   block_uuid?: string;
-  error?: string[];
-  error_stack?: string[][];
-  error_stacktrace: string;
+  error?: string | string[];
+  error_stack?: string[] | string[][];
+  error_stacktrace: string | string[];
   level: LogLevelEnum;
   message: string;
   pipeline_run_id?: number;
