@@ -67,12 +67,12 @@ function LogDetail({
   if (Array.isArray(errorStackFromData) && !Array.isArray(errorStackFromData?.[0])) {
     errorStack = [errorStackFromData] as string[][];
   }
-  if (errorStackTraceFromData && !Array.isArray(errorStackTraceFromData)) {
-    errorStackTrace = [errorStackTraceFromData];
+  if (errorStackTraceFromData && Array.isArray(errorStackTraceFromData)) {
+    errorStackTrace = errorStackTraceFromData?.[0];
   }
 
   const rows = useMemo(() => {
-    const arr: any[] = [
+    const arr = [
       ['file name', name],
       ['file path', path],
     ];
@@ -84,7 +84,7 @@ function LogDetail({
     });
 
     if (errorStackTrace) {
-      arr.push(['error', errorStackTrace]);
+      arr.push(['error', errorStackTrace as string]);
     }
 
     return sortByKey(arr, ([k, _]) => k);
