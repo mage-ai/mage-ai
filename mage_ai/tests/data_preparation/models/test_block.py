@@ -746,6 +746,13 @@ def test_output(output, *args) -> None:
             ),
         )
 
+    def test_none_block_type(self):
+        block = Block(name='test block', uuid='test uuid', block_type=None)
+        self.assertEqual(
+            block.get_typed_content('test content'),
+            '@None\ntest content',
+        )
+
 
 class BlockProjectPlatformTests(ProjectPlatformMixin):
     def test_file_path(self):
