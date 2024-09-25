@@ -2,6 +2,7 @@ import io
 from collections import Counter
 from typing import Dict, Generator, List
 
+import chardet
 import pandas as pd
 from singer.schema import Schema
 
@@ -107,8 +108,6 @@ class GoogleCloudStorage(Source):
 
             streams.append(catalog_entry)
 
-            # break
-
         return Catalog(streams)
 
     def load_data(
@@ -140,7 +139,9 @@ class GoogleCloudStorage(Source):
         if '.parquet' in key:
             df = pd.read_parquet(buffer)
         elif '.csv' in key:
-            df = pd.read_csv(buffer)
+            with blob.open('rb') as f:
+                encoding = chardet.detect(f.read())['encoding']
+            df = pd.read_csv(buffer, encoding=encoding)
         return df
 
 
