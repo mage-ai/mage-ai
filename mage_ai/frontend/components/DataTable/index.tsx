@@ -190,6 +190,11 @@ const Styles = styled.div<{
   }
 `;
 
+const PreStyle = styled.pre`
+  overflow: auto;
+  ${ScrollbarStyledCss}
+`;
+
 function estimateCellHeight({
   original,
   values,
@@ -214,7 +219,7 @@ function estimateCellHeight({
     original?.every(o => Array.isArray(o) || isObject(o)) &&
     variableListProps
   ) {
-    const { columnHeaderHeight, height, maxHeight, width: width2 } = variableListProps;
+    const { columnHeaderHeight, height, maxHeight } = variableListProps;
 
     return original?.reduce((acc: number, vals: any) => {
       let rows = [];
@@ -525,46 +530,15 @@ function Table({ ...props }: TableProps) {
               if (isJsonString(cellValue)) {
                 try {
                   const cellObject = JSON.parse(cellValue);
-                  if (Array.isArray(cellObject)) {
+                  if (Array.isArray(cellObject) || isObject(cellObject)) {
+                    // Render JSON object as formmated text
                     cellValueDisplay = (
-                      <Table
-                        {...props}
-                        columns={[
-                          {
-                            Header: 'value',
-                            accessor: () => 'Column for value',
-                          },
-                        ]}
-                        data={cellObject?.map(v => [v])}
-                        disableScrolling
-                        height={height}
-                        maxHeight={1000}
-                        numberOfIndexes={0}
-                        width={props.width - maxWidthOfIndexColumns[idx]}
-                      />
+                      <PreStyle>
+                        <Text default wordBreak>
+                          {JSON.stringify(cellObject, null, 2)}
+                        </Text>
+                      </PreStyle>
                     );
-                    cellStyle.padding = 0;
-                  } else if (isObject(cellObject)) {
-                    const cols = Object.keys(cellObject).map(key => ({
-                      Header: key,
-                      accessor: () => 'Column for value',
-                    }));
-                    const vals: (string | number)[] =
-                      (Object.values(cellObject) as (string | number)[]) || [];
-
-                    cellValueDisplay = (
-                      <Table
-                        {...props}
-                        columns={cols}
-                        data={[vals]}
-                        disableScrolling
-                        height={height}
-                        maxHeight={1000}
-                        numberOfIndexes={0}
-                        width={props.width - maxWidthOfIndexColumns[idx]}
-                      />
-                    );
-                    cellStyle.padding = 0;
                   }
                 } catch {}
               }
@@ -606,14 +580,12 @@ function Table({ ...props }: TableProps) {
     },
     [
       columnsAll,
-      height,
       indexProp,
       invalidValues,
       maxWidthOfIndexColumns,
       numberOfIndexes,
       prepareRow,
       previewIndexes,
-      props,
       rows,
       shouldUseIndexProp,
     ],
