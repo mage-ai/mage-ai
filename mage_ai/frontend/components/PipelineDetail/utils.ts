@@ -94,7 +94,6 @@ export function prepareOutputsForDisplay(outputs: OutputType[]) {
       });
     }
   });
-  console.log('outputsFinal', outputsFinal);
 
   if (DataTypeEnum.TEXT_PLAIN === outputType) {
     return outputsFinal;
