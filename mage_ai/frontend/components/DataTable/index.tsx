@@ -191,7 +191,6 @@ const Styles = styled.div<{
 `;
 
 const CellStyle = styled.div`
-  overflow: auto;
   ${ScrollbarStyledCss}
 `;
 
@@ -536,6 +535,7 @@ function Table({ ...props }: TableProps) {
                 try {
                   const cellObject = JSON.parse(cellValue);
                   if (Array.isArray(cellObject) || isObject(cellObject)) {
+                    cellStyle.overflow = 'auto';
                     // Render JSON object as formmated text
                     cellValueDisplay = (
                       <PreStyle>
