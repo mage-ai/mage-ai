@@ -191,6 +191,7 @@ const Styles = styled.div<{
 `;
 
 const CellStyle = styled.div`
+  overflow: hidden;
   ${ScrollbarStyledCss}
 `;
 
