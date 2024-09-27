@@ -190,6 +190,11 @@ const Styles = styled.div<{
   }
 `;
 
+const CellStyle = styled.div`
+  overflow: auto;
+  ${ScrollbarStyledCss}
+`;
+
 const PreStyle = styled.pre`
   overflow: auto;
   ${ScrollbarStyledCss}
@@ -545,7 +550,7 @@ function Table({ ...props }: TableProps) {
             }
 
             return (
-              <div
+              <CellStyle
                 {...cellProps}
                 className={`td ${indexColumn ? 'td-index-column' : ''}`}
                 key={`${idx}-${cellValue}`}
@@ -572,7 +577,7 @@ function Table({ ...props }: TableProps) {
                     )}
                   </FlexContainer>
                 )}
-              </div>
+              </CellStyle>
             );
           })}
         </div>
