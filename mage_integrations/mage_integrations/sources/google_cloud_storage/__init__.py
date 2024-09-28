@@ -2,8 +2,8 @@ import io
 from collections import Counter
 from typing import Dict, Generator, List
 
-import chardet
 import pandas as pd
+from charset_normalizer import from_bytes
 from singer.schema import Schema
 
 from mage_integrations.connections.google_cloud_storage import (
@@ -139,8 +139,7 @@ class GoogleCloudStorage(Source):
         if '.parquet' in key:
             df = pd.read_parquet(buffer)
         elif '.csv' in key:
-            with blob.open('rb') as f:
-                encoding = chardet.detect(f.read())['encoding']
+            encoding = from_bytes(data).best().encoding
             df = pd.read_csv(buffer, encoding=encoding)
         return df
 
