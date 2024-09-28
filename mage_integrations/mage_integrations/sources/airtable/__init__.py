@@ -18,7 +18,7 @@ from mage_integrations.sources.utils import get_standard_metadata
 
 class Airtable(Source):
     """
-    A source connector class for syncing data from Airtable using Mage's data orchestration tool.
+    A source connector class for syncing data from Airtable.
     """
 
     @property
