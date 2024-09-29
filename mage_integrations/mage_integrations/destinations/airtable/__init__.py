@@ -1,5 +1,6 @@
 import argparse
 import sys
+from typing import Dict, List
 
 from mage_integrations.connections.airtable import Airtable as AirtableConnection
 from mage_integrations.destinations.base import Destination
@@ -7,16 +8,12 @@ from mage_integrations.destinations.base import Destination
 
 class Airtable(Destination):
     """
-   Airtable Destination for syncing data to Airtable
-   """
+    Airtable Destination for syncing data to Airtable
+    """
 
     @property
     def base_id(self):
         return self.config.get('base_id')
-
-    @property
-    def table_name(self):
-        return self.config.get('table_name')
 
     def build_client(self):
         """
@@ -27,6 +24,26 @@ class Airtable(Destination):
         self.logger.info(f"Building Airtable connection for base ID: {self.base_id}")
         connection = AirtableConnection(self.config['token'], self.base_id)
         return connection.build_connection()
+
+    def test_connection(self) -> None:
+        """
+        Test the Airtable connection.
+
+        :raises Exception: If unable to connect or retrieve tables.
+        """
+        client = self.build_client()
+        try:
+            client.tables()
+            self.logger.info("Airtable connection test successful.")
+        except Exception as e:
+            self.logger.error(f"Failed to test Airtable connection: {e}")
+            raise
+
+    def export_batch_data(self, record_data: List[Dict], stream: str, tags: Dict = None) -> None:
+        """
+        Export batch data to Airtable
+        """
+        pass
 
 
 if __name__ == '__main__':
