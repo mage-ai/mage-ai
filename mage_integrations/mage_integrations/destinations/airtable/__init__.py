@@ -4,6 +4,10 @@ from typing import Dict, List
 
 from mage_integrations.connections.airtable import Airtable as AirtableConnection
 from mage_integrations.destinations.base import Destination
+from mage_integrations.destinations.utils import (
+    map_json_to_airtable,
+    update_record_with_internal_columns,
+)
 
 
 class Airtable(Destination):
@@ -43,7 +47,43 @@ class Airtable(Destination):
         """
         Export batch data to Airtable
         """
-        pass
+        client = self.build_client()
+
+        tags = dict(
+            records=len(record_data),
+            stream=stream
+        )
+
+        self.logger.info(f"Creating Airtable table {stream}")
+
+        fields = [
+            {
+                'name': column,
+                'type': map_json_to_airtable(info['type']),
+                **({'options': {'precision': 2}}
+                   if map_json_to_airtable(info['type']) == 'number' else {})
+            }
+            for column, info in self.schemas[stream]['properties'].items()
+        ]
+
+        table = client.create_table(stream, fields)
+
+        self.logger.info(f"Successfully created table {table.name}")
+
+        self.logger.info('Export data started', tags=tags)
+
+        # Add _mage_created_at and _mage_updated_at columns
+        for r in record_data:
+            r['record'] = update_record_with_internal_columns(r['record'])
+
+        records = [item['record'] for item in record_data]
+        table.batch_create(records)
+
+        tags.update(
+            records_inserted=len(record_data),
+        )
+
+        self.logger.info('Export data completed.', tags=tags)
 
 
 if __name__ == '__main__':
