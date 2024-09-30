@@ -42,16 +42,18 @@ tools = [
                         "type": "string",
                         "description": "Programming language of the code block. "
                                        f"Default value is {BlockLanguage.__name__}__python.",
-                        "enum": [f"{BlockLanguage.__name__}__{type.name.lower()}"
-                                 for type in BlockLanguage]
+                        "enum": [
+                            f"{BlockLanguage.__name__}__{type.name.lower()}"
+                            for type in BlockLanguage]
                     },
                     PipelineType.__name__: {
                         "type": "string",
                         "description": "Type of pipeline to build. Default value is "
                                        f"{PipelineType.__name__}__python if pipeline type "
                                        "is not mentioned in the description.",
-                        "enum": [f"{PipelineType.__name__}__{type.name.lower()}"
-                                 for type in PipelineType]
+                        "enum": [
+                            f"{PipelineType.__name__}__{type.name.lower()}"
+                            for type in PipelineType]
                     },
                     ActionType.__name__: {
                         "type": "string",
@@ -85,7 +87,7 @@ class OpenAIClient(AIClient):
             open_ai_config.openai_api_key or os.getenv('OPENAI_API_KEY')
         openai.api_key = openai_api_key
         self.llm = OpenAI(openai_api_key=openai_api_key, temperature=0)
-        self.openai_client = OpenAILib()
+        self.openai_client = OpenAILib(api_key=openai_api_key)
 
     def __chat_completion_request(self, messages):
         try:
