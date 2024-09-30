@@ -51,6 +51,7 @@ import { redirectToUrl } from '@utils/url';
 import { storeLocalTimezoneSetting } from '@components/settings/workspace/utils';
 import { useModal } from '@context/Modal';
 import { useError } from '@context/Error';
+import { toggleTheme } from '@oracle/styles/themes/utils';
 
 export type BreadcrumbType = BreadcrumbTypeOrig;
 
@@ -698,6 +699,7 @@ function Header({
                       noBackground
                       noHoverUnderline
                       onClick={() => setUserMenuVisible(true)}
+                      //onClick={toggleTheme}
                       ref={refUserMenu}
                       uuid="Header/menu"
                     >
