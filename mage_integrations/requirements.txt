@@ -32,7 +32,6 @@ pendulum==3.0.0; python_version >= '3.12'
 protobuf>=4.0.0
 psycopg2==2.9.3
 psycopg2-binary==2.9.3
-pyairtable
 pyarrow==14.0.1
 pymongo==4.3.3
 pymongo_schema==0.4.1
