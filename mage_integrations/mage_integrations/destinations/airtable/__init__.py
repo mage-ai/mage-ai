@@ -2,12 +2,10 @@ import argparse
 import sys
 from typing import Dict, List
 
+from mage_ai.io.utils import map_json_to_airtable
 from mage_integrations.connections.airtable import Airtable as AirtableConnection
 from mage_integrations.destinations.base import Destination
-from mage_integrations.destinations.utils import (
-    map_json_to_airtable,
-    update_record_with_internal_columns,
-)
+from mage_integrations.destinations.utils import update_record_with_internal_columns
 
 
 class Airtable(Destination):

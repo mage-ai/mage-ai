@@ -48,21 +48,3 @@ def update_destination_state_bookmarks(
     with open(absolute_path_to_destination_state, 'w') as f:
         line = json.dumps(dict(bookmarks=bookmarks))
         f.write(line)
-
-
-def map_json_to_airtable(data_types):
-    # Extract the non-null type (ignoring 'null')
-    data_type = next((t for t in data_types if t != 'null'), 'string')
-
-    # Mapping from JSON types to Airtable types
-    type_mapping = {
-        'string': 'multilineText',
-        'integer': 'number',
-        'boolean': 'checkbox',
-        'array': 'multipleSelects',
-        'object': 'singleCollaborator',
-        'number': 'number',
-        'date-time': 'dateTime'
-    }
-
-    return type_mapping.get(data_type, 'str')
