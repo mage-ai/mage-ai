@@ -20,6 +20,7 @@ from mage_integrations.destinations.elasticsearch.target_elasticsearch.common im
     PORT,
     SCHEME,
     SSL_CA_FILE,
+    VERIFY_CERTS,
     USERNAME,
 )
 from mage_integrations.destinations.target import Target
@@ -88,6 +89,12 @@ class TargetElasticsearch(Target):
             th.StringType,
             description="location of the the SSL certificate for cert verification = `/some/path`",
             default=None,
+        ),
+        th.Property(
+            VERIFY_CERTS,
+            th.BooleanType,
+            description="disable the SSL certificate verification",
+            default=True,
         ),
         th.Property(
             INDEX_FORMAT,
