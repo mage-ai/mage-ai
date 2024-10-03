@@ -47,7 +47,7 @@ setuptools.setup(
             'openai>=1.0.0',
         ],
         'airtable': [
-            'pyairtable==2.3.3'
+            'pyairtable>=2.3.3'
         ],
         'azure': [
             'azure-eventhub==5.11.2',

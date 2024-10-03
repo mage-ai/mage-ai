@@ -23,7 +23,6 @@ pendulum==2.1.0
 protobuf>=4.0.0
 psycopg2==2.9.3
 psycopg2-binary==2.9.3
-pyairtable==2.3.3
 pyarrow==14.0.1
 pymongo==4.3.3
 pymongo_schema==0.4.1
