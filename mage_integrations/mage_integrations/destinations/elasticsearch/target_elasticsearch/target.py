@@ -20,8 +20,8 @@ from mage_integrations.destinations.elasticsearch.target_elasticsearch.common im
     PORT,
     SCHEME,
     SSL_CA_FILE,
-    VERIFY_CERTS,
     USERNAME,
+    VERIFY_CERTS,
 )
 from mage_integrations.destinations.target import Target
 
