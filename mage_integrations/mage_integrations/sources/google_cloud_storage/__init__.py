@@ -51,6 +51,11 @@ class GoogleCloudStorage(Source):
                 continue
 
             key = blob.name
+
+            # Ensure the file type matches the required file type
+            if not key.endswith(f'.{self.file_type}'):
+                continue
+
             parts = key.split('.')
             stream_id = '_'.join(parts[:-1])
 
@@ -123,6 +128,7 @@ class GoogleCloudStorage(Source):
             key = blob.name
             stream_id = '_'.join(key.split('.')[:-1])
 
+            # load selected streams only
             if stream_id in self.selected_streams:
                 df = self.__build_df(blob.name)
                 yield df.to_dict('records')
