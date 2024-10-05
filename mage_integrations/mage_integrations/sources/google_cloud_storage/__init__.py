@@ -107,8 +107,6 @@ class GoogleCloudStorage(Source):
 
             streams.append(catalog_entry)
 
-            # break
-
         return Catalog(streams)
 
     def load_data(
@@ -121,8 +119,13 @@ class GoogleCloudStorage(Source):
         for blob in client.list_blobs(self.bucket, prefix=self.prefix):
             if blob.size == 0:
                 continue
-            df = self.__build_df(blob.name)
-            yield df.to_dict('records')
+
+            key = blob.name
+            stream_id = '_'.join(key.split('.')[:-1])
+
+            if stream_id in self.selected_streams:
+                df = self.__build_df(blob.name)
+                yield df.to_dict('records')
 
     def test_connection(self) -> None:
         client = self.build_client()
