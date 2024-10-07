@@ -61,7 +61,8 @@ class ElasticSearchSink(BaseSink):
                         'doc': doc} for doc in messages]
         else:
             if self.config._op_type is not None:
-                docs = [{'_index': self.config.index_name, 'doc': doc, '_op_type': self.config._op_type} for doc in messages]
+                docs = [{'_index': self.config.index_name, 'doc': doc,
+                        '_op_type': self.config._op_type} for doc in messages]
             else:
                 docs = [{'_index': self.config.index_name, 'doc': doc} for doc in messages]
 
