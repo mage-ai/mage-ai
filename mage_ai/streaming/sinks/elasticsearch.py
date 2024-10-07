@@ -16,6 +16,7 @@ class ElasticSearchConfig(BaseConfig):
     api_key: str = None
     ca_cert: str = None
     _id: str = None
+    _op_type: str = None
 
 
 class ElasticSearchSink(BaseSink):
@@ -52,8 +53,16 @@ class ElasticSearchSink(BaseSink):
     def batch_write(self, messages: List[Dict]):
         self._print(f'Batch ingest data {messages}, time={time.time()}')
         if self.config._id is not None:
-            docs = [{'_index': self.config.index_name, '_id': doc[self.config._id],
-                     'doc': doc} for doc in messages]
+            if self.config._op_type is not None:
+                docs = [{'_index': self.config.index_name, '_id': doc[self.config._id],
+                        'doc': doc, '_op_type': self.config._op_type} for doc in messages]
+            else:
+                docs = [{'_index': self.config.index_name, '_id': doc[self.config._id],
+                        'doc': doc} for doc in messages]
         else:
-            docs = [{'_index': self.config.index_name, 'doc': doc} for doc in messages]
+            if self.config._op_type is not None:
+                docs = [{'_index': self.config.index_name, 'doc': doc, '_op_type': self.config._op_type} for doc in messages]
+            else:
+                docs = [{'_index': self.config.index_name, 'doc': doc} for doc in messages]
+
         helpers.bulk(self.client, docs)
