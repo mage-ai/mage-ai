@@ -3,7 +3,7 @@ from abc import ABC, abstractmethod
 from typing import Callable, Dict
 
 from mage_ai.shared.enum import StrEnum
-from mage_ai.shared.environments import is_test_mage
+from mage_ai.shared.environments import is_test, is_test_mage
 
 
 class SourceConsumeMethod(StrEnum):
@@ -24,7 +24,7 @@ class BaseSource(ABC):
         self.checkpoint_path = kwargs.get('checkpoint_path')
         self.checkpoint = self.read_checkpoint()
         self.init_client()
-        if not is_test_mage():
+        if not is_test() and not is_test_mage():
             # Not test the connection in unit tests
             self.test_connection()
 
