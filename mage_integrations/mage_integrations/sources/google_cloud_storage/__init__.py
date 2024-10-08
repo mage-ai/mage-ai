@@ -3,6 +3,7 @@ from collections import Counter
 from typing import Dict, Generator, List
 
 import pandas as pd
+from charset_normalizer import from_bytes
 from singer.schema import Schema
 
 from mage_integrations.connections.google_cloud_storage import (
@@ -107,8 +108,6 @@ class GoogleCloudStorage(Source):
 
             streams.append(catalog_entry)
 
-            # break
-
         return Catalog(streams)
 
     def load_data(
@@ -140,7 +139,8 @@ class GoogleCloudStorage(Source):
         if '.parquet' in key:
             df = pd.read_parquet(buffer)
         elif '.csv' in key:
-            df = pd.read_csv(buffer)
+            encoding = from_bytes(data).best().encoding
+            df = pd.read_csv(buffer, encoding=encoding)
         return df
 
 

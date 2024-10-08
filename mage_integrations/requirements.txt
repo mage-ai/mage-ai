@@ -2,6 +2,7 @@ attrs==17.4.0; python_version < '3.12'
 attrs==24.2.0; python_version >= '3.12'
 azure-storage-blob==12.14.1
 backoff
+charset-normalizer
 clickhouse_sqlalchemy~=0.2.4
 couchbase==4.1.1; python_version < '3.11'
 couchbase==4.3.1; python_version >= '3.11'
