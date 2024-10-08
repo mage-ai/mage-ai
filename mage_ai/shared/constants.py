@@ -11,6 +11,7 @@ VALID_ENVS = frozenset([
     ENV_PROD,
     ENV_STAGING,
     ENV_TEST,
+    ENV_TEST_MAGE,
 ])
 
 SAMPLE_SIZE = 1000
