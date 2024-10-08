@@ -186,8 +186,7 @@ class ElasticSink(BatchSink):
             scheme = "https"
             config["ca_certs"] = self.config[SSL_CA_FILE]
 
-        if scheme == "https":
-            config['verify_certs'] = self.config[VERIFY_CERTS]
+        self.config.get(VERIFY_CERTS, True)
 
         config["hosts"] = [f"{scheme}://{self.config[HOST]}:{self.config[PORT]}"]
 
