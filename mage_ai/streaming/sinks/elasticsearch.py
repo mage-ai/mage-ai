@@ -53,7 +53,7 @@ class ElasticSearchSink(BaseSink):
     def batch_write(self, messages: List[Dict]):
         self._print(f'Batch ingest data {messages}, time={time.time()}')
         docs = []
-        for msg in in messages:
+        for msg in messages:
             doc = {'_index': self.config.index_name, 'doc': doc}
             if self.config._id is not None:
                 doc['id'] = msg[self.config._id]
