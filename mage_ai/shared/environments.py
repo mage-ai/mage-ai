@@ -27,11 +27,11 @@ def is_unittest():
 
 
 def is_test():
-    return os.getenv('ENV', None) == 'test' or is_unittest()
+    return os.getenv('ENV', None) == 'test'
 
 
 def is_test_mage():
-    return os.getenv('ENV', None) == 'test_mage'
+    return os.getenv('ENV', None) == 'test_mage' or is_unittest()
 
 
 def is_production():

@@ -13,7 +13,7 @@ from mage_ai.orchestration.db.setup import get_postgres_connection_url
 from mage_ai.orchestration.db.utils import get_user_info_from_db_connection_url
 from mage_ai.settings import OTEL_EXPORTER_OTLP_ENDPOINT
 from mage_ai.settings.repo import get_variables_dir
-from mage_ai.shared.environments import is_debug, is_test_mage, is_unittest
+from mage_ai.shared.environments import is_debug, is_test_mage
 
 DB_RETRY_COUNT = 2
 TEST_DB = 'test.db'
@@ -28,7 +28,7 @@ db_kwargs = dict(
 if OTEL_EXPORTER_OTLP_ENDPOINT:
     from opentelemetry.instrumentation.sqlalchemy import SQLAlchemyInstrumentor
 
-if is_test_mage() or is_unittest():
+if is_test_mage():
     db_connection_url = f'sqlite:///{TEST_DB}'
     db_kwargs['connect_args']['check_same_thread'] = False
 elif not db_connection_url:
@@ -37,7 +37,7 @@ elif not db_connection_url:
     if pg_db_connection_url:
         db_connection_url = pg_db_connection_url
     else:
-        if is_test_mage() or is_unittest():
+        if is_test_mage():
             db_connection_url = f'sqlite:///{TEST_DB}'
         elif os.path.exists(os.path.join('mage_ai', 'orchestration', 'db')):
             # For local dev environment
