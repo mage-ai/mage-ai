@@ -1,7 +1,13 @@
 import os
 import sys
 
-from mage_ai.shared.constants import ENV_DEV, ENV_PROD, ENV_STAGING, ENV_TEST, ENV_TEST_MAGE
+from mage_ai.shared.constants import (
+    ENV_DEV,
+    ENV_PROD,
+    ENV_STAGING,
+    ENV_TEST,
+    ENV_TEST_MAGE,
+)
 
 
 def is_deus_ex_machina():
