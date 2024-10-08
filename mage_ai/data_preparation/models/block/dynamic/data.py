@@ -1,6 +1,6 @@
 from typing import List
 
-from mage_ai.shared.environments import is_debug, is_test
+from mage_ai.shared.environments import is_debug, is_test, is_test_mage
 
 
 def calculate_dynamic_index_data_index(
@@ -14,7 +14,7 @@ def calculate_dynamic_index_data_index(
     for i in range(upstream_index + 1, len(item_counts)):
         step_size *= item_counts[i]
 
-        if is_debug() or is_test():
+        if is_debug() or is_test() or is_test_mage():
             print(
                 '[calculate_dynamic_index_data_index] '
                 f'dynamic_block_index: {dynamic_block_index}, '
@@ -28,7 +28,7 @@ def calculate_dynamic_index_data_index(
     if step_size == 0:
         return None
 
-    if is_debug() or is_test():
+    if is_debug() or is_test() or is_test_mage():
         print(
             '[calculate_dynamic_index_data_index] '
             f'dynamic_block_index: {dynamic_block_index}, '

@@ -25,7 +25,7 @@ from mage_ai.data_preparation.models.variables.utils import (
 )
 from mage_ai.io.base import ExportWritePolicy
 from mage_ai.settings.server import DEBUG_MEMORY, MEMORY_MANAGER_V2
-from mage_ai.shared.environments import is_debug, is_test
+from mage_ai.shared.environments import is_debug, is_test, is_test_mage
 from mage_ai.shared.strings import to_ordinal_integers
 from mage_ai.system.memory.wrappers import execute_with_memory_tracking
 
@@ -683,7 +683,7 @@ def fetch_input_variables_for_dynamic_upstream_blocks(
                             child_data.append(lz_data)
                             metadata.update(md_data)
 
-                        if is_debug() or is_test():
+                        if is_debug() or is_test() or is_test_mage():
                             print(
                                 '[fetch_input_variables_for_dynamic_upstream_blocks.reduce_output] '
                                 f'upstream:{upstream_block.uuid}: -> '
@@ -693,7 +693,7 @@ def fetch_input_variables_for_dynamic_upstream_blocks(
                                 f'kwargs: {md_data}'
                             )
 
-                if is_debug() or is_test():
+                if is_debug() or is_test() or is_test_mage():
                     print(
                         '[fetch_input_variables_for_dynamic_upstream_blocks.reduce_output] '
                         f'upstream:{upstream_block.uuid} -> {block.uuid}:{dynamic_block_index}: '
@@ -716,7 +716,7 @@ def fetch_input_variables_for_dynamic_upstream_blocks(
 
                 child_data_count = len(lazy_variable_controller)
                 if child_data_count > 0:
-                    if is_debug() or is_test():
+                    if is_debug() or is_test() or is_test_mage():
                         print(
                             '[fetch_input_variables_for_dynamic_upstream_blocks] '
                             f'upstream:{upstream_block.uuid} -> {block.uuid}:'
