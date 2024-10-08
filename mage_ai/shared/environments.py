@@ -22,16 +22,12 @@ def is_dev():
     return os.getenv('ENV', None) == 'dev' or os.getenv('ENV', None) == 'development'
 
 
-def is_unittest():
-    return any('unittest' in v for v in sys.argv)
-
-
 def is_test():
     return os.getenv('ENV', None) == 'test'
 
 
 def is_test_mage():
-    return os.getenv('ENV', None) == 'test_mage' or is_unittest()
+    return os.getenv('ENV', None) == 'test_mage' or any('unittest' in v for v in sys.argv)
 
 
 def is_production():
