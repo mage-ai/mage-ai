@@ -1,7 +1,7 @@
 import os
 import sys
 
-from mage_ai.shared.constants import ENV_DEV, ENV_PROD, ENV_STAGING, ENV_TEST
+from mage_ai.shared.constants import ENV_DEV, ENV_PROD, ENV_STAGING, ENV_TEST, ENV_TEST_MAGE
 
 
 def is_deus_ex_machina():
@@ -16,8 +16,16 @@ def is_dev():
     return os.getenv('ENV', None) == 'dev' or os.getenv('ENV', None) == 'development'
 
 
+def is_unittest():
+    return any('unittest' in v for v in sys.argv)
+
+
 def is_test():
-    return os.getenv('ENV', None) == 'test_mage' or any('unittest' in v for v in sys.argv)
+    return os.getenv('ENV', None) == 'test' or is_unittest()
+
+
+def is_test_mage():
+    return os.getenv('ENV', None) == 'test_mage'
 
 
 def is_production():
@@ -31,6 +39,8 @@ def is_staging():
 def get_env():
     if is_test():
         return ENV_TEST
+    elif is_test_mage():
+        return ENV_TEST_MAGE
     elif is_production():
         return ENV_PROD
     elif is_staging():
