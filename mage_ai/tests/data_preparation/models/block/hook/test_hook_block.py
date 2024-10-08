@@ -5,7 +5,7 @@ from faker import Faker
 from mage_ai.data_preparation.models.block.hook.block import HookBlock
 from mage_ai.data_preparation.models.constants import BlockType
 from mage_ai.data_preparation.models.global_hooks.models import HookStatus, HookStrategy
-from mage_ai.shared.constants import ENV_TEST
+from mage_ai.shared.constants import ENV_TEST_MAGE
 from mage_ai.tests.api.operations.test_base import BaseApiTestCase
 from mage_ai.tests.factory import create_pipeline_with_blocks
 from mage_ai.tests.shared.mixins import build_hooks
@@ -46,7 +46,7 @@ class HookBlockTest(BaseApiTestCase):
                 check_status=True,
                 configuration={},
                 context={},
-                env=ENV_TEST,
+                env=ENV_TEST_MAGE,
                 error_on_failure=True,
                 mage=1,
                 pipeline_uuid='',
@@ -85,7 +85,7 @@ class HookBlockTest(BaseApiTestCase):
                 check_status=True,
                 configuration={},
                 context={},
-                env=ENV_TEST,
+                env=ENV_TEST_MAGE,
                 error_on_failure=True,
                 mage=1,
                 pipeline_uuid='',
