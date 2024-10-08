@@ -52,18 +52,13 @@ class ElasticSearchSink(BaseSink):
 
     def batch_write(self, messages: List[Dict]):
         self._print(f'Batch ingest data {messages}, time={time.time()}')
-        if self.config._id is not None:
+        docs = []
+        for msg in in messages:
+            doc = {'_index': self.config.index_name, 'doc': doc}
+            if self.config._id is not None:
+                doc['id'] = msg[self.config._id]
             if self.config._op_type is not None:
-                docs = [{'_index': self.config.index_name, '_id': doc[self.config._id],
-                        'doc': doc, '_op_type': self.config._op_type} for doc in messages]
-            else:
-                docs = [{'_index': self.config.index_name, '_id': doc[self.config._id],
-                        'doc': doc} for doc in messages]
-        else:
-            if self.config._op_type is not None:
-                docs = [{'_index': self.config.index_name, 'doc': doc,
-                        '_op_type': self.config._op_type} for doc in messages]
-            else:
-                docs = [{'_index': self.config.index_name, 'doc': doc} for doc in messages]
+                doc['_op_type'] = self.config._op_type
+            docs.append(doc)
 
         helpers.bulk(self.client, docs)
