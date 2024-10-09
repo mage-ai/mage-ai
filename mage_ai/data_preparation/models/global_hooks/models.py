@@ -30,7 +30,7 @@ from mage_ai.settings.platform import (
 from mage_ai.settings.repo import get_repo_path
 from mage_ai.shared.array import find, find_index, flatten
 from mage_ai.shared.enum import StrEnum
-from mage_ai.shared.environments import is_debug, is_test
+from mage_ai.shared.environments import is_debug, is_test, is_test_mage
 from mage_ai.shared.hash import (
     dig,
     extract,
@@ -466,7 +466,7 @@ class Hook(BaseDataClass):
                 elif HookStrategy.CONTINUE in self.strategies:
                     self.status.strategy = HookStrategy.CONTINUE
 
-            if is_debug() or is_test():
+            if is_debug() or is_test() or is_test_mage():
                 print(f'[ERROR] Hook.run: {err}')
 
     def should_run(

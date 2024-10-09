@@ -9,7 +9,7 @@ from mage_ai.settings.constants import PROJECT_METADATA_FILENAME, REPO_PATH_ENV_
 from mage_ai.settings.platform.constants import set_project_platform_activated_flag
 from mage_ai.settings.platform.utils import project_platform_activated
 from mage_ai.settings.utils import base_repo_dirname, base_repo_path
-from mage_ai.shared.environments import is_test
+from mage_ai.shared.environments import is_test, is_test_mage
 from mage_ai.shared.yaml import load_yaml
 
 MAGE_PROJECT_TYPE_ENV_VAR = 'PROJECT_TYPE'
@@ -20,7 +20,7 @@ Moved from repo_manager because repo_manager has too many dependencies
 which can cause circular import errors.
 """
 
-if is_test():
+if is_test() or is_test_mage():
     DEFAULT_MAGE_DATA_DIR = '.'
 else:
     DEFAULT_MAGE_DATA_DIR = os.path.join('~', '.mage_data')

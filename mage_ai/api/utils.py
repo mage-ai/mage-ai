@@ -14,7 +14,7 @@ from mage_ai.settings import (
     REQUIRE_USER_AUTHENTICATION,
     is_disable_pipeline_edit_access,
 )
-from mage_ai.shared.environments import is_test
+from mage_ai.shared.environments import is_test, is_test_mage
 
 
 def authenticate_client_and_token(client_id: str, token: str) -> Tuple[Oauth2AccessToken, bool]:
@@ -36,7 +36,7 @@ def is_owner(
     entity_id: str = None,
 ) -> bool:
     return (user and user.owner) or \
-        (not REQUIRE_USER_AUTHENTICATION and not is_test()) or \
+        (not REQUIRE_USER_AUTHENTICATION and not is_test() and not is_test_mage()) or \
         (user and user.get_access(entity, entity_id) & Permission.Access.OWNER != 0)
 
 
@@ -46,7 +46,7 @@ def has_at_least_admin_role(
     entity_id: str = None,
 ) -> bool:
     return not user or \
-        (not REQUIRE_USER_AUTHENTICATION and not is_test()) or \
+        (not REQUIRE_USER_AUTHENTICATION and not is_test() and not is_test_mage()) or \
         is_owner(user, entity, entity_id) or \
         (user.roles and user.roles & 1 != 0) or \
         (user and user.get_access(entity, entity_id) & Permission.Access.ADMIN != 0)
@@ -58,7 +58,7 @@ def has_at_least_editor_role(
     entity_id: str = None,
 ) -> bool:
     return not user or \
-        (not REQUIRE_USER_AUTHENTICATION and not is_test()) or \
+        (not REQUIRE_USER_AUTHENTICATION and not is_test() and not is_test_mage()) or \
         is_owner(user, entity, entity_id) or \
         has_at_least_admin_role(user, entity, entity_id) or \
         (user.roles and user.roles & 2 != 0) or \
@@ -95,7 +95,7 @@ def has_at_least_viewer_role(
     entity_id: str = None,
 ) -> bool:
     return not user or \
-        (not REQUIRE_USER_AUTHENTICATION and not is_test()) or \
+        (not REQUIRE_USER_AUTHENTICATION and not is_test() and not is_test_mage()) or \
         is_owner(user, entity, entity_id) or \
         has_at_least_admin_role(user, entity, entity_id) or \
         has_at_least_editor_role(user, entity, entity_id) or \

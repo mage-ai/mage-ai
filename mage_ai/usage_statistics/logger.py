@@ -33,7 +33,7 @@ from mage_ai.data_preparation.models.project import Project
 from mage_ai.orchestration.db import safe_db_query
 from mage_ai.orchestration.db.models.oauth import User
 from mage_ai.orchestration.db.models.schedules import BlockRun, PipelineRun
-from mage_ai.shared.environments import get_env, is_debug, is_test
+from mage_ai.shared.environments import get_env, is_debug, is_test, is_test_mage
 from mage_ai.shared.hash import merge_dict
 from mage_ai.usage_statistics.constants import (
     API_ENDPOINT,
@@ -430,7 +430,7 @@ class UsageStatisticLogger():
         project_uuid: str = None,
     ) -> bool:
         if not override_validation:
-            if is_test():
+            if is_test() or is_test_mage():
                 return False
 
             if not self.help_improve_mage:

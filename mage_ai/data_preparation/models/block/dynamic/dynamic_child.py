@@ -14,7 +14,7 @@ from mage_ai.data_preparation.models.constants import BlockType
 from mage_ai.orchestration.db.models.schedules import BlockRun
 from mage_ai.shared.array import find, find_index
 from mage_ai.shared.custom_logger import DX_PRINTER
-from mage_ai.shared.environments import is_test
+from mage_ai.shared.environments import is_test, is_test_mage
 
 
 class DynamicChildBlockFactory:
@@ -69,7 +69,7 @@ class DynamicChildBlockFactory:
             try:
                 self._block_run = BlockRun.query.get(self.block_run_id)
             except AttributeError as err:
-                if not is_test():
+                if not is_test() and not is_test_mage():
                     raise err
                 print(err)
 
