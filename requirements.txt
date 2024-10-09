@@ -106,7 +106,7 @@ azure-storage-blob==12.14.1
 
 # Streaming
 confluent-avro~=1.8.0
-elasticsearch==8.9.0
+elasticsearch==8.15.1
 influxdb_client==1.36.1
 kafka-python==2.0.2
 nats-py==2.6.0

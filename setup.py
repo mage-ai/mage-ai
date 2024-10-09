@@ -120,7 +120,7 @@ setuptools.setup(
         ],
         'streaming': [
             'confluent-avro~=1.8.0',
-            'elasticsearch==8.9.0',
+            'elasticsearch==8.15.1',
             'influxdb_client==1.36.1',
             'kafka-python==2.0.2',
             'nats-py==2.6.0',
@@ -158,7 +158,7 @@ setuptools.setup(
             'dbt-sqlserver==1.7.4',
             'dbt-trino==1.7.1',
             'duckdb==1.0.0',
-            'elasticsearch==8.9.0',
+            'elasticsearch==8.15.1',
             'google-api-core~=2.15.0',
             'google-api-python-client~=2.70.0',
             'google-cloud-bigquery~=3.14.1',

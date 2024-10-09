@@ -24,6 +24,7 @@ from mage_integrations.destinations.elasticsearch.target_elasticsearch.common im
     SCHEME,
     SSL_CA_FILE,
     USERNAME,
+    VERIFY_CERTS,
     to_daily,
     to_monthly,
     to_yearly,
@@ -184,6 +185,8 @@ class ElasticSink(BatchSink):
         if SSL_CA_FILE in self.config:
             scheme = "https"
             config["ca_certs"] = self.config[SSL_CA_FILE]
+
+        config[VERIFY_CERTS] = self.config.get(VERIFY_CERTS, True)
 
         config["hosts"] = [f"{scheme}://{self.config[HOST]}:{self.config[PORT]}"]
 
