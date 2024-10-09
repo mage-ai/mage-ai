@@ -1,4 +1,4 @@
-from mage_integrations.utils.parsers import encode_complex
+from mage_integrations.utils.parsers import encode_complex, process_data
 from singer.messages import (
     RecordMessage,
     SchemaMessage as SchemaMessageOriginal,
@@ -45,8 +45,9 @@ class SchemaMessage(SchemaMessageOriginal):
 
 def format_message(message):
     try:
+        processed_data = process_data(message.asdict())
         return simplejson.dumps(
-            message.asdict(),
+            processed_data,
             default=encode_complex,
             ignore_nan=True,
             use_decimal=True,
