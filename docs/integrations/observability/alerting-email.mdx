@@ -59,6 +59,19 @@ notification_config:
 
 Change the values for each key under the `email_config` section.
 
+## Using Environment Variables for Dynamic Email Recipients
+
+For flexibility, you can use environment variables to dynamically manage the list of email recipients. This is especially useful when deploying the application in different environments (development, staging, production) where the email addresses might vary.
+On top of that we can provide the email list so we dont need to define it one by one .
+
+```yaml
+to_emails: "{{ env('EMAIL_RECIPIENTS') }}" # Use environment variable for recipients
+```
+
+```
+EMAIL_RECIPIENTS="email-1@local.net,email-2@local.net"
+```
+
 ## Customize message templates
 
 You can customize message templates in `notification_config`. Here is an example config:
