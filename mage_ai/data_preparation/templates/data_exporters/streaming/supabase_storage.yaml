@@ -1,0 +1,12 @@
+connector_type: supabase_storage
+bucket: bucket
+prefix: prefix
+url: url
+api_key: api_key
+login_type: password
+password: password
+email: email
+file_options: null
+file_type: 'parquet'
+buffer_size_mb: 5
+buffer_timeout_seconds: 300

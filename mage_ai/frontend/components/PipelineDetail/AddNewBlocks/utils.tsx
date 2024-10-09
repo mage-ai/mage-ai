@@ -67,6 +67,7 @@ const getDataSourceTypes = (
         DataSourceTypeEnum.RABBITMQ,
         DataSourceTypeEnum.REDSHIFT,
         DataSourceTypeEnum.SNOWFLAKE,
+        DataSourceTypeEnum.SUPABASE_STORAGE,
         DataSourceTypeEnum.TRINO,
       ],
       [BlockTypeEnum.TRANSFORMER]: [
