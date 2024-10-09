@@ -58,12 +58,16 @@ class ActiveMQSink(BaseSink):
         )
         for message in messages:
             if isinstance(message, dict):
-                data = message.get('data', message)
-                metadata = message.get('metadata', None)
+                data = message.get('message', message)
+                headers = message.get('headers', None)
             else:
                 data = message
-                metadata = None
+                headers = None
+
+            self._print(f'Sending message: {data}')
+            self._print(f'With headers: {headers}')
+
             self.connection.send(destination=f'/queue/{self.config.queue_name}',
                                  body=json.dumps(data).encode('utf-8'),
-                                 headers=metadata,
+                                 headers=headers,
                                  )

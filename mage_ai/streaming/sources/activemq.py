@@ -18,10 +18,16 @@ class ActiveMQConfig(BaseConfig):
     configure_consume: bool = False
     username: str = 'admin'
     password: str = 'admin'
+    heartbeats: tuple = (10000, 10000)
 
 
-def messageProcessingFunction(message, handler):
+def messageProcessingFunction(message, headers, handler):
     print('Recieved message: "%s"' % message)
+    print('Recieved headers: "%s"' % headers)
+    message = {
+        "message" : message,
+        "headers" : headers
+    }
     handler([message])
 
 
@@ -38,7 +44,7 @@ class ActiveMQMsgListener(stomp.ConnectionListener):
         print('Received an error "%s"' % frame.body)
 
     def on_message(self, frame):
-        self.processMessage(frame.body, self.handler)
+        self.processMessage(frame.body, frame.headers, self.handler)
 
 
 class ActiveMQSource(BaseSource):
@@ -50,11 +56,12 @@ class ActiveMQSource(BaseSource):
         password = self.config.password
         connection_host = self.config.connection_host
         connection_port = self.config.connection_port
+        heartbeats = tuple(self.config.heartbeats)
 
         self._print(f'Starting to initialize consumer for queue {queue_name}')
 
         try:
-            conn = stomp.Connection11([(connection_host, connection_port)])
+            conn = stomp.Connection11([(connection_host, connection_port)], heartbeats=heartbeats)
             self._print('Connecting to broker')
             conn.connect(username, password, wait=True)
             self.connection = conn
@@ -76,7 +83,7 @@ class ActiveMQSource(BaseSource):
         listener = ActiveMQMsgListener(processMessage=messageProcessingFunction,
                                        conn=self.connection,
                                        handler=handler)
-        self.connection.set_listener('ActiceMQListerner', listener)
+        self.connection.set_listener('ActiveMQListerner', listener)
         self.connection.subscribe(destination=f'/queue/{self.config.queue_name}',
                                   id=uuid.uuid4(), headers={})
         try:
