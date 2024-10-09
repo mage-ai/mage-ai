@@ -29,3 +29,21 @@ def escape_quotes(line: str, single: bool = True, double: bool = True) -> str:
     if double:
         new_line = new_line.replace('\"', '\\"')
     return new_line
+
+
+def map_json_to_airtable(data_types):
+    # Extract the non-null type (ignoring 'null')
+    data_type = next((t for t in data_types if t != 'null'), 'string')
+
+    # Mapping from JSON types to Airtable types
+    type_mapping = {
+        'string': 'multilineText',
+        'integer': 'number',
+        'boolean': 'checkbox',
+        'array': 'multipleSelects',
+        'object': 'singleCollaborator',
+        'number': 'number',
+        'date-time': 'dateTime'
+    }
+
+    return type_mapping.get(data_type, 'str')
