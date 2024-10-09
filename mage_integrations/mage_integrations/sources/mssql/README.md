@@ -11,7 +11,7 @@ You must enter the following credentials when configuring this source:
 | Key | Description | Sample value
 | --- | --- | --- |
 | `database` | The name of the database you want to read data from. | `msdb` |
-| `host` | The host name of your MSSQL database. | `172.20.0.2` |
+| `host` | The host name of your MSSQL database. Port number needs to be included at the end. | `172.20.0.2,1433` |
 | `password` | Password for the MSSQL user to access the database. | `abc123...` |
 | `port` | Port of the running database (typically 1433). | `1433` |
 | `schema` | Schema of the data you want to read data from. | `public` |
