@@ -15,6 +15,7 @@ API_KEY = "api_key"
 SSL_CA_FILE = "ssl_ca_file"
 VERIFY_CERTS = "verify_certs"
 INDEX_FORMAT = "index_format"
+INDEX_OP_TYPE = "_op_type"
 INDEX_TEMPLATE_FIELDS = "index_schema_fields"
 METADATA_FIELDS = "metadata_fields"
 

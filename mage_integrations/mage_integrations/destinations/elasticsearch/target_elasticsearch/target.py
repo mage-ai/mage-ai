@@ -14,6 +14,7 @@ from mage_integrations.destinations.elasticsearch.target_elasticsearch.common im
     BEARER_TOKEN,
     HOST,
     INDEX_FORMAT,
+    INDEX_OP_TYPE,
     INDEX_TEMPLATE_FIELDS,
     METADATA_FIELDS,
     PASSWORD,
@@ -118,6 +119,16 @@ class TargetElasticsearch(Target):
     to yearly `{{ to_yearly(timestamp) }}`
             """,
             default="{{ stream_name }}",
+        ),
+        th.Property(
+            INDEX_OP_TYPE,
+            th.StringType,
+            description="""Elasticsearch Data Streams support only the `create` action
+            within the _op_type field, for other index modes refer to the documentation:
+
+    https://www.elastic.co/guide/en/elasticsearch/client/python-api/current/client-helpers.html
+            """,
+            default="index",
         ),
         th.Property(
             INDEX_TEMPLATE_FIELDS,

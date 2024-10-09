@@ -20,6 +20,7 @@ By default, table name config is used to set elasticsearch `index` name
 | ssl_ca_file | path of the the SSL certificate for cert verification | None | Not Required |
 | verify_certs | disable the SSL certificate verification | True | Not Required |
 | index_schema_fields | this id map allows you to specify specific record values via jsonpath from the stream to be used in index formulation. | None | Not Required |
+| _op_type | select the operation type depending on the indexing mode | "index" | Not Required |
 | metadata_fields | this config is used to pull out specific fields from the record to be included in the ES index request. | None | Not Required |
 | bulk_kwargs | the arguments of this field will configure the `bulk` operation in the destination. See options below this table | None | Not Required |
 

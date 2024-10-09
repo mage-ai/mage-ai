@@ -17,6 +17,7 @@ from mage_integrations.destinations.elasticsearch.target_elasticsearch.common im
     ELASTIC_YEARLY_FORMAT,
     HOST,
     INDEX_FORMAT,
+    INDEX_OP_TYPE,
     INDEX_TEMPLATE_FIELDS,
     METADATA_FIELDS,
     PASSWORD,
@@ -140,7 +141,8 @@ class ElasticSink(BatchSink):
             distinct_indices.add(index)
             updated_records.append(
                 {
-                    **{"_op_type": "index", "_index": index, "_source": r},
+                    **{"_op_type": self.config.get(INDEX_OP_TYPE, "index"), "_index": index,
+                       "_source": r},
                     **build_fields(self.stream_name, metadata_fields, r, self.logger),
                 }
             )
