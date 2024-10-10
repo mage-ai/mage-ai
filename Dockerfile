@@ -17,6 +17,8 @@ RUN \
   msodbcsql18\
   unixodbc-dev \
   graphviz \
+  # postgres dependencies \
+  postgresql-client \
   # R
   r-base && \
   apt-get clean && \
