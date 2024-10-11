@@ -119,16 +119,16 @@ requests_aws4auth==1.1.2
 stomp.py==8.1.0
 
 # DBT
-dbt-bigquery==1.7.2
-dbt-clickhouse==1.7.1
-dbt-core==1.7.4
-dbt-duckdb==1.7.0
-dbt-postgres==1.7.4
-dbt-redshift==1.7.1
-dbt-snowflake==1.7.1
-dbt-spark==1.7.1
-dbt-sqlserver==1.7.4
-dbt-trino==1.7.1
+dbt-bigquery==1.8.2
+dbt-clickhouse==1.8.4
+dbt-core==1.8.7
+dbt-duckdb==1.8.4
+dbt-postgres==1.8.2
+dbt-redshift==1.8.1
+dbt-snowflake==1.8.3
+dbt-spark==1.8.0
+dbt-sqlserver==1.8.4
+dbt-trino==1.8.2
 
 async-timeout==4.0.3
 attrs==17.4.0; python_version < '3.12'
