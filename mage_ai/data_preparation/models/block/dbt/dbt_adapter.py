@@ -5,7 +5,7 @@ from typing import Any, Dict, Optional, Tuple, Union
 
 import dbt.flags as flags
 import pandas as pd
-from dbt.adapters.base import BaseRelation, Credentials
+from dbt.adapters.base import BaseRelation
 from dbt.adapters.factory import (
     Adapter,
     cleanup_connections,
@@ -15,7 +15,7 @@ from dbt.adapters.factory import (
 )
 from dbt.config.profile import read_user_config
 from dbt.config.runtime import RuntimeConfig
-from dbt.contracts.connection import AdapterResponse
+from dbt.contracts.connection import AdapterResponse, Credentials
 from dbt.contracts.relation import RelationType
 
 from mage_ai.data_preparation.models.block.dbt.profiles import Profiles
