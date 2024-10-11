@@ -20,9 +20,9 @@ RUN \
   nfs-common \
   # odbc dependencies
   msodbcsql18 \
-  unixodbc-dev && \
+  unixodbc-dev \
   # postgres dependencies \
-  postgresql-client \
+  postgresql-client && \
   apt-get clean && \
   rm -rf /var/lib/apt/lists/*
 
