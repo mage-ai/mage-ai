@@ -13,8 +13,8 @@ from dbt.adapters.factory import (
     register_adapter,
     reset_adapters,
 )
-from dbt.config import read_user_config
 from dbt.config.runtime import RuntimeConfig
+from dbt.config.utils import read_user_config
 from dbt.contracts.connection import AdapterResponse, Credentials
 from dbt.contracts.relation import RelationType
 
