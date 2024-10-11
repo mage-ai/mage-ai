@@ -75,8 +75,6 @@ setuptools.setup(
             'dbt-spark==1.8.0',
             'dbt-sqlserver==1.8.4',
             'dbt-trino==1.8.2',
-            'sqlfluff==3.0.7',
-            'sqlfluff-templater-dbt==3.0.7',
             'trino~=0.326',
         ],
         'google-cloud-storage': [
