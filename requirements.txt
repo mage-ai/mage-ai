@@ -131,8 +131,6 @@ dbt-snowflake==1.8.3
 dbt-spark==1.8.0
 dbt-sqlserver==1.8.4
 dbt-trino==1.8.2
-sqlfluff==3.0.7
-sqlfluff-templater-dbt==3.0.7
 
 async-timeout==4.0.3
 attrs==22.2.0; python_version < '3.12'
