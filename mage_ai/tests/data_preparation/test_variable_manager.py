@@ -1,3 +1,5 @@
+from unittest.mock import patch
+
 import pandas as pd
 from pandas.testing import assert_frame_equal
 
@@ -14,6 +16,11 @@ from mage_ai.settings.repo import set_repo_path
 from mage_ai.tests.base_test import DBTestCase
 
 
+@patch('mage_ai.data_preparation.models.pipeline.project_platform_activated', lambda: False)
+@patch('mage_ai.data_preparation.variable_manager.project_platform_activated', lambda: False)
+@patch('mage_ai.orchestration.db.models.schedules.project_platform_activated', lambda: False)
+@patch('mage_ai.settings.platform.project_platform_activated', lambda: False)
+@patch('mage_ai.settings.repo.project_platform_activated', lambda: False)
 class VariableManagerTest(DBTestCase):
     def test_add_and_get_variable(self):
         self.__create_pipeline("test pipeline 1")
