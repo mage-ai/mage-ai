@@ -33,6 +33,6 @@ class VariableManagerProjectPlatformTests(ProjectPlatformMixin):
             pipeline.save()
 
             retrieved_value_1 = get_global_variables(None, pipeline=pipeline),
-            self.assertEqual(retrieved_value_1, pipeline.variables)
+            self.assertEqual(retrieved_value_1, pipeline.variables,)
             retrieved_value_2 = get_global_variables(pipeline.uuid)
             self.assertEqual(retrieved_value_2, pipeline.variables)
