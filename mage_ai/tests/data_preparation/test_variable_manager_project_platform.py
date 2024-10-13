@@ -11,7 +11,7 @@ from mage_ai.tests.shared.mixins import ProjectPlatformMixin
 @patch('mage_ai.data_preparation.variable_manager.project_platform_activated', lambda: True)
 @patch('mage_ai.data_preparation.models.pipeline.project_platform_activated', lambda: True)
 class VariableManagerProjectPlatformTests(ProjectPlatformMixin):
-    async def test_get_global_variable(self):
+    def test_get_global_variable(self):
         for settings in self.repo_paths.values():
             pipeline = Pipeline.create(
                 self.faker.unique.name(),
@@ -20,10 +20,10 @@ class VariableManagerProjectPlatformTests(ProjectPlatformMixin):
             value = self.faker.unique.name()
             pipeline.variables = dict(mage=value)
             pipeline.save()
+            retrieved_value = get_global_variable(pipeline.uuid, "mage")
+            self.assertEqual(retrieved_value, value)
 
-            self.assertEqual(get_global_variable(pipeline.uuid, "mage"), value)
-
-    async def test_get_global_variables(self):
+    def test_get_global_variables(self):
         for settings in self.repo_paths.values():
             pipeline = Pipeline.create(
                 self.faker.unique.name(),
@@ -32,10 +32,7 @@ class VariableManagerProjectPlatformTests(ProjectPlatformMixin):
             pipeline.variables = self.faker.unique.name()
             pipeline.save()
 
-            self.assertEqual(
-                get_global_variables(None, pipeline=pipeline),
-                pipeline.variables,
-            )
-            self.assertEqual(
-                get_global_variables(pipeline.uuid), pipeline.variables
-            )
+            retrieved_value_1 = get_global_variables(None, pipeline=pipeline),
+            self.assertEqual(retrieved_value_1, pipeline.variables)
+            retrieved_value_2 = get_global_variables(pipeline.uuid)
+            self.assertEqual(retrieved_value_2, pipeline.variables)
