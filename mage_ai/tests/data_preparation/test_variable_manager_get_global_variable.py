@@ -1,0 +1,27 @@
+from unittest.mock import patch
+
+from mage_ai.data_preparation.models.pipeline import Pipeline
+from mage_ai.data_preparation.variable_manager import get_global_variable
+from mage_ai.tests.shared.mixins import ProjectPlatformMixin
+
+
+class VariableManagerGetGlobalVariableTests(ProjectPlatformMixin):
+    def test_get_global_variable(self):
+        with patch(
+            "mage_ai.data_preparation.variable_manager.project_platform_activated",
+            lambda: True,
+        ):
+            with patch(
+                "mage_ai.data_preparation.models.pipeline.project_platform_activated",
+                lambda: True,
+            ):
+                for settings in self.repo_paths.values():
+                    pipeline = Pipeline.create(
+                        self.faker.unique.name(),
+                        repo_path=settings["full_path"],
+                    )
+                    value = self.faker.unique.name()
+                    pipeline.variables = dict(mage=value)
+                    pipeline.save()
+
+                    self.assertEqual(get_global_variable(pipeline.uuid, "mage"), value)
