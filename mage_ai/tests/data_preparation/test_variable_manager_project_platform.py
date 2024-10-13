@@ -8,9 +8,9 @@ from mage_ai.data_preparation.variable_manager import (
 from mage_ai.tests.shared.mixins import ProjectPlatformMixin
 
 
-@patch('mage_ai.settings.platform.project_platform_activated', lambda: True)
-@patch('mage_ai.data_preparation.variable_manager.project_platform_activated', lambda: True)
 @patch('mage_ai.data_preparation.models.pipeline.project_platform_activated', lambda: True)
+@patch('mage_ai.data_preparation.variable_manager.project_platform_activated', lambda: True)
+@patch('mage_ai.settings.platform.project_platform_activated', lambda: True)
 class VariableManagerProjectPlatformTests(ProjectPlatformMixin):
     def test_get_global_variable(self):
         for settings in self.repo_paths.values():
