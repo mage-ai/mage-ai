@@ -556,6 +556,7 @@ def get_global_variable(
     )
 
     print('################# DEBUG (get_global_variable) #################')
+    print(f'For key: {key}')
     print(f'Currrent pipeline.variables: {pipeline.variables}')
     print('################# DEBUG END #################')
 
@@ -571,7 +572,7 @@ def get_global_variable(
         )
 
     print('################# DEBUG (get_global_variable) #################')
-    print(f'Found variable_value: {variable_value}')
+    print(f'Found variable_value for key = {key}: {variable_value}')
     print('################# DEBUG END #################')
 
     return variable_value
@@ -604,7 +605,7 @@ def set_global_variable(
     pipeline = Pipeline.get(pipeline_uuid, repo_path=repo_path)
 
     print('################# DEBUG (set_global_variable) #################')
-    print(f'Setting global variable {key} in pipeline {pipeline_uuid}')
+    print(f'Setting global variable {key} to {value} in pipeline {pipeline_uuid}')
     print(f'Currrent pipeline.variables: {pipeline.variables}')
     print('################# DEBUG END #################')
 
