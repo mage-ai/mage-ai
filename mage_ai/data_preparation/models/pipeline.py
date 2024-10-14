@@ -4,6 +4,7 @@ import json
 import os
 import shutil
 import tempfile
+import time
 import zipfile
 from datetime import datetime, timezone
 from io import BytesIO
@@ -2328,6 +2329,9 @@ class Pipeline:
         extension_uuid: str = None,
         widget: bool = False,
     ):
+        # Add a minimal delay to avoid getting the same timestamp for multiple files
+        time.sleep(0.0001)
+
         blocks_current = sorted([b.uuid for b in self.blocks_by_uuid.values()])
 
         if block_uuid is not None:
