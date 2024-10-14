@@ -46,6 +46,8 @@ def safe_write(
                 write_func(fp, content)
             else:
                 fp.write(content)
+            fp.flush()
+            fp.close()
         success = True
     except Exception as e:
         raise e
