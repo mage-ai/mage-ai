@@ -2329,7 +2329,8 @@ class Pipeline:
         extension_uuid: str = None,
         widget: bool = False,
     ):
-        # Add a minimal delay to avoid getting the same timestamp for multiple files
+        # Introduce a small delay to prevent multiple changes from generating
+        # identical timestamps for the pipeline YAML file
         time.sleep(0.001)
 
         blocks_current = sorted([b.uuid for b in self.blocks_by_uuid.values()])
