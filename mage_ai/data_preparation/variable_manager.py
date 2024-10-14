@@ -554,14 +554,27 @@ def get_global_variable(
         pipeline_uuid,
         all_projects=project_platform_activated(),
     )
+
+    print('################# DEBUG (get_global_variable) #################')
+    print(f'Currrent pipeline.variables: {pipeline.variables}')
+    print('################# DEBUG END #################')
+
     if pipeline.variables is not None:
-        return pipeline.variables.get(key)
+        variable_value = pipeline.variables.get(key)
     else:
-        return VariableManager(variables_dir=get_variables_dir()).get_variable(
+        variable_value = VariableManager(
+            variables_dir=get_variables_dir()
+        ).get_variable(
             pipeline_uuid,
             'global',
             key,
         )
+
+    print('################# DEBUG (get_global_variable) #################')
+    print(f'Found variable_value: {variable_value}')
+    print('################# DEBUG END #################')
+
+    return variable_value
 
 
 def get_variable(pipeline_uuid: str, block_uuid: str, key: str, **kwargs) -> Any:
@@ -590,9 +603,18 @@ def set_global_variable(
 
     pipeline = Pipeline.get(pipeline_uuid, repo_path=repo_path)
 
+    print('################# DEBUG (set_global_variable) #################')
+    print(f'Setting global variable {key} in pipeline {pipeline_uuid}')
+    print(f'Currrent pipeline.variables: {pipeline.variables}')
+    print('################# DEBUG END #################')
+
     if pipeline.variables is None:
         pipeline.variables = get_global_variables(pipeline_uuid)
     pipeline.update_global_variable(key, value)
+
+    print('################# DEBUG (set_global_variable) #################')
+    print(f'Updated pipeline.variables: {pipeline.variables}')
+    print('################# DEBUG END #################')
 
 
 def delete_global_variable(
