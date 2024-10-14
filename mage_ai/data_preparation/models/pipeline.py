@@ -2209,7 +2209,13 @@ class Pipeline:
         if self.variables is None:
             self.variables = {}
         self.variables[key] = value
+
         self.save()
+
+        print('################# DEBUG (update_global_variable) #################')
+        print(f'Updated self.variables: {self.variables}')
+        print(f'Current time: {datetime.now()}')
+        print('################# DEBUG END #################')
 
     def delete_global_variable(self, key):
         del self.variables[key]
@@ -2379,6 +2385,11 @@ class Pipeline:
         content = yaml.dump(pipeline_dict, allow_unicode=True)
 
         safe_write(self.config_path, content)
+        print('################# DEBUG (save: safe_write) #################')
+        print(f'Updated self.config_path: {self.config_path}')
+        print(f'Updated pipeline_dict: {pipeline_dict}')
+        print(f'Current time: {datetime.now()}')
+        print('################# DEBUG END #################')
 
         File.create(
             PIPELINE_CONFIG_FILE,
@@ -2387,6 +2398,11 @@ class Pipeline:
             repo_path=self.repo_path,
             file_version_only=True,
         )
+        print('################# DEBUG (save: File.create) #################')
+        print(f'pipeline path: {PIPELINES_FOLDER}/{self.uuid}')
+        print(f'content: {content}')
+        print(f'Current time: {datetime.now()}')
+        print('################# DEBUG END #################')
 
     def should_save_trigger_in_code_automatically(self) -> bool:
         from mage_ai.data_preparation.models.project import Project
