@@ -320,6 +320,8 @@ class File:
             with open(file_path, **kwargs) as f:
                 if content:
                     f.write(content or '')
+                f.flush()
+                f.close()
         self.validate_content(dir_path, filename, content)
 
         update_caches(repo_path, dir_path, filename)
