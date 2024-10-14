@@ -2329,6 +2329,10 @@ class Pipeline:
         extension_uuid: str = None,
         widget: bool = False,
     ):
+        # Introduce a small delay to prevent multiple changes from generating
+        # identical timestamps for the pipeline YAML file
+        time.sleep(0.001)
+
         blocks_current = sorted([b.uuid for b in self.blocks_by_uuid.values()])
 
         if block_uuid is not None:
@@ -2388,10 +2392,6 @@ class Pipeline:
             repo_path=self.repo_path,
             file_version_only=True,
         )
-
-        # Introduce a small delay to prevent multiple changes from generating
-        # identical timestamps for the pipeline YAML file
-        time.sleep(0.001)
 
     def should_save_trigger_in_code_automatically(self) -> bool:
         from mage_ai.data_preparation.models.project import Project
