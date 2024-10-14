@@ -2330,7 +2330,7 @@ class Pipeline:
         widget: bool = False,
     ):
         # Add a minimal delay to avoid getting the same timestamp for multiple files
-        time.sleep(0.0001)
+        time.sleep(0.001)
 
         blocks_current = sorted([b.uuid for b in self.blocks_by_uuid.values()])
 
