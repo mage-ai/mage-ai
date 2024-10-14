@@ -113,7 +113,7 @@ def async_cache_file_read(cache):
 file_cache = MemorySizeLRUCache()
 
 
-@cache_file_read(file_cache)
+# @cache_file_read(file_cache)
 def read_yaml_file(file_path, mode: str = 'r', **kwargs):
     with open(file_path, mode, **kwargs) as file:
         return load_yaml(file.read()) or {}
