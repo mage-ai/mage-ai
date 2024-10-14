@@ -556,6 +556,7 @@ def get_global_variable(
     )
 
     print('################# DEBUG (get_global_variable) #################')
+    print(f'Current time: {datetime.now()}')
     print(f'For key: {key}')
     print(f'Currrent pipeline.variables: {pipeline.variables}')
     print('################# DEBUG END #################')
@@ -572,6 +573,7 @@ def get_global_variable(
         )
 
     print('################# DEBUG (get_global_variable) #################')
+    print(f'Current time: {datetime.now()}')
     print(f'Found variable_value for key = {key}: {variable_value}')
     print('################# DEBUG END #################')
 
@@ -605,6 +607,7 @@ def set_global_variable(
     pipeline = Pipeline.get(pipeline_uuid, repo_path=repo_path)
 
     print('################# DEBUG (set_global_variable) #################')
+    print(f'Current time: {datetime.now()}')
     print(f'Setting global variable {key} to {value} in pipeline {pipeline_uuid}')
     print(f'Currrent pipeline.variables: {pipeline.variables}')
     print('################# DEBUG END #################')
@@ -615,6 +618,7 @@ def set_global_variable(
 
     print('################# DEBUG (set_global_variable) #################')
     print(f'Updated pipeline.variables: {pipeline.variables}')
+    print(f'Current time: {datetime.now()}')
     print('################# DEBUG END #################')
 
 
