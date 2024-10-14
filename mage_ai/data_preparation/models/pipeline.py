@@ -2331,7 +2331,7 @@ class Pipeline:
     ):
         # Introduce a small delay to prevent multiple changes from generating
         # identical timestamps for the pipeline YAML file
-        time.sleep(0.0005)
+        time.sleep(0.0002)
 
         blocks_current = sorted([b.uuid for b in self.blocks_by_uuid.values()])
 
