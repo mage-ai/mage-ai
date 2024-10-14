@@ -375,6 +375,7 @@ class File:
         try:
             with open(self.file_path, encoding='utf-8') as fp:
                 file_content = fp.read()
+                fp.close()
             return file_content
         except FileNotFoundError as err:
             print(f'[ERROR] File.content: {err}')
