@@ -1,4 +1,5 @@
 DESTINATIONS = [
+    dict(name='Airtable'),
     dict(name='Amazon S3'),
     dict(name='BigQuery'),
     dict(name='Clickhouse'),
