@@ -74,6 +74,16 @@ const SHARED_EMPHASIZED_TEXT_PROPS = {
 };
 const BLOCK_COLOR_HEX_CODE_MAPPING = getBlockColorHexCodeMapping();
 
+const RESERVED_BLOCK_CONFIG_KEYS = [
+  'data_integration',
+  'disable_output_preview',
+  'dynamic',
+  'file_path',
+  'file_source',
+  'global_data_product',
+  'reduce_output',
+];
+
 type BlockSettingsProps = {
   addNewBlockAtIndex: (
     block: BlockRequestPayloadType,
@@ -186,12 +196,10 @@ function BlockSettings({
 
   const blockVariables: { [key: string]: string } = useMemo(
     () =>
-      ignoreKeys(blockAttributes?.configuration || configuration, [
-        'data_integration',
-        'file_path',
-        'file_source',
-        'global_data_product',
-      ]),
+      ignoreKeys(
+        blockAttributes?.configuration || configuration,
+        RESERVED_BLOCK_CONFIG_KEYS,
+      ),
     [blockAttributes?.configuration, configuration],
   );
 
@@ -484,7 +492,7 @@ function BlockSettings({
           <Spacing mt={PADDING_UNITS}>
             <Checkbox
               checked={!!blockAttributes?.configuration?.disable_output_preview}
-              label="Disable output preview"
+              label="Disable output preview on page load"
               onClick={() =>
                 setBlockAttributes((prev) => ({
                   ...prev,
