@@ -308,7 +308,7 @@ WHERE TABLE_SCHEMA = '{schema_name}' AND TABLE_NAME = '{table_name}'
                 if len(t) >= 1 and type(t[0]) is int:
                     arr.append(t)
 
-        print(arr)
+        self.logger.debug(f'arr: {arr}')
 
         if len(arr) == 1:
             if len(arr[0]) >= 1:
