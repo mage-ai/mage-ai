@@ -226,7 +226,8 @@ class Salesforce():
         self.domain = domain
         self.select_fields_by_default = select_fields_by_default is True or (isinstance(
             select_fields_by_default, str) and select_fields_by_default.lower() == 'true')
-        self.default_start_date = default_start_date
+        # validate date and convert to the proper format
+        self.default_start_date = singer_utils.strptime_to_utc(default_start_date).strftime( "%Y-%m-%dT%H:%M:%SZ")
         self.rest_requests_attempted = 0
         self.jobs_completed = 0
         self.data_url = "{}/services/data/v53.0/{}"
@@ -234,9 +235,6 @@ class Salesforce():
         self.login_timer = None
 
         self.auth = SalesforceAuth.from_credentials(credentials, domain=self.domain)
-
-        # validate start_date
-        singer_utils.strptime(default_start_date)
 
     # pylint: disable=anomalous-backslash-in-string,line-too-long
     def check_rest_quota_usage(self, headers):
