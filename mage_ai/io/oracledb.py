@@ -244,10 +244,8 @@ FETCH FIRST {limit} ROWS ONLY
             # Remove extraneous surrounding double quotes
             # that get added while performing conversion to string.
             df_[col] = df_[col].apply(lambda x: x.strip('"') if x and isinstance(x, str) else x)
-        df_.replace({np.NaN: None}, inplace=True)
-        values = []
-        for i in range(0, len(df_)):
-            values.append(tuple(df_.fillna('').values[i]))
+        df_.fillna('', inplace=True)
+        values = list(df_.itertuples(index=False, name=None))
 
         # Create values placeholder
         colmn_names = df.columns.tolist()
