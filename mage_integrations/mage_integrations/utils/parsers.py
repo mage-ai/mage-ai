@@ -5,7 +5,7 @@ from typing import Any, Callable
 
 
 def process_data(
-    data: dict[str, Any] | list[Any] | bytes | Any,
+        data: dict[str, Any] | list[Any] | bytes | Any,
 ) -> dict[str, Any] | list[Any] | Any:
     """Recursively processes the input data based on its type.
 
@@ -36,7 +36,6 @@ def process_data(
         """
 
         return base64.b64encode(obj).decode("utf-8", errors="replace")
-
 
     def process_dict(d: dict[str, Any]) -> dict[str, Any]:
         return {key: process_data(value) for key, value in d.items()}
