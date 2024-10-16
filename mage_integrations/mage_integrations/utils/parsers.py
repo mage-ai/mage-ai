@@ -1,12 +1,12 @@
 import base64
 import uuid
 from datetime import datetime, timedelta
-from typing import Any, Callable
+from typing import Any, Callable, Union
 
 
 def process_data(
-        data: dict[str, Any] | list[Any] | bytes | Any,
-) -> dict[str, Any] | list[Any] | Any:
+        data: Union[dict[str, Any], list[Any], bytes, Any],
+) -> Union[dict[str, Any], list[Any], Any]:
     """Recursively processes the input data based on its type.
 
     If the input data is a dictionary, recursively processes each key and value.
