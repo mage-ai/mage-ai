@@ -1,5 +1,7 @@
+import base64
 import uuid
 from datetime import datetime, timedelta
+from typing import Any, Callable
 
 
 def process_data(
@@ -20,22 +22,22 @@ def process_data(
     """
 
     def process_bytes(obj: Any) -> Any:
-    """Encodes the input object to base64 if it is a bytes object.
+        """Encodes the input object to base64 if it is a bytes object.
 
-    If the input object is a bytes object, encodes it to base64 and returns a string.
+        If the input object is a bytes object, encodes it to base64 and returns a string.
 
-    Args:
-        obj: The input object which can be a bytes object or any other type.
+        Args:
+            obj: The input object which can be a bytes object or any other type.
 
-    Returns:
-        The input object encoded to base64 if it is a bytes object,
-        otherwise returns the input object unchanged.
+        Returns:
+            The input object encoded to base64 if it is a bytes object,
+            otherwise returns the input object unchanged.
 
-    """
+        """
 
-    return base64.b64encode(obj).decode("utf-8", errors="replace")
+        return base64.b64encode(obj).decode("utf-8", errors="replace")
 
-    
+
     def process_dict(d: dict[str, Any]) -> dict[str, Any]:
         return {key: process_data(value) for key, value in d.items()}
 
@@ -48,7 +50,7 @@ def process_data(
     type_handlers: dict[type, Callable[[Any], Any]] = {
         dict: process_dict,
         list: process_list,
-        bytes: encode_complex_obj,
+        bytes: process_bytes,
         datetime: process_datatime,
     }
 
