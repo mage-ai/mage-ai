@@ -1,12 +1,12 @@
 import base64
 import uuid
 from datetime import datetime, timedelta
-from typing import Any, Callable, Union
+from typing import Any, Callable, Union, Dict, List
 
 
 def process_data(
-        data: Union[dict[str, Any], list[Any], bytes, Any],
-) -> Union[dict[str, Any], list[Any], Any]:
+        data: Union[Dict[str, Any], List[Any], bytes, Any],
+) -> Union[Dict[str, Any], List[Any], Any]:
     """Recursively processes the input data based on its type.
 
     If the input data is a dictionary, recursively processes each key and value.
@@ -37,16 +37,16 @@ def process_data(
 
         return base64.b64encode(obj).decode("utf-8", errors="replace")
 
-    def process_dict(d: dict[str, Any]) -> dict[str, Any]:
+    def process_dict(d: Dict[str, Any]) -> Dict[str, Any]:
         return {key: process_data(value) for key, value in d.items()}
 
-    def process_list(lst: list[Any]) -> list[Any]:
+    def process_list(lst: List[Any]) -> List[Any]:
         return [process_data(item) for item in lst]
 
     def process_datatime(dt: datetime) -> str:
         return dt.isoformat()
 
-    type_handlers: dict[type, Callable[[Any], Any]] = {
+    type_handlers: Dict[type, Callable[[Any], Any]] = {
         dict: process_dict,
         list: process_list,
         bytes: process_bytes,
