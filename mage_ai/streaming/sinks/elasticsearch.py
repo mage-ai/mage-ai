@@ -54,7 +54,7 @@ class ElasticSearchSink(BaseSink):
         self._print(f'Batch ingest data {messages}, time={time.time()}')
         docs = []
         for msg in messages:
-            doc = {'_index': self.config.index_name, 'doc': msg}
+            doc = {'_index': self.config.index_name, '_source': msg}
             if self.config._id is not None:
                 doc['id'] = msg[self.config._id]
             if self.config._op_type is not None:
