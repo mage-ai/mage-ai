@@ -1,11 +1,12 @@
 from dataclasses import dataclass
+from typing import List
 
 from mage_ai.shared.config import BaseConfig
 
 
 @dataclass
 class TeamsConfig(BaseConfig):
-    webhook_url: str = None
+    webhook_url: List[str] = None
 
     def __post_init__(self):
         # Normalize webhook_url to a list if it's provided as a string
