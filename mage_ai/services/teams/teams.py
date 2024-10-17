@@ -1,5 +1,6 @@
-from mage_ai.services.teams.config import TeamsConfig
 import requests
+
+from mage_ai.services.teams.config import TeamsConfig
 
 
 def send_teams_message(
@@ -7,13 +8,14 @@ def send_teams_message(
     message: str,
     title: str = 'Mage pipeline run status logs',
 ) -> None:
-    requests.post(
-        url=config.webhook_url,
-        json={
-            'summary': title,
-            'sections': [{
-                'activityTitle': title,
-                'activitySubtitle': message,
-            }],
-        },
-    )
+    for url in config.webhook_url:
+        requests.post(
+            url=url,
+            json={
+                'summary': title,
+                'sections': [{
+                    'activityTitle': title,
+                    'activitySubtitle': message,
+                }],
+            },
+        )
