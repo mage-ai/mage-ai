@@ -10,7 +10,7 @@ aiohttp==3.10.0
 alembic>=1.7.5
 bcrypt==4.0.1
 croniter==1.3.7
-cryptography==41.0.6
+cryptography==42.0.0
 dask>=2022.2.0
 datadog==0.44.0
 freezegun==1.2.2
@@ -21,7 +21,7 @@ ipykernel==6.15.0
 ipython==8.10.0
 itsdangerous~=1.1.0
 joblib>=1.1.0
-jupyter-server==1.23.5
+jupyter-server==2.14.1
 jupyter_client==7.4.4
 ldap3==2.9.1
 memory_profiler
@@ -90,7 +90,7 @@ pyodbc==4.0.35; python_version < '3.12'
 pyodbc==5.0.1; python_version >= '3.12'
 redshift-connector==2.0.915
 lxml==4.9.4
-snowflake-connector-python==3.5.0
+snowflake-connector-python==3.7.1
 sshtunnel==0.4.0
 tables==3.7.0; python_version < '3.11'
 tables==3.10.1; python_version >= '3.11'
@@ -112,7 +112,7 @@ kafka-python==2.0.2
 nats-py==2.6.0
 nkeys~=0.1.0; python_version < '3.12'
 nkeys~=0.2.0; python_version >= '3.12'
-opensearch-py==2.0.0
+opensearch-py==2.0.0 
 pika==1.3.1
 pymongo==4.3.3
 requests_aws4auth==1.1.2
@@ -121,9 +121,9 @@ stomp.py==8.1.0
 # DBT
 dbt-bigquery==1.7.2
 dbt-clickhouse==1.7.1
-dbt-core==1.7.4
+dbt-core==1.7.13
 dbt-duckdb==1.7.0
-dbt-postgres==1.7.4
+dbt-postgres==1.7.13
 dbt-redshift==1.7.1
 dbt-snowflake==1.7.1
 dbt-spark==1.7.1
@@ -131,7 +131,7 @@ dbt-sqlserver==1.7.4
 dbt-trino==1.7.1
 
 async-timeout==4.0.3
-attrs==17.4.0; python_version < '3.12'
+attrs==22.2.0; python_version < '3.12'
 attrs==24.2.0; python_version >= '3.12'
 backoff
 clickhouse_sqlalchemy
@@ -147,7 +147,6 @@ pendulum==2.1.0; python_version < '3.12'
 pendulum==3.0.0; python_version >= '3.12'
 pymongo_schema==0.4.1
 python-magic==0.4.27
-redshift-connector~=2.0.915
 requests_mock==1.10.0
 simple_salesforce~=1.12.5
 singer_sdk~=0.34.1
@@ -158,3 +157,7 @@ tzlocal==4.2
 xlsx2csv==0.8.1
 xmltodict==0.13.0
 zenpy==2.0.25
+
+Werkzeug==3.0.3
+setuptools==70.0.0
+sqlparse==0.5.0
