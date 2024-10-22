@@ -3,5 +3,5 @@
   "host": "",
   "password": "",
   "port": 27017,
-  "user": ""
+  "username": ""
 }
