@@ -9,7 +9,7 @@ you can customize the compute resource in the following ways:
 
 ## 1. Customize the compute resource of the Mage web service
 
-Mage web service is responsibile for running Mage web backend, scheduler service
+Mage web service is responsible for running Mage web backend, scheduler service
 and local block executions. You can customize the CPU and memory of the Mage web
 service by updating the Terraform variables and then running `terraform apply`
 
@@ -112,7 +112,7 @@ in this project. Example config:
   ```
   Please make sure the [GPU driver](https://kubernetes.io/docs/tasks/manage-gpus/scheduling-gpus/#using-device-plugins)
   is installed and run on your nodes to use the GPUs.
-* To further customize the container config of the kubernetes executor, you can sepcify the `container_config` or `job` in the k8s executor config. Here is the example:
+* To further customize the container config of the kubernetes executor, you can specify the `container_config` or `job` in the k8s executor config. Here is the example:
   ```yaml
   k8s_executor_config:
     container_config:
@@ -222,7 +222,7 @@ name: example_pipeline
 | launch_type             | The launch type of the ECS task.                                                                                                                       | FARGATE                     |
 | memory                  | The memory allocated to the ECS task.                                                                                                                  | 2048                        |
 | tags                    | The tags of the ECS task.                                                                                                                              | ['tag1', 'tag2']            |
-| wait_timeout            | The maximum wait time for the ECS task (in seoncds). The default wait timeout for the ECS task is 10 minutes. Setting to -1 will disable waiting.      | 1200 (default: 600)         |
+| wait_timeout            | The maximum wait time for the ECS task (in seconds). The default wait timeout for the ECS task is 10 minutes. Setting to -1 will disable waiting.      | 1200 (default: 600)         |
 
 Example config
 ```yaml
@@ -274,7 +274,7 @@ Customizing compute resource for GCP Cloud Run executor is coming soon.
 ### Azure Container Instance executor
 
 If your Mage app is deployed on Microsoft Azure with Mage's [terraform scripts](https://github.com/mage-ai/mage-ai-terraform-templates/tree/master/azure),
-you can choose to launch separate Azure containce instances to execute blocks.
+you can choose to launch separate Azure container instances to execute blocks.
 
 How to configure pipeline to use Azure Container Instance executor:
 1. Update Project's metadata.yaml
