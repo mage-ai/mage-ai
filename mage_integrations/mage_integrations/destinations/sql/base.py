@@ -288,7 +288,7 @@ class Destination(BaseDestination):
                         try:
                             results += self.build_connection().execute([qs], commit=True)
                         except Exception as err:
-                            self.logger.debug(f'qs: {qs}')
+                            self.logger.info(f'qs: {qs}')
                             raise err
                 else:
                     results += self.build_connection().execute(query_strings, commit=True)
@@ -307,7 +307,7 @@ class Destination(BaseDestination):
                     try:
                         results += self.build_connection().execute([qs], commit=True)
                     except Exception as err:
-                        self.logger.debug(f'qs: {qs}')
+                        self.logger.info(f'qs: {qs}')
                         raise err
             else:
                 results += self.build_connection().execute(query_strings, commit=True)
