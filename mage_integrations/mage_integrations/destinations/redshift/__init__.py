@@ -135,6 +135,10 @@ WHERE TABLE_NAME = '{table_name}' AND TABLE_SCHEMA = '{schema_name}'
             full_table_name_old = self.full_table_name(schema_name, table_name, prefix='old_')
             drop_temp_table_command = f'DROP TABLE IF EXISTS {full_table_name_temp}'
             drop_old_table_command = f'DROP TABLE IF EXISTS {full_table_name_old}'
+
+            self.logger.info(f'Create drop_temp_table_command: {drop_temp_table_command}')
+            self.logger.info(f'Create drop_old_table_command: {drop_old_table_command}')
+
             unique_constraints_clean = [
                 f'{self.clean_column_name(col)}'
                 for col in unique_constraints
