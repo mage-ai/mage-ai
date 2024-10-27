@@ -112,7 +112,7 @@ kafka-python==2.0.2
 nats-py==2.6.0
 nkeys~=0.1.0; python_version < '3.12'
 nkeys~=0.2.0; python_version >= '3.12'
-opensearch-py==2.0.0 
+opensearch-py==2.0.0
 pika==1.3.1
 pymongo==4.3.3
 requests_aws4auth==1.1.2
@@ -121,9 +121,9 @@ stomp.py==8.1.0
 # DBT
 dbt-bigquery==1.7.2
 dbt-clickhouse==1.7.1
-dbt-core==1.7.13
+dbt-core==1.7.4
 dbt-duckdb==1.7.0
-dbt-postgres==1.7.13
+dbt-postgres==1.7.4
 dbt-redshift==1.7.1
 dbt-snowflake==1.7.1
 dbt-spark==1.7.1
@@ -147,6 +147,7 @@ pendulum==2.1.0; python_version < '3.12'
 pendulum==3.0.0; python_version >= '3.12'
 pymongo_schema==0.4.1
 python-magic==0.4.27
+redshift-connector~=2.0.915
 requests_mock==1.10.0
 simple_salesforce~=1.12.5
 singer_sdk~=0.34.1
@@ -160,4 +161,3 @@ zenpy==2.0.25
 
 Werkzeug==3.0.3
 setuptools==70.0.0
-sqlparse==0.5.0
