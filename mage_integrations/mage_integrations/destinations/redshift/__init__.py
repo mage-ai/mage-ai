@@ -195,10 +195,14 @@ WHERE TABLE_NAME = '{table_name}' AND TABLE_SCHEMA = '{schema_name}'
         with connection.cursor() as cursor:
             cursor.execute(
                 f'SELECT * FROM pg_tables WHERE schemaname = \'{schema_name}\' AND '
-                f'tablename = \'{table_name}\'',
+                f'tablename = \'{table_name}\''
             )
             count = cursor.redshift_rowcount
             table_exist = count > 0
+            self.logger.info(
+                f'Redshift table {database_name}.{schema_name}.{table_name} '
+                f'exists: {table_exist}'
+            )
         redshift_connection.close_connection(connection)
         return table_exist
 
