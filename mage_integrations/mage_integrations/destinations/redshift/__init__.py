@@ -197,7 +197,7 @@ WHERE TABLE_NAME = '{table_name}' AND TABLE_SCHEMA = '{schema_name}'
                 f'SELECT * FROM pg_tables WHERE schemaname = \'{schema_name}\' AND '
                 f'tablename = \'{table_name}\'',
             )
-            count = cursor.rowcount
+            count = cursor.redshift_rowcount
             table_exist = count > 0
         redshift_connection.close_connection(connection)
         return table_exist
