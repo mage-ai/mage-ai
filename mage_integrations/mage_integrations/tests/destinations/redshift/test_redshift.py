@@ -50,6 +50,7 @@ class RedshiftDestinationTests(unittest.TestCase, SQLDestinationMixin):
             'schema': '',
             'table': '',
             'user': '',
+            'use_merge_load': False,
         },
     }
 
