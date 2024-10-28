@@ -156,7 +156,8 @@ WHERE TABLE_NAME = '{table_name}' AND TABLE_SCHEMA = '{schema_name}'
             drop_stage_table_command = f'DROP TABLE IF EXISTS {full_table_name_stage}'
             self.logger.info(f'drop_stage_table_command: {drop_stage_table_command}')
             create_stage_table_command = (
-                f'CREATE TABLE {full_table_name_stage} LIKE {full_table_name} INCLUDING ALL'
+                f'CREATE TABLE {full_table_name_stage} '
+                f'(LIKE {full_table_name} INCLUDING DEFAULTS)'
             )
             self.logger.info(f'create_stage_table_command: {create_stage_table_command}')
 
