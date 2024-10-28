@@ -906,8 +906,8 @@
     "github": "https://www.github.com/mage-ai"
   },
   "analytics": {
-    "amplitude": {
-      "apiKey": "b3c3b09423fea2abaae92c08b44de1c3"
+    "ga4": {
+      "measurementId": "G-GR172GGB5V"
     }
   },
   "api": {
