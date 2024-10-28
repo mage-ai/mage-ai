@@ -18,6 +18,7 @@ You must enter the following credentials when configuring this source:
 | `schema` | Schema of the data you want to load data from. | `public` |
 | `table` | Name of the table that will be created to store data from your source. | `dim_users_v1` |
 | `user` | Name of the user that will access the database (must have permissions to read and write to specified schema). | `awsuser` |
+| `use_merge_load` | If `true`, use merge when updating the data in the target table. | `false` (default value) |
 
 Alternatively, instead of using `password` and `user`, you can use the following credentials to authenticate:
 
