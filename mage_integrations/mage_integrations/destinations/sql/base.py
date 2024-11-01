@@ -261,7 +261,7 @@ class Destination(BaseDestination):
 
         if self.debug:
             for qs in query_strings:
-                self.logger.debug(f'qs: {qs}')
+                self.logger.info(f'qs: {qs}')
 
         results += self.build_connection().execute(query_strings, commit=True)
 
