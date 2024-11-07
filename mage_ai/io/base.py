@@ -51,23 +51,22 @@ class FileFormat(StrEnum):
 
     @classmethod
     def from_extension(cls, ext: str):
-        match ext:
-            case 'csv':
-                return cls.CSV
-            case 'json':
-                return cls.JSON
-            case 'parquet':
-                return cls.PARQUET
-            case 'hdf5':
-                return cls.HDF5
-            case 'xml':
-                return cls.XML
-            case 'xls' | 'xlsx':
-                return cls.EXCEL
-            case _:
-                raise ValueError(
-                    f'None file format found for this file extension: {ext}'
-                )
+        if ext == 'csv':
+            return cls.CSV
+        elif ext == 'json':
+            return cls.JSON
+        elif ext == 'parquet':
+            return cls.PARQUET
+        elif ext == 'hdf5':
+            return cls.HDF5
+        elif ext == 'xml':
+            return cls.XML
+        elif ext in ('xls', 'xlsx'):
+            return cls.EXCEL
+        else:
+            raise ValueError(
+                f'None file format found for this file extension: {ext}'
+            )
 
 
 class ExportWritePolicy(BaseEnum):
