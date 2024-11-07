@@ -357,6 +357,15 @@ def make_app(
             r'/(?P<child>file_versions)',
             ApiChildListHandler
         ),
+        # Override APIs with encoded resource ID
+        (
+            r'/api/(?P<resource>page_block_layouts)/(?P<pk>.+)',
+            ApiResourceDetailHandler,
+        ),
+        (
+            r'/api/(?P<resource>block_outputs)/(?P<pk>.+)',
+            ApiResourceDetailHandler,
+        ),
         # Generic API patterns
         (
             r'/api/(?P<resource>\w+)/(?P<pk>[\w\-\%2f\.]+)'
