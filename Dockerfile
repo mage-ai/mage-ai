@@ -1,15 +1,66 @@
-FROM python:3.10-bookworm
+FROM ubuntu:22.04
 LABEL description="Deploy Mage on ECS"
 ARG FEATURE_BRANCH
 USER root
 
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
+# Set environment variables to prevent prompts during package installation
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Update the package list, install CA certificates and curl
+
+# Creates a directory to store GPG keys
+RUN mkdir -p /etc/apt/keyrings && \
+    apt-get update && apt-get install -y --no-install-recommends \
+    curl \
+    # Enables apt to access repositories served over HTTPS
+    apt-transport-https \
+    # Provides a set of trusted CA certificates to verify SSL/TLS connections.
+    ca-certificates \
+    # GPG (GNU Privacy Guard) tool, used for managing and verifying GPG keys.
+    # Required for securely downloading and authenticating packages from repositories with GPG-signed keys.
+    gnupg2 \
+    # Contains scripts for managing APT repositories and third-party software sources.
+    software-properties-common \
+    # Provides Kerberos configuration tools. Necessary when authenticate with Kerberos.
+    # Build fails without this package and compalains /bin/sh: 1: krb5-config: not found.
+    krb5-config \
+    libkrb5-dev \
+    # The GNU C Compiler, compiler needed to build C programs.
+    # gcc \
+    # # The GNU C++ Compiler, used for compiling C++ code. 
+    # g++ \
+    # A package that installs gcc, g++, and other tools (like make). Essential for building packages or compiling code from source.
+    build-essential \
+    git \
+    # Install PostgreSQL development headers
+    libpq-dev \
+    # install Python 3.10 and pip3
+    # Image build fails if not installed
+    python3.10 \
+    python3.10-dev \
+    python3-pip && \
+    rm -rf /var/lib/apt/lists/*
+
+# Create a symbolic link to make python3 point to python3.10
+# Make 'python' command available by creating a symlink to 'python3'
+# Upgrade pip to the latest version
+RUN \
+  ln -s /usr/bin/python3 /usr/bin/python && \
+  update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.10 1 && \
+  pip3 install --no-cache-dir --upgrade pip
+
 ## System Packages
 RUN \
   curl https://packages.microsoft.com/keys/microsoft.asc | apt-key add - && \
-  curl https://packages.microsoft.com/config/debian/11/prod.list > /etc/apt/sources.list.d/mssql-release.list && \
-  apt-get -y update && \
+  curl https://packages.microsoft.com/config/ubuntu/22.04/prod.list > /etc/apt/sources.list.d/mssql-release.list && \
+  curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg && \
+  NODE_MAJOR=20 && \
+  echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_$NODE_MAJOR.x nodistro main" | tee /etc/apt/sources.list.d/nodesource.list
+
+
+RUN  apt-get -y update && \
   ACCEPT_EULA=Y apt-get -y install --no-install-recommends \
   # NFS dependencies
   nfs-common \
