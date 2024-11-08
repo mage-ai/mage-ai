@@ -54,6 +54,13 @@ section.
 
 ### Kubernetes executor
 
+<Note>
+  Running a block from the code editor, while developing a pipeline, won’t use this executor.
+  Instead, the block will be executed using the same process that the code editor is running on.
+
+  Use Mage Pro if you need to run your blocks in separate pods or process while developing in the code editor.
+</Note>
+
 If your Mage app is running in a Kubernetes cluster, you can execute the blocks in separate Kubernetes pods with Kubernetes executor.
 
 To configure a pipeline block to use Kubernetes executor, you simply just need to update the `executor_type` of the block to `k8s` in pipeline's metadata.yaml:
