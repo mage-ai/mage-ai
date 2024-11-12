@@ -6,47 +6,6 @@ icon: "code"
 "og:image": "https://qph.cf2.quoracdn.net/main-qimg-3aed77679a9fbe28bcae784d8fb831a8"
 ---
 
-## Code and output side-by-side view
-
-Run code and see its output right next to where you’re writing.
-
-This makes it so that you don’t have to keep scrolling down every time you make a code change
-and want to see its results.
-
-<Frame>
-    <p align="center">
-        <img
-            alt="Code and output side-by-side view"
-            src="https://github.com/mage-ai/assets/blob/main/dev-ux/code-editor/split-view.gif?raw=true"
-        />
-    </p>
-</Frame>
-
-To enable this feature:
-
-1. Go to your [project settings](http://localhost:6789/settings/workspace/preferences).
-1. Enable the feature named <b>Notebook block output split view</b>.
-1. Open the edit view of a pipeline.
-1. Under the header menu named <b>View</b>, click the option <b>Show output next to code</b>.
-
-<AccordionGroup>
-    <Accordion title="Check out this demo for a quick overview" icon="window" iconType="duotone">
-        <Frame>
-          <iframe
-            width="560"
-            height="315"
-            src="https://www.youtube.com/embed/x4VLyIG6fCc"
-            title="YouTube video player"
-            frameborder="0"
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-            allowFullScreen
-          />
-        </Frame>
-    </Accordion>
-</AccordionGroup>
-
----
-
 ## Adding blocks made easy
 
 You can quickly add blocks of code to your pipeline with these methods:
@@ -92,7 +51,7 @@ You can quickly add blocks of code to your pipeline with these methods:
         </Note>
 
         Instead of clicking a button to add a new block, type in the search bar to find an
-        existing block across all your projects. 
+        existing block across all your projects.
 
         <Frame>
             <p align="center">
@@ -105,7 +64,7 @@ You can quickly add blocks of code to your pipeline with these methods:
 
         <Tip>
             ⌘ + / (Command + Forward Slash) keyboard shortcut will instantly focus your typing on the
-            search bar from anywhere on the page (as long as you aren’t already typing in a 
+            search bar from anywhere on the page (as long as you aren’t already typing in a
             block of code).
         </Tip>
 
@@ -150,7 +109,7 @@ You can quickly add blocks of code to your pipeline with these methods:
         When editing a pipeline, you can switch the file browser view to show only the blocks in the
         current pipeline.
 
-        After toggling this view, you can select which blocks to collapse and which to expand. 
+        After toggling this view, you can select which blocks to collapse and which to expand.
         This can help optimize vertical screen space while writing code.
 
         <Frame>
@@ -183,7 +142,7 @@ data integrations (Singer Taps and Targets) provided by the data engineering com
 <Tip>
     Data integrations to sync your data to 3rd party destinations are also available in the
     same feature set.
-</Tip> 
+</Tip>
 
 <Tip>
     These sources and destinations can be combined and chained together with
@@ -261,61 +220,6 @@ Let the robots document your code so you can focus on the fun and creative side 
 
 ---
 
-## Customize layout of buttons
-
-The buttons that are used to add new blocks (alongside the search bar) can be personalized.
-
-The buttons in the dropdown menu and the buttons that are visible can be configured using
-[custom design layouts](/platform/designs/setup#add-block-buttons).
-
-The default layout is:
-
-<Frame>
-    <p align="center">
-    <img
-        alt="Add new block default buttons."
-        src="https://github.com/mage-ai/assets/blob/main/dev-ux/code-editor/customize-buttons-default.png?raw=True"
-    />
-    </p>
-</Frame>
-
-<Note>
-    The personalized layout shows `Transformer` and `Global data product` as opposed to
-    `Custom` and `Markdown`; and the dropdown menu is in a different order.
-</Note>
-
-<br />
-
-A personalized layout can look like this:
-
-<Frame>
-    <p align="center">
-    <img
-        alt="Add new block buttons personalized."
-        src="https://github.com/mage-ai/assets/blob/main/dev-ux/code-editor/customize-buttons.png?raw=True"
-    />
-    </p>
-</Frame>
-
----
-
-## Browse dbt models across multiple projects
-
-Dedicated file browser to discover existing models across multiple projects.
-
-<Frame>
-    <p align="center">
-    <img
-        alt="dbt DX 2.0"
-        src="https://github.com/mage-ai/assets/blob/main/dbt/dbt-dx-2.gif?raw=true"
-    />
-    </p>
-</Frame>
-
-[Read more here](/dbt/developer-experience#browse-and-discover-models-across-multiple-projects)
-
----
-
 ## Block upgrades
 
 Enhance your code with these quick power-ups:
@@ -353,21 +257,6 @@ Enhance your code with these quick power-ups:
         [Read more here](/guides/blocks/replicate-blocks)
     </Accordion>
 
-    <Accordion title="Modify block variables with no-code" icon="display-code" iconType="duotone">
-        <Frame>
-            <p align="center">
-            <img
-                alt="Block interactions preview"
-                src="https://github.com/mage-ai/assets/blob/main/interactions/block-interactions-preview.png?raw=true"
-            />
-            </p>
-        </Frame>
-
-        Configure and run pipelines using no-code UI text fields, dropdown menus, checkboxes, toggle switches, and more.
-
-        [Read more here](/interactions/overview)
-    </Accordion>
-
     <Accordion title="Conditionally execute code" icon="code-merge" iconType="duotone">
         <Frame>
             <p align="center">
@@ -382,23 +271,10 @@ Enhance your code with these quick power-ups:
     </Accordion>
 
     <Accordion title="Callbacks" icon="phone-volume" iconType="duotone">
-        A callback block is associated to another block. 
+        A callback block is associated to another block.
         When the parent block succeeds or fails, the callback block functions are executed.
 
         [Read more here](/design/blocks/callbacks)
-    </Accordion>
-
-    <Accordion title="Test your code with pre-built Great Expectations" icon="flask-vial" iconType="duotone">
-        <Frame>
-            <p align="center">
-            <img
-                alt="Test your code with pre-built Great Expectations."
-                src="https://github.com/mage-ai/assets/blob/main/notebook/extensions/great-expectation-extension-block.jpeg?raw=true"
-            />
-            </p>
-        </Frame>
-
-        [Read more here](/development/testing/great-expectations)
     </Accordion>
 </AccordionGroup>
 
