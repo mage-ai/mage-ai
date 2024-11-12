@@ -248,13 +248,6 @@
           "pages": [
             "orchestration/triggers/triggering-pipelines",
             "orchestration/triggers/configure-triggers-in-code",
-            {
-              "group": "Event triggers",
-              "pages": [
-                "orchestration/triggers/events/overview",
-                "orchestration/triggers/events/aws"
-              ]
-            },
             "orchestration/triggers/trigger-pipeline",
             "orchestration/triggers/trigger-pipeline-api",
             "orchestration/triggers/schedule-pipelines",
