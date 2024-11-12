@@ -127,7 +127,6 @@
                 "design/blocks/conditionals",
                 "design/blocks/data-exporter",
                 "design/blocks/data-loader",
-                "design/blocks/extension",
                 "design/blocks/scratchpad",
                 "design/blocks/sensor",
                 "design/blocks/transformer"
@@ -468,13 +467,6 @@
           ]
         },
         "development/ai/overview",
-        {
-          "group": "Visualizations",
-          "icon": "chart-line-up-down",
-          "pages": [
-            "visualizations/dashboards"
-          ]
-        },
         "development/updating-mage"
       ]
     },
@@ -780,27 +772,10 @@
     {
       "group": "Features",
       "pages": [
-        "developer-ux/overview",
-        "developer-ux/personalize",
         "developer-ux/file-browser",
         "developer-ux/code-editor",
         "developer-ux/block-dependency-tree",
         "developer-ux/sidekick"
-      ]
-    },
-    {
-      "group": "Command Center",
-      "pages": [
-        "developer-ux/command-center/spellcaster",
-        "developer-ux/command-center/modes/version-control"
-      ]
-    },
-    {
-      "group": "Applications",
-      "pages": [
-        "developer-ux/applications/overview",
-        "developer-ux/applications/arcane-library",
-        "developer-ux/applications/portal-terminal"
       ]
     },
     {
