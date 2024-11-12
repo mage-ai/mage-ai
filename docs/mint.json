@@ -238,8 +238,7 @@
                 "dbt/snapshots",
                 "dbt/running-dbt-tests"
               ]
-            },
-            "dbt/developer-experience"
+            }
           ]
         },
         "orchestration/global-data-products/overview",
