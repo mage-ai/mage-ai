@@ -116,14 +116,6 @@
           ]
         },
         {
-          "group": "Global Hooks",
-          "icon": "globe",
-          "pages": [
-            "orchestration/global-hooks/overview",
-            "orchestration/global-hooks/guides"
-          ]
-        },
-        {
           "group": "Blocks",
           "icon": "block-brick",
           "pages": [
@@ -241,7 +233,6 @@
             }
           ]
         },
-        "orchestration/global-data-products/overview",
         "design/data-pipeline-management",
         {
           "group": "Pipeline runs",
@@ -346,7 +337,6 @@
                 }
               ]
             },
-            "custom-templates/overview",
             {
               "group": "Dependencies",
               "pages": [
@@ -380,7 +370,6 @@
               ]
             },
             "getting-started/kernels",
-            "development/project/features",
             "development/project/local-timezone"
           ]
         },
@@ -391,7 +380,6 @@
             "development/project/setup",
             "getting-started/setting-up-git",
             "development/git/configure",
-            "getting-started/file-versions",
             "development/text-editor"
           ]
         },
@@ -434,7 +422,6 @@
                   "group": "Monitoring",
                   "pages": [
                     "integrations/observability/datadog",
-                    "integrations/observability/great-expectations",
                     "integrations/observability/metaplane",
                     "integrations/observability/newrelic",
                     "integrations/observability/sentry",
