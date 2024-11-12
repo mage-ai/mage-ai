@@ -186,8 +186,7 @@
             {
               "group": "Sources",
               "pages": [
-                "data-integrations/sources/overview",
-                "data-integrations/sources/postgresql"
+                "data-integrations/sources/overview"
               ]
             },
             {
