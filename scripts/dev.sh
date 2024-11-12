@@ -42,6 +42,16 @@ case $key in
     shift # past argument
     shift # past value
     ;;
+    --enable_open_ai)
+    ENABLE_OPEN_AI="$3"
+    shift # past argument
+    shift # past value
+    ;;
+    --enable_hugging_face)
+    ENABLE_HUGGING_FACE="$3"
+    shift # past argument
+    shift # past value
+    ;;
     --otel_exporter_otlp_endpoint)
     OTEL_EXPORTER_OTLP_ENDPOINT="$3"
     shift # past argument
@@ -169,6 +179,8 @@ export ECS_TASK_DEFINITION=$ECS_TASK_DEFINITION
 export ECS_CONTAINER_NAME=$ECS_CONTAINER_NAME
 export ENABLE_NEW_RELIC=$ENABLE_NEW_RELIC
 export ENABLE_PROMETHEUS=$ENABLE_PROMETHEUS
+export ENABLE_OPEN_AI=$ENABLE_OPEN_AI
+export ENABLE_HUGGING_FACE=$ENABLE_HUGGING_FACE
 export OTEL_EXPORTER_OTLP_ENDPOINT=$OTEL_EXPORTER_OTLP_ENDPOINT
 export OTEL_EXPORTER_OTLP_HTTP_ENDPOINT=$OTEL_EXPORTER_OTLP_HTTP_ENDPOINT
 export OTEL_PYTHON_TORNADO_EXCLUDED_URLS=$OTEL_PYTHON_TORNADO_EXCLUDED_URLS

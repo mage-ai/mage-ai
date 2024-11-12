@@ -1,7 +1,7 @@
-from enum import Enum
+from mage_ai.shared.enum import StrEnum
 
 
-class LogType(str, Enum):
+class LogType(StrEnum):
     END = 'END'
     GENERIC = 'GENERIC'
     MEMORY = 'MEMORY'

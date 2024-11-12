@@ -1,12 +1,12 @@
 from dataclasses import dataclass, field
-from enum import Enum
 from typing import Dict
 
 from mage_ai.shared.config import BaseConfig
+from mage_ai.shared.enum import StrEnum
 from mage_ai.shared.logger import LoggingLevel
 
 
-class LoggerType(str, Enum):
+class LoggerType(StrEnum):
     DEFAULT = 'file'
     S3 = 's3'
     GCS = 'gcs'

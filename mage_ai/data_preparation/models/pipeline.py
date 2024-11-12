@@ -4,6 +4,7 @@ import json
 import os
 import shutil
 import tempfile
+import time
 import zipfile
 from datetime import datetime, timezone
 from io import BytesIO
@@ -2328,6 +2329,10 @@ class Pipeline:
         extension_uuid: str = None,
         widget: bool = False,
     ):
+        # Introduce a small delay to prevent multiple changes from generating
+        # identical timestamps for the pipeline YAML file
+        time.sleep(0.0003)
+
         blocks_current = sorted([b.uuid for b in self.blocks_by_uuid.values()])
 
         if block_uuid is not None:

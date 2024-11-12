@@ -205,12 +205,12 @@ class PlatformSettingsTest(ProjectPlatformMixin):
         ))
 
     def test_platform_settings_full_path(self):
-        self.assertEquals(
+        self.assertEqual(
             platform_settings_full_path(), os.path.join(base_repo_path(), 'settings.yaml'),
         )
 
     def test_local_platform_settings_full_path(self):
-        self.assertEquals(
+        self.assertEqual(
             local_platform_settings_full_path(), os.path.join(base_repo_path(), '.settings.yaml'),
         )
 

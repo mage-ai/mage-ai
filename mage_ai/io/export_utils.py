@@ -1,9 +1,9 @@
-from enum import Enum
 from typing import Callable, Dict, List, Mapping
 
 from pandas import DataFrame, Series
 from pandas.api.types import infer_dtype
 
+from mage_ai.shared.enum import StrEnum
 from mage_ai.shared.utils import clean_name
 
 """
@@ -19,7 +19,7 @@ class BadConversionError(Exception):
     pass
 
 
-class PandasTypes(str, Enum):
+class PandasTypes(StrEnum):
     """
     Internal datatypes defined by the pandas Public API
     """

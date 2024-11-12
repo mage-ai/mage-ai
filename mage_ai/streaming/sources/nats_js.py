@@ -1,17 +1,19 @@
 import asyncio
-import enum
 import json
 import ssl
 import threading
 from dataclasses import dataclass
-from typing import Callable, Dict, Optional
+from typing import Callable, Dict, Optional, Tuple, Union
 
 import nats
 from nats.errors import NoServersError, TimeoutError
 
 from mage_ai.shared.config import BaseConfig
+from mage_ai.shared.enum import StrEnum
 from mage_ai.streaming.constants import DEFAULT_BATCH_SIZE, DEFAULT_TIMEOUT_MS
 from mage_ai.streaming.sources.base import BaseSource, SourceConsumeMethod
+
+Credentials = Union[str, Tuple[str, str]]
 
 
 @dataclass
@@ -22,7 +24,7 @@ class SSLConfig:
     check_hostname: bool = False
 
 
-class ConsumerType(str, enum.Enum):
+class ConsumerType(StrEnum):
     PULL = "PULL"
     PUSH = "PUSH"
 
@@ -33,6 +35,7 @@ class NATSConfig(BaseConfig):
     stream_name: str
     subject: str = None
     nkeys_seed_str: Optional[str] = None
+    user_credentials: Optional[Credentials] = None
     use_tls: bool = False
     ssl_config: Optional[SSLConfig] = None
     consumer_name: Optional[str] = None
@@ -98,6 +101,10 @@ class NATSSource(BaseSource):
             # Use NKEY if provided
             if self.config.nkeys_seed_str:
                 connect_opts["nkeys_seed_str"] = self.config.nkeys_seed_str
+
+            # Use credentials if provided
+            if self.config.user_credentials:
+                connect_opts["user_credentials"] = self.config.user_credentials
 
             # Establish connection with the configured options
             self.nc = await nats.connect(**connect_opts)

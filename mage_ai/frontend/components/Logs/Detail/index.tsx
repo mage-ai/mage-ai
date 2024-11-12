@@ -51,13 +51,25 @@ function LogDetail({
     path,
   } = log;
   const {
-    error,
-    error_stack: errorStack,
-    error_stacktrace: errorStackTrace,
+    error: errorFromData,
+    error_stack: errorStackFromData,
+    error_stacktrace: errorStackTraceFromData,
     level,
     timestamp,
   } = data || {};
   const sharedProps =  { [level.toLowerCase()]: true };
+  let error = errorFromData;
+  let errorStack = errorStackFromData;
+  let errorStackTrace = errorStackTraceFromData;
+  if (errorFromData && !Array.isArray(errorFromData)) {
+    error = [errorFromData];
+  }
+  if (Array.isArray(errorStackFromData) && !Array.isArray(errorStackFromData?.[0])) {
+    errorStack = [errorStackFromData] as string[][];
+  }
+  if (errorStackTraceFromData && Array.isArray(errorStackTraceFromData)) {
+    errorStackTrace = errorStackTraceFromData?.[0];
+  }
 
   const rows = useMemo(() => {
     const arr = [
@@ -72,7 +84,7 @@ function LogDetail({
     });
 
     if (errorStackTrace) {
-      arr.push(['error', errorStackTrace]);
+      arr.push(['error', errorStackTrace as string]);
     }
 
     return sortByKey(arr, ([k, _]) => k);
@@ -230,19 +242,21 @@ function LogDetail({
             </Text>
           </Spacing>
 
-          {error?.map((lines: string) => lines.split('\n').map((line: string) => (
-            line.split('\\n').map(part => (
-              <Text
-                default
-                key={part}
-                monospace
-                preWrap
-                small
-              >
-                {part}
-              </Text>
-            ))
-          )))}
+          {Array.isArray(error) && error?.map(
+            (lines: string) => lines.split('\n').map((line: string) => (
+              line.split('\\n').map(part => (
+                <Text
+                  default
+                  key={part}
+                  monospace
+                  preWrap
+                  small
+                >
+                  {part}
+                </Text>
+              ))
+            )),
+          )}
 
           {errorStack && (
             <Spacing mt={3}>
@@ -252,17 +266,19 @@ function LogDetail({
                 </Text>
               </Spacing>
 
-              {errorStack?.map((lines: string[]) => lines?.map((line: string) => (
-                <Text
-                  default
-                  key={line}
-                  monospace
-                  preWrap
-                  small
-                >
-                  {line}
-                </Text>
-              )))}
+              {(errorStack as string[][])?.map(
+                (lines: string[]) => lines?.map((line: string) => (
+                  <Text
+                    default
+                    key={line}
+                    monospace
+                    preWrap
+                    small
+                  >
+                    {line}
+                  </Text>
+                )),
+              )}
             </Spacing>
           )}
         </Spacing>

@@ -1,4 +1,4 @@
-from enum import Enum
+from mage_ai.shared.enum import StrEnum
 
 ALL = 'all'
 CREATE = 'create'
@@ -20,7 +20,7 @@ META_KEY_ORDER_BY = '_order_by[]'
 COOKIE_PREFIX = '__COOKIE__'
 
 
-class OperationType(str, Enum):
+class OperationType(StrEnum):
     ALL = ALL
     CREATE = CREATE
     DELETE = DELETE

@@ -1,8 +1,9 @@
 from dataclasses import dataclass
-from enum import Enum
+
+from mage_ai.shared.enum import StrEnum
 
 
-class SerializationMethod(str, Enum):
+class SerializationMethod(StrEnum):
     AVRO = 'AVRO'
     JSON = 'JSON'
     PROTOBUF = 'PROTOBUF'

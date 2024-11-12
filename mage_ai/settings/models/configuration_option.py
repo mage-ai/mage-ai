@@ -1,7 +1,6 @@
 import asyncio
 import os
 from dataclasses import dataclass
-from enum import Enum
 from pathlib import Path
 from typing import Dict, Union
 
@@ -15,6 +14,7 @@ from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.data_preparation.shared.utils import get_template_vars
 from mage_ai.settings.platform import project_platform_activated
 from mage_ai.settings.repo import get_repo_path
+from mage_ai.shared.enum import StrEnum
 from mage_ai.shared.files import get_full_file_paths_containing_multi_items
 from mage_ai.shared.hash import merge_dict
 from mage_ai.shared.models import BaseDataClass
@@ -37,11 +37,11 @@ async def read_file(full_path: str) -> str:
         return config
 
 
-class ConfigurationType(str, Enum):
+class ConfigurationType(StrEnum):
     DBT = 'dbt'
 
 
-class OptionType(str, Enum):
+class OptionType(StrEnum):
     PROFILES = 'profiles'
     PROJECTS = 'projects'
     TARGETS = 'targets'

@@ -34,16 +34,14 @@ import { indexBy } from '@utils/array';
 import { shouldDisplayLocalTimezone } from '@components/settings/workspace/utils';
 import { useWindowSize } from '@utils/sizes';
 
-type TriggerInteractions = {
+type TriggerInteractionsType = {
   containerRef: any;
   date?: Date;
   interactions: InteractionType[];
   pipeline: PipelineType;
   pipelineInteraction: PipelineInteractionType;
   pipelineSchedule: PipelineScheduleType;
-  setVariables: (prev: any) => {
-    [key: string]: any;
-  };
+  setVariables: (prev: any) => void;
   showSummary?: boolean;
   time?: TimeType;
   triggerTypes?: {
@@ -77,7 +75,7 @@ function TriggerInteractions({
   time,
   triggerTypes,
   variables,
-}) {
+}: TriggerInteractionsType) {
   const interactionsMapping = useMemo(() => indexBy(interactions || [], ({ uuid }) => uuid), [
     interactions,
   ]);
@@ -97,7 +95,7 @@ function TriggerInteractions({
         uuid: blockUUID,
       } = block || {
         uuid: null,
-      }
+      };
 
       const blockInteractions = blockInteractionsMapping?.[blockUUID] || [];
       const hasBlockInteractions = blockInteractions?.length >= 1;
@@ -158,7 +156,7 @@ function TriggerInteractions({
         uuid: blockUUID,
       } = block || {
         uuid: null,
-      }
+      };
 
       const blockInteractions = blockInteractionsMapping?.[blockUUID] || [];
 
@@ -176,7 +174,7 @@ function TriggerInteractions({
           }: InteractionVariableType = variable;
 
           const value = variables?.[variableUUID];
-          const missingValue = typeof value === 'undefined'
+          const missingValue = typeof value === 'undefined';
           const invalid = required && missingValue;
           const Icon = INTERACTION_VARIABLE_VALUE_TYPE_ICON_MAPPING?.[types[0]] || Alphabet;
 
@@ -346,9 +344,12 @@ function TriggerInteractions({
                     monospace
                     muted={!pipelineSchedule?.schedule_interval}
                   >
-                    {pipelineSchedule?.schedule_interval && capitalizeRemoveUnderscoreLower(
-                      pipelineSchedule?.schedule_interval?.substring(1) || '',
-                    )}
+                    {pipelineSchedule?.schedule_interval
+                      && capitalizeRemoveUnderscoreLower(pipelineSchedule?.schedule_interval?.[0] === '@'
+                        ? (pipelineSchedule?.schedule_interval?.substring(1) || '')
+                        : (pipelineSchedule?.schedule_interval || ''),
+                      )
+                    }
                     {!pipelineSchedule?.schedule_interval && 'This is required'}
                   </Text>
                 </Spacing>,

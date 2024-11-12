@@ -1,6 +1,5 @@
 import os
 from abc import ABC, abstractmethod
-from enum import Enum
 from pathlib import Path
 from typing import Any, Dict, Union
 
@@ -9,9 +8,10 @@ from jinja2 import Template
 
 from mage_ai.data_preparation.shared.utils import get_template_vars
 from mage_ai.settings.repo import get_repo_path
+from mage_ai.shared.enum import StrEnum
 
 
-class ConfigKey(str, Enum):
+class ConfigKey(StrEnum):
     """
     List of configuration settings for use with data IO clients.
     """
@@ -333,7 +333,7 @@ class EnvironmentVariableLoader(BaseConfigLoader):
         return os.getenv(env_var)
 
 
-class VerboseConfigKey(str, Enum):
+class VerboseConfigKey(StrEnum):
     """
     Config key headers for the verbose configuration file format.
     """

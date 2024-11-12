@@ -110,7 +110,7 @@ class DynamicBlockCombinationTest(BaseApiTestCase):
             content = inspect.getsource(func)
 
         if content:
-            block.update_content(f'@{block.type}\n{content}')
+            block.update_content(block.get_typed_content(content))
 
         return block
 

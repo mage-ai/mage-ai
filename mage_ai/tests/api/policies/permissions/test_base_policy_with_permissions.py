@@ -1,5 +1,4 @@
 import secrets
-from enum import Enum
 from typing import Any, Callable, Dict, List, Union
 from unittest.mock import patch
 
@@ -19,13 +18,14 @@ from mage_ai.authentication.permissions.constants import (
 )
 from mage_ai.orchestration.db.models.oauth import Permission, Role, User, UserRole
 from mage_ai.shared.array import find
+from mage_ai.shared.enum import StrEnum
 from mage_ai.shared.hash import index_by, merge_dict
 from mage_ai.tests.api.mixins import BootstrapMixin
 from mage_ai.tests.api.operations.test_base import BaseApiTestCase
 from mage_ai.tests.api.policies.permissions.mixins import PermissionsMixin
 
 
-class TestSuite(str, Enum):
+class TestSuite(StrEnum):
     AUTHORIZED = 'AUTHORIZED'
     DISABLED = 'DISABLED'
     INVERSE = 'INVERSE'

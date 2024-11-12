@@ -36,6 +36,14 @@ If you're familiar with [Docker Compose](https://docs.docker.com/compose/) or pl
    rm dev.env
    docker compose up
    ```
+
+   ```Windows powershell/cmd
+   git clone https://github.com/mage-ai/compose-quickstart.git mage-quickstart
+   cd mage-quickstart
+   copy dev.env .env
+   del dev.env
+   docker compose up
+   ```
    </CodeGroup>
 
    Once the server is running, open `http://localhost:6789` in your browser and explore! We recommend one of our [guides](/guides/overview) to for inspiration.

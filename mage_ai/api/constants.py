@@ -1,20 +1,19 @@
-from enum import Enum
-
 from mage_ai.api.operations.constants import OperationType
 from mage_ai.orchestration.db.models.oauth import Permission
+from mage_ai.shared.enum import StrEnum
 
 
-class AttributeOperationType(str, Enum):
+class AttributeOperationType(StrEnum):
     QUERY = 'query'
     READ = 'read'
     WRITE = 'write'
 
 
-class AttributeType(str, Enum):
+class AttributeType(StrEnum):
     ALL = '__*MAGE*__'
 
 
-class AuthorizeStatusType(str, Enum):
+class AuthorizeStatusType(StrEnum):
     ALL = 'all'
     FAILED = 'failed'
     SUCCEEDED = 'succeeded'

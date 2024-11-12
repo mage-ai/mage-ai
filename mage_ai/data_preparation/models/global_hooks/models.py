@@ -2,7 +2,6 @@ import hashlib
 import os
 from dataclasses import dataclass, field, make_dataclass
 from datetime import datetime
-from enum import Enum
 from typing import Dict, List, Tuple, Union
 
 import yaml
@@ -30,6 +29,7 @@ from mage_ai.settings.platform import (
 )
 from mage_ai.settings.repo import get_repo_path
 from mage_ai.shared.array import find, find_index, flatten
+from mage_ai.shared.enum import StrEnum
 from mage_ai.shared.environments import is_debug, is_test
 from mage_ai.shared.hash import (
     dig,
@@ -44,7 +44,7 @@ from mage_ai.shared.models import BaseDataClass
 from mage_ai.shared.multi import run_parallel_multiple_args
 
 
-class HookOperation(str, Enum):
+class HookOperation(StrEnum):
     CREATE = OperationType.CREATE.value
     DELETE = OperationType.DELETE.value
     DETAIL = OperationType.DETAIL.value
@@ -54,18 +54,18 @@ class HookOperation(str, Enum):
     UPDATE_ANYWHERE = 'update_anywhere'
 
 
-class HookCondition(str, Enum):
+class HookCondition(StrEnum):
     FAILURE = 'failure'
     SUCCESS = 'success'
 
 
-class HookStrategy(str, Enum):
+class HookStrategy(StrEnum):
     BREAK = 'break'
     CONTINUE = 'continue'
     RAISE = 'raise'
 
 
-class HookStage(str, Enum):
+class HookStage(StrEnum):
     AFTER = 'after'
     BEFORE = 'before'
 

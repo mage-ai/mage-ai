@@ -68,11 +68,19 @@ Follow these steps to add that webhook URL to your project settings:
       alert_on:
         ...
       teams_config:
-        webhook_url: 'https://teams.webhook.office.com/webhookb2/B04XXXXGY67/IncomingWebhook/1UgUkao8pXXXXPmsuXXXX2lk'
+        webhook_url: 
+          - 'https://teams.webhook.office.com/webhookb2/B04XXXXGY67/IncomingWebhook/1UgUkao8pXXXXPmsuXXXX2lk'
+          - 'https://teams.webhook.office.com/webhookb2/B04XXXXGY67/IncomingWebhook/1UgUkao8pXXXXPmsuXXXX2lx'
     ```
 
-    Change the `webhook_url` value to be the webhook URL you created from Teams.
+    Change the `webhook_url` values to be the webhook URLs you created from Teams.
 
+    The `webhook_url` must be a string if you are using version 0.9.73 or older and it only accepts one endpoint.
+
+    ```
+    teams_config:
+        webhook_url: 'https://teams.webhook.office.com/webhookb2/B04XXXXGY67/IncomingWebhook/1UgUkao8pXXXXPmsuXXXX2lk'
+    ```
 ---
 
 ## What next?

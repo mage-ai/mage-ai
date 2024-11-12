@@ -1,12 +1,12 @@
 from dataclasses import dataclass, field
-from enum import Enum
 from typing import Dict, List
 
 from mage_ai.services.spark.models.applications import Application
 from mage_ai.services.spark.models.base import BaseSparkModel
+from mage_ai.shared.enum import StrEnum
 
 
-class JobStatus(str, Enum):
+class JobStatus(StrEnum):
     FAILED = 'FAILED'
     RUNNING = 'RUNNING'
     SUCCEEDED = 'SUCCEEDED'

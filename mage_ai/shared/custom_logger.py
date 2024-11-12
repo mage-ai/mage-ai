@@ -1,15 +1,15 @@
 import inspect
 import logging
-from enum import Enum
 
 import simplejson
 
 from mage_ai.data_preparation.models.constants import BlockType
+from mage_ai.shared.enum import StrEnum
 from mage_ai.shared.environments import is_deus_ex_machina
 from mage_ai.shared.parsers import encode_complex
 
 
-class Color(str, Enum):
+class Color(StrEnum):
     BLUE = "\x1b[1;34m"
     BOLD_RED = "\x1b[31;1m"
     GREEN = "\x1b[1;32m"
@@ -64,19 +64,19 @@ class ColorPrinter:
         self.label = None
 
     def debug(self, *args, **kwargs):
-        self.print(color=Color.PURPLE, *args, **kwargs)
+        self.print(*args, color=Color.PURPLE, **kwargs)
 
     def info(self, *args, **kwargs):
-        self.print(color=Color.BLUE, *args, **kwargs)
+        self.print(*args, color=Color.BLUE, **kwargs)
 
     def warning(self, *args, **kwargs):
-        self.print(color=Color.GREEN, *args, **kwargs)
+        self.print(*args, color=Color.GREEN, **kwargs)
 
     def error(self, *args, **kwargs):
-        self.print(color=Color.RED, *args, **kwargs)
+        self.print(*args, color=Color.RED, **kwargs)
 
     def critical(self, *args, **kwargs):
-        self.print(color=Color.BOLD_RED, *args, **kwargs)
+        self.print(*args, color=Color.BOLD_RED, **kwargs)
 
     def print(self, *args, **kwargs):
         if not is_deus_ex_machina():
@@ -183,39 +183,39 @@ class CustomFormatter(logging.Formatter):
     def debug(self, p: int = 0, *args, **kwargs):
         if is_deus_ex_machina():
             if p:
-                self.print(color=Color.PURPLE, *args, **kwargs)
+                self.print(*args, color=Color.PURPLE, **kwargs)
             else:
                 super().debug(*args, **kwargs)
 
     def info(self, p: int = 0, *args, **kwargs):
         if is_deus_ex_machina():
             if p:
-                self.print(color=Color.BLUE, *args, **kwargs)
+                self.print(*args, color=Color.BLUE, **kwargs)
             else:
                 super().info(*args, **kwargs)
 
     def warning(self, p: int = 0, *args, **kwargs):
         if is_deus_ex_machina():
             if p:
-                self.print(color=Color.YELLOW, *args, **kwargs)
+                self.print(*args, color=Color.YELLOW, **kwargs)
             else:
                 super().warning(*args, **kwargs)
 
     def error(self, p: int = 0, *args, **kwargs):
         if is_deus_ex_machina():
             if p:
-                self.print(color=Color.RED, *args, **kwargs)
+                self.print(*args, color=Color.RED, **kwargs)
             else:
                 super().error(*args, **kwargs)
 
     def critical(self, p: int = 0, *args, **kwargs):
         if is_deus_ex_machina():
             if p:
-                self.print(color=Color.BOLD_RED, *args, **kwargs)
+                self.print(*args, color=Color.BOLD_RED, **kwargs)
             else:
                 super().critical(*args, **kwargs)
 
-    def print(self, color: Color, *args, **kwargs):
+    def print(self, *args, color: Color, **kwargs):
         more = None
         if kwargs:
             more = simplejson.dumps(

@@ -1,5 +1,4 @@
 from dataclasses import dataclass, field
-from enum import Enum
 from typing import List
 
 from mage_ai.services.discord.config import DiscordConfig
@@ -10,9 +9,10 @@ from mage_ai.services.slack.config import SlackConfig
 from mage_ai.services.teams.config import TeamsConfig
 from mage_ai.services.telegram.config import TelegramConfig
 from mage_ai.shared.config import BaseConfig
+from mage_ai.shared.enum import StrEnum
 
 
-class AlertOn(str, Enum):
+class AlertOn(StrEnum):
     PIPELINE_RUN_FAILURE = 'trigger_failure'
     PIPELINE_RUN_SUCCESS = 'trigger_success'
     PIPELINE_RUN_PASSED_SLA = 'trigger_passed_sla'

@@ -91,7 +91,11 @@ Install additional dev dependencies from `pyproject.toml`:
 pip install $(python -c "import toml; print(' '.join(toml.load('pyproject.toml')['tool']['poetry']['group']['dev']['dependencies'].keys()))" | tr '\n' ' ')
 ```
 
-The above command uses the `toml` library to output the dev dependencies from the `pyproject.toml` as a space-delimited list, and passes that output to the `pip install` command.
+The above command uses the `toml` library to output the dev dependencies from the `pyproject.toml` as a space-delimited list, and passes that output to the `pip install` command. If you encounter the error: `ModuleNotFoundError: No module named 'toml'`, try running the following command instead:
+
+```bash
+pip install $(python3 -c "import toml; print(' '.join(toml.load('pyproject.toml')['tool']['poetry']['group']['dev']['dependencies'].keys()))" | tr '\n' ' ')
+```
 
 ## Mage frontend
 

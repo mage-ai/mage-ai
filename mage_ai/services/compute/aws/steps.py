@@ -1,6 +1,5 @@
 import os
 import socket
-from enum import Enum
 from typing import List
 
 import requests
@@ -26,12 +25,15 @@ from mage_ai.services.compute.models import (
     SetupStepStatus,
 )
 from mage_ai.services.ssh.aws.emr.constants import SSH_DEFAULTS
+from mage_ai.shared.enum import StrEnum
 from mage_ai.shared.hash import extract, merge_dict
 
 ERROR_MESSAGE_ACCESS_KEY_ID = ErrorMessage.load(
-    message='Environment variable '
-            f'{{{{{CONNECTION_CREDENTIAL_AWS_ACCESS_KEY_ID}}}}} '
-            'is missing',
+    message=(
+        'Environment variable '
+        f'{{{{{CONNECTION_CREDENTIAL_AWS_ACCESS_KEY_ID}}}}} '
+        'is missing'
+    ),
     variables={
         CONNECTION_CREDENTIAL_AWS_ACCESS_KEY_ID: dict(
             monospace=True,
@@ -41,9 +43,11 @@ ERROR_MESSAGE_ACCESS_KEY_ID = ErrorMessage.load(
 )
 
 ERROR_MESSAGE_SECRET_ACCESS_KEY = ErrorMessage.load(
-    message='Environment variable '
-            f'{{{{{CONNECTION_CREDENTIAL_AWS_SECRET_ACCESS_KEY}}}}} '
-            'is missing',
+    message=(
+        'Environment variable '
+        f'{{{{{CONNECTION_CREDENTIAL_AWS_SECRET_ACCESS_KEY}}}}} '
+        'is missing'
+    ),
     variables={
         CONNECTION_CREDENTIAL_AWS_SECRET_ACCESS_KEY: dict(
             monospace=True,
@@ -53,7 +57,7 @@ ERROR_MESSAGE_SECRET_ACCESS_KEY = ErrorMessage.load(
 )
 
 
-class SetupStepUUID(str, Enum):
+class SetupStepUUID(StrEnum):
     ACTIVATE_CLUSTER = 'activate_cluster'
     AWS_ACCESS_KEY_ID = CONNECTION_CREDENTIAL_AWS_ACCESS_KEY_ID
     AWS_SECRET_ACCESS_KEY = CONNECTION_CREDENTIAL_AWS_SECRET_ACCESS_KEY
@@ -399,8 +403,10 @@ def build_connections(compute_service: ComputeService) -> List[ComputeConnection
             ),
             SetupStep.load(
                 name='EC2 key path',
-                description='The absolute file path to the EC2 key pair '
-                            f'{ec2_key_name_display}stored on the current machine.',
+                description=(
+                    'The absolute file path to the EC2 key pair '
+                    f'{ec2_key_name_display}stored on the current machine.'
+                ),
                 required=True,
                 status=(
                     SetupStepStatus.COMPLETED if ec2_key_path

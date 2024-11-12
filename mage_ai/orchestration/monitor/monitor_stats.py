@@ -1,4 +1,3 @@
-import enum
 from datetime import datetime, timedelta
 from functools import reduce
 from typing import Callable, Dict, List, Union
@@ -15,13 +14,14 @@ from mage_ai.orchestration.db.models.schedules import (
 )
 from mage_ai.settings.platform.constants import project_platform_activated
 from mage_ai.settings.repo import get_repo_path
+from mage_ai.shared.enum import StrEnum
 from mage_ai.shared.hash import group_by, merge_dict
 
 NO_PIPELINE_SCHEDULE_ID = 'no_pipeline_schedule_id'
 NO_PIPELINE_SCHEDULE_NAME = 'no_pipeline_schedule_name'
 
 
-class MonitorStatsType(str, enum.Enum):
+class MonitorStatsType(StrEnum):
     PIPELINE_RUN_COUNT = 'pipeline_run_count'
     PIPELINE_RUN_TIME = 'pipeline_run_time'
     BLOCK_RUN_COUNT = 'block_run_count'

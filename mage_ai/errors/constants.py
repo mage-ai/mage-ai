@@ -1,4 +1,4 @@
-from enum import Enum
+from mage_ai.shared.enum import IntEnum
 
 """
 - **400 Bad Request**: The server could not understand the request due to invalid syntax.
@@ -13,7 +13,7 @@ from enum import Enum
 """
 
 
-class ErrorCode(int, Enum):
+class ErrorCode(IntEnum):
     CODE_400 = 400
     CODE_401 = 401
     CODE_402 = 402

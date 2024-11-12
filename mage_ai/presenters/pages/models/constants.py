@@ -1,16 +1,16 @@
-from enum import Enum
+from mage_ai.shared.enum import StrEnum
 
 
-class ComponentCategory(str, Enum):
+class ComponentCategory(StrEnum):
     BUTTON = 'button'
     FIELD = 'field'
     FORM = 'form'
 
 
-class PageCategory(str, Enum):
+class PageCategory(StrEnum):
     COMMUNITY = 'community'
 
 
-class ResourceType(str, Enum):
+class ResourceType(StrEnum):
     PIPELINE = 'pipeline'
     PIPELINE_SCHEDULE = 'pipeline_schedule'

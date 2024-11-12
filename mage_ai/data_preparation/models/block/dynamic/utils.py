@@ -1,7 +1,6 @@
 import json
 import os
 from dataclasses import dataclass, field
-from enum import Enum
 from typing import Any, Dict, List, Optional, Tuple, Union
 
 import pandas as pd
@@ -38,11 +37,12 @@ from mage_ai.data_preparation.models.utils import (
 from mage_ai.server.kernel_output_parser import DataType
 from mage_ai.shared.array import find
 from mage_ai.shared.custom_logger import DX_PRINTER
+from mage_ai.shared.enum import StrEnum
 from mage_ai.shared.hash import ignore_keys_with_blank_values
 from mage_ai.shared.models import BaseDataClass
 
 
-class DynamicBlockFlag(str, Enum):
+class DynamicBlockFlag(StrEnum):
     CLONE_OF_ORIGINAL = 'clone_of_original'
     DYNAMIC = 'dynamic'
     DYNAMIC_CHILD = 'dynamic_child'
@@ -1012,42 +1012,40 @@ def check_all_dynamic_upstreams_completed(
         execution_partition=execution_partition,
         pipeline=pipeline,
     ):
-        if not upstream_block.upstream_blocks:
-            return True
-
         from mage_ai.orchestration.db.models.schedules import BlockRun
 
-        upstreams_done = all([
-            check_all_dynamic_upstreams_completed(
-                b,
-                block_runs=block_runs,
-                execution_partition=execution_partition,
-            )
-            for b in upstream_block.upstream_blocks
-        ])
+        if upstream_block.upstream_blocks:
+            upstreams_done = all([
+                check_all_dynamic_upstreams_completed(
+                    b,
+                    block_runs=block_runs,
+                    execution_partition=execution_partition,
+                )
+                for b in upstream_block.upstream_blocks
+            ])
 
-        if not upstreams_done:
-            return False
-
-        is_dynamic_child = is_dynamic_block_child(upstream_block)
-        if is_dynamic_child:
-            combos = build_combinations_for_dynamic_child(
-                upstream_block,
-                execution_partition=execution_partition,
-            )
-
-            selected = [
-                br
-                for br in block_runs
-                if pipeline.get_block(
-                    br.block_uuid,
-                ).uuid
-                == upstream_block.uuid
-                and br.status == BlockRun.BlockRunStatus.COMPLETED
-            ]
-
-            if len(list(selected)) < len(combos) + 1:
+            if not upstreams_done:
                 return False
+
+            is_dynamic_child = is_dynamic_block_child(upstream_block)
+            if is_dynamic_child:
+                combos = build_combinations_for_dynamic_child(
+                    upstream_block,
+                    execution_partition=execution_partition,
+                )
+
+                selected = [
+                    br
+                    for br in block_runs
+                    if pipeline.get_block(
+                        br.block_uuid,
+                    ).uuid
+                    == upstream_block.uuid
+                    and br.status == BlockRun.BlockRunStatus.COMPLETED
+                ]
+
+                if len(list(selected)) < len(combos) + 1:
+                    return False
 
         return all([
             br.status == BlockRun.BlockRunStatus.COMPLETED

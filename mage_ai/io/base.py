@@ -1,6 +1,5 @@
 import os
 from abc import ABC, abstractmethod
-from enum import Enum
 from typing import IO, Any, Callable, Dict, Union
 
 import pandas as pd
@@ -8,6 +7,7 @@ import polars as pl
 from pandas import DataFrame
 
 from mage_ai.io.constants import SQL_RESERVED_WORDS
+from mage_ai.shared.enum import StrEnum
 from mage_ai.shared.logger import VerbosePrintHandler
 from mage_ai.shared.models import BaseEnum
 from mage_ai.shared.utils import clean_name
@@ -15,7 +15,7 @@ from mage_ai.shared.utils import clean_name
 QUERY_ROW_LIMIT = 10_000_000
 
 
-class DataSource(str, Enum):
+class DataSource(StrEnum):
     ALGOLIA = 'algolia'
     API = 'api'
     BIGQUERY = 'bigquery'
@@ -41,7 +41,7 @@ class DataSource(str, Enum):
     WEAVIATE = 'weaviate'
 
 
-class FileFormat(str, Enum):
+class FileFormat(StrEnum):
     CSV = 'csv'
     JSON = 'json'
     PARQUET = 'parquet'

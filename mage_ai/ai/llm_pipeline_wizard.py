@@ -30,6 +30,7 @@ from mage_ai.data_preparation.templates.template import (
 from mage_ai.io.base import DataSource
 from mage_ai.orchestration.ai.config import AIConfig
 from mage_ai.server.logger import Logger
+from mage_ai.settings import ENABLE_HUGGING_FACE, ENABLE_OPEN_AI
 
 logger = Logger().new_server_logger(__name__)
 
@@ -155,16 +156,18 @@ TEMPLATE_CLASSIFICATION_FUNCTION = [
                     "type": "string",
                     "description": "Programming language of the code block. "
                                    f"Default value is {BlockLanguage.__name__}__python.",
-                    "enum": [f"{BlockLanguage.__name__}__{type.name.lower()}"
-                             for type in BlockLanguage]
+                    "enum": [
+                        f"{BlockLanguage.__name__}__{type.name.lower()}"
+                        for type in BlockLanguage]
                 },
                 PipelineType.__name__: {
                     "type": "string",
                     "description": "Type of pipeline to build. Default value is "
                                    f"{PipelineType.__name__}__python if pipeline type "
                                    "is not mentioned in the description.",
-                    "enum": [f"{PipelineType.__name__}__{type.name.lower()}"
-                             for type in PipelineType]
+                    "enum": [
+                        f"{PipelineType.__name__}__{type.name.lower()}"
+                        for type in PipelineType]
                 },
                 ActionType.__name__: {
                     "type": "string",
@@ -190,12 +193,13 @@ TEMPLATE_CLASSIFICATION_FUNCTION = [
 class LLMPipelineWizard:
     def __init__(self):
         ai_config = AIConfig.load(config=get_repo_config().ai_config)
-        if ai_config.mode == AIMode.OPEN_AI:
+        if ENABLE_OPEN_AI and ai_config.mode == AIMode.OPEN_AI:
             self.client = OpenAIClient(ai_config.open_ai_config)
-        elif ai_config.mode == AIMode.HUGGING_FACE:
+        elif ENABLE_HUGGING_FACE and ai_config.mode == AIMode.HUGGING_FACE:
             self.client = HuggingFaceClient(ai_config.hugging_face_config)
         else:
-            raise Exception('AI Mode is not available.')
+            raise Exception('AI Mode is not available. ENABLE_OPEN_AI: '
+                            f'{ENABLE_OPEN_AI}, ENABLE_HUGGING_FACE: {ENABLE_HUGGING_FACE}')
 
     async def __async_llm_call(
         self,
