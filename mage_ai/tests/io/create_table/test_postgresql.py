@@ -1,7 +1,9 @@
 import pandas as pd
+import simplejson
 
 from mage_ai.io.export_utils import infer_dtypes
 from mage_ai.io.postgres import Postgres
+from mage_ai.shared.parsers import encode_complex
 from mage_ai.tests.base_test import DBTestCase
 
 
@@ -26,3 +28,28 @@ class TestTablePostgres(DBTestCase):
         )
         self.assertEqual('CREATE TABLE Test.Test ("varchar_time" text,"datetime_time" TIMESTAMP);',
                          query)
+
+    def test_clean_array_value(self):
+        test_cases = [
+            [],
+            [123],
+            [['abc', 'def']],
+            [['08:00', '12:00'], ['15:00', '20:00']],
+            [['08:00', '12:00'], []],
+        ]
+        expected = [
+            '{}',
+            '{123}',
+            '{{"abc", "def"}}',
+            '{{"08:00", "12:00"}, {"15:00", "20:00"}}',
+            '{{"08:00", "12:00"}, {}}',
+        ]
+        for val, expected_val in zip(test_cases, expected):
+            cleaned_array_value = Postgres._clean_array_value(
+                simplejson.dumps(
+                    val,
+                    default=encode_complex,
+                    ignore_nan=True,
+                )
+            )
+            self.assertEqual(cleaned_array_value, expected_val)

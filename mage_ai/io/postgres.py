@@ -295,6 +295,14 @@ class Postgres(BaseSQL):
 
         return 'text'
 
+    @staticmethod
+    def _clean_array_value(val: str) -> str:
+        if val is None or type(val) is not str or len(val) < 2:
+            return val
+        if val[0] == '[' and val[-1] == ']':
+            return str(val).replace('[', '{').replace(']', '}')
+        return val
+
     def upload_dataframe(
         self,
         cursor: _psycopg.cursor,
@@ -316,13 +324,6 @@ class Postgres(BaseSQL):
             # Use COPY command
             use_insert_command = False
 
-        def clean_array_value(val):
-            if val is None or type(val) is not str or len(val) < 2:
-                return val
-            if val[0] == '[' and val[-1] == ']':
-                return '{' + val[1:-1] + '}'
-            return val
-
         def serialize_obj(val):
             if type(val) is dict or type(val) is np.ndarray:
                 return simplejson.dumps(
@@ -337,7 +338,7 @@ class Postgres(BaseSQL):
                     ignore_nan=True,
                 )
             elif not use_insert_command and type(val) is list:
-                return clean_array_value(simplejson.dumps(
+                return self._clean_array_value(simplejson.dumps(
                     val,
                     default=encode_complex,
                     ignore_nan=True,
