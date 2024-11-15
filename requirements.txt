@@ -159,5 +159,5 @@ xlsx2csv==0.8.1
 xmltodict==0.13.0
 zenpy==2.0.25
 
-Werkzeug==3.0.3
+Werkzeug==3.0.6
 setuptools==70.0.0
