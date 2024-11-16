@@ -14,36 +14,26 @@
 
 <a href="https://mage.ai/pro">
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://github.com/mage-ai/assets/blob/main/oss/mage-pro-callout-light.png?raw=true">
-    <img alt="Mage Pro callout" src="https://github.com/mage-ai/assets/blob/main/oss/mage-pro-callout-light.png?raw=true">
-  </picture>
-</a>
-
-<br />
-
-<a href="https://mage.ai/pro">
-  <picture>
     <source media="(prefers-color-scheme: dark)" srcset="https://github.com/mage-ai/assets/blob/main/oss/hero.png?raw=true">
     <img alt="Mage AI hero" src="https://github.com/mage-ai/assets/blob/main/oss/hero.png?raw=true">
   </picture>
 </a>
 
 <br />
+<br />
 
-<div align="left">
-  Mage is a hybrid framework for transforming and integrating data. It combines the best of both worlds: the flexibility of notebooks with the rigor of modular code.
+Mage is a hybrid framework for transforming and integrating data. It combines the best of both worlds: the flexibility of notebooks with the rigor of modular code.
 
-  <br />
+<br />
 
-  - Extract and synchronize data from 3rd party sources.
-  - Transform data with real-time and batch pipelines using Python, SQL, and R.
-  - Load data into your data warehouse or data lake using our pre-built connectors.
-  - Run, monitor, and orchestrate thousands of pipelines without losing sleep.
+- Extract and synchronize data from 3rd party sources.
+- Transform data with real-time and batch pipelines using Python, SQL, and R.
+- Load data into your data warehouse or data lake using our pre-built connectors.
+- Run, monitor, and orchestrate thousands of pipelines without losing sleep.
 
-  <br />
+<br />
 
-  Plus hundreds of enterprise-class features, infrastructure innovations, and magical surprises.
-</div>
+Plus hundreds of enterprise-class features, infrastructure innovations, and magical surprises.
 
 <h1></h1>
 
