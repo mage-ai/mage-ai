@@ -44,13 +44,17 @@ Plus hundreds of enterprise-class features, infrastructure innovations, and magi
 <table style="width: 100%; border: none;" cellspacing="0" cellpadding="0" border="0">
   <tr>
     <td rowspan="2">
-      <img width="124" align="left" src="https://github.com/mage-ai/assets/blob/main/oss/card-pro.png?raw=true" />
+      <a href="https://mage.ai/pro">
+        <img alt="Mage Pro" width="124" align="left" src="https://github.com/mage-ai/assets/blob/main/oss/card-pro.png?raw=true" />
+      </a>
       <b>For teams.</b> Fully managed platform
       <br />
       for integrating and transforming data.
     </td>
     <td rowspan="2">
-      <img width="124" align="left" src="https://github.com/mage-ai/assets/blob/main/oss/card-oss.png?raw=true" />
+      <a href="https://github.com/mage-ai/mage-ai?tab=readme-ov-file#its-magic">
+        <img alt="Mage OSS" width="124" align="left" src="https://github.com/mage-ai/assets/blob/main/oss/card-oss.png?raw=true" />
+      </a>
       <b>Self-hosted.</b> System to build, run, and
       <br />
       manage data pipelines.
@@ -61,9 +65,10 @@ Plus hundreds of enterprise-class features, infrastructure innovations, and magi
 <br />
 
 <a href="https://mage.ai/pro">
-  <img alt="Join the Mage AI community" src="https://img.shields.io/badge/try%20it%20out%20now-black.svg?style=for-the-badge&logo=artifacthub&labelColor=6A35FF&logoColor=FFFFFF&label=pro&color=6A35FF">
+  <img alt="Try out Mage Pro" src="https://img.shields.io/badge/try%20it%20out%20now-black.svg?style=for-the-badge&logo=artifacthub&labelColor=6A35FF&logoColor=FFFFFF&label=mage%20pro&color=6A35FF">
 </a>
 
+<br />
 <br />
 
 <div align="left">
