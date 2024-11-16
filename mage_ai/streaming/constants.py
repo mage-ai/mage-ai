@@ -41,6 +41,7 @@ class SinkType(StrEnum):
     RABBITMQ = 'rabbitmq'
     REDSHIFT = 'redshift'
     SNOWFLAKE = 'snowflake'
+    SUPABASE_STORAGE = 'supabase_storage'
     TRINO = 'trino'
 
 

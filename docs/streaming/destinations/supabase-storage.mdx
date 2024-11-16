@@ -1,0 +1,73 @@
+---
+title: "Supabase Storage"
+---
+
+## Basic config
+
+```yaml
+connector_type: supabase_storage
+bucket: bucket
+prefix: prefix
+url: url
+api_key: api_key
+login_type: password
+password: password
+email: email
+file_options: null
+file_type: 'parquet'
+buffer_size_mb: 5
+buffer_timeout_seconds: 300
+```
+
+* `bucket`: The Supabase Storage bucket you want to use to store the data.
+* `prefix`: The Supabase Storage path prefix.
+* `url`: The Supabase connection url.
+* `api_key`: The Supabase API key.
+* `login_type`: Supabase login type. Please read `Authentication` for more information.
+* `password`: Supabase user password.
+* `email`: Supabase user email.
+* `file_options`: Supabase Storage upload header. Default is: {"content-type": "text/csv"}.
+* `file_type`: `parquet` or `csv`.
+* `buffer_size_mb` and `buffer_timeout_seconds`: Mage puts messages in a buffer before uploading to supabase.
+  You can configure the size and timeout of the buffer to control the file size and the delay.
+
+## Configure time-based partition
+
+```yaml
+date_partition_format: "%Y%m%dT%H"
+
+```
+
+If you want to store the Supabase Storage data in time-based paratition folders. You can add `date_partition_format`
+to the config. Example values: `%Y%m%d`, `%Y%m%dT%H`.
+
+
+## Authentication
+There are 3 authentication types:
+ - password
+ - otp
+ - oauth
+
+For more reference, please check the [supabase docs](https://supabase.com/docs/reference/python/auth-signinwithpassword)
+
+### Password authentication
+```yaml
+login_type: password
+password: your_password
+email: your_email
+```
+
+### OAuth authentication
+```yaml
+login_type: oauth
+auth_provider: your_auth_provider
+options: dict containing oauth login options
+```
+
+### OTP authentication
+```yaml
+login_type: otp
+phone: your_phone
+email: your_email
+options: dict containing otp login options
+```

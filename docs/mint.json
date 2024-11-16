@@ -297,6 +297,7 @@
                 "streaming/destinations/rabbitmq",
                 "streaming/destinations/redshift",
                 "streaming/destinations/snowflake",
+                "streaming/destinations/supabase-storage",
                 "streaming/destinations/trino"
               ]
             }

@@ -33,6 +33,7 @@ export enum DataSourceTypeEnum {
   REDSHIFT = 'redshift',
   S3 = 's3',
   SNOWFLAKE = 'snowflake',
+  SUPABASE_STORAGE = 'supabase_storage',
   TRINO = 'trino',
 }
 
@@ -69,6 +70,7 @@ export const DATA_SOURCE_TYPE_HUMAN_READABLE_NAME_MAPPING = {
   [DataSourceTypeEnum.REDSHIFT]: 'Amazon Redshift',
   [DataSourceTypeEnum.S3]: 'Amazon S3',
   [DataSourceTypeEnum.SNOWFLAKE]: 'Snowflake',
+  [DataSourceTypeEnum.SUPABASE_STORAGE]: 'Supabase Storage',
   [DataSourceTypeEnum.TRINO]: 'Trino',
 };
 
@@ -101,6 +103,7 @@ export const DATA_SOURCE_TYPES: { [blockType in BlockTypeEnum]?: DataSourceTypeE
     DataSourceTypeEnum.REDSHIFT,
     DataSourceTypeEnum.BIGQUERY,
     DataSourceTypeEnum.SNOWFLAKE,
+    DataSourceTypeEnum.SUPABASE_STORAGE,
     DataSourceTypeEnum.MYSQL,
     DataSourceTypeEnum.POSTGRES,
   ],
