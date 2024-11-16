@@ -78,6 +78,12 @@
   >
     <img alt="pip installs" src="https://static.pepy.tech/personalized-badge/mage-ai?period=total&units=international_system&left_color=grey&right_color=blue&left_text=pip%20installs">
   </a>
+  <a
+    href="https://gurubase.io/g/mage-ai"
+    target="_blank"
+  >
+    <img alt="Gurubase" src="https://img.shields.io/badge/Gurubase-Ask%20Mage%20AI%20Guru-006BFF">
+  </a>
 </div>
 <img
   referrerpolicy="no-referrer-when-downgrade"
