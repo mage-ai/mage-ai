@@ -1,45 +1,70 @@
 {
-  "name": "Mage",
+  "name": "Mage AI",
   "logo": {
-    "light": "/logo/light.svg",
-    "dark": "/logo/dark.svg"
+    "light": "/logo/m-mage-light.svg",
+    "dark": "/logo/m-mage.svg"
   },
-  "favicon": "/favicon.png",
+  "favicon": "/favicons/m1.svg",
   "colors": {
-    "primary": "#7E53F8",
-    "light": "#BFA8FF",
-    "dark": "#4C22C0",
-    "ultraLight": "#E4DAFF",
-    "ultraDark": "#270A7A",
+    "primary": "#6A35FF",
+    "light": "#00FB82",
+    "dark": "#148EFF",
     "background": {
-      "dark": "#121212"
+      "dark": "#000000",
+      "light": "#FFFFFF"
     }
   },
-  "feedback": {
-    "suggestEdit": true,
-    "raiseIssue": true,
-    "thumbsRating": true
+  "layout": "sidenav",
+  "background": {
+    "style": "gradient"
+  },
+  "backgroundImage": "/background.png",
+  "font": {
+    "headings": {
+      "family": "Alkatra"
+    },
+    "body": {
+      "family": "Inter"
+    }
+  },
+  "modeToggle": {
+    "default": "dark",
+    "isHidden": false
+  },
+  "sidebar": {
+    "items": "border"
   },
   "search": {
-    "prompt": "✨ Make magic..."
+    "location": "top",
+    "prompt": "Omniscience... ✨"
   },
-  "metadata": {
-    "og:image": "https://github.com/mage-ai/mage-ai/blob/master/docs/og.png?raw=True",
-    "og:description": "Mage is an open-source, hybrid framework for transforming and integrating data. Our docs are the best place to learn about making magical data pipelines.",
-    "og:site_name": "Mage Docs",
-    "twitter:site": "@mage_ai"
-  },
+  "rounded": "default",
+  "topbarLinks": [
+    {
+      "name": "GitHub",
+      "url": "https://www.mage.ai/oss"
+    },
+    {
+      "name": "Chat now",
+      "url": "https://www.mage.ai/chat"
+    },
+    {
+      "name": "Try Pro",
+      "url": "https://www.mage.ai/pro"
+    }
+  ],
   "topbarCtaButton": {
-    "type": "github",
-    "url": "https://github.com/mage-ai/mage-ai"
+    "type": "link",
+    "name": "Demo playground",
+    "url": "https://github.com/mage-ai/mage-ai",
+    "style": "pill",
+    "arrow": true
   },
-  "topAnchor": {
-    "name": "Documentation",
-    "icon": "book-open"
-  },
-  "primaryTab": {
-    "name": "Docs"
-  },
+  "versions": [
+    "Latest",
+    "Pro"
+  ],
+  "anchors": [],
   "tabs": [
     {
       "name": "Guides",
@@ -70,26 +95,366 @@
       "url": "https://www.mage.ai/chat"
     }
   ],
-  "anchors": [
+  "footer": {
+    "socials": {
+      "website": "https://www.mage.ai",
+      "facebook": "https://www.facebook.com/mageai",
+      "youtube": "https://www.youtube.com/@mage_ai",
+      "slack": "https://www.mage.ai/chat",
+      "github": "https://www.github.com/mage-ai",
+      "linkedin": "https://www.linkedin.com/company/magetech/",
+      "instagram": "https://www.instagram.com/mage_ai/",
+      "medium": "https://m.mage.ai",
+      "twitter": "https://twitter.com/mage_ai"
+    },
+    "links": [
+      {
+        "title": "Column 1",
+        "links": [
+          {
+            "label": "Column 1 Link 1",
+            "url": "https://mintlify.com"
+          },
+          {
+            "label": "Column 1 Link 2",
+            "url": "https://mintlify.com"
+          }
+        ]
+      },
+      {
+        "title": "Column 2",
+        "links": [
+          {
+            "label": "Column 2 Link 1",
+            "url": "https://mintlify.com"
+          },
+          {
+            "label": "Column 2 Link 2",
+            "url": "https://mintlify.com"
+          }
+        ]
+      },
+      {
+        "title": "Column 2",
+        "links": [
+          {
+            "label": "Column 2 Link 1",
+            "url": "https://mintlify.com"
+          },
+          {
+            "label": "Column 2 Link 2",
+            "url": "https://mintlify.com"
+          }
+        ]
+      }
+    ]
+  },
+  "feedback": {
+    "suggestEdit": true,
+    "raiseIssue": true,
+    "thumbsRating": true
+  },
+  "api": {
+    "playground": {
+      "mode": "hide"
+    }
+  },
+  "analytics": {
+    "ga4": {
+      "measurementId": "G-GR172GGB5V"
+    }
+  },
+  "redirects": [
     {
-      "name": "Releases",
-      "icon": "megaphone",
-      "url": "https://docs.mage.ai/about/releases"
+      "source": "/getting-started/secrets",
+      "destination": "/development/variables/secrets"
     },
     {
-      "name": "Roadmap",
-      "icon": "map",
-      "url": "https://docs.mage.ai/about/roadmap"
+      "source": "/development/environment-variables",
+      "destination": "/development/variables/environment-variables"
     },
     {
-      "name": "Troubleshooting",
-      "icon": "question",
-      "url": "https://docs.mage.ai/development/troubleshooting"
+      "source": "/contributing/code-of-conduct",
+      "destination": "/about/code-of-conduct"
+    },
+    {
+      "source": "/contributing/statistics/overview",
+      "destination": "/about/statistics"
+    },
+    {
+      "source": "/guides/streaming/contributing",
+      "destination": "/contributing/backend/streaming/sources-and-destinations"
+    },
+    {
+      "source": "/community/contributing",
+      "destination": "/contributing/overview"
+    },
+    {
+      "source": "/development/blocks/callbacks/overview",
+      "destination": "/design/blocks/callbacks"
+    },
+    {
+      "source": "/development/blocks/conditionals/overview",
+      "destination": "/design/blocks/conditionals"
+    },
+    {
+      "source": "/development/blocks/sql/trino",
+      "destination": "/integrations/databases/trino"
+    },
+    {
+      "source": "/guides/data-validation",
+      "destination": "/development/data-validation"
+    },
+    {
+      "source": "/production/observability/logging",
+      "destination": "/development/observability/logging"
+    },
+    {
+      "source": "/production/observability/monitoring",
+      "destination": "/development/observability/monitoring"
+    },
+    {
+      "source": "/development/versioning/file-versions",
+      "destination": "/getting-started/file-versions"
+    },
+    {
+      "source": "/production/configuring-production-settings/runtime-",
+      "destination": "/getting-started/runtime-variable"
+    },
+    {
+      "source": "/development/secrets/secrets",
+      "destination": "/development/variables/secrets"
+    },
+    {
+      "source": "/developing-in-the-cloud/setting-up-git",
+      "destination": "/getting-started/setting-up-git"
+    },
+    {
+      "source": "/guides/r-blocks",
+      "destination": "/guides/blocks/r-blocks"
+    },
+    {
+      "source": "/design/blocks/replicate-blocks",
+      "destination": "/guides/blocks/replicate-blocks"
+    },
+    {
+      "source": "/guides/sql-blocks",
+      "destination": "/guides/blocks/sql-blocks"
+    },
+    {
+      "source": "/guides/transformer-blocks",
+      "destination": "/guides/blocks/transformer-blocks"
+    },
+    {
+      "source": "/tutorials/examples",
+      "destination": "/guides/community-examples"
+    },
+    {
+      "source": "/tutorials/load-api-data",
+      "destination": "/guides/load-api-data"
+    },
+    {
+      "source": "/tutorials/setup-dbt",
+      "destination": "/guides/setup-dbt"
+    },
+    {
+      "source": "/tutorials/train-model",
+      "destination": "/guides/train-model"
+    },
+    {
+      "source": "/tutorials/train/complete-project",
+      "destination": "/guides/train/complete-project"
+    },
+    {
+      "source": "/production/observability/alerting-email",
+      "destination": "/integrations/observability/alerting-email"
+    },
+    {
+      "source": "/production/observability/alerting-opsgenie",
+      "destination": "/integrations/observability/alerting-opsgenie"
+    },
+    {
+      "source": "/production/observability/alerting-slack",
+      "destination": "/integrations/observability/alerting-slack"
+    },
+    {
+      "source": "/production/observability/alerting-teams",
+      "destination": "/integrations/observability/alerting-teams"
+    },
+    {
+      "source": "/production/observability/alerting-discord",
+      "destination": "/integrations/observability/alerting-discord"
+    },
+    {
+      "source": "/production/observability/alerting-telegram",
+      "destination": "/integrations/observability/alerting-telegram"
+    },
+    {
+      "source": "/production/observability/datadog",
+      "destination": "/integrations/observability/datadog"
+    },
+    {
+      "source": "/integrations/great-expectations",
+      "destination": "/integrations/observability/great-expectations"
+    },
+    {
+      "source": "/integrations/metaplane",
+      "destination": "/integrations/observability/metaplane"
+    },
+    {
+      "source": "/production/observability/newrelic",
+      "destination": "/integrations/observability/newrelic"
+    },
+    {
+      "source": "/production/observability/sentry",
+      "destination": "/integrations/observability/sentry"
+    },
+    {
+      "source": "/production/observability/prometheus",
+      "destination": "/integrations/observability/prometheus"
+    },
+    {
+      "source": "/guides/triggers/configure-triggers-in-code",
+      "destination": "/orchestration/triggers/configure-triggers-in-code"
+    },
+    {
+      "source": "/guides/triggers/events/aws",
+      "destination": "/orchestration/triggers/events/aws"
+    },
+    {
+      "source": "/guides/triggers/events/overview",
+      "destination": "/orchestration/triggers/events/overview"
+    },
+    {
+      "source": "/guides/schedule-pipelines",
+      "destination": "/orchestration/triggers/schedule-pipelines"
+    },
+    {
+      "source": "/guides/trigger-pipeline-api",
+      "destination": "/orchestration/triggers/trigger-pipeline-api"
+    },
+    {
+      "source": "/production/configuring-production-settings/secrets",
+      "destination": "/production/deploying-to-cloud/secrets/AWS"
+    },
+    {
+      "source": "/development/secrets/GCP",
+      "destination": "/production/deploying-to-cloud/secrets/GCP"
+    },
+    {
+      "source": "/developing-in-the-cloud/cloud-dev-environments/aws-ecs",
+      "destination": "/production/developing-in-the-cloud/cloud-dev-environments/aws-ecs"
+    },
+    {
+      "source": "/developing-in-the-cloud/cloud-dev-environments/cloud-run",
+      "destination": "/production/developing-in-the-cloud/cloud-dev-environments/cloud-run"
+    },
+    {
+      "source": "/developing-in-the-cloud/cloud-dev-environments/kubernetes",
+      "destination": "/production/developing-in-the-cloud/cloud-dev-environments/kubernetes"
+    },
+    {
+      "source": "/developing-in-the-cloud/cloud-dev-environments/overview",
+      "destination": "/production/developing-in-the-cloud/cloud-dev-environments/overview"
+    },
+    {
+      "source": "/developing-in-the-cloud/workspaces/kubernetes",
+      "destination": "/production/developing-in-the-cloud/workspaces/kubernetes"
+    },
+    {
+      "source": "/developing-in-the-cloud/workspaces/overview",
+      "destination": "/production/developing-in-the-cloud/workspaces/overview"
+    },
+    {
+      "source": "/guides/streaming/destinations/amazon-s3",
+      "destination": "/streaming/destinations/amazon-s3"
+    },
+    {
+      "source": "/guides/streaming/destinations/elasticsearch",
+      "destination": "/streaming/destinations/elasticsearch"
+    },
+    {
+      "source": "/guides/streaming/destinations/azure_data_lake",
+      "destination": "/streaming/destinations/azure_data_lake"
+    },
+    {
+      "source": "/guides/streaming/destinations/dummy",
+      "destination": "/streaming/destinations/dummy"
+    },
+    {
+      "source": "/guides/streaming/destinations/kafka",
+      "destination": "/streaming/destinations/kafka"
+    },
+    {
+      "source": "/guides/streaming/destinations/kinesis",
+      "destination": "/streaming/destinations/kinesis"
+    },
+    {
+      "source": "/guides/streaming/destinations/mongodb",
+      "destination": "/streaming/destinations/mongodb"
+    },
+    {
+      "source": "/guides/streaming/destinations/opensearch",
+      "destination": "/streaming/destinations/opensearch"
+    },
+    {
+      "source": "/guides/streaming/destinations/redshift",
+      "destination": "/streaming/destinations/redshift"
+    },
+    {
+      "source": "/guides/streaming/overview",
+      "destination": "/streaming/overview"
+    },
+    {
+      "source": "/guides/streaming/sources/amazon-sqs",
+      "destination": "/streaming/sources/amazon-sqs"
+    },
+    {
+      "source": "/guides/streaming/sources/azure-event-hub",
+      "destination": "/streaming/sources/azure-event-hub"
+    },
+    {
+      "source": "/guides/streaming/sources/google-cloud-pubsub",
+      "destination": "/streaming/sources/google-cloud-pubsub"
+    },
+    {
+      "source": "/guides/streaming/sources/kafka",
+      "destination": "/streaming/sources/kafka"
+    },
+    {
+      "source": "/guides/streaming/sources/kinesis",
+      "destination": "/streaming/sources/kinesis"
+    },
+    {
+      "source": "/data-integrations/sources/adapt-existing-source",
+      "destination": "/contributing/data-integrations/adapt-existing-source"
+    },
+    {
+      "source": "/data-integrations/sources/add-new-source",
+      "destination": "/contributing/data-integrations/add-new-source"
+    },
+    {
+      "source": "/data-integrations/destination/add-new-destination",
+      "destination": "/contributing/data-integrations/add-new-destination"
+    },
+    {
+      "source": "/development/git/generate-an-ssh-token",
+      "destination": "/development/git/configure#generate-ssh-token"
+    },
+    {
+      "source": "/production/data-sync/github",
+      "destination": "/production/data-sync/version-control"
     }
   ],
+  "seo": {
+    "indexHiddenPages": true
+  },
+  "primaryTab": {
+    "name": "Docs"
+  },
   "navigation": [
     {
-      "group": "Get Started",
+      "group": "Adventure starts here",
       "pages": [
         "introduction/overview",
         "getting-started/setup",
@@ -454,7 +819,6 @@
           "icon": "vial",
           "pages": [
             "development/data-validation",
-            "development/testing/great-expectations",
             "development/testing/unit-tests"
           ]
         },
@@ -468,7 +832,8 @@
       "pages": [
         "about/code-of-conduct",
         "about/statistics",
-        "about/frequently-asked-questions"
+        "about/frequently-asked-questions",
+        "about/releases"
       ]
     },
     {
@@ -850,304 +1215,10 @@
       ]
     }
   ],
-  "backgroundImage": "/background.png",
-  "footerSocials": {
-    "linkedin": "https://www.linkedin.com/company/magetech/",
-    "twitter": "https://twitter.com/mage_ai",
-    "facebook": "https://www.facebook.com/mageai",
-    "instagram": "https://www.instagram.com/mage_ai/",
-    "github": "https://www.github.com/mage-ai"
-  },
-  "analytics": {
-    "ga4": {
-      "measurementId": "G-GR172GGB5V"
-    }
-  },
-  "api": {
-    "playground": {
-      "mode": "hide"
-    }
-  },
-  "redirects": [
-    {
-      "source": "/getting-started/secrets",
-      "destination": "/development/variables/secrets"
-    },
-    {
-      "source": "/development/environment-variables",
-      "destination": "/development/variables/environment-variables"
-    },
-    {
-      "source": "/contributing/code-of-conduct",
-      "destination": "/about/code-of-conduct"
-    },
-    {
-      "source": "/contributing/statistics/overview",
-      "destination": "/about/statistics"
-    },
-    {
-      "source": "/guides/streaming/contributing",
-      "destination": "/contributing/backend/streaming/sources-and-destinations"
-    },
-    {
-      "source": "/community/contributing",
-      "destination": "/contributing/overview"
-    },
-    {
-      "source": "/development/blocks/callbacks/overview",
-      "destination": "/design/blocks/callbacks"
-    },
-    {
-      "source": "/development/blocks/conditionals/overview",
-      "destination": "/design/blocks/conditionals"
-    },
-    {
-      "source": "/development/blocks/sql/trino",
-      "destination": "/integrations/databases/trino"
-    },
-    {
-      "source": "/guides/data-validation",
-      "destination": "/development/data-validation"
-    },
-    {
-      "source": "/production/observability/logging",
-      "destination": "/development/observability/logging"
-    },
-    {
-      "source": "/production/observability/monitoring",
-      "destination": "/development/observability/monitoring"
-    },
-    {
-      "source": "/development/versioning/file-versions",
-      "destination": "/getting-started/file-versions"
-    },
-    {
-      "source": "/production/configuring-production-settings/runtime-",
-      "destination": "/getting-started/runtime-variable"
-    },
-    {
-      "source": "/development/secrets/secrets",
-      "destination": "/development/variables/secrets"
-    },
-    {
-      "source": "/developing-in-the-cloud/setting-up-git",
-      "destination": "/getting-started/setting-up-git"
-    },
-    {
-      "source": "/guides/r-blocks",
-      "destination": "/guides/blocks/r-blocks"
-    },
-    {
-      "source": "/design/blocks/replicate-blocks",
-      "destination": "/guides/blocks/replicate-blocks"
-    },
-    {
-      "source": "/guides/sql-blocks",
-      "destination": "/guides/blocks/sql-blocks"
-    },
-    {
-      "source": "/guides/transformer-blocks",
-      "destination": "/guides/blocks/transformer-blocks"
-    },
-    {
-      "source": "/tutorials/examples",
-      "destination": "/guides/community-examples"
-    },
-    {
-      "source": "/tutorials/load-api-data",
-      "destination": "/guides/load-api-data"
-    },
-    {
-      "source": "/tutorials/setup-dbt",
-      "destination": "/guides/setup-dbt"
-    },
-    {
-      "source": "/tutorials/train-model",
-      "destination": "/guides/train-model"
-    },
-    {
-      "source": "/tutorials/train/complete-project",
-      "destination": "/guides/train/complete-project"
-    },
-    {
-      "source": "/production/observability/alerting-email",
-      "destination": "/integrations/observability/alerting-email"
-    },
-    {
-      "source": "/production/observability/alerting-opsgenie",
-      "destination": "/integrations/observability/alerting-opsgenie"
-    },
-    {
-      "source": "/production/observability/alerting-slack",
-      "destination": "/integrations/observability/alerting-slack"
-    },
-    {
-      "source": "/production/observability/alerting-teams",
-      "destination": "/integrations/observability/alerting-teams"
-    },
-    {
-      "source": "/production/observability/alerting-discord",
-      "destination": "/integrations/observability/alerting-discord"
-    },
-    {
-      "source": "/production/observability/alerting-telegram",
-      "destination": "/integrations/observability/alerting-telegram"
-    },
-    {
-      "source": "/production/observability/datadog",
-      "destination": "/integrations/observability/datadog"
-    },
-    {
-      "source": "/integrations/great-expectations",
-      "destination": "/integrations/observability/great-expectations"
-    },
-    {
-      "source": "/integrations/metaplane",
-      "destination": "/integrations/observability/metaplane"
-    },
-    {
-      "source": "/production/observability/newrelic",
-      "destination": "/integrations/observability/newrelic"
-    },
-    {
-      "source": "/production/observability/sentry",
-      "destination": "/integrations/observability/sentry"
-    },
-    {
-      "source": "/production/observability/prometheus",
-      "destination": "/integrations/observability/prometheus"
-    },
-    {
-      "source": "/guides/triggers/configure-triggers-in-code",
-      "destination": "/orchestration/triggers/configure-triggers-in-code"
-    },
-    {
-      "source": "/guides/triggers/events/aws",
-      "destination": "/orchestration/triggers/events/aws"
-    },
-    {
-      "source": "/guides/triggers/events/overview",
-      "destination": "/orchestration/triggers/events/overview"
-    },
-    {
-      "source": "/guides/schedule-pipelines",
-      "destination": "/orchestration/triggers/schedule-pipelines"
-    },
-    {
-      "source": "/guides/trigger-pipeline-api",
-      "destination": "/orchestration/triggers/trigger-pipeline-api"
-    },
-    {
-      "source": "/production/configuring-production-settings/secrets",
-      "destination": "/production/deploying-to-cloud/secrets/AWS"
-    },
-    {
-      "source": "/development/secrets/GCP",
-      "destination": "/production/deploying-to-cloud/secrets/GCP"
-    },
-    {
-      "source": "/developing-in-the-cloud/cloud-dev-environments/aws-ecs",
-      "destination": "/production/developing-in-the-cloud/cloud-dev-environments/aws-ecs"
-    },
-    {
-      "source": "/developing-in-the-cloud/cloud-dev-environments/cloud-run",
-      "destination": "/production/developing-in-the-cloud/cloud-dev-environments/cloud-run"
-    },
-    {
-      "source": "/developing-in-the-cloud/cloud-dev-environments/kubernetes",
-      "destination": "/production/developing-in-the-cloud/cloud-dev-environments/kubernetes"
-    },
-    {
-      "source": "/developing-in-the-cloud/cloud-dev-environments/overview",
-      "destination": "/production/developing-in-the-cloud/cloud-dev-environments/overview"
-    },
-    {
-      "source": "/developing-in-the-cloud/workspaces/kubernetes",
-      "destination": "/production/developing-in-the-cloud/workspaces/kubernetes"
-    },
-    {
-      "source": "/developing-in-the-cloud/workspaces/overview",
-      "destination": "/production/developing-in-the-cloud/workspaces/overview"
-    },
-    {
-      "source": "/guides/streaming/destinations/amazon-s3",
-      "destination": "/streaming/destinations/amazon-s3"
-    },
-    {
-      "source": "/guides/streaming/destinations/elasticsearch",
-      "destination": "/streaming/destinations/elasticsearch"
-    },
-    {
-      "source": "/guides/streaming/destinations/azure_data_lake",
-      "destination": "/streaming/destinations/azure_data_lake"
-    },
-    {
-      "source": "/guides/streaming/destinations/dummy",
-      "destination": "/streaming/destinations/dummy"
-    },
-    {
-      "source": "/guides/streaming/destinations/kafka",
-      "destination": "/streaming/destinations/kafka"
-    },
-    {
-      "source": "/guides/streaming/destinations/kinesis",
-      "destination": "/streaming/destinations/kinesis"
-    },
-    {
-      "source": "/guides/streaming/destinations/mongodb",
-      "destination": "/streaming/destinations/mongodb"
-    },
-    {
-      "source": "/guides/streaming/destinations/opensearch",
-      "destination": "/streaming/destinations/opensearch"
-    },
-    {
-      "source": "/guides/streaming/destinations/redshift",
-      "destination": "/streaming/destinations/redshift"
-    },
-    {
-      "source": "/guides/streaming/overview",
-      "destination": "/streaming/overview"
-    },
-    {
-      "source": "/guides/streaming/sources/amazon-sqs",
-      "destination": "/streaming/sources/amazon-sqs"
-    },
-    {
-      "source": "/guides/streaming/sources/azure-event-hub",
-      "destination": "/streaming/sources/azure-event-hub"
-    },
-    {
-      "source": "/guides/streaming/sources/google-cloud-pubsub",
-      "destination": "/streaming/sources/google-cloud-pubsub"
-    },
-    {
-      "source": "/guides/streaming/sources/kafka",
-      "destination": "/streaming/sources/kafka"
-    },
-    {
-      "source": "/guides/streaming/sources/kinesis",
-      "destination": "/streaming/sources/kinesis"
-    },
-    {
-      "source": "/data-integrations/sources/adapt-existing-source",
-      "destination": "/contributing/data-integrations/adapt-existing-source"
-    },
-    {
-      "source": "/data-integrations/sources/add-new-source",
-      "destination": "/contributing/data-integrations/add-new-source"
-    },
-    {
-      "source": "/data-integrations/destination/add-new-destination",
-      "destination": "/contributing/data-integrations/add-new-destination"
-    },
-    {
-      "source": "/development/git/generate-an-ssh-token",
-      "destination": "/development/git/configure#generate-ssh-token"
-    },
-    {
-      "source": "/production/data-sync/github",
-      "destination": "/production/data-sync/version-control"
-    }
-  ]
+  "metadata": {
+    "og:image": "https://github.com/mage-ai/mage-ai/blob/master/docs/og.png?raw=True",
+    "og:description": "The leading framework for transforming and integrating data.",
+    "og:site_name": "Mage AI Documentation",
+    "twitter:site": "@mage_ai"
+  }
 }

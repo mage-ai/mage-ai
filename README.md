@@ -1,12 +1,12 @@
 <div align="left">
-  <h1>Mage</h1>
+  <h1>Mage AI</h1>
 
   <p>Give your data team magical powers.</p>
 
 <a href="https://mage.ai"><img alt="Mage AI GitHub repo stars" src="https://img.shields.io/github/stars/mage-ai/mage-ai?style=for-the-badge&logo=github&labelColor=000000&logoColor=FFFFFF&label=stars&color=0500ff" /></a>
-  <a href="https://hub.docker.com/r/mageai/mageai"><img alt="Mage AI Docker downloads" src="https://img.shields.io/docker/pulls/mageai/mageai?style=for-the-badge&logo=docker&labelColor=000000&logoColor=FFFFFF&label=pulls&color=6A35FF"></a>
-  <a href="https://github.com/mage-ai/mage-ai/blob/master/LICENSE"><img alt="Mage AI license" src="https://img.shields.io/github/license/mage-ai/mage-ai?style=for-the-badge&logo=codeigniter&labelColor=000000&logoColor=FFFFFF&label=license&color=FFCC19"></a>
-  <a href="https://www.mage.ai/chat"><img alt="Join the Mage AI community" src="https://img.shields.io/badge/Join%20the%20community-black.svg?style=for-the-badge&logo=lightning&labelColor=000000&logoColor=FFFFFF&label=&color=DD55FF&logoWidth=20"></a>
+<a href="https://hub.docker.com/r/mageai/mageai"><img alt="Mage AI Docker downloads" src="https://img.shields.io/docker/pulls/mageai/mageai?style=for-the-badge&logo=docker&labelColor=000000&logoColor=FFFFFF&label=pulls&color=6A35FF" /></a>
+<a href="https://github.com/mage-ai/mage-ai/blob/master/LICENSE"><img alt="Mage AI license" src="https://img.shields.io/github/license/mage-ai/mage-ai?style=for-the-badge&logo=codeigniter&labelColor=000000&logoColor=FFFFFF&label=license&color=FFCC19" /></a>
+<a href="https://www.mage.ai/chat"><img alt="Join the Mage AI community" src="https://img.shields.io/badge/Join%20the%20community-black.svg?style=for-the-badge&logo=lightning&labelColor=000000&logoColor=FFFFFF&label=&color=DD55FF&logoWidth=20" /></a>
 
 </div>
 
@@ -15,7 +15,7 @@
 <a href="https://mage.ai/pro">
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="https://github.com/mage-ai/assets/blob/main/oss/hero.png?raw=true">
-    <img alt="Mage AI hero" src="https://github.com/mage-ai/assets/blob/main/oss/hero.png?raw=true">
+    <img alt="Mage AI hero" src="https://github.com/mage-ai/assets/blob/main/oss/hero.png?raw=true" />
   </picture>
 </a>
 
@@ -48,7 +48,6 @@ Plus hundreds of enterprise-class features, infrastructure innovations, and magi
         <img alt="Mage Pro" width="124" align="left" src="https://github.com/mage-ai/assets/blob/main/oss/card-pro.png?raw=true" />
       </a>
       <b>For teams.</b> Fully managed platform
-      <br />
       for integrating and transforming data.
     </td>
     <td rowspan="2">
@@ -56,7 +55,6 @@ Plus hundreds of enterprise-class features, infrastructure innovations, and magi
         <img alt="Mage OSS" width="124" align="left" src="https://github.com/mage-ai/assets/blob/main/oss/card-oss.png?raw=true" />
       </a>
       <b>Self-hosted.</b> System to build, run, and
-      <br />
       manage data pipelines.
     </td>
   </tr>
