@@ -1,6 +1,6 @@
 ---
 title: "Connect a local db in Docker"
-sidebarTitle: "Connect a local db in Docker"
+sidebarTitle: "Connect local database"
 icon: "docker"
 description: "Here's how you can connect a local database to Mage in Docker for development."
 ---
@@ -9,13 +9,13 @@ description: "Here's how you can connect a local database to Mage in Docker for 
 
 When you develop in Docker, you can connect a database to your Mage container. This allows you to use the database in your data pipelines.
 
-A Docker Network is a virtual network that allows containers to communicate with each other. 
+A Docker Network is a virtual network that allows containers to communicate with each other.
 By creating a network, you can connect database containers to your Mage instances.
-Read more about Docker Networks [here](https://docs.docker.com/network/). 
+Read more about Docker Networks [here](https://docs.docker.com/network/).
 
-The following guides detail various methods for creating databases and connecting them to your Mage project. 
+The following guides detail various methods for creating databases and connecting them to your Mage project.
 
-We recommend starting with a [docker compose](https://docs.docker.com/compose/) file, as it affords the most flexibility and customizability. You might 
+We recommend starting with a [docker compose](https://docs.docker.com/compose/) file, as it affords the most flexibility and customizability. You might
 choose to use `docker run` instead, as it's a bit simpler.
 
 ## Guides
@@ -56,7 +56,7 @@ services:
     volumes:
       - .:/home/src/
     restart: on-failure:5
-  
+
   postgres:
     image: postgres:14
     restart: on-failure
