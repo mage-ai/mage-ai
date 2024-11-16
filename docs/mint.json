@@ -39,6 +39,9 @@
     "prompt": "Omniscience... ✨"
   },
   "rounded": "default",
+  "codeBlock": {
+    "mode": "auto"
+  },
   "topbarLinks": [
     {
       "name": "GitHub",
@@ -56,7 +59,7 @@
   "topbarCtaButton": {
     "type": "link",
     "name": "Demo playground",
-    "url": "https://github.com/mage-ai/mage-ai",
+    "url": "https://www.mage.ai/demo",
     "style": "pill",
     "arrow": true
   },
@@ -67,31 +70,19 @@
   "anchors": [],
   "tabs": [
     {
-      "name": "Guides",
+      "name": "Development",
       "url": "guides"
     },
     {
-      "name": "Dev UX",
-      "url": "developer-ux"
-    },
-    {
-      "name": "API",
-      "url": "api-reference"
-    },
-    {
-      "name": "Deploy",
+      "name": "Production",
       "url": "production"
-    },
-    {
-      "name": "Platform",
-      "url": "platform"
     },
     {
       "name": "Contribute",
       "url": "contributing"
     },
     {
-      "name": "Slack",
+      "name": "Community",
       "url": "https://www.mage.ai/chat"
     }
   ],
@@ -450,7 +441,7 @@
     "indexHiddenPages": true
   },
   "primaryTab": {
-    "name": "Docs"
+    "name": "Documentation"
   },
   "navigation": [
     {
@@ -472,14 +463,6 @@
     {
       "group": "Concepts",
       "pages": [
-        {
-          "group": "Backfills",
-          "icon": "database",
-          "pages": [
-            "orchestration/backfills/overview",
-            "orchestration/backfills/guides"
-          ]
-        },
         {
           "group": "Blocks",
           "icon": "block-brick",
@@ -598,15 +581,6 @@
         },
         "design/data-pipeline-management",
         {
-          "group": "Pipeline runs",
-          "icon": "pipe-circle-check",
-          "pages": [
-            "orchestration/pipeline-runs/retrying-block-runs",
-            "orchestration/pipeline-runs/saving-block-output-as-csv",
-            "orchestration/pipeline-runs/database-query"
-          ]
-        },
-        {
           "group": "Schedules and triggers",
           "icon": "clock",
           "pages": [
@@ -616,6 +590,15 @@
             "orchestration/triggers/trigger-pipeline-api",
             "orchestration/triggers/schedule-pipelines",
             "orchestration/triggers/database-query"
+          ]
+        },
+        {
+          "group": "Pipeline runs",
+          "icon": "pipe-circle-check",
+          "pages": [
+            "orchestration/pipeline-runs/retrying-block-runs",
+            "orchestration/pipeline-runs/saving-block-output-as-csv",
+            "orchestration/pipeline-runs/database-query"
           ]
         },
         {
@@ -665,6 +648,14 @@
                 "streaming/destinations/trino"
               ]
             }
+          ]
+        },
+        {
+          "group": "Backfills",
+          "icon": "database",
+          "pages": [
+            "orchestration/backfills/overview",
+            "orchestration/backfills/guides"
           ]
         }
       ]
@@ -753,7 +744,13 @@
             {
               "group": "Orchestration",
               "pages": [
-                "integrations/airflow",
+                {
+                  "group": "Airflow",
+                  "pages": [
+                    "integrations/airflow/index",
+                    "integrations/airflow/integrate-mage-airflow"
+                  ]
+                },
                 "integrations/prefect"
               ]
             },
@@ -837,75 +834,91 @@
       ]
     },
     {
-      "group": "Get Started",
+      "group": "Quickstart",
       "pages": [
-        "guides/overview"
-      ]
-    },
-    {
-      "group": "Quickstarts",
-      "pages": [
-        "guides/load-api-data",
-        "guides/data-integration-pipeline",
-        "guides/setup-dbt",
-        "guides/integrate-mage-airflow"
-      ]
-    },
-    {
-      "group": "Tutorials",
-      "pages": [
-        {
-          "group": "Blocks",
-          "icon": "block-brick",
-          "pages": [
-            "guides/blocks/transformer-blocks",
-            "guides/blocks/sql-blocks",
-            "guides/blocks/dynamic-blocks",
-            "guides/blocks/custom-blocks",
-            "guides/blocks/markdown-blocks",
-            "guides/blocks/r-blocks",
-            "guides/blocks/replicate-blocks",
-            "guides/blocks/reorder-blocks",
-            "guides/blocks/detach-blocks"
-          ]
-        },
-        {
-          "group": "Pipelines",
-          "icon": "pipe-section",
-          "pages": [
-            "guides/streaming-pipeline",
-            "guides/streaming/magic-devcontainer",
-            "guides/streaming-pipeline-rabbitmq",
-            "guides/train-model",
-            "guides/pipelines/importing-pipelines"
-          ]
-        },
-        "guides/dbt/developing-dbt-in-mage",
-        {
-          "group": "Using AI",
-          "icon": "microchip-ai",
-          "pages": [
-            "guides/ai/overview",
-            "guides/ai/ai-client"
-          ]
-        },
-        "guides/docker/connecting-a-database",
-        "guides/community-examples",
+        "guides/overview",
         "guides/tips-and-tricks"
       ]
     },
     {
-      "group": "Get Started",
+      "group": "Blocks",
+      "icon": "block-brick",
+      "pages": [
+        "guides/blocks/reorder-blocks",
+        "guides/blocks/detach-blocks",
+        "guides/blocks/dynamic-blocks",
+        "guides/blocks/replicate-blocks",
+        "guides/blocks/transformer-blocks",
+        "guides/blocks/custom-blocks",
+        "guides/blocks/markdown-blocks",
+        "guides/blocks/sql-blocks",
+        "guides/blocks/r-blocks"
+      ]
+    },
+    {
+      "group": "Pipelines",
+      "icon": "pipe-section",
+      "pages": [
+        "guides/load-api-data",
+        "guides/data-integration-pipeline",
+        {
+          "group": "Streaming",
+          "icon": "water",
+          "pages": [
+            "guides/streaming-pipeline",
+            "guides/streaming/magic-devcontainer",
+            "guides/streaming-pipeline-rabbitmq"
+          ]
+        },
+        "guides/train-model",
+        "guides/pipelines/importing-pipelines",
+        "guides/community-examples"
+      ]
+    },
+    {
+      "group": "dbt",
+      "pages": [
+        "guides/setup-dbt",
+        "guides/dbt/developing-dbt-in-mage"
+      ]
+    },
+    {
+      "group": "Docker",
+      "icon": "docker",
+      "pages": [
+        "guides/docker/connecting-a-database",
+        "guides/docker/non-root-user"
+      ]
+    },
+    {
+      "group": "Developer experience",
+      "pages": [
+        "guides/developer-ux/code-editor",
+        "guides/developer-ux/block-dependency-tree",
+        "guides/developer-ux/file-browser",
+        "guides/developer-ux/sidekick"
+      ]
+    },
+    {
+      "group": "AI",
+      "icon": "microchip-ai",
+      "pages": [
+        "guides/ai/overview",
+        "guides/ai/ai-client"
+      ]
+    },
+    {
+      "group": "API",
       "icon": "robot",
       "pages": [
-        "api-reference/overview",
+        "guides/api-reference/overview",
         {
           "group": "Design",
           "icon": "pencil",
           "pages": [
-            "api-reference/resources",
-            "api-reference/policies",
-            "api-reference/presenters"
+            "guides/api-reference/resources",
+            "guides/api-reference/policies",
+            "guides/api-reference/presenters"
           ]
         }
       ]
@@ -918,89 +931,109 @@
           "group": "Backfills",
           "icon": "database",
           "pages": [
-            "api-reference/backfills/overview",
-            "api-reference/backfills/read-backfills",
-            "api-reference/backfills/create-backfills",
-            "api-reference/backfills/update-backfill",
-            "api-reference/backfills/delete-backfill"
+            "guides/api-reference/backfills/overview",
+            "guides/api-reference/backfills/read-backfills",
+            "guides/api-reference/backfills/create-backfills",
+            "guides/api-reference/backfills/update-backfill",
+            "guides/api-reference/backfills/delete-backfill"
           ]
         },
         {
           "group": "Blocks",
           "icon": "block-brick",
           "pages": [
-            "api-reference/blocks/overview",
-            "api-reference/blocks/read-block",
-            "api-reference/blocks/create-block",
-            "api-reference/blocks/update-block",
-            "api-reference/blocks/delete-block"
+            "guides/api-reference/blocks/overview",
+            "guides/api-reference/blocks/read-block",
+            "guides/api-reference/blocks/create-block",
+            "guides/api-reference/blocks/update-block",
+            "guides/api-reference/blocks/delete-block"
           ]
         },
         {
           "group": "Logs",
           "icon": "scroll",
           "pages": [
-            "api-reference/logs/overview",
-            "api-reference/logs/read-logs"
+            "guides/api-reference/logs/overview",
+            "guides/api-reference/logs/read-logs"
           ]
         },
         {
           "group": "OAuth access tokens",
           "icon": "key",
           "pages": [
-            "api-reference/oauth-access-tokens/overview",
-            "api-reference/oauth-access-tokens/read-oauth-access-tokens"
+            "guides/api-reference/oauth-access-tokens/overview",
+            "guides/api-reference/oauth-access-tokens/read-oauth-access-tokens"
           ]
         },
         {
           "group": "Pipeline runs",
           "icon": "pipe-valve",
           "pages": [
-            "api-reference/pipeline-runs/overview",
-            "api-reference/pipeline-runs/read-pipeline-runs",
-            "api-reference/pipeline-runs/trigger-pipeline"
+            "guides/api-reference/pipeline-runs/overview",
+            "guides/api-reference/pipeline-runs/read-pipeline-runs",
+            "guides/api-reference/pipeline-runs/trigger-pipeline"
           ]
         },
         {
           "group": "Pipeline schedules",
           "icon": "pipe-circle-check",
           "pages": [
-            "api-reference/pipeline-schedules/overview",
-            "api-reference/pipeline-schedules/read-pipeline-schedules",
-            "api-reference/pipeline-schedules/create-pipeline-schedule"
+            "guides/api-reference/pipeline-schedules/overview",
+            "guides/api-reference/pipeline-schedules/read-pipeline-schedules",
+            "guides/api-reference/pipeline-schedules/create-pipeline-schedule"
           ]
         },
         {
           "group": "Pipelines",
           "icon": "pipe-collar",
           "pages": [
-            "api-reference/pipelines/overview",
-            "api-reference/pipelines/read-pipeline",
-            "api-reference/pipelines/create-pipeline",
-            "api-reference/pipelines/update-pipeline",
-            "api-reference/pipelines/delete-pipeline"
+            "guides/api-reference/pipelines/overview",
+            "guides/api-reference/pipelines/read-pipeline",
+            "guides/api-reference/pipelines/create-pipeline",
+            "guides/api-reference/pipelines/update-pipeline",
+            "guides/api-reference/pipelines/delete-pipeline"
           ]
         },
         {
           "group": "Sessions",
           "icon": "window",
           "pages": [
-            "api-reference/sessions/overview",
-            "api-reference/sessions/create-session"
+            "guides/api-reference/sessions/overview",
+            "guides/api-reference/sessions/create-session"
           ]
         }
       ]
     },
     {
-      "group": "Get Started",
+      "group": "Version control",
+      "pages": [
+        "production/data-sync/version-control",
+        "production/data-sync/git-sync"
+      ]
+    },
+    {
+      "group": "Deployment",
+      "icon": "circle-check",
+      "pages": [
+        "production/ci-cd/overview",
+        "production/ci-cd/local-cloud/repository-setup",
+        "production/ci-cd/local-cloud/github-actions",
+        "production/ci-cd/local-cloud/gitlab-ci-cd",
+        "production/ci-cd/local-cloud/buildkite",
+        "production/ci-cd/mage/pro"
+      ]
+    },
+    {
+      "group": "Infrastructure",
       "pages": [
         "production/deploying-to-cloud/architecture",
         {
-          "group": "Providers",
+          "group": "Cloud",
           "icon": "clouds",
           "pages": [
             {
               "group": "AWS",
+              "icon": "aws",
               "pages": [
                 "production/deploying-to-cloud/aws/setup",
                 "production/deploying-to-cloud/aws/resources",
@@ -1014,6 +1047,7 @@
             },
             {
               "group": "Azure",
+              "icon": "microsoft",
               "pages": [
                 "production/deploying-to-cloud/azure/setup",
                 "production/deploying-to-cloud/azure/resources"
@@ -1021,48 +1055,61 @@
             },
             {
               "group": "DigitalOcean",
+              "icon": "digital-ocean",
               "pages": [
                 "production/deploying-to-cloud/digitalocean/setup"
               ]
             },
             {
               "group": "GCP",
+              "icon": "google",
               "pages": [
                 "production/deploying-to-cloud/gcp/setup",
                 "production/deploying-to-cloud/gcp/resources",
                 "production/deploying-to-cloud/gcp/gcp-artifact-registry"
               ]
-            }
+            },
+            "production/mage/pro"
           ]
         },
-        "production/deploying-to-cloud/using-terraform",
-        "production/deploying-to-cloud/using-helm"
+        {
+          "group": "Infrastructure as code",
+          "icon": "road-bridge",
+          "pages": [
+            "production/deploying-to-cloud/using-terraform",
+            "production/deploying-to-cloud/using-helm"
+          ]
+        }
       ]
     },
     {
-      "group": "Concepts",
+      "group": "Security",
       "pages": [
         {
           "group": "Authentication",
           "icon": "passport",
           "pages": [
             "production/authentication/overview",
-            "production/authentication/google",
             "production/authentication/okta",
-            "production/authentication/microsoft"
+            "production/authentication/microsoft",
+            "production/authentication/google",
+            "production/authentication/ldap"
           ]
         },
         {
-          "group": "CI/CD",
-          "icon": "circle-check",
+          "group": "Secrets",
+          "icon": "lock",
           "pages": [
-            "production/ci-cd/overview",
-            "production/ci-cd/local-cloud/repository-setup",
-            "production/ci-cd/local-cloud/github-actions",
-            "production/ci-cd/local-cloud/gitlab-ci-cd",
-            "production/ci-cd/local-cloud/buildkite"
+            "production/deploying-to-cloud/secrets/AWS",
+            "production/deploying-to-cloud/secrets/Azure",
+            "production/deploying-to-cloud/secrets/GCP"
           ]
-        },
+        }
+      ]
+    },
+    {
+      "group": "Concepts",
+      "pages": [
         {
           "group": "Configuration",
           "icon": "gear",
@@ -1072,85 +1119,7 @@
             "production/configuring-production-settings/settings-backend"
           ]
         },
-        "production/databases/default",
-        {
-          "group": "Secrets",
-          "icon": "lock",
-          "pages": [
-            "production/deploying-to-cloud/secrets/AWS",
-            "production/deploying-to-cloud/secrets/Azure",
-            "production/deploying-to-cloud/secrets/GCP"
-          ]
-        },
-        {
-          "group": "Team management",
-          "icon": "user-plus",
-          "pages": [
-            "production/developing-in-the-cloud/cloud-dev-environments/overview",
-            {
-              "group": "Environments",
-              "pages": [
-                "production/developing-in-the-cloud/cloud-dev-environments/aws-ecs",
-                "production/developing-in-the-cloud/cloud-dev-environments/cloud-run",
-                "production/developing-in-the-cloud/cloud-dev-environments/kubernetes"
-              ]
-            }
-          ]
-        },
-        {
-          "group": "Version control",
-          "icon": "code-branch",
-          "pages": [
-            "production/data-sync/git-sync",
-            "production/data-sync/version-control"
-          ]
-        },
-        {
-          "group": "Workspaces",
-          "icon": "boxes-stacked",
-          "pages": [
-            "production/developing-in-the-cloud/workspaces/overview",
-            {
-              "group": "Environments",
-              "pages": [
-                "production/developing-in-the-cloud/workspaces/kubernetes"
-              ]
-            }
-          ]
-        },
-        {
-          "group": "Custom docker image",
-          "pages": [
-            "production/custom-docker-image/non-root-user"
-          ]
-        }
-      ]
-    },
-    {
-      "group": "Features",
-      "pages": [
-        "developer-ux/file-browser",
-        "developer-ux/code-editor",
-        "developer-ux/block-dependency-tree",
-        "developer-ux/sidekick"
-      ]
-    },
-    {
-      "group": "Overview",
-      "pages": [
-        "platform/overview"
-      ]
-    },
-    {
-      "group": "Designs",
-      "pages": [
-        "platform/designs/setup"
-      ]
-    },
-    {
-      "group": "Projects",
-      "pages": [
-        "platform/projects/management"
+        "production/databases/default"
       ]
     },
     {

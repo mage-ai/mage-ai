@@ -6,11 +6,12 @@ description: "Give your data team magical powers."
 ---
 
 import Badges from '/snippets/badges.mdx';
+import { ProButton } from '/snippets/pro/button.mdx';
 import { urls } from '/snippets/variables/urls.mdx';
 
 <Badges />
 
-<a href="https://mage.ai/pro">
+<a href="https://mage.ai/pro?source=introduction">
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="https://github.com/mage-ai/assets/blob/main/oss/hero.png?raw=true" />
     <img alt="Mage AI hero" src="https://github.com/mage-ai/assets/blob/main/oss/hero.png?raw=true" />
@@ -32,7 +33,7 @@ Plus hundreds of enterprise-class features, infrastructure innovations, and magi
 
 <CardGroup cols={2}>
   <Card
-    href={urls.pro}
+    href={`${urls.pro}?source=introduction`}
     horizontal
   >
     <div
@@ -53,7 +54,7 @@ Plus hundreds of enterprise-class features, infrastructure innovations, and magi
     </div>
   </Card>
   <Card
-    href={urls.oss}
+  href={`${urls.oss}?source=introduction`}
     horizontal
   >
     <div
@@ -75,20 +76,7 @@ Plus hundreds of enterprise-class features, infrastructure innovations, and magi
   </Card>
 </CardGroup>
 
-<a href={urls.pro} target="_blank">
-  <img
-    alt="Try out Mage Pro"
-    className="hidden dark:block"
-    src="https://img.shields.io/badge/try%20it%20out%20now-black.svg?style=for-the-badge&logo=artifacthub&labelColor=6A35FF&logoColor=FFFFFF&label=mage%20pro&color=6A35FF"
-    noZoom
-  />
-  <img
-    alt="Try out Mage Pro"
-    className="block dark:hidden"
-    src="https://img.shields.io/badge/try%20it%20out%20now-black.svg?style=for-the-badge&logo=artifacthub&labelColor=148EFF&logoColor=FFFFFF&label=mage%20pro&color=148EFF"
-    noZoom
-  />
-</a>
+<ProButton source="introduction" />
 
 ---
 
@@ -217,8 +205,8 @@ Together, we're Magers!
   </a>
 </p>
 
-## 🪪 [License](https://github.com/mage-ai/mage-ai/blob/master/LICENSE)
+---
 
 <p align="center">
-<img src="https://github.com/mage-ai/assets/blob/main/mascots/mascots-shorter.jpeg?raw=true" noZoom />
+  <img src="https://github.com/mage-ai/assets/blob/main/mascots/mascots-shorter.jpeg?raw=true" noZoom />
 </p>

@@ -1,0 +1,31 @@
+---
+title: "Mage Pro"
+sidebarTitle: "Mage"
+icon: "cloud-bolt-moon"
+description: "Magic power at your fingertips."
+---
+
+import { urls } from '/snippets/variables/urls.mdx';
+
+<Card
+  title="Get started for free"
+  href={`${urls.pro}?source=cloud-infrastructure`}
+>
+  <img
+    src="https://github.com/mage-ai/assets/blob/main/pro/banner-light.png?raw=true"
+    className="hidden dark:block"
+    noZoom
+  />
+  <img
+    src="https://github.com/mage-ai/assets/blob/main/pro/banner-dark.png?raw=true"
+    className="block dark:hidden"
+    noZoom
+  />
+
+  <br />
+
+  A fully managed service, where we maintain the infrastructure, guarantee uptime,
+  automatically scale your workloads to handle any volume of pipeline runs,
+  automatically upgrade new versions of Mage Pro only features,
+  monitor your production pipelines, and provide enterprise level support.
+</Card>

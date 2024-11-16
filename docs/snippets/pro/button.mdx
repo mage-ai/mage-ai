@@ -1,0 +1,16 @@
+export const ProButton = ({ source = 'documentation' }) => (
+  <a href={`https://mage.ai/pro?source=${source}`} target="_blank">
+    <img
+      alt="Try out Mage Pro"
+      className="hidden dark:block"
+      src="https://img.shields.io/badge/try%20it%20out%20now-black.svg?style=for-the-badge&logo=artifacthub&labelColor=6A35FF&logoColor=FFFFFF&label=mage%20pro&color=6A35FF"
+      noZoom
+    />
+    <img
+      alt="Try out Mage Pro"
+      className="block dark:hidden"
+      src="https://img.shields.io/badge/try%20it%20out%20now-black.svg?style=for-the-badge&logo=artifacthub&labelColor=148EFF&logoColor=FFFFFF&label=mage%20pro&color=148EFF"
+      noZoom
+    />
+  </a>
+);

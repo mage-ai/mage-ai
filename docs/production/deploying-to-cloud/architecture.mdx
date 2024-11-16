@@ -3,12 +3,17 @@ title: "Architecture"
 icon: "sitemap"
 ---
 
-Here is an overview of Mage architecture:
+import { ProBanner } from '/snippets/pro/banner.mdx';
+import { ProButton } from '/snippets/pro/button.mdx';
 
-![Mage architecture](https://github.com/mage-ai/assets/blob/main/mage-architecture.png?raw=True)
+<ProBanner source="architecture" />
+
+<Frame caption="Mage architecture diagram">
+  <img alt="Mage OSS rchitecture" diagram src="https://github.com/mage-ai/assets/blob/main/mage-architecture.png?raw=True" />
+</Frame>
 
 
-## Mage server
+## Server
 
 Mage server runs in an instance or container. Here are the responsibilities of the Mage server.
 - Handle all the API requests.
@@ -56,3 +61,10 @@ To separate the web server and scheduler, you can override the container command
     ```
 
 To run multiple schedulers simultaneously, you will need to specify the `REDIS_URL` environment variable in your container. The Redis storage is used to coordinate the job scheduling between multiple containers to resolve race conditions. Here is an example Redis URL format: `redis://redis:6379/0`
+
+## Autoscaling
+
+Do you want to run your pipelines at any scale without having to deal with infrastructure setup,
+configurations, deployment, and maintenance?
+
+<ProButton source="autoscaling" />

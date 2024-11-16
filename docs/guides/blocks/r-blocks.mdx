@@ -1,8 +1,9 @@
 ---
 title: "R blocks"
+sidebarTitle: "R"
+icon: "flask"
+description: "You can write R language to transform data in blocks."
 ---
-
-You can write R language to transform data in blocks.
 
 ## Requirements
 
@@ -28,7 +29,7 @@ R blocks are only supported when running Mage using [Docker](/getting-started/se
     }
     ```
 1. Transformer
-    ```R 
+    ```R
     library("pacman")
     p_load(dplyr)
 
@@ -65,7 +66,7 @@ p_load(dplyr)
 
 > Note
 >
-> When you run the R block for the 1st time, the package will be installed. 
+> When you run the R block for the 1st time, the package will be installed.
 > The 2nd time you run the R block, the package won’t need to be installed again.
 
 ### What is `pacman`?
