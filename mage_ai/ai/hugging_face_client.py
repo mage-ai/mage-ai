@@ -5,7 +5,7 @@ from typing import Dict
 
 import requests
 
-from mage_ai.ai.ai_client import AIClient
+from mage_ai.ai.ai_client import AIClient, InferenceType
 from mage_ai.data_cleaner.transformer_actions.constants import ActionType, Axis
 from mage_ai.data_preparation.models.constants import (
     BlockLanguage,
@@ -14,6 +14,9 @@ from mage_ai.data_preparation.models.constants import (
 )
 from mage_ai.io.base import DataSource
 from mage_ai.orchestration.ai.config import HuggingFaceConfig
+from mage_ai.server.logger import Logger
+
+logger = Logger().new_server_logger(__name__)
 
 headers = {
     "Content-Type": "application/json"
@@ -46,6 +49,9 @@ Return your responses in JSON format with the question name as the key and
 the answer as the value.
 """
 
+PROMPT_FOR_CODE_GEN = "Write a {code_language} function based on the description: \
+    {code_description}. Input is df: DataFrame. Output is DataFrame."
+
 
 class HuggingFaceClient(AIClient):
     """
@@ -59,7 +65,10 @@ class HuggingFaceClient(AIClient):
             or os.getenv('HUGGINGFACE_INFERENCE_API_TOKEN')
         self.api = hf_config.huggingface_api or \
             os.getenv('HUGGINGFACE_API')
-        print(f'Using Hugging Face API: {self.api}')
+        self.enable_code_gen = hf_config.enable_code_gen
+        self.code_gen_api = hf_config.code_gen_api
+        logger.info(f'Using Hugging Face API: {self.api}')
+        logger.info(f'Using Hugging Face enable_code_gen: {self.enable_code_gen}')
 
     def __parse_function_args(self, function_args: Dict):
         try:
@@ -124,8 +133,12 @@ class HuggingFaceClient(AIClient):
             self,
             variable_values: Dict[str, str],
             prompt_template: str,
-            is_json_response: bool = True
+            is_json_response: bool = True,
+            inference_type: InferenceType = InferenceType.DEFAULT
     ):
+        # If code generation is enabled, use code generation model.
+        if self.enable_code_gen and inference_type == InferenceType.CODE_GENERATION:
+            return self.code_generate(variable_values)
         formated_prompt = prompt_template.format(**variable_values)
         data = json.dumps({
             'inputs': formated_prompt,
@@ -144,6 +157,7 @@ class HuggingFaceClient(AIClient):
             print(f'Unexpected error from hugging face: {response_json["error"]}')
             return ""
         generated_text = response.json()[0]['generated_text'].lstrip('\n')
+
         if is_json_response:
             # Clean up unexpected JSON format.
             generated_text = re.sub(r'^```json', '', generated_text)
@@ -151,6 +165,66 @@ class HuggingFaceClient(AIClient):
             generated_text = re.sub(r'"""', '"', generated_text)
             return json.loads(generated_text, strict=False)
         return generated_text
+
+    def code_generate(
+            self,
+            variable_values: Dict[str, str],
+    ) -> str:
+        """
+        Generates customized code based on description.
+
+        Args:
+            variable_values (Dict): contains values needed in the prompt.
+                Values requried are code_description, code_language.
+
+        Returns:
+            generated code in string format.
+        """
+        logger.info("Generating customized code with code model.")
+        formated_prompt = PROMPT_FOR_CODE_GEN.format(**variable_values)
+
+        headers.update(
+            {'Authorization': f'Bearer {self.api_token}'})
+        data = json.dumps({
+            'inputs': formated_prompt,
+            'parameters': {
+                'return_full_text': False,
+                'max_new_tokens': 200,
+                'num_return_sequences': 1}})
+        response = requests.post(self.code_gen_api, headers=headers, data=data)
+        response_json = response.json()
+        if 'error' in response_json:
+            if response_json['error'] == 'Bad Gateway':
+                raise Exception('Error hugging face endpoint Bad Gateway. \
+                                Please start hugging face inference endpoint.')
+            print(f'Unexpected error from hugging face: {response_json["error"]}')
+            return ""
+        """
+        Response from model is returned in the following format:
+        \\begin{code}
+            def transform_by_times_100(df):
+                df['col1'] = df['col1'] * 100
+                df['col2'] = df['col2'] * 100
+                df['col3'] = df['col3'] * 100
+                return df
+        \\end{code}
+
+        Parse and save it into output_generated_code.
+        """
+        generated_text = response.json()[0]['generated_text'].lstrip('\n')
+
+        pattern = r'\\begin{code}(.*?)\\end{code}'
+        match = re.search(pattern, generated_text, re.DOTALL)
+        output_generated_code = ''
+        if match:
+            generated_lines = match.group(1).strip().split('\n')
+            for line in generated_lines:
+                if line.strip().startswith('def'):
+                    continue
+                output_generated_code = \
+                    f'{output_generated_code}\n{re.sub(r"return ", "", line)}'
+
+        return {'code': output_generated_code}
 
     async def find_block_params(
             self,

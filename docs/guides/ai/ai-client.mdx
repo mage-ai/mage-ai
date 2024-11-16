@@ -58,6 +58,29 @@ You are ready to go once the "ai_config" is setup. At this point,
 you can fully leverage Mage AI's capabilities, such as generating blocks
 with text description, automatically write comments for your functions, etc.
 
+#### Use Dedicated Code Generation Model
+
+You can also utilize a dedicated code generation model to enhance the AI capabilities 
+for generating customized code. To achieve this, you will need to enable code generation
+(enable_code_gen: true) and include the code generation inference API within the 
+'ai_config' section of your project's metadata YAML configuration. That covers everything you need.
+
+Example configuration:
+
+```
+ai_config:
+  mode: 'hugging_face'
+  open_ai_config:
+    openai_api_key: key
+  hugging_face_config:
+    huggingface_api: api_url
+    huggingface_inference_api_token: api_token
+    enable_code_gen: true
+    code_gen_api: https://nyvss6tksvgn7mf3.us-east-1.aws.endpoints.huggingface.cloud
+```
+
+To reach a good performance, you can use `codellama/CodeLlama-34b-hf` or `codellama/CodeLlama-13b-hf`.
+
 ## How to add a new AI Client
 
 You may find it necessary to employ an AI client other than those offered by OpenAI and Hugging Face.

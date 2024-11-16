@@ -13,6 +13,8 @@ class OpenAIConfig(BaseConfig):
 class HuggingFaceConfig(BaseConfig):
     huggingface_api: str = None
     huggingface_inference_api_token: str = None
+    enable_code_gen: bool = False
+    code_gen_api: str = None
 
 
 @dataclass
