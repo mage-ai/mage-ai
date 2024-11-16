@@ -1,21 +1,93 @@
-<h1 align="center">
-  <a
-    target="_blank"
-    href="https://mage.ai"
-  >
-    <img
-      align="center"
-      alt="Mage"
-      src="https://github.com/mage-ai/assets/blob/main/mascots/mascots-shorter.jpeg?raw=true"
-      style="width:100%;"
-    />
-  </a>
-</h1>
-<p align="center">
-  🧙 A modern replacement for Airflow.
-</p>
+<div align="left">
+  <h1>Mage</h1>
 
-<p align="center">
+  <p>Give your data team magical powers.</p>
+
+  <a href="https://mage.ai">
+    <img alt="Mage AI GitHub repo stars" src="https://img.shields.io/github/stars/mage-ai/mage-ai?style=for-the-badge&logo=github&labelColor=000000&logoColor=FFFFFF&label=⭐&color=0500ff">
+  </a>
+  <a href="https://hub.docker.com/r/mageai/mageai">
+    <img alt="Mage AI Docker downloads" src="https://img.shields.io/docker/pulls/mageai/mageai?style=for-the-badge&logo=docker&labelColor=000000&logoColor=FFFFFF&label=pulls&color=6A35FF">
+  </a>
+  <a href="https://github.com/mage-ai/mage-ai/blob/master/LICENSE">
+    <img alt="Mage AI license" src="https://img.shields.io/github/license/mage-ai/mage-ai?style=for-the-badge&logo=codeigniter&labelColor=000000&logoColor=FFFFFF&label=license&color=FFCC19">
+  </a>
+  <a href="https://www.mage.ai/chat">
+    <img alt="Join the Mage AI community" src="https://img.shields.io/badge/Join%20the%20community-black.svg?style=for-the-badge&logo=lightning&labelColor=000000&logoColor=FFFFFF&label=&color=DD55FF&logoWidth=20">
+  </a>
+</div>
+
+<br />
+
+<a href="https://mage.ai/pro">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://github.com/mage-ai/assets/blob/main/oss/mage-pro-callout-light.png?raw=true">
+    <img alt="Mage Pro callout" src="https://github.com/mage-ai/assets/blob/main/oss/mage-pro-callout-light.png?raw=true">
+  </picture>
+</a>
+
+<br />
+
+<a href="https://mage.ai/pro">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://github.com/mage-ai/assets/blob/main/oss/hero.png?raw=true">
+    <img alt="Mage AI hero" src="https://github.com/mage-ai/assets/blob/main/oss/hero.png?raw=true">
+  </picture>
+</a>
+
+<br />
+
+<div align="left">
+  Mage is a hybrid framework for transforming and integrating data. It combines the best of both worlds: the flexibility of notebooks with the rigor of modular code.
+
+  <br />
+
+  - Extract and synchronize data from 3rd party sources.
+  - Transform data with real-time and batch pipelines using Python, SQL, and R.
+  - Load data into your data warehouse or data lake using our pre-built connectors.
+  - Run, monitor, and orchestrate thousands of pipelines without losing sleep.
+
+  <br />
+
+  Plus hundreds of enterprise-class features, infrastructure innovations, and magical surprises.
+</div>
+
+<h1></h1>
+
+#### Available in two spellbinding versions
+
+<br />
+
+<table style="width: 100%; border: none;" cellspacing="0" cellpadding="0" border="0">
+  <tr>
+    <td rowspan="2">
+      <img width="124" align="left" src="https://github.com/mage-ai/assets/blob/main/oss/card-pro.png?raw=true" />
+      <b>For teams.</b> Fully managed platform
+      <br />
+      for integrating and transforming data.
+    </td>
+    <td rowspan="2">
+      <img width="124" align="left" src="https://github.com/mage-ai/assets/blob/main/oss/card-oss.png?raw=true" />
+      <b>Self-hosted.</b> System to build, run, and
+      <br />
+      manage data pipelines.
+    </td>
+  </tr>
+</table>
+
+<br />
+
+<a href="https://mage.ai/pro">
+  <img alt="Join the Mage AI community" src="https://img.shields.io/badge/try%20it%20out%20now-black.svg?style=for-the-badge&logo=artifacthub&labelColor=6A35FF&logoColor=FFFFFF&label=pro&color=6A35FF">
+</a>
+
+<br />
+
+<div align="left">
+
+# It’s magic.
+
+<p align="left">
   <a
     href="https://docs.mage.ai"
     target="_blank"
@@ -35,81 +107,13 @@
     <b>Get instant help</b>
   </a>
 </p>
-<div align="center">
-  <a
-    href="https://pypi.org/project/mage-ai/"
-    target="_blank"
-  >
-    <img alt="PyPi" src="https://img.shields.io/pypi/v/mage-ai?color=orange" />
-  </a>
-  <a
-    href="https://anaconda.org/conda-forge/mage-ai"
-    target="_blank"
-  >
-    <img src="https://anaconda.org/conda-forge/mage-ai/badges/version.svg" />
-  </a>
-  <a
-    href="https://opensource.org/licenses/Apache-2.0"
-    target="_blank"
-  >
-    <img alt="License" src="https://img.shields.io/github/license/mage-ai/mage-ai?color=red" />
-  </a>
-  <a
-    href="https://www.mage.ai/chat"
-    target="_blank"
-  >
-    <img alt="Slack" src="https://img.shields.io/badge/Slack-Join%20Slack-blueviolet?logo=slack" />
-  </a>
-  <a
-    href="https://github.com/mage-ai/mage-ai"
-    target="_blank"
-  >
-    <img alt="GitHub Stars" src="https://img.shields.io/github/stars/mage-ai/mage-ai?logo=github">
-  </a>
-  <a
-    href="https://hub.docker.com/r/mageai/mageai"
-    target="_blank"
-  >
-    <img alt="Docker pulls" src="https://img.shields.io/docker/pulls/mageai/mageai.svg">
-  </a>
-  <a
-    href="https://pepy.tech/project/mage-ai"
-    target="_blank"
-  >
-    <img alt="pip installs" src="https://static.pepy.tech/personalized-badge/mage-ai?period=total&units=international_system&left_color=grey&right_color=blue&left_text=pip%20installs">
-  </a>
-</div>
-<img
-  referrerpolicy="no-referrer-when-downgrade"
-  src="https://static.scarf.sh/a.png?x-pxid=b3c96d79-b8f0-414b-a687-8bfc164b4b7a"
-/>
-
-<div align="center">
-
-### Give your data team `magical` powers
-
-</div>
-
-<p align="center">
-  <b>Integrate</b> and synchronize data from 3rd party sources
-</p>
-
-<p align="center">
-  Build real-time and batch pipelines to <b>transform</b> data using Python, SQL, and R
-</p>
-
-<p align="center">
-  Run, monitor, and <b>orchestrate</b> thousands of pipelines without losing sleep
-</p>
 
 <br />
 
 <p align="center">1️⃣ 🏗️</p>
 <h1 align="center">Build</h1>
 <p align="center">
-  Have you met anyone who said they loved developing in Airflow?
-  <br />
-  That’s why we designed an easy developer experience that you’ll enjoy.
+  We designed an easy developer experience that you’ll enjoy.
 </p>
 
 |   |   |
@@ -123,8 +127,6 @@
 <p align="center">2️⃣ 🔮</p>
 <h1 align="center">Preview</h1>
 <p align="center">
-  Stop wasting time waiting around for your DAGs to finish testing.
-  <br />
   Get instant feedback from your code each time you run it.
 </p>
 
@@ -139,9 +141,7 @@
 <p align="center">3️⃣ 🚀</p>
 <h1 align="center">Launch</h1>
 <p align="center">
-  Don’t have a large team dedicated to Airflow?
-  <br />
-  Mage makes it easy for a single developer or small team to scale up and manage thousands of pipelines.
+  Easy for a solo developer or large team to scale up and manage thousands of pipelines.
 </p>
 
 |   |   |
@@ -224,26 +224,32 @@ Build and run a data pipeline with our <b>[demo app](https://demo.mage.ai/)</b>.
 | 🚰 | <b>[Streaming pipelines](https://docs.mage.ai/guides/streaming-pipeline)</b> | Ingest and transform real-time data. |
 | ❎ | <b>[dbt](https://docs.mage.ai/dbt/overview)</b> | Build, run, and manage your dbt models with Mage. |
 
+<br />
+
 <b>A sample data pipeline defined across 3 files ➝</b>
+
+<br />
 
 1. Load data ➝
     ```python
     @data_loader
-    def load_csv_from_file():
-        return pd.read_csv('default_repo/titanic.csv')
+    def load_csv_from_file() -> pl.DataFrame:
+        return pl.read_csv('default_repo/titanic.csv')
     ```
 1. Transform data ➝
     ```python
     @transformer
-    def select_columns_from_df(df, *args):
+    def select_columns_from_df(df: pl.DataFrame, *args) -> pl.DataFrame:
         return df[['Age', 'Fare', 'Survived']]
     ```
 1. Export data ➝
     ```python
     @data_exporter
-    def export_titanic_data_to_disk(df) -> None:
+    def export_titanic_data_to_disk(df: pl.DataFrame) -> None:
         df.to_csv('default_repo/titanic_transformed.csv')
     ```
+
+<br />
 
 <b>What the data pipeline looks like in the UI ➝</b>
 
@@ -255,7 +261,9 @@ Build and run a data pipeline with our <b>[demo app](https://demo.mage.ai/)</b>.
 New? We recommend reading about <b>[blocks](https://docs.mage.ai/design/blocks)</b> and
 learning from a <b>[hands-on tutorial](https://docs.mage.ai/guides/load-api-data)</b>.
 
-[![Ask us questions on Slack](https://img.shields.io/badge/%20-Ask%20us%20questions%20on%20Slack-purple?style=for-the-badge&logo=slack&labelColor=6B50D7)](https://www.mage.ai/chat)
+<a href="https://www.mage.ai/chat">
+  <img alt="Join the Mage AI community" src="https://img.shields.io/badge/Ask%20us%20questions%20on%20Slack-black.svg?style=for-the-badge&logo=slack&labelColor=6A35FF&logoColor=FFFFFF&label=&color=6A35FF&logoWidth=20">
+</a>
 
 <br />
 
@@ -310,7 +318,11 @@ Together, we’re Magers!
 > A group of mages who help each other realize their full potential!
 Let’s hang out and chat together ➝
 
-[![Hang out on Slack](https://img.shields.io/badge/%20-Hang%20out%20on%20Slack-purple?style=for-the-badge&logo=slack&labelColor=6B50D7)](https://www.mage.ai/chat)
+<a href="https://www.mage.ai/chat">
+  <img alt="Join the Mage AI community" src="https://img.shields.io/badge/Hang%20out%20on%20Slack-black.svg?style=for-the-badge&logo=slack&labelColor=6A35FF&logoColor=FFFFFF&label=&color=6A35FF&logoWidth=20">
+</a>
+
+<br />
 
 For real-time news, fun memes, data engineering topics, and more, join us on ➝
 
