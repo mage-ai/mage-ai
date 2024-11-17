@@ -1,6 +1,7 @@
 ---
 title: "Configuring Mage settings backend"
-sidebarTitle: "Settings backend"
+sidebarTitle: "Settings"
+icon: "gear"
 ---
 
 ## Overview
@@ -19,7 +20,7 @@ from the settings backend before falling back to environment variables.
 
 By default, many of Mage's configurable settings are read from environment variables. This may make sense
 for more settings, but there are some settings that are too sensitive to be stored as environment
-variables. 
+variables.
 
 You can configure a settings backend to read settings from a different source. To set this up, you will
 need to add a `settings_backend` section to your project's `metadata.yaml` file.
@@ -38,7 +39,7 @@ See below sections for the different types of settings backends that are availab
 
 ## AWS Secrets Manager
 
-When the AWS Secrets Manager settings backend is enabled, Mage will read the value from the 
+When the AWS Secrets Manager settings backend is enabled, Mage will read the value from the
 AWS secret name: `{prefix}{settings_name}`. For example if the setting is `OKTA_CLIENT_SECRET`
 and the prefix is `default_repo/settings/`, Mage will fetch the value for `default_repo/settings/OKTA_CLIENT_SECRET`.
 

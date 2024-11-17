@@ -2,6 +2,7 @@ import { ProButton } from '/snippets/pro/button.mdx';
 
 export const ProBanner = ({
   button = 'Try Mage Pro for free',
+  description,
   source = 'documentation',
   title = 'Our fully managed solution for teams is now available!',
 }) => (
@@ -16,6 +17,8 @@ export const ProBanner = ({
         style={{ flex: 1 }}
       >
         {title}
+        {description && <br />}
+        {description && <p className="normal">{description}</p>}
       </div>
 
       <div>&nbsp;</div>
