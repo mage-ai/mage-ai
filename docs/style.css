@@ -10,9 +10,7 @@
 
 footer {}
 
-.prose :where(a):not(:where([class~=not-prose], [class~=not-prose] *)),
-a.no-border-bottom,
-#no-border-bottom {
+a.no-border-bottom {
   border-bottom: none !important;
 
   &:hover {
