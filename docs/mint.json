@@ -82,16 +82,16 @@
       "url": "observability"
     },
     {
-      "name": "Extensibility",
-      "url": "extensibility"
-    },
-    {
       "name": "Integrations",
       "url": "integrations"
     },
     {
       "name": "AI",
       "url": "ai"
+    },
+    {
+      "name": "Extensibility",
+      "url": "extensibility"
     },
     {
       "name": "Community",
