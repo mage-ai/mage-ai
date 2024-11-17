@@ -10,7 +10,8 @@
 
 footer {}
 
-a.no-border-bottom {
+a.no-border-bottom,
+#no-border-bottom {
   border-bottom: none !important;
 
   &:hover {
