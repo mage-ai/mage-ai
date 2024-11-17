@@ -5,8 +5,8 @@ icon: "space-station-moon-construction"
 description: "Go from zero to Mage hero in under a minute. We'll walk you through installing Mage and running your first pipeline. 🦸‍♀️"
 ---
 
-import { ProBanner } from '/snippets/pro/banner.mdx';
 import { ProButton } from '/snippets/pro/button.mdx';
+import { ProBanner } from '/snippets/pro/banner.mdx';
 
 ## ⛵️ Overview
 
@@ -19,51 +19,13 @@ If you're familiar with [Docker Compose](https://docs.docker.com/compose/) or pl
 ## 🪄 Get Mage
 
 <AccordionGroup>
-   <Accordion title="Docker compose template" icon="Docker">
-   ### Get started
+  <Accordion title="Docker" icon="docker">
 
-   The following is useful if you plan on customizing your image or adding additional services to a Docker network with Mage. Read more about Docker compose [here](https://docs.docker.com/compose/).
+    ### Get started
 
-   Be sure that [Docker](https://docs.docker.com/engine/install/) and [Git](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git) are installed and run:
-   <CodeGroup>
-   ```bash Mac/Linux
-   git clone https://github.com/mage-ai/compose-quickstart.git mage-quickstart \
-   && cd mage-quickstart \
-   && cp dev.env .env && rm dev.env \
-   && docker compose up
-   ```
+    First, be sure [Docker](https://docs.docker.com/engine/install/) is installed. Next, create a new folder for your project, change directory into that folder, and run the following from your terminal:
 
-   ```bash Windows
-   git clone https://github.com/mage-ai/compose-quickstart.git mage-quickstart
-   cd mage-quickstart
-   cp dev.env .env
-   rm dev.env
-   docker compose up
-   ```
-
-   ```Windows powershell/cmd
-   git clone https://github.com/mage-ai/compose-quickstart.git mage-quickstart
-   cd mage-quickstart
-   copy dev.env .env
-   del dev.env
-   docker compose up
-   ```
-   </CodeGroup>
-
-   Once the server is running, open `http://localhost:6789` in your browser and explore! We recommend one of our [guides](/guides/overview) to for inspiration.
-
-   ### What's happening?
-
-   We're cloning our Docker Compose [quickstart repo](https://github.com/mage-ai/compose-quickstart.git), copying `dev.env` to `.env`, which is ignored by git in our configuration (to avoid exposing secrets), then running `docker compose up` to start a Mage server.
-
-   </Accordion>
-   <Accordion title="Docker run" icon="docker">
-
-   ### Get started
-
-   First, be sure [Docker](https://docs.docker.com/engine/install/) is installed. Next, create a new folder for your project, change directory into that folder, and run the following from your terminal:
-
-   <CodeGroup>
+    <CodeGroup>
       ```bash Mac/Linux
       docker run -it -p 6789:6789 -v $(pwd):/home/src mageai/mageai /app/run_app.sh mage start [project_name]
       ```
@@ -78,13 +40,52 @@ If you're familiar with [Docker Compose](https://docs.docker.com/compose/) or pl
       ```bash GCP VM Instance
       sudo docker run -it -p 6789:6789 -v $(pwd):/home/src mageai/mageai /app/run_app.sh mage start [project_name]
       ```
-   </CodeGroup>
+    </CodeGroup>
 
-   Once the server is running, open `http://localhost:6789` in your browser and explore! If using any cloud provider use external IP address with the port eg 123.456.78:6789. We recommend one of our [guides](/guides/overview) for inspiration.
+    Once the server is running, open `http://localhost:6789` in your browser and explore! If using any cloud provider use external IP address with the port eg 123.456.78:6789. We recommend one of our [guides](/guides/overview) for inspiration.
 
-   ### What's happening?
+    ### What's happening?
 
-   We're executing `docker run`, which runs a Docker container from the Mage image. additionally, we're _mounting a volume_ (the `-v` command) to persist our project files on our container. This mounts the current folder to `/home/src` in the mage container. We're executing our docker image `mageai/mageai` and running a script to start up the container.
+    We're executing `docker run`, which runs a Docker container from the Mage image. additionally, we're _mounting a volume_ (the `-v` command) to persist our project files on our container. This mounts the current folder to `/home/src` in the mage container. We're executing our docker image `mageai/mageai` and running a script to start up the container.
+
+  </Accordion>
+
+  <Accordion title="Docker Compose" icon="Docker">
+    ### Get started
+
+    The following is useful if you plan on customizing your image or adding additional services to a Docker network with Mage. Read more about Docker compose [here](https://docs.docker.com/compose/).
+
+    Be sure that [Docker](https://docs.docker.com/engine/install/) and [Git](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git) are installed and run:
+    <CodeGroup>
+      ```bash Mac/Linux
+      git clone https://github.com/mage-ai/compose-quickstart.git mage-quickstart \
+      && cd mage-quickstart \
+      && cp dev.env .env && rm dev.env \
+      && docker compose up
+      ```
+
+      ```bash Windows
+      git clone https://github.com/mage-ai/compose-quickstart.git mage-quickstart
+      cd mage-quickstart
+      cp dev.env .env
+      rm dev.env
+      docker compose up
+      ```
+
+      ```Windows powershell/cmd
+      git clone https://github.com/mage-ai/compose-quickstart.git mage-quickstart
+      cd mage-quickstart
+      copy dev.env .env
+      del dev.env
+      docker compose up
+      ```
+    </CodeGroup>
+
+    Once the server is running, open `http://localhost:6789` in your browser and explore! We recommend one of our [guides](/guides/overview) to for inspiration.
+
+    ### What's happening?
+
+    We're cloning our Docker Compose [quickstart repo](https://github.com/mage-ai/compose-quickstart.git), copying `dev.env` to `.env`, which is ignored by git in our configuration (to avoid exposing secrets), then running `docker compose up` to start a Mage server.
 
    </Accordion>
 
@@ -135,9 +136,10 @@ If you're familiar with [Docker Compose](https://docs.docker.com/compose/) or pl
       </Steps>
    </Accordion>
 
-   <Accordion title="Mage Pro" icon="cloud-bolt-moon">
-      <ProBanner source="setup" />
-      <ProButton source="setup" />
+   <Accordion title="Cloud" icon="cloud-bolt-moon" defaultOpen>
+      <ProBanner
+        source="setup"
+      />
    </Accordion>
 </AccordionGroup>
 

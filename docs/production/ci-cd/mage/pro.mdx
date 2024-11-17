@@ -1,19 +1,53 @@
 ---
 title: "Continuous deployment with Mage Pro"
-sidebarTitle: "Mage"
+sidebarTitle: "Mage Pro"
 icon: "rocket-launch"
 description: "Manage, deploy, and rollback new code changes, from a remote repository to any environment, all from within the Mage platform."
 ---
 
+import { ProBanner } from '/snippets/pro/banner.mdx';
+import { ProButton } from '/snippets/pro/button.mdx';
 import { ProOnly } from '/snippets/pro/only.mdx';
 import { urls } from '/snippets/variables/urls.mdx';
 
-<ProOnly source="ci-cd" />
+<ProOnly source="deployment" />
 
+<Steps>
+  <Step title="Connect remote repository">
+    <Frame>
+      <img
+        alt="Mage Pro Connect remote repository"
+        src="https://github.com/mage-ai/assets/blob/main/pro/features/deployment-configurations.jpg?raw=true"
+      />
+    </Frame>
+  </Step>
+
+  <Step title="Deployment stages">
+    <Frame>
+      <img
+        alt="Mage Pro Deployment stages"
+        src="https://github.com/mage-ai/assets/blob/main/pro/features/deployment-stages.jpg?raw=true"
+      />
+    </Frame>
+  </Step>
+
+  <Step title="Deploy new code changes or rollback">
+    <Frame>
+      <img
+        alt="Mage Pro Deploy new code changes or rollback"
+        src="https://github.com/mage-ai/assets/blob/main/pro/features/deployment-deploys.jpg?raw=true"
+      />
+    </Frame>
+
+    Automatically deploy new code changes and data pipelines to different environments.
+  </Step>
+</Steps>
+
+---
 
 <Card
   title="Get started for free"
-  href={`${urls.pro}?source=ci-cd`}
+  href={`${urls.pro}?source=deployment`}
 >
   <img
     src="https://github.com/mage-ai/assets/blob/main/pro/banner-light.png?raw=true"

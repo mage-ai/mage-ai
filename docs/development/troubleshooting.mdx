@@ -34,12 +34,12 @@ Sometimes, upstream data is out of our contol. If we're expecting a column in a 
 
 <Frame><img alt="Oh no" src="https://media0.giphy.com/media/t1RCtCTlFUhby/200w.gif" /></Frame>
 
-Thankfully, [Mage Community](https://www.mage.ai/chat) member [Josh Pachner](https://mageai.slack.com/team/U05B9DLK0N7) has a solution. 
+Thankfully, [Mage Community](https://www.mage.ai/chat) member [Josh Pachner](https://mageai.slack.com/team/U05B9DLK0N7) has a solution.
 
 Say you have an upstream block that looks like:
 
 ```SQL
-SELECT 
+SELECT
   df."col_1",
   df."col_2",
   df."col_3",
@@ -68,7 +68,7 @@ This is especially helpful in databases like Snowflake, which don't have an `ife
 Accessing data located in S3, you may see an error like this:
 
 ```text
-An error occurred (InvalidToken) when calling the GetObject operation: 
+An error occurred (InvalidToken) when calling the GetObject operation:
 The provided token is malformed or otherwise invalid.
 ```
 
@@ -123,7 +123,6 @@ If Mage terminal or "Run block" button doesn't work, it usually means there's a 
 If your block gets stuck in running status in the Mage editor, you can try the following things:
 * [Restart the kernel](/getting-started/kernels#restart-kernel) and refresh the page.
 * Check whether the CPU and memory usage of the instance is too high. Increase the CPU and memory if the usage is above 50%.
-* Check whether the "Compute management" feature is enabled in the project settings. This feature sometimes causes the slowdown of the block execution in the Mage editor (notebook).
 
 
 ## Server fails to start or keeps restarting due to healthcheck failures
