@@ -10,11 +10,25 @@
 
 footer {}
 
-a.no-border-bottom {
+.group.px-4.relative.inline-flex.items-center.text-sm.font-medium.no-border-bottom {
   border-bottom: none !important;
 
   &:hover {
     border-bottom: none !important;
+  }
+}
+
+.wtf {
+  .prose :where(a):not(:where([class~=not-prose], [class~=not-prose] *)) {
+    border-bottom: none !important;
+  }
+
+  .no-border-bottom {
+    border-bottom: none !important;
+
+    &:hover {
+      border-bottom: none !important;
+    }
   }
 }
 
