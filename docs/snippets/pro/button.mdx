@@ -3,13 +3,12 @@ export const ProButton = ({
   label = 'Get started with Mage Pro for free',
   source = 'documentation',
 }) => (
-<div className="no-border-bottom" id="no-border-bottom">
   <div
     style={{ height: 32, position: 'relative' }}
   >
     <a
       target="_blank"
-      className="group px-4 py-1.5 relative inline-flex items-center text-sm font-medium no-border-bottom"
+      className="group px-4 py-1.5 relative inline-flex items-center text-sm font-medium rounded-full"
       href={href ?? `https://mage.ai/pro?source=${source}`}
     >
       <span
@@ -28,5 +27,4 @@ export const ProButton = ({
       </div>
     </a>
   </div>
-</div>
 );

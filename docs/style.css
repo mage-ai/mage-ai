@@ -10,28 +10,6 @@
 
 footer {}
 
-div#no-border-bottom,
-div.no-border-bottom,
-div {
-  div {
-    a.no-border-bottom {
-      border-bottom: none !important;
-
-      &:hover {
-        border-bottom: none !important;
-      }
-    }
-  }
-}
-
-.no-border-bottom {
-  border-bottom: none !important;
-
-  &:hover {
-    border-bottom: none !important;
-  }
-}
-
 a.block {
   display: block;
 }
