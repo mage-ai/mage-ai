@@ -48,11 +48,11 @@
       "url": "https://www.mage.ai/oss"
     },
     {
-      "name": "Chat now",
+      "name": "Community",
       "url": "https://www.mage.ai/chat"
     },
     {
-      "name": "Try Pro",
+      "name": "Mage Pro",
       "url": "https://www.mage.ai/pro?source=documentation-header"
     }
   ],
@@ -86,16 +86,12 @@
       "url": "integrations"
     },
     {
-      "name": "AI",
-      "url": "ai"
-    },
-    {
       "name": "Extensibility",
       "url": "extensibility"
     },
     {
-      "name": "Community",
-      "url": "https://www.mage.ai/chat"
+      "name": "AI",
+      "url": "ai"
     }
   ],
   "footer": {
