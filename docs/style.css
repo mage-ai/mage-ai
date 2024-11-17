@@ -9,3 +9,20 @@
 #table-of-contents {}
 
 footer {}
+
+a.no-border-bottom {
+  border-bottom: none !important;
+
+  &:hover {
+    border-bottom: none !important;
+  }
+}
+
+a.block {
+  display: block;
+}
+
+p.normal,
+span.normal {
+  font-weight: normal !important;
+}
