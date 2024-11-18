@@ -23,10 +23,22 @@ def is_dev():
 
 
 def is_test_mage():
+    """
+    The "test_mage" environment is used for running unit tests in the CI/CD pipeline.
+    When running unit tests, a "test.db" sqlite database is temporarily created for
+    storing test metadata. Refer to the mage_ai/orchestration/db/__init__.py file for
+    implementation details. The test_mage environment is separate from the "test"
+    environment so that Mage's unit tests don't affect a user's own testing metadata db.
+    """
     return os.getenv('ENV', None) == 'test_mage' or any('unittest' in v for v in sys.argv)
 
 
 def is_test():
+    """
+    The "test" environment is the default environment for testing where users may have
+    their own specific tests that they want to run with their own test metadata db at a
+    specific location.
+    """
     return os.getenv('ENV', None) == 'test' or is_test_mage()
 
 
