@@ -761,7 +761,7 @@
           "group": "Streaming",
           "icon": "water",
           "pages": [
-            "guides/streaming/overview",
+            "guides/streaming/introduction",
             {
               "group": "Sources",
               "pages": [
@@ -865,7 +865,8 @@
         "production/ci-cd/local-cloud/github-actions",
         "production/ci-cd/local-cloud/gitlab-ci-cd",
         "production/ci-cd/local-cloud/buildkite",
-        "production/ci-cd/mage/pro"
+        "production/ci-cd/mage/pro",
+        "production/configuring-production-settings/overview"
       ]
     },
     {
@@ -935,29 +936,25 @@
       ]
     },
     {
-      "group": "Settings",
+      "group": "Secret manager",
       "pages": [
-        "production/configuring-production-settings/overview",
-        {
-          "group": "Authentication",
-          "icon": "passport",
-          "pages": [
-            "production/authentication/overview",
-            "production/authentication/okta",
-            "production/authentication/microsoft",
-            "production/authentication/google",
-            "production/authentication/ldap"
-          ]
-        },
-        {
-          "group": "Secrets",
-          "icon": "lock",
-          "pages": [
-            "production/deploying-to-cloud/secrets/AWS",
-            "production/deploying-to-cloud/secrets/Azure",
-            "production/deploying-to-cloud/secrets/GCP"
-          ]
-        }
+        "production/deploying-to-cloud/secrets/mage",
+        "production/deploying-to-cloud/secrets/AWS",
+        "production/deploying-to-cloud/secrets/Azure",
+        "production/deploying-to-cloud/secrets/GCP"
+      ]
+    },
+    {
+      "group": "Authentication",
+      "pages": [
+        "production/authentication/overview",
+        "production/authentication/okta",
+        "production/authentication/microsoft",
+        "production/authentication/google",
+        "production/authentication/ldap",
+        "production/authentication/permissions/overview",
+        "production/authentication/permissions/roles",
+        "production/authentication/permissions/permissions"
       ]
     },
     {
