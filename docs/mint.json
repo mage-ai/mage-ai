@@ -1104,6 +1104,13 @@
       ]
     },
     {
+      "group": "Environment-specific configuration",
+      "pages": [
+        "extensibility/env-config/project",
+        "extensibility/env-config/pipeline"
+      ]
+    },
+    {
       "group": "API",
       "icon": "robot",
       "pages": [

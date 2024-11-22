@@ -1,0 +1,138 @@
+---
+title: Pipeline configuration environment overrides
+sidebarTitle: "Pipeline configuration"
+description: "Add environment-specific overrides for your pipeline configuration."
+icon: "pipe-collar"
+---
+
+import { ProButton } from '/snippets/pro/button.mdx';
+import { ProOnly } from '/snippets/pro/only.mdx';
+
+<ProOnly source="env-specific-config" />
+
+### Location of pipeline configuration
+
+Each pipeline in Mage has a `metadata.yaml` configuration file located in the
+pipeline uuid's folder under the `pipelines` directory. For example, if you
+had a pipeline with uuid `charismatic_inventor`, the folder structure for that
+pipeline might look something like this:
+
+```
+your_project/
+├─ pipelines/
+│  ├─ charismatic_inventor/
+│  │  ├─ __init__.py
+│  │  ├─ interactions.yaml
+│  │  ├─ metadata.yaml
+│  │  ├─ triggers.yaml
+├ ...
+```
+
+### **Override pipeline config based on environment**
+
+In the pipeline's `metadata.yaml` config file, add an `overrides` key at the top-level
+(no indentations) with the name of your environment (e.g. `prod`, `dev`, `test`) under
+the `overrides` key and indented once. Then under the environment name key, add the
+properties of your base pipeline config that you want to override. Make sure the
+indentations of the properties match those of the base config. Any environment-specific
+overrides will REPLACE the matching property in the base config, so be careful when
+overriding properties with nested values.
+
+<Note>
+The environment name should match the environment defined in the `ENV`
+[environment variable](https://docs.mage.ai/development/variables/environment-variables).
+</Note>
+
+### Example pipeline config file with environment overrides
+
+```yaml
+# your_project/pipelines/charismatic_inventor/metadata.yaml
+blocks:
+- all_upstream_blocks_executed: true
+  color: null
+  configuration:
+    disable_output_preview: false
+    file_source:
+      path: data_loaders/load_titanic.py
+    sample_count_preview: 0
+  downstream_blocks:
+  - starry_forest
+  executor_config: null
+  executor_type: local_python
+  has_callback: false
+  language: python
+  name: load_titanic
+  retry_config: {}
+  status: executed
+  timeout: null
+  type: data_loader
+  upstream_blocks: []
+  uuid: load_titanic
+- all_upstream_blocks_executed: true
+  color: null
+  configuration:
+    sample_count_preview: 8
+  downstream_blocks: []
+  executor_config: null
+  executor_type: local_python
+  has_callback: false
+  language: python
+  name: starry forest
+  retry_config: {}
+  status: executed
+  timeout: null
+  type: custom
+  upstream_blocks:
+  - load_titanic
+  uuid: starry_forest
+cache_block_output_in_memory: false
+callbacks: []
+concurrency_config:
+  pipeline_run_limit: 5
+  pipeline_run_limit_all_triggers: 5
+conditionals: []
+created_at: '2024-09-27 23:18:10.554952+00:00'
+data_integration: null
+description: null
+executor_config: {}
+executor_count: 1
+executor_type: null
+extensions: {}
+name: charismatic inventor
+notification_config: {}
+remote_variables_dir: null
+retry_config: {}
+run_pipeline_in_one_process: false
+settings:
+  triggers: null
+spark_config: {}
+state_store_config: {}
+tags: []
+type: python
+uuid: charismatic_inventor
+variables_dir: /root/.mage_data/default_repo
+widgets: []
+
+overrides:
+  prod:
+    concurrency_config:
+      pipeline_run_limit: 10
+      pipeline_run_limit_all_triggers: 20
+    description: Overridden description for charismatic inventor in prod
+  dev:
+    concurrency_config:
+      pipeline_run_limit: 1
+      pipeline_run_limit_all_triggers: 1
+    description: Overridden description for charismatic inventor in dev
+```
+
+In the example above when in the `dev` environment, the pipeline's configuration property
+of `concurrency_config` will have its `pipeline_run_limit` and `pipeline_run_limit_all_triggers`
+properties overridden to be `1` (instead of `5` as defined in the base config).
+The `description` property will also be overridden to be
+`Overridden description for charismatic inventor in dev` instead of `null`.
+
+Similarly for the `prod` environment, `pipeline_run_limit` will be replaced with `10` and 
+`pipeline_run_limit_all_triggers` with `20`. The `description` property will be overridden
+to be `Overridden description for charismatic inventor in prod`. Other environments
+(not `dev` or `prod`) will not utilize the `overrides` section.
