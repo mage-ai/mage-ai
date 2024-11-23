@@ -311,14 +311,6 @@ function Header({
         },
         uuid: 'user_settings',
       },
-      {
-        label: () => 'Launch command center',
-        onClick: (e) => {
-          pauseEvent(e);
-          launchCommandCenterWrapper();
-        },
-        uuid: 'Launch command center',
-      },
     ];
 
   if (REQUIRE_USER_AUTHENTICATION()) {
@@ -449,74 +441,6 @@ function Header({
               breadcrumbs={breadcrumbs}
             />
           </Flex>
-
-          {(!!project && !hideActions) && (
-            <Flex flex={1} alignItems="center" justifyContent="center">
-              <Spacing ml={PADDING_UNITS} />
-
-              <Button
-                noBackground
-                noBorder
-                noPadding
-                onClick={(e) => {
-                  pauseEvent(e);
-                  launchCommandCenterWrapper();
-                }}
-              >
-                <ButtonInputStyle active={CommandCenterStateEnum.OPEN === commandCenterState}>
-                  <FlexContainer alignItems="center">
-                    <>
-                      {CommandCenterStateEnum.OPEN === commandCenterState
-                        ? <UFO muted size={2 * UNIT} />
-                        : <Planet
-                          size={2 * UNIT}
-                          success={!enableCommandCenterLoading && !commandCenterEnabled}
-                          warning={enableCommandCenterLoading}
-                        />
-                      }
-                    </>
-
-                    <div style={{ marginRight: 1.5 * UNIT }} />
-
-                    {CommandCenterStateEnum.OPEN !== commandCenterState && (
-                      <Text default noWrapping weightStyle={4}>
-                        {commandCenterEnabled
-                          ? 'Command Center'
-                          : enableCommandCenterLoading
-                            ? 'Launching Command Center' : 'Launch Command Center'
-                        }
-                      </Text>
-                    )}
-                    {CommandCenterStateEnum.OPEN === commandCenterState && (
-                      <Text muted noWrapping>
-                        Command Center launched
-                      </Text>
-                    )}
-
-                    {enableCommandCenterLoading && (
-                      <>
-                        <div style={{ marginRight: 1.5 * UNIT }} />
-                        <Loading
-                          color={themeContext?.accent?.warning}
-                          loadingStyle={LoadingStyleEnum.BLOCKS}
-                          width={1.5 * UNIT}
-                        />
-                      </>
-                    )}
-
-                    {commandCenterEnabled && (
-                      <>
-                        <div style={{ marginRight: 1.5 * UNIT }} />
-                        <LaunchKeyboardShortcutText compact settings={getSetSettings()} small />
-                      </>
-                    )}
-                  </FlexContainer>
-                </ButtonInputStyle>
-              </Button>
-
-              <Spacing mr={PADDING_UNITS} />
-            </Flex>
-          )}
 
           <Flex alignItems="center">
             {gitIntegrationEnabled && branch && (
