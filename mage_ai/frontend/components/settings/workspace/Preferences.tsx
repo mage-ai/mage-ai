@@ -261,6 +261,7 @@ function Preferences({
             FeatureUUIDEnum.COMMAND_CENTER,
             FeatureUUIDEnum.COMPUTE_MANAGEMENT,
             FeatureUUIDEnum.CUSTOM_DESIGN,
+            FeatureUUIDEnum.DBT_V2,
             FeatureUUIDEnum.GLOBAL_HOOKS,
             FeatureUUIDEnum.NOTEBOOK_BLOCK_OUTPUT_SPLIT_VIEW,
           ]) || {}).map(([k, v], idx) => {

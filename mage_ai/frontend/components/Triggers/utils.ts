@@ -8,7 +8,6 @@ import {
   DATE_FORMAT_LONG_T_SEP,
   dateFormatLong,
 } from '@utils/date';
-import { DEFAULT_PORT, getHost } from '@api/utils/url';
 import {
   PipelineScheduleFilterQueryEnum,
   ScheduleIntervalEnum,
@@ -16,6 +15,7 @@ import {
 } from '@interfaces/PipelineScheduleType';
 import { TimeType } from '@oracle/components/Calendar';
 import { datetimeInLocalTimezone, getDayRangeForCurrentMonth } from '@utils/date';
+import { getHost } from '@api/utils/url';
 import { ignoreKeys } from '@utils/hash';
 import { rangeSequential } from '@utils/array';
 
@@ -63,11 +63,6 @@ export const getTriggerTypes = (
       description: () => 'This pipeline will run continuously on an interval or just once.',
       label: () => 'Schedule',
       uuid: ScheduleTypeEnum.TIME,
-    },
-    {
-      description: () => 'This pipeline will run when a specific event occurs.',
-      label: () => 'Event',
-      uuid: ScheduleTypeEnum.EVENT,
     },
     {
       description: () => 'Run this pipeline when you make an API call.',
