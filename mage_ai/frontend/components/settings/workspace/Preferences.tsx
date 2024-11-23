@@ -262,6 +262,7 @@ function Preferences({
             FeatureUUIDEnum.COMPUTE_MANAGEMENT,
             FeatureUUIDEnum.CUSTOM_DESIGN,
             FeatureUUIDEnum.GLOBAL_HOOKS,
+            FeatureUUIDEnum.NOTEBOOK_BLOCK_OUTPUT_SPLIT_VIEW,
           ]) || {}).map(([k, v], idx) => {
             const overrideFromRootProject = projectPlatformActivated
               && !rootProjectUse
