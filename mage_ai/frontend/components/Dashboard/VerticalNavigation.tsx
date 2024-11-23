@@ -100,28 +100,6 @@ const DEFAULT_NAV_ITEMS = ({
     }, 4, miscItems);
   }
 
-  if (featureEnabled(FeatureUUIDEnum.GLOBAL_HOOKS)) {
-    miscItems = pushAtIndex({
-      Icon: Insights,
-      id: 'global-hooks',
-      label: () => 'Global hooks (beta)',
-      linkProps: {
-        href: '/global-hooks',
-      },
-    }, 4, miscItems);
-
-    if (projectPlatformActivated) {
-      miscItems = pushAtIndex({
-        Icon: Insights,
-        id: 'platform/global-hooks',
-        label: () => 'Global hooks (platform)',
-        linkProps: {
-          href: '/platform/global-hooks',
-        },
-      }, 5, miscItems);
-    }
-  }
-
   return [
     {
       id: 'main',
