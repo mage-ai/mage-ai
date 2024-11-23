@@ -321,13 +321,6 @@ function FileHeaderMenu({
       onClick?: () => void;
       uuid: string;
     }[] = [
-      {
-        label: () => 'Open compute management',
-        linkProps: {
-          href: '/compute',
-        },
-        uuid: 'Open compute management',
-      },
     ];
 
     if (KernelNameEnum.PYTHON3 === kernel?.name) {

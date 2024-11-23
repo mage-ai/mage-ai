@@ -259,6 +259,7 @@ function Preferences({
           {Object.entries(ignoreKeys(projectAttributes?.features, [
             FeatureUUIDEnum.CODE_BLOCK_V2,
             FeatureUUIDEnum.COMMAND_CENTER,
+            FeatureUUIDEnum.COMPUTE_MANAGEMENT,
             FeatureUUIDEnum.CUSTOM_DESIGN,
             FeatureUUIDEnum.GLOBAL_HOOKS,
           ]) || {}).map(([k, v], idx) => {

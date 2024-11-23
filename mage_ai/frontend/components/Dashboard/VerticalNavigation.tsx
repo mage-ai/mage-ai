@@ -89,17 +89,6 @@ const DEFAULT_NAV_ITEMS = ({
     },
   ];
 
-  if (featureEnabled(FeatureUUIDEnum.COMPUTE_MANAGEMENT)) {
-    miscItems = pushAtIndex({
-      Icon: TripleBoxes,
-      id: 'compute',
-      label: () => 'Compute management (beta)',
-      linkProps: {
-        href: '/compute',
-      },
-    }, 4, miscItems);
-  }
-
   return [
     {
       id: 'main',
