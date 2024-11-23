@@ -260,28 +260,6 @@ function Header({
     width?: number;
   }>(null);
 
-  const customDesignMedia = useMemo(() => {
-    if (typeof window !== 'undefined') {
-      const media = design?.components?.header?.media;
-      if (media) {
-        const image = new Image();
-        const imageSrc = media?.url || media?.file_path;
-
-        if (typeof imageSrc !== 'undefined' && imageSrc !== null) {
-          image.src = imageSrc;
-          image.onload = () => {
-            setCustomMediaSize(image);
-          };
-
-          return image;
-        }
-      }
-    }
-  }, [
-    design,
-    setCustomMediaSize,
-  ]);
-
   const logoLink = useMemo(() => {
     let logoHeight = LOGO_HEIGHT;
     let logoEl = <GradientLogoIcon height={LOGO_HEIGHT} />;
