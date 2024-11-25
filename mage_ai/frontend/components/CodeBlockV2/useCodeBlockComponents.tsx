@@ -81,12 +81,9 @@ export default function useCodeBlockComponents({
       /*
        * Replace "featureUUIDs?.DBT_V2" with "featureUUIDs?.CODE_BLOCK_V2" when all
        * block types (not just dbt blocks) are supported by V2 of the code block.
-       * Also update the codeBlockV2 variable in the CodeBlock component file.
        */
-      && featureEnabled?.(featureUUIDs?.DBT_V2),
+      && false,
     [
-      featureEnabled,
-      featureUUIDs,
       pipeline,
     ],
   );
