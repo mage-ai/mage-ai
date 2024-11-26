@@ -88,6 +88,8 @@ export enum FileContextEnum {
 }
 
 function FileBrowser({
+  // eslint-disable-next-line react/prop-types
+  allowDbtModelSelect,  // included in FolderSharedProps
   addNewBlock,
   blocks = [],
   deleteWidget,
@@ -386,6 +388,7 @@ function FileBrowser({
 
   const filesMemo = useMemo(() => files?.map((file: FileType) => (
     <Folder
+      allowDbtModelSelect={allowDbtModelSelect}
       containerRef={ref}
       cursorRef={cursorRef}
       disableContextMenu={disableContextMenu}
@@ -406,6 +409,7 @@ function FileBrowser({
       uuidContainer={uuidFileBrowser}
     />
   )), [
+    allowDbtModelSelect,
     disableContextMenu,
     files,
     onClickFile,

@@ -131,14 +131,19 @@ export function getBlockFromFile(
 export function getNonPythonBlockFromFile(
   file: FileType,
   currentPathInit: string = null,
+  allowDbtModelSelect: boolean = false,
 ): BlockType {
   const parts = getFullPath(file, currentPathInit).split(osPath.sep);
   if (!parts[1]) {
     return;
   }
   let blockType: BlockTypeEnum = singularize(parts[currentPathInit ? 0 : 1]);
+  let fileNotInDbtFolder = false;
   if (parts[1] === BlockTypeEnum.DBT) {
     blockType = BlockTypeEnum.DBT;
+  } else if (allowDbtModelSelect) {
+    blockType = BlockTypeEnum.DBT;
+    fileNotInDbtFolder = true;
   }
   const fileName = parts[parts.length - 1];
 
@@ -158,10 +163,13 @@ export function getNonPythonBlockFromFile(
     };
   } else if (fileName.match(sqlRegex) && SQL_BLOCK_TYPES.includes(blockType)) {
     const formattedFilename = fileName.replace(/[.]/g, '_');
-    const blockUUID =
+    let blockUUID =
       blockType === BlockTypeEnum.DBT
         ? parts.slice(2, -1).join('_').concat(`_${formattedFilename}`)
         : fileName.replace(sqlRegex, '');
+    if (fileNotInDbtFolder && blockType === BlockTypeEnum.DBT) {
+      blockUUID = parts.slice(1, -1).join('_').concat(`_${formattedFilename}`);
+    }
 
     return {
       type: blockType,
