@@ -47,6 +47,26 @@ class FileFormat(StrEnum):
     PARQUET = 'parquet'
     HDF5 = 'hdf5'
     XML = 'xml'
+    EXCEL = 'excel'
+
+    @classmethod
+    def from_extension(cls, ext: str):
+        if ext == 'csv':
+            return cls.CSV
+        elif ext == 'json':
+            return cls.JSON
+        elif ext == 'parquet':
+            return cls.PARQUET
+        elif ext == 'hdf5':
+            return cls.HDF5
+        elif ext == 'xml':
+            return cls.XML
+        elif ext in ('xls', 'xlsx'):
+            return cls.EXCEL
+        else:
+            raise ValueError(
+                f'None file format found for this file extension: {ext}'
+            )
 
 
 class ExportWritePolicy(BaseEnum):
@@ -126,7 +146,9 @@ class BaseFile(BaseIO):
         pass
 
     def _get_file_format(self, filepath: Union[os.PathLike, str]) -> str:
-        return os.path.splitext(os.path.basename(filepath))[-1][1:]
+        return FileFormat.from_extension(
+            os.path.splitext(os.path.basename(filepath))[-1][1:]
+        )
 
     def __get_reader(self, format: Union[FileFormat, str, None]) -> Callable:
         """
@@ -151,6 +173,8 @@ class BaseFile(BaseIO):
             return pd.read_hdf
         elif format == FileFormat.XML:
             return pd.read_xml
+        elif format == FileFormat.EXCEL:
+            return pd.read_excel
         else:
             raise ValueError(f"Invalid format '{format}' specified.")
 
@@ -249,6 +273,8 @@ class BaseFile(BaseIO):
                 return df.write_hdf5
             elif format == FileFormat.XML:
                 return df.write_xml
+            elif format == FileFormat.EXCEL:
+                return df.write_excel
             return df.write_parquet
 
         elif isinstance(df, DataFrame):  # pandas DataFrame
@@ -260,6 +286,8 @@ class BaseFile(BaseIO):
                 return df.to_hdf
             elif format == FileFormat.XML:
                 return df.to_xml
+            elif format == FileFormat.EXCEL:
+                return df.to_excel
             return df.to_parquet
 
     def __del__(self):

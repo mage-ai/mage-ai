@@ -260,28 +260,6 @@ function Header({
     width?: number;
   }>(null);
 
-  const customDesignMedia = useMemo(() => {
-    if (typeof window !== 'undefined') {
-      const media = design?.components?.header?.media;
-      if (media) {
-        const image = new Image();
-        const imageSrc = media?.url || media?.file_path;
-
-        if (typeof imageSrc !== 'undefined' && imageSrc !== null) {
-          image.src = imageSrc;
-          image.onload = () => {
-            setCustomMediaSize(image);
-          };
-
-          return image;
-        }
-      }
-    }
-  }, [
-    design,
-    setCustomMediaSize,
-  ]);
-
   const logoLink = useMemo(() => {
     let logoHeight = LOGO_HEIGHT;
     let logoEl = <GradientLogoIcon height={LOGO_HEIGHT} />;
@@ -332,14 +310,6 @@ function Header({
           href: '/settings/workspace/preferences',
         },
         uuid: 'user_settings',
-      },
-      {
-        label: () => 'Launch command center',
-        onClick: (e) => {
-          pauseEvent(e);
-          launchCommandCenterWrapper();
-        },
-        uuid: 'Launch command center',
       },
     ];
 
@@ -471,74 +441,6 @@ function Header({
               breadcrumbs={breadcrumbs}
             />
           </Flex>
-
-          {(!!project && !hideActions) && (
-            <Flex flex={1} alignItems="center" justifyContent="center">
-              <Spacing ml={PADDING_UNITS} />
-
-              <Button
-                noBackground
-                noBorder
-                noPadding
-                onClick={(e) => {
-                  pauseEvent(e);
-                  launchCommandCenterWrapper();
-                }}
-              >
-                <ButtonInputStyle active={CommandCenterStateEnum.OPEN === commandCenterState}>
-                  <FlexContainer alignItems="center">
-                    <>
-                      {CommandCenterStateEnum.OPEN === commandCenterState
-                        ? <UFO muted size={2 * UNIT} />
-                        : <Planet
-                          size={2 * UNIT}
-                          success={!enableCommandCenterLoading && !commandCenterEnabled}
-                          warning={enableCommandCenterLoading}
-                        />
-                      }
-                    </>
-
-                    <div style={{ marginRight: 1.5 * UNIT }} />
-
-                    {CommandCenterStateEnum.OPEN !== commandCenterState && (
-                      <Text default noWrapping weightStyle={4}>
-                        {commandCenterEnabled
-                          ? 'Command Center'
-                          : enableCommandCenterLoading
-                            ? 'Launching Command Center' : 'Launch Command Center'
-                        }
-                      </Text>
-                    )}
-                    {CommandCenterStateEnum.OPEN === commandCenterState && (
-                      <Text muted noWrapping>
-                        Command Center launched
-                      </Text>
-                    )}
-
-                    {enableCommandCenterLoading && (
-                      <>
-                        <div style={{ marginRight: 1.5 * UNIT }} />
-                        <Loading
-                          color={themeContext?.accent?.warning}
-                          loadingStyle={LoadingStyleEnum.BLOCKS}
-                          width={1.5 * UNIT}
-                        />
-                      </>
-                    )}
-
-                    {commandCenterEnabled && (
-                      <>
-                        <div style={{ marginRight: 1.5 * UNIT }} />
-                        <LaunchKeyboardShortcutText compact settings={getSetSettings()} small />
-                      </>
-                    )}
-                  </FlexContainer>
-                </ButtonInputStyle>
-              </Button>
-
-              <Spacing mr={PADDING_UNITS} />
-            </Flex>
-          )}
 
           <Flex alignItems="center">
             {gitIntegrationEnabled && branch && (

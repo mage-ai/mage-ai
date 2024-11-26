@@ -17,9 +17,12 @@ timeout: 5
 
 # Optional: TLS configuration
 use_tls: false
-# cafile: "path/to/ca.pem"
-# certfile: "path/to/client-cert.pem"
-# keyfile: "path/to/client-key.pem"
+
+# Optional: SSL configuration
+# ssl_config:
+#   cafile: "path/to/ca.pem"
+#   certfile: "path/to/client-cert.pem"
+#   keyfile: "path/to/client-key.pem"
 
 # Optional: NKEY seed string
 # nkeys_seed_str: "SUAPAEYJQOQHJ4"

@@ -1,6 +1,6 @@
 ---
 title: "ETL pipeline tutorial"
-sidebarTitle: "ETL pipeline"
+sidebarTitle: "Batch"
 icon: "truck-ramp-box"
 description: "Build a data pipeline that loads restaurant data, transforms it, then exports it to a DuckDB database. 🦆"
 ---
@@ -35,7 +35,7 @@ git clone https://github.com/mage-ai/etl-demo mage-etl-demo \
 ```
 
 ```bash Windows
-git clone https://github.com/mage-ai/etl-demo mage-etl-demo 
+git clone https://github.com/mage-ai/etl-demo mage-etl-demo
 cd mage-etl-demo
 cp dev.env .env
 rm dev.env
@@ -154,13 +154,13 @@ Then navigate to `https://localhost:6789` in your browser to see the pipeline in
         </Frame>
     </Accordion>
     <Accordion title="4️⃣ Export data to DuckDB">
-        Let's export the data to a local DuckDB database! Create a new `Data Exporter` SQL block and change the connection type to be `DuckDB`. 
+        Let's export the data to a local DuckDB database! Create a new `Data Exporter` SQL block and change the connection type to be `DuckDB`.
 
-        Next, change the `Table name` to be `magic_duck.restaurant_user_transactions` and make sure the content of the block is: 
+        Next, change the `Table name` to be `magic_duck.restaurant_user_transactions` and make sure the content of the block is:
 
         ```sql
         SELECT * FROM {{ df_1 }}
-        ``` 
+        ```
 
         This will take our data from the previous block and export it to a local DuckDB table— `magic_duck.restaurant_user_transactions`! 🎉
 

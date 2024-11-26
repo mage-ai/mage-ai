@@ -3,6 +3,7 @@ from collections import Counter
 from typing import Dict, Generator, List
 
 import pandas as pd
+from charset_normalizer import from_bytes
 from singer.schema import Schema
 
 from mage_integrations.connections.google_cloud_storage import (
@@ -51,6 +52,11 @@ class GoogleCloudStorage(Source):
                 continue
 
             key = blob.name
+
+            # Ensure the file type matches the required file type
+            if not key.endswith(f'.{self.file_type}'):
+                continue
+
             parts = key.split('.')
             stream_id = '_'.join(parts[:-1])
 
@@ -107,8 +113,6 @@ class GoogleCloudStorage(Source):
 
             streams.append(catalog_entry)
 
-            # break
-
         return Catalog(streams)
 
     def load_data(
@@ -121,8 +125,14 @@ class GoogleCloudStorage(Source):
         for blob in client.list_blobs(self.bucket, prefix=self.prefix):
             if blob.size == 0:
                 continue
-            df = self.__build_df(blob.name)
-            yield df.to_dict('records')
+
+            key = blob.name
+            stream_id = '_'.join(key.split('.')[:-1])
+
+            # load selected streams only
+            if stream_id in self.selected_streams:
+                df = self.__build_df(blob.name)
+                yield df.to_dict('records')
 
     def test_connection(self) -> None:
         client = self.build_client()
@@ -140,7 +150,8 @@ class GoogleCloudStorage(Source):
         if '.parquet' in key:
             df = pd.read_parquet(buffer)
         elif '.csv' in key:
-            df = pd.read_csv(buffer)
+            encoding = from_bytes(data).best().encoding
+            df = pd.read_csv(buffer, encoding=encoding)
         return df
 
 

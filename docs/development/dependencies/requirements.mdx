@@ -1,7 +1,7 @@
 ---
-title: "Install Python packages"
-sidebarTitle: "Requirements.txt"
-description: "Mage allows you to easily integrate third-party Python packages into your project and pipelines. 
+title: "Install Python packages using `requirements.txt`"
+sidebarTitle: "Python packages"
+description: "Mage allows you to easily integrate third-party Python packages into your project and pipelines.
 This guide will walk you through the process of adding and managing external dependencies."
 ---
 <p align='center'>
@@ -16,7 +16,7 @@ This guide will walk you through the process of adding and managing external dep
 
 ### Location
 
-At the root of your Mage project directory, you'll find a file named `requirements.txt`. 
+At the root of your Mage project directory, you'll find a file named `requirements.txt`.
 This file is used to specify all the Python packages that your project depends on.
 
 ### Path
@@ -45,14 +45,14 @@ In this example the `requirements.txt` file will install:
 ## Automatic installation
 
 When installing Mage using Docker, Mage provides two main methods for automatically installing third-party packages at runtime.
-These methods utilize the `USER_CODE_PATH` environment variable, which defines your project path (e.g. `/home/src/project_name`), 
+These methods utilize the `USER_CODE_PATH` environment variable, which defines your project path (e.g. `/home/src/project_name`),
 to locate your `requirements.txt` file and install the packages listed there.
 
 <Accordion title="Using Command Line Flags">
 
 ## Using command line flags
 
-If you installed Mage using Docker, the `USER_CODE_PATH` can be set using command line flags. You will need to add these command line flags at every run when running a new Docker container or installing a new version of Mage. 
+If you installed Mage using Docker, the `USER_CODE_PATH` can be set using command line flags. You will need to add these command line flags at every run when running a new Docker container or installing a new version of Mage.
 
 ### Setting `USER_CODE_PATH` in Docker
 
@@ -90,8 +90,8 @@ For more detailed information on environment variables and their impact on Mage'
 
 ## Using Dockerfiles
 
-One important aspect of configuring Mage is setting the `USER_CODE_PATH`, which tells Mage where your project code is located. 
-While this can be done using command-line flags when running Docker containers, it's also possible to set the `USER_CODE_PATH` 
+One important aspect of configuring Mage is setting the `USER_CODE_PATH`, which tells Mage where your project code is located.
+While this can be done using command-line flags when running Docker containers, it's also possible to set the `USER_CODE_PATH`
 directly in your Dockerfile. This approach can be more convenient for consistent deployments and when building custom images.
 
 ```Bash
@@ -140,10 +140,10 @@ To use this Dockerfile:
 3. Build the Docker image using this Dockerfile.
 4. Run the container to start your Mage environment.
 
-This Dockerfile demonstrates how to set the `USER_CODE_PATH` using build arguments. By defining it this way, you ensure that Mage will 
+This Dockerfile demonstrates how to set the `USER_CODE_PATH` using build arguments. By defining it this way, you ensure that Mage will
 consistently know where to find your project code within the container, without needing to specify it each time you run the container.
 
-Follow the [Repository setup](https://docs.mage.ai/production/ci-cd/local-cloud/repository-setup) documentation to deploy this 
+Follow the [Repository setup](https://docs.mage.ai/production/ci-cd/local-cloud/repository-setup) documentation to deploy this
 Dockerfile to fully automate the installation of third-party Python pacakges.
 
 </Accordion>
@@ -151,7 +151,7 @@ If you’re running Mage using pip or conda, your local machine’s environme
 
 ### Prerequisites
 
-1. Ensure that the environment variable `USER_CODE_PATH` is set to your project path, using 
+1. Ensure that the environment variable `USER_CODE_PATH` is set to your project path, using
 the command line flags or the Dockerfile methods.
 
       Example: `/home/src/project_name`

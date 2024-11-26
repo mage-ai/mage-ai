@@ -2,10 +2,10 @@ from mage_ai.orchestration.notification.config import NotificationConfig
 from mage_ai.tests.base_test import TestCase
 from mage_ai.tests.orchestration.notification.constants import (
     EMAIL_NOTIFICATION_CONFIG,
+    GOOGLE_CHAT_NOTIFICATION_CONFIG,
+    OPSGENIE_NOTIFICATION_CONFIG,
     SLACK_NOTIFICATION_CONFIG,
     TEAMS_NOTIFICATION_CONFIG,
-    GOOGLE_CHAT_NOTIFICATION_CONFIG,
-    OPSGENIE_NOTIFICATION_CONFIG
 )
 
 
@@ -43,7 +43,7 @@ class NotificationConfigTests(TestCase):
         self.assertIsNone(config3.email_config)
         self.assertEqual(config3.slack_config.webhook_url, 'test_webhook_url')
 
-        self.assertEqual(config4.teams_config.webhook_url, 'test_webhook_url')
+        self.assertEqual(config4.teams_config.webhook_url, ['test_webhook_url'])
 
         self.assertEqual(config5.google_chat_config.webhook_url, 'test_webhook_url')
 

@@ -90,7 +90,6 @@ function ButtonItems({
   pipelineType,
   setAddNewBlockMenuOpenIdx,
   setButtonMenuOpenIndex,
-  showBlockBrowserModal,
   showBrowseTemplates,
   showGlobalDataProducts,
 }: ButtonItemsProps) {

@@ -135,7 +135,7 @@ function BlockRunsTable({
     [displayLocalTimezone],
   );
   const { columns, columnFlex } = useMemo(() => {
-    const colFlex = [1, null, 2, 2, 1, 1, 1, null];
+    const colFlex = [1, null, 2, null, 2, 1, 1, 1, null];
     const arr = [
       {
         uuid: 'Status',
@@ -146,6 +146,9 @@ function BlockRunsTable({
       },
       {
         uuid: 'Block',
+      },
+      {
+        uuid: 'ID',
       },
       {
         uuid: 'Trigger',
@@ -273,6 +276,14 @@ function BlockRunsTable({
               </Text>
             </Link>
           </NextLink>,
+          <Text
+            default
+            key={`${id}_block_run_id`}
+            monospace
+            small
+          >
+            {id}
+          </Text>,
           <NextLink
             as={`/pipelines/${pipelineUUID}/triggers/${pipelineScheduleId}`}
             href={'/pipelines/[pipeline]/triggers/[...slug]'}

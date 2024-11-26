@@ -17,6 +17,7 @@ from mage_integrations.destinations.elasticsearch.target_elasticsearch.common im
     ELASTIC_YEARLY_FORMAT,
     HOST,
     INDEX_FORMAT,
+    INDEX_OP_TYPE,
     INDEX_TEMPLATE_FIELDS,
     METADATA_FIELDS,
     PASSWORD,
@@ -24,6 +25,7 @@ from mage_integrations.destinations.elasticsearch.target_elasticsearch.common im
     SCHEME,
     SSL_CA_FILE,
     USERNAME,
+    VERIFY_CERTS,
     to_daily,
     to_monthly,
     to_yearly,
@@ -139,7 +141,8 @@ class ElasticSink(BatchSink):
             distinct_indices.add(index)
             updated_records.append(
                 {
-                    **{"_op_type": "index", "_index": index, "_source": r},
+                    **{"_op_type": self.config.get(INDEX_OP_TYPE, "index"), "_index": index,
+                       "_source": r},
                     **build_fields(self.stream_name, metadata_fields, r, self.logger),
                 }
             )
@@ -184,6 +187,8 @@ class ElasticSink(BatchSink):
         if SSL_CA_FILE in self.config:
             scheme = "https"
             config["ca_certs"] = self.config[SSL_CA_FILE]
+
+        config[VERIFY_CERTS] = self.config.get(VERIFY_CERTS, True)
 
         config["hosts"] = [f"{scheme}://{self.config[HOST]}:{self.config[PORT]}"]
 

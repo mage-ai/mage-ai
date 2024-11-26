@@ -1,7 +1,7 @@
 ---
 title: "Develop dbt in Mage"
-sidebarTitle: "Develop dbt"
-icon: "block"
+sidebarTitle: "Getting started"
+icon: "sliders"
 description: "Learn how to develop your favorite dbt models in Mage."
 ---
 
@@ -102,11 +102,11 @@ For the rest of this tutorial, we’ll use the project name `demo_project`.
     - Under the data loader block you just added, click the button **`dbt model`**,
     then click the option `Single model`.
     - In the file browser that pops up, click the file named
-    `my_second_dbt_model.sql` under the folders `demo/models/example/`. 
-    
+    `my_second_dbt_model.sql` under the folders `demo/models/example/`.
+
     - This will add 2 dbt blocks to your pipeline: 1 for the dbt model named
-    `my_first_dbt_model` and the 2nd for the dbt model named `my_second_dbt_model`. 
-    
+    `my_first_dbt_model` and the 2nd for the dbt model named `my_second_dbt_model`.
+
     - The model named `my_first_dbt_model` was added to
     the pipeline because `my_second_dbt_model` references it.
 
@@ -214,7 +214,7 @@ For the rest of this tutorial, we’ll use the project name `demo_project`.
 -  Open the file `demo_project/dbt/demo/models/example/schema.yml` and remove
     the tests named `unique` under both models. Your file should look like this:
 
-    ```yaml 
+    ```yaml
 
     version: 2
 

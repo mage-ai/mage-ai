@@ -8,7 +8,6 @@ export const test = base.extend<{
 }>({
   failOnClientError: true,
   settingFeaturesToDisable: {
-    [FeatureUUIDEnum.CODE_BLOCK_V2]: true,
     [FeatureUUIDEnum.LOCAL_TIMEZONE]: true,
   },
   // eslint-disable-next-line sort-keys

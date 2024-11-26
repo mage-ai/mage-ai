@@ -12,9 +12,10 @@ export enum FeatureUUIDEnum {
   DBT_V2 = 'dbt_v2',
   GLOBAL_HOOKS = 'global_hooks',
   INTERACTIONS = 'interactions',
-  NOTEBOOK_BLOCK_OUTPUT_SPLIT_VIEW = 'notebook_block_output_split_view',
   LOCAL_TIMEZONE = 'display_local_timezone',
+  NOTEBOOK_BLOCK_OUTPUT_SPLIT_VIEW = 'notebook_block_output_split_view',
   OPERATION_HISTORY = 'operation_history',
+  POLARS = 'polars',
 }
 
 export enum ProjectTypeEnum {

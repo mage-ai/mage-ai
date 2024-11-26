@@ -16,7 +16,6 @@ import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import TextInput from '@oracle/elements/Inputs/TextInput';
 import api from '@api';
-import useCustomDesign from '@utils/models/customDesign/useCustomDesign';
 import {
   ABBREV_BLOCK_LANGUAGE_MAPPING,
 } from '@interfaces/BlockType';
@@ -87,8 +86,6 @@ function AddNewBlocksV2({
   const refTextInputInit = useRef(null);
   const refTextInput =
     typeof searchTextInputRef !== 'undefined' ? searchTextInputRef : refTextInputInit;
-
-  const { design } = useCustomDesign();
 
   const componentUUID = useMemo(() => `AddNewBlocksV2/${blockIdx}`, [blockIdx]);
   const [showError] = useError(null, {}, [], {
@@ -276,7 +273,6 @@ function AddNewBlocksV2({
               buttonMenuOpenIndex={buttonMenuOpenIndex}
               closeButtonMenu={closeButtonMenu}
               compact={compact}
-              design={design}
               itemsDBT={itemsDBT}
               pipelineType={pipelineType}
               setAddNewBlockMenuOpenIdx={setAddNewBlockMenuOpenIdx}

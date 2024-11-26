@@ -1,5 +1,7 @@
 ---
 title: "GitHub Actions"
+sidebarTitle: "GitHub"
+icon: "github"
 description: "Development (local) and production (cloud) using GitHub Actions."
 ---
 
@@ -138,7 +140,7 @@ env:
 
 ## Azure
 
-Mage can be deployed to Azure using GitHub Actions. 
+Mage can be deployed to Azure using GitHub Actions.
 
 Our template for deploying to an Azure Container instance is located [here](https://github.com/mage-ai/mage-ai/blob/master/templates/github_actions/build_and_deploy_to_azure_container_instance.yml) and based off the "GitHub Workflow" option in Azure's docs.
 
@@ -152,10 +154,8 @@ To configure this workflow, you will need to add the following secrets to your G
 | `REGISTRY_PASSWORD`     | The clientSecret from the JSON output from the service principal creation              |   |   |   |
 | `RESOURCE_GROUP`        | The name of the resource group you used to scope the service principal                 |   |   |   |
 
-We recommend [Microsoft's Guide](https://learn.microsoft.com/en-us/azure/container-instances/container-instances-github-action?tabs=userlevel#configure-github-workflow) for obtaining these credentials via the Azure CLI. 
+We recommend [Microsoft's Guide](https://learn.microsoft.com/en-us/azure/container-instances/container-instances-github-action?tabs=userlevel#configure-github-workflow) for obtaining these credentials via the Azure CLI.
 
 Microsoft also has templates that are similar to ours— we use the `Service ID Principal` method for authentication, but you can check Microsoft's docs for the [`OpenID Connect`](https://learn.microsoft.com/en-us/azure/container-instances/container-instances-github-action?tabs=openid#save-credentials-to-github-repo) method.
 
 Alternatively, you can use the `az container app up` command in the [Deploy to Azure](https://github.com/Azure/deploy-to-azure-cli-extension) extension in the Azure CLI. This command streamlines creation of the GitHub workflow and deployment steps.
-
-

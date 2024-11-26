@@ -28,6 +28,4 @@ test('ensure all main pages load properly', async ({ page }) => {
   await navigateToAndWaitTilLoaded('Templates');
   await navigateToAndWaitTilLoaded('Version control');
   await navigateToAndWaitTilLoaded('Terminal');
-  await navigateToAndWaitTilLoaded('Global hooks');
-  await navigateToAndWaitTilLoaded('Compute management');
 });

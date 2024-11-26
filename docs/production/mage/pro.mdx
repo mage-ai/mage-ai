@@ -1,0 +1,97 @@
+---
+title: "Mage Pro"
+sidebarTitle: "Mage Pro"
+icon: "cloud-bolt-moon"
+description: "Magic power at your fingertips."
+---
+
+import { ProBanner } from '/snippets/pro/banner.mdx';
+import { ProButton } from '/snippets/pro/button.mdx';
+import { urls } from '/snippets/variables/urls.mdx';
+
+<ProBanner source="cloud-infrastructure" />
+
+<Steps>
+  <Step title="Create multiple environments">
+    <Frame>
+      <img
+        alt="Mage Pro Cloud Create multiple environments"
+        src="https://github.com/mage-ai/assets/blob/main/pro/cloud/cloud--cluster_new.jpg?raw=true"
+      />
+    </Frame>
+
+    Launch multiple environments and manage shared team workspaces.
+  </Step>
+
+  <Step title="Customize and manage each environment">
+    <Frame>
+      <img
+        alt="Mage Pro Cloud Customize and manage each environment"
+        src="https://github.com/mage-ai/assets/blob/main/pro/cloud/cloud--cluster_detail.jpg?raw=true"
+      />
+    </Frame>
+
+    Multi-tenant support with granular access controls and isolated workspaces.
+  </Step>
+
+  <Step title="Monitor data pipeline CPU utilization">
+    <Frame>
+      <img
+        alt="Mage Pro Cloud Monitor data pipeline CPU utilization"
+        src="https://github.com/mage-ai/assets/blob/main/pro/cloud/cloud--cluster_usage_cpu.jpg?raw=true"
+      />
+    </Frame>
+
+    System level metrics and logs with dashboard charts.
+  </Step>
+
+  <Step title="Monitor data pipeline memory usage">
+    <Frame>
+      <img
+        alt="Mage Pro Cloud Monitor data pipeline memory usage"
+        src="https://github.com/mage-ai/assets/blob/main/pro/cloud/cloud--cluster_usage_memory.jpg?raw=true"
+      />
+    </Frame>
+
+    Customizable monitoring dashboard.
+  </Step>
+
+  <Step title="Migrate existing projects instantly into Mage Pro">
+    <Frame>
+      <video
+        controls
+        autoplay
+        loop
+        src="https://github.com/user-attachments/assets/5aa989cc-ba85-43bd-aadd-f7deb1145428"
+      >
+      </video>
+    </Frame>
+
+    Remote repository import tool for easily migrating or syncing existing projects.
+  </Step>
+</Steps>
+
+---
+
+<Card
+  title="Get started for free"
+  href={`${urls.pro}?source=cloud-infrastructure`}
+>
+  <img
+    src="https://github.com/mage-ai/assets/blob/main/pro/banner-light.png?raw=true"
+    className="hidden dark:block"
+    noZoom
+  />
+  <img
+    src="https://github.com/mage-ai/assets/blob/main/pro/banner-dark.png?raw=true"
+    className="block dark:hidden"
+    noZoom
+  />
+
+  <br />
+
+  A fully managed service, where we maintain the infrastructure, guarantee uptime,
+  automatically scale your workloads to handle any volume of pipeline runs,
+  automatically upgrade new versions of Mage Pro only features,
+  monitor your production pipelines, and provide enterprise level support.
+</Card>
