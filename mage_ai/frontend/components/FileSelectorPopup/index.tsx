@@ -28,6 +28,7 @@ function FileSelectorPopup({
   const {
     browser: fileBrowser,
   } = useFileComponents({
+    allowDbtModelSelect: true,
     disableContextMenu: true,
     onOpenFile,
     onSelectBlockFile,

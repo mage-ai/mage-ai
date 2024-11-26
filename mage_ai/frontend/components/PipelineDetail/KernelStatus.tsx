@@ -344,7 +344,7 @@ function KernelStatus({
     }
 
     const menuEl = (
-       <ClickOutside
+      <ClickOutside
         onClickOutside={(e) => {
           pauseEvent(e);
           setComputeConnectionVisible(false);
@@ -575,23 +575,25 @@ function KernelStatus({
       }
     }
 
-    return (
-      <div style={{ position: 'relative' }}>
-        <KeyboardShortcutButton
-          beforeElement={statusIconEl}
-          blackBorder
-          compact
-          inline
-          noHover={!dataSparkApplications || sparkApplications?.length >= 1}
-          onClick={onClick}
-          uuid="Pipeline/ComputeStatus"
-          {...buttonProps}
-        >
-          {pipelineDisplayName}
-        </KeyboardShortcutButton>
+    return (pipelineDisplayName
+      ? (
+        <div style={{ position: 'relative' }}>
+          <KeyboardShortcutButton
+            beforeElement={statusIconEl}
+            blackBorder
+            compact
+            inline
+            noHover={!dataSparkApplications || sparkApplications?.length >= 1}
+            onClick={onClick}
+            uuid="Pipeline/ComputeStatus"
+            {...buttonProps}
+          >
+            {pipelineDisplayName}
+          </KeyboardShortcutButton>
 
-        {menuEl}
-      </div>
+          {menuEl}
+        </div>
+      ): null
     );
   }, [
     activeCluster,

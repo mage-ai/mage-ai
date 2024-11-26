@@ -249,66 +249,8 @@ function FileHeaderMenu({
       onClick: toggleHideOutputOnExecution,
       uuid: 'Hide output on execution',
     },
-    // {
-    //   label: () => (
-    //     <FileHeaderMenuItem
-    //       label="Collapse all outputs"
-    //     />
-    //   ),
-    //   onClick: () => collapseAllBlockOutputs(true),
-    //   uuid: 'Collapse all outputs',
-    // },
-    // {
-    //   label: () => (
-    //     <FileHeaderMenuItem
-    //       label="Expand all outputs"
-    //     />
-    //   ),
-    //   onClick: () => collapseAllBlockOutputs(false),
-    //   uuid: 'Expand all outputs',
-    // },
-    {
-      label: () => (
-        <FileHeaderMenuItem
-          beforeIcon={<LayoutStacked success={!sideBySideEnabled} />}
-          label="Show output below block"
-        />
-      ),
-      onClick: () => {
-        setSideBySideEnabled(false);
-      },
-      uuid: 'Show output below block',
-    },
-    {
-      label: () => (
-        <FileHeaderMenuItem
-          beforeIcon={<LayoutSplit success={sideBySideEnabled} />}
-          label="Show output next to code (beta)"
-        />
-      ),
-      onClick: () => {
-        setSideBySideEnabled(true);
-      },
-      uuid: 'Show output next to code',
-    },
-    {
-      disabled: !sideBySideEnabled,
-      label: () => (
-        <FileHeaderMenuItem
-          checked={scrollTogether}
-          label="Scroll output alongside code (beta)"
-          muted={!sideBySideEnabled}
-        />
-      ),
-      onClick: () => setScrollTogether(!scrollTogether),
-      uuid: 'Scroll output alongside code',
-    },
   ], [
     hideOutputOnExecution,
-    scrollTogether,
-    setScrollTogether,
-    setSideBySideEnabled,
-    sideBySideEnabled,
     toggleHideOutputOnExecution,
   ]);
 
@@ -321,13 +263,6 @@ function FileHeaderMenu({
       onClick?: () => void;
       uuid: string;
     }[] = [
-      {
-        label: () => 'Open compute management',
-        linkProps: {
-          href: '/compute',
-        },
-        uuid: 'Open compute management',
-      },
     ];
 
     if (KernelNameEnum.PYTHON3 === kernel?.name) {
@@ -459,7 +394,6 @@ function FileHeaderMenu({
         </div>
 
         {PipelineTypeEnum.INTEGRATION !== pipeline?.type
-          && featureEnabled?.(featureUUIDs.NOTEBOOK_BLOCK_OUTPUT_SPLIT_VIEW)
           && (
           <div style={{ position: 'relative' }}>
             <Button
