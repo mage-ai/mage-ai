@@ -307,13 +307,7 @@ function AddNewBlocks({
     {
       label: () => 'Single model or snapshot (from file)',
       onClick: () => {
-        if (featureEnabled?.(featureUUIDs.DBT_V2)) {
-          showBlockBrowserModal({
-            blockIndex: blockIdx,
-          });
-        } else {
-          onClickAddSingleDBTModel?.(blockIdx);
-        }
+        onClickAddSingleDBTModel?.(blockIdx);
       },
       uuid: 'dbt/single_model',
     },
