@@ -526,7 +526,7 @@ function FileBrowser({
           onClick: () => {
             selectedFolder?.children?.forEach((file: FileType) => {
               if (!('children' in file)) {
-                const fp = getFullPath(selectedFolder)
+                const fp = getFullPath(selectedFolder);
                 onClickFile([fp, file?.name]?.join(osPath.sep), file);
               }
             });
@@ -751,14 +751,12 @@ function FileBrowser({
     );
   }, [
     coordinates,
-    deleteBlockFile,
     deleteFile,
     deleteFolder,
     deleteWidget,
     downloadFile,
-    featureEnabled,
-    featureUUIDs,
-    project,
+    onClickFile,
+    openFile,
     ref,
     showModal,
     showModalNewFile,
