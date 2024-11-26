@@ -625,16 +625,6 @@ function FileBrowser({
         },
         uuid: 'New Mage project',
       });
-
-      if (featureEnabled?.(featureUUIDs?.DBT_V2)) {
-        items.push({
-          beforeIcon: <DBT />,
-          onClick: () => {
-            showModalNewFolder({ projectType: ProjectTypeEnum.DBT });
-          },
-          uuid: 'New dbt project',
-        });
-      }
     } else if (selectedFile) {
       if (selectedFile?.path) {
         items.push({
