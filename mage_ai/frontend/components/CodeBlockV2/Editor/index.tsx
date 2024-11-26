@@ -630,7 +630,10 @@ function Editor({
     setTimeout(() => {
       const width = (refEditorContainer?.current?.getBoundingClientRect?.()?.width || 0)
         - WIDTH_OFFSET;
-      refInputContainer.current.style.width = `${width}px`;
+
+      if (refInputContainer?.current) {
+        refInputContainer.current.style.width = `${width}px`;
+      }
     }, 1);
   }, [width]);
 
