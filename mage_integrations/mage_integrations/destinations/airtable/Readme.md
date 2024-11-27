@@ -12,7 +12,7 @@ You must supply the following parameters to use this tap:
 |--------------|--------------------------------------------------------------------------------|--------------|----------|
 | `token`      | An Airtable access token containing credentials to access your desired tables. | `pat...`     | ✅        |
 | `base_id`    | The ID of the specified application inside airtable workspace                  | `app...`     | ✅        |
-| `table_name` | The table name or id                                                           | `tbl...`     |          |
+
 <br />
 
 ## Generating credentials
@@ -23,5 +23,5 @@ See [this guide](https://airtable.com/developers/web/guides/personal-access-toke
 
 Your access token should support the following scopes:
 
-- data.records:read
-- schema.bases:read
+- schema.bases:write
+- data.records:write
