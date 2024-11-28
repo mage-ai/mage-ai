@@ -894,57 +894,6 @@ function Edit({
       ],
     ];
 
-    if (!creatingWithLimitation) {
-      rows.push([
-        <FlexContainer
-          alignItems="center"
-          key="frequency"
-        >
-          <Switch default size={1.5 * UNIT} />
-          <Spacing mr={1} />
-          <Text default>
-            Enable landing time
-          </Text>
-        </FlexContainer>,
-
-        <div key="frequency_input">
-          <ToggleSwitch
-            checked={landingTimeEnabled}
-            disabled={landingTimeDisabled}
-            onCheck={() => {
-              setSettings(prev => ({
-                ...prev,
-                landing_time_enabled: !landingTimeEnabled,
-              }));
-            }}
-          />
-
-          <Spacing mt={1} p={1}>
-            {landingTimeDisabled && (
-              <Text muted small>
-                In order to enable landing time, the trigger’s frequency must
-                be <Text inline monospace small>{ScheduleIntervalEnum.HOURLY}
-                </Text>, <Text inline monospace small>
-                  {ScheduleIntervalEnum.DAILY}
-                </Text>, <Text inline monospace small>
-                  {ScheduleIntervalEnum.WEEKLY}
-                </Text>, or <Text inline monospace small>
-                  {ScheduleIntervalEnum.MONTHLY}
-                </Text>.
-              </Text>
-            )}
-            {!landingTimeDisabled && (
-              <Text muted small>
-                Instead of starting at a specific time,
-                this trigger will schedule pipeline runs at a time where it will finish
-                by the specified time below.
-              </Text>
-            )}
-          </Spacing>
-        </div>,
-      ]);
-    }
-
     if (showLandingTime) {
       rows.push([
         <FlexContainer

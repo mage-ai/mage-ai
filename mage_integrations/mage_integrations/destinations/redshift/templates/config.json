@@ -6,5 +6,6 @@
   "region": "",
   "schema": "",
   "table": "",
-  "user": ""
+  "user": "",
+  "use_merge_load": false
 }

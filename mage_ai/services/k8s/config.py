@@ -58,6 +58,7 @@ class K8sExecutorConfig(BaseConfig):
         service_account_name = DEFAULT_SERVICE_ACCOUNT_NAME
         affinity = None
         node_selector = None
+        scheduler_name = None
         tolerations = []
         volumes = []
         image_pull_secrets = {}
@@ -71,6 +72,8 @@ class K8sExecutorConfig(BaseConfig):
 
             if executor_config.pod.get('node_selector'):
                 node_selector = executor_config.pod['node_selector']
+            if executor_config.pod.get('scheduler_name'):
+                scheduler_name = executor_config.pod['scheduler_name']
 
             if executor_config.pod.get('tolerations'):
                 tolerations += [V1Toleration(**e) for e in executor_config.pod['tolerations']]
@@ -123,6 +126,7 @@ class K8sExecutorConfig(BaseConfig):
             containers=[container],
             image_pull_secrets=image_pull_secrets,
             node_selector=node_selector,
+            scheduler_name=scheduler_name,
             restart_policy='Never',
             service_account_name=service_account_name,
             tolerations=tolerations,

@@ -306,11 +306,11 @@ After you get a certificate, add a HTTPS listener in your load balancer group.
 2. View all load balancers.
 3. Click on the load balancer with the name `mage-data-prep` in it (if you
    changed the app name, then find the load balancer with that app name).
-4. Click "Listners" tab.
+4. Click "Listeners and rules" tab.
 5. Click "Add listener" button
 6. For "Protocol" and "Port", choose HTTPS and keep the default port or enter a
    different port.
-7. In "Default actions", select "Forward" and forward to the target group that
+7. In "Default actions", select "Forward to target groups" and forward to the target group that
    contains your app name (`mage-data-prep-production-tg` by default)
 8. In "Security Policy", keep the default security policy.
 9. For "Default SSL certificate", do one of the following:

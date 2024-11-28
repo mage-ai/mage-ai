@@ -99,6 +99,8 @@ class Postgres(BaseSQL):
             password = self.settings['password']
             port = self.settings['port']
             user = self.settings['user']
+            keepalives = self.settings.get('keepalives', 1)
+            keepalives_idle = self.settings.get('keepalives_idle', 300)
             if self.settings['connection_method'] == 'ssh_tunnel':
                 ssh_setting = dict(ssh_username=self.settings['ssh_username'])
                 if self.settings['ssh_pkey'] is not None:
@@ -128,18 +130,34 @@ class Postgres(BaseSQL):
                 host = '127.0.0.1'
                 port = self.ssh_tunnel.local_bind_port
 
-            connect_opts = dict(
-                database=database,
-                host=host,
-                password=password,
-                port=port,
-                user=user,
-                keepalives=1,
-                keepalives_idle=300,
-            )
+            connect_opts = self.settings.copy()
+            # See recognized keyword parameters for psycopg2.connect()
+            # https://www.postgresql.org/docs/current/libpq-connect.html#LIBPQ-PARAMKEYWORDS
+            unrecognized_keys = [
+                'dbname',
+                'schema',
+                'connection_method',
+                'ssh_host',
+                'ssh_port',
+                'ssh_username',
+                'ssh_password',
+                'ssh_pkey',
+                "verbose"
+            ]
+            for key in unrecognized_keys:
+                connect_opts.pop(key, None)
 
-            if self.settings.get('connect_timeout'):
-                connect_opts['connect_timeout'] = self.settings['connect_timeout']
+            connect_opts.update(
+                {
+                    'database': database,
+                    'host': host,
+                    'password': password,
+                    'port': port,
+                    'user': user,
+                    'keepalives': keepalives,
+                    'keepalives_idle': keepalives_idle,
+                }
+            )
 
             try:
                 self._ctx = connect(**connect_opts)
@@ -277,6 +295,14 @@ class Postgres(BaseSQL):
 
         return 'text'
 
+    @staticmethod
+    def _clean_array_value(val: str) -> str:
+        if val is None or type(val) is not str or len(val) < 2:
+            return val
+        if val[0] == '[' and val[-1] == ']':
+            return str(val).replace('[', '{').replace(']', '}')
+        return val
+
     def upload_dataframe(
         self,
         cursor: _psycopg.cursor,
@@ -298,13 +324,6 @@ class Postgres(BaseSQL):
             # Use COPY command
             use_insert_command = False
 
-        def clean_array_value(val):
-            if val is None or type(val) is not str or len(val) < 2:
-                return val
-            if val[0] == '[' and val[-1] == ']':
-                return '{' + val[1:-1] + '}'
-            return val
-
         def serialize_obj(val):
             if type(val) is dict or type(val) is np.ndarray:
                 return simplejson.dumps(
@@ -319,7 +338,7 @@ class Postgres(BaseSQL):
                     ignore_nan=True,
                 )
             elif not use_insert_command and type(val) is list:
-                return clean_array_value(simplejson.dumps(
+                return self._clean_array_value(simplejson.dumps(
                     val,
                     default=encode_complex,
                     ignore_nan=True,

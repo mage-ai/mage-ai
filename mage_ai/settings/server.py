@@ -161,6 +161,11 @@ NEW_RELIC_CONFIG_PATH = os.getenv('NEW_RELIC_CONFIG_PATH', '')
 # If enabled, the /metrics route will expose Tornado server metrics
 ENABLE_PROMETHEUS = get_bool_value(os.getenv('ENABLE_PROMETHEUS', 'False'))
 
+# API switch configuration
+# If disabled, those AI APIs will not be used in backend.
+ENABLE_OPEN_AI = get_bool_value(os.getenv('ENABLE_OPEN_AI') or 'True')
+ENABLE_HUGGING_FACE = get_bool_value(os.getenv('ENABLE_HUGGING_FACE') or 'True')
+
 # OpenTelemetry Configuration
 OTEL_EXPORTER_OTLP_ENDPOINT = os.getenv('OTEL_EXPORTER_OTLP_ENDPOINT', None)
 OTEL_EXPORTER_OTLP_HTTP_ENDPOINT = os.getenv('OTEL_EXPORTER_HTTP_OTLP_ENDPOINT', None)

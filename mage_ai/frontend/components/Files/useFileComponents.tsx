@@ -88,6 +88,7 @@ const MENU_ICON_PROPS = {
 };
 
 type UseFileComponentsProps = {
+  allowDbtModelSelect?: boolean;
   addNewBlock?: (
     b: BlockRequestPayloadType,
     cb: (block: BlockType) => void,
@@ -144,6 +145,7 @@ type UseFileComponentsProps = {
 
 function useFileComponents(
   {
+    allowDbtModelSelect,
     addNewBlock,
     blocks,
     contained,
@@ -692,6 +694,7 @@ function useFileComponents(
 
   const fileBrowserProps = useMemo(
     () => ({
+      allowDbtModelSelect,
       addNewBlock,
       blocks,
       deleteWidget,
@@ -711,6 +714,7 @@ function useFileComponents(
       widgets,
     }),
     [
+      allowDbtModelSelect,
       addNewBlock,
       blocks,
       deleteWidget,

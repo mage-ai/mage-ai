@@ -32,6 +32,7 @@ import { range, sortByKey } from '@utils/array';
 const DEFAULT_NAME = 'default_repo';
 
 export type FolderSharedProps = {
+  allowDbtModelSelect?: boolean;
   allowEmptyFolders?: boolean;
   allowSelectingFolders?: boolean;
   disableContextMenu?: boolean;
@@ -141,6 +142,7 @@ function buildFolderUUID(parts: string[]): string {
 }
 
 function Folder({
+  allowDbtModelSelect,
   allowEmptyFolders,
   allowSelectingFolders,
   containerRef,
@@ -240,6 +242,7 @@ function Folder({
     (arr: FileType[]) =>
       arr?.map((f: FileType) => (
         <Folder
+          allowDbtModelSelect={allowDbtModelSelect}
           allowEmptyFolders={allowEmptyFolders}
           allowSelectingFolders={allowSelectingFolders}
           containerRef={containerRef}
@@ -469,7 +472,7 @@ function Folder({
               }
             }
 
-            const nonPythonBlockFromFile = getNonPythonBlockFromFile(file);
+            const nonPythonBlockFromFile = getNonPythonBlockFromFile(file, null, allowDbtModelSelect);
 
             if (children) {
               if (allowSelectingFolders) {

@@ -1,0 +1,26 @@
+---
+title: "PySpark executor"
+sidebarTitle: "Spark"
+icon: "sparkles"
+---
+
+If the pipeline type is `pyspark`, we use PySpark executors for pipeline and
+block executions.
+
+You can customize the compute resource of PySpark executor by
+updating the instance types of `emr_config` in project's metadata.yaml file.
+
+## Example:
+
+```yaml
+emr_config:
+  ec2_key_name: "xxxxx"
+  master_instance_type: "r5.2xlarge"
+  slave_instance_type: "r5.2xlarge"
+```
+
+## Spark compute resource manager
+
+Manage your Spark compute resources and track Spark pipeline execution metrics.
+
+[Learn more](/integrations/compute/management)

@@ -1,6 +1,7 @@
 ---
 title: "User authentication"
-sidebarTitle: "Overview"
+sidebarTitle: "User sign in"
+icon: "passport"
 description: "Create users, manage users, and require sign in to authenticate and use Mage."
 ---
 
@@ -20,7 +21,7 @@ Set the following environment variable name and value:
 | Value | `1` |
 
 
-### Set access token expiration time 
+### Set access token expiration time
 
 You can set the `MAGE_ACCESS_TOKEN_EXPIRY_TIME` environment variable to customize the expiration time
 of a Mage access token. The value should be the length of time in seconds.
@@ -28,7 +29,7 @@ of a Mage access token. The value should be the length of time in seconds.
 Defaults to 2592000 which is 30 days.
 
 |   |   |
-| --- | --- | 
+| --- | --- |
 | Name | `MAGE_ACCESS_TOKEN_EXPIRY_TIME` |
 | Value | `2592000` |
 
@@ -119,34 +120,6 @@ On this page, you can:
 | Editor | Can do everything a viewer can, create, update, and delete. |
 | Admin | Can do everything a viewer can, an editor can, and manage users who are viewers/editors (update usernames, emails, passwords, and make viewers editors or vice versa. |
 | Owner | In addition to what admins can do, add and delete users. Manage all users, including admins/owners. Make other users any role, including admins/owners. |
-
-## LDAP
-
-If you want to enable LDAP authentication mode, Set the following environment variable name and value:
-
-| Variable name          | Value               |
-| ---------------------- | --------------------------- |
-| `AUTHENTICATION_MODE`  | `ldap`                     |
-
-In this case, you will also need to configure the following variables:
-
-| Variable name          | Description                                                 | Example value               |
-| ---------------------- | ----------------------------------------------------------- | --------------------------- |
-| `LDAP_ADMIN_USERNAME`  | The username of the owner user created on first run         | `admin`                     |
-| `LDAP_SERVER`          | The host of the LDAP server                                  | `ldap.example.com`          |
-| `LDAP_BIND_DN`         | The `bind_dn` for the LDAP account that will be used to perform search operations | `cn=admin,dc=example,dc=com` |
-| `LDAP_BIND_PASSWORD`   | The password for the LDAP account that will be used to perform search operations | `password`                  |
-| `LDAP_BASE_DN`         | The base DN of the server                                    | `dc=example,dc=com`         |
-| `LDAP_AUTHENTICATION_FILTER` | The authentication filter to use in template format using the variable `username` | `(&(\|(objectClass=inetOrgPerson)(objectClass=groupOfNames))(cn={username}))` |
-| `LDAP_AUTHORIZATION_FILTER` | The authorization filter to use in template format using the variable `user_dn` | `(&(objectClass=groupOfNames)(cn=group)(member={user_dn}))` |
-| `LDAP_GROUP_FIELD` | Name of user attribute to use to determine a user's LDAP group. | `memberOf` |
-| `LDAP_ROLES_MAPPING` | Mapping of user LDAP group to Mage roles. Must be in JSON string format. | `'{"Admin": ["Admin"]}'` |
-| `LDAP_DEFAULT_ACCESS` | Default access for a new user authenticated through LDAP (default user will have no role) | `Viewer`, `Editor`, `Admin` |
-| `UPDATE_ROLES_ON_LOGIN` | Update roles on every login. Otherwise, the roles will only be set when the user logs in for the first time. | `1` |
-
-Make sure to adjust the values of the variables to match your LDAP configuration.
-
-When LDAP authentication is enabled, users will need to provide their LDAP credentials to log in to the system. Once authenticated, Mage will use the authorization filter to determine the user's permissions based on their LDAP group membership.
 
 ## Authenticated requests
 

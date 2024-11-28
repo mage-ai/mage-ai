@@ -39,6 +39,26 @@ def calculate_item_count(
     check_upstream_block_uuids_only: Optional[List[str]] = None,
     update_upstream_item_count_callback: Optional[Callable] = None,
 ) -> int:
+    """
+    Calculates the item count for a given block based on its upstream blocks' output.
+
+    This method builds counters for the block and multiplies their item counts to determine
+    the total item count. If a counter has an item count of zero and is included in
+    `check_upstream_block_uuids_only`, the method recursively calculates the item count
+    for the corresponding upstream block. An optional callback can be provided to update
+    the item count based on upstream block outputs.
+
+    Args:
+        block: The block for which to calculate the item count.
+        execution_partition (Optional[str]): The execution partition identifier.
+        check_upstream_block_uuids_only (Optional[List[str]]): A list of UUIDs for upstream blocks
+            to check when their item count is zero.
+        update_upstream_item_count_callback (Optional[Callable]): A callback function that can
+            update the item count based on the upstream block's output.
+
+    Returns:
+        int: The calculated item count for the block.
+    """
     counters = build_counters(block, execution_partition)
 
     uuid_counts = [
@@ -95,7 +115,9 @@ class DynamicBlockFactory(DynamicBlockWrapperBase):
         ])
 
         # If item count is 0 because the upstream blocks haven’t output anything yet
-        item_count_total = max(self.__calculate_item_count(), upstream_blocks_count)
+        item_count_total = self.__calculate_item_count()
+        if item_count_total == 0:
+            item_count_total = upstream_blocks_count
 
         upstream_block_runs = self.__upstream_block_runs()
         upstream_block_runs_completed = len([
@@ -174,6 +196,19 @@ class DynamicBlockFactory(DynamicBlockWrapperBase):
         return self._counters
 
     def __calculate_item_count(self) -> int:
+        """
+        Calculates the item count for the current block, ensuring downstream execution even if an
+        upstream block has no output.
+
+        This method calculates the item count by checking the output of upstream blocks. If an
+        upstream block has been spawned multiple times but has no output, it ensures that the
+        downstream block is still executed by returning an item count of 1. An internal callback
+        updates the item count based on the upstream block's completed runs.
+
+        Returns:
+            int: The calculated item count for the block, ensuring downstream block execution.
+        """
+
         # If an upstream block indeed has no output (e.g. no return statement),
         # we need to ensure that the downstream block is still executed.
 
@@ -226,10 +261,12 @@ class DynamicBlockFactory(DynamicBlockWrapperBase):
                 if completed_count == spawn_count:
                     return 1
 
-            # If no upstream block has been spawned,
+            # If no upstream block has been spawned and the upstream block runs are completed,
             # we need to return 1 so that the downstream block is still executed.
             if spawn_count == 0:
-                return 1
+                upstream_block_runs = self.__upstream_block_runs()
+                if all(b.status == BlockRun.BlockRunStatus.COMPLETED for b in upstream_block_runs):
+                    return 1
 
             return output_item_count
 

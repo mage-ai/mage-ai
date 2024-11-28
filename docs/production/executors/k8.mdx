@@ -1,0 +1,139 @@
+---
+title: "Kubernetes executor"
+sidebarTitle: "Kubernetes"
+icon: "python"
+description: "Execute block runs in separate pods."
+---
+
+import { ProButton } from '/snippets/pro/button.mdx';
+import { ProBanner } from '/snippets/pro/banner.mdx';
+
+<ProBanner
+  source="kubernetes-executor"
+  title="Use Mage Pro if you need to run your blocks in separate pods or process while developing in the code editor."
+  description={`
+  Running a block from the code editor, while developing a pipeline, won’t use this executor.
+  Instead, the block will be executed using the same process that the code editor is running on.
+  `}
+/>
+
+If your Mage app is running in a Kubernetes cluster, you can execute the blocks in separate Kubernetes pods with Kubernetes executor.
+
+To configure a pipeline block to use Kubernetes executor, you simply just need to update the `executor_type` of the block to `k8s` in pipeline's metadata.yaml:
+
+```yaml
+blocks:
+- uuid: example_data_loader
+  type: data_loader
+  upstream_blocks: []
+  downstream_blocks: []
+  executor_type: k8s
+  ...
+```
+By default, Mage uses `default` as the Kubernetes namespace. You can customize the namespace by setting the `KUBE_NAMESPACE` environment variable.
+
+There're three ways to customize the Kubernetes executor config:
+
+1. Add the `executor_config` at block level in pipeline's metadata.yaml file. Example config:
+    ```yaml
+    blocks:
+    - uuid: example_data_loader
+      type: data_loader
+      upstream_blocks: []
+      downstream_blocks: []
+      executor_type: k8s
+      executor_config:
+        namespace: default
+        resource_limits:
+          cpu: 1000m
+          memory: 2048Mi
+        resource_requests:
+          cpu: 500m
+          memory: 1024Mi
+    ```
+2. Add the `k8s_executor_config` to project's metadata.yaml. This `k8s_executor_config` will apply to all the blocks that use k8s executor
+in this project. Example config:
+    ```yaml
+    k8s_executor_config:
+      job_name_prefix: data-prep
+      namespace: default
+      resource_limits:
+        cpu: 1000m
+        memory: 2048Mi
+      resource_requests:
+        cpu: 500m
+        memory: 1024Mi
+      service_account_name: default
+    ```
+* The kubernetes job name is in this format: `mage-{job_name_prefix}-block-{block_run_id}`. The default `job_name_prefix` is `data-prep`. You can customize it in the k8s executor config.
+  You can interpolate the trigger name in the `job_name_prefix` field with the format `{trigger_name}`
+* If you want to use GPU resource in your k8s executor, you can configure the GPU resource in the `k8s_executor_config` like
+  ```yaml
+  k8s_executor_config:
+    resource_limits:
+      gpu-vendor.example/example-gpu: 1 # requesting 1 GPU
+  ```
+  Please make sure the [GPU driver](https://kubernetes.io/docs/tasks/manage-gpus/scheduling-gpus/#using-device-plugins)
+  is installed and run on your nodes to use the GPUs.
+* To further customize the container config of the kubernetes executor, you can specify the `container_config` or `job` in the k8s executor config. Here is the example:
+  ```yaml
+  k8s_executor_config:
+    container_config:
+      image: mageai/mageai:0.9.7
+      env:
+      - name: USER_CODE_PATH
+        value: /home/src/k8s_project
+    job:
+      active_deadline_seconds: 120
+      backoff_limit: 3
+      ttl_seconds_after_finished: 86400
+  ```
+3. You can configure the job template by using the `K8S_CONFIG_FILE` environment variable, which should point to the configuration file. Here is the format for the Kubernetes configuration template:
+
+```yaml
+# Kubernetes Configuration Template
+metadata:
+  annotations:
+    application: "mage"
+    composant: "executor"
+  labels:
+    application: "mage"
+    type: "spark"
+  namespace: "default"
+pod:
+  service_account_name: ""
+  image_pull_secrets: "secret"
+  volumes:
+  - name: data-pvc
+    persistent_volume_claim:
+      claim_name: pvc-name
+container:
+  name: "mage-data"
+  env:
+    - name: "KUBE_NAMESPACE"
+      value: "default"
+    - name: "secret_key"
+      value: "somesecret"
+  image: "mageai/mageai:latest"
+  image_pull_policy: "IfNotPresent"
+  resources:
+    limits:
+      cpu: "1"
+      memory: "1Gi"
+    requests:
+      cpu: "0.1"
+      memory: "0.5Gi"
+  volume_mounts:
+    - mount_path: "/tmp/data"
+      name: "data-pvc"
+```
+
+**NB:** When deploying Mage in a multi-container pod, you need to specify the environment variable `MAGE_CONTAINER_NAME`. If this variable is not set, Mage will default to using the first container in the pod. To specify the Mage container, you can use:
+
+```yaml
+    env:
+      - name: MAGE_CONTAINER_NAME
+        valueFrom:
+          fieldRef:
+            fieldPath: metadata.name
+```

@@ -88,6 +88,8 @@ export enum FileContextEnum {
 }
 
 function FileBrowser({
+  // eslint-disable-next-line react/prop-types
+  allowDbtModelSelect,  // included in FolderSharedProps
   addNewBlock,
   blocks = [],
   deleteWidget,
@@ -386,6 +388,7 @@ function FileBrowser({
 
   const filesMemo = useMemo(() => files?.map((file: FileType) => (
     <Folder
+      allowDbtModelSelect={allowDbtModelSelect}
       containerRef={ref}
       cursorRef={cursorRef}
       disableContextMenu={disableContextMenu}
@@ -406,6 +409,7 @@ function FileBrowser({
       uuidContainer={uuidFileBrowser}
     />
   )), [
+    allowDbtModelSelect,
     disableContextMenu,
     files,
     onClickFile,
@@ -522,7 +526,7 @@ function FileBrowser({
           onClick: () => {
             selectedFolder?.children?.forEach((file: FileType) => {
               if (!('children' in file)) {
-                const fp = getFullPath(selectedFolder)
+                const fp = getFullPath(selectedFolder);
                 onClickFile([fp, file?.name]?.join(osPath.sep), file);
               }
             });
@@ -621,16 +625,6 @@ function FileBrowser({
         },
         uuid: 'New Mage project',
       });
-
-      if (featureEnabled?.(featureUUIDs?.DBT_V2)) {
-        items.push({
-          beforeIcon: <DBT />,
-          onClick: () => {
-            showModalNewFolder({ projectType: ProjectTypeEnum.DBT });
-          },
-          uuid: 'New dbt project',
-        });
-      }
     } else if (selectedFile) {
       if (selectedFile?.path) {
         items.push({
@@ -757,14 +751,12 @@ function FileBrowser({
     );
   }, [
     coordinates,
-    deleteBlockFile,
     deleteFile,
     deleteFolder,
     deleteWidget,
     downloadFile,
-    featureEnabled,
-    featureUUIDs,
-    project,
+    onClickFile,
+    openFile,
     ref,
     showModal,
     showModalNewFile,

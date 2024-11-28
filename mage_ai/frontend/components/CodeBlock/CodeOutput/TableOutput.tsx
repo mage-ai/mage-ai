@@ -1,5 +1,5 @@
 import InnerHTML from 'dangerously-set-html-content';
-import { useEffect, useMemo } from 'react';
+import { useMemo } from 'react';
 
 import DataTable from '@components/DataTable';
 import FlexContainer from '@oracle/components/FlexContainer';

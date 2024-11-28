@@ -103,7 +103,7 @@ function OverviewPage({ tab }: { tab?: TimePeriodEnum }) {
   const router = useRouter();
   const newPipelineButtonMenuRef = useRef(null);
 
-  const allTabs = useMemo(() => TIME_PERIOD_TABS.concat(TAB_DASHBOARD), []);
+  const allTabs = useMemo(() => TIME_PERIOD_TABS, []);
   const [selectedTab, setSelectedTabState] = useState<TabType>(
     allTabs.find(
       ({ uuid }) => uuid === (tab ? tab : get(LOCAL_STORAGE_KEY_OVERVIEW_TAB_SELECTED)?.uuid),

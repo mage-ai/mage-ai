@@ -172,7 +172,10 @@ def get_access_token(git_config, repo_path: str) -> str:
 def build_authenticated_remote_url(remote_url: str, username: str, token: str) -> str:
     # https://[username]:[token]@github.com/[remote_url]
     url = urlsplit(remote_url)
-    url = url._replace(netloc=f'{username}:{token}@{url.netloc}')
+    if remote_url.startswith('https://bitbucket.org/'):
+        url = url._replace(netloc=f'x-token-auth:{token}@{url.netloc}')
+    else:
+        url = url._replace(netloc=f'{username}:{token}@{url.netloc}')
     return urlunsplit(url)
 
 

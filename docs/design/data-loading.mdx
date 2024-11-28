@@ -263,6 +263,7 @@ Handles data transfer between an S3 bucket and the Mage app. The `S3` client sup
 -   Parquet
 -   HDF5
 -   XML
+-   Excel
 
 If an IAM profile is not set up using `aws configure`, then AWS credentials for accesses the S3 bucket can be manually specified through either Mage's [configuration loader](#configuration-settings) system or through keyword arguments in the constructor (see constructor).
 
@@ -321,6 +322,7 @@ If the format is HDF5, the default key under which the data frame is stored is t
         | Parquet | [_DataFrame.to_parquet_](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.to_parquet.html) |
         | HDF5    | [_DataFrame.to_hdf_](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.to_hdf.html)         |
         | XML     | [_DataFrame.to_xml_](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.to_xml.html)         |
+        | Excel   | [_DataFrame.to_excel_](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.to_excel.html)     |
 
 **_load_** - `load(bucket_name: str, object_key: str, format: FileFormat | str = None, limit: int = QUERY_ROW_LIMIT **kwargs) -> DataFrame`
 
@@ -341,6 +343,7 @@ Loads data from object in S3 bucket into a Pandas data frame. This function will
         | Parquet | [_read_parquet_](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.read_parquet.html) |
         | HDF5    | [_read_hdf_](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.read_hdf.html)         |
         | XML     | [_read_xml_](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.read_xml.html)         |
+        | Excel   | [_read_excel_](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.read_excel.html)     |
 
 -   **Returns**: (`DataFrame`) Data frame object loaded from data in the specified file.
 
@@ -355,6 +358,7 @@ Handles data transfer between the filesystem and the Mage app. The `FileIO` clie
 -   Parquet
 -   HDF5
 -   XML
+-   Excel
 
 <h3> Constructor </h3>
 
@@ -387,6 +391,7 @@ If the format is HDF5, the default key under which the data frame is stored is t
         | Parquet | [_DataFrame.to_parquet_](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.to_parquet.html) |
         | HDF5    | [_DataFrame.to_hdf_](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.to_hdf.html)         |
         | XML     | [_DataFrame.to_xml_](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.to_xml.html)         |
+        | Excel   | [_DataFrame.to_excel_](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.to_excel.html)     |
 
 **_load_** - `load(filepath: os.PathLike, format: FileFormat | str = None, limit: int = QUERY_ROW_LIMIT **kwargs) -> DataFrame`
 
@@ -406,6 +411,7 @@ Loads the data frame from the filepath specified. This function will load at max
         | Parquet | [_read_parquet_](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.read_parquet.html) |
         | HDF5    | [_read_hdf_](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.read_hdf.html)         |
         | XML     | [_read_xml_](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.read_xml.html)         |
+        | Excel   | [_read_excel_](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.read_excel.html)     |
 
 -   **Returns**: (`DataFrame`) Data frame object loaded from data in the specified file.
 
@@ -420,6 +426,7 @@ Handles data transfer between a Google Cloud Storage bucket and the Mage app. Su
 -   Parquet
 -   HDF5
 -   XML
+-   Excel
 
 If `GOOGLE_APPLICATION_CREDENTIALS` environment is set, no further arguments are needed other than those specified below. Otherwise, use the factory method `with_config` to construct the data loader using manually specified credentials.
 
@@ -476,6 +483,7 @@ Exports data frame to a GoogleCloudStorage bucket.
         | Parquet | [_DataFrame.to_parquet_](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.to_parquet.html) |
         | HDF5    | [_DataFrame.to_hdf_](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.to_hdf.html)         |
         | XML     | [_DataFrame.to_xml_](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.to_xml.html)         |
+        | Excel   | [_DataFrame.to_excel_](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.to_excel.html)     |
 
 **_load_** - `load(bucket_name: str, object_key: str, format: FileFormat | str = None, limit: int = QUERY_ROW_LIMIT, **kwargs) -> DataFrame`
 
@@ -496,6 +504,7 @@ Loads data from object in GoogleCloudStorage bucket into a Pandas data frame. Th
         | Parquet | [_read_parquet_](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.read_parquet.html) |
         | HDF5    | [_read_hdf_](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.read_hdf.html)         |
         | XML     | [_read_xml_](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.read_xml.html)         |
+        | Excel   | [_read_excel_](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.read_excel.html)     |
 
 -   **Returns**: (`DataFrame`) Data frame object loaded from data in the specified file.
 
@@ -510,6 +519,7 @@ Handles data transfer between an Azure Blob Storage conatiner and Mage. Supports
 -   Parquet
 -   HDF5
 -   XML
+-   Excel
 
 To authenticate access to Azure Blob Storage, the following environment variables must be set:
 
@@ -560,6 +570,7 @@ Exports data frame to an Azure Blob Storage container.
         | Parquet | [_DataFrame.to_parquet_](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.to_parquet.html) |
         | HDF5    | [_DataFrame.to_hdf_](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.to_hdf.html)         |
         | XML     | [_DataFrame.to_xml_](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.to_xml.html)         |
+        | Excel   | [_DataFrame.to_excel_](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.to_excel.html)     |
 
 **_load_** - `load(container_name: str, blob_path: str, format: FileFormat | str = None, limit: int = QUERY_ROW_LIMIT, **kwargs) -> DataFrame`
 

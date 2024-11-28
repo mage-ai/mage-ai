@@ -1,5 +1,7 @@
 ---
 title: "SQL blocks"
+sidebarTitle: "SQL"
+icon: "database"
 description: "Execute SQL commands directly in your database, data warehouse, etc."
 ---
 
@@ -344,14 +346,14 @@ will be interpolated as is.
 With `block_uuid`
 
 ```sql
-SELECT 
+SELECT
     '{{ block_output("magic_config", parse=lambda data, _vars: data["power"]) }}' AS power
     , '{{ block_output("magic_config", parse=lambda data, _vars: data["spell"]) }}' AS spell
 FROM mage.core_spells
 ```
 
 ```sql
-SELECT 
+SELECT
     '{{ block_output("data_loader_block", parse=lambda data, variables: data["runtime"] * variables["tries"]) }}' AS data
 FROM mage.core_spells
 ```
@@ -365,14 +367,14 @@ FROM mage.core_spells
 Without `block_uuid`
 
 ```sql
-SELECT 
+SELECT
     '{{ block_output(parse=lambda data, _vars: data[0]["power"]) }}' AS power
     , '{{ block_output(parse=lambda data, _vars: data[0]["spell"]) }}' AS spell
-FROM mage.core_spells    
+FROM mage.core_spells
 ```
 
 ```sql
-SELECT 
+SELECT
     '{{ block_output(parse=lambda data, variables: data[0]["runtime"] * variables[0]["tries"]) }}' AS data
 FROM mage.core_spells
 ```
@@ -424,7 +426,7 @@ Mage automatically pre-processes your SQL command before sending it to the final
 The pre-process extracts and structures the command so that Mage can build upstream tables and
 properly display preview data.
 
-However, there are scenarios where the SQL command you write must be executed as is. 
+However, there are scenarios where the SQL command you write must be executed as is.
 You can disable Mage’s pre-processing by opening a SQL block and checking the box labeled
 <b>Use raw SQL</b> and <b>Disable query preprocessing</b>.
 

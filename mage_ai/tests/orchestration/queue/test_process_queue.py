@@ -33,9 +33,10 @@ class ProcessQueueTests(TestCase):
         self.assertFalse('block_run_3' in self.queue.job_dict)
         self.assertFalse('block_run_4' in self.queue.job_dict)
 
-    @patch('mage_ai.orchestration.queue.process_queue.poll_job_and_execute')
+    @patch.object(ProcessQueue, 'start_worker_pool')
     @patch('mage_ai.orchestration.queue.process_queue.psutil.pid_exists')
-    def test_has_job(self, mock_pid_exists, mock_poll_job_and_execute):
+    def test_has_job(self, mock_pid_exists, mock_start_worker_pool):
+        mock_start_worker_pool.return_value = None
         mock_pid_exists.return_value = True
 
         self.queue.job_dict['block_run_1'] = JobStatus.QUEUED

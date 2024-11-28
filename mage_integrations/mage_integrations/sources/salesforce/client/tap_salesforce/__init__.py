@@ -84,7 +84,7 @@ def stream_is_selected(mdata):
 
 def build_state(raw_state, catalog):
     state = {}
-
+    raw_state = raw_state or {}
     for catalog_entry in catalog['streams']:
         tap_stream_id = catalog_entry['tap_stream_id']
         catalog_metadata = metadata.to_map(catalog_entry['metadata'])

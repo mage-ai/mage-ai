@@ -3,13 +3,15 @@ from mage_ai.shared.enum import StrEnum
 ENV_DEV = 'dev'
 ENV_PROD = 'prod'
 ENV_STAGING = 'staging'
-ENV_TEST = 'test_mage'
+ENV_TEST = 'test'
+ENV_TEST_MAGE = 'test_mage'
 
 VALID_ENVS = frozenset([
     ENV_DEV,
     ENV_PROD,
     ENV_STAGING,
     ENV_TEST,
+    ENV_TEST_MAGE,
 ])
 
 SAMPLE_SIZE = 1000

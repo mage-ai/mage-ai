@@ -2,6 +2,7 @@ import { Page, expect } from '@playwright/test';
 
 import { FeatureUUIDEnum } from '@interfaces/ProjectType';
 import { capitalizeRemoveUnderscoreLower } from '@utils/string';
+import { ignoreKeys } from '@utils/hash';
 
 export type TSettingFeaturesToDisable = Partial<
   Record<FeatureUUIDEnum, boolean>
@@ -11,8 +12,17 @@ function getSettingsToEnable(
   settingFeaturesToDisable: TSettingFeaturesToDisable,
 ): FeatureUUIDEnum[] {
   const settingsToEnable: FeatureUUIDEnum[] = [];
+  const featuresFiltered = ignoreKeys(FeatureUUIDEnum, [
+    'CODE_BLOCK_V2',
+    'COMMAND_CENTER',
+    'COMPUTE_MANAGEMENT',
+    'CUSTOM_DESIGN',
+    'DBT_V2',
+    'GLOBAL_HOOKS',
+    'NOTEBOOK_BLOCK_OUTPUT_SPLIT_VIEW',
+]);
 
-  for (const feature in FeatureUUIDEnum) {
+  for (const feature in featuresFiltered) {
     if (!settingFeaturesToDisable[
       FeatureUUIDEnum[feature as keyof typeof FeatureUUIDEnum]
     ]) {

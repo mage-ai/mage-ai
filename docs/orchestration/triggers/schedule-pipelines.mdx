@@ -26,34 +26,6 @@ You can schedule your pipeline to run on these intervals:
 Learn more about how to
 [schedule pipelines](/design/data-pipeline-management#create-trigger).
 
-## Landing times
-
-If the trigger type is a schedule then instead of choosing when the pipeline will run,
-you can choose the pipeline’s landing time.
-
-This is useful if you want your data pipeline to finish at a specific time instead of start at
-a specific time.
-
-For example, a pipeline is scheduled to land daily at 17:00 UTC.
-If this pipeline takes 10 hours on average to complete, then the pipeline will be triggered and
-start running at 05:00 UTC each day.
-
-### Enable landing time
-
-When editing a trigger with schedule type, there is a toggle called `Enable landing time`.
-Turn that on to enable landing time for the trigger.
-
-### Configure landing time
-
-Depending on the frequency, you’ll be able to configure the following times the pipeline
-should complete:
-
-- Day of the month
-- Day of the week
-- Hour of the day
-- Minute of the hour
-- Second of the minute
-
 ## Extra runtime variables from pipeline run
 
 Default runtime variables from pipeline run:
@@ -65,6 +37,7 @@ Default runtime variables from pipeline run:
 | `execution_date` | A datetime object that the pipeline is executed at. | `86400` |
 | `execution_partition` | An automatically formatted partition of the pipeline run using the execution date. | `10/20231225T122520` |
 | `pipeline_run_id` | The id of the pipeline run. | `10` |
+| `trigger_name` | The trigger name of the pipeline run. | `test run 1` |
 
 
 If your pipeline run belongs to a trigger that is scheduled, then the following extra
