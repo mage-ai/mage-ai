@@ -6,6 +6,8 @@ from typing import Any, Dict, Optional, Tuple, Union
 import dbt.flags as flags
 import pandas as pd
 from dbt.adapters.base import BaseRelation
+from dbt.adapters.contracts.connection import AdapterResponse, Credentials
+from dbt.adapters.contracts.relation import RelationType
 from dbt.adapters.factory import (
     Adapter,
     cleanup_connections,
@@ -15,8 +17,6 @@ from dbt.adapters.factory import (
 )
 from dbt.config.project import read_project_flags
 from dbt.config.runtime import RuntimeConfig
-from dbt.contracts.connection import AdapterResponse, Credentials
-from dbt.contracts.relation import RelationType
 
 from mage_ai.data_preparation.models.block.dbt.profiles import Profiles
 from mage_ai.shared.environments import is_debug
