@@ -13,8 +13,8 @@ from dbt.adapters.factory import (
     register_adapter,
     reset_adapters,
 )
+from dbt.config.project import read_project_flags
 from dbt.config.runtime import RuntimeConfig
-from dbt.config.utils import read_user_config
 from dbt.contracts.connection import AdapterResponse, Credentials
 from dbt.contracts.relation import RelationType
 
@@ -203,7 +203,7 @@ class DBTAdapter:
         # set dbt flags
         # Need to add profiles.yml file
         try:
-            user_config = read_user_config(profiles_path)
+            user_config = read_project_flags(profiles_path)
         except Exception as err:
             print(f'[ERROR] DBTAdapter.open: {err}.')
 
@@ -211,7 +211,7 @@ class DBTAdapter:
                     not profiles_path.endswith('profiles.yml'):
 
                 try:
-                    user_config = read_user_config(os.path.join(profiles_path, 'profiles.yml'))
+                    user_config = read_project_flags(os.path.join(profiles_path, 'profiles.yml'))
                 except Exception as err2:
                     print(f'[ERROR] DBTAdapter.open: {err2}.')
                     raise err
