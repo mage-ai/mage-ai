@@ -40,6 +40,7 @@ requests~=2.31.0
 ruamel.yaml==0.17.17
 scikit-learn>=1.0
 sentry-sdk==1.19.1
+setuptools==70.0.0
 simplejson
 six>=1.15.0
 sqlalchemy>=1.4.20, <2.0.0
@@ -50,6 +51,8 @@ tornado==6.3.3
 typer[all]==0.9.0
 typing_extensions==4.10.0
 watchdog==4.0.0
+Werkzeug==3.0.3
+
 
 # extras
 astor>=0.8.1
@@ -158,6 +161,3 @@ tzlocal==4.2
 xlsx2csv==0.8.1
 xmltodict==0.13.0
 zenpy==2.0.25
-
-Werkzeug==3.0.3
-setuptools==70.0.0
