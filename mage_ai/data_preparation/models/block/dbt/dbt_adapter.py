@@ -5,7 +5,7 @@ from typing import Any, Dict, Optional, Tuple, Union
 
 import dbt.flags as flags
 import pandas as pd
-from dbt.adapters.base import BaseRelation
+from dbt.adapters.base.relation import BaseRelation
 from dbt.adapters.contracts.connection import AdapterResponse, Credentials
 from dbt.adapters.contracts.relation import RelationType
 from dbt.adapters.factory import (
