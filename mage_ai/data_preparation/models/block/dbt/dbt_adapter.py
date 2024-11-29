@@ -1,3 +1,4 @@
+import multiprocessing as mp
 import os
 import uuid
 from dataclasses import dataclass
@@ -228,7 +229,7 @@ class DBTAdapter:
             config = RuntimeConfig.from_args(adapter_config)
             reset_adapters()
             # register the correct adapter from config
-            register_adapter(config)
+            register_adapter(config, mp_context=mp.get_context('spawn'))
             # load the adapter
             self.__adapter = get_adapter(config)
             # connect
