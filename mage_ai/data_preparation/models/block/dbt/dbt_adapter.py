@@ -1,4 +1,3 @@
-import multiprocessing as mp
 import os
 import uuid
 from dataclasses import dataclass
@@ -18,6 +17,8 @@ from dbt.adapters.factory import (
 )
 from dbt.config.project import read_project_flags
 from dbt.config.runtime import RuntimeConfig
+from dbt.context.providers import generate_runtime_macro_context
+from dbt.mp_context import get_mp_context
 
 from mage_ai.data_preparation.models.block.dbt.profiles import Profiles
 from mage_ai.shared.environments import is_debug
@@ -136,6 +137,8 @@ class DBTAdapter:
             package
         )
 
+        self.__adapter.set_macro_resolver(manifest)
+
         # create a context for the macro (e.g. downstream macros)
         from dbt.context.providers import generate_runtime_macro_context
         macro_context = generate_runtime_macro_context(
@@ -229,9 +232,10 @@ class DBTAdapter:
             config = RuntimeConfig.from_args(adapter_config)
             reset_adapters()
             # register the correct adapter from config
-            register_adapter(config, mp_context=mp.get_context('spawn'))
+            register_adapter(config, mp_context=get_mp_context())
             # load the adapter
             self.__adapter = get_adapter(config)
+            self.__adapter.set_macro_context_generator(generate_runtime_macro_context)
             # connect
             self.__adapter.acquire_connection('mage_dbt_adapter_' + uuid.uuid4().hex)
             return self
