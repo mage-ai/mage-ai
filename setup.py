@@ -67,7 +67,7 @@ setuptools.setup(
         'dbt': [
             'dbt-bigquery==1.8.2',
             'dbt-clickhouse==1.8.4',
-            'dbt-core==1.8.1',
+            'dbt-core==1.8.7',
             'dbt-duckdb==1.8.4',
             'dbt-postgres==1.8.2',
             'dbt-redshift==1.8.1',
