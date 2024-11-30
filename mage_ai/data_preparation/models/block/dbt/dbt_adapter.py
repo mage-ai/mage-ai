@@ -81,7 +81,11 @@ class DBTAdapter:
         # remove interpolated profiles.yml
         self.__profiles.clean()
 
-    def execute(self, sql: str, fetch: bool = False) -> Tuple[AdapterResponse, pd.DataFrame]:
+    def execute(
+        self,
+        sql: str,
+        fetch: bool = False
+    ) -> Tuple[AdapterResponse, pd.DataFrame]:
         """
         Executes any sql statement using the dbt adapter.
 
@@ -216,7 +220,9 @@ class DBTAdapter:
 
                 try:
                     user_config = read_project_flags(
-                        self.project_path, os.path.join(profiles_path, 'profiles.yml'))
+                        self.project_path,
+                        os.path.join(profiles_path, 'profiles.yml')
+                    )
                 except Exception as err2:
                     print(f'[ERROR] DBTAdapter.open: {err2}.')
                     raise err
