@@ -65,7 +65,7 @@ setuptools.setup(
             'clickhouse-connect~=0.6.23',
         ],
         'dbt': [
-            'dbt-adapters==1.8.0',
+            'dbt-adapters==1.7.0',
             'dbt-bigquery==1.8.2',
             'dbt-clickhouse==1.8.4',
             'dbt-core==1.8.7',
