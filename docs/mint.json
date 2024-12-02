@@ -78,6 +78,10 @@
       "url": "production"
     },
     {
+      "name": "AI",
+      "url": "ai"
+    },
+    {
       "name": "Observability",
       "url": "observability"
     },
@@ -88,10 +92,6 @@
     {
       "name": "Extensibility",
       "url": "extensibility"
-    },
-    {
-      "name": "AI",
-      "url": "ai"
     }
   ],
   "footer": {
@@ -442,6 +442,10 @@
     {
       "source": "/development/git/generate-an-ssh-token",
       "destination": "/development/git/configure#generate-ssh-token"
+    },
+    {
+      "source": "/development/git/configure",
+      "destination": "/guides/git/configure"
     },
     {
       "source": "/production/data-sync/github",
@@ -958,6 +962,12 @@
       ]
     },
     {
+      "group": "AI Sidekick",
+      "pages": [
+        "ai/sidekick/index"
+      ]
+    },
+    {
       "group": "Development",
       "icon": "microchip-ai",
       "pages": [
@@ -972,12 +982,6 @@
         "ai/ml/train-model",
         "ai/rag-pipeline",
         "ai/custom-resources"
-      ]
-    },
-    {
-      "group": "AI Sidekick",
-      "pages": [
-        "ai/sidekick"
       ]
     },
     {
