@@ -1,4 +1,4 @@
-FROM python:3.10-bookworm
+FROM python:3.12-bookworm
 LABEL description="Deploy Mage on ECS"
 ARG FEATURE_BRANCH
 USER root

@@ -1,4 +1,4 @@
-FROM python:3.10-bookworm
+FROM python:3.12-bookworm
 
 ENV PYTHONPATH="${PYTHONPATH}:/home/src"
 WORKDIR /home/src
