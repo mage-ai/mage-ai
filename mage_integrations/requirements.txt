@@ -12,8 +12,8 @@ facebook_business==20.0.2
 gnupg==2.3.1
 google-ads==23.1.0; python_version < '3.11'
 google-ads==25.1.0; python_version >= '3.11'
-google-analytics-data==0.17.2; python_version < '3.11'
-google-analytics-data==0.18.15; python_version >= '3.11'
+google-analytics-data==0.14.2; python_version < '3.11'
+google-analytics-data==0.15.0; python_version >= '3.11'
 google-api-python-client==2.70.0
 google-cloud-bigquery~=3.0
 google-cloud-bigquery-storage==2.16.2; python_version < '3.11'

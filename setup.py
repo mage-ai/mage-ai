@@ -86,7 +86,7 @@ setuptools.setup(
             "tables==3.10.1; python_version >= '3.11'",
         ],
         'mysql': [
-            "mysql-connector-python~=8.2.0; python_version < '3.11'",
+            "mysql-connector-python~=8.4.0; python_version < '3.11'",
             "mysql-connector-python~=9.0.0; python_version >= '3.11'",
         ],
         'oracle': [
