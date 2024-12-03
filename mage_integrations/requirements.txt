@@ -10,8 +10,8 @@ deltalake==0.20.2
 elasticsearch==8.15.1
 facebook_business==20.0.2
 gnupg==2.3.1
-google-ads==22.1.0; python_version < '3.11'
-google-ads==23.0.0; python_version >= '3.11'
+google-ads==23.1.0; python_version < '3.11'
+google-ads==25.1.0; python_version >= '3.11'
 google-analytics-data==0.14.2; python_version < '3.11'
 google-analytics-data==0.15.0; python_version >= '3.11'
 google-api-python-client==2.70.0
