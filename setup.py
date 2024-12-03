@@ -188,7 +188,7 @@ setuptools.setup(
             'pika==1.3.1',
             'pinotdb==5.1.0',
             'prometheus_client>=0.18.0',
-            'protobuf~=4.21.12',
+            'protobuf>=4.25.0',
             'psycopg2-binary==2.9.3',
             'psycopg2==2.9.3',
             'pyairtable==2.3.3',
