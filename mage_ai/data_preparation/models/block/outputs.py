@@ -17,6 +17,10 @@ from mage_ai.data.tabular.utils import (
     series_to_dataframe,
 )
 from mage_ai.data_cleaner.shared.utils import is_geo_dataframe, is_spark_dataframe
+from mage_ai.data_preparation.models.block.constants import (
+    CHILD_DATA_VARIABLE_UUID,
+    METADATA_VARIABLE_UUID,
+)
 from mage_ai.data_preparation.models.block.dynamic.utils import (
     is_dynamic_block,
     is_dynamic_block_child,
@@ -502,8 +506,8 @@ def get_outputs_for_display_dynamic_block(
                 metadata = output_pair[1]
 
         for output, variable_uuid in [
-            (child_data, 'output_0'),
-            (metadata, 'output_1'),
+            (child_data, CHILD_DATA_VARIABLE_UUID),
+            (metadata, METADATA_VARIABLE_UUID),
         ]:
             if output is None or (exclude_blank_variable_uuids and variable_uuid.strip() == ''):
                 continue
