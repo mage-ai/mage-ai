@@ -6,7 +6,6 @@ from typing import Any, Dict, List, Optional
 from mage_ai.data.constants import InputDataType
 from mage_ai.data.models.generator import DataGenerator
 from mage_ai.data.tabular.models import BatchSettings
-from mage_ai.data_preparation.models.constants import CHILD_DATA_VARIABLE_UUID
 from mage_ai.data_preparation.models.utils import (
     infer_variable_type,
     warn_for_repo_path,
@@ -390,7 +389,7 @@ class VariableManager:
                 self.get_variables_by_block(pipeline_uuid, block_uuid, partition=partition)
             )
         if not variable_uuid:
-            variable_uuid = CHILD_DATA_VARIABLE_UUID
+            variable_uuid = 'output_0'
 
         return Variable(
             variable_uuid,

@@ -7,10 +7,6 @@ from mage_ai.data_preparation.models.block.utils import (
     is_dynamic_block_child,
     should_reduce_output,
 )
-from mage_ai.data_preparation.models.constants import (
-    CHILD_DATA_VARIABLE_UUID,
-    METADATA_VARIABLE_UUID,
-)
 from mage_ai.tests.api.operations.test_base import BaseApiTestCase
 from mage_ai.tests.factory import create_pipeline_with_blocks
 
@@ -87,11 +83,11 @@ class BlockUtilsTest(BaseApiTestCase):
         self.block.save_outputs(
             [
                 dict(
-                    variable_uuid=CHILD_DATA_VARIABLE_UUID,
+                    variable_uuid='output_0',
                     text_data=[i for i in range(3)],
                 ),
                 dict(
-                    variable_uuid=METADATA_VARIABLE_UUID,
+                    variable_uuid='output_1',
                     text_data=[dict(mage=i) for i in range(3)],
                 ),
             ],
@@ -123,11 +119,11 @@ class BlockUtilsTest(BaseApiTestCase):
         self.block3.save_outputs(
             [
                 dict(
-                    variable_uuid=CHILD_DATA_VARIABLE_UUID,
+                    variable_uuid='output_0',
                     text_data=[i for i in range(3)],
                 ),
                 dict(
-                    variable_uuid=METADATA_VARIABLE_UUID,
+                    variable_uuid='output_1',
                     text_data=[dict(mage=i) for i in range(3)],
                 ),
             ],

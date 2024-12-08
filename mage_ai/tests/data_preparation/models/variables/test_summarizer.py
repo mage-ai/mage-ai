@@ -5,11 +5,7 @@ from unittest.mock import patch
 from mage_ai.data.models.generator import DataGenerator
 from mage_ai.data.tabular.mocks import create_dataframe
 from mage_ai.data_preparation.models.block import Block
-from mage_ai.data_preparation.models.constants import (
-    CHILD_DATA_VARIABLE_UUID,
-    BlockLanguage,
-    BlockType,
-)
+from mage_ai.data_preparation.models.constants import BlockLanguage, BlockType
 from mage_ai.data_preparation.models.variables.constants import (
     VariableAggregateDataType,
     VariableAggregateSummaryGroupType,
@@ -140,12 +136,12 @@ class VariableSummarizerTest(BaseApiTestCase):
             variable = variable_manager.get_variable_object(
                 pipeline_uuid=self.pipeline.uuid,
                 block_uuid=block.uuid,
-                variable_uuid=CHILD_DATA_VARIABLE_UUID,
+                variable_uuid='output_0',
             )
             variable_transformer = variable_manager.get_variable_object(
                 pipeline_uuid=self.pipeline.uuid,
                 block_uuid=transformer.uuid,
-                variable_uuid=CHILD_DATA_VARIABLE_UUID,
+                variable_uuid='output_0',
             )
             aggregate_summary_info_for_all_variables(
                 variable_manager,
@@ -161,7 +157,7 @@ class VariableSummarizerTest(BaseApiTestCase):
                         variable_manager,
                         pipeline_uuid=self.pipeline.uuid,
                         block_uuid=block.uuid,
-                        variable_uuid=CHILD_DATA_VARIABLE_UUID,
+                        variable_uuid='output_0',
                         data_type=VariableAggregateDataType.STATISTICS,
                         group_type=VariableAggregateSummaryGroupType.PARTS,
                     ).parts.statistics
@@ -183,7 +179,7 @@ class VariableSummarizerTest(BaseApiTestCase):
                         variable_manager,
                         pipeline_uuid=self.pipeline.uuid,
                         block_uuid=transformer.uuid,
-                        variable_uuid=CHILD_DATA_VARIABLE_UUID,
+                        variable_uuid='output_0',
                         data_type=VariableAggregateDataType.STATISTICS,
                         group_type=VariableAggregateSummaryGroupType.PARTS,
                     ).parts.statistics
@@ -222,12 +218,12 @@ class VariableSummarizerTest(BaseApiTestCase):
             variable = variable_manager.get_variable_object(
                 pipeline_uuid=self.pipeline.uuid,
                 block_uuid=block.uuid,
-                variable_uuid=CHILD_DATA_VARIABLE_UUID,
+                variable_uuid='output_0',
             )
             variable_transformer = variable_manager.get_variable_object(
                 pipeline_uuid=self.pipeline.uuid,
                 block_uuid=transformer.uuid,
-                variable_uuid=CHILD_DATA_VARIABLE_UUID,
+                variable_uuid='output_0',
             )
             aggregate_summary_info_for_all_variables(
                 variable_manager,
@@ -241,7 +237,7 @@ class VariableSummarizerTest(BaseApiTestCase):
                     variable_manager,
                     pipeline_uuid=self.pipeline.uuid,
                     block_uuid=block.uuid,
-                    variable_uuid=CHILD_DATA_VARIABLE_UUID,
+                    variable_uuid='output_0',
                     data_type=VariableAggregateDataType.STATISTICS,
                     group_type=VariableAggregateSummaryGroupType.PARTS,
                 ).parts
@@ -261,7 +257,7 @@ class VariableSummarizerTest(BaseApiTestCase):
                         variable_manager,
                         pipeline_uuid=self.pipeline.uuid,
                         block_uuid=transformer.uuid,
-                        variable_uuid=CHILD_DATA_VARIABLE_UUID,
+                        variable_uuid='output_0',
                         data_type=VariableAggregateDataType.STATISTICS,
                         group_type=VariableAggregateSummaryGroupType.PARTS,
                     ).parts.statistics
@@ -291,12 +287,12 @@ class VariableSummarizerTest(BaseApiTestCase):
             variable = variable_manager.get_variable_object(
                 pipeline_uuid=self.pipeline.uuid,
                 block_uuid=block.uuid,
-                variable_uuid=CHILD_DATA_VARIABLE_UUID,
+                variable_uuid='output_0',
             )
             variable_transformer = variable_manager.get_variable_object(
                 pipeline_uuid=self.pipeline.uuid,
                 block_uuid=transformer.uuid,
-                variable_uuid=CHILD_DATA_VARIABLE_UUID,
+                variable_uuid='output_0',
             )
             aggregate_summary_info_for_all_variables(
                 variable_manager,
@@ -312,7 +308,7 @@ class VariableSummarizerTest(BaseApiTestCase):
                         variable_manager,
                         pipeline_uuid=self.pipeline.uuid,
                         block_uuid=block.uuid,
-                        variable_uuid=CHILD_DATA_VARIABLE_UUID,
+                        variable_uuid='output_0',
                         data_type=VariableAggregateDataType.STATISTICS,
                         group_type=VariableAggregateSummaryGroupType.PARTS,
                     ).parts.statistics
@@ -334,7 +330,7 @@ class VariableSummarizerTest(BaseApiTestCase):
                         variable_manager,
                         pipeline_uuid=self.pipeline.uuid,
                         block_uuid=transformer.uuid,
-                        variable_uuid=CHILD_DATA_VARIABLE_UUID,
+                        variable_uuid='output_0',
                         data_type=VariableAggregateDataType.STATISTICS,
                         group_type=VariableAggregateSummaryGroupType.PARTS,
                     ).parts.statistics
@@ -366,12 +362,12 @@ class VariableSummarizerTest(BaseApiTestCase):
             variable = variable_manager.get_variable_object(
                 pipeline_uuid=self.pipeline.uuid,
                 block_uuid=block.uuid,
-                variable_uuid=CHILD_DATA_VARIABLE_UUID,
+                variable_uuid='output_0',
             )
             variable_transformer = variable_manager.get_variable_object(
                 pipeline_uuid=self.pipeline.uuid,
                 block_uuid=transformer.uuid,
-                variable_uuid=CHILD_DATA_VARIABLE_UUID,
+                variable_uuid='output_0',
             )
             aggregate_summary_info_for_all_variables(
                 variable_manager,
@@ -387,7 +383,7 @@ class VariableSummarizerTest(BaseApiTestCase):
                         variable_manager,
                         pipeline_uuid=self.pipeline.uuid,
                         block_uuid=block.uuid,
-                        variable_uuid=CHILD_DATA_VARIABLE_UUID,
+                        variable_uuid='output_0',
                         data_type=VariableAggregateDataType.STATISTICS,
                         group_type=VariableAggregateSummaryGroupType.PARTS,
                     ).parts.statistics
@@ -407,7 +403,7 @@ class VariableSummarizerTest(BaseApiTestCase):
                     variable_manager,
                     pipeline_uuid=self.pipeline.uuid,
                     block_uuid=transformer.uuid,
-                    variable_uuid=CHILD_DATA_VARIABLE_UUID,
+                    variable_uuid='output_0',
                     data_type=VariableAggregateDataType.STATISTICS,
                     group_type=VariableAggregateSummaryGroupType.PARTS,
                 ).parts
@@ -439,12 +435,12 @@ class VariableSummarizerTest(BaseApiTestCase):
             variable = variable_manager.get_variable_object(
                 pipeline_uuid=self.pipeline.uuid,
                 block_uuid=block.uuid,
-                variable_uuid=CHILD_DATA_VARIABLE_UUID,
+                variable_uuid='output_0',
             )
             variable_transformer = variable_manager.get_variable_object(
                 pipeline_uuid=self.pipeline.uuid,
                 block_uuid=transformer.uuid,
-                variable_uuid=CHILD_DATA_VARIABLE_UUID,
+                variable_uuid='output_0',
             )
             aggregate_summary_info_for_all_variables(
                 variable_manager,
@@ -458,7 +454,7 @@ class VariableSummarizerTest(BaseApiTestCase):
                     variable_manager,
                     pipeline_uuid=self.pipeline.uuid,
                     block_uuid=block.uuid,
-                    variable_uuid=CHILD_DATA_VARIABLE_UUID,
+                    variable_uuid='output_0',
                     data_type=VariableAggregateDataType.STATISTICS,
                     group_type=VariableAggregateSummaryGroupType.PARTS,
                 ).parts
@@ -477,7 +473,7 @@ class VariableSummarizerTest(BaseApiTestCase):
                 variable_manager,
                 pipeline_uuid=self.pipeline.uuid,
                 block_uuid=transformer.uuid,
-                variable_uuid=CHILD_DATA_VARIABLE_UUID,
+                variable_uuid='output_0',
                 data_type=VariableAggregateDataType.STATISTICS,
                 group_type=VariableAggregateSummaryGroupType.DYNAMIC,
             ).dynamic.statistics:

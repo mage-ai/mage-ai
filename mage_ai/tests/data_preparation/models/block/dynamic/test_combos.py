@@ -7,12 +7,7 @@ from mage_ai.data_preparation.models.block import Block
 from mage_ai.data_preparation.models.block.dynamic.utils import (
     build_combinations_for_dynamic_child,
 )
-from mage_ai.data_preparation.models.constants import (
-    CHILD_DATA_VARIABLE_UUID,
-    METADATA_VARIABLE_UUID,
-    BlockLanguage,
-    BlockType,
-)
+from mage_ai.data_preparation.models.constants import BlockLanguage, BlockType
 from mage_ai.tests.api.operations.test_base import BaseApiTestCase
 from mage_ai.tests.factory import create_pipeline
 
@@ -178,10 +173,10 @@ class DynamicBlockCombinationTest(BaseApiTestCase):
                 dynamic2.execute_sync()
 
                 child_data1 = dynamic1.get_variable_object(
-                    dynamic1.uuid, variable_uuid=CHILD_DATA_VARIABLE_UUID
+                    dynamic1.uuid, variable_uuid='output_0'
                 ).read_data()
                 metadata1 = dynamic1.get_variable_object(
-                    dynamic1.uuid, variable_uuid=METADATA_VARIABLE_UUID
+                    dynamic1.uuid, variable_uuid='output_1'
                 ).read_data()
                 # self.assertEqual(len(child_data1), len(metadata1))
                 self.assertEqual(len(child_data1), 2)
@@ -190,10 +185,10 @@ class DynamicBlockCombinationTest(BaseApiTestCase):
                 print(child_data1, metadata1)
 
                 child_data2 = dynamic2.get_variable_object(
-                    dynamic2.uuid, variable_uuid=CHILD_DATA_VARIABLE_UUID
+                    dynamic2.uuid, variable_uuid='output_0'
                 ).read_data()
                 metadata2 = dynamic2.get_variable_object(
-                    dynamic2.uuid, variable_uuid=METADATA_VARIABLE_UUID
+                    dynamic2.uuid, variable_uuid='output_1'
                 ).read_data()
                 # self.assertEqual(len(child_data2), len(metadata2))
                 self.assertEqual(len(child_data2), 1)
@@ -207,16 +202,12 @@ class DynamicBlockCombinationTest(BaseApiTestCase):
                 for i, combo in enumerate(child2x_combos):
                     child2x.execute_sync(dynamic_block_index=i)
                     out0 = child2x.get_variable_object(
-                        child2x.uuid,
-                        dynamic_block_index=i,
-                        variable_uuid=CHILD_DATA_VARIABLE_UUID
+                        child2x.uuid, dynamic_block_index=i, variable_uuid='output_0'
                     ).read_data()
                     print('child2x', i, combo)
                     print(out0)
                     out1 = child2x.get_variable_object(
-                        child2x.uuid,
-                        dynamic_block_index=i,
-                        variable_uuid=METADATA_VARIABLE_UUID
+                        child2x.uuid, dynamic_block_index=i, variable_uuid='output_1'
                     ).read_data()
                     child2x_outputs.append(out0)
                     child2x_metadata.append(out1)
@@ -231,9 +222,7 @@ class DynamicBlockCombinationTest(BaseApiTestCase):
                 for i, _combo in enumerate(child2x_outputs):
                     child1x.execute_sync(dynamic_block_index=i)
                     out0 = child1x.get_variable_object(
-                        child1x.uuid,
-                        dynamic_block_index=i,
-                        variable_uuid=CHILD_DATA_VARIABLE_UUID
+                        child1x.uuid, dynamic_block_index=i, variable_uuid='output_0'
                     ).read_data()
                     child1x_outputs.append(out0)
                 self.assertEqual(len(child1x_outputs), len(child2x_outputs))
@@ -244,9 +233,7 @@ class DynamicBlockCombinationTest(BaseApiTestCase):
                 for i in range(len(dynamic_spawn_2x_combos)):
                     dynamic_spawn_2x.execute_sync(dynamic_block_index=i)
                     out = dynamic_spawn_2x.get_variable_object(
-                        dynamic_spawn_2x.uuid,
-                        dynamic_block_index=i,
-                        variable_uuid=CHILD_DATA_VARIABLE_UUID
+                        dynamic_spawn_2x.uuid, dynamic_block_index=i, variable_uuid='output_0'
                     ).read_data()
                     dynamic_spawn_2x_outputs.append(out)
                 self.assertEqual(
@@ -259,9 +246,7 @@ class DynamicBlockCombinationTest(BaseApiTestCase):
                 for i in range(len(child_1x_spawn_1x_combos)):
                     child_1x_spawn_1x.execute_sync(dynamic_block_index=i)
                     out = child_1x_spawn_1x.get_variable_object(
-                        child_1x_spawn_1x.uuid,
-                        dynamic_block_index=i,
-                        variable_uuid=CHILD_DATA_VARIABLE_UUID
+                        child_1x_spawn_1x.uuid, dynamic_block_index=i, variable_uuid='output_0'
                     ).read_data()
                     child_1x_spawn_1x_outputs.append(out)
                 self.assertEqual(
@@ -291,9 +276,7 @@ class DynamicBlockCombinationTest(BaseApiTestCase):
                 for i, _combo in enumerate(replica_combos):
                     replica.execute_sync(dynamic_block_index=i)
                     out0 = replica.get_variable_object(
-                        replica.uuid,
-                        dynamic_block_index=i,
-                        variable_uuid=CHILD_DATA_VARIABLE_UUID
+                        replica.uuid, dynamic_block_index=i, variable_uuid='output_0'
                     ).read_data()
                     replica_outputs.append(out0)
                 self.assertEqual(
@@ -314,7 +297,7 @@ class DynamicBlockCombinationTest(BaseApiTestCase):
     #                 out0 = child_1x_childspawn_1x_reduce.get_variable_object(
     #                     child_1x_childspawn_1x_reduce.uuid,
     #                     dynamic_block_index=i,
-    #                     variable_uuid=CHILD_DATA_VARIABLE_UUID,
+    #                     variable_uuid='output_0',
     #                 ).read_data()
     #                 child_1x_childspawn_1x_reduce_outputs.append(out0)
 
