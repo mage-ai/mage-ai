@@ -5,8 +5,11 @@ from unittest.mock import patch
 from mage_ai.data.models.generator import DataGenerator
 from mage_ai.data.tabular.mocks import create_dataframe
 from mage_ai.data_preparation.models.block import Block
-from mage_ai.data_preparation.models.block.constants import CHILD_DATA_VARIABLE_UUID
-from mage_ai.data_preparation.models.constants import BlockLanguage, BlockType
+from mage_ai.data_preparation.models.constants import (
+    CHILD_DATA_VARIABLE_UUID,
+    BlockLanguage,
+    BlockType,
+)
 from mage_ai.data_preparation.models.variables.constants import (
     VariableAggregateDataType,
     VariableAggregateSummaryGroupType,

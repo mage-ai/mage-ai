@@ -4,14 +4,15 @@ from typing import Callable, Optional
 from unittest.mock import patch
 
 from mage_ai.data_preparation.models.block import Block
-from mage_ai.data_preparation.models.block.constants import (
-    CHILD_DATA_VARIABLE_UUID,
-    METADATA_VARIABLE_UUID,
-)
 from mage_ai.data_preparation.models.block.dynamic.utils import (
     build_combinations_for_dynamic_child,
 )
-from mage_ai.data_preparation.models.constants import BlockLanguage, BlockType
+from mage_ai.data_preparation.models.constants import (
+    CHILD_DATA_VARIABLE_UUID,
+    METADATA_VARIABLE_UUID,
+    BlockLanguage,
+    BlockType,
+)
 from mage_ai.tests.api.operations.test_base import BaseApiTestCase
 from mage_ai.tests.factory import create_pipeline
 

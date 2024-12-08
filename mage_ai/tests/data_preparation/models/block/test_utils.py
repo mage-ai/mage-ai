@@ -1,15 +1,15 @@
 from uuid import uuid4
 
-from mage_ai.data_preparation.models.block.constants import (
-    CHILD_DATA_VARIABLE_UUID,
-    METADATA_VARIABLE_UUID,
-)
 from mage_ai.data_preparation.models.block.utils import (
     build_dynamic_block_uuid,
     dynamic_block_values_and_metadata,
     is_dynamic_block,
     is_dynamic_block_child,
     should_reduce_output,
+)
+from mage_ai.data_preparation.models.constants import (
+    CHILD_DATA_VARIABLE_UUID,
+    METADATA_VARIABLE_UUID,
 )
 from mage_ai.tests.api.operations.test_base import BaseApiTestCase
 from mage_ai.tests.factory import create_pipeline_with_blocks

@@ -17,10 +17,6 @@ from mage_ai.data.tabular.utils import (
     series_to_dataframe,
 )
 from mage_ai.data_cleaner.shared.utils import is_geo_dataframe, is_spark_dataframe
-from mage_ai.data_preparation.models.block.constants import (
-    CHILD_DATA_VARIABLE_UUID,
-    METADATA_VARIABLE_UUID,
-)
 from mage_ai.data_preparation.models.block.dynamic.utils import (
     is_dynamic_block,
     is_dynamic_block_child,
@@ -29,9 +25,11 @@ from mage_ai.data_preparation.models.block.settings.variables.models import (
     ChunkKeyTypeUnion,
 )
 from mage_ai.data_preparation.models.constants import (
+    CHILD_DATA_VARIABLE_UUID,
     DATAFRAME_ANALYSIS_MAX_COLUMNS,
     DATAFRAME_SAMPLE_COUNT,
     DATAFRAME_SAMPLE_COUNT_PREVIEW,
+    METADATA_VARIABLE_UUID,
 )
 from mage_ai.data_preparation.models.utils import (
     infer_variable_type,

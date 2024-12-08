@@ -8,8 +8,11 @@ import pandas as pd
 import simplejson
 
 from mage_ai.data_preparation.models.block import Block
-from mage_ai.data_preparation.models.block.constants import CHILD_DATA_VARIABLE_UUID
-from mage_ai.data_preparation.models.constants import VARIABLE_DIR, BlockType
+from mage_ai.data_preparation.models.constants import (
+    CHILD_DATA_VARIABLE_UUID,
+    VARIABLE_DIR,
+    BlockType,
+)
 from mage_ai.data_preparation.models.variables.constants import (
     DATAFRAME_CSV_FILE,
     VariableType,

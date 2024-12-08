@@ -10,8 +10,8 @@ from pandas.testing import assert_frame_equal
 # from mage_ai.data_cleaner.column_types.constants import ColumnType
 from mage_ai.data_preparation.models.block import Block, BlockType, CallbackBlock
 from mage_ai.data_preparation.models.block.block_factory import BlockFactory
-from mage_ai.data_preparation.models.block.constants import CHILD_DATA_VARIABLE_UUID
 from mage_ai.data_preparation.models.block.errors import HasDownstreamDependencies
+from mage_ai.data_preparation.models.constants import CHILD_DATA_VARIABLE_UUID
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.data_preparation.repo_manager import get_repo_config
 from mage_ai.data_preparation.variable_manager import VariableManager

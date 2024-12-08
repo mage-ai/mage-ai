@@ -9,7 +9,6 @@ import simplejson
 from jinja2 import Template
 
 from mage_ai.data_preparation.models.block import Block
-from mage_ai.data_preparation.models.block.constants import CHILD_DATA_VARIABLE_UUID
 from mage_ai.data_preparation.models.block.dbt import DBTBlock
 from mage_ai.data_preparation.models.block.dbt.constants import LogLevel
 from mage_ai.data_preparation.models.block.dbt.dbt_cli import DBTCli
@@ -22,7 +21,11 @@ from mage_ai.data_preparation.models.block.dbt.utils import (
 from mage_ai.data_preparation.models.block.platform.mixins import (
     ProjectPlatformAccessible,
 )
-from mage_ai.data_preparation.models.constants import BlockLanguage, BlockType
+from mage_ai.data_preparation.models.constants import (
+    CHILD_DATA_VARIABLE_UUID,
+    BlockLanguage,
+    BlockType,
+)
 from mage_ai.data_preparation.shared.utils import get_template_vars
 from mage_ai.orchestration.constants import PIPELINE_RUN_MAGE_VARIABLES_KEY
 from mage_ai.settings.utils import base_repo_path

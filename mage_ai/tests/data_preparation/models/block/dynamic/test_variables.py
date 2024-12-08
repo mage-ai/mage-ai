@@ -2,12 +2,12 @@ from functools import reduce
 from typing import Any, Dict, Optional
 from unittest.mock import patch
 
-from mage_ai.data_preparation.models.block.constants import (
-    CHILD_DATA_VARIABLE_UUID,
-    METADATA_VARIABLE_UUID,
-)
 from mage_ai.data_preparation.models.block.dynamic.data import (
     calculate_dynamic_index_data_index,
+)
+from mage_ai.data_preparation.models.constants import (
+    CHILD_DATA_VARIABLE_UUID,
+    METADATA_VARIABLE_UUID,
 )
 from mage_ai.tests.data_preparation.models.test_blocks_helper import BlockHelperTest
 
