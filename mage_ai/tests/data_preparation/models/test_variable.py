@@ -9,6 +9,7 @@ from pandas.testing import assert_frame_equal
 from polars.testing import assert_frame_equal as assert_polars_frame_equal
 
 from mage_ai.data_preparation.models.block import Block
+from mage_ai.data_preparation.models.constants import VARIABLE_DIR
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.data_preparation.models.utils import infer_variable_type
 from mage_ai.data_preparation.models.variable import Variable
@@ -77,7 +78,7 @@ class VariableTest(DBTestCase):
                 df2['col4'] = df2['col4'].astype('Int64')
                 variable1.write_data(df1)
                 variable2.write_data(df2)
-                variable_dir_path = os.path.join(pipeline.dir_path, '.variables')
+                variable_dir_path = os.path.join(pipeline.dir_path, VARIABLE_DIR)
                 self.assertTrue(
                     os.path.exists(
                         os.path.join(variable_dir_path, 'block1', 'var1', 'data.parquet'),
@@ -192,7 +193,7 @@ class VariableTest(DBTestCase):
         df2 = df2.cast({'col4': pl.Int64})
         variable1.write_data(df1)
         variable2.write_data(df2)
-        variable_dir_path = os.path.join(pipeline.dir_path, '.variables')
+        variable_dir_path = os.path.join(pipeline.dir_path, VARIABLE_DIR)
         self.assertTrue(
             os.path.exists(
                 os.path.join(variable_dir_path, 'block1', 'polars1', 'data.parquet'),

@@ -9,6 +9,7 @@ import pandas as pd
 import polars as pl
 import simplejson
 
+from mage_ai.data_preparation.models.constants import VARIABLE_DIR
 from mage_ai.data_preparation.models.file import File
 from mage_ai.data_preparation.storage.base_storage import BaseStorage
 from mage_ai.settings.server import DEBUG_FILE_IO
@@ -61,7 +62,7 @@ class LocalStorage(BaseStorage):
         default_value: Optional[Union[Dict, List]] = None,
         raise_exception: bool = False,
     ) -> Dict:
-        if DEBUG_FILE_IO and '.variables' in file_path:
+        if DEBUG_FILE_IO and VARIABLE_DIR in file_path:
             print(f'[READ JSON FILE]: {file_path}')
         if not self.path_exists(file_path):
             return default_value or {}
