@@ -140,7 +140,7 @@ def __render_r_script(
     )
 
     output_variable_object = block.variable_object(
-        "output_0",
+        CHILD_DATA_VARIABLE_UUID,
         execution_partition=execution_partition,
     )
     os.makedirs(output_variable_object.variable_path, exist_ok=True)
