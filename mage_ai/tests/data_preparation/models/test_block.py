@@ -10,6 +10,7 @@ from pandas.testing import assert_frame_equal
 # from mage_ai.data_cleaner.column_types.constants import ColumnType
 from mage_ai.data_preparation.models.block import Block, BlockType, CallbackBlock
 from mage_ai.data_preparation.models.block.block_factory import BlockFactory
+from mage_ai.data_preparation.models.block.constants import CHILD_DATA_VARIABLE_UUID
 from mage_ai.data_preparation.models.block.errors import HasDownstreamDependencies
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.data_preparation.repo_manager import get_repo_config
@@ -81,12 +82,12 @@ def remove_duplicate_rows(df):
             variables_dir=get_repo_config(self.repo_path).variables_dir,
         )
         data = variable_manager.get_variable(
-            pipeline.uuid, block2.uuid, 'output_0', variable_type='dataframe'
+            pipeline.uuid, block2.uuid, CHILD_DATA_VARIABLE_UUID, variable_type='dataframe'
         )
         # analysis = variable_manager.get_variable(
         #     pipeline.uuid,
         #     block2.uuid,
-        #     'output_0',
+        #     CHILD_DATA_VARIABLE_UUID,
         #     variable_type='dataframe_analysis',
         # )
         df_final = pd.DataFrame({'col1': [1, 1, 3], 'col2': [2, 2, 4]}).drop_duplicates()
@@ -146,7 +147,7 @@ def remove_duplicate_rows(df):
             variables_dir=get_repo_config(self.repo_path).variables_dir,
         )
         data = variable_manager.get_variable(
-            pipeline.uuid, block2.uuid, 'output_0', variable_type='dataframe'
+            pipeline.uuid, block2.uuid, CHILD_DATA_VARIABLE_UUID, variable_type='dataframe'
         )
 
         df_final = pd.DataFrame({'col1': [2, 2, 6], 'col2': [4, 4, 8]}).drop_duplicates()
@@ -197,7 +198,7 @@ def remove_duplicate_rows(df):
             variables_dir=get_repo_config(self.repo_path).variables_dir,
         )
         data = variable_manager.get_variable(
-            pipeline.uuid, block2.uuid, 'output_0', variable_type='dataframe'
+            pipeline.uuid, block2.uuid, CHILD_DATA_VARIABLE_UUID, variable_type='dataframe'
         )
         df_final = pd.DataFrame({
             'col1': [1, 1, 3],
@@ -262,12 +263,12 @@ def union_datasets(df1, df2):
             variables_dir=get_repo_config(self.repo_path).variables_dir,
         )
         data = variable_manager.get_variable(
-            pipeline.uuid, block3.uuid, 'output_0', variable_type='dataframe'
+            pipeline.uuid, block3.uuid, CHILD_DATA_VARIABLE_UUID, variable_type='dataframe'
         )
         analysis = variable_manager.get_variable(
             pipeline.uuid,
             block3.uuid,
-            'output_0',
+            CHILD_DATA_VARIABLE_UUID,
             variable_type='dataframe_analysis',
         )
         df_final = pd.concat([

@@ -9,6 +9,7 @@ import simplejson
 from jinja2 import Template
 
 from mage_ai.data_preparation.models.block import Block
+from mage_ai.data_preparation.models.block.constants import CHILD_DATA_VARIABLE_UUID
 from mage_ai.data_preparation.models.block.dbt import DBTBlock
 from mage_ai.data_preparation.models.block.dbt.constants import LogLevel
 from mage_ai.data_preparation.models.block.dbt.dbt_cli import DBTCli
@@ -432,7 +433,7 @@ class DBTBlockSQL(DBTBlock, ProjectPlatformAccessible):
         # provide df for downstream usage or data preview
         self.store_variables(
             # key differes whether its executed from notebook or execcuted in the background
-            {'df' if from_notebook else 'output_0': df},
+            {'df' if from_notebook else CHILD_DATA_VARIABLE_UUID: df},
             execution_partition=execution_partition,
             override_outputs=True,
         )
@@ -495,7 +496,7 @@ class DBTBlockSQL(DBTBlock, ProjectPlatformAccessible):
                 output = self.pipeline.variable_manager.get_variable(
                     self.pipeline.uuid,
                     ublock.uuid,
-                    'output_0',
+                    CHILD_DATA_VARIABLE_UUID,
                     partition=execution_partition,
                 )
 

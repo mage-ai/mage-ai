@@ -2,6 +2,7 @@ from typing import Dict, List
 
 from pandas import DataFrame
 
+from mage_ai.data_preparation.models.block.constants import CHILD_DATA_VARIABLE_UUID
 from mage_ai.data_preparation.models.block.sql.utils.shared import (
     blocks_in_query,
     interpolate_input,
@@ -62,7 +63,7 @@ def create_upstream_block_tables(
                 df = get_variable(
                     upstream_block.pipeline.uuid,
                     upstream_block.uuid,
-                    'output_0',
+                    CHILD_DATA_VARIABLE_UUID,
                     partition=execution_partition,
                 )
 

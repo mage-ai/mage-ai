@@ -2,6 +2,10 @@ from functools import reduce
 from typing import Any, Dict, Optional
 from unittest.mock import patch
 
+from mage_ai.data_preparation.models.block.constants import (
+    CHILD_DATA_VARIABLE_UUID,
+    METADATA_VARIABLE_UUID,
+)
 from mage_ai.data_preparation.models.block.dynamic.data import (
     calculate_dynamic_index_data_index,
 )
@@ -132,7 +136,10 @@ class DynamicBlockVariableDataTest(BlockHelperTest):
         ]
 
         for data, values_correct in [(data1, values_correct1), (data2, values_correct2)]:
-            blocks = [i for i in range(reduce(lambda a, b: a * b, [len(arr) for arr in data], 1))]
+            blocks = [
+                i for i in range(
+                    reduce(lambda a, b: a * b, [len(arr) for arr in data], 1))
+            ]
 
             values = []
             for dynamic_block_index in blocks:
@@ -297,10 +304,18 @@ class DynamicBlockVariableDataTest(BlockHelperTest):
         dynamic2.execute_sync()
         dynamic3.execute_sync()
         block1.execute_sync()
-        dynamic1_output0 = dynamic1.get_variable_object(variable_uuid='output_0').read_data()
-        dynamic2_output0 = dynamic2.get_variable_object(variable_uuid='output_0').read_data()
-        dynamic3_output0 = dynamic3.get_variable_object(variable_uuid='output_0').read_data()
-        # block1_output0 = block1.get_variable_object(variable_uuid='output_0').read_data()
+        dynamic1_output0 = dynamic1.get_variable_object(
+            variable_uuid=CHILD_DATA_VARIABLE_UUID
+        ).read_data()
+        dynamic2_output0 = dynamic2.get_variable_object(
+            variable_uuid=CHILD_DATA_VARIABLE_UUID
+        ).read_data()
+        dynamic3_output0 = dynamic3.get_variable_object(
+            variable_uuid=CHILD_DATA_VARIABLE_UUID
+        ).read_data()
+        # block1_output0 = block1.get_variable_object(
+        # variable_uuid=CHILD_DATA_VARIABLE_UUID
+        # ).read_data()
 
         parent_item_count = len(dynamic1_output0) * len(dynamic2_output0) * len(dynamic3_output0)
 
@@ -310,12 +325,14 @@ class DynamicBlockVariableDataTest(BlockHelperTest):
             child1.execute_sync(dynamic_block_index=i)
             child1_output0s.append(
                 child1.get_variable_object(
-                    dynamic_block_index=i, variable_uuid='output_0'
+                    dynamic_block_index=i,
+                    variable_uuid=CHILD_DATA_VARIABLE_UUID
                 ).read_data()
             )
             child1_output1s.append(
                 child1.get_variable_object(
-                    dynamic_block_index=i, variable_uuid='output_1'
+                    dynamic_block_index=i,
+                    variable_uuid=METADATA_VARIABLE_UUID
                 ).read_data()
             )
 
@@ -336,12 +353,14 @@ class DynamicBlockVariableDataTest(BlockHelperTest):
             reduce1.execute_sync(dynamic_block_index=i)
             reduce1_output0s.append(
                 reduce1.get_variable_object(
-                    dynamic_block_index=i, variable_uuid='output_0'
+                    dynamic_block_index=i,
+                    variable_uuid=CHILD_DATA_VARIABLE_UUID
                 ).read_data()
             )
             reduce1_output1s.append(
                 reduce1.get_variable_object(
-                    dynamic_block_index=i, variable_uuid='output_1'
+                    dynamic_block_index=i,
+                    variable_uuid=METADATA_VARIABLE_UUID
                 ).read_data()
             )
 
@@ -355,7 +374,7 @@ class DynamicBlockVariableDataTest(BlockHelperTest):
 
         reduce1_child1.execute_sync()
         reduce1_child1_output0 = reduce1_child1.get_variable_object(
-            variable_uuid='output_0'
+            variable_uuid=CHILD_DATA_VARIABLE_UUID
         ).read_data()
         self.assertEqual(
             sum(reduce1_child1_output0),
@@ -369,12 +388,14 @@ class DynamicBlockVariableDataTest(BlockHelperTest):
             child2.execute_sync(dynamic_block_index=i)
             child2_output0s.append(
                 child2.get_variable_object(
-                    dynamic_block_index=i, variable_uuid='output_0'
+                    dynamic_block_index=i,
+                    variable_uuid=CHILD_DATA_VARIABLE_UUID
                 ).read_data()
             )
             child2_output1s.append(
                 child2.get_variable_object(
-                    dynamic_block_index=i, variable_uuid='output_1'
+                    dynamic_block_index=i,
+                    variable_uuid=METADATA_VARIABLE_UUID
                 ).read_data()
             )
 

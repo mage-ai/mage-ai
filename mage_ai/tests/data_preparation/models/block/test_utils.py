@@ -1,5 +1,9 @@
 from uuid import uuid4
 
+from mage_ai.data_preparation.models.block.constants import (
+    CHILD_DATA_VARIABLE_UUID,
+    METADATA_VARIABLE_UUID,
+)
 from mage_ai.data_preparation.models.block.utils import (
     build_dynamic_block_uuid,
     dynamic_block_values_and_metadata,
@@ -83,11 +87,11 @@ class BlockUtilsTest(BaseApiTestCase):
         self.block.save_outputs(
             [
                 dict(
-                    variable_uuid='output_0',
+                    variable_uuid=CHILD_DATA_VARIABLE_UUID,
                     text_data=[i for i in range(3)],
                 ),
                 dict(
-                    variable_uuid='output_1',
+                    variable_uuid=METADATA_VARIABLE_UUID,
                     text_data=[dict(mage=i) for i in range(3)],
                 ),
             ],
@@ -119,11 +123,11 @@ class BlockUtilsTest(BaseApiTestCase):
         self.block3.save_outputs(
             [
                 dict(
-                    variable_uuid='output_0',
+                    variable_uuid=CHILD_DATA_VARIABLE_UUID,
                     text_data=[i for i in range(3)],
                 ),
                 dict(
-                    variable_uuid='output_1',
+                    variable_uuid=METADATA_VARIABLE_UUID,
                     text_data=[dict(mage=i) for i in range(3)],
                 ),
             ],

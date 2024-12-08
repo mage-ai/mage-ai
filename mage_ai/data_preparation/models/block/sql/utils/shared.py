@@ -5,6 +5,7 @@ from typing import Callable, Dict, List, Optional, Tuple, Union
 from jinja2 import StrictUndefined, Template
 from pandas import DataFrame
 
+from mage_ai.data_preparation.models.block.constants import CHILD_DATA_VARIABLE_UUID
 from mage_ai.data_preparation.models.block.sql.constants import (
     CONFIG_KEY_UPSTREAM_BLOCK_CONFIGURATION,
     CONFIG_KEY_UPSTREAM_BLOCK_CONFIGURATION_TABLE_NAME,
@@ -405,7 +406,7 @@ def create_upstream_block_tables(
                 df = get_variable(
                     upstream_block.pipeline.uuid,
                     upstream_block.uuid,
-                    'output_0',
+                    CHILD_DATA_VARIABLE_UUID,
                     partition=execution_partition,
                 )
 
