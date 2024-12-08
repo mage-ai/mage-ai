@@ -34,3 +34,6 @@ TAG_REPLICA = 'replica'
 TAG_DBT_SNAPSHOT = 'snapshot'
 
 LOG_PARTITION_EDIT_PIPELINE = 'edit_pipeline'
+
+CHILD_DATA_VARIABLE_UUID = 'output_0'
+METADATA_VARIABLE_UUID = 'output_1'
