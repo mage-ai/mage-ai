@@ -25,11 +25,9 @@ from mage_ai.data_preparation.models.block.settings.variables.models import (
     ChunkKeyTypeUnion,
 )
 from mage_ai.data_preparation.models.constants import (
-    CHILD_DATA_VARIABLE_UUID,
     DATAFRAME_ANALYSIS_MAX_COLUMNS,
     DATAFRAME_SAMPLE_COUNT,
     DATAFRAME_SAMPLE_COUNT_PREVIEW,
-    METADATA_VARIABLE_UUID,
 )
 from mage_ai.data_preparation.models.utils import (
     infer_variable_type,
@@ -504,8 +502,8 @@ def get_outputs_for_display_dynamic_block(
                 metadata = output_pair[1]
 
         for output, variable_uuid in [
-            (child_data, CHILD_DATA_VARIABLE_UUID),
-            (metadata, METADATA_VARIABLE_UUID),
+            (child_data, 'output_0'),
+            (metadata, 'output_1'),
         ]:
             if output is None or (exclude_blank_variable_uuids and variable_uuid.strip() == ''):
                 continue

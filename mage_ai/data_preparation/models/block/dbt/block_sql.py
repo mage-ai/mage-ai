@@ -21,11 +21,7 @@ from mage_ai.data_preparation.models.block.dbt.utils import (
 from mage_ai.data_preparation.models.block.platform.mixins import (
     ProjectPlatformAccessible,
 )
-from mage_ai.data_preparation.models.constants import (
-    CHILD_DATA_VARIABLE_UUID,
-    BlockLanguage,
-    BlockType,
-)
+from mage_ai.data_preparation.models.constants import BlockLanguage, BlockType
 from mage_ai.data_preparation.shared.utils import get_template_vars
 from mage_ai.orchestration.constants import PIPELINE_RUN_MAGE_VARIABLES_KEY
 from mage_ai.settings.utils import base_repo_path
@@ -436,7 +432,7 @@ class DBTBlockSQL(DBTBlock, ProjectPlatformAccessible):
         # provide df for downstream usage or data preview
         self.store_variables(
             # key differes whether its executed from notebook or execcuted in the background
-            {'df' if from_notebook else CHILD_DATA_VARIABLE_UUID: df},
+            {'df' if from_notebook else 'output_0': df},
             execution_partition=execution_partition,
             override_outputs=True,
         )
@@ -499,7 +495,7 @@ class DBTBlockSQL(DBTBlock, ProjectPlatformAccessible):
                 output = self.pipeline.variable_manager.get_variable(
                     self.pipeline.uuid,
                     ublock.uuid,
-                    CHILD_DATA_VARIABLE_UUID,
+                    'output_0',
                     partition=execution_partition,
                 )
 
