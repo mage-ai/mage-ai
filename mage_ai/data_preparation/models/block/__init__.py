@@ -42,7 +42,6 @@ from mage_ai.data.tabular.models import BatchSettings
 from mage_ai.data_integrations.sources.constants import SQL_SOURCES_MAPPING
 from mage_ai.data_preparation.logging.logger import DictLogger
 from mage_ai.data_preparation.logging.logger_manager_factory import LoggerManagerFactory
-from mage_ai.data_preparation.models.block.constants import CHILD_DATA_VARIABLE_UUID
 from mage_ai.data_preparation.models.block.content import hydrate_block_outputs
 from mage_ai.data_preparation.models.block.data_integration.mixins import (
     DataIntegrationMixin,
@@ -2236,7 +2235,7 @@ class Block(
 
                 if len(variable_types) >= 1 and self._store_variables_in_block_function:
                     self._store_variables_in_block_function(
-                        {CHILD_DATA_VARIABLE_UUID: variable_types},
+                        {'output_0': variable_types},
                         save_variable_types_only=True,
                     )
 
