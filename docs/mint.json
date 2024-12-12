@@ -368,64 +368,51 @@
       "destination": "/production/developing-in-the-cloud/workspaces/overview"
     },
     {
-      "source": "/guides/streaming/destinations/amazon-s3",
-      "destination": "/streaming/destinations/amazon-s3"
+      "source": "/guides/streaming/destinations/amazon-s3"
     },
     {
-      "source": "/guides/streaming/destinations/elasticsearch",
-      "destination": "/streaming/destinations/elasticsearch"
+      "source": "/guides/streaming/destinations/elasticsearch"
     },
     {
       "source": "/guides/streaming/destinations/azure_data_lake",
       "destination": "/streaming/destinations/azure_data_lake"
     },
     {
-      "source": "/guides/streaming/destinations/dummy",
-      "destination": "/streaming/destinations/dummy"
+      "source": "/guides/streaming/destinations/dummy"
     },
     {
-      "source": "/guides/streaming/destinations/kafka",
-      "destination": "/streaming/destinations/kafka"
+      "source": "/guides/streaming/destinations/kafka"
     },
     {
-      "source": "/guides/streaming/destinations/kinesis",
-      "destination": "/streaming/destinations/kinesis"
+      "source": "/guides/streaming/destinations/kinesis"
     },
     {
-      "source": "/guides/streaming/destinations/mongodb",
-      "destination": "/streaming/destinations/mongodb"
+      "source": "/guides/streaming/destinations/mongodb"
     },
     {
-      "source": "/guides/streaming/destinations/opensearch",
-      "destination": "/streaming/destinations/opensearch"
+      "source": "/guides/streaming/destinations/opensearch"
     },
     {
-      "source": "/guides/streaming/destinations/redshift",
-      "destination": "/streaming/destinations/redshift"
+      "source": "/guides/streaming/destinations/redshift"
     },
     {
       "source": "/guides/streaming/overview",
       "destination": "/streaming/overview"
     },
     {
-      "source": "/guides/streaming/sources/amazon-sqs",
-      "destination": "/streaming/sources/amazon-sqs"
+      "source": "/guides/streaming/sources/amazon-sqs"
     },
     {
-      "source": "/guides/streaming/sources/azure-event-hub",
-      "destination": "/streaming/sources/azure-event-hub"
+      "source": "/guides/streaming/sources/azure-event-hub"
     },
     {
-      "source": "/guides/streaming/sources/google-cloud-pubsub",
-      "destination": "/streaming/sources/google-cloud-pubsub"
+      "source": "/guides/streaming/sources/google-cloud-pubsub"
     },
     {
-      "source": "/guides/streaming/sources/kafka",
-      "destination": "/streaming/sources/kafka"
+      "source": "/guides/streaming/sources/kafka"
     },
     {
-      "source": "/guides/streaming/sources/kinesis",
-      "destination": "/streaming/sources/kinesis"
+      "source": "/guides/streaming/sources/kinesis"
     },
     {
       "source": "/data-integrations/sources/adapt-existing-source",
