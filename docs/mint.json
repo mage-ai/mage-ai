@@ -368,64 +368,8 @@
       "destination": "/production/developing-in-the-cloud/workspaces/overview"
     },
     {
-      "source": "/guides/streaming/destinations/amazon-s3",
-      "destination": "/guides/streaming/destinations/amazon-s3"
-    },
-    {
-      "source": "/guides/streaming/destinations/elasticsearch",
-      "destination": "/guides/streaming/destinations/elasticsearch"
-    },
-    {
-      "source": "/guides/streaming/destinations/azure_data_lake",
-      "destination": "/streaming/destinations/azure_data_lake"
-    },
-    {
-      "source": "/guides/streaming/destinations/dummy",
-      "destination": "/guides/streaming/destinations/dummy"
-    },
-    {
-      "source": "/guides/streaming/destinations/kafka",
-      "destination": "/guides/streaming/destinations/kafka"
-    },
-    {
-      "source": "/guides/streaming/destinations/kinesis",
-      "destination": "/guides/streaming/destinations/kinesis"
-    },
-    {
-      "source": "/guides/streaming/destinations/mongodb",
-      "destination": "/guides/streaming/destinations/mongodb"
-    },
-    {
-      "source": "/guides/streaming/destinations/opensearch",
-      "destination": "/guides/streaming/destinations/opensearch"
-    },
-    {
-      "source": "/guides/streaming/destinations/redshift",
-      "destination": "/guides/streaming/destinations/redshift"
-    },
-    {
       "source": "/guides/streaming/overview",
       "destination": "/streaming/overview"
-    },
-    {
-      "source": "/guides/streaming/sources/amazon-sqs",
-      "destination": "/guides/streaming/sources/amazon-sqs"
-    },
-    {
-      "source": "/guides/streaming/sources/azure-event-hub",
-      "destination": "/guides/streaming/sources/azure-event-hub"
-    },
-    {
-      "source": "/guides/streaming/sources/google-cloud-pubsub",
-      "destination": "/guides/streaming/sources/google-cloud-pubsub"
-    },
-    {
-      "source": "/guides/streaming/sources/kafka",
-      "destination": "/guides/streaming/sources/kafka"
-    },
-    {
-      "source": "/guides/streaming/sources/kinesis",
-      "destination": "/guides/streaming/sources/kinesis"
     },
     {
       "source": "/data-integrations/sources/adapt-existing-source",
