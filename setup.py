@@ -86,7 +86,7 @@ setuptools.setup(
             "tables==3.10.1; python_version >= '3.11'",
         ],
         'mysql': [
-            "mysql-connector-python~=8.2.0; python_version < '3.11'",
+            "mysql-connector-python~=8.4.0; python_version < '3.11'",
             "mysql-connector-python~=9.0.0; python_version >= '3.11'",
         ],
         'oracle': [
@@ -188,7 +188,7 @@ setuptools.setup(
             'pika==1.3.1',
             'pinotdb==5.1.0',
             'prometheus_client>=0.18.0',
-            'protobuf~=4.21.12',
+            'protobuf>=4.25.0',
             'psycopg2-binary==2.9.3',
             'psycopg2==2.9.3',
             'pyairtable==2.3.3',

@@ -29,7 +29,7 @@ newrelic==8.8.0
 numpy>=1.22.0
 pandas>=1.3.0
 polars>=0.18.0, <0.19.2
-protobuf~=4.21.12
+protobuf>=4.25.0
 psutil==5.9.8
 pyarrow>=14.0.1
 python-dateutil==2.8.2
@@ -73,7 +73,7 @@ gspread==5.7.2
 kubernetes>=28.1.0
 langchain==0.1.6; python_version >= '3.8'
 langchain_community<0.0.20
-mysql-connector-python~=8.2.0; python_version < '3.11'
+mysql-connector-python~=8.4.0; python_version < '3.11'
 mysql-connector-python~=9.0.0; python_version >= '3.11'
 openai==1.39.0
 opentelemetry-api==1.22.0
