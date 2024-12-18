@@ -368,51 +368,92 @@
       "destination": "/production/developing-in-the-cloud/workspaces/overview"
     },
     {
-      "source": "/guides/streaming/destinations/amazon-s3"
+      "source": "/streaming/destinations/amazon-s3",
+      "destination": "/guides/streaming/destinations/amazon-s3"
     },
     {
-      "source": "/guides/streaming/destinations/elasticsearch"
+      "source": "/streaming/destinations/bigquery",
+      "destination": "/guides/streaming/destinations/bigquery"
     },
     {
-      "source": "/guides/streaming/destinations/azure_data_lake",
-      "destination": "/streaming/destinations/azure_data_lake"
+      "source": "/streaming/destinations/clickhouse",
+      "destination": "/guides/streaming/destinations/clickhouse"
     },
     {
-      "source": "/guides/streaming/destinations/dummy"
+      "source": "/streaming/destinations/duckdb",
+      "destination": "/guides/streaming/destinations/duckdb"
     },
     {
-      "source": "/guides/streaming/destinations/kafka"
+      "source": "/streaming/destinations/dummy",
+      "destination": "/guides/streaming/destinations/dummy"
     },
     {
-      "source": "/guides/streaming/destinations/kinesis"
+      "source": "/streaming/destinations/elasticsearch",
+      "destination": "/guides/streaming/destinations/elasticsearch"
     },
     {
-      "source": "/guides/streaming/destinations/mongodb"
+      "source": "/streaming/destinations/kafka",
+      "destination": "/guides/streaming/destinations/kafka"
     },
     {
-      "source": "/guides/streaming/destinations/opensearch"
+      "source": "/streaming/destinations/kinesis",
+      "destination": "/guides/streaming/destinations/kinesis"
     },
     {
-      "source": "/guides/streaming/destinations/redshift"
+      "source": "/streaming/destinations/mongodb",
+      "destination": "/guides/streaming/destinations/mongodb"
     },
     {
-      "source": "/guides/streaming/overview",
-      "destination": "/streaming/overview"
+      "source": "/streaming/destinations/mssql",
+      "destination": "/guides/streaming/destinations/mssql"
     },
     {
-      "source": "/guides/streaming/sources/amazon-sqs"
+      "source": "/streaming/destinations/mysql",
+      "destination": "/guides/streaming/destinations/mysql"
     },
     {
-      "source": "/guides/streaming/sources/azure-event-hub"
+      "source": "/streaming/destinations/opensearch",
+      "destination": "/guides/streaming/destinations/opensearch"
     },
     {
-      "source": "/guides/streaming/sources/google-cloud-pubsub"
+      "source": "/streaming/destinations/postgres",
+      "destination": "/guides/streaming/destinations/postgres"
     },
     {
-      "source": "/guides/streaming/sources/kafka"
+      "source": "/streaming/destinations/redshift",
+      "destination": "/guides/streaming/destinations/redshift"
     },
     {
-      "source": "/guides/streaming/sources/kinesis"
+      "source": "/streaming/destinations/snowflake",
+      "destination": "/guides/streaming/destinations/snowflake"
+    },
+    {
+      "source": "/streaming/destinations/trino",
+      "destination": "/guides/streaming/destinations/trino"
+    },
+    {
+      "source": "/streaming/sources/amazon-sqs",
+      "destination": "/guides/streaming/sources/amazon-sqs"
+    },
+    {
+      "source": "/streaming/sources/azure-event-hub",
+      "destination": "/guides/streaming/sources/azure-event-hub"
+    },
+    {
+      "source": "/streaming/sources/google-cloud-pubsub",
+      "destination": "/guides/streaming/sources/google-cloud-pubsub"
+    },
+    {
+      "source": "/streaming/sources/kafka",
+      "destination": "/guides/streaming/sources/kafka"
+    },
+    {
+      "source": "/streaming/sources/kinesis",
+      "destination": "/guides/streaming/sources/kinesis"
+    },
+    {
+      "source": "/guides/streaming-pipeline-rabbitmq",
+      "destination": "/guides/streaming/tutorials/streaming-pipeline-rabbitmq"
     },
     {
       "source": "/data-integrations/sources/adapt-existing-source",
