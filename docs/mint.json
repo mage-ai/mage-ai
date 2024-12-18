@@ -368,10 +368,6 @@
       "destination": "/production/developing-in-the-cloud/workspaces/overview"
     },
     {
-      "source": "/guides/streaming/overview",
-      "destination": "/streaming/overview"
-    },
-    {
       "source": "/streaming/destinations/amazon-s3",
       "destination": "/guides/streaming/destinations/amazon-s3"
     },
