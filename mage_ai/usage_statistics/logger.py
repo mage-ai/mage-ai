@@ -1,3 +1,4 @@
+import asyncio
 import hashlib
 import json
 import platform
@@ -229,6 +230,11 @@ class UsageStatisticLogger():
             ),
         )
 
+    def pipeline_runs_impression_sync(self, count_func: Callable) -> bool:
+        if not self.help_improve_mage:
+            return False
+        return asyncio.run(self.pipeline_runs_impression(count_func))
+
     @safe_db_query
     async def pipeline_runs_impression(self, count_func: Callable) -> bool:
         if not self.help_improve_mage:
@@ -299,6 +305,13 @@ class UsageStatisticLogger():
                 users=User.query.count(),
             ),
         )
+
+    @safe_db_query
+    def pipeline_run_ended_sync(self, pipeline_run: PipelineRun) -> bool:
+        if not self.help_improve_mage:
+            return False
+
+        return asyncio.run(self.pipeline_run_ended(pipeline_run))
 
     @safe_db_query
     async def pipeline_run_ended(self, pipeline_run: PipelineRun) -> bool:
