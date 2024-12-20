@@ -1,4 +1,3 @@
-import asyncio
 import collections
 import os
 import traceback
@@ -262,7 +261,7 @@ class PipelineScheduler:
                         pipeline_run=self.pipeline_run,
                     )
 
-                asyncio.run(UsageStatisticLogger().pipeline_run_ended(self.pipeline_run))
+                UsageStatisticLogger().pipeline_run_ended_sync(self.pipeline_run)
 
                 self.logger_manager.output_logs_to_destination()
 
@@ -338,7 +337,7 @@ class PipelineScheduler:
 
     @safe_db_query
     def on_pipeline_run_failure(self, error: str) -> None:
-        asyncio.run(UsageStatisticLogger().pipeline_run_ended(self.pipeline_run))
+        UsageStatisticLogger().pipeline_run_ended_sync(self.pipeline_run)
         self.notification_sender.send_pipeline_run_failure_message(
             pipeline=self.pipeline,
             pipeline_run=self.pipeline_run,
@@ -1317,7 +1316,7 @@ def stop_pipeline_run(
     # Update pipeline run status to cancelled
     pipeline_run.update(status=status)
 
-    asyncio.run(UsageStatisticLogger().pipeline_run_ended(pipeline_run))
+    UsageStatisticLogger().pipeline_run_ended_sync(pipeline_run)
 
     # Cancel all the block runs
     cancel_block_runs_and_jobs(pipeline_run, pipeline)

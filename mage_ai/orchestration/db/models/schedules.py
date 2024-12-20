@@ -1,4 +1,3 @@
-import asyncio
 import collections
 import traceback
 import uuid
@@ -1400,10 +1399,8 @@ class PipelineRun(PipelineRunProjectPlatformMixin, BaseModel):
 
         from mage_ai.usage_statistics.logger import UsageStatisticLogger
 
-        asyncio.run(
-            UsageStatisticLogger().pipeline_runs_impression(
-                lambda: self.query.filter(self.status == self.PipelineRunStatus.COMPLETED).count(),
-            )
+        UsageStatisticLogger().pipeline_runs_impression_sync(
+            lambda: self.query.filter(self.status == self.PipelineRunStatus.COMPLETED).count(),
         )
 
     @safe_db_query
