@@ -121,7 +121,7 @@ CONCURRENCY_CONFIG_PIPELINE_RUN_LIMIT = get_int_value(
 )
 DISABLE_AUTO_BROWSER_OPEN = get_bool_value(os.getenv('DISABLE_AUTO_BROWSER_OPEN', 'False'))
 DISABLE_AUTORELOAD = get_bool_value(os.getenv('DISABLE_AUTORELOAD', 'False'))
-HIDE_API_TRIGGER_TOKEN = get_bool_value(os.getenv('DISABLE_AUTORELOAD', 'False'))
+HIDE_API_TRIGGER_TOKEN = get_bool_value(os.getenv('HIDE_API_TRIGGER_TOKEN', 'False'))
 
 # The hostname in Kubernetes or AWS ECS
 HOSTNAME = os.getenv('HOSTNAME')
