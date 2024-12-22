@@ -1,5 +1,6 @@
 from mage_ai.api.operations import constants
 from mage_ai.api.presenters.BasePresenter import BasePresenter
+from mage_ai.settings.server import HIDE_API_TRIGGER_TOKEN
 
 
 class PipelineSchedulePresenter(BasePresenter):
@@ -32,8 +33,6 @@ class PipelineSchedulePresenter(BasePresenter):
             ])
             data['tags'] = sorted([tag.name for tag in self.get_tag_associations])
             data['next_pipeline_run_date'] = self.model.next_execution_date()
-
-            return data
         elif 'with_runtime_average' == display_format:
             data = self.model.to_dict()
             data['runtime_average'] = self.model.runtime_average()
@@ -47,6 +46,16 @@ class PipelineSchedulePresenter(BasePresenter):
         else:
             data = self.model.to_dict()
 
+        if display_format == constants.UPDATE:
+            rotate_token = kwargs.get(
+                'payload', dict(),
+            ).get(
+                'pipeline_schedule', dict(),
+            ).get('rotate_token')
+        else:
+            rotate_token = False
+        if HIDE_API_TRIGGER_TOKEN and not rotate_token:
+            data['token'] = '[API_TOKEN_PLACEHOLDER]'
         return data
 
 

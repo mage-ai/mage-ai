@@ -100,6 +100,7 @@ PipelineSchedulePolicy.allow_read(PipelineSchedulePresenter.default_attributes +
 PipelineSchedulePolicy.allow_read(PipelineSchedulePresenter.default_attributes + [
     'event_matchers',
     'next_pipeline_run_date',
+    'rotate_token',
     'tags',
 ], scopes=[
     OauthScope.CLIENT_PRIVATE,
