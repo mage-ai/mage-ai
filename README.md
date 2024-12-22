@@ -12,7 +12,7 @@
 
 <br />
 
-<a href="https://mage.ai/pro">
+<a href="https://cloud.mage.ai/sign-up">
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="https://github.com/mage-ai/assets/blob/main/oss/hero.png?raw=true">
     <img alt="Mage AI hero" src="https://github.com/mage-ai/assets/blob/main/oss/hero.png?raw=true" />
@@ -44,7 +44,7 @@ Plus hundreds of enterprise-class features, infrastructure innovations, and magi
 <table style="width: 100%; border: none;" cellspacing="0" cellpadding="0" border="0">
   <tr>
     <td rowspan="2">
-      <a href="https://mage.ai/pro">
+      <a href="https://cloud.mage.ai/sign-up">
         <img alt="Mage Pro" width="124" align="left" src="https://github.com/mage-ai/assets/blob/main/oss/card-pro.png?raw=true" />
       </a>
       <b>For teams.</b> Fully managed platform
@@ -62,7 +62,7 @@ Plus hundreds of enterprise-class features, infrastructure innovations, and magi
 
 <br />
 
-<a href="https://mage.ai/pro">
+<a href="https://cloud.mage.ai/sign-up">
   <img alt="Try out Mage Pro" src="https://img.shields.io/badge/try%20it%20out%20now-black.svg?style=for-the-badge&logo=artifacthub&labelColor=6A35FF&logoColor=FFFFFF&label=mage%20pro&color=6A35FF">
 </a>
 
@@ -74,7 +74,7 @@ Plus hundreds of enterprise-class features, infrastructure innovations, and magi
 # It’s magic.
 
 <p align="left">
-  For documentation on getting started, how to develop, and how to deploy to production check out the live 
+  For documentation on getting started, how to develop, and how to deploy to production check out the live
   <br />
   <a
     href="https://docs.mage.ai?source=github"

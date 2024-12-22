@@ -53,7 +53,7 @@
     },
     {
       "name": "Mage Pro",
-      "url": "https://www.mage.ai/pro?source=documentation-header"
+      "url": "https://cloud.mage.ai/sign-up?source=documentation-header"
     }
   ],
   "topbarCtaButton": {
@@ -120,7 +120,7 @@
         "links": [
           {
             "label": "Get started for free",
-            "url": "https://www.mage.ai/pro"
+            "url": "https://cloud.mage.ai/sign-up"
           }
         ]
       },
