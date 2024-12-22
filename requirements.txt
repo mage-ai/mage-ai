@@ -82,7 +82,7 @@ opentelemetry-instrumentation-tornado==0.43b0
 opentelemetry-exporter-otlp==1.22.0
 opentelemetry-instrumentation-sqlalchemy==0.43b0
 oracledb==1.3.1; python_version < '3.12'
-oracledb==1.3.1; python_version >= '3.12'
+oracledb==2.0.0; python_version >= '3.12'
 pinotdb==5.1.0
 prometheus_client>=0.18.0
 psycopg2==2.9.3
