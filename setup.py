@@ -92,7 +92,7 @@ setuptools.setup(
         ],
         'oracle': [
             "oracledb==1.3.1; python_version < '3.12'",
-            "oracledb==2.2.1; python_version >= '3.12'",
+            "oracledb==1.3.1; python_version >= '3.12'",
         ],
         'postgres': [
             'psycopg2==2.9.3',
