@@ -3941,7 +3941,6 @@ class Block(
             for v in b.output_variables(execution_partition=execution_partition):
                 objs.append(
                     self.get_variable_object(
-                        self.pipeline_uuid,
                         b.uuid,
                         v,
                         partition=execution_partition,

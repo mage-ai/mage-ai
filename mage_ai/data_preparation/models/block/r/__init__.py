@@ -10,7 +10,6 @@ import simplejson
 from mage_ai.data_preparation.models.block import Block
 from mage_ai.data_preparation.models.constants import (
     CHILD_DATA_VARIABLE_UUID,
-    VARIABLE_DIR,
     BlockType,
 )
 from mage_ai.data_preparation.models.variables.constants import (
@@ -157,13 +156,7 @@ def __render_r_script(
             code=code,
             global_vars=global_vars_str,
             input_paths=[
-                os.path.join(
-                    v.pipeline_path,
-                    VARIABLE_DIR,
-                    v.uuid,
-                    CHILD_DATA_VARIABLE_UUID,
-                    DATAFRAME_CSV_FILE
-                )
+                os.path.join(v.variable_path, DATAFRAME_CSV_FILE)
                 for v in input_variable_objects
             ],
             input_vars_str=", ".join(
