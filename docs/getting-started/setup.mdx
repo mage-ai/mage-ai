@@ -8,7 +8,64 @@ description: "Go from zero to Mage hero in under a minute. We'll walk you throug
 import { ProButton } from '/snippets/pro/button.mdx';
 import { ProBanner } from '/snippets/pro/banner.mdx';
 
-## ⛵️ Overview
+## Mage Pro overview
+
+After creating a Mage Pro account or logging into Mage Pro you are directed to the cluster management portal. Here you can manage
+your Mage clusters.
+
+### Cluster Pages
+
+1. **Creating a New Cluster**:
+    - On the clusters page, you can create a new cluster by clicking the "Launch new cluster" button.
+    - Fill in the required field **Cluster Name**. Note that environment variables can be customized after the cluster is created.
+
+<Note>
+If you are in a free trial you are limited to a single cluster.
+</Note>
+
+2. **Viewing Cluster List**:
+    - The cluster list page provides an overview of all your clusters, displaying essential information such as the cluster status, ID, UUID, cloud provider, and the number of replicas.
+3. **Cluster Details**:
+    - Click the "Open cluster" button to view detailed information about the cluster. Here, you can see various metrics and statuses that help you monitor and manage your cluster effectively.
+    - Add the following environment variables prior to starting a new cluster
+
+### Environment variables
+
+1. **Modifying Environment Variables**:
+    - You can modify the environment variables for your cluster on the cluster configuration page. After making changes, click "Apply changes" to update the settings.
+
+We recommend adding the environment variables below to get started:
+
+```bash
+DYNAMIC_BLOCKS_VERSION = 2
+MEMORY_MANAGER_PANDAS_VERSION = 2
+MEMORY_MANAGER_POLARS_VERSION = 2
+MEMORY_MANAGER_VERSION = 2
+VARIABLE_DATA_OUTPUT_META_CACHE = 1
+KERNEL_MANAGER = magic
+AI_SIDEKICK = 1
+```
+### Cluster login
+
+1. **Accessing the cluster**:
+    - Click the "Open cluster" button to navigate to the actual Mage cluster page. Here, you can interact with your cluster and use the Mage tool as you normally would.
+    - Currently, we use separate databases for each cluster for enhanced security. The users credentials in the Mage Pro cluster are managed inside the cluster. Use the default owner credentials (email: [admin@admin.com](mailto:admin@admin.com), password: **admin**) to log in. After you login, you should either update the password of the default owner user or create your own owner user.
+<Note>
+Credentials may differ from cluster portal. For initial setup use Email or username: admin@admin.com, Password: admin.
+</Note>
+
+### Run your first pipeline
+
+- **Step 1**: From the pipeline editor page click the "New pipeline" button 
+- **Step 2**: Select a template for inspiration or start from scratch by clicking the "Start from scratch" button
+- **Step 3**: Select your pipeline type and give it an optional new name, description, and tag
+- **Step 4**: Click the create new pipline button
+- **Step 5**: Add your blocks by following the Youtube video below
+
+<iframe width="560" height="315" src="https://www.youtube.com/embed/VFFzJFZjuAg?si=GxWtS3f-ovvfw7T1" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+
+
+## ⛵️ Mage OSS overview
 
 We recommend using Docker to get started.
 
