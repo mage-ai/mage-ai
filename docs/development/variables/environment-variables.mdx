@@ -4,7 +4,21 @@ sidebarTitle: "Environment variables"
 description: "Configure Mage settings through environment variables."
 ---
 
-## Environment variables in Mage
+## Environment variables in Mage Pro
+Environment variables are set from the Mage Pro cluster management portal. Check out the steps and video below on how to create environment variables.
+
+### Adding or modifying environment variables:
+    - Click the "Edit / add variables" button
+    - On the Environment Variables screen, you can either input a value directly or add a custom environment variable by specifying its key-value pair
+    - Click "Save changes" to update the settings.
+
+<iframe width="560" height="315" src="https://www.youtube.com/embed/ZiG67ldzMUE?si=fVCPtZvJfSidpnA_" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+
+<Note>
+After clicking the "Save changes" button the cluster will automatically restart.
+</Note>
+
+## Environment variables in Mage OSS
 
 Environment variables may be set in your Docker container to configure Mage settings. If you’re running Mage using `pip` or `conda`, your local machine’s environment variables
 are accessible within the running Mage app.
