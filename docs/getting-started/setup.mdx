@@ -19,6 +19,10 @@ your Mage clusters.
     - On the clusters page, you can create a new cluster by clicking the "Launch new cluster" button.
     - Fill in the required field **Cluster Name**. Note that environment variables can be customized after the cluster is created.
 
+<p align="center">
+<img src="https://github.com/mage-ai/assets/blob/main/getting-started/mage-pro/create-new-cluster.png?raw=True"/>
+</p>
+
 <Note>
 If you are in a free trial you are limited to a single cluster.
 </Note>
@@ -27,24 +31,8 @@ If you are in a free trial you are limited to a single cluster.
     - The cluster list page provides an overview of all your clusters, displaying essential information such as the cluster status, ID, UUID, cloud provider, and the number of replicas.
 3. **Cluster Details**:
     - Click the "Open cluster" button to view detailed information about the cluster. Here, you can see various metrics and statuses that help you monitor and manage your cluster effectively.
-    - Add the following environment variables prior to starting a new cluster
+    - Follow the [environment variables](/development/variables/environment-variables) documentation to customize your Mage Pro cluster.
 
-### Environment variables
-
-1. **Modifying Environment Variables**:
-    - You can modify the environment variables for your cluster on the cluster configuration page. After making changes, click "Apply changes" to update the settings.
-
-We recommend adding the environment variables below to get started:
-
-```bash
-DYNAMIC_BLOCKS_VERSION = 2
-MEMORY_MANAGER_PANDAS_VERSION = 2
-MEMORY_MANAGER_POLARS_VERSION = 2
-MEMORY_MANAGER_VERSION = 2
-VARIABLE_DATA_OUTPUT_META_CACHE = 1
-KERNEL_MANAGER = magic
-AI_SIDEKICK = 1
-```
 ### Cluster login
 
 1. **Accessing the cluster**:
