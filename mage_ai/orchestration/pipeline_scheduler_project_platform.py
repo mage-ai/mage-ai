@@ -1567,7 +1567,7 @@ def schedule_all():
                 concurrency_config = ConcurrencyConfig.load(config=pipeline.concurrency_config)
 
                 lock_key = f'pipeline_schedule_{pipeline_schedule.id}'
-                if not lock.try_acquire_lock(lock_key):
+                if not lock.try_acquire_lock(lock_key, timeout=30):
                     continue
 
                 try:

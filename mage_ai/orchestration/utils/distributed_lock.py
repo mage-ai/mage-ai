@@ -1,12 +1,19 @@
+import os
+
 from mage_ai.services.redis.redis import init_redis_client
 from mage_ai.settings import REDIS_URL
+
+try:
+    REDIS_LOCK_DEFAULT_TIMEOUT = int(os.getenv('REDIS_LOCK_DEFAULT_TIMEOUT', 30) or 30)
+except Exception:
+    REDIS_LOCK_DEFAULT_TIMEOUT = 30
 
 
 class DistributedLock:
     def __init__(
         self,
         lock_key_prefix='LOCK_KEY',
-        lock_timeout=30,
+        lock_timeout=REDIS_LOCK_DEFAULT_TIMEOUT,
     ):
         self.lock_key_prefix = lock_key_prefix
         self.lock_timeout = lock_timeout

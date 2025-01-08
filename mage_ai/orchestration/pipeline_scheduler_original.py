@@ -1583,7 +1583,7 @@ def schedule_all():
         pipeline_runs_excluded_by_limit = []
         for pipeline_schedule in active_schedules:
             lock_key = f'pipeline_schedule_{pipeline_schedule.id}'
-            if not lock.try_acquire_lock(lock_key):
+            if not lock.try_acquire_lock(lock_key, timeout=30):
                 continue
 
             trigger_pipeline_run_limit = pipeline_schedule.get_settings().pipeline_run_limit
