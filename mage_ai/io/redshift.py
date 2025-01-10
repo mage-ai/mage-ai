@@ -281,12 +281,27 @@ class Redshift(BaseSQL):
             config (BaseConfigLoader): Configuration loader object
         """
         if ConfigKey.REDSHIFT_DBNAME not in config:
-            raise ValueError('AWS Redshift client requires REDSHIFT_DBNAME setting.')
-        
+            raise ValueError('AWS Redshift client requires REDSHIFT_DBNAME setting to connect.')
         kwargs['database'] = database or config[ConfigKey.REDSHIFT_DBNAME]
-
-        # Handle Serverless Redshift with IAM
-        if config.get(ConfigKey.REDSHIFT_SERVERLESS) and config.get(ConfigKey.REDSHIFT_IAM_PROFILE):
+        if (
+            ConfigKey.REDSHIFT_CLUSTER_ID in config
+            and ConfigKey.REDSHIFT_DBUSER in config
+            and ConfigKey.REDSHIFT_IAM_PROFILE in config
+        ):
+            kwargs['cluster_identifier'] = config[ConfigKey.REDSHIFT_CLUSTER_ID]
+            kwargs['db_user'] = config[ConfigKey.REDSHIFT_DBUSER]
+            kwargs['profile'] = config[ConfigKey.REDSHIFT_IAM_PROFILE]
+            kwargs['iam'] = True
+        elif (
+            ConfigKey.REDSHIFT_TEMP_CRED_USER in config
+            and ConfigKey.REDSHIFT_TEMP_CRED_PASSWORD in config
+            and ConfigKey.REDSHIFT_HOST in config
+        ):
+            kwargs['user'] = config[ConfigKey.REDSHIFT_TEMP_CRED_USER]
+            kwargs['password'] = config[ConfigKey.REDSHIFT_TEMP_CRED_PASSWORD]
+            kwargs['host'] = config[ConfigKey.REDSHIFT_HOST]
+            kwargs['port'] = config[ConfigKey.REDSHIFT_PORT]
+        elif config.get(ConfigKey.REDSHIFT_SERVERLESS) and config.get(ConfigKey.REDSHIFT_IAM_PROFILE):
             if ConfigKey.REDSHIFT_WORKGROUP not in config:
                 raise ValueError('Redshift Serverless requires REDSHIFT_WORKGROUP setting.')
             
@@ -305,22 +320,6 @@ class Redshift(BaseSQL):
                 password=response['dbPassword'],
                 **kwargs
             )
-
-        # Original connection logic for non-serverless
-        if ConfigKey.REDSHIFT_CLUSTER_ID in config:
-            kwargs['cluster_identifier'] = config[ConfigKey.REDSHIFT_CLUSTER_ID]
-            kwargs['db_user'] = config[ConfigKey.REDSHIFT_DBUSER]
-            kwargs['profile'] = config[ConfigKey.REDSHIFT_IAM_PROFILE]
-            kwargs['iam'] = True
-        elif (
-            ConfigKey.REDSHIFT_TEMP_CRED_USER in config
-            and ConfigKey.REDSHIFT_TEMP_CRED_PASSWORD in config
-            and ConfigKey.REDSHIFT_HOST in config
-        ):
-            kwargs['user'] = config[ConfigKey.REDSHIFT_TEMP_CRED_USER]
-            kwargs['password'] = config[ConfigKey.REDSHIFT_TEMP_CRED_PASSWORD]
-            kwargs['host'] = config[ConfigKey.REDSHIFT_HOST]
-            kwargs['port'] = config[ConfigKey.REDSHIFT_PORT]
         else:
             raise ValueError(
                 'No valid configuration found for initializing AWS Redshift client. '
