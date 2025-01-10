@@ -301,6 +301,7 @@ class BaseSQL(BaseSQLConnection):
                     if_exists=if_exists,
                     unique_conflict_method=unique_conflict_method,
                     unique_constraints=unique_constraints,
+                    **kwargs,
                 )
                 return
 
