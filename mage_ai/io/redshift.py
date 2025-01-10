@@ -2,9 +2,9 @@ import json
 import warnings
 from typing import Dict, Union
 
+import boto3
 from pandas import DataFrame
 from redshift_connector import connect
-import boto3
 
 from mage_ai.io.base import QUERY_ROW_LIMIT, ExportWritePolicy
 from mage_ai.io.config import BaseConfigLoader, ConfigKey
@@ -301,7 +301,7 @@ class Redshift(BaseSQL):
             kwargs['password'] = config[ConfigKey.REDSHIFT_TEMP_CRED_PASSWORD]
             kwargs['host'] = config[ConfigKey.REDSHIFT_HOST]
             kwargs['port'] = config[ConfigKey.REDSHIFT_PORT]
-        elif (config.get(ConfigKey.REDSHIFT_SERVERLESS) and 
+        elif (config.get(ConfigKey.REDSHIFT_SERVERLESS) and
               config.get(ConfigKey.REDSHIFT_IAM_PROFILE)):
             if ConfigKey.REDSHIFT_WORKGROUP not in config:
                 raise ValueError('Redshift Serverless requires REDSHIFT_WORKGROUP setting.')
