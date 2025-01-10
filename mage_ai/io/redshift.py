@@ -36,70 +36,22 @@ class Redshift(BaseSQL):
         """
         with self.printer.print_msg('Connecting to Redshift cluster'):
             connect_options = {}
-            
-            # Add Serverless support while preserving existing logic
-            if self.settings.get('serverless'):
-                client = boto3.client('redshift-serverless')
-                
-                # Handle IAM auth for Serverless
-                if self.settings.get('iam'):
-                    response = client.get_credentials(
-                        workgroupName=self.settings['workgroup'],
-                        dbName=self.settings['database'],
-                        durationSeconds=3600,
-                        # Add IAM specific parameters for Serverless
-                        dbUser=self.settings.get('db_user'),
-                    )
-                else:
-                    # Standard Serverless auth
-                    response = client.get_credentials(
-                        workgroupName=self.settings['workgroup'],
-                        dbName=self.settings['database'],
-                        durationSeconds=3600
-                    )
-                    
-                connect_options.update({
-                    'user': response['dbUser'],
-                    'password': response['dbPassword'],
-                    'host': self.settings['host'],
-                    'port': self.settings.get('port', 5439),
-                    'database': self.settings['database'],
-                })
-            # Keep existing IAM authentication logic for provisioned clusters
-            elif self.settings.get('iam'):
-                client = boto3.client('redshift')
-                response = client.get_cluster_credentials(
-                    DbUser=self.settings['db_user'],
-                    DbName=self.settings['database'],
-                    ClusterIdentifier=self.settings['cluster_identifier'],
-                    AutoCreate=False,
-                )
-                connect_options.update({
-                    'user': response['DbUser'],
-                    'password': response['DbPassword'],
-                    'host': self.settings['host'],
-                    'port': self.settings.get('port', 5439),
-                    'database': self.settings['database'],
-                })
-            # Keep existing standard authentication logic
-            else:
-                for key in [
-                    'access_key_id',
-                    'cluster_identifier',
-                    'database',
-                    'db_user',
-                    'host',
-                    'iam',
-                    'password',
-                    'port',
-                    'profile',
-                    'region',
-                    'secret_access_key',
-                    'user',
-                ]:
-                    if self.settings.get(key):
-                        connect_options[key] = self.settings[key]
-
+            for key in [
+                'access_key_id',
+                'cluster_identifier',
+                'database',
+                'db_user',
+                'host',
+                'iam',
+                'password',
+                'port',
+                'profile',
+                'region',
+                'secret_access_key',
+                'user',
+            ]:
+                if self.settings.get(key):
+                    connect_options[key] = self.settings[key]
             warnings.filterwarnings('ignore', category=DeprecationWarning)
             self._ctx = connect(**connect_options)
 
@@ -332,43 +284,58 @@ class Redshift(BaseSQL):
             raise ValueError('AWS Redshift client requires REDSHIFT_DBNAME setting.')
         
         kwargs['database'] = database or config[ConfigKey.REDSHIFT_DBNAME]
-        
-        # Add Serverless support as a new option
-        if config.get(ConfigKey.REDSHIFT_SERVERLESS):
+
+        # Handle Serverless Redshift with IAM
+        if config.get(ConfigKey.REDSHIFT_SERVERLESS) and config.get(ConfigKey.REDSHIFT_IAM_PROFILE):
             if ConfigKey.REDSHIFT_WORKGROUP not in config:
                 raise ValueError('Redshift Serverless requires REDSHIFT_WORKGROUP setting.')
-            kwargs.update({
-                'workgroup': config[ConfigKey.REDSHIFT_WORKGROUP],
-                'serverless': True,
-                'host': config.get(ConfigKey.REDSHIFT_HOST),
-                'port': config.get(ConfigKey.REDSHIFT_PORT, 5439),
-            })
-            return cls(verbose=kwargs.pop('verbose', True), **kwargs)
             
-        # Keep existing logic unchanged
-        if (
-            ConfigKey.REDSHIFT_CLUSTER_ID in config
-            and ConfigKey.REDSHIFT_DBUSER in config
-            and ConfigKey.REDSHIFT_IAM_PROFILE in config
+            client = boto3.client('redshift-serverless')
+            response = client.get_credentials(
+                workgroupName=config[ConfigKey.REDSHIFT_WORKGROUP],
+                dbName=kwargs['database'],
+                durationSeconds=3600
+            )
+            
+            return cls(
+                database=kwargs['database'],
+                host=config[ConfigKey.REDSHIFT_HOST],
+                port=config.get(ConfigKey.REDSHIFT_PORT, 5439),
+                user=response['dbUser'],
+                password=response['dbPassword'],
+                **kwargs
+            )
+
+        # Original connection logic for non-serverless
+        if ConfigKey.REDSHIFT_CLUSTER_ID in config:
+            kwargs['cluster_identifier'] = config[ConfigKey.REDSHIFT_CLUSTER_ID]
+            kwargs['db_user'] = config[ConfigKey.REDSHIFT_DBUSER]
+            kwargs['profile'] = config[ConfigKey.REDSHIFT_IAM_PROFILE]
+            kwargs['iam'] = True
+        elif (
+            ConfigKey.REDSHIFT_TEMP_CRED_USER in config
+            and ConfigKey.REDSHIFT_TEMP_CRED_PASSWORD in config
+            and ConfigKey.REDSHIFT_HOST in config
         ):
-            kwargs.update({
-                'iam': True,
-                'cluster_identifier': config[ConfigKey.REDSHIFT_CLUSTER_ID],
-                'db_user': config[ConfigKey.REDSHIFT_DBUSER],
-                'host': config[ConfigKey.REDSHIFT_HOST],
-                'port': config.get(ConfigKey.REDSHIFT_PORT, 5439),
-            })
+            kwargs['user'] = config[ConfigKey.REDSHIFT_TEMP_CRED_USER]
+            kwargs['password'] = config[ConfigKey.REDSHIFT_TEMP_CRED_PASSWORD]
+            kwargs['host'] = config[ConfigKey.REDSHIFT_HOST]
+            kwargs['port'] = config[ConfigKey.REDSHIFT_PORT]
+        else:
+            raise ValueError(
+                'No valid configuration found for initializing AWS Redshift client. '
+                'Either specify your temporary database '
+                'credentials or provide your IAM Profile and Redshift cluster information to '
+                'automatically generate temporary database credentials.'
+            )
+        kwargs['access_key_id'] = config[ConfigKey.AWS_ACCESS_KEY_ID]
+        kwargs['secret_access_key'] = config[ConfigKey.AWS_SECRET_ACCESS_KEY]
+        kwargs['region'] = config[ConfigKey.AWS_REGION]
 
-        for k, v in {
-            'host': ConfigKey.REDSHIFT_HOST,
-            'password': ConfigKey.REDSHIFT_TEMP_CRED_PASSWORD,
-            'port': ConfigKey.REDSHIFT_PORT,
-            'user': ConfigKey.REDSHIFT_TEMP_CRED_USER,
-        }.items():
-            if v in config:
-                kwargs[k] = config[v]
+        if ConfigKey.REDSHIFT_SCHEMA in config:
+            kwargs['schema'] = config[ConfigKey.REDSHIFT_SCHEMA]
 
-        return cls(verbose=kwargs.pop('verbose', True), **kwargs)
+        return cls(**kwargs)
 
     @classmethod
     def with_temporary_credentials(
