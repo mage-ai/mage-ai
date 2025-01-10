@@ -301,17 +301,18 @@ class Redshift(BaseSQL):
             kwargs['password'] = config[ConfigKey.REDSHIFT_TEMP_CRED_PASSWORD]
             kwargs['host'] = config[ConfigKey.REDSHIFT_HOST]
             kwargs['port'] = config[ConfigKey.REDSHIFT_PORT]
-        elif config.get(ConfigKey.REDSHIFT_SERVERLESS) and config.get(ConfigKey.REDSHIFT_IAM_PROFILE):
+        elif (config.get(ConfigKey.REDSHIFT_SERVERLESS) and 
+              config.get(ConfigKey.REDSHIFT_IAM_PROFILE)):
             if ConfigKey.REDSHIFT_WORKGROUP not in config:
                 raise ValueError('Redshift Serverless requires REDSHIFT_WORKGROUP setting.')
-            
+
             client = boto3.client('redshift-serverless')
             response = client.get_credentials(
                 workgroupName=config[ConfigKey.REDSHIFT_WORKGROUP],
                 dbName=kwargs['database'],
                 durationSeconds=3600
             )
-            
+
             return cls(
                 database=kwargs['database'],
                 host=config[ConfigKey.REDSHIFT_HOST],
