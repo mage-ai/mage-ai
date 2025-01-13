@@ -163,6 +163,7 @@ class ADProvider(SsoProvider, OauthProvider):
             ) as response:
                 userinfo_resp = await response.json()
 
+            print(f'ADProvider roles_mapping {self.roles_mapping}')
             if self.roles_mapping:
                 try:
                     async with session.get(
@@ -186,6 +187,7 @@ class ADProvider(SsoProvider, OauthProvider):
                         timeout=10,
                     ) as response:
                         app_roles = await response.json()
+                        print(f'App roles {app_roles}')
 
                     app_role_mapping = {
                         app_role.get('id'): app_role.get('value')
@@ -201,6 +203,7 @@ class ADProvider(SsoProvider, OauthProvider):
                         timeout=10,
                     ) as response:
                         app_role_assignments = await response.json()
+                        print(f'App role assignments {app_role_assignments}')
 
                     for assignment in app_role_assignments.get('value'):
                         app_role_id = assignment.get('appRoleId')
