@@ -63,6 +63,7 @@ RUN if [ -z "$FEATURE_BRANCH" ] || [ "$FEATURE_BRANCH" = "null" ] ; then \
   pip3 install --no-cache-dir "git+https://github.com/mage-ai/mage-ai.git@$FEATURE_BRANCH#egg=mage-ai[all]"; \
   fi
 
+RUN pip3 install --no-cache-dir dbt-adapters==1.8.0
 
 ## Startup Script
 COPY --chmod=0755 ./scripts/install_other_dependencies.py ./scripts/run_app.sh /app/
