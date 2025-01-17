@@ -252,7 +252,7 @@ function PipelineSettings({
             description={(
               <>
                 <Text muted small>
-                  Limit the concurrent pipeline runs across all trigers in this pipeline.
+                  Limit the concurrent pipeline runs across all triggers in this pipeline.
                 </Text>
               </>
             )}
