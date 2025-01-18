@@ -200,8 +200,6 @@ setuptools.setup(
             'lxml==4.9.4',
             'requests_aws4auth==1.1.2',
             'snowflake-connector-python==3.7.1',
-            'sqlfluff==3.0.7',
-            'sqlfluff-templater-dbt==3.0.7',
             'sshtunnel==0.4.0',
             'stomp.py==8.1.0',
             'thefuzz[speedup]==0.19.0',
