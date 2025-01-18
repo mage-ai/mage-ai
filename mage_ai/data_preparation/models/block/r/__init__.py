@@ -8,7 +8,10 @@ import pandas as pd
 import simplejson
 
 from mage_ai.data_preparation.models.block import Block
-from mage_ai.data_preparation.models.constants import BlockType
+from mage_ai.data_preparation.models.constants import (
+    CHILD_DATA_VARIABLE_UUID,
+    BlockType,
+)
 from mage_ai.data_preparation.models.variables.constants import (
     DATAFRAME_CSV_FILE,
     VariableType,
@@ -81,7 +84,10 @@ def execute_r_code(
 
     if len(output_variable_objects) > 0:
         df = pd.read_csv(
-            os.path.join(output_variable_objects[0].variable_path, DATAFRAME_CSV_FILE)
+            os.path.join(
+                output_variable_objects[0].variable_path,
+                DATAFRAME_CSV_FILE
+            )
         )
     else:
         df = None
@@ -129,14 +135,19 @@ def __render_r_script(
         raise Exception(
             f"Block execution for {block.type} with R language is not supported.",
         )
-    template = template_env.get_template(BLOCK_TYPE_TO_EXECUTION_TEMPLATE[block.type])
+    template = template_env.get_template(
+        BLOCK_TYPE_TO_EXECUTION_TEMPLATE[block.type]
+    )
 
     output_variable_object = block.variable_object(
-        "output_0",
+        CHILD_DATA_VARIABLE_UUID,
         execution_partition=execution_partition,
     )
     os.makedirs(output_variable_object.variable_path, exist_ok=True)
-    output_path = os.path.join(output_variable_object.variable_path, DATAFRAME_CSV_FILE)
+    output_path = os.path.join(
+        output_variable_object.variable_path,
+        DATAFRAME_CSV_FILE
+    )
 
     global_vars_str = __render_global_vars(global_vars=global_vars)
 

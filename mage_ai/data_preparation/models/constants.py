@@ -27,6 +27,7 @@ PIPELINES_FOLDER = 'pipelines'
 PREFERENCES_FILE = '.preferences.yaml'
 REPO_CONFIG_FILE = 'metadata.yaml'
 VARIABLE_DIR = '.variables'
+CHILD_DATA_VARIABLE_UUID = 'output_0'
 
 PIPELINE_RUN_STATUS_LAST_RUN_FAILED = 'last_run_failed'
 

@@ -1,14 +1,12 @@
 from typing import Any, Iterable, List, Optional, Sequence
 
 from mage_ai.data.tabular.reader import read_metadata
-from mage_ai.data_preparation.models.block.dynamic.constants import (
-    CHILD_DATA_VARIABLE_UUID,
-)
 from mage_ai.data_preparation.models.block.dynamic.utils import (
     is_dynamic_block,
     is_dynamic_block_child,
     should_reduce_output,
 )
+from mage_ai.data_preparation.models.constants import CHILD_DATA_VARIABLE_UUID
 from mage_ai.data_preparation.models.variables.cache import VariableAggregateCache
 from mage_ai.data_preparation.models.variables.constants import (
     VariableAggregateDataType,
