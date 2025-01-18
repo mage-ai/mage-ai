@@ -65,7 +65,7 @@ setuptools.setup(
             'clickhouse-connect~=0.6.23',
         ],
         'dbt': [
-            'dbt-adapters==1.7.0',
+            'dbt-adapters==1.8.0',
             'dbt-bigquery==1.8.3',
             'dbt-clickhouse==1.8.5',
             'dbt-core==1.8.7',
@@ -147,7 +147,7 @@ setuptools.setup(
             'clickhouse-connect~=0.6.23',
             'confluent-avro~=1.8.0',
             'db-dtypes==1.0.5',
-            'dbt-adapters==1.7.0',
+            'dbt-adapters==1.8.0',
             'dbt-bigquery==1.8.3',
             'dbt-clickhouse==1.8.5',
             'dbt-core==1.8.7',
