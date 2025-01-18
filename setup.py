@@ -33,7 +33,7 @@ setuptools.setup(
         'Operating System :: OS Independent',
     ],
     install_requires=requirements,
-    python_requires='>=3.7',
+    python_requires='>=3.9',
     entry_points={
         'console_scripts': [
             'mage=mage_ai.cli.main:app',
