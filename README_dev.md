@@ -12,7 +12,7 @@ We'd love to have your contribution, but first you'll need to configure your loc
 > [!WARNING]
 > _All commands below, without any notes, assume you are at the root of the repo._
 
-Mage server uses Python >=3.9 (as per `setup.py`), and the development dependencies will complain if you're not using at least Python 3.9. We [use Python 3.12](./Dockerfile).
+Mage server uses Python >=3.9 (as per `setup.py`), and the development dependencies will complain if you're not using at least Python 3.9. We [use Python 3.11](./Dockerfile).
 
 As such, make sure you have Python >=3.8. Verify this with:
 
@@ -30,13 +30,13 @@ Using a virtual environment is recommended.
 
 Create an Anaconda virtual environment with the correct version of python:
 ```bash
-conda create -n python3.12 python==3.12
+conda create -n python3.11 python==3.11
 ```
 
 Activate that virtual environment (to get the right version of Python on your PATH):
 
 ```bash
-conda activate python3.12
+conda activate python3.11
 ```
 
 Verify that the correct Python version is being used:

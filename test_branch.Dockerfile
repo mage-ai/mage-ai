@@ -1,4 +1,4 @@
-FROM python:3.12-bookworm
+FROM python:3.11-bookworm
 LABEL description="Deploy Mage on ECS"
 USER root
 
