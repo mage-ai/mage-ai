@@ -67,9 +67,17 @@ def execute_raw_sql(
     query_string: str,
     configuration: Dict = None,
     should_query: bool = False,
+    disable_query_preprocessing: bool = False,
 ) -> List[Any]:
     if configuration is None:
         configuration = {}
+
+    if disable_query_preprocessing:
+        return loader.execute_query_raw(
+            query_string,
+            configuration=configuration,
+        )
+
     queries = []
     fetch_query_at_indexes = []
 

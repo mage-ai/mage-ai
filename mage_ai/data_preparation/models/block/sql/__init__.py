@@ -368,6 +368,7 @@ def execute_sql_code(
                     loader,
                     block,
                     query_string,
+                    disable_query_preprocessing=disable_query_preprocessing,
                     configuration=configuration,
                     should_query=should_query,
                 )
