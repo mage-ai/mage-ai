@@ -6,7 +6,7 @@ authors = ["Mage"]
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = ">=3.9,<4.0"
+python = ">=3.8,<4.0"
 
 [tool.poetry.group.dev.dependencies]
 mypy = "*"
