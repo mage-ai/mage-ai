@@ -5,7 +5,9 @@ from typing import Any, Dict, Optional, Tuple, Union
 
 import dbt.flags as flags
 import pandas as pd
-from dbt.adapters.base import BaseRelation, Credentials
+from dbt.adapters.base.relation import BaseRelation
+from dbt.adapters.contracts.connection import AdapterResponse, Credentials
+from dbt.adapters.contracts.relation import RelationType
 from dbt.adapters.factory import (
     Adapter,
     cleanup_connections,
@@ -13,10 +15,10 @@ from dbt.adapters.factory import (
     register_adapter,
     reset_adapters,
 )
-from dbt.config.profile import read_user_config
+from dbt.config.project import read_project_flags
 from dbt.config.runtime import RuntimeConfig
-from dbt.contracts.connection import AdapterResponse
-from dbt.contracts.relation import RelationType
+from dbt.context.providers import generate_runtime_macro_context
+from dbt.mp_context import get_mp_context
 
 from mage_ai.data_preparation.models.block.dbt.profiles import Profiles
 from mage_ai.shared.environments import is_debug
@@ -79,7 +81,11 @@ class DBTAdapter:
         # remove interpolated profiles.yml
         self.__profiles.clean()
 
-    def execute(self, sql: str, fetch: bool = False) -> Tuple[AdapterResponse, pd.DataFrame]:
+    def execute(
+        self,
+        sql: str,
+        fetch: bool = False
+    ) -> Tuple[AdapterResponse, pd.DataFrame]:
         """
         Executes any sql statement using the dbt adapter.
 
@@ -134,6 +140,8 @@ class DBTAdapter:
             self.__adapter.config.project_name,
             package
         )
+
+        self.__adapter.set_macro_resolver(manifest)
 
         # create a context for the macro (e.g. downstream macros)
         from dbt.context.providers import generate_runtime_macro_context
@@ -203,7 +211,7 @@ class DBTAdapter:
         # set dbt flags
         # Need to add profiles.yml file
         try:
-            user_config = read_user_config(profiles_path)
+            user_config = read_project_flags(self.project_path, profiles_path)
         except Exception as err:
             print(f'[ERROR] DBTAdapter.open: {err}.')
 
@@ -211,7 +219,10 @@ class DBTAdapter:
                     not profiles_path.endswith('profiles.yml'):
 
                 try:
-                    user_config = read_user_config(os.path.join(profiles_path, 'profiles.yml'))
+                    user_config = read_project_flags(
+                        self.project_path,
+                        os.path.join(profiles_path, 'profiles.yml')
+                    )
                 except Exception as err2:
                     print(f'[ERROR] DBTAdapter.open: {err2}.')
                     raise err
@@ -227,9 +238,10 @@ class DBTAdapter:
             config = RuntimeConfig.from_args(adapter_config)
             reset_adapters()
             # register the correct adapter from config
-            register_adapter(config)
+            register_adapter(config, mp_context=get_mp_context())
             # load the adapter
             self.__adapter = get_adapter(config)
+            self.__adapter.set_macro_context_generator(generate_runtime_macro_context)
             # connect
             self.__adapter.acquire_connection('mage_dbt_adapter_' + uuid.uuid4().hex)
             return self
