@@ -14,7 +14,7 @@ We'd love to have your contribution, but first you'll need to configure your loc
 
 Mage server uses Python >=3.9 (as per `setup.py`), and the development dependencies will complain if you're not using at least Python 3.9. We [use Python 3.11](./Dockerfile).
 
-As such, make sure you have Python >=3.8. Verify this with:
+As such, make sure you have Python >=3.9. Verify this with:
 
 ```bash
 git clone https://github.com/mage-ai/mage-ai mage-ai
