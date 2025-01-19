@@ -196,7 +196,7 @@ setuptools.setup(
             'pydruid==0.6.5',
             'pymongo==4.3.3',
             "pyodbc==4.0.35; python_version < '3.12'",
-            "pyodbc==5.0.1; python_version >= '3.12'",
+            "pyodbc==5.2.0; python_version >= '3.12'",
             'redshift-connector==2.0.915',
             'lxml==4.9.4',
             'requests_aws4auth==1.1.2',
