@@ -12,7 +12,7 @@ We'd love to have your contribution, but first you'll need to configure your loc
 > [!WARNING]
 > _All commands below, without any notes, assume you are at the root of the repo._
 
-Mage server uses Python >=3.8 (as per `setup.py`), and the development dependencies will complain if you're not using at least Python 3.8. We [use Python 3.12](./Dockerfile).
+Mage server uses Python >=3.9 (as per `setup.py`), and the development dependencies will complain if you're not using at least Python 3.9. We [use Python 3.12](./Dockerfile).
 
 As such, make sure you have Python >=3.8. Verify this with:
 
