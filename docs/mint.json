@@ -257,7 +257,7 @@
     },
     {
       "source": "/tutorials/setup-dbt",
-      "destination": "/guides/setup-dbt"
+      "destination": "/guides/dbt/setup-dbt"
     },
     {
       "source": "/tutorials/train-model",
