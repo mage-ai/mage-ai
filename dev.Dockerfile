@@ -1,4 +1,4 @@
-FROM python:3.10-bookworm
+FROM python:3.11-bookworm
 LABEL description="Mage data management platform"
 ARG PIP=pip3
 USER root
