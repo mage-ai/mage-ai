@@ -16,6 +16,7 @@ QUERY_ROW_LIMIT = 10_000_000
 
 
 class DataSource(StrEnum):
+    AIRTABLE = 'airtable'
     ALGOLIA = 'algolia'
     API = 'api'
     BIGQUERY = 'bigquery'
