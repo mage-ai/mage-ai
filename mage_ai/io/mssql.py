@@ -198,9 +198,11 @@ class MSSQL(BaseSQL):
                 TrustServerCertificate='yes',
             ),
         )
+        conn_kwargs = extract(kwargs, ['pool_size', 'max_overflow'])
         engine = create_engine(
             connection_url,
             fast_executemany=True,
+            **conn_kwargs,
         )
 
         unique_conflict_method = kwargs.get('unique_conflict_method')
