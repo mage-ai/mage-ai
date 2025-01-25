@@ -131,6 +131,7 @@ dbt-redshift==1.8.1
 dbt-snowflake==1.8.4
 dbt-spark==1.8.0
 dbt-sqlserver==1.8.4
+dbt-synapse==1.8.2
 dbt-trino==1.8.4
 
 async-timeout==4.0.3
