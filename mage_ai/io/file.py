@@ -24,6 +24,7 @@ class FileIO(BaseFile):
         Args:
             filepath (os.PathLike): Filepath to load data frame from.
             format (Union[FileFormat, str], Optional): Format of the file to load data frame from.
+            encoding (str, Optional): Character encoding of the file.
             Defaults to None, in which case the format is inferred.
 
         Returns:
@@ -35,7 +36,7 @@ class FileIO(BaseFile):
                 if format is None:
                     format = self._get_file_format(filepath)
 
-                return self._read(filepath, format, **kwargs)
+                return self._read(filepath, format, encoding, **kwargs)
 
             file_paths = []
             for file_directory in file_directories:
@@ -45,7 +46,7 @@ class FileIO(BaseFile):
             for fp in file_paths:
                 if format is None:
                     format = self._get_file_format(fp)
-                df = self._read(fp, format, **kwargs)
+                df = self._read(fp, format, encoding, **kwargs)
                 dfs.append(df)
 
             return pd.concat(dfs, axis=0, ignore_index=True)
@@ -64,12 +65,13 @@ class FileIO(BaseFile):
             df (DataFrame): Data frame to export.
             filepath (os.PathLike): Filepath to export data frame to.
             format (Union[FileFormat, str], Optional): Format of the file to export data frame to.
+            encoding (str, Optional): Character encoding of the file.
             Defaults to None, in which case the format is inferred.
         """
         if format is None:
             format = self._get_file_format(filepath)
         with self.printer.print_msg(f'Exporting data frame to \'{filepath}\''):
-            self._write(df, format, filepath, **kwargs)
+            self._write(df, format, filepath, encoding, **kwargs)
 
     def exists(
         self,
