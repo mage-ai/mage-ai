@@ -137,6 +137,8 @@ export default interface PermissionType {
   entity_id?: number | string;
   entity_name?: string;
   entity_names?: string[];
+  entity_scope?: string;
+  enttiy_scope_id?: string;
   entity_type?: string;
   entity_types?: string[];
   id?: number;
