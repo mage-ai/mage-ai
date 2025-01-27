@@ -1,5 +1,6 @@
 import logging
 import os
+from functools import wraps
 from urllib.parse import parse_qs, quote_plus, urlparse
 
 import sqlalchemy
@@ -167,6 +168,25 @@ def safe_db_query(func):
                 retry_count += 1
 
     return func_with_rollback
+
+
+def safe_db_query_async(func):
+    @wraps(func)
+    async def func_with_rollback_async(*args, **kwargs):
+        retry_count = 0
+        while True:
+            try:
+                return await func(*args, **kwargs)
+            except (
+                sqlalchemy.exc.OperationalError,
+                sqlalchemy.exc.PendingRollbackError,
+                sqlalchemy.exc.InternalError,
+            ) as e:
+                db_connection.session.rollback()
+                if retry_count >= DB_RETRY_COUNT:
+                    raise e
+                retry_count += 1
+    return func_with_rollback_async
 
 
 logging.basicConfig()

@@ -6,7 +6,7 @@ from mage_ai.authentication.ldap import new_ldap_connection
 from mage_ai.authentication.oauth2 import encode_token, generate_access_token
 from mage_ai.authentication.passwords import verify_password
 from mage_ai.authentication.providers.constants import NAME_TO_PROVIDER
-from mage_ai.orchestration.db import safe_db_query
+from mage_ai.orchestration.db import safe_db_query, safe_db_query_async
 from mage_ai.orchestration.db.models.oauth import Role, User
 from mage_ai.settings import (
     AUTHENTICATION_MODE,
@@ -20,7 +20,7 @@ from mage_ai.usage_statistics.logger import UsageStatisticLogger
 
 class SessionResource(BaseResource):
     @classmethod
-    @safe_db_query
+    @safe_db_query_async
     async def create(self, payload, _, **kwargs):
         email = payload.get('email')
         password = payload.get('password')
