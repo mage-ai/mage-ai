@@ -12,7 +12,7 @@
 | `password` | Authentication to the SFTP Server (optional) |  `ABC1...` |
 | `tables` | An array of tables to load. See table configuration below |
 | `start_date` | Earliest file date to synchronize | `2021-01-28` |  
-| `decryption_config` | Decryption configs for the SFTP files. See table configuration below |
+| `decryption_config` | Decryption configs for the SFTP files. See table configuration below (optional) |
 | `private_key_file` | Authentication to the SFTP Server (optional) | `/bin/home/securefolder` |
 
 
