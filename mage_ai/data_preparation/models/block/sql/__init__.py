@@ -150,6 +150,7 @@ def execute_sql_code(
     interpolate_vars_options = dict(
         block=block,
         dynamic_block_index=dynamic_block_index,
+        execution_partition=execution_partition,
         global_vars=global_vars,
     )
 

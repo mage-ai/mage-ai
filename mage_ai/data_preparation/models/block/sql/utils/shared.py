@@ -232,7 +232,8 @@ def interpolate_vars(
     content: str,
     global_vars: Dict = None,
     block=None,
-    dynamic_block_index: int = None
+    dynamic_block_index: int = None,
+    execution_partition: str = None,
 ) -> str :
     if not content:
         return content
@@ -241,7 +242,10 @@ def interpolate_vars(
 
     if block:
         content = block.interpolate_content(
-            content, variables=global_vars, dynamic_block_index=dynamic_block_index,
+            content,
+            variables=global_vars,
+            dynamic_block_index=dynamic_block_index,
+            execution_partition=execution_partition,
         )
 
     return Template(
