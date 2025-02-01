@@ -100,7 +100,7 @@ jobs:
         env:
           PYTHONPATH: ${{ env.pythonLocation }}:. # Playwright tests on CI depend on the Python web server
         if: matrix.python-version == '3.10'
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: playwright-report
@@ -139,7 +139,7 @@ jobs:
           yarn playwright install chromium &&
           yarn playwright test -c playwright-windows.config.ci.ts
         working-directory: mage_ai/frontend/
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: playwright-report
