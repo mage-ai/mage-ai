@@ -5,6 +5,7 @@ from typing import Dict, Union
 from pandas import DataFrame
 from redshift_connector import connect
 
+from mage_ai.data_preparation.models.block.sql.utils.shared import split_query_string
 from mage_ai.io.base import QUERY_ROW_LIMIT, ExportWritePolicy
 from mage_ai.io.config import BaseConfigLoader, ConfigKey
 from mage_ai.io.export_utils import clean_df_for_export, infer_dtypes
@@ -66,6 +67,18 @@ class Redshift(BaseSQL):
             query_string = self._clean_query(query_string)
             with self.conn.cursor() as cur:
                 cur.execute(query_string, **kwargs)
+
+    def execute_query_raw(self, query: str, **kwargs) -> None:
+        """
+        Overwrite execute query to process multiple queries in one string.
+        """
+        results = []
+        with self.conn.cursor() as cursor:
+            for query_string in split_query_string(query):
+                result = cursor.execute(query_string)
+                results.append(result)
+        self.conn.commit()
+        return results
 
     def load(
         self,
