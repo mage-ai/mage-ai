@@ -3,7 +3,8 @@ from typing import Optional
 from sqlalchemy import Column, String, Text, UniqueConstraint, or_
 
 from mage_ai.orchestration.db import safe_db_query
-from mage_ai.orchestration.db.models.base import BaseModel
+from mage_ai.orchestration.db.models.base import BaseModel, classproperty
+from mage_ai.settings.repo import get_repo_path
 
 
 class Secret(BaseModel):
@@ -14,6 +15,15 @@ class Secret(BaseModel):
     repo_name = Column(String(255))
     key_uuid = Column(String(255), nullable=True)
     __table_args__ = (UniqueConstraint('name', 'key_uuid', name='name_key_uuid_uc'),)
+
+    @classproperty
+    def repo_query(cls):
+        return cls.query.filter(
+            or_(
+                Secret.repo_name == get_repo_path(),
+                Secret.repo_name.is_(None),
+            )
+        )
 
     @classmethod
     @safe_db_query
