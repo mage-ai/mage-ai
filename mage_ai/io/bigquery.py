@@ -401,6 +401,7 @@ WHERE table_id = '{table_name}'
             # Clean column names
             if type(df) is DataFrame:
                 df.columns = df.columns.str.replace(' ', '_')
+            table = None
             try:
                 # Cast column types
                 table = self.client.get_table(table_id)
