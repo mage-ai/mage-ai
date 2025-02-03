@@ -1,7 +1,9 @@
+import traceback
 import uuid
 from typing import Dict, List, Mapping, Union
 
 import numpy as np
+import pandas as pd
 from google.cloud.bigquery import (
     Client,
     LoadJobConfig,
@@ -399,8 +401,27 @@ WHERE table_id = '{table_name}'
             # Clean column names
             if type(df) is DataFrame:
                 df.columns = df.columns.str.replace(' ', '_')
+            try:
+                # Cast column types
+                table = self.client.get_table(table_id)
+            except Exception:
+                print(f'Table {table_id} does not exist.')
+                pass
 
-            return self.client.load_table_from_dataframe(df, table_id, job_config=config).result()
+            if table is not None:
+                try:
+                    timestamp_columns = [field.name for field in table.schema
+                                         if field.field_type == 'TIMESTAMP']
+
+                    # Convert TIMESTAMP columns in DataFrame
+                    for col in timestamp_columns:
+                        if col in df.columns:
+                            df[col] = pd.to_datetime(df[col])
+                except Exception:
+                    print('Fail to cast column types in dataframe.')
+                    traceback.print_exc()
+
+            return self.client.load_table_from_dataframe(df, table_id).result()
 
     def execute(self, query_string: str, **kwargs) -> None:
         """
