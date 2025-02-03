@@ -163,7 +163,7 @@ class SyncResource(GenericResource):
         access_token = user_payload.pop('access_token', None)
         if access_token:
             secret_name = get_access_token_secret_name(user=user)
-            secret = Secret.query.filter(Secret.name == secret_name).one_or_none()
+            secret = Secret.repo_query.filter(Secret.name == secret_name).one_or_none()
             if secret:
                 secret.delete()
             create_secret(secret_name, access_token, repo_name=repo_name)
