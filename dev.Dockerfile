@@ -52,7 +52,9 @@ RUN \
   pip3 install --no-cache-dir "git+https://github.com/mage-ai/dbt-mysql.git#egg=dbt-mysql" && \
   pip3 install --no-cache-dir "git+https://github.com/mage-ai/sqlglot#egg=sqlglot" && \
   # faster-fifo is not supported on Windows: https://github.com/alex-petrenko/faster-fifo/issues/17
-  pip3 install --no-cache-dir faster-fifo
+  pip3 install --no-cache-dir faster-fifo && \
+  pip3 install --no-cache-dir google-ads==25.1.0 && \
+  pip3 install --no-cache-dir protobuf==4.25.6
 COPY mage_integrations /tmp/mage_integrations
 RUN \
   pip3 install --no-cache-dir /tmp/mage_integrations && \
