@@ -43,7 +43,7 @@ setuptools.setup(
         'ai': [
             'astor>=0.8.1',
             'langchain==0.1.7',
-            'langchain_community<0.0.20',
+            'langchain_community==0.0.20',
             'openai==1.39.0',
         ],
         'azure': [
@@ -175,7 +175,7 @@ setuptools.setup(
             'kafka-python==2.0.2',
             'kubernetes>=28.1.0',
             'langchain==0.1.7',
-            'langchain_community<0.0.20',
+            'langchain_community==0.0.20',
             'ldap3==2.9.1',
             'nats-py==2.6.0',
             'nkeys~=0.2.0',
