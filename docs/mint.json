@@ -751,7 +751,8 @@
         "guides/developer-ux/file-browser",
         "guides/developer-ux/code-browser",
         "guides/developer-ux/sidekick",
-        "guides/developer-ux/personalize"
+        "guides/developer-ux/personalize",
+        "guides/developer-ux/workspaces"
       ]
     },
     {
