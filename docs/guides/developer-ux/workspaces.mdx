@@ -1,0 +1,105 @@
+---
+title: "Mage Pro workspaces"
+sidebarTitle: "Workspaces"
+icon: "briefcase"
+description: "Set up Mage Pro workspaces for organizing your own personal environment."
+---
+
+<iframe width="560" height="315" src="https://www.youtube.com/embed/O84nC2aOsT4?si=LWWVenWeQDM8YXL_" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+
+## Overview
+
+Mage Pro workspaces provide isolated environments for developing and managing data pipelines. Each workspace operates as a separate container instance, allowing for independent resource allocation and configuration management.
+
+## Core Components
+
+- Runtime Environment: Containerized Python environment
+- Storage System: Persistent volume for code and data
+- Resource Manager: Kubernetes-based resource allocation
+- Access Control: Role-based permission system
+
+## Setup Guide
+
+- **Step 1**: After logging into the Mage Pro environment you will be in the Workspaces interface. Press the Create new workspace button.
+- **Step 2**:  Give the workspace a name.
+    - Remember you need to use lowercase letters, numbers, or special characters. No spaces are allowed in the workspace name.
+- **Step 3**: Click the dropdown arrow and toggle on the Kubernetes configuration if you need to custom configure your Kubernetes container. (see Kubernetes container configuration section for more details).
+- **Step 4**: Click the Lifecycle (optional) dropdown to create lifecycle management policies (see Lifecycle management policies section for more information).
+- **Step 4**: Click the create button and wait a few minutes for your workspace to start.
+- **Step 5**: Once your workspace is running, click the workspace open button under the open column in the workspace management interface.
+
+## Kubernetes container configuration
+
+Kubernetes provides a robust container orchestration system for managing your workspace resources and environment. The configuration above covers two key aspects:
+
+1. Resource Configuration: Controls memory and CPU allocation for your workspace container, with both minimum guarantees and upper limits to ensure stable performance.
+2. Environment Configuration: Enables customization of environment variables, specifically the project code location if you've modified it from the default path.
+
+These settings help maintain workspace stability and ensure proper resource allocation for development tasks.
+
+### Environment configuration
+
+If you've modified the default `USER_CODE_PATH` environment variable in the base project (Mage Pro management portal), update your Kubernetes configuration:
+
+```yaml
+env:
+  - name: USER_CODE_PATH
+    value: /home/src/<path_to_folder>
+```
+
+This environment variable tells your workspace where to find your project code.
+
+### Resource configuration (optional)
+
+**Optionally** configure your workspace's computing resources in Kubernetes:
+
+```yaml
+resources:
+  requests: # Minimum resources guaranteed
+    memory: "2Gi" # 2 gigabytes of RAM
+    cpu: "1" # 1 full CPU core
+  limits: # Maximum resources allowed
+    memory: "4Gi" # 4 gigabytes RAM ceiling
+    cpu: "2" # Can use up to 2 CPU cores
+```
+
+This configuration ensures your workspace has adequate resources for development while preventing resource overconsumption. The requests represent guaranteed minimums, while limits prevent your workspace from using more than its allocated share.
+
+## Lifecycle management policies
+
+Mage Pro workspaces support various lifecycle management policies that control how your workspace behaves throughout its runtime. These policies include automated termination settings, pre-initialization scripts, and post-initialization procedures, giving you complete control over your workspace's behavior from startup to shutdown.
+
+### Termination Policy
+
+The termination policy controls how your workspace shuts down when inactive. You can enable auto-termination, which will automatically shut down your workspace after a specified period of inactivity. The idle time is measured in seconds, and you can set this duration based on your needs. For example, you might set it to 1800 seconds (30 minutes) or 3600 seconds (1 hour).
+
+### Pre-Start Scripts
+
+Pre-start scripts run before your workspace container is initialized. These scripts must include a `get_custom_configs` method that returns a dictionary of configurations. This is where you can set up environment variables, modify container configurations, and prepare any necessary resources. The script executes before any workspace services start, making it ideal for initial setup and configuration tasks.
+
+### Post-Start Scripts
+
+Post-start scripts execute after your workspace is fully initialized and running. You can specify either a direct command or provide a path to a script for more complex procedures. These scripts are typically used for starting services, performing health checks, or completing any additional setup tasks that require the workspace to be fully operational.
+
+## Global Roles
+
+Users can be assigned global roles that apply across all workspaces within your Mage Pro environment. Global role assignment is managed by project administrators through Users tab in left navigation menu located in the main project interface.
+
+## Workspace-Specific Roles
+
+Individual workspaces can have unique role settings. Workspace owners can:
+
+- Assign user roles specific to their workspace
+- Modify existing role assignments
+- Remove user access to their workspace
+
+<Frame>
+    <p align="center">
+        <img
+            alt="Workspace roles UI"
+            src="https://github.com/mage-ai/assets/blob/main/guides/workspaces/workspaces-roles-ui.png?raw=true"
+        />
+    </p>
+</Frame>
+
+Understanding and properly configuring your Mage Pro workspaces is essential for efficient data pipeline development and management. With the right combination of resource allocation, lifecycle policies, and user permissions, you can create a stable and secure environment tailored to your project's needs. 
