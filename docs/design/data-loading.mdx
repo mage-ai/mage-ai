@@ -905,6 +905,7 @@ MYSQL_HOST: MySQL database hostname
 MYSQL_PASSWORD: MySQL database login password
 MYSQL_PORT: MySQL database port
 MYSQL_USER: MySQL database login username
+MYSQL_ALLOW_LOCAL_INFILE: Pass boolean value to `allow_local_infile` param during connection to enbale the capability to load local data file.
 ```
 
 <h3> Constructor </h3>
@@ -919,6 +920,7 @@ Initializes the MySQL data loading client.
     -   `password (str)`: The login password for the user.
     -   `host (str)`: Host address for database.
     -   `port (int)`: Port on which the database is running Defaults to 3306.
+    -   `allow_local_infile (bool)`: Enables verbose capability to load local file. Defaults to `False`.
     -   `verbose (bool)`: Enables verbose output printing. Defaults to `True`.
     -   `**kwargs`: Additional settings for creating psycopg2 connection
 
