@@ -8,6 +8,7 @@ from mage_ai.data_preparation.models.triggers import (
 from mage_ai.orchestration.db import safe_db_query
 from mage_ai.orchestration.db.models.schedules import PipelineSchedule
 from mage_ai.settings.repo import get_repo_path
+from mage_ai.settings.server import HIDE_API_TRIGGER_TOKEN
 
 
 class PipelineTriggerResource(GenericResource):
@@ -50,9 +51,10 @@ class PipelineTriggerResource(GenericResource):
                 sla=pipeline_schedule.sla,
                 start_time=pipeline_schedule.start_time,
                 status=pipeline_schedule.status,
-                token=pipeline_schedule.token,
                 variables=pipeline_schedule.variables,
             )
+            if not HIDE_API_TRIGGER_TOKEN:
+                trigger.token = pipeline_schedule.token
         else:
             trigger = Trigger(**payload)
 

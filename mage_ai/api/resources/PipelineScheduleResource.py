@@ -29,6 +29,7 @@ from mage_ai.orchestration.db.models.tags import (
 )
 from mage_ai.settings.platform import project_platform_activated
 from mage_ai.settings.repo import get_repo_path
+from mage_ai.settings.server import HIDE_API_TRIGGER_TOKEN
 from mage_ai.shared.hash import ignore_keys, merge_dict
 
 
@@ -430,9 +431,10 @@ class PipelineScheduleResource(DatabaseResource):
                 sla=updated_model.sla,
                 start_time=updated_model.start_time,
                 status=updated_model.status,
-                token=updated_model.token,
                 variables=updated_model.variables,
             )
+            if not HIDE_API_TRIGGER_TOKEN:
+                trigger.token = updated_model.token
 
             update_only_if_exists = (
                 not pipeline.should_save_trigger_in_code_automatically()
