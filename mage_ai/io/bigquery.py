@@ -421,8 +421,22 @@ WHERE table_id = '{table_name}'
                 except Exception:
                     print('Fail to cast column types in dataframe.')
                     traceback.print_exc()
-
-            return self.client.load_table_from_dataframe(df, table_id).result()
+                if (
+                    not config.schema and
+                    config.write_disposition == WriteDisposition.WRITE_TRUNCATE
+                ):
+                    df_columns = df.columns.tolist()
+                    config.schema = [
+                        SchemaField(
+                            field.name,
+                            field.field_type,
+                            mode=field.mode,
+                            fields=field.fields,
+                        )
+                        for field in table.schema
+                        if field.name in df_columns
+                    ]
+            return self.client.load_table_from_dataframe(df, table_id, job_config=config).result()
 
     def execute(self, query_string: str, **kwargs) -> None:
         """
