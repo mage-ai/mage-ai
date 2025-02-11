@@ -42,14 +42,16 @@ class MySQL(BaseSQL):
 
     @classmethod
     def with_config(cls, config: BaseConfigLoader) -> 'MySQL':
-        return cls(
+        conn_kwargs = dict(
             database=config[ConfigKey.MYSQL_DATABASE],
             host=config[ConfigKey.MYSQL_HOST],
             password=config[ConfigKey.MYSQL_PASSWORD],
             port=config[ConfigKey.MYSQL_PORT],
             user=config[ConfigKey.MYSQL_USER],
-            allow_local_infile=config[ConfigKey.MYSQL_ALLOW_LOCAL_INFILE],
         )
+        if config[ConfigKey.MYSQL_ALLOW_LOCAL_INFILE] is not None:
+            conn_kwargs['allow_local_infile'] = config[ConfigKey.MYSQL_ALLOW_LOCAL_INFILE]
+        return cls(**conn_kwargs)
 
     def build_create_table_command(
         self,
