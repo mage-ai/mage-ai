@@ -58,8 +58,8 @@
   ],
   "topbarCtaButton": {
     "type": "link",
-    "name": "Demo playground",
-    "url": "https://www.mage.ai/demo",
+    "name": "Get a demo",
+    "url": "https://mage.ai/getdemo",
     "style": "pill",
     "arrow": true
   },
