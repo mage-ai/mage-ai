@@ -44,15 +44,24 @@ class Snowflake(Destination):
         return self.config.get('disable_double_quotes', False)
 
     def build_connection(self) -> SnowflakeConnection:
-        return SnowflakeConnection(
-            account=self.config['account'],
-            database=self.config['database'],
-            password=self.config['password'],
-            schema=self.config['schema'],
-            username=self.config['username'],
-            warehouse=self.config['warehouse'],
-            role=self.config.get('role'),
-        )
+        conn_kwargs = {
+            "account": self.config["account"],
+            "database": self.config["database"],
+            "schema": self.config["schema"],
+            "warehouse": self.config["warehouse"],
+            "role": self.config.get("role"),
+            "username": self.config["username"],
+        }
+
+        if self.config.get("private_key"):
+            conn_kwargs.update({
+                "private_key": self.config["private_key"],
+                "passphrase": self.config["passphrase"],
+            })
+        else:
+            conn_kwargs["password"] = self.config["password"]
+
+        return SnowflakeConnection(**conn_kwargs)
 
     def build_create_table_commands(
         self,
