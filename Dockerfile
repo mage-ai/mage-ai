@@ -46,6 +46,8 @@ RUN \
   pip3 install --no-cache-dir "git+https://github.com/mage-ai/sqlglot#egg=sqlglot" && \
   # faster-fifo is not supported on Windows: https://github.com/alex-petrenko/faster-fifo/issues/17
   pip3 install --no-cache-dir faster-fifo && \
+  pip3 install --no-cache-dir google-ads==25.1.0 && \
+  pip3 install --no-cache-dir protobuf==4.25.6 && \
   if [ -z "$FEATURE_BRANCH" ] || [ "$FEATURE_BRANCH" = "null" ]; then \
   pip3 install --no-cache-dir "git+https://github.com/mage-ai/mage-ai.git#egg=mage-integrations&subdirectory=mage_integrations"; \
   else \
