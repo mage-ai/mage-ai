@@ -752,7 +752,8 @@
         "guides/developer-ux/code-browser",
         "guides/developer-ux/sidekick",
         "guides/developer-ux/personalize",
-        "guides/developer-ux/workspaces"
+        "guides/developer-ux/workspaces",
+        "guides/developer-ux/visual-studio-code"
       ]
     },
     {
