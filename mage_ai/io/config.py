@@ -16,6 +16,8 @@ class ConfigKey(StrEnum):
     List of configuration settings for use with data IO clients.
     """
 
+    AIRTABLE_ACCESS_TOKEN = "AIRTABLE_ACCESS_TOKEN"
+
     ALGOLIA_APP_ID = 'ALGOLIA_APP_ID'
     ALGOLIA_API_KEY = 'ALGOLIA_API_KEY'
     ALGOLIA_INDEX_NAME = 'ALGOLIA_INDEX_NAME'
@@ -339,6 +341,7 @@ class VerboseConfigKey(StrEnum):
     Config key headers for the verbose configuration file format.
     """
 
+    AIRTABLE = 'Airtable'
     ALGOLIA = 'Algolia'
     AWS = 'AWS'
     BIGQUERY = 'BigQuery'
@@ -357,6 +360,7 @@ class VerboseConfigKey(StrEnum):
 
 class ConfigFileLoader(BaseConfigLoader):
     KEY_MAP = {
+        ConfigKey.AIRTABLE_ACCESS_TOKEN: VerboseConfigKey.AIRTABLE,
         ConfigKey.ALGOLIA_APP_ID: (
             VerboseConfigKey.ALGOLIA, 'app_id'),
         ConfigKey.ALGOLIA_API_KEY: (
