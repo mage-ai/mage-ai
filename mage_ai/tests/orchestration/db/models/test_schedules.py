@@ -3,6 +3,7 @@ from datetime import datetime, timedelta, timezone
 from unittest.mock import Mock, patch
 from uuid import uuid4
 
+from cron_converter import Cron
 from croniter import croniter
 from freezegun import freeze_time
 
@@ -950,7 +951,9 @@ class PipelineScheduleTests(DBTestCase):
             datetime(2023, 10, 1, 0, 0, 0).replace(tzinfo=timezone.utc),
         )
 
-        cron_itr = croniter('* * * * *', now)
+        # cron_itr = croniter('* * * * *', now)
+        cron_instance = Cron('* * * * *')
+        cron_schedule = cron_instance.schedule(now)
         self.assertEqual(
             PipelineSchedule.create(
                 **merge_dict(
@@ -961,7 +964,8 @@ class PipelineScheduleTests(DBTestCase):
                     ),
                 )
             ).current_execution_date(),
-            cron_itr.get_prev(datetime),
+            # cron_itr.get_prev(datetime),
+            cron_schedule.prev(),
         )
 
     @freeze_time('2023-10-11 12:13:14')
@@ -1034,7 +1038,9 @@ class PipelineScheduleTests(DBTestCase):
             datetime(2023, 10, 12, 13, 14, 15).replace(tzinfo=timezone.utc),
         )
 
-        cron_itr = croniter('* * * * *', now)
+        # cron_itr = croniter('* * * * *', now)
+        cron_instance = Cron('* * * * *')
+        cron_schedule = cron_instance.schedule(now)
         self.assertEqual(
             PipelineSchedule.create(
                 **merge_dict(
@@ -1045,7 +1051,8 @@ class PipelineScheduleTests(DBTestCase):
                     ),
                 )
             ).current_execution_date(),
-            cron_itr.get_prev(datetime),
+            # cron_itr.get_prev(datetime),
+            cron_schedule.prev(),
         )
 
     @freeze_time('2023-08-19 20:10:15')
@@ -1117,7 +1124,9 @@ class PipelineScheduleTests(DBTestCase):
             datetime(2023, 9, 1, 0, 0, 0).replace(tzinfo=timezone.utc),
         )
 
-        cron_itr = croniter('30 9 * 8 *', now)
+        # cron_itr = croniter('30 9 * 8 *', now)
+        cron_instance = Cron('30 9 * 8 *')
+        cron_schedule = cron_instance.schedule(now)
         self.assertEqual(
             PipelineSchedule.create(
                 **merge_dict(
@@ -1128,7 +1137,8 @@ class PipelineScheduleTests(DBTestCase):
                     ),
                 )
             ).next_execution_date(),
-            cron_itr.get_next(datetime),
+            # cron_itr.get_next(datetime),
+            cron_schedule.next(),
         )
 
     @freeze_time('2023-08-19 20:10:15')
