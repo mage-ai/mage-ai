@@ -5,6 +5,7 @@ from datetime import datetime, timezone
 from typing import Dict, List, Optional
 
 import yaml
+from cron_converter import Cron
 from croniter import croniter
 
 from mage_ai.data_preparation.models.constants import PIPELINES_FOLDER
@@ -84,6 +85,13 @@ class Trigger(BaseConfig):
                 f'Please provide valid env values inside {list(VALID_ENVS)}.'
             )
 
+    def __is_valid_cron_interval(self, schedule_interval):
+        try:
+            Cron(schedule_interval)  # Try parsing the cron string
+            return True
+        except Exception as e:
+            return False
+
     @property
     def has_valid_schedule_interval(self) -> bool:
         # Check if trigger has valid cron expression
@@ -91,7 +99,7 @@ class Trigger(BaseConfig):
             self.schedule_interval is not None
             and self.schedule_type == ScheduleType.TIME
             and self.schedule_interval not in [e.value for e in ScheduleInterval]
-            and not croniter.is_valid(self.schedule_interval)
+            and not __is_valid_cron_interval(self.schedule_interval)
         ):
             return False
 
