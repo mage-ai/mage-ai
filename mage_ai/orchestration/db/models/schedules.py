@@ -8,10 +8,6 @@ from typing import DefaultDict, Dict, List
 
 import dateutil.parser
 import pytz
-from cron_converter import Cron
-from croniter import croniter
-from mage_ai.shared.croniter import Croniter
-
 from dateutil.relativedelta import relativedelta
 from sqlalchemy import (
     JSON,
@@ -70,10 +66,10 @@ from mage_ai.orchestration.db.models.schedules_project_platform import (
 )
 from mage_ai.orchestration.db.models.tags import Tag, TagAssociation
 from mage_ai.server.kernel_output_parser import DataType
-from mage_ai.server.logger import Logger
 from mage_ai.settings.platform import project_platform_activated
 from mage_ai.settings.repo import get_repo_path
 from mage_ai.shared.constants import ENV_PROD
+from mage_ai.shared.croniter import croniter
 from mage_ai.shared.dates import compare
 from mage_ai.shared.enum import StrEnum
 from mage_ai.shared.hash import ignore_keys, index_by, merge_dict
@@ -85,9 +81,6 @@ pipeline_schedule_event_matcher_association_table = Table(
     Column('pipeline_schedule_id', ForeignKey('pipeline_schedule.id')),
     Column('event_matcher_id', ForeignKey('event_matcher.id')),
 )
-
-
-logger = Logger().new_server_logger(__name__)
 
 
 class PipelineSchedule(PipelineScheduleProjectPlatformMixin, BaseModel):
@@ -248,15 +241,9 @@ class PipelineSchedule(PipelineScheduleProjectPlatformMixin, BaseModel):
     @validates('schedule_interval')
     def validate_schedule_interval(self, key, schedule_interval):
         if schedule_interval and schedule_interval not in [e.value for e in ScheduleInterval]:
-            # if not croniter.is_valid(schedule_interval):
-            #     raise ValueError('Cron expression is invalid.')
-            try:
-                Cron(schedule_interval)  # Try parsing the cron string
-                logger.info(f"TESTING is_valid called and is valid: {schedule_interval}")
-                return schedule_interval
-            except Exception as e:
-                logger.info(f"TESTING is_valid called and is not valid: {schedule_interval}")
+            if not croniter.is_valid(schedule_interval):
                 raise ValueError('Cron expression is invalid.')
+
         return schedule_interval
 
     @property
@@ -472,14 +459,8 @@ class PipelineSchedule(PipelineScheduleProjectPlatformMixin, BaseModel):
         elif self.schedule_interval == ScheduleInterval.MONTHLY:
             current_execution_date = now.replace(second=0, microsecond=0, minute=0, hour=0, day=1)
         else:
-            logger.info(f'TESTING Using cron expression: {self.schedule_interval}')
-            # cron_itr = croniter(self.schedule_interval, now)
-            cron_itr = Croniter(self.schedule_interval, now)
-            # cron_instance = Cron(self.schedule_interval)
-            # schedule = cron_instance.schedule(now)
-            # current_execution_date = schedule.prev()
+            cron_itr = croniter(self.schedule_interval, now)
             current_execution_date = cron_itr.get_prev(datetime)
-            # logger.info(f'TESTING current_execution_date: {current_execution_date}, {current_execution_date_old}')
 
         # If landing time is enabled, the start_time is used as the date and time the schedule
         # should finish running by.
@@ -535,15 +516,8 @@ class PipelineSchedule(PipelineScheduleProjectPlatformMixin, BaseModel):
         elif self.schedule_interval == ScheduleInterval.MONTHLY:
             next_execution_date = (current_execution_date + timedelta(days=32)).replace(day=1)
         else:
-            cron_itr = Croniter(self.schedule_interval, current_execution_date)
-            # cron_instance = Cron(self.schedule_interval)
-            # cron_schedule = cron_instance.schedule(current_execution_date)
-            # # When pristine is True, the next() method returns the current date if current date matches with cron expression
-            # cron_schedule.pristine = False
-            # next_execution_date = cron_schedule.next()
+            cron_itr = croniter(self.schedule_interval, current_execution_date)
             next_execution_date = cron_itr.get_next(datetime)
-            # logger.info(f'TESTING next_execution_date current_execution_date: {current_execution_date} {self.schedule_interval}')
-            # logger.info(f'TESTING next_execution_date: {next_execution_date}, {next_execution_date_old}')
 
         return next_execution_date
 
@@ -1640,28 +1614,17 @@ class PipelineRun(PipelineRunProjectPlatformMixin, BaseModel):
                 interval_seconds = 60 * 60 * 24 * 7
             else:
                 try:
-                    cron_itr = Croniter(
+                    cron_itr = croniter(
                         self.pipeline_schedule.schedule_interval,
                         self.execution_date,
                     )
-                    # cron_instance = Cron(self.pipeline_schedule.schedule_interval)
-                    # cron_schedule = cron_instance.schedule(self.execution_date)
                     current = cron_itr.get_current(datetime)
-                    # current_new = cron_schedule.date
-                    # logger.info(f"TESTING self.execution_date: {self.execution_date}")
-                    # logger.info(f"TESTING current: {current_old} == {current_new}")
-                    interval_start_datetime_previous_old = cron_itr.get_prev(datetime)
-                    # interval_start_datetime_previous_new = cron_schedule.prev()
-                    # logger.info(f"TESTING start date: {interval_start_datetime_previous_old} == {interval_start_datetime_previous_new}")
+                    interval_start_datetime_previous = cron_itr.get_prev(datetime)
                     # get_prev and get_next changes the state of the cron iterator, so we need
                     # to call get_next again to go back to the original state
                     cron_itr.get_next()
-                    # reset() does not work hence replace with next()
-                    # cron_schedule.next()
-                    # interval_end_datetime_new = cron_schedule.next()
-                    interval_end_datetime_old = cron_itr.get_next(datetime)
-                    # logger.info(f"TESTING end date: {interval_end_datetime_old} == {interval_end_datetime_new}")
-                    interval_seconds = interval_end_datetime_old.timestamp() - current.timestamp()
+                    interval_end_datetime = cron_itr.get_next(datetime)
+                    interval_seconds = interval_end_datetime.timestamp() - current.timestamp()
                 except Exception:
                     pass
 

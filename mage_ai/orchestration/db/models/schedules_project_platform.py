@@ -5,8 +5,6 @@ from typing import Dict, List
 
 import dateutil.parser
 import pytz
-from cron_converter import Cron
-from croniter import croniter
 from dateutil.relativedelta import relativedelta
 from sqlalchemy import or_
 from sqlalchemy.sql import func
@@ -29,6 +27,7 @@ from mage_ai.settings.platform.utils import (
     get_pipeline_from_platform_async,
 )
 from mage_ai.shared.constants import ENV_PROD
+from mage_ai.shared.croniter import croniter
 from mage_ai.shared.dates import compare
 from mage_ai.shared.hash import merge_dict
 from mage_ai.shared.utils import clean_name
@@ -330,18 +329,12 @@ class PipelineRunProjectPlatformMixin:
                         self.pipeline_schedule.schedule_interval,
                         self.execution_date,
                     )
-                    cron_instance = Cron(self.pipeline_schedule.schedule_interval)
-                    cron_schedule = cron_instance.schedule(self.execution_date)
-                    current = cron_schedule.date
-                    current_old = cron_itr.get_current(datetime)
-                    interval_start_datetime_previous = cron_schedule.prev()
-                    interval_start_datetime_previous_old = cron_itr.get_prev(datetime)
+                    current = cron_itr.get_current(datetime)
+                    interval_start_datetime_previous = cron_itr.get_prev(datetime)
                     # get_prev and get_next changes the state of the cron iterator, so we need
                     # to call get_next again to go back to the original state
                     cron_itr.get_next()
-                    cron_schedule.next()
-                    interval_end_datetime = cron_schedule.next()
-                    interval_end_datetime_old = cron_itr.get_next(datetime)
+                    interval_end_datetime = cron_itr.get_next(datetime)
                     interval_seconds = (
                         interval_end_datetime.timestamp() - current.timestamp()
                     )
