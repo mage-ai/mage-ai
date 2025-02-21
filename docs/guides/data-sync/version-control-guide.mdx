@@ -1,0 +1,165 @@
+---
+title: "Mage Pro Version Control"
+sidebarTitle: "Version control guide"
+icon: "code"
+description: "Connect your magical data pipelines from GitHub to your Mage Pro workspace using either the sacred OAuth tokens or the mystical SSH keys. Below lies the ancient knowledge for both rituals. Choose your path wisely!"
+---
+
+import { ProButton } from '/snippets/pro/button.mdx';
+import { ProOnly } from '/snippets/pro/only.mdx';
+
+<ProOnly source="versoin-control-guide" />
+
+## 1. Syncing to a Github repo with Oauth tokens
+
+Navigate to the the Deployments application where you will set up your connection using the Mage Pro “Connect repository” UI where you will connect to your Github account using authenticated sign in.
+
+### Connect repository
+
+From the Home page, select **Deployments** in the left-hand navigation menu to access the Deployments interface.
+
+Click the Setup connection button to begin syncing with your Github repository.
+
+<Frame>
+  <img
+    alt="Mage Pro deployments button"
+    src="https://github.com/mage-ai/assets/blob/main/pro/features/deployments/deployments-setup-connection-button.png?raw=true"
+  />
+</Frame>
+
+**Connect to Github using Oauth tokens:**
+
+Once you are in the connect repository UI take the following steps:
+
+**Step 1**: Set your directory as the user code path you intend to use for your project. 
+
+- In Mage Pro the default directory will be `/home/src/default_repo`.
+- If you changed the `USER_CODE_PATH` environment variable in the Mage Cloud Management Portal, your directory will need to reflect that change.
+
+**Step 2**: Click the “Connect” button to the right of the GitHub connection 
+
+- This will take you to the GitHub sign-in authentication
+
+**Step 3**: Sign in with your Github login credentials
+
+- After authenticating you will return to the Mage-Pro deployment app
+- You should now see that you are connected to Github
+
+**Step 4**: Select the your Github organization from the dropdown list. 
+
+- If there are no organizations listed add an organization to the text field below and click the Set organization button
+
+<Frame>
+  <img
+    alt="Mage Pro connect repo page"
+    src="https://github.com/mage-ai/assets/blob/main/pro/features/deployments/connect-repo-page.png?raw=true"
+  />
+</Frame>
+
+**Step 5**: Select the repo you want to commit code to by clicking the repository drop down box
+
+- You should see all your Github repos here if you authenticated correctly
+
+**Step 6**: Select your branch (usually main or master) to commit your code to by clicking the dropdown box and selecting the branch name
+
+**Step 7**: Click “Next step to deployment stage” button to move onto the next stage of the workflow.
+
+<Frame>
+  <img
+    alt="Mage Pro install app button"
+    src="https://github.com/mage-ai/assets/blob/main/pro/features/deployments/install-mage-app-github.png?raw=true"
+  />
+</Frame>
+
+<Note>
+If you need to connect deployments to a private Github repo, provide an organization then click the Install Mage Pro app on Github button.
+</Note>
+
+## 2. Configure deployment stages:
+
+Configure each stage of the deployment process before your code reaches production by completing the following steps:
+
+Click “Add stage” button and then complete the following steps
+
+**Step 1**: Select the type of environment for the first stage. The options are Development, Testing, Staging, Canary, or Production.
+
+**Step 2:** Select the branch name, this will likely already be set to Main or Master from your previous selection when connecting to your Github account
+
+**Step 3**: Add your target directory you are using in Mage. Typically this is `/home/src/default_repo` . If you made changes to the target directory, type in your directory path.
+
+**Step 4**: Add in an optional description.
+
+**Step 5**: If you need to add additional stages click the “Add stages” button and go through the same process as above for all stages of your CI/CD workflow.
+
+**Step 6:** When finished adding all stages click the “Deployment triggers” button to move onto the next stage in the workflow.
+
+<Frame>
+  <img
+    alt="Mage Pro install app button"
+    src="https://github.com/mage-ai/assets/blob/main/pro/features/deployments/deployment-stages.png?raw=true"
+  />
+</Frame>
+
+## 3. Version control application and Git terminal commands
+
+Once connected to a GitHub account, you can efficiently manage your codebase by pushing and pulling files directly from the terminal. Utilize standard Git commands to perform various version control operations, such as:
+
+`git checkout -b <branch-name>`
+
+*(Creates and switches to a new branch named `<branch-name>`, enabling isolated development for features or fixes.)*
+
+`git status`
+
+*(Displays the current state of the working directory and staging area, highlighting modified, staged, and untracked files.*
+
+`git add .`
+
+*(Stages all changes in the current directory and its subdirectories, preparing them for the next commit.)*
+
+`git commit -m "<commit-message>"`
+
+*(Records the staged changes in the repository with a descriptive message `<commit-message>`, creating a new commit in the current branch.)*
+
+`git push origin <branch-name>`
+
+*(Uploads the commits from the local `<branch-name>` to the corresponding remote branch on GitHub, making the changes available to collaborators.)*
+
+<Frame>
+  <img
+    alt="Mage Pro install app button"
+    src="https://github.com/mage-ai/assets/blob/main/pro/features/deployments/version-control.png?raw=true"
+  />
+</Frame>
+
+### 3.1 Troubleshooting version control application git commands:
+
+When trying to connect to github, you may run into a few roadblocks along the way 
+
+1. Make sure you are in the correct folder
+    1. `home/src/<Your user code path>`
+2. you may need to globally configure your email and username to your gituhub. 
+    1. `git config --global user.email "[your_email@example.com](mailto:your_email@example.com)"`
+    2. `git config --global [user.name](http://user.name/) "Your Username"`
+
+## 4. Merge pull request
+
+Once you push code to your git branch, head to Github and merge the pull request. Once the pull request is merged your deployment will be available in the deployments application interface.
+
+## 5. Deploying code
+
+Mage simplifies the deployment of code to production pipelines. Follow these steps to deploy your pipeline’s CI/CD Git branches. Currently, Mage Pro offers developers a flexible way to deploy code to different Git branches through its terminal. 
+
+1. Once you have merged the pull request in Github navigate back to the deployments tab and click deployments highlighted in green in the top 
+2. Click the Deploy button to deploy the current version you just merged
+    - To revert to a previous version, simply click the "Rollback" button to deploy the desired version.
+
+<Frame>
+  <img
+    alt="Mage Pro install app button"
+    src="https://github.com/mage-ai/assets/blob/main/pro/features/deployments/deployments-page.png?raw=true"
+  />
+</Frame>
+
+<Note>
+Coming soon SSH key integration and version control video demo.
+</Note>
