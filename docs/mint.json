@@ -759,6 +759,7 @@
     {
       "group": "Version control",
       "pages": [
+        "guides/data-sync/version-control-guide",
         "guides/git/configure",
         "guides/data-sync/version-control",
         "guides/data-sync/git-sync",
