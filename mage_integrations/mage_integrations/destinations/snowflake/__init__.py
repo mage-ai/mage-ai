@@ -367,7 +367,7 @@ WHERE TABLE_SCHEMA = '{schema_name}' AND TABLE_NAME = '{table_name}'
         if connection is None:
             snowflake_connection = self.build_connection()
             connection = snowflake_connection.build_connection()
-            new_connection_created
+            new_connection_created = True
         if self.disable_double_quotes:
             df.columns = [col.upper() for col in df.columns]
 

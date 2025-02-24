@@ -21,5 +21,6 @@ DESTINATIONS = [
     dict(name='Redshift'),
     dict(name='Salesforce'),
     dict(name='Snowflake'),
+    dict(name='Teradata'),
     dict(name='Trino'),
 ]

@@ -270,8 +270,11 @@ WHERE table_schema = '{schema}'
     def _after_load_data(self, stream):
         pass
 
-    def _limit_query_string(self, limit, offset):
+    def _limit_query_string(self, limit, offset, order_by_columns: List = None):
         return f'LIMIT {limit} OFFSET {offset}'
+
+    def _order_by_query_string(self, order_by_columns):
+        return f"ORDER BY {', '.join(order_by_columns)}"
 
     def _replication_method(self, stream, bookmarks: Dict = None):
         return stream.replication_method
@@ -339,7 +342,7 @@ WHERE table_schema = '{schema}'
         order_by_columns = self.update_column_names(order_by_columns)
 
         if order_by_columns and not count_records:
-            order_by_statement = f"ORDER BY {', '.join(order_by_columns)}"
+            order_by_statement = self._order_by_query_string(order_by_columns)
         else:
             order_by_statement = ''
 
@@ -407,7 +410,7 @@ WHERE table_schema = '{schema}'
             ))
         else:
             with_limit_query_string += [
-                self._limit_query_string(limit, offset),
+                self._limit_query_string(limit, offset, order_by_columns=order_by_columns),
             ]
         with_limit_query_string = '\n'.join(with_limit_query_string)
 
