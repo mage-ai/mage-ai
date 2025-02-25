@@ -41,6 +41,10 @@ class Destination(BaseDestination):
     def allow_reserved_words(self) -> bool:
         return self.config.get('allow_reserved_words', False)
 
+    @property
+    def skip_schema_creation(self) -> bool:
+        return self.config.get("skip_schema_creation") is True
+
     def clean_column_name(self, col):
         return clean_column_name(col,
                                  lower_case=self.use_lowercase,
@@ -83,7 +87,7 @@ class Destination(BaseDestination):
         # Create schema if not exists. Only run this command for the first batch.
         # Pass if user decides to skip it
         if tags.get('batch') == 0:
-            if self.config.get("skip_schema_creation") is True:
+            if self.skip_schema_creation:
                 # User decided not to run CREATE SCHEMA command
                 self.logger.info('Skipping CREATE SCHEMA command')
             else:

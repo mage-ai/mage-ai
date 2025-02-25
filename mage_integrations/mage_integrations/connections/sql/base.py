@@ -11,15 +11,25 @@ class Connection(BaseConnection):
     def close_connection(self, connection):
         connection.close()
 
-    def execute_with_connection(self, connection, query_strings: List[str]) -> List[Tuple]:
+    def execute_with_connection(
+        self,
+        connection,
+        query_strings: List[str],
+        log_exception: bool = True,
+    ) -> List[Tuple]:
         with connection.cursor() as cursor:
-            return self.get_data_from_query_strings(cursor, query_strings)
+            return self.get_data_from_query_strings(
+                cursor,
+                query_strings,
+                log_exception=log_exception,
+            )
 
     def execute(
         self,
         query_strings: List[str],
         commit=False,
         connection=None,
+        log_exception: bool = True,
     ) -> List[List[tuple]]:
         """
         Execute the provided SQL queries using the given connection, or create a new one if not
@@ -43,7 +53,11 @@ class Connection(BaseConnection):
             connection = self.build_connection()
             new_connection_created = True
 
-        data = self.execute_with_connection(connection, query_strings)
+        data = self.execute_with_connection(
+            connection,
+            query_strings,
+            log_exception=log_exception,
+        )
 
         if commit:
             connection.commit()
@@ -53,7 +67,12 @@ class Connection(BaseConnection):
 
         return data
 
-    def get_data_from_query_strings(self, cursor, query_strings):
+    def get_data_from_query_strings(
+        self,
+        cursor,
+        query_strings,
+        log_exception: bool = True,
+    ):
         data = []
 
         for query_string in query_strings:
@@ -77,8 +96,14 @@ class Connection(BaseConnection):
                 if description:
                     data.append(cursor.fetchall())
             except Exception as err:
-                self.logger.error(f'Error while executing query: {str(err)}. '
-                                  f'Query string: {query_string[:1000]}')
+                error_message = (
+                    f'Error while executing query: {str(err)}. '
+                    f'Query string: {query_string[:1000]}'
+                )
+                if log_exception:
+                    self.logger.error(error_message)
+                else:
+                    self.logger.info(error_message)
                 raise err
 
             now2 = datetime.utcnow().timestamp()
