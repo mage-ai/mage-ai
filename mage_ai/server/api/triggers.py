@@ -29,6 +29,10 @@ class ApiTriggerPipelineHandler(BaseHandler):
             raise UnauthenticatedRequestException(
                 f'Invalid token for pipeline schedule ID {pipeline_schedule_id}.',
             )
+        else:
+            raise UnauthenticatedRequestException(
+                'This endpoint is only supported for API trigger.',
+            )
 
         payload = self.get_payload()
         if 'variables' not in payload:
