@@ -217,6 +217,7 @@ WHERE TableName = '{table_name}' AND DatabaseName = '{database_name}'
                     drop_temp_table_command,
                     commit=False,
                     connection=connection,
+                    log_exception=False,
                 )
             except Exception:
                 self.logger.info(f"Table {full_table_name_temp} doesn't exist")
