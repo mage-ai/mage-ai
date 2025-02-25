@@ -276,8 +276,8 @@ WHERE TableName = '{table_name}' AND DatabaseName = '{database_name}'
         new_connection_created = False
         teradata_connection = None
         if connection is None:
-            snowflake_connection = self.build_connection()
-            connection = snowflake_connection.build_connection()
+            teradata_connection = self.build_connection()
+            connection = teradata_connection.build_connection()
             new_connection_created = True
 
         record_values = [list(r.values()) for r in records]
