@@ -23,6 +23,15 @@ class ApiTriggerPipelineHandler(BaseHandler):
         if token is None:
             token = get_bearer_auth_token_from_headers(self.request.headers)
 
+        if ScheduleType.API != pipeline_schedule.schedule_type:
+            raise UnauthenticatedRequestException(
+                'This endpoint is only supported for API trigger.',
+            )
+        if not pipeline_schedule.token:
+            raise UnauthenticatedRequestException(
+                'The token of the API trigger cannot be empty.',
+            )
+
         if ScheduleType.API == pipeline_schedule.schedule_type and \
             pipeline_schedule.token and \
                 pipeline_schedule.token != token:
