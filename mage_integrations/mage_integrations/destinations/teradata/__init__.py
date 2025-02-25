@@ -2,18 +2,19 @@ import json
 from typing import Dict, List, Tuple
 
 from mage_integrations.connections.teradata import Teradata as TeradataConnection
-from mage_integrations.destinations.constants import COLUMN_TYPE_OBJECT
-from mage_integrations.destinations.sql.base import Destination, main
-from mage_integrations.destinations.sql.utils import (
-    build_create_table_command,
-    build_insert_columns,
+from mage_integrations.destinations.constants import (
+    COLUMN_TYPE_OBJECT,
+    UNIQUE_CONFLICT_METHOD_UPDATE,
 )
+from mage_integrations.destinations.sql.base import Destination, main
+from mage_integrations.destinations.sql.utils import build_insert_columns
 from mage_integrations.destinations.sql.utils import (
     column_type_mapping as column_type_mapping_orig,
 )
 from mage_integrations.destinations.sql.utils import convert_column_type
 from mage_integrations.destinations.teradata.utils import (
     build_alter_table_command,
+    build_create_table_command,
     clean_column_name,
 )
 
@@ -53,9 +54,8 @@ class Teradata(Destination):
             build_create_table_command(
                 column_type_mapping=self.column_type_mapping(schema),
                 columns=schema['properties'].keys(),
-                full_table_name=f'{database_name}.{table_name}',
+                full_table_name=self.full_table_name(database_name, table_name),
                 key_properties=self.key_properties.get(stream),
-                schema=schema,
                 unique_constraints=unique_constraints,
                 use_lowercase=self.use_lowercase,
             ),
@@ -97,26 +97,50 @@ WHERE TableName = '{table_name}' AND DatabaseName = '{database_name}'
 
     def build_merge_stage_command(
         self,
-        unique_constraints: List[str],
+        columns: List[str],
         target_table_name: str,
         source_table_name: str,
+        unique_conflict_method: str = None,
+        unique_constraints: List[str] = None,
     ) -> str:
+        unique_constraints = unique_constraints or []
         unique_constraints_clean = [
             f'{self.clean_column_name(col)}'
             for col in unique_constraints
+        ]
+        update_columns_cleaned = [
+            self._wrap_with_quotes(self.clean_column_name(col))
+            for col in columns if col not in unique_constraints
+        ]
+        columns_cleaned = [
+            self._wrap_with_quotes(self.clean_column_name(col))
+            for col in columns
         ]
 
         condition_list = []
 
         for col in unique_constraints_clean:
-            condition_list.append(f'{target_table_name}.{col} = _source.{col}')
+            condition_list.append(f'{target_table_name}.{col} = {source_table_name}.{col}')
 
         conditions = ' AND '.join(condition_list)
 
-        merge_command = f"""
-            MERGE INTO {target_table_name} USING {source_table_name} AS _source
-            ON ({conditions}) REMOVE DUPLICATES;
-        """
+        merge_commands = [f"""
+            MERGE INTO {target_table_name} USING {source_table_name}
+            ON ({conditions})
+        """]
+
+        if UNIQUE_CONFLICT_METHOD_UPDATE == unique_conflict_method:
+            set_command = ', '.join(
+                [f'{col} = {source_table_name}.{col}' for col in update_columns_cleaned],
+            )
+            merge_commands.append(f'WHEN MATCHED THEN UPDATE SET {set_command}')
+
+        insert_columns = ', '.join(columns_cleaned)
+        merge_values = f"({', '.join([f'{source_table_name}.{col}' for col in columns_cleaned])})"
+        merge_commands.append(
+            f"WHEN NOT MATCHED THEN INSERT ({insert_columns}) VALUES {merge_values}",
+        )
+        merge_command = '\n'.join(merge_commands)
         return merge_command
 
     def process_queries(
@@ -128,7 +152,7 @@ WHERE TableName = '{table_name}' AND DatabaseName = '{database_name}'
         **kwargs,
     ) -> List[List[Tuple]]:
         """
-        Process and load data into Snowflake using batch or default SQL insertion.
+        Process and load data into Teradata using batch or default SQL insertion.
 
         Args:
             query_strings (List[str]): List of SQL query strings for pre-processing.
@@ -179,17 +203,26 @@ WHERE TableName = '{table_name}' AND DatabaseName = '{database_name}'
         )
 
         if unique_constraints and unique_conflict_method:
-            full_table_name_temp = self.full_table_name_temp(database, table)
-            drop_temp_table_command = [f'DROP TABLE IF EXISTS {full_table_name_temp}']
+            full_table_name_temp = self.full_table_name(database, table, prefix='temp_')
+            drop_temp_table_command = [f'DROP TABLE {full_table_name_temp}']
 
             create_temp_table_command = \
-                [f'CREATE TEMP TABLE {full_table_name_temp} AS '
+                [f'CREATE VOLATILE TABLE {full_table_name_temp} AS '
                  f'(SELECT * FROM {full_table_name}) WITH NO DATA;']
-            # Run commands in one Snowflake session to leverage TEMP table
+            # Run commands in one Teradata session to leverage TEMP table
             teradata_connection = self.build_connection()
             connection = teradata_connection.build_connection()
+            try:
+                results += teradata_connection.execute(
+                    drop_temp_table_command,
+                    commit=False,
+                    connection=connection,
+                )
+            except Exception:
+                self.logger.info(f"Table {full_table_name_temp} doesn't exist")
+
             results += teradata_connection.execute(
-                drop_temp_table_command + create_temp_table_command,
+                create_temp_table_command,
                 commit=False,
                 connection=connection,
             )
@@ -204,9 +237,11 @@ WHERE TableName = '{table_name}' AND DatabaseName = '{database_name}'
                 f'write_dataframe_to_table completed to: {full_table_name_temp}')
 
             merge_command = [self.build_merge_stage_command(
-                unique_constraints,
+                columns,
                 full_table_name,
                 full_table_name_temp,
+                unique_conflict_method=unique_conflict_method,
+                unique_constraints=unique_constraints,
             )]
 
             self.logger.info(f'Merging {full_table_name_temp} into {full_table_name}')
