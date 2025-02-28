@@ -1060,6 +1060,7 @@
             "integrations/databases/BigQuery",
             "integrations/databases/Chroma",
             "integrations/databases/ClickHouse",
+            "integrations/databases/Databricks",
             "integrations/databases/Druid",
             "integrations/databases/DuckDB",
             "integrations/databases/GoogleSheets",
