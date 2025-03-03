@@ -11,6 +11,8 @@ default:
   ALGOLIA_APP_ID: app_id
   ALGOLIA_API_KEY: api_key
   ALGOLIA_INDEX_NAME: index_name
+  # Airtable
+  AIRTABLE_ACCESS_TOKEN: token
   # Azure
   AZURE_CLIENT_ID: "{{ env_var('AZURE_CLIENT_ID') }}"
   AZURE_CLIENT_SECRET: "{{ env_var('AZURE_CLIENT_SECRET') }}"
