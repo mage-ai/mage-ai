@@ -2,11 +2,13 @@
   "account": "",
   "database": "",
   "disable_double_quotes": false,
-  "password": "",
   "role": "",
   "schema": "",
   "table": "",
   "username": "",
+  "password": "",
+  "private_key": "",
+  "passphrase": "",
   "warehouse": "",
   "use_batch_load": true
 }
