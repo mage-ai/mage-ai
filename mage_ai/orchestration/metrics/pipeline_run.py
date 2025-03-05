@@ -220,7 +220,7 @@ def __calculate_metrics(pipeline_run: PipelineRun, pipeline) -> Dict:
 
     pipeline_metrics_by_stream = {}
     pipeline_logs_by_stream = {}
-    pipeline_logs = pipeline_run.logs['content'].split('\n')
+    pipeline_logs = pipeline_run.logs[0]['content'].split('\n')
     for pipeline_log in pipeline_logs:
         tags = parse_line(pipeline_log)
         stream = tags.get('stream')
