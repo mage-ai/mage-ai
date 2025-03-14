@@ -8,7 +8,6 @@ from typing import DefaultDict, Dict, List
 
 import dateutil.parser
 import pytz
-from croniter import croniter
 from dateutil.relativedelta import relativedelta
 from sqlalchemy import (
     JSON,
@@ -70,6 +69,7 @@ from mage_ai.server.kernel_output_parser import DataType
 from mage_ai.settings.platform import project_platform_activated
 from mage_ai.settings.repo import get_repo_path
 from mage_ai.shared.constants import ENV_PROD
+from mage_ai.shared.croniter import croniter
 from mage_ai.shared.dates import compare
 from mage_ai.shared.enum import StrEnum
 from mage_ai.shared.hash import ignore_keys, index_by, merge_dict

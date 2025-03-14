@@ -5,7 +5,6 @@ from typing import Dict, List
 
 import dateutil.parser
 import pytz
-from croniter import croniter
 from dateutil.relativedelta import relativedelta
 from sqlalchemy import or_
 from sqlalchemy.sql import func
@@ -28,6 +27,7 @@ from mage_ai.settings.platform.utils import (
     get_pipeline_from_platform_async,
 )
 from mage_ai.shared.constants import ENV_PROD
+from mage_ai.shared.croniter import croniter
 from mage_ai.shared.dates import compare
 from mage_ai.shared.hash import merge_dict
 from mage_ai.shared.utils import clean_name
