@@ -46,6 +46,9 @@ setuptools.setup(
             'langchain_community<0.0.20',
             'openai==1.39.0',
         ],
+        'airtable': [
+            'pyairtable>=2.3.3'
+        ],
         'azure': [
             'azure-eventhub==5.11.2',
             'azure-identity==1.12.0',
