@@ -130,6 +130,7 @@ class ConfigKey(StrEnum):
     SNOWFLAKE_PASSWORD = 'SNOWFLAKE_PASSWORD'
     SNOWFLAKE_PRIVATE_KEY_PASSPHRASE = 'SNOWFLAKE_PRIVATE_KEY_PASSPHRASE'
     SNOWFLAKE_PRIVATE_KEY_PATH = 'SNOWFLAKE_PRIVATE_KEY_PATH'
+    SNOWFLAKE_PRIVATE_KEY = 'SNOWFLAKE_PRIVATE_KEY'
     SNOWFLAKE_ROLE = 'SNOWFLAKE_ROLE'
     SNOWFLAKE_TIMEOUT = 'SNOWFLAKE_TIMEOUT'
     SNOWFLAKE_USER = 'SNOWFLAKE_USER'
@@ -449,6 +450,7 @@ class ConfigFileLoader(BaseConfigLoader):
         ConfigKey.SNOWFLAKE_PRIVATE_KEY_PASSPHRASE: (
             VerboseConfigKey.SNOWFLAKE, 'private_key_passphrase'),
         ConfigKey.SNOWFLAKE_PRIVATE_KEY_PATH: (VerboseConfigKey.SNOWFLAKE, 'private_key_path'),
+        ConfigKey.SNOWFLAKE_PRIVATE_KEY: (VerboseConfigKey.SNOWFLAKE, 'private_key'),
         ConfigKey.SNOWFLAKE_ROLE: (VerboseConfigKey.SNOWFLAKE, 'role'),
         ConfigKey.SNOWFLAKE_TIMEOUT: (VerboseConfigKey.SNOWFLAKE, 'timeout'),
         ConfigKey.SNOWFLAKE_USER: (VerboseConfigKey.SNOWFLAKE, 'user'),
