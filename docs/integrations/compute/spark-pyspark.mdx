@@ -12,6 +12,58 @@ Want to become a
 
 ![](https://user-images.githubusercontent.com/78053898/199308674-afd8860e-09de-4003-a7ed-9ab2db221b0c.png)
 
+# Mage Pro: Effortless PySpark Integration
+Mage Pro makes it easy to run PySpark pipelines with a streamlined, configuration-free setup. Get started immediately without worrying about complex configurations—just write your PySpark code and execute it seamlessly within your Mage Pro cluster.
+
+## Example: Simple PySpark Pipeline in Mage Pro
+
+### Create the pipeline
+
+Create a stanard batch pipeline and configure the blow settings in pipeline `metadata.yaml` file:
+
+```yaml
+cache_block_output_in_memory: true
+run_pipeline_in_one_process: true
+```
+
+### Data loader block code:
+
+```python
+if 'data_loader' not in globals():
+    from mage_ai.data_preparation.decorators import data_loader
+if 'test' not in globals():
+    from mage_ai.data_preparation.decorators import test
+from pyspark.sql import Row, SparkSession
+
+
+@data_loader
+def load_data(*args, **kwargs):
+    spark = SparkSession.builder.getOrCreate()
+    data = [
+        Row(id=1, name="Alice", age=29, salary=50000),
+        Row(id=2, name="Bob", age=35, salary=60000),
+        Row(id=3, name="Charlie", age=40, salary=70000),
+        Row(id=4, name="David", age=45, salary=None)  # Null value example
+    ]
+
+    df = spark.createDataFrame(data)
+    df.show()
+    return df
+```
+
+Data exporter block code:
+```python
+if 'data_exporter' not in globals():
+    from mage_ai.data_preparation.decorators import data_exporter
+
+
+@data_exporter
+def export_data(df, *args, **kwargs):
+    df.write.csv("spark_output", header=True, mode="overwrite")
+```
+---
+
+# Open source
 ## Kubernetes
 
 When you run Mage and Spark in the same Kubernetes cluster, you can set the environment variable `SPARK_MASTER_HOST`
