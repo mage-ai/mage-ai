@@ -848,6 +848,7 @@
               "group": "Tutorials",
               "pages": [
                 "guides/streaming/tutorials/streaming-pipeline",
+                "guides/streaming/tutorials/streaming-stateful-store",
                 "guides/streaming/tutorials/magic-devcontainer",
                 "guides/streaming/tutorials/streaming-pipeline-rabbitmq"
               ]
