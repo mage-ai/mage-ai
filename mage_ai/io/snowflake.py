@@ -28,15 +28,21 @@ class Snowflake(BaseSQLConnection):
 
     def __init__(self, **kwargs) -> None:
         """
-        Initializes settings for connecting to Snowflake data warehouse.
+        Initializes settings for connecting to Snowflake data warehouse,
+        with optional support for private key authentication.
         The following arguments must be provided to the connector, all other
         arguments are optional.
 
         Required Arguments:
             user (str): Username for the Snowflake user.
-            password (str): Login Password for the user.
             account (str): Snowflake account identifier (excluding
             `snowflake-computing.com` suffix).
+
+        Optional Arguments:
+            password (str): Login Password for the user (if not using private key).
+            private_key (bytes, optional): Private key bytes for authentication
+            (if not using password).
+            passphrase (str, optional): Passphrase for the private key (if applicable).
         """
         if 'login_timeout' not in kwargs:
             kwargs['login_timeout'] = DEFAULT_LOGIN_TIMEOUT
@@ -459,6 +465,9 @@ INSERT INTO "{database}"."{schema}"."{table_name}"
 
         if ConfigKey.SNOWFLAKE_PASSWORD in config:
             conn_kwargs['password'] = config[ConfigKey.SNOWFLAKE_PASSWORD]
+
+        if ConfigKey.SNOWFLAKE_PRIVATE_KEY in config:
+            conn_kwargs['private_key'] = config[ConfigKey.SNOWFLAKE_PASSWORD]
 
         elif ConfigKey.SNOWFLAKE_PRIVATE_KEY_PATH in config:
             with open(config[ConfigKey.SNOWFLAKE_PRIVATE_KEY_PATH], 'rb') as key:

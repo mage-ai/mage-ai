@@ -33,6 +33,17 @@ class SnowflakeDestinationTests(unittest.TestCase, SQLDestinationMixin):
         'warehouse': 'warehouse',
         'lower_case': False,
     }
+    config_private_key = {
+        'account': 'account',
+        'database': 'database',
+        'private_key': 'private_key',
+        'passphrase': 'passphrase',
+        'schema': 'schema',
+        'username': 'username',
+        'warehouse': 'warehouse',
+        'lower_case': False,
+    }
+
     conn_class_path = 'mage_integrations.destinations.snowflake.SnowflakeConnection'
     destination_class = Snowflake
     expected_conn_class_kwargs = dict(
@@ -44,12 +55,24 @@ class SnowflakeDestinationTests(unittest.TestCase, SQLDestinationMixin):
         warehouse='warehouse',
         role=None,
     )
+    expected_conn_class_kwargs_private_key = dict(
+        account='account',
+        database='database',
+        private_key='private_key',
+        passphrase='passphrase',
+        schema='schema',
+        username='username',
+        warehouse='warehouse',
+        role=None,
+    )
     expected_template_config = {
         'config': {
             'account': '',
             'database': '',
             'disable_double_quotes': False,
             'password': '',
+            'private_key': '',
+            'passphrase': '',
             'role': '',
             'schema': '',
             'table': '',
@@ -61,6 +84,19 @@ class SnowflakeDestinationTests(unittest.TestCase, SQLDestinationMixin):
 
     def test_create_table_commands(self):
         destination = Snowflake(config=self.config)
+        destination.key_properties = {}
+        table_commands = destination.build_create_table_commands(SCHEMA,
+                                                                 SCHEMA_NAME,
+                                                                 STREAM,
+                                                                 TABLE_NAME,
+                                                                 database_name=DATABASE_NAME)
+        self.assertEqual(
+            table_commands,
+            ['CREATE TABLE "test_db"."test"."test_table" ("ID" VARCHAR, "_USER" VARIANT)']
+        )
+
+    def test_create_table_commands__private_key(self):
+        destination = Snowflake(config=self.config_private_key)
         destination.key_properties = {}
         table_commands = destination.build_create_table_commands(SCHEMA,
                                                                  SCHEMA_NAME,
