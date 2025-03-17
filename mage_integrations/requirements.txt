@@ -42,7 +42,7 @@ requests_mock==1.10.0
 simple_salesforce~=1.12.5
 simplejson
 singer_sdk~=0.34.1
-snowflake-connector-python==3.7.1
+snowflake-connector-python==3.13.1
 sshtunnel==0.4.0
 stripe==5.5.0
 teradatasql
