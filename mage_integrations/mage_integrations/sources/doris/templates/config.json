@@ -1,0 +1,13 @@
+{
+  "database": "",
+  "host": "",
+  "port": 9030,
+  "username": "",
+  "password": "",
+  "connection_method": "direct",
+  "ssh_host": "",
+  "ssh_port": 22,
+  "ssh_username": "",
+  "ssh_password": "",
+  "ssh_pkey": ""
+}

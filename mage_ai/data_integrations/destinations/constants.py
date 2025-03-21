@@ -5,6 +5,7 @@ DESTINATIONS = [
     dict(name='Clickhouse'),
     dict(name='Delta Lake Azure'),
     dict(name='Delta Lake S3'),
+    dict(name='Doris'),
     dict(name='Elasticsearch'),
     dict(name='Google Cloud Storage'),
     dict(name='Kafka'),

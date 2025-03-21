@@ -17,7 +17,7 @@ do
     esac
 done
 
-# If SHELL_MODE is true, run the ipython shell using docker-compose
+# If SHELL_MODE is true, run the ipython shell using docker compose
 if [ "$SHELL_MODE" = true ]; then
     HOST='' PORT='' PROJECT='' docker compose run py ipython
 else
