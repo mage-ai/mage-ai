@@ -20,4 +20,4 @@ set -- "${POSITIONAL[@]}" # restore positional parameters
 
 : "${PACKAGE:=""}"
 
-docker-compose run app yarn add $PACKAGE
+docker compose run app yarn add $PACKAGE
