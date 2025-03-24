@@ -3,6 +3,7 @@ import { useRouter } from 'next/router';
 
 import Button from '@oracle/elements/Button';
 import Divider from '@oracle/elements/Divider';
+import Paginate, { ROW_LIMIT } from '@components/shared/Paginate';
 import PrivateRoute from '@components/shared/PrivateRoute';
 import RoleType from '@interfaces/RoleType';
 import SettingsDashboard from '@components/settings/Dashboard';
@@ -14,10 +15,12 @@ import UserType from '@interfaces/UserType';
 import api from '@api';
 import { AddUserSmileyFace } from '@oracle/icons';
 import { BreadcrumbType } from '@components/Breadcrumbs';
+import { MetaQueryEnum } from '@api/constants';
 import { PADDING_UNITS } from '@oracle/styles/units/spacing';
 import { SectionEnum, SectionItemEnum } from '@components/settings/Dashboard/constants';
 import { dateFormatLong } from '@utils/date';
 import { getUser } from '@utils/session';
+import { queryFromUrl, queryString } from '@utils/url';
 
 function UsersListPage() {
   const router = useRouter();
@@ -29,10 +32,23 @@ function UsersListPage() {
     owner: isOwner,
   } = getUser(router?.basePath) || {};
 
-  const { data } = api.users.list({}, {
-    revalidateOnFocus: false,
-  });
+  const q = queryFromUrl();
+  const page = q?.page ? q.page : 0;
+  const usersRequestQuery: {
+    _limit?: number;
+    _offset?: number;
+  } = {
+    [MetaQueryEnum.LIMIT]: ROW_LIMIT,
+    [MetaQueryEnum.OFFSET]: page * ROW_LIMIT,
+  };
+  const { data } = api.users.list(
+    usersRequestQuery,
+    {
+      revalidateOnFocus: false,
+    },
+  );
   const users = useMemo(() => data?.users || [], [data?.users]);
+  const totalUsers = useMemo(() => data?.metadata?.count || [], [data]);
 
   const breadcrumbs: BreadcrumbType[] = [
     {
@@ -148,6 +164,24 @@ function UsersListPage() {
             })}
             uuid="pipeline-runs"
           />
+          <Spacing p={2}>
+            <Paginate
+              maxPages={9}
+              onUpdate={(p) => {
+                const newPage = Number(p);
+                const updatedQuery = {
+                  ...q,
+                  page: newPage >= 0 ? newPage : 0,
+                };
+                router.push(
+                  '/settings/workspace/users',
+                  `/settings/workspace/users?${queryString(updatedQuery)}`,
+                );
+              }}
+              page={Number(page)}
+              totalPages={Math.ceil(totalUsers / ROW_LIMIT)}
+            />
+          </Spacing>
         </>
       )}
     </SettingsDashboard>
