@@ -1,1 +1,1 @@
-docker compose run app yarn install
+docker-compose run app yarn install

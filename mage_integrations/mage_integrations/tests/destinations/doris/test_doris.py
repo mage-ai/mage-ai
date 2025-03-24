@@ -25,7 +25,7 @@ class DorisDestinationTests(unittest.TestCase, SQLDestinationMixin):
         "username": "username",
         "lower_case": False,
     }
-    conn_class_path = "mage_integrations.destinations.doris.MySQLConnection"
+    conn_class_path = "mage_integrations.destinations.doris.DorisConnection"
     destination_class = Doris
     expected_conn_class_kwargs = dict(
         database="database",

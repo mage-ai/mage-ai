@@ -33,4 +33,4 @@ set -- "${POSITIONAL[@]}" # restore positional parameters
 HOST=$HOST \
 PORT=$PORT \
 PROJECT=$PROJECT_NAME \
-docker compose run --service-ports server python mage_ai/cli/main.py start $PROJECT_NAME --host $HOST --port $PORT
+docker-compose run --service-ports server python mage_ai/cli/main.py start $PROJECT_NAME --host $HOST --port $PORT

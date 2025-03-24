@@ -213,24 +213,24 @@ if [ -z "$SERVICES" ]; then
   SERVICES="server app"
 fi
 
-if command -v docker compose &> /dev/null
+if command -v docker-compose &> /dev/null
 then
-    # docker compose exists
+    # docker-compose exists
     if [ -n "${OVERRIDE_COMPOSE}" ]; then
         HOST=$HOST \
         PORT=$PORT \
         PROJECT=$PROJECT_NAME \
         MANAGE_INSTANCE=$MANAGE_INSTANCE \
-        docker compose -f docker-compose.yml -f "${OVERRIDE_COMPOSE}" up $SERVICES
+        docker-compose -f docker-compose.yml -f "${OVERRIDE_COMPOSE}" up $SERVICES
     else
         HOST=$HOST \
         PORT=$PORT \
         PROJECT=$PROJECT_NAME \
         MANAGE_INSTANCE=$MANAGE_INSTANCE \
-        docker compose -f docker-compose.yml up $SERVICES
+        docker-compose -f docker-compose.yml up $SERVICES
     fi
 else
-    # docker compose does not exist (Docker Compose V2 syntax)
+    # docker-compose does not exist (Docker Compose V2 syntax)
     if [ -n "${OVERRIDE_COMPOSE}" ]; then
         HOST=$HOST \
         PORT=$PORT \
