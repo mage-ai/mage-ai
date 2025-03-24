@@ -11,11 +11,11 @@ from mage_integrations.connections.sql.base import Connection
 
 
 class ConnectionMethod(str, enum.Enum):
-    DIRECT = 'direct'
-    SSH_TUNNEL = 'ssh_tunnel'
+    DIRECT = "direct"
+    SSH_TUNNEL = "ssh_tunnel"
 
 
-class MySQL(Connection):
+class Doris(Connection):
     def __init__(
         self,
         database: str,
@@ -55,23 +55,23 @@ class MySQL(Connection):
             ssh_setting = dict(ssh_username=self.ssh_username)
             if self.ssh_pkey is not None:
                 if os.path.exists(self.ssh_pkey):
-                    ssh_setting['ssh_pkey'] = self.ssh_pkey
+                    ssh_setting["ssh_pkey"] = self.ssh_pkey
                 else:
-                    ssh_setting['ssh_pkey'] = paramiko.RSAKey.from_private_key(
+                    ssh_setting["ssh_pkey"] = paramiko.RSAKey.from_private_key(
                         io.StringIO(self.ssh_pkey),
                     )
             else:
-                ssh_setting['ssh_password'] = self.ssh_password
+                ssh_setting["ssh_password"] = self.ssh_password
             self.ssh_tunnel = SSHTunnelForwarder(
                 (self.ssh_host, self.ssh_port),
                 remote_bind_address=(self.host, self.port),
-                local_bind_address=('', self.port),
+                local_bind_address=("", self.port),
                 **ssh_setting,
             )
             self.ssh_tunnel.start()
             self.ssh_tunnel._check_is_started()
 
-            host = '127.0.0.1'
+            host = "127.0.0.1"
             port = self.ssh_tunnel.local_bind_port
         return connect(
             database=self.database,

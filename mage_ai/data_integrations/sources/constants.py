@@ -3,6 +3,7 @@ from mage_ai.shared.hash import index_by
 
 SQL_SOURCES = [
     dict(name='BigQuery'),
+    dict(name='Doris'),
     dict(
         name='Microsoft SQL Server',
         uuid='mssql',
@@ -12,7 +13,6 @@ SQL_SOURCES = [
     dict(name='PostgreSQL'),
     dict(name='Redshift'),
     dict(name='Snowflake'),
-    dict(name='Doris'),
 ]
 
 SQL_SOURCES_MAPPING = index_by(get_uuid, SQL_SOURCES)
