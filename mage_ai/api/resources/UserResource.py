@@ -28,7 +28,7 @@ class UserResource(DatabaseResource):
         results = (
             User.
             query.
-            order_by(User.username.asc())
+            order_by(User.id.asc())
         )
 
         if user and user.is_admin:

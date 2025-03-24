@@ -4,6 +4,7 @@ import { useRouter } from 'next/router';
 import Button from '@oracle/elements/Button';
 import ErrorsType from '@interfaces/ErrorsType';
 import Headline from '@oracle/elements/Headline';
+import Paginate, { ROW_LIMIT } from '@components/shared/Paginate';
 import PrivateRoute from '@components/shared/PrivateRoute';
 import Spacing from '@oracle/elements/Spacing';
 import Table from '@components/shared/Table';
@@ -13,12 +14,13 @@ import WorkspacesDashboard from '@components/workspaces/Dashboard';
 import api from '@api';
 import usePrevious from '@utils/usePrevious';
 import { Add } from '@oracle/icons';
+import { MetaQueryEnum } from '@api/constants';
 import { PADDING_UNITS } from '@oracle/styles/units/spacing';
 import { WorkspacesPageNameEnum } from '@components/workspaces/Dashboard/constants';
 import { displayErrorFromReadResponse } from '@api/utils/response';
 import { getUser } from '@utils/session';
 import { isEqual } from '@utils/hash';
-import { queryFromUrl } from '@utils/url';
+import { queryFromUrl, queryString } from '@utils/url';
 
 function UsersListPage() {
   const router = useRouter();
@@ -29,9 +31,22 @@ function UsersListPage() {
     user_id: number;
   }>(null);
 
-  const { data, mutate: fetchUsers } = api.users.list({}, {
-    revalidateOnFocus: false,
-  });
+  const q = queryFromUrl();
+  const page = q?.page ? q.page : 0;
+  const usersRequestQuery: {
+    _limit?: number;
+    _offset?: number;
+  } = {
+    [MetaQueryEnum.LIMIT]: ROW_LIMIT,
+    [MetaQueryEnum.OFFSET]: page * ROW_LIMIT,
+  };
+  const { data, mutate: fetchUsers } = api.users.list(
+    usersRequestQuery,
+    {
+      revalidateOnFocus: false,
+    },
+  );
+  const totalUsers = useMemo(() => data?.metadata?.count || [], [data]);
 
   useEffect(() => {
     displayErrorFromReadResponse(data, setErrors);
@@ -51,7 +66,6 @@ function UsersListPage() {
 
   const user = dataUser?.user;
 
-  const q = queryFromUrl();
   const qPrev = usePrevious(q);
   useEffect(() => {
     const {
@@ -153,6 +167,24 @@ function UsersListPage() {
         ])}
         uuid="pipeline-runs"
       />
+      <Spacing p={2}>
+        <Paginate
+          maxPages={9}
+          onUpdate={(p) => {
+            const newPage = Number(p);
+            const updatedQuery = {
+              ...q,
+              page: newPage >= 0 ? newPage : 0,
+            };
+            router.push(
+              '/manage/users',
+              `/manage/users?${queryString(updatedQuery)}`,
+            );
+          }}
+          page={Number(page)}
+          totalPages={Math.ceil(totalUsers / ROW_LIMIT)}
+        />
+      </Spacing>
     </WorkspacesDashboard>
   );
 }
