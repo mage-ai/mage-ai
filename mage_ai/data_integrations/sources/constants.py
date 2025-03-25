@@ -3,6 +3,7 @@ from mage_ai.shared.hash import index_by
 
 SQL_SOURCES = [
     dict(name='BigQuery'),
+    dict(name='Doris'),
     dict(
         name='Microsoft SQL Server',
         uuid='mssql',
