@@ -19,22 +19,13 @@ export function getCurrentTheme(ctx: any, invertedTheme = 1) {
   } else {
     currentTheme = Cookies.get(LOCAL_STORAGE_KEY_THEME);
   }
-
-  if (Number(currentTheme) === invertedTheme) {
-    if (invertedTheme === LOCAL_STORAGE_KEY_THEME_DARK) {
-      return light;
-    } else {
-      return dark;
-    }
-  }
-
-  if (invertedTheme === LOCAL_STORAGE_KEY_THEME_LIGHT) {
-    return dark;
-  } else {
+/*
+  if (Number (currentTheme) === LOCAL_STORAGE_KEY_THEME_LIGHT) {
     return light;
-  }
-
-  return dark;
+  } else {
+    return dark;
+  }*/
+    return light;
 }
 
 export function getCurrentInvertedTheme(ctx) {
