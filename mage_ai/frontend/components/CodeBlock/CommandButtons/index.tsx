@@ -56,6 +56,7 @@ import { isMac } from '@utils/os';
 import { indexBy } from '@utils/array';
 import { onSuccess } from '@api/utils/response';
 import { useError } from '@context/Error';
+import Setup from '@components/AI/Setup';
 
 export type CommandButtonsSharedProps = {
   addWidget?: (widget: BlockType, opts?: {
@@ -178,12 +179,12 @@ function CommandButtons({
       ...config,
       onClick: () => savePipelineContent().then(() => config.onClick()),
     })),
-    [
-      addNewBlock,
-      block,
-      blocks,
-      savePipelineContent,
-    ]);
+      [
+        addNewBlock,
+        block,
+        blocks,
+        savePipelineContent,
+      ]);
 
   const blocksMapping = useMemo(() => indexBy(blocks, ({ uuid }) => uuid), [blocks]);
   const isDBT = useMemo(() => BlockTypeEnum.DBT === block?.type, [block]);
@@ -194,14 +195,14 @@ function CommandButtons({
     {
       onSuccess: (response: any) => onSuccess(
         response, {
-          callback: () => {
-            fetchPipeline();
-          },
-          onErrorCallback: (response, errors) => setErrors({
-            errors,
-            response,
-          }),
+        callback: () => {
+          fetchPipeline();
         },
+        onErrorCallback: (response, errors) => setErrors({
+          errors,
+          response,
+        }),
+      },
       ),
     },
   );
@@ -211,18 +212,18 @@ function CommandButtons({
     {
       onSuccess: (response: any) => onSuccess(
         response, {
-          callback: ({
-            llm,
-          }) => {
-            if (llm?.response && setBlockContent) {
-              setBlockContent?.(llm?.response);
-            }
-          },
-          onErrorCallback: (response, errors) => showError({
-            errors,
-            response,
-          }),
+        callback: ({
+          llm,
+        }) => {
+          if (llm?.response && setBlockContent) {
+            setBlockContent?.(llm?.response);
+          }
         },
+        onErrorCallback: (response, errors) => showError({
+          errors,
+          response,
+        }),
+      },
       ),
     },
   );
@@ -231,27 +232,7 @@ function CommandButtons({
     const shouldShowModal = !project?.openai_api_key;
     const showModal = (llm: LLMType) => {
       showConfigureProjectModal?.({
-        header: (
-          <Spacing mb={UNITS_BETWEEN_SECTIONS}>
-            <Panel>
-              <Text warning>
-                You need to add an OpenAI API key to your project before you can
-                generate blocks using AI.
-              </Text>
-
-              <Spacing mt={1}>
-                <Text warning>
-                  Read <Link
-                    href="https://help.openai.com/en/articles/4936850-where-do-i-find-my-secret-api-key"
-                    openNewWindow
-                  >
-                    OpenAI’s documentation
-                  </Link> to get your API key.
-                </Text>
-              </Spacing>
-            </Panel>
-          </Spacing>
-        ),
+        header: <Setup />,
         onSaveSuccess: (project: ProjectType) => {
           if (project?.openai_api_key) {
             // @ts-ignore
@@ -355,7 +336,7 @@ function CommandButtons({
         />
       )}
 
-      {runBlock && (!isInProgress && !isStreaming) &&  (
+      {runBlock && (!isInProgress && !isStreaming) && (
         <>
           {!isDBT && (
             <Tooltip
@@ -532,53 +513,53 @@ function CommandButtons({
       )}
 
       {!hideExtraButtons && !(BLOCK_TYPES_NOT_SUPPORTED_WITH_CHARTS.includes(block.type)
-      && (BlockTypeEnum.DBT !== block.type || BlockLanguageEnum.YAML !== block?.language)
-      && !isStreaming
-      && !isIntegration)
-      && (
-        <>
-          <Spacing
-            ml={PADDING_UNITS}
-            ref={refAddChart}
-          >
-            <Tooltip
-              appearBefore
-              default
-              label="Add chart"
-              size={UNIT * 2.25}
-              widthFitContent
+        && (BlockTypeEnum.DBT !== block.type || BlockLanguageEnum.YAML !== block?.language)
+        && !isStreaming
+        && !isIntegration)
+        && (
+          <>
+            <Spacing
+              ml={PADDING_UNITS}
+              ref={refAddChart}
             >
-              <Button
-                noBackground
-                noBorder
-                noPadding
-                onClick={() => setShowAddCharts(currState => !currState)}
+              <Tooltip
+                appearBefore
+                default
+                label="Add chart"
+                size={UNIT * 2.25}
+                widthFitContent
               >
-                <Charts size={UNIT * 2.25} />
-              </Button>
-            </Tooltip>
-          </Spacing>
+                <Button
+                  noBackground
+                  noBorder
+                  noPadding
+                  onClick={() => setShowAddCharts(currState => !currState)}
+                >
+                  <Charts size={UNIT * 2.25} />
+                </Button>
+              </Tooltip>
+            </Spacing>
 
-          {addWidget && (
-            <ClickOutside
-              disableEscape
-              onClickOutside={() => setShowAddCharts(false)}
-              open={showAddCharts}
-            >
-              <AddChartMenu
-                addWidget={addWidget}
-                block={block}
-                onClickCallback={() => setShowAddCharts(false)}
+            {addWidget && (
+              <ClickOutside
+                disableEscape
+                onClickOutside={() => setShowAddCharts(false)}
                 open={showAddCharts}
-                parentRef={refAddChart}
-                rightOffset={UNIT * 9}
-                runBlock={runBlock}
-                topOffset={UNIT * 2}
-              />
-            </ClickOutside>
-          )}
-        </>
-      )}
+              >
+                <AddChartMenu
+                  addWidget={addWidget}
+                  block={block}
+                  onClickCallback={() => setShowAddCharts(false)}
+                  open={showAddCharts}
+                  parentRef={refAddChart}
+                  rightOffset={UNIT * 9}
+                  runBlock={runBlock}
+                  topOffset={UNIT * 2}
+                />
+              </ClickOutside>
+            )}
+          </>
+        )}
 
       {!hideExtraButtons && isMarkdown && (
         <Spacing ml={PADDING_UNITS}>

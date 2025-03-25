@@ -84,6 +84,7 @@ import { storeLocalTimezoneSetting } from '@components/settings/workspace/utils'
 import { useModal } from '@context/Modal';
 import UploadPipeline from '@components/PipelineDetail/UploadPipeline';
 import { LOCAL_STORAGE_KEY_OVERVIEW_TAB_SELECTED, set, get } from 'storage/localStorage';
+import Setup from '@components/AI/Setup';
 
 const SHARED_WIDGET_SPACING_PROPS = {
   mt: 2,
@@ -337,29 +338,7 @@ function OverviewPage({ tab }: { tab?: TimePeriodEnum }) {
         <Preferences
           cancelButtonText={cancelButtonText}
           contained
-          header={
-            <Spacing mb={UNITS_BETWEEN_SECTIONS}>
-              <Panel>
-                <Text warning>
-                  You need to add an OpenAI API key to your project before you can generate
-                  pipelines using AI.
-                </Text>
-
-                <Spacing mt={1}>
-                  <Text warning>
-                    Read{' '}
-                    <Link
-                      href="https://help.openai.com/en/articles/4936850-where-do-i-find-my-secret-api-key"
-                      openNewWindow
-                    >
-                      OpenAI’s documentation
-                    </Link>{' '}
-                    to get your API key.
-                  </Text>
-                </Spacing>
-              </Panel>
-            </Spacing>
-          }
+          header={<Setup />}
           onCancel={() => {
             onCancel?.();
             hideConfigureProjectModal();

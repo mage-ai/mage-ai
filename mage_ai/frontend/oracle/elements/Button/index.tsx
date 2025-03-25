@@ -97,7 +97,7 @@ export type ButtonProps = {
     right?: number;
     top?: number;
     zIndex?: number;
-  };
+  } & any;
   success?: boolean;
   tabIndex?: number;
   target?: string;

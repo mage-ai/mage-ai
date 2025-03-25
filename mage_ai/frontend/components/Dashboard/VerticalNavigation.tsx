@@ -20,6 +20,7 @@ import {
   DocumentIcon,
   Lightning,
   NavDashboard,
+  Rocket,
   PipelineV3,
   Schedule,
   Settings,
@@ -35,6 +36,7 @@ import {
 import { PURPLE_BLUE } from '@oracle/styles/colors/gradients';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { pushAtIndex } from '@utils/array';
+import Link from '@oracle/elements/Link';
 
 const ICON_SIZE = 3 * UNIT;
 const DEFAULT_NAV_ITEMS = ({
@@ -78,6 +80,16 @@ const DEFAULT_NAV_ITEMS = ({
       linkProps: {
         href: '/terminal',
       },
+    },
+    {
+      Icon: Rocket,
+      id: 'deployments',
+      label: () => 'Deploy',
+      linkProps: {
+        href: 'https://www.mage.ai/deploy?ref=oss',
+        target: '_blank',
+      },
+      tag: 'Pro',
     },
     {
       Icon: Settings,
@@ -196,6 +208,7 @@ function VerticalNavigation({
       label,
       linkProps,
       onClick,
+      tag,
     } = item;
     const selected: boolean = isSelected
       ? isSelected(pathname, item)
@@ -308,10 +321,22 @@ function VerticalNavigation({
         <FlexContainer alignItems="center">
           {iconEl}
           <Spacing mr={2} />
-          <Flex flex={1}>
+          <Flex flex={1} alignItems="center" style={{ gap: 8 }}>
             <Text noWrapping>
               {displayText}
             </Text>
+
+            {tag && (
+              <div style={{
+                borderRadius: 100,
+                padding: '4px 10px',
+                backgroundColor: '#00000099'
+              }}>
+                <Text small bold>
+                  {tag}
+                </Text>
+              </div>
+            )}
           </Flex>
         </FlexContainer>
       );
@@ -323,11 +348,14 @@ function VerticalNavigation({
         href="#"
         onClick={onClick}
         selected={selected}
+        {...(linkProps?.target ? {
+          ...linkProps
+        } : {})}
       >
         {el}
       </NavigationLinkStyle>
     );
-    if (linkProps) {
+    if (linkProps && !linkProps?.target) {
       clickEl = (
         <NextLink
           {...linkProps}

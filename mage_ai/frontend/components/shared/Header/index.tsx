@@ -107,8 +107,8 @@ function Header({
     {
       revalidateOnFocus: false,
     }, {
-      pauseFetch: REQUIRE_USER_AUTHENTICATION() && !loggedIn,
-    },
+    pauseFetch: REQUIRE_USER_AUTHENTICATION() && !loggedIn,
+  },
     {
       delay: 11000,
     },
@@ -244,9 +244,9 @@ function Header({
   }
 
   const breadcrumbs = useMemo(() => [
-      ...breadcrumbProjects,
-      ...(breadcrumbsProp || []),
-    ], [
+    ...breadcrumbProjects,
+    ...(breadcrumbsProp || []),
+  ], [
     breadcrumbProjects,
     breadcrumbsProp,
     project,
@@ -311,15 +311,24 @@ function Header({
         },
         uuid: 'user_settings',
       },
+      {
+        label: () => 'Light mode',
+        linkProps: {
+          href: 'https://www.mage.ai/build?ref=oss',
+          openNewWindow: true,
+        },
+        tag: 'Pro',
+        uuid: 'light_mode',
+      },
     ];
 
   if (REQUIRE_USER_AUTHENTICATION()) {
     userDropdown.push(
-    {
-      label: () => 'Sign out',
-      onClick: () => logout(),
-      uuid: 'sign_out',
-    });
+      {
+        label: () => 'Sign out',
+        onClick: () => logout(),
+        uuid: 'sign_out',
+      });
   }
 
   const [showModal, hideModal] = useModal(() => (
@@ -327,7 +336,7 @@ function Header({
       branch={branch}
       fetchBranch={fetchBranch}
     />
-  ),{}, [branch, fetchBranch], {
+  ), {}, [branch, fetchBranch], {
     background: true,
     uuid: 'git_actions',
   });
@@ -484,7 +493,7 @@ function Header({
               </Button>
             )}
 
-            {version && typeof(version) !== 'undefined' && (
+            {version && typeof (version) !== 'undefined' && (
               <Spacing px={1}>
                 <Link
                   href="https://www.mage.ai/changelog"

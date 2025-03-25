@@ -113,12 +113,12 @@ services:
       - 8765:8765
     networks:
       - app-network
-  magic-database:
+  database:
     image: pgvector/pgvector:0.6.0-pg16
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: password
-      POSTGRES_DB: magic
+      POSTGRES_USER: $POSTGRES_USER
+      POSTGRES_PASSWORD: $POSTGRES_PASSWORD
+      POSTGRES_DB: $POSTGRES_DB
     ports:
       - 5432:5432
     volumes:

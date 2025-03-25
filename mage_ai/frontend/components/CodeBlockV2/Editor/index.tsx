@@ -50,6 +50,7 @@ import { pauseEvent } from '@utils/events';
 import { useError } from '@context/Error';
 import { useKeyboardContext } from '@context/Keyboard';
 import { useWindowSize } from '@utils/sizes';
+import Setup from '@components/AI/Setup';
 
 const WIDTH_OFFSET = ((BORDER_WIDTH_THICK * 2) + (UNIT * 2) + LEFT_PADDING);
 
@@ -151,45 +152,45 @@ function Editor({
     {
       onSuccess: (response: any) => onSuccess(
         response, {
-          callback: ({
-            llm,
-          }) => {
-            let code;
-            if (typeof llm?.response === 'string') {
-              code = llm?.response;
-            } else {
-              code = llm?.response?.code;
-            }
+        callback: ({
+          llm,
+        }) => {
+          let code;
+          if (typeof llm?.response === 'string') {
+            code = llm?.response;
+          } else {
+            code = llm?.response?.code;
+          }
 
-            set(LOCAL_STORAGE_KEY_GENERATE_CODE_HISTORY, [
-              {
-                block: {
-                  uuid: block?.uuid,
-                },
-                code,
-                description: refInputValue.current,
-                language,
-                timestamp: Number(new Date()),
+          set(LOCAL_STORAGE_KEY_GENERATE_CODE_HISTORY, [
+            {
+              block: {
+                uuid: block?.uuid,
               },
-              // @ts-ignore
-            ].concat((history && Array.isArray(history)) ? history : [])?.slice(0, 40));
+              code,
+              description: refInputValue.current,
+              language,
+              timestamp: Number(new Date()),
+            },
+            // @ts-ignore
+          ].concat((history && Array.isArray(history)) ? history : [])?.slice(0, 40));
 
-            updateContentWithCode(code);
+          updateContentWithCode(code);
 
-            refInput.current.value = '';
-            refInput.current.blur();
-            refInputValue.current = '';
+          refInput.current.value = '';
+          refInput.current.blur();
+          refInputValue.current = '';
 
-            setSelected(true);
-            setTextareaFocused(true);
+          setSelected(true);
+          setTextareaFocused(true);
 
-            reset();
-          },
-          onErrorCallback: (response, errors) => showError({
-            errors,
-            response,
-          }),
+          reset();
         },
+        onErrorCallback: (response, errors) => showError({
+          errors,
+          response,
+        }),
+      },
       ),
     },
   );
@@ -212,16 +213,16 @@ function Editor({
     {
       onSuccess: (response: any) => onSuccess(
         response, {
-          callback: ({
-            llm,
-          }) => {
+        callback: ({
+          llm,
+        }) => {
 
-          },
-          onErrorCallback: (response, errors) => showError({
-            errors,
-            response,
-          }),
         },
+        onErrorCallback: (response, errors) => showError({
+          errors,
+          response,
+        }),
+      },
       ),
     },
   );
@@ -230,27 +231,7 @@ function Editor({
     const shouldShowModal = !project?.openai_api_key;
     const showModal = (llm: LLMType) => {
       showConfigureProjectModal?.({
-        header: (
-          <Spacing mb={UNITS_BETWEEN_SECTIONS}>
-            <Panel>
-              <Text warning>
-                You need to add an OpenAI API key to your project before you can
-                generate blocks using AI.
-              </Text>
-
-              <Spacing mt={1}>
-                <Text warning>
-                  Read <Link
-                    href="https://help.openai.com/en/articles/4936850-where-do-i-find-my-secret-api-key"
-                    openNewWindow
-                  >
-                    OpenAI’s documentation
-                  </Link> to get your API key.
-                </Text>
-              </Spacing>
-            </Panel>
-          </Spacing>
-        ),
+        header: <Setup />,
         onSaveSuccess: (project: ProjectType) => {
           if (project?.openai_api_key) {
             // @ts-ignore

@@ -50,6 +50,7 @@ import { onSuccess } from '@api/utils/response';
 import { pauseEvent } from '@utils/events';
 import { useError } from '@context/Error';
 import { useKeyboardContext } from '@context/Keyboard';
+import Setup from '@components/AI/Setup';
 
 // WORKING ON storing a user clicking setup later on the project modal
 
@@ -166,16 +167,16 @@ function AddNewBlocksV2({
     {
       onSuccess: (response: any) => onSuccess(
         response, {
-          callback: ({
-            search_result: sr,
-          }) => {
-            setSearchResult(sr);
-          },
-          onErrorCallback: (response, errors) => showError({
-            errors,
-            response,
-          }),
+        callback: ({
+          search_result: sr,
+        }) => {
+          setSearchResult(sr);
         },
+        onErrorCallback: (response, errors) => showError({
+          errors,
+          response,
+        }),
+      },
       ),
     },
   );
@@ -427,27 +428,7 @@ function AddNewBlocksV2({
                     if (ObjectType.GENERATE_BLOCK === objectType && !hasOpenAIAPIKey) {
                       showConfigureProjectModal?.({
                         cancelButtonText: 'Set this up later',
-                        header: (
-                          <Spacing mb={UNITS_BETWEEN_SECTIONS}>
-                            <Panel>
-                              <Text warning>
-                                You need to add an OpenAI API key to your project before you can
-                                generate blocks using AI.
-                              </Text>
-
-                              <Spacing mt={1}>
-                                <Text warning>
-                                  Read <Link
-                                    href="https://help.openai.com/en/articles/4936850-where-do-i-find-my-secret-api-key"
-                                    openNewWindow
-                                  >
-                                    OpenAI’s documentation
-                                  </Link> to get your API key.
-                                </Text>
-                              </Spacing>
-                            </Panel>
-                          </Spacing>
-                        ),
+                        header: <Setup />,
                         onCancel: () => {
                           setSetupAILater(true);
                         },
