@@ -18,6 +18,7 @@ import {
   CubeWithArrowDown,
   DBT as DBTIcon,
   File as FileIcon,
+  AIStarsAlt,
   FrameBoxSelection,
   HexagonAll,
   Sensor,
@@ -33,6 +34,7 @@ import { BLOCK_TYPE_ICON_MAPPING } from '@components/CustomTemplates/BrowseTempl
 import {
   BUTTON_ITEMS_DEFAULT,
   ITEMS_MORE,
+  ITEM_AI,
   ITEMS_MORE_UUIDS_ORDERED,
   ITEM_BROWSE_TEMPLATES,
   ITEM_CREATE_TEMPLATE,
@@ -131,11 +133,11 @@ function ButtonItems({
   )?.find(({
     uuid,
   }) => uuid === `${BlockTypeEnum.DATA_LOADER}/${BlockLanguageEnum.PYTHON}`)?.items,
-  [
-    addNewBlock,
-    blockTemplatesByBlockType,
-    pipelineType,
-  ]);
+    [
+      addNewBlock,
+      blockTemplatesByBlockType,
+      pipelineType,
+    ]);
   const itemsDataLoaderSource = useMemo(() => getdataSourceMenuItems(
     addNewBlock,
     BlockTypeEnum.DATA_LOADER,
@@ -148,11 +150,11 @@ function ButtonItems({
   )?.find(({
     uuid,
   }) => uuid === `${BlockTypeEnum.DATA_LOADER}/${DataIntegrationTypeEnum.SOURCES}`)?.items,
-  [
-    addNewBlock,
-    blockTemplatesByBlockType,
-    pipelineType,
-  ]);
+    [
+      addNewBlock,
+      blockTemplatesByBlockType,
+      pipelineType,
+    ]);
 
   const itemsDataExporter = useMemo(() => getdataSourceMenuItems(
     addNewBlock,
@@ -163,13 +165,13 @@ function ButtonItems({
       v2: true,
     },
   )?.find(({
-      uuid,
+    uuid,
   }) => uuid === `${BlockTypeEnum.DATA_EXPORTER}/${BlockLanguageEnum.PYTHON}`)?.items,
-  [
-    addNewBlock,
-    blockTemplatesByBlockType,
-    pipelineType,
-  ]);
+    [
+      addNewBlock,
+      blockTemplatesByBlockType,
+      pipelineType,
+    ]);
   const itemsDataExporterDestination = useMemo(() => getdataSourceMenuItems(
     addNewBlock,
     BlockTypeEnum.DATA_EXPORTER,
@@ -182,11 +184,11 @@ function ButtonItems({
   )?.find(({
     uuid,
   }) => uuid === `${BlockTypeEnum.DATA_EXPORTER}/${DataIntegrationTypeEnum.DESTINATIONS}`)?.items,
-  [
-    addNewBlock,
-    blockTemplatesByBlockType,
-    pipelineType,
-  ]);
+    [
+      addNewBlock,
+      blockTemplatesByBlockType,
+      pipelineType,
+    ]);
 
   const itemsTransformer = useMemo(() => getdataSourceMenuItems(
     addNewBlock,
@@ -213,13 +215,13 @@ function ButtonItems({
       v2: true,
     },
   )?.find(({
-      uuid,
+    uuid,
   }) => uuid === `${BlockTypeEnum.SENSOR}/${BlockLanguageEnum.PYTHON}`)?.items,
-  [
-    addNewBlock,
-    blockTemplatesByBlockType,
-    pipelineType,
-  ]);
+    [
+      addNewBlock,
+      blockTemplatesByBlockType,
+      pipelineType,
+    ]);
 
   const buildNonPythonItems = useCallback((blockType: BlockTypeEnum) => [
     {
@@ -303,7 +305,7 @@ function ButtonItems({
   ]);
 
   const dataExporterGroupItems = useMemo(() => {
-    const arr =[
+    const arr = [
       {
         isGroupingTitle: true,
         label: () => 'Python',
@@ -541,6 +543,7 @@ function ButtonItems({
           const isOtherItems = [
             ITEM_BROWSE_TEMPLATES,
             ITEM_CREATE_TEMPLATE,
+            ITEM_AI,
             // @ts-ignore
           ].includes(uuid);
           // @ts-ignore
@@ -579,6 +582,15 @@ function ButtonItems({
       onClick: () => showBrowseTemplates({
         addNewBlock,
       }),
+    },
+    [ITEM_AI]: {
+      Icon: AIStarsAlt,
+      label: () => 'AI Code',
+      linkProps: {
+        href: 'https://www.mage.ai/ai?ref=oss',
+        openNewWindow: true,
+      },
+      tag: 'Pro',
     },
     [ITEM_CREATE_TEMPLATE]: {
       Icon: ArrowsAdjustingFrameSquare,

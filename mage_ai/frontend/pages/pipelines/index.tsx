@@ -102,6 +102,7 @@ import { range, sortByKey } from '@utils/array';
 import { storeLocalTimezoneSetting } from '@components/settings/workspace/utils';
 import { useModal } from '@context/Modal';
 import { initiateDownload } from '@utils/downloads';
+import Setup from '@components/AI/Setup';
 
 const TAB_RECENT = {
   Icon: Schedule,
@@ -195,7 +196,7 @@ function PipelineListPage() {
     useMemo(() => project?.features?.[FeatureUUIDEnum.OPERATION_HISTORY], [project]);
   const timezoneTooltipProps = useMemo(() =>
     displayLocalTimezone ? TIMEZONE_TOOLTIP_PROPS : {}
-  , [displayLocalTimezone]);
+    , [displayLocalTimezone]);
 
   const { data, mutate: fetchPipelines } = api.pipelines.list({
     ...query,
@@ -232,7 +233,7 @@ function PipelineListPage() {
         pipelinesFiltered = pipelinesFiltered
           .filter(({ tags }) => (
             tags.some(t => tagsFromQuery.includes(t))
-              || (tags.length === 0 && tagsFromQuery.includes(PipelineQueryEnum.NO_TAGS))
+            || (tags.length === 0 && tagsFromQuery.includes(PipelineQueryEnum.NO_TAGS))
           ));
       }
 
@@ -256,12 +257,12 @@ function PipelineListPage() {
   const sortColumnIndexQuery = q?.[SortQueryEnum.SORT_COL_IDX];
   const sortDirectionQuery = q?.[SortQueryEnum.SORT_DIRECTION];
   const sortedColumnInit: SortedColumnType = useMemo(() => (sortColumnIndexQuery
-      ?
-        {
-          columnIndex: +sortColumnIndexQuery,
-          sortDirection: sortDirectionQuery || SortDirectionEnum.ASC,
-        }
-      : undefined
+    ?
+    {
+      columnIndex: +sortColumnIndexQuery,
+      sortDirection: sortDirectionQuery || SortDirectionEnum.ASC,
+    }
+    : undefined
   ), [sortColumnIndexQuery, sortDirectionQuery]);
   const groupByQuery = q?.[PipelineQueryEnum.GROUP];
 
@@ -391,7 +392,7 @@ function PipelineListPage() {
         if (typeof v !== 'undefined' && v !== null) {
           // @ts-ignore
           if (META_QUERY_KEYS.includes(k) || NON_ARRAY_QUERY_KEYS.includes(k)) {
-              f[k] = v2;
+            f[k] = v2;
           } else {
             if (!Array.isArray(v2)) {
               // @ts-ignore
@@ -434,18 +435,18 @@ function PipelineListPage() {
     {
       onSuccess: (response: any) => onSuccess(
         response, {
-          callback: ({
-            pipeline: {
-              uuid,
-            },
-          }) => {
-            onSuccessCallback?.(uuid);
+        callback: ({
+          pipeline: {
+            uuid,
           },
-          onErrorCallback: (response, errors) => setErrors({
-            errors,
-            response,
-          }),
+        }) => {
+          onSuccessCallback?.(uuid);
         },
+        onErrorCallback: (response, errors) => setErrors({
+          errors,
+          response,
+        }),
+      },
       ),
     },
   );
@@ -471,32 +472,32 @@ function PipelineListPage() {
     {
       onSuccess: (response: any) => onSuccess(
         response, {
-          callback: ({
-            pipeline: {
-              uuid,
-            },
-          }) => {
-            setPipelinesEditing(prev => ({
-              ...prev,
-              [uuid]: false,
-            }));
-            fetchPipelines();
-            fetchPipelinesFromHistory?.();
-            hideInputModal?.();
-            setSelectedPipeline(null);
+        callback: ({
+          pipeline: {
+            uuid,
           },
-          onErrorCallback: (response, errors) => {
-            const pipelineUUID = response?.url_parameters?.pk;
-            setPipelinesEditing(prev => ({
-              ...prev,
-              [pipelineUUID]: false,
-            }));
-            setErrors({
-              errors,
-              response,
-            });
-          },
+        }) => {
+          setPipelinesEditing(prev => ({
+            ...prev,
+            [uuid]: false,
+          }));
+          fetchPipelines();
+          fetchPipelinesFromHistory?.();
+          hideInputModal?.();
+          setSelectedPipeline(null);
         },
+        onErrorCallback: (response, errors) => {
+          const pipelineUUID = response?.url_parameters?.pk;
+          setPipelinesEditing(prev => ({
+            ...prev,
+            [pipelineUUID]: false,
+          }));
+          setErrors({
+            errors,
+            response,
+          });
+        },
+      },
       ),
     },
   );
@@ -505,15 +506,15 @@ function PipelineListPage() {
     {
       onSuccess: (response: any) => onSuccess(
         response, {
-          callback: () => {
-            fetchPipelines?.();
-            fetchPipelinesFromHistory?.();
-          },
-          onErrorCallback: (response, errors) => setErrors({
-            errors,
-            response,
-          }),
+        callback: () => {
+          fetchPipelines?.();
+          fetchPipelinesFromHistory?.();
         },
+        onErrorCallback: (response, errors) => setErrors({
+          errors,
+          response,
+        }),
+      },
       ),
     },
   );
@@ -592,7 +593,7 @@ function PipelineListPage() {
       }
       value={pipelineName ? pipelineName : pipelineDescription}
     />
-  ), {} , [
+  ), {}, [
     isLoadingUpdate,
     selectedPipeline,
   ], {
@@ -654,27 +655,7 @@ function PipelineListPage() {
       <Preferences
         cancelButtonText={cancelButtonText}
         contained
-        header={(
-          <Spacing mb={UNITS_BETWEEN_SECTIONS}>
-            <Panel>
-              <Text warning>
-                You need to add an OpenAI API key to your project before you can
-                generate pipelines using AI.
-              </Text>
-
-              <Spacing mt={1}>
-                <Text warning>
-                  Read <Link
-                    href="https://help.openai.com/en/articles/4936850-where-do-i-find-my-secret-api-key"
-                    openNewWindow
-                  >
-                    OpenAI’s documentation
-                  </Link> to get your API key.
-                </Text>
-              </Spacing>
-            </Panel>
-          </Spacing>
-        )}
+        header={<Setup />}
         onCancel={() => {
           onCancel?.();
           hideConfigureProjectModal();
@@ -816,9 +797,9 @@ function PipelineListPage() {
                 ? null
                 : PipelineGroupingEnum.STATUS;
 
-               if (!val) {
-                 setGroupBys({});
-               }
+              if (!val) {
+                setGroupBys({});
+              }
 
               goToWithQuery({
                 [PipelineQueryEnum.GROUP]: val,
@@ -842,9 +823,9 @@ function PipelineListPage() {
                 ? null
                 : PipelineGroupingEnum.TAG;
 
-               if (!val) {
-                 setGroupBys({});
-               }
+              if (!val) {
+                setGroupBys({});
+              }
 
               goToWithQuery({
                 [PipelineQueryEnum.GROUP]: val,
@@ -868,9 +849,9 @@ function PipelineListPage() {
                 ? null
                 : PipelineGroupingEnum.TYPE;
 
-               if (!val) {
-                 setGroupBys({});
-               }
+              if (!val) {
+                setGroupBys({});
+              }
 
               goToWithQuery({
                 [PipelineQueryEnum.GROUP]: val,
@@ -1102,8 +1083,8 @@ function PipelineListPage() {
       })}
       onDoubleClickRow={(rowIndex: number) => {
         router.push(
-            '/pipelines/[pipeline]/edit',
-            `/pipelines/${pipelinesInner[rowIndex].uuid}/edit`,
+          '/pipelines/[pipeline]/edit',
+          `/pipelines/${pipelinesInner[rowIndex].uuid}/edit`,
         );
       }}
       ref={refTable}
@@ -1425,12 +1406,12 @@ function PipelineListPage() {
   const showNoPipelinesForTab =
     useMemo(() => ((!operationHistoryEnabled || TAB_ALL.uuid === selectedTabUUID) && !pipelinesCount)
       || (operationHistoryEnabled && TAB_RECENT.uuid === selectedTabUUID && !pipelinesFromHistoryCount),
-    [
-      operationHistoryEnabled,
-      pipelinesCount,
-      pipelinesFromHistoryCount,
-      selectedTabUUID,
-    ]);
+      [
+        operationHistoryEnabled,
+        pipelinesCount,
+        pipelinesFromHistoryCount,
+        selectedTabUUID,
+      ]);
 
   const limitMemo = useMemo(() => {
     const limit = query?.[MetaQueryEnum.LIMIT];
@@ -1558,14 +1539,14 @@ function PipelineListPage() {
           <Spacing p={UNITS_BETWEEN_ITEMS_IN_SECTIONS}>
             {!data
               ?
-                <Spinner inverted large />
+              <Spinner inverted large />
               :
-                <Text bold default monospace muted>
-                  No pipelines available
-                </Text>
+              <Text bold default monospace muted>
+                No pipelines available
+              </Text>
             }
           </Spacing>
-        ): null
+        ) : null
       }
 
       <TableContainerStyle

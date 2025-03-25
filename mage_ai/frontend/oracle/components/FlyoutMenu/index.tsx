@@ -24,6 +24,7 @@ import {
 import { UNIT } from '@oracle/styles/units/spacing';
 import { pauseEvent } from '@utils/events';
 import { useKeyboardContext } from '@context/Keyboard';
+import Link from '@oracle/elements/Link';
 
 export const DEFAULT_MENU_ITEM_HEIGHT = UNIT * 4.5;
 
@@ -47,6 +48,7 @@ export type FlyoutMenuItemType = {
   isGroupingTitle?: boolean;
   onClick?: (opts?: any) => void;
   tooltip?: () => string;
+  tag?: string;
   uuid: string;
 };
 
@@ -229,6 +231,7 @@ function FlyoutMenu({
           leftAligned,
           linkProps,
           onClick,
+          tag,
           openConfirmationDialogue,
           tooltip,
           uuid,
@@ -268,6 +271,13 @@ function FlyoutMenu({
               onClick={(e) => {
                 if (!linkProps) {
                   e.preventDefault();
+                }
+
+                if (linkProps?.openNewWindow) {
+                  e.stopPropagation();
+
+                  window.open(linkProps.href, '_blank');
+                  return
                 }
 
                 if (openConfirmationDialogue && !disabled) {
@@ -310,27 +320,46 @@ function FlyoutMenu({
                 fullWidth
                 justifyContent={leftAligned ? 'flex-start' : 'space-between'}
               >
-                {(beforeIcon || typeof labelToRender === 'string') && (
-                  <Flex alignItems="center">
-                    {beforeIcon &&
-                      <>
-                        {beforeIcon}
-                        <Spacing mr={1} />
-                      </>
-                    }
-                    {typeof labelToRender === 'string' && (
-                      <Text
-                        bold={bold}
-                        disabled={disabled}
-                        noWrapping
-                      >
-                        <span role="menuitem">{labelToRender}</span>
-                      </Text>
-                    )}
-                  </Flex>
-                )}
+                <Flex alignItems="center"
+                  justifyContent={leftAligned ? 'flex-start' : 'flex-end'}
+                  style={{
+                    gap: 8,
+                  }}
+                >
+                  {(beforeIcon || typeof labelToRender === 'string') && (
+                    <Flex alignItems="center">
+                      {beforeIcon &&
+                        <>
+                          {beforeIcon}
+                          <Spacing mr={1} />
+                        </>
+                      }
+                      {typeof labelToRender === 'string' && (
+                        <Text
+                          bold={bold}
+                          disabled={disabled}
+                          noWrapping
+                        >
+                          <span role="menuitem">{labelToRender}</span>
+                        </Text>
+                      )}
+                    </Flex>
+                  )}
 
-                {typeof labelToRender !== 'string' && labelToRender}
+                  {typeof labelToRender !== 'string' && labelToRender}
+
+                  {tag && (
+                    <div style={{
+                      borderRadius: 100,
+                      padding: '4px 10px',
+                      backgroundColor: '#00000099'
+                    }}>
+                      <Text small bold>
+                        {tag}
+                      </Text>
+                    </div>
+                  )}
+                </Flex>
 
                 {items && (
                   <Spacing ml={2}>
@@ -372,7 +401,7 @@ function FlyoutMenu({
             );
           }
 
-          if (linkProps) {
+          if (linkProps && !linkProps?.openNewWindow) {
             el = (
               <NextLink
                 {...linkProps}

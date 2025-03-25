@@ -29,7 +29,7 @@ import useCustomDesign from '@utils/models/customDesign/useCustomDesign';
 import useDelayFetch from '@api/utils/useDelayFetch';
 import useProject from '@utils/models/project/useProject';
 import { BLUE_TRANSPARENT, YELLOW } from '@oracle/styles/colors/main';
-import { BranchAlt, Planet, Slack, UFO } from '@oracle/icons';
+import { BranchAlt, MageProLetters, Planet, Slack, UFO } from '@oracle/icons';
 import {
   ButtonInputStyle,
   CUSTOM_LOGO_HEIGHT,
@@ -107,8 +107,8 @@ function Header({
     {
       revalidateOnFocus: false,
     }, {
-      pauseFetch: REQUIRE_USER_AUTHENTICATION() && !loggedIn,
-    },
+    pauseFetch: REQUIRE_USER_AUTHENTICATION() && !loggedIn,
+  },
     {
       delay: 11000,
     },
@@ -244,9 +244,9 @@ function Header({
   }
 
   const breadcrumbs = useMemo(() => [
-      ...breadcrumbProjects,
-      ...(breadcrumbsProp || []),
-    ], [
+    ...breadcrumbProjects,
+    ...(breadcrumbsProp || []),
+  ], [
     breadcrumbProjects,
     breadcrumbsProp,
     project,
@@ -311,15 +311,24 @@ function Header({
         },
         uuid: 'user_settings',
       },
+      {
+        label: () => 'Light mode',
+        linkProps: {
+          href: 'https://www.mage.ai/build?ref=oss',
+          openNewWindow: true,
+        },
+        tag: 'Pro',
+        uuid: 'light_mode',
+      },
     ];
 
   if (REQUIRE_USER_AUTHENTICATION()) {
     userDropdown.push(
-    {
-      label: () => 'Sign out',
-      onClick: () => logout(),
-      uuid: 'sign_out',
-    });
+      {
+        label: () => 'Sign out',
+        onClick: () => logout(),
+        uuid: 'sign_out',
+      });
   }
 
   const [showModal, hideModal] = useModal(() => (
@@ -327,7 +336,7 @@ function Header({
       branch={branch}
       fetchBranch={fetchBranch}
     />
-  ),{}, [branch, fetchBranch], {
+  ), {}, [branch, fetchBranch], {
     background: true,
     uuid: 'git_actions',
   });
@@ -484,7 +493,7 @@ function Header({
               </Button>
             )}
 
-            {version && typeof(version) !== 'undefined' && (
+            {version && typeof (version) !== 'undefined' && (
               <Spacing px={1}>
                 <Link
                   href="https://www.mage.ai/changelog"
@@ -524,6 +533,26 @@ function Header({
                 uuid="Header/live_chat"
               >
                 Live help
+              </KeyboardShortcutButton>
+            </Spacing>
+
+            <Spacing ml={1}>
+              <KeyboardShortcutButton
+                compact
+                highlightOnHoverAlt
+                inline
+                linkProps={{
+                  as: 'https://cloud.mage.ai/sign-up?ref=oss',
+                  href: 'https://cloud.mage.ai/sign-up?ref=oss',
+                }}
+                openNewTab
+                noBackground
+                noHoverUnderline
+                sameColorAsText
+                afterElement={<MageProLetters size={24} />}
+                uuid="Header/pro"
+              >
+                Try
               </KeyboardShortcutButton>
             </Spacing>
 
