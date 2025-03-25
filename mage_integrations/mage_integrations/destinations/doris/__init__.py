@@ -1,7 +1,7 @@
 from typing import Dict, List, Tuple
 
-from mage_integrations.connections.mysql import ConnectionMethod
-from mage_integrations.connections.mysql import MySQL as DorisConnection
+from mage_integrations.connections.doris import ConnectionMethod
+from mage_integrations.connections.doris import Doris as DorisConnection
 from mage_integrations.destinations.constants import (
     COLUMN_TYPE_OBJECT,
     INTERNAL_COLUMN_CREATED_AT,
