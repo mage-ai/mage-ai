@@ -3,7 +3,6 @@ from datetime import datetime, timedelta, timezone
 from unittest.mock import Mock, patch
 from uuid import uuid4
 
-from croniter import croniter
 from freezegun import freeze_time
 
 from mage_ai.data_preparation.models.block import Block
@@ -22,6 +21,7 @@ from mage_ai.orchestration.db.models.schedules import (
     PipelineSchedule,
 )
 from mage_ai.orchestration.pipeline_scheduler import configure_pipeline_run_payload
+from mage_ai.shared.croniter import croniter
 
 # from mage_ai.settings.utils import base_repo_path
 from mage_ai.shared.hash import merge_dict
