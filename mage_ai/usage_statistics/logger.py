@@ -1,4 +1,3 @@
-import asyncio
 import hashlib
 import json
 import platform
@@ -8,6 +7,7 @@ from typing import Callable, Dict, List, Union
 
 import aiohttp
 import pytz
+import requests
 
 from mage_ai.api.operations.constants import OperationType
 from mage_ai.cache.block_action_object.constants import (
@@ -43,6 +43,8 @@ from mage_ai.usage_statistics.constants import (
     EventObjectType,
 )
 from mage_ai.usage_statistics.utils import build_event_data_for_chart
+
+AMPLITUDE_API_KEY = 'KwnbpKJNe6gOjC2X5ilxafFvxbNppiIfGejB2hlY'
 
 
 class UsageStatisticLogger():
@@ -233,7 +235,13 @@ class UsageStatisticLogger():
     def pipeline_runs_impression_sync(self, count_func: Callable) -> bool:
         if not self.help_improve_mage:
             return False
-        return asyncio.run(self.pipeline_runs_impression(count_func))
+        return self.__send_message_sync(
+            dict(
+                object=EventObjectType.PIPELINE_RUN,
+                action=EventActionType.IMPRESSION,
+                pipeline_runs=count_func(),
+            ),
+        )
 
     @safe_db_query
     async def pipeline_runs_impression(self, count_func: Callable) -> bool:
@@ -307,26 +315,7 @@ class UsageStatisticLogger():
         )
 
     @safe_db_query
-    def pipeline_run_ended_sync(self, pipeline_run: PipelineRun) -> bool:
-        if not self.help_improve_mage:
-            return False
-
-        return asyncio.run(self.pipeline_run_ended(pipeline_run))
-
-    @safe_db_query
-    async def pipeline_run_ended(self, pipeline_run: PipelineRun) -> bool:
-        """
-        Write "pipeline_run_ended" event to Amplitude for the given PipelineRun.
-
-        Args:
-            pipeline_run (PipelineRun): pipeline run to use to populate the event
-
-        Returns:
-            bool: True if event was successfully uploaded
-        """
-        if not self.help_improve_mage:
-            return False
-
+    def pipeline_run_ended_data(self, pipeline_run: PipelineRun):
         pipeline = pipeline_run.pipeline
 
         if pipeline.type == PipelineType.INTEGRATION:
@@ -346,7 +335,7 @@ class UsageStatisticLogger():
 
         encoded_pipeline_uuid = pipeline.uuid.encode('utf-8')
         pipeline_schedule = pipeline_run.pipeline_schedule
-        data = dict(
+        return dict(
             landing_time_enabled=1 if pipeline_schedule.landing_time_enabled() else 0,
             num_pipeline_blocks=len(block_configs),
             pipeline_run_uuid=pipeline_run.id,
@@ -359,7 +348,44 @@ class UsageStatisticLogger():
             unique_languages=list(set([b.get('language') for b in block_configs])),
         )
 
+    @safe_db_query
+    async def pipeline_run_ended(self, pipeline_run: PipelineRun) -> bool:
+        """
+        Write "pipeline_run_ended" event to Amplitude for the given PipelineRun.
+
+        Args:
+            pipeline_run (PipelineRun): pipeline run to use to populate the event
+
+        Returns:
+            bool: True if event was successfully uploaded
+        """
+        if not self.help_improve_mage:
+            return False
+
+        data = self.pipeline_run_ended_data(pipeline_run)
+
         return await self.__send_message(
+            data,
+            event_name=EventNameType.PIPELINE_RUN_ENDED,
+        )
+
+    @safe_db_query
+    def pipeline_run_ended_sync(self, pipeline_run: PipelineRun) -> bool:
+        """
+        Write "pipeline_run_ended" event to Amplitude for the given PipelineRun.
+
+        Args:
+            pipeline_run (PipelineRun): pipeline run to use to populate the event
+
+        Returns:
+            bool: True if event was successfully uploaded
+        """
+        if not self.help_improve_mage:
+            return False
+
+        data = self.pipeline_run_ended_data(pipeline_run)
+
+        return self.__send_message_sync(
             data,
             event_name=EventNameType.PIPELINE_RUN_ENDED,
         )
@@ -465,7 +491,7 @@ class UsageStatisticLogger():
                 async with session.post(
                     API_ENDPOINT,
                     json=dict(
-                        api_key='KwnbpKJNe6gOjC2X5ilxafFvxbNppiIfGejB2hlY',
+                        api_key=AMPLITUDE_API_KEY,
                         event_name=event_name,
                         usage_statistics=data_to_send,
                     ),
@@ -476,6 +502,51 @@ class UsageStatisticLogger():
                         if is_debug():
                             print(json.dumps(data_to_send, indent=2))
                         return True
+        except Exception as err:
+            print(f'[Statistics] Message: {err}')
+        return False
+
+    def __send_message_sync(
+        self,
+        data: Dict,
+        event_name: EventNameType = EventNameType.USAGE_STATISTIC_CREATE,
+        override_validation: bool = False,
+        project_uuid: str = None,
+    ) -> bool:
+        if not override_validation:
+            if is_test():
+                return False
+
+            if not self.help_improve_mage:
+                return False
+
+        if data is None:
+            data = {}
+
+        data_to_send = merge_dict(
+            self.__shared_metadata(),
+            data,
+        )
+
+        if project_uuid and not data_to_send.get('project_uuid'):
+            data_to_send['project_uuid'] = project_uuid
+
+        try:
+            response = requests.post(
+                API_ENDPOINT,
+                json={
+                    'api_key': AMPLITUDE_API_KEY,
+                    'event_name': event_name,
+                    'usage_statistics': data_to_send,
+                },
+                timeout=3
+            )
+            response.raise_for_status()
+            response_json = response.json()
+            if response_json.get('success'):
+                if is_debug():
+                    print(json.dumps(data_to_send, indent=2))
+                return True
         except Exception as err:
             print(f'[Statistics] Message: {err}')
         return False
