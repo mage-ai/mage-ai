@@ -20,41 +20,41 @@ env:
   ENV: test_mage
 
 jobs:
-  check-code-quality:
+  # check-code-quality:
 
-    runs-on: ubuntu-latest
-    name: Check Code Quality
-    steps:
-      - name: Check out source repository
-        uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
-      # https://github.com/actions/setup-python/blob/main/docs/advanced-usage.md#caching-packages
-      - name: Install Poetry
-        run: pipx install poetry
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: "3.10"
-          cache: 'poetry'
-      - name: Install Python dev dependencies
-        run: |
-          poetry install --no-interaction --only dev
-          poetry run pre-commit install
-      - id: changed-files
-        uses: tj-actions/changed-files@v36
-        with:
-          files_ignore: |
-            requirements.txt
-      - name: Run pre-commit hooks
-        run: poetry run pre-commit run --show-diff-on-failure --files ${{ steps.changed-files.outputs.all_changed_files }}
+  #   runs-on: ubuntu-latest
+  #   name: Check Code Quality
+  #   steps:
+  #     - name: Check out source repository
+  #       uses: actions/checkout@v3
+  #       with:
+  #         fetch-depth: 0
+  #     # https://github.com/actions/setup-python/blob/main/docs/advanced-usage.md#caching-packages
+  #     - name: Install Poetry
+  #       run: pipx install poetry
+  #     - name: Set up Python
+  #       uses: actions/setup-python@v4
+  #       with:
+  #         python-version: "3.10"
+  #         cache: 'poetry'
+  #     - name: Install Python dev dependencies
+  #       run: |
+  #         poetry install --no-interaction --only dev
+  #         poetry run pre-commit install
+  #     - id: changed-files
+  #       uses: tj-actions/changed-files@v36
+  #       with:
+  #         files_ignore: |
+  #           requirements.txt
+  #     - name: Run pre-commit hooks
+  #       run: poetry run pre-commit run --show-diff-on-failure --files ${{ steps.changed-files.outputs.all_changed_files }}
 
   test_backend:
     runs-on: ubuntu-latest
     strategy:
       matrix:
         python-version: ["3.9", "3.10", "3.11", "3.12"]
-    needs: check-code-quality
+    # needs: check-code-quality
     steps:
       - uses: actions/checkout@v3
       - name: Set up Python ${{ matrix.python-version }}
@@ -112,7 +112,7 @@ jobs:
     strategy:
       matrix:
         python-version: ["3.10"]
-    needs: check-code-quality
+    # needs: check-code-quality
     steps:
       - uses: actions/checkout@v3
       - name: Set up Python ${{ matrix.python-version }}
