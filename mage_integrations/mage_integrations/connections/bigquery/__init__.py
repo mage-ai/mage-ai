@@ -34,7 +34,16 @@ class BigQuery(Connection):
     def build_connection(self):
         return dbapi.Connection(self.client)
 
-    def execute_with_connection(self, connection, query_strings: List[str]) -> List[Tuple]:
+    def execute_with_connection(
+        self,
+        connection,
+        query_strings: List[str],
+        log_exception: bool = True,
+    ) -> List[Tuple]:
         cursor = connection.cursor()
 
-        return self.get_data_from_query_strings(cursor, query_strings)
+        return self.get_data_from_query_strings(
+            cursor,
+            query_strings,
+            log_exception=log_exception,
+        )
