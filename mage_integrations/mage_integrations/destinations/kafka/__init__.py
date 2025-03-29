@@ -10,12 +10,9 @@ if sys.version_info >= (3, 12, 0):
 from typing import Dict, List
 
 from kafka import KafkaConsumer, KafkaProducer
-
 from mage_integrations.destinations.base import Destination
 from mage_integrations.destinations.constants import KEY_RECORD
 from mage_integrations.destinations.utils import update_record_with_internal_columns
-
-MAXIMUM_BATCH_SIZE_MB = 1
 
 
 class Kafka(Destination):

@@ -80,7 +80,7 @@ WHERE  c.table_schema = '{schema}'
     def update_column_names(self, columns: List[str]) -> List[str]:
         return list(map(lambda column: f'"{column}"', columns))
 
-    def _limit_query_string(self, limit, offset):
+    def _limit_query_string(self, limit, offset, **kwargs):
         return f'OFFSET {offset} ROWS FETCH NEXT {limit} ROWS ONLY'
 
 
