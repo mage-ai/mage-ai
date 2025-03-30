@@ -38,10 +38,12 @@ class SnowflakeDestinationTests(unittest.TestCase, SQLDestinationMixin):
     expected_conn_class_kwargs = dict(
         account='account',
         database='database',
-        password='password',
         schema='schema',
         username='username',
         warehouse='warehouse',
+        password='password',
+        private_key_file=None,
+        private_key_file_pwd=None,
         role=None,
     )
     expected_template_config = {
@@ -55,6 +57,8 @@ class SnowflakeDestinationTests(unittest.TestCase, SQLDestinationMixin):
             'table': '',
             'username': '',
             'warehouse': '',
+            'private_key_file': None,
+            'private_key_file_pwd': None,
             'use_batch_load': True,
         },
     }
