@@ -5,5 +5,7 @@
   "role": "",
   "schema": "",
   "username": "",
-  "warehouse": ""
+  "warehouse": "",
+  "private_key_file": null,
+  "private_key_file_pwd": null
 }

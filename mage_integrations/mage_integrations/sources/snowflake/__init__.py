@@ -20,10 +20,12 @@ class Snowflake(Source):
         return SnowflakeConnection(
             account=self.config['account'],
             database=self.config['database'],
-            password=self.config['password'],
             schema=self.config['schema'],
             username=self.config['username'],
             warehouse=self.config['warehouse'],
+            password=self.config.get('password'),
+            private_key_file=self.config.get('private_key_file'),
+            private_key_file_pwd=self.config.get('private_key_file_pwd'),
             role=self.config.get('role'),
         )
 

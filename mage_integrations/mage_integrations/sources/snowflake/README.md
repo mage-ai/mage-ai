@@ -12,13 +12,22 @@ You must enter the following credentials when configuring this source:
 | --- | --- | --- |
 | `account` | Your Snowflake [account ID](https://docs.snowflake.com/en/user-guide/admin-account-identifier.html). | `abc1234.us-east-1` |
 | `database` | The name of the database you want to read data from. | `DEMO_DB` |
-| `password` | Password for the user to access the database. | `abc123...` |
-| `role` | Role of the user to access the database. | `ROLE` |
 | `schema` | Schema of the data you want to read from. | `PUBLIC` |
 | `username` | Name of the user that will access the database (must have permissions to read and write to specified schema). | `guest` |
 | `warehouse` | Name of the warehouse that contains the specified database and schema. | `COMPUTE_WH` |
 
-### Optional Configs
+### Optional connection configs
+
+| Key | Description | Sample value
+| --- | --- | --- |
+| `password` | Password for the user to access the database. | `abc123...` |
+| `private_key_file` | Path to the Snowflake private key file. Supported in version >= 0.9.76. | `/path/to/snowflake_private_key` |
+| `private_key_file_pwd` | Passphrase of the private key file. Supported in version >= 0.9.76. | `abc123...` |
+| `role` | Role of the user to access the database. | `ROLE` |
+
+Doc for enabling key-pair authentication: https://docs.snowflake.com/en/user-guide/key-pair-auth
+
+### Other optional Configs
 
 | Key | Description | Sample value
 | --- | --- | --- |
