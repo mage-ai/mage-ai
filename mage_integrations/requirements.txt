@@ -1,4 +1,4 @@
-attrs==17.4.0; python_version < '3.12'
+attrs==22.2.0; python_version < '3.12'
 attrs==24.2.0; python_version >= '3.12'
 azure-storage-blob==12.14.1
 backoff
