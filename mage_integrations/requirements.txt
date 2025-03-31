@@ -5,7 +5,7 @@ backoff
 charset-normalizer
 clickhouse_sqlalchemy~=0.2.4
 couchbase==4.1.1; python_version < '3.11'
-couchbase==4.3.1; python_version >= '3.11'
+couchbase==4.3.5; python_version >= '3.11'
 deltalake==0.20.2
 elasticsearch==8.15.1
 facebook_business==20.0.2
