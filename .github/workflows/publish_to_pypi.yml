@@ -29,7 +29,7 @@ jobs:
         python setup.py sdist bdist_wheel
     - name: Publish distribution to Test PyPI
       if: github.event.inputs.dry_run == 'true'
-      uses: pypa/gh-action-pypi-publish@release/v1.12.4
+      uses: pypa/gh-action-pypi-publish@release/v1
       with:
         password: ${{ secrets.TEST_PYPI_API_TOKEN }}
         repository-url: https://test.pypi.org/legacy/
@@ -37,7 +37,7 @@ jobs:
         skip-existing: true
     - name: Publish distribution to PyPI
       if: github.event.inputs.dry_run == 'false'
-      uses: pypa/gh-action-pypi-publish@release/v1.12.4
+      uses: pypa/gh-action-pypi-publish@release/v1
       with:
         password: ${{ secrets.PYPI_API_TOKEN }}
         verbose: true
