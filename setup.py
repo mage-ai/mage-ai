@@ -44,7 +44,7 @@ setuptools.setup(
             'astor>=0.8.1',
             'langchain==0.1.6',
             'langchain_community<0.0.20',
-            'openai==1.39.0',
+            'openai>=1.0.0',
         ],
         'airtable': [
             'pyairtable>=2.3.3'
@@ -182,7 +182,7 @@ setuptools.setup(
             'ldap3==2.9.1',
             'nats-py==2.6.0',
             'nkeys~=0.2.0',
-            'openai==1.39.0',
+            'openai>=1.0.0',
             'opensearch-py==2.0.0',
             'opentelemetry-api==1.22.0',
             'opentelemetry-exporter-prometheus==0.43b0',
@@ -191,7 +191,7 @@ setuptools.setup(
             'opentelemetry-instrumentation-sqlalchemy==0.43b0',
             'oracledb==1.3.1',
             'pika==1.3.1',
-            'pinotdb==5.1.0',
+            'pinotdb==5.6.0',
             'prometheus_client>=0.18.0',
             'protobuf>=4.25.0',
             'psycopg2-binary==2.9.3',
