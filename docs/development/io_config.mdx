@@ -127,3 +127,80 @@ default:
     data_type_properties:
       timestamp_precision: 3                              # Optional. Set TIMESTAMP(n) precision
 ```
+
+# Unified config
+import { ProButton } from '/snippets/pro/button.mdx';
+import { ProOnly } from '/snippets/pro/only.mdx';
+
+<ProOnly source="io_config" />
+
+Mage Pro provides a unified framework for configuring connections using `io_config.yaml` across different types of pipelines:
+* **Batch pipeline** (Python block, SQL block)
+* **Data integration pipeline**
+* **Streaming pipeline**
+
+Each pipeline reads from the same io_config.yaml file, which allows you to centralize connection information and switch between pipeline types with minimal configuration changes.
+
+
+## Batch pipeline
+
+### Example: Python block (Postgres)
+
+```python
+from mage_ai.settings.repo import get_repo_path
+from mage_ai.io.config import ConfigFileLoader
+from mage_ai.io.postgres import Postgres
+from os import path
+
+@data_loader
+def load_data_from_postgres(**kwargs):
+    query = 'SELECT 1'
+    config_path = path.join(get_repo_path(), 'io_config.yaml')
+    config_profile = 'default'
+
+    with Postgres.with_config(ConfigFileLoader(config_path, config_profile)) as loader:
+        return loader.load(query)
+```
+
+### Example: SQL block
+
+Just select the desired IO Config profile in the UI (under the "Profile" dropdown).
+The profile must exist in your io_config.yaml and contain valid credentials for the source or destination.
+
+
+## Data integration pipeline
+
+Data integration pipelines use source and destination blocks.
+These blocks can reference connection credentials from `io_config.yaml` via the `io_config_profile` key.
+
+### Example source config (Postgres)
+
+```yaml
+io_config_profile: default  # profile in the io_config.yaml
+```
+
+### Example destination config (Postgres)
+
+```yaml
+io_config_profile: default  # profile in the io_config.yaml
+schema: test                # Override the schema
+```
+
+With this setup, you don’t need to hard-code connection details in your block configs—just use the profile name.
+
+
+## Streaming pipeline
+
+Streaming pipelines also support `io_config.yaml` for setting up destinations.
+
+### Example: Destination block config (BigQuery)
+
+```yaml
+connector_type: bigquery
+profile: default    # profile in the io_config.yaml
+config:
+  table_id: table_id
+  if_exists: "append"
+```
+
+The `profile` field points to the profile in your `io_config.yaml`, and additional block-specific settings can still be defined under config.
