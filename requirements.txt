@@ -141,7 +141,7 @@ attrs==24.2.0; python_version >= '3.12'
 backoff
 clickhouse_sqlalchemy
 deltalake==0.20.2
-facebook_business==20.0.2
+facebook_business==22.0.2
 gnupg==2.3.1
 google-analytics-data==0.14.2; python_version < '3.11'
 google-analytics-data==0.15.0; python_version >= '3.11'
