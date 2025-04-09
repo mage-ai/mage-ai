@@ -1,3 +1,6 @@
+
+from __future__ import annotations
+
 from datetime import datetime
 from typing import TYPE_CHECKING
 
@@ -155,7 +158,7 @@ def trigger_pipeline(
 
 
 def __fetch_or_create_pipeline_schedule(
-    pipeline: Pipeline | IntegrationPipeline | None,
+    pipeline: "Pipeline | IntegrationPipeline | None",
     schedule_name: str | None = None,
 ) -> PipelineSchedule:
     if schedule_name is None:
