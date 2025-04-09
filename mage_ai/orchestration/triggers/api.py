@@ -1,8 +1,7 @@
-
 from __future__ import annotations
 
 from datetime import datetime
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Union
 
 from pytz import UTC
 
@@ -28,6 +27,7 @@ if TYPE_CHECKING:
         IntegrationPipeline,
     )
 
+
 def trigger_pipeline(
     pipeline_uuid: str,
     repo_path: str | None = None,
@@ -35,7 +35,7 @@ def trigger_pipeline(
     poll_interval: float = DEFAULT_POLL_INTERVAL,
     poll_timeout: float | None = None,
     schedule_name: str | None = None,
-    remote_blocks: list[dict| RemoteBlock] | None = None,
+    remote_blocks: list[Union[dict, RemoteBlock]] | None = None,
     *,
     check_status: bool = False,
     error_on_failure: bool = False,
@@ -158,14 +158,13 @@ def trigger_pipeline(
 
 
 def __fetch_or_create_pipeline_schedule(
-    pipeline: "Pipeline | IntegrationPipeline | None",
+    pipeline: 'Pipeline | IntegrationPipeline | None',
     schedule_name: str | None = None,
 ) -> PipelineSchedule:
     if schedule_name is None:
         schedule_name = TRIGGER_NAME_FOR_TRIGGER_CREATED_FROM_CODE
 
-    # FIXME: Possible source of error?
-    pipeline_uuid = pipeline.uuid  # if pipeline else None
+    pipeline_uuid = pipeline.uuid if pipeline else None
     schedule_type = ScheduleType.API
 
     pipeline_schedule = PipelineSchedule.repo_query.filter(
