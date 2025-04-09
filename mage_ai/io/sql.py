@@ -1,6 +1,9 @@
+from __future__ import annotations
+
 import warnings
+from collections.abc import Mapping
 from io import StringIO
-from typing import IO, Any, Dict, List, Mapping, Union
+from typing import IO, Any, Dict, List, Literal, Union
 
 from pandas import DataFrame, Series, read_sql
 
@@ -17,17 +20,16 @@ from mage_ai.io.export_utils import (
 class BaseSQL(BaseSQLConnection):
     @classmethod
     def with_config(cls, config: BaseConfigLoader):
-        """
-        Initializes SQL loader from configuration loader
+        """Initializes SQL loader from configuration loader
 
         Args:
             config (BaseConfigLoader): Configuration loader object
+
         """
-        raise Exception('Subclasses must override this method.')
+        raise Exception("Subclasses must override this method.")
 
     def get_type(self, column: Series, dtype: str) -> str:
-        """
-        Maps pandas Data Frame column to SQL type
+        """Maps pandas Data Frame column to SQL type
 
         Args:
             series (Series): Column to map
@@ -38,14 +40,15 @@ class BaseSQL(BaseSQLConnection):
 
         Returns:
             str: SQL data type for this column
+
         """
-        raise Exception('Subclasses must override this method.')
+        raise Exception("Subclasses must override this method.")
 
     def build_create_schema_command(
         self,
-        schema_name: str
+        schema_name: str,
     ) -> str:
-        return f'CREATE SCHEMA IF NOT EXISTS {schema_name};'
+        return f"CREATE SCHEMA IF NOT EXISTS {schema_name};"
 
     def build_create_table_command(
         self,
@@ -77,10 +80,7 @@ class BaseSQL(BaseSQLConnection):
         table_name: str,
         query_string: str,
     ) -> str:
-        return 'CREATE TABLE {} AS\n{}'.format(
-            table_name,
-            query_string,
-        )
+        return f"CREATE TABLE {table_name} AS\n{query_string}"
 
     def default_database(self) -> str:
         return None
@@ -89,14 +89,12 @@ class BaseSQL(BaseSQLConnection):
         return None
 
     def open(self) -> None:
+        """Opens a connection to the SQL database specified by the parameters.
         """
-        Opens a connection to the SQL database specified by the parameters.
-        """
-        raise Exception('Subclasses must override this method.')
+        raise Exception("Subclasses must override this method.")
 
     def table_exists(self, schema_name: str, table_name: str) -> bool:
-        """
-        Returns whether the specified table exists.
+        """Returns whether the specified table exists.
 
         Args:
             schema_name (str): Name of the schema the table belongs to.
@@ -104,8 +102,9 @@ class BaseSQL(BaseSQLConnection):
 
         Returns:
             bool: True if the table exists, else False.
+
         """
-        raise Exception('Subclasses must override this method.')
+        raise Exception("Subclasses must override this method.")
 
     def upload_dataframe(
         self,
@@ -117,17 +116,17 @@ class BaseSQL(BaseSQLConnection):
         buffer: Union[IO, None] = None,
         **kwargs,
     ) -> None:
-        raise Exception('Subclasses must override this method.')
+        raise Exception("Subclasses must override this method.")
 
     def execute(self, query_string: str, **query_vars) -> None:
-        """
-        Sends query to the connected database.
+        """Sends query to the connected database.
 
         Args:
             query_string (str): SQL query string to apply on the connected database.
             query_vars: Variable values to fill in when using format strings in query.
+
         """
-        with self.printer.print_msg(f'Executing query \'{query_string}\''):
+        with self.printer.print_msg(f"Executing query '{query_string}'"):
             query_string = self._clean_query(query_string)
             with self.conn.cursor() as cur:
                 cur.execute(query_string, **query_vars)
@@ -181,8 +180,7 @@ class BaseSQL(BaseSQLConnection):
         verbose: bool = True,
         **kwargs,
     ) -> DataFrame:
-        """
-        Loads data from the connected database into a Pandas data frame based on the query given.
+        """Loads data from the connected database into a Pandas data frame based on the query given.
         This will fail if the query returns no data from the database. This function will load at
         maximum 10,000,000 rows of data. To operate on more data, consider performing data
         transformations in warehouse.
@@ -195,21 +193,22 @@ class BaseSQL(BaseSQLConnection):
 
         Returns:
             DataFrame: The data frame corresponding to the data returned by the given query.
+
         """
-        print_message = 'Loading data'
+        print_message = "Loading data"
         if verbose:
-            print_message += ' with query'
+            print_message += " with query"
 
             if display_query:
-                for line in display_query.split('\n'):
-                    print_message += f'\n{line}'
+                for line in display_query.split("\n"):
+                    print_message += f"\n{line}"
             else:
-                print_message += f'\n\n{query_string}\n\n'
+                print_message += f"\n\n{query_string}\n\n"
 
         query_string = self._clean_query(query_string)
 
         with self.printer.print_msg(print_message):
-            warnings.filterwarnings('ignore', category=UserWarning)
+            warnings.filterwarnings("ignore", category=UserWarning)
 
             return read_sql(
                 self._enforce_limit(query_string, limit),
@@ -219,57 +218,124 @@ class BaseSQL(BaseSQLConnection):
 
     def export(
         self,
-        df: DataFrame,
-        # Optional configs but commonly used
-        schema_name: str = None,
-        table_name: str = None,
-        if_exists: ExportWritePolicy = ExportWritePolicy.REPLACE,
+        df: DataFrame, # NOTE: possible confusion as may also accept dict | list
+        table_name: str | None = None, # NOTE: Not an optional argument?
+        schema_name: str | None = None,
+        overwrite_types: dict | None = None,
+        query_string: str | None = None,
+        unique_conflict_method: str | Literal["IGNORE", "UPDATE"] | None = None,
+        unique_constraints: list[str] | None= None,
+        if_exists: ExportWritePolicy | Literal["replace", "append", "fail" ] = ExportWritePolicy.REPLACE,
+        *,
         index: bool = False,
         verbose: bool = True,
-        # Other optional configs
         allow_reserved_words: bool = False,
         auto_clean_name: bool = True,
         case_sensitive: bool = False,
         cascade_on_drop: bool = False,
         drop_table_on_replace: bool = False,
-        overwrite_types: Dict = None,
-        query_string: Union[str, None] = None,
-        unique_conflict_method: str = None,
-        unique_constraints: List[str] = None,
         skip_semicolon_at_end: bool = False,
-        **kwargs,
+        **kwargs: dict[str, Any],
     ) -> None:
-        """
-        Exports dataframe to the connected database from a Pandas data frame. If table doesn't
-        exist, the table is automatically created. If the schema doesn't exist, the schema is
-        also created.
+        """Exports a DataFrame to a SQL database table.
 
-        Args:
-            schema_name (str): Name of the schema of the table to export data to.
-            table_name (str): Name of the table to insert rows from this data frame into.
-            if_exists (ExportWritePolicy): Specifies export policy if table exists. Either
-                - `'fail'`: throw an error.
-                - `'replace'`: drops existing table and creates new table of same name.
-                - `'append'`: appends data frame to existing table. In this case the schema must
-                                match the original table.
-            Defaults to `'replace'`.
-            index (bool): If true, the data frame index is also exported alongside the table.
-                            Defaults to False.
-            **kwargs: Additional query parameters.
+        This method handles the export of data from a Pandas DataFrame to a SQL database table.
+        It automatically creates the table if it doesn't exist, and can handle various export
+        scenarios including appending to existing tables, replacing tables, or failing if
+        the table already exists.
+
+        Parameters
+        ----------
+        df : DataFrame
+            The DataFrame containing the data to be exported. If a dict or list is provided,
+            it will be converted to a DataFrame.
+        table_name : str, optional
+            The name of the table to which data will be exported. This argument is required;
+            an exception is raised if it is not provided.
+        schema_name : str, optional
+            The schema where the table resides. If not provided, the default schema
+            returned by `default_schema()` is used.
+        overwrite_types : dict, optional
+            A mapping for overwriting the inferred data types during table creation.
+        query_string : str, optional
+            A SQL query string to be used for creating the table (or inserting data into it).
+            When provided, the export follows a query-based path instead of processing the DataFrame.
+        unique_conflict_method : str or {"IGNORE", "UPDATE"}, optional
+            Specifies the method to resolve conflicts when unique constraints
+            are violated during data export.
+        unique_constraints : list of str, optional
+            A list of column names defining unique constraints for the table.
+        if_exists : ExportWritePolicy or {"replace", "append", "fail"}, optional
+            Defines the behavior if the target table already exists. Options are:
+            - 'fail': Raise an error.
+            - 'replace': Drop the existing table (or delete its contents, depending on other flags) and create a new one.
+            - 'append': Append the data to the existing table (the schema must match).
+            Defaults to ExportWritePolicy.REPLACE.
+        index : bool, optional
+            If True, exports the DataFrame index as a column in the table.
+            Defaults to False.
+        verbose : bool, optional
+            If True, prints log messages during export (e.g., indicating the target table).
+            Defaults to True.
+        allow_reserved_words : bool, optional
+            If True, permits the use of SQL reserved words as column names;
+            otherwise, columns are cleaned to avoid conflicts. Defaults to False.
+        auto_clean_name : bool, optional
+            If True, automatically cleans column names to ensure they are SQL-safe.
+            Defaults to True.
+        case_sensitive : bool, optional
+            Determines whether column names are treated as case sensitive.
+            Defaults to False.
+        cascade_on_drop : bool, optional
+            If True and the table is being replaced, uses CASCADE when dropping the table.
+            Defaults to False.
+        drop_table_on_replace : bool, optional
+            If True and `if_exists` is set to 'replace', drops the entire table
+            rather than deleting its rows. Defaults to False.
+        skip_semicolon_at_end : bool, optional
+            If True, omits the semicolon at the end of generated SQL commands.
+            Defaults to False.
+        **kwargs : dict
+            Additional keyword arguments for advanced configurations. For example,
+            `fast_execute` can be used to trigger a fast upload method if supported by the connection.
+
+        Returns
+        -------
+        None
+
+        Raises
+        ------
+        Exception
+            If `table_name` is not provided.
+        ValueError
+            If the table already exists and `if_exists` is set to 'fail'.
+
+        Notes
+        -----
+        This method is the primary way to export data from a DataFrame to a SQL database.
+        It handles all the complexities of table creation, data type mapping, and data insertion.
+
+        See Also
+        --------
+        mage_ai.io.export_utils.clean_df_for_export
+        mage_ai.io.export_utils.infer_dtypes
+        mage_ai.io.export_utils.gen_table_creation_query
         """
+        # FIXME: if table_name is required, don't make it optional?
         if table_name is None:
-            raise Exception('Please provide a table_name argument in the export method.')
+            raise Exception("Please provide a table_name argument in the export method.")
 
         if schema_name is None:
             schema_name = self.default_schema()
 
+        # NOTE: Why is this logic here if df is a DataFrame?
         if type(df) is dict:
             df = DataFrame([df])
         elif type(df) is list:
             df = DataFrame(df)
 
         if schema_name:
-            full_table_name = f'{schema_name}.{table_name}'
+            full_table_name = f"{schema_name}.{table_name}"
         else:
             full_table_name = table_name
 
@@ -292,8 +358,8 @@ class BaseSQL(BaseSQLConnection):
             dtypes = infer_dtypes(df)
 
         def __process():
-            if not query_string and kwargs.get('fast_execute', True) and \
-                    hasattr(self, 'upload_dataframe_fast') and callable(self.upload_dataframe_fast):
+            if not query_string and kwargs.get("fast_execute", True) and \
+                    hasattr(self, "upload_dataframe_fast") and callable(self.upload_dataframe_fast):
                 self.upload_dataframe_fast(
                     df,
                     schema_name,
@@ -316,19 +382,19 @@ class BaseSQL(BaseSQLConnection):
                 should_create_table = not table_exists
 
                 if table_exists:
-                    if ExportWritePolicy.FAIL == if_exists:
+                    if if_exists == ExportWritePolicy.FAIL:
                         raise ValueError(
-                            f'Table \'{full_table_name}\' already exists in database.'
+                            f"Table '{full_table_name}' already exists in database.",
                         )
-                    elif ExportWritePolicy.REPLACE == if_exists:
+                    if if_exists == ExportWritePolicy.REPLACE:
                         if drop_table_on_replace:
-                            cmd = f'DROP TABLE {full_table_name}'
+                            cmd = f"DROP TABLE {full_table_name}"
                             if cascade_on_drop:
-                                cmd = f'{cmd} CASCADE'
+                                cmd = f"{cmd} CASCADE"
                             cur.execute(cmd)
                             should_create_table = True
                         else:
-                            cur.execute(f'DELETE FROM {full_table_name}')
+                            cur.execute(f"DELETE FROM {full_table_name}")
 
                 if query_string:
                     query = self.build_create_table_as_command(
@@ -336,11 +402,8 @@ class BaseSQL(BaseSQLConnection):
                         query_string,
                     )
 
-                    if ExportWritePolicy.APPEND == if_exists and table_exists:
-                        query = 'INSERT INTO {}\n{}'.format(
-                            full_table_name,
-                            query_string,
-                        )
+                    if if_exists == ExportWritePolicy.APPEND and table_exists:
+                        query = f"INSERT INTO {full_table_name}\n{query_string}"
                     cur.execute(query)
                 else:
                     db_dtypes = {col: self.get_type(df[col], dtypes[col]) for col in dtypes}
@@ -375,15 +438,14 @@ class BaseSQL(BaseSQLConnection):
 
         if verbose:
             with self.printer.print_msg(
-                f'Exporting data to \'{full_table_name}\''
+                f"Exporting data to '{full_table_name}'",
             ):
                 __process()
         else:
             __process()
 
     def clean(self, column: Series, dtype: str) -> Series:
-        """
-        Cleans column in order to write data frame to PostgreSQL database
+        """Cleans column in order to write data frame to PostgreSQL database
 
         Args:
             column (Series): Column to clean
@@ -391,10 +453,10 @@ class BaseSQL(BaseSQLConnection):
 
         Returns:
             Series: Cleaned column
+
         """
         if dtype == PandasTypes.CATEGORICAL:
             return column.astype(str)
-        elif dtype in (PandasTypes.TIMEDELTA, PandasTypes.TIMEDELTA64, PandasTypes.PERIOD):
+        if dtype in (PandasTypes.TIMEDELTA, PandasTypes.TIMEDELTA64, PandasTypes.PERIOD):
             return column.view(int)
-        else:
-            return column
+        return column
