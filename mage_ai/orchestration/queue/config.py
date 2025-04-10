@@ -1,10 +1,13 @@
+import traceback
 from dataclasses import dataclass
+from enum import Enum
 
 from mage_ai.shared.config import BaseConfig
-from mage_ai.shared.enum import StrEnum
+
+DEFAULT_CONCURRENCY = 20
 
 
-class QueueType(StrEnum):
+class QueueType(str, Enum):
     CELERY = 'celery'
     PROCESS = 'process'
 
@@ -17,5 +20,12 @@ class ProcessQueueConfig(BaseConfig):
 @dataclass
 class QueueConfig(BaseConfig):
     queue_type: QueueType = QueueType.PROCESS
-    concurrency: int = 20
+    concurrency: int = DEFAULT_CONCURRENCY
     process_queue_config: ProcessQueueConfig = None
+
+    def __post_init__(self):
+        try:
+            self.concurrency = int(self.concurrency)
+        except Exception:
+            traceback.print_exc()
+            self.concurrency = DEFAULT_CONCURRENCY
