@@ -38,12 +38,14 @@ class MSSQL(BaseSQL):
         host: str,
         password: str,
         user: str,
+        authentication: str = None,
         schema: str = None,
         port: int = 1433,
         verbose: bool = True,
         **kwargs,
     ) -> None:
         super().__init__(
+            authentication=authentication,
             database=database,
             server=host,
             user=user,
@@ -61,15 +63,19 @@ class MSSQL(BaseSQL):
         database = self.settings['database']
         username = self.settings['user']
         password = self.settings['password']
-        return (
-            f'DRIVER={{{driver}}};'
-            f'SERVER={server};'
-            f'DATABASE={database};'
-            f'UID={username};'
-            f'PWD={password};'
-            'ENCRYPT=yes;'
-            'TrustServerCertificate=yes;'
-        )
+        conn_opts = [
+            f'DRIVER={{{driver}}}',
+            f'SERVER={server}',
+            f'DATABASE={database}',
+            f'UID={username}',
+            f'PWD={password}',
+            'ENCRYPT=yes',
+            'TrustServerCertificate=yes',
+        ]
+        if self.settings.get('authentication'):
+            authentication = self.settings.get('authentication')
+            conn_opts.append(f'Authentication={authentication}')
+        return ';'.join(conn_opts)
 
     def default_schema(self) -> str:
         return self.settings.get('schema') or 'dbo'
@@ -318,6 +324,7 @@ class MSSQL(BaseSQL):
     @classmethod
     def with_config(cls, config: BaseConfigLoader) -> 'MSSQL':
         return cls(
+            authentication=config[ConfigKey.MSSQL_AUTHENTICATION],
             database=config[ConfigKey.MSSQL_DATABASE],
             schema=config[ConfigKey.MSSQL_SCHEMA],
             driver=config[ConfigKey.MSSQL_DRIVER],
