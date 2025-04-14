@@ -32,6 +32,14 @@ class GitFileResource(GenericResource):
                 pass
 
         file_path_absolute = os.path.join(git_manager.repo_path, file_path)
+
+        # Prevent path traversal by resolving the absolute path location
+        # and checking if it's within the repo
+        if not os.path.abspath(file_path_absolute).startswith(
+            os.path.abspath(git_manager.repo_path)
+        ):
+            raise Exception("Access denied: Attempted path traversal")
+
         file = File.from_path(file_path_absolute)
         if not file.exists():
             file = File.from_path(file_path_absolute, '')
