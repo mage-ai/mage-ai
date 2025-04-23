@@ -23,11 +23,15 @@ Mage Pro workspaces provide isolated environments for developing and managing da
 - Resource Manager: Kubernetes-based resource allocation
 - Access Control: Role-based permission system
 
+<Note>
+To utilize the collaborative workspace environment, please contact Mage to request an account upgrade. 
+The Mage team will need to enable this feature for your organization.
+</Note>
+
 ## Setup Guide
 
 - **Step 1**: After logging into the Mage Pro environment you will be in the Workspaces interface. Press the Create new workspace button.
 - **Step 2**:  Give the workspace a name.
-    - Remember you need to use lowercase letters, numbers, or special characters. No spaces are allowed in the workspace name.
 - **Step 3**: Click the dropdown arrow and toggle on the Kubernetes configuration if you need to custom configure your Kubernetes container. (see Kubernetes container configuration section for more details).
 - **Step 4**: Click the Lifecycle (optional) dropdown to create lifecycle management policies (see Lifecycle management policies section for more information).
 - **Step 4**: Click the create button and wait a few minutes for your workspace to start.
@@ -69,6 +73,40 @@ resources:
 ```
 
 This configuration ensures your workspace has adequate resources for development while preventing resource overconsumption. The requests represent guaranteed minimums, while limits prevent your workspace from using more than its allocated share.
+
+## Share secrets across workspaces
+
+To share secrets across different workspaces developers need to create a custom environment variable 
+called `SHARE_SECRETS_ACROSS_WORKSPACES` then set the value to `1` to enable this feature. This will 
+allow developers to share their secrets across different workspaces within a cluster.
+
+<Frame>
+    <p align="center">
+        <img
+            alt="Add key value pairs at the bottom of the add/edit env var page"
+            src="https://github.com/mage-ai/assets/blob/main/guides/workspaces/add-env-var-secrets-workspaces.png?raw=true"
+        />
+    </p>
+</Frame>
+
+## Inherit environment variables
+
+Configuring your Mage Pro workspaces to inherit the main cluster’s environment 
+variables is essential for efficiently configuring your workspace container. 
+The following options allow you to control how variables are shared within your environment.
+
+### Inherit all variables
+
+To simplify pipeline configurations with shared variables, developers need to set 
+the `INHERIT_ENV_VARS` environment variable to `1` to enable this feature. 
+This will allow all system environment variables to be shared between the main 
+Mage environment and workspaces within a cluster.
+
+### Inherit custom variables
+
+Developers can specify which custom variables to inherit by setting 
+the `USER_DEFINED_VARS` environment variable with a comma-separated list of variable names. 
+This provides flexibility to include specific configuration values needed across workspaces.
 
 ## Lifecycle management policies (optional)
 
