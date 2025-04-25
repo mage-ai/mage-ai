@@ -116,6 +116,11 @@ The block runs should look like this:
 
 ## Dynamic blocks 2.0
 
+import { ProButton } from '/snippets/pro/button.mdx';
+import { ProOnly } from '/snippets/pro/only.mdx';
+
+<ProOnly source="dynamic-blocks-2__stream-mode" />
+
 In version 1.0 of dynamic blocks,
 Mage was loading all the data of an upstream dynamic child block from disk into memory
 in order to calculate how many dynamic child blocks should be created.
