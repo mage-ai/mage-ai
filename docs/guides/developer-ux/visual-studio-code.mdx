@@ -10,4 +10,180 @@ import { ProOnly } from '/snippets/pro/only.mdx';
 
 <ProOnly source="visual studio code" />
 
-<iframe width="560" height="315" src="https://www.youtube.com/embed/pxC8lY3SZ8U?si=M7WLPEbZg00oqVD_" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+<iframe width="560" height="315" 
+src="https://www.youtube.com/embed/pxC8lY3SZ8U?si=M7WLPEbZg00oqVD_" 
+title="YouTube video player" 
+frameborder="0" 
+allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
+referrerpolicy="strict-origin-when-cross-origin" allowfullscreen>
+</iframe>
+
+## Overview
+
+Mage Pro offers integration with Visual Studio Code (VS Code) and Cursor through Tailscale VPN and remote SSH capabilities. This connection allows you to edit and manage your Mage Pro pipelines directly from VS Code, combining the powerful features of both platforms into a unified development environment.
+
+## Core components
+
+- **Tailscale VPN**: Secure network connection between local and remote environments
+- **Remote SSH Extension**: VS Code's tool for remote development
+- **Mage Pro Cluster**: Containerized environment for data pipelines
+- **Authentication System**: Secure key-based access control
+
+To integrate with VS Code or Cursor please contact Mage to request an account upgrade. The Mage team will need to enable this feature for your organization.
+
+## Setup guide
+
+### 1. Tailscale VPN setup
+
+Step 1: Navigate to the Tailscale website and download the appropriate version for your operating system.
+
+<Frame>
+  <img
+    alt="Tailscale download "
+    src="https://github.com/mage-ai/assets/blob/main/pro/features/vs-code/Tailscale-download.png?raw=true"
+  />
+</Frame>
+
+Step 2: Install Tailscale following the in-app instructions.
+Step 3: Access the Tailscale admin console from their main website.
+Step 4: Generate an Auth Key by navigating to Settings > Keys and selecting "Generate Auth Key."
+
+<Frame>
+  <img
+    alt="Tailscale keys"
+    src="https://github.com/mage-ai/assets/blob/main/pro/features/vs-code/tailscale-keys.jpg?raw=true"
+  />
+</Frame>
+
+### 2. Mage Pro configuration
+
+Step 1: Navigate to your Mage Pro management cluster.
+
+Step 2: Select "Edit/Add variable’ to add environment variables.
+Step 3: Add a new custom variable:
+
+- Key: `TS_AUTH_KEY`
+- Value: `YOUR_AUTH_KEY`
+
+Step 4: Click the “Save changes” button to save the TS_AUTHKEY variable. 
+(This will restart your cluster).
+
+<Frame>
+  <img
+    alt="TS Authkey Environment Variable"
+    src="https://github.com/mage-ai/assets/blob/main/pro/features/vs-code/tailscale-authkey.png?raw=true"
+  />
+</Frame>
+
+### 3. Connection verification
+
+Step 1: Return to the Tailscale admin panel after your cluster restarts.
+Step 2: Locate your Mage Pro cluster in your Machine’s list (i.e. mageai-1-tutorials).
+Step 3: Note the private IP address from the address column.
+
+<Frame>
+  <img
+    alt="TS Tailscale machines"
+    src="https://github.com/mage-ai/assets/blob/main/pro/features/vs-code/tailscale-machines.jpg?raw=true"
+  />
+</Frame>
+
+Step 4: Open a terminal on your local machine and run the following command:
+
+```bash
+curl <PRIVATE_IP_ADDRESS>:6789/api/status
+```
+
+Step 5: Verify that you receive a successful connection response.
+
+### 4. VS Code setup
+
+Step 1: Open Visual Studio Code on your local machine.
+Step 2: Install the "Remote - SSH" extension from the Extensions marketplace (Ctrl+Shift+X or Cmd+Shift+X on macOS).
+
+<Frame>
+  <img
+    alt="VS Code remote SSH"
+    src="https://github.com/mage-ai/assets/blob/main/pro/features/vs-code/vs-code-remote-ssh-2.jpg.png?raw=true"
+  />
+</Frame>
+
+Step 3: Open the Command Palette (Ctrl+Shift+P or Cmd+Shift+P on macOS).
+Step 4: Type "Remote-SSH: Connect to Host" and select it.
+
+<Frame>
+  <img
+    alt="Connect to SSH host"
+    src="https://github.com/mage-ai/assets/blob/main/pro/features/vs-code/vs-code-host-connect.png?raw=true"
+  />
+</Frame>
+
+Step 5: Enter or select the correct ip address.
+
+<Frame>
+  <img
+    alt="Enter ip address"
+    src="https://github.com/mage-ai/assets/blob/main/pro/features/vs-code/vs-code-ip-address.png?raw=true"
+  />
+</Frame>
+
+Step 6: Enter the login username and password which will first be provided to you by Mage
+
+### 5. Accessing your code
+
+Step 1: When prompted for the folder to open, enter your user code path.
+
+- Default user code path: `/home/src/default_repo`
+
+Step 3: If you've customized this path, use your specific directory.
+Step 4: Click "OK" to open your project files in VS Code.
+
+# Setting up Tailscale on AWS
+
+Connect your AWS instances to your secure network using Tailscale to enable access to your cloud resources. When using Mage Pro in AWS environments, proper route configuration ensures reliable connectivity between your local machine and cloud resources.
+
+## Setting up route acceptance in Tailscale
+
+Route acceptance in Tailscale can be configured in two ways to ensure proper connectivity between your local machine and AWS-hosted Mage Pro environment.
+
+### 1. Using the command line
+
+Run the following command on your local machine to accept routes advertised by Tailscale nodes:
+
+```bash
+tailscale up --accept-routes
+
+```
+
+### 2. Using the admin console
+
+Step 1: Navigate to the Tailscale admin console (https://login.tailscale.com/admin)
+Step 2: Go to the "Machines" page
+Step 3: Find the machine that's advertising routes (in your case, the "vpn" node)
+Step 4: Click on it to view details
+Step 5: Under "Subnet routes" section, approve which subnet routes should be advertised to the entire tailnet
+
+### Understanding route configuration
+
+The two configuration methods work together:
+
+- Admin UI settings control which machines can advertise routes (a tailnet-wide setting)
+- Command-line option (`-accept-routes`) determines whether your specific machine will accept those advertised routes
+
+### Configuring Mage Pro for route acceptance
+
+To ensure your Mage Pro environment automatically accepts routes when it starts, add the following environment variable:
+
+- Key: `TS_EXTRA_ARGS`
+- Value: `-accept-routes`
+
+### Verifying route acceptance
+
+After configuring route acceptance, verify it's working correctly:
+
+```bash
+tailscale status
+
+```
+
+You should no longer see health warnings about routes not being accepted, and you should be able to access the subnet IPs that were being advertised.
