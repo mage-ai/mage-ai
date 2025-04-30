@@ -160,6 +160,55 @@ Mage simplifies the deployment of code to production pipelines. Follow these ste
   />
 </Frame>
 
+## Sync to GitLab
+
+This part of the guide walks you through the process of connecting your Mage Pro environment to GitLab. Once connected, your team will be able to push and pull code from GitLab repositories, collaborate on pipeline development, and maintain version history of your data workflows.
+
+### **Update environment variables**
+
+First, You will need to set the following environment variables in your Mage environment:
+
+1. GITLAB_CLIENT_ID: the application ID you retrieved in the previous step
+2. GITLAB_CLIENT_SECRET: the secret you retrieved in the previous step
+3. GITLAB_HOST (optional): hostname for your GitLab instance.
+
+<Frame>
+  <img
+    alt="GitLab Environment Variables"
+    src="https://github.com/mage-ai/assets/blob/main/pro/features/gitlab-env-var.png?raw=true"
+  />
+</Frame>
+
+### **Authenticate with GitLab**
+
+Next developers will have to authenticate the Mage Pro application with GitLab. To do this they should:
+
+1. Navigate to the import existing feature by clicking on the dropdown menu located in the top right of the application.
+2. Click the “Import existing” button
+3. Scroll down and then click the Authenticate with GitLab button. This will take you to the GitLab authentication page where you will sign into your account.
+
+<Frame>
+  <img
+    alt="Authenticate Mage Pro with GitLab"
+    src="https://github.com/mage-ai/assets/blob/main/pro/features/gitlab-authentication.png?raw=true"
+  />
+</Frame>
+
+4. Sign into your GitLab account and then make sure the Mage Pro application is installed on the account.
+
+<Frame>
+  <img
+    alt="GitLab Sign in"
+    src="https://github.com/mage-ai/assets/blob/main/pro/features/gitlab-signin.png?raw=true"
+  />
+</Frame>
+
+5. Ensure the Mage Pro application is installed onto your Gitlab account
+
 <Note>
-Coming soon SSH key integration and version control video demo.
+Currently the deployments application is only available for GitHub users.
 </Note>
+
+### **Push and pull code**
+
+Finally developers can use the version control application to push and pull code from Gitlab. You can see the documentation above for use of the version control application.
