@@ -17,3 +17,26 @@ Here's a list of the different variables and functions you can use in your code:
 | `{{ azure_secret_var('secret') }}`  | Get secret from [Azure Key Vault](/production/deploying-to-cloud/secrets/Azure).       |
 | `{{ json_value(json_obj, 'key') }}` | Extract value from a JSON string.                                                     |
 | `{{ n_days_ago(N) }}`               | Get the date `N` days ago (data integration pipelines only).                          |
+
+## Mage Pro only variable syntax
+
+| Syntax                              | Description                                                                           |
+| ----------------------------------- | ------------------------------------------------------------------------------------- |
+| `{{ file('path/to/file.txt') }}`    | Load the contents of a [local file](/development/variables/referencing-variables#file-content-syntax). |
+
+
+### File content syntax
+
+This is useful for dynamically loading configuration files, secrets, or text assets during pipeline execution.
+The path can be either abosulte path or relative path to the project.
+
+**Example Usage**
+```jinja
+{{ json_value(file('secrets.txt'))}}`
+{{ json_value(file('/home/src/default_repo/settings.json'))}}`
+```
+
+If you want to get a json field from the local file, you can use it together with the `json_value` syntax like
+```
+{{ json_value(file('path/to/file.json'), 'key')}}`
+```
