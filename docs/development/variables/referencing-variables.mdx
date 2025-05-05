@@ -36,11 +36,11 @@ The path can be either abosulte path or relative path to the project.
 
 **Example Usage**
 ```jinja
-{{ json_value(file('secrets.txt'))}}`
-{{ json_value(file('/home/src/default_repo/settings.json'))}}`
+{{ file('secrets.txt') }}`
+{{ file('/home/src/default_repo/settings.json') }}`
 ```
 
 If you want to get a json field from the local file, you can use it together with the `json_value` syntax like
 ```
-{{ json_value(file('path/to/file.json'), 'key')}}`
+{{ json_value(file('path/to/file.json'), 'key') }}`
 ```
