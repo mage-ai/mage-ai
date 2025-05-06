@@ -29,7 +29,6 @@ To interact with the Mage Cloud API, you must first authenticate with your Mage 
 ### Example: Initialize session and get token
 
 ```Python
-import os
 import requests
 
 
@@ -68,7 +67,8 @@ def authenticate_session(username: str, password: str) -> requests.Session:
     session.headers = headers
 
     response = session.post(SESSION_API, json=payload)
-    response.raise_for_status()
+    if response.json().get('error'):
+        raise ValueError(response.text)
 
     token = response.json()['session']['token']
     session.headers['Cookie'] = f'oauth_token={token}'
@@ -181,8 +181,6 @@ def update_cluster_env_vars(session, team_id, cluster_id, updates):
 **Example usage**
 ```Python
 session = authenticate_session(username='your_email@example.com', password='your_password')
-
-update_cluster_status(session, team_id='your_team_id', cluster_id='your_cluster_id', start=True)
 
 update_cluster_env_vars(
     session=session,
