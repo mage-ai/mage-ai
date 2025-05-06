@@ -132,7 +132,7 @@ update_cluster_status(session, team_id='your_team_id', cluster_id='your_cluster_
 
 ## Update Cluster Environment Variables
 
-To add or update environment variables in a Mage Pro cluster, modify the extraEnvs field in the cluster config.
+To add or update environment variables in a Mage Pro cluster, modify the `extraEnvs` field in the cluster config.
 
 ### Example: Update Environment Variables
 
@@ -180,6 +180,10 @@ def update_cluster_env_vars(session, team_id, cluster_id, updates):
 
 **Example usage**
 ```Python
+session = authenticate_session(username='your_email@example.com', password='your_password')
+
+update_cluster_status(session, team_id='your_team_id', cluster_id='your_cluster_id', start=True)
+
 update_cluster_env_vars(
     session=session,
     team_id='your_team_id',
