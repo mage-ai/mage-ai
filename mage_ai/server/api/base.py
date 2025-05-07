@@ -1,12 +1,15 @@
 import asyncio
 import json
+import re
 import traceback
+import urllib.parse
 
 import dateutil.parser
 import simplejson
 import tornado.web
 
 from mage_ai.api.middleware import OAuthMiddleware
+from mage_ai.server.api.constants import PATH_TRAVERSAL_PATTERN
 from mage_ai.shared.parsers import encode_complex
 from mage_ai.shared.strings import camel_to_snake_case
 from mage_ai.usage_statistics.constants import EventNameType
@@ -127,11 +130,49 @@ class BaseApiHandler(BaseHandler, OAuthMiddleware):
         super().initialize(**kwargs)
         self.is_health_check = kwargs.get('is_health_check', False)
 
+    def is_safe_path(self, user_input):
+        """
+        Check if the user input is safe and doesn't contain path traversal sequences.
+        """
+        return re.match(PATH_TRAVERSAL_PATTERN, user_input) is not None
+
     def prepare(self):
         from mage_ai.server.server import latest_user_activity
 
         if not self.is_health_check:
             latest_user_activity.update_latest_activity()
+
+        # Validate the request path by decoding from bytes to string if necessary
+        decoded_path = self.request.path
+        if isinstance(decoded_path, bytes):
+            decoded_path = decoded_path.decode('utf-8')  # Decode only if it's a bytes object
+
+        decoded_path = urllib.parse.unquote(decoded_path)  # Decode URL-encoded characters
+        if not self.is_safe_path(decoded_path):
+            self.set_status(400)  # Bad Request
+            self.write("Error: Invalid path (path traversal detected)")
+            self.finish()
+            return
+
+        # Validate query parameters (if any)
+        for key, value in self.request.arguments.items():
+            # Decode each key and value from bytes to string if necessary
+            decoded_key = key
+            if isinstance(decoded_key, bytes):
+                decoded_key = decoded_key.decode('utf-8')
+
+            decoded_value = value[0]
+            if isinstance(decoded_value, bytes):
+                decoded_value = decoded_value.decode('utf-8')
+
+            decoded_value = urllib.parse.unquote(decoded_value)  # Decode URL-encoded characters
+            if not self.is_safe_path(decoded_value):
+                self.set_status(400)
+                self.write(
+                    f"Error: Invalid parameter value for '{decoded_key}' (path traversal detected)"
+                )
+                self.finish()
+                return
         super().prepare()
 
 
