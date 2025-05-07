@@ -88,7 +88,7 @@ def update_cluster_status(session: requests.Session, team_id: str, cluster_id: s
     Args:
         session (requests.Session): Authenticated Mage Cloud session.
         team_id (str): Mage Cloud team ID.
-        cluster_id (str): Cluster UUID.
+        cluster_id (str): Cluster ID.
         start (bool): Set True to start, False to stop the cluster.
     """
     cluster_url = f'{BASE_API}/teams/{team_id}/clusters/{cluster_id}'
@@ -144,7 +144,7 @@ def update_cluster_env_vars(session, team_id, cluster_id, updates):
     Args:
         session (requests.Session): Authenticated session with Mage Cloud API.
         team_id (str): Mage team ID.
-        cluster_id (str): Cluster UUID.
+        cluster_id (str): Cluster ID.
         updates (dict): Dictionary of environment variable key-value pairs to add or update.
     """
     cluster_url = f'https://cloud.mage.ai/api/v1/teams/{team_id}/clusters/{cluster_id}'
