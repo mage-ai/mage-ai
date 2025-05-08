@@ -16,7 +16,7 @@ Before those other blocks are executed, any associated conditional blocks will b
 Take the following example:
 
 <div align="center">
-<img src="https://github.com/mage-ai/assets/blob/main/blocks/conditionals-example.png?raw=true" width="85%"/>
+<img src="https://mage-ai.github.io/assets/blocks/conditionals-example.png" width="85%"/>
 </div>
 
 The `morpheus` block returns a variable— `pill`, which is either red or blue. Both downstream blocks have conditionals associated with them. The `red_pill` block will only execute if `pill` is red, and the `blue_pill` block will only execute if `pill` is blue.
@@ -24,8 +24,8 @@ The `morpheus` block returns a variable— `pill`, which is either red or blue. 
 Here's what the conditionals look like for each:
 
 <div align="center">
-    <img src="https://github.com/mage-ai/assets/blob/main/blocks/conditional-red-pill.png?raw=true" width="70%"/>
-    <img src="https://github.com/mage-ai/assets/blob/main/blocks/conditional-blue-pill.png?raw=true" width="70%"/>
+    <img src="https://mage-ai.github.io/assets/blocks/conditional-red-pill.png" width="70%"/>
+    <img src="https://mage-ai.github.io/assets/blocks/conditional-blue-pill.png" width="70%"/>
 </div>
 
 Because `pill=red`, the `red_pill` block will execute, and the `blue_pill` block will not. Additionally, any _downstream_ blocks of the `blue_pill` block will not execute.
@@ -35,7 +35,7 @@ Because `pill=red`, the `red_pill` block will execute, and the `blue_pill` block
 Conditional blocks are "add-on blocks" in Mage— that means they're added through the side panel on the right in the pipeline editor.
 
 <div align="center">
-<img src="https://github.com/mage-ai/assets/blob/main/blocks/add-conditionals.gif?raw=true" width="85%"/>
+<img src="https://mage-ai.github.io/assets/blocks/add-conditionals.gif" width="85%"/>
 </div>
 
 To add a condition to your block:

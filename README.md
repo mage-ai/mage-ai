@@ -14,8 +14,8 @@
 
 <a href="https://cloud.mage.ai/sign-up">
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://github.com/mage-ai/assets/blob/main/oss/hero.png?raw=true">
-    <img alt="Mage AI hero" src="https://github.com/mage-ai/assets/blob/main/oss/hero.png?raw=true" />
+    <source media="(prefers-color-scheme: dark)" srcset="https://mage-ai.github.io/assets/oss/hero.png">
+    <img alt="Mage AI hero" src="https://mage-ai.github.io/assets/oss/hero.png" />
   </picture>
 </a>
 
@@ -45,14 +45,14 @@ Plus hundreds of enterprise-class features, infrastructure innovations, and magi
   <tr>
     <td rowspan="2">
       <a href="https://cloud.mage.ai/sign-up">
-        <img alt="Mage Pro" width="124" align="left" src="https://github.com/mage-ai/assets/blob/main/oss/card-pro.png?raw=true" />
+        <img alt="Mage Pro" width="124" align="left" src="https://mage-ai.github.io/assets/oss/card-pro.png" />
       </a>
       <b>For teams.</b> Fully managed platform
       for integrating and transforming data.
     </td>
     <td rowspan="2">
       <a href="https://github.com/mage-ai/mage-ai?tab=readme-ov-file#its-magic">
-        <img alt="Mage OSS" width="124" align="left" src="https://github.com/mage-ai/assets/blob/main/oss/card-oss.png?raw=true" />
+        <img alt="Mage OSS" width="124" align="left" src="https://mage-ai.github.io/assets/oss/card-oss.png" />
       </a>
       <b>Self-hosted.</b> System to build, run, and
       manage data pipelines.
@@ -116,7 +116,7 @@ Build and run a data pipeline with our <b>[demo app](https://demo.mage.ai/)</b>.
 > The live demo is public to everyone, please don’t save anything sensitive (e.g. passwords, secrets, etc).
 ### Demo video (5 min)
 
-[![Mage quick start demo](https://github.com/mage-ai/assets/blob/main/overview/overview-video.png?raw=True)](https://youtu.be/GswOdShLGmg)
+[![Mage quick start demo](https://mage-ai.github.io/assets/overview/overview-video.png)](https://youtu.be/GswOdShLGmg)
 
 <sub><i>Click the image to play video</i></sub>
 
@@ -159,4 +159,4 @@ Build and run a data pipeline with our <b>[demo app](https://demo.mage.ai/)</b>.
 
 <br />
 
-[<img alt="Water mage casting spell" height="300" src="https://github.com/mage-ai/assets/blob/main/mage-water-charging-up.svg?raw=True" />](https://www.mage.ai/)
+[<img alt="Water mage casting spell" height="300" src="https://mage-ai.github.io/assets/mage-water-charging-up.svg" />](https://www.mage.ai/)
