@@ -220,13 +220,40 @@ Read more [here](/development/observability/monitoring).
 You can limit the concurrency of the block execution to reduce resource consumption.
 
 ### Global concurrency
-You can configure the maximum number of concurrent block runs in project’s metadata.yaml via queue_config.
+You can configure the maximum number of concurrent block runs in project’s `metadata.yaml` via `queue_config`.
 
 ```yaml
 queue_config:
   concurrency: 100
 ```
 The default value of concurrency is 20.
+
+### Global concurrency by block uuid
+
+import { ProButton } from '/snippets/pro/button.mdx';
+import { ProOnly } from '/snippets/pro/only.mdx';
+
+<ProOnly source="concurrency" />
+
+You can configure the global block run concurrency by block uuid in project's `metadata.yaml` via `concurrency_config`.
+
+**Example**
+```yaml
+concurrency_config:
+  block_run_limit_per_block_uuid:
+    block_uuid_1: 1
+    block_uuid_2: 5
+```
+In the example above:
+* `block_uuid_1` can run at most 1 concurrent execution.
+* `block_uuid_2` can run up to 5 concurrent executions.
+
+**Limitations**
+
+This feature is not supported in the following scenarios:
+* Replica blocks: Each replica is assigned a unique UUID for block run, so concurrency limits are not enforced across replicas.
+* Dynamic blocks: Each dynamic child block has a unique UUID for block run, preventing concurrency limits from applying across them.
+* Single-process mode: When `run_pipeline_in_one_process` is set to `true` in the pipeline’s `metadata.yaml`, global concurrency is not enforced.
 
 ### Pipeline level concurrency
 You can edit the `concurrency_config` in each pipeline's metadata.yaml file to enforce pipeline level concurrency.
