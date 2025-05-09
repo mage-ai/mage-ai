@@ -91,7 +91,7 @@ class KafkaSource(BaseSource):
             api_version=self.config.api_version,
             auto_offset_reset=self.config.auto_offset_reset,
             max_partition_fetch_bytes=self.config.max_partition_fetch_bytes,
-            enable_auto_commit=True,
+            enable_auto_commit=False,
         )
         if self.config.security_protocol == SecurityProtocol.SSL:
             consumer_kwargs['security_protocol'] = SecurityProtocol.SSL
@@ -270,6 +270,7 @@ class KafkaSource(BaseSource):
                     message_values.append(message)
             if len(message_values) > 0:
                 handler(message_values)
+            self.consumer.commit()
 
     def test_connection(self):
         self.consumer._client.check_version(timeout=5)
