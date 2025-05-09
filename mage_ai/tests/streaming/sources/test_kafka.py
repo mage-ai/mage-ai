@@ -33,7 +33,7 @@ class KafkaTests(TestCase):
             api_version='0.10.2',
             auto_offset_reset='latest',
             max_partition_fetch_bytes=1048576,
-            enable_auto_commit=True,
+            enable_auto_commit=False,
         )
 
     def test_init_client_with_topics(self):
@@ -56,7 +56,7 @@ class KafkaTests(TestCase):
             api_version='0.10.2',
             auto_offset_reset='latest',
             max_partition_fetch_bytes=1048576,
-            enable_auto_commit=True,
+            enable_auto_commit=False,
         )
 
     def test_init_client_with_missing_topic_or_topics(self):
