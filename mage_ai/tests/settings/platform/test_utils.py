@@ -83,6 +83,7 @@ class PlatformUtilsTests(ProjectPlatformMixin, AsyncDBTestCase):
                 )
                 mock.assert_called_once_with(
                     'mage',
+                    check_if_exists=False,
                     repo_path=os.path.join(base_repo_path(), 'mage_platform'),
                     all_projects=False,
                     use_repo_path=False,
