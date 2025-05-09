@@ -50,7 +50,7 @@ class TestExceptionHandling(unittest.TestCase):
         try:
             client.request("GET")
         except _client.LinkedInBadRequestError as e:
-            self.assertEquals(str(e), "HTTP-error-code: 400, Error: " + str(json.get("errorDetails")))
+            self.assertEqual(str(e), "HTTP-error-code: 400, Error: " + str(json.get("errorDetails")))
 
     def test_400_error_simple_json(self, mocked_access_token, mocked_request):
         json = {"message": "Invalid params for account.",
@@ -63,7 +63,7 @@ class TestExceptionHandling(unittest.TestCase):
         try:
             client.request("GET")
         except _client.LinkedInBadRequestError as e:
-            self.assertEquals(str(e), "HTTP-error-code: 400, Error: Invalid params for account.")
+            self.assertEqual(str(e), "HTTP-error-code: 400, Error: Invalid params for account.")
 
     def test_400_error_empty_json(self, mocked_access_token, mocked_request):
         mocked_request.return_value = get_response(400, raise_error = True)
@@ -72,7 +72,7 @@ class TestExceptionHandling(unittest.TestCase):
         try:
             client.request("GET")
         except _client.LinkedInBadRequestError as e:
-            self.assertEquals(str(e), "HTTP-error-code: 400, Error: The request is missing or has a bad parameter.")
+            self.assertEqual(str(e), "HTTP-error-code: 400, Error: The request is missing or has a bad parameter.")
 
     def test_404_error(self, mocked_access_token, mocked_request):
         json = {"message": "Not Found.",
@@ -85,7 +85,7 @@ class TestExceptionHandling(unittest.TestCase):
         try:
             client.request("GET")
         except _client.LinkedInNotFoundError as e:
-            self.assertEquals(str(e), "HTTP-error-code: 404, Error: The resource you have specified cannot be found. Either the accounts provided are invalid or you do not have access to the Ad Account.")
+            self.assertEqual(str(e), "HTTP-error-code: 404, Error: The resource you have specified cannot be found. Either the accounts provided are invalid or you do not have access to the Ad Account.")
 
     def test_404_error_empty_json(self, mocked_access_token, mocked_request):
         mocked_request.return_value = get_response(404, raise_error = True)
@@ -94,4 +94,4 @@ class TestExceptionHandling(unittest.TestCase):
         try:
             client.request("GET")
         except _client.LinkedInNotFoundError as e:
-            self.assertEquals(str(e), "HTTP-error-code: 404, Error: The resource you have specified cannot be found. Either the accounts provided are invalid or you do not have access to the Ad Account.")
+            self.assertEqual(str(e), "HTTP-error-code: 404, Error: The resource you have specified cannot be found. Either the accounts provided are invalid or you do not have access to the Ad Account.")
