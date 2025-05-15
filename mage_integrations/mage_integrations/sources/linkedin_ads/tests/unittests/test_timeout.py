@@ -25,7 +25,7 @@ class TestTimeoutValue(unittest.TestCase):
                                    request_timeout=config.get('request_timeout'))
 
         # verify that timeout value is default as request timeout is not passed in config
-        self.assertEquals(300, cl.request_timeout)
+        self.assertEqual(300, cl.request_timeout)
 
     def test_timeout_int_value_passed_in_config(self):
         config = {"client_id": "test_client_id",
@@ -44,7 +44,7 @@ class TestTimeoutValue(unittest.TestCase):
                                    request_timeout=config.get('request_timeout'))
 
         # verify that timeout value is same as the value passed in the config
-        self.assertEquals(100.0, cl.request_timeout)
+        self.assertEqual(100.0, cl.request_timeout)
 
     def test_timeout_string_value_passed_in_config(self):
         config = {"client_id": "test_client_id",
@@ -63,7 +63,7 @@ class TestTimeoutValue(unittest.TestCase):
                                    request_timeout=config.get('request_timeout'))
 
         # verify that timeout value is same as the value passed in the config
-        self.assertEquals(100.0, cl.request_timeout)
+        self.assertEqual(100.0, cl.request_timeout)
 
     def test_timeout_empty_value_passed_in_config(self):
         config = {"client_id": "test_client_id",
@@ -82,7 +82,7 @@ class TestTimeoutValue(unittest.TestCase):
                                    request_timeout=config.get('request_timeout'))
 
         # verify that timeout value is default as request timeout is empty in the config
-        self.assertEquals(300, cl.request_timeout)
+        self.assertEqual(300, cl.request_timeout)
 
     def test_timeout_0_value_passed_in_config(self):
         config = {"client_id": "test_client_id",
@@ -101,7 +101,7 @@ class TestTimeoutValue(unittest.TestCase):
                                    request_timeout=config.get('request_timeout'))
 
         # verify that timeout value is default as request timeout is zero in the config
-        self.assertEquals(300, cl.request_timeout)
+        self.assertEqual(300, cl.request_timeout)
 
     def test_timeout_string_0_value_passed_in_config(self):
         config = {"client_id": "test_client_id",
@@ -120,7 +120,7 @@ class TestTimeoutValue(unittest.TestCase):
                                    request_timeout=config.get('request_timeout'))
 
         # verify that timeout value is default as request timeout is zero in the config
-        self.assertEquals(300, cl.request_timeout)
+        self.assertEqual(300, cl.request_timeout)
 
 
 @mock.patch("time.sleep")
@@ -154,7 +154,7 @@ class TestTimeoutBackoff(unittest.TestCase):
             pass
 
         # verify that we backoff for 5 times
-        self.assertEquals(mocked_request.call_count, 5)
+        self.assertEqual(mocked_request.call_count, 5)
 
     def test_timeout_error__check_accounts(self, mocked_request, mocked_sleep):
 
@@ -183,7 +183,7 @@ class TestTimeoutBackoff(unittest.TestCase):
             pass
 
         # verify that we backoff for 5 times
-        self.assertEquals(mocked_request.call_count, 5)
+        self.assertEqual(mocked_request.call_count, 5)
 
     def test_timeout_error__request(self, mocked_request, mocked_sleep):
 
@@ -212,7 +212,7 @@ class TestTimeoutBackoff(unittest.TestCase):
             pass
 
         # verify that we backoff for 5 times
-        self.assertEquals(mocked_request.call_count, 5)
+        self.assertEqual(mocked_request.call_count, 5)
 
 
 @mock.patch("time.sleep")
@@ -247,7 +247,7 @@ class TestConnectionErrorBackoff(unittest.TestCase):
             pass
 
         # verify that we backoff for 5 times
-        self.assertEquals(mocked_request.call_count, 5)
+        self.assertEqual(mocked_request.call_count, 5)
 
     def test_connection_error__check_accounts(self, mocked_request, mocked_sleep):
 
@@ -276,4 +276,4 @@ class TestConnectionErrorBackoff(unittest.TestCase):
             pass
 
         # verify that we backoff for 5 times
-        self.assertEquals(mocked_request.call_count, 5)
+        self.assertEqual(mocked_request.call_count, 5)

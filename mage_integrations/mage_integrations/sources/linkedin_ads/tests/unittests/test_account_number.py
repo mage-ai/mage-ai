@@ -48,7 +48,7 @@ class TestValidLinkedInAccount(unittest.TestCase):
         config = {"accounts": "1111, 2222"}
         client = _client.LinkedinClient('client_id', 'client_secret', 'refresh_token', 'access_token')
         tap_linkedin_ads.do_discover(client, config)
-        self.assertEquals(mocked_discover.call_count, 1)
+        self.assertEqual(mocked_discover.call_count, 1)
 
     def test_invalid_linkedIn_accounts(self, mocked_request, mocked_discover):
         '''

@@ -243,4 +243,4 @@ class MongoDBDatatype(unittest.TestCase):
                             "collection": "some_collection"}
         }
 
-        self.assertEquals(expected_record, records_by_stream['datatype_coll_1']['messages'][1]['data'])
+        self.assertEqual(expected_record, records_by_stream['datatype_coll_1']['messages'][1]['data'])
