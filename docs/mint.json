@@ -582,7 +582,8 @@
             {
               "group": "Sources",
               "pages": [
-                "data-integrations/sources/overview"
+                "data-integrations/sources/overview",
+                "data-integrations/sources/custom_source"
               ]
             },
             {
