@@ -104,3 +104,59 @@ from data_integrations.sources.custom_source.module import SomeClass
 ```
 
 This change ensures that Mage loads and uses your custom integration from the project folder instead of the built-in Mage package.
+
+
+## Testing Your Custom Source
+To test your custom data source integration:
+1. Create a new data integration pipeline.
+2. **Select your custom source** from the source dropdown.
+    * Custom sources appear at the **bottom** of the list in the UI.
+3. **Enter your source configuration**.
+4. Click "**Test connection**" if your custom source class implements the test_connection method.
+5. Click "**View and select stream**" to verify that the expected streams are returned.
+6. **Add a destination** and run the pipeline using a trigger to test end-to-end data flow.
+
+
+### Troubleshooting: Source Not Appearing in UI?
+
+If your custom source isn't showing up in the Data Integration source dropdown, follow these steps to debug:
+1. Create a pipeline and add a **scratchpad block**.
+2. **Run the following code** in the block to inspect the custom sources:
+```python
+# Inspect custom source registration
+from mage_ai.server.api.integration_sources import get_custom_collection
+
+custom_sources = get_custom_collection('sources', debug=True)
+print(f'Custom sources detected: {custom_sources}')
+```
+3. **Try importing your custom module manually** to ensure it's discoverable and error-free:
+```python
+from data_integrations.sources.source_uuid import SourceModuleName
+```
+Replace `source_uuid` and `SourceModuleName` with the actual folder name and class name of your custom source.
+
+### Troubleshooting: "View and select stream" Not Working?
+If clicking "**View and select stream**" in the UI doesn’t return any streams, you can manually debug the discovery step using a **scratchpad block** in your pipeline.
+
+Run the following code to test your custom source's `discover_streams` method:
+```python
+from data_integrations.sources.source_uuid import SourceModuleName
+
+# Replace with your actual config keys and values
+config = dict(
+    key1='value1',
+    key2='value2',
+)
+
+# Initialize the source class with config
+source = SourceModuleName(config=config)
+
+# Run stream discovery
+streams = source.discover_streams()
+
+# Print discovered streams
+print(f'Discovered streams: {streams}')
+```
+**What to check**
+* Ensure the `config` you provide contains all required fields expected by your source class.
+* If `discover_streams()` returns an empty list or raises an error, check your source implementation or credentials.
