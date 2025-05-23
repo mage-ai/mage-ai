@@ -46,7 +46,7 @@ class FacebookInvalidAttributionWindowInt(FacebookBaseTest):
         # get discovery error message
         discovery_error_message = exit_status.get('discovery_error_message')
         # validate the error message
-        self.assertEquals(discovery_error_message, "The attribution window must be 1, 7 or 28.")
+        self.assertEqual(discovery_error_message, "The attribution window must be 1, 7 or 28.")
         self.assertIsNone(exit_status.get('target_exit_status'))
         self.assertIsNone(exit_status.get('tap_exit_status'))
 
@@ -62,4 +62,4 @@ class FacebookInvalidAttributionWindowStr(FacebookInvalidAttributionWindowInt):
         self.ATTRIBUTION_WINDOW = 'something'
         self.run_test()
 
-    # BUG : TDL-18569 created to standarize the error message for sting values for attribution window
+    # BUG : TDL-18569 created to standardize the error message for sting values for attribution window

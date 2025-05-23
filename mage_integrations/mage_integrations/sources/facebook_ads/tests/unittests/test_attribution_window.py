@@ -26,4 +26,4 @@ class TestAttributionWindow(unittest.TestCase):
             error_message = str(e)
 
         # verify the error message was as expected
-        self.assertEquals(error_message, "The attribution window must be 1, 7 or 28.")
+        self.assertEqual(error_message, "The attribution window must be 1, 7 or 28.")
