@@ -49,8 +49,8 @@ class TestAdCreativeSyncBbatches(unittest.TestCase):
             ad_creative_object.sync_batches([])
 
         # verify calls inside sync_batches are called 5 times as max 5 retries provided for function
-        self.assertEquals(5, mocked_api.new_batch.call_count)
-        self.assertEquals(5, mocked_schema.call_count)
+        self.assertEqual(5, mocked_api.new_batch.call_count)
+        self.assertEqual(5, mocked_schema.call_count)
 
     @mock.patch("tap_facebook.API")
     @mock.patch("singer.resolve_schema_references")
@@ -74,8 +74,8 @@ class TestAdCreativeSyncBbatches(unittest.TestCase):
             ad_creative_object.sync_batches([])
 
         # verify calls inside sync_batches are called 5 times as max 5 reties provided for function
-        self.assertEquals(5, mocked_api.new_batch.call_count)
-        self.assertEquals(5, mocked_schema.call_count)
+        self.assertEqual(5, mocked_api.new_batch.call_count)
+        self.assertEqual(5, mocked_schema.call_count)
 
     @mock.patch("tap_facebook.API")
     @mock.patch("singer.resolve_schema_references")
@@ -97,8 +97,8 @@ class TestAdCreativeSyncBbatches(unittest.TestCase):
         ad_creative_object.sync_batches([])
 
         # verify calls inside sync_batches are called once as no exception is thrown
-        self.assertEquals(1, mocked_api.new_batch.call_count)
-        self.assertEquals(1, mocked_schema.call_count)
+        self.assertEqual(1, mocked_api.new_batch.call_count)
+        self.assertEqual(1, mocked_schema.call_count)
 
 
 class TestLeadsSyncBatches(unittest.TestCase):
@@ -125,8 +125,8 @@ class TestLeadsSyncBatches(unittest.TestCase):
             leads_object.sync_batches([])
 
         # verify calls inside sync_batches are called 5 times as max 5 reties provided for function
-        self.assertEquals(5, mocked_api.new_batch.call_count)
-        self.assertEquals(5, mocked_schema.call_count)
+        self.assertEqual(5, mocked_api.new_batch.call_count)
+        self.assertEqual(5, mocked_schema.call_count)
 
     @mock.patch("tap_facebook.API")
     @mock.patch("singer.resolve_schema_references")
@@ -150,5 +150,5 @@ class TestLeadsSyncBatches(unittest.TestCase):
             leads_object.sync_batches([])
 
         # verify calls inside sync_batches are called 5 times as max 5 reties provided for function
-        self.assertEquals(5, mocked_api.new_batch.call_count)
-        self.assertEquals(5, mocked_schema.call_count)
+        self.assertEqual(5, mocked_api.new_batch.call_count)
+        self.assertEqual(5, mocked_schema.call_count)
