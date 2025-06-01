@@ -15,7 +15,7 @@ dask>=2022.2.0
 datadog==0.44.0
 freezegun==1.2.2
 great-expectations==0.18.12
-httpx==0.28.1
+httpx==0.25.0
 inflection==0.5.1
 ipykernel==6.15.0
 ipython==8.10.0
