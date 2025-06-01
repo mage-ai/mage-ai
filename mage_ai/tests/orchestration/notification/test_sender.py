@@ -112,9 +112,11 @@ class NotificationSenderTests(DBTestCase):
             f'`{pipeline_run.pipeline_schedule.name}` '
             f'at execution time `{pipeline_run.execution_date}`. Error: None'
         )
+        title = 'Failed to run Mage pipeline test_pipeline'
         mock_send_teams_message.assert_called_once_with(
             notification_config.teams_config,
             message,
+            title
         )
 
     @patch('mage_ai.orchestration.notification.sender.send_teams_message')
@@ -131,9 +133,11 @@ class NotificationSenderTests(DBTestCase):
             f'`{pipeline_run.pipeline_schedule.name}` '
             f'at execution time `{pipeline_run.execution_date}`.'
         )
+        title = 'Successfully ran Mage pipeline test_pipeline'
         mock_send_teams_message.assert_called_once_with(
             notification_config.teams_config,
             message,
+            title
         )
 
     @patch('mage_ai.orchestration.notification.sender.send_teams_message')
