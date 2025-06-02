@@ -69,7 +69,7 @@ class NotificationSender:
 
         if self.config.teams_config is not None and self.config.teams_config.is_valid:
             try:
-                send_teams_message(self.config.teams_config, summary)
+                send_teams_message(self.config.teams_config, summary, title)
             except Exception:
                 traceback.print_exc()
 
@@ -87,7 +87,7 @@ class NotificationSender:
 
         if self.config.google_chat_config is not None and self.config.google_chat_config.is_valid:
             try:
-                send_google_chat_message(self.config.google_chat_config, summary)
+                send_google_chat_message(self.config.google_chat_config, summary, title)
             except Exception:
                 traceback.print_exc()
 
