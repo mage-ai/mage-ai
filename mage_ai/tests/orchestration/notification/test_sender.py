@@ -116,7 +116,7 @@ class NotificationSenderTests(DBTestCase):
         mock_send_teams_message.assert_called_once_with(
             notification_config.teams_config,
             message,
-            title
+            'Failed to run Mage pipeline test_pipeline'
         )
 
     @patch('mage_ai.orchestration.notification.sender.send_teams_message')
