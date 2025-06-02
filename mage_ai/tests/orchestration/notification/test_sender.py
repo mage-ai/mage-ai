@@ -106,13 +106,13 @@ class NotificationSenderTests(DBTestCase):
         pipeline_run = self.__class__.pipeline_run
         sender.send_pipeline_run_failure_message(self.__class__.pipeline, pipeline_run)
         self.assertEqual(mock_send_email.call_count, 0)
+        title = 'Failed to run Pipeline `test_pipeline` '
         message = (
-            'Failed to run Pipeline `test_pipeline` '
+            f'{title}'
             f'with Trigger {pipeline_run.pipeline_schedule.id} '
             f'`{pipeline_run.pipeline_schedule.name}` '
             f'at execution time `{pipeline_run.execution_date}`. Error: None'
         )
-        title = 'Failed to run Mage pipeline test_pipeline'
         mock_send_teams_message.assert_called_once_with(
             notification_config.teams_config,
             message,
@@ -127,13 +127,13 @@ class NotificationSenderTests(DBTestCase):
         pipeline_run = self.__class__.pipeline_run
         sender.send_pipeline_run_success_message(self.__class__.pipeline, pipeline_run)
         self.assertEqual(mock_send_email.call_count, 0)
+        title = f'Successfully ran Pipeline `test_pipeline` '
         message = (
-            'Successfully ran Pipeline `test_pipeline` '
+            f'{title}'
             f'with Trigger {pipeline_run.pipeline_schedule.id} '
             f'`{pipeline_run.pipeline_schedule.name}` '
             f'at execution time `{pipeline_run.execution_date}`.'
         )
-        title = 'Successfully ran Mage pipeline test_pipeline'
         mock_send_teams_message.assert_called_once_with(
             notification_config.teams_config,
             message,
