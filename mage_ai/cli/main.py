@@ -194,7 +194,11 @@ def run(
     from mage_ai.orchestration.db.models.schedules import PipelineRun
     from mage_ai.orchestration.utils.git import log_git_sync, run_git_sync
     from mage_ai.server.logger import Logger
-    from mage_ai.settings import SENTRY_DSN, SENTRY_TRACES_SAMPLE_RATE
+    from mage_ai.settings import (
+        SENTRY_DSN,
+        SENTRY_SERVER_NAME,
+        SENTRY_TRACES_SAMPLE_RATE,
+    )
     from mage_ai.shared.hash import merge_dict
 
     logger = Logger().new_server_logger(__name__)
@@ -204,6 +208,7 @@ def run(
         sentry_sdk.init(
             sentry_dsn,
             traces_sample_rate=SENTRY_TRACES_SAMPLE_RATE,
+            server_name=SENTRY_SERVER_NAME,
         )
     (enable_new_relic, application) = initialize_new_relic()
 
