@@ -1,0 +1,38 @@
+---
+title: "Stripe"
+---
+
+
+## Configuration
+
+To set up the Stripe source, provide the following configuration parameters:
+
+| Key              | Description                                                   | Sample Value        | Required |
+| ---------------- | ------------------------------------------------------------- | ------------------- | -------- |
+| `account_id`     | Your Stripe account’s unique ID.                               | `acct_73bb...`      | ✅        |
+| `client_secret`  | Secret key associated with your Stripe account.               | `sk_live_ABC1...`   | ✅        |
+| `start_date`     | The date to start syncing data from. Format: `YYYY-MM-DD`.     | `2022-01-01`        | ✅        |
+
+> **Find your API keys:**  
+> Refer to Stripe’s [API keys documentation](https://stripe.com/docs/keys) to locate your `client_secret` and `account_id`.
+
+<br/>
+
+## Schema
+
+The following resources are synced:
+
+- [Balance Transactions](./schemas/balance_transactions.json)
+- [Charges](./schemas/charges.json)
+- [Coupons](./schemas/coupons.json)
+- [Customers](./schemas/customers.json)
+- [Disputes](./schemas/disputes.json)
+- [Events](./schemas/events.json)
+- [Invoice Items](./schemas/invoice_items.json)
+- [Invoice Line Items](./schemas/invoice_line_items.json)
+- [Invoices](./schemas/invoices.json)
+- [Payment Intents](./schemas/payment_intents.json)
+- [Payout Transactions](./schemas/payout_transactions.json)
+- [Payouts](./schemas/payouts.json)
+- [Plans](./schemas/plans.json)
+- [Products](./schemas/products.)
