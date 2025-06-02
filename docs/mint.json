@@ -583,7 +583,10 @@
               "group": "Sources",
               "pages": [
                 "data-integrations/sources/overview",
-                "data-integrations/sources/custom_source"
+                "data-integrations/sources/custom_source",
+                "data-integrations/sources/quickbooks",
+                "data-integrations/sources/stripe",
+                "data-integrations/sources/xero"
               ]
             },
             {
