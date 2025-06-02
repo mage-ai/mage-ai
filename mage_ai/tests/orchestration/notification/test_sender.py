@@ -87,7 +87,7 @@ class NotificationSenderTests(DBTestCase):
             f'{pipeline_run.id}. Pipeline uuid: test_pipeline. '
             f'Trigger name: {pipeline_run.pipeline_schedule.name}.'
         )
-        title = 'Failed to run Mage pipeline `test_pipeline` '
+        title = 'Failed to run Mage pipeline test_pipeline'
         mock_send_slack.assert_called_once_with(
             notification_config.slack_config,
             message,
