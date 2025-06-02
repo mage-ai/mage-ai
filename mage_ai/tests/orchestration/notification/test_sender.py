@@ -106,7 +106,7 @@ class NotificationSenderTests(DBTestCase):
         pipeline_run = self.__class__.pipeline_run
         sender.send_pipeline_run_failure_message(self.__class__.pipeline, pipeline_run)
         self.assertEqual(mock_send_email.call_count, 0)
-        title = 'Failed to run Pipeline `test_pipeline` '
+        title = 'Failed to run Pipeline test_pipeline'
         message = (
             f'{title}'
             f'with Trigger {pipeline_run.pipeline_schedule.id} '
@@ -127,7 +127,7 @@ class NotificationSenderTests(DBTestCase):
         pipeline_run = self.__class__.pipeline_run
         sender.send_pipeline_run_success_message(self.__class__.pipeline, pipeline_run)
         self.assertEqual(mock_send_email.call_count, 0)
-        title = f'Successfully ran Pipeline `test_pipeline` '
+        title = f'Successfully ran Pipeline test_pipeline'
         message = (
             f'{title}'
             f'with Trigger {pipeline_run.pipeline_schedule.id} '
