@@ -48,6 +48,8 @@ These settings help maintain workspace stability and ensure proper resource allo
 
 ### Environment configuration
 
+#### Setting `USER_CODE_PATH`
+
 If you've modified the default `USER_CODE_PATH` environment variable in the base project (Mage Pro management portal), update your Kubernetes configuration:
 
 ```yaml
@@ -57,6 +59,21 @@ env:
 ```
 
 This environment variable tells your workspace where to find your project code.
+
+#### Adding Other Environment Variables
+You can define additional environment variables in the same env section to further configure your workspace:
+
+```yaml
+env:
+  - name: USER_CODE_PATH
+    value: /home/src/<your_project_folder>
+  - name: ENV
+    value: dev
+  - name: TS_AUTHKEY
+    value: <your_tailscale_auth_key>
+  - name: TS_EXTRA_ARGS
+    value: --accept-routes
+```
 
 ### Resource configuration (optional)
 

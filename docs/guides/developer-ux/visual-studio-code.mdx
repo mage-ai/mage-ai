@@ -57,6 +57,8 @@ Step 4: Generate an Auth Key by navigating to Settings > Keys and selecting "Gen
 
 ### 2. Mage Pro configuration
 
+#### Setting Environment Variables for the Cluster
+
 Step 1: Navigate to your Mage Pro management cluster.
 
 Step 2: Select "Edit/Add variable’ to add environment variables.
@@ -74,6 +76,29 @@ Step 4: Click the “Save changes” button to save the TS_AUTHKEY variable.
     src="https://mage-ai.github.io/assets/pro/features/vs-code/tailscale-authkey.png"
   />
 </Frame>
+
+#### Setting Environment Variables for Workspaces
+
+If you are using Mage Pro **workspaces**, you must configure environment variables separately at the workspace level.
+> **Note**: Each workspace requires its own **unique** `TS_AUTHKEY`.
+> Generate a separate Tailscale auth key for each workspace to ensure proper network isolation and security.
+
+To configure environment variables for a workspace, follow the guide here:
+👉 [Workspace Environment Configuration](/guides/developer-ux/workspaces#environment-configuration)
+
+Here’s an example workspace configuration:
+
+```yaml
+env:
+  - name: TS_AUTHKEY
+    value: <workspace_specific_tailscale_auth_key>
+  - name: TS_EXTRA_ARGS
+    value: --accept-routes
+  - name: ENV
+    value: dev
+  - name: USER_CODE_PATH
+    value: /home/src/<your_project_folder>
+```
 
 ### 3. Connection verification
 
