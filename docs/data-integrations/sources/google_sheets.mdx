@@ -1,0 +1,36 @@
+---
+title: "Google Sheets"
+---
+
+## Configuration
+
+To set up the Google Sheets source, provide the following configuration parameters:
+
+| Key                             | Description                                                                                          | Sample Value                      |
+| ------------------------------- | ---------------------------------------------------------------------------------------------------- | --------------------------------- |
+| `path_to_credentials_json_file` | Path to your Google service account credentials JSON file.                                           | `/path/to/service_account_credentials.json` |
+| `spreadsheet_id`                 | The unique identifier of a spreadsheet (found in the spreadsheet URL after `/spreadsheets/d/`).      | `abcdefg123456`                   |
+| `selected_sheet_names`           | A list of sheet names to filter and extract.                                                         | `["sheet1", "sheet2"]`             |
+
+<br/>
+
+## Prerequisites
+
+- [Enable the Google Sheets API](https://console.cloud.google.com/apis/library/sheets.googleapis.com).
+- Share your spreadsheet with the service account:
+  - Open the spreadsheet.
+  - Click **Share**.
+  - Add the service account’s email with **Editor** or **Viewer** permission.
+
+<br/>
+
+## Sheet Requirements
+
+Each sheet must meet the following requirements:
+
+- Sheet is not empty.
+- The first row must contain column names (no duplicate column names).
+- The following rows must contain only valid cell values:
+  - No [errorType](https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets/other#ExtendedValue) or formulaType cells.
+
+<br/>

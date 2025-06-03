@@ -1,0 +1,36 @@
+---
+title: "MySQL"
+---
+
+![MySQL](https://user-images.githubusercontent.com/78053898/198753513-4a149790-853a-4dcd-8c93-388f84ef6aeb.png)
+
+<br/>
+
+## Configuration
+
+To set up the MySQL source, provide the following configuration parameters:
+
+| Key                | Description                                                                                                 | Sample Value                           |
+| ------------------ | ----------------------------------------------------------------------------------------------------------- | -------------------------------------- |
+| `database`         | Name of the database you want to read data from.                                                             | `demo`                                 |
+| `host`             | Hostname of your MySQL server.                                                                               | `mage.abc.us-west-2.rds.amazonaws.com` |
+| `port`             | Port on which the database is running (typically `3306`).                                                    | `3306`                                 |
+| `username`         | Username with permissions to read and write to the specified schema.                                         | `root`                                 |
+| `password`         | Password for the user to access the database.                                                                | `abc123...`                            |
+| `connection_method`| Method used to connect to MySQL server, either `direct` or `ssh_tunnel`.                                      | `direct` or `ssh_tunnel`               |
+| `conn_kwargs`      | (Optional) Extra [connection keyword arguments](https://dev.mysql.com/doc/connector-python/en/connector-python-connectargs.html) in dictionary format. | `{"ssl_ca": "CARoot.pem", "ssl_cert": "certificate.pem", "ssl_key": "key.pem"}` |
+| `ssh_host`         | (Optional) Host of the intermediate bastion server.                                                          | `123.45.67.89`                         |
+| `ssh_port`         | (Optional) Port of the bastion server. Default is `22`.                                                       | `22`                                   |
+| `ssh_username`     | (Optional) Username used to connect to the bastion server.                                                    | `username`                             |
+| `ssh_password`     | (Optional) Password for bastion authentication (if using password).                                           | `password`                             |
+| `ssh_pkey`         | (Optional) Path to the private key file for bastion authentication (if using a private key).                  | `/path/to/private/key`                 |
+
+<br/>
+
+### Optional Configuration
+
+| Key                | Description                                                                                      | Sample Value |
+| ------------------ | ------------------------------------------------------------------------------------------------ | ------------ |
+| `batch_fetch_limit` | Number of rows to fetch per batch (defaults to 50,000). Adjust higher if your instance has more memory. | `50000`      |
+
+<br/>

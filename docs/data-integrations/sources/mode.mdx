@@ -1,0 +1,26 @@
+---
+title: "Mode"
+---
+
+![Mode](https://ta-relay-public-files-prod.s3.us-east-2.amazonaws.com/icp/product_images/163aa82596261bf2ce6b6d88e9b68a4f.png)
+
+## Configuration
+
+To set up the Mode source, provide the following configuration parameters:
+
+| Key             | Description                                                                                     | Sample Value       |
+| --------------- | ----------------------------------------------------------------------------------------------- | ------------------ |
+| `access_token`  | Access token used to authenticate your Mode account.                                             | `abcdefg123456`     |
+| `password`      | Mode token password.                                                                             | `supersecurepassword` |
+| `workspace`     | Workspace ID in Mode.                                                                            | `ws-12345`          |
+| `user_agent`    | User agent string to send in the request header.                                                  | `my-app-v1.0`       |
+| `start_date`    | Filters results to only fetch records updated after this date. Format: `YYYY-MM-DD`.             | `2023-01-01`        |
+
+<br/>
+
+### How to Get Your `access_token` and `password`
+
+Follow Mode’s [instructions](https://mode.com/developer/api-reference/authentication/)  
+to generate your `access_token` and `password`.
+
+<br/>

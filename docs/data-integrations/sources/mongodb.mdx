@@ -1,0 +1,37 @@
+---
+title: "MongoDB"
+---
+
+![MongoDB](https://upload.wikimedia.org/wikipedia/commons/thumb/9/93/MongoDB_Logo.svg/2560px-MongoDB_Logo.svg.png)
+
+<br/>
+
+## Configuration
+
+To set up the MongoDB source, provide the following configuration parameters:
+
+| Key              | Description                                                                 | Sample Value         |
+| ---------------- | --------------------------------------------------------------------------- | -------------------- |
+| `database`       | Name of the database you want to read data from.                            | `company`             |
+| `host`           | Hostname of your MongoDB server.                                             | `127.0.0.1`           |
+| `password`       | Password for the user to access the database.                               | `abc123...`           |
+| `port`           | Port on which MongoDB is running (typically `27017`).                       | `27017`               |
+| `user`           | Username that will access the database.                                     | `admin`               |
+| `replica_set`    | (Optional) Name of the replica set, if any.                                  | `optional`            |
+| `ssl`            | (Optional) Use SSL for the connection. Default is `false`.                   | `false`               |
+| `authSource`     | (Optional) Authentication source database name.                             | `the_database`        |
+| `authMechanism`  | (Optional) Authentication mechanism. Default is none. Example: `SCRAM-SHA-256`. | `SCRAM-SHA-256`    |
+
+<br/>
+
+## Run MongoDB Locally
+
+You can run a local instance of MongoDB using Docker:
+
+```bash
+docker run -p 27017:27017 \
+  -e MONGO_INITDB_ROOT_USERNAME=admin \
+  -e MONGO_INITDB_ROOT_PASSWORD=password \
+  --name mongo \
+  mongo:latest
+```

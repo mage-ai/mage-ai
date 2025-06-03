@@ -1,0 +1,25 @@
+---
+title: "Chargebee"
+---
+
+## Configuration
+
+To set up the Chargebee source, provide the following configuration parameters:
+
+| Key               | Description                                                                                                                   | Sample Value         |
+| ----------------- | ----------------------------------------------------------------------------------------------------------------------------- | -------------------- |
+| `api_key`         | API key for your Chargebee site.                                                                                               | `fake_api_key...`     |
+| `site`            | Name of your Chargebee site. (For `mage.chargebee.com`, enter `mage`.)                                                         | `your-site-name`      |
+| `start_date`      | The date in ISO (`YYYY-MM-DDTHH:MM:SSZ`) format to start pulling data (for resources that support this).                         | `2010-01-01T00:00:00Z`|
+| `include_deleted` | (Optional) Whether to include deleted records in all streams. Defaults to `True`.                                               | `True`                |
+| `request_timeout` | (Optional) Timeout for requests to the Chargebee API (in seconds). Defaults to `300`.                                           | `300`                 |
+
+<br/>
+
+## Streams
+
+The following streams are supported in the Chargebee source:
+
+👉 [List of Supported Streams](https://github.com/mage-ai/mage-ai/tree/master/mage_integrations/mage_integrations/sources/chargebee/streams)
+
+<br/>

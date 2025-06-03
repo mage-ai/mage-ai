@@ -1,0 +1,56 @@
+---
+title: "Amplitude"
+---
+
+
+![Amplitude](https://user-images.githubusercontent.com/78053898/198753477-f08a7424-00de-4ae3-9d04-e1c1429a7d28.png)
+
+<br/>
+
+## Configuration
+
+To set up the Amplitude source, provide the following configuration parameters:
+
+| Key           | Description                                  | Sample Value     | Required |
+| ------------- | -------------------------------------------- | ---------------- | -------- |
+| `api_key`     | Amplitude project's unique API key.          | `73bb...`        | ✅        |
+| `secret_key`  | Amplitude project's unique secret key.       | `ABC1...`        | ✅        |
+
+> **Find your API credentials:**  
+> See Amplitude’s [documentation](https://www.docs.developers.amplitude.com/analytics/find-api-credentials/).
+
+<br/>
+
+### Optional Configuration
+
+| Key    | Description                                                                                                                                   | Sample Value                        |
+| ------ | --------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------- |
+| `host` | Amplitude host URL. Standard server: `https://amplitude.com`. EU Residency server: `https://analytics.eu.amplitude.com`. Defaults to `https://amplitude.com`. | `https://analytics.eu.amplitude.com` |
+
+<br/>
+
+## Query Behavior
+
+Loading data from Amplitude requires a start date and an end date.
+
+Mage automatically passes the start date and end date based on the scheduled trigger you create.  
+For example, if your pipeline runs daily, the start date will be 1 day ago, and the end date will be today.
+
+If you prefer to hardcode and customize these dates, follow the [instructions to override runtime variables](https://docs.mage.ai/production/configuring-production-settings/runtime-variable).
+
+Add the following keys and values to your pipeline’s runtime variables:
+
+| Key          | Description                          | Sample Value  |
+| ------------ | ------------------------------------ | ------------- |
+| `_start_date` | Date to start fetching events.        | `2022-10-01`  |
+| `_end_date`   | Date to stop fetching events.         | `2022-10-03`  |
+
+<br/>
+
+## Schema
+
+The following resources are synced:
+
+- [Events](https://www.docs.developers.amplitude.com/analytics/apis/export-api/#response-schema)
+
+<br/>
