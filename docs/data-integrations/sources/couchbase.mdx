@@ -1,0 +1,31 @@
+---
+title: "Couchbase"
+---
+
+![Couchbase](https://www.couchbase.com/wp-content/uploads/2022/08/CB-logo-R_B_B.png)
+
+<br/>
+
+## Configuration
+
+To set up the Couchbase source, provide the following configuration parameters:
+
+| Key                 | Description                                                                                                                | Sample Value                                  |
+| ------------------- | -------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------- |
+| `connection_string`  | Connection string for your Couchbase database. [More info](https://docs.couchbase.com/kotlin-sdk/current/howtos/connecting.html#connection-string-scheme). | `couchbase://my_instance.cloud.couchbase.com` |
+| `username`           | Username to access the database (must have permissions to read from the specified bucket and scope).                       | `username`                                   |
+| `password`           | Password for the user.                                                                                                     | `password`                                   |
+| `bucket`             | Name of the Couchbase bucket containing your data.                                                                         | `my_bucket`                                  |
+| `scope`              | Name of the Couchbase scope. Only collections within this scope will be available in Mage.                                 | `my_scope`                                   |
+| `strategy`           | (Optional) Strategy for schema inference. See below.                                                                       | `infer`                                      |
+
+<br/>
+
+## Strategy Details
+
+By default, Mage will attempt to infer your data’s schema from a sample of documents.
+
+- `strategy: infer` — Mage will try to infer a unified schema from the data. If multiple schemas exist, Mage will pick the one covering the most data points.
+- `strategy: combine` — Mage will combine the data into a single `_document` column as an object.
+
+<br/>

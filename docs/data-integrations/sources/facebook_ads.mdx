@@ -1,0 +1,52 @@
+---
+title: "Facebook Ads"
+---
+
+![Facebook](https://upload.wikimedia.org/wikipedia/commons/thumb/8/89/Facebook_Logo_%282019%29.svg/2560px-Facebook_Logo_%282019%29.svg.png)
+
+<br/>
+
+## Configuration
+
+To set up the Facebook Ads source, provide the following configuration parameters:
+
+| Key             | Description                                                          | Sample Value                | Required |
+| --------------- | -------------------------------------------------------------------- | ---------------------------- | -------- |
+| `account_id`    | The Facebook Ad account ID used when extracting data.                | `"abc123..."` (double quotes required) | ✅       |
+| `access_token`  | OAuth token to access API endpoints.                                 | `abc123...`                  | ✅       |
+| `start_date`    | Fetch data newer than the specified `start_date`. Format: ISO8601.   | `2022-01-01T00:00:00Z`        | ✅       |
+
+<br/>
+
+### `account_id`
+
+Visit [Facebook Ads Manager Accounts](https://www.facebook.com/adsmanager/manage/accounts) to find your account ID.  
+It should look like: `13261011608127020`.
+
+> **Note**  
+> Your account ID is **not** the same as your App ID.
+
+<br/>
+
+### `access_token`
+
+1. [Create a Facebook App](https://developers.facebook.com/docs/development/create-an-app/).
+2. Get the access token:
+   1. Go to: `https://developers.facebook.com/apps/[app_id]/marketing-api/tools`
+      - Replace `[app_id]` with the ID of the app you created.
+   2. Under **Select Token Permissions**, check the following:
+      - `ads_management`
+      - `ads_read`
+      - `read_insights`
+   3. Click **Get Token**.
+3. Copy the generated `access_token`.
+
+<br/>
+
+## Errors
+
+### API Rate Limit
+
+If you encounter API rate limits, refer to this [Facebook Community Thread](https://developers.facebook.com/community/threads/158172292247085/) for more information.
+
+<br/>

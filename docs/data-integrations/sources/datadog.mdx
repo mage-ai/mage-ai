@@ -1,0 +1,32 @@
+---
+title: "Datadog"
+---
+
+![Datadog](https://imgix.datadoghq.com/img/about/presskit/logo-v/dd_vertical_white.png?auto=format&fit=max&w=847)
+
+<br/>
+
+## Configuration
+
+To set up the Datadog source, provide the following configuration parameters:
+
+| Key                | Description                                                                                                                  | Sample Value        |
+| ------------------ | ---------------------------------------------------------------------------------------------------------------------------- | ------------------- |
+| `api_key`          | Datadog API key.                                                                                                              | `abc123...`         |
+| `application_key`  | Datadog application key.                                                                                                      | `def456...`         |
+| `start_date`       | The date in ISO (`YYYY-MM-DDTHH:MM:SSZ`) format to start pulling data (for streams that support this). If a bookmark property is used, it will prioritize the latest bookmark date. | `2010-01-01T00:00:00Z` |
+| `query`            | Some streams support a `query` parameter to narrow down the data (currently `audit_logs` and `logs` streams).                | `query string...`   |
+
+<br/>
+
+## Query Configuration
+
+To set up a query for a specific stream, provide the stream name as a key in the `query` field, and the query string as the value.
+
+Example:
+
+```yaml
+query:
+  audit_logs: your query here...
+```
+<br />

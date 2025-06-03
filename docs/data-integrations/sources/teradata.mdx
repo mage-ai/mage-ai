@@ -1,0 +1,42 @@
+---
+title: "Teradata"
+---
+
+<br/>
+
+## Configuration
+
+Connect to your Teradata database and extract data by providing the following configuration parameters:
+
+| Key          | Description                                                              | Sample Value                   |
+| ------------ | ------------------------------------------------------------------------ | ------------------------------- |
+| `database`   | The name of the database you want to read data from.                     | `demo`                          |
+| `host`       | Hostname or IP address of your Teradata database.                        | `test.clearscape.teradata.com`   |
+| `port`       | Port number for the database connection (default is 1025 for Teradata).  | `1025`                           |
+| `username`   | Username with permissions to access the database and schema.             | `demo_user`                      |
+| `password`   | Password for the user to authenticate.                                   | `abc123...`                      |
+
+<br/>
+
+### Optional Configs
+
+| Key                 | Description                                                                                  | Sample Value |
+| ------------------- | -------------------------------------------------------------------------------------------- | ------------ |
+| `batch_fetch_limit`  | Number of rows to fetch per batch (default: 50,000). Adjust based on available memory.       | `50000`      |
+
+<br/>
+
+## What is Teradata?
+
+[Teradata](https://www.teradata.com/) is a powerful enterprise-grade relational database management system (RDBMS) optimized for high-performance data warehousing and large-scale analytics. It supports complex queries and advanced analytics across massive datasets.
+
+<br/>
+
+## Why Integrate Teradata with Mage?
+
+- **High-performance analytics**: Leverage Teradata’s parallel processing to extract large volumes of data efficiently.
+- **Scalable ETL workflows**: Integrate Teradata data into your data pipelines for advanced transformation and analysis.
+- **Enterprise-ready**: Built for high security, reliability, and compliance standards.
+- **Batch optimization**: Customize batch fetch limits to tune performance based on workload and memory.
+
+<br/>

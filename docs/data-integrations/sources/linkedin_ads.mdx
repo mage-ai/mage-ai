@@ -1,0 +1,41 @@
+---
+title: "LinkedIn Ads"
+---
+
+![LinkedIn Ads](https://i0.wp.com/winatlinkedin.com/wp-content/uploads/2019/07/Linkedin-ad-management-2.png)
+
+<br/>
+
+## Configuration
+
+To set up the LinkedIn Ads source, provide the following configuration parameters:
+
+| Key               | Description                                                                 | Sample Value             | Required |
+| ----------------- | --------------------------------------------------------------------------- | ------------------------ | -------- |
+| `accounts`        | Comma-separated list of account IDs. Required if syncing `accounts` or `account_users` streams. | `"id1, id2, id3"`         | Required (conditional) |
+| `access_token`    | Access token for authentication.                                             | `def789...`               | ✅        |
+| `request_timeout` | Timeout (in seconds) for API requests.                                       | `300`                     |          |
+| `start_date`      | Fetch data newer than this `start_date`. Format: ISO8601 (`YYYY-MM-DDTHH:MM:SSZ`). | `2023-01-01T00:00:00Z`     | ✅        |
+| `user_agent`      | User agent string (usually your email address).                             | `your_email@your_domain.com` | ✅        |
+
+<br/>
+
+Instead of providing an `access_token`, you can also use the following OAuth credentials:
+
+| Key             | Description            | Sample Value  | Required |
+| --------------- | ---------------------- | ------------- | -------- |
+| `client_id`     | OAuth client ID.         | `abc123...`   | ✅        |
+| `client_secret` | OAuth client secret.     | `xyz456...`   | ✅        |
+| `refresh_token` | OAuth refresh token.     | `def789...`   | ✅        |
+
+<br/>
+
+### How to Get `access_token`
+
+1. Create a LinkedIn App: [LinkedIn Developers](https://www.linkedin.com/developers/apps).
+2. Enable the **Marketing Developer Platform** product:  
+   [Request Access](https://learn.microsoft.com/en-us/linkedin/shared/authentication/getting-access?context=linkedin%2Fcontext#marketing).
+3. Submit the access form and wait for approval (a few business days).
+4. Once approved, follow these [instructions](https://www.linkedin.com/developers/tools/oauth) to generate an `access_token`.
+
+<br/>

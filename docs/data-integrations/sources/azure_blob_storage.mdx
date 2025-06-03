@@ -1,0 +1,29 @@
+---
+title: "Azure Blob Storage"
+---
+
+![Azure Blob Storage](https://user-images.githubusercontent.com/80284865/212203409-7f9660ba-abf1-4a1c-9e86-0d699ed04381.png)
+
+<br/>
+
+## Configuration
+
+To set up the Azure Blob Storage source, provide the following configuration parameters:
+
+| Key                | Description                                                                                                     | Sample Value |
+| ------------------ | -------------------------------------------------------------------------------------------------------------- | ------------ |
+| `connection_string` | Storage account connection string.                                                                             | `BlobEndpoint=https://xxx.blob.core.windows.net/;yyyyyy&sig=testsig` |
+| `container_name`    | The name of the Blob storage container where the data is stored.                                                | `testcontainer` |
+| `prefix`            | Path within the container where files are located. Do not include the container name or table name in this path. | `users/ds/20221225` |
+
+<br/>
+
+## How to Find Connection String
+
+- **Option 1:** Get the connection string from your Storage Account's Access Keys:  
+  [Microsoft documentation](https://learn.microsoft.com/en-us/answers/questions/1071173/where-can-i-find-storage-account-connection-string)
+  
+- **Option 2:** If you want to restrict access to the storage account, generate a **Shared Access Signature (SAS)** token and build the connection string:  
+  [Microsoft documentation](https://learn.microsoft.com/en-us/azure/applied-ai-services/form-recognizer/create-sas-tokens?view=form-recog-3.0.0#create-your-sas-tokens)
+
+<br/>

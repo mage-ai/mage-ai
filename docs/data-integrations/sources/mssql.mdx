@@ -1,0 +1,32 @@
+---
+title: "MSSQL (Microsoft SQL Server)"
+---
+
+![MSSQL](https://www.commvault.com/wp-content/uploads/2019/08/sql-server_logo.jpg)
+
+<br/>
+
+## Configuration
+
+To set up the MSSQL source, provide the following configuration parameters:
+
+| Key            | Description                                                                                      | Sample Value         |
+| -------------- | ------------------------------------------------------------------------------------------------ | -------------------- |
+| `database`     | Name of the database you want to read data from.                                                  | `msdb`                |
+| `host`         | Hostname of the MSSQL database, including port number at the end (e.g., `host,port`).             | `172.20.0.2,1433`     |
+| `password`     | Password for the MSSQL user to access the database.                                               | `abc123...`           |
+| `port`         | Port where the database is running (typically `1433`).                                            | `1433`                |
+| `schema`       | Schema of the database you want to read data from.                                                | `public`              |
+| `username`     | Username that will access the database (must have read and write permissions to the specified schema). | `guest`           |
+
+<br/>
+
+### Optional Configuration
+
+| Key              | Description                                                                                               | Sample Value                          |
+| ---------------- | --------------------------------------------------------------------------------------------------------- | ------------------------------------- |
+| `authentication` | Authentication mode for connecting to MSSQL with [Azure Active Directory authentication](https://learn.microsoft.com/en-us/sql/connect/jdbc/connecting-using-azure-active-directory-authentication?view=sql-server-ver16). | `ActiveDirectoryServicePrincipal`     |
+| `batch_fetch_limit` | Number of rows to fetch per batch (defaults to 50,000). Adjust if your instance has more memory.        | `50000`                               |
+| `driver`         | ODBC [driver](https://learn.microsoft.com/en-us/sql/connect/odbc/download-odbc-driver-for-sql-server?view=sql-server-ver16) for SQL Server. | `ODBC Driver 18 for SQL Server`       |
+
+<br/>
