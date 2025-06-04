@@ -1,0 +1,168 @@
+---
+title: "IO Config Setup"
+sidebarTitle: "IO Config Setup"
+icon: "key"
+description: "Learn how to set up and configure the io_config file for your Mage project"
+---
+
+# IO Config Setup Guide
+
+The `io_config` file is a crucial configuration file in Mage that stores credentials and connection information for accessing various data sources. This guide will help you understand where to store it and how to create it from scratch.
+
+## File Location
+
+The `io_config` file should be stored in your Mage project's root directory. The default path is:
+
+```
+your_mage_project/
+└── default_repo/
+    └── io_config.yaml
+```
+
+## Creating a New io_config File
+
+### 1. Basic Structure
+
+Create a new file named `io_config.yaml` in your project's `default_repo` directory with the following basic structure:
+
+```yaml
+version: 0.1.1  # Optional but recommended
+default:
+  # Your default profile configuration here
+```
+
+### 2. Configuration Formats
+
+Mage supports two formats for the `io_config` file:
+
+#### Standard Format (Recommended)
+
+```yaml
+version: 0.1.1
+default:
+  # PostgreSQL configuration
+  POSTGRES_DBNAME: your_database
+  POSTGRES_USER: your_username
+  POSTGRES_PASSWORD: your_password
+  POSTGRES_HOST: your_host
+  POSTGRES_PORT: 5432
+
+  # Snowflake configuration
+  SNOWFLAKE_USER: your_username
+  SNOWFLAKE_PASSWORD: your_password
+  SNOWFLAKE_ACCOUNT: your_account
+  SNOWFLAKE_DEFAULT_WH: your_warehouse
+  SNOWFLAKE_DEFAULT_DB: your_database
+  SNOWFLAKE_DEFAULT_SCHEMA: your_schema
+
+  # AWS configuration
+  AWS_ACCESS_KEY_ID: "{{ env_var('AWS_ACCESS_KEY_ID') }}"
+  AWS_SECRET_ACCESS_KEY: "{{ env_var('AWS_SECRET_ACCESS_KEY') }}"
+  AWS_REGION: your_region
+```
+
+#### Legacy Format (Verbose)
+
+```yaml
+default:
+  PostgreSQL:
+    database: your_database
+    user: your_username
+    password: your_password
+    host: your_host
+    port: 5432
+  AWS:
+    region: your_region
+    Redshift:
+      database: your_redshift_database
+      port: 5439
+```
+
+### 3. Using Environment Variables
+
+For security, it's recommended to use environment variables for sensitive information:
+
+```yaml
+version: 0.1.1
+default:
+  POSTGRES_PASSWORD: "{{ env_var('POSTGRES_PASSWORD') }}"
+  SNOWFLAKE_PASSWORD: "{{ env_var('SNOWFLAKE_PASSWORD') }}"
+```
+
+### 4. Multiple Profiles
+
+You can create multiple profiles for different environments or use cases:
+
+```yaml
+version: 0.1.1
+default:
+  # Default profile configuration
+  POSTGRES_DBNAME: production_db
+
+development:
+  # Development environment configuration
+  POSTGRES_DBNAME: development_db
+
+staging:
+  # Staging environment configuration
+  POSTGRES_DBNAME: staging_db
+```
+
+## Using io_config in Your Code
+
+### Python Block Example
+
+```python
+from mage_ai.settings.repo import get_repo_path
+from mage_ai.io.config import ConfigFileLoader
+from mage_ai.io.postgres import Postgres
+from os import path
+
+@data_loader
+def load_data_from_postgres(**kwargs):
+    query = 'SELECT * FROM your_table'
+    config_path = path.join(get_repo_path(), 'io_config.yaml')
+    config_profile = 'default'  # or any other profile name
+
+    with Postgres.with_config(ConfigFileLoader(config_path, config_profile)) as loader:
+        return loader.load(query)
+```
+
+### SQL Block Example
+
+In SQL blocks, you can select the desired IO Config profile from the UI using the "Profile" dropdown menu.
+
+## Best Practices
+
+1. **Security**:
+   - Never commit sensitive credentials directly in the `io_config` file
+   - Use environment variables for sensitive information
+   - Consider using a secrets management service for production environments
+
+2. **Organization**:
+   - Use meaningful profile names
+   - Group related configurations together
+   - Document any non-standard configurations
+   - Use the standard format for new configurations
+
+3. **Version Control**:
+   - Add `io_config.yaml` to your `.gitignore` file
+   - Provide a template file (`io_config.yaml.template`) with dummy values
+   - Document the required environment variables
+
+## Troubleshooting
+
+If you encounter issues with your `io_config`:
+
+1. Verify the file is in the correct location (`default_repo/io_config.yaml`)
+2. Check that all required fields are present
+3. Ensure environment variables are properly set
+4. Validate the YAML syntax
+5. Check the connection credentials
+6. Verify you're using the correct configuration format (standard or verbose)
+
+## Additional Resources
+
+- [Variables Overview](/development/variables/overview)
+- [Data Integration Guide](/data-integrations/overview)
+- [Pipeline Configuration](/design/data-pipeline-management) 
