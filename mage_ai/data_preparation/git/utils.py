@@ -186,7 +186,21 @@ async def poll_process_with_timeout(
 ) -> str:
     ct = 0
     return_code = None
+    out = b''
+
+    # set stdout to be in non-blocking mode
+    # we don't want to block on reading just want to grab anything that might
+    # be sitting in the pipe
+    os.set_blocking(proc.stdout.fileno(), False)
     while ct < timeout * 2:
+        # read output from the process. if stdout fills up it's pipe the
+        # command will never finish and we will timeout.
+        while True:
+            tmp = proc.stdout.readline()
+            if len(tmp) == 0:
+                break
+            out += tmp
+
         return_code = proc.poll()
         if return_code is not None:
             proc.kill()
@@ -198,7 +212,8 @@ async def poll_process_with_timeout(
         error_message = 'Error running Git process'
 
     if return_code is not None:
-        out, err = proc.communicate()
+        tmp, err = proc.communicate()
+        out += tmp
         if return_code != 0:
             message = err.decode('UTF-8') if err else error_message
             raise ChildProcessError(message)
