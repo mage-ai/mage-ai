@@ -77,6 +77,61 @@ Follow these steps to add that Opsgenie Configuration to your project settings:
 
     Change the `your_api_key` value to be the API Key you created from Opsgenie.
 
+## Customize message templates
+You can customize message templates in `notification_config`. Here is an example config:
+```yaml
+notification_config:
+  alert_on:
+    ...
+  opsgenie_config:
+    ...
+  message_templates:
+    failure:
+      details: >
+        Failed to execute pipeline {pipeline_run_url}.
+        Pipeline uuid: {pipeline_uuid}. Trigger name: {pipeline_schedule_name}.
+        Test custom message.
+    success:
+      details: ...
+    passed_sla:
+      details: ...
+```
+You can customize the message template for `success`, `failure`, `passed_sla` scenarios. For each message template,
+you can specify either `summary` or `details`.
+* If you specify the `summary`, the slack message will be your `summary` + the url of the pipeline run page
+* If you specify the `details`, the `details` will be used as your slack message directly
+
+To interpolate variables in the message template, you can use `{variable_name}` syntax.
+Here are the supported variables:
+1. `execution_time`
+1. `pipeline_run_url`
+1. `pipeline_schedule_id`
+1. `pipeline_schedule_name`
+1. `pipeline_schedule_description`
+1. `pipeline_uuid`
+1. `error`
+    * available only for the `failure` message template
+1. `stacktrace`
+    * available only for the `failure` message template
+
+> **Note**: For `pipeline_run_url`, the default host is `http://localhost:6789`. You can specify `MAGE_PUBLIC_HOST` to be
+the host url you want to use in the notification messages.
+
+### 🚀 Pro Only: Interpolate Mage Variables in Message Templates
+
+If you're using **Mage Pro**, you can interpolate environment variables and other [Mage variables](/development/variables/referencing-variables#accessing-variables-in-mage) directly in your Slack message templates using the familiar Jinja-like syntax:
+
+```yaml
+notification_config:
+  message_templates:
+    failure:
+      details: >
+        Failed at {{ env_var('ENVIRONMENT') }} environment.
+        Pipeline run: {pipeline_run_url}.
+```
+
+This makes your Opsgenie notifications more dynamic and context-aware — ideal for multi-environment deployments and advanced workflows.
+
 ---
 
 ## What next?

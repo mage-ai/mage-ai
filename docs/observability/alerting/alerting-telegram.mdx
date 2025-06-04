@@ -119,8 +119,25 @@ Here are the supported variables:
 1. `stacktrace`
     * available only for the `failure` message template
 
-For `pipeline_run_url`, the default host is `http://localhost:6789`. You can specify `MAGE_PUBLIC_HOST` to be
+> **Note**: For `pipeline_run_url`, the default host is `http://localhost:6789`. You can specify `MAGE_PUBLIC_HOST` to be
 the host url you want to use in the notification messages.
+
+### 🚀 Pro Only: Interpolate Mage Variables in Message Templates
+
+If you're using **Mage Pro**, you can interpolate environment variables and other [Mage variables](/development/variables/referencing-variables#accessing-variables-in-mage) directly in your Slack message templates using the familiar Jinja-like syntax:
+
+```yaml
+notification_config:
+  message_templates:
+    failure:
+      title: 'Failed to execute pipeline {pipeline_uuid} at {{ env_var('ENVIRONMENT') }} environment'
+      summary: >
+        Failed to execute pipeline {pipeline_run_url}.
+        Pipeline uuid: {pipeline_uuid}. Trigger name: {pipeline_schedule_name}.
+        Test custom message.
+```
+
+This makes your Telegram notifications more dynamic and context-aware — ideal for multi-environment deployments and advanced workflows.
 
 ---
 

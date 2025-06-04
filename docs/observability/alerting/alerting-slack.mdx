@@ -2,7 +2,7 @@
 title: "Alerting status updates in Slack"
 sidebarTitle: "Slack"
 icon: "slack"
-description: "Get status updates in your Slack channel."
+description: "Get real-time status updates from Mage pipelines directly in your Slack channels."
 ---
 
 <img
@@ -15,14 +15,16 @@ description: "Get status updates in your Slack channel."
 
 1. Set up webhooks for Slack
 2. Update Mage project settings
+3. Customize message templates with dynamic variables (Pro only)
 
 ---
 
 ## Set up webhooks for Slack
 
-Follow these
-[instructions on Slack](https://api.slack.com/messaging/webhooks)
-to setup incoming webhooks for your workspace.
+To send notifications to Slack, you need to configure an incoming webhook:
+
+- Follow the official [Slack webhook setup guide](https://api.slack.com/messaging/webhooks).
+- Create a webhook URL for your desired Slack channel.
 
 ---
 
@@ -113,8 +115,23 @@ Here are the supported variables:
 1. `stacktrace`
     * available only for the `failure` message template
 
-For `pipeline_run_url`, the default host is `http://localhost:6789`. You can specify `MAGE_PUBLIC_HOST` to be
+> **Note**: For `pipeline_run_url`, the default host is `http://localhost:6789`. You can specify `MAGE_PUBLIC_HOST` to be
 the host url you want to use in the notification messages.
+
+### 🚀 Pro Only: Interpolate Mage Variables in Message Templates
+
+If you're using **Mage Pro**, you can interpolate environment variables and other [Mage variables](/development/variables/referencing-variables#accessing-variables-in-mage) directly in your Slack message templates using the familiar Jinja-like syntax:
+
+```yaml
+notification_config:
+  message_templates:
+    failure:
+      details: >
+        Failed at {{ env_var('ENVIRONMENT') }} environment.
+        Pipeline run: {pipeline_run_url}.
+```
+
+This makes your Slack notifications more dynamic and context-aware — ideal for multi-environment deployments and advanced workflows.
 
 ---
 
