@@ -119,6 +119,11 @@ the host url you want to use in the notification messages.
 
 ### 🚀 Pro Only: Interpolate Mage Variables in Message Templates
 
+import { ProButton } from '/snippets/pro/button.mdx';
+import { ProOnly } from '/snippets/pro/only.mdx';
+
+<ProOnly source="notification" />
+
 If you're using **Mage Pro**, you can interpolate environment variables and other [Mage variables](/development/variables/referencing-variables#accessing-variables-in-mage) directly in your Discord message templates using the familiar Jinja-like syntax:
 
 ```yaml
