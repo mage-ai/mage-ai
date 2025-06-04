@@ -716,6 +716,7 @@
         },
         "development/databases/default",
         "development/io_config",
+        "development/io_config_setup",
         "getting-started/kernels",
         "development/project/local-timezone",
         "development/settings-backend",
