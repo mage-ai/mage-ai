@@ -1,0 +1,76 @@
+---
+title: "Facebook Pages"
+---
+
+import { ProButton } from '/snippets/pro/button.mdx';
+import { ProOnly } from '/snippets/pro/only.mdx';
+
+<ProOnly source="data-integration" />
+
+<img src="https://upload.wikimedia.org/wikipedia/commons/thumb/8/89/Facebook_Logo_%282019%29.svg/2560px-Facebook_Logo_%282019%29.svg.png" alt="Facebook Pages" width="300"/>
+
+
+## Configuration
+
+Connect to **Facebook Pages** and sync posts, insights, and engagement metrics. Provide the following configuration parameters:
+
+| Key             | Description                                                                                         | Sample Value                  | Required |
+| --------------- | --------------------------------------------------------------------------------------------------- | ------------------------------ | -------- |
+| `access_token`  | OAuth access token for Facebook Graph API with the required permissions (`pages_read_engagement`, `pages_read_user_content`). | `EAABsbCS1i...`                | ✅       |
+| `page_ids`      | List of Facebook Page IDs you want to extract data from.                                             | `["1234567890", "9876543210"]`  | ✅       |
+| `start_date`    | Start date (ISO 8601 format) to begin fetching posts and engagement data.                             | `2025-01-01T00:00:00Z`         | ✅       |
+
+<br/>
+
+## How to Get Your `access_token`
+
+You have two options to generate an access token:
+
+### 1. Use the OAuth Button (Recommended)
+
+- Click the **OAuth Authorize** button in your Mage workspace.
+- Approve the required Facebook permissions:
+  - `pages_show_list`
+  - `pages_read_engagement`
+  - `pages_read_user_content`
+  - `read_insights`
+- The access token will be securely generated and auto-filled in the configuration.
+
+> **Tip**: Use the OAuth flow for a smoother, safer authentication process without manually handling tokens.
+
+### 2. Manually Generate Access Token
+
+- Create a Facebook App via [Facebook Developer Portal](https://developers.facebook.com/).
+- Configure the app and get the permissions listed above.
+- Generate a **User Access Token** or **Page Access Token** via [Graph API Explorer](https://developers.facebook.com/tools/explorer/).
+- (Optional) Exchange for a **long-lived token** for production environments.
+
+<br/>
+
+## What is Facebook Pages API?
+
+The [Facebook Pages API](https://developers.facebook.com/docs/pages) allows programmatic access to posts, insights, page metadata, and engagement data for Facebook Pages. Businesses use it to monitor social presence, measure engagement, and automate reporting workflows.
+
+<br/>
+
+## Why Integrate Facebook Pages with Mage?
+
+- **Automate data extraction**: Fetch page posts, reactions, and comments for analysis.
+- **Engagement tracking**: Monitor likes, shares, comments, and post performance.
+- **Insights at scale**: Integrate page metrics into BI dashboards for better reporting.
+- **Marketing analytics**: Correlate Facebook engagement with other marketing activities.
+
+<br/>
+
+## Supported Streams
+
+The Facebook Pages source extracts the following resources:
+
+- **page**: Basic page details like name, ID, and metadata.
+- **page_insights**: Aggregated metrics like page impressions, engagement, and follower growth.
+- **post_attachments**: Media and links attached to posts.
+- **post_insights**: Detailed insights for each post, including reach and engagement breakdown.
+- **post_tagged_profile**: Profiles tagged in the posts.
+- **posts**: Content posted on the page — text, images, videos, and links.
+
+<br/>
