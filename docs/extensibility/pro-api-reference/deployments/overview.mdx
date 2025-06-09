@@ -31,6 +31,10 @@ Trigger a deployment using a specific deployment setting.
   The environment where the deployment will be created (e.g., `development`, `staging`, `production`).
 </ParamField>
 
+<ParamField body="deployment.stage.target_directory" type="string">
+  Optional. The directory path inside the deployment environment where the code will be deployed.
+</ParamField>
+
 <RequestExample>
 
 ```bash Request
@@ -50,7 +54,8 @@ curl --request POST \
             "branch": {
               "name": "deploy-main"
             },
-            "environment": "production"
+            "environment": "production",
+            "target_directory": "/home/src/project_name"
           }
         },
         "api_key": "zkWlN0PkIKSN0C11CfUHUj84OT5XOJ6tDZ6bDRO2"
