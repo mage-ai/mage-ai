@@ -1,0 +1,47 @@
+---
+title: "Iceberg"
+---
+
+import { ProButton } from '/snippets/pro/button.mdx';
+import { ProOnly } from '/snippets/pro/only.mdx';
+
+<ProOnly source="iceberg" />
+
+## Add credentials
+
+To access **Apache Iceberg tables stored in Amazon S3**, you'll need to configure your credentials.
+
+1. Create a new pipeline or open an existing pipeline.
+2. Expand the left side of your screen to view the file browser.
+3. Scroll down and click on a file named `io_config.yaml`.
+4. Enter the following keys and values under the key named `default` (or the profile you are using):
+
+   ```yaml
+   version: 0.1.1
+   default:
+     AWS_ACCESS_KEY_ID: ...
+     AWS_SECRET_ACCESS_KEY: ...
+     AWS_REGION: us-west-2  # or the region where your S3 bucket is located
+   ```
+   > These credentials must have read/write access to the S3 bucket that contains your Iceberg tables.
+
+## Using Python block
+You can use Mage to load data from Iceberg tables stored in S3 or export data to Iceberg tables using a configurable Python block.
+
+**Steps**
+1. **Create or open a pipeline** in your Mage Pro cluster.
+2. **Add a block** of type **Data Loader** or **Data Exporter**.
+3. From the block template list, choose:  
+   **Data lakes → Apache Iceberg**
+4. In the generated code block, update the following required configuration parameters:
+   - `base_uri`: The URI of your data lake storage (e.g., `s3://your-bucket-name/warehouse`)
+   - `bucket_name`: Name of your S3 bucket
+   - `table_name`: Fully qualified name of your Iceberg table (e.g., `db_name.table_name`)
+5. If you're using a non-default profile, update the `config_profile` field accordingly.
+6. **Run the block** to load or export data from your Iceberg table stored on S3.
+
+
+### Notes
+- The Iceberg integration supports direct access to tables through metadata stored in S3.  
+- Make sure the `table_path` points to the root directory of the Iceberg table (i.e., where the `metadata/` folder resides).  
+- Mage uses a **Postgres-backed Iceberg catalog** by default. If you're using a different catalog (e.g., **Hive** or **REST**), you can customize the configuration to point to your specific catalog endpoint and type.

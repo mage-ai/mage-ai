@@ -1123,6 +1123,7 @@
             "integrations/databases/Druid",
             "integrations/databases/DuckDB",
             "integrations/databases/GoogleSheets",
+            "integrations/databases/Iceberg",
             "integrations/databases/MicrosoftSQLServer",
             "integrations/databases/MongoDB",
             "integrations/databases/MotherDuck",
