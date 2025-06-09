@@ -36,7 +36,7 @@ Trigger a deployment using a specific deployment setting.
 ```bash Request
 curl --request POST \
   -H 'Content-Type: application/json' \
-  -H 'Authorization: Bearer <your-api-token>' \
+  -H 'OAUTH-TOKEN: <your-oauth-token>' \
   -d '{
         "deployment": {
           "source": {
