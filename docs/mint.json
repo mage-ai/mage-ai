@@ -1299,7 +1299,8 @@
     {
       "group": "Mage Pro API",
       "pages": [
-        "extensibility/pro-api-reference/overview"
+        "extensibility/pro-api-reference/overview",
+        "extensibility/pro-api-reference/deployments/overview"
       ]
     }
   ],
