@@ -180,6 +180,7 @@ class VariableTest(DBTestCase):
                 [1, 'test'],
                 [2, 'test2'],
             ],
+            orient="row",
             schema=['col1', 'col2'],
         )
         df2 = pl.DataFrame(
@@ -187,6 +188,7 @@ class VariableTest(DBTestCase):
                 [1, 'test', 3.123, 41414123123124],
                 [2, 'test2', 4.321, 12111111],
             ],
+            orient="row",
             schema=['col1', 'col2', 'col3', 'col4'],
         )
         df2 = df2.cast({'col4': pl.Int64})

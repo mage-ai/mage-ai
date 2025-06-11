@@ -106,6 +106,7 @@ jobs:
           name: playwright-report
           path: mage_ai/frontend/playwright-report/
           retention-days: 3
+          overwrite: true
 
   test_web_server_windows:
     runs-on: windows-latest
