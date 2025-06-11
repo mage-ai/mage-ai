@@ -1,0 +1,36 @@
+---
+title: "Managed cloud"
+sidebarTitle: "SaaS"
+icon: "laptop"
+description: "Fully managed Mage Pro"
+---
+
+Mage Pro SaaS is fully managed and deployed in the Mage cloud infrastructure. In this configuration, both the control and data planes are hosted and managed within Mage's cloud infrastructure:
+
+<img
+    alt="SaaS Deployment"
+    src="https://raw.githubusercontent.com/mage-ai/assets/main/pro/deployments/SaaS%20Deployment%20Architecture%20(1).png"
+/>
+
+### Technical Specifications
+
+- **Deployment Method**: Zero touch deployment with automatic provisioning
+- **Infrastructure**: Containerized environment with auto scaling in Kubernetes
+- **Networking**: Secure TLS connections to data sources with IP Whitelisting
+- **Authentication**: SAML/OAuth2 support for SSO integration
+- **Updates**: Automated version management with zero-downtime updates
+- **Scalability**: Dynamic resource allocation based on workload patterns
+- **Monitoring**: Internal monitoring tools, capable of integrating with external monitoring tools
+
+### Integration Requirements
+
+- Ensure network connectivity between your data sources and Mage's cloud environment
+- Configure firewall rules to allow connection from Mage's IP ranges
+- Set up authentication credentials for data source access
+- Establish monitoring integrations if desired
+
+### Regional deployment
+
+Mage Pro’s SaaS is currently deployed in the following regions U.S. West, U.S. East, Canada, Europe, Asia, and Australia.
+
+Please reach out to Mage if you would like to deploy Mage Pro from a specific region other than what’s listed above.

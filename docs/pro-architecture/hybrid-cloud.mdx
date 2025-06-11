@@ -1,0 +1,28 @@
+---
+title: "Hybrid cloud deployment"
+sidebarTitle: "Hybrid Cloud"
+icon: "cloud"
+description: "Deploy the data plane in your cloud environment"
+---
+
+Mage Pro’s hybrid deployment architecture splits the control plane and the data place components across environments. The control plane is maintained in Mage’s cloud environment while the data processed in the data plane never leaves your cloud infrastructure.
+
+<img
+    alt="SaaS Deployment"
+    src="https://raw.githubusercontent.com/mage-ai/assets/main/pro/deployments/Hybrid%20Deployment%20(1).png"
+/>
+
+### Technical Specifications
+
+- **Control Plane**: Managed by Mage in secure cloud infrastructure
+- **Data Plane**: Deployed in your AWS, GCP, or Azure environment
+- **Connectivity**: Secure agent-based communication between planes
+- **Resource Management**: Configurable compute profiles with auto-scaling
+- **Pipeline Execution**: All data processing occurs within your network boundary
+
+### Integration Requirements
+
+- VPC/VNET connectivity configuration between control and data planes
+- IAM roles or service accounts for resource provisioning
+- Network security groups configured to allow necessary communication
+- Container registry access for execution images
