@@ -250,3 +250,47 @@ description: "Here are some neat ways you can make the most of Mage! Tips and tr
   </Frame>
 </Accordion>
 </AccordionGroup>
+
+## Run asynchronous code in blocks
+
+```python
+import asyncio
+from typing import Any, Dict
+
+import aiohttp
+
+
+@data_loader
+def load_data_sync(*args, **kwargs) -> Dict[str, Any]:
+    """
+    Synchronously load data from a remote API endpoint using aiohttp and asyncio.
+    Uses a configurable URL with a fallback to a working test endpoint.
+    Includes error handling to gracefully manage connection issues.
+
+    Returns:
+        Dict[str, Any]: The JSON response from the API as a dictionary, or error info.
+    """
+    url: str = kwargs.get('url', 'https://jsonplaceholder.typicode.com/todos/1')
+
+    async def fetch_data(url: str) -> Dict[str, Any]:
+        # Create an aiohttp session and fetch the data
+        async with aiohttp.ClientSession() as session:
+            async with session.get(url) as response:
+                response.raise_for_status()
+                data: Dict[str, Any] = await response.json()
+                return data
+
+    # Check if there's already a running event loop
+    try:
+        loop = asyncio.get_running_loop()
+    except RuntimeError:
+        loop = None
+
+    if loop and loop.is_running():
+        # If running in an existing event loop (e.g., Jupyter), use create_task and await
+        result: Dict[str, Any] = loop.run_until_complete(fetch_data(url))
+    else:
+        # If no running event loop, use asyncio.run
+        result: Dict[str, Any] = asyncio.run(fetch_data(url))
+    return result
+```
