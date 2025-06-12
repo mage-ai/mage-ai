@@ -33,14 +33,14 @@ class TestTablePostgres(DBTestCase):
         test_cases = [
             [],
             [123],
-            [['abc', 'def']],
+            [['àabc', 'deèéf']],
             [['08:00', '12:00'], ['15:00', '20:00']],
             [['08:00', '12:00'], []],
         ]
         expected = [
             '{}',
             '{123}',
-            '{{"abc", "def"}}',
+            '{{"àabc", "deèéf"}}',
             '{{"08:00", "12:00"}, {"15:00", "20:00"}}',
             '{{"08:00", "12:00"}, {}}',
         ]
@@ -49,6 +49,7 @@ class TestTablePostgres(DBTestCase):
                 simplejson.dumps(
                     val,
                     default=encode_complex,
+                    ensure_ascii=False,
                     ignore_nan=True,
                 )
             )
