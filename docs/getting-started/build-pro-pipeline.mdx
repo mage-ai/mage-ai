@@ -1,0 +1,137 @@
+---
+title: "Mage Pro data pipeline"
+sidebarTitle: "Build a pipeline"
+icon: "code-fork"
+description: "Build your first Mage Pro data pipeline"
+---
+
+Mage makes building data pipelines intuitive through its block-based architecture. Instead of writing complex scripts, you create  blocks that handle specific parts of your data workflow. Mage offers a complete data pipeline workflow architecture so you can extract, transform, and load your data to a target in one tool.
+
+**Pipeline Types:**
+Mage supports three main pipeline patterns to match your use case:
+
+- **Batch pipelines** for scheduled data processing jobs
+- **Data integration pipelines** for syncing data to and from different systems
+- **Streaming pipelines** for real-time data processing
+
+**What are blocks?**
+Blocks are modular pieces of code that perform specific functions in your pipeline. Each block has a defined purpose:
+
+- **Data loader blocks** bring data into your pipeline from various sources
+- **Transformer blocks** clean, filter, and reshape your data
+- **Data exporter blocks** send processed data to its final destination
+
+Let's walk through creating your first batch pipeline step by step.
+
+**Steps to build you first pipeline:**
+
+**Step 1**: From the home page click “Pipelines” from the left popout navigation menu
+
+**Step 2**: Click the green “New pipeline” button 
+
+**Step 3**: Click “Start from scratch” 
+
+You’ll notice that you can select from the three main data engineering use cases as described above: batch, data integration, and streaming. For the purposes of this getting started tutorial we will select the batch pipeline option.
+
+<img
+    alt="Create new pipeline"
+    src="https://raw.githubusercontent.com/mage-ai/assets/main/pro/cloud/create-new-pipeline.png"
+/>
+
+After you filled in the Name, and optionally completed the Description and Tags click the blue “Create new pipeline” button at the top of the Page. This will take you to the pipeline editor page where we will create our first data_loader block.
+
+**Extract data from source systems**
+
+The first block we’ll add to out data pipeline is a data loader block. the data loader block is meant to extract data from source systems, whether its cloud storage, an API or database, Mage Pro has a connection for nearly anything.
+
+**Steps to create your first block:**
+
+**Step 1**: Click the “Blocks” button located in the upper left portion of the UI
+
+<img
+    alt="Create new pipeline"
+    src="https://raw.githubusercontent.com/mage-ai/assets/main/pro/cloud/blocks-blow-up.png"
+/>
+
+**Step 2**: A drop down menu will appear, just hover over “Loader“ then select the “Base template (generic)” block under Python.
+
+**Step 3**: A popup will appear, give the block a name, something like “fetch data” and then click “Save and add”.
+
+This will add a new generic Python block to your pipeline. Once the block appears in your pipeline editor UI add the code below and click the “Run code” button located in the top right portion of the block.
+
+```Python
+import pandas as pd
+import requests
+
+if 'data_loader' not in globals():
+    from mage_ai.data_preparation.decorators import data_loader
+if 'test' not in globals():
+    from mage_ai.data_preparation.decorators import test
+
+
+@data_loader
+def load_data(*args, **kwargs):
+
+    url = 'https://raw.githubusercontent.com/mage-ai/datasets/master/medical.csv'
+    df = pd.read_csv(url)
+    
+    return df
+```
+
+Congratulations on adding your first block to a pipeline. This is the first major step in creating a working data pipeline in Mage Pro. Next we’re going to add a transformation step in data pipeline.
+
+**Transform data** 
+
+**Step 1**: Add a generic python transformation block to your pipeline by following the same steps above when you added the data loader block
+
+**Step 2**: Give the block a meaningful name such as “transformation risk”
+
+**Step 3**: Add the code below to the transformation block and click the “Run code” button to return a sample output.
+
+```Python
+if 'transformer' not in globals():
+    from mage_ai.data_preparation.decorators import transformer
+if 'test' not in globals():
+    from mage_ai.data_preparation.decorators import test
+
+
+@transformer
+def transform(data, *args, **kwargs):
+
+    def classify_health_risk(health_score):
+        if health_score <= 3:
+            return "Low"
+        elif health_score <= 6:
+            return "Medium"
+        else:
+            return "High"
+    
+    data['heart_health_risk'] = data['health_score'].apply(classify_health_risk)
+
+    return data
+```
+
+Finally we’ll want to export our data to a target destination. Mage has many prebuilt templates for writing data to target destinations. From Snowflake to GCS, even Iceberg, Mage can write data to many different target vendors. 
+
+To export data complete the following steps:
+
+**Step 1**: Add a generic python exporter block to your pipeline by following the same steps above when you added the data loader and transformer block.
+
+**Step 2**: Give the code block a meaningful name such as “risk data export.” 
+
+**Step 3**: Add the code below to the transformation block and click the “Run code” button to return a sample output.
+
+```Python
+if 'data_exporter' not in globals():
+    from mage_ai.data_preparation.decorators import data_exporter
+
+
+@data_exporter
+def export_data(data, *args, **kwargs):
+
+    return data
+```
+
+
+
+You did it, you created your first pipeline in Mage. Wasn’t it fun? Mage was created with developers in mind and we pride ourselves on an experience that is both easy and fun for developers. But, we’re not done yet. Next we need to schedule this pipeline so we can automate our workflow. 
