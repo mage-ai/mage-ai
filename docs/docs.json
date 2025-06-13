@@ -30,7 +30,7 @@
             ]
           },
           {
-            "group": "Getting Started",
+            "group": "Getting started",
             "pages": [
               "getting-started/cluster-management-portal",
               "getting-started/mage-pro-api",
@@ -47,6 +47,47 @@
               "guides/data-sync/version-control-guide",
               "guides/data-sync/git-terminal",
               "guides/version-control/file-versions"
+            ]
+          },
+          {
+            "group": "Pro only features",
+            "pages": [
+              {
+                "group": "AI",
+                "icon": "microchip-ai",
+                "pages": [
+                  "ai/sidekick/index",
+                  "ai/rag-pipeline",
+                  "ai/custom-resources"
+                ]
+              },
+              {
+                "group": "Blocks",
+                "icon": "block-brick",
+                "pages": [
+                  "guides/blocks/dynamic-blocks-2",
+                  "guides/blocks/batch-read-write"
+                ]
+              },
+              {
+                "group": "Data integrations",
+                "icon": "link",
+                "pages": [
+                  "data-integrations/sources/custom_source",
+                  "contributing/data-integrations/adapt-existing-source",
+                  "contributing/data-integrations/add-new-source",
+                  "contributing/data-integrations/add-new-destination",
+                  {
+                    "group": "Sources",
+                    "pages": [
+                      "data-integrations/sources/facebook_pages",
+                      "data-integrations/sources/instagram",
+                      "data-integrations/sources/quickbooks",
+                      "data-integrations/sources/xero"
+                    ]
+                  }
+                ]
+              }
             ]
           }
         ]
@@ -146,7 +187,6 @@
                     "group": "Sources",
                     "pages": [
                       "data-integrations/sources/overview",
-                      "data-integrations/sources/custom_source",
                       "data-integrations/sources/airtable",
                       "data-integrations/sources/amazon_s3",
                       "data-integrations/sources/amplitude",
@@ -161,7 +201,6 @@
                       "data-integrations/sources/dremio",
                       "data-integrations/sources/dynamodb",
                       "data-integrations/sources/facebook_ads",
-                      "data-integrations/sources/facebook_pages",
                       "data-integrations/sources/freshdesk",
                       "data-integrations/sources/front",
                       "data-integrations/sources/github",
@@ -171,7 +210,6 @@
                       "data-integrations/sources/google_search_console",
                       "data-integrations/sources/google_sheets",
                       "data-integrations/sources/hubspot",
-                      "data-integrations/sources/instagram",
                       "data-integrations/sources/intercom",
                       "data-integrations/sources/knowi",
                       "data-integrations/sources/linkedin_ads",
@@ -187,7 +225,6 @@
                       "data-integrations/sources/postgresql",
                       "data-integrations/sources/postmark",
                       "data-integrations/sources/powerbi",
-                      "data-integrations/sources/quickbooks",
                       "data-integrations/sources/redshift",
                       "data-integrations/sources/salesforce",
                       "data-integrations/sources/sftp",
@@ -196,7 +233,6 @@
                       "data-integrations/sources/tableau",
                       "data-integrations/sources/teradata",
                       "data-integrations/sources/twitter_ads",
-                      "data-integrations/sources/xero",
                       "data-integrations/sources/zendesk"
                     ]
                   },
@@ -299,14 +335,6 @@
                 "pages": [
                   "contributing/backend/overview",
                   {
-                    "group": "Data integration",
-                    "pages": [
-                      "contributing/data-integrations/adapt-existing-source",
-                      "contributing/data-integrations/add-new-source",
-                      "contributing/data-integrations/add-new-destination"
-                    ]
-                  },
-                  {
                     "group": "IO classes",
                     "pages": [
                       "contributing/backend/io/adding-a-class"
@@ -396,8 +424,6 @@
               "guides/blocks/reorder-blocks",
               "guides/blocks/detach-blocks",
               "guides/blocks/dynamic-blocks",
-              "guides/blocks/dynamic-blocks-2",
-              "guides/blocks/batch-read-write",
               "guides/blocks/polars",
               "guides/blocks/replicate-blocks",
               "guides/blocks/transformer-blocks",
@@ -626,12 +652,6 @@
         "tab": "AI",
         "groups": [
           {
-            "group": "AI Sidekick",
-            "pages": [
-              "ai/sidekick/index"
-            ]
-          },
-          {
             "group": "Development",
             "icon": "microchip-ai",
             "pages": [
@@ -643,9 +663,7 @@
             "group": "Pipelines",
             "icon": "microchip-ai",
             "pages": [
-              "ai/ml/train-model",
-              "ai/rag-pipeline",
-              "ai/custom-resources"
+              "ai/ml/train-model"
             ]
           }
         ]
