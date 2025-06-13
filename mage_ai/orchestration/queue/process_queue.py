@@ -19,6 +19,7 @@ from mage_ai.settings import (
     HOSTNAME,
     REDIS_URL,
     SENTRY_DSN,
+    SENTRY_SERVER_NAME,
     SENTRY_TRACES_SAMPLE_RATE,
     SERVER_LOGGING_FORMAT,
     SERVER_VERBOSITY,
@@ -287,6 +288,7 @@ class Worker(mp.Process):
             sentry_sdk.init(
                 self.dsn,
                 traces_sample_rate=SENTRY_TRACES_SAMPLE_RATE,
+                server_name=SENTRY_SERVER_NAME,
             )
         initialize_new_relic()
 
