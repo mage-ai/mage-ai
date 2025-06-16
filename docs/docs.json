@@ -16,7 +16,7 @@
           {
             "group": "Adventure starts here",
             "pages": [
-              "introduction/about-mage-pro"
+              "production/mage/pro"
             ]
           },
           {
@@ -66,7 +66,15 @@
                 "icon": "block-brick",
                 "pages": [
                   "guides/blocks/dynamic-blocks-2",
-                  "guides/blocks/batch-read-write"
+                  "guides/blocks/batch-read-write",
+                  {
+                    "group": "Streaming",
+                    "icon": "stream",
+                    "pages": [
+                      "guides/streaming/sources/oracledb",
+                      "guides/streaming/tutorials/streaming-stateful-store"
+                    ]
+                  }
                 ]
               },
               {
@@ -87,7 +95,53 @@
                     ]
                   }
                 ]
+              },
+              {
+                "group": "Developer experience",
+                "icon": "terminal",
+                "pages": [
+                  "guides/developer-ux/pipeline-dependencies",
+                  "guides/developer-ux/code-canvas",
+                  "guides/developer-ux/code-browser",
+                  "guides/developer-ux/personalize",
+                  "guides/developer-ux/visual-studio-code"
+                ]
               }
+            ]
+          },
+          {
+            "group": "Infrastructure",
+            "pages": [
+              {
+                "group": "Compute",
+                "icon": "stars",
+                "pages": [
+                  "integrations/compute/management",
+                  "integrations/compute/databricks"
+                ]
+              },
+              {
+                "group": "Storage",
+                "icon": "database",
+                "pages": [
+                  "integrations/databases/Databricks",
+                  "integrations/databases/Iceberg"
+                ]
+              }
+            ]
+          },
+          {
+            "group": "Global hooks",
+            "pages": [
+              "extensibility/global-hooks/overview",
+              "extensibility/global-hooks/guides"
+            ]
+          },
+          {
+            "group": "Mage Pro API",
+            "pages": [
+              "extensibility/pro-api-reference/overview",
+              "extensibility/pro-api-reference/deployments/overview"
             ]
           }
         ]
@@ -218,7 +272,6 @@
                       "data-integrations/sources/mongodb",
                       "data-integrations/sources/mssql",
                       "data-integrations/sources/mysql",
-                      "data-integrations/sources/oracledb",
                       "data-integrations/sources/outreach",
                       "data-integrations/sources/paystack",
                       "data-integrations/sources/pipedrive",
@@ -399,13 +452,8 @@
             "pages": [
               "guides/developer-ux/code-editor",
               "guides/developer-ux/block-dependency-tree",
-              "guides/developer-ux/pipeline-dependencies",
-              "guides/developer-ux/code-canvas",
               "guides/developer-ux/file-browser",
-              "guides/developer-ux/code-browser",
-              "guides/developer-ux/sidekick",
-              "guides/developer-ux/personalize",
-              "guides/developer-ux/visual-studio-code"
+              "guides/developer-ux/sidekick"
             ]
           },
           {
@@ -491,7 +539,6 @@
                     "group": "Tutorials",
                     "pages": [
                       "guides/streaming/tutorials/streaming-pipeline",
-                      "guides/streaming/tutorials/streaming-stateful-store",
                       "guides/streaming/tutorials/magic-devcontainer",
                       "guides/streaming/tutorials/streaming-pipeline-rabbitmq"
                     ]
@@ -608,8 +655,7 @@
                   "production/deploying-to-cloud/gcp/resources",
                   "production/deploying-to-cloud/gcp/gcp-artifact-registry"
                 ]
-              },
-              "production/mage/pro"
+              }
             ]
           },
           {
@@ -723,9 +769,7 @@
                 "group": "Compute",
                 "icon": "diamonds-4",
                 "pages": [
-                  "integrations/compute/spark-pyspark",
-                  "integrations/compute/management",
-                  "integrations/compute/databricks"
+                  "integrations/compute/spark-pyspark"
                 ]
               },
               {
@@ -740,7 +784,6 @@
                   "integrations/databases/Druid",
                   "integrations/databases/DuckDB",
                   "integrations/databases/GoogleSheets",
-                  "integrations/databases/Iceberg",
                   "integrations/databases/MicrosoftSQLServer",
                   "integrations/databases/MongoDB",
                   "integrations/databases/MotherDuck",
@@ -799,13 +842,6 @@
       {
         "tab": "Extensibility",
         "groups": [
-          {
-            "group": "Global hooks",
-            "pages": [
-              "extensibility/global-hooks/overview",
-              "extensibility/global-hooks/guides"
-            ]
-          },
           {
             "group": "Environment-specific configuration",
             "pages": [
@@ -902,13 +938,6 @@
                   "extensibility/api-reference/sessions/create-session"
                 ]
               }
-            ]
-          },
-          {
-            "group": "Mage Pro API",
-            "pages": [
-              "extensibility/pro-api-reference/overview",
-              "extensibility/pro-api-reference/deployments/overview"
             ]
           }
         ]
