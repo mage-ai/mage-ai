@@ -45,3 +45,53 @@ You can use Mage to load data from Iceberg tables stored in S3 or export data to
 - The Iceberg integration supports direct access to tables through metadata stored in S3.  
 - Make sure the `table_path` points to the root directory of the Iceberg table (i.e., where the `metadata/` folder resides).  
 - Mage uses a **Postgres-backed Iceberg catalog** by default. If you're using a different catalog (e.g., **Hive** or **REST**), you can customize the configuration to point to your specific catalog endpoint and type.
+
+## Using Iceberg with PySpark
+
+Mage Pro supports reading from and writing to [Apache Iceberg](https://iceberg.apache.org/) tables using PySpark, enabling scalable and efficient data lake operations.
+
+### Example code
+
+Using Iceberg with Google Cloud Storage (GCS)
+
+```python
+from pyspark.sql import SparkSession
+
+spark = SparkSession.builder \
+    .appName("IcebergWithGCS") \
+    .config("spark.jars.packages", "org.apache.iceberg:iceberg-spark-runtime-3.5_2.12:1.5.1") \
+    .config("spark.jars", "/opt/spark/jars/gcs-connector-hadoop3-2.2.5-shaded.jar") \
+    .config("spark.sql.extensions", "org.apache.iceberg.spark.extensions.IcebergSparkSessionExtensions") \
+    .config("spark.sql.catalog.iceberg", "org.apache.iceberg.spark.SparkCatalog") \
+    .config("spark.sql.catalog.iceberg.type", "hadoop") \
+    .config("spark.sql.catalog.iceberg.warehouse", "gs://mage_icerberg_test/test") \
+    .config("spark.hadoop.fs.gs.impl", "com.google.cloud.hadoop.fs.gcs.GoogleHadoopFileSystem") \
+    .config("spark.hadoop.google.cloud.auth.service.account.enable", "true") \
+    .config("spark.hadoop.google.cloud.auth.service.account.json.keyfile", "/home/src/default_repo/your_google_service_account_key.json") \
+    .getOrCreate()
+```
+Create and Write an Iceberg Table
+```python
+# Sample DataFrame
+df = spark.createDataFrame([
+    (1, "apple"),
+    (2, "banana"),
+    (3, "banana"),
+], ["id", "fruit"])
+
+# Create the database if it doesn't exist
+spark.sql("CREATE DATABASE IF NOT EXISTS iceberg.db_name")
+
+# Write data to an Iceberg table
+df.writeTo("iceberg.db_name.iceberg_table") \
+  .using("iceberg") \
+  .createOrReplace()
+```
+
+### Notes
+
+- `iceberg.db_name.iceberg_table` uses the Hadoop catalog type and stores metadata in the specified GCS path.
+- You can modify the catalog configs to use **Hive**, **Glue**, or **Nessie** depending on your architecture.
+- For AWS S3, update the warehouse path and authentication configurations accordingly.
+- The Google service account key file path must be accessible inside the Mage Pro cluster.
+- You can run this code inside a block in Mage Pro batch pipeline.

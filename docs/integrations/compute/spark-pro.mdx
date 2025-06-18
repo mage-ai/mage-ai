@@ -1,0 +1,85 @@
+---
+title: "PySpark in Mage Pro"
+sidebarTitle: "PySpark (Pro)"
+icon: "sparkles"
+description: >
+  This guide explains how to use PySpark in Mage Pro, including how to run PySpark
+  blocks in batch pipelines, manage dependencies like Apache Iceberg, and access cloud storage securely.
+---
+
+import { ProButton } from '/snippets/pro/button.mdx';
+import { ProOnly } from '/snippets/pro/only.mdx';
+
+<ProOnly source="spark" />
+
+Mage Pro provides built-in support for running PySpark code inside your pipelines. You can run distributed Spark jobs directly within a Mage Pro batch pipeline, with automatic resource management, cloud integration, and observability.
+
+Use PySpark in Mage to transform large datasets, connect to cloud object storage like **GCS or S3**, and integrate with modern data lake formats like **Apache Iceberg**.
+
+## How to Use PySpark in Mage Pro
+
+Follow these steps to run PySpark code in Mage Pro:
+
+1. Create a **batch pipeline** in the Mage UI.
+2. Add a **block** of type: `Data Loader`, `Transformer`, `Data Exporter`, or `Custom`.
+3. In your block, write PySpark code using the provided `SparkSession`.
+4. Install or mount any required Spark JARs, such as those for Iceberg or cloud storage access.
+
+## Example Pipeline
+
+Create a standard **batch pipeline** and configure the following settings in the pipeline's `metadata.yaml` file to ensure PySpark works properly:
+
+```yaml
+cache_block_output_in_memory: true
+run_pipeline_in_one_process: true
+```
+These settings ensure data is passed in-memory between PySpark blocks and the pipeline runs in a single JVM process for Spark compatibility.
+
+### Data Loader Block (PySpark)
+```python
+if 'data_loader' not in globals():
+    from mage_ai.data_preparation.decorators import data_loader
+if 'test' not in globals():
+    from mage_ai.data_preparation.decorators import test
+from pyspark.sql import Row, SparkSession
+
+@data_loader
+def load_data(*args, **kwargs):
+    spark = SparkSession.builder.getOrCreate()
+    data = [
+        Row(id=1, name="Alice", age=29, salary=50000),
+        Row(id=2, name="Bob", age=35, salary=60000),
+        Row(id=3, name="Charlie", age=40, salary=70000),
+        Row(id=4, name="David", age=45, salary=None)  # Null value example
+    ]
+
+    df = spark.createDataFrame(data)
+    df.show()
+    return df
+```
+
+### Data Exporter Block
+```python
+if 'data_exporter' not in globals():
+    from mage_ai.data_preparation.decorators import data_exporter
+
+@data_exporter
+def export_data(df, *args, **kwargs):
+    df.write.csv("spark_output", header=True, mode="overwrite")
+```
+
+This example pipeline loads structured data into a Spark DataFrame and writes it to disk in CSV format.
+
+## Benefits of Running PySpark in Mage Pro
+Mage Pro handles all the infrastructure so you can focus on your PySpark code:
+* ⚙️ Distributed execution with automatic pod scheduling and resource allocation
+* ☁️ Seamless cloud integration with GCS, S3, and service account/IAM-based authentication
+* 🧩 Support for Spark JARs and connectors like Apache Iceberg, GCS connectors, Delta Lake, and more
+* 📈 Built-in observability, with access to logs, resource usage, and block-level monitoring in the Mage UI
+
+## Notes
+
+- You can customize the `SparkSession` in any block using `.builder.config(...)` to tune performance or integrate external tools.
+- Cloud storage credentials (e.g., a GCP service account key or AWS credentials) must be mounted and accessible inside the Mage Pro cluster.
+- For advanced use cases (e.g., Apache Iceberg), see the [Iceberg + PySpark guide](/integrations/databases/Iceberg#using-iceberg-with-pyspark).
+
