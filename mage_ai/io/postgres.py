@@ -329,18 +329,21 @@ class Postgres(BaseSQL):
                 return simplejson.dumps(
                     val,
                     default=encode_complex,
+                    ensure_ascii=False,
                     ignore_nan=True,
                 )
             elif type(val) is list and len(val) >= 1 and type(val[0]) is dict:
                 return simplejson.dumps(
                     val,
                     default=encode_complex,
+                    ensure_ascii=False,
                     ignore_nan=True,
                 )
             elif not use_insert_command and type(val) is list:
                 return self._clean_array_value(simplejson.dumps(
                     val,
                     default=encode_complex,
+                    ensure_ascii=False,
                     ignore_nan=True,
                 ))
             return val
