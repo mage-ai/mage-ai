@@ -116,6 +116,7 @@
                 "group": "Compute",
                 "icon": "stars",
                 "pages": [
+                  "integrations/compute/spark-pro",
                   "integrations/compute/management",
                   "integrations/compute/databricks"
                 ]
