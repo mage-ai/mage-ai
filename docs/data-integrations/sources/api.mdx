@@ -1,10 +1,18 @@
 ---
-title: "API"
+title: "API Source Configuration"
+sidebarTitle: "API"
+description: >
+  Learn how to configure API sources in Mage to extract data from RESTful and file-based endpoints.
+  This guide covers authentication, pagination, response parsing, and advanced options available in Mage Pro.
 ---
 
-List of sample APIs: https://apipheny.io/free-api/
+Mage supports integrating with any RESTful or file-based API. This allows you to extract data from JSON, CSV, TSV, XLSX responses, with support for pagination, authentication, and schema inference.
 
-## Config
+📚 Sample public APIs for testing: https://apipheny.io/free-api/
+
+## Basic Features (OSS)
+
+### Configuration Fields
 
 You must enter the following credentials when configuring this source:
 
@@ -20,22 +28,111 @@ You must enter the following credentials when configuring this source:
 |`separator`| If the file extension is TSV, XLSX (or CSV with specific separator), then you can define it | Optional: ',' is default|
 |`has_header`| If the file extension is TSV, XLSX or CSV, and contains a header, then you can define it as True | Optional: False is default|
 
-<br />
+---
+
+## Mage Pro Features
+The following features are available only in [**Mage Pro**](https://cloud.mage.ai) and are designed for advanced API integrations at scale:
+
+### Advanced Configuration (Mage Pro only)
+
+These configuration parameters give you greater control over how data is fetched, parsed, and validated from APIs—especially useful for large files, custom encodings, or complex schemas.
+
+| Key | Description | Default |
+| --- | ----------- | ------- |
+| `encoding` | Specifies the character encoding of the API response, such as `"utf-8"` or `"iso-8859-1"`. Use this to avoid decoding issues with special characters. | `"utf-8"` |
+| `verify` | Whether to verify SSL certificates for HTTPS requests. Disabling this is useful in internal or staging environments with self-signed certs. | `True` |
+| `schema_discovery_sample_rows` | The number of rows to sample when inferring the schema from API responses or files. A higher value improves schema accuracy for inconsistent data. | `100` |
+| `force_all_columns_type` | Forces all columns to be interpreted as a single type: `"string"`, `"integer"`, or `"number"`. Useful for normalizing schema across variable data sources. | _None_ |
+| `infer_schema_when_syncing` | Enables schema inference at the time of sync (rather than preview), which is ideal for streaming or large file responses. | `False` |
+
+These options enhance your ability to handle diverse data formats and edge cases in production environments, giving you full control over data ingestion quality and reliability.
+
+### Pagination Configuration
+
+To sync paginated API responses, the `pagination_config` config block supports two types:
+
+- **`"cursor"`** — follows a token provided in the API response (e.g., `next_cursor`)
+- **`"page"`** — iterates using a page number or offset (e.g., `page=1`, `page=2`, …)
+
+---
+
+#### 🔁 Cursor-Based Pagination
+
+Use when the API returns a **next cursor/token** in the response body.
+
+| Key                  | Description                                                               | Required |
+|----------------------|---------------------------------------------------------------------------|----------|
+| `type`               | `"cursor"`                                                                | ✅        |
+| `cursor_param`       | Name of the query parameter to set the cursor/token                       | ✅        |
+| `initial_cursor_value` | Initial cursor value to use in the first request (e.g., `"*"` or `null`) | ✅        |
+| `next_cursor_path`   | Dot-notation path in the response to extract the next cursor              | ✅        |
+
+**Example**
+
+```yaml
+pagination_config:
+  type: cursor
+  cursor_param: curseur
+  initial_cursor_value: "*"
+  next_cursor_path: header.curseurSuivant
+```
+
+#### 🔢 Page-Based Pagination
+
+Use when the API accepts **page numbers** or **offsets** and optionally supports a `limit` parameter.
+
+| Key                         | Description                                                                 | Required |
+|-----------------------------|-----------------------------------------------------------------------------|----------|
+| `type`                      | `"page"`                                                                    | ✅        |
+| `param`                     | Name of the query parameter that controls page or offset (e.g., `"page"`, `"offset"`) | ✅        |
+| `initial_value`             | Starting value for the page or offset                                       | ✅        |
+| `increment_by`              | Value to increase per request (e.g., `1` for pages, `100` for offset)       | ✅        |
+| `limit_param`               | Name of the limit parameter (e.g., `"limit"`, `"per_page"`)                 | Optional |
+| `limit_value`               | Limit value per page                                                        | Optional |
+| `stop_condition.type`       | When to stop: `"empty"` (no results) or `"max_value"` (based on total pages) | ✅        |
+| `stop_condition.max_value_path` | (If using `max_value`) Dot-notation path to total pages or count (e.g., `meta.totalPages`) | Required for `max_value` |
+
+---
+
+**Example: Page + Total Pages (stop when last page reached)**
+
+```json
+pagination_config:
+  type: page
+  param: page
+  initial_value: 1
+  increment_by: 1
+  stop_condition:
+    type: max_value
+    max_value_path: total_pages
+```
+
+**Example: Offset + Limit (stop when response is empty)**
+```json
+pagination_config:
+  type: page
+  param: offset
+  initial_value: 0
+  increment_by: 100
+  limit_param: limit
+  limit_value: 100
+  stop_condition:
+    type: empty
+```
+
+## Other Example Configs
 
 ### Example GET API 1
 
 ```json
-{
-  "url": "https://api.plos.org/search",
-  "query": {
-    "q": "title:DNA"
-  },
-  "headers": {
-    "Content-Type": "application/json"
-  },
-  "response_parser": "response.docs[0].author_display",
-  "columns": ["author_display"]
-}
+url: https://api.plos.org/search
+query:
+  q: "title:DNA"
+headers:
+  Content-Type: application/json
+response_parser: response.docs[0].author_display
+columns:
+  - author_display
 ```
 
 The response from the above endpoint is:
@@ -62,7 +159,11 @@ The response from the above endpoint is:
           "Stoyno S. Stoynov"
         ],
         "abstract": [
-          "Nucleic acids, due to their structural and chemical properties, can form double-stranded secondary structures that assist the transfer of genetic information and can modulate gene expression. However, the nucleotide sequence alone is insufficient in explaining phenomena like intron-exon recognition during RNA processing. This raises the question whether nucleic acids are endowed with other attributes that can contribute to their biological functions. In this work, we present a calculation of thermodynamic stability of DNA/DNA and mRNA/DNA duplexes across the genomes of four species in the genus Saccharomyces by nearest-neighbor method. The results show that coding regions are more thermodynamically stable than introns, 3′-untranslated regions and intergenic sequences. Furthermore, open reading frames have more stable sense mRNA/DNA duplexes than the potential antisense duplexes, a property that can aid gene discovery. The lower stability of the DNA/DNA and mRNA/DNA duplexes of 3′-untranslated regions and the higher stability of genes correlates with increased mRNA level. These results suggest that the thermodynamic stability of DNA/DNA and mRNA/DNA duplexes affects mRNA transcription."
+          "Nucleic acids, due to their structural and chemical properties, can form double-stranded secondary structures that assist the transfer of genetic information and can modulate gene expression. ",
+          "However, the nucleotide sequence alone is insufficient in explaining phenomena like intron-exon recognition during RNA processing. This raises the question whether nucleic acids are endowed with other attributes that can contribute to their biological functions. ",
+          "In this work, we present a calculation of thermodynamic stability of DNA/DNA and mRNA/DNA duplexes across the genomes of four species in the genus Saccharomyces by nearest-neighbor method. ",
+          "The results show that coding regions are more thermodynamically stable than introns, 3′-untranslated regions and intergenic sequences. Furthermore, open reading frames have more stable sense mRNA/DNA duplexes than the potential antisense duplexes, a property that can aid gene discovery. ",
+          "The lower stability of the DNA/DNA and mRNA/DNA duplexes of 3′-untranslated regions and the higher stability of genes correlates with increased mRNA level. These results suggest that the thermodynamic stability of DNA/DNA and mRNA/DNA duplexes affects mRNA transcription."
         ],
         "title_display": "Stability of mRNA/DNA and DNA/DNA Duplexes Affects mRNA Transcription",
         "score": 6.7217336
@@ -118,12 +219,9 @@ The final data is converted into a JSON object before being outputted to its des
 ### Example GET API 2
 
 ```json
-{
-  "url": "https://api.coingecko.com/api/v3/coins/markets",
-  "query": {
-    "vs_currency": "usd"
-  }
-}
+url: https://api.coingecko.com/api/v3/coins/markets
+query:
+  vs_currency: usd
 ```
 
 The response from the above endpoint is:
