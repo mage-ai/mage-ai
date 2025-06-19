@@ -1,8 +1,11 @@
 ---
-title: "Mage Pro Visual Studio Code integration"
-sidebarTitle: "Visual Studio Code"
+title: "Develop Mage Pro Code with VS Code or Cursor"
+sidebarTitle: "VS Code & Cursor"
 icon: "code"
-description: "Integrate your Mage Pro environment with Visual Studio Code."
+description: >
+  Learn how to develop Mage Pro pipelines and projects using Visual Studio Code or Cursor.
+  This guide walks you through secure remote access via Tailscale and SSH, environment configuration,
+  and integrating your local IDE with Mage Pro.
 ---
 
 import { ProButton } from '/snippets/pro/button.mdx';
@@ -20,7 +23,10 @@ referrerpolicy="strict-origin-when-cross-origin" allowfullscreen>
 
 ## Overview
 
-Mage Pro offers integration with Visual Studio Code (VS Code) and Cursor through Tailscale VPN and remote SSH capabilities. This connection allows you to edit and manage your Mage Pro pipelines directly from VS Code, combining the powerful features of both platforms into a unified development environment.
+Mage Pro supports remote development using [Visual Studio Code](https://code.visualstudio.com/) or [Cursor](https://www.cursor.so/), so you can build and manage your pipelines in a full-featured local IDE while connecting securely to your Mage Pro environment. This integration leverages [Tailscale VPN](https://tailscale.com/) for secure networking and SSH for remote access.
+
+> ⚠️ This feature is not available by default on Trial clusters.
+> To enable access, please contact the Mage team at **[pro@mage.ai](mailto:pro@mage.ai)** to request activation for your Mage Pro account.
 
 ## Core components
 
