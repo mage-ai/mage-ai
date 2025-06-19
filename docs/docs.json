@@ -91,7 +91,8 @@
                       "data-integrations/sources/facebook_pages",
                       "data-integrations/sources/instagram",
                       "data-integrations/sources/quickbooks",
-                      "data-integrations/sources/xero"
+                      "data-integrations/sources/xero",
+                      "data-integrations/sources/youtube_analytics"
                     ]
                   }
                 ]
