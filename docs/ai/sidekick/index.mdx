@@ -69,3 +69,59 @@ import { ProOnly } from '/snippets/pro/only.mdx';
 1. Recommend and answer questions related to data engineering and best practices
 1. Provide insights on your past, present, and future data creation and performance trends
 1. Automatically create monitoring dashboards and visualization charts
+
+## Enable RAG
+
+Create a file at the root of your project named `ai_config.yaml`
+
+```yaml
+rag:
+  folders:
+    include:
+      - /home/src/default_repo
+```
+
+Or include selected folders from your project
+
+```yaml
+rag:
+  folders:
+    include:
+      - /home/projects/mage-pro-tutorials/callbacks
+      - /home/projects/mage-pro-tutorials/conditionals
+      - /home/projects/mage-pro-tutorials/custom
+      - /home/projects/mage-pro-tutorials/data_exporters
+      - /home/projects/mage-pro-tutorials/data_loaders
+      - /home/projects/mage-pro-tutorials/dbt
+      - /home/projects/mage-pro-tutorials/extensions
+      - /home/projects/mage-pro-tutorials/sensors
+      - /home/projects/mage-pro-tutorials/transformers
+      - /home/projects/mage-pro-tutorials/services
+      - /home/projects/mage-pro-tutorials/utils
+  files:
+    exclude:
+      # gitignore patterns
+      - .env
+```
+
+### Reindex
+
+```python
+import requests
+
+url = "https://cluster.mage.ai/[cluster UUID]/api/vector_store"
+
+headers = {
+    "Authorization": "Bearer IwMQiEhGerIOt2DxJNiCwOlSiRigpda2FM4mTfjphq8",
+    "Content-Type": "application/json",
+}
+
+payload = {
+    "vector_store": {
+        "path": "/home/src/default_repo",
+    },
+    "api_key": "[API key]",
+}
+
+response = requests.post(url, headers=headers, json=payload)
+```
