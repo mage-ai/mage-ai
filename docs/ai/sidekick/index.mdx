@@ -76,9 +76,16 @@ Create a file at the root of your project named `ai_config.yaml`
 
 ```yaml
 rag:
-  folders:
+  files:
     include:
       - /home/src/default_repo
+    exclude:
+      # gitignore patterns
+      - secrets.json
+# Add this if you permit the AI to read your data when asking it questions.
+# If this is not present, then the AI will ask for your permission each time.
+data:
+  all: true
 ```
 
 Or include selected folders from your project
