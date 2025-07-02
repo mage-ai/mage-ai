@@ -1,162 +1,124 @@
-<div align="left">
-  <h1>Mage AI</h1>
+# Mage OSS
 
-  <p>Give your data team magical powers.</p>
-
-<a href="https://mage.ai"><img alt="Mage AI GitHub repo stars" src="https://img.shields.io/github/stars/mage-ai/mage-ai?style=for-the-badge&logo=github&labelColor=000000&logoColor=FFFFFF&label=stars&color=0500ff" /></a>
-<a href="https://hub.docker.com/r/mageai/mageai"><img alt="Mage AI Docker downloads" src="https://img.shields.io/docker/pulls/mageai/mageai?style=for-the-badge&logo=docker&labelColor=000000&logoColor=FFFFFF&label=pulls&color=6A35FF" /></a>
-<a href="https://github.com/mage-ai/mage-ai/blob/master/LICENSE"><img alt="Mage AI license" src="https://img.shields.io/github/license/mage-ai/mage-ai?style=for-the-badge&logo=codeigniter&labelColor=000000&logoColor=FFFFFF&label=license&color=FFCC19" /></a>
-<a href="https://www.mage.ai/chat"><img alt="Join the Mage AI community" src="https://img.shields.io/badge/Join%20the%20community-black.svg?style=for-the-badge&logo=lightning&labelColor=000000&logoColor=FFFFFF&label=&color=DD55FF&logoWidth=20" /></a>
-
-</div>
+### Build modern data pipelines locally — fast, visual, and production-ready.
 
 <br />
 
-<a href="https://cloud.mage.ai/sign-up">
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://mage-ai.github.io/assets/oss/hero.png">
-    <img alt="Mage AI hero" src="https://mage-ai.github.io/assets/oss/hero.png" />
-  </picture>
-</a>
+Mage OSS is a self-hosted development environment designed to help teams create production-grade data pipelines with confidence.
 
-<br />
-<br />
+Ideal for automating ETL tasks, architecting data flow, or orchestrating transformations — all in a fast, notebook-style interface powered by modular code.
 
-Mage is a hybrid framework for transforming and integrating data. It combines the best of both worlds: the flexibility of notebooks with the rigor of modular code.
+When it’s time to scale, [Mage Pro](https://mage.ai) — our core platform — unlocks enterprise orchestration, collaboration, and AI-powered workflows.
 
 <br />
 
-- Extract and synchronize data from 3rd party sources.
-- Transform data with real-time and batch pipelines using Python, SQL, and R.
-- Load data into your data warehouse or data lake using our pre-built connectors.
-- Run, monitor, and orchestrate thousands of pipelines without losing sleep.
+[![GitHub Stars](https://img.shields.io/github/stars/mage-ai/mage-ai?style=for-the-badge&labelColor=000000&color=1C1C1C)](https://github.com/mage-ai/mage-ai/stargazers)
+[![Docker Pulls](https://img.shields.io/docker/pulls/mageai/mageai?style=for-the-badge&labelColor=000000&color=1C1C1C)](https://hub.docker.com/r/mageai/mageai)
+[![License](https://img.shields.io/github/license/mage-ai/mage-ai?style=for-the-badge&labelColor=000000&color=1C1C1C)](https://github.com/mage-ai/mage-ai/blob/master/LICENSE)
 
 <br />
 
-Plus hundreds of enterprise-class features, infrastructure innovations, and magical surprises.
+## What you can do with Mage OSS
 
-<h1></h1>
+- Build pipelines locally with Python, SQL, or R in a modular notebook-style UI
 
-#### Available in two spellbinding versions
+- Run jobs manually or on a schedule (cron supported)
 
-<br />
+- Connect to databases, APIs, and cloud storage with prebuilt connectors
 
-<table style="width: 100%; border: none;" cellspacing="0" cellpadding="0" border="0">
-  <tr>
-    <td rowspan="2">
-      <a href="https://cloud.mage.ai/sign-up">
-        <img alt="Mage Pro" width="124" align="left" src="https://mage-ai.github.io/assets/oss/card-pro.png" />
-      </a>
-      <b>For teams.</b> Fully managed platform
-      for integrating and transforming data.
-    </td>
-    <td rowspan="2">
-      <a href="https://github.com/mage-ai/mage-ai?tab=readme-ov-file#its-magic">
-        <img alt="Mage OSS" width="124" align="left" src="https://mage-ai.github.io/assets/oss/card-oss.png" />
-      </a>
-      <b>Self-hosted.</b> System to build, run, and
-      manage data pipelines.
-    </td>
-  </tr>
-</table>
+- Debug visually with logs, live previews, and step-by-step execution
+
+- Set up quickly with Docker, pip, or conda — no cloud account required
+
+- Your go-to workspace for local pipeline development — fully in your control.
+  
+<img width="100%" alt="mage" src="https://github.com/user-attachments/assets/75992872-20a6-4120-8bf0-9c22a3d66450" />
+
+
+<br /><br />
+
+## Start local. Scale when you're ready.
+
+Use Mage OSS to build and run pipelines on your machine. When you're ready for advanced tooling, performance, and AI-assisted productivity, Mage Pro is just one click away.
+
+[**Try Mage Pro free →**](https://mage.ai)
 
 <br />
 
-<a href="https://cloud.mage.ai/sign-up">
-  <img alt="Try out Mage Pro" src="https://img.shields.io/badge/try%20it%20out%20now-black.svg?style=for-the-badge&logo=artifacthub&labelColor=6A35FF&logoColor=FFFFFF&label=mage%20pro&color=6A35FF">
-</a>
+### Quickstart
 
-<br />
-<br />
-
-<div align="left">
-
-# It’s magic.
-
-<p align="left">
-  For documentation on getting started, how to develop, and how to deploy to production check out the live
-  <br />
-  <a
-    href="https://docs.mage.ai?source=github"
-    target="_blank"
-  ><b>Developer documentation portal</b></a>.
-</p>
-
-<br />
-
-## 🏃‍♀️ Install
-
-The recommended way to install the latest version of Mage is through Docker with the following command:
+Install using Docker (recommended):
 
 ```bash
 docker pull mageai/mageai:latest
 ```
 
-You can also install Mage using pip or conda, though this may cause dependency issues without the proper environment.
+Or with pip:
 
 ```bash
 pip install mage-ai
 ```
+
+Or with conda:
+
 ```bash
 conda install -c conda-forge mage-ai
 ```
 
-Looking for help? The _fastest_ way to get started is by checking out our documentation [here](https://docs.mage.ai/getting-started/setup).
-
-Looking for quick examples? Open a [demo](https://demo.mage.ai/) project right in your browser or check out our [guides](https://docs.mage.ai/guides/overview).
-
-## 🎮 Demo
-
-### Live demo
-
-Build and run a data pipeline with our <b>[demo app](https://demo.mage.ai/)</b>.
-
-> WARNING
->
-> The live demo is public to everyone, please don’t save anything sensitive (e.g. passwords, secrets, etc).
-### Demo video (5 min)
-
-[![Mage quick start demo](https://mage-ai.github.io/assets/overview/overview-video.png)](https://youtu.be/GswOdShLGmg)
-
-<sub><i>Click the image to play video</i></sub>
+Full setup guide and docs: [docs.mage.ai](https://docs.mage.ai)
 
 <br />
 
-## 🔮 [Features](https://docs.mage.ai/about/features)
+## Core Features
 
-|   |   |   |
-| --- | --- | --- |
-| 🎶 | <b>[Orchestration](https://docs.mage.ai/design/data-pipeline-management)</b> | Schedule and manage data pipelines with observability. |
-| 📓 | <b>[Notebook](https://docs.mage.ai/about/features#notebook-for-building-data-pipelines)</b> | Interactive Python, SQL, & R editor for coding data pipelines. |
-| 🏗️ | <b>[Data integrations](https://docs.mage.ai/data-integrations/overview)</b> | Synchronize data from 3rd party sources to your internal destinations. |
-| 🚰 | <b>[Streaming pipelines](https://docs.mage.ai/guides/streaming-pipeline)</b> | Ingest and transform real-time data. |
-| ❎ | <b>[dbt](https://docs.mage.ai/dbt/overview)</b> | Build, run, and manage your dbt models with Mage. |
-
-<br />
-
-<b>A sample data pipeline defined across 3 files ➝</b>
+| Feature | Description |
+| :- | :- |
+| Modular pipelines | Build pipelines block-by-block using Python, SQL, or R |
+| Notebook UI | Interactive editor for writing and documenting logic |
+| Data integrations | Prebuilt connectors to databases, APIs, and cloud storage |
+| Scheduling | Trigger pipelines manually or on a schedule |
+| Visual debugging | Step-by-step logs, data previews, and error handling |
+| dbt support | Build and run dbt models directly inside Mage |
 
 <br />
 
-1. Load data ➝
-    ```python
-    @data_loader
-    def load_csv_from_file() -> pl.DataFrame:
-        return pl.read_csv('default_repo/titanic.csv')
-    ```
-1. Transform data ➝
-    ```python
-    @transformer
-    def select_columns_from_df(df: pl.DataFrame, *args) -> pl.DataFrame:
-        return df[['Age', 'Fare', 'Survived']]
-    ```
-1. Export data ➝
-    ```python
-    @data_exporter
-    def export_titanic_data_to_disk(df: pl.DataFrame) -> None:
-        df.to_csv('default_repo/titanic_transformed.csv')
-    ```
+## Example Use Cases
+
+- Move data from Google Sheets to Snowflake with a Python transform
+- Schedule a daily SQL pipeline to clean and aggregate product data
+- Develop dbt models in a visual notebook-style interface
+- Run simple ETL/ELT jobs locally with full transparency
 
 <br />
 
-[<img alt="Water mage casting spell" height="300" src="https://mage-ai.github.io/assets/mage-water-charging-up.svg" />](https://www.mage.ai/)
+## Documentation
+
+Looking for how-to guides, examples, or advanced configuration?
+
+Explore our full documentation at [docs.mage.ai](https://docs.mage.ai).
+
+
+<br />
+
+## Contributing
+
+We welcome contributions of all kinds — bug fixes, docs, new features, or community examples.
+
+Start with our [contributing guide](https://docs.mage.ai/contributing/overview), check out open issues, or suggest improvements.
+
+<br />
+
+## Ready to scale? Mage Pro has you covered.
+
+Mage Pro is a powered-up platform built for teams.
+It adds everything you need for production pipelines, at scale.
+
+- Magical AI-assisted development and debugging
+- Multi-environment orchestration
+- Role-based access control
+- Real-time monitoring & alerts
+- Powerful CI/CD & version control
+- Powerful enterprise features
+- Available fully managed, hybrid, or on-premises
+
+[**Try Mage Pro free →**](https://mage.ai)
