@@ -779,6 +779,7 @@
                 "icon": "database",
                 "pages": [
                   "integrations/databases/Algolia",
+                  "integrations/databases/Athena",
                   "integrations/databases/BigQuery",
                   "integrations/databases/Chroma",
                   "integrations/databases/ClickHouse",
