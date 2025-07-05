@@ -1157,6 +1157,7 @@ df = get_variable('${pipeline.uuid}', '${block.uuid}', 'output_0')
         </CodeBlock>,
       );
     });
+    console.log(arr.length, 'codeBlocks length');
 
     return arr;
   }, [

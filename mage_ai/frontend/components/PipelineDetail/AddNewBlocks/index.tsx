@@ -13,20 +13,9 @@ import Tooltip from '@oracle/components/Tooltip';
 import useProject from '@utils/models/project/useProject';
 import { Add, HexagonAll, Sensor as SensorIcon } from '@oracle/icons';
 import { AxisEnum } from '@interfaces/ActionPayloadType';
-import {
-  BlockLanguageEnum,
-  BlockRequestPayloadType,
-  BlockTypeEnum,
-} from '@interfaces/BlockType';
-import {
-  ButtonWrapper,
-  ICON_SIZE,
-  IconContainerStyle,
-} from './index.style';
-import {
-  COLUMN_ACTION_GROUPINGS,
-  ROW_ACTION_GROUPINGS,
-} from '@interfaces/TransformerActionType';
+import { BlockLanguageEnum, BlockRequestPayloadType, BlockTypeEnum } from '@interfaces/BlockType';
+import { ButtonWrapper, ICON_SIZE, IconContainerStyle } from './index.style';
+import { COLUMN_ACTION_GROUPINGS, ROW_ACTION_GROUPINGS } from '@interfaces/TransformerActionType';
 import { FlyoutMenuItemType } from '@oracle/components/FlyoutMenu';
 import { OpenBlockBrowserModalType } from '@components/BlockBrowser/constants';
 import { UNIT } from '@oracle/styles/units/spacing';
@@ -111,10 +100,7 @@ function AddNewBlocks({
   showConfigureProjectModal,
   showGlobalDataProducts,
 }: AddNewBlocksProps) {
-  const {
-    featureEnabled,
-    featureUUIDs,
-  } = useProject();
+  const { featureEnabled, featureUUIDs } = useProject();
 
   const [buttonMenuOpenIndex, setButtonMenuOpenIndex] = useState(null);
   const dataLoaderButtonRef = useRef(null);
@@ -133,20 +119,14 @@ function AddNewBlocks({
   const iconSize = compact ? ICON_SIZE / 2 : ICON_SIZE;
   const MAX_TOOLTIP_WIDTH = UNIT * 25;
 
-  const columnActionMenuItems = useMemo(() => createActionMenuGroupings(
-    COLUMN_ACTION_GROUPINGS,
-    AxisEnum.COLUMN,
-    addNewBlock,
-  ), [
-    addNewBlock,
-  ]);
-  const rowActionMenuItems = useMemo(() => createActionMenuGroupings(
-    ROW_ACTION_GROUPINGS,
-    AxisEnum.ROW,
-    addNewBlock,
-  ), [
-    addNewBlock,
-  ]);
+  const columnActionMenuItems = useMemo(
+    () => createActionMenuGroupings(COLUMN_ACTION_GROUPINGS, AxisEnum.COLUMN, addNewBlock),
+    [addNewBlock],
+  );
+  const rowActionMenuItems = useMemo(
+    () => createActionMenuGroupings(ROW_ACTION_GROUPINGS, AxisEnum.ROW, addNewBlock),
+    [addNewBlock],
+  );
 
   const allActionMenuItems = useMemo(() => {
     const arr: FlyoutMenuItemType[] = [
@@ -175,16 +155,12 @@ function AddNewBlocks({
     ];
 
     if (!hideTransformerDataSources) {
-      arr.splice(
-        1,
-        0,
-        {
-          bold: true,
-          items: getdataSourceMenuItems(addNewBlock, BlockTypeEnum.TRANSFORMER, pipelineType),
-          label: () => 'Data sources',
-          uuid: 'data_sources_grouping',
-        },
-      );
+      arr.splice(1, 0, {
+        bold: true,
+        items: getdataSourceMenuItems(addNewBlock, BlockTypeEnum.TRANSFORMER, pipelineType),
+        label: () => 'Data sources',
+        uuid: 'data_sources_grouping',
+      });
     }
 
     return arr;
@@ -197,58 +173,42 @@ function AddNewBlocks({
   ]);
 
   const closeButtonMenu = useCallback(() => setButtonMenuOpenIndex(null), []);
-  const handleBlockZIndex = useCallback((newButtonMenuOpenIndex: number) =>
-    setAddNewBlockMenuOpenIdx?.(idx => (
-      (idx === null || buttonMenuOpenIndex !== newButtonMenuOpenIndex)
-        ? blockIdx
-        : null
-    )),
+  const handleBlockZIndex = useCallback(
+    (newButtonMenuOpenIndex: number) =>
+      setAddNewBlockMenuOpenIdx?.(idx =>
+        idx === null || buttonMenuOpenIndex !== newButtonMenuOpenIndex ? blockIdx : null,
+      ),
     [blockIdx, buttonMenuOpenIndex, setAddNewBlockMenuOpenIdx],
   );
 
   const isPySpark = PipelineTypeEnum.PYSPARK === pipelineType;
 
-  const blockTemplatesByBlockType = useMemo(() => groupBlockTemplates(
-    blockTemplates,
-    addNewBlock,
-    {
-      'data_integrations/destinations/base': true,
-      'data_integrations/sources/base': true,
-    },
-  ), [
-    addNewBlock,
-    blockTemplates,
-  ]);
+  const blockTemplatesByBlockType = useMemo(
+    () =>
+      groupBlockTemplates(blockTemplates, addNewBlock, {
+        'data_integrations/destinations/base': true,
+        'data_integrations/sources/base': true,
+      }),
+    [addNewBlock, blockTemplates],
+  );
 
-  const dataLoaderItems = useMemo(() => getdataSourceMenuItems(
-    addNewBlock,
-    BlockTypeEnum.DATA_LOADER,
-    pipelineType,
-    {
-      blockTemplatesByBlockType,
-      showBrowseTemplates,
-    },
-  ), [
-    addNewBlock,
-    blockTemplatesByBlockType,
-    pipelineType,
-    showBrowseTemplates,
-  ]);
+  const dataLoaderItems = useMemo(
+    () =>
+      getdataSourceMenuItems(addNewBlock, BlockTypeEnum.DATA_LOADER, pipelineType, {
+        blockTemplatesByBlockType,
+        showBrowseTemplates,
+      }),
+    [addNewBlock, blockTemplatesByBlockType, pipelineType, showBrowseTemplates],
+  );
 
-  const dataExporterItems = useMemo(() => getdataSourceMenuItems(
-    addNewBlock,
-    BlockTypeEnum.DATA_EXPORTER,
-    pipelineType,
-    {
-      blockTemplatesByBlockType,
-      showBrowseTemplates,
-    },
-  ), [
-    addNewBlock,
-    blockTemplatesByBlockType,
-    pipelineType,
-    showBrowseTemplates,
-  ]);
+  const dataExporterItems = useMemo(
+    () =>
+      getdataSourceMenuItems(addNewBlock, BlockTypeEnum.DATA_EXPORTER, pipelineType, {
+        blockTemplatesByBlockType,
+        showBrowseTemplates,
+      }),
+    [addNewBlock, blockTemplatesByBlockType, pipelineType, showBrowseTemplates],
+  );
 
   const transformerItems = useMemo(() => {
     if (isPySpark || PipelineTypeEnum.INTEGRATION === pipelineType) {
@@ -262,16 +222,11 @@ function AddNewBlocks({
           label: () => 'Python',
           uuid: 'transformers/python',
         },
-        ...getdataSourceMenuItems(
-          addNewBlock,
-          BlockTypeEnum.TRANSFORMER,
-          pipelineType,
-          {
-            blockTemplatesByBlockType,
-            onlyCustomTemplate: true,
-            showBrowseTemplates,
-          },
-        ),
+        ...getdataSourceMenuItems(addNewBlock, BlockTypeEnum.TRANSFORMER, pipelineType, {
+          blockTemplatesByBlockType,
+          onlyCustomTemplate: true,
+          showBrowseTemplates,
+        }),
       ];
     }
 
@@ -282,16 +237,11 @@ function AddNewBlocks({
         uuid: 'transformers/python_all',
       },
       ...getNonPythonMenuItems(addNewBlock, BlockTypeEnum.TRANSFORMER),
-      ...getdataSourceMenuItems(
-        addNewBlock,
-        BlockTypeEnum.TRANSFORMER,
-        pipelineType,
-        {
-          blockTemplatesByBlockType,
-          onlyCustomTemplate: true,
-          showBrowseTemplates,
-        },
-      ),
+      ...getdataSourceMenuItems(addNewBlock, BlockTypeEnum.TRANSFORMER, pipelineType, {
+        blockTemplatesByBlockType,
+        onlyCustomTemplate: true,
+        showBrowseTemplates,
+      }),
     ];
   }, [
     addNewBlock,
@@ -303,68 +253,71 @@ function AddNewBlocks({
     showBrowseTemplates,
   ]);
 
-  const itemsDBT = useMemo(() => [
-    {
-      label: () => 'Single model or snapshot (from file)',
-      onClick: () => {
-        onClickAddSingleDBTModel?.(blockIdx);
+  const itemsDBT = useMemo(
+    () => [
+      {
+        label: () => 'Single model or snapshot (from file)',
+        onClick: () => {
+          onClickAddSingleDBTModel?.(blockIdx);
+        },
+        uuid: 'dbt/single_model',
       },
-      uuid: 'dbt/single_model',
-    },
-    {
-      label: () => 'All models (w/ optional exclusion)',
-      onClick: () => addNewBlock({
-        configuration: {
-          dbt: {
-            command: 'run',
-          },
-        },
-        language: BlockLanguageEnum.YAML,
-        type: BlockTypeEnum.DBT,
-      }),
-      uuid: 'dbt/all_models',
-    },
-    {
-      label: () => 'Generic dbt command',
-      onClick: () => addNewBlock({
-        configuration: {
-          dbt: {
-            command: 'run',
-          },
-        },
-        language: BlockLanguageEnum.YAML,
-        type: BlockTypeEnum.DBT,
-      }),
-      uuid: 'dbt/generic_command',
-    },
-    {
-      isGroupingTitle: true,
-      label: () => 'Create new models',
-      uuid: 'dbt/new_model/group',
-    },
-    {
-      disabled: true,
-      label: () => 'Use the file browser to create new SQL files',
-      uuid: 'dbt/new_model',
-    },
-  ], [
-    addNewBlock,
-    blockIdx,
-    featureEnabled,
-    featureUUIDs,
-    onClickAddSingleDBTModel,
-    setCreatingNewDBTModel,
-    showBlockBrowserModal,
-  ]);
+      {
+        label: () => 'All models (w/ optional exclusion)',
+        onClick: () =>
+          addNewBlock({
+            configuration: {
+              dbt: {
+                command: 'run',
+              },
+            },
+            language: BlockLanguageEnum.YAML,
+            type: BlockTypeEnum.DBT,
+          }),
+        uuid: 'dbt/all_models',
+      },
+      {
+        label: () => 'Generic dbt command',
+        onClick: () =>
+          addNewBlock({
+            configuration: {
+              dbt: {
+                command: 'run',
+              },
+            },
+            language: BlockLanguageEnum.YAML,
+            type: BlockTypeEnum.DBT,
+          }),
+        uuid: 'dbt/generic_command',
+      },
+      {
+        isGroupingTitle: true,
+        label: () => 'Create new models',
+        uuid: 'dbt/new_model/group',
+      },
+      {
+        disabled: true,
+        label: () => 'Use the file browser to create new SQL files',
+        uuid: 'dbt/new_model',
+      },
+    ],
+    [
+      addNewBlock,
+      blockIdx,
+      featureEnabled,
+      featureUUIDs,
+      onClickAddSingleDBTModel,
+      setCreatingNewDBTModel,
+      showBlockBrowserModal,
+    ],
+  );
 
   const useV2 = useMemo(
-    () => PipelineTypeEnum.PYTHON === pipelineType && !isPySpark
-      && project?.features?.[FeatureUUIDEnum.ADD_NEW_BLOCK_V2],
-    [
-      isPySpark,
-      pipelineType,
-      project,
-    ],
+    () =>
+      PipelineTypeEnum.PYTHON === pipelineType &&
+      !isPySpark &&
+      project?.features?.[FeatureUUIDEnum.ADD_NEW_BLOCK_V2],
+    [isPySpark, pipelineType, project],
   );
 
   if (useV2) {
@@ -390,12 +343,9 @@ function AddNewBlocks({
   }
 
   return (
-    <FlexContainer flexWrap="wrap" inline>
-      <ClickOutside
-        onClickOutside={closeButtonMenu}
-        open
-      >
-        <FlexContainer flexWrap="wrap">
+    <FlexContainer flexWrap='wrap' inline>
+      <ClickOutside onClickOutside={closeButtonMenu} open>
+        <FlexContainer flexWrap='wrap'>
           {!hideDataExporter && (
             <ButtonWrapper increasedZIndex={buttonMenuOpenIndex === DATA_LOADER_BUTTON_INDEX}>
               <FlyoutMenuWrapper
@@ -404,7 +354,7 @@ function AddNewBlocks({
                 onClickCallback={closeButtonMenu}
                 open={buttonMenuOpenIndex === DATA_LOADER_BUTTON_INDEX}
                 parentRef={dataLoaderButtonRef}
-                uuid="data_loader_button"
+                uuid='data_loader_button'
               >
                 <KeyboardShortcutButton
                   {...sharedProps}
@@ -413,18 +363,20 @@ function AddNewBlocks({
                       <Add size={iconSize} />
                     </IconContainerStyle>
                   }
-                  onClick={(e) => {
+                  onClick={e => {
                     e.preventDefault();
-                    setButtonMenuOpenIndex(val =>
-                      val === DATA_LOADER_BUTTON_INDEX
-                        ? null
-                        : DATA_LOADER_BUTTON_INDEX,
-                    );
-                    handleBlockZIndex(DATA_LOADER_BUTTON_INDEX);
+                    // setButtonMenuOpenIndex(val =>
+                    //   val === DATA_LOADER_BUTTON_INDEX ? null : DATA_LOADER_BUTTON_INDEX,
+                    // );
+                    // handleBlockZIndex(DATA_LOADER_BUTTON_INDEX);
+                    addNewBlock({
+                      language: BlockLanguageEnum.PYTHON,
+                      type: BlockTypeEnum.TRANSFORMER,
+                    });
                   }}
-                  uuid="AddNewBlocks/Data_loader"
+                  uuid='AddNewBlocks/Data_loader'
                 >
-                  Data loader
+                  Data loader x
                 </KeyboardShortcutButton>
               </FlyoutMenuWrapper>
             </ButtonWrapper>
@@ -438,7 +390,7 @@ function AddNewBlocks({
                 onClickCallback={closeButtonMenu}
                 open={buttonMenuOpenIndex === TRANSFORMER_BUTTON_INDEX}
                 parentRef={transformerButtonRef}
-                uuid="transformer_button"
+                uuid='transformer_button'
               >
                 <KeyboardShortcutButton
                   {...sharedProps}
@@ -447,16 +399,14 @@ function AddNewBlocks({
                       <Add size={iconSize} />
                     </IconContainerStyle>
                   }
-                  onClick={(e) => {
+                  onClick={e => {
                     e.preventDefault();
                     setButtonMenuOpenIndex(val =>
-                      val === TRANSFORMER_BUTTON_INDEX
-                        ? null
-                        : TRANSFORMER_BUTTON_INDEX,
+                      val === TRANSFORMER_BUTTON_INDEX ? null : TRANSFORMER_BUTTON_INDEX,
                     );
                     handleBlockZIndex(TRANSFORMER_BUTTON_INDEX);
                   }}
-                  uuid="AddNewBlocks/Transformer"
+                  uuid='AddNewBlocks/Transformer'
                 >
                   Transformer
                 </KeyboardShortcutButton>
@@ -472,28 +422,23 @@ function AddNewBlocks({
                 onClickCallback={closeButtonMenu}
                 open={buttonMenuOpenIndex === DATA_EXPORTER_BUTTON_INDEX}
                 parentRef={dataExporterButtonRef}
-                uuid="data_exporter_button"
+                uuid='data_exporter_button'
               >
                 <KeyboardShortcutButton
                   {...sharedProps}
                   beforeElement={
                     <IconContainerStyle compact={compact} yellow>
-                      <Add
-                        inverted
-                        size={iconSize}
-                      />
+                      <Add inverted size={iconSize} />
                     </IconContainerStyle>
                   }
-                  onClick={(e) => {
+                  onClick={e => {
                     e.preventDefault();
                     setButtonMenuOpenIndex(val =>
-                      val === DATA_EXPORTER_BUTTON_INDEX
-                        ? null
-                        : DATA_EXPORTER_BUTTON_INDEX,
+                      val === DATA_EXPORTER_BUTTON_INDEX ? null : DATA_EXPORTER_BUTTON_INDEX,
                     );
                     handleBlockZIndex(DATA_EXPORTER_BUTTON_INDEX);
                   }}
-                  uuid="AddNewBlocks/Data_exporter"
+                  uuid='AddNewBlocks/Data_exporter'
                 >
                   Data exporter
                 </KeyboardShortcutButton>
@@ -507,37 +452,28 @@ function AddNewBlocks({
                 disableKeyboardShortcuts
                 items={[
                   ...itemsDBT,
-                  ...getdataSourceMenuItems(
-                    addNewBlock,
-                    BlockTypeEnum.DBT,
-                    pipelineType,
-                    {
-                      blockTemplatesByBlockType,
-                      onlyCustomTemplate: true,
-                      showBrowseTemplates,
-                    },
-                  ),
+                  ...getdataSourceMenuItems(addNewBlock, BlockTypeEnum.DBT, pipelineType, {
+                    blockTemplatesByBlockType,
+                    onlyCustomTemplate: true,
+                    showBrowseTemplates,
+                  }),
                 ]}
                 onClickCallback={closeButtonMenu}
                 open={buttonMenuOpenIndex === DBT_BUTTON_INDEX}
                 parentRef={dbtButtonRef}
-                uuid="dbt_button"
+                uuid='dbt_button'
               >
                 <KeyboardShortcutButton
                   {...sharedProps}
-                  beforeElement={
-                    <DBTLogo size={ICON_SIZE * (compact ? 0.75 : 1.25)} />
-                  }
-                  onClick={(e) => {
+                  beforeElement={<DBTLogo size={ICON_SIZE * (compact ? 0.75 : 1.25)} />}
+                  onClick={e => {
                     e.preventDefault();
                     setButtonMenuOpenIndex(val =>
-                      val === DBT_BUTTON_INDEX
-                        ? null
-                        : DBT_BUTTON_INDEX,
+                      val === DBT_BUTTON_INDEX ? null : DBT_BUTTON_INDEX,
                     );
                     handleBlockZIndex(DBT_BUTTON_INDEX);
                   }}
-                  uuid="AddNewBlocks/DBT"
+                  uuid='AddNewBlocks/DBT'
                 >
                   DBT model
                 </KeyboardShortcutButton>
@@ -568,25 +504,20 @@ function AddNewBlocks({
                     label: () => 'SQL',
                     uuid: 'custom_block_sql',
                   },
-                  ...getdataSourceMenuItems(
-                    addNewBlock,
-                    BlockTypeEnum.CUSTOM,
-                    pipelineType,
-                    {
-                      blockTemplatesByBlockType,
-                      onlyCustomTemplate: true,
-                      showBrowseTemplates,
-                    },
-                  ),
+                  ...getdataSourceMenuItems(addNewBlock, BlockTypeEnum.CUSTOM, pipelineType, {
+                    blockTemplatesByBlockType,
+                    onlyCustomTemplate: true,
+                    showBrowseTemplates,
+                  }),
                 ]}
                 onClickCallback={closeButtonMenu}
-                open={buttonMenuOpenIndex ===CUSTOM_BUTTON_INDEX}
+                open={buttonMenuOpenIndex === CUSTOM_BUTTON_INDEX}
                 parentRef={customBlockButtonRef}
-                uuid="custom_block_button"
+                uuid='custom_block_button'
               >
                 <Tooltip
                   block
-                  label="Add a custom code block with a designated color."
+                  label='Add a custom code block with a designated color.'
                   maxWidth={MAX_TOOLTIP_WIDTH}
                   size={null}
                 >
@@ -594,22 +525,17 @@ function AddNewBlocks({
                     {...sharedProps}
                     beforeElement={
                       <IconContainerStyle compact={compact} grey>
-                        <Add
-                          inverted
-                          size={iconSize}
-                        />
+                        <Add inverted size={iconSize} />
                       </IconContainerStyle>
                     }
-                    onClick={(e) => {
+                    onClick={e => {
                       e.preventDefault();
                       setButtonMenuOpenIndex(val =>
-                        val === CUSTOM_BUTTON_INDEX
-                          ? null
-                          : CUSTOM_BUTTON_INDEX,
+                        val === CUSTOM_BUTTON_INDEX ? null : CUSTOM_BUTTON_INDEX,
                       );
                       handleBlockZIndex(CUSTOM_BUTTON_INDEX);
                     }}
-                    uuid="AddNewBlocks/Scratchpad"
+                    uuid='AddNewBlocks/Scratchpad'
                   >
                     Custom
                   </KeyboardShortcutButton>
@@ -622,7 +548,7 @@ function AddNewBlocks({
             <ButtonWrapper>
               <Tooltip
                 block
-                label="Write experimental code that doesn’t get executed when you run your pipeline."
+                label='Write experimental code that doesn’t get executed when you run your pipeline.'
                 maxWidth={MAX_TOOLTIP_WIDTH}
                 size={null}
               >
@@ -633,13 +559,13 @@ function AddNewBlocks({
                       <Add size={iconSize} />
                     </IconContainerStyle>
                   }
-                  onClick={(e) => {
+                  onClick={e => {
                     e.preventDefault();
                     addNewBlock({
                       type: BlockTypeEnum.SCRATCHPAD,
                     });
                   }}
-                  uuid="AddNewBlocks/Scratchpad"
+                  uuid='AddNewBlocks/Scratchpad'
                 >
                   Scratchpad
                 </KeyboardShortcutButton>
@@ -651,7 +577,7 @@ function AddNewBlocks({
             <ButtonWrapper>
               <Tooltip
                 block
-                label="Add a global data product block"
+                label='Add a global data product block'
                 maxWidth={MAX_TOOLTIP_WIDTH}
                 size={null}
               >
@@ -662,14 +588,14 @@ function AddNewBlocks({
                       <HexagonAll size={iconSize} />
                     </IconContainerStyle>
                   }
-                  onClick={(e) => {
+                  onClick={e => {
                     e.preventDefault();
                     showGlobalDataProducts({
                       // @ts-ignore
                       addNewBlock,
                     });
                   }}
-                  uuid="AddNewBlocks/GlobalDataProducts"
+                  uuid='AddNewBlocks/GlobalDataProducts'
                 >
                   Global data product
                 </KeyboardShortcutButton>
@@ -683,21 +609,16 @@ function AddNewBlocks({
                 disableKeyboardShortcuts
                 items={[
                   ...getdataSourceMenuItems(addNewBlock, BlockTypeEnum.SENSOR, pipelineType),
-                  ...getdataSourceMenuItems(
-                    addNewBlock,
-                    BlockTypeEnum.SENSOR,
-                    pipelineType,
-                    {
-                      blockTemplatesByBlockType,
-                      onlyCustomTemplate: true,
-                      showBrowseTemplates,
-                    },
-                  ),
+                  ...getdataSourceMenuItems(addNewBlock, BlockTypeEnum.SENSOR, pipelineType, {
+                    blockTemplatesByBlockType,
+                    onlyCustomTemplate: true,
+                    showBrowseTemplates,
+                  }),
                 ]}
                 onClickCallback={closeButtonMenu}
                 open={buttonMenuOpenIndex === SENSOR_BUTTON_INDEX}
                 parentRef={sensorButtonRef}
-                uuid="sensor_button"
+                uuid='sensor_button'
               >
                 <KeyboardShortcutButton
                   {...sharedProps}
@@ -706,16 +627,14 @@ function AddNewBlocks({
                       <SensorIcon pink size={ICON_SIZE * (compact ? 0.75 : 1.25)} />
                     </IconContainerStyle>
                   }
-                  onClick={(e) => {
+                  onClick={e => {
                     e.preventDefault();
                     setButtonMenuOpenIndex(val =>
-                      val === SENSOR_BUTTON_INDEX
-                        ? null
-                        : SENSOR_BUTTON_INDEX,
+                      val === SENSOR_BUTTON_INDEX ? null : SENSOR_BUTTON_INDEX,
                     );
                     handleBlockZIndex(SENSOR_BUTTON_INDEX);
                   }}
-                  uuid="AddNewBlocks/Sensor"
+                  uuid='AddNewBlocks/Sensor'
                 >
                   Sensor
                 </KeyboardShortcutButton>
@@ -738,42 +657,32 @@ function AddNewBlocks({
                     },
                     uuid: 'generic_markdown',
                   },
-                  ...getdataSourceMenuItems(
-                    addNewBlock,
-                    BlockTypeEnum.MARKDOWN,
-                    pipelineType,
-                    {
-                      blockTemplatesByBlockType,
-                      onlyCustomTemplate: true,
-                      showBrowseTemplates,
-                    },
-                  ),
+                  ...getdataSourceMenuItems(addNewBlock, BlockTypeEnum.MARKDOWN, pipelineType, {
+                    blockTemplatesByBlockType,
+                    onlyCustomTemplate: true,
+                    showBrowseTemplates,
+                  }),
                 ]}
                 onClickCallback={closeButtonMenu}
                 open={buttonMenuOpenIndex === MARKDOWN_BUTTON_INDEX}
                 parentRef={markdownButtonRef}
-                uuid="markdown_button"
+                uuid='markdown_button'
               >
                 <KeyboardShortcutButton
                   {...sharedProps}
                   beforeElement={
                     <IconContainerStyle compact={compact} sky>
-                      <Add
-                        inverted
-                        size={iconSize}
-                      />
+                      <Add inverted size={iconSize} />
                     </IconContainerStyle>
                   }
-                  onClick={(e) => {
+                  onClick={e => {
                     e.preventDefault();
                     setButtonMenuOpenIndex(val =>
-                      val === MARKDOWN_BUTTON_INDEX
-                        ? null
-                        : MARKDOWN_BUTTON_INDEX,
+                      val === MARKDOWN_BUTTON_INDEX ? null : MARKDOWN_BUTTON_INDEX,
                     );
                     handleBlockZIndex(MARKDOWN_BUTTON_INDEX);
                   }}
-                  uuid="AddNewBlocks/Markdown"
+                  uuid='AddNewBlocks/Markdown'
                 >
                   Markdown
                 </KeyboardShortcutButton>
