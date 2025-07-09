@@ -376,7 +376,7 @@ function AddNewBlocks({
                   }}
                   uuid='AddNewBlocks/Data_loader'
                 >
-                  Data loader x
+                  Data loader
                 </KeyboardShortcutButton>
               </FlyoutMenuWrapper>
             </ButtonWrapper>

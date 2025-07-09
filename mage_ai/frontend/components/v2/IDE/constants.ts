@@ -2,7 +2,7 @@ export const languageClientConfig = {
   options: {
     $type: 'WebSocket',
     host: 'localhost',
-    port: 8765,
+    port: 3030,
     secured: false,
   },
 };

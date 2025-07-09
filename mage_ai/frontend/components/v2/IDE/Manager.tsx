@@ -11,6 +11,7 @@ import { ModeEnum } from '@mana/themes/modes';
 import { getHost } from '@api/utils/url';
 import { getTheme, getThemeSettings } from '@mana/themes/utils';
 import { languageClientConfig, loggerConfig } from './constants';
+import { getLSPWebSocket } from '@api/utils/url';
 
 type onComplete = (
   wrapper?: any,
@@ -406,11 +407,17 @@ class Manager {
         this.languageClient = Manager.languageServers?.[this.language];
         console.log(`LSP: ${this.language} already started, skipping...`);
       } else {
-        await languageServerClientWrapper.start().then(() => {
-          this.languageClient = languageServerClientWrapper.getLanguageClient();
-          Manager.languageServers[this.language] = this.languageClient;
-          console.log(`LSP: ${this.language} starting...`);
-        });
+        console.log(`LSP: ${this.language} connecting to WebSocket bridge at ${getLSPWebSocket()}`);
+        await languageServerClientWrapper
+          .start()
+          .then(() => {
+            this.languageClient = languageServerClientWrapper.getLanguageClient();
+            Manager.languageServers[this.language] = this.languageClient;
+            console.log(`LSP: ${this.language} connected to WebSocket bridge`);
+          })
+          .catch((error: any) => {
+            console.error(`LSP: ${this.language} failed to connect to WebSocket bridge:`, error);
+          });
       }
     }
 

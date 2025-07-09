@@ -165,6 +165,11 @@ function CodeEditor(
       editorRef.current = editor;
       monacoRef.current = monaco;
 
+      // Initialize LSP WebSocket connection for Python
+      if (language === 'python' && !showDiffs) {
+        initializePythonLSP(editor, monaco);
+      }
+
       const shortcuts = [];
 
       shortcutsProp?.forEach(func => {
@@ -263,6 +268,7 @@ function CodeEditor(
       setDisableGlobalKeyboardShortcuts,
       autoHeight,
       height,
+      language, // Add language to dependencies
       onContentSizeChangeCallback,
       onDidChangeCursorPosition,
       onMountCallback,
@@ -277,6 +283,606 @@ function CodeEditor(
       value,
     ],
   );
+
+  /**
+   * Initializes the Python Language Server Protocol (LSP) integration via WebSocket.
+   *
+   * This function establishes a WebSocket connection to an LSP bridge running on localhost:3030,
+   * implements the LSP protocol for communication with a Python language server, and registers
+   * Monaco Editor providers for code completion, hover information, signature help, and diagnostics.
+   *
+   * Features provided:
+   * - Real-time code completion with snippets and documentation
+   * - Hover information for symbols and functions
+   * - Signature help for function parameters
+   * - Real-time error/warning diagnostics
+   * - Full LSP protocol compliance
+   *
+   * @param editor - Monaco Editor instance
+   * @param monaco - Monaco Editor API instance
+   */
+  const initializePythonLSP = useCallback((editor, monaco) => {
+    try {
+      /**
+       * Creates a language client wrapper that implements the LSP protocol over WebSocket.
+       * This wrapper mimics the vscode-languageclient API for compatibility.
+       *
+       * @returns Object containing the language client and WebSocket instance
+       */
+      const createLanguageClient = () => {
+        const websocket = new WebSocket('ws://localhost:3030/');
+        let requestId = 1;
+        const pendingRequests = new Map();
+
+        // Store notification handlers outside the WebSocket instance
+        const notificationHandlers = new Map();
+
+        /**
+         * Language client that implements the LSP protocol.
+         * Provides methods for sending requests/notifications and handling responses.
+         */
+        const languageClient = {
+          /**
+           * Sends an LSP request and returns a Promise with the response.
+           * Implements proper request/response correlation using unique IDs.
+           *
+           * @param method - LSP method name (e.g., 'textDocument/completion')
+           * @param params - Request parameters
+           * @returns Promise that resolves with the LSP response
+           */
+          sendRequest: async (method, params) => {
+            return new Promise((resolve, reject) => {
+              const id = requestId++;
+              pendingRequests.set(id, { resolve, reject });
+
+              if (websocket.readyState === WebSocket.OPEN) {
+                websocket.send(
+                  JSON.stringify({
+                    jsonrpc: '2.0',
+                    id,
+                    method,
+                    params,
+                  }),
+                );
+
+                // Timeout after 10 seconds to prevent hanging requests
+                setTimeout(() => {
+                  if (pendingRequests.has(id)) {
+                    pendingRequests.delete(id);
+                    reject(new Error('Request timeout'));
+                  }
+                }, 10000);
+              } else {
+                pendingRequests.delete(id);
+                reject(new Error('WebSocket not connected'));
+              }
+            });
+          },
+
+          /**
+           * Sends an LSP notification (fire-and-forget, no response expected).
+           * Used for events like document changes, cursor movements, etc.
+           *
+           * @param method - LSP method name (e.g., 'textDocument/didChange')
+           * @param params - Notification parameters
+           */
+          sendNotification: (method, params) => {
+            if (websocket.readyState === WebSocket.OPEN) {
+              websocket.send(
+                JSON.stringify({
+                  jsonrpc: '2.0',
+                  method,
+                  params,
+                }),
+              );
+            }
+          },
+
+          /**
+           * Registers a handler for LSP notifications from the server.
+           * Used for server-initiated events like diagnostics publishing.
+           *
+           * @param method - LSP method name to listen for
+           * @param handler - Function to handle the notification
+           */
+          onNotification: (method, handler) => {
+            notificationHandlers.set(method, handler);
+          },
+        };
+
+        websocket.onopen = () => {
+          console.log('Connected to LSP WebSocket bridge');
+
+          // Send initialize request
+          languageClient
+            .sendRequest('initialize', {
+              processId: null,
+              clientInfo: {
+                name: 'mage-ai-monaco',
+                version: '1.0.0',
+              },
+              capabilities: {
+                textDocument: {
+                  completion: {
+                    dynamicRegistration: false,
+                    completionItem: {
+                      snippetSupport: true,
+                      commitCharactersSupport: true,
+                      documentationFormat: ['markdown', 'plaintext'],
+                      deprecatedSupport: true,
+                      preselectSupport: true,
+                    },
+                  },
+                  hover: {
+                    dynamicRegistration: false,
+                    contentFormat: ['markdown', 'plaintext'],
+                  },
+                  signatureHelp: {
+                    dynamicRegistration: false,
+                    signatureInformation: {
+                      documentationFormat: ['markdown', 'plaintext'],
+                    },
+                  },
+                  publishDiagnostics: {
+                    relatedInformation: true,
+                    versionSupport: false,
+                    tagSupport: { valueSet: [1, 2] },
+                  },
+                },
+              },
+            })
+            .then(result => {
+              console.log('LSP initialized:', result);
+
+              // Send initialized notification
+              languageClient.sendNotification('initialized', {});
+
+              // Register text document
+              const model = editor.getModel();
+              if (model) {
+                languageClient.sendNotification('textDocument/didOpen', {
+                  textDocument: {
+                    uri: model.uri.toString(),
+                    languageId: 'python',
+                    version: 1,
+                    text: model.getValue(),
+                  },
+                });
+              }
+            })
+            .catch(console.error);
+        };
+
+        websocket.onmessage = event => {
+          try {
+            const message = JSON.parse(event.data);
+
+            if (message.id && pendingRequests.has(message.id)) {
+              const { resolve, reject } = pendingRequests.get(message.id);
+              pendingRequests.delete(message.id);
+
+              if (message.error) {
+                reject(new Error(message.error.message));
+              } else {
+                resolve(message.result);
+              }
+            } else if (message.method) {
+              const handler = notificationHandlers.get(message.method);
+              if (handler) {
+                handler(message.params);
+              }
+            }
+          } catch (error) {
+            console.error('Error parsing LSP message:', error);
+          }
+        };
+
+        websocket.onerror = error => {
+          console.error('LSP WebSocket error:', error);
+        };
+
+        websocket.onclose = () => {
+          console.log('LSP WebSocket connection closed');
+          // Reject all pending requests
+          pendingRequests.forEach(({ reject }) => {
+            reject(new Error('WebSocket connection closed'));
+          });
+          pendingRequests.clear();
+        };
+
+        return { languageClient, websocket };
+      };
+
+      const { languageClient, websocket } = createLanguageClient();
+
+      /**
+       * Registers a completion provider that requests autocompletion from the LSP server.
+       * Provides rich IntelliSense features including:
+       * - Context-aware completions
+       * - Snippet support
+       * - Documentation preview
+       * - Proper filtering and sorting
+       */
+      const completionProvider = monaco.languages.registerCompletionItemProvider('python', {
+        triggerCharacters: ['.', ' ', '('],
+
+        /**
+         * Provides completion items for the given position in the document.
+         * Sends a completion request to the LSP server and converts the response
+         * to Monaco Editor's completion format.
+         *
+         * @param model - Monaco text model
+         * @param position - Cursor position
+         * @param context - Completion context (trigger character, etc.)
+         * @returns Promise with completion suggestions
+         */
+        provideCompletionItems: async (model, position, context) => {
+          try {
+            const result = await languageClient.sendRequest('textDocument/completion', {
+              textDocument: { uri: model.uri.toString() },
+              position: {
+                line: position.lineNumber - 1,
+                character: position.column - 1,
+              },
+              context: {
+                triggerKind: context.triggerKind,
+                triggerCharacter: context.triggerCharacter,
+              },
+            });
+
+            if (!result) return { suggestions: [] };
+
+            let items: any[] = [];
+            if (Array.isArray(result)) {
+              items = result;
+            } else if (
+              result &&
+              typeof result === 'object' &&
+              'items' in result &&
+              Array.isArray((result as any).items)
+            ) {
+              items = (result as any).items;
+            }
+
+            const suggestions = items.map((item, index) => ({
+              label: item.label,
+              kind: convertLSPKindToMonaco(monaco, item.kind),
+              documentation: formatDocumentation(item.documentation),
+              detail: item.detail || '',
+              insertText: item.insertText || item.label,
+              insertTextRules:
+                item.insertTextFormat === 2
+                  ? monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet
+                  : undefined,
+              range: item.textEdit
+                ? convertLSPRangeToMonaco(item.textEdit.range, position)
+                : undefined,
+              sortText: item.sortText || `${index.toString().padStart(4, '0')}`,
+              filterText: item.filterText || item.label,
+              preselect: item.preselect,
+              commitCharacters: item.commitCharacters,
+            }));
+
+            return { suggestions };
+          } catch (error) {
+            console.error('Completion request failed:', error);
+            return { suggestions: [] };
+          }
+        },
+      });
+
+      /**
+       * Registers a hover provider that shows documentation and type information.
+       * Displays rich hover tooltips with symbol information, documentation,
+       * and type signatures when hovering over code elements.
+       */
+      const hoverProvider = monaco.languages.registerHoverProvider('python', {
+        /**
+         * Provides hover information for the symbol at the given position.
+         *
+         * @param model - Monaco text model
+         * @param position - Mouse hover position
+         * @returns Promise with hover content or null
+         */
+        provideHover: async (model, position) => {
+          try {
+            const result = await languageClient.sendRequest('textDocument/hover', {
+              textDocument: { uri: model.uri.toString() },
+              position: {
+                line: position.lineNumber - 1,
+                character: position.column - 1,
+              },
+            });
+
+            if (
+              !result ||
+              typeof result !== 'object' ||
+              result === null ||
+              !('contents' in result)
+            ) {
+              return null;
+            }
+
+            return {
+              contents: formatHoverContents((result as { contents: any; range?: any }).contents),
+              range: (result as any).range
+                ? convertLSPRangeToMonacoRange((result as any).range)
+                : undefined,
+            };
+          } catch (error) {
+            console.error('Hover request failed:', error);
+            return null;
+          }
+        },
+      });
+
+      /**
+       * Registers a signature help provider for function parameter assistance.
+       * Shows function signatures, parameter information, and active parameter
+       * highlighting when typing function calls.
+       */
+      const signatureProvider = monaco.languages.registerSignatureHelpProvider('python', {
+        signatureHelpTriggerCharacters: ['(', ','],
+
+        /**
+         * Provides signature help for function calls at the given position.
+         *
+         * @param model - Monaco text model
+         * @param position - Cursor position
+         * @returns Promise with signature help or null
+         */
+        provideSignatureHelp: async (model, position) => {
+          try {
+            const result = await languageClient.sendRequest('textDocument/signatureHelp', {
+              textDocument: { uri: model.uri.toString() },
+              position: {
+                line: position.lineNumber - 1,
+                character: position.column - 1,
+              },
+            });
+
+            if (
+              !result ||
+              typeof result !== 'object' ||
+              result === null ||
+              !('signatures' in result) ||
+              !Array.isArray((result as any).signatures)
+            ) {
+              return null;
+            }
+
+            return {
+              signatures: (result as any).signatures.map((sig: any) => ({
+                label: sig.label,
+                documentation: formatDocumentation(sig.documentation),
+                parameters:
+                  sig.parameters?.map((param: any) => ({
+                    label: param.label,
+                    documentation: formatDocumentation(param.documentation),
+                  })) || [],
+              })),
+              activeSignature: (result as any).activeSignature || 0,
+              activeParameter: (result as any).activeParameter || 0,
+            };
+          } catch (error) {
+            console.error('Signature help request failed:', error);
+            return null;
+          }
+        },
+      });
+
+      /**
+       * Handles diagnostic notifications from the LSP server.
+       * Converts LSP diagnostics (errors, warnings, hints) to Monaco markers
+       * and displays them in the editor with appropriate styling.
+       */
+      languageClient.onNotification('textDocument/publishDiagnostics', params => {
+        const model = editor.getModel();
+        if (!model || model.uri.toString() !== params.uri) return;
+
+        const markers = params.diagnostics.map(diagnostic => ({
+          severity: convertLSPSeverityToMonaco(monaco, diagnostic.severity),
+          message: diagnostic.message,
+          source: diagnostic.source,
+          startLineNumber: diagnostic.range.start.line + 1,
+          startColumn: diagnostic.range.start.character + 1,
+          endLineNumber: diagnostic.range.end.line + 1,
+          endColumn: diagnostic.range.end.character + 1,
+          relatedInformation: diagnostic.relatedInformation?.map(info => ({
+            resource: monaco.Uri.parse(info.location.uri),
+            message: info.message,
+            startLineNumber: info.location.range.start.line + 1,
+            startColumn: info.location.range.start.character + 1,
+            endLineNumber: info.location.range.end.line + 1,
+            endColumn: info.location.range.end.character + 1,
+          })),
+        }));
+
+        monaco.editor.setModelMarkers(model, 'python-lsp', markers);
+      });
+
+      // Handle text changes
+      let changeTimeout;
+      editor.onDidChangeModelContent(() => {
+        const model = editor.getModel();
+        if (!model) return;
+
+        clearTimeout(changeTimeout);
+        changeTimeout = setTimeout(() => {
+          languageClient.sendNotification('textDocument/didChange', {
+            textDocument: {
+              uri: model.uri.toString(),
+              version: model.getVersionId(),
+            },
+            contentChanges: [
+              {
+                text: model.getValue(),
+              },
+            ],
+          });
+        }, 300);
+      });
+
+      // Store references for cleanup
+      editor._lspWebSocket = websocket;
+      editor._lspProviders = [completionProvider, hoverProvider, signatureProvider];
+      editor._lspLanguageClient = languageClient;
+    } catch (error) {
+      console.error('Failed to initialize Python LSP:', error);
+    }
+  }, []);
+
+  /**
+   * Converts LSP completion item kinds to Monaco Editor completion kinds.
+   * Maps LSP's numeric kind values to Monaco's enum values for proper
+   * icon display and categorization in the completion dropdown.
+   *
+   * @param monaco - Monaco Editor API instance
+   * @param lspKind - LSP completion item kind (numeric)
+   * @returns Monaco completion item kind enum value
+   */
+  const convertLSPKindToMonaco = useCallback((monaco, lspKind) => {
+    const kindMap = {
+      1: monaco.languages.CompletionItemKind.Text, // Plain text
+      2: monaco.languages.CompletionItemKind.Method, // Class method
+      3: monaco.languages.CompletionItemKind.Function, // Function
+      4: monaco.languages.CompletionItemKind.Constructor, // Class constructor
+      5: monaco.languages.CompletionItemKind.Field, // Class field
+      6: monaco.languages.CompletionItemKind.Variable, // Variable
+      7: monaco.languages.CompletionItemKind.Class, // Class definition
+      8: monaco.languages.CompletionItemKind.Interface, // Interface
+      9: monaco.languages.CompletionItemKind.Module, // Module/package
+      10: monaco.languages.CompletionItemKind.Property, // Object property
+      11: monaco.languages.CompletionItemKind.Unit, // Unit value
+      12: monaco.languages.CompletionItemKind.Value, // Generic value
+      13: monaco.languages.CompletionItemKind.Enum, // Enumeration
+      14: monaco.languages.CompletionItemKind.Keyword, // Language keyword
+      15: monaco.languages.CompletionItemKind.Snippet, // Code snippet
+      16: monaco.languages.CompletionItemKind.Color, // Color value
+      17: monaco.languages.CompletionItemKind.File, // File reference
+      18: monaco.languages.CompletionItemKind.Reference, // Reference
+      19: monaco.languages.CompletionItemKind.Folder, // Directory
+      20: monaco.languages.CompletionItemKind.EnumMember, // Enum member
+      21: monaco.languages.CompletionItemKind.Constant, // Constant value
+      22: monaco.languages.CompletionItemKind.Struct, // Structure
+      23: monaco.languages.CompletionItemKind.Event, // Event
+      24: monaco.languages.CompletionItemKind.Operator, // Operator
+      25: monaco.languages.CompletionItemKind.TypeParameter, // Generic type parameter
+    };
+    return kindMap[lspKind] || monaco.languages.CompletionItemKind.Text;
+  }, []);
+
+  /**
+   * Converts LSP diagnostic severity levels to Monaco Editor marker severity.
+   * Maps LSP's numeric severity values to Monaco's severity enum for proper
+   * visual styling of errors, warnings, and hints in the editor.
+   *
+   * @param monaco - Monaco Editor API instance
+   * @param severity - LSP diagnostic severity (1=Error, 2=Warning, 3=Info, 4=Hint)
+   * @returns Monaco marker severity enum value
+   */
+  const convertLSPSeverityToMonaco = useCallback((monaco, severity) => {
+    const severityMap = {
+      1: monaco.MarkerSeverity.Error, // Red underline and error icon
+      2: monaco.MarkerSeverity.Warning, // Yellow/orange underline and warning icon
+      3: monaco.MarkerSeverity.Info, // Blue underline and info icon
+      4: monaco.MarkerSeverity.Hint, // Subtle styling for hints
+    };
+    return severityMap[severity] || monaco.MarkerSeverity.Info;
+  }, []);
+
+  /**
+   * Formats LSP documentation content for Monaco Editor display.
+   * Handles various documentation formats including plain text, markdown,
+   * and structured documentation objects. Ensures proper rendering in
+   * completion tooltips and hover information.
+   *
+   * @param doc - LSP documentation (string, object, or MarkupContent)
+   * @returns Formatted documentation object for Monaco or undefined
+   */
+  const formatDocumentation = useCallback(doc => {
+    if (!doc) return undefined;
+
+    // Handle plain string documentation
+    if (typeof doc === 'string') return { value: doc };
+
+    // Handle MarkupContent with markdown
+    if (doc.kind === 'markdown') return { value: doc.value, isTrusted: true };
+
+    // Handle other structured documentation
+    return { value: doc.value || doc };
+  }, []);
+
+  /**
+   * Formats hover contents from LSP response for Monaco Editor display.
+   * Processes hover content arrays and individual content items, ensuring
+   * proper formatting for rich hover tooltips with markdown support.
+   *
+   * @param contents - LSP hover contents (array or single content item)
+   * @returns Array of formatted content objects for Monaco hover
+   */
+  const formatHoverContents = useCallback(
+    contents => {
+      if (!contents) return [];
+
+      // Handle array of content items
+      if (Array.isArray(contents)) {
+        return contents.map(formatDocumentation).filter(Boolean);
+      }
+
+      // Handle single content item
+      const formatted = formatDocumentation(contents);
+      return formatted ? [formatted] : [];
+    },
+    [formatDocumentation],
+  );
+
+  /**
+   * Converts LSP range coordinates to Monaco Editor range format.
+   * LSP uses 0-based line/character positions, while Monaco uses 1-based
+   * line numbers and 1-based column positions. Used for text edits and replacements.
+   *
+   * @param lspRange - LSP range with start/end positions
+   * @param position - Current cursor position (for context)
+   * @returns Monaco range object with 1-based coordinates
+   */
+  const convertLSPRangeToMonaco = useCallback((lspRange, position) => {
+    return {
+      startLineNumber: lspRange.start.line + 1, // Convert 0-based to 1-based line
+      startColumn: lspRange.start.character + 1, // Convert 0-based to 1-based column
+      endLineNumber: lspRange.end.line + 1, // Convert 0-based to 1-based line
+      endColumn: lspRange.end.character + 1, // Convert 0-based to 1-based column
+    };
+  }, []);
+
+  /**
+   * Converts LSP range to Monaco Range object for hover and diagnostic display.
+   * Similar to convertLSPRangeToMonaco but returns a range object suitable
+   * for highlighting and visual feedback in the editor.
+   *
+   * @param lspRange - LSP range with start/end positions
+   * @returns Monaco range object for visual highlighting
+   */
+  const convertLSPRangeToMonacoRange = useCallback(lspRange => {
+    return {
+      startLineNumber: lspRange.start.line + 1,
+      startColumn: lspRange.start.character + 1,
+      endLineNumber: lspRange.end.line + 1,
+      endColumn: lspRange.end.character + 1,
+    };
+  }, []);
+
+  // Cleanup WebSocket and providers on unmount
+  useEffect(() => {
+    return () => {
+      if (editorRef.current?._lspWebSocket) {
+        editorRef.current._lspWebSocket.close();
+      }
+      if (editorRef.current?._lspProviders) {
+        editorRef.current._lspProviders.forEach(provider => provider.dispose());
+      }
+    };
+  }, []);
 
   useEffect(() => {
     let autoSaveInterval;
@@ -424,6 +1030,11 @@ function CodeEditor(
           renderLineHighlight: 'all',
           renderMarginRevertIcon: true,
           renderSideBySide: true,
+          // Enable LSP features for Python
+          quickSuggestions: language === 'python',
+          suggestOnTriggerCharacters: language === 'python',
+          acceptSuggestionOnEnter: language === 'python' ? 'on' : 'off',
+          tabCompletion: language === 'python' ? 'on' : 'off',
         }}
         original={showDiffs ? originalValue : undefined}
         theme={loadedTheme || 'vs-dark'}

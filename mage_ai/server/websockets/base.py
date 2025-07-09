@@ -40,7 +40,7 @@ class BaseHandler(WebSocketHandler):
         self.__class__.running_executions_mapping[message.msg_id] = message
 
     @classmethod
-    def send_message(self, message: Message) -> None:
+    def send_message(cls, message: Message) -> None:
         if not message.executed or not message.msg_id:
             return
 
@@ -49,10 +49,10 @@ class BaseHandler(WebSocketHandler):
 
         message = filter_out_sensitive_data(message)
         if message.error:
-            message.data = self.format_error(message.error)
+            message.data = cls.format_error(message.error)
 
-        message = self.running_executions_mapping.get(message.msg_id)
-        for client in self.clients:
+        message = cls.running_executions_mapping.get(message.msg_id)
+        for client in cls.clients:
             client.write_message(simplejson.dumps(
                 message.to_dict(),
                 default=encode_complex,
@@ -61,5 +61,5 @@ class BaseHandler(WebSocketHandler):
             ) if message else '')
 
     @classmethod
-    def format_error(self, error: Error) -> List[str]:
+    def format_error(cls, error: Error) -> List[str]:
         pass

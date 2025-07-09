@@ -157,6 +157,12 @@ function CodeEditor(
       editorRef.current = editor;
       monacoRef.current = monaco;
 
+      // Initialize LSP WebSocket connection for Python
+      console.log('language===>', language);
+      if (language === 'python') {
+        initializePythonLSP(editor, monaco);
+      }
+
       const shortcuts = [];
 
       shortcutsProp?.forEach(func => {
@@ -240,10 +246,10 @@ function CodeEditor(
       setMounted(true);
       onMountCallback?.(editor, monaco);
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     [
       autoHeight,
       height,
+      language, // Add language to dependencies
       onContentSizeChangeCallback,
       onDidChangeCursorPosition,
       onMountCallback,
@@ -258,6 +264,143 @@ function CodeEditor(
       value,
     ],
   );
+
+  // Add LSP initialization function
+  const initializePythonLSP = useCallback((editor, monaco) => {
+    try {
+      const websocket = new WebSocket('ws://localhost:3030/');
+
+      websocket.onopen = () => {
+        console.log('Connected to LSP WebSocket bridge');
+
+        // Register text document capabilities
+        const model = editor.getModel();
+        if (model) {
+          const uri = model.uri.toString();
+
+          // Send didOpen notification
+          websocket.send(
+            JSON.stringify({
+              jsonrpc: '2.0',
+              method: 'textDocument/didOpen',
+              params: {
+                textDocument: {
+                  uri: uri,
+                  languageId: 'python',
+                  version: 1,
+                  text: model.getValue(),
+                },
+              },
+            }),
+          );
+        }
+      };
+
+      websocket.onmessage = event => {
+        try {
+          const message = JSON.parse(event.data);
+          handleLSPMessage(editor, monaco, message);
+        } catch (error) {
+          console.error('Error parsing LSP message:', error);
+        }
+      };
+
+      websocket.onerror = error => {
+        console.error('LSP WebSocket error:', error);
+      };
+
+      websocket.onclose = () => {
+        console.log('LSP WebSocket connection closed');
+      };
+
+      // Handle text changes
+      editor.onDidChangeModelContent(() => {
+        const model = editor.getModel();
+        if (model && websocket.readyState === WebSocket.OPEN) {
+          websocket.send(
+            JSON.stringify({
+              jsonrpc: '2.0',
+              method: 'textDocument/didChange',
+              params: {
+                textDocument: {
+                  uri: model.uri.toString(),
+                  version: model.getVersionId(),
+                },
+                contentChanges: [
+                  {
+                    text: model.getValue(),
+                  },
+                ],
+              },
+            }),
+          );
+        }
+      });
+
+      // Store websocket reference for cleanup
+      editor._lspWebSocket = websocket;
+    } catch (error) {
+      console.error('Failed to initialize Python LSP:', error);
+    }
+  }, []);
+
+  const handleLSPMessage = useCallback((editor, monaco, message) => {
+    if (!message.method) return;
+
+    switch (message.method) {
+      case 'textDocument/publishDiagnostics':
+        handleDiagnostics(editor, monaco, message.params);
+        break;
+      case 'textDocument/completion':
+        handleCompletion(editor, monaco, message.result);
+        break;
+      case 'textDocument/hover':
+        handleHover(editor, monaco, message.result);
+        break;
+      default:
+        console.log('Unhandled LSP message:', message.method);
+    }
+  }, []);
+
+  const handleDiagnostics = useCallback((editor, monaco, params) => {
+    const model = editor.getModel();
+    if (!model || model.uri.toString() !== params.uri) return;
+
+    const markers = params.diagnostics.map(diagnostic => ({
+      severity:
+        diagnostic.severity === 1
+          ? monaco.MarkerSeverity.Error
+          : diagnostic.severity === 2
+          ? monaco.MarkerSeverity.Warning
+          : monaco.MarkerSeverity.Info,
+      message: diagnostic.message,
+      startLineNumber: diagnostic.range.start.line + 1,
+      startColumn: diagnostic.range.start.character + 1,
+      endLineNumber: diagnostic.range.end.line + 1,
+      endColumn: diagnostic.range.end.character + 1,
+    }));
+
+    monaco.editor.setModelMarkers(model, 'python-lsp', markers);
+  }, []);
+
+  const handleCompletion = useCallback((editor, monaco, result) => {
+    // Handle completion results if needed
+    console.log('Completion result:', result);
+  }, []);
+
+  const handleHover = useCallback((editor, monaco, result) => {
+    // Handle hover results if needed
+    console.log('Hover result:', result);
+  }, []);
+
+  // Cleanup WebSocket on unmount
+  useEffect(() => {
+    return () => {
+      if (editorRef.current?._lspWebSocket) {
+        editorRef.current._lspWebSocket.close();
+      }
+    };
+  }, []);
 
   useEffect(() => {
     let autoSaveInterval;
@@ -400,6 +543,11 @@ function CodeEditor(
           renderLineHighlight: 'all',
           renderMarginRevertIcon: true,
           renderSideBySide: true,
+          // Enable LSP features
+          quickSuggestions: language === 'python',
+          suggestOnTriggerCharacters: language === 'python',
+          acceptSuggestionOnEnter: language === 'python' ? 'on' : 'off',
+          tabCompletion: language === 'python' ? 'on' : 'off',
         }}
         original={showDiffs ? originalValue : undefined}
         theme={loadedTheme || 'vs-dark'}

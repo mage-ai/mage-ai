@@ -1,1 +1,1 @@
-export const WEBSOCKT_URL = 'ws://localhost:6789/websocket/';
+export const WEBSOCKT_URL = 'ws://localhost:3030/';

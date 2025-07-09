@@ -77,6 +77,16 @@ export function getWebSocket(path = '') {
   return `${prefix}${host}/websocket/${path}`;
 }
 
+export function getLSPWebSocket(): string {
+  const windowDefined = typeof window !== 'undefined';
+
+  let prefix = 'ws://';
+  if (windowDefined && window.location.protocol?.match(/https/)) {
+    prefix = 'wss://';
+  }
+  return `${prefix}localhost:3030/`;
+}
+
 export function getEventStreamsUrl(uuid?: string): string {
   const windowDefined = typeof window !== 'undefined';
   const LOCALHOST = DEFAULT_HOST;
