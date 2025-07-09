@@ -1,0 +1,63 @@
+---
+title: Airtable
+description: How to configure and authenticate the Airtable destination for loading data into Airtable via the API.
+---
+
+![Airtable Logo](https://1000logos.net/wp-content/uploads/2022/05/Airtable-Logo.png)
+
+Connect Mage to Airtable as a **destination** to load data into your bases. This guide explains how to configure authentication using a Personal Access Token and the required base ID.
+
+---
+
+## Configuration Parameters
+
+To use Airtable as a destination, provide the following configuration values:
+
+| Key        | Description                                                                 | Example Value      | Required |
+|------------|-----------------------------------------------------------------------------|---------------------|----------|
+| `token`    | Airtable Personal Access Token with the required scopes                    | `pat1234abcd...`    | ✅        |
+| `base_id`  | The unique ID of the Airtable base you're writing to (starts with `app`)   | `app5678efgh...`    | ✅        |
+
+---
+
+## Generating Credentials
+
+To generate your Airtable Personal Access Token:
+
+1. Visit the [Airtable Developer Hub](https://airtable.com/developers/web/guides/personal-access-tokens).
+2. Click **Create token**.
+3. Assign the appropriate scopes (listed below).
+4. Save the token securely and include it in your Mage destination configuration.
+
+---
+
+## Required Scopes
+
+Make sure your token includes the following scopes:
+
+- `schema.bases:write` — Required for schema access
+- `data.records:write` — Required to insert, update, or delete records in Airtable
+
+---
+
+## FAQs
+
+### What is `base_id` in Airtable?
+
+The `base_id` is a unique identifier for your Airtable base. It typically starts with `app` and can be found in the base’s URL or retrieved using the Airtable API.
+
+### How should I store my Airtable token securely?
+
+Use environment variables or Mage’s secrets manager to store your token. Avoid hardcoding tokens in your configuration files or version control.
+
+### Can Mage write data to multiple Airtable bases?
+
+Yes, but you must configure each destination with its corresponding `base_id` and ensure the access token has permission for each base.
+
+---
+
+## Related Resources
+
+- [Airtable API Docs](https://airtable.com/developers/web/api/introduction)
+- [Schema Guide](https://airtable.com/developers/web/guides/schema)
+- [Personal Access Token Guide](https://airtable.com/developers/web/guides/personal-access-tokens)

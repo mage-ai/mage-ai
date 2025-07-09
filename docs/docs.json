@@ -294,7 +294,28 @@
                   {
                     "group": "Destinations",
                     "pages": [
-                      "data-integrations/destinations/overview"
+                      "data-integrations/destinations/overview",
+                      "data-integrations/destinations/airtable",
+                      "data-integrations/destinations/amazon_s3",
+                      "data-integrations/destinations/bigquery",
+                      "data-integrations/destinations/clickhouse",
+                      "data-integrations/destinations/delta_lake_azure",
+                      "data-integrations/destinations/delta_lake_s3",
+                      "data-integrations/destinations/doris",
+                      "data-integrations/destinations/elasticsearch",
+                      "data-integrations/destinations/google_cloud_storage",
+                      "data-integrations/destinations/kafka",
+                      "data-integrations/destinations/mongodb",
+                      "data-integrations/destinations/mssql",
+                      "data-integrations/destinations/mysql",
+                      "data-integrations/destinations/opensearch",
+                      "data-integrations/destinations/oracledb",
+                      "data-integrations/destinations/postgresql",
+                      "data-integrations/destinations/redshift",
+                      "data-integrations/destinations/salesforce",
+                      "data-integrations/destinations/snowflake",
+                      "data-integrations/destinations/teradata",
+                      "data-integrations/destinations/trino"
                     ]
                   },
                   "data-integrations/batch-pipelines"
