@@ -1,0 +1,34 @@
+---
+title: Delta Lake (S3)
+description: How to configure Delta Lake on AWS S3 as a destination in Mage to write data to a Delta table using S3 URIs.
+---
+
+## Configuration Parameters
+
+To use **Delta Lake on AWS S3** as a destination in Mage, provide the following parameters:
+
+| Key                   | Description                                                                                                                                                       | Example Value                         | Required |
+|------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------|---------------------------------------|----------|
+| `aws_access_key_id`    | Your AWS access key ID. Required to authenticate with S3.                                                                                                         | `AKIAIOSFODNN7EXAMPLE`                | ✅        |
+| `aws_secret_access_key`| Your AWS secret access key. Used for writing to the S3 bucket.                                                                                                    | `wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY` | ✅        |
+| `aws_region`           | AWS region where your S3 bucket is located.                                                                                                                       | `us-west-2` *(default)*              | ✅        |
+| `bucket`               | Name of the S3 bucket where the Delta table is stored.                                                                                                            | `mage-spark-data`                    | ✅        |
+| `table`                | Logical name of the Delta table that Mage will write to.                                                                                                          | `dim_profiles_v1`                    | ✅        |
+| `mode`                 | Write mode: <br/>- `append`: Adds rows to the table. Fails if schema changes.<br/>- `overwrite`: Replaces all existing rows and recreates the table.            | `append` (default) or `overwrite`    | ✅        |
+| `object_key_path`      | Path inside the S3 bucket where the Delta table is written. Exclude `s3://`, bucket name, and table name from this path.                                         | `users/ds/20250708`                  | ✅        |
+
+---
+
+## Notes
+
+- The object key path is relative to the S3 bucket and should not include the scheme (`s3://`), bucket name, or table name.
+- Mage uses the [delta-rs](https://delta-io.github.io/delta-rs/python/usage.html) engine for writing data to Delta Lake on S3.
+- Use `overwrite` mode with caution: it deletes all existing rows and recreates the table.
+
+---
+
+## Related Resources
+
+- [Delta Lake Python API (`delta-rs`)](https://delta-io.github.io/delta-rs/python/usage.html)
+- [Delta Lake Overview](https://delta.io/)
+- [Working with S3 Buckets](https://docs.aws.amazon.com/AmazonS3/latest/userguide/UsingBucket.html)

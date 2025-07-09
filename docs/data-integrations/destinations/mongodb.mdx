@@ -1,0 +1,45 @@
+---
+title: MongoDB
+description: How to configure MongoDB as a destination in Mage to write data to a MongoDB database using a connection string.
+---
+
+## Overview
+
+Use **MongoDB** as a destination in Mage to export records from your pipelines directly into a MongoDB collection. This is ideal for persisting semi-structured JSON data, powering APIs, or integrating with operational data systems.
+
+Each record from your pipeline will be inserted as a document in the specified MongoDB collection. If no collection name is provided, Mage will default to using the stream name as the collection name.
+
+---
+
+## Configuration Parameters
+
+| Key                | Description                                                                                     | Example Value                                  | Required |
+|---------------------|-------------------------------------------------------------------------------------------------|------------------------------------------------|----------|
+| `connection_string` | MongoDB connection URI string, including hostname and port.                                     | `mongodb://mongodb0.example.com:27017`         | ✅        |
+| `db_name`           | Name of the MongoDB database where documents will be stored.                                    | `admin`                                        | ✅        |
+| `table_name`        | *(Optional)* Name of the MongoDB collection to write to. If omitted, the stream name is used.   | `user_profiles`                                | ❌        |
+
+---
+
+## Notes
+
+- The `connection_string` should include any authentication, cluster details, or replica set info as needed (e.g., `mongodb+srv://user:pass@cluster0.mongodb.net/`).
+- If `table_name` is not set, Mage automatically uses the name of the stream that produced the data.
+- Mage inserts each record as a single MongoDB document in the target collection.
+
+---
+
+## Example Configuration
+
+```yaml
+connection_string: mongodb://mongodb0.example.com:27017
+db_name: analytics
+```
+
+---
+
+## Related Resources
+
+- [MongoDB Connection String URI Format](https://www.mongodb.com/docs/manual/reference/connection-string/)
+- [MongoDB Python Driver (`pymongo`)](https://pymongo.readthedocs.io/en/stable/)
+- [MongoDB Collections vs Tables](https://www.mongodb.com/docs/manual/core/databases-and-collections/)

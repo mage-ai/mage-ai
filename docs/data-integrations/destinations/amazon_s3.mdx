@@ -1,0 +1,66 @@
+---
+title: Amazon S3
+description: How to configure Amazon S3 as a destination in Mage to write data to your S3 bucket in CSV or Parquet format.
+---
+
+
+Configure **Amazon S3** as a Mage destination to write data files in CSV or Parquet format directly into your AWS S3 bucket.
+
+---
+
+## Configuration Parameters
+
+The following parameters are required to set up Amazon S3 as a destination:
+
+| Key                    | Description                                                                                                                                             | Example Value                                | Required |
+|------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------|----------------------------------------------|----------|
+| `aws_access_key_id`    | Your AWS access key ID.                                                                                                                                  | `AKIA...`                                    | ✅        |
+| `aws_secret_access_key`| Your AWS secret access key.                                                                                                                              | `xyz456...`                                  | ✅        |
+| `aws_region`           | AWS region where your S3 bucket is located.                                                                                                              | `us-west-2`                                  | ✅        |
+| `role_arn`             | (Optional) ARN of an IAM role to assume for access. Useful for temporary or cross-account access.                                                       | `arn:aws:iam::111111:role/example-role`      | ❌        |
+| `bucket`               | The name of the S3 bucket where data will be written.                                                                                                    | `user_generated_content`                     | ✅        |
+| `file_type`            | The file format to use when writing to S3. Supported values: `csv`, `parquet`.                                                                          | `parquet`                                    | ✅        |
+| `object_key_path`      | The S3 object key prefix (path) to write files under. Do **not** include `s3://`, the bucket name, or table name in this path.                          | `users/ds/20221225`                          | ✅        |
+| `column_header_format` | (Optional) Format for column headers. Will be applied before writing to S3. Options: `upper`, `lower`, or `null` (no formatting).                       | `lower`                                      | ❌        |
+| `date_partition_format`| (Optional) Format for date-based partitioning in file paths. If null, partitioning is skipped. Examples: `%Y%m%d`, `%Y%m%dT%H`.                         | `%Y%m%d`                                     | ❌        |
+| `aws_endpoint`         | (Optional) Custom endpoint URL for non-AWS S3-compatible services (e.g., MinIO).                                                                        | `https://play.min.io`                        | ❌        |
+
+---
+
+## Credential Requirements
+
+To use Amazon S3, you need an AWS IAM user or role with permissions to:
+
+- Put objects (`s3:PutObject`)
+- Create folders (`s3:PutObject`)
+- Optionally assume roles (`sts:AssumeRole`) if `role_arn` is used
+
+Ensure the credentials provided have appropriate access to the target bucket and path.
+
+---
+
+## FAQs
+
+### Can I write to MinIO or other S3-compatible storage?
+
+Yes. Set the `aws_endpoint` field to your custom endpoint URL (e.g., `https://play.min.io`). Ensure your credentials and permissions are configured accordingly.
+
+### How are files named in S3?
+
+Mage automatically handles file naming using table names and batch metadata. Your `object_key_path` acts as the prefix under which the files are written.
+
+### What happens if I don’t set `date_partition_format`?
+
+Files will be written directly into the specified path without date-based folder partitioning.
+
+### What if both `role_arn` and access keys are set?
+
+Mage will attempt to assume the IAM role using the provided access key credentials. This is helpful in cross-account setups or for short-lived access via STS.
+
+---
+
+## Related Resources
+
+- [Amazon S3 Documentation](https://docs.aws.amazon.com/s3/)
+- [IAM Policy Reference](https://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies.html)
+- [MinIO Documentation](https://min.io/docs/minio/linux/index.html)
