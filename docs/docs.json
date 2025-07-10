@@ -133,6 +133,12 @@
             ]
           },
           {
+            "group": "Migration guides",
+            "pages": [
+              "migrations/airflow-to-mage-pro"
+            ]
+          },
+          {
             "group": "Global hooks",
             "pages": [
               "extensibility/global-hooks/overview",
