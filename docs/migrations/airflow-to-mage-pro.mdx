@@ -1,0 +1,132 @@
+---
+title: "Migrate from Airflow to Mage Pro"
+sidebarTitle: "Airflow to Mage Pro"
+---
+Many teams start with Apache Airflow for orchestration—but soon encounter challenges with scalability, debugging, and developer productivity. Mage Pro offers a modern alternative: visual pipelines, built-in observability, and AI-assisted development, with zero DevOps overhead.
+
+## Why migrate from Airflow to Mage Pro?
+
+Airflow is a powerful scheduler, but it wasn't designed for:
+
+- Debugging pipelines visually  
+- Mixing SQL and Python naturally  
+- Streaming or event-driven workflows  
+- Managing secrets, Git, or multi-tenant workspaces  
+- AI-powered pipeline development  
+
+Mage Pro is built to solve these challenges out-of-the-box, with a modern developer experience and enterprise-grade scalability.
+
+---
+
+## ✨ Mage Pro vs Airflow: Benefits Overview
+
+Mage Pro goes far beyond orchestration. It’s a unified platform for **data integration**, **SQL modeling (dbt-like blocks)**, **AI-powered transformation**, and **streaming pipelines** — all within a collaborative, Git-native workspace.
+
+| Capability | Airflow | Mage Pro |
+|------------|---------|----------|
+| **Visual pipeline UI** | ❌ Code-only (Jinja, Python) | ✅ Drag-and-drop editor |
+| **Built-in lineage** | ⚠️ Plugin-based (e.g., OpenLineage) | ✅ Native, auto-generated |
+| **AI assistance** | ❌ | ✅ Generate, fix, and explain code with AI Sidekick |
+| **Multi-language support** | ⚠️ Python only by default | ✅ SQL, Python, streaming, APIs |
+| **Data integration pipelines** | ⚠️ Custom Python or 3rd-party plugins | ✅ Native connectors for databases, files, APIs |
+| **SQL block support** | ⚠️ SQLOperator runs raw strings only | ✅ dbt-style SQL blocks with `ref()`, preview, and test support |
+| **Incremental modeling** | ❌ (requires custom logic) | ✅ Native in SQL block config |
+| **Environment isolation** | ⚠️ Requires Airflow deployments per team | ✅ Per-workspace configs, secrets, variables |
+| **Git integration** | ⚠️ Manual DAG sync | ✅ Git-backed version control and CI/CD |
+| **Scheduling & triggers** | ✅ Cron + sensors | ✅ Cron, events, file triggers, webhooks |
+| **Secrets management** | ⚠️ Requires Vault or plugins | ✅ Built-in across workspaces and pipelines |
+| **RBAC & SSO** | ⚠️ Manual plugins / external auth | ✅ Built-in, enterprise-ready |
+| **Observability & logging** | ⚠️ Requires Prometheus, Grafana, etc. | ✅ Native UI for logs, metrics, traces |
+| **Scalability** | ⚠️ Manual tuning of workers and queues | ✅ Auto-scaled executors on K8s or ECS |
+| **Streaming support** | ❌ | ✅ Kafka, CDC, real-time ingestion |
+| **Data previews & interactive runs** | ❌ | ✅ Preview data at every step |
+| **Team collaboration** | ⚠️ Airflow not multi-tenant | ✅ Workspaces, permissions, activity logs |
+
+---
+
+## 🛠️ Step-by-Step Migration Instructions
+
+<Steps>
+
+1. **Inventory your Airflow DAGs**  
+   - List your active DAGs and their task types:
+     - `PythonOperator`, `BashOperator`, `SQLOperator`, etc.  
+   - Identify dependencies and scheduling logic
+
+2. **Create a cluster in Mage Pro**  
+   - Visit [Mage Pro](https://cloud.mage.ai) and sign in  
+   - (Optional) Connect your Git repo for version control
+
+3. **Recreate your DAGs as Mage pipelines**  
+   - Each Airflow DAG → 1 Mage pipeline  
+   - Each Airflow task → 1 Mage block:
+     - `PythonOperator` → Python block  
+     - `SQLOperator` → SQL block  
+     - `BranchOperator` → Dynamic block  
+     - `Sensor` → Trigger block  
+   - Define dependencies visually using the UI
+
+4. **Configure scheduling and triggers**  
+   - Use cron, interval, or event-based triggers  
+   - Configure schedules via UI or YAML
+
+5. **Run and validate pipelines**  
+   - Use Mage Pro’s UI to test individual blocks  
+   - Preview dataframes, logs, and outputs  
+   - Compare results to your Airflow jobs
+
+6. **Monitor, scale, and automate**  
+   - Monitor pipeline runs and resource usage  
+   - Set alerts and retry rules  
+   - Mage Pro autoscaling handles executor resources automatically
+
+</Steps>
+---
+
+## 🤖 Convert Airflow DAGs with AI Sidekick
+
+Skip the manual rewrites — Mage Pro’s **AI Sidekick** can automatically convert your Airflow DAG code into a Mage pipeline with just one prompt.
+
+### 🔧 How to Use It
+
+1. Click the **“Ask AI”** button in the top-right corner of the Mage Pro UI.  
+2. Paste your Airflow DAG code — including `@dag`, `@task`, or `PythonOperator`-based workflows.  
+3. Ask: **“Convert this Airflow DAG to a Mage pipeline.”**  
+4. Sidekick will:
+   - Parse the DAG structure and task relationships  
+   - Generate the corresponding Mage blocks (Python, SQL, dynamic, trigger)  
+   - Define block dependencies and scheduling logic  
+5. Review and insert the generated pipeline directly into your project.
+
+### 💡 Why Use Sidekick?
+
+- **Faster migration**: turn entire DAGs into Mage pipelines in seconds  
+- **Less error-prone**: Sidekick understands scheduling, dependencies, and operator types  
+- **Context-aware**: uses your project setup and prior block structure  
+- **Fully editable**: review, tweak, and insert blocks before saving  
+
+👉 Learn more in the [AI Sidekick docs](/ai/sidekick).
+
+
+---
+
+## 🧠 Tips for Migrating Complex DAGs
+
+- Split large DAGs into smaller, modular pipelines  
+- Use **global variables** or **shared outputs** to pass data between blocks  
+- Replace Airflow SubDAGs with **block groups**  
+- Use **dynamic blocks** to support branching and conditional logic  
+
+---
+
+## ✅ After Migration: What You Get with Mage Pro
+
+- AI-powered block generation and debugging (via AI Sidekick)  
+- Visual pipeline builder and real-time logs  
+- Git-backed version control and CI/CD  
+- Built-in access controls, audit logs, and workspace isolation  
+- Support for SQL, Python, streaming, dbt, Delta Lake, Iceberg, and more  
+
+> Your pipelines, your logic—augmented by AI, automated for scale.
+
+👉 [Migrate to Mage Pro Today](/production/mage/pro#migrating-to-mage-pro)
