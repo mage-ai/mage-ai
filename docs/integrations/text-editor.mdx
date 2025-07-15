@@ -100,13 +100,72 @@ uuid: etl_demo
 
 <ParamField path="type" type="string enum">
     The type of pipeline. Currently available options are:
-
-    `databricks`, `integration`, `pyspark`, `python` (most common), `streaming`.
+    - `databricks`
+    - `integration`
+    - `pyspark`
+    - `python` (most common)
+    - `streaming`
 </ParamField>
 
 <ParamField path="uuid" type="string">
     Unique identifier of the pipeline. This UUID must be unique across all pipelines.
 </ParamField>
+
+<ParamField path="description" type="string">
+  Optional description of what the pipeline does.
+</ParamField>
+
+<ParamField path="executor_type" type="string enum">
+  Pipeline level executor type. Supported values:
+  - `ecs`
+  - `gcp_cloud_run`
+  - `azure_container_instance`
+  - `k8s`
+  - `local_python` (most common)
+  - `pyspark`
+</ParamField>
+
+<ParamField path="executor_count" type="integer">
+  Number of concurrent executors to run the pipeline. Used in streaming pipeline.
+</ParamField>
+
+<ParamField path="executor_config" type="object">
+  Optional configuration specific to the selected executor type.
+  Refer to the following documentation for executor-specific options:
+
+  - [`ecs`](/production/executors/aws)
+  - [`gcp_cloud_run`](/production/executors/gcp)
+  - [`azure_container_instance`](/production/executors/azure)
+  - [`k8s`](/production/executors/k8)
+</ParamField>
+
+<ParamField path="retry_config" type="object">
+  Retry configuration at the pipeline level.
+  See [documentation](/orchestration/pipeline-runs/retrying-block-runs#3-pipeline-level-retry-config) for details.
+</ParamField>
+
+<ParamField path="notification_config" type="object">
+  Configuration for pipeline notification messages (e.g., on failure or success).
+  See [documentation](/observability/alerting/alerting-slack) for details.
+</ParamField>
+
+<ParamField path="concurrency_config" type="object">
+  Concurrency settings for block execution within the pipeline.
+  See [documentation](/design/data-pipeline-management#pipeline-level-concurrency) for details.
+  - `block_run_limit`: Maximum number of blocks that can run in parallel.
+  - `pipeline_run_limit`
+  - `pipeline_run_limit_all_triggers`
+  - `on_pipeline_run_limit_reached`
+</ParamField>
+
+<ParamField path="cache_block_output_in_memory" type="boolean">
+  Whether to cache block output in memory during execution.
+</ParamField>
+
+<ParamField path="run_pipeline_in_one_process" type="boolean">
+  If true, runs all blocks in a single process or k8s pod.
+</ParamField>
+
 
 ### Block attributes
 
@@ -117,14 +176,30 @@ uuid: etl_demo
 
 <ParamField path="executor_type" type="string enum">
     The method for running this block of code. Currently available options are:
+    - `ecs`
+    - `gcp_cloud_run`
+    - `azure_container_instance`
+    - `k8s`
+    - `local_python` (most common)
+    - `pyspark`
+</ParamField>
 
-    `ecs`, `gcp_cloud_run`, `azure_container_instance`, `k8s`, `local_python` (most common), `pyspark`.
+<ParamField path="executor_config" type="object">
+  Optional configuration specific to the selected executor type.
+  Refer to the following documentation for executor-specific options:
+
+  - [`ecs`](/production/executors/aws)
+  - [`gcp_cloud_run`](/production/executors/gcp)
+  - [`azure_container_instance`](/production/executors/azure)
+  - [`k8s`](/production/executors/k8)
 </ParamField>
 
 <ParamField path="language" type="string enum">
-    The code language the block is using. Currently available options are:
-
-    `python` (most common), `r`, `sql`, `yaml`.
+  Programming language used by the block. Supported values:
+  - `python` (most common)
+  - `r`
+  - `sql`
+  - `yaml`
 </ParamField>
 
 <ParamField path="name" type="string">
@@ -133,8 +208,14 @@ uuid: etl_demo
 
 <ParamField path="type" type="string enum">
     The type of block. Currently available options are:
-
-    `chart`, `custom` (most common), `data_exporter`, `data_loader`, `dbt`, `scratchpad`, `sensor`, `transformer`.
+    - `chart`
+    - `custom` (most common)
+    - `data_exporter`
+    - `data_loader`
+    - `dbt`
+    - `scratchpad`
+    - `sensor`
+    - `transformer`
 
     The type of block will determine which folder it needs to be in. For example, if the block `type`
     is `data_loader`, then the file must be in the `[project_name]/data_loaders/` folder. It can be
@@ -152,4 +233,9 @@ uuid: etl_demo
 
     For example, if the UUID is `load_data` and the `language` is `python`, then the file name
     will be `load_data.py`.
+</ParamField>
+
+<ParamField path="retry_config" type="object">
+  Retry configuration at the block level.
+  See [documentation](/orchestration/pipeline-runs/retrying-block-runs#2-block-level-retry-config) for details.
 </ParamField>
