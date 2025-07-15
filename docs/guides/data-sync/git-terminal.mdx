@@ -2,7 +2,8 @@
 title: "Git terminal with built-in authentication and shortcuts"
 sidebarTitle: "Git terminal"
 icon: "code"
-description: "New collaborative terminal with Git authentication and functionality built-in for easy and fast version control."
+description: "Mage Pro supports Git-based version control, making it easy to 
+collaborate, track changes, and manage code across environments."
 ---
 
 import { ProButton } from '/snippets/pro/button.mdx';
@@ -10,10 +11,34 @@ import { ProOnly } from '/snippets/pro/only.mdx';
 
 <ProOnly source="git-terminal" />
 
-## Integrated with Git
+### Introduction
 
-Authenticate with your Git provider and start working on your codebase right away.
-Connect to a remote repository and perform Git operations directly from the terminal.
+The Git Terminal is a browser based terminal with built in Git authentication, 
+directly integrated into Mage Pro. It provides standard Git functionality with 
+real-time collaboration features, eliminating the need to switch between tools for 
+version control operations. Multiple team members can work simultaneously in 
+the same terminal session, sharing commands and coordinating development work.
+
+### Location
+
+From the home page, hover over the left popout navigation menu and click 
+“Version control.” You will then be taken to a terminal screen directly integrated 
+with Git.
+
+<Frame>
+  <img
+    alt="Git terminal navigation"
+    src="https://raw.githubusercontent.com/mage-ai/assets/main/dev-ux/applications/version-control-nav.png"
+  />
+</Frame>
+
+### Integration
+
+The Git Terminal connects with your existing development workflow. Key integration points include:
+
+- GitHub, GitLab, and other Git providers
+- Maintains authentication across sessions
+- Works within existing Mage Pro workflow
 
 <Frame>
   <img
@@ -22,16 +47,41 @@ Connect to a remote repository and perform Git operations directly from the term
   />
 </Frame>
 
-## Real-time collaboration
+### Use Cases
 
-Invite your team members to collaborate on the same terminal session.
+Use the Git Terminal in your development environment to push changes to GitHub for source version control after making modifications to pipelines, blocks, or configurations in the Mage UI. Essential use cases include:
 
-<Frame>
-  <video
-    controls
-    autoplay
-    loop
-    src="https://github.com/user-attachments/assets/10dbb996-0353-4ed2-9eff-3e0a5080227f"
-  >
-  </video>
-</Frame>
+- Before deploying changes to save work to version control
+- For regular commits to maintain code history and backup
+
+### Authentication
+
+Before using the Git Terminal, you must first authenticate with GitHub through the Deploy App. This one-time setup enables all Git operations within Mage Pro.
+
+**Quick Setup:**
+
+1. Navigate to **Deployments** → **Connect repository**
+2. Complete GitHub OAuth authentication
+3. Configure your repository connection
+
+*For detailed authentication steps, see the [Version control guide](https://docs.mage.ai/guides/data-sync/version-control-guide).*
+
+Once authenticated, the Git Terminal automatically uses your credentials for all Git operations without requiring additional setup.
+
+### Usage
+
+The Git Terminal supports all standard Git operations you're familiar with. Run standard Git commands such as:
+
+```python
+git status                    # Check current changes
+git add .                     # Stage all changes  
+git commit -m "message"       # Commit with description
+git push origin main          # Push to remote repository
+```
+
+### Conclusion
+
+The Git Terminal streamlines your development workflow by bringing version control directly into the Mage Pro environment. 
+With built-in authentication, real-time collaboration, and standard Git functionality, teams can maintain professional development 
+practices without the complexity of managing separate tools. This integrated approach enables faster development cycles while ensuring 
+code changes are properly tracked and shared across your team.

@@ -44,9 +44,10 @@
             "group": "CI/CD",
             "pages": [
               "development/git/pro-overview",
-              "guides/data-sync/version-control-guide",
+              "guides/data-sync/cicd-workflow",
               "guides/data-sync/git-terminal",
-              "guides/version-control/file-versions"
+              "guides/version-control/file-versions",
+              "guides/data-sync/version-control-guide"
             ]
           },
           {
