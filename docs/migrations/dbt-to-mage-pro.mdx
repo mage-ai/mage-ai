@@ -1,0 +1,269 @@
+---
+title: "Migrate from dbt to Mage Pro"
+sidebarTitle: "dbt to Mage Pro"
+---
+
+## **Overview**
+
+Migrating your dbt Cloud project to Mage Pro enables your team to unify analytics and data engineering workflows, combining dbt’s data transformation power with Mage Pro’s orchestration, monitoring, and modular pipeline capabilities. This guide provides a step-by-step process for a seamless migration, allowing you to run, schedule, and monitor dbt models directly inside Mage Pro—alongside SQL, Python, and R blocks.
+
+**✨ Mage Pro vs dbt Cloud: Benefits Overview**
+
+Mage Pro goes far beyond SQL modeling. It's a unified platform for **data integration**, **transformation (including native dbt support)**, **AI-powered development**, and **streaming pipelines** — all within a collaborative, Git-native workspace.
+
+| **Capability** | **dbt Cloud** | **Mage Pro** |
+|------------|-----------|----------|
+| **Visual pipeline UI** | ⚠️ Basic lineage view only | ✅ Full drag-and-drop pipeline editor |
+| **dbt model execution** | ✅ Native | ✅ Native with enhanced orchestration |
+| **Multi-language support** | ❌ SQL only | ✅ SQL, Python, R, and dbt blocks |
+| **Data ingestion** | ❌ Transformation only | ✅ 200+ built-in connectors |
+| **End-to-end pipelines** | ❌ Requires external orchestration | ✅ Complete ETL/ELT workflows |
+| **Real-time streaming** | ❌ Batch only | ✅ Kafka, CDC, event-driven processing |
+| **AI assistance** | ⚠️ Limited dbt Assist (private beta) | ✅ AI Sidekick for all pipeline development |
+| **Pricing model** | ⚠️ Per-seat + model builds (unpredictable) | ✅ Transparent per-seat pricing |
+| **Cost predictability** | ❌ Consumption charges can spike unexpectedly | ✅ Fixed monthly costs with no usage surprises |
+| **IDE experience** | ✅ Browser-based SQL IDE | ✅ Advanced notebook-style blocks + VS Code integration |
+| **Git integration** | ⚠️ Basic Git functionality, complex workflows limited | ✅ Full Git workflows with CI/CD |
+| **Orchestration** | ⚠️ Requires Airflow/external tools | ✅ Native scheduling and event triggers |
+| **Environment isolation** | ⚠️ Limited workspace management | ✅ Per-workspace configs and secrets |
+| **Data previews** | ⚠️ Limited preview capabilities | ✅ Interactive data preview at every step |
+| **Scalability** | ⚠️ Limited concurrency (1-5 jobs) | ✅ Auto-scaled execution on K8s/ECS |
+| **Security concerns** | ⚠️ Data passes through dbt infrastructure | ✅ Direct warehouse connections |
+| **Team collaboration** | ⚠️ Limited to SQL transformations | ✅ Full-stack data team collaboration |
+
+## **Migration Process Outline:**
+
+Developers should create a Git repo and push the base Mage Pro project into their chosen vendor. This could be Github, GitLab, GitBucket, etc. For the sake of this migration tutorial we will be using Github.
+
+## Step 1: Connect Mage Pro to Gituhub
+
+Before migrating your dbt project, you must connect Mage Pro to your GitHub repository to enable version control and deployment capabilities.
+
+### Quick Setup
+
+1. **Navigate to Deployments** in the left-hand navigation menu
+2. **Click "Setup connection"** to begin GitHub integration
+3. **Authenticate with GitHub** using OAuth tokens
+4. **Select your organization and repository** from the dropdown menus
+5. **Choose your target branch** (typically `main` or `master`)
+6. **Complete the connection** by clicking "Next step to deployment stage"
+
+*For detailed authentication steps, see the* [Version Control Guide](https://docs.mage.ai/guides/data-sync/version-control-guide)*.*
+
+Once authenticated, the Git Terminal automatically uses your credentials for all Git operations without requiring additional setup.
+
+## Step 2: Push base Mage Pro project to Github
+
+After connecting to GitHub, you'll need to push your initial Mage Pro project structure to your repository to establish the foundation for your dbt migration.
+
+### **Quick Setup**
+
+1. **Access Git Terminal** by hovering over the left navigation menu and clicking "Version control"
+2. **Stage your project files** using standard Git commands:
+    
+    ```bash
+    git add .
+    git commit -m "Initial Mage Pro project setup"
+    git push origin main
+    ```
+    
+3. **Verify the push** by checking your GitHub repository for the Mage Pro project structure
+
+NOTE - you may need to force push the initial commit to Github
+
+### **What Gets Pushed**
+
+Your initial commit will include:
+
+- Mage Pro project structure (pipelines, data_loaders, transformers, etc.)
+- Configuration files (`io_config.yaml`, `metadata.yaml`)
+- Environment setup files
+
+### **Authentication**
+
+The Git Terminal uses the authentication you configured in Step 1, so no additional setup is required. All standard Git operations work seamlessly within the Mage Pro interface.
+
+*For detailed Git Terminal usage and advanced features, see the [Git Terminal Guide](https://docs.mage.ai/guides/data-sync/git-terminal).*
+
+Once your base project is pushed to GitHub, you can proceed with importing and integrating your existing dbt models into the Mage Pro environment.
+
+## Step 3: Clone your dbt project
+
+After pushing your base Mage Pro project, you'll need to clone your existing dbt project into the Mage environment to begin the migration process.
+
+### Quick Setup
+
+1. **Access Git Terminal** by hovering over the left navigation menu and clicking "Version control"
+2. **Navigate to the dbt directory** that Mage provides:
+    
+    `cd dbt`
+    
+3. **Clone your dbt project** into the dbt folder:
+    
+    `git clone https://github.com/your-org/your-dbt-project.git
+    cd your-dbt-project`
+    
+4. **Verify the clone** by checking that your dbt models, tests, and configurations are present
+
+### Integration Notes
+
+- The dbt folder is specifically designed for dbt project integration
+- Your cloned project will work seamlessly with Mage Pro's native dbt support
+- Authentication uses the same credentials from your GitHub connection
+
+*For detailed Git Terminal usage and advanced features, see the [Git Terminal Guide](https://docs.mage.ai/guides/data-sync/git-terminal).*
+
+Once your dbt project is cloned into Mage Pro, you can begin creating pipelines that incorporate your existing dbt models alongside new data processing workflows.
+
+## Step 4: Add Mage profiles.yaml file
+
+You will need to custom configure your profiles.yaml file in 
+
+After cloning your dbt project, you need to configure the `profiles.yml` file to connect your dbt models to your data warehouse within the Mage Pro environment.
+
+### Quick Setup
+
+1. **Navigate to your dbt project folder** in the Git Terminal:
+    
+    `cd dbt/your-dbt-project`
+    
+2. **Create or edit the profiles.yml file**:
+    
+    `touch profiles.yml`
+    
+3. **Add your warehouse configuration** using the appropriate connection details
+
+NOTE - for this step you should use the Mage terminal not the Git terminal
+
+### BigQuery Configuration Example
+
+```yaml
+mage_dbt_demos:
+  outputs:
+    dev:
+      dataset: BigQuery dataset
+      job_execution_timeout_seconds: 300
+      job_retries: 1
+      keyfile: /home/src/<project-name>/<file-name.json>
+      location: US
+      method: service-account
+      priority: interactive
+      project: CGP_PROJECT_ID
+      threads: 4
+      type: bigquery
+  target: dev
+```
+
+### Key Configuration Notes
+
+- **Profile name** should match your `dbt_project.yml` profile setting
+- **Keyfile path** must point to your service account credentials within Mage Pro
+- **Dataset and project** should match your BigQuery setup
+- **Target environment** determines which output configuration dbt uses
+
+### Environment-Specific Configurations
+
+You can add multiple environments (dev, staging, prod) within the same profile to support different deployment targets as your project grows.
+
+Once configured, your dbt models will be able to connect to your data warehouse and execute transformations within the Mage Pro environment.
+
+## **Step 5: Testing the dbt connection**
+
+After migrating your dbt project to Mage Pro and configuring your `profiles.yml`, you’ll want to verify that Mage Pro can successfully connect to your data warehouse and run dbt commands. This ensures that your credentials, connection details, and environment setup are correct before integrating further workflows.
+
+### **How to Test Your dbt Connection in Mage Pro**
+
+1. **Open Mage Pro and locate your dbt block** within the relevant pipeline.
+2. **Click into the dbt block** to access its configuration and terminal interface.
+3. **Run a basic dbt command** to test connectivity. For example:
+    
+    `dbt debug`
+    
+    This command will check the connection parameters defined in your `profiles.yml` and confirm dbt is able to reach your data warehouse.
+    
+4. **Verify the output** in the terminal panel:
+    - If the last line is `All checks passed!`, your connection is successful.
+    - If you see errors, review the credentials in `profiles.yml`, check access permissions, and validate that your warehouse is network accessible from Mage Pro.
+
+## **Step 6: Loading dbt Dependencies After Migrating From GitHub**
+
+When bringing a dbt project from GitHub, you may have dependencies declared in your `packages.yml` file (e.g. dbt-utils). Mage Pro supports full dependency resolution for dbt projects cloned or migrated from GitHub.
+
+### **How to Load dbt Dependencies in Mage Pro**
+
+1. **Open Mage Pro and navigate to your cloned dbt project directory** using the built-in terminal or via the dbt block settings.
+2. **Locate your `packages.yml`** file (usually in the root of your dbt project).
+3. **Install dependencies** by running:
+    
+    `dbt deps`
+    
+    This command will download and install all packages specified in your `packages.yml`.
+    
+4. **Verify successful installation**:
+    - Check the console output for confirmation that packages were installed (look for messages like “Dependencies installed!”).
+    - Confirm that new folders such as `dbt_packages` are present in your dbt project directory.
+5. **After installing dependencies, you can now compile and run your dbt models** as usual in Mage Pro.
+
+## Step 7: Connect dbt models to Mage blocks
+
+When you connect a dbt block in Mage Pro to an upstream block (Python, SQL, or R), Mage automatically generates and manages a special `mage_sources.yml` file in your dbt project's model directory. This file describes upstream Mage blocks as dbt sources, making their outputs available to your dbt models.
+
+Below is a sample `mage_sources.yml` that gets created when you connect a data loader or transformation block (e.g., Python, SQL, or R) to a downstream dbt model block:
+
+```yaml
+version: 2
+sources:
+  - description: Dataframes Mage upstream blocks
+    loader: mage
+    name: mage_dbt_tutorial
+    schema: public
+    tables:
+      - description: Dataframe for block `get_data` of the `dbt_tutorial` mage pipeline.
+        identifier: mage_dbt_tutorial_get_data
+        meta:
+          block_uuid: get_data
+          pipeline_uuid: dbt_tutorial
+        name: dbt_tutorial_get_data
+```
+
+### **Explanation**
+
+- **version**: dbt sources file version (always `2` for dbt v1+).
+- **sources**: List of source definitions.
+    - **description**: Human-readable note (optional, here noting that sources come from Mage blocks).
+    - **loader**: Indicates Mage created the source.
+    - **name**: The dbt source name, usually `mage_<pipeline_name>` or similar.
+    - **schema**: Target schema for the seed tables (commonly `public`).
+    - **tables**: List of upstream Mage blocks exposed as tables to dbt.
+        - **description**: Helps you identify the block in Mage.
+        - **identifier**: Table identifier in your warehouse, typically `mage_<pipeline_uuid>_<block_uuid>`.
+        - **meta**: Traceability information, recording Mage pipeline and block UUIDs.
+        - **name**: dbt-level source table name (used as the second argument for `source()` in dbt SQL).
+
+## Step 8: Make changes to your sources in dbt blocks
+
+Mage Pro manages the mapping between upstream pipeline outputs and your dbt models. Any time you update upstream logic—such as renaming a block, changing a pipeline, or adding new data sources—Mage Pro ensures your `mage_sources.yml` file reflects the latest available sources.
+
+To use an upstream Mage block as a source in your dbt model:
+
+1. In Mage Pro, open your dbt model block from the pipeline.
+2. Check that your most recent changes to Python, SQL, or R blocks upstream are reflected in the generated `mage_sources.yml` file. For example, if you add a new transformation block called `get_data`, the following entry should appear:
+    
+    ```yaml
+    sources:
+      - name: mage_dbt_tutorial
+        tables:
+          - name: dbt_tutorial_get_data
+            identifier: mage_dbt_tutorial_get_data
+    ```
+    
+3. Reference the Mage source in your dbt SQL model using dbt's `source()` macro:
+    
+    `select *
+    from {{ source('mage_dbt_tutorial', 'dbt_tutorial_get_data') }}`
+    
+4. Run and test your dbt model as usual. Model compilation and execution automatically reference the latest outputs from your upstream Mage pipeline logic.
+
+## Conclusion
+
+After completing these steps, you've successfully migrated your dbt project to Mage Pro, creating a unified platform that combines dbt transformations with Mage Pro's orchestration and multi-language support. Your dbt models now run seamlessly alongside Python, SQL, and R blocks, while maintaining GitHub version control. This migration enables more comprehensive data workflows and enhanced collaboration while preserving your existing dbt investments.
