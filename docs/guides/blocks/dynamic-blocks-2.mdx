@@ -60,6 +60,31 @@ With dynamic block 2.0, you can enable stream mode which will allow downstream d
 3. As soon as 1 output is detected from block B, block C spawns 1 dynamic child.
 4. As soon as 1 output is detected from both block B and block C, block D spawns 1 dynamic child.
 
+## Enabling stream mode
+
+Stream mode allows downstream dynamic child blocks to execute without waiting for every upstream block to finish, improving pipeline performance.
+
+### Accessing block settings
+
+To enable stream mode, access the Dynamic block v2 configuration:
+
+1. Click the **block settings button** next to the "Run code" button
+    - Alternatively, use the **Block settings** tab in the right side navigation menu
+
+### Configuration
+
+1. Scroll down to the "Dynamic block v2 configuration" section
+2. Select **"Stream"** from the Mode dropdown
+3. Enter a **poll interval** in seconds - this is how often the system checks for new data or completed upstream blocks. Lower values (like 1 second) provide faster response times but use more system resources
+4. **(Optional)** Toggle **"Combine all output into 1"** to consolidate outputs for downstream processing
+
+Stream mode enables parallel processing and better resource utilization by allowing child blocks to start processing data as it becomes available.
+
+<img
+  alt="block-settings-button"
+  src="https://raw.githubusercontent.com/mage-ai/assets/main/blocks/block-settings-button.png"
+/>
+
 ## Memory generator
 
 If a dynamic block contains a yield block,
