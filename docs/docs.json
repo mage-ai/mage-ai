@@ -136,6 +136,7 @@
           {
             "group": "Migration guides",
             "pages": [
+              "migrations/airbyte-to-mage-pro",
               "migrations/airflow-to-mage-pro",
               "migrations/dbt-to-mage-pro"
             ]
