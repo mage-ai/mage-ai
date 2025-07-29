@@ -47,6 +47,27 @@ These configuration parameters give you greater control over how data is fetched
 
 These options enhance your ability to handle diverse data formats and edge cases in production environments, giving you full control over data ingestion quality and reliability.
 
+### Multi-Stream Configuration (Mage Pro only)
+
+Mage Pro supports defining multiple independent API configs using the `streams` key. Each key in the `streams` map represents a separate stream and can define its own URL, headers, parser, and pagination settings.
+
+```yaml
+streams:
+  users:
+    url: https://api.example.com/users
+    headers:
+      x-api-key: user-key
+    response_parser: data.users
+
+  orders:
+    url: https://api.example.com/orders
+    headers:
+      x-api-key: order-key
+    response_parser: data.orders
+```
+Each stream entry can independently use any configuration field supported in the single-stream format.
+
+
 ### Pagination Configuration
 
 To sync paginated API responses, the `pagination_config` config block supports two types:
@@ -56,28 +77,49 @@ To sync paginated API responses, the `pagination_config` config block supports t
 
 ---
 
-#### 🔁 Cursor-Based Pagination
+#### Cursor-Based Pagination
 
 Use when the API returns a **next cursor/token** in the response body.
 
-| Key                  | Description                                                               | Required |
-|----------------------|---------------------------------------------------------------------------|----------|
-| `type`               | `"cursor"`                                                                | ✅        |
-| `cursor_param`       | Name of the query parameter to set the cursor/token                       | ✅        |
-| `initial_cursor_value` | Initial cursor value to use in the first request (e.g., `"*"` or `null`) | ✅        |
-| `next_cursor_path`   | Dot-notation path in the response to extract the next cursor              | ✅        |
+| Key                    | Description                                                                                          | Required |
+|------------------------|------------------------------------------------------------------------------------------------------|----------|
+| `type`                 | Must be `"cursor"`                                                                                   | Yes      |
+| `cursor_param`         | Name of the query parameter for the cursor (single cursor only)                                      | Yes*     |
+| `cursor_params`        | List of query parameter names used for multiple cursors                                              | Yes*     |
+| `initial_cursor_value` | Initial value(s) to start pagination. Can be a string, list, or dictionary.                         | No       |
+| `next_cursor_path`     | Dot path(s) in response to extract next cursor. String for single, dictionary for multiple cursors. | Yes      |
 
-**Example**
+> *Either `cursor_param` or `cursor_params` must be provided.
+> If `cursor_params` is used, `next_cursor_path` must be a dictionary mapping each param to its response path.
+
+
+**Example: Single cursor**
 
 ```yaml
 pagination_config:
   type: cursor
-  cursor_param: curseur
-  initial_cursor_value: "*"
-  next_cursor_path: header.curseurSuivant
+  cursor_param: next
+  initial_cursor_value: null
+  next_cursor_path: meta.next_cursor
 ```
 
-#### 🔢 Page-Based Pagination
+**Example: Multiple cursors**
+
+```yaml
+pagination_config:
+  type: cursor
+  cursor_params:
+    - start
+    - end
+  initial_cursor_value:
+    start: null
+    end: null
+  next_cursor_path:
+    start: meta.start_cursor
+    end: meta.end_cursor
+```
+
+#### Page-Based Pagination
 
 Use when the API accepts **page numbers** or **offsets** and optionally supports a `limit` parameter.
 
