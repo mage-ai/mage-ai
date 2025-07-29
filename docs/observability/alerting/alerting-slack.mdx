@@ -136,6 +136,13 @@ notification_config:
         Pipeline run: {pipeline_run_url}.
 ```
 
+In addition to the variables mentioned above (e.g. `execution_time`, `pipeline_uuid`, etc), you can also use the
+following in your message templates in Mage Pro:
+1. `start_time`
+1. `end_time`
+1. `duration` (in seconds)
+1. `env` (this gets the value stored in the `ENV` environment variable)
+
 This makes your Slack notifications more dynamic and context-aware — ideal for multi-environment deployments and advanced workflows.
 
 ---
