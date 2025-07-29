@@ -138,7 +138,9 @@
             "pages": [
               "migrations/airbyte-to-mage-pro",
               "migrations/airflow-to-mage-pro",
-              "migrations/dbt-to-mage-pro"
+              "migrations/dbt-to-mage-pro",
+              "migrations/estuary-to-mage-pro",
+              "migrations/fivetran-to-mage-pro"
             ]
           },
           {
