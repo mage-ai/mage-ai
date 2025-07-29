@@ -30,6 +30,10 @@ You must provide the following credentials when configuring Redshift as a destin
 | `table`            | Name of the destination table to store data from your pipeline.                                             | `dim_users_v1`                                         | ✅        |
 | `region`           | AWS region where the Redshift cluster is hosted.                                                            | `us-west-2`                                            | ✅        |
 | `use_merge_load`   | If `true`, Mage will attempt to merge incoming data with existing records (UPSERT-like behavior).           | `false` *(default)*                                    | ❌        |
+| `use_s3_copy`      | If `true`, Mage will upload data to S3 and load into Redshift using the COPY command (Pro feature).         | `false` *(default)*                                    | ❌        |
+
+> **Note**: `use_s3_copy` is a Mage **Pro-only** feature. It enables faster bulk loads via S3 and supports IAM roles or access key authentication.
+
 
 ---
 
@@ -43,6 +47,35 @@ If you prefer to use **IAM credentials** instead of traditional authentication, 
 | `secret_access_key`  | AWS secret access key corresponding to the above access key ID.                                             | `xyz123...`      | ✅                        |
 | `cluster_identifier` | Identifier of the Amazon Redshift cluster.                                                                 | `mage-prod`      | ✅                        |
 | `db_user`            | IAM-authenticated Redshift user.                                                                           | `admin`          | ✅                        |
+
+---
+
+## S3 Configuration (Required if `use_s3_copy` is true)
+
+import { ProButton } from '/snippets/pro/button.mdx';
+import { ProOnly } from '/snippets/pro/only.mdx';
+
+<ProOnly source="redshift" />
+
+| Key                   | Description                                                                 | Required            | Sample Value                                               |
+|------------------------|-----------------------------------------------------------------------------|---------------------|------------------------------------------------------------|
+| `aws_access_key_id`     | AWS access key for uploading data to S3. Ignored if using IAM role.        | ✅ (unless using IAM role) | `AKIA...`                                           |
+| `aws_secret_access_key` | AWS secret key for uploading data to S3. Ignored if using IAM role.        | ✅ (unless using IAM role) | `xyz...`                                            |
+| `aws_region`            | Region where the S3 bucket is located.                                     | ✅                  | `us-west-2`                                               |
+| `bucket`                | S3 bucket to temporarily stage Parquet files for Redshift COPY.            | ✅                  | `mage-feature-sets`                                      |
+| `redshift_iam_role`     | IAM role ARN with S3 read access attached to your Redshift cluster.        | Optional            | `arn:aws:iam::123456789012:role/MyRedshiftRole`          |
+
+Configure these inside a nested `s3_creds` config object:
+
+```yaml
+use_s3_copy: true
+s3_creds:
+  aws_access_key_id: AKIA...
+  aws_secret_access_key: xyz...
+  aws_region: us-west-2
+  bucket: mage-feature-sets
+  redshift_iam_role: arn:aws:iam::123456789012:role/MyRedshiftRole
+```
 
 ---
 
