@@ -125,6 +125,35 @@ Developers can specify which custom variables to inherit by setting
 the `USER_DEFINED_VARS` environment variable with a comma-separated list of variable names. 
 This provides flexibility to include specific configuration values needed across workspaces.
 
+### Updating workspaces after environment variable changes
+
+When you add or modify environment variables in your base cluster, existing workspaces will not automatically inherit these changes. To ensure your workspaces reflect the updated environment configuration, you must restart the affected workspaces.
+
+To update a workspace:
+
+1. Open the workspace settings by clicking into the workspace you want to update
+2. Click the update button for your workspace
+<Frame>
+    <p align="center">
+        <img
+            alt="Update workspace button"
+            src="https://raw.githubusercontent.com/mage-ai/assets/main/guides/workspaces/update-workspace-button.png"
+        />
+    </p>
+</Frame>
+3. Click the dropdown arrow on the Kubernetes configuration section
+4. Toggle the "update workspace settings" option to true
+5. Click update
+<Frame>
+    <p align="center">
+        <img
+            alt="Update workspace configuration"
+            src="https://raw.githubusercontent.com/mage-ai/assets/main/guides/workspaces/workspace-update-configuration.png"
+        />
+    </p>
+</Frame>
+The container will take up to several minutes to update and restart with the new environment configuration.
+
 ## Lifecycle management policies (optional)
 
 Mage Pro workspaces support various lifecycle management policies that control how your workspace behaves throughout its runtime. These policies include automated termination settings, pre-initialization scripts, and post-initialization procedures, giving you complete control over your workspace's behavior from startup to shutdown.
