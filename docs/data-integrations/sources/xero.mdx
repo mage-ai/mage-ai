@@ -53,7 +53,13 @@ To sync all available streams, grant the following scopes:
 
 ### Example Scope String
 ```
-accounting.settings.read accounting.transactions.read accounting.contacts.read accounting.reports.read accounting.journals.read accounting.attachments.read offline_access
+accounting.settings.read
+accounting.transactions.read
+accounting.contacts.read
+accounting.reports.read
+accounting.journals.read
+accounting.attachments.read
+offline_access
 ```
 <br/>
 
@@ -64,6 +70,7 @@ Follow Xero's [OAuth 2.0 Authentication Flow guide](https://developer.xero.com/d
 1. Register a new Xero app to get your `client_id` and `client_secret`.
 2. Set up the OAuth scopes your app requires.
 3. Complete the OAuth 2.0 authorization flow to obtain your `access_token`, `refresh_token`, `id_token`, and `tenant_id`.
+4. Store these securely in your configuration.
 
 <br/>
 
