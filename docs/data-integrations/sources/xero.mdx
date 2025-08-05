@@ -21,6 +21,40 @@ To set up the Xero source, provide the following configuration parameters:
 | `tenant_id`      | Tenant ID associated with your Xero organization.                                              | `abcdefg`               | ✅        |
 | `refresh_token`  | Refresh token used to renew the access token after expiration (requires `offline_access` scope). | `abcdefg`             | ✅        |
 
+## Required Xero OAuth2 Scopes
+
+To use this source, you must grant your Xero app the following OAuth2 scopes.
+
+### Minimum Scope for Discovery
+- `accounting.settings.read`
+  Required for the `/Currencies` endpoint, which is called during discovery to verify:
+  - Your `access_token` is valid
+  - Your `tenant_id` is authorised
+  - The app has the correct scopes
+
+If this scope is missing, discovery will fail before any sync begins.
+
+### Scopes for Syncing All Streams
+To sync all available streams, grant the following scopes:
+
+| Scope                        | Required For                              |
+|------------------------------|-------------------------------------------|
+| `accounting.settings.read`   | Organisation settings, currencies, etc.  |
+| `accounting.transactions.read` | Invoices, bank transactions, payments   |
+| `accounting.contacts.read`   | Contacts                                  |
+| `accounting.reports.read`    | Reports                                   |
+| `accounting.journals.read`   | Journals                                  |
+| `accounting.attachments.read`| Attachments                               |
+| `offline_access`             | Long-lived access via refresh tokens     |
+
+**Note:**
+- You only need scopes for the streams you plan to sync.
+- Missing scopes for a selected stream will result in `401` or `403` errors.
+
+### Example Scope String
+```
+accounting.settings.read accounting.transactions.read accounting.contacts.read accounting.reports.read accounting.journals.read accounting.attachments.read offline_access
+```
 <br/>
 
 ## How to Generate Credentials
@@ -38,3 +72,4 @@ Follow Xero's [OAuth 2.0 Authentication Flow guide](https://developer.xero.com/d
 - The `start_date` determines how far back data will be synced.
 - Ensure that the `offline_access` scope is enabled to receive a `refresh_token`.
 - Tokens expire after a set period; use the `refresh_token` to obtain new `access_token` and `id_token` values automatically.
+- During setup, the connector calls the `/Currencies` endpoint to validate platform access before syncing.
