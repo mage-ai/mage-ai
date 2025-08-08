@@ -35,6 +35,8 @@ import {
   SchemaPropertyType,
   StreamType,
   UniqueConflictMethodEnum,
+  ValidationRuleType,
+  ValidationTypeEnum,
 } from '@interfaces/IntegrationSourceType';
 import { TableContainerStyle } from '../index.style';
 import { UNIT } from '@oracle/styles/units/spacing';
@@ -51,12 +53,64 @@ const SHARED_TOOLTIP_PROPS = {
   relativePosition: true,
 };
 
+// Helper function to determine which validation types are applicable for a column based on its data types
+// Frontend Learning: This is a pure function - it takes inputs and returns outputs without side effects
+const getValidationTypesForColumn = (columnTypes: ColumnTypeEnum[]): ValidationTypeEnum[] => {
+  // Check if column supports numeric operations (integers or numbers)
+  const hasInteger = columnTypes.includes(ColumnTypeEnum.INTEGER) || columnTypes.includes(ColumnTypeEnum.NUMBER);
+  // Check if column supports string operations
+  const hasString = columnTypes.includes(ColumnTypeEnum.STRING);
+  
+  // Common validation types that apply to all column types
+  const commonTypes = [ValidationTypeEnum.NOT_NULL, ValidationTypeEnum.UNIQUE];
+  
+  if (hasInteger) {
+    // Spread operator (...) combines common types with numeric-specific validations
+    // This is a modern JavaScript feature for merging arrays
+    return [
+      ...commonTypes,
+      ValidationTypeEnum.GREATER_THAN,
+      ValidationTypeEnum.LESS_THAN,
+      ValidationTypeEnum.EQUAL,
+      ValidationTypeEnum.GREATER_THAN_OR_EQUAL,
+      ValidationTypeEnum.LESS_THAN_OR_EQUAL,
+      ValidationTypeEnum.NOT_EQUAL,
+    ];
+  }
+  
+  if (hasString) {
+    // String-specific validations for text columns
+    return [
+      ...commonTypes,
+      ValidationTypeEnum.IN,
+      ValidationTypeEnum.NOT_IN,
+      ValidationTypeEnum.NOT_EQUAL_STR,
+      ValidationTypeEnum.NOT_EMPTY_STRING,
+      ValidationTypeEnum.MINIMUM_LENGTH,
+      ValidationTypeEnum.MAXIMUM_LENGTH,
+    ];
+  }
+  
+  // Default to common types for other column types (boolean, null, etc.)
+  return commonTypes;
+};
+
+// Determines if a validation type needs a user-provided value (e.g., ">= 5" needs "5")
+const validationTypeRequiresValue = (type: ValidationTypeEnum): boolean => {
+  return ![
+    ValidationTypeEnum.NOT_NULL,
+    ValidationTypeEnum.UNIQUE,
+    ValidationTypeEnum.NOT_EMPTY_STRING,
+  ].includes(type);
+};
+
 export type SchemaTableProps = {
   bookmarkValues?: { [key: string]: any };
   destination: IntegrationDestinationEnum;
   isLoadingLoadSampleData: boolean;
   isLoadingUpdateDestinationBlockState?: boolean;
   loadSampleData: (stream: string) => void;
+  pipeline?: any; // Pipeline object
   source: IntegrationSourceEnum;
   streams?: StreamType[];
   updateAllStreams: (streamDataTransformer: (stream: StreamType) => StreamType) => void;
@@ -92,6 +146,7 @@ function SchemaTable({
   isLoadingLoadSampleData,
   isLoadingUpdateDestinationBlockState,
   loadSampleData,
+  pipeline,
   source,
   stream,
   streams,
@@ -117,6 +172,7 @@ function SchemaTable({
     tap_stream_id: streamUUID,
     unique_constraints: uniqueConstraints,
     unique_conflict_method: uniqueConflictMethod,
+    validation_rules: validationRules,
   } = stream;
 
   const [destinationTable, setDestinationTable] = useState<string>(destinationTableInit);
@@ -124,6 +180,9 @@ function SchemaTable({
   const [isApplyingToAllStreamsIdx, setIsApplyingToAllStreamsIdx] = useState<number>(null);
   const [showBookmarkValuesTable, setShowBookmarkPropertyTable] = useState<boolean>(!!destination);
   const [bookmarkValues, setBookmarkValues] = useState({ [streamUUID]: bookmarkValuesInit || {} });
+
+  // Validation rules are automatically saved via updateStream calls
+  // No separate API endpoint needed since updateStream handles catalog persistence
 
   const streamUUIDPrev = usePrevious(streamUUID);
   useEffect(() => {
@@ -405,6 +464,113 @@ function SchemaTable({
             return stream;
           })}
         />,
+        {/* Validation rules UI for this column */}
+        <FlexContainer
+          alignItems="center"
+          key={`${streamUUID}/${columnName}/validation`}
+        >
+          {/* Dropdown to add new validation rules */}
+          <Select
+            compact
+            onChange={(e) => {
+              const validationType = e.target.value as ValidationTypeEnum;  // TypeScript type assertion
+              if (!validationType) return;
+              
+              // updateStream uses a callback pattern to modify stream state
+              updateStream(streamUUID, (stream: StreamType) => {
+                // Initialize validation_rules structure if needed
+                if (!stream.validation_rules) {
+                  stream.validation_rules = {};
+                }
+                if (!stream.validation_rules[columnName]) {
+                  stream.validation_rules[columnName] = [];
+                }
+                
+                // Prevent duplicate rules
+                const existingRule = stream.validation_rules[columnName].find(
+                  rule => rule.type === validationType
+                );
+                
+                if (!existingRule) {
+                  stream.validation_rules[columnName].push({
+                    type: validationType,
+                    // Conditional value assignment - some rules need values, others don't
+                    value: validationTypeRequiresValue(validationType) ? '' : undefined,
+                  });
+                }
+                
+                // updateStream automatically handles persistence to catalog.json
+                
+                return stream;
+              });
+            }}
+            small
+            value=""
+            width={12 * UNIT}
+          >
+            <option value="">Add rule...</option>
+            {/* Dynamically generate options based on column type */}
+            {getValidationTypesForColumn(columnTypes).map(validationType => (
+              <option key={validationType} value={validationType}>
+                {validationType}
+              </option>
+            ))}
+          </Select>
+          
+          {/* Display existing validation rules as chips with optional value inputs */}
+          {validationRules?.[columnName]?.length > 0 && (
+            <Spacing ml={1}>
+              <FlexContainer flexDirection="column">
+                {/* Optional chaining (?.) safely accesses nested properties */}
+                {validationRules[columnName].map((rule, ruleIdx) => (
+                  <Spacing key={`${rule.type}-${ruleIdx}`} mb={1}>
+                    <FlexContainer alignItems="center">
+                      {/* Chip component displays validation rule as a removable tag */}
+                      <Chip
+                        label={rule.type}
+                        onClick={() => updateStream(streamUUID, (stream: StreamType) => {
+                          if (stream.validation_rules?.[columnName]) {
+                            // Array.filter() removes the clicked rule by index
+                            stream.validation_rules[columnName] = stream.validation_rules[columnName].filter(
+                              (_, idx) => idx !== ruleIdx  // Underscore (_) ignores the array item parameter
+                            );
+                            // Clean up empty arrays to keep data structure clean
+                            if (stream.validation_rules[columnName].length === 0) {
+                              delete stream.validation_rules[columnName];
+                            }
+                          }
+                          
+                          return stream;
+                        })}
+                        small
+                      />
+                      {/* Conditionally render input field for rules that need values */}
+                      {validationTypeRequiresValue(rule.type) && (
+                        <Spacing ml={1}>
+                          <TextInput
+                            compact
+                            onChange={(e) => updateStream(streamUUID, (stream: StreamType) => {
+                              // Optional chaining prevents errors if structure doesn't exist
+                              if (stream.validation_rules?.[columnName]?.[ruleIdx]) {
+                                stream.validation_rules[columnName][ruleIdx].value = e.target.value;
+                              }
+                              
+                              return stream;
+                            })}
+                            placeholder="Value..."
+                            small
+                            value={rule.value || ''}  // Fallback to empty string if value is undefined
+                            width={8 * UNIT}
+                          />
+                        </Spacing>
+                      )}
+                    </FlexContainer>
+                  </Spacing>
+                ))}
+              </FlexContainer>
+            </Spacing>
+          )}
+        </FlexContainer>,
       ];
 
       if (showPartitionKey) {
@@ -494,6 +660,16 @@ function SchemaTable({
                   } else if (!partitionKeys?.includes(columnName) && stream?.partition_keys?.includes(columnName)) {
                     stream.partition_keys = remove(stream.partition_keys, col => columnName === col);
                   }
+
+                  // Apply validation rules to other streams
+                  if (validationRules?.[columnName]) {
+                    if (!stream.validation_rules) {
+                      stream.validation_rules = {};
+                    }
+                    stream.validation_rules[columnName] = [...validationRules[columnName]];
+                  } else if (stream?.validation_rules?.[columnName]) {
+                    delete stream.validation_rules[columnName];
+                  }
                 }
 
                 return {
@@ -517,7 +693,7 @@ function SchemaTable({
     });
 
     const allColumnsSelected: boolean = selectedArr.every(s => s);
-    const columnFlex = [null, 2, 1, null, null, null];
+    const columnFlex = [null, 2, 1, null, null, null, 2];
     const columns: ColumnType[] = [
       {
         label: () => (
@@ -553,6 +729,11 @@ function SchemaTable({
         fitTooltipContentWidth: true,
         tooltipMessage: 'Used to create primary key for destination table',
         uuid: 'Key prop',
+      },
+      {
+        fitTooltipContentWidth: true,
+        tooltipMessage: "Used to validate column's value during ingestion",
+        uuid: 'Validation',
       },
     ];
 
@@ -603,6 +784,7 @@ function SchemaTable({
     updateMetadataForColumns,
     updateSchemaProperty,
     updateStream,
+    validationRules,
     validKeyProperties,
     validReplicationKeys,
   ]);
