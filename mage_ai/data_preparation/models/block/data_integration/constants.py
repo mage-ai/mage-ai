@@ -68,6 +68,7 @@ KEY_TABLE = 'table'
 KEY_TYPE = 'type'
 KEY_UNIQUE_CONFLICT_METHOD = 'unique_conflict_method'
 KEY_UNIQUE_CONSTRAINTS = 'unique_constraints'
+KEY_VALIDATION_RULES = 'validation_rules'
 KEY_VALUE = 'value'
 KEY_VERSION = 'version'
 
@@ -84,3 +85,28 @@ VARIABLE_BOOKMARK_VALUES_KEY = '__bookmark_values__'
 class IngestMode(StrEnum):
     DISK = 'disk'
     MEMORY = 'memory'
+
+# Validation rule type constants - used by both frontend and backend
+# These constants ensure consistency between UI and data persistence layers
+
+# General validation types (apply to all column types)
+VALIDATION_TYPE_NOTNULL = 'not null'
+VALIDATION_TYPE_UNIQUE = 'unique'
+
+# Integer/numeric validation types
+VALIDATION_TYPE_INT_GT = '>'         # Greater than
+VALIDATION_TYPE_INT_LT = '<'         # Less than  
+VALIDATION_TYPE_INT_E = '='          # Equal to
+VALIDATION_TYPE_INT_GTE = '>='       # Greater than or equal
+VALIDATION_TYPE_INT_LTE = '<='       # Less than or equal
+VALIDATION_TYPE_INT_NE = '!='        # Not equal
+
+# String validation types
+VALIDATION_TYPE_STR_IN = 'in'        # Value must be in specified list
+VALIDATION_TYPE_STR_NOTIN = 'not in' # Value must not be in specified list
+VALIDATION_TYPE_STR_NEQ = 'not equal'        # String must not equal value
+VALIDATION_TYPE_STR_NEMS = 'not empty string' # String must have content
+VALIDATION_TYPE_STR_MINL = 'minimum length'   # String minimum length check
+VALIDATION_TYPE_STR_MAXL = 'maximum length'   # String maximum length check
+
+
