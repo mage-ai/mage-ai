@@ -203,6 +203,40 @@ class DataIntegrationMixin:
             with open(catalog_full_path, mode='w') as f:
                 f.write(json.dumps(catalog))
 
+    def update_stream_validation_rules(self, stream_id: str, validation_rules: Dict[str, List[Dict]]) -> None:
+        """
+        Update validation rules for a specific stream in the catalog file.
+        
+        Backend Learning: This method demonstrates the "read-modify-write" pattern
+        commonly used in data persistence operations.
+
+        Args:
+            stream_id (str): The stream ID to update validation rules for.
+            validation_rules (Dict[str, List[Dict]]): Dictionary with column names as keys 
+                                                     and list of validation rule dicts as values.
+        """
+        # Load existing catalog or create empty one
+        catalog = self.get_catalog_from_file() or {}
+        streams = catalog.get('streams', [])
+        
+        # Find the target stream and update its validation rules
+        for stream in streams:
+            if (stream.get('tap_stream_id') == stream_id or 
+                stream.get('stream') == stream_id):
+                stream['validation_rules'] = validation_rules
+                break
+        else:
+            # Python's for-else: executes if loop completes without break
+            # This handles the case where stream doesn't exist yet
+            streams.append({
+                'tap_stream_id': stream_id,
+                'validation_rules': validation_rules
+            })
+            catalog['streams'] = streams
+        
+        # Persist changes back to catalog.json file
+        self.update_catalog_file(catalog)
+
     def is_data_integration(self, pipeline_project: Project = None) -> bool:
         """
         Check if the block is a data integration block.
