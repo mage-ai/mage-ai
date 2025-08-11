@@ -112,18 +112,58 @@ Configuring your Mage Pro workspaces to inherit the main cluster’s environment
 variables is essential for efficiently configuring your workspace container. 
 The following options allow you to control how variables are shared within your environment.
 
-### Inherit all variables
 
-To simplify pipeline configurations with shared variables, developers need to set 
-the `INHERIT_ENV_VARS` environment variable to `1` to enable this feature. 
-This will allow all system environment variables to be shared between the main 
-Mage environment and workspaces within a cluster.
+To enable environment variable inheritance in workspaces, you must set:
 
-### Inherit custom variables
+```bash
+INHERIT_ENV_VARS=1
+```
 
-Developers can specify which custom variables to inherit by setting 
-the `USER_DEFINED_VARS` environment variable with a comma-separated list of variable names. 
-This provides flexibility to include specific configuration values needed across workspaces.
+This applies to **both Managed Cloud** and **Self-hosted Mage Pro**.
+
+
+### Managed Cloud
+The USER_DEFINED_VARS environment variable lets you control which environment variables are inherited by workspaces.
+It accepts a comma-separated list of variable names, giving you flexibility to include only the configuration values you need across workspaces.
+
+- If `USER_DEFINED_VARS` is **not set**: all environment variables will be inherited automatically.
+- If `USER_DEFINED_VARS` is **set**: only the specified variables will be inherited.
+
+**Example – inherit specific variables:**
+```bash
+USER_DEFINED_VARS=VAR1,VAR2
+```
+
+**Example – inherit by pattern (wildcard/regex):**
+```bash
+USER_DEFINED_VARS=DEV_ENV_*
+```
+This will inherit all environment variables matching the pattern (e.g., any starting with `DEV_ENV_*`).
+
+### Self-hosted Mage Pro (Hybrid Cloud, Private Cloud, On-prem)
+You **must** set `USER_DEFINED_VARS` to define which variables to inherit:
+```bash
+USER_DEFINED_VARS=VAR1,VAR2
+```
+Wildcard/regex-style patterns are supported here as well.
+
+
+### Inherit variables by workspace environment (new)
+You can define inheritance rules per workspace environment using the `ENV` variable:
+
+```bash
+USER_DEFINED_VARS__ENV__{env_value}={pattern}
+```
+
+- `{env_value}`: value of the `ENV` variable in the workspace.
+- `{pattern}`: wildcard/regex pattern for matching variables.
+
+**Example:**
+```bash
+USER_DEFINED_VARS__ENV__dev=DEV_ENV_*
+```
+Any workspace with `ENV=dev` inherits all variables matching `DEV_ENV_*`.
+
 
 ### Updating workspaces after environment variable changes
 
