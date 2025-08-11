@@ -4,6 +4,9 @@ title: "PostgreSQL"
 
 ![](https://user-images.githubusercontent.com/78053898/198754399-3b594af0-cf84-41d3-8faf-e1f6e4c5182d.png)
 
+import { ProButton } from '/snippets/pro/button.mdx';
+import { ProOnly } from '/snippets/pro/only.mdx';
+
 ## Add credentials
 
 1. Create a new pipeline or open an existing pipeline.
@@ -27,6 +30,22 @@ default:
   POSTGRES_SSH_PASSWORD:
   POSTGRES_SSH_PKEY:
 ```
+
+
+### Pro-only fields
+<ProOnly source="postgresql" />
+
+```yaml
+  POSTGRES_SSL_MODE:
+  POSTGRES_SSL_ROOTCERT:
+  POSTGRES_SSL_CERT:
+  POSTGRES_SSL_KEY:
+```
+
+**Notes:**
+- `POSTGRES_SSL_MODE` corresponds to the `sslmode` parameter in psycopg2 (e.g., `require`, `verify-full`).  
+- `POSTGRES_SSL_ROOTCERT`, `POSTGRES_SSL_CERT`, and `POSTGRES_SSL_KEY` should be absolute paths to your SSL files on disk.  
+
 ### SSH tunneling
 If you want to connect to Postgres cluster with ssh tunnel, update the value of `POSTGRES_CONNECTION_METHOD` to `ssh_tunnel`, and enter the values for keys with prefix `POSTGRES_SSH`.
 
@@ -184,4 +203,11 @@ def export_data_to_postgres(df: DataFrame, **kwargs) -> None:
 | unique_conflict_method  | How to handle the conflict on unique constrants.                                                                                                       | 'UPDATE' (default: None)         |
 | unique_constraints      | The unique constraints of the table.                                                                                                                   | ['col1', 'col2'] (default: None) |
 
-<br />
+
+#### Pro-only fields
+
+<ProOnly source="postgresql" />
+
+| Field name   | Description                                                                                      | Example values              |
+| ------------ | ------------------------------------------------------------------------------------------------ | --------------------------- |
+| batch_write  | Use `COPY` command to write to PostgreSQL to improve performance.                                | True/False (default: False) |
