@@ -24,6 +24,10 @@ RUN \
   apt-get clean && \
   rm -rf /var/lib/apt/lists/*
 
+## code-server installation
+RUN \
+  curl -fsSL https://code-server.dev/install.sh | sh
+
 ## R Packages
 RUN \
   R -e "install.packages('pacman', repos='http://cran.us.r-project.org')" && \
@@ -71,5 +75,6 @@ ENV PYTHONPATH="${PYTHONPATH}:/home/src"
 WORKDIR /home/src
 EXPOSE 6789
 EXPOSE 7789
+EXPOSE 8080
 
 CMD ["/bin/sh", "-c", "/app/run_app.sh"]
