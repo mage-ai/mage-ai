@@ -39,7 +39,7 @@ if [[ "${CODE_SERVER}" == "1" ]]; then
     fi
     
     # Start code-server in the background
-    code-server \
+    PASSWORD=${CODE_SERVER_PASSWORD} code-server \
         --bind-addr 0.0.0.0:8080 \
         --auth password \
         --password "${CODE_SERVER_PASSWORD}" \
