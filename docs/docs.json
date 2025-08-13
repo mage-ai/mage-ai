@@ -773,7 +773,8 @@
               "observability/alerting/alerting-opsgenie",
               "observability/alerting/alerting-slack",
               "observability/alerting/alerting-teams",
-              "observability/alerting/alerting-telegram"
+              "observability/alerting/alerting-telegram",
+              "observability/alerting/alerting-zendesk"
             ]
           },
           {

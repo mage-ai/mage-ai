@@ -1,0 +1,145 @@
+---
+title: "Alerting status updates in Zendesk"
+sidebarTitle: "Zendesk"
+icon: "ticket"
+description: "Create Zendesk tickets from Mage pipeline events to track incidents and resolution."
+---
+
+<img
+  alt="Zendesk"
+  src="https://cdn.simpleicons.org/zendesk"
+  width="300"
+/>
+
+import { ProButton } from '/snippets/pro/button.mdx';
+import { ProOnly } from '/snippets/pro/only.mdx';
+
+<ProOnly source="notification" />
+
+## Overview of steps
+
+1. Create an API token in Zendesk  
+2. Update Mage project settings with Zendesk config  
+3. Customize ticket templates with dynamic variables (Pro only)  
+
+---
+
+## Create an API token in Zendesk
+
+To allow Mage to create tickets in Zendesk, you need to set up an API token:
+
+1. Log in to Zendesk as an **admin**.
+2. Go to **Admin Center** → **Apps and integrations** → **Zendesk API**.
+3. Enable **Token Access**.
+4. Click **Add API token**.
+5. Enter a description (e.g., "Mage Alerts") and copy the generated token.  
+   > **Note:** This token will only be shown once. Store it securely.
+6. Identify your Zendesk **subdomain** (e.g., for `https://acme.zendesk.com` the subdomain is `acme`).
+7. Ensure the account you use (email) has **agent** or **admin** permissions.
+
+---
+
+## Update Mage project settings
+
+Once you have your subdomain, email, and API token, add them to your project settings.
+
+Here’s an example `zendesk_config` (add under `notification_config` in `metadata.yaml`):
+
+```yaml
+notification_config:
+  alert_on:
+    - trigger_failure
+    - trigger_passed_sla
+  zendesk_config:
+    subdomain: your-domain
+    email: bot@example.com
+    api_token: YOUR_ZENDESK_API_TOKEN
+    group_id: "1234567890"          # optional: numeric group ID
+    assignee_id: "9876543210"       # optional: numeric agent ID
+    priority: high                  # optional: low | normal | high | urgent
+    status: new                     # optional: new | open | pending | hold
+    tags: mage,alert,pipeline       # optional: comma-separated tags
+```
+
+If you omit the `alert_on` section, it will default to `trigger_failure` and `trigger_passed_sla`.
+
+Options for `alert_on`:
+- `trigger_failure`: alert when a run of a trigger fails
+- `trigger_success`: alert when a run of a trigger succeeds
+- `trigger_passed_sla`: alert when a SLA is missed.
+  - SLA (Service Level Agreement) is an expected amount of time for the pipeline to complete.
+  - If the pipeline runs _longer_ than the SLA, an alert will be sent.
+
+---
+
+## Customize ticket templates
+
+You can customize ticket templates in `notification_config` just like Slack message templates:
+
+```yaml
+notification_config:
+  alert_on:
+    ...
+  zendesk_config:
+    ...
+  message_templates:
+    failure:
+      details: >
+        Pipeline {pipeline_uuid} failed.
+        See logs: {pipeline_run_url}.
+    success:
+      details: ...
+    passed_sla:
+      details: ...
+```
+
+You can customize templates for `success`, `failure`, and `passed_sla` scenarios.  
+For each template:
+- If you specify `summary`, the ticket subject will be your summary, and `details` will be used as the body.
+- If you specify only `details`, it will be used as the ticket body directly.
+
+**Supported variables:**
+1. `execution_time`
+1. `pipeline_run_url`
+1. `pipeline_schedule_id`
+1. `pipeline_schedule_name`
+1. `pipeline_schedule_description`
+1. `pipeline_uuid`
+1. `error` (failure only)
+1. `stacktrace` (failure only)
+
+---
+
+### 🚀 Pro Only: Interpolate Mage Variables in Ticket Templates
+
+
+In **Mage Pro**, you can interpolate environment variables and other [Mage variables](/development/variables/referencing-variables#accessing-variables-in-mage) in your Zendesk ticket templates using Jinja-like syntax:
+
+```yaml
+notification_config:
+  message_templates:
+    failure:
+      details: >
+        Failed at {{ env_var('ENVIRONMENT') }} environment.
+        Run details: {pipeline_run_url}.
+```
+
+Additional variables available in Mage Pro:
+1. `start_time`
+1. `end_time`
+1. `duration` (in seconds)
+1. `env` (value of the `ENV` environment variable)
+
+---
+
+## What next?
+
+Whenever a pipeline run completes or fails, Mage will create a Zendesk ticket based on your configuration.  
+You can route these tickets to specific groups or agents, tag them, and track resolution in Zendesk.
+
+Example ticket subject/body:
+
+|                                                                                                       |
+| ----------------------------------------------------------------------------------------------------- |
+| **Subject:** Mage Notification: Failed to run Mage pipeline example_pipeline                          |
+| **Body:** Pipeline `example_pipeline` failed at 2025-08-13. View logs at: https://mage_url/pipelines/example_pipeline/runs/123 |
