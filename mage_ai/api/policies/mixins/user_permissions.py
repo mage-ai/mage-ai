@@ -18,6 +18,7 @@ from mage_ai.authentication.permissions.constants import (
     PermissionAccess,
     PermissionCondition,
 )
+from mage_ai.data_preparation.repo_manager import get_project_uuid
 from mage_ai.orchestration.db.models.oauth import Permission, User
 from mage_ai.settings import (
     DISABLE_NOTEBOOK_EDIT_ACCESS,
@@ -103,13 +104,29 @@ async def validate_condition_with_permissions(
             return (True, False)
 
         # 1. Get permissions for current entity_name for roles belonging to current user.
-        # Include permissions where entity_name is ALL or ALL_EXCEPT_RESERVED.
-        correct_entity_name = permission.entity_name == entity_name or \
-            permission.entity_name == EntityName.ALL or \
-            (
-                permission.entity_name == EntityName.ALL_EXCEPT_RESERVED and
-                entity_name not in RESERVED_ENTITY_NAMES
-            )
+        if (
+            permission.entity == 'global' and
+            permission.entity_name is None
+        ):
+            # If the user has global all permission
+            # Global access to all entities
+            correct_entity_name = True
+        elif (
+            permission.entity == 'project' and
+            permission.entity_name is None and
+            permission.entity_id == get_project_uuid()
+        ):
+            # If the user has project all permission
+            # Project level access to all entities
+            correct_entity_name = True
+        else:
+            # Include permissions where entity_name is ALL or ALL_EXCEPT_RESERVED.
+            correct_entity_name = permission.entity_name == entity_name or \
+                permission.entity_name == EntityName.ALL or \
+                (
+                    permission.entity_name == EntityName.ALL_EXCEPT_RESERVED and
+                    entity_name not in RESERVED_ENTITY_NAMES
+                )
 
         if not correct_entity_name:
             return (False, False)
