@@ -15,9 +15,7 @@
         "groups": [
           {
             "group": "Adventure starts here",
-            "pages": [
-              "production/mage/pro"
-            ]
+            "pages": ["production/mage/pro"]
           },
           {
             "group": "Deployment architecture",
@@ -58,6 +56,7 @@
                 "icon": "microchip-ai",
                 "pages": [
                   "ai/sidekick/index",
+                  "ai/blocks",
                   "ai/rag-pipeline",
                   "ai/custom-resources"
                 ]
@@ -126,10 +125,7 @@
               {
                 "group": "Storage",
                 "icon": "database",
-                "pages": [
-                  "integrations/databases/Databricks",
-                  "integrations/databases/Iceberg"
-                ]
+                "pages": ["integrations/databases/Databricks", "integrations/databases/Iceberg"]
               }
             ]
           },
@@ -145,10 +141,7 @@
           },
           {
             "group": "Global hooks",
-            "pages": [
-              "extensibility/global-hooks/overview",
-              "extensibility/global-hooks/guides"
-            ]
+            "pages": ["extensibility/global-hooks/overview", "extensibility/global-hooks/guides"]
           },
           {
             "group": "Mage Pro API",
@@ -171,10 +164,7 @@
               {
                 "group": "Abstractions",
                 "icon": "object-subtract",
-                "pages": [
-                  "design/core-abstractions",
-                  "design/abstractions/project-structure"
-                ]
+                "pages": ["design/core-abstractions", "design/abstractions/project-structure"]
               }
             ]
           },
@@ -212,33 +202,23 @@
                       },
                       {
                         "group": "Transformer",
-                        "pages": [
-                          "development/blocks/transformers/templates"
-                        ]
+                        "pages": ["development/blocks/transformers/templates"]
                       },
                       {
                         "group": "Data exporter",
-                        "pages": [
-                          "development/blocks/data_exporters/templates"
-                        ]
+                        "pages": ["development/blocks/data_exporters/templates"]
                       },
                       {
                         "group": "Sensors",
-                        "pages": [
-                          "development/blocks/sensors/templates"
-                        ]
+                        "pages": ["development/blocks/sensors/templates"]
                       },
                       {
                         "group": "Callbacks",
-                        "pages": [
-                          "development/blocks/callbacks/templates"
-                        ]
+                        "pages": ["development/blocks/callbacks/templates"]
                       },
                       {
                         "group": "Conditionals",
-                        "pages": [
-                          "development/blocks/conditionals/templates"
-                        ]
+                        "pages": ["development/blocks/conditionals/templates"]
                       }
                     ]
                   }
@@ -356,10 +336,7 @@
               {
                 "group": "Backfills",
                 "icon": "clock-rotate-left",
-                "pages": [
-                  "orchestration/backfills/overview",
-                  "orchestration/backfills/guides"
-                ]
+                "pages": ["orchestration/backfills/overview", "orchestration/backfills/guides"]
               }
             ]
           },
@@ -423,21 +400,15 @@
                   "contributing/backend/overview",
                   {
                     "group": "IO classes",
-                    "pages": [
-                      "contributing/backend/io/adding-a-class"
-                    ]
+                    "pages": ["contributing/backend/io/adding-a-class"]
                   },
                   {
                     "group": "Streaming",
-                    "pages": [
-                      "contributing/backend/streaming/sources-and-destinations"
-                    ]
+                    "pages": ["contributing/backend/streaming/sources-and-destinations"]
                   },
                   {
                     "group": "Testing",
-                    "pages": [
-                      "contributing/backend/testing/overview"
-                    ]
+                    "pages": ["contributing/backend/testing/overview"]
                   }
                 ]
               },
@@ -453,9 +424,7 @@
               {
                 "group": "Documentation",
                 "icon": "book",
-                "pages": [
-                  "contributing/documentation/overview"
-                ]
+                "pages": ["contributing/documentation/overview"]
               }
             ]
           },
@@ -476,10 +445,7 @@
         "groups": [
           {
             "group": "Quickstart",
-            "pages": [
-              "guides/overview",
-              "guides/tips-and-tricks"
-            ]
+            "pages": ["guides/overview", "guides/tips-and-tricks"]
           },
           {
             "group": "Developer experience",
@@ -613,11 +579,7 @@
               {
                 "group": "Commands",
                 "icon": "command",
-                "pages": [
-                  "guides/dbt/docs",
-                  "guides/dbt/snapshots",
-                  "guides/dbt/running-dbt-tests"
-                ]
+                "pages": ["guides/dbt/docs", "guides/dbt/snapshots", "guides/dbt/running-dbt-tests"]
               }
             ]
           }
@@ -677,9 +639,7 @@
               {
                 "group": "DigitalOcean",
                 "icon": "digital-ocean",
-                "pages": [
-                  "production/deploying-to-cloud/digitalocean/setup"
-                ]
+                "pages": ["production/deploying-to-cloud/digitalocean/setup"]
               },
               {
                 "group": "GCP",
@@ -734,17 +694,12 @@
           {
             "group": "Development",
             "icon": "microchip-ai",
-            "pages": [
-              "ai/setup",
-              "ai/ai-client"
-            ]
+            "pages": ["ai/setup", "ai/ai-client"]
           },
           {
             "group": "Pipelines",
             "icon": "microchip-ai",
-            "pages": [
-              "ai/ml/train-model"
-            ]
+            "pages": ["ai/ml/train-model"]
           }
         ]
       },
@@ -780,17 +735,12 @@
           {
             "group": "Logging",
             "icon": "eye",
-            "pages": [
-              "observability/logging"
-            ]
+            "pages": ["observability/logging"]
           },
           {
             "group": "Testing",
             "icon": "vial",
-            "pages": [
-              "observability/testing/data-validation",
-              "observability/testing/unit-tests"
-            ]
+            "pages": ["observability/testing/data-validation", "observability/testing/unit-tests"]
           }
         ]
       },
@@ -803,9 +753,7 @@
               {
                 "group": "Compute",
                 "icon": "diamonds-4",
-                "pages": [
-                  "integrations/compute/spark-pyspark"
-                ]
+                "pages": ["integrations/compute/spark-pyspark"]
               },
               {
                 "group": "Storage",
@@ -858,17 +806,12 @@
               {
                 "group": "ETL",
                 "icon": "timeline-arrow",
-                "pages": [
-                  "integrations/airbyte",
-                  "integrations/stitch"
-                ]
+                "pages": ["integrations/airbyte", "integrations/stitch"]
               },
               {
                 "group": "Reverse ETL",
                 "icon": "diagram-sankey",
-                "pages": [
-                  "integrations/hightouch"
-                ]
+                "pages": ["integrations/hightouch"]
               },
               "integrations/dbt-cloud"
             ]
@@ -880,10 +823,7 @@
         "groups": [
           {
             "group": "Environment-specific configuration",
-            "pages": [
-              "extensibility/env-config/project",
-              "extensibility/env-config/pipeline"
-            ]
+            "pages": ["extensibility/env-config/project", "extensibility/env-config/pipeline"]
           },
           {
             "group": "API",
