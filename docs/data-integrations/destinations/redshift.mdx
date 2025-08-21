@@ -31,8 +31,9 @@ You must provide the following credentials when configuring Redshift as a destin
 | `region`           | AWS region where the Redshift cluster is hosted.                                                            | `us-west-2`                                            | ✅        |
 | `use_merge_load`   | If `true`, Mage will attempt to merge incoming data with existing records (UPSERT-like behavior).           | `false` *(default)*                                    | ❌        |
 | `use_s3_copy`      | If `true`, Mage will upload data to S3 and load into Redshift using the COPY command (Pro feature).         | `false` *(default)*                                    | ❌        |
+| `type_mapping`     | Custom mapping to override default column type conversions. Useful for specifying custom Redshift data types like SUPER for JSON data (Pro feature).  | see below                                              | ❌ (Pro) |
 
-> **Note**: `use_s3_copy` is a Mage **Pro-only** feature. It enables faster bulk loads via S3 and supports IAM roles or access key authentication.
+> **Note**: `use_s3_copy` and `type_mapping` are Mage **Pro-only** features. `use_s3_copy` enables faster bulk loads via S3 and supports IAM roles or access key authentication.
 
 
 ---
@@ -76,6 +77,52 @@ s3_creds:
   bucket: mage-feature-sets
   redshift_iam_role: arn:aws:iam::123456789012:role/MyRedshiftRole
 ```
+---
+## Type Mapping
+
+<ProOnly source="redshift" />
+
+The `type_mapping` configuration allows you to override default column type conversions. This is useful for advanced cases like storing JSON in Redshift’s `SUPER` type or adjusting column widths.
+
+### Example Configuration
+
+**YAML Format:**
+```yaml
+type_mapping:
+  object: SUPER
+  array: SUPER
+  string: VARCHAR(1000)
+```
+
+**Complete YAML Example:**
+```yaml
+database: demo
+host: mage-prod.3.us-west-2.redshift.amazonaws.com
+password: abc123...
+port: 5439
+region: us-west-2
+schema: public
+user: awsuser
+use_merge_load: false
+use_s3_copy: false
+lower_case: true
+type_mapping:
+  object: SUPER
+  array: SUPER
+  string: VARCHAR(1000)
+  datetime: TIMESTAMPTZ
+  number: BIGINT
+```
+
+### Supported Overrides
+
+- **`object`** → Redshift type for JSON objects (e.g., `SUPER`)
+- **`array`** → Redshift type for JSON arrays (e.g., `SUPER`)
+- **`string`** → Custom VARCHAR or other string type
+- **`datetime`** → Custom timestamp type (e.g., `TIMESTAMPTZ`)
+- **`number`** → Custom numeric type (e.g., `BIGINT`)
+
+> When using `SUPER`, Mage automatically applies `JSON_PARSE()` for correct Redshift insertion.
 
 ---
 
