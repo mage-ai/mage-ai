@@ -464,7 +464,7 @@ function SchemaTable({
             return stream;
           })}
         />,
-        {/* Validation rules UI for this column */}
+        /*{ Validation rules UI for this column } */
         <FlexContainer
           alignItems="center"
           key={`${streamUUID}/${columnName}/validation`}
@@ -570,7 +570,7 @@ function SchemaTable({
               </FlexContainer>
             </Spacing>
           )}
-        </FlexContainer>,
+        </FlexContainer>
       ];
 
       if (showPartitionKey) {

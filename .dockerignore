@@ -1,0 +1,78 @@
+# Node modules and frontend build artifacts
+node_modules
+.next
+mage_ai/frontend/node_modules
+mage_ai/frontend/.next
+mage_ai/frontend/out
+mage_ai/server/frontend_dist/_next
+
+# Python cache and virtual environments
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.Python
+env
+pip-log.txt
+pip-delete-this-directory.txt
+.tox
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.log
+.git
+.mypy_cache
+.pytest_cache
+.hypothesis
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# IDEs
+.vscode
+.idea
+*.swp
+*.swo
+
+# Build and dist directories
+build/
+dist/
+*.egg-info/
+
+# Temporary files
+tmp/
+*.tmp
+*.temp
+
+# Docker files
+Dockerfile*
+docker-compose*
+.dockerignore
+
+# Git
+.git/
+.gitignore
+.gitattributes
+
+# Documentation
+*.md
+docs/
+
+# Tests
+tests/
+test/
+*_test.py
+test_*.py
+
+# Environment files
+.env
+.env.*

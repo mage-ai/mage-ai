@@ -212,6 +212,7 @@ function SchemaSettings({
               {...props}
               bookmarkValues={bookmarkValues}
               isLoadingUpdateDestinationBlockState={isLoadingUpdateDestinationBlockState}
+              pipeline={pipeline}
               stream={selectedStream}
               streams={streams}
               updateDestinationBlockState={updateDestinationBlockState}

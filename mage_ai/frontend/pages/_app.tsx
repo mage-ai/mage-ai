@@ -3,7 +3,6 @@ import App, { AppProps } from 'next/app';
 import Cookies from 'js-cookie';
 import LoadingBar from 'react-top-loading-bar';
 import dynamic from 'next/dynamic';
-import { GoogleAnalytics } from '@next/third-parties/google';
 import { GridThemeProvider } from 'styled-bootstrap-grid';
 import { ThemeProvider } from 'styled-components';
 import { createRoot } from 'react-dom/client';
@@ -334,7 +333,21 @@ function MyApp(props: MyAppProps & AppProps) {
         </ThemeProvider>
       </KeyboardContext.Provider>
 
-      {isDemoApp && <GoogleAnalytics gaId={DEMO_GA_MEASUREMENT_ID} />}
+      {isDemoApp && (
+        <>
+          <script async src={`https://www.googletagmanager.com/gtag/js?id=${DEMO_GA_MEASUREMENT_ID}`} />
+          <script
+            dangerouslySetInnerHTML={{
+              __html: `
+                window.dataLayer = window.dataLayer || [];
+                function gtag(){dataLayer.push(arguments);}
+                gtag('js', new Date());
+                gtag('config', '${DEMO_GA_MEASUREMENT_ID}');
+              `,
+            }}
+          />
+        </>
+      )}
     </>
   );
 }

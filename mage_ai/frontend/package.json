@@ -23,7 +23,6 @@
     "@codingame/monaco-vscode-keybindings-service-override": "^5.2.0",
     "@codingame/monaco-vscode-python-default-extension": "^5.2.0",
     "@monaco-editor/react": "^4.6.0",
-    "@next/third-parties": "^14.1.0",
     "@tanstack/react-query": "^5.45.0",
     "@types/moment-duration-format": "^2.2.5",
     "@types/react-table": "^7.7.12",
