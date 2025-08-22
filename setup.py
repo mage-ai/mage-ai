@@ -18,7 +18,7 @@ setuptools.setup(
     name='mage-ai',
     # NOTE: when you change this, change the value of VERSION in the following file:
     # mage_ai/server/constants.py
-    version='0.9.76',
+    version='0.9.77',
     author='Mage',
     author_email='eng@mage.ai',
     description='Mage is a tool for building and deploying data pipelines.',
@@ -42,8 +42,8 @@ setuptools.setup(
     extras_require={
         'ai': [
             'astor>=0.8.1',
-            'langchain==0.1.6',
-            'langchain_community<0.0.20',
+            'langchain>=0.2.5',
+            'langchain_community>=0.2.5',
             'openai>=1.0.0',
         ],
         'airtable': [
@@ -177,8 +177,8 @@ setuptools.setup(
             'influxdb_client==1.36.1',
             'kafka-python==2.0.2',
             'kubernetes>=28.1.0',
-            'langchain==0.1.6',
-            'langchain_community<0.0.20',
+            'langchain>=0.2.5',
+            'langchain_community>=0.2.5',
             'ldap3==2.9.1',
             'nats-py==2.6.0',
             'nkeys~=0.2.0',
