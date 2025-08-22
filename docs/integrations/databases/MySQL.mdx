@@ -12,6 +12,8 @@ title: "MySQL"
 4. Enter the following keys and values under the key named `default` (you can
    have multiple profiles, add it under whichever is relevant to you)
 
+### Standard connection
+
 ```yaml
 version: 0.1.1
 default:
@@ -21,6 +23,41 @@ default:
   MYSQL_PORT: 3306
   MYSQL_USER: root
 ```
+
+### SSH tunnel connection
+
+import { ProButton } from '/snippets/pro/button.mdx';
+import { ProOnly } from '/snippets/pro/only.mdx';
+
+<ProOnly source="mysql" />
+
+If your MySQL database is in a private network and you need to connect via an SSH bastion host, Mage Pro supports configuring an SSH tunnel directly in io_config.yaml:
+
+```yaml
+version: 0.1.1
+default:
+  MYSQL_DATABASE: ...
+  MYSQL_HOST: ...
+  MYSQL_PASSWORD: ...
+  MYSQL_PORT: 3306
+  MYSQL_USER: root
+
+  # Pro only: SSH tunnel settings
+  MYSQL_SSH_HOST: bastion.example.com
+  MYSQL_SSH_PORT: 22
+  MYSQL_SSH_USERNAME: ec2-user
+  # Use one of the following for authentication:
+  MYSQL_SSH_PKEY: /path/to/private/key.pem   # path to SSH private key
+  MYSQL_SSH_PASSWORD: your_ssh_password      # only if using password auth
+```
+
+* `MYSQL_SSH_HOST`: Hostname or IP of the SSH bastion.
+* `MYSQL_SSH_PORT`: SSH port (default 22).
+* `MYSQL_SSH_USERNAME`: SSH user to log in as.
+* `MYSQL_SSH_PKEY`: Path to private key file (preferred).
+* `MYSQL_SSH_PASSWORD`: Password for SSH user (alternative to key).
+
+⚠️ You only need either `MYSQL_SSH_PKEY` or `MYSQL_SSH_PASSWORD`, not both.
 
 ---
 
