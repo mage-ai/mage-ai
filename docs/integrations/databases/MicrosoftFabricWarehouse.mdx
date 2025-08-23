@@ -1,0 +1,296 @@
+---
+title: "Microsoft Fabric Warehouse"
+---
+
+import { ProButton } from '/snippets/pro/button.mdx';
+import { ProOnly } from '/snippets/pro/only.mdx';
+
+<ProOnly source="workspaces" />
+
+
+![](https://learn.microsoft.com/en-us/fabric/media/fabric-icon.png)
+
+## Overview
+
+Microsoft Fabric Warehouse is a fully managed, cloud-native data warehouse built on Azure Synapse SQL. It provides enterprise-grade performance, scalability, and security for your data analytics workloads.
+
+This integration allows you to connect to Microsoft Fabric Data Warehouse using Azure AD Service Principal authentication and perform SQL operations directly from Mage pipelines.
+
+## Add credentials
+
+1. Create a new pipeline or open an existing pipeline.
+2. Expand the left side of your screen to view the file browser.
+3. Scroll down and click on a file named `io_config.yaml`.
+4. Enter the following keys and values under the key named `default` (you can
+   have multiple profiles, add it under whichever is relevant to you)
+
+```yaml
+version: 0.1.1
+default:
+  AZURE_CLIENT_ID: '12345678-1234-1234-1234-123456789012'
+  AZURE_CLIENT_SECRET: 'your-azure-ad-service-principal-secret'
+  MICROSOFT_FABRIC_WAREHOUSE_NAME: 'your_database_name'
+  MICROSOFT_FABRIC_WAREHOUSE_ENDPOINT: 'your-endpoint-here'
+  MICROSOFT_FABRIC_WAREHOUSE_SCHEMA: 'dbo'
+```
+
+### Configuration Parameters
+
+| Parameter | Description | Required | Example |
+|-----------|-------------|----------|---------|
+| `AZURE_CLIENT_ID` | Azure AD Service Principal Application ID (GUID format) | ✅ | `12345678-1234-1234-1234-123456789012` |
+| `AZURE_CLIENT_SECRET` | Azure AD Service Principal Secret | ✅ | `your-secret-here` |
+| `MICROSOFT_FABRIC_WAREHOUSE_NAME` | Name of your Fabric Data Warehouse database | ✅ | `my_database` |
+| `MICROSOFT_FABRIC_WAREHOUSE_ENDPOINT` | Fabric workspace endpoint URL | ✅ | `abcde12345.datawarehouse.fabric.microsoft.com` |
+| `MICROSOFT_FABRIC_WAREHOUSE_SCHEMA` | Default schema for operations | ❌ | `dbo` (default) |
+
+
+## Service Principal Setup
+
+To use service principals with Microsoft Fabric Data Warehouse, you need to:
+
+1. **Create a service principal** in Microsoft Entra ID
+2. **Enable service principal access** in Microsoft Fabric
+3. **Assign appropriate permissions** to the service principal
+
+For detailed setup instructions, see:
+- [Register a Microsoft Entra app and create a service principal](https://learn.microsoft.com/en-us/entra/identity-platform/howto-create-service-principal-portal)
+- [Service principal in Fabric Data Warehouse](https://learn.microsoft.com/en-us/fabric/data-warehouse/service-principals#prerequisites)
+
+---
+
+## Using Python block
+
+1. Create a new pipeline or open an existing pipeline.
+2. Add a data loader, transformer, or data exporter block (the code snippet
+   below is for a data loader).
+3. Select `Generic (no template)`.
+4. Enter this code snippet (note: change the `config_profile` from `default` if
+   you have a different profile):
+
+```python
+from mage_ai.settings.repo import get_repo_path
+from mage_ai.io.config import ConfigFileLoader
+from mage_ai.io.microsoft_fabric_warehouse import MicrosoftFabricWarehouse
+from os import path
+
+if 'data_loader' not in globals():
+    from mage_ai.data_preparation.decorators import data_loader
+
+
+@data_loader
+def load_data_from_fabric_warehouse(*args, **kwargs):
+    """
+    Template for loading data from Microsoft Fabric Warehouse.
+    Specify your configuration settings in 'io_config.yaml'.
+    Set the following in your io_config:
+
+    Docs: https://docs.mage.ai/integrations/databases/MicrosoftFabricWarehouse
+    """
+    query = 'SELECT * FROM your_table LIMIT 1000'  # Specify your SQL query here
+    config_path = path.join(get_repo_path(), 'io_config.yaml')
+    config_profile = 'default'
+
+    with MicrosoftFabricWarehouse.with_config(ConfigFileLoader(config_path, config_profile)) as warehouse:
+        return warehouse.load(query)
+```
+
+5. Run the block.
+
+### Export a dataframe
+
+Here is an example code snippet to export a dataframe to Microsoft Fabric Warehouse:
+
+```python
+from mage_ai.settings.repo import get_repo_path
+from mage_ai.io.config import ConfigFileLoader
+from mage_ai.io.microsoft_fabric_warehouse import MicrosoftFabricWarehouse
+from pandas import DataFrame
+from os import path
+
+if 'data_exporter' not in globals():
+    from mage_ai.data_preparation.decorators import data_exporter
+
+
+@data_exporter
+def export_data_to_fabric_warehouse(df: DataFrame, **kwargs) -> None:
+    """
+    Template for exporting data to Microsoft Fabric Warehouse.
+    Specify your configuration settings in 'io_config.yaml'.
+    Set the following in your io_config:
+
+    Docs: https://docs.mage.ai/integrations/databases/MicrosoftFabricWarehouse
+    """
+    schema_name = 'dbo'  # Specify the name of the schema to export data to
+    table_name = 'your_table_name'  # Specify the name of the table to export data to
+    config_path = path.join(get_repo_path(), 'io_config.yaml')
+    config_profile = 'default'
+
+    with MicrosoftFabricWarehouse.with_config(ConfigFileLoader(config_path, config_profile)) as warehouse:
+        warehouse.export(
+            df,
+            schema_name,
+            table_name,
+            if_exists='replace',  # Specify resolution policy if table name already exists
+            index=False,  # Specifies whether to include index in exported table
+        )
+```
+
+<br />
+
+### Custom types
+
+To overwrite a column type when running a python export block, simply specify the column name and type in the `overwrite_types` dict in data exporter config:
+
+```python
+from mage_ai.settings.repo import get_repo_path
+from mage_ai.io.config import ConfigFileLoader
+from mage_ai.io.microsoft_fabric_warehouse import MicrosoftFabricWarehouse
+from pandas import DataFrame
+from os import path
+
+if 'data_exporter' not in globals():
+    from mage_ai.data_preparation.decorators import data_exporter
+
+
+@data_exporter
+def export_data_to_fabric_warehouse(df: DataFrame, **kwargs) -> None:
+    """
+    Template for exporting data to Microsoft Fabric Warehouse.
+    Specify your configuration settings in 'io_config.yaml'.
+    Set the following in your io_config:
+
+    Docs: /integrations/databases/MicrosoftFabricWarehouse
+    """
+    schema_name = 'dbo'  # Specify the name of the schema to export data to
+    table_name = 'your_table_name'  # Specify the name of the table to export data to
+    config_path = path.join(get_repo_path(), 'io_config.yaml')
+    config_profile = 'default'
+    overwrite_types = {'column_name': 'VARCHAR(255)'}
+
+    with MicrosoftFabricWarehouse.with_config(ConfigFileLoader(config_path, config_profile)) as warehouse:
+        warehouse.export(
+            df,
+            schema_name,
+            table_name,
+            if_exists='replace',  # Specify resolution policy if table name already exists
+            overwrite_types=overwrite_types,
+            index=False,  # Specifies whether to include index in exported table
+        )
+```
+
+
+## Troubleshooting errors
+
+### Connection Timeout Errors
+
+**Error**: `Login timeout expired` or `Connection timeout`
+
+<Check>
+    *"Verify your Service Principal credentials and network connectivity"*
+</Check>
+
+**Solutions**:
+- Ensure `AZURE_CLIENT_ID` is a valid GUID format
+- Verify `AZURE_CLIENT_SECRET` is correct and not expired
+- Check that the Service Principal has appropriate permissions on your Fabric workspace
+- Ensure the Service Principal is not disabled in Azure AD
+- Verify network connectivity to the endpoint
+- Check if corporate firewall or proxy is blocking the connection
+- Try increasing connection timeout settings
+
+### TCP Provider Errors
+
+**Error**: `TCP Provider: Error code 0x2746 (10054)` or `Connection reset by peer`
+
+<Check>
+    *"Verify your endpoint URL and network connectivity"*
+</Check>
+
+**Solutions**:
+- Ensure `MICROSOFT_FABRIC_WAREHOUSE_ENDPOINT` is correct and accessible
+- Check network connectivity to the endpoint (ping, telnet, etc.)
+- Verify the endpoint is accessible from your current location
+- Ensure the endpoint is not blocked by firewall rules
+- Check if Azure region is experiencing connectivity issues
+- Verify the Microsoft Fabric service is operational
+- Try connecting from a different network to isolate the issue
+
+### Database Object Errors
+
+**Error**: `Invalid object name 'table_name'` or `Database 'database_name' does not exist`
+
+<Check>
+    *"Verify your database name, schema, and table existence"*
+</Check>
+
+**Solutions**:
+- Ensure `MICROSOFT_FABRIC_WAREHOUSE_NAME` matches exactly (case-sensitive)
+- Check that the Service Principal has access to the database
+- Verify the database exists in your Fabric workspace
+- Ensure the database is not paused or offline
+- Verify the table exists in the specified schema
+- Check if you're using the correct schema name (default is 'dbo')
+- Ensure table names are properly quoted if they contain special characters
+
+### Authentication Errors
+
+**Error**: `Failed to authenticate with Azure AD` or `Login failed for user`
+
+<Check>
+    *"Verify your Service Principal credentials and permissions"*
+</Check>
+
+**Solutions**:
+- Ensure `AZURE_CLIENT_ID` is a valid GUID format
+- Verify `AZURE_CLIENT_SECRET` is correct and not expired
+- Check that the Service Principal has appropriate permissions on your Fabric workspace
+- Ensure the Service Principal is not disabled in Azure AD
+- Verify the Service Principal has the correct role assignments
+- Check if the Service Principal's permissions have been revoked
+
+### Schema Errors
+
+**Error**: `Schema 'schema_name' does not exist`
+
+<Check>
+    *"Verify your schema name and permissions"*
+</Check>
+
+**Solutions**:
+- Ensure `MICROSOFT_FABRIC_WAREHOUSE_SCHEMA` is correct
+- Check that the Service Principal has access to the schema
+- Verify the schema exists in your database
+- Use 'dbo' as the default schema if unsure
+- Check if the schema name is case-sensitive
+- Verify the Service Principal has CREATE/ALTER permissions on the schema
+
+## Best Practices
+
+1. **Service Principal Management**:
+   - Use dedicated Service Principals for different environments
+   - Rotate secrets regularly
+   - Grant minimum required permissions
+
+2. **Connection Management**:
+   - Always use context managers (`with` statements) when possible
+   - Close connections explicitly when not using context managers
+   - Test connections before running large operations
+
+3. **Performance Optimization**:
+   - Use appropriate `if_exists` policies ('replace', 'append', 'fail')
+   - Consider using `overwrite_types` for optimal column types
+   - Use LIMIT clauses in queries when testing
+
+4. **Security**:
+   - Never hardcode credentials in your code
+   - Use `io_config.yaml` for all configuration
+   - Ensure `io_config.yaml` is not committed to version control
+   - Use environment variables for sensitive values in production
+
+## Related Documentation
+
+- [Microsoft Fabric Documentation](https://learn.microsoft.com/en-us/fabric/)
+- [Microsoft Fabric Warehouse Documentation](https://learn.microsoft.com/en-us/fabric/data-warehouse/)
+- [Azure AD Service Principal Setup](https://learn.microsoft.com/en-us/azure/active-directory/develop/howto-create-service-principal-portal)
+- [ODBC Driver Installation](https://learn.microsoft.com/en-us/sql/connect/odbc/linux-mac/installing-the-microsoft-odbc-driver-for-sql-server) 
