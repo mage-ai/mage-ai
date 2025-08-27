@@ -445,7 +445,11 @@
         "groups": [
           {
             "group": "Quickstart",
-            "pages": ["guides/overview", "guides/tips-and-tricks"]
+            "pages": [
+              "guides/overview",
+              "guides/tips-and-tricks",
+              "development/troubleshooting"
+            ]
           },
           {
             "group": "Developer experience",
