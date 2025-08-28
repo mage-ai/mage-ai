@@ -34,6 +34,8 @@ RUN \
   R -e "install.packages('pacman', repos='http://cran.us.r-project.org')" && \
   R -e "install.packages('renv', repos='http://cran.us.r-project.org')"
 
+## Node Packages
+RUN npm install --global yarn && yarn global add next
 
 ## Python Packages
 RUN \
@@ -59,37 +61,36 @@ RUN \
 
 # Mage
 COPY ./mage_ai/server/constants.py /tmp/constants.py
-RUN if [ -z "$FEATURE_BRANCH" ] || [ "$FEATURE_BRANCH" = "null" ] ; then \
-  tag=$(tail -n 1 /tmp/constants.py) && \
-  VERSION=$(echo "$tag" | tr -d "'") && \
-  pip3 install --no-cache-dir "mage-ai[all]==$VERSION"; \
-  else \
-  pip3 install --no-cache-dir "git+https://github.com/mage-ai/mage-ai.git@$FEATURE_BRANCH#egg=mage-ai[all]"; \
-  fi
-
-## Node Packages
-RUN npm install --global yarn && yarn global add next
+COPY . /app
+WORKDIR /app
+RUN pip3 install --no-cache-dir .
+# RUN if [ -z "$FEATURE_BRANCH" ] || [ "$FEATURE_BRANCH" = "null" ] ; then \
+#   tag=$(tail -n 1 /tmp/constants.py) && \
+#   VERSION=$(echo "$tag" | tr -d "'") && \
+#   pip3 install --no-cache-dir "mage-ai[all]==$VERSION"; \
+#   else \
+#   pip3 install --no-cache-dir "git+https://github.com/mage-ai/mage-ai.git@$FEATURE_BRANCH#egg=mage-ai[all]"; \
+#   fi
 
 COPY mage_integrations /tmp/mage_integrations
 RUN \
   pip3 install --no-cache-dir /tmp/mage_integrations && \
   rm -rf /tmp/mage_integrations
 
-# Frontend Build Stage
-FROM node:20-bookworm AS frontend-builder
-WORKDIR /frontend
-COPY ./mage_ai/frontend/package.json ./mage_ai/frontend/yarn.lock ./
-RUN yarn install --frozen-lockfile --network-timeout 300000 --network-concurrency 8
-COPY ./mage_ai/frontend ./
-RUN NODE_OPTIONS="--max-old-space-size=8192" GENERATE_SOURCEMAP=false yarn build
+# Mage Dependencies
+COPY requirements.txt /tmp/requirements.txt
+RUN \
+  pip3 install --no-cache-dir -r /tmp/requirements.txt && \
+  rm /tmp/requirements.txt
 
-# Final stage
-FROM python-base AS final
+COPY ./mage_ai/server/constants.py /tmp/constants.py
 
 ## Mage Frontend
-COPY --from=frontend-builder /frontend/.next /home/src/mage_ai/frontend/.next
-COPY --from=frontend-builder /frontend/public /home/src/mage_ai/frontend/public
 COPY ./mage_ai /home/src/mage_ai
+WORKDIR /home/src/mage_ai/frontend
+RUN npm install ajv@6 ajv-keywords@3 --legacy-peer-deps \
+    && npm install --legacy-peer-deps \
+    && NODE_OPTIONS="--max-old-space-size=4096" npm run build
 
 ## Startup Script
 COPY --chmod=0755 ./scripts/install_other_dependencies.py ./scripts/run_app.sh /app/
