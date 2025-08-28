@@ -1804,6 +1804,111 @@ class BlockRun(BlockRunProjectPlatformMixin, BaseModel):
         )
 
 
+class GenericJob(BaseModel):
+    class JobStatus(StrEnum):
+        INITIAL = 'initial'
+        QUEUED = 'queued'
+        RUNNING = 'running'
+        COMPLETED = 'completed'
+        FAILED = 'failed'
+
+    class JobType(StrEnum):
+        CANCEL_PIPELINE_RUN = 'cancel_pipeline_run'
+
+    job_type = Column(Enum(JobType), nullable=False, index=True)
+    status = Column(Enum(JobStatus), default=JobStatus.INITIAL, index=True)
+    payload = Column(JSON)  # Job-specific data (e.g., pipeline_run_id)
+    extra_metadata = Column(JSON)  # Additional metadata for the job
+    started_at = Column(DateTime(timezone=True))
+    completed_at = Column(DateTime(timezone=True))
+    repo_path = Column(String(255))
+
+    @classproperty
+    def repo_query(cls):
+        return cls.query.filter(
+            or_(
+                GenericJob.repo_path == get_repo_path(),
+                GenericJob.repo_path.is_(None),
+            )
+        )
+
+    @classmethod
+    @safe_db_query
+    def enqueue_cancel_pipeline_run(
+        cls,
+        pipeline_run_id: int,
+        cancelled_block_run_ids: List,
+        repo_path: str = None,
+    ) -> 'GenericJob':
+        """Enqueue a job to cancel a pipeline run."""
+        if repo_path is None:
+            repo_path = get_repo_path()
+
+        job = cls.create(
+            job_type=cls.JobType.CANCEL_PIPELINE_RUN,
+            payload=dict(
+                pipeline_run_id=pipeline_run_id,
+                cancelled_block_run_ids=cancelled_block_run_ids,
+            ),
+            repo_path=repo_path,
+            status=cls.JobStatus.INITIAL
+        )
+        return job
+
+    @classmethod
+    @safe_db_query
+    def get_jobs_with_initial_status(
+        cls,
+        limit: int = 10,
+        repo_path: str = None,
+    ) -> List['GenericJob']:
+        """Get up to N jobs with INITIAL status for processing."""
+        query = cls.repo_query.filter(
+            cls.status == cls.JobStatus.INITIAL,
+        )
+
+        if repo_path:
+            query = query.filter(cls.repo_path == repo_path)
+
+        jobs = query.order_by(cls.created_at.asc()).limit(limit).all()
+
+        return jobs
+
+    @safe_db_query
+    def mark_completed(self):
+        """Mark the job as completed successfully."""
+        self.update(
+            status=self.JobStatus.COMPLETED,
+            completed_at=datetime.now(tz=pytz.UTC)
+        )
+
+    @safe_db_query
+    def mark_failed(self, metadata: dict = None):
+        """Mark the job as failed."""
+        self.update(
+            status=self.JobStatus.FAILED,
+            completed_at=datetime.now(tz=pytz.UTC),
+            extra_metadata=metadata or {}
+        )
+
+    @safe_db_query
+    def mark_queued(self):
+        """Mark the job as queued."""
+        self.update(
+            status=self.JobStatus.QUEUED,
+        )
+
+    @safe_db_query
+    def mark_running(self):
+        """Mark the job as queued."""
+        self.update(
+            status=self.JobStatus.RUNNING,
+        )
+
+    def __repr__(self):
+        return f'GenericJob(id={self.id}, type={self.job_type}, status={self.status})'
+
+
 class EventMatcher(BaseModel):
     class EventType(StrEnum):
         AWS_EVENT = 'aws_event'

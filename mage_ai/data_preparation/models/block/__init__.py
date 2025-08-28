@@ -4464,29 +4464,36 @@ class CallbackBlock(AddonBlock):
             elif 'on_success' == callback:
                 callback_functions_legacy = success_functions
                 callback_status = CallbackStatus.SUCCESS
+            elif 'on_cancelled' == callback:
+                callback_functions_legacy = []
+                callback_status = CallbackStatus.CANCELLED
 
-            # Fetch input variables
-            input_vars, kwargs_vars, upstream_block_uuids = self.fetch_input_variables(
-                None,
-                dynamic_block_index=dynamic_block_index,
-                dynamic_block_indexes=dynamic_block_indexes,
-                dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
-                execution_partition=execution_partition,
-                from_notebook=from_notebook,
-                global_vars=global_vars,
-                metadata=metadata,
-                upstream_block_uuids=[parent_block.uuid] if parent_block else None,
-                upstream_block_uuids_override=upstream_block_uuids_override,
-            )
-
-            # Copied logic from the method self.execute_block
-            outputs_from_input_vars = {}
-            upstream_block_uuids_length = len(upstream_block_uuids)
-            for idx, input_var in enumerate(input_vars):
-                if idx < upstream_block_uuids_length:
-                    upstream_block_uuid = upstream_block_uuids[idx]
-                    outputs_from_input_vars[upstream_block_uuid] = input_var
-                    outputs_from_input_vars[f'df_{idx + 1}'] = input_var
+            if callback_status in [CallbackStatus.FAILURE, CallbackStatus.SUCCESS]:
+                # Fetch input variables
+                input_vars, kwargs_vars, upstream_block_uuids = self.fetch_input_variables(
+                    None,
+                    dynamic_block_index=dynamic_block_index,
+                    dynamic_block_indexes=dynamic_block_indexes,
+                    dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
+                    execution_partition=execution_partition,
+                    from_notebook=from_notebook,
+                    global_vars=global_vars,
+                    metadata=metadata,
+                    upstream_block_uuids=[parent_block.uuid] if parent_block else None,
+                    upstream_block_uuids_override=upstream_block_uuids_override,
+                )
+                # Copied logic from the method self.execute_block
+                outputs_from_input_vars = {}
+                upstream_block_uuids_length = len(upstream_block_uuids)
+                for idx, input_var in enumerate(input_vars):
+                    if idx < upstream_block_uuids_length:
+                        upstream_block_uuid = upstream_block_uuids[idx]
+                        outputs_from_input_vars[upstream_block_uuid] = input_var
+                        outputs_from_input_vars[f'df_{idx + 1}'] = input_var
+            else:
+                input_vars = []
+                kwargs_vars = []
+                upstream_block_uuids = []
 
             global_vars_copy = global_vars.copy()
             for kwargs_var in kwargs_vars:
