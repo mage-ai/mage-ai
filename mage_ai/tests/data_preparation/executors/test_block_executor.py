@@ -98,7 +98,7 @@ class BlockExecutorTest(BaseApiTestCase):
         self.block_executor._execute_conditional = MagicMock(return_value=True)
         self.block_executor._execute = MagicMock(return_value={'result': 'success'})
         # self.block.run_tests = MagicMock()
-        self.block_executor._execute_callback = MagicMock()
+        self.block_executor.execute_callback = MagicMock()
 
         result = self.block_executor.execute(
             analyze_outputs=analyze_outputs,
@@ -167,7 +167,7 @@ class BlockExecutorTest(BaseApiTestCase):
         #     update_tests=False,
         #     dynamic_block_uuid=dynamic_block_uuid,
         # )
-        self.block_executor._execute_callback.assert_called_with(
+        self.block_executor.execute_callback.assert_called_with(
             'on_success',
             block_run_id=None,
             callback_kwargs=dict(retry=dict(attempts=1)),
@@ -245,7 +245,7 @@ class BlockExecutorTest(BaseApiTestCase):
         self.block.callback_blocks = [MagicMock(), MagicMock()]
         self.block.callback_block = MagicMock()
 
-        self.block_executor._execute_callback(
+        self.block_executor.execute_callback(
             callback='on_success',
             global_vars=dict(retry=dict(attempts=1)),
             logging_tags={},
