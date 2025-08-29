@@ -693,7 +693,7 @@ class BlockExecutor:
                             ),
                             tags=tags,
                         )
-                    self._execute_callback(
+                    self.execute_callback(
                         'on_failure',
                         block_run_id=block_run_id,
                         callback_kwargs=dict(__error=error, retry=self.retry_metadata),
@@ -748,7 +748,7 @@ class BlockExecutor:
             # success callback because this isn’t the last data integration block that needs
             # to run.
             if not data_integration_metadata or is_original_block:
-                self._execute_callback(
+                self.execute_callback(
                     'on_success',
                     block_run_id=block_run_id,
                     callback_kwargs=dict(retry=self.retry_metadata),
@@ -1253,7 +1253,7 @@ class BlockExecutor:
 
         return result
 
-    def _execute_callback(
+    def execute_callback(
         self,
         callback: str,
         global_vars: Dict,
@@ -1275,6 +1275,11 @@ class BlockExecutor:
             dynamic_block_index: Index of the dynamic block.
             dynamic_upstream_block_uuids: List of UUIDs of the dynamic upstream blocks.
         """
+        if logging_tags is None:
+            logging_tags = self.build_tags(
+                block_run_id=block_run_id,
+                pipeline_run_id=pipeline_run.id if pipeline_run is not None else None,
+            )
         upstream_block_uuids_override = []
         if is_dynamic_block_child(self.block):
             if not self.block_run and block_run_id:

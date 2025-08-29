@@ -8,6 +8,7 @@ class JobType(StrEnum):
     BLOCK_RUN = 'block_run'
     PIPELINE_RUN = 'pipeline_run'
     INTEGRATION_STREAM = 'integration_stream'
+    GENERIC_JOB = 'generic_job'
 
 
 class JobManager:
@@ -62,6 +63,19 @@ class JobManager:
             logging_tags=logging_tags,
         )
 
+    def has_generic_job(
+        self,
+        generic_job_id: int,
+        logger=None,
+        logging_tags: Dict = None,
+    ) -> bool:
+        job_id = self.__job_id(JobType.GENERIC_JOB, generic_job_id)
+        return self.queue.has_job(
+            job_id,
+            logger=logger,
+            logging_tags=logging_tags,
+        )
+
     def kill_block_run_job(self, block_run_id):
         print(f'Kill block run id: {block_run_id}')
         job_id = self.__job_id(JobType.BLOCK_RUN, block_run_id)
@@ -76,6 +90,11 @@ class JobManager:
         id = f'{pipeline_run_id}_{stream}'
         print(f'Kill integration stream id: {id}')
         job_id = self.__job_id(JobType.INTEGRATION_STREAM, id)
+        return self.queue.kill_job(job_id)
+
+    def kill_generic_job(self, generic_job_id):
+        print(f'Kill generic job id: {generic_job_id}')
+        job_id = self.__job_id(JobType.GENERIC_JOB, generic_job_id)
         return self.queue.kill_job(job_id)
 
     def start(self):

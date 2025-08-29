@@ -82,6 +82,7 @@ class BlockColor(StrEnum):
 
 
 class CallbackStatus(StrEnum):
+    CANCELLED = 'cancelled'
     FAILURE = 'failure'
     SUCCESS = 'success'
 
@@ -126,6 +127,7 @@ BLOCK_LANGUAGE_TO_FILE_EXTENSION = {
 
 
 CALLBACK_STATUSES = [
+    CallbackStatus.CANCELLED,
     CallbackStatus.FAILURE,
     CallbackStatus.SUCCESS,
 ]

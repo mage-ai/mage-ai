@@ -32,6 +32,7 @@ from mage_ai.orchestration.db.models.schedules import (
     Backfill,
     BlockRun,
     EventMatcher,
+    GenericJob,
     PipelineRun,
     PipelineSchedule,
 )
@@ -928,6 +929,81 @@ class PipelineScheduler:
             self.memory_usage_failure(tags=tags)
 
 
+def on_pipeline_run_cancelled(
+    job_id: int,
+    pipeline_run_id: int,
+    cancelled_block_run_ids: List,
+):
+    job = GenericJob.query.get(job_id)
+    if job.status not in [
+        GenericJob.JobStatus.INITIAL,
+        GenericJob.JobStatus.QUEUED,
+        GenericJob.JobStatus.RUNNING,
+    ]:
+        return
+    job.mark_running()
+
+    if not pipeline_run_id:
+        job.mark_failed(
+            metadata=dict(
+                error_message='Pipeline run id is not provided in the job.',
+            ),
+        )
+        return
+    if not cancelled_block_run_ids:
+        job.mark_failed(
+            metadata=dict(
+                error_message='Cancelled block run ids are not provided in the job.',
+            ),
+        )
+        return
+
+    try:
+        # Run callback blocks for cancelled block runs
+        pipeline_run = PipelineRun.query.get(pipeline_run_id)
+        if not pipeline_run:
+            raise Exception(f'Fail to retrieve pipeline run with id {pipeline_run_id}')
+        pipeline_schedule = pipeline_run.pipeline_schedule
+        pipeline = get_pipeline_from_platform(
+            pipeline_run.pipeline_uuid,
+            repo_path=pipeline_schedule.repo_path if pipeline_schedule else None,
+        )
+        if pipeline_run.status != PipelineRun.PipelineRunStatus.CANCELLED:
+            job.mark_failed(
+                metadata=dict(
+                    error_message=f'Pipeline run {pipeline_run_id} is not in cancelled status.',
+                ),
+            )
+            return
+        for block_run_id in cancelled_block_run_ids:
+            block_run = BlockRun.query.get(block_run_id)
+            if not block_run:
+                continue
+            if block_run.status != BlockRun.BlockRunStatus.CANCELLED:
+                continue
+            ExecutorFactory.get_block_executor(
+                pipeline,
+                block_run.block_uuid,
+                block_run_id=block_run.id,
+                execution_partition=pipeline_run.execution_partition,
+                executor_type=ExecutorType.LOCAL_PYTHON,
+            ).execute_callback(
+                callback='on_cancelled',
+                global_vars=pipeline_run.get_variables(),
+                logging_tags=None,
+                pipeline_run=pipeline_run,
+                block_run_id=block_run_id,
+            )
+    except Exception as e:
+        job.mark_failed(
+            metadata=dict(
+                error_message=f'Failed to run pipeline run cancellation hook: {e}.',
+            ),
+        )
+        return
+    job.mark_completed()
+
+
 def run_integration_streams(
     streams: List[Dict],
     *args,
@@ -1406,8 +1482,9 @@ def cancel_block_runs_and_jobs(
             block_runs_to_cancel.append(b)
         if b.status == BlockRun.BlockRunStatus.RUNNING:
             running_blocks.append(b)
+    cancelled_block_run_ids = [b.id for b in block_runs_to_cancel]
     BlockRun.batch_update_status(
-        [b.id for b in block_runs_to_cancel],
+        cancelled_block_run_ids,
         BlockRun.BlockRunStatus.CANCELLED,
     )
 
@@ -1434,6 +1511,18 @@ def cancel_block_runs_and_jobs(
     else:
         for b in running_blocks:
             job_manager.kill_block_run_job(b.id)
+
+    GenericJob.enqueue_cancel_pipeline_run(pipeline_run.id, cancelled_block_run_ids)
+
+
+def kill_cancelled_runs(pipeline_run_id: int, cancelled_block_run_ids: List):
+    job_manager = get_job_manager()
+    if pipeline_run_id and job_manager.has_pipeline_run_job(pipeline_run_id):
+        job_manager.kill_pipeline_run_job(pipeline_run_id)
+    if cancelled_block_run_ids:
+        for block_run_id in cancelled_block_run_ids:
+            if job_manager.has_block_run_job(block_run_id):
+                job_manager.kill_block_run_job(block_run_id)
 
 
 def check_sla():
@@ -1732,6 +1821,13 @@ def schedule_all():
             logger.exception(f'Failed to schedule {r}')
             traceback.print_exc()
             continue
+
+    try:
+        schedule_generic_jobs()
+    except Exception as e:
+        logger.exception(f'Failed to schedule generic jobs {e}')
+        traceback.print_exc()
+
     job_manager = get_job_manager()
     if job_manager is None:
         logger.info('Job manager is None.')
@@ -1912,3 +2008,52 @@ def sync_schedules(pipeline_uuids: List[str]):
             trigger_configs.append(pipeline_trigger)
 
     PipelineSchedule.create_or_update_batch(trigger_configs)
+
+
+def schedule_generic_jobs():
+    """
+    Schedule generic jobs that are in INITIAL status.
+
+    This method schedules jobs like cancel_pipeline_run that have been enqueued
+    by the server process and are waiting to be executed by the job manager.
+    """
+    try:
+        # Get all jobs with INITIAL status across all repositories
+        jobs = GenericJob.get_jobs_with_initial_status()
+        job_manager = get_job_manager()
+
+        if not jobs:
+            return
+
+        logger.info(f'Scheduling {len(jobs)} generic jobs')
+
+        # Schedule each job with the job manager
+        for job in jobs:
+            try:
+                if job.job_type == GenericJob.JobType.CANCEL_PIPELINE_RUN:
+                    pipeline_run_id = job.payload.get('pipeline_run_id')
+                    cancelled_block_run_ids = job.payload.get('cancelled_block_run_ids')
+                    try:
+                        kill_cancelled_runs(pipeline_run_id, cancelled_block_run_ids)
+                    except Exception:
+                        pass
+                    # Add job to job manager for execution
+                    job_manager.add_job(
+                        JobType.GENERIC_JOB,
+                        job.id,
+                        on_pipeline_run_cancelled,
+                        # args
+                        job.id,
+                        pipeline_run_id,
+                        cancelled_block_run_ids,
+                    )
+                    job.mark_queued()
+                    logger.info(f'Scheduled generic job {job.id} ({job.job_type})')
+                else:
+                    raise ValueError(f"Unknown job type: {job.job_type}")
+            except Exception as e:
+                error_message = f"Failed to schedule generic job: {str(e)}"
+                logger.exception(f'Failed to schedule generic job {job.id}: {error_message}')
+                job.mark_failed({'error': error_message})
+    except Exception as e:
+        logger.exception(f'Failed to schedule generic jobs: {e}')
