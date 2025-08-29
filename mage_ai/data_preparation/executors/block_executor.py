@@ -1277,7 +1277,8 @@ class BlockExecutor:
         """
         if logging_tags is None:
             logging_tags = self.build_tags(
-                block_run_id=block_run_id, pipeline_run_id=pipeline_run.id
+                block_run_id=block_run_id,
+                pipeline_run_id=pipeline_run.id if pipeline_run is not None else None,
             )
         upstream_block_uuids_override = []
         if is_dynamic_block_child(self.block):

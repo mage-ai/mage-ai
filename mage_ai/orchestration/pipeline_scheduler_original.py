@@ -946,7 +946,7 @@ def on_pipeline_run_cancelled(
     if not pipeline_run_id:
         job.mark_failed(
             metadata=dict(
-                error_message='Pipeline run is is not provided in the job.',
+                error_message='Pipeline run id is not provided in the job.',
             ),
         )
         return
@@ -991,7 +991,6 @@ def on_pipeline_run_cancelled(
                 block_run_id=block_run_id,
             )
     except Exception as e:
-        raise e
         job.mark_failed(
             metadata=dict(
                 error_message=f'Failed to run pipeline run cancellation hook: {e}.',
