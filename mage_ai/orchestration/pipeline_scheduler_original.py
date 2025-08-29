@@ -961,6 +961,8 @@ def on_pipeline_run_cancelled(
     try:
         # Run callback blocks for cancelled block runs
         pipeline_run = PipelineRun.query.get(pipeline_run_id)
+        if not pipeline_run:
+            raise Exception(f'Fail to retrieve pipeline run with id {pipeline_run_id}')
         pipeline_schedule = pipeline_run.pipeline_schedule
         pipeline = get_pipeline_from_platform(
             pipeline_run.pipeline_uuid,
@@ -975,6 +977,8 @@ def on_pipeline_run_cancelled(
             return
         for block_run_id in cancelled_block_run_ids:
             block_run = BlockRun.query.get(block_run_id)
+            if not block_run:
+                continue
             if block_run.status != BlockRun.BlockRunStatus.CANCELLED:
                 continue
             ExecutorFactory.get_block_executor(
