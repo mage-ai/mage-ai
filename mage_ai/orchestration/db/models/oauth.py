@@ -882,4 +882,5 @@ class Oauth2AccessToken(BaseModel):
     def is_valid(self) -> bool:
         return self.token and \
             self.expires and \
-            self.expires >= datetime.utcnow().replace(tzinfo=self.expires.tzinfo)
+            self.expires >= datetime.utcnow().replace(tzinfo=self.expires.tzinfo) and \
+            self.user is not None
