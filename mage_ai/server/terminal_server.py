@@ -126,6 +126,9 @@ class TerminalWebsocketServer(terminado.TermSocket):
                             Entity.PROJECT,
                             get_project_uuid(),
                         )
+                    else:
+                        # If the user is deleted, set valid to False
+                        valid = False
             if not valid or is_disable_pipeline_edit_access():
                 return self.send_json_message(
                     ['stdout', f'{command[1]}\nUnauthorized access to the terminal.'])
