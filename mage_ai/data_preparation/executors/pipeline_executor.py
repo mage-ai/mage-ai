@@ -10,9 +10,12 @@ from mage_ai.data_preparation.logging.logger import DictLogger
 from mage_ai.data_preparation.logging.logger_manager_factory import LoggerManagerFactory
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.orchestration.db.models.schedules import BlockRun, PipelineRun
+from mage_ai.server.logger import Logger
 from mage_ai.shared.hash import merge_dict
 from mage_ai.usage_statistics.constants import EventNameType, EventObjectType
 from mage_ai.usage_statistics.logger import UsageStatisticLogger
+
+logger = Logger().new_server_logger(__name__)
 
 
 class PipelineExecutor:
@@ -77,11 +80,13 @@ class PipelineExecutor:
         # Execute the task based on current context
         try:
             loop = asyncio.get_running_loop()
+            logger.info(f'[PipelineExecutor] Found running loop {loop}')
             # We're in an async context, use create_task
             task = asyncio.create_task(_execute_task())
             loop.run_until_complete(task)
         except RuntimeError:
             # No running loop, safe to use asyncio.run
+            logger.info('[PipelineExecutor] No running loop, using asyncio.run')
             asyncio.run(_execute_task())
 
         self.logger_manager.output_logs_to_destination()
