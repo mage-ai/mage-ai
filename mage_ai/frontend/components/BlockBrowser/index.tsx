@@ -137,7 +137,7 @@ function Browser({
 
   const [focusedState, setFocusedState] = useState<boolean>(false);
   const setFocused = useCallback((value: boolean) => {
-    if (setFocusedProp && typeof focusedProp !== undefined) {
+    if (setFocusedProp && typeof focusedProp !== "undefined") {
       setFocusedProp?.(value);
     } else {
       setFocusedState(value);
