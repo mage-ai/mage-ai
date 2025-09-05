@@ -94,7 +94,7 @@ MAX_OUTPUT_IMAGE_PREVIEW_SIZE = int(os.getenv('MAX_OUTPUT_IMAGE_PREVIEW_SIZE', 1
 # User Authentication Settings
 # -------------------
 
-REQUIRE_USER_AUTHENTICATION = get_bool_value(os.getenv('REQUIRE_USER_AUTHENTICATION', 'False'))
+REQUIRE_USER_AUTHENTICATION = get_bool_value(os.getenv('REQUIRE_USER_AUTHENTICATION', 'True'))
 REQUIRE_USER_PERMISSIONS = REQUIRE_USER_AUTHENTICATION and get_bool_value(
     os.getenv('REQUIRE_USER_PERMISSIONS', 'False')
 )
