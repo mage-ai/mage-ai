@@ -343,7 +343,13 @@ def format_output_data(
                 columns=columns_to_display,
                 rows=[
                     list(row.values())
-                    for row in json.loads(json.dumps(data[columns_to_display].to_dicts()))
+                    for row in json.loads(
+                        simplejson.dumps(
+                            data[columns_to_display].to_dicts(),
+                            default=encode_complex,
+                            ignore_nan=True,
+                        )
+                    )
                 ],
             ),
             resource_usage=resource_usage,
