@@ -87,8 +87,36 @@ k8s_executor_config:
     cpu: 500m
     memory: 1024Mi
   service_account_name: default
+  # Node scheduling configurations
+  pod:
+    node_selector:
+      node-type: gpu
+      instance-type: c5.large
+    scheduler_name: custom-scheduler
+    tolerations:
+      - key: "nvidia.com/gpu"
+        operator: "Exists"
+        effect: "NoSchedule"
+    affinity:
+      nodeAffinity:
+        requiredDuringSchedulingIgnoredDuringExecution:
+          nodeSelectorTerms:
+            - matchExpressions:
+                - key: "node-type"
+                  operator: "In"
+                  values: ["gpu", "compute"]
+      podAntiAffinity:
+        requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchLabels:
+                app: mage-pipeline
+            topologyKey: "kubernetes.io/hostname"
+    volumes:
+      - name: data-volume
+        persistent_volume_claim:
+          claim_name: mage-data-pvc
+    image_pull_secrets: my-registry-secret
 ```
-
 
 * The Kubernetes job name is in this format: `mage-{job_name_prefix}-block-{block_run_id}`.
   The default `job_name_prefix` is `data-prep`.
@@ -100,6 +128,13 @@ k8s_executor_config:
   k8s_executor_config:
     resource_limits:
       nvidia.com/gpu: 1  # request 1 GPU
+    pod:
+      node_selector:
+        accelerator: nvidia-tesla-v100
+      tolerations:
+        - key: "nvidia.com/gpu"
+          operator: "Exists"
+          effect: "NoSchedule"
   ```
   Make sure [GPU device plugins](https://kubernetes.io/docs/tasks/manage-gpus/scheduling-gpus/#using-device-plugins) are installed.
 
@@ -138,12 +173,57 @@ metadata:
   namespace: "default"
 
 pod:
-  service_account_name: ""
-  image_pull_secrets: "secret"
+  service_account_name: "mage-service-account"
+  image_pull_secrets: "my-registry-secret"
+  node_selector:
+    node-type: "compute"
+    instance-type: "c5.xlarge"
+    zone: "us-west-1a"
+  scheduler_name: "custom-scheduler"
+  tolerations:
+    - key: "nvidia.com/gpu"
+      operator: "Exists"
+      effect: "NoSchedule"
+    - key: "spot-instance"
+      operator: "Equal"
+      value: "true"
+      effect: "NoSchedule"
+  affinity:
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+          - matchExpressions:
+              - key: "node-type"
+                operator: "In"
+                values: ["compute", "gpu"]
+              - key: "instance-type"
+                operator: "In"
+                values: ["c5.xlarge", "c5.2xlarge"]
+      preferredDuringSchedulingIgnoredDuringExecution:
+        - weight: 100
+          preference:
+            matchExpressions:
+              - key: "zone"
+                operator: "In"
+                values: ["us-west-1a", "us-west-1b"]
+    podAntiAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        - labelSelector:
+            matchLabels:
+              app: "mage-pipeline"
+          topologyKey: "kubernetes.io/hostname"
   volumes:
   - name: data-pvc
     persistent_volume_claim:
-      claim_name: pvc-name
+      claim_name: mage-data-pvc
+  - name: config-volume
+    config_map:
+      name: mage-config
+  - name: secret-volume
+    secret:
+      secret_name: mage-secrets
+  - name: empty-dir-volume
+    empty_dir: {}
 
 container:
   name: "mage-data"
@@ -158,12 +238,90 @@ container:
     limits:
       cpu: "1"
       memory: "1Gi"
+      nvidia.com/gpu: 1
     requests:
       cpu: "0.1"
       memory: "0.5Gi"
+      nvidia.com/gpu: 1
   volume_mounts:
     - mount_path: "/tmp/data"
       name: "data-pvc"
+    - mount_path: "/etc/config"
+      name: "config-volume"
+    - mount_path: "/etc/secrets"
+      name: "secret-volume"
+      read_only: true
+```
+
+## Node Scheduling Configuration
+
+### Node Selector
+Use `node_selector` to schedule pods on specific nodes based on labels:
+
+```yaml
+k8s_executor_config:
+  pod:
+    node_selector:
+      node-type: "gpu"           # Schedule on GPU nodes
+      instance-type: "c5.large"  # Schedule on specific instance types
+      zone: "us-west-1a"         # Schedule in specific availability zones
+```
+
+### Tolerations
+Use `tolerations` to allow pods to be scheduled on tainted nodes:
+
+```yaml
+k8s_executor_config:
+  pod:
+    tolerations:
+      - key: "nvidia.com/gpu"
+        operator: "Exists"
+        effect: "NoSchedule"
+      - key: "spot-instance"
+        operator: "Equal"
+        value: "true"
+        effect: "NoSchedule"
+```
+
+### Affinity Rules
+Use `affinity` for advanced scheduling rules:
+
+```yaml
+k8s_executor_config:
+  pod:
+    affinity:
+      # Node affinity - prefer specific node types
+      nodeAffinity:
+        requiredDuringSchedulingIgnoredDuringExecution:
+          nodeSelectorTerms:
+            - matchExpressions:
+                - key: "node-type"
+                  operator: "In"
+                  values: ["compute", "gpu"]
+        preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            preference:
+              matchExpressions:
+                - key: "zone"
+                  operator: "In"
+                  values: ["us-west-1a", "us-west-1b"]
+
+      # Pod anti-affinity - avoid co-locating similar pods
+      podAntiAffinity:
+        requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchLabels:
+                app: "mage-pipeline"
+            topologyKey: "kubernetes.io/hostname"
+```
+
+### Custom Scheduler
+Use a custom scheduler for advanced scheduling logic:
+
+```yaml
+k8s_executor_config:
+  pod:
+    scheduler_name: "custom-scheduler"
 ```
 
 ✅ **Use when:**
