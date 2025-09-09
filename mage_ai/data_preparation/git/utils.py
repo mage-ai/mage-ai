@@ -215,7 +215,7 @@ def check_connection(git, remote_url: str) -> None:
 
 
 async def check_connection_async(git, remote_name: str) -> None:
-    proc = git.ls_remote(remote_name, as_process=True)
+    proc = git.ls_remote(remote_name, 'HEAD', as_process=True)
 
     await poll_process_with_timeout(
         proc,
@@ -228,7 +228,7 @@ async def check_connection_async(git, remote_name: str) -> None:
 
 
 async def validate_authentication_for_remote_url(git, remote_url: str) -> None:
-    proc = git.ls_remote(remote_url, as_process=True)
+    proc = git.ls_remote(remote_url, 'HEAD', as_process=True)
 
     await poll_process_with_timeout(
         proc,
