@@ -12,11 +12,12 @@ from jinja2 import Template
 from mage_ai.cluster_manager.constants import ClusterType
 from mage_ai.data_preparation.templates.utils import copy_template_directory
 from mage_ai.settings import INITIAL_METADATA, settings
-from mage_ai.settings.repo import (
-    DEFAULT_MAGE_DATA_DIR,
-    MAGE_DATA_DIR_ENV_VAR,
-    PROJECT_METADATA_FILENAME,
+from mage_ai.settings.constants import PROJECT_METADATA_FILENAME
+from mage_ai.settings.platform import (
+    build_repo_path_for_all_projects,
+    project_platform_activated,
 )
+from mage_ai.settings.repo import DEFAULT_MAGE_DATA_DIR, MAGE_DATA_DIR_ENV_VAR
 from mage_ai.settings.repo import get_data_dir as get_data_dir_new
 from mage_ai.settings.repo import get_metadata_path
 from mage_ai.settings.repo import get_repo_name as get_repo_name_new
@@ -343,12 +344,26 @@ def get_cluster_type(repo_path=None) -> Optional[ClusterType]:
 
 
 def set_project_uuid_from_metadata() -> None:
-    global project_uuid
+    global project_uuid_cache
     metadata_path = os.path.join(base_repo_path(), PROJECT_METADATA_FILENAME)
     if os.path.exists(metadata_path):
         with open(metadata_path, 'r', encoding='utf-8') as f:
             config = yml.load(f) or {}
-            project_uuid = config.get('project_uuid')
+            project_uuid_cache['project_uuid'] = config.get('project_uuid')
+
+    if project_platform_activated():
+        repo_paths_all = build_repo_path_for_all_projects(
+            repo_path=base_repo_path(),
+            mage_projects_only=True,
+        )
+        if 'projects' not in project_uuid_cache:
+            project_uuid_cache['projects'] = {}
+        for project_name, paths in repo_paths_all.items():
+            metadata_path = os.path.join(paths.get('full_path'), PROJECT_METADATA_FILENAME)
+            if os.path.exists(metadata_path):
+                with open(metadata_path, 'r', encoding='utf-8') as f:
+                    config = yml.load(f) or {}
+                    project_uuid_cache['projects'][project_name] = config.get('project_uuid')
 
 
 def update_settings_on_metadata_change() -> None:
@@ -365,29 +380,32 @@ def init_project_uuid(overwrite_uuid: str = None, root_project: bool = False) ->
         overwrite_uuid (str): If not null, the overwrite_uuid will overwrite the current
             value of project_uuid.
     """
-    global project_uuid
+    global project_uuid_cache
     repo_config = get_repo_config(root_project=root_project)
     if overwrite_uuid:
         if repo_config.project_uuid != overwrite_uuid:
             repo_config.save(project_uuid=overwrite_uuid)
-        project_uuid = overwrite_uuid
+        project_uuid_cache['project_uuid'] = overwrite_uuid
         return
 
-    if not project_uuid:
+    if not project_uuid_cache.get('project_uuid'):
         if repo_config.project_uuid:
-            project_uuid = repo_config.project_uuid
+            project_uuid_cache['project_uuid'] = repo_config.project_uuid
         else:
             puuid = uuid.uuid4().hex
             repo_config.save(project_uuid=puuid)
-            project_uuid = puuid
+            project_uuid_cache['project_uuid'] = puuid
 
 
-project_uuid = None
+project_uuid_cache = {}
 set_project_uuid_from_metadata()
 
 
-def get_project_uuid() -> str:
-    return project_uuid
+def get_project_uuid(root_project: bool = True, project_name: str = None) -> str:
+    if root_project:
+        return project_uuid_cache.get('project_uuid')
+    elif project_name:
+        return project_uuid_cache.get('projects', {}).get(project_name)
 
 
 # These should not be used. Please use the corresponding functions in
