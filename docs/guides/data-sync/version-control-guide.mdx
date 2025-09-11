@@ -10,7 +10,7 @@ import { ProOnly } from '/snippets/pro/only.mdx';
 
 <ProOnly source="versoin-control-guide" />
 
-## 1. Syncing to a Github repo with Oauth tokens
+## 1 Syncing to Github
 
 Navigate to the the Deployments application where you will set up your connection using the Mage Pro “Connect repository” UI where you will connect to your Github account using authenticated sign in.
 
@@ -47,7 +47,7 @@ Once you are in the connect repository UI take the following steps:
 
 **Step 4**: Select the your Github organization from the dropdown list. 
 
-- If there are no organizations listed add an organization to the text field below and click the Set organization button
+- If there are no organizations listed, add an organization to the text field below and click the Set organization button
 
 <Frame>
   <img
@@ -75,30 +75,71 @@ Once you are in the connect repository UI take the following steps:
 If you need to connect deployments to a private Github repo, provide an organization then click the Install Mage Pro app on Github button.
 </Note>
 
-## 2. Configure deployment stages:
+## 2 Syncing to BitBucket 
+Mage Pro now supports integration with BitBucket repositories for version control, collaboration, and deployments.
 
-Configure each stage of the deployment process before your code reaches production by completing the following steps:
+### Connect workspace
 
-Click “Add stage” button and then complete the following steps
+Go to the Deployments application and use Mage Pro's "Connect repository" feature to link your BitBucket account through secure authentication.
 
-**Step 1**: Select the type of environment for the first stage. The options are Development, Testing, Staging, Canary, or Production.
+From the Home page, select **Deployments** in the left-hand navigation menu to access the Deployments interface.
 
-**Step 2:** Select the branch name, this will likely already be set to Main or Master from your previous selection when connecting to your Github account
+Click the Setup connection button to begin syncing with your BitBucket repository.
 
-**Step 3**: Add your target directory you are using in Mage. Typically this is `/home/src/default_repo` . If you made changes to the target directory, type in your directory path.
+**Connect to BitBucket using Oauth tokens:**
 
-**Step 4**: Add in an optional description.
+Once you are in the connect repository UI take the following steps:
 
-**Step 5**: If you need to add additional stages click the “Add stages” button and go through the same process as above for all stages of your CI/CD workflow.
+**Step 1**: Set your directory as the user code path you intend to use for your project. 
 
-**Step 6:** When finished adding all stages click the “Deployment triggers” button to move onto the next stage in the workflow.
+- In Mage Pro the default directory will be `/home/src/default_repo`.
+- If you changed the `USER_CODE_PATH` environment variable in the Mage Cloud Management Portal, your directory will need to reflect that change.
 
 <Frame>
   <img
-    alt="Mage Pro install app button"
-    src="https://mage-ai.github.io/assets/pro/features/deployments/deployment-stages.png"
+    alt="Connect repository"
+    src="https://raw.githubusercontent.com/mage-ai/assets/main/version-control/bitbucket/bitbucket-connect-repo.png"
   />
 </Frame>
+
+**Step 2**: Click the “Connect” button to the right of the BitBucket connection 
+
+- This will take you to the BitBucket sign-in authentication
+
+**Step 3**: Sign in with your BitBucket login credentials
+
+- After authenticating you will return to the Mage-Pro deployment app
+- You should now see that you are connected to BitBucket
+
+<Frame>
+  <img
+    alt="Connect Button"
+    src="https://raw.githubusercontent.com/mage-ai/assets/main/version-control/bitbucket/bitbucket-connect.png"
+  />
+</Frame>
+
+**Step 4**: Select your BitBucket workspace from the dropdown list. 
+
+- If there are no organizations listed, add an organization to the text field below and click the "Set organization" button
+
+**Step 5**: Select the repository from the dropdown menu.
+
+- You should see a list of all the repositories that were created in the workspace.
+
+**Step 6**: Finally, select the production branch from the dropdown list
+
+- The production branch is the primary branch that your production code will mirror.
+
+<Frame>
+  <img
+    alt="Bitbucket workspace"
+    src="https://raw.githubusercontent.com/mage-ai/assets/main/version-control/bitbucket/bitbucket-workspace.png"
+  />
+</Frame>
+
+### Conclusion
+
+Integrating Mage Pro with BitBucket and GitHub through OAuth credentials enables seamless version control for data pipelines. Teams can use both the visual Mage Pro interface and standard Git commands across both platforms, ensuring robust collaboration and deployment workflows for production data systems.
 
 ## 3. Version control application and Git terminal commands
 
@@ -110,7 +151,7 @@ Once connected to a GitHub account, you can efficiently manage your codebase by 
 
 `git status`
 
-*(Displays the current state of the working directory and staging area, highlighting modified, staged, and untracked files.*
+*Displays the current state of the working directory and staging area, highlighting modified, staged, and untracked files.*
 
 `git add .`
 
