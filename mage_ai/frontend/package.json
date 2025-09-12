@@ -64,7 +64,7 @@
     "monaco-editor-wrapper": "^5.2.0",
     "monaco-languageclient": "^8.5.0",
     "monaco-themes": "^0.4.4",
-    "next": "12.3.4",
+    "next": "14.2.32",
     "next-cookies": "^2.0.3",
     "next-remove-imports": "^1.0.12",
     "plist": "^3.1.0",
