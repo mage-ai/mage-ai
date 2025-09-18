@@ -219,7 +219,7 @@ def reformat(df, action, **kwargs):
                 )
                 clean_col = clean_col.str.lower()
             df.loc[:, column] = pd.to_datetime(
-                clean_col, infer_datetime_format=True, errors='coerce'
+                clean_col, format='mixed', errors='coerce'
             )
     elif reformat_action == 'trim':
         for column in columns:
@@ -334,8 +334,8 @@ def __filter_df_with_time_window(df, action):
     if all(k in action_options for k in time_window_keys):
         window_in_seconds = action_options['window']
         df_time_diff = (
-            pd.to_datetime(df[action_options['timestamp_feature_a']], utc=True)
-            - pd.to_datetime(df[action_options['timestamp_feature_b']], utc=True)
+            pd.to_datetime(df[action_options['timestamp_feature_a']], format='mixed', utc=True)
+            - pd.to_datetime(df[action_options['timestamp_feature_b']], format='mixed', utc=True)
         ).dt.total_seconds()
         if window_in_seconds > 0:
             df_time_diff_filtered = df_time_diff[
