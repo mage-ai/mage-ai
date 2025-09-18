@@ -139,15 +139,31 @@ class LoggerManager:
                          str_to_timedelta(log_retention_period)).strftime(
                             format='%Y%m%dT%H%M%S')
 
+        from mage_ai.data_preparation.models.constants import PipelineType
+        from mage_ai.data_preparation.models.pipeline import Pipeline
         if self.pipeline_uuid is None:
-            from mage_ai.data_preparation.models.pipeline import Pipeline
-
             pipeline_uuids = Pipeline.get_all_pipelines(self.repo_path)
         else:
             pipeline_uuids = [self.pipeline_uuid]
 
         for pipeline_uuid in pipeline_uuids:
             print(f'Removing old logs from pipeline {pipeline_uuid}')
+            # Skip cleaning up logs for streaming pipelines
+            skip_clean_up_logs = False
+            try:
+                p = Pipeline.get(pipeline_uuid)
+                if p.type == PipelineType.STREAMING:
+                    print(f'Pipeline {pipeline_uuid} is a Streaming pipeline. '
+                          'Skip cleaning up logs.')
+                    skip_clean_up_logs = True
+            except Exception as e:
+                print(f'Fail to load pipeline {pipeline_uuid} due to error {e}. '
+                      'Skip cleaning up logs.')
+                skip_clean_up_logs = True
+
+            if skip_clean_up_logs:
+                continue
+
             pipeline_log_path = self.get_log_filepath_prefix(pipeline_uuid=pipeline_uuid)
             dirs = self.storage.listdir(pipeline_log_path)
             for dirname in dirs:
