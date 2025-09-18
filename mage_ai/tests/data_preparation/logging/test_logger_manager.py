@@ -1,8 +1,10 @@
 import os
 from datetime import datetime, timedelta
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 from mage_ai.data_preparation.logging.logger_manager import LoggerManager
+from mage_ai.data_preparation.models.constants import PipelineType
+from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.data_preparation.storage.local_storage import LocalStorage
 from mage_ai.tests.base_test import TestCase
 
@@ -19,7 +21,13 @@ class LoggerManagerTest(TestCase):
         # Mock the storage object to avoid actual deletion of files
         logger_manager.storage = MockStorage()
         self.__create_log_dir(logger_manager, mock_pipeline_uuid)
-        logger_manager.delete_old_logs()
+        # Mock the Pipeline.get to return a pipeline with type PipelineType.PYTHON
+        mock_pipeline = Mock(spec=Pipeline)
+        mock_pipeline.type = PipelineType.PYTHON
+        mock_get_pipeline = Mock(spec=Pipeline.get)
+        mock_get_pipeline.return_value = mock_pipeline
+        with patch('mage_ai.data_preparation.models.pipeline.Pipeline.get', mock_get_pipeline):
+            logger_manager.delete_old_logs()
         # Assert that no files were deleted
         self.assertEqual(logger_manager.storage.remove_dir_calls, [])
 
@@ -34,7 +42,13 @@ class LoggerManagerTest(TestCase):
         # Mock the storage object to capture the calls to remove_dir
         logger_manager.storage = MockStorage()
         mock_old_log_folder = self.__create_log_dir(logger_manager, mock_pipeline_uuid)
-        logger_manager.delete_old_logs()
+        # Mock the Pipeline.get to return a pipeline with type PipelineType.PYTHON
+        mock_pipeline = Mock(spec=Pipeline)
+        mock_pipeline.type = PipelineType.PYTHON
+        mock_get_pipeline = Mock(spec=Pipeline.get)
+        mock_get_pipeline.return_value = mock_pipeline
+        with patch('mage_ai.data_preparation.models.pipeline.Pipeline.get', mock_get_pipeline):
+            logger_manager.delete_old_logs()
         # Assert that the folder with old log files was deleted
         self.assertIn(mock_old_log_folder, logger_manager.storage.remove_dir_calls)
 
@@ -74,8 +88,13 @@ class LoggerManagerTest(TestCase):
                 trigger_id=mock_pipeline_config['trigger_id'],
             )
             mock_pipeline_config['log_folder'] = mock_log_folder
-
-        logger_manager.delete_old_logs()
+        # Mock the Pipeline.get to return a pipeline with type PipelineType.PYTHON
+        mock_pipeline = Mock(spec=Pipeline)
+        mock_pipeline.type = PipelineType.PYTHON
+        mock_get_pipeline = Mock(spec=Pipeline.get)
+        mock_get_pipeline.return_value = mock_pipeline
+        with patch('mage_ai.data_preparation.models.pipeline.Pipeline.get', mock_get_pipeline):
+            logger_manager.delete_old_logs()
 
         # Assert that the folders with old log files were deleted for each pipeline
         for mock_pipeline_config in mock_pipeline_configs:
