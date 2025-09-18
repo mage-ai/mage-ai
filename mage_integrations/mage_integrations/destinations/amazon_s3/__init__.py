@@ -101,7 +101,10 @@ class AmazonS3(Destination):
         schema = self.schemas[stream]
         for column, column_settings in schema['properties'].items():
             if COLUMN_FORMAT_DATETIME == column_settings.get('format'):
-                df[column] = pd.to_datetime(df[column])
+                try:
+                    df[column] = pd.to_datetime(df[column])
+                except Exception:
+                    df[column] = pd.to_datetime(df[column], format='mixed')
 
         column_header_format = self.config.get('column_header_format')
         if column_header_format:
