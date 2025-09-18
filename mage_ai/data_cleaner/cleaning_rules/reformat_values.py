@@ -232,7 +232,7 @@ class ReformatDateSubRule(ReformatValuesSubRule):
         if not self.exact_dtypes[column] is str:
             return
         clean_col = self.strip_column_for_date_parsing(column)
-        clean_col = pd.to_datetime(clean_col, infer_datetime_format=True, errors='coerce')
+        clean_col = pd.to_datetime(clean_col, format='mixed', errors='coerce')
         notnull_value_rate = clean_col.count() / len(clean_col)
         if notnull_value_rate >= self.DATE_MATCHES_LB:
             self.matches.append(column)
