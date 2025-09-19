@@ -9,17 +9,28 @@ description: "Create users, manage users, and require sign in to authenticate an
 
 ---
 
-## Require user authentication
+## Overview
 
-If you’re using Mage version 0.8.4 or greater, than you can optionally turn on user authentication.
+Mage supports user authentication to secure access to the UI and APIs.
+Authentication is required before creating, managing, or running pipelines.
 
-Set the following environment variable name and value:
+- **Mage OSS**:
+  - Versions **0.9.78 and above** → user authentication is **enabled by default**.
+  - Versions **0.8.4 – 0.9.77** → user authentication can be turned on optionally.
+
+- **Mage Pro**:
+  - User authentication is **always enabled by default**.
+
+## Configure user authentication
+
+For Mage OSS versions **0.8.4 – 0.9.77**, you can enable authentication manually by setting the following environment variable:
 
 |   |   |
-| --- | --- |
+|---|---|
 | Name | `REQUIRE_USER_AUTHENTICATION` |
 | Value | `1` |
 
+For Mage OSS **0.9.78+** and **Mage Pro**, this setting is no longer required because authentication is enabled by default.
 
 ### Set access token expiration time
 
