@@ -38,6 +38,10 @@ any associated callback blocks will also be executed depending on the status of 
     @callback('failure')
     def alert_me(parent_block_data, **kwargs):
         # some code...
+
+    @callback('cancelled')
+    def notify_cancelled(parent_block_data, **kwargs):
+        # some code...
     ```
 
 1. You associate the above callback block to the following 2 blocks:
@@ -87,6 +91,41 @@ Execute callback function when block fails.
 def only_run_this_function_on_failure(parent_block_data, **kwargs):
     pass
 ```
+
+#### `cancelled`
+<Note>Available in versions `>= 0.9.77`.</Note>
+Execute callback function when block is cancelled (manually or by system interruption).
+
+```python
+@callback('cancelled')
+def only_run_this_function_on_cancelled(parent_block_data, **kwargs):
+    pass
+```
+
+### Advanced parameters
+
+import { ProButton } from '/snippets/pro/button.mdx';
+import { ProOnly } from '/snippets/pro/only.mdx';
+
+<ProOnly source="callback" />
+
+In **Mage Pro**, you can pass additional parameters to the `@callback` decorator.
+
+#### `fetch_inputs`
+
+By default, Mage will fetch upstream inputs before executing a callback.
+If your callback doesn’t need input data (e.g. sending alerts, posting logs), you can **disable input fetching** to improve performance.
+
+```python
+@callback('failure', fetch_inputs=False)
+def alert_me_without_inputs(*args, **kwargs):
+    # Runs faster since upstream block inputs are not fetched
+    send_alert("Parent block failed!")
+```
+
+- **`fetch_inputs=True`** (default) → Fetch parent block inputs before executing callback
+- **`fetch_inputs=False`** → Skip fetching inputs, speeding up execution
+
 
 ### Positional arguments
 

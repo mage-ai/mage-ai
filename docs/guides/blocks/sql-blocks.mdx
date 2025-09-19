@@ -80,6 +80,28 @@ In addition to the fields mentioned in the table above. Here are some extra fiel
 | --------------------- | ------------------------ | --------------------------------------------------------------------------------|
 | limit                 | No                       | The maximum number of rows to return in notebook.                               |
 | limit_in_pipeline_run | No                       | The maximum number of rows to return when running the block in the pipeline run.|
+
+
+#### Dynamic `data_provider_profile`
+
+You can configure the `data_provider_profile` in a SQL block to resolve dynamically at runtime using [Mage variable syntax](/development/variables/referencing-variables).
+
+This is done by modifying the pipeline’s `metadata.yaml` directly.
+
+**Example:**
+
+```yaml
+configuration:
+  data_provider: snowflake
+  data_provider_profile: '{{ variables("DB_PROFILE") }}'
+  data_provider_schema: analytics
+  export_write_policy: append
+```
+
+When the pipeline runs, the profile name will be resolved from the referenced variable (environment variable, pipeline variable, or secret variable).
+
+
+
 ---
 
 <img
