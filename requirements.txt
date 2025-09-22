@@ -16,7 +16,7 @@ dask>=2022.2.0
 datadog==0.44.0
 freezegun==1.2.2
 great-expectations==0.18.12
-httpx==0.25.0
+httpx>=0.27.0
 inflection==0.5.1
 ipykernel==6.15.0
 ipython==8.10.0
@@ -74,8 +74,8 @@ google-cloud-run~=0.10.1
 google-cloud-storage~=2.5.0
 gspread==5.7.2
 kubernetes>=28.1.0
-langchain==0.1.6; python_version >= '3.8'
-langchain_community<0.0.20
+langchain>=0.2.5; python_version >= '3.8'
+langchain_community>=0.2.5
 mysql-connector-python~=8.4.0; python_version < '3.11'
 mysql-connector-python~=9.0.0; python_version >= '3.11'
 openai>=1.0.0
@@ -149,7 +149,7 @@ google-analytics-data==0.14.2; python_version < '3.11'
 google-analytics-data==0.15.0; python_version >= '3.11'
 google-cloud-bigquery-storage==2.16.2; python_version < '3.11'
 google-cloud-bigquery-storage==2.26.0; python_version >= '3.11'
-httpx[http2]
+httpx[http2]>=0.27.0
 pendulum==2.1.0; python_version < '3.12'
 pendulum==3.0.0; python_version >= '3.12'
 pymongo_schema==0.4.1
