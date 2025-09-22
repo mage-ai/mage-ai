@@ -10,64 +10,66 @@ import { ProOnly } from '/snippets/pro/only.mdx';
 
 <ProOnly source="versoin-control-guide" />
 
-## 1 Syncing to Github
-
-Navigate to the the Deployments application where you will set up your connection using the Mage Pro “Connect repository” UI where you will connect to your Github account using authenticated sign in.
-
-### Connect repository
+## 1. Connect repository
 
 From the Home page, select **Deployments** in the left-hand navigation menu to access the Deployments interface.
 
-Click the Setup connection button to begin syncing with your Github repository.
+Click the Setup connection button to begin syncing with your code repository.
 
 <Frame>
   <img
     alt="Mage Pro deployments button"
-    src="https://mage-ai.github.io/assets/pro/features/deployments/deployments-setup-connection-button.png"
+    src="https://mage-ai.github.io/assets/pro/features/deployments/setup-connection-091925.png"
   />
 </Frame>
 
-**Connect to Github using Oauth tokens:**
-
 Once you are in the connect repository UI take the following steps:
 
-**Step 1**: Set your directory as the user code path you intend to use for your project. 
+**Step 1**: Set your directory as the user code path you intend to use for your project.
 
-- In Mage Pro the default directory will be `/home/src/default_repo`.
-- If you changed the `USER_CODE_PATH` environment variable in the Mage Cloud Management Portal, your directory will need to reflect that change.
+- In Mage Pro the default directory will be **`/home/src/default_repo`**.
+- If you changed the **`USER_CODE_PATH`** environment variable in the Mage Cloud Management Portal, your directory will need to reflect that change.
 
-**Step 2**: Click the “Connect” button to the right of the GitHub connection 
+**Step 2 (optional)**: Set your target directory for your deployment if it will be different from your top level directory.
+
+- If you have a nested GitHub project, you may want to set the target directory to `/home/src`
+
+
+<Frame>
+  <img
+    alt="Mage Pro deployments button"
+    src="https://mage-ai.github.io/assets/pro/features/deployments/connect-repo-091925.png"
+  />
+</Frame>
+
+
+## 1.1 Syncing to Github
+
+**Step 1**: Click the “Connect” button to the right of the GitHub connection 
 
 - This will take you to the GitHub sign-in authentication
 
-**Step 3**: Sign in with your Github login credentials
+**Step 2**: Sign in with your Github login credentials
 
 - After authenticating you will return to the Mage-Pro deployment app
 - You should now see that you are connected to Github
 
-**Step 4**: Select the your Github organization from the dropdown list. 
+**Step 3**: Select the your Github organization from the dropdown list. 
 
 - If there are no organizations listed, add an organization to the text field below and click the Set organization button
 
-<Frame>
-  <img
-    alt="Mage Pro connect repo page"
-    src="https://mage-ai.github.io/assets/pro/features/deployments/connect-repo-page.png"
-  />
-</Frame>
-
-**Step 5**: Select the repo you want to commit code to by clicking the repository drop down box
+**Step 4**: Select the repo you want to commit code to by clicking the repository drop down box
 
 - You should see all your Github repos here if you authenticated correctly
 
-**Step 6**: Select your branch (usually main or master) to commit your code to by clicking the dropdown box and selecting the branch name
+**Step 5**: Select your branch (usually main or master) to commit your code to by clicking the dropdown box and selecting the branch name
 
-**Step 7**: Click “Next step to deployment stage” button to move onto the next stage of the workflow.
+**Step 6**: Click the "Deployments" button to see a list of commits from your Git hosting vendor, and deploy from the most recent or any specific commit.
 
 <Frame>
   <img
     alt="Mage Pro install app button"
-    src="https://mage-ai.github.io/assets/pro/features/deployments/install-mage-app-github.png"
+    src="https://mage-ai.github.io/assets/pro/features/deployments/set-branch-09192025.png"
   />
 </Frame>
 
@@ -75,7 +77,7 @@ Once you are in the connect repository UI take the following steps:
 If you need to connect deployments to a private Github repo, provide an organization then click the Install Mage Pro app on Github button.
 </Note>
 
-## 2 Syncing to BitBucket 
+## 1.2 Syncing to BitBucket 
 Mage Pro now supports integration with BitBucket repositories for version control, collaboration, and deployments.
 
 ### Connect workspace
@@ -247,7 +249,7 @@ Next developers will have to authenticate the Mage Pro application with GitLab. 
 5. Ensure the Mage Pro application is installed onto your Gitlab account
 
 <Note>
-Currently the deployments application is only available for GitHub users.
+Currently the deployments application is only available for GitHub, GitLab, and Bitbucket users.
 </Note>
 
 ### **Push and pull code**
