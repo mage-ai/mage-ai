@@ -5,12 +5,12 @@ from datetime import datetime, timezone
 from typing import Dict, List, Optional
 
 import yaml
-from croniter import croniter
 
 from mage_ai.data_preparation.models.constants import PIPELINES_FOLDER
 from mage_ai.settings.repo import get_repo_path
 from mage_ai.shared.config import BaseConfig
 from mage_ai.shared.constants import VALID_ENVS
+from mage_ai.shared.croniter import croniter
 from mage_ai.shared.enum import StrEnum
 from mage_ai.shared.hash import index_by
 from mage_ai.shared.io import safe_write
