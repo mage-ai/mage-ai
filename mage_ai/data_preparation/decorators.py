@@ -1,7 +1,10 @@
 """Static definition of block decorators.
-These decorators definitions are added to avoid python compilation errors.
-The actual definitions of the decorators are generated at runtime dynamically in
-execute_block method of mage_ai/data_preparation/models/block.py file.
+
+These decorator definitions are included to prevent Python compilation errors.
+The actual definitions of the decorators are dynamically generated at runtime
+in the "execute_block" method located in:
+   mage_ai/data_preparation/models/block/__init__.py
+
 """
 
 
