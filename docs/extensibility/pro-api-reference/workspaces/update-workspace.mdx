@@ -1,0 +1,48 @@
+---
+title: "Update Workspace"
+api: "PUT /api/workspaces/{workspace_name}"
+---
+
+Update the configuration of an existing workspace in your Mage Pro cluster.
+
+`PUT /api/workspaces/{workspace_name}`
+
+<ParamField path="workspace_name" type="string" required>
+  Name of the workspace to update. You can find the workspace name on your Mage Pro cluster's `/apps/workspaces` page.
+</ParamField>
+
+<ParamField body="workspace.action" type="string" required>
+  The action to perform. Use `"patch"` to apply partial updates to the workspace configuration.
+</ParamField>
+
+<ParamField body="workspace.container_config" type="string">
+  Optional. Configuration string for the container.  
+  For example, updating environment variables:  
+  ```
+  env:
+    - name: ENV
+      value: test
+  ```
+</ParamField>
+
+<ParamField body="workspace.update_workspace_settings" type="boolean">
+  Optional. Whether to update workspace settings with the current cluster's environment variables.  
+  Set to `true` to sync the workspace configuration with the cluster-level environment.
+</ParamField>
+
+<RequestExample>
+
+```bash Request
+curl --request PUT \
+  -H 'Content-Type: application/json' \
+  -H 'OAUTH-TOKEN: <your-oauth-token>' \
+  -d '{
+        "workspace": {
+          "action": "patch",
+          "container_config": "env:\n  - name: ENV\n    value: test",
+          "update_workspace_settings": true
+        }
+      }' \
+  --url https://your-mage-instance.com/api/workspaces/my-workspace
+```
+</RequestExample>
