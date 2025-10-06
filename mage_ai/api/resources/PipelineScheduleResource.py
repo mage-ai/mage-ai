@@ -158,17 +158,15 @@ class PipelineScheduleResource(DatabaseResource):
                 ),
                 func.sum(
                     case(
-                        [
-                            (
-                                PipelineRun.status.in_(
-                                    [
-                                        PipelineRun.PipelineRunStatus.INITIAL,
-                                        PipelineRun.PipelineRunStatus.RUNNING,
-                                    ]
-                                ),
-                                1,
-                            )
-                        ],
+                        (
+                            PipelineRun.status.in_(
+                                [
+                                    PipelineRun.PipelineRunStatus.INITIAL,
+                                    PipelineRun.PipelineRunStatus.RUNNING,
+                                ]
+                            ),
+                            1,
+                        ),
                         else_=0,
                     )
                 ).label('in_progress_runs_count'),
