@@ -176,7 +176,7 @@ setuptools.setup(
             'gspread==5.7.2',
             'influxdb_client==1.36.1',
             'kafka-python==2.0.2',
-            'kubernetes>=28.1.0',
+            'kubernetes==33.1.0',
             'langchain>=0.2.5',
             'langchain_community>=0.2.5',
             'ldap3==2.9.1',
