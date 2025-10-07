@@ -19,11 +19,18 @@ commands.
 Follow the steps for the database or data warehouse of your choice:
 
 - [BigQuery](/integrations/databases/BigQuery#add-credentials)
+- [ClickHouse](/integrations/databases/ClickHouse#add-credentials)
+- [Databricks](/integrations/databases/Databricks#add-credentials) (Mage Pro only)
 - [Druid](/integrations/databases/Druid#add-credentials)
+- [DuckDB](/integrations/databases/DuckDB#add-credentials)
 - [MySQL](/integrations/databases/MySQL#add-credentials)
+- [Oracle](/design/data-loading#oracledb) (Mage Pro only)
 - [PostgreSQL](/integrations/databases/PostgreSQL#add-credentials)
 - [Redshift](/integrations/databases/Redshift#add-credentials)
 - [Snowflake](/integrations/databases/Snowflake#add-credentials)
+- [SQLite](/integrations/databases/SQLite#add-credentials) (Mage Pro only)
+- [Microsoft SQL Server](/integrations/databases/MicrosoftSQLServer#add-credentials)
+- [Trino](/integrations/databases/Trino#add-credentials)
 
 ---
 
@@ -42,7 +49,7 @@ There are 4 - 5 fields that must be configured for each SQL block:
 | Field          | Required                 | Description                                                                                                                                                                                                                                               |
 | -------------- | ------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Data provider  | Yes                      | The database or data warehouse you want to execute your SQL commands in.                                                                                                                                                                                  |
-| Profile        | Yes                      | When you add your credentials to the `io_config.yaml` file, you added them under a key. That key is called the profile. Choose which set of credentials you want this SQL block to use.                                                                   |
+| Profile        | Yes                      | When you add your credentials to the `io_config.yaml` file, you added them under a key. That key is called the profile. Choose which set of credentials you want this SQL block to use. For detailed information about setting up profiles, see the [IO Config Setup documentation](/development/io_config_setup). |
 | Use raw SQL    | No                       | You can write raw SQL and it’ll be executed as written in your data provider. |
 | Database       | Depends on data provider | Some data warehouses require that we explicitly state the name of the database we want to write to. If this is present, it’s required. The name of the table that is created follows this convention: `[database].[schema].[pipeline UUID]_[block UUID]`. |
 | Schema to save | Yes                      | Every SQL block will save data to your data provider. The name of the table that is created follows this convention: `[schema].[pipeline UUID]_[block UUID]`.                                                                                             |
@@ -166,7 +173,7 @@ Then, it’ll insert a single row into that table.
 
 #### Required SQL statements
 
-When writing raw SQL, you must at least 1 of the following statements:
+When writing raw SQL, you must use at least 1 of the following statements:
 
 - `SELECT`
     ```sql
@@ -224,7 +231,7 @@ All SQL blocks have the following variables they can access in their query:
 
 ### `{{ execution_date }}`
 
-The date and time the block is ran.
+The date and time the block is run.
 
 **Example**
 
