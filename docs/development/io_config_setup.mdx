@@ -24,7 +24,7 @@ For detailed information about project structure and file organization, see the 
 
 ### 1. Basic Structure
 
-Create a new file named `io_config.yaml` in your project's root directory (e.g. `/home/src/default_repo`) with the following basic structure:
+Create a new file named `io_config.yaml` in your project's root directory (e.g. `/home/src/your_mage_project`) with the following basic structure:
 
 ```yaml
 version: 0.1.1  # Optional but recommended
@@ -268,7 +268,7 @@ def load_data(**kwargs):
 
 **1. "FileNotFoundError" or "No such file or directory"**
 
-- Make sure your `io_config.yaml` file exists in your project root (e.g., `/home/src/default_repo/io_config.yaml`).
+- Make sure your `io_config.yaml` file exists in your project root (e.g., `/home/src/your_mage_project/io_config.yaml`).
 - If running in a different environment (e.g., Docker), confirm the file is mounted and accessible.
 
 **2. "KeyError" or "Missing profile"**
