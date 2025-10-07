@@ -46,6 +46,17 @@ type: str
 | `skip_schema_creation` | If `true`, Mage will **not** run a `CREATE SCHEMA` command. Useful if the schema already exists. See [issue #3416](https://github.com/mage-ai/mage-ai/issues/3416). | `true`        | `false` |
 | `lower_case`      | If `true`, column names will be automatically converted to lowercase before writing to BigQuery.                             | `true`        | `true`  |
 
+
+## Mage Pro Features
+
+The following features are available only in [**Mage Pro**](https://cloud.mage.ai):
+
+### Advanced Configuration (Mage Pro only)
+
+| Key                              | Description                                                                                                              | Default |
+|----------------------------------|--------------------------------------------------------------------------------------------------------------------------|---------|
+| `truncate_table_before_full_table_sync` | If `true`, Mage will truncate (empty) the destination table before performing a full table sync. This ensures no old data remains. | `false`  |
+
 ---
 
 ## Required Permissions

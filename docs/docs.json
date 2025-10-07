@@ -783,8 +783,9 @@
                   "integrations/databases/Qdrant",
                   "integrations/databases/Redshift",
                   "integrations/databases/S3",
-                  "integrations/databases/trino",
                   "integrations/databases/Snowflake",
+                  "integrations/databases/SQLite",
+                  "integrations/databases/trino",
                   "integrations/databases/Weaviate"
                 ]
               }

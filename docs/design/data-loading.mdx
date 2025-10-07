@@ -65,6 +65,8 @@ Loading data from a Snowflake data warehouse is made easy using the `mage_ai.io.
 
 These parameters can be manually specified as input to the data loading client (see [Snowflake](#snowflake) API). However we recommend using a [Configuration Loader](#configuration-settings) to handle loading these secrets. If you used `mage init` to create your project repository, you can store these values in your `io_config.yaml` file and use `mage_ai.io.config.ConfigFileLoader` to construct the data loader client.
 
+For detailed information about setting up `io_config.yaml`, see the [IO Config Setup documentation](/development/io_config_setup).
+
 An example `io_config.yaml` file in this instance would be:
 
 ```yaml
@@ -1297,12 +1299,14 @@ These functions are shared among all configuration loaders, but depending on the
 
 Loads configuration settings from a configuration file.
 
+For detailed information about creating and managing `io_config.yaml` files, see the [IO Config Setup documentation](/development/io_config_setup).
+
 **Example**:
 
 ```python
 from mage_ai.io.config import ConfigKey, ConfigFileLoader
 
-config = ConfigFileLoader('path/to/my/config.yaml', 'my_profile')
+config = ConfigFileLoader('path/to/my/io_config.yaml', 'my_profile')
 postgres_db = config[ConfigKey.POSTGRES_DBNAME]
 ```
 
