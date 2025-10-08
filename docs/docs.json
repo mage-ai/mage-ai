@@ -510,7 +510,8 @@
                       "guides/streaming/sources/nats",
                       "guides/streaming/sources/oracledb",
                       "guides/streaming/sources/rabbitmq",
-                      "guides/streaming/sources/mongodb"
+                      "guides/streaming/sources/mongodb",
+                      "guides/streaming/sources/mysql-cdc"
                     ]
                   },
                   {
