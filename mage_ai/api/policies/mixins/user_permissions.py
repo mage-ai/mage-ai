@@ -103,6 +103,7 @@ async def validate_condition_with_permissions(
         if permission.access & PermissionAccess.OWNER:
             return (True, False)
 
+        global_access = False
         # 1. Get permissions for current entity_name for roles belonging to current user.
         if (
             permission.entity == 'global' and
@@ -111,6 +112,7 @@ async def validate_condition_with_permissions(
             # If the user has global all permission
             # Global access to all entities
             correct_entity_name = True
+            global_access = True
         elif (
             permission.entity == 'project' and
             permission.entity_name is None and
@@ -119,6 +121,7 @@ async def validate_condition_with_permissions(
             # If the user has project all permission
             # Project level access to all entities
             correct_entity_name = True
+            global_access = True
         else:
             # Include permissions where entity_name is ALL or ALL_EXCEPT_RESERVED.
             correct_entity_name = permission.entity_name == entity_name or \
@@ -127,12 +130,11 @@ async def validate_condition_with_permissions(
                     permission.entity_name == EntityName.ALL_EXCEPT_RESERVED and
                     entity_name not in RESERVED_ENTITY_NAMES
                 )
-
         if not correct_entity_name:
             return (False, False)
 
         # If the permission has an entity_id, check to see if it matches.
-        if permission.entity_id is not None and resource:
+        if not global_access and (permission.entity_id is not None and resource):
             id_attribute_name = 'id'
             if entity_name in ENTITY_NAME_ENTITY_ID_ATTRIBUTE_NAME_MAPPING:
                 # e.g. Pipeline’s ID is called uuid
