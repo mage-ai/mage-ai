@@ -75,6 +75,7 @@ type ObjectAttributesType = {
   access?: number;
   conditions?: PermissionConditionEnum[];
   created_at?: string;
+  entity?: string;
   entity_id?: string | number;
   entity_name?: string;
   entity_type?: string;
@@ -656,11 +657,52 @@ function PermissionDetail({
         <Spacing p={PADDING_UNITS}>
           <FlexContainer alignItems="center">
             <Text
+              danger={'entity' in attributesTouched && !objectAttributes?.entity}
+              default
+              large
+            >
+              Entity Scope {'entity' in attributesTouched && !objectAttributes?.entity && (
+                <Text danger inline large>
+                  is required
+                </Text>
+              )}
+            </Text>
+
+            <Spacing mr={PADDING_UNITS} />
+
+            <Flex flex={1} justifyContent="flex-end">
+              <Select
+                afterIconSize={ICON_SIZE}
+                alignRight
+                autoComplete="off"
+                large
+                noBackground
+                noBorder
+                onChange={e => setObjectAttributes({
+                  entity: e.target.value,
+                })}
+                paddingHorizontal={0}
+                paddingVertical={0}
+                placeholder="Select entity scope"
+                value={objectAttributes?.entity || ''}
+              >
+                <option value="global">Global</option>
+                <option value="project">Project</option>
+              </Select>
+            </Flex>
+          </FlexContainer>
+        </Spacing>
+
+        <Divider light />
+
+        <Spacing p={PADDING_UNITS}>
+          <FlexContainer alignItems="center">
+            <Text
               danger={'entity_name' in attributesTouched && !objectAttributes?.entity_name}
               default
               large
             >
-              Entity {'entity_name' in attributesTouched && !objectAttributes?.entity_name && (
+              Entity Name {'entity_name' in attributesTouched && !objectAttributes?.entity_name && (
                 <Text danger inline large>
                   is required
                 </Text>
@@ -1141,6 +1183,7 @@ function PermissionDetail({
               ...selectKeys(objectAttributes, [
                 'access',
                 'conditions',
+                'entity',
                 'entity_id',
                 'entity_name',
                 'entity_type',

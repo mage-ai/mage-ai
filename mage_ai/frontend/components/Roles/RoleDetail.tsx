@@ -331,6 +331,9 @@ function RoleDetail({
           uuid: 'Entity',
         },
         {
+          uuid: 'Entity Name',
+        },
+        {
           uuid: 'Subtype',
         },
         {
@@ -386,8 +389,11 @@ function RoleDetail({
           <Text default key="id" monospace>
             {id}
           </Text>,
+          <Text key="entity" monospace>
+            {entity || '-'}
+          </Text>,
           <Text key="entityName" monospace>
-            {entityName || entity}
+            {entityName || '-'}
           </Text>,
           <Text default key="entityType" monospace={!!entityType}>
             {entityType || '-'}

@@ -115,7 +115,11 @@ async def validate_condition_with_permissions(
             global_access = True
         elif (
             permission.entity == 'project' and
-            permission.entity_name is None and
+            (
+                permission.entity_name is None or
+                permission.entity_name == EntityName.ALL or
+                permission.entity_name == ''
+            ) and
             permission.entity_id == get_project_uuid()
         ):
             # If the user has project all permission
