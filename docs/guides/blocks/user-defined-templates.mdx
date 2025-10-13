@@ -1,0 +1,141 @@
+---
+title: "User-defined templates"
+sidebarTitle: "User-defined templates"
+description: "Learn how to create and use custom block templates and pipeline templates in Mage for better code reusability and standardization."
+icon: "book"
+---
+
+## Overview
+
+User-defined templates allow you to create reusable code patterns for blocks and pipelines, enabling faster development and consistent coding standards across your organization. Templates can include placeholders for customization and can be shared across projects.
+
+## Block Templates
+
+### Creating block templates
+
+Block templates are reusable code patterns that can be customized with variables. They help standardize common patterns across your organization.
+
+**Steps to create a block template:**
+
+1. **Navigate to Templates** - Click "Templates" in the left navigation menu
+2. **Create new template** - Click "New block template" button
+3. **Define template properties**:
+   - **Template UUID** - Enter a unique identifier (e.g., `sql_data_loader`)
+   - **Block type** - Select the type (Data loader, Transformer, Data exporter, etc.)
+   - **Language** - Choose the programming language (Python, SQL, R, etc.)
+4. **Edit template content** - Write the template code with placeholders
+5. **Save template** - Click "Save template" to create the template
+
+### Template File Structure
+
+When you create a block template, Mage automatically creates the following file structure:
+
+```
+custom_templates/
+└── blocks/
+    └── {template_uuid}/
+        ├── metadata.yaml    # Template metadata and configuration
+        └── {template_uuid}.py  # Template code file
+```
+
+**Template files:**
+- **`metadata.yaml`** - Contains template metadata, block type, language, and other configuration
+- **`{template_uuid}.py`** - The actual template code file that users will customize
+
+**Example structure for `test_template`:**
+```
+custom_templates/
+└── blocks/
+    └── test_template/
+        ├── metadata.yaml
+        └── test_template.py
+```
+
+### Template Library Interface
+
+The template library provides a centralized location to manage all your block and pipeline templates:
+
+**Template Library Features:**
+- **Template categories** - Filter templates by type (Blocks or Pipelines)
+- **Pipeline template categories** - Filter pipeline templates by type (Standard, Integration, Streaming)
+- **Search functionality** - Find templates by name or description
+- **Template preview** - View template details before using
+- **Template management** - Edit, delete, or duplicate existing templates
+
+**Accessing Templates:**
+1. **From left navigation** - Click "Templates" to access the template library
+2. **From pipeline editor** - Use "Browse templates" when adding new blocks
+3. **From pipeline creation** - Select "From a template" when creating new pipelines
+4. **Template organization** - Templates are organized by type and category for easy discovery
+
+**Viewing Pipeline Templates:**
+- **Switch to Pipelines tab** - Click "PIPELINES" tab in the template library
+- **Filter by category** - Select from Standard, Integration, or Streaming templates
+- **View template details** - See template name, description, and metadata
+- **Select template** - Click on a template to use it for creating new pipelines
+
+### Using block templates
+
+**Steps to use a block template:**
+
+1. **Open pipeline editor** - Navigate to the pipeline where you want to add the block
+2. **Add new block** - Click the "+" button to add a new block
+3. **Browse templates** - Select "Browse templates" from the block creation options
+4. **Select template** - Choose the template you want to use from the available templates
+5. **Name the block** - Enter a specific name for your new block instance
+6. **Customize as needed** - Modify the generated code for your specific use case
+
+## Pipeline Templates
+
+### Creating pipeline templates
+
+Pipeline templates define complete pipeline structures that can be customized for different use cases.
+
+**Steps to create a pipeline template:**
+
+1. **Navigate to pipelines page** - Go to the main pipelines list view
+2. **Right-click on a pipeline** - Right-click on the pipeline you want to use as a template
+3. **Select "Create template"** - Choose "Create template" from the right-click context menu
+4. **Configure template settings** - Set template name, description, and other properties
+5. **Save template** - The pipeline structure will be saved as a reusable template
+
+**Example pipeline template structure:**
+
+```
+custom_templates/pipelines/
+└── example_pipeline_template/
+    ├── metadata.yaml
+    └── triggers.yaml
+```
+
+### Using pipeline templates
+
+**Steps to use a pipeline template:**
+
+1. **Navigate to the pipelines page** in your project
+2. **Click "New"** button to open the pipeline creation menu
+3. **Select "From a template"** from the dropdown options
+4. **Choose your template** from the available pipeline templates
+5. **Customize the pipeline** - Modify blocks, connections, and settings as needed
+6. **Save the pipeline** with your specific configuration
+
+<Info>
+  **Note**: Pipeline templates are created from existing pipelines using the right-click context menu. This allows you to reuse successful pipeline patterns across your projects.
+</Info>
+
+## Best Practices
+
+### Template design
+
+- **Keep templates focused** - Each template should serve a specific purpose
+- **Use clear variable names** - Make variable purposes obvious
+- **Include comprehensive documentation** - Explain usage and customization options
+- **Test with different configurations** - Ensure templates work with various inputs
+- **Follow coding standards** - Maintain consistent style and practices
+
+### Template maintenance
+
+- **Regular updates** - Keep templates current with latest Mage features
+- **User feedback** - Collect and incorporate user suggestions
+- **Performance optimization** - Monitor and improve template performance
+- **Security review** - Ensure templates follow security best practices

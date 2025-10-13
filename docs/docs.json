@@ -475,6 +475,8 @@
             "icon": "block-brick",
             "pages": [
               "guides/blocks/reorder-blocks",
+              "guides/blocks/reuse-blocks",
+              "guides/blocks/user-defined-templates",
               "guides/blocks/detach-blocks",
               "guides/blocks/dynamic-blocks",
               "guides/blocks/polars",
