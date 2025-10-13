@@ -329,6 +329,7 @@
                 "group": "Pipeline runs",
                 "icon": "person-running-fast",
                 "pages": [
+                  "orchestration/pipeline-runs/overview",
                   "orchestration/pipeline-runs/retrying-block-runs",
                   "orchestration/pipeline-runs/saving-block-output-as-csv",
                   "orchestration/pipeline-runs/database-query"
