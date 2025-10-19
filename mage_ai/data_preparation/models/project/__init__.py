@@ -214,10 +214,12 @@ class Project:
         return [self.repo_path]
 
     def projects(self) -> Dict:
-        return project_platform_settings(
+        projects = project_platform_settings(
             context_data=self.context_data,
             mage_projects_only=True
         )
+        sorted_projects = {k: projects[k] for k in sorted(projects)}
+        return sorted_projects
 
     def is_feature_enabled(self, feature_name: FeatureUUID) -> bool:
         feature_enabled = self.features.get(feature_name.value, False)
