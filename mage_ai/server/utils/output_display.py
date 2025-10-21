@@ -148,7 +148,7 @@ def add_internal_output_info(
         pipeline_uuid = block.pipeline.uuid if block.pipeline else None
         repo_path = block.pipeline.repo_path if block.pipeline else None
         block_uuid = block.uuid
-
+        escaped_repo_path = repo_path.replace('\\', '\\\\') if repo_path else None
         replacements = [
             ('DATAFRAME_ANALYSIS_MAX_COLUMNS', DATAFRAME_ANALYSIS_MAX_COLUMNS),
             ('DATAFRAME_SAMPLE_COUNT_PREVIEW', DATAFRAME_SAMPLE_COUNT_PREVIEW),
@@ -159,7 +159,7 @@ def add_internal_output_info(
             ('is_print_statement', is_print_statement),
             ('last_line', last_line),
             ('pipeline_uuid', f"'{pipeline_uuid}'"),
-            ('repo_path', f"'{repo_path}'"),
+            ('repo_path', f"'{escaped_repo_path}'"),
             ('widget', widget),
         ]
         replacements.append((
