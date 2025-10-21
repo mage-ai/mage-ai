@@ -199,7 +199,9 @@ def __interpolate_code_content(
 
         for placeholder, replacement in replacements:
             placeholder_pattern = f"'{{{placeholder}}}'"
-            content = re.sub(placeholder_pattern, str(replacement), content)
+            # Escape backslashes and other regex special characters in the replacement string
+            escaped_replacement = re.escape(str(replacement))
+            content = re.sub(placeholder_pattern, escaped_replacement, content)
 
         return content
 
