@@ -3,6 +3,7 @@ import io
 import logging
 import logging.handlers
 import os
+import traceback
 from datetime import datetime
 from typing import Callable, Dict, List
 
@@ -106,6 +107,18 @@ class LoggerManager:
                     self.stream = stream_handler.stream
 
         self.storage = LocalStorage()
+
+    def __del__(self):
+        """
+        Close the log file if the logger uses the file handler.
+        """
+        for handler in list(self.logger.handlers):
+            try:
+                if isinstance(handler, (logging.FileHandler, logging.handlers.RotatingFileHandler)):
+                    self.logger.removeHandler(handler)
+                    handler.close()
+            except Exception:
+                traceback.print_exc()
 
     def create_stream_handler(self):
         """
