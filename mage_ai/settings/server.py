@@ -228,6 +228,12 @@ VARIABLE_DATA_OUTPUT_META_CACHE = str(os.getenv('VARIABLE_DATA_OUTPUT_META_CACHE
     'True',
 ]
 
+# -------------------------------
+# Pipeline Init Settings
+# -------------------------------
+
+RUN_PIPELINE_IN_ONE_PROCESS = get_bool_value(os.getenv('RUN_PIPELINE_IN_ONE_PROCESS', 'False'))
+
 # -------------------------
 # IDE settings
 # -------------------------
@@ -270,6 +276,7 @@ MAGE_SETTINGS_ENVIRONMENT_VARIABLES = [
     'MAGE_PUBLIC_HOST',
     'SCHEDULER_TRIGGER_INTERVAL',
     'REQUIRE_USER_PERMISSIONS',
+    'RUN_PIPELINE_IN_ONE_PROCESS',
     'ENABLE_PROMETHEUS',
     'OTEL_EXPORTER_OTLP_ENDPOINT',
     'OTEL_EXPORTER_OTLP_HTTP_ENDPOINT',

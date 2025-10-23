@@ -1,4 +1,5 @@
 import asyncio
+import importlib
 import json
 import os
 import shutil
@@ -31,6 +32,50 @@ class PipelineTest(AsyncDBTestCase):
             self.repo_path, 'pipelines', 'test_pipeline', '__init__.py')))
         self.assertTrue(os.path.exists(os.path.join(
             self.repo_path, 'pipelines', 'test_pipeline', 'metadata.yaml')))
+
+    @patch.dict('os.environ', {'RUN_PIPELINE_IN_ONE_PROCESS': 'True'})
+    def test_pipeline_in_one_process_true(self):
+        import mage_ai.data_preparation.models.pipeline as pipeline_mod
+
+        # import the modules that have env var dependency
+        import mage_ai.settings.server as server_mod
+
+        importlib.reload(server_mod)  # reload the modules to reset the env var
+        importlib.reload(pipeline_mod)
+
+        pipeline = pipeline_mod.Pipeline.create(
+            'test pipeline one process true',
+            repo_path=self.repo_path,
+        )
+        self.assertEqual(pipeline.run_pipeline_in_one_process, True)
+
+    @patch.dict('os.environ', {'RUN_PIPELINE_IN_ONE_PROCESS': 'False'})
+    def test_pipeline_in_one_process_false(self):
+        import mage_ai.data_preparation.models.pipeline as pipeline_mod
+        import mage_ai.settings.server as server_mod
+
+        importlib.reload(server_mod)
+        importlib.reload(pipeline_mod)
+
+        pipeline = pipeline_mod.Pipeline.create(
+            'test pipeline one process false',
+            repo_path=self.repo_path,
+        )
+        self.assertEqual(pipeline.run_pipeline_in_one_process, False)
+
+    @patch.dict('os.environ', {'RUN_PIPELINE_IN_ONE_PROCESS': 'InvalidValue'})
+    def test_pipeline_in_one_process_invalid_string(self):
+        import mage_ai.data_preparation.models.pipeline as pipeline_mod
+        import mage_ai.settings.server as server_mod
+
+        importlib.reload(server_mod)
+        importlib.reload(pipeline_mod)
+
+        pipeline = pipeline_mod.Pipeline.create(
+            'test pipeline one process invalid string',
+            repo_path=self.repo_path,
+        )
+        self.assertEqual(pipeline.run_pipeline_in_one_process, False)
 
     @freeze_time('2023-08-01 08:08:24')
     def test_add_block(self):
