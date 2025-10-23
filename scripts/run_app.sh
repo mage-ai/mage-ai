@@ -29,6 +29,26 @@ if [ -f "$REQUIREMENTS_FILE" ]; then
     pip3 install -r $REQUIREMENTS_FILE
 fi
 
+# Start code-server if CODE_SERVER=1
+if [[ "${CODE_SERVER}" == "1" ]]; then
+    echo "Starting code-server..."
+    # Generate a random password if not provided
+    if [[ -z "${CODE_SERVER_PASSWORD}" ]]; then
+        CODE_SERVER_PASSWORD=$(openssl rand -base64 32)
+        echo "Generated code-server password: ${CODE_SERVER_PASSWORD}"
+    fi
+    
+    # Start code-server in the background
+    PASSWORD=${CODE_SERVER_PASSWORD} code-server \
+        --bind-addr 0.0.0.0:8080 \
+        --auth password \
+        --password "${CODE_SERVER_PASSWORD}" \
+        --disable-telemetry \
+        /home/src &
+    
+    echo "code-server started on port 8080"
+fi
+
 mage_args=()
 if [[ ! -z "${PROJECT_UUID}" ]]; then
     mage_args+=( '--project-uuid' "$PROJECT_UUID" )
