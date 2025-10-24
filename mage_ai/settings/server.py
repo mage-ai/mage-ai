@@ -228,12 +228,6 @@ VARIABLE_DATA_OUTPUT_META_CACHE = str(os.getenv('VARIABLE_DATA_OUTPUT_META_CACHE
     'True',
 ]
 
-# -------------------------------
-# Pipeline Init Settings
-# -------------------------------
-
-RUN_PIPELINE_IN_ONE_PROCESS = get_bool_value(os.getenv('RUN_PIPELINE_IN_ONE_PROCESS', 'False'))
-
 # -------------------------
 # IDE settings
 # -------------------------

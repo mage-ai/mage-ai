@@ -78,7 +78,6 @@ from mage_ai.orchestration.notification.sender import NotificationSender
 from mage_ai.settings.platform import build_repo_path_for_all_projects
 from mage_ai.settings.platform.constants import project_platform_activated
 from mage_ai.settings.repo import get_repo_path
-from mage_ai.settings.server import RUN_PIPELINE_IN_ONE_PROCESS
 from mage_ai.shared.array import find
 from mage_ai.shared.hash import extract, ignore_keys, index_by, merge_dict
 from mage_ai.shared.io import safe_write, safe_write_async
@@ -129,7 +128,8 @@ class Pipeline:
 
         self.repo_path = repo_path or get_repo_path()
         self.retry_config = {}
-        self.run_pipeline_in_one_process = RUN_PIPELINE_IN_ONE_PROCESS
+        rpiop = os.getenv('RUN_PIPELINE_IN_ONE_PROCESS', 'False') == 'True'
+        self.run_pipeline_in_one_process = rpiop
         self.schedules = []
         self.settings = {}
         self.tags = tags or []
@@ -886,11 +886,12 @@ class Pipeline:
         self.executor_type = config.get('executor_type')
         self.notification_config = config.get('notification_config') or {}
         self.retry_config = config.get('retry_config') or {}
-        # Only override the existing value (which may come from an environment
-        # variable) if the config explicitly contains the key. This preserves
-        # the environment default when metadata.yaml doesn't set the option.
         if 'run_pipeline_in_one_process' in config:
             self.run_pipeline_in_one_process = config.get('run_pipeline_in_one_process')
+        else:
+            rpiop = os.getenv('RUN_PIPELINE_IN_ONE_PROCESS', 'False') == 'True'
+            self.run_pipeline_in_one_process = rpiop
+
         self.settings = PipelineSettings.load(**config.get('settings') or {})
         self.spark_config = config.get('spark_config') or {}
         self.tags = config.get('tags') or []
