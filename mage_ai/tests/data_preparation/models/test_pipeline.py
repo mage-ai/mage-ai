@@ -868,14 +868,6 @@ class PipelineTest(AsyncDBTestCase):
         return pipeline
 
     def __create_pipeline_with_integration(self, name):
-        """
-        import mage_ai.data_preparation.models.pipeline as pipeline_mod
-        import mage_ai.settings.server as server_mod
-
-        importlib.reload(server_mod)
-        importlib.reload(pipeline_mod)
-        """
-
         pipeline = Pipeline.create(
             name,
             pipeline_type=PipelineType.INTEGRATION,
