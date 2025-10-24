@@ -891,7 +891,6 @@ class Pipeline:
         else:
             rpiop = os.getenv('RUN_PIPELINE_IN_ONE_PROCESS', 'False') == 'True'
             self.run_pipeline_in_one_process = rpiop
-
         self.settings = PipelineSettings.load(**config.get('settings') or {})
         self.spark_config = config.get('spark_config') or {}
         self.tags = config.get('tags') or []
