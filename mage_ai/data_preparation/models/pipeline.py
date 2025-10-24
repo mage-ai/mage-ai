@@ -128,7 +128,8 @@ class Pipeline:
 
         self.repo_path = repo_path or get_repo_path()
         self.retry_config = {}
-        self.run_pipeline_in_one_process = False
+        rpiop = os.getenv('RUN_PIPELINE_IN_ONE_PROCESS', 'False') == 'True'
+        self.run_pipeline_in_one_process = rpiop
         self.schedules = []
         self.settings = {}
         self.tags = tags or []
@@ -885,7 +886,11 @@ class Pipeline:
         self.executor_type = config.get('executor_type')
         self.notification_config = config.get('notification_config') or {}
         self.retry_config = config.get('retry_config') or {}
-        self.run_pipeline_in_one_process = config.get('run_pipeline_in_one_process', False)
+        if 'run_pipeline_in_one_process' in config:
+            self.run_pipeline_in_one_process = config.get('run_pipeline_in_one_process')
+        else:
+            rpiop = os.getenv('RUN_PIPELINE_IN_ONE_PROCESS', 'False') == 'True'
+            self.run_pipeline_in_one_process = rpiop
         self.settings = PipelineSettings.load(**config.get('settings') or {})
         self.spark_config = config.get('spark_config') or {}
         self.tags = config.get('tags') or []

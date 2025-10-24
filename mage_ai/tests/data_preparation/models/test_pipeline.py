@@ -32,6 +32,33 @@ class PipelineTest(AsyncDBTestCase):
         self.assertTrue(os.path.exists(os.path.join(
             self.repo_path, 'pipelines', 'test_pipeline', 'metadata.yaml')))
 
+    @patch.dict('os.environ', {'RUN_PIPELINE_IN_ONE_PROCESS': 'True'})
+    def test_pipeline_in_one_process_true(self):
+
+        pipeline = Pipeline.create(
+            'test pipeline one process true',
+            repo_path=self.repo_path,
+        )
+        self.assertEqual(pipeline.run_pipeline_in_one_process, True)
+
+    @patch.dict('os.environ', {'RUN_PIPELINE_IN_ONE_PROCESS': 'False'})
+    def test_pipeline_in_one_process_false(self):
+
+        pipeline = Pipeline.create(
+            'test pipeline one process false',
+            repo_path=self.repo_path,
+        )
+        self.assertEqual(pipeline.run_pipeline_in_one_process, False)
+
+    @patch.dict('os.environ', {'RUN_PIPELINE_IN_ONE_PROCESS': 'InvalidValue'})
+    def test_pipeline_in_one_process_invalid_string(self):
+
+        pipeline = Pipeline.create(
+            'test pipeline one process invalid string',
+            repo_path=self.repo_path,
+        )
+        self.assertEqual(pipeline.run_pipeline_in_one_process, False)
+
     @freeze_time('2023-08-01 08:08:24')
     def test_add_block(self):
         self.__create_pipeline_with_blocks('test pipeline 2')
@@ -637,6 +664,7 @@ class PipelineTest(AsyncDBTestCase):
 
     @freeze_time('2023-08-01 08:08:24')
     def test_save_and_get_data_integration_catalog(self):
+        self.maxDiff = None
         pipeline = self.__create_pipeline_with_integration('test_pipeline_9')
         pipeline.save()
         catalog_config_path = os.path.join(
@@ -845,6 +873,7 @@ class PipelineTest(AsyncDBTestCase):
             pipeline_type=PipelineType.INTEGRATION,
             repo_path=self.repo_path,
         )
+
         source_block = Block.create(
             'source_block',
             'data_loader',
@@ -869,6 +898,7 @@ class PipelineTest(AsyncDBTestCase):
                 ],
             },
         }
+
         return pipeline
 
     def __create_dummy_data_loader_block(self, name, pipeline):
