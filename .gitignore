@@ -135,7 +135,6 @@ default_repo
 instance_metadata.json
 ~/.mage_data
 mage_data/
-data_loaders/
 
 # test notebook
 test.ipynb
