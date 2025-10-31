@@ -34,6 +34,7 @@ export enum DataSourceTypeEnum {
   S3 = 's3',
   SNOWFLAKE = 'snowflake',
   TRINO = 'trino',
+  MQTT = 'mqtt'
 }
 
 export const DATA_SOURCE_TYPE_HUMAN_READABLE_NAME_MAPPING = {
@@ -70,6 +71,7 @@ export const DATA_SOURCE_TYPE_HUMAN_READABLE_NAME_MAPPING = {
   [DataSourceTypeEnum.S3]: 'Amazon S3',
   [DataSourceTypeEnum.SNOWFLAKE]: 'Snowflake',
   [DataSourceTypeEnum.TRINO]: 'Trino',
+  [DataSourceTypeEnum.MQTT]: 'MQTT',
 };
 
 export const DATA_SOURCE_TYPES: { [blockType in BlockTypeEnum]?: DataSourceTypeEnum[] } = {
@@ -90,6 +92,7 @@ export const DATA_SOURCE_TYPES: { [blockType in BlockTypeEnum]?: DataSourceTypeE
     DataSourceTypeEnum.S3,
     DataSourceTypeEnum.SNOWFLAKE,
     DataSourceTypeEnum.MONGODB,
+    DataSourceTypeEnum.MQTT,
   ],
   [BlockTypeEnum.DATA_EXPORTER]: [
     DataSourceTypeEnum.GENERIC,
