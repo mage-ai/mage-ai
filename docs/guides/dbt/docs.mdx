@@ -4,6 +4,25 @@ sidebarTitle: "Docs"
 description: "To serve dbt docs in production, you will need to enable a container to host the dbt docs webserver in the cloud service you are using."
 ---
 
+## Mage Pro (auto-generate and serve)
+
+
+import { ProButton } from '/snippets/pro/button.mdx';
+import { ProOnly } from '/snippets/pro/only.mdx';
+
+<ProOnly source="dbt" />
+
+If you're using Mage Pro, dbt docs can be automatically generated and served when the app starts.
+
+- Set the environment variable `ENABLE_DBT_DOCS=true`.
+- Mage will discover dbt projects under `/dbt`, generate docs (if missing), and serve them.
+- Open a project's docs from the UI:
+  - In File Browser, right-click the dbt project folder and click "Open dbt docs".
+  - The docs are available at `/dbt_docs/[dbt_project_name]`.
+  - The path `/dbt_docs` shows the status for all dbt projects (running port, errors, etc.).
+
+To regenerate docs manually, add a generic dbt block in a pipeline and run `dbt docs generate`.
+
 ## Generating docs
 
 Before enabling dbt docs in production, we need to make sure the static files for the docs are generated.
