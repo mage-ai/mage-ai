@@ -10,6 +10,7 @@ import Select from '@oracle/elements/Inputs/Select';
 import Spacing from '@oracle/elements/Spacing';
 import Spinner from '@oracle/components/Spinner';
 import Text from '@oracle/elements/Text';
+import TextInput from '@oracle/elements/Inputs/TextInput';
 import TriggersTable from '@components/Triggers/Table';
 import api from '@api';
 import {
@@ -25,6 +26,7 @@ import { storeLocalTimezoneSetting } from '@components/settings/workspace/utils'
 function TriggerListPage() {
   const router = useRouter();
   const [errors, setErrors] = useState(null);
+  const [searchText, setSearchText] = useState('');
 
   const q = queryFromUrl();
   const page = q?.page ? q.page : 0;
@@ -41,6 +43,7 @@ function TriggerListPage() {
     _limit: ROW_LIMIT,
     _offset: page * ROW_LIMIT,
     order_by: orderByQuery,
+    ...(searchText && { search: searchText }),
   };
 
   const {
@@ -71,32 +74,48 @@ function TriggerListPage() {
       uuid="triggers/index"
     >
       <Spacing mx={2} my={1}>
-        <FlexContainer alignItems="center">
-          <Text bold default large>Sort by:</Text>
-          <Spacing mr={1} />
-          <Select
-            compact
-            defaultColor
-            fitContent
-            onChange={e => {
-              e.preventDefault();
-              goToWithQuery(
-                {
-                  order_by: e.target.value,
-                  page: 0,
-                },
-              );
-            }}
-            paddingRight={UNIT * 4}
-            placeholder="Select column"
-            value={orderByQuery || SortQueryParamEnum.CREATED_AT}
-          >
-            {Object.entries(SORT_QUERY_TO_COLUMN_NAME_MAPPING).map(([sortKey, sortDisplayValue]) => (
-              <option key={sortKey} value={sortKey}>
-                {sortDisplayValue}
-              </option>
-            ))}
-          </Select>
+        <FlexContainer alignItems="center" justifyContent="space-between">
+          <FlexContainer alignItems="center">
+            <Text bold default large>Search:</Text>
+            <Spacing mr={1} />
+            <TextInput
+              compact
+              onChange={e => {
+                setSearchText(e.target.value);
+              }}
+              placeholder="Search by pipeline name..."
+              value={searchText}
+              width={UNIT * 30}
+            />
+          </FlexContainer>
+
+          <FlexContainer alignItems="center">
+            <Text bold default large>Sort by:</Text>
+            <Spacing mr={1} />
+            <Select
+              compact
+              defaultColor
+              fitContent
+              onChange={e => {
+                e.preventDefault();
+                goToWithQuery(
+                  {
+                    order_by: e.target.value,
+                    page: 0,
+                  },
+                );
+              }}
+              paddingRight={UNIT * 4}
+              placeholder="Select column"
+              value={orderByQuery || SortQueryParamEnum.CREATED_AT}
+            >
+              {Object.entries(SORT_QUERY_TO_COLUMN_NAME_MAPPING).map(([sortKey, sortDisplayValue]) => (
+                <option key={sortKey} value={sortKey}>
+                  {sortDisplayValue}
+                </option>
+              ))}
+            </Select>
+          </FlexContainer>
         </FlexContainer>
       </Spacing>
 
