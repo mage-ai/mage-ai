@@ -107,7 +107,7 @@ class Qdrant(BaseIO):
         Save data into Qdrant.
         Args:
             df (DataFrame): Data to export.
-            document_column (str): Column name containinng documents to export.
+            document_column (str): Column name containing documents to export.
             id_column (str): Column name of the id. Default will use index in df.
             vector_column (str): Column name of the vector. Will use default
             encoder to auto generate query vector to auto generate query vector.

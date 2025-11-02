@@ -312,7 +312,7 @@ def build_overview_data(
         increment(f"{DD_KEY}.build_overview_time_series.succeeded", tags)
 
     """
-    Build sample data for scatter plot. Sample data consits of two parts:
+    Build sample data for scatter plot. Sample data consists of two parts:
     1. Numeric features
     2. Low cardinality categorical features
     """

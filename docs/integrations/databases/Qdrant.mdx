@@ -41,10 +41,10 @@ Both the data loader and exporter use SentenceTransformer 'all-MiniLM-L6-v2' as 
 
 - Qdrant data exporter arguments:
   - df (DataFrame): Data to export.
-  - document_column (str): Column name containinng documents to export.
+  - document_column (str): Column name containing documents to export.
   - id_column (str): Column name of the id. Default will use index in df.
   - vector_column (str): Column name of the vector. Will use default encoder to auto generate query vector.
-  - collection_name (str): name of the collection. Deafult to use the name defined in io_config.yaml.
+  - collection_name (str): name of the collection. Default to use the name defined in io_config.yaml.
   - vector_size (int): dimension size of vector.
   - distance (models.Distance): distance metric to use.
 

@@ -314,7 +314,7 @@ function PipelineDetailPage({
         || pipeline === null
         || typeof pipeline?.blocks === 'undefined'
         || pipeline?.blocks === null
-        || !!pipeline?.blocks?.find(({ ouputs }) => typeof ouputs === 'undefined'),
+        || !!pipeline?.blocks?.find(({ outputs }) => typeof outputs === 'undefined'),
       ...(includeSparkOutputs
         ? {
           includes_outputs_spark: true,
@@ -1180,7 +1180,7 @@ function PipelineDetailPage({
     },
   );
 
-  const [ouputsToSaveByBlockUUID, setOuputsToSaveByBlockUUID] = useState<{
+  const [outputsToSaveByBlockUUID, setOutputsToSaveByBlockUUID] = useState<{
     [blockUUID: string]: any;
   }>({});
 
@@ -1243,7 +1243,7 @@ function PipelineDetailPage({
 
           if (BlockTypeEnum.SCRATCHPAD === block.type
             || hasError
-            || ('table' !== type && ouputsToSaveByBlockUUID?.[block?.uuid])
+            || ('table' !== type && outputsToSaveByBlockUUID?.[block?.uuid])
           ) {
             if (Array.isArray(data)) {
               d.data = data.reduce((acc, text: string) => {
@@ -1364,7 +1364,7 @@ function PipelineDetailPage({
       }
     });
 
-    setOuputsToSaveByBlockUUID({});
+    setOutputsToSaveByBlockUUID({});
     const updatedPipeline = {
       ...pipeline,
       ...pipelineOverride,
@@ -1437,7 +1437,7 @@ function PipelineDetailPage({
     blocks,
     maxPrintOutputLines,
     messages,
-    ouputsToSaveByBlockUUID,
+    outputsToSaveByBlockUUID,
     pipeline,
     runningBlocks,
     sparkEnabled,
@@ -2643,7 +2643,7 @@ function PipelineDetailPage({
         return runningBlocksPrevious.concat(block);
       });
 
-      setOuputsToSaveByBlockUUID(prev => ({
+      setOutputsToSaveByBlockUUID(prev => ({
         ...prev,
         [block?.uuid]: true,
       }));

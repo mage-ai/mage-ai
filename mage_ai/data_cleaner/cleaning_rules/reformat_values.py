@@ -224,7 +224,7 @@ class ReformatDateSubRule(ReformatValuesSubRule):
         1. If column is not of dtype category or text, no suggestion
         2. If column does not contain string types, no suggestion
         3. Try use Pandas datetime parse to convert from string to datetime.
-           If more than DATE_MATCHES_LB entries are succesfully converted, suggest
+           If more than DATE_MATCHES_LB entries are successfully converted, suggest
            conversion to datetime type
         """
         dtype = self.column_types[column]

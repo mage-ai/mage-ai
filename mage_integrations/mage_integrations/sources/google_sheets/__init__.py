@@ -243,7 +243,7 @@ class GoogleSheets(Source):
             self.logger.info(f'SKIPPING Empty Sheet: {sheet_title}')
             return None, None
 
-        # spreadsheet is an OrderedDict, with orderd sheets and rows in the repsonse
+        # spreadsheet is an OrderedDict, with ordered sheets and rows in the response
         headers = row_data[0].get('values', [])
         first_values = row_data[1].get('values', [])
         # Pad first row values with default if null

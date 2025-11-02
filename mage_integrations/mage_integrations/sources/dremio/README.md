@@ -34,7 +34,7 @@ To find more details, please refer to Dremio docs [here](https://docs.dremio.com
 
 ### Source Backend
 
-In order to maintain the same quality pattern from Mage's data extraction, this Source allow's the user to specify which data source pattern is preferred. As of now, the avaliable backend sources are:
+In order to maintain the same quality pattern from Mage's data extraction, this Source allow's the user to specify which data source pattern is preferred. As of now, the available backend sources are:
 
  - postgresql
  - mysql
