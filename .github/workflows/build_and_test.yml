@@ -26,14 +26,14 @@ jobs:
   #   name: Check Code Quality
   #   steps:
   #     - name: Check out source repository
-  #       uses: actions/checkout@v3
+  #       uses: actions/checkout@v5
   #       with:
   #         fetch-depth: 0
   #     # https://github.com/actions/setup-python/blob/main/docs/advanced-usage.md#caching-packages
   #     - name: Install Poetry
   #       run: pipx install poetry
   #     - name: Set up Python
-  #       uses: actions/setup-python@v4
+  #       uses: actions/setup-python@v6
   #       with:
   #         python-version: "3.10"
   #         cache: 'poetry'
@@ -56,9 +56,9 @@ jobs:
         python-version: ["3.9", "3.10", "3.11", "3.12"]
     # needs: check-code-quality
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v5
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v3
+        uses: actions/setup-python@v6
         with:
           python-version: ${{ matrix.python-version }}
       - name: Install dependencies
@@ -80,7 +80,7 @@ jobs:
 
       # Run Playwright web UI tests only run once per workflow (Python 3.10).
       - name: Set up Node
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v6
         with:
           node-version: "18.18.0"
         if: matrix.python-version == '3.10'
@@ -115,14 +115,14 @@ jobs:
         python-version: ["3.10"]
     # needs: check-code-quality
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v5
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v3
+        uses: actions/setup-python@v6
         with:
           python-version: ${{ matrix.python-version }}
       # Run Playwright web UI tests only run once per workflow (Python 3.10).
       - name: Set up Node
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v6
         with:
           node-version: "20.15.1"
       - name: Create Mage test project
