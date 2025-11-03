@@ -19,7 +19,7 @@ Mage Pro makes it easy to run PySpark pipelines with a streamlined, configuratio
 
 ### Create the pipeline
 
-Create a stanard batch pipeline and configure the below settings in pipeline `metadata.yaml` file:
+Create a standard batch pipeline and configure the below settings in pipeline `metadata.yaml` file:
 
 ```yaml
 cache_block_output_in_memory: true
@@ -72,7 +72,7 @@ cluster and execute PySpark code in Mage.
 
 Here is an overview of the steps required to use Mage with Spark in Kubernetes cluster.
 
-### 1. Run Spark cluser in Kubernetes cluster
+### 1. Run Spark cluster in Kubernetes cluster
 You can use Helm command to run Spark cluster in the Kubernetes cluster:
 ```bash
 helm repo add bitnami https://charts.bitnami.com/bitnami
@@ -503,7 +503,7 @@ from AWS’s IAM Management console.
 
 Once you’ve acquired those credentials, you can switch your kernel in your Mage notebook
 to `pyspark` kernel. Mage will automatically creates the EMR cluster when you switch to `pyspark`
-kernel. The cluster is usually created and intialized within 8~10 minutes. Then you can select
+kernel. The cluster is usually created and initialized within 8~10 minutes. Then you can select
 your EMR cluster in the dropdown of your `pyspark` kernel selector.
 
 

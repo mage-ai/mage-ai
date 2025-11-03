@@ -40,7 +40,7 @@ def update_event_rule_targets(name):
     # Add target to Event rule
     targets.append(dict(Id=str(uuid.uuid4()), Arn=lambda_function_arn))
     response = client.put_targets(Rule=name, Targets=targets)
-    print(f'Event rule put_target repsonse: {response}')
+    print(f'Event rule put_target response: {response}')
     # Add permission to lambda function
     lambda_client = get_aws_boto3_client('lambda')
     response = lambda_client.add_permission(
@@ -50,4 +50,4 @@ def update_event_rule_targets(name):
         Principal='events.amazonaws.com',
         SourceArn=event_rule_info['Arn'],
     )
-    print(f'Lambda function add_permission repsonse: {response}')
+    print(f'Lambda function add_permission response: {response}')

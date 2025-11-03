@@ -102,7 +102,7 @@ export default function useDraggableElement({
           window.removeEventListener('mouseup', stopExecution, true);
         };
 
-        const initalize = e => {
+        const initialize = e => {
           if (e.which !== 1) {
             return;
           }
@@ -129,10 +129,10 @@ export default function useDraggableElement({
         };
 
         interactiveElements?.forEach(interactiveEl => {
-          interactiveEl?.addEventListener('mousedown', initalize, true);
+          interactiveEl?.addEventListener('mousedown', initialize, true);
         });
 
-        refHandlers.current[uuid] = initalize;
+        refHandlers.current[uuid] = initialize;
       },
     );
 

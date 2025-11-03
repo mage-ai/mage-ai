@@ -122,7 +122,7 @@ export function getAllAncestors(block: BlockType, blocks: BlockType[]): BlockTyp
   });
 }
 
-function getUpstreamDynamicAndReduceOuput(block: BlockType, blocks: BlockType[]): {
+function getUpstreamDynamicAndReduceOutput(block: BlockType, blocks: BlockType[]): {
   dynamicUpstreamBlock?: BlockType;
   dynamicUpstreamBlocks: BlockType[];
   reduceOutputUpstreamBlock?: BlockType;
@@ -159,7 +159,7 @@ export function useDynamicUpstreamBlocks(blocksToUse: BlockType[], blocks: Block
       dynamicUpstreamBlocks,
       reduceOutputUpstreamBlock,
       reduceOutputUpstreamBlocks,
-    } = getUpstreamDynamicAndReduceOuput(block, blocks);
+    } = getUpstreamDynamicAndReduceOutput(block, blocks);
 
     const {
       configuration

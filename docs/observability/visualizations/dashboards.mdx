@@ -229,8 +229,8 @@ from typing import List
 
 
 @data_source
-def filter_data(block_data_ouput: List, **kwargs) -> List:
-    df_partition_1, df_partition_2 = block_data_ouput
+def filter_data(block_data_output: List, **kwargs) -> List:
+    df_partition_1, df_partition_2 = block_data_output
 
     df_1 = df_partition_1[df_partition_1['Age'] >= 21]
     df_2 = df_partition_2[df_partition_2['Age'] >= 21]
@@ -251,7 +251,7 @@ from typing import List
 
 @x
 def some_columns(data_from_data_source, **kwargs) -> List:
-    df_partition_1 = block_data_ouput[0]
+    df_partition_1 = block_data_output[0]
 
     return df_partition_1.columns[:3]
 ```
@@ -269,7 +269,7 @@ from typing import List
 
 @y
 def number_of_data_integration_pipelines(data_from_data_source, **kwargs) -> List:
-    df_partition_1 = block_data_ouput[0]
+    df_partition_1 = block_data_output[0]
 
     count = len(df_partition_1[df_partition_1['type'] == 'data_integration'].index)
 
@@ -291,7 +291,7 @@ from typing import List, Tuple
 
 @xy
 def columns_and_numbers(data_from_data_source, **kwargs) -> Tuple[List]:
-    df_partition_1 = block_data_ouput[0]
+    df_partition_1 = block_data_output[0]
 
     count = len(df_partition_1[df_partition_1['type'] == 'data_integration'].index)
 
@@ -339,7 +339,7 @@ from typing import List
 
 @columns
 def some_columns(data_from_data_source, **kwargs) -> List:
-    df_partition_1 = block_data_ouput[0]
+    df_partition_1 = block_data_output[0]
 
     return df_partition_1.columns[:3]
 ```

@@ -55,7 +55,7 @@ As for the stream itself, you might notice `kafka` and `zookeeper` in the `docke
 
 We're using `kafka` to manage the stream and `zookeeper` to manage `kafka`. You can read more about these tools [here](https://kafka.apache.org/).
 
-The _acutal_ stream is managed by the `stream` container, which spins up a python container and executes `./stream/bin/send_stream.py`— this is the script that reads from the pubsub topic data (`./stream/data/taxi-stream.json`).
+The _actual_ stream is managed by the `stream` container, which spins up a python container and executes `./stream/bin/send_stream.py`— this is the script that reads from the pubsub topic data (`./stream/data/taxi-stream.json`).
 
 Data will begin streaming 30 seconds after the container starts.
 
