@@ -66,7 +66,7 @@ Or with conda:
 conda install -c conda-forge mage-ai
 ```
 
-Full setup guide and docs: [docs.mage.ai](https://docs.mage.ai)
+Full setup guide and docs: [docs.mage.ai](https://docs.mage.ai/getting-started/setup#%E2%9B%B5%EF%B8%8F-mage-oss-overview)
 
 <br />
 
