@@ -120,20 +120,20 @@ When `return_db_records_only: true`:
     "id": 1,
     "name": "John",
     "email": "john@example.com",
-    "_mage_created_at": 1640995200,
+    "_mage_created_at": "2021-12-31T23:00:00+00:00",
     "_mage_updated_at": null,
     "_mage_deleted_at": null
   },
   "metadata": {
     "schema": "mydb",
     "table": "users",
-    "key_columns": {
-      "id": 1
-    },
+    "key_columns": ["id"],
     "operation": "INSERT"
   }
 }
 ```
+
+**Note**: The `_mage_*` timestamp columns are returned as datetime objects (ISO 8601 format strings when serialized) in UTC timezone, not Unix timestamps. This ensures proper type handling when writing to databases.
 
 ## Event Types
 
@@ -175,20 +175,19 @@ The source automatically detects and extracts primary key columns:
 1. **Schema Discovery**: Queries `INFORMATION_SCHEMA` for table structure
 2. **Primary Key Detection**: Identifies actual primary key columns from database constraints
 3. **Caching**: Stores schema and primary key information for performance
-4. **Key Extraction**: Extracts primary key values from row events
+4. **Key Extraction**: Extracts primary key column names from row events
 
 <CodeGroup>
 ```json Example Output
 {
   "metadata": {
-    "key_columns": {
-      "user_id": 123,
-      "tenant_id": 456
-    }
+    "key_columns": ["user_id", "tenant_id"]
   }
 }
 ```
 </CodeGroup>
+
+**Note**: `key_columns` is a list of column names (not values) that can be used for deduplication or upsert operations in downstream sinks.
 
 ## Examples
 
@@ -295,6 +294,91 @@ Monitor key metrics:
 </Accordion>
 </AccordionGroup>
 
+## Integration with Generic IO Sink
+
+The MySQL CDC source works seamlessly with the Generic IO sink, which provides:
+
+- **Automatic Column Type Mapping**: Automatically maps `_mage_*` timestamp columns to appropriate database types (TIMESTAMP, DATETIME2, DateTime64, etc.) based on the target database
+- **Metadata Interpolation**: Use metadata values from MySQL CDC events in sink configurations for dynamic routing and table naming
+
+### Supported Databases
+
+Generic IO Sink supports the following databases:
+- **BigQuery**
+- **ClickHouse**
+- **DuckDB**
+- **MySQL**
+- **MSSQL**
+- **Postgres**
+
+### Metadata Interpolation
+
+You can use metadata values from MySQL CDC events in your sink configuration using Python string formatting syntax:
+
+- **`{schema}`**: Database/schema name from the event
+- **`{table}`**: Table name from the event
+- **`{key_columns}`**: List of primary key column names (e.g., `["id"]` or `["user_id", "tenant_id"]`)
+
+When using `{key_columns}` in `unique_constraints`, it will be automatically converted from a string representation to a list. The format supports both Python-style (`"['id']"`) and JSON-style (`'["id"]'`) array strings.
+
+### Example Configurations
+
+<CodeGroup>
+```yaml BigQuery Example
+connector_type: bigquery
+profile: default
+config:
+  table_id: "{schema}.{table}"  # Dynamic table names from metadata
+  unique_conflict_method: UPDATE
+  unique_constraints: "{key_columns}"  # Uses primary keys from metadata
+```
+
+```yaml Postgres Example
+connector_type: postgres
+profile: default
+config:
+  schema_name: "{schema}"  # Dynamic schema from metadata
+  table_name: "{table}"    # Dynamic table name from metadata
+  unique_conflict_method: UPDATE
+  unique_constraints: "{key_columns}"  # Uses primary keys from metadata
+  if_exists: append
+```
+
+```yaml MySQL Example
+connector_type: mysql
+profile: default
+config:
+  schema_name: "{schema}"
+  table_name: "{table}"
+  unique_conflict_method: UPDATE
+  unique_constraints: "{key_columns}"
+  if_exists: append
+```
+
+```yaml Static Configuration
+connector_type: postgres
+profile: default
+config:
+  schema_name: public
+  table_name: cdc_events  # Static table name
+  unique_constraints: ['id', 'event_id']  # Static list (string format also works: "['id', 'event_id']")
+  unique_conflict_method: UPDATE
+  if_exists: append
+```
+</CodeGroup>
+
+### How Metadata Interpolation Works
+
+1. **Message Grouping**: Messages are automatically grouped by their interpolated config values. For example, if you use `table_name: "{schema}_{table}"`, messages from `mydb.users` will be grouped together and written to `mydb_users` table.
+
+2. **Key Columns Interpolation**: When using `{key_columns}` in `unique_constraints`, the sink automatically:
+   - Converts the list to a string representation during interpolation
+   - Parses it back to a list (supports both `"['id']"` and `'["id"]'` formats)
+   - Uses it for upsert operations based on `unique_conflict_method`
+
+
+**Example**: If you have a table `users` with primary key `id`, and you configure `unique_constraints: "{key_columns}"`, it will automatically use `["id"]` for upsert operations.
+
 ## Best Practices
 
 1. **Use GTID**: Enable GTID for reliable resume capabilities
@@ -304,6 +388,21 @@ Monitor key metrics:
 5. **Secure Connections**: Use SSL in production
 6. **Regular Backups**: Backup checkpoint files
 7. **Schema Validation**: Test with schema changes
+8. **Use Generic IO Sink**: Leverage automatic type mapping and metadata interpolation for flexible data routing
+9. **Metadata Interpolation**: Use `{schema}`, `{table}`, and `{key_columns}` for dynamic table routing and upsert configuration
+
+## Timestamp Handling
+
+The MySQL CDC source automatically converts Unix timestamps to datetime objects:
+
+- **`_mage_created_at`**: Set to event timestamp (datetime) for INSERT operations
+- **`_mage_updated_at`**: Set to event timestamp (datetime) for UPDATE operations
+- **`_mage_deleted_at`**: Set to event timestamp (datetime) for DELETE operations
+
+All timestamps are in UTC timezone and returned as datetime objects, which ensures:
+- Proper type handling in downstream databases
+- Automatic type conversion in Generic IO sink
+- Consistent timezone handling across systems
 
 ## Limitations
 
@@ -312,3 +411,4 @@ Monitor key metrics:
 - **Network Dependency**: Requires stable network connection
 - **Memory Usage**: Schema caching uses memory
 - **Binlog Retention**: Depends on MySQL binlog retention settings
+- **Timezone**: All timestamps are in UTC timezone
