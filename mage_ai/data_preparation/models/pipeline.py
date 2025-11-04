@@ -886,8 +886,10 @@ class Pipeline:
         self.executor_type = config.get('executor_type')
         self.notification_config = config.get('notification_config') or {}
         self.retry_config = config.get('retry_config') or {}
-        rpiop = RUN_PIPELINE_IN_ONE_PROCESS  # have to do this or flake8 will complain
-        self.run_pipeline_in_one_process = config.get('run_pipeline_in_one_process', rpiop)
+        self.run_pipeline_in_one_process = config.get(
+            'run_pipeline_in_one_process',
+            RUN_PIPELINE_IN_ONE_PROCESS,
+        )
         self.settings = PipelineSettings.load(**config.get('settings') or {})
         self.spark_config = config.get('spark_config') or {}
         self.tags = config.get('tags') or []
