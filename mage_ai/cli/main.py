@@ -210,6 +210,8 @@ def run(
             traces_sample_rate=SENTRY_TRACES_SAMPLE_RATE,
             server_name=SENTRY_SERVER_NAME,
         )
+        import atexit
+        atexit.register(lambda: sentry_sdk.flush(timeout=5))
     (enable_new_relic, application) = initialize_new_relic()
 
     with (
