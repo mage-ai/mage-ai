@@ -1042,6 +1042,88 @@ function DependencyGraph({
     upstreamBlocksEditing,
   ]);
 
+    const moveBlockToTop = useCallback(
+    async function moveBlockToTop(blockB: BlockType) {
+      if (!blockB) return;
+
+      // Snapshot neighbors BEFORE any writes
+      const parentUUIDs = [...(blockB.upstream_blocks || [])];
+      const childUUIDs = [...(blockB.downstream_blocks || [])];
+
+      const uniq = <T,>(arr: T[]) => Array.from(new Set(arr));
+
+      // 0) HARD DETACH B FIRST (break mirror-sync loop)
+      await Promise.all([
+        blockB.upstream_blocks?.length || 0
+          ? updateBlockByDragAndDrop({ block: blockB, upstreamBlocks: [] })
+          : Promise.resolve(),
+        blockB.downstream_blocks?.length || 0
+          ? updateBlockByDragAndDrop({ block: blockB, downstreamBlocks: [] })
+          : Promise.resolve(),
+      ]);
+
+      if (childUUIDs.length === 1) {
+        // B had exactly one child → bridge parents to that child
+        const child = blockUUIDMapping[childUUIDs[0]];
+        if (child) {
+          // 1) Parents: replace B with C (or just remove B if not present)
+          for (const pUuid of parentUUIDs) {
+            const p = blockUUIDMapping[pUuid];
+            if (!p) continue;
+            const ds = p.downstream_blocks || [];
+            const mapped = ds.map(uuid => (uuid === blockB.uuid ? child.uuid : uuid));
+            const stripped = mapped.filter((v, i, a) => a.indexOf(v) === i); // dedupe
+            if (stripped.join() !== ds.join()) {
+              await updateBlockByDragAndDrop({ block: p, downstreamBlocks: stripped });
+            }
+          }
+
+          // 2) Child: (child.upstream - B) ∪ parents
+          const curUp = child.upstream_blocks || [];
+          const withoutB = curUp.filter(u => u !== blockB.uuid);
+          const newUp = uniq(withoutB.concat(parentUUIDs));
+          if (newUp.join() !== curUp.join()) {
+            await updateBlockByDragAndDrop({ block: child, upstreamBlocks: newUp });
+          }
+        }
+      } else {
+        // Leaf or split: just make sure parents forget B (no bridging)
+        for (const pUuid of parentUUIDs) {
+          const p = blockUUIDMapping[pUuid];
+          if (!p) continue;
+          const ds = p.downstream_blocks || [];
+          const filtered = ds.filter(uuid => uuid !== blockB.uuid);
+          if (filtered.length !== ds.length) {
+            await updateBlockByDragAndDrop({ block: p, downstreamBlocks: filtered });
+          }
+        }
+        // Children (if any): drop B from their upstreams
+        for (const cUuid of childUUIDs) {
+          const c = blockUUIDMapping[cUuid];
+          if (!c) continue;
+          const up = c.upstream_blocks || [];
+          const filtered = up.filter(uuid => uuid !== blockB.uuid);
+          if (filtered.length !== up.length) {
+            await updateBlockByDragAndDrop({ block: c, upstreamBlocks: filtered });
+          }
+        }
+      }
+
+      await fetchPipeline?.();
+
+      // After moving the block and refreshing the pipeline, scroll to show the block
+      // Give the graph time to re-render with the new layout
+      setTimeout(() => {
+        const nodeElement = document.querySelector(`[data-id="${blockB.uuid}"]`);
+        if (nodeElement) {
+          // Scroll the moved block into view smoothly
+          nodeElement.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' });
+        }
+      }, 500);
+    },
+    [blockUUIDMapping, updateBlockByDragAndDrop, fetchPipeline, canvasRef],
+  );
+
   const buildBlockNode = useCallback((node, block, {
     isDragging,
     nodeHeight,
@@ -1619,6 +1701,11 @@ function DependencyGraph({
         },
         uuid: 'View file versions',
       },
+      {
+        disabled: !(block?.upstream_blocks?.length || 0 || block?.downstream_blocks?.length || 0),
+        onClick: () => moveBlockToTop(block),
+        uuid: 'Move to top',
+      },
     ]);
 
     return (
@@ -2084,6 +2171,7 @@ function DependencyGraph({
 
                   return (
                     <foreignObject
+                      data-id={block?.uuid}
                       height={nodeHeight}
                       onClick={(e) => onClickNode?.(e, node)}
                       onContextMenu={contextMenuEnabled
