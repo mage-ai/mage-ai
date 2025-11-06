@@ -211,7 +211,7 @@ def run(
             server_name=SENTRY_SERVER_NAME,
         )
         import atexit
-        atexit.register(lambda:__import__("sentry_sdk").flush(timeout=5))
+        atexit.register(lambda: sentry_sdk.flush(timeout=5))
     (enable_new_relic, application) = initialize_new_relic()
 
     with (

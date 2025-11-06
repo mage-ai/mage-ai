@@ -291,7 +291,7 @@ class Worker(mp.Process):
                 server_name=SENTRY_SERVER_NAME,
             )
             import atexit
-            atexit.register(lambda: __import__("sentry_sdk").flush(timeout=5))
+            atexit.register(lambda: sentry_sdk.flush(timeout=5))
         initialize_new_relic()
 
         set_logging_format(
