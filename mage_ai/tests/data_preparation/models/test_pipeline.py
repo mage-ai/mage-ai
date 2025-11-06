@@ -1,4 +1,5 @@
 import asyncio
+import importlib
 import json
 import os
 import shutil
@@ -31,6 +32,57 @@ class PipelineTest(AsyncDBTestCase):
             self.repo_path, 'pipelines', 'test_pipeline', '__init__.py')))
         self.assertTrue(os.path.exists(os.path.join(
             self.repo_path, 'pipelines', 'test_pipeline', 'metadata.yaml')))
+
+    def test_pipeline_in_one_process_true(self):
+        with (patch.dict('os.environ', {'RUN_PIPELINE_IN_ONE_PROCESS': 'True'})):
+            import mage_ai.data_preparation.models.pipeline as pipeline_mod
+            import mage_ai.settings.server as server_mod
+
+            importlib.reload(server_mod)
+            importlib.reload(pipeline_mod)
+
+            pipeline = Pipeline.create(
+                'test pipeline one process true',
+                repo_path=self.repo_path,
+            )
+            self.assertEqual(pipeline.run_pipeline_in_one_process, True)
+
+        importlib.reload(server_mod)
+        importlib.reload(pipeline_mod)
+
+    def test_pipeline_in_one_process_false(self):
+        with (patch.dict('os.environ', {'RUN_PIPELINE_IN_ONE_PROCESS': 'False'})):
+            import mage_ai.data_preparation.models.pipeline as pipeline_mod
+            import mage_ai.settings.server as server_mod
+
+            importlib.reload(server_mod)
+            importlib.reload(pipeline_mod)
+
+            pipeline = Pipeline.create(
+                'test pipeline one process false',
+                repo_path=self.repo_path,
+            )
+            self.assertEqual(pipeline.run_pipeline_in_one_process, False)
+
+        importlib.reload(server_mod)
+        importlib.reload(pipeline_mod)
+
+    def test_pipeline_in_one_process_invalid_string(self):
+        with (patch.dict('os.environ', {'RUN_PIPELINE_IN_ONE_PROCESS': 'InvalidString'})):
+            import mage_ai.data_preparation.models.pipeline as pipeline_mod
+            import mage_ai.settings.server as server_mod
+
+            importlib.reload(server_mod)
+            importlib.reload(pipeline_mod)
+
+            pipeline = Pipeline.create(
+                'test pipeline one process invalid',
+                repo_path=self.repo_path,
+            )
+            self.assertEqual(pipeline.run_pipeline_in_one_process, False)
+
+        importlib.reload(server_mod)
+        importlib.reload(pipeline_mod)
 
     @freeze_time('2023-08-01 08:08:24')
     def test_add_block(self):
@@ -637,6 +689,7 @@ class PipelineTest(AsyncDBTestCase):
 
     @freeze_time('2023-08-01 08:08:24')
     def test_save_and_get_data_integration_catalog(self):
+        self.maxDiff = None
         pipeline = self.__create_pipeline_with_integration('test_pipeline_9')
         pipeline.save()
         catalog_config_path = os.path.join(
@@ -845,6 +898,7 @@ class PipelineTest(AsyncDBTestCase):
             pipeline_type=PipelineType.INTEGRATION,
             repo_path=self.repo_path,
         )
+
         source_block = Block.create(
             'source_block',
             'data_loader',
@@ -869,6 +923,7 @@ class PipelineTest(AsyncDBTestCase):
                 ],
             },
         }
+
         return pipeline
 
     def __create_dummy_data_loader_block(self, name, pipeline):
