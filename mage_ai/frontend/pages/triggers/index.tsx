@@ -1,6 +1,7 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/router';
 
+import Button from '@oracle/elements/Button';
 import Dashboard from '@components/Dashboard';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Paginate, { ROW_LIMIT } from '@components/shared/Paginate';
@@ -27,6 +28,8 @@ function TriggerListPage() {
   const router = useRouter();
   const [errors, setErrors] = useState(null);
   const [searchText, setSearchText] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
+  const debounceTimeout = useRef(null);
 
   const q = queryFromUrl();
   const page = q?.page ? q.page : 0;
@@ -39,11 +42,35 @@ function TriggerListPage() {
     [project?.features],
   );
 
+  // Debounce search input
+  useEffect(() => {
+    if (debounceTimeout.current) {
+      clearTimeout(debounceTimeout.current);
+    }
+
+    debounceTimeout.current = setTimeout(() => {
+      setSearchQuery(searchText);
+    }, 500);
+
+    return () => {
+      if (debounceTimeout.current) {
+        clearTimeout(debounceTimeout.current);
+      }
+    };
+  }, [searchText]);
+
+  // Reset page to 0 when search query changes
+  useEffect(() => {
+    if (searchQuery && page !== 0) {
+      goToWithQuery({ page: 0 });
+    }
+  }, [searchQuery]);
+
   const pipelineSchedulesRequestQuery: PipelineScheduleReqQueryParamsType = {
     _limit: ROW_LIMIT,
     _offset: page * ROW_LIMIT,
     order_by: orderByQuery,
-    ...(searchText && { search: searchText }),
+    ...(searchQuery && { search: searchQuery }),
   };
 
   const {
@@ -76,17 +103,32 @@ function TriggerListPage() {
       <Spacing mx={2} my={1}>
         <FlexContainer alignItems="center" justifyContent="space-between">
           <FlexContainer alignItems="center">
-            <Text bold default large>Search:</Text>
-            <Spacing mr={1} />
             <TextInput
               compact
               onChange={e => {
                 setSearchText(e.target.value);
               }}
-              placeholder="Search by pipeline name..."
+              onKeyPress={e => {
+                if (e.key === 'Enter') {
+                  setSearchQuery(searchText);
+                  goToWithQuery({ page: 0 });
+                }
+              }}
+              placeholder="Search by pipeline or trigger name..."
               value={searchText}
               width={UNIT * 30}
             />
+            <Spacing mr={1} />
+            <Button
+              compact
+              onClick={() => {
+                setSearchQuery(searchText);
+                goToWithQuery({ page: 0 });
+              }}
+              primary
+            >
+              Search
+            </Button>
           </FlexContainer>
 
           <FlexContainer alignItems="center">
