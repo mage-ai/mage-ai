@@ -176,7 +176,9 @@ class KafkaSource(BaseSource):
             message = {
                 'data': self.__deserialize_message(message.value),
                 'metadata': {
-                    'key': message.key.decode() if message.key else None,
+                    'key': (message.key if self.config.serde_config and
+                           self.config.serde_config.serialization_method == SerializationMethod.RAW_VALUE
+                           else message.key.decode() if message.key else None),
                     'partition': message.partition,
                     'offset': message.offset,
                     'time': int(message.timestamp),

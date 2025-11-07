@@ -1,0 +1,74 @@
+from unittest.mock import MagicMock, patch
+import json
+import pytest
+
+from mage_ai.streaming.sources.kafka import KafkaSource
+from mage_ai.streaming.sources.shared import SerDeConfig, SerializationMethod
+
+
+@patch('mage_ai.streaming.sources.kafka.KafkaConsumer')
+def test_kafka_raw_value_key_handling(mock_kafka):
+    # Create a mock message with non-UTF8 key
+    mock_message = MagicMock()
+    mock_message.key = b'\xff\x83\x00'  # Invalid UTF-8 bytes
+    mock_message.value = b'test_value'
+    mock_message.partition = 1
+    mock_message.offset = 100
+    mock_message.timestamp = 1234567890
+    mock_message.topic = 'test_topic'
+
+    # Configure source with RAW_VALUE
+    config = {
+        'bootstrap_server': 'dummy',
+        'consumer_group': 'test',
+        'topic': 'test_topic',
+        'include_metadata': True,
+        'serde_config': {
+            'serialization_method': SerializationMethod.RAW_VALUE
+        }
+    }
+    
+    source = KafkaSource(config)
+    
+    # Test message conversion
+    result = source._convert_message(mock_message)
+    
+    assert isinstance(result, dict)
+    assert 'metadata' in result
+    assert 'key' in result['metadata']
+    # With RAW_VALUE, key should remain as bytes
+    assert result['metadata']['key'] == b'\xff\x83\x00'
+    assert result['data'] == b'test_value'
+
+
+@patch('mage_ai.streaming.sources.kafka.KafkaConsumer')
+def test_kafka_utf8_key_handling(mock_kafka):
+    # Create a mock message with UTF-8 key
+    mock_message = MagicMock()
+    mock_message.key = 'test_key'.encode('utf-8')
+    mock_message.value = json.dumps({'value': 'test_value'}).encode('utf-8')
+    mock_message.partition = 1
+    mock_message.offset = 100
+    mock_message.timestamp = 1234567890
+    mock_message.topic = 'test_topic'
+
+    # Configure source without RAW_VALUE
+    config = {
+        'bootstrap_server': 'dummy',
+        'consumer_group': 'test',
+        'topic': 'test_topic',
+        'include_metadata': True
+    }
+    
+    source = KafkaSource(config)
+    
+    # Test message conversion
+    result = source._convert_message(mock_message)
+    
+    assert isinstance(result, dict)
+    assert 'metadata' in result
+    assert 'key' in result['metadata']
+    # Without RAW_VALUE, key should be decoded to string
+    assert result['metadata']['key'] == 'test_key'
+    assert isinstance(result['data'], dict)  # JSON deserialization
+    assert result['data']['value'] == 'test_value'
