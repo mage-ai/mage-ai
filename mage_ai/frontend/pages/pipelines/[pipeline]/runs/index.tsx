@@ -281,14 +281,16 @@ function PipelineRuns({
               pipeline_uuid: pipelineUUID,
             },
           }) => {
+            // refetch to update table
             fetchPipelineRuns?.();
+            //keep the current filters query from url
+            const nextQuery = q || {};
             if (pipelineUUID) {
-              router.push(
+              router.replace(
                 '/pipelines/[pipeline]/runs',
-                `/pipelines/${pipelineUUID}/runs`,
+                `/pipelines/${pipelineUUID}/runs?${queryString(nextQuery)}`,
+                { shallow: true },
               );
-            } else {
-              fetchPipelineRuns?.();
             }
             setSelectedRun(null);
           },
