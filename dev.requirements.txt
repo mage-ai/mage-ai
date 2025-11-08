@@ -1,1 +1,2 @@
 flake8-bugbear
+pytest>=7.0.0
