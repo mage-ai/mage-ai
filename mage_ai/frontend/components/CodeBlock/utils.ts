@@ -141,6 +141,8 @@ export const getMoreActionsItems = (
         add_upstream_for_block_uuid: string;
       };
     }) => Promise<any>;
+    blocks?: BlockType[];
+    pipeline?: PipelineType;
   },
 ): FlyoutMenuItemType[] => {
   const {
@@ -160,6 +162,29 @@ export const getMoreActionsItems = (
   } = configuration || {};
   const isDBT = BlockTypeEnum.DBT === blockType;
   const items: FlyoutMenuItemType[] = [];
+
+  const moveBlockInList = (mode: 'up' | 'top') => {
+    const arr = (opts?.blocks || []).slice();
+    const idx = arr.findIndex(b => b.uuid === blockUUID);
+    if (idx < 0) return;
+
+    if (mode === 'up') {
+      if (idx === 0) return; // already at top
+      const [item] = arr.splice(idx, 1);
+      arr.splice(idx - 1, 0, item);
+    } else if (mode === 'top') {
+      if (idx === 0) return;
+      const [item] = arr.splice(idx, 1);
+      arr.unshift(item);
+    }
+
+    opts?.savePipelineContent?.({
+      pipeline: {
+        blocks: arr,
+        uuid: opts?.pipeline?.uuid,
+      },
+    })?.then(() => opts?.fetchPipeline?.());
+  };
 
   const isInteractionsEnabled = !!opts?.project?.features?.[FeatureUUIDEnum.INTERACTIONS];
 
@@ -371,7 +396,18 @@ export const getMoreActionsItems = (
       uuid: 'Add interactions',
     });
   }
-
+  items.push(
+    {
+      label: () => 'Move up',
+      onClick: () => moveBlockInList('up'),
+      uuid: 'move_up_ui',
+    },
+    {
+      label: () => 'Move to top',
+      onClick: () => moveBlockInList('top'),
+      uuid: 'move_to_top_ui',
+    },
+  );
   items.push({
     label: () => 'Delete block',
     onClick: () => {
