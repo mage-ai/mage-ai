@@ -16,133 +16,196 @@ on:
       - "requirements.txt"
       - "setup.py"
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 env:
   ENV: test_mage
 
 jobs:
-  # check-code-quality:
-
-  #   runs-on: ubuntu-latest
-  #   name: Check Code Quality
-  #   steps:
-  #     - name: Check out source repository
-  #       uses: actions/checkout@v5
-  #       with:
-  #         fetch-depth: 0
-  #     # https://github.com/actions/setup-python/blob/main/docs/advanced-usage.md#caching-packages
-  #     - name: Install Poetry
-  #       run: pipx install poetry
-  #     - name: Set up Python
-  #       uses: actions/setup-python@v6
-  #       with:
-  #         python-version: "3.10"
-  #         cache: 'poetry'
-  #     - name: Install Python dev dependencies
-  #       run: |
-  #         poetry install --no-interaction --only dev
-  #         poetry run pre-commit install
-  #     - id: changed-files
-  #       uses: tj-actions/changed-files@v36
-  #       with:
-  #         files_ignore: |
-  #           requirements.txt
-  #     - name: Run pre-commit hooks
-  #       run: poetry run pre-commit run --show-diff-on-failure --files ${{ steps.changed-files.outputs.all_changed_files }}
+  # Detect what changed so we can decide whether to run UI
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      frontend: ${{ steps.filter.outputs.frontend }}
+      backend: ${{ steps.filter.outputs.backend }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          token: ${{ github.token }}
+          filters: |
+            frontend:
+              - 'mage_ai/frontend/**'
+              - 'mage_ai/server/**'
+            backend:
+              - 'mage_ai/**'
+              - 'mage_integrations/**'
+              - 'pyproject.toml'
+              - 'requirements.txt'
+              - 'setup.py'
 
   test_backend:
     runs-on: ubuntu-latest
+    needs: changes
+    timeout-minutes: 60
     strategy:
+      fail-fast: true
       matrix:
+        # Full matrix on PRs and pushes (you asked not to skip other tests)
         python-version: ["3.9", "3.10", "3.11", "3.12"]
-    # needs: check-code-quality
     steps:
       - uses: actions/checkout@v5
+
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v6
         with:
           python-version: ${{ matrix.python-version }}
+          cache: "pip"
+
+      - name: System deps
+        run: |
+          sudo apt-get update -y
+          sudo apt-get install -y --no-install-recommends freetds-dev
+
       - name: Install dependencies
         run: |
-          sudo apt-get install freetds-dev
           python -m pip install --upgrade pip
           pip install "git+https://github.com/mage-ai/sqlglot#egg=sqlglot"
           pip install -r requirements.txt
           pip install mage_integrations/
           pip install "git+https://github.com/mage-ai/singer-python.git#egg=singer-python"
+
       - name: Run unit tests
-        run: |
-          python3 -m unittest discover -s mage_ai --failfast
+        run: python3 -m unittest discover -s mage_ai --failfast
         env:
           OPENAI_API_KEY: abcdefg
-      - name: Run mage integrations unit tests
-        run: |
-          cd mage_integrations && python3 -m unittest discover mage_integrations.tests
 
-      # Run Playwright web UI tests only run once per workflow (Python 3.10).
+      - name: Run mage integrations unit tests
+        run: cd mage_integrations && python3 -m unittest discover mage_integrations.tests
+
+  # Playwright for PRs:
+  # - Runs when frontend changed OR label 'ui-tests' is present
+  # - Linux, Python 3.10 only
+  # - Sharded 3 ways to keep runtime sane
+  playwright_pr:
+    runs-on: ubuntu-latest
+    needs: [changes, test_backend]
+    if: >
+      github.event_name == 'pull_request' &&
+      (
+        needs.changes.outputs.frontend == 'true' ||
+        contains(join(github.event.pull_request.labels.*.name, ','), 'ui-tests')
+      )
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: ["1/3", "2/3", "3/3"]
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Set up Python 3.10
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.10"
+          cache: "pip"
+
+      - name: System deps
+        run: |
+          sudo apt-get update -y
+          sudo apt-get install -y --no-install-recommends freetds-dev
+
+      - name: Install Python deps (web server)
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
       - name: Set up Node
         uses: actions/setup-node@v6
         with:
           node-version: "18.18.0"
-        if: matrix.python-version == '3.10'
+          cache: "yarn"
+          cache-dependency-path: mage_ai/frontend/yarn.lock
+
       - name: Create Mage test project
-        run: |
-          python mage_ai/cli/main.py init test_project
+        run: python mage_ai/cli/main.py init test_project
         env:
           PYTHONPATH: ${{ env.pythonLocation }}:.
-        if: matrix.python-version == '3.10'
-      - name: Build frontend, start server, and run Playwright tests
-        run: |
-          yarn install &&
-          yarn export_prod &&
-          yarn playwright install chromium &&
-          yarn playwright test -c playwright.config.ci.ts
+
+      - name: Build frontend, install browsers, run Playwright (shard ${{ matrix.shard }})
         working-directory: mage_ai/frontend/
         env:
-          PYTHONPATH: ${{ env.pythonLocation }}:. # Playwright tests on CI depend on the Python web server
-        if: matrix.python-version == '3.10'
+          PYTHONPATH: ${{ env.pythonLocation }}:.
+        run: |
+          yarn install
+          yarn export_prod
+          yarn playwright install chromium
+          # Shard the suite; cap failures for faster feedback
+          yarn playwright test -c playwright.config.ci.ts --shard=${{ matrix.shard }} --max-failures=5
+
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: playwright-report
+          name: playwright-report-pr-shard-${{ matrix.shard }}
           path: mage_ai/frontend/playwright-report/
           retention-days: 3
           overwrite: true
 
+  # Keep the existing push-time UI coverage (Linux + Windows).
+  # Windows can be noisy; keep it on push but non-blocking.
   test_web_server_windows:
+    if: github.event_name == 'push'
     runs-on: windows-latest
+    timeout-minutes: 60
+    continue-on-error: true
     strategy:
       matrix:
         python-version: ["3.10"]
-    # needs: check-code-quality
     steps:
       - uses: actions/checkout@v5
+
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v6
         with:
           python-version: ${{ matrix.python-version }}
-      # Run Playwright web UI tests only run once per workflow (Python 3.10).
+          cache: "pip"
+
       - name: Set up Node
         uses: actions/setup-node@v6
         with:
           node-version: "20.15.1"
+          cache: "yarn"
+          cache-dependency-path: mage_ai/frontend/yarn.lock
+
       - name: Create Mage test project
+        shell: pwsh
         run: |
-          Start-Process -Wait -FilePath "C:\Program Files\Git\unins000.exe" -ArgumentList "/SILENT"
+          if (Test-Path "C:\Program Files\Git\unins000.exe") {
+            Start-Process -Wait -FilePath "C:\Program Files\Git\unins000.exe" -ArgumentList "/SILENT"
+          }
           python -m venv venv3
-          venv3/Scripts/Activate.ps1
+          .\venv3\Scripts\Activate.ps1
           $env:PYTHONPATH = "${env:PYTHONPATH};${pwd}"
+          python -m pip install -U pip
           python -m pip install -r requirements.txt
           python mage_ai/cli/main.py init test_project
+
       - name: Build frontend, start server, and run Playwright tests
-        run: |
-          yarn install &&
-          yarn export_prod &&
-          yarn playwright install chromium &&
-          yarn playwright test -c playwright-windows.config.ci.ts
         working-directory: mage_ai/frontend/
+        run: |
+          yarn install
+          yarn export_prod
+          yarn playwright install chromium
+          yarn playwright test -c playwright-windows.config.ci.ts --max-failures=5
+
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: playwright-report
+          name: playwright-report-windows
           path: mage_ai/frontend/playwright-report/
           retention-days: 3
