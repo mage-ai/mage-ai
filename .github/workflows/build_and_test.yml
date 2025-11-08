@@ -24,7 +24,7 @@ env:
   ENV: test_mage
 
 jobs:
-  # Detect what changed so we can decide whether to run UI
+  # Detect what changed so we can decide whether to run UI testing
   changes:
     runs-on: ubuntu-latest
     outputs:
