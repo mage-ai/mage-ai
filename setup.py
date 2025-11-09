@@ -42,9 +42,9 @@ setuptools.setup(
     extras_require={
         'ai': [
             'astor>=0.8.1',
-            'langchain>=0.2.5',
-            'langchain_community>=0.2.5',
-            'openai>=1.0.0',
+            'langchain==0.2.5',
+            'langchain_community==0.2.5',
+            'openai==1.82.0',
         ],
         'airtable': [
             'pyairtable>=2.3.3'
@@ -177,12 +177,12 @@ setuptools.setup(
             'influxdb_client==1.36.1',
             'kafka-python==2.0.2',
             'kubernetes==33.1.0',
-            'langchain>=0.2.5',
-            'langchain_community>=0.2.5',
+            'langchain==0.2.5',
+            'langchain_community==0.2.5',
             'ldap3==2.9.1',
             'nats-py==2.6.0',
             'nkeys~=0.2.0',
-            'openai>=1.0.0',
+            'openai==1.82.0',
             'opensearch-py==2.0.0',
             'opentelemetry-api==1.22.0',
             'opentelemetry-exporter-prometheus==0.43b0',

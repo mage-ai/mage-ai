@@ -74,11 +74,11 @@ google-cloud-run~=0.10.1
 google-cloud-storage~=2.5.0
 gspread==5.7.2
 kubernetes==33.1.0
-langchain>=0.2.5; python_version >= '3.8'
-langchain_community>=0.2.5
+langchain==0.2.5; python_version >= '3.8'
+langchain_community==0.2.5
 mysql-connector-python~=8.4.0; python_version < '3.11'
 mysql-connector-python~=9.0.0; python_version >= '3.11'
-openai>=1.0.0
+openai==1.82.0
 opentelemetry-api==1.22.0
 opentelemetry-exporter-prometheus==0.43b0
 opentelemetry-instrumentation-tornado==0.43b0
