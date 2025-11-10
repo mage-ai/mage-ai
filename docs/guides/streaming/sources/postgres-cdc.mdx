@@ -202,6 +202,48 @@ return_db_records_only: true
 ```
 </CodeGroup>
 
+## Heartbeat Table
+
+The heartbeat table is used to prevent WAL logs from filling up in managed PostgreSQL services (like Aiven). When configured, the source periodically writes to this table to keep the replication slot active.
+
+### Schema
+
+The heartbeat table is automatically created if it doesn't exist. It has the following schema:
+
+```sql
+CREATE TABLE {schema}.{table} (
+    id INTEGER PRIMARY KEY DEFAULT 1,
+    timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+```
+
+**Columns:**
+- `id` (INTEGER PRIMARY KEY): Primary key column with default value of 1
+- `timestamp` (TIMESTAMP): Timestamp column that gets updated with the current timestamp on each heartbeat write
+
+### How It Works
+
+1. **Automatic Creation**: If the table doesn't exist, it's automatically created when the source initializes
+2. **Periodic Updates**: The source updates the `timestamp` column every `heartbeat_interval_seconds` (default: 60 seconds)
+3. **UPSERT Pattern**: Uses `INSERT ... ON CONFLICT DO UPDATE` to update the single row with `id=1`, or falls back to `UPDATE`/`INSERT` if the database doesn't support `ON CONFLICT`
+
+### Manual Creation
+
+If you prefer to create the table manually, you can use:
+
+```sql
+CREATE TABLE public.cdc_status (
+    id INTEGER PRIMARY KEY DEFAULT 1,
+    timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Insert initial row
+INSERT INTO public.cdc_status (id, timestamp)
+VALUES (1, CURRENT_TIMESTAMP);
+```
+
+**Note**: The table must have a primary key or unique constraint on the `id` column for the UPSERT pattern to work correctly.
+
 ## Prerequisites
 
 ### PostgreSQL Server Configuration
