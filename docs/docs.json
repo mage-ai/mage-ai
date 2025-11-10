@@ -66,15 +66,15 @@
                 "icon": "block-brick",
                 "pages": [
                   "guides/blocks/dynamic-blocks-2",
-                  "guides/blocks/batch-read-write",
-                  {
-                    "group": "Streaming",
-                    "icon": "stream",
-                    "pages": [
-                      "guides/streaming/sources/oracledb",
-                      "guides/streaming/tutorials/streaming-stateful-store"
-                    ]
-                  }
+                  "guides/blocks/batch-read-write"
+                ]
+              },
+              {
+                "group": "Streaming",
+                "icon": "stream",
+                "pages": [
+                  "guides/streaming/sources/oracledb",
+                  "guides/streaming/tutorials/streaming-stateful-store"
                 ]
               },
               {
@@ -512,6 +512,7 @@
                       "guides/streaming/sources/kinesis",
                       "guides/streaming/sources/nats",
                       "guides/streaming/sources/oracledb",
+                      "guides/streaming/sources/postgres-cdc",
                       "guides/streaming/sources/rabbitmq",
                       "guides/streaming/sources/mongodb",
                       "guides/streaming/sources/mysql-cdc"
