@@ -512,6 +512,7 @@
                       "guides/streaming/sources/kinesis",
                       "guides/streaming/sources/nats",
                       "guides/streaming/sources/oracledb",
+                      "guides/streaming/sources/postgres-cdc",
                       "guides/streaming/sources/rabbitmq",
                       "guides/streaming/sources/mongodb",
                       "guides/streaming/sources/mysql-cdc"
