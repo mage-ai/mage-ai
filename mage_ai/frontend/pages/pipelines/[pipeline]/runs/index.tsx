@@ -283,7 +283,7 @@ function PipelineRuns({
           }) => {
             // refetch to update table
             fetchPipelineRuns?.();
-            //keep the current filters query from url
+            // keep the current filters query from url
             const nextQuery = q || {};
             if (pipelineUUID) {
               router.replace(
