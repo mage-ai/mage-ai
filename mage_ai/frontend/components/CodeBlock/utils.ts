@@ -403,12 +403,12 @@ export const getMoreActionsItems = (
   items.push(
     {
       label: () => 'Move up',
-      onClick: () => moveBlockInList('up'),
+      onClick: () => moveBlockInList(MoveMode.Up),
       uuid: 'move_up_ui',
     },
     {
       label: () => 'Move to top',
-      onClick: () => moveBlockInList('top'),
+      onClick: () => moveBlockInList(MoveMode.Top),      ),
       uuid: 'move_to_top_ui',
     },
   );
