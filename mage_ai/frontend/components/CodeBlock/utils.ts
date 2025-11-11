@@ -67,6 +67,11 @@ export const getOutputCollapsedUUID = (
   blockUUID: string,
 ) => `${pipelineUUID}/${blockUUID}/outputCollapsed`;
 
+export enum MoveMode {
+    Up = 'up',
+    Top = 'top',
+  }
+
 export const buildConvertBlockMenuItems = (
   b: BlockType,
   blocks: BlockType[],
@@ -163,10 +168,6 @@ export const getMoreActionsItems = (
   const isDBT = BlockTypeEnum.DBT === blockType;
   const items: FlyoutMenuItemType[] = [];
 
-  enum MoveMode {
-    Up = 'up',
-    Top = 'top',
-  }
   const moveBlockInList = (mode: MoveMode) => {
     const arr = (opts?.blocks || []).slice();
     const idx = arr.findIndex(b => b.uuid === blockUUID);
@@ -408,7 +409,7 @@ export const getMoreActionsItems = (
     },
     {
       label: () => 'Move to top',
-      onClick: () => moveBlockInList(MoveMode.Top),      ),
+      onClick: () => moveBlockInList(MoveMode.Top),
       uuid: 'move_to_top_ui',
     },
   );
