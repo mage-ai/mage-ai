@@ -400,7 +400,7 @@ export const getMoreActionsItems = (
     });
   }
 
-    items.push(
+  items.push(
     {
       label: () => 'Move up',
       onClick: () => moveBlockInList('up'),
