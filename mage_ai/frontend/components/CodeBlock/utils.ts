@@ -163,18 +163,21 @@ export const getMoreActionsItems = (
   const isDBT = BlockTypeEnum.DBT === blockType;
   const items: FlyoutMenuItemType[] = [];
 
-    const moveBlockInList = (mode: 'up' | 'top') => {
+  enum MoveMode {
+    Up = 'up',
+    Top = 'top',
+  }
+  const moveBlockInList = (mode: MoveMode) => {
     const arr = (opts?.blocks || []).slice();
     const idx = arr.findIndex(b => b.uuid === blockUUID);
-    if (idx < 0) return;
+    
+    if (idx <= 0) return;
 
+    const [item] = arr.splice(idx, 1);
     if (mode === 'up') {
-      if (idx === 0) return; // already at top
-      const [item] = arr.splice(idx, 1);
       arr.splice(idx - 1, 0, item);
-    } else if (mode === 'top') {
-      if (idx === 0) return;
-      const [item] = arr.splice(idx, 1);
+    } else {
+      // 'top'
       arr.unshift(item);
     }
 
