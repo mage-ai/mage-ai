@@ -175,7 +175,7 @@ export const getMoreActionsItems = (
     if (idx <= 0) return;
 
     const [item] = arr.splice(idx, 1);
-    if (mode === 'up') {
+    if (mode === MoveMode.Up) {
       arr.splice(idx - 1, 0, item);
     } else {
       // 'top'
