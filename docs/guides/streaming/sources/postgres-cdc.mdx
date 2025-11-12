@@ -57,6 +57,7 @@ The PostgreSQL CDC streaming source captures real-time changes from PostgreSQL W
 | `heartbeat_table_schema` | string | - | Schema name for heartbeat table (e.g., 'public') |
 | `heartbeat_table_name` | string | - | Table name for heartbeat (e.g., 'cdc_status') |
 | `heartbeat_interval_seconds` | number | 60.0 | How often to write heartbeat in seconds |
+| `heartbeat_update_query` | string | - | Custom SQL query to update heartbeat (overrides default). **WARNING**: Query is executed directly without sanitization. Only use queries from trusted sources to prevent SQL injection vulnerabilities. |
 | `return_db_records_only` | boolean | true | Return only DB records with Mage timestamp columns |
 
 ### SSL Configuration
@@ -200,6 +201,21 @@ heartbeat_interval_seconds: 60.0
 schemas: ["public"]
 return_db_records_only: true
 ```
+
+```yaml With Custom Heartbeat Query
+connector_type: postgres
+host: aiven-postgres.company.com
+port: 5432
+database: mydb
+user: cdc_user
+password: password
+heartbeat_table_schema: public
+heartbeat_table_name: cdc_status
+heartbeat_interval_seconds: 60.0
+heartbeat_update_query: "UPDATE public.cdc_status SET timestamp = NOW(), last_updated_by = 'mage_cdc' WHERE id = 1"
+schemas: ["public"]
+return_db_records_only: true
+```
 </CodeGroup>
 
 ## Heartbeat Table
@@ -225,7 +241,23 @@ CREATE TABLE {schema}.{table} (
 
 1. **Automatic Creation**: If the table doesn't exist, it's automatically created when the source initializes
 2. **Periodic Updates**: The source updates the `timestamp` column every `heartbeat_interval_seconds` (default: 60 seconds)
-3. **UPSERT Pattern**: Uses `INSERT ... ON CONFLICT DO UPDATE` to update the single row with `id=1`, or falls back to `UPDATE`/`INSERT` if the database doesn't support `ON CONFLICT`
+3. **Default UPSERT Pattern**: Uses `INSERT ... ON CONFLICT DO UPDATE` to update the single row with `id=1`, or falls back to `UPDATE`/`INSERT` if the database doesn't support `ON CONFLICT`
+4. **Custom Query**: You can override the default heartbeat update query by providing `heartbeat_update_query` in the configuration
+
+### Security Warning for Custom Heartbeat Query
+
+<Warning>
+**Important Security Notice**: The `heartbeat_update_query` parameter executes SQL queries directly without sanitization or parameterization. This could introduce SQL injection vulnerabilities if the query is sourced from untrusted input.
+
+**Best Practices:**
+- Only use queries from trusted, validated sources
+- Never construct queries dynamically from user input or external APIs
+- Validate that the query is not empty or whitespace-only before use
+- Consider using the default heartbeat mechanism unless you have specific requirements
+- Review and test custom queries thoroughly before deploying to production
+
+The source performs basic validation to ensure the query is not empty or whitespace-only, but does not perform SQL injection protection. Always ensure your configuration management system properly secures and validates this parameter.
+</Warning>
 
 ### Manual Creation
 
