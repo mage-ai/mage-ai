@@ -171,12 +171,32 @@ class KafkaSource(BaseSource):
                     self.registry_client, self.config.topic
                 )
 
+    def _decode_key(self, key):
+        """Decode message key based on serialization method.
+        
+        When using RAW_VALUE, keep key as raw bytes.
+        Otherwise, attempt UTF-8 decode with fallback to raw bytes on error.
+        """
+        if not key:
+            return None
+        
+        # Keep as raw bytes for RAW_VALUE serialization
+        if (self.config.serde_config and
+            self.config.serde_config.serialization_method == SerializationMethod.RAW_VALUE):
+            return key
+        
+        # Attempt UTF-8 decode, fallback to raw bytes on error
+        try:
+            return key.decode('utf-8')
+        except UnicodeDecodeError:
+            return key
+
     def _convert_message(self, message):
         if self.config.include_metadata:
             message = {
                 'data': self.__deserialize_message(message.value),
                 'metadata': {
-                    'key': message.key.decode() if message.key else None,
+                    'key': self._decode_key(message.key),
                     'partition': message.partition,
                     'offset': message.offset,
                     'time': int(message.timestamp),
