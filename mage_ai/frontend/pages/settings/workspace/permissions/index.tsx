@@ -80,6 +80,9 @@ function PermissionsListPage() {
                 uuid: 'Entity',
               },
               {
+                uuid: 'Entity Name',
+              },
+              {
                 uuid: 'Subtype',
               },
               {
@@ -115,8 +118,11 @@ function PermissionsListPage() {
               const accessDisplayNamesCount = accessDisplayNames?.length || 0;
 
               return [
+                <Text key="entity" monospace>
+                  {entity || '-'}
+                </Text>,
                 <Text key="entityName" monospace>
-                  {entityName || entity}
+                  {entityName || ''}
                 </Text>,
                 <Text default key="entityType" monospace={!!entityType}>
                   {entityType || '-'}
