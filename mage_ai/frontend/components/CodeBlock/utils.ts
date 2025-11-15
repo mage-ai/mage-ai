@@ -67,6 +67,11 @@ export const getOutputCollapsedUUID = (
   blockUUID: string,
 ) => `${pipelineUUID}/${blockUUID}/outputCollapsed`;
 
+export enum MoveMode {
+    Up = 'up',
+    Top = 'top',
+  }
+
 export const buildConvertBlockMenuItems = (
   b: BlockType,
   blocks: BlockType[],
@@ -141,6 +146,8 @@ export const getMoreActionsItems = (
         add_upstream_for_block_uuid: string;
       };
     }) => Promise<any>;
+    blocks?: BlockType[];
+    pipeline?: PipelineType;
   },
 ): FlyoutMenuItemType[] => {
   const {
@@ -160,6 +167,28 @@ export const getMoreActionsItems = (
   } = configuration || {};
   const isDBT = BlockTypeEnum.DBT === blockType;
   const items: FlyoutMenuItemType[] = [];
+
+  const moveBlockInList = (mode: MoveMode) => {
+    const arr = (opts?.blocks || []).slice();
+    const idx = arr.findIndex(b => b.uuid === blockUUID);
+    
+    if (idx <= 0) return;
+
+    const [item] = arr.splice(idx, 1);
+    if (mode === MoveMode.Up) {
+      arr.splice(idx - 1, 0, item);
+    } else {
+      // 'top'
+      arr.unshift(item);
+    }
+
+    opts?.savePipelineContent?.({
+      pipeline: {
+        blocks: arr,
+        uuid: opts?.pipeline?.uuid,
+      },
+    })?.then(() => opts?.fetchPipeline?.());
+  };
 
   const isInteractionsEnabled = !!opts?.project?.features?.[FeatureUUIDEnum.INTERACTIONS];
 
@@ -371,6 +400,19 @@ export const getMoreActionsItems = (
       uuid: 'Add interactions',
     });
   }
+
+  items.push(
+    {
+      label: () => 'Move up',
+      onClick: () => moveBlockInList(MoveMode.Up),
+      uuid: 'move_up_ui',
+    },
+    {
+      label: () => 'Move to top',
+      onClick: () => moveBlockInList(MoveMode.Top),
+      uuid: 'move_to_top_ui',
+    },
+  );
 
   items.push({
     label: () => 'Delete block',

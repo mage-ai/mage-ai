@@ -712,6 +712,8 @@ function CommandButtons({
                 project,
                 savePipelineContent,
                 updatePipeline,
+                blocks,
+                pipeline,
               },
             )}
             onClickCallback={() => setShowMoreActions(false)}
