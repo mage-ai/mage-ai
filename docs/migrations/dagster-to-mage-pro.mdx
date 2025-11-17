@@ -1,0 +1,358 @@
+---
+title: "Migrate from Dagster to Mage Pro"
+sidebarTitle: "Dagster to Mage Pro"
+---
+Many teams start with Dagster for data orchestration—but soon encounter challenges with data engineering workflows, visual debugging, and developer productivity. Mage Pro offers a modern alternative: visual pipelines, built-in data integration, AI-assisted development, and UI-based deployment management—all within a unified platform for your data workflows.
+
+## Why migrate from Dagster to Mage Pro?
+
+Dagster is a powerful orchestration tool focused on data assets, but it wasn't designed for:
+
+- Visual pipeline development and debugging  
+- Native data integration (ETL/ELT workflows)  
+- Mixing SQL and Python naturally in the same pipeline  
+- Streaming or event-driven data processing  
+- Built-in data previews and interactive development  
+- AI-powered pipeline development  
+
+Mage Pro is built to solve these challenges out-of-the-box, combining orchestration with data engineering capabilities in a modern, developer-friendly platform.
+
+---
+
+## Mage Pro vs Dagster: Benefits Overview
+
+Mage Pro goes far beyond orchestration. It's a unified platform for **data integration**, **SQL modeling (native dbt blocks and Mage SQL blocks)**, **AI-powered transformation**, and **streaming pipelines** — all within a collaborative, Git-native workspace with UI-based deployment management.
+
+| Capability | Dagster | Mage Pro |
+|------------|---------|----------|
+| **Visual pipeline UI** | ⚠️ Code-only (Python decorators) | ✅ Hybrid UI: drag-and-drop DAG builder + notebook-style coding experience |
+| **Built-in lineage** | ✅ Asset lineage | ✅ Native, auto-generated data lineage |
+| **AI assistance** | ❌ | ✅ Generate, optimize, fix, and explain code with AI Sidekick |
+| **Multi-language support** | ⚠️ Python only | ✅ SQL, Python, R, streaming, APIs |
+| **Data integration pipelines** | ⚠️ Custom Python or 3rd-party tools | ✅ 200+ native connectors for databases, files, APIs |
+| **SQL block support** | ⚠️ Requires custom ops | ✅ Native dbt blocks, or Mage SQL block, preview, and test support |
+| **Incremental modeling** | ⚠️ Requires custom logic | ✅ Native in SQL block config and Data integration pipeline |
+| **Data previews & interactive runs** | ⚠️ Limited | ✅ Preview data at every step, run blocks independently |
+| **Environment isolation** | ⚠️ Requires separate deployments | ✅ Per-workspace configs, secrets, variables |
+| **Git integration** | ⚠️ Manual sync | ✅ Git-backed version control and CI/CD, UI based Deployment App |
+| **Scheduling & triggers** | ✅ Cron + sensors | ✅ Cron, events, file triggers, webhooks, API |
+| **Secrets management** | ⚠️ Requires Dagster Cloud or external config | ✅ Support both built-in secret manager, or external secret manager |
+| **RBAC & SSO** | ⚠️ Dagster Cloud only | ✅ Built-in, enterprise-ready |
+| **Observability & logging** | ✅ Dagster UI | ✅ Native UI for logs, metrics, traces, lineage |
+| **Scalability** | ⚠️ Manual worker configuration | ✅ Auto-scaled executors on K8s or Docker |
+| **Streaming support** | ❌ | ✅ Kafka, CDC, real-time ingestion |
+| **Team collaboration** | ⚠️ Limited multi-tenancy | ✅ Workspaces, permissions, activity logs |
+
+---
+
+## Step-by-Step Migration Instructions
+
+<Steps>
+
+1. **Inventory your Dagster assets and jobs**  
+   - List your active assets, ops, and jobs:
+     - `@asset` and `@op` decorators  
+     - Dagster resources (storage, infrastructure)  
+     - Dependencies and scheduling logic  
+     - Partitions and materializations
+   - Identify data sources, transformations, and destinations
+
+2. **Create a workspace in Mage Pro**  
+   - Visit [Mage Pro](https://cloud.mage.ai) and sign in  
+   - (Optional) Connect your Git repo for version control  
+   - Set up your deployment configuration using the **Deployment App** in the UI
+
+3. **Recreate your Dagster assets as Mage pipelines**  
+   - Each Dagster **job** → 1 Mage pipeline  
+   - Each Dagster **asset/op** → 1 Mage block:
+     - `@asset` or `@op` with data loading → **Data loader block**  
+     - `@asset` or `@op` with transformations → **Transformer block** (Python or SQL)  
+     - `@asset` or `@op` with data writing → **Data exporter block**  
+     - Dagster resources → **Data loader/exporter blocks** or pipeline configuration  
+   - Define dependencies visually using the UI (no decorators needed)
+
+4. **Configure scheduling and triggers**  
+   - Dagster schedules → Mage **triggers** (cron, interval, or event-based)  
+   - Dagster sensors → Mage **event triggers** or **file triggers**  
+   - Configure schedules via UI or YAML
+
+5. **Run and validate pipelines**  
+   - Use Mage Pro's UI to test individual blocks  
+   - Preview dataframes, logs, and outputs at each step  
+   - Compare results to your Dagster jobs
+
+6. **Monitor, scale, and automate**  
+   - Monitor pipeline runs and resource usage  
+   - Set alerts and retry rules  
+   - Mage Pro autoscaling handles executor resources automatically on Kubernetes or Docker
+   - Use the **Deployment App** to manage deployments and rollbacks
+
+</Steps>
+
+---
+
+## Mapping Dagster Concepts to Mage Pro
+
+### Assets & Jobs → Pipelines
+
+**Dagster:**
+```python
+from dagster import asset, job, op
+
+@asset
+def raw_data():
+    return pd.read_csv("data.csv")
+
+@asset
+def transformed_data(raw_data):
+    return raw_data.dropna()
+
+@job
+def my_etl_job():
+    transformed_data(raw_data())
+```
+
+**Mage Pro:**
+- Create a new **pipeline** in the UI
+- Each asset/op becomes a **block** (data loader, transformer, or data exporter)
+- Dependencies are defined by connecting blocks in the UI
+- No need for explicit job definitions—pipeline structure defines execution
+
+### Assets & Ops → Blocks
+
+**Dagster:**
+```python
+@asset
+def extract_data():
+    return pd.read_csv("data.csv")
+
+@op
+def transform_data(context, df):
+    return df.dropna()
+
+@asset
+def load_data(transformed_data):
+    transformed_data.to_sql("table", engine)
+```
+
+**Mage Pro:**
+- `extract_data` → **Data loader block** (Python or connector)
+- `transform_data` → **Transformer block** (Python, SQL, or dbt block)
+- `load_data` → **Data exporter block** (Python or connector)
+
+### Dagster Resources → Mage Blocks
+
+| Dagster Resource Type | Mage Pro Equivalent |
+|----------------------|---------------------|
+| `S3Resource`, `GCSResource` | **Data loader/exporter blocks** with native S3/GCS connectors |
+| `PostgresResource`, `SnowflakeResource` | **Data loader/exporter blocks** with database connectors |
+| `DockerResource`, `K8sResource` | **Executor configuration** in pipeline settings |
+| Config resources | **Workspace variables** or **pipeline variables** |
+
+### Partitions & Materializations
+
+**Dagster:**
+```python
+from dagster import DailyPartitionsDefinition, asset
+
+daily_partitions = DailyPartitionsDefinition(start_date="2024-01-01")
+
+@asset(partitions_def=daily_partitions)
+def partitioned_asset(context):
+    partition_date = context.partition_key
+    # Process data for specific partition
+    ...
+```
+
+**Mage Pro:**
+- Use **pipeline variables** or **dynamic blocks** for partition logic
+- Configure **incremental processing** in SQL blocks or Python blocks
+- Use **backfill triggers** for historical data processing
+- Schedule pipelines with cron expressions for partition-based runs
+
+### Scheduling & Sensors
+
+**Dagster:**
+```python
+from dagster import schedule, sensor, RunRequest
+
+@schedule(cron_schedule="0 0 * * *", job=my_etl_job)
+def daily_schedule(context):
+    return RunRequest()
+
+@sensor(job=my_etl_job)
+def file_sensor(context):
+    if file_exists("new_data.csv"):
+        return RunRequest()
+```
+
+**Mage Pro:**
+- Create a **schedule trigger** in the pipeline UI
+- Configure cron expression, interval, or event-based triggers
+- Use **file triggers** for file-based sensors
+- Use **event triggers** for webhook-based sensors
+- Use the **Deployment App** to manage deployments across environments (dev, staging, prod)
+
+### Secrets & Configuration
+
+**Dagster:**
+```python
+from dagster import ConfigurableResource
+
+class MyResource(ConfigurableResource):
+    api_key: str
+
+@asset
+def use_resource(my_resource: MyResource):
+    key = my_resource.api_key
+```
+
+**Mage Pro:**
+- Use **workspace variables** or **pipeline variables**
+- Access via `variables` dictionary in blocks
+- **Built-in secret manager** with encryption, or integrate with **external secret managers** (AWS Secrets Manager, HashiCorp Vault, etc.)
+- Secrets are isolated per workspace and pipeline
+
+---
+
+## Convert Dagster Code with AI Sidekick
+
+Skip the manual rewrites — Mage Pro's **AI Sidekick** can automatically convert your Dagster asset and job code into a Mage pipeline with just one prompt.
+
+### How to Use It
+
+1. Click the **"Ask AI"** button in the top-right corner of the Mage Pro UI.  
+2. Paste your Dagster code — including `@asset`, `@op`, `@job`, or asset-based workflows.  
+3. Ask: **"Convert this Dagster job to a Mage pipeline."**  
+4. Sidekick will:
+   - Parse the asset/op structure and dependencies  
+   - Generate the corresponding Mage blocks (data loader, transformer, data exporter)  
+   - Define block dependencies and scheduling logic  
+   - Convert Dagster resources to Mage connectors where applicable  
+   - **Optimize** the generated code for performance and best practices
+5. Review and insert the generated pipeline directly into your project.
+
+### Why Use Sidekick?
+
+- **Faster migration**: turn entire jobs into Mage pipelines in seconds  
+- **Less error-prone**: Sidekick understands asset dependencies, partitions, and op types  
+- **Code optimization**: automatically optimizes generated code for performance  
+- **Context-aware**: uses your project setup and prior block structure  
+- **Fully editable**: review, tweak, and insert blocks before saving  
+
+👉 Learn more in the [AI Sidekick docs](/ai/sidekick).
+
+---
+
+## Tips for Migrating Complex Jobs
+
+### Handling Dagster Asset Dependencies
+
+**Dagster:**
+```python
+@asset
+def parent_asset():
+    ...
+
+@asset
+def child_asset(parent_asset):
+    ...
+```
+
+**Mage Pro:**
+- Dependencies are automatically inferred from block connections in the UI
+- Use **upstream blocks** to define data flow
+- Blocks with no dependencies run in parallel automatically
+
+### Dagster Partitions
+
+**Dagster:**
+```python
+from dagster import DailyPartitionsDefinition
+
+daily_partitions = DailyPartitionsDefinition(start_date="2024-01-01")
+
+@asset(partitions_def=daily_partitions)
+def partitioned_asset(context):
+    partition_date = context.partition_key
+    ...
+```
+
+**Mage Pro:**
+- Use **pipeline variables** to pass partition information
+- Configure **incremental processing** in SQL blocks
+- Use **backfill triggers** to process historical partitions
+- Schedule pipelines with appropriate cron expressions
+
+### Dagster Resources & Configuration
+
+**Dagster:**
+```python
+from dagster import ConfigurableResource, asset
+
+class DatabaseResource(ConfigurableResource):
+    connection_string: str
+
+@asset
+def use_database(database: DatabaseResource):
+    conn = database.connection_string
+    ...
+```
+
+**Mage Pro:**
+- Use **workspace variables** or **pipeline variables** for configuration
+- Access via `variables` dictionary in blocks
+- Use **data loader/exporter blocks** with native connectors for databases
+- Secrets are managed through built-in or external secret managers
+
+### Dagster Retries & Error Handling
+
+**Dagster:**
+```python
+@asset(retry_policy=RetryPolicy(max_retries=3, delay=60))
+def risky_asset():
+    ...
+```
+
+**Mage Pro:**
+- Configure **retry settings** in block or pipeline configuration
+- Set retry count, delay, and backoff strategy
+- Built-in error handling and alerting
+
+### Dagster Caching & Materializations
+
+**Dagster:**
+```python
+@asset(
+    compute_kind="pandas",
+    metadata={"cache": True}
+)
+def cached_asset():
+    ...
+```
+
+**Mage Pro:**
+- Use **block output caching** in pipeline settings
+- Configure cache expiration and invalidation rules
+- Preview cached outputs in the UI
+
+---
+
+## After Migration: What You Get with Mage Pro
+
+- **Unified data platform**: orchestration + data integration + transformation + streaming in one tool  
+- **Visual pipeline builder** with real-time data previews  
+- **AI-powered block generation, optimization, and debugging** (via AI Sidekick)  
+- **Git-backed version control** and CI/CD with **UI-based Deployment App**  
+- **Built-in access controls**, audit logs, and workspace isolation  
+- **Support for SQL, Python, R, streaming, dbt blocks, Delta Lake, Iceberg**, and more  
+- **200+ native connectors** for databases, APIs, and cloud storage  
+- **Streaming pipelines** for real-time data processing  
+- **Flexible secrets management**: built-in secret manager or integrate with external systems (AWS Secrets Manager, Vault, etc.)  
+- **Auto-scaled executors** on Kubernetes or Docker  
+- **Transparent pricing**: usage-based pricing (SaaS) or cluster/workspace license-based pricing (self-hosted)
+
+> Dagster excels at asset-based orchestration. But when you need **data engineering, visual development, AI assistance, and native data integration** — **Mage Pro is built for modern data teams**.
+
+👉 [Migrate to Mage Pro Today](https://cloud.mage.ai)
+
