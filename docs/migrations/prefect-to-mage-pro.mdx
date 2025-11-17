@@ -1,0 +1,297 @@
+---
+title: "Migrate from Prefect to Mage Pro"
+sidebarTitle: "Prefect to Mage Pro"
+---
+Many teams start with Prefect for workflow orchestration—but soon encounter challenges with data engineering workflows, visual debugging, and developer productivity. Mage Pro offers a modern alternative: visual pipelines, built-in data integration, AI-assisted development, and UI-based deployment management—all within a unified platform for your data workflows.
+
+## Why migrate from Prefect to Mage Pro?
+
+Prefect is a powerful orchestration tool, but it wasn't designed for:
+
+- Visual pipeline development and debugging  
+- Native data integration (ETL/ELT workflows)  
+- Mixing SQL and Python naturally in the same pipeline  
+- Streaming or event-driven data processing  
+- Built-in data previews and interactive development  
+- AI-powered pipeline development  
+
+Mage Pro is built to solve these challenges out-of-the-box, combining orchestration with data engineering capabilities in a modern, developer-friendly platform.
+
+---
+
+## Mage Pro vs Prefect: Benefits Overview
+
+Mage Pro goes far beyond orchestration. It's a unified platform for **data integration**, **SQL modeling (native dbt blocks and Mage SQL blocks)**, **AI-powered transformation**, and **streaming pipelines** — all within a collaborative, Git-native workspace with UI-based deployment management.
+
+| Capability | Prefect | Mage Pro |
+|------------|---------|----------|
+| **Visual pipeline UI** | ⚠️ Code-only (Python decorators) | ✅ Hybrid UI: drag-and-drop DAG builder + notebook-style coding experience |
+| **Built-in lineage** | ⚠️ Requires external tools | ✅ Native, auto-generated data lineage |
+| **AI assistance** | ❌ | ✅ Generate, optimize, fix, and explain code with AI Sidekick |
+| **Multi-language support** | ⚠️ Python only | ✅ SQL, Python, R, streaming, APIs |
+| **Data integration pipelines** | ⚠️ Custom Python or 3rd-party tools | ✅ 200+ native connectors for databases, files, APIs |
+| **SQL block support** | ⚠️ Requires custom tasks | ✅ Native dbt blocks, or Mage SQL block, preview, and test support |
+| **Incremental modeling** | ❌ (requires custom logic) | ✅ Native in SQL block config and Data integration pipeline |
+| **Data previews & interactive runs** | ❌ | ✅ Preview data at every step, run blocks independently |
+| **Environment isolation** | ⚠️ Requires separate deployments | ✅ Per-workspace configs, secrets, variables |
+| **Git integration** | ⚠️ Manual sync | ✅ Git-backed version control and CI/CD, UI based Deployment App |
+| **Scheduling & triggers** | ✅ Cron + event triggers | ✅ Cron, events, file triggers, webhooks, API |
+| **Secrets management** | ⚠️ Requires Prefect Cloud or external Vault | ✅ Support both built-in secret manager, or external secret manager |
+| **RBAC & SSO** | ⚠️ Prefect Cloud only | ✅ Built-in, enterprise-ready |
+| **Observability & logging** | ✅ Prefect Cloud UI | ✅ Native UI for logs, metrics, traces, lineage |
+| **Scalability** | ⚠️ Manual worker configuration | ✅ Auto-scaled executors on K8s or Docker |
+| **Streaming support** | ❌ | ✅ Kafka, CDC, real-time ingestion |
+| **Team collaboration** | ⚠️ Limited multi-tenancy | ✅ Workspaces, permissions, activity logs |
+
+---
+
+## Step-by-Step Migration Instructions
+
+<Steps>
+
+1. **Inventory your Prefect flows**  
+   - List your active flows and their task types:
+     - `@flow` and `@task` decorators  
+     - Prefect blocks (storage, infrastructure)  
+     - Dependencies and scheduling logic  
+   - Identify data sources, transformations, and destinations
+
+2. **Create a workspace in Mage Pro**  
+   - Visit [Mage Pro](https://cloud.mage.ai) and sign in  
+   - (Optional) Connect your Git repo for version control  
+   - Set up your deployment configuration using the **Deployment App** in the UI
+
+3. **Recreate your Prefect flows as Mage pipelines**  
+   - Each Prefect **flow** → 1 Mage pipeline  
+   - Each Prefect **task** → 1 Mage block:
+     - `@task` with data loading → **Data loader block**  
+     - `@task` with transformations → **Transformer block** (Python or SQL)  
+     - `@task` with data writing → **Data exporter block**  
+     - Prefect blocks (storage) → **Data loader/exporter blocks**  
+   - Define dependencies visually using the UI (no decorators needed)
+
+4. **Configure scheduling and triggers**  
+   - Prefect deployments → Mage **triggers** (cron, interval, or event-based)  
+   - Prefect schedules → Mage **schedule triggers**  
+   - Configure schedules via UI or YAML
+
+5. **Run and validate pipelines**  
+   - Use Mage Pro's UI to test individual blocks  
+   - Preview dataframes, logs, and outputs at each step  
+   - Compare results to your Prefect flows
+
+6. **Monitor, scale, and automate**  
+   - Monitor pipeline runs and resource usage  
+   - Set alerts and retry rules  
+   - Mage Pro autoscaling handles executor resources automatically on Kubernetes or Docker
+   - Use the **Deployment App** to manage deployments and rollbacks
+
+</Steps>
+
+---
+
+## Mapping Prefect Concepts to Mage Pro
+
+### Flows → Pipelines
+
+**Prefect:**
+```python
+from prefect import flow, task
+
+@flow(name="my-etl-flow")
+def my_etl_flow():
+    data = extract_data()
+    transformed = transform_data(data)
+    load_data(transformed)
+```
+
+**Mage Pro:**
+- Create a new **pipeline** in the UI
+- Add blocks visually or via code
+- Dependencies are defined by connecting blocks in the UI
+
+### Tasks → Blocks
+
+**Prefect:**
+```python
+@task
+def extract_data():
+    return pd.read_csv("data.csv")
+
+@task
+def transform_data(df):
+    return df.dropna()
+
+@task
+def load_data(df):
+    df.to_sql("table", engine)
+```
+
+**Mage Pro:**
+- `extract_data` → **Data loader block** (Python or connector)
+- `transform_data` → **Transformer block** (Python, SQL, or dbt block)
+- `load_data` → **Data exporter block** (Python or connector)
+
+### Prefect Blocks → Mage Blocks
+
+| Prefect Block Type | Mage Pro Equivalent |
+|-------------------|---------------------|
+| `S3Block`, `GCSBlock` | **Data loader/exporter blocks** with native S3/GCS connectors |
+| `PostgresBlock`, `SnowflakeBlock` | **Data loader/exporter blocks** with database connectors |
+| `DockerBlock`, `KubernetesJob` | **Executor configuration** in pipeline settings |
+
+### Scheduling & Deployments
+
+**Prefect:**
+```python
+from prefect import serve
+from prefect.schedules import CronSchedule
+
+@flow
+def scheduled_flow():
+    ...
+
+if __name__ == "__main__":
+    scheduled_flow.serve(
+        cron=CronSchedule(cron="0 0 * * *")
+    )
+```
+
+**Mage Pro:**
+- Create a **schedule trigger** in the pipeline UI
+- Configure cron expression, interval, or event-based triggers
+- Use the **Deployment App** to manage deployments across environments (dev, staging, prod)
+- No complex deployment setup needed—triggers and deployments are configured via UI
+
+### Secrets & Configuration
+
+**Prefect:**
+```python
+from prefect.blocks.system import Secret
+
+@task
+def use_secret():
+    api_key = Secret.load("my-api-key")
+```
+
+**Mage Pro:**
+- Use **workspace variables** or **pipeline variables**
+- Access via `variables` dictionary in blocks
+- **Built-in secret manager** with encryption, or integrate with **external secret managers** (AWS Secrets Manager, HashiCorp Vault, etc.)
+- Secrets are isolated per workspace and pipeline
+
+---
+
+## Convert Prefect Flows with AI Sidekick
+
+Skip the manual rewrites — Mage Pro's **AI Sidekick** can automatically convert your Prefect flow code into a Mage pipeline with just one prompt.
+
+### How to Use It
+
+1. Click the **"Ask AI"** button in the top-right corner of the Mage Pro UI.  
+2. Paste your Prefect flow code — including `@flow`, `@task`, or flow-based workflows.  
+3. Ask: **"Convert this Prefect flow to a Mage pipeline."**  
+4. Sidekick will:
+   - Parse the flow structure and task relationships  
+   - Generate the corresponding Mage blocks (data loader, transformer, data exporter)  
+   - Define block dependencies and scheduling logic  
+   - Convert Prefect blocks to Mage connectors where applicable  
+   - **Optimize** the generated code for performance and best practices
+5. Review and insert the generated pipeline directly into your project.
+
+### Why Use Sidekick?
+
+- **Faster migration**: turn entire flows into Mage pipelines in seconds  
+- **Less error-prone**: Sidekick understands scheduling, dependencies, and task types  
+- **Code optimization**: automatically optimizes generated code for performance  
+- **Context-aware**: uses your project setup and prior block structure  
+- **Fully editable**: review, tweak, and insert blocks before saving  
+
+👉 Learn more in the [AI Sidekick docs](/ai/sidekick).
+
+---
+
+## Tips for Migrating Complex Flows
+
+### Handling Prefect Subflows
+
+**Prefect:**
+```python
+@flow
+def parent_flow():
+    result = subflow()
+
+@flow
+def subflow():
+    ...
+```
+
+**Mage Pro:**
+- Split into **separate pipelines** and trigger them via API or use **dynamic blocks** for conditional logic
+- Use **block groups** to organize related blocks within a pipeline
+
+### Prefect Task Runners & Concurrency
+
+**Prefect:**
+```python
+from prefect.task_runners import ConcurrentTaskRunner
+
+@flow(task_runner=ConcurrentTaskRunner())
+def parallel_flow():
+    ...
+```
+
+**Mage Pro:**
+- Configure **concurrency settings** in pipeline configuration
+- Blocks with no dependencies run in parallel automatically
+- Use **executor configuration** for custom parallelism on Kubernetes or Docker
+
+### Prefect Retries & Error Handling
+
+**Prefect:**
+```python
+@task(retries=3, retry_delay_seconds=60)
+def risky_task():
+    ...
+```
+
+**Mage Pro:**
+- Configure **retry settings** in block or pipeline configuration
+- Set retry count, delay, and backoff strategy
+- Built-in error handling and alerting
+
+### Prefect Caching
+
+**Prefect:**
+```python
+@task(cache_key_fn=task_input_hash, cache_expiration=timedelta(hours=1))
+def cached_task():
+    ...
+```
+
+**Mage Pro:**
+- Use **block output caching** in pipeline settings
+- Configure cache expiration and invalidation rules
+- Preview cached outputs in the UI
+
+---
+
+## After Migration: What You Get with Mage Pro
+
+- **Unified data platform**: orchestration + data integration + transformation + streaming in one tool  
+- **Visual pipeline builder** with real-time data previews  
+- **AI-powered block generation, optimization, and debugging** (via AI Sidekick)  
+- **Git-backed version control** and CI/CD with **UI-based Deployment App**  
+- **Built-in access controls**, audit logs, and workspace isolation  
+- **Support for SQL, Python, R, streaming, dbt blocks, Delta Lake, Iceberg**, and more  
+- **200+ native connectors** for databases, APIs, and cloud storage  
+- **Streaming pipelines** for real-time data processing  
+- **Flexible secrets management**: built-in secret manager or integrate with external systems (AWS Secrets Manager, Vault, etc.)  
+- **Auto-scaled executors** on Kubernetes or Docker  
+- **Transparent pricing**: usage-based pricing (SaaS) or cluster/workspace license-based pricing (self-hosted)
+
+> Prefect excels at orchestration. But when you need **data engineering, visual development, and AI assistance** — **Mage Pro is built for modern data teams**.
+
+👉 [Migrate to Mage Pro Today](https://cloud.mage.ai)
+
+
