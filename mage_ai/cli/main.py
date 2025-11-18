@@ -135,7 +135,7 @@ def start(
     """
     from mage_ai.settings.repo import set_repo_path
 
-    # Set repo_path before intializing the DB so that we can get correct db_connection_url
+    # Set repo_path before initializing the DB so that we can get correct db_connection_url
     project_path = os.path.abspath(project_path)
     set_repo_path(project_path)
 
@@ -177,7 +177,7 @@ def run(
     """
     from mage_ai.settings.repo import set_repo_path
 
-    # Set repo_path before intializing the DB so that we can get correct db_connection_url
+    # Set repo_path before initializing the DB so that we can get correct db_connection_url
     project_path = os.path.abspath(project_path)
     set_repo_path(project_path)
 
