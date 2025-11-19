@@ -7,28 +7,187 @@ Update the configuration of an existing workspace in your Mage Pro cluster.
 
 `PUT /api/workspaces/{workspace_name}`
 
+## Path Parameters
+
 <ParamField path="workspace_name" type="string" required>
   Name of the workspace to update. You can find the workspace name on your Mage Pro cluster's `/apps/workspaces` page.
 </ParamField>
 
+## Request Body Parameters
+
+All request body parameters are nested under the `workspace` object.
+
 <ParamField body="workspace.action" type="string" required>
-  The action to perform. Use `"patch"` to apply partial updates to the workspace configuration.
+  The action to perform on the workspace. Supported values: `"stop"`, `"resume"`, `"patch"`, `"add_to_ingress"`.
+  See the [Supported Actions](#supported-actions) section below for details on each action and which parameters they support.
 </ParamField>
 
 <ParamField body="workspace.container_config" type="string">
-  Optional. Configuration string for the container.  
-  For example, updating environment variables:  
+  Optional. YAML configuration string for the container. Used with the `patch` action.  
+  Allows you to update container-level settings such as environment variables, resource limits, and other container configurations.
+  For example, updating environment variables:
   ```
   env:
     - name: ENV
       value: test
+    - name: API_KEY
+      value: secret-key
   ```
 </ParamField>
 
-<ParamField body="workspace.update_workspace_settings" type="boolean">
-  Optional. Whether to update workspace settings with the current cluster's environment variables.  
-  Set to `true` to sync the workspace configuration with the cluster-level environment.
+<ParamField body="workspace.lifecycle_config" type="string">
+  Optional. YAML configuration string for lifecycle hooks. Used with the `patch` action.
+  Defines commands to run at different stages of the container lifecycle (e.g., postStart, preStop hooks).
 </ParamField>
+
+<ParamField body="workspace.update_workspace_settings" type="boolean">
+  Optional. Whether to update workspace settings with the current cluster's environment variables. Used with the `patch` action.
+  Set to `true` to sync the workspace configuration with the cluster-level environment variables.
+  When enabled, the workspace will inherit environment variables from the cluster configuration.
+</ParamField>
+
+## Supported Actions
+
+The `action` field determines what operation will be performed on the workspace. Each action supports different parameters and cluster types.
+
+### `stop`
+
+Stops a running workspace. The workspace metadata is preserved, but the cloud instance is stopped or paused.
+
+**Supported cluster types:** K8S, Docker
+
+**Required parameters:**
+- `workspace.action`: `"stop"`
+
+**Optional parameters:** None
+
+**Request body:**
+```json
+{
+  "workspace": {
+    "action": "stop"
+  }
+}
+```
+
+**Example:**
+```bash
+curl --request PUT \
+  -H 'Content-Type: application/json' \
+  -H 'OAUTH-TOKEN: <your-oauth-token>' \
+  -d '{
+        "workspace": {
+          "action": "stop"
+        }
+      }' \
+  --url https://your-mage-instance.com/api/workspaces/my-workspace
+```
+
+### `resume`
+
+Resumes a stopped workspace, restarting the cloud instance.
+
+**Supported cluster types:** K8S, Docker
+
+**Required parameters:**
+- `workspace.action`: `"resume"`
+
+**Optional parameters:** None
+
+**Request body:**
+```json
+{
+  "workspace": {
+    "action": "resume"
+  }
+}
+```
+
+**Example:**
+```bash
+curl --request PUT \
+  -H 'Content-Type: application/json' \
+  -H 'OAUTH-TOKEN: <your-oauth-token>' \
+  -d '{
+        "workspace": {
+          "action": "resume"
+        }
+      }' \
+  --url https://your-mage-instance.com/api/workspaces/my-workspace
+```
+
+### `patch`
+
+Applies partial updates to the workspace configuration, such as updating environment variables, container settings, or lifecycle configurations.
+
+**Supported cluster types:** K8S, Docker
+
+**Required parameters:**
+- `workspace.action`: `"patch"`
+
+**Optional parameters:**
+- `workspace.container_config` (string) - YAML configuration string for the container
+- `workspace.lifecycle_config` (string) - YAML configuration string for lifecycle hooks
+- `workspace.update_workspace_settings` (boolean) - Whether to sync workspace settings with cluster-level environment variables
+
+**Request body:**
+```json
+{
+  "workspace": {
+    "action": "patch",
+    "container_config": "env:\n  - name: ENV\n    value: test",
+    "update_workspace_settings": true
+  }
+}
+```
+
+**Example:**
+```bash
+curl --request PUT \
+  -H 'Content-Type: application/json' \
+  -H 'OAUTH-TOKEN: <your-oauth-token>' \
+  -d '{
+        "workspace": {
+          "action": "patch",
+          "container_config": "env:\n  - name: ENV\n    value: test",
+          "update_workspace_settings": true
+        }
+      }' \
+  --url https://your-mage-instance.com/api/workspaces/my-workspace
+```
+
+### `add_to_ingress`
+
+Adds the workspace service to the Kubernetes ingress configuration, making it accessible via the ingress URL.
+
+**Supported cluster types:** Kubernetes (K8S) only
+
+**Required parameters:**
+- `workspace.action`: `"add_to_ingress"`
+
+**Optional parameters:** None
+
+**Request body:**
+```json
+{
+  "workspace": {
+    "action": "add_to_ingress"
+  }
+}
+```
+
+**Example:**
+```bash
+curl --request PUT \
+  -H 'Content-Type: application/json' \
+  -H 'OAUTH-TOKEN: <your-oauth-token>' \
+  -d '{
+        "workspace": {
+          "action": "add_to_ingress"
+        }
+      }' \
+  --url https://your-mage-instance.com/api/workspaces/my-workspace
+```
 
 <RequestExample>
 
