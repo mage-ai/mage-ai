@@ -35,9 +35,23 @@ All request body parameters are nested under the `workspace` object.
   ```
 </ParamField>
 
-<ParamField body="workspace.lifecycle_config" type="string">
-  Optional. YAML configuration string for lifecycle hooks. Used with the `patch` action.
-  Defines commands to run at different stages of the container lifecycle (e.g., postStart, preStop hooks).
+<ParamField body="workspace.lifecycle_config" type="object">
+  Optional. Dictionary/object containing lifecycle configuration. Used with the `patch` action.
+  Defines lifecycle management policies including termination policies, pre-start scripts, and post-start hooks.
+  Structure:
+  ```json
+  {
+    "termination_policy": {
+      "enable_auto_termination": true,
+      "max_idle_seconds": 1800
+    },
+    "pre_start_script_path": "/path/to/script.sh",
+    "post_start": {
+      "command": ["echo", "Workspace started"],
+      "hook_path": "/path/to/hook.sh"
+    }
+  }
+  ```
 </ParamField>
 
 <ParamField body="workspace.update_workspace_settings" type="boolean">
@@ -127,7 +141,7 @@ Applies partial updates to the workspace configuration, such as updating environ
 
 **Optional parameters:**
 - `workspace.container_config` (string) - YAML configuration string for the container
-- `workspace.lifecycle_config` (string) - YAML configuration string for lifecycle hooks
+- `workspace.lifecycle_config` (object) - Dictionary containing lifecycle configuration (termination policy, pre-start scripts, post-start hooks)
 - `workspace.update_workspace_settings` (boolean) - Whether to sync workspace settings with cluster-level environment variables
 
 **Request body:**
@@ -136,6 +150,13 @@ Applies partial updates to the workspace configuration, such as updating environ
   "workspace": {
     "action": "patch",
     "container_config": "env:\n  - name: ENV\n    value: test",
+    "lifecycle_config": {
+      "termination_policy": {
+        "enable_auto_termination": true,
+        "max_idle_seconds": 1800
+      },
+      "pre_start_script_path": "/path/to/script.sh"
+    },
     "update_workspace_settings": true
   }
 }
