@@ -1,5 +1,6 @@
 ---
 title: "Xero"
+description: "Sync accounting data from Xero including invoices, contacts, payments, and more. Supports incremental syncing with automatic OAuth token refresh."
 ---
 
 import { ProButton } from '/snippets/pro/button.mdx';
@@ -24,18 +25,14 @@ To set up the Xero source, provide the following configuration parameters:
 You must provide either `refresh_token` or `refresh_token_secret_name`. Using `refresh_token_secret_name` is recommended because Xero uses rotating refresh tokens (each token can only be used once), and this option automatically persists the new token after each refresh.
 </Note>
 
-## Token Management
-
 ### Option 1: Direct Refresh Token
 
-```json
-{
-    "client_id": "YOUR_CLIENT_ID",
-    "client_secret": "YOUR_CLIENT_SECRET",
-    "tenant_id": "YOUR_TENANT_ID",
-    "start_date": "2021-01-01T00:00:00Z",
-    "refresh_token": "YOUR_REFRESH_TOKEN"
-}
+```yaml
+client_id: YOUR_CLIENT_ID
+client_secret: YOUR_CLIENT_SECRET
+tenant_id: YOUR_TENANT_ID
+start_date: "2021-01-01T00:00:00Z"
+refresh_token: YOUR_REFRESH_TOKEN
 ```
 
 <Warning>
@@ -44,14 +41,12 @@ Xero refresh tokens are single-use. Each time the token is refreshed, a new one 
 
 ### Option 2: Mage Secret (Recommended)
 
-```json
-{
-    "client_id": "YOUR_CLIENT_ID",
-    "client_secret": "YOUR_CLIENT_SECRET",
-    "tenant_id": "YOUR_TENANT_ID",
-    "start_date": "2021-01-01T00:00:00Z",
-    "refresh_token_secret_name": "XERO_REFRESH_TOKEN"
-}
+```yaml
+client_id: YOUR_CLIENT_ID
+client_secret: YOUR_CLIENT_SECRET
+tenant_id: YOUR_TENANT_ID
+start_date: "2021-01-01T00:00:00Z"
+refresh_token_secret_name: XERO_REFRESH_TOKEN
 ```
 
 First, create a secret in Mage. You can choose any name for your secret:
@@ -67,16 +62,61 @@ First, create a secret in Mage. You can choose any name for your secret:
 The tap will automatically update the secret with the new refresh token after each sync, ensuring reliable long-term operation.
 </Check>
 
-## Required Xero OAuth2 Scopes
+## Supported Streams
 
-To use this source, you must grant your Xero app the following OAuth2 scopes.
+The Xero source supports the following streams:
 
-### Minimum Scope for Discovery
-- `accounting.settings.read`
+### Incremental Streams
 
-This scope is required for the `/Currencies` endpoint, which is called during discovery to verify access.
+These streams support incremental syncing based on the `start_date` configuration and bookmark state:
 
-### Scopes for Syncing All Streams
+| Stream | Primary Key | Replication Key |
+| ------ | ----------- | --------------- |
+| `accounts` | AccountID | UpdatedDateUTC |
+| `bank_transactions` | BankTransactionID | UpdatedDateUTC |
+| `bank_transfers` | BankTransferID | CreatedDateUTC |
+| `contacts` | ContactID | UpdatedDateUTC |
+| `credit_notes` | CreditNoteID | UpdatedDateUTC |
+| `employees` | EmployeeID | UpdatedDateUTC |
+| `expense_claims` | ExpenseClaimID | UpdatedDateUTC |
+| `invoices` | InvoiceID | UpdatedDateUTC |
+| `items` | ItemID | UpdatedDateUTC |
+| `journals` | JournalID | JournalNumber |
+| `linked_transactions` | LinkedTransactionID | UpdatedDateUTC |
+| `manual_journals` | ManualJournalID | UpdatedDateUTC |
+| `overpayments` | OverpaymentID | UpdatedDateUTC |
+| `payments` | PaymentID | UpdatedDateUTC |
+| `prepayments` | PrepaymentID | UpdatedDateUTC |
+| `purchase_orders` | PurchaseOrderID | UpdatedDateUTC |
+| `quotes` | QuoteID | UpdatedDateUTC |
+| `receipts` | ReceiptID | UpdatedDateUTC |
+| `users` | UserID | UpdatedDateUTC |
+
+### Full Table Streams
+
+These streams are fully synced on each run (no incremental support):
+
+| Stream | Primary Key |
+| ------ | ----------- |
+| `branding_themes` | BrandingThemeID |
+| `contact_groups` | ContactGroupID |
+| `currencies` | Code |
+| `organisations` | OrganisationID |
+| `repeating_invoices` | RepeatingInvoiceID |
+| `tax_rates` | TaxType |
+| `tracking_categories` | TrackingCategoryID |
+
+## How to Generate Credentials
+
+To use this source, you need to create a Xero OAuth app and complete the OAuth flow.
+
+### 1. Create a Xero App
+
+Go to the [Xero Developer Portal](https://developer.xero.com/app/manage) and create a new app. Note down your **Client ID** and **Client Secret**.
+
+### 2. Configure OAuth2 Scopes
+
+When setting up your Xero app, grant the following OAuth2 scopes:
 
 | Scope                          | Required For                              |
 | ------------------------------ | ----------------------------------------- |
@@ -89,24 +129,17 @@ This scope is required for the `/Currencies` endpoint, which is called during di
 | `offline_access`               | Long-lived access via refresh tokens      |
 
 <Note>
+- The minimum scope required for discovery is `accounting.settings.read`.
 - You only need scopes for the streams you plan to sync.
 - Missing scopes for a selected stream will result in `401` or `403` errors.
 </Note>
 
-### Example Scope String
+**Example Scope String:**
 ```
 accounting.settings.read accounting.transactions.read accounting.contacts.read accounting.reports.read accounting.journals.read accounting.attachments.read offline_access
 ```
 
-## How to Generate Credentials
-
-To use this source, you need to create a Xero OAuth app and complete the OAuth flow:
-
-### 1. Create a Xero App
-
-Go to the [Xero Developer Portal](https://developer.xero.com/app/manage) and create a new app. Note down your **Client ID** and **Client Secret**.
-
-### 2. Complete the OAuth2 Authorization Flow
+### 3. Complete the OAuth2 Authorization Flow
 
 Follow [Xero's OAuth2 Auth Flow Guide](https://developer.xero.com/documentation/guides/oauth2/auth-flow/) to obtain your initial `access_token` and `refresh_token`.
 
@@ -114,7 +147,7 @@ Follow [Xero's OAuth2 Auth Flow Guide](https://developer.xero.com/documentation/
 Make sure to request the `offline_access` scope to receive a refresh token.
 </Tip>
 
-### 3. Get Your Tenant ID
+### 4. Get Your Tenant ID
 
 The `tenant_id` uniquely identifies your Xero organization. After completing OAuth authentication:
 
