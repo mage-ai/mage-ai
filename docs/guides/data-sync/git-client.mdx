@@ -549,6 +549,135 @@ branch_name: str  # Branch name (optional)
 use_deployment_settings: bool  # Use Mage Pro settings (default: False)
 ```
 
+## Setting Up Automated Git Push Jobs
+
+You can automate Git push operations by creating a pipeline with a Git push block and configuring a trigger to run it on a schedule or in response to events.
+
+### Step 1: Create a Git Push Pipeline
+
+1. Create a new pipeline (e.g., `auto_git_push`)
+2. Add a **Data Exporter** block using the Git push template:
+   - Click **Blocks** → **Exporter** → **Version control** → **Git push**
+3. Configure the block with your desired settings:
+
+```python
+from typing import Dict, List, Optional, Union
+from mage_ai.deployments.git_client import GitClient
+
+if 'data_exporter' not in globals():
+    from mage_ai.data_preparation.decorators import data_exporter
+
+
+@data_exporter
+def export_to_git(*args, **kwargs) -> Dict:
+    """
+    Push changes to a git remote repository.
+
+    Uses the git settings configured via git settings (/settings/workspace/sync-data)
+    or deployment settings (/apps/deploy).
+
+    Docs: https://docs.mage.ai/guides/data-sync/git-client
+    """
+
+    # Get configuration from kwargs
+    commit_message: str = kwargs.get(
+        'commit_message',
+        'Auto-commit from Mage pipeline'
+    )
+    files: Union[str, List[str]] = kwargs.get('files', '.')
+    include_deletions: bool = kwargs.get('include_deletions', True)
+    remote_name: Optional[str] = kwargs.get('remote_name')
+    branch_name: Optional[str] = kwargs.get('branch_name')
+    use_deployment_settings: bool = kwargs.get('use_deployment_settings', False)
+
+    # Initialize git client
+    git = GitClient(use_deployment_settings=use_deployment_settings)
+
+    # Set add flags
+    add_flags = ['-A'] if include_deletions else None
+
+    # Add, commit, and push
+    result = git.add_commit_push(
+        message=commit_message,
+        files=files,
+        add_flags=add_flags,
+        remote_name=remote_name,
+        branch_name=branch_name,
+    )
+
+    # Print result
+    if result.success:
+        print(f"✓ Successfully pushed to {result.remote}/{result.branch}")
+        if result.commit_hash:
+            print(f"  Commit: {result.commit_hash}")
+    else:
+        print(f"✗ Push failed: {result.error}")
+
+    # Return the result and pass through the input data
+    return {
+        'result': result.to_dict(),
+    }
+```
+
+### Step 2: Create a Trigger
+
+Navigate to your pipeline's **Triggers** tab and create a new trigger:
+
+<Tabs>
+<Tab title="Schedule Trigger">
+
+For periodic backups (e.g., daily at midnight):
+
+1. Click **+ New trigger**
+2. Select **Schedule** as the trigger type
+3. Configure the schedule:
+   - **Name**: `daily_git_backup`
+   - **Frequency**: Daily (or use Custom with cron: `0 0 * * *`)
+   - **Start date**: Set your desired start date
+4. Click **Save changes**
+
+**Example cron patterns:**
+
+| Pattern | Description |
+|---------|-------------|
+| `0 * * * *` | Every hour |
+| `0 0 * * *` | Daily at midnight |
+| `0 9,18 * * 1-5` | Weekdays at 9 AM and 6 PM |
+| `*/30 * * * *` | Every 30 minutes |
+
+</Tab>
+<Tab title="API Trigger">
+
+For on-demand pushes from external systems:
+
+1. Click **+ New trigger**
+2. Select **API** as the trigger type
+3. Configure:
+   - **Name**: `git_push_api`
+4. Click **Save changes**
+5. Copy the API endpoint URL
+
+**Trigger the pipeline via API:**
+
+```bash
+curl -X POST "https://your-mage-instance.com/api/pipeline_schedules/{trigger_id}/pipeline_runs/{token}" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "pipeline_run": {
+      "variables": {
+        "commit_message": "Triggered via API"
+      }
+    }
+  }'
+```
+
+</Tab>
+</Tabs>
+
+<Info>
+For more details on trigger configuration, see the [Pipeline Triggers documentation](/orchestration/triggers/triggering-pipelines).
+</Info>
+
 ## Troubleshooting
 
 <AccordionGroup>
