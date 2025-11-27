@@ -45,7 +45,9 @@
               "guides/data-sync/cicd-workflow",
               "guides/data-sync/git-terminal",
               "guides/version-control/file-versions",
-              "guides/data-sync/version-control-guide"
+              "guides/data-sync/version-control-guide",
+              "guides/data-sync/git-client"
+
             ]
           },
           {
