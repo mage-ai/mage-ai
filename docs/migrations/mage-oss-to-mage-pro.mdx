@@ -24,7 +24,19 @@ Mage Pro provides all of this while maintaining **100% code compatibility** with
 
 ## Common Features: OSS vs Pro
 
-Both Mage OSS and Mage Pro share a strong foundation of core features, ensuring a consistent development experience regardless of which version you choose.
+Both Mage OSS and Mage Pro share a strong foundation of core features, ensuring a consistent development experience regardless of which version you choose. Most importantly, both provide a **unified platform** that consolidates all data engineering capabilities in one place.
+
+### Unified Platform Capabilities
+
+Both OSS and Pro offer a single, unified platform that combines:
+
+- **Batch pipelines**: Traditional ETL/ELT workflows for scheduled data processing
+- **No-code data integration pipelines**: Pre-built connectors for seamless data ingestion and loading
+- **Streaming pipelines**: Real-time data processing for event-driven architectures (Pro includes stateful streaming with checkpointing)
+- **Unified ingestion, transformation, and orchestration**: All pipeline types share the same interface, configuration, and execution framework
+- **Integrated observability**: Built-in monitoring, logging, and data previews across all pipeline types
+
+This unification means you can build end-to-end data workflows—from ingestion to transformation to orchestration—all within a single platform, without needing separate tools for different pipeline types.
 
 ### Features Available in Both OSS and Pro
 
@@ -42,7 +54,6 @@ Both Mage OSS and Mage Pro share a strong foundation of core features, ensuring 
 - **Block library**: Reusable code blocks across projects
 - **Testing framework**: Built-in testing capabilities for data quality
 - **dbt integration**: Run dbt models within pipelines
-- **Streaming pipelines**: Real-time data processing (Pro includes stateful streaming with checkpointing)
 
 ### When to Use Mage OSS
 
@@ -120,7 +131,7 @@ Mage Pro is more performant, reliable, and cost-effective than Mage OSS, with en
 | **SSO (SAML/OAuth/Okta)** | ✅ Supported | ✅ Enterprise SSO integration |
 | **RBAC** | ⚠️ Basic auth | ✅ Granular roles and permissions at workspace/project levels |
 | **Audit logs** | ❌ | ✅ User activity tracking and audit logs for compliance |
-| **SCIM provisioning** | ❌ | ✅ Automated user/group lifecycle from your IdP |
+| **SCIM provisioning** | ❌ | ✅ Automated user/group lifecycle from your Identity Provider (IdP) |
 | **Per-workspace secret scoping** | ❌ | ✅ Workspace-level secret isolation |
 | **Static CP egress IPs** | ❌ | ✅ IP allowlisting for Hybrid/Cloud deployments |
 | **Autoscaling pipeline orchestration** | ❌ Manual scaling | ✅ Auto-scales pipelines vertically/horizontally |
@@ -171,13 +182,16 @@ Mage Pro is more performant, reliable, and cost-effective than Mage OSS, with en
        - Variables and secrets (if stored in Git)
        - Project structure
      - No code changes required—Mage Pro is 100% compatible with Mage OSS code
-   - **Set up branch mappings** (optional):
-     - `main/master` → Production
-     - `staging` → Staging
-     - `development` → Development
-   - **Enable automatic deployments or manual approval workflows** (optional)
+   - **Deploy commits**:
+     - The deployments page will show a list of commits from your GitHub branch
+     - Click the "Deploy" button next to any commit to deploy that version
+     - Your pipelines will be updated with the code from the selected commit
+   - **Update USER_CODE_PATH environment variable**:
+     - After pulling code from GitHub, update the `USER_CODE_PATH` environment variable (default value is `/home/src/default_repo`) to point to your Mage project path
+     - **For SaaS or Hybrid Cloud**: Configure in the [cloud.mage.ai](https://cloud.mage.ai) portal for the cluster, or in the workspace UI
+     - **For Private Cloud or On-Prem**: Configure via Helm chart values for the cluster, or in the workspace UI
 
-5. **Configure environment variables and credentials**  
+4. **Configure environment variables and credentials**
    - **Set up environment variables**:
      - **For SaaS or Hybrid Cloud**:
        - Configure environment variables in the [cloud.mage.ai](https://cloud.mage.ai) portal for each cluster, OR
@@ -227,7 +241,9 @@ Mage Pro is more performant, reliable, and cost-effective than Mage OSS, with en
    - Verify all database connections and external integrations work correctly
 
 9. **Deploy to production**  
-   - Use the deployment app to promote code from dev → staging → production
+   - Navigate to the deployments page in Mage Pro
+   - The page will display a list of commits from your GitHub branch
+   - Click the "Deploy" button next to the commit you want to deploy to production
    - Monitor pipeline runs and resource usage in real-time
    - Set up alerts for failures or performance issues
    - Leverage pipeline dependency views to understand cross-pipeline relationships
@@ -320,7 +336,7 @@ If you prefer not to use Git-based import, you can manually migrate your project
 - **Pipeline dependency views**: Visualize how pipelines orchestrate and depend on each other
 - **Enterprise SSO**: Enhanced SAML/OAuth/Okta integration with group mapping per tenant
 - **Granular RBAC**: Fine-grained roles and permissions at workspace and project levels
-- **SCIM provisioning**: Automated user and group lifecycle management from your IdP
+- **SCIM provisioning**: Automated user and group lifecycle management from your Identity Provider (IdP) such as Okta, Azure AD, or Google Workspace
 - **Audit logs**: Comprehensive user activity tracking and audit logs for compliance
 - **Per-workspace secret scoping**: Workspace-level secret isolation for enhanced security
 - **Per-tenant quotas/limits**: Compute and concurrency limits per workspace/tenant
@@ -354,7 +370,7 @@ If you prefer not to use Git-based import, you can manually migrate your project
 
 - **Documentation**: Explore the [Mage Pro documentation](/production/mage/pro)
 - **Support**: Contact Mage Pro support for migration assistance
-- **Community**: Join the [Mage community](https://www.mage.ai/community) for tips and best practices
+- **Community**: Join the [Mage community](https://www.mage.ai/chat) for tips and best practices
 
 > Your pipelines, your logic—now with enterprise-grade infrastructure, AI assistance, and zero DevOps overhead.
 
