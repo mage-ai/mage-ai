@@ -181,7 +181,12 @@ Mage Pro is more performant, reliable, and cost-effective than Mage OSS, with en
        - Configuration files (including IO configs)
        - Variables and secrets (if stored in Git)
        - Project structure
+       - Trigger files (triggers will be created automatically)
      - No code changes required—Mage Pro is 100% compatible with Mage OSS code
+   - **Migrate triggers**:
+     - **Before migration**: In Mage OSS, save your triggers in code by following the [configure triggers in code guide](/orchestration/triggers/configure-triggers-in-code#configure-triggers-in-code)
+     - **After pulling code from GitHub**: When you pull code from GitHub in Mage Pro, the trigger files will be automatically imported and triggers will be created in Mage Pro
+     - All your scheduled triggers, event triggers, and API triggers will be automatically set up
    - **Deploy commits**:
      - The deployments page will show a list of commits from your GitHub branch
      - Click the "Deploy" button next to any commit to deploy that version
@@ -280,6 +285,7 @@ If you prefer not to use Git-based import, you can manually migrate your project
 - **Block types**: All block types (data loaders, transformers, data exporters, sensors) are fully supported
 - **Dependencies**: Python dependencies defined in `requirements.txt` are automatically installed
 - **IO Configs**: Existing IO configs are automatically imported from your GitHub repository and work as-is, with optional Pro enhancements available
+- **Triggers**: Save triggers in code in Mage OSS (see [configure triggers in code guide](/orchestration/triggers/configure-triggers-in-code#configure-triggers-in-code)). When you pull code from GitHub in Mage Pro, trigger files are automatically imported and triggers are created automatically
 
 ### Workspace Organization
 
