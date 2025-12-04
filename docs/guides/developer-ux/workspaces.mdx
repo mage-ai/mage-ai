@@ -34,15 +34,37 @@ The Mage team will need to enable this feature for your organization.
 - **Step 2**:  Give the workspace a name.
 - **Step 3**: Click the dropdown arrow and toggle on the Kubernetes configuration if you need to custom configure your Kubernetes container. (see Kubernetes container configuration section for more details).
 - **Step 4**: Click the Lifecycle (optional) dropdown to create lifecycle management policies (see Lifecycle management policies section for more information).
-- **Step 4**: Click the create button and wait a few minutes for your workspace to start.
-- **Step 5**: Once your workspace is running, click the workspace open button under the open column in the workspace management interface.
+- **Step 5**: Click the create button and wait a few minutes for your workspace to start.
+- **Step 6**: Once your workspace is running, click the workspace open button under the open column in the workspace management interface.
 
-## Kubernetes container configuration
+## Workspace Configuration Options
 
-Kubernetes provides a robust container orchestration system for managing your workspace resources and environment. The configuration above covers two key aspects:
+Mage Pro workspaces support comprehensive configuration options that allow you to customize your workspace environment, resources, and behavior. Configuration options vary by cluster type (Kubernetes, Docker).
 
-1. Resource Configuration: Controls memory and CPU allocation for your workspace container, with both minimum guarantees and upper limits to ensure stable performance.
-2. Environment Configuration: Enables customization of environment variables, specifically the project code location if you've modified it from the default path.
+### Basic Workspace Configuration
+
+All workspace types support these basic fields:
+
+- **`name`** (required): The workspace name. Must be unique within your cluster.
+- **`lifecycle_config`** (optional): Lifecycle management policies (see [Lifecycle Management Policies](#lifecycle-management-policies-optional) section below).
+
+### Kubernetes Workspace Configuration
+
+Kubernetes workspaces support the following configuration options:
+
+#### General Kubernetes Settings
+
+- **`namespace`** (optional): The Kubernetes namespace where the workspace resources will be deployed. Defaults to the value of the `KUBE_NAMESPACE` environment variable.
+- **`service_account_name`** (optional): The Kubernetes service account name to use for the workspace. Defaults to the cluster UUID for main projects.
+- **`ingress_name`** (optional): If you want to add the workspace to an existing ingress, enter the name of the ingress here. Otherwise, the workspace can be accessed through the service.
+
+#### Container Configuration (YAML)
+
+The `container_config` field accepts a YAML string that allows you to configure:
+
+1. **Resource Configuration**: Controls memory and CPU allocation for your workspace container
+2. **Environment Variables**: Customize environment variables for your workspace
+3. **Other Container Settings**: Any other Kubernetes container configuration options
 
 These settings help maintain workspace stability and ensure proper resource allocation for development tasks.
 
@@ -90,6 +112,41 @@ resources:
 ```
 
 This configuration ensures your workspace has adequate resources for development while preventing resource overconsumption. The requests represent guaranteed minimums, while limits prevent your workspace from using more than its allocated share.
+
+#### Complete Kubernetes Container Configuration Example
+
+Here's a complete example of a Kubernetes `container_config` YAML:
+
+```yaml
+env:
+  - name: USER_CODE_PATH
+    value: /home/src/<path_to_folder>
+  - name: ENV
+    value: dev
+  - name: TS_AUTHKEY
+    value: <your_tailscale_auth_key>
+  - name: TS_EXTRA_ARGS
+    value: --accept-routes
+
+resources:
+  requests: # Minimum resources guaranteed
+    memory: "2Gi" # 2 gigabytes of RAM
+    cpu: "1" # 1 full CPU core
+  limits: # Maximum resources allowed
+    memory: "4Gi" # 4 gigabytes RAM ceiling
+    cpu: "2" # Can use up to 2 CPU cores
+```
+
+**Resource Configuration Details:**
+- **`requests`**: Minimum resources guaranteed to your workspace. Kubernetes will ensure these resources are available.
+- **`limits`**: Maximum resources your workspace can use. Prevents resource overconsumption and ensures fair resource allocation across workspaces.
+
+**Note**: You can include any valid Kubernetes container configuration in the `container_config` YAML, including:
+- Environment variables (`env`)
+- Resource requests and limits (`resources`)
+- Volume mounts (`volumeMounts`)
+- Security context (`securityContext`)
+- And other Kubernetes container spec fields
 
 ## Share secrets across workspaces
 
@@ -194,21 +251,227 @@ To update a workspace:
 </Frame>
 The container will take up to several minutes to update and restart with the new environment configuration.
 
-## Lifecycle management policies (optional)
+## Lifecycle Management Policies (Optional)
 
 Mage Pro workspaces support various lifecycle management policies that control how your workspace behaves throughout its runtime. These policies include automated termination settings, pre-initialization scripts, and post-initialization procedures, giving you complete control over your workspace's behavior from startup to shutdown.
 
+Lifecycle configuration is specified in the `lifecycle_config` field as a YAML object:
+
+```yaml
+termination_policy:
+  enable_auto_termination: true
+  max_idle_seconds: 1800
+pre_start_script_path: /path/to/script.sh
+post_start:
+  command: ["echo", "Workspace started"]
+  hook_path: /path/to/hook.sh
+```
+
 ### Termination Policy
 
-The termination policy controls how your workspace shuts down when inactive. You can enable auto-termination, which will automatically shut down your workspace after a specified period of inactivity. The idle time is measured in seconds, and you can set this duration based on your needs. For example, you might set it to 1800 seconds (30 minutes) or 3600 seconds (1 hour).
+The termination policy controls how your workspace shuts down when inactive.
+
+**Configuration:**
+- **`enable_auto_termination`** (boolean): Enable or disable automatic termination. Defaults to `false`.
+- **`max_idle_seconds`** (integer): The number of seconds of inactivity before the workspace is automatically terminated. The idle time is measured in seconds, and you can set this duration based on your needs. For example:
+  - `1800` seconds = 30 minutes
+  - `3600` seconds = 1 hour
+  - `7200` seconds = 2 hours
+
+**Example:**
+```yaml
+termination_policy:
+  enable_auto_termination: true
+  max_idle_seconds: 1800
+```
 
 ### Pre-Start Scripts
 
 Pre-start scripts run before your workspace container is initialized. These scripts must include a `get_custom_configs` method that returns a dictionary of configurations. This is where you can set up environment variables, modify container configurations, and prepare any necessary resources. The script executes before any workspace services start, making it ideal for initial setup and configuration tasks.
 
+**Configuration:**
+- **`pre_start_script_path`** (string): Path to the pre-start script. Can be:
+  - Absolute path: `/absolute/path/to/script.sh`
+  - Relative path: `scripts/pre_start.sh` (relative to the root project directory)
+
+**Example:**
+```yaml
+pre_start_script_path: /home/src/scripts/setup_workspace.sh
+```
+
 ### Post-Start Scripts
 
 Post-start scripts execute after your workspace is fully initialized and running. You can specify either a direct command or provide a path to a script for more complex procedures. These scripts are typically used for starting services, performing health checks, or completing any additional setup tasks that require the workspace to be fully operational.
+
+**Configuration:**
+- **`post_start.command`** (array of strings): Direct command to execute. Example: `["echo", "Workspace started"]`
+- **`post_start.hook_path`** (string): Path to a script file. Can be:
+  - Absolute path: `/absolute/path/to/hook.sh`
+  - Relative path: `scripts/post_start.sh` (relative to the root project directory)
+
+**Note**: You can specify either `command` or `hook_path`, or both. If both are specified, the command will execute first, followed by the hook script.
+
+**Example 1: Single post-start command**
+```yaml
+post_start:
+  command: ["echo", "Workspace started"]
+```
+
+**Example 2: Multiple post-start commands using a script**
+```yaml
+post_start:
+  hook_path: /home/src/scripts/post_start.sh
+```
+
+Where `post_start.sh` contains multiple commands:
+```bash
+#!/bin/bash
+echo "Starting service 1..."
+service1 start
+
+echo "Starting service 2..."
+service2 start
+```
+
+**Example 3: Two post-start commands using command array with shell**
+```yaml
+post_start:
+  command: ["sh", "-c", "echo 'Command 1' && service1 start && echo 'Command 2' && service2 start"]
+```
+
+**Example 4: Command and hook script (command runs first, then hook)**
+```yaml
+post_start:
+  command: ["echo", "Workspace started"]
+  hook_path: /home/src/scripts/start_services.sh
+```
+
+## Setting workspaces for self-hosted Mage Pro cluster
+
+<Note>
+This section applies to **self-hosted Mage Pro clusters** only. These configurations are not applicable to Managed Cloud deployments.
+</Note>
+
+### Workspace Configuration Environment Variables
+
+These environment variables are set at the **cluster level** to configure default workspace behavior. They control how workspaces are created, what storage they use, and how they're exposed via ingress.
+
+#### Ingress Configuration
+
+- **`WORKSPACE_INGRESS_NAME`** (optional): Name of the Kubernetes ingress resource to use for workspaces. Defaults to the cluster UUID (`MAGE_CLUSTER_UUID`). If not set, workspaces will be accessible through the service directly rather than via ingress.
+
+- **`WORKSPACE_INGRESS_TYPE`** (optional): Type of ingress controller to use. Supported values:
+  - `nginx` (default): Use NGINX ingress controller
+  - `alb`: Use AWS Application Load Balancer ingress
+  - `istio`: Use Istio ingress gateway
+
+  Default: `nginx`
+
+- **`WORKSPACE_INGRESS_PATH_TYPE`** (optional): Path type for ingress paths. Supported values:
+  - `ImplementationSpecific` (default): Path matching is implementation-specific
+  - `Prefix`: Path must match as a prefix
+
+  Default: `ImplementationSpecific`
+
+#### Storage Configuration
+
+You can configure workspace storage in one of two ways:
+
+##### Option 1: Individual PVCs per Workspace (using WORKSPACE_STORAGE_CLASS)
+
+- **`WORKSPACE_STORAGE_CLASS`** (optional): Kubernetes storage class name to use for workspace persistent volumes. When configured, each workspace will create its own PersistentVolumeClaim (PVC) using this storage class.
+
+  Default: `efs-sc-us-west-2`
+
+  **Use case**: When you want each workspace to have its own isolated storage volume.
+
+##### Option 2: Shared PVC across Workspaces (using WORKSPACE_PVC_NAME + WORKSPACE_PVC_SUBPATH_PREFIX)
+
+- **`WORKSPACE_PVC_NAME`** (optional): Name of an existing PersistentVolumeClaim (PVC) to share across all workspaces. When set, all workspaces will use this shared PVC instead of creating individual PVCs.
+
+- **`WORKSPACE_PVC_SUBPATH_PREFIX`** (optional): Prefix for subpaths when using a shared PVC. Each workspace will use a separate subfolder under this prefix to isolate its data. **Required** when `WORKSPACE_PVC_NAME` is set.
+
+  **Example**: If `WORKSPACE_PVC_SUBPATH_PREFIX=workspaces`, a workspace named `my-workspace` will use the subpath `workspaces/my-workspace`.
+
+  **Use case**: When you want to share storage across multiple workspaces and manage storage more efficiently.
+
+**Important**: Configure either `WORKSPACE_STORAGE_CLASS` (for individual PVCs) or `WORKSPACE_PVC_NAME` + `WORKSPACE_PVC_SUBPATH_PREFIX` (for shared PVC), but not both. If both are configured, the shared PVC option takes precedence.
+
+#### Pod Configuration
+
+- **`INHERIT_POD_ANNOTATIONS`** (optional, boolean): If `true`, workspace pods will inherit annotations from the main cluster pod. This is useful for passing through annotations like Prometheus scraping labels, service mesh configuration, etc.
+
+  Default: `false`
+
+#### Example Configuration
+
+**Example 1: Individual PVCs per workspace**
+```bash
+# Ingress configuration
+export WORKSPACE_INGRESS_NAME=my-cluster-ingress
+export WORKSPACE_INGRESS_TYPE=nginx
+export WORKSPACE_INGRESS_PATH_TYPE=Prefix
+
+# Storage configuration - each workspace gets its own PVC
+export WORKSPACE_STORAGE_CLASS=fast-ssd
+
+# Pod configuration
+export INHERIT_POD_ANNOTATIONS=true
+```
+
+**Example 2: Shared PVC across workspaces**
+```bash
+# Ingress configuration
+export WORKSPACE_INGRESS_NAME=my-cluster-ingress
+export WORKSPACE_INGRESS_TYPE=nginx
+export WORKSPACE_INGRESS_PATH_TYPE=Prefix
+
+# Storage configuration - all workspaces share one PVC with separate subfolders
+export WORKSPACE_PVC_NAME=shared-workspace-storage
+export WORKSPACE_PVC_SUBPATH_PREFIX=workspaces
+
+# Pod configuration
+export INHERIT_POD_ANNOTATIONS=true
+```
+
+**Note**: These environment variables are set on the **main cluster container**, not on individual workspaces. They control the default behavior when creating new workspaces. Individual workspaces can override some of these settings (like storage class) in their own configuration.
+
+### Docker Workspace Configuration
+
+Docker workspaces support additional configuration options specific to Docker containers:
+
+#### Docker Workspace Environment Variables
+
+These environment variables are set at the **cluster level** to configure default Docker workspace behavior:
+
+- **`DOCKER_HOST`** (optional): Docker daemon host. Defaults to `unix://var/run/docker.sock`.
+- **`DOCKER_TLS_VERIFY`** (optional): Enable TLS verification for Docker connection. Set to `1` to enable, `0` to disable. Defaults to `0`.
+- **`DOCKER_CERT_PATH`** (optional): Path to TLS certificates for Docker connection.
+- **`DOCKER_SWARM_MODE`** (optional): Enable or disable Docker Swarm mode. Set to `1` to enable, `0` to disable. Defaults to `0`.
+
+**Note**: These environment variables are set on the **main cluster container**, not on individual workspaces. They control the default behavior when creating new Docker workspaces. Individual workspaces can override these settings in their own configuration.
+
+#### Docker Container Configuration (YAML)
+
+Similar to Kubernetes, Docker workspaces support a `container_config` YAML string:
+
+**Example Docker Workspace Configuration:**
+```yaml
+image: mage-pro:version
+volumes:
+  /host/path:
+    bind: /home/src
+    mode: rw
+environment:
+  TEST_ENV_VAR: "1"
+public_url: mage.example.com/test1
+```
+
+**Note**: For Docker workspaces, the `container_config` field is the primary way to configure image, volumes, and environment. The system will parse this YAML string and extract:
+- `image`: Docker image to use
+- `volumes`: Volume mounts configuration
+- `environment`: Environment variables
+- `public_url`: Public URL for the workspace
 
 ## Global Roles
 
