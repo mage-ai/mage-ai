@@ -52,12 +52,6 @@ All workspace types support these basic fields:
 
 Kubernetes workspaces support the following configuration options:
 
-#### General Kubernetes Settings
-
-- **`namespace`** (optional): The Kubernetes namespace where the workspace resources will be deployed. Defaults to the value of the `KUBE_NAMESPACE` environment variable.
-- **`service_account_name`** (optional): The Kubernetes service account name to use for the workspace. Defaults to the cluster UUID for main projects.
-- **`ingress_name`** (optional): If you want to add the workspace to an existing ingress, enter the name of the ingress here. Otherwise, the workspace can be accessed through the service.
-
 #### Container Configuration (YAML)
 
 The `container_config` field accepts a YAML string that allows you to configure:
