@@ -91,6 +91,8 @@ env:
     value: --accept-routes
 ```
 
+**Note on ENV variable**: If you set `WORKSPACE_ENV_PATTERN` at the cluster level, the `ENV` variable will be automatically set based on the workspace name. You can still explicitly set `ENV` in the container configuration to override the pattern. See the [Auto-set ENV variable from workspace name](#auto-set-env-variable-from-workspace-name) section for more details.
+
 ### Resource configuration (optional)
 
 **Optionally** configure your workspace's computing resources in Kubernetes:
@@ -313,7 +315,58 @@ USER_DEFINED_VARS=VAR1,VAR2
 Wildcard/regex-style patterns are supported here as well.
 
 
-### Inherit variables by workspace environment (new)
+### Auto-set ENV variable from workspace name
+
+You can automatically set the `ENV` environment variable for each workspace based on its name using the `WORKSPACE_ENV_PATTERN` cluster-level environment variable. This eliminates the need to manually set `ENV` in each workspace's container configuration.
+
+**Configuration:**
+Set `WORKSPACE_ENV_PATTERN` at the **cluster level** (not at the workspace level):
+
+```bash
+WORKSPACE_ENV_PATTERN=dev_{workspace_name}
+```
+
+- `{workspace_name}`: Placeholder that will be replaced with the actual workspace name
+- The pattern supports any string with the `{workspace_name}` placeholder
+
+**How it works:**
+- If `ENV` is not explicitly set in a workspace's container configuration, it will be automatically set using the pattern
+- If `ENV` is explicitly set in the workspace's container configuration, that value takes precedence over the pattern
+- The pattern is only applied when `WORKSPACE_ENV_PATTERN` is defined
+
+**Examples:**
+
+**Example 1: Simple prefix pattern**
+```bash
+WORKSPACE_ENV_PATTERN=dev_{workspace_name}
+```
+For a workspace named `my-workspace`, this sets `ENV=dev_my-workspace`.
+
+**Example 2: Environment prefix with suffix**
+```bash
+WORKSPACE_ENV_PATTERN=env-{workspace_name}-prod
+```
+For a workspace named `analytics`, this sets `ENV=env-analytics-prod`.
+
+**Example 3: Just workspace name**
+```bash
+WORKSPACE_ENV_PATTERN={workspace_name}
+```
+For a workspace named `production`, this sets `ENV=production`.
+
+**Integration with environment-specific variable inheritance:**
+
+When `ENV` is automatically set via `WORKSPACE_ENV_PATTERN`, it enables the environment-specific variable inheritance feature. You can then use:
+
+```bash
+WORKSPACE_ENV_PATTERN=dev_{workspace_name}
+USER_DEFINED_VARS__ENV__dev_my-workspace=DEV_ENV_*
+```
+
+This automatically sets `ENV=dev_my-workspace` for a workspace named `my-workspace`, and that workspace will inherit all variables matching `DEV_ENV_*` from the cluster.
+
+### Inherit variables by workspace environment
+
 You can define inheritance rules per workspace environment using cluster-level environment variables with the `ENV` variable:
 
 ```bash
@@ -328,6 +381,20 @@ USER_DEFINED_VARS__ENV__{env_value}={pattern}
 USER_DEFINED_VARS__ENV__dev=DEV_ENV_*
 ```
 Any workspace with `ENV=dev` inherits all variables matching `DEV_ENV_*`.
+
+**Combined example with WORKSPACE_ENV_PATTERN:**
+```bash
+# Automatically set ENV based on workspace name
+WORKSPACE_ENV_PATTERN=dev_{workspace_name}
+
+# Inherit variables based on the auto-set ENV value
+USER_DEFINED_VARS__ENV__dev_workspace1=DEV_ENV_*
+USER_DEFINED_VARS__ENV__dev_workspace2=PROD_ENV_*
+```
+
+In this example:
+- A workspace named `workspace1` automatically gets `ENV=dev_workspace1` and inherits variables matching `DEV_ENV_*`
+- A workspace named `workspace2` automatically gets `ENV=dev_workspace2` and inherits variables matching `PROD_ENV_*`
 
 
 ### Updating workspaces after environment variable changes
