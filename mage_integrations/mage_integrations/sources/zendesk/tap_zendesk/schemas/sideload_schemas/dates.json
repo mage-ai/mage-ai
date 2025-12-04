@@ -1,0 +1,65 @@
+{
+  "type": [
+    "null", 
+    "object"
+  ], 
+  "properties": {
+    "dates": {
+      "type": [
+        "null", 
+        "object"
+      ], 
+      "properties": {
+        "solved_at": {
+          "type": [
+            "null",
+              "string"
+            ],
+            "format": "date-time"
+        }, 
+        "status_updated_at": {
+          "type": [
+            "null",
+              "string"
+            ],
+            "format": "date-time"
+        }, 
+        "assignee_updated_at": {
+          "type": [
+            "null",
+              "string"
+            ],
+            "format": "date-time"
+        }, 
+        "assigned_at": {
+          "type": [
+            "null",
+              "string"
+            ],
+            "format": "date-time"
+        }, 
+        "requester_updated_at": {
+          "type": [
+            "null",
+              "string"
+            ],
+            "format": "date-time"
+        }, 
+        "latest_comment_added_at": {
+          "type": [
+            "null",
+              "string"
+            ],
+            "format": "date-time"
+        }, 
+        "initially_assigned_at": {
+          "type": [
+            "null",
+              "string"
+            ],
+            "format": "date-time"
+        }
+      }
+    }
+  }
+}
