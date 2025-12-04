@@ -142,11 +142,125 @@ resources:
 - Security context (`securityContext`)
 - And other Kubernetes container spec fields
 
+### Pod Scheduling Configuration
+
+You can control which nodes your workspace pods are scheduled on using `nodeSelector`, `affinity`, and `tolerations`.
+
+#### Node Selector
+
+Use `nodeSelector` to schedule workspace pods on nodes with specific labels. This is the simplest way to target specific nodes.
+
+**Example:**
+```yaml
+nodeSelector:
+  disktype: ssd
+  instance-type: gpu
+```
+
+#### Affinity
+
+Use `affinity` for more advanced scheduling rules, including node affinity, pod affinity, and pod anti-affinity.
+
+**Node Affinity Example:**
+```yaml
+affinity:
+  nodeAffinity:
+    requiredDuringSchedulingIgnoredDuringExecution:
+      nodeSelectorTerms:
+      - matchExpressions:
+        - key: kubernetes.io/os
+          operator: In
+          values:
+          - linux
+    preferredDuringSchedulingIgnoredDuringExecution:
+    - weight: 100
+      preference:
+        matchExpressions:
+        - key: node-type
+          operator: In
+          values:
+          - compute-optimized
+```
+
+**Pod Anti-Affinity Example (spread workspaces across nodes):**
+```yaml
+affinity:
+  podAntiAffinity:
+    preferredDuringSchedulingIgnoredDuringExecution:
+    - weight: 100
+      podAffinityTerm:
+        labelSelector:
+          matchExpressions:
+          - key: app
+            operator: In
+            values:
+            - workspace
+        topologyKey: kubernetes.io/hostname
+```
+
+#### Tolerations
+
+Use `tolerations` to allow workspace pods to be scheduled on nodes with taints.
+
+**Example:**
+```yaml
+tolerations:
+- key: "workspace"
+  operator: "Equal"
+  value: "true"
+  effect: "NoSchedule"
+- key: "gpu"
+  operator: "Exists"
+  effect: "NoSchedule"
+```
+
+#### Complete Example with Scheduling Configuration
+
+Here's a complete example combining resource configuration with pod scheduling:
+
+```yaml
+env:
+  - name: USER_CODE_PATH
+    value: /home/src/my-project
+  - name: ENV
+    value: production
+
+resources:
+  requests:
+    memory: "4Gi"
+    cpu: "2"
+  limits:
+    memory: "8Gi"
+    cpu: "4"
+
+nodeSelector:
+  instance-type: gpu
+
+affinity:
+  nodeAffinity:
+    requiredDuringSchedulingIgnoredDuringExecution:
+      nodeSelectorTerms:
+      - matchExpressions:
+        - key: zone
+          operator: In
+          values:
+          - us-west-2a
+          - us-west-2b
+
+tolerations:
+- key: "gpu"
+  operator: "Equal"
+  value: "true"
+  effect: "NoSchedule"
+```
+
+**Note**: These pod-level scheduling configurations (`nodeSelector`, `affinity`, `tolerations`) are applied to the workspace pod, not the container. They control where Kubernetes schedules your workspace pods in the cluster.
+
 ## Share secrets across workspaces
 
-To share secrets across different workspaces developers need to create a custom environment variable 
-called `SHARE_SECRETS_ACROSS_WORKSPACES` then set the value to `1` to enable this feature. This will 
-allow developers to share their secrets across different workspaces within a cluster.
+To share secrets across different workspaces, you need to set the `SHARE_SECRETS_ACROSS_WORKSPACES` environment variable at the **cluster level** (not at the workspace level) and set the value to `1` to enable this feature. This will allow developers to share their secrets across different workspaces within a cluster.
+
+**Note**: The `SHARE_SECRETS_ACROSS_WORKSPACES` environment variable must be set on the **main cluster container**, not on individual workspaces.
 
 <Frame>
     <p align="center">
@@ -164,17 +278,17 @@ variables is essential for efficiently configuring your workspace container.
 The following options allow you to control how variables are shared within your environment.
 
 
-To enable environment variable inheritance in workspaces, you must set:
+To enable environment variable inheritance in workspaces, you must set the `INHERIT_ENV_VARS` environment variable at the **cluster level** (not at the workspace level):
 
 ```bash
 INHERIT_ENV_VARS=1
 ```
 
-This applies to **both Managed Cloud** and **Self-hosted Mage Pro**.
+**Note**: The `INHERIT_ENV_VARS` environment variable must be set on the **main cluster container**, not on individual workspaces. This applies to **both Managed Cloud** and **Self-hosted Mage Pro**.
 
 
 ### Managed Cloud
-The USER_DEFINED_VARS environment variable lets you control which environment variables are inherited by workspaces.
+The `USER_DEFINED_VARS` environment variable (set at the **cluster level**) lets you control which environment variables are inherited by workspaces.
 It accepts a comma-separated list of variable names, giving you flexibility to include only the configuration values you need across workspaces.
 
 - If `USER_DEFINED_VARS` is **not set**: all environment variables will be inherited automatically.
@@ -192,7 +306,7 @@ USER_DEFINED_VARS=DEV_ENV_*
 This will inherit all environment variables matching the pattern (e.g., any starting with `DEV_ENV_*`).
 
 ### Self-hosted Mage Pro (Hybrid Cloud, Private Cloud, On-prem)
-You **must** set `USER_DEFINED_VARS` to define which variables to inherit:
+You **must** set `USER_DEFINED_VARS` at the **cluster level** to define which variables to inherit:
 ```bash
 USER_DEFINED_VARS=VAR1,VAR2
 ```
@@ -200,7 +314,7 @@ Wildcard/regex-style patterns are supported here as well.
 
 
 ### Inherit variables by workspace environment (new)
-You can define inheritance rules per workspace environment using the `ENV` variable:
+You can define inheritance rules per workspace environment using cluster-level environment variables with the `ENV` variable:
 
 ```bash
 USER_DEFINED_VARS__ENV__{env_value}={pattern}
