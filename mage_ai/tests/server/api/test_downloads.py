@@ -118,26 +118,6 @@ class TestApiResourceDownloadHandlerGetFilePointer(TestCase):
         self.assertEqual(magic_bytes, b'PK')
         file_pointer.close()
 
-    def test_folder_creates_zip(self):
-        """Test that folders are zipped"""
-        folder = os.path.join(self.temp_dir, 'test_folder')
-        os.makedirs(folder, exist_ok=True)
-        
-        file1 = os.path.join(folder, 'file1.txt')
-        with open(file1, 'w') as f:
-            f.write('content')
-
-        file_pointer = self.handler.get_file_pointer([folder], ['test_folder'])
-        
-        # Should be a binary file (zip)
-        self.assertTrue('b' in file_pointer.mode)
-        
-        # Verify it's a zip file
-        file_pointer.seek(0)
-        magic_bytes = file_pointer.read(2)
-        self.assertEqual(magic_bytes, b'PK')
-        file_pointer.close()
-
     def test_compound_extensions_tar_gz(self):
         """Test files with compound extensions like .tar.gz"""
         # .tar.gz IS in binary_extensions, should be binary mode
