@@ -38,6 +38,9 @@ MAX_ITEMS_IN_SAMPLE_OUTPUT = 20
 def has_to_dict(obj) -> bool:
     return hasattr(obj, 'to_dict')
 
+def has_dict(obj) -> bool:
+    return hasattr(obj, '__dict__')
+
 
 def encode_complex(obj):
     from mage_ai.shared.models import BaseDataClass
@@ -92,6 +95,15 @@ def encode_complex(obj):
             'traceback': traceback.format_tb(obj.__traceback__),
         }
 
+
+    #---------------- Objects with __dict__ ----------------
+    if has_dict(obj):
+        # Shallow dict of attributes, convert recursively
+        try:
+            return {name: str(value) if value is obj else value for name, value in obj.__dict__.items()}
+        except Exception:
+            return str(obj)
+        
     return obj
 
 

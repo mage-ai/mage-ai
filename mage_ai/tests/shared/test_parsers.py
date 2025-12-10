@@ -1,4 +1,4 @@
-from mage_ai.shared.parsers import sample_output
+from mage_ai.shared.parsers import sample_output, encode_complex
 from mage_ai.tests.base_test import TestCase
 
 
@@ -71,3 +71,34 @@ class ParsersTests(TestCase):
             True,
         )
         self.assertEqual(sample_output(input_data2), expected_output2)
+
+
+    # ---------------------------------------
+    # Tests encode_complex
+    # ---------------------------------------
+
+    def test_encode_simple_object_with_dict(self):
+        # Simple class with __dict__
+        class SimpleObj:
+            def __init__(self):
+                self.a = 1
+                self.b = "hello"
+
+        obj = SimpleObj()
+        result = encode_complex(obj)
+        assert result == {"a": 1, "b": "hello"}
+        assert isinstance(result, dict)
+
+    def test_encode_circular_object_with_dict(self):
+        # Object with circular reference
+        class CircularObj:
+            def __init__(self):
+                self.x = 123
+                self.y = self  # circular reference
+                
+        obj = CircularObj()
+        result = encode_complex(obj)
+        assert result["x"] == 123
+        # The circular reference should fallback to str
+        assert result["y"] == str(obj)
+ 
