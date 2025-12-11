@@ -54,7 +54,7 @@ tornado==6.4.2
 typer[all]==0.9.0
 typing_extensions==4.11.0
 watchdog==4.0.0
-Werkzeug==3.0.3
+Werkzeug==3.1.4
 
 
 # extras
