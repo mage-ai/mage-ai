@@ -43,9 +43,15 @@ pipelines:
     triggers:
       save_in_code_automatically: true
 
-features:
-  command_center: true
-  custom_design: true
+notification_config:
+  alert_on:
+  - trigger_failure
+  - trigger_passed_sla
+  slack_config:
+    webhook_url: "{{ env_var('MAGE_SLACK_WEBHOOK_URL') }}"
+  teams_config:
+    webhook_url: "{{ env_var('MAGE_TEAMS_WEBHOOK_URL') }}"
+project_uuid: 123456789abcdefg
 ```
 
 ## Top-level fields
@@ -55,7 +61,8 @@ features:
 </ParamField>
 
 <ParamField path="cluster_type" type="string">
-  Optional cluster type used by the project (e.g., `k8s`, `docker`).
+  Optional cluster type used by the project (e.g., `k8s`, `docker`). Used by Mage Pro
+  when running managed workspaces.
 </ParamField>
 
 <ParamField path="project_uuid" type="string">
@@ -78,11 +85,12 @@ features:
 
 <ParamField path="workspace_initial_metadata" type="object">
   Default project metadata applied to new workspaces created from this project.
+  Mage Pro workspaces only.
 </ParamField>
 
 <ParamField path="workspace_config_defaults" type="object">
   Default workspace configuration applied across environments (e.g., k8s
-  defaults when running on Kubernetes).
+  defaults when running on Kubernetes). Mage Pro workspaces only.
 </ParamField>
 
 <ParamField path="help_improve_mage" type="boolean">
@@ -99,7 +107,7 @@ features:
 </ParamField>
 
 <ParamField path="overrides" type="object">
-  Environment-specific overrides for any top-level field. See
+  Environment-specific overrides for any top-level field. Mage Pro only. See
   `/extensibility/env-config/project`.
 </ParamField>
 
