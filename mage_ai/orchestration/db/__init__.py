@@ -4,7 +4,7 @@ from functools import wraps
 from urllib.parse import parse_qs, quote_plus, urlparse
 
 import sqlalchemy
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, text
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import scoped_session, sessionmaker
 
@@ -132,16 +132,17 @@ def set_db_schema():
         db_schema = get_postgresql_schema(db_connection_url)
         if db_schema:
             db_connection.start_session()
-            db_connection.session.execute(f'CREATE SCHEMA IF NOT EXISTS {db_schema};')
+            db_connection.session.execute(text(f'CREATE SCHEMA IF NOT EXISTS {db_schema};'))
             # Get the current database name from the query fetchall() result
             # e.g., [('test_database',)]
             db_current = db_connection.session.execute(
-                'SELECT current_database()'
+                text('SELECT current_database()')
             ).fetchall()[0][0]
             username, _ = get_user_info_from_db_connection_url(db_connection_url)
             if username:
                 db_connection.session.execute(
-                    f'ALTER ROLE {username} IN DATABASE {db_current} SET search_path TO {db_schema}'
+                    text(f'ALTER ROLE {username} IN DATABASE '
+                         f'{db_current} SET search_path TO {db_schema}')
                 )
                 db_connection.session.commit()
                 db_connection.close_session()

@@ -262,7 +262,7 @@ def build_overview_data(
             continue
 
         df_copy[datetime_column] = pd.to_datetime(
-            df[datetime_column], infer_datetime_format=True, errors="coerce"
+            df[datetime_column], format='mixed', errors="coerce"
         )
         df_copy[datetime_column] = df_copy[datetime_column].view(int) / 10**9
 
