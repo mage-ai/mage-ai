@@ -38,8 +38,29 @@ MAX_ITEMS_IN_SAMPLE_OUTPUT = 20
 def has_to_dict(obj) -> bool:
     return hasattr(obj, 'to_dict')
 
+def has_dict(obj) -> bool:
+    """
+    Safely check if object has __dict__ attribute.
+    Returns False if accessing __dict__ raises any exception.
+    """
+    try:
+        return hasattr(obj, '__dict__')
+    except Exception:
+        return False
 
-def encode_complex(obj):
+
+def encode_complex(obj, visited=None):
+    if obj is None:
+        return None
+    if visited is None:
+        visited = set()
+
+    obj_id = id(obj)
+    if obj_id in visited:
+        return str(obj)
+
+    visited.add(obj_id)
+
     from mage_ai.shared.models import BaseDataClass
 
     if isinstance(obj, set):
@@ -91,8 +112,26 @@ def encode_complex(obj):
             'message': str(obj),
             'traceback': traceback.format_tb(obj.__traceback__),
         }
+    # ---------------- Objects with __dict__ ----------------
+    elif (
+        has_dict(obj)
+        and not inspect.isclass(obj)
+        and not inspect.isfunction(obj)
+        and not inspect.ismethod(obj)
+        and not inspect.ismodule(obj)
+    ):
+        # Shallow dict of attributes, convert recursively
+        try:
+            return {
+                name: encode_complex(value, visited)
+                for name, value in obj.__dict__.items()
+            }
 
+        except Exception:
+            return str(obj)
     return obj
+
+
 
 
 def extract_json_objects(text, decoder=None):
@@ -236,3 +275,4 @@ def object_to_dict(
         data_dict['variable_type'] = variable_type.value
 
     return data_dict
+
