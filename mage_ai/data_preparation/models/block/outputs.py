@@ -1,5 +1,6 @@
 import json
 import os
+import inspect
 from typing import Any, Dict, List, Optional, Tuple, Union
 
 import pandas as pd
@@ -149,7 +150,13 @@ def format_output_data(
             text_data=encode_complex(data),
             variable_uuid=variable_uuid,
         )
-        if has_to_dict(data) or has_dict(data):
+        if has_to_dict(data) or (
+        has_dict(data)
+        and not inspect.isclass(data)
+        and not inspect.isfunction(data)
+        and not inspect.ismethod(data)
+        and not inspect.ismodule(data)
+    ):
             return_output['type'] = DataType.OBJECT
         else:
             return_output['type'] = DataType.TEXT
