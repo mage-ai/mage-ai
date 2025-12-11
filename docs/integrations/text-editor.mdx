@@ -139,6 +139,12 @@ uuid: etl_demo
   - [`k8s`](/production/executors/k8)
 </ParamField>
 
+<ParamField path="spark_config" type="object">
+  Spark-specific configuration for PySpark pipelines. Mirrors the keys you
+  would normally pass to `SparkConf` (e.g., `spark_master`, `executor_env`,
+  `spark_jars`).
+</ParamField>
+
 <ParamField path="retry_config" type="object">
   Retry configuration at the pipeline level.
   See [documentation](/orchestration/pipeline-runs/retrying-block-runs#3-pipeline-level-retry-config) for details.
@@ -164,6 +170,52 @@ uuid: etl_demo
 
 <ParamField path="run_pipeline_in_one_process" type="boolean">
   If true, runs all blocks in a single process or k8s pod.
+</ParamField>
+
+<ParamField path="callbacks" type="array of objects">
+  Blocks that run after your main graph finishes (e.g., notifications, cleanup).
+  Same shape as items in `blocks`.
+</ParamField>
+
+<ParamField path="conditionals" type="array of objects">
+  Conditional blocks that can short-circuit or branch execution. Same shape as
+  items in `blocks`.
+</ParamField>
+
+<ParamField path="extensions" type="array of objects">
+  Extension blocks (e.g., Great Expectations). Same shape as items in `blocks`.
+</ParamField>
+
+<ParamField path="widgets" type="array of objects">
+  Chart or reporting blocks shown in the pipeline UI. Same shape as items in
+  `blocks`.
+</ParamField>
+
+<ParamField path="settings" type="object">
+  Pipeline-level settings; currently supports `triggers.save_in_code_automatically`
+  to control whether new/updated triggers are persisted to YAML.
+</ParamField>
+
+<ParamField path="variables" type="object">
+  Key/value pairs available to the pipeline for templating. Useful for
+  environment-specific values that are not secrets.
+</ParamField>
+
+<ParamField path="state_store_config" type="object">
+  Configure an external state store for pipeline runs.
+</ParamField>
+
+<ParamField path="tags" type="array of strings">
+  Free-form labels to organize and search for pipelines.
+</ParamField>
+
+<ParamField path="created_by" type="string">
+  Identifier for the user or process that created the pipeline.
+</ParamField>
+
+<ParamField path="overrides" type="object">
+  Environment-specific overrides for any top-level pipeline field. See
+  [environment overrides](/extensibility/env-config/pipeline) for guidance.
 </ParamField>
 
 
@@ -235,7 +287,32 @@ uuid: etl_demo
     will be `load_data.py`.
 </ParamField>
 
+<ParamField path="color" type="string">
+  Optional HEX color used to visually organize blocks in the UI.
+</ParamField>
+
+<ParamField path="configuration" type="object">
+  Block-specific configuration. For integrations or dbt blocks this mirrors the
+  configuration visible in the block settings panel.
+</ParamField>
+
+<ParamField path="documentation" type="string">
+  Markdown content rendered in the block’s documentation tab.
+</ParamField>
+
+<ParamField path="priority" type="integer">
+  Optional priority for scheduling blocks when multiple are runnable.
+</ParamField>
+
 <ParamField path="retry_config" type="object">
   Retry configuration at the block level.
   See [documentation](/orchestration/pipeline-runs/retrying-block-runs#2-block-level-retry-config) for details.
+</ParamField>
+
+<ParamField path="tags" type="array of strings">
+  Labels applied to the block for organization and filtering.
+</ParamField>
+
+<ParamField path="timeout" type="integer">
+  Maximum execution time for the block in seconds.
 </ParamField>

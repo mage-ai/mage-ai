@@ -392,7 +392,8 @@
               "getting-started/kernels",
               "development/project/local-timezone",
               "development/settings-backend",
-              "development/updating-mage"
+              "development/updating-mage",
+              "development/project/metadata"
             ]
           },
           {
