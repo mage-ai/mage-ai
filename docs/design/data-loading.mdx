@@ -685,7 +685,7 @@ Sample data from a table in the PostgreSQL database. Sample is not guaranteed to
 
 The following advanced export parameters are available for all SQL database clients (PostgreSQL, MySQL, MSSQL, Snowflake, BigQuery, ClickHouse, Trino, Databricks SQL, SQLite, etc.) that inherit from `BaseSQL`. These parameters provide fine-grained control over how data is exported.
 
-> **Note:** UPSERT (UPDATE or INSERT) functionality is only supported on a subset of SQL databases (e.g., PostgreSQL, MySQL, MSSQL, Snowflake, BigQuery, Databricks SQL, SQLite). It is **not** supported on Redshift, ClickHouse, or Trino. See below for details.
+> **Note:** UPSERT (UPDATE or INSERT) functionality is only supported on a subset of SQL databases (e.g., PostgreSQL, MySQL, MSSQL, Snowflake, BigQuery, SQLite). It is **not** supported on Redshift, ClickHouse, Trino or Databricks SQL. See below for details.
 
 ### UPSERT (UPDATE or INSERT)
 
@@ -742,7 +742,7 @@ with loader:
 
 **Note**: UPSERT functionality is supported on PostgreSQL, MySQL, MSSQL, Snowflake, BigQuery, and SQLite. The exact SQL syntax used may vary by database (e.g., PostgreSQL uses `ON CONFLICT`, MySQL uses `ON DUPLICATE KEY UPDATE`, MSSQL uses `MERGE`), but the interface remains consistent across all supported databases.
 
-UPSERT functionality is **not supported** on Redshift, ClickHouse, and Trino.
+UPSERT functionality is **not supported** on Redshift, ClickHouse, Trino and Databricks SQL.
 
 ### Additional Export Parameters
 
@@ -2053,7 +2053,7 @@ The following are the set of allowed key names that you must name your secrets w
 | AWS_SECRET_ACCESS_KEY           | AWS General                  | -                            | AWS Secret Access Key credential                                        | Used by [Redshift](#redshift) and [S3](#s3) |
 | AWS_SESSION_TOKEN               | AWS General                  | -                            | AWS Session Token (used to generate temporary DB credentials)           | Used by Redshift                            |
 | AWS_REGION                      | AWS General                  | -                            | AWS Region                                                              | Used by [Redshift](#redshift) and [S3](#s3) |
-| AWS_ENDPOINT                    | AWS General                  | -                            | AWS endpoint URL                                                        | Optional                                    |
+| AWS_ENDPOINT                    | AWS General                  | -                            | AWS endpoint URL                                                        | Used by [S3](#s3). Optional                                    |
 | **AWS Redshift**                |                              |                              |                                                                         |                                             |
 | REDSHIFT_DBNAME                 | [AWS Redshift](#redshift)    | database                     | Name of Redshift database to connect to                                 |                                             |
 | REDSHIFT_HOST                   | [AWS Redshift](#redshift)    | host                         | Redshift Cluster hostname                                               | Use with temporary credentials              |
@@ -2171,10 +2171,10 @@ The following are the set of allowed key names that you must name your secrets w
 | **SQLite**                      |                              |                              |                                                                         |                                             |
 | SQLITE                          | [SQLite](#sqlite)            | database                     | SQLite database file path                                               |                                             |
 | **Azure**                       |                              |                              |                                                                         |                                             |
-| AZURE_CLIENT_ID                 | Azure Services               | client_id                    | Azure AD application client ID                                           | Used by Azure Blob Storage, Data Lake Storage |
-| AZURE_CLIENT_SECRET             | Azure Services               | client_secret                | Azure AD application client secret                                       | Used by Azure Blob Storage, Data Lake Storage |
-| AZURE_TENANT_ID                 | Azure Services               | tenant_id                    | Azure AD tenant ID                                                       | Used by Azure Blob Storage, Data Lake Storage |
-| AZURE_STORAGE_ACCOUNT_NAME      | Azure Services               | storage_account_name         | Azure Storage account name                                              | Used by Azure Blob Storage, Data Lake Storage |
+| AZURE_CLIENT_ID                 | Azure Services               | client_id                    | Azure AD application client ID                                           | Used by [Azure Blob Storage](#azureblobstorage), [Azure Data Lake Storage](#azure-data-lake-storage) |
+| AZURE_CLIENT_SECRET             | Azure Services               | client_secret                | Azure AD application client secret                                       | Used by [Azure Blob Storage](#azureblobstorage), [Azure Data Lake Storage](#azure-data-lake-storage) |
+| AZURE_TENANT_ID                 | Azure Services               | tenant_id                    | Azure AD tenant ID                                                       | Used by [Azure Blob Storage](#azureblobstorage), [Azure Data Lake Storage](#azure-data-lake-storage)|
+| AZURE_STORAGE_ACCOUNT_NAME      | Azure Services               | storage_account_name         | Azure Storage account name                                              | Used by [Azure Blob Storage](#azureblobstorage), [Azure Data Lake Storage](#azure-data-lake-storage) |
 | **Microsoft Fabric**            |                              |                              |                                                                         |                                             |
 | MICROSOFT_FABRIC_WAREHOUSE_NAME | [Microsoft Fabric](#microsoft-fabric-warehouse) | warehouse_name | Microsoft Fabric warehouse name                                         |                                             |
 | MICROSOFT_FABRIC_WAREHOUSE_ENDPOINT | [Microsoft Fabric](#microsoft-fabric-warehouse) | endpoint | Microsoft Fabric warehouse endpoint                                     |                                             |
