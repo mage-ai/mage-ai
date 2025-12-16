@@ -11,7 +11,7 @@ Mage provides data loading clients that simplify loading and exporting data in y
 **File Storage:**
 -   [AWS S3](#s3)
 -   [Azure Blob Storage](#azureblobstorage)
--   [Azure Data Lake Storage](#azuredatalakestorage)
+-   [Azure Data Lake Storage](#azure-data-lake-storage)
 -   [Filesystem](#fileio)
 -   [Google Cloud Storage](#googlecloudstorage)
 
@@ -36,16 +36,6 @@ Mage provides data loading clients that simplify loading and exporting data in y
 
 **APIs & Services:**
 -   [Google Sheets](#googlesheets)
-
-**Vector Databases:**
--   [Chroma](#chroma)
--   [Qdrant](#qdrant)
--   [Weaviate](#weaviate)
-
-**Other:**
--   [Algolia](#algolia)
--   [Druid](#druid)
--   [Pinot](#pinot)
 
 Mage's data loading clients fall into two categories:
 
@@ -693,7 +683,9 @@ Sample data from a table in the PostgreSQL database. Sample is not guaranteed to
 
 ## Advanced Export Parameters for SQL Databases
 
-The following advanced export parameters are available for all SQL database clients (PostgreSQL, MySQL, MSSQL, Snowflake, BigQuery, ClickHouse, Trino, Databricks SQL, SQLite, etc.) that inherit from `BaseSQL`. These parameters provide fine-grained control over how data is exported, including UPSERT (UPDATE or INSERT) functionality.
+The following advanced export parameters are available for all SQL database clients (PostgreSQL, MySQL, MSSQL, Snowflake, BigQuery, ClickHouse, Trino, Databricks SQL, SQLite, etc.) that inherit from `BaseSQL`. These parameters provide fine-grained control over how data is exported.
+
+> **Note:** UPSERT (UPDATE or INSERT) functionality is only supported on a subset of SQL databases (e.g., PostgreSQL, MySQL, MSSQL, Snowflake, BigQuery, Databricks SQL, SQLite). It is **not** supported on Redshift, ClickHouse, or Trino. See below for details.
 
 ### UPSERT (UPDATE or INSERT)
 
@@ -1214,10 +1206,10 @@ Handles data transfer between a Redshift cluster and the Mage app. Mage uses tem
 2. Provide an IAM Profile to automatically generate temporary credentials for connection. The IAM profile is read from `~/.aws/` and is used with the `GetClusterCredentials` endpoint to generate temporary credentials. Add the following keys to the configuration settings for `Redshift` to generate temporary credentials
 
     ```yaml
-    REDSHIFT_DBNAME: Name of Redshift database to connect toName of Redshift database to connect to
+    REDSHIFT_DBNAME: Name of Redshift database to connect to
     REDSHIFT_DBUSER: Redshift database user to generate credentials for
     REDSHIFT_CLUSTER_ID: Redshift cluster ID
-    REDSHIFT_IAM_PROFILE: Name of the IAM profile to generate temp credentials with `
+    REDSHIFT_IAM_PROFILE: Name of the IAM profile to generate temp credentials with
     ```
 
     If an IAM profile is not setup using `aws configure`, manually specify the AWS credentials in the configuration settings as well.
@@ -1226,7 +1218,7 @@ Handles data transfer between a Redshift cluster and the Mage app. Mage uses tem
     AWS_ACCESS_KEY_ID: AWS Access Key ID credential
     AWS_SECRET_ACCESS_KEY: AWS Secret Access Key credential
     AWS_SESSION_TOKEN: AWS Session Token (used to generate temp DB credentials)
-    AWS_REGION: AWS Region `
+    AWS_REGION: AWS Region
     ```
 
 <h3> Constructor </h3>
