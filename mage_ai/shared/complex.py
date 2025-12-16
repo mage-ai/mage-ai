@@ -3,7 +3,7 @@ from typing import Any
 
 
 def is_model_sklearn(data: Any) -> bool:
-    if inspect.isclass(data):
+    if data is None or inspect.isclass(data):
         return False
 
     try:
@@ -22,7 +22,7 @@ def is_model_xgboost(data: Any) -> bool:
     Checks if the given data is an instance of an XGBoost model, either a Booster
     or an object from XGBoost's scikit-learn API.
     """
-    if inspect.isclass(data):
+    if data is None or inspect.isclass(data):
         return False
 
     # Check for direct instance of Booster
