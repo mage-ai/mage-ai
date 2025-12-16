@@ -3,6 +3,9 @@ title: "Data loader utilities"
 sidebarTitle: "Utilities"
 ---
 
+import { ProButton } from '/snippets/pro/button.mdx';
+import { ProOnly } from '/snippets/pro/only.mdx';
+
 Mage provides data loading clients that simplify loading and exporting data in your pipelines, allowing you to spend more time analyzing and transforming your data for ML tasks. Currently, Mage includes clients for the following data sources:
 
 **File Storage:**
@@ -15,7 +18,7 @@ Mage provides data loading clients that simplify loading and exporting data in y
 **Databases:**
 -   [AWS Redshift](#redshift)
 -   [ClickHouse](#clickhouse)
--   [Databricks SQL](#databrickssql)
+-   [Databricks SQL](#databricks-sql) (Pro only)
 -   [DuckDB](#duckdb)
 -   [MySQL](#mysql)
 -   [MSSQL](#mssql)
@@ -29,7 +32,7 @@ Mage provides data loading clients that simplify loading and exporting data in y
 
 **Data Warehouses:**
 -   [Google BigQuery](#bigquery)
--   [Microsoft Fabric Warehouse](#microsoftfabricwarehouse)
+-   [Microsoft Fabric Warehouse](#microsoft-fabric-warehouse) (Pro only)
 
 **APIs & Services:**
 -   [Google Sheets](#googlesheets)
@@ -1428,7 +1431,7 @@ Any changes made to the database will not be saved unless `commit()` is called a
         -   `'append'`: appends data frame to existing table.
         Defaults to `'replace'`.
     -   `index (bool)`: If `True`, the data frame index is also exported alongside the table. Defaults to `False`.
-    -   `**kwargs`: Additional arguments to pass to writer.
+    -   `**kwargs`: Additional arguments to pass to the writer. See the [Advanced Export Parameters](#advanced-export-parameters) section for details on using options such as `unique_constraints`, `unique_conflict_method`, and other advanced export options.
 
 **_load_** - `load(query_string: str, limit: int, *args, **kwargs) -> DataFrame`
 
@@ -1528,7 +1531,7 @@ Exports a Pandas data frame to a ClickHouse warehouse. If table doesn't exist, t
         -   `'replace'`: drops existing table and creates new table of same name.
         -   `'append'`: appends data frame to existing table.
         Defaults to `'replace'`.
-    -   `**kwargs`: Additional arguments to pass to writer.
+    -   `**kwargs`: Advanced export parameters. See [Advanced Export Parameters](#advanced-export-parameters).
 
 ## SQLite
 
@@ -1585,7 +1588,7 @@ Exports data frame to the SQLite database from a Pandas data frame. If table doe
         -   `'append'`: appends data frame to existing table.
         Defaults to `'replace'`.
     -   `index (bool)`: If `True`, the data frame index is also exported alongside the table. Defaults to `False`.
-    -   `**kwargs`: Additional arguments to pass to writer.
+    -   `**kwargs`: Advanced export options such as `unique_constraints`, `unique_conflict_method`, `overwrite_types`, `auto_clean_name`, etc. See the [Advanced Export Parameters](#advanced-export-parameters) section for details.
 
 **_load_** - `load(query_string: str, limit: int, *args, **kwargs) -> DataFrame`
 
@@ -1678,7 +1681,7 @@ Any changes made to the warehouse will not be saved unless `commit()` is called 
         -   `'replace'`: drops existing table and creates new table of same name.
         -   `'append'`: appends data frame to existing table.
         Defaults to `'replace'`.
-    -   `**kwargs`: Additional arguments to pass to writer.
+    -   `**kwargs`: Advanced export parameters. See [Advanced Export Parameters](#advanced-export-parameters). (UPSERT not supported.)
 
 **_load_** - `load(query_string: str, limit: int, *args, **kwargs) -> DataFrame`
 
@@ -1766,6 +1769,8 @@ Exports the input dataframe to the MongoDB collection.
 
 ## Databricks SQL
 
+<ProOnly source="databricks" />
+
 `mage_ai.io.databricks_sql.DatabricksSQL`
 
 Handles data transfer between a Databricks SQL warehouse and the Mage app. The `DatabricksSQL` client utilizes the following keys to authenticate access and connect to Databricks.
@@ -1832,7 +1837,7 @@ Exports a Pandas data frame to a Databricks SQL warehouse. If table doesn't exis
         -   `'replace'`: drops existing table and creates new table of same name.
         -   `'append'`: appends data frame to existing table.
         Defaults to `'replace'`.
-    -   `**kwargs`: Additional arguments to pass to writer.
+    -   `**kwargs`: See [Advanced Export Parameters](#advanced-export-parameters) for available options.
 
 **_load_** - `load(query_string: str, limit: int, *args, **kwargs) -> DataFrame`
 
@@ -1990,6 +1995,8 @@ Loads data from object in Azure Data Lake Storage Gen2 into a Pandas data frame.
 -   **Returns**: (`DataFrame`) Data frame object loaded from data in the specified file.
 
 ## Microsoft Fabric Warehouse
+
+<ProOnly source="microsoft-fabric-warehouse" />
 
 `mage_ai.io.microsoft_fabric_warehouse.MicrosoftFabricWarehouse`
 

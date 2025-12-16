@@ -118,3 +118,51 @@ def export_data_to_redshift(df: DataFrame, **kwargs) -> None:
         )
 
 ```
+
+### Method arguments
+
+| Field name              | Description                                                                                                                                            | Example values              |
+| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------- |
+| allow_reserved_words    | Whether to allow using reserved words as column names.                                                                                                 | True/False (default: False) |
+| auto_clean_name         | Whether to automatically clean the column name (replace the empty space with underscore, avoid using number as the prefix of the column name)          | True/False (default: True)  |
+| case_sensitive          | Whether to support case sensitive columns                                                                                                              | True/False (default: False) |
+| drop_table_on_replace   | Whether to drop the table when "if_exists" param is set to "replace".                                                                                  | True/False (default: False) |
+| if_exists               | Specify resolution policy if table name already exists                                                                                                 | "fail"/"replace"/"append" (default: "replace") |
+| overwrite_types         | Overwrite the column types                                                                                                                             | `{'column1': 'INTEGER', 'column2': 'VARCHAR(255)'}` |
+| unique_conflict_method  | How to handle the conflict on unique constraints. Use 'UPDATE' for UPSERT (update existing rows, insert new ones) or 'IGNORE' to skip duplicates.    | 'UPDATE' or 'IGNORE' (default: None) |
+| unique_constraints      | The unique constraints of the table. Used with unique_conflict_method for UPSERT operations.                                                           | ['col1', 'col2'] (default: None) |
+
+**Example: Using UPSERT (UPDATE or INSERT)**
+
+```python
+from mage_ai.settings.repo import get_repo_path
+from mage_ai.io.config import ConfigFileLoader
+from mage_ai.io.redshift import Redshift
+from pandas import DataFrame
+from os import path
+
+if 'data_exporter' not in globals():
+    from mage_ai.data_preparation.decorators import data_exporter
+
+
+@data_exporter
+def export_data_to_redshift(df: DataFrame, **kwargs) -> None:
+    """
+    Template for exporting data to Redshift with UPSERT support.
+    Specify your configuration settings in 'io_config.yaml'.
+
+    Docs: https://docs.mage.ai/design/data-loading#redshift
+    """
+    table_name = 'your_table_name'
+    config_path = path.join(get_repo_path(), 'io_config.yaml')
+    config_profile = 'default'
+
+    with Redshift.with_config(ConfigFileLoader(config_path, config_profile)) as loader:
+        loader.export(
+            df,
+            table_name,
+            if_exists='append',  # Use 'append' with UPSERT
+            unique_constraints=['user_id', 'email'],  # Columns that form unique constraint
+            unique_conflict_method='UPDATE',  # Update existing rows, insert new ones
+        )
+```
