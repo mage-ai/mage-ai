@@ -3,20 +3,39 @@ title: "Data loader utilities"
 sidebarTitle: "Utilities"
 ---
 
+import { ProButton } from '/snippets/pro/button.mdx';
+import { ProOnly } from '/snippets/pro/only.mdx';
+
 Mage provides data loading clients that simplify loading and exporting data in your pipelines, allowing you to spend more time analyzing and transforming your data for ML tasks. Currently, Mage includes clients for the following data sources:
 
--   [AWS Redshift](#redshift)
+**File Storage:**
 -   [AWS S3](#s3)
 -   [Azure Blob Storage](#azureblobstorage)
--   [DuckDB](#duckdb)
+-   [Azure Data Lake Storage](#azure-data-lake-storage) (Pro only)
 -   [Filesystem](#fileio)
--   [Google BigQuery](#bigquery)
 -   [Google Cloud Storage](#googlecloudstorage)
--   [Google Sheets](#googlesheets)
+
+**Databases:**
+-   [AWS Redshift](#redshift)
+-   [ClickHouse](#clickhouse)
+-   [Databricks SQL](#databricks-sql) (Pro only)
+-   [DuckDB](#duckdb)
 -   [MySQL](#mysql)
+-   [MSSQL](#mssql)
+-   [MongoDB](#mongodb)
 -   [OracleDB](#oracledb)
 -   [PostgreSQL](#postgresql)
+-   [SQLite](#sqlite)
 -   [Snowflake](#snowflake)
+-   [Spark](#spark)
+-   [Trino](#trino)
+
+**Data Warehouses:**
+-   [Google BigQuery](#bigquery)
+-   [Microsoft Fabric Warehouse](#microsoft-fabric-warehouse) (Pro only)
+
+**APIs & Services:**
+-   [Google Sheets](#googlesheets)
 
 Mage's data loading clients fall into two categories:
 
@@ -108,151 +127,73 @@ To learn more about loading data from Snowflake, see the [Snowflake](#snowflake)
 
 This section covers the API for using the following data loaders.
 
-## Redshift
+## FileIO
 
-`mage_ai.io.redshift.Redshift`
+`mage_ai.io.file.FileIO`
 
-Handles data transfer between a Redshift cluster and the Mage app. Mage uses temporary credentials to authenticate access to a Redshift cluster. There are two ways to specify these credentials:
+Handles data transfer between the filesystem and the Mage app. The `FileIO` client currently supports importing and exporting with the following file formats:
 
-1. Pre-generate temporary credentials and specify them in the configuration settings. Add the following keys to the configuration settings for `Redshift` to use the temporary credentials:
-    ```yaml
-    REDSHIFT_DBNAME: Name of Redshift database to connect to
-    REDSHIFT_HOST: Redshift Cluster hostname
-    REDSHIFT_PORT: Redshift Cluster port. Optional, defaults to 5439
-    REDSHIFT_TEMP_CRED_USER: Redshift temp credentials username
-    REDSHIFT_TEMP_CRED_PASSWORD: Redshift temp credentials password
-    ```
-2. Provide an IAM Profile to automatically generate temporary credentials for connection. The IAM profile is read from `~/.aws/` and is used with the `GetClusterCredentials` endpoint to generate temporary credentials. Add the following keys to the configuration settings for `Redshift` to generate temporary credentials
-
-    ```yaml
-    REDSHIFT_DBNAME: Name of Redshift database to connect toName of Redshift database to connect to
-    REDSHIFT_DBUSER: Redshift database user to generate credentials for
-    REDSHIFT_CLUSTER_ID: Redshift cluster ID
-    REDSHIFT_IAM_PROFILE: Name of the IAM profile to generate temp credentials with `
-    ```
-
-    If an IAM profile is not setup using `aws configure`, manually specify the AWS credentials in the configuration settings as well.
-
-    ```yaml
-    AWS_ACCESS_KEY_ID: AWS Access Key ID credential
-    AWS_SECRET_ACCESS_KEY: AWS Secret Access Key credential
-    AWS_SESSION_TOKEN: AWS Session Token (used to generate temp DB credentials)
-    AWS_REGION: AWS Region `
-    ```
+-   CSV
+-   JSON
+-   Parquet
+-   HDF5
+-   XML
+-   Excel
 
 <h3> Constructor </h3>
 
-`__init__(**kwargs)`
+`__init__(self, verbose: bool)`
+
+Initializes the FileIO data loading client.
 
 -   **Args**
-
-    -   `verbose`: Enables verbose output. Defaults to `False`.
-
-    See other keyword arguments in [Redshift's Python connector](https://docs.aws.amazon.com/redshift/latest/mgmt/python-configuration-options.html) docs.
-
-<h3> Attributes </h3>
-
--   _conn_ (`redshift_connector.Connection`) - the underlying [Redshift Connection](https://docs.aws.amazon.com/redshift/latest/mgmt/python-api-reference.html#python-api-connection) object.
-
-<h3> Factory Methods </h3>
-
-**_with_config_** - `with_config(config: BaseConfigLoader, **kwargs) -> Redshift`
-
-Initializes Redshift client from configuration settings.
-
--   **Args**:
-    -   `config (BaseConfigLoader)`: Configuration loader object.
-    -   `**kwargs`: Additional parameters passed to the loader constructor.
--   **Returns**: (`Redshift`) Redshift data loading client constructed using this method
-
-**_with_temporary_credentials_** - `with_temporary_credentials(database: str, host: str, user: str, password: str, port: int = 5439, **kwargs) -> Redshift`
-
-Creates a Redshift data loader with temporary database credentials.
-
--   **Args**:
-    -   `database (str)`: Name of the database to connect to.
-    -   `host (str)`: The hostname of the Redshift cluster which the database belongs to.
-    -   `user (str)`: Temporary credentials username for use in authentication.
-    -   `password (str)`: Temporary credentials password for use in authentication.
-    -   `port (int, optional)`: Port number of the Redshift cluster. Defaults to 5439.
-    -   `**kwargs`: Additional parameters passed to the loader constructor.
--   **Returns**: (`Redshift`) Redshift data loading client constructed using this method
-
-**_with_iam_** - `with_iam(cluster_identifier: str, database: str, db_user: str, profile: str, **kwargs) -> Redshift`
-
-Creates a Redshift data loader using an IAM profile from `~/.aws`.
-
-The IAM Profile settings can also be manually specified as keyword arguments to this constructor, but is not recommended. If credentials are manually specified, the region of the Redshift cluster must also be specified.
-
--   **Args**:
-    -   `cluster_identifier (str)`: Identifier of the cluster to connect to.
-    -   `database (str)`: The database to connect to within the specified cluster.
-    -   `db_user (str)`: Database username
-    -   `profile (str, optional)`: The profile to use from stored credentials file.
-        Defaults to 'default'.
-    -   `**kwargs`: Additional parameters passed to the loader constructor
--   **Returns**: (`Redshift`) Redshift data loading client constructed using this method
+    -   `verbose (bool)`: Enables verbose output printing. Defaults to False.
 
 <h3> Methods </h3>
 
-**_close_** - `close()`
+**_export_** - `export(df: DataFrame, filepath: os.PathLike, format: FileFormat | str = None, **kwargs) -> None:`
 
-Closes connection to the Redshift cluster specified in the loader configuration.
+Exports the input data frame to the file specified.
 
-**_commit_** - `commit()`
-
-Saves all changes made to the database since the last transaction.
-
-**_execute_** - `execute(query_string: str, **kwargs) -> None`
-
-Sends query to the connected Redshift cluster. Any changes made to the database will not be saved unless `commit()` is called afterward.
-
--   **Args**:
-    -   `query_string (str)`: The query to execute on the Redshift cluster.
-    -   `**kwargs`: Additional parameters to pass to the query. See [`redshift-connector` docs](https://github.com/aws/amazon-redshift-python-driver#configuring-cursor-paramstyle) for configuring query parameters.
-
-**_export_** - `export(df: DataFrame, table_name: str) -> None`
-
-Exports a Pandas data frame to a Redshift cluster under the specified table. The changes made to the database will not be saved unless `commit()` is called afterward.
-
--   **Args**:
-    -   `df (DataFrame)`: Data frame to export to database in Redshift cluster.
-    -   `table_name (str)`: Name of the table to export the data to. Table must already exist.
-
-**_load_** - `load(query_string: str, limit: int, *args, **kwargs) -> DataFrame`
-
-Loads data from the results of a query into a Pandas data frame. This will fail if the query returns no data from the database.
-
-This function will load at maximum 10,000,000 rows of data (this limit is configurable). To operate on more data, consider performing data transformations in warehouse using `execute`.
+If the format is HDF5, the default key under which the data frame is stored is the stem of the filename. For example, if the file to write the data frame to is 'storage/my_data_frame.hdf5', the key would be 'my_data_frame'. This can be overridden using the `key` keyword argument.
 
 -   **Args**:
 
-    -   `query_string (str)`: Query to fetch a table or subset of a table.
-    -   `limit (int, Optional)`: The number of rows to limit the loaded data frame to. Defaults to 10,000,000.
-    -   `*args, **kwargs`: Additional parameters to send to query, including parameters
-        for use with format strings. See [`redshift-connector` docs](https://github.com/aws/amazon-redshift-python-driver#configuring-cursor-paramstyle) for configuring query parameters.
+    -   `df (DataFrame)`: Data frame to export.
+    -   `filepath (os.PathLike)`: Filepath to export data frame to.
+    -   `format (FileFormat | str, Optional)`: Format of the file to export data frame to. Defaults to None, in which case the format is inferred.
+    -   `**kwargs` - Additional keyword arguments to pass to the file writer. See possible arguments by file formats at:
 
--   **Returns**: (`DataFrame`) Data frame containing the queried data.
+        | Format  | Pandas Writer                                                                                                         |
+        | ------- | --------------------------------------------------------------------------------------------------------------------- |
+        | CSV     | [_DataFrame.to_csv_](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.to_csv.html)         |
+        | JSON    | [_DataFrame.to_json_](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.to_json.html)       |
+        | Parquet | [_DataFrame.to_parquet_](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.to_parquet.html) |
+        | HDF5    | [_DataFrame.to_hdf_](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.to_hdf.html)         |
+        | XML     | [_DataFrame.to_xml_](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.to_xml.html)         |
+        | Excel   | [_DataFrame.to_excel_](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.to_excel.html)     |
 
-**_open_** - `open()`
+**_load_** - `load(filepath: os.PathLike, format: FileFormat | str = None, limit: int = QUERY_ROW_LIMIT **kwargs) -> DataFrame`
 
-Opens a connection to the Redshift cluster specified in the loader configuration.
-
-**_rollback_** - `rollback()`
-
-Rolls back (deletes) all database changes made since the last transaction.
-
-**_sample_** - `sample(schema: str, table: str, size: int, **kwargs) -> DataFrame`
-
-Sample data from a table in the selected database in the Redshift cluster. Sample is not guaranteed to be random.
+Loads the data frame from the filepath specified. This function will load at maximum 10,000,000 rows of data from the specified file (this limit is configurable).
 
 -   **Args**:
 
-    -   `schema (str)`: The schema to select the table from.
-    -   `size (int)`: The number of rows to sample. Defaults to 10,000,000.
-    -   `table (str)`: The table to sample from in the connected database.
+    -   `filepath (os.PathLike)`: Filepath to load data frame from.
+    -   `format (FileFormat | str, Optional)`: Format of the file to load data frame from. Defaults to None, in which case the format is inferred.
+    -   `limit (int, optional)`: The number of rows to limit the loaded data frame to. Defaults to 10,000,000.
+    -   `**kwargs` - Additional keyword arguments to pass to the file writer. See possible arguments by file formats at:
 
--   **Returns**: (`DataFrame`) Sampled data from the table.
+        | Format  | Pandas Reader                                                                                         |
+        | ------- | ----------------------------------------------------------------------------------------------------- |
+        | CSV     | [_read_csv_](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.read_csv.html)         |
+        | JSON    | [_read_json_](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.read_json.html)       |
+        | Parquet | [_read_parquet_](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.read_parquet.html) |
+        | HDF5    | [_read_hdf_](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.read_hdf.html)         |
+        | XML     | [_read_xml_](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.read_xml.html)         |
+        | Excel   | [_read_excel_](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.read_excel.html)     |
+
+-   **Returns**: (`DataFrame`) Data frame object loaded from data in the specified file.
 
 ## S3
 
@@ -334,74 +275,6 @@ Loads data from object in S3 bucket into a Pandas data frame. This function will
 
     -   `bucket_name (str)`: Name of the bucket to load data from.
     -   `object_key (str)`: Key of the object in S3 bucket to load data from.
-    -   `format (FileFormat | str, Optional)`: Format of the file to load data frame from. Defaults to None, in which case the format is inferred.
-    -   `limit (int, optional)`: The number of rows to limit the loaded data frame to. Defaults to 10,000,000.
-    -   `**kwargs` - Additional keyword arguments to pass to the file writer. See possible arguments by file formats at:
-
-        | Format  | Pandas Reader                                                                                         |
-        | ------- | ----------------------------------------------------------------------------------------------------- |
-        | CSV     | [_read_csv_](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.read_csv.html)         |
-        | JSON    | [_read_json_](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.read_json.html)       |
-        | Parquet | [_read_parquet_](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.read_parquet.html) |
-        | HDF5    | [_read_hdf_](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.read_hdf.html)         |
-        | XML     | [_read_xml_](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.read_xml.html)         |
-        | Excel   | [_read_excel_](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.read_excel.html)     |
-
--   **Returns**: (`DataFrame`) Data frame object loaded from data in the specified file.
-
-## FileIO
-
-`mage_ai.io.file.FileIO`
-
-Handles data transfer between the filesystem and the Mage app. The `FileIO` client currently supports importing and exporting with the following file formats:
-
--   CSV
--   JSON
--   Parquet
--   HDF5
--   XML
--   Excel
-
-<h3> Constructor </h3>
-
-`__init__(self, verbose: bool)`
-
-Initializes the FileIO data loading client.
-
--   **Args**
-    -   `verbose (bool)`: Enables verbose output printing. Defaults to False.
-
-<h3> Methods </h3>
-
-**_export_** - `export(df: DataFrame, filepath: os.PathLike, format: FileFormat | str = None, **kwargs) -> None:`
-
-Exports the input data frame to the file specified.
-
-If the format is HDF5, the default key under which the data frame is stored is the stem of the filename. For example, if the file to write the data frame to is 'storage/my_data_frame.hdf5', the key would be 'my_data_frame'. This can be overridden using the `key` keyword argument.
-
--   **Args**:
-
-    -   `df (DataFrame)`: Data frame to export.
-    -   `filepath (os.PathLike)`: Filepath to export data frame to.
-    -   `format (FileFormat | str, Optional)`: Format of the file to export data frame to. Defaults to None, in which case the format is inferred.
-    -   `**kwargs` - Additional keyword arguments to pass to the file writer. See possible arguments by file formats at:
-
-        | Format  | Pandas Writer                                                                                                         |
-        | ------- | --------------------------------------------------------------------------------------------------------------------- |
-        | CSV     | [_DataFrame.to_csv_](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.to_csv.html)         |
-        | JSON    | [_DataFrame.to_json_](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.to_json.html)       |
-        | Parquet | [_DataFrame.to_parquet_](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.to_parquet.html) |
-        | HDF5    | [_DataFrame.to_hdf_](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.to_hdf.html)         |
-        | XML     | [_DataFrame.to_xml_](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.to_xml.html)         |
-        | Excel   | [_DataFrame.to_excel_](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.to_excel.html)     |
-
-**_load_** - `load(filepath: os.PathLike, format: FileFormat | str = None, limit: int = QUERY_ROW_LIMIT **kwargs) -> DataFrame`
-
-Loads the data frame from the filepath specified. This function will load at maximum 10,000,000 rows of data from the specified file (this limit is configurable).
-
--   **Args**:
-
-    -   `filepath (os.PathLike)`: Filepath to load data frame from.
     -   `format (FileFormat | str, Optional)`: Format of the file to load data frame from. Defaults to None, in which case the format is inferred.
     -   `limit (int, optional)`: The number of rows to limit the loaded data frame to. Defaults to 10,000,000.
     -   `**kwargs` - Additional keyword arguments to pass to the file writer. See possible arguments by file formats at:
@@ -774,7 +647,7 @@ Any changes made to the database will not be saved unless `commit()` is called a
         Defaults to `'replace'`.
 
     -   `index (bool)`: If `True`, the data frame index is also exported alongside the table. Defaults to `False`.
-    -   `**kwargs`: Additional arguments to pass to writer.
+    -   `**kwargs`: Additional arguments to pass to writer. See [Advanced Export Parameters](#advanced-export-parameters-for-sql-databases) for details on UPSERT (`unique_constraints`, `unique_conflict_method`) and other advanced options like `overwrite_types`, `query_string`, `auto_clean_name`, etc.
 
 **_load_** - `load(query_string: str, limit: int, *args, **kwargs) -> DataFrame`
 
@@ -807,6 +680,110 @@ Sample data from a table in the PostgreSQL database. Sample is not guaranteed to
     -   `table (str)`: The table to sample from in the connected database.
 
 -   **Returns**: (`DataFrame`) Sampled data from the table.
+
+## Advanced Export Parameters for SQL Databases
+
+The following advanced export parameters are available for all SQL database clients (PostgreSQL, MySQL, MSSQL, Snowflake, BigQuery, ClickHouse, Trino, Databricks SQL, SQLite, etc.) that inherit from `BaseSQL`. These parameters provide fine-grained control over how data is exported.
+
+> **Note:** UPSERT (UPDATE or INSERT) functionality is only supported on a subset of SQL databases (e.g., PostgreSQL, MySQL, MSSQL, Snowflake, BigQuery, SQLite). It is **not** supported on Redshift, ClickHouse, Trino or Databricks SQL. See below for details.
+
+### UPSERT (UPDATE or INSERT)
+
+UPSERT allows you to update existing rows when they match unique constraints, or insert new rows if they don't exist. This is useful for maintaining data integrity and avoiding duplicate entries.
+
+To enable UPSERT functionality, you need to specify both `unique_constraints` and `unique_conflict_method` parameters:
+
+-   `unique_constraints (List[str])`: A list of column names that form the unique constraint. These columns are used to identify existing rows for updates.
+-   `unique_conflict_method (str)`: Specifies how to handle conflicts when unique constraints are violated. Can be either:
+    -   `'UPDATE'` (or use constant `UNIQUE_CONFLICT_METHOD_UPDATE`): Updates existing rows that match the unique constraints with new values from the data frame, and inserts new rows that don't match.
+    -   `'IGNORE'` (or use constant `UNIQUE_CONFLICT_METHOD_IGNORE`): Ignores rows that would violate unique constraints (does not update or insert).
+
+**Example: UPSERT with PostgreSQL**
+
+```python
+from mage_ai.io.postgres import Postgres
+from mage_ai.io.constants import UNIQUE_CONFLICT_METHOD_UPDATE
+
+loader = Postgres(...)
+with loader:
+    loader.export(
+        df,
+        table_name='users',
+        schema='public',
+        if_exists='append',
+        unique_constraints=['user_id', 'email'],  # Columns that form unique constraint
+        unique_conflict_method=UNIQUE_CONFLICT_METHOD_UPDATE,  # Update existing, insert new
+    )
+    loader.commit()
+```
+
+In this example:
+- If a row with the same `user_id` and `email` already exists, it will be updated with the new values from the data frame.
+- If no matching row exists, a new row will be inserted.
+
+**Example: Ignore duplicates**
+
+```python
+from mage_ai.io.postgres import Postgres
+from mage_ai.io.constants import UNIQUE_CONFLICT_METHOD_IGNORE
+
+loader = Postgres(...)
+with loader:
+    loader.export(
+        df,
+        table_name='users',
+        schema='public',
+        if_exists='append',
+        unique_constraints=['user_id'],
+        unique_conflict_method=UNIQUE_CONFLICT_METHOD_IGNORE,  # Skip rows that already exist
+    )
+    loader.commit()
+```
+
+**Note**: UPSERT functionality is supported on PostgreSQL, MySQL, MSSQL, Snowflake, BigQuery, and SQLite. The exact SQL syntax used may vary by database (e.g., PostgreSQL uses `ON CONFLICT`, MySQL uses `ON DUPLICATE KEY UPDATE`, MSSQL uses `MERGE`), but the interface remains consistent across all supported databases.
+
+UPSERT functionality is **not supported** on Redshift, ClickHouse, Trino and Databricks SQL.
+
+### Additional Export Parameters
+
+The following parameters provide additional control over the export process:
+
+-   `allow_reserved_words (bool)`: If `True`, allows column names that are SQL reserved words. Defaults to `False`.
+-   `auto_clean_name (bool)`: If `True`, automatically cleans column and table names (removes special characters, handles reserved words). Defaults to `True`.
+-   `case_sensitive (bool)`: If `True`, preserves case sensitivity for identifiers. Defaults to `False`.
+-   `cascade_on_drop (bool)`: If `True`, adds `CASCADE` when dropping tables. Defaults to `False`.
+-   `drop_table_on_replace (bool)`: If `True`, drops the table when using `if_exists='replace'` instead of deleting all rows. Defaults to `False`.
+-   `overwrite_types (Dict[str, str])`: A dictionary mapping column names to SQL data types to override automatic type inference. Example: `{'price': 'DECIMAL(10,2)', 'description': 'TEXT'}`.
+-   `query_string (str)`: A custom SQL query string to use for creating the table. If provided, the table is created using `CREATE TABLE AS SELECT ...` syntax.
+-   `skip_check_table_exists (bool)`: If `True`, skips checking if the table exists before export. Defaults to `False`.
+-   `skip_create_schema (bool)`: If `True`, skips creating the schema if it doesn't exist. Defaults to `False`.
+-   `skip_semicolon_at_end (bool)`: If `True`, omits the semicolon at the end of SQL statements. Defaults to `False`.
+
+**Example: Using overwrite_types**
+
+```python
+loader.export(
+    df,
+    table_name='products',
+    schema='public',
+    overwrite_types={
+        'price': 'DECIMAL(10,2)',
+        'description': 'TEXT',
+        'created_at': 'TIMESTAMP',
+    }
+)
+```
+
+**Example: Using query_string**
+
+```python
+loader.export(
+    df,
+    table_name='filtered_data',
+    schema='public',
+    query_string='SELECT * FROM source_table WHERE status = \'active\'',
+)
+```
 
 ## OracleDB
 ```yaml
@@ -975,7 +952,7 @@ Any changes made to the database will not be saved unless `commit()` is called a
         Defaults to `'replace'`.
 
     -   `index (bool)`: If `True`, the data frame index is also exported alongside the table. Defaults to `False`.
-    -   `**kwargs`: Additional arguments to pass to writer.
+    -   `**kwargs`: Additional arguments to pass to writer. See [Advanced Export Parameters](#advanced-export-parameters-for-sql-databases) for details on UPSERT (`unique_constraints`, `unique_conflict_method`) and other advanced options.
 
 **_load_** - `load(query_string: str, limit: int, *args, **kwargs) -> DataFrame`
 
@@ -1178,7 +1155,7 @@ Any changes made to the database will not be saved unless `commit()` is called a
 
         Defaults to `'append'`.
 
-    -   `**kwargs`: Additional arguments to pass to writer
+    -   `**kwargs`: Additional arguments to pass to writer. See [Advanced Export Parameters](#advanced-export-parameters-for-sql-databases) for details on UPSERT (`unique_constraints`, `unique_conflict_method`) and other advanced options.
 
 **_load_** - `load(query_string: str, limit: int, *args, **kwargs) -> DataFrame`
 
@@ -1212,6 +1189,832 @@ Sample data from a table in the Snowflake warehouse. Sample is not guaranteed to
 
 -   **Returns**: (`DataFrame`) Sampled data from the data frame.
 
+## Redshift
+
+`mage_ai.io.redshift.Redshift`
+
+Handles data transfer between a Redshift cluster and the Mage app. Mage uses temporary credentials to authenticate access to a Redshift cluster. There are two ways to specify these credentials:
+
+1. Pre-generate temporary credentials and specify them in the configuration settings. Add the following keys to the configuration settings for `Redshift` to use the temporary credentials:
+    ```yaml
+    REDSHIFT_DBNAME: Name of Redshift database to connect to
+    REDSHIFT_HOST: Redshift Cluster hostname
+    REDSHIFT_PORT: Redshift Cluster port. Optional, defaults to 5439
+    REDSHIFT_TEMP_CRED_USER: Redshift temp credentials username
+    REDSHIFT_TEMP_CRED_PASSWORD: Redshift temp credentials password
+    ```
+2. Provide an IAM Profile to automatically generate temporary credentials for connection. The IAM profile is read from `~/.aws/` and is used with the `GetClusterCredentials` endpoint to generate temporary credentials. Add the following keys to the configuration settings for `Redshift` to generate temporary credentials
+
+    ```yaml
+    REDSHIFT_DBNAME: Name of Redshift database to connect to
+    REDSHIFT_DBUSER: Redshift database user to generate credentials for
+    REDSHIFT_CLUSTER_ID: Redshift cluster ID
+    REDSHIFT_IAM_PROFILE: Name of the IAM profile to generate temp credentials with
+    ```
+
+    If an IAM profile is not setup using `aws configure`, manually specify the AWS credentials in the configuration settings as well.
+
+    ```yaml
+    AWS_ACCESS_KEY_ID: AWS Access Key ID credential
+    AWS_SECRET_ACCESS_KEY: AWS Secret Access Key credential
+    AWS_SESSION_TOKEN: AWS Session Token (used to generate temp DB credentials)
+    AWS_REGION: AWS Region
+    ```
+
+<h3> Constructor </h3>
+
+`__init__(**kwargs)`
+
+-   **Args**
+
+    -   `verbose`: Enables verbose output. Defaults to `False`.
+
+    See other keyword arguments in [Redshift's Python connector](https://docs.aws.amazon.com/redshift/latest/mgmt/python-configuration-options.html) docs.
+
+<h3> Attributes </h3>
+
+-   _conn_ (`redshift_connector.Connection`) - the underlying [Redshift Connection](https://docs.aws.amazon.com/redshift/latest/mgmt/python-api-reference.html#python-api-connection) object.
+
+<h3> Factory Methods </h3>
+
+**_with_config_** - `with_config(config: BaseConfigLoader, **kwargs) -> Redshift`
+
+Initializes Redshift client from configuration settings.
+
+-   **Args**:
+    -   `config (BaseConfigLoader)`: Configuration loader object.
+    -   `**kwargs`: Additional parameters passed to the loader constructor.
+-   **Returns**: (`Redshift`) Redshift data loading client constructed using this method
+
+**_with_temporary_credentials_** - `with_temporary_credentials(database: str, host: str, user: str, password: str, port: int = 5439, **kwargs) -> Redshift`
+
+Creates a Redshift data loader with temporary database credentials.
+
+-   **Args**:
+    -   `database (str)`: Name of the database to connect to.
+    -   `host (str)`: The hostname of the Redshift cluster which the database belongs to.
+    -   `user (str)`: Temporary credentials username for use in authentication.
+    -   `password (str)`: Temporary credentials password for use in authentication.
+    -   `port (int, optional)`: Port number of the Redshift cluster. Defaults to 5439.
+    -   `**kwargs`: Additional parameters passed to the loader constructor.
+-   **Returns**: (`Redshift`) Redshift data loading client constructed using this method
+
+**_with_iam_** - `with_iam(cluster_identifier: str, database: str, db_user: str, profile: str, **kwargs) -> Redshift`
+
+Creates a Redshift data loader using an IAM profile from `~/.aws`.
+
+The IAM Profile settings can also be manually specified as keyword arguments to this constructor, but is not recommended. If credentials are manually specified, the region of the Redshift cluster must also be specified.
+
+-   **Args**:
+    -   `cluster_identifier (str)`: Identifier of the cluster to connect to.
+    -   `database (str)`: The database to connect to within the specified cluster.
+    -   `db_user (str)`: Database username
+    -   `profile (str, optional)`: The profile to use from stored credentials file.
+        Defaults to 'default'.
+    -   `**kwargs`: Additional parameters passed to the loader constructor
+-   **Returns**: (`Redshift`) Redshift data loading client constructed using this method
+
+<h3> Methods </h3>
+
+**_close_** - `close()`
+
+Closes connection to the Redshift cluster specified in the loader configuration.
+
+**_commit_** - `commit()`
+
+Saves all changes made to the database since the last transaction.
+
+**_execute_** - `execute(query_string: str, **kwargs) -> None`
+
+Sends query to the connected Redshift cluster. Any changes made to the database will not be saved unless `commit()` is called afterward.
+
+-   **Args**:
+    -   `query_string (str)`: The query to execute on the Redshift cluster.
+    -   `**kwargs`: Additional parameters to pass to the query. See [`redshift-connector` docs](https://github.com/aws/amazon-redshift-python-driver#configuring-cursor-paramstyle) for configuring query parameters.
+
+**_export_** - `export(df: DataFrame, table_name: str) -> None`
+
+Exports a Pandas data frame to a Redshift cluster under the specified table. The changes made to the database will not be saved unless `commit()` is called afterward.
+
+-   **Args**:
+    -   `df (DataFrame)`: Data frame to export to database in Redshift cluster.
+    -   `table_name (str)`: Name of the table to export the data to. Table must already exist.
+
+**_load_** - `load(query_string: str, limit: int, *args, **kwargs) -> DataFrame`
+
+Loads data from the results of a query into a Pandas data frame. This will fail if the query returns no data from the database.
+
+This function will load at maximum 10,000,000 rows of data (this limit is configurable). To operate on more data, consider performing data transformations in warehouse using `execute`.
+
+-   **Args**:
+
+    -   `query_string (str)`: Query to fetch a table or subset of a table.
+    -   `limit (int, Optional)`: The number of rows to limit the loaded data frame to. Defaults to 10,000,000.
+    -   `*args, **kwargs`: Additional parameters to send to query, including parameters
+        for use with format strings. See [`redshift-connector` docs](https://github.com/aws/amazon-redshift-python-driver#configuring-cursor-paramstyle) for configuring query parameters.
+
+-   **Returns**: (`DataFrame`) Data frame containing the queried data.
+
+**_open_** - `open()`
+
+Opens a connection to the Redshift cluster specified in the loader configuration.
+
+**_rollback_** - `rollback()`
+
+Rolls back (deletes) all database changes made since the last transaction.
+
+**_sample_** - `sample(schema: str, table: str, size: int, **kwargs) -> DataFrame`
+
+Sample data from a table in the selected database in the Redshift cluster. Sample is not guaranteed to be random.
+
+-   **Args**:
+
+    -   `schema (str)`: The schema to select the table from.
+    -   `size (int)`: The number of rows to sample. Defaults to 10,000,000.
+    -   `table (str)`: The table to sample from in the connected database.
+
+-   **Returns**: (`DataFrame`) Sampled data from the table.
+
+## MSSQL
+
+`mage_ai.io.mssql.MSSQL`
+
+Handles data transfer between a Microsoft SQL Server database and the Mage app. The `MSSQL` client utilizes the following keys to connect to the database.
+
+```yaml
+MSSQL_DATABASE: MSSQL database name
+MSSQL_USER: MSSQL database login username
+MSSQL_PASSWORD: MSSQL database login password
+MSSQL_HOST: MSSQL database hostname
+MSSQL_PORT: MSSQL database port (defaults to 1433)
+MSSQL_SCHEMA: MSSQL database schema (defaults to 'dbo')
+MSSQL_AUTHENTICATION: Authentication method (optional)
+MSSQL_CONNECTION_METHOD: Connection method ('direct' or 'ssh_tunnel')
+MSSQL_SSH_HOST: SSH tunnel host (if using SSH tunnel)
+MSSQL_SSH_PORT: SSH tunnel port
+MSSQL_SSH_USERNAME: SSH tunnel username
+MSSQL_SSH_PASSWORD: SSH tunnel password
+MSSQL_SSH_PKEY: SSH tunnel private key path
+```
+
+<h3> Constructor </h3>
+
+`__init__(self, **kwargs)`
+
+Initializes the MSSQL data loading client.
+
+-   **Args**:
+    -   `database (str)`: The name of the database to connect to.
+    -   `user (str)`: The user for connecting to the database with.
+    -   `password (str)`: The login password for the user.
+    -   `host (str)`: Host address for database.
+    -   `port (int)`: Port on which the database is running. Defaults to 1433.
+    -   `schema (str)`: Schema name. Defaults to 'dbo'.
+    -   `authentication (str, optional)`: Authentication method.
+    -   `connection_method (str)`: Connection method ('direct' or 'ssh_tunnel'). Defaults to 'direct'.
+    -   `ssh_host (str, optional)`: SSH tunnel host.
+    -   `ssh_port (int, optional)`: SSH tunnel port.
+    -   `ssh_username (str, optional)`: SSH tunnel username.
+    -   `ssh_password (str, optional)`: SSH tunnel password.
+    -   `ssh_pkey (str, optional)`: SSH tunnel private key path.
+    -   `verbose (bool)`: Enables verbose output printing. Defaults to `True`.
+    -   `**kwargs`: Additional settings for creating connection
+
+<h3> Factory Methods </h3>
+
+**_with_config_** - `with_config(config: BaseConfigLoader, **kwargs) -> MSSQL`
+
+Creates MSSQL data loading client from configuration settings.
+
+-   **Args**:
+    -   `config (BaseConfigLoader)`: Configuration loader object.
+    -   `**kwargs`: Additional parameters passed to the loader constructor
+-   **Returns**: (`MSSQL`) The constructed dataloader using this method
+
+<h3> Methods </h3>
+
+**_close_** - `close()`
+
+Closes connection to MSSQL database.
+
+**_commit_** - `commit()`
+
+Saves all changes made to the database since the previous transaction.
+
+**_execute_** - `execute(query_string: str, **kwargs) -> None`
+
+Sends query to the connected MSSQL database. Any changes made to the database will not be saved unless `commit()` is called afterward.
+
+-   **Args**:
+    -   `query_string (str)`: The query to execute on the MSSQL database.
+    -   `**kwargs`: Additional parameters to pass to the query.
+
+**_export_** - `export(df: DataFrame, schema_name: str, table_name: str, if_exists: str, index: bool, **kwargs) -> None`
+
+Exports data frame to the MSSQL database from a Pandas data frame. If table doesn't exist, the table is automatically created.
+
+Any changes made to the database will not be saved unless `commit()` is called afterward.
+
+-   **Args**:
+    -   `df (DataFrame)`: Data frame to export to the MSSQL database.
+    -   `schema_name (str)`: Name of the schema in which the table is located. Defaults to 'dbo'.
+    -   `table_name (str)`: Name of the table to export data to.
+    -   `if_exists (ExportWritePolicy)`: Specifies export policy if table exists. Either
+        -   `'fail'`: throw an error.
+        -   `'replace'`: drops existing table and creates new table of same name.
+        -   `'append'`: appends data frame to existing table.
+        Defaults to `'replace'`.
+    -   `index (bool)`: If `True`, the data frame index is also exported alongside the table. Defaults to `False`.
+    -   `**kwargs`: Additional arguments to pass to the writer. See the [Advanced Export Parameters](#advanced-export-parameters-for-sql-databases) section for details on using options such as `unique_constraints`, `unique_conflict_method`, and other advanced export options.
+
+**_load_** - `load(query_string: str, limit: int, *args, **kwargs) -> DataFrame`
+
+Loads data from the results of a query into a Pandas data frame. This will fail if the query returns no data from the database.
+
+This function will load at maximum 10,000,000 rows of data (this limit is configurable). To operate on more data, consider performing data transformations in warehouse.
+
+-   **Args**:
+    -   `query_string (str)`: Query to fetch a table or subset of a table.
+    -   `limit (int, Optional)`: The number of rows to limit the loaded data frame to. Defaults to 10,000,000.
+    -   `**kwargs`: Additional parameters to pass to the query.
+-   **Returns**: (`DataFrame`) Data frame containing the queried data.
+
+**_open_** - `open()`
+
+Opens a connection to MSSQL database.
+
+**_rollback_** - `rollback()`
+
+Rolls back (deletes) all database changes made since the last transaction.
+
+## ClickHouse
+
+`mage_ai.io.clickhouse.ClickHouse`
+
+Handles data transfer between a ClickHouse data warehouse and the Mage app. The `ClickHouse` client utilizes the following keys to authenticate access and connect to ClickHouse servers.
+
+```yaml
+CLICKHOUSE_HOST: ClickHouse hostname
+CLICKHOUSE_PORT: ClickHouse port
+CLICKHOUSE_USERNAME: ClickHouse username
+CLICKHOUSE_PASSWORD: ClickHouse password
+CLICKHOUSE_DATABASE: ClickHouse database name
+CLICKHOUSE_INTERFACE: ClickHouse interface (optional)
+CLICKHOUSE_SSL_CA_CERT: Path to CA certificate for SSL (optional)
+```
+
+<h3> Constructor </h3>
+
+`__init__(self, **kwargs)`
+
+Initializes the ClickHouse data loading client.
+
+-   **Args**:
+    -   `host (str)`: ClickHouse hostname.
+    -   `port (int)`: ClickHouse port.
+    -   `username (str)`: ClickHouse username.
+    -   `password (str)`: ClickHouse password.
+    -   `database (str)`: Database name. Defaults to 'default'.
+    -   `interface (str, optional)`: ClickHouse interface.
+    -   `secure (bool, optional)`: Enable SSL.
+    -   `ca_cert (str, optional)`: Path to CA certificate.
+    -   `verbose (bool)`: Enables verbose output printing. Defaults to `True`.
+    -   `**kwargs`: Additional settings passed to ClickHouse client
+
+<h3> Factory Methods </h3>
+
+**_with_config_** - `with_config(config: BaseConfigLoader, **kwargs) -> ClickHouse`
+
+Creates ClickHouse data loading client from configuration settings.
+
+-   **Args**:
+    -   `config (BaseConfigLoader)`: Configuration loader object.
+    -   `**kwargs`: Additional parameters passed to the loader constructor
+-   **Returns**: (`ClickHouse`) The constructed dataloader using this method
+
+<h3> Methods </h3>
+
+**_execute_** - `execute(command_string: str, **kwargs) -> None`
+
+Sends command to the connected ClickHouse warehouse.
+
+-   **Args**:
+    -   `command_string (str)`: Command to execute on the ClickHouse warehouse.
+    -   `**kwargs`: Additional arguments to pass to command.
+
+**_load_** - `load(query_string: str, limit: int, **kwargs) -> DataFrame`
+
+Loads data from ClickHouse into a Pandas data frame based on the query given. This will fail if the query returns no data from the database. When a select query is provided, this function will load at maximum 10,000,000 rows of data. To operate on more data, consider performing data transformations in warehouse.
+
+-   **Args**:
+    -   `query_string (str)`: Query to fetch a table or subset of a table.
+    -   `limit (int, Optional)`: The number of rows to limit the loaded dataframe to. Defaults to 10,000,000.
+    -   `**kwargs`: Additional arguments to pass to query.
+-   **Returns**: (`DataFrame`) Data frame associated with the given query.
+
+**_export_** - `export(df: DataFrame, table_name: str, database: str, if_exists: str, **kwargs) -> None`
+
+Exports a Pandas data frame to a ClickHouse warehouse. If table doesn't exist, the table is automatically created.
+
+-   **Args**:
+    -   `df (DataFrame)`: Data frame to export to ClickHouse warehouse.
+    -   `table_name (str)`: Name of the table to export data to.
+    -   `database (str)`: Name of the database in which the table is located.
+    -   `if_exists (ExportWritePolicy)`: Specifies export policy if table exists. Either
+        -   `'fail'`: throw an error.
+        -   `'replace'`: drops existing table and creates new table of same name.
+        -   `'append'`: appends data frame to existing table.
+        Defaults to `'replace'`.
+    -   `**kwargs`: Advanced export parameters. See [Advanced Export Parameters](#advanced-export-parameters-for-sql-databases). (UPSERT not supported.)
+
+## SQLite
+
+`mage_ai.io.sqlite.SQLite`
+
+Handles data transfer between a SQLite database and the Mage app.
+
+<h3> Constructor </h3>
+
+`__init__(self, database: str, verbose: bool = True, **kwargs)`
+
+Initializes the SQLite data loading client.
+
+-   **Args**:
+    -   `database (str)`: Path to the SQLite database file.
+    -   `verbose (bool)`: Enables verbose output printing. Defaults to `True`.
+    -   `**kwargs`: Additional settings for creating connection
+
+<h3> Factory Methods </h3>
+
+**_with_config_** - `with_config(config: BaseConfigLoader, **kwargs) -> SQLite`
+
+Creates SQLite data loading client from configuration settings.
+
+-   **Args**:
+    -   `config (BaseConfigLoader)`: Configuration loader object.
+    -   `**kwargs`: Additional parameters passed to the loader constructor
+-   **Returns**: (`SQLite`) The constructed dataloader using this method
+
+<h3> Methods </h3>
+
+**_close_** - `close()`
+
+Closes connection to SQLite database.
+
+**_execute_** - `execute(query_string: str, **kwargs) -> None`
+
+Sends query to the connected SQLite database.
+
+-   **Args**:
+    -   `query_string (str)`: The query to execute on the SQLite database.
+    -   `**kwargs`: Additional parameters to pass to the query.
+
+**_export_** - `export(df: DataFrame, table_name: str, if_exists: str, index: bool, **kwargs) -> None`
+
+Exports data frame to the SQLite database from a Pandas data frame. If table doesn't exist, the table is automatically created.
+
+-   **Args**:
+    -   `df (DataFrame)`: Data frame to export to the SQLite database.
+    -   `table_name (str)`: Name of the table to export data to.
+    -   `if_exists (ExportWritePolicy)`: Specifies export policy if table exists. Either
+        -   `'fail'`: throw an error.
+        -   `'replace'`: drops existing table and creates new table of same name.
+        -   `'append'`: appends data frame to existing table.
+        Defaults to `'replace'`.
+    -   `index (bool)`: If `True`, the data frame index is also exported alongside the table. Defaults to `False`.
+    -   `**kwargs`: Advanced export options such as `unique_constraints`, `unique_conflict_method`, `overwrite_types`, `auto_clean_name`, etc. See the [Advanced Export Parameters](#advanced-export-parameters-for-sql-databases) section for details.
+
+**_load_** - `load(query_string: str, limit: int, *args, **kwargs) -> DataFrame`
+
+Loads data from the results of a query into a Pandas data frame. This will fail if the query returns no data from the database.
+
+This function will load at maximum 10,000,000 rows of data (this limit is configurable). To operate on more data, consider performing data transformations in warehouse.
+
+-   **Args**:
+    -   `query_string (str)`: Query to fetch a table or subset of a table.
+    -   `limit (int, Optional)`: The number of rows to limit the loaded data frame to. Defaults to 10,000,000.
+    -   `**kwargs`: Additional parameters to pass to the query.
+-   **Returns**: (`DataFrame`) Data frame containing the queried data.
+
+**_open_** - `open()`
+
+Opens a connection to SQLite database.
+
+## Trino
+
+`mage_ai.io.trino.Trino`
+
+Handles data transfer between a Trino data warehouse and the Mage app. The `Trino` client utilizes the following keys to authenticate access and connect to Trino servers.
+
+```yaml
+TRINO_CATALOG: Trino catalog name
+TRINO_HOST: Trino hostname
+TRINO_PORT: Trino port (defaults to 8080)
+TRINO_USER: Trino username
+TRINO_PASSWORD: Trino password
+TRINO_SCHEMA: Trino schema name
+```
+
+<h3> Constructor </h3>
+
+`__init__(self, catalog: str, host: str, user: str, password: str = None, port: int = 8080, schema: str = None, verbose: bool = True, **kwargs)`
+
+Initializes the Trino data loading client.
+
+-   **Args**:
+    -   `catalog (str)`: Trino catalog name.
+    -   `host (str)`: Trino hostname.
+    -   `user (str)`: Trino username.
+    -   `password (str, optional)`: Trino password.
+    -   `port (int)`: Trino port. Defaults to 8080.
+    -   `schema (str, optional)`: Trino schema name.
+    -   `verbose (bool)`: Enables verbose output printing. Defaults to `True`.
+    -   `**kwargs`: Additional settings for creating connection
+
+<h3> Factory Methods </h3>
+
+**_with_config_** - `with_config(config: BaseConfigLoader, **kwargs) -> Trino`
+
+Creates Trino data loading client from configuration settings.
+
+-   **Args**:
+    -   `config (BaseConfigLoader)`: Configuration loader object.
+    -   `**kwargs`: Additional parameters passed to the loader constructor
+-   **Returns**: (`Trino`) The constructed dataloader using this method
+
+<h3> Methods </h3>
+
+**_close_** - `close()`
+
+Closes connection to Trino warehouse.
+
+**_commit_** - `commit()`
+
+Saves all changes made to the warehouse since the previous transaction.
+
+**_execute_** - `execute(query_string: str, **kwargs) -> None`
+
+Sends query to the connected Trino warehouse. Any changes made to the warehouse will not be saved unless `commit()` is called afterward.
+
+-   **Args**:
+    -   `query_string (str)`: The query to execute on the Trino warehouse.
+    -   `**kwargs`: Additional parameters to pass to the query.
+
+**_export_** - `export(df: DataFrame, table_name: str, schema: str, if_exists: str, **kwargs) -> None`
+
+Exports a Pandas data frame to a Trino warehouse. If table doesn't exist, the table is automatically created.
+
+Any changes made to the warehouse will not be saved unless `commit()` is called afterward.
+
+-   **Args**:
+    -   `df (DataFrame)`: Data frame to export to Trino warehouse.
+    -   `table_name (str)`: Name of the table to export data to.
+    -   `schema (str)`: Name of the schema in which the table is located.
+    -   `if_exists (ExportWritePolicy)`: Specifies export policy if table exists. Either
+        -   `'fail'`: throw an error.
+        -   `'replace'`: drops existing table and creates new table of same name.
+        -   `'append'`: appends data frame to existing table.
+        Defaults to `'replace'`.
+    -   `**kwargs`: Advanced export parameters. See [Advanced Export Parameters](#advanced-export-parameters-for-sql-databases). (UPSERT not supported.)
+
+**_load_** - `load(query_string: str, limit: int, *args, **kwargs) -> DataFrame`
+
+Loads data from Trino into a Pandas data frame based on the query given. This will fail if the query returns no data from the warehouse.
+
+This function will load at maximum 10,000,000 rows of data (this limit is configurable). To operate on more data, consider performing data transformations in warehouse.
+
+-   **Args**:
+    -   `query_string (str)`: Query to fetch a table or subset of a table.
+    -   `limit (int, Optional)`: The number of rows to limit the loaded data frame to. Defaults to 10,000,000.
+    -   `**kwargs`: Additional parameters to pass to the query.
+-   **Returns**: (`DataFrame`) Data frame containing the queried data.
+
+**_open_** - `open()`
+
+Opens a connection to Trino warehouse.
+
+**_rollback_** - `rollback()`
+
+Rolls back (deletes) all warehouse changes made since the last transaction.
+
+## MongoDB
+
+`mage_ai.io.mongodb.MongoDB`
+
+Handles data transfer between a MongoDB database and the Mage app. The `MongoDB` client utilizes the following keys to connect to the database.
+
+```yaml
+MONGODB_CONNECTION_STRING: MongoDB connection string (alternative to individual settings)
+MONGODB_HOST: MongoDB hostname
+MONGODB_PORT: MongoDB port (defaults to 27017)
+MONGODB_USER: MongoDB username
+MONGODB_PASSWORD: MongoDB password
+MONGODB_DATABASE: MongoDB database name
+MONGODB_COLLECTION: MongoDB collection name
+```
+
+<h3> Constructor </h3>
+
+`__init__(self, connection_string: str = None, host: str = None, port: int = 27017, user: str = None, password: str = None, database: str = None, collection: str = None, verbose: bool = True, **kwargs)`
+
+Initializes the MongoDB data loading client.
+
+-   **Args**:
+    -   `connection_string (str, optional)`: MongoDB connection string. If provided, other connection parameters are ignored.
+    -   `host (str, optional)`: MongoDB hostname.
+    -   `port (int, optional)`: MongoDB port. Defaults to 27017.
+    -   `user (str, optional)`: MongoDB username.
+    -   `password (str, optional)`: MongoDB password.
+    -   `database (str, optional)`: MongoDB database name.
+    -   `collection (str, optional)`: MongoDB collection name.
+    -   `verbose (bool)`: Enables verbose output printing. Defaults to `True`.
+    -   `**kwargs`: Additional settings for creating connection
+
+<h3> Factory Methods </h3>
+
+**_with_config_** - `with_config(config: BaseConfigLoader, **kwargs) -> MongoDB`
+
+Creates MongoDB data loading client from configuration settings.
+
+-   **Args**:
+    -   `config (BaseConfigLoader)`: Configuration loader object.
+    -   `**kwargs`: Additional parameters passed to the loader constructor
+-   **Returns**: (`MongoDB`) The constructed dataloader using this method
+
+<h3> Methods </h3>
+
+**_load_** - `load(collection: str = None, query: Dict = None, **kwargs) -> DataFrame`
+
+Loads the data frame from the MongoDB collection.
+
+-   **Args**:
+    -   `collection (str, optional)`: MongoDB collection name. Defaults to collection specified in constructor.
+    -   `query (Dict, optional)`: Filter the result by using a query object. Examples:
+        `{ "address": "Park Lane 38" }`, `{ "address": { "$gt": "S" } }`
+-   **Returns**: (`DataFrame`) Data frame object loaded from the MongoDB collection.
+
+**_export_** - `export(data: Union[DataFrame, List[Dict]], collection: str = None, **kwargs) -> None`
+
+Exports the input dataframe to the MongoDB collection.
+
+-   **Args**:
+    -   `data (Union[DataFrame, List[Dict]])`: Data frame or List of Dictionary to export.
+    -   `collection (str, optional)`: MongoDB collection name. Defaults to collection specified in constructor.
+
+## Databricks SQL
+
+<ProOnly source="databricks" />
+
+`mage_ai.io.databricks_sql.DatabricksSQL`
+
+Handles data transfer between a Databricks SQL warehouse and the Mage app. The `DatabricksSQL` client utilizes the following keys to authenticate access and connect to Databricks.
+
+```yaml
+DATABRICKS_ACCESS_TOKEN: Databricks access token
+DATABRICKS_HOST: Databricks workspace hostname
+DATABRICKS_HTTP_PATH: Databricks SQL warehouse HTTP path
+DATABRICKS_DATABASE: Databricks database/catalog name
+DATABRICKS_SCHEMA: Databricks schema name
+```
+
+<h3> Constructor </h3>
+
+`__init__(self, verbose: bool = True, **kwargs)`
+
+Initializes the Databricks SQL data loading client.
+
+-   **Args**:
+    -   `access_token (str)`: Databricks access token (required).
+    -   `host (str)`: Databricks workspace hostname (required).
+    -   `http_path (str)`: Databricks SQL warehouse HTTP path (required).
+    -   `database (str, optional)`: Database/catalog name.
+    -   `schema (str, optional)`: Schema name.
+    -   `verbose (bool)`: Enables verbose output printing. Defaults to `True`.
+    -   `**kwargs`: Additional settings for creating connection
+
+<h3> Factory Methods </h3>
+
+**_with_config_** - `with_config(config: BaseConfigLoader, **kwargs) -> DatabricksSQL`
+
+Creates Databricks SQL data loading client from configuration settings.
+
+-   **Args**:
+    -   `config (BaseConfigLoader)`: Configuration loader object.
+    -   `**kwargs`: Additional parameters passed to the loader constructor
+-   **Returns**: (`DatabricksSQL`) The constructed dataloader using this method
+
+<h3> Methods </h3>
+
+**_close_** - `close()`
+
+Closes connection to Databricks SQL warehouse.
+
+**_execute_** - `execute(query_string: str, **kwargs) -> None`
+
+Sends query to the connected Databricks SQL warehouse.
+
+-   **Args**:
+    -   `query_string (str)`: The query to execute on the Databricks SQL warehouse.
+    -   `**kwargs`: Additional parameters to pass to the query.
+
+**_export_** - `export(df: DataFrame, table_name: str, database: str, schema: str, if_exists: str, **kwargs) -> None`
+
+Exports a Pandas data frame to a Databricks SQL warehouse. If table doesn't exist, the table is automatically created.
+
+-   **Args**:
+    -   `df (DataFrame)`: Data frame to export to Databricks SQL warehouse.
+    -   `table_name (str)`: Name of the table to export data to.
+    -   `database (str)`: Name of the database/catalog in which the table is located.
+    -   `schema (str)`: Name of the schema in which the table is located.
+    -   `if_exists (ExportWritePolicy)`: Specifies export policy if table exists. Either
+        -   `'fail'`: throw an error.
+        -   `'replace'`: drops existing table and creates new table of same name.
+        -   `'append'`: appends data frame to existing table.
+        Defaults to `'replace'`.
+    -   `**kwargs`: See [Advanced Export Parameters](#advanced-export-parameters-for-sql-databases) for available options.
+
+**_load_** - `load(query_string: str, limit: int, *args, **kwargs) -> DataFrame`
+
+Loads data from Databricks SQL into a Pandas data frame based on the query given. This will fail if the query returns no data from the warehouse.
+
+This function will load at maximum 10,000,000 rows of data (this limit is configurable). To operate on more data, consider performing data transformations in warehouse.
+
+-   **Args**:
+    -   `query_string (str)`: Query to fetch a table or subset of a table.
+    -   `limit (int, Optional)`: The number of rows to limit the loaded data frame to. Defaults to 10,000,000.
+    -   `**kwargs`: Additional parameters to pass to the query.
+-   **Returns**: (`DataFrame`) Data frame containing the queried data.
+
+**_open_** - `open()`
+
+Opens a connection to Databricks SQL warehouse.
+
+## Spark
+
+`mage_ai.io.spark.Spark`
+
+Handles data transfer between a Spark session and the Mage app. The `Spark` client utilizes the following keys to connect to Spark.
+
+```yaml
+SPARK_HOST: Spark host/master URL
+SPARK_METHOD: Spark connection method
+SPARK_SCHEMA: Spark database/schema name
+```
+
+<h3> Constructor </h3>
+
+`__init__(self, **kwargs)`
+
+Initializes the Spark data loading client.
+
+-   **Args**:
+    -   `host (str)`: Spark master URL (e.g., 'local', 'spark://host:port').
+    -   `method (str, optional)`: Spark connection method.
+    -   `database (str, optional)`: Database/schema name.
+    -   `verbose (bool)`: Enables verbose output printing. Defaults to `True`.
+    -   `**kwargs`: Additional settings for creating Spark session
+
+<h3> Factory Methods </h3>
+
+**_with_config_** - `with_config(config: BaseConfigLoader, **kwargs) -> Spark`
+
+Creates Spark data loading client from configuration settings.
+
+-   **Args**:
+    -   `config (BaseConfigLoader)`: Configuration loader object.
+    -   `**kwargs`: Additional parameters passed to the loader constructor
+-   **Returns**: (`Spark`) The constructed dataloader using this method
+
+<h3> Methods </h3>
+
+**_execute_** - `execute(query_string: str, **kwargs) -> None`
+
+Sends query to the connected Spark session.
+
+-   **Args**:
+    -   `query_string (str)`: Query to execute on the Spark session.
+    -   `**kwargs`: Additional arguments to pass to query.
+
+**_load_** - `load(query_string: str, limit: int, **kwargs) -> DataFrame`
+
+Loads data from Spark into a Pandas data frame based on the query given. This will fail if the query returns no data.
+
+This function will load at maximum 10,000,000 rows of data (this limit is configurable). To operate on more data, consider performing data transformations in Spark.
+
+-   **Args**:
+    -   `query_string (str)`: Query to fetch a table or subset of a table.
+    -   `limit (int, Optional)`: The number of rows to limit the loaded data frame to. Defaults to 10,000,000.
+    -   `**kwargs`: Additional arguments to pass to query.
+-   **Returns**: (`DataFrame`) Data frame containing the queried data.
+
+**_export_** - `export(df: DataFrame, table_name: str, database: str, if_exists: str, **kwargs) -> None`
+
+Exports a Pandas data frame to a Spark session. If table doesn't exist, the table is automatically created.
+
+-   **Args**:
+    -   `df (DataFrame)`: Data frame to export to Spark session.
+    -   `table_name (str)`: Name of the table to export data to.
+    -   `database (str)`: Name of the database in which the table is located.
+    -   `if_exists (ExportWritePolicy)`: Specifies export policy if table exists. Either
+        -   `'fail'`: throw an error.
+        -   `'replace'`: drops existing table and creates new table of same name.
+        -   `'append'`: appends data frame to existing table.
+        Defaults to `'replace'`.
+    -   `**kwargs`: Additional arguments to pass to writer.
+
+## Azure Data Lake Storage
+
+<ProOnly source="azure-data-lake-storage" />
+
+`mage_ai.io.azure_data_lake_storage.AzureDataLakeStorage`
+
+Handles data transfer between an Azure Data Lake Storage Gen2 container and the Mage app. Supports loading files of the following types:
+
+-   CSV
+-   JSON
+-   Parquet
+
+To authenticate access to Azure Data Lake Storage, the following environment variables must be set:
+
+- `AZURE_CLIENT_ID`
+- `AZURE_CLIENT_SECRET`
+- `AZURE_TENANT_ID`
+- `AZURE_STORAGE_ACCOUNT_NAME`
+
+By default, these correspond to variables of the same name in `io_config.yaml`.
+
+<h3> Constructor </h3>
+
+`__init__(self, verbose: bool = True, **kwargs)`
+
+Initializes data loader from an Azure Data Lake Storage Gen2 container.
+
+-   **Args**:
+    -   `storage_account_name (str)`: Azure Storage account name (required).
+    -   `verbose (bool)`: Enables verbose output printing. Defaults to `True`.
+    -   `**kwargs`: Additional settings. If `AZURE_CLIENT_ID`, `AZURE_CLIENT_SECRET`, and `AZURE_TENANT_ID` are provided, they will be used for authentication. Otherwise, DefaultAzureCredential will be used.
+
+<h3> Factory Methods </h3>
+
+**_with_config_** - `with_config(config: BaseConfigLoader, **kwargs) -> AzureDataLakeStorage`
+
+Creates AzureDataLakeStorage data loading client from configuration settings.
+
+-   **Args**:
+    -   `config (BaseConfigLoader)`: Configuration loader object.
+    -   `**kwargs`: Additional parameters passed to the loader constructor
+-   **Returns**: (`AzureDataLakeStorage`) The constructed dataloader using this method
+
+<h3> Methods </h3>
+
+**_export_** - `export(df: DataFrame, container_name: str, file_path: str, format: FileFormat | str = None, **kwargs) -> None`
+
+Exports data frame to an Azure Data Lake Storage Gen2 container.
+
+-   **Args**:
+    -   `df (DataFrame)`: Data frame to export.
+    -   `container_name (str)`: Name of the Azure container to export data to.
+    -   `file_path (str)`: The desired output path of the data in your Azure Data Lake Storage.
+    -   `format (FileFormat | str, Optional)`: Format of the file to export data frame to. Defaults to `None`, in which case the format is inferred.
+    -   `**kwargs` - Additional keyword arguments to pass to the file writer. See possible arguments by file formats in [FileIO](#fileio) section.
+
+**_load_** - `load(container_name: str, file_path: str, format: FileFormat | str = None, limit: int = QUERY_ROW_LIMIT, **kwargs) -> DataFrame`
+
+Loads data from object in Azure Data Lake Storage Gen2 into a Pandas data frame. This function will load at maximum 10,000,000 rows of data from the specified file (this limit is configurable).
+
+-   **Args**:
+    -   `container_name (str)`: Name of the container to load data from.
+    -   `file_path (str)`: Path of the file in Azure Data Lake Storage to load data from.
+    -   `format (FileFormat | str, Optional)`: Format of the file to load data frame from. Defaults to None, in which case the format is inferred.
+    -   `limit (int, optional)`: The number of rows to limit the loaded data frame to. Defaults to 10,000,000.
+    -   `**kwargs` - Additional keyword arguments to pass to the file reader. See possible arguments by file formats in [FileIO](#fileio) section.
+-   **Returns**: (`DataFrame`) Data frame object loaded from data in the specified file.
+
+## Microsoft Fabric Warehouse
+
+<ProOnly source="microsoft-fabric-warehouse" />
+
+`mage_ai.io.microsoft_fabric_warehouse.MicrosoftFabricWarehouse`
+
+Handles data transfer between a Microsoft Fabric Warehouse and the Mage app. This client extends the MSSQL client and uses the same connection methods.
+
+<h3> Constructor </h3>
+
+`__init__(self, **kwargs)`
+
+Initializes the Microsoft Fabric Warehouse data loading client. Uses the same parameters as [MSSQL](#mssql).
+
+<h3> Factory Methods </h3>
+
+**_with_config_** - `with_config(config: BaseConfigLoader, **kwargs) -> MicrosoftFabricWarehouse`
+
+Creates Microsoft Fabric Warehouse data loading client from configuration settings.
+
+-   **Args**:
+    -   `config (BaseConfigLoader)`: Configuration loader object.
+    -   `**kwargs`: Additional parameters passed to the loader constructor
+-   **Returns**: (`MicrosoftFabricWarehouse`) The constructed dataloader using this method
+
 # Configuration Settings
 
 Connections to third-party data storage require you to specify confidential information such as login information or access keys. While you can manually specify this information code while constructing data loading clients, it is recommended to not store the secrets directly in code.
@@ -1230,7 +2033,7 @@ Currently, the following sources (and their corresponding configuration loader) 
 -   Configuration File - `ConfigFileLoader`
 -   Environment Variables - `EnvironmentVariableLoader`
 -   AWS Secrets Manager - `AWSSecretLoader`
-s
+
 For example, the code below constructs a Redshift data loading client using secrets stored in AWS Secrets Manager
 
 ```python
@@ -1245,31 +2048,137 @@ The following are the set of allowed key names that you must name your secrets w
 
 | Key Name                        | Service                      | Client Constructor Parameter | Description                                                             | Notes                                       |
 | ------------------------------- | ---------------------------- | ---------------------------- | ----------------------------------------------------------------------- | ------------------------------------------- |
+| **AWS General**                 |                              |                              |                                                                         |                                             |
 | AWS_ACCESS_KEY_ID               | AWS General                  | -                            | AWS Access Key ID credential                                            | Used by [Redshift](#redshift) and [S3](#s3) |
 | AWS_SECRET_ACCESS_KEY           | AWS General                  | -                            | AWS Secret Access Key credential                                        | Used by [Redshift](#redshift) and [S3](#s3) |
 | AWS_SESSION_TOKEN               | AWS General                  | -                            | AWS Session Token (used to generate temporary DB credentials)           | Used by Redshift                            |
 | AWS_REGION                      | AWS General                  | -                            | AWS Region                                                              | Used by [Redshift](#redshift) and [S3](#s3) |
+| AWS_ENDPOINT                    | AWS General                  | -                            | AWS endpoint URL                                                        | Used by [S3](#s3). Optional                                    |
+| **AWS Redshift**                |                              |                              |                                                                         |                                             |
 | REDSHIFT_DBNAME                 | [AWS Redshift](#redshift)    | database                     | Name of Redshift database to connect to                                 |                                             |
 | REDSHIFT_HOST                   | [AWS Redshift](#redshift)    | host                         | Redshift Cluster hostname                                               | Use with temporary credentials              |
 | REDSHIFT_PORT                   | [AWS Redshift](#redshift)    | port                         | Redshift Cluster port. Optional, defaults to 5439.                      | Use with temporary credentials              |
+| REDSHIFT_SCHEMA                 | [AWS Redshift](#redshift)    | schema                       | Redshift schema name                                                    | Optional                                    |
 | REDSHIFT_TEMP_CRED_USER         | [AWS Redshift](#redshift)    | user                         | Redshift temporary credentials username.                                | Use with temporary credentials              |
 | REDSHIFT_TEMP_CRED_PASSWORD     | [AWS Redshift](#redshift)    | password                     | Redshift temporary credentials password.                                | Use with temporary credentials              |
 | REDSHIFT_DBUSER                 | [AWS Redshift](#redshift)    | db_user                      | Redshift database user to generate credentials for.                     | Use to generate temporary credentials       |
 | REDSHIFT_CLUSTER_ID             | [AWS Redshift](#redshift)    | cluster_identifier           | Redshift cluster ID                                                     | Use to generate temporary credentials       |
 | REDSHIFT_IAM_PROFILE            | [AWS Redshift](#redshift)    | profile                      | Name of the IAM profile to generate temporary credentials with          | Use to generate temporary credentials       |
+| **PostgreSQL**                  |                              |                              |                                                                         |                                             |
 | POSTGRES_DBNAME                 | [PostgreSQL](#postgresql)    | dbname                       | Database name                                                           |                                             |
 | POSTGRES_USER                   | [PostgreSQL](#postgresql)    | user                         | Database login username                                                 |                                             |
 | POSTGRES_PASSWORD               | [PostgreSQL](#postgresql)    | password                     | Database login password                                                 |                                             |
 | POSTGRES_HOST                   | [PostgreSQL](#postgresql)    | host                         | Database hostname                                                       |                                             |
 | POSTGRES_PORT                   | [PostgreSQL](#postgresql)    | port                         | PostgreSQL database port                                                |                                             |
+| POSTGRES_SCHEMA                 | [PostgreSQL](#postgresql)    | schema                       | PostgreSQL schema name                                                  | Optional                                    |
+| POSTGRES_CONNECTION_METHOD      | [PostgreSQL](#postgresql)    | connection_method            | Connection method ('direct' or 'ssh_tunnel')                            | Optional                                    |
+| POSTGRES_SSH_HOST               | [PostgreSQL](#postgresql)    | ssh_host                     | SSH tunnel host                                                         | Optional                                    |
+| POSTGRES_SSH_PORT               | [PostgreSQL](#postgresql)    | ssh_port                     | SSH tunnel port                                                         | Optional                                    |
+| POSTGRES_SSH_USERNAME           | [PostgreSQL](#postgresql)    | ssh_username                 | SSH tunnel username                                                     | Optional                                    |
+| POSTGRES_SSH_PASSWORD           | [PostgreSQL](#postgresql)    | ssh_password                 | SSH tunnel password                                                     | Optional                                    |
+| POSTGRES_SSH_PKEY               | [PostgreSQL](#postgresql)    | ssh_pkey                     | SSH tunnel private key path                                            | Optional                                    |
+| POSTGRES_SSL_MODE               | [PostgreSQL](#postgresql)    | sslmode                      | SSL mode                                                                | Optional                                    |
+| POSTGRES_SSL_ROOTCERT           | [PostgreSQL](#postgresql)    | sslrootcert                  | SSL root certificate path                                               | Optional                                    |
+| POSTGRES_SSL_CERT               | [PostgreSQL](#postgresql)    | sslcert                      | SSL certificate path                                                   | Optional                                    |
+| POSTGRES_SSL_KEY                | [PostgreSQL](#postgresql)    | sslkey                       | SSL key path                                                            | Optional                                    |
+| POSTGRES_CONNECT_TIMEOUT        | [PostgreSQL](#postgresql)    | connect_timeout              | Connection timeout in seconds                                           | Optional                                    |
+| **Snowflake**                   |                              |                              |                                                                         |                                             |
 | SNOWFLAKE_USER                  | [Snowflake](#snowflake)      | user                         | Snowflake username                                                      |                                             |
-| SNOWFLAKE_PASS                  | [Snowflake](#snowflake)      | password                     | Snowflake password                                                      |                                             |
+| SNOWFLAKE_PASSWORD              | [Snowflake](#snowflake)      | password                     | Snowflake password                                                      |                                             |
 | SNOWFLAKE_ACCOUNT               | [Snowflake](#snowflake)      | account                      | Snowflake account ID (including region)                                 |                                             |
 | SNOWFLAKE_DEFAULT_DB            | [Snowflake](#snowflake)      | database                     | Default database to use. Optional, no database chosen if unspecified.   |                                             |
 | SNOWFLAKE_DEFAULT_SCHEMA        | [Snowflake](#snowflake)      | schema                       | Default schema to use. Optional, no schema chosen if unspecified.       |                                             |
 | SNOWFLAKE_DEFAULT_WH            | [Snowflake](#snowflake)      | warehouse                    | Default warehouse to use. Optional, no warehouse chosen if unspecified. |                                             |
+| SNOWFLAKE_PRIVATE_KEY_PASSPHRASE | [Snowflake](#snowflake)    | private_key_passphrase      | Private key passphrase for key pair authentication                      | Optional                                    |
+| SNOWFLAKE_PRIVATE_KEY_PATH     | [Snowflake](#snowflake)      | private_key_path             | Path to private key file for key pair authentication                     | Optional                                    |
+| SNOWFLAKE_ROLE                  | [Snowflake](#snowflake)      | role                         | Snowflake role name                                                     | Optional                                    |
+| SNOWFLAKE_TIMEOUT               | [Snowflake](#snowflake)      | timeout                      | Query timeout in seconds                                                | Optional                                    |
+| **Google BigQuery**             |                              |                              |                                                                         |                                             |
 | GOOGLE_SERVICE_ACC_KEY          | [Google BigQuery](#bigquery) | credentials_mapping          | Service account key                                                     |                                             |
 | GOOGLE_SERVICE_ACC_KEY_FILEPATH | [Google BigQuery](#bigquery) | path_to_credentials          | Path to service account key                                             |                                             |
+| GOOGLE_LOCATION                 | [Google BigQuery](#bigquery) | location                     | Google Cloud location                                                   | Optional                                    |
+| **MySQL**                       |                              |                              |                                                                         |                                             |
+| MYSQL_DATABASE                  | [MySQL](#mysql)              | database                     | MySQL database name                                                     |                                             |
+| MYSQL_USER                      | [MySQL](#mysql)              | user                         | MySQL username                                                          |                                             |
+| MYSQL_PASSWORD                  | [MySQL](#mysql)              | password                     | MySQL password                                                          |                                             |
+| MYSQL_HOST                      | [MySQL](#mysql)              | host                         | MySQL hostname                                                          |                                             |
+| MYSQL_PORT                      | [MySQL](#mysql)              | port                         | MySQL port. Defaults to 3306.                                          |                                             |
+| MYSQL_CONNECTION_METHOD        | [MySQL](#mysql)              | connection_method            | Connection method ('direct' or 'ssh_tunnel')                            | Optional                                    |
+| MYSQL_SSH_HOST                  | [MySQL](#mysql)              | ssh_host                     | SSH tunnel host                                                         | Optional                                    |
+| MYSQL_SSH_PORT                  | [MySQL](#mysql)              | ssh_port                     | SSH tunnel port                                                         | Optional                                    |
+| MYSQL_SSH_USERNAME              | [MySQL](#mysql)              | ssh_username                 | SSH tunnel username                                                     | Optional                                    |
+| MYSQL_SSH_PASSWORD              | [MySQL](#mysql)              | ssh_password                 | SSH tunnel password                                                     | Optional                                    |
+| MYSQL_SSH_PKEY                  | [MySQL](#mysql)              | ssh_pkey                     | SSH tunnel private key path                                            | Optional                                    |
+| **MSSQL**                       |                              |                              |                                                                         |                                             |
+| MSSQL_DATABASE                  | [MSSQL](#mssql)              | database                     | MSSQL database name                                                     |                                             |
+| MSSQL_USER                      | [MSSQL](#mssql)              | user                         | MSSQL username                                                          |                                             |
+| MSSQL_PASSWORD                  | [MSSQL](#mssql)              | password                     | MSSQL password                                                          |                                             |
+| MSSQL_HOST                      | [MSSQL](#mssql)              | host                         | MSSQL hostname                                                          |                                             |
+| MSSQL_PORT                      | [MSSQL](#mssql)              | port                         | MSSQL port. Defaults to 1433.                                           |                                             |
+| MSSQL_SCHEMA                    | [MSSQL](#mssql)              | schema                       | MSSQL schema name. Defaults to 'dbo'.                                  |                                             |
+| MSSQL_AUTHENTICATION            | [MSSQL](#mssql)              | authentication               | Authentication method                                                   | Optional                                    |
+| MSSQL_CONNECTION_METHOD         | [MSSQL](#mssql)              | connection_method            | Connection method ('direct' or 'ssh_tunnel')                            | Optional                                    |
+| MSSQL_SSH_HOST                  | [MSSQL](#mssql)              | ssh_host                     | SSH tunnel host                                                         | Optional                                    |
+| MSSQL_SSH_PORT                  | [MSSQL](#mssql)              | ssh_port                     | SSH tunnel port                                                         | Optional                                    |
+| MSSQL_SSH_USERNAME              | [MSSQL](#mssql)              | ssh_username                 | SSH tunnel username                                                     | Optional                                    |
+| MSSQL_SSH_PASSWORD              | [MSSQL](#mssql)              | ssh_password                 | SSH tunnel password                                                     | Optional                                    |
+| MSSQL_SSH_PKEY                  | [MSSQL](#mssql)              | ssh_pkey                     | SSH tunnel private key path                                            | Optional                                    |
+| MSSQL_DRIVER                    | [MSSQL](#mssql)              | driver                       | ODBC driver name                                                        | Optional                                    |
+| **ClickHouse**                  |                              |                              |                                                                         |                                             |
+| CLICKHOUSE_HOST                 | [ClickHouse](#clickhouse)    | host                         | ClickHouse hostname                                                     |                                             |
+| CLICKHOUSE_PORT                 | [ClickHouse](#clickhouse)    | port                         | ClickHouse port                                                         |                                             |
+| CLICKHOUSE_USERNAME             | [ClickHouse](#clickhouse)    | username                     | ClickHouse username                                                     |                                             |
+| CLICKHOUSE_PASSWORD             | [ClickHouse](#clickhouse)    | password                     | ClickHouse password                                                     |                                             |
+| CLICKHOUSE_DATABASE             | [ClickHouse](#clickhouse)    | database                     | ClickHouse database name                                                |                                             |
+| CLICKHOUSE_INTERFACE            | [ClickHouse](#clickhouse)    | interface                    | ClickHouse interface                                                    | Optional                                    |
+| CLICKHOUSE_SSL_CA_CERT          | [ClickHouse](#clickhouse)    | ca_cert                      | Path to CA certificate for SSL                                          | Optional                                    |
+| **Trino**                       |                              |                              |                                                                         |                                             |
+| TRINO_CATALOG                   | [Trino](#trino)              | catalog                      | Trino catalog name                                                      |                                             |
+| TRINO_HOST                      | [Trino](#trino)              | host                         | Trino hostname                                                          |                                             |
+| TRINO_PORT                      | [Trino](#trino)              | port                         | Trino port. Defaults to 8080.                                          |                                             |
+| TRINO_USER                      | [Trino](#trino)              | user                         | Trino username                                                          |                                             |
+| TRINO_PASSWORD                  | [Trino](#trino)              | password                     | Trino password                                                          | Optional                                    |
+| TRINO_SCHEMA                    | [Trino](#trino)              | schema                       | Trino schema name                                                       | Optional                                    |
+| **Databricks SQL**              |                              |                              |                                                                         |                                             |
+| DATABRICKS_ACCESS_TOKEN         | [Databricks SQL](#databricks-sql) | access_token              | Databricks access token                                                 |                                             |
+| DATABRICKS_HOST                  | [Databricks SQL](#databricks-sql) | host                      | Databricks workspace hostname                                           |                                             |
+| DATABRICKS_HTTP_PATH            | [Databricks SQL](#databricks-sql) | http_path                | Databricks SQL warehouse HTTP path                                      |                                             |
+| DATABRICKS_DATABASE              | [Databricks SQL](#databricks-sql) | database                | Databricks database/catalog name                                        | Optional                                    |
+| DATABRICKS_SCHEMA                | [Databricks SQL](#databricks-sql) | schema                  | Databricks schema name                                                  | Optional                                    |
+| **Spark**                       |                              |                              |                                                                         |                                             |
+| SPARK_HOST                      | [Spark](#spark)              | host                         | Spark master URL                                                        |                                             |
+| SPARK_METHOD                    | [Spark](#spark)              | method                       | Spark connection method                                                 | Optional                                    |
+| SPARK_SCHEMA                    | [Spark](#spark)              | database                     | Spark database/schema name                                              | Optional                                    |
+| **MongoDB**                     |                              |                              |                                                                         |                                             |
+| MONGODB_CONNECTION_STRING       | [MongoDB](#mongodb)         | connection_string            | MongoDB connection string                                                | Alternative to individual settings          |
+| MONGODB_HOST                    | [MongoDB](#mongodb)         | host                         | MongoDB hostname                                                        |                                             |
+| MONGODB_PORT                    | [MongoDB](#mongodb)         | port                         | MongoDB port. Defaults to 27017.                                        |                                             |
+| MONGODB_USER                    | [MongoDB](#mongodb)         | user                         | MongoDB username                                                        |                                             |
+| MONGODB_PASSWORD                | [MongoDB](#mongodb)         | password                     | MongoDB password                                                        |                                             |
+| MONGODB_DATABASE                | [MongoDB](#mongodb)         | database                     | MongoDB database name                                                   |                                             |
+| MONGODB_COLLECTION              | [MongoDB](#mongodb)         | collection                  | MongoDB collection name                                                 | Optional                                    |
+| **OracleDB**                    |                              |                              |                                                                         |                                             |
+| ORACLEDB_USER                   | [OracleDB](#oracledb)        | user                         | OracleDB username                                                       |                                             |
+| ORACLEDB_PASSWORD               | [OracleDB](#oracledb)        | password                     | OracleDB password                                                       |                                             |
+| ORACLEDB_HOST                   | [OracleDB](#oracledb)        | host                         | OracleDB hostname                                                        |                                             |
+| ORACLEDB_PORT                   | [OracleDB](#oracledb)        | port                         | OracleDB port                                                           |                                             |
+| ORACLEDB_SERVICE                 | [OracleDB](#oracledb)        | service                      | OracleDB service name                                                   |                                             |
+| ORACLEDB_MODE                   | [OracleDB](#oracledb)        | mode                         | OracleDB mode ('thin' or 'thick')                                       | Optional                                    |
+| **DuckDB**                      |                              |                              |                                                                         |                                             |
+| DUCKDB_DATABASE                 | [DuckDB](#duckdb)            | database                     | DuckDB database path                                                    |                                             |
+| DUCKDB_SCHEMA                   | [DuckDB](#duckdb)            | schema                       | DuckDB schema name. Defaults to 'main'.                                 | Optional                                    |
+| MOTHERDUCK_TOKEN                | [DuckDB](#duckdb)            | -                            | MotherDuck authentication token                                          | Optional                                    |
+| **SQLite**                      |                              |                              |                                                                         |                                             |
+| SQLITE                          | [SQLite](#sqlite)            | database                     | SQLite database file path                                               |                                             |
+| **Azure**                       |                              |                              |                                                                         |                                             |
+| AZURE_CLIENT_ID                 | Azure Services               | client_id                    | Azure AD application client ID                                           | Used by [Azure Blob Storage](#azureblobstorage), [Azure Data Lake Storage](#azure-data-lake-storage) |
+| AZURE_CLIENT_SECRET             | Azure Services               | client_secret                | Azure AD application client secret                                       | Used by [Azure Blob Storage](#azureblobstorage), [Azure Data Lake Storage](#azure-data-lake-storage) |
+| AZURE_TENANT_ID                 | Azure Services               | tenant_id                    | Azure AD tenant ID                                                       | Used by [Azure Blob Storage](#azureblobstorage), [Azure Data Lake Storage](#azure-data-lake-storage)|
+| AZURE_STORAGE_ACCOUNT_NAME      | Azure Services               | storage_account_name         | Azure Storage account name                                              | Used by [Azure Blob Storage](#azureblobstorage), [Azure Data Lake Storage](#azure-data-lake-storage) |
+| **Microsoft Fabric**            |                              |                              |                                                                         |                                             |
+| MICROSOFT_FABRIC_WAREHOUSE_NAME | [Microsoft Fabric](#microsoft-fabric-warehouse) | warehouse_name | Microsoft Fabric warehouse name                                         |                                             |
+| MICROSOFT_FABRIC_WAREHOUSE_ENDPOINT | [Microsoft Fabric](#microsoft-fabric-warehouse) | endpoint | Microsoft Fabric warehouse endpoint                                     |                                             |
+| MICROSOFT_FABRIC_WAREHOUSE_SCHEMA | [Microsoft Fabric](#microsoft-fabric-warehouse) | schema | Microsoft Fabric warehouse schema                                       | Optional                                    |
 
 ## Configuration Loader APIs
 

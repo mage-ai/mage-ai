@@ -127,6 +127,14 @@ def export_data_to_clickhouse(df: DataFrame, **kwargs) -> None:
         table_name=table_name,
         database=database,
         index=False,  # Specifies whether to include index in exported table
-        if_exists='replace'  # Specify resolution policy if table name already exists
+        if_exists='replace',  # Specify resolution policy if table name already exists
+        overwrite_types={'column_name': 'VARCHAR(255)'},  # Overwrite column types
     )
 ```
+
+### Method arguments
+
+| Field name              | Description                                                                                                                                            | Example values              |
+| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------- |
+| if_exists               | Specify resolution policy if table name already exists                                                                                                 | "fail"/"replace"/"append" (default: "replace") |
+| overwrite_types         | Overwrite the column types                                                                                                                             | `{'column1': 'VARCHAR(255)', 'column2': 'INTEGER'}` |
