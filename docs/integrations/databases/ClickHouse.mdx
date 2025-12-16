@@ -138,39 +138,3 @@ def export_data_to_clickhouse(df: DataFrame, **kwargs) -> None:
 | ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------- |
 | if_exists               | Specify resolution policy if table name already exists                                                                                                 | "fail"/"replace"/"append" (default: "replace") |
 | overwrite_types         | Overwrite the column types                                                                                                                             | `{'column1': 'VARCHAR(255)', 'column2': 'INTEGER'}` |
-| unique_conflict_method  | How to handle the conflict on unique constraints. Use 'UPDATE' for UPSERT (update existing rows, insert new ones) or 'IGNORE' to skip duplicates.    | 'UPDATE' or 'IGNORE' (default: None) |
-| unique_constraints      | The unique constraints of the table. Used with unique_conflict_method for UPSERT operations.                                                           | ['col1', 'col2'] (default: None) |
-
-**Example: Using UPSERT (UPDATE or INSERT)**
-
-```python
-from mage_ai.settings.repo import get_repo_path
-from mage_ai.io.config import ConfigFileLoader
-from mage_ai.io.clickhouse import ClickHouse
-from pandas import DataFrame
-from os import path
-
-if 'data_exporter' not in globals():
-    from mage_ai.data_preparation.decorators import data_exporter
-
-
-@data_exporter
-def export_data_to_clickhouse(df: DataFrame, **kwargs) -> None:
-    """
-    Template for exporting data to ClickHouse with UPSERT support.
-    Specify your configuration settings in 'io_config.yaml'.
-    """
-    database = 'database_name'
-    table_name = 'table_name'
-    config_path = path.join(get_repo_path(), 'io_config.yaml')
-    config_profile = 'default'
-
-    ClickHouse.with_config(ConfigFileLoader(config_path, config_profile)).export(
-        df,
-        table_name=table_name,
-        database=database,
-        if_exists='append',  # Use 'append' with UPSERT
-        unique_constraints=['user_id', 'email'],  # Columns that form unique constraint
-        unique_conflict_method='UPDATE',  # Update existing rows, insert new ones
-    )
-```
