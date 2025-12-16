@@ -11,7 +11,7 @@ Mage provides data loading clients that simplify loading and exporting data in y
 **File Storage:**
 -   [AWS S3](#s3)
 -   [Azure Blob Storage](#azureblobstorage)
--   [Azure Data Lake Storage](#azure-data-lake-storage)
+-   [Azure Data Lake Storage](#azure-data-lake-storage) (Pro only)
 -   [Filesystem](#fileio)
 -   [Google Cloud Storage](#googlecloudstorage)
 
@@ -1923,6 +1923,8 @@ Exports a Pandas data frame to a Spark session. If table doesn't exist, the tabl
     -   `**kwargs`: Additional arguments to pass to writer.
 
 ## Azure Data Lake Storage
+
+<ProOnly source="azure-data-lake-storage" />
 
 `mage_ai.io.azure_data_lake_storage.AzureDataLakeStorage`
 
