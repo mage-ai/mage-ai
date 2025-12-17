@@ -521,6 +521,7 @@
                       "guides/streaming/sources/postgres-cdc",
                       "guides/streaming/sources/rabbitmq",
                       "guides/streaming/sources/mongodb",
+                      "guides/streaming/sources/mssql-cdc",
                       "guides/streaming/sources/mysql-cdc"
                     ]
                   },
