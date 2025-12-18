@@ -32,6 +32,19 @@ class OracleDB(Source):
     @property
     def mode(self) -> str:
         return self.config.get('mode') or 'thin'
+        
+    @property
+def schema(self) -> str:
+    return self.config.get('schema')
+
+    @property
+    def table_prefix(self):
+        schema = self.schema
+        return f'"{schema}".' if schema else ''
+    
+    def build_table_name(self, stream) -> str:
+        table_name = stream.tap_stream_id
+        return f'{self.table_prefix}"{table_name}"'
 
     def update_column_names(self, columns: List[str]) -> List[str]:
         return list(map(lambda column: f'"{column}"', columns))
