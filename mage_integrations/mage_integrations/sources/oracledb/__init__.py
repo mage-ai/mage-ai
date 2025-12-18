@@ -32,7 +32,7 @@ class OracleDB(Source):
     @property
     def mode(self) -> str:
         return self.config.get('mode') or 'thin'
-        
+
     @property
     def schema(self) -> str:
         return self.config.get('schema')
@@ -41,7 +41,7 @@ class OracleDB(Source):
     def table_prefix(self):
         schema = self.schema
         return f'"{schema}".' if schema else ''
-    
+
     def build_table_name(self, stream) -> str:
         table_name = stream.tap_stream_id
         return f'{self.table_prefix}"{table_name}"'
@@ -52,10 +52,9 @@ class OracleDB(Source):
     def _limit_query_string(self, limit, offset, **kwargs):
         return f'OFFSET {offset} ROWS FETCH NEXT {limit} ROWS ONLY'
 
-    
     def build_discover_query(self, streams: List[str] = None):
-    schema = self.schema
-    query = """
+        schema = self.schema
+        query = """
 with selected_items as (
 SELECT user_tab.TABLE_NAME,
 user_tab.DATA_DEFAULT,
@@ -93,19 +92,18 @@ COLUMN_NAME,
 DATA_TYPE,
 IS_NULLABLE
 from selected_items where row_id = 1
-    """
-    schema_clause = f"\nAND user_tab.OWNER = '{schema}'" if schema else ''
-    if streams:
-        table_names = ', '.join([f"'{n}'" for n in streams])
-        query = query.format(
-            schema_clause=schema_clause,
-            where_table_clause=f"\nAND user_tab.TABLE_NAME IN ({table_names})"
-        )
-    else:
-        query = query.format(schema_clause=schema_clause, where_table_clause='')
+        """
+        schema_clause = f"\nAND user_tab.OWNER = '{schema}'" if schema else ''
+        if streams:
+            table_names = ', '.join([f"'{n}'" for n in streams])
+            query = query.format(
+                schema_clause=schema_clause,
+                where_table_clause=f"\nAND user_tab.TABLE_NAME IN ({table_names})"
+            )
+        else:
+            query = query.format(schema_clause=schema_clause, where_table_clause='')
 
-    return query
-
+        return query
 
     def build_connection(self) -> OracleDBConnection:
         return OracleDBConnection(
