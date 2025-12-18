@@ -34,8 +34,8 @@ class OracleDB(Source):
         return self.config.get('mode') or 'thin'
         
     @property
-def schema(self) -> str:
-    return self.config.get('schema')
+    def schema(self) -> str:
+        return self.config.get('schema')
 
     @property
     def table_prefix(self):
