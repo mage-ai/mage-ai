@@ -64,7 +64,7 @@ boto3==1.26.60
 botocore==1.29.60
 clickhouse-connect~=0.6.23
 db-dtypes==1.0.5
-duckdb==1.1.3
+duckdb==1.4.3
 google-api-core~=2.15.0
 google-api-python-client~=2.70.0
 google-cloud-bigquery~=3.14.1
