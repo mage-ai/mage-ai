@@ -30,7 +30,7 @@ newrelic==8.8.0
 numpy>=1.22.0
 pandas>=1.3.0
 paramiko==3.5.1
-polars==1.29.0
+polars==1.30.0
 protobuf>=4.25.0
 psutil==5.9.8
 pyairtable>=2.3.3
