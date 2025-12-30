@@ -88,7 +88,7 @@ def run_job(command: str, job_id: str, cloud_run_config: CloudRunConfig) -> Dict
         name=job_name,
     ))
     logger.info('Waiting for run_job operation to complete...')
-    response = operation.result()
+    response = operation.result(timeout=cloud_run_config.timeout_seconds)
     logger.info(json.dumps(response, indent=4, default=str))
 
     # Delete the job after job completes
