@@ -790,7 +790,10 @@ WHERE table_id = '{table_name}'
                 column_type_dict = mapping[column]
                 column_settings = column_type_dict['column_settings']
                 if COLUMN_FORMAT_DATETIME == column_settings.get('format'):
-                    df[column_cleaned] = pd.to_datetime(df[column_cleaned])
+                    try:
+                        df[column_cleaned] = pd.to_datetime(df[column_cleaned])
+                    except Exception:
+                        df[column_cleaned] = pd.to_datetime(df[column_cleaned], format='mixed')
             job = client.load_table_from_dataframe(
                 df,
                 full_table_name,

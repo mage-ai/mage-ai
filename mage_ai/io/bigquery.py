@@ -417,7 +417,10 @@ WHERE table_id = '{table_name}'
                     # Convert TIMESTAMP columns in DataFrame
                     for col in timestamp_columns:
                         if col in df.columns:
-                            df[col] = pd.to_datetime(df[col])
+                            try:
+                                df[col] = pd.to_datetime(df[col])
+                            except Exception:
+                                df[col] = pd.to_datetime(df[col], format='mixed')
                 except Exception:
                     print('Fail to cast column types in dataframe.')
                     traceback.print_exc()

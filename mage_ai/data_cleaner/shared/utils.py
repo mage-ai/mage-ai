@@ -52,7 +52,7 @@ def clean_series(series, column_type, dropna=True):
         if is_percent:
             series_cleaned /= 100
     elif column_type == ColumnType.DATETIME:
-        series_cleaned = pd.to_datetime(series_cleaned, errors='coerce', infer_datetime_format=True)
+        series_cleaned = pd.to_datetime(series_cleaned, errors='coerce', format='mixed')
     elif column_type == ColumnType.PHONE_NUMBER and dtype is not str:
         series_cleaned = series_cleaned.astype(str)
         series_cleaned = series_cleaned.str.replace(r'\.\d*', '', regex=True)
