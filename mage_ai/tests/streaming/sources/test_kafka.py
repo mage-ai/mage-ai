@@ -137,12 +137,14 @@ class KafkaTests(TestCase):
         with patch('mage_ai.streaming.sources.kafka.KafkaConsumer') as mock_consumer:
             with patch('mage_ai.streaming.sources.kafka_oauth.requests.post') as mock_post:
                 # Mock the OAuth token response
-                mock_response = patch('requests.Response')
-                mock_post.return_value.json.return_value = {
+                from unittest.mock import Mock
+                mock_response = Mock()
+                mock_response.json.return_value = {
                     'access_token': 'test_token',
                     'expires_in': 3600,
                 }
-                mock_post.return_value.raise_for_status = patch('unittest.mock.Mock')
+                mock_response.raise_for_status = Mock()
+                mock_post.return_value = mock_response
                 
                 KafkaSource(kafka_config)
 
