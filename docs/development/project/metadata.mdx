@@ -1,0 +1,173 @@
+---
+title: "Project metadata.yaml"
+sidebarTitle: "Project metadata.yaml"
+description: "Reference for configuring project-level settings in metadata.yaml."
+icon: "briefcase"
+---
+
+## Overview
+
+Each Mage project has a `metadata.yaml` file at the root of the project
+directory. The file controls storage locations, feature flags, compute
+configuration, and defaults that apply to all pipelines in the project.
+
+```
+your_project/
+├─ pipelines/
+├─ .../
+├─ io_config.yaml
+├─ metadata.yaml   <-- project metadata lives here
+├─ requirements.txt
+```
+
+Use the fields below to customize how your project behaves. For
+environment-specific overrides, add an `overrides` section (see
+`/extensibility/env-config/project`).
+
+## Sample `metadata.yaml`
+
+```yaml
+project_type: standalone
+variables_dir: ~/.mage_data
+remote_variables_dir: s3://bucket/path_prefix
+help_improve_mage: true
+
+notification_config:
+  alert_on:
+    - trigger_failure
+  slack_config:
+    webhook_url: "{{ env_var('MAGE_SLACK_WEBHOOK_URL') }}"
+
+pipelines:
+  settings:
+    triggers:
+      save_in_code_automatically: true
+
+project_uuid: 123456789abcdefg
+```
+
+## Top-level fields
+
+<ParamField path="project_type" type="string enum">
+  Project layout. Common options: `standalone` (default), `main`, or `sub`.
+</ParamField>
+
+<ParamField path="cluster_type" type="string">
+  Optional cluster type used by the project (e.g., `k8s`, `docker`). Used by Mage Pro
+  when running managed workspaces.
+</ParamField>
+
+<ParamField path="project_uuid" type="string">
+  Unique identifier for the project. Generated when the project is created.
+</ParamField>
+
+<ParamField path="variables_dir" type="string">
+  Local path for storing pipeline variables and outputs. Paths are relative to
+  the project root unless an absolute path is provided. Default to `/home/src/mage_data`.
+</ParamField>
+
+<ParamField path="remote_variables_dir" type="string">
+  Remote path (e.g., `s3://bucket/prefix`) for storing variables in object
+  storage instead of the local filesystem.
+</ParamField>
+
+<ParamField path="variables_retention_period" type="string">
+  How long variables are retained (e.g., `90d`).
+</ParamField>
+
+<ParamField path="workspace_initial_metadata" type="object">
+  Default project metadata applied to new workspaces created from this project.
+  Mage Pro workspaces only.
+</ParamField>
+
+<ParamField path="workspace_config_defaults" type="object">
+  Default workspace configuration applied across environments (e.g., k8s
+  defaults when running on Kubernetes). Mage Pro workspaces only.
+</ParamField>
+
+<ParamField path="help_improve_mage" type="boolean">
+  Allows Mage to collect limited telemetry to improve the product.
+</ParamField>
+
+<ParamField path="features" type="object">
+  Feature flags for the project (e.g., `command_center`, `dbt_v2`,
+  `automatic_kernel_cleanup`). Keys are booleans.
+</ParamField>
+
+<ParamField path="pipelines.settings.triggers.save_in_code_automatically" type="boolean">
+  Whether new or updated triggers are automatically written to code.
+</ParamField>
+
+<ParamField path="overrides" type="object">
+  Environment-specific overrides for any top-level field. Mage Pro only. See
+  `/extensibility/env-config/project`.
+</ParamField>
+
+## Compute and execution
+
+<ParamField path="emr_config" type="object">
+  Amazon EMR cluster settings (instance types, security groups, key pair, etc.).
+</ParamField>
+
+<ParamField path="spark_config" type="object">
+  Spark configuration shared across pipelines (e.g., `spark_master`,
+  `executor_env`, `spark_jars`, `use_custom_session`).
+</ParamField>
+
+<ParamField path="ecs_config" type="object">
+  Project-level defaults for AWS ECS execution.
+</ParamField>
+
+<ParamField path="gcp_cloud_run_config" type="object">
+  Project-level defaults for GCP Cloud Run execution.
+</ParamField>
+
+<ParamField path="azure_container_instance_config" type="object">
+  Project-level defaults for Azure Container Instances execution.
+</ParamField>
+
+<ParamField path="k8s_executor_config" type="object">
+  Kubernetes executor defaults applied to pipelines and blocks.
+</ParamField>
+
+<ParamField path="concurrency_config" type="object">
+  Limits and concurrency settings at the project level.
+</ParamField>
+
+<ParamField path="queue_config" type="object">
+  Configuration for queueing pipeline runs.
+</ParamField>
+
+<ParamField path="state_store_config" type="object">
+  State store configuration used by pipelines.
+</ParamField>
+
+## Observability and safety
+
+<ParamField path="notification_config" type="object">
+  Project-level alerting configuration (alert types, Slack/Teams webhooks, etc.).
+</ParamField>
+
+<ParamField path="logging_config" type="object">
+  Configure log destinations and formats for the project.
+</ParamField>
+
+<ParamField path="retry_config" type="object">
+  Default retry behavior applied at the project level.
+</ParamField>
+
+<ParamField path="ai_config" type="object">
+  Global AI-related settings (e.g., model providers).
+</ParamField>
+
+<ParamField path="rag_config" type="object">
+  Retrieval-augmented generation settings shared across pipelines.
+</ParamField>
+
+<ParamField path="openai_api_key" type="string">
+  Project-level OpenAI API key used by AI features when applicable.
+</ParamField>
+
+<ParamField path="ldap_config" type="object">
+  Optional LDAP connection settings for authentication.
+</ParamField>

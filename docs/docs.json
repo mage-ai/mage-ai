@@ -45,7 +45,9 @@
               "guides/data-sync/cicd-workflow",
               "guides/data-sync/git-terminal",
               "guides/version-control/file-versions",
-              "guides/data-sync/version-control-guide"
+              "guides/data-sync/version-control-guide",
+              "guides/data-sync/git-client"
+
             ]
           },
           {
@@ -134,11 +136,12 @@
             "pages": [
               "migrations/airbyte-to-mage-pro",
               "migrations/airflow-to-mage-pro",
+              "migrations/dagster-to-mage-pro",
               "migrations/dbt-to-mage-pro",
               "migrations/estuary-to-mage-pro",
               "migrations/fivetran-to-mage-pro",
-              "migrations/prefect-to-mage-pro",
-              "migrations/dagster-to-mage-pro"
+              "migrations/mage-oss-to-mage-pro",
+              "migrations/prefect-to-mage-pro"
             ]
           },
           {
@@ -389,7 +392,8 @@
               "getting-started/kernels",
               "development/project/local-timezone",
               "development/settings-backend",
-              "development/updating-mage"
+              "development/updating-mage",
+              "development/project/metadata"
             ]
           },
           {
@@ -517,6 +521,7 @@
                       "guides/streaming/sources/postgres-cdc",
                       "guides/streaming/sources/rabbitmq",
                       "guides/streaming/sources/mongodb",
+                      "guides/streaming/sources/mssql-cdc",
                       "guides/streaming/sources/mysql-cdc"
                     ]
                   },

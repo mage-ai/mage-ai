@@ -15,7 +15,7 @@ buffer_timeout_seconds: 300
 
 * `bucket`: The S3 bucket you want to use to store the data.
 * `prefix`: The S3 path prefix. The whole S3 path will be `s3://{bucket}/{prefix}`.
-* `file_type`: `parquet` or `csv`
+* `file_type`: `parquet`, `csv`, or `delta` (for Delta Lake tables)
 * `buffer_size_mb` and `buffer_timeout_seconds`: Mage puts messages in a buffer before uploading to S3.
   You can configure the size and timeout of the buffer to control the file size and the delay.
 
@@ -28,9 +28,45 @@ date_partition_format: "%Y%m%dT%H"
 
 ```
 
-If you want to store the S3 data in time-based paratition folders. You can add `date_partition_format`
+If you want to store the S3 data in time-based partition folders. You can add `date_partition_format`
 to the config. Example values: `%Y%m%d`, `%Y%m%dT%H`.
 
+
+## Delta Lake configuration
+
+import { ProButton } from '/snippets/pro/button.mdx';
+import { ProOnly } from '/snippets/pro/only.mdx';
+
+
+**Note:** Delta Lake format (`file_type: delta`) is a Mage Pro only feature.
+
+<ProOnly source="s3-deltalake" />
+
+When using `file_type: delta`, you can write data to Delta Lake tables in Amazon S3.
+
+```yaml
+connector_type: amazon_s3
+bucket: my-bucket
+prefix: my-prefix
+file_type: delta
+table_uri: s3://my-bucket/path/to/delta-table  # Optional: if not provided, constructed from bucket/prefix
+mode: append  # 'append' or 'overwrite'
+buffer_size_mb: 5
+buffer_timeout_seconds: 300
+aws_access_key_id: YOUR_ACCESS_KEY  # Optional: falls back to environment variables or IAM roles
+aws_secret_access_key: YOUR_SECRET_KEY  # Optional: falls back to environment variables or IAM roles
+aws_region: us-west-2  # Optional: defaults to us-west-2
+```
+
+* `table_uri`: (Optional) Full URI for the Delta Lake table (e.g., `s3://bucket/path/to/table`). If not provided, the URI will be automatically constructed from `bucket` and `prefix`.
+* `mode`: Write mode for Delta Lake tables. Valid values:
+  * `append`: Adds new rows to the existing table (default)
+  * `overwrite`: Replaces all existing rows in the table
+* `aws_access_key_id`: (Optional) AWS access key ID. If not provided, will fall back to the `AWS_ACCESS_KEY_ID` environment variable or the IAM role attached to the instance. See [Referencing Variables](/development/variables/referencing-variables) for configuring credentials via environment variables or secret variables.
+* `aws_secret_access_key`: (Optional) AWS secret access key. If not provided, will fall back to the `AWS_SECRET_ACCESS_KEY` environment variable or the IAM role attached to the instance. See [Referencing Variables](/development/variables/referencing-variables) for configuring credentials via environment variables or secret variables.
+* `aws_region`: (Optional) AWS region. If not provided, will fall back to the `AWS_REGION` environment variable or default to `us-west-2`.
+
+**Note:** When using Delta Lake format, time-based partitioning (`date_partition_format`) is not applied as Delta Lake manages its own internal file structure.
 
 ## Authentication
 Here are the options to authenticate with the AWS S3 bucket.
@@ -41,3 +77,5 @@ Here are the options to authenticate with the AWS S3 bucket.
 2. If you deploy Mage on AWS ECS cluster, you can use ECS execution task role to authenticate.
    You can grant the ECS task permissions to access other AWS services by attaching IAM policies
    to this ECS task execution role.
+
+**Security Note:** Storing credentials in configuration files can be insecure. Prefer using environment variables or IAM roles when possible, especially for production deployments. See [Referencing Variables](/development/variables/referencing-variables) for configuring credentials via environment variables or secret variables.
