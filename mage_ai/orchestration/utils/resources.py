@@ -4,6 +4,9 @@ from typing import Tuple
 
 import psutil
 
+# Threshold value for cgroup memory limit indicating no limit is set
+NO_LIMIT_THRESHOLD = 9e18
+
 
 def get_compute() -> Tuple[float, float, float, float]:
     # Getting loadover15 minutes
@@ -29,7 +32,7 @@ def get_memory() -> Tuple[float, float, float]:
     total_memory = None
     used_memory = None
 
-    # Skip check the memory in Windows
+    # Skip checking the memory in Windows
     if os.name == 'nt':
         return free_memory, used_memory, total_memory
 
@@ -61,7 +64,7 @@ def get_memory() -> Tuple[float, float, float]:
                 if limit_value != "max":
                     limit_bytes = int(limit_value)
                     # A value of 9223372036854771712 or greater indicates no limit set
-                    if limit_bytes < 9e18:
+                    if limit_bytes < NO_LIMIT_THRESHOLD:
                         total_memory = limit_bytes / mb_factor
         
         # If we successfully read both values, calculate free memory

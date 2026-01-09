@@ -69,17 +69,23 @@ class TestGetMemory(unittest.TestCase):
         usage_bytes = 1500 * 1024 * 1024
         limit_bytes = 5000 * 1024 * 1024
         
+        # Create mock read() return value with strip() method
+        usage_read_value = MagicMock()
+        usage_read_value.strip.return_value = str(usage_bytes)
+        
+        limit_read_value = MagicMock()
+        limit_read_value.strip.return_value = str(limit_bytes)
+        
         mock_file_handles = {
             "/sys/fs/cgroup/memory.current": MagicMock(
                 __enter__=lambda self: self,
                 __exit__=lambda self, *args: None,
-                read=lambda: str(usage_bytes),
-                strip=lambda: str(usage_bytes)
+                read=lambda: usage_read_value
             ),
             "/sys/fs/cgroup/memory.max": MagicMock(
                 __enter__=lambda self: self,
                 __exit__=lambda self, *args: None,
-                read=lambda: MagicMock(strip=lambda: str(limit_bytes))
+                read=lambda: limit_read_value
             ),
         }
         
@@ -111,16 +117,23 @@ class TestGetMemory(unittest.TestCase):
         
         usage_bytes = 1500 * 1024 * 1024
         
+        # Create mock read() return value with strip() method
+        usage_read_value = MagicMock()
+        usage_read_value.strip.return_value = str(usage_bytes)
+        
+        limit_read_value = MagicMock()
+        limit_read_value.strip.return_value = "max"
+        
         mock_file_handles = {
             "/sys/fs/cgroup/memory.current": MagicMock(
                 __enter__=lambda self: self,
                 __exit__=lambda self, *args: None,
-                read=lambda: MagicMock(strip=lambda: str(usage_bytes))
+                read=lambda: usage_read_value
             ),
             "/sys/fs/cgroup/memory.max": MagicMock(
                 __enter__=lambda self: self,
                 __exit__=lambda self, *args: None,
-                read=lambda: MagicMock(strip=lambda: "max")
+                read=lambda: limit_read_value
             ),
         }
         
@@ -185,16 +198,23 @@ class TestGetMemory(unittest.TestCase):
         # Very large limit indicates no limit
         limit_bytes = 9223372036854771712
         
+        # Create mock read() return value with strip() method
+        usage_read_value = MagicMock()
+        usage_read_value.strip.return_value = str(usage_bytes)
+        
+        limit_read_value = MagicMock()
+        limit_read_value.strip.return_value = str(limit_bytes)
+        
         mock_file_handles = {
             "/sys/fs/cgroup/memory/memory.usage_in_bytes": MagicMock(
                 __enter__=lambda self: self,
                 __exit__=lambda self, *args: None,
-                read=lambda: MagicMock(strip=lambda: str(usage_bytes))
+                read=lambda: usage_read_value
             ),
             "/sys/fs/cgroup/memory/memory.limit_in_bytes": MagicMock(
                 __enter__=lambda self: self,
                 __exit__=lambda self, *args: None,
-                read=lambda: MagicMock(strip=lambda: str(limit_bytes))
+                read=lambda: limit_read_value
             ),
         }
         
