@@ -21,6 +21,40 @@ except ImportError:
 logger = logging.getLogger(__name__)
 
 
+def create_oauth_token_provider(sasl_config):
+    """
+    Create an OAuth token provider for OAUTHBEARER mechanism.
+    
+    Args:
+        sasl_config: SASL configuration containing OAuth parameters
+        
+    Returns:
+        ClientCredentialsTokenProvider instance
+        
+    Raises:
+        Exception: If required OAuth parameters are missing
+    """
+    if not sasl_config.oauth_token_url:
+        raise Exception(
+            'oauth_token_url is required in sasl_config for OAUTHBEARER mechanism'
+        )
+    if not sasl_config.oauth_client_id:
+        raise Exception(
+            'oauth_client_id is required in sasl_config for OAUTHBEARER mechanism'
+        )
+    if not sasl_config.oauth_client_secret:
+        raise Exception(
+            'oauth_client_secret is required in sasl_config for OAUTHBEARER mechanism'
+        )
+    
+    return ClientCredentialsTokenProvider(
+        token_url=sasl_config.oauth_token_url,
+        client_id=sasl_config.oauth_client_id,
+        client_secret=sasl_config.oauth_client_secret,
+        scope=sasl_config.oauth_scope,
+    )
+
+
 class ClientCredentialsTokenProvider(AbstractTokenProvider):
     """
     Token provider that implements OAuth 2.0 client credentials flow.
@@ -108,6 +142,13 @@ class ClientCredentialsTokenProvider(AbstractTokenProvider):
             
             response.raise_for_status()
             token_data = response.json()
+            
+            # Validate that access_token is present in the response
+            if 'access_token' not in token_data:
+                logger.error("OAuth server response missing 'access_token' field")
+                raise RuntimeError(
+                    "Invalid token response format: missing 'access_token' field"
+                )
             
             self._access_token = token_data['access_token']
             expires_in = token_data.get('expires_in', 3600)

@@ -193,6 +193,7 @@ class ClientCredentialsTokenProviderTests(TestCase):
             provider.token()
         
         self.assertIn('Invalid token response format', str(context.exception))
+        self.assertIn('missing', str(context.exception))
     
     def test_extensions(self):
         """Test that extensions returns empty dict"""

@@ -12,6 +12,7 @@ from mage_ai.streaming.sinks.base import BaseSink
 
 
 class SecurityProtocol(StrEnum):
+    SASL_PLAINTEXT = 'SASL_PLAINTEXT'
     SASL_SSL = 'SASL_SSL'
     SSL = 'SSL'
 
@@ -59,42 +60,6 @@ class KafkaConfig(BaseConfig):
         return config
 
 
-def _create_oauth_token_provider(sasl_config: SASLConfig):
-    """
-    Create an OAuth token provider for OAUTHBEARER mechanism.
-    
-    Args:
-        sasl_config: SASL configuration containing OAuth parameters
-        
-    Returns:
-        ClientCredentialsTokenProvider instance
-        
-    Raises:
-        Exception: If required OAuth parameters are missing
-    """
-    from mage_ai.streaming.sources.kafka_oauth import ClientCredentialsTokenProvider
-    
-    if not sasl_config.oauth_token_url:
-        raise Exception(
-            'oauth_token_url is required in sasl_config for OAUTHBEARER mechanism'
-        )
-    if not sasl_config.oauth_client_id:
-        raise Exception(
-            'oauth_client_id is required in sasl_config for OAUTHBEARER mechanism'
-        )
-    if not sasl_config.oauth_client_secret:
-        raise Exception(
-            'oauth_client_secret is required in sasl_config for OAUTHBEARER mechanism'
-        )
-    
-    return ClientCredentialsTokenProvider(
-        token_url=sasl_config.oauth_token_url,
-        client_id=sasl_config.oauth_client_id,
-        client_secret=sasl_config.oauth_client_secret,
-        scope=sasl_config.oauth_scope,
-    )
-
-
 class KafkaSink(BaseSink):
     config_class = KafkaConfig
 
@@ -130,7 +95,9 @@ class KafkaSink(BaseSink):
             
             # Handle OAUTHBEARER mechanism
             if self.config.sasl_config.mechanism == 'OAUTHBEARER':
-                token_provider = _create_oauth_token_provider(self.config.sasl_config)
+                from mage_ai.streaming.sources.kafka_oauth import create_oauth_token_provider
+                
+                token_provider = create_oauth_token_provider(self.config.sasl_config)
                 kwargs['sasl_oauth_token_provider'] = token_provider
             else:
                 # Handle PLAIN, SCRAM mechanisms
