@@ -185,4 +185,40 @@ class ParsersTests(TestCase):
         # Second level circular reference should fallback to string
         self.assertEqual(result["next"]["next"], str(a))
 
-        
+    def test_encode_diamond_reference_behavior(self):
+        """
+        Test: Shared (diamond) reference behavior.
+
+        A -> B -> D
+        A -> C -> D
+
+        D is shared but not circular. Current behavior serializes D the first time
+        and falls back to string on subsequent encounters.
+        """
+
+        class Node:
+            def __init__(self, name):
+                self.name = name
+                self.child = None
+
+        d = Node("D")
+        b = Node("B")
+        c = Node("C")
+        a = Node("A")
+
+        b.child = d
+        c.child = d
+        a.left = b
+        a.right = c
+
+        result = encode_complex(a)
+
+        # First encounter of D → dict
+        self.assertIsInstance(result["left"]["child"], dict)
+        self.assertEqual(result["left"]["child"]["name"], "D")
+
+        # Second encounter of D → string fallback
+        self.assertEqual(
+            result["right"]["child"],
+            str(d),
+        )
