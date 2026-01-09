@@ -101,7 +101,7 @@ function GitFiles({
       },
     ),
   }), [fetchBranchProp, sharedUpdateProps]);
-  const updateEndpoint = useMemo(() => api.git_custom_branches.useUpdate(branch?.name), [branch]);
+  const updateEndpoint = useMemo(() => api.git_custom_branches.useUpdate(encodeURIComponent(branch?.name)), [branch]);
 
   const [updateGitBranch, { isLoading: isLoadingUpdate }] = useMutation(
     updateEndpoint,
@@ -217,7 +217,7 @@ function GitFiles({
   const logs = useMemo(() => dataBranch?.git_custom_branch?.logs || [], [dataBranch]);
 
   const [updateGitBranchCommit, { isLoading: isLoadingUpdateCommit }] = useMutation(
-    api.git_custom_branches.useUpdate(branch?.name),
+    api.git_custom_branches.useUpdate(encodeURIComponent(branch?.name)),
     {
       onSuccess: (response: any) => onSuccess(
         response, {
