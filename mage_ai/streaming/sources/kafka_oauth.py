@@ -15,7 +15,16 @@ try:
 except ImportError:
     # Fallback for when kafka is not installed
     class AbstractTokenProvider:
-        pass
+        """Fallback token provider interface when kafka-python is not installed."""
+        
+        def __init__(self, **config):
+            pass
+        
+        def token(self):
+            raise NotImplementedError("token() must be implemented by subclass")
+        
+        def extensions(self):
+            return {}
 
 
 logger = logging.getLogger(__name__)

@@ -1,4 +1,4 @@
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 from mage_ai.streaming.sinks.kafka import KafkaSink
 from mage_ai.tests.base_test import TestCase
@@ -56,7 +56,6 @@ class KafkaSinkTests(TestCase):
         with patch('mage_ai.streaming.sinks.kafka.KafkaProducer') as mock_producer:
             with patch('mage_ai.streaming.sources.kafka_oauth.requests.post') as mock_post:
                 # Mock the OAuth token response
-                from unittest.mock import Mock
                 mock_response = Mock()
                 mock_response.json.return_value = {
                     'access_token': 'test_token',
