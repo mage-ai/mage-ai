@@ -21,6 +21,11 @@ class SASLConfig:
     mechanism: str = 'PLAIN'
     username: str = None
     password: str = None
+    # OAuth configuration for OAUTHBEARER mechanism
+    oauth_token_url: str = None
+    oauth_client_id: str = None
+    oauth_client_secret: str = None
+    oauth_scope: str = None
 
 
 @dataclass
@@ -86,8 +91,35 @@ class KafkaSink(BaseSink):
         elif self.config.security_protocol == SecurityProtocol.SASL_SSL:
             kwargs['security_protocol'] = SecurityProtocol.SASL_SSL
             kwargs['sasl_mechanism'] = self.config.sasl_config.mechanism
-            kwargs['sasl_plain_username'] = self.config.sasl_config.username
-            kwargs['sasl_plain_password'] = self.config.sasl_config.password
+            
+            # Handle OAUTHBEARER mechanism
+            if self.config.sasl_config.mechanism == 'OAUTHBEARER':
+                from mage_ai.streaming.sources.kafka_oauth import ClientCredentialsTokenProvider
+                
+                if not self.config.sasl_config.oauth_token_url:
+                    raise Exception(
+                        'oauth_token_url is required in sasl_config for OAUTHBEARER mechanism'
+                    )
+                if not self.config.sasl_config.oauth_client_id:
+                    raise Exception(
+                        'oauth_client_id is required in sasl_config for OAUTHBEARER mechanism'
+                    )
+                if not self.config.sasl_config.oauth_client_secret:
+                    raise Exception(
+                        'oauth_client_secret is required in sasl_config for OAUTHBEARER mechanism'
+                    )
+                
+                token_provider = ClientCredentialsTokenProvider(
+                    token_url=self.config.sasl_config.oauth_token_url,
+                    client_id=self.config.sasl_config.oauth_client_id,
+                    client_secret=self.config.sasl_config.oauth_client_secret,
+                    scope=self.config.sasl_config.oauth_scope,
+                )
+                kwargs['sasl_oauth_token_provider'] = token_provider
+            else:
+                # Handle PLAIN, SCRAM mechanisms
+                kwargs['sasl_plain_username'] = self.config.sasl_config.username
+                kwargs['sasl_plain_password'] = self.config.sasl_config.password
 
             if self.config.ssl_config is not None and self.config.ssl_config.cafile:
                 kwargs['ssl_cafile'] = self.config.ssl_config.cafile
