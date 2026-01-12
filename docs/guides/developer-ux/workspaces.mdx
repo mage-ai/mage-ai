@@ -506,7 +506,7 @@ pre_start_script_path: /home/src/scripts/setup_workspace.sh
 
 ### Post-Start Scripts
 
-Post-start scripts execute after requirements installation and before the workspace server starts. These scripts are executed via the `mage run-post-start-hooks` command and run with graceful error handling—if a post-start hook fails, it logs a warning but does not prevent the container from starting. These scripts are typically used for starting services, performing health checks, or completing any additional setup tasks that require the workspace to be fully operational.
+Post-start scripts execute after requirements installation and before the workspace server starts. These scripts are executed via the `mage run-post-start-hooks` command and run with graceful error handling—if a post-start hook fails, it logs a warning but does not prevent the container from starting. These scripts are typically used for starting services, performing health checks, or completing any additional setup tasks that depend on installed requirements but must run before the workspace server is fully started.
 
 **Configuration:**
 - **`post_start.command`** (string or array of strings): Command to execute. Can be specified as:
