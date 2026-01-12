@@ -4,7 +4,7 @@ sidebarTitle: "PySpark (Pro)"
 icon: "sparkles"
 description: >
   This guide explains how to use PySpark in Mage Pro, including how to run PySpark
-  blocks in batch pipelines, manage dependencies like Apache Iceberg, and access cloud storage securely.
+  blocks in batch pipelines, connect to Spark on Kubernetes, manage dependencies like Apache Iceberg, and access cloud storage securely.
 ---
 
 import { ProButton } from '/snippets/pro/button.mdx';
@@ -69,6 +69,84 @@ def export_data(df, *args, **kwargs):
 ```
 
 This example pipeline loads structured data into a Spark DataFrame and writes it to disk in CSV format.
+
+## Connecting to Spark on Kubernetes
+
+Mage Pro can connect to an external Spark cluster running on Kubernetes. This allows you to leverage existing Spark infrastructure or run Spark jobs on a dedicated Kubernetes cluster.
+
+### Option 1: Configure via metadata.yaml (Recommended)
+
+Configure Spark connection settings in your project's `metadata.yaml` file:
+
+```yaml
+spark_config:
+  # Application name
+  app_name: 'my spark app'
+  # Master URL to connect to Spark on Kubernetes
+  # For Kubernetes native mode:
+  spark_master: 'k8s://https://kubernetes.default.svc:443'
+  # Or for standalone Spark cluster in Kubernetes:
+  # spark_master: 'spark://spark-master-service:7077'
+  
+  # Executor environment variables
+  executor_env: {}
+  
+  # Jar files to be uploaded to the cluster and added to the classpath
+  spark_jars: []
+  
+  # Path where Spark is installed on worker nodes (if applicable)
+  spark_home: null
+  
+  # Additional Spark configuration options
+  others:
+    spark.executor.memory: '4g'
+    spark.executor.cores: '2'
+    spark.kubernetes.namespace: 'default'
+    spark.kubernetes.container.image: 'your-spark-image:tag'
+```
+
+### Option 2: Configure via Environment Variable
+
+Alternatively, you can set the `SPARK_MASTER_HOST` environment variable in your Mage Pro workspace configuration:
+
+- For Kubernetes native mode: `SPARK_MASTER_HOST=k8s://https://kubernetes.default.svc:443`
+- For standalone Spark cluster: `SPARK_MASTER_HOST=spark://spark-master-service:7077`
+
+### Setting Up Spark on Kubernetes
+
+If you need to deploy Spark on Kubernetes first, you can use Helm:
+
+```bash
+# Add the Bitnami Helm repository
+helm repo add bitnami https://charts.bitnami.com/bitnami
+
+# Install Spark cluster
+helm install my-spark bitnami/spark
+
+# Get the Spark master service URL
+kubectl get svc my-spark-spark-master-svc
+```
+
+Then use the service URL in your `spark_master` configuration. For example:
+- Service name: `my-spark-spark-master-svc`
+- Port: `7077`
+- Configuration: `spark_master: 'spark://my-spark-spark-master-svc:7077'`
+
+### Using Spark in Your Code
+
+Once configured, you can use Spark in your pipeline blocks:
+
+```python
+from pyspark.sql import SparkSession
+
+# SparkSession will automatically use the configuration from metadata.yaml
+spark = SparkSession.builder.getOrCreate()
+
+# Your Spark operations here
+df = spark.read.csv("your-data.csv")
+```
+
+The Spark session will automatically connect to your configured Kubernetes Spark cluster.
 
 ## Benefits of Running PySpark in Mage Pro
 Mage Pro handles all the infrastructure so you can focus on your PySpark code:

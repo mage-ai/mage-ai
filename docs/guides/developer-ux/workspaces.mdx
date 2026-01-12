@@ -138,11 +138,27 @@ resources:
 - **`limits`**: Maximum resources your workspace can use. Prevents resource overconsumption and ensures fair resource allocation across workspaces.
 
 **Note**: You can include any valid Kubernetes container configuration in the `container_config` YAML, including:
+- Container image (`image`)
 - Environment variables (`env`)
 - Resource requests and limits (`resources`)
 - Volume mounts (`volumeMounts`)
 - Security context (`securityContext`)
 - And other Kubernetes container spec fields
+
+#### Container Image Configuration
+
+When creating or updating a workspace, you can specify the container image in the `container_config` YAML:
+
+```yaml
+image: [image_repo]/mage-pro:20260112-1200
+```
+
+**Important behavior when updating workspaces:**
+
+- **If `image` is specified**: The workspace will use the specified image.
+- **If `image` is NOT specified**: The system will use the image from the main cluster pod configuration template (`pod_config`), **not** the current workspace's image.
+
+This means that when updating a workspace without specifying an `image` in `container_config`, the workspace image may change to match the main cluster pod configuration, even if the workspace currently uses a different image. To preserve the current image, explicitly include it in your `container_config` when updating.
 
 ### Pod Scheduling Configuration
 
@@ -426,6 +442,20 @@ To update a workspace:
 </Frame>
 The container will take up to several minutes to update and restart with the new environment configuration.
 
+**Note on container image during updates:**
+
+When updating a workspace, if you don't explicitly specify the `image` field in your `container_config` YAML, the system will use the image from the main cluster pod configuration template, not the workspace's current image. This means:
+
+- If your workspace currently uses a custom image (e.g., `my-custom-image:v1`) and you update the workspace without specifying `image` in `container_config`, the image may change to match the main cluster pod configuration (e.g., `mageai/mageai:latest`).
+- To preserve your current workspace image during updates, explicitly include it in your `container_config`:
+
+```yaml
+image: my-custom-image:v1
+env:
+  - name: USER_CODE_PATH
+    value: /home/src/my-project
+```
+
 ## Lifecycle Management Policies (Optional)
 
 Mage Pro workspaces support various lifecycle management policies that control how your workspace behaves throughout its runtime. These policies include automated termination settings, pre-initialization scripts, and post-initialization procedures, giving you complete control over your workspace's behavior from startup to shutdown.
@@ -476,23 +506,37 @@ pre_start_script_path: /home/src/scripts/setup_workspace.sh
 
 ### Post-Start Scripts
 
-Post-start scripts execute after your workspace is fully initialized and running. You can specify either a direct command or provide a path to a script for more complex procedures. These scripts are typically used for starting services, performing health checks, or completing any additional setup tasks that require the workspace to be fully operational.
+Post-start scripts execute after requirements installation and before the workspace server starts. These scripts are executed via the `mage run-post-start-hooks` command and run with graceful error handling—if a post-start hook fails, it logs a warning but does not prevent the container from starting. These scripts are typically used for starting services, performing health checks, or completing any additional setup tasks that require the workspace to be fully operational.
 
 **Configuration:**
-- **`post_start.command`** (array of strings): Direct command to execute. Example: `["echo", "Workspace started"]`
+- **`post_start.command`** (string or array of strings): Command to execute. Can be specified as:
+  - **JSON array of strings**: `["echo", "Workspace started"]` or `["python", "script.py", "--arg", "value"]`
+  - **Shell command string**: `echo "Hello" && echo "World"` or `pip install playwright && playwright install --with-deps`
 - **`post_start.hook_path`** (string): Path to a script file. Can be:
   - Absolute path: `/absolute/path/to/hook.sh`
   - Relative path: `scripts/post_start.sh` (relative to the root project directory)
 
-**Note**: You can specify either `command` or `hook_path`, or both. If both are specified, the command will execute first, followed by the hook script.
+**Note**: You can specify either `command` or `hook_path`, or both. If both are specified, the command will execute first, followed by the hook script. Post-start hooks execute after requirements installation but before the Mage server starts, ensuring they run early in the container startup process.
 
-**Example 1: Single post-start command**
+**Example 1: Post-start command as JSON array**
 ```yaml
 post_start:
   command: ["echo", "Workspace started"]
 ```
 
-**Example 2: Multiple post-start commands using a script**
+**Example 2: Post-start command as shell string**
+```yaml
+post_start:
+  command: echo "Hello" && echo "World"
+```
+
+**Example 3: Post-start command with multiple operations (shell string)**
+```yaml
+post_start:
+  command: pip install playwright && playwright install --with-deps
+```
+
+**Example 4: Post-start hook script**
 ```yaml
 post_start:
   hook_path: /home/src/scripts/post_start.sh
@@ -508,18 +552,18 @@ echo "Starting service 2..."
 service2 start
 ```
 
-**Example 3: Two post-start commands using command array with shell**
-```yaml
-post_start:
-  command: ["sh", "-c", "echo 'Command 1' && service1 start && echo 'Command 2' && service2 start"]
-```
-
-**Example 4: Command and hook script (command runs first, then hook)**
+**Example 5: Command and hook script (command runs first, then hook)**
 ```yaml
 post_start:
   command: ["echo", "Workspace started"]
   hook_path: /home/src/scripts/start_services.sh
 ```
+
+**Important Notes:**
+- Post-start hooks execute after requirements installation but before the Mage server starts
+- If a post-start hook fails, it logs a warning but does not prevent the container from starting
+- Shell command strings support operators like `&&`, `||`, etc.
+- Hook scripts must be executable and located in a path accessible to the container
 
 ## Setting workspaces for self-hosted Mage Pro cluster
 
