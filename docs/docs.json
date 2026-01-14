@@ -352,6 +352,7 @@
             "icon": "flask",
             "pages": [
               "development/project/setup",
+              "development/cli-commands",
               "development/git/setting-up-git",
               {
                 "group": "Docker",

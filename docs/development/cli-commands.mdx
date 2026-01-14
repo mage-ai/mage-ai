@@ -1,0 +1,462 @@
+---
+title: "CLI Commands Reference"
+sidebarTitle: "CLI Commands"
+description: "Complete reference guide for all Mage CLI commands, including usage instructions and OSS vs Pro availability."
+icon: "terminal"
+---
+
+Mage provides a command-line interface (CLI) for managing projects, running pipelines, and performing administrative tasks. The CLI is built using [Typer](https://typer.tghoward.com/) and supports both interactive and scripted usage.
+
+## Quick Reference
+
+### Command Availability
+
+| Command | Description | OSS | Pro |
+|---------|-------------|-----|-----|
+| [`init`](#init---initialize-mage-project) | Initialize a new Mage project at the specified path | ✅ | ✅ |
+| [`start`](#start---start-mage-server-and-ui) | Start the Mage server and web UI | ✅ | ✅ |
+| [`run`](#run---run-pipeline) | Execute a pipeline or a specific block within a pipeline | ✅ | ✅ |
+| [`clean_cached_variables`](#clean_cached_variables---clean-cached-variables) | Clean up old pipeline run outputs based on retention period | ✅ | ✅ |
+| [`clean_old_logs`](#clean_old_logs---clean-old-logs) | Clean up old pipeline run logs based on retention period | ✅ | ✅ |
+| [`clean_unused_blocks`](#clean_unused_blocks---clean-unused-blocks) | Clean up unused blocks from the project (interactive) | ❌ | ✅ |
+| [`create_secret`](#create_secret---create-or-update-secret) | Create or update a secret for the given Mage project | ❌ | ✅ |
+| [`run_post_start_hooks`](#run_post_start_hooks---execute-post-start-hooks) | Execute post-start hooks with graceful error handling | ❌ | ✅ |
+| [`restart_jobs`](#restart_jobs---restart-failed-or-cancelled-pipeline-runs) | Restart failed or cancelled pipeline runs with optional filters | ❌ | ✅ |
+| [`update_workspace`](#update_workspace---update-workspace-configuration) | Update a workspace configuration synchronously | ❌ | ✅ |
+| [`update_all_workspaces`](#update_all_workspaces---update-all-workspaces) | Update all workspaces in the cluster synchronously | ❌ | ✅ |
+| [`re_add_workspace_routes`](#re_add_workspace_routes---re-add-workspace-routes-to-ingress) | Re-add workspace routes to the ingress (Kubernetes) | ❌ | ✅ |
+| [`recover_pipelines_from_file_versions`](#recover_pipelines_from_file_versions---recover-pipelines-from-file-versions) | Recover pipelines from file versions in `.file_versions` folder | ❌ | ✅ |
+
+### Getting Help
+
+To see all available commands:
+```bash
+mage --help
+```
+
+To get help for a specific command:
+```bash
+mage <command> --help
+```
+
+---
+
+## Command Categories
+
+- **[Project Management](#project-management)** - Initialize and start Mage projects
+- **[Pipeline Execution](#pipeline-execution)** - Run pipelines and blocks
+- **[Maintenance Commands](#maintenance-commands)** - Clean up variables and logs
+- **[Mage Pro Only Commands](#mage-pro-only-commands)** - Workspace management and advanced features
+
+---
+
+## Available Commands
+
+### Project Management
+
+#### `init` - Initialize Mage Project
+**Available in:** ✅ OSS, ✅ Pro
+
+Initialize a new Mage project at the specified path.
+
+**Usage:**
+```bash
+mage init <project_path> [OPTIONS]
+```
+
+**Parameters:**
+- `project_path` (required): Path of the Mage project to be created
+- `--project-type` (optional): Type of project to create. Options: `main`, `sub`, or `standalone` (default: `standalone`)
+- `--cluster-type` (optional): Type of instance to create for workspace management (Pro only)
+- `--project-uuid` (optional): Project UUID for the new project
+
+**Example:**
+```bash
+mage init my_project --project-type standalone
+```
+
+---
+
+#### `start` - Start Mage Server and UI
+**Available in:** ✅ OSS, ✅ Pro
+
+Start the Mage server and web UI.
+
+**Usage:**
+```bash
+mage start [project_path] [OPTIONS]
+```
+
+**Parameters:**
+- `project_path` (optional): Path of the Mage project to be loaded (default: current directory)
+- `--host` (optional): Specify the host (default: `localhost`)
+- `--port` (optional): Specify the port (default: `6789`)
+- `--manage-instance` (optional): Enable manage instance (default: `0`)
+- `--dbt-docs-instance` (optional): Enable dbt docs instance (default: `0`)
+- `--instance-type` (optional): Specify the instance type (default: `server_and_scheduler`)
+- `--project-type` (optional): Create project of this type if it does not exist. Options: `main`, `sub`, or `standalone` (default: `standalone`)
+- `--cluster-type` (optional): Type of instance to create for workspace management (Pro only)
+- `--project-uuid` (optional): Set project UUID for the repo that is being started
+
+**Example:**
+```bash
+mage start . --host 0.0.0.0 --port 6789
+```
+
+---
+
+### Pipeline Execution
+
+#### `run` - Run Pipeline
+**Available in:** ✅ OSS, ✅ Pro
+
+Execute a pipeline or a specific block within a pipeline.
+
+**Usage:**
+```bash
+mage run <project_path> <pipeline_uuid> [OPTIONS]
+```
+
+**Parameters:**
+- `project_path` (required): Path of the Mage project that contains the pipeline
+- `pipeline_uuid` (required): UUID of the pipeline to be run
+- `--test` (optional): Specify if tests should be run (default: `False`)
+- `--block-uuid` (optional): UUID of the block to be run (if not specified, runs entire pipeline)
+- `--execution-partition` (optional): Execution partition identifier
+- `--executor-type` (optional): Executor type to use
+- `--callback-url` (optional): Callback URL for block execution
+- `--block-run-id` (optional): Block run ID
+- `--pipeline-run-id` (optional): Pipeline run ID
+- `--runtime-vars` (optional): Runtime variables in JSON format. These will overwrite the pipeline global variables
+- `--skip-sensors` (optional): Specify if the sensors should be skipped (default: `False`)
+- `--template-runtime-configuration` (optional): Runtime configuration of data integration block runs (JSON format)
+
+**Examples:**
+```bash
+# Run entire pipeline
+mage run /path/to/project my_pipeline_uuid
+
+# Run specific block
+mage run /path/to/project my_pipeline_uuid --block-uuid my_block_uuid
+
+# Run with runtime variables
+mage run /path/to/project my_pipeline_uuid --runtime-vars '{"key": "value"}'
+
+# Run with tests
+mage run /path/to/project my_pipeline_uuid --test
+```
+
+---
+
+### Maintenance Commands
+
+#### `clean_cached_variables` - Clean Cached Variables
+**Available in:** ✅ OSS, ✅ Pro
+
+Clean up old pipeline run outputs based on retention period.
+
+**Usage:**
+```bash
+mage clean_cached_variables <project_path> [OPTIONS]
+```
+
+**Parameters:**
+- `project_path` (required): Path of the Mage project to clean variables
+- `--pipeline-uuid` (optional): UUID of the pipeline to clean (if not specified, cleans all pipelines)
+- `--retention-period` (optional): Default retention period, e.g., `7d`, `2w` (days or weeks)
+
+**Example:**
+```bash
+mage clean_cached_variables /path/to/project --retention-period 7d
+```
+
+---
+
+#### `clean_old_logs` - Clean Old Logs
+**Available in:** ✅ OSS, ✅ Pro
+
+Clean up old pipeline run logs based on retention period.
+
+**Usage:**
+```bash
+mage clean_old_logs <project_path> [OPTIONS]
+```
+
+**Parameters:**
+- `project_path` (required): Path of the Mage project to clean old logs
+- `--pipeline-uuid` (optional): UUID of the pipeline to clean (if not specified, cleans all pipelines)
+- `--retention-period` (optional): Default retention period, e.g., `7d`, `2w` (days or weeks)
+
+**Example:**
+```bash
+mage clean_old_logs /path/to/project --retention-period 30d
+```
+
+---
+
+### Mage Pro Only Commands
+
+The following commands are **exclusively available in Mage Pro**:
+
+#### `clean_unused_blocks` - Clean Unused Blocks
+**Available in:** ❌ OSS, ✅ Pro
+
+Clean up unused blocks from the given Mage project. This command interactively prompts you to delete blocks that are not referenced by any pipeline.
+
+**Usage:**
+```bash
+mage clean_unused_blocks <project_path> [OPTIONS]
+```
+
+**Parameters:**
+- `project_path` (required): Path of the Mage project
+- `--block-type` (optional): The type of block to clean up (e.g., `data_loader`, `transformer`, `data_exporter`)
+
+**Example:**
+```bash
+mage clean_unused_blocks /path/to/project
+```
+
+**Interactive Options:**
+- `y`: Yes, delete the block
+- `N`: No, skip the block
+- `c`: Check content of the block before deciding
+- `q`: Quit the operation
+
+---
+
+#### `create_secret` - Create or Update Secret
+**Available in:** ❌ OSS, ✅ Pro
+
+Create or update a secret for the given Mage project.
+
+**Usage:**
+```bash
+mage create_secret <project_path> <name> <value> [OPTIONS]
+```
+
+**Parameters:**
+- `project_path` (required): Path of the Mage project
+- `name` (required): Name of the secret
+- `value` (required): Value of the secret
+- `--update-exists` (optional): Whether to update the secret if it already exists (default: `True`)
+
+**Example:**
+```bash
+mage create_secret /path/to/project my_secret_name "my_secret_value"
+```
+
+---
+
+#### `run_post_start_hooks` - Execute Post-Start Hooks
+**Available in:** ❌ OSS, ✅ Pro
+
+Execute post-start hooks with graceful error handling. This command reads `POST_START_COMMAND` and `POST_START_HOOK_PATH` from environment variables if not provided as arguments.
+
+**Usage:**
+```bash
+mage run_post_start_hooks [OPTIONS]
+```
+
+**Parameters:**
+- `--post-start-command` (optional): Post-start command to execute (JSON array or shell command string). Can also be set via `POST_START_COMMAND` environment variable
+- `--post-start-hook-path` (optional): Path to post-start hook script file. Can also be set via `POST_START_HOOK_PATH` environment variable
+
+**Example:**
+```bash
+mage run_post_start_hooks --post-start-command '["pip", "install", "package"]'
+```
+
+---
+
+#### `restart_jobs` - Restart Failed or Cancelled Pipeline Runs
+**Available in:** ❌ OSS, ✅ Pro
+
+Restart failed or cancelled pipeline runs with optional filters.
+
+**Usage:**
+```bash
+mage restart_jobs <project_path> [OPTIONS]
+```
+
+**Parameters:**
+- `project_path` (required): Path of the Mage project to restart jobs from
+- `--pipeline-uuid` (optional): UUID of the pipeline to filter jobs by
+- `--status` (optional): Status filter: `failed`, `cancelled`, or `both` (default: `failed`)
+- `--start-time` (optional): Start time filter (ISO format: `2024-01-01T00:00:00`)
+- `--end-time` (optional): End time filter (ISO format: `2024-01-01T23:59:59`)
+- `--limit` (optional): Maximum number of jobs to restart (default: `100`)
+- `--skip-confirmation` (optional): Skip confirmation prompt (default: `False`)
+
+**Example:**
+```bash
+mage restart_jobs /path/to/project --status failed --limit 50
+```
+
+---
+
+#### `update_workspace` - Update Workspace Configuration
+**Available in:** ❌ OSS, ✅ Pro
+
+Update a workspace configuration synchronously. The cluster type is determined by the `CLUSTER_TYPE` environment variable, defaulting to `k8s` if not set.
+
+**Usage:**
+```bash
+mage update_workspace <workspace_name> [OPTIONS]
+```
+
+**Parameters:**
+- `workspace_name` (required): Name of the workspace to update
+- `--project-path` (optional): Path to the Mage project (defaults to current directory)
+- `--container-config` (optional): YAML string for container configuration updates
+- `--update-workspace-settings` / `--no-update-workspace-settings` (optional): Whether to update workspace settings with current cluster environment variables (default: `False`)
+
+**Example:**
+```bash
+mage update_workspace my_workspace --container-config "memory: 4Gi"
+```
+
+---
+
+#### `update_all_workspaces` - Update All Workspaces
+**Available in:** ❌ OSS, ✅ Pro
+
+Update all workspaces in the cluster synchronously.
+
+**Usage:**
+```bash
+mage update_all_workspaces [OPTIONS]
+```
+
+**Parameters:**
+- `--project-path` (optional): Path to the Mage project (defaults to current directory)
+- `--container-config` (optional): YAML string for container configuration updates
+- `--update-workspace-settings` / `--no-update-workspace-settings` (optional): Whether to update workspace settings with current cluster environment variables (default: `False`)
+- `--cluster-type` (optional): Type of cluster: `k8s` or `docker` (default: `k8s`)
+
+**Example:**
+```bash
+mage update_all_workspaces --cluster-type k8s --update-workspace-settings
+```
+
+---
+
+#### `re_add_workspace_routes` - Re-add Workspace Routes to Ingress
+**Available in:** ❌ OSS, ✅ Pro
+
+Re-add workspace routes to the ingress. This is useful for Kubernetes deployments where workspace routes need to be refreshed.
+
+**Usage:**
+```bash
+mage re_add_workspace_routes <project_path>
+```
+
+**Parameters:**
+- `project_path` (required): Path of the Mage project
+
+**Example:**
+```bash
+mage re_add_workspace_routes /path/to/project
+```
+
+---
+
+#### `recover_pipelines_from_file_versions` - Recover Pipelines from File Versions
+**Available in:** ❌ OSS, ✅ Pro
+
+Recover pipelines from file versions. This command lists all pipelines that have file versions in the `.file_versions` folder and allows you to recover pipeline files from those versions.
+
+**Usage:**
+```bash
+mage recover_pipelines_from_file_versions <project_path> [OPTIONS]
+```
+
+**Parameters:**
+- `project_path` (required): Path of the Mage project
+- `--pipeline-uuid` (optional): UUID of the pipeline to recover. If not specified, all pipelines are processed
+- `--all` / `--no-all` (optional): Recover all files automatically without confirmation. Uses the most recent version for each file (default: `False`)
+- `--verbose` / `-v` (optional): Show detailed pipeline information including individual files and blocks (default: `False`)
+
+**Examples:**
+```bash
+# Interactive recovery
+mage recover_pipelines_from_file_versions /path/to/project
+
+# Recover specific pipeline
+mage recover_pipelines_from_file_versions /path/to/project --pipeline-uuid my_pipeline
+
+# Recover all automatically
+mage recover_pipelines_from_file_versions /path/to/project --all
+
+# Verbose output
+mage recover_pipelines_from_file_versions /path/to/project --verbose
+```
+
+---
+
+## Common Use Cases
+
+### Initializing a New Project
+```bash
+mage init my_data_project --project-type standalone
+cd my_data_project
+mage start
+```
+
+### Running a Pipeline with Variables
+```bash
+mage run /path/to/project my_pipeline_uuid \
+  --runtime-vars '{"date": "2024-01-01", "environment": "production"}'
+```
+
+### Cleaning Up Old Data
+```bash
+# Clean variables older than 7 days
+mage clean_cached_variables /path/to/project --retention-period 7d
+
+# Clean logs older than 30 days
+mage clean_old_logs /path/to/project --retention-period 30d
+```
+
+### Pro: Managing Secrets
+```bash
+mage create_secret /path/to/project database_password "secure_password_123"
+```
+
+### Pro: Updating Workspace Configuration
+```bash
+# Update a single workspace
+mage update_workspace dev_workspace --update-workspace-settings
+
+# Update all workspaces
+mage update_all_workspaces --cluster-type k8s
+```
+
+---
+
+## Environment Variables
+
+Some commands can be configured via environment variables:
+
+- `CLUSTER_TYPE`: Cluster type for workspace operations (default: `k8s`)
+- `POST_START_COMMAND`: Post-start command for `run_post_start_hooks`
+- `POST_START_HOOK_PATH`: Post-start hook script path for `run_post_start_hooks`
+- `ENV_VAR_INSTANCE_TYPE`: Instance type override for `start` command
+
+---
+
+## Additional Resources
+
+- [Mage OSS CLI Reference](https://github.com/mage-ai/mage-ai/blob/master/mage_ai/cli/main.py) - Source code for OSS CLI commands
+- [Project Setup Guide](/development/project/setup) - Learn how to set up a Mage project
+- [Workspaces Documentation](/guides/developer-ux/workspaces) - Learn about Mage Pro workspaces
+
+---
+
+## Notes
+
+- All paths can be absolute or relative to the current working directory
+- JSON parameters should be properly escaped when used in shell commands
+- Pro-only commands require appropriate cluster/workspace configuration
+- Some commands may require database connections to be properly configured
+
