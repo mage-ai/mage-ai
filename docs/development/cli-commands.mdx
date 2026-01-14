@@ -13,19 +13,19 @@ Mage provides a command-line interface (CLI) for managing projects, running pipe
 
 | Command | Description | OSS | Pro |
 |---------|-------------|-----|-----|
-| [`init`](#init---initialize-mage-project) | Initialize a new Mage project at the specified path | ✅ | ✅ |
-| [`start`](#start---start-mage-server-and-ui) | Start the Mage server and web UI | ✅ | ✅ |
-| [`run`](#run---run-pipeline) | Execute a pipeline or a specific block within a pipeline | ✅ | ✅ |
-| [`clean_cached_variables`](#clean_cached_variables---clean-cached-variables) | Clean up old pipeline run outputs based on retention period | ✅ | ✅ |
-| [`clean_old_logs`](#clean_old_logs---clean-old-logs) | Clean up old pipeline run logs based on retention period | ✅ | ✅ |
-| [`clean_unused_blocks`](#clean_unused_blocks---clean-unused-blocks) | Clean up unused blocks from the project (interactive) | ❌ | ✅ |
-| [`create_secret`](#create_secret---create-or-update-secret) | Create or update a secret for the given Mage project | ❌ | ✅ |
-| [`run_post_start_hooks`](#run_post_start_hooks---execute-post-start-hooks) | Execute post-start hooks with graceful error handling | ❌ | ✅ |
-| [`restart_jobs`](#restart_jobs---restart-failed-or-cancelled-pipeline-runs) | Restart failed or cancelled pipeline runs with optional filters | ❌ | ✅ |
-| [`update_workspace`](#update_workspace---update-workspace-configuration) | Update a workspace configuration synchronously | ❌ | ✅ |
-| [`update_all_workspaces`](#update_all_workspaces---update-all-workspaces) | Update all workspaces in the cluster synchronously | ❌ | ✅ |
-| [`re_add_workspace_routes`](#re_add_workspace_routes---re-add-workspace-routes-to-ingress) | Re-add workspace routes to the ingress (Kubernetes) | ❌ | ✅ |
-| [`recover_pipelines_from_file_versions`](#recover_pipelines_from_file_versions---recover-pipelines-from-file-versions) | Recover pipelines from file versions in `.file_versions` folder | ❌ | ✅ |
+| [`init`](#init-initialize-mage-project) | Initialize a new Mage project at the specified path | ✅ | ✅ |
+| [`start`](#start-start-mage-server-and-ui) | Start the Mage server and web UI | ✅ | ✅ |
+| [`run`](#run-run-pipeline) | Execute a pipeline or a specific block within a pipeline | ✅ | ✅ |
+| [`clean_cached_variables`](#clean_cached_variables-clean-cached-variables) | Clean up old pipeline run outputs based on retention period | ✅ | ✅ |
+| [`clean_old_logs`](#clean_old_logs-clean-old-logs) | Clean up old pipeline run logs based on retention period | ✅ | ✅ |
+| [`clean_unused_blocks`](#clean_unused_blocks-clean-unused-blocks) | Clean up unused blocks from the project (interactive) | ❌ | ✅ |
+| [`create_secret`](#create_secret-create-or-update-secret) | Create or update a secret for the given Mage project | ❌ | ✅ |
+| [`run_post_start_hooks`](#run_post_start_hooks-execute-post-start-hooks) | Execute post-start hooks with graceful error handling | ❌ | ✅ |
+| [`restart_jobs`](#restart_jobs-restart-failed-or-cancelled-pipeline-runs) | Restart failed or cancelled pipeline runs with optional filters | ❌ | ✅ |
+| [`update_workspace`](#update_workspace-update-workspace-configuration) | Update a workspace configuration synchronously | ❌ | ✅ |
+| [`update_all_workspaces`](#update_all_workspaces-update-all-workspaces) | Update all workspaces in the cluster synchronously | ❌ | ✅ |
+| [`re_add_workspace_routes`](#re_add_workspace_routes-re-add-workspace-routes-to-ingress) | Re-add workspace routes to the ingress (Kubernetes) | ❌ | ✅ |
+| [`recover_pipelines_from_file_versions`](#recover_pipelines_from_file_versions-recover-pipelines-from-file-versions) | Recover pipelines from file versions in `.file_versions` folder | ❌ | ✅ |
 
 ### Getting Help
 
