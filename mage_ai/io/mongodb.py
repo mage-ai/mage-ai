@@ -75,6 +75,11 @@ class MongoDB(BaseIO):
                 database = extract_db_name_from_uri(connection_string)
         else:
             self.client = MongoClient(f'mongodb://{user}:{password}@{host}:{port}/')
+        if database is None:
+            raise Exception(
+                'Please provide the database name either in the constructor arguments or in '
+                'the connection string URI.'
+            )
         self.database = self.client[database]
         self.collection = collection
 
