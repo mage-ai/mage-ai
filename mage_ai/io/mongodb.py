@@ -11,12 +11,24 @@ from mage_ai.io.config import BaseConfigLoader, ConfigKey
 def extract_db_name_from_uri(connection_string: str) -> str:
     """
     Extract the database name from a MongoDB connection string URI.
+
     Args:
         connection_string: MongoDB connection string (e.g., mongodb://user:pass@host:27017/my_db)
+
     Returns:
         The database name extracted from the URI path, or None if not present.
+
+    Notes:
         URL-encoded database names are decoded.
-        Nested paths return only the first segment.
+        For nested paths, only the first segment is used as the database name.
+
+    Examples:
+        >>> extract_db_name_from_uri("mongodb://user:pass@host:27017/my_db")
+        'my_db'
+        >>> extract_db_name_from_uri("mongodb://host:27017/my_db/collection")
+        'my_db'
+        >>> extract_db_name_from_uri("mongodb://host:27017/my%5Fdb")
+        'my_db'
     """
     if not connection_string:
         return None
