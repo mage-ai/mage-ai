@@ -1,4 +1,4 @@
-from typing import Dict, List, Union
+from typing import Dict, List, Union, Optional
 from urllib.parse import unquote, urlparse
 
 from pandas import DataFrame
@@ -8,7 +8,7 @@ from mage_ai.io.base import BaseIO
 from mage_ai.io.config import BaseConfigLoader, ConfigKey
 
 
-def extract_db_name_from_uri(connection_string: str) -> str:
+def extract_db_name_from_uri(connection_string: str) -> Optional[str]:
     """
     Extract the database name from a MongoDB connection string URI.
 
