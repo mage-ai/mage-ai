@@ -143,8 +143,7 @@ class TestModelUtils(TestCase):
         for test_data in test_cases:
             serialized_data, column_types = serialize_complex(test_data)
             deserialized_data = deserialize_complex(serialized_data, column_types)
-            # Note: For the last case (just None), serialize_complex returns (None, {})
-            # and deserialize_complex should handle it correctly
+            # Handle the case where test_data is None
             if test_data is None:
                 self.assertIsNone(deserialized_data)
             else:
