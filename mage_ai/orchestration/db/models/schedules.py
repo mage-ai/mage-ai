@@ -340,8 +340,17 @@ class PipelineSchedule(PipelineScheduleProjectPlatformMixin, BaseModel):
                 trigger_config.status == ScheduleStatus.ACTIVE
                 and trigger_config.last_enabled_at is None
             ):
-                last_enabled_at = datetime.now(tz=pytz.UTC)
-                trigger_config.last_enabled_at = last_enabled_at
+                # If the trigger already exists and is currently active, preserve its
+                # last_enabled_at timestamp to avoid triggering an immediate pipeline run
+                # when only the schedule is being edited (not the status).
+                if existing_trigger and existing_trigger.status == ScheduleStatus.ACTIVE:
+                    last_enabled_at = existing_trigger.last_enabled_at
+                    trigger_config.last_enabled_at = last_enabled_at
+                else:
+                    # Set last_enabled_at to current time for new triggers or when
+                    # transitioning from INACTIVE to ACTIVE
+                    last_enabled_at = datetime.now(tz=pytz.UTC)
+                    trigger_config.last_enabled_at = last_enabled_at
                 add_or_update_trigger_for_pipeline_and_persist(
                     trigger_config,
                     trigger_config.pipeline_uuid,

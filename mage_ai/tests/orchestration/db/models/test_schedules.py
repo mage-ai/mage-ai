@@ -1233,6 +1233,108 @@ class PipelineScheduleTests(DBTestCase):
         self.assertEqual(ps3.pipeline_uuid, 'test_create_or_update_batch')
         self.assertEqual(ps3.schedule_interval, ScheduleInterval.WEEKLY)
 
+    def test_create_or_update_batch_preserves_last_enabled_at_on_schedule_update(self):
+        """
+        Test that updating an existing active trigger's schedule (e.g., cron expression)
+        preserves the original last_enabled_at timestamp, preventing unexpected
+        immediate pipeline execution when "create_initial_pipeline_run" is disabled.
+        """
+        create_pipeline_with_blocks(
+            'test preserve last enabled',
+            self.repo_path,
+        )
+
+        # Create an initial active trigger with a specific last_enabled_at timestamp
+        original_last_enabled_at = datetime(2024, 1, 1, 0, 0, 0)
+        PipelineSchedule.create(
+            **dict(
+                name='test preserve trigger',
+                pipeline_uuid='test_preserve_last_enabled',
+                schedule_type=ScheduleType.TIME,
+                schedule_interval=ScheduleInterval.DAILY,
+                status=ScheduleStatus.ACTIVE,
+                last_enabled_at=original_last_enabled_at,
+            )
+        )
+
+        # Update the trigger with a different schedule interval, simulating
+        # an edit to the trigger in code (e.g., changing cron expression)
+        # Note: last_enabled_at is None in the trigger config, as it would be
+        # when loaded from triggers.yaml after a schedule edit
+        trigger_configs = [
+            Trigger.load(
+                config=dict(
+                    name='test preserve trigger',
+                    pipeline_uuid='test_preserve_last_enabled',
+                    schedule_type=ScheduleType.TIME,
+                    start_time=datetime.now(),
+                    schedule_interval='@hourly',  # Changed from DAILY
+                    status=ScheduleStatus.ACTIVE,
+                    last_enabled_at=None,  # Not tracked in YAML file
+                )
+            ),
+        ]
+
+        PipelineSchedule.create_or_update_batch(trigger_configs)
+
+        # Verify the trigger was updated
+        ps = PipelineSchedule.query.filter(
+            PipelineSchedule.name == 'test preserve trigger'
+        ).one_or_none()
+        self.assertIsNotNone(ps)
+        self.assertEqual(ps.schedule_interval, '@hourly')
+
+        # CRITICAL: Verify that last_enabled_at was preserved, not reset to current time
+        self.assertEqual(ps.last_enabled_at, original_last_enabled_at)
+
+    def test_create_or_update_batch_sets_last_enabled_at_on_status_change(self):
+        """
+        Test that when a trigger's status changes from INACTIVE to ACTIVE,
+        last_enabled_at is set to the current time, ensuring the trigger
+        behaves correctly for initial runs after activation.
+        """
+        create_pipeline_with_blocks(
+            'test status change',
+            self.repo_path,
+        )
+
+        # Create an inactive trigger
+        PipelineSchedule.create(
+            **dict(
+                name='test status change trigger',
+                pipeline_uuid='test_status_change',
+                schedule_type=ScheduleType.TIME,
+                schedule_interval=ScheduleInterval.DAILY,
+                status=ScheduleStatus.INACTIVE,
+            )
+        )
+
+        # Activate the trigger
+        trigger_configs = [
+            Trigger.load(
+                config=dict(
+                    name='test status change trigger',
+                    pipeline_uuid='test_status_change',
+                    schedule_type=ScheduleType.TIME,
+                    start_time=datetime(2024, 6, 15, 0, 0, 0, tzinfo=timezone.utc),
+                    schedule_interval='@daily',
+                    status=ScheduleStatus.ACTIVE,
+                    last_enabled_at=None,
+                )
+            ),
+        ]
+
+        PipelineSchedule.create_or_update_batch(trigger_configs)
+
+        # Verify last_enabled_at was set to a non-None value (newly activated)
+        ps = PipelineSchedule.query.filter(
+            PipelineSchedule.name == 'test status change trigger'
+        ).one_or_none()
+        self.assertIsNotNone(ps)
+        self.assertEqual(ps.status, ScheduleStatus.ACTIVE)
+        # Verify last_enabled_at is not None for newly activated trigger
+        self.assertIsNotNone(ps.last_enabled_at)
+
 
 class PipelineRunTests(DBTestCase):
     def setUp(self):
