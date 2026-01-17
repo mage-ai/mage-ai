@@ -1,0 +1,21 @@
+connector_type: mqtt
+host: "127.0.0.1"
+topic: topic_name
+port: 1883
+qos: 0
+clean: true
+client_id: test_client_id
+
+keepalive: 60
+
+# username: username
+# password: password
+
+# connect_properties:
+#   session_expiry_interval: 600
+
+# tls: true
+# tls_config:
+#   ca_certs: CA.pem
+#   certfile: cert.pem
+#   keyfile: key.pem

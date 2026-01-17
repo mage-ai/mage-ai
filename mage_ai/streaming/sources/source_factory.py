@@ -49,6 +49,9 @@ class SourceFactory:
         elif connector_type == SourceType.MONGODB:
             from mage_ai.streaming.sources.mongodb import MongoSource
             return MongoSource(config, **kwargs)
+        elif connector_type == SourceType.MQTT:
+            from mage_ai.streaming.sources.mqtt import MQTTSource
+            return MQTTSource(config, **kwargs)
         raise Exception(
             f'Consuming data from {connector_type} is not supported in streaming pipelines yet.',
         )
