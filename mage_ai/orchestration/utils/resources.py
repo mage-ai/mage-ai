@@ -19,12 +19,12 @@ def get_compute() -> Tuple[float, float, float, float]:
 def get_memory() -> Tuple[float, float, float]:
     """
     Get memory usage information.
-    
+
     For containerized environments (e.g., Google Cloud Run), this reads from cgroup files
     which provide accurate container-specific memory limits and usage.
-    
+
     For non-containerized environments, falls back to the 'free' command.
-    
+
     Returns:
         Tuple[float, float, float]: (free_memory, used_memory, total_memory) in MB
     """
@@ -40,22 +40,22 @@ def get_memory() -> Tuple[float, float, float]:
     try:
         # Define MB conversion factor (1024 * 1024)
         mb_factor = 1024 * 1024
-        
+
         # Try cgroup v1 paths first
         usage_path = "/sys/fs/cgroup/memory/memory.usage_in_bytes"
         limit_path = "/sys/fs/cgroup/memory/memory.limit_in_bytes"
-        
+
         # Check if cgroup v2 is being used (single unified hierarchy)
         if not os.path.exists(usage_path):
             usage_path = "/sys/fs/cgroup/memory.current"
             limit_path = "/sys/fs/cgroup/memory.max"
-        
+
         # Read memory usage
         if os.path.exists(usage_path):
             with open(usage_path, "r") as f:
                 usage_bytes = int(f.read().strip())
                 used_memory = usage_bytes / mb_factor
-        
+
         # Read memory limit
         if os.path.exists(limit_path):
             with open(limit_path, "r") as f:
@@ -66,12 +66,11 @@ def get_memory() -> Tuple[float, float, float]:
                     # A value of 9223372036854771712 or greater indicates no limit set
                     if limit_bytes < NO_LIMIT_THRESHOLD:
                         total_memory = limit_bytes / mb_factor
-        
         # If we successfully read both values, calculate free memory
         if used_memory is not None and total_memory is not None:
             free_memory = total_memory - used_memory
             return free_memory, used_memory, total_memory
-    except (FileNotFoundError, ValueError, PermissionError) as err:
+    except (FileNotFoundError, ValueError, PermissionError):
         # Cgroup files not available or unreadable, will fall back to 'free' command
         pass
 
