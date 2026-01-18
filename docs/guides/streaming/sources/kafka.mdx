@@ -77,6 +77,30 @@ ssl_config:
   cafile: "pemfilename.pem"
 ```
 
+SASL_SSL with OAUTHBEARER (OAuth 2.0):
+```yaml
+security_protocol: "SASL_SSL"
+sasl_config:
+  mechanism: "OAUTHBEARER"
+  oauth_token_url: "https://keycloak.example.com/auth/realms/myrealm/protocol/openid-connect/token"
+  oauth_client_id: "kafka-client"
+  oauth_client_secret: "your-client-secret"
+  oauth_scope: "kafka"  # Optional
+ssl_config:
+  cafile: "pemfilename.pem"
+  check_hostname: true
+```
+
+<Note>
+  **OAUTHBEARER Authentication:**
+
+  - The `oauth_token_url`, `oauth_client_id`, and `oauth_client_secret` are **required** when using `OAUTHBEARER` mechanism.
+  - The `oauth_scope` parameter is optional.
+  - OAuth tokens are automatically cached and refreshed before expiry (60 seconds before expiration by default).
+  - It's recommended to use `SASL_SSL` (not `SASL_PLAINTEXT`) with OAUTHBEARER for secure token transmission.
+  - Compatible with OAuth 2.0 providers like Keycloak, Okta, and other identity servers that support client credentials flow.
+</Note>
+
 ## Data format
 
 By default, if `include_metadata` is false, the kafka data loader returns data from value field, e.g.
