@@ -12,6 +12,7 @@ from mage_ai.streaming.sinks.base import BaseSink
 
 
 class SecurityProtocol(StrEnum):
+    SASL_PLAINTEXT = 'SASL_PLAINTEXT'
     SASL_SSL = 'SASL_SSL'
     SSL = 'SSL'
 
@@ -21,6 +22,11 @@ class SASLConfig:
     mechanism: str = 'PLAIN'
     username: str = None
     password: str = None
+    # OAuth configuration for OAUTHBEARER mechanism
+    oauth_token_url: str = None
+    oauth_client_id: str = None
+    oauth_client_secret: str = None
+    oauth_scope: str = None
 
 
 @dataclass
@@ -86,8 +92,17 @@ class KafkaSink(BaseSink):
         elif self.config.security_protocol == SecurityProtocol.SASL_SSL:
             kwargs['security_protocol'] = SecurityProtocol.SASL_SSL
             kwargs['sasl_mechanism'] = self.config.sasl_config.mechanism
-            kwargs['sasl_plain_username'] = self.config.sasl_config.username
-            kwargs['sasl_plain_password'] = self.config.sasl_config.password
+            
+            # Handle OAUTHBEARER mechanism
+            if self.config.sasl_config.mechanism == 'OAUTHBEARER':
+                from mage_ai.streaming.sources.kafka_oauth import create_oauth_token_provider
+                
+                token_provider = create_oauth_token_provider(self.config.sasl_config)
+                kwargs['sasl_oauth_token_provider'] = token_provider
+            else:
+                # Handle PLAIN, SCRAM mechanisms
+                kwargs['sasl_plain_username'] = self.config.sasl_config.username
+                kwargs['sasl_plain_password'] = self.config.sasl_config.password
 
             if self.config.ssl_config is not None and self.config.ssl_config.cafile:
                 kwargs['ssl_cafile'] = self.config.ssl_config.cafile

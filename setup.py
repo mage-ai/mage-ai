@@ -127,7 +127,7 @@ setuptools.setup(
             'confluent-avro~=1.8.0',
             'elasticsearch==8.15.1',
             'influxdb_client==1.36.1',
-            'kafka-python==2.0.2',
+            'kafka-python==2.3.0',
             'nats-py==2.6.0',
             'nkeys~=0.2.0',
             'opensearch-py==2.0.0',

@@ -1,4 +1,4 @@
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 from mage_ai.streaming.sources.kafka import KafkaSource
 from mage_ai.tests.base_test import TestCase
@@ -92,6 +92,128 @@ class KafkaTests(TestCase):
             self.assertEqual(source.config.sasl_config.username, 'test_username')
             self.assertEqual(source.config.sasl_config.password, 'test_password')
             self.assertIsNone(source.config.ssl_config)
+
+    def test_init_with_oauth_sasl_config(self):
+        with patch.object(KafkaSource, 'init_client') as mock_init_client:
+            source = KafkaSource(dict(
+                connector_type='kafka',
+                bootstrap_server='test_server',
+                consumer_group='test_group',
+                topic='test_topic',
+                security_protocol='SASL_SSL',
+                sasl_config=dict(
+                    mechanism='OAUTHBEARER',
+                    oauth_token_url='https://auth.example.com/token',
+                    oauth_client_id='test_client',
+                    oauth_client_secret='test_secret',
+                    oauth_scope='kafka',
+                ),
+            ))
+            mock_init_client.assert_called_once()
+            self.assertEqual(source.config.security_protocol, 'SASL_SSL')
+            self.assertEqual(source.config.sasl_config.mechanism, 'OAUTHBEARER')
+            self.assertEqual(
+                source.config.sasl_config.oauth_token_url, 'https://auth.example.com/token')
+            self.assertEqual(source.config.sasl_config.oauth_client_id, 'test_client')
+            self.assertEqual(source.config.sasl_config.oauth_client_secret, 'test_secret')
+            self.assertEqual(source.config.sasl_config.oauth_scope, 'kafka')
+            self.assertIsNone(source.config.ssl_config)
+
+    def test_init_client_with_oauthbearer(self):
+        kafka_config = dict(
+            connector_type='kafka',
+            bootstrap_server='test_server',
+            consumer_group='test_group',
+            topic='test_topic',
+            security_protocol='SASL_SSL',
+            sasl_config=dict(
+                mechanism='OAUTHBEARER',
+                oauth_token_url='https://auth.example.com/token',
+                oauth_client_id='test_client',
+                oauth_client_secret='test_secret',
+            ),
+        )
+
+        with patch('mage_ai.streaming.sources.kafka.KafkaConsumer') as mock_consumer:
+            with patch('mage_ai.streaming.sources.kafka_oauth.requests.post') as mock_post:
+                # Mock the OAuth token response
+                mock_response = Mock()
+                mock_response.json.return_value = {
+                    'access_token': 'test_token',
+                    'expires_in': 3600,
+                }
+                mock_response.raise_for_status = Mock()
+                mock_post.return_value = mock_response
+                
+                KafkaSource(kafka_config)
+
+        # Verify KafkaConsumer was called with correct parameters
+        self.assertEqual(mock_consumer.call_count, 1)
+        args, kwargs = mock_consumer.call_args
+        self.assertEqual(args, ('test_topic',))
+        self.assertEqual(kwargs['group_id'], 'test_group')
+        self.assertEqual(kwargs['bootstrap_servers'], 'test_server')
+        self.assertEqual(kwargs['security_protocol'], 'SASL_SSL')
+        self.assertEqual(kwargs['sasl_mechanism'], 'OAUTHBEARER')
+        self.assertIn('sasl_oauth_token_provider', kwargs)
+        self.assertIsNotNone(kwargs['sasl_oauth_token_provider'])
+
+    def test_init_client_with_oauthbearer_missing_token_url(self):
+        kafka_config = dict(
+            connector_type='kafka',
+            bootstrap_server='test_server',
+            consumer_group='test_group',
+            topic='test_topic',
+            security_protocol='SASL_SSL',
+            sasl_config=dict(
+                mechanism='OAUTHBEARER',
+                oauth_client_id='test_client',
+                oauth_client_secret='test_secret',
+            ),
+        )
+
+        with self.assertRaises(Exception) as context:
+            KafkaSource(kafka_config)
+
+        self.assertIn('oauth_token_url is required', str(context.exception))
+
+    def test_init_client_with_oauthbearer_missing_client_id(self):
+        kafka_config = dict(
+            connector_type='kafka',
+            bootstrap_server='test_server',
+            consumer_group='test_group',
+            topic='test_topic',
+            security_protocol='SASL_SSL',
+            sasl_config=dict(
+                mechanism='OAUTHBEARER',
+                oauth_token_url='https://auth.example.com/token',
+                oauth_client_secret='test_secret',
+            ),
+        )
+
+        with self.assertRaises(Exception) as context:
+            KafkaSource(kafka_config)
+
+        self.assertIn('oauth_client_id is required', str(context.exception))
+
+    def test_init_client_with_oauthbearer_missing_client_secret(self):
+        kafka_config = dict(
+            connector_type='kafka',
+            bootstrap_server='test_server',
+            consumer_group='test_group',
+            topic='test_topic',
+            security_protocol='SASL_SSL',
+            sasl_config=dict(
+                mechanism='OAUTHBEARER',
+                oauth_token_url='https://auth.example.com/token',
+                oauth_client_id='test_client',
+            ),
+        )
+
+        with self.assertRaises(Exception) as context:
+            KafkaSource(kafka_config)
+
+        self.assertIn('oauth_client_secret is required', str(context.exception))
 
     def test_init_with_serde_config(self):
         with patch.object(KafkaSource, 'init_client') as mock_init_client:

@@ -30,6 +30,11 @@ class SASLConfig:
     mechanism: str = 'PLAIN'
     username: str = None
     password: str = None
+    # OAuth configuration for OAUTHBEARER mechanism
+    oauth_token_url: str = None
+    oauth_client_id: str = None
+    oauth_client_secret: str = None
+    oauth_scope: str = None
 
 
 @dataclass
@@ -105,8 +110,17 @@ class KafkaSource(BaseSource):
         elif self.config.security_protocol == SecurityProtocol.SASL_SSL:
             consumer_kwargs['security_protocol'] = SecurityProtocol.SASL_SSL
             consumer_kwargs['sasl_mechanism'] = self.config.sasl_config.mechanism
-            consumer_kwargs['sasl_plain_username'] = self.config.sasl_config.username
-            consumer_kwargs['sasl_plain_password'] = self.config.sasl_config.password
+            
+            # Handle OAUTHBEARER mechanism
+            if self.config.sasl_config.mechanism == 'OAUTHBEARER':
+                from mage_ai.streaming.sources.kafka_oauth import create_oauth_token_provider
+                
+                token_provider = create_oauth_token_provider(self.config.sasl_config)
+                consumer_kwargs['sasl_oauth_token_provider'] = token_provider
+            else:
+                # Handle PLAIN, SCRAM mechanisms
+                consumer_kwargs['sasl_plain_username'] = self.config.sasl_config.username
+                consumer_kwargs['sasl_plain_password'] = self.config.sasl_config.password
 
             if self.config.ssl_config:
                 consumer_kwargs[
@@ -123,8 +137,17 @@ class KafkaSource(BaseSource):
         elif self.config.security_protocol == SecurityProtocol.SASL_PLAINTEXT:
             consumer_kwargs['security_protocol'] = SecurityProtocol.SASL_PLAINTEXT
             consumer_kwargs['sasl_mechanism'] = self.config.sasl_config.mechanism
-            consumer_kwargs['sasl_plain_username'] = self.config.sasl_config.username
-            consumer_kwargs['sasl_plain_password'] = self.config.sasl_config.password
+            
+            # Handle OAUTHBEARER mechanism
+            if self.config.sasl_config.mechanism == 'OAUTHBEARER':
+                from mage_ai.streaming.sources.kafka_oauth import create_oauth_token_provider
+                
+                token_provider = create_oauth_token_provider(self.config.sasl_config)
+                consumer_kwargs['sasl_oauth_token_provider'] = token_provider
+            else:
+                # Handle PLAIN, SCRAM mechanisms
+                consumer_kwargs['sasl_plain_username'] = self.config.sasl_config.username
+                consumer_kwargs['sasl_plain_password'] = self.config.sasl_config.password
 
         if self.config.topic:
             topics = [self.config.topic]
