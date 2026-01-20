@@ -366,6 +366,10 @@ def make_app(
             r'/api/(?P<resource>block_outputs)/(?P<pk>.+)',
             ApiResourceDetailHandler,
         ),
+        (
+            r'/api/(?P<resource>git_custom_branches)/(?P<pk>.+)',
+            ApiResourceDetailHandler,
+        ),
         # Generic API patterns
         (
             r'/api/(?P<resource>\w+)/(?P<pk>[\w\-\%2f\.]+)'
