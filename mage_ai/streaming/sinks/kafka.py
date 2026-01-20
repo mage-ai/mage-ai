@@ -4,7 +4,6 @@ from dataclasses import dataclass
 from typing import Dict, List
 
 from kafka import KafkaProducer
-
 from mage_ai.shared.config import BaseConfig
 from mage_ai.shared.enum import StrEnum
 from mage_ai.streaming.constants import DEFAULT_BATCH_SIZE, DEFAULT_TIMEOUT_MS
@@ -90,13 +89,17 @@ class KafkaSink(BaseSink):
             kwargs['ssl_password'] = self.config.ssl_config.password
             kwargs['ssl_check_hostname'] = self.config.ssl_config.check_hostname
         elif self.config.security_protocol == SecurityProtocol.SASL_SSL:
+            if not self.config.sasl_config:
+                raise Exception('sasl_config is required when security_protocol is SASL_SSL')
             kwargs['security_protocol'] = SecurityProtocol.SASL_SSL
             kwargs['sasl_mechanism'] = self.config.sasl_config.mechanism
-            
+
             # Handle OAUTHBEARER mechanism
             if self.config.sasl_config.mechanism == 'OAUTHBEARER':
-                from mage_ai.streaming.sources.kafka_oauth import create_oauth_token_provider
-                
+                from mage_ai.streaming.sources.kafka_oauth import (
+                    create_oauth_token_provider,
+                )
+
                 token_provider = create_oauth_token_provider(self.config.sasl_config)
                 kwargs['sasl_oauth_token_provider'] = token_provider
             else:

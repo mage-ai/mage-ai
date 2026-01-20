@@ -11,7 +11,6 @@ from dataclasses import dataclass, field
 from typing import Callable, Dict, List
 
 from kafka import KafkaConsumer, TopicPartition
-
 from mage_ai.shared.config import BaseConfig
 from mage_ai.shared.enum import StrEnum
 from mage_ai.streaming.constants import DEFAULT_BATCH_SIZE, DEFAULT_TIMEOUT_MS
@@ -99,6 +98,8 @@ class KafkaSource(BaseSource):
             enable_auto_commit=False,
         )
         if self.config.security_protocol == SecurityProtocol.SSL:
+            if not self.config.ssl_config:
+                raise Exception('ssl_config is required when security_protocol is SSL')
             consumer_kwargs['security_protocol'] = SecurityProtocol.SSL
             consumer_kwargs['ssl_cafile'] = self.config.ssl_config.cafile
             consumer_kwargs['ssl_certfile'] = self.config.ssl_config.certfile
@@ -108,13 +109,17 @@ class KafkaSource(BaseSource):
                 'ssl_check_hostname'
             ] = self.config.ssl_config.check_hostname
         elif self.config.security_protocol == SecurityProtocol.SASL_SSL:
+            if not self.config.sasl_config:
+                raise Exception('sasl_config is required when security_protocol is SASL_SSL')
             consumer_kwargs['security_protocol'] = SecurityProtocol.SASL_SSL
             consumer_kwargs['sasl_mechanism'] = self.config.sasl_config.mechanism
-            
+
             # Handle OAUTHBEARER mechanism
             if self.config.sasl_config.mechanism == 'OAUTHBEARER':
-                from mage_ai.streaming.sources.kafka_oauth import create_oauth_token_provider
-                
+                from mage_ai.streaming.sources.kafka_oauth import (
+                    create_oauth_token_provider,
+                )
+
                 token_provider = create_oauth_token_provider(self.config.sasl_config)
                 consumer_kwargs['sasl_oauth_token_provider'] = token_provider
             else:
@@ -135,13 +140,21 @@ class KafkaSource(BaseSource):
                     consumer_kwargs['ssl_password'] = self.config.ssl_config.password
 
         elif self.config.security_protocol == SecurityProtocol.SASL_PLAINTEXT:
+            if not self.config.sasl_config:
+                raise Exception('sasl_config is required when security_protocol is SASL_PLAINTEXT')
             consumer_kwargs['security_protocol'] = SecurityProtocol.SASL_PLAINTEXT
             consumer_kwargs['sasl_mechanism'] = self.config.sasl_config.mechanism
-            
+
             # Handle OAUTHBEARER mechanism
             if self.config.sasl_config.mechanism == 'OAUTHBEARER':
-                from mage_ai.streaming.sources.kafka_oauth import create_oauth_token_provider
-                
+                self._print(
+                    'WARNING: Using OAUTHBEARER with SASL_PLAINTEXT is not recommended. '
+                    'OAuth tokens should be used with SASL_SSL for secure transmission.'
+                )
+                from mage_ai.streaming.sources.kafka_oauth import (
+                    create_oauth_token_provider,
+                )
+
                 token_provider = create_oauth_token_provider(self.config.sasl_config)
                 consumer_kwargs['sasl_oauth_token_provider'] = token_provider
             else:
@@ -196,18 +209,18 @@ class KafkaSource(BaseSource):
 
     def _decode_key(self, key):
         """Decode message key based on serialization method.
-        
+
         When using RAW_VALUE, keep key as raw bytes.
         Otherwise, attempt UTF-8 decode with fallback to raw bytes on error.
         """
         if not key:
             return None
-        
+
         # Keep as raw bytes for RAW_VALUE serialization
         if (self.config.serde_config and
-            self.config.serde_config.serialization_method == SerializationMethod.RAW_VALUE):
+                self.config.serde_config.serialization_method == SerializationMethod.RAW_VALUE):
             return key
-        
+
         # Attempt UTF-8 decode, fallback to raw bytes on error
         try:
             return key.decode('utf-8')
