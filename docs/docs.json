@@ -35,7 +35,8 @@
               "getting-started/install-dependencies",
               "guides/developer-ux/workspaces",
               "getting-started/build-pro-pipeline",
-              "getting-started/trigger-pipeline"
+              "getting-started/trigger-pipeline",
+              "guides/best-practices"
             ]
           },
           {
