@@ -1642,7 +1642,6 @@ function Edit({
 
         {ScheduleTypeEnum.TIME === scheduleType && (
           <>
-            
             <Spacing mt={PADDING_UNITS}>
               <FlexContainer alignItems="center">
                 <Checkbox
