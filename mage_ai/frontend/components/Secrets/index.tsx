@@ -3,7 +3,7 @@ import { toast } from 'react-toastify';
 
 import api from '@api';
 import { onSuccess } from '@api/utils/response';
-import Table from '@components/shared/Table';
+import Table, { SortedColumnType } from '@components/shared/Table';
 import { useError } from '@context/Error';
 import SecretType from '@interfaces/SecretType';
 import ClickOutside from '@oracle/components/ClickOutside';
@@ -20,14 +20,22 @@ import { BORDER_RADIUS_SMALL } from '@oracle/styles/units/borders';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { useState } from 'react';
 
+export const COLUMN_KEY_MAP = {
+  0: 'name',
+};
+
+export const SORTABLE_COLUMN_INDEXES = Object.keys(COLUMN_KEY_MAP).map(i => Number(i));
+
 type SecretsProps = {
   fetchSecrets: () => void;
   secrets: SecretType[];
+  sortedColumn?: SortedColumnType;
 };
 
 function Secrets({
   fetchSecrets,
   secrets,
+  sortedColumn,
 }: SecretsProps) {
   const [secretToDelete, setSecretToDelete] = useState<string | null>(null);
   const [showError] = useError(null, {}, [], {
@@ -81,79 +89,81 @@ function Secrets({
   return (
     <>
       <Table
-      columnFlex={[null, null, null]}
-      columns={[
-        {
-          uuid: 'Name',
-        },
-        {
-          uuid: 'Value',
-        },
-        {
-          center: true,
-          label: () => '',
-          uuid: 'Actions',
-        },
-      ]}
-      rows={secrets?.map((secret: SecretType, idx: number) => [
-        <Text key={`name_${idx}`} monospace>
-          {secret.name}
-        </Text>,
-        <Text default key={`value_${idx}`} monospace>
-          ****************
-        </Text>,
-        <Flex
-          flex={1}
-          justifyContent="flex-end"
-          key={`actions_${idx}`}
-        >
-          <Tooltip
-            appearBefore
-            label="Copy secret name"
-            widthFitContent
+        columnFlex={[null, null, null]}
+        columns={[
+          {
+            uuid: 'Name',
+          },
+          {
+            uuid: 'Value',
+          },
+          {
+            center: true,
+            label: () => '',
+            uuid: 'Actions',
+          },
+        ]}
+        rows={secrets?.map((secret: SecretType, idx: number) => [
+          <Text key={`name_${idx}`} monospace>
+            {secret.name}
+          </Text>,
+          <Text default key={`value_${idx}`} monospace>
+            ****************
+          </Text>,
+          <Flex
+            flex={1}
+            justifyContent="flex-end"
+            key={`actions_${idx}`}
           >
-            <Button
-            {...sharedButtonProps}
-            onClick={() => {
-              navigator.clipboard.writeText(secret.name)
-                .then(() => {
-                    toast.success('Successfully copied to clipboard.', {
-                        position: toast.POSITION.BOTTOM_RIGHT,
-                        toastId: secret.name,
-                    });
-                });
-            }}
-            title="Copy secret name"
-          >
-              <Copy default size={2 * UNIT} />
-            </Button>
-          </Tooltip>
-          <Spacing ml={`${UNIT * 2}px`}>
             <Tooltip
               appearBefore
-              label={`Delete ${secret.name} secret`}
+              label="Copy secret name"
               widthFitContent
             >
               <Button
-                {...sharedButtonProps}
-                onClick={() => {
-                  setSecretToDelete(secret.name);
-                }}
-                title="Delete"
-              >
-                <Trash default size={2 * UNIT} />
+              {...sharedButtonProps}
+              onClick={() => {
+                navigator.clipboard.writeText(secret.name)
+                  .then(() => {
+                      toast.success('Successfully copied to clipboard.', {
+                          position: toast.POSITION.BOTTOM_RIGHT,
+                          toastId: secret.name,
+                      });
+                  });
+              }}
+              title="Copy secret name"
+            >
+                <Copy default size={2 * UNIT} />
               </Button>
             </Tooltip>
-          </Spacing>
-        </Flex>,
-      ])}
-      uuid="secrets"
-    />
+            <Spacing ml={`${UNIT * 2}px`}>
+              <Tooltip
+                appearBefore
+                label={`Delete ${secret.name} secret`}
+                widthFitContent
+              >
+                <Button
+                  {...sharedButtonProps}
+                  onClick={() => {
+                    setSecretToDelete(secret.name);
+                  }}
+                  title="Delete"
+                >
+                  <Trash default size={2 * UNIT} />
+                </Button>
+              </Tooltip>
+            </Spacing>
+          </Flex>,
+        ])}
+        sortableColumnIndexes={SORTABLE_COLUMN_INDEXES}
+        sortedColumn={sortedColumn}
+        uuid="secrets"
+      />
       {secretToDelete && (
       <ClickOutside
        onClickOutside={() => setSecretToDelete(null)}
        open
-     >
+      >
         <PopupMenu
         centerOnScreen
          danger

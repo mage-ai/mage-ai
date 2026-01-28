@@ -3,10 +3,12 @@ import { useEffect, useMemo, useState } from 'react';
 import api from '@api';
 import { META_QUERY_KEYS, MetaQueryEnum } from '@api/constants';
 import Dashboard from '@components/Dashboard';
-import Secrets from '@components/Secrets';
+import Secrets, { COLUMN_KEY_MAP, SORTABLE_COLUMN_INDEXES } from '@components/Secrets';
 import SecretDetail from '@components/Secrets/SecretDetail';
 import Paginate, { MAX_PAGES, ROW_LIMIT } from '@components/shared/Paginate';
 import PrivateRoute from '@components/shared/PrivateRoute';
+import { SortedColumnType } from '@components/shared/Table';
+import { SortDirectionEnum, SortQueryEnum } from '@components/shared/Table/constants';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Button from '@oracle/elements/Button';
 import Select from '@oracle/elements/Inputs/Select';
@@ -24,20 +26,45 @@ function SecretsPage() {
 
   const urlQuery = queryFromUrl();
   const query = useMemo(() => ({
-    ...filterQuery(urlQuery, META_QUERY_KEYS),
+    ...filterQuery(urlQuery, [...META_QUERY_KEYS, SortQueryEnum.SORT_COL_IDX, SortQueryEnum.SORT_DIRECTION]),
   }) , [urlQuery]);
+
+  const sortColumnIndexQuery = urlQuery?.[SortQueryEnum.SORT_COL_IDX];
+  const sortDirectionQuery = urlQuery?.[SortQueryEnum.SORT_DIRECTION];
+  const sortedColumnInit: SortedColumnType = useMemo(() => (sortColumnIndexQuery
+    ?
+    {
+      columnIndex: +sortColumnIndexQuery,
+      sortDirection: sortDirectionQuery || SortDirectionEnum.ASC,
+    }
+    : undefined
+  ), [sortColumnIndexQuery, sortDirectionQuery]);
 
   const { data: dataSecrets, mutate: fetchSecrets } = api.secrets.list(query, {
     revalidateOnFocus: false,
   });
 
-  const secrets = useMemo(() => sortByKey(dataSecrets?.secrets || [], 'name'), [dataSecrets]);
+  const secrets = useMemo(() => {
+    const arr = dataSecrets?.secrets || [];
+    if (sortedColumnInit) {
+      const { columnIndex, sortDirection } = sortedColumnInit;
+
+      if (SORTABLE_COLUMN_INDEXES.includes(columnIndex)) {
+        return sortByKey(arr, COLUMN_KEY_MAP[columnIndex], {
+          ascending: sortDirection === SortDirectionEnum.ASC,
+        });
+      }
+    }
+    return arr;
+  }, [dataSecrets, sortedColumnInit]);
 
   useEffect(() => {
     if (isEmptyObject(urlQuery)) {
       goToWithQuery({
         [MetaQueryEnum.LIMIT]: ROW_LIMIT,
         [MetaQueryEnum.OFFSET]: 0,
+        [SortQueryEnum.SORT_COL_IDX]: SORTABLE_COLUMN_INDEXES[0],
+        [SortQueryEnum.SORT_DIRECTION]: SortDirectionEnum.ASC,
       }, {
         pushHistory: false,
       });
@@ -140,6 +167,7 @@ function SecretsPage() {
       <Secrets
         fetchSecrets={fetchSecrets}
         secrets={secrets}
+        sortedColumn={sortedColumnInit}
       />
 
       {paginateMemo}
