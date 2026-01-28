@@ -24,6 +24,7 @@ test('ensure all main pages load properly', async ({ page }) => {
   await navigateToAndWaitTilLoaded('Triggers');
   await navigateToAndWaitTilLoaded('Pipeline runs');
   await navigateToAndWaitTilLoaded('Global data products');
+  await navigateToAndWaitTilLoaded('Secrets');
   await navigateToAndWaitTilLoaded('Files');
   await navigateToAndWaitTilLoaded('Templates');
   await navigateToAndWaitTilLoaded('Version control');
