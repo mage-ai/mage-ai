@@ -3,12 +3,10 @@ import { useEffect, useMemo, useState } from 'react';
 import api from '@api';
 import { META_QUERY_KEYS, MetaQueryEnum } from '@api/constants';
 import Dashboard from '@components/Dashboard';
-import Secrets, { COLUMN_KEY_MAP, SORTABLE_COLUMN_INDEXES } from '@components/Secrets';
+import Secrets from '@components/Secrets';
 import SecretDetail from '@components/Secrets/SecretDetail';
 import Paginate, { MAX_PAGES, ROW_LIMIT } from '@components/shared/Paginate';
 import PrivateRoute from '@components/shared/PrivateRoute';
-import { SortedColumnType } from '@components/shared/Table';
-import { SortDirectionEnum, SortQueryEnum } from '@components/shared/Table/constants';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Button from '@oracle/elements/Button';
 import Select from '@oracle/elements/Inputs/Select';
@@ -16,7 +14,7 @@ import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import { Add } from '@oracle/icons';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
-import { range, sortByKey } from '@utils/array';
+import { range } from '@utils/array';
 import { isEmptyObject } from '@utils/hash';
 import { goToWithQuery } from '@utils/routing';
 import { filterQuery, queryFromUrl } from '@utils/url';
@@ -26,45 +24,20 @@ function SecretsPage() {
 
   const urlQuery = queryFromUrl();
   const query = useMemo(() => ({
-    ...filterQuery(urlQuery, [...META_QUERY_KEYS, SortQueryEnum.SORT_COL_IDX, SortQueryEnum.SORT_DIRECTION]),
+    ...filterQuery(urlQuery, META_QUERY_KEYS),
   }) , [urlQuery]);
 
-  const sortColumnIndexQuery = urlQuery?.[SortQueryEnum.SORT_COL_IDX];
-  const sortDirectionQuery = urlQuery?.[SortQueryEnum.SORT_DIRECTION];
-  const sortedColumnInit: SortedColumnType = useMemo(() => (sortColumnIndexQuery
-    ?
-    {
-      columnIndex: +sortColumnIndexQuery,
-      sortDirection: sortDirectionQuery || SortDirectionEnum.ASC,
-    }
-    : undefined
-  ), [sortColumnIndexQuery, sortDirectionQuery]);
-
-  const { data: dataSecrets, mutate: fetchSecrets } = api.secrets.list(query, {
+  const { data: dataSecrets, mutate: fetchSecrets, isLoading } = api.secrets.list(query, {
     revalidateOnFocus: false,
   });
 
-  const secrets = useMemo(() => {
-    const arr = dataSecrets?.secrets || [];
-    if (sortedColumnInit) {
-      const { columnIndex, sortDirection } = sortedColumnInit;
-
-      if (SORTABLE_COLUMN_INDEXES.includes(columnIndex)) {
-        return sortByKey(arr, COLUMN_KEY_MAP[columnIndex], {
-          ascending: sortDirection === SortDirectionEnum.ASC,
-        });
-      }
-    }
-    return arr;
-  }, [dataSecrets, sortedColumnInit]);
+  const secrets = useMemo(() => dataSecrets?.secrets || [], [dataSecrets]);
 
   useEffect(() => {
     if (isEmptyObject(urlQuery)) {
       goToWithQuery({
         [MetaQueryEnum.LIMIT]: ROW_LIMIT,
         [MetaQueryEnum.OFFSET]: 0,
-        [SortQueryEnum.SORT_COL_IDX]: SORTABLE_COLUMN_INDEXES[0],
-        [SortQueryEnum.SORT_DIRECTION]: SortDirectionEnum.ASC,
       }, {
         pushHistory: false,
       });
@@ -137,7 +110,6 @@ function SecretsPage() {
     );
   }, [dataSecrets, query]);
 
-
   return (
     <Dashboard
       before={showSecretDetail && (
@@ -151,23 +123,23 @@ function SecretsPage() {
         <FlexContainer justifyContent="space-between">
           <Spacing pr={PADDING_UNITS}>
             <Button
-                beforeIcon={<Add size={UNIT * 2.5} />}
-                onClick={() => setShowSecretDetail(true)}
-                primary
-              >
+              beforeIcon={<Add size={UNIT * 2.5} />}
+              onClick={() => setShowSecretDetail(true)}
+              primary
+            >
               New secret
             </Button>
           </Spacing>
           {limitMemo}
         </FlexContainer>
-    )}
+      )}
       title="Secrets"
       uuid="Secrets/index"
     >
       <Secrets
         fetchSecrets={fetchSecrets}
+        isLoading={isLoading}
         secrets={secrets}
-        sortedColumn={sortedColumnInit}
       />
 
       {paginateMemo}

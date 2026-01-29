@@ -1,6 +1,5 @@
 import {
   useCallback,
-  useEffect,
   useMemo,
   useState,
 } from 'react';
@@ -9,9 +8,7 @@ import { useMutation } from 'react-query';
 import api from '@api';
 import { onSuccess } from '@api/utils/response';
 import { useError } from '@context/Error';
-import { useKeyboardContext } from '@context/Keyboard';
 import SecretType from '@interfaces/SecretType';
-import CodeBlock from '@oracle/components/CodeBlock';
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Button from '@oracle/elements/Button';
@@ -19,16 +16,15 @@ import TextInput from '@oracle/elements/Inputs/TextInput';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import { PADDING_UNITS } from '@oracle/styles/units/spacing';
-import {
-  KEY_CODE_CONTROL,
-  KEY_CODE_META,
-  KEY_CODE_R,
-  KEY_CODE_S,
-} from '@utils/hooks/keyboardShortcuts/constants';
-import { onlyKeysPresent } from '@utils/hooks/keyboardShortcuts/utils';
 import useConfirmLeave from '@utils/hooks/useConfirmLeave';
-import { SAMPLE_SECRET_VALUE, SECRET_IN_CODE } from './constants';
+import { toast } from 'react-toastify';
+import {
+  SECRET_NAME_INVALID_MESSAGE,
+  SECRETS_INFO,
+} from './constants';
 import { ButtonsStyle, ContainerStyle } from './index.style';
+import { EncryptionWarning, UsageExamples } from './SecretInformation';
+import { isSecretNameValid } from './utils';
 
 type SecretDetailProps = {
   onClose: () => void;
@@ -58,6 +54,10 @@ function SecretDetail({
       onSuccess: (response: any) =>
         onSuccess(response, {
           callback: (res) => {
+            toast.success('Secret created successfully', {
+              position: toast.POSITION.BOTTOM_RIGHT,
+              toastId: 'secret_created',
+            });
             onSaveSuccess?.(res?.secret);
             onClose();
           },
@@ -71,13 +71,11 @@ function SecretDetail({
 
   const isNameValid = useMemo(() => {
     const name = secretAttributes?.name || '';
-    // Only allow alphanumeric and underscores, must start with a letter/underscore
-    return /^[a-zA-Z_][a-zA-Z0-9_]*$/.test(name);
+    return isSecretNameValid(name);
   }, [secretAttributes?.name]);
 
-  const buttonDisabled = useMemo(() => !secretAttributes?.name?.trim()
-    || !isNameValid
-    || !secretAttributes?.value?.trim(), [
+  const buttonDisabled = useMemo(() => !isNameValid
+    || !secretAttributes?.value, [
     secretAttributes,
     isNameValid,
   ]);
@@ -91,37 +89,6 @@ function SecretDetail({
     createSecret,
     secretAttributes,
   ]);
-
-  const {
-    registerOnKeyDown,
-    unregisterOnKeyDown,
-  } = useKeyboardContext();
-
-  useEffect(() => () => {
-    unregisterOnKeyDown(uuid);
-  }, [unregisterOnKeyDown, uuid]);
-
-  registerOnKeyDown(
-    uuid,
-    (event, keyMapping) => {
-      if (touched && onlyKeysPresent([KEY_CODE_META, KEY_CODE_R], keyMapping)) {
-        event.preventDefault();
-        const warning = 'You have changes that are unsaved. Click cancel and save your changes before reloading page.';
-        if (typeof window !== 'undefined' && typeof location !== 'undefined' && window.confirm(warning)) {
-          location.reload();
-        }
-      } else if (onlyKeysPresent([KEY_CODE_META, KEY_CODE_S], keyMapping)
-        || onlyKeysPresent([KEY_CODE_CONTROL, KEY_CODE_S], keyMapping)
-      ) {
-        event.preventDefault();
-        saveSecret();
-      }
-    },
-    [
-      saveSecret,
-      touched,
-    ],
-  );
 
   const { ConfirmLeaveModal } = useConfirmLeave({
     shouldWarn: touched,
@@ -138,20 +105,11 @@ function SecretDetail({
       >
         <Flex flexDirection="column">
           <Spacing mt={2} px={PADDING_UNITS}>
-            <Spacing mb={2}>
-              <Text muted small>
-                <Text inline warning>
-                  WARNING:
-                </Text>{' '}
-                The encryption key is stored in a file on your machine. If you need more secure
-                encryption, we recommend using a secrets manager.
-              </Text>
-            </Spacing>
+            <EncryptionWarning muted small />
 
             <Spacing>
               <Text muted small>
-                Secrets are not editable, they can only be created and deleted. Secrets are shared across
-                the project, and can be used in configuration fields.
+                {SECRETS_INFO}
               </Text>
             </Spacing>
           </Spacing>
@@ -166,13 +124,13 @@ function SecretDetail({
               </Text>
               {secretAttributes?.name && !isNameValid && (
                 <Text danger small>
-                  Name must start with a letter or underscore and contain only letters, numbers, and underscores.
+                  {SECRET_NAME_INVALID_MESSAGE}
                 </Text>
               )}
             </Spacing>
 
             <TextInput
-              danger={!isNameValid}
+              danger={secretAttributes?.name && !isNameValid}
               monospace
               onChange={(e) => setSecretAttributes((prev) => ({
                 ...prev,
@@ -209,33 +167,7 @@ function SecretDetail({
           </Spacing>
 
           <Spacing mt={2} px={PADDING_UNITS}>
-            <Spacing mb={2}>
-              <Text muted small>To reference a secret, use the
-                following templating syntax:
-              </Text>
-            </Spacing>
-
-            <Spacing mb={2}>
-              <CodeBlock
-                language="yaml"
-                small
-                source={SAMPLE_SECRET_VALUE}
-              />
-            </Spacing>
-
-            <Spacing mb={2}>
-              <Text muted small>
-                To reference a secret in code, you can import the `get_secret_value` helper method:
-              </Text>
-            </Spacing>
-
-            <Spacing mb={PADDING_UNITS}>
-              <CodeBlock
-                language="python"
-                small
-                source={SECRET_IN_CODE}
-              />
-            </Spacing>
+            <UsageExamples muted small />
           </Spacing>
         </Flex>
 
