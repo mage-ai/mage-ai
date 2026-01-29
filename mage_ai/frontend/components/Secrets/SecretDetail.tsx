@@ -16,7 +16,6 @@ import TextInput from '@oracle/elements/Inputs/TextInput';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import { PADDING_UNITS } from '@oracle/styles/units/spacing';
-import useConfirmLeave from '@utils/hooks/useConfirmLeave';
 import { toast } from 'react-toastify';
 import {
   SECRET_NAME_INVALID_MESSAGE,
@@ -40,13 +39,8 @@ function SecretDetail({
     uuid,
   });
 
-  const [touched, setTouched] = useState<boolean>(false);
-  const [secretAttributes, setSecretAttributesState] =
+  const [secretAttributes, setSecretAttributes] =
     useState<SecretType>();
-  const setSecretAttributes = useCallback((handlePrevious) => {
-    setTouched(true);
-    setSecretAttributesState(handlePrevious);
-  }, []);
 
   const [createSecret, { isLoading: isLoadingCreateSecret }] = useMutation(
     api.secrets.useCreate(),
@@ -90,14 +84,8 @@ function SecretDetail({
     secretAttributes,
   ]);
 
-  const { ConfirmLeaveModal } = useConfirmLeave({
-    shouldWarn: touched,
-    warningMessage: 'You have unsaved changes. Are you sure you want to leave?',
-  });
-
   return (
     <ContainerStyle>
-      <ConfirmLeaveModal />
       <FlexContainer
         flexDirection="column"
         fullHeight
