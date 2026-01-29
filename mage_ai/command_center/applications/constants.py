@@ -78,6 +78,10 @@ ITEMS = [
         condition=lambda opts: REQUIRE_USER_PERMISSIONS,
     ),
     dict(
+        title='Secrets',
+        path='/secrets',
+    ),
+    dict(
         title='Terminal',
         path='/terminal',
     ),

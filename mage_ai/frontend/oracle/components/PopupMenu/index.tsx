@@ -1,9 +1,9 @@
-import Button from '@oracle/elements/Button';
 import FlexContainer from '@oracle/components/FlexContainer';
-import PopupMenuContainer from './PopupMenuContainer';
+import Button from '@oracle/elements/Button';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import { UNIT } from '@oracle/styles/units/spacing';
+import PopupMenuContainer from './PopupMenuContainer';
 
 type PopupMenuProps = {
   bottom?: number;
@@ -57,7 +57,7 @@ function PopupMenu({
             {title}
           </Text>
         </Spacing>
-        <Text small>
+        <Text small whiteSpaceNormal>
           {subtitle}
         </Text>
       </FlexContainer>

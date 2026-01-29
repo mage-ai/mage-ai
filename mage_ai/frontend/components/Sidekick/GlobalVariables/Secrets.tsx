@@ -1,26 +1,31 @@
-import React, { useCallback, useMemo, useState } from 'react';
-import { toast } from 'react-toastify';
+import { useCallback, useMemo, useState } from 'react';
 import { useMutation } from 'react-query';
+import { toast } from 'react-toastify';
 
-import CodeBlock from '@oracle/components/CodeBlock';
+import api from '@api';
+import { onSuccess } from '@api/utils/response';
+import {
+  SECRET_NAME_INVALID_MESSAGE,
+  SECRETS_INFO,
+} from '@components/Secrets/constants';
+import { EncryptionWarning, UsageExamples } from '@components/Secrets/SecretInformation';
+import { isSecretNameValid } from '@components/Secrets/utils';
 import Col from '@components/shared/Grid/Col';
-import FlexContainer from '@oracle/components/FlexContainer';
-import Headline from '@oracle/elements/Headline';
-import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButton';
 import Row from '@components/shared/Grid/Row';
+import { removeKeyboardFocus } from '@context/shared/utils';
+import { VariableType } from '@interfaces/PipelineVariableType';
 import SecretType from '@interfaces/SecretType';
+import FlexContainer from '@oracle/components/FlexContainer';
+import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButton';
+import Headline from '@oracle/elements/Headline';
+import TextInput from '@oracle/elements/Inputs/TextInput';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
-import TextInput from '@oracle/elements/Inputs/TextInput';
-import VariableRow from './VariableRow';
-import api from '@api';
 import { Add, Copy } from '@oracle/icons';
-import { CellStyle, TableStyle } from './index.style';
 import { DARK_CONTENT_BACKGROUND } from '@oracle/styles/colors/content';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
-import { VariableType } from '@interfaces/PipelineVariableType';
-import { onSuccess } from '@api/utils/response';
-import { removeKeyboardFocus } from '@context/shared/utils';
+import { CellStyle, TableStyle } from './index.style';
+import VariableRow from './VariableRow';
 
 type SecretsProps = {
   fetchSecrets: () => void;
@@ -40,6 +45,13 @@ function Secrets({ fetchSecrets, pipelineUUID, secrets, setErrorMessages, width 
   const [createSecret] = useMutation(api.secrets.useCreate(), {
     onSuccess: (response: any) =>
       onSuccess(response, {
+        callback: () => {
+          fetchSecrets();
+          toast.success('Secret created successfully', {
+            position: toast.POSITION.BOTTOM_RIGHT,
+            toastId: 'secret_created',
+          });
+        },
         onErrorCallback: ({ error: { message, exception } }) => {
           // @ts-ignore
           setErrorMessages(errorMessages => {
@@ -61,8 +73,12 @@ function Secrets({ fetchSecrets, pipelineUUID, secrets, setErrorMessages, width 
       onSuccess(response, {
         callback: () => {
           fetchSecrets();
+          toast.success('Secret deleted successfully', {
+            position: toast.POSITION.BOTTOM_RIGHT,
+            toastId: 'secret_deleted',
+          });
         },
-        onErrorCallback: ({ error: { errors, message } }) => {
+        onErrorCallback: ({ error: { message } }) => {
           // @ts-ignore
           setErrorMessages(errorMessages => errorMessages.concat(message));
         },
@@ -71,7 +87,7 @@ function Secrets({ fetchSecrets, pipelineUUID, secrets, setErrorMessages, width 
 
   const handleKeyDown = useCallback(
     e => {
-      if (e.key === 'Enter') {
+      if (e.key === 'Enter' && newSecretValue && isSecretNameValid(newSecretName)) {
         // @ts-ignore
         createSecret({
           secret: {
@@ -79,7 +95,6 @@ function Secrets({ fetchSecrets, pipelineUUID, secrets, setErrorMessages, width 
             value: newSecretValue,
           },
         }).then(() => {
-          fetchSecrets();
           setNewSecretName(null);
           setNewSecretValue(null);
         });
@@ -90,7 +105,7 @@ function Secrets({ fetchSecrets, pipelineUUID, secrets, setErrorMessages, width 
         setShowNewSecret(false);
       }
     },
-    [createSecret, fetchSecrets, newSecretName, newSecretValue],
+    [createSecret, newSecretName, newSecretValue],
   );
 
   const handleDelete = useCallback(
@@ -100,16 +115,6 @@ function Secrets({ fetchSecrets, pipelineUUID, secrets, setErrorMessages, width 
     },
     [deleteSecret],
   );
-
-  const SAMPLE_SECRET_VALUE = `
-    "{{ mage_secret_var('<secret_name>') }}"
-  `;
-
-  const SECRET_IN_CODE = `
-    from mage_ai.data_preparation.shared.secrets import get_secret_value
-
-    get_secret_value('<secret_name>')
-  `;
 
   return (
     <Spacing p={PADDING_UNITS}>
@@ -130,15 +135,9 @@ function Secrets({ fetchSecrets, pipelineUUID, secrets, setErrorMessages, width 
           </KeyboardShortcutButton>
         </FlexContainer>
       </Spacing>
-      <Spacing mb={PADDING_UNITS}>
-        <Text>
-          <Text inline warning>
-            WARNING:
-          </Text>{' '}
-          the encryption key is stored in a file on your machine. If you need more secure
-          encryption, we recommend using a secrets manager.
-        </Text>
-      </Spacing>
+
+      <EncryptionWarning />
+
       {showNewSecret && (
         <Spacing mb={PADDING_UNITS}>
           <Text muted>
@@ -154,6 +153,11 @@ function Secrets({ fetchSecrets, pipelineUUID, secrets, setErrorMessages, width 
           </Text>
         </Spacing>
       )}
+      {newSecretName && !isSecretNameValid(newSecretName) && (
+        <Text danger small>
+          {SECRET_NAME_INVALID_MESSAGE}
+        </Text>
+      )}
       <Spacing mb={PADDING_UNITS}>
         <TableStyle width={tableWidth}>
           {showNewSecret && (
@@ -166,11 +170,19 @@ function Secrets({ fetchSecrets, pipelineUUID, secrets, setErrorMessages, width 
                     centerText
                     muted
                     onClick={() => {
-                      navigator.clipboard.writeText(`{{ mage_secret_var(${newSecretName}) }}`);
-                      toast.success('Successfully copied to clipboard.', {
-                        position: toast.POSITION.BOTTOM_RIGHT,
-                        toastId: newSecretName,
-                      });
+                      navigator.clipboard.writeText(`{{ mage_secret_var(${newSecretName}) }}`)
+                        .then(() => {
+                          toast.success('Successfully copied to clipboard.', {
+                            position: toast.POSITION.BOTTOM_RIGHT,
+                            toastId: newSecretName,
+                          });
+                        })
+                        .catch(() => {
+                          toast.error('Failed to copy to clipboard.', {
+                            position: toast.POSITION.BOTTOM_RIGHT,
+                            toastId: 'copy_error',
+                          });
+                        });
                     }}
                     uuid={`Sidekick/Secrets/${newSecretName}`}
                     withIcon
@@ -184,6 +196,7 @@ function Secrets({ fetchSecrets, pipelineUUID, secrets, setErrorMessages, width 
                   <TextInput
                     borderless
                     compact
+                    danger={newSecretName && !isSecretNameValid(newSecretName)}
                     fullWidth
                     monospace
                     onChange={e => {
@@ -238,24 +251,14 @@ function Secrets({ fetchSecrets, pipelineUUID, secrets, setErrorMessages, width 
           ))}
         </TableStyle>
       </Spacing>
+
       <Spacing mb={PADDING_UNITS}>
         <Text>
-          Secrets are not editable, they can only be created and deleted. Secrets are shared across
-          the project, and can be used in configuration fields. To reference a secret, use the
-          following templating syntax:
+          {SECRETS_INFO}
         </Text>
       </Spacing>
-      <Spacing mb={PADDING_UNITS}>
-        <CodeBlock language="yaml" maxWidth={tableWidth} small source={SAMPLE_SECRET_VALUE} />
-      </Spacing>
-      <Spacing mb={PADDING_UNITS}>
-        <Text>
-          To reference a secret in code, you can import the `get_secret_value` helper method:
-        </Text>
-      </Spacing>
-      <Spacing mb={PADDING_UNITS}>
-        <CodeBlock language="python" maxWidth={tableWidth} small source={SECRET_IN_CODE} />
-      </Spacing>
+
+      <UsageExamples width={tableWidth} />
     </Spacing>
   );
 }
