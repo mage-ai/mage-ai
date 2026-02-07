@@ -1005,7 +1005,7 @@ class croniter(object):
                         # Add FirstBound -> ENDRANGE, respecting step
                         rng = list(range(low, cls.RANGES[field_index][1] + 1, step))
                         # Then 0 -> SecondBound, but skipping n
-                        # first occurences according to step
+                        # first occurrences according to step
                         # EG to respect such expressions : Apr-Jan/3
                         to_skip = 0
                         if rng:
