@@ -97,6 +97,14 @@
                       "data-integrations/sources/xero",
                       "data-integrations/sources/youtube_analytics"
                     ]
+                  },
+                  {
+                    "group": "Destinations",
+                    "pages": [
+                      "data-integrations/destinations/databricks",
+                      "data-integrations/destinations/duckdb",
+                      "data-integrations/destinations/iceberg_s3"
+                    ]
                   }
                 ]
               },
