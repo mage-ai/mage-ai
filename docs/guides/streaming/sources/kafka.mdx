@@ -97,7 +97,7 @@ Start from specific timestamp (milliseconds since epoch):
 ```yaml
 offset:
   type: "timestamp"
-  value: 1693396630163  # Wed Aug 30 2023 11:57:10 GMT+0
+  value: 1693396630163  # Wed Aug 30 2023 11:57:10 UTC
   partitions:
     - {"topic": "my_topic", "partition": 0}
 ```
@@ -277,7 +277,7 @@ Calculate memory requirements:
 Estimated Memory = max_partition_fetch_bytes × number_of_partitions × 1.5
 ```
 
-The 1.5x multiplier accounts for overhead. Ensure your consumer JVM has at least this much heap memory available.
+The 1.5x multiplier accounts for overhead. Ensure your consumer process has at least this much memory available.
 
 ## Troubleshooting
 
@@ -304,7 +304,7 @@ The 1.5x multiplier accounts for overhead. Ensure your consumer JVM has at least
 **Solutions:**
 1. Increase `batch_size` and `max_partition_fetch_bytes`
 2. Increase `timeout_ms` to allow more time for message accumulation
-3. Scale horizontally: Run multiple consumer instances (different consumer groups)
+3. Scale horizontally: Set higher value for [executor_count](/guides/streaming/introduction#executor-count) to run multiple consumer instances in the same consumer group so Kafka can distribute partitions among them.
 4. Optimize downstream processing speed
 
 ### Issue: Out of Memory Errors
