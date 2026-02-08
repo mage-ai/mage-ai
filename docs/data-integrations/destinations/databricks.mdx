@@ -1,0 +1,55 @@
+---
+title: Databricks
+description: How to configure Databricks as a destination in Mage to write pipeline data to Databricks SQL warehouses using Unity Catalog.
+---
+
+import { ProButton } from '/snippets/pro/button.mdx';
+import { ProOnly } from '/snippets/pro/only.mdx';
+
+<ProOnly source="data-integration" />
+
+Use **Databricks** as a destination in Mage to load structured data into your Databricks workspace. Mage integrates with Databricks SQL warehouses and uses **Unity Catalog** for table management.
+
+This destination is ideal for exporting transformed pipeline data to Databricks for analytics, ML workloads, or data lakehouse operations.
+
+---
+
+## Required Configuration
+
+Provide the following credentials when configuring Databricks as a destination:
+
+| Key               | Description                                                          | Example Value                       | Required |
+|-------------------|----------------------------------------------------------------------|-------------------------------------|----------|
+| `access_token`    | Personal access token to authenticate with Databricks                | `dapi123abc...`                     | ✅        |
+| `server_hostname` | Hostname of your Databricks workspace                                | `dbc-123456.cloud.databricks.com`  | ✅        |
+| `http_path`       | HTTP path of the Databricks SQL warehouse or cluster                 | `/sql/1.0/warehouses/abc123`        | ✅        |
+| `schema`          | Name of the schema (database) within the catalog                     | `analytics`                         | ✅        |
+| `table`           | Name of the table to write data into                                 | `user_events`                       | ✅        |
+
+---
+
+## Optional Configuration
+
+| Key                   | Description                                                             | Example Value | Default |
+|-----------------------|-------------------------------------------------------------------------|---------------|---------|
+| `catalog`             | Name of the Unity Catalog to use                                     | `workspace`   | - |
+| `skip_schema_creation`| If `true`, Mage won't run `CREATE SCHEMA`. Useful if the schema already exists. | `true`       | `false` |
+| `lower_case`          | If `true`, all column names will be lowercased.                         | `true`       | `true` |
+| `allow_reserved_words`| If `true`, Mage will allow use of SQL reserved words as column names.   | `false`      | `false` |
+
+---
+
+## Notes
+
+- **Unity Catalog**: Set `catalog` to your Unity Catalog name. This is an optional field for table management in Databricks.
+- **Access Token**: Generate a personal access token from your Databricks workspace settings.
+- **HTTP Path**: Find the HTTP path in your SQL warehouse or cluster connection details.
+- **Permissions**: Ensure your access token has permissions to create schemas and write to tables in the specified catalog and schema.
+
+---
+
+## Related Resources
+
+- [Databricks SQL Documentation](https://docs.databricks.com/sql/)
+- [Unity Catalog Overview](https://docs.databricks.com/data-governance/unity-catalog/index.html)
+- [Databricks Personal Access Tokens](https://docs.databricks.com/dev-tools/auth/pat.html)
