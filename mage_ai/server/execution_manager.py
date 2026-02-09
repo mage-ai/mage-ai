@@ -12,7 +12,7 @@ class PipelineExecution:
     """
     Singleton class to manage the current pipeline execution running in
     the websocket. We need to track the state of this execution because
-    it will be run in a seperate process, and the user can choose to cancel
+    it will be run in a separate process, and the user can choose to cancel
     the execution.
     """
     def __init__(self):
