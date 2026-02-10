@@ -1,22 +1,22 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { toast } from 'react-toastify';
 
+import api from '@api';
+import { onSuccess } from '@api/utils/response';
 import Col from '@components/shared/Grid/Col';
+import Row from '@components/shared/Grid/Row';
+import { removeKeyboardFocus } from '@context/shared/utils';
+import { VariableType } from '@interfaces/PipelineVariableType';
 import Flex from '@oracle/components/Flex';
 import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButton';
-import Row from '@components/shared/Grid/Row';
-import Text from '@oracle/elements/Text';
 import TextInput from '@oracle/elements/Inputs/TextInput';
-import { CellStyle } from './index.style';
+import Text from '@oracle/elements/Text';
 import { Copy, Edit, Trash } from '@oracle/icons';
 import { DARK_CONTENT_BACKGROUND } from '@oracle/styles/colors/content';
 import { LIME_DARK } from '@oracle/styles/colors/main';
 import { UNIT } from '@oracle/styles/units/spacing';
-import { VariableType } from '@interfaces/PipelineVariableType';
-import { onSuccess } from '@api/utils/response';
-import { removeKeyboardFocus } from '@context/shared/utils';
 import { useMutation } from 'react-query';
-import api from '@api';
+import { CellStyle } from './index.style';
 
 type VariableRowProps = {
   copyText?: string;
@@ -138,11 +138,19 @@ function VariableRow({
               centerText
               muted
               onClick={() => {
-                navigator.clipboard.writeText(copyText);
-                toast.success('Successfully copied to clipboard.', {
-                  position: toast.POSITION.BOTTOM_RIGHT,
-                  toastId: uuid,
-                });
+                navigator.clipboard.writeText(copyText)
+                  .then(() => {
+                    toast.success('Successfully copied to clipboard.', {
+                      position: toast.POSITION.BOTTOM_RIGHT,
+                      toastId: uuid,
+                    });
+                  })
+                  .catch(() => {
+                    toast.error('Failed to copy to clipboard.', {
+                      position: toast.POSITION.BOTTOM_RIGHT,
+                      toastId: 'copy_error',
+                    });
+                  });
               }}
               small
               uuid={`Sidekick/GlobalVariables/${uuid}`}

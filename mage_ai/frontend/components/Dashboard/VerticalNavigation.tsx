@@ -28,6 +28,7 @@ import {
   TemplateShapes,
   Terminal,
   TripleBoxes,
+  Secrets,
 } from '@oracle/icons';
 import {
   NavigationItemStyle,
@@ -143,6 +144,14 @@ const DEFAULT_NAV_ITEMS = ({
           label: () => 'Global data products',
           linkProps: {
             href: '/global-data-products',
+          },
+        },
+        {
+          Icon: Secrets,
+          id: 'secrets',
+          label: () => 'Secrets',
+          linkProps: {
+            href: '/secrets',
           },
         },
       ],
