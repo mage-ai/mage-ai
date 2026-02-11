@@ -21,7 +21,7 @@ class ActiveMQConfig(BaseConfig):
 
 
 def messageProcessingFunction(message, handler):
-    print('Recieved message: "%s"' % message)
+    print('Received message: "%s"' % message)
     handler([message])
 
 
