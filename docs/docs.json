@@ -393,6 +393,7 @@
                 "icon": "family",
                 "pages": [
                   "development/dependencies/requirements",
+                  "development/dependencies/dependency-management",
                   "development/dependencies/custom-files"
                 ]
               },

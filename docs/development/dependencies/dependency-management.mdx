@@ -1,0 +1,605 @@
+---
+title: "Dependency Management"
+sidebarTitle: "Dependency Management"
+description: "Advanced dependency management with isolated virtual environments, automatic caching, and intelligent package resolution in Mage Pro."
+---
+
+import { ProButton } from '/snippets/pro/button.mdx';
+import { ProOnly } from '/snippets/pro/only.mdx';
+
+<ProOnly source="dependency" />
+
+Mage Pro includes an advanced dependency management system that provides isolated, reproducible dependency environments for your projects. This system automatically creates and manages virtual environments based on your project's dependencies, ensuring consistent execution across different environments.
+
+## Overview
+
+The dependency management system provides:
+
+- **Isolated environments**: Each unique combination of dependencies gets its own virtual environment
+- **Automatic caching**: Environments are reused based on content fingerprinting
+- **Fast installation**: Uses `uv` for blazing-fast package installation with `pip` fallback
+- **Smart compatibility checking**: Detects and reuses compatible packages from the global environment
+- **Safe concurrency**: File-based locking prevents race conditions when multiple processes create environments
+
+## Using Dependency Management
+
+You can manage dependencies in three ways:
+
+### 1. Via UI (Recommended for Quick Updates)
+
+The easiest way to manage your project dependencies is through the Mage UI:
+
+1. **Navigate to the Terminal page** in your Mage workspace
+
+2. **Open your requirements file**: Browse to `/home/src/[project_path]/requirements.txt` and open it in the editor
+
+3. **Edit your dependencies**: Add, remove, or update package requirements in the `requirements.txt` file
+   ```txt
+   # Example requirements.txt
+   pandas==2.0.0
+   numpy>=1.24.0
+   scikit-learn==1.3.0
+   ```
+
+4. **Click the "Install dependencies" button**: This will automatically:
+   - Open a terminal at the bottom of the page
+   - Execute `mage deps install` command
+   - Show real-time installation progress and output
+
+The system will intelligently install only the packages that need to be added or updated, reusing compatible packages from the global environment when possible.
+
+### 2. Via Mage Terminal
+
+For more control, you can run `mage deps` commands directly in the Mage terminal:
+
+1. **Open the Terminal page** in your Mage workspace
+
+2. **Run dependency commands**:
+   ```bash
+   # Ensure virtual environment exists
+   mage deps ensure
+
+   # Install dependencies from requirements.txt
+   mage deps install
+
+   # Install from custom requirements file
+   mage deps install -r production_requirements.txt
+
+   # List all environments
+   mage deps list
+
+   # Clean up old environments
+   mage deps cleanup
+   ```
+
+See the [CLI Commands](#cli-commands) section below for complete command documentation.
+
+### 3. Via Cluster Restart (Automatic)
+
+When you restart your Mage cluster, the dependency management system automatically:
+
+1. **Reads your latest `requirements.txt`**: Checks for any changes since the last environment was created
+2. **Creates or updates the virtual environment**:
+   - If the requirements haven't changed, reuses the existing environment
+   - If requirements have changed, creates a new environment with updated dependencies
+3. **Activates the environment**: Makes it available for all pipeline executions
+
+This ensures your dependencies are always synchronized with your `requirements.txt` after each cluster restart, with no manual intervention required.
+
+## How It Works
+
+### Automatic Server-Side Management
+
+When the Mage server starts, the dependency management system automatically handles virtual environment setup:
+
+- **If no environment exists**: A new virtual environment is automatically created based on your project's `requirements.txt`
+- **If an environment exists**: The matching environment is automatically activated for use
+
+This seamless integration means you don't need to manually manage virtual environments for normal server operation. The system ensures your dependencies are always properly configured without manual intervention.
+
+For more control over environment creation, activation, and management, you can use the [CLI commands](#cli-commands) described below.
+
+### Environment Fingerprinting
+
+The system computes a deterministic fingerprint hash for each environment based on:
+
+- Python version (e.g., `3.11.8`)
+- Normalized `requirements.txt` content
+- `uv` version (if available)
+
+If any of these change, a new environment is created. If they match an existing environment, that environment is reused.
+
+### Directory Structure
+
+Virtual environments are stored under your Mage data directory:
+
+```
+/home/src/mage_data/
+└── venvs/
+    ├── .cleanup.lock             # Global cleanup lock
+    └── <python-version>/         # e.g., 3.11.8
+        ├── env-<fingerprint>/    # Virtual environment
+        │   ├── .mage_env.json    # Environment metadata
+        │   ├── bin/              # Python executables
+        │   └── lib/              # Installed packages
+        └── .locks/               # Lock files for concurrency
+            ├── .install.lock     # Installation lock
+            ├── .activate.lock    # Activation lock
+            ├── global.lock       # Global package versions
+            └── venv.lock         # Installed package versions
+```
+
+Each virtual environment includes a `.mage_env.json` metadata file that tracks:
+- `fingerprint`: Environment fingerprint hash
+- `python_version`: Python version
+- `created_at`: Creation timestamp (ISO 8601 format)
+- `last_used_at`: Last usage timestamp (ISO 8601 format)
+- `dependency_source`: Source of dependencies (e.g., `requirements.txt`)
+
+### Package Installation Strategy
+
+The system uses a smart installation strategy to minimize redundant installations:
+
+1. **Global package detection**: Scans globally installed packages
+2. **Compatibility filtering**: Filters out requirements already satisfied by global packages
+3. **Constrained installation**: Installs remaining packages with global package versions as constraints
+4. **Fallback handling**: Automatically retries without constraints if dependency conflicts occur
+
+### Installation Tools
+
+- **Primary**: `uv pip install` - Fast, modern Python package installer
+- **Fallback**: `pip install` - Standard Python package installer
+- **Virtual environment creation**: `uv venv --system-site-packages`
+
+The `--system-site-packages` flag allows the virtual environment to inherit global packages while still allowing user packages to override them when needed.
+
+## CLI Commands
+
+### `mage deps ensure`
+
+Create or reuse a virtual environment for your project's dependencies.
+
+**Usage:**
+```bash
+mage deps ensure [PROJECT_PATH] [OPTIONS]
+```
+
+**Parameters:**
+- `project-path` (optional): Path to the Mage project (defaults to current directory)
+- `--python-version` (optional): Python version to use (defaults to current Python version)
+- `--output-file` (optional): File to write environment path to
+
+**Examples:**
+
+```bash
+# Ensure environment for current project
+mage deps ensure
+
+# Ensure environment for specific project
+mage deps ensure /path/to/project
+
+# Write environment path to file
+mage deps ensure --output-file /tmp/venv_path.txt
+
+# Use specific Python version
+mage deps ensure --python-version 3.11.8
+```
+
+**Output:**
+
+When successful, the command outputs an environment variable assignment:
+```bash
+export MAGE_VENV_PATH="/path/to/venv"
+```
+
+You can activate this environment in your shell:
+```bash
+eval $(mage deps ensure)
+source $MAGE_VENV_PATH/bin/activate
+```
+
+### `mage deps install`
+
+Install dependencies from a requirements file using the best available installer.
+
+**Usage:**
+```bash
+mage deps install [PROJECT_PATH] [OPTIONS]
+```
+
+**Parameters:**
+- `project-path` (optional): Path to the Mage project (defaults to current directory)
+- `-r, --requirements-file` (optional): Path to requirements file (defaults to `requirements.txt` in project)
+- `--override-global-version` (optional): Skip global package constraints (default: `False`)
+
+**Examples:**
+
+```bash
+# Install dependencies for current project
+mage deps install
+
+# Install from specific requirements file
+mage deps install -r custom_requirements.txt
+
+# Install without global package constraints
+mage deps install --override-global-version
+
+# Install for specific project
+mage deps install /path/to/project
+```
+
+**Behavior:**
+
+1. Checks if running in an existing virtual environment (`VIRTUAL_ENV`)
+2. If yes: Installs packages using advanced features (filtering, constraints, diff analysis)
+3. If no: Installs packages system-wide using standard pip
+
+**Conflict Resolution:**
+
+If installation fails due to conflicting dependencies with global packages, the CLI will prompt:
+
+```
+Installation failed due to conflicting dependencies with global package versions.
+Would you like to override global package versions and install without constraints? (Y/Yes/yes):
+```
+
+Answering "yes" retries the installation without global package constraints.
+
+### `mage deps list`
+
+List all dependency virtual environments with their metadata.
+
+**Usage:**
+```bash
+mage deps list [OPTIONS]
+```
+
+**Parameters:**
+- `--project-path` (optional): Path to the Mage project (defaults to current directory)
+- `--python-version` (optional): Filter by Python version (e.g., `3.11.8`)
+- `--verbose` (optional): Show detailed information including full paths
+
+**Examples:**
+
+```bash
+# List all environments
+mage deps list
+
+# List environments for specific Python version
+mage deps list --python-version 3.11.8
+
+# Show detailed information
+mage deps list --verbose
+```
+
+**Output:**
+
+```
+Virtual Environments:
+
+Python 3.11.8:
+  env-abc123def456... (created: 2024-01-15T10:30:00Z, last used: 2024-01-20T14:25:00Z)
+  env-789ghi012jkl... (created: 2024-01-10T08:00:00Z, last used: 2024-01-18T16:45:00Z)
+
+Total: 2 environment(s)
+```
+
+### `mage deps cleanup`
+
+Clean up stale virtual environments to free disk space.
+
+**Usage:**
+```bash
+mage deps cleanup [OPTIONS]
+```
+
+**Parameters:**
+- `--project-path` (optional): Path to the Mage project (defaults to current directory)
+- `--ttl-seconds` (optional): Time-to-live in seconds (defaults to 604800 = 7 days)
+- `--max-retention` (optional): Maximum number of environments to retain across all Python versions
+- `--dry-run` (optional): Show what would be deleted without actually deleting (default: `False`)
+- `--verbose` (optional): Show detailed information about cleanup process
+
+**Examples:**
+
+```bash
+# Dry run to see what would be deleted
+mage deps cleanup --dry-run
+
+# Cleanup with custom TTL (14 days)
+mage deps cleanup --ttl-seconds 1209600
+
+# Limit retention to 10 most recent environments
+mage deps cleanup --max-retention 10
+
+# Combine options
+mage deps cleanup --ttl-seconds 604800 --max-retention 5 --dry-run
+```
+
+**How it works:**
+
+1. Identifies environments unused for longer than TTL
+2. Skips environments with active installation or activation locks
+3. If `max_retention` is set, keeps the N most recently used environments even if they exceed TTL
+4. Removes eligible environments and their metadata
+
+**Output:**
+
+```
+Cleanup completed:
+  - Deleted: 3 environment(s)
+  - Skipped: 2 environment(s)
+  - Scanned: 5 environment(s)
+```
+
+**Configuration:**
+
+You can configure cleanup defaults in your project's `metadata.yaml`:
+
+```yaml
+dependency_venvs_config:
+  cleanup_config:
+    ttl_seconds: 1209600  # 14 days
+    max_retention: 10     # Keep 10 most recent
+```
+
+## Features in Detail
+
+### Automatic Package Filtering
+
+The system intelligently filters out packages that are already satisfied by globally installed packages:
+
+```
+Checking requirements against global packages...
+  → Skipping pandas>=1.3.0 - existing package version 1.5.0 is compatible
+  → Installing numpy>=1.22.0 - version 1.21.0 does not satisfy requirement
+  → Installing scikit-learn - not found in global packages
+
+Compatibility check complete: 1/3 package(s) satisfied by global packages, 2 will be installed in venv
+```
+
+This reduces installation time and disk usage by reusing compatible packages.
+
+### Global Package Constraints
+
+To ensure consistency with the base environment, the system creates a `global.lock` file containing all globally installed package versions and uses it as a constraint file during installation:
+
+```bash
+uv pip install -r requirements.txt -c global.lock
+```
+
+This ensures that when a package from `requirements.txt` doesn't specify an exact version, the installer uses the same version as the global environment (if compatible), maintaining consistency.
+
+### Installation Diff Analysis
+
+After installation, the system analyzes the difference between global and virtual environment packages:
+
+```
+============================================================
+Installation Diff Analysis
+============================================================
+✅ Reused from global: 45 package(s)
+⬆️  Upgraded: 2 package(s)
+  - numpy: 1.21.0 → 1.22.0
+  - pandas: 1.3.0 → 1.5.0
+➕ Newly added: 3 package(s)
+  - scikit-learn==1.2.0
+  - scipy==1.10.0
+  - joblib==1.2.0
+============================================================
+```
+
+This helps you understand what was installed, upgraded, or reused.
+
+### Concurrency Safety
+
+The system uses cross-platform file locking to prevent race conditions:
+
+- **POSIX systems** (Linux, macOS): Uses `fcntl.flock()`
+- **Windows**: Uses `msvcrt.locking()`
+- **Lock timeout**: 10 minutes (configurable)
+
+**Lock Types:**
+
+1. **Installation lock** (`.install.lock`): Exclusive lock held during environment creation and dependency installation
+2. **Activation lock** (`.activate.lock`): Shared lock held when environment is being used
+3. **Cleanup lock** (`.cleanup.lock`): Global lock preventing simultaneous cleanup operations
+
+This ensures that if multiple processes try to create the same environment simultaneously, only one creates it while others wait and then reuse it. Environments with active locks are protected from cleanup.
+
+### Environment Validation
+
+After creation, environments are validated to ensure they're properly initialized:
+
+```python
+def validate_venv(venv_path: str) -> bool:
+    """Validate that a virtual environment is properly initialized."""
+    python_exe = _get_venv_python_exe(venv_path)
+    return os.path.exists(python_exe) and os.path.isfile(python_exe)
+```
+
+Invalid environments are automatically cleaned up and recreated.
+
+## Error Handling
+
+The system provides detailed error messages for common issues:
+
+### Lock Acquisition Timeout
+
+```
+Could not acquire lock /path/to/lock within 600s timeout
+
+This may indicate:
+  - Another process is creating the same environment
+  - A previous process crashed while holding the lock
+  - System I/O issues
+
+Try waiting a few minutes and retrying, or check for stale lock files.
+```
+
+### Installation Failure
+
+```
+Failed to install dependencies using uv.
+Error output:
+[detailed error message]
+
+This may be due to:
+  - Network connectivity issues
+  - Invalid package specifications in requirements.txt
+  - Incompatible package versions
+  - Missing system dependencies
+
+Please check your requirements.txt file and try again.
+```
+
+### Requirements File Not Found
+
+```
+Requirements file not found: /path/to/requirements.txt
+
+Ensure that:
+  - The file exists at the specified path
+  - The path is correct and accessible
+  - You have read permissions for the file
+```
+
+## Best Practices
+
+### 1. Pin Package Versions
+
+For reproducibility, pin exact versions in `requirements.txt`:
+
+```
+# Good - exact versions
+pandas==1.5.0
+numpy==1.22.0
+scikit-learn==1.2.0
+
+# Less predictable - version ranges
+pandas>=1.3.0
+numpy>=1.20.0
+```
+
+### 2. Use Virtual Environments in Development
+
+Always activate the virtual environment when developing:
+
+```bash
+eval $(mage deps ensure)
+source $MAGE_VENV_PATH/bin/activate
+```
+
+### 3. Update Dependencies Carefully
+
+When updating dependencies:
+
+1. Update `requirements.txt`
+2. Run `mage deps ensure` to create a new environment
+3. Test thoroughly before deploying
+
+### 4. Monitor Disk Usage
+
+Virtual environments can consume significant disk space. Use the cleanup command to remove stale environments:
+
+```bash
+# See what would be deleted
+mage deps cleanup --dry-run
+
+# Clean up environments unused for 7+ days
+mage deps cleanup
+
+# Or configure automatic cleanup in metadata.yaml
+```
+
+### 5. Handle Dependency Conflicts
+
+If you encounter dependency conflicts:
+
+1. Try without `--override-global-version` first (uses global constraints)
+2. If that fails, retry with `--override-global-version`
+3. Review the conflict and adjust `requirements.txt` if needed
+
+## Troubleshooting
+
+### Environment Not Found After Creation
+
+**Symptom**: `mage deps ensure` succeeds but environment doesn't exist
+
+**Solution**: Check for validation failures in logs. The environment may have been created but failed validation and was cleaned up.
+
+### Slow Environment Creation
+
+**Symptom**: Creating environments takes a long time
+
+**Possible causes**:
+- Network issues downloading packages
+- Many packages to install
+- Slow disk I/O
+
+**Solutions**:
+- Install `uv` for faster installation: `pip install uv`
+- Check network connectivity
+- Review `requirements.txt` for unnecessary packages
+
+### Permission Errors
+
+**Symptom**: Cannot create virtual environment due to permission errors
+
+**Solution**: Ensure you have write permissions to the Mage data directory:
+```bash
+ls -ld $(python -c "from mage_ai.settings.repo import get_data_dir; print(get_data_dir())")
+```
+
+### Stale Lock Files
+
+**Symptom**: Lock acquisition timeout errors persist
+
+**Solution**: Manually remove stale lock files:
+```bash
+# Find lock files
+find /home/src/mage_data/venvs -name "*.lock"
+
+# Remove stale locks (be careful!)
+rm /home/src/mage_data/venvs/*/\.locks/*.lock
+```
+
+## Technical Details
+
+### Fingerprint Algorithm
+
+The fingerprint is computed as follows:
+
+```python
+components = [
+    f"python:{python_version}",
+    f"requirements:{requirements_content or ''}",
+    f"uv:{uv_version or 'no-uv'}",
+]
+fingerprint_input = '\n'.join(components)
+fingerprint = hashlib.sha256(fingerprint_input.encode('utf-8')).hexdigest()
+```
+
+### Requirements Normalization
+
+Requirements are normalized before fingerprinting:
+- Leading/trailing whitespace stripped from each line
+- Empty lines removed
+- Comments (lines starting with `#`) removed
+- Order preserved
+
+This ensures that cosmetic changes to `requirements.txt` don't trigger new environment creation.
+
+### Lock File Semantics
+
+- **.install.lock**: Exclusive lock preventing concurrent installation/creation of environment
+- **.activate.lock**: Shared lock indicating environment is actively being used
+- **.cleanup.lock**: Global lock preventing simultaneous cleanup operations across all environments
+- **global.lock**: Snapshot of globally installed packages at environment creation time (used as constraints)
+- **venv.lock**: Snapshot of packages installed in the virtual environment (for diff analysis)
+
+## See Also
+
+- [Python Packages](/development/dependencies/requirements) - Basic requirements.txt usage
+- [Custom Files](/development/dependencies/custom-files) - Managing custom Python files
+- [CLI Commands](/development/cli-commands) - Complete CLI reference

@@ -4,6 +4,9 @@ sidebarTitle: "Python packages"
 description: "Mage allows you to easily integrate third-party Python packages into your project and pipelines.
 This guide will walk you through the process of adding and managing external dependencies."
 ---
+
+import { ProButton } from '/snippets/pro/button.mdx';
+
 <p align='center'>
 <img
   alt="Python mecha"
@@ -11,6 +14,23 @@ This guide will walk you through the process of adding and managing external dep
   width="250"
 ></img>
 </p>
+
+<Note>
+**Mage Pro: Advanced Dependency Management**
+
+Mage Pro includes an advanced dependency management system with isolated virtual environments, automatic caching, and intelligent package resolution. Features include:
+
+- **Isolated environments** for each unique combination of dependencies
+- **Automatic caching** with fingerprint-based environment reuse
+- **Fast installation** using `uv` with `pip` fallback
+- **Smart compatibility checking** to reuse global packages
+- **No cluster restarts required** for dependency updates
+- **Easy UI-based installation** via Terminal page
+
+See the [Advanced Dependency Management](/development/dependencies/dependency-management) guide for complete documentation, or the [Quick Start guide](/getting-started/install-dependencies) for UI-based installation.
+
+<ProButton />
+</Note>
 
 ## Add Python packages to `requirements.txt`
 
