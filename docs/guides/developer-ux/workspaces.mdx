@@ -109,6 +109,25 @@ resources:
 
 This configuration ensures your workspace has adequate resources for development while preventing resource overconsumption. The requests represent guaranteed minimums, while limits prevent your workspace from using more than its allocated share.
 
+#### Default Resource Configuration
+
+These environment variables set default resource requests and limits for Kubernetes workspace containers. They are applied when a workspace's `container_config` does not specify resources (or when specific fields like `requests.cpu` or `limits.memory` are omitted). User-specified values in `container_config` always take precedence.
+
+| Variable | Purpose | Example Value |
+|----------|---------|---------------|
+| `WORKSPACE_DEFAULT_RESOURCE_REQUESTS_CPU` | Default CPU request for workspace containers | `500m` |
+| `WORKSPACE_DEFAULT_RESOURCE_REQUESTS_MEMORY` | Default memory request for workspace containers | `2Gi` |
+| `WORKSPACE_DEFAULT_RESOURCE_LIMITS_CPU` | Default CPU limit for workspace containers | `4` |
+| `WORKSPACE_DEFAULT_RESOURCE_LIMITS_MEMORY` | Default memory limit for workspace containers | `8Gi` |
+
+**Example:**
+```bash
+export WORKSPACE_DEFAULT_RESOURCE_REQUESTS_CPU="500m"
+export WORKSPACE_DEFAULT_RESOURCE_REQUESTS_MEMORY="2Gi"
+export WORKSPACE_DEFAULT_RESOURCE_LIMITS_CPU="4"
+export WORKSPACE_DEFAULT_RESOURCE_LIMITS_MEMORY="8Gi"
+```
+
 #### Complete Kubernetes Container Configuration Example
 
 Here's a complete example of a Kubernetes `container_config` YAML:
