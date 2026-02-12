@@ -7,6 +7,7 @@ description: "Run Mage pipeline blocks in separate Kubernetes pods for scalabili
 
 import { ProButton } from '/snippets/pro/button.mdx';
 import { ProBanner } from '/snippets/pro/banner.mdx';
+import { ProOnly } from '/snippets/pro/only.mdx';
 
 <ProBanner
   source="kubernetes-executor"
@@ -345,8 +346,32 @@ If not set, Mage defaults to the **first container** in the pod.
 
 ## Environment Variables Reference
 
+### General Configuration
+
 | Variable               | Purpose                                         | Default |
 |------------------------|-------------------------------------------------|---------|
 | `KUBE_NAMESPACE`       | Namespace for job execution                     | default |
 | `K8S_CONFIG_FILE`      | Path to full Kubernetes job config file         | —       |
 | `MAGE_CONTAINER_NAME`  | Container to run Mage in multi-container pods   | —       |
+
+### Default Resource Configuration
+
+<ProOnly source="kubernetes-executor" />
+
+
+These environment variables set default resource limits and requests for all K8s executor jobs.
+They are applied when not specified in block-level or project-level configuration.
+
+| Variable                                      | Purpose                                    | Example Value |
+|-----------------------------------------------|--------------------------------------------|---------------|
+| `K8S_EXECUTOR_DEFAULT_RESOURCE_REQUESTS_CPU`  | Default CPU request for executor jobs      | `250m`        |
+| `K8S_EXECUTOR_DEFAULT_RESOURCE_REQUESTS_MEMORY` | Default memory request for executor jobs | `512Mi`       |
+| `K8S_EXECUTOR_DEFAULT_RESOURCE_LIMITS_CPU`    | Default CPU limit for executor jobs        | `500m`        |
+| `K8S_EXECUTOR_DEFAULT_RESOURCE_LIMITS_MEMORY` | Default memory limit for executor jobs     | `1Gi`         |
+| `K8S_EXECUTOR_DEFAULT_SERVICE_ACCOUNT_NAME`   | Default service account for executor jobs  | `default`     |
+
+**Priority order** (highest to lowest):
+1. Block-level `executor_config` in pipeline's `metadata.yaml`
+2. Project-level `k8s_executor_config` in project's `metadata.yaml`
+3. Environment variable defaults (listed above)
+4. Hardcoded defaults
