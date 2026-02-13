@@ -50,6 +50,13 @@ CAST_TYPE_COLUMN_TYPES = {
     'float64',
 }
 
+# Column types that indicate the column was originally object dtype but contained
+# datetime-like values. Parquet infers these back to datetime64 on read, so we
+# need to cast them back to object and restore None values in place of NaT.
+DATETIME_OBJECT_COLUMN_TYPES = {
+    'Timestamp',
+}
+
 POLARS_CAST_TYPE_COLUMN_TYPES = {
     'Float64': pl.Float64,
     'Int64': pl.Int64,
@@ -82,6 +89,19 @@ def cast_column_types(df: pd.DataFrame, column_types: Dict):
                 if df is None or df.empty:
                     continue
                 df[column] = df[column].astype(column_type)
+            except Exception:
+                traceback.print_exc()
+        elif column_type in DATETIME_OBJECT_COLUMN_TYPES:
+            try:
+                if df is None or df.empty or column not in df.columns:
+                    continue
+                # The column was originally object dtype (e.g. user converted
+                # datetime64 to object to replace NaT with None). Parquet
+                # silently infers it back to datetime64, so restore the
+                # original object dtype and convert NaT back to None.
+                if hasattr(df[column].dtype, 'kind') and df[column].dtype.kind == 'M':
+                    df[column] = df[column].astype(object)
+                    df[column] = df[column].where(df[column].notna(), None)
             except Exception:
                 traceback.print_exc()
     return df
