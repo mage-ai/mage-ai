@@ -344,6 +344,62 @@ env:
 If not set, Mage defaults to the **first container** in the pod.
 
 
+## Default config file
+
+<ProOnly source="kubernetes-executor" />
+
+You can provide a **default K8s executor config file** that Mage reads from the path in `K8S_DEFAULT_CONFIG_PATH` environment variable. The file is loaded as a policy and merged with block-level and project-level config. Use this to enforce cluster-wide defaults (e.g. resource limits, service account) without editing every project.
+
+**Helm chart:** When deploying **Mage Pro** with the [Mage Helm chart](https://github.com/mage-ai/helm-charts), configure the default via **`k8sExecutorConfig`** in `values.yaml`. The chart creates a ConfigMap from your config, mounts it into the control-plane (and workspace pods), and sets `K8S_DEFAULT_CONFIG_PATH` automatically. Do not set the env var manually when using the chart. See [Using Helm](/production/deploying-to-cloud/using-helm#default-workspace-and-k8s-executor-config) for details. For non-Helm deployments, set the env var and ensure the file exists at that path (e.g. via your own ConfigMap or volume mount).
+
+**File format:**
+
+```yaml
+enabled: true   # Set to false to disable this policy
+enforce: true   # If true, policy overrides user config. If false, user config overrides.
+
+resource_limits:
+  cpu: "500m"
+  memory: "1Gi"
+resource_requests:
+  cpu: "250m"
+  memory: "512Mi"
+service_account_name: default
+
+pod:
+  node_selector:
+    node-type: compute
+  tolerations: []
+  volumes: []
+
+container:
+  env: []
+  volume_mounts: []
+```
+
+**Policy fields:**
+
+| Field | Description |
+|-------|-------------|
+| `enabled` | If `false`, the policy is not applied. |
+| `enforce` | Controls how the default file is merged with **user config** (block + project). See [Priority when merging](#priority-when-merging-default-file-with-user-config) below. |
+| *(other keys)* | Same structure as [project-level k8s_executor_config](/production/executors/k8#2-project-level-configuration-applies-to-all-k8s-executor-blocks) (e.g. `resource_limits`, `resource_requests`, `pod`, `container`, `metadata`, `job`). |
+
+The file must exist at the given path on the Mage control-plane. Use a ConfigMap or volume mount to provide it. When **workspaces** are created, only the K8s default config file is injected (volume + volume mount + env var) so workspace pods can read it; see [Workspaces](/guides/developer-ux/workspaces#default-workspace-config-file-workspace_default_config_path).
+
+**Priority when merging default file with user config**
+
+The default file is **merged** with the combined user config (block + project). The **effective priority order** (who wins for a given key) depends on `enforce`:
+
+| `enforce` | Effective priority (highest → lowest) | Result |
+|-----------|----------------------------------------|--------|
+| **`true`** | **1. Default config file** → 2. Block → 3. Project → 4. Env vars → 5. Hardcoded | **Policy is highest priority.** Values from the default file override block and project for the same keys. Use this to enforce cluster-wide defaults (e.g. resource limits, service account) that users cannot override. Conflicting values can cause an error on update when strict conflict checking is used. |
+| **`false`** | **1. Block** → 2. Project → 3. Default config file (fills gaps only) → 4. Env vars → 5. Hardcoded | **User wins.** Block and project override the policy for the same keys. The policy only fills in keys that block and project did not set. Use this to provide optional defaults while allowing per-block or per-project overrides. |
+
+So when **`enforce: true`**, the policy has the **highest** priority; when **`enforce: false`**, block and project are higher and the policy only supplies missing values.
+
+
+
 ## Environment Variables Reference
 
 ### General Configuration

@@ -3,6 +3,10 @@ title: "Helm"
 icon: "anchor"
 ---
 
+
+import { ProButton } from '/snippets/pro/button.mdx';
+import { ProBanner } from '/snippets/pro/banner.mdx';
+
 ![](https://avatars.githubusercontent.com/u/15859888?s=200&v=4)
 
 Deploy Mage to Kubernetes cluster with Helm.
@@ -100,7 +104,22 @@ You can customize the deployment by updating the `values.yaml` file.
     ```bash
     helm install --values path/to/values.yaml my-mageai mageai/mageai
     ```
+
+## Default workspace and K8s executor config
+
+<ProBanner
+  source="kubernetes-executor"
+  title="The workspaceConfig and k8sExecutorConfig options in the Helm chart are supported only in Mage Pro. They are ignored when running Mage OSS."
+/>
+
+When using **Mage Pro**, you can configure default workspace and Kubernetes executor settings via the chart so the control-plane (and, for K8s executor, workspace pods) get the config file mounted and the corresponding environment variables set automatically.
+
+- **`workspaceConfig`** — Default workspace configuration (e.g. `container_config`, `service_account_name`, `lifecycle_config`). The chart creates a ConfigMap, mounts it on the control-plane, and sets `WORKSPACE_DEFAULT_CONFIG_PATH`. See [Workspaces — Default config file](/guides/developer-ux/workspaces#default-workspace-config-file).
+- **`k8sExecutorConfig`** — Default K8s executor configuration (e.g. `resource_limits`, `pod`, `container`). The chart creates a ConfigMap, mounts it on the control-plane and workspace pods, and sets `K8S_DEFAULT_CONFIG_PATH`. See [K8s executor — Default config file](/production/executors/k8#default-config-file).
+
+Enable and set `enforce` as needed in `values.yaml`; do not set `WORKSPACE_DEFAULT_CONFIG_PATH` or `K8S_DEFAULT_CONFIG_PATH` manually when using these chart options.
     
+
 ## Releases
 
 https://github.com/mage-ai/helm-charts/releases
