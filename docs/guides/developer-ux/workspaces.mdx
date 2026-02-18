@@ -641,6 +641,90 @@ You can configure workspace storage in one of two ways:
 
   Default: `false`
 
+
+#### Default Resource Configuration
+
+These environment variables set default resource requests and limits for Kubernetes workspace containers. They are applied when a workspace's `container_config` does not specify resources (or when specific fields like `requests.cpu` or `limits.memory` are omitted). User-specified values in `container_config` always take precedence.
+
+| Variable | Purpose | Example Value |
+|----------|---------|---------------|
+| `WORKSPACE_DEFAULT_RESOURCE_REQUESTS_CPU` | Default CPU request for workspace containers | `500m` |
+| `WORKSPACE_DEFAULT_RESOURCE_REQUESTS_MEMORY` | Default memory request for workspace containers | `2Gi` |
+| `WORKSPACE_DEFAULT_RESOURCE_LIMITS_CPU` | Default CPU limit for workspace containers | `4` |
+| `WORKSPACE_DEFAULT_RESOURCE_LIMITS_MEMORY` | Default memory limit for workspace containers | `8Gi` |
+
+**Example:**
+```bash
+export WORKSPACE_DEFAULT_RESOURCE_REQUESTS_CPU="500m"
+export WORKSPACE_DEFAULT_RESOURCE_REQUESTS_MEMORY="2Gi"
+export WORKSPACE_DEFAULT_RESOURCE_LIMITS_CPU="4"
+export WORKSPACE_DEFAULT_RESOURCE_LIMITS_MEMORY="8Gi"
+```
+
+#### Default Workspace Config File
+
+- **`WORKSPACE_DEFAULT_CONFIG_PATH`** (optional): Path to a YAML file that defines default workspace configuration applied when creating or updating workspaces. The file is merged with user-defined config based on the `enforce` flag. The file is read on the **control-plane** only; it is not mounted into workspace pods.
+
+  **Helm chart (recommended):** When deploying **Mage Pro** with the [Mage Helm chart](https://github.com/mage-ai/helm-charts), configure the default via **`workspaceConfig`** in `values.yaml`. The chart creates a ConfigMap from your config, mounts it on the control-plane, and sets `WORKSPACE_DEFAULT_CONFIG_PATH` automatically. Do not set the env var manually when using the chart. See [Using Helm](/production/deploying-to-cloud/using-helm#default-workspace-and-k8s-executor-config) for details.
+
+  **Supported fields** (top-level in the YAML file):
+
+  | Field | Type | Description |
+  |-------|------|-------------|
+  | `container_config` | YAML string or object | Default container configuration (image, resources, env, volumeMounts, etc.). |
+  | `service_account_name` | string | Default Kubernetes service account for workspace pods. |
+  | `lifecycle_config` | object | Default lifecycle configuration (termination policy, pre-start scripts, post-start hooks). |
+
+  **Policy fields:**
+
+  | Field | Description |
+  |-------|-------------|
+  | `enabled` | If `false`, the policy is not applied. |
+  | `enforce` | Controls who wins when both the default file and the user set the same key. See **Priority when merging** below. |
+  | *(other keys)* | `container_config`, `service_account_name`, `lifecycle_config` (see table above). |
+
+  **Priority when merging default file with user config**
+
+  The default file is merged with the workspace config supplied by the user (UI or API). The **effective priority** (who wins for a given key) depends on `enforce`:
+
+  | `enforce` | Effective priority | Result |
+  |-----------|--------------------|--------|
+  | **`true`** | **Default file is highest.** Default file → user config. | Values from the file override user-defined values. Use this to enforce cluster-wide workspace defaults (e.g. resources, service account) that users cannot override. |
+  | **`false`** | **User is highest.** User config → default file (fills gaps only). | User config overrides the default file for the same keys. The file only fills in keys the user did not set. Use this to provide optional defaults while allowing per-workspace overrides. |
+
+  **Top-level format** (recommended; no wrapper needed):
+
+  ```yaml
+  enabled: true   # Set to false to disable this policy entirely
+  enforce: false  # User wins on conflicts; file only fills in missing keys
+
+  container_config:
+    resources:
+      limits:
+        cpu: "2"
+        memory: "4Gi"
+      requests:
+        cpu: "1"
+        memory: "2Gi"
+    nodeSelector:
+      node.kubernetes.io/instance-type: "m5.large"
+    tolerations:
+      - key: "dedicated"
+        operator: "Equal"
+        value: "mage"
+        effect: "NoSchedule"
+
+  lifecycle_config:
+    post_start:
+      command: echo "Hello World"
+
+  service_account_name: workspace_config
+  ```
+
+  The file must use this **top-level format** (no wrapper key). The code does not use a `workspace_config_defaults` section when loading the policy file; only top-level keys (`container_config`, `service_account_name`, `lifecycle_config`, `enabled`, `enforce`) are read.
+
+  The config file must exist at the specified path on the **control-plane** pod. Use a ConfigMap or volume mount to make the file available.
+
 #### Example Configuration
 
 **Example 1: Individual PVCs per workspace**
