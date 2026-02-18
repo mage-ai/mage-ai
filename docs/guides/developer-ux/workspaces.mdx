@@ -692,36 +692,35 @@ export WORKSPACE_DEFAULT_RESOURCE_LIMITS_MEMORY="8Gi"
   | **`true`** | **Default file is highest.** Default file → user config. | Values from the file override user-defined values. Use this to enforce cluster-wide workspace defaults (e.g. resources, service account) that users cannot override. |
   | **`false`** | **User is highest.** User config → default file (fills gaps only). | User config overrides the default file for the same keys. The file only fills in keys the user did not set. Use this to provide optional defaults while allowing per-workspace overrides. |
 
-  **Top-level format** (recommended; no wrapper needed):
+  **Top-level format**:
 
   ```yaml
-  enabled: true   # Set to false to disable this policy entirely
-  enforce: false  # User wins on conflicts; file only fills in missing keys
+  workspaceConfig:
+    enabled: true   # Set to false to disable this policy entirely
+    enforce: false  # User wins on conflicts; file only fills in missing keys
 
-  container_config:
-    resources:
-      limits:
-        cpu: "2"
-        memory: "4Gi"
-      requests:
-        cpu: "1"
-        memory: "2Gi"
-    nodeSelector:
-      node.kubernetes.io/instance-type: "m5.large"
-    tolerations:
-      - key: "dedicated"
-        operator: "Equal"
-        value: "mage"
-        effect: "NoSchedule"
+    container_config:
+      resources:
+        limits:
+          cpu: "2"
+          memory: "4Gi"
+        requests:
+          cpu: "1"
+          memory: "2Gi"
+      nodeSelector:
+        node.kubernetes.io/instance-type: "m5.large"
+      tolerations:
+        - key: "dedicated"
+          operator: "Equal"
+          value: "mage"
+          effect: "NoSchedule"
 
-  lifecycle_config:
-    post_start:
-      command: echo "Hello World"
+    lifecycle_config:
+      post_start:
+        command: echo "Hello World"
 
-  service_account_name: workspace_config
+    service_account_name: workspace_config
   ```
-
-  The file must use this **top-level format** (no wrapper key). The code does not use a `workspace_config_defaults` section when loading the policy file; only top-level keys (`container_config`, `service_account_name`, `lifecycle_config`, `enabled`, `enforce`) are read.
 
   The config file must exist at the specified path on the **control-plane** pod. Use a ConfigMap or volume mount to make the file available.
 

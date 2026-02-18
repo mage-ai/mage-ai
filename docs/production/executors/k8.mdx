@@ -355,26 +355,27 @@ You can provide a **default K8s executor config file** that Mage reads from the 
 **File format:**
 
 ```yaml
-enabled: true   # Set to false to disable this policy
-enforce: true   # If true, policy overrides user config. If false, user config overrides.
+k8sExecutorConfig:
+  enabled: true   # Set to false to disable this policy
+  enforce: true   # If true, policy overrides user config. If false, user config overrides.
 
-resource_limits:
-  cpu: "500m"
-  memory: "1Gi"
-resource_requests:
-  cpu: "250m"
-  memory: "512Mi"
-service_account_name: default
+  resource_limits:
+    cpu: "500m"
+    memory: "1Gi"
+  resource_requests:
+    cpu: "250m"
+    memory: "512Mi"
+  service_account_name: default
 
-pod:
-  node_selector:
-    node-type: compute
-  tolerations: []
-  volumes: []
+  pod:
+    node_selector:
+      node-type: compute
+    tolerations: []
+    volumes: []
 
-container:
-  env: []
-  volume_mounts: []
+  container:
+    env: []
+    volume_mounts: []
 ```
 
 **Policy fields:**
@@ -397,8 +398,6 @@ The default file is **merged** with the combined user config (block + project). 
 | **`false`** | **1. Block** → 2. Project → 3. Default config file (fills gaps only) → 4. Env vars → 5. Hardcoded | **User wins.** Block and project override the policy for the same keys. The policy only fills in keys that block and project did not set. Use this to provide optional defaults while allowing per-block or per-project overrides. |
 
 So when **`enforce: true`**, the policy has the **highest** priority; when **`enforce: false`**, block and project are higher and the policy only supplies missing values.
-
-
 
 ## Environment Variables Reference
 
