@@ -385,7 +385,7 @@ container:
 | `enforce` | Controls how the default file is merged with **user config** (block + project). See [Priority when merging](#priority-when-merging-default-file-with-user-config) below. |
 | *(other keys)* | Same structure as [project-level k8s_executor_config](/production/executors/k8#2-project-level-configuration-applies-to-all-k8s-executor-blocks) (e.g. `resource_limits`, `resource_requests`, `pod`, `container`, `metadata`, `job`). |
 
-The file must exist at the given path on the Mage control-plane. Use a ConfigMap or volume mount to provide it. When **workspaces** are created, only the K8s default config file is injected (volume + volume mount + env var) so workspace pods can read it; see [Workspaces](/guides/developer-ux/workspaces#default-workspace-config-file-workspace_default_config_path).
+The file must exist at the given path on the Mage control-plane. Use a ConfigMap or volume mount to provide it. When **workspaces** are created, only the K8s default config file is injected (volume + volume mount + env var) so workspace pods can read it; see [Workspaces](/guides/developer-ux/workspaces#default-workspace-config-file).
 
 **Priority when merging default file with user config**
 

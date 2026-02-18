@@ -661,25 +661,6 @@ export WORKSPACE_DEFAULT_RESOURCE_LIMITS_CPU="4"
 export WORKSPACE_DEFAULT_RESOURCE_LIMITS_MEMORY="8Gi"
 ```
 
-#### Default Resource Configuration
-
-These environment variables set default resource requests and limits for Kubernetes workspace containers. They are applied when a workspace's `container_config` does not specify resources (or when specific fields like `requests.cpu` or `limits.memory` are omitted). User-specified values in `container_config` always take precedence.
-
-| Variable | Purpose | Example Value |
-|----------|---------|---------------|
-| `WORKSPACE_DEFAULT_RESOURCE_REQUESTS_CPU` | Default CPU request for workspace containers | `500m` |
-| `WORKSPACE_DEFAULT_RESOURCE_REQUESTS_MEMORY` | Default memory request for workspace containers | `2Gi` |
-| `WORKSPACE_DEFAULT_RESOURCE_LIMITS_CPU` | Default CPU limit for workspace containers | `4` |
-| `WORKSPACE_DEFAULT_RESOURCE_LIMITS_MEMORY` | Default memory limit for workspace containers | `8Gi` |
-
-**Example:**
-```bash
-export WORKSPACE_DEFAULT_RESOURCE_REQUESTS_CPU="500m"
-export WORKSPACE_DEFAULT_RESOURCE_REQUESTS_MEMORY="2Gi"
-export WORKSPACE_DEFAULT_RESOURCE_LIMITS_CPU="4"
-export WORKSPACE_DEFAULT_RESOURCE_LIMITS_MEMORY="8Gi"
-```
-
 #### Default Workspace Config File
 
 - **`WORKSPACE_DEFAULT_CONFIG_PATH`** (optional): Path to a YAML file that defines default workspace configuration applied when creating or updating workspaces. The file is merged with user-defined config based on the `enforce` flag. The file is read on the **control-plane** only; it is not mounted into workspace pods.
