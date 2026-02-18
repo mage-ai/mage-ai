@@ -667,7 +667,7 @@ export WORKSPACE_DEFAULT_RESOURCE_LIMITS_MEMORY="8Gi"
 
   **Helm chart (recommended):** When deploying **Mage Pro** with the [Mage Helm chart](https://github.com/mage-ai/helm-charts), configure the default via **`workspaceConfig`** in `values.yaml`. The chart creates a ConfigMap from your config, mounts it on the control-plane, and sets `WORKSPACE_DEFAULT_CONFIG_PATH` automatically. Do not set the env var manually when using the chart. See [Using Helm](/production/deploying-to-cloud/using-helm#default-workspace-and-k8s-executor-config) for details.
 
-  **Supported fields** (top-level under `workspaceConfig` key):
+  **Supported fields** (top-level in the YAML file):
 
   | Field | Type | Description |
   |-------|------|-------------|
@@ -695,31 +695,30 @@ export WORKSPACE_DEFAULT_RESOURCE_LIMITS_MEMORY="8Gi"
   **Top-level format**:
 
   ```yaml
-  workspaceConfig:
-    enabled: true   # Set to false to disable this policy entirely
-    enforce: false  # User wins on conflicts; file only fills in missing keys
+  enabled: true   # Set to false to disable this policy entirely
+  enforce: false  # User wins on conflicts; file only fills in missing keys
 
-    container_config:
-      resources:
-        limits:
-          cpu: "2"
-          memory: "4Gi"
-        requests:
-          cpu: "1"
-          memory: "2Gi"
-      nodeSelector:
-        node.kubernetes.io/instance-type: "m5.large"
-      tolerations:
-        - key: "dedicated"
-          operator: "Equal"
-          value: "mage"
-          effect: "NoSchedule"
+  container_config:
+    resources:
+      limits:
+        cpu: "2"
+        memory: "4Gi"
+      requests:
+        cpu: "1"
+        memory: "2Gi"
+    nodeSelector:
+      node.kubernetes.io/instance-type: "m5.large"
+    tolerations:
+      - key: "dedicated"
+        operator: "Equal"
+        value: "mage"
+        effect: "NoSchedule"
 
-    lifecycle_config:
-      post_start:
-        command: echo "Hello World"
+  lifecycle_config:
+    post_start:
+      command: echo "Hello World"
 
-    service_account_name: workspace_config
+  service_account_name: workspace-sa
   ```
 
   The config file must exist at the specified path on the **control-plane** pod. Use a ConfigMap or volume mount to make the file available.
