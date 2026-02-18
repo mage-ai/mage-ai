@@ -667,7 +667,7 @@ export WORKSPACE_DEFAULT_RESOURCE_LIMITS_MEMORY="8Gi"
 
   **Helm chart (recommended):** When deploying **Mage Pro** with the [Mage Helm chart](https://github.com/mage-ai/helm-charts), configure the default via **`workspaceConfig`** in `values.yaml`. The chart creates a ConfigMap from your config, mounts it on the control-plane, and sets `WORKSPACE_DEFAULT_CONFIG_PATH` automatically. Do not set the env var manually when using the chart. See [Using Helm](/production/deploying-to-cloud/using-helm#default-workspace-and-k8s-executor-config) for details.
 
-  **Supported fields** (top-level in the YAML file):
+  **Supported fields** (top-level under `workspaceConfig` key):
 
   | Field | Type | Description |
   |-------|------|-------------|
