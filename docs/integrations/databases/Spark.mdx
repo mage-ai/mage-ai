@@ -20,7 +20,7 @@ default:
   SPARK_SCHEMA: default
 ```
 
-For a **remote Spark cluster** (e.g. Spark Thrift server or cluster URL), set `SPARK_HOST` to the master URL (e.g. `spark://host:7077` or `local[*]`). You can also set optional keys such as `SPARK_PORT`, `SPARK_TOKEN`, `SPARK_USER`, `SPARK_DRIVER`, `SPARK_CLUSTER`, `SPARK_ENDPOINT`, `SPARK_ORGANIZATION`, `SPARK_SERVER_SIDE_PARAMETERS` as needed for your deployment.
+For a **remote Spark cluster**, set `SPARK_HOST` to the Spark master URL (for example, `spark://host:7077`, `local[*]`, or another valid `SparkSession.builder.master(...)` value). You can also set `SPARK_METHOD` (e.g. `session`) and `SPARK_SCHEMA` to control how the session is created and which default database/schema is used.
 
 <br />
 
