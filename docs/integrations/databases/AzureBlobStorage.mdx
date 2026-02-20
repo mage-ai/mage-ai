@@ -1,0 +1,104 @@
+---
+title: "Azure Blob Storage"
+---
+
+## Add credentials
+
+1. Create a new pipeline or open an existing pipeline.
+2. Expand the left side of your screen to view the file browser.
+3. Scroll down and click on a file named `io_config.yaml`.
+4. Enter the following keys and values under the key named `default` (you can
+   have multiple profiles, add it under whichever is relevant to you)
+
+**Required:** storage account name. For authentication you can use either Azure AD (service principal) or default credentials (e.g. Azure CLI, managed identity).
+
+```yaml
+version: 0.1.1
+default:
+  AZURE_STORAGE_ACCOUNT_NAME: your_storage_account_name
+
+  # Optional: Service principal (if not using DefaultAzureCredential)
+  AZURE_CLIENT_ID: ...
+  AZURE_CLIENT_SECRET: ...
+  AZURE_TENANT_ID: ...
+```
+
+If `AZURE_CLIENT_ID`, `AZURE_CLIENT_SECRET`, and `AZURE_TENANT_ID` are omitted, the client uses `DefaultAzureCredential` (Azure CLI, environment variables, or managed identity when running in Azure).
+
+<br />
+
+## Using Python block
+
+1. Create a new pipeline or open an existing pipeline.
+2. Add a data loader or transformer block (the code snippet below is for a data
+   loader).
+3. Select `Generic (no template)`.
+4. Enter this code snippet (note: change the `config_profile` from `default` if
+   you have a different profile):
+
+   ```python
+   from mage_ai.settings.repo import get_repo_path
+   from mage_ai.io.config import ConfigFileLoader
+   from mage_ai.io.azure_blob_storage import AzureBlobStorage
+   from os import path
+   from pandas import DataFrame
+
+   if 'data_loader' not in globals():
+       from mage_ai.data_preparation.decorators import data_loader
+
+
+   @data_loader
+   def load_from_azure_blob(**kwargs) -> DataFrame:
+       config_path = path.join(get_repo_path(), 'io_config.yaml')
+       config_profile = 'default'
+
+       container_name = '...'  # Your container name
+       blob_path = '...'       # Blob path (e.g. folder/data.parquet)
+
+       return AzureBlobStorage.with_config(
+           ConfigFileLoader(config_path, config_profile)
+       ).load(container_name, blob_path)
+   ```
+
+5. Run the block.
+
+### Export data to Azure Blob Storage
+
+   ```python
+   from mage_ai.settings.repo import get_repo_path
+   from mage_ai.io.config import ConfigFileLoader
+   from mage_ai.io.azure_blob_storage import AzureBlobStorage
+   from os import path
+   from pandas import DataFrame
+
+   if 'data_exporter' not in globals():
+       from mage_ai.data_preparation.decorators import data_exporter
+
+
+   @data_exporter
+   def export_data_to_azure_blob(df: DataFrame, **kwargs) -> None:
+       config_path = path.join(get_repo_path(), 'io_config.yaml')
+       config_profile = 'default'
+
+       container_name = '...'
+       blob_path = '...'
+
+       AzureBlobStorage.with_config(
+           ConfigFileLoader(config_path, config_profile)
+       ).export(df, container_name, blob_path)
+   ```
+
+## Supported formats
+
+Azure Blob Storage supports loading and exporting:
+
+- `.csv`
+- `.json`
+- `.parquet`
+
+## Permissions
+
+Ensure your Azure AD app or managed identity has the appropriate role on the storage account, for example:
+
+- **Storage Blob Data Contributor** – read and write blobs
+- **Storage Blob Data Reader** – read-only
