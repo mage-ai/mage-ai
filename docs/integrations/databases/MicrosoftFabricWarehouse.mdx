@@ -14,7 +14,11 @@ import { ProOnly } from '/snippets/pro/only.mdx';
 
 Microsoft Fabric Warehouse is a fully managed, cloud-native data warehouse built on Azure Synapse SQL. It provides enterprise-grade performance, scalability, and security for your data analytics workloads.
 
-This integration allows you to connect to Microsoft Fabric Data Warehouse using Azure AD Service Principal authentication and perform SQL operations directly from Mage pipelines.
+This integration allows you to:
+
+- Connect to Microsoft Fabric Data Warehouse using Azure AD Service Principal authentication
+- Run SQL in pipelines via **SQL blocks** (transformer) or Python blocks
+- Export data using standard row-based inserts or **COPY INTO** from OneLake for fast bulk loads
 
 ## Add credentials
 
@@ -32,6 +36,12 @@ default:
   MICROSOFT_FABRIC_WAREHOUSE_NAME: 'your_database_name'
   MICROSOFT_FABRIC_WAREHOUSE_ENDPOINT: 'your-endpoint-here'
   MICROSOFT_FABRIC_WAREHOUSE_SCHEMA: 'dbo'
+
+  # Optional: enable COPY INTO for fast bulk export (large data)
+  # MICROSOFT_FABRIC_USE_COPY_INTO: true
+  # AZURE_TENANT_ID: 'your-azure-tenant-id'
+  # MICROSOFT_FABRIC_LAKEHOUSE_WORKSPACE: 'your_workspace_name'
+  # MICROSOFT_FABRIC_LAKEHOUSE_NAME: 'your_lakehouse_name'
 ```
 
 ### Configuration Parameters
@@ -43,6 +53,10 @@ default:
 | `MICROSOFT_FABRIC_WAREHOUSE_NAME` | Name of your Fabric Data Warehouse database | ✅ | `my_database` |
 | `MICROSOFT_FABRIC_WAREHOUSE_ENDPOINT` | Fabric workspace endpoint URL | ✅ | `abcde12345.datawarehouse.fabric.microsoft.com` |
 | `MICROSOFT_FABRIC_WAREHOUSE_SCHEMA` | Default schema for operations | ❌ | `dbo` (default) |
+| `MICROSOFT_FABRIC_USE_COPY_INTO` | When `true`, `warehouse.export()` uses COPY INTO (Mage uploads to OneLake then loads). See [Export options overview](#export-options-overview). | ❌ | `true` |
+| `AZURE_TENANT_ID` | Azure AD tenant ID. Required when COPY INTO is used with Mage upload (config-driven or `export_via_copy_into` upload path). | When using COPY INTO with upload | `xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx` |
+| `MICROSOFT_FABRIC_LAKEHOUSE_WORKSPACE` | Workspace name for OneLake. Required when COPY INTO is used with Mage upload (config-driven or `export_via_copy_into` upload path). | When using COPY INTO with upload | `my_workspace` |
+| `MICROSOFT_FABRIC_LAKEHOUSE_NAME` | Lakehouse name for OneLake. Required when COPY INTO is used with Mage upload (config-driven or `export_via_copy_into` upload path). | When using COPY INTO with upload | `my_lakehouse` |
 
 
 ## Service Principal Setup
@@ -56,6 +70,34 @@ To use service principals with Microsoft Fabric Data Warehouse, you need to:
 For detailed setup instructions, see:
 - [Register a Microsoft Entra app and create a service principal](https://learn.microsoft.com/en-us/entra/identity-platform/howto-create-service-principal-portal)
 - [Service principal in Fabric Data Warehouse](https://learn.microsoft.com/en-us/fabric/data-warehouse/service-principals#prerequisites)
+
+---
+
+## Using SQL blocks
+
+Run SQL directly against Microsoft Fabric Warehouse from a **SQL block** (transformer):
+
+1. Add a **Transformer** block and set its language to **SQL**.
+2. In the block’s connection settings, set **Connection** to **Microsoft Fabric** and **Profile** to your `io_config.yaml` profile (e.g. `default`).
+3. Optionally set **Schema** (default `dbo`) and **Use raw SQL** to run statements as-is.
+4. Write your SQL. Reference upstream block output with **`{{ df_1 }}`**, **`{{ df_2 }}`**, etc. The block uses the profile’s credentials and schema.
+
+A SQL block writes data to the warehouse in two ways:
+
+1. **Materialized output (no “Use raw SQL”)**
+   When “Use raw SQL” is **off**, the block runs your query and **exports the result** to a table (creates or appends to the table) by executing the query string in the warehouse. This path does **not** use the profile’s export option (standard vs COPY INTO); the warehouse runs the SQL directly.
+
+2. **Upstream data referenced in SQL (`{{ df_1 }}`, `{{ df_2 }}`, …)**
+   When your SQL references **`{{ df_1 }}`** (or `{{ df_2 }}`, etc.), the **upstream block’s output** must be available in the warehouse. If it is not already there, Mage **uploads** that upstream DataFrame to the warehouse so the SQL can query it. This upload **does** use the profile’s export option (standard or COPY INTO).
+
+Only **case 2** (upstream DataFrame upload) uses the export options. The table below applies to that case:
+
+| Upload option | How it works | When to use |
+|---------------|--------------|-------------|
+| **Standard export** (default) | Data is inserted into the warehouse in rows/batches over the connection. | Small or medium data; no extra config. |
+| **COPY INTO** | Data is written to OneLake (e.g. Parquet), then the warehouse runs `COPY INTO` to load it in bulk. | Large DataFrames; requires `MICROSOFT_FABRIC_USE_COPY_INTO: true` and OneLake keys in your profile (see [Option 2: COPY INTO – config-driven](#option-2-copy-into--config-driven-mage-uploads-to-onelake)). |
+
+If your profile does **not** have COPY INTO enabled, upstream DataFrame uploads (case 2) use **standard export**. To use COPY INTO for those uploads, add the [COPY INTO config](#option-2-copy-into--config-driven-mage-uploads-to-onelake) to the same profile. For very large materialized result sets (case 1), the block always runs the query string in the warehouse; to get COPY INTO for that data, use a **data exporter** block with COPY INTO or stage to OneLake and run COPY INTO separately.
 
 ---
 
@@ -99,7 +141,7 @@ def load_data_from_fabric_warehouse(*args, **kwargs):
 
 ### Export a dataframe
 
-Here is an example code snippet to export a dataframe to Microsoft Fabric Warehouse:
+Use a data exporter block and call `warehouse.export()`. If your profile has `MICROSOFT_FABRIC_USE_COPY_INTO: true` and the optional OneLake settings (`AZURE_TENANT_ID`, `MICROSOFT_FABRIC_LAKEHOUSE_WORKSPACE`, `MICROSOFT_FABRIC_LAKEHOUSE_NAME`), export uses **COPY INTO** automatically for faster bulk load.
 
 ```python
 from mage_ai.settings.repo import get_repo_path
@@ -115,14 +157,12 @@ if 'data_exporter' not in globals():
 @data_exporter
 def export_data_to_fabric_warehouse(df: DataFrame, **kwargs) -> None:
     """
-    Template for exporting data to Microsoft Fabric Warehouse.
-    Specify your configuration settings in 'io_config.yaml'.
-    Set the following in your io_config:
-
-    Docs: https://docs.mage.ai/integrations/databases/MicrosoftFabricWarehouse
+    Export to Microsoft Fabric Warehouse.
+    Enable COPY INTO in io_config with MICROSOFT_FABRIC_USE_COPY_INTO: true
+    and (for upload path) AZURE_TENANT_ID, MICROSOFT_FABRIC_LAKEHOUSE_*.
     """
-    schema_name = 'dbo'  # Specify the name of the schema to export data to
-    table_name = 'your_table_name'  # Specify the name of the table to export data to
+    schema_name = 'dbo'
+    table_name = 'your_table_name'
     config_path = path.join(get_repo_path(), 'io_config.yaml')
     config_profile = 'default'
 
@@ -131,12 +171,218 @@ def export_data_to_fabric_warehouse(df: DataFrame, **kwargs) -> None:
             df,
             schema_name,
             table_name,
-            if_exists='replace',  # Specify resolution policy if table name already exists
-            index=False,  # Specifies whether to include index in exported table
+            if_exists='replace',
+            index=False,
         )
 ```
 
 <br />
+
+### Fast bulk export (COPY INTO)
+
+For large datasets, use **COPY INTO** so data is staged in OneLake (Parquet) and loaded in bulk instead of row-by-row inserts.
+
+**Option 1 – Config-driven (recommended)**
+In `io_config.yaml` set:
+
+- `MICROSOFT_FABRIC_USE_COPY_INTO: true`
+- `AZURE_TENANT_ID`: your Azure AD tenant ID
+- `MICROSOFT_FABRIC_LAKEHOUSE_WORKSPACE`: workspace name
+- `MICROSOFT_FABRIC_LAKEHOUSE_NAME`: lakehouse name
+
+Then use `warehouse.export(df, schema_name, table_name, ...)` as above. The loader will upload the DataFrame as Parquet to OneLake and run COPY INTO.
+
+**Option 2 – Data already in OneLake**
+If files are already in a Lakehouse (e.g. under **Files**), run COPY INTO manually:
+
+```python
+with MicrosoftFabricWarehouse.with_config(ConfigFileLoader(config_path, config_profile)) as warehouse:
+    warehouse.copy_into_from_onelake(
+        table_name='sales',
+        onelake_path='https://onelake.dfs.fabric.microsoft.com/<workspace>/<lakehouse>/Files/sales/',
+        schema_name='dbo',
+        file_type='PARQUET',
+    )
+```
+
+For CSV:
+
+```python
+warehouse.copy_into_from_onelake(
+    table_name='sales',
+    onelake_path='https://onelake.dfs.fabric.microsoft.com/.../Files/sales/',
+    file_type='CSV',
+    field_terminator=',',
+    first_row=2,
+)
+```
+
+**Option 3 – Full control in code**
+Use `export_via_copy_into()` to create the table, optionally upload the DataFrame to OneLake, and run COPY INTO:
+
+```python
+# Upload to OneLake then COPY INTO (needs tenant_id, lakehouse_workspace, lakehouse_name)
+warehouse.export_via_copy_into(
+    df, 'your_table',
+    schema_name='dbo',
+    lakehouse_workspace='your_workspace',
+    lakehouse_name='your_lakehouse',
+    tenant_id='your_azure_tenant_id',
+    if_exists='replace',
+)
+
+# Or use an existing OneLake path (table created from DataFrame schema, then COPY INTO)
+warehouse.export_via_copy_into(
+    df,
+    'your_table',
+    schema_name='dbo',
+    onelake_path='https://onelake.dfs.fabric.microsoft.com/.../Files/folder/',
+    if_exists='replace',
+)
+```
+
+<br />
+
+### Export options overview
+
+You can export data to Fabric Warehouse in two ways. The choice affects **throughput**, **setup**, and **where your data is staged**.
+
+| | **Standard export** | **COPY INTO (bulk)** |
+|--|---------------------|----------------------|
+| **How it works** | Inserts rows into the warehouse (via SQL `INSERT` / `to_sql`). | Writes data to OneLake (e.g. Parquet), then runs `COPY INTO` in the warehouse to load from that path. |
+| **Performance** | Good for small/medium tables (e.g. &lt; 100k–500k rows). Slower for large datasets due to row-by-row or batch inserts over the warehouse connection. | **Best for large datasets** (hundreds of thousands to billions of rows). Parallelized bulk load; minimal round-trips. |
+| **Configuration** | No extra config. Use base credentials only. | **Option A (Mage uploads):** Set `MICROSOFT_FABRIC_USE_COPY_INTO: true` plus `AZURE_TENANT_ID`, `MICROSOFT_FABRIC_LAKEHOUSE_WORKSPACE`, `MICROSOFT_FABRIC_LAKEHOUSE_NAME` in `io_config.yaml`. **Option B (you stage files):** No COPY-specific config; call `copy_into_from_onelake()` or `export_via_copy_into(..., onelake_path=...)` with the OneLake URL. |
+| **When to use** | Quick exports, small tables, or when you don’t want to use a Lakehouse. | Large batch loads, recurring big exports, or when data is already in a Lakehouse. |
+
+**Quick choice:** Small/medium data or no Lakehouse → **Option 1 (standard export)**. Large data and you’re fine adding OneLake config → **Option 2 (config-driven COPY INTO)**. Files already in a Lakehouse → **Option 3** (`copy_into_from_onelake`) or **Option 4** with `onelake_path`.
+
+---
+
+### Option 1: Standard export (default)
+
+No extra configuration. Use the same `io_config.yaml` profile as for loading (no `MICROSOFT_FABRIC_USE_COPY_INTO` or Lakehouse keys). Best for small to medium data.
+
+**Configuration:** Base credentials only (see [Add credentials](#add-credentials)).
+
+**Code:** Call `warehouse.export(df, schema_name, table_name, ...)` in a data exporter block:
+
+```python
+from mage_ai.settings.repo import get_repo_path
+from mage_ai.io.config import ConfigFileLoader
+from mage_ai.io.microsoft_fabric_warehouse import MicrosoftFabricWarehouse
+from pandas import DataFrame
+from os import path
+
+if 'data_exporter' not in globals():
+    from mage_ai.data_preparation.decorators import data_exporter
+
+
+@data_exporter
+def export_data_to_fabric_warehouse(df: DataFrame, **kwargs) -> None:
+    schema_name = 'dbo'
+    table_name = 'your_table_name'
+    config_path = path.join(get_repo_path(), 'io_config.yaml')
+    config_profile = 'default'
+
+    with MicrosoftFabricWarehouse.with_config(ConfigFileLoader(config_path, config_profile)) as warehouse:
+        warehouse.export(
+            df,
+            schema_name,
+            table_name,
+            if_exists='replace',
+            index=False,
+        )
+```
+
+---
+
+### Option 2: COPY INTO – config-driven (Mage uploads to OneLake)
+
+Mage writes the DataFrame to Parquet in OneLake, then runs `COPY INTO` in the warehouse. **Best performance for large exports** with minimal code changes.
+
+**Configuration in `io_config.yaml`:**
+
+```yaml
+default:
+  # ... base credentials (AZURE_CLIENT_ID, etc.) ...
+
+  MICROSOFT_FABRIC_USE_COPY_INTO: true
+  AZURE_TENANT_ID: 'your-azure-tenant-id'
+  MICROSOFT_FABRIC_LAKEHOUSE_WORKSPACE: 'your_workspace_name'
+  MICROSOFT_FABRIC_LAKEHOUSE_NAME: 'your_lakehouse_name'
+```
+
+**Code:** Same as standard export — keep using `warehouse.export(df, schema_name, table_name, ...)`. The loader detects the config and uses COPY INTO automatically.
+
+**Performance:** Bulk load from OneLake; typically much faster than standard export for large tables.
+
+---
+
+### Option 3: COPY INTO – data already in OneLake
+
+You stage files (Parquet or CSV) in a Lakehouse (e.g. under **Files**). Mage only runs `COPY INTO` in the warehouse. No Lakehouse keys needed in `io_config` for this path.
+
+**Configuration:** Base credentials only. No `MICROSOFT_FABRIC_USE_COPY_INTO` or Lakehouse settings required.
+
+**Code:** Call `copy_into_from_onelake()` with the full OneLake folder URL:
+
+```python
+with MicrosoftFabricWarehouse.with_config(ConfigFileLoader(config_path, config_profile)) as warehouse:
+    warehouse.copy_into_from_onelake(
+        table_name='sales',
+        onelake_path='https://onelake.dfs.fabric.microsoft.com/<workspace>/<lakehouse>/Files/sales/',
+        schema_name='dbo',
+        file_type='PARQUET',
+    )
+```
+
+For CSV:
+
+```python
+warehouse.copy_into_from_onelake(
+    table_name='sales',
+    onelake_path='https://onelake.dfs.fabric.microsoft.com/.../Files/sales/',
+    file_type='CSV',
+    field_terminator=',',
+    first_row=2,
+)
+```
+
+**Performance:** Same as other COPY INTO flows — bulk load from OneLake. Use when you already have files in a Lakehouse (e.g. from Spark, pipelines, or manual upload).
+
+---
+
+### Option 4: COPY INTO – full control in code
+
+Use `export_via_copy_into()` when you want to create the table from the DataFrame schema and either upload to OneLake or point to an existing OneLake path, all in one call.
+
+**Configuration:** Base credentials. For upload path, you also need `tenant_id`, `lakehouse_workspace`, and `lakehouse_name` (passed in code or from config).
+
+**Code – Mage uploads then COPY INTO:**
+
+```python
+warehouse.export_via_copy_into(
+    df, 'your_table',
+    schema_name='dbo',
+    lakehouse_workspace='your_workspace',
+    lakehouse_name='your_lakehouse',
+    tenant_id='your_azure_tenant_id',
+    if_exists='replace',
+)
+```
+
+**Code – data already in OneLake (table created from DataFrame schema, then COPY INTO):**
+
+```python
+warehouse.export_via_copy_into(
+    df, 'your_table',
+    schema_name='dbo',
+    onelake_path='https://onelake.dfs.fabric.microsoft.com/.../Files/folder/',
+    if_exists='replace',
+)
+```
+
+**Performance:** Same bulk benefits as Options 2 and 3. Use when you need explicit control over table creation and the OneLake path in code.
 
 ### Custom types
 
@@ -160,7 +406,7 @@ def export_data_to_fabric_warehouse(df: DataFrame, **kwargs) -> None:
     Specify your configuration settings in 'io_config.yaml'.
     Set the following in your io_config:
 
-    Docs: /integrations/databases/MicrosoftFabricWarehouse
+    Docs: https://docs.mage.ai/integrations/databases/MicrosoftFabricWarehouse
     """
     schema_name = 'dbo'  # Specify the name of the schema to export data to
     table_name = 'your_table_name'  # Specify the name of the table to export data to
@@ -278,6 +524,7 @@ def export_data_to_fabric_warehouse(df: DataFrame, **kwargs) -> None:
    - Test connections before running large operations
 
 3. **Performance Optimization**:
+   - Prefer **standard export** for small/medium tables; use **COPY INTO** for large batch loads (see [Export options overview](#export-options-overview)). Enable COPY INTO via `MICROSOFT_FABRIC_USE_COPY_INTO: true` and the OneLake keys when Mage should upload to OneLake.
    - Use appropriate `if_exists` policies ('replace', 'append', 'fail')
    - Consider using `overwrite_types` for optimal column types
    - Use LIMIT clauses in queries when testing
