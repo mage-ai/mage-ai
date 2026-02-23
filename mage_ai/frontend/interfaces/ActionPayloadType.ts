@@ -22,6 +22,7 @@ export enum ActionTypeEnum {
   MIN = 'min',
   MODE = 'mode',
   NORMALIZE = 'normalize',
+  ONE_HOT_ENCODE = 'one_hot_encode',
   REFORMAT = 'reformat',
   REMOVE = 'remove',
   REMOVE_OUTLIERS = 'remove_outliers',
