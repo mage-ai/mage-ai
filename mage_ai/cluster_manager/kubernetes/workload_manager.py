@@ -52,6 +52,7 @@ class WorkloadManager:
         self.core_client = client.CoreV1Api()
         self.apps_client = client.AppsV1Api()
         self.networking_client = client.NetworkingV1Api()
+        self.custom_object_client = client.CustomObjectsApi()
 
         self.namespace = namespace
         if not self.namespace:
@@ -211,7 +212,10 @@ class WorkloadManager:
         4. Create config map for lifecycle hooks if provided.
         5. Create stateful set
         6. Create service
-        7. Update ingress if ingress_name provided
+        7.
+            a) Update ingress if ingress_name provided
+            or
+            b) Create httproute if gateway name/namespace/hostname are provided
 
         Args:
             name (str): name of the workload
@@ -236,6 +240,8 @@ class WorkloadManager:
         pvc_retention_policy = parameters.get('pvc_retention_policy') or 'Retain'
 
         ingress_name = workspace_config.ingress_name
+        gateway_name = workspace_config.gateway_name
+        gateway_namespace = workspace_config.gateway_namespace
 
         volumes = []
         volume_mounts = [{'name': 'mage-data', 'mountPath': '/home/src'}]
@@ -245,7 +251,10 @@ class WorkloadManager:
             project_type=project_type,
             project_uuid=workspace_config.project_uuid,
             container_config=container_config,
-            set_base_path=ingress_name is not None,
+            set_base_path=(
+                    ingress_name is not None or
+                    (gateway_name is not None and gateway_namespace is not None)
+            ),
             initial_metadata=initial_metadata,
         )
         container_config['env'] = env_vars
@@ -469,9 +478,19 @@ class WorkloadManager:
             self.namespace, service
         )
 
+        hostname = workspace_config.hostname
+
         try:
             if ingress_name:
                 self.add_service_to_ingress_paths(ingress_name, service_name, name)
+            if gateway_name and gateway_namespace and hostname:
+                self.create_http_route(
+                    gateway_name,
+                    gateway_namespace,
+                    hostname,
+                    service_name,
+                    name
+                )
         except Exception as err:
             self.delete_workload(name)
             raise err
@@ -561,6 +580,67 @@ class WorkloadManager:
             ingress_name, self.namespace, ingress
         )
 
+    def create_http_route(
+            self,
+            gateway_name: str,
+            gateway_namespace: str,
+            hostname: str,
+            service_name: str,
+            workload_name: str,
+    ) -> None:
+        _ = self.custom_object_client.get_namespaced_custom_object(
+            group="gateway.networking.k8s.io",
+            version="v1",
+            namespace="ingress",
+            plural="gateways",
+            name=gateway_name
+        )
+        http_route = {
+            'apiVersion': 'gateway.networking.k8s.io/v1',
+            'kind': 'HTTPRoute',
+            'metadata': {
+                'name': workload_name,
+                'namespace': self.namespace,
+            },
+            'spec': {
+                'parentRefs': [
+                    {
+                        'name': gateway_name,
+                        'namespace': gateway_namespace
+                    }
+                ],
+                'hostnames': [
+                    hostname
+                ],
+                'rules': [
+                    {
+                        'matches': [
+                            {
+                                'path': {
+                                    'type': 'PathPrefix',
+                                    'path': f'{workload_name}'
+                                }
+                            }
+                        ],
+                        'backendRefs': [
+                            {
+                                'kind': 'Service',
+                                'name': service_name,
+                                'port': 6789,
+                            }
+                        ]
+                    }
+                ]
+            }
+        }
+        _ = self.custom_object_client.create_namespaced_custom_object(
+            group="networking.k8s.io",
+            version="v1",
+            namespace="default",
+            plural="httproutes",
+            body=http_route
+        )
+
     def get_url_from_ingress(self, ingress_name: str, workload_name: str) -> str:
         ingress = self.networking_client.read_namespaced_ingress(
             ingress_name,
@@ -616,7 +696,24 @@ class WorkloadManager:
             ingress_name, self.namespace, ingress
         )
 
-    def delete_workload(self, name: str, ingress_name: str = None):
+    def delete_http_route(
+        self,
+        workload_name: str,
+    ) -> None:
+        self.custom_object_client.delete_namespaced_custom_object(
+            group="networking.k8s.io",
+            version="v1",
+            namespace="default",
+            plural="httproutes",
+            name=workload_name
+        )
+
+    def delete_workload(
+            self,
+            name: str,
+            ingress_name: str = None,
+            gateway_name: str = None
+    ):
         self.apps_client.delete_namespaced_stateful_set(name, self.namespace)
         self.core_client.delete_namespaced_service(f'{name}-service', self.namespace)
         try:
@@ -634,6 +731,14 @@ class WorkloadManager:
         except Exception as ex:
             raise Exception(
                 'Failed to delete workspace path from ingress, you may need to manually delete it'
+            ) from ex
+
+        try:
+            if gateway_name:
+                self.delete_http_route(name)
+        except Exception as ex:
+            raise Exception(
+                f'Failed to delete workspace http route ({self.namespace}/{name})'
             ) from ex
 
     def get_workload_activity(self, name: str) -> Dict:
