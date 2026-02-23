@@ -4,6 +4,20 @@ icon: "circle-up"
 sidebarTitle: "Version upgrades"
 description: "How to get the latest and greatest from the Mage team."
 ---
+<Warning>
+  Available in version <b>`0.9.58`</b> and greater. For Mage version lower than <b>`0.9.58`</b>, you can manually do application data or files backup before upgrading.
+</Warning>
+
+## Back up application data or files before upgrading 
+
+Mage has built-in file versioning capabilities that can help you back up your application data or files before upgrading. This feature automatically keeps track of previous versions of a file, allowing you to roll back changes or recover old file versions without the need for manual Git configuration.
+
+## Configure the number of versions per file
+
+In Mage version `>=0.9.58`, you can set how many previous versions to keep track of for every file by setting the following environment variable. The default is `100`, and it's located in the `[project_name]/.file_versions`. For example, if your project name is `demo_project`, the directory will be `demo_project/.file_versions`.
+
+By utilizing these file versioning features, you can effectively back up your application data or files before upgrading. This allows you to easily revert changes if needed during the upgrade process.
+
 
 <AccordionGroup>
    <Accordion title="Docker" icon="Docker">
