@@ -5,7 +5,12 @@ from mage_ai.api.presenters.PipelineTriggerPresenter import PipelineTriggerPrese
 
 
 class PipelineTriggerPolicy(BasePolicy):
-    pass
+    def initialize_project_uuid(self):
+        parent_model = self.options.get('parent_model')
+        if parent_model:
+            self.project_uuid = parent_model.project_uuid
+        else:
+            super().initialize_project_uuid()
 
 
 PipelineTriggerPolicy.allow_actions([
