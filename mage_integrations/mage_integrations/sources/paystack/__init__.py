@@ -1,7 +1,6 @@
 from mage_integrations.sources.base import Source, main
 from mage_integrations.sources.paystack.client import PaystackClient
 from mage_integrations.sources.paystack.streams import STREAMS
-from singer.schema import Schema
 from typing import Dict, Generator, List
 
 
@@ -39,6 +38,7 @@ class Paystack(Source):
 
     def get_valid_replication_keys(self, stream_id):
         return STREAMS[stream_id].VALID_REPLICATION_KEYS
+
 
 if __name__ == '__main__':
     main(Paystack)
