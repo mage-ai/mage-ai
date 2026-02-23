@@ -438,19 +438,23 @@ WHERE table_id = '{table_name}'
                     ]
             return self.client.load_table_from_dataframe(df, table_id, job_config=config).result()
 
-    def execute(self, query_string: str, **kwargs) -> None:
+    def execute(self, query_string: str, **kwargs):
         """
-        Sends query to the connected BigQuery warehouse.
+        Sends query to the connected BigQuery warehouse and returns the result.
 
         Args:
             query_string (str): Query to execute on the BigQuery warehouse.
             **kwargs: Additional arguments to pass to query, such as query configurations
+
+        Returns:
+            google.cloud.bigquery.table.RowIterator: Query result iterator.
         """
         with self.printer.print_msg(f'Executing query \'{query_string}\''):
             query_string = self._clean_query(query_string)
-            self.client.query(query_string, **kwargs)
+            job = self.client.query(query_string, **kwargs)
+            return job.result()
 
-    def execute_query_raw(self, query: str, configuration: Dict = None, **kwargs) -> None:
+    def execute_query_raw(self, query: str, configuration: Dict = None, **kwargs):
         DX_PRINTER.print(
             f'BigQuery.execute_query_raw\n{query}',
         )
