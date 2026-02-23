@@ -52,13 +52,14 @@ export const useError = (
     setShown(true);
     refError.current = runtimePropsArg;
   }, []);
+
   const hideError = useCallback(() => {
     setShown(false);
     refError.current = null;
   }, []);
 
   useEffect(() => {
-    if (isShown) {
+    if (isShown && !context.minimized) {
       context.showError(key, error, hideError, errorProps, {
         ...opts,
         runtimeProps,
@@ -76,9 +77,14 @@ export const useError = (
     hideError,
     isShown,
     key,
+    context.minimized,
     opts,
     runtimeProps,
   ]);
 
-  return [showError, hideError, refError];
+  return [showError, hideError, refError, {
+    errorsHistory: context.errorsHistory,
+    minimized: context.minimized,
+    setMinimized: context.setMinimized,
+  }];
 };
