@@ -21,6 +21,7 @@ from mage_integrations.destinations.bigquery.constants import (
 from mage_integrations.destinations.bigquery.utils import (
     convert_array,
     convert_array_for_batch_load,
+    convert_column_if_json,
     convert_column_type,
     convert_converted_type_to_parameter_type,
     convert_datetime,
@@ -44,13 +45,6 @@ from mage_integrations.destinations.sql.utils import (
     column_type_mapping,
 )
 from mage_integrations.utils.dictionary import merge_dict
-
-
-def convert_column_if_json(value, column_type):
-    if column_type == 'JSON' and 'TO_JSON' not in value:
-        return f"TO_JSON('{value}')"
-
-    return value
 
 
 class BigQuery(Destination):
@@ -237,7 +231,7 @@ WHERE table_id = '{table_name}'
         if tags is None:
             tags = {}
 
-        tries = kwargs.get('tries', 0)
+        tries = tags.get('tries', 0)
 
         try:
             return self.__process_queries(
@@ -263,8 +257,8 @@ WHERE table_id = '{table_name}'
                         query_strings=query_strings,
                         record_data=record_data,
                         stream=stream,
-                        tags=tags,
-                        tries=tries,
+                        tags=tags2,
+                        **kwargs,
                     )
                 else:
                     raise err
