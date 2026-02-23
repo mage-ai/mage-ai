@@ -411,6 +411,9 @@ def build_client(config, logger=None):
     verify_mode = config.get('verify_mode', 'true') == 'true'
     use_ssl = config.get('ssl') == 'true'
 
+    # Reduced server selection timeout  to 20 seconds
+    server_selection_timeout = 20
+
     connection_params = {
         'host': config['host'],
         'port': int(config['port']),
@@ -419,6 +422,8 @@ def build_client(config, logger=None):
         'ssl': use_ssl,
         'replicaset': config.get('replica_set', None),
         'readPreference': 'secondaryPreferred',
+        'serverSelectionTimeoutMS': server_selection_timeout * 1000
+
     }
     if config.get('authSource'):
         connection_params['authSource'] = config.get('authSource')
@@ -429,10 +434,35 @@ def build_client(config, logger=None):
     if not verify_mode and use_ssl:
         connection_params["ssl_cert_reqs"] = ssl.CERT_NONE
 
-    client = pymongo.MongoClient(**connection_params)
+    try:
+        client = MongoClient(**connection_params)
+        logger.info(f"Connected to MongoDB host: {config['host']}, "
+                    f"version: {client.server_info().get('version', 'unknown')}")
 
-    logger.info(f"Connected to MongoDB host: {config['host']}, "
-                f"version: {client.server_info().get('version', 'unknown')}")
+    except ServerSelectionTimeoutError as e:
+        logger.warning(f"Connection attempt failed: {e}. Trying fallback method.")
+
+        try:
+            # Constructing the simpler connection string with additional parameters
+            connection_uri = f"mongodb+srv://{connection_params['username']}:{connection_params['password']}@{connection_params['host']}/"
+            connection_uri += f"?serverSelectionTimeoutMS={server_selection_timeout * 1000}"
+        
+            if 'authSource' in connection_params:
+                connection_uri += f"/?authSource={connection_params['authSource']}"
+        
+                if 'replicaset' in connection_params:
+                    connection_uri += f"&replicaSet={connection_params['replicaset']}"
+        
+                if not verify_mode and use_ssl:
+                    connection_uri += "&ssl=true&ssl_cert_reqs=CERT_NONE"
+        
+            client = MongoClient(connection_uri)
+            logger.info("Successfully connected using fallback method")
+        
+        except Exception as e:
+            logger.error(f"Failed to connect to MongoDB: {e}")
+            raise
+
 
     common.INCLUDE_SCHEMAS_IN_DESTINATION_STREAM_NAME = \
         (config.get('include_schemas_in_destination_stream_name') == 'true')
