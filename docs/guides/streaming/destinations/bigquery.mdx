@@ -61,7 +61,7 @@ dead_letter:
 |-----------|------|-------------|---------|
 | `table_id` | string | BigQuery table identifier. Use `project_id.dataset_id.table_id` or `dataset_id.table_id` (project from profile or `database`). Supports [metadata interpolation](#metadata-interpolation), e.g. `"{schema}.{table}"` for CDC. | *(required)* |
 | `database` | string | Default project when `table_id` is two-part (`dataset_id.table_id`). Overrides the profile project if set. | profile project |
-| `if_exists` | string | Behavior when the table already exists: `append` (add rows), `replace` (drop and recreate), or `fail` (throw an error). | `append` |
+| `if_exists` | string | Behavior when the table already exists: `append` (add rows), `replace` (truncate/overwrite existing rows; preserves table schema), or `fail` (throw an error). | `append` |
 | `overwrite_types` | object | Map of column name → BigQuery type (e.g. `STRING`, `INT64`, `TIMESTAMP`, `RECORD`). Used to cast columns before write. Useful for `_mage_*` or custom columns. | — |
 | `unique_constraints` | list (or string) | List of column names for upsert/merge. When set with `unique_conflict_method`, exports as MERGE instead of append. Supports interpolation, e.g. `"{key_columns}"` from [PostgreSQL CDC](/guides/streaming/sources/postgres-cdc). | — |
 | `unique_conflict_method` | string | For upsert: e.g. `UPDATE` to update existing rows on conflict. Used only when `unique_constraints` is set. | — |
