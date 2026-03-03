@@ -30,6 +30,10 @@ from mage_ai.settings import (
     REQUIRE_USER_AUTHENTICATION,
     REQUIRE_USER_PERMISSIONS,
 )
+from mage_ai.settings.platform import (
+    active_project_settings,
+    project_platform_activated,
+)
 from mage_ai.shared.hash import extract, ignore_keys
 
 CONTEXT_DATA_KEY_USER_ROLE_VALIDATIONS = '__user_role_validations'
@@ -61,12 +65,28 @@ class BasePolicy(UserPermissionMixIn, ResultSetMixIn):
         else:
             self.result_set_attr = ResultSet([])
 
+        self.project_uuid = None
+        try:
+            self.initialize_project_uuid()
+        except Exception:
+            pass
+
         # This is only used to override the environment variable when bootstrapping permissions.
         self.disable_notebook_edit_access_override = None
 
+    def initialize_project_uuid(self):
+        if project_platform_activated():
+            active_project = active_project_settings(user=self.current_user) or {}
+            project_name = active_project.get('uuid')
+            if project_name:
+                self.project_uuid = get_project_uuid(
+                    root_project=False, project_name=project_name)
+        else:
+            self.project_uuid = get_project_uuid()
+
     @property
     def entity(self) -> Tuple[Union[Entity, None], Union[str, None]]:
-        return Entity.PROJECT, get_project_uuid()
+        return Entity.PROJECT, self.project_uuid
 
     @classmethod
     def action_rule(self, action):
