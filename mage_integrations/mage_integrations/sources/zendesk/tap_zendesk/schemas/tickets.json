@@ -245,6 +245,48 @@
                     "null",
                     "string"
                   ]
+                },
+                "brand_id": {
+                  "type": [
+                    "null",
+                    "string"
+                  ]
+                },
+                "formatted_phone": {
+                  "type": [
+                    "null",
+                    "string"
+                  ]
+                },
+                "phone": {
+                  "type": [
+                    "null",
+                    "string"
+                  ]
+                },
+                "profile_url": {
+                  "type": [
+                    "null",
+                    "string"
+                  ]
+                },
+                "twitter_id": {
+                  "type": [
+                    "null",
+                    "string"
+                  ]
+                },
+                "username": {
+                  "type": [
+                    "null",
+                    "string"
+                  ]
+                },
+                "channel": {
+                  "type": [
+                    "null",
+                    "string"
+                  ]
                 }
               },
               "type": [
@@ -261,6 +303,42 @@
                   ]
                 },
                 "name": {
+                  "type": [
+                    "null",
+                    "string"
+                  ]
+                },
+                "brand_id": {
+                  "type": [
+                    "null",
+                    "string"
+                  ]
+                },
+                "formatted_phone": {
+                  "type": [
+                    "null",
+                    "string"
+                  ]
+                },
+                "phone": {
+                  "type": [
+                    "null",
+                    "string"
+                  ]
+                },
+                "profile_url": {
+                  "type": [
+                    "null",
+                    "string"
+                  ]
+                },
+                "twitter_id": {
+                  "type": [
+                    "null",
+                    "string"
+                  ]
+                },
+                "username": {
                   "type": [
                     "null",
                     "string"
