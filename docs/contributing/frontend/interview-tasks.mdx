@@ -1,0 +1,171 @@
+---
+title: "Frontend Engineer Interview Tasks"
+sidebarTitle: "Interview Tasks"
+description: "Recommended open GitHub issues for frontend engineer interview tasks, organized by difficulty."
+---
+
+This page lists open GitHub issues that are well-suited as take-home or live-coding tasks for frontend engineer interviews. Each issue tests relevant React/TypeScript skills, has a clear scope, and includes reproducible steps or acceptance criteria.
+
+## How to use this guide
+
+When assigning an interview task:
+
+1. Pick an issue from the appropriate difficulty tier below.
+2. Share the linked GitHub issue with the candidate so they have the full context.
+3. Ask the candidate to fork the repository, implement a fix or feature in `mage_ai/frontend/`, and share a link to a branch or commit in their fork for review. Do **not** ask candidates to open a PR against the upstream repository, as this clutters the project with interview submissions.
+
+The frontend codebase is a **React + Next.js + TypeScript** application. Candidates should be comfortable with React hooks, component composition, and TypeScript. See the [frontend overview](/contributing/frontend/overview) for setup instructions.
+
+---
+
+## 🟢 Beginner (1–3 hours)
+
+These issues require minimal context about the codebase and test core React debugging skills.
+
+### [#5791 – Objects not valid as React child when using nested variables](https://github.com/mage-ai/mage-ai/issues/5791)
+
+| | |
+|---|---|
+| **Type** | Bug |
+| **Skills tested** | React rendering, debugging, `JSON.stringify` / type narrowing |
+
+When a pipeline variable has an object value (e.g. `{ var: 'value' }`), the UI crashes with the classic React error: *"Objects are not valid as a React child"*. The fix requires finding where the value is rendered and ensuring objects are serialised to a string before display.
+
+**Why it's a good interview task:** Classic React beginner error. A self-contained, one-component fix that tests how a candidate approaches debugging a React crash without needing deep product knowledge.
+
+---
+
+### [#5630 – Empty string in concurrency config is saved as zero](https://github.com/mage-ai/mage-ai/issues/5630)
+
+| | |
+|---|---|
+| **Type** | Bug |
+| **Skills tested** | Form/input handling, controlled components, edge-case validation |
+
+On the Pipeline Settings page, clearing a numeric field (concurrency limit) and saving writes `0` to `metadata.yaml` instead of omitting the key entirely. A `pipeline_run_limit_all_triggers: 0` value is then treated as "allow zero concurrent runs", which causes all subsequent pipeline runs to be blocked immediately.
+
+**Why it's a good interview task:** Tests careful handling of controlled numeric inputs in React forms — a very common real-world frontend scenario. Requires understanding the difference between `""`, `undefined`, and `0` when serialising form state to JSON.
+
+---
+
+## 🟡 Intermediate (4–8 hours)
+
+These issues require reading existing components and integrating a new behaviour.
+
+### [#5764 – Runtime variable with JSON object value shows `[Object Object]` after editing](https://github.com/mage-ai/mage-ai/issues/5764)
+
+| | |
+|---|---|
+| **Type** | Bug |
+| **Skills tested** | React state management, JSON serialisation/deserialisation, controlled inputs |
+
+When a trigger's runtime variable holds a JSON object, editing and saving the trigger causes the value to display as `[Object Object]` on subsequent edits. The runtime correctly uses the saved value, but the UI state is corrupted.
+
+**Steps to reproduce:** See the [full issue](https://github.com/mage-ai/mage-ai/issues/5764) — includes screenshots.
+
+**Why it's a good interview task:** Tests whether a candidate can trace state mutations across component re-renders and correctly serialise/deserialise complex values. Well-scoped with clear reproduction steps and a known-good baseline (the runtime handles it correctly).
+
+---
+
+### [#5697 – Search / filter triggers by name in the Triggers page](https://github.com/mage-ai/mage-ai/issues/5697)
+
+| | |
+|---|---|
+| **Type** | Feature Request |
+| **Skills tested** | React component composition, client-side filtering, UX design, controlled inputs |
+
+The Triggers page shows a paginated list of pipeline triggers. There is no way to search or filter by trigger name, making it difficult to find a specific trigger when there are many.
+
+**Acceptance criteria:**
+- A search/filter input appears above the trigger list.
+- Typing filters the list in real time (client-side is acceptable for an initial implementation).
+- An empty search shows all triggers.
+- The UX is consistent with the existing UI patterns.
+
+**Why it's a good interview task:** Classic CRUD list + search feature. Tests the full lifecycle of adding a small, well-defined UI feature: reading the existing page component, adding a controlled input, wiring client-side filtering, and matching the design system.
+
+---
+
+### [#5769 – Cron trigger with empty expression can be saved in active state](https://github.com/mage-ai/mage-ai/issues/5769)
+
+| | |
+|---|---|
+| **Type** | Bug |
+| **Skills tested** | Form validation, error/disabled state UX, edge-case handling |
+
+The trigger form allows saving a schedule trigger with an empty cron expression while it is in the active state, which later causes a `CroniterBadCronError`.
+
+**Why it's a good interview task:** Tests defensive form validation on the frontend — an important skill for any production UI. Requires locating the trigger form component and adding appropriate validation guards.
+
+---
+
+## 🔴 Advanced (1–2 days)
+
+These issues require architectural thinking and a deeper understanding of the codebase.
+
+### [#6033 – Download pipeline dependency graph as an image](https://github.com/mage-ai/mage-ai/issues/6033)
+
+| | |
+|---|---|
+| **Type** | Feature Request |
+| **Skills tested** | DOM/SVG/Canvas rendering, `html-to-image` or similar libraries, toolbox UI |
+
+The pipeline editor renders a dependency graph of blocks. There is currently no way to export it. This issue asks for a **Download** button in the bottom toolbox that exports the visible graph as a high-resolution image.
+
+**Acceptance criteria (from the issue):**
+- Captures the entire dependency tree.
+- Maintains readable resolution.
+- Matches the layout shown in the UI.
+
+**Why it's a good interview task:** Tests a candidate's ability to work with DOM capture libraries (e.g. `html2canvas`, `html-to-image`) inside an existing complex React component. Requires reading the `reaflow`-based graph component and integrating a non-trivial export feature cleanly.
+
+---
+
+### [#4978 – Block Runs monitoring page](https://github.com/mage-ai/mage-ai/issues/4978)
+
+| | |
+|---|---|
+| **Type** | Feature Request |
+| **Skills tested** | New page creation, data fetching, filtering/sorting, list virtualisation |
+
+A new UI page, similar to the existing Pipeline Runs page, that shows all currently running or queued **block runs** across all pipelines — with filters and column sorting.
+
+**Why it's a good interview task:** Tests the ability to build a full new page end-to-end: API integration, list rendering with filters, and appropriate loading/error states. Good for assessing a mid-to-senior level candidate.
+
+---
+
+### [#4516 – Bulk delete / purge pipeline runs](https://github.com/mage-ai/mage-ai/issues/4516)
+
+| | |
+|---|---|
+| **Type** | Feature Request |
+| **Skills tested** | Multi-select UI patterns, batch API calls, confirmation dialogs, optimistic updates |
+
+The Pipeline Runs view only allows deleting one run at a time. This issue asks for a **Select All / multi-select** checkbox pattern and a **Delete selected** action in the existing action dropdown.
+
+**Why it's a good interview task:** Tests batch-action UI patterns — a common and nuanced pattern in data management UIs. Requires state management for selected rows, a confirmation modal, and batch API calls with error handling.
+
+---
+
+## 🔧 Maintenance / Security (Dependency tasks)
+
+These issues are good for candidates focused on frontend infrastructure or security.
+
+| Issue | Type | Summary |
+|---|---|---|
+| [#5613](https://github.com/mage-ai/mage-ai/issues/5613) | Dependency upgrade | Upgrade DOMPurify from 3.0.5 → latest (3.2.x) |
+| [#5785](https://github.com/mage-ai/mage-ai/issues/5785) | Security / CVE | Next.js 12.3.4 is vulnerable to CVE-2023-46298; upgrade Next.js |
+| [#5226](https://github.com/mage-ai/mage-ai/issues/5226) | Dependency upgrade | Next.js 12 reached end-of-life; upgrade to a supported version |
+
+---
+
+## Evaluation rubric (suggested)
+
+| Area | What to look for |
+|---|---|
+| **Code quality** | TypeScript types, no `any`, clean component separation |
+| **Correctness** | The bug is fixed / feature works per acceptance criteria |
+| **Edge cases** | Empty state, loading state, error state handled |
+| **UI consistency** | New UI matches the existing design system / style |
+| **Tests** | Playwright or unit test added for the change (see [testing guide](/contributing/frontend/testing)) |
+| **PR description** | Clear explanation of what changed and why |
