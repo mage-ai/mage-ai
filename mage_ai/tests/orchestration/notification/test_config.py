@@ -6,6 +6,7 @@ from mage_ai.tests.orchestration.notification.constants import (
     OPSGENIE_NOTIFICATION_CONFIG,
     SLACK_NOTIFICATION_CONFIG,
     TEAMS_NOTIFICATION_CONFIG,
+    NTFY_NOTIFICATION_CONIG
 )
 
 
@@ -18,12 +19,14 @@ class NotificationConfigTests(TestCase):
         notification_config_teams = TEAMS_NOTIFICATION_CONFIG
         notification_config_google_chat = GOOGLE_CHAT_NOTIFICATION_CONFIG
         notification_config_opsgenie = OPSGENIE_NOTIFICATION_CONFIG
+        notification_conig_ntfy = NTFY_NOTIFICATION_CONIG
         config1 = NotificationConfig.load(config=notification_config_empty)
         config2 = NotificationConfig.load(config=notification_config_email)
         config3 = NotificationConfig.load(config=notification_config_slack)
         config4 = NotificationConfig.load(config=notification_config_teams)
         config5 = NotificationConfig.load(config=notification_config_google_chat)
         config6 = NotificationConfig.load(config=notification_config_opsgenie)
+        config7 = NotificationConfig.load(config=notification_conig_ntfy)
 
         self.assertIsNone(config1.email_config)
         self.assertIsNone(config1.slack_config)
@@ -49,3 +52,8 @@ class NotificationConfigTests(TestCase):
 
         self.assertEqual(config6.opsgenie_config.url, 'test_url')
         self.assertEqual(config6.opsgenie_config.api_key, 'test_api_key')
+
+        self.assertEqual(config7.ntfy_config.webhook_url, 'test_url')
+        self.assertEqual(config7.ntfy_config.priority, 'urgent')
+        self.assertEqual(config7.ntfy_config.tags, 'warning,skull')
+
