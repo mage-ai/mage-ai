@@ -21,6 +21,13 @@ class PipelineRunPresenter(BasePresenter):
         'variables',
     ]
 
+    def _get_queue_position(self, run_id, queue_position_map):
+        """
+        Returns the queue position of a run from a pre-computed map,
+        or None if the run is not currently queued.
+        """
+        return queue_position_map.get(run_id)
+
     async def prepare_present(self, **kwargs):
         display_format = kwargs.get('format')
         data_to_display = self.model
@@ -56,7 +63,22 @@ class PipelineRunPresenter(BasePresenter):
             if include_pipeline_tags:
                 additional_attributes.append('pipeline_tags')
 
-            return data_to_display.to_dict(include_attributes=additional_attributes)
+            data = data_to_display.to_dict(include_attributes=additional_attributes)
+
+            # Read queue position map from result_set metadata
+            queue_position_map = {}
+            if hasattr(self.resource, 'result_set') and self.resource.result_set():
+                queue_position_map = self.resource.result_set().metadata.get(
+                    'queue_position_map', {}
+                )
+
+            data['queue_position'] = self._get_queue_position(
+                data_to_display.id,
+                queue_position_map,
+            )
+
+            return data
+
         elif constants.DETAIL == display_format:
             block_runs = data_to_display.block_runs
             data = data_to_display.to_dict()
@@ -72,6 +94,7 @@ class PipelineRunPresenter(BasePresenter):
             data['block_runs'] = arr
 
             return data
+
         elif 'with_basic_details' == display_format:
             data = data_to_display.to_dict()
 
@@ -95,6 +118,7 @@ PipelineRunPresenter.register_format(
         'pipeline_schedule_type',
         'pipeline_tags',
         'pipeline_type',
+        'queue_position',
         'repo_path',
     ],
 )
