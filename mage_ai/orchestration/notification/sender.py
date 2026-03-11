@@ -14,6 +14,7 @@ from mage_ai.services.opsgenie.opsgenie import send_opsgenie_alert
 from mage_ai.services.slack.slack import send_slack_message
 from mage_ai.services.teams.teams import send_teams_message
 from mage_ai.services.telegram.telegram import send_telegram_message
+from mage_ai.services.ntfy.ntfy import send_ntfy_message
 from mage_ai.settings import DEFAULT_LOCALHOST_URL, MAGE_PUBLIC_HOST
 
 DEFAULT_MESSAGES = dict(
@@ -107,6 +108,16 @@ class NotificationSender:
                     self.config.opsgenie_config,
                     message=title,
                     description=details or summary,
+                )
+            except Exception:
+                traceback.print_exc()
+
+        if self.config.ntfy_config is not None and self.config.ntfy_config.is_valid:
+            try:
+                send_ntfy_message(
+                    self.config.ntfy_config,
+                    title=title,
+                    message=details or summary
                 )
             except Exception:
                 traceback.print_exc()

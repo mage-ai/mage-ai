@@ -8,6 +8,7 @@ from mage_ai.services.opsgenie.config import OpsgenieConfig
 from mage_ai.services.slack.config import SlackConfig
 from mage_ai.services.teams.config import TeamsConfig
 from mage_ai.services.telegram.config import TelegramConfig
+from mage_ai.services.ntfy.config import NtfyConfig
 from mage_ai.shared.config import BaseConfig
 from mage_ai.shared.enum import StrEnum
 
@@ -48,4 +49,5 @@ class NotificationConfig(BaseConfig):
     teams_config: TeamsConfig = None
     discord_config: DiscordConfig = None
     telegram_config: TelegramConfig = None
+    ntfy_config: NtfyConfig = None
     message_templates: MessageTemplates = None

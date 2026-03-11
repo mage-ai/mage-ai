@@ -1,0 +1,71 @@
+---
+title: "Alerting status updates in ntfy"
+sidebarTitle: "nfty"
+description: "Get status updates in ntfy."
+---
+
+<img
+  alt="nfty"
+  src="https://ntfy.sh/_next/static/media/logo.077f6a13.svg"
+  width="300"
+/>
+
+## Overview of steps
+
+1. Set up integration for ntfy
+2. Update Mage project settings
+
+## Set up integration for ntfy
+
+Follow these
+[instructions on ntfy](https://docs.ntfy.sh/)
+to setup an integration in your account.
+
+
+## Update Mage project settings
+
+Once you’ve set up an integration for ntfy,
+follow these steps to add that ntfy configuration to your project settings:
+
+1. Open the Mage tool in your browser (e.g. http://localhost:6789/).
+2. Open a pipeline and start editing it (e.g.
+   http://localhost:6789/pipelines/example_pipeline/edit).
+3. In your left sidebar in the file browser, scroll all the way down and click
+   on a file named `metadata.yaml`.
+4. In the `metadata.yaml` file, add a section with the following
+   configuration or update the existing `notification_config` section:
+
+    ```yaml
+    notification_config:
+      alert_on:
+        - trigger_failure
+        - trigger_passed_sla
+    ```
+
+    If you omit the `alert_on` section it will default to `trigger_failure` and `trigger_passed_sla`.
+
+    Options:
+
+    - `trigger_failure`: alert when a run of a trigger fails
+    - `trigger_success`: alert when a run of a trigger succeeds
+    - `trigger_passed_sla`: alert when a run of a trigger passes sla
+
+5. In the `metadata.yaml` file, add the following values:
+
+    ```yaml
+    notification_config:
+      alert_on:
+        ...
+      ntfy_config:
+        url: "ntfy.sh/mytopic"
+        priority: "default" # Default default
+        tags: # Default empty
+        - production
+    ```
+
+---
+
+## What next?
+
+Whenever a pipeline run is successfully completed or fails, a nfty alert be
+created.
