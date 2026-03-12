@@ -31,6 +31,7 @@ export type PipelineExecutionProps = {
   checkIfPipelineRunning: () => void;
   executePipeline: () => void;
   isPipelineExecuting: boolean;
+  outputHeight?: number;
   pipelineExecutionHidden: boolean;
   pipelineMessages: KernelOutputType[];
   setPipelineExecutionHidden: (pipelineExecutionHidden: boolean) => void;
@@ -41,6 +42,7 @@ function PipelineExecution({
   checkIfPipelineRunning,
   executePipeline,
   isPipelineExecuting,
+  outputHeight,
   pipelineExecutionHidden,
   pipelineMessages,
   setPipelineExecutionHidden,
@@ -125,9 +127,8 @@ function PipelineExecution({
             </Button>
           </Flex>
           <Flex alignItems="center">
-            <Spacing ml={1} />
-            <Text>
-              Hide
+            <Text noWrapping>
+              Hide output
             </Text>
             <Spacing mr={1} />
             <ToggleSwitch
@@ -142,7 +143,7 @@ function PipelineExecution({
       {!pipelineExecutionHidden &&
         <>
           <Spacing mb={1} />
-          <OutputContainerStyle noScrollbarTrackBackground>
+          <OutputContainerStyle height={outputHeight} noScrollbarTrackBackground>
             <CodeBlockStyle
               executedAndIdle
               hasError={false}
