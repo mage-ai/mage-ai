@@ -1,18 +1,21 @@
-import { memo, useEffect, useState } from 'react';
+import { memo, useCallback, useEffect, useRef, useState } from 'react';
 
 import Button from '@oracle/elements/Button';
 import Text from '@oracle/elements/Text';
 import Tooltip from '@oracle/components/Tooltip';
 import { BORDER_RADIUS_PILL } from '@oracle/styles/units/borders';
 import { CanvasRef } from 'reaflow';
+import { Download, Recenter, ZoomIn, ZoomOut } from '@oracle/icons';
 import { ICON_SIZE_MEDIUM } from '@oracle/styles/units/icons';
-import { Recenter, ZoomIn, ZoomOut } from '@oracle/icons';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { ZoomControlsStyle, ZoomDisplayStyle } from './index.style';
+import { exportDependencyGraph } from '@utils/downloads';
 
 type ZoomControlProps = {
   canvasRef?: { current?: CanvasRef };
   containerRef?: { current?: any };
+  graphContainerRef?: { current?: HTMLDivElement };
+  pipelineName?: string;
   zoomLevel: number;
 };
 
@@ -38,8 +41,15 @@ const SHARED_ICON_PROPS = {
   size: ICON_SIZE_MEDIUM,
 };
 
-function ZoomControls({ canvasRef, containerRef, zoomLevel }: ZoomControlProps) {
+function ZoomControls({
+  canvasRef,
+  containerRef,
+  graphContainerRef,
+  pipelineName,
+  zoomLevel,
+}: ZoomControlProps) {
   const [minimizeControls, setMinimizeControls] = useState<boolean>(false);
+  const controlsRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!containerRef?.current) return;
@@ -53,8 +63,34 @@ function ZoomControls({ canvasRef, containerRef, zoomLevel }: ZoomControlProps) 
     return () => resizeObserver.disconnect();
   }, [containerRef]);
 
+  const handleDownload = useCallback(async () => {
+    if (!graphContainerRef?.current) return;
+
+    // Hide controls so fitCanvas uses the full container area
+    if (controlsRef.current) {
+      controlsRef.current.style.display = 'none';
+    }
+
+    canvasRef?.current?.fitCanvas?.();
+
+    // Allow the canvas to re-render
+    await new Promise((resolve) => setTimeout(resolve, 300));
+
+    const filename = pipelineName
+      ? `${pipelineName}-dependency-graph`
+      : 'dependency-graph';
+
+    try {
+      await exportDependencyGraph(graphContainerRef.current, filename);
+    } finally {
+      if (controlsRef.current) {
+        controlsRef.current.style.display = '';
+      }
+    }
+  }, [canvasRef, graphContainerRef, pipelineName]);
+
   return (
-    <ZoomControlsStyle onDoubleClick={(event) => { event.stopPropagation(); }}>
+    <ZoomControlsStyle ref={controlsRef} onDoubleClick={(event) => { event.stopPropagation(); }}>
       {!minimizeControls && (
         <>
           <Tooltip {...SHARED_TOOLTIP_PROPS} label="Reset (shortcut: double-click canvas)">
@@ -85,6 +121,14 @@ function ZoomControls({ canvasRef, containerRef, zoomLevel }: ZoomControlProps) 
               )}
             >
               <ZoomOut {...SHARED_ICON_PROPS} />
+            </Button>
+          </Tooltip>
+          <Tooltip {...SHARED_TOOLTIP_PROPS} label="Download graph as image">
+            <Button
+              {...SHARED_BUTTON_PROPS}
+              onClick={handleDownload}
+            >
+              <Download {...SHARED_ICON_PROPS} />
             </Button>
           </Tooltip>
         </>
