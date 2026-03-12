@@ -43,7 +43,10 @@ from mage_ai.orchestration.metrics.pipeline_run import (
     calculate_source_metrics,
 )
 from mage_ai.orchestration.notification.config import NotificationConfig
-from mage_ai.orchestration.notification.sender import NotificationSender
+from mage_ai.orchestration.notification.sender import (
+    NotificationSender,
+    format_failed_blocks_dbt_detail,
+)
 from mage_ai.orchestration.utils.distributed_lock import DistributedLock
 from mage_ai.orchestration.utils.git import log_git_sync, run_git_sync
 from mage_ai.orchestration.utils.resources import get_compute, get_memory
@@ -358,6 +361,9 @@ class PipelineScheduler:
                         message = '\n'.join(message_split)
                         stacktrace = f'Error for block {br.block_uuid}:\n{message}'
                         break
+            dbt_detail = format_failed_blocks_dbt_detail(failed_block_runs)
+            if dbt_detail:
+                stacktrace = (stacktrace or '') + ('\n\n' + dbt_detail)
 
             self.notification_sender.send_pipeline_run_failure_message(
                 pipeline=self.pipeline,
@@ -455,6 +461,8 @@ class PipelineScheduler:
                 errors=error.get('errors'),
                 message=error.get('message'),
             )
+            if error.get('dbt'):
+                metrics['error']['dbt'] = error['dbt']
 
         update_status()
 
