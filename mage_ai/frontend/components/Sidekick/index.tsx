@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { CanvasRef } from 'reaflow';
 
 import ApiReloader from '@components/ApiReloader';
@@ -292,10 +292,16 @@ function Sidekick({
   const hasData = !!sampleData;
   const isIntegration = useMemo(() => PipelineTypeEnum.INTEGRATION === pipeline?.type, [pipeline]);
 
+  const graphContainerRef = useRef<HTMLDivElement>(null);
+  const outputScrollRef = useRef<HTMLDivElement>(null);
+  const dragIndicatorRef = useRef<HTMLDivElement>(null);
+
   const availablePanelHeight = heightWindow - (heightOffset - SCROLLBAR_WIDTH);
-  const { handleDragHandleMouseDown, outputHeight } = useDragResize({
-    availablePanelHeight,
+  const { handleDragHandleMouseDown, isDragging, outputHeight } = useDragResize({
+    dragIndicatorRef,
+    graphContainerRef,
     initialHeight: OUTPUT_HEIGHT,
+    outputScrollRef,
   });
 
   const finalOutputHeight = !(PipelineTypeEnum.STREAMING === pipeline?.type)
@@ -699,6 +705,7 @@ function Sidekick({
                 <div
                   aria-hidden={treeHidden}
                   data-testid="dependency-graph-container"
+                  ref={graphContainerRef}
                   style={{ display: treeHidden ? 'none' : undefined }}
                 >
                   <DependencyGraph
@@ -749,6 +756,26 @@ function Sidekick({
               {!blockEditing && PipelineTypeEnum.STREAMING === pipeline?.type
                 && !(treeHidden && pipelineExecutionHidden) && (
                   <>
+                    {isDragging && (
+                      <div
+                        style={{
+                          cursor: 'row-resize',
+                          inset: 0,
+                          position: 'fixed',
+                          zIndex: 9999,
+                        }}
+                      >
+                        <div
+                          ref={dragIndicatorRef}
+                          style={{
+                            borderTop: '1px solid',
+                            left: 0,
+                            position: 'absolute',
+                            right: 0,
+                          }}
+                        />
+                      </div>
+                    )}
                     {!pipelineExecutionHidden && (
                       <DragHandleStyle onMouseDown={handleDragHandleMouseDown} />
                     )}
@@ -759,6 +786,7 @@ function Sidekick({
                         executePipeline={executePipeline}
                         isPipelineExecuting={isPipelineExecuting}
                         outputHeight={effectiveOutputHeight}
+                        outputScrollRef={outputScrollRef}
                         pipelineExecutionHidden={pipelineExecutionHidden}
                         pipelineMessages={pipelineMessages}
                         setPipelineExecutionHidden={setPipelineExecutionHidden}

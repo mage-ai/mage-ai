@@ -1,45 +1,95 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
-
-import { DRAG_HANDLE_HEIGHT } from './index.style';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 
 type UseDragResizeArgs = {
-  availablePanelHeight: number;
+  dragIndicatorRef?: React.RefObject<HTMLDivElement>;
+  graphContainerRef: React.RefObject<HTMLDivElement>;
   initialHeight: number;
+  outputScrollRef: React.RefObject<HTMLDivElement>;
 };
 
 type UseDragResizeResult = {
   handleDragHandleMouseDown: (e: React.MouseEvent) => void;
+  isDragging: boolean;
   outputHeight: number;
 };
 
 export default function useDragResize({
-  availablePanelHeight,
+  dragIndicatorRef,
+  graphContainerRef,
   initialHeight,
+  outputScrollRef,
 }: UseDragResizeArgs): UseDragResizeResult {
   const [outputHeight, setOutputHeight] = useState<number>(initialHeight);
+  const [isDragging, setIsDragging] = useState<boolean>(false);
 
-  const isDraggingRef = useRef<boolean>(false);
-  const dragStartYRef = useRef<number>(0);
-  const dragStartHeightRef = useRef<number>(initialHeight);
+  const isDraggingRef = useRef(false);
+  const dragStartYRef = useRef(0);
+  const dragStartGraphHeightRef = useRef(0);
+  const dragStartScrollHeightRef = useRef(0);
+  const dragStartOutputHeightRef = useRef(0);
+  const outputHeightRef = useRef(initialHeight);
+  const rafRef = useRef<number | null>(null);
+  const shouldClearStylesRef = useRef(false);
+  const dragHandleInitialTopRef = useRef(0);
+  const dragHandleRectRef = useRef<DOMRect | null>(null);
+  const dragHandleBorderColorRef = useRef<string>('');
+
+  if (!isDraggingRef.current) {
+    outputHeightRef.current = outputHeight;
+  }
 
   const handleDragHandleMouseDown = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
     isDraggingRef.current = true;
+    setIsDragging(true);
     dragStartYRef.current = e.clientY;
-    dragStartHeightRef.current = outputHeight;
-  }, [outputHeight]);
+    const handleEl = e.currentTarget as HTMLElement;
+    dragHandleInitialTopRef.current = graphContainerRef?.current?.getBoundingClientRect()?.bottom || 0;
+    dragHandleRectRef.current = handleEl.getBoundingClientRect();
+    dragHandleBorderColorRef.current = window.getComputedStyle(handleEl).borderTopColor;
+    dragStartGraphHeightRef.current = graphContainerRef?.current?.offsetHeight || 0;
+    dragStartScrollHeightRef.current = outputScrollRef?.current?.offsetHeight || 0;
+    dragStartOutputHeightRef.current = outputHeightRef.current;
+  }, [graphContainerRef, outputScrollRef]);
 
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
       if (!isDraggingRef.current) return;
-      const delta = dragStartYRef.current - e.clientY;
-      const maxHeight = availablePanelHeight - DRAG_HANDLE_HEIGHT - 100;
-      const clamped = Math.min(maxHeight, Math.max(100, dragStartHeightRef.current + delta));
-      setOutputHeight(clamped);
+      if (rafRef.current !== null) cancelAnimationFrame(rafRef.current);
+
+      rafRef.current = requestAnimationFrame(() => {
+        const rawDelta = dragStartYRef.current - e.clientY;
+        const maxDelta = dragStartGraphHeightRef.current - 100;
+        const minDelta = -(dragStartScrollHeightRef.current - 100);
+        const delta = Math.min(maxDelta, Math.max(minDelta, rawDelta));
+
+        if (graphContainerRef?.current) {
+          graphContainerRef.current.style.height =
+            `${dragStartGraphHeightRef.current - delta}px`;
+          graphContainerRef.current.style.overflow = 'hidden';
+        }
+        if (outputScrollRef?.current) {
+          outputScrollRef.current.style.height =
+            `${dragStartScrollHeightRef.current + delta}px`;
+        }
+
+        outputHeightRef.current = dragStartOutputHeightRef.current + delta;
+
+        if (dragIndicatorRef?.current) {
+          dragIndicatorRef.current.style.top = `${dragHandleInitialTopRef.current - delta}px`;
+        }
+
+        rafRef.current = null;
+      });
     };
 
     const handleMouseUp = () => {
-      isDraggingRef.current = false;
+      if (isDraggingRef.current) {
+        isDraggingRef.current = false;
+        setIsDragging(false);
+        shouldClearStylesRef.current = true;
+        setOutputHeight(outputHeightRef.current);
+      }
     };
 
     document.addEventListener('mousemove', handleMouseMove);
@@ -48,8 +98,32 @@ export default function useDragResize({
     return () => {
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', handleMouseUp);
+      if (rafRef.current !== null) cancelAnimationFrame(rafRef.current);
     };
-  }, [availablePanelHeight]);
+  }, [dragIndicatorRef, graphContainerRef, outputScrollRef]);
 
-  return { handleDragHandleMouseDown, outputHeight };
+  useLayoutEffect(() => {
+    if (isDragging && dragIndicatorRef?.current) {
+      const rect = dragHandleRectRef.current;
+      dragIndicatorRef.current.style.top = `${dragHandleInitialTopRef.current}px`;
+      dragIndicatorRef.current.style.left = rect ? `${rect.left}px` : '0';
+      dragIndicatorRef.current.style.right = rect ? `${window.innerWidth - rect.right}px` : '0';
+      dragIndicatorRef.current.style.borderTopColor = dragHandleBorderColorRef.current;
+    }
+  }, [isDragging, dragIndicatorRef]);
+
+  useLayoutEffect(() => {
+    if (shouldClearStylesRef.current) {
+      shouldClearStylesRef.current = false;
+      if (graphContainerRef?.current) {
+        graphContainerRef.current.style.height = '';
+        graphContainerRef.current.style.overflow = '';
+      }
+      if (outputScrollRef?.current) {
+        outputScrollRef.current.style.height = '';
+      }
+    }
+  }, [outputHeight, graphContainerRef, outputScrollRef]);
+
+  return { handleDragHandleMouseDown, isDragging, outputHeight };
 }

@@ -32,6 +32,7 @@ export type PipelineExecutionProps = {
   executePipeline: () => void;
   isPipelineExecuting: boolean;
   outputHeight?: number;
+  outputScrollRef?: React.RefObject<HTMLDivElement>;
   pipelineExecutionHidden: boolean;
   pipelineMessages: KernelOutputType[];
   setPipelineExecutionHidden: (pipelineExecutionHidden: boolean) => void;
@@ -43,6 +44,7 @@ function PipelineExecution({
   executePipeline,
   isPipelineExecuting,
   outputHeight,
+  outputScrollRef,
   pipelineExecutionHidden,
   pipelineMessages,
   setPipelineExecutionHidden,
@@ -143,7 +145,7 @@ function PipelineExecution({
       {!pipelineExecutionHidden &&
         <>
           <Spacing mb={1} />
-          <OutputContainerStyle height={outputHeight} noScrollbarTrackBackground>
+          <OutputContainerStyle height={outputHeight} noScrollbarTrackBackground ref={outputScrollRef}>
             <CodeBlockStyle
               executedAndIdle
               hasError={false}
