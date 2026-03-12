@@ -10,6 +10,6 @@ def send_ntfy_message(config: NtfyConfig, message: str, title: str) -> None:
         headers={
             "Title": title,
             "Priority": config.priority,
-            "Tags": config.tags,
+            "Tags": ','.join(config.tags)
         },
     )
