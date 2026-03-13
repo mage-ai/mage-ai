@@ -61,14 +61,19 @@ jobs:
         uses: actions/setup-python@v6
         with:
           python-version: ${{ matrix.python-version }}
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          enable-cache: true
       - name: Install dependencies
         run: |
           sudo apt-get install freetds-dev
-          python -m pip install --upgrade pip
-          pip install "git+https://github.com/mage-ai/sqlglot#egg=sqlglot"
-          pip install -r requirements.txt
-          pip install mage_integrations/
-          pip install "git+https://github.com/mage-ai/singer-python.git#egg=singer-python"
+          uv pip install --system --no-cache "git+https://github.com/mage-ai/sqlglot#egg=sqlglot"
+          uv pip install --system --no-cache -r requirements.txt
+          uv pip install --system --no-cache mage_integrations/
+          uv pip install --system --no-cache "git+https://github.com/mage-ai/singer-python.git#egg=singer-python"
+        env:
+          UV_SYSTEM_PYTHON: 1
       - name: Run unit tests
         run: |
           python3 -m unittest discover -s mage_ai --failfast
@@ -120,6 +125,10 @@ jobs:
         uses: actions/setup-python@v6
         with:
           python-version: ${{ matrix.python-version }}
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          enable-cache: true
       # Run Playwright web UI tests only run once per workflow (Python 3.10).
       - name: Set up Node
         uses: actions/setup-node@v6
@@ -131,7 +140,7 @@ jobs:
           python -m venv venv3
           venv3/Scripts/Activate.ps1
           $env:PYTHONPATH = "${env:PYTHONPATH};${pwd}"
-          python -m pip install -r requirements.txt
+          uv pip install --no-cache -r requirements.txt
           python mage_ai/cli/main.py init test_project
       - name: Build frontend, start server, and run Playwright tests
         run: |
