@@ -1995,7 +1995,8 @@ class ColumnTests(TestCase):
         df_new = impute(df, action).reset_index(drop=True)
         df_new['group_id'] = df_new['group_id'].astype(np.int64)
         df_new['price'] = df_new['price'].astype(float)
-        df_new['group_churned_at'] = df_new['group_churned_at'].astype(np.datetime64)
+        df_new['group_churned_at'] = df_new['group_churned_at'].astype('datetime64[ns]')
+        df_expected['group_churned_at'] = df_expected['group_churned_at'].astype('datetime64[ns]')
         assert_frame_equal(df_new, df_expected)
 
     def test_impute_constant_with_value(self):
@@ -3079,8 +3080,8 @@ class ColumnTests(TestCase):
         df_new2 = reformat(df, action2).reset_index(drop=True)
         assert_frame_equal(df_new2, df)
         df_new3 = reformat(df, action3).reset_index(drop=True)
-        df_new3['notdate'] = df_new3['notdate'].astype(np.datetime64)
-        df_new3['mostlydate'] = df_new3['mostlydate'].astype(np.datetime64)
+        df_new3['notdate'] = df_new3['notdate'].astype('datetime64[ns]')
+        df_new3['mostlydate'] = df_new3['mostlydate'].astype('datetime64[ns]')
         assert_frame_equal(df_new3, expected_df)
 
     def test_remove_outliers(self):
