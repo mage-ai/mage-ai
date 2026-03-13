@@ -8,6 +8,8 @@ import { ScrollbarStyledCss } from '@oracle/styles/scrollbars';
 import { UNIT } from '@oracle/styles/units/spacing';
 
 export const DRAG_HANDLE_HEIGHT = UNIT;
+/** Header height: `outer padding (16px) + line height (20px) + button padding (16px) + border (2px)` */
+export const OUTPUT_HEADER_HEIGHT = (UNIT * 2) + REGULAR_LINE_HEIGHT + (UNIT * 2) + 2/*px border*/;
 
 export const DragHandleStyle = styled.div<{
   active?: boolean;

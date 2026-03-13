@@ -18,7 +18,7 @@ export const OutputContainerStyle = styled.div<{
 
   overflow-y: scroll;
 
-  ${props => props.height && `
+  ${props => props.height !== undefined && `
     height: ${props.height}px;
   `}
 

@@ -118,27 +118,19 @@ export default function useDragResize({
   useLayoutEffect(() => {
     if (shouldClearStylesRef.current) {
       shouldClearStylesRef.current = false;
-      if (graphContainerRef?.current) {
-        graphContainerRef.current.style.height = '';
-        graphContainerRef.current.style.overflow = '';
-      }
       if (outputScrollRef?.current) {
         outputScrollRef.current.style.height = '';
       }
     }
-  }, [outputHeight, graphContainerRef, outputScrollRef]);
+  }, [outputHeight, outputScrollRef]);
 
   useLayoutEffect(() => {
     if (disabled) {
-      if (graphContainerRef?.current) {
-        graphContainerRef.current.style.height = '';
-        graphContainerRef.current.style.overflow = '';
-      }
       if (outputScrollRef?.current) {
         outputScrollRef.current.style.height = '';
       }
     }
-  }, [disabled, graphContainerRef, outputScrollRef]);
+  }, [disabled, outputScrollRef]);
 
   return { handleDragHandleMouseDown, isDragging, outputHeight };
 }

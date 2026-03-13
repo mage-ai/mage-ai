@@ -67,6 +67,7 @@ import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import {
   DRAG_HANDLE_HEIGHT,
   DragHandleStyle,
+  OUTPUT_HEADER_HEIGHT,
   SidekickContainerStyle,
   TABLE_COLUMN_HEADER_HEIGHT,
 } from '@components/Sidekick/index.style';
@@ -313,11 +314,13 @@ function Sidekick({
   const finalOutputHeight = !isStreamingPipeline
     ? -70   // Hide entire output area
     : pipelineExecutionHidden
-      ? DRAG_HANDLE_HEIGHT  // bar always snaps to bottom of panel
-      : outputHeight + DRAG_HANDLE_HEIGHT;
+      ? DRAG_HANDLE_HEIGHT + OUTPUT_HEADER_HEIGHT + UNIT
+      : outputHeight + DRAG_HANDLE_HEIGHT + OUTPUT_HEADER_HEIGHT + UNIT;
+
+  const graphHeight = Math.max(0, availablePanelHeight - finalOutputHeight);
 
   const effectiveOutputHeight = treeHidden
-    ? availablePanelHeight - DRAG_HANDLE_HEIGHT
+    ? availablePanelHeight - DRAG_HANDLE_HEIGHT - OUTPUT_HEADER_HEIGHT - UNIT
     : outputHeight;
 
   const renderColumnHeader = useCallback(buildRenderColumnHeader({
@@ -706,7 +709,11 @@ function Sidekick({
                   aria-hidden={treeHidden}
                   data-testid="dependency-graph-container"
                   ref={graphContainerRef}
-                  style={{ display: treeHidden ? 'none' : undefined }}
+                  style={{
+                    display: treeHidden ? 'none' : undefined,
+                    height: graphHeight,
+                    overflow: 'hidden',
+                  }}
                 >
                   <DependencyGraph
                     addNewBlockAtIndex={addNewBlockAtIndex}
@@ -719,7 +726,8 @@ function Sidekick({
                     editingBlock={editingBlock}
                     enablePorts={!isIntegration}
                     fetchPipeline={fetchPipeline}
-                    height={heightWindow - (heightOffset - SCROLLBAR_WIDTH) - finalOutputHeight}
+                    height={graphHeight}
+                    heightOffset={0}
                     messages={messages}
                     // @ts-ignore
                     onClickNode={({ block: { uuid } }) => setHiddenBlocks((prev) => {
