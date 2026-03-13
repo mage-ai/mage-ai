@@ -346,6 +346,18 @@ class PipelineSchedule(PipelineScheduleProjectPlatformMixin, BaseModel):
                     trigger_config,
                     trigger_config.pipeline_uuid,
                 )
+            elif (
+                trigger_config.status == ScheduleStatus.ACTIVE
+                and trigger_config.last_enabled_at is not None
+                and existing_trigger is not None
+                and existing_trigger.schedule_interval != trigger_config.schedule_interval
+            ):
+                last_enabled_at = datetime.now(tz=pytz.UTC)
+                trigger_config.last_enabled_at = last_enabled_at
+                add_or_update_trigger_for_pipeline_and_persist(
+                    trigger_config,
+                    trigger_config.pipeline_uuid,
+                )
 
             kwargs = dict(
                 description=trigger_config.description,
@@ -620,7 +632,7 @@ class PipelineSchedule(PipelineScheduleProjectPlatformMixin, BaseModel):
                 avoid_initial_pipeline_run = (
                     compare(
                         current_execution_date,
-                        self.last_enabled_at,
+                        self.last_enabled_at.replace(tzinfo=pytz.UTC),
                     )
                     == -1
                     if not create_initial_pipeline_run
