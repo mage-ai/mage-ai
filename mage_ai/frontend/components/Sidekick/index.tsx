@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { CanvasRef } from 'reaflow';
 
 import ApiReloader from '@components/ApiReloader';
@@ -52,9 +52,14 @@ import {
   ViewKeyEnum,
 } from './constants';
 import { VERTICAL_NAVIGATION_WIDTH } from '@components/Dashboard/index.style';
-import { LOCAL_STORAGE_KEY_PIPELINE_EXECUTION_HIDDEN, get } from '@storage/localStorage';
+import { LOCAL_STORAGE_KEY_PIPELINE_EXECUTION_HIDDEN, get, set as setLocalStorage } from '@storage/localStorage';
 import { OpenDataIntegrationModalType } from '@components/DataIntegrationModal/constants';
-import { OUTPUT_HEIGHT } from '@components/PipelineDetail/PipelineExecution/index.style';
+import {
+  COLLAPSED_PANEL_HEIGHT,
+  COLLAPSE_THRESHOLD,
+  OUTPUT_HEIGHT,
+  SNAP_TO_TOP_GAP,
+} from '@components/PipelineDetail/PipelineExecution/constants';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import {
   SidekickContainerStyle,
@@ -248,6 +253,100 @@ function Sidekick({
   const [pipelineExecutionHidden, setPipelineExecutionHidden] =
     useState(!!get(LOCAL_STORAGE_KEY_PIPELINE_EXECUTION_HIDDEN));
 
+  const isStreaming = PipelineTypeEnum.STREAMING === pipeline?.type;
+  const [executionPanelHeight, setExecutionPanelHeight] = useState<number>(
+    () => {
+      const hidden = !!get(LOCAL_STORAGE_KEY_PIPELINE_EXECUTION_HIDDEN);
+      return hidden ? COLLAPSED_PANEL_HEIGHT : OUTPUT_HEIGHT;
+    },
+  );
+  const [isDraggingPanel, setIsDraggingPanel] = useState(false);
+  const dragStartY = useRef<number>(0);
+  const dragStartHeight = useRef<number>(0);
+
+  // max available space occupied by graph
+  const graphHeight = useMemo(
+    () => heightWindow - ALL_HEADERS_HEIGHT - COLLAPSED_PANEL_HEIGHT,
+    [heightWindow]
+  );
+
+  // max available space occupied by pipelineExecution
+  const maxPanelHeight = useMemo(
+    () => heightWindow - ALL_HEADERS_HEIGHT,
+    [heightWindow],
+  );
+
+  const handleDragStart = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    setIsDraggingPanel(true);
+    dragStartY.current = e.clientY;
+    dragStartHeight.current = executionPanelHeight;
+
+    if (pipelineExecutionHidden) {
+      dragStartHeight.current = COLLAPSED_PANEL_HEIGHT;
+    }
+  }, [executionPanelHeight, pipelineExecutionHidden]);
+
+  useEffect(() => {
+    if (!isDraggingPanel) return;
+
+    document.body.style.cursor = 'row-resize';
+    document.body.style.userSelect = 'none';
+
+    const handleMouseMove = (e: MouseEvent) => {
+      const delta = dragStartY.current - e.clientY;
+      let newHeight = dragStartHeight.current + delta;
+
+      // Clamp + prevent violent gragging higher than maxPanelHeight
+      newHeight = Math.max(0, Math.min(newHeight, maxPanelHeight));
+
+      // Snap to top if within SNAP_TO_TOP_GAP of max
+      if (newHeight > maxPanelHeight - SNAP_TO_TOP_GAP) {
+        newHeight = maxPanelHeight;
+      }
+
+      // always show the execution content when the PipelineExecution being increased
+      if (newHeight > COLLAPSED_PANEL_HEIGHT) {
+        setPipelineExecutionHidden(false)
+        setLocalStorage(LOCAL_STORAGE_KEY_PIPELINE_EXECUTION_HIDDEN, false);
+      }
+
+      setExecutionPanelHeight(newHeight);
+    };
+
+    const handleMouseUp = (e: MouseEvent) => {
+      setIsDraggingPanel(false);
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+
+      const delta = dragStartY.current - e.clientY;
+      let newHeight = dragStartHeight.current + delta;
+      newHeight = Math.max(0, Math.min(newHeight, maxPanelHeight));
+
+      // Collapse if below threshold
+      if (newHeight < COLLAPSE_THRESHOLD) {
+        setExecutionPanelHeight(COLLAPSED_PANEL_HEIGHT);
+        setPipelineExecutionHidden(true);
+        setLocalStorage(LOCAL_STORAGE_KEY_PIPELINE_EXECUTION_HIDDEN, true);
+      } else {
+        // Snap to top
+        if (newHeight > maxPanelHeight - SNAP_TO_TOP_GAP) {
+          newHeight = maxPanelHeight;
+        }
+        setExecutionPanelHeight(newHeight);
+      }
+    };
+
+    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mouseup', handleMouseUp);
+    return () => {
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [isDraggingPanel, maxPanelHeight, pipelineExecutionHidden]);
+
   const afterWidth = useMemo(() => afterWidthProp - (VERTICAL_NAVIGATION_WIDTH + 1), [
     afterWidthProp,
   ]);
@@ -275,9 +374,6 @@ function Sidekick({
 
   const hasData = !!sampleData;
   const isIntegration = useMemo(() => PipelineTypeEnum.INTEGRATION === pipeline?.type, [pipeline]);
-  const finalOutputHeight = !(PipelineTypeEnum.STREAMING === pipeline?.type)
-    ? -70   // Hide entire output area
-    : (pipelineExecutionHidden ? -16 : OUTPUT_HEIGHT);
 
   const renderColumnHeader = useCallback(buildRenderColumnHeader({
     columnTypes,
@@ -545,6 +641,17 @@ function Sidekick({
     showUpdateBlockModal,
   ]);
 
+  const togglePipelineExecutionHidden = useCallback((hidden: boolean) => {
+    setPipelineExecutionHidden(hidden);
+
+    // edge case, then PipelineExecution dragged manually to the hidden state
+    if (!hidden && executionPanelHeight <= COLLAPSED_PANEL_HEIGHT) {
+      setExecutionPanelHeight(OUTPUT_HEIGHT);
+    }
+  }, [executionPanelHeight]);
+
+  const panelHeight = (pipelineExecutionHidden && !isDraggingPanel) ? COLLAPSED_PANEL_HEIGHT : Math.max(executionPanelHeight, COLLAPSED_PANEL_HEIGHT)
+
   return (
     <>
       {errorMessages?.length >= 1 &&
@@ -598,7 +705,7 @@ function Sidekick({
       >
         {activeView === ViewKeyEnum.TREE &&
           <ApiReloader uuid={`PipelineDetail/${pipeline?.uuid}`}>
-            <>
+            <div style={{ position: 'relative', height: '100%' }}>
               <DependencyGraph
                 addNewBlockAtIndex={addNewBlockAtIndex}
                 blockRefs={blockRefs}
@@ -610,7 +717,7 @@ function Sidekick({
                 editingBlock={editingBlock}
                 enablePorts={!isIntegration}
                 fetchPipeline={fetchPipeline}
-                height={heightWindow - (heightOffset - SCROLLBAR_WIDTH) - finalOutputHeight}
+                height={graphHeight}
                 messages={messages}
                 // @ts-ignore
                 onClickNode={({ block: { uuid } }) => setHiddenBlocks((prev) => {
@@ -632,6 +739,7 @@ function Sidekick({
                 setActiveSidekickView={setActiveSidekickView}
                 setEditingBlock={setEditingBlock}
                 setErrors={setErrors}
+                heightOffset={0}
                 setSelectedBlock={(block) => {
                   setSelectedBlock(block);
 
@@ -642,20 +750,21 @@ function Sidekick({
                 showUpdateBlockModal={showUpdateBlockModal}
                 treeRef={treeRef}
               />
-              {!blockEditing && PipelineTypeEnum.STREAMING === pipeline?.type && (
-                <Spacing p={1}>
-                  <PipelineExecution
-                    cancelPipeline={cancelPipeline}
-                    checkIfPipelineRunning={checkIfPipelineRunning}
-                    executePipeline={executePipeline}
-                    isPipelineExecuting={isPipelineExecuting}
-                    pipelineExecutionHidden={pipelineExecutionHidden}
-                    pipelineMessages={pipelineMessages}
-                    setPipelineExecutionHidden={setPipelineExecutionHidden}
-                  />
-                </Spacing>
+              {!blockEditing && isStreaming && (
+                <PipelineExecution
+                  cancelPipeline={cancelPipeline}
+                  checkIfPipelineRunning={checkIfPipelineRunning}
+                  executePipeline={executePipeline}
+                  isDragging={isDraggingPanel}
+                  isPipelineExecuting={isPipelineExecuting}
+                  onDragStart={handleDragStart}
+                  panelHeight={panelHeight}
+                  pipelineExecutionHidden={pipelineExecutionHidden}
+                  pipelineMessages={pipelineMessages}
+                  setPipelineExecutionHidden={togglePipelineExecutionHidden}
+                />
               )}
-            </>
+            </div>
           </ApiReloader>
         }
 
