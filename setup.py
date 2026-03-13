@@ -163,7 +163,7 @@ setuptools.setup(
             'dbt-sqlserver==1.8.4',
             'dbt-synapse==1.8.2',
             'dbt-trino==1.8.4',
-            'duckdb==1.0.0',
+            'duckdb==1.4.3',
             'elasticsearch==8.15.1',
             'google-api-core~=2.15.0',
             'google-api-python-client~=2.70.0',
