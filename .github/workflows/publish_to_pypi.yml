@@ -20,9 +20,9 @@ jobs:
       with:
         python-version: 3.10.18
     - name: Install uv
-      uses: astral-sh/setup-uv@v4
+      uses: astral-sh/setup-uv@v7
       with:
-        enable-cache: true
+        enable-cache: false
     - name: Install dependencies
       run: uv pip install --system --no-cache setuptools wheel requests pkginfo
       env:
