@@ -41,12 +41,13 @@ import SecretType from '@interfaces/SecretType';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import Terminal from '@components/Terminal';
-import ToggleSwitch from '@oracle/elements/Inputs/ToggleSwitch';
 import { ALL_HEADERS_HEIGHT, ASIDE_SUBHEADER_HEIGHT } from '@components/TripleLayout/index.style';
 import {
   Charts as ChartsIcon,
   Close,
   SettingsWithKnobs,
+  Tree,
+  VisibleEye,
 } from '@oracle/icons';
 import {
   MESSAGE_VIEWS,
@@ -297,18 +298,23 @@ function Sidekick({
   const dragIndicatorRef = useRef<HTMLDivElement>(null);
 
   const availablePanelHeight = heightWindow - (heightOffset - SCROLLBAR_WIDTH);
+  const dragHandleDisabled = treeHidden || pipelineExecutionHidden;
+
   const { handleDragHandleMouseDown, isDragging, outputHeight } = useDragResize({
+    disabled: dragHandleDisabled,
     dragIndicatorRef,
     graphContainerRef,
     initialHeight: OUTPUT_HEIGHT,
     outputScrollRef,
   });
 
-  const finalOutputHeight = !(PipelineTypeEnum.STREAMING === pipeline?.type)
+  const isStreamingPipeline = PipelineTypeEnum.STREAMING === pipeline?.type;
+
+  const finalOutputHeight = !isStreamingPipeline
     ? -70   // Hide entire output area
     : pipelineExecutionHidden
-      ? ASIDE_SUBHEADER_HEIGHT + UNIT * 2  // Reserve just the execution header bar
-      : outputHeight + DRAG_HANDLE_HEIGHT; // Full output area + drag handle
+      ? DRAG_HANDLE_HEIGHT  // bar always snaps to bottom of panel
+      : outputHeight + DRAG_HANDLE_HEIGHT;
 
   const effectiveOutputHeight = treeHidden
     ? availablePanelHeight - DRAG_HANDLE_HEIGHT
@@ -669,37 +675,31 @@ function Sidekick({
                     </Spacing>
                     <FlexContainer>
                       <Button
+                        beforeIcon={<Tree muted size={UNIT * 2} />}
+                        compact
                         onClick={() => handleSetTreeHidden(false)}
                         secondary
                       >
-                        Show tree
+                        <Text bold noWrapping>
+                          Show tree
+                        </Text>
                       </Button>
                       <Spacing ml={1} />
                       <Button
+                        beforeIcon={<VisibleEye muted size={UNIT * 2} />}
+                        compact
                         onClick={() => {
                           setPipelineExecutionHidden(false);
                           set(LOCAL_STORAGE_KEY_PIPELINE_EXECUTION_HIDDEN, false);
                         }}
+                        secondary
                       >
-                        Show output
+                        <Text bold noWrapping>
+                          Show output
+                        </Text>
                       </Button>
                     </FlexContainer>
                   </FlexContainer>
-              )}
-              {!blockEditing && PipelineTypeEnum.STREAMING === pipeline?.type
-                && !(treeHidden && pipelineExecutionHidden) && (
-                  <Spacing p={1}>
-                    <FlexContainer alignItems="center" justifyContent="flex-end">
-                      <Text noWrapping>
-                        Hide tree
-                      </Text>
-                      <Spacing mr={1} />
-                      <ToggleSwitch
-                        checked={treeHidden}
-                        onCheck={() => handleSetTreeHidden(!treeHidden)}
-                      />
-                    </FlexContainer>
-                  </Spacing>
               )}
               {hasEverShownTree && (
                 <div
@@ -776,20 +776,23 @@ function Sidekick({
                         />
                       </div>
                     )}
-                    {!pipelineExecutionHidden && (
-                      <DragHandleStyle onMouseDown={handleDragHandleMouseDown} />
-                    )}
+                    <DragHandleStyle
+                      disabled={dragHandleDisabled}
+                      onMouseDown={handleDragHandleMouseDown}
+                    />
                     <Spacing p={1}>
                       <PipelineExecution
                         cancelPipeline={cancelPipeline}
                         checkIfPipelineRunning={checkIfPipelineRunning}
                         executePipeline={executePipeline}
                         isPipelineExecuting={isPipelineExecuting}
+                        onToggleTreeHidden={() => handleSetTreeHidden(!treeHidden)}
                         outputHeight={effectiveOutputHeight}
                         outputScrollRef={outputScrollRef}
                         pipelineExecutionHidden={pipelineExecutionHidden}
                         pipelineMessages={pipelineMessages}
                         setPipelineExecutionHidden={setPipelineExecutionHidden}
+                        treeHidden={treeHidden}
                       />
                     </Spacing>
                   </>

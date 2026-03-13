@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 
 type UseDragResizeArgs = {
+  disabled?: boolean;
   dragIndicatorRef?: React.RefObject<HTMLDivElement>;
   graphContainerRef: React.RefObject<HTMLDivElement>;
   initialHeight: number;
@@ -14,6 +15,7 @@ type UseDragResizeResult = {
 };
 
 export default function useDragResize({
+  disabled,
   dragIndicatorRef,
   graphContainerRef,
   initialHeight,
@@ -39,6 +41,7 @@ export default function useDragResize({
   }
 
   const handleDragHandleMouseDown = useCallback((e: React.MouseEvent) => {
+    if (disabled) return;
     e.preventDefault();
     isDraggingRef.current = true;
     setIsDragging(true);
@@ -50,7 +53,7 @@ export default function useDragResize({
     dragStartGraphHeightRef.current = graphContainerRef?.current?.offsetHeight || 0;
     dragStartScrollHeightRef.current = outputScrollRef?.current?.offsetHeight || 0;
     dragStartOutputHeightRef.current = outputHeightRef.current;
-  }, [graphContainerRef, outputScrollRef]);
+  }, [disabled, graphContainerRef, outputScrollRef]);
 
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
@@ -59,8 +62,8 @@ export default function useDragResize({
 
       rafRef.current = requestAnimationFrame(() => {
         const rawDelta = dragStartYRef.current - e.clientY;
-        const maxDelta = dragStartGraphHeightRef.current - 100;
-        const minDelta = -(dragStartScrollHeightRef.current - 100);
+        const maxDelta = dragStartGraphHeightRef.current;
+        const minDelta = -(dragStartScrollHeightRef.current);
         const delta = Math.min(maxDelta, Math.max(minDelta, rawDelta));
 
         if (graphContainerRef?.current) {
@@ -124,6 +127,18 @@ export default function useDragResize({
       }
     }
   }, [outputHeight, graphContainerRef, outputScrollRef]);
+
+  useLayoutEffect(() => {
+    if (disabled) {
+      if (graphContainerRef?.current) {
+        graphContainerRef.current.style.height = '';
+        graphContainerRef.current.style.overflow = '';
+      }
+      if (outputScrollRef?.current) {
+        outputScrollRef.current.style.height = '';
+      }
+    }
+  }, [disabled, graphContainerRef, outputScrollRef]);
 
   return { handleDragHandleMouseDown, isDragging, outputHeight };
 }
