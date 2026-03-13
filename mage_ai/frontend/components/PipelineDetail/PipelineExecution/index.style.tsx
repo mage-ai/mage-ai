@@ -74,19 +74,27 @@ export const OutputContainerStyle = styled.div<{
 }>`
   ${ScrollbarStyledCss}
 
-  overflow-y: scroll;
+  overflow-y: auto;
   flex: 1;
   min-height: 0;
 
-  ${props => props.height && `
+  ${props =>
+    props.height &&
+    `
     height: ${props.height}px;
   `}
 
-  ${props => !props.height && !props.maxHeight && `
+  ${props =>
+    !props.height &&
+    !props.maxHeight &&
+    `
     flex: 1;
   `}
 
-  ${props => !props.height && props.maxHeight && `
+  ${props =>
+    !props.height &&
+    props.maxHeight &&
+    `
     max-height: ${props.maxHeight}px;
   `}
 
