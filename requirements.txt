@@ -141,7 +141,7 @@ async-timeout==4.0.3
 attrs==22.2.0; python_version < '3.12'
 attrs==24.2.0; python_version >= '3.12'
 backoff
-clickhouse_sqlalchemy~=0.2.4
+clickhouse_sqlalchemy~=0.3.0
 deltalake==0.20.2
 facebook_business==22.0.2
 gnupg==2.3.1
