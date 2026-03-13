@@ -80,6 +80,8 @@ jobs:
           python3 -m unittest discover -s mage_ai --failfast
         env:
           OPENAI_API_KEY: abcdefg
+          # Use a writable path for SQLite test DB (CI can have read-only cwd or permissions)
+          MAGE_TEST_DATABASE_CONNECTION_URL: "sqlite:////tmp/mage_ci_test.db"
       - name: Run mage integrations unit tests
         run: |
           cd mage_integrations && python3 -m unittest discover mage_integrations.tests

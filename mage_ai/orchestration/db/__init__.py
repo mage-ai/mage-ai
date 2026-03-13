@@ -8,7 +8,10 @@ from sqlalchemy import create_engine, text
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import scoped_session, sessionmaker
 
-from mage_ai.orchestration.constants import DATABASE_CONNECTION_URL_ENV_VAR
+from mage_ai.orchestration.constants import (
+    DATABASE_CONNECTION_URL_ENV_VAR,
+    TEST_DATABASE_CONNECTION_URL_ENV_VAR,
+)
 from mage_ai.orchestration.db.cache import CachingQuery, SessionWithCaching
 from mage_ai.orchestration.db.setup import get_postgres_connection_url
 from mage_ai.orchestration.db.utils import get_user_info_from_db_connection_url
@@ -30,7 +33,9 @@ if OTEL_EXPORTER_OTLP_ENDPOINT:
     from opentelemetry.instrumentation.sqlalchemy import SQLAlchemyInstrumentor
 
 if is_test_mage():
-    db_connection_url = f'sqlite:///{TEST_DB}'
+    db_connection_url = (
+        os.getenv(TEST_DATABASE_CONNECTION_URL_ENV_VAR) or f'sqlite:///{TEST_DB}'
+    )
     db_kwargs['connect_args']['check_same_thread'] = False
 elif not db_connection_url:
     pg_db_connection_url = get_postgres_connection_url()
