@@ -61,19 +61,27 @@ jobs:
         uses: actions/setup-python@v6
         with:
           python-version: ${{ matrix.python-version }}
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true
+          cache-dependency-glob: "**/requirements*.txt"
       - name: Install dependencies
         run: |
           sudo apt-get install freetds-dev
-          python -m pip install --upgrade pip
-          pip install "git+https://github.com/mage-ai/sqlglot#egg=sqlglot"
-          pip install -r requirements.txt
-          pip install mage_integrations/
-          pip install "git+https://github.com/mage-ai/singer-python.git#egg=singer-python"
+          uv pip install "git+https://github.com/mage-ai/sqlglot#egg=sqlglot"
+          uv pip install -r requirements.txt
+          uv pip install mage_integrations/
+          uv pip install "git+https://github.com/mage-ai/singer-python.git#egg=singer-python"
+        env:
+          UV_SYSTEM_PYTHON: 1
       - name: Run unit tests
         run: |
           python3 -m unittest discover -s mage_ai --failfast
         env:
           OPENAI_API_KEY: abcdefg
+          # Use a writable path for SQLite test DB (CI can have read-only cwd or permissions)
+          MAGE_TEST_DATABASE_CONNECTION_URL: "sqlite:////tmp/mage_ci_test.db"
       - name: Run mage integrations unit tests
         run: |
           cd mage_integrations && python3 -m unittest discover mage_integrations.tests
@@ -120,6 +128,11 @@ jobs:
         uses: actions/setup-python@v6
         with:
           python-version: ${{ matrix.python-version }}
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true
+          cache-dependency-glob: "**/requirements*.txt"
       # Run Playwright web UI tests only run once per workflow (Python 3.10).
       - name: Set up Node
         uses: actions/setup-node@v6
@@ -131,7 +144,7 @@ jobs:
           python -m venv venv3
           venv3/Scripts/Activate.ps1
           $env:PYTHONPATH = "${env:PYTHONPATH};${pwd}"
-          python -m pip install -r requirements.txt
+          uv pip install --no-cache -r requirements.txt
           python mage_ai/cli/main.py init test_project
       - name: Build frontend, start server, and run Playwright tests
         run: |

@@ -2,6 +2,7 @@ import re
 from datetime import datetime
 from typing import Callable, List, Union
 
+import sqlalchemy
 from sqlalchemy import (
     JSON,
     Boolean,
@@ -15,6 +16,7 @@ from sqlalchemy import (
     and_,
     asc,
     func,
+    select,
 )
 from sqlalchemy.orm import relationship, validates
 
@@ -258,10 +260,14 @@ class User(BaseModel):
             )
         )
 
-        query = query.add_column(row_number_column)
-        query = query.from_self().filter(row_number_column == 1)
-        query.cache = True
-        rows = query.all()
+        if sqlalchemy.__version__.startswith('2.'):
+            subq = query.subquery()
+            query = select(subq).filter(subq.c.row_number == 1)
+            rows = db_connection.execute_with_cache(query, cache=True, result_type='all')
+        else:
+            query = query.from_self().filter(row_number_column == 1)
+            query.cache = True
+            rows = query.all()
 
         arr = []
 
@@ -785,8 +791,14 @@ class Permission(BaseModel):
         )
 
         query = query.add_column(row_number_column)
-        query = query.from_self().filter(row_number_column == 1)
-        rows = query.all()
+        if sqlalchemy.__version__.startswith('2.'):
+            subq = query.subquery()
+            query = select(subq).filter(subq.c.row_number == 1)
+            rows = db_connection.execute_with_cache(query, cache=True, result_type='all')
+        else:
+            query = query.from_self().filter(row_number_column == 1)
+            query.cache = True
+            rows = query.all()
 
         arr = []
 
