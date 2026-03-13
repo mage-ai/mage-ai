@@ -2407,9 +2407,7 @@ class ColumnTests(TestCase):
                 None,
             ]
         )
-        df['timestamp'] = pd.to_datetime(
-            df['timestamp'], infer_datetime_format=True, errors='coerce'
-        )
+        df['timestamp'] = pd.to_datetime(df['timestamp'], errors='coerce')
         action = dict(
             action_type='impute',
             action_arguments=['state', 'location', 'timestamp', 'lists'],
@@ -2459,7 +2457,7 @@ class ColumnTests(TestCase):
         )
         new_df = impute(df, action).reset_index(drop=True)
         expected_df['timestamp'] = pd.to_datetime(
-            expected_df['timestamp'], infer_datetime_format=True, errors='coerce'
+            expected_df['timestamp'], errors='coerce'
         )
         assert_frame_equal(expected_df, new_df)
 

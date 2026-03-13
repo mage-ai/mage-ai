@@ -101,7 +101,11 @@ def impute(df, action, **kwargs):
     value = action_options.get('value')
 
     empty_string_pattern = r'^\s*$'
-    df[columns] = df[columns].replace(empty_string_pattern, np.nan, regex=True)
+    df[columns] = (
+        df[columns]
+        .replace(empty_string_pattern, np.nan, regex=True)
+        .infer_objects(copy=False)
+    )
     ctypes = [action_variables[column]['feature']['column_type'] for column in columns]
 
     if strategy == ImputationStrategy.AVERAGE:
@@ -132,7 +136,8 @@ def impute(df, action, **kwargs):
     elif strategy == ImputationStrategy.SEQ:
         timeseries_cols = action_options.get('timeseries_index')
         df = df.sort_values(by=timeseries_cols, axis=0)
-        df[columns] = df[columns].fillna(method='ffill')
+        # In pandas 2.x, fillna(method=...) is deprecated; prefer ffill/bfill directly.
+        df[columns] = df[columns].ffill().infer_objects(copy=False)
     elif strategy == ImputationStrategy.RANDOM:
         for column, dtype in zip(columns, ctypes):
             invalid_idx = df[df[column].isna()].index
@@ -194,12 +199,19 @@ def reformat(df, action, **kwargs):
             else:
                 df[column] = df[column].str.lower()
         # Convert empty strings to NaN for this action
-        df[columns] = df[columns].replace(r'^\s*$', np.nan, regex=True)
+        df[columns] = (
+            df[columns]
+            .replace(r'^\s*$', np.nan, regex=True)
+            .infer_objects(copy=False)
+        )
     elif reformat_action == 'currency_to_num':
         for column in generate_string_cols(df, columns):
             clean_col = df[column].replace(CURRENCY_SYMBOLS, '', regex=True)
             clean_col = clean_col.replace(r'\s', '', regex=True)
-            clean_col = clean_col.replace(r'^\s*$', np.nan, regex=True)
+            clean_col = (
+                clean_col.replace(r'^\s*$', np.nan, regex=True)
+                .infer_objects(copy=False)
+            )
 
             # Robust numeric coercion that works across pandas 1.x and 2.x
             numeric_col = pd.to_numeric(clean_col, errors='coerce')
@@ -226,7 +238,11 @@ def reformat(df, action, **kwargs):
             df[column] = df[column].str.strip()
     else:
         # Apply NaN replacement only for other actions
-        df[columns] = df[columns].replace(r'^\s*$', np.nan, regex=True)
+        df[columns] = (
+            df[columns]
+            .replace(r'^\s*$', np.nan, regex=True)
+            .infer_objects(copy=False)
+        )
 
     return df
 

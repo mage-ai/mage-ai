@@ -78,7 +78,8 @@ if type(x) is str else x)
             if is_percent:
                 series_cleaned /= 100
     elif column_type == ColumnType.DATETIME:
-        series_cleaned = pd.to_datetime(series_cleaned, errors="coerce", infer_datetime_format=True)
+        # In pandas 2.x, infer_datetime_format is deprecated and inference is automatic.
+        series_cleaned = pd.to_datetime(series_cleaned, errors="coerce")
     return series_cleaned
 
 @transformer_action
@@ -182,7 +183,8 @@ if type(x) is str else x)
             if is_percent:
                 series_cleaned /= 100
     elif column_type == ColumnType.DATETIME:
-        series_cleaned = pd.to_datetime(series_cleaned, errors="coerce", infer_datetime_format=True)
+        # In pandas 2.x, infer_datetime_format is deprecated and inference is automatic.
+        series_cleaned = pd.to_datetime(series_cleaned, errors="coerce")
     return series_cleaned
 
 ctypes = infer_column_types(df)
