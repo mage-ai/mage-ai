@@ -6,7 +6,6 @@ import { UNIT } from '@oracle/styles/units/spacing';
 
 export const ZoomControlsStyle = styled.div`
   position: absolute;
-  // bottom: ${UNIT * 3}px;
   top: ${UNIT}px;
   left: 50%;
   transform: translateX(-50%);

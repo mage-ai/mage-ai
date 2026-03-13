@@ -266,8 +266,8 @@ function Sidekick({
 
   // max available space occupied by graph
   const graphHeight = useMemo(
-    () => heightWindow - ALL_HEADERS_HEIGHT - COLLAPSED_PANEL_HEIGHT,
-    [heightWindow]
+    () => heightWindow - ALL_HEADERS_HEIGHT - (isStreaming ? COLLAPSED_PANEL_HEIGHT : 0),
+    [heightWindow, isStreaming]
   );
 
   // max available space occupied by pipelineExecution
