@@ -59,7 +59,7 @@ setuptools.setup(
         ],
         'bigquery': [
             'google-cloud-bigquery~=3.0',
-            'db-dtypes==1.0.5',
+            'db-dtypes==1.2.0',
         ],
         'chroma': [
             'chromadb>=0.4.17',
@@ -150,7 +150,7 @@ setuptools.setup(
             'botocore==1.29.60',
             'clickhouse-connect~=0.6.23',
             'confluent-avro~=1.8.0',
-            'db-dtypes==1.0.5',
+            'db-dtypes==1.2.0',
             'dbt-adapters==1.8.0',
             'dbt-bigquery==1.8.3',
             'dbt-clickhouse==1.8.5',
@@ -163,7 +163,7 @@ setuptools.setup(
             'dbt-sqlserver==1.8.4',
             'dbt-synapse==1.8.2',
             'dbt-trino==1.8.4',
-            'duckdb==1.0.0',
+            'duckdb==1.4.3',
             'elasticsearch==8.15.1',
             'google-api-core~=2.15.0',
             'google-api-python-client~=2.70.0',

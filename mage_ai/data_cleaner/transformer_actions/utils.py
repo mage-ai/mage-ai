@@ -1,14 +1,19 @@
+import logging
 from keyword import iskeyword
-from mage_ai.data_cleaner.column_types.column_type_detector import REGEX_NUMBER, infer_column_types
+from typing import Dict, List, Union
+
+from pandas import DataFrame
+
+from mage_ai.data_cleaner.column_types.column_type_detector import (
+    REGEX_NUMBER,
+    infer_column_types,
+)
 from mage_ai.data_cleaner.column_types.constants import ColumnType
 from mage_ai.data_cleaner.transformer_actions.constants import (
     ActionType,
     Axis,
     NameConventionPatterns,
 )
-from pandas import DataFrame
-from typing import Dict, List, Union
-import logging
 
 logger = logging.getLogger(__name__)
 
@@ -154,10 +159,13 @@ def generate_string_cols(df, columns):
     for column in columns:
         clean_col = df[column]
         dropped = clean_col.dropna(axis=0)
-        exact_dtype = type(dropped.iloc[0]) if len(dropped) > 0 else None
-        if exact_dtype is str:
+        if len(dropped) == 0:
+            continue
+
+        first_value = dropped.iloc[0]
+        if isinstance(first_value, str):
             yield column
         else:
-            logger.warn(
+            logger.warning(
                 f'Attempted to perform string-only action on non-string column \'{column}\''
             )

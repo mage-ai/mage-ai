@@ -837,7 +837,7 @@ class RowTests(TestCase):
                 'string',
             ],
         )
-        expected_df.index = pd.Int64Index([1, 2])
+        expected_df.index = pd.Index([1, 2], dtype=np.int64)
         expected_df2 = pd.DataFrame(
             [],
             columns=[
@@ -846,7 +846,7 @@ class RowTests(TestCase):
                 'string',
             ],
         )
-        expected_df2.index = pd.Int64Index([])
+        expected_df2.index = pd.Index([], dtype=np.int64)
         new_df = remove_row(df, action1)
         new_df2 = remove_row(df, action2).astype(object)
         assert_frame_equal(new_df, expected_df)
