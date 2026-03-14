@@ -169,7 +169,7 @@ class NotificationSenderTests(DBTestCase):
             description=ANY,
         )
 
-    @patch('mage_ai.orchestration.notification.sender.send_ntfy_alert')
+    @patch('mage_ai.orchestration.notification.sender.send_ntfy_message')
     @patch('mage_ai.orchestration.notification.sender.send_email')
     def test_send_pipeline_run_failure_message_using_ntfy(
             self,
