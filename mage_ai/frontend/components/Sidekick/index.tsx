@@ -322,8 +322,10 @@ function Sidekick({
     ? availablePanelHeight - DRAG_HANDLE_HEIGHT - OUTPUT_HEADER_HEIGHT - UNIT
     : outputHeight;
 
-  // Visual heights for containers only — change every frame during drag.
-  // graphHeight and effectiveOutputHeight stay stable (DependencyGraph never re-layouts during drag).
+  /**
+   * @dev Visual heights for containers only — change every frame during drag.  
+   * `graphHeight` and `effectiveOutputHeight` stay stable (`DependencyGraph` never re-layouts during drag).
+   */
   const visualGraphHeight = isDragging
     ? Math.max(0, graphHeight - dragDelta)
     : graphHeight;
