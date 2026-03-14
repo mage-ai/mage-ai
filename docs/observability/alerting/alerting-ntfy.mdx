@@ -1,6 +1,7 @@
 ---
 title: "Alerting status updates in ntfy"
 sidebarTitle: "ntfy"
+icon: "ntfy"
 description: "Get status updates in ntfy."
 ---
 
@@ -58,7 +59,7 @@ follow these steps to add that ntfy configuration to your project settings:
         ...
       ntfy_config:
         webhook_url: "https://ntfy.sh/mytopic"
-        priority: "default" # Default default
+        priority: "default" # Default: "default"
         tags: # Default empty
         - production
     ```
@@ -67,5 +68,4 @@ follow these steps to add that ntfy configuration to your project settings:
 
 ## What next?
 
-Whenever a pipeline run is successfully completed or fails, a ntfy alert be
-created.
+Whenever a pipeline run is successfully completed or fails, a ntfy alert will be created.

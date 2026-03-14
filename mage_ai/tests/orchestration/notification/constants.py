@@ -79,7 +79,7 @@ OPSGENIE_NOTIFICATION_CONFIG = dict(
 )
 
 
-NTFY_NOTIFICATION_CONIG = dict(
+NTFY_NOTIFICATION_CONFIG = dict(
     alert_on=[
         'trigger_failure',
         'trigger_success',
@@ -87,6 +87,6 @@ NTFY_NOTIFICATION_CONIG = dict(
     ntfy_config=dict(
         webhook_url='test_url',
         priority='urgent',
-        tags=['warning','skull']
+        tags=['warning', 'skull']
     )
 )

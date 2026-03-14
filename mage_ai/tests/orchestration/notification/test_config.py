@@ -55,4 +55,4 @@ class NotificationConfigTests(TestCase):
 
         self.assertEqual(config7.ntfy_config.webhook_url, 'test_url')
         self.assertEqual(config7.ntfy_config.priority, 'urgent')
-        self.assertEqual(config7.ntfy_config.tags, 'warning,skull')
+        self.assertEqual(config7.ntfy_config.tags, ['warning', 'skull'])

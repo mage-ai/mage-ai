@@ -6,6 +6,7 @@ from mage_ai.tests.base_test import DBTestCase
 from mage_ai.tests.factory import create_pipeline, create_pipeline_run_with_schedule
 from mage_ai.tests.orchestration.notification.constants import (
     EMAIL_NOTIFICATION_CONFIG,
+    NTFY_NOTIFICATION_CONFIG,
     OPSGENIE_NOTIFICATION_CONFIG,
     SLACK_NOTIFICATION_CONFIG,
     SLACK_NOTIFICATION_CONFIG_WITH_CUSTOM_TEMPLATE,
@@ -164,6 +165,24 @@ class NotificationSenderTests(DBTestCase):
         self.assertEqual(mock_send_email.call_count, 0)
         mock_send_opsgenie_message.assert_called_once_with(
             notification_config.opsgenie_config,
+            message=ANY,
+            description=ANY,
+        )
+
+    @patch('mage_ai.orchestration.notification.sender.send_ntfy_alert')
+    @patch('mage_ai.orchestration.notification.sender.send_email')
+    def test_send_pipeline_run_failure_message_using_ntfy(
+            self,
+            mock_send_email,
+            mock_send_ntfy_message,
+    ):
+        notification_config = NotificationConfig.load(config=NTFY_NOTIFICATION_CONFIG)
+        sender = NotificationSender(config=notification_config)
+        pipeline_run = self.__class__.pipeline_run
+        sender.send_pipeline_run_failure_message(self.__class__.pipeline, pipeline_run)
+        self.assertEqual(mock_send_email.call_count, 0)
+        mock_send_ntfy_message.assert_called_once_with(
+            notification_config.ntfy_config,
             message=ANY,
             description=ANY,
         )
