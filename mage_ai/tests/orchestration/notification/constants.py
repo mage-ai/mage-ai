@@ -87,6 +87,6 @@ NTFY_NOTIFICATION_CONIG = dict(
     ntfy_config=dict(
         webhook_url='test_url',
         priority='urgent',
-        tags='warning,skull'
+        tags=['warning','skull']
     )
 )
