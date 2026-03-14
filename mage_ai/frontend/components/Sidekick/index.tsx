@@ -789,6 +789,7 @@ function Sidekick({
                       </NextHead>
                     )}
                     <DragHandleStyle
+                      data-testid="drag-handle"
                       disabled={dragHandleDisabled}
                       onMouseDown={handleDragHandleMouseDown}
                     />

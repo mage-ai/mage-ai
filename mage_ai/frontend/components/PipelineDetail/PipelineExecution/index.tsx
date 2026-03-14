@@ -165,7 +165,7 @@ function PipelineExecution({
       {!pipelineExecutionHidden &&
         <>
           <Spacing mb={1} />
-          <OutputContainerStyle height={outputHeight} noScrollbarTrackBackground ref={outputScrollRef}>
+          <OutputContainerStyle data-testid="pipeline-execution-output" height={outputHeight} noScrollbarTrackBackground ref={outputScrollRef}>
             <CodeBlockStyle
               executedAndIdle
               hasError={false}
