@@ -93,7 +93,7 @@ export async function enableSettings(
  */
 export async function createStreamingPipeline(page: Page): Promise<string> {
   await page.goto('/pipelines');
-  await expect(page.getByText('Name', { exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'New' }).waitFor({ state: 'visible' });
   await page.getByRole('button', { name: 'New' }).click();
   await page.getByRole('menuitem', { name: 'Streaming' }).click();
   await page.getByRole('button', { exact: true, name: 'Create' }).click();
@@ -108,6 +108,33 @@ export async function createStreamingPipeline(page: Page): Promise<string> {
   });
   await page.reload();
   await page.waitForLoadState();
+
+  const pathStr = await page.evaluate(() => document.location.pathname);
+  const path = pathStr.split('/'); // ['', 'pipelines', '<pipeline-name>', 'edit']
+  return path[2];
+}
+
+/**
+ * Creates a fresh Standard (batch) pipeline via the Pipelines dashboard and
+ * returns its URL slug (name).
+ *
+ * @remarks
+ * Unlike {@link createStreamingPipeline}, this helper intentionally does **not**
+ * clear `pipeline_tree_hidden` from localStorage. This is required by T18, which
+ * must keep the key set (as a streaming pipeline would have left it) to reproduce
+ * the cross-pipeline-type contamination scenario.
+ *
+ * @param page - The Playwright {@link Page} for the current test.
+ * @returns The pipeline name / URL slug extracted from the redirect URL.
+ *   Pass this to {@link deletePipeline} to clean up after the test.
+ */
+export async function createBatchPipeline(page: Page): Promise<string> {
+  await page.goto('/pipelines');
+  await page.getByRole('button', { name: 'New' }).waitFor({ state: 'visible' });
+  await page.getByRole('button', { name: 'New' }).click();
+  await page.getByRole('menuitem', { name: 'Standard (batch)' }).click();
+  await page.getByRole('button', { exact: true, name: 'Create' }).click();
+  await page.waitForURL('**/pipelines/**');
 
   const pathStr = await page.evaluate(() => document.location.pathname);
   const path = pathStr.split('/'); // ['', 'pipelines', '<pipeline-name>', 'edit']

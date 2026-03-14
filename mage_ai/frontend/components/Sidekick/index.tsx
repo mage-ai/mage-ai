@@ -360,6 +360,13 @@ function Sidekick({
     }
   }, [hasEverShownTree, treeHidden]);
 
+  useEffect(() => {
+    if (pipeline?.type && !isStreamingPipeline) {
+      if (treeHidden) setTreeHidden(false);
+      if (!hasEverShownTree) setHasEverShownTree(true);
+    }
+  }, [hasEverShownTree, isStreamingPipeline, pipeline?.type, treeHidden]);
+
   const globalVariablesMemo = useMemo(() => (
     <GlobalVariables
       blocks={blocks}

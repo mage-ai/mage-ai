@@ -1,5 +1,6 @@
 import { expect, test } from './base';
 import {
+  createBatchPipeline,
   createStreamingPipeline,
   deletePipeline,
   navigateToTreeView,
@@ -441,5 +442,34 @@ test.describe('streaming pipeline sidekick', () => {
     expect(await outputScrollH()).toBeGreaterThan(100);
     expect(await graphH()).toBeGreaterThan(0);
     expect(await handleCursor()).toBe('row-resize');
+  });
+
+  test('T18 — regression: pipeline_tree_hidden set by streaming pipeline does not suppress DependencyGraph on non-streaming', async ({ page }) => {
+    // Step 1: Hide tree on the streaming pipeline → writes pipeline_tree_hidden=true.
+    await page.getByRole('button', { name: 'Hide tree' }).click();
+    await expect(page.locator('[data-testid="dependency-graph-container"]')).toHaveAttribute('aria-hidden', 'true');
+
+    // Step 2: Create a batch pipeline. createBatchPipeline intentionally does NOT
+    // clear pipeline_tree_hidden, so the contamination scenario is preserved.
+    let batchPipelineName: string | undefined;
+    try {
+      batchPipelineName = await createBatchPipeline(page);
+
+      // Step 3: Navigate to the batch pipeline's Tree view.
+      // navigateToTreeView waits for dependency-graph-container to attach and
+      // have positive height — this is the assertion itself.
+      await navigateToTreeView(page);
+
+      // Step 4: Explicit checks: container must be visible and not aria-hidden.
+      const graph = page.locator('[data-testid="dependency-graph-container"]');
+      await expect(graph).not.toHaveAttribute('aria-hidden', 'true');
+      const box = await graph.boundingBox();
+      expect(box).not.toBeNull();
+      expect(box.height).toBeGreaterThan(0);
+    } finally {
+      if (batchPipelineName) {
+        await deletePipeline(page, batchPipelineName);
+      }
+    }
   });
 });
