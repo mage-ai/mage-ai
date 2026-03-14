@@ -17,7 +17,11 @@ export const OutputContainerStyle = styled.div.attrs<{
   style: {
     height: height != null ? `${height}px` : undefined,
   },
-}))`
+}))<{
+  height?: number;
+  maxHeight?: number;
+  noScrollbarTrackBackground?: boolean;
+}>`
   ${ScrollbarStyledCss}
 
   overflow-y: scroll;
