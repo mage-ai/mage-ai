@@ -43,7 +43,9 @@ export const GraphContainerStyle = styled.div.attrs<{
   style: {
     height: height != null ? `${height}px` : undefined,
   },
-}))`
+}))<{
+  height?: number;
+}>`
   position: relative;
   
   div {
