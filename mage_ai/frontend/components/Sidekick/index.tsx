@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import NextHead from 'next/head';
 import { CanvasRef } from 'reaflow';
 
 import ApiReloader from '@components/ApiReloader';
@@ -296,14 +297,12 @@ function Sidekick({
 
   const graphContainerRef = useRef<HTMLDivElement>(null);
   const outputScrollRef = useRef<HTMLDivElement>(null);
-  const dragIndicatorRef = useRef<HTMLDivElement>(null);
 
   const availablePanelHeight = heightWindow - (heightOffset - SCROLLBAR_WIDTH);
   const dragHandleDisabled = treeHidden || pipelineExecutionHidden;
 
-  const { handleDragHandleMouseDown, isDragging, outputHeight } = useDragResize({
+  const { dragDelta, handleDragHandleMouseDown, isDragging, outputHeight } = useDragResize({
     disabled: dragHandleDisabled,
-    dragIndicatorRef,
     graphContainerRef,
     initialHeight: OUTPUT_HEIGHT,
     outputScrollRef,
@@ -322,6 +321,16 @@ function Sidekick({
   const effectiveOutputHeight = treeHidden
     ? availablePanelHeight - DRAG_HANDLE_HEIGHT - OUTPUT_HEADER_HEIGHT - UNIT
     : outputHeight;
+
+  // Visual heights for containers only — change every frame during drag.
+  // graphHeight and effectiveOutputHeight stay stable (DependencyGraph never re-layouts during drag).
+  const visualGraphHeight = isDragging
+    ? Math.max(0, graphHeight - dragDelta)
+    : graphHeight;
+
+  const visualOutputHeight = isDragging
+    ? Math.max(0, effectiveOutputHeight + dragDelta)
+    : effectiveOutputHeight;
 
   const renderColumnHeader = useCallback(buildRenderColumnHeader({
     columnTypes,
@@ -711,7 +720,7 @@ function Sidekick({
                   ref={graphContainerRef}
                   style={{
                     display: treeHidden ? 'none' : undefined,
-                    height: graphHeight,
+                    height: visualGraphHeight,
                     overflow: 'hidden',
                   }}
                 >
@@ -726,7 +735,7 @@ function Sidekick({
                     editingBlock={editingBlock}
                     enablePorts={!isIntegration}
                     fetchPipeline={fetchPipeline}
-                    height={graphHeight}
+                    height={visualGraphHeight}
                     heightOffset={0}
                     messages={messages}
                     // @ts-ignore
@@ -765,24 +774,17 @@ function Sidekick({
                 && !(treeHidden && pipelineExecutionHidden) && (
                   <>
                     {isDragging && (
-                      <div
-                        style={{
-                          cursor: 'row-resize',
-                          inset: 0,
-                          position: 'fixed',
-                          zIndex: 9999,
-                        }}
-                      >
-                        <div
-                          ref={dragIndicatorRef}
-                          style={{
-                            borderTop: '1px solid',
-                            left: 0,
-                            position: 'absolute',
-                            right: 0,
+                      <NextHead>
+                        <style
+                          dangerouslySetInnerHTML={{
+                            __html: `
+                              body {
+                                cursor: row-resize;
+                              }
+                            `,
                           }}
                         />
-                      </div>
+                      </NextHead>
                     )}
                     <DragHandleStyle
                       disabled={dragHandleDisabled}
@@ -795,7 +797,7 @@ function Sidekick({
                         executePipeline={executePipeline}
                         isPipelineExecuting={isPipelineExecuting}
                         onToggleTreeHidden={() => handleSetTreeHidden(!treeHidden)}
-                        outputHeight={effectiveOutputHeight}
+                        outputHeight={visualOutputHeight}
                         outputScrollRef={outputScrollRef}
                         pipelineExecutionHidden={pipelineExecutionHidden}
                         pipelineMessages={pipelineMessages}
