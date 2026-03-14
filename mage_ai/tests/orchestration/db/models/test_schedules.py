@@ -493,6 +493,70 @@ class PipelineScheduleTests(DBTestCase):
             )
             self.assertFalse(pipeline_schedule_false.should_schedule())
 
+    @freeze_time('2025-01-01 00:00:00')
+    def test_create_or_update_batch_updates_last_enabled_at_on_schedule_change(self):
+        """
+        When an active trigger's schedule_interval is changed via trigger configs,
+        last_enabled_at should be updated to "now" so that, with
+        create_initial_pipeline_run disabled, no immediate initial run is created.
+        """
+        original_last_enabled_at = datetime(2024, 12, 31, 0, 0, 0)
+        trigger_config = Trigger(
+            last_enabled_at=original_last_enabled_at,
+            name='test_trigger_schedule_change',
+            pipeline_uuid='test_pipeline_schedule_change',
+            repo_path=self.repo_path,
+            schedule_interval='@daily',
+            schedule_type=ScheduleType.TIME,
+            settings=dict(create_initial_pipeline_run=False),
+            sla=None,
+            start_time=datetime(2024, 12, 1, 0, 0, 0),
+            status=ScheduleStatus.ACTIVE,
+            token=None,
+            variables=None,
+        )
+
+        with patch(
+            'mage_ai.orchestration.db.models.schedules.add_or_update_trigger_for_pipeline_and_persist'  # noqa: E501
+        ):
+            PipelineSchedule.create_or_update_batch([trigger_config])
+        pipeline_schedules = PipelineSchedule.query.filter(
+            PipelineSchedule.pipeline_uuid == trigger_config.pipeline_uuid,
+            PipelineSchedule.name == trigger_config.name,
+        ).all()
+        self.assertEqual(1, len(pipeline_schedules))
+        schedule = pipeline_schedules[0]
+        # Compare without tzinfo to avoid aware/naive mismatches under freezegun.
+        self.assertEqual(
+            original_last_enabled_at.replace(tzinfo=None),
+            schedule.last_enabled_at.replace(tzinfo=None)
+            if schedule.last_enabled_at is not None
+            else schedule.last_enabled_at,
+        )
+
+        trigger_config.schedule_interval = '@hourly'
+
+        with patch(
+            'mage_ai.orchestration.db.models.schedules.add_or_update_trigger_for_pipeline_and_persist'  # noqa: E501
+        ):
+            PipelineSchedule.create_or_update_batch([trigger_config])
+
+        updated_schedule = PipelineSchedule.query.filter(
+            PipelineSchedule.id == schedule.id,
+        ).first()
+        self.assertIsNotNone(updated_schedule.last_enabled_at)
+        self.assertNotEqual(
+            original_last_enabled_at.replace(tzinfo=None),
+            updated_schedule.last_enabled_at.replace(tzinfo=None),
+        )
+        expected_now = datetime(2025, 1, 1, 0, 0, 0)
+        self.assertEqual(
+            expected_now.replace(tzinfo=None),
+            updated_schedule.last_enabled_at.replace(tzinfo=None),
+        )
+
+        self.assertFalse(updated_schedule.should_schedule())
+
     @freeze_time('2023-10-11 12:13:14')
     def test_should_schedule_when_landing_time_enabled(self):
         shared_attrs = dict(
@@ -1215,7 +1279,11 @@ class PipelineScheduleTests(DBTestCase):
             ),
         ]
 
-        PipelineSchedule.create_or_update_batch(trigger_configs)
+        # Avoid touching YAML persistence layer; focus on DB behavior only.
+        with patch(
+            'mage_ai.orchestration.db.models.schedules.add_or_update_trigger_for_pipeline_and_persist'  # noqa: E501
+        ):
+            PipelineSchedule.create_or_update_batch(trigger_configs)
 
         ps1 = PipelineSchedule.query.filter(
             PipelineSchedule.name == 'test create batch trigger 1'

@@ -26,7 +26,13 @@ fi
 REQUIREMENTS_FILE="${PROJECT_PATH}/requirements.txt"
 if [ -f "$REQUIREMENTS_FILE" ]; then
     echo "$REQUIREMENTS_FILE exists."
-    pip3 install -r $REQUIREMENTS_FILE
+
+    # Run pip install and handle errors gracefully
+    if ! pip3 install -r "$REQUIREMENTS_FILE"; then
+        echo "Warning: Failed to install requirements from $REQUIREMENTS_FILE" >&2
+    else
+        echo "Requirements installed successfully."
+    fi
 fi
 
 mage_args=()
