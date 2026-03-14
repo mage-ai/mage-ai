@@ -3,7 +3,7 @@ from mage_ai.tests.base_test import TestCase
 from mage_ai.tests.orchestration.notification.constants import (
     EMAIL_NOTIFICATION_CONFIG,
     GOOGLE_CHAT_NOTIFICATION_CONFIG,
-    NTFY_NOTIFICATION_CONIG,
+    NTFY_NOTIFICATION_CONFIG,
     OPSGENIE_NOTIFICATION_CONFIG,
     SLACK_NOTIFICATION_CONFIG,
     TEAMS_NOTIFICATION_CONFIG,
@@ -19,14 +19,14 @@ class NotificationConfigTests(TestCase):
         notification_config_teams = TEAMS_NOTIFICATION_CONFIG
         notification_config_google_chat = GOOGLE_CHAT_NOTIFICATION_CONFIG
         notification_config_opsgenie = OPSGENIE_NOTIFICATION_CONFIG
-        notification_conig_ntfy = NTFY_NOTIFICATION_CONIG
+        notification_config_ntfy = NTFY_NOTIFICATION_CONFIG
         config1 = NotificationConfig.load(config=notification_config_empty)
         config2 = NotificationConfig.load(config=notification_config_email)
         config3 = NotificationConfig.load(config=notification_config_slack)
         config4 = NotificationConfig.load(config=notification_config_teams)
         config5 = NotificationConfig.load(config=notification_config_google_chat)
         config6 = NotificationConfig.load(config=notification_config_opsgenie)
-        config7 = NotificationConfig.load(config=notification_conig_ntfy)
+        config7 = NotificationConfig.load(config=notification_config_ntfy)
 
         self.assertIsNone(config1.email_config)
         self.assertIsNone(config1.slack_config)
