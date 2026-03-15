@@ -29,6 +29,28 @@ export const SidekickContainerStyle = styled.div<{
   `}
 `;
 
+export const DragHandleStyle = styled.div`
+  cursor: ns-resize;
+  height: 8px;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  &::after {
+    content: '';
+    height: 2px;
+    width: 40px;
+    border-radius: 1px;
+    background: rgba(255, 255, 255, 0.2);
+  }
+
+  &:hover::after,
+  &:active::after {
+    background: rgba(255, 255, 255, 0.5);
+  }
+`;
+
 export const PaddingContainerStyle = styled.div<{ noPadding?: boolean }>`
   padding: ${UNIT * 2}px;
 

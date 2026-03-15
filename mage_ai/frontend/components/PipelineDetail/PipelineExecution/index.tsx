@@ -29,21 +29,29 @@ import Image from 'next/image';
 export type PipelineExecutionProps = {
   cancelPipeline: () => void;
   checkIfPipelineRunning: () => void;
+  containerHeight?: number;
   executePipeline: () => void;
   isPipelineExecuting: boolean;
+  outputContainerRef?: React.RefObject<HTMLDivElement>;
   pipelineExecutionHidden: boolean;
   pipelineMessages: KernelOutputType[];
   setPipelineExecutionHidden: (pipelineExecutionHidden: boolean) => void;
+  setTreeHidden?: (hidden: boolean) => void;
+  treeHidden?: boolean;
 };
 
 function PipelineExecution({
   cancelPipeline,
   checkIfPipelineRunning,
+  containerHeight,
   executePipeline,
   isPipelineExecuting,
+  outputContainerRef,
   pipelineExecutionHidden,
   pipelineMessages,
   setPipelineExecutionHidden,
+  setTreeHidden,
+  treeHidden,
 }: PipelineExecutionProps) {
   const numberOfMessages = useMemo(() => pipelineMessages?.length || 0, [pipelineMessages]);
   const truncatedPipelineMessages = useMemo(() => (
@@ -63,11 +71,15 @@ function PipelineExecution({
 
   const togglePipelineExecution = useCallback(() => {
     const val = !pipelineExecutionHidden;
-    setPipelineExecutionHidden(val);
-    set(LOCAL_STORAGE_KEY_PIPELINE_EXECUTION_HIDDEN, val);
+    // Don't allow hiding output when tree is already hidden
+    if (!val || !treeHidden) {
+      setPipelineExecutionHidden(val);
+      set(LOCAL_STORAGE_KEY_PIPELINE_EXECUTION_HIDDEN, val);
+    }
   }, [
     pipelineExecutionHidden,
     setPipelineExecutionHidden,
+    treeHidden,
   ]);
 
   return (
@@ -125,15 +137,48 @@ function PipelineExecution({
             </Button>
           </Flex>
           <Flex alignItems="center">
-            <Spacing ml={1} />
+            {setTreeHidden && (
+              <>
+                <Text>
+                  Tree
+                </Text>
+                <Spacing mr={1} />
+                <span
+                  data-testid="tree-toggle"
+                  style={pipelineExecutionHidden && !treeHidden ? {
+                    opacity: 0.4,
+                    pointerEvents: 'none',
+                  } : {}}
+                >
+                  <ToggleSwitch
+                    checked={!treeHidden}
+                    onCheck={() => {
+                      const newHidden = !treeHidden;
+                      if (!newHidden || !pipelineExecutionHidden) {
+                        setTreeHidden(newHidden);
+                      }
+                    }}
+                  />
+                </span>
+                <Spacing ml={2} />
+              </>
+            )}
             <Text>
-              Hide
+              Output
             </Text>
             <Spacing mr={1} />
-            <ToggleSwitch
-              checked={pipelineExecutionHidden}
-              onCheck={togglePipelineExecution}
-            />
+            <span
+              data-testid="output-toggle"
+              style={treeHidden && !pipelineExecutionHidden ? {
+                opacity: 0.4,
+                pointerEvents: 'none',
+              } : {}}
+            >
+              <ToggleSwitch
+                checked={!pipelineExecutionHidden}
+                onCheck={togglePipelineExecution}
+              />
+            </span>
           </Flex>
         </FlexContainer>
       </OutputHeaderStyle>
@@ -142,7 +187,7 @@ function PipelineExecution({
       {!pipelineExecutionHidden &&
         <>
           <Spacing mb={1} />
-          <OutputContainerStyle noScrollbarTrackBackground>
+          <OutputContainerStyle height={containerHeight} noScrollbarTrackBackground ref={outputContainerRef}>
             <CodeBlockStyle
               executedAndIdle
               hasError={false}

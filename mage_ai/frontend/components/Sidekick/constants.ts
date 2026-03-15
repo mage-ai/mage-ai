@@ -5,7 +5,6 @@ import {
   Charts,
   Interactions,
   Lightning,
-  NavReport,
   Secrets,
   Settings,
   SettingsWithKnobs,
@@ -128,9 +127,7 @@ export function SIDEKICK_VIEWS(opts?: {
   if (PipelineTypeEnum.PYSPARK !== opts?.pipeline?.type) {
     arr.push(...[
       {
-        buildLabel: ({
-          pipeline,
-        }) => 'Add-on blocks',
+        buildLabel: () => 'Add-on blocks',
         key: ViewKeyEnum.ADDON_BLOCKS,
       },
       {
@@ -183,8 +180,8 @@ export function SIDEKICK_VIEWS_BY_KEY(opts?: {
   pipeline?: PipelineType;
   project?: ProjectType;
 }) {
-  return indexBy(SIDEKICK_VIEWS(opts), ({ key }) => key)
-};
+  return indexBy(SIDEKICK_VIEWS(opts), ({ key }) => key);
+}
 
 export const NAV_ICON_MAPPING = {
   [ViewKeyEnum.ADDON_BLOCKS]: Union,
