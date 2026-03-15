@@ -72,6 +72,7 @@ import { isEmptyObject } from '@utils/hash';
 import { scrollToBlock } from '@components/PipelineDetail/ColumnScroller/utils';
 import { useWindowSize } from '@utils/sizes';
 import AddonBlocks from '@components/PipelineDetail/AddonBlocks';
+import { useExecutionPanelResize } from './useExecutionPanelResize';
 
 const MAX_COLUMNS = 100;
 
@@ -245,111 +246,24 @@ function Sidekick({
   updateWidget,
   widgets,
 }: SidekickProps) {
-  const {
-    height: heightWindow,
-  } = useWindowSize();
+  const { height: heightWindow } = useWindowSize();
   const heightOffset = ALL_HEADERS_HEIGHT;
   const [errorMessages, setErrorMessages] = useState<string[]>([]);
-  const [pipelineExecutionHidden, setPipelineExecutionHidden] =
-    useState(!!get(LOCAL_STORAGE_KEY_PIPELINE_EXECUTION_HIDDEN));
 
   const isStreaming = PipelineTypeEnum.STREAMING === pipeline?.type;
-  const [executionPanelHeight, setExecutionPanelHeight] = useState<number>(
-    () => {
-      const hidden = !!get(LOCAL_STORAGE_KEY_PIPELINE_EXECUTION_HIDDEN);
-      return hidden ? COLLAPSED_PANEL_HEIGHT : OUTPUT_HEIGHT;
-    },
+  const {
+    graphHeight,
+    panelHeight,
+    isDraggingPanel,
+    isPipelineExecutionHidden,
+    togglePipelineExecutionHidden,
+    handleDragStart,
+  } = useExecutionPanelResize({ isStreaming });
+
+  const afterWidth = useMemo(
+    () => afterWidthProp - (VERTICAL_NAVIGATION_WIDTH + 1),
+    [afterWidthProp],
   );
-  const [isDraggingPanel, setIsDraggingPanel] = useState(false);
-  const dragStartY = useRef<number>(0);
-  const dragStartHeight = useRef<number>(0);
-
-  // max available space occupied by graph
-  const graphHeight = useMemo(
-    () => heightWindow - ALL_HEADERS_HEIGHT - (isStreaming ? COLLAPSED_PANEL_HEIGHT : 0),
-    [heightWindow, isStreaming]
-  );
-
-  // max available space occupied by pipelineExecution
-  const maxPanelHeight = useMemo(
-    () => heightWindow - ALL_HEADERS_HEIGHT,
-    [heightWindow],
-  );
-
-  const handleDragStart = useCallback((e: React.MouseEvent) => {
-    e.preventDefault();
-    setIsDraggingPanel(true);
-    dragStartY.current = e.clientY;
-    dragStartHeight.current = executionPanelHeight;
-
-    if (pipelineExecutionHidden) {
-      dragStartHeight.current = COLLAPSED_PANEL_HEIGHT;
-    }
-  }, [executionPanelHeight, pipelineExecutionHidden]);
-
-  useEffect(() => {
-    if (!isDraggingPanel) return;
-
-    document.body.style.cursor = 'row-resize';
-    document.body.style.userSelect = 'none';
-
-    const handleMouseMove = (e: MouseEvent) => {
-      const delta = dragStartY.current - e.clientY;
-      let newHeight = dragStartHeight.current + delta;
-
-      // Clamp + prevent violent gragging higher than maxPanelHeight
-      newHeight = Math.max(0, Math.min(newHeight, maxPanelHeight));
-
-      // Snap to top if within SNAP_TO_TOP_GAP of max
-      if (newHeight > maxPanelHeight - SNAP_TO_TOP_GAP) {
-        newHeight = maxPanelHeight;
-      }
-
-      // always show the execution content when the PipelineExecution being increased
-      if (newHeight > COLLAPSED_PANEL_HEIGHT) {
-        setPipelineExecutionHidden(false)
-        setLocalStorage(LOCAL_STORAGE_KEY_PIPELINE_EXECUTION_HIDDEN, false);
-      }
-
-      setExecutionPanelHeight(newHeight);
-    };
-
-    const handleMouseUp = (e: MouseEvent) => {
-      setIsDraggingPanel(false);
-      document.body.style.cursor = '';
-      document.body.style.userSelect = '';
-
-      const delta = dragStartY.current - e.clientY;
-      let newHeight = dragStartHeight.current + delta;
-      newHeight = Math.max(0, Math.min(newHeight, maxPanelHeight));
-
-      // Collapse if below threshold
-      if (newHeight < COLLAPSE_THRESHOLD) {
-        setExecutionPanelHeight(COLLAPSED_PANEL_HEIGHT);
-        setPipelineExecutionHidden(true);
-        setLocalStorage(LOCAL_STORAGE_KEY_PIPELINE_EXECUTION_HIDDEN, true);
-      } else {
-        // Snap to top
-        if (newHeight > maxPanelHeight - SNAP_TO_TOP_GAP) {
-          newHeight = maxPanelHeight;
-        }
-        setExecutionPanelHeight(newHeight);
-      }
-    };
-
-    window.addEventListener('mousemove', handleMouseMove);
-    window.addEventListener('mouseup', handleMouseUp);
-    return () => {
-      document.body.style.cursor = '';
-      document.body.style.userSelect = '';
-      window.removeEventListener('mousemove', handleMouseMove);
-      window.removeEventListener('mouseup', handleMouseUp);
-    };
-  }, [isDraggingPanel, maxPanelHeight, pipelineExecutionHidden]);
-
-  const afterWidth = useMemo(() => afterWidthProp - (VERTICAL_NAVIGATION_WIDTH + 1), [
-    afterWidthProp,
-  ]);
 
   const isInteractionsEnabled =
     useMemo(() => !!project?.features?.[FeatureUUIDEnum.INTERACTIONS], [
@@ -641,17 +555,6 @@ function Sidekick({
     showUpdateBlockModal,
   ]);
 
-  const togglePipelineExecutionHidden = useCallback((hidden: boolean) => {
-    setPipelineExecutionHidden(hidden);
-
-    // edge case, then PipelineExecution dragged manually to the hidden state
-    if (!hidden && executionPanelHeight <= COLLAPSED_PANEL_HEIGHT) {
-      setExecutionPanelHeight(OUTPUT_HEIGHT);
-    }
-  }, [executionPanelHeight]);
-
-  const panelHeight = (pipelineExecutionHidden && !isDraggingPanel) ? COLLAPSED_PANEL_HEIGHT : Math.max(executionPanelHeight, COLLAPSED_PANEL_HEIGHT)
-
   return (
     <>
       {errorMessages?.length >= 1 &&
@@ -759,7 +662,7 @@ function Sidekick({
                   isPipelineExecuting={isPipelineExecuting}
                   onDragStart={handleDragStart}
                   panelHeight={panelHeight}
-                  pipelineExecutionHidden={pipelineExecutionHidden}
+                  pipelineExecutionHidden={isPipelineExecutionHidden}
                   pipelineMessages={pipelineMessages}
                   setPipelineExecutionHidden={togglePipelineExecutionHidden}
                 />
