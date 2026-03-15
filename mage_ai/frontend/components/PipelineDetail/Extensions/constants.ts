@@ -52,11 +52,7 @@ export type ExtensionProps = {
   selectedBlock?: BlockType;
   setAnyInputFocused?: (value: boolean) => void;
   setErrors: (errors: ErrorsType) => void;
-  setHiddenBlocks: ((opts: {
-    [uuid: string]: BlockType;
-  }) => {
-    [uuid: string]: BlockType;
-  });
+  setHiddenBlocks: (callback: (prev: { [uuid: string]: boolean }) => { [uuid: string]: boolean }) => void;
   setSelectedBlock: (block: BlockType) => void;
   setTextareaFocused: (textareaFocused: boolean) => void;
   showBrowseTemplates?: (opts?: {

@@ -145,9 +145,7 @@ export type SidekickProps = {
     [blockUUID: string]: BlockInteractionType[];
   };
   setDisableShortcuts: (disableShortcuts: boolean) => void;
-  setHiddenBlocks: (opts: { [uuid: string]: BlockType }) => {
-    [uuid: string]: BlockType;
-  };
+  setHiddenBlocks: (callback: (prev: { [uuid: string]: boolean }) => { [uuid: string]: boolean }) => void;
   setErrors: (errors: ErrorsType) => void;
   setInteractionsMapping: (prev: any) => {
     [interactionUUID: string]: InteractionType;
@@ -702,7 +700,6 @@ function Sidekick({
                     fetchPipeline={fetchPipeline}
                     height={heightWindow - (heightOffset - SCROLLBAR_WIDTH) - finalOutputHeight}
                     messages={messages}
-                    // @ts-ignore
                     onClickNode={({ block: { uuid } }) =>
                       setHiddenBlocks(prev => {
                         const hidden = !!prev?.[uuid];
