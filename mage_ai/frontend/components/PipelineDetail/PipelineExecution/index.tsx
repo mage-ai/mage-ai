@@ -143,10 +143,13 @@ function PipelineExecution({
                   Tree
                 </Text>
                 <Spacing mr={1} />
-                <span style={pipelineExecutionHidden && !treeHidden ? {
-                  opacity: 0.4,
-                  pointerEvents: 'none',
-                } : {}}>
+                <span
+                  data-testid="tree-toggle"
+                  style={pipelineExecutionHidden && !treeHidden ? {
+                    opacity: 0.4,
+                    pointerEvents: 'none',
+                  } : {}}
+                >
                   <ToggleSwitch
                     checked={!treeHidden}
                     onCheck={() => {
@@ -164,10 +167,13 @@ function PipelineExecution({
               Output
             </Text>
             <Spacing mr={1} />
-            <span style={treeHidden && !pipelineExecutionHidden ? {
-              opacity: 0.4,
-              pointerEvents: 'none',
-            } : {}}>
+            <span
+              data-testid="output-toggle"
+              style={treeHidden && !pipelineExecutionHidden ? {
+                opacity: 0.4,
+                pointerEvents: 'none',
+              } : {}}
+            >
               <ToggleSwitch
                 checked={!pipelineExecutionHidden}
                 onCheck={togglePipelineExecution}

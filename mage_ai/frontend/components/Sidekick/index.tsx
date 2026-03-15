@@ -373,14 +373,15 @@ function Sidekick({
   const executionContainerHeight = treeHidden ? heightWindow - heightOffset : outputHeight;
 
   const renderColumnHeader = useMemo(
-    () => buildRenderColumnHeader({
-      columnTypes,
-      columns,
-      insightsByFeatureUUID,
-      insightsOverview,
-      noColumnLinks: true,
-      statistics,
-    }),
+    () =>
+      buildRenderColumnHeader({
+        columnTypes,
+        columns,
+        insightsByFeatureUUID,
+        insightsOverview,
+        noColumnLinks: true,
+        statistics,
+      }),
     [columnTypes, columns, insightsByFeatureUUID, insightsOverview, statistics],
   );
 
@@ -641,7 +642,7 @@ function Sidekick({
     <>
       {errorMessages?.length >= 1 && (
         <Spacing mb={3} mt={2} mx={2}>
-          <FlexContainer justifyContent="space-between">
+          <FlexContainer justifyContent='space-between'>
             <Text bold danger>
               Errors
             </Text>
@@ -739,9 +740,9 @@ function Sidekick({
                 <div style={{ borderTop: '1px solid rgba(255, 255, 255, 0.1)' }}>
                   {!treeHidden && (
                     <DragHandleStyle
-                      aria-label="Resize output panel"
+                      aria-label='Resize output panel'
                       ref={dragHandleRef}
-                      role="separator"
+                      role='separator'
                     />
                   )}
                   <Spacing p={1}>
@@ -786,35 +787,35 @@ function Sidekick({
         (!selectedBlock && hasData && activeView === ViewKeyEnum.DATA)
           ? null
           : MESSAGE_VIEWS.includes(activeView) && (
-            <FlexContainer
-              alignItems="center"
-              justifyContent="center"
-              verticalHeight={VH_PERCENTAGE}
-              verticalHeightOffset={heightOffset}
-              width={afterWidth}
-            >
-              <Text center default disableWordBreak large monospace>
-                {!selectedBlock
-                  ? 'Select a block for insights'
-                  : !hasData && 'No data or insights available'}
-              </Text>
-            </FlexContainer>
-          )}
+              <FlexContainer
+                alignItems='center'
+                justifyContent='center'
+                verticalHeight={VH_PERCENTAGE}
+                verticalHeightOffset={heightOffset}
+                width={afterWidth}
+              >
+                <Text center default disableWordBreak large monospace>
+                  {!selectedBlock
+                    ? 'Select a block for insights'
+                    : !hasData && 'No data or insights available'}
+                </Text>
+              </FlexContainer>
+            )}
 
         {ViewKeyEnum.CHARTS === activeView &&
           (widgets.length > 0 ? (
             chartsMemo
           ) : (
             <FlexContainer
-              alignItems="center"
-              flexDirection="column"
-              justifyContent="center"
+              alignItems='center'
+              flexDirection='column'
+              justifyContent='center'
               verticalHeight={VH_PERCENTAGE}
               verticalHeightOffset={heightOffset}
               width={afterWidth}
             >
               <Spacing px={1}>
-                <FlexContainer flexDirection="row">
+                <FlexContainer flexDirection='row'>
                   <Text center default>
                     Add a chart by clicking the chart icon &nbsp;
                     <ChartsIcon size={UNIT * 1.5} />
@@ -841,15 +842,15 @@ function Sidekick({
             blockSettingsMemo
           ) : (
             <FlexContainer
-              alignItems="center"
-              flexDirection="column"
-              justifyContent="center"
+              alignItems='center'
+              flexDirection='column'
+              justifyContent='center'
               verticalHeight={VH_PERCENTAGE}
               verticalHeightOffset={heightOffset}
               width={afterWidth}
             >
               <Spacing px={1}>
-                <FlexContainer flexDirection="row">
+                <FlexContainer flexDirection='row'>
                   <Text center default>
                     Please select a block and then click the settings icon &nbsp;
                     <SettingsWithKnobs size={UNIT * 1.5} />
