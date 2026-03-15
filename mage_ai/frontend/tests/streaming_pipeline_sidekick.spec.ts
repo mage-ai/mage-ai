@@ -18,12 +18,15 @@ async function deleteStreamingPipeline(page: Page, pipelineName: string): Promis
   await page.goto('/pipelines');
   await expect(page.getByText('Name', { exact: true })).toBeVisible();
   page.on('dialog', async dialog => {
-    if (dialog.message().includes(pipelineName)) {
+    if (dialog.message() === `Are you sure you want to delete pipeline ${pipelineName}?`) {
       await dialog.accept();
+    } else {
+      throw new Error(`Unexpected dialog: ${dialog.message()}`);
     }
   });
   await page.getByRole('textbox').first().fill(pipelineName);
   await expect(page.getByText('All pipelines › 1')).toBeVisible();
+  await expect(page.getByRole('cell', { name: pipelineName })).toBeVisible();
   await page.getByRole('cell', { name: pipelineName }).click({ button: 'right' });
   await expect(page.getByRole('menuitem', { name: 'Delete' })).toBeVisible();
   await page.getByRole('menuitem', { name: 'Delete' }).click();
