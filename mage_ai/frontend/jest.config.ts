@@ -4,7 +4,13 @@ const config: Config = {
   preset: 'ts-jest',
   testEnvironment: 'jest-environment-jsdom',
   setupFilesAfterEnv: ['<rootDir>/jest.setup.ts'],
-  testPathIgnorePatterns: ['<rootDir>/.next/', '<rootDir>/node_modules/'],
+  testPathIgnorePatterns: [
+    '<rootDir>/.next/',
+    '<rootDir>/node_modules/',
+    '<rootDir>/tests/',
+    '<rootDir>/components/',
+    '<rootDir>/pages/',
+  ],
   moduleNameMapper: {
     '^@api/(.*)$': '<rootDir>/api/$1',
     '^@components/(.*)$': '<rootDir>/components/$1',
@@ -19,8 +25,8 @@ const config: Config = {
     '^@utils/(.*)$': '<rootDir>/utils/$1',
   },
   transform: {
-    '^.+\\.(ts|tsx)$': 'ts-jest'
-  }
+    '^.+\\.(ts|tsx)$': 'ts-jest',
+  },
 };
 
 export default config;
