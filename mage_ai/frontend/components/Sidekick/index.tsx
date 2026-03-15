@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { CanvasRef } from 'reaflow';
 
 import ApiReloader from '@components/ApiReloader';
@@ -52,11 +52,18 @@ import {
   ViewKeyEnum,
 } from './constants';
 import { VERTICAL_NAVIGATION_WIDTH } from '@components/Dashboard/index.style';
-import { LOCAL_STORAGE_KEY_PIPELINE_EXECUTION_HIDDEN, get } from '@storage/localStorage';
+import {
+  LOCAL_STORAGE_KEY_PIPELINE_EXECUTION_HIDDEN,
+  LOCAL_STORAGE_KEY_PIPELINE_STREAMING_TREE_HIDDEN,
+  LOCAL_STORAGE_KEY_STREAMING_OUTPUT_HEIGHT,
+  get,
+  set,
+} from '@storage/localStorage';
 import { OpenDataIntegrationModalType } from '@components/DataIntegrationModal/constants';
 import { OUTPUT_HEIGHT } from '@components/PipelineDetail/PipelineExecution/index.style';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import {
+  DragHandleStyle,
   SidekickContainerStyle,
   TABLE_COLUMN_HEADER_HEIGHT,
 } from './index.style';
@@ -69,6 +76,8 @@ import { useWindowSize } from '@utils/sizes';
 import AddonBlocks from '@components/PipelineDetail/AddonBlocks';
 
 const MAX_COLUMNS = 100;
+const MIN_OUTPUT_HEIGHT = 100;
+const MIN_TREE_HEIGHT = 150;
 
 export type SidekickProps = {
   activeView?: ViewKeyEnum;
@@ -247,10 +256,68 @@ function Sidekick({
   const [errorMessages, setErrorMessages] = useState<string[]>([]);
   const [pipelineExecutionHidden, setPipelineExecutionHidden] =
     useState(!!get(LOCAL_STORAGE_KEY_PIPELINE_EXECUTION_HIDDEN));
+  const [outputHeight, setOutputHeight] = useState<number>(
+    () => (get(LOCAL_STORAGE_KEY_STREAMING_OUTPUT_HEIGHT) as number) || OUTPUT_HEIGHT,
+  );
+  const [treeHidden, setTreeHidden] = useState<boolean>(
+    !!get(LOCAL_STORAGE_KEY_PIPELINE_STREAMING_TREE_HIDDEN),
+  );
+  const dragHandleRef = useRef<HTMLDivElement>(null);
+  const outputContainerRef = useRef<HTMLDivElement>(null);
+  const treeContainerRef = useRef<HTMLDivElement>(null);
+  const dragHeightRef = useRef<number>(outputHeight);
 
   const afterWidth = useMemo(() => afterWidthProp - (VERTICAL_NAVIGATION_WIDTH + 1), [
     afterWidthProp,
   ]);
+
+  useEffect(() => {
+    const el = dragHandleRef.current;
+    if (!el || treeHidden) return;
+
+    let dragging = false;
+
+    const onMouseMove = (e: MouseEvent) => {
+      if (!dragging) return;
+      const maxH = heightWindow - heightOffset - MIN_TREE_HEIGHT;
+      const newH = Math.min(maxH, Math.max(MIN_OUTPUT_HEIGHT, heightWindow - e.clientY));
+      dragHeightRef.current = newH;
+      if (outputContainerRef.current) {
+        outputContainerRef.current.style.height = `${newH}px`;
+      }
+      if (treeContainerRef.current) {
+        treeContainerRef.current.style.height = `${heightWindow - heightOffset + SCROLLBAR_WIDTH - newH}px`;
+      }
+    };
+    const onMouseDown = () => {
+      dragging = true;
+      document.addEventListener('mousemove', onMouseMove);
+    };
+    const onMouseUp = () => {
+      dragging = false;
+      document.removeEventListener('mousemove', onMouseMove);
+      setOutputHeight(dragHeightRef.current);
+      set(LOCAL_STORAGE_KEY_STREAMING_OUTPUT_HEIGHT, dragHeightRef.current);
+    };
+
+    el.addEventListener('mousedown', onMouseDown);
+    document.addEventListener('mouseup', onMouseUp);
+    return () => {
+      el.removeEventListener('mousedown', onMouseDown);
+      document.removeEventListener('mouseup', onMouseUp);
+      document.removeEventListener('mousemove', onMouseMove);
+    };
+  }, [heightOffset, heightWindow, treeHidden]);
+
+  useEffect(() => {
+    if (outputContainerRef.current) outputContainerRef.current.style.height = '';
+    if (treeContainerRef.current) treeContainerRef.current.style.height = '';
+  }, [outputHeight]);
+
+  const handleSetTreeHidden = useCallback((hidden: boolean) => {
+    setTreeHidden(hidden);
+    set(LOCAL_STORAGE_KEY_PIPELINE_STREAMING_TREE_HIDDEN, hidden);
+  }, []);
 
   const isInteractionsEnabled =
     useMemo(() => !!project?.features?.[FeatureUUIDEnum.INTERACTIONS], [
@@ -276,8 +343,16 @@ function Sidekick({
   const hasData = !!sampleData;
   const isIntegration = useMemo(() => PipelineTypeEnum.INTEGRATION === pipeline?.type, [pipeline]);
   const finalOutputHeight = !(PipelineTypeEnum.STREAMING === pipeline?.type)
-    ? -70   // Hide entire output area
-    : (pipelineExecutionHidden ? -16 : OUTPUT_HEIGHT);
+    ? -70
+    : pipelineExecutionHidden
+      ? -16
+      : treeHidden
+        ? 0
+        : outputHeight;
+
+  const executionContainerHeight = treeHidden
+    ? heightWindow - heightOffset
+    : outputHeight;
 
   const renderColumnHeader = useCallback(buildRenderColumnHeader({
     columnTypes,
@@ -599,61 +674,78 @@ function Sidekick({
         {activeView === ViewKeyEnum.TREE &&
           <ApiReloader uuid={`PipelineDetail/${pipeline?.uuid}`}>
             <>
-              <DependencyGraph
-                addNewBlockAtIndex={addNewBlockAtIndex}
-                blockRefs={blockRefs}
-                blocks={blocks}
-                contentByBlockUUID={contentByBlockUUID}
-                contextMenuEnabled
-                deleteBlock={deleteBlock}
-                dragEnabled
-                editingBlock={editingBlock}
-                enablePorts={!isIntegration}
-                fetchPipeline={fetchPipeline}
-                height={heightWindow - (heightOffset - SCROLLBAR_WIDTH) - finalOutputHeight}
-                messages={messages}
-                // @ts-ignore
-                onClickNode={({ block: { uuid } }) => setHiddenBlocks((prev) => {
-                  const hidden = !!prev?.[uuid];
+              {!treeHidden && (
+                <div ref={treeContainerRef} style={{ overflow: 'hidden' }}>
+                <DependencyGraph
+                  addNewBlockAtIndex={addNewBlockAtIndex}
+                  blockRefs={blockRefs}
+                  blocks={blocks}
+                  contentByBlockUUID={contentByBlockUUID}
+                  contextMenuEnabled
+                  deleteBlock={deleteBlock}
+                  dragEnabled
+                  editingBlock={editingBlock}
+                  enablePorts={!isIntegration}
+                  fetchPipeline={fetchPipeline}
+                  height={heightWindow - (heightOffset - SCROLLBAR_WIDTH) - finalOutputHeight}
+                  messages={messages}
+                  // @ts-ignore
+                  onClickNode={({ block: { uuid } }) => setHiddenBlocks((prev) => {
+                    const hidden = !!prev?.[uuid];
 
-                  if (!hidden) {
-                    return prev;
-                  }
+                    if (!hidden) {
+                      return prev;
+                    }
 
-                  return {
-                    ...prev,
-                    [uuid]: !hidden,
-                  };
-                })}
-                pipeline={pipeline}
-                runBlock={runBlock}
-                runningBlocks={runningBlocks}
-                selectedBlock={selectedBlock}
-                setActiveSidekickView={setActiveSidekickView}
-                setEditingBlock={setEditingBlock}
-                setErrors={setErrors}
-                setSelectedBlock={(block) => {
-                  setSelectedBlock(block);
+                    return {
+                      ...prev,
+                      [uuid]: !hidden,
+                    };
+                  })}
+                  pipeline={pipeline}
+                  runBlock={runBlock}
+                  runningBlocks={runningBlocks}
+                  selectedBlock={selectedBlock}
+                  setActiveSidekickView={setActiveSidekickView}
+                  setEditingBlock={setEditingBlock}
+                  setErrors={setErrors}
+                  setSelectedBlock={(block) => {
+                    setSelectedBlock(block);
 
-                  if (sideBySideEnabled) {
-                    scrollToBlock(block);
-                  }
-                }}
-                showUpdateBlockModal={showUpdateBlockModal}
-                treeRef={treeRef}
-              />
+                    if (sideBySideEnabled) {
+                      scrollToBlock(block);
+                    }
+                  }}
+                  showUpdateBlockModal={showUpdateBlockModal}
+                  treeRef={treeRef}
+                />
+                </div>
+              )}
               {!blockEditing && PipelineTypeEnum.STREAMING === pipeline?.type && (
-                <Spacing p={1}>
-                  <PipelineExecution
-                    cancelPipeline={cancelPipeline}
-                    checkIfPipelineRunning={checkIfPipelineRunning}
-                    executePipeline={executePipeline}
-                    isPipelineExecuting={isPipelineExecuting}
-                    pipelineExecutionHidden={pipelineExecutionHidden}
-                    pipelineMessages={pipelineMessages}
-                    setPipelineExecutionHidden={setPipelineExecutionHidden}
-                  />
-                </Spacing>
+                <div style={{ borderTop: '1px solid rgba(255, 255, 255, 0.1)' }}>
+                  {!treeHidden && (
+                    <DragHandleStyle
+                      aria-label="Resize output panel"
+                      ref={dragHandleRef}
+                      role="separator"
+                    />
+                  )}
+                  <Spacing p={1}>
+                    <PipelineExecution
+                      cancelPipeline={cancelPipeline}
+                      checkIfPipelineRunning={checkIfPipelineRunning}
+                      containerHeight={pipelineExecutionHidden ? undefined : executionContainerHeight}
+                      executePipeline={executePipeline}
+                      isPipelineExecuting={isPipelineExecuting}
+                      outputContainerRef={outputContainerRef}
+                      pipelineExecutionHidden={pipelineExecutionHidden}
+                      pipelineMessages={pipelineMessages}
+                      setPipelineExecutionHidden={setPipelineExecutionHidden}
+                      setTreeHidden={handleSetTreeHidden}
+                      treeHidden={treeHidden}
+                    />
+                  </Spacing>
+                </div>
               )}
             </>
           </ApiReloader>
