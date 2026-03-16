@@ -137,8 +137,7 @@ function BlockRunsTable({
                       )}
                 </Text>,
               ];
-          })} 
-          uuid="global-block-runs"        />
+          })} uuid="global-block-runs"        />
     );
 }
 
