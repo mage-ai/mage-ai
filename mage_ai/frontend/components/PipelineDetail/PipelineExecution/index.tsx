@@ -84,6 +84,10 @@ function PipelineExecution({
   const content = (
     <>
       <DragHandleStyle
+        role="separator"
+        aria-valuenow={panelHeight}
+        aria-label="Resize execution logs"
+        data-testid="execution-drag-handle"
         isDragging={isDragging}
         isHidden={pipelineExecutionHidden}
         onMouseDown={onDragStart}
@@ -147,6 +151,7 @@ function PipelineExecution({
             </Text>
             <Spacing mr={1} />
             <ToggleSwitch
+              data-testid="hide-logs-toggle"
               checked={pipelineExecutionHidden}
               onCheck={togglePipelineExecution}
             />
@@ -224,7 +229,11 @@ function PipelineExecution({
 
   if (panelHeight !== undefined) {
     return (
-      <PipelineExecutionWrapperStyle panelHeight={panelHeight}>
+      <PipelineExecutionWrapperStyle
+        aria-expanded={!pipelineExecutionHidden}
+        data-testid="pipeline-execution-panel"
+        panelHeight={panelHeight}
+      >
         {content}
       </PipelineExecutionWrapperStyle>
     );

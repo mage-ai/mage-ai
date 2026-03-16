@@ -52,14 +52,7 @@ import {
   ViewKeyEnum,
 } from './constants';
 import { VERTICAL_NAVIGATION_WIDTH } from '@components/Dashboard/index.style';
-import { LOCAL_STORAGE_KEY_PIPELINE_EXECUTION_HIDDEN, get, set as setLocalStorage } from '@storage/localStorage';
 import { OpenDataIntegrationModalType } from '@components/DataIntegrationModal/constants';
-import {
-  COLLAPSED_PANEL_HEIGHT,
-  COLLAPSE_THRESHOLD,
-  OUTPUT_HEIGHT,
-  SNAP_TO_TOP_GAP,
-} from '@components/PipelineDetail/PipelineExecution/constants';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import {
   SidekickContainerStyle,
@@ -608,7 +601,9 @@ function Sidekick({
       >
         {activeView === ViewKeyEnum.TREE &&
           <ApiReloader uuid={`PipelineDetail/${pipeline?.uuid}`}>
-            <div style={{ position: 'relative', height: '100%' }}>
+            <div 
+              style={{ position: 'relative', height: '100%' }} data-testid="dependency-graph-container"
+            >
               <DependencyGraph
                 addNewBlockAtIndex={addNewBlockAtIndex}
                 blockRefs={blockRefs}
