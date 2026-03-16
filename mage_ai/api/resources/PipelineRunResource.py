@@ -128,7 +128,7 @@ class PipelineRunResource(DatabaseResource):
                          PipelineRun.id == latest_pipeline_runs.c.id,
                          latest_pipeline_runs.c.row_number == 1,
                      ))
-            )
+                    )
         else:
             query = PipelineRun.query
 
@@ -193,22 +193,17 @@ class PipelineRunResource(DatabaseResource):
         return initial_results
 
     @classmethod
-    @safe_db_query
-    def _build_queue_position_map(cls):
+    def _build_queue_position_map(cls, results):
         """
         Builds a dict mapping run_id -> 1-indexed queue position for all
-        currently queued (INITIAL status) pipeline runs, ordered by created_at.
-
-        This is computed once per list request in process_collection and passed
-        to the presenter via kwargs, avoiding an O(N) DB query per presenter call.
+        INITIAL status pipeline runs in the current result set, ordered by
+        created_at. Uses already-fetched results to avoid an extra DB query.
         """
-        queued_runs = (
-            PipelineRun.query
-            .filter(PipelineRun.status == PipelineRun.PipelineRunStatus.INITIAL)
-            .order_by(PipelineRun.created_at)
-            .all()
+        queued = sorted(
+            [r for r in results if r.status == PipelineRun.PipelineRunStatus.INITIAL],
+            key=lambda r: r.created_at,
         )
-        return {run.id: i + 1 for i, run in enumerate(queued_runs)}
+        return {run.id: i + 1 for i, run in enumerate(queued)}
 
     @classmethod
     @safe_db_query
@@ -312,11 +307,8 @@ class PipelineRunResource(DatabaseResource):
             ):
                 db_connection.session.expire(run)
 
-        try:
-            queue_position_map = self._build_queue_position_map()
-        except Exception as err:
-            print('ERROR building queue_position_map:', err)
-            queue_position_map = {}
+        # Build queue position map from already-fetched results — no extra DB query needed
+        queue_position_map = self._build_queue_position_map(results[0:final_end_idx])
 
         result_set = self.build_result_set(
             results[0:final_end_idx],
