@@ -312,7 +312,11 @@ class PipelineRunResource(DatabaseResource):
             ):
                 db_connection.session.expire(run)
 
-        queue_position_map = self._build_queue_position_map()
+        try:
+            queue_position_map = self._build_queue_position_map()
+        except Exception as err:
+            print('ERROR building queue_position_map:', err)
+            queue_position_map = {}
 
         result_set = self.build_result_set(
             results[0:final_end_idx],
