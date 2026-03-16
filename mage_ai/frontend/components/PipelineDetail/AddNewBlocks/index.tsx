@@ -11,7 +11,7 @@ import PipelineType, { PipelineTypeEnum } from '@interfaces/PipelineType';
 import ProjectType, { FeatureUUIDEnum } from '@interfaces/ProjectType';
 import Tooltip from '@oracle/components/Tooltip';
 import useProject from '@utils/models/project/useProject';
-import { Add, HexagonAll, Sensor as SensorIcon } from '@oracle/icons';
+import { Add, CubeWithArrowDown, HexagonAll, Sensor as SensorIcon } from '@oracle/icons';
 import { AxisEnum } from '@interfaces/ActionPayloadType';
 import {
   BlockLanguageEnum,
@@ -48,6 +48,7 @@ type AddNewBlocksProps = {
   hideDataLoader?: boolean;
   hideDbt?: boolean;
   hideCustom?: boolean;
+  hideDownload?: boolean;
   hideMarkdown?: boolean;
   hideScratchpad?: boolean;
   hideSensor?: boolean;
@@ -74,6 +75,7 @@ type AddNewBlocksProps = {
   showGlobalDataProducts?: (opts?: {
     addNewBlock?: (block: BlockRequestPayloadType) => Promise<any>;
   }) => void;
+  downloadImage?: (fileType: 'jpeg' | 'png' | 'svg') => void;
 } & OpenBlockBrowserModalType;
 
 const DATA_LOADER_BUTTON_INDEX = 0;
@@ -83,6 +85,7 @@ const DBT_BUTTON_INDEX = 3;
 const CUSTOM_BUTTON_INDEX = 4;
 const SENSOR_BUTTON_INDEX = 6;
 const MARKDOWN_BUTTON_INDEX = 7;
+const DOWNLOAD_BUTTON_INDEX = 8;
 
 function AddNewBlocks({
   addNewBlock,
@@ -94,6 +97,7 @@ function AddNewBlocks({
   hideDataExporter,
   hideDataLoader,
   hideDbt,
+  hideDownload,
   hideMarkdown,
   hideScratchpad,
   hideSensor,
@@ -110,6 +114,7 @@ function AddNewBlocks({
   showBrowseTemplates,
   showConfigureProjectModal,
   showGlobalDataProducts,
+  downloadImage,
 }: AddNewBlocksProps) {
   const {
     featureEnabled,
@@ -124,6 +129,7 @@ function AddNewBlocks({
   const customBlockButtonRef = useRef(null);
   const sensorButtonRef = useRef(null);
   const markdownButtonRef = useRef(null);
+  const downloadButtonRef = useRef(null);
   const sharedProps = {
     compact,
     inline: true,
@@ -777,6 +783,62 @@ function AddNewBlocks({
                 >
                   Markdown
                 </KeyboardShortcutButton>
+              </FlyoutMenuWrapper>
+            </ButtonWrapper>
+          )}
+
+
+          {!hideDownload && (
+            <ButtonWrapper increasedZIndex={buttonMenuOpenIndex === DOWNLOAD_BUTTON_INDEX}>
+              <FlyoutMenuWrapper
+                disableKeyboardShortcuts
+                items={[
+                  {
+                    label: () => 'JPEG Format',
+                    onClick: () => downloadImage('jpeg'),
+                    uuid: 'download_jpeg_button',
+                  },
+                  {
+                    label: () => 'PNG Format',
+                    onClick: () => downloadImage('png'),
+                    uuid: 'download_png_button',
+                  },
+                ]}
+                onClickCallback={closeButtonMenu}
+                open={buttonMenuOpenIndex === DOWNLOAD_BUTTON_INDEX}
+                parentRef={downloadButtonRef}
+                uuid="download_menu_items"
+              >
+                <Tooltip
+                  block
+                  label="Download pipeline dependency tree."
+                  maxWidth={MAX_TOOLTIP_WIDTH}
+                  size={null}
+                >
+                  <KeyboardShortcutButton
+                    {...sharedProps}
+                    beforeElement={
+                      <IconContainerStyle compact={compact} sky>
+                        <CubeWithArrowDown
+                          inverted
+                          size={iconSize}
+                        />
+                      </IconContainerStyle>
+                    }
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setButtonMenuOpenIndex(val =>
+                        val === DOWNLOAD_BUTTON_INDEX
+                          ? null
+                          : DOWNLOAD_BUTTON_INDEX,
+                      );
+                      handleBlockZIndex(DOWNLOAD_BUTTON_INDEX);
+                    }}
+                    uuid="download_context_menu_button"
+                  >
+                    Download image
+                  </KeyboardShortcutButton>
+                </Tooltip>
               </FlyoutMenuWrapper>
             </ButtonWrapper>
           )}
