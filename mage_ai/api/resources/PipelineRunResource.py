@@ -193,6 +193,7 @@ class PipelineRunResource(DatabaseResource):
         return initial_results
 
     @classmethod
+    @safe_db_query
     def _build_queue_position_map(cls):
         """
         Builds a dict mapping run_id -> 1-indexed queue position for all
