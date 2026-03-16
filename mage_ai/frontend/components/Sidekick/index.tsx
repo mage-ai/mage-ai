@@ -412,6 +412,7 @@ function Sidekick({
         : TABLE_COLUMN_HEADER_HEIGHT
       }
       columns={columns}
+      enableFiltering
       height={heightWindow - heightOffset - ASIDE_SUBHEADER_HEIGHT}
       noBorderBottom
       noBorderLeft

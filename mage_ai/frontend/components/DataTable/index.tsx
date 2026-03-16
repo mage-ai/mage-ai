@@ -1,4 +1,4 @@
-import React, { useCallback, useContext, useEffect, useMemo, useRef } from 'react';
+import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import Link from '@oracle/elements/Link';
 import NextLink from 'next/link';
 import styled from 'styled-components';
@@ -6,11 +6,13 @@ import { VariableSizeList } from 'react-window';
 import { TableHeaderProps, useBlockLayout, useTable } from 'react-table';
 import { useSticky } from 'react-table-sticky';
 
+import FilterRow from './FilterRow';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Text from '@oracle/elements/Text';
 import dark from '@oracle/styles/themes/dark';
 import light from '@oracle/styles/themes/light';
 import scrollbarWidth from './scrollbarWidth';
+import useDynamicDebounce from '@utils/hooks/useDebounce';
 import { FONT_FAMILY_REGULAR, MONO_FONT_FAMILY_REGULAR } from '@oracle/styles/fonts/primary';
 import { REGULAR, REGULAR_LINE_HEIGHT, SMALL } from '@oracle/styles/fonts/sizes';
 import { ScrollbarStyledCss } from '@oracle/styles/scrollbars';
@@ -18,6 +20,7 @@ import { TAB_REPORTS } from '@components/datasets/overview/constants';
 import { ThemeContext } from 'styled-components';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { createDatasetTabRedirectLink } from '@components/utils';
+import { filterRows } from './filterUtils';
 import { range, sum } from '@utils/array';
 import { isObject } from '@utils/hash';
 import { isJsonString } from '@utils/string';
@@ -71,16 +74,20 @@ type TableProps = {
     sticky?: string;
   }[];
   data: (string | number | { [key: string]: string | number | boolean } | (string | number)[])[][];
+  enableFiltering?: boolean;
   numberOfIndexes: number;
+  onFilteredRowCount?: (count: number | null) => void;
 } & SharedProps;
 
 type DataTableProps = {
   columns: string[];
   disableZeroIndexRowNumber?: boolean;
+  enableFiltering?: boolean;
   noBorderBottom?: boolean;
   noBorderLeft?: boolean;
   noBorderRight?: boolean;
   noBorderTop?: boolean;
+  onFilteredRowCount?: (count: number | null) => void;
   rows: string[][] | number[][];
 } & SharedProps;
 
@@ -186,6 +193,12 @@ const Styles = styled.div<{
 
     .header {
       overflow: hidden;
+    }
+
+    .tr-filter {
+      .td {
+        padding: 0;
+      }
     }
   }
 `;
@@ -357,11 +370,13 @@ function Table({ ...props }: TableProps) {
     columns,
     data,
     disableScrolling,
+    enableFiltering,
     height,
     index: indexProp,
     invalidValues,
     maxHeight,
     numberOfIndexes,
+    onFilteredRowCount,
     previewIndexes,
     renderColumnHeader,
     renderColumnHeaderCell,
@@ -371,6 +386,53 @@ function Table({ ...props }: TableProps) {
   const themeContext = useContext(ThemeContext);
   const refHeader = useRef(null);
   const refListOuter = useRef(null);
+  const refList = useRef<VariableSizeList>(null);
+
+  const [filters, setFilters] = useState<Record<number, string>>({});
+  const [debouncedFilters, setDebouncedFilters] = useState<Record<number, string>>({});
+  const [debouncer, cancelDebounce] = useDynamicDebounce();
+
+  const handleFilterChange = useCallback((colIndex: number, value: string) => {
+    setFilters(prev => {
+      const next = { ...prev };
+      if (value) {
+        next[colIndex] = value;
+      } else {
+        delete next[colIndex];
+      }
+      return next;
+    });
+  }, []);
+
+  useEffect(() => {
+    debouncer(setDebouncedFilters, 300, filters);
+    return cancelDebounce;
+  }, [cancelDebounce, debouncer, filters]);
+
+  const { filteredData, originalIndices, isFiltering } = useMemo(() => {
+    const hasActiveFilters = enableFiltering && Object.keys(debouncedFilters).length > 0;
+    if (!hasActiveFilters) {
+      return { filteredData: data, originalIndices: [], isFiltering: false };
+    }
+    const result = filterRows(data, debouncedFilters);
+    return {
+      filteredData: result.filteredRows,
+      originalIndices: result.originalIndices,
+      isFiltering: true,
+    };
+  }, [data, debouncedFilters, enableFiltering]);
+
+  useEffect(() => {
+    if (enableFiltering && onFilteredRowCount) {
+      onFilteredRowCount(isFiltering ? filteredData.length : null);
+    }
+  }, [enableFiltering, filteredData.length, isFiltering, onFilteredRowCount]);
+
+  useEffect(() => {
+    if (refList.current) {
+      refList.current.resetAfterIndex(0);
+    }
+  }, [filteredData]);
 
   useEffect(() => {
     const onScrollCallback = e => {
@@ -437,7 +499,7 @@ function Table({ ...props }: TableProps) {
   const { getTableBodyProps, getTableProps, headerGroups, prepareRow, rows } = useTable(
     {
       columns,
-      data,
+      data: filteredData,
       defaultColumn,
     },
     useBlockLayout,
@@ -507,11 +569,14 @@ function Table({ ...props }: TableProps) {
             let indexColumnValue: any;
 
             if (indexColumn) {
+              const displayIndex = isFiltering && originalIndices.length > 0 ? originalIndices[index] : index;
               if (shouldUseIndexProp) {
-                indexColumnValue = indexProp[index];
+                indexColumnValue = indexProp[displayIndex];
                 if (Array.isArray(indexColumnValue)) {
                   indexColumnValue = indexColumnValue[idx];
                 }
+              } else if (isFiltering) {
+                indexColumnValue = String(displayIndex);
               } else {
                 indexColumnValue = cell.render('Cell');
               }
@@ -588,8 +653,10 @@ function Table({ ...props }: TableProps) {
       columnsAll,
       indexProp,
       invalidValues,
+      isFiltering,
       maxWidthOfIndexColumns,
       numberOfIndexes,
+      originalIndices,
       prepareRow,
       previewIndexes,
       rows,
@@ -598,35 +665,49 @@ function Table({ ...props }: TableProps) {
   );
 
   const variableListMemo = useMemo(
-    () => (
-      <VariableSizeList
-        estimatedItemSize={BASE_ROW_HEIGHT}
-        height={getVariableListHeight(columnHeaderHeight, height, maxHeight, rows, width)}
-        itemCount={rows?.length}
-        itemSize={(idx: number) => {
-          const size = estimateCellHeight({
-            ...rows[idx],
-            variableListProps: {
-              columnHeaderHeight,
-              height,
-              maxHeight,
-              width,
-            },
-            width,
-          });
+    () => {
+      const listHeight = getVariableListHeight(columnHeaderHeight, height, maxHeight, rows, width);
+      const adjustedHeight = enableFiltering ? Math.max(0, listHeight - BASE_ROW_HEIGHT) : listHeight;
 
-          return size;
-        }}
-        outerRef={refListOuter}
-        style={{
-          maxHeight: maxHeight,
-          pointerEvents: disableScrolling ? 'none' : null,
-        }}
-      >
-        {renderRow}
-      </VariableSizeList>
-    ),
-    [columnHeaderHeight, disableScrolling, height, maxHeight, renderRow, rows, width],
+      if (rows?.length === 0 && isFiltering) {
+        return (
+          <div style={{ padding: UNIT * 2 }}>
+            <Text muted>No rows match the current filters.</Text>
+          </div>
+        );
+      }
+
+      return (
+        <VariableSizeList
+          estimatedItemSize={BASE_ROW_HEIGHT}
+          height={adjustedHeight}
+          itemCount={rows?.length}
+          itemSize={(idx: number) => {
+            const size = estimateCellHeight({
+              ...rows[idx],
+              variableListProps: {
+                columnHeaderHeight,
+                height,
+                maxHeight,
+                width,
+              },
+              width,
+            });
+
+            return size;
+          }}
+          outerRef={refListOuter}
+          ref={refList}
+          style={{
+            maxHeight: maxHeight && enableFiltering ? maxHeight - BASE_ROW_HEIGHT : maxHeight,
+            pointerEvents: disableScrolling ? 'none' : null,
+          }}
+        >
+          {renderRow}
+        </VariableSizeList>
+      );
+    },
+    [columnHeaderHeight, disableScrolling, enableFiltering, height, isFiltering, maxHeight, renderRow, rows, width],
   );
 
   return (
@@ -701,6 +782,16 @@ function Table({ ...props }: TableProps) {
           ))}
         </div>
 
+        {enableFiltering && (
+          <FilterRow
+            columnCount={columns.length - numberOfIndexes}
+            columnWidth={defaultColumn.width}
+            filters={filters}
+            indexColumnWidths={maxWidthOfIndexColumns}
+            onFilterChange={handleFilterChange}
+          />
+        )}
+
         {variableListMemo}
       </div>
     </div>
@@ -712,6 +803,7 @@ function DataTable({
   columns: columnsProp,
   disableScrolling,
   disableZeroIndexRowNumber,
+  enableFiltering,
   height,
   index,
   invalidValues,
@@ -720,6 +812,7 @@ function DataTable({
   noBorderLeft,
   noBorderRight,
   noBorderTop,
+  onFilteredRowCount,
   previewIndexes,
   renderColumnHeader,
   renderColumnHeaderCell,
@@ -761,11 +854,13 @@ function DataTable({
           columns={columns}
           data={rowsProp}
           disableScrolling={disableScrolling}
+          enableFiltering={enableFiltering}
           height={height}
           index={index}
           invalidValues={invalidValues}
           maxHeight={maxHeight}
           numberOfIndexes={numberOfIndexes}
+          onFilteredRowCount={onFilteredRowCount}
           previewIndexes={previewIndexes}
           renderColumnHeader={renderColumnHeader}
           renderColumnHeaderCell={renderColumnHeaderCell}
@@ -776,6 +871,7 @@ function DataTable({
       columnHeaderHeight,
       columnHeadersContainEmptyString,
       columns,
+      enableFiltering,
       rowsProp,
       disableScrolling,
       height,
@@ -783,6 +879,7 @@ function DataTable({
       invalidValues,
       maxHeight,
       numberOfIndexes,
+      onFilteredRowCount,
       previewIndexes,
       renderColumnHeader,
       renderColumnHeaderCell,

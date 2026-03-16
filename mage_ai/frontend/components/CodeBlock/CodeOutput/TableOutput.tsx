@@ -1,5 +1,5 @@
 import InnerHTML from 'dangerously-set-html-content';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 
 import DataTable from '@components/DataTable';
 import FlexContainer from '@oracle/components/FlexContainer';
@@ -39,6 +39,7 @@ function TableOutput({
   uuid,
 }: TableOutputProps) {
   const { data, resource_usage: resourceUsage, sample_data: sampleData } = output;
+  const [filteredRowCount, setFilteredRowCount] = useState<number | null>(null);
   const shape = useMemo(
     // @ts-ignore
     () =>
@@ -119,7 +120,9 @@ function TableOutput({
     const arr1 = [];
     const arr2 = [];
 
-    if (shape?.length >= 1) {
+    if (filteredRowCount !== null && shape?.length >= 1) {
+      arr1.push(`Showing ${filteredRowCount} of ${pluralize('row', shape[0])}`);
+    } else if (shape?.length >= 1) {
       const r = pluralize('row', shape?.[0]);
       if (shape?.length >= 2) {
         const c = pluralize('column', shape?.[1]);
@@ -161,19 +164,21 @@ function TableOutput({
         </Text>
       </>
     );
-  }, [shape, resourceUsage]);
+  }, [filteredRowCount, shape, resourceUsage]);
 
   return (
     <>
       <DataTable
         columns={columns}
         disableScrolling={!selected}
+        enableFiltering
         key={`data-table-${order}`}
         maxHeight={maxHeight || UNIT * 60}
         noBorderBottom
         noBorderLeft
         noBorderRight
         noBorderTop={!borderTop}
+        onFilteredRowCount={setFilteredRowCount}
         renderColumnHeaderCell={(
           { Header: columnName },
           _,
