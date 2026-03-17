@@ -1,0 +1,123 @@
+---
+title: "Alerting status updates in ntfy"
+sidebarTitle: "ntfy"
+icon: "bell"
+description: "Get status updates via ntfy push notifications."
+---
+
+## Overview of steps
+
+1. Set up an [ntfy](https://ntfy.sh) topic (hosted or self-hosted)
+2. Update Mage project settings
+
+---
+
+## Set up an ntfy topic
+
+If you're using the public ntfy server, simply choose a topic name (e.g.
+`mage-alerts`). Your topic URL will be `https://ntfy.sh/mage-alerts`.
+
+If you're running a self-hosted ntfy instance, use your server's URL instead
+(e.g. `https://ntfy.example.com/mage-alerts`).
+
+You can test your topic by opening the topic URL directly in your browser
+(e.g. `https://ntfy.sh/mage-alerts`), subscribing in the
+[ntfy web app](https://ntfy.sh/app), or using the mobile app. Then send a test
+message:
+
+```bash
+curl -d "Test alert from Mage" https://ntfy.sh/mage-alerts
+```
+
+---
+
+## Update Mage project settings
+
+Follow these steps to add your ntfy topic URL to your project settings:
+
+1. Open the Mage tool in your browser (e.g. http://localhost:6789/).
+2. Open a pipeline and start editing it (e.g.
+   http://localhost:6789/pipelines/example_pipeline/edit).
+3. In your left sidebar in the file browser, scroll all the way down and click
+   on a file named `metadata.yaml`.
+4. In the `metadata.yaml` file, add a section with the following
+   configuration or update the existing `notification_config` section:
+
+    ```yaml
+    notification_config:
+      alert_on:
+        - trigger_failure
+        - trigger_passed_sla
+    ```
+
+    If you omit the `alert_on` section it will default to `trigger_failure` and `trigger_passed_sla`.
+
+    Options:
+
+    - `trigger_failure`: alert when a run of a trigger fails
+    - `trigger_success`: alert when a run of a trigger succeeds
+    - `trigger_passed_sla`: alert when a SLA is missed.
+      - In this context, SLA (Service Level Agreement) is an expected amount of time for the pipeline to complete.
+      - If the pipeline runs _longer_ than the SLA, an alert will be sent.
+
+5. In the `metadata.yaml` file, add the following values:
+
+    ```yaml
+    notification_config:
+      alert_on:
+        ...
+      ntfy_config:
+        base_url: ...
+        topic: ...
+    ```
+
+    Change `base_url` to your ntfy server URL (e.g. `https://ntfy.sh`) and
+    `topic` to your topic name (e.g. `mage-alerts`).
+
+## Customize message templates
+You can customize message templates in `notification_config`. Here is an example config:
+```yaml
+notification_config:
+  alert_on:
+    ...
+  ntfy_config:
+    ...
+  message_templates:
+    failure:
+      title: 'Failed to execute pipeline {pipeline_uuid} at {execution_time}'
+      summary: >
+        Failed to execute pipeline {pipeline_run_url}.
+        Pipeline uuid: {pipeline_uuid}. Trigger name: {pipeline_schedule_name}.
+        Test custom message.
+    success:
+      title: ...
+      summary: ...
+    passed_sla:
+      title: ...
+      summary: ...
+```
+You can customize the message template for `success`, `failure`, `passed_sla` scenarios. For each message template,
+you can specify the sentence on `summary` and the `title`.
+
+To interpolate variables in the message template, you can use `{variable_name}` syntax.
+Here are the supported variables:
+1. `execution_time`
+1. `pipeline_run_url`
+1. `pipeline_schedule_id`
+1. `pipeline_schedule_name`
+1. `pipeline_schedule_description`
+1. `pipeline_uuid`
+1. `error`
+    * available only for the `failure` message template
+1. `stacktrace`
+    * available only for the `failure` message template
+
+> **Note**: For `pipeline_run_url`, the default host is `http://localhost:6789`. You can specify `MAGE_PUBLIC_HOST` to be
+the host url you want to use in the notification messages.
+
+---
+
+## What next?
+
+Whenever a pipeline run is successfully completed or fails, a push notification will
+appear on any device subscribed to your ntfy topic.
