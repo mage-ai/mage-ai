@@ -2,8 +2,10 @@ import { expect, test } from './base';
 
 test('ensure users can download jpeg image of dependency graph', async ({ page }) => {
   await page.goto('/pipelines/example_pipeline/edit');
-  await expect(page.getByRole('button', { name: 'Download' })).toBeVisible();
-  await page.getByRole('button', { name: 'Download' }).click();
+  const downloadButton = page.getByRole('button', { name: 'Download' });
+  await downloadButton.scrollIntoViewIfNeeded();
+  await expect(downloadButton).toBeVisible();
+  await downloadButton.click();
   const [download] = await Promise.all([
     page.waitForEvent('download'),
     page.getByText('JPEG Format').click(),
@@ -15,8 +17,10 @@ test('ensure users can download jpeg image of dependency graph', async ({ page }
 
 test('ensure users can download png image of dependency graph', async ({ page }) => {
   await page.goto('/pipelines/example_pipeline/edit');
-  await expect(page.getByRole('button', { name: 'Download' })).toBeVisible();
-  await page.getByRole('button', { name: 'Download' }).click();
+  const downloadButton = page.getByRole('button', { name: 'Download' });
+  await downloadButton.scrollIntoViewIfNeeded();
+  await expect(downloadButton).toBeVisible();
+  await downloadButton.click();
   const [download] = await Promise.all([
     page.waitForEvent('download'),
     page.getByText('PNG Format').click(),
