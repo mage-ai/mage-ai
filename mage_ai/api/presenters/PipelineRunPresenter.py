@@ -1,5 +1,6 @@
 from mage_ai.api.operations import constants
 from mage_ai.api.presenters.BasePresenter import BasePresenter
+from mage_ai.orchestration.db.models.schedules import PipelineRun
 
 
 class PipelineRunPresenter(BasePresenter):
@@ -20,13 +21,6 @@ class PipelineRunPresenter(BasePresenter):
         'updated_at',
         'variables',
     ]
-
-    def _get_queue_position(self, run_id, queue_position_map):
-        """
-        Returns the queue position of a run from a pre-computed map,
-        or None if the run is not currently queued.
-        """
-        return queue_position_map.get(run_id)
 
     async def prepare_present(self, **kwargs):
         display_format = kwargs.get('format')
@@ -65,17 +59,33 @@ class PipelineRunPresenter(BasePresenter):
 
             data = data_to_display.to_dict(include_attributes=additional_attributes)
 
-            # Read queue position map from result_set metadata
+            # Compute queue position map once per request and cache it on the result set
+            # metadata so subsequent presenter calls in the same request reuse it.
             queue_position_map = {}
+            result_set = None
             if hasattr(self.resource, 'result_set') and self.resource.result_set():
-                queue_position_map = self.resource.result_set().metadata.get(
-                    'queue_position_map', {}
-                )
+                result_set = self.resource.result_set()
+                queue_position_map = result_set.metadata.get('queue_position_map') \
+                    if result_set.metadata else None
 
-            data['queue_position'] = self._get_queue_position(
-                data_to_display.id,
-                queue_position_map,
-            )
+                if queue_position_map is None:
+                    # First presenter call for this request — build and cache the map
+                    queued_runs = (
+                        PipelineRun.query
+                        .filter(
+                            PipelineRun.status == PipelineRun.PipelineRunStatus.INITIAL,
+                        )
+                        .order_by(PipelineRun.created_at)
+                        .all()
+                    )
+                    queue_position_map = {
+                        run.id: i + 1 for i, run in enumerate(queued_runs)
+                    }
+                    if result_set.metadata is None:
+                        result_set.metadata = {}
+                    result_set.metadata['queue_position_map'] = queue_position_map
+
+            data['queue_position'] = queue_position_map.get(data_to_display.id)
 
             return data
 

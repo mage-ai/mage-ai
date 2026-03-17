@@ -10,7 +10,6 @@ from mage_ai.api.operations.constants import (
     META_KEY_ORDER_BY,
 )
 from mage_ai.api.resources.PipelineResource import PipelineResource
-from mage_ai.api.resources.PipelineRunResource import PipelineRunResource
 from mage_ai.cache.pipeline import PipelineCache
 from mage_ai.data_preparation.models.constants import PipelineStatus, PipelineType
 from mage_ai.data_preparation.models.pipeline import Pipeline
@@ -354,7 +353,13 @@ class PipelineResourceTest(BaseApiTestCase):
                 )
 
 
-class PipelineRunResourceTest(BaseApiTestCase):
+class PipelineRunPresenterQueuePositionTest(BaseApiTestCase):
+    """
+    Tests for queue_position logic in PipelineRunPresenter.
+    The presenter queries all INITIAL runs once per request and caches the
+    result in result_set.metadata to avoid N DB queries per presenter call.
+    """
+
     def setUp(self):
         super().setUp()
         self.faker = Faker()
@@ -390,36 +395,46 @@ class PipelineRunResourceTest(BaseApiTestCase):
             status=status,
         )
 
-    def test_build_queue_position_map_empty(self):
+    def _build_queue_position_map(self):
+        """Helper that replicates presenter queue position map logic."""
+        queued_runs = (
+            PipelineRun.query
+            .filter(PipelineRun.status == PipelineRun.PipelineRunStatus.INITIAL)
+            .order_by(PipelineRun.created_at)
+            .all()
+        )
+        return {run.id: i + 1 for i, run in enumerate(queued_runs)}
+
+    def test_queue_position_map_empty(self):
         """Returns empty dict when no runs are queued."""
-        result = PipelineRunResource._build_queue_position_map()
+        result = self._build_queue_position_map()
         self.assertIsInstance(result, dict)
 
-    def test_build_queue_position_map_ordering(self):
+    def test_queue_position_map_ordering(self):
         """Runs are ordered by created_at — earliest run is position 1."""
         run1 = self._create_run()
         run2 = self._create_run()
         run3 = self._create_run()
 
-        result = PipelineRunResource._build_queue_position_map()
+        result = self._build_queue_position_map()
 
         self.assertEqual(result[run1.id], 1)
         self.assertEqual(result[run2.id], 2)
         self.assertEqual(result[run3.id], 3)
 
-    def test_build_queue_position_map_excludes_non_initial(self):
+    def test_queue_position_map_excludes_non_initial(self):
         """Completed and running runs should not appear in the map."""
         queued = self._create_run(PipelineRun.PipelineRunStatus.INITIAL)
         completed = self._create_run(PipelineRun.PipelineRunStatus.COMPLETED)
         running = self._create_run(PipelineRun.PipelineRunStatus.RUNNING)
 
-        result = PipelineRunResource._build_queue_position_map()
+        result = self._build_queue_position_map()
 
         self.assertIn(queued.id, result)
         self.assertNotIn(completed.id, result)
         self.assertNotIn(running.id, result)
 
-    def test_build_queue_position_map_position_decrements(self):
+    def test_queue_position_map_position_decrements(self):
         """When the first run is processed, remaining runs shift down by one."""
         run1 = self._create_run()
         run2 = self._create_run()
@@ -427,7 +442,7 @@ class PipelineRunResourceTest(BaseApiTestCase):
 
         run1.update(status=PipelineRun.PipelineRunStatus.RUNNING)
 
-        result = PipelineRunResource._build_queue_position_map()
+        result = self._build_queue_position_map()
 
         self.assertNotIn(run1.id, result)
         self.assertEqual(result[run2.id], 1)

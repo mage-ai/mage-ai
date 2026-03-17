@@ -112,23 +112,23 @@ class PipelineRunResource(DatabaseResource):
             latest_pipeline_runs = PipelineRun.select(
                 PipelineRun.id,
                 func.row_number()
-                .over(
-                    partition_by=(
-                        PipelineRun.execution_date,
-                        PipelineRun.pipeline_schedule_id,
-                        PipelineRun.pipeline_uuid,
-                    ),
-                    order_by=desc(PipelineRun.id))
-                .label('row_number')
+                    .over(
+                        partition_by=(
+                            PipelineRun.execution_date,
+                            PipelineRun.pipeline_schedule_id,
+                            PipelineRun.pipeline_uuid,
+                        ),
+                        order_by=desc(PipelineRun.id))
+                    .label('row_number')
             ).cte(name='latest_pipeline_runs')
             query = (PipelineRun.select(
-                PipelineRun,
+                    PipelineRun,
             )
-                     .join(latest_pipeline_runs, and_(
-                         PipelineRun.id == latest_pipeline_runs.c.id,
-                         latest_pipeline_runs.c.row_number == 1,
-                     ))
-                    )
+                .join(latest_pipeline_runs, and_(
+                    PipelineRun.id == latest_pipeline_runs.c.id,
+                    latest_pipeline_runs.c.row_number == 1,
+                ))
+            )
         else:
             query = PipelineRun.query
 
@@ -193,19 +193,6 @@ class PipelineRunResource(DatabaseResource):
         return initial_results
 
     @classmethod
-    def _build_queue_position_map(cls, results):
-        """
-        Builds a dict mapping run_id -> 1-indexed queue position for all
-        INITIAL status pipeline runs in the current result set, ordered by
-        created_at. Uses already-fetched results to avoid an extra DB query.
-        """
-        queued = sorted(
-            [r for r in results if r.status == PipelineRun.PipelineRunStatus.INITIAL],
-            key=lambda r: r.created_at,
-        )
-        return {run.id: i + 1 for i, run in enumerate(queued)}
-
-    @classmethod
     @safe_db_query
     async def process_collection(self, query_arg, meta, user, **kwargs):
         context_data = kwargs.get('context_data')
@@ -268,7 +255,7 @@ class PipelineRunResource(DatabaseResource):
         returned consistent across pages).
         """
         if limit is not None and limit != 0 and total_count >= 1 and \
-                not disable_retries_grouping and \
+            not disable_retries_grouping and \
                 (pipeline_uuid is not None or pipeline_schedule_id is not None):
 
             first_result = results[0]
@@ -302,13 +289,10 @@ class PipelineRunResource(DatabaseResource):
         # the next time they are fetched.
         for run in results:
             if run.status in (
-                    PipelineRun.PipelineRunStatus.RUNNING,
-                    PipelineRun.PipelineRunStatus.INITIAL,
+                PipelineRun.PipelineRunStatus.RUNNING,
+                PipelineRun.PipelineRunStatus.INITIAL,
             ):
                 db_connection.session.expire(run)
-
-        # Build queue position map from already-fetched results — no extra DB query needed
-        queue_position_map = self._build_queue_position_map(results[0:final_end_idx])
 
         result_set = self.build_result_set(
             results[0:final_end_idx],
@@ -319,7 +303,6 @@ class PipelineRunResource(DatabaseResource):
         result_set.metadata = {
             'count': total_count,
             'next': has_next,
-            'queue_position_map': queue_position_map,
         }
 
         if include_pipeline_uuids:
@@ -350,8 +333,8 @@ class PipelineRunResource(DatabaseResource):
                 resource.pipeline_schedule_id,
             )
             if schedule and \
-                    schedule.status == ScheduleStatus.INACTIVE and \
-                    schedule.schedule_type == ScheduleType.TIME and \
+                schedule.status == ScheduleStatus.INACTIVE and \
+                schedule.schedule_type == ScheduleType.TIME and \
                     schedule.schedule_interval == ScheduleInterval.ONCE:
                 schedule.update(status=ScheduleStatus.ACTIVE)
 
