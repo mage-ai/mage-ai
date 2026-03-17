@@ -2,10 +2,14 @@ import { expect, test } from './base';
 
 test('ensure users can download jpeg image of dependency graph', async ({ page }) => {
   await page.goto('/pipelines/example_pipeline/edit');
-  const downloadButton = page.getByRole('button', { name: 'Download' });
+  await expect(page.locator('svg').first()).toBeVisible({ timeout: 30000 });
+
+  const downloadButton = page.getByRole('button', { name: 'Download image' });
   await downloadButton.scrollIntoViewIfNeeded();
   await expect(downloadButton).toBeVisible();
   await downloadButton.click();
+
+  await expect(page.getByText('JPEG Format')).toBeVisible();
   const [download] = await Promise.all([
     page.waitForEvent('download'),
     page.getByText('JPEG Format').click(),
@@ -17,10 +21,14 @@ test('ensure users can download jpeg image of dependency graph', async ({ page }
 
 test('ensure users can download png image of dependency graph', async ({ page }) => {
   await page.goto('/pipelines/example_pipeline/edit');
-  const downloadButton = page.getByRole('button', { name: 'Download' });
+  await expect(page.locator('svg').first()).toBeVisible({ timeout: 30000 });
+
+  const downloadButton = page.getByRole('button', { name: 'Download image' });
   await downloadButton.scrollIntoViewIfNeeded();
   await expect(downloadButton).toBeVisible();
   await downloadButton.click();
+
+  await expect(page.getByText('PNG Format')).toBeVisible();
   const [download] = await Promise.all([
     page.waitForEvent('download'),
     page.getByText('PNG Format').click(),
@@ -29,3 +37,4 @@ test('ensure users can download png image of dependency graph', async ({ page })
   const path = await download.path();
   expect(path).not.toBeNull();
 });
+
