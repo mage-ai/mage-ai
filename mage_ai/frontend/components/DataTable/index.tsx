@@ -509,11 +509,12 @@ function Table({ ...props }: TableProps) {
   const renderRow = useCallback(
     ({ index, style }) => {
       const removedRowIndexes = new Set(previewIndexes?.removedRows || []);
+      const originalIndex = isFiltering && originalIndices.length > 0 ? originalIndices[index] : index;
 
       const row = rows[index];
       prepareRow(row);
       const { original } = row;
-      const rowToBeRemoved = removedRowIndexes.has(index);
+      const rowToBeRemoved = removedRowIndexes.has(originalIndex);
 
       return (
         <div
@@ -529,7 +530,7 @@ function Table({ ...props }: TableProps) {
             const indexColumn = idx <= numberOfIndexes - 1;
             const cellProps = cell.getCellProps();
             const header = cell.column.id;
-            const isInvalid = invalidValues?.[header]?.includes(index);
+            const isInvalid = invalidValues?.[header]?.includes(originalIndex);
             const cellStyle: {
               [key: string]: number | string;
             } = {
@@ -569,7 +570,7 @@ function Table({ ...props }: TableProps) {
             let indexColumnValue: any;
 
             if (indexColumn) {
-              const displayIndex = isFiltering && originalIndices.length > 0 ? originalIndices[index] : index;
+              const displayIndex = originalIndex;
               if (shouldUseIndexProp) {
                 indexColumnValue = indexProp[displayIndex];
                 if (Array.isArray(indexColumnValue)) {
