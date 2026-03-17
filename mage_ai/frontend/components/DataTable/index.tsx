@@ -395,7 +395,7 @@ function Table({ ...props }: TableProps) {
   const handleFilterChange = useCallback((colIndex: number, value: string) => {
     setFilters(prev => {
       const next = { ...prev };
-      if (value) {
+      if (value.trim()) {
         next[colIndex] = value;
       } else {
         delete next[colIndex];
@@ -408,6 +408,11 @@ function Table({ ...props }: TableProps) {
     debouncer(setDebouncedFilters, 300, filters);
     return cancelDebounce;
   }, [cancelDebounce, debouncer, filters]);
+
+  useEffect(() => {
+    setFilters({});
+    setDebouncedFilters({});
+  }, [data]);
 
   const { filteredData, originalIndices, isFiltering } = useMemo(() => {
     const hasActiveFilters = enableFiltering && Object.keys(debouncedFilters).length > 0;
