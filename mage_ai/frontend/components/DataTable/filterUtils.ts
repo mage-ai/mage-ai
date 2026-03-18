@@ -38,7 +38,7 @@ export function parseFilterExpression(expr: string): ParsedFilter | null {
     const value = match[2];
     const valueTrimmed = value.trim();
     const isStrictNumber = STRICT_NUMBER_REGEX.test(valueTrimmed);
-    const numericValue = isStrictNumber ? parseFloat(value) : undefined;
+    const numericValue = isStrictNumber ? parseFloat(valueTrimmed) : undefined;
     const dateValue = tryParseDate(valueTrimmed);
     return {
       dateValue,

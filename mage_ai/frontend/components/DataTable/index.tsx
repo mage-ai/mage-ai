@@ -395,7 +395,7 @@ function Table({ ...props }: TableProps) {
   const handleFilterChange = useCallback((colIndex: number, value: string) => {
     setFilters(prev => {
       const next = { ...prev };
-      if (value.trim()) {
+      if (value) {
         next[colIndex] = value;
       } else {
         delete next[colIndex];
@@ -409,10 +409,13 @@ function Table({ ...props }: TableProps) {
     return cancelDebounce;
   }, [cancelDebounce, debouncer, filters]);
 
-  useEffect(() => {
+  const [prevData, setPrevData] = useState(data);
+  if (data !== prevData) {
+    setPrevData(data);
     setFilters({});
     setDebouncedFilters({});
-  }, [data]);
+    cancelDebounce();
+  }
 
   const { filteredData, originalIndices, isFiltering } = useMemo(() => {
     const hasActiveFilters = enableFiltering && Object.keys(debouncedFilters).length > 0;
@@ -675,42 +678,41 @@ function Table({ ...props }: TableProps) {
       const listHeight = getVariableListHeight(columnHeaderHeight, height, maxHeight, rows, width);
       const adjustedHeight = enableFiltering ? Math.max(0, listHeight - BASE_ROW_HEIGHT) : listHeight;
 
-      if (rows?.length === 0 && isFiltering) {
-        return (
-          <div style={{ padding: UNIT * 2 }}>
-            <Text muted>No rows match the current filters.</Text>
-          </div>
-        );
-      }
-
       return (
-        <VariableSizeList
-          estimatedItemSize={BASE_ROW_HEIGHT}
-          height={adjustedHeight}
-          itemCount={rows?.length}
-          itemSize={(idx: number) => {
-            const size = estimateCellHeight({
-              ...rows[idx],
-              variableListProps: {
-                columnHeaderHeight,
-                height,
-                maxHeight,
+        <>
+          {rows?.length === 0 && isFiltering && (
+            <div style={{ padding: UNIT * 2 }}>
+              <Text muted>No rows match the current filters.</Text>
+            </div>
+          )}
+          <VariableSizeList
+            estimatedItemSize={BASE_ROW_HEIGHT}
+            height={adjustedHeight}
+            itemCount={rows?.length || 0}
+            itemSize={(idx: number) => {
+              const size = estimateCellHeight({
+                ...rows[idx],
+                variableListProps: {
+                  columnHeaderHeight,
+                  height,
+                  maxHeight,
+                  width,
+                },
                 width,
-              },
-              width,
-            });
+              });
 
-            return size;
-          }}
-          outerRef={refListOuter}
-          ref={refList}
-          style={{
-            maxHeight: maxHeight && enableFiltering ? maxHeight - BASE_ROW_HEIGHT : maxHeight,
-            pointerEvents: disableScrolling ? 'none' : null,
-          }}
-        >
-          {renderRow}
-        </VariableSizeList>
+              return size;
+            }}
+            outerRef={refListOuter}
+            ref={refList}
+            style={{
+              maxHeight: maxHeight && enableFiltering ? maxHeight - BASE_ROW_HEIGHT : maxHeight,
+              pointerEvents: disableScrolling ? 'none' : null,
+            }}
+          >
+            {renderRow}
+          </VariableSizeList>
+        </>
       );
     },
     [columnHeaderHeight, disableScrolling, enableFiltering, height, isFiltering, maxHeight, renderRow, rows, width],
@@ -786,17 +788,16 @@ function Table({ ...props }: TableProps) {
               })}
             </div>
           ))}
+          {enableFiltering && (
+            <FilterRow
+              columnCount={columns.length - numberOfIndexes}
+              columnWidth={defaultColumn.width}
+              filters={filters}
+              indexColumnWidths={maxWidthOfIndexColumns}
+              onFilterChange={handleFilterChange}
+            />
+          )}
         </div>
-
-        {enableFiltering && (
-          <FilterRow
-            columnCount={columns.length - numberOfIndexes}
-            columnWidth={defaultColumn.width}
-            filters={filters}
-            indexColumnWidths={maxWidthOfIndexColumns}
-            onFilterChange={handleFilterChange}
-          />
-        )}
 
         {variableListMemo}
       </div>
