@@ -83,16 +83,6 @@ const DEFAULT_NAV_ITEMS = ({
       },
     },
     {
-      Icon: Rocket,
-      id: 'deployments',
-      label: () => 'Deploy',
-      linkProps: {
-        href: 'https://www.mage.ai/deploy?ref=oss',
-        target: '_blank',
-      },
-      tag: 'Pro',
-    },
-    {
       Icon: Settings,
       id: 'settings',
       label: () => 'Settings',

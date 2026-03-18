@@ -1,5 +1,5 @@
 const HEIGHT = 14;
-const WIDTH = 18.53;
+const WIDTH = 20;
 const RATIO = WIDTH / HEIGHT;
 
 type GradientLogoProps = {
@@ -15,25 +15,34 @@ function GradientLogo({
   const w = width || (height ? (height * (RATIO)) : WIDTH);
 
   return (
-    <svg width={w} height={h} viewBox="0 0 20 14" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path opacity="0.4" d="M15.3266 0L19.2641 1.82961e-06L11.9687 14L8.03125 14L15.3266 0Z" fill="url(#paint0_linear_1303_5)" />
-      <path d="M11.9692 1.82961e-06L8.03164 0L0.736328 14L4.67383 14L8.03164 7.55626V14H11.9691V8.38194e-05L11.9692 1.82961e-06Z" fill="url(#paint1_linear_1303_5)" />
-      <path d="M15.3269 2.57679e-06H19.2644V14H15.3269V2.57679e-06Z" fill="url(#paint2_linear_1303_5)" />
-      <defs>
-        <linearGradient id="paint0_linear_1303_5" x1="8.03125" y1="7" x2="19.2641" y2="7" gradientUnits="userSpaceOnUse">
-          <stop offset="0.28125" stopColor="#7D55EC" />
-          <stop offset="1" stopColor="#2AB2FE" />
-        </linearGradient>
-        <linearGradient id="paint1_linear_1303_5" x1="0.736328" y1="7" x2="19.2644" y2="7" gradientUnits="userSpaceOnUse">
-          <stop offset="0.28125" stopColor="#7D55EC" />
-          <stop offset="1" stopColor="#2AB2FE" />
-        </linearGradient>
-        <linearGradient id="paint2_linear_1303_5" x1="0.736328" y1="7" x2="19.2644" y2="7" gradientUnits="userSpaceOnUse">
-          <stop offset="0.28125" stopColor="#7D55EC" />
-          <stop offset="1" stopColor="#2AB2FE" />
-        </linearGradient>
-    </defs>
-  </svg>
+    <svg
+  width={w}
+  height={h}
+  viewBox="0 0 400 300"
+  fill="none"
+  xmlns="http://www.w3.org/2000/svg"
+>
+  <path
+    d="M393.46 53.27H200V50.27C200 38.23 204.81 26.68 213.44 18.19C222.07 9.7 233.77 4.9 245.88 4.9H393.46V53.27Z"
+    fill="#2A19EF"
+  />
+  <path
+    d="M6.54 53.27H200V56.27C200 68.37 195.17 79.97 186.5 88.48C177.83 96.99 166.08 101.63 154 101.63H6.54V53.27Z"
+    fill="#2A19EF"
+  />
+  <path
+    d="M393.46 246.73H6.54V295.1H393.46V246.73Z"
+    fill="#2A19EF"
+  />
+  <path
+    d="M393.46 150H200V147C200 134.96 204.81 123.41 213.44 114.92C222.07 106.43 233.77 101.63 245.88 101.63H393.46V150Z"
+    fill="#2A19EF"
+  />
+  <path
+    d="M6.54 150H200V153C200 165.1 195.17 176.7 186.5 185.21C177.83 193.72 166.08 198.37 154 198.37H6.54V150Z"
+    fill="#2A19EF"
+  />
+</svg>
   );
 }
 
