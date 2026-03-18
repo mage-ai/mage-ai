@@ -8,7 +8,7 @@ type ParsedFilter = {
 
 const OPERATOR_REGEX = /^(>=|<=|!=|>|<|=)\s*(.*)$/;
 const STRICT_NUMBER_REGEX = /^-?\d+(\.\d+)?$/;
-const DATE_SEPARATOR_REGEX = /[-/]/;
+const DATE_SEPARATOR_REGEX = /^\d{1,4}[-/]\d{1,2}[-/]\d{1,4}/;
 
 function tryParseDate(s: string): number | undefined {
   if (!s || !DATE_SEPARATOR_REGEX.test(s)) {
@@ -45,7 +45,7 @@ export function parseFilterExpression(expr: string): ParsedFilter | null {
       numericValue,
       operator,
       value,
-      valueLower: value.toLowerCase(),
+      valueLower: valueTrimmed.toLowerCase(),
     };
   }
 
