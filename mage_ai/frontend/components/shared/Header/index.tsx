@@ -310,16 +310,7 @@ function Header({
           href: '/settings/workspace/preferences',
         },
         uuid: 'user_settings',
-      },
-      {
-        label: () => 'Light mode',
-        linkProps: {
-          href: 'https://www.mage.ai/build?ref=oss',
-          openNewWindow: true,
-        },
-        tag: 'Pro',
-        uuid: 'light_mode',
-      },
+      }
     ];
 
   if (REQUIRE_USER_AUTHENTICATION()) {
@@ -516,7 +507,7 @@ function Header({
               />
             </Spacing>
 
-            <Spacing ml={1}>
+            {/* <Spacing ml={1}>
               <KeyboardShortcutButton
                 beforeElement={<Slack />}
                 compact
@@ -554,7 +545,7 @@ function Header({
               >
                 Try
               </KeyboardShortcutButton>
-            </Spacing>
+            </Spacing>*/}
 
             {menuItems &&
               <>

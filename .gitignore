@@ -104,6 +104,7 @@ celerybeat.pid
 # Environments
 .env
 .venv
+.pypirc
 .DS_Store
 env/
 venv/

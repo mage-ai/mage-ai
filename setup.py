@@ -15,16 +15,16 @@ with open('requirements.txt') as f:
         requirements.append(line)
 
 setuptools.setup(
-    name='mage-ai',
+    name='b2m-sage-ai',
     # NOTE: when you change this, change the value of VERSION in the following file:
     # mage_ai/server/constants.py
     version='0.9.79',
-    author='Mage',
-    author_email='eng@mage.ai',
-    description='Mage is a tool for building and deploying data pipelines.',
+    author='B2M',
+    author_email='admin@b2metric.com',
+    description='B2M Sage AI is a tool for building and deploying data pipelines.',
     long_description=readme(),
     long_description_content_type='text/markdown',
-    url='https://github.com/mage-ai/mage-ai',
+    url='https://github.com',
     packages=setuptools.find_packages('.'),
     include_package_data=True,
     classifiers=[

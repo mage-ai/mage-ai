@@ -7,7 +7,7 @@ type HeadProps = {
   title?: string;
 };
 
-const Head = ({ children, defaultTitle = 'Mage', title }: HeadProps) => {
+const Head = ({ children, defaultTitle = 'B2M Sage AI', title }: HeadProps) => {
   const router = useRouter();
 
   return (
