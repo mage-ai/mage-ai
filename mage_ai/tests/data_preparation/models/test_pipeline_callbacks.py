@@ -67,7 +67,9 @@ class PipelineCallbacksTest(DBTestCase):
         callback_block = CallbackBlock.create('pipeline_cb_all', self.repo_path)
         self.pipeline.add_block(callback_block, pipeline_callback=True)
 
-        all_uuids = [c.get('uuid') for c in self.pipeline.all_block_configs]
+        # Reload pipeline from disk so pipeline_callback_configs is populated
+        reloaded = Pipeline(self.pipeline.uuid, repo_path=self.repo_path)
+        all_uuids = [c.get('uuid') for c in reloaded.all_block_configs]
         self.assertIn(callback_block.uuid, all_uuids)
 
     def test_execute_pipeline_callbacks_on_success(self):
