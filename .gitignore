@@ -191,3 +191,5 @@ package.json
 test.py
 test/
 test_data*
+scripts/test_data
+titanic_clean.csv

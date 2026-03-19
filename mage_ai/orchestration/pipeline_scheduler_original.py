@@ -22,6 +22,7 @@ from mage_ai.data_preparation.models.triggers import (
     ScheduleInterval,
     ScheduleStatus,
     ScheduleType,
+    get_triggers_by_pipeline,
     get_triggers_by_pipeline_with_cache,
 )
 from mage_ai.data_preparation.repo_manager import get_repo_config
@@ -1988,6 +1989,27 @@ def schedule_with_event(event: Dict = None):
             )
 
 
+@safe_db_query
+def _sync_deletions_from_triggers_yaml(pipeline_uuids: List[str]) -> None:
+    """Delete DB pipeline schedules no longer in triggers.yaml (YAML is authoritative)."""
+    current_env = get_env()
+    for pipeline_uuid in pipeline_uuids:
+        # Names that are in YAML and apply to this env (same filter as create_or_update_batch).
+        yaml_trigger_names = {
+            t.name for t in get_triggers_by_pipeline(pipeline_uuid)
+            if not t.envs or current_env in t.envs
+        }
+        db_schedules = PipelineSchedule.repo_query.filter(
+            PipelineSchedule.pipeline_uuid == pipeline_uuid,
+        ).all()
+        for schedule in db_schedules:
+            if schedule.name not in yaml_trigger_names:
+                logger.info(
+                    f'Removing trigger "{schedule.name}" from DB (no longer in triggers.yaml).'
+                )
+                schedule.delete()
+
+
 def sync_schedules(pipeline_uuids: List[str]):
     trigger_configs = []
 
@@ -2008,6 +2030,12 @@ def sync_schedules(pipeline_uuids: List[str]):
             trigger_configs.append(pipeline_trigger)
 
     PipelineSchedule.create_or_update_batch(trigger_configs)
+
+    # When sync_deletions_from_code is set in metadata.yaml, triggers.yaml is authoritative:
+    # remove from DB any pipeline schedules that are no longer in the YAML.
+    repo_config = get_repo_config()
+    if getattr(repo_config, 'sync_deletions_from_code', False):
+        _sync_deletions_from_triggers_yaml(pipeline_uuids)
 
 
 def schedule_generic_jobs():
