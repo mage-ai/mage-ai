@@ -2,11 +2,13 @@ import { BlockRunReqQueryParamsType, RunStatus } from '@interfaces/BlockRunType'
 
 type BlockRunsFilterQueryType = Omit<BlockRunReqQueryParamsType, 'pipeline_uuid' | 'status'> & {
     pipeline_uuid?: string | string[];
+    'pipeline_uuid[]'?: string | string[];
     status?: RunStatus | RunStatus[];
+    'status[]'?: RunStatus | RunStatus[];
 };
 
 export function getSelectedPipelineUUID(query: BlockRunsFilterQueryType): string | null {
-    const pipelineUUID = query?.pipeline_uuid;
+    const pipelineUUID = query?.pipeline_uuid ?? query?.['pipeline_uuid[]'];
 
     if (!pipelineUUID) {
         return null;
@@ -20,7 +22,7 @@ export function getSelectedPipelineUUID(query: BlockRunsFilterQueryType): string
 }
 
 export function getSingleStatusValue(query: BlockRunsFilterQueryType): RunStatus | null {
-    const status = query?.status;
+    const status = query?.status ?? query?.['status[]'];
 
     if (!status) {
         return null;
@@ -40,7 +42,9 @@ export function buildBlockRunsRequestQuery(
 ): BlockRunReqQueryParamsType {
     const {
         pipeline_uuid: pipelineUUIDFilter,
+        'pipeline_uuid[]': pipelineUUIDFilterBracket,
         status: statusFilter,
+        'status[]': statusFilterBracket,
         ...restQuery
     } = query || {};
 
@@ -50,12 +54,18 @@ export function buildBlockRunsRequestQuery(
         _offset: page * rowLimit,
     };
 
-    const pipelineUUID = getSelectedPipelineUUID({ pipeline_uuid: pipelineUUIDFilter });
+    const pipelineUUID = getSelectedPipelineUUID({
+        pipeline_uuid: pipelineUUIDFilter,
+        'pipeline_uuid[]': pipelineUUIDFilterBracket,
+    });
     if (pipelineUUID) {
         requestQuery.pipeline_uuid = pipelineUUID;
     }
 
-    const status = getSingleStatusValue({ status: statusFilter });
+    const status = getSingleStatusValue({
+        status: statusFilter,
+        'status[]': statusFilterBracket,
+    });
     if (status) {
         requestQuery.status = status;
     }

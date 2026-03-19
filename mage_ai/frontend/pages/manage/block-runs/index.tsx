@@ -29,9 +29,11 @@ function RunListPage() {
     const router = useRouter();
     const [errors, setErrors] = useState<ErrorsType>(null);
     const q = queryFromUrl();
-    const page = q?.page ? q.page : 0;
+    const page = Number(q?.page || 0);
 
-    const selectedPipelineUUID = useMemo(() => getSelectedPipelineUUID(q), [q]);
+    const selectedPipelineUUID = useMemo(() => getSelectedPipelineUUID({
+        pipeline_uuid: q?.[BlockRunFilterQueryEnum.PIPELINE_UUID] ?? q?.pipeline_uuid,
+    }), [q]);
     const query = useMemo(() => filterQuery(q, [
         BlockRunFilterQueryEnum.PIPELINE_UUID,
         BlockRunFilterQueryEnum.STATUS,
@@ -54,7 +56,7 @@ function RunListPage() {
 
     const blockRunsRequestQuery: BlockRunReqQueryParamsType = buildBlockRunsRequestQuery(
         query,
-        Number(page),
+        page,
         ROW_LIMIT,
     );
     const {
@@ -68,7 +70,7 @@ function RunListPage() {
     );
 
     const blockRuns = useMemo(() => dataBlockRuns?.block_runs || [], [dataBlockRuns]);
-    const totalRuns = useMemo(() => dataBlockRuns?.metadata?.count || [], [dataBlockRuns]);
+    const totalRuns = useMemo(() => dataBlockRuns?.metadata?.count || 0, [dataBlockRuns]);
 
     const toolbarEl = useMemo(() => (
       <Toolbar
@@ -133,7 +135,7 @@ function RunListPage() {
                                     `/manage/block-runs?${queryString(updatedQuery)}`,
                                 );
                             }}
-                            page={Number(page)}
+                            page={page}
                             totalPages={Math.ceil(totalRuns / ROW_LIMIT)}
                         />
                     </Spacing>

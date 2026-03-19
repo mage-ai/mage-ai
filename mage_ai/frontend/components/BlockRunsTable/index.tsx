@@ -51,40 +51,42 @@ function BlockRunsTable({
                   created_at: createdAt,
                   id,
                   pipeline_run_id: pipelineRunId,
+                  pipeline_uuid: pipelineUUIDValue,
                   started_at: startedAt,
                   status,
               } = blockRun || {};
 
-              return [
-                <Text {...getRunStatusTextProps(status)} key={`${id}_status`}>
-                  {status}
-                </Text>,
+              const pipelineUUID = pipelineUUIDValue || selectedPipelineUUID;
+
+              return [<Text {...getRunStatusTextProps(status)} key={`${id}_status`}>
+                {status}
+              </Text>,
                 <Button
-                      default
-                      disabled={!selectedPipelineUUID}
-                      iconOnly
-                      key={`${id}_logs`}
-                      noBackground
-                      onClick={() => Router.push(`/pipelines/${selectedPipelineUUID}/logs?block_run_id[]=${id}`)}
-                  >
-                  <Logs default size={2 * UNIT}/>
+                        default
+                        disabled={!pipelineUUID}
+                        iconOnly
+                        key={`${id}_logs`}
+                        noBackground
+                        onClick={() => Router.push(`/pipelines/${pipelineUUID}/logs?block_run_id[]=${id}`)}
+                    >
+                  <Logs default size={2 * UNIT} />
                 </Button>,
-                  selectedPipelineUUID ? (
-                    <NextLink
-                          as={`/pipelines/${selectedPipelineUUID}/runs/${pipelineRunId}`}
-                          href={'/pipelines/[pipeline]/runs/[run]'}
-                          key={`${id}_pipeline_uuid`}
-                          passHref
-                      >
-                      <Link bold monospace sky>
-                        {selectedPipelineUUID}
-                      </Link>
-                    </NextLink>
-                  ) : (
-                    <Text key={`${id}_pipeline_uuid`} muted>
-                      Filter by pipeline
-                    </Text>
-                  ),
+                    pipelineUUID ? (
+                      <NextLink
+                            as={`/pipelines/${pipelineUUID}/runs/${pipelineRunId}`}
+                            href={'/pipelines/[pipeline]/runs/[run]'}
+                            key={`${id}_pipeline_uuid`}
+                            passHref
+                        >
+                        <Link bold monospace sky>
+                          {pipelineUUID}
+                        </Link>
+                      </NextLink>
+                    ) : (
+                      <Text key={`${id}_pipeline_uuid`} muted>
+                        Filter by pipeline
+                      </Text>
+                    ),
                 <Text key={`${id}_block_uuid`} monospace>
                   {blockUUID}
                 </Text>,
@@ -92,52 +94,54 @@ function BlockRunsTable({
                   {id}
                 </Text>,
                 <Text
-                      default
-                      key={`${id}_created_at`}
-                      monospace
-                      small
-                      title={createdAt ? utcStringToElapsedTime(createdAt) : null}
-                  >
+                        default
+                        key={`${id}_created_at`}
+                        monospace
+                        small
+                        title={createdAt ? utcStringToElapsedTime(createdAt) : null}
+                    >
                   {displayLocalTimezone
-                          ? datetimeInLocalTimezone(createdAt, displayLocalTimezone)
-                          : dateFormatLong(createdAt, { includeSeconds: true })}
+                            ? datetimeInLocalTimezone(createdAt, displayLocalTimezone)
+                            : dateFormatLong(createdAt, { includeSeconds: true })}
                 </Text>,
                 <Text
-                      default
-                      key={`${id}_started_at`}
-                      monospace
-                      small
-                      title={startedAt ? utcStringToElapsedTime(startedAt) : null}
-                  >
+                        default
+                        key={`${id}_started_at`}
+                        monospace
+                        small
+                        title={startedAt ? utcStringToElapsedTime(startedAt) : null}
+                    >
                   {startedAt ? (
-                          displayLocalTimezone ? (
-                              datetimeInLocalTimezone(startedAt, displayLocalTimezone)
-                          ) : (
-                              dateFormatLong(startedAt, { includeSeconds: true })
-                          )
-                      ) : (
-                        <>&#8212;</>
-                      )}
+                            displayLocalTimezone ? (
+                                datetimeInLocalTimezone(startedAt, displayLocalTimezone)
+                            ) : (
+                                dateFormatLong(startedAt, { includeSeconds: true })
+                            )
+                        ) : (
+                          <>&#8212;</>
+                        )}
                 </Text>,
                 <Text
-                      default
-                      key={`${id}_completed_at`}
-                      monospace
-                      small
-                      title={completedAt ? utcStringToElapsedTime(completedAt) : null}
-                  >
+                        default
+                        key={`${id}_completed_at`}
+                        monospace
+                        small
+                        title={completedAt ? utcStringToElapsedTime(completedAt) : null}
+                    >
                   {completedAt ? (
-                          displayLocalTimezone ? (
-                              datetimeInLocalTimezone(completedAt, displayLocalTimezone)
-                          ) : (
-                              dateFormatLong(completedAt, { includeSeconds: true })
-                          )
-                      ) : (
-                        <>&#8212;</>
-                      )}
+                            displayLocalTimezone ? (
+                                datetimeInLocalTimezone(completedAt, displayLocalTimezone)
+                            ) : (
+                                dateFormatLong(completedAt, { includeSeconds: true })
+                            )
+                        ) : (
+                          <>&#8212;</>
+                        )}
                 </Text>,
-              ];
-          })} uuid="global-block-runs"        />
+                ];
+            })}
+            uuid="global-block-runs"
+        />
     );
 }
 

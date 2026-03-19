@@ -58,3 +58,18 @@ test('buildBlockRunsRequestQuery removes multi-select status from backend query'
         pipeline_uuid: 'p1',
     });
 });
+
+
+test('buildBlockRunsRequestQuery removes multi-select pipeline_uuid from backend query', () => {
+    const result = buildBlockRunsRequestQuery(
+        { pipeline_uuid: ['p1', 'p2'], status: RunStatus.RUNNING },
+        1,
+        10,
+    );
+
+    expect(result).toEqual({
+        _limit: 10,
+        _offset: 10,
+        status: RunStatus.RUNNING,
+    });
+});

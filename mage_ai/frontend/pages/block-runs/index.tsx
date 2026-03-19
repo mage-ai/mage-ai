@@ -22,24 +22,17 @@ import { UNITS_BETWEEN_ITEMS_IN_SECTIONS } from '@oracle/styles/units/spacing';
 import { filterQuery, queryFromUrl, queryString } from '@utils/url';
 import { sortByKey } from '@utils/array';
 import { storeLocalTimezoneSetting } from '@components/settings/workspace/utils';
+import { buildBlockRunsRequestQuery, getSelectedPipelineUUID } from '@utils/blockRuns';
 
 function RunListPage() {
     const router = useRouter();
     const [errors, setErrors] = useState<ErrorsType>(null);
     const q = queryFromUrl();
-    const page = q?.page ? q.page : 0;
+    const page = Number(q?.page || 0);
 
-    const selectedPipelineUUID = useMemo(() => {
-        if (!q?.pipeline_uuid) {
-            return null;
-        }
-
-        if (Array.isArray(q.pipeline_uuid)) {
-            return 1 === q.pipeline_uuid.length ? q.pipeline_uuid[0] : null;
-        }
-
-        return q.pipeline_uuid;
-    }, [q?.pipeline_uuid]);
+    const selectedPipelineUUID = useMemo(() => getSelectedPipelineUUID({
+        pipeline_uuid: q?.[BlockRunFilterQueryEnum.PIPELINE_UUID] ?? q?.pipeline_uuid,
+    }), [q]);
     const query = useMemo(() => filterQuery(q, [
         BlockRunFilterQueryEnum.PIPELINE_UUID,
         BlockRunFilterQueryEnum.STATUS,
@@ -60,14 +53,11 @@ function RunListPage() {
         [dataPipelines],
     );
 
-    const blockRunsRequestQuery: BlockRunReqQueryParamsType = {
-        ...query,
-        _limit: ROW_LIMIT,
-        _offset: page * ROW_LIMIT,
-    };
-    if (q?.status) {
-        blockRunsRequestQuery.status = q.status;
-    }
+    const blockRunsRequestQuery: BlockRunReqQueryParamsType = buildBlockRunsRequestQuery(
+        query,
+        page,
+        ROW_LIMIT,
+    );
     const {
         data: dataBlockRuns,
     } = api.block_runs.list(
@@ -79,7 +69,7 @@ function RunListPage() {
     );
 
     const blockRuns = useMemo(() => dataBlockRuns?.block_runs || [], [dataBlockRuns]);
-    const totalRuns = useMemo(() => dataBlockRuns?.metadata?.count || [], [dataBlockRuns]);
+    const totalRuns = useMemo(() => dataBlockRuns?.metadata?.count || 0, [dataBlockRuns]);
 
     const toolbarEl = useMemo(() => (
       <Toolbar
@@ -132,7 +122,7 @@ function RunListPage() {
                                     `/block-runs?${queryString(updatedQuery)}`,
                                 );
                             }}
-                            page={Number(page)}
+                            page={page}
                             totalPages={Math.ceil(totalRuns / ROW_LIMIT)}
                         />
                     </Spacing>
