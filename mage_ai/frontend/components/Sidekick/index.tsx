@@ -56,6 +56,8 @@ import { LOCAL_STORAGE_KEY_PIPELINE_EXECUTION_HIDDEN, get } from '@storage/local
 import { OpenDataIntegrationModalType } from '@components/DataIntegrationModal/constants';
 import { OUTPUT_HEIGHT } from '@components/PipelineDetail/PipelineExecution/index.style';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
+import { REGULAR_LINE_HEIGHT } from '@oracle/styles/fonts/sizes';
+import { pluralize } from '@utils/string';
 import {
   SidekickContainerStyle,
   TABLE_COLUMN_HEADER_HEIGHT,
@@ -402,6 +404,25 @@ function Sidekick({
     textareaFocused,
   ]);
 
+  const [filteredRowCount, setFilteredRowCount] = useState<number | null>(null);
+  const handleFilteredCountChange = useCallback((count: number) => {
+    setFilteredRowCount(count);
+  }, []);
+
+  const dataStatusBar = useMemo(() => {
+    if (!columns.length) return null;
+    const totalRows = rows.length;
+    const totalCols = columns.length;
+    const label = (filteredRowCount !== null && filteredRowCount !== totalRows)
+      ? `${filteredRowCount} of ${pluralize('row', totalRows)} × ${pluralize('column', totalCols)}`
+      : `${pluralize('row', totalRows)} x ${pluralize('column', totalCols)}`;
+    return (
+      <Spacing pb={1} px={PADDING_UNITS}>
+        <Text monospace muted small>{label}</Text>
+      </Spacing>
+    );
+  }, [columns.length, filteredRowCount, rows.length]);
+
   const dataMemo = useMemo(() => columns.length > 0 && (
     <DataTable
       columnHeaderHeight={
@@ -412,11 +433,13 @@ function Sidekick({
         : TABLE_COLUMN_HEADER_HEIGHT
       }
       columns={columns}
-      height={heightWindow - heightOffset - ASIDE_SUBHEADER_HEIGHT}
+      filterable
+      height={heightWindow - heightOffset - ASIDE_SUBHEADER_HEIGHT - (UNIT * 2 + REGULAR_LINE_HEIGHT)}
       noBorderBottom
       noBorderLeft
       noBorderRight
       noBorderTop
+      onFilteredCountChange={handleFilteredCountChange}
       renderColumnHeader={renderColumnHeader}
       rows={rows}
       width={afterWidth}
@@ -425,6 +448,7 @@ function Sidekick({
     afterWidth,
     columnTypes,
     columns,
+    handleFilteredCountChange,
     heightOffset,
     heightWindow,
     insightsByFeatureUUID,
@@ -660,6 +684,7 @@ function Sidekick({
         }
 
         {activeView === ViewKeyEnum.DATA && dataMemo}
+        {activeView === ViewKeyEnum.DATA && dataStatusBar}
 
         {ViewKeyEnum.SECRETS === activeView && secretsMemo}
 
