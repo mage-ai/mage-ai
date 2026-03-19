@@ -1,7 +1,10 @@
+type Operator = '=' | '!=' | '>' | '<' | '>=' | '<=' | 'contains' | 'blank' | 'notblank';
+
 type ParsedFilter = {
-  operator: string;
+  filterType: 'contains' | 'string' | 'numeric' | 'date' | 'blank';
+  operator: Operator;
   value: string;
-  valueLower: string;
+  valueLower?: string;
   numericValue?: number;
   dateValue?: number;
 };
@@ -9,6 +12,7 @@ type ParsedFilter = {
 const OPERATOR_REGEX = /^(>=|<=|!=|>|<|=)\s*(.*)$/;
 const STRICT_NUMBER_REGEX = /^-?\d+(\.\d+)?$/;
 const DATE_SEPARATOR_REGEX = /^\d{1,4}[-/]\d{1,2}[-/]\d{1,4}/;
+const DATE_PREFIX_REGEX = /^date\s+(>=|<=|!=|>|<|=)\s*(.*)$/i;
 
 function tryParseDate(s: string): number | undefined {
   if (!s || !DATE_SEPARATOR_REGEX.test(s)) {
@@ -16,6 +20,29 @@ function tryParseDate(s: string): number | undefined {
   }
   const t = new Date(s).getTime();
   return isNaN(t) ? undefined : t;
+}
+
+function isBlankValue(cellValue: any): boolean {
+  return cellValue === null || cellValue === undefined || cellValue === 'null' || cellValue === '';
+}
+
+function compareNumbers(a: number, b: number, operator: Operator): boolean {
+  switch (operator) {
+    case '=':
+      return a === b;
+    case '!=':
+      return a !== b;
+    case '>':
+      return a > b;
+    case '<':
+      return a < b;
+    case '>=':
+      return a >= b;
+    case '<=':
+      return a <= b;
+    default:
+      return false;
+  }
 }
 
 export function parseFilterExpression(expr: string): ParsedFilter | null {
@@ -26,30 +53,62 @@ export function parseFilterExpression(expr: string): ParsedFilter | null {
 
   const trimmedLower = trimmed.toLowerCase();
   if (trimmedLower === 'is blank') {
-    return { operator: 'blank', value: '', valueLower: '' };
+    return { filterType: 'blank', operator: 'blank', value: '' };
   }
   if (trimmedLower === 'is not blank') {
-    return { operator: 'notblank', value: '', valueLower: '' };
+    return { filterType: 'blank', operator: 'notblank', value: '' };
   }
 
-  const match = trimmed.match(OPERATOR_REGEX);
-  if (match) {
-    const operator = match[1];
-    const value = match[2];
-    const valueTrimmed = value.trim();
-    const isStrictNumber = STRICT_NUMBER_REGEX.test(valueTrimmed);
-    const numericValue = isStrictNumber ? parseFloat(valueTrimmed) : undefined;
+  // date prefix: "date >= 2024-01-01"
+  const dateMatch = trimmed.match(DATE_PREFIX_REGEX);
+  if (dateMatch) {
+    const operator = dateMatch[1] as Operator;
+    const valueTrimmed = dateMatch[2].trim();
     const dateValue = tryParseDate(valueTrimmed);
+    if (dateValue === undefined) {
+      return null;
+    }
     return {
       dateValue,
-      numericValue,
+      filterType: 'date',
       operator,
-      value,
+      value: valueTrimmed,
+    };
+  }
+
+  // operator match: >, <, >=, <=, =, !=
+  const match = trimmed.match(OPERATOR_REGEX);
+  if (match) {
+    const operator = match[1] as Operator;
+    const valueTrimmed = match[2].trim();
+    const isNumeric = STRICT_NUMBER_REGEX.test(valueTrimmed);
+
+    // Numeric value → numeric filter for all operators
+    if (isNumeric) {
+      return {
+        filterType: 'numeric',
+        numericValue: parseFloat(valueTrimmed),
+        operator,
+        value: valueTrimmed,
+      };
+    }
+
+    // Non-numeric value with >, <, >=, <= → invalid (these are always numeric)
+    if (operator !== '=' && operator !== '!=') {
+      return null;
+    }
+
+    return {
+      filterType: 'string',
+      operator,
+      value: valueTrimmed,
       valueLower: valueTrimmed.toLowerCase(),
     };
   }
 
+  // No operator → contains
   return {
+    filterType: 'contains',
     operator: 'contains',
     value: trimmed,
     valueLower: trimmedLower,
@@ -57,17 +116,14 @@ export function parseFilterExpression(expr: string): ParsedFilter | null {
 }
 
 export function matchesFilter(cellValue: any, parsed: ParsedFilter): boolean {
-  const { operator } = parsed;
+  const { filterType, operator } = parsed;
 
-  if (operator === 'blank') {
-    return cellValue === null || cellValue === undefined || cellValue === 'null' || cellValue === '';
-  }
-  if (operator === 'notblank') {
-    return cellValue !== null && cellValue !== undefined && cellValue !== 'null' && cellValue !== '';
+  if (filterType === 'blank') {
+    return operator === 'blank' ? isBlankValue(cellValue) : !isBlankValue(cellValue);
   }
 
   let displayValue: string;
-  if (cellValue === null || cellValue === undefined || cellValue === 'null') {
+  if (isBlankValue(cellValue)) {
     displayValue = 'None';
   } else if (cellValue === true) {
     displayValue = 'True';
@@ -77,74 +133,33 @@ export function matchesFilter(cellValue: any, parsed: ParsedFilter): boolean {
     displayValue = String(cellValue);
   }
 
-  const { valueLower, numericValue, dateValue } = parsed;
-
-  if (operator === 'contains') {
-    return displayValue.toLowerCase().includes(valueLower);
+  if (filterType === 'contains') {
+    return displayValue.toLowerCase().includes(parsed.valueLower ?? '');
   }
 
-  // Date comparison takes priority over numeric — skip when filter isn't a date
-  if (dateValue !== undefined) {
+  if (filterType === 'string') {
+    const displayLower = displayValue.toLowerCase();
+    if (operator === '=') {
+      return displayLower === (parsed.valueLower ?? '');
+    }
+    // !=
+    return displayLower !== (parsed.valueLower ?? '');
+  }
+
+  if (filterType === 'numeric') {
+    const cellNumeric = parseFloat(displayValue);
+    if (isNaN(cellNumeric)) {
+      return false;
+    }
+    return compareNumbers(cellNumeric, parsed.numericValue ?? 0, operator);
+  }
+
+  if (filterType === 'date') {
     const cellDate = tryParseDate(displayValue);
-    if (cellDate !== undefined) {
-      switch (operator) {
-        case '=':
-          return cellDate === dateValue;
-        case '!=':
-          return cellDate !== dateValue;
-        case '>':
-          return cellDate > dateValue;
-        case '<':
-          return cellDate < dateValue;
-        case '>=':
-          return cellDate >= dateValue;
-        case '<=':
-          return cellDate <= dateValue;
-      }
+    if (cellDate === undefined) {
+      return false;
     }
-  }
-
-  // Numeric comparison — skip regex when filter isn't numeric
-  if (numericValue !== undefined) {
-    const isStrictCellNumber = STRICT_NUMBER_REGEX.test(displayValue);
-    if (isStrictCellNumber) {
-      const cellNumeric = parseFloat(displayValue);
-      switch (operator) {
-        case '=':
-          return cellNumeric === numericValue;
-        case '!=':
-          return cellNumeric !== numericValue;
-        case '>':
-          return cellNumeric > numericValue;
-        case '<':
-          return cellNumeric < numericValue;
-        case '>=':
-          return cellNumeric >= numericValue;
-        case '<=':
-          return cellNumeric <= numericValue;
-      }
-    }
-  }
-
-  // String fallback
-  const displayLower = displayValue.toLowerCase();
-  if (operator === '=') {
-    return displayLower === valueLower;
-  }
-  if (operator === '!=') {
-    return displayLower !== valueLower;
-  }
-
-  const cmp = displayLower.localeCompare(valueLower);
-  switch (operator) {
-    case '>':
-      return cmp > 0;
-    case '<':
-      return cmp < 0;
-    case '>=':
-      return cmp >= 0;
-    case '<=':
-      return cmp <= 0;
+    return compareNumbers(cellDate, parsed.dateValue ?? 0, operator);
   }
 
   return false;
