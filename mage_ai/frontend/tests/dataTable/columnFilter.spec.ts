@@ -6,7 +6,10 @@ const PIPELINE_URL = '/pipelines/example_pipeline/edit';
 test('filters data table rows by column value', async ({ page }) => {
   await page.goto(PIPELINE_URL);
 
-  // 1. Filter inputs are visible below column headers.
+  // Run the first block to generate the data table output.
+  await page.getByLabel('Run block').first().click();
+
+  // 1. Filter inputs are visible below column headers (waits for block to finish).
   const nameFilter = page.getByLabel('Filter Name column').first();
   await expect(nameFilter).toBeVisible({ timeout: 30_000 });
 
