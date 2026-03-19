@@ -1,4 +1,4 @@
-import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import Link from '@oracle/elements/Link';
 import NextLink from 'next/link';
 import styled from 'styled-components';
@@ -28,6 +28,12 @@ import { isJsonString } from '@utils/string';
 const BASE_ROW_HEIGHT = UNIT * 2 + REGULAR_LINE_HEIGHT;
 const DEFAULT_COLUMN_WIDTH = UNIT * 20;
 const WIDTH_OF_CHARACTER = 8.5;
+
+const EMPTY_FILTER_OUTER_STYLE: React.CSSProperties = {
+  overflowX: 'auto',
+  overflowY: 'hidden',
+};
+
 export const WIDTH_OF_SINGLE_CHARACTER_MONOSPACE = 8.7;
 
 type InvalidValueType = {
@@ -385,6 +391,7 @@ function Table({ ...props }: TableProps) {
 
   const themeContext = useContext(ThemeContext);
   const refHeader = useRef(null);
+  const refListInner = useRef<HTMLDivElement>(null);
   const refListOuter = useRef(null);
   const refList = useRef<VariableSizeList>(null);
 
@@ -430,6 +437,8 @@ function Table({ ...props }: TableProps) {
     };
   }, [data, debouncedFilters, enableFiltering]);
 
+  const isFilteredEmpty = enableFiltering && isFiltering && filteredData.length === 0;
+
   useEffect(() => {
     if (enableFiltering && onFilteredRowCount) {
       onFilteredRowCount(isFiltering ? filteredData.length : null);
@@ -443,20 +452,19 @@ function Table({ ...props }: TableProps) {
   }, [filteredData]);
 
   useEffect(() => {
-    const onScrollCallback = e => {
-      refHeader?.current?.scroll(e.target.scrollLeft, 0);
+    const el = refListOuter.current;
+    if (!el) return;
+
+    const onScrollCallback = (e: Event) => {
+      refHeader?.current?.scroll((e.target as HTMLElement).scrollLeft, 0);
     };
 
-    if (refListOuter) {
-      refListOuter.current.addEventListener('scroll', onScrollCallback);
-    }
-
-    const listOuter = refListOuter.current;
+    el.addEventListener('scroll', onScrollCallback);
 
     return () => {
-      listOuter?.removeEventListener('scroll', onScrollCallback);
+      el.removeEventListener('scroll', onScrollCallback);
     };
-  }, [refHeader, refListOuter]);
+  }, [isFilteredEmpty]);
 
   const shouldUseIndexProp = useMemo(
     () => indexProp && data && indexProp.length === data.length,
@@ -504,6 +512,17 @@ function Table({ ...props }: TableProps) {
     };
   }, [columns, maxWidthOfIndexColumns, scrollBarSize, width]);
 
+  const totalColumnsWidth = useMemo(
+    () => sum(maxWidthOfIndexColumns) + (columns.length - numberOfIndexes) * defaultColumn.width,
+    [columns.length, defaultColumn.width, maxWidthOfIndexColumns, numberOfIndexes],
+  );
+
+  useLayoutEffect(() => {
+    if (refListInner.current) {
+      refListInner.current.style.minWidth = `${totalColumnsWidth}px`;
+    }
+  }, [totalColumnsWidth, isFilteredEmpty]);
+
   const { getTableBodyProps, getTableProps, headerGroups, prepareRow, rows } = useTable(
     {
       columns,
@@ -514,9 +533,13 @@ function Table({ ...props }: TableProps) {
     useSticky,
   );
 
+  const removedRowIndexes = useMemo(
+    () => new Set(previewIndexes?.removedRows || []),
+    [previewIndexes?.removedRows],
+  );
+
   const renderRow = useCallback(
     ({ index, style }) => {
-      const removedRowIndexes = new Set(previewIndexes?.removedRows || []);
       const originalIndex = isFiltering && originalIndices.length > 0 ? originalIndices[index] : index;
 
       const row = rows[index];
@@ -667,7 +690,7 @@ function Table({ ...props }: TableProps) {
       numberOfIndexes,
       originalIndices,
       prepareRow,
-      previewIndexes,
+      removedRowIndexes,
       rows,
       shouldUseIndexProp,
     ],
@@ -675,47 +698,55 @@ function Table({ ...props }: TableProps) {
 
   const variableListMemo = useMemo(
     () => {
+      if (isFilteredEmpty) {
+        return (
+          <div
+            ref={refListOuter}
+            style={EMPTY_FILTER_OUTER_STYLE}
+          >
+            <div style={{ minWidth: totalColumnsWidth, padding: UNIT * 2 }}>
+              <Text muted>No rows match the current filters.</Text>
+            </div>
+          </div>
+        );
+      }
+
       const listHeight = getVariableListHeight(columnHeaderHeight, height, maxHeight, rows, width);
       const adjustedHeight = enableFiltering ? Math.max(0, listHeight - BASE_ROW_HEIGHT) : listHeight;
 
       return (
-        <>
-          {rows?.length === 0 && isFiltering && (
-            <div style={{ padding: UNIT * 2 }}>
-              <Text muted>No rows match the current filters.</Text>
-            </div>
-          )}
-          <VariableSizeList
-            estimatedItemSize={BASE_ROW_HEIGHT}
-            height={adjustedHeight}
-            itemCount={rows?.length || 0}
-            itemSize={(idx: number) => {
-              const size = estimateCellHeight({
-                ...rows[idx],
-                variableListProps: {
-                  columnHeaderHeight,
-                  height,
-                  maxHeight,
-                  width,
-                },
+        <VariableSizeList
+          estimatedItemSize={BASE_ROW_HEIGHT}
+          height={adjustedHeight}
+          innerRef={refListInner}
+          itemCount={rows?.length || 0}
+          itemSize={(idx: number) =>
+            estimateCellHeight({
+              ...rows[idx],
+              variableListProps: {
+                columnHeaderHeight,
+                height,
+                maxHeight,
                 width,
-              });
-
-              return size;
-            }}
-            outerRef={refListOuter}
-            ref={refList}
-            style={{
-              maxHeight: maxHeight && enableFiltering ? maxHeight - BASE_ROW_HEIGHT : maxHeight,
-              pointerEvents: disableScrolling ? 'none' : null,
-            }}
-          >
-            {renderRow}
-          </VariableSizeList>
-        </>
+              },
+              width,
+            })
+          }
+          outerRef={refListOuter}
+          ref={refList}
+          style={{
+            maxHeight: maxHeight && enableFiltering ? maxHeight - BASE_ROW_HEIGHT : maxHeight,
+            pointerEvents: disableScrolling ? 'none' : null,
+          }}
+        >
+          {renderRow}
+        </VariableSizeList>
       );
     },
-    [columnHeaderHeight, disableScrolling, enableFiltering, height, isFiltering, maxHeight, renderRow, rows, width],
+    [
+      columnHeaderHeight, disableScrolling, enableFiltering, height, isFilteredEmpty,
+      maxHeight, renderRow, rows, totalColumnsWidth, width,
+    ],
   );
 
   return (
