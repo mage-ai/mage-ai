@@ -14,7 +14,7 @@ current trigger’s settings to code.
 - **Source of truth:** The `triggers.yaml` file is the source of truth for trigger definitions.
 - **Sync flow:** A background scheduler process periodically syncs triggers from `triggers.yaml` into the database. Only triggers that pass the **envs filter** (see [Envs filter](#envs-filter)) are created or updated on that instance. After a trigger is synced to the database, it appears in the Triggers UI.
 - **New/updates flow both ways:** New or updated triggers in the YAML are pushed to the database when the scheduler runs. Edits you make in the UI to a trigger that's defined in code are written back to `triggers.yaml` so UI and code stay in sync.
-- **Deletions:** By default, removing a trigger from `triggers.yaml` does **not** remove it from the database; you must delete it in the UI or via API. If you set **sync_deletions_from_code** in the project’s `metadata.yaml` (see [Sync deletions from code](#sync-deletions-from-code)), then `triggers.yaml` becomes fully authoritative and the scheduler will remove from the database any trigger that is no longer present in the YAML (subject to the envs filter). See [Delete triggers](#delete-triggers).
+- **Deletions:** By default, removing a trigger from `triggers.yaml` does **not** remove it from the database; you must delete it in the UI or via API. If you set **sync_deletions_from_code** (project or pipeline level) **and** **save_in_code_automatically** is enabled for that pipeline (see [Sync deletions from code](#sync-deletions-from-code)), then `triggers.yaml` becomes fully authoritative and the scheduler will remove from the database any trigger that is no longer present in the YAML (subject to the envs filter). See [Delete triggers](#delete-triggers).
 
 ## Create and configure triggers
 
@@ -93,13 +93,21 @@ The optional `envs` field limits which instances or workspaces sync and run the 
 
 ## Sync deletions from code
 
-To make `triggers.yaml` fully authoritative so that removals in the file are reflected in the database, set **sync_deletions_from_code** in the project’s root `metadata.yaml`:
+To make `triggers.yaml` fully authoritative so that removals in the file are reflected in the database, set **sync_deletions_from_code**. It can be set at the **project** or **pipeline** level (in the same triggers settings as **Save triggers in code automatically**). It **only applies when save_in_code_automatically is also enabled** for that pipeline.
+
+**Project level** (root `metadata.yaml` under `pipelines.settings.triggers`):
 
 ```yaml
-sync_deletions_from_code: true
+pipelines:
+  settings:
+    triggers:
+      save_in_code_automatically: true
+      sync_deletions_from_code: true
 ```
 
-When this is set, the scheduler will remove from the database any pipeline schedule (trigger) that is no longer present in the pipeline’s `triggers.yaml`, subject to the same [envs filter](#envs-filter) used for creates and updates. Triggers that exist in the YAML but are filtered out by `envs` for this instance are not deleted.
+**Pipeline level** (pipeline’s `metadata.yaml` under `settings.triggers`): set `sync_deletions_from_code: true` next to `save_in_code_automatically` in that file.
+
+When both flags are set for a pipeline, the scheduler will remove from the database any pipeline schedule (trigger) that is no longer present in that pipeline’s `triggers.yaml`, subject to the same [envs filter](#envs-filter) used for creates and updates. Triggers that exist in the YAML but are filtered out by `envs` for this instance are not deleted.
 
 ## Modify triggers
 

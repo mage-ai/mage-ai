@@ -1991,12 +1991,23 @@ def schedule_with_event(event: Dict = None):
 
 @safe_db_query
 def _sync_deletions_from_triggers_yaml(pipeline_uuids: List[str]) -> None:
-    """Delete DB pipeline schedules no longer in triggers.yaml (YAML is authoritative)."""
+    """Delete DB pipeline schedules no longer in triggers.yaml (YAML is authoritative).
+    Only runs for pipelines where both save_in_code_automatically and
+    sync_deletions_from_code are set (project or pipeline level).
+    """
+    repo_path = get_repo_path()
     current_env = get_env()
     for pipeline_uuid in pipeline_uuids:
+        pipeline = Pipeline.get(pipeline_uuid, repo_path=repo_path)
+        if not pipeline:
+            continue
+        if not pipeline.should_save_trigger_in_code_automatically():
+            continue
+        if not pipeline.should_sync_deletions_from_code():
+            continue
         # Names that are in YAML and apply to this env (same filter as create_or_update_batch).
         yaml_trigger_names = {
-            t.name for t in get_triggers_by_pipeline(pipeline_uuid)
+            t.name for t in get_triggers_by_pipeline(pipeline_uuid, repo_path=repo_path)
             if not t.envs or current_env in t.envs
         }
         db_schedules = PipelineSchedule.repo_query.filter(
@@ -2031,11 +2042,9 @@ def sync_schedules(pipeline_uuids: List[str]):
 
     PipelineSchedule.create_or_update_batch(trigger_configs)
 
-    # When sync_deletions_from_code is set in metadata.yaml, triggers.yaml is authoritative:
-    # remove from DB any pipeline schedules that are no longer in the YAML.
-    repo_config = get_repo_config()
-    if getattr(repo_config, 'sync_deletions_from_code', False):
-        _sync_deletions_from_triggers_yaml(pipeline_uuids)
+    # Per-pipeline: when both save_in_code_automatically and sync_deletions_from_code
+    # are set, remove from DB any pipeline schedules no longer in triggers.yaml.
+    _sync_deletions_from_triggers_yaml(pipeline_uuids)
 
 
 def schedule_generic_jobs():

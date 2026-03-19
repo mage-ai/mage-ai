@@ -308,6 +308,27 @@ class PipelineResourceTest(BaseApiTestCase):
 
                 mock_update_model.assert_called_once_with(resource.model)
 
+    async def test_update_rejects_sync_deletions_from_code_without_save_in_code(self):
+        """sync_deletions=True, save_in_code=False on update -> raises."""
+        from mage_ai.api.errors import ApiError
+
+        payload = dict(
+            settings=dict(
+                triggers=dict(
+                    save_in_code_automatically=False,
+                    sync_deletions_from_code=True,
+                ),
+            ),
+        )
+        with self.assertRaises(ApiError) as cm:
+            await PipelineResource(
+                self.pipeline1, None, None
+            ).process_update(payload)
+        self.assertIn(
+            'sync_deletions_from_code requires save_in_code_automatically',
+            str(cm.exception),
+        )
+
     async def test_delete(self):
         __initialize_cache = self.__prepare_cache()[1]
 

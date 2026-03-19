@@ -172,6 +172,16 @@ function PipelineSettings({
       projectPipelineSettings,
     ]);
 
+  const saveInCodeAutomaticallyEffective = saveInCodeAutomaticallyToggled
+    || !!pipelineAttributes?.settings?.triggers?.save_in_code_automatically;
+  const syncDeletionsFromCodeToggled =
+    useMemo(() => projectPipelineSettings?.triggers?.sync_deletions_from_code
+      && typeof pipelineAttributes?.settings?.triggers?.sync_deletions_from_code === 'undefined',
+    [
+      pipelineAttributes,
+      projectPipelineSettings,
+    ]);
+
   return (
     <Spacing p={PADDING_UNITS}>
       <SetupSection title="Details">
@@ -229,7 +239,7 @@ function PipelineSettings({
           )}
           title="Save triggers in code automatically"
           toggleSwitch={{
-            checked: saveInCodeAutomaticallyToggled || !!pipelineAttributes?.settings?.triggers?.save_in_code_automatically,
+            checked: saveInCodeAutomaticallyEffective,
             onCheck: (valFunc: (val: boolean) => boolean) => setPipelineAttributes(prev => ({
               ...prev,
               settings: {
@@ -238,6 +248,47 @@ function PipelineSettings({
                   ...prev?.settings?.triggers,
                   save_in_code_automatically: valFunc(
                     saveInCodeAutomaticallyToggled ||  prev?.settings?.triggers?.save_in_code_automatically,
+                  ),
+                },
+              },
+            })),
+          }}
+        />
+
+        <SetupSectionRow
+          description={(
+            <>
+              <Text muted small>
+                When the scheduler runs, remove from the database any trigger that is no longer
+                in this pipeline’s triggers.yaml. Only applies when “Save triggers in code
+                automatically” is enabled.
+              </Text>
+              {!saveInCodeAutomaticallyEffective && (
+                <Text small warning>
+                  Enable “Save triggers in code automatically” first.
+                </Text>
+              )}
+              {projectPipelineSettings?.triggers?.sync_deletions_from_code && (
+                <Text small warning>
+                  This setting is enabled at the project level. Changing it here affects only
+                  this pipeline.
+                </Text>
+              )}
+            </>
+          )}
+          title="Sync deletions from code"
+          toggleSwitch={{
+            checked: syncDeletionsFromCodeToggled
+              || !!pipelineAttributes?.settings?.triggers?.sync_deletions_from_code,
+            onCheck: (valFunc: (val: boolean) => boolean) => setPipelineAttributes(prev => ({
+              ...prev,
+              settings: {
+                ...prev?.settings,
+                triggers: {
+                  ...prev?.settings?.triggers,
+                  sync_deletions_from_code: valFunc(
+                    syncDeletionsFromCodeToggled
+                      || prev?.settings?.triggers?.sync_deletions_from_code,
                   ),
                 },
               },
