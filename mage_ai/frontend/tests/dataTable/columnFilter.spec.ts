@@ -14,7 +14,7 @@ test('filters data table rows by column value', async ({ page }) => {
   await expect(nameFilter).toBeVisible({ timeout: 30_000 });
 
   // 2. User types a value — matching rows shown, non-matching hidden.
-  await nameFilter.fill('Owen');
+  await nameFilter.fill('Braund, Mr. Owen Harris');
   await page.waitForTimeout(DEBOUNCE_MS + 150);
 
   // 3. Row count updates.
