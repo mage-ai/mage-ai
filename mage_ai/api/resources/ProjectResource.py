@@ -223,7 +223,7 @@ class ProjectResource(GenericResource):
             data['emr_config'] = payload['emr_config']
 
         if 'pipelines' in payload:
-            pipelines_payload = payload['pipelines']
+            pipelines_payload = payload.get('pipelines') or {}
             triggers = (pipelines_payload.get('settings') or {}).get('triggers') or {}
             if triggers.get('sync_deletions_from_code') and not triggers.get(
                 'save_in_code_automatically'

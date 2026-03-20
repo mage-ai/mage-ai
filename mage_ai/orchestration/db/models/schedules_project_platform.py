@@ -31,6 +31,10 @@ from mage_ai.shared.dates import compare
 from mage_ai.shared.hash import merge_dict
 from mage_ai.shared.utils import clean_name
 
+# Module-level reference for test patching compatibility
+# Actual import happens lazily in methods to avoid pulling in heavy dependencies
+LoggerManagerFactory = None
+
 
 class PipelineScheduleProjectPlatformMixin:
     @classproperty
@@ -369,9 +373,14 @@ class PipelineRunProjectPlatformMixin:
             repo_path=repo_path,
         )
 
-        from mage_ai.data_preparation.logging.logger_manager_factory import (
-            LoggerManagerFactory,
-        )
+        # Import lazily, but check module-level first (for test patching)
+        if LoggerManagerFactory is None:
+            from mage_ai.data_preparation.logging.logger_manager_factory import (
+                LoggerManagerFactory as _LoggerManagerFactory,
+            )
+
+            # Update module-level for caching and test compatibility
+            globals()['LoggerManagerFactory'] = _LoggerManagerFactory
 
         pipeline_logs = await LoggerManagerFactory.get_logger_manager(
             pipeline_uuid=self.pipeline_uuid,
@@ -397,9 +406,14 @@ class BlockRunProjectPlatformMixin:
             repo_path=repo_path,
         )
 
-        from mage_ai.data_preparation.logging.logger_manager_factory import (
-            LoggerManagerFactory,
-        )
+        # Import lazily, but check module-level first (for test patching)
+        if LoggerManagerFactory is None:
+            from mage_ai.data_preparation.logging.logger_manager_factory import (
+                LoggerManagerFactory as _LoggerManagerFactory,
+            )
+
+            # Update module-level for caching and test compatibility
+            globals()['LoggerManagerFactory'] = _LoggerManagerFactory
 
         return await LoggerManagerFactory.get_logger_manager(
             pipeline_uuid=pipeline.uuid,
