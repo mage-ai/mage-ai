@@ -346,7 +346,7 @@ class PipelineScheduler:
         UsageStatisticLogger().pipeline_run_ended_sync(self.pipeline_run)
         self.logger.info(
             f'Pipeline {self.pipeline.uuid} for run {self.pipeline_run.id} '
-            f'in schedule {self.pipeline_run.pipeline_schedule_id} FAILED.'
+            f'in schedule {self.pipeline_run.pipeline_schedule_id} {status}.'
         )
 
         if status == PipelineRun.PipelineRunStatus.FAILED:
