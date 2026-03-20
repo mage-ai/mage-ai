@@ -385,10 +385,6 @@ class PipelineScheduler:
         metrics: Dict = None,
     ) -> None:
         block_run = BlockRun.get(pipeline_run_id=self.pipeline_run.id, block_uuid=block_uuid)
-        self.logger.info(
-            f'Completed PipelineRun {self.pipeline_run.id}, '
-            f'BlockRun for block {block_uuid} in pipeline {self.pipeline.uuid}'
-        )
 
         @retry(retries=2, delay=5)
         def update_status(metrics=metrics):
