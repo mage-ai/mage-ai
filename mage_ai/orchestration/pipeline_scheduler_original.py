@@ -263,7 +263,8 @@ class PipelineScheduler:
                     UsageStatisticLogger().pipeline_run_ended_sync(self.pipeline_run)
                     self.logger.info(
                         f'Pipeline {self.pipeline.uuid} for run {self.pipeline_run.id} '
-                        f'in schedule {self.pipeline_run.pipeline_schedule_id} COMPLETED.'
+                        f'in schedule {self.pipeline_run.pipeline_schedule_id} COMPLETED.',
+                        **self.build_tags(),
                     )
 
                 self.logger_manager.output_logs_to_destination()
