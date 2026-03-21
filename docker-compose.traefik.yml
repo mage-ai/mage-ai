@@ -1,0 +1,47 @@
+services:
+  traefik:
+    image: traefik:v3.0
+    command:
+      - --api.dashboard=true
+      - --api.insecure=true
+      - --providers.docker=true
+      - --providers.docker.exposedbydefault=false
+      - --entrypoints.web.address=:80
+    ports:
+      - "80:80"
+      - "8080:8080"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+      - web
+
+  mage:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: harbor.b2metric.com/stc/b2m-sage-ai:latest
+    environment:
+      HOST: 0.0.0.0
+      PORT: 6380
+      MAGE_BASE_PATH: workspace/abc
+      MAGE_REQUESTS_BASE_PATH: workspace/abc
+      MAGE_ROUTES_BASE_PATH: workspace/abc
+      MAGE_PUBLIC_HOST: http://127.0.0.1/workspace/abc
+      REQUIRE_USER_AUTHENTICATION: "true"
+      AUTHENTICATION_MODE: LOCAL
+      DEFAULT_OWNER_EMAIL: admin@b2metric.com
+      DEFAULT_OWNER_PASSWORD: odin
+      DEFAULT_OWNER_USERNAME: admin
+    volumes:
+      - ./default_repo:/home/src/default_repo
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.mage.rule=PathPrefix(`/workspace/abc`)
+      - traefik.http.routers.mage.entrypoints=web
+      - traefik.http.services.mage.loadbalancer.server.port=6380
+    networks:
+      - web
+
+networks:
+  web:
+    driver: bridge

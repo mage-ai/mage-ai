@@ -23,7 +23,7 @@ import { ignoreKeys } from '@utils/hash';
 import { onSuccess } from '@api/utils/response';
 import { onlyKeysPresent } from '@utils/hooks/keyboardShortcuts/utils';
 import { queryFromUrl, queryString } from '@utils/url';
-import { setUser } from '@utils/session';
+import { REQUIRE_USER_AUTHENTICATION, setUser } from '@utils/session';
 
 const KEY_EMAIL = 'email';
 const KEY_PASSWORD = 'password';
@@ -96,9 +96,15 @@ function SignForm({
     router?.basePath,
   ), [createRequest, router?.basePath]);
 
-  const { data: dataOauths } = api.oauths.list({
-    redirect_uri: typeof window !== 'undefined' ? encodeURIComponent(window.location.href) : '',
-  });
+  const { data: dataOauths } = api.oauths.list(
+    {
+      redirect_uri: typeof window !== 'undefined' ? encodeURIComponent(window.location.href) : '',
+    },
+    {},
+    {
+      pauseFetch: REQUIRE_USER_AUTHENTICATION(),
+    },
+  );
 
   const providerMapping = useMemo(() => dataOauths?.oauths?.reduce(
     (acc, curr) => {

@@ -16,11 +16,6 @@ function getHostCore(
   if (windowDefined) {
     host = window.location.hostname;
   }
-  if ((host === defaultHost && !opts?.forceCurrentPort) || opts?.forceDefaultPort) {
-    host = `${host}:${defaultPort}`;
-  } else if (windowDefined && !!window.location.port) {
-    host = `${host}:${window.location.port}`;
-  }
 
   /*
   The CLOUD_BASE_PATH placeholder below is used for replacing with base
@@ -32,6 +27,15 @@ function getHostCore(
   let basePath = '';
   if (!CLOUD_BASE_PATH.includes('CLOUD_NOTEBOOK_BASE_PATH_PLACEHOLDER')) {
     basePath = CLOUD_BASE_PATH;
+  }
+
+  const useCurrentOrigin = windowDefined && !!basePath;
+  if ((host === defaultHost && !opts?.forceCurrentPort) || opts?.forceDefaultPort) {
+    if (!useCurrentOrigin) {
+      host = `${host}:${defaultPort}`;
+    }
+  } else if (windowDefined && !!window.location.port) {
+    host = `${host}:${window.location.port}`;
   }
 
   return `${host}${basePath}`;
