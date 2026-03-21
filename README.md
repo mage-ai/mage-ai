@@ -192,15 +192,19 @@ docker run -it --rm \
   b2m-sage-ai:latest
 ```
 
-To build and push a multi-platform image to Harbor with an env file:
+## Scripts
+
+Use [scripts/publish_harbor.sh](/Users/tunasonmez/Documents/B2metric/core/test/mage-ai/scripts/publish_harbor.sh) to build and push a multi-platform image to Harbor with an env file.
 
 ```bash
 cp .env.harbor.example .env.harbor
 ```
 
-Set your credentials in `.env.harbor`:
+Required values in `.env.harbor`:
 
 ```bash
+HARBOR_REGISTRY=harbor.b2metric.com
+HARBOR_PROJECT=stc
 HARBOR_USER=your-user
 HARBOR_PASSWORD=your-password
 ```
@@ -211,18 +215,16 @@ Then run:
 ./scripts/publish_harbor.sh .env.harbor
 ```
 
-This builds and pushes the image to:
+By default, the script builds and pushes:
 
 ```bash
-harbor.b2metric.com/b2metric/b2m-sage-ai:latest
+harbor.b2metric.com/stc/b2m-sage-ai:latest
 ```
 
-You can override the defaults with environment variables:
+The script also reads these optional values from `.env.harbor`:
 
 - `IMAGE_NAME` defaults to `b2m-sage-ai`
 - `IMAGE_TAG` defaults to `latest`
-- `HARBOR_REGISTRY` defaults to `harbor.b2metric.com`
-- `HARBOR_PROJECT` defaults to `stc`
 - `BUILD_PLATFORMS` defaults to `linux/amd64,linux/arm64`
 - `BUILDER_NAME` defaults to `multiarch`
 - `DOCKERFILE_PATH` defaults to `Dockerfile`
