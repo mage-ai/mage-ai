@@ -3,6 +3,8 @@ set -eo pipefail
 
 PROJECT_PATH="default_repo"
 MAGE_PROJECT_TYPE="standalone"
+HOST="${HOST:-0.0.0.0}"
+PORT="${PORT:-6789}"
 
 if [[ ! -z "${FILESTORE_IP_ADDRESS}" && ! -z "${FILE_SHARE_NAME}" ]]; then
     echo "Mounting Cloud Filestore ${FILESTORE_IP_ADDRESS}:/${FILE_SHARE_NAME}"
@@ -50,10 +52,15 @@ if [ "$#" -gt 0 ]; then
 else
     echo "Starting project at ${PROJECT_PATH}, project type ${MAGE_PROJECT_TYPE}"
     if [[ ! -z "${DBT_DOCS_INSTANCE}" ]]; then
-        mage start $PROJECT_PATH --dbt-docs-instance 1
+        mage start $PROJECT_PATH --host "$HOST" --port "$PORT" --dbt-docs-instance 1
     elif [[ ! -z "${MANAGE_INSTANCE}" ]]; then
-        mage start $PROJECT_PATH --manage-instance 1
+        mage start $PROJECT_PATH --host "$HOST" --port "$PORT" --manage-instance 1
     else
-        mage start $PROJECT_PATH --project-type $MAGE_PROJECT_TYPE "${mage_args[@]}"
+        mage start \
+            $PROJECT_PATH \
+            --host "$HOST" \
+            --port "$PORT" \
+            --project-type $MAGE_PROJECT_TYPE \
+            "${mage_args[@]}"
     fi
 fi

@@ -6,7 +6,7 @@
     "build": "next build",
     "export": "next build && next export",
     "export_prod": "next build && next export -o ../server/frontend_dist",
-    "export_prod_base_path": "next build && next export -o ../server/frontend_dist_base_path_template",
+    "export_prod_base_path": "sh -c 'cp next.config.js next.config.js.bak && cp next_base_path.config.js next.config.js && next build && next export -o ../server/frontend_dist_base_path_template; status=$?; mv next.config.js.bak next.config.js; exit $status'",
     "dev": "npx next dev",
     "install_and_test": "yarn install && yarn type",
     "lint": "next lint",

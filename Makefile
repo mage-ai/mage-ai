@@ -9,4 +9,7 @@ dev_env:
 publish_private_pip:
 	@bash scripts/publish_private_pip.sh
 
-.PHONY: install-hooks dev_env publish_private_pip
+publish_harbor:
+	@bash scripts/publish_harbor.sh
+
+.PHONY: install-hooks dev_env publish_private_pip publish_harbor

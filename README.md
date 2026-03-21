@@ -70,6 +70,180 @@ Full setup guide and docs: [docs.mage.ai](https://docs.mage.ai/getting-started/s
 
 <br />
 
+## Build And Deploy Docker Image
+
+This repository includes a local `Dockerfile` that builds Mage from the current codebase instead of pulling `mageai/mageai:latest`.
+
+Build the image locally:
+
+```bash
+docker build -t b2m-sage-ai:latest .
+```
+
+The Dockerfile now defaults to a slimmer runtime image. It installs the base app only,
+without the full `.[all]` Python extras bundle or optional stacks like R, Sparkmagic,
+MSSQL drivers, and extra git-based Python dependencies.
+
+If you need those back, enable them explicitly at build time:
+
+```bash
+docker build \
+  --build-arg MAGE_EXTRAS='dbt,postgres,mysql,oracle,redshift,s3,snowflake,spark' \
+  --build-arg INSTALL_EXTRA_PY_DEPS=true \
+  --build-arg INSTALL_SPARKMAGIC=true \
+  --build-arg INSTALL_MSSQL=true \
+  --build-arg INSTALL_R=true \
+  -t b2m-sage-ai:latest .
+```
+
+This Docker build now regenerates the Mage frontend assets from `mage_ai/frontend`
+by running:
+
+```bash
+yarn export_prod
+yarn export_prod_base_path
+```
+
+inside a frontend build stage before the Python image is assembled.
+
+For reverse-proxy/base-path deployments, `export_prod_base_path` now temporarily switches
+to `next_base_path.config.js` so exported `_next` assets are generated with the
+`CLOUD_NOTEBOOK_BASE_PATH_PLACEHOLDER_` prefix that Mage rewrites at runtime.
+
+Run it locally:
+
+```bash
+docker run -it --rm \
+  -p 6789:6789 \
+  -p 7789:7789 \
+  b2m-sage-ai:latest
+```
+
+Run it on port `6380` behind a reverse proxy path such as `/workspace/abc`:
+
+```bash
+docker run -it --rm \
+  -p 6380:6380 \
+  -e HOST=0.0.0.0 \
+  -e PORT=6380 \
+  -e MAGE_BASE_PATH=workspace/abc \
+  -e MAGE_PUBLIC_HOST=http://IP/workspace/abc \
+  b2m-sage-ai:latest
+```
+
+Then proxy `/workspace/abc/` to `http://127.0.0.1:6380/workspace/abc/`.
+
+For Nginx:
+
+```nginx
+location /workspace/abc/ {
+    proxy_pass http://127.0.0.1:6380/workspace/abc/;
+    proxy_http_version 1.1;
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+    proxy_set_header Upgrade $http_upgrade;
+    proxy_set_header Connection "upgrade";
+}
+```
+
+Or run Traefik and Mage together with Docker Compose:
+
+```bash
+docker compose -f docker-compose.traefik.yml up --build -d
+```
+
+If you need a full clean rebuild after frontend or Dockerfile changes:
+
+```bash
+docker compose -f docker-compose.traefik.yml down
+docker build --no-cache -t b2m-sage-ai:latest .
+docker compose -f docker-compose.traefik.yml up -d
+```
+
+This exposes:
+
+- Mage at `http://127.0.0.1/workspace/abc`
+- Traefik dashboard at `http://localhost:8080`
+
+Before using it on a real server, update `MAGE_PUBLIC_HOST` in `docker-compose.traefik.yml`
+from `http://127.0.0.1/workspace/abc` to your real address, for example:
+
+```yaml
+MAGE_PUBLIC_HOST: http://192.168.1.10/workspace/abc
+```
+
+The Traefik compose file also sets:
+
+```yaml
+REQUIRE_USER_AUTHENTICATION: "false"
+```
+
+This avoids `401` responses on `/api/oauths` during the sign-in flow for this local reverse-proxy setup.
+
+If you want to mount a local project into the container:
+
+```bash
+docker run -it --rm \
+  -p 6789:6789 \
+  -p 7789:7789 \
+  -v "$(pwd)/default_repo:/home/src/default_repo" \
+  b2m-sage-ai:latest
+```
+
+To build and push a multi-platform image to Harbor with an env file:
+
+```bash
+cp .env.harbor.example .env.harbor
+```
+
+Set your credentials in `.env.harbor`:
+
+```bash
+HARBOR_USER=your-user
+HARBOR_PASSWORD=your-password
+```
+
+Then run:
+
+```bash
+./scripts/publish_harbor.sh .env.harbor
+```
+
+This builds and pushes the image to:
+
+```bash
+harbor.b2metric.com/b2metric/b2m-sage-ai:latest
+```
+
+You can override the defaults with environment variables:
+
+- `IMAGE_NAME` defaults to `b2m-sage-ai`
+- `IMAGE_TAG` defaults to `latest`
+- `HARBOR_REGISTRY` defaults to `harbor.b2metric.com`
+- `HARBOR_PROJECT` defaults to `stc`
+- `BUILD_PLATFORMS` defaults to `linux/amd64,linux/arm64`
+- `BUILDER_NAME` defaults to `multiarch`
+- `DOCKERFILE_PATH` defaults to `Dockerfile`
+- `BUILD_CONTEXT` defaults to `.`
+- `MAGE_EXTRAS` defaults to `postgres`
+- `INSTALL_EXTRA_PY_DEPS` defaults to `true`
+- `INSTALL_MSSQL` defaults to `false`
+- `INSTALL_R` defaults to `false`
+- `INSTALL_SPARKMAGIC` defaults to `false`
+
+The Harbor script performs these steps:
+
+1. Logs in to Harbor with `docker login`
+2. Creates or reuses a Docker Buildx builder
+3. Builds `linux/amd64,linux/arm64`
+4. Pushes the multi-platform image to Harbor
+
+Keep Harbor credentials in environment variables or CI secrets. Do not commit them into the repository.
+
+<br />
+
 ## Core Features
 
 | Feature | Description |
