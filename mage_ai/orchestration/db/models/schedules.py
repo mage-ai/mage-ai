@@ -82,6 +82,23 @@ pipeline_schedule_event_matcher_association_table = Table(
     Column('event_matcher_id', ForeignKey('event_matcher.id')),
 )
 
+ALWAYS_ON_DAYTIME_START_HOUR_UTC = 7
+ALWAYS_ON_DAYTIME_END_HOUR_UTC = 22  # inclusive; 22:59 UTC is still active
+
+
+def is_now_within_always_on_daytime_window(now: datetime) -> bool:
+    """
+    True when *now* falls on calendar hours 07:00–22:59 in UTC (same clock as should_schedule).
+
+    Outside this window, @always_on_daytime triggers do not start new runs (runs already executing
+    are not stopped).
+    """
+    if now.tzinfo is None:
+        now = now.replace(tzinfo=pytz.UTC)
+    else:
+        now = now.astimezone(pytz.UTC)
+    return ALWAYS_ON_DAYTIME_START_HOUR_UTC <= now.hour <= ALWAYS_ON_DAYTIME_END_HOUR_UTC
+
 
 class PipelineSchedule(PipelineScheduleProjectPlatformMixin, BaseModel):
     name = Column(String(255))
@@ -458,6 +475,7 @@ class PipelineSchedule(PipelineScheduleProjectPlatformMixin, BaseModel):
         if (
             self.schedule_interval == ScheduleInterval.ONCE
             or self.schedule_interval == ScheduleInterval.ALWAYS_ON
+            or self.schedule_interval == ScheduleInterval.ALWAYS_ON_DAYTIME
         ):
             current_execution_date = now
         elif self.schedule_interval == ScheduleInterval.DAILY:
@@ -517,6 +535,7 @@ class PipelineSchedule(PipelineScheduleProjectPlatformMixin, BaseModel):
         if (
             self.schedule_interval == ScheduleInterval.ONCE
             or self.schedule_interval == ScheduleInterval.ALWAYS_ON
+            or self.schedule_interval == ScheduleInterval.ALWAYS_ON_DAYTIME
         ):
             pass
         elif self.schedule_interval == ScheduleInterval.DAILY:
@@ -599,6 +618,16 @@ class PipelineSchedule(PipelineScheduleProjectPlatformMixin, BaseModel):
             if executor_count > 1 and pipeline_run_count < executor_count:
                 return True
         elif self.schedule_interval == ScheduleInterval.ALWAYS_ON:
+            if self.pipeline_runs_count == 0:
+                return True
+            else:
+                return self.last_pipeline_run_status not in [
+                    PipelineRun.PipelineRunStatus.RUNNING,
+                    PipelineRun.PipelineRunStatus.INITIAL,
+                ]
+        elif self.schedule_interval == ScheduleInterval.ALWAYS_ON_DAYTIME:
+            if not is_now_within_always_on_daytime_window(now):
+                return False
             if self.pipeline_runs_count == 0:
                 return True
             else:
@@ -1611,6 +1640,7 @@ class PipelineRun(PipelineRunProjectPlatformMixin, BaseModel):
             if (
                 ScheduleInterval.ONCE == self.pipeline_schedule.schedule_interval
                 or ScheduleInterval.ALWAYS_ON == self.pipeline_schedule.schedule_interval
+                or ScheduleInterval.ALWAYS_ON_DAYTIME == self.pipeline_schedule.schedule_interval
             ):
                 pass
             elif ScheduleInterval.DAILY == self.pipeline_schedule.schedule_interval:

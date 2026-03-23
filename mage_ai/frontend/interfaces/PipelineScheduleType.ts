@@ -26,8 +26,16 @@ export enum ScheduleIntervalEnum {
   DAILY = '@daily',
   WEEKLY = '@weekly',
   MONTHLY = '@monthly',
-  ALWAYS_ON = '@always_on'
+  ALWAYS_ON = '@always_on',
+  /** Same as always on, but only 07:00–22:59 UTC (see backend schedules helper). */
+  ALWAYS_ON_DAYTIME = '@always_on_daytime',
 }
+
+/** Human-friendly labels for trigger frequency dropdown (otherwise raw @… value is shown). */
+export const SCHEDULE_INTERVAL_DISPLAY_LABELS: Partial<Record<ScheduleIntervalEnum, string>> = {
+  [ScheduleIntervalEnum.ALWAYS_ON]: 'Always on',
+  [ScheduleIntervalEnum.ALWAYS_ON_DAYTIME]: 'Always on (7:00–22:59 UTC)',
+};
 
 export const SCHEDULE_INTERVALS = [
   ScheduleIntervalEnum.ONCE,

@@ -36,6 +36,7 @@ import PipelineDetailPage from '@components/PipelineDetailPage';
 import PipelineInteractionType from '@interfaces/PipelineInteractionType';
 import PipelineScheduleType, {
   PipelineScheduleSettingsType,
+  SCHEDULE_INTERVAL_DISPLAY_LABELS,
   ScheduleIntervalEnum,
   ScheduleStatusEnum,
   ScheduleTypeEnum,
@@ -870,7 +871,8 @@ function Edit({
 
               return acc.concat(
                 <option key={value} value={value}>
-                  {value.substring(1)}
+                  {SCHEDULE_INTERVAL_DISPLAY_LABELS[value]
+                    ?? value.substring(1).replace(/_/g, ' ')}
                 </option>,
               );
             }, [])}

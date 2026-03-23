@@ -44,6 +44,9 @@ class ScheduleInterval(StrEnum):
     WEEKLY = '@weekly'
     MONTHLY = '@monthly'
     ALWAYS_ON = '@always_on'
+    # Same restart semantics as ALWAYS_ON, but only while the wall clock is within the daytime
+    # window in UTC (07:00–22:59 inclusive). See schedules.is_now_within_always_on_daytime_window.
+    ALWAYS_ON_DAYTIME = '@always_on_daytime'
 
 
 @dataclass
