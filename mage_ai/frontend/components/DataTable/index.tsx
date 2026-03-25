@@ -231,8 +231,6 @@ const FilterInput = styled.input<{ error?: boolean }>`
   }
 `;
 
-
-
 function estimateCellHeight({
   original,
   values,

@@ -22,7 +22,7 @@ const ISO_DATE_RE = /^\d{4}(-\d{2}(-\d{2}([T ][\d:.Z+-]+)?)?)?$/;
  *   3. Otherwise → 'string'
  *   4. No non-null samples at all → 'unknown'
  *
- * @param samples  Up to ~20 representative values from the column.
+ * @param samples  A representative sample of values (caller is responsible for limiting size).
  *                 Null / undefined entries are filtered out before analysis.
  */
 export function inferColumnDtype(

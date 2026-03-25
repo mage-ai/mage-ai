@@ -405,9 +405,6 @@ function Sidekick({
   ]);
 
   const [filteredRowCount, setFilteredRowCount] = useState<number | null>(null);
-  const handleFilteredCountChange = useCallback((count: number) => {
-    setFilteredRowCount(count);
-  }, []);
 
   const dataStatusBar = useMemo(() => {
     if (!columns.length) return null;
@@ -434,12 +431,12 @@ function Sidekick({
       }
       columns={columns}
       filterable
-      height={heightWindow - heightOffset - ASIDE_SUBHEADER_HEIGHT - (UNIT * 2 + REGULAR_LINE_HEIGHT)}
+      height={heightWindow - heightOffset - ASIDE_SUBHEADER_HEIGHT - (UNIT * 7 + REGULAR_LINE_HEIGHT)}
       noBorderBottom
       noBorderLeft
       noBorderRight
       noBorderTop
-      onFilteredCountChange={handleFilteredCountChange}
+      onFilteredCountChange={setFilteredRowCount}
       renderColumnHeader={renderColumnHeader}
       rows={rows}
       width={afterWidth}
@@ -448,13 +445,13 @@ function Sidekick({
     afterWidth,
     columnTypes,
     columns,
-    handleFilteredCountChange,
     heightOffset,
     heightWindow,
     insightsByFeatureUUID,
     insightsOverview,
     renderColumnHeader,
     rows,
+    setFilteredRowCount,
   ]);
 
   const chartsMemo = useMemo(() => widgets.length > 0 && (

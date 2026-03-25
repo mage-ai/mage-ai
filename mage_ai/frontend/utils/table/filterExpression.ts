@@ -9,7 +9,7 @@ export type FilterResult = {
  * Word-alias → canonical operator map.
  * Exact set — no additions, no omissions.
  */
-export const OPERATOR_ALIASES: { [alias: string]: string } = {
+const OPERATOR_ALIASES: { [alias: string]: string } = {
   eq: '=',
   ge: '>=',
   gt: '>',
@@ -103,7 +103,7 @@ function applyStringFilter(
       return { match: cellLower === valueLower };
     case '!=':
       return { match: cellLower !== valueLower };
-    case '>':
+    case '>': // Note: > and < do lexicographic string comparison, not numeric
       return { match: cellLower > valueLower };
     case '>=':
       return { match: cellLower >= valueLower };
@@ -213,8 +213,6 @@ function applyDatetimeFilter(
           return { match: cellMs < valueMs };
         case '<=':
           return { match: cellMs <= valueMs };
-        default:
-          return { match: true };
       }
     }
 
