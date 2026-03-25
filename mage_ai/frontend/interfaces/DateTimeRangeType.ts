@@ -4,11 +4,11 @@ export enum DateTimeRangeQueryEnum {
 }
 
 export enum DateTimeRangeEnum {
-  LAST_HOUR = 'Last hour',
-  LAST_DAY = 'Last day',
-  LAST_WEEK = 'Last week',
-  LAST_30_DAYS = 'Last 30 days',
-  CUSTOM_RANGE = 'Custom range',
+    LAST_HOUR = 'Last hour',
+    LAST_DAY = 'Last day',
+    LAST_WEEK = 'Last week',
+    LAST_30_DAYS = 'Last 30 days',
+    CUSTOM_RANGE = 'Custom range',
 }
 
 export const DATE_TIME_RANGES = [
@@ -24,5 +24,3 @@ export const DATE_TIME_RANGE_SECOND_INTERVAL_MAPPING = {
     [DateTimeRangeEnum.LAST_WEEK]: 604800,
     [DateTimeRangeEnum.LAST_30_DAYS]: 2592000,
 };
-
-
