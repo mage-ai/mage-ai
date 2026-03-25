@@ -15,7 +15,7 @@ type ZoomControlProps = {
   canvasRef?: { current?: CanvasRef };
   containerRef?: { current?: any };
   graphContainerRef?: { current?: HTMLDivElement };
-  pipelineName?: string;
+  pipelineUuid?: string;
   zoomLevel: number;
 };
 
@@ -45,7 +45,7 @@ function ZoomControls({
   canvasRef,
   containerRef,
   graphContainerRef,
-  pipelineName,
+  pipelineUuid,
   zoomLevel,
 }: ZoomControlProps) {
   const [minimizeControls, setMinimizeControls] = useState<boolean>(false);
@@ -76,8 +76,8 @@ function ZoomControls({
     // Allow the canvas to re-render
     await new Promise((resolve) => setTimeout(resolve, 300));
 
-    const filename = pipelineName
-      ? `${pipelineName}-dependency-graph`
+    const filename = pipelineUuid
+      ? `${pipelineUuid}-dependency-graph`
       : 'dependency-graph';
 
     try {
@@ -87,7 +87,7 @@ function ZoomControls({
         controlsRef.current.style.display = '';
       }
     }
-  }, [canvasRef, graphContainerRef, pipelineName]);
+  }, [canvasRef, graphContainerRef, pipelineUuid]);
 
   return (
     <ZoomControlsStyle ref={controlsRef} onDoubleClick={(event) => { event.stopPropagation(); }}>

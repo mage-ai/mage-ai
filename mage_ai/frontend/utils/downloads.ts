@@ -63,11 +63,8 @@ function restoreStyles(backups: Map<HTMLElement, string>): void {
 
 function hideTooltips(element: HTMLElement): HTMLElement[] {
     const hidden: HTMLElement[] = [];
-    // Tooltip popups are absolutely positioned divs with z-index 3
-    // rendered by styled-components ContentStyle inside Tooltip wrappers
-    element.querySelectorAll('div').forEach((el) => {
-        const style = window.getComputedStyle(el);
-        if (style.position === 'absolute' && style.zIndex === '3') {
+    element.querySelectorAll('[data-tooltip-content]').forEach((el) => {
+        if (el instanceof HTMLElement) {
             el.style.setProperty('display', 'none', 'important');
             hidden.push(el);
         }
@@ -85,12 +82,10 @@ export async function exportDependencyGraph(
 ): Promise<void> {
     const backups = inlineStylesForCapture(element);
     const hiddenTooltips = hideTooltips(element);
-
     try {
         const canvas = await html2canvas(element, {
             scale: 3,
             useCORS: true,
-            allowTaint: true,
             backgroundColor: '#1E1F24',
         });
 

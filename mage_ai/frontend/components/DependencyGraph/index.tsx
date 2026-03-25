@@ -1775,7 +1775,7 @@ function DependencyGraph({
           canvasRef={canvasRef}
           containerRef={containerRef}
           graphContainerRef={graphContainerRef}
-          pipelineName={pipeline?.uuid}
+          pipelineUuid={pipeline?.uuid}
           zoomLevel={zoomLevel}
         />
         <Canvas
