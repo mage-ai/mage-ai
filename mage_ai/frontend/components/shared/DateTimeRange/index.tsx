@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import Button from '@oracle/elements/Button';
 import Calendar, { TimeType } from '@oracle/components/Calendar';
@@ -11,6 +11,7 @@ import TextInput from '@oracle/elements/Inputs/TextInput';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { calculateStartTimestamp } from '@utils/number';
 import {
+    getDatePartsFromUnixTimestamp,
     isoDateFormatFromDateParts,
     padTime,
     unixTimestampFromDate,
@@ -19,8 +20,10 @@ import {
 import { goToWithQuery } from '@utils/routing';
 import FlexContainer from '@oracle/components/FlexContainer';
 import { DATE_TIME_RANGE_SECOND_INTERVAL_MAPPING, DATE_TIME_RANGES, DateTimeRangeEnum, DateTimeRangeQueryEnum } from '@interfaces/DateTimeRangeType';
+import { queryFromUrl } from '@utils/url';
 
 function DateTimeRange({ setSelectedRange, selectedRange }) {
+    const q = queryFromUrl();
     const [showCalendarIndex, setShowCalendarIndex] = useState<number>(null);
     const [startDate, setStartDate] = useState<Date>(null);
     const [startTime, setStartTime] = useState<TimeType>({ hour: '00', minute: '00' });
@@ -29,6 +32,44 @@ function DateTimeRange({ setSelectedRange, selectedRange }) {
         hour: padTime(String(new Date().getUTCHours())),
         minute: padTime(String(new Date().getUTCMinutes())),
     });
+
+    useEffect(() => {
+        const {
+            start_timestamp: initialStart,
+            end_timestamp: initialEnd,
+        } = q;
+
+        if (initialStart) {
+            const {
+                date: initialStartDate,
+                hour: initialStartHour,
+                minute: initialStartMinute,
+            } = getDatePartsFromUnixTimestamp(initialStart);
+            setStartDate(initialStartDate);
+            setStartTime({
+                hour: padTime(initialStartHour),
+                minute: padTime(initialStartMinute),
+            });
+
+            const secondsAgo = (Math.ceil(Date.now() / 1000) - initialStart);
+            if (Math.abs(secondsAgo - DATE_TIME_RANGE_SECOND_INTERVAL_MAPPING[DateTimeRangeEnum.LAST_DAY]) <= 60) {
+                setSelectedRange(DateTimeRangeEnum.LAST_DAY);
+            }
+        }
+
+        if (initialEnd) {
+            const {
+                date: initialEndDate,
+                hour: initialEndHour,
+                minute: initialEndMinute,
+            } = getDatePartsFromUnixTimestamp(initialEnd);
+            setEndDate(initialEndDate);
+            setEndTime({
+                hour: padTime(initialEndHour),
+                minute: padTime(initialEndMinute),
+            });
+        }
+    }, []);
 
     return (
         <FlexContainer alignItems="center">
