@@ -29,6 +29,7 @@ class SendNtfyMessageTests(TestCase):
                 'message': 'Pipeline failed',
                 'title': 'Alert',
             },
+            timeout=10,
         )
         mock_response.raise_for_status.assert_called_once()
 
