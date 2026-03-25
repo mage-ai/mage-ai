@@ -131,8 +131,7 @@ function DateRangePicker({ endTimestamp, onApply, onOpenChange, startTimestamp }
     setEndTime(DEFAULT_TIME);
     setActiveField('start');
     onApply(null, null);
-    setOpenWithCallback(false);
-  }, [onApply, setOpenWithCallback]);
+  }, [onApply]);
 
   const tileClassName = useCallback(({ date, view }: { date: Date; view: string }) => {
     if (view !== 'month' || !startDate || !endDate) return null;
