@@ -142,94 +142,120 @@ function Terminal({
       return undefined;
     }
 
-    const term = new XTerm({
-      cursorBlink: true,
-      fontFamily: 'Menlo, Monaco, "Courier New", monospace',
-      fontSize: 13,
-      overviewRuler: { width: 0 },
-      scrollback: 5000,
-      theme: {
-        background: bg,
-        cursor: cursor,
-        foreground: fg,
-      },
-    });
-    const fitAddon = new FitAddon();
-    term.loadAddon(fitAddon);
-    term.open(refHost.current);
-    termRef.current = term;
-    fitAddonRef.current = fitAddon;
+    let term: XTerm | null = null;
+    let fitAddon: FitAddon | null = null;
+    let onWindowResize: (() => void) | null = null;
+    let ro: ResizeObserver | null = null;
 
-    term.onData((data) => {
-      sendPayload(['stdin', data]);
-    });
+    try {
+      term = new XTerm({
+        cursorBlink: true,
+        fontFamily: 'Menlo, Monaco, "Courier New", monospace',
+        fontSize: 13,
+        overviewRuler: { width: 0 },
+        scrollback: 5000,
+        theme: {
+          background: bg,
+          cursor: cursor,
+          foreground: fg,
+        },
+      });
 
-    term.attachCustomKeyEventHandler((domEvent) => {
-      if (domEvent.metaKey && domEvent.key.toLowerCase() === 'k') {
-        domEvent.preventDefault();
-        clearScreen();
-        return false;
-      }
-      const ext = externalShortcutsRef.current;
-      if (ext) {
-        const keyMapping: Record<string, boolean> = {
-          Meta: domEvent.metaKey,
-          Control: domEvent.ctrlKey,
-          Shift: domEvent.shiftKey,
-          Alt: domEvent.altKey,
-        };
-        if (ext(domEvent, keyMapping, [])) {
+      fitAddon = new FitAddon();
+      term.loadAddon(fitAddon);
+      term.open(refHost.current);
+      termRef.current = term;
+      fitAddonRef.current = fitAddon;
+
+      term.onData((data) => {
+        sendPayload(['stdin', data]);
+      });
+
+      term.attachCustomKeyEventHandler((domEvent) => {
+        if (domEvent.metaKey && domEvent.key.toLowerCase() === 'k') {
           domEvent.preventDefault();
+          clearScreen();
           return false;
         }
-      }
-      return true;
-    });
+        const ext = externalShortcutsRef.current;
+        if (ext) {
+          const keyMapping: Record<string, boolean> = {
+            Meta: domEvent.metaKey,
+            Control: domEvent.ctrlKey,
+            Shift: domEvent.shiftKey,
+            Alt: domEvent.altKey,
+          };
+          if (ext(domEvent, keyMapping, [])) {
+            domEvent.preventDefault();
+            return false;
+          }
+        }
+        return true;
+      });
 
-    const scheduleDebouncedFit = () => {
-      if (resizeDebounceRef.current) {
-        window.clearTimeout(resizeDebounceRef.current);
-      }
-      resizeDebounceRef.current = window.setTimeout(() => {
-        resizeDebounceRef.current = null;
-        fitAndNotifySize();
-      }, 50);
-    };
+      const scheduleDebouncedFit = () => {
+        if (resizeDebounceRef.current) {
+          window.clearTimeout(resizeDebounceRef.current);
+        }
+        resizeDebounceRef.current = window.setTimeout(() => {
+          resizeDebounceRef.current = null;
+          fitAndNotifySize();
+        }, 50);
+      };
 
-    const refitUntilStable = () => {
-      fitAndNotifySize();
-      requestAnimationFrame(() => {
+      const refitUntilStable = () => {
         fitAndNotifySize();
         requestAnimationFrame(() => {
           fitAndNotifySize();
+          requestAnimationFrame(() => {
+            fitAndNotifySize();
+          });
         });
+        window.setTimeout(() => fitAndNotifySize(), 50);
+        window.setTimeout(() => fitAndNotifySize(), 200);
+      };
+
+      refitUntilStable();
+
+      // Guard for environments where the Font Loading API may not exist.
+      const fontsReadyThen = (document as any)?.fonts?.ready?.then;
+      if (typeof fontsReadyThen === 'function') {
+        void (document as any).fonts.ready.then(() => {
+          fitAndNotifySize();
+          window.setTimeout(() => fitAndNotifySize(), 100);
+        });
+      } else {
+        fitAndNotifySize();
+      }
+
+      onWindowResize = () => scheduleDebouncedFit();
+      window.addEventListener('resize', onWindowResize);
+
+      ro = new ResizeObserver(() => {
+        scheduleDebouncedFit();
       });
-      window.setTimeout(() => fitAndNotifySize(), 50);
-      window.setTimeout(() => fitAndNotifySize(), 200);
-    };
-    refitUntilStable();
-    void document.fonts.ready.then(() => {
-      fitAndNotifySize();
-      window.setTimeout(() => fitAndNotifySize(), 100);
-    });
-
-    const onWindowResize = () => scheduleDebouncedFit();
-    window.addEventListener('resize', onWindowResize);
-
-    const ro = new ResizeObserver(() => {
-      scheduleDebouncedFit();
-    });
-    ro.observe(refHost.current);
-    resizeObserverRef.current = ro;
+      ro.observe(refHost.current);
+      resizeObserverRef.current = ro;
+    } catch (err) {
+      // If xterm fails to initialize, avoid breaking the whole page load.
+      // This helps keep non-terminal UI elements (like page breadcrumbs) visible.
+      // eslint-disable-next-line no-console
+      console.error('Mage terminal init failed:', err);
+      return undefined;
+    }
 
     return () => {
-      window.removeEventListener('resize', onWindowResize);
-      ro.disconnect();
-      resizeObserverRef.current = null;
+      if (onWindowResize) {
+        window.removeEventListener('resize', onWindowResize);
+      }
+      if (ro) {
+        ro.disconnect();
+        resizeObserverRef.current = null;
+      }
       if (resizeDebounceRef.current) {
         window.clearTimeout(resizeDebounceRef.current);
       }
-      term.dispose();
+      term?.dispose();
       termRef.current = null;
       fitAddonRef.current = null;
     };
