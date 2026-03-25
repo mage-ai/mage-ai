@@ -9,7 +9,7 @@ import { ColumnDtype } from './filterExpression';
  *
  * Note: numeric years such as "2023" satisfy this regex, but the numeric check
  * runs first in the detection priority — so ["2023","2022"] → 'numeric', not 'datetime'.
- * This is intentional (see architecture Decision 4).
+ * This is intentional: numeric detection takes precedence over datetime detection for 4-digit year strings.
  */
 const ISO_DATE_RE = /^\d{4}(-\d{2}(-\d{2}(T[\d:.Z+-]+)?)?)?$/;
 
