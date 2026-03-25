@@ -1,4 +1,3 @@
-import { DEBOUNCE_MS } from '@components/constants';
 import { expect, test } from '../base';
 
 const PIPELINE_URL = '/pipelines/example_pipeline/edit';
@@ -15,10 +14,9 @@ test('filters data table rows by column value', async ({ page }) => {
 
   // 2. User types a value — matching rows shown, non-matching hidden.
   await nameFilter.fill('Braund, Mr. Owen Harris');
-  await page.waitForTimeout(DEBOUNCE_MS + 150);
 
-  // 3. Row count updates.
-  await expect(page.getByText('1 of 891 rows × 12 columns').first()).toBeVisible();
+  // 3. Row count updates — Playwright retries until debounce fires and UI settles.
+  await expect(page.getByText('1 of 891 rows × 12 columns').first()).toBeVisible({ timeout: 5_000 });
 
   // 4. User clears filters — full dataset restored.
   await page.getByText('✕ Clear filters').first().click();
