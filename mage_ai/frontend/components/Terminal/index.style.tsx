@@ -50,7 +50,9 @@ export const XTermHost = styled.div<{
   height: 100%;
   min-height: 0;
   min-width: 0;
-  padding: ${PADDING_UNITS * UNIT}px;
+  /* xterm should occupy the full measured area; padding shrinks PTY cols/lines and
+   * causes premature wrapping. */
+  padding: 0;
   position: relative;
   width: 100%;
 
