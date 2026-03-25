@@ -11,10 +11,16 @@ def send_ntfy_message(config: NtfyConfig, message: str, title: str) -> None:
     if title:
         payload['title'] = title
 
-    response = requests.post(
-        url=config.base_url,
-        json=payload,
-    )
+    response = None
+    try:
+        response = requests.post(
+            url=config.base_url,
+            json=payload,
+            timeout=10,
+        )
+    except requests.exceptions.RequestException:
+        logger.exception('Failed to send ntfy message')
+        return
 
     try:
         if response is not None:
