@@ -161,7 +161,7 @@ function applyNumericFilter(
     case '<=':
       return { match: cellNum <= numValue };
     default:
-      return { hint: 'Unknown operator. Try: contains, =, >=', match: true };
+      return { hint: 'Unknown operator. Try one of: =, !=, >, >=, <, <=', match: true };
   }
 }
 
