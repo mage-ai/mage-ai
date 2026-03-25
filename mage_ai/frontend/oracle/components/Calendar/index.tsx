@@ -14,6 +14,7 @@ export type TimeType = {
 };
 
 type CalendarProps = {
+  inline?: boolean;
   localTime?: boolean;
   selectedDate: Date;
   selectedTime: TimeType;
@@ -23,6 +24,7 @@ type CalendarProps = {
 };
 
 function Calendar({
+  inline,
   localTime,
   selectedDate,
   selectedTime,
@@ -32,7 +34,7 @@ function Calendar({
 }: CalendarProps) {
   return (
     <DateSelectionContainer
-      absolute
+      absolute={!inline}
       topPosition={topPosition}
     >
       <ReactCalendar

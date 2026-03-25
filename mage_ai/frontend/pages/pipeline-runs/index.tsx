@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/router';
 
 import Dashboard from '@components/Dashboard';
@@ -10,7 +10,7 @@ import ProjectType, { FeatureUUIDEnum } from '@interfaces/ProjectType';
 import Spacing from '@oracle/elements/Spacing';
 import Spinner from '@oracle/components/Spinner';
 import TagType from '@interfaces/TagType';
-import Toolbar from '@components/shared/Table/Toolbar';
+import Toolbar, { DateRangePickerProps } from '@components/shared/Table/Toolbar';
 import api from '@api';
 import {
   PIPELINE_RUN_STATUSES_NO_LAST_RUN_FAILED,
@@ -41,6 +41,23 @@ function RunListPage() {
     [project?.features],
   );
 
+  const urlStartTimestamp = Number.isFinite(Number(q?.start_timestamp))
+    ? Number(q.start_timestamp)
+    : undefined;
+  const urlEndTimestamp = Number.isFinite(Number(q?.end_timestamp))
+    ? Number(q.end_timestamp)
+    : undefined;
+
+  const [startTimestamp, setStartTimestamp] = useState<number | undefined>(urlStartTimestamp);
+  const [endTimestamp, setEndTimestamp] = useState<number | undefined>(urlEndTimestamp);
+  const [datePickerOpen, setDatePickerOpen] = useState<boolean>(false);
+
+  useEffect(() => {
+    setStartTimestamp(urlStartTimestamp);
+    setEndTimestamp(urlEndTimestamp);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [urlStartTimestamp, urlEndTimestamp]);
+
   const pipelineRunsRequestQuery: PipelineRunReqQueryParamsType = {
     ...query,
     _limit: ROW_LIMIT,
@@ -52,13 +69,19 @@ function RunListPage() {
   if (q?.status) {
     pipelineRunsRequestQuery.status = q.status;
   }
+  if (startTimestamp) {
+    pipelineRunsRequestQuery.start_timestamp = startTimestamp;
+  }
+  if (endTimestamp) {
+    pipelineRunsRequestQuery.end_timestamp = endTimestamp;
+  }
   const {
     data: dataPipelineRuns,
     mutate: fetchPipelineRuns,
   } = api.pipeline_runs.list(
     pipelineRunsRequestQuery,
     {
-      refreshInterval: 3000,
+      refreshInterval: datePickerOpen ? 0 : 3000,
       revalidateOnFocus: true,
     },
   );
@@ -72,8 +95,41 @@ function RunListPage() {
   const totalRuns = useMemo(() => dataPipelineRuns?.metadata?.count || [], [dataPipelineRuns]);
   const pipelineUUIDs = useMemo(() => dataPipelineRuns?.metadata?.pipeline_uuids || [], [dataPipelineRuns]);
 
+  const dateRangePickerProps: DateRangePickerProps = useMemo(() => ({
+    endTimestamp,
+    onApply: (start, end) => {
+      const newStart = start || undefined;
+      const newEnd = end || undefined;
+
+      setStartTimestamp(newStart);
+      setEndTimestamp(newEnd);
+
+      const updatedQuery = { ...queryFromUrl() };
+      if (newStart) {
+        updatedQuery.start_timestamp = newStart;
+      } else {
+        delete updatedQuery.start_timestamp;
+      }
+      if (newEnd) {
+        updatedQuery.end_timestamp = newEnd;
+      } else {
+        delete updatedQuery.end_timestamp;
+      }
+      delete updatedQuery.page;
+      router.push(
+        '/pipeline-runs',
+        `/pipeline-runs?${queryString(updatedQuery)}`,
+        { shallow: true },
+      );
+    },
+    onOpenChange: setDatePickerOpen,
+    startTimestamp,
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }), [endTimestamp, startTimestamp]);
+
   const toolbarEl = useMemo(() => (
     <Toolbar
+      dateRangePickerProps={dateRangePickerProps}
       filterOptions={{
         pipeline_tag: tags.map(({ uuid }) => uuid),
         pipeline_uuid: pipelineUUIDs,
@@ -96,6 +152,7 @@ function RunListPage() {
   ), [
     // The "query" dependency is intentionally excluded to avoid the filters
     // being reset every time pipeline runs are fetched.
+    dateRangePickerProps,
     pipelineUUIDs,
     router,
     tags,
@@ -134,6 +191,7 @@ function RunListPage() {
                   router.push(
                     '/pipeline-runs',
                     `/pipeline-runs?${queryString(updatedQuery)}`,
+                    { shallow: true },
                   );
                 }}
                 page={Number(page)}

@@ -142,15 +142,19 @@ def get_query_timestamps(query_arg) -> Tuple[datetime, datetime]:
     error = ApiError.RESOURCE_INVALID.copy()
     if start_timestamp:
         try:
-            start_timestamp = datetime.fromtimestamp(int(start_timestamp))
+            start_timestamp = datetime.utcfromtimestamp(int(start_timestamp))
         except (ValueError, OverflowError):
             error.update(message='Value is invalid for start_timestamp.')
             raise ApiError(error)
     if end_timestamp:
         try:
-            end_timestamp = datetime.fromtimestamp(int(end_timestamp))
+            end_timestamp = datetime.utcfromtimestamp(int(end_timestamp))
         except (ValueError, OverflowError):
             error.update(message='Value is invalid for end_timestamp.')
             raise ApiError(error)
+
+    if start_timestamp and end_timestamp and start_timestamp > end_timestamp:
+        error.update(message='start_timestamp must be earlier than end_timestamp.')
+        raise ApiError(error)
 
     return start_timestamp, end_timestamp

@@ -2,6 +2,7 @@ import moment from 'moment';
 import tzMoment from 'moment-timezone';
 import 'moment-duration-format';
 
+import { TimeType } from '@oracle/components/Calendar';
 import { pluralize } from '@utils/string';
 import { rangeSequential } from '@utils/array';
 
@@ -347,4 +348,21 @@ export function convertToMillisecondsTimestamp(value: number): number {
 
 export function isDate(value: any): value is Date {
   return value instanceof Date;
+}
+
+export function toUnixTimestamp(date: Date, time: TimeType): number {
+  const d = new Date(date);
+  d.setHours(parseInt(time.hour || '0', 10), parseInt(time.minute || '0', 10), 0, 0);
+  return Math.floor(d.getTime() / 1000);
+}
+
+export function fromUnixTimestamp(ts: number): { date: Date; time: TimeType } {
+  const d = new Date(ts * 1000);
+  return {
+    date: d,
+    time: {
+      hour: String(d.getHours()).padStart(2, '0'),
+      minute: String(d.getMinutes()).padStart(2, '0'),
+    },
+  };
 }
