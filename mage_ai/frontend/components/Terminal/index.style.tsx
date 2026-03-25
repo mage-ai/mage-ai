@@ -25,7 +25,8 @@ export const ContainerStyle = styled.div<{
   ${ScrollbarStyledCss}
 
   height: 100%;
-  overflow: auto;
+  /* xterm viewport scrolls; outer scroll breaks PTY width vs grid alignment */
+  overflow: hidden;
   position: absolute;
 
   ${props => `
@@ -46,13 +47,17 @@ export const XTermHost = styled.div<{
   ${SHARED_STYLES}
   box-sizing: border-box;
   flex: 1;
+  height: 100%;
   min-height: 0;
   min-width: 0;
   padding: ${PADDING_UNITS * UNIT}px;
+  position: relative;
+  width: 100%;
 
   .xterm {
     height: 100%;
     padding: 0;
+    width: 100%;
   }
 
   .xterm-viewport {

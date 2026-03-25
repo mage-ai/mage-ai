@@ -1,5 +1,6 @@
-import { FitAddon } from '@xterm/addon-fit';
 import { Terminal as XTerm } from '@xterm/xterm';
+
+import { FitAddon } from './xtermFitAddon';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTheme } from 'styled-components';
 
@@ -118,7 +119,8 @@ function Terminal({
     }
     const { cols, rows } = term;
     if (cols > 0 && rows > 0) {
-      sendPayload(['set_size', cols, rows]);
+      // terminado: self.size = command[1:3] then rows, cols = client.size → expect [rows, cols]
+      sendPayload(['set_size', rows, cols]);
     }
   }, [sendPayload]);
 
@@ -144,6 +146,7 @@ function Terminal({
       cursorBlink: true,
       fontFamily: 'Menlo, Monaco, "Courier New", monospace',
       fontSize: 13,
+      overviewRuler: { width: 0 },
       scrollback: 5000,
       theme: {
         background: bg,
@@ -183,23 +186,44 @@ function Terminal({
       return true;
     });
 
-    requestAnimationFrame(() => {
-      fitAndNotifySize();
-    });
-
-    const ro = new ResizeObserver(() => {
+    const scheduleDebouncedFit = () => {
       if (resizeDebounceRef.current) {
         window.clearTimeout(resizeDebounceRef.current);
       }
       resizeDebounceRef.current = window.setTimeout(() => {
         resizeDebounceRef.current = null;
         fitAndNotifySize();
-      }, 100);
+      }, 50);
+    };
+
+    const refitUntilStable = () => {
+      fitAndNotifySize();
+      requestAnimationFrame(() => {
+        fitAndNotifySize();
+        requestAnimationFrame(() => {
+          fitAndNotifySize();
+        });
+      });
+      window.setTimeout(() => fitAndNotifySize(), 50);
+      window.setTimeout(() => fitAndNotifySize(), 200);
+    };
+    refitUntilStable();
+    void document.fonts.ready.then(() => {
+      fitAndNotifySize();
+      window.setTimeout(() => fitAndNotifySize(), 100);
+    });
+
+    const onWindowResize = () => scheduleDebouncedFit();
+    window.addEventListener('resize', onWindowResize);
+
+    const ro = new ResizeObserver(() => {
+      scheduleDebouncedFit();
     });
     ro.observe(refHost.current);
     resizeObserverRef.current = ro;
 
     return () => {
+      window.removeEventListener('resize', onWindowResize);
       ro.disconnect();
       resizeObserverRef.current = null;
       if (resizeDebounceRef.current) {
