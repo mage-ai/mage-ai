@@ -170,7 +170,7 @@ class PipelineRunResource(DatabaseResource):
         if start_timestamp is not None:
             results = results.filter(PipelineRun.started_at >= start_timestamp)
         if end_timestamp is not None:
-            results = results.filter(PipelineRun.completed_at <= end_timestamp)
+            results = results.filter(PipelineRun.started_at <= end_timestamp)
 
         limit = int((meta or {}).get(META_KEY_LIMIT, self.DEFAULT_LIMIT))
 
