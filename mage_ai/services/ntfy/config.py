@@ -10,4 +10,9 @@ class NtfyConfig(BaseConfig):
 
     @property
     def is_valid(self) -> bool:
-        return bool(self.base_url) and bool(self.topic)
+        return (
+            bool(self.base_url)
+            and bool(self.topic)
+            and self.base_url != 'None'
+            and self.topic != 'None'
+        )
