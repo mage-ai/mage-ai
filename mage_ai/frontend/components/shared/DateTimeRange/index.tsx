@@ -20,10 +20,8 @@ import {
 import { goToWithQuery } from '@utils/routing';
 import FlexContainer from '@oracle/components/FlexContainer';
 import { DATE_TIME_RANGE_SECOND_INTERVAL_MAPPING, DATE_TIME_RANGES, DateTimeRangeEnum, DateTimeRangeQueryEnum } from '@interfaces/DateTimeRangeType';
-import { queryFromUrl } from '@utils/url';
 
-function DateTimeRange({ setSelectedRange, selectedRange }) {
-    const q = queryFromUrl();
+function DateTimeRange({ timestamps, setSelectedRange, selectedRange }) {
     const [showCalendarIndex, setShowCalendarIndex] = useState<number>(null);
     const [startDate, setStartDate] = useState<Date>(null);
     const [startTime, setStartTime] = useState<TimeType>({ hour: '00', minute: '00' });
@@ -37,7 +35,7 @@ function DateTimeRange({ setSelectedRange, selectedRange }) {
         const {
             start_timestamp: initialStart,
             end_timestamp: initialEnd,
-        } = q;
+        } = timestamps;
 
         if (initialStart) {
             const {

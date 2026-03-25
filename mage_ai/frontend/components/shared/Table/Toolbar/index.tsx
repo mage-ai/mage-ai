@@ -385,6 +385,7 @@ function Toolbar({
 
       <Spacing ml={BUTTON_PADDING}>
         <DateTimeRange
+          timestamps={query}
           selectedRange={selectedRange}
           setSelectedRange={setSelectedRange}></DateTimeRange>
       </Spacing>
