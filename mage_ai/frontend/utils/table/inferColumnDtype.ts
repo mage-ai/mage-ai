@@ -11,7 +11,7 @@ import { ColumnDtype } from './filterExpression';
  * runs first in the detection priority — so ["2023","2022"] → 'numeric', not 'datetime'.
  * This is intentional: numeric detection takes precedence over datetime detection for 4-digit year strings.
  */
-const ISO_DATE_RE = /^\d{4}(-\d{2}(-\d{2}(T[\d:.Z+-]+)?)?)?$/;
+const ISO_DATE_RE = /^\d{4}(-\d{2}(-\d{2}([T ][\d:.Z+-]+)?)?)?$/;
 
 /**
  * Infer the data type of a column from a sample of its values.

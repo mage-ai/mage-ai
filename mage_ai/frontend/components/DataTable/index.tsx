@@ -89,7 +89,7 @@ type DataTableProps = {
   noBorderLeft?: boolean;
   noBorderRight?: boolean;
   noBorderTop?: boolean;
-  onFilteredCountChange?: (count: number) => void;
+  onFilteredCountChange?: (count: number | null) => void;
   rows: string[][] | number[][];
 } & SharedProps;
 
