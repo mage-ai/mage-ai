@@ -7,7 +7,6 @@ import Select from '@oracle/elements/Inputs/Select';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import TextInput from '@oracle/elements/Inputs/TextInput';
-import { LogRangeEnum } from '@interfaces/LogType';
 
 import { UNIT } from '@oracle/styles/units/spacing';
 import { calculateStartTimestamp } from '@utils/number';
@@ -19,25 +18,7 @@ import {
 } from '@utils/date';
 import { goToWithQuery } from '@utils/routing';
 import FlexContainer from '@oracle/components/FlexContainer';
-
-enum RangeQueryEnum {
-    START = 'start_timestamp',
-    END = 'end_timestamp',
-}
-
-const RANGES = [
-    LogRangeEnum.LAST_HOUR,
-    LogRangeEnum.LAST_DAY,
-    LogRangeEnum.LAST_WEEK,
-    LogRangeEnum.LAST_30_DAYS,
-];
-
-const RANGE_SECOND_INTERVAL_MAPPING = {
-    [LogRangeEnum.LAST_HOUR]: 3600,
-    [LogRangeEnum.LAST_DAY]: 86400,
-    [LogRangeEnum.LAST_WEEK]: 604800,
-    [LogRangeEnum.LAST_30_DAYS]: 2592000,
-};
+import { DATE_TIME_RANGE_SECOND_INTERVAL_MAPPING, DATE_TIME_RANGES, DateTimeRangeEnum, DateTimeRangeQueryEnum } from '@interfaces/DateTimeRangeType';
 
 function DateTimeRange({ setSelectedRange, selectedRange }) {
     const [showCalendarIndex, setShowCalendarIndex] = useState<number>(null);
@@ -58,12 +39,12 @@ function DateTimeRange({ setSelectedRange, selectedRange }) {
                     e.preventDefault();
                     const range = e.target.value;
                     setSelectedRange(range);
-                    if (RANGES.includes(range)) {
-                        const startTimestamp = calculateStartTimestamp(RANGE_SECOND_INTERVAL_MAPPING[range]);
+                    if (DATE_TIME_RANGES.includes(range)) {
+                        const startTimestamp = calculateStartTimestamp(DATE_TIME_RANGE_SECOND_INTERVAL_MAPPING[range]);
                         goToWithQuery(
                             {
-                                [RangeQueryEnum.START]: startTimestamp,
-                                [RangeQueryEnum.END]: null,
+                                [DateTimeRangeQueryEnum.START]: startTimestamp,
+                                [DateTimeRangeQueryEnum.END]: null,
                             },
                         );
                     }
@@ -72,7 +53,7 @@ function DateTimeRange({ setSelectedRange, selectedRange }) {
                 placeholder="Select time range"
                 value={selectedRange}
             >
-                {Object.values(LogRangeEnum).map(range => (
+                {Object.values(DateTimeRangeEnum).map(range => (
                     <option key={range} value={range}>
                         {range}
                     </option>
@@ -82,7 +63,7 @@ function DateTimeRange({ setSelectedRange, selectedRange }) {
             <Spacing mr={1} />
 
             {
-                selectedRange === LogRangeEnum.CUSTOM_RANGE && (
+                selectedRange === DateTimeRangeEnum.CUSTOM_RANGE && (
                     <>
                         <TextInput
                             compact
@@ -146,8 +127,8 @@ function DateTimeRange({ setSelectedRange, selectedRange }) {
                                 const start = isoDateFormatFromDateParts(startDate, startTime.hour, startTime.minute);
                                 const end = isoDateFormatFromDateParts(endDate, endTime.hour, endTime.minute);
                                 goToWithQuery({
-                                    [RangeQueryEnum.START]: unixTimestampFromDate(start),
-                                    [RangeQueryEnum.END]: unixTimestampFromDate(end),
+                                    [DateTimeRangeQueryEnum.START]: unixTimestampFromDate(start),
+                                    [DateTimeRangeQueryEnum.END]: unixTimestampFromDate(end),
                                 });
                             }}
                             padding={`${UNIT / 2}px`}

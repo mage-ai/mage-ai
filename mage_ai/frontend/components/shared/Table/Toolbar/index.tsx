@@ -4,6 +4,7 @@ import { useRouter } from 'next/router';
 import AddButton from '@components/shared/AddButton';
 import Badge from '@oracle/components/Badge';
 import ClickOutside from '@oracle/components/ClickOutside';
+import DateTimeRange from '@components/shared/DateTimeRange';
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import FlyoutMenuWrapper from '@oracle/components/FlyoutMenu/FlyoutMenuWrapper';
@@ -29,6 +30,7 @@ import { UNIT } from '@oracle/styles/units/spacing';
 import { VerticalDividerStyle } from '@oracle/elements/Divider/index.style';
 import { getNestedTruthyValuesCount } from '@utils/hash';
 import { isViewer } from '@utils/session';
+import { DateTimeRangeEnum } from '@interfaces/DateTimeRangeType';
 
 type ToolbarProps = {
   addButtonProps?: {
@@ -129,6 +131,7 @@ function Toolbar({
   const [filterButtonMenuOpen, setFilterButtonMenuOpen] = useState<boolean>(false);
   const [groupButtonMenuOpen, setGroupButtonMenuOpen] = useState<boolean>(false);
   const [moreActionsMenuOpen, setMoreActionsMenuOpen] = useState<boolean>(false);
+  const [selectedRange, setSelectedRange] = useState<DateTimeRangeEnum>(null);
   const [confirmationDialogueOpenIdx, setConfirmationDialogueOpenIdx] = useState<number>(null);
   const disabledActions = !selectedRowId;
 
@@ -264,11 +267,11 @@ function Toolbar({
         {...SHARED_BUTTON_PROPS}
         afterElement={filtersAppliedCount > 0
           ?
-            <Badge cyan noVerticalPadding>
-              <Text bold inverted>
-                {filtersAppliedCount}
-              </Text>
-            </Badge>
+          <Badge cyan noVerticalPadding>
+            <Text bold inverted>
+              {filtersAppliedCount}
+            </Text>
+          </Badge>
           : null
         }
         beforeElement={<Filter size={2 * UNIT} />}
@@ -379,6 +382,12 @@ function Toolbar({
 
       {(addButtonProps || secondaryButtonProps || children) && <Spacing mr={BUTTON_PADDING} />}
       {filterButtonEl}
+
+      <Spacing ml={BUTTON_PADDING}>
+        <DateTimeRange
+          selectedRange={selectedRange}
+          setSelectedRange={setSelectedRange}></DateTimeRange>
+      </Spacing>
 
       {groupMenuItems?.length > 0 &&
         <Spacing ml={BUTTON_PADDING}>
