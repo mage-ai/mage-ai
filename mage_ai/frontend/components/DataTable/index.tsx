@@ -987,6 +987,10 @@ function DataTable({
             onClick={() => {
               setFilters({});
               setDebouncedFilters({});
+              if (debounceRef.current) {
+                clearTimeout(debounceRef.current);
+                debounceRef.current = null;
+              }
             }}
             small
           >
