@@ -97,6 +97,12 @@ type ToolbarProps = {
   selectedRowId?: string | number;
   setSelectedRow?: (row: any) => void;
   showDivider?: boolean;
+  dateTimeRangeProps?: {
+    timestamps: {
+      start_timestamp?: number;
+      end_timestamp?: number;
+    }
+  }
 };
 
 function Toolbar({
@@ -118,6 +124,7 @@ function Toolbar({
   selectedRowId,
   setSelectedRow,
   showDivider,
+  dateTimeRangeProps,
 }: ToolbarProps) {
   const router = useRouter();
   const isViewerRole = isViewer(router?.basePath);
@@ -383,12 +390,15 @@ function Toolbar({
       {(addButtonProps || secondaryButtonProps || children) && <Spacing mr={BUTTON_PADDING} />}
       {filterButtonEl}
 
-      <Spacing ml={BUTTON_PADDING}>
-        <DateTimeRange
-          timestamps={query}
-          selectedRange={selectedRange}
-          setSelectedRange={setSelectedRange}></DateTimeRange>
-      </Spacing>
+      {dateTimeRangeProps && (
+        <Spacing ml={BUTTON_PADDING}>
+          <DateTimeRange
+            timestamps={dateTimeRangeProps.timestamps}
+            selectedRange={selectedRange}
+            setSelectedRange={setSelectedRange}
+          />
+        </Spacing>
+      )}
 
       {groupMenuItems?.length > 0 &&
         <Spacing ml={BUTTON_PADDING}>

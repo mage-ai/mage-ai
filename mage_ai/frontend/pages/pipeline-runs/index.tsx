@@ -43,6 +43,16 @@ function RunListPage() {
     [project?.features],
   );
 
+  const start = query?.[PipelineRunFilterQueryEnum.START_TIMESTAMP];
+  const end = query?.[PipelineRunFilterQueryEnum.END_TIMESTAMP];
+
+  const dateTimeRangeProps = {
+    timestamps: {
+      start_timestamp: start ? Number(start) : undefined,
+      end_timestamp: end ? Number(end) : undefined,
+    },
+  };
+
   const pipelineRunsRequestQuery: PipelineRunReqQueryParamsType = {
     ...query,
     _limit: ROW_LIMIT,
@@ -93,6 +103,7 @@ function RunListPage() {
       }}
       query={query}
       resetPageOnFilterApply
+      dateTimeRangeProps={dateTimeRangeProps}
     />
   // eslint-disable-next-line react-hooks/exhaustive-deps
   ), [
