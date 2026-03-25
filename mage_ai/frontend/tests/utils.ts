@@ -20,7 +20,7 @@ function getSettingsToEnable(
     'DBT_V2',
     'GLOBAL_HOOKS',
     'NOTEBOOK_BLOCK_OUTPUT_SPLIT_VIEW',
-]);
+  ]);
 
   for (const feature in featuresFiltered) {
     if (!settingFeaturesToDisable[
@@ -68,4 +68,23 @@ export async function enableSettings(
   }
 
   await page.getByRole('button', { name: 'Save project settings' }).click();
+}
+
+export async function selectDateTime(
+  page,
+  placeholder,
+  daySelector,
+  hour,
+  minute,
+) {
+  await page.locator(`input[placeholder="${placeholder}"]`).click();
+
+  const calendar = page.locator('.react-calendar');
+  await calendar.locator(daySelector).click();
+
+  const selects = page.locator('select:visible');
+  const count = await selects.count();
+
+  await selects.nth(count - 2).selectOption(hour);
+  await selects.nth(count - 1).selectOption(minute);
 }

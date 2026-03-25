@@ -1,4 +1,5 @@
 import { expect, test } from './base';
+import { selectDateTime } from './utils';
 
 test('ensure pipeline "example_pipeline" runs successfully', async ({ page }) => {
   // This test assumes the "example_pipeline" pipeline exists in a new project.
@@ -20,4 +21,19 @@ test('ensure pipeline "example_pipeline" runs successfully', async ({ page }) =>
   // Go back to pipeline's trigger page.
   await page.getByRole('link', { name: 'example_pipeline' }).click();
   await expect(page.locator('#pipeline-triggers-row-0')).toContainText('completed');
+});
+
+test('filters pipeline runs using custom date ranges in the URL', async ({ page }) => {
+  await page.goto('/pipeline-runs');
+
+  await page
+    .locator('select[placeholder="Select time range"]')
+    .selectOption({ label: 'Custom range' });
+
+  await selectDateTime(page, 'Start', '.react-calendar__tile--now', '10', '05');
+  await selectDateTime(page, 'End', '.react-calendar__tile--now', '17', '30');
+
+  await page.getByRole('button', { name: /^Filter$/i }).last().click();
+
+  await expect(page).toHaveURL(/start_timestamp=.*end_timestamp=.*/);
 });
