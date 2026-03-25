@@ -55,6 +55,9 @@ function DateTimeRange({ setSelectedRange, selectedRange }) {
             if (Math.abs(secondsAgo - DATE_TIME_RANGE_SECOND_INTERVAL_MAPPING[DateTimeRangeEnum.LAST_DAY]) <= 60) {
                 setSelectedRange(DateTimeRangeEnum.LAST_DAY);
             }
+            else if (Math.abs(secondsAgo - DATE_TIME_RANGE_SECOND_INTERVAL_MAPPING[DateTimeRangeEnum.LAST_HOUR]) <= 3600) {
+                setSelectedRange(DateTimeRangeEnum.LAST_HOUR);
+            }
         }
 
         if (initialEnd) {
@@ -68,6 +71,10 @@ function DateTimeRange({ setSelectedRange, selectedRange }) {
                 hour: padTime(initialEndHour),
                 minute: padTime(initialEndMinute),
             });
+        }
+
+        if (initialStart && initialEnd) {
+            setSelectedRange(DateTimeRangeEnum.CUSTOM_RANGE);
         }
     }, []);
 
