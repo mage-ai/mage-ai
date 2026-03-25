@@ -168,9 +168,9 @@ class PipelineRunResource(DatabaseResource):
         if statuses:
             results = results.filter(PipelineRun.status.in_(statuses))
         if start_timestamp is not None:
-            results = results.filter(PipelineRun.started_at >= start_timestamp)
+            results = results.filter(PipelineRun.created_at >= start_timestamp)
         if end_timestamp is not None:
-            results = results.filter(PipelineRun.started_at <= end_timestamp)
+            results = results.filter(PipelineRun.created_at <= end_timestamp)
 
         limit = int((meta or {}).get(META_KEY_LIMIT, self.DEFAULT_LIMIT))
 
