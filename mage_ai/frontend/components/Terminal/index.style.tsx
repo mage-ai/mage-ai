@@ -39,6 +39,27 @@ export const InnerStyle = styled.div`
   padding: ${PADDING_UNITS * UNIT}px;
 `;
 
+/** Fills parent; xterm FitAddon measures this element. */
+export const XTermHost = styled.div<{
+  width?: number;
+}>`
+  ${SHARED_STYLES}
+  box-sizing: border-box;
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+  padding: ${PADDING_UNITS * UNIT}px;
+
+  .xterm {
+    height: 100%;
+    padding: 0;
+  }
+
+  .xterm-viewport {
+    border-radius: 0;
+  }
+`;
+
 export const LineStyle = styled.div`
   height: ${ROW_HEIGHT}px;
 `;
