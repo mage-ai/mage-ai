@@ -105,13 +105,22 @@ function DateRangePicker({ endTimestamp, onApply, onOpenChange, startTimestamp }
   }, [activeField]);
 
   const handleApply = useCallback(() => {
+    let startTs: number;
+    let endTs: number;
+
     if (!startDate || !endDate) {
-      onApply(null, null);
+      const now = new Date();
+      const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0);
+      startTs = Math.floor(todayStart.getTime() / 1000);
+      endTs = Math.floor(now.getTime() / 1000);
     } else {
-      const startTs = toUnixTimestamp(startDate, startTime);
-      const endTs = toUnixTimestamp(endDate, endTime);
-      onApply(Math.min(startTs, endTs), Math.max(startTs, endTs));
+      const s = toUnixTimestamp(startDate, startTime);
+      const e = toUnixTimestamp(endDate, endTime);
+      startTs = Math.min(s, e);
+      endTs = Math.max(s, e);
     }
+
+    onApply(startTs, endTs);
     setOpenWithCallback(false);
   }, [endDate, endTime, onApply, setOpenWithCallback, startDate, startTime]);
 
@@ -121,7 +130,9 @@ function DateRangePicker({ endTimestamp, onApply, onOpenChange, startTimestamp }
     setEndDate(null);
     setEndTime(DEFAULT_TIME);
     setActiveField('start');
-  }, []);
+    onApply(null, null);
+    setOpenWithCallback(false);
+  }, [onApply, setOpenWithCallback]);
 
   const tileClassName = useCallback(({ date, view }: { date: Date; view: string }) => {
     if (view !== 'month' || !startDate || !endDate) return null;
