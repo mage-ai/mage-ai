@@ -143,7 +143,19 @@ function RunListPage() {
         status: RUN_STATUS_TO_LABEL,
       }}
       onClickFilterDefaults={() => {
-        router.push('/pipeline-runs');
+        const updatedQuery: Record<string, unknown> = {};
+        if (startTimestamp) {
+          updatedQuery.start_timestamp = startTimestamp;
+        }
+        if (endTimestamp) {
+          updatedQuery.end_timestamp = endTimestamp;
+        }
+        const qs = queryString(updatedQuery);
+        router.push(
+          '/pipeline-runs',
+          qs ? `/pipeline-runs?${qs}` : '/pipeline-runs',
+          { shallow: true },
+        );
       }}
       query={query}
       resetPageOnFilterApply
@@ -153,8 +165,10 @@ function RunListPage() {
     // The "query" dependency is intentionally excluded to avoid the filters
     // being reset every time pipeline runs are fetched.
     dateRangePickerProps,
+    endTimestamp,
     pipelineUUIDs,
     router,
+    startTimestamp,
     tags,
   ]);
 
