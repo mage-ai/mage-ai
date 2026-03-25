@@ -23,7 +23,7 @@ test('ensure pipeline "example_pipeline" runs successfully', async ({ page }) =>
   await expect(page.locator('#pipeline-triggers-row-0')).toContainText('completed');
 });
 
-test('filters pipeline runs using custom date ranges in the URL', async ({ page }) => {
+test('updates URL when filtering pipeline runs by a custom date range', async ({ page }) => {
   await page.goto('/pipeline-runs');
 
   await page
@@ -37,3 +37,22 @@ test('filters pipeline runs using custom date ranges in the URL', async ({ page 
 
   await expect(page).toHaveURL(/start_timestamp=.*end_timestamp=.*/);
 });
+
+const cases = [
+  { label: 'Last hour' },
+  { label: 'Last day' },
+  { label: 'Last week' },
+  { label: 'Last 30 days' },
+];
+
+for (const { label } of cases) {
+  test(`updates URL for ${label} filter`, async ({ page }) => {
+    await page.goto('/pipeline-runs');
+
+    await page
+      .locator('select[placeholder="Select time range"]')
+      .selectOption({ label });
+
+    await expect(page).toHaveURL(/start_timestamp=.*/);
+  });
+}
