@@ -85,7 +85,8 @@ function applyStringFilter(
 
   // None-check mode (all dtypes)
   if (value.toLowerCase() === 'none') {
-    const isNone = cell == null || cellStr.trim() === '';
+    // Also treat the string "null" as None — the table renderer displays it as "None".
+    const isNone = cell == null || cellStr.trim() === '' || cellStr.toLowerCase() === 'null';
     if (operator === '!=') {
       return { match: !isNone };
     }
