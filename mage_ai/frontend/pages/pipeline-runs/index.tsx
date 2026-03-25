@@ -32,6 +32,8 @@ function RunListPage() {
     PipelineRunFilterQueryEnum.PIPELINE_UUID,
     PipelineRunFilterQueryEnum.STATUS,
     PipelineRunFilterQueryEnum.TAG,
+    PipelineRunFilterQueryEnum.START_TIMESTAMP,
+    PipelineRunFilterQueryEnum.END_TIMESTAMP,
   ]), [q]);
 
   const { data: dataProjects } = api.projects.list();

@@ -61,12 +61,16 @@ export interface PipelineRunReqQueryParamsType {
   include_pipeline_uuids?: boolean;
   pipeline_uuid?: string;
   status?: RunStatusEnum;
+  start_timestamp?: number;
+  end_timestamp?: number;
 }
 
 export enum PipelineRunFilterQueryEnum {
   PIPELINE_UUID = 'pipeline_uuid[]',
   STATUS = 'status[]',
   TAG = 'pipeline_tag[]',
+  START_TIMESTAMP = 'start_timestamp',
+  END_TIMESTAMP = 'end_timestamp',
 }
 
 interface Obj {
