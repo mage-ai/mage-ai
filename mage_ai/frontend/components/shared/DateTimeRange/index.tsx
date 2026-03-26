@@ -91,6 +91,8 @@ function DateTimeRange({ timestamps, setSelectedRange, selectedRange }) {
                             {
                                 [DateTimeRangeQueryEnum.START]: startTimestamp,
                                 [DateTimeRangeQueryEnum.END]: null,
+                                page: null,
+                                offset: null,
                             },
                         );
                     }
@@ -175,6 +177,8 @@ function DateTimeRange({ timestamps, setSelectedRange, selectedRange }) {
                                 goToWithQuery({
                                     [DateTimeRangeQueryEnum.START]: unixTimestampFromDate(start),
                                     [DateTimeRangeQueryEnum.END]: unixTimestampFromDate(end),
+                                    page: null,
+                                    offset: null,
                                 });
                             }}
                             padding={`${UNIT / 2}px`}
