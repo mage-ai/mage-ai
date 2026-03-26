@@ -86,9 +86,28 @@ ALWAYS_ON_DAYTIME_START_HOUR_UTC = 7
 ALWAYS_ON_DAYTIME_END_HOUR_UTC = 22  # inclusive; 22:59 UTC is still active
 
 
-def is_now_within_always_on_daytime_window(now: datetime) -> bool:
+def _normalize_hour_utc(hour: int, fallback: int) -> int:
+    if hour is None:
+        return fallback
+
+    try:
+        hour_int = int(hour)
+    except Exception:
+        return fallback
+
+    if hour_int < 0 or hour_int > 23:
+        return fallback
+
+    return hour_int
+
+
+def is_now_within_always_on_daytime_window(
+    now: datetime,
+    start_hour_utc: int = ALWAYS_ON_DAYTIME_START_HOUR_UTC,
+    end_hour_utc: int = ALWAYS_ON_DAYTIME_END_HOUR_UTC,
+) -> bool:
     """
-    True when *now* falls on calendar hours 07:00–22:59 in UTC (same clock as should_schedule).
+    True when *now* falls on UTC clock hours within the configured window.
 
     Outside this window, @always_on_daytime triggers do not start new runs (runs already executing
     are not stopped).
@@ -97,7 +116,15 @@ def is_now_within_always_on_daytime_window(now: datetime) -> bool:
         now = now.replace(tzinfo=pytz.UTC)
     else:
         now = now.astimezone(pytz.UTC)
-    return ALWAYS_ON_DAYTIME_START_HOUR_UTC <= now.hour <= ALWAYS_ON_DAYTIME_END_HOUR_UTC
+
+    start_hour_utc = _normalize_hour_utc(start_hour_utc, ALWAYS_ON_DAYTIME_START_HOUR_UTC)
+    end_hour_utc = _normalize_hour_utc(end_hour_utc, ALWAYS_ON_DAYTIME_END_HOUR_UTC)
+
+    # Support windows that cross midnight (e.g. 22 -> 2).
+    if start_hour_utc <= end_hour_utc:
+        return start_hour_utc <= now.hour <= end_hour_utc
+
+    return now.hour >= start_hour_utc or now.hour <= end_hour_utc
 
 
 class PipelineSchedule(PipelineScheduleProjectPlatformMixin, BaseModel):
@@ -626,7 +653,15 @@ class PipelineSchedule(PipelineScheduleProjectPlatformMixin, BaseModel):
                     PipelineRun.PipelineRunStatus.INITIAL,
                 ]
         elif self.schedule_interval == ScheduleInterval.ALWAYS_ON_DAYTIME:
-            if not is_now_within_always_on_daytime_window(now):
+            settings = self.settings or {}
+            daytime_start_hour = settings.get('always_on_daytime_start_hour')
+            daytime_end_hour = settings.get('always_on_daytime_end_hour')
+
+            if not is_now_within_always_on_daytime_window(
+                now,
+                start_hour_utc=daytime_start_hour,
+                end_hour_utc=daytime_end_hour,
+            ):
                 return False
             if self.pipeline_runs_count == 0:
                 return True

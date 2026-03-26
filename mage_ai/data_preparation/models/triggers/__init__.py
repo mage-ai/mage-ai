@@ -58,6 +58,9 @@ class SettingsConfig(BaseConfig):
     pipeline_run_limit: int = None
     timeout: int = None  # in seconds
     timeout_status: str = None
+    # Used by the `@always_on_daytime` schedule interval (UTC hours, inclusive).
+    always_on_daytime_start_hour: int = None
+    always_on_daytime_end_hour: int = None
 
 
 @dataclass

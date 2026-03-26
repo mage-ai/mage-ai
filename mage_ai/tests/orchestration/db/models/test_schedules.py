@@ -1304,6 +1304,78 @@ class PipelineScheduleTests(DBTestCase):
             ),
         )
 
+    def test_is_now_within_always_on_daytime_window_custom_window(self):
+        self.assertTrue(
+            is_now_within_always_on_daytime_window(
+                datetime(2023, 8, 19, 2, 0, 0, tzinfo=timezone.utc),
+                start_hour_utc=1,
+                end_hour_utc=3,
+            ),
+        )
+        self.assertFalse(
+            is_now_within_always_on_daytime_window(
+                datetime(2023, 8, 19, 0, 0, 0, tzinfo=timezone.utc),
+                start_hour_utc=1,
+                end_hour_utc=3,
+            ),
+        )
+        # Wrap-around window example: 22 -> 2 (UTC)
+        self.assertTrue(
+            is_now_within_always_on_daytime_window(
+                datetime(2023, 8, 19, 23, 0, 0, tzinfo=timezone.utc),
+                start_hour_utc=22,
+                end_hour_utc=2,
+            ),
+        )
+        self.assertTrue(
+            is_now_within_always_on_daytime_window(
+                datetime(2023, 8, 19, 1, 0, 0, tzinfo=timezone.utc),
+                start_hour_utc=22,
+                end_hour_utc=2,
+            ),
+        )
+        self.assertFalse(
+            is_now_within_always_on_daytime_window(
+                datetime(2023, 8, 19, 3, 0, 0, tzinfo=timezone.utc),
+                start_hour_utc=22,
+                end_hour_utc=2,
+            ),
+        )
+
+    @freeze_time('2023-08-19 02:00:00')
+    def test_should_schedule_always_on_daytime_custom_window(self):
+        pipeline_schedule = PipelineSchedule.create(
+            name=self.faker.name(),
+            pipeline_uuid='test_pipeline',
+            schedule_interval=ScheduleInterval.ALWAYS_ON_DAYTIME,
+            schedule_type=ScheduleType.TIME,
+            start_time=datetime(2023, 8, 19, 0, 0, 0).replace(tzinfo=timezone.utc),
+            status=ScheduleStatus.ACTIVE,
+            settings=dict(
+                always_on_daytime_start_hour=1,
+                always_on_daytime_end_hour=3,
+            ),
+        )
+
+        self.assertTrue(pipeline_schedule.should_schedule())
+
+    @freeze_time('2023-08-19 05:00:00')
+    def test_should_schedule_always_on_daytime_custom_window_outside(self):
+        pipeline_schedule = PipelineSchedule.create(
+            name=self.faker.name(),
+            pipeline_uuid='test_pipeline',
+            schedule_interval=ScheduleInterval.ALWAYS_ON_DAYTIME,
+            schedule_type=ScheduleType.TIME,
+            start_time=datetime(2023, 8, 19, 0, 0, 0).replace(tzinfo=timezone.utc),
+            status=ScheduleStatus.ACTIVE,
+            settings=dict(
+                always_on_daytime_start_hour=1,
+                always_on_daytime_end_hour=3,
+            ),
+        )
+
+        self.assertFalse(pipeline_schedule.should_schedule())
+
     def test_create_or_update_batch(self):
         create_pipeline_with_blocks(
             'test create or update batch',

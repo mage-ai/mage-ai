@@ -186,7 +186,15 @@ class PipelineScheduleProjectPlatformMixin:
                 is_now_within_always_on_daytime_window,
             )
 
-            if not is_now_within_always_on_daytime_window(now):
+            settings = self.settings or {}
+            daytime_start_hour = settings.get('always_on_daytime_start_hour')
+            daytime_end_hour = settings.get('always_on_daytime_end_hour')
+
+            if not is_now_within_always_on_daytime_window(
+                now,
+                start_hour_utc=daytime_start_hour,
+                end_hour_utc=daytime_end_hour,
+            ):
                 return False
             if self.pipeline_runs_count == 0:
                 return True
