@@ -74,7 +74,11 @@ function DateTimeRange({ timestamps, setSelectedRange, selectedRange }) {
         if (initialStart && initialEnd) {
             setSelectedRange(DateTimeRangeEnum.CUSTOM_RANGE);
         }
-    }, []);
+    },
+        // Initialize state from URL params on mount.
+        // Avoid re-running on query changes to prevent overwriting user input.
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        []);
 
     return (
         <FlexContainer alignItems="center">
