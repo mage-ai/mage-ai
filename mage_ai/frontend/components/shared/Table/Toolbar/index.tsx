@@ -274,11 +274,11 @@ function Toolbar({
         {...SHARED_BUTTON_PROPS}
         afterElement={filtersAppliedCount > 0
           ?
-          <Badge cyan noVerticalPadding>
-            <Text bold inverted>
-              {filtersAppliedCount}
-            </Text>
-          </Badge>
+            <Badge cyan noVerticalPadding>
+              <Text bold inverted>
+                {filtersAppliedCount}
+              </Text>
+            </Badge>
           : null
         }
         beforeElement={<Filter size={2 * UNIT} />}
@@ -393,9 +393,9 @@ function Toolbar({
       {dateTimeRangeProps && (
         <Spacing ml={BUTTON_PADDING}>
           <DateTimeRange
-            timestamps={dateTimeRangeProps.timestamps}
             selectedRange={selectedRange}
             setSelectedRange={setSelectedRange}
+            timestamps={dateTimeRangeProps.timestamps}
           />
         </Spacing>
       )}
