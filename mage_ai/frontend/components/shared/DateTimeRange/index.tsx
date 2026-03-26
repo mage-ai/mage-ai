@@ -54,18 +54,21 @@ function DateTimeRange({ timestamps, setSelectedRange, selectedRange }: DateTime
         });
 
         const secondsAgo = Math.ceil(Date.now() / 1000) - initialStart;
-        if (
-          Math.abs(
-            secondsAgo - DATE_TIME_RANGE_SECOND_INTERVAL_MAPPING[DateTimeRangeEnum.LAST_DAY],
-          ) <= 60
-        ) {
-          setSelectedRange(DateTimeRangeEnum.LAST_DAY);
-        } else if (
-          Math.abs(
-            secondsAgo - DATE_TIME_RANGE_SECOND_INTERVAL_MAPPING[DateTimeRangeEnum.LAST_HOUR],
-          ) <= 3600
-        ) {
-          setSelectedRange(DateTimeRangeEnum.LAST_HOUR);
+        const presets = [
+          DateTimeRangeEnum.LAST_HOUR,
+          DateTimeRangeEnum.LAST_DAY,
+          DateTimeRangeEnum.LAST_WEEK,
+          DateTimeRangeEnum.LAST_30_DAYS,
+        ];
+
+        for (const preset of presets) {
+          const targetSeconds = DATE_TIME_RANGE_SECOND_INTERVAL_MAPPING[preset];
+          if (typeof targetSeconds === 'number'
+            && Math.abs(secondsAgo - targetSeconds) <= 60
+          ) {
+            setSelectedRange(preset);
+            break;
+          }
         }
       }
 
