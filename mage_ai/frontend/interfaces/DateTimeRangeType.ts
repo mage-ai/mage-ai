@@ -24,3 +24,14 @@ export const DATE_TIME_RANGE_SECOND_INTERVAL_MAPPING = {
     [DateTimeRangeEnum.LAST_WEEK]: 604800,
     [DateTimeRangeEnum.LAST_30_DAYS]: 2592000,
 };
+
+export type DateTimeRangeTimeStamps = {
+    start_timestamp?: number;
+    end_timestamp?: number;
+}
+
+export type DateTimeRangeProps = {
+    timestamps: DateTimeRangeTimeStamps,
+    selectedRange: DateTimeRangeEnum;
+    setSelectedRange: (range: DateTimeRangeEnum) => void;
+};
