@@ -76,7 +76,7 @@ function DateRangePicker({ endTimestamp, onApply, onOpenChange, startTimestamp }
     if (!open) return;
 
     setActiveField('start');
-    if (startTimestamp) {
+    if (startTimestamp !== null && startTimestamp !== undefined) {
       const { date, time } = fromUnixTimestamp(startTimestamp);
       setStartDate(date);
       setStartTime(time);
@@ -84,7 +84,7 @@ function DateRangePicker({ endTimestamp, onApply, onOpenChange, startTimestamp }
       setStartDate(null);
       setStartTime(DEFAULT_TIME);
     }
-    if (endTimestamp) {
+    if (endTimestamp !== null && endTimestamp !== undefined) {
       const { date, time } = fromUnixTimestamp(endTimestamp);
       setEndDate(date);
       setEndTime(time);
@@ -105,19 +105,25 @@ function DateRangePicker({ endTimestamp, onApply, onOpenChange, startTimestamp }
   }, [activeField]);
 
   const handleApply = useCallback(() => {
-    let startTs: number;
-    let endTs: number;
+    let startTs: number | null = null;
+    let endTs: number | null = null;
 
-    if (!startDate || !endDate) {
+    if (!startDate && !endDate) {
       const now = new Date();
       const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0);
       startTs = Math.floor(todayStart.getTime() / 1000);
       endTs = Math.floor(now.getTime() / 1000);
-    } else {
+    } else if (startDate && endDate) {
       const s = toUnixTimestamp(startDate, startTime);
       const e = toUnixTimestamp(endDate, endTime);
       startTs = Math.min(s, e);
       endTs = Math.max(s, e);
+    } else if (startDate && !endDate) {
+      startTs = toUnixTimestamp(startDate, startTime);
+      endTs = null;
+    } else if (!startDate && endDate) {
+      startTs = null;
+      endTs = toUnixTimestamp(endDate, endTime);
     }
 
     onApply(startTs, endTs);
@@ -171,7 +177,7 @@ function DateRangePicker({ endTimestamp, onApply, onOpenChange, startTimestamp }
     <div style={{ display: 'inline-block', position: 'relative' }}>
       <KeyboardShortcutButton
         {...SHARED_BUTTON_PROPS}
-        afterElement={startTimestamp || endTimestamp
+        afterElement={startTimestamp != null || endTimestamp != null
           ? <Badge cyan noVerticalPadding><Text bold inverted>1</Text></Badge>
           : null
         }

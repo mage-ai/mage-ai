@@ -69,10 +69,10 @@ function RunListPage() {
   if (q?.status) {
     pipelineRunsRequestQuery.status = q.status;
   }
-  if (startTimestamp) {
+  if (startTimestamp !== undefined) {
     pipelineRunsRequestQuery.start_timestamp = startTimestamp;
   }
-  if (endTimestamp) {
+  if (endTimestamp !== undefined) {
     pipelineRunsRequestQuery.end_timestamp = endTimestamp;
   }
   const {
@@ -98,19 +98,19 @@ function RunListPage() {
   const dateRangePickerProps: DateRangePickerProps = useMemo(() => ({
     endTimestamp,
     onApply: (start, end) => {
-      const newStart = start || undefined;
-      const newEnd = end || undefined;
+      const newStart = start ?? undefined;
+      const newEnd = end ?? undefined;
 
       setStartTimestamp(newStart);
       setEndTimestamp(newEnd);
 
       const updatedQuery = { ...queryFromUrl() };
-      if (newStart) {
+      if (newStart !== undefined) {
         updatedQuery.start_timestamp = newStart;
       } else {
         delete updatedQuery.start_timestamp;
       }
-      if (newEnd) {
+      if (newEnd !== undefined) {
         updatedQuery.end_timestamp = newEnd;
       } else {
         delete updatedQuery.end_timestamp;
@@ -144,10 +144,10 @@ function RunListPage() {
       }}
       onClickFilterDefaults={() => {
         const updatedQuery: Record<string, unknown> = {};
-        if (startTimestamp) {
+        if (startTimestamp !== null && startTimestamp !== undefined) {
           updatedQuery.start_timestamp = startTimestamp;
         }
-        if (endTimestamp) {
+        if (endTimestamp !== null && endTimestamp !== undefined) {
           updatedQuery.end_timestamp = endTimestamp;
         }
         const qs = queryString(updatedQuery);

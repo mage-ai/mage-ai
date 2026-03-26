@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import List, Tuple
+from typing import List, Optional, Tuple
 
 from mage_ai.api.errors import ApiError
 from mage_ai.orchestration.constants import Entity
@@ -131,7 +131,7 @@ def parse_cookie_header(cookies_raw):
     return cookies
 
 
-def get_query_timestamps(query_arg) -> Tuple[datetime, datetime]:
+def get_query_timestamps(query_arg) -> Tuple[Optional[datetime], Optional[datetime]]:
     start_timestamp = query_arg.get('start_timestamp', [None])
     if start_timestamp:
         start_timestamp = start_timestamp[0]
