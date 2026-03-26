@@ -147,10 +147,11 @@ export function matchesFilter(cellValue: any, parsed: ParsedFilter): boolean {
   }
 
   if (filterType === 'numeric') {
-    const cellNumeric = parseFloat(displayValue);
-    if (isNaN(cellNumeric)) {
+    const normalizedDisplay = displayValue.trim();
+    if (!STRICT_NUMBER_REGEX.test(normalizedDisplay)) {
       return false;
     }
+    const cellNumeric = parseFloat(normalizedDisplay);
     return compareNumbers(cellNumeric, parsed.numericValue ?? 0, operator);
   }
 
