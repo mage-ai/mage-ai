@@ -1,5 +1,5 @@
 import InnerHTML from 'dangerously-set-html-content';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import DataTable from '@components/DataTable';
 import FlexContainer from '@oracle/components/FlexContainer';
@@ -40,6 +40,11 @@ function TableOutput({
 }: TableOutputProps) {
   const { data, resource_usage: resourceUsage, sample_data: sampleData } = output;
   const [filteredRowCount, setFilteredRowCount] = useState<number | null>(null);
+
+  useEffect(() => {
+    setFilteredRowCount(null);
+  }, [output]);
+
   const shape = useMemo(
     // @ts-ignore
     () =>
