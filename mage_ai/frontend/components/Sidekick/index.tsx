@@ -145,7 +145,9 @@ export type SidekickProps = {
     [blockUUID: string]: BlockInteractionType[];
   };
   setDisableShortcuts: (disableShortcuts: boolean) => void;
-  setHiddenBlocks: (callback: (prev: { [uuid: string]: boolean }) => { [uuid: string]: boolean }) => void;
+  setHiddenBlocks: (
+    callback: (prev: { [uuid: string]: boolean }) => { [uuid: string]: boolean },
+  ) => void;
   setErrors: (errors: ErrorsType) => void;
   setInteractionsMapping: (prev: any) => {
     [interactionUUID: string]: InteractionType;
@@ -253,6 +255,7 @@ function Sidekick({
   const dragHandleRef = useRef<HTMLDivElement>(null);
   const outputContainerRef = useRef<HTMLDivElement>(null);
   const treeContainerRef = useRef<HTMLDivElement>(null);
+  const graphContainerRef = useRef<HTMLDivElement>(null);
   const dragHeightRef = useRef<number>(outputHeight);
 
   const { block: blockEditing } = editingBlock?.upstreamBlocks || {};
@@ -296,10 +299,8 @@ function Sidekick({
           // it reverts to content size (treeH - UNIT*10) when the inline style clears.
           // DependencyGraph subtracts its default heightOffset (UNIT * 10) internally,
           // so we match that here so the inline and styled-comp values are identical.
-          const graphContainerEl = treeContainerRef.current.firstElementChild
-            ?.firstElementChild as HTMLElement | null;
-          if (graphContainerEl) {
-            graphContainerEl.style.height = `${treeH - UNIT * 10}px`;
+          if (graphContainerRef.current) {
+            graphContainerRef.current.style.height = `${treeH - UNIT * 10}px`;
           }
         }
       });
@@ -310,14 +311,17 @@ function Sidekick({
       document.addEventListener('mousemove', onMouseMove);
     };
     const onMouseUp = () => {
+      const wasDragging = dragging;
       dragging = false;
       if (rafId !== null) {
         cancelAnimationFrame(rafId);
         rafId = null;
       }
       document.removeEventListener('mousemove', onMouseMove);
-      setOutputHeight(dragHeightRef.current);
-      set(LOCAL_STORAGE_KEY_STREAMING_OUTPUT_HEIGHT, dragHeightRef.current);
+      if (wasDragging) {
+        setOutputHeight(dragHeightRef.current);
+        set(LOCAL_STORAGE_KEY_STREAMING_OUTPUT_HEIGHT, dragHeightRef.current);
+      }
     };
 
     el.addEventListener('mousedown', onMouseDown);
@@ -332,10 +336,8 @@ function Sidekick({
 
   useEffect(() => {
     if (outputContainerRef.current) outputContainerRef.current.style.height = '';
-    if (treeContainerRef.current) {
-      const graphContainerEl = treeContainerRef.current.firstElementChild
-        ?.firstElementChild as HTMLElement | null;
-      if (graphContainerEl) graphContainerEl.style.height = '';
+    if (graphContainerRef.current) {
+      graphContainerRef.current.style.height = '';
     }
   }, [outputHeight]);
 
@@ -691,6 +693,7 @@ function Sidekick({
                     addNewBlockAtIndex={addNewBlockAtIndex}
                     blockRefs={blockRefs}
                     blocks={blocks}
+                    graphContainerRef={graphContainerRef}
                     contentByBlockUUID={contentByBlockUUID}
                     contextMenuEnabled
                     deleteBlock={deleteBlock}
