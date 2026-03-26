@@ -80,6 +80,7 @@ type TableProps = {
     sticky?: string;
   }[];
   data: (string | number | { [key: string]: string | number | boolean } | (string | number)[])[][];
+  disableZeroIndexRowNumber?: boolean;
   enableFiltering?: boolean;
   numberOfIndexes: number;
   onFilteredRowCount?: (count: number | null) => void;
@@ -376,6 +377,7 @@ function Table({ ...props }: TableProps) {
     columns,
     data,
     disableScrolling,
+    disableZeroIndexRowNumber,
     enableFiltering,
     height,
     index: indexProp,
@@ -608,7 +610,7 @@ function Table({ ...props }: TableProps) {
                   indexColumnValue = indexColumnValue[idx];
                 }
               } else if (isFiltering) {
-                indexColumnValue = String(displayIndex);
+                indexColumnValue = String(displayIndex + (disableZeroIndexRowNumber ? 1 : 0));
               } else {
                 indexColumnValue = cell.render('Cell');
               }
@@ -683,6 +685,7 @@ function Table({ ...props }: TableProps) {
     },
     [
       columnsAll,
+      disableZeroIndexRowNumber,
       indexProp,
       invalidValues,
       isFiltering,
@@ -892,6 +895,7 @@ function DataTable({
           columns={columns}
           data={rowsProp}
           disableScrolling={disableScrolling}
+          disableZeroIndexRowNumber={disableZeroIndexRowNumber}
           enableFiltering={enableFiltering}
           height={height}
           index={index}
@@ -909,9 +913,10 @@ function DataTable({
       columnHeaderHeight,
       columnHeadersContainEmptyString,
       columns,
+      disableScrolling,
+      disableZeroIndexRowNumber,
       enableFiltering,
       rowsProp,
-      disableScrolling,
       height,
       index,
       invalidValues,
