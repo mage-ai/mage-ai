@@ -25,11 +25,13 @@ test('ensure pipeline "example_pipeline" runs successfully', async ({ page }) =>
 
 const dateTimeRangeCases = [
   { url: '/pipeline-runs' },
-  { url: '/pipeline-runs?page=7&offset=300' }
+  { url: '/pipeline-runs?page=7&offset=300' },
 ];
 
 for (const { url } of dateTimeRangeCases) {
-  test(`updates URL ${url} when filtering pipeline runs by a custom date range`, async ({ page }) => {
+  test(`updates URL ${url} when filtering pipeline runs by a custom date range`, async ({
+    page,
+  }) => {
     await page.goto(url);
 
     await page
@@ -39,7 +41,10 @@ for (const { url } of dateTimeRangeCases) {
     await selectDateTime(page, 'Start', '.react-calendar__tile--now', '10', '05');
     await selectDateTime(page, 'End', '.react-calendar__tile--now', '17', '30');
 
-    await page.getByRole('button', { name: /^Filter$/i }).last().click();
+    await page
+      .getByRole('button', { name: /^Filter$/i })
+      .last()
+      .click();
 
     await expect(page).toHaveURL(/start_timestamp=.*end_timestamp=.*/);
     await expect(page).not.toHaveURL(/[?&]page=/);
@@ -66,4 +71,32 @@ for (const { url } of dateTimeRangeCases) {
       await expect(page).not.toHaveURL(/[?&]offset=/);
     });
   }
+}
+
+const INTERVALS = {
+  LAST_30_DAYS: 2592000,
+  LAST_WEEK: 604800,
+  LAST_DAY: 86400,
+  LAST_HOUR: 3600,
+};
+
+const shareUrlCases = [
+  { interval: INTERVALS.LAST_30_DAYS, label: 'Last 30 days' },
+  { interval: INTERVALS.LAST_WEEK, label: 'Last week' },
+  { interval: INTERVALS.LAST_DAY, label: 'Last day' },
+  { interval: INTERVALS.LAST_HOUR, label: 'Last hour' },
+];
+
+for (const { interval, label } of shareUrlCases) {
+  test(`initializes date time range to ${label} when URL has corresponding start_timestamp`, async ({
+    page,
+  }) => {
+    const now = Math.floor(Date.now() / 1000);
+    const startTimestamp = now - interval;
+
+    await page.goto(`/pipeline-runs?start_timestamp=${startTimestamp}`);
+
+    const select = await page.locator('select[placeholder="Select time range"]');
+    await expect(select).toHaveValue(label);
+  });
 }
