@@ -93,7 +93,7 @@ function DateTimeRange({ timestamps, setSelectedRange, selectedRange }: DateTime
   );
 
   return (
-    <FlexContainer alignItems='center'>
+    <FlexContainer alignItems="center">
       <Select
         compact
         defaultColor
@@ -114,7 +114,7 @@ function DateTimeRange({ timestamps, setSelectedRange, selectedRange }: DateTime
           }
         }}
         paddingRight={UNIT * 4}
-        placeholder='Select time range'
+        placeholder="Select time range"
         value={selectedRange}
       >
         {Object.values(DateTimeRangeEnum).map(range => (
@@ -133,7 +133,7 @@ function DateTimeRange({ timestamps, setSelectedRange, selectedRange }: DateTime
             defaultColor
             onClick={() => setShowCalendarIndex(0)}
             paddingRight={0}
-            placeholder='Start'
+            placeholder="Start"
             value={
               startDate ? utcDateFromDateAndTime(startDate, startTime?.hour, startTime?.minute) : ''
             }
@@ -160,7 +160,7 @@ function DateTimeRange({ timestamps, setSelectedRange, selectedRange }: DateTime
             defaultColor
             onClick={() => setShowCalendarIndex(1)}
             paddingRight={0}
-            placeholder='End'
+            placeholder="End"
             value={endDate ? utcDateFromDateAndTime(endDate, endTime?.hour, endTime?.minute) : ''}
           />
           <ClickOutside
