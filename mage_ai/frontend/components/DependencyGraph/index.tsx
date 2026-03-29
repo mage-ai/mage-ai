@@ -1588,15 +1588,15 @@ function DependencyGraph({
               compact
               inline
               loading={isLoadingUpdateBlock}
-              // @ts-ignore
-              onClick={() =>
+              onClick={() => {
+                // @ts-ignore
                 updateBlock({
                   block: {
                     ...blockEditing,
                     upstream_blocks: upstreamBlocksEditing.map(({ uuid }) => uuid),
                   },
-                })
-              }
+                });
+              }}
               uuid='DependencyGraph/save_parents'
             >
               Save dependencies
