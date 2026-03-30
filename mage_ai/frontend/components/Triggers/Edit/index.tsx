@@ -898,7 +898,7 @@ function Edit({
 
               return acc.concat(
                 <option key={value} value={value}>
-                  {value.substring(1)}
+                  {value.substring(1).replace(/_/g, ' ')}
                 </option>,
               );
             }, [])}
