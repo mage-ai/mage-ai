@@ -60,6 +60,8 @@ export function getGradientColorForBlockType(blockType: BlockTypeEnum) {
     value = FIRE_GRADIENT;
   } else if (BlockTypeEnum.MARKDOWN === blockType) {
     value = WATER_GRADIENT;
+  } else if (BlockTypeEnum.MODEL_MAKER === blockType) {
+  value = EARTH_GRADIENT;
   } else if (BlockTypeEnum.TRANSFORMER === blockType) {
     value = BUTTON_GRADIENT;
   }
@@ -101,6 +103,9 @@ export function getColorsForBlockType(
   } else if (BlockTypeEnum.MARKDOWN === blockType) {
     accent = (theme || dark).accent.sky;
     accentLight = (theme || dark).accent.skyLight;
+  } else if (BlockTypeEnum.MODEL_MAKER === blockType) {
+    accent = (theme?.accent || dark.accent).teal;
+    accentLight = (theme?.accent || dark.accent).tealLight;
   } else if (BlockTypeEnum.SENSOR === blockType
     || blockColor === BlockColorEnum.PINK) {
     accent = (theme || dark).accent.pink;

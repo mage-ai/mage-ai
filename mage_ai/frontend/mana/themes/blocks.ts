@@ -46,6 +46,10 @@ export function getBlockColor(
     baseName = 'sky';
     accent = colors?.sky;
     accentLight = colors?.skyHi;
+  } else if (BlockTypeEnum.MODEL_MAKER === blockType) {
+      baseName = 'teal';
+      accent = colors?.teal;
+      accentLight = colors?.tealHi;
   } else if (BlockTypeEnum.SENSOR === blockType || blockColor === BlockColorEnum.PINK) {
     baseName = 'pink';
     accent = colors?.pink;

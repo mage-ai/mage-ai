@@ -97,6 +97,11 @@ def fetch_template_source(
             language=language,
             pipeline_type=pipeline_type,
         )
+    elif block_type == BlockType.MODEL_MAKER:
+        template_source = __fetch_model_maker_templates(
+            config,
+            language=language
+        )
     elif block_type == BlockType.DATA_EXPORTER:
         template_source = __fetch_data_exporter_templates(
             config,
@@ -206,6 +211,18 @@ def __fetch_transformer_templates(
             )
             + '\n'
         )
+
+
+def __fetch_model_maker_templates(config, language=BlockLanguage.PYTHON):
+    if language != BlockLanguage.PYTHON:
+        return ''
+    template_path = 'model_makers/default.jinja'
+    return (
+        template_env.get_template(template_path).render(
+            code=config.get('existing_code', ''),
+        )
+        + '\n'
+    )
 
 
 def is_default_transformer_template(

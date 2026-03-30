@@ -39,6 +39,7 @@ export const BLOCK_TYPE_ICON_MAPPING = {
   [BlockTypeEnum.DBT]: DBT,
   [BlockTypeEnum.EXTENSION]: Lightning,
   [BlockTypeEnum.MARKDOWN]: FileIcon,
+  [BlockTypeEnum.MODEL_MAKER]: Insights,
   [BlockTypeEnum.SENSOR]: Sensor,
   [BlockTypeEnum.TRANSFORMER]: FrameBoxSelection,
 };

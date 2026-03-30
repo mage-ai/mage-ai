@@ -1,0 +1,12 @@
+{% extends "testable.jinja" %}
+{% block imports %}
+if 'model_maker' not in globals():
+    from mage_ai.data_preparation.decorators import model_maker
+{% endblock %}
+
+{% block content %}
+@model_maker
+def train(df, *args, **kwargs):
+    # Write your Model Maker code here
+    return {}
+{% endblock %}

@@ -21,7 +21,6 @@ commitizen = "*"
 ipykernel = "^6.17.1"
 pandas-stubs = "*"
 flake8-bugbear = "*"
-sourcery = "*"
 
 [tool.isort]
 profile = "black"

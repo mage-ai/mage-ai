@@ -14,6 +14,7 @@ export const BUTTON_ITEMS_DEFAULT = [
 export const ITEMS_MORE_UUIDS_ORDERED = [
   BlockTypeEnum.DATA_LOADER,
   BlockTypeEnum.TRANSFORMER,
+  BlockTypeEnum.MODEL_MAKER,
   BlockTypeEnum.DATA_EXPORTER,
   BlockTypeEnum.CUSTOM,
   BlockTypeEnum.DBT,

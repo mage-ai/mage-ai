@@ -20,6 +20,7 @@ BLOCK_TYPE_TO_CLASS = {
     BlockType.EXTENSION: ExtensionBlock,
     BlockType.GLOBAL_DATA_PRODUCT: GlobalDataProductBlock,
     BlockType.MARKDOWN: Block,
+    BlockType.MODEL_MAKER: Block,
     BlockType.SCRATCHPAD: Block,
     BlockType.TRANSFORMER: Block,
     BlockType.SENSOR: SensorBlock,
