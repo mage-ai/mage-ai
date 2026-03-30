@@ -539,6 +539,21 @@ function Edit({
       data.sla = 0;
     }
 
+    if (
+      settings?.active_hours_start !== undefined
+      && settings?.active_hours_start !== null
+      && settings?.active_hours_start === settings?.active_hours_end
+    ) {
+      toast.error(
+        'Start and end hour cannot be the same.',
+        {
+          position: toast.POSITION.BOTTOM_RIGHT,
+          toastId: 'active_hours_error',
+        },
+      );
+      return;
+    }
+
     data.settings = settings;
 
     // @ts-ignore
@@ -1532,6 +1547,104 @@ function Edit({
                   </option>
                 </Select>
               </Spacing>
+            </>
+          )}
+          {scheduleInterval === ScheduleIntervalEnum.ALWAYS_ON && (
+            <>
+              <Spacing mb={UNITS_BETWEEN_ITEMS_IN_SECTIONS}>
+                <FlexContainer alignItems="center">
+                  <Spacing mr={2}>
+                    <ToggleSwitch
+                      checked={
+                        settings?.active_hours_start !== undefined
+                        && settings?.active_hours_start !== null
+                      }
+                      onCheck={(val) => {
+                        if (val) {
+                          setSettings(prev => ({
+                            ...prev,
+                            active_hours_start: 7,
+                            active_hours_end: 22,
+                          }));
+                        } else {
+                          setSettings(prev => {
+                            const next = { ...prev };
+                            delete next.active_hours_start;
+                            delete next.active_hours_end;
+                            return next;
+                          });
+                        }
+                      }}
+                    />
+                  </Spacing>
+                  <Text default monospace>
+                    Configure active hours
+                  </Text>
+                </FlexContainer>
+              </Spacing>
+
+              {settings?.active_hours_start !== undefined
+                && settings?.active_hours_start !== null && (
+                <>
+                  <Spacing mb={UNITS_BETWEEN_ITEMS_IN_SECTIONS}>
+                    <Text>
+                      Start hour (UTC)
+                    </Text>
+                    <Spacing mb={1} />
+                    <Select
+                      fullWidth
+                      monospace
+                      onChange={(e) => {
+                        e.preventDefault();
+                        setSettings(prev => ({
+                          ...prev,
+                          active_hours_start: Number(e.target.value),
+                        }));
+                      }}
+                      value={settings?.active_hours_start}
+                    >
+                      {Array.from({ length: 24 }, (_, i) => (
+                        <option key={i} value={i}>
+                          {i >= 10 ? String(i) : `0${i}`}:00
+                        </option>
+                      ))}
+                    </Select>
+                  </Spacing>
+
+                  <Spacing mb={UNITS_BETWEEN_ITEMS_IN_SECTIONS}>
+                    <Text>
+                      End hour (UTC)
+                    </Text>
+                    <Spacing mb={1} />
+                    <Select
+                      fullWidth
+                      monospace
+                      onChange={(e) => {
+                        e.preventDefault();
+                        setSettings(prev => ({
+                          ...prev,
+                          active_hours_end: Number(e.target.value),
+                        }));
+                      }}
+                      value={settings?.active_hours_end}
+                    >
+                      {Array.from({ length: 24 }, (_, i) => (
+                        <option key={i} value={i}>
+                          {i >= 10 ? String(i) : `0${i}`}:00
+                        </option>
+                      ))}
+                    </Select>
+                  </Spacing>
+
+                  {settings?.active_hours_start === settings?.active_hours_end && (
+                    <Spacing mb={UNITS_BETWEEN_ITEMS_IN_SECTIONS}>
+                      <Text danger small>
+                        Start and end hour cannot be the same. The pipeline will never run during active hours.
+                      </Text>
+                    </Spacing>
+                  )}
+                </>
+              )}
             </>
           )}
           <FlexContainer alignItems="center">
