@@ -16,6 +16,7 @@ from mage_ai.data_preparation.models.triggers import (
     remove_trigger,
 )
 from mage_ai.orchestration.db import db_connection, safe_db_query
+from mage_ai.data_preparation.models.triggers import ScheduleInterval
 from mage_ai.orchestration.db.models.schedules import (
     EventMatcher,
     PipelineRun,
@@ -252,9 +253,14 @@ class PipelineScheduleResource(DatabaseResource):
         payload['pipeline_uuid'] = pipeline.uuid
 
         settings = payload.get('settings') or {}
-        active_start = settings.get('active_hours_start')
-        active_end = settings.get('active_hours_end')
-        if active_start is not None and active_end is not None:
+        schedule_interval = payload.get('schedule_interval')
+        if schedule_interval == ScheduleInterval.ALWAYS_ON:
+            active_start = settings.get('active_hours_start')
+            active_end = settings.get('active_hours_end')
+            if active_start is None or active_end is None:
+                raise Exception(
+                    'active_hours_start and active_hours_end are required for @always_on triggers.'
+                )
             if not (isinstance(active_start, int) and 0 <= active_start <= 23):
                 raise Exception('active_hours_start must be an integer between 0 and 23.')
             if not (isinstance(active_end, int) and 0 <= active_end <= 23):
@@ -293,9 +299,14 @@ class PipelineScheduleResource(DatabaseResource):
     @safe_db_query
     def update(self, payload, **kwargs):
         settings = payload.get('settings') or {}
-        active_start = settings.get('active_hours_start')
-        active_end = settings.get('active_hours_end')
-        if active_start is not None and active_end is not None:
+        schedule_interval = payload.get('schedule_interval') or self.schedule_interval
+        if schedule_interval == ScheduleInterval.ALWAYS_ON:
+            active_start = settings.get('active_hours_start')
+            active_end = settings.get('active_hours_end')
+            if active_start is None or active_end is None:
+                raise Exception(
+                    'active_hours_start and active_hours_end are required for @always_on triggers.'
+                )
             if not (isinstance(active_start, int) and 0 <= active_start <= 23):
                 raise Exception('active_hours_start must be an integer between 0 and 23.')
             if not (isinstance(active_end, int) and 0 <= active_end <= 23):

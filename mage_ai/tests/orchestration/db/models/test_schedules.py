@@ -1262,8 +1262,8 @@ class PipelineScheduleTests(DBTestCase):
         # 23:00 UTC is outside 7-22, no off_hours_interval, should NOT schedule
         self.assertFalse(pipeline_schedule.should_schedule())
 
-    @freeze_time('2023-08-19 23:00:00')
-    def test_should_schedule_always_on_no_active_hours_regression(self):
+    @freeze_time('2023-08-19 14:00:00')
+    def test_should_schedule_always_on_no_active_hours_backwards_compat(self):
         pipeline_schedule = PipelineSchedule.create(
             name=self.faker.name(),
             pipeline_uuid='test_pipeline',
@@ -1272,7 +1272,7 @@ class PipelineScheduleTests(DBTestCase):
             start_time=datetime(2023, 8, 19, 0, 0, 0).replace(tzinfo=timezone.utc),
             status=ScheduleStatus.ACTIVE,
         )
-        # No active_hours settings — should behave like original @always_on
+        # Legacy triggers without active_hours settings still run 24/7
         # No pipeline runs exist, so should schedule
         self.assertTrue(pipeline_schedule.should_schedule())
 

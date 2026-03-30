@@ -539,22 +539,28 @@ function Edit({
       data.sla = 0;
     }
 
-    if (
-      settings?.active_hours_start !== undefined
-      && settings?.active_hours_start !== null
-      && settings?.active_hours_start === settings?.active_hours_end
-    ) {
-      toast.error(
-        'Start and end hour cannot be the same.',
-        {
-          position: toast.POSITION.BOTTOM_RIGHT,
-          toastId: 'active_hours_error',
-        },
-      );
-      return;
+    let settingsToSave = { ...settings };
+    if (scheduleInterval === ScheduleIntervalEnum.ALWAYS_ON) {
+      const start = settingsToSave?.active_hours_start ?? 7;
+      const end = settingsToSave?.active_hours_end ?? 22;
+      if (start === end) {
+        toast.error(
+          'Start and end hour cannot be the same.',
+          {
+            position: toast.POSITION.BOTTOM_RIGHT,
+            toastId: 'active_hours_error',
+          },
+        );
+        return;
+      }
+      settingsToSave = {
+        ...settingsToSave,
+        active_hours_start: start,
+        active_hours_end: end,
+      };
     }
 
-    data.settings = settings;
+    data.settings = settingsToSave;
 
     // @ts-ignore
     updateSchedule({
@@ -872,6 +878,13 @@ function Edit({
                 ...s,
                 schedule_interval: interval,
               }));
+              if (interval === ScheduleIntervalEnum.ALWAYS_ON) {
+                setSettings(prev => ({
+                  ...prev,
+                  active_hours_start: prev?.active_hours_start ?? 7,
+                  active_hours_end: prev?.active_hours_end ?? 22,
+                }));
+              }
             }}
             placeholder="Choose the frequency to run"
             value={scheduleInterval}
@@ -1552,98 +1565,70 @@ function Edit({
           {scheduleInterval === ScheduleIntervalEnum.ALWAYS_ON && (
             <>
               <Spacing mb={UNITS_BETWEEN_ITEMS_IN_SECTIONS}>
-                <FlexContainer alignItems="center">
-                  <Spacing mr={2}>
-                    <ToggleSwitch
-                      checked={
-                        settings?.active_hours_start !== undefined
-                        && settings?.active_hours_start !== null
-                      }
-                      onCheck={(val) => {
-                        if (val) {
-                          setSettings(prev => ({
-                            ...prev,
-                            active_hours_start: 7,
-                            active_hours_end: 22,
-                          }));
-                        } else {
-                          setSettings(prev => {
-                            const next = { ...prev };
-                            delete next.active_hours_start;
-                            delete next.active_hours_end;
-                            return next;
-                          });
-                        }
-                      }}
-                    />
-                  </Spacing>
-                  <Text default monospace>
-                    Configure active hours
-                  </Text>
-                </FlexContainer>
+                <Text default monospace>
+                  Active hours (UTC)
+                </Text>
+                <Text muted small>
+                  Pipeline runs continuously during active hours and pauses outside this window.
+                </Text>
               </Spacing>
 
-              {settings?.active_hours_start !== undefined
-                && settings?.active_hours_start !== null && (
-                <>
-                  <Spacing mb={UNITS_BETWEEN_ITEMS_IN_SECTIONS}>
-                    <Text>
-                      Start hour (UTC)
-                    </Text>
-                    <Spacing mb={1} />
-                    <Select
-                      fullWidth
-                      monospace
-                      onChange={(e) => {
-                        e.preventDefault();
-                        setSettings(prev => ({
-                          ...prev,
-                          active_hours_start: Number(e.target.value),
-                        }));
-                      }}
-                      value={settings?.active_hours_start}
-                    >
-                      {Array.from({ length: 24 }, (_, i) => (
-                        <option key={i} value={i}>
-                          {i >= 10 ? String(i) : `0${i}`}:00
-                        </option>
-                      ))}
-                    </Select>
-                  </Spacing>
+              <Spacing mb={UNITS_BETWEEN_ITEMS_IN_SECTIONS}>
+                <Text>
+                  Start hour (UTC)
+                </Text>
+                <Spacing mb={1} />
+                <Select
+                  fullWidth
+                  monospace
+                  onChange={(e) => {
+                    e.preventDefault();
+                    setSettings(prev => ({
+                      ...prev,
+                      active_hours_start: Number(e.target.value),
+                    }));
+                  }}
+                  value={settings?.active_hours_start ?? 7}
+                >
+                  {Array.from({ length: 24 }, (_, i) => (
+                    <option key={i} value={i}>
+                      {i >= 10 ? String(i) : `0${i}`}:00
+                    </option>
+                  ))}
+                </Select>
+              </Spacing>
 
-                  <Spacing mb={UNITS_BETWEEN_ITEMS_IN_SECTIONS}>
-                    <Text>
-                      End hour (UTC)
-                    </Text>
-                    <Spacing mb={1} />
-                    <Select
-                      fullWidth
-                      monospace
-                      onChange={(e) => {
-                        e.preventDefault();
-                        setSettings(prev => ({
-                          ...prev,
-                          active_hours_end: Number(e.target.value),
-                        }));
-                      }}
-                      value={settings?.active_hours_end}
-                    >
-                      {Array.from({ length: 24 }, (_, i) => (
-                        <option key={i} value={i}>
-                          {i >= 10 ? String(i) : `0${i}`}:00
-                        </option>
-                      ))}
-                    </Select>
-                  </Spacing>
+              <Spacing mb={UNITS_BETWEEN_ITEMS_IN_SECTIONS}>
+                <Text>
+                  End hour (UTC)
+                </Text>
+                <Spacing mb={1} />
+                <Select
+                  fullWidth
+                  monospace
+                  onChange={(e) => {
+                    e.preventDefault();
+                    setSettings(prev => ({
+                      ...prev,
+                      active_hours_end: Number(e.target.value),
+                    }));
+                  }}
+                  value={settings?.active_hours_end ?? 22}
+                >
+                  {Array.from({ length: 24 }, (_, i) => (
+                    <option key={i} value={i}>
+                      {i >= 10 ? String(i) : `0${i}`}:00
+                    </option>
+                  ))}
+                </Select>
+              </Spacing>
 
-                  {settings?.active_hours_start === settings?.active_hours_end && (
-                    <Spacing mb={UNITS_BETWEEN_ITEMS_IN_SECTIONS}>
-                      <Text danger small>
-                        Start and end hour cannot be the same. The pipeline will never run during active hours.
-                      </Text>
-                    </Spacing>
-                  )}
-                </>
+              {settings?.active_hours_start === settings?.active_hours_end && (
+                <Spacing mb={UNITS_BETWEEN_ITEMS_IN_SECTIONS}>
+                  <Text danger small>
+                    Start and end hour cannot be the same. The pipeline will never run during active hours.
+                  </Text>
+                </Spacing>
               )}
             </>
           )}

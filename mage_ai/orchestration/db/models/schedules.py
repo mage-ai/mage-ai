@@ -614,7 +614,6 @@ class PipelineSchedule(PipelineScheduleProjectPlatformMixin, BaseModel):
                 if not in_active_window:
                     return False
 
-            # Default @always_on behavior (no active hours configured, or inside active window)
             if self.pipeline_runs_count == 0:
                 return True
             else:
