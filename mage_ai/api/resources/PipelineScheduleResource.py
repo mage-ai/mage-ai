@@ -251,6 +251,17 @@ class PipelineScheduleResource(DatabaseResource):
         pipeline = kwargs['parent_model']
         payload['pipeline_uuid'] = pipeline.uuid
 
+        settings = payload.get('settings') or {}
+        active_start = settings.get('active_hours_start')
+        active_end = settings.get('active_hours_end')
+        if active_start is not None and active_end is not None:
+            if not (isinstance(active_start, int) and 0 <= active_start <= 23):
+                raise Exception('active_hours_start must be an integer between 0 and 23.')
+            if not (isinstance(active_end, int) and 0 <= active_end <= 23):
+                raise Exception('active_hours_end must be an integer between 0 and 23.')
+            if active_start == active_end:
+                raise Exception('active_hours_start and active_hours_end cannot be the same.')
+
         if 'repo_path' not in payload:
             payload['repo_path'] = (
                 (pipeline.repo_path if pipeline else None)
@@ -281,6 +292,17 @@ class PipelineScheduleResource(DatabaseResource):
 
     @safe_db_query
     def update(self, payload, **kwargs):
+        settings = payload.get('settings') or {}
+        active_start = settings.get('active_hours_start')
+        active_end = settings.get('active_hours_end')
+        if active_start is not None and active_end is not None:
+            if not (isinstance(active_start, int) and 0 <= active_start <= 23):
+                raise Exception('active_hours_start must be an integer between 0 and 23.')
+            if not (isinstance(active_end, int) and 0 <= active_end <= 23):
+                raise Exception('active_hours_end must be an integer between 0 and 23.')
+            if active_start == active_end:
+                raise Exception('active_hours_start and active_hours_end cannot be the same.')
+
         # Update associated event matchers
         arr = payload.pop('event_matchers', None)
         event_matchers = []

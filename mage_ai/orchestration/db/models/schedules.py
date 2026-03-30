@@ -599,6 +599,22 @@ class PipelineSchedule(PipelineScheduleProjectPlatformMixin, BaseModel):
             if executor_count > 1 and pipeline_run_count < executor_count:
                 return True
         elif self.schedule_interval == ScheduleInterval.ALWAYS_ON:
+            active_hours_start = (self.settings or {}).get('active_hours_start')
+            active_hours_end = (self.settings or {}).get('active_hours_end')
+
+            if active_hours_start is not None and active_hours_end is not None:
+                current_hour = datetime.now(tz=pytz.UTC).hour
+
+                if active_hours_start <= active_hours_end:
+                    in_active_window = active_hours_start <= current_hour < active_hours_end
+                else:
+                    # Midnight wraparound (e.g. start=22, end=7)
+                    in_active_window = current_hour >= active_hours_start or current_hour < active_hours_end
+
+                if not in_active_window:
+                    return False
+
+            # Default @always_on behavior (no active hours configured, or inside active window)
             if self.pipeline_runs_count == 0:
                 return True
             else:

@@ -55,6 +55,8 @@ class SettingsConfig(BaseConfig):
     pipeline_run_limit: int = None
     timeout: int = None  # in seconds
     timeout_status: str = None
+    active_hours_start: int = None
+    active_hours_end: int = None
 
 
 @dataclass
