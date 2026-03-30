@@ -65,6 +65,7 @@ class BlockType(StrEnum):
     GLOBAL_DATA_PRODUCT = 'global_data_product'
     HOOK = 'hook'
     MARKDOWN = 'markdown'
+    MODEL_MAKER = 'model_maker'
     SCRATCHPAD = 'scratchpad'
     SENSOR = 'sensor'
     TRANSFORMER = 'transformer'
@@ -150,6 +151,7 @@ CUSTOM_EXECUTION_BLOCK_TYPES = [
     BlockType.DBT,
     BlockType.EXTENSION,
     BlockType.GLOBAL_DATA_PRODUCT,
+    BlockType.MODEL_MAKER,
     BlockType.SENSOR,
     BlockType.TRANSFORMER,
 ]

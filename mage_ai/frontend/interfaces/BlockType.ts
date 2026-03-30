@@ -68,6 +68,7 @@ export enum BlockTypeEnum {
   SCRATCHPAD = 'scratchpad',
   SENSOR = 'sensor',
   MARKDOWN = 'markdown',
+  MODEL_MAKER = 'model_maker',
   TRANSFORMER = 'transformer',
 }
 
@@ -450,6 +451,7 @@ export const BLOCK_TYPE_NAME_MAPPING = {
   [BlockTypeEnum.EXTENSION]: 'Extension',
   [BlockTypeEnum.GLOBAL_DATA_PRODUCT]: 'Global data product',
   [BlockTypeEnum.MARKDOWN]: 'Markdown',
+  [BlockTypeEnum.MODEL_MAKER]: 'Model Maker',
   [BlockTypeEnum.SCRATCHPAD]: 'Scratchpad',
   [BlockTypeEnum.SENSOR]: 'Sensor',
   [BlockTypeEnum.TRANSFORMER]: 'Transformer',

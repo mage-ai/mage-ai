@@ -143,6 +143,20 @@ TEMPLATES = [
         name='Base template',
         path='conditionals/base.jinja',
     ),
+    dict(
+        block_type=BlockType.MODEL_MAKER,
+        description='Train or wrap an ML model using data from upstream blocks.',
+        language=BlockLanguage.PYTHON,
+        name='Generic (no template)',
+        path='model_makers/default.jinja',
+    ),
+    dict(
+        block_type=BlockType.MODEL_MAKER,
+        description='Model evaluator.',
+        language=BlockLanguage.PYTHON,
+        name='Model evaluator',
+        path='model_makers/model_evaluator.py',
+    ),
 ]
 
 TEMPLATES_ONLY_FOR_V2 = [
@@ -432,6 +446,13 @@ TEMPLATES_ONLY_FOR_V2 = [
         language=BlockLanguage.PYTHON,
         name='Total count of values in column',
         path='transformers/transformer_actions/column/count.py',
+    ),
+    dict(
+        block_type=BlockType.TRANSFORMER,
+        groups=[GROUP_COLUMN_ACTIONS, GROUP_AGGREGATE],
+        language=BlockLanguage.PYTHON,
+        name='B2Metric Column Aggregate',
+        path='transformers/transformer_actions/column/b2metric_column_aggregate.py',
     ),
     #       Formatting
     dict(

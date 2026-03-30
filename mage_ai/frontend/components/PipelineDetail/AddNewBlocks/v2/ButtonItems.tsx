@@ -23,6 +23,7 @@ import {
   HexagonAll,
   Sensor,
   TemplateShapes,
+  Insights,
 } from '@oracle/icons';
 import {
   BLOCK_TYPE_NAME_MAPPING,
@@ -222,6 +223,23 @@ function ButtonItems({
       blockTemplatesByBlockType,
       pipelineType,
     ]);
+
+  const itemsModelMaker = useMemo(() => getdataSourceMenuItems(
+      addNewBlock,
+      BlockTypeEnum.MODEL_MAKER,
+      pipelineType,
+      {
+        blockTemplatesByBlockType,
+        v2: true,
+      },
+    )?.find(({
+      uuid,
+    }) => uuid === `${BlockTypeEnum.MODEL_MAKER}/${BlockLanguageEnum.PYTHON}`)?.items,
+      [
+        addNewBlock,
+        blockTemplatesByBlockType,
+        pipelineType,
+      ]);
 
   const buildNonPythonItems = useCallback((blockType: BlockTypeEnum) => [
     {
@@ -531,6 +549,19 @@ function ButtonItems({
       label: () => BLOCK_TYPE_NAME_MAPPING[BlockTypeEnum.TRANSFORMER],
       uuid: [BlockLanguageEnum.PYTHON, BlockTypeEnum.TRANSFORMER].join('/'),
     },
+    [BlockTypeEnum.MODEL_MAKER]: {
+      Icon: Insights,
+      items: [
+        {
+          isGroupingTitle: true,
+          label: () => 'Python',
+          uuid: `${BlockLanguageEnum.PYTHON}${BlockTypeEnum.MODEL_MAKER}/group`,
+        },
+        // @ts-ignore
+      ].concat(itemsModelMaker),
+      label: () => BLOCK_TYPE_NAME_MAPPING[BlockTypeEnum.MODEL_MAKER],
+      uuid: `${BlockTypeEnum.MODEL_MAKER}/${BlockLanguageEnum.PYTHON}`,
+    },
     [ITEMS_MORE]: {
       Icon: TemplateShapes,
       buildItems: () => itemsMoreUUIDs?.map((uuid: string, idx2) => {
@@ -626,6 +657,7 @@ function ButtonItems({
     itemsMoreUUIDs,
     itemsSensors,
     itemsTransformer,
+    itemsModelMaker,
     setButtonMenuOpenIndex,
     showBrowseTemplates,
     showGlobalDataProducts,

@@ -37,6 +37,10 @@ def transformer(function):
     return function
 
 
+def model_maker(function):
+    return function
+
+
 def test(function):
     return function
 

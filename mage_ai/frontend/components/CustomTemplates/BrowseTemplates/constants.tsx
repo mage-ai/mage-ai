@@ -15,6 +15,7 @@ import {
   File as FileIcon,
   FrameBoxSelection,
   IntegrationPipeline,
+  Insights,
   Lightning,
   Sensor,
   StreamingPipeline,
@@ -63,6 +64,7 @@ export const BLOCK_TYPE_ICON_MAPPING = {
   [BlockTypeEnum.DBT]: DBT,
   [BlockTypeEnum.EXTENSION]: Lightning,
   [BlockTypeEnum.MARKDOWN]: FileIcon,
+  [BlockTypeEnum.MODEL_MAKER]: Insights,
   [BlockTypeEnum.SENSOR]: Sensor,
   [BlockTypeEnum.TRANSFORMER]: FrameBoxSelection,
 };
@@ -79,6 +81,7 @@ export const NAV_LINKS: NavLinkType[] = [
   {
     uuid: BlockTypeEnum.TRANSFORMER,
   },
+  { uuid: BlockTypeEnum.MODEL_MAKER },
   {
     selectedIconProps: {
       inverted: true,
