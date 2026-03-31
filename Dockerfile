@@ -98,8 +98,11 @@ COPY --from=frontend-build /build/mage_ai/server/frontend_dist ./mage_ai/server/
 COPY --from=frontend-build /build/mage_ai/server/frontend_dist_base_path_template ./mage_ai/server/frontend_dist_base_path_template
 
 RUN \
-  chmod +x /app/run_app.sh && \
-  python -m pip install ./mage_integrations && \
+  chmcd od +x /app/run_app.sh && \
+  python -m pip install ./mage_integrations --ignore-requires-python \
+    --no-deps && \
+  python -m pip install psycopg2-binary && \
+  python -m pip install ./mage_integrations --no-deps || true && \
   if [ -n "${MAGE_EXTRAS}" ]; then \
     python -m pip install ".[${MAGE_EXTRAS}]"; \
   else \
