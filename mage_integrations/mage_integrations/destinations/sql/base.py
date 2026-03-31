@@ -4,6 +4,7 @@ from typing import Dict, List, Tuple
 
 from mage_integrations.destinations.base import Destination as BaseDestination
 from mage_integrations.destinations.constants import (
+    KEY_TRUNCATE_FULL_TABLE,
     MAX_QUERY_STRING_SIZE,
     REPLICATION_METHOD_FULL_TABLE,
     REPLICATION_METHOD_INCREMENTAL,
@@ -44,6 +45,24 @@ class Destination(BaseDestination):
     @property
     def skip_schema_creation(self) -> bool:
         return self.config.get("skip_schema_creation") is True
+
+    @property
+    def truncate_full_table(self) -> bool:
+        """
+        When True, truncate the destination table before a FULL_TABLE sync if the table exists.
+        Defaults to False so existing pipelines keep prior behavior.
+        """
+        return self.config.get(KEY_TRUNCATE_FULL_TABLE) is True
+
+    def build_truncate_table_commands(
+        self,
+        database_name: str | None,
+        schema_name: str | None,
+        table_name: str,
+    ) -> List[str]:
+        parts = [p for p in [database_name, schema_name, table_name] if p]
+        full_table_name = '.'.join([self._wrap_with_quotes(p) for p in parts])
+        return [f'TRUNCATE TABLE {full_table_name}']
 
     def clean_column_name(self, col):
         return clean_column_name(col,
@@ -181,6 +200,15 @@ class Destination(BaseDestination):
 
             if table_exists:
                 self.logger.info(f'Table {friendly_table_name} already exists.', tags=tags)
+                if (
+                    REPLICATION_METHOD_FULL_TABLE == replication_method
+                    and self.truncate_full_table
+                ):
+                    query_strings += self.build_truncate_table_commands(
+                        database_name=database_name,
+                        schema_name=schema_name,
+                        table_name=table_name,
+                    )
                 """
                 Check whether any new columns are added
                 """
