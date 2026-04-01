@@ -16,6 +16,7 @@ GROUP_FEATURE_SCALING = 'Feature scaling'
 GROUP_FORMATTING = 'Formatting'
 GROUP_ORCHESTRATION = 'Orchestration'
 GROUP_ROW_ACTIONS = 'Row actions'
+GROUP_B2METRIC = 'b2metric'
 GROUP_SHIFT = 'Shift'
 
 TEMPLATES = [
@@ -543,6 +544,63 @@ TEMPLATES_ONLY_FOR_V2 = [
         language=BlockLanguage.PYTHON,
         name='Calculate difference between values',
         path='transformers/transformer_actions/column/diff.py',
+    ),
+    # b2metric transformer templates
+    dict(
+        block_type=BlockType.TRANSFORMER,
+        groups=[GROUP_B2METRIC],
+        language=BlockLanguage.PYTHON,
+        name='Categoric Feature Encoder',
+        path='transformers/transformer_actions/b2metric/categoric_feature_encoder.py',
+    ),
+    dict(
+        block_type=BlockType.TRANSFORMER,
+        groups=[GROUP_B2METRIC],
+        language=BlockLanguage.PYTHON,
+        name='Data Validator',
+        path='transformers/transformer_actions/b2metric/data_validator.py',
+    ),
+    dict(
+        block_type=BlockType.TRANSFORMER,
+        groups=[GROUP_B2METRIC],
+        language=BlockLanguage.PYTHON,
+        name='Dtype Optimizer',
+        path='transformers/transformer_actions/b2metric/dtype_optimizer.py',
+    ),
+    dict(
+        block_type=BlockType.TRANSFORMER,
+        groups=[GROUP_B2METRIC],
+        language=BlockLanguage.PYTHON,
+        name='Duplicate Cleaner',
+        path='transformers/transformer_actions/b2metric/duplicate_cleaner.py',
+    ),
+    dict(
+        block_type=BlockType.TRANSFORMER,
+        groups=[GROUP_B2METRIC],
+        language=BlockLanguage.PYTHON,
+        name='Feature Engineer',
+        path='transformers/transformer_actions/b2metric/feature_engineer.py',
+    ),
+    dict(
+        block_type=BlockType.TRANSFORMER,
+        groups=[GROUP_B2METRIC],
+        language=BlockLanguage.PYTHON,
+        name='Missing Value Handler',
+        path='transformers/transformer_actions/b2metric/missing_value_handler.py',
+    ),
+    dict(
+        block_type=BlockType.TRANSFORMER,
+        groups=[GROUP_B2METRIC],
+        language=BlockLanguage.PYTHON,
+        name='Numeric Feature Scaler',
+        path='transformers/transformer_actions/b2metric/numeric_feature_scaler.py',
+    ),
+    dict(
+        block_type=BlockType.TRANSFORMER,
+        groups=[GROUP_B2METRIC],
+        language=BlockLanguage.PYTHON,
+        name='Outlier Handler',
+        path='transformers/transformer_actions/b2metric/outlier_handler.py',
     ),
     # Data exporters
     dict(
