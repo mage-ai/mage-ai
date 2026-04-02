@@ -1,10 +1,16 @@
+import hashlib
+import logging
 import os
 import threading
-from typing import Optional
+from typing import Dict, Optional, Tuple
+
+logger = logging.getLogger(__name__)
 
 ENV_VAR_KEY_VAULT_URL = 'AZURE_KEY_VAULT_URL'
 
-_client_cache = {}
+_PROFILE_PREFIX = 'AZURE_KEY_VAULT_PROFILE_'
+
+_client_cache: Dict[str, object] = {}
 _cache_lock = threading.Lock()
 
 _CREDENTIAL_PARAMS = ('client_id', 'client_secret', 'tenant_id')
@@ -13,9 +19,40 @@ _CREDENTIAL_PARAMS = ('client_id', 'client_secret', 'tenant_id')
 def _build_cache_key(
     vault_url: str,
     client_id: Optional[str] = None,
+    client_secret: Optional[str] = None,
     tenant_id: Optional[str] = None,
 ) -> str:
-    return f"{vault_url}|{client_id or ''}|{tenant_id or ''}"
+    secret_hash = ''
+    if client_secret:
+        secret_hash = hashlib.sha256(client_secret.encode()).hexdigest()[:16]
+    return f"{vault_url}|{client_id or ''}|{tenant_id or ''}|{secret_hash}"
+
+
+def _resolve_profile(profile: str) -> Tuple[str, Optional[str], Optional[str], Optional[str]]:
+    """Resolve a named vault profile from environment variables.
+
+    Looks for env vars with the pattern:
+        AZURE_KEY_VAULT_PROFILE_<NAME>_URL
+        AZURE_KEY_VAULT_PROFILE_<NAME>_CLIENT_ID
+        AZURE_KEY_VAULT_PROFILE_<NAME>_CLIENT_SECRET
+        AZURE_KEY_VAULT_PROFILE_<NAME>_TENANT_ID
+
+    Returns (vault_url, client_id, client_secret, tenant_id).
+    """
+    prefix = f'{_PROFILE_PREFIX}{profile.upper()}_'
+
+    vault_url = os.getenv(f'{prefix}URL')
+    if not vault_url or not vault_url.strip():
+        raise ValueError(
+            f'Vault profile {profile!r} not configured. '
+            f'Set the {prefix}URL environment variable.'
+        )
+
+    client_id = os.getenv(f'{prefix}CLIENT_ID')
+    client_secret = os.getenv(f'{prefix}CLIENT_SECRET')
+    tenant_id = os.getenv(f'{prefix}TENANT_ID')
+
+    return vault_url.strip(), client_id, client_secret, tenant_id
 
 
 def _get_client(
@@ -24,31 +61,48 @@ def _get_client(
     client_secret: Optional[str] = None,
     tenant_id: Optional[str] = None,
 ):
-    from azure.keyvault.secrets import SecretClient
-
-    cache_key = _build_cache_key(vault_url, client_id, tenant_id)
+    cache_key = _build_cache_key(vault_url, client_id, client_secret, tenant_id)
 
     with _cache_lock:
         if cache_key in _client_cache:
             return _client_cache[cache_key]
 
-    if client_id and client_secret and tenant_id:
-        from azure.identity import ClientSecretCredential
+    try:
+        from azure.keyvault.secrets import SecretClient
+    except ImportError:
+        raise ImportError(
+            'Azure Key Vault SDK is not installed. '
+            'Run: pip install azure-identity azure-keyvault-secrets'
+        )
 
+    if client_id and client_secret and tenant_id:
+        try:
+            from azure.identity import ClientSecretCredential
+        except ImportError:
+            raise ImportError(
+                'azure-identity is not installed. '
+                'Run: pip install azure-identity'
+            )
         credential = ClientSecretCredential(
             tenant_id=tenant_id,
             client_id=client_id,
             client_secret=client_secret,
         )
     else:
-        from azure.identity import DefaultAzureCredential
-
+        try:
+            from azure.identity import DefaultAzureCredential
+        except ImportError:
+            raise ImportError(
+                'azure-identity is not installed. '
+                'Run: pip install azure-identity'
+            )
         credential = DefaultAzureCredential()
 
     client = SecretClient(vault_url=vault_url, credential=credential)
 
     with _cache_lock:
-        _client_cache.setdefault(cache_key, client)
+        if cache_key not in _client_cache:
+            _client_cache[cache_key] = client
         return _client_cache[cache_key]
 
 
@@ -77,25 +131,49 @@ def get_secret(
     client_id: Optional[str] = None,
     client_secret: Optional[str] = None,
     tenant_id: Optional[str] = None,
+    profile: Optional[str] = None,
 ) -> str:
     """Retrieve a secret from Azure Key Vault.
 
-    When vault_url is omitted, falls back to the AZURE_KEY_VAULT_URL
-    environment variable.  Passing explicit credential parameters
-    (client_id, client_secret, tenant_id) creates a dedicated
-    ClientSecretCredential for that vault; otherwise
-    DefaultAzureCredential is used.
+    Credential resolution order:
+      1. If *profile* is given, resolve vault URL and credentials from
+         environment variables named ``AZURE_KEY_VAULT_PROFILE_<NAME>_*``.
+      2. Explicit *vault_url* / *client_id* / *client_secret* / *tenant_id*.
+      3. Fall back to the ``AZURE_KEY_VAULT_URL`` environment variable with
+         ``DefaultAzureCredential``.
 
-    SecretClient instances are cached per (vault_url, client_id,
-    tenant_id) tuple so repeated calls reuse the same connection.
+    Profiles let users configure vault credentials once via environment
+    variables and reference them by name in pipelines::
+
+        # Environment variables
+        AZURE_KEY_VAULT_PROFILE_CUSTOMER1_URL=https://customer1.vault.azure.net/
+        AZURE_KEY_VAULT_PROFILE_CUSTOMER1_CLIENT_ID=...
+        AZURE_KEY_VAULT_PROFILE_CUSTOMER1_CLIENT_SECRET=...
+        AZURE_KEY_VAULT_PROFILE_CUSTOMER1_TENANT_ID=...
+
+        # Pipeline YAML
+        {{ azure_secret_var('API_KEY', profile='customer1') }}
+
+    SecretClient instances are cached per unique combination of vault URL
+    and credentials so repeated calls reuse the same connection.
 
     Raises:
-        ValueError: If vault_url is not provided and AZURE_KEY_VAULT_URL
-            is not set, if secret_name is empty, or if only some of the
-            credential parameters are provided.
+        ValueError: If vault_url cannot be determined, if secret_name is
+            empty, if only some credential parameters are provided, or if
+            a profile is not configured.
+        ImportError: If the Azure SDK packages are not installed.
     """
     if not secret_name or not secret_name.strip():
         raise ValueError('secret_name must be a non-empty string.')
+
+    if profile:
+        p_vault_url, p_client_id, p_client_secret, p_tenant_id = (
+            _resolve_profile(profile)
+        )
+        vault_url = vault_url or p_vault_url
+        client_id = client_id or p_client_id
+        client_secret = client_secret or p_client_secret
+        tenant_id = tenant_id or p_tenant_id
 
     _validate_credential_params(client_id, client_secret, tenant_id)
 
@@ -105,7 +183,8 @@ def get_secret(
     if not vault_url or not vault_url.strip():
         raise ValueError(
             'No Azure Key Vault URL provided. Either pass the vault_url '
-            f'parameter or set the {ENV_VAR_KEY_VAULT_URL} environment variable.'
+            f'parameter, set a profile, or set the {ENV_VAR_KEY_VAULT_URL} '
+            'environment variable.'
         )
 
     vault_url = vault_url.strip()
