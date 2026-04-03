@@ -18,6 +18,10 @@ GROUP_ORCHESTRATION = 'Orchestration'
 GROUP_ROW_ACTIONS = 'Row actions'
 GROUP_B2METRIC = 'b2metric'
 GROUP_SHIFT = 'Shift'
+GROUP_CLASSIFICATION = 'Classification'
+GROUP_REGRESSION = 'Regression'
+GROUP_CLUSTERING = 'Clustering'
+GROUP_RECOMMENDATION = 'Recommendation'
 
 TEMPLATES = [
     dict(
@@ -144,19 +148,121 @@ TEMPLATES = [
         name='Base template',
         path='conditionals/base.jinja',
     ),
+    # Classification
     dict(
         block_type=BlockType.MODEL_MAKER,
-        description='Train or wrap an ML model using data from upstream blocks.',
+        description='Train an XGBoost classification model.',
+        groups=[GROUP_CLASSIFICATION],
         language=BlockLanguage.PYTHON,
-        name='Generic (no template)',
-        path='model_makers/default.jinja',
+        name='XGBoost',
+        path='model_makers/classification/xgboost.py',
     ),
     dict(
         block_type=BlockType.MODEL_MAKER,
-        description='Model evaluator.',
+        description='Train a LightGBM classification model.',
+        groups=[GROUP_CLASSIFICATION],
         language=BlockLanguage.PYTHON,
-        name='Model evaluator',
-        path='model_makers/model_evaluator.py',
+        name='LightGBM',
+        path='model_makers/classification/lightgbm.py',
+    ),
+    dict(
+        block_type=BlockType.MODEL_MAKER,
+        description='Train a CatBoost classification model.',
+        groups=[GROUP_CLASSIFICATION],
+        language=BlockLanguage.PYTHON,
+        name='CatBoost',
+        path='model_makers/classification/catboost.py',
+    ),
+    dict(
+        block_type=BlockType.MODEL_MAKER,
+        description='Train a Random Forest classification model.',
+        groups=[GROUP_CLASSIFICATION],
+        language=BlockLanguage.PYTHON,
+        name='Random Forest',
+        path='model_makers/classification/random_forest.py',
+    ),
+    # Regression
+    dict(
+        block_type=BlockType.MODEL_MAKER,
+        description='Train an XGBoost regression model.',
+        groups=[GROUP_REGRESSION],
+        language=BlockLanguage.PYTHON,
+        name='XGBoost',
+        path='model_makers/regression/xgboost.py',
+    ),
+    dict(
+        block_type=BlockType.MODEL_MAKER,
+        description='Train a LightGBM regression model.',
+        groups=[GROUP_REGRESSION],
+        language=BlockLanguage.PYTHON,
+        name='LightGBM',
+        path='model_makers/regression/lightgbm.py',
+    ),
+    dict(
+        block_type=BlockType.MODEL_MAKER,
+        description='Train a CatBoost regression model.',
+        groups=[GROUP_REGRESSION],
+        language=BlockLanguage.PYTHON,
+        name='CatBoost',
+        path='model_makers/regression/catboost.py',
+    ),
+    dict(
+        block_type=BlockType.MODEL_MAKER,
+        description='Train a Random Forest regression model.',
+        groups=[GROUP_REGRESSION],
+        language=BlockLanguage.PYTHON,
+        name='Random Forest',
+        path='model_makers/regression/random_forest.py',
+    ),
+    # Clustering
+    dict(
+        block_type=BlockType.MODEL_MAKER,
+        description='Train a K-Nearest Neighbors clustering model.',
+        groups=[GROUP_CLUSTERING],
+        language=BlockLanguage.PYTHON,
+        name='KNN',
+        path='model_makers/clustering/knn.py',
+    ),
+    dict(
+        block_type=BlockType.MODEL_MAKER,
+        description='Train a KMeans clustering model.',
+        groups=[GROUP_CLUSTERING],
+        language=BlockLanguage.PYTHON,
+        name='KMeans',
+        path='model_makers/clustering/kmeans.py',
+    ),
+    dict(
+        block_type=BlockType.MODEL_MAKER,
+        description='Train a DBSCAN clustering model.',
+        groups=[GROUP_CLUSTERING],
+        language=BlockLanguage.PYTHON,
+        name='DBSCAN',
+        path='model_makers/clustering/dbscan.py',
+    ),
+    # Recommendation
+    dict(
+        block_type=BlockType.MODEL_MAKER,
+        description='Train an XGBoost recommendation model.',
+        groups=[GROUP_RECOMMENDATION],
+        language=BlockLanguage.PYTHON,
+        name='XGBoost',
+        path='model_makers/recommendation/xgboost.py',
+    ),
+    dict(
+        block_type=BlockType.MODEL_MAKER,
+        description='Train a LightGBM recommendation model.',
+        groups=[GROUP_RECOMMENDATION],
+        language=BlockLanguage.PYTHON,
+        name='LightGBM',
+        path='model_makers/recommendation/lightgbm.py',
+    ),
+    dict(
+        block_type=BlockType.MODEL_MAKER,
+        description='Train a CatBoost recommendation model.',
+        groups=[GROUP_RECOMMENDATION],
+        language=BlockLanguage.PYTHON,
+        name='CatBoost',
+        path='model_makers/recommendation/catboost.py',
     ),
 ]
 

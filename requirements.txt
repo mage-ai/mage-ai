@@ -42,6 +42,9 @@ redis~=5.0.1
 requests~=2.31.0
 ruamel.yaml==0.17.17
 scikit-learn<1.8
+xgboost>=1.7.0
+catboost>=1.2.0
+lightgbm>=4.0.0
 sentry-sdk>=2.0.0,<3.0.0
 setuptools==70.0.0
 simplejson

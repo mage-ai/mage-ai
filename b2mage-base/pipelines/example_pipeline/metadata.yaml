@@ -35,8 +35,7 @@ blocks:
 - all_upstream_blocks_executed: false
   color: null
   configuration: {}
-  downstream_blocks:
-  - victorious_monk
+  downstream_blocks: []
   executor_config: null
   executor_type: local_python
   has_callback: null
@@ -49,73 +48,6 @@ blocks:
   upstream_blocks:
   - fill_in_missing_values
   uuid: export_titanic_clean
-- all_upstream_blocks_executed: false
-  color: null
-  configuration: {}
-  downstream_blocks:
-  - scenic_grimoire
-  executor_config: null
-  executor_type: local_python
-  has_callback: false
-  language: python
-  name: victorious monk
-  retry_config: null
-  status: not_executed
-  timeout: null
-  type: transformer
-  upstream_blocks:
-  - export_titanic_clean
-  uuid: victorious_monk
-- all_upstream_blocks_executed: false
-  color: null
-  configuration: {}
-  downstream_blocks:
-  - divine_crafter
-  executor_config: null
-  executor_type: local_python
-  has_callback: false
-  language: python
-  name: scenic grimoire
-  retry_config: null
-  status: not_executed
-  timeout: null
-  type: model_maker
-  upstream_blocks:
-  - victorious_monk
-  uuid: scenic_grimoire
-- all_upstream_blocks_executed: false
-  color: null
-  configuration: {}
-  downstream_blocks:
-  - nebulous_bird
-  executor_config: null
-  executor_type: local_python
-  has_callback: false
-  language: python
-  name: divine crafter
-  retry_config: null
-  status: not_executed
-  timeout: null
-  type: model_maker
-  upstream_blocks:
-  - scenic_grimoire
-  uuid: divine_crafter
-- all_upstream_blocks_executed: false
-  color: null
-  configuration: {}
-  downstream_blocks: []
-  executor_config: null
-  executor_type: local_python
-  has_callback: false
-  language: python
-  name: nebulous bird
-  retry_config: null
-  status: not_executed
-  timeout: null
-  type: model_maker
-  upstream_blocks:
-  - divine_crafter
-  uuid: nebulous_bird
 cache_block_output_in_memory: false
 callbacks: []
 concurrency_config: {}
