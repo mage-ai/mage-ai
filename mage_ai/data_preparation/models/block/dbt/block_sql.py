@@ -415,7 +415,8 @@ class DBTBlockSQL(DBTBlock, ProjectPlatformAccessible):
                 res = cli.invoke([task] + args)
                 success = res.success
                 if not success:
-                    raise Exception(str(res.exception))
+                    error_details = self.__build_dbt_error_detail(task, res)
+                    raise Exception(error_details)  # was raise Exception(str(res.exception))
             # run show task, to get data for preview or downstream usage
             # test task does not have any data
             #
@@ -611,3 +612,34 @@ class DBTBlockSQL(DBTBlock, ProjectPlatformAccessible):
                 return file_path
 
         return self.configuration.get('file_path')
+
+    @staticmethod
+    def __build_dbt_error_detail(task: str, res) -> str:
+        """
+        Parse dbtRunnerResult to extract per-model/test failure details.
+        Returns an error string listing the specific failed models/tests encountered errors.
+        """
+        failed_lines = []
+        try:
+            if res.result and hasattr(res.result, 'results'):
+                for node_result in res.result.results:
+                    status = str(getattr(node_result, 'status', '')).lower()
+                    if status in ('error', 'fail'):
+                        node = getattr(node_result, 'node', None)
+                        node_name = node.name if node else 'unknown'
+                        resource_type = (
+                            node.resource_type.value
+                            if node and hasattr(node.resource_type, 'value')
+                            else 'node'
+                        )
+                        message = getattr(node_result, 'message', None) or status
+                        failed_lines.append(f'  [{resource_type}] {node_name}: {message}')
+        except Exception:
+            pass  # fall back to generic error
+
+        if failed_lines:
+            return (
+                f'dbt {task} failed. The following models/tests encountered errors:\n'
+                + '\n'.join(failed_lines)
+            )
+        return str(res.exception)

@@ -346,18 +346,28 @@ class PipelineScheduler:
             failed_block_runs = self.pipeline_run.failed_block_runs
             stacktrace = None
             for br in failed_block_runs:
-                if br.metrics:
-                    message = br.metrics.get('error', {}).get('message')
-                    if message:
-                        message_split = message.split('\n')
-                        # Truncate the error message if it has too many lines, set max
-                        # lines at 50
-                        if len(message_split) > 50:
-                            message_split = message_split[-50:]
-                            message_split.insert(0, '... (error truncated)')
-                        message = '\n'.join(message_split)
-                        stacktrace = f'Error for block {br.block_uuid}:\n{message}'
-                        break
+                error_entry = br.metrics.get('error', {})
+                # The 'error' key holds the exception message (may contain dbt model details)
+                error_str = error_entry.get('error', '')
+                message = error_entry.get('message', '')
+
+                parts = []
+                # Include the exception message first — for dbt blocks this contains
+                # the per-model/test failure summary built in block_sql.py
+                if error_str:
+                    parts.append(error_str)
+
+                # Append truncated traceback for further debugging context
+                if message:
+                    message_split = message.split('\n')
+                    if len(message_split) > 50:
+                        message_split = message_split[-50:]
+                        message_split.insert(0, '... (traceback truncated)')
+                    parts.append('\n'.join(message_split))
+
+                if parts:
+                    stacktrace = f'Error for block {br.block_uuid}:\n' + '\n\n'.join(parts)
+                    break
 
             self.notification_sender.send_pipeline_run_failure_message(
                 pipeline=self.pipeline,
