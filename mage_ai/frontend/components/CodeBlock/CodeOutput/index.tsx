@@ -75,6 +75,7 @@ import {
 } from '@utils/string';
 import { onSuccess } from '@api/utils/response';
 import { ignoreKeys, isObject } from '@utils/hash';
+import { imageMimeTypeForDataType, isImageOutputDataType } from '@utils/imageOutput';
 import { range } from '@utils/array';
 import TextOutput from './TextOutput';
 import ImageOutput from './ImageOutput';
@@ -889,9 +890,14 @@ function CodeOutput(
                     displayElement = tableEl;
                   }
                 }
-              } else if (DataTypeEnum.IMAGE_PNG === typeDisplay && textData) {
+              } else if (isImageOutputDataType(typeDisplay) && textData) {
                 displayElement = (
-                  <ImageOutput data={textData} height={UNIT * 60} uuid={String(idxInner)} />
+                  <ImageOutput
+                    data={textData}
+                    height={UNIT * 60}
+                    mimeType={imageMimeTypeForDataType(typeDisplay)}
+                    uuid={String(idxInner)}
+                  />
                 );
               }
             }
@@ -998,10 +1004,14 @@ function CodeOutput(
           if (data) {
             displayElement = buildDisplayForHTMLOutput(data, outputRowSharedProps);
           }
-        } else if (dataTypeInner === DataTypeEnum.IMAGE_PNG && data?.length >= 1) {
+        } else if (isImageOutputDataType(dataTypeInner) && data?.length >= 1) {
+          const mime = imageMimeTypeForDataType(dataTypeInner);
           displayElement = (
             <div style={{ overflow: 'auto', backgroundColor: 'white', maxHeight: UNIT * 60 }}>
-              <img alt={`Image ${idx} from code output`} src={`data:image/png;base64, ${data}`} />
+              <img
+                alt={`Image ${idx} from code output`}
+                src={`data:${mime};base64,${String(data).replace(/^\s+|\s+$/g, '')}`}
+              />
             </div>
           );
         } else if (dataTypeInner === DataTypeEnum.PROGRESS) {
