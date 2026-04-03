@@ -38,12 +38,23 @@ from mage_ai.data_preparation.models.variables.constants import VariableType
 from mage_ai.server.kernel_output_parser import DataType
 from mage_ai.settings.server import MEMORY_MANAGER_V2
 from mage_ai.shared.hash import merge_dict
+from mage_ai.shared.image_output_detect import (
+    try_image_payload_from_bytes,
+    try_image_payload_from_string,
+)
 from mage_ai.shared.parsers import (
     convert_matrix_to_dataframe,
     encode_complex,
     has_to_dict,
 )
 from mage_ai.shared.strings import is_json
+
+_MIME_TO_OUTPUT_TYPE = {
+    'image/png': DataType.IMAGE_PNG,
+    'image/jpeg': DataType.IMAGE_JPEG,
+    'image/gif': DataType.IMAGE_GIF,
+    'image/webp': DataType.IMAGE_WEBP,
+}
 
 
 def format_output_data(
@@ -369,6 +380,16 @@ df = get_variable('{block.pipeline.uuid}', '{block.uuid}', 'df')
             variable_uuid=variable_uuid,
         )
         return data, False
+    elif isinstance(data, (bytes, bytearray)):
+        img = try_image_payload_from_bytes(bytes(data))
+        if img:
+            mime, b64 = img
+            data = dict(
+                text_data=b64,
+                type=_MIME_TO_OUTPUT_TYPE.get(mime, DataType.IMAGE_PNG),
+                variable_uuid=variable_uuid,
+            )
+            return data, False
     elif is_primitive(data):
         json_data = is_json(data)
         if json_data:
@@ -381,11 +402,21 @@ df = get_variable('{block.pipeline.uuid}', '{block.uuid}', 'df')
                 variable_uuid=variable_uuid,
             )
         else:
-            data = dict(
-                text_data=str(data),
-                type=DataType.TEXT,
-                variable_uuid=variable_uuid,
-            )
+            text = str(data)
+            img = try_image_payload_from_string(text)
+            if img:
+                mime, b64 = img
+                data = dict(
+                    text_data=b64,
+                    type=_MIME_TO_OUTPUT_TYPE.get(mime, DataType.IMAGE_PNG),
+                    variable_uuid=variable_uuid,
+                )
+            else:
+                data = dict(
+                    text_data=text,
+                    type=DataType.TEXT,
+                    variable_uuid=variable_uuid,
+                )
         return data, False
     elif basic_iterable:
         data = dict(
