@@ -1119,3 +1119,171 @@ class PipelineSchedulerTests(DBTestCase):
         PipelineScheduler(pipeline_run=pipeline_run2).schedule()
         self.assertEqual(block_run.status, BlockRun.BlockRunStatus.FAILED)
         self.assertEqual(block_run2.status, BlockRun.BlockRunStatus.RUNNING)
+
+
+class PipelineSchedulerOnFailureTests(DBTestCase):
+    """Tests for on_pipeline_run_failure stacktrace construction (enhanced dbt notifications)."""
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.pipeline = create_pipeline_with_blocks('test_failure_pipeline', cls.repo_path)
+
+    def _make_scheduler_with_failed_block(self, error_str=None, message=None, metrics=None):
+        """
+        Create a PipelineScheduler with one failed block run whose metrics
+        contain the given error_str and message.
+        """
+        pipeline_run = create_pipeline_run_with_schedule(
+            pipeline_uuid='test_failure_pipeline',
+        )
+        pipeline_run.update(status=PipelineRun.PipelineRunStatus.RUNNING)
+
+        block_run = pipeline_run.block_runs[0]
+
+        if metrics is not None:
+            block_run.update(
+                status=BlockRun.BlockRunStatus.FAILED,
+                metrics=metrics,
+            )
+        else:
+            block_metrics = {}
+            if error_str is not None or message is not None:
+                block_metrics['error'] = {}
+                if error_str is not None:
+                    block_metrics['error']['error'] = error_str
+                if message is not None:
+                    block_metrics['error']['message'] = message
+            block_run.update(
+                status=BlockRun.BlockRunStatus.FAILED,
+                metrics=block_metrics,
+            )
+
+        return PipelineScheduler(pipeline_run=pipeline_run), pipeline_run
+
+    def test_error_str_appears_in_stacktrace(self):
+        """The exception message (error_str from metrics) is included in the stacktrace."""
+        dbt_detail = (
+            'dbt build failed. The following models/tests encountered errors:\n'
+            '  [model] my_model: Database Error\n    bad SQL'
+        )
+        scheduler, pipeline_run = self._make_scheduler_with_failed_block(
+            error_str=dbt_detail,
+        )
+
+        captured = {}
+        with patch.object(
+            scheduler.notification_sender,
+            'send_pipeline_run_failure_message',
+        ) as mock_send:
+            mock_send.side_effect = lambda **kw: captured.update(kw)
+            with patch(
+                'mage_ai.orchestration.pipeline_scheduler_original.cancel_block_runs_and_jobs'
+            ):
+                with patch(
+                    'mage_ai.orchestration.pipeline_scheduler_original'
+                    '.UsageStatisticLogger'
+                ):
+                    scheduler.on_pipeline_run_failure(error_msg='block failed')
+
+        stacktrace = captured.get('stacktrace', '')
+        self.assertIn(dbt_detail, stacktrace)
+
+    def test_both_error_str_and_traceback_present(self):
+        """When both error_str and message exist, they both appear separated by blank line."""
+        error_str = 'dbt build failed.\n  [model] bad_model: syntax error'
+        traceback_msg = 'Traceback (most recent call last):\n  File "block.py", line 10\nException'
+        scheduler, _ = self._make_scheduler_with_failed_block(
+            error_str=error_str,
+            message=traceback_msg,
+        )
+
+        captured = {}
+        with patch.object(
+            scheduler.notification_sender,
+            'send_pipeline_run_failure_message',
+        ) as mock_send:
+            mock_send.side_effect = lambda **kw: captured.update(kw)
+            with patch(
+                'mage_ai.orchestration.pipeline_scheduler_original.cancel_block_runs_and_jobs'
+            ):
+                with patch(
+                    'mage_ai.orchestration.pipeline_scheduler_original'
+                    '.UsageStatisticLogger'
+                ):
+                    scheduler.on_pipeline_run_failure(error_msg='block failed')
+
+        stacktrace = captured.get('stacktrace', '')
+        self.assertIn(error_str, stacktrace)
+        self.assertIn(traceback_msg, stacktrace)
+        # The two parts are separated by a blank line
+        self.assertIn('\n\n', stacktrace)
+
+    def test_long_traceback_is_truncated(self):
+        """Tracebacks longer than 50 lines are truncated and prefixed with a notice."""
+        long_message = '\n'.join([f'line {i}' for i in range(100)])
+        scheduler, _ = self._make_scheduler_with_failed_block(message=long_message)
+
+        captured = {}
+        with patch.object(
+            scheduler.notification_sender,
+            'send_pipeline_run_failure_message',
+        ) as mock_send:
+            mock_send.side_effect = lambda **kw: captured.update(kw)
+            with patch(
+                'mage_ai.orchestration.pipeline_scheduler_original.cancel_block_runs_and_jobs'
+            ):
+                with patch(
+                    'mage_ai.orchestration.pipeline_scheduler_original'
+                    '.UsageStatisticLogger'
+                ):
+                    scheduler.on_pipeline_run_failure(error_msg='block failed')
+
+        stacktrace = captured.get('stacktrace', '')
+        self.assertIn('... (traceback truncated)', stacktrace)
+        # Should end with the last few original lines, not line 0
+        self.assertIn('line 99', stacktrace)
+        self.assertNotIn('line 0\n', stacktrace)
+
+    def test_empty_metrics_does_not_crash(self):
+        """When block run metrics is an empty dict, stacktrace stays None (no crash)."""
+        scheduler, _ = self._make_scheduler_with_failed_block(metrics={})
+
+        captured = {}
+        with patch.object(
+            scheduler.notification_sender,
+            'send_pipeline_run_failure_message',
+        ) as mock_send:
+            mock_send.side_effect = lambda **kw: captured.update(kw)
+            with patch(
+                'mage_ai.orchestration.pipeline_scheduler_original.cancel_block_runs_and_jobs'
+            ):
+                with patch(
+                    'mage_ai.orchestration.pipeline_scheduler_original'
+                    '.UsageStatisticLogger'
+                ):
+                    scheduler.on_pipeline_run_failure(error_msg='block failed')
+
+        self.assertIsNone(captured.get('stacktrace'))
+
+    def test_none_metrics_does_not_crash(self):
+        """When block run metrics is None, the loop skips it without crashing."""
+        scheduler, _ = self._make_scheduler_with_failed_block(metrics=None)
+
+        captured = {}
+        with patch.object(
+            scheduler.notification_sender,
+            'send_pipeline_run_failure_message',
+        ) as mock_send:
+            mock_send.side_effect = lambda **kw: captured.update(kw)
+            with patch(
+                'mage_ai.orchestration.pipeline_scheduler_original.cancel_block_runs_and_jobs'
+            ):
+                with patch(
+                    'mage_ai.orchestration.pipeline_scheduler_original'
+                    '.UsageStatisticLogger'
+                ):
+                    # Should not raise AttributeError
+                    scheduler.on_pipeline_run_failure(error_msg='block failed')
+
+        self.assertIsNone(captured.get('stacktrace'))

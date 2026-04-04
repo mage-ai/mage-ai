@@ -1,329 +1,131 @@
-# import asyncio
-# import json
-# import os
-# from pathlib import Path
-# from unittest.mock import MagicMock, call, patch
+from unittest.mock import MagicMock
 
-# from dbt.cli.main import dbtRunnerResult
-
-# from mage_ai.data_preparation.models.block.dbt.block import DBTBlock
-# from mage_ai.data_preparation.models.block.dbt.block_sql import DBTBlockSQL
-# from mage_ai.data_preparation.models.constants import BlockLanguage, BlockType
-# from mage_ai.settings.utils import base_repo_path
-# from mage_ai.tests.base_test import TestCase
-# from mage_ai.tests.data_preparation.models.block.platform.test_mixins import (
-#     BlockWithProjectPlatformShared,
-# )
-# from mage_ai.tests.shared.mixins import ProjectPlatformMixin
+from mage_ai.data_preparation.models.block.dbt.block_sql import DBTBlockSQL
+from mage_ai.tests.base_test import TestCase
 
 
-# def build_block():
-#     pipeline = MagicMock()
-#     pipeline.uuid = 'test'
-#     pipeline.repo_path = 'test_repo_path'
-#     pipeline.get_block.return_value = None
-
-#     return DBTBlock.create(
-#         name='test_dbt_block_sql',
-#         uuid='test_dbt_block_sql',
-#         block_type=BlockType.DBT,
-#         language=BlockLanguage.SQL,
-#         pipeline=pipeline,
-#         configuration={
-#             'dbt_profile_target': 'test',
-#             'file_path': str(Path('test_project_name/test_models/model.sql')),
-#             'dbt': {
-#                 'command': 'build',
-#                 'disable_tests': True
-#             }
-#         }
-#     )
+def _make_node(name, resource_type_value):
+    node = MagicMock()
+    node.name = name
+    node.resource_type.value = resource_type_value
+    return node
 
 
-# class DBTBlockSQLTest(TestCase):
-#     @classmethod
-#     def setUpClass(self):
-#         super().setUpClass()
-#         self.dbt_block = build_block()
-
-#     @classmethod
-#     def tearDownClass(self):
-#         super().tearDownClass()
-
-#     def test_file_path(self):
-#         self.assertEqual(
-#             self.dbt_block.file_path,
-#             str(Path('test_repo_path/dbt/test_project_name/test_models/model.sql'))
-#         )
-
-#     @patch('mage_ai.data_preparation.models.block.dbt.block_sql.Profiles')
-#     @patch('mage_ai.data_preparation.models.block.dbt.block_sql.Project')
-#     def test_metadata_async(self, Project: MagicMock, Profiles: MagicMock):
-#         Project.return_value.local_packages = ['test_project_name']
-#         Project.return_value.project = {
-#             'name': 'test_project_name',
-#             'profile': 'test_project_name'
-#         }
-#         Profiles.return_value.profiles = {
-#             'test_project_name': {
-#                 'target': 'test',
-#                 'outputs': {
-#                     'test': None,
-#                     'dev': None,
-#                     'prod': None
-#                 }
-#             }
-#         }
-
-#         metadata = asyncio.run(self.dbt_block.metadata_async())
-
-#         self.assertEqual(
-#             metadata,
-#             {
-#                 'dbt': {
-#                     'block': {'snapshot': False},
-#                     'project': 'test_project_name',
-#                     'projects': {
-#                         'test_project_name': {
-#                             'target': 'test',
-#                             'targets': ['dev', 'prod', 'test']
-#                         }
-#                     }
-#                 }
-#             }
-#         )
-
-#     @patch('mage_ai.data_preparation.models.block.dbt.block_sql.Project')
-#     def test_tags(self, Project: MagicMock):
-#         Project.return_value.project = {
-#             'model-paths': ['models', 'test_models']
-#         }
-#         self.assertEqual(
-#             self.dbt_block.tags(),
-#             []
-#         )
-
-#     def test_project_path(self):
-#         self.assertEqual(
-#             self.dbt_block.project_path,
-#             str(Path('test_repo_path/dbt/test_project_name'))
-#         )
-
-#     @patch('mage_ai.data_preparation.models.block.dbt.block_sql.DBTCli.invoke')
-#     @patch('mage_ai.data_preparation.models.block.dbt.block_sql.Project')
-#     @patch('mage_ai.data_preparation.models.block.dbt.block_sql.Profiles')
-#     def test_execute_block(
-#         self,
-#         Profiles: MagicMock,
-#         Project: MagicMock,
-#         mock_invoke: MagicMock,
-#     ):
-#         mock_invoke.return_value = dbtRunnerResult(True)
-#         Profiles.return_value.__enter__.return_value.profiles_dir = 'test_profiles_dir'
-#         Project.return_value.project = {
-#             'model-paths': ['models', 'test_models']
-#         }
-
-#         self.dbt_block._execute_block(
-#             {},
-#             from_notebook=False,
-#             runtime_arguments={
-#                 '__mage_variables': {
-#                     'blocks': {
-#                         'test_dbt_block_sql': {
-#                             'configuration': {
-#                                 'flags': ['--full-refresh'],
-#                                 'suffix': '+'
-#                             }
-#                         }
-#                     }
-#                 }
-#             },
-#             global_vars={}
-#         )
-
-#         self.assertEqual(mock_invoke.mock_calls[0], call([
-#             'deps',
-#             '--project-dir', str(Path('test_repo_path/dbt/test_project_name')),
-#             '--full-refresh',
-#             '--select', 'model+',
-#             '--vars', '{}',
-#             '--target', 'test',
-#             '--profiles-dir', 'test_profiles_dir'
-#         ]))
-#         self.assertEqual(mock_invoke.mock_calls[1], call([
-#             'run',
-#             '--project-dir', str(Path('test_repo_path/dbt/test_project_name')),
-#             '--full-refresh',
-#             '--select', 'model+',
-#             '--vars', '{}',
-#             '--target', 'test',
-#             '--profiles-dir', 'test_profiles_dir'
-#         ]))
-
-#     @patch('mage_ai.data_preparation.models.block.dbt.block_sql.Project')
-#     @patch('mage_ai.data_preparation.models.block.dbt.block_sql.Path.open')
-#     @patch('mage_ai.data_preparation.models.block.dbt.block_sql.Path.exists')
-#     def test_content_compiled(self, exists: MagicMock, open: MagicMock, Project: MagicMock):
-#         Project.return_value.project = {
-#             'model-paths': ['models', 'test_models']
-#         }
-#         open.return_value.__enter__.return_value.read.return_value = 'SELECT * FROM test'
-#         exists.return_value = True
-
-#         self.assertEqual(
-#             self.dbt_block.content_compiled,
-#             'SELECT * FROM test'
-#         )
-
-#     @patch('mage_ai.data_preparation.models.block.dbt.block_sql.DBTCli.invoke')
-#     @patch('mage_ai.data_preparation.models.block.dbt.block_sql.Profiles')
-#     def test_upstream_dbt_blocks(
-#         self,
-#         Profiles: MagicMock,
-#         mock_invoke: MagicMock,
-#     ):
-#         Profiles.return_value.__enter__.return_value.profiles_dir = 'test_profiles_dir'
-#         mock_invoke.return_value = dbtRunnerResult(
-#             success=True,
-#             exception=None,
-#             result=[
-#                 '{"unique_id":"test1", "original_file_path":"test1_file_path.sql", ' +
-#                 '"depends_on": {"nodes":[]}}',
-#                 '{"unique_id":"test2", "original_file_path":"test2_file_path.sql", ' +
-#                 '"depends_on": {"nodes":["test1"]}}'
-#             ],
-#         )
-
-#         blocks = [block.to_dict() for block in self.dbt_block.upstream_dbt_blocks()].__iter__()
-
-#         mock_invoke.assert_called_once_with([
-#             'list',
-#             '--project-dir', str(Path('test_repo_path/dbt/test_project_name')),
-#             '--profiles-dir', 'test_profiles_dir',
-#             '--select', '+model',
-#             '--output', 'json',
-#             '--output-keys', 'unique_id original_file_path depends_on',
-#             '--resource-type', 'model',
-#             '--resource-type', 'snapshot',
-#         ])
-
-#         block = next(blocks)
-#         self.assertDictContainsSubset(
-#             {
-#                 'configuration': {
-#                     'file_path': str(Path('test_project_name/test1_file_path.sql'))
-#                 },
-#                 'downstream_blocks': [str(Path('test_project_name/test2_file_path'))],
-#                 'name': str(Path('test_project_name/test1_file_path')),
-#                 'language': 'sql',
-#                 'type': 'dbt',
-#                 'upstream_blocks': [],
-#                 'uuid': str(Path('test_project_name/test1_file_path'))
-#             },
-#             block
-#         )
-
-#         block = next(blocks)
-#         self.assertDictContainsSubset(
-#             {
-#                 'configuration': {
-#                     'file_path': str(Path('test_project_name/test2_file_path.sql'))
-#                 },
-#                 'downstream_blocks': [],
-#                 'name': str(Path('test_project_name/test2_file_path')),
-#                 'language': 'sql',
-#                 'type': 'dbt',
-#                 'upstream_blocks': [str(Path('test_project_name/test1_file_path'))],
-#                 'uuid': str(Path('test_project_name/test2_file_path'))
-#             },
-#             block
-#         )
+def _make_node_result(status, node, message=None):
+    nr = MagicMock()
+    nr.status = status
+    nr.node = node
+    nr.message = message
+    return nr
 
 
-# @patch(
-#     'mage_ai.data_preparation.models.block.platform.mixins.project_platform_activated',
-#     lambda: True,
-# )
-# @patch(
-#     'mage_ai.data_preparation.models.block.platform.utils.project_platform_activated',
-#     lambda: True,
-# )
-# @patch('mage_ai.settings.platform.project_platform_activated', lambda: True)
-# class DBTBlockSQLProjectPlatformTest(ProjectPlatformMixin, BlockWithProjectPlatformShared):
-#     def test_file_path(self):
-#         block = build_block()
-#         block.configuration['file_source'] = dict(path='mage_data/dbt/demo/models/fire.sql')
-#         self.assertEqual(block.file_path, 'mage_data/dbt/demo/models/fire.sql')
+def _make_res(node_results, exception_str='some dbt exception'):
+    res = MagicMock()
+    res.result.results = node_results
+    res.exception = exception_str
+    return res
 
-#     def test_project_path(self):
-#         block = build_block()
-#         block.configuration['file_source'] = dict(
-#             path='mage_data/dbt/demo/models/fire.sql',
-#             project_path='mage_data/dbt/demo',
-#         )
-#         self.assertEqual(block.project_path, os.path.join(base_repo_path(), 'mage_data/dbt/demo'))
 
-#     @patch('mage_ai.data_preparation.models.block.dbt.block_sql.DBTCli.invoke')
-#     @patch('mage_ai.data_preparation.models.block.dbt.block_sql.Profiles')
-#     def test_upstream_dbt_blocks(self, Profiles, mock_invoke):
-#         mock_invoke.return_value = dbtRunnerResult(success=True, result=[
-#             json.dumps(dict(
-#                 depends_on=dict(nodes=[]),
-#                 original_file_path='models/water.sql',
-#                 unique_id='water',
-#             )),
-#             json.dumps(dict(
-#                 depends_on=dict(nodes=['water']),
-#                 original_file_path='models/ice.sql',
-#                 unique_id='ice',
-#             )),
-#         ])
-#         Profiles.return_value.__enter__.return_value.profiles_dir = 'test_profiles_dir'
+# Helper to call the name-mangled private static method
+def _build(task, res):
+    return DBTBlockSQL._DBTBlockSQL__build_dbt_error_detail(task, res)
 
-#         os.makedirs(os.path.join(base_repo_path(), 'mage_data/dbt/demo/models'), exist_ok=True)
-#         for key in [
-#             'fire',
-#             'ice',
-#             'water',
-#         ]:
-#             with open(
-#                 os.path.join(base_repo_path(), f'mage_data/dbt/demo/models/{key}.sql'),
-#                 'w',
-#             ) as f:
-#                 f.write('')
-#         with open(os.path.join(base_repo_path(), 'mage_data/dbt/dbt_project.yml'), 'w') as f:
-#             f.write('')
 
-#         block = build_block()
-#         block.configuration['file_source'] = dict(
-#             path='mage_data/dbt/demo/models/fire.sql',
-#             project_path='mage_data/dbt/demo',
-#         )
-#         blocks = block.upstream_dbt_blocks()
+class DBTBlockSQLBuildErrorDetailTest(TestCase):
 
-#         self.assertEqual(len(blocks), 2)
+    def test_model_error_is_formatted(self):
+        """A failed model node produces [model] name: message format."""
+        node = _make_node('my_model', 'model')
+        res = _make_res([_make_node_result('error', node, 'Database Error\n  bad SQL')])
 
-#         block1, block2 = blocks
-#         self.assertTrue(isinstance(block1, DBTBlockSQL))
-#         self.assertEqual(block1.type, BlockType.DBT)
-#         self.assertEqual(block1.configuration, dict(
-#             file_path='mage_data/dbt/demo/models/water.sql',
-#             file_source=dict(
-#                 path='mage_data/dbt/demo/models/water.sql',
-#                 project_path='mage_data/dbt',
-#             ),
-#         ))
-#         self.assertEqual(block1.language, BlockLanguage.SQL)
+        result = _build('run', res)
 
-#         self.assertTrue(isinstance(block2, DBTBlockSQL))
-#         self.assertEqual(block2.type, BlockType.DBT)
-#         self.assertEqual(block2.configuration, dict(
-#             file_path='mage_data/dbt/demo/models/ice.sql',
-#             file_source=dict(
-#                 path='mage_data/dbt/demo/models/ice.sql',
-#                 project_path='mage_data/dbt',
-#             ),
-#         ))
-#         self.assertEqual(block2.language, BlockLanguage.SQL)
-#         self.assertEqual(block2.upstream_blocks, [block1])
+        self.assertIn('dbt run failed', result)
+        self.assertIn('[model] my_model', result)
+        self.assertIn('Database Error', result)
+
+    def test_test_fail_is_formatted(self):
+        """A failed dbt test node (status=fail) produces [test] name: message format."""
+        node = _make_node('not_null_orders_id', 'test')
+        res = _make_res([_make_node_result('fail', node, 'Got 3 results')])
+
+        result = _build('test', res)
+
+        self.assertIn('dbt test failed', result)
+        self.assertIn('[test] not_null_orders_id', result)
+        self.assertIn('Got 3 results', result)
+
+    def test_multiple_failures_all_listed(self):
+        """All failed nodes are listed, not just the first."""
+        node_a = _make_node('model_a', 'model')
+        node_b = _make_node('model_b', 'model')
+        res = _make_res([
+            _make_node_result('error', node_a, 'Error A'),
+            _make_node_result('error', node_b, 'Error B'),
+        ])
+
+        result = _build('build', res)
+
+        self.assertIn('[model] model_a', result)
+        self.assertIn('[model] model_b', result)
+
+    def test_passing_nodes_are_excluded(self):
+        """Nodes with status 'success' or 'pass' do not appear in the output."""
+        passing_node = _make_node('good_model', 'model')
+        failing_node = _make_node('bad_model', 'model')
+        res = _make_res([
+            _make_node_result('success', passing_node, None),
+            _make_node_result('error', failing_node, 'Error'),
+        ])
+
+        result = _build('run', res)
+
+        self.assertNotIn('good_model', result)
+        self.assertIn('bad_model', result)
+
+    def test_no_failed_nodes_falls_back_to_exception(self):
+        """When all nodes pass, falls back to str(res.exception)."""
+        node = _make_node('good_model', 'model')
+        res = _make_res([_make_node_result('success', node, None)], exception_str='original error')
+
+        result = _build('run', res)
+
+        self.assertEqual(result, 'original error')
+
+    def test_none_result_falls_back_to_exception(self):
+        """When res.result is None, falls back to str(res.exception)."""
+        res = MagicMock()
+        res.result = None
+        res.exception = 'fallback error'
+
+        result = _build('run', res)
+
+        self.assertEqual(result, 'fallback error')
+
+    def test_node_is_none_uses_unknown(self):
+        """When node attribute is None, node name falls back to 'unknown'."""
+        nr = _make_node_result('error', None, 'some error')
+        res = _make_res([nr])
+
+        result = _build('run', res)
+
+        self.assertIn('unknown', result)
+
+    def test_resource_type_without_value_attr_uses_node(self):
+        """When resource_type has no .value, resource type label falls back to 'node'."""
+        # Use spec= to create a resource_type object that has no .value attribute
+        resource_type = MagicMock(spec=[])  # empty spec → no attributes including .value
+        node = MagicMock(spec=['name', 'resource_type'])
+        node.name = 'my_model'
+        node.resource_type = resource_type
+
+        nr = MagicMock()
+        nr.status = 'error'
+        nr.node = node
+        nr.message = 'err'
+        res = _make_res([nr])
+
+        result = _build('run', res)
+
+        self.assertIn('node', result)
+        self.assertIn('my_model', result)

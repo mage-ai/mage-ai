@@ -346,6 +346,8 @@ class PipelineScheduler:
             failed_block_runs = self.pipeline_run.failed_block_runs
             stacktrace = None
             for br in failed_block_runs:
+                if not br.metrics:
+                    continue
                 error_entry = br.metrics.get('error', {})
                 # The 'error' key holds the exception message (may contain dbt model details)
                 error_str = error_entry.get('error', '')

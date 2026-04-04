@@ -616,7 +616,7 @@ class DBTBlockSQL(DBTBlock, ProjectPlatformAccessible):
     @staticmethod
     def __build_dbt_error_detail(task: str, res) -> str:
         """
-        Parse dbtRunnerResult to extract per-model/test failure details.
+        Parse res as dbtRunnerResult to extract per-model/test failure details.
         Returns an error string listing the specific failed models/tests encountered errors.
         """
         failed_lines = []
