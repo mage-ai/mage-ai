@@ -2149,6 +2149,9 @@ class Block(
                 if global_vars:
                     global_vars.update(part_index=part_index)
 
+        # Check if the block function is async
+        is_async = inspect.iscoroutinefunction(block_function_updated)
+
         if MEMORY_MANAGER_V2:
             log_message_prefix = self.uuid
             if self.pipeline:
@@ -2164,7 +2167,14 @@ class Block(
                 logger=logger,
                 logging_tags=logging_tags,
                 log_message_prefix=log_message_prefix,
+                is_async=is_async,
             )
+        elif is_async:
+            # Handle async block functions
+            if has_kwargs and global_vars is not None and len(global_vars) != 0:
+                output = asyncio.run(block_function_updated(*input_vars, **global_vars))
+            else:
+                output = asyncio.run(block_function_updated(*input_vars))
         elif has_kwargs and global_vars is not None and len(global_vars) != 0:
             output = block_function_updated(*input_vars, **global_vars)
         else:
@@ -4294,10 +4304,22 @@ class SensorBlock(Block):
             has_kwargs = any([p.kind == p.VAR_KEYWORD for p in sig.parameters.values()])
             use_global_vars = has_kwargs and global_vars is not None and len(global_vars) != 0
             args = input_vars if has_args else []
+            is_async = inspect.iscoroutinefunction(block_function)
+
             while True:
-                condition = (
-                    block_function(*args, **global_vars) if use_global_vars else block_function()
-                )
+                if is_async:
+                    # Handle async sensor functions
+                    condition = (
+                        asyncio.run(block_function(*args, **global_vars))
+                        if use_global_vars
+                        else asyncio.run(block_function())
+                    )
+                else:
+                    condition = (
+                        block_function(*args, **global_vars)
+                        if use_global_vars
+                        else block_function()
+                    )
                 if condition:
                     break
                 print('Sensor sleeping for 1 minute...')
