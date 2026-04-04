@@ -86,6 +86,32 @@ class Destination(BaseDestination):
 
         # Create schema if not exists. Only run this command for the first batch.
         # Pass if user decides to skip it
+
+        # Truncate table before first batch if config option is enabled
+        if not hasattr(self, '_truncated_streams'):
+            self._truncated_streams = set()
+
+        replication_method = self.replication_methods.get(stream)
+        truncate_enabled = self.config.get('truncate_before_full_table_sync', False)
+
+        if (
+            truncate_enabled
+            and replication_method == REPLICATION_METHOD_FULL_TABLE
+            and stream not in self._truncated_streams
+        ):
+            self.logger.info(
+                f'truncate_before_full_table_sync=true: truncating table for stream {stream}',
+                tags=tags,
+            )
+            self.truncate_table(
+                database_name=database_name,
+                schema_name=schema_name,
+                table_name=table_name,
+            )
+            self._truncated_streams.add(stream)
+        
+
+
         if tags.get('batch') == 0:
             if self.skip_schema_creation:
                 # User decided not to run CREATE SCHEMA command
@@ -317,6 +343,25 @@ class Destination(BaseDestination):
                 results += self.build_connection().execute(query_strings, commit=True)
 
         return results
+
+    def truncate_table(
+        self,
+        table_name: str,
+        schema_name: str = None,
+        database_name: str = None,
+    ) -> None:
+        """
+        Truncates the destination table before a FULL_TABLE sync.
+        Only runs when truncate_before_full_table_sync=true in config.
+        """
+        parts = [x for x in [database_name, schema_name, table_name] if x]
+        full_table = '.'.join([self._wrap_with_quotes(p) for p in parts])
+
+        sql = f'TRUNCATE TABLE {full_table};'
+        self.logger.info(f'Executing: {sql}')
+        self.build_connection().execute([sql], commit=True)
+        self.logger.info(f'Table {full_table} truncated successfully.')
+
 
     def build_connection(self):
         raise Exception('Subclasses must implement the build_connection method.')

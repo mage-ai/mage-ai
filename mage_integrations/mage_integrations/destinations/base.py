@@ -189,8 +189,25 @@ class Destination(ABC):
     def after_process(self) -> None:    # noqa: B027
         pass
 
-    def export_batch_data(self, record_data: List[Dict], stream: str, tags: Dict = None) -> None:
-        raise NotImplementedError('Subclasses must implement the export_batch_data method.')
+    def export_batch_data(self, stream, schema, records, replication_method=None, **kwargs):
+        REPLICATION_METHOD_FULL_TABLE = 'FULL_TABLE'
+
+        truncate_enabled = self.config.get('truncate_before_full_table_sync', False)
+        is_full_table = replication_method == REPLICATION_METHOD_FULL_TABLE
+
+        if not hasattr(self, '_truncated_streams'):
+            self._truncated_streams = set()
+
+        if truncate_enabled and is_full_table and stream not in self._truncated_streams:
+            self.logger.info(
+                f'truncate_before_full_table_sync=true: truncating stream {stream}'
+            )
+            self.truncate_table(stream, schema)
+            self._truncated_streams.add(stream)
+    
+    def truncate_table(self, stream: str, schema: dict) -> None:
+        pass
+    
 
     def export_data(
         self,
