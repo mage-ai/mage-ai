@@ -415,10 +415,7 @@ class DBTBlockSQL(DBTBlock, ProjectPlatformAccessible):
                 res = cli.invoke([task] + args)
                 success = res.success
                 if not success:
-                    print("Exception:")
-                    print(f'[BEFORE] str(res.exception): {str(res.exception)}.')
                     error_details = self._build_dbt_error_detail(task, res)
-                    print(f'[AFTER] error_details: {error_details}.')
                     raise Exception(error_details)  # was raise Exception(str(res.exception))
             # run show task, to get data for preview or downstream usage
             # test task does not have any data
