@@ -83,6 +83,34 @@ pipeline_schedule_event_matcher_association_table = Table(
 )
 
 
+def _is_in_active_window(settings):
+    """Check if current UTC hour falls within the configured active hours window.
+
+    Returns True if no active hours are configured (legacy 24/7 behavior),
+    or if the current hour is inside the window. Falls back to True on
+    invalid/non-integer values to avoid disrupting scheduling.
+    """
+    if not settings:
+        return True
+    raw_start = settings.get('active_hours_start')
+    raw_end = settings.get('active_hours_end')
+    if raw_start is None or raw_end is None:
+        return True
+    try:
+        start = int(raw_start)
+        end = int(raw_end)
+    except (TypeError, ValueError):
+        return True
+    if not (0 <= start <= 23 and 0 <= end <= 23):
+        return True
+
+    current_hour = datetime.now(tz=pytz.UTC).hour
+    if start <= end:
+        return start <= current_hour < end
+    # Midnight wraparound (e.g. start=22, end=7)
+    return current_hour >= start or current_hour < end
+
+
 class PipelineSchedule(PipelineScheduleProjectPlatformMixin, BaseModel):
     name = Column(String(255))
     description = Column(Text)
@@ -599,20 +627,8 @@ class PipelineSchedule(PipelineScheduleProjectPlatformMixin, BaseModel):
             if executor_count > 1 and pipeline_run_count < executor_count:
                 return True
         elif self.schedule_interval == ScheduleInterval.ALWAYS_ON:
-            active_hours_start = (self.settings or {}).get('active_hours_start')
-            active_hours_end = (self.settings or {}).get('active_hours_end')
-
-            if active_hours_start is not None and active_hours_end is not None:
-                current_hour = datetime.now(tz=pytz.UTC).hour
-
-                if active_hours_start <= active_hours_end:
-                    in_active_window = active_hours_start <= current_hour < active_hours_end
-                else:
-                    # Midnight wraparound (e.g. start=22, end=7)
-                    in_active_window = current_hour >= active_hours_start or current_hour < active_hours_end
-
-                if not in_active_window:
-                    return False
+            if not _is_in_active_window(self.settings):
+                return False
 
             if self.pipeline_runs_count == 0:
                 return True

@@ -618,7 +618,15 @@ function TriggerDetail({
       ]);
     }
 
-    if (settings?.active_hours_start !== undefined && settings?.active_hours_start !== null) {
+    if (
+      scheduleInterval === ScheduleIntervalEnum.ALWAYS_ON
+      && settings?.active_hours_start != null
+      && settings?.active_hours_end != null
+    ) {
+      const startPad = settings.active_hours_start >= 10
+        ? String(settings.active_hours_start) : `0${settings.active_hours_start}`;
+      const endPad = settings.active_hours_end >= 10
+        ? String(settings.active_hours_end) : `0${settings.active_hours_end}`;
       rows.push([
         <FlexContainer
           alignItems="center"
@@ -639,10 +647,9 @@ function TriggerDetail({
           key="trigger_active_hours_label"
           monospace
         >
-          {`${settings.active_hours_start}:00 - ${settings.active_hours_end}:00 UTC`}
+          {`${startPad}:00 - ${endPad}:00 UTC`}
         </Text>,
       ]);
-
     }
 
     return (
