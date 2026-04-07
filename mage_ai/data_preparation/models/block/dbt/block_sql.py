@@ -415,7 +415,10 @@ class DBTBlockSQL(DBTBlock, ProjectPlatformAccessible):
                 res = cli.invoke([task] + args)
                 success = res.success
                 if not success:
-                    error_details = self.__build_dbt_error_detail(task, res)
+                    print("Exception:")
+                    print(f'[BEFORE] str(res.exception): {str(res.exception)}.')
+                    error_details = self._build_dbt_error_detail(task, res)
+                    print(f'[AFTER] error_details: {error_details}.')
                     raise Exception(error_details)  # was raise Exception(str(res.exception))
             # run show task, to get data for preview or downstream usage
             # test task does not have any data
@@ -614,17 +617,22 @@ class DBTBlockSQL(DBTBlock, ProjectPlatformAccessible):
         return self.configuration.get('file_path')
 
     @staticmethod
-    def __build_dbt_error_detail(task: str, res) -> str:
+    def _build_dbt_error_detail(task: str, res, max_nodes: int = 20) -> str:
         """
         Parse res as dbtRunnerResult to extract per-model/test failure details.
         Returns an error string listing the specific failed models/tests encountered errors.
+        Caps output at max_nodes to avoid exceeding notification channel limits.
         """
         failed_lines = []
+        total_failures = 0
         try:
             if res.result and hasattr(res.result, 'results'):
                 for node_result in res.result.results:
                     status = str(getattr(node_result, 'status', '')).lower()
                     if status in ('error', 'fail'):
+                        total_failures += 1
+                        if len(failed_lines) >= max_nodes:
+                            continue
                         node = getattr(node_result, 'node', None)
                         node_name = node.name if node else 'unknown'
                         resource_type = (
@@ -638,8 +646,13 @@ class DBTBlockSQL(DBTBlock, ProjectPlatformAccessible):
             pass  # fall back to generic error
 
         if failed_lines:
-            return (
+            detail = (
                 f'dbt {task} failed. The following models/tests encountered errors:\n'
                 + '\n'.join(failed_lines)
             )
+            if total_failures > max_nodes:
+                detail += (
+                    f'\n  ... and {total_failures - max_nodes} more failure(s) omitted.'
+                )
+            return detail
         return str(res.exception)

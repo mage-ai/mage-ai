@@ -26,9 +26,8 @@ def _make_res(node_results, exception_str='some dbt exception'):
     return res
 
 
-# Helper to call the name-mangled private static method
 def _build(task, res):
-    return DBTBlockSQL._DBTBlockSQL__build_dbt_error_detail(task, res)
+    return DBTBlockSQL._build_dbt_error_detail(task, res)
 
 
 class DBTBlockSQLBuildErrorDetailTest(TestCase):
@@ -129,3 +128,20 @@ class DBTBlockSQLBuildErrorDetailTest(TestCase):
 
         self.assertIn('node', result)
         self.assertIn('my_model', result)
+
+    def test_output_is_capped_at_max_nodes(self):
+        """When more nodes fail than max_nodes, output is truncated with a notice."""
+        nodes = [
+            _make_node_result('error', _make_node(f'model_{i}', 'model'), f'Error {i}')
+            for i in range(30)
+        ]
+        res = _make_res(nodes)
+
+        # Use max_nodes=10 to test capping
+        result = DBTBlockSQL._build_dbt_error_detail('build', res, max_nodes=10)
+
+        # First 10 should appear, rest should not
+        self.assertIn('[model] model_0', result)
+        self.assertIn('[model] model_9', result)
+        self.assertNotIn('[model] model_10', result)
+        self.assertIn('20 more failure(s) omitted', result)

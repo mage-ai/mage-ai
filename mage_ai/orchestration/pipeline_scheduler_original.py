@@ -357,7 +357,11 @@ class PipelineScheduler:
                 # Include the exception message first — for dbt blocks this contains
                 # the per-model/test failure summary built in block_sql.py
                 if error_str:
-                    parts.append(error_str)
+                    error_str_lines = error_str.split('\n')
+                    if len(error_str_lines) > 50:
+                        error_str_lines = error_str_lines[:50]
+                        error_str_lines.append('... (error details truncated)')
+                    parts.append('\n'.join(error_str_lines))
 
                 # Append truncated traceback for further debugging context
                 if message:

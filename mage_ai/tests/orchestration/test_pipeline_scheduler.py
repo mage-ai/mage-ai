@@ -1287,3 +1287,29 @@ class PipelineSchedulerOnFailureTests(DBTestCase):
                     scheduler.on_pipeline_run_failure(error_msg='block failed')
 
         self.assertIsNone(captured.get('stacktrace'))
+
+    def test_long_error_str_is_truncated(self):
+        """error_str longer than 50 lines is truncated, keeping the first 50 lines."""
+        long_error = '\n'.join([f'  [model] model_{i}: Error {i}' for i in range(100)])
+        scheduler, _ = self._make_scheduler_with_failed_block(error_str=long_error)
+
+        captured = {}
+        with patch.object(
+            scheduler.notification_sender,
+            'send_pipeline_run_failure_message',
+        ) as mock_send:
+            mock_send.side_effect = lambda **kw: captured.update(kw)
+            with patch(
+                'mage_ai.orchestration.pipeline_scheduler_original.cancel_block_runs_and_jobs'
+            ):
+                with patch(
+                    'mage_ai.orchestration.pipeline_scheduler_original'
+                    '.UsageStatisticLogger'
+                ):
+                    scheduler.on_pipeline_run_failure(error_msg='block failed')
+
+        stacktrace = captured.get('stacktrace', '')
+        self.assertIn('... (error details truncated)', stacktrace)
+        # Should keep the first lines (model names), not the last
+        self.assertIn('model_0', stacktrace)
+        self.assertNotIn('model_99', stacktrace)
