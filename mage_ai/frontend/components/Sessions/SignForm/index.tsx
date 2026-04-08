@@ -34,6 +34,50 @@ type SignFormProps = {
   title: string;
 };
 
+function parseUserFromQuery(userValue?: string, userBase64Value?: string) {
+  if (typeof window === 'undefined') {
+    return null;
+  }
+
+  const values = [userValue, userBase64Value];
+  for (const value of values) {
+    if (!value) {
+      continue;
+    }
+
+    try {
+      return JSON.parse(value);
+    } catch (error) {
+    }
+
+    try {
+      return JSON.parse(window.atob(value));
+    } catch (error) {
+    }
+  }
+
+  return null;
+}
+
+function redirectAfterLogin(basePath?: string) {
+  let url: string = `${basePath}/`;
+
+  if (typeof window !== 'undefined') {
+    const query = queryFromUrl(window.location.href);
+    const qs = queryString(
+      ignoreKeys(
+        query,
+        ['redirect_url', 'access_token', 'provider', 'token', 'user', 'user_base64'],
+      ),
+    );
+    if (query.redirect_url) {
+      url = `${query.redirect_url}?${qs}`;
+    }
+
+    window.location.href = url;
+  }
+}
+
 function SignForm({
   title,
 }: SignFormProps) {
@@ -118,10 +162,54 @@ function SignForm({
 
   const { 
     access_token: accessTokenFromURL,
+    token: sessionTokenFromURL,
     provider,
+    user: userFromURLParam,
+    user_base64: userBase64FromURLParam,
   } = queryFromUrl() || {};
 
+  const userFromURL = useMemo(
+    () => parseUserFromQuery(userFromURLParam, userBase64FromURLParam),
+    [
+      userBase64FromURLParam,
+      userFromURLParam,
+    ],
+  );
+
   useEffect(() => {
+    if (sessionTokenFromURL) {
+      AuthToken.logout(
+        () => {
+          AuthToken.storeToken(
+            sessionTokenFromURL,
+            async () => {
+              if (userFromURL) {
+                setUser(userFromURL, router?.basePath);
+                redirectAfterLogin(router?.basePath);
+                return;
+              }
+
+              try {
+                const response = await api.sessions.detailAsync('1');
+                const user = response?.session?.user;
+
+                if (user) {
+                  setUser(user, router?.basePath);
+                }
+              } catch (error) {
+              } finally {
+                redirectAfterLogin(router?.basePath);
+              }
+            },
+            router?.basePath,
+          );
+        },
+        router?.basePath,
+      );
+
+      return;
+    }
+
     if (accessTokenFromURL && provider) {
       // @ts-ignore
       createRequest({
@@ -135,6 +223,9 @@ function SignForm({
     accessTokenFromURL,
     createRequest,
     provider,
+    router?.basePath,
+    sessionTokenFromURL,
+    userFromURL,
   ]);
 
   return (
