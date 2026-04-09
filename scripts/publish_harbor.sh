@@ -41,7 +41,7 @@ load_env_file() {
 
 load_env_file "${ENV_FILE}"
 
-IMAGE_NAME="${IMAGE_NAME:-b2m-sage-ai}"
+IMAGE_NAME="${IMAGE_NAME:-b2mage-base}"
 IMAGE_TAG="${IMAGE_TAG:-latest}"
 HARBOR_REGISTRY="${HARBOR_REGISTRY:-}"
 HARBOR_PROJECT="${HARBOR_PROJECT:-}"
@@ -57,7 +57,9 @@ INSTALL_MSSQL="${INSTALL_MSSQL:-false}"
 INSTALL_R="${INSTALL_R:-false}"
 INSTALL_SPARKMAGIC="${INSTALL_SPARKMAGIC:-false}"
 
+COMMIT_ID="${COMMIT_ID:-$(git rev-parse HEAD)}"
 REMOTE_IMAGE="${HARBOR_REGISTRY}/${HARBOR_PROJECT}/${IMAGE_NAME}:${IMAGE_TAG}"
+REMOTE_IMAGE_COMMIT="${HARBOR_REGISTRY}/${HARBOR_PROJECT}/${IMAGE_NAME}:${COMMIT_ID}"
 
 if [[ -z "${HARBOR_REGISTRY}" || -z "${HARBOR_PROJECT}" || -z "${HARBOR_USER}" || -z "${HARBOR_PASSWORD}" ]]; then
   cat <<'EOF'
@@ -87,6 +89,7 @@ cd "${ROOT_DIR}"
 
 echo "Loaded env file: ${ENV_FILE}"
 echo "Remote image: ${REMOTE_IMAGE}"
+echo "Remote image (commit): ${REMOTE_IMAGE_COMMIT}"
 echo "Platforms: ${BUILD_PLATFORMS}"
 echo "Dockerfile: ${DOCKERFILE_PATH}"
 echo "Build context: ${BUILD_CONTEXT}"
@@ -107,7 +110,7 @@ fi
 
 docker buildx inspect --bootstrap >/dev/null
 
-echo "Building and pushing ${REMOTE_IMAGE}..."
+echo "Building and pushing ${REMOTE_IMAGE} and ${REMOTE_IMAGE_COMMIT}..."
 docker buildx build \
   --platform "${BUILD_PLATFORMS}" \
   --build-arg "MAGE_EXTRAS=${MAGE_EXTRAS}" \
@@ -117,7 +120,9 @@ docker buildx build \
   --build-arg "INSTALL_SPARKMAGIC=${INSTALL_SPARKMAGIC}" \
   -f "${DOCKERFILE_PATH}" \
   -t "${REMOTE_IMAGE}" \
+  -t "${REMOTE_IMAGE_COMMIT}" \
   --push \
   "${BUILD_CONTEXT}"
 
 echo "Published ${REMOTE_IMAGE}"
+echo "Published ${REMOTE_IMAGE_COMMIT}"
