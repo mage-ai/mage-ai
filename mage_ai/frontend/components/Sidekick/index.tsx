@@ -608,7 +608,7 @@ function Sidekick({
                 deleteBlock={deleteBlock}
                 dragEnabled
                 editingBlock={editingBlock}
-                enablePorts={!isIntegration}
+                enablePorts={false}
                 fetchPipeline={fetchPipeline}
                 height={heightWindow - (heightOffset - SCROLLBAR_WIDTH) - finalOutputHeight}
                 messages={messages}

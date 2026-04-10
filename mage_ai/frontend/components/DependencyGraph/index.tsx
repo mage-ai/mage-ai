@@ -1933,8 +1933,8 @@ function DependencyGraph({
           layoutOptions={{
             'elk.hierarchyHandling': 'INCLUDE_CHILDREN',
             // 'elk.nodeLabels.placement': 'INSIDE V_CENTER H_RIGHT',
-            // 'elk.algorithm': 'org.eclipse.elk.layered',
-            // 'elk.direction': 'DOWN',
+            'elk.algorithm': 'org.eclipse.elk.layered',
+            'elk.direction': 'DOWN',
             // nodeLayering: 'INTERACTIVE',
             // 'org.eclipse.elk.edgeRouting': 'ORTHOGONAL',
             // 'elk.layered.unnecessaryBendpoints': 'true',
