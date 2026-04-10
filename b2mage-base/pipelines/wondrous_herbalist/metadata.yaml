@@ -1,0 +1,161 @@
+blocks:
+- all_upstream_blocks_executed: true
+  color: null
+  configuration: {}
+  downstream_blocks:
+  - wonderful_ash
+  executor_config: null
+  executor_type: local_python
+  has_callback: false
+  language: python
+  name: small inventor
+  retry_config: null
+  status: not_executed
+  timeout: null
+  type: data_loader
+  upstream_blocks: []
+  uuid: small_inventor
+- all_upstream_blocks_executed: false
+  color: null
+  configuration: {}
+  downstream_blocks:
+  - honorable_labyrinth
+  executor_config: null
+  executor_type: local_python
+  has_callback: false
+  language: python
+  name: wonderful ash
+  retry_config: null
+  status: not_executed
+  timeout: null
+  type: transformer
+  upstream_blocks:
+  - small_inventor
+  uuid: wonderful_ash
+- all_upstream_blocks_executed: false
+  color: null
+  configuration: {}
+  downstream_blocks:
+  - withered_leaf
+  executor_config: null
+  executor_type: local_python
+  has_callback: false
+  language: python
+  name: honorable labyrinth
+  retry_config: null
+  status: not_executed
+  timeout: null
+  type: transformer
+  upstream_blocks:
+  - wonderful_ash
+  uuid: honorable_labyrinth
+- all_upstream_blocks_executed: false
+  color: null
+  configuration: {}
+  downstream_blocks:
+  - verdant_druid
+  executor_config: null
+  executor_type: local_python
+  has_callback: false
+  language: python
+  name: withered leaf
+  retry_config: null
+  status: not_executed
+  timeout: null
+  type: transformer
+  upstream_blocks:
+  - honorable_labyrinth
+  uuid: withered_leaf
+- all_upstream_blocks_executed: false
+  color: null
+  configuration: {}
+  downstream_blocks:
+  - eccentric_treasure
+  executor_config: null
+  executor_type: local_python
+  has_callback: false
+  language: python
+  name: verdant druid
+  retry_config: null
+  status: not_executed
+  timeout: null
+  type: transformer
+  upstream_blocks:
+  - withered_leaf
+  uuid: verdant_druid
+- all_upstream_blocks_executed: false
+  color: null
+  configuration: {}
+  downstream_blocks:
+  - patient_glitter
+  executor_config: null
+  executor_type: local_python
+  has_callback: false
+  language: python
+  name: eccentric treasure
+  retry_config: null
+  status: not_executed
+  timeout: null
+  type: transformer
+  upstream_blocks:
+  - verdant_druid
+  uuid: eccentric_treasure
+- all_upstream_blocks_executed: false
+  color: null
+  configuration: {}
+  downstream_blocks:
+  - lucid_sound
+  executor_config: null
+  executor_type: local_python
+  has_callback: false
+  language: python
+  name: patient glitter
+  retry_config: null
+  status: not_executed
+  timeout: null
+  type: model_maker
+  upstream_blocks:
+  - eccentric_treasure
+  uuid: patient_glitter
+- all_upstream_blocks_executed: false
+  color: null
+  configuration: {}
+  downstream_blocks: []
+  executor_config: null
+  executor_type: local_python
+  has_callback: false
+  language: python
+  name: lucid sound
+  retry_config: null
+  status: not_executed
+  timeout: null
+  type: data_exporter
+  upstream_blocks:
+  - patient_glitter
+  uuid: lucid_sound
+cache_block_output_in_memory: false
+callbacks: []
+concurrency_config: {}
+conditionals: []
+created_at: '2026-04-10 05:17:06.085200+00:00'
+data_integration: null
+description: Created from "Anomaly Detection Template"
+executor_config: {}
+executor_count: 1
+executor_type: null
+extensions: {}
+name: anomaly_detection
+notification_config: {}
+remote_variables_dir: null
+retry_config: {}
+run_pipeline_in_one_process: false
+settings:
+  triggers: null
+spark_config: {}
+tags:
+- anomaly
+- from-template
+type: python
+uuid: wondrous_herbalist
+variables_dir: /home/src/mage_data/b2mage-base
+widgets: []

@@ -1,0 +1,127 @@
+blocks:
+- all_upstream_blocks_executed: true
+  color: null
+  configuration: {}
+  downstream_blocks:
+  - nba_dtype_optimizer
+  executor_config: null
+  executor_type: local_python
+  has_callback: false
+  language: python
+  name: load_nba_data
+  retry_config: null
+  status: executed
+  timeout: null
+  type: data_loader
+  upstream_blocks: []
+  uuid: load_nba_data
+- all_upstream_blocks_executed: true
+  color: null
+  configuration: {}
+  downstream_blocks:
+  - nba_duplicate_cleaner
+  executor_config: null
+  executor_type: local_python
+  has_callback: false
+  language: python
+  name: nba_dtype_optimizer
+  retry_config: null
+  status: executed
+  timeout: null
+  type: transformer
+  upstream_blocks:
+  - load_nba_data
+  uuid: nba_dtype_optimizer
+- all_upstream_blocks_executed: true
+  color: null
+  configuration: {}
+  downstream_blocks:
+  - nba_missing_value_handler
+  executor_config: null
+  executor_type: local_python
+  has_callback: false
+  language: python
+  name: nba_duplicate_cleaner
+  retry_config: null
+  status: executed
+  timeout: null
+  type: transformer
+  upstream_blocks:
+  - nba_dtype_optimizer
+  uuid: nba_duplicate_cleaner
+- all_upstream_blocks_executed: true
+  color: null
+  configuration: {}
+  downstream_blocks:
+  - nba_outlier_handler
+  executor_config: null
+  executor_type: local_python
+  has_callback: false
+  language: python
+  name: nba_missing_value_handler
+  retry_config: null
+  status: executed
+  timeout: null
+  type: transformer
+  upstream_blocks:
+  - nba_duplicate_cleaner
+  uuid: nba_missing_value_handler
+- all_upstream_blocks_executed: true
+  color: null
+  configuration: {}
+  downstream_blocks:
+  - nba_model
+  executor_config: null
+  executor_type: local_python
+  has_callback: false
+  language: python
+  name: nba_outlier_handler
+  retry_config: null
+  status: executed
+  timeout: null
+  type: transformer
+  upstream_blocks:
+  - nba_missing_value_handler
+  uuid: nba_outlier_handler
+- all_upstream_blocks_executed: true
+  color: null
+  configuration: {}
+  downstream_blocks: []
+  executor_config: null
+  executor_type: local_python
+  has_callback: false
+  language: python
+  name: nba_model
+  retry_config: null
+  status: updated
+  timeout: null
+  type: model_maker
+  upstream_blocks:
+  - nba_outlier_handler
+  uuid: nba_model
+cache_block_output_in_memory: false
+callbacks: []
+concurrency_config: {}
+conditionals: []
+created_at: '2026-04-07 09:22:18.754477+00:00'
+data_integration: null
+description: Next Best Action For Insurance
+executor_config: {}
+executor_count: 1
+executor_type: null
+extensions: {}
+name: next_best_action_for_insurance
+notification_config: {}
+remote_variables_dir: null
+retry_config: {}
+run_pipeline_in_one_process: false
+settings:
+  triggers: null
+spark_config: {}
+tags:
+- next-best-action
+- insurance
+type: python
+uuid: next_best_action_for_insurance
+variables_dir: /home/src/mage_data/b2mage-base
+widgets: []

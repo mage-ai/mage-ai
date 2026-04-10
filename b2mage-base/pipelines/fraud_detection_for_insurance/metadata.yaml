@@ -1,0 +1,147 @@
+blocks:
+- all_upstream_blocks_executed: true
+  color: null
+  configuration:
+    file_path: data_loaders/load_fraud_data.py
+    file_source:
+      path: data_loaders/load_fraud_data.py
+  downstream_blocks:
+  - fraud_dtype_optimizer
+  executor_config: null
+  executor_type: local_python
+  has_callback: false
+  language: python
+  name: load_fraud_data
+  retry_config: null
+  status: executed
+  timeout: null
+  type: data_loader
+  upstream_blocks: []
+  uuid: load_fraud_data
+- all_upstream_blocks_executed: true
+  color: null
+  configuration: {}
+  downstream_blocks:
+  - fraud_duplicate_cleaner
+  executor_config: null
+  executor_type: local_python
+  has_callback: false
+  language: python
+  name: fraud_dtype_optimizer
+  retry_config: null
+  status: executed
+  timeout: null
+  type: transformer
+  upstream_blocks:
+  - load_fraud_data
+  uuid: fraud_dtype_optimizer
+- all_upstream_blocks_executed: true
+  color: null
+  configuration: {}
+  downstream_blocks:
+  - fraud_missing_value_handler
+  executor_config: null
+  executor_type: local_python
+  has_callback: false
+  language: python
+  name: fraud_duplicate_cleaner
+  retry_config: null
+  status: executed
+  timeout: null
+  type: transformer
+  upstream_blocks:
+  - fraud_dtype_optimizer
+  uuid: fraud_duplicate_cleaner
+- all_upstream_blocks_executed: true
+  color: null
+  configuration: {}
+  downstream_blocks:
+  - fraud_outlier_handler
+  executor_config: null
+  executor_type: local_python
+  has_callback: false
+  language: python
+  name: fraud_missing_value_handler
+  retry_config: null
+  status: executed
+  timeout: null
+  type: transformer
+  upstream_blocks:
+  - fraud_duplicate_cleaner
+  uuid: fraud_missing_value_handler
+- all_upstream_blocks_executed: true
+  color: null
+  configuration: {}
+  downstream_blocks:
+  - fraud_categoric_feature_encoder
+  executor_config: null
+  executor_type: local_python
+  has_callback: false
+  language: python
+  name: fraud_outlier_handler
+  retry_config: null
+  status: executed
+  timeout: null
+  type: transformer
+  upstream_blocks:
+  - fraud_missing_value_handler
+  uuid: fraud_outlier_handler
+- all_upstream_blocks_executed: true
+  color: null
+  configuration: {}
+  downstream_blocks:
+  - fraud_model
+  executor_config: null
+  executor_type: local_python
+  has_callback: false
+  language: python
+  name: fraud_categoric_feature_encoder
+  retry_config: null
+  status: executed
+  timeout: null
+  type: transformer
+  upstream_blocks:
+  - fraud_outlier_handler
+  uuid: fraud_categoric_feature_encoder
+- all_upstream_blocks_executed: true
+  color: null
+  configuration: {}
+  downstream_blocks: []
+  executor_config: null
+  executor_type: local_python
+  has_callback: false
+  language: python
+  name: fraud_model
+  retry_config: null
+  status: executed
+  timeout: null
+  type: model_maker
+  upstream_blocks:
+  - fraud_categoric_feature_encoder
+  uuid: fraud_model
+cache_block_output_in_memory: false
+callbacks: []
+concurrency_config: {}
+conditionals: []
+created_at: '2026-04-07 17:37:15.317747+00:00'
+data_integration: null
+description: Fraud Detection For Insurance
+executor_config: {}
+executor_count: 1
+executor_type: null
+extensions: {}
+name: fraud_detection_for_insurance
+notification_config: {}
+remote_variables_dir: null
+retry_config: {}
+run_pipeline_in_one_process: false
+settings:
+  triggers: null
+spark_config: {}
+tags:
+- insurance
+- fraud
+type: python
+uuid: fraud_detection_for_insurance
+variables_dir: /home/src/mage_data/b2mage-base
+widgets: []
