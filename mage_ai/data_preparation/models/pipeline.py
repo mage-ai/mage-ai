@@ -2305,6 +2305,19 @@ class Pipeline:
         if os.path.exists(variables_path):
             shutil.rmtree(variables_path)
 
+        # Also clean up from the variable manager's storage path (mage_data dir),
+        # which is separate from the pipeline source dir and is where block outputs
+        # are actually written. Without this, recreating a block with the same UUID
+        # would still serve the old cached output.
+        try:
+            vm_block_path = Variable.dir_path(
+                self.variable_manager.pipeline_path(self.uuid), block.uuid
+            )
+            if self.variable_manager.storage.path_exists(vm_block_path):
+                self.variable_manager.storage.remove_dir(vm_block_path)
+        except Exception:
+            pass
+
         if widget:
             del self.widgets_by_uuid[block.uuid]
         elif is_extension:
