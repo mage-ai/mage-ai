@@ -4,6 +4,7 @@ from datetime import datetime
 import joblib
 import pandas as pd
 from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_score
 from sklearn.model_selection import train_test_split
 
 if 'model_maker' not in globals():
@@ -12,11 +13,27 @@ if 'model_maker' not in globals():
 IS_SAVE = True
 
 
+def _print_metrics(y_test, y_pred, metrics):
+    available = {
+        'accuracy':  lambda: accuracy_score(y_test, y_pred),
+        'f1':        lambda: f1_score(y_test, y_pred, average='weighted', zero_division=0),
+        'precision': lambda: precision_score(y_test, y_pred, average='weighted', zero_division=0),
+        'recall':    lambda: recall_score(y_test, y_pred, average='weighted', zero_division=0),
+    }
+    results = {m: available[m]() for m in metrics if m in available}
+    print('\n===== Classification Metrics (Test Set) =====')
+    for name, value in results.items():
+        print(f'  {name:<12}: {value:.4f}')
+    print('=============================================\n')
+    return results
+
+
 @model_maker
 def train(df: pd.DataFrame, *args, **kwargs):
     target_column = kwargs.get('target_column', 'target')
     test_size = kwargs.get('test_size', 0.2)
     random_state = kwargs.get('random_state', 42)
+    metrics = kwargs.get('metrics', ['accuracy', 'f1', 'precision', 'recall'])
 
     X = df.drop(columns=[target_column])
     y = df[target_column]
@@ -31,6 +48,9 @@ def train(df: pd.DataFrame, *args, **kwargs):
         random_state=random_state,
     )
     model.fit(X_train, y_train)
+
+    y_pred = model.predict(X_test)
+    _print_metrics(y_test, y_pred, metrics)
 
     if IS_SAVE:
         from mage_ai.settings.repo import get_repo_path
