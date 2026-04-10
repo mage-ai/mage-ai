@@ -103,6 +103,7 @@ celerybeat.pid
 
 # Environments
 .env
+.env.harbor
 .venv
 .pypirc
 .DS_Store
