@@ -6,7 +6,6 @@
     Warning: This method uses relative outlier checks, and so repeated executions of this
     transformer action will continue to remove data.
 
-    Docs: https://docs.mage.ai/guides/transformer-blocks#remove-outliers
     """
     action = build_transformer_action(
         df,

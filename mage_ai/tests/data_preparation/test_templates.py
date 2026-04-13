@@ -140,7 +140,6 @@ def load_data_from_redshift(*args, **kwargs):
     Template for loading data from a Redshift cluster.
     Specify your configuration settings in 'io_config.yaml'.
 
-    Docs: https://docs.mage.ai/design/data-loading#redshift
     \"\"\"
     query = 'your_redshift_selection_query'
     config_path = path.join(get_repo_path(), 'io_config.yaml')
@@ -173,7 +172,6 @@ def load_from_s3_bucket(*args, **kwargs):
     Template for loading data from a S3 bucket.
     Specify your configuration settings in 'io_config.yaml'.
 
-    Docs: https://docs.mage.ai/design/data-loading#s3
     \"\"\"
     config_path = path.join(get_repo_path(), 'io_config.yaml')
     config_profile = 'default'
@@ -334,7 +332,6 @@ def execute_transformer_action(df: DataFrame, *args, **kwargs) -> DataFrame:
     \"\"\"
     Execute Transformer Action: ActionType.CLEAN_COLUMN_NAME
 
-    Docs: https://docs.mage.ai/guides/transformer-blocks#clean-column-names
     \"\"\"
     action = build_transformer_action(
         df,
@@ -375,7 +372,6 @@ def execute_transformer_action(df: DataFrame, *args, **kwargs) -> DataFrame:
     \"\"\"
     Execute Transformer Action: ActionType.FILTER
 
-    Docs: https://docs.mage.ai/guides/transformer-blocks#filter
     \"\"\"
     action = build_transformer_action(
         df,
@@ -416,7 +412,6 @@ def execute_transformer_action(df: DataFrame, *args, **kwargs) -> DataFrame:
     \"\"\"
     Execute Transformer Action: ActionType.REFORMAT
 
-    Docs: https://docs.mage.ai/guides/transformer-blocks#reformat-values
     \"\"\"
     action = build_transformer_action(
         df,
@@ -458,7 +453,6 @@ def execute_transformer_action(df: DataFrame, *args, **kwargs) -> DataFrame:
     \"\"\"
     Execute Transformer Action: ActionType.FIRST
 
-    Docs: https://docs.mage.ai/guides/transformer-blocks#aggregation-actions
     \"\"\"
     action = build_transformer_action(
         df,
@@ -535,7 +529,6 @@ def export_data_to_big_query(df: DataFrame, **kwargs) -> None:
     Template for exporting data to a BigQuery warehouse.
     Specify your configuration settings in 'io_config.yaml'.
 
-    Docs: https://docs.mage.ai/design/data-loading#bigquery
     \"\"\"
     table_id = 'your-project.your_dataset.your_table_name'
     config_path = path.join(get_repo_path(), 'io_config.yaml')
@@ -563,7 +556,6 @@ def export_data_to_snowflake(df: DataFrame, **kwargs) -> None:
     Template for exporting data to a Snowflake warehouse.
     Specify your configuration settings in 'io_config.yaml'.
 
-    Docs: https://docs.mage.ai/design/data-loading#snowflake
     \"\"\"
     table_name = 'your_table_name'
     database = 'your_database_name'

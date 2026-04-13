@@ -3,7 +3,6 @@
     """
     Execute Transformer Action: ActionType.SELECT
 
-    Docs: https://docs.mage.ai/guides/transformer-blocks#select-columns
     """
     action = build_transformer_action(
         df,

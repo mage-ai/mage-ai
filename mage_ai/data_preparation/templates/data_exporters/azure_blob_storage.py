@@ -14,7 +14,6 @@ def export_data_to_azure_blob_storage(df: DataFrame, **kwargs) -> None:
     Template for exporting data to a Azure Blob Storage.
     Specify your configuration settings in 'io_config.yaml'.
 
-    Docs: https://docs.mage.ai/design/data-loading
     """
     config_path = path.join(get_repo_path(), 'io_config.yaml')
     config_profile = 'default'

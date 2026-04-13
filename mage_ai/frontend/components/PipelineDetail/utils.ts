@@ -352,11 +352,6 @@ export function buildBlockFromFilePath({
     // Used in project platform
   };
 
-  if (isNewBlock) {
-    newBlock.content = `--Docs: https://docs.mage.ai/dbt/sources
-`;
-  }
-
   const isAddingFromBlock = typeof blockIndex === 'undefined' || blockIndex === null;
   const block = blocks[isAddingFromBlock ? blocks.length - 1 : blockIndex];
   const upstreamBlocks = block ? getUpstreamBlockUuids(block, newBlock) : [];

@@ -5,7 +5,6 @@
 
     Shifts value in the selected column down by specified number periods.
 
-    Docs: https://docs.mage.ai/guides/transformer-blocks#shift-down
     """
     action = build_transformer_action(
         df,

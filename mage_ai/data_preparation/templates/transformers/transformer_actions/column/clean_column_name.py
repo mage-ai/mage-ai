@@ -3,7 +3,6 @@
     """
     Execute Transformer Action: ActionType.CLEAN_COLUMN_NAME
 
-    Docs: https://docs.mage.ai/guides/transformer-blocks#clean-column-names
     """
     action = build_transformer_action(
         df,

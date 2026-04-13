@@ -3,7 +3,6 @@
     """
     Execute Transformer Action: ActionType.REMOVE
 
-    Docs: https://docs.mage.ai/guides/transformer-blocks#remove-rows
     """
     action = build_transformer_action(
         df,

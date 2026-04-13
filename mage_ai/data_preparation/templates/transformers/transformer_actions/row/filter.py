@@ -3,7 +3,6 @@
     """
     Execute Transformer Action: ActionType.FILTER
 
-    Docs: https://docs.mage.ai/guides/transformer-blocks#filter
     """
     action = build_transformer_action(
         df,

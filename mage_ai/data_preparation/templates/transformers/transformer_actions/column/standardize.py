@@ -6,7 +6,6 @@
     """
     Execute Transformer Action: ActionType.STANDARDIZE
 
-    Docs: https://docs.mage.ai/guides/transformer-blocks#standardize-data
     """
     action = build_transformer_action(
         df,

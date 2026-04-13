@@ -7,7 +7,6 @@ from mage_ai.data_cleaner.transformer_actions.constants import ImputationStrateg
     """
     Execute Transformer Action: ActionType.IMPUTE
 
-    Docs: https://docs.mage.ai/guides/transformer-blocks#fill-in-missing-values
     """
     action = build_transformer_action(
         df,

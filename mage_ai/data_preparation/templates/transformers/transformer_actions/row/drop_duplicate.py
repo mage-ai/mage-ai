@@ -3,7 +3,6 @@
     """
     Execute Transformer Action: ActionType.DROP_DUPLICATE
 
-    Docs: https://docs.mage.ai/guides/transformer-blocks#drop-duplicates
     """
     action = build_transformer_action(
         df,

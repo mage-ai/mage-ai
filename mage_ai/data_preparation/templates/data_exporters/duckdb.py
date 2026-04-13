@@ -14,7 +14,6 @@ def export_data_to_duckdb(df: DataFrame, **kwargs) -> None:
     Template for exporting data to DuckDB database.
     Specify your configuration settings in 'io_config.yaml'.
 
-    Docs: https://docs.mage.ai/design/data-loading#duckdb
     """
     table_name = 'your_table_name'  # Specify the name of the table to export data to
     config_path = path.join(get_repo_path(), 'io_config.yaml')

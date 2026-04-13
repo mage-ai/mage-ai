@@ -14,7 +14,6 @@ def load_data_from_file(*args, **kwargs):
     For multiple directories, use the following:
         FileIO().load(file_directories=['dir_1', 'dir_2'])
 
-    Docs: https://docs.mage.ai/design/data-loading#fileio
     """
     filepath = 'b2mage-base/data/nba_insurance_sample.csv'
 

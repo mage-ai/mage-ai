@@ -443,8 +443,7 @@ export const createColorMenuItems = (
   }));
 
 export const addSqlBlockNote = (content: string) => (
-  `-- Docs: https://docs.mage.ai/guides/sql-blocks
-` + (content || '')
+  content || ''
 );
 
 export function addScratchpadNote(

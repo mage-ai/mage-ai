@@ -3,7 +3,6 @@
     """
     Execute Transformer Action: ActionType.COUNT_DISTINCT
 
-    Docs: https://docs.mage.ai/guides/transformer-blocks#aggregation-actions
     """
     action = build_transformer_action(
         df,

@@ -3,7 +3,6 @@
     """
     Execute Transformer Action: ActionType.LAST
 
-    Docs: https://docs.mage.ai/guides/transformer-blocks#aggregation-actions
     """
     action = build_transformer_action(
         df,
