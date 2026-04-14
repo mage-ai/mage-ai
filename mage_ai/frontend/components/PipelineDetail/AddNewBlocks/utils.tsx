@@ -95,6 +95,11 @@ export const createDataSourceMenuItems = (
           config: {
             data_source: (sourceType === DataSourceTypeEnum.GENERIC) ? null : sourceType,
           },
+          ...(sourceType !== DataSourceTypeEnum.GENERIC && {
+            configuration: {
+              template_name: DATA_SOURCE_TYPE_HUMAN_READABLE_NAME_MAPPING[sourceType],
+            },
+          }),
           language: (requiresConfigFile && sourceType !== DataSourceTypeEnum.GENERIC)
             ? BlockLanguageEnum.YAML
             : BlockLanguageEnum.PYTHON,
@@ -180,7 +185,10 @@ export function groupBlockTemplates(
           template_type: templateType,
           template_variables: templateVariables,
         },
-        configuration,
+        configuration: {
+          ...configuration,
+          template_name: name,
+        },
         defaults,
         language,
         type: blockType,

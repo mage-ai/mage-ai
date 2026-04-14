@@ -136,6 +136,7 @@ export const NodeStyle = styled.div<{
   border-radius: ${BORDER_RADIUS}px;
   min-width: fit-content;
   overflow: hidden;
+  position: relative;
 
   ${props => !props.noBackground && `
     background-color: ${(props.theme.background || dark.background).codeTextarea};

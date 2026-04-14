@@ -168,6 +168,7 @@ export interface ConfigurationType {
     uuid: string;
   };
   reduce_output?: boolean;
+  template_name?: string;
   x_axis_label?: string;
 }
 

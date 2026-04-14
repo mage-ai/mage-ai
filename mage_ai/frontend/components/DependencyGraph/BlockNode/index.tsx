@@ -43,6 +43,7 @@ import {
 } from '@components/CodeBlock/index.style';
 import { getBlockStatus, getRuntimeText } from '../utils';
 import { range } from '@utils/array';
+import { UNIT } from '@oracle/styles/units/spacing';
 
 const ICON_MAPPING = {
   [BlockTypeEnum.DATA_EXPORTER]: CircleWithArrowUp,
@@ -322,7 +323,7 @@ function BlockNode({
         {!downstreamBlocks?.length && (
           <HeaderStyle>
             <FlexContainer alignItems="center" justifyContent="space-between">
-              <Flex flex={1}>
+              <Flex alignItems="center" flex={1} justifyContent="center">
                 {iconEl}
 
                 <Spacing mr={HEADER_SPACING_HORIZONTAL_UNITS} />
@@ -331,7 +332,12 @@ function BlockNode({
                   <Text bold monospace>
                     {getBlockHeaderText(block, pipeline)}
                   </Text>
-                  <Text default monospace small>
+                  {block?.configuration?.template_name && (
+                    <Text default monospace small wordBreak>
+                      {block.configuration.template_name}
+                    </Text>
+                  )}
+                  <Text default monospace muted small wordBreak>
                     {getBlockHeaderSubtitle(block, pipeline)}
                   </Text>
                 </Flex>
@@ -359,15 +365,15 @@ function BlockNode({
         )}
 
         <BodyStyle>
+          {!downstreamBlocks?.length && tagsText?.length >= 1 && (
+            <div style={{ bottom: UNIT, left: UNIT, position: 'absolute' }}>
+              <Text default monospace small>
+                {tagsText}
+              </Text>
+            </div>
+          )}
           {!downstreamBlocks?.length && (
             <>
-              {tagsText?.length >= 1 && (
-                <Spacing mt={1}>
-                  <Text default monospace small>
-                    {tagsText}
-                  </Text>
-                </Spacing>
-              )}
 
               {/* This is in a specific order */}
               {[

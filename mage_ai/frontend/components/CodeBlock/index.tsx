@@ -2428,6 +2428,22 @@ df = get_variable('${pipelineUUID}', '${blockUUID}', 'output_0')`;
                       <>
                         <Spacing mr={PADDING_UNITS} />
 
+                        {blockConfiguration?.template_name && (
+                          <>
+                            <Text muted monospace noWrapping small>
+                              {'›'}
+                            </Text>
+
+                            <Spacing mr={1} />
+
+                            <Text monospace muted noWrapping small>
+                              {blockConfiguration.template_name}
+                            </Text>
+
+                            <Spacing mr={PADDING_UNITS} />
+                          </>
+                        )}
+
                         <FileFill size={UNIT * 1.5} />
 
                         <Spacing mr={1} />

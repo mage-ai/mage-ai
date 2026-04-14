@@ -165,6 +165,11 @@ export function getBlockNodeHeight(block: BlockType, pipeline: PipelineType, opt
   // Body padding top
   let height = NODE_HEIGHT + HEADER_HEIGHT;
 
+  // Extra line for template name in the header
+  if (block?.configuration?.template_name) {
+    height += TAG_HEIGHT;
+  }
+
   const width = getBlockNodeWidth(block, pipeline, opts);
   const widthWithoutPadding = width - (NODE_WIDTH + (UNIT * 2));
 
