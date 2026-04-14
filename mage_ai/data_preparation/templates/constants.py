@@ -22,6 +22,7 @@ GROUP_CLASSIFICATION = 'Classification'
 GROUP_REGRESSION = 'Regression'
 GROUP_CLUSTERING = 'Clustering'
 GROUP_RECOMMENDATION = 'Recommendation'
+GROUP_TIME_SERIES = 'Time Series'
 
 TEMPLATES = [
     dict(
@@ -263,6 +264,170 @@ TEMPLATES = [
         language=BlockLanguage.PYTHON,
         name='CatBoost',
         path='model_makers/recommendation/catboost.py',
+    ),
+    # Classification (sklearn)
+    dict(
+        block_type=BlockType.MODEL_MAKER,
+        description='Train a Logistic Regression classification model.',
+        groups=[GROUP_CLASSIFICATION],
+        language=BlockLanguage.PYTHON,
+        name='Logistic Regression',
+        path='model_makers/classification/logistic_regression.py',
+    ),
+    dict(
+        block_type=BlockType.MODEL_MAKER,
+        description='Train a Support Vector Machine classification model.',
+        groups=[GROUP_CLASSIFICATION],
+        language=BlockLanguage.PYTHON,
+        name='SVM',
+        path='model_makers/classification/svm.py',
+    ),
+    dict(
+        block_type=BlockType.MODEL_MAKER,
+        description='Train a Decision Tree classification model.',
+        groups=[GROUP_CLASSIFICATION],
+        language=BlockLanguage.PYTHON,
+        name='Decision Tree',
+        path='model_makers/classification/decision_tree.py',
+    ),
+    dict(
+        block_type=BlockType.MODEL_MAKER,
+        description='Train an AdaBoost classification model.',
+        groups=[GROUP_CLASSIFICATION],
+        language=BlockLanguage.PYTHON,
+        name='AdaBoost',
+        path='model_makers/classification/adaboost.py',
+    ),
+    dict(
+        block_type=BlockType.MODEL_MAKER,
+        description='Train a Multi-Layer Perceptron (Neural Network) classification model.',
+        groups=[GROUP_CLASSIFICATION],
+        language=BlockLanguage.PYTHON,
+        name='MLP',
+        path='model_makers/classification/mlp.py',
+    ),
+    dict(
+        block_type=BlockType.MODEL_MAKER,
+        description='Train an Extra Trees classification model.',
+        groups=[GROUP_CLASSIFICATION],
+        language=BlockLanguage.PYTHON,
+        name='Extra Trees',
+        path='model_makers/classification/extra_trees.py',
+    ),
+    # Regression (sklearn)
+    dict(
+        block_type=BlockType.MODEL_MAKER,
+        description='Train a Linear Regression model.',
+        groups=[GROUP_REGRESSION],
+        language=BlockLanguage.PYTHON,
+        name='Linear Regression',
+        path='model_makers/regression/linear_regression.py',
+    ),
+    dict(
+        block_type=BlockType.MODEL_MAKER,
+        description='Train a Ridge regression model (L2 regularization).',
+        groups=[GROUP_REGRESSION],
+        language=BlockLanguage.PYTHON,
+        name='Ridge',
+        path='model_makers/regression/ridge.py',
+    ),
+    dict(
+        block_type=BlockType.MODEL_MAKER,
+        description='Train a Lasso regression model (L1 regularization).',
+        groups=[GROUP_REGRESSION],
+        language=BlockLanguage.PYTHON,
+        name='Lasso',
+        path='model_makers/regression/lasso.py',
+    ),
+    dict(
+        block_type=BlockType.MODEL_MAKER,
+        description='Train an ElasticNet regression model (L1 + L2 regularization).',
+        groups=[GROUP_REGRESSION],
+        language=BlockLanguage.PYTHON,
+        name='ElasticNet',
+        path='model_makers/regression/elasticnet.py',
+    ),
+    dict(
+        block_type=BlockType.MODEL_MAKER,
+        description='Train a Support Vector Regression model.',
+        groups=[GROUP_REGRESSION],
+        language=BlockLanguage.PYTHON,
+        name='SVR',
+        path='model_makers/regression/svr.py',
+    ),
+    dict(
+        block_type=BlockType.MODEL_MAKER,
+        description='Train a Decision Tree regression model.',
+        groups=[GROUP_REGRESSION],
+        language=BlockLanguage.PYTHON,
+        name='Decision Tree',
+        path='model_makers/regression/decision_tree.py',
+    ),
+    dict(
+        block_type=BlockType.MODEL_MAKER,
+        description='Train an Extra Trees regression model.',
+        groups=[GROUP_REGRESSION],
+        language=BlockLanguage.PYTHON,
+        name='Extra Trees',
+        path='model_makers/regression/extra_trees.py',
+    ),
+    dict(
+        block_type=BlockType.MODEL_MAKER,
+        description='Train a Multi-Layer Perceptron (Neural Network) regression model.',
+        groups=[GROUP_REGRESSION],
+        language=BlockLanguage.PYTHON,
+        name='MLP',
+        path='model_makers/regression/mlp.py',
+    ),
+    # Clustering (sklearn)
+    dict(
+        block_type=BlockType.MODEL_MAKER,
+        description='Train a Gaussian Mixture Model for soft clustering.',
+        groups=[GROUP_CLUSTERING],
+        language=BlockLanguage.PYTHON,
+        name='GMM',
+        path='model_makers/clustering/gmm.py',
+    ),
+    dict(
+        block_type=BlockType.MODEL_MAKER,
+        description='Train an Agglomerative (hierarchical) clustering model.',
+        groups=[GROUP_CLUSTERING],
+        language=BlockLanguage.PYTHON,
+        name='Agglomerative',
+        path='model_makers/clustering/agglomerative.py',
+    ),
+    dict(
+        block_type=BlockType.MODEL_MAKER,
+        description='Train an OPTICS density-based clustering model (handles variable density).',
+        groups=[GROUP_CLUSTERING],
+        language=BlockLanguage.PYTHON,
+        name='OPTICS',
+        path='model_makers/clustering/optics.py',
+    ),
+    dict(
+        block_type=BlockType.MODEL_MAKER,
+        description='Train a Mean Shift clustering model (auto-detects number of clusters).',
+        groups=[GROUP_CLUSTERING],
+        language=BlockLanguage.PYTHON,
+        name='Mean Shift',
+        path='model_makers/clustering/mean_shift.py',
+    ),
+    # Time Series
+    dict(
+        block_type=BlockType.MODEL_MAKER,
+        description='Train a Prophet time series forecasting model.',
+        groups=[GROUP_TIME_SERIES],
+        language=BlockLanguage.PYTHON,
+        name='Prophet',
+        path='model_makers/time_series/prophet.py',
+    ),
+    dict(
+        block_type=BlockType.MODEL_MAKER,
+        description='Train an ARIMA time series forecasting model.',
+        groups=[GROUP_TIME_SERIES],
+        language=BlockLanguage.PYTHON,
+        name='ARIMA',
+        path='model_makers/time_series/arima.py',
     ),
 ]
 
