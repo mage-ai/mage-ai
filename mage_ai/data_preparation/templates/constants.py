@@ -503,6 +503,13 @@ TEMPLATES_ONLY_FOR_V2 = [
         block_type=BlockType.DATA_LOADER,
         groups=[GROUP_DATABASES],
         language=BlockLanguage.PYTHON,
+        name='ClickHouse',
+        path='data_loaders/clickhouse.py',
+    ),
+    dict(
+        block_type=BlockType.DATA_LOADER,
+        groups=[GROUP_DATABASES],
+        language=BlockLanguage.PYTHON,
         name='DuckDB',
         path='data_loaders/duckdb.py',
     ),
