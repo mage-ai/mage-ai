@@ -1,35 +1,114 @@
 ---
 title: "Google Ads"
+description: "Sync campaign, ad group, keyword, and performance report data from the Google Ads API v23 using OAuth 2.0 authentication."
 ---
 
-![Google](https://hellomidia.com.br/wp-content/uploads/2018/06/google-ads.png)
+import { ProButton } from '/snippets/pro/button.mdx';
+import { ProOnly } from '/snippets/pro/only.mdx';
+
+<ProOnly source="data-integration" />
+
+![Google Ads](https://hellomidia.com.br/wp-content/uploads/2018/06/google-ads.png)
 
 <br/>
 
-## INCREMENTAL Sync
+## Overview
 
-This source handles state internally, meaning **INCREMENTAL sync selection is not supported**.
+This source syncs campaign, ad group, ad, keyword, and performance report data from the [Google Ads API](https://developers.google.com/google-ads/api/docs/start) (**v23**). Authentication uses user OAuth (not service accounts) — the connector requires a `refresh_token` alongside a `developer_token`.
+
+Incremental state is handled inside the connector; **stream-level INCREMENTAL selection is not available** in the UI, but bookmarks still resume progress across syncs.
+
+<br/>
+
+## Authentication
+
+This connector uses **two kinds** of credentials:
+
+- **Application credential** (`developer_token`) — identifies your app to the Google Ads API. Issued per manager account via [API Center](https://ads.google.com/aw/apicenter). This is not an OAuth token.
+- **User OAuth** (`refresh_token`, `oauth_client_id`, `oauth_client_secret`) — proves the user has consented to read their Ads data. The required OAuth scope is `https://www.googleapis.com/auth/adwords`.
+
+### Manual setup vs Mage OAuth Authorize
+
+| Method | What to set |
+| ------ | ----------- |
+| **Mage OAuth Authorize** (recommended) | Use the **OAuth Authorize** button on the source block. Mage injects `refresh_token` automatically. You only need `developer_token` and `login_customer_ids`. You may omit `oauth_client_id` and `oauth_client_secret`. |
+| **Manual** | Create an OAuth 2.0 client in Google Cloud (Web or Desktop app type), obtain a `refresh_token` for the Ads scope, and fill in all three OAuth fields. |
+
+Service accounts and Application Default Credentials are **not** supported.
 
 <br/>
 
 ## Configuration
 
-To set up the Google Ads source, provide the following configuration parameters:
-
-| Key                  | Description                                                                                                  | Sample Value                                                                                   | Required |
-| -------------------- | ------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------- | -------- |
-| `login_customer_ids`  | A list containing both `customerId` and `loginCustomerId` from Google Ads.                                   | `"login_customer_ids": [{"customerId": "1234567890", "loginCustomerId": "0987654321"}]`          | ✅        |
-| `oauth_client_id`     | OAuth client ID from Google Cloud.                                                                           | `XXXXXXXXXXXX-YYYYYYYYYYYYYYYYYYYYYY.apps.googleusercontent.com`                                | ✅        |
-| `oauth_client_secret` | OAuth client secret from Google Cloud.                                                                       | `abc...`                                                                                        | ✅        |
-| `refresh_token`       | Google API refresh token, obtainable from [Google OAuth Playground](https://developers.google.com/oauthplayground). | `abc...`                                                                                        | ✅        |
-| `developer_token`     | Google Ads developer token.                                                                                  | `abc...`                                                                                        | ✅        |
-| `start_date`          | Fetch data newer than the specified `start_date`. Format: ISO8601 (`YYYY-MM-DDTHH:MM:SSZ`).                  | `2022-01-01T00:00:00Z`                                                                          | ✅        |
+| Key                   | Required | Default | Description |
+| --------------------- | -------- | ------- | ----------- |
+| `developer_token`     | ✅ | — | Google Ads API application token from [API Center](https://ads.google.com/aw/apicenter). Not a user OAuth token. |
+| `oauth_client_id`     | Conditional | — | Google Cloud OAuth client ID. Required for manual OAuth setup; optional when using Mage OAuth Authorize. |
+| `oauth_client_secret` | Conditional | — | Google Cloud OAuth client secret. Same conditions as `oauth_client_id`. |
+| `refresh_token`       | ✅ | — | Long-lived user refresh token for the `https://www.googleapis.com/auth/adwords` scope. Injected automatically by Mage OAuth Authorize. |
+| `login_customer_ids`  | ✅ | — | List of `{ customerId, loginCustomerId }` pairs. `customerId` is the account to read; `loginCustomerId` is the manager (MCC) account used to access it, or `null` for direct access. |
+| `start_date`          | ✅ | — | Fetch data newer than this date. Format: ISO 8601 (`YYYY-MM-DDTHH:MM:SSZ`). |
+| `end_date`            | | now | Upper bound for report syncs. |
+| `request_timeout`     | | `900` | HTTP timeout in seconds for API calls. |
+| `conversion_window`   | | `30` | Conversion attribution window in days. Allowed: `1`–`30`, `60`, `90`. |
+| `query_limit`         | | `1000000` | Max rows per query for core streams. |
 
 <br/>
 
-## Generating Credentials
+## Sample configs
 
-Check out [this article](https://articles.wesionary.team/how-to-implement-google-ads-api-ff69f628d4ac)  
-by **Sudeep Timalsina** for a great guide on generating credentials for Google Ads API access.
+**Using Mage OAuth Authorize** (recommended — no OAuth client credentials needed):
+
+```yaml
+developer_token: YOUR_DEVELOPER_TOKEN
+refresh_token: YOUR_REFRESH_TOKEN
+start_date: '2023-01-01T00:00:00Z'
+login_customer_ids:
+  - customerId: '1234567890'
+    loginCustomerId: null
+```
+
+**Manual OAuth setup with manager account**:
+
+```yaml
+developer_token: YOUR_DEVELOPER_TOKEN
+oauth_client_id: YOUR_CLIENT_ID.apps.googleusercontent.com
+oauth_client_secret: YOUR_CLIENT_SECRET
+refresh_token: YOUR_REFRESH_TOKEN
+start_date: '2023-01-01T00:00:00Z'
+login_customer_ids:
+  - customerId: '1234567890'
+    loginCustomerId: '0987654321'
+```
+
+<br/>
+
+## How to get `login_customer_ids`
+
+`customerId` is the account whose data you want to sync. `loginCustomerId` is the manager (MCC) account you use to access it — leave it `null` when there is no manager hop.
+
+1. Sign in to [Google Ads](https://ads.google.com/).
+2. Open the account switcher in the top bar.
+3. Copy the numeric ID for each account (strip dashes: `123-456-7890` → `'1234567890'`).
+
+<br/>
+
+## How to get a `developer_token`
+
+A developer token belongs to a [manager (MCC) account](https://support.google.com/google-ads/answer/6139186). Client-only accounts cannot open API Center.
+
+1. Sign in to a manager account.
+2. Open [API Center](https://ads.google.com/aw/apicenter) (**Tools & Settings → Setup → API Center**).
+3. Complete the API sign-up. Your token may start as **Test** tier; request **Basic** or **Standard** access when you are ready for production volume.
+4. Set the token as `developer_token` in your config.
+
+<br/>
+
+## Related links
+
+- [Google Ads API — Get Started](https://developers.google.com/google-ads/api/docs/start)
+- [OAuth with Google Ads API](https://developers.google.com/google-ads/api/docs/oauth/overview)
+- [Developer token access levels](https://developers.google.com/google-ads/api/docs/access-levels)
+- [Manager accounts overview](https://support.google.com/google-ads/answer/6139186)
 
 <br/>

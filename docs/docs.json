@@ -92,8 +92,12 @@
                     "group": "Sources",
                     "pages": [
                       "data-integrations/sources/facebook_pages",
+                      "data-integrations/sources/google_campaign_manager_360",
+                      "data-integrations/sources/google_display_video_360",
                       "data-integrations/sources/instagram",
+                      "data-integrations/sources/microsoft_ads",
                       "data-integrations/sources/quickbooks",
+                      "data-integrations/sources/tiktok_ads",
                       "data-integrations/sources/xero",
                       "data-integrations/sources/youtube_analytics"
                     ]
