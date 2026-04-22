@@ -1,143 +1,123 @@
 blocks:
 - all_upstream_blocks_executed: true
   color: null
-  configuration:
-    file_path: data_loaders/load_data.py
-    file_source:
-      path: data_loaders/load_data.py
+  configuration: {}
   downstream_blocks:
-  - dtype_optimizer
+  - duplicate_cleaner_94471e69
   executor_config: null
   executor_type: local_python
   has_callback: false
   language: python
-  name: load_data
+  name: data loader
   retry_config: null
-  status: executed
+  status: not_executed
   timeout: null
   type: data_loader
   upstream_blocks: []
-  uuid: load_data
-- all_upstream_blocks_executed: true
+  uuid: data_loader_2e9abb71
+- all_upstream_blocks_executed: false
   color: null
   configuration: {}
   downstream_blocks:
-  - duplicate_cleaner
+  - missing_value_handler_69f33ff6
   executor_config: null
   executor_type: local_python
   has_callback: false
   language: python
-  name: dtype_optimizer
+  name: duplicate cleaner
   retry_config: null
-  status: executed
+  status: not_executed
   timeout: null
   type: transformer
   upstream_blocks:
-  - load_data
-  uuid: dtype_optimizer
-- all_upstream_blocks_executed: true
+  - data_loader_2e9abb71
+  uuid: duplicate_cleaner_94471e69
+- all_upstream_blocks_executed: false
   color: null
   configuration: {}
   downstream_blocks:
-  - outlier_handler
+  - dtype_optimizer_92c57925
   executor_config: null
   executor_type: local_python
   has_callback: false
   language: python
-  name: duplicate_cleaner
+  name: missing value handler
   retry_config: null
-  status: executed
+  status: not_executed
   timeout: null
   type: transformer
   upstream_blocks:
-  - dtype_optimizer
-  uuid: duplicate_cleaner
-- all_upstream_blocks_executed: true
+  - duplicate_cleaner_94471e69
+  uuid: missing_value_handler_69f33ff6
+- all_upstream_blocks_executed: false
   color: null
   configuration: {}
   downstream_blocks:
-  - missing_value_handler
+  - outlier_handler_0906e0e7
   executor_config: null
   executor_type: local_python
   has_callback: false
   language: python
-  name: outlier_handler
+  name: dtype optimizer
   retry_config: null
-  status: executed
+  status: not_executed
   timeout: null
   type: transformer
   upstream_blocks:
-  - duplicate_cleaner
-  uuid: outlier_handler
-- all_upstream_blocks_executed: true
+  - missing_value_handler_69f33ff6
+  uuid: dtype_optimizer_92c57925
+- all_upstream_blocks_executed: false
   color: null
   configuration: {}
   downstream_blocks:
-  - feature_engineer
+  - feature_engineer_75b90b94
   executor_config: null
   executor_type: local_python
   has_callback: false
   language: python
-  name: missing_value_handler
+  name: outlier handler
   retry_config: null
-  status: executed
+  status: not_executed
   timeout: null
   type: transformer
   upstream_blocks:
-  - outlier_handler
-  uuid: missing_value_handler
-- all_upstream_blocks_executed: true
+  - dtype_optimizer_92c57925
+  uuid: outlier_handler_0906e0e7
+- all_upstream_blocks_executed: false
   color: null
   configuration: {}
   downstream_blocks:
-  - column_removal
+  - model_bb55124d
   executor_config: null
   executor_type: local_python
   has_callback: false
   language: python
-  name: feature_engineer
+  name: feature engineer
   retry_config: null
-  status: executed
+  status: not_executed
   timeout: null
   type: transformer
   upstream_blocks:
-  - missing_value_handler
-  uuid: feature_engineer
-- all_upstream_blocks_executed: true
+  - outlier_handler_0906e0e7
+  uuid: feature_engineer_75b90b94
+- all_upstream_blocks_executed: false
   color: null
   configuration: {}
   downstream_blocks:
-  - model
-  executor_config: null
-  executor_type: local_python
-  has_callback: false
-  language: python
-  name: column_removal
-  retry_config: null
-  status: executed
-  timeout: null
-  type: transformer
-  upstream_blocks:
-  - feature_engineer
-  uuid: column_removal
-- all_upstream_blocks_executed: true
-  color: null
-  configuration: {}
-  downstream_blocks:
-  - data_export
+  - data_exporter_dd108b63
   executor_config: null
   executor_type: local_python
   has_callback: false
   language: python
   name: model
   retry_config: null
-  status: executed
+  status: not_executed
   timeout: null
   type: model_maker
   upstream_blocks:
-  - column_removal
-  uuid: model
-- all_upstream_blocks_executed: true
+  - feature_engineer_75b90b94
+  uuid: model_bb55124d
+- all_upstream_blocks_executed: false
   color: null
   configuration: {}
   downstream_blocks: []
@@ -145,26 +125,26 @@ blocks:
   executor_type: local_python
   has_callback: false
   language: python
-  name: data_export
+  name: data exporter
   retry_config: null
-  status: executed
+  status: not_executed
   timeout: null
   type: data_exporter
   upstream_blocks:
-  - model
-  uuid: data_export
+  - model_bb55124d
+  uuid: data_exporter_dd108b63
 cache_block_output_in_memory: false
 callbacks: []
 concurrency_config: {}
 conditionals: []
-created_at: '2026-04-03 09:16:29.235755+00:00'
+created_at: '2026-04-14 12:01:50.979881+00:00'
 data_integration: null
-description: Churn Prediction For Insurance
+description: Created from "Next Best Offer" Template
 executor_config: {}
 executor_count: 1
 executor_type: null
 extensions: {}
-name: churn_prediction_for_insurance
+name: next-best-offer
 notification_config: {}
 remote_variables_dir: null
 retry_config: {}
@@ -173,9 +153,9 @@ settings:
   triggers: null
 spark_config: {}
 tags:
-- churn
-- insurance
+- next-best-offer
+- from-a-template
 type: python
-uuid: churn_prediction_for_insurance
+uuid: next_best_offer
 variables_dir: /home/src/mage_data/b2mage-base
 widgets: []

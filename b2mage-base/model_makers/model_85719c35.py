@@ -4,7 +4,7 @@ from datetime import datetime
 import pandas as pd
 import xgboost as xgb
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import recall_score, precision_score, roc_auc_score, f1_score 
+from sklearn.metrics import recall_score, precision_score, roc_auc_score, f1_score
 
 if 'model_maker' not in globals():
     from mage_ai.data_preparation.decorators import model_maker
@@ -50,8 +50,8 @@ def train(df: pd.DataFrame, *args, **kwargs):
         f"""
         AUC: {auc}
         Recall: {recall}
-        Precision: {recall}
-        F1: {recall}
+        Precision: {precision}
+        F1: {f1}
         """
         )
 

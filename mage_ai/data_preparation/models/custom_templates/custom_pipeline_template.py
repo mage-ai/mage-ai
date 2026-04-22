@@ -40,11 +40,22 @@ class CustomPipelineTemplate(BaseConfig):
     pipeline: Dict = field(default_factory=dict)
     repo_path: str = None
     tags: List = field(default_factory=list)
+    template_base_path: str = None
     template_uuid: str = None
     user: Dict = field(default_factory=dict)
 
+    @property
+    def _template_root(self) -> str:
+        return self.template_base_path or self.repo_path
+
     @classmethod
-    def load(self, repo_path: str, template_uuid: str = None, uuid: str = None):
+    def load(
+        self,
+        repo_path: str,
+        template_uuid: str = None,
+        uuid: str = None,
+        template_base_path: str = None,
+    ):
         uuid_use = uuid
         template_uuid_use = template_uuid
 
@@ -58,15 +69,33 @@ class CustomPipelineTemplate(BaseConfig):
                 template_uuid_use,
             )
 
+        base = template_base_path or repo_path
+
         try:
             config_path_metadata = os.path.join(
-                repo_path,
+                base,
                 uuid_use,
                 METADATA_FILENAME_WITH_EXTENSION,
             )
+
+            # Fall back to core library templates when not found in the project directory.
+            if not os.path.exists(config_path_metadata) and template_base_path is None:
+                from mage_ai.data_preparation.models.custom_templates.constants import (
+                    CORE_CUSTOM_TEMPLATES_PATH,
+                )
+                core_meta = os.path.join(
+                    CORE_CUSTOM_TEMPLATES_PATH,
+                    uuid_use,
+                    METADATA_FILENAME_WITH_EXTENSION,
+                )
+                if os.path.exists(core_meta):
+                    config_path_metadata = core_meta
+                    template_base_path = CORE_CUSTOM_TEMPLATES_PATH
+
             custom_template = super().load(config_path_metadata)
             custom_template.template_uuid = template_uuid_use
             custom_template.repo_path = repo_path
+            custom_template.template_base_path = template_base_path
 
             return custom_template
         except Exception as err:
@@ -131,7 +160,7 @@ class CustomPipelineTemplate(BaseConfig):
     @property
     def metadata_file_path(self) -> str:
         return os.path.join(
-            self.repo_path,
+            self._template_root,
             self.uuid,
             METADATA_FILENAME_WITH_EXTENSION,
         )
@@ -139,14 +168,14 @@ class CustomPipelineTemplate(BaseConfig):
     @property
     def triggers_file_path(self) -> str:
         return os.path.join(
-            self.repo_path,
+            self._template_root,
             self.uuid,
             TRIGGER_FILE_NAME,
         )
 
     @property
     def blocks_dir(self) -> str:
-        return os.path.join(self.repo_path, self.uuid, BLOCKS_DIRECTORY)
+        return os.path.join(self._template_root, self.uuid, BLOCKS_DIRECTORY)
 
     def build_pipeline(self) -> Pipeline:
         return Pipeline(

@@ -15,7 +15,7 @@ def load_data_from_file(*args, **kwargs):
         FileIO().load(file_directories=['dir_1', 'dir_2'])
 
     """
-    filepath = 'b2mage-base/data/fraud_insurance_sample.csv'
+    filepath = 'b2mage-base/data/nba_insurance_sample.csv'
 
     return FileIO().load(filepath)
 

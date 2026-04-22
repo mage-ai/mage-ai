@@ -162,4 +162,4 @@ def train(df: pd.DataFrame, *args, **kwargs):
         model.save_model(os.path.join(models_dir, filename))
         print(f'Model saved to {os.path.join(models_dir, filename)}')
 
-    return df
+    return model
