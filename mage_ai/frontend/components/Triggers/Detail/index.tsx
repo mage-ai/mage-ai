@@ -618,6 +618,40 @@ function TriggerDetail({
       ]);
     }
 
+    if (
+      scheduleInterval === ScheduleIntervalEnum.ALWAYS_ON
+      && settings?.active_hours_start != null
+      && settings?.active_hours_end != null
+    ) {
+      const startPad = settings.active_hours_start >= 10
+        ? String(settings.active_hours_start) : `0${settings.active_hours_start}`;
+      const endPad = settings.active_hours_end >= 10
+        ? String(settings.active_hours_end) : `0${settings.active_hours_end}`;
+      rows.push([
+        <FlexContainer
+          alignItems="center"
+          key="trigger_active_hours"
+        >
+          <Tooltip
+            default
+            label="Pipeline runs continuously during active hours and pauses outside"
+            maxWidth={UNIT * 32}
+            size={ICON_SIZE_DEFAULT}
+          />
+          <Spacing mr={1} />
+          <Text default>
+            Active hours
+          </Text>
+        </FlexContainer>,
+        <Text
+          key="trigger_active_hours_label"
+          monospace
+        >
+          {`${startPad}:00 - ${endPad}:00 UTC`}
+        </Text>,
+      ]);
+    }
+
     return (
       <Table
         columnFlex={[null, 1]}

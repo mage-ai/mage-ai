@@ -1228,6 +1228,122 @@ class PipelineScheduleTests(DBTestCase):
         )
         self.assertFalse(pipeline_schedule.should_schedule())
 
+    @freeze_time('2023-08-19 14:00:00')
+    def test_should_schedule_always_on_active_hours_inside_window(self):
+        pipeline_schedule = PipelineSchedule.create(
+            name=self.faker.name(),
+            pipeline_uuid='test_pipeline',
+            schedule_interval=ScheduleInterval.ALWAYS_ON,
+            schedule_type=ScheduleType.TIME,
+            start_time=datetime(2023, 8, 19, 0, 0, 0).replace(tzinfo=timezone.utc),
+            status=ScheduleStatus.ACTIVE,
+            settings=dict(
+                active_hours_start=7,
+                active_hours_end=22,
+            ),
+        )
+        # 14:00 UTC is inside 7-22, should schedule like normal @always_on
+        self.assertTrue(pipeline_schedule.should_schedule())
+
+    @freeze_time('2023-08-19 23:00:00')
+    def test_should_schedule_always_on_active_hours_outside_window_paused(self):
+        pipeline_schedule = PipelineSchedule.create(
+            name=self.faker.name(),
+            pipeline_uuid='test_pipeline',
+            schedule_interval=ScheduleInterval.ALWAYS_ON,
+            schedule_type=ScheduleType.TIME,
+            start_time=datetime(2023, 8, 19, 0, 0, 0).replace(tzinfo=timezone.utc),
+            status=ScheduleStatus.ACTIVE,
+            settings=dict(
+                active_hours_start=7,
+                active_hours_end=22,
+            ),
+        )
+        # 23:00 UTC is outside 7-22, no off_hours_interval, should NOT schedule
+        self.assertFalse(pipeline_schedule.should_schedule())
+
+    @freeze_time('2023-08-19 14:00:00')
+    def test_should_schedule_always_on_no_active_hours_backwards_compat(self):
+        pipeline_schedule = PipelineSchedule.create(
+            name=self.faker.name(),
+            pipeline_uuid='test_pipeline',
+            schedule_interval=ScheduleInterval.ALWAYS_ON,
+            schedule_type=ScheduleType.TIME,
+            start_time=datetime(2023, 8, 19, 0, 0, 0).replace(tzinfo=timezone.utc),
+            status=ScheduleStatus.ACTIVE,
+        )
+        # Legacy triggers without active_hours settings still run 24/7
+        # No pipeline runs exist, so should schedule
+        self.assertTrue(pipeline_schedule.should_schedule())
+
+    @freeze_time('2023-08-19 23:30:00')
+    def test_should_schedule_always_on_active_hours_midnight_wraparound_inside(self):
+        pipeline_schedule = PipelineSchedule.create(
+            name=self.faker.name(),
+            pipeline_uuid='test_pipeline',
+            schedule_interval=ScheduleInterval.ALWAYS_ON,
+            schedule_type=ScheduleType.TIME,
+            start_time=datetime(2023, 8, 19, 0, 0, 0).replace(tzinfo=timezone.utc),
+            status=ScheduleStatus.ACTIVE,
+            settings=dict(
+                active_hours_start=22,
+                active_hours_end=7,
+            ),
+        )
+        # 23:30 is inside 22-7 (overnight window), should schedule
+        self.assertTrue(pipeline_schedule.should_schedule())
+
+    @freeze_time('2023-08-19 14:00:00')
+    def test_should_schedule_always_on_active_hours_midnight_wraparound_outside(self):
+        pipeline_schedule = PipelineSchedule.create(
+            name=self.faker.name(),
+            pipeline_uuid='test_pipeline',
+            schedule_interval=ScheduleInterval.ALWAYS_ON,
+            schedule_type=ScheduleType.TIME,
+            start_time=datetime(2023, 8, 19, 0, 0, 0).replace(tzinfo=timezone.utc),
+            status=ScheduleStatus.ACTIVE,
+            settings=dict(
+                active_hours_start=22,
+                active_hours_end=7,
+            ),
+        )
+        # 14:00 is outside 22-7 (overnight window), should NOT schedule
+        self.assertFalse(pipeline_schedule.should_schedule())
+
+    @freeze_time('2023-08-19 07:00:00')
+    def test_should_schedule_always_on_active_hours_boundary_start(self):
+        pipeline_schedule = PipelineSchedule.create(
+            name=self.faker.name(),
+            pipeline_uuid='test_pipeline',
+            schedule_interval=ScheduleInterval.ALWAYS_ON,
+            schedule_type=ScheduleType.TIME,
+            start_time=datetime(2023, 8, 19, 0, 0, 0).replace(tzinfo=timezone.utc),
+            status=ScheduleStatus.ACTIVE,
+            settings=dict(
+                active_hours_start=7,
+                active_hours_end=22,
+            ),
+        )
+        # Exactly at start hour — should be inside window
+        self.assertTrue(pipeline_schedule.should_schedule())
+
+    @freeze_time('2023-08-19 22:00:00')
+    def test_should_schedule_always_on_active_hours_boundary_end(self):
+        pipeline_schedule = PipelineSchedule.create(
+            name=self.faker.name(),
+            pipeline_uuid='test_pipeline',
+            schedule_interval=ScheduleInterval.ALWAYS_ON,
+            schedule_type=ScheduleType.TIME,
+            start_time=datetime(2023, 8, 19, 0, 0, 0).replace(tzinfo=timezone.utc),
+            status=ScheduleStatus.ACTIVE,
+            settings=dict(
+                active_hours_start=7,
+                active_hours_end=22,
+            ),
+        )
+        # Exactly at end hour — should be outside window (exclusive end)
+        self.assertFalse(pipeline_schedule.should_schedule())
+
     def test_create_or_update_batch(self):
         create_pipeline_with_blocks(
             'test create or update batch',
