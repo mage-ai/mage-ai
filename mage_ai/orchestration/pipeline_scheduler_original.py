@@ -261,6 +261,11 @@ class PipelineScheduler:
                         pipeline_run=self.pipeline_run,
                     )
                     UsageStatisticLogger().pipeline_run_ended_sync(self.pipeline_run)
+                    self.logger.info(
+                        f'Pipeline {self.pipeline.uuid} for run {self.pipeline_run.id} '
+                        f'in schedule {self.pipeline_run.pipeline_schedule_id} COMPLETED.',
+                        **self.build_tags(),
+                    )
 
                 self.logger_manager.output_logs_to_destination()
 
@@ -340,6 +345,10 @@ class PipelineScheduler:
         status=PipelineRun.PipelineRunStatus.FAILED,
     ) -> None:
         UsageStatisticLogger().pipeline_run_ended_sync(self.pipeline_run)
+        self.logger.info(
+            f'Pipeline {self.pipeline.uuid} for run {self.pipeline_run.id} '
+            f'in schedule {self.pipeline_run.pipeline_schedule_id} {status}.'
+        )
 
         if status == PipelineRun.PipelineRunStatus.FAILED:
             # Only send notification when pipeline run status is FAILED
@@ -440,6 +449,10 @@ class PipelineScheduler:
         job_manager = get_job_manager()
         block_run = BlockRun.get(pipeline_run_id=self.pipeline_run.id, block_uuid=block_uuid)
         metrics = block_run.metrics or {}
+        self.logger.info(
+            f'Failed PipelineRun {self.pipeline_run.id}, '
+            f'BlockRun for block {block_uuid} in pipeline {self.pipeline.uuid}'
+        )
 
         @retry(retries=2, delay=5)
         def update_status():
