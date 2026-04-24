@@ -29,7 +29,7 @@ DEFAULT_MESSAGES = dict(
         summary=(
             'Failed to run Pipeline `{pipeline_uuid}` with Trigger {pipeline_schedule_id} '
             '`{pipeline_schedule_name}` at execution time `{execution_time}`. '
-            'Error: {error}'
+            'Error: {error}{stacktrace}'
         ),
     ),
     passed_sla=dict(
@@ -59,6 +59,7 @@ class NotificationSender:
             summary (str, optional): Mid-length sentences, used as the summary of the message.
             details (str, optional): Long message, used as the body of the message (e.g. Email body)
         """
+
         if summary is None:
             return
         if self.config.slack_config is not None and self.config.slack_config.is_valid:
@@ -181,7 +182,7 @@ class NotificationSender:
             pipeline_schedule_name=pipeline_run.pipeline_schedule.name,
             pipeline_schedule_description=pipeline_run.pipeline_schedule.description,
             pipeline_uuid=pipeline.uuid,
-            stacktrace=stacktrace,
+            stacktrace=f'\n{stacktrace}' if stacktrace else ''
         )
 
     def __send_pipeline_run_message(
