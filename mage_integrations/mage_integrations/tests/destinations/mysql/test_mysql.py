@@ -24,6 +24,7 @@ class MySQLDestinationTests(unittest.TestCase, SQLDestinationMixin):
         'password': 'password',
         'username': 'username',
         'lower_case': False,
+        'truncate_full_table': True,
     }
     conn_class_path = 'mage_integrations.destinations.mysql.MySQLConnection'
     destination_class = MySQL
@@ -43,13 +44,14 @@ class MySQLDestinationTests(unittest.TestCase, SQLDestinationMixin):
     )
     expected_template_config = {
         'config': {
-          'database': '',
-          'host': '',
-          'password': '',
-          'port': 3306,
-          'table': '',
-          'username': '',
-          'use_lowercase': True
+            'database': '',
+            'host': '',
+            'password': '',
+            'port': 3306,
+            'table': '',
+            'truncate_full_table': False,
+            'username': '',
+            'use_lowercase': True,
         },
     }
 
@@ -64,4 +66,33 @@ class MySQLDestinationTests(unittest.TestCase, SQLDestinationMixin):
         self.assertEqual(
             table_commands,
             ['CREATE TABLE test_db.test_table (ID CHAR(255))']
+        )
+
+    def test_build_query_strings_truncate_full_table(self):
+        destination = MySQL(config=self.config)
+        stream = STREAM
+        destination.schemas = {stream: SCHEMA}
+        destination.unique_constraints = {stream: None}
+        destination.replication_methods = {stream: 'FULL_TABLE'}
+
+        with unittest.mock.patch.object(
+            destination,
+            'does_table_exist',
+            return_value=True,
+        ):
+            with unittest.mock.patch.object(
+                destination,
+                'build_alter_table_commands',
+                return_value=[],
+            ):
+                queries = destination.build_query_strings(
+                    record_data=[],
+                    stream=stream,
+                    tags={'batch': 0},
+                )
+
+        self.assertGreaterEqual(len(queries), 1)
+        self.assertTrue(
+            any('TRUNCATE TABLE' in q for q in queries),
+            msg=f'Expected TRUNCATE TABLE in queries, got: {queries}',
         )
