@@ -1,0 +1,60 @@
+---
+title: "Installation"
+description: "System requirements and install options for mage-agent."
+---
+
+## Requirements
+
+- Python **3.10** or newer
+- A Mage Pro cluster (URL + account credentials)
+
+## Install from PyPI
+
+```bash
+pip install mage-agent
+```
+
+We recommend installing inside a virtual environment:
+
+```bash
+python -m venv .venv
+source .venv/bin/activate   # Windows: .venv\Scripts\activate
+pip install mage-agent
+```
+
+Verify:
+
+```bash
+mage-agent --version
+```
+
+## Install from source
+
+```bash
+git clone https://github.com/mage-ai/mage-agent.git
+cd mage-agent
+python -m venv .venv
+source .venv/bin/activate
+pip install -e .
+```
+
+## IDE PATH requirement
+
+When you configure your IDE to launch `mage-agent mcp`, the IDE may use a different `PATH` than your terminal. If the MCP server fails to start, use the absolute path to the executable:
+
+```bash
+which mage-agent   # e.g. /Users/you/.venv/bin/mage-agent
+```
+
+Then update your IDE config:
+
+```json
+{
+  "mcpServers": {
+    "mage-agent": {
+      "command": "/Users/you/.venv/bin/mage-agent",
+      "args": ["mcp"]
+    }
+  }
+}
+```

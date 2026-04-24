@@ -1,0 +1,61 @@
+---
+title: "Authentication"
+description: "Log in to your Mage Pro cluster and manage credentials."
+---
+
+## Interactive login
+
+```bash
+mage-agent login
+```
+
+The CLI prompts for:
+1. Your Mage Pro cluster URL (e.g. `https://app.mage.ai`)
+2. Email
+3. Password
+
+On success, mage-agent writes your credentials to `~/.mage-agent/config.json` and fetches remote skill files from the cluster.
+
+## Non-interactive login
+
+Pass all values as flags to skip prompts — useful in CI or scripted environments:
+
+```bash
+mage-agent login \
+  --cluster-url https://your-mage-url \
+  --email YOUR_EMAIL \
+  --password YOUR_PASSWORD
+```
+
+## Credential file
+
+Credentials are stored at `~/.mage-agent/config.json` with `600` permissions (owner read/write only):
+
+```json
+{
+  "cluster_url": "https://your-mage-url",
+  "oauth_token": "YOUR_OAUTH_TOKEN"
+}
+```
+
+<Warning>
+  Do not commit `~/.mage-agent/config.json` to version control or share it. The OAuth token provides full access to your Mage Pro cluster.
+</Warning>
+
+You can also create this file manually if you already have an OAuth token — mage-agent will pick it up automatically.
+
+## Re-authenticating
+
+If you see `AUTH_EXPIRED` errors, your session token has expired. Run `mage-agent login` again to get a fresh token.
+
+## How authentication is used
+
+All MCP tool calls and sync operations send the OAuth token as a bearer credential to your cluster. You can override the default API key by adding an `api_key` field to the config file:
+
+```json
+{
+  "cluster_url": "https://your-mage-url",
+  "oauth_token": "YOUR_OAUTH_TOKEN",
+  "api_key": "YOUR_API_KEY"
+}
+```

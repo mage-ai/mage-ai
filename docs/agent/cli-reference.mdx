@@ -1,0 +1,103 @@
+---
+title: "CLI Reference"
+description: "All mage-agent commands and their options."
+---
+
+## Global flags
+
+These flags apply to every command:
+
+| Flag | Default | Description |
+|---|---|---|
+| `--log-level` | `INFO` | Log verbosity: `DEBUG`, `INFO`, `WARNING`, `ERROR` |
+| `--format-output` | `json` | Output format: `json` or `human` |
+
+You can also set `MAGE_AGENT_LOG_LEVEL` as an environment variable:
+
+```bash
+MAGE_AGENT_LOG_LEVEL=DEBUG mage-agent sync-status
+```
+
+---
+
+## `mage-agent login`
+
+Authenticate with your Mage Pro cluster and save credentials.
+
+```bash
+mage-agent login [OPTIONS]
+```
+
+| Option | Description |
+|---|---|
+| `--cluster-url URL` | Mage Pro cluster URL |
+| `--email EMAIL` | Account email |
+| `--password PASSWORD` | Account password |
+
+If any option is omitted, the CLI prompts interactively.
+
+On success, writes `~/.mage-agent/config.json` and fetches remote skill files from the cluster.
+
+---
+
+## `mage-agent mcp`
+
+Start the MCP stdio server. This is the command your IDE or AI agent launches.
+
+```bash
+mage-agent mcp
+```
+
+No options. The server reads JSON-RPC requests from stdin and writes responses to stdout. Logs go to stderr.
+
+---
+
+## `mage-agent sync-project-to-local`
+
+Pull all remote project files to a local directory.
+
+```bash
+mage-agent sync-project-to-local [--local-project-dir PATH]
+```
+
+| Option | Default | Description |
+|---|---|---|
+| `--local-project-dir` | `.mage-agent/local_sync` | Destination directory |
+
+---
+
+## `mage-agent sync-status`
+
+Show what has changed between local and remote.
+
+```bash
+mage-agent sync-status [--local-project-dir PATH]
+```
+
+Output groups files into: `remote_to_local`, `local_to_remote`, `conflicts`, `in_sync`.
+
+Use `--format-output human` for a readable table.
+
+---
+
+## `mage-agent sync-local-to-remote`
+
+Push locally changed files to the cluster.
+
+```bash
+mage-agent sync-local-to-remote [--local-project-dir PATH]
+```
+
+Only files with `local_to_remote` status are uploaded.
+
+---
+
+## `mage-agent sync`
+
+Bidirectional sync with interactive conflict resolution.
+
+```bash
+mage-agent sync [--local-project-dir PATH]
+```
+
+For each conflicting file, prompts: `[r]emote / [l]ocal / [s]kip`.

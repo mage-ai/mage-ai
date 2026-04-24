@@ -40,6 +40,20 @@
             ]
           },
           {
+            "group": "Mage Agent",
+            "pages": [
+              "agent/introduction",
+              "agent/quickstart",
+              "agent/installation",
+              "agent/authentication",
+              "agent/ide-integration",
+              "agent/sync",
+              "agent/mcp-tools",
+              "agent/cli-reference",
+              "agent/troubleshooting"
+            ]
+          },
+          {
             "group": "CI/CD",
             "pages": [
               "development/git/pro-overview",
