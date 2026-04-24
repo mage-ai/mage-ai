@@ -2,7 +2,7 @@
 title: "Mage Pro Version Control"
 sidebarTitle: "Version control guide"
 icon: "code"
-description: "Connect your data pipelines to Git repositories and deploy code seamlessly. Authenticate with GitHub, BitBucket, or GitLab, manage code with Git commands, and deploy from commits to your Mage Pro cluster."
+description: "Connect Mage Pro to GitHub, Bitbucket, GitLab, or Azure DevOps using OAuth, HTTPS+PAT, or SSH. Manage data pipelines with Git and deploy commits to your cluster."
 ---
 
 import { ProButton } from '/snippets/pro/button.mdx';
@@ -10,24 +10,31 @@ import { ProOnly } from '/snippets/pro/only.mdx';
 
 <ProOnly source="version-control-guide" />
 
-Mage Pro provides two main applications for version control and deployment:
+Mage Pro's version control workflow has three parts:
 
-1. **Deployments App**: Deploy code from Git commits to your Mage Pro cluster
-2. **Version Control Terminal**: Push/pull code and manage branches using Git commands
+1. **Authentication** — [Connect your Git host](#1-authentication) to Mage (OAuth with GitHub, Bitbucket, GitLab, or Azure DevOps; HTTPS with a personal access token; or SSH). You do this in the **Deployments** app, but it also enables the [Version control terminal](#3-version-control-terminal).
+2. **Deployments** — [Deploy](#2-deployments-app) commits to your Mage Pro cluster or workspace from the visual Deployments app.
+3. **Version control terminal** — [Run Git in the browser](#3-version-control-terminal) (push, pull, branches) once you are connected.
 
-## 1. Deployments App
+## 1. Authentication
 
-The Deployments App is your primary tool for deploying code from Git commits to your Mage Pro cluster. It provides a visual interface for managing deployments across different environments.
+**Authentication is shared** by the [Deployments app](#2-deployments-app) and the [version control terminal](#3-version-control-terminal). Configure it in **Deployments** → open **Connect repository** or deployment **Setup** → **Connection** → **Authentication type**. Until this is set up, you cannot use Git-based deployment or the terminal.
 
-### 1.1 Authentication
+Mage Pro supports three **authentication types**:
 
-First, authenticate with your Git provider in the Deployments application to enable version control and deployment features.
+| Type | When to use |
+| --- | --- |
+| **OAuth** | Default path: sign in with GitHub, Bitbucket, GitLab, or Azure DevOps and pick org/workspace, repo, and branch from the UI. |
+| **HTTPS + PAT** | Your organization requires a **personal access token** instead of OAuth, or you use a provider / URL where OAuth is not an option. |
+| **SSH** | You use **deploy keys** or user SSH keys and `git@…` (or `ssh://`) remotes. |
 
-#### Access Deployments
+If you change authentication type, **save authentication settings** before continuing with the rest of the connection configuration. Switching types clears the credentials from the other method in your deployment settings.
+
+### Open the connection UI
 
 From the Home page, select **Deployments** in the left-hand navigation menu to access the Deployments interface.
 
-Click the Setup connection button to begin syncing with your code repository.
+Click the **Setup connection** button to begin syncing with your code repository.
 
 <Frame>
   <img
@@ -36,18 +43,13 @@ Click the Setup connection button to begin syncing with your code repository.
   />
 </Frame>
 
-#### Configure Repository Settings
+### Project settings
 
-Once you are in the connect repository UI, take the following steps:
+Fill in the **Project settings** fields at the top of the Connect repository page, then click **Save settings** before configuring authentication below.
 
-**Step 1**: Set your directory as the user code path you intend to use for your project.
-
-- In Mage Pro the default directory will be **`/home/src/default_repo`**.
-- If you changed the **`USER_CODE_PATH`** environment variable in the Mage Cloud Management Portal, your directory will need to reflect that change.
-
-**Step 2 (optional)**: Set your target directory for your deployment if it will be different from your top level directory.
-
-- If you have a nested GitHub project, you may want to set the target directory to `/home/src`
+- **Configuration name** — a label for this deployment configuration.
+- **Project directory** — the user code path for your project. The default in Mage Pro is `/home/src/default_repo`. If you changed the `USER_CODE_PATH` environment variable in the Mage Cloud Management Portal, set this field to match.
+- **Target directory (optional)** — the directory code changes are deployed into. If left empty, the project directory is used. For a nested repository you may want to set this to `/home/src`.
 
 <Frame>
   <img
@@ -56,28 +58,82 @@ Once you are in the connect repository UI, take the following steps:
   />
 </Frame>
 
-#### GitHub Authentication
+After clicking **Save settings**, proceed to the **Connection** section below to set your authentication type and connect your provider.
 
-**Step 1**: Click the "Connect" button to the right of the GitHub connection
+### HTTPS and personal access token (PAT)
 
-- This will take you to the GitHub sign-in authentication
+1. Under **Connection**, set **Authentication type** to **HTTPS+PAT**.
+2. Enter the **remote repository URL** in HTTPS form (for example `https://github.com/your-org/your-repo.git`). The UI derives owner and repository name from this URL.
+3. Enter a **username** and **email** for Git commit authorship. These are also used as HTTP credentials: the username is your Git host account name and the PAT is sent in place of a password.
+4. In your Git host, create a **personal access token** (or app password) scoped to at least **clone, fetch, and push**. Scope names differ by provider — for example, GitHub requires the `repo` scope; GitLab requires `read_repository` and `write_repository`; Bitbucket uses the `repository:write` permission.
+5. Paste the token into **Personal access token** and click **Save authentication settings**. The token is stored as a **Mage secret** named `mage_git_access_token_{user_id}` (where `{user_id}` is your Mage user ID).
 
-**Step 2**: Sign in with your GitHub login credentials
+HTTPS+PAT uses your stored credentials for Git in the [version control terminal](#3-version-control-terminal) the same way OAuth does.
 
-- After authenticating you will return to the Mage-Pro deployment app
-- You should now see that you are connected to GitHub
+<Frame>
+  <img
+    alt="Connect with PAT"
+    src="https://mage-ai.github.io/assets/pro/features/deployments/connect-pat.png"
+  />
+</Frame>
 
-**Step 3**: Select your GitHub organization from the dropdown list.
+### SSH key authentication
 
-- If there are no organizations listed, add an organization to the text field below and click the Set organization button
+1. Under **Connection**, set **Authentication type** to **SSH**.
+2. Enter the **remote repository URL** in SSH form (for example `git@github.com:your-org/your-repo.git` or a supported `ssh://` URL from your provider).
+3. Enter a **username** and **email** for Git **commit** identity (as shown in `git log`), matching what you use for the repository.
+4. Add **SSH public and private key** values. The form expects the key material in **base64** (as labeled in the UI). In your Git host, add the public key as a **deploy key** (repo-scoped) or a user key, with permission to read/write the repo as needed.
+5. Click **Save authentication settings**.
 
-**Step 4**: Select the repo you want to commit code to by clicking the repository drop down box
+<Note>
+With **SSH** authentication, Mage cannot use the provider’s **Git hosting API** for some deployment flows the same way as with OAuth (for example, **listing commits in the Deployments** UI). For **`git push`**, **`git pull`**, fetches, and other Git wire operations, use the **[version control terminal](#access-the-version-control-terminal)**. A warning is shown in the app when this applies.
+</Note>
 
-- You should see all your GitHub repos here if you authenticated correctly
+<Frame>
+  <img
+    alt="Connect with SSH keys"
+    src="https://mage-ai.github.io/assets/pro/features/deployments/connect-ssh.png"
+  />
+</Frame>
 
-**Step 5**: Select your branch (usually main or master) to commit your code to by clicking the dropdown box and selecting the branch name
+### GitHub (OAuth)
 
-**Step 6**: Click the "Deployments" button to see a list of commits from your Git hosting vendor, and deploy from the most recent or any specific commit.
+Mage Pro supports integration with GitHub repositories for version control, collaboration, and deployments. For **HTTPS+PAT** or **SSH**, use [PAT](#https-and-personal-access-token-pat) or [SSH key](#ssh-key-authentication) instead of the GitHub **Connect** OAuth flow below.
+
+**Connect to GitHub using OAuth tokens:**
+
+**Step 1**: Click the **Connect** button to the right of the GitHub connection.
+
+- This will take you to the GitHub sign-in authentication.
+
+<Frame>
+  <img
+    alt="Connect GitHub"
+    src="https://mage-ai.github.io/assets/pro/features/deployments/connect-oauth-github.png"
+  />
+</Frame>
+
+**Step 2**: Sign in with your GitHub login credentials.
+
+- After authenticating you will return to the Mage Pro deployment app.
+- You should now see that you are connected to GitHub.
+- Click **Save authentication settings**.
+
+**Step 3**: Select your GitHub organization from the list.
+
+- If your organization isn't appearing, enter the name in the **Organization name** field and click **Set organization**.
+
+<Note>
+To deploy from a **private repository**, click the **Install Mage Pro app on GitHub** button that appears below the Organization section. Once installed, you can verify or update the installation at any time using the **Verify installation** or **Configure installation settings** buttons.
+</Note>
+
+**Step 4**: Select the repository from the dropdown.
+
+- You should see all your GitHub repositories if you authenticated correctly.
+
+**Step 5**: Select the production branch from the dropdown.
+
+- The production branch is the primary branch your production code will mirror.
 
 <Frame>
   <img
@@ -86,20 +142,11 @@ Once you are in the connect repository UI, take the following steps:
   />
 </Frame>
 
-<Note>
-If you need to connect deployments to a private GitHub repo, provide an organization then click the Install Mage Pro app on GitHub button.
-</Note>
+### Bitbucket (OAuth)
 
-#### BitBucket Authentication
+Mage Pro supports integration with Bitbucket repositories for version control, collaboration, and deployments. For **HTTPS+PAT** or **SSH**, use [PAT](#https-and-personal-access-token-pat) or [SSH key](#ssh-key-authentication) instead of the Bitbucket **Connect** OAuth flow below.
 
-Mage Pro supports integration with BitBucket repositories for version control, collaboration, and deployments.
-
-**Connect to BitBucket using OAuth tokens:**
-
-**Step 1**: Set your directory as the user code path you intend to use for your project. 
-
-- In Mage Pro the default directory will be `/home/src/default_repo`.
-- If you changed the `USER_CODE_PATH` environment variable in the Mage Cloud Management Portal, your directory will need to reflect that change.
+**Connect to Bitbucket using OAuth tokens:**
 
 <Frame>
   <img
@@ -108,14 +155,15 @@ Mage Pro supports integration with BitBucket repositories for version control, c
   />
 </Frame>
 
-**Step 2**: Click the "Connect" button to the right of the BitBucket connection 
+**Step 1**: Click the **Connect** button to the right of the Bitbucket connection.
 
-- This will take you to the BitBucket sign-in authentication
+- This will take you to the Bitbucket sign-in authentication.
 
-**Step 3**: Sign in with your BitBucket login credentials
+**Step 2**: Sign in with your Bitbucket login credentials.
 
-- After authenticating you will return to the Mage-Pro deployment app
-- You should now see that you are connected to BitBucket
+- After authenticating you will return to the Mage Pro deployment app.
+- You should now see that you are connected to Bitbucket.
+- Click **Save authentication settings**.
 
 <Frame>
   <img
@@ -124,17 +172,17 @@ Mage Pro supports integration with BitBucket repositories for version control, c
   />
 </Frame>
 
-**Step 4**: Select your BitBucket workspace from the dropdown list. 
+**Step 3**: Select your Bitbucket workspace from the dropdown list.
 
-- If there are no organizations listed, add an organization to the text field below and click the "Set organization" button
+- If there are no workspaces listed, enter a workspace slug in the text field below and click **Set workspace**.
 
-**Step 5**: Select the repository from the dropdown menu.
+**Step 4**: Select the repository from the dropdown menu.
 
-- You should see a list of all the repositories that were created in the workspace.
+- You should see a list of all the repositories in that workspace.
 
-**Step 6**: Finally, select the production branch from the dropdown list
+**Step 5**: Select the production branch from the dropdown list.
 
-- The production branch is the primary branch that your production code will mirror.
+- The production branch is the primary branch your production code will mirror.
 
 <Frame>
   <img
@@ -143,25 +191,21 @@ Mage Pro supports integration with BitBucket repositories for version control, c
   />
 </Frame>
 
-#### GitLab Authentication
+### GitLab (OAuth)
 
-Mage Pro supports integration with GitLab repositories for version control, collaboration, and deployments.
+Mage Pro supports integration with GitLab repositories for version control, collaboration, and deployments. For **HTTPS+PAT** or **SSH**, use [PAT](#https-and-personal-access-token-pat) or [SSH key](#ssh-key-authentication) instead of the **Connect** GitLab OAuth flow below.
 
 **Connect to GitLab using OAuth tokens:**
 
-**Step 1**: Set your directory as the user code path you intend to use for your project. 
+**Step 1**: Click the **Connect** button to the right of the GitLab connection.
 
-- In Mage Pro the default directory will be `/home/src/default_repo`.
-- If you changed the `USER_CODE_PATH` environment variable in the Mage Cloud Management Portal, your directory will need to reflect that change.
+- This will take you to the GitLab sign-in authentication.
 
-**Step 2**: Click the "Connect" button to the right of the GitLab connection 
+**Step 2**: Sign in with your GitLab login credentials.
 
-- This will take you to the GitLab sign-in authentication
-
-**Step 3**: Sign in with your GitLab login credentials
-
-- After authenticating you will return to the Mage-Pro deployment app
-- You should now see that you are connected to GitLab
+- After authenticating you will return to the Mage Pro deployment app.
+- You should now see that you are connected to GitLab.
+- Click **Save authentication settings**.
 
 <Frame>
   <img
@@ -170,37 +214,70 @@ Mage Pro supports integration with GitLab repositories for version control, coll
   />
 </Frame>
 
-**Step 4**: Select your GitLab group from the dropdown list. 
+**Step 3**: Select your GitLab group from the dropdown list.
 
-- If there are no groups listed, add a group to the text field below and click the "Set group" button
+- If there are no groups listed, enter a group name in the text field below and click **Set group**.
 
-**Step 5**: Select the repository from the dropdown menu.
+**Step 4**: Select the repository from the dropdown menu.
 
-- You should see a list of all the repositories that were created in the group.
+- You should see a list of all the repositories in that group.
 
-**Step 6**: Finally, select the production branch from the dropdown list
+**Step 5**: Select the production branch from the dropdown list.
 
-- The production branch is the primary branch that your production code will mirror.
+- The production branch is the primary branch your production code will mirror.
 
-<Note>
-Currently the deployments application is only available for GitHub, GitLab, and Bitbucket users.
-</Note>
+### Azure DevOps (OAuth)
 
-### 1.2 Deploy Code
+Mage Pro supports integration with Azure DevOps repositories for version control, collaboration, and deployments. For **HTTPS+PAT** or **SSH**, use [PAT](#https-and-personal-access-token-pat) or [SSH key](#ssh-key-authentication) instead of the Azure DevOps **Connect** OAuth flow below.
 
-Deploy code from Git commits to your Mage Pro cluster or workspace using the Deployments application.
+**Connect to Azure DevOps using OAuth tokens:**
 
-#### Merge Pull Request
+**Step 1**: Click the **Connect** button to the right of the Azure DevOps connection.
 
-Once you push code to your Git branch, head to your Git provider and merge the pull request. Once the pull request is merged your deployment will be available in the deployments application interface.
+- This will take you to the Azure DevOps sign-in authentication.
 
-#### Deploy Code
+**Step 2**: Sign in with your Azure DevOps credentials.
 
-Mage simplifies the deployment of code to production pipelines. Follow these steps to deploy your pipeline's CI/CD Git branches:
+- After authenticating you will return to the Mage Pro deployment app.
+- You should now see that you are connected to Azure DevOps.
+- Click **Save authentication settings**.
 
-1. Once you have merged the pull request in your Git provider, navigate back to the deployments tab and click deployments highlighted in green in the top
-2. Click the Deploy button to deploy the current version you just merged
-    - To revert to a previous version, simply click the "Rollback" button to deploy the desired version.
+<Frame>
+  <img
+    alt="Connect repository"
+    src="https://mage-ai.github.io/assets/pro/features/deployments/azuredevops-connect.png"
+  />
+</Frame>
+
+**Step 3**: Select your Azure DevOps **organization** from the dropdown, or type the organization name directly in the text field and click **Save**.
+
+- If your organization isn't appearing in the dropdown, enter the name in the **Organization name** field and click **Set organization**.
+
+**Step 4**: Select your **Azure DevOps project** from the dropdown.
+
+- This is the project that contains the repository you want to deploy changes from.
+
+**Step 5**: Select the **repository** from the dropdown.
+
+- You should see a list of all repositories in that project.
+
+**Step 6**: Select the **production branch** from the dropdown.
+
+- This is the primary branch your production code will mirror.
+- If your branch isn't listed, type the branch name into the text field and click **Set branch**.
+
+## 2. Deployments App
+
+The Deployments app is the control surface for [deploying](#merge-pull-request-and-deploy) merged work from Git to your Mage Pro cluster. It assumes you have already completed [authentication](#1-authentication).
+
+### Merge pull request and deploy
+
+Once you push code to your Git branch, open your Git provider and merge the pull request. When the merge is done, the deployment is available in the Deployments app.
+
+Mage then deploys a chosen commit to your environment:
+
+1. In Mage, go to the **Deployments** view and open the deployments list (highlighted in green at the top when updates are available).
+2. Click **Deploy** to ship the version you just merged. Use **Rollback** to deploy an earlier commit if you need to revert.
 
 <Frame>
   <img
@@ -209,22 +286,20 @@ Mage simplifies the deployment of code to production pipelines. Follow these ste
   />
 </Frame>
 
-## 2. Version Control Terminal
+## 3. Version control terminal
 
-Once authenticated with a Git provider, you can manage your codebase by pushing and pulling files directly from the terminal. Use standard Git commands to perform various version control operations.
+Once you have completed [Authentication](#1-authentication), you can use standard Git in the browser: status, commit, push, pull, and branch operations against your configured remote.
 
 <Note>
-If you haven't authenticated with a Git provider yet, see the [Authentication section](#1-1-authentication) above to set up GitHub, BitBucket, or GitLab integration first.
+If you have not set up Git access yet, follow [Authentication](#1-authentication) first: **OAuth**, or **HTTPS+PAT** / **SSH** in the **Deployments** connection settings. All three options enable the version control terminal.
 </Note>
 
-### 2.1 Access Version Control Terminal
+### Access the version control terminal
 
-To access the Version Control Terminal in Mage Pro:
-- From the Home page, select **Version control** in the left-hand navigation menu to access the Version control terminal.
-- Once the version control terminal page is open, you can enter the git commands in the terminal page and press enter to run it.
+- From the home page, open the left navigation and select **Version control** (or the Version control / terminal app, depending on your layout).
+- When the page loads, type Git commands in the terminal and press **Enter** to run them.
 
-
-### 2.2 Essential Git Commands
+### Essential Git commands
 
 `git checkout -b <branch-name>`
 
@@ -244,7 +319,7 @@ To access the Version Control Terminal in Mage Pro:
 
 `git push origin <branch-name>`
 
-*(Uploads the commits from the local `<branch-name>` to the corresponding remote branch on GitHub, making the changes available to collaborators.)*
+*(Uploads the commits from the local `<branch-name>` to the corresponding remote branch, making the changes available to collaborators.)*
 
 <Frame>
   <img
@@ -253,24 +328,24 @@ To access the Version Control Terminal in Mage Pro:
   />
 </Frame>
 
-### 2.3 Troubleshooting Git Commands
+### Troubleshooting Git commands
 
-When trying to connect to GitHub, you may run into a few roadblocks along the way:
+When running Git commands, you may run into a few common issues:
 
-1. Make sure you are in the correct folder
-    1. `/home/src/<Your user code path>`
-2. You may need to globally configure your email and username to your GitHub:
-    1. `git config --global user.email "your_email@example.com"`
-    2. `git config --global user.name "Your Username"`
+- Make sure you are in the correct folder: `/home/src/<your user code path>`
+- If Git doesn't recognize your identity, configure your email and username globally:
+  - `git config --global user.email "your_email@example.com"`
+  - `git config --global user.name "Your Username"`
 
 ## Summary
 
-Mage Pro provides a complete version control and deployment workflow with two main applications:
+Mage Pro supports a full Git-based workflow in three steps:
 
-- **Deployments App**: Primary tool for deploying code from Git commits to your Mage Pro cluster
-- **Version Control Terminal**: Use Git commands to push/pull code and manage branches
+- **[Authentication](#1-authentication)** — **OAuth**, **HTTPS + PAT**, or **SSH**; configured in the Deployments app and required for the tools below.
+- **[Deployments app](#2-deployments-app)** — Promote merged commits to your cluster (deploy / rollback) after work lands in your remote branch.
+- **[Version control terminal](#3-version-control-terminal)** — Run `git` in the browser; with **SSH** auth, some push/pull activities may be terminal-only if the host Git API is not used for your setup.
 
-This enables seamless version control for data pipelines, allowing teams to use both the visual Mage Pro interface and standard Git commands across all platforms, ensuring robust collaboration and deployment workflows for production data systems.
+This enables version control for data pipelines through both the visual Deployments interface and a standard terminal workflow.
 
 
 ## Best Practices for Environment Management
@@ -282,7 +357,7 @@ This enables seamless version control for data pipelines, allowing teams to use 
 - **Secondary Tool - Deployments App**:
   - Deploy to dev environment for testing and validation
   - Rollback changes or switch to another feature branch (can also be done via terminal)
-- **Workflow**: Develop locally → Commit to feature branch → Deploy to dev environment for testing
+- **Workflow**: Develop in Mage Pro → Commit to feature branch → Deploy to dev environment for testing
 
 ### Staging Environment
 - **Primary Tool - Deployments App**:
