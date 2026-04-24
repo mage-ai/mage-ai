@@ -1,0 +1,44 @@
+---
+title: "Introduction"
+description: "Build and manage Mage data pipelines directly from your AI coding assistant."
+---
+
+**Mage Agent** connects your local development environment to your Mage Pro cluster through the [Model Context Protocol (MCP)](https://modelcontextprotocol.io). Your AI assistant can inspect, create, modify, and run Mage pipelines using natural language — and a built-in sync engine keeps local files in step with the cluster.
+
+<CardGroup cols={2}>
+  <Card title="Quickstart" icon="rocket" href="/agent/quickstart">
+    Get connected in under five minutes.
+  </Card>
+  <Card title="IDE Integration" icon="code" href="/agent/ide-integration">
+    Connect Cursor, Claude Code, or Codex CLI.
+  </Card>
+  <Card title="Sync" icon="arrows-rotate" href="/agent/sync">
+    Mirror your Mage project to local files.
+  </Card>
+  <Card title="MCP Tools" icon="wrench" href="/agent/mcp-tools">
+    Full reference for every tool your AI can call.
+  </Card>
+</CardGroup>
+
+## How it works
+
+```
+Your AI assistant  ──MCP──►  mage-agent  ──REST──►  Mage Pro cluster
+      │                           │
+      │                     sync engine
+      └── local files ◄──────────┘
+```
+
+1. **MCP server** — mage-agent runs as a background stdio process. Your IDE or AI agent sends tool calls over JSON-RPC; mage-agent translates them into Mage Pro REST API requests.
+2. **Skill resources** — the server exposes Markdown guidance files that give your AI assistant context on how to interact with pipelines, blocks, runs, and sync operations.
+3. **Sync engine** — a separate CLI layer lets you pull the full remote project tree to a local directory, push local edits back, and resolve conflicts file by file.
+
+## Supported clients
+
+<CardGroup cols={3}>
+  <Card title="Cursor" icon="arrow-pointer" />
+  <Card title="Claude Code" icon="terminal" />
+  <Card title="OpenAI Codex CLI" icon="terminal" />
+</CardGroup>
+
+Any MCP-compatible client that can launch a subprocess will work with the same configuration.
