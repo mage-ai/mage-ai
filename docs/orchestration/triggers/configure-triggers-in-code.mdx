@@ -14,7 +14,7 @@ current trigger’s settings to code.
 - **Source of truth:** The `triggers.yaml` file is the source of truth for trigger definitions.
 - **Sync flow:** A background scheduler process periodically syncs triggers from `triggers.yaml` into the database. Only triggers that pass the **envs filter** (see [Envs filter](#envs-filter)) are created or updated on that instance. After a trigger is synced to the database, it appears in the Triggers UI.
 - **New/updates flow both ways:** New or updated triggers in the YAML are pushed to the database when the scheduler runs. Edits you make in the UI to a trigger that's defined in code are written back to `triggers.yaml` so UI and code stay in sync.
-- **Deletions are not synced:** Removing a trigger from `triggers.yaml` does **not** remove it from the database. You must delete the trigger in the UI (or via API) to remove it from the database. See [Delete triggers](#delete-triggers).
+- **Deletions:** By default, removing a trigger from `triggers.yaml` does **not** remove it from the database; you must delete it in the UI or via API. If you set **sync_deletions_from_code** (project or pipeline level) **and** **save_in_code_automatically** is enabled for that pipeline (see [Sync deletions from code](#sync-deletions-from-code)), then `triggers.yaml` becomes fully authoritative and the scheduler will remove from the database any trigger that is no longer present in the YAML (subject to the envs filter). See [Delete triggers](#delete-triggers).
 
 ## Create and configure triggers
 
@@ -89,7 +89,25 @@ The optional `envs` field limits which instances or workspaces sync and run the 
   - **OSS:** Allowed values are `dev`, `staging`, `prod`, and `test`.
   - **Mage Pro:** Any value is allowed; it must match the `ENV` set for that instance or workspace.
 
-**If you add an `envs` filter to a trigger that already exists everywhere:** Triggers that were previously synced (e.g. when `envs` was empty) remain in the database on instances that no longer match the new `envs` list. The sync process only creates or updates triggers; it does not delete them. To stop such a trigger from existing (and running) on those instances, you must **delete the trigger manually** in the UI on each affected instance or workspace.
+**If you add an `envs` filter to a trigger that already exists everywhere:** Triggers that were previously synced (e.g. when `envs` was empty) remain in the database on instances that no longer match the new `envs` list. The sync process only creates or updates triggers; it does not delete them (unless [sync_deletions_from_code](#sync-deletions-from-code) is enabled). To stop such a trigger from existing (and running) on those instances without that setting, you must **delete the trigger manually** in the UI on each affected instance or workspace.
+
+## Sync deletions from code
+
+To make `triggers.yaml` fully authoritative so that removals in the file are reflected in the database, set **sync_deletions_from_code**. It can be set at the **project** or **pipeline** level (in the same triggers settings as **Save triggers in code automatically**). It **only applies when save_in_code_automatically is also enabled** for that pipeline.
+
+**Project level** (root `metadata.yaml` under `pipelines.settings.triggers`):
+
+```yaml
+pipelines:
+  settings:
+    triggers:
+      save_in_code_automatically: true
+      sync_deletions_from_code: true
+```
+
+**Pipeline level** (pipeline’s `metadata.yaml` under `settings.triggers`): set `sync_deletions_from_code: true` next to `save_in_code_automatically` in that file.
+
+When both flags are set for a pipeline, the scheduler will remove from the database any pipeline schedule (trigger) that is no longer present in that pipeline’s `triggers.yaml`, subject to the same [envs filter](#envs-filter) used for creates and updates. Triggers that exist in the YAML but are filtered out by `envs` for this instance are not deleted.
 
 ## Modify triggers
 
@@ -98,14 +116,16 @@ If an existing trigger is defined in the YAML file, changes flow both ways: upda
 
 ## Delete triggers
 
-The `triggers.yaml` file is synced into the database automatically, but **deletions work differently**:
+The `triggers.yaml` file is synced into the database automatically, but **deletions work differently** unless [sync_deletions_from_code](#sync-deletions-from-code) is enabled:
 
-- **Deleting triggers completely:**
+- **Deleting triggers completely (default behavior):**
   Removing a trigger from the YAML file does not delete it from the database. You must delete the trigger in the UI on each instance where it exists.
   - In the Pipeline triggers table (`/pipeline/[pipeline_uuid]/triggers`), click the trash can icon.
   - In **Mage Pro**, right-click on the trigger row and click <b>Delete</b>.
 
-  This removes the trigger from both the database and the pipeline’s `triggers.yaml` config file. If you added an [envs filter](#envs-filter) and the trigger was already created on other instances, delete it manually on those instances as well; sync does not remove triggers from the database.
+  This removes the trigger from both the database and the pipeline’s `triggers.yaml` config file. If you added an [envs filter](#envs-filter) and the trigger was already created on other instances, delete it manually on those instances as well (unless sync_deletions_from_code is enabled).
+
+- **When sync_deletions_from_code is enabled:** Removing a trigger from `triggers.yaml` (or removing it from the envs list for this instance) will cause the scheduler to delete it from the database on the next sync. No UI deletion is required.
 
 - **Alternative to deletion:**
   Instead of deleting, you can update the trigger status in the YAML file (e.g. set `status: inactive`).

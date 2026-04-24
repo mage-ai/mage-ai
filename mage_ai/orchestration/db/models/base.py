@@ -2,7 +2,7 @@ from datetime import datetime
 from typing import Dict
 
 from sqlalchemy import Column, DateTime, Integer
-from sqlalchemy.ext.declarative import declarative_base, declared_attr
+from sqlalchemy.orm import declarative_base, declared_attr
 from sqlalchemy.orm.collections import InstrumentedList
 from sqlalchemy.sql import func
 
