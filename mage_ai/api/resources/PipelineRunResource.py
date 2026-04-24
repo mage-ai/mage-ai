@@ -123,7 +123,7 @@ class PipelineRunResource(DatabaseResource):
             ).cte(name='latest_pipeline_runs')
             query = (PipelineRun.select(
                     PipelineRun,
-                )
+            )
                 .join(latest_pipeline_runs, and_(
                     PipelineRun.id == latest_pipeline_runs.c.id,
                     latest_pipeline_runs.c.row_number == 1,
