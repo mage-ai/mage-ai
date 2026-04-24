@@ -181,19 +181,31 @@ class Destination(BaseDestination):
 
             if table_exists:
                 self.logger.info(f'Table {friendly_table_name} already exists.', tags=tags)
-                """
-                Check whether any new columns are added
-                """
-                alter_table_commands = self.build_alter_table_commands(
-                    database_name=database_name,
-                    schema=schema,
-                    schema_name=schema_name,
-                    stream=stream,
-                    table_name=table_name,
-                    unique_constraints=unique_constraints,
-                )
-                if len(alter_table_commands) > 0:
-                    query_strings += alter_table_commands
+
+                if replication_method == REPLICATION_METHOD_FULL_TABLE:
+                    self.logger.info(
+                        f'Truncating table {friendly_table_name} for FULL_TABLE replication.',
+                        tags=tags,
+                    )
+                    query_strings += self.build_truncate_table_commands(
+                        database_name=database_name,
+                        schema_name=schema_name,
+                        table_name=table_name,
+                    )
+                else:
+                    """
+                    Check whether any new columns are added
+                    """
+                    alter_table_commands = self.build_alter_table_commands(
+                        database_name=database_name,
+                        schema=schema,
+                        schema_name=schema_name,
+                        stream=stream,
+                        table_name=table_name,
+                        unique_constraints=unique_constraints,
+                    )
+                    if len(alter_table_commands) > 0:
+                        query_strings += alter_table_commands
             else:
                 self.logger.info(f'Table {friendly_table_name} doesn’t exists.', tags=tags)
                 query_strings += self.build_create_table_commands(
@@ -329,6 +341,19 @@ class Destination(BaseDestination):
         return [
             f'CREATE SCHEMA IF NOT EXISTS {self._wrap_with_quotes(schema_name)}',
         ]
+
+    def build_truncate_table_commands(
+        self,
+        schema_name: str,
+        table_name: str,
+        database_name: str = None,
+    ) -> List[str]:
+        full_table_name = '.'.join([
+            self._wrap_with_quotes(x)
+            for x in [schema_name, table_name]
+            if x
+        ])
+        return [f'TRUNCATE TABLE {full_table_name}']
 
     def build_create_table_commands(
         self,
