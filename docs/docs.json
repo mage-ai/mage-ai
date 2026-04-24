@@ -97,6 +97,7 @@
                       "data-integrations/sources/instagram",
                       "data-integrations/sources/microsoft_ads",
                       "data-integrations/sources/quickbooks",
+                      "data-integrations/sources/salesforce_marketing_cloud",
                       "data-integrations/sources/tiktok_ads",
                       "data-integrations/sources/xero",
                       "data-integrations/sources/youtube_analytics"
