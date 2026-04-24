@@ -5,6 +5,7 @@ import pytz
 import yaml
 from freezegun import freeze_time
 
+from mage_ai.data_preparation.models.block import Block
 from mage_ai.data_preparation.models.constants import PipelineType
 from mage_ai.data_preparation.models.triggers import (
     ScheduleInterval,
@@ -54,6 +55,29 @@ class PipelineSchedulerTests(DBTestCase):
             'test integration pipeline',
             self.repo_path,
         )
+
+    def _create_pipeline_with_callbacks(self):
+        pipeline = create_pipeline_with_blocks(
+            self.faker.unique.slug().replace('-', '_'),
+            self.repo_path,
+        )
+        suffix = self.faker.unique.pystr(min_chars=8, max_chars=8).lower()
+        pipeline_callback = Block.create(
+            f'pipeline_callback_{suffix}',
+            'callback',
+            self.repo_path,
+            language='python',
+        )
+        block_callback = Block.create(
+            f'block_callback_{suffix}',
+            'callback',
+            self.repo_path,
+            language='python',
+        )
+        pipeline.add_block(pipeline_callback, pipeline_callback=True)
+        pipeline.add_block(block_callback, upstream_block_uuids=['block1'])
+
+        return pipeline, pipeline_callback.uuid, block_callback.uuid
 
     def test_start(self):
         pipeline_run = PipelineRun.create(pipeline_uuid='test_pipeline')
@@ -133,6 +157,96 @@ class PipelineSchedulerTests(DBTestCase):
                 pipeline=scheduler.pipeline,
                 pipeline_run=pipeline_run,
             )
+
+    def test_schedule_all_blocks_completed_executes_pipeline_callbacks_only(self):
+        pipeline, pipeline_callback_uuid, block_callback_uuid = self._create_pipeline_with_callbacks()
+        pipeline_run = PipelineRun.create(pipeline_uuid=pipeline.uuid)
+        pipeline_run.update(status=PipelineRun.PipelineRunStatus.RUNNING)
+        for block_run in pipeline_run.block_runs:
+            block_run.update(status=BlockRun.BlockRunStatus.COMPLETED)
+
+        scheduler = PipelineScheduler(pipeline_run=pipeline_run)
+        pipeline_callback = scheduler.pipeline.pipeline_callbacks_by_uuid[pipeline_callback_uuid]
+        block_callback = scheduler.pipeline.callbacks_by_uuid[block_callback_uuid]
+
+        with patch.object(
+            scheduler.notification_sender, 'send_pipeline_run_success_message',
+        ) as mock_send_message:
+            with patch.object(pipeline_callback, 'execute_callback') as mock_pipeline_callback:
+                with patch.object(block_callback, 'execute_callback') as mock_block_callback:
+                    scheduler.schedule()
+
+        self.assertEqual(pipeline_run.status, PipelineRun.PipelineRunStatus.COMPLETED)
+        mock_send_message.assert_called_once_with(
+            pipeline=scheduler.pipeline,
+            pipeline_run=pipeline_run,
+        )
+        mock_pipeline_callback.assert_called_once()
+        self.assertEqual('on_success', mock_pipeline_callback.call_args[0][0])
+        self.assertEqual(
+            pipeline_run,
+            mock_pipeline_callback.call_args[1]['callback_kwargs']['pipeline_run'],
+        )
+        self.assertEqual(
+            scheduler.pipeline.uuid,
+            mock_pipeline_callback.call_args[1]['callback_kwargs']['pipeline_uuid'],
+        )
+        mock_block_callback.assert_not_called()
+
+    def test_schedule_failed_pipeline_executes_pipeline_failure_callbacks_only(self):
+        pipeline, pipeline_callback_uuid, block_callback_uuid = self._create_pipeline_with_callbacks()
+        pipeline_run = PipelineRun.create(pipeline_uuid=pipeline.uuid)
+        pipeline_run.update(status=PipelineRun.PipelineRunStatus.RUNNING)
+        failed_block_run = find(lambda br: br.block_uuid == 'block1', pipeline_run.block_runs)
+        failed_block_run.update(status=BlockRun.BlockRunStatus.FAILED)
+
+        scheduler = PipelineScheduler(pipeline_run=pipeline_run)
+        pipeline_callback = scheduler.pipeline.pipeline_callbacks_by_uuid[pipeline_callback_uuid]
+        block_callback = scheduler.pipeline.callbacks_by_uuid[block_callback_uuid]
+
+        with patch.object(
+            scheduler.notification_sender, 'send_pipeline_run_failure_message',
+        ) as mock_send_message:
+            with patch.object(pipeline_callback, 'execute_callback') as mock_pipeline_callback:
+                with patch.object(block_callback, 'execute_callback') as mock_block_callback:
+                    scheduler.schedule()
+
+        self.assertEqual(pipeline_run.status, PipelineRun.PipelineRunStatus.FAILED)
+        mock_send_message.assert_called_once()
+        mock_pipeline_callback.assert_called_once()
+        self.assertEqual('on_failure', mock_pipeline_callback.call_args[0][0])
+        self.assertIsInstance(
+            mock_pipeline_callback.call_args[1]['callback_kwargs']['__error'],
+            Exception,
+        )
+        mock_block_callback.assert_not_called()
+
+    @freeze_time('2023-05-01 01:20:33')
+    def test_pipeline_run_timeout_cancel_does_not_execute_failure_callbacks(self):
+        pipeline, pipeline_callback_uuid, _ = self._create_pipeline_with_callbacks()
+        pipeline_run = create_pipeline_run_with_schedule(
+            pipeline_uuid=pipeline.uuid,
+            execution_date=datetime(2023, 5, 1, 1, 10, 32, tzinfo=pytz.utc).astimezone(),
+            pipeline_schedule_settings=dict(
+                timeout=600,
+                timeout_status=PipelineRun.PipelineRunStatus.CANCELLED,
+            ),
+            started_at=datetime(2023, 5, 1, 1, 10, 32, tzinfo=pytz.utc).astimezone(),
+        )
+        pipeline_run.update(status=PipelineRun.PipelineRunStatus.RUNNING)
+
+        scheduler = PipelineScheduler(pipeline_run=pipeline_run)
+        pipeline_callback = scheduler.pipeline.pipeline_callbacks_by_uuid[pipeline_callback_uuid]
+
+        with patch.object(
+            scheduler.notification_sender, 'send_pipeline_run_failure_message',
+        ) as mock_send_message:
+            with patch.object(pipeline_callback, 'execute_callback') as mock_pipeline_callback:
+                scheduler.schedule()
+
+        self.assertEqual(pipeline_run.status, PipelineRun.PipelineRunStatus.CANCELLED)
+        mock_send_message.assert_not_called()
+        mock_pipeline_callback.assert_not_called()
 
     @freeze_time('2023-11-11 12:30:00')
     def test_backfill_status_with_completed_pipeline_run(self):

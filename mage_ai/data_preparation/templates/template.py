@@ -111,7 +111,7 @@ def fetch_template_source(
             language=language,
         )
     elif block_type == BlockType.CALLBACK:
-        template_source = __fetch_callback_templates()
+        template_source = __fetch_callback_templates(config)
     elif block_type == BlockType.CONDITIONAL:
         template_source = __fetch_conditional_templates()
 
@@ -329,8 +329,10 @@ def __fetch_custom_templates(
     )
 
 
-def __fetch_callback_templates() -> str:
-    template_path = 'callbacks/default.py'
+def __fetch_callback_templates(config: Mapping[str, str]) -> str:
+    template_path = 'callbacks/pipeline_default.py' if config.get(
+        'pipeline_callback'
+    ) else 'callbacks/default.py'
     return (
         template_env.get_template(template_path).render()
         + '\n'
