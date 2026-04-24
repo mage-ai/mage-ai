@@ -74,7 +74,10 @@ def infer_column_types(df, **kwargs):
             datetime_feature_names.append(col_name)
         elif col_type == 'object':
             df_sub = df[col_name].copy()
-            df_sub = df_sub.replace(r'^\s+$', np.nan, regex=True)
+            df_sub = (
+                df_sub.replace(r'^\s+$', np.nan, regex=True)
+                .infer_objects(copy=False)
+            )
             df_sub = df_sub.dropna()
             df_sub = df_sub.apply(lambda x: x.strip() if type(x) is str else x)
             if df_sub.empty:
