@@ -260,6 +260,7 @@ function DependencyGraph({
   const colorsInverse = useMemo(() => inverseColorsMapping(themeContext), [themeContext]);
 
   const containerRef = useRef(null);
+  const graphContainerRef = useRef<HTMLDivElement>(null);
   const portRefs = useRef({});
   const timeoutActiveRefs = useRef({});
   const timeoutDraggingRefs = useRef({});
@@ -1768,10 +1769,13 @@ function DependencyGraph({
       <GraphContainerStyle
         height={containerHeight}
         onDoubleClick={() => canvasRef?.current?.fitCanvas?.()}
+        ref={graphContainerRef}
       >
         <ZoomControls
           canvasRef={canvasRef}
           containerRef={containerRef}
+          graphContainerRef={graphContainerRef}
+          pipelineUuid={pipeline?.uuid}
           zoomLevel={zoomLevel}
         />
         <Canvas

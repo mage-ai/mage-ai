@@ -252,6 +252,7 @@ function TooltipWrapper({
           appearAbove={appearAbove}
           appearBefore={appearBefore}
           bottomOffset={bottomOffset}
+          data-tooltip-content
           leftPosition={center ? leftPosition : null}
           lightBackground={lightBackground}
           minWidth={autoWidth ? minWidth : null}
