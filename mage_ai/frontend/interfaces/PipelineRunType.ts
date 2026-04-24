@@ -55,11 +55,13 @@ export interface PipelineRunReqQueryParamsType {
   _limit?: number;
   _offset?: number;
   disable_retries_grouping?: boolean;
+  end_timestamp?: number;
   global_data_product_uuid?: string;
   include_all_pipeline_schedules?: boolean;
   include_pipeline_tags?: boolean;
   include_pipeline_uuids?: boolean;
   pipeline_uuid?: string;
+  start_timestamp?: number;
   status?: RunStatusEnum;
 }
 
