@@ -52,6 +52,7 @@
     "framer-motion": "^11.2.11",
     "global": "^4.4.0",
     "html-react-parser": "^5.1.10",
+    "html-to-image": "^1.11.13",
     "immutability-helper": "^3.1.1",
     "js-cookie": "^3.0.5",
     "jwt-decode": "^3.1.2",
