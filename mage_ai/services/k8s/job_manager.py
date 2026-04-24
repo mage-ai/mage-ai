@@ -69,6 +69,7 @@ class JobManager():
         command: str,
         k8s_config: Union[K8sExecutorConfig, Dict] = None,
     ):
+        job = None
         if not self.job_exists():
             if type(k8s_config) is dict:
                 k8s_config = K8sExecutorConfig.load(config=k8s_config)
@@ -78,18 +79,34 @@ class JobManager():
             )
 
             self.create_job(job)
+        else:
+            job = self.batch_api_client.read_namespaced_job(
+                name=self.job_name,
+                namespace=self.namespace
+            )
 
         api_response = None
         job_completed = False
+        backoff_limit = job.spec.backoff_limit or 0
+
         while not job_completed:
             api_response = self.batch_api_client.read_namespaced_job(
                 name=self.job_name,
                 namespace=self.namespace
             )
-            if api_response.status.succeeded is not None or \
-                    api_response.status.failed is not None:
+            succeeded = api_response.status.succeeded or 0
+            failed = api_response.status.failed or 0
+            if succeeded >= 1:
                 job_completed = True
-            time.sleep(5)
+
+            elif failed >= backoff_limit:
+                job_completed = True
+                self._print(
+                    f'Backoff limit exceeded ({failed}) for job {self.job_name}'
+                )
+            else:
+                time.sleep(5)
+
             # self._print(f'Job {self.job_name} status={api_response.status}')
 
         self.delete_job()
