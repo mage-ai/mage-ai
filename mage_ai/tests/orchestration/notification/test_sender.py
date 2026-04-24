@@ -6,6 +6,8 @@ from mage_ai.tests.base_test import DBTestCase
 from mage_ai.tests.factory import create_pipeline, create_pipeline_run_with_schedule
 from mage_ai.tests.orchestration.notification.constants import (
     EMAIL_NOTIFICATION_CONFIG,
+    NTFY_NOTIFICATION_CONFIG,
+    NTFY_NOTIFICATION_CONFIG_WITH_CUSTOM_TEMPLATE,
     OPSGENIE_NOTIFICATION_CONFIG,
     SLACK_NOTIFICATION_CONFIG,
     SLACK_NOTIFICATION_CONFIG_WITH_CUSTOM_TEMPLATE,
@@ -149,6 +151,65 @@ class NotificationSenderTests(DBTestCase):
         sender.send_pipeline_run_failure_message(self.__class__.pipeline, pipeline_run)
         self.assertEqual(mock_send_email.call_count, 0)
         self.assertEqual(mock_send_teams_message.call_count, 0)
+
+    @patch('mage_ai.orchestration.notification.sender.send_ntfy_message')
+    @patch('mage_ai.orchestration.notification.sender.send_email')
+    def test_send_pipeline_run_failure_message_using_ntfy(
+            self,
+            mock_send_email,
+            mock_send_ntfy_message,
+    ):
+        notification_config = NotificationConfig.load(config=NTFY_NOTIFICATION_CONFIG)
+        sender = NotificationSender(config=notification_config)
+        pipeline_run = self.__class__.pipeline_run
+        sender.send_pipeline_run_failure_message(self.__class__.pipeline, pipeline_run)
+        self.assertEqual(mock_send_email.call_count, 0)
+        message = (
+            'Failed to run Pipeline `test_pipeline` '
+            f'with Trigger {pipeline_run.pipeline_schedule.id} '
+            f'`{pipeline_run.pipeline_schedule.name}` '
+            f'at execution time `{pipeline_run.execution_date}`. Error: None'
+        )
+        title = 'Failed to run Mage pipeline test_pipeline'
+        mock_send_ntfy_message.assert_called_once_with(
+            notification_config.ntfy_config,
+            message,
+            title
+        )
+
+    @patch('mage_ai.orchestration.notification.sender.send_ntfy_message')
+    @patch('mage_ai.orchestration.notification.sender.send_email')
+    def test_send_pipeline_run_failure_message_using_ntfy_with_custom_template(
+            self,
+            mock_send_email,
+            mock_send_ntfy_message,
+    ):
+        notification_config = NotificationConfig.load(
+            config=NTFY_NOTIFICATION_CONFIG_WITH_CUSTOM_TEMPLATE)
+        sender = NotificationSender(config=notification_config)
+        pipeline_run = self.__class__.pipeline_run
+        sender.send_pipeline_run_failure_message(
+            self.__class__.pipeline,
+            pipeline_run,
+            error='Something broke',
+            stacktrace='Traceback: line 42',
+        )
+        self.assertEqual(mock_send_email.call_count, 0)
+        expected_title = (
+            f'Pipeline test_pipeline failed at {pipeline_run.execution_date}'
+        )
+        expected_summary = (
+            'Failed: http://localhost:6789/pipelines/test_pipeline/runs/'
+            f'{pipeline_run.id} | trigger={pipeline_run.pipeline_schedule.name} '
+            f'(id={pipeline_run.pipeline_schedule.id}) '
+            f'| desc={pipeline_run.pipeline_schedule.description} '
+            '| error=Something broke | stacktrace=Traceback: line 42'
+        )
+        mock_send_ntfy_message.assert_called_once_with(
+            notification_config.ntfy_config,
+            expected_summary,
+            expected_title,
+        )
 
     @patch('mage_ai.orchestration.notification.sender.send_opsgenie_alert')
     @patch('mage_ai.orchestration.notification.sender.send_email')

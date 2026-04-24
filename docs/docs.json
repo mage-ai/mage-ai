@@ -773,6 +773,7 @@
             "pages": [
               "observability/alerting/alerting-discord",
               "observability/alerting/alerting-email",
+              "observability/alerting/alerting-ntfy",
               "observability/alerting/alerting-opsgenie",
               "observability/alerting/alerting-slack",
               "observability/alerting/alerting-teams",
