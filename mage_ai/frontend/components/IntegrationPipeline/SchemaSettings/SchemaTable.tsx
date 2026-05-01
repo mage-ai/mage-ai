@@ -115,6 +115,7 @@ function SchemaTable({
       properties,
     },
     tap_stream_id: streamUUID,
+    truncate_before_replication: truncateBeforeReplication,
     unique_constraints: uniqueConstraints,
     unique_conflict_method: uniqueConflictMethod,
   } = stream;
@@ -152,9 +153,9 @@ function SchemaTable({
         [streamUUID]: bookmarkValuesInit,
       }));
     }
-  // The bookmarkValues dependency is not included below in the dep array
-  // because it would cause an infinite rendering loop.
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // The bookmarkValues dependency is not included below in the dep array
+    // because it would cause an infinite rendering loop.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     bookmarkProperties?.length,
     bookmarkValuesInit,
@@ -294,8 +295,8 @@ function SchemaTable({
                   <Chip
                     border
                     label={(columnFormat
-                        && ColumnTypeEnum.STRING === columnType
-                        && indexOfFirstStringType === idx)
+                      && ColumnTypeEnum.STRING === columnType
+                      && indexOfFirstStringType === idx)
                       ? ColumnFormatMapping[columnFormat]
                       : columnType
                     }
@@ -360,16 +361,16 @@ function SchemaTable({
           onClick={(validKeyProperties.length >= 1 && !validKeyProperties.includes(columnName))
             ? null
             : () => updateStream(streamUUID, (stream: StreamType) => {
-            if (stream.unique_constraints?.includes(columnName)) {
-              stream.unique_constraints =
-                remove(stream.unique_constraints, col => columnName === col);
-            } else {
-              stream.unique_constraints =
-                [columnName].concat(stream.unique_constraints || []);
-            }
+              if (stream.unique_constraints?.includes(columnName)) {
+                stream.unique_constraints =
+                  remove(stream.unique_constraints, col => columnName === col);
+              } else {
+                stream.unique_constraints =
+                  [columnName].concat(stream.unique_constraints || []);
+              }
 
-            return stream;
-          })}
+              return stream;
+            })}
         />,
         <Checkbox
           checked={!!bookmarkProperties?.includes(columnName)}
@@ -378,17 +379,17 @@ function SchemaTable({
           onClick={(validReplicationKeys.length >= 1 && !validReplicationKeys.includes(columnName))
             ? null
             : () => updateStream(streamUUID, (stream: StreamType) => {
-            if (stream.bookmark_properties?.includes(columnName)) {
-              removeBookmarkPropertyFromState(columnName);
-              stream.bookmark_properties =
-                remove(stream.bookmark_properties, col => columnName === col);
-            } else {
-              stream.bookmark_properties =
-                [columnName].concat(stream.bookmark_properties || []);
-            }
+              if (stream.bookmark_properties?.includes(columnName)) {
+                removeBookmarkPropertyFromState(columnName);
+                stream.bookmark_properties =
+                  remove(stream.bookmark_properties, col => columnName === col);
+              } else {
+                stream.bookmark_properties =
+                  [columnName].concat(stream.bookmark_properties || []);
+              }
 
-            return stream;
-          })}
+              return stream;
+            })}
         />,
         <Checkbox
           checked={!!keyProperties?.includes(columnName)}
@@ -411,7 +412,7 @@ function SchemaTable({
         const isNotDeltaLakeDestination = destination !== IntegrationDestinationEnum.DELTA_LAKE_S3;
         const disabled = isNotDeltaLakeDestination && (
           validKeyProperties.includes(columnName)
-            || !columnTypesSetForAllowingPartitionKey.has(ColumnFormatEnum.DATE_TIME)
+          || !columnTypesSetForAllowingPartitionKey.has(ColumnFormatEnum.DATE_TIME)
         );
 
         row.push(
@@ -718,7 +719,7 @@ function SchemaTable({
                     <option key={method} value={method}>
                       {method}
                     </option>
-                ))}
+                  ))}
               </Select>
 
               <Spacing ml={3} />
@@ -778,8 +779,30 @@ function SchemaTable({
                   {UniqueConflictMethodEnum.UPDATE}
                 </option>
               </Select>
-            </Flex>
+              <Spacing ml={3} />
 
+            </Flex>
+            {replicationMethod === ReplicationMethodEnum.FULL_TABLE && (
+              <Flex alignItems='center'>
+                <Text default>Truncate Table before Replication</Text>
+                <Spacing ml={1} />
+
+                <Tooltip
+                  appearBefore
+                  {...SHARED_TOOLTIP_PROPS}
+                  label={<Text>When enabled, all existing rows in the destination table will be deleted (FULL_TABLE replication only)</Text>}
+                />
+                <Spacing ml={1} />
+                <ToggleSwitch
+                  onCheck={() => updateStream(streamUUID, (stream: StreamType) => ({
+                    ...stream,
+                    truncate_before_replication: !truncateBeforeReplication,
+                  }))}
+                  checked={truncateBeforeReplication} />
+
+                <Spacing ml={3} />
+              </Flex>
+            )}
             {hasMultipleStreams && (
               <Flex alignItems="center">
                 <Text default>
@@ -1070,7 +1093,7 @@ function SchemaTable({
                 </Text> to
                 use a specific column as a unique constraint.
               </Text>
-              )}
+            )}
             {uniqueConstraints?.sort().map((columnName: string) => (
               <Spacing
                 key={`unique_constraints/${columnName}`}
@@ -1113,7 +1136,7 @@ function SchemaTable({
                 </Text> to
                 use a specific column as a key property.
               </Text>
-              )}
+            )}
             {keyProperties?.sort().map((columnName: string) => (
               <Spacing
                 key={`key_properties/${columnName}`}
@@ -1158,7 +1181,7 @@ function SchemaTable({
                   </Text> to
                   use a specific column as a partition key.
                 </Text>
-                )}
+              )}
               {partitionKeys?.sort().map((columnName: string) => (
                 <Spacing
                   key={`key_properties/${columnName}`}
