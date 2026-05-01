@@ -43,10 +43,7 @@ from mage_ai.shared.parsers import (
     encode_complex,
     has_to_dict,
 )
-from mage_ai.shared.strings import (
-    is_json,
-    is_image
-)
+from mage_ai.shared.strings import is_image, is_json
 
 
 def format_output_data(

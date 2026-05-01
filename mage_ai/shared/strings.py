@@ -21,7 +21,7 @@ def is_image(img):
     try:
         # Strip metadata header if present (e.g., "data:image/png;base64,")
         if "," in img:
-            image_string = img.split(",")[1]
+            img = img.split(",")[1]
 
         img_data = base64.b64decode(img, validate=True)
 
