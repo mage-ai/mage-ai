@@ -28,6 +28,7 @@ export enum AttributeUUIDEnum {
   PROPERTY_SELECTED = 'property_selected',
   REPLICATION_METHOD = 'replication_method',
   RUN_IN_PARALLEL = 'run_in_parallel',
+  TRUNCATE_BEFORE_REPLICATION = 'truncate_before_replication',
   UNIQUE_CONFLICT_METHOD = 'unique_conflict_method',
   UNIQUE_CONSTRAINTS = 'unique_constraints',
 }
@@ -79,8 +80,8 @@ export function getLeafNodes(
   opts: {
     includeAllNodes: boolean;
   } = {
-    includeAllNodes: false,
-  },
+      includeAllNodes: false,
+    },
 ): BlockType[] {
   const blocksMapping = indexBy(blocks, ({ uuid }) => uuid);
 
@@ -777,6 +778,7 @@ export function updateStreamMappingWithStreamAttributes(
     AttributeUUIDEnum.DISABLE_COLUMN_TYPE_CHECK,
     AttributeUUIDEnum.REPLICATION_METHOD,
     AttributeUUIDEnum.RUN_IN_PARALLEL,
+    AttributeUUIDEnum.TRUNCATE_BEFORE_REPLICATION,
     AttributeUUIDEnum.UNIQUE_CONFLICT_METHOD,
   ];
 
