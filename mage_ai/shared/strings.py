@@ -1,8 +1,11 @@
+import base64
+import io
 import json
 import re
 from typing import List
 
 import inflection
+from PIL import Image
 
 
 def is_json(myjson):
@@ -14,6 +17,19 @@ def is_json(myjson):
     except Exception:
         return False
 
+def is_image(img):
+    try:
+        # Strip metadata header if present (e.g., "data:image/png;base64,")
+        if "," in img:
+            image_string = img.split(",")[1]
+
+        img_data = base64.b64decode(img, validate=True)
+
+        with Image.open(io.BytesIO(img_data)) as img:
+            img.verify()
+            return img.format, True
+    except Exception:
+        return '', False
 
 def camel_to_snake_case(name):
     name = re.sub('(.)([A-Z][a-z]+)', r'\1_\2', name)
