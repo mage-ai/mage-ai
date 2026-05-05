@@ -1,0 +1,137 @@
+---
+title: "Google Display & Video 360"
+description: "Sync DV360 entity metadata and Bid Manager performance report data from Google's Display & Video 360 platform using a service account."
+---
+
+import { ProButton } from '/snippets/pro/button.mdx';
+import { ProOnly } from '/snippets/pro/only.mdx';
+
+<ProOnly source="data-integration" />
+
+## Overview
+
+This source syncs entity metadata from [Display & Video 360](https://displayvideo.google.com/) using the [Display Video API v4](https://developers.google.com/display-video/api/reference/rest/v4) and performance report data using the [DoubleClick Bid Manager API v2](https://developers.google.com/bid-manager/reference/rest).
+
+**Entity streams** cover the full DV360 resource hierarchy: partners → advertisers → campaigns, insertion orders, line items, creatives, channels, ad groups, and more, including nested resources such as assigned targeting options and YouTube asset associations.
+
+**Bid Manager streams** (`bid_manager_queries`, `bid_manager_reports`, `bid_manager_report_rows`) list saved queries and their completed reports, and download CSV report data directly from the GCS path returned by the Bid Manager API.
+
+Authentication uses a **Google Cloud service account** JSON key (not user OAuth). Domain-wide delegation is supported via the optional `email` field.
+
+All streams use **full table** replication. Each entity row includes `entity_id`, `_raw` (full API object as JSON), and flattened top-level fields.
+
+<br/>
+
+## Configuration
+
+| Key | Required | Default | Description |
+| --- | -------- | ------- | ----------- |
+| `path_to_credentials_json_file` | ✅ | — | Path to a Google Cloud **service account** JSON key with access to Display & Video 360. |
+| `email` | | — | Google user to impersonate when using **domain-wide delegation**. Leave blank for direct service-account access. |
+| `partner_id` | ✅ | — | DV360 **partner ID**. Required for `advertisers` and any advertiser-scoped stream when `advertiser_ids` is not set. Not required for `partners` or `bid_manager_*` streams. Optional for **Test connection** (falls back to `partners.list` without it). |
+| `advertiser_ids` | | auto-discover | Comma-separated DV360 advertiser IDs. If set, all advertiser-scoped streams use only these IDs and `partner_id` is not needed for those streams. If omitted, advertiser IDs are discovered by calling `advertisers.list` under `partner_id`. |
+| `bid_manager_query_ids` | | all queries | Comma-separated Bid Manager query IDs. If omitted, all queries from `queries.list` are used — this can be slow when there are many queries. |
+
+<br/>
+
+## Sample configs
+
+**DV360 entity streams only** (no Bid Manager):
+
+```yaml
+path_to_credentials_json_file: /secrets/dv360_service_account.json
+partner_id: "123456"
+```
+
+**Scoped to specific advertisers** (`partner_id` not required for advertiser-scoped streams):
+
+```yaml
+path_to_credentials_json_file: /secrets/dv360_service_account.json
+advertiser_ids: "111111111,222222222"
+```
+
+**Bid Manager streams with explicit query IDs** (disable entity streams in catalog):
+
+```yaml
+path_to_credentials_json_file: /secrets/dv360_service_account.json
+bid_manager_query_ids: "123456789,987654321"
+```
+
+**Full config — DV360 entities + Bid Manager + domain-wide delegation**:
+
+```yaml
+path_to_credentials_json_file: /secrets/dv360_service_account.json
+email: analyst@company.com
+partner_id: "123456"
+advertiser_ids: "111111111,222222222"
+bid_manager_query_ids: "123456789"
+```
+
+<br/>
+
+## Streams
+
+### DV360 entity streams
+
+| Stream | API resource |
+| ------ | ------------ |
+| `partners` | [`partners.list`](https://developers.google.com/display-video/api/reference/rest/v4/partners/list) — partners visible to the credential. No `partner_id` required. |
+| `advertisers` | [`advertisers.list`](https://developers.google.com/display-video/api/reference/rest/v4/advertisers/list) — advertisers under `partner_id`. |
+| `campaigns` | `advertisers.campaigns.list` |
+| `insertion_orders` | `advertisers.insertionOrders.list` |
+| `line_items` | `advertisers.lineItems.list` |
+| `ad_groups` | `advertisers.adGroups.list` |
+| `ad_group_ads` | `advertisers.adGroupAds.list` |
+| `ad_assets` | `advertisers.adAssets.list` |
+| `creatives` | `advertisers.creatives.list` |
+| `channels` | `advertisers.channels.list` |
+| `channel_sites` | `advertisers.channels.sites.list` — walks each channel per advertiser. |
+| `invoices` | `advertisers.invoices.list` |
+| `location_lists` | `advertisers.locationLists.list` |
+| `location_list_assigned_locations` | `advertisers.locationLists.assignedLocations.list` |
+| `negative_keyword_lists` | `advertisers.negativeKeywordLists.list` |
+| `negative_keyword_list_negative_keywords` | `advertisers.negativeKeywordLists.negativeKeywords.list` |
+| `advertiser_assigned_targeting_options` | `advertisers.targetingTypes.assignedTargetingOptions.list` — one request per targeting type enum value. |
+| `ad_group_assigned_targeting_options` | `advertisers.adGroups.targetingTypes.assignedTargetingOptions.list` — one request per ad group per targeting type. |
+| `ad_group_youtube_asset_associations` | `advertisers.adGroups.youtubeAssetTypes.youtubeAssetAssociations.list` |
+| `line_item_assigned_targeting_options` | `advertisers.lineItems.targetingTypes.assignedTargetingOptions.list` |
+| `line_item_youtube_asset_associations` | `advertisers.lineItems.youtubeAssetTypes.youtubeAssetAssociations.list` |
+
+### Bid Manager streams
+
+| Stream | Description |
+| ------ | ----------- |
+| `bid_manager_queries` | Saved Bid Manager query definitions from [`queries.list`](https://developers.google.com/bid-manager/reference/rest/v2/queries/list). |
+| `bid_manager_reports` | Report metadata per query from [`queries.reports.list`](https://developers.google.com/bid-manager/reference/rest/v2/queries.reports/list). |
+| `bid_manager_report_rows` | For each completed (`DONE`) CSV report, streams rows from the GCS path in `metadata.googleCloudStoragePath`. Each record contains `entity_id`, `_query_id`, `_report_id`, `_row_number`, and `row_data` (JSON map of CSV column → value). Reports with status other than `DONE`, XLSX format, or no GCS path are skipped. |
+
+**Sample data limits:** `bid_manager_queries` returns at most 25 rows; `bid_manager_reports` uses only the first query and one report; `bid_manager_report_rows` returns at most 25 CSV rows from a single report.
+
+<br/>
+
+## Prerequisites
+
+1. Enable the **Display & Video 360 API** (`displayvideo.googleapis.com`) in [Google Cloud Console](https://console.cloud.google.com/apis/dashboard).
+2. For Bid Manager streams, also enable the **DoubleClick Bid Manager API** (`doubleclickbidmanager.googleapis.com`) and grant the service account read access to the GCS buckets where report files are delivered.
+3. Create a service account and download its JSON key. Set `path_to_credentials_json_file` to the local path.
+4. In the DV360 UI, grant the service account access at the partner or advertiser level as appropriate.
+5. If your organization uses **domain-wide delegation**: configure it in Google Workspace Admin for the service account, include the DV360 and Bid Manager scopes, and set `email` to the user to impersonate.
+
+### OAuth scopes used
+
+| Scope | Used by |
+| ----- | ------- |
+| `https://www.googleapis.com/auth/display-video` | All DV360 entity streams |
+| `https://www.googleapis.com/auth/doubleclickbidmanager` | Bid Manager streams |
+| `https://www.googleapis.com/auth/devstorage.read_only` | Bid Manager report file download from GCS |
+
+<br/>
+
+## Related links
+
+- [Display & Video 360 API (v4) reference](https://developers.google.com/display-video/api/reference/rest/v4)
+- [DoubleClick Bid Manager API (v2) reference](https://developers.google.com/bid-manager/reference/rest)
+- [Service account authentication](https://cloud.google.com/iam/docs/service-account-overview)
+- [Domain-wide delegation](https://developers.google.com/workspace/guides/create-credentials#optional_set_up_domain-wide_delegation_for_a_service_account)
+
+<br/>

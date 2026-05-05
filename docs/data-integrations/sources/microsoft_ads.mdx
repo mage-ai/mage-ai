@@ -1,0 +1,131 @@
+---
+title: "Microsoft Ads"
+description: "Sync performance reports from the Microsoft Advertising API (Bing Ads v13) using OAuth 2.0 and the official bingads Python SDK."
+---
+
+import { ProButton } from '/snippets/pro/button.mdx';
+import { ProOnly } from '/snippets/pro/only.mdx';
+
+<ProOnly source="data-integration" />
+
+## Overview
+
+This source syncs performance reports from the [Microsoft Advertising API](https://learn.microsoft.com/en-us/advertising/guides/get-started) (Bing Ads API **v13**) using the official [`bingads`](https://github.com/BingAds/BingAds-Python-SDK) Python SDK.
+
+Reports are requested asynchronously: the connector submits a report request, polls until the result is ready, downloads the data, and emits one record per row. All three streams use **daily aggregation** by default and sync **incrementally** on `TimePeriod` per ad account, so only new or updated days are fetched on subsequent runs.
+
+Authentication uses **OAuth 2.0** with a `refresh_token` (no service accounts). You provide an Azure AD application's `client_id` (and optionally `client_secret`) alongside a `developer_token` that identifies your API application.
+
+<br/>
+
+## Configuration
+
+| Key                     | Required | Default | Description |
+| ----------------------- | -------- | ------- | ----------- |
+| `developer_token`       | ✅ | — | Microsoft Advertising developer token. Identifies your application to the API. Obtained from [Microsoft Advertising API Center](https://developers.ads.microsoft.com/Account). |
+| `client_id`             | ✅ | — | Azure AD **Application (client) ID** for your registered app. |
+| `client_secret`         | | — | Azure AD client secret. Required for **confidential/web app** OAuth flows. Leave empty for **public/desktop app** flows. |
+| `refresh_token`         | ✅ | — | OAuth refresh token scoped to `https://ads.microsoft.com/msads.manage`. See [Authentication with OAuth](https://learn.microsoft.com/en-us/advertising/guides/authentication-oauth). |
+| `oauth_redirection_uri` | | `https://login.microsoftonline.com/common/oauth2/nativeclient` | Redirect URI registered in Azure AD. Must match the URI used when obtaining the refresh token. Required when `client_secret` is set. |
+| `customer_id`           | ✅ | — | Microsoft Advertising **manager account (customer) ID** the user operates under. |
+| `account_ids`           | ✅ | — | Comma-separated **advertiser account IDs** to sync. Find these in the Microsoft Advertising UI under account settings. |
+| `start_date`            | ✅ | — | Reporting lower bound. Format: ISO 8601 (`YYYY-MM-DDTHH:MM:SSZ`). |
+| `end_date`              | | today (UTC) | Optional reporting upper bound. |
+| `environment`           | | `production` | API environment: `production` or `sandbox`. |
+| `aggregation`           | | `Daily` | Report aggregation period. Common values: `Daily`, `Weekly`, `Monthly`. |
+| `report_time_zone`      | | — | [ReportTimeZone](https://learn.microsoft.com/en-us/advertising/reporting-service/reporttimezonetype) value. Leave empty to use the account's default time zone. |
+| `poll_interval_ms`      | | `5000` | Milliseconds between status polls while the async report is generating. |
+| `report_timeout_ms`     | | `3600000` | Maximum milliseconds to wait for report download before failing (default 1 hour). |
+
+> **Legacy key:** `accounts` is accepted as an alias for `account_ids` for backwards compatibility.
+
+<br/>
+
+## Sample configs
+
+**Minimal — production environment, daily reports**:
+
+```yaml
+developer_token: YOUR_DEVELOPER_TOKEN
+client_id: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+refresh_token: YOUR_REFRESH_TOKEN
+customer_id: "12345678"
+account_ids: "111111111,222222222"
+start_date: "2025-01-01T00:00:00Z"
+```
+
+**Confidential app flow (with client secret)**:
+
+```yaml
+developer_token: YOUR_DEVELOPER_TOKEN
+client_id: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+client_secret: YOUR_CLIENT_SECRET
+refresh_token: YOUR_REFRESH_TOKEN
+oauth_redirection_uri: https://login.microsoftonline.com/common/oauth2/nativeclient
+customer_id: "12345678"
+account_ids: "111111111"
+start_date: "2025-01-01T00:00:00Z"
+```
+
+**Sandbox testing**:
+
+```yaml
+developer_token: YOUR_DEVELOPER_TOKEN
+client_id: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+refresh_token: YOUR_SANDBOX_REFRESH_TOKEN
+customer_id: "12345678"
+account_ids: "111111111"
+start_date: "2025-01-01T00:00:00Z"
+environment: sandbox
+```
+
+<br/>
+
+## Streams
+
+| Stream | Report type | Description |
+| ------ | ----------- | ----------- |
+| `campaign_performance_report` | [CampaignPerformanceReportRequest](https://learn.microsoft.com/en-us/advertising/reporting-service/campaignperformancereportrequest) | Daily campaign-level impressions, clicks, spend, and conversions. |
+| `ad_group_performance_report` | [AdGroupPerformanceReportRequest](https://learn.microsoft.com/en-us/advertising/reporting-service/adgroupperformancereportrequest) | Daily ad group-level performance metrics. |
+| `ad_performance_report` | [AdPerformanceReportRequest](https://learn.microsoft.com/en-us/advertising/reporting-service/adperformancereportrequest) | Daily ad-level performance metrics. |
+
+All streams sync **incrementally** on `TimePeriod` (one bookmark per ad account). On the first run the full history from `start_date` is fetched; subsequent runs fetch only new or updated days.
+
+<br/>
+
+## How to get credentials
+
+### 1. Developer token
+
+1. Sign in to [Microsoft Advertising](https://ads.microsoft.com/) as the account owner or a user with API access.
+2. Go to **Tools → API Center** (or visit the [Microsoft Advertising API Center](https://developers.ads.microsoft.com/Account) directly).
+3. Request and copy your developer token.
+
+### 2. Azure AD app (`client_id` / `client_secret`)
+
+1. Open [Azure Portal → App registrations](https://portal.azure.com/#blade/Microsoft_AAD_RegisteredApps/ApplicationsListBlade) and click **New registration**.
+2. Choose **Public client / native** for desktop flows (no `client_secret` required) or **Web** for server flows.
+3. Add `https://login.microsoftonline.com/common/oauth2/nativeclient` as a redirect URI (or your own URI for web flows).
+4. Copy the **Application (client) ID** → `client_id`.
+5. For web flows: go to **Certificates & secrets** and create a client secret → `client_secret`.
+
+### 3. Refresh token
+
+Use the [Microsoft Advertising OAuth guide](https://learn.microsoft.com/en-us/advertising/guides/authentication-oauth) to complete the authorization code flow with the scope `https://ads.microsoft.com/msads.manage offline_access`. Copy the resulting `refresh_token` into your config.
+
+### 4. `customer_id` and `account_ids`
+
+Find these in the [Microsoft Advertising UI](https://ui.ads.microsoft.com):
+- **Customer ID** — shown in the top-right account selector next to your account name.
+- **Account IDs** — visible in **Accounts Summary** or each account's settings page.
+
+<br/>
+
+## Related links
+
+- [Microsoft Advertising API — Get Started](https://learn.microsoft.com/en-us/advertising/guides/get-started)
+- [Authentication with OAuth](https://learn.microsoft.com/en-us/advertising/guides/authentication-oauth)
+- [Reporting Service overview](https://learn.microsoft.com/en-us/advertising/reporting-service/reporting-service-reference)
+- [ReportTimeZone values](https://learn.microsoft.com/en-us/advertising/reporting-service/reporttimezonetype)
+
+<br/>

@@ -40,6 +40,20 @@
             ]
           },
           {
+            "group": "Mage Agent",
+            "pages": [
+              "agent/introduction",
+              "agent/quickstart",
+              "agent/installation",
+              "agent/authentication",
+              "agent/ide-integration",
+              "agent/sync",
+              "agent/mcp-tools",
+              "agent/cli-reference",
+              "agent/troubleshooting"
+            ]
+          },
+          {
             "group": "CI/CD",
             "pages": [
               "development/git/pro-overview",
@@ -92,8 +106,13 @@
                     "group": "Sources",
                     "pages": [
                       "data-integrations/sources/facebook_pages",
+                      "data-integrations/sources/google_campaign_manager_360",
+                      "data-integrations/sources/google_display_video_360",
                       "data-integrations/sources/instagram",
+                      "data-integrations/sources/microsoft_ads",
                       "data-integrations/sources/quickbooks",
+                      "data-integrations/sources/salesforce_marketing_cloud",
+                      "data-integrations/sources/tiktok_ads",
                       "data-integrations/sources/xero",
                       "data-integrations/sources/youtube_analytics"
                     ]

@@ -1,0 +1,128 @@
+---
+title: "IDE Integration"
+description: "Connect Cursor, Claude Code, or OpenAI Codex CLI to your Mage Pro cluster via MCP."
+---
+
+mage-agent exposes a [Model Context Protocol](https://modelcontextprotocol.io) (MCP) server over stdio. Any MCP-compatible AI client can connect by launching `mage-agent mcp` as a subprocess.
+
+## Prerequisites
+
+Complete [Installation](/agent/installation) and [Authentication](/agent/authentication) before setting up IDE integration.
+
+---
+
+## Cursor
+
+<Steps>
+  <Step title="Open MCP settings">
+    In Cursor, go to **Settings → MCP** (or open the Command Palette and search for "MCP Servers").
+  </Step>
+  <Step title="Add mage-agent">
+    Add the following server config:
+
+    ```json
+    {
+      "mcpServers": {
+        "mage-agent": {
+          "command": "mage-agent",
+          "args": ["mcp"]
+        }
+      }
+    }
+    ```
+  </Step>
+  <Step title="Reload Cursor">
+    Save the config and reload the window. Confirm that `mage-agent` tools appear in the MCP tool list.
+  </Step>
+</Steps>
+
+---
+
+## Claude Code
+
+<Steps>
+  <Step title="Add the MCP server via CLI">
+    ```bash
+    claude mcp add mage-agent -- mage-agent mcp
+    ```
+
+    Or add it manually to `.claude/settings.json` in your project (or `~/.claude/settings.json` globally):
+
+    ```json
+    {
+      "mcpServers": {
+        "mage-agent": {
+          "command": "mage-agent",
+          "args": ["mcp"]
+        }
+      }
+    }
+    ```
+  </Step>
+  <Step title="Restart Claude Code">
+    Restart the Claude Code session. Run a quick sanity check:
+
+    > "Use the `pipeline_list` tool to list my Mage pipelines"
+  </Step>
+</Steps>
+
+---
+
+## OpenAI Codex CLI
+
+<Steps>
+  <Step title="Edit your Codex config">
+    Add `mage-agent` to the `mcpServers` section of your Codex config file:
+
+    ```json
+    {
+      "mcpServers": {
+        "mage-agent": {
+          "command": "mage-agent",
+          "args": ["mcp"]
+        }
+      }
+    }
+    ```
+  </Step>
+  <Step title="Restart Codex CLI">
+    Restart Codex CLI and verify tools and resources are visible.
+  </Step>
+</Steps>
+
+---
+
+## PATH issues
+
+If `mage-agent` is not found when the IDE launches the MCP server, use the absolute path to the executable:
+
+```bash
+which mage-agent
+# e.g. /Users/you/.venv/bin/mage-agent
+```
+
+```json
+{
+  "mcpServers": {
+    "mage-agent": {
+      "command": "/Users/you/.venv/bin/mage-agent",
+      "args": ["mcp"]
+    }
+  }
+}
+```
+
+---
+
+## Skill resources
+
+When connected, your AI assistant can also read four Markdown guidance resources that describe how to interact with Mage:
+
+| Resource URI | Content |
+|---|---|
+| `skill://pipeline` | Pipeline CRUD patterns and conventions |
+| `skill://blocks` | Block inspection and editing guidance |
+| `skill://executions` | Run triggers and log retrieval |
+| `skill://sync` | Sync operations and conflict handling |
+
+These are loaded automatically from your cluster at login time (with bundled fallbacks if the cluster is unreachable).

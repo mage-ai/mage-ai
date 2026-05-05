@@ -1,0 +1,209 @@
+---
+title: "MCP Tools"
+description: "Full reference for every tool your AI assistant can call via mage-agent."
+---
+
+Once mage-agent is connected to your IDE, your AI assistant has access to the following tools. All tools require valid authentication.
+
+---
+
+## Pipelines
+
+<AccordionGroup>
+  <Accordion title="pipeline_list">
+    List all pipelines in the project.
+
+    **Arguments:** none
+
+    **Example prompt:** *"List all my Mage pipelines"*
+  </Accordion>
+
+  <Accordion title="pipeline_get">
+    Get details for a single pipeline.
+
+    | Parameter | Type | Required | Description |
+    |---|---|---|---|
+    | `uuid` | string | yes | Pipeline UUID |
+  </Accordion>
+
+  <Accordion title="pipeline_create">
+    Create a new pipeline.
+
+    | Parameter | Type | Required | Description |
+    |---|---|---|---|
+    | `name` | string | yes | Pipeline name |
+    | `type` | string | no | `python` (default), `streaming`, or `integration` |
+
+    **Example prompt:** *"Create a new streaming pipeline called `realtime_events`"*
+  </Accordion>
+
+  <Accordion title="pipeline_update">
+    Update fields on an existing pipeline.
+
+    | Parameter | Type | Required | Description |
+    |---|---|---|---|
+    | `uuid` | string | yes | Pipeline UUID |
+    | `name` | string | no | New name |
+    | `description` | string | no | Updated description |
+  </Accordion>
+
+  <Accordion title="pipeline_delete">
+    Delete a pipeline by UUID.
+
+    | Parameter | Type | Required | Description |
+    |---|---|---|---|
+    | `uuid` | string | yes | Pipeline UUID |
+
+    <Warning>Deletion is permanent and cannot be undone.</Warning>
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## Blocks
+
+<AccordionGroup>
+  <Accordion title="block_list">
+    List all blocks in a pipeline.
+
+    | Parameter | Type | Required | Description |
+    |---|---|---|---|
+    | `pipeline_uuid` | string | yes | Pipeline UUID |
+  </Accordion>
+
+  <Accordion title="block_get">
+    Get block details including source code.
+
+    | Parameter | Type | Required | Description |
+    |---|---|---|---|
+    | `pipeline_uuid` | string | yes | Pipeline UUID |
+    | `uuid` | string | yes | Block UUID |
+  </Accordion>
+
+  <Accordion title="block_create">
+    Create a new block in a pipeline.
+
+    | Parameter | Type | Required | Description |
+    |---|---|---|---|
+    | `pipeline_uuid` | string | yes | Pipeline UUID |
+    | `name` | string | yes | Block name |
+    | `type` | string | yes | Block type (see below) |
+    | `language` | string | no | `python` (default), `sql`, `r`, `yaml`, `markdown` |
+    | `content` | string | no | Initial source code |
+    | `upstream_blocks` | array | no | UUIDs of upstream blocks |
+    | `config` | object | no | Additional block configuration |
+
+    **Supported block types:**
+    `data_loader`, `transformer`, `data_exporter`, `sensor`, `callback`, `chart`, `conditional`, `custom`, `dbt`, `extension`, `global_data_product`, `markdown`, `scratchpad`
+
+    <Note>
+      If no `config` is provided, mage-agent automatically matches a block template for you. For `integration` pipelines, it also auto-detects available sources and destinations.
+    </Note>
+
+    **Example prompt:** *"Add a SQL transformer block to the `customer_etl` pipeline that filters rows where revenue > 1000"*
+  </Accordion>
+
+  <Accordion title="block_update">
+    Update a block's code or configuration.
+
+    | Parameter | Type | Required | Description |
+    |---|---|---|---|
+    | `pipeline_uuid` | string | yes | Pipeline UUID |
+    | `uuid` | string | yes | Block UUID |
+    | `content` | string | no | New source code |
+    | `name` | string | no | New name |
+    | `upstream_blocks` | array | no | Updated upstream block UUIDs |
+  </Accordion>
+
+  <Accordion title="block_templates_list">
+    List available block templates.
+
+    | Parameter | Type | Required | Description |
+    |---|---|---|---|
+    | `force_refresh` | boolean | no | Bypass the daily cache and re-fetch from cluster |
+
+    Templates are cached for 24 hours at `~/.mage-agent/cache/block_templates.json`.
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## Runs & Logs
+
+<AccordionGroup>
+  <Accordion title="run_pipeline">
+    Trigger a pipeline run.
+
+    | Parameter | Type | Required | Description |
+    |---|---|---|---|
+    | `pipeline_uuid` | string | yes | Pipeline UUID |
+    | `payload` | object | no | Optional run payload (variables, etc.) |
+
+    **Example prompt:** *"Run the `daily_refresh` pipeline"*
+  </Accordion>
+
+  <Accordion title="run_logs">
+    Fetch logs for a specific pipeline run.
+
+    | Parameter | Type | Required | Description |
+    |---|---|---|---|
+    | `pipeline_run_id` | string | yes | Pipeline run ID (returned by `run_pipeline`) |
+
+    **Example prompt:** *"Show me the logs for the last run"*
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## Sync
+
+<AccordionGroup>
+  <Accordion title="sync_project_to_local">
+    Pull all remote project files to a local directory.
+
+    | Parameter | Type | Required | Description |
+    |---|---|---|---|
+    | `local_project_dir` | string | no | Local directory path (default: `.mage-agent/local_sync`) |
+  </Accordion>
+
+  <Accordion title="sync_status">
+    Show what has changed between local and remote.
+
+    | Parameter | Type | Required | Description |
+    |---|---|---|---|
+    | `local_project_dir` | string | no | Local directory path |
+  </Accordion>
+
+  <Accordion title="sync_local_to_remote">
+    Push locally changed files to the cluster.
+
+    | Parameter | Type | Required | Description |
+    |---|---|---|---|
+    | `local_project_dir` | string | no | Local directory path |
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## Error responses
+
+All tool errors return a structured envelope:
+
+```json
+{
+  "status": "error",
+  "error": {
+    "code": "AUTH_EXPIRED",
+    "message": "Session token expired. Run `mage-agent login` to re-authenticate."
+  }
+}
+```
+
+| Error code | Cause |
+|---|---|
+| `CONFIG_INVALID` | Missing or malformed `~/.mage-agent/config.json` |
+| `AUTH_REQUIRED` | No credentials found |
+| `AUTH_EXPIRED` | 401/403 from cluster — run `mage-agent login` |
+| `API_ERROR` | Cluster API returned an error |
+| `TOOL_NOT_FOUND` | Requested tool name is not registered |
+| `INTERNAL_ERROR` | Unexpected internal failure |

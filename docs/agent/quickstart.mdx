@@ -1,0 +1,76 @@
+---
+title: "Quickstart"
+description: "Install mage-agent, log in, and make your first AI-assisted pipeline call in under five minutes."
+---
+
+<Steps>
+  <Step title="Install mage-agent">
+    ```bash
+    pip install mage-agent
+    ```
+
+    Verify the install:
+
+    ```bash
+    mage-agent --version
+    ```
+  </Step>
+
+  <Step title="Log in to your Mage Pro cluster">
+    ```bash
+    mage-agent login
+    ```
+
+    The CLI prompts for your cluster URL, email, and password. On success, credentials are saved to `~/.mage-agent/config.json`.
+
+    <Tip>
+      To skip the prompts, pass flags directly:
+      ```bash
+      mage-agent login \
+        --cluster-url https://your-mage-url \
+        --email YOUR_EMAIL \
+        --password YOUR_PASSWORD
+      ```
+    </Tip>
+  </Step>
+
+  <Step title="Connect your AI assistant">
+    Add the following to your IDE's MCP server config and restart the client:
+
+    ```json
+    {
+      "mcpServers": {
+        "mage-agent": {
+          "command": "mage-agent",
+          "args": ["mcp"]
+        }
+      }
+    }
+    ```
+
+    See [IDE Integration](/agent/ide-integration) for client-specific setup instructions.
+  </Step>
+
+  <Step title="Try it">
+    Ask your AI assistant:
+
+    > "List all my Mage pipelines"
+
+    > "Create a new Python transformer block in the `customer_etl` pipeline"
+
+    > "Run the `daily_refresh` pipeline and show me the logs"
+
+    The assistant calls the appropriate MCP tool automatically — no manual API calls required.
+  </Step>
+</Steps>
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Sync local files" icon="arrows-rotate" href="/agent/sync">
+    Mirror your Mage project to your machine for local editing.
+  </Card>
+  <Card title="MCP tools reference" icon="book" href="/agent/mcp-tools">
+    See every tool available to your AI assistant.
+  </Card>
+</CardGroup>

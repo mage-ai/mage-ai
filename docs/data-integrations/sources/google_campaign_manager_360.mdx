@@ -1,0 +1,127 @@
+---
+title: "Google Campaign Manager 360"
+description: "Sync entity data and Report Builder exports from Campaign Manager 360 using the DFA Reporting & Trafficking API v5 and a service account."
+---
+
+import { ProButton } from '/snippets/pro/button.mdx';
+import { ProOnly } from '/snippets/pro/only.mdx';
+
+<ProOnly source="data-integration" />
+
+## Overview
+
+This source syncs entity data and report exports from [Campaign Manager 360](https://campaignmanager.google.com/) using the [Campaign Manager 360 API (dfareporting v5)](https://developers.google.com/doubleclick-advertisers). API v4 is sunset; this connector targets **v5 only**.
+
+There are two categories of streams:
+
+- **Entity streams** (`user_profiles`, `advertisers`, `campaigns`, `reports`) — list resources via the DFA Reporting & Trafficking API. Each row includes a stable `entity_id`, flattened top-level fields, and `_raw` (full API object as JSON).
+- **Report export stream** (`report_rows`) — runs saved **Report Builder** reports by ID, waits for completion, downloads the CSV file via the API, and emits one record per data row. Columns vary by report definition and are packed into a `row_data` JSON string.
+
+Authentication uses a **Google Cloud service account** JSON key. Domain-wide delegation is supported via the optional `email` field.
+
+All streams use **full table** replication.
+
+<br/>
+
+## Configuration
+
+| Key | Required | Default | Description |
+| --- | -------- | ------- | ----------- |
+| `path_to_credentials_json_file` | ✅ | — | Path to a Google Cloud **service account** JSON key with access to Campaign Manager 360. |
+| `email` | | — | Google user to impersonate when using **domain-wide delegation**. Leave blank for direct service-account access. |
+| `profile_id` | ✅ | — | Campaign Manager **user profile ID**. Required for `advertisers`, `campaigns`, `reports`, and `report_rows`. Run the `user_profiles` stream (or use **Load sample data**) to discover available profile IDs. |
+| `advertiser_ids` | | auto-discover | Comma-separated DCM advertiser IDs. If omitted, the `campaigns` stream auto-discovers advertisers by calling `advertisers.list` for `profile_id`. |
+| `report_ids` | ✅ (`report_rows` only) | — | Comma-separated IDs of saved **Report Builder** reports. Required for `report_rows`; ignored by all other streams. Each report must be configured to output **CSV** (not Excel). |
+| `report_use_latest_file` | | `false` | When `true`, reads the most recently completed (`REPORT_AVAILABLE`) file for each report instead of triggering a new execution. Use this for idempotent syncs or when you lack permission to trigger new runs. Raises an error if no completed file exists for a report ID. |
+| `report_run_synchronous` | | `false` | Passes `synchronous=true` to [`reports.run`](https://developers.google.com/doubleclick-advertisers/rest/v5/reports/run). May complete faster for small reports when supported. Has no effect when `report_use_latest_file` is `true`. |
+| `report_poll_interval_seconds` | | `10` | Seconds between [`files.get`](https://developers.google.com/doubleclick-advertisers/rest/v5/files/get) status polls while the report is `QUEUED` or `PROCESSING`. Has no effect when `report_use_latest_file` is `true`. |
+| `report_poll_timeout_seconds` | | `3600` | Maximum seconds to wait for `REPORT_AVAILABLE` before failing the sync. Has no effect when `report_use_latest_file` is `true`. |
+
+<br/>
+
+## Sample configs
+
+**Entity streams only** — user profiles, advertisers, campaigns, reports (no report download):
+
+```yaml
+path_to_credentials_json_file: /secrets/cm360_service_account.json
+profile_id: "1234567"
+```
+
+**Report rows — trigger a new run and wait for completion**:
+
+```yaml
+path_to_credentials_json_file: /secrets/cm360_service_account.json
+profile_id: "1234567"
+report_ids: "987654321,876543210"
+report_poll_interval_seconds: 30
+report_poll_timeout_seconds: 1800
+```
+
+**Report rows — read the most recently completed file** (no new execution triggered):
+
+```yaml
+path_to_credentials_json_file: /secrets/cm360_service_account.json
+profile_id: "1234567"
+report_ids: "987654321"
+report_use_latest_file: true
+```
+
+**Campaigns scoped to specific advertisers with domain-wide delegation**:
+
+```yaml
+path_to_credentials_json_file: /secrets/cm360_service_account.json
+email: analyst@company.com
+profile_id: "1234567"
+advertiser_ids: "111111111,222222222"
+```
+
+<br/>
+
+## Streams
+
+| Stream | Description |
+| ------ | ----------- |
+| `user_profiles` | DCM user profiles accessible to the credential. A useful starting point — run this stream to discover your `profile_id` value. |
+| `advertisers` | Advertisers visible to `profile_id` via [`advertisers.list`](https://developers.google.com/doubleclick-advertisers/rest/v5/advertisers/list). |
+| `campaigns` | Campaigns per advertiser. Uses `advertiser_ids` if set; otherwise auto-discovers advertisers first. |
+| `reports` | Saved Report Builder report definitions for `profile_id`. Returns report metadata only — use `report_rows` to execute and download data. |
+| `report_rows` | Executes each configured `report_id`, waits for the file to reach `REPORT_AVAILABLE`, downloads the CSV, and emits one record per data row. Empty rows (e.g. summary/footer rows) are skipped. Each record contains `_report_id`, `_file_id`, `_row_number`, and `row_data` (a JSON string mapping CSV header names to cell values). |
+
+**`report_rows` and sample data:** When loading sample data, only the first `report_id` is run and at most 25 CSV rows are returned, so the UI preview does not trigger every report or download large files.
+
+<br/>
+
+## How `report_rows` works
+
+1. For each `report_id`, the connector calls [`reports.run`](https://developers.google.com/doubleclick-advertisers/rest/v5/reports/run) to start a new execution (or, if `report_use_latest_file: true`, looks up the most recent completed file via `reports.files.list`).
+2. It polls [`files.get`](https://developers.google.com/doubleclick-advertisers/rest/v5/files/get) every `report_poll_interval_seconds` until the status reaches `REPORT_AVAILABLE`, `FAILED`, or `CANCELLED`, or until `report_poll_timeout_seconds` is exceeded.
+3. Once available, the file is downloaded in streaming chunks via the `files.get_media` endpoint and written to a local temp file.
+4. The temp file is parsed as a UTF-8 CSV. Blank rows are skipped. Each data row is emitted as a record.
+
+<br/>
+
+## Prerequisites
+
+1. Enable **Campaign Manager 360 API** (`dfareporting.googleapis.com`) in [Google Cloud Console](https://console.cloud.google.com/apis/dashboard).
+2. Create a service account and download its JSON key. Set `path_to_credentials_json_file` to the local path.
+3. In Campaign Manager 360, grant the service account access to the account (via **Admin → User Profiles**). Use **domain-wide delegation** and set `email` if your organization requires impersonation.
+4. For `report_rows`: create and save the report in Campaign Manager's [Report Builder](https://support.google.com/campaignmanager/answer/2823849) with **CSV** output format. Copy the numeric report ID from the URL or Report Builder UI and add it to `report_ids`.
+
+### OAuth scopes used
+
+| Scope | Used by |
+| ----- | ------- |
+| `https://www.googleapis.com/auth/dfareporting` | All streams (reporting API) |
+| `https://www.googleapis.com/auth/dfatrafficking` | Entity streams (trafficking API — required for advertisers, campaigns) |
+
+<br/>
+
+## Related links
+
+- [Campaign Manager 360 API (v5) overview](https://developers.google.com/doubleclick-advertisers)
+- [reports.run reference](https://developers.google.com/doubleclick-advertisers/rest/v5/reports/run)
+- [File status lifecycle](https://developers.google.com/doubleclick-advertisers/rest/v5/File#Status)
+- [Service account authentication](https://cloud.google.com/iam/docs/service-account-overview)
+
+<br/>

@@ -1,0 +1,105 @@
+---
+title: "TikTok Ads"
+description: "Sync ad management objects and performance insight reports from the TikTok Marketing API using a long-lived access token."
+---
+
+import { ProButton } from '/snippets/pro/button.mdx';
+import { ProOnly } from '/snippets/pro/only.mdx';
+
+<ProOnly source="data-integration" />
+
+## Overview
+
+This source syncs ad management objects and performance insight reports from the [TikTok Marketing API](https://ads.tiktok.com/marketing_api/). It covers advertisers, campaigns, ad groups, ads, and a set of insight breakdowns (by age/gender, country, platform, and province).
+
+Authentication is via a **long-lived access token** issued by the TikTok Marketing API portal. The token is scoped to one or more advertiser accounts, which you list in `accounts`.
+
+Insight streams (`ad_insights`, `ad_insights_by_*`) sync **incrementally** from `start_date`. Entity streams (`advertisers`, `campaigns`, `adgroups`, `ads`) sync **full table** by default.
+
+<br/>
+
+## Configuration
+
+| Key               | Required | Default | Description |
+| ----------------- | -------- | ------- | ----------- |
+| `access_token`    | ✅ | — | TikTok Marketing API access token. Obtained from the TikTok for Business API portal. |
+| `accounts`        | ✅ | — | Comma-separated advertiser account IDs, or a YAML list. All streams sync data for these accounts. |
+| `start_date`      | ✅ | — | Start of incremental extraction. Format: ISO 8601 (`YYYY-MM-DDTHH:MM:SSZ`). |
+| `end_date`        | | now | Optional upper bound for extraction. |
+| `sandbox`         | | `"false"` | Set to `"true"` to use TikTok sandbox API hosts instead of production. |
+| `user_agent`      | | — | User-Agent header for API calls. TikTok recommends setting this to identify your integration. |
+| `request_timeout` | | `300` | Request timeout in seconds. |
+| `page_size`       | | `1000` | Number of results per API page. |
+| `include_deleted` | | `"false"` | Set to `"true"` to include deleted rows in the `ads`, `adgroups`, and `campaigns` streams. |
+
+<br/>
+
+## Sample configs
+
+**Minimal — entity and insight streams for one account**:
+
+```yaml
+access_token: YOUR_ACCESS_TOKEN
+accounts: "1234567890123456789"
+start_date: "2024-01-01T00:00:00Z"
+```
+
+**Multiple accounts with deleted rows included**:
+
+```yaml
+access_token: YOUR_ACCESS_TOKEN
+accounts: "1234567890123456789,9876543210987654321"
+start_date: "2024-01-01T00:00:00Z"
+include_deleted: "true"
+```
+
+**Sandbox testing**:
+
+```yaml
+access_token: YOUR_SANDBOX_TOKEN
+accounts: "1234567890123456789"
+start_date: "2024-01-01T00:00:00Z"
+sandbox: "true"
+```
+
+<br/>
+
+## Streams
+
+| Stream | Type | Description |
+| ------ | ---- | ----------- |
+| `advertisers` | Full table | Advertiser account details for the configured `accounts`. |
+| `campaigns` | Full table | Campaigns per advertiser. Set `include_deleted: "true"` to include deleted campaigns. |
+| `adgroups` | Full table | Ad groups per campaign. |
+| `ads` | Full table | Individual ads per ad group. |
+| `ad_insights` | Incremental | Daily ad-level performance metrics from `start_date`. |
+| `ad_insights_by_age_and_gender` | Incremental | Ad performance broken down by age and gender. |
+| `ad_insights_by_country` | Incremental | Ad performance broken down by country. |
+| `ad_insights_by_platform` | Incremental | Ad performance broken down by platform (iOS, Android, etc.). |
+| `campaign_insights_by_province` | Incremental | Campaign performance broken down by province/region. |
+
+<br/>
+
+## How to get an access token
+
+1. Go to the [TikTok for Business Marketing API portal](https://ads.tiktok.com/marketing_api).
+2. Create a new app (use the **Marketing API** app flow, not the consumer "TikTok for Developers" Login Kit/Share Kit flow).
+3. Under app permissions, request **read** access for:
+   - **Ad Account Management**
+   - **Ads Management**
+   - **Reporting**
+4. Optionally add a **sandbox advertiser** for testing without spending budget.
+5. Authorize the app against your TikTok Ads account and generate an access token.
+6. Copy the `access_token` and your advertiser ID(s) into the source config.
+
+> **Token expiry:** TikTok Marketing API access tokens are long-lived but can expire. If syncs fail with auth errors, regenerate the token in the portal and update your config.
+
+<br/>
+
+## Related links
+
+- [TikTok Marketing API documentation](https://ads.tiktok.com/marketing_api/docs)
+- [TikTok Ads Manager](https://ads.tiktok.com/)
+- [Reporting API reference](https://ads.tiktok.com/marketing_api/docs?id=1738864835805185)
+
+<br/>
