@@ -38,6 +38,7 @@ type LogsTableProps = {
   autoScrollLogs?: boolean;
   blocksByUUID: { [keyof: string]: BlockType };
   jumpToLogUUID?: string;
+  refreshVersion?: number;
   searchQuery?: string;
   tableInnerRef: React.RefObject<any>;
   logs: LogType[];
@@ -53,6 +54,7 @@ function LogsTable({
   autoScrollLogs,
   blocksByUUID,
   jumpToLogUUID,
+  refreshVersion,
   tableInnerRef,
   logs,
   onRowClick,
@@ -73,6 +75,11 @@ function LogsTable({
 
   const logsPrev = usePrevious(logs);
   useEffect(() => {
+    if (typeof refreshVersion === 'number' && refreshVersion > 0) {
+      tableRef?.current?.scrollTo(0);
+      return;
+    }
+
     if (autoScrollLogs && (logsPrev || []).length !== (logs || []).length) {
       tableInnerRef?.current?.scrollIntoView(false);
     }
@@ -80,6 +87,7 @@ function LogsTable({
     autoScrollLogs,
     logs,
     logsPrev,
+    refreshVersion,
     tableInnerRef,
   ]);
 

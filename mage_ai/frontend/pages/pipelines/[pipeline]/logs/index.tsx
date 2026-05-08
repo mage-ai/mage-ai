@@ -115,6 +115,12 @@ function PipelineLogsPage({
   const [searchField, setSearchField] = useState<LogSearchFieldEnum>(LogSearchFieldEnum.ALL);
   const [matchIndex, setMatchIndex] = useState<number>(0);
   const [pendingSearchDirection, setPendingSearchDirection] = useState<1 | -1>(null);
+  const [refreshVersion, setRefreshVersion] = useState<number>(0);
+
+  useEffect(() => {
+    // forcing a refresh of the logs when navigating between pipelines to reset the state of the page
+    setRefreshVersion(previousValue => previousValue + 1);
+  }, []);
 
   const { data: dataPipeline } = api.pipelines.detail(pipelineUUID, {
     includes_content: false,
@@ -496,6 +502,7 @@ function PipelineLogsPage({
       onRowClick={setSelectedTab}
       pipeline={pipeline}
       query={query}
+      refreshVersion={refreshVersion}
       saveScrollPosition={saveScrollPosition}
       searchQuery={searchQuery}
       setSelectedLog={setSelectedLog}
@@ -668,6 +675,7 @@ function PipelineLogsPage({
           <KeyboardShortcutButton
             {...SHARED_BUTTON_PROPS}
             onClick={() => {
+              setRefreshVersion(previousValue => previousValue + 1); // adding refresh version trigger
               if (q?._offset === '0' && q?._limit === String(LOG_FILE_COUNT_INTERVAL)) {
                 fetchLogs(null);
               } else {
