@@ -30,12 +30,15 @@ import { getLogScrollPositionLocalStorageKey } from '../utils';
 import { goToWithQuery } from '@utils/routing';
 import { shouldDisplayLocalTimezone } from '@components/settings/workspace/utils';
 import { useWindowSize } from '@utils/sizes';
+import { highlightTextMatches, normalizeSearchQuery } from '@components/Logs/search';
 
 export const LOG_UUID_PARAM = 'log_uuid';
 
 type LogsTableProps = {
   autoScrollLogs?: boolean;
   blocksByUUID: { [keyof: string]: BlockType };
+  jumpToLogUUID?: string;
+  searchQuery?: string;
   tableInnerRef: React.RefObject<any>;
   logs: LogType[];
   onRowClick?: (tab?: TabType) => void;
@@ -49,12 +52,14 @@ type LogsTableProps = {
 function LogsTable({
   autoScrollLogs,
   blocksByUUID,
+  jumpToLogUUID,
   tableInnerRef,
   logs,
   onRowClick,
   pipeline,
   query,
   saveScrollPosition,
+  searchQuery,
   setSelectedLog,
   themeContext,
 }: LogsTableProps) {
@@ -87,6 +92,17 @@ function LogsTable({
       tableRef?.current?.scrollTo(get(scrollPositionLocalStorageKey, 0));
     }
   }, [saveScrollPosition, scrollPositionLocalStorageKey]);
+
+  useEffect(() => {
+    if (!jumpToLogUUID) {
+      return;
+    }
+
+    const logIndex = logs.findIndex(log => log?.data?.uuid === jumpToLogUUID);
+    if (logIndex >= 0) {
+      tableRef?.current?.scrollToItem?.(logIndex, 'center');
+    }
+  }, [jumpToLogUUID, logs]);
 
   let blockUUIDs = Object.keys(blocksByUUID || {});
   if (isIntegration) {
@@ -138,6 +154,7 @@ function LogsTable({
     const {
       blocksByUUID,
       logs,
+      searchQuery,
       themeContext,
     } = data;
     const { content, data: logData, name } = logs[index];
@@ -156,6 +173,12 @@ function LogsTable({
     } else if (typeof displayText === 'object') {
       displayText = JSON.stringify(displayText);
     }
+    const highlightedMessage = highlightTextMatches(
+      displayText || '',
+      searchQuery,
+      `${uuid || index}_message`,
+    );
+    const hasSearchQuery = !!normalizeSearchQuery(searchQuery);
 
     let idEl;
     const uuidInit = blockUUIDProp || name.split('.log')[0];
@@ -286,9 +309,11 @@ function LogsTable({
             textOverflow
             title={displayText}
           >
-            <Ansi>
-              {displayText}
-            </Ansi>
+            {hasSearchQuery ? highlightedMessage : (
+              <Ansi>
+                {displayText}
+              </Ansi>
+            )}
           </Text>
         </Flex>
         <Flex
@@ -306,6 +331,7 @@ function LogsTable({
     isIntegration,
     onRowClick,
     query,
+    searchQuery,
     setSelectedLog,
   ]);
 
@@ -337,13 +363,14 @@ function LogsTable({
       </TableHeadStyle>
       <FixedSizeList
         // window height - header - subheader - table header - footer
-        height={windowHeight - HEADER_HEIGHT - 86 - 34 - 58}
+        height={windowHeight - (HEADER_HEIGHT * 2) - 86 - 34 - 58}
         innerRef={tableInnerRef}
         itemCount={logs.length}
         itemData={{
           blocksByUUID,
           logs,
           pipeline,
+          searchQuery,
           themeContext,
         }}
         itemSize={UNIT * 3.75}
