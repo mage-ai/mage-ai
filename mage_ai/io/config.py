@@ -124,6 +124,13 @@ class ConfigKey(StrEnum):
     REDSHIFT_TEMP_CRED_PASSWORD = 'REDSHIFT_TEMP_CRED_PASSWORD'
     REDSHIFT_TEMP_CRED_USER = 'REDSHIFT_TEMP_CRED_USER'
 
+    SFTP_HOST = 'SFTP_HOST'
+    SFTP_PASSWORD = 'SFTP_PASSWORD'
+    SFTP_PORT = 'SFTP_PORT'
+    SFTP_PRIVATE_KEY = 'SFTP_PRIVATE_KEY'
+    SFTP_PRIVATE_KEY_PASSPHRASE = 'SFTP_PRIVATE_KEY_PASSPHRASE'
+    SFTP_USERNAME = 'SFTP_USERNAME'
+
     SNOWFLAKE_ACCOUNT = 'SNOWFLAKE_ACCOUNT'
     SNOWFLAKE_DEFAULT_DB = 'SNOWFLAKE_DEFAULT_DB'
     SNOWFLAKE_DEFAULT_SCHEMA = 'SNOWFLAKE_DEFAULT_SCHEMA'
@@ -353,6 +360,7 @@ class VerboseConfigKey(StrEnum):
     PINOT = 'Pinot'
     POSTGRES = 'PostgreSQL'
     REDSHIFT = 'Redshift'
+    SFTP = 'SFTP'
     SNOWFLAKE = 'Snowflake'
     SPARK = 'Spark'
     QDRANT = 'Qdrant'
@@ -442,6 +450,13 @@ class ConfigFileLoader(BaseConfigLoader):
         ConfigKey.POSTGRES_USER: (VerboseConfigKey.POSTGRES, 'user'),
         ConfigKey.QDRANT_COLLECTION: (VerboseConfigKey.QDRANT, 'collection'),
         ConfigKey.QDRANT_PATH: (VerboseConfigKey.QDRANT, 'path'),
+        ConfigKey.SFTP_HOST: (VerboseConfigKey.SFTP, 'host'),
+        ConfigKey.SFTP_PASSWORD: (VerboseConfigKey.SFTP, 'password'),
+        ConfigKey.SFTP_PORT: (VerboseConfigKey.SFTP, 'port'),
+        ConfigKey.SFTP_PRIVATE_KEY: (VerboseConfigKey.SFTP, 'private_key'),
+        ConfigKey.SFTP_PRIVATE_KEY_PASSPHRASE: (
+            VerboseConfigKey.SFTP, 'private_key_passphrase'),
+        ConfigKey.SFTP_USERNAME: (VerboseConfigKey.SFTP, 'username'),
         ConfigKey.SNOWFLAKE_ACCOUNT: (VerboseConfigKey.SNOWFLAKE, 'account'),
         ConfigKey.SNOWFLAKE_DEFAULT_DB: (VerboseConfigKey.SNOWFLAKE, 'database'),
         ConfigKey.SNOWFLAKE_DEFAULT_SCHEMA: (VerboseConfigKey.SNOWFLAKE, 'schema'),
