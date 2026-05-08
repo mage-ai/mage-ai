@@ -371,6 +371,7 @@ function LogsTable({
       </TableHeadStyle>
       <FixedSizeList
         // window height - header - subheader - table header - footer
+        // added a row to header
         height={windowHeight - (HEADER_HEIGHT * 2) - 86 - 34 - 58}
         innerRef={tableInnerRef}
         itemCount={logs.length}
