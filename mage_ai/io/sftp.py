@@ -121,6 +121,9 @@ class SFTP(BaseFile):
         with self.printer.print_msg(
             f'Exporting data to SFTP at \'{remote_path}\''
         ):
+            if self.exists(remote_path):
+                self.client.remove(remote_path)
+
             if isinstance(data, DataFrame):
                 with self.client.open(remote_path, 'wb') as remote_file:
                     self._write(data, format, remote_file, **kwargs)
