@@ -50,10 +50,27 @@ class SFTP(BaseFile):
 
         private_key = None
         if pkey:
-            private_key = paramiko.RSAKey.from_private_key_file(pkey)
+            for pkey_class in (
+                paramiko.RSAKey,
+                paramiko.Ed25519Key,
+                paramiko.ECDSAKey,
+                paramiko.DSSKey,
+            ):
+                try:
+                    private_key = pkey_class.from_private_key_file(pkey)
+                    break
+                except paramiko.SSHException:
+                    pass
+            if not private_key:
+                self._transport.close()
+                raise ValueError(f"Invalid or unsupported private key format for file: {pkey}")
 
-        self._transport.connect(username=username, password=password, pkey=private_key)
-        self.client = paramiko.SFTPClient.from_transport(self._transport)
+        try:
+            self._transport.connect(username=username, password=password, pkey=private_key)
+            self.client = paramiko.SFTPClient.from_transport(self._transport)
+        except Exception:
+            self._transport.close()
+            raise
 
     def load(
         self,
@@ -124,7 +141,7 @@ class SFTP(BaseFile):
         try:
             self.client.stat(remote_path)
             return True
-        except FileNotFoundError:
+        except (IOError, FileNotFoundError):
             return False
 
     @classmethod
