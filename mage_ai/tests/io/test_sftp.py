@@ -63,7 +63,8 @@ class SFTPConnectorTests(TestCase):
         csv_bytes = b'a,b\n1,2\n3,4\n'
         mock_client = MagicMock()
         self.mock_paramiko.SFTPClient.from_transport.return_value = mock_client
-        mock_client.getfo.side_effect = lambda r, buf: buf.write(csv_bytes)
+        mock_file = MagicMock()
+        mock_client.open.return_value.__enter__.return_value = mock_file
 
         # Mock the underlying _read from BaseFile so we don't need actual pandas parsing
         mock_read.return_value = pd.DataFrame({'a': [1, 3], 'b': [2, 4]})
@@ -87,8 +88,7 @@ class SFTPConnectorTests(TestCase):
         sftp = SFTP.with_config(self._make_config())
         sftp.export(pd.DataFrame({'x': [1]}), '/out.csv')
 
-        mock_client.putfo.assert_called_once()
-        self.assertIsInstance(mock_client.putfo.call_args[0][0], BytesIO)
+        mock_client.open.assert_called_once_with('/out.csv', 'wb')
         mock_write.assert_called_once()
         sftp.close()
 

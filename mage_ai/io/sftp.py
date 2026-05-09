@@ -67,6 +67,7 @@ class SFTP(BaseFile):
 
         try:
             self._transport.connect(username=username, password=password, pkey=private_key)
+            self._transport.set_keepalive(60)
             self.client = paramiko.SFTPClient.from_transport(self._transport)
         except Exception:
             self._transport.close()
@@ -96,10 +97,8 @@ class SFTP(BaseFile):
         with self.printer.print_msg(
             f'Loading data frame from SFTP at \'{remote_path}\''
         ):
-            buffer = BytesIO()
-            self.client.getfo(remote_path, buffer)
-            buffer.seek(0)
-            return self._read(buffer, format, limit, **kwargs)
+            with self.client.open(remote_path, 'rb') as remote_file:
+                return self._read(remote_file, format, limit, **kwargs)
 
     def export(
         self,
@@ -123,10 +122,8 @@ class SFTP(BaseFile):
             f'Exporting data to SFTP at \'{remote_path}\''
         ):
             if isinstance(data, DataFrame):
-                buffer = BytesIO()
-                self._write(data, format, buffer, **kwargs)
-                buffer.seek(0)
-                self.client.putfo(buffer, remote_path)
+                with self.client.open(remote_path, 'wb') as remote_file:
+                    self._write(data, format, remote_file, **kwargs)
             elif isinstance(data, str):
                 self.client.put(data, remote_path)
             else:
