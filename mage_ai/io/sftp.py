@@ -50,6 +50,8 @@ class SFTP(BaseFile):
 
         private_key = None
         if pkey:
+            import io
+            is_string_key = '-----BEGIN' in pkey
             for pkey_class in (
                 paramiko.RSAKey,
                 paramiko.Ed25519Key,
@@ -57,13 +59,16 @@ class SFTP(BaseFile):
                 paramiko.DSSKey,
             ):
                 try:
-                    private_key = pkey_class.from_private_key_file(pkey)
+                    if is_string_key:
+                        private_key = pkey_class.from_private_key(io.StringIO(pkey))
+                    else:
+                        private_key = pkey_class.from_private_key_file(pkey)
                     break
                 except paramiko.SSHException:
                     pass
             if not private_key:
                 self._transport.close()
-                raise ValueError(f"Invalid or unsupported private key format for file: {pkey}")
+                raise ValueError("Invalid or unsupported private key format/path provided.")
 
         try:
             self._transport.connect(username=username, password=password, pkey=private_key)

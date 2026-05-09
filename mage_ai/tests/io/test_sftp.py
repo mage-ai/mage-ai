@@ -45,10 +45,18 @@ class SFTPConnectorTests(TestCase):
         )
         sftp.close()
 
-    def test_with_config_pkey_auth(self):
+    def test_with_config_pkey_auth_file(self):
         cfg = self._make_config(**{ConfigKey.SFTP_PASSWORD: None, ConfigKey.SFTP_PKEY: '/key'})
         sftp = SFTP.with_config(cfg)
         self.mock_paramiko.RSAKey.from_private_key_file.assert_called_once_with('/key')
+        sftp.close()
+
+    def test_with_config_pkey_auth_string(self):
+        # Emulate a key coming from Mage Secrets Manager
+        raw_key = "-----BEGIN RSA PRIVATE KEY-----\nMOCKKEY\n-----END RSA PRIVATE KEY-----"
+        cfg = self._make_config(**{ConfigKey.SFTP_PASSWORD: None, ConfigKey.SFTP_PKEY: raw_key})
+        sftp = SFTP.with_config(cfg)
+        self.mock_paramiko.RSAKey.from_private_key.assert_called_once()
         sftp.close()
 
     def test_with_config_missing_host_raises(self):
