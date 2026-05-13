@@ -3,7 +3,6 @@ Unit tests for mage_ai.io.sftp.SFTP
 
 All paramiko I/O is mocked — no real SFTP server is needed.
 """
-from io import BytesIO
 from unittest import TestCase
 from unittest.mock import MagicMock, patch
 
@@ -31,9 +30,7 @@ class SFTPConnectorTests(TestCase):
             ConfigKey.SFTP_PORT: 22,
         }
         defaults.update(overrides)
-        cfg = MagicMock()
-        cfg.__getitem__ = lambda self, key: defaults.get(key)
-        return cfg
+        return defaults
 
     # -- with_config --------------------------------------------------------
 

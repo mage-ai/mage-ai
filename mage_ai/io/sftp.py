@@ -1,4 +1,3 @@
-from io import BytesIO
 from typing import Union
 
 import paramiko
@@ -102,6 +101,17 @@ class SFTP(BaseFile):
         with self.printer.print_msg(
             f'Loading data frame from SFTP at \'{remote_path}\''
         ):
+            if format == FileFormat.HDF5:
+                import os
+                import tempfile
+                with tempfile.NamedTemporaryFile(delete=False) as tmp:
+                    pass
+                try:
+                    self.client.get(remote_path, tmp.name)
+                    return self._read(tmp.name, format, limit, **kwargs)
+                finally:
+                    os.remove(tmp.name)
+
             with self.client.open(remote_path, 'rb') as remote_file:
                 return self._read(remote_file, format, limit, **kwargs)
 
@@ -126,9 +136,6 @@ class SFTP(BaseFile):
         with self.printer.print_msg(
             f'Exporting data to SFTP at \'{remote_path}\''
         ):
-            if self.exists(remote_path):
-                self.client.remove(remote_path)
-
             if isinstance(data, DataFrame):
                 with self.client.open(remote_path, 'wb') as remote_file:
                     self._write(data, format, remote_file, **kwargs)
@@ -146,8 +153,12 @@ class SFTP(BaseFile):
         try:
             self.client.stat(remote_path)
             return True
-        except (IOError, FileNotFoundError):
+        except FileNotFoundError:
             return False
+        except OSError as err:
+            if err.errno == 2:
+                return False
+            raise
 
     @classmethod
     def with_config(
