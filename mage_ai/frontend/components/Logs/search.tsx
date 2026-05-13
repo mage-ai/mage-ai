@@ -63,7 +63,6 @@ export function logMatchesSearch(log: LogType, normalizedSearchQuery: string): b
     logData?.pipeline_run_id,
     logData?.timestamp,
     logData?.uuid,
-    logData,
   ];
 
   const searchableText = allSearchableValues

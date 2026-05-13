@@ -74,8 +74,13 @@ function LogsTable({
   );
 
   const logsPrev = usePrevious(logs);
+  const refreshVersionPrev = usePrevious(refreshVersion);
   useEffect(() => {
-    if (typeof refreshVersion === 'number' && refreshVersion > 0) {
+    if (
+      typeof refreshVersion === 'number'
+      && refreshVersion > 0
+      && refreshVersion !== refreshVersionPrev
+    ) {
       tableRef?.current?.scrollTo(0);
       return;
     }
@@ -88,6 +93,7 @@ function LogsTable({
     logs,
     logsPrev,
     refreshVersion,
+    refreshVersionPrev,
     tableInnerRef,
   ]);
 
@@ -181,6 +187,7 @@ function LogsTable({
     } else if (typeof displayText === 'object') {
       displayText = JSON.stringify(displayText);
     }
+    const hasAnsiEscapeSequences = /\u001B\[[0-?]*[ -\/]*[@-~]/.test(displayText || '');
     const highlightedMessage = highlightTextMatches(
       displayText || '',
       searchQuery,
@@ -317,7 +324,7 @@ function LogsTable({
             textOverflow
             title={displayText}
           >
-            {hasSearchQuery ? highlightedMessage : (
+            {hasSearchQuery && !hasAnsiEscapeSequences ? highlightedMessage : (
               <Ansi>
                 {displayText}
               </Ansi>

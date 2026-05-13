@@ -113,14 +113,16 @@ function PipelineLogsPage({
   const [autoScrollLogs, setAutoScrollLogs] = useState(get(LOCAL_STORAGE_KEY_AUTO_SCROLL_LOGS, true));
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [searchField, setSearchField] = useState<LogSearchFieldEnum>(LogSearchFieldEnum.ALL);
-  const [matchIndex, setMatchIndex] = useState<number>(0);
   const [pendingSearchDirection, setPendingSearchDirection] = useState<1 | -1>(null);
   const [refreshVersion, setRefreshVersion] = useState<number>(0);
 
   useEffect(() => {
-    // forcing a refresh of the logs when navigating between pipelines to reset the state of the page
+    // Reset page-local navigation state when the route changes to a different pipeline.
+    setSelectedLog(null);
+    setSearchQuery('');
+    setPendingSearchDirection(null);
     setRefreshVersion(previousValue => previousValue + 1);
-  }, []);
+  }, [pipelineUUID]);
 
   const { data: dataPipeline } = api.pipelines.detail(pipelineUUID, {
     includes_content: false,
@@ -300,16 +302,6 @@ function PipelineLogsPage({
     [logIndexByUUID, matchedLogs],
   );
 
-  useEffect(() => {
-    setMatchIndex(previousMatchIndex => {
-      if (!matchedLogs?.length) {
-        return 0;
-      }
-
-      return Math.min(previousMatchIndex, matchedLogs.length - 1);
-    });
-  }, [matchedLogs]);
-
   const qPrev = usePrevious(q);
   useEffect(() => {
     if (onlyLoadPastDayLogs) {
@@ -423,7 +415,6 @@ function PipelineLogsPage({
     if (nextMatchIndex >= 0 && matchedLogs[nextMatchIndex]) {
       const matchedLog = matchedLogs[nextMatchIndex];
       setPendingSearchDirection(null);
-      setMatchIndex(nextMatchIndex);
       goToWithQuery({ [LOG_UUID_PARAM]: matchedLog?.data?.uuid });
       setSelectedLog(matchedLog || null);
       return;
@@ -446,7 +437,6 @@ function PipelineLogsPage({
     if (boundaryMatchIndex >= 0 && matchedLogs[boundaryMatchIndex]) {
       const matchedLog = matchedLogs[boundaryMatchIndex];
       setPendingSearchDirection(null);
-      setMatchIndex(boundaryMatchIndex);
       goToWithQuery({ [LOG_UUID_PARAM]: matchedLog?.data?.uuid });
       setSelectedLog(matchedLog || null);
     }
@@ -519,6 +509,7 @@ function PipelineLogsPage({
     saveScrollPosition,
     searchQuery,
     themeContext,
+    refreshVersion,
   ]);
 
   return (
@@ -611,7 +602,6 @@ function PipelineLogsPage({
                   disabled={!searchQuery}
                   onClick={() => {
                     setSearchQuery('');
-                    setMatchIndex(0);
                     setPendingSearchDirection(null);
                   }}
                   uuid="logs/clear_search"
