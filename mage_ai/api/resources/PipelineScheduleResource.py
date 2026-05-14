@@ -420,6 +420,7 @@ class PipelineScheduleResource(DatabaseResource):
         pipeline = Pipeline.get(updated_model.pipeline_uuid, repo_path=repo_path)
         if pipeline:
             trigger = Trigger(
+                description=updated_model.description,
                 last_enabled_at=updated_model.last_enabled_at,
                 name=updated_model.name,
                 pipeline_uuid=updated_model.pipeline_uuid,

@@ -42,6 +42,7 @@ class PipelineTriggerResource(GenericResource):
         if pipeline_schedule_id:
             pipeline_schedule = PipelineSchedule.query.get(pipeline_schedule_id)
             trigger = Trigger(
+                description=pipeline_schedule.description,
                 last_enabled_at=pipeline_schedule.last_enabled_at,
                 name=pipeline_schedule.name,
                 pipeline_uuid=pipeline_schedule.pipeline_uuid,
