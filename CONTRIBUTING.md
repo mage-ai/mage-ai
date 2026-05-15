@@ -104,7 +104,7 @@ Already familiar with Mage? Help others in the community:
 | :--- | :--- | :--- |
 | Python | ≥ 3.8 (recommended: 3.10) | Backend server |
 | Node.js | 18.18.0 | Frontend (only if working on UI) |
-| Yarn | latest | Frontend package manager |
+| Yarn | 1.x | Frontend package manager (Yarn classic) |
 | Docker | latest | Recommended for dev environment |
 
 ### Quick Start with Docker
