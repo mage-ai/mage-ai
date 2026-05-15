@@ -270,11 +270,18 @@ Before submitting, please confirm:
 
 ### TypeScript (Frontend)
 
-- **Style guide**: [Airbnb JavaScript Style Guide](https://airbnb.io/javascript/react/)
-- **Linter**: ESLint (with `eslint-config-next`)
+- **Style guide**: Follow the project's ESLint rules rather than a separate external style guide
+- **Linter**: ESLint (extending Next.js `core-web-vitals` and the recommended TypeScript, React, and Storybook rules)
+- **Config**: See the project's ESLint configuration for the full rule set
 
 ```bash
 # Run the frontend linter locally
+yarn lint
+
+# Run TypeScript type checking
+yarn type
+
+# Run full repo checks (formatting, backend tests, etc.)
 ./scripts/test.sh
 ```
 
@@ -302,7 +309,7 @@ docker container ls
 docker exec -it mage-ai-server-1 /bin/bash
 
 # Run tests
-python3 -m unittest discover -s mage_ai.tests --failfast
+python3 -m unittest discover -s mage_ai --failfast
 ```
 
 Tests live in the [`mage_ai/tests/`](mage_ai/tests/) directory.
