@@ -80,8 +80,8 @@ export function getLeafNodes(
   opts: {
     includeAllNodes: boolean;
   } = {
-      includeAllNodes: false,
-    },
+    includeAllNodes: false,
+  },
 ): BlockType[] {
   const blocksMapping = indexBy(blocks, ({ uuid }) => uuid);
 
