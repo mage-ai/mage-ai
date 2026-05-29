@@ -205,6 +205,200 @@ The Mage Pro Cluster API is the set of HTTP APIs available on your running Mage 
 - Deploy git commits
 - More APIs available in Mage Pro UI
 
+<Accordion title="Mage Pro /runs api endpoint">
+
+The `/runs` endpoint executes a single block within a pipeline and returns its output in the same HTTP response. No polling required.
+
+This is the right tool when an external application needs the result of a specific block right now, not after a full pipeline run. Common use cases include real-time scoring, record lookups, and enrichment logic triggered per request.
+
+<Frame>
+    <iframe
+        width="560"
+        height="315"
+        src="https://www.youtube.com/embed/iZzpaO3JumY"
+        title="YouTube video player" frameborder="0"
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin"
+        allowfullscreen
+    />
+</Frame>
+
+---
+
+### What It Does
+
+When you call `/runs`, Mage works through the following steps:
+
+1. Validates the token against an API-type pipeline trigger
+2. Resolves the target pipeline and block
+3. Runs upstream blocks if `run_upstream_blocks` is `true`
+4. Executes the target block with any variables injected via `kwargs`
+5. Returns the block output in the same HTTP response
+6. Writes a `PipelineRun` and `BlockRun` record to the database if `record` is `true`
+
+---
+
+### Endpoint
+
+```
+POST https://<your-cluster-hostname>/api/runs/{token}
+```
+
+---
+
+### Authentication
+
+Every call to `/runs` requires a token from an API-type pipeline trigger.
+
+**Option A: Token in the URL**
+
+```
+POST /api/runs/your_token_here
+```
+
+**Option B: Bearer token in the Authorization header**
+
+```
+POST /api/runs
+Authorization: Bearer your_token_here
+```
+
+To generate a token:
+
+1. Open your pipeline in Mage Pro and go to the **Triggers** tab
+2. Click **Add Trigger** and select type **API**
+3. Save and copy the token from the trigger detail page
+
+---
+
+### Request Body
+
+```json
+{
+    "run": {
+        "pipeline_uuid":       "your_pipeline_uuid",
+        "block_uuid":          "your_block_uuid",
+        "variables":           {},
+        "project":             null,
+        "record":              true,
+        "store_variables":     true,
+        "run_upstream_blocks": false,
+        "incomplete_only":     false
+    }
+}
+```
+
+---
+
+
+
+### Example: Run a single block
+
+```python
+import requests
+
+MAGE_URL = 'https://<your-cluster-hostname>'
+TOKEN    = 'your_trigger_token_here'
+
+response = requests.post(
+    f'{MAGE_URL}/api/runs/{TOKEN}',
+    json={
+        'run': {
+            'pipeline_uuid': 'my_pipeline',
+            'block_uuid':    'my_block'
+        }
+    }
+)
+
+result = response.json()['run']
+print(result)
+```
+
+---
+
+### Example: Run a block with runtime variables
+
+Pass variables in the request body and they get injected into the block via `kwargs`.
+
+```python
+response = requests.post(
+    f'{MAGE_URL}/api/runs/{TOKEN}',
+    json={
+        'run': {
+            'pipeline_uuid': 'patient_lookup',
+            'block_uuid':    'transform_medical_data',
+            'variables': {
+                'patient_id': 'PID00087'
+            }
+        }
+    }
+)
+
+result = response.json()['run']
+print(result)
+```
+
+Access the variable inside your block:
+
+```python
+if 'transformer' not in globals():
+    from mage_ai.data_preparation.decorators import transformer
+
+@transformer
+def transform(df, *args, **kwargs):
+    patient_id = kwargs.get('patient_id')
+    # use patient_id in your block logic
+    return df
+```
+
+---
+
+### Response
+
+A successful call returns HTTP 200 with the block output under the `run` key:
+
+```json
+{ "run": { ...block output... } }
+```
+
+---
+
+### Request Options Reference
+
+| Option | Default | Description |
+| --- | --- | --- |
+| `pipeline_uuid` | required | The unique identifier of the pipeline containing the target block |
+| `block_uuid` | required | The unique identifier of the block to execute |
+| `variables` | `{}` | Key-value pairs injected into the block at runtime via `kwargs` |
+| `project` | `null` | Scopes the pipeline lookup to a specific sub-project in a multi-project workspace |
+| `record` | `true` | Write a PipelineRun and BlockRun record to the Mage database |
+| `store_variables` | `true` | Persist the passed variables to disk alongside the block run record |
+| `run_upstream_blocks` | `false` | Run all upstream block dependencies before executing the target block |
+| `incomplete_only` | `false` | When `run_upstream_blocks` is `true`, skip upstream blocks that already completed successfully |
+
+---
+
+### Error Handling
+
+The endpoint raises exceptions directly rather than wrapping them in an error envelope.
+
+| Condition | Behaviour |
+| --- | --- |
+| Missing or invalid token | 401 Unauthenticated. The request is rejected before any pipeline lookup. |
+| Token does not match a trigger | 404 Resource Not Found |
+| `pipeline_uuid` not found | 404 Resource Not Found. UUIDs are case-sensitive. |
+| `block_uuid` not found | 404 Resource Not Found. The block must exist within the specified pipeline. |
+| Block throws an exception | The exception propagates to the HTTP response. Database records are marked `FAILED` when `record` is `true`. |
+
+---
+
+### Audit Trail
+
+When `record` is `true`, Mage writes a `PipelineRun` and `BlockRun` record to the database on every call. You can see these in the Mage Pro UI under pipeline run history. Records are marked `COMPLETED` or `FAILED` depending on the outcome.
+
+If you are calling this endpoint at high frequency and do not need the audit log, set `record` to `false` to skip the database writes.
+
+</Accordion>
+
 ## **Base URL**
 
 **`https://<your-cluster-hostname>/api`**
