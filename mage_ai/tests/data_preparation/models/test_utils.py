@@ -107,3 +107,29 @@ class TestModelUtils(TestCase):
         self.assertIsNone(result['date_col'].iloc[4])
         # other_col should be unchanged
         self.assertEqual(str(result['other_col'].dtype), 'int64')
+
+    def test_cast_column_types_preserves_object_native_datetime(self):
+        """Columns saved as 'datetime' type (Python datetime.datetime values)
+        should also be restored to object dtype with None instead of NaT."""
+        # Simulate a DataFrame as it comes back from parquet: datetime64 with NaT
+        df = pd.DataFrame({
+            'date_col': pd.to_datetime([
+                '2025-01-01', '2025-02-15', None, '2025-04-30', None
+            ]),
+            'other_col': [1, 2, 3, 4, 5],
+        })
+        self.assertEqual(str(df['date_col'].dtype), 'datetime64[ns]')
+
+        # __get_column_types records 'datetime' (the coltype class __name__)
+        # for object columns holding native datetime.datetime values
+        column_types = {'date_col': 'datetime', 'other_col': 'int64'}
+
+        result = cast_column_types(df, column_types)
+
+        # date_col should be restored to object dtype
+        self.assertEqual(result['date_col'].dtype, object)
+        # NaT values should be restored to None
+        self.assertIsNone(result['date_col'].iloc[2])
+        self.assertIsNone(result['date_col'].iloc[4])
+        # other_col should be unchanged
+        self.assertEqual(str(result['other_col'].dtype), 'int64')

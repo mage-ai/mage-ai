@@ -55,6 +55,7 @@ CAST_TYPE_COLUMN_TYPES = {
 # need to cast them back to object and restore None values in place of NaT.
 DATETIME_OBJECT_COLUMN_TYPES = {
     'Timestamp',
+    'datetime',
 }
 
 POLARS_CAST_TYPE_COLUMN_TYPES = {
