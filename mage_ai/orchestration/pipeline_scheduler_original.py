@@ -55,7 +55,10 @@ from mage_ai.settings.platform import (
 )
 from mage_ai.settings.platform.utils import get_pipeline_from_platform
 from mage_ai.settings.repo import get_repo_path
-from mage_ai.settings.server import KERNEL_MAGIC
+from mage_ai.settings.server import (
+    KERNEL_MAGIC,
+    RESTART_STREAMING_PIPELINES_ON_REQUIREMENTS_CHANGE,
+)
 from mage_ai.shared.array import find
 from mage_ai.shared.dates import compare
 from mage_ai.shared.environments import get_env
@@ -1555,6 +1558,9 @@ def restart_running_streaming_pipeline_runs_if_requirements_changed(
     pipeline: Pipeline,
 ) -> List[PipelineRun]:
     if PipelineType.STREAMING != pipeline.type:
+        return []
+
+    if not RESTART_STREAMING_PIPELINES_ON_REQUIREMENTS_CHANGE:
         return []
 
     running_pipeline_runs = PipelineRun.query.filter(
