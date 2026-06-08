@@ -26,6 +26,7 @@ from mage_ai.data_preparation.models.triggers import (
 )
 from mage_ai.data_preparation.repo_manager import get_repo_config
 from mage_ai.data_preparation.sync.git_sync import get_sync_config
+from mage_ai.data_preparation.variable_manager import get_global_variables
 from mage_ai.orchestration.concurrency import ConcurrencyConfig, OnLimitReached
 from mage_ai.orchestration.db import db_connection, safe_db_query
 from mage_ai.orchestration.db.models.schedules import (
@@ -249,17 +250,14 @@ class PipelineScheduler:
                         'Failed blocks: '
                         f'{", ".join([b.block_uuid for b in failed_block_runs])}.'
                     )
-                    self.notification_sender.send_pipeline_run_failure_message(
-                        error=error_msg,
-                        pipeline=self.pipeline,
-                        pipeline_run=self.pipeline_run,
-                    )
+                    self.on_pipeline_run_failure(error_msg)
                 else:
                     self.pipeline_run.complete()
                     self.notification_sender.send_pipeline_run_success_message(
                         pipeline=self.pipeline,
                         pipeline_run=self.pipeline_run,
                     )
+                    self.__execute_pipeline_callbacks('on_success')
 
                 UsageStatisticLogger().pipeline_run_ended_sync(self.pipeline_run)
 
@@ -302,7 +300,7 @@ class PipelineScheduler:
                 )
                 self.pipeline_run.update(status=status)
 
-                self.on_pipeline_run_failure('Pipeline run timed out.')
+                self.on_pipeline_run_failure('Pipeline run timed out.', status=status)
             elif self.pipeline_run.any_blocks_failed() and not self.allow_blocks_to_fail:
                 self.pipeline_run.update(status=PipelineRun.PipelineRunStatus.FAILED)
 
@@ -336,13 +334,24 @@ class PipelineScheduler:
                     self.__schedule_blocks(block_runs)
 
     @safe_db_query
-    def on_pipeline_run_failure(self, error: str) -> None:
+    def on_pipeline_run_failure(
+        self,
+        error: str,
+        status=PipelineRun.PipelineRunStatus.FAILED,
+    ) -> None:
         UsageStatisticLogger().pipeline_run_ended_sync(self.pipeline_run)
-        self.notification_sender.send_pipeline_run_failure_message(
-            pipeline=self.pipeline,
-            pipeline_run=self.pipeline_run,
-            error=error,
-        )
+
+        if status == PipelineRun.PipelineRunStatus.FAILED:
+            self.notification_sender.send_pipeline_run_failure_message(
+                pipeline=self.pipeline,
+                pipeline_run=self.pipeline_run,
+                error=error,
+            )
+            self.__execute_pipeline_callbacks(
+                'on_failure',
+                callback_kwargs=dict(__error=Exception(error)),
+            )
+
         # Cancel block runs that are still in progress for the pipeline run.
         cancel_block_runs_and_jobs(self.pipeline_run, self.pipeline)
 
@@ -481,6 +490,44 @@ class PipelineScheduler:
                 logger=self.logger,
                 logging_tags=tags,
             )
+
+    def __execute_pipeline_callbacks(
+        self,
+        callback: str,
+        callback_kwargs: Dict = None,
+    ) -> None:
+        if not self.pipeline.pipeline_callbacks_by_uuid:
+            return
+
+        tags = self.build_tags()
+        global_vars = self.pipeline_run.variables or dict()
+        if self.pipeline_run.pipeline_schedule:
+            global_vars = self.pipeline_run.get_variables(
+                pipeline_uuid=self.pipeline.uuid,
+            )
+        else:
+            global_vars = merge_dict(
+                get_global_variables(self.pipeline.uuid) or dict(),
+                global_vars,
+            )
+        callback_kwargs = merge_dict(
+            dict(
+                pipeline=self.pipeline,
+                pipeline_run=self.pipeline_run,
+                pipeline_uuid=self.pipeline.uuid,
+            ),
+            callback_kwargs or dict(),
+        )
+
+        self.pipeline.execute_pipeline_callbacks(
+            callback,
+            callback_kwargs=callback_kwargs,
+            execution_partition=self.pipeline_run.execution_partition,
+            global_vars=global_vars,
+            logger=self.logger,
+            logging_tags=tags,
+            pipeline_run=self.pipeline_run,
+        )
 
     def build_tags(self, **kwargs):
         base_tags = dict(

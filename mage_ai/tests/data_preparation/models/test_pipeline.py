@@ -106,7 +106,7 @@ class PipelineTest(AsyncDBTestCase):
             spark_config=dict(),
             type='python',
             remote_variables_dir=None,
-            variables_dir=self.repo_path,
+            variables_dir=pipeline.variables_dir,
             blocks=[
                 dict(
                     language='python',
@@ -179,6 +179,7 @@ class PipelineTest(AsyncDBTestCase):
             ],
             callbacks=[],
             conditionals=[],
+            pipeline_callbacks=[],
             settings=dict(triggers=None),
             created_at='2023-08-01 08:08:24+00:00',
             widgets=[
@@ -271,7 +272,7 @@ class PipelineTest(AsyncDBTestCase):
             spark_config=dict(),
             type='python',
             remote_variables_dir=None,
-            variables_dir=self.repo_path,
+            variables_dir=pipeline.variables_dir,
             blocks=[
                 dict(
                     language='python',
@@ -327,6 +328,7 @@ class PipelineTest(AsyncDBTestCase):
             ],
             callbacks=[],
             conditionals=[],
+            pipeline_callbacks=[],
             settings=dict(triggers=None),
             created_at='2023-08-01 08:08:24+00:00',
             widgets=[],
@@ -364,7 +366,7 @@ class PipelineTest(AsyncDBTestCase):
             spark_config=dict(),
             type='python',
             remote_variables_dir=None,
-            variables_dir=self.repo_path,
+            variables_dir=pipeline.variables_dir,
             blocks=[
                 dict(
                     language='python',
@@ -437,6 +439,7 @@ class PipelineTest(AsyncDBTestCase):
             ],
             callbacks=[],
             conditionals=[],
+            pipeline_callbacks=[],
             settings=dict(triggers=None),
             created_at='2023-08-01 08:08:24+00:00',
             widgets=[],
@@ -480,7 +483,7 @@ class PipelineTest(AsyncDBTestCase):
             spark_config=dict(),
             type='python',
             remote_variables_dir=None,
-            variables_dir=self.repo_path,
+            variables_dir=pipeline.variables_dir,
             blocks=[
                 dict(
                     language='python',
@@ -604,6 +607,7 @@ class PipelineTest(AsyncDBTestCase):
             ],
             callbacks=[],
             conditionals=[],
+            pipeline_callbacks=[],
             settings=dict(triggers=None),
             created_at='2023-08-01 08:08:24+00:00',
             widgets=[],
@@ -735,7 +739,7 @@ class PipelineTest(AsyncDBTestCase):
                     type='integration',
                     uuid='test_pipeline_9',
                     remote_variables_dir=None,
-                    variables_dir=self.repo_path,
+                    variables_dir=pipeline.variables_dir,
                     blocks=[
                         dict(
                             all_upstream_blocks_executed=True,
@@ -774,6 +778,7 @@ class PipelineTest(AsyncDBTestCase):
                     ],
                     callbacks=[],
                     conditionals=[],
+                    pipeline_callbacks=[],
                     settings=dict(triggers=None),
                     widgets=[],
                 ),

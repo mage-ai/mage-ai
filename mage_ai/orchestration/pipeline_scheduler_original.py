@@ -26,6 +26,7 @@ from mage_ai.data_preparation.models.triggers import (
 )
 from mage_ai.data_preparation.repo_manager import get_repo_config
 from mage_ai.data_preparation.sync.git_sync import get_sync_config
+from mage_ai.data_preparation.variable_manager import get_global_variables
 from mage_ai.orchestration.concurrency import ConcurrencyConfig, OnLimitReached
 from mage_ai.orchestration.db import db_connection, safe_db_query
 from mage_ai.orchestration.db.models.schedules import (
@@ -260,6 +261,7 @@ class PipelineScheduler:
                         pipeline=self.pipeline,
                         pipeline_run=self.pipeline_run,
                     )
+                    self.__execute_pipeline_callbacks('on_success')
                     UsageStatisticLogger().pipeline_run_ended_sync(self.pipeline_run)
 
                 self.logger_manager.output_logs_to_destination()
@@ -364,6 +366,10 @@ class PipelineScheduler:
                 pipeline_run=self.pipeline_run,
                 error=error_msg,
                 stacktrace=stacktrace,
+            )
+            self.__execute_pipeline_callbacks(
+                'on_failure',
+                callback_kwargs=dict(__error=Exception(error_msg)),
             )
 
         # Cancel block runs that are still in progress for the pipeline run.
@@ -507,6 +513,44 @@ class PipelineScheduler:
                 logger=self.logger,
                 logging_tags=tags,
             )
+
+    def __execute_pipeline_callbacks(
+        self,
+        callback: str,
+        callback_kwargs: Dict = None,
+    ) -> None:
+        if not self.pipeline.pipeline_callbacks_by_uuid:
+            return
+
+        tags = self.build_tags()
+        global_vars = self.pipeline_run.variables or dict()
+        if self.pipeline_run.pipeline_schedule:
+            global_vars = self.pipeline_run.get_variables(
+                pipeline_uuid=self.pipeline.uuid,
+            )
+        else:
+            global_vars = merge_dict(
+                get_global_variables(self.pipeline.uuid) or dict(),
+                global_vars,
+            )
+        callback_kwargs = merge_dict(
+            dict(
+                pipeline=self.pipeline,
+                pipeline_run=self.pipeline_run,
+                pipeline_uuid=self.pipeline.uuid,
+            ),
+            callback_kwargs or dict(),
+        )
+
+        self.pipeline.execute_pipeline_callbacks(
+            callback,
+            callback_kwargs=callback_kwargs,
+            execution_partition=self.pipeline_run.execution_partition,
+            global_vars=global_vars,
+            logger=self.logger,
+            logging_tags=tags,
+            pipeline_run=self.pipeline_run,
+        )
 
     def build_tags(self, block_run=None, **kwargs):
         base_tags = dict(
