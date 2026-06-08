@@ -1748,6 +1748,7 @@ def schedule_all():
         concurrency_config = ConcurrencyConfig.load(config=pipeline.concurrency_config)
         pipeline_runs_to_start = []
         pipeline_runs_excluded_by_limit = []
+        restarted_streaming_pipeline_run_for_pipeline = False
         for pipeline_schedule in active_schedules:
             lock_key = f'pipeline_schedule_{pipeline_schedule.id}'
             if not lock.try_acquire_lock(lock_key, timeout=30):
@@ -1775,6 +1776,10 @@ def schedule_all():
                         pipeline_schedule,
                         pipeline,
                     )
+                )
+                restarted_streaming_pipeline_run_for_pipeline = (
+                    restarted_streaming_pipeline_run_for_pipeline
+                    or len(restarted_streaming_pipeline_runs) >= 1
                 )
 
                 # Decide whether to schedule any pipeline runs
@@ -1839,7 +1844,9 @@ def schedule_all():
                                 pipeline,
                                 pipeline_schedule,
                                 payload,
-                                message='Pipeline run limit reached... skipping this run',
+                                message=(
+                                    'Previous pipeline run is still running... skipping this run'
+                                ),
                             )
                     else:
                         for payload in payloads:
@@ -1878,6 +1885,10 @@ def schedule_all():
                 lock.release_lock(lock_key)
 
         pipeline_run_limit = concurrency_config.pipeline_run_limit_all_triggers
+        if restarted_streaming_pipeline_run_for_pipeline:
+            pipeline_runs_by_pipeline[pipeline_uuid] = PipelineRun.active_runs_for_pipelines([
+                pipeline_uuid,
+            ])
         if pipeline_run_limit is not None:
             pipeline_quota = pipeline_run_limit - len(
                 pipeline_runs_by_pipeline.get(pipeline_uuid, [])

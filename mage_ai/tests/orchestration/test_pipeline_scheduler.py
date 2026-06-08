@@ -485,6 +485,11 @@ class PipelineSchedulerTests(DBTestCase):
         pipeline.save()
 
         requirements_path = os.path.join(self.repo_path, 'requirements.txt')
+        self.addCleanup(
+            lambda: os.remove(requirements_path)
+            if os.path.exists(requirements_path)
+            else None
+        )
         with open(requirements_path, 'w') as f:
             f.write('requests==2.31.0\n')
 
@@ -538,6 +543,11 @@ class PipelineSchedulerTests(DBTestCase):
         pipeline.save()
 
         requirements_path = os.path.join(self.repo_path, 'requirements.txt')
+        self.addCleanup(
+            lambda: os.remove(requirements_path)
+            if os.path.exists(requirements_path)
+            else None
+        )
         with open(requirements_path, 'w') as f:
             f.write('requests==2.31.0\n')
 
@@ -593,6 +603,11 @@ class PipelineSchedulerTests(DBTestCase):
         pipeline.save()
 
         requirements_path = os.path.join(self.repo_path, 'requirements.txt')
+        self.addCleanup(
+            lambda: os.remove(requirements_path)
+            if os.path.exists(requirements_path)
+            else None
+        )
         with open(requirements_path, 'w') as f:
             f.write('requests==2.31.0\n')
 
@@ -631,6 +646,11 @@ class PipelineSchedulerTests(DBTestCase):
         pipeline_schedule.update(status=ScheduleStatus.INACTIVE)
 
     @freeze_time('2023-10-11 12:13:14')
+    @patch(
+        'mage_ai.orchestration.pipeline_scheduler_original.'
+        'RESTART_STREAMING_PIPELINES_ON_REQUIREMENTS_CHANGE',
+        False,
+    )
     @patch('mage_ai.orchestration.pipeline_scheduler_original.PipelineScheduler.schedule')
     @patch('mage_ai.orchestration.pipeline_scheduler_original.get_job_manager')
     def test_schedule_all_does_not_restart_streaming_pipeline_when_env_var_disabled(
@@ -650,6 +670,11 @@ class PipelineSchedulerTests(DBTestCase):
         pipeline.save()
 
         requirements_path = os.path.join(self.repo_path, 'requirements.txt')
+        self.addCleanup(
+            lambda: os.remove(requirements_path)
+            if os.path.exists(requirements_path)
+            else None
+        )
         with open(requirements_path, 'w') as f:
             f.write('requests==2.31.0\n')
 
