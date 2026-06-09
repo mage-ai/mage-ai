@@ -55,7 +55,10 @@ from mage_ai.settings.platform import (
 )
 from mage_ai.settings.platform.utils import get_pipeline_from_platform
 from mage_ai.settings.repo import get_repo_path
-from mage_ai.settings.server import KERNEL_MAGIC
+from mage_ai.settings.server import (
+    KERNEL_MAGIC,
+    RESTART_STREAMING_PIPELINES_ON_REQUIREMENTS_CHANGE,
+)
 from mage_ai.shared.array import find
 from mage_ai.shared.dates import compare
 from mage_ai.shared.environments import get_env
@@ -64,6 +67,7 @@ from mage_ai.shared.retry import retry
 from mage_ai.usage_statistics.logger import UsageStatisticLogger
 
 MEMORY_USAGE_MAXIMUM = 0.95
+REQUIREMENTS_FILE = 'requirements.txt'
 
 lock = DistributedLock()
 logger = Logger().new_server_logger(__name__)
@@ -1525,6 +1529,80 @@ def kill_cancelled_runs(pipeline_run_id: int, cancelled_block_run_ids: List):
                 job_manager.kill_block_run_job(block_run_id)
 
 
+def requirements_file_changed_after_pipeline_run_started(
+    pipeline_run: PipelineRun,
+    pipeline: Pipeline,
+) -> bool:
+    repo_path = pipeline.repo_path or get_repo_path()
+    requirements_path = os.path.join(repo_path, REQUIREMENTS_FILE)
+    if not os.path.exists(requirements_path):
+        return False
+
+    run_started_at = pipeline_run.started_at or pipeline_run.created_at
+    if not run_started_at:
+        return False
+    if run_started_at.tzinfo is None:
+        run_started_at = pytz.UTC.localize(run_started_at)
+    else:
+        run_started_at = run_started_at.astimezone(pytz.UTC)
+
+    requirements_modified_at = datetime.fromtimestamp(
+        os.path.getmtime(requirements_path),
+        tz=pytz.UTC,
+    )
+    return compare(run_started_at, requirements_modified_at) == -1
+
+
+def restart_running_streaming_pipeline_runs_if_requirements_changed(
+    pipeline_schedule: PipelineSchedule,
+    pipeline: Pipeline,
+) -> List[PipelineRun]:
+    if PipelineType.STREAMING != pipeline.type:
+        return []
+
+    if not RESTART_STREAMING_PIPELINES_ON_REQUIREMENTS_CHANGE:
+        return []
+
+    running_pipeline_runs = PipelineRun.query.filter(
+        PipelineRun.pipeline_schedule_id == pipeline_schedule.id,
+        PipelineRun.status == PipelineRun.PipelineRunStatus.RUNNING,
+    ).all()
+
+    restarted_pipeline_runs = []
+    for pipeline_run in running_pipeline_runs:
+        if requirements_file_changed_after_pipeline_run_started(pipeline_run, pipeline):
+            logger.info(
+                'Restarting streaming pipeline run because requirements.txt changed. '
+                f'pipeline_run_id={pipeline_run.id}, '
+                f'pipeline_schedule_id={pipeline_schedule.id}, '
+                f'pipeline_uuid={pipeline.uuid}',
+            )
+            stop_pipeline_run(pipeline_run, pipeline)
+            restarted_pipeline_runs.append(pipeline_run)
+
+    return restarted_pipeline_runs
+
+
+def build_restarted_streaming_pipeline_run_payload(
+    pipeline_schedule: PipelineSchedule,
+    pipeline_run: PipelineRun,
+) -> Dict:
+    variables = merge_dict(pipeline_schedule.variables or {}, pipeline_run.variables or {})
+    variables.pop('execution_partition', None)
+
+    payload = dict(
+        execution_date=pipeline_schedule.current_execution_date(),
+        event_variables=pipeline_run.event_variables,
+        pipeline_schedule_id=pipeline_schedule.id,
+        pipeline_uuid=pipeline_schedule.pipeline_uuid,
+        variables=variables,
+    )
+    if ScheduleType.API == pipeline_schedule.schedule_type:
+        payload['execution_date'] = datetime.utcnow()
+
+    return payload
+
+
 def check_sla():
     repo_pipelines = set(
         Pipeline.get_all_pipelines_all_projects(
@@ -1644,10 +1722,12 @@ def schedule_all():
             ),
             PipelineRun.status == PipelineRun.PipelineRunStatus.COMPLETED,
         )
-        query = query.add_columns(row_number_column)
-        query = query.from_self().filter(row_number_column == 1)
-        for tup in query.all():
-            pr, _ = tup
+        subquery = query.add_columns(row_number_column).subquery()
+        query = PipelineRun.query.join(
+            subquery,
+            PipelineRun.id == subquery.c.id,
+        ).filter(subquery.c.row_number == 1)
+        for pr in query.all():
             previous_pipeline_run_by_pipeline_schedule_id[pr.pipeline_schedule_id] = pr
 
     git_sync_result = None
@@ -1670,6 +1750,7 @@ def schedule_all():
         concurrency_config = ConcurrencyConfig.load(config=pipeline.concurrency_config)
         pipeline_runs_to_start = []
         pipeline_runs_excluded_by_limit = []
+        restarted_streaming_pipeline_run_for_pipeline = False
         for pipeline_schedule in active_schedules:
             lock_key = f'pipeline_schedule_{pipeline_schedule.id}'
             if not lock.try_acquire_lock(lock_key, timeout=30):
@@ -1692,11 +1773,25 @@ def schedule_all():
                             pipeline_run=previous_pipeline_run,
                         )
 
+                restarted_streaming_pipeline_runs = (
+                    restart_running_streaming_pipeline_runs_if_requirements_changed(
+                        pipeline_schedule,
+                        pipeline,
+                    )
+                )
+                restarted_streaming_pipeline_run_for_pipeline = (
+                    restarted_streaming_pipeline_run_for_pipeline
+                    or len(restarted_streaming_pipeline_runs) >= 1
+                )
+
                 # Decide whether to schedule any pipeline runs
-                should_schedule = pipeline_schedule.should_schedule(
-                    previous_runtimes=previous_runtimes,
-                    pipeline=pipeline,
-                    repo_config=repo_config,
+                should_schedule = (
+                    len(restarted_streaming_pipeline_runs) >= 1
+                    or pipeline_schedule.should_schedule(
+                        previous_runtimes=previous_runtimes,
+                        pipeline=pipeline,
+                        repo_config=repo_config,
+                    )
                 )
                 initial_pipeline_runs = pipeline_schedule.initial_pipeline_runs
 
@@ -1715,15 +1810,27 @@ def schedule_all():
                     if not git_sync_result and sync_config and sync_config.sync_on_pipeline_run:
                         git_sync_result = run_git_sync(lock=lock, sync_config=sync_config)
 
-                    payload = dict(
-                        execution_date=pipeline_schedule.current_execution_date(),
-                        pipeline_schedule_id=pipeline_schedule.id,
-                        pipeline_uuid=pipeline_uuid,
-                        variables=pipeline_schedule.variables,
-                    )
+                    if restarted_streaming_pipeline_runs:
+                        payloads = [
+                            build_restarted_streaming_pipeline_run_payload(
+                                pipeline_schedule,
+                                pipeline_run,
+                            )
+                            for pipeline_run in restarted_streaming_pipeline_runs
+                        ]
+                    else:
+                        payloads = [
+                            dict(
+                                execution_date=pipeline_schedule.current_execution_date(),
+                                pipeline_schedule_id=pipeline_schedule.id,
+                                pipeline_uuid=pipeline_uuid,
+                                variables=pipeline_schedule.variables,
+                            )
+                        ]
 
                     if len(previous_runtimes) >= 1:
-                        payload['metrics'] = dict(previous_runtimes=previous_runtimes)
+                        for payload in payloads:
+                            payload['metrics'] = dict(previous_runtimes=previous_runtimes)
 
                     if pipeline_schedule.get_settings().skip_if_previous_running and (
                         initial_pipeline_runs or running_pipeline_run_count > 0
@@ -1734,25 +1841,33 @@ def schedule_all():
                             create_and_cancel_pipeline_run,
                         )
 
-                        pipeline_run = create_and_cancel_pipeline_run(
-                            pipeline,
-                            pipeline_schedule,
-                            payload,
-                            message='Pipeline run limit reached... skipping this run',
-                        )
+                        for payload in payloads:
+                            pipeline_run = create_and_cancel_pipeline_run(
+                                pipeline,
+                                pipeline_schedule,
+                                payload,
+                                message=(
+                                    'Previous pipeline run is still running... skipping this run'
+                                ),
+                            )
                     else:
-                        payload['create_block_runs'] = False
-                        pipeline_run = PipelineRun.create(prevent_duplicates=True, **payload)
-                        if pipeline_run:
-                            # Log Git sync status for new pipeline runs if a git sync result exists
-                            if git_sync_result:
-                                pipeline_scheduler = PipelineScheduler(pipeline_run)
-                                log_git_sync(
-                                    git_sync_result,
-                                    pipeline_scheduler.logger,
-                                    pipeline_scheduler.build_tags(),
-                                )
-                            initial_pipeline_runs.append(pipeline_run)
+                        for payload in payloads:
+                            payload['create_block_runs'] = False
+                            pipeline_run = PipelineRun.create(
+                                prevent_duplicates=not restarted_streaming_pipeline_runs,
+                                **payload,
+                            )
+                            if pipeline_run:
+                                # Log Git sync status for new pipeline runs if a git sync
+                                # result exists.
+                                if git_sync_result:
+                                    pipeline_scheduler = PipelineScheduler(pipeline_run)
+                                    log_git_sync(
+                                        git_sync_result,
+                                        pipeline_scheduler.logger,
+                                        pipeline_scheduler.build_tags(),
+                                    )
+                                initial_pipeline_runs.append(pipeline_run)
 
                 # Enforce pipeline concurrency limit
                 pipeline_run_quota = None
@@ -1772,6 +1887,10 @@ def schedule_all():
                 lock.release_lock(lock_key)
 
         pipeline_run_limit = concurrency_config.pipeline_run_limit_all_triggers
+        if restarted_streaming_pipeline_run_for_pipeline:
+            pipeline_runs_by_pipeline[pipeline_uuid] = PipelineRun.active_runs_for_pipelines([
+                pipeline_uuid,
+            ])
         if pipeline_run_limit is not None:
             pipeline_quota = pipeline_run_limit - len(
                 pipeline_runs_by_pipeline.get(pipeline_uuid, [])
