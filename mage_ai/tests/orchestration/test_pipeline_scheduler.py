@@ -461,11 +461,6 @@ class PipelineSchedulerTests(DBTestCase):
         self.assertEqual(call_args[5], ignore_keys(mock_call[1][5], ['hostname']))
 
     @freeze_time('2023-10-11 12:13:14')
-    @patch(
-        'mage_ai.orchestration.pipeline_scheduler_original.'
-        'RESTART_STREAMING_PIPELINES_ON_REQUIREMENTS_CHANGE',
-        True,
-    )
     @patch('mage_ai.orchestration.pipeline_scheduler_original.PipelineScheduler.schedule')
     @patch('mage_ai.orchestration.pipeline_scheduler_original.get_job_manager')
     def test_schedule_all_restarts_streaming_pipeline_when_requirements_change(
@@ -509,7 +504,11 @@ class PipelineSchedulerTests(DBTestCase):
             status=PipelineRun.PipelineRunStatus.RUNNING,
         )
 
-        schedule_all()
+        with patch.dict(
+            schedule_all.__globals__,
+            {'RESTART_STREAMING_PIPELINES_ON_REQUIREMENTS_CHANGE': True},
+        ):
+            schedule_all()
 
         pipeline_run.refresh()
         self.assertEqual(PipelineRun.PipelineRunStatus.CANCELLED, pipeline_run.status)
@@ -519,11 +518,6 @@ class PipelineSchedulerTests(DBTestCase):
         pipeline_schedule.update(status=ScheduleStatus.INACTIVE)
 
     @freeze_time('2023-10-11 12:13:14')
-    @patch(
-        'mage_ai.orchestration.pipeline_scheduler_original.'
-        'RESTART_STREAMING_PIPELINES_ON_REQUIREMENTS_CHANGE',
-        True,
-    )
     @patch('mage_ai.orchestration.pipeline_scheduler_original.PipelineScheduler.schedule')
     @patch('mage_ai.orchestration.pipeline_scheduler_original.get_job_manager')
     def test_schedule_all_restarts_once_streaming_pipeline_when_requirements_change(
@@ -569,7 +563,11 @@ class PipelineSchedulerTests(DBTestCase):
             status=PipelineRun.PipelineRunStatus.RUNNING,
         )
 
-        schedule_all()
+        with patch.dict(
+            schedule_all.__globals__,
+            {'RESTART_STREAMING_PIPELINES_ON_REQUIREMENTS_CHANGE': True},
+        ):
+            schedule_all()
 
         pipeline_run.refresh()
         self.assertEqual(PipelineRun.PipelineRunStatus.CANCELLED, pipeline_run.status)
@@ -579,11 +577,6 @@ class PipelineSchedulerTests(DBTestCase):
         pipeline_schedule.update(status=ScheduleStatus.INACTIVE)
 
     @freeze_time('2023-10-11 12:13:14')
-    @patch(
-        'mage_ai.orchestration.pipeline_scheduler_original.'
-        'RESTART_STREAMING_PIPELINES_ON_REQUIREMENTS_CHANGE',
-        True,
-    )
     @patch('mage_ai.orchestration.pipeline_scheduler_original.PipelineScheduler.schedule')
     @patch('mage_ai.orchestration.pipeline_scheduler_original.get_job_manager')
     def test_schedule_all_restarts_api_streaming_pipeline_when_requirements_change(
@@ -631,7 +624,11 @@ class PipelineSchedulerTests(DBTestCase):
             status=PipelineRun.PipelineRunStatus.RUNNING,
         )
 
-        schedule_all()
+        with patch.dict(
+            schedule_all.__globals__,
+            {'RESTART_STREAMING_PIPELINES_ON_REQUIREMENTS_CHANGE': True},
+        ):
+            schedule_all()
 
         pipeline_run.refresh()
         replacement_run = PipelineRun.query.filter(
@@ -646,11 +643,6 @@ class PipelineSchedulerTests(DBTestCase):
         pipeline_schedule.update(status=ScheduleStatus.INACTIVE)
 
     @freeze_time('2023-10-11 12:13:14')
-    @patch(
-        'mage_ai.orchestration.pipeline_scheduler_original.'
-        'RESTART_STREAMING_PIPELINES_ON_REQUIREMENTS_CHANGE',
-        False,
-    )
     @patch('mage_ai.orchestration.pipeline_scheduler_original.PipelineScheduler.schedule')
     @patch('mage_ai.orchestration.pipeline_scheduler_original.get_job_manager')
     def test_schedule_all_does_not_restart_streaming_pipeline_when_env_var_disabled(
@@ -694,7 +686,11 @@ class PipelineSchedulerTests(DBTestCase):
             status=PipelineRun.PipelineRunStatus.RUNNING,
         )
 
-        schedule_all()
+        with patch.dict(
+            schedule_all.__globals__,
+            {'RESTART_STREAMING_PIPELINES_ON_REQUIREMENTS_CHANGE': False},
+        ):
+            schedule_all()
 
         pipeline_run.refresh()
         self.assertEqual(PipelineRun.PipelineRunStatus.RUNNING, pipeline_run.status)
