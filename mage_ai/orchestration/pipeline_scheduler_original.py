@@ -1587,7 +1587,7 @@ def build_restarted_streaming_pipeline_run_payload(
     pipeline_schedule: PipelineSchedule,
     pipeline_run: PipelineRun,
 ) -> Dict:
-    variables = (pipeline_run.variables or {}).copy()
+    variables = merge_dict(pipeline_schedule.variables or {}, pipeline_run.variables or {})
     variables.pop('execution_partition', None)
 
     payload = dict(

@@ -630,6 +630,10 @@ class PipelineSchedulerTests(DBTestCase):
             pipeline_uuid=pipeline.uuid,
             schedule_type=ScheduleType.API,
             status=ScheduleStatus.ACTIVE,
+            variables=dict(
+                schedule_only=True,
+                source='schedule',
+            ),
         )
         self.add_pipeline_schedule_cleanup(pipeline_schedule)
         pipeline_run = PipelineRun.create(
@@ -660,7 +664,13 @@ class PipelineSchedulerTests(DBTestCase):
         self.assertEqual(PipelineRun.PipelineRunStatus.CANCELLED, pipeline_run.status)
         self.assertEqual(2, pipeline_schedule.pipeline_runs_count)
         self.assertIsNotNone(replacement_run)
-        self.assertEqual(dict(source='api'), replacement_run.variables)
+        self.assertEqual(
+            dict(
+                schedule_only=True,
+                source='api',
+            ),
+            replacement_run.variables,
+        )
         mock_job_manager.kill_pipeline_run_job.assert_any_call(pipeline_run.id)
         pipeline_schedule.update(status=ScheduleStatus.INACTIVE)
 
