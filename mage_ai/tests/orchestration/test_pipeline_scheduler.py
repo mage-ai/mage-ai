@@ -495,6 +495,7 @@ class PipelineSchedulerTests(DBTestCase):
             schedule_type=ScheduleType.TIME,
             status=ScheduleStatus.ACTIVE,
         )
+        self.addCleanup(lambda: pipeline_schedule.update(status=ScheduleStatus.INACTIVE))
         pipeline_run = PipelineRun.create(
             pipeline_schedule_id=pipeline_schedule.id,
             pipeline_uuid=pipeline.uuid,
@@ -553,6 +554,7 @@ class PipelineSchedulerTests(DBTestCase):
             schedule_type=ScheduleType.TIME,
             status=ScheduleStatus.ACTIVE,
         )
+        self.addCleanup(lambda: pipeline_schedule.update(status=ScheduleStatus.INACTIVE))
         pipeline_run = PipelineRun.create(
             execution_date=execution_date,
             pipeline_schedule_id=pipeline_schedule.id,
@@ -610,6 +612,7 @@ class PipelineSchedulerTests(DBTestCase):
             schedule_type=ScheduleType.API,
             status=ScheduleStatus.ACTIVE,
         )
+        self.addCleanup(lambda: pipeline_schedule.update(status=ScheduleStatus.INACTIVE))
         pipeline_run = PipelineRun.create(
             execution_date=datetime(2023, 10, 11, 12, 0, 0, tzinfo=pytz.UTC),
             pipeline_schedule_id=pipeline_schedule.id,
@@ -677,6 +680,7 @@ class PipelineSchedulerTests(DBTestCase):
             schedule_type=ScheduleType.TIME,
             status=ScheduleStatus.ACTIVE,
         )
+        self.addCleanup(lambda: pipeline_schedule.update(status=ScheduleStatus.INACTIVE))
         pipeline_run = PipelineRun.create(
             pipeline_schedule_id=pipeline_schedule.id,
             pipeline_uuid=pipeline.uuid,

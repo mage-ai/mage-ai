@@ -1498,10 +1498,12 @@ def schedule_all():
             ),
             PipelineRun.status == PipelineRun.PipelineRunStatus.COMPLETED,
         )
-        query = query.add_columns(row_number_column)
-        query = query.from_self().filter(row_number_column == 1)
-        for tup in query.all():
-            pr, _ = tup
+        subquery = query.add_columns(row_number_column).subquery()
+        query = PipelineRun.query.join(
+            subquery,
+            PipelineRun.id == subquery.c.id,
+        ).filter(subquery.c.row_number == 1)
+        for pr in query.all():
             previous_pipeline_run_by_pipeline_schedule_id[pr.pipeline_schedule_id] = pr
 
     git_sync_result = None
