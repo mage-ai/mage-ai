@@ -67,6 +67,14 @@ class PipelineSchedulerTests(DBTestCase):
         for pipeline_run in pipeline_runs:
             pipeline_run.update(status=PipelineRun.PipelineRunStatus.CANCELLED)
 
+    def deactivate_pipeline_schedules(self, pipeline_uuid):
+        pipeline_schedules = PipelineSchedule.query.filter(
+            PipelineSchedule.pipeline_uuid == pipeline_uuid,
+        ).all()
+        for pipeline_schedule in pipeline_schedules:
+            self.cancel_pipeline_schedule_runs(pipeline_schedule.id)
+            pipeline_schedule.update(status=ScheduleStatus.INACTIVE)
+
     def test_start(self):
         pipeline_run = PipelineRun.create(pipeline_uuid='test_pipeline')
         scheduler = PipelineScheduler(pipeline_run=pipeline_run)
@@ -866,6 +874,7 @@ class PipelineSchedulerTests(DBTestCase):
             'test pipeline_run_limit_all_triggers',
             self.repo_path,
         )
+        self.deactivate_pipeline_schedules(pipeline.uuid)
         ps1 = PipelineSchedule.create(
             last_enabled_at=datetime(2023, 5, 2, 0, 0, 0),
             name='test_limit_pipeline_trigger_1',
@@ -927,6 +936,7 @@ class PipelineSchedulerTests(DBTestCase):
             'test pipeline_run_limit_all_triggers',
             self.repo_path,
         )
+        self.deactivate_pipeline_schedules(pipeline.uuid)
         ps1 = PipelineSchedule.create(
             last_enabled_at=datetime(2023, 4, 30, 0, 0, 0),
             name='test_limit_pipeline_trigger_1',
@@ -993,6 +1003,7 @@ class PipelineSchedulerTests(DBTestCase):
             'test pipeline_run_limit',
             self.repo_path,
         )
+        self.deactivate_pipeline_schedules(pipeline.uuid)
         ps1 = PipelineSchedule.create(
             name='test_both_limit_pipeline_trigger_1',
             pipeline_uuid=pipeline.uuid,
@@ -1048,6 +1059,7 @@ class PipelineSchedulerTests(DBTestCase):
             'test pipeline_run_limit_skip',
             self.repo_path,
         )
+        self.deactivate_pipeline_schedules(pipeline.uuid)
         ps1 = PipelineSchedule.create(
             name='test_limit_skip_pipeline_trigger_1',
             pipeline_uuid=pipeline.uuid,
@@ -1104,6 +1116,7 @@ class PipelineSchedulerTests(DBTestCase):
             'test pipeline_run_limit_negative_quota',
             self.repo_path,
         )
+        self.deactivate_pipeline_schedules(pipeline.uuid)
         ps1 = PipelineSchedule.create(
             name='test_negative_quota_pipeline_trigger_1',
             pipeline_uuid=pipeline.uuid,
@@ -1176,6 +1189,7 @@ class PipelineSchedulerTests(DBTestCase):
             'test pipeline_run_limit_include_all',
             self.repo_path,
         )
+        self.deactivate_pipeline_schedules(pipeline.uuid)
         ps1 = PipelineSchedule.create(
             name='test_limit_include_all_pipeline_trigger_1',
             pipeline_uuid=pipeline.uuid,
