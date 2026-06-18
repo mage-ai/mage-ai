@@ -2,7 +2,7 @@ cachetools
 click<8.2.0
 Faker==4.14.0
 GitPython==3.1.41
-Jinja2==3.1.3
+Jinja2>=3.1.6
 Pillow==10.3.0
 PyGithub==1.59.0
 PyJWT==2.6.0
@@ -62,14 +62,14 @@ astor>=0.8.1
 aws-secretsmanager-caching==1.1.1.5
 boto3==1.26.60
 botocore==1.29.60
-clickhouse-connect~=0.6.23
+clickhouse-connect>=0.10.0
 db-dtypes==1.2.0
 duckdb==1.4.3
-google-api-core~=2.15.0
+google-api-core>=2.30.0
 google-api-python-client~=2.70.0
-google-cloud-bigquery~=3.14.1
-google-cloud-iam~=2.13.0
-google-cloud-pubsub~=2.19.0
+google-cloud-bigquery~=3.30.0
+google-cloud-iam>=2.20.0
+google-cloud-pubsub>=2.30.0
 google-cloud-run~=0.10.1
 google-cloud-storage~=2.5.0
 gspread==5.7.2
@@ -79,11 +79,11 @@ langchain_community==0.2.5
 mysql-connector-python~=8.4.0; python_version < '3.11'
 mysql-connector-python~=9.0.0; python_version >= '3.11'
 openai==1.82.0
-opentelemetry-api==1.22.0
-opentelemetry-exporter-prometheus==0.43b0
-opentelemetry-instrumentation-tornado==0.43b0
-opentelemetry-exporter-otlp==1.22.0
-opentelemetry-instrumentation-sqlalchemy==0.43b0
+opentelemetry-api>=1.40.0
+opentelemetry-exporter-otlp>=1.40.0
+opentelemetry-exporter-prometheus>=0.61b0
+opentelemetry-instrumentation-sqlalchemy>=0.61b0
+opentelemetry-instrumentation-tornado>=0.61b0
 oracledb==1.3.1; python_version < '3.12'
 oracledb==2.4.1; python_version >= '3.12'
 pinotdb==5.6.0
@@ -94,9 +94,9 @@ pyairtable==2.3.3
 pydruid==0.6.5
 pyodbc==4.0.35; python_version < '3.12'
 pyodbc==5.0.1; python_version >= '3.12'
-redshift-connector==2.0.915
+redshift-connector>=2.1.8
 lxml==4.9.4
-snowflake-connector-python==3.7.1
+snowflake-connector-python>=4.0.0
 sshtunnel==0.4.0
 tables==3.7.0; python_version < '3.11'
 tables==3.10.1; python_version >= '3.11'
@@ -123,19 +123,19 @@ pymongo==4.3.3
 requests_aws4auth==1.1.2
 stomp.py==8.1.0
 
-# DBT
-dbt-adapters==1.8.0
-dbt-bigquery==1.8.3
-dbt-clickhouse==1.8.5
-dbt-core==1.8.7
-dbt-duckdb==1.8.4
-dbt-postgres==1.8.2
-dbt-redshift==1.8.1
-dbt-snowflake==1.8.4
-dbt-spark==1.8.0
-dbt-sqlserver==1.8.4
-dbt-synapse==1.8.2
-dbt-trino==1.8.4
+# DBT (latest 1.10.x; code in dbt_cli.py is backward compatible with 1.8)
+dbt-adapters==1.22.5
+dbt-bigquery==1.10.3
+dbt-clickhouse==1.10.0
+dbt-core==1.10.20
+dbt-duckdb==1.10.1
+dbt-postgres==1.10.0
+dbt-redshift==1.10.1
+dbt-snowflake==1.10.7
+dbt-spark==1.10.1
+dbt-sqlserver==1.9.0
+dbt-synapse==1.8.4
+dbt-trino==1.10.1
 
 async-timeout==4.0.3
 attrs==22.2.0; python_version < '3.12'
@@ -145,16 +145,14 @@ clickhouse_sqlalchemy
 deltalake==0.20.2
 facebook_business==22.0.2
 gnupg==2.3.1
-google-analytics-data==0.14.2; python_version < '3.11'
-google-analytics-data==0.15.0; python_version >= '3.11'
-google-cloud-bigquery-storage==2.16.2; python_version < '3.11'
-google-cloud-bigquery-storage==2.26.0; python_version >= '3.11'
+google-analytics-data>=0.20.0
+google-cloud-bigquery-storage==2.36.2
 httpx[http2]>=0.27.0
 pendulum==2.1.0; python_version < '3.12'
 pendulum==3.0.0; python_version >= '3.12'
 pymongo_schema==0.4.1
 python-magic==0.4.27
-redshift-connector~=2.0.915
+redshift-connector>=2.1.8
 requests_mock==1.10.0
 simple_salesforce~=1.12.5
 singer_sdk~=0.34.1

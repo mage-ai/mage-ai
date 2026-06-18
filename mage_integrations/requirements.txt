@@ -11,12 +11,10 @@ elasticsearch==8.15.1
 facebook_business==22.0.2
 gnupg==2.3.1
 google-ads==25.1.0
-google-analytics-data==0.14.2; python_version < '3.11'
-google-analytics-data==0.15.0; python_version >= '3.11'
+google-analytics-data>=0.20.0
 google-api-python-client==2.70.0
-google-cloud-bigquery~=3.0
-google-cloud-bigquery-storage==2.16.2; python_version < '3.11'
-google-cloud-bigquery-storage==2.26.0; python_version >= '3.11'
+google-cloud-bigquery~=3.30.0
+google-cloud-bigquery-storage==2.36.2
 google-cloud-storage==2.5.0
 httpx>=0.27.0
 httpx[http2]>=0.27.0
@@ -37,13 +35,13 @@ pymongo==4.3.3
 pymongo_schema==0.4.1
 python-dateutil==2.8.2
 python-magic==0.4.27
-redshift-connector~=2.0.915
+redshift-connector>=2.1.8
 requests~=2.31.0
 requests_mock==1.10.0
 simple_salesforce~=1.12.5
 simplejson
 singer_sdk~=0.34.1
-snowflake-connector-python==3.7.1
+snowflake-connector-python>=4.0.0
 sshtunnel==0.4.0
 stripe==5.5.0
 teradatasql
