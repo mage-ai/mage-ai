@@ -195,6 +195,21 @@ def print_plan(
     print(f'Unchanged: {plan.unchanged_count}')
 
 
+def print_list_only(dst: Path, plan: SyncPlan) -> None:
+    rows: list[tuple[str, Path]] = []
+    rows.extend(('new', dst_file) for _, dst_file in plan.new_files)
+    rows.extend(('changed', dst_file) for _, dst_file in plan.changed_files)
+    rows.extend(('deleted', dst_file) for dst_file in plan.deleted_files)
+
+    if not rows:
+        print('No docs to sync.')
+        return
+
+    print('Docs to sync:')
+    for status, dst_file in rows:
+        print(f'{status}: {dst_file.relative_to(dst)}')
+
+
 def apply_plan(dst: Path, plan: SyncPlan, verbose: bool) -> None:
     for src_file, dst_file in plan.new_files:
         dst_file.parent.mkdir(parents=True, exist_ok=True)
@@ -246,6 +261,11 @@ def parse_args() -> argparse.Namespace:
         help='Mirror deletions for filtered paths missing from source.',
     )
     parser.add_argument(
+        '--list-only',
+        action='store_true',
+        help='Only print docs that need syncing, without source/destination details.',
+    )
+    parser.add_argument(
         '--verbose', action='store_true', help='Print each file written or deleted.'
     )
     return parser.parse_args()
@@ -275,13 +295,17 @@ def main() -> int:
         return 2
 
     mode = 'CHECK' if args.check else 'APPLY' if args.apply else 'DRY RUN'
-    print_plan(src.resolve(), dst.resolve(), args.paths, mode, plan)
+    if args.list_only:
+        print_list_only(dst.resolve(), plan)
+    else:
+        print_plan(src.resolve(), dst.resolve(), args.paths, mode, plan)
 
     if args.check and plan.write_count:
-        print()
-        print(
-            'Docs are out of sync. Run this command with --apply to update the destination.'
-        )
+        if not args.list_only:
+            print()
+            print(
+                'Docs are out of sync. Run this command with --apply to update the destination.'
+            )
         return 1
 
     if args.apply:
@@ -293,7 +317,7 @@ def main() -> int:
             f'({len(plan.new_files)} new, {len(plan.changed_files)} updated, '
             f'{len(plan.deleted_files)} deleted).',
         )
-    elif not args.check:
+    elif not args.check and not args.list_only:
         print()
         print(
             'Run with --apply to write changes, or --check to fail when changes are needed.'

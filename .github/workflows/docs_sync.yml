@@ -1,6 +1,12 @@
 name: Docs sync
 
 on:
+  workflow_dispatch:
+    inputs:
+      paths:
+        description: "Optional docs-relative paths to dry run. Leave blank to scan all docs."
+        required: false
+        type: string
   push:
     paths:
       - "docs/**"
@@ -39,6 +45,7 @@ jobs:
 
       - name: Collect changed docs
         id: changed-docs
+        if: github.event_name != 'workflow_dispatch'
         working-directory: mage-ai
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
@@ -73,4 +80,24 @@ jobs:
             --dst mage-pro/docs \
             --check \
             --delete \
+            --list-only \
             "${changed_docs[@]}"
+
+      - name: Dry run docs mirror
+        if: github.event_name == 'workflow_dispatch'
+        env:
+          DOCS_SYNC_PATHS: ${{ inputs.paths }}
+        run: |
+          set -euo pipefail
+          if [[ -n "${DOCS_SYNC_PATHS}" ]]; then
+            read -ra docs_paths <<< "${DOCS_SYNC_PATHS}"
+          else
+            docs_paths=()
+          fi
+
+          python mage-ai/scripts/sync_docs.py \
+            --src mage-ai/docs \
+            --dst mage-pro/docs \
+            --delete \
+            --list-only \
+            "${docs_paths[@]}"
