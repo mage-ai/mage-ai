@@ -3,28 +3,37 @@ name: Docs sync
 on:
   workflow_dispatch:
     inputs:
-      paths:
-        description: "Optional docs-relative paths to dry run. Leave blank to scan all docs."
+      dry_run:
+        description: "Only print docs that need syncing."
+        required: true
+        default: true
+        type: boolean
+      direction:
+        description: "Sync direction."
+        required: true
+        default: oss-to-pro
+        type: choice
+        options:
+          - pro-to-oss
+          - oss-to-pro
+          - bidirectional
+      filters:
+        description: "Optional space-separated docs-relative files or directories."
         required: false
         type: string
   push:
+    branches:
+      - master
     paths:
       - "docs/**"
-      - "scripts/sync_docs.py"
-      - ".github/workflows/docs_sync.yml"
-  pull_request:
-    paths:
-      - "docs/**"
-      - "scripts/sync_docs.py"
-      - ".github/workflows/docs_sync.yml"
 
 permissions:
-  contents: read
-  pull-requests: read
+  contents: write
+  pull-requests: write
 
 jobs:
   docs-sync:
-    name: Check mage-pro docs mirror
+    name: Sync docs
     runs-on: ubuntu-latest
     steps:
       - name: Check out mage-ai
@@ -32,6 +41,8 @@ jobs:
         with:
           path: mage-ai
           fetch-depth: 0
+          ref: master
+          token: ${{ secrets.DOCS_SYNC_TOKEN || github.token }}
 
       - name: Check out mage-pro
         uses: actions/checkout@v4
@@ -39,16 +50,18 @@ jobs:
           repository: mage-ai/mage-pro
           token: ${{ secrets.DOCS_SYNC_TOKEN || github.token }}
           path: mage-pro
+          fetch-depth: 0
+          ref: master
 
       - name: Validate sync script
         run: python -m py_compile mage-ai/scripts/sync_docs.py
 
-      - name: Collect changed docs
+      - name: Collect changed docs on master push
         id: changed-docs
-        if: github.event_name != 'workflow_dispatch'
+        if: github.event_name == 'push'
         working-directory: mage-ai
         env:
-          BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
+          BASE_SHA: ${{ github.event.before }}
         run: |
           set -euo pipefail
           base_sha="${BASE_SHA}"
@@ -59,45 +72,114 @@ jobs:
           git diff --name-only --diff-filter=ACMRTD "${base_sha}" HEAD -- docs \
             | sed 's#^docs/##' \
             | grep -E '\.(mdx|md|json|png|jpe?g|gif|svg|webp|ico)$' \
-            > /tmp/changed-docs.txt || true
+            > /tmp/docs-sync-filters.txt || true
 
-          if [[ -s /tmp/changed-docs.txt ]]; then
+          if [[ -s /tmp/docs-sync-filters.txt ]]; then
             echo "has_docs=true" >> "${GITHUB_OUTPUT}"
-            echo "Changed docs:"
-            cat /tmp/changed-docs.txt
           else
             echo "has_docs=false" >> "${GITHUB_OUTPUT}"
-            echo "No docs files changed; skipping mirror check."
           fi
 
-      - name: Check docs mirror
-        if: steps.changed-docs.outputs.has_docs == 'true'
-        run: |
-          set -euo pipefail
-          mapfile -t changed_docs < /tmp/changed-docs.txt
-          python mage-ai/scripts/sync_docs.py \
-            --src mage-ai/docs \
-            --dst mage-pro/docs \
-            --check \
-            --delete \
-            --list-only \
-            "${changed_docs[@]}"
-
-      - name: Dry run docs mirror
+      - name: Prepare manual filters
         if: github.event_name == 'workflow_dispatch'
         env:
-          DOCS_SYNC_PATHS: ${{ inputs.paths }}
+          DOCS_SYNC_FILTERS: ${{ inputs.filters }}
         run: |
           set -euo pipefail
-          if [[ -n "${DOCS_SYNC_PATHS}" ]]; then
-            read -ra docs_paths <<< "${DOCS_SYNC_PATHS}"
+          if [[ -n "${DOCS_SYNC_FILTERS}" ]]; then
+            tr ' ' '\n' <<< "${DOCS_SYNC_FILTERS}" | sed '/^$/d' > /tmp/docs-sync-filters.txt
           else
-            docs_paths=()
+            : > /tmp/docs-sync-filters.txt
           fi
 
+      - name: Dry run docs differences on master push
+        if: github.event_name == 'push' && steps.changed-docs.outputs.has_docs == 'true'
+        run: |
+          set -euo pipefail
+          mapfile -t docs_paths < /tmp/docs-sync-filters.txt
           python mage-ai/scripts/sync_docs.py \
             --src mage-ai/docs \
             --dst mage-pro/docs \
             --delete \
             --list-only \
             "${docs_paths[@]}"
+
+      - name: No changed docs on master push
+        if: github.event_name == 'push' && steps.changed-docs.outputs.has_docs != 'true'
+        run: echo "No docs to sync."
+
+      - name: Manual docs sync
+        if: github.event_name == 'workflow_dispatch'
+        env:
+          GH_TOKEN: ${{ secrets.DOCS_SYNC_TOKEN || github.token }}
+          DRY_RUN: ${{ inputs.dry_run }}
+          DIRECTION: ${{ inputs.direction }}
+        run: |
+          set -euo pipefail
+          mapfile -t docs_paths < /tmp/docs-sync-filters.txt
+
+          sync_one() {
+            local source_dir="$1"
+            local dest_dir="$2"
+            local dest_repo="$3"
+            local label="$4"
+
+            echo "::group::${label}"
+            if [[ "${DRY_RUN}" == "true" ]]; then
+              python mage-ai/scripts/sync_docs.py \
+                --src "${source_dir}/docs" \
+                --dst "${dest_dir}/docs" \
+                --delete \
+                --list-only \
+                "${docs_paths[@]}"
+              echo "::endgroup::"
+              return
+            fi
+
+            python mage-ai/scripts/sync_docs.py \
+              --src "${source_dir}/docs" \
+              --dst "${dest_dir}/docs" \
+              --delete \
+              --apply \
+              --list-only \
+              "${docs_paths[@]}"
+
+            if git -C "${dest_dir}" diff --quiet -- docs; then
+              echo "No docs to sync."
+              echo "::endgroup::"
+              return
+            fi
+
+            local branch="codex/docs-sync-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}-${label}"
+            git -C "${dest_dir}" config user.name "github-actions[bot]"
+            git -C "${dest_dir}" config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git -C "${dest_dir}" checkout -b "${branch}"
+            git -C "${dest_dir}" add docs
+            git -C "${dest_dir}" commit -m "[codex] Sync docs from ${label}"
+            git -C "${dest_dir}" push origin "${branch}"
+
+            gh pr create \
+              --repo "${dest_repo}" \
+              --base master \
+              --head "${branch}" \
+              --title "[codex] Sync docs from ${label}" \
+              --body "Created by manual docs sync workflow run ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}."
+            echo "::endgroup::"
+          }
+
+          case "${DIRECTION}" in
+            pro-to-oss)
+              sync_one mage-pro mage-ai mage-ai/mage-ai pro-to-oss
+              ;;
+            oss-to-pro)
+              sync_one mage-ai mage-pro mage-ai/mage-pro oss-to-pro
+              ;;
+            bidirectional)
+              sync_one mage-pro mage-ai mage-ai/mage-ai pro-to-oss
+              sync_one mage-ai mage-pro mage-ai/mage-pro oss-to-pro
+              ;;
+            *)
+              echo "Unknown direction: ${DIRECTION}" >&2
+              exit 2
+              ;;
+          esac
