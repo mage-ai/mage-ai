@@ -1,6 +1,7 @@
 import json
 import os
 from dataclasses import dataclass, field
+from itertools import product
 from typing import Any, Dict, List, Optional, Tuple, Union
 
 import pandas as pd
@@ -511,23 +512,9 @@ def transform_output_for_display_dynamic_child(
 
 
 def create_combinations(combinations: List[Any]) -> List[Any]:
-    def __create_combinations(combinations_inner: List[Any]) -> List[Any]:
-        combos = []
-
-        for idx, arr in enumerate(combinations_inner):
-            for value in arr:
-                combinations_next = combinations_inner[(idx + 1) :]
-                if len(combinations_next) >= 1:
-                    for combos_down in __create_combinations(combinations_next):
-                        combos.append([value] + combos_down)
-                else:
-                    combos.append([value])
-
-        return combos
-
-    count = len(combinations)
-    arr = __create_combinations(combinations)
-    return [combo for combo in arr if len(combo) == count]
+    if not combinations:
+        return []
+    return [list(combo) for combo in product(*combinations)]
 
 
 def build_combinations_for_dynamic_child(
