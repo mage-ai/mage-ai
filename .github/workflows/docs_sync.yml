@@ -17,8 +17,17 @@ on:
           - pro-to-oss
           - oss-to-pro
           - bidirectional
+      scan_scope:
+        description: "Which docs to scan."
+        required: true
+        default: all-docs
+        type: choice
+        options:
+          - all-docs
+          - changed-docs
+          - filters
       filters:
-        description: "Optional space-separated docs-relative files or directories."
+        description: "Space-separated docs-relative files or directories when scan_scope=filters."
         required: false
         type: string
   push:
@@ -83,13 +92,40 @@ jobs:
       - name: Prepare manual filters
         if: github.event_name == 'workflow_dispatch'
         env:
+          SCAN_SCOPE: ${{ inputs.scan_scope }}
           DOCS_SYNC_FILTERS: ${{ inputs.filters }}
         run: |
           set -euo pipefail
-          if [[ -n "${DOCS_SYNC_FILTERS}" ]]; then
-            tr ' ' '\n' <<< "${DOCS_SYNC_FILTERS}" | sed '/^$/d' > /tmp/docs-sync-filters.txt
+          case "${SCAN_SCOPE}" in
+            all-docs)
+              : > /tmp/docs-sync-filters.txt
+              ;;
+            changed-docs)
+              base_sha="$(git -C mage-ai rev-parse HEAD^)"
+              git -C mage-ai diff --name-only --diff-filter=ACMRTD "${base_sha}" HEAD -- docs \
+                | sed 's#^docs/##' \
+                | grep -E '\.(mdx|md|json|png|jpe?g|gif|svg|webp|ico)$' \
+                > /tmp/docs-sync-filters.txt || true
+              ;;
+            filters)
+              if [[ -z "${DOCS_SYNC_FILTERS}" ]]; then
+                echo "scan_scope=filters requires at least one docs-relative file or directory." >&2
+                exit 2
+              fi
+              tr ' ' '\n' <<< "${DOCS_SYNC_FILTERS}" | sed '/^$/d' > /tmp/docs-sync-filters.txt
+              ;;
+            *)
+              echo "Unknown scan_scope: ${SCAN_SCOPE}" >&2
+              exit 2
+              ;;
+          esac
+
+          echo "scan_scope=${SCAN_SCOPE}"
+          if [[ -s /tmp/docs-sync-filters.txt ]]; then
+            echo "Docs filters:"
+            cat /tmp/docs-sync-filters.txt
           else
-            : > /tmp/docs-sync-filters.txt
+            echo "Docs filters: all docs"
           fi
 
       - name: Dry run docs differences on master push
