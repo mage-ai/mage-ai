@@ -65,62 +65,55 @@ jobs:
       - name: Validate sync script
         run: python -m py_compile mage-ai/scripts/sync_docs.py
 
-      - name: Collect changed docs on master push
-        id: changed-docs
-        if: github.event_name == 'push'
-        working-directory: mage-ai
+      - name: Prepare docs scan filters
         env:
+          EVENT_NAME: ${{ github.event_name }}
           BASE_SHA: ${{ github.event.before }}
-        run: |
-          set -euo pipefail
-          base_sha="${BASE_SHA}"
-          if [[ -z "${base_sha}" || "${base_sha}" =~ ^0+$ ]]; then
-            base_sha="$(git rev-list --max-parents=0 HEAD)"
-          fi
-
-          git diff --name-only --diff-filter=ACMRTD "${base_sha}" HEAD -- docs \
-            | sed 's#^docs/##' \
-            | grep -E '\.(mdx|md|json|png|jpe?g|gif|svg|webp|ico)$' \
-            > /tmp/docs-sync-filters.txt || true
-
-          if [[ -s /tmp/docs-sync-filters.txt ]]; then
-            echo "has_docs=true" >> "${GITHUB_OUTPUT}"
-          else
-            echo "has_docs=false" >> "${GITHUB_OUTPUT}"
-          fi
-
-      - name: Prepare manual filters
-        if: github.event_name == 'workflow_dispatch'
-        env:
           SCAN_SCOPE: ${{ inputs.scan_scope }}
           DOCS_SYNC_FILTERS: ${{ inputs.filters }}
         run: |
           set -euo pipefail
-          case "${SCAN_SCOPE}" in
-            all-docs)
-              : > /tmp/docs-sync-filters.txt
-              ;;
-            changed-docs)
-              base_sha="$(git -C mage-ai rev-parse HEAD^)"
-              git -C mage-ai diff --name-only --diff-filter=ACMRTD "${base_sha}" HEAD -- docs \
+
+          if [[ "${EVENT_NAME}" == "push" ]]; then
+            base_sha="${BASE_SHA}"
+            if [[ -z "${base_sha}" || "${base_sha}" =~ ^0+$ ]]; then
+              base_sha="$(git -C mage-ai rev-list --max-parents=0 HEAD)"
+            fi
+
+            git -C mage-ai diff --name-only --diff-filter=ACMRTD "${base_sha}" HEAD -- docs \
                 | sed 's#^docs/##' \
                 | grep -E '\.(mdx|md|json|png|jpe?g|gif|svg|webp|ico)$' \
                 > /tmp/docs-sync-filters.txt || true
-              ;;
-            filters)
-              if [[ -z "${DOCS_SYNC_FILTERS}" ]]; then
-                echo "scan_scope=filters requires at least one docs-relative file or directory." >&2
-                exit 2
-              fi
-              tr ' ' '\n' <<< "${DOCS_SYNC_FILTERS}" | sed '/^$/d' > /tmp/docs-sync-filters.txt
-              ;;
-            *)
-              echo "Unknown scan_scope: ${SCAN_SCOPE}" >&2
-              exit 2
-              ;;
-          esac
 
-          echo "scan_scope=${SCAN_SCOPE}"
+            echo "scan_scope=changed-docs"
+          else
+            case "${SCAN_SCOPE}" in
+              all-docs)
+                : > /tmp/docs-sync-filters.txt
+                ;;
+              changed-docs)
+                base_sha="$(git -C mage-ai rev-parse HEAD^)"
+                git -C mage-ai diff --name-only --diff-filter=ACMRTD "${base_sha}" HEAD -- docs \
+                  | sed 's#^docs/##' \
+                  | grep -E '\.(mdx|md|json|png|jpe?g|gif|svg|webp|ico)$' \
+                  > /tmp/docs-sync-filters.txt || true
+                ;;
+              filters)
+                if [[ -z "${DOCS_SYNC_FILTERS}" ]]; then
+                  echo "scan_scope=filters requires at least one docs-relative file or directory." >&2
+                  exit 2
+                fi
+                tr ' ' '\n' <<< "${DOCS_SYNC_FILTERS}" | sed '/^$/d' > /tmp/docs-sync-filters.txt
+                ;;
+              *)
+                echo "Unknown scan_scope: ${SCAN_SCOPE}" >&2
+                exit 2
+                ;;
+            esac
+
+            echo "scan_scope=${SCAN_SCOPE}"
+          fi
+
           if [[ -s /tmp/docs-sync-filters.txt ]]; then
             echo "Docs filters:"
             cat /tmp/docs-sync-filters.txt
@@ -128,31 +121,30 @@ jobs:
             echo "Docs filters: all docs"
           fi
 
-      - name: Dry run docs differences on master push
-        if: github.event_name == 'push' && steps.changed-docs.outputs.has_docs == 'true'
-        run: |
-          set -euo pipefail
-          mapfile -t docs_paths < /tmp/docs-sync-filters.txt
-          python mage-ai/scripts/sync_docs.py \
-            --src mage-ai/docs \
-            --dst mage-pro/docs \
-            --delete \
-            --list-only \
-            "${docs_paths[@]}"
-
-      - name: No changed docs on master push
-        if: github.event_name == 'push' && steps.changed-docs.outputs.has_docs != 'true'
-        run: echo "No docs to sync."
-
-      - name: Manual docs sync
-        if: github.event_name == 'workflow_dispatch'
+      - name: Run docs sync
         env:
           GH_TOKEN: ${{ secrets.DOCS_SYNC_TOKEN || github.token }}
+          EVENT_NAME: ${{ github.event_name }}
           DRY_RUN: ${{ inputs.dry_run }}
           DIRECTION: ${{ inputs.direction }}
         run: |
           set -euo pipefail
           mapfile -t docs_paths < /tmp/docs-sync-filters.txt
+
+          if [[ "${EVENT_NAME}" == "push" ]]; then
+            if [[ "${#docs_paths[@]}" -eq 0 ]]; then
+              echo "No docs to sync."
+              exit 0
+            fi
+
+            python mage-ai/scripts/sync_docs.py \
+              --src mage-ai/docs \
+              --dst mage-pro/docs \
+              --delete \
+              --list-only \
+              "${docs_paths[@]}"
+            exit 0
+          fi
 
           sync_one() {
             local source_dir="$1"
