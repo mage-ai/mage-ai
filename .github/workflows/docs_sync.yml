@@ -1,0 +1,76 @@
+name: Docs sync
+
+on:
+  push:
+    paths:
+      - "docs/**"
+      - "scripts/sync_docs.py"
+      - ".github/workflows/docs_sync.yml"
+  pull_request:
+    paths:
+      - "docs/**"
+      - "scripts/sync_docs.py"
+      - ".github/workflows/docs_sync.yml"
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  docs-sync:
+    name: Check mage-pro docs mirror
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out mage-ai
+        uses: actions/checkout@v4
+        with:
+          path: mage-ai
+          fetch-depth: 0
+
+      - name: Check out mage-pro
+        uses: actions/checkout@v4
+        with:
+          repository: mage-ai/mage-pro
+          token: ${{ secrets.DOCS_SYNC_TOKEN || github.token }}
+          path: mage-pro
+
+      - name: Validate sync script
+        run: python -m py_compile mage-ai/scripts/sync_docs.py
+
+      - name: Collect changed docs
+        id: changed-docs
+        working-directory: mage-ai
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
+        run: |
+          set -euo pipefail
+          base_sha="${BASE_SHA}"
+          if [[ -z "${base_sha}" || "${base_sha}" =~ ^0+$ ]]; then
+            base_sha="$(git rev-list --max-parents=0 HEAD)"
+          fi
+
+          git diff --name-only --diff-filter=ACMRTD "${base_sha}" HEAD -- docs \
+            | sed 's#^docs/##' \
+            | grep -E '\.(mdx|md|json|png|jpe?g|gif|svg|webp|ico)$' \
+            > /tmp/changed-docs.txt || true
+
+          if [[ -s /tmp/changed-docs.txt ]]; then
+            echo "has_docs=true" >> "${GITHUB_OUTPUT}"
+            echo "Changed docs:"
+            cat /tmp/changed-docs.txt
+          else
+            echo "has_docs=false" >> "${GITHUB_OUTPUT}"
+            echo "No docs files changed; skipping mirror check."
+          fi
+
+      - name: Check docs mirror
+        if: steps.changed-docs.outputs.has_docs == 'true'
+        run: |
+          set -euo pipefail
+          mapfile -t changed_docs < /tmp/changed-docs.txt
+          python mage-ai/scripts/sync_docs.py \
+            --src mage-ai/docs \
+            --dst mage-pro/docs \
+            --check \
+            --delete \
+            "${changed_docs[@]}"
