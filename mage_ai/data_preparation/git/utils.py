@@ -1,6 +1,7 @@
 import asyncio
 import base64
 import os
+import re
 import subprocess
 from typing import Callable
 from urllib.parse import urlparse, urlsplit, urlunsplit
@@ -24,6 +25,20 @@ from mage_ai.settings.keys import (
     GIT_SSH_PUBLIC_KEY,
     GITLAB_HOST,
 )
+
+
+# Strict RFC-952/1123 hostname (with optional :port). Refuses shell metacharacters.
+_SAFE_HOSTNAME_RE = re.compile(
+    r'^[A-Za-z0-9](?:[A-Za-z0-9\-]*[A-Za-z0-9])?'
+    r'(?:\.[A-Za-z0-9](?:[A-Za-z0-9\-]*[A-Za-z0-9])?)*'
+    r'(?::[0-9]{1,5})?$'
+)
+
+
+def _validate_hostname(hostname: str) -> str:
+    if not hostname or not _SAFE_HOSTNAME_RE.match(hostname):
+        raise ValueError(f'Refusing unsafe SSH hostname: {hostname!r}')
+    return hostname
 
 
 def get_auth_type_from_url(remote_url: str) -> AuthType:
@@ -123,6 +138,9 @@ def create_ssh_keys(
         # Codecommit requires additional configuration for SSH connection
         config_file = os.path.join(DEFAULT_SSH_KEY_DIRECTORY, 'config')
         if hostname and hostname.startswith('git-codecommit'):
+            # Defense in depth: reject hostnames containing shell/newline
+            # metacharacters before interpolating them into the SSH config file.
+            _validate_hostname(hostname)
             if not os.path.exists(config_file) or overwrite:
                 config = f'''Host {hostname}
 User {git_config.username}
@@ -139,17 +157,34 @@ def run_command(command: str) -> None:
     proc.wait()
 
 
-def add_host_to_known_hosts(remote_repo_link: str):
+def add_host_to_known_hosts(remote_repo_link: str) -> bool:
     url = remote_repo_link
     if url and not url.startswith('ssh://'):
         url = f'ssh://{url}'
 
     hostname = urlparse(url).hostname
-    if hostname:
-        cmd = f'ssh-keyscan -t rsa {hostname} >> {DEFAULT_KNOWN_HOSTS_FILE}'
-        run_command(cmd)
-        return True
-    return False
+    if not hostname:
+        return False
+
+    # Reject hostnames containing shell metacharacters (`;`, `|`, `` ` ``, `$()`,
+    # `&&`, whitespace, newlines, etc.) before they reach any subprocess call.
+    _validate_hostname(hostname)
+
+    known_hosts_dir = os.path.dirname(DEFAULT_KNOWN_HOSTS_FILE)
+    if known_hosts_dir:
+        os.makedirs(known_hosts_dir, exist_ok=True)
+
+    # Use list-form subprocess + Python-managed file handle: shell metacharacters
+    # in `hostname` cannot reach a shell. Defense in depth on top of the regex
+    # check above.
+    with open(DEFAULT_KNOWN_HOSTS_FILE, 'ab') as known_hosts:
+        subprocess.run(
+            ['ssh-keyscan', '-t', 'rsa', hostname],
+            stdout=known_hosts,
+            stderr=subprocess.DEVNULL,
+            check=False,
+        )
+    return True
 
 
 def get_access_token(git_config, repo_path: str) -> str:
