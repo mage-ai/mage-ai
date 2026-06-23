@@ -58,7 +58,7 @@ setuptools.setup(
             'azure-storage-blob==12.14.1',
         ],
         'bigquery': [
-            'google-cloud-bigquery~=3.0',
+            'google-cloud-bigquery~=3.14.1',
             'db-dtypes==1.2.0',
         ],
         'chroma': [
@@ -109,7 +109,7 @@ setuptools.setup(
         ],
         'redshift': [
             'boto3==1.26.60',
-            'redshift-connector==2.0.915',
+            'redshift-connector~=2.0.915',
             'lxml==4.9.4',
         ],
         's3': [
@@ -175,7 +175,7 @@ setuptools.setup(
             'great-expectations==0.18.12',
             'gspread==5.7.2',
             'influxdb_client==1.36.1',
-            'kafka-python==2.0.2',
+            'kafka-python==2.3.0',
             'kubernetes==33.1.0',
             'langchain==0.2.5',
             'langchain_community==0.2.5',
@@ -189,7 +189,8 @@ setuptools.setup(
             'opentelemetry-instrumentation-tornado==0.43b0',
             'opentelemetry-exporter-otlp==1.22.0',
             'opentelemetry-instrumentation-sqlalchemy==0.43b0',
-            'oracledb==1.3.1',
+            "oracledb==1.3.1; python_version < '3.12'",
+            "oracledb==2.4.1; python_version >= '3.12'",
             'pika==1.3.1',
             'pinotdb==5.6.0',
             'prometheus_client>=0.18.0',
@@ -201,7 +202,7 @@ setuptools.setup(
             'pymongo==4.3.3',
             "pyodbc==4.0.35; python_version < '3.12'",
             "pyodbc==5.0.1; python_version >= '3.12'",
-            'redshift-connector==2.0.915',
+            'redshift-connector~=2.0.915',
             'lxml==4.9.4',
             'requests_aws4auth==1.1.2',
             'snowflake-connector-python==3.7.1',

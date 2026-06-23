@@ -94,7 +94,7 @@ pyairtable==2.3.3
 pydruid==0.6.5
 pyodbc==4.0.35; python_version < '3.12'
 pyodbc==5.0.1; python_version >= '3.12'
-redshift-connector==2.0.915
+redshift-connector~=2.0.915
 lxml==4.9.4
 snowflake-connector-python==3.7.1
 sshtunnel==0.4.0
@@ -141,7 +141,7 @@ async-timeout==4.0.3
 attrs==22.2.0; python_version < '3.12'
 attrs==24.2.0; python_version >= '3.12'
 backoff
-clickhouse_sqlalchemy
+clickhouse_sqlalchemy~=0.3.0
 deltalake==0.20.2
 facebook_business==22.0.2
 gnupg==2.3.1

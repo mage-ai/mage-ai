@@ -8,7 +8,10 @@ from sqlalchemy import create_engine, text
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import scoped_session, sessionmaker
 
-from mage_ai.orchestration.constants import DATABASE_CONNECTION_URL_ENV_VAR
+from mage_ai.orchestration.constants import (
+    DATABASE_CONNECTION_URL_ENV_VAR,
+    TEST_DATABASE_CONNECTION_URL_ENV_VAR,
+)
 from mage_ai.orchestration.db.cache import CachingQuery, SessionWithCaching
 from mage_ai.orchestration.db.setup import get_postgres_connection_url
 from mage_ai.orchestration.db.utils import get_user_info_from_db_connection_url
@@ -30,7 +33,9 @@ if OTEL_EXPORTER_OTLP_ENDPOINT:
     from opentelemetry.instrumentation.sqlalchemy import SQLAlchemyInstrumentor
 
 if is_test_mage():
-    db_connection_url = f'sqlite:///{TEST_DB}'
+    db_connection_url = (
+        os.getenv(TEST_DATABASE_CONNECTION_URL_ENV_VAR) or f'sqlite:///{TEST_DB}'
+    )
     db_kwargs['connect_args']['check_same_thread'] = False
 elif not db_connection_url:
     pg_db_connection_url = get_postgres_connection_url()
@@ -108,6 +113,55 @@ class DBConnection:
         if hasattr(self.session.registry.registry, 'value'):
             if hasattr(self.session.registry.registry.value, 'stop_cache'):
                 self.session.registry.registry.value.stop_cache()
+
+    def execute_with_cache(
+        self,
+        statement,
+        cache: bool = False,
+        result_type: str = 'scalars',
+        **kwargs,
+    ):
+        """
+        Executes a SQLAlchemy statement with optional caching and result type handling.
+
+        - If using scoped_session, routes to the underlying SessionWithCaching instance.
+        - If using a plain session, falls back to session.execute(...).
+
+        Args:
+            statement: SQLAlchemy statement to execute.
+            cache (bool): Whether to use query result caching.
+            result_type (str): One of 'scalars', 'all', or 'fetchall'.
+            **kwargs: Additional arguments to pass to session.execute.
+
+        Returns:
+            list: Query results based on result_type.
+
+        Raises:
+            RuntimeError: If session is not initialized.
+            ValueError: If result_type is invalid.
+        """
+        if self.session is None:
+            raise RuntimeError("Session not started. Call start_session() first.")
+
+        if hasattr(self.session, 'registry') and hasattr(self.session.registry.registry, 'value'):
+            # scoped_session: unwrap actual session from thread-local registry
+            session = self.session.registry.registry.value
+            if hasattr(session, 'execute_with_cache'):
+                return session.execute_with_cache(
+                    statement, cache=cache, result_type=result_type, **kwargs
+                )
+        else:
+            # direct session instance
+            result = self.session.execute(statement, **kwargs)
+
+            if result_type == 'scalars':
+                return result.scalars().all()
+            elif result_type == 'all':
+                return result.all()
+            elif result_type == 'fetchall':
+                return result.fetchall()
+            else:
+                raise ValueError(f"Unsupported result_type: {result_type}")
 
 
 def get_postgresql_schema(url):
