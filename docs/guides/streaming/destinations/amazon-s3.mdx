@@ -16,6 +16,7 @@ buffer_timeout_seconds: 300
 * `bucket`: The S3 bucket you want to use to store the data.
 * `prefix`: The S3 path prefix. The whole S3 path will be `s3://{bucket}/{prefix}`.
 * `file_type`: `parquet`, `csv`, or `delta` (for Delta Lake tables)
+* `file_type`: `parquet` or `csv`
 * `buffer_size_mb` and `buffer_timeout_seconds`: Mage puts messages in a buffer before uploading to S3.
   You can configure the size and timeout of the buffer to control the file size and the delay.
 
@@ -67,6 +68,10 @@ aws_region: us-west-2  # Optional: defaults to us-west-2
 * `aws_region`: (Optional) AWS region. If not provided, will fall back to the `AWS_REGION` environment variable or default to `us-west-2`.
 
 **Note:** When using Delta Lake format, time-based partitioning (`date_partition_format`) is not applied as Delta Lake manages its own internal file structure.
+
+If you want to store the S3 data in time-based paratition folders. You can add `date_partition_format`
+to the config. Example values: `%Y%m%d`, `%Y%m%dT%H`.
+
 
 ## Authentication
 Here are the options to authenticate with the AWS S3 bucket.

@@ -51,6 +51,18 @@ All request body parameters are nested under the `workspace` object.
       "hook_path": "/path/to/hook.sh"
     }
   }
+<ParamField body="workspace.action" type="string" required>
+  The action to perform. Use `"patch"` to apply partial updates to the workspace configuration.
+</ParamField>
+
+<ParamField body="workspace.container_config" type="string">
+  Optional. Configuration string for the container.  
+  For example, updating the workspace image tag and environment variables:
+  ```
+  image_tag: 2026.06.16
+  env:
+    - name: ENV
+      value: test
   ```
 </ParamField>
 
@@ -210,6 +222,10 @@ curl --request PUT \
   --url https://your-mage-instance.com/api/workspaces/my-workspace
 ```
 
+  Optional. Whether to update workspace settings with the current cluster's environment variables.  
+  Set to `true` to sync the workspace configuration with the cluster-level environment.
+</ParamField>
+
 <RequestExample>
 
 ```bash Request
@@ -220,6 +236,7 @@ curl --request PUT \
         "workspace": {
           "action": "patch",
           "container_config": "env:\n  - name: ENV\n    value: test",
+          "container_config": "image_tag: 2026.06.16\nenv:\n  - name: ENV\n    value: test",
           "update_workspace_settings": true
         }
       }' \

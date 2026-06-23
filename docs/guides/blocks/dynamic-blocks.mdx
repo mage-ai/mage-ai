@@ -114,6 +114,45 @@ The block runs should look like this:
 
 ![Dynamic block runs](https://mage-ai.github.io/assets/blocks/dynamic-block-runs.png)
 
+## Limit dynamically created blocks
+
+To prevent a dynamic block from creating too many downstream block runs, set a maximum number
+of dynamic child block runs. To throttle execution after those rows are created, set a maximum
+number of concurrent dynamic child block runs. Unset values and `0` allow unlimited dynamic child
+block creation or concurrent dynamic child execution.
+
+Set workspace-wide defaults with the `DYNAMIC_BLOCKS_MAX_CHILD_BLOCKS` and
+`DYNAMIC_BLOCKS_MAX_CONCURRENT_CHILD_BLOCKS` environment variables. Set
+`DYNAMIC_BLOCKS_MAX_CHILD_BLOCKS_BEHAVIOR` to `fail` to stop runs that exceed the creation limit,
+or `limit` to create only up to the configured maximum. You can also add this to the project
+`metadata.yaml`:
+
+```yaml
+dynamic_blocks:
+  max_child_block_runs: 1000
+  on_max_child_block_runs_exceeded: fail
+  max_concurrent_child_block_runs: 25
+```
+
+Set a pipeline-specific limit in the pipeline `metadata.yaml`:
+
+```yaml
+dynamic_blocks:
+  max_child_block_runs: 500
+  on_max_child_block_runs_exceeded: limit
+  max_concurrent_child_block_runs: 10
+```
+
+Set a stricter limit for one dynamic block in that block's configuration:
+
+```yaml
+configuration:
+  dynamic:
+    max_child_block_runs: 100
+    on_max_child_block_runs_exceeded: limit
+    max_concurrent_child_block_runs: 5
+```
+
 ## Dynamic blocks 2.0
 
 import { ProButton } from '/snippets/pro/button.mdx';

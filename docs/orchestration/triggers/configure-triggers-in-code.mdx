@@ -51,6 +51,26 @@ Here are the steps to create and configure triggers via code:
         - `envs`: List of environments where this trigger should be synced and run. See [Envs filter](#envs-filter) below.
 
 1. Save the `triggers.yaml` file. On the next scheduler run, trigger configs are synced to the database (subject to the envs filter) and then show in the Triggers UI.
+    1. Required trigger fields
+        1. `name`: Unique identifier of the trigger
+        1. `schedule_type`: `time`, `api`, or `event`
+        1. `schedule_interval`: `@once`, `@hourly`, `@daily`, `@weekly`, `@monthly`, `@always_on`, or Cron syntax(`* * * * *`)
+        1. `start_time`: The start time of the trigger (e.g. `2023-01-01`)
+    1. Optional trigger fields
+        1. `status`: `active` or `inactive`
+        1. `variables`: A dictionary of variables that's associated with the trigger
+        1. `sla`: SLA in seconds
+        1. `settings`: a dictionary of [advanced settings](/orchestration/triggers/triggering-pipelines#additional-trigger-settings)
+            1. `skip_if_previous_running`: `true`/`false`
+            1. `allow_blocks_to_fail`: `true`/`false`
+            1. `create_initial_pipeline_run`: `true`/`false`
+        1. `envs`: The environments that the trigger runs in.
+            - If `envs` is not set or empty, the trigger will run in all environments.
+            - The environment of the Mage app is set via the `ENV` [environment variable](/development/variables/environment-variables).
+            - **OSS:** Only supports `dev`, `staging`, `prod`, `test`.
+            - **Mage Pro:** Supports any value, which must match the `ENV` environment variable.
+
+1. Save the `triggers.yaml` file. The trigger configs will be synced to the triggers UI shortly.
 
 
 ### Example triggers config:
@@ -109,4 +129,12 @@ The `triggers.yaml` file is synced into the database automatically, but **deleti
 
 - **Alternative to deletion:**
   Instead of deleting, you can update the trigger status in the YAML file (e.g. set `status: inactive`).
+  Removing a trigger from the yaml file won’t delete it from the database. You will need to delete the trigger in the UI.
+  - In the Pipeline triggers table (`/pipeline/[pipeline_uuid]/triggers`), click the trash can icon.
+  - In **Mage Pro**, right-click on the trigger row and click <b>Delete</b>.
+
+  This ensures the trigger is removed both from the database and from the pipeline’s `triggers.yaml` config file.
+
+- **Alternative to deletion:**
+  Instead of deleting, you can update the trigger status in the yaml file (e.g. set `status: inactive`).
   Status changes are automatically synced to the database and UI.

@@ -290,6 +290,74 @@ Loads data from object in S3 bucket into a Pandas data frame. This function will
 
 -   **Returns**: (`DataFrame`) Data frame object loaded from data in the specified file.
 
+## FileIO
+
+`mage_ai.io.file.FileIO`
+
+Handles data transfer between the filesystem and the Mage app. The `FileIO` client currently supports importing and exporting with the following file formats:
+
+-   CSV
+-   JSON
+-   Parquet
+-   HDF5
+-   XML
+-   Excel
+
+<h3> Constructor </h3>
+
+`__init__(self, verbose: bool)`
+
+Initializes the FileIO data loading client.
+
+-   **Args**
+    -   `verbose (bool)`: Enables verbose output printing. Defaults to False.
+
+<h3> Methods </h3>
+
+**_export_** - `export(df: DataFrame, filepath: os.PathLike, format: FileFormat | str = None, **kwargs) -> None:`
+
+Exports the input data frame to the file specified.
+
+If the format is HDF5, the default key under which the data frame is stored is the stem of the filename. For example, if the file to write the data frame to is 'storage/my_data_frame.hdf5', the key would be 'my_data_frame'. This can be overridden using the `key` keyword argument.
+
+-   **Args**:
+
+    -   `df (DataFrame)`: Data frame to export.
+    -   `filepath (os.PathLike)`: Filepath to export data frame to.
+    -   `format (FileFormat | str, Optional)`: Format of the file to export data frame to. Defaults to None, in which case the format is inferred.
+    -   `**kwargs` - Additional keyword arguments to pass to the file writer. See possible arguments by file formats at:
+
+        | Format  | Pandas Writer                                                                                                         |
+        | ------- | --------------------------------------------------------------------------------------------------------------------- |
+        | CSV     | [_DataFrame.to_csv_](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.to_csv.html)         |
+        | JSON    | [_DataFrame.to_json_](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.to_json.html)       |
+        | Parquet | [_DataFrame.to_parquet_](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.to_parquet.html) |
+        | HDF5    | [_DataFrame.to_hdf_](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.to_hdf.html)         |
+        | XML     | [_DataFrame.to_xml_](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.to_xml.html)         |
+        | Excel   | [_DataFrame.to_excel_](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.to_excel.html)     |
+
+**_load_** - `load(filepath: os.PathLike, format: FileFormat | str = None, limit: int = QUERY_ROW_LIMIT **kwargs) -> DataFrame`
+
+Loads the data frame from the filepath specified. This function will load at maximum 10,000,000 rows of data from the specified file (this limit is configurable).
+
+-   **Args**:
+
+    -   `filepath (os.PathLike)`: Filepath to load data frame from.
+    -   `format (FileFormat | str, Optional)`: Format of the file to load data frame from. Defaults to None, in which case the format is inferred.
+    -   `limit (int, optional)`: The number of rows to limit the loaded data frame to. Defaults to 10,000,000.
+    -   `**kwargs` - Additional keyword arguments to pass to the file writer. See possible arguments by file formats at:
+
+        | Format  | Pandas Reader                                                                                         |
+        | ------- | ----------------------------------------------------------------------------------------------------- |
+        | CSV     | [_read_csv_](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.read_csv.html)         |
+        | JSON    | [_read_json_](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.read_json.html)       |
+        | Parquet | [_read_parquet_](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.read_parquet.html) |
+        | HDF5    | [_read_hdf_](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.read_hdf.html)         |
+        | XML     | [_read_xml_](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.read_xml.html)         |
+        | Excel   | [_read_excel_](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.read_excel.html)     |
+
+-   **Returns**: (`DataFrame`) Data frame object loaded from data in the specified file.
+
 ## GoogleCloudStorage
 
 `mage_ai.io.google_cloud_storage.GoogleCloudStorage`
@@ -2207,6 +2275,8 @@ These functions are shared among all configuration loaders, but depending on the
 ### Configuration File
 
 Loads configuration settings from a configuration file.
+
+For detailed information about creating and managing `io_config.yaml` files, see the [IO Config Setup documentation](/development/io_config_setup).
 
 For detailed information about creating and managing `io_config.yaml` files, see the [IO Config Setup documentation](/development/io_config_setup).
 

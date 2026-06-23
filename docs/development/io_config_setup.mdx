@@ -92,6 +92,7 @@ For security, it's recommended to use environment variables and other secret man
 | `{{ aws_secret_var('secret') }}` | Get secret from AWS Secrets Manager |
 | `{{ azure_secret_var('secret') }}` | Get secret from Azure Key Vault |
 | `{{ gcp_secret_var('secret') }}` | Get secret from Google Cloud Secret Manager (Mage Pro only) |
+| `{{ doppler_secret_var('secret') }}` | Get secret from Doppler |
 | `{{ json_value(json_obj, 'key') }}` | Extract value from a JSON string |
 | `{{ file('path/to/file.txt') }}` | Load contents of a local file (Mage Pro only) |
 
@@ -136,6 +137,16 @@ default:
   POSTGRES_PASSWORD: "{{ gcp_secret_var('postgres-password') }}"
   SNOWFLAKE_PASSWORD: "{{ gcp_secret_var('snowflake-password') }}"
 ```
+
+**Doppler:**
+```yaml
+version: 0.1.1
+default:
+  POSTGRES_PASSWORD: "{{ doppler_secret_var('POSTGRES_PASSWORD') }}"
+  SNOWFLAKE_PASSWORD: "{{ doppler_secret_var('SNOWFLAKE_PASSWORD') }}"
+```
+
+To use Doppler, configure the Mage runtime with `DOPPLER_TOKEN`, `DOPPLER_PROJECT`, and `DOPPLER_CONFIG`. Mage caches Doppler secrets in memory for `DOPPLER_SECRETS_CACHE_TTL_SECONDS` seconds, defaulting to `10`. Set the TTL to `0` to refresh on every lookup. Secret changes are picked up on the next config render after the TTL expires; already-open connections may continue using the previous value until recreated.
 
 **File Content (Mage Pro only):**
 ```yaml

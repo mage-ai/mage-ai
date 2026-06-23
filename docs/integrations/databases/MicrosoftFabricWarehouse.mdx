@@ -19,6 +19,7 @@ This integration allows you to:
 - Connect to Microsoft Fabric Data Warehouse using Azure AD Service Principal authentication (with optional token-based auth via `AZURE_TENANT_ID`)
 - Run SQL in pipelines via **SQL blocks** (transformer) or Python blocks
 - Export data using batched row-based inserts (standard export)
+This integration allows you to connect to Microsoft Fabric Data Warehouse using Azure AD Service Principal authentication and perform SQL operations directly from Mage pipelines.
 
 ## Add credentials
 
@@ -129,6 +130,7 @@ def load_data_from_fabric_warehouse(*args, **kwargs):
 ### Export a dataframe
 
 Use a data exporter block and call `warehouse.export()`. Data is inserted in batches (see [Export limits](#export-limits)).
+Here is an example code snippet to export a dataframe to Microsoft Fabric Warehouse:
 
 ```python
 from mage_ai.settings.repo import get_repo_path
@@ -149,6 +151,14 @@ def export_data_to_fabric_warehouse(df: DataFrame, **kwargs) -> None:
     """
     schema_name = 'dbo'
     table_name = 'your_table_name'
+    Template for exporting data to Microsoft Fabric Warehouse.
+    Specify your configuration settings in 'io_config.yaml'.
+    Set the following in your io_config:
+
+    Docs: https://docs.mage.ai/integrations/databases/MicrosoftFabricWarehouse
+    """
+    schema_name = 'dbo'  # Specify the name of the schema to export data to
+    table_name = 'your_table_name'  # Specify the name of the table to export data to
     config_path = path.join(get_repo_path(), 'io_config.yaml')
     config_profile = 'default'
 
@@ -159,6 +169,8 @@ def export_data_to_fabric_warehouse(df: DataFrame, **kwargs) -> None:
             table_name,
             if_exists='replace',
             index=False,
+            if_exists='replace',  # Specify resolution policy if table name already exists
+            index=False,  # Specifies whether to include index in exported table
         )
 ```
 
@@ -203,6 +215,7 @@ def export_data_to_fabric_warehouse(df: DataFrame, **kwargs) -> None:
     Set the following in your io_config:
 
     Docs: https://docs.mage.ai/integrations/databases/MicrosoftFabricWarehouse
+    Docs: /integrations/databases/MicrosoftFabricWarehouse
     """
     schema_name = 'dbo'  # Specify the name of the schema to export data to
     table_name = 'your_table_name'  # Specify the name of the table to export data to
@@ -278,6 +291,7 @@ def export_data_to_fabric_warehouse(df: DataFrame, **kwargs) -> None:
 ### Authentication Errors
 
 **Error**: `Failed to authenticate with Azure AD` or `Login failed for user` or `Could not login because the authentication failed.`
+**Error**: `Failed to authenticate with Azure AD` or `Login failed for user`
 
 <Check>
     *"Verify your Service Principal credentials and permissions"*

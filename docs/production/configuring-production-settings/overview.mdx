@@ -4,6 +4,9 @@ sidebarTitle: "Production settings"
 icon: "gear"
 ---
 
+import { ProButton } from '/snippets/pro/button.mdx';
+import { ProOnly } from '/snippets/pro/only.mdx';
+
 ## Settings
 
 ### Read only access
@@ -36,6 +39,10 @@ To use a specific `schema_name` in PostgreSQL:
 
 #### MSSQL
 `export MAGE_DATABASE_CONNECTION_URL="mssql+pyodbc://?odbc_connect=DRIVER={ODBC Driver 18 for SQL Server};SERVER=host;DATABASE=dbname;UID=user;PWD=password;ENCRYPT=yes;TrustServerCertificate=yes;"`
+
+<ProOnly source="production-settings" />
+
+If Mage fails to start because an orchestration database migration failed, use `mage db diagnose` first. See [Troubleshoot database migration failures](/development/databases/default#troubleshoot-database-migration-failures) for migration history, table schema inspection, migration, rollback, and Alembic version stamping commands.
 
 ### ulimit
 

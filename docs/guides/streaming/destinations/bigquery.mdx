@@ -5,6 +5,8 @@ description: "Stream data to Google BigQuery using the Storage Write API, with o
 
 The BigQuery streaming destination uses the **Generic IO** sink. Writes go through the **BigQuery Storage Write API** (default stream, Arrow format) for better throughput and lower cost. The target table must already exist.
 
+---
+
 ## Basic config
 
 ```yaml
@@ -103,4 +105,15 @@ This pattern works particularly well with **CDC** sources such as [PostgreSQL CD
 ```yaml
 config:
   table_id: "{schema}.{table}"
+```
+profile: default    # profile in the io_config.yaml
+config:
+  table_id: table_id
+  if_exists: "append"
+```
+
+## Optional fields
+
+```yaml
+database: database  # Override the database
 ```

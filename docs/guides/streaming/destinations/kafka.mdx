@@ -63,6 +63,14 @@ ssl_config:
   - Compatible with OAuth 2.0 providers like Keycloak, Okta, and other identity servers that support client credentials flow.
 </Note>
 
+```yaml
+security_protocol: "SASL_SSL"
+sasl_config:
+  mechanism: "PLAIN"
+  username: username
+  password: password
+```
+
 ## Data format
 
 The Kafka data exporter scalar values

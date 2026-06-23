@@ -15,6 +15,7 @@ Here's a list of the different variables and functions you can use in your code:
 | `{{ mage_secret_var('secret') }}`   | Get secret from [Mage secrets](/development/variables/secrets).                        |
 | `{{ aws_secret_var('secret') }}`    | Get secret from [AWS Secrets Manager](/production/deploying-to-cloud/secrets/AWS).     |
 | `{{ azure_secret_var('secret') }}`  | Get secret from [Azure Key Vault](/production/deploying-to-cloud/secrets/Azure).       |
+| `{{ doppler_secret_var('secret') }}` | Get secret from Doppler.                                                              |
 | `{{ json_value(json_obj, 'key') }}` | Extract value from a JSON string.                                                     |
 | `{{ n_days_ago(N) }}`               | Get the date `N` days ago (data integration pipelines only).                          |
 
@@ -44,3 +45,29 @@ If you want to get a json field from the local file, you can use it together wit
 ```
 {{ json_value(file('path/to/file.json'), 'key') }}`
 ```
+
+### Doppler secrets syntax
+
+Use `doppler_secret_var` to read a secret directly from Doppler when the template is rendered:
+
+```jinja
+{{ doppler_secret_var('POSTGRES_PASSWORD') }}
+```
+
+Mage reads the default Doppler project and config from these environment variables:
+
+| Variable | Description |
+| --- | --- |
+| `DOPPLER_TOKEN` | Doppler token used to read secrets. |
+| `DOPPLER_PROJECT` | Doppler project identifier. |
+| `DOPPLER_CONFIG` | Doppler config name. |
+| `DOPPLER_API_HOST` | Optional API host. Defaults to `https://api.doppler.com`. |
+| `DOPPLER_SECRETS_CACHE_TTL_SECONDS` | Optional in-memory cache TTL. Defaults to `10`. Set to `0` to refresh on every lookup. |
+
+You can override the project or config for an individual reference:
+
+```jinja
+{{ doppler_secret_var('POSTGRES_PASSWORD', project='analytics', config='prd') }}
+```
+
+When a Doppler secret changes, Mage picks up the new value on the next template render after the cache TTL expires. Already-open database connections or clients may continue using the value they were created with until they are recreated.

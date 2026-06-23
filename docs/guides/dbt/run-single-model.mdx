@@ -81,6 +81,43 @@ WHERE created_at >= '{{ var("ds") }}'
 In the above example, the variable named `ds` is defined as part of the runtime
 variables for the pipeline.
 
+### Upstream block output
+
+You can also use the output from an upstream Mage block inside a dbt SQL model
+with `block_output`. This is useful when a Python, SQL, or dynamic block decides
+which value the dbt model should query, filter, or materialize.
+
+For example, an upstream data loader named `select_city` can return a record:
+
+```python
+@data_loader
+def load_data(*args, **kwargs):
+    return [
+        {
+            'city': 'seattle',
+            'run_label': 'daily_refresh',
+        },
+    ]
+```
+
+Then a dbt SQL model block can interpolate that output before dbt runs:
+
+```sql
+select
+  '{{ block_output("select_city", parse=lambda rows: rows[0]["city"]) }}' as city,
+  '{{ block_output("select_city", parse=lambda rows: rows[0]["run_label"]) }}' as run_label
+```
+
+If the upstream block is dynamic, Mage resolves the output for the current
+dynamic run and passes that value to the dbt model. For structured outputs, use
+`parse` to return a scalar value that is valid SQL.
+
+Mage only hydrates `block_output(...)` before invoking dbt. Other dbt Jinja such
+as `{{ config(...) }}`, `{{ ref(...) }}`, and `{{ source(...) }}` is left for dbt
+to compile. Hydrated dbt SQL is written to an isolated temporary copy of the dbt
+project for each execution, so concurrent runs of the same model do not overwrite
+the source model file or read another run's interpolated SQL.
+
 ---
 
 ## Adding variables when running a YAML dbt block
