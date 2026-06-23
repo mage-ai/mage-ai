@@ -138,8 +138,7 @@ class LoggerManager:
         Args:
             path (str): The path to create the directory.
         """
-        if not os.path.exists(path):
-            os.makedirs(path)
+        os.makedirs(path, exist_ok=True)
 
     def delete_old_logs(self):
         """
