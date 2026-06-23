@@ -5,7 +5,7 @@ from mage_ai.api.presenters.PipelineSchedulePresenter import PipelineSchedulePre
 from mage_ai.data_preparation.models.pipelines.interactions import PipelineInteractions
 from mage_ai.data_preparation.models.project import Project
 from mage_ai.data_preparation.models.project.constants import FeatureUUID
-from mage_ai.data_preparation.repo_manager import get_project_uuid
+from mage_ai.data_preparation.repo_manager import get_repo_config
 from mage_ai.orchestration.constants import Entity
 
 READABLE_ATTRIBUTES_FOR_PIPELINE_INTERACTIONS = [
@@ -30,6 +30,18 @@ WRITABLE_ATTRIBUTES_FOR_PIPELINE_INTERACTIONS = [
 
 
 class PipelineSchedulePolicy(BasePolicy):
+    def initialize_project_uuid(self):
+        if self.resource:
+            if isinstance(self.resource.model, dict):
+                repo_path = self.resource.model.get('repo_path')
+                repo_config = get_repo_config(repo_path=repo_path)
+            else:
+                repo_config = get_repo_config(repo_path=self.resource.model.repo_path)
+            if repo_config:
+                self.project_uuid = repo_config.project_uuid
+        else:
+            super().initialize_project_uuid()
+
     @property
     def entity(self):
         if self.resource and self.resource.model:
@@ -38,7 +50,7 @@ class PipelineSchedulePolicy(BasePolicy):
             else:
                 return Entity.PIPELINE, self.resource.model.pipeline_uuid
 
-        return Entity.PROJECT, get_project_uuid()
+        return super().entity
 
 
 async def authorize_operation_create(policy: PipelineSchedulePolicy) -> bool:

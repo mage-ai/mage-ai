@@ -2,12 +2,24 @@ from mage_ai.api.oauth_scope import OauthScope
 from mage_ai.api.operations import constants
 from mage_ai.api.policies.BasePolicy import BasePolicy
 from mage_ai.api.presenters.OutputPresenter import OutputPresenter
-from mage_ai.data_preparation.repo_manager import get_project_uuid
+from mage_ai.data_preparation.repo_manager import get_repo_config
 from mage_ai.orchestration.constants import Entity
 from mage_ai.orchestration.db.models.schedules import BlockRun
 
 
 class OutputPolicy(BasePolicy):
+    def initialize_project_uuid(self):
+        parent_model = self.options.get('parent_model')
+        if parent_model:
+            if type(parent_model) is BlockRun:
+                repo_config = get_repo_config(
+                    parent_model.pipeline_run.pipeline_schedule.repo_path
+                )
+                if repo_config:
+                    self.project_uuid = repo_config.project_uuid
+        else:
+            super().initialize_project_uuid()
+
     @property
     def entity(self):
         parent_model = self.options.get('parent_model')
@@ -15,7 +27,7 @@ class OutputPolicy(BasePolicy):
             if type(parent_model) is BlockRun:
                 return Entity.PIPELINE, parent_model.pipeline_run.pipeline_uuid
 
-        return Entity.PROJECT, get_project_uuid()
+        return super().entity
 
 
 OutputPolicy.allow_actions(
