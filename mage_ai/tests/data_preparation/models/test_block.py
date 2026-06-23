@@ -395,6 +395,61 @@ def sensor(*args):
         output = block2.execute_sync(from_notebook=True)
         self.assertEqual(output['output'][0], True)
 
+    @patch('time.sleep')
+    def test_sensor_block_default_poll_interval(self, mock_sleep):
+        pipeline = Pipeline.create(
+            'test pipeline sensor default interval',
+            repo_path=self.repo_path,
+        )
+        block = Block.create(
+            'test_sensor_default_interval',
+            'sensor',
+            self.repo_path,
+            pipeline=pipeline,
+        )
+        # Write a sensor that fails once then succeeds, to trigger sleep
+        with open(block.file_path, 'w') as file:
+            file.write("""if 'sensor' not in globals():
+    from mage_ai.data_preparation.decorators import sensor
+
+_attempt = [0]
+
+@sensor
+def check_condition():
+    _attempt[0] += 1
+    return _attempt[0] > 1
+""")
+        block.execute_sync()
+        mock_sleep.assert_any_call(60)
+
+    @patch('time.sleep')
+    def test_sensor_block_custom_poll_interval(self, mock_sleep):
+        pipeline = Pipeline.create(
+            'test pipeline sensor custom interval',
+            repo_path=self.repo_path,
+        )
+        block = Block.create(
+            'test_sensor_custom_interval',
+            'sensor',
+            self.repo_path,
+            pipeline=pipeline,
+            configuration={'poll_interval_seconds': 5},
+        )
+        # Write a sensor that fails once then succeeds, to trigger sleep
+        with open(block.file_path, 'w') as file:
+            file.write("""if 'sensor' not in globals():
+    from mage_ai.data_preparation.decorators import sensor
+
+_attempt = [0]
+
+@sensor
+def check_condition():
+    _attempt[0] += 1
+    return _attempt[0] > 1
+""")
+        block.execute_sync()
+        mock_sleep.assert_any_call(5)
+
     @patch('builtins.print')
     def test_execute_with_callback_success(self, mock_print):
         pipeline = Pipeline.create(
