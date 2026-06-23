@@ -26,6 +26,7 @@ import {
   PVC_RETENTION_OPTIONS,
   VOLUME_CLAIM_K8S_FIELDS,
   WORKSPACE_FIELDS,
+  K8S_INGRESS_GATEWAY_FIELDS,
   WorkspaceFieldType,
 } from './constants';
 import { BlockLanguageEnum } from '@interfaces/BlockType';
@@ -63,7 +64,7 @@ function ConfigureWorkspace({
   const [updateWorkspaceSettings, setUpdateWorkspaceSettings] = useState<boolean>(false);
   const [workspaceConfig, setWorkspaceConfig] = useState(workspace);
   const [lifecycleConfig, setLifecycleConfig] = useState(lifecycle_config);
-
+  const [ingressType, setIngressType ] = useState<string>(K8S_INGRESS_GATEWAY_FIELDS[0].label);
   const isUpdate = !!workspace;
 
   const defaultWorkspaceConfig: WorkspaceConfigType = useMemo(
@@ -250,6 +251,35 @@ function ConfigureWorkspace({
       {GENERAL_K8S_FIELDS.map(
         (field: WorkspaceFieldType) => createWorkspaceTextField(field))}
       <Divider muted/>
+      <Spacing ml={3} mr={2} my={1}>
+        <FlexContainer alignItems="center" justifyContent="space-between">
+          <Flex flex={3}>
+            <Text>
+              Ingress Type
+            </Text>
+          </Flex>
+          <Flex flex={1}>
+            <Select
+                fullWidth
+                label="Ingress Type"
+                onChange={(e) => {
+
+                  setIngressType(e.target.value)
+                  console.log(e.target.value)
+                }}
+                value={ingressType}
+            >
+              {K8S_INGRESS_GATEWAY_FIELDS.map(val => <option key={val.label} value={val.label}>
+                    {val.label}
+                  </option>)}
+            </Select>
+          </Flex>
+        </FlexContainer>
+      </Spacing>
+      <Divider muted/>
+          {K8S_INGRESS_GATEWAY_FIELDS.find(field => field.label === ingressType)?.fields.map(
+              (field: WorkspaceFieldType) => createWorkspaceTextField(field))}
+      <Divider muted/>
       <FlexContainer>
         <Spacing ml={2} my={2} >
           <Text bold sky>
@@ -327,11 +357,9 @@ function ConfigureWorkspace({
               placeholder="Retention policy"
               value={workspaceConfig?.['pvc_retention_policy']}
             >
-              {PVC_RETENTION_OPTIONS.map(val => (
-                <option key={val} value={val}>
+              {PVC_RETENTION_OPTIONS.map(val => <option key={val} value={val}>
                   {val}
-                </option>
-              ))}
+                </option>)}
             </Select>
           </Flex>
         </FlexContainer>
@@ -351,8 +379,7 @@ function ConfigureWorkspace({
           </Spacing>
         </FlexContainer>
       </Spacing>
-      {configureContainer && (
-        <Spacing ml={3} mr={2} my={1}>
+      {configureContainer && <Spacing ml={3} mr={2} my={1}>
           <CodeEditorStyle>
             <CodeEditor
               autoHeight
@@ -369,14 +396,14 @@ function ConfigureWorkspace({
               width="100%"
             />
           </CodeEditorStyle>
-        </Spacing>
-      )}
+        </Spacing>}
       <Divider muted />
     </>
   ), [
     createWorkspaceTextField,
     configureContainer,
     workspaceConfig,
+    ingressType
   ]);
 
   // Eventually, we should allow users to update every workspace field.
