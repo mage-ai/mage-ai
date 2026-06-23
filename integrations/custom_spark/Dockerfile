@@ -38,7 +38,8 @@ RUN apt-get install screen unzip -y
 
 ADD hive-site.xml $SPARK_HOME/conf
 
-RUN pip3 install pandas numpy matplotlib seaborn scipy jupyter importlib_metadata spark-nlp
+RUN pip3 install --no-cache-dir uv
+RUN uv pip install --system --no-cache-dir pandas numpy matplotlib seaborn scipy jupyter importlib_metadata spark-nlp
 
 ENV SHELL /bin/bash
 
