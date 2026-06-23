@@ -31,7 +31,7 @@ class MonitorStatsType(StrEnum):
 class MonitorStats:
     @property
     def repo_path(self) -> str:
-        return get_repo_path(root_project=True)
+        return get_repo_path(root_project=not project_platform_activated())
 
     def get_stats(
         self,
@@ -69,6 +69,7 @@ class MonitorStats:
         end_time: datetime = None,
         pipeline_schedule_id: int = None,
         pipeline_uuid: str = None,
+        repo_path: str = None,
         start_time: datetime = None,
     ) -> List:
         filter_statement = []
@@ -84,6 +85,9 @@ class MonitorStats:
 
         if pipeline_schedule_id is not None:
             filter_statement.append(PipelineRun.pipeline_schedule_id == int(pipeline_schedule_id))
+
+        if repo_path is not None:
+            filter_statement.append(PipelineSchedule.repo_path == repo_path)
 
         if filter_statement:
             return query.filter(*filter_statement)
@@ -123,6 +127,7 @@ class MonitorStats:
             end_time=end_time,
             pipeline_schedule_id=pipeline_schedule_id,
             pipeline_uuid=pipeline_uuid,
+            repo_path=self.repo_path if project_platform_activated() else None,
             start_time=start_time,
         )
 
@@ -138,7 +143,6 @@ class MonitorStats:
             try:
                 pipeline = Pipeline.get(
                     uuid,
-                    all_projects=project_platform_activated(),
                     check_if_exists=False,
                     repo_path=self.repo_path,
                 )
@@ -218,6 +222,7 @@ class MonitorStats:
             PipelineRun.select(*select),
             end_time=end_time,
             pipeline_uuid=pipeline_uuid,
+            repo_path=self.repo_path if project_platform_activated() else None,
             start_time=start_time,
         ).filter(PipelineRun.completed_at != None, PipelineRun.created_at != None)  # noqa: E711
 
