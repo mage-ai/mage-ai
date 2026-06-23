@@ -35,22 +35,7 @@
               "getting-started/install-dependencies",
               "guides/developer-ux/workspaces",
               "getting-started/build-pro-pipeline",
-              "getting-started/trigger-pipeline",
-              "guides/best-practices"
-            ]
-          },
-          {
-            "group": "Mage Agent",
-            "pages": [
-              "agent/introduction",
-              "agent/quickstart",
-              "agent/installation",
-              "agent/authentication",
-              "agent/ide-integration",
-              "agent/sync",
-              "agent/mcp-tools",
-              "agent/cli-reference",
-              "agent/troubleshooting"
+              "getting-started/trigger-pipeline"
             ]
           },
           {
@@ -60,9 +45,7 @@
               "guides/data-sync/cicd-workflow",
               "guides/data-sync/git-terminal",
               "guides/version-control/file-versions",
-              "guides/data-sync/version-control-guide",
-              "guides/data-sync/git-client"
-
+              "guides/data-sync/version-control-guide"
             ]
           },
           {
@@ -106,23 +89,10 @@
                     "group": "Sources",
                     "pages": [
                       "data-integrations/sources/facebook_pages",
-                      "data-integrations/sources/google_campaign_manager_360",
-                      "data-integrations/sources/google_display_video_360",
                       "data-integrations/sources/instagram",
-                      "data-integrations/sources/microsoft_ads",
                       "data-integrations/sources/quickbooks",
-                      "data-integrations/sources/salesforce_marketing_cloud",
-                      "data-integrations/sources/tiktok_ads",
                       "data-integrations/sources/xero",
                       "data-integrations/sources/youtube_analytics"
-                    ]
-                  },
-                  {
-                    "group": "Destinations",
-                    "pages": [
-                      "data-integrations/destinations/databricks",
-                      "data-integrations/destinations/duckdb",
-                      "data-integrations/destinations/iceberg_s3"
                     ]
                   }
                 ]
@@ -164,12 +134,9 @@
             "pages": [
               "migrations/airbyte-to-mage-pro",
               "migrations/airflow-to-mage-pro",
-              "migrations/dagster-to-mage-pro",
               "migrations/dbt-to-mage-pro",
               "migrations/estuary-to-mage-pro",
-              "migrations/fivetran-to-mage-pro",
-              "migrations/mage-oss-to-mage-pro",
-              "migrations/prefect-to-mage-pro"
+              "migrations/fivetran-to-mage-pro"
             ]
           },
           {
@@ -380,7 +347,6 @@
             "icon": "flask",
             "pages": [
               "development/project/setup",
-              "development/cli-commands",
               "development/git/setting-up-git",
               {
                 "group": "Docker",
@@ -412,7 +378,6 @@
                 "icon": "family",
                 "pages": [
                   "development/dependencies/requirements",
-                  "development/dependencies/dependency-management",
                   "development/dependencies/custom-files"
                 ]
               },
@@ -421,9 +386,9 @@
               "development/io_config_setup",
               "getting-started/kernels",
               "development/project/local-timezone",
+              "development/project/landing-page",
               "development/settings-backend",
-              "development/updating-mage",
-              "development/project/metadata"
+              "development/updating-mage"
             ]
           },
           {
@@ -551,7 +516,6 @@
                       "guides/streaming/sources/postgres-cdc",
                       "guides/streaming/sources/rabbitmq",
                       "guides/streaming/sources/mongodb",
-                      "guides/streaming/sources/mssql-cdc",
                       "guides/streaming/sources/mysql-cdc"
                     ]
                   },
@@ -809,30 +773,24 @@
                 "pages": [
                   "integrations/databases/Algolia",
                   "integrations/databases/Athena",
-                  "integrations/databases/AzureBlobStorage",
-                  "integrations/databases/AzureDataLakeStorage",
                   "integrations/databases/BigQuery",
                   "integrations/databases/Chroma",
                   "integrations/databases/ClickHouse",
                   "integrations/databases/Databricks",
                   "integrations/databases/Druid",
                   "integrations/databases/DuckDB",
-                  "integrations/databases/GoogleCloudStorage",
                   "integrations/databases/GoogleSheets",
                   "integrations/databases/MicrosoftFabricWarehouse",
                   "integrations/databases/MicrosoftSQLServer",
                   "integrations/databases/MongoDB",
                   "integrations/databases/MotherDuck",
                   "integrations/databases/MySQL",
-                  "integrations/databases/OracleDB",
                   "integrations/databases/Pinot",
                   "integrations/databases/PostgreSQL",
-                  "integrations/databases/PowerBI",
                   "integrations/databases/Qdrant",
                   "integrations/databases/Redshift",
                   "integrations/databases/S3",
                   "integrations/databases/Snowflake",
-                  "integrations/databases/Spark",
                   "integrations/databases/SQLite",
                   "integrations/databases/trino",
                   "integrations/databases/Weaviate"

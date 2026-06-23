@@ -3,6 +3,9 @@ title: "Database"
 icon: "database"
 ---
 
+import { ProButton } from '/snippets/pro/button.mdx';
+import { ProOnly } from '/snippets/pro/only.mdx';
+
 By default, Mage uses sqlite to store orchestration data (trigger, pipeline run, and block run). To use a different database, you can set the `MAGE_DATABASE_CONNECTION_URL` environment variable.
 
 In production, you can set the environment variable in the corresponding Terraform script.
@@ -36,3 +39,124 @@ The expected format of the secret is JSON string with the following keys:
 
 ## MSSQL (not officially supported)
 `export MAGE_DATABASE_CONNECTION_URL="mssql+pyodbc://?odbc_connect=DRIVER={ODBC Driver 18 for SQL Server};SERVER=host;DATABASE=dbname;UID=user;PWD=password;ENCRYPT=yes;TrustServerCertificate=yes;"`
+
+## Troubleshoot database migration failures
+
+<ProOnly source="database" />
+
+Mage uses Alembic migrations for orchestration tables such as triggers, pipeline runs, block runs, users, secrets, and audit events. If the server fails during startup with an error like `alembic`, `sqlalchemy.exc`, `DROP INDEX`, `CREATE INDEX`, `alembic_version`, or `Can't locate revision`, use the Mage database CLI before manually editing the database.
+
+Start with a read-only diagnosis:
+
+```bash
+mage db diagnose
+```
+
+If your project uses the default SQLite database, run the command from the project directory or pass the project path:
+
+```bash
+mage db diagnose --project-path /path/to/project
+```
+
+The command prints the database dialect, redacted database URL, revision stored in the `alembic_version` table, migration head in the installed Mage code, recommendations, and any pending revisions that have not been migrated yet.
+
+To list every Alembic revision available in the installed Mage code:
+
+```bash
+mage db history
+```
+
+This is read-only and does not connect to or change the database.
+
+To inspect the current schema for a specific database table:
+
+```bash
+mage db schema <table>
+```
+
+If your database uses a non-default schema, pass it explicitly:
+
+```bash
+mage db schema <table> --schema <schema>
+```
+
+This prints the table columns, types, nullability, primary key columns, defaults, indexes, and foreign keys. Use it to confirm whether a failed migration already created or removed the table objects referenced by the error before you decide to roll back or stamp a revision.
+
+### Run pending migrations
+
+If the database is behind the installed Mage code, run:
+
+```bash
+mage db migrate
+```
+
+To migrate to a specific Alembic revision:
+
+```bash
+mage db migrate --revision <revision>
+```
+
+This runs migration SQL and uses Mage's database migration lock so multiple processes do not migrate the same database at the same time.
+
+### Roll back a failed or incompatible migration
+
+If a migration was applied and you need to revert it, roll back one migration:
+
+```bash
+mage db rollback --revision -1
+```
+
+Or roll back to a specific revision:
+
+```bash
+mage db rollback --revision <revision>
+```
+
+Review the migration file before rolling back in production. A rollback can drop columns, indexes, tables, or enum values depending on the migration.
+
+Rollback statements often need exclusive locks on orchestration tables. For example, a downgrade that drops columns from the `user` table can wait while the running Mage server has active sessions using that table. The CLI applies a PostgreSQL lock timeout so the command fails instead of waiting forever:
+
+```bash
+mage db rollback --revision -1 --lock-timeout-seconds 10
+```
+
+To inspect active PostgreSQL sessions that may be blocking the rollback:
+
+```bash
+mage db locks
+```
+
+For an overall statement cap, also pass:
+
+```bash
+mage db rollback --revision -1 --lock-timeout-seconds 10 --statement-timeout-seconds 120
+```
+
+If rollback times out waiting for locks, stop the Mage server or other workers connected to the orchestration database, then retry the rollback. After the rollback finishes, run `mage db diagnose` before restarting Mage.
+
+### Stamp a revision without running SQL
+
+Use `stamp` only when the database schema already matches the target revision but the `alembic_version` metadata is missing or wrong:
+
+```bash
+mage db stamp <revision>
+```
+
+For non-interactive recovery:
+
+```bash
+mage db stamp <revision> --yes
+```
+
+`stamp` changes Alembic metadata without creating, dropping, or altering database objects. It can help when a migration partially completed outside Alembic, but it can also hide real schema drift if used incorrectly. If you see an error such as `index "..." does not exist`, confirm whether the rest of the migration's expected schema changes are already present before stamping past that revision.
+
+### Typical recovery flow
+
+1. Back up the database before making changes in production.
+2. Run `mage db diagnose`.
+3. Run `mage db history` to find the target revision and surrounding migrations.
+4. If the error names a table, index, or constraint, run `mage db schema <table>` to inspect the live table.
+5. If the database is behind, run `mage db migrate`.
+6. If the latest migration is bad for your deployment, run `mage db rollback --revision -1`, then pin or deploy a Mage version with a compatible migration chain.
+7. If the schema already matches the intended revision but `alembic_version` is wrong, run `mage db stamp <revision>`.
+8. Run `mage db diagnose` again and restart Mage.

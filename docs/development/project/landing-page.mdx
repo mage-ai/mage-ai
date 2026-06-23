@@ -1,0 +1,45 @@
+---
+title: "Initial start screen"
+sidebarTitle: "Landing page"
+description: "Choose which page opens first when you launch Mage."
+icon: "house"
+---
+
+By default, when you enter a workspace, Mage takes you to the
+**Pipelines page** (`/pipelines`). You can change which page opens
+first by picking a different option in Workspace Preferences.
+
+## Available start screens
+
+| Option         | Route             |
+| -------------- | ----------------- |
+| Pipelines (default) | `/pipelines`      |
+| Monitoring     | `/overview`       |
+| Runs           | `/pipeline-runs`  |
+| Triggers       | `/triggers`       |
+
+## Steps to change your start screen
+
+1. Open the `Settings` page (with the wrench icon) from the left
+   vertical navigation panel and select **Workspace** → **Preferences**.
+2. Scroll to the **Workspace** section.
+3. In the **Initial start screen** dropdown, pick the page you want to
+   land on when you next open the workspace.
+
+The change takes effect the next time you open the workspace home
+URL (`/`) — for example by clicking the Mage logo or refreshing.
+You can change it back at any time.
+
+<Info>
+  This preference is saved in your **browser's local storage**, not in
+  your project's `metadata.yaml` file. As a result:
+
+  - It applies only to the browser where you set it. Other browsers,
+    other devices, and other team members will keep their own
+    preference (or the default Pipelines page).
+  - Clearing your browser data resets it to the default.
+  - Open tabs do not sync with each other until they are reloaded.
+
+  Instance managers always land on the `/manage` page regardless of
+  this setting.
+</Info>
