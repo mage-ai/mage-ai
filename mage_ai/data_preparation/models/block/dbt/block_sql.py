@@ -415,7 +415,7 @@ class DBTBlockSQL(DBTBlock, ProjectPlatformAccessible):
                 res = cli.invoke([task] + args)
                 success = res.success
                 if not success:
-                    raise Exception(str(res.exception))
+                    raise Exception(self.__get_dbt_error_message(res))
             # run show task, to get data for preview or downstream usage
             # test task does not have any data
             #
@@ -611,3 +611,45 @@ class DBTBlockSQL(DBTBlock, ProjectPlatformAccessible):
                 return file_path
 
         return self.configuration.get('file_path')
+
+    @staticmethod
+    def __get_dbt_error_message(res) -> str:
+        """
+        Build a detailed error message from a failed dbt run result.
+
+        Extracts individual model/test failures from res.result.results so that
+        notifications show exactly which dbt models or tests caused the failure,
+        rather than only a generic exception string.
+        """
+        base_msg = str(res.exception) if res.exception else 'dbt run failed'
+
+        failed_nodes = []
+        try:
+            if res.result and hasattr(res.result, 'results'):
+                for run_result in res.result.results:
+                    status = str(run_result.status)
+                    # RunStatus values that represent failures: 'error' (model errors),
+                    # 'fail' (test failures), 'runtime error'
+                    if status in ('error', 'fail', 'runtime error'):
+                        node = run_result.node
+                        resource_type = (
+                            node.resource_type.value
+                            if hasattr(node.resource_type, 'value')
+                            else str(node.resource_type)
+                        )
+                        node_name = node.name
+                        message = run_result.message or ''
+                        failed_nodes.append(
+                            f'  - {resource_type} "{node_name}": {message}'
+                        )
+        except Exception:
+            pass
+
+        if failed_nodes:
+            return (
+                f'{base_msg}\n\n'
+                f'Failed dbt models/tests:\n'
+                + '\n'.join(failed_nodes)
+            )
+
+        return base_msg
