@@ -3,6 +3,7 @@ name: Build and test
 on:
   push:
     paths:
+      - ".github/workflows/build_and_test.yml"
       - "mage_ai/**"
       - "mage_integrations/**"
       - "pyproject.toml"
@@ -10,16 +11,100 @@ on:
       - "setup.py"
   pull_request:
     paths:
+      - ".github/workflows/build_and_test.yml"
       - "mage_ai/**"
       - "mage_integrations/**"
       - "pyproject.toml"
       - "requirements.txt"
       - "setup.py"
 
+permissions:
+  contents: read
+  pull-requests: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.ref_name }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 env:
   ENV: test_mage
 
 jobs:
+  ci_context:
+    name: Decide CI context
+    runs-on: ubuntu-latest
+    outputs:
+      should_run: ${{ steps.decision.outputs.should_run }}
+      reason: ${{ steps.decision.outputs.reason }}
+    steps:
+      - name: Decide whether to run CI jobs
+        id: decision
+        uses: actions/github-script@v7
+        with:
+          script: |
+            if (context.eventName !== 'push') {
+              core.setOutput('should_run', 'true');
+              core.setOutput('reason', `${context.eventName} event`);
+              return;
+            }
+
+            if (!context.ref.startsWith('refs/heads/')) {
+              core.setOutput('should_run', 'true');
+              core.setOutput('reason', `push ref ${context.ref} is not a branch`);
+              return;
+            }
+
+            const branch = context.ref.replace('refs/heads/', '');
+            const { data: pulls } = await github.rest.pulls.list({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              head: `${context.repo.owner}:${branch}`,
+              state: 'open',
+              per_page: 1,
+            });
+
+            if (pulls.length > 0) {
+              core.setOutput('should_run', 'false');
+              core.setOutput('reason', `push branch ${branch} already has open PR #${pulls[0].number}`);
+              return;
+            }
+
+            core.setOutput('should_run', 'true');
+            core.setOutput('reason', `push branch ${branch} has no open PR`);
+      - name: Report CI context decision
+        run: |
+          echo "should_run=${{ steps.decision.outputs.should_run }}"
+          echo "reason=${{ steps.decision.outputs.reason }}"
+
+  frontend_changes:
+    name: Detect frontend changes
+    needs: ci_context
+    if: needs.ci_context.outputs.should_run == 'true'
+    runs-on: ubuntu-latest
+    outputs:
+      any_changed: ${{ steps.changed.outputs.any_changed }}
+    steps:
+      - name: Check out source repository
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+      - name: List changed frontend files
+        id: changed
+        # Pin SHA; v47.0.5: https://github.com/step-security/changed-files.
+        uses: step-security/changed-files@2e07db73e5ccdb319b9a6c7766bd46d39d304bad
+        with:
+          files: |
+            mage_ai/frontend/**
+          skip_initial_fetch: "true"
+      - name: Report frontend change decision
+        run: |
+          if [[ "${{ steps.changed.outputs.any_changed }}" == "true" ]]; then
+            echo "Frontend CI will run for changed files:"
+            printf '%s\n' "${{ steps.changed.outputs.all_changed_files }}"
+          else
+            echo "No frontend files changed; skipping frontend Playwright jobs."
+          fi
+
   # check-code-quality:
 
   #   runs-on: ubuntu-latest
@@ -50,6 +135,8 @@ jobs:
   #       run: poetry run pre-commit run --show-diff-on-failure --files ${{ steps.changed-files.outputs.all_changed_files }}
 
   test_backend:
+    needs: ci_context
+    if: needs.ci_context.outputs.should_run == 'true'
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -78,18 +165,33 @@ jobs:
         run: |
           cd mage_integrations && python3 -m unittest discover mage_integrations.tests
 
-      # Run Playwright web UI tests only run once per workflow (Python 3.10).
+  test_frontend:
+    needs: [ci_context, frontend_changes]
+    if: needs.ci_context.outputs.should_run == 'true' && needs.frontend_changes.outputs.any_changed == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.10"
       - name: Set up Node
         uses: actions/setup-node@v6
         with:
           node-version: "18.18.0"
-        if: matrix.python-version == '3.10'
+      - name: Install Python dependencies
+        run: |
+          sudo apt-get install freetds-dev
+          python -m pip install --upgrade pip uv
+          uv pip install --system "git+https://github.com/mage-ai/sqlglot#egg=sqlglot"
+          uv pip install --system -r requirements.txt
+          uv pip install --system mage_integrations/
+          uv pip install --system "git+https://github.com/mage-ai/singer-python.git#egg=singer-python"
       - name: Create Mage test project
         run: |
           python mage_ai/cli/main.py init test_project
         env:
           PYTHONPATH: ${{ env.pythonLocation }}:.
-        if: matrix.python-version == '3.10'
       - name: Build frontend, start server, and run Playwright tests
         run: |
           yarn install &&
@@ -99,16 +201,17 @@ jobs:
         working-directory: mage_ai/frontend/
         env:
           PYTHONPATH: ${{ env.pythonLocation }}:. # Playwright tests on CI depend on the Python web server
-        if: matrix.python-version == '3.10'
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: playwright-report
+          name: playwright-report-linux
           path: mage_ai/frontend/playwright-report/
           retention-days: 3
           overwrite: true
 
   test_web_server_windows:
+    needs: [ci_context, frontend_changes]
+    if: needs.ci_context.outputs.should_run == 'true' && needs.frontend_changes.outputs.any_changed == 'true'
     runs-on: windows-latest
     strategy:
       matrix:
@@ -144,6 +247,6 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: playwright-report
+          name: playwright-report-windows
           path: mage_ai/frontend/playwright-report/
           retention-days: 3
