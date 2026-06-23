@@ -1,5 +1,6 @@
 import shutil
 from pathlib import Path
+from unittest.mock import MagicMock
 
 from dbt.include.starter_project import PACKAGE_PATH as starter_project_directory
 
@@ -109,4 +110,39 @@ models:
         self.assertEqual(
             df.to_dict(),
             {'id': {0: 1}}
+        )
+
+    def test_to_pandas_empty_when_result_is_none(self):
+        cli = DBTCli()
+        result = MagicMock()
+        result.result = None
+
+        df = cli.to_pandas(result)
+
+        self.assertTrue(df.empty)
+
+    def test_to_pandas_empty_when_results_empty(self):
+        cli = DBTCli()
+        result = MagicMock()
+        result.result = MagicMock()
+        result.result.results = []
+
+        df = cli.to_pandas(result)
+
+        self.assertTrue(df.empty)
+
+    def test_to_pandas_empty_on_shape_mismatch_logs_info(self):
+        mock_logger = MagicMock()
+        cli = DBTCli(logger=mock_logger)
+        result = MagicMock()
+        result.result = MagicMock()
+        result.result.results = [object()]
+
+        df = cli.to_pandas(result)
+
+        self.assertTrue(df.empty)
+        mock_logger.info.assert_called()
+        self.assertIn(
+            'Failed to convert dbt result',
+            mock_logger.info.call_args[0][0],
         )

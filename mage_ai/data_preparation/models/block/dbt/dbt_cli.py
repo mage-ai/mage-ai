@@ -14,11 +14,18 @@ logger_default = Logger().new_server_logger(__name__)
 
 
 def build_logging_callback(logging_func: Callable, log_level: LogLevel = None):
+    """
+    Build a callback for dbtRunner (dbt 1.8+ EventMsg: event.info.level, event.info.msg).
+    """
+
     def __callback(event, log_level=log_level, logging_func=logging_func):
         log_levels = set([LogLevel.INFO, LogLevel.WARN, LogLevel.ERROR])
+        info = event.info
+        evt_level = info.level
+        evt_msg = getattr(info, 'msg', '') or ''
 
-        if LogLevel.DEBUG == log_level or event.info.level in log_levels:
-            logging_func(event.info.level, event.info.msg)
+        if LogLevel.DEBUG == log_level or evt_level in log_levels:
+            logging_func(evt_level, evt_msg)
 
     return __callback
 
@@ -102,12 +109,22 @@ class DBTCli:
         ], **kwargs)
 
     def to_pandas(self, result: dbtRunnerResult) -> pd.DataFrame:
-        results = result.result.results
-        if results:
-            run_result = results[0]
-            table = run_result.agate_table
+        """
+        Convert dbt show result to DataFrame.
+        result.result is RunExecutionResult with .results[0].agate_table.rows (dbt 1.8+).
+        """
+        try:
+            if not result.result or not result.result.results:
+                return pd.DataFrame()
 
-            return pd.DataFrame([row.dict() for row in table.rows])
+            table = result.result.results[0].agate_table
+            rows = [row.dict() for row in table.rows]
+            return pd.DataFrame(rows)
+        except (AttributeError, IndexError, TypeError, KeyError) as err:
+            self.__info(
+                f'Failed to convert dbt result to pandas DataFrame: {err}',
+            )
+            return pd.DataFrame()
 
     def __debug(self, *args, **kwargs) -> None:
         self.__log(LogLevel.DEBUG, *args, **kwargs)
