@@ -1188,6 +1188,8 @@ function PipelineDetailPage({
     block?: BlockType;
     pipeline?: PipelineType | {
       blocks?: BlockType[];
+      callbacks?: BlockType[];
+      conditionals?: BlockType[];
       extensions?: PipelineExtensionsType;
       name?: string;
       type?: string;
@@ -1208,7 +1210,21 @@ function PipelineDetailPage({
     const callbacksByUUID = {};
     const conditionalsByUUID = {};
 
-    const blocksFinal = pipelineOverride?.blocks || blocks;
+    const blocksFinal = [];
+    const blocksFinalByUUID = {};
+
+    [
+      pipelineOverride?.blocks || blocks,
+      pipelineOverride?.callbacks || pipeline?.callbacks,
+      pipelineOverride?.conditionals || pipeline?.conditionals,
+    ].forEach((arr: BlockType[] = []) => {
+      arr?.forEach((block: BlockType) => {
+        if (!blocksFinalByUUID[block.uuid]) {
+          blocksFinalByUUID[block.uuid] = true;
+          blocksFinal.push(block);
+        }
+      });
+    });
 
     blocksFinal.forEach((block: BlockType) => {
       const {
@@ -1350,7 +1366,7 @@ function PipelineDetailPage({
     const conditionalsToSave = [];
 
     // @ts-ignore
-    (pipelineOverride?.blocks || blocks).forEach(({ uuid }) => {
+    blocksFinal.forEach(({ uuid }) => {
       const blockToSave = blocksByUUID[uuid];
       const callbackBlock = callbacksByUUID[uuid];
       const conditionalBlock = conditionalsByUUID[uuid];
