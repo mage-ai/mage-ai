@@ -1,4 +1,4 @@
-from typing import Callable, Dict, List
+from typing import Callable, Dict, List, Tuple
 
 import pandas as pd
 import simplejson
@@ -21,6 +21,39 @@ def build_logging_callback(logging_func: Callable, log_level: LogLevel = None):
             logging_func(event.info.level, event.info.msg)
 
     return __callback
+
+
+def extract_failed_dbt_nodes(res: dbtRunnerResult) -> Tuple[List[str], List[str]]:
+    """Return (failed_models, failed_tests) parsed from a dbtRunnerResult."""
+    failed_models: List[str] = []
+    failed_tests: List[str] = []
+
+    if res is None:
+        return failed_models, failed_tests
+
+    result = getattr(res, 'result', None)
+    results_list = getattr(result, 'results', result) if result is not None else None
+    if not results_list:
+        return failed_models, failed_tests
+
+    for r in results_list:
+        node = getattr(r, 'node', None)
+        status = getattr(r, 'status', None)
+        if node is None or status is None:
+            continue
+
+        status_str = str(status).lower()
+        if 'success' in status_str or 'pass' in status_str:
+            continue
+
+        name = getattr(node, 'name', None) or getattr(node, 'unique_id', None)
+        if not name:
+            continue
+
+        resource_type = str(getattr(node, 'resource_type', 'model')).lower()
+        (failed_tests if resource_type == 'test' else failed_models).append(name)
+
+    return failed_models, failed_tests
 
 
 class DBTCli:
@@ -129,5 +162,4 @@ class DBTCli:
                     ignore_nan=True,
                 )
                 message = f'{message} ({tags_json})'
-
-            print(f'[INFO] DBTCLI: {message}')
+            # Intentionally avoid stdout logging when no logger is provided.
