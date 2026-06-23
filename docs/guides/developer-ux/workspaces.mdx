@@ -59,6 +59,15 @@ The `container_config` field accepts a YAML string that allows you to configure:
 1. **Resource Configuration**: Controls memory and CPU allocation for your workspace container
 2. **Environment Variables**: Customize environment variables for your workspace
 3. **Other Container Settings**: Any other Kubernetes container configuration options
+- **Step 4**: Click the create button and wait a few minutes for your workspace to start.
+- **Step 5**: Once your workspace is running, click the workspace open button under the open column in the workspace management interface.
+
+## Kubernetes container configuration
+
+Kubernetes provides a robust container orchestration system for managing your workspace resources and environment. The configuration above covers two key aspects:
+
+1. Resource Configuration: Controls memory and CPU allocation for your workspace container, with both minimum guarantees and upper limits to ensure stable performance.
+2. Environment Configuration: Enables customization of environment variables, specifically the project code location if you've modified it from the default path.
 
 These settings help maintain workspace stability and ensure proper resource allocation for development tasks.
 
@@ -298,6 +307,11 @@ tolerations:
 To share secrets across different workspaces, you need to set the `SHARE_SECRETS_ACROSS_WORKSPACES` environment variable at the **cluster level** (not at the workspace level) and set the value to `1` to enable this feature. This will allow developers to share their secrets across different workspaces within a cluster.
 
 **Note**: The `SHARE_SECRETS_ACROSS_WORKSPACES` environment variable must be set on the **main cluster container**, not on individual workspaces.
+## Share secrets across workspaces
+
+To share secrets across different workspaces developers need to create a custom environment variable 
+called `SHARE_SECRETS_ACROSS_WORKSPACES` then set the value to `1` to enable this feature. This will 
+allow developers to share their secrets across different workspaces within a cluster.
 
 <Frame>
     <p align="center">
@@ -316,6 +330,7 @@ The following options allow you to control how variables are shared within your 
 
 
 To enable environment variable inheritance in workspaces, you must set the `INHERIT_ENV_VARS` environment variable at the **cluster level** (not at the workspace level):
+To enable environment variable inheritance in workspaces, you must set:
 
 ```bash
 INHERIT_ENV_VARS=1
@@ -326,6 +341,11 @@ INHERIT_ENV_VARS=1
 
 ### Managed Cloud
 The `USER_DEFINED_VARS` environment variable (set at the **cluster level**) lets you control which environment variables are inherited by workspaces.
+This applies to **both Managed Cloud** and **Self-hosted Mage Pro**.
+
+
+### Managed Cloud
+The USER_DEFINED_VARS environment variable lets you control which environment variables are inherited by workspaces.
 It accepts a comma-separated list of variable names, giving you flexibility to include only the configuration values you need across workspaces.
 
 - If `USER_DEFINED_VARS` is **not set**: all environment variables will be inherited automatically.
@@ -344,6 +364,7 @@ This will inherit all environment variables matching the pattern (e.g., any star
 
 ### Self-hosted Mage Pro (Hybrid Cloud, Private Cloud, On-prem)
 You **must** set `USER_DEFINED_VARS` at the **cluster level** to define which variables to inherit:
+You **must** set `USER_DEFINED_VARS` to define which variables to inherit:
 ```bash
 USER_DEFINED_VARS=VAR1,VAR2
 ```
@@ -403,6 +424,8 @@ This automatically sets `ENV=dev_my-workspace` for a workspace named `my-workspa
 ### Inherit variables by workspace environment
 
 You can define inheritance rules per workspace environment using cluster-level environment variables with the `ENV` variable:
+### Inherit variables by workspace environment (new)
+You can define inheritance rules per workspace environment using the `ENV` variable:
 
 ```bash
 USER_DEFINED_VARS__ENV__{env_value}={pattern}
@@ -508,6 +531,13 @@ termination_policy:
   enable_auto_termination: true
   max_idle_seconds: 1800
 ```
+## Lifecycle management policies (optional)
+
+Mage Pro workspaces support various lifecycle management policies that control how your workspace behaves throughout its runtime. These policies include automated termination settings, pre-initialization scripts, and post-initialization procedures, giving you complete control over your workspace's behavior from startup to shutdown.
+
+### Termination Policy
+
+The termination policy controls how your workspace shuts down when inactive. You can enable auto-termination, which will automatically shut down your workspace after a specified period of inactivity. The idle time is measured in seconds, and you can set this duration based on your needs. For example, you might set it to 1800 seconds (30 minutes) or 3600 seconds (1 hour).
 
 ### Pre-Start Scripts
 
@@ -792,6 +822,9 @@ public_url: mage.example.com/test1
 - `volumes`: Volume mounts configuration
 - `environment`: Environment variables
 - `public_url`: Public URL for the workspace
+### Post-Start Scripts
+
+Post-start scripts execute after your workspace is fully initialized and running. You can specify either a direct command or provide a path to a script for more complex procedures. These scripts are typically used for starting services, performing health checks, or completing any additional setup tasks that require the workspace to be fully operational.
 
 ## Global Roles
 

@@ -20,6 +20,11 @@ path_to_credentials_json_file: /path/to/your/service/account/key.json
 * `buffer_size_mb` and `buffer_timeout_seconds`: Mage puts messages in a buffer before uploading to Google Cloud Storage.
   You can configure the size and timeout of the buffer to control the file size and the delay.
 * `path_to_credentials_json_file`: Google service account credential json file. If Mage is running on GCP, you can leave this value null and then Mage will use the instance service account to authenticate. See [Referencing Variables](/development/variables/referencing-variables) for configuring credentials via environment variables or secret variables.
+* `prefix`: The Google Cloud Storage path prefix. The whole S3 path will be `s3://{bucket}/{prefix}`.
+* `file_type`: `parquet` or `csv`
+* `buffer_size_mb` and `buffer_timeout_seconds`: Mage puts messages in a buffer before uploading to Google Cloud Storage.
+  You can configure the size and timeout of the buffer to control the file size and the delay.
+* `path_to_credentials_json_file`: Google service account credential json file. If Mage is running on GCP, you can leave this value null and then Mage will use the instance service account to authenticate.
 
 ## Configure time-based partition
 
@@ -61,3 +66,5 @@ path_to_credentials_json_file: /path/to/your/service/account/key.json
 **Note:** When using Delta Lake format, time-based partitioning (`date_partition_format`) is not applied as Delta Lake manages its own internal file structure.
 
 **Security Note:** Storing credentials in configuration files can be insecure. Prefer using environment variables (e.g., `GOOGLE_APPLICATION_CREDENTIALS`) or secret variables when possible, especially for production deployments. See [Referencing Variables](/development/variables/referencing-variables) for configuring credentials via environment variables or secret variables.
+If you want to store the Google Cloud Storage data in time-based paratition folders. You can add `date_partition_format`
+to the config. Example values: `%Y%m%d`, `%Y%m%dT%H`.
