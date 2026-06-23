@@ -66,9 +66,9 @@ jobs:
           sudo apt-get install freetds-dev
           python -m pip install --upgrade pip uv
           uv pip install --system "git+https://github.com/mage-ai/sqlglot#egg=sqlglot"
+          uv pip install --system "git+https://github.com/mage-ai/singer-python.git#egg=singer-python"
           uv pip install --system -r requirements.txt
           uv pip install --system mage_integrations/
-          uv pip install --system "git+https://github.com/mage-ai/singer-python.git#egg=singer-python"
       - name: Run unit tests
         run: |
           python3 -m unittest discover -s mage_ai --failfast
