@@ -1,10 +1,57 @@
-from typing import Dict, List, Union
+from typing import Dict, List, Union, Optional
+from urllib.parse import unquote, urlparse
 
 from pandas import DataFrame
 from pymongo import MongoClient
 
 from mage_ai.io.base import BaseIO
 from mage_ai.io.config import BaseConfigLoader, ConfigKey
+
+
+def extract_db_name_from_uri(connection_string: str) -> Optional[str]:
+    """
+    Extract the database name from a MongoDB connection string URI.
+
+    Args:
+        connection_string: MongoDB connection string (e.g., mongodb://user:pass@host:27017/my_db)
+
+    Returns:
+        The database name extracted from the URI path, or None if not present.
+
+    Notes:
+        URL-encoded database names are decoded.
+        For nested paths, only the first segment is used as the database name.
+
+    Examples:
+        >>> extract_db_name_from_uri("mongodb://user:pass@host:27017/my_db")
+        'my_db'
+        >>> extract_db_name_from_uri("mongodb://host:27017/my_db/collection")
+        'my_db'
+        >>> extract_db_name_from_uri("mongodb://host:27017/my%5Fdb")
+        'my_db'
+    """
+    if not connection_string:
+        return None
+
+    try:
+        parsed = urlparse(connection_string)
+        path = parsed.path
+
+        if path and path.startswith('/'):
+            path = path[1:]
+
+        if not path:
+            return None
+
+        # Take only the first segment for nested paths
+        db_name = path.split('/')[0]
+
+        # URL decode the database name
+        db_name = unquote(db_name)
+
+        return db_name if db_name else None
+    except Exception:
+        return None
 
 
 class MongoDB(BaseIO):
@@ -23,8 +70,16 @@ class MongoDB(BaseIO):
         super().__init__(verbose=verbose)
         if connection_string:
             self.client = MongoClient(connection_string)
+            # Extract database from URI if not explicitly provided
+            if database is None:
+                database = extract_db_name_from_uri(connection_string)
         else:
             self.client = MongoClient(f'mongodb://{user}:{password}@{host}:{port}/')
+        if database is None:
+            raise Exception(
+                'Please provide the database name either in the constructor arguments or in '
+                'the connection string URI.'
+            )
         self.database = self.client[database]
         self.collection = collection
 
