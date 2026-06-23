@@ -167,3 +167,92 @@ class NotificationSenderTests(DBTestCase):
             message=ANY,
             description=ANY,
         )
+
+
+class NotificationSenderStacktraceTests(DBTestCase):
+    """Tests for the enhanced failure message: stacktrace in template, None-guarding."""
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        cls.pipeline = create_pipeline('test_stacktrace_pipeline', cls.repo_path)
+        cls.pipeline_run = create_pipeline_run_with_schedule(
+            pipeline_uuid='test_stacktrace_pipeline'
+        )
+
+    @patch('mage_ai.orchestration.notification.sender.send_slack_message')
+    def test_stacktrace_appears_in_slack_message(self, mock_send_slack):
+        """When stacktrace is provided, it is included in the Slack notification body."""
+        notification_config = NotificationConfig.load(config=SLACK_NOTIFICATION_CONFIG)
+        sender = NotificationSender(config=notification_config)
+        pipeline_run = self.__class__.pipeline_run
+
+        dbt_stacktrace = (
+            'Error for block my_block:\n'
+            'dbt build failed. The following models/tests encountered errors:\n'
+            '  [model] my_model: Database Error\n    syntax error'
+        )
+        sender.send_pipeline_run_failure_message(
+            self.__class__.pipeline,
+            pipeline_run,
+            error='Failed blocks: my_block',
+            stacktrace=dbt_stacktrace,
+        )
+
+        call_args = mock_send_slack.call_args
+        sent_message = call_args[0][1]  # positional: (config, message, title)
+        self.assertIn('[model] my_model', sent_message)
+        self.assertIn('syntax error', sent_message)
+
+    @patch('mage_ai.orchestration.notification.sender.send_slack_message')
+    def test_none_stacktrace_does_not_produce_literal_none(self, mock_send_slack):
+        """When stacktrace=None, the word 'None' must not appear in the message."""
+        notification_config = NotificationConfig.load(config=SLACK_NOTIFICATION_CONFIG)
+        sender = NotificationSender(config=notification_config)
+        pipeline_run = self.__class__.pipeline_run
+
+        sender.send_pipeline_run_failure_message(
+            self.__class__.pipeline,
+            pipeline_run,
+            error='some error',
+            stacktrace=None,
+        )
+
+        sent_message = mock_send_slack.call_args[0][1]
+        # The literal string 'None' must not appear as a value
+        self.assertNotIn('\nNone', sent_message)
+
+    @patch('mage_ai.orchestration.notification.sender.send_slack_message')
+    def test_none_stacktrace_adds_no_extra_blank_line(self, mock_send_slack):
+        """When stacktrace=None, no extra blank line is added after the error."""
+        notification_config = NotificationConfig.load(config=SLACK_NOTIFICATION_CONFIG)
+        sender = NotificationSender(config=notification_config)
+        pipeline_run = self.__class__.pipeline_run
+
+        sender.send_pipeline_run_failure_message(
+            self.__class__.pipeline,
+            pipeline_run,
+            error='some error',
+            stacktrace=None,
+        )
+
+        sent_message = mock_send_slack.call_args[0][1]
+        self.assertNotIn('some error\n\n', sent_message)
+
+    @patch('mage_ai.orchestration.notification.sender.send_slack_message')
+    def test_stacktrace_and_error_both_appear(self, mock_send_slack):
+        """Both the error summary and the dbt stacktrace detail appear in the message."""
+        notification_config = NotificationConfig.load(config=SLACK_NOTIFICATION_CONFIG)
+        sender = NotificationSender(config=notification_config)
+        pipeline_run = self.__class__.pipeline_run
+
+        sender.send_pipeline_run_failure_message(
+            self.__class__.pipeline,
+            pipeline_run,
+            error='Failed blocks: my_dbt_block',
+            stacktrace='Error for block my_dbt_block:\ndbt run failed.\n  [model] orders: OOM',
+        )
+
+        sent_message = mock_send_slack.call_args[0][1]
+        self.assertIn('Failed blocks: my_dbt_block', sent_message)
+        self.assertIn('[model] orders', sent_message)
