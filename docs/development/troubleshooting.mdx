@@ -4,6 +4,9 @@ description: "Debugging common issues in Mage and other frequently asked questio
 icon: "question"
 ---
 
+import { ProButton } from '/snippets/pro/button.mdx';
+import { ProOnly } from '/snippets/pro/only.mdx';
+
 ## Pipeline edit page freezes browser
 
 The data output of a block contains too much information for the browser to render.
@@ -26,6 +29,16 @@ The above command will remove the data output files for each block in your pipel
 If you’re running Mage via Docker and you’re trying to connect to a local database outside of
 Docker, you must use the following `host` or `IP` value when trying to connect to it:
 `host.docker.internal`.
+
+---
+
+## Database migration fails during startup
+
+<ProOnly source="troubleshooting" />
+
+If Mage fails to start because an Alembic or SQLAlchemy database migration failed, run `mage db diagnose` to inspect the current migration state and get the next recommended command.
+
+See [Troubleshoot database migration failures](/development/databases/default#troubleshoot-database-migration-failures) for `mage db history`, `mage db schema`, `mage db migrate`, `mage db rollback`, and `mage db stamp` recovery steps.
 
 ---
 
