@@ -1,12 +1,12 @@
-from mage_integrations.utils.parsers import encode_complex
-from singer.messages import (
-    RecordMessage,
-    SchemaMessage as SchemaMessageOriginal,
-    StateMessage,
-)
-from typing import List
-import simplejson
 import sys
+from typing import List
+
+import simplejson
+from singer.messages import RecordMessage
+from singer.messages import SchemaMessage as SchemaMessageOriginal
+from singer.messages import StateMessage
+
+from mage_integrations.utils.parsers import encode_complex, process_data
 
 
 class SchemaMessage(SchemaMessageOriginal):
@@ -45,8 +45,9 @@ class SchemaMessage(SchemaMessageOriginal):
 
 def format_message(message):
     try:
+        processed_data = process_data(message.asdict())
         return simplejson.dumps(
-            message.asdict(),
+            processed_data,
             default=encode_complex,
             ignore_nan=True,
             use_decimal=True,
