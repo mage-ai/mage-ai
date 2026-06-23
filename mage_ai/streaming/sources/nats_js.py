@@ -168,7 +168,8 @@ class NATSSource(BaseSource):
         future.result()
 
     def close_client(self):
-        asyncio.run_coroutine_threadsafe(self.aclose_client(), self.loop)
+        future = asyncio.run_coroutine_threadsafe(self.aclose_client(), self.loop)
+        future.result()
 
     def batch_read(self, handler: Callable):
         self.init_client()
@@ -209,7 +210,7 @@ class NATSSource(BaseSource):
                 msg = self.fetch_message()
                 if not msg:
                     self._print("No message fetched, re-fetching...")
-                    break
+                    continue
                 handler(msg)    # Process decoded message
         finally:
             self.close_client()
