@@ -33,6 +33,10 @@ class ConfigKey(StrEnum):
     AZURE_STORAGE_ACCOUNT_NAME = 'AZURE_STORAGE_ACCOUNT_NAME'
     AZURE_TENANT_ID = 'AZURE_TENANT_ID'
 
+    B2_APPLICATION_KEY_ID = 'B2_APPLICATION_KEY_ID'
+    B2_APPLICATION_KEY = 'B2_APPLICATION_KEY'
+    B2_ENDPOINT_URL = 'B2_ENDPOINT_URL'
+
     CHROMA_COLLECTION = 'CHROMA_COLLECTION'
     CHROMA_PATH = 'CHROMA_PATH'
 
@@ -345,6 +349,7 @@ class VerboseConfigKey(StrEnum):
     AIRTABLE = 'Airtable'
     ALGOLIA = 'Algolia'
     AWS = 'AWS'
+    BACKBLAZE_B2 = 'Backblaze B2'
     BIGQUERY = 'BigQuery'
     CHROMA = 'Chroma'
     CLICKHOUSE = 'ClickHouse'
@@ -372,6 +377,9 @@ class ConfigFileLoader(BaseConfigLoader):
         ConfigKey.AWS_REGION: (VerboseConfigKey.AWS, 'region'),
         ConfigKey.AWS_SECRET_ACCESS_KEY: (VerboseConfigKey.AWS, 'secret_access_key'),
         ConfigKey.AWS_SESSION_TOKEN: (VerboseConfigKey.AWS, 'session_token'),
+        ConfigKey.B2_APPLICATION_KEY_ID: (VerboseConfigKey.BACKBLAZE_B2, 'application_key_id'),
+        ConfigKey.B2_APPLICATION_KEY: (VerboseConfigKey.BACKBLAZE_B2, 'application_key'),
+        ConfigKey.B2_ENDPOINT_URL: (VerboseConfigKey.BACKBLAZE_B2, 'endpoint_url'),
         ConfigKey.GOOGLE_LOCATION: (VerboseConfigKey.BIGQUERY, 'location'),
         ConfigKey.GOOGLE_SERVICE_ACC_KEY: (VerboseConfigKey.BIGQUERY, 'credentials_mapping'),
         ConfigKey.GOOGLE_SERVICE_ACC_KEY_FILEPATH: (
