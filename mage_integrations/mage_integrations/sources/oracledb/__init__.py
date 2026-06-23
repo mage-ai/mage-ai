@@ -33,6 +33,19 @@ class OracleDB(Source):
     def mode(self) -> str:
         return self.config.get('mode') or 'thin'
 
+    @property
+    def schema(self) -> str:
+        return self.config.get('schema')
+
+    @property
+    def table_prefix(self):
+        schema = self.schema
+        return f'"{schema}".' if schema else ''
+
+    def build_table_name(self, stream) -> str:
+        table_name = stream.tap_stream_id
+        return f'{self.table_prefix}"{table_name}"'
+
     def update_column_names(self, columns: List[str]) -> List[str]:
         return list(map(lambda column: f'"{column}"', columns))
 
@@ -40,6 +53,7 @@ class OracleDB(Source):
         return f'OFFSET {offset} ROWS FETCH NEXT {limit} ROWS ONLY'
 
     def build_discover_query(self, streams: List[str] = None):
+        schema = self.schema
         query = """
 with selected_items as (
 SELECT user_tab.TABLE_NAME,
@@ -61,13 +75,15 @@ FROM all_tab_columns user_tab
 LEFT JOIN all_cons_columns cols
 ON cols.table_name = user_tab.table_name
 AND cols.column_name = user_tab.column_name
+AND cols.owner = user_tab.owner
 LEFT JOIN all_constraints cons
 ON cons.table_name = user_tab.table_name
 AND cons.CONSTRAINT_NAME = cols.CONSTRAINT_NAME
+AND cons.owner = user_tab.owner
 WHERE user_tab.OWNER not in ('SYS', 'OLAPSYS', 'ORDSYS', 'DBSNMP',
 'OJVMSYS', 'CTXSYS', 'XDB', 'DBSFWUSER', 'WMSYS', 'OUTLN', 'APPQOSSYS',
 'DVSYS', 'GSMADMIN_INTERNAL', 'AUDSYS', 'MDSYS', 'SYSTEM', 'LBACSYS',
-'ORDDATA'){where_table_clause}
+'ORDDATA'){schema_clause}{where_table_clause}
 )
 select TABLE_NAME,
 DATA_DEFAULT,
@@ -77,11 +93,15 @@ DATA_TYPE,
 IS_NULLABLE
 from selected_items where row_id = 1
         """
+        schema_clause = f"\nAND user_tab.OWNER = '{schema}'" if schema else ''
         if streams:
             table_names = ', '.join([f"'{n}'" for n in streams])
-            query = query.format(where_table_clause=f"\nAND user_tab.TABLE_NAME IN ({table_names})")
+            query = query.format(
+                schema_clause=schema_clause,
+                where_table_clause=f"\nAND user_tab.TABLE_NAME IN ({table_names})"
+            )
         else:
-            query = query.format(where_table_clause='')
+            query = query.format(schema_clause=schema_clause, where_table_clause='')
 
         return query
 
