@@ -1,6 +1,5 @@
 FROM python:3.10-bookworm
 LABEL description="Mage data management platform"
-ARG PIP=pip3
 USER root
 
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
@@ -37,30 +36,33 @@ RUN apt-get update -y && \
 ## Node Packages
 RUN npm install --global yarn && yarn global add next
 
+# Install uv for faster package installation
+RUN pip3 install --no-cache-dir uv
+
 ## Python Packages
 RUN \
-  pip3 install --no-cache-dir sparkmagic && \
+  uv pip install --system --no-cache-dir sparkmagic && \
   mkdir ~/.sparkmagic && \
   curl https://raw.githubusercontent.com/jupyter-incubator/sparkmagic/master/sparkmagic/example_config.json > ~/.sparkmagic/config.json && \
   sed -i 's/localhost:8998/host.docker.internal:9999/g' ~/.sparkmagic/config.json && \
-  jupyter-kernelspec install --user "$(pip3 show sparkmagic | grep Location | cut -d' ' -f2)/sparkmagic/kernels/pysparkkernel"
+  jupyter-kernelspec install --user "$(uv pip show sparkmagic | grep Location | cut -d' ' -f2)/sparkmagic/kernels/pysparkkernel"
 # Mage integrations and other related packages
 RUN \
-  pip3 install --no-cache-dir "git+https://github.com/wbond/oscrypto.git@d5f3437ed24257895ae1edd9e503cfb352e635a8" && \
-  pip3 install --no-cache-dir "git+https://github.com/dremio-hub/arrow-flight-client-examples.git#egg=dremio-flight&subdirectory=python/dremio-flight" && \
-  pip3 install --no-cache-dir "git+https://github.com/mage-ai/singer-python.git#egg=singer-python" && \
-  pip3 install --no-cache-dir "git+https://github.com/mage-ai/dbt-mysql.git#egg=dbt-mysql" && \
-  pip3 install --no-cache-dir "git+https://github.com/mage-ai/sqlglot#egg=sqlglot" && \
+  uv pip install --system --no-cache-dir "git+https://github.com/wbond/oscrypto.git@d5f3437ed24257895ae1edd9e503cfb352e635a8" && \
+  uv pip install --system --no-cache-dir "git+https://github.com/dremio-hub/arrow-flight-client-examples.git#egg=dremio-flight&subdirectory=python/dremio-flight" && \
+  uv pip install --system --no-cache-dir "git+https://github.com/mage-ai/singer-python.git#egg=singer-python" && \
+  uv pip install --system --no-cache-dir "git+https://github.com/mage-ai/dbt-mysql.git#egg=dbt-mysql" && \
+  uv pip install --system --no-cache-dir "git+https://github.com/mage-ai/sqlglot#egg=sqlglot" && \
   # faster-fifo is not supported on Windows: https://github.com/alex-petrenko/faster-fifo/issues/17
-  pip3 install --no-cache-dir faster-fifo
+  uv pip install --system --no-cache-dir faster-fifo
 COPY mage_integrations /tmp/mage_integrations
 RUN \
-  pip3 install --no-cache-dir /tmp/mage_integrations && \
+  uv pip install --system --no-cache-dir /tmp/mage_integrations && \
   rm -rf /tmp/mage_integrations
 # Mage Dependencies
 COPY requirements.txt /tmp/requirements.txt
 RUN \
-  pip3 install --no-cache-dir -r /tmp/requirements.txt && \
+  uv pip install --system --no-cache-dir -r /tmp/requirements.txt && \
   rm /tmp/requirements.txt
 
 ## Mage Frontend

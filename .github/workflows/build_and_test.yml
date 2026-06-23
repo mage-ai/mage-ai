@@ -64,11 +64,11 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt-get install freetds-dev
-          python -m pip install --upgrade pip
-          pip install "git+https://github.com/mage-ai/sqlglot#egg=sqlglot"
-          pip install -r requirements.txt
-          pip install mage_integrations/
-          pip install "git+https://github.com/mage-ai/singer-python.git#egg=singer-python"
+          python -m pip install --upgrade pip uv
+          uv pip install --system "git+https://github.com/mage-ai/sqlglot#egg=sqlglot"
+          uv pip install --system -r requirements.txt
+          uv pip install --system mage_integrations/
+          uv pip install --system "git+https://github.com/mage-ai/singer-python.git#egg=singer-python"
       - name: Run unit tests
         run: |
           python3 -m unittest discover -s mage_ai --failfast
@@ -131,7 +131,8 @@ jobs:
           python -m venv venv3
           venv3/Scripts/Activate.ps1
           $env:PYTHONPATH = "${env:PYTHONPATH};${pwd}"
-          python -m pip install -r requirements.txt
+          python -m pip install --upgrade pip uv
+          uv pip install -r requirements.txt
           python mage_ai/cli/main.py init test_project
       - name: Build frontend, start server, and run Playwright tests
         run: |
