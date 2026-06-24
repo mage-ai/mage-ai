@@ -228,14 +228,10 @@ class FileProjectPlatformTest(ProjectPlatformMixin, AsyncDBTestCase):
                 self.assertTrue(error)
 
             with patch(
-                'mage_ai.data_preparation.models.file.project_platform_activated',
+                'mage_ai.settings.repo.project_platform_activated',
                 lambda: True,
             ):
-                with patch(
-                    'mage_ai.settings.repo.project_platform_activated',
-                    lambda: True,
-                ):
-                    ensure_file_is_in_project(os.path.join(self.repo_path, 'file.txt'))
+                ensure_file_is_in_project(os.path.join(self.repo_path, 'file.txt'))
 
-                    with self.assertRaises(FileNotInProjectError):
-                        ensure_file_is_in_project('../file.txt')
+                with self.assertRaises(FileNotInProjectError):
+                    ensure_file_is_in_project('../file.txt')
