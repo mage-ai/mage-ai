@@ -218,8 +218,15 @@ class MonitorStats:
         if start_time or end_time:
             select.append(PipelineRun.created_at)
 
+        query = PipelineRun.select(*select)
+        if project_platform_activated():
+            query = query.join(
+                PipelineSchedule,
+                PipelineRun.pipeline_schedule_id == PipelineSchedule.id,
+            )
+
         query = self.__filter(
-            PipelineRun.select(*select),
+            query,
             end_time=end_time,
             pipeline_uuid=pipeline_uuid,
             repo_path=self.repo_path if project_platform_activated() else None,
