@@ -26,7 +26,6 @@ from sqlalchemy.orm import joinedload, relationship, validates
 from sqlalchemy.sql import func, text
 from sqlalchemy.sql.functions import coalesce
 
-from mage_ai.data_preparation.logging.logger_manager_factory import LoggerManagerFactory
 from mage_ai.data_preparation.models.block.dynamic.utils import (
     DynamicBlockFlag,
     all_upstreams_completed,
@@ -878,6 +877,10 @@ class PipelineRun(PipelineRunProjectPlatformMixin, BaseModel):
             List[Dict]: A list containing dictionaries of logs for the pipeline and scheduler.
                 Each dictionary represents logs for a specific component.
         """
+        from mage_ai.data_preparation.logging.logger_manager_factory import (
+            LoggerManagerFactory,
+        )
+
         pipeline_logs = LoggerManagerFactory.get_logger_manager(
             pipeline_uuid=self.pipeline_uuid,
             partition=self.execution_partition,
@@ -940,6 +943,10 @@ class PipelineRun(PipelineRunProjectPlatformMixin, BaseModel):
         """
         if project_platform_activated():
             return await self.logs_async_project_platform()
+
+        from mage_ai.data_preparation.logging.logger_manager_factory import (
+            LoggerManagerFactory,
+        )
 
         pipeline_logs = await LoggerManagerFactory.get_logger_manager(
             pipeline_uuid=self.pipeline_uuid,
@@ -1682,6 +1689,10 @@ class BlockRun(BlockRunProjectPlatformMixin, BaseModel):
 
     @property
     def logs(self):
+        from mage_ai.data_preparation.logging.logger_manager_factory import (
+            LoggerManagerFactory,
+        )
+
         pipeline = self.pipeline_run.pipeline_schedule.pipeline
         return LoggerManagerFactory.get_logger_manager(
             pipeline_uuid=pipeline.uuid,
@@ -1693,6 +1704,10 @@ class BlockRun(BlockRunProjectPlatformMixin, BaseModel):
     async def logs_async(self, repo_path: str = None):
         if project_platform_activated():
             return await self.logs_async_project_platform(repo_path=repo_path)
+
+        from mage_ai.data_preparation.logging.logger_manager_factory import (
+            LoggerManagerFactory,
+        )
 
         pipeline = await Pipeline.get_async(self.pipeline_run.pipeline_uuid, repo_path=repo_path)
         return await LoggerManagerFactory.get_logger_manager(

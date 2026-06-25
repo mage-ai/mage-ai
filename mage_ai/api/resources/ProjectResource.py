@@ -223,7 +223,23 @@ class ProjectResource(GenericResource):
             data['emr_config'] = payload['emr_config']
 
         if 'pipelines' in payload:
-            data['pipelines'] = payload['pipelines']
+            pipelines_payload = payload.get('pipelines') or {}
+            triggers = (pipelines_payload.get('settings') or {}).get('triggers') or {}
+            if triggers.get('sync_deletions_from_code') and not triggers.get(
+                'save_in_code_automatically'
+            ):
+                from mage_ai.api.errors import ApiError
+
+                raise ApiError(
+                    ApiError.RESOURCE_INVALID
+                    | dict(
+                        message=(
+                            'sync_deletions_from_code requires save_in_code_automatically to be '
+                            'enabled (project or pipeline level).'
+                        )
+                    )
+                )
+            data['pipelines'] = pipelines_payload
 
         if 'spark_config' in payload:
             data['spark_config'] = payload['spark_config']

@@ -119,6 +119,7 @@ export interface PipelineRetryConfigType {
 
 interface PipelineSettingsTriggersType {
   save_in_code_automatically?: boolean;
+  sync_deletions_from_code?: boolean;
 }
 
 export interface PipelineSettingsType {

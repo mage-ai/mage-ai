@@ -4,6 +4,7 @@ from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from typing import Dict, List, Optional
 
+import dateutil.parser
 import yaml
 
 from mage_ai.data_preparation.models.constants import PIPELINES_FOLDER
@@ -73,6 +74,18 @@ class Trigger(BaseConfig):
     repo_path: str = None
     description: Optional[str] = None
     token: Optional[str] = None
+
+    @classmethod
+    def parse_config(cls, config: Dict = None) -> Dict:
+        """Convert date fields from YAML string to datetime for SQLAlchemy."""
+        if config is None:
+            return config
+        config = dict(config)
+        for key in ('start_time', 'last_enabled_at'):
+            val = config.get(key)
+            if isinstance(val, str):
+                config[key] = dateutil.parser.parse(val)
+        return config
 
     def __post_init__(self):
         if self.schedule_type and type(self.schedule_type) is str:

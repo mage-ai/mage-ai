@@ -236,6 +236,29 @@ function Preferences({
             })),
           }}
         />
+
+        <SetupSectionRow
+          description={'When the scheduler runs, remove from the database any trigger that is no longer in a pipeline\'s triggers.yaml. Only applies when "Save triggers in code automatically" is enabled (project or pipeline level).'}
+          title="Sync deletions from code"
+          toggleSwitch={{
+            checked: !!projectAttributes?.pipelines?.settings?.triggers?.sync_deletions_from_code,
+            onCheck: (valFunc: (val: boolean) => boolean) => setProjectAttributes(prev => ({
+              ...prev,
+              pipelines: {
+                ...prev?.pipelines,
+                settings: {
+                  ...prev?.pipelines?.settings,
+                  triggers: {
+                    ...prev?.pipelines?.settings?.triggers,
+                    sync_deletions_from_code: valFunc(
+                      prev?.pipelines?.settings?.triggers?.sync_deletions_from_code,
+                    ),
+                  },
+                },
+              },
+            })),
+          }}
+        />
       </SetupSection>
 
       <Spacing mt={UNITS_BETWEEN_SECTIONS} />

@@ -104,6 +104,7 @@ celerybeat.pid
 # Environments
 .env
 .venv
+.venv_ci
 .DS_Store
 env/
 venv/
@@ -191,3 +192,5 @@ package.json
 test.py
 test/
 test_data*
+scripts/test_data
+titanic_clean.csv
