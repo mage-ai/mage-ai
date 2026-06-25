@@ -1,10 +1,47 @@
 import styled from 'styled-components';
 
+import dark from '@oracle/styles/themes/dark';
 import { ALL_HEADERS_HEIGHT } from '@components/TripleLayout/index.style';
 import { COLUMN_HEADER_CHART_HEIGHT } from '@components/datasets/overview/utils';
 import { REGULAR_LINE_HEIGHT } from '@oracle/styles/fonts/sizes';
 import { ScrollbarStyledCss } from '@oracle/styles/scrollbars';
 import { UNIT } from '@oracle/styles/units/spacing';
+
+export const DRAG_HANDLE_HEIGHT = UNIT;
+/** Header height: `outer padding (16px) + line height (20px) + button padding (16px) + border (2px)` */
+export const OUTPUT_HEADER_HEIGHT = (UNIT * 2) + REGULAR_LINE_HEIGHT + (UNIT * 2) + 2/*px border*/;
+
+export const DragHandleStyle = styled.div<{
+  active?: boolean;
+  disabled?: boolean;
+}>`
+  cursor: row-resize;
+  height: ${DRAG_HANDLE_HEIGHT}px;
+  position: relative;
+  width: 100%;
+  z-index: 6;
+
+  border-top-style: solid;
+  border-top-width: 1px;
+
+  ${props => `
+    border-color: ${(props.theme.borders || dark.borders).medium};
+  `}
+
+  &:hover {
+    ${props => !props.disabled && `
+      border-color: ${(props.theme.text || dark.text).fileBrowser} !important;
+    `}
+  }
+
+  ${props => props.active && !props.disabled && `
+    border-color: ${(props.theme.text || dark.text).fileBrowser} !important;
+  `}
+
+  ${props => props.disabled && `
+    cursor: default;
+  `}
+`;
 
 export const TOTAL_PADDING = UNIT * 4;
 export const TABLE_COLUMN_HEADER_HEIGHT = COLUMN_HEADER_CHART_HEIGHT + (UNIT * 3) + REGULAR_LINE_HEIGHT;

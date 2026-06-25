@@ -37,7 +37,13 @@ const colorStyles = Object.entries(inverseColorsMapping()).reduce((acc, [k, v]) 
     }
   `), []);
 
-export const GraphContainerStyle = styled.div<{
+export const GraphContainerStyle = styled.div.attrs<{
+  height?: number;
+}>(({ height }) => ({
+  style: {
+    height: height != null ? `${height}px` : undefined,
+  },
+}))<{
   height?: number;
 }>`
   position: relative;
@@ -45,10 +51,6 @@ export const GraphContainerStyle = styled.div<{
   div {
     ${ScrollbarStyledCss}
   }
-
-  ${props => props.height && `
-    height: ${props.height}px;
-  `}
 
   .edge {
     &.activeSlow {
