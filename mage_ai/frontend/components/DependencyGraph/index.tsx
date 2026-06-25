@@ -260,6 +260,7 @@ function DependencyGraph({
   const colorsInverse = useMemo(() => inverseColorsMapping(themeContext), [themeContext]);
 
   const containerRef = useRef(null);
+  const graphContainerElRef = useRef(null);
   const portRefs = useRef({});
   const timeoutActiveRefs = useRef({});
   const timeoutDraggingRefs = useRef({});
@@ -484,6 +485,13 @@ function DependencyGraph({
       }
     }, 1000);
   }, [canvasRef]);
+
+  useEffect(() => {
+    if (treeRef && graphContainerElRef.current) {
+      (treeRef as any).graphContainerRef = graphContainerElRef;
+      (treeRef as any).resetZoom = () => canvasRef?.current?.fitCanvas?.();
+    }
+  }, [treeRef, graphContainerElRef.current]);
 
   const [updateBlock, { isLoading: isLoadingUpdateBlock }] = useMutation(
     api.blocks.pipelines.useUpdate(
@@ -1768,12 +1776,15 @@ function DependencyGraph({
       <GraphContainerStyle
         height={containerHeight}
         onDoubleClick={() => canvasRef?.current?.fitCanvas?.()}
+        ref={graphContainerElRef}
       >
-        <ZoomControls
-          canvasRef={canvasRef}
-          containerRef={containerRef}
-          zoomLevel={zoomLevel}
-        />
+        <div data-html2canvas-ignore="true">
+          <ZoomControls
+            canvasRef={canvasRef}
+            containerRef={containerRef}
+            zoomLevel={zoomLevel}
+          />
+        </div>
         <Canvas
           // arrow={<MarkerArrow style={{ fill: themeContext?.borders?.light }} />}
           arrow={null}

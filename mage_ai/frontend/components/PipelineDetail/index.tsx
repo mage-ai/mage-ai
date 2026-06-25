@@ -1,5 +1,7 @@
 import NextLink from 'next/link';
 import React, { createRef, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import html2canvas from 'html2canvas';
+import { CanvasRef } from 'reaflow';
 import { CSSTransition } from 'react-transition-group';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
@@ -92,6 +94,37 @@ import { pushAtIndex, removeAtIndex } from '@utils/array';
 import { selectKeys } from '@utils/hash';
 import { useKeyboardContext } from '@context/Keyboard';
 import { useWindowSize } from '@utils/sizes';
+
+const GRAPH_CAPTURE_CSS_PROPERTIES = [
+  'display', 'flex-direction', 'flex-wrap', 'flex', 'flex-grow', 'flex-shrink', 'flex-basis',
+  'align-items', 'align-self', 'justify-content', 'justify-self',
+  'width', 'min-width', 'max-width', 'height', 'min-height', 'max-height',
+  'padding-top', 'padding-right', 'padding-bottom', 'padding-left',
+  'margin-top', 'margin-right', 'margin-bottom', 'margin-left',
+  'position', 'top', 'right', 'bottom', 'left', 'z-index',
+  'overflow', 'overflow-x', 'overflow-y',
+  'box-sizing',
+  'border-top-color', 'border-right-color', 'border-bottom-color', 'border-left-color',
+  'border-top-width', 'border-right-width', 'border-bottom-width', 'border-left-width',
+  'border-top-style', 'border-right-style', 'border-bottom-style', 'border-left-style',
+  'border-radius',
+  'fill', 'stroke',
+  'font-size', 'font-weight', 'font-family', 'line-height', 'white-space',
+  'opacity',
+];
+const GRAPH_CAPTURE_SCALE = 2;
+const GRAPH_DEFAULT_BACKGROUND_COLOR = '#13131a';
+const GRAPH_TEXT_COLOR = '#fff';
+const JPEG_BLACK_BACKGROUND_COLOR = '#000000';
+const JPEG_ENCODER_QUALITY = 0.95;
+const FIT_CANVAS_ANIMATION_DELAY_MS = 500;
+const RGBA_TRANSPARENT = 'rgba(0, 0, 0, 0)';
+
+type TreeRef = {
+  current?: CanvasRef;
+  graphContainerRef?: React.MutableRefObject<HTMLElement | null>;
+  resetZoom?: () => void;
+};
 
 type PipelineDetailProps = {
   addNewBlockAtIndex: (
@@ -202,6 +235,7 @@ type PipelineDetailProps = {
   showUpdateBlockModal?: (block: BlockType, name: string) => void;
   sideBySideEnabled?: boolean;
   textareaFocused: boolean;
+  treeRef: TreeRef;
   widgets: BlockType[];
 } & SetEditingBlockType &
   OpenDataIntegrationModalType &
@@ -270,6 +304,7 @@ function PipelineDetail({
   showUpdateBlockModal,
   sideBySideEnabled,
   textareaFocused,
+  treeRef,
   widgets,
 }: PipelineDetailProps) {
   const { featureEnabled, featureUUIDs, project } = useProject();
@@ -827,6 +862,102 @@ df = get_variable('${pipeline.uuid}', '${block.uuid}', 'output_0')
     [setAddDBTModelVisible, setDisableShortcuts, setLastBlockIndex],
   );
 
+  const downloadImage = useCallback(async (fileType: 'jpeg' | 'png') => {
+    const graphContainerEl: HTMLElement | null =
+      treeRef?.graphContainerRef?.current
+      ?? (treeRef?.current?.containerRef?.current as HTMLElement | null);
+
+    if (!graphContainerEl) return;
+
+    if (treeRef?.resetZoom) {
+      treeRef.resetZoom();
+      await new Promise(resolve => setTimeout(resolve, FIT_CANVAS_ANIMATION_DELAY_MS));
+    }
+
+    const childElements = Array.from(graphContainerEl.querySelectorAll('*')) as HTMLElement[];
+    const originalChildStyles = childElements.map(el => el.getAttribute('style'));
+    const originalContainerStyle = graphContainerEl.getAttribute('style');
+
+    childElements.forEach(el => {
+      if (!el.style) return;
+      const computedStyle = window.getComputedStyle(el);
+
+      GRAPH_CAPTURE_CSS_PROPERTIES.forEach(property => {
+        const value = computedStyle.getPropertyValue(property);
+        if (value) el.style.setProperty(property, value);
+      });
+
+      const resolvedBackgroundColor = computedStyle.getPropertyValue('background-color');
+      if (resolvedBackgroundColor && resolvedBackgroundColor !== RGBA_TRANSPARENT) {
+        el.style.setProperty('background-color', resolvedBackgroundColor);
+      }
+
+      el.style.setProperty('color', GRAPH_TEXT_COLOR);
+    });
+
+    const resolvedContainerBackground =
+      window.getComputedStyle(graphContainerEl).backgroundColor;
+    graphContainerEl.style.setProperty(
+      'background-color',
+      resolvedContainerBackground && resolvedContainerBackground !== RGBA_TRANSPARENT
+        ? resolvedContainerBackground
+        : GRAPH_DEFAULT_BACKGROUND_COLOR,
+    );
+
+    const graphSvgEl = graphContainerEl.querySelector('svg');
+    const graphSvgBounds = graphSvgEl?.getBoundingClientRect();
+    const graphContainerBounds = graphContainerEl.getBoundingClientRect();
+    const exportWidth = graphSvgBounds
+      ? Math.max(graphContainerBounds.width, graphSvgBounds.width)
+      : graphContainerEl.scrollWidth;
+    const exportHeight = graphSvgBounds
+      ? Math.max(graphContainerBounds.height, graphSvgBounds.height)
+      : graphContainerEl.scrollHeight;
+
+    graphContainerEl.style.setProperty('overflow', 'visible');
+    graphContainerEl.style.setProperty('width', `${exportWidth}px`);
+    graphContainerEl.style.setProperty('height', `${exportHeight}px`);
+
+    try {
+      const renderedCanvas = await html2canvas(graphContainerEl, {
+        scale: GRAPH_CAPTURE_SCALE,
+        useCORS: true,
+        allowTaint: false,
+        logging: false,
+        width: exportWidth,
+        height: exportHeight,
+      });
+
+      const mimeType = fileType === 'jpeg' ? 'image/jpeg' : 'image/png';
+      const fileExtension = fileType === 'jpeg' ? 'jpeg' : 'png';
+
+      let exportCanvas = renderedCanvas;
+      if (fileType === 'jpeg') {
+        exportCanvas = document.createElement('canvas');
+        exportCanvas.width = renderedCanvas.width;
+        exportCanvas.height = renderedCanvas.height;
+        const ctx = exportCanvas.getContext('2d');
+        ctx.fillStyle = JPEG_BLACK_BACKGROUND_COLOR;
+        ctx.fillRect(0, 0, exportCanvas.width, exportCanvas.height);
+        ctx.drawImage(renderedCanvas, 0, 0);
+      }
+
+      const downloadLink = document.createElement('a');
+      downloadLink.download = `dependency-graph.${fileExtension}`;
+      downloadLink.href = exportCanvas.toDataURL(mimeType, JPEG_ENCODER_QUALITY);
+      downloadLink.click();
+    } finally {
+      childElements.forEach((el, index) => {
+        const originalStyle = originalChildStyles[index];
+        if (originalStyle === null) el.removeAttribute('style');
+        else el.setAttribute('style', originalStyle);
+      });
+
+      if (originalContainerStyle === null) graphContainerEl.removeAttribute('style');
+      else graphContainerEl.setAttribute('style', originalContainerStyle);
+    }
+  }, [treeRef]);
+
   const closeAddDBTModelPopup = useCallback(() => {
     setAddDBTModelVisible(false);
     setCreatingNewDBTModel(false);
@@ -889,6 +1020,7 @@ df = get_variable('${pipeline.uuid}', '${block.uuid}', 'output_0')
             showBrowseTemplates={showBrowseTemplates}
             showConfigureProjectModal={showConfigureProjectModal}
             showGlobalDataProducts={showGlobalDataProducts}
+            downloadImage={downloadImage}
           />
 
           {!useV2AddNewBlock && !isIntegration && !isStreaming && (
@@ -930,6 +1062,7 @@ df = get_variable('${pipeline.uuid}', '${block.uuid}', 'output_0')
       showBrowseTemplates,
       showConfigureProjectModal,
       showGlobalDataProducts,
+      downloadImage,
       useV2AddNewBlock,
     ],
   );
