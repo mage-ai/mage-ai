@@ -17,7 +17,8 @@
     "test": "playwright test",
     "test:h": "playwright test --headed",
     "test:ci": "playwright test -c playwright.config.ci.ts",
-    "test:report": "playwright show-report"
+    "test:report": "playwright show-report",
+    "test:unit": "playwright test tests/unit/blockRuns.test.ts"
   },
   "dependencies": {
     "@codingame/monaco-vscode-keybindings-service-override": "^5.2.0",
