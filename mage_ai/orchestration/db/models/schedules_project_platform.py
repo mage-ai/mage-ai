@@ -172,6 +172,11 @@ class PipelineScheduleProjectPlatformMixin:
             if executor_count > 1 and pipeline_run_count < executor_count:
                 return True
         elif self.schedule_interval == ScheduleInterval.ALWAYS_ON:
+            from mage_ai.orchestration.db.models.schedules import _is_in_active_window
+
+            if not _is_in_active_window(self.settings):
+                return False
+
             if self.pipeline_runs_count == 0:
                 return True
             else:
