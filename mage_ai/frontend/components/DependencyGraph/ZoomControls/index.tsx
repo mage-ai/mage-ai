@@ -6,13 +6,17 @@ import Tooltip from '@oracle/components/Tooltip';
 import { BORDER_RADIUS_PILL } from '@oracle/styles/units/borders';
 import { CanvasRef } from 'reaflow';
 import { ICON_SIZE_MEDIUM } from '@oracle/styles/units/icons';
-import { Recenter, ZoomIn, ZoomOut } from '@oracle/icons';
+import { Recenter, Save, ZoomIn, ZoomOut } from '@oracle/icons';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { ZoomControlsStyle, ZoomDisplayStyle } from './index.style';
+import { exportGraphAsImage } from '../exportGraph';
 
 type ZoomControlProps = {
+  allowDownload?: boolean;
+  backgroundColor?: string;
   canvasRef?: { current?: CanvasRef };
   containerRef?: { current?: any };
+  fileNamePrefix?: string;
   zoomLevel: number;
 };
 
@@ -38,8 +42,16 @@ const SHARED_ICON_PROPS = {
   size: ICON_SIZE_MEDIUM,
 };
 
-function ZoomControls({ canvasRef, containerRef, zoomLevel }: ZoomControlProps) {
+function ZoomControls({
+  allowDownload,
+  backgroundColor,
+  canvasRef,
+  containerRef,
+  fileNamePrefix,
+  zoomLevel,
+}: ZoomControlProps) {
   const [minimizeControls, setMinimizeControls] = useState<boolean>(false);
+  const [downloading, setDownloading] = useState<boolean>(false);
 
   useEffect(() => {
     if (!containerRef?.current) return;
@@ -53,14 +65,41 @@ function ZoomControls({ canvasRef, containerRef, zoomLevel }: ZoomControlProps) 
     return () => resizeObserver.disconnect();
   }, [containerRef]);
 
+  const handleDownload = async () => {
+    if (downloading) {
+      return;
+    }
+    setDownloading(true);
+    try {
+      await exportGraphAsImage({ backgroundColor, canvasRef, fileNamePrefix });
+    } finally {
+      setDownloading(false);
+    }
+  };
+
   return (
     <ZoomControlsStyle onDoubleClick={(event) => { event.stopPropagation(); }}>
+      {allowDownload && (
+        <Tooltip {...SHARED_TOOLTIP_PROPS} label="Download as image">
+          <Button
+            {...SHARED_BUTTON_PROPS}
+            borderRadius={`${BORDER_RADIUS_PILL}px 0 0 ${BORDER_RADIUS_PILL}px`}
+            disabled={downloading || !(canvasRef?.current?.layout?.width)}
+            onClick={handleDownload}
+            padding={`${UNIT * 1.5}px ${UNIT * 1.875}px ${UNIT * 1.5}px ${UNIT * 3.25}px`}
+          >
+            <Save {...SHARED_ICON_PROPS} />
+          </Button>
+        </Tooltip>
+      )}
       {!minimizeControls && (
         <>
           <Tooltip {...SHARED_TOOLTIP_PROPS} label="Reset (shortcut: double-click canvas)">
             <Button 
               {...SHARED_BUTTON_PROPS}
-              borderRadius={`${BORDER_RADIUS_PILL}px 0 0 ${BORDER_RADIUS_PILL}px`}
+              borderRadius={allowDownload
+                ? '0 0 0 0'
+                : `${BORDER_RADIUS_PILL}px 0 0 ${BORDER_RADIUS_PILL}px`}
               onClick={() => canvasRef?.current?.fitCanvas?.()}
               padding={`${UNIT * 1.5}px ${UNIT * 1.875}px ${UNIT * 1.5}px ${UNIT * 3.25}px`}
             >

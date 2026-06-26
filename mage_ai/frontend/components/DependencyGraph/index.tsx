@@ -42,6 +42,7 @@ import {
   SideEnum,
   ZOOMABLE_CANVAS_SIZE,
 } from './constants';
+import dark from '@oracle/styles/themes/dark';
 import { GraphContainerStyle, STROKE_WIDTH, inverseColorsMapping } from './index.style';
 import { RunStatus } from '@interfaces/BlockRunType';
 import { ThemeType } from '@oracle/styles/themes/constants';
@@ -219,10 +220,12 @@ export type DependencyGraphProps = {
   ) => void;
   treeRef?: { current?: CanvasRef };
   zoomable?: boolean;
+  allowGraphImageDownload?: boolean;
 } & SetEditingBlockType;
 
 function DependencyGraph({
   addNewBlockAtIndex,
+  allowGraphImageDownload,
   blockRefs,
   blockStatus,
   blocksOverride,
@@ -1770,8 +1773,11 @@ function DependencyGraph({
         onDoubleClick={() => canvasRef?.current?.fitCanvas?.()}
       >
         <ZoomControls
+          allowDownload={allowGraphImageDownload}
+          backgroundColor={(themeContext?.background || dark.background).panel}
           canvasRef={canvasRef}
           containerRef={containerRef}
+          fileNamePrefix={pipeline?.uuid}
           zoomLevel={zoomLevel}
         />
         <Canvas

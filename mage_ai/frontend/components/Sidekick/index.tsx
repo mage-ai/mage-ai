@@ -601,6 +601,7 @@ function Sidekick({
             <>
               <DependencyGraph
                 addNewBlockAtIndex={addNewBlockAtIndex}
+                allowGraphImageDownload
                 blockRefs={blockRefs}
                 blocks={blocks}
                 contentByBlockUUID={contentByBlockUUID}
