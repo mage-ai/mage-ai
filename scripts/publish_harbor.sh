@@ -45,10 +45,6 @@ IMAGE_NAME="${IMAGE_NAME:-b2mage-base}"
 IMAGE_TAG="${IMAGE_TAG:-latest}"
 HARBOR_REGISTRY="${HARBOR_REGISTRY:-}"
 HARBOR_PROJECT="${HARBOR_PROJECT:-}"
-HARBOR_USER="${HARBOR_USER:-}"
-HARBOR_PASSWORD="${HARBOR_PASSWORD:-}"
-BUILD_PLATFORMS="${BUILD_PLATFORMS:-linux/amd64,linux/arm64}"
-BUILDER_NAME="${BUILDER_NAME:-multiarch}"
 DOCKERFILE_PATH="${DOCKERFILE_PATH:-Dockerfile}"
 BUILD_CONTEXT="${BUILD_CONTEXT:-.}"
 MAGE_EXTRAS="${MAGE_EXTRAS:-postgres}"
@@ -61,19 +57,15 @@ COMMIT_ID="${COMMIT_ID:-$(git rev-parse HEAD)}"
 REMOTE_IMAGE="${HARBOR_REGISTRY}/${HARBOR_PROJECT}/${IMAGE_NAME}:${IMAGE_TAG}"
 REMOTE_IMAGE_COMMIT="${HARBOR_REGISTRY}/${HARBOR_PROJECT}/${IMAGE_NAME}:${COMMIT_ID}"
 
-if [[ -z "${HARBOR_REGISTRY}" || -z "${HARBOR_PROJECT}" || -z "${HARBOR_USER}" || -z "${HARBOR_PASSWORD}" ]]; then
+if [[ -z "${HARBOR_REGISTRY}" || -z "${HARBOR_PROJECT}" ]]; then
   cat <<'EOF'
 Missing required variables in env file:
   HARBOR_REGISTRY
   HARBOR_PROJECT
-  HARBOR_USER
-  HARBOR_PASSWORD
 
 Optional variables:
   IMAGE_NAME
   IMAGE_TAG
-  BUILD_PLATFORMS
-  BUILDER_NAME
   DOCKERFILE_PATH
   BUILD_CONTEXT
   MAGE_EXTRAS
@@ -90,29 +82,13 @@ cd "${ROOT_DIR}"
 echo "Loaded env file: ${ENV_FILE}"
 echo "Remote image: ${REMOTE_IMAGE}"
 echo "Remote image (commit): ${REMOTE_IMAGE_COMMIT}"
-echo "Platforms: ${BUILD_PLATFORMS}"
 echo "Dockerfile: ${DOCKERFILE_PATH}"
 echo "Build context: ${BUILD_CONTEXT}"
 echo "MAGE_EXTRAS: ${MAGE_EXTRAS}"
 echo "INSTALL_EXTRA_PY_DEPS: ${INSTALL_EXTRA_PY_DEPS}"
 
-echo "Logging in to ${HARBOR_REGISTRY}..."
-printf '%s' "${HARBOR_PASSWORD}" | docker login "${HARBOR_REGISTRY}" \
-  --username "${HARBOR_USER}" \
-  --password-stdin
-
-if ! docker buildx inspect "${BUILDER_NAME}" >/dev/null 2>&1; then
-  echo "Creating buildx builder ${BUILDER_NAME}..."
-  docker buildx create --name "${BUILDER_NAME}" --use
-else
-  docker buildx use "${BUILDER_NAME}"
-fi
-
-docker buildx inspect --bootstrap >/dev/null
-
-echo "Building and pushing ${REMOTE_IMAGE} and ${REMOTE_IMAGE_COMMIT}..."
-docker buildx build \
-  --platform "${BUILD_PLATFORMS}" \
+echo "Building ${REMOTE_IMAGE} and ${REMOTE_IMAGE_COMMIT}..."
+docker build \
   --build-arg "MAGE_EXTRAS=${MAGE_EXTRAS}" \
   --build-arg "INSTALL_EXTRA_PY_DEPS=${INSTALL_EXTRA_PY_DEPS}" \
   --build-arg "INSTALL_MSSQL=${INSTALL_MSSQL}" \
@@ -121,8 +97,13 @@ docker buildx build \
   -f "${DOCKERFILE_PATH}" \
   -t "${REMOTE_IMAGE}" \
   -t "${REMOTE_IMAGE_COMMIT}" \
-  --push \
   "${BUILD_CONTEXT}"
+
+echo "Pushing ${REMOTE_IMAGE}..."
+docker push "${REMOTE_IMAGE}"
+
+echo "Pushing ${REMOTE_IMAGE_COMMIT}..."
+docker push "${REMOTE_IMAGE_COMMIT}"
 
 echo "Published ${REMOTE_IMAGE}"
 echo "Published ${REMOTE_IMAGE_COMMIT}"
