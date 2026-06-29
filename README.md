@@ -54,13 +54,19 @@ Install using Docker (recommended):
 docker pull mageai/mageai:latest
 ```
 
-To run the Docker Compose services from a local checkout:
+To run Mage from a local checkout with Docker Compose:
 
 ```bash
 HOST=0.0.0.0 PORT=6789 PROJECT=default_repo MANAGE_INSTANCE=1 docker compose up -d server app
 ```
 
 Then open the Mage UI at [http://localhost:3000](http://localhost:3000). The backend runs on port `6789`.
+
+The full Compose stack in `docker-compose.yml` defines `server`, `app`, `server_spark`, `app_spark`, `py`, `lsp`, and `database`. To start every service, omit the service names:
+
+```bash
+HOST=0.0.0.0 PORT=6789 PROJECT=default_repo MANAGE_INSTANCE=1 docker compose up -d
+```
 
 Or with pip:
 
