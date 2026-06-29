@@ -1,16 +1,21 @@
-from mage_ai.io.file import FileIO
+from pathlib import Path
+
 from pandas import DataFrame
 
 if 'data_exporter' not in globals():
     from mage_ai.data_preparation.decorators import data_exporter
 
 
+def project_root() -> Path:
+    return Path(__file__).resolve().parents[1]
+
+
 @data_exporter
 def export_data_to_file(df: DataFrame, **kwargs) -> None:
     """
-    Template for exporting data to filesystem.
-
-    Docs: https://docs.mage.ai/design/data-loading#example-loading-data-from-a-file
+    Save the cleaned Titanic dataset inside the Mage project folder.
     """
-    filepath = 'titanic_clean.csv'
-    FileIO().export(df, filepath)
+    output_dir = project_root() / 'data' / 'processed' / 'titanic'
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    df.to_csv(output_dir / 'titanic_clean.csv', index=False)
