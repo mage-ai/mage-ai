@@ -54,6 +54,14 @@ Install using Docker (recommended):
 docker pull mageai/mageai:latest
 ```
 
+To run the Docker Compose services from a local checkout:
+
+```bash
+HOST=0.0.0.0 PORT=6789 PROJECT=default_repo MANAGE_INSTANCE=1 docker compose up -d server app
+```
+
+Then open the Mage UI at [http://localhost:3000](http://localhost:3000). The backend runs on port `6789`.
+
 Or with pip:
 
 ```bash
