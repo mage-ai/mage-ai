@@ -56,7 +56,7 @@ class GoogleProvider(SsoProvider, OauthProvider):
         base_url = get_base_url(kwargs.get('redirect_uri'))
 
         data = dict()
-        async with aiohttp.ClientSession() as session:
+        async with aiohttp.ClientSession(trust_env=True) as session:
             async with session.post(
                 'https://oauth2.googleapis.com/token',
                 data=dict(
@@ -75,7 +75,7 @@ class GoogleProvider(SsoProvider, OauthProvider):
     async def get_user_info(self, access_token: str = None, **kwargs) -> Awaitable[Dict]:
         if access_token is None:
             raise Exception('Access token is required to fetch user info.')
-        async with aiohttp.ClientSession() as session:
+        async with aiohttp.ClientSession(trust_env=True) as session:
             async with session.get(
                 'https://www.googleapis.com/oauth2/v3/userinfo',
                 params=dict(access_token=access_token),
