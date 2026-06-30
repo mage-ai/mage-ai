@@ -30,6 +30,7 @@ CUSTOM_TYPES = {
     'integer': 'integer',
     'decimal': 'number',
     'checkbox': 'boolean',
+    'lookup': 'string',
 }
 
 DEFAULT_SEARCH_WINDOW_SIZE = (60 * 60 * 24) * 30 # defined in seconds, default to a month (30 days)
