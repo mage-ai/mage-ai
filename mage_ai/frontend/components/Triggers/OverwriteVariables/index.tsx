@@ -161,7 +161,7 @@ function OverwriteVariables({
             },
             {
               label: () => '',
-              uuid: 'Action'
+              uuid: 'Action',
             },
           ]}
           rows={Object.entries(runtimeVariables).map(([uuid, value]) => [
@@ -177,7 +177,7 @@ function OverwriteVariables({
               <Button
                 iconOnly
                 onClick={() => {
-                  setRuntimeVariables(prev => ignoreKeys(prev, [uuid]))
+                  setRuntimeVariables(prev => ignoreKeys(prev, [uuid]));
                 }}
               >
                 <Trash default />
