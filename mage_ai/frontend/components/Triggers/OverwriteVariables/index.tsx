@@ -20,11 +20,45 @@ type OverwriteVariablesProps = {
   borderless?: boolean;
   compact?: boolean;
   enableVariablesOverwrite: boolean;
-  originalVariables?: { [keyof: string]: string };
-  runtimeVariables: { [keyof: string]: string };
+  originalVariables?: { [keyof: string]: any };
+  runtimeVariables: { [keyof: string]: any };
   setEnableVariablesOverwrite: (enableVariablesOverwrite: boolean) => void;
   setRuntimeVariables: (runtimeVariables: any) => void;
 };
+
+function formatRuntimeVariableValue(value: any): string {
+  if (typeof value === 'undefined') {
+    return '';
+  } else if (typeof value === 'string') {
+    return value;
+  } else if (typeof value === 'object') {
+    try {
+      return JSON.stringify(value, null, 2);
+    } catch {
+      return String(value);
+    }
+  }
+
+  return String(value);
+}
+
+function shouldUseTextAreaForValue(value: any): boolean {
+  if (value !== null && typeof value === 'object') {
+    return true;
+  }
+
+  if (typeof value !== 'string' || !isJsonString(value)) {
+    return false;
+  }
+
+  const parsedValue = JSON.parse(value);
+
+  return (
+    typeof parsedValue === 'object'
+    && !Array.isArray(parsedValue)
+    && parsedValue !== null
+  );
+}
 
 function OverwriteVariables({
   borderless,
@@ -43,14 +77,10 @@ function OverwriteVariables({
     const textAreaElementMappingInit = Object.entries(runtimeVariables || {})
       .reduce((acc, keyValPair) => {
         const [uuid, val] = keyValPair;
-        const isUsingTextAreaEl = isJsonString(val)
-          && typeof JSON.parse(val) === 'object'
-          && !Array.isArray(JSON.parse(val))
-          && JSON.parse(val) !== null;
 
         return {
           ...acc,
-          [uuid]: isUsingTextAreaEl,
+          [uuid]: shouldUseTextAreaForValue(val),
         };
       }, {});
 
@@ -64,7 +94,8 @@ function OverwriteVariables({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const buildValueRowEl = (uuid: string, value: string) => {
+  const buildValueRowEl = (uuid: string, value: any) => {
+    const formattedValue = formatRuntimeVariableValue(value);
     const sharedValueElProps = {
       borderless: true,
       key: `variable_uuid_input_${uuid}`,
@@ -78,7 +109,7 @@ function OverwriteVariables({
       },
       paddingHorizontal: 0,
       placeholder: 'Variable value',
-      value,
+      value: formattedValue,
     };
 
     if (textAreaElementMapping[uuid]) {
@@ -86,7 +117,7 @@ function OverwriteVariables({
         <TextArea
           {...sharedValueElProps}
           rows={1}
-          value={value}
+          value={formattedValue}
         />
       );
     }
