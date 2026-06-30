@@ -47,6 +47,26 @@ class PipelineScheduleOperationTests(BaseApiTestCase):
         self.assertEqual(response['pipeline_schedule']['name'], 'test_schedule')
         self.assertEqual(response['pipeline_schedule']['repo_path'], get_repo_path())
 
+    async def test_execute_create_active_schedule_requires_cron_interval(self):
+        email = self.faker.email()
+        user = create_user(email=email, roles=1)
+        operation = self.build_create_operation(
+            dict(
+                name='test_schedule_empty_cron',
+                schedule_interval='',
+                schedule_type=ScheduleType.TIME,
+                status=ScheduleStatus.ACTIVE,
+                variables=[],
+            ),
+            resource_parent='pipeline',
+            resource_parent_id=self.pipeline.uuid,
+            user=user,
+        )
+
+        with self.assertRaises(ValueError) as context:
+            await operation.execute()
+        self.assertTrue('Cron expression cannot be empty.' in str(context.exception))
+
     async def test_execute_update_schedule_saved_in_code(self):
         email = self.faker.email()
         user = create_user(email=email, roles=1)
@@ -108,6 +128,30 @@ class PipelineScheduleOperationTests(BaseApiTestCase):
             updated_trigger_configs_by_name['test_schedule_2']['status'],
             ScheduleStatus.ACTIVE,
         )
+
+    async def test_execute_update_active_schedule_requires_cron_interval(self):
+        email = self.faker.email()
+        user = create_user(email=email, roles=1)
+        pipeline_schedule = PipelineSchedule.create(
+            name='test_schedule_update_empty_cron',
+            pipeline_uuid='test_pipeline',
+            schedule_interval='',
+            schedule_type=ScheduleType.TIME,
+            status=ScheduleStatus.INACTIVE,
+        )
+        operation = self.build_update_operation(
+            pipeline_schedule.id,
+            {
+                'pipeline_schedule': dict(
+                    status=ScheduleStatus.ACTIVE,
+                ),
+            },
+            user=user,
+        )
+
+        with self.assertRaises(ValueError) as context:
+            await operation.execute()
+        self.assertTrue('Cron expression cannot be empty.' in str(context.exception))
 
     async def test_execute_list(self):
         email = self.faker.email()
