@@ -30,6 +30,10 @@ function formatRuntimeVariableValue(value: any): string {
   if (typeof value === 'undefined') {
     return '';
   } else if (typeof value === 'string') {
+    if (shouldUseTextAreaForValue(value)) {
+      return JSON.stringify(JSON.parse(value), null, 2);
+    }
+
     return value;
   } else if (typeof value === 'object') {
     try {
@@ -74,25 +78,31 @@ function OverwriteVariables({
   const [newVariableValue, setNewVariableValue] = useState(null);
 
   useEffect(() => {
-    const textAreaElementMappingInit = Object.entries(runtimeVariables || {})
-      .reduce((acc, keyValPair) => {
-        const [uuid, val] = keyValPair;
+    setTextAreaElementMapping(prev => {
+      let mappingChanged = false;
+      const runtimeVariableMapping = Object.entries(runtimeVariables || {})
+        .reduce((acc, [uuid, val]) => {
+          if (typeof prev?.[uuid] !== 'undefined') {
+            return {
+              ...acc,
+              [uuid]: prev[uuid],
+            };
+          }
 
-        return {
-          ...acc,
-          [uuid]: shouldUseTextAreaForValue(val),
-        };
-      }, {});
+          mappingChanged = true;
 
-    setTextAreaElementMapping(textAreaElementMappingInit);
+          return {
+            ...acc,
+            [uuid]: shouldUseTextAreaForValue(val),
+          };
+        }, {});
 
-  /*
-   * The runtimeVariables prop is intentionally excluded from the dependency array
-   * because adding it would convert the input element back to a normal TextInput
-   * component once the user edits the variable value.
-   */
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+      return mappingChanged
+        || Object.keys(prev || {}).length !== Object.keys(runtimeVariableMapping || {}).length
+        ? runtimeVariableMapping
+        : prev;
+    });
+  }, [runtimeVariables]);
 
   const buildValueRowEl = (uuid: string, value: any) => {
     const formattedValue = formatRuntimeVariableValue(value);
@@ -116,7 +126,7 @@ function OverwriteVariables({
       return (
         <TextArea
           {...sharedValueElProps}
-          rows={1}
+          rows={Math.min(formattedValue.split('\n').length, 6)}
           value={formattedValue}
         />
       );
