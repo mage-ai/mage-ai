@@ -115,7 +115,12 @@ def convert_column_to_type(value, column_type: str):
     return convert_column_to_type_orig(value, column_type)
 
 
-def convert_column_type(column_type: str, column_settings: Dict, **kwargs) -> str:
+def convert_column_type(
+    column_type: str,
+    column_settings: Dict,
+    string_type: str = 'CHAR(255)',
+    **kwargs,
+) -> str:
     if COLUMN_TYPE_BOOLEAN == column_type:
         return 'CHAR(52)'
     elif COLUMN_TYPE_INTEGER == column_type:
@@ -128,6 +133,6 @@ def convert_column_type(column_type: str, column_settings: Dict, **kwargs) -> st
         if COLUMN_FORMAT_DATETIME == column_settings.get('format'):
             # Twice as long as the number of characters in ISO date format
             return 'CHAR(52)'
-        return 'TEXT'
+        return 'CHAR(255)' if string_type == 'VARCHAR' else string_type
 
-    return 'TEXT'
+    return 'CHAR(255)'
