@@ -15,6 +15,25 @@ from mage_ai.settings import JWT_DOWNLOAD_SECRET, REQUIRE_USER_AUTHENTICATION
 from mage_ai.settings.repo import get_repo_path
 
 
+BINARY_DOWNLOAD_FILE_EXTENSIONS = (
+    '.7z',
+    '.rar',
+    '.tar',
+    '.tar.bz2',
+    '.tar.gz',
+    '.tar.xz',
+    '.tbz2',
+    '.tgz',
+    '.txz',
+    '.xlsx',
+    '.zip',
+)
+
+
+def should_open_download_in_binary_mode(file_path):
+    return file_path.lower().endswith(BINARY_DOWNLOAD_FILE_EXTENSIONS)
+
+
 class ApiDownloadHandler(BaseHandler):
     async def get(self, pipeline_uuid, block_uuid, **kwargs):
         self.set_header('Content-Type', 'text/csv')
@@ -118,8 +137,8 @@ class ApiResourceDownloadHandler(BaseHandler):
     # file pointer points to either a singular file or a temporary zip
     def get_file_pointer(self, file_list, relative_file_list):
         if len(file_list) == 1:
-            if file_list[0].endswith('.xlsx'):  # Check if it's an XLSX file
-                return open(file_list[0], 'rb')  # Open in binary mode for XLSX
+            if should_open_download_in_binary_mode(file_list[0]):
+                return open(file_list[0], 'rb')
             else:
                 return open(file_list[0])
         return self.zip_files(file_list, relative_file_list)
