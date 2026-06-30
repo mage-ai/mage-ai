@@ -22,7 +22,7 @@ type OverwriteVariablesProps = {
   enableVariablesOverwrite: boolean;
   originalVariables?: { [keyof: string]: any };
   runtimeVariables: { [keyof: string]: any };
-  setEnableVariablesOverwrite: (enableVariablesOverwrite: boolean) => void;
+  setEnableVariablesOverwrite?: (enableVariablesOverwrite: boolean) => void;
   setRuntimeVariables: (runtimeVariables: any) => void;
 };
 
