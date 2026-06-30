@@ -259,6 +259,10 @@ class DynamicBlockFactory(DynamicBlockWrapperBase):
                 )
 
                 if completed_count == spawn_count:
+                    counter = self.__counters.get(upstream_uuid)
+                    if counter is not None and counter.output_exists():
+                        return output_item_count
+
                     return 1
 
             # If no upstream block has been spawned and the upstream block runs are completed,
@@ -266,6 +270,10 @@ class DynamicBlockFactory(DynamicBlockWrapperBase):
             if spawn_count == 0:
                 upstream_block_runs = self.__upstream_block_runs()
                 if all(b.status == BlockRun.BlockRunStatus.COMPLETED for b in upstream_block_runs):
+                    counter = self.__counters.get(upstream_uuid)
+                    if counter is not None and counter.output_exists():
+                        return output_item_count
+
                     return 1
 
             return output_item_count
