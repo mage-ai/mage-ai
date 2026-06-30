@@ -1,6 +1,6 @@
 import moment from 'moment';
 
-import LogType, { LogDataType } from '@interfaces/LogType';
+import LogType from '@interfaces/LogType';
 import { isJsonString } from '@utils/string';
 
 const DATE_REGEX = /^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}$/;
@@ -50,6 +50,24 @@ export function initializeLogs(log: LogType) {
     ...log,
     content: content2,
   }));
+}
+
+export function getLogMessageText(log: LogType): string {
+  const displayText: any = log?.data?.message == null ? log?.content : log?.data?.message;
+
+  if (displayText == null) {
+    return '';
+  } else if (Array.isArray(displayText)) {
+    return displayText.join(' ');
+  } else if (typeof displayText === 'object') {
+    try {
+      return JSON.stringify(displayText);
+    } catch {
+      return String(displayText);
+    }
+  }
+
+  return String(displayText);
 }
 
 export function formatTimestamp(
