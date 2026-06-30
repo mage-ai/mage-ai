@@ -1,7 +1,7 @@
 import { queryString } from '@utils/url';
 
-export const DEFAULT_HOST: string = 'localhost';
-export const DEFAULT_PORT: string = '6789';
+export const DEFAULT_HOST: string = process.env.NEXT_PUBLIC_DEFAULT_HOST_OVERRIDE || 'localhost';
+export const DEFAULT_PORT: string = process.env.NEXT_PUBLIC_DEFAULT_PORT_OVERRIDE || '6789';
 
 function getHostCore(
   windowDefined: boolean,

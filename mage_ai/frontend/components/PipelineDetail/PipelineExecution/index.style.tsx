@@ -2,6 +2,7 @@ import { ScrollbarStyledCss, hideScrollBar } from '@oracle/styles/scrollbars';
 import styled from 'styled-components';
 
 export const OUTPUT_HEIGHT = 300;
+export const OUTPUT_HEIGHT_MIN = 120;
 
 export const OutputHeaderStyle = styled.div`
   ${hideScrollBar()}

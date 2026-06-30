@@ -52,12 +52,23 @@ import {
   ViewKeyEnum,
 } from './constants';
 import { VERTICAL_NAVIGATION_WIDTH } from '@components/Dashboard/index.style';
-import { LOCAL_STORAGE_KEY_PIPELINE_EXECUTION_HIDDEN, get } from '@storage/localStorage';
+import {
+  LOCAL_STORAGE_KEY_PIPELINE_EXECUTION_HEIGHT,
+  LOCAL_STORAGE_KEY_PIPELINE_EXECUTION_HIDDEN,
+  LOCAL_STORAGE_KEY_PIPELINE_EXECUTION_TREE_HIDDEN,
+  get,
+  set,
+} from '@storage/localStorage';
 import { OpenDataIntegrationModalType } from '@components/DataIntegrationModal/constants';
-import { OUTPUT_HEIGHT } from '@components/PipelineDetail/PipelineExecution/index.style';
+import {
+  OUTPUT_HEIGHT,
+  OUTPUT_HEIGHT_MIN,
+} from '@components/PipelineDetail/PipelineExecution/index.style';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import {
   SidekickContainerStyle,
+  StreamingTreeGraphStyle,
+  StreamingTreeResizeHandleStyle,
   TABLE_COLUMN_HEADER_HEIGHT,
 } from './index.style';
 import { SCROLLBAR_WIDTH } from '@oracle/styles/scrollbars';
@@ -69,6 +80,17 @@ import { useWindowSize } from '@utils/sizes';
 import AddonBlocks from '@components/PipelineDetail/AddonBlocks';
 
 const MAX_COLUMNS = 100;
+const STREAMING_TREE_MIN_HEIGHT = UNIT * 20;
+const STREAMING_PIPELINE_EXECUTION_CHROME_HEIGHT = UNIT * 8;
+const STREAMING_PIPELINE_EXECUTION_HEADER_ONLY_HEIGHT = UNIT * 7;
+const STREAMING_PIPELINE_RESIZE_HANDLE_HEIGHT = UNIT;
+const NON_STREAMING_TREE_HEIGHT_OFFSET = 70;
+
+function clampNumber(value: number, min: number, max: number): number {
+  const upperBound = Math.max(min, max);
+
+  return Math.min(Math.max(value, min), upperBound);
+}
 
 export type SidekickProps = {
   activeView?: ViewKeyEnum;
@@ -243,10 +265,20 @@ function Sidekick({
   const {
     height: heightWindow,
   } = useWindowSize();
+  const heightWindowUse = Number.isFinite(heightWindow) ? heightWindow : 0;
   const heightOffset = ALL_HEADERS_HEIGHT;
   const [errorMessages, setErrorMessages] = useState<string[]>([]);
   const [pipelineExecutionHidden, setPipelineExecutionHidden] =
     useState(!!get(LOCAL_STORAGE_KEY_PIPELINE_EXECUTION_HIDDEN));
+  const [pipelineTreeHidden, setPipelineTreeHidden] =
+    useState(!!get(LOCAL_STORAGE_KEY_PIPELINE_EXECUTION_TREE_HIDDEN));
+  const [pipelineExecutionHeight, setPipelineExecutionHeight] = useState<number>(() => {
+    const cachedHeight = Number(get(LOCAL_STORAGE_KEY_PIPELINE_EXECUTION_HEIGHT));
+
+    return cachedHeight && !Number.isNaN(cachedHeight)
+      ? cachedHeight
+      : OUTPUT_HEIGHT;
+  });
 
   const afterWidth = useMemo(() => afterWidthProp - (VERTICAL_NAVIGATION_WIDTH + 1), [
     afterWidthProp,
@@ -275,11 +307,132 @@ function Sidekick({
 
   const hasData = !!sampleData;
   const isIntegration = useMemo(() => PipelineTypeEnum.INTEGRATION === pipeline?.type, [pipeline]);
-  const finalOutputHeight = !(PipelineTypeEnum.STREAMING === pipeline?.type)
-    ? -70   // Hide entire output area
-    : (pipelineExecutionHidden ? -16 : OUTPUT_HEIGHT);
+  const isStreaming = useMemo(() => PipelineTypeEnum.STREAMING === pipeline?.type, [pipeline]);
+  const streamingTreeHidden = isStreaming && pipelineTreeHidden;
+  const sidekickContentHeight = useMemo(() => Math.max(0, heightWindowUse - heightOffset), [
+    heightOffset,
+    heightWindowUse,
+  ]);
+  const pipelineExecutionHeightMax = useMemo(() => Math.max(
+    OUTPUT_HEIGHT_MIN,
+    sidekickContentHeight
+      - STREAMING_TREE_MIN_HEIGHT
+      - STREAMING_PIPELINE_EXECUTION_CHROME_HEIGHT
+      - STREAMING_PIPELINE_RESIZE_HANDLE_HEIGHT,
+  ), [
+    sidekickContentHeight,
+  ]);
+  const pipelineExecutionHeightUse = useMemo(() => {
+    if (streamingTreeHidden) {
+      return Math.max(
+        OUTPUT_HEIGHT_MIN,
+        sidekickContentHeight - STREAMING_PIPELINE_EXECUTION_CHROME_HEIGHT,
+      );
+    }
 
-  const renderColumnHeader = useCallback(buildRenderColumnHeader({
+    return clampNumber(
+      pipelineExecutionHeight,
+      OUTPUT_HEIGHT_MIN,
+      pipelineExecutionHeightMax,
+    );
+  }, [
+    pipelineExecutionHeight,
+    pipelineExecutionHeightMax,
+    sidekickContentHeight,
+    streamingTreeHidden,
+  ]);
+  const pipelineExecutionPanelHeight = useMemo(() => {
+    if (!isStreaming || blockEditing) {
+      return 0;
+    }
+
+    return pipelineExecutionHidden
+      ? STREAMING_PIPELINE_EXECUTION_HEADER_ONLY_HEIGHT
+      : STREAMING_PIPELINE_EXECUTION_CHROME_HEIGHT + pipelineExecutionHeightUse;
+  }, [
+    blockEditing,
+    isStreaming,
+    pipelineExecutionHeightUse,
+    pipelineExecutionHidden,
+  ]);
+  const streamingTreeResizeHandleVisible = useMemo(() => (
+    isStreaming
+      && !blockEditing
+      && !pipelineExecutionHidden
+      && !streamingTreeHidden
+  ), [
+    blockEditing,
+    isStreaming,
+    pipelineExecutionHidden,
+    streamingTreeHidden,
+  ]);
+  const streamingTreeHeight = useMemo(() => Math.max(
+    0,
+    sidekickContentHeight
+      - pipelineExecutionPanelHeight
+      - (streamingTreeResizeHandleVisible ? STREAMING_PIPELINE_RESIZE_HANDLE_HEIGHT : 0),
+  ), [
+    pipelineExecutionPanelHeight,
+    sidekickContentHeight,
+    streamingTreeResizeHandleVisible,
+  ]);
+  const nonStreamingTreeHeight = heightWindowUse
+    - (heightOffset - SCROLLBAR_WIDTH)
+    + NON_STREAMING_TREE_HEIGHT_OFFSET;
+
+  useEffect(() => {
+    if (!isStreaming || streamingTreeHidden) {
+      return;
+    }
+
+    setPipelineExecutionHeight(prev => clampNumber(
+      prev,
+      OUTPUT_HEIGHT_MIN,
+      pipelineExecutionHeightMax,
+    ));
+  }, [
+    isStreaming,
+    pipelineExecutionHeightMax,
+    streamingTreeHidden,
+  ]);
+
+  const resizePipelineExecution = useCallback((event: React.MouseEvent<HTMLDivElement>) => {
+    event.preventDefault();
+
+    const startY = event.clientY;
+    const startHeight = pipelineExecutionHeightUse;
+    let nextHeight = startHeight;
+    const bodyCursor = document.body.style.cursor;
+    const bodyUserSelect = document.body.style.userSelect;
+
+    document.body.style.cursor = 'row-resize';
+    document.body.style.userSelect = 'none';
+
+    const handleMouseMove = (e: MouseEvent) => {
+      nextHeight = clampNumber(
+        startHeight + startY - e.clientY,
+        OUTPUT_HEIGHT_MIN,
+        pipelineExecutionHeightMax,
+      );
+      setPipelineExecutionHeight(nextHeight);
+    };
+
+    const handleMouseUp = () => {
+      set(LOCAL_STORAGE_KEY_PIPELINE_EXECUTION_HEIGHT, nextHeight);
+      document.body.style.cursor = bodyCursor;
+      document.body.style.userSelect = bodyUserSelect;
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+  }, [
+    pipelineExecutionHeightMax,
+    pipelineExecutionHeightUse,
+  ]);
+
+  const renderColumnHeader = useMemo(() => buildRenderColumnHeader({
     columnTypes,
     columns,
     insightsByFeatureUUID,
@@ -412,7 +565,7 @@ function Sidekick({
         : TABLE_COLUMN_HEADER_HEIGHT
       }
       columns={columns}
-      height={heightWindow - heightOffset - ASIDE_SUBHEADER_HEIGHT}
+      height={heightWindowUse - heightOffset - ASIDE_SUBHEADER_HEIGHT}
       noBorderBottom
       noBorderLeft
       noBorderRight
@@ -426,7 +579,7 @@ function Sidekick({
     columnTypes,
     columns,
     heightOffset,
-    heightWindow,
+    heightWindowUse,
     insightsByFeatureUUID,
     insightsOverview,
     renderColumnHeader,
@@ -599,49 +752,67 @@ function Sidekick({
         {activeView === ViewKeyEnum.TREE &&
           <ApiReloader uuid={`PipelineDetail/${pipeline?.uuid}`}>
             <>
-              <DependencyGraph
-                addNewBlockAtIndex={addNewBlockAtIndex}
-                blockRefs={blockRefs}
-                blocks={blocks}
-                contentByBlockUUID={contentByBlockUUID}
-                contextMenuEnabled
-                deleteBlock={deleteBlock}
-                dragEnabled
-                editingBlock={editingBlock}
-                enablePorts={!isIntegration}
-                fetchPipeline={fetchPipeline}
-                height={heightWindow - (heightOffset - SCROLLBAR_WIDTH) - finalOutputHeight}
-                messages={messages}
-                // @ts-ignore
-                onClickNode={({ block: { uuid } }) => setHiddenBlocks((prev) => {
-                  const hidden = !!prev?.[uuid];
+              {!streamingTreeHidden && (
+                <StreamingTreeGraphStyle height={isStreaming
+                  ? streamingTreeHeight
+                  : nonStreamingTreeHeight
+                }>
+                  <DependencyGraph
+                    addNewBlockAtIndex={addNewBlockAtIndex}
+                    blockRefs={blockRefs}
+                    blocks={blocks}
+                    contentByBlockUUID={contentByBlockUUID}
+                    contextMenuEnabled
+                    deleteBlock={deleteBlock}
+                    dragEnabled
+                    editingBlock={editingBlock}
+                    enablePorts={!isIntegration}
+                    fetchPipeline={fetchPipeline}
+                    height={isStreaming
+                      ? streamingTreeHeight
+                      : nonStreamingTreeHeight
+                    }
+                    messages={messages}
+                    // @ts-ignore
+                    onClickNode={({ block: { uuid } }) => setHiddenBlocks((prev) => {
+                      const hidden = !!prev?.[uuid];
 
-                  if (!hidden) {
-                    return prev;
-                  }
+                      if (!hidden) {
+                        return prev;
+                      }
 
-                  return {
-                    ...prev,
-                    [uuid]: !hidden,
-                  };
-                })}
-                pipeline={pipeline}
-                runBlock={runBlock}
-                runningBlocks={runningBlocks}
-                selectedBlock={selectedBlock}
-                setActiveSidekickView={setActiveSidekickView}
-                setEditingBlock={setEditingBlock}
-                setErrors={setErrors}
-                setSelectedBlock={(block) => {
-                  setSelectedBlock(block);
+                      return {
+                        ...prev,
+                        [uuid]: !hidden,
+                      };
+                    })}
+                    pipeline={pipeline}
+                    runBlock={runBlock}
+                    runningBlocks={runningBlocks}
+                    selectedBlock={selectedBlock}
+                    setActiveSidekickView={setActiveSidekickView}
+                    setEditingBlock={setEditingBlock}
+                    setErrors={setErrors}
+                    setSelectedBlock={(block) => {
+                      setSelectedBlock(block);
 
-                  if (sideBySideEnabled) {
-                    scrollToBlock(block);
-                  }
-                }}
-                showUpdateBlockModal={showUpdateBlockModal}
-                treeRef={treeRef}
-              />
+                      if (sideBySideEnabled) {
+                        scrollToBlock(block);
+                      }
+                    }}
+                    showUpdateBlockModal={showUpdateBlockModal}
+                    treeRef={treeRef}
+                  />
+                </StreamingTreeGraphStyle>
+              )}
+              {streamingTreeResizeHandleVisible && (
+                <StreamingTreeResizeHandleStyle
+                  aria-label="Resize pipeline results"
+                  onMouseDown={resizePipelineExecution}
+                  role="separator"
+                  title="Drag to resize results"
+                />
+              )}
               {!blockEditing && PipelineTypeEnum.STREAMING === pipeline?.type && (
                 <Spacing p={1}>
                   <PipelineExecution
@@ -649,9 +820,12 @@ function Sidekick({
                     checkIfPipelineRunning={checkIfPipelineRunning}
                     executePipeline={executePipeline}
                     isPipelineExecuting={isPipelineExecuting}
+                    outputHeight={pipelineExecutionHidden ? undefined : pipelineExecutionHeightUse}
                     pipelineExecutionHidden={pipelineExecutionHidden}
                     pipelineMessages={pipelineMessages}
+                    pipelineTreeHidden={pipelineTreeHidden}
                     setPipelineExecutionHidden={setPipelineExecutionHidden}
+                    setPipelineTreeHidden={setPipelineTreeHidden}
                   />
                 </Spacing>
               )}

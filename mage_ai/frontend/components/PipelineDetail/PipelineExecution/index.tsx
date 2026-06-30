@@ -17,6 +17,7 @@ import {
   OutputRowStyle,
 } from '@components/CodeBlock/CodeOutput/index.style';
 import {
+  LOCAL_STORAGE_KEY_PIPELINE_EXECUTION_TREE_HIDDEN,
   LOCAL_STORAGE_KEY_PIPELINE_EXECUTION_HIDDEN,
   set,
 } from '@storage/localStorage';
@@ -31,9 +32,12 @@ export type PipelineExecutionProps = {
   checkIfPipelineRunning: () => void;
   executePipeline: () => void;
   isPipelineExecuting: boolean;
+  outputHeight?: number;
   pipelineExecutionHidden: boolean;
+  pipelineTreeHidden?: boolean;
   pipelineMessages: KernelOutputType[];
   setPipelineExecutionHidden: (pipelineExecutionHidden: boolean) => void;
+  setPipelineTreeHidden?: (pipelineTreeHidden: boolean) => void;
 };
 
 function PipelineExecution({
@@ -41,9 +45,12 @@ function PipelineExecution({
   checkIfPipelineRunning,
   executePipeline,
   isPipelineExecuting,
+  outputHeight,
   pipelineExecutionHidden,
+  pipelineTreeHidden,
   pipelineMessages,
   setPipelineExecutionHidden,
+  setPipelineTreeHidden,
 }: PipelineExecutionProps) {
   const numberOfMessages = useMemo(() => pipelineMessages?.length || 0, [pipelineMessages]);
   const truncatedPipelineMessages = useMemo(() => (
@@ -68,6 +75,14 @@ function PipelineExecution({
   }, [
     pipelineExecutionHidden,
     setPipelineExecutionHidden,
+  ]);
+  const togglePipelineTree = useCallback(() => {
+    const val = !pipelineTreeHidden;
+    setPipelineTreeHidden?.(val);
+    set(LOCAL_STORAGE_KEY_PIPELINE_EXECUTION_TREE_HIDDEN, val);
+  }, [
+    pipelineTreeHidden,
+    setPipelineTreeHidden,
   ]);
 
   return (
@@ -123,6 +138,22 @@ function PipelineExecution({
                 Running status
               </Text>
             </Button>
+            {!!setPipelineTreeHidden && (
+              <>
+                <Spacing ml={1} />
+                <Button
+                  onClick={togglePipelineTree}
+                  secondary
+                >
+                  <Text
+                    bold
+                    noWrapping
+                  >
+                    {pipelineTreeHidden ? 'Show tree' : 'Hide tree'}
+                  </Text>
+                </Button>
+              </>
+            )}
           </Flex>
           <Flex alignItems="center">
             <Spacing ml={1} />
@@ -142,7 +173,10 @@ function PipelineExecution({
       {!pipelineExecutionHidden &&
         <>
           <Spacing mb={1} />
-          <OutputContainerStyle noScrollbarTrackBackground>
+          <OutputContainerStyle
+            height={outputHeight}
+            noScrollbarTrackBackground
+          >
             <CodeBlockStyle
               executedAndIdle
               hasError={false}
