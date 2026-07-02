@@ -47,6 +47,7 @@
               "agent/introduction",
               "agent/quickstart",
               "agent/installation",
+              "agent/mage-agent-plugin",
               "agent/authentication",
               "agent/ide-integration",
               "agent/sync",
