@@ -32,7 +32,7 @@ When it’s time to scale, [Mage Pro](https://mage.ai) — our core platform —
 - Set up quickly with Docker, pip, or conda — no cloud account required
 
 - Your go-to workspace for local pipeline development — fully in your control.
-  
+
 <img width="100%" alt="mage" src="https://github.com/user-attachments/assets/75992872-20a6-4120-8bf0-9c22a3d66450" />
 
 
