@@ -43,9 +43,8 @@ class FileIO(BaseFile):
 
             dfs = []
             for fp in file_paths:
-                if format is None:
-                    format = self._get_file_format(fp)
-                df = self._read(fp, format, **kwargs)
+                file_format = format if format is not None else self._get_file_format(fp)
+                df = self._read(fp, file_format, **kwargs)
                 dfs.append(df)
 
             return pd.concat(dfs, axis=0, ignore_index=True)
