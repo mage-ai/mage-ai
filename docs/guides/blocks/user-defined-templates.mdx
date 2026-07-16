@@ -17,14 +17,18 @@ Block templates are reusable code patterns that can be customized with variables
 
 **Steps to create a block template:**
 
-1. **Navigate to Templates** - Click "Templates" in the left navigation menu
+1. **Navigate to Block templates** - Click "Templates" in the left navigation menu, then open **Block templates**. You can also go directly to `/apps/templates/blocks`.
 2. **Create new template** - Click "New block template" button
 3. **Define template properties**:
    - **Template UUID** - Enter a unique identifier (e.g., `sql_data_loader`)
    - **Block type** - Select the type (Data loader, Transformer, Data exporter, etc.)
-   - **Language** - Choose the programming language (Python, SQL, R, etc.)
+   - **Language** - Choose the programming language (Python, SQL, R, YAML, etc.)
 4. **Edit template content** - Write the template code with placeholders
 5. **Save template** - Click "Save template" to create the template
+
+<Info>
+  Template UUIDs can include letters, numbers, underscores, hyphens, and folder separators (`/`). They must start with a letter or number, cannot include empty, `.` or `..` folder segments, and must be 255 characters or fewer. The block type and language are locked after the template is created.
+</Info>
 
 ### Template File Structure
 
@@ -42,6 +46,8 @@ custom_templates/
 - **`metadata.yaml`** - Contains template metadata, block type, language, and other configuration
 - **`{template_uuid}.py`** - The actual template code file that users will customize
 
+The code file extension follows the selected language. For example, Python templates use `.py`, SQL templates use `.sql`, R templates use `.r`, and YAML templates use `.yaml`.
+
 **Example structure for `test_template`:**
 ```
 custom_templates/
@@ -57,20 +63,20 @@ The template library provides a centralized location to manage all your block an
 
 **Template Library Features:**
 - **Template categories** - Filter templates by type (Blocks or Pipelines)
-- **Pipeline template categories** - Filter pipeline templates by type (Standard, Integration, Streaming)
-- **Search functionality** - Find templates by name or description
+- **Block template categories** - Filter block templates by block type
+- **Pipeline template sources** - Browse all pipeline templates or team-created pipeline templates
 - **Template preview** - View template details before using
 - **Template management** - Edit, delete, or duplicate existing templates
 
 **Accessing Templates:**
-1. **From left navigation** - Click "Templates" to access the template library
+1. **From left navigation** - Click "Templates" to access the template library. The default Templates page redirects to the block template library at `/apps/templates/blocks`.
 2. **From pipeline editor** - Use "Browse templates" when adding new blocks
 3. **From pipeline creation** - Select "From a template" when creating new pipelines
 4. **Template organization** - Templates are organized by type and category for easy discovery
 
 **Viewing Pipeline Templates:**
-- **Switch to Pipelines tab** - Click "PIPELINES" tab in the template library
-- **Filter by category** - Select from Standard, Integration, or Streaming templates
+- **Open Pipeline templates** - Click the Pipelines tab in the template library or go directly to `/apps/templates/pipelines`
+- **Filter by source** - Select **All templates** or **Team** in the pipeline template navigation
 - **View template details** - See template name, description, and metadata
 - **Select template** - Click on a template to use it for creating new pipelines
 
@@ -93,11 +99,17 @@ Pipeline templates define complete pipeline structures that can be customized fo
 
 **Steps to create a pipeline template:**
 
-1. **Navigate to pipelines page** - Go to the main pipelines list view
-2. **Right-click on a pipeline** - Right-click on the pipeline you want to use as a template
-3. **Select "Create template"** - Choose "Create template" from the right-click context menu
-4. **Configure template settings** - Set template name, description, and other properties
-5. **Save template** - The pipeline structure will be saved as a reusable template
+1. **Navigate to Pipeline templates** - Open **Templates**, then **Pipeline templates**, or go directly to `/apps/templates/pipelines`.
+2. **Create new template from an existing pipeline** - From the pipeline list, right-click the pipeline you want to reuse and select the action to create a template. This opens `/apps/templates/pipelines/new?pipeline_uuid={pipeline_uuid}`.
+3. **Configure template settings** - Set the template UUID, name, description, and other properties.
+4. **Save template** - The pipeline structure will be saved as a reusable template.
+
+<Info>
+  Pipeline template UUIDs follow the same rules as block template UUIDs: letters, numbers,
+  underscores, hyphens, and folder separators (`/`) are allowed, the value must start with a
+  letter or number, `.` and `..` folder segments are rejected, and the value must be 255
+  characters or fewer.
+</Info>
 
 **Example pipeline template structure:**
 

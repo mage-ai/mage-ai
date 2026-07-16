@@ -133,17 +133,25 @@ This ensures smooth teamwork and prevents conflicts when more than one person is
         </Frame>
     </Accordion>
 
-    <Accordion title="Show blocks in current pipeline" icon="user-secret" iconType="duotone">
-        When editing a pipeline, you can switch the file browser view to show only the blocks in the
-        current pipeline.
+    <Accordion title="Filter files to the current pipeline" icon="user-secret" iconType="duotone">
+        When editing a pipeline, open the <b>Files</b> tab and use the selector above the search box
+        to switch between <b>All Files</b> and <b>This pipeline only</b>. The
+        <b>This pipeline only</b> filter shows repo-backed files related to the current pipeline,
+        including pipeline metadata and configuration files, trigger configuration, referenced block
+        source files, and supporting project configuration such as <code>io_config.yaml</code>,
+        <code>metadata.yaml</code>, and <code>requirements.txt</code>. Runtime data and log files
+        are not included.
+    </Accordion>
 
-        After toggling this view, you can select which blocks to collapse and which to expand.
-        This can help optimize vertical screen space while writing code.
+    <Accordion title="Block visibility tab" icon="user-secret" iconType="duotone">
+        Use the <b>Visibility</b> tab to hide blocks in the notebook. Hidden blocks are collapsed,
+        and you can click a hidden block to expand it again. This can help optimize vertical screen
+        space while writing code.
 
         <Frame>
             <p align="center">
             <img
-                alt="Show blocks in current pipeline"
+                alt="Hide and show blocks in the current pipeline"
                 src="https://mage-ai.github.io/assets/dev-ux/file-browser/blocks-in-pipeline.gif"
             />
             </p>
@@ -323,6 +331,10 @@ Run code and see its output right next to where you’re writing.
 
 This makes it so that you don’t have to keep scrolling down every time you make a code change
 and want to see its results.
+
+For table outputs, click a column header to sort the preview or use the filter
+icon beside the header to filter rows by column value. These controls are
+temporary preview tools and don’t change the underlying block output.
 
 <Frame>
     <p align="center">

@@ -18,6 +18,7 @@ Mage provides a command-line interface (CLI) for managing projects, running pipe
 | [`run`](#run-run-pipeline) | Execute a pipeline or a specific block within a pipeline | ✅ | ✅ |
 | [`clean-cached-variables`](#clean-cached-variables-clean-cached-variables) | Clean up old pipeline run outputs based on retention period | ✅ | ✅ |
 | [`clean-old-logs`](#clean-old-logs-clean-old-logs) | Clean up old pipeline run logs based on retention period | ✅ | ✅ |
+| [`clean-workspaces`](#clean-workspaces-clean-workspaces) | Clean up old pipeline run outputs and logs inside workspace pods | ❌ | ✅ |
 | [`clean-unused-blocks`](#clean-unused-blocks-clean-unused-blocks) | Clean up unused blocks from the project (interactive) | ❌ | ✅ |
 | [`create-secret`](#create-secret-create-or-update-secret) | Create or update a secret for the given Mage project | ❌ | ✅ |
 | [`run-post-start-hooks`](#run-post-start-hooks-execute-post-start-hooks) | Execute post-start hooks with graceful error handling | ❌ | ✅ |
@@ -190,6 +191,30 @@ mage clean-old-logs <project_path> [OPTIONS]
 **Example:**
 ```bash
 mage clean-old-logs /path/to/project --retention-period 30d
+```
+
+---
+
+#### `clean-workspaces` - Clean Workspaces
+**Available in:** ❌ OSS, ✅ Pro
+
+Clean up old pipeline run outputs and logs inside Kubernetes workspace pods.
+
+**Usage:**
+```bash
+mage clean-workspaces [OPTIONS]
+```
+
+**Parameters:**
+- `--cluster-type` (optional): Cluster type for workspace cleanup. Currently only `k8s` is supported
+- `--workspace-name` (optional): Workspace name to clean. If not specified, cleans all workspaces
+- `--pipeline-uuid` (optional): UUID of the pipeline to clean
+- `--retention-period` (optional): Default retention period, e.g., `7d`, `2w` (days or weeks)
+- `--skip-unavailable / --no-skip-unavailable` (optional): Skip workspaces without a running pod instead of failing the cleanup job
+
+**Example:**
+```bash
+mage clean-workspaces --retention-period 30d
 ```
 
 ---
@@ -459,4 +484,3 @@ Some commands can be configured via environment variables:
 - JSON parameters should be properly escaped when used in shell commands
 - Pro-only commands require appropriate cluster/workspace configuration
 - Some commands may require database connections to be properly configured
-

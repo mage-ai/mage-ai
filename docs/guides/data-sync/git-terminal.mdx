@@ -21,8 +21,8 @@ the same terminal session, sharing commands and coordinating development work.
 
 ### Location
 
-From the home page, hover over the left popout navigation menu and click 
-“Version control.” You will then be taken to a terminal screen directly integrated 
+From the home page, hover over the left popout navigation menu and click
+**Terminal**. You will then be taken to a terminal screen directly integrated
 with Git.
 
 <Frame>
@@ -56,17 +56,23 @@ Use the Git Terminal in your development environment to push changes to GitHub f
 
 ### Authentication
 
-Before using the Git Terminal, you must first authenticate with GitHub through the Deploy App. This one-time setup enables all Git operations within Mage Pro.
+Before using the Git Terminal, authenticate with your Git provider through the Deploy App. This one-time setup enables Git operations within Mage Pro.
 
 **Quick Setup:**
 
 1. Navigate to **Deployments** → **Connect repository**
-2. Complete GitHub OAuth authentication
+2. Complete OAuth authentication for GitHub, Bitbucket, GitLab, or Azure DevOps
 3. Configure your repository connection
 
 *For detailed authentication steps, see the [Version control guide](https://docs.mage.ai/guides/data-sync/version-control-guide).*
 
 Once authenticated, the Git Terminal automatically uses your credentials for all Git operations without requiring additional setup.
+
+For OAuth connections, each terminal session receives a session-scoped Git credential helper for the connected repository's Git provider. HTTPS Git commands such as `git fetch`, `git pull`, and `git push` can use the OAuth token already connected in Mage, and provider CLI commands can read the matching session token environment variable without running a separate CLI login such as `gh auth login`.
+
+If the terminal header shows **Authenticate Git**, Mage has not detected usable Git authentication for the repository, either from the terminal environment such as an environment token, GitHub CLI login, or SSH key, or from a connected Git OAuth token. Select **Authenticate Git** to open the repository connection page for the current project, complete the Deployments Git OAuth flow, and then return to the terminal. If you authenticate Git directly in the terminal, Mage hides the action after it detects that Git authentication is available.
+
+The Mage Pro image includes common Git provider CLIs for terminal workflows: GitHub CLI (`gh`), GitLab CLI (`glab`), Azure CLI (`az`) with the Azure DevOps extension, and the community Bitbucket CLI (`bitbucket-cli`).
 
 ### Usage
 
@@ -78,6 +84,22 @@ git add .                     # Stage all changes
 git commit -m "message"       # Commit with description
 git push origin main          # Push to remote repository
 ```
+
+### Terminal controls
+
+Use terminal tabs when you need more than one shell context. Each tab runs its
+own terminal session, keeps its own working directory, and can be reconnected or
+closed without interrupting the other tabs.
+
+The prompt bar shows the current folder, Git branch, and working tree change
+counts for the active tab. Autocomplete appears while typing and can suggest
+shell commands, Git subcommands, files, folders, executable commands on `PATH`,
+and recent command history.
+
+Terminal prompt timestamps and shell commands use UTC by default. If your
+workspace has **Display local timezone** enabled, new terminal sessions use your
+browser's local IANA timezone for the prompt timestamp and the session `TZ`
+environment variable.
 
 ### Conclusion
 

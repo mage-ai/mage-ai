@@ -54,7 +54,7 @@ View all pipeline runs across your entire project:
 
 1. **Navigate to the homepage** and click **"Pipeline runs"** in the left navigation
 2. **Or go directly to** `/pipeline-runs` URL
-3. **Filter and search** by pipeline, status, date range, or trigger
+3. **Filter** by pipeline, status, or date range, and **search** by pipeline or trigger
 4. **Monitor key metrics** like success rate, average duration, and recent activity
 
 #### View Types
@@ -77,7 +77,8 @@ The pipeline run list page provides comprehensive filtering options:
 - **Pipeline UUID** - Filter by specific pipeline identifiers
 - **Status** - Filter by run status (Cancelled, Done, Failed, Last run failed, Ready, Running)
 - **Pipeline Tag** - Filter by pipeline tags
-- **Search** - Text search across pipeline runs (Mage Pro only)
+- **Date range** - Filter current and past runs by bounded UTC preset ranges (Last hour, Last day, Last week, Last 30 days, Last year), all time, or a custom UTC start and end date
+- **Search** - Text search by pipeline or trigger (Mage Pro only)
 
 **Filter Actions:**
 - **Apply filters** - Apply selected filter criteria
@@ -227,8 +228,9 @@ When pipeline runs fail, use these debugging techniques to identify and resolve 
 **Block-Level Debugging:**
 1. **Click on individual block runs** to see detailed information
 2. **Access block logs** for error messages and stack traces
-3. **Review block output** to understand data state at failure
-4. **Check upstream dependencies** to ensure data flow is correct
+3. **Open the log source** from the selected error log's source-location link, or click the block name in the Block column, to open the failing block in the pipeline editor. When line metadata is available, Mage focuses that line in the editor.
+4. **Review block output** to understand data state at failure
+5. **Check upstream dependencies** to ensure data flow is correct
 
 ### Common Failure Patterns
 

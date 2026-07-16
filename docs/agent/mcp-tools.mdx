@@ -5,6 +5,107 @@ description: "Full reference for every tool your AI assistant can call via mage-
 
 Once mage-agent is connected to your IDE, your AI assistant has access to the following tools. All tools require valid authentication.
 
+<Note>
+  In MCP clients that support rendered tool output, mage-agent returns compact
+  resource widgets for supported resource actions. Widgets are currently
+  available for pipelines, blocks, pipeline runs, block runs, block outputs,
+  pipeline schedules, and pipeline triggers. They do not change the tool
+  arguments or authentication flow; clients that do not support rendered output
+  still receive the normal structured tool response.
+</Note>
+
+## Resource Widget Contract
+
+The widget path is an additive MCP Apps enhancement for read-only resource
+tools. A widget-enabled tool descriptor includes both `_meta.ui.resourceUri` and
+`_meta["openai/outputTemplate"]` pointing at the registered HTML resource. When
+the tool succeeds, mage-agent returns:
+
+- `structuredContent.kind = "mage_resource_widget"`
+- `structuredContent.schema_version` for renderer compatibility
+- `structuredContent.resource` and `structuredContent.action`
+- `structuredContent.state` as `ok`, `empty`, `loading`, or `error`
+- sanitized `records`, `summary`, `columns`, `filters`, and `pagination`
+- optional sanitized `mutation` metadata for create, update, or delete results
+- optional sanitized `graph` data for pipeline-oriented detail widgets, using
+  normalized `nodes` and `edges` instead of raw pipeline YAML
+- `content[0].text` as a JSON fallback for clients that do not render widgets
+- `_meta["openai/widgetData"]` with widget-only rendering hints
+
+List and get widgets render the normal table or detail view. Mutating actions
+may render the returned record with a mutation summary banner and footer, such as
+`Operation: Create`; delete results without a returned record render a compact
+success state. The adapter must redact sensitive fields before they enter
+`structuredContent`, fallback `content`, widget `_meta`, or activity logs.
+
+Pipeline-oriented widgets may include a compact graph preview when Mage returns
+block dependency metadata. The graph shape is:
+
+```json
+{
+  "nodes": [
+    {
+      "id": "load_customers",
+      "label": "Load customers",
+      "type": "data_loader",
+      "status": "completed",
+      "selected": false
+    }
+  ],
+  "edges": [
+    {
+      "source": "load_customers",
+      "target": "segment_customers"
+    }
+  ],
+  "totalNodes": 12,
+  "truncated": false
+}
+```
+
+Renderers should treat graph data as optional. If it is missing, malformed, or
+too large, the widget must fall back to the existing list/detail table without
+blocking the tool response.
+
+## Adding Widget Support
+
+To add another Mage resource widget:
+
+1. Add the resource/action pair to `widget_contracts.py`.
+2. Add presentation columns, summary fields, empty/error copy, and guidance in
+   `widget_registry.py`.
+3. Add adapter tests that cover populated, empty, malformed, large-result, and
+   secret-bearing payloads.
+4. Add renderer coverage in `widgets/resource_widget` and the app-shell preview
+   route under `/apps/test/resource-widgets`.
+5. Run the MCP protocol tests and an EKS mocked app-shell visual check before
+   calling the change QA-ready.
+
+For normal Mage trigger inventory, active trigger counts, API/webhook trigger
+lists, run-once schedules, and next run dates, use `pipeline_schedules`. Use
+`pipeline_triggers` only when the user explicitly asks for the advanced
+`PipelineTriggerResource` config surface scoped to a pipeline.
+
+---
+
+## Codex chat context
+
+<AccordionGroup>
+  <Accordion title="current_page_context">
+    Read the visible non-chat text that Mage Pro AI Chat captured from the user's current browser page for the active chat turn.
+
+    This tool is only registered when Mage Pro AI Chat starts Codex with captured page context. Standard IDE MCP sessions do not expose it unless `MAGE_AGENT_CURRENT_PAGE_CONTEXT_PATH` points to a valid context sidecar file.
+
+    | Parameter | Type | Required | Description |
+    |---|---|---|---|
+    | `include_text` | boolean | no | Return the captured page text. Set to `false` to return metadata only. |
+
+    <Note>
+      The context is scoped to the authenticated user and chat session, excludes the Codex chat UI, and should only be used for page-relative requests such as "explain this page" or "what am I looking at?"
+    </Note>
+  </Accordion>
+</AccordionGroup>
+
 ---
 
 ## Pipelines
@@ -180,6 +281,56 @@ Once mage-agent is connected to your IDE, your AI assistant has access to the fo
     | Parameter | Type | Required | Description |
     |---|---|---|---|
     | `local_project_dir` | string | no | Local directory path |
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## Mage Cloud Backend
+
+Mage Cloud Backend tools are exposed only for installed-agent sessions that have
+Cloud handoff credentials. These tools are generated from the Cloud Backend
+resource inventory, so call `mage_tool_contract` before invoking a Cloud tool
+when payload or query shape matters.
+
+<AccordionGroup>
+  <Accordion title="Cloud Backend contracts">
+    Cloud Backend create and update requests use the same resource-root envelope
+    that the backend API expects. Do not send flat mutation payloads.
+
+    | Tool | Mutation payload root |
+    |---|---|
+    | `teams` | `team` |
+    | `cloud_users` | `user` |
+    | `team_memberships` | `team_membership` |
+    | `invitations` | `invitation` |
+
+    Role fields use Cloud Backend integer values: owner `0`, admin `1`,
+    editor `2`, viewer `3`.
+
+    For example, creating a team invitation uses:
+
+    ```json
+    {
+      "action": "create",
+      "identifiers": {
+        "team_id": "42"
+      },
+      "payload": {
+        "invitation": {
+          "invitee_email": "user@example.com",
+          "role": 3
+        }
+      }
+    }
+    ```
+
+    `cluster_stats` requires `query.cluster_uuid`; `cluster_uuid` is not a path
+    identifier for that tool.
+
+    `cloud_users` supports `list`, `get`, and `update`. It does not expose
+    `create`, because Cloud Backend treats `users.create` as the public signup
+    path rather than a private team-admin user creation API.
   </Accordion>
 </AccordionGroup>
 

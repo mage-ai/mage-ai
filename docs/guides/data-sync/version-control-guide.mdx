@@ -445,94 +445,27 @@ Once you have completed [Authentication](#1-authentication), you can use standar
 If you have not set up Git access yet, follow [Authentication](#1-authentication) first: **OAuth**, or **HTTPS+PAT** / **SSH** in the **Deployments** connection settings. All three options enable the version control terminal.
 </Note>
 
-### Access the version control terminal
+With **OAuth**, the terminal automatically attaches a session-scoped Git credential helper for the connected repository's provider. HTTPS Git commands can use the OAuth token that is already connected in Mage, so you do not need to run a separate provider CLI login in the terminal.
 
-- From the home page, open the left navigation and select **Version control** (or the Version control / terminal app, depending on your layout).
+Mage Pro images include GitHub CLI (`gh`) for optional GitHub auth helper and status checks. GitLab, Azure DevOps, and Bitbucket Git operations use the Mage credential helper or configured SSH/PAT authentication and do not require provider-specific CLIs in the runtime image.
+
+### Access the Git terminal
+
+- From the home page, open the left navigation and select **Terminal**.
 - When the page loads, type Git commands in the terminal and press **Enter** to run them.
+- If the terminal header shows **Authenticate Git**, Mage has not detected usable Git authentication for the repository. Select it to open the repository connection page for the current project, complete Git OAuth in Deployments, and then return to the terminal. If you authenticate Git directly in the terminal, Mage hides the action after it detects that Git authentication is available.
+- Use tabs to keep multiple shell sessions open. Each tab keeps its own terminal session and working directory, so closing one tab does not interrupt the other tabs.
+- The terminal status row shows the active folder, Git branch, and working tree change counts. Autocomplete appears while typing and suggests shell commands, Git subcommands, files, folders, executable commands, and recent command history from the active working directory.
+- Terminal prompt timestamps and shell commands use UTC by default. If **Display local timezone** is enabled for the workspace, new terminal sessions use your browser's local IANA timezone for the prompt timestamp and the session `TZ` environment variable.
 
 ### Essential Git commands
-## 2. Version Control Terminal
 
-Once authenticated with a Git provider, you can manage your codebase by pushing and pulling files directly from the terminal. Use standard Git commands to perform various version control operations.
-
-<Note>
-If you haven't authenticated with a Git provider yet, see the [Authentication section](#1-1-authentication) above to set up GitHub, BitBucket, or GitLab integration first.
-</Note>
-
-### 2.1 Access Version Control Terminal
-
-To access the Version Control Terminal in Mage Pro:
-- From the Home page, select **Version control** in the left-hand navigation menu to access the Version control terminal.
-- Once the version control terminal page is open, you can enter the git commands in the terminal page and press enter to run it.
-
-
-### 2.2 Essential Git Commands
-
-`git checkout -b <branch-name>`
-
-*(Creates and switches to a new branch named `<branch-name>`, enabling isolated development for features or fixes.)*
-
-`git status`
-
-*Displays the current state of the working directory and staging area, highlighting modified, staged, and untracked files.*
-
-`git add .`
-
-*(Stages all changes in the current directory and its subdirectories, preparing them for the next commit.)*
-
-`git commit -m "<commit-message>"`
-
-*(Records the staged changes in the repository with a descriptive message `<commit-message>`, creating a new commit in the current branch.)*
-
-`git push origin <branch-name>`
-
-*(Uploads the commits from the local `<branch-name>` to the corresponding remote branch, making the changes available to collaborators.)*
-*(Uploads the commits from the local `<branch-name>` to the corresponding remote branch on GitHub, making the changes available to collaborators.)*
-
-<Frame>
-  <img
-    alt="Mage Pro install app button"
-    src="https://mage-ai.github.io/assets/pro/features/deployments/version-control.png"
-  />
-</Frame>
-
-### Troubleshooting Git commands
-
-When running Git commands, you may run into a few common issues:
-
-- Make sure you are in the correct folder: `/home/src/<your user code path>`
-- If Git doesn't recognize your identity, configure your email and username globally:
-  - `git config --global user.email "your_email@example.com"`
-  - `git config --global user.name "Your Username"`
-
-## Summary
-
-Mage Pro supports a full Git-based workflow in three steps:
-
-- **[Authentication](#1-authentication)** — **OAuth**, **HTTPS + PAT**, or **SSH**; configured in the Deployments app and required for the tools below.
-- **[Deployments app](#2-deployments-app)** — Promote merged commits to your cluster (deploy / rollback) after work lands in your remote branch.
-- **[Version control terminal](#3-version-control-terminal)** — Run `git` in the browser; with **SSH** auth, some push/pull activities may be terminal-only if the host Git API is not used for your setup.
-
-This enables version control for data pipelines through both the visual Deployments interface and a standard terminal workflow.
-### 2.3 Troubleshooting Git Commands
-
-When trying to connect to GitHub, you may run into a few roadblocks along the way:
-
-1. Make sure you are in the correct folder
-    1. `/home/src/<Your user code path>`
-2. You may need to globally configure your email and username to your GitHub:
-    1. `git config --global user.email "your_email@example.com"`
-    2. `git config --global user.name "Your Username"`
-
-## Summary
-
-Mage Pro provides a complete version control and deployment workflow with two main applications:
-
-- **Deployments App**: Primary tool for deploying code from Git commits to your Mage Pro cluster
-- **Version Control Terminal**: Use Git commands to push/pull code and manage branches
-
-This enables seamless version control for data pipelines, allowing teams to use both the visual Mage Pro interface and standard Git commands across all platforms, ensuring robust collaboration and deployment workflows for production data systems.
-
+- `git checkout -b <branch-name>`: create and switch to a new feature branch.
+- `git status`: inspect modified, staged, and untracked files.
+- `git add .`: stage changes in the current directory.
+- `git commit -m "<commit-message>"`: commit the staged changes.
+- `git pull`: fetch and merge remote changes into the current branch.
+- `git push origin <branch-name>`: push the current branch to the remote repository.
 
 ## Best Practices for Environment Management
 

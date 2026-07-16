@@ -6,6 +6,8 @@ icon: "mask"
 "og:image": "https://media1.tenor.com/m/VKeRffhEsFsAAAAC/late-batman.gif"
 ---
 
+import { ProOnly } from '/snippets/pro/only.mdx';
+
 The Pipeline sidekick appears when you edit a pipeline.
 
 <Frame>
@@ -24,7 +26,14 @@ the right panel and reveal the Sidekick.
 
 ## Visualize block output data
 
+<ProOnly source="pipeline-dependencies" />
+
 Add 1 or multiple charts to visualize the data produced by a block.
+
+When viewing block output as a table in the Sidekick data view, click a column
+header to sort the preview or use the filter icon to narrow rows by column value.
+Sorting and filtering only change the current table preview; they don’t modify
+the block output saved by the pipeline.
 
 <Frame>
     <p align="center">

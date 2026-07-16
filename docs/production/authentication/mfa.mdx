@@ -1,0 +1,140 @@
+---
+title: "Multi-factor authentication"
+sidebarTitle: "MFA"
+icon: "shield-check"
+description: "Configure multi-factor authentication for Mage user accounts."
+---
+
+import { ProButton } from '/snippets/pro/button.mdx';
+import { ProOnly } from '/snippets/pro/only.mdx';
+
+<ProOnly source="mfa" />
+
+## Overview
+
+Multi-factor authentication (MFA) adds a second verification step when a user signs in.
+After MFA is enabled for an account, Mage requires the user's password or SSO sign in
+and then a 6-digit code from an authenticator app before issuing a session.
+
+Mage supports time-based one-time passwords (TOTP), which work with authenticator apps
+such as Google Authenticator, Microsoft Authenticator, Authy, and 1Password.
+
+<Note>
+  MFA is configured per user account. Each user must enable MFA from their own account settings.
+</Note>
+
+## Pre-requisites
+
+Before configuring MFA, make sure:
+
+- User authentication is enabled. See [User authentication](/production/authentication/overview).
+- Your Mage deployment has run the latest database migrations.
+- The Mage server has the MFA dependencies installed from `requirements.txt`, including `pyotp`
+  and `qrcode`.
+- The user has access to an authenticator app that can scan QR codes.
+
+## Enable MFA
+
+<Steps>
+
+<Step title="Open MFA settings">
+
+Sign in to Mage and go to **Settings** → **Workspace** → **MFA**.
+
+</Step>
+
+<Step title="Start setup">
+
+Click **Set up Multi-Factor Authentication**.
+
+</Step>
+
+<Step title="Install or open an authenticator app">
+
+Open an authenticator app that supports TOTP codes. Mage supports apps such as:
+
+- Google Authenticator
+- Microsoft Authenticator
+- Authy
+- 1Password
+
+</Step>
+
+<Step title="Scan the QR code">
+
+Click **Next**, then scan the QR code with your authenticator app.
+
+The QR code adds a new Mage entry to the authenticator app. The app will start showing
+rotating 6-digit verification codes for that Mage account.
+
+</Step>
+
+<Step title="Verify the code">
+
+Enter the current 6-digit code from the authenticator app and click **Next**.
+
+After the code is accepted, Mage shows a confirmation step.
+
+</Step>
+
+<Step title="Complete setup">
+
+Click **Complete Setup** to close the setup flow and return to the MFA settings page.
+
+The status changes to **Active** after MFA is enabled for your account.
+
+</Step>
+
+</Steps>
+
+## Sign in with MFA
+
+After MFA is enabled, signing in has two steps:
+
+1. Enter your email or username and password, or complete your configured SSO sign in.
+1. Enter the 6-digit code from your authenticator app on the MFA verification page.
+
+If the MFA verification session expires, return to the sign in page and start again.
+
+<Warning>
+  After too many invalid MFA codes, Mage temporarily locks MFA verification for that user.
+  Wait 5 minutes, then sign in again and enter a new code from the authenticator app.
+</Warning>
+
+## Disable MFA
+
+To disable MFA for your account:
+
+<Steps>
+
+<Step title="Open MFA settings">
+
+Sign in to Mage and go to **Settings** → **Workspace** → **MFA**.
+
+</Step>
+
+<Step title="Choose disable">
+
+Click **Disable MFA**.
+
+</Step>
+
+<Step title="Confirm with a current code">
+
+Enter the current 6-digit code from your authenticator app and confirm.
+
+Mage deactivates the active MFA devices for your account after the code is verified.
+
+</Step>
+
+</Steps>
+
+## Troubleshooting
+
+| Issue | What to check |
+| --- | --- |
+| The MFA page does not appear | Confirm that your Mage version includes MFA and that user authentication is enabled. |
+| QR code generation fails | Confirm that `pyotp` and `qrcode` are installed in the Mage server environment and restart the server after installing dependencies. |
+| The verification code is rejected | Enter the newest 6-digit code from the authenticator app. If codes continue to fail, check that the device running the authenticator app has the correct time. |
+| The verification page says the session expired | Sign in again to create a new MFA challenge session. |
+| Disable MFA fails | Enter the current 6-digit authenticator code for the account that is signed in. |

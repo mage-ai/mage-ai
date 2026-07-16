@@ -102,18 +102,25 @@ the option <b>Show hidden files</b> under the <b>View</b> menu dropdown options.
 
 ---
 
-## Show blocks in current pipeline
+## Filter files to the current pipeline
 
-When editing a pipeline, you can switch the file browser view to show only the blocks in the
-current pipeline.
+When editing a pipeline, open the <b>Files</b> tab and use the selector above the search box to
+switch between <b>All Files</b> and <b>This pipeline only</b>. The <b>This pipeline only</b>
+filter shows repo-backed files related to the current pipeline, including pipeline metadata and
+configuration files, trigger configuration, referenced block source files, and supporting project
+configuration such as <code>io_config.yaml</code>, <code>metadata.yaml</code>, and
+<code>requirements.txt</code>. Runtime data and log files are not included.
 
-After toggling this view, you can select which blocks to collapse and which to expand.
-This can help optimize vertical screen space while writing code.
+## Block visibility tab
+
+Use the <b>Visibility</b> tab to hide blocks in the notebook. Hidden blocks are collapsed, and
+you can click a hidden block to expand it again. This can help optimize vertical screen space
+while writing code.
 
 <Frame>
     <p align="center">
     <img
-        alt="Show blocks in current pipeline"
+        alt="Hide and show blocks in the current pipeline"
         src="https://mage-ai.github.io/assets/dev-ux/file-browser/blocks-in-pipeline.gif"
     />
     </p>

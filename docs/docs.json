@@ -108,15 +108,15 @@
                     "group": "Sources",
                     "pages": [
                       "data-integrations/sources/facebook_pages",
+                      "data-integrations/sources/instagram",
+                      "data-integrations/sources/quickbooks",
+                      "data-integrations/sources/xero",
+                      "data-integrations/sources/youtube_analytics",
                       "data-integrations/sources/google_campaign_manager_360",
                       "data-integrations/sources/google_display_video_360",
-                      "data-integrations/sources/instagram",
                       "data-integrations/sources/microsoft_ads",
-                      "data-integrations/sources/quickbooks",
                       "data-integrations/sources/salesforce_marketing_cloud",
-                      "data-integrations/sources/tiktok_ads",
-                      "data-integrations/sources/xero",
-                      "data-integrations/sources/youtube_analytics"
+                      "data-integrations/sources/tiktok_ads"
                     ]
                   },
                   {
@@ -169,10 +169,10 @@
             "pages": [
               "migrations/airbyte-to-mage-pro",
               "migrations/airflow-to-mage-pro",
-              "migrations/dagster-to-mage-pro",
               "migrations/dbt-to-mage-pro",
               "migrations/estuary-to-mage-pro",
               "migrations/fivetran-to-mage-pro",
+              "migrations/dagster-to-mage-pro",
               "migrations/mage-oss-to-mage-pro",
               "migrations/prefect-to-mage-pro"
             ]
@@ -404,7 +404,6 @@
             "icon": "flask",
             "pages": [
               "development/project/setup",
-              "development/cli-commands",
               "development/git/setting-up-git",
               {
                 "group": "Docker",
@@ -436,8 +435,8 @@
                 "icon": "family",
                 "pages": [
                   "development/dependencies/requirements",
-                  "development/dependencies/dependency-management",
-                  "development/dependencies/custom-files"
+                  "development/dependencies/custom-files",
+                  "development/dependencies/dependency-management"
                 ]
               },
               "development/databases/default",
@@ -445,10 +444,11 @@
               "development/io_config_setup",
               "getting-started/kernels",
               "development/project/local-timezone",
+              "development/project/landing-page",
               "development/settings-backend",
               "development/updating-mage",
-              "development/project/metadata",
-              "development/project/landing-page"
+              "development/cli-commands",
+              "development/project/metadata"
             ]
           },
           {
@@ -584,8 +584,8 @@
                       "guides/streaming/sources/postgres-cdc",
                       "guides/streaming/sources/rabbitmq",
                       "guides/streaming/sources/mongodb",
-                      "guides/streaming/sources/mssql-cdc",
-                      "guides/streaming/sources/mysql-cdc"
+                      "guides/streaming/sources/mysql-cdc",
+                      "guides/streaming/sources/mssql-cdc"
                     ]
                   },
                   {
@@ -764,6 +764,7 @@
             "group": "Authentication",
             "pages": [
               "production/authentication/overview",
+              "production/authentication/mfa",
               "production/authentication/okta",
               "production/authentication/microsoft",
               "production/authentication/google",
@@ -828,7 +829,8 @@
             "group": "Logging",
             "icon": "eye",
             "pages": [
-              "observability/logging"
+              "observability/logging",
+              "observability/log-search-opensearch"
             ]
           },
           {
@@ -878,8 +880,8 @@
                   "integrations/databases/MySQL",
                   "integrations/databases/OracleDB",
                   "integrations/databases/Pinot",
-                  "integrations/databases/PostgreSQL",
                   "integrations/databases/PowerBI",
+                  "integrations/databases/PostgreSQL",
                   "integrations/databases/Qdrant",
                   "integrations/databases/Redshift",
                   "integrations/databases/S3",

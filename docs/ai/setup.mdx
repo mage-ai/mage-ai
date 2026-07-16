@@ -23,6 +23,7 @@ We currently support the following AI features:
 
 - Generate pipelines
 - Generate blocks
+- Chat with Codex in Mage Pro
 - Document code
   - Block documentation
   - Block comments
@@ -45,6 +46,22 @@ You need to add an OpenAI API key to your project before you can use AI for vari
 </Note>
 
 Once you have your OpenAI API key, go to project settings (click the "wizard" in the top right > Workspace > Preferences) and enter the OpenAI API key under the section labeled <b>OpenAI</b>.
+
+## AI Chat in Mage Pro
+
+Mage Pro includes AI Chat for Codex-backed workspace assistance. Open AI Chat from Mage Pro, or visit `/ai/chat` in an authenticated workspace as a user with the Editor role or higher.
+
+For each chat turn, Mage captures the visible non-chat text from the current browser page, along with the page title and URL, so Codex can answer page-relative prompts such as "explain this page" or "what am I looking at?" The captured context is scoped to the authenticated user and chat session, excludes the Codex chat UI, and is capped at 20,000 characters.
+
+The AI Chat sidebar lists active and archived chats, lets you search chat history by title, and loads older chats with **Show more** when more results are available. Mage Pro remembers the selected chat and whether you were viewing active or archived chats for the current workspace, then restores that state when you refresh or reopen AI Chat.
+
+AI Chat supports session-scoped file attachments. Attachment uploads require a chat session and are limited by the `MAGE_CODEX_CHAT_ATTACHMENT_MAX_BYTES`, `MAGE_CODEX_CHAT_ATTACHMENT_MAX_COUNT`, and `MAGE_CODEX_CHAT_ATTACHMENT_MAX_SESSION_BYTES` environment variables.
+
+When Codex returns a project-local PNG, JPEG, GIF, or WebP path, AI Chat renders the image inline. The path can be on its own line, embedded in prose, such as `Here it is: /home/src/demo/cyborg_mage.png`, or used as a Markdown link target, such as `[output/anime_styled_mage.png](output/anime_styled_mage.png)`. The preview is served through a short-lived authenticated URL, so the image file does not need a public URL.
+
+For direct model authentication, configure `MAGE_CODEX_CHAT_OPENAI_API_KEY` or store the key in a Mage secret named by `MAGE_CODEX_CHAT_OPENAI_API_KEY_SECRET`. `OPENAI_API_KEY` is also accepted as a fallback.
+
+For Mage Pro proxy authentication, set `MAGE_CODEX_MODEL_AUTH_MODE=proxy` and configure either `MAGE_CODEX_MODEL_PROXY_BASE_URL` or `MAGE_PRO_API_ENDPOINT` with `MAGE_PRO_API_API_KEY`. The chat model, reasoning effort, service tier, and concurrency defaults can be configured with the `MAGE_CODEX_CHAT_*` environment variables listed in [Environment variables](/development/variables/environment-variables).
 
 ## Generate pipeline using AI
 
