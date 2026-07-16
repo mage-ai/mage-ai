@@ -72,7 +72,10 @@ For OAuth connections, each terminal session receives a session-scoped Git crede
 
 If the terminal header shows **Authenticate Git**, Mage has not detected usable Git authentication for the repository, either from the terminal environment such as an environment token, GitHub CLI login, or SSH key, or from a connected Git OAuth token. Select **Authenticate Git** to open the repository connection page for the current project, complete the Deployments Git OAuth flow, and then return to the terminal. If you authenticate Git directly in the terminal, Mage hides the action after it detects that Git authentication is available.
 
-The Mage Pro image includes common Git provider CLIs for terminal workflows: GitHub CLI (`gh`), GitLab CLI (`glab`), Azure CLI (`az`) with the Azure DevOps extension, and the community Bitbucket CLI (`bitbucket-cli`).
+The Mage Pro image includes GitHub CLI (`gh`) for optional GitHub authentication
+and status checks. For GitLab, Azure DevOps, and Bitbucket, use standard Git
+commands with Mage's credential helper or configured SSH/PAT authentication;
+provider-specific CLIs are not required.
 
 ### Usage
 
