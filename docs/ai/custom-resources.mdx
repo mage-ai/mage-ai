@@ -1,22 +1,79 @@
 ---
-title: "Customized AI resources for training and inference"
+title: "Custom resources for AI workloads"
 sidebarTitle: "Resources"
-description: ""
+description: "Configure custom block resources in Mage Pro when AI, ML, or LLM workloads need dedicated CPU or memory."
 icon: "robot-astromech"
 ---
 
 import { ProButton } from '/snippets/pro/button.mdx';
 import { ProOnly } from '/snippets/pro/only.mdx';
 
-## Custom resources
+## Custom resources for AI workloads
 
-Customized GPU accelerated resources for running AI/ML/LLM pipelines.
+Mage Pro automatically optimizes resource allocation for your pipeline blocks. Use custom
+resources when an AI, ML, or LLM block needs more predictable compute than the default
+allocation provides.
 
 <ProOnly source="ai-resources" />
 
-## Inference endpoints
+Custom resources are configured from a block's **Custom scaling** settings. You can choose
+the execution environment and override CPU or memory for that block.
 
-Deploy high-performance, low-latency API endpoints for executing blocks and returning output data,
-such as inference endpoints.
+## When to customize resources
 
-<ProOnly source="ai-endpoints" />
+Leave resource allocation automatic unless a block has a specific requirement. Custom
+resources are most useful for:
+
+- model training blocks that need consistent CPU or memory
+- inference blocks that load large model artifacts
+- LLM or embedding steps that process large batches of text
+- data preparation steps that transform large intermediate datasets
+- blocks that fail because they exceed the default memory allocation
+
+## Configure custom scaling
+
+1. Open a pipeline in Mage Pro.
+2. Select the block that needs custom resources.
+3. Open the block settings panel.
+4. Find the **Custom scaling** section.
+5. Choose an executor or leave the default.
+6. Enter CPU or memory overrides only for the resources you want to control.
+7. Save the block and run the pipeline.
+
+## Settings
+
+### Executor
+
+Controls the block execution environment. Mage Pro defaults to Kubernetes for auto-scaling
+resource management.
+
+Available executor options include:
+
+- Kubernetes
+- Local Python
+- Local Python Force
+
+### CPU
+
+Override CPU by entering milliCPU units. For example, `1024` is one CPU core.
+
+Leave this field blank to use automatic allocation.
+
+### Memory
+
+Override memory by entering megabytes. For example, `2048` is 2 GB.
+
+Leave this field blank to use automatic allocation.
+
+## Best practices
+
+- Start with automatic allocation, then override only the blocks that need it.
+- Change CPU and memory one block at a time so run behavior is easier to compare.
+- Use custom resources for expensive AI workloads instead of applying larger defaults to
+  every block in the pipeline.
+- Revisit custom values after model, prompt, batch size, or input data changes.
+
+## Related docs
+
+- [AI Sidekick](/ai/sidekick)
+- [AI Blocks](/ai/blocks)
