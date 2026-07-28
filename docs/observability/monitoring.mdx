@@ -23,7 +23,13 @@ Here are the following metrics that are monitored for each pipeline and block:
 - Block runs completed successfully
 - Block runs failed
 - How long each block ran for
-- _CPU usage for each block run (coming soon)_
-- _Memory usage for each block run (coming soon)_
+- CPU usage for Kubernetes block and pipeline runs in Mage Pro
+- Memory usage for Kubernetes block and pipeline runs in Mage Pro
 - _Data validation success for each block (coming soon)_
 - _Data validation failure for each block (coming soon)_
+
+For pipelines that run with the Kubernetes executor in Mage Pro, the pipeline
+monitoring dashboard can show historical peak CPU and memory usage, sample
+counts, and copied resource request and limit recommendations based on stored
+run metrics. See [Monitoring with Prometheus](/observability/external/prometheus#kubernetes-resource-usage-in-mage-pro)
+to set up Prometheus as the preferred resource usage source.

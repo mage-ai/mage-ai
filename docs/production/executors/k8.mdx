@@ -24,7 +24,7 @@ If your Mage app is deployed in a **Kubernetes cluster**, you can configure the 
 - Namespace: `default`
 - **Job name format:** `mage-data-prep-block-{block_run_id}`
 
-You can override these defaults at the **block level**, **project level**, or with a **full Kubernetes job template**.
+You can override these defaults at the **project level**, **pipeline level**, **block level**, or with a **full Kubernetes job template**.
 
 ## Basic Setup
 
@@ -47,35 +47,50 @@ export KUBE_NAMESPACE=my-namespace
 
 ## Configuration Methods
 
-You can configure Kubernetes Executor in **three ways**:
+You can configure Kubernetes Executor in several places. Mage builds the
+effective config by deep-merging the less specific config first, then applying
+more specific config on top:
 
-### 1. Block-Level Configuration
+1. Environment variable defaults and hardcoded defaults
+2. Project-level `k8s_executor_config`
+3. Pipeline-level `executor_config`
+4. Block-level `executor_config`
 
-Add `executor_config` to a block in pipeline's `metadata.yaml`:
+For a normal block-level Kubernetes executor run, block settings win over
+pipeline settings, pipeline settings win over project settings, and project
+settings win over environment defaults. For `run_pipeline_in_one_process: true`,
+Mage uses the pipeline-level Kubernetes executor and merges only project-level
+and pipeline-level settings because the whole pipeline runs in one pod.
 
-```yaml
-blocks:
-- uuid: example_data_loader
-  type: data_loader
-  executor_type: k8s
-  executor_config:
-    namespace: default
-    resource_limits:
-      cpu: 1000m
-      memory: 2048Mi
-    resource_requests:
-      cpu: 500m
-      memory: 1024Mi
+Most nested dictionaries are merged, so you can set broad defaults at the
+project level and override only the keys that need to change at the pipeline or
+block level. Resource requests and limits are applied to the job container after
+the pod template is built, so `executor_config.resource_requests` and
+`executor_config.resource_limits` take precedence over `container.resources`.
+
+### 1. Environment Variable Defaults
+
+Use environment variables to set default resource requests, resource limits, and
+service account for all Kubernetes executor jobs. These values are only applied
+when a more specific project, pipeline, or block config does not set the same
+resource group.
+
+```bash
+export K8S_EXECUTOR_DEFAULT_RESOURCE_REQUESTS_CPU=250m
+export K8S_EXECUTOR_DEFAULT_RESOURCE_REQUESTS_MEMORY=512Mi
+export K8S_EXECUTOR_DEFAULT_RESOURCE_LIMITS_CPU=500m
+export K8S_EXECUTOR_DEFAULT_RESOURCE_LIMITS_MEMORY=1Gi
+export K8S_EXECUTOR_DEFAULT_SERVICE_ACCOUNT_NAME=default
 ```
 
 ✅ **Use when:**
-You only want to:
-* Run certain blocks in the Kubernetes executor
-* Override the k8s executor config for specific blocks
+You want a cluster-wide fallback for jobs that do not define their own
+Kubernetes resources.
 
+### 2. Project-Level Configuration
 
-### 2. Project-Level Configuration (applies to all k8s executor blocks)
-Set `k8s_executor_config` in the project's metadata.yaml:
+Set `k8s_executor_config` in the project's `metadata.yaml` to apply defaults to
+all blocks and pipeline runs that use the Kubernetes Executor in that project:
 
 ```yaml
 k8s_executor_config:
@@ -119,6 +134,60 @@ k8s_executor_config:
     image_pull_secrets: my-registry-secret
 ```
 
+✅ **Use when:**
+You want consistent Kubernetes settings across a project, such as default
+CPU/RAM, namespace, service account, or node scheduling.
+
+### 3. Pipeline-Level Configuration
+
+Add `executor_type: k8s` and `executor_config` to the pipeline's
+`metadata.yaml`. Pipeline-level config applies to the pipeline executor when
+`run_pipeline_in_one_process: true`; it also acts as a shared default for block
+runs in that pipeline before block-level overrides are applied.
+
+```yaml
+executor_type: k8s
+run_pipeline_in_one_process: true
+executor_config:
+  namespace: default
+  resource_limits:
+    cpu: 2000m
+    memory: 4096Mi
+  resource_requests:
+    cpu: 1000m
+    memory: 2048Mi
+```
+
+✅ **Use when:**
+You want every block run in one pipeline to inherit the same Kubernetes config,
+or you run the entire pipeline in one Kubernetes pod with
+`run_pipeline_in_one_process: true`.
+
+### 4. Block-Level Configuration
+
+Add `executor_type: k8s` and `executor_config` to a block in the pipeline's
+`metadata.yaml`:
+
+```yaml
+blocks:
+- uuid: example_data_loader
+  type: data_loader
+  executor_type: k8s
+  executor_config:
+    namespace: default
+    resource_limits:
+      cpu: 1000m
+      memory: 2048Mi
+    resource_requests:
+      cpu: 500m
+      memory: 1024Mi
+```
+
+✅ **Use when:**
+You only want to:
+* Run certain blocks in the Kubernetes executor
+* Override the Kubernetes executor config for specific blocks
+
 * The Kubernetes job name is in this format: `mage-{job_name_prefix}-block-{block_run_id}`.
   The default `job_name_prefix` is `data-prep`.
   You can customize it in the `k8s_executor_config`.
@@ -154,12 +223,16 @@ k8s_executor_config:
   ```
 
 ✅ **Use when:**
-You want consistent settings for all blocks using the Kubernetes Executor in the project.
+You need specialized resources or scheduling for one expensive block without
+changing the rest of the pipeline.
 
 
-### 3. Full Kubernetes Job Template (maximum control)
+### 5. Full Kubernetes Job Template (maximum control)
 
-Set the `K8S_CONFIG_FILE` environment variable to the path of a YAML configuration file.
+Set the `K8S_CONFIG_FILE` environment variable to the path of a YAML
+configuration file. This is the raw job template for Kubernetes executor jobs.
+Use `K8S_DEFAULT_CONFIG_PATH` instead when you want a reusable policy that
+merges with user config as described in [Default config file](#default-config-file).
 
 **Example template:**
 
@@ -382,27 +455,25 @@ container:
 | Field | Description |
 |-------|-------------|
 | `enabled` | If `false`, the policy is not applied. |
-| `enforce` | Controls how the default file is merged with **user config** (block + project). See [Priority when merging](#priority-when-merging-default-file-with-user-config) below. |
-| *(other keys)* | Same structure as [project-level k8s_executor_config](/production/executors/k8#2-project-level-configuration-applies-to-all-k8s-executor-blocks) (e.g. `resource_limits`, `resource_requests`, `pod`, `container`, `metadata`, `job`). |
+| `enforce` | Controls how the default file is merged with **user config** (block + pipeline + project). See [Priority when merging](#priority-when-merging-default-file-with-user-config) below. |
+| *(other keys)* | Same structure as [project-level k8s_executor_config](/production/executors/k8#2-project-level-configuration) (e.g. `resource_limits`, `resource_requests`, `pod`, `container`, `metadata`, `job`). |
 
 The file must exist at the given path on the Mage control-plane. Use a ConfigMap or volume mount to provide it. When **workspaces** are created, only the K8s default config file is injected (volume + volume mount + env var) so workspace pods can read it; see [Workspaces](/guides/developer-ux/workspaces#default-workspace-config-file).
 
 **Priority when merging default file with user config**
 
-The default file is **merged** with the combined user config (block + project). The **effective priority order** (who wins for a given key) depends on `enforce`:
+The default file is **merged** with the combined user config (block + pipeline + project). The **effective priority order** (who wins for a given key) depends on `enforce`:
 
 | `enforce` | Effective priority (highest → lowest) | Result |
 |-----------|----------------------------------------|--------|
-| **`true`** | **1. Default config file** → 2. Block → 3. Project → 4. Env vars → 5. Hardcoded | **Policy is highest priority.** Values from the default file override block and project for the same keys. Use this to enforce cluster-wide defaults (e.g. resource limits, service account) that users cannot override. Conflicting values can cause an error on update when strict conflict checking is used. |
-| **`false`** | **1. Block** → 2. Project → 3. Default config file (fills gaps only) → 4. Env vars → 5. Hardcoded | **User wins.** Block and project override the policy for the same keys. The policy only fills in keys that block and project did not set. Use this to provide optional defaults while allowing per-block or per-project overrides. |
+| **`true`** | **1. Default config file** → 2. Block → 3. Pipeline → 4. Project → 5. Env vars → 6. Hardcoded | **Policy is highest priority.** Values from the default file override block, pipeline, and project for the same keys. Use this to enforce cluster-wide defaults (e.g. resource limits, service account) that users cannot override. Conflicting values can cause an error on update when strict conflict checking is used. |
+| **`false`** | **1. Block** → 2. Pipeline → 3. Project → 4. Default config file (fills gaps only) → 5. Env vars → 6. Hardcoded | **User wins.** Block, pipeline, and project override the policy for the same keys. The policy only fills in keys that user config did not set. Use this to provide optional defaults while allowing per-block, per-pipeline, or per-project overrides. |
 
-So when **`enforce: true`**, the policy has the **highest** priority; when **`enforce: false`**, block and project are higher and the policy only supplies missing values.
+So when **`enforce: true`**, the policy has the **highest** priority; when **`enforce: false`**, block, pipeline, and project config are higher and the policy only supplies missing values.
 
 ## Environment Variables Reference
 
 ### General Configuration
-
-## Environment Variables Reference
 
 | Variable               | Purpose                                         | Default |
 |------------------------|-------------------------------------------------|---------|
@@ -410,13 +481,60 @@ So when **`enforce: true`**, the policy has the **highest** priority; when **`en
 | `K8S_CONFIG_FILE`      | Path to full Kubernetes job config file         | —       |
 | `MAGE_CONTAINER_NAME`  | Container to run Mage in multi-container pods   | —       |
 
+### Resource Usage Metrics
+
+<ProOnly source="kubernetes-resource-usage" />
+
+In Mage Pro, completed Kubernetes executor runs can store CPU and memory usage
+summaries for the run detail **Resources** tab and the pipeline monitoring
+dashboard. Mage uses Prometheus first when
+`K8S_RESOURCE_USAGE_PROMETHEUS_URL` is configured; otherwise it uses the
+Kubernetes Metrics API fallback when available.
+
+Pipeline-level recommendations are available in Mage Pro after completed K8s
+executor runs have stored CPU or memory samples. Mage calculates the suggested
+`resource_requests` and `resource_limits` from observed usage, then shows the
+values in the pipeline monitoring page so you can copy them into
+`executor_config` or `k8s_executor_config`.
+
+**How recommendations are calculated:**
+
+| Resource | Basis | Request | Limit |
+| --- | --- | --- | --- |
+| CPU | `p95_cores`, then `max_cores`, then latest `current_cores` | `max(basis * 0.75, 50m)` | `max(basis * 1.5, request * 2)` |
+| Memory | `p95_bytes`, then `max_bytes`, then latest `current_bytes` | `basis * 1.1` | `basis * 1.3` |
+
+Mage marks the recommendation as `low` confidence when the run has fewer than
+three samples or an OOM warning, `medium` when enough samples exist from the
+Kubernetes Metrics API fallback, and `high` when Prometheus provides at least
+six samples. Prometheus samples are queried with
+`K8S_RESOURCE_USAGE_PROMETHEUS_STEP_SECONDS` and Mage can wait once after a run
+completes, controlled by
+`K8S_RESOURCE_USAGE_PROMETHEUS_COMPLETION_DELAY_SECONDS`, before retrying sparse
+completed runs. When unset, the completion delay defaults to
+`K8S_RESOURCE_USAGE_PROMETHEUS_STEP_SECONDS`.
+
+| Variable | Purpose | Default |
+| --- | --- | --- |
+| `K8S_RESOURCE_USAGE_PROMETHEUS_URL` | Prometheus base URL for K8s resource usage summaries | — |
+| `K8S_RESOURCE_USAGE_PROMETHEUS_BEARER_TOKEN` | Bearer token for Prometheus requests | — |
+| `K8S_RESOURCE_USAGE_PROMETHEUS_USERNAME` | Username for Prometheus basic authentication | — |
+| `K8S_RESOURCE_USAGE_PROMETHEUS_PASSWORD` | Password for Prometheus basic authentication | — |
+| `K8S_RESOURCE_USAGE_PROMETHEUS_TIMEOUT_SECONDS` | Timeout for each Prometheus query | `5` |
+| `K8S_RESOURCE_USAGE_PROMETHEUS_STEP_SECONDS` | Query range step for CPU and memory samples | `15` |
+| `K8S_RESOURCE_USAGE_PROMETHEUS_COMPLETION_DELAY_SECONDS` | Delay before retrying Prometheus for completed runs with too few samples | `K8S_RESOURCE_USAGE_PROMETHEUS_STEP_SECONDS` |
+| `K8S_RESOURCE_USAGE_PROMETHEUS_VERIFY_TLS` | Set to `0`, `false`, `no`, or `off` to skip TLS certificate verification | `true` |
+
+See [Monitoring with Prometheus](/observability/external/prometheus#kubernetes-resource-usage-in-mage-pro) for Prometheus query behavior and authentication details.
+
 ### Default Resource Configuration
 
 <ProOnly source="kubernetes-executor" />
 
 
 These environment variables set default resource limits and requests for all K8s executor jobs.
-They are applied when not specified in block-level or project-level configuration.
+They are applied when a project-level, pipeline-level, or block-level configuration does not
+specify resource requests or limits.
 
 | Variable                                      | Purpose                                    | Example Value |
 |-----------------------------------------------|--------------------------------------------|---------------|
@@ -426,8 +544,15 @@ They are applied when not specified in block-level or project-level configuratio
 | `K8S_EXECUTOR_DEFAULT_RESOURCE_LIMITS_MEMORY` | Default memory limit for executor jobs     | `1Gi`         |
 | `K8S_EXECUTOR_DEFAULT_SERVICE_ACCOUNT_NAME`   | Default service account for executor jobs  | `default`     |
 
-**Priority order** (highest to lowest):
-1. Block-level `executor_config` in pipeline's `metadata.yaml`
-2. Project-level `k8s_executor_config` in project's `metadata.yaml`
-3. Environment variable defaults (listed above)
-4. Hardcoded defaults
+**Priority order without a default config file** (highest to lowest):
+1. Block-level `executor_config` in the pipeline's `metadata.yaml`
+2. Pipeline-level `executor_config` in the pipeline's `metadata.yaml`
+3. Project-level `k8s_executor_config` in the project's `metadata.yaml`
+4. Environment variable defaults (listed above)
+5. Hardcoded defaults
+
+When Mage Pro resource usage recommendations suggest new Kubernetes
+`resource_requests` or `resource_limits`, apply the values at the narrowest
+level you want to tune: block-level for one block, pipeline-level for all runs
+of one pipeline, or project-level for all Kubernetes executor jobs in the
+project.
