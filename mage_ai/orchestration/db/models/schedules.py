@@ -246,6 +246,50 @@ class PipelineSchedule(PipelineScheduleProjectPlatformMixin, BaseModel):
 
         return schedule_interval
 
+    def full_clean(self, **kwargs) -> None:
+        self.validate_active_time_schedule_interval()
+
+    def validate_active_time_schedule_interval(self) -> None:
+        if (
+            self.status != ScheduleStatus.ACTIVE
+            or self.schedule_type != ScheduleType.TIME
+            or self.schedule_interval is None
+        ):
+            return
+
+        if (
+            isinstance(self.schedule_interval, str)
+            and len(self.schedule_interval.strip()) == 0
+        ):
+            raise ValueError('Cron expression cannot be empty.')
+
+        if (
+            self.schedule_interval not in [e.value for e in ScheduleInterval]
+            and not croniter.is_valid(self.schedule_interval)
+        ):
+            raise ValueError('Cron expression is invalid.')
+
+    def save(self, commit=True) -> None:
+        try:
+            self.full_clean()
+            super().save(commit=commit)
+        except Exception as e:
+            if commit:
+                self.session.rollback()
+            raise e
+
+    def update(self, **kwargs) -> None:
+        commit = kwargs.pop('commit', True)
+        super().update(commit=False, **kwargs)
+        try:
+            self.full_clean()
+            if commit:
+                self.session.commit()
+        except Exception as e:
+            if commit:
+                self.session.rollback()
+            raise e
+
     @property
     def last_pipeline_run_status(self) -> str:
         if project_platform_activated():
@@ -400,8 +444,12 @@ class PipelineSchedule(PipelineScheduleProjectPlatformMixin, BaseModel):
                     kwargs['token'] = uuid.uuid4().hex
                 triggers_to_create.append(kwargs)
 
+        triggers = [PipelineSchedule(**data) for data in triggers_to_create]
+        for trigger in triggers:
+            trigger.full_clean()
+
         db_connection.session.bulk_save_objects(
-            [PipelineSchedule(**data) for data in triggers_to_create],
+            triggers,
             return_defaults=True,
         )
         db_connection.session.commit()
