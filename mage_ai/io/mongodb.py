@@ -1,4 +1,5 @@
 from typing import Dict, List, Union
+from urllib.parse import unquote, urlparse
 
 from pandas import DataFrame
 from pymongo import MongoClient
@@ -23,8 +24,22 @@ class MongoDB(BaseIO):
         super().__init__(verbose=verbose)
         if connection_string:
             self.client = MongoClient(connection_string)
+            # Extract database from connection string if not explicitly provided
+            if database is None:
+                parsed = urlparse(connection_string)
+                # The path contains the database name (e.g., "/my_database")
+                if parsed.path and len(parsed.path) > 1:
+                    # Get first path segment, decode URL-encoded characters
+                    path = parsed.path.strip('/')
+                    # Handle nested paths like /db/collection by taking first segment
+                    database = unquote(path.split('/')[0]) if path else None
         else:
             self.client = MongoClient(f'mongodb://{user}:{password}@{host}:{port}/')
+        if not database:
+            raise Exception(
+                'Database name must be provided either in the connection string '
+                '(e.g., mongodb://host/my_database) or via the MONGODB_DATABASE configuration.'
+            )
         self.database = self.client[database]
         self.collection = collection
 
