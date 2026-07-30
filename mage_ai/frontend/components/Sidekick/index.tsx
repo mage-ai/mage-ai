@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { CanvasRef } from 'reaflow';
 
 import ApiReloader from '@components/ApiReloader';
@@ -52,9 +52,7 @@ import {
   ViewKeyEnum,
 } from './constants';
 import { VERTICAL_NAVIGATION_WIDTH } from '@components/Dashboard/index.style';
-import { LOCAL_STORAGE_KEY_PIPELINE_EXECUTION_HIDDEN, get } from '@storage/localStorage';
 import { OpenDataIntegrationModalType } from '@components/DataIntegrationModal/constants';
-import { OUTPUT_HEIGHT } from '@components/PipelineDetail/PipelineExecution/index.style';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import {
   SidekickContainerStyle,
@@ -67,6 +65,7 @@ import { isEmptyObject } from '@utils/hash';
 import { scrollToBlock } from '@components/PipelineDetail/ColumnScroller/utils';
 import { useWindowSize } from '@utils/sizes';
 import AddonBlocks from '@components/PipelineDetail/AddonBlocks';
+import { useExecutionPanelResize } from './useExecutionPanelResize';
 
 const MAX_COLUMNS = 100;
 
@@ -240,17 +239,24 @@ function Sidekick({
   updateWidget,
   widgets,
 }: SidekickProps) {
-  const {
-    height: heightWindow,
-  } = useWindowSize();
+  const { height: heightWindow } = useWindowSize();
   const heightOffset = ALL_HEADERS_HEIGHT;
   const [errorMessages, setErrorMessages] = useState<string[]>([]);
-  const [pipelineExecutionHidden, setPipelineExecutionHidden] =
-    useState(!!get(LOCAL_STORAGE_KEY_PIPELINE_EXECUTION_HIDDEN));
 
-  const afterWidth = useMemo(() => afterWidthProp - (VERTICAL_NAVIGATION_WIDTH + 1), [
-    afterWidthProp,
-  ]);
+  const isStreaming = PipelineTypeEnum.STREAMING === pipeline?.type;
+  const {
+    graphHeight,
+    panelHeight,
+    isDraggingPanel,
+    isPipelineExecutionHidden,
+    togglePipelineExecutionHidden,
+    handleDragStart,
+  } = useExecutionPanelResize({ isStreaming });
+
+  const afterWidth = useMemo(
+    () => afterWidthProp - (VERTICAL_NAVIGATION_WIDTH + 1),
+    [afterWidthProp],
+  );
 
   const isInteractionsEnabled =
     useMemo(() => !!project?.features?.[FeatureUUIDEnum.INTERACTIONS], [
@@ -275,9 +281,6 @@ function Sidekick({
 
   const hasData = !!sampleData;
   const isIntegration = useMemo(() => PipelineTypeEnum.INTEGRATION === pipeline?.type, [pipeline]);
-  const finalOutputHeight = !(PipelineTypeEnum.STREAMING === pipeline?.type)
-    ? -70   // Hide entire output area
-    : (pipelineExecutionHidden ? -16 : OUTPUT_HEIGHT);
 
   const renderColumnHeader = useCallback(buildRenderColumnHeader({
     columnTypes,
@@ -598,7 +601,9 @@ function Sidekick({
       >
         {activeView === ViewKeyEnum.TREE &&
           <ApiReloader uuid={`PipelineDetail/${pipeline?.uuid}`}>
-            <>
+            <div 
+              style={{ position: 'relative', height: '100%' }} data-testid="dependency-graph-container"
+            >
               <DependencyGraph
                 addNewBlockAtIndex={addNewBlockAtIndex}
                 blockRefs={blockRefs}
@@ -610,7 +615,7 @@ function Sidekick({
                 editingBlock={editingBlock}
                 enablePorts={!isIntegration}
                 fetchPipeline={fetchPipeline}
-                height={heightWindow - (heightOffset - SCROLLBAR_WIDTH) - finalOutputHeight}
+                height={graphHeight}
                 messages={messages}
                 // @ts-ignore
                 onClickNode={({ block: { uuid } }) => setHiddenBlocks((prev) => {
@@ -632,6 +637,7 @@ function Sidekick({
                 setActiveSidekickView={setActiveSidekickView}
                 setEditingBlock={setEditingBlock}
                 setErrors={setErrors}
+                heightOffset={0}
                 setSelectedBlock={(block) => {
                   setSelectedBlock(block);
 
@@ -642,20 +648,21 @@ function Sidekick({
                 showUpdateBlockModal={showUpdateBlockModal}
                 treeRef={treeRef}
               />
-              {!blockEditing && PipelineTypeEnum.STREAMING === pipeline?.type && (
-                <Spacing p={1}>
-                  <PipelineExecution
-                    cancelPipeline={cancelPipeline}
-                    checkIfPipelineRunning={checkIfPipelineRunning}
-                    executePipeline={executePipeline}
-                    isPipelineExecuting={isPipelineExecuting}
-                    pipelineExecutionHidden={pipelineExecutionHidden}
-                    pipelineMessages={pipelineMessages}
-                    setPipelineExecutionHidden={setPipelineExecutionHidden}
-                  />
-                </Spacing>
+              {!blockEditing && isStreaming && (
+                <PipelineExecution
+                  cancelPipeline={cancelPipeline}
+                  checkIfPipelineRunning={checkIfPipelineRunning}
+                  executePipeline={executePipeline}
+                  isDragging={isDraggingPanel}
+                  isPipelineExecuting={isPipelineExecuting}
+                  onDragStart={handleDragStart}
+                  panelHeight={panelHeight}
+                  pipelineExecutionHidden={isPipelineExecutionHidden}
+                  pipelineMessages={pipelineMessages}
+                  setPipelineExecutionHidden={togglePipelineExecutionHidden}
+                />
               )}
-            </>
+            </div>
           </ApiReloader>
         }
 
