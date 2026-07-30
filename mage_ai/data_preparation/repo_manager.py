@@ -86,6 +86,7 @@ class RepoConfig:
         self.variables_retention_period = None
         self.workspace_initial_metadata = None
         self.workspace_shared_config = None
+        self.sync_deletions_from_code = None
 
         from mage_ai.data_preparation.shared.utils import get_template_vars
 
@@ -169,6 +170,9 @@ class RepoConfig:
 
             self.variables_retention_period = repo_config.get(
                 'variables_retention_period'
+            )
+            self.sync_deletions_from_code = repo_config.get(
+                'sync_deletions_from_code', False
             )
         except Exception as err:
             traceback.print_exc()

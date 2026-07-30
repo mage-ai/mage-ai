@@ -8,6 +8,7 @@ from sqlalchemy import or_
 from sqlalchemy.orm import aliased
 
 from mage_ai.ai.constants import LLMUseCase
+from mage_ai.api.errors import ApiError
 from mage_ai.api.operations.constants import (
     DELETE,
     DETAIL,
@@ -735,6 +736,32 @@ class PipelineResource(BaseResource):
 
             if pipeline_doc:
                 await _add_markdown_block(pipeline_doc, self.model.uuid, 0)
+
+        # Require save_in_code_automatically when sync_deletions_from_code is set.
+        settings = payload.get('settings') or {}
+        triggers = settings.get('triggers') or {}
+        if triggers.get('sync_deletions_from_code'):
+            save_in_code = triggers.get('save_in_code_automatically')
+            if save_in_code is None and self.model.settings and self.model.settings.triggers:
+                save_in_code = self.model.settings.triggers.save_in_code_automatically
+            if not save_in_code:
+                project = Project(repo_config=self.model.repo_config)
+                save_in_code = (
+                    project.pipelines
+                    and project.pipelines.settings
+                    and project.pipelines.settings.triggers
+                    and project.pipelines.settings.triggers.save_in_code_automatically
+                )
+            if not save_in_code:
+                raise ApiError(
+                    ApiError.RESOURCE_INVALID
+                    | dict(
+                        message=(
+                            'sync_deletions_from_code requires save_in_code_automatically to be '
+                            'enabled (project or pipeline level).'
+                        )
+                    )
+                )
 
         pipeline_type = self.model.type
         await self.model.update(

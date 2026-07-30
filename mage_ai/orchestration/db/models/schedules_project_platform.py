@@ -10,7 +10,6 @@ from sqlalchemy import or_
 from sqlalchemy.sql import func
 from sqlalchemy.sql.functions import coalesce
 
-from mage_ai.data_preparation.logging.logger_manager_factory import LoggerManagerFactory
 from mage_ai.data_preparation.models.pipeline import Pipeline
 from mage_ai.data_preparation.models.project import Project
 from mage_ai.data_preparation.models.triggers import (
@@ -31,6 +30,10 @@ from mage_ai.shared.croniter import croniter
 from mage_ai.shared.dates import compare
 from mage_ai.shared.hash import merge_dict
 from mage_ai.shared.utils import clean_name
+
+# Module-level reference for test patching compatibility
+# Actual import happens lazily in methods to avoid pulling in heavy dependencies
+LoggerManagerFactory = None
 
 
 class PipelineScheduleProjectPlatformMixin:
@@ -370,6 +373,15 @@ class PipelineRunProjectPlatformMixin:
             repo_path=repo_path,
         )
 
+        # Import lazily, but check module-level first (for test patching)
+        if LoggerManagerFactory is None:
+            from mage_ai.data_preparation.logging.logger_manager_factory import (
+                LoggerManagerFactory as _LoggerManagerFactory,
+            )
+
+            # Update module-level for caching and test compatibility
+            globals()['LoggerManagerFactory'] = _LoggerManagerFactory
+
         pipeline_logs = await LoggerManagerFactory.get_logger_manager(
             pipeline_uuid=self.pipeline_uuid,
             partition=self.execution_partition,
@@ -393,6 +405,15 @@ class BlockRunProjectPlatformMixin:
             self.pipeline_run.pipeline_uuid,
             repo_path=repo_path,
         )
+
+        # Import lazily, but check module-level first (for test patching)
+        if LoggerManagerFactory is None:
+            from mage_ai.data_preparation.logging.logger_manager_factory import (
+                LoggerManagerFactory as _LoggerManagerFactory,
+            )
+
+            # Update module-level for caching and test compatibility
+            globals()['LoggerManagerFactory'] = _LoggerManagerFactory
 
         return await LoggerManagerFactory.get_logger_manager(
             pipeline_uuid=pipeline.uuid,

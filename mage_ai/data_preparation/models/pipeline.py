@@ -2416,6 +2416,29 @@ class Pipeline:
             and project.pipelines.settings.triggers.save_in_code_automatically
         )
 
+    def should_sync_deletions_from_code(self) -> bool:
+        """Only meaningful when save_in_code_automatically is also True."""
+        from mage_ai.data_preparation.models.project import Project
+
+        if (
+            self.settings
+            and self.settings.triggers
+            and self.settings.triggers.sync_deletions_from_code is not None
+        ):
+            return self.settings.triggers.sync_deletions_from_code
+
+        project = Project(repo_config=self.repo_config)
+        if (
+            project.pipelines
+            and project.pipelines.settings
+            and project.pipelines.settings.triggers
+            and project.pipelines.settings.triggers.sync_deletions_from_code is not None
+        ):
+            return project.pipelines.settings.triggers.sync_deletions_from_code
+
+        # Backward compatibility: top-level sync_deletions_from_code in project metadata.yaml
+        return bool(getattr(self.repo_config, 'sync_deletions_from_code', False))
+
     async def save_async(
         self,
         block_type: str = None,
