@@ -181,6 +181,30 @@ class PipelineScheduleProjectPlatformMixin:
                     PipelineRun.PipelineRunStatus.RUNNING,
                     PipelineRun.PipelineRunStatus.INITIAL,
                 ]
+        elif self.schedule_interval == ScheduleInterval.ALWAYS_ON_DAYTIME:
+            from mage_ai.orchestration.db.models.schedules import (
+                is_now_within_always_on_daytime_window,
+            )
+
+            settings = self.settings or {}
+            daytime_start_hour = settings.get('always_on_daytime_start_hour')
+            daytime_end_hour = settings.get('always_on_daytime_end_hour')
+
+            if not is_now_within_always_on_daytime_window(
+                now,
+                start_hour_utc=daytime_start_hour,
+                end_hour_utc=daytime_end_hour,
+            ):
+                return False
+            if self.pipeline_runs_count == 0:
+                return True
+            else:
+                from mage_ai.orchestration.db.models.schedules import PipelineRun
+
+                return self.last_pipeline_run_status not in [
+                    PipelineRun.PipelineRunStatus.RUNNING,
+                    PipelineRun.PipelineRunStatus.INITIAL,
+                ]
         else:
             current_execution_date = self.current_execution_date()
             if current_execution_date is None:
@@ -310,6 +334,7 @@ class PipelineRunProjectPlatformMixin:
             if (
                 ScheduleInterval.ONCE == self.pipeline_schedule.schedule_interval
                 or ScheduleInterval.ALWAYS_ON == self.pipeline_schedule.schedule_interval
+                or ScheduleInterval.ALWAYS_ON_DAYTIME == self.pipeline_schedule.schedule_interval
             ):
                 pass
             elif ScheduleInterval.DAILY == self.pipeline_schedule.schedule_interval:
