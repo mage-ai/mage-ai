@@ -1,7 +1,7 @@
 ---
 title: "Your AI data engineer"
 sidebarTitle: "Introduction"
-description: "Upgrade from a co-pilot to a co-commander with your very own AI sidekick for pipelines, analytics, and machine learning."
+description: "Use AI Sidekick to ask questions, debug pipelines, generate code, and run agentic workflows with Mage Pro context."
 icon: "user-robot"
 ---
 
@@ -10,505 +10,161 @@ import { ProOnly } from '/snippets/pro/only.mdx';
 
 <ProOnly source="pipeline-dependencies" />
 
-**Mage Pro AI Sidekick is your intelligent assistant for data pipelines, analytics, and ML workflows.**
-It helps you design, debug, and optimize your pipelines — faster and smarter — using natural language. Whether you're building ETL processes, exploring data, or resolving code issues, Mage Pro AI understands your intent and delivers code, context, and insights on the spot.
+AI Sidekick brings an AI assistant into your Mage Pro workspace. Use it to
+ask questions about the page you are viewing, inspect pipeline context, generate
+or update code, debug failures, and run longer agent tasks without leaving Mage.
 
-Use it to:
-- Generate production-grade pipelines with a simple prompt
-- Fix broken blocks or refactor complex logic
-- Analyze pipeline behavior and explain errors
-- Visualize outputs and transform them into shareable, interactive data products
+Use AI Sidekick to:
 
-It’s like having a senior data engineer available 24/7 — inside your repo.
+- ask about the current page, selected pipeline, block code, logs, outputs, and
+  project files
+- create pipeline blocks, refactor existing code, and apply requested changes
+  with Mage context
+- use logs, block outputs, and pipeline metadata to understand errors and
+  suggest fixes
+- let the Mage agent inspect resources, call tools, and report progress during
+  longer workflows
 
-## AI-Powered Answers for Data Engineering, Analytics, and ML
+## Open AI Sidekick
 
-**Mage Pro AI** is your always-on data expert. Whether you’re building data pipelines, designing warehouse schemas, troubleshooting integrations, or making sense of your analytics stack, Mage Pro AI has the answer. It’s trained to understand the language of modern data teams — from ETL to orchestration to compliance — so you can move faster, with confidence.
+Open AI Sidekick from Mage Pro. You can also open the standalone chat at
+`/ai/chat` or `/apps/ai/chat` in an authenticated workspace.
 
-<div style={{
-  position: 'relative',
-  width: '100%',
-  paddingBottom: '56.25%', /* 16:9 ratio */
-  height: 0,
-  overflow: 'hidden',
-  borderRadius: '12px',
-  boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
-}}>
-  <iframe
-    src="https://www.youtube.com/embed/18PYIQYfDgM"
-    title="AI-Powered Answers for Data Engineering, Analytics, and ML"
-    allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-    allowFullScreen
-    style={{
-      position: 'absolute',
-      top: 0,
-      left: 0,
-      width: '100%',
-      height: '100%',
-      border: 0,
-      borderRadius: '12px'
-    }}
-  />
-</div>
+AI Sidekick is available to users with the Editor role or higher.
 
-### How it works
+## What AI Sidekick Can Use As Context
 
-Just type your question — natural language is all it takes. Mage Pro AI instantly parses your query and provides accurate, actionable responses across a wide range of data topics: infrastructure, modeling, governance, ML, and more. It’s built into the Mage Pro platform and fine-tuned specifically for data engineers, analysts, and architects. No docs to dig through. No syntax to memorize. Just ask.
+AI Sidekick can work with the context Mage already has about your workspace,
+including:
 
-### Why it matters
+- the current page title and URL
+- visible non-chat text on the page
+- selected pipelines and blocks
+- block code, block outputs, and logs
+- pipeline run state and recent execution details
+- files or images you attach to the chat session
+- project files that the configured agent tools are allowed to read
 
-Data teams lose countless hours searching for answers across scattered documentation, Slack threads, and tribal knowledge. Mage Pro AI changes that. With expert-level responses at your fingertips, your team can solve problems faster, onboard more easily, and stay focused on high-impact work. It’s like having a senior engineer on call — 24/7.
+This means you can ask questions like:
 
-
----
-
-## Design Complex Data Pipelines in Seconds
-
-Stop wasting hours piecing together pipelines by hand. Mage Pro AI can design and build complex data workflows in seconds. Just describe your goal in plain English, and Mage Pro AI auto-generates the full pipeline—every block, every dependency, every line of code.
-
-<div style={{
-  position: 'relative',
-  width: '100%',
-  paddingBottom: '56.25%', /* 16:9 ratio */
-  height: 0,
-  overflow: 'hidden',
-  borderRadius: '12px',
-  boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
-}}>
-  <iframe
-    src="https://www.youtube.com/embed/7C8qnPFbGHA"
-    title="Design Complex Data Pipelines in Seconds"
-    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-    allowFullScreen
-    style={{
-      position: 'absolute',
-      top: 0,
-      left: 0,
-      width: '100%',
-      height: '100%',
-      border: 0,
-      borderRadius: '12px'
-    }}
-  />
-</div>
-
-### How it works
-
-Tell Mage Pro AI what you want to build—ingest from S3, transform with Polars, join with a Delta Lake table, run daily, alert on failure. Mage instantly maps out the entire pipeline and generates working code for each step, fully integrated with your existing tools and infrastructure.
-
-### Why it matters
-
-Manually building pipelines is slow, error-prone, and often blocks teams from experimenting or scaling quickly. Mage Pro AI turns hours of setup into seconds of generation—so engineers can focus on what matters: logic, not boilerplate.
-
-
----
-
-## AI-Generated Code Blocks for Data Pipelines
-
-Design your pipeline one step at a time—without writing a single line of code. Mage Pro AI can generate complete, production-ready code blocks for every stage of your data workflow.
-
-<div style={{
-  position: 'relative',
-  width: '100%',
-  paddingBottom: '56.25%', /* 16:9 ratio */
-  height: 0,
-  overflow: 'hidden',
-  borderRadius: '12px',
-  boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
-}}>
-  <iframe
-    src="https://www.youtube.com/embed/OD5Vby6-O8w?si=I2oG_qE2GLHS9NkK"
-    title="AI-Generated Code Blocks for Data Pipelines"
-    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-    allowFullScreen
-    style={{
-      position: 'absolute',
-      top: 0,
-      left: 0,
-      width: '100%',
-      height: '100%',
-      border: 0,
-      borderRadius: '12px'
-    }}
-  />
-</div>
-
-### How it works
-
-Tell Mage what you need:  
-> “Load this CSV from S3,”  
-> “Join with this Delta Lake table,”  
-> “Clean nulls in this column,”  
-> “Calculate weekly aggregates.”
-
-### Why it matters
-
-Writing every block by hand is slow and repetitive. Mage Pro AI speeds up development by giving you smart, reusable code blocks that integrate cleanly with upstream and downstream steps.
-
-
----
-
-## Smarter, Faster Code for Every Pipeline Block
-
-Mage Pro AI helps you evolve your workflows by intelligently updating, refactoring, and improving code blocks in place.
-
-<div style={{
-  position: 'relative',
-  width: '100%',
-  paddingBottom: '56.25%', /* 16:9 ratio */
-  height: 0,
-  overflow: 'hidden',
-  borderRadius: '12px',
-  boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
-}}>
-  <iframe
-    src="https://www.youtube.com/embed/PVxzrx4Ng7Q"
-    title="Smarter, Faster Code for Every Pipeline Block"
-    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-    allowFullScreen
-    style={{
-      position: 'absolute',
-      top: 0,
-      left: 0,
-      width: '100%',
-      height: '100%',
-      border: 0,
-      borderRadius: '12px'
-    }}
-  />
-</div>
-
-### How it works
-
-Highlight a block. Ask Mage Pro AI to optimize it, update logic, or align with new requirements. The AI understands your pipeline context and rewrites the code accordingly.
-
-### Why it matters
-
-Mage Pro AI handles updates safely, intelligently, and instantly—saving hours of debugging while ensuring consistency and performance across your pipeline.
-
-
----
-
-## Fix Pipeline Code Errors with AI-Powered Debugging
-
-Mage Pro AI helps you resolve issues in your pipeline code with intelligent, context-aware fixes.
-
-<div style={{
-  position: 'relative',
-  width: '100%',
-  paddingBottom: '56.25%', /* 16:9 ratio */
-  height: 0,
-  overflow: 'hidden',
-  borderRadius: '12px',
-  boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
-}}>
-  <iframe
-    src="https://www.youtube.com/embed/_J-TkoDZegA"
-    title="Fix Pipeline Code Errors with AI-Powered Debugging"
-    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-    allowFullScreen
-    style={{
-      position: 'absolute',
-      top: 0,
-      left: 0,
-      width: '100%',
-      height: '100%',
-      border: 0,
-      borderRadius: '12px'
-    }}
-  />
-</div>
-
-### How it works
-
-Highlight the problematic block or describe the issue. Mage Pro AI analyzes the code and suggests a corrected version that works within the full pipeline context.
-
-### Why it matters
-
-Debugging pipeline code wastes valuable time. Mage Pro AI reduces that friction by helping your team quickly find and fix issues.
-
-
----
-
-## Self-Healing Data Pipelines with AI
-
-Mage Pro AI makes it possible to build pipelines that detect failures, diagnose errors, and fix themselves.
-
-<div style={{
-  position: 'relative',
-  width: '100%',
-  paddingBottom: '56.25%', /* 16:9 ratio */
-  height: 0,
-  overflow: 'hidden',
-  borderRadius: '12px',
-  boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
-}}>
-  <iframe
-    src="https://www.youtube.com/embed/TuEA_RfM3H0"
-    title="Self-Healing Data Pipelines with AI"
-    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-    allowFullScreen
-    style={{
-      position: 'absolute',
-      top: 0,
-      left: 0,
-      width: '100%',
-      height: '100%',
-      border: 0,
-      borderRadius: '12px'
-    }}
-  />
-</div>
-
-### How it works
-
-When a pipeline breaks, Mage Pro AI iterates through debugging cycles, rewriting blocks and rerunning them until validation checks pass.
-
-### Why it matters
-
-Mage Pro AI automatically fixes pipelines, ensuring that data quality checks are met without wasting hours chasing down errors.
-
-
----
-
-## Understand Your Pipeline Data with AI-Powered Q&A and Analysis
-
-With Mage Pro AI, you can ask questions about your pipeline data and get clear answers.
-
-<div style={{
-  position: 'relative',
-  width: '100%',
-  paddingBottom: '56.25%', /* 16:9 ratio */
-  height: 0,
-  overflow: 'hidden',
-  borderRadius: '12px',
-  boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
-}}>
-  <iframe
-    src="https://www.youtube.com/embed/RavUBmG3okY"
-    title="Understand Your Pipeline Data with AI-Powered Q&A and Analysis"
-    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-    allowFullScreen
-    style={{
-      position: 'absolute',
-      top: 0,
-      left: 0,
-      width: '100%',
-      height: '100%',
-      border: 0,
-      borderRadius: '12px'
-    }}
-  />
-</div>
-
-### How it works
-
-Ask Mage Pro AI questions like “Why did this block fail?” or “Are there outliers in this column?” It responds with insights, context, and suggested actions.
-
-### Why it matters
-
-Mage Pro AI eliminates the need to query logs or write SQL—helping you understand your data instantly and take informed action.
-
-
----
-
-## AI-Powered Data Visualizations for Every Step in Your Pipeline
-
-Mage Pro AI transforms pipeline outputs into insightful, ready-to-use visualizations.
-
-<div style={{
-  position: 'relative',
-  width: '100%',
-  paddingBottom: '56.25%', /* 16:9 ratio */
-  height: 0,
-  overflow: 'hidden',
-  borderRadius: '12px',
-  boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
-}}>
-  <iframe
-    src="https://www.youtube.com/embed/ib-u3KPwjYQ"
-    title="AI-Powered Data Visualizations for Every Step in Your Pipeline"
-    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-    allowFullScreen
-    style={{
-      position: 'absolute',
-      top: 0,
-      left: 0,
-      width: '100%',
-      height: '100%',
-      border: 0,
-      borderRadius: '12px'
-    }}
-  />
-</div>
-
-### How it works
-
-After a block runs, Mage Pro AI analyzes its output and auto-generates the most appropriate visualization—bar charts, line graphs, histograms, heatmaps, and more.
-
-### Why it matters
-
-Visual feedback helps you debug faster and understand your data more deeply at every step—without needing to configure or write plotting code.
-
-
----
-
-## Build Interactive Data Products Instantly with AI-Generated Tables
-
-Mage Pro AI lets you turn raw pipeline outputs into smart, explorable tables—instantly.
-
-<div style={{
-  position: 'relative',
-  width: '100%',
-  paddingBottom: '56.25%', /* 16:9 ratio */
-  height: 0,
-  overflow: 'hidden',
-  borderRadius: '12px',
-  boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
-}}>
-  <iframe
-    src="https://www.youtube.com/embed/i2JKXwA36iE"
-    title="Build Interactive Data Products Instantly with AI-Generated Tables"
-    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-    allowFullScreen
-    style={{
-      position: 'absolute',
-      top: 0,
-      left: 0,
-      width: '100%',
-      height: '100%',
-      border: 0,
-      borderRadius: '12px'
-    }}
-  />
-</div>
-
-### How it works
-
-Mage Pro AI creates interactive tables with sorting, filtering, and searching automatically after your pipeline runs—no front-end or dashboard setup needed.
-
-### Why it matters
-
-Don’t stop at raw output. Instantly turn your data into interactive, insightful products for analysts, stakeholders, or pipelines.
-
-
-
-## Enable RAG
-
-**Empower Mage Pro AI to give smarter, context-aware answers by enabling RAG (Retrieval-Augmented Generation).**
-
-When RAG is enabled, Mage Pro AI can reference your actual project files — including pipeline code, configurations, and documentation — to provide deeper, more accurate answers. This dramatically improves the AI’s ability to help with debugging, code generation, and pipeline understanding.
-
-### Why Enable RAG
-
-Without RAG, Mage Pro AI answers based solely on general knowledge and standard behaviors. With RAG enabled:
-
-- ✅ The AI can **reference your exact project structure and code**
-- ✅ Responses are **context-specific** and align with your real pipelines
-- ✅ You get **accurate fixes, relevant suggestions, and smarter debugging**
-- ✅ Answers reflect your own naming conventions, tools, and logic
-
-If RAG is not enabled, the AI will ask for permission before reading any of your files each time you make a request.
-
-### How to Enable RAG
-
-Create a file at the root of your project named `ai_config.yaml`. This file defines which folders the AI is allowed to read and which files to exclude.
-
-#### Option 1: Enable RAG for the entire project
-
-
-Create a file at the root of your project named `ai_config.yaml`
-
-```yaml
-rag:
-  folders:
-    include:
-      - /home/src/default_repo
-  files:
-    exclude:
-      # gitignore patterns
-      - secrets.json
-# Add this if you permit the AI to read your data when asking it questions.
-# If this is not present, then the AI will ask for your permission each time.
-data:
-  all: true
+```text
+Explain why this block failed.
 ```
 
-#### Option 2: Enable RAG for selected folders only
-
-
-```yaml
-rag:
-  folders:
-    include:
-      - /home/projects/mage-pro-tutorials/callbacks
-      - /home/projects/mage-pro-tutorials/conditionals
-      - /home/projects/mage-pro-tutorials/custom
-      - /home/projects/mage-pro-tutorials/data_exporters
-      - /home/projects/mage-pro-tutorials/data_loaders
-      - /home/projects/mage-pro-tutorials/dbt
-      - /home/projects/mage-pro-tutorials/extensions
-      - /home/projects/mage-pro-tutorials/sensors
-      - /home/projects/mage-pro-tutorials/transformers
-      - /home/projects/mage-pro-tutorials/services
-      - /home/projects/mage-pro-tutorials/utils
-  files:
-    exclude:
-      # gitignore patterns
-      - .env
+```text
+Update this transformer to validate the required columns before exporting.
 ```
 
-### How to Trigger Reindexing
-
-Once you've updated your `ai_config.yaml`, call the following API to reindex your project files into the vector store:
-
-
-```python
-import requests
-
-url = "https://cluster.mage.ai/[cluster UUID]/api/vector_store"
-
-headers = {
-    "Authorization": "Bearer IwMQiEhGerIOt2DxJNiCwOlSiRigpda2FM4mTfjphq8",
-    "Content-Type": "application/json",
-}
-
-payload = {
-    "vector_store": {
-        "path": "/home/src/default_repo",
-    },
-    "api_key": "[API key]",
-}
-
-response = requests.post(url, headers=headers, json=payload)
+```text
+Create a pipeline that loads customer data, cleans emails, and exports the result.
 ```
 
-After reindexing, Mage Pro AI will be able to answer questions using your real project data—enabling more personalized, precise assistance.
+## Chat Sessions
 
----
+AI Sidekick keeps conversations in sessions. The sidebar lets you:
 
-## Real-World Use Cases for Mage Pro AI
+- start a new chat
+- search active chat history
+- view archived chats
+- load older chats with **Show more**
+- archive a chat
+- reopen a chat from the current workspace
 
-### Build AI-Generated Data Pipelines
-Create complete data pipelines from a single prompt. Describe your data goals in plain English and Mage Pro AI generates end-to-end ETL workflows with correct dependencies and block-level logic.
+Mage remembers the selected chat and sidebar view for the current workspace, so
+you can refresh or reopen AI Sidekick without losing your place.
 
-### Automate Machine Learning Pipelines
-Use Mage Pro AI to generate data preparation, model training, and evaluation pipelines in seconds. Easily experiment and scale machine learning workflows without writing boilerplate code.
+## Attach Files
 
-### Generate Code Blocks On Demand
-Need to load a CSV, clean nulls, or join with a Delta Lake table? Mage Pro AI generates clean, reusable code blocks tailored to your infrastructure, tools, and pipeline logic.
+Attach files to give AI Sidekick more context for the current chat. Attachments are
+scoped to the chat session and can be referenced by the agent while it works.
 
-### Debug and Fix Pipelines with AI
-Highlight a broken step or describe the issue—Mage Pro AI suggests fixes, explains errors, and updates the code in context. Eliminate hours of debugging time.
+Default attachment limits are:
 
-### Build Self-Healing Pipelines
-Mage Pro AI can detect failed blocks, rerun them, and rewrite logic to meet validation rules—creating fault-tolerant pipelines that repair themselves automatically.
+| Limit | Default |
+|---|---:|
+| Maximum file size | 10 MB |
+| Maximum files per session | 20 |
+| Maximum total attachment size per session | 50 MB |
 
-### Ask Questions About Your Data
-Want to understand why a block failed or check for anomalies? Mage Pro AI provides contextual answers and analysis—no SQL or log digging required.
+Workspace administrators can override these limits with:
 
-### Auto-Generate Visualizations and Tables
-Mage Pro AI analyzes pipeline outputs and automatically creates helpful visualizations and interactive tables—ready for review or sharing with stakeholders.
+```bash
+MAGE_CODEX_CHAT_ATTACHMENT_MAX_BYTES=10485760
+MAGE_CODEX_CHAT_ATTACHMENT_MAX_COUNT=20
+MAGE_CODEX_CHAT_ATTACHMENT_MAX_SESSION_BYTES=52428800
+```
 
-### Rapidly Prototype and Iterate
-Test new data workflows, transform logic, or refactor pipelines in seconds using natural language. Mage Pro AI makes it easy to try new ideas without slowing down.
+When the agent returns a project-local PNG, JPEG, GIF, or WebP path, Mage can
+render the image inline in the chat transcript.
+
+## Execution Settings
+
+Use the chat settings menu to choose how the agent should run for the current
+chat:
+
+- **Speed** controls whether the chat uses the standard or fast execution path.
+- **Reasoning** controls how much reasoning effort the model should use.
+
+Use lower reasoning for quick questions and higher reasoning for complex code
+changes, multi-step debugging, or tasks that need deeper project analysis.
+
+## Common Workflows
+
+### Explain The Current Page
+
+Ask AI Sidekick what you are looking at when you are on a pipeline, run, log, block,
+or settings page.
+
+```text
+What am I looking at, and what should I check next?
+```
+
+### Debug A Failed Block
+
+Open the failed block or run logs, then ask AI Sidekick to explain the failure and
+suggest a fix.
+
+```text
+Why did this block fail? Suggest the smallest safe fix.
+```
+
+### Generate A Pipeline Or Block
+
+Describe the data source, transformations, destination, schedule, and any
+constraints you care about.
+
+```text
+Create a daily pipeline that loads Stripe charges, removes test records, and
+exports clean revenue data to Snowflake.
+```
+
+### Refactor Existing Code
+
+Ask AI Sidekick to update code in place while preserving the pipeline contract.
+
+```text
+Refactor this transformer to use Polars and keep the same output columns.
+```
+
+### Work With Project Files
+
+Ask AI Sidekick to inspect project files, explain how a pipeline is organized, or
+make targeted changes.
+
+```text
+Find where this pipeline reads database credentials and explain how they are used.
+```
+
+## Project Context
+
+For deeper project-aware answers, AI Sidekick can reference project files and
+related workspace context that the configured agent tools are allowed to read.
+Use project context when you want answers grounded in your actual repository
+structure, pipeline code, naming conventions, and configuration.
+
+## Related Docs
+
+- [AI Blocks](/ai/blocks)
+- [RAG pipelines](/ai/rag-pipeline)
+- [Mage Agent](/agent/introduction)
+- [MCP tools](/agent/mcp-tools)

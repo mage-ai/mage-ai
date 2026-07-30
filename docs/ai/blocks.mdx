@@ -1,14 +1,14 @@
 ---
-title: 'Building, Configuring, and Automating with LLMs'
+title: 'AI Blocks'
 sidebarTitle: 'AI Blocks'
-description: 'Learn how to create, configure, and run AI Blocks in Mage to generate text, produce structured outputs, write and validate code, and trigger other pipelines—empowering you to build advanced RAG and automation workflows with ease.'
+description: 'Use AI Blocks in Mage Pro pipelines to generate text, produce structured outputs, write or validate code, and trigger other pipelines with LLMs.'
 icon: 'microchip-ai'
 ---
 
 import { ProButton } from '/snippets/pro/button.mdx';
 import { ProOnly } from '/snippets/pro/only.mdx';
 
-<ProOnly source="rag-pipeline" />
+<ProOnly source="ai-blocks" />
 
 <Frame>
   <iframe
@@ -23,168 +23,157 @@ import { ProOnly } from '/snippets/pro/only.mdx';
   />
 </Frame>
 
-## 1. What is an AI Block?
+AI Blocks let you add LLM-powered steps directly to a Mage Pro pipeline. Use them
+when the pipeline itself needs to call an AI model during execution, return a
+validated response, generate code, or decide whether another pipeline should run.
 
-An **AI block** is a special type of block in a Mage pipeline that uses a Large Language Model (LLM) to:
+Use **AI Sidekick** when you want an interactive assistant in the Mage UI. Use an
+AI Block when you want AI behavior to become part of a repeatable pipeline.
 
-- Generate text or code
-- Return structured data in a defined schema
-- Trigger other pipelines as tools
-- Validate outputs before passing them downstream
+## When To Use AI Blocks
 
-AI blocks are configured in **YAML** and can be designed to:
+Use AI Blocks to:
 
-- Write and validate executable code
-- Produce structured outputs for downstream blocks
-- Decide which other pipelines to trigger and pass them variables
+- summarize, classify, transform, or enrich text during a pipeline run
+- return structured data that downstream blocks can consume
+- generate code or SQL and optionally validate it before saving
+- route work to another pipeline by exposing that pipeline as a tool
+- add LLM-based checks to a broader automation or RAG workflow
 
-They integrate directly with Mage’s orchestration engine, allowing AI-generated outputs to be chained together, validated, and reused.
+## How AI Blocks Work
 
----
-
-## 2. How to Use an AI Block
-
-1. **Add a new block** in your Mage pipeline and set its type to `ai`.
-2. **Write a prompt** — the main instruction for the AI.
-3. **Optionally define output settings**:
-   - **Code generation** (`output.code`)
-   - **Structured JSON schema** (`output.format`)
-4. **(Optional) Configure tools** to allow the AI to trigger other pipelines.
-5. **Run the pipeline** — Mage will send your prompt and configuration to the AI model, validate the output (if specified), and pass it to the next blocks.
-
-**Minimal example:**
+An AI Block is configured with YAML. At minimum, the block needs a `prompt`.
+Optional sections control the expected output and any tools the model can use.
 
 ```yaml
-prompt: Summarize the input text in two sentences
+prompt: Summarize the input text in two sentences.
 ```
 
----
+For production workflows, define the output shape or validation rules so
+downstream blocks receive predictable results.
 
-## 3. AI Block Configuration
+## Configuration Reference
 
-### 3.1 Basic Structure
+### prompt
+
+The instruction sent to the model.
+
+Use a multi-line prompt when the task has multiple requirements:
 
 ```yaml
 prompt: |
-  Enter what you want AI to do
+  Review the customer feedback.
+  Return the main sentiment, the product area mentioned, and one suggested action.
+```
+
+### output.code
+
+Use `output.code` when the block should produce executable code or SQL.
+
+```yaml
+prompt: |
+  Write a SQL query that counts daily active users by signup cohort.
 output:
-  # Choose either `code` or `format`, not both
   code:
     save: true
-    validation: Ensure this code runs without errors
+    validation: Ensure the SQL is valid and only references known tables.
+    language: sql
+    profile: default
+    client: postgres
+```
+
+Common fields:
+
+| Field | Description |
+|---|---|
+| `save` | Saves generated code for reuse when enabled. |
+| `validation` | Adds instructions for validating generated code. |
+| `language` | Sets the expected language, such as `python` or `sql`. |
+| `profile` | Selects a SQL connection profile from `io_config.yaml`. |
+| `client` | Sets the SQL client type. |
+
+### output.format
+
+Use `output.format` when downstream blocks need structured values.
+
+```yaml
+prompt: Extract customer details from the text.
+output:
   format:
     name:
       type: string
-      description: The name of the person
-    age:
-      type: integer
-      minimum: 0
-validation: Validation prompt for output
-tools:
-  prompt: A prompt to decide which pipeline(s) to trigger
-  required: false
-  pipelines:
-    - uuid: pipeline_uuid
-      description: Description of the pipeline
-      blocks:
-        - uuid: block_uuid
-      variables:
-        user_id:
-          type: string
+      description: Customer's full name
+    email:
+      type: string
+      format: email
+    priority:
+      type: string
+      enum:
+        - low
+        - medium
+        - high
+  validation: Ensure all required fields are present.
 ```
 
----
+### validation
 
-### 3.2 Fields
-
-#### **prompt** (Required)
-
-The instruction to send to the AI model.
-
-- Supports multi-line strings with `|`.
-- Example:
+Use `validation` to describe how Mage should check the model response before the
+pipeline continues.
 
 ```yaml
-prompt: |
-  Write a haiku about the moon.
-```
-
-#### **output**
-
-Controls how the AI’s response is validated and structured.
-
-1. **Code Output**
-
-```yaml
-output:
-  code:
-    save: true # Save generated code for reuse
-    validation: Ensure no syntax errors
-    language: sql # Optional, e.g., python or sql
-    profile: default # SQL connection profile from io_config.yaml
-    client: postgres # SQL client type
-```
-
-2. **Structured Format Output**
-
-```yaml
+prompt: Classify the support ticket.
 output:
   format:
-    title:
+    category:
       type: string
-      description: Blog post title
-    tags:
-      type: array
-      items:
-        type: string
-    published:
-      type: boolean
-  validation: Ensure all fields are present and valid
+    reason:
+      type: string
+validation: Return only categories used by the support team.
 ```
 
-3. **Unstructured Output**
+### tools
+
+Use `tools` when the AI Block should choose from approved Mage pipelines and pass
+variables into the selected pipeline.
 
 ```yaml
-output: ''
-```
-
----
-
-#### **tools**
-
-Lets the AI trigger other pipelines as part of execution.
-
-```yaml
+prompt: Analyze the customer request and decide whether follow-up processing is needed.
 tools:
-  prompt: Select a pipeline to process this request
+  prompt: Choose the best pipeline for the request.
   required: true
   pipelines:
-    - uuid: abc123
-      description: Cleans and normalizes customer data
+    - uuid: customer_followup
+      description: Creates follow-up tasks for high-priority customer requests.
       blocks:
-        - uuid: block_1
+        - uuid: create_tasks
       variables:
         customer_id:
           type: string
+        priority:
+          type: string
+          enum:
+            - medium
+            - high
 ```
 
----
+## JSON Schema Support
 
-## 4. JSON Schema Support for Structured Outputs
+The `output.format` and `tools.pipelines.variables` fields use a JSON Schema
+draft-07 subset to describe structured values.
 
-The `output.format` and `variables` fields use **JSON Schema draft-07** (subset) to define:
+Supported schema options include:
 
-- `type` — string, number, integer, boolean, array, object
-- `description` — field description
-- `enum` — allowed values
-- `items` — item schema for arrays
-- `minItems`, `maxItems` — constraints for arrays
-- `pattern` — regex validation for strings
-- `required` — list of required keys
-- `oneOf`, `anyOf`, `allOf` — branching validation
-- `$ref`, `$defs` — recursive or modular schemas
+- `type`
+- `description`
+- `enum`
+- `items`
+- `minItems` and `maxItems`
+- `pattern`
+- `required`
+- `oneOf`, `anyOf`, and `allOf`
+- `$ref` and `$defs`
 
-**Example:**
+Example:
 
 ```yaml
 output:
@@ -197,60 +186,76 @@ output:
       format: date-time
 ```
 
----
+## Examples
 
-## 5. Best Practices
-
-- Use **`output.code`** only when expecting executable code.
-- Use **`output.format`** for predictable structured outputs.
-- Avoid defining both `code` and `format` in the same block.
-- Use **multi-line prompts** with `|` for readability.
-- Only include fields you need — minimal configs run faster.
-- Always include a `validation` prompt for critical outputs.
-- When chaining pipelines, define `variables` clearly for tool execution.
-
----
-
-## 6. Example Configurations
-
-**Minimal AI Block**
+### Summarize Text
 
 ```yaml
-prompt: Summarize this document in bullet points
+prompt: |
+  Summarize this document in five bullet points.
+  Call out any risks or missing information.
 ```
 
-**AI Block with Structured Output**
+### Return Structured Data
 
 ```yaml
-prompt: Extract customer details from the text
+prompt: Extract the customer, product, and requested action from the message.
 output:
   format:
-    name:
+    customer:
       type: string
-      description: Customer's full name
-    email:
+    product:
       type: string
-      format: email
-    phone:
+    requested_action:
       type: string
-      pattern: "^[0-9\\-]+$"
-  validation: Ensure all fields are filled
+  validation: Ensure the output can be parsed by downstream blocks.
 ```
 
-**AI Block Triggering Another Pipeline**
+### Generate SQL
 
 ```yaml
-prompt: Analyze sales data and decide next action
-tools:
-  prompt: Choose a data processing pipeline
-  required: true
-  pipelines:
-    - uuid: sales_analysis_001
-      description: Processes daily sales data
-      blocks:
-        - uuid: clean_data_block
-      variables:
-        date:
-          type: string
-          format: date
+prompt: |
+  Create a SQL query that returns weekly revenue by plan.
+  Exclude test accounts.
+output:
+  code:
+    save: true
+    language: sql
+    profile: default
+    client: postgres
+    validation: Ensure the query is valid SQL and includes a week column.
 ```
+
+### Trigger Another Pipeline
+
+```yaml
+prompt: Decide whether the request needs enrichment before export.
+tools:
+  prompt: Trigger the enrichment pipeline only when customer metadata is missing.
+  required: false
+  pipelines:
+    - uuid: enrich_customer_records
+      description: Adds missing customer metadata before export.
+      variables:
+        customer_id:
+          type: string
+```
+
+## Best Practices
+
+- Keep prompts specific and focused on one job.
+- Use `output.format` when another block depends on the response.
+- Use `output.code` only when the expected output is executable code or SQL.
+- Do not define `output.code` and `output.format` for the same block.
+- Add `validation` for outputs that affect production data or downstream control
+  flow.
+- Expose only the pipelines and variables the AI Block needs when configuring
+  tools.
+- Use AI Sidekick to prototype prompts, then move stable behavior into an AI
+  Block when it needs to run repeatedly.
+
+## Related Docs
+
+- [AI Sidekick](/ai/sidekick)
+- [RAG pipelines](/ai/rag-pipeline)
+- [Custom AI resources](/ai/custom-resources)
