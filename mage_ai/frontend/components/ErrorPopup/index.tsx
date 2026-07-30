@@ -2,7 +2,7 @@ import Button from '@oracle/elements/Button';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import useErrorViews, { UseErrorViewsProps } from './useErrorViews';
-import { Close } from '@oracle/icons';
+import { Close, VisibleEye } from '@oracle/icons';
 import {
   CloseButtonContainerStyle,
   ErrorPopupStyle,
@@ -10,9 +10,11 @@ import {
 
 function ErrorPopup({
   onClose,
+  setMinimized,
   ...props
 }: UseErrorViewsProps & {
   onClose?: () => void;
+  setMinimized?: () => void;
 }) {
   const {
     displayMessage,
@@ -25,6 +27,23 @@ function ErrorPopup({
   return (
     <ErrorPopupStyle>
       <CloseButtonContainerStyle>
+        {setMinimized && (
+          <>
+          <Button
+              iconOnly
+              noBackground
+              noBorder
+              noPadding
+              onClick={onClose}
+              size={20}
+              title="Close errors"
+            >
+              <VisibleEye />
+            </Button>
+            <div style={{ paddingRight: 24 }} />
+          </>
+        )}
+
         <Button
           iconOnly
           noBackground
@@ -35,6 +54,7 @@ function ErrorPopup({
         >
           <Close />
         </Button>
+
       </CloseButtonContainerStyle>
 
       <Text bold large>
