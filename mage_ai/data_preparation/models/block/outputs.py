@@ -1,5 +1,6 @@
 import json
 import os
+import inspect
 from typing import Any, Dict, List, Optional, Tuple, Union
 
 import pandas as pd
@@ -42,6 +43,7 @@ from mage_ai.shared.parsers import (
     convert_matrix_to_dataframe,
     encode_complex,
     has_to_dict,
+    is_custom_object_with_dict
 )
 from mage_ai.shared.strings import is_json
 
@@ -148,7 +150,7 @@ def format_output_data(
             text_data=encode_complex(data),
             variable_uuid=variable_uuid,
         )
-        if has_to_dict(data):
+        if has_to_dict(data) or is_custom_object_with_dict(data):
             return_output['type'] = DataType.OBJECT
         else:
             return_output['type'] = DataType.TEXT
