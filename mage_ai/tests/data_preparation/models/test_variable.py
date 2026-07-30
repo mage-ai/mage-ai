@@ -16,6 +16,7 @@ from mage_ai.data_preparation.models.variables.constants import (
     VariableAggregateDataTypeFilename,
     VariableType,
 )
+from mage_ai.data_preparation.variable_manager import VariableManager
 from mage_ai.tests.base_test import DBTestCase
 from mage_ai.tests.factory import create_pipeline
 from mage_ai.tests.test_shared import (
@@ -102,6 +103,27 @@ class VariableTest(DBTestCase):
                 assert_frame_equal(variable1.read_data(sample=True, sample_count=1), df1.iloc[:1])
                 assert_frame_equal(variable2.read_data(), df2)
                 assert_frame_equal(variable2.read_data(sample=True, sample_count=1), df2.iloc[:1])
+
+    def test_write_and_read_empty_dataframe_with_columns_memory_manager_v2(self):
+        with patch.multiple(
+            'mage_ai.settings.server',
+            MEMORY_MANAGER_PANDAS_V2=True,
+            MEMORY_MANAGER_V2=True,
+        ):
+            variable_manager = VariableManager(variables_dir=self.repo_path)
+            df = pd.DataFrame(columns=['date', 'name', 'value'])
+
+            variable_manager.add_variable(
+                self.pipeline.uuid,
+                'transformer',
+                'output_0',
+                df,
+            )
+
+            assert_frame_equal(
+                variable_manager.get_variable(self.pipeline.uuid, 'transformer', 'output_0'),
+                df,
+            )
 
     def test_write_and_read_dataframe_analysis(self):
         pipeline = self.__create_pipeline('test pipeline 3')
