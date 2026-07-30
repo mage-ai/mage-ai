@@ -1,6 +1,9 @@
 from typing import Dict
 
+from botocore.exceptions import WaiterError
+
 from mage_ai.data_preparation.executors.pipeline_executor import PipelineExecutor
+from mage_ai.orchestration.db.models.schedules import PipelineRun
 from mage_ai.services.aws.ecs import ecs
 from mage_ai.shared.hash import merge_dict
 
@@ -10,7 +13,9 @@ class EcsPipelineExecutor(PipelineExecutor):
         super().__init__(pipeline, execution_partition=execution_partition)
         self.executor_config = self.pipeline.repo_config.ecs_config or dict()
         if self.pipeline.executor_config is not None:
-            self.executor_config = merge_dict(self.executor_config, self.pipeline.executor_config)
+            self.executor_config = merge_dict(
+                self.executor_config, self.pipeline.executor_config
+            )
 
     def execute(
         self,
@@ -19,8 +24,24 @@ class EcsPipelineExecutor(PipelineExecutor):
         **kwargs,
     ) -> None:
         cmd = self._run_commands(
-            global_vars=global_vars,
-            pipeline_run_id=pipeline_run_id,
-            **kwargs
+            global_vars=global_vars, pipeline_run_id=pipeline_run_id, **kwargs
         )
-        ecs.run_task(' '.join(cmd), ecs_config=self.executor_config)
+
+        try:
+            ecs.run_task(' '.join(cmd), ecs_config=self.executor_config)
+        except WaiterError as e:
+            # Handle ECS task timeout - mark pipeline run as failed
+            self.logger.error(f'ECS task timeout: {e}')
+            if pipeline_run_id:
+                pipeline_run = PipelineRun.query.get(pipeline_run_id)
+                if pipeline_run:
+                    pipeline_run.update(status=PipelineRun.PipelineRunStatus.FAILED)
+            raise e
+        except Exception as e:
+            # Handle other ECS errors
+            self.logger.error(f'ECS task failed: {e}')
+            if pipeline_run_id:
+                pipeline_run = PipelineRun.query.get(pipeline_run_id)
+                if pipeline_run:
+                    pipeline_run.update(status=PipelineRun.PipelineRunStatus.FAILED)
+            raise e
