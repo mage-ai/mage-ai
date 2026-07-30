@@ -15,6 +15,8 @@ import {
 import { ColumnTypeEnum } from '@interfaces/FeatureType';
 import { UNIT } from '@oracle/styles/units/spacing';
 
+export const DEBOUNCE_MS = 200;
+
 export const HEADER_HEIGHT_UNITS = 7;
 export const HEADER_HEIGHT = UNIT * HEADER_HEIGHT_UNITS;
 export const HEADER_Z_INDEX = 22;
