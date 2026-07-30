@@ -122,6 +122,16 @@ PARTITION BY
             create_table_command,
         ]
 
+    def build_truncate_commands(
+        self,
+        database_name: str,
+        schema_name: str,
+        table_name: str,
+    ) -> List[str]:
+        parts = [x for x in [database_name, schema_name, table_name] if x]
+        full_table_name = '.'.join([f'`{p}`' for p in parts])
+        return [f'TRUNCATE TABLE {full_table_name}']
+
     def build_alter_table_commands(
         self,
         schema: Dict,
