@@ -1,3 +1,4 @@
+import os
 import urllib.parse
 from abc import ABC, abstractmethod
 from typing import Dict, List
@@ -21,6 +22,10 @@ from mage_ai.services.spark.models.threads import Thread
 from mage_ai.services.spark.spark import get_spark_session
 from mage_ai.settings.repo import get_repo_path
 from mage_ai.shared.array import find
+
+# Default to verifying SSL certificates. Set SPARK_VERIFY_SSL=false to disable
+# (e.g., for self-signed certificates in development environments).
+SPARK_VERIFY_SSL = os.environ.get('SPARK_VERIFY_SSL', 'true').lower() not in ('false', '0', 'no')
 
 
 class BaseAPI(ABC):
@@ -209,7 +214,7 @@ class BaseAPI(ABC):
             data=payload,
             headers=headers,
             timeout=12,
-            verify=False,
+            verify=SPARK_VERIFY_SSL,
         )
 
     async def __build_request(self, *args, **kwargs):

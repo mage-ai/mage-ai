@@ -16,6 +16,8 @@ class OpensearchConfig(BaseConfig):
     host: str
     index_name: str
     verify_certs: bool = True
+    ssl_assert_hostname: bool = True
+    ssl_show_warn: bool = True
     http_auth: str = '@awsauth'
 
 
@@ -43,8 +45,8 @@ class OpenSearchSink(BaseSink):
                 http_auth=http_auth,
                 use_ssl=True,
                 verify_certs=self.config.verify_certs,
-                ssl_assert_hostname=False,
-                ssl_show_warn=False,
+                ssl_assert_hostname=self.config.ssl_assert_hostname,
+                ssl_show_warn=self.config.ssl_show_warn,
                 connection_class=RequestsHttpConnection,
         )
 
