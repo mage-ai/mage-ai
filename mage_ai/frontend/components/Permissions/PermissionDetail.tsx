@@ -78,6 +78,8 @@ type ObjectAttributesType = {
   entity_id?: string | number;
   entity_name?: string;
   entity_type?: string;
+  entity_scope?: string;
+  entity_scope_id?: string;
   query_attributes?: string[];
   read_attributes?: string[];
   rolesMapping?: {
@@ -170,6 +172,12 @@ function PermissionDetail({
     permission,
     permissionEmpty,
   ]);
+  const entityScopes: string[] = useMemo(() => (permission || permissionEmpty)?.entity_scopes || [], [
+    permission,
+    permissionEmpty,
+  ]);
+
+  console.log('entity scopes:', entityScopes);
 
   const [mutateObject, { isLoading: isLoadingMutateObject }] = useMutation(
     permission ? api.permissions.useUpdate(permission?.id) : api.permissions.useCreate(),
@@ -660,7 +668,7 @@ function PermissionDetail({
               default
               large
             >
-              Entity {'entity_name' in attributesTouched && !objectAttributes?.entity_name && (
+              Resource name {'entity_name' in attributesTouched && !objectAttributes?.entity_name && (
                 <Text danger inline large>
                   is required
                 </Text>
@@ -682,7 +690,7 @@ function PermissionDetail({
                 })}
                 paddingHorizontal={0}
                 paddingVertical={0}
-                placeholder="Select an entity"
+                placeholder="Select a resource"
                 value={objectAttributes?.entity_name || ''}
               >
                 {entityNames.map((entityName: string) => (
@@ -703,7 +711,7 @@ function PermissionDetail({
               default
               large
             >
-              Entity subtype
+              Resource entity subtype
             </Text>
 
             <Spacing mr={PADDING_UNITS} />
@@ -744,7 +752,7 @@ function PermissionDetail({
               default
               large
             >
-              Enity UUID
+              Resource entity UUID
             </Text>
 
             <Spacing mr={PADDING_UNITS} />
@@ -770,6 +778,86 @@ function PermissionDetail({
                 paddingVertical={0}
                 placeholder="e.g. pipeline_uuid"
                 value={objectAttributes?.entity_id || ''}
+              />
+            </Flex>
+          </FlexContainer>
+        </Spacing>
+
+        <Divider light />
+
+        <Spacing p={PADDING_UNITS}>
+          <FlexContainer alignItems="center">
+            <Text
+              default
+              large
+            >
+              Permission scope
+            </Text>
+
+            <Spacing mr={PADDING_UNITS} />
+
+            <Flex flex={1} justifyContent="flex-end">
+              <Select
+                afterIconSize={ICON_SIZE}
+                alignRight
+                autoComplete="off"
+                large
+                monospace
+                noBackground
+                noBorder
+                onChange={e => setObjectAttributes({
+                  entity_scope: e.target.value,
+                })}
+                paddingHorizontal={0}
+                paddingVertical={0}
+                placeholder="Select a scope"
+                value={objectAttributes?.entity_scope || ''}
+              >
+                <option value="" />
+                {entityScopes.map((scope: string) => (
+                  <option key={scope} value={scope}>
+                    {scope}
+                  </option>
+                ))}
+              </Select>
+            </Flex>
+          </FlexContainer>
+        </Spacing>
+
+        <Divider light />
+
+        <Spacing p={PADDING_UNITS}>
+          <FlexContainer alignItems="center">
+            <Text
+              default
+              large
+            >
+              Permission scope UUID
+            </Text>
+
+            <Spacing mr={PADDING_UNITS} />
+
+            <Flex flex={1}>
+              <TextInput
+                afterIcon={<Edit />}
+                afterIconClick={(_, inputRef) => {
+                  inputRef?.current?.focus();
+                }}
+                afterIconSize={ICON_SIZE}
+                alignRight
+                autoComplete="off"
+                fullWidth
+                large
+                monospace
+                noBackground
+                noBorder
+                onChange={e => setObjectAttributes({
+                  entity_scope_id: e.target.value,
+                })}
+                paddingHorizontal={0}
+                paddingVertical={0}
+                placeholder="e.g. project_uuid"
+                value={objectAttributes?.entity_scope_id || ''}
               />
             </Flex>
           </FlexContainer>
@@ -1143,6 +1231,8 @@ function PermissionDetail({
                 'conditions',
                 'entity_id',
                 'entity_name',
+                'entity_scope',
+                'entity_scope_id',
                 'entity_type',
                 'query_attributes',
                 'read_attributes',
