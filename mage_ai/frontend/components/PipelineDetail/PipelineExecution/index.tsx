@@ -25,6 +25,7 @@ import { UNIT } from '@oracle/styles/units/spacing';
 import { removeKeyboardFocus } from '@context/shared/utils';
 import { SampleDataType } from '@interfaces/BlockType';
 import Image from 'next/image';
+import { imageMimeTypeForDataType, isImageOutputDataType } from '@utils/imageOutput';
 
 export type PipelineExecutionProps = {
   cancelPipeline: () => void;
@@ -180,13 +181,15 @@ function PipelineExecution({
                         </Text>
                       </OutputRowStyle>
                     );
-                  } else if (dataType === DataTypeEnum.IMAGE_PNG) {
+                  } else if (isImageOutputDataType(dataType)) {
+                    const mime = imageMimeTypeForDataType(dataType);
                     displayElement = (
                       <div style={{ backgroundColor: 'white' }}>
                         <Image
                           alt={`Image ${idx} from code output`}
                           layout="responsive"
-                          src={`data:image/png;base64, ${data}`}
+                          src={`data:${mime};base64,${String(data).replace(/^\s+|\s+$/g, '')}`}
+                          unoptimized
                         />
                       </div>
                     );
