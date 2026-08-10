@@ -32,9 +32,6 @@ variables_dir: ~/.mage_data
 remote_variables_dir: s3://bucket/path_prefix
 help_improve_mage: true
 
-lineage:
-  enabled: true
-
 notification_config:
   alert_on:
     - trigger_failure
@@ -55,9 +52,6 @@ pipelines:
       save_in_code_automatically: true
 
 project_uuid: 123456789abcdefg
-
-autopilot:
-  enabled: true
 ```
 
 ## Top-level fields
@@ -106,12 +100,6 @@ autopilot:
 <ParamField path="features" type="object">
   Feature flags for the project (e.g., `command_center`, `dbt_v2`,
   `automatic_kernel_cleanup`). Keys are booleans.
-</ParamField>
-
-<ParamField path="lineage.enabled" type="boolean">
-  Opts the project into Autopilot-managed data lineage hooks when the Mage Pro
-  cluster lineage service settings are also configured. See
-  [Data lineage](/observability/data-lineage).
 </ParamField>
 
 <ParamField path="pipelines.settings.triggers.save_in_code_automatically" type="boolean">
@@ -222,13 +210,6 @@ autopilot:
 
 <ParamField path="ai_config" type="object">
   Global AI-related settings (e.g., model providers).
-</ParamField>
-
-<ParamField path="autopilot.enabled" type="boolean">
-  Mage Pro only. Enables Autopilot runtime callbacks and signed Autopilot K8s
-  executor configuration for this project. Leave unset or set to `false` for
-  projects that should not accept Autopilot runtime package, runtime run, or
-  executor-config grants.
 </ParamField>
 
 <ParamField path="rag_config" type="object">
