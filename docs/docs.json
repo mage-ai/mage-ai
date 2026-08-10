@@ -25,6 +25,7 @@
               "pro-architecture/architecture-overview",
               "pro-architecture/saas",
               "pro-architecture/hybrid-cloud",
+              "pro-architecture/sidekick-tool-events",
               "pro-architecture/private-cloud",
               "pro-architecture/on-prem"
             ]
@@ -100,6 +101,7 @@
                 "group": "Data integrations",
                 "icon": "link",
                 "pages": [
+                  "data-integrations/data-explorer",
                   "data-integrations/sources/custom_source",
                   "contributing/data-integrations/adapt-existing-source",
                   "contributing/data-integrations/add-new-source",
@@ -284,6 +286,7 @@
                 "icon": "rotate",
                 "pages": [
                   "data-integrations/overview",
+                  "data-integrations/data-explorer",
                   "data-integrations/configuration",
                   {
                     "group": "Sources",
@@ -804,6 +807,7 @@
             "icon": "eye",
             "pages": [
               "observability/monitoring",
+              "observability/data-lineage",
               "observability/external/datadog",
               "observability/external/metaplane",
               "observability/external/newrelic",

@@ -5,10 +5,32 @@ icon: "envelopes"
 description: "Get status updates sent to your email inbox."
 ---
 
+import { ProOnly } from '/snippets/pro/only.mdx';
+
 <img
   alt="Email"
   src="https://yourreclaimedlife.com/wp-content/uploads/2018/12/email-marketing-without-permission.jpg"
 />
+
+## Configure alerts in the Mage Pro UI
+
+You can configure email alerts in the Mage Pro UI instead of editing
+`metadata.yaml` directly:
+
+1. For project defaults, go to **Settings > Account > Alerts**.
+2. For one pipeline, open the pipeline and go to **Alerts**. Pipeline-level
+   settings override the project-level alert config for that pipeline.
+3. Choose the alert outcomes, enable Email, and select a delivery method:
+   **Custom SMTP** or **Mage managed email**.
+4. Enter recipients or use managed API default recipients when they are
+   configured, then use **Send test notification** before saving. Custom SMTP
+   sends through your SMTP server; Mage managed email sends through the managed
+   notification service.
+
+You can still reference secrets with values such as
+`{{ env_var('MAGE_SMTP_PASSWORD') }}`.
+
+---
 
 ## Create notification_config
 
@@ -107,9 +129,6 @@ the host url you want to use in the notification messages.
 
 ### 🚀 Pro Only: Interpolate Mage Variables in Message Templates
 
-import { ProButton } from '/snippets/pro/button.mdx';
-import { ProOnly } from '/snippets/pro/only.mdx';
-
 <ProOnly source="notification" />
 
 If you're using **Mage Pro**, you can interpolate environment variables and other [Mage variables](/development/variables/referencing-variables#accessing-variables-in-mage) directly in your Email message templates using the familiar Jinja-like syntax:
@@ -131,6 +150,73 @@ following in your message templates in Mage Pro:
 1. `env` (this gets the value stored in the `ENV` environment variable)
 
 This makes your Email notifications more dynamic and context-aware — ideal for multi-environment deployments and advanced workflows.
+
+### Managed notification email delivery
+
+<ProOnly source="managed-notifications" />
+
+Mage Pro can send pipeline status emails through the managed notification delivery API instead of requiring each
+project to own SMTP credentials. The project or pipeline `metadata.yaml` owns who receives alerts, while the
+companion Mage Pro API deployment owns the provider credentials, idempotency, rate limiting, and delivery.
+Managed email uses the same notification title and body as SMTP email, including the pipeline run link when
+available.
+
+In the Mage UI, enable Email and choose **Mage managed email** as the delivery
+method. In `metadata.yaml`, enable managed email delivery with
+`notification_config.managed_config`:
+
+```yaml
+notification_config:
+  alert_on:
+    - trigger_failure
+    - trigger_passed_sla
+  managed_config:
+    enabled: true
+    channels:
+      - email
+    email_config:
+      to_emails:
+        - data-oncall@example.com
+    timeout: 10
+```
+
+Fields:
+
+- `enabled`: opt in to managed delivery.
+- `channels`: currently supports `email` only. Include `email` explicitly when you want managed email
+  delivery.
+- `email_config.to_emails`: optional direct customer email recipients. Mage trims, deduplicates, and forwards
+  these addresses to the managed API.
+- `timeout`: total seconds Mage waits for the managed API token exchange and delivery request. Mage caps this
+  value at `30` seconds. Provider-specific request timeouts are configured in the Mage Pro API service.
+
+Mage only forwards `email_config` when `to_emails` includes at least one address. Leave `to_emails`
+empty to use managed API default recipients when the operator has configured them.
+
+Managed notifications are email-only in this implementation. Do not configure `sms`, `sms_config`,
+`to_phone_numbers`, or phone recipients.
+
+Operators configure the companion Mage Pro API with deployment environment variables:
+
+| Environment variable | Default | Description |
+| --- | --- | --- |
+| `MANAGED_NOTIFICATION_DRY_RUN` | `true` | Keeps the API from contacting live providers while the API contract, recipient resolution, idempotency, and logging are validated. Set to `false` only after live recipients and provider credentials are approved. |
+| `MANAGED_NOTIFICATION_EMAIL_PROVIDER` | `ses` | Email provider. AWS SES SMTP is the default; SES aliases include `ses`, `ses-smtp`, `ses_smtp`, `aws-ses`, `aws_ses`, `aws-ses-smtp`, and `aws_ses_smtp`. Use `resend` for the legacy Resend provider. |
+| `MANAGED_NOTIFICATION_IDEMPOTENCY_TTL_SECONDS` | `86400` | How long the API replays completed idempotent responses and keeps duplicate-send protection for deterministic delivery keys. |
+| `MANAGED_NOTIFICATION_RATE_LIMIT_PER_MINUTE` | `60` | Per-cluster managed notification rate limit. Values less than or equal to `0` disable the limit. |
+| `MANAGED_NOTIFICATION_PROVIDER_TIMEOUT_SECONDS` | `10` | Provider request timeout used by SES SMTP or Resend delivery, and the short wait budget for in-progress idempotent responses. |
+
+For AWS SES SMTP, configure:
+
+- `AWS_SES_FROM_EMAIL`: sender address. `SES_FROM_EMAIL` is also accepted as a fallback.
+- `AWS_SES_USERNAME` and `AWS_SES_PASSWORD`: SES SMTP credentials.
+- `AWS_SES_REGION`, `AWS_REGION`, or `AWS_DEFAULT_REGION`: used to build `email-smtp.<region>.amazonaws.com`
+  when `AWS_SES_SMTP_HOST` is not set.
+- `AWS_SES_SMTP_HOST`: optional explicit SMTP host.
+- `AWS_SES_SMTP_PORT`: SMTP port, default `587`.
+- `AWS_SES_SMTP_STARTTLS`: whether to call STARTTLS, default `true`.
+
+For Resend, set `MANAGED_NOTIFICATION_EMAIL_PROVIDER=resend`, `RESEND_API_KEY`, and `RESEND_FROM_EMAIL`.
 
 ---
 

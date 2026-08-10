@@ -13,6 +13,7 @@ description: "Triggers for a pipeline."
   "id": 41,
   "last_pipeline_run_status": null,
   "name": "dark brook",
+  "next_pipeline_run_date": null,
   "pipeline_runs_count": 0,
   "pipeline_uuid": "dry_bird",
   "schedule_interval": "@once",
@@ -20,7 +21,8 @@ description: "Triggers for a pipeline."
   "settings": {
     "allow_blocks_to_fail": true,
     "create_initial_pipeline_run": true,
-    "skip_if_previous_running": false
+    "skip_if_previous_running": false,
+    "timeout": 3600
   },
   "sla": 950400,
   "start_time": "2023-03-01 22:04:00+00:00",
@@ -40,7 +42,8 @@ description: "Triggers for a pipeline."
 </ResponseField>
 
 <ResponseField name="event_matchers" type="array of objects">
-  Event matching logic for event triggers.
+  Deprecated. Legacy event matching logic returned for existing event triggers. New trigger
+  creation supports `api` and `time` schedule types.
 
   <Expandable title="properties">
     <ResponseField name="event_type" type="string" required>
@@ -67,7 +70,12 @@ description: "Triggers for a pipeline."
 </ResponseField>
 
 <ResponseField name="name" type="string" required>
-  Name of trigger.
+  Name of trigger. Names are trimmed before validation, must include at least one letter or
+  number, cannot exceed 255 characters, and must be unique within the pipeline.
+</ResponseField>
+
+<ResponseField name="next_pipeline_run_date" type="datetime">
+  Next scheduled execution date for the trigger, or `null` when no next run is scheduled.
 </ResponseField>
 
 <ResponseField name="pipeline_runs_count" type="integer">
@@ -82,7 +90,8 @@ description: "Triggers for a pipeline."
 </ResponseField>
 
 <ResponseField name="schedule_type" type="string" required>
-  Trigger type: `api`, `event`, `time`
+  Trigger type. Supported new trigger creation uses `api` or `time`; `event` may appear for
+  deprecated legacy event triggers.
 </ResponseField>
 
 <ResponseField name="settings" type="object">
@@ -109,11 +118,18 @@ description: "Triggers for a pipeline."
       If `true`, then new pipeline runs won’t be triggered until the most recent pipeline run is
       no longer running.
     </ResponseField>
+
+    <ResponseField name="timeout" type="integer">
+      Optional run timeout in seconds. When provided, the value is a positive integer. A `null`
+      or omitted value means no timeout.
+    </ResponseField>
   </Expandable>
 </ResponseField>
 
 <ResponseField name="sla" type="integer">
-  If the pipeline run has been running for more than the SLA value, then the pipeline will fail.
+  Optional SLA threshold in seconds. If the pipeline run has been running for more than the SLA
+  value, then the pipeline will fail. A positive integer enables SLA enforcement; `0` clears the
+  SLA on update.
 </ResponseField>
 
 <ResponseField name="start_time" type="datetime">

@@ -104,6 +104,14 @@ workspace has **Display local timezone** enabled, new terminal sessions use your
 browser's local IANA timezone for the prompt timestamp and the session `TZ`
 environment variable.
 
+Terminal sessions load Mage-managed safeguards for AI and Mage API access. Codex
+commands launched from the terminal use Mage Pro proxy authentication instead of
+provider API keys inherited by the shell. Direct shell calls from the browser
+terminal to Mage REST endpoints such as pipelines, pipeline runs, blocks, block
+runs, pipeline schedules, and status are blocked; use the Mage UI, the
+documented API from outside the workspace terminal, or Mage agent MCP tools for
+those operations.
+
 ### Conclusion
 
 The Git Terminal streamlines your development workflow by bringing version control directly into the Mage Pro environment. 

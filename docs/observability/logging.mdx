@@ -10,6 +10,23 @@ The server logger can be configured to adjust the amount of detail that is inclu
 
 The `SERVER_VERBOSITY` variable accepts the following values: `DEBUG`, `INFO`, `WARNING`, `ERROR` and `CRITICAL`.
 
+## AI Sidekick logging
+
+Mage Pro AI Chat emits structured server-side app logs through the `mage_ai.ai.sidekick` logger with the `ai_sidekick` message prefix. These logs include the Sidekick turn lifecycle, app-server request timings, proxy API probe and session timings, MCP callback URL shape, session and turn identifiers, lease identifiers, sanitized errors, issue responses, and terminal cleanup state.
+
+Message bodies, prompts, tokens, and secrets are not logged. Sidekick logging is enabled by default; set `MAGE_CODEX_CHAT_SERVER_LOGGING` to `0`, `false`, `no`, or `off` to disable it. Set `MAGE_CODEX_CHAT_SERVER_LOG_VALUE_MAX_CHARS` to control the maximum retained length for each structured log value.
+
+Example server app log lines:
+
+```text
+INFO:mage_ai.ai.sidekick:ai_sidekick {"component":"ai_sidekick","event":"turn_context_built","lease_id":"lease-123","mcp_api_url_host":"127.0.0.1","mcp_api_url_path":"/mageai-1-dev","mcp_api_url_port":6789,"prompt_length":824,"runner":"codex_app_server","session_uuid":"session-123","turn_uuid":"turn-123"}
+INFO:mage_ai.ai.sidekick:ai_sidekick {"component":"ai_sidekick","duration_ms":31,"event":"app_server_request_complete","method":"thread/start","request_id":2,"response_keys":["thread"],"runner":"codex_app_server","session_uuid":"session-123","turn_uuid":"turn-123"}
+WARNING:mage_ai.ai.sidekick:ai_sidekick {"component":"ai_sidekick","duration_ms":42,"event":"app_server_request_error_response","json_rpc_error_code":-32603,"json_rpc_error_keys":["code","message"],"json_rpc_error_message":"CONFIG_INVALID","method":"tools/call","request_id":7,"runner":"codex_app_server","session_uuid":"session-123","turn_uuid":"turn-123"}
+WARNING:mage_ai.ai.sidekick:ai_sidekick {"attempt":1,"component":"ai_sidekick","duration_ms":244,"error":"HTTP 503","event":"model_proxy_status_probe_attempt_failed","status_code":503,"status_url_host":"api.mage.local","status_url_path":"/api/status"}
+ERROR:mage_ai.ai.sidekick:ai_sidekick {"component":"ai_sidekick","duration_ms":612,"event":"model_proxy_session_failed","runner":"model_proxy_session_broker","session_uuid":"session-123","turn_uuid":"turn-123","upstream_error_message":"Proxy unavailable","upstream_error_type":"proxy_unavailable","upstream_status_code":503,"user_id":"user-123"}
+INFO:mage_ai.ai.sidekick:ai_sidekick {"component":"ai_sidekick","duration_ms":18431,"event":"turn_cleanup","final_status":"completed","notification_counts":{"turn/completed":1},"projected_event_counts":{"final_response":1},"runner":"codex_app_server","session_uuid":"session-123","turn_uuid":"turn-123"}
+```
+
 ## Server logging format
 
 You can customize the format by setting the `SERVER_LOGGING_FORMAT` environment variable. By default it is set as

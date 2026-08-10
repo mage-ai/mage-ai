@@ -278,6 +278,13 @@ When you modify a shared block:
 3. **Communicate changes** - Notify team members about significant modifications
 4. **Version control** - Use Git to track changes and enable rollbacks if needed
 
+### Deleting shared blocks
+
+When you delete a shared block from the pipeline editor, choose whether to remove only the pipeline reference or remove the block file too:
+
+- **Remove from this pipeline only** - Removes the block from the current pipeline and keeps the shared block file available to other pipelines.
+- **Remove and delete the block file** - Permanently deletes the block file only when the block is not a replica and no other pipeline uses that file. This option is disabled when deleting the file would break another pipeline or replica.
+
 ### Detaching blocks when needed
 
 If you need to customize a shared block for a specific pipeline:

@@ -70,16 +70,24 @@ the pod template is built, so `executor_config.resource_requests` and
 
 ### 1. Environment Variable Defaults
 
-Use environment variables to set default resource requests, resource limits, and
-service account for all Kubernetes executor jobs. These values are only applied
-when a more specific project, pipeline, or block config does not set the same
-resource group.
+Use environment variables to set default resource requests, resource limits,
+maximum allowed resource requests, maximum allowed resource limits, and service
+account for all Kubernetes executor jobs. Default values are only applied when a
+more specific project, pipeline, or block config does not set the same resource
+group. Maximum values are Mage Pro-only guardrails: after environment defaults,
+project config, pipeline config, and block config are merged, Mage fails the job
+before creating the Kubernetes Job if the effective request or limit exceeds a
+configured maximum.
 
 ```bash
 export K8S_EXECUTOR_DEFAULT_RESOURCE_REQUESTS_CPU=250m
 export K8S_EXECUTOR_DEFAULT_RESOURCE_REQUESTS_MEMORY=512Mi
 export K8S_EXECUTOR_DEFAULT_RESOURCE_LIMITS_CPU=500m
 export K8S_EXECUTOR_DEFAULT_RESOURCE_LIMITS_MEMORY=1Gi
+export K8S_EXECUTOR_MAX_RESOURCE_REQUESTS_CPU=2000m
+export K8S_EXECUTOR_MAX_RESOURCE_REQUESTS_MEMORY=4Gi
+export K8S_EXECUTOR_MAX_RESOURCE_LIMITS_CPU=4000m
+export K8S_EXECUTOR_MAX_RESOURCE_LIMITS_MEMORY=8Gi
 export K8S_EXECUTOR_DEFAULT_SERVICE_ACCOUNT_NAME=default
 ```
 
@@ -103,35 +111,14 @@ k8s_executor_config:
     cpu: 500m
     memory: 1024Mi
   service_account_name: default
-  # Node scheduling configurations
   pod:
     node_selector:
-      node-type: gpu
-      instance-type: c5.large
-    scheduler_name: custom-scheduler
+      workload: batch
     tolerations:
-      - key: "nvidia.com/gpu"
-        operator: "Exists"
+      - key: "workload"
+        operator: "Equal"
+        value: "batch"
         effect: "NoSchedule"
-    affinity:
-      nodeAffinity:
-        requiredDuringSchedulingIgnoredDuringExecution:
-          nodeSelectorTerms:
-            - matchExpressions:
-                - key: "node-type"
-                  operator: "In"
-                  values: ["gpu", "compute"]
-      podAntiAffinity:
-        requiredDuringSchedulingIgnoredDuringExecution:
-          - labelSelector:
-              matchLabels:
-                app: mage-pipeline
-            topologyKey: "kubernetes.io/hostname"
-    volumes:
-      - name: data-volume
-        persistent_volume_claim:
-          claim_name: mage-data-pvc
-    image_pull_secrets: my-registry-secret
 ```
 
 ✅ **Use when:**
@@ -494,8 +481,12 @@ Kubernetes Metrics API fallback when available.
 Pipeline-level recommendations are available in Mage Pro after completed K8s
 executor runs have stored CPU or memory samples. Mage calculates the suggested
 `resource_requests` and `resource_limits` from observed usage, then shows the
-values in the pipeline monitoring page so you can copy them into
-`executor_config` or `k8s_executor_config`.
+values in the pipeline monitoring page. Open **Monitoring** for a pipeline, then
+review **Pipeline resource usage** for compute metrics history and **Pipeline
+Recommended K8s executor config** for the recommended Kubernetes executor
+config. Use **Apply** to write the recommendation to the pipeline-level
+`executor_config`, or copy the values into block-level `executor_config` or
+project-level `k8s_executor_config` when you want a narrower or broader scope.
 
 **How recommendations are calculated:**
 
@@ -514,6 +505,13 @@ completes, controlled by
 completed runs. When unset, the completion delay defaults to
 `K8S_RESOURCE_USAGE_PROMETHEUS_STEP_SECONDS`.
 
+The Kubernetes Metrics API fallback samples active pods only. To use it, install
+Metrics Server, confirm `v1beta1.metrics.k8s.io` is available, and grant the
+Mage service account `get` and `list` access to `pods.metrics.k8s.io` in the K8s
+executor job namespace. Because the Metrics API does not keep historical pod
+samples after pods finish, short runs can still have sparse metrics; use
+Prometheus when you need reliable completed-run history.
+
 | Variable | Purpose | Default |
 | --- | --- | --- |
 | `K8S_RESOURCE_USAGE_PROMETHEUS_URL` | Prometheus base URL for K8s resource usage summaries | — |
@@ -525,16 +523,19 @@ completed runs. When unset, the completion delay defaults to
 | `K8S_RESOURCE_USAGE_PROMETHEUS_COMPLETION_DELAY_SECONDS` | Delay before retrying Prometheus for completed runs with too few samples | `K8S_RESOURCE_USAGE_PROMETHEUS_STEP_SECONDS` |
 | `K8S_RESOURCE_USAGE_PROMETHEUS_VERIFY_TLS` | Set to `0`, `false`, `no`, or `off` to skip TLS certificate verification | `true` |
 
-See [Monitoring with Prometheus](/observability/external/prometheus#kubernetes-resource-usage-in-mage-pro) for Prometheus query behavior and authentication details.
+See [Monitoring with Prometheus](/observability/external/prometheus#kubernetes-resource-usage-in-mage-pro) for Prometheus query behavior, authentication details, and Kubernetes Metrics API fallback setup.
 
 ### Default Resource Configuration
 
 <ProOnly source="kubernetes-executor" />
 
 
-These environment variables set default resource limits and requests for all K8s executor jobs.
-They are applied when a project-level, pipeline-level, or block-level configuration does not
-specify resource requests or limits.
+These environment variables set default resource limits and requests, maximum
+allowed resource limits and requests, and the default service account for all
+K8s executor jobs. Defaults are applied when project-level, pipeline-level, or
+block-level configuration does not specify resource requests or limits.
+Maximums are Mage Pro-only guardrails enforced after environment defaults,
+project-level config, pipeline-level config, and block-level config are merged.
 
 | Variable                                      | Purpose                                    | Example Value |
 |-----------------------------------------------|--------------------------------------------|---------------|
@@ -542,6 +543,10 @@ specify resource requests or limits.
 | `K8S_EXECUTOR_DEFAULT_RESOURCE_REQUESTS_MEMORY` | Default memory request for executor jobs | `512Mi`       |
 | `K8S_EXECUTOR_DEFAULT_RESOURCE_LIMITS_CPU`    | Default CPU limit for executor jobs        | `500m`        |
 | `K8S_EXECUTOR_DEFAULT_RESOURCE_LIMITS_MEMORY` | Default memory limit for executor jobs     | `1Gi`         |
+| `K8S_EXECUTOR_MAX_RESOURCE_REQUESTS_CPU`      | Maximum CPU request allowed for executor jobs | `2000m`    |
+| `K8S_EXECUTOR_MAX_RESOURCE_REQUESTS_MEMORY`   | Maximum memory request allowed for executor jobs | `4Gi`   |
+| `K8S_EXECUTOR_MAX_RESOURCE_LIMITS_CPU`        | Maximum CPU limit allowed for executor jobs | `4000m`     |
+| `K8S_EXECUTOR_MAX_RESOURCE_LIMITS_MEMORY`     | Maximum memory limit allowed for executor jobs | `8Gi`    |
 | `K8S_EXECUTOR_DEFAULT_SERVICE_ACCOUNT_NAME`   | Default service account for executor jobs  | `default`     |
 
 **Priority order without a default config file** (highest to lowest):

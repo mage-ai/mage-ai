@@ -14,18 +14,36 @@ api: "PUT /api/pipeline_schedules/:id"
 <ParamField body="pipeline_schedule" type="object" required>
   <Expandable title="payload" defaultOpen="true">
     <ParamField body="event_matchers" type="array of objects">
+      Deprecated. Used only for maintaining existing legacy event triggers.
     </ParamField>
     <ParamField body="name" type="string">
+      Trigger names are trimmed before validation. The name must include at least one letter or
+      number, cannot exceed 255 characters, and must be unique within the pipeline.
     </ParamField>
     <ParamField body="schedule_interval" type="string">
+      Required when `schedule_type` is `time`.
     </ParamField>
     <ParamField body="schedule_type" type="string">
+      Trigger type. Use `api` or `time` for supported non-legacy triggers. `event` is deprecated
+      and only used for existing legacy event triggers.
     </ParamField>
     <ParamField body="settings" type="object">
+      Additional settings for the trigger.
+
+      <Expandable title="properties">
+        <ParamField body="timeout" type="integer">
+          Optional run timeout in seconds. When provided, the value must be a positive integer.
+          Use `null` or omit this field for no timeout.
+        </ParamField>
+      </Expandable>
     </ParamField>
     <ParamField body="sla" type="integer">
+      Optional SLA threshold in seconds. When provided, the value must be a positive integer.
+      Use `0` or `null` to clear an existing SLA, or omit this field for no SLA change.
     </ParamField>
     <ParamField body="start_time" type="datetime">
+      Persisted schedule start timestamp. For `@once`, this value determines the single run time;
+      for recurring time schedules, it anchors when the schedule begins.
     </ParamField>
     <ParamField body="status" type="string">
     </ParamField>
@@ -43,7 +61,6 @@ curl --request PUT \
     "pipeline_schedule": {
       "name": "black voice11111",
       "schedule_type": "time",
-      "event_matchers": [],
       "schedule_interval": "@once",
       "start_time": "2023-03-06 04:53:00",
       "variables": {
@@ -54,7 +71,8 @@ curl --request PUT \
       "settings": {
         "allow_blocks_to_fail": true,
         "create_initial_pipeline_run": false,
-        "skip_if_previous_running": true
+        "skip_if_previous_running": true,
+        "timeout": 3600
       }
     }
   }'
@@ -82,7 +100,8 @@ curl --request PUT \
     "settings": {
       "allow_blocks_to_fail": true,
       "create_initial_pipeline_run": false,
-      "skip_if_previous_running": true
+      "skip_if_previous_running": true,
+      "timeout": 3600
     },
     "event_matchers": []
   }

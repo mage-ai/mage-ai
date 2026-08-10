@@ -112,7 +112,7 @@ def check_condition(**kwargs) -> bool:
 <Note>
   This example is using a helper function called `check_status` that handles the
   logic for retrieving the status of a pipeline run for `transform_users` on the
-  current execution date. You can optionally pass block uuid and hours 
+  current execution date. You can optionally pass block uuid and hours
   parameters to `check_status` to check the status of a block run or within a
   interval of time.
 </Note>
@@ -144,13 +144,14 @@ Some examples of data products produced by blocks:
 A trigger is a set of instructions that determine when or how a pipeline should
 run. A pipeline can have 1 or more triggers.
 
-There are 3 types of triggers:
+New trigger creation supports 2 trigger types:
 
 1. Schedule
 
-2. Event
+2. API
 
-3. API
+Event triggers are deprecated and may only appear for existing legacy
+configurations.
 
 ### Schedule
 
@@ -171,22 +172,11 @@ Currently, the frequency pipelines can be scheduled for include:
 
 - Every N minutes (coming soon)
 
-### Event
+### Deprecated Event
 
-An event-type trigger will instruct the pipeline to run whenever a specific
-event occurs.
-
-For example, you can have a pipeline start running when a database query is
-finished executing or when a new object is created in Amazon S3 or Google
-Storage.
-
-You can also trigger a pipeline using your own custom event by making a `POST`
-request to the `http://localhost/api/events` endpoint with a custom event
-payload.
-
-Check out this
-[**tutorial**](/orchestration/triggers/events/aws) on how
-to create an event trigger.
+Event triggers are deprecated for new trigger creation. Use API triggers for new
+event-driven or webhook-style workflows. Existing legacy event triggers may
+still appear in older projects.
 
 ### API
 

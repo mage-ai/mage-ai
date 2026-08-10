@@ -35,11 +35,11 @@ Here are the steps to create and configure triggers via code:
         ```
     1. **Required trigger fields**
         - `name`: Unique identifier of the trigger (per pipeline).
-        - `schedule_type`: `time`, `api`, or `event`. Determines how the trigger runs (schedule vs API vs event).
+        - `schedule_type`: `time` or `api` for new triggers. `event` is deprecated and should only be used to maintain existing legacy event triggers.
         - For **time (schedule)** triggers: `schedule_interval` and `start_time` are required.
             - `schedule_interval`: `@once`, `@hourly`, `@daily`, `@weekly`, `@monthly`, `@always_on`, or a Cron expression (e.g. `* * * * *`).
-            - `start_time`: When the schedule starts (e.g. `2023-01-01` or `2023-01-01 00:00:00`).
-        - For **api** and **event** triggers: `schedule_interval` and `start_time` are typically not used for execution but may still be present in the config.
+            - `start_time`: Persisted schedule start timestamp. For `@once`, this is the single run time (e.g. `2023-01-01` or `2023-01-01 00:00:00`).
+        - For **api** triggers: `schedule_interval` and `start_time` are typically not used for execution but may still be present in the config.
     1. **Optional trigger fields**
         - `status`: `active` or `inactive`. Defaults to `inactive` if omitted.
         - `variables`: A dictionary of [runtime variables](/getting-started/runtime-variable) for this trigger.
@@ -53,9 +53,9 @@ Here are the steps to create and configure triggers via code:
 1. Save the `triggers.yaml` file. On the next scheduler run, trigger configs are synced to the database (subject to the envs filter) and then show in the Triggers UI.
     1. Required trigger fields
         1. `name`: Unique identifier of the trigger
-        1. `schedule_type`: `time`, `api`, or `event`
+        1. `schedule_type`: `time` or `api` for new triggers. `event` is deprecated for legacy event triggers only.
         1. `schedule_interval`: `@once`, `@hourly`, `@daily`, `@weekly`, `@monthly`, `@always_on`, or Cron syntax(`* * * * *`)
-        1. `start_time`: The start time of the trigger (e.g. `2023-01-01`)
+        1. `start_time`: Persisted schedule start timestamp. For `@once`, this is the single run time (e.g. `2023-01-01`)
     1. Optional trigger fields
         1. `status`: `active` or `inactive`
         1. `variables`: A dictionary of variables that's associated with the trigger
@@ -120,21 +120,33 @@ If an existing trigger is defined in the YAML file, changes flow both ways: upda
 
 The `triggers.yaml` file is synced into the database automatically, but **deletions work differently**:
 
-- **Deleting triggers completely:**
-  Removing a trigger from the YAML file does not delete it from the database. You must delete the trigger in the UI on each instance where it exists.
-  - In the Pipeline triggers table (`/pipeline/[pipeline_uuid]/triggers`), click the trash can icon.
-  - In **Mage Pro**, right-click on the trigger row and click <b>Delete</b>.
+- **Delete one trigger:** Removing a trigger from the YAML file does not delete it from the database.
+  Delete it in the UI on each instance where it exists:
+  - In the Pipeline triggers table (`/pipelines/[pipeline_uuid]/triggers`), click the trash can icon.
+  - In **Mage Pro**, right-click the trigger row and click <b>Delete</b>.
 
-  This removes the trigger from both the database and the pipeline’s `triggers.yaml` config file. If you added an [envs filter](#envs-filter) and the trigger was already created on other instances, delete it manually on those instances as well; sync does not remove triggers from the database.
+- **Delete selected triggers in Mage Pro:** On the global Triggers page, select one or more rows on
+  the current page, open <b>Actions</b>, and choose <b>Delete selected (N)</b>. Selection applies only
+  to the visible page and does not carry across pagination.
 
-- **Alternative to deletion:**
-  Instead of deleting, you can update the trigger status in the YAML file (e.g. set `status: inactive`).
-  Removing a trigger from the yaml file won’t delete it from the database. You will need to delete the trigger in the UI.
-  - In the Pipeline triggers table (`/pipeline/[pipeline_uuid]/triggers`), click the trash can icon.
-  - In **Mage Pro**, right-click on the trigger row and click <b>Delete</b>.
+- **Delete matching triggers in Mage Pro:** Apply at least one search term or filter on the global
+  Triggers page, then open <b>Actions</b> and choose <b>Delete matching triggers</b>. This action is
+  unavailable without a search term or filter. Mage previews the matching count across all pages
+  and requires you to type `DELETE` exactly before deletion. If the set of matching triggers
+  changes after the preview, Mage stops the deletion so you can review the filters again. Triggers
+  outside the current search and filters are not deleted.
 
-  This ensures the trigger is removed both from the database and from the pipeline’s `triggers.yaml` config file.
+The Mage Pro bulk deletion actions require Editor access. Each request can delete up to 100 triggers
+and cancel up to 100 associated active runs; refine the selection or filters, or wait for active runs
+to finish, if either limit is exceeded. It removes each trigger's database record and its definition
+from the pipeline's `triggers.yaml` file. Mage marks observed `initial` and `running` pipeline-run and
+block-run records as cancelled and attempts to stop their executors. Executor cancellation is best
+effort, so a worker or a run created concurrently by another scheduler process may continue after the
+trigger is deleted. Run and block-run history is preserved, and completed, failed, and
+already-cancelled runs are unchanged. After Mage commits the trigger's inactive state, a cancellation
+or final deletion failure leaves the trigger and its YAML definition inactive so you can retry. If an
+[envs filter](#envs-filter) previously created the trigger on other instances, delete it manually on
+those instances as well; sync does not remove triggers from their databases.
 
-- **Alternative to deletion:**
-  Instead of deleting, you can update the trigger status in the yaml file (e.g. set `status: inactive`).
-  Status changes are automatically synced to the database and UI.
+As a reversible alternative, set the trigger's `status` to `inactive` in `triggers.yaml`. Status
+changes are automatically synced to the database and UI.

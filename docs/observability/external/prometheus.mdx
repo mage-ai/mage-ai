@@ -119,6 +119,84 @@ query a shared Prometheus service directly. Route resource usage requests
 through a tenant-aware gateway, such as `mage-pro-api`, so authentication,
 authorization, and tenant label scoping happen before Prometheus is queried.
 
+### Kubernetes Metrics API fallback
+
+When `K8S_RESOURCE_USAGE_PROMETHEUS_URL` is unset, Mage Pro can use the
+Kubernetes Metrics API as a best-effort fallback. The fallback samples active
+K8s executor pods while the job is still running, then stores average and peak
+CPU/RAM from the collected snapshots. It does not provide historical pod
+metrics after Kubernetes removes the pod, so Prometheus is still recommended for
+completed runs, fast runs, and long-term pipeline monitoring history.
+
+Install Metrics Server if your cluster does not already expose
+`metrics.k8s.io`:
+
+```bash
+helm repo add metrics-server https://kubernetes-sigs.github.io/metrics-server/
+helm repo update
+
+helm upgrade --install metrics-server metrics-server/metrics-server \
+  --namespace kube-system
+```
+
+Verify the APIService is available:
+
+```bash
+kubectl get apiservice v1beta1.metrics.k8s.io
+```
+
+Verify Metrics Server returns pod metrics in the namespace where K8s executor
+jobs run:
+
+```bash
+kubectl top pods -n <job-namespace>
+```
+
+The Mage service account that runs the web/server process must be able to read
+pod metrics:
+
+```bash
+kubectl auth can-i get pods.metrics.k8s.io \
+  --as system:serviceaccount:<mage-namespace>:<mage-service-account>
+```
+
+If the command returns `no`, grant read access to `pods.metrics.k8s.io` in the
+namespace where job pods run:
+
+```yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: mage-k8s-metrics-reader
+  namespace: <job-namespace>
+rules:
+  - apiGroups:
+      - metrics.k8s.io
+    resources:
+      - pods
+    verbs:
+      - get
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: mage-k8s-metrics-reader
+  namespace: <job-namespace>
+subjects:
+  - kind: ServiceAccount
+    name: <mage-service-account>
+    namespace: <mage-namespace>
+roleRef:
+  kind: Role
+  name: mage-k8s-metrics-reader
+  apiGroup: rbac.authorization.k8s.io
+```
+
+If the UI shows the Metrics API fallback as unavailable, check that the run used
+the Kubernetes executor, that Mage identified the job pod, that the pod stayed
+running long enough to be sampled, and that `kubectl top pods` works for active
+pods in the job namespace.
+
 ### Configuration reference
 
 | Variable | Description | Default |

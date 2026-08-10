@@ -4,15 +4,28 @@ api: "DELETE /api/pipelines/:pipeline_uuid/blocks/:block_uuid"
 ---
 `DELETE /api/pipelines/:pipeline_uuid/blocks/:block_uuid`
 
-Delete a block from a pipeline.
+Delete a block from a pipeline. By default, this removes the block from the pipeline and keeps the block file in the project.
 
 By default, blocks with downstream dependencies may not be deleted. To force delete blocks, set the `force` query parameter to the boolean `True`.
+
+To also delete the underlying block file, set the `delete_file` query parameter to the boolean `True`. File deletion is only allowed when the block is not a replica and no other pipeline uses the same block file.
 
 The following example deletes a fictional block `winter_wildflower` from the `broken_wave` pipeline.
 <RequestExample>
 
 ```bash Request
 curl 'http://localhost:6789/api/pipelines/broken_wave/blocks/winter_wildflower?block_type=data_loader&api_key=zkWlN0PkIKSN0C11CfUHUj84OT5XOJ6tDZ6bDRO2&force=True' \
+  -X 'DELETE'
+```
+
+</RequestExample>
+
+The following example removes the block from the pipeline and deletes its block file.
+
+<RequestExample>
+
+```bash Request
+curl 'http://localhost:6789/api/pipelines/broken_wave/blocks/winter_wildflower?block_type=data_loader&api_key=zkWlN0PkIKSN0C11CfUHUj84OT5XOJ6tDZ6bDRO2&force=True&delete_file=True' \
   -X 'DELETE'
 ```
 

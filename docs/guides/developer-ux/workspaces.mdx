@@ -37,6 +37,38 @@ The Mage team will need to enable this feature for your organization.
 - **Step 5**: Click the create button and wait a few minutes for your workspace to start.
 - **Step 6**: Once your workspace is running, click the workspace open button under the open column in the workspace management interface.
 
+### Troubleshoot pending or failed Kubernetes workspaces
+
+For Kubernetes workspaces, administrators can review **Pod diagnostics** on the workspace detail page. The panel shows recent warning events and actionable container states, including image pull failures, scheduling failures caused by node affinity or insufficient resources, and non-zero container exits. Each diagnostic can include the Kubernetes reason, message, occurrence or restart count, and elapsed time. Mage limits the panel to the five most relevant diagnostics and truncates long Kubernetes messages.
+
+The panel is visible only to administrators and appears only while a Kubernetes workspace is not running and Kubernetes returns diagnostics. After the workspace recovers and reaches `RUNNING`, Mage clears the panel instead of presenting retained Kubernetes warning events as current failures. If the Mage control-plane service account cannot list pod events, workspace status remains available but Kubernetes event messages are omitted. Mage Helm chart `0.2.16` and later grant the required `list` verb for the core Kubernetes `events` resource through the existing namespace-scoped `Role`; see [helm-charts #94](https://github.com/mage-ai/helm-charts/pull/94). For manual same-namespace installations, add the following rule and binding in the namespace where Mage manages its workspaces:
+
+```yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: mage-workspace-event-reader
+  namespace: <mage-workspace-namespace>
+rules:
+  - apiGroups: [""]
+    resources: ["events"]
+    verbs: ["list"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: mage-workspace-event-reader-binding
+  namespace: <mage-workspace-namespace>
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: mage-workspace-event-reader
+subjects:
+  - kind: ServiceAccount
+    name: <mage-control-plane-service-account>
+    namespace: <mage-workspace-namespace>
+```
+
 ## Workspace Configuration Options
 
 Mage Pro workspaces support comprehensive configuration options that allow you to customize your workspace environment, resources, and behavior. Configuration options vary by cluster type (Kubernetes, Docker).

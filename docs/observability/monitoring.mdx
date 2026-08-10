@@ -6,8 +6,9 @@ description:
   "You can monitor many metrics for each of your pipelines and blocks."
 ---
 
-Soon, you'll be able to monitor aggregate metrics across all pipelines and
-blocks.
+Use the Overview page to monitor aggregate pipeline run health across your
+project. The monitoring panels show recent run status, failing runs, active
+runs, and trigger activity for the selected time range.
 
 <img
   alt="Monitoring"
@@ -33,3 +34,14 @@ monitoring dashboard can show historical peak CPU and memory usage, sample
 counts, and copied resource request and limit recommendations based on stored
 run metrics. See [Monitoring with Prometheus](/observability/external/prometheus#kubernetes-resource-usage-in-mage-pro)
 to set up Prometheus as the preferred resource usage source.
+
+## Overview monitoring actions
+
+The Overview page includes actions for the monitoring panels:
+
+- **Fix runs** opens AI Sidekick with a prompt to investigate failing runs for
+  the selected time range.
+- **Analyze runs** opens AI Sidekick with a prompt to inspect active runs for
+  the selected time range.
+- **View triggers** opens the trigger list, preserving the selected compute
+  cluster filter when one is active.

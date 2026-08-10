@@ -5,6 +5,8 @@ description: "Learn how to create and use custom block templates and pipeline te
 icon: "book"
 ---
 
+import { ProOnly } from '/snippets/pro/only.mdx';
+
 ## Overview
 
 User-defined templates allow you to create reusable code patterns for blocks and pipelines, enabling faster development and consistent coding standards across your organization. Templates can include placeholders for customization and can be shared across projects.
@@ -64,7 +66,8 @@ The template library provides a centralized location to manage all your block an
 **Template Library Features:**
 - **Template categories** - Filter templates by type (Blocks or Pipelines)
 - **Block template categories** - Filter block templates by block type
-- **Pipeline template sources** - Browse all pipeline templates or team-created pipeline templates
+- **Team pipeline templates** - Manage pipeline templates created from pipelines in your project; built-in starting points are available from the pipeline creation flow
+- **Pipeline template discovery** - Search and filter the broader built-in catalog from **New pipeline** > **From a template**; the customization page remains focused on Team templates
 - **Template preview** - View template details before using
 - **Template management** - Edit, delete, or duplicate existing templates
 
@@ -76,9 +79,10 @@ The template library provides a centralized location to manage all your block an
 
 **Viewing Pipeline Templates:**
 - **Open Pipeline templates** - Click the Pipelines tab in the template library or go directly to `/apps/templates/pipelines`
-- **Filter by source** - Select **All templates** or **Team** in the pipeline template navigation
+- **Manage team templates** - This customization page lists only reusable pipeline templates created and maintained in your Mage project
+- **Browse built-in starting points** - From the Pipelines page, choose **New pipeline**, then **From a template** to browse Basics, General purpose, and Industry solutions alongside Team templates
 - **View template details** - See template name, description, and metadata
-- **Select template** - Click on a template to use it for creating new pipelines
+- **Select a team template** - Click a Team template to inspect or customize it
 
 ### Using block templates
 
@@ -93,13 +97,46 @@ The template library provides a centralized location to manage all your block an
 
 ## Pipeline Templates
 
+<ProOnly source="pipeline-template-catalog" />
+
+### Built-in pipeline template catalog
+
+Mage Pro provides three built-in sources alongside templates created by your team:
+
+- **Basics** are remotely provided example pipelines for learning Mage fundamentals and common block patterns.
+- **General purpose** templates are starting points for recurring workflows such as ingestion, data quality, streaming, and AI context preparation.
+- **Industry solutions** adapt common patterns to outcomes in areas such as retail, financial services, healthcare, manufacturing, and logistics.
+
+Browse these templates from **Pipelines** > **New pipeline** > **Browse templates**. Mage loads lightweight catalog metadata while you browse and downloads a template's blocks only after you select it.
+
+<Info>
+  General purpose and Industry solution templates are production-oriented starting points, not zero-configuration demos. Review and adapt them before using them with production data.
+</Info>
+
+Each generated pipeline begins with an **overview and setup** Markdown block that lists its required credentials, identifiers, columns, dependencies, expected output, and limitations.
+
+Configure templates in two places:
+
+- Put non-sensitive settings in each block's **USER CONFIGURATION** dictionary. Runtime variables can override matching lowercase settings when they must differ by run or environment.
+- Put credentials in [`io_config.yaml`](/development/io_config_setup). Source and destination blocks select connections by their configured tags, so keep secrets out of block configuration and runtime variables.
+
+Before a first run:
+
+1. Read the **overview and setup** block.
+2. Supply the required settings and create the named connection profiles.
+3. Start in `dry_run` mode. Loaders return a sample DataFrame and exporters skip destination writes, so you can inspect the transformation without connecting to external systems.
+4. Turn off `dry_run`, then run the blocks in order with the smallest representative input supported by the template.
+5. Before scheduling, choose an idempotent write policy and add your organization's monitoring, recovery, privacy, and retention controls.
+
+Catalog administrators configure the source with `MAGE_PRO_TEMPLATES_ENDPOINT` and the server-side `MAGE_PRO_TEMPLATES_API_TOKEN`. Catalog updates do not require a new Mage image, and Mage keeps the last successfully fetched catalog available during temporary refresh failures.
+
 ### Creating pipeline templates
 
 Pipeline templates define complete pipeline structures that can be customized for different use cases.
 
 **Steps to create a pipeline template:**
 
-1. **Navigate to Pipeline templates** - Open **Templates**, then **Pipeline templates**, or go directly to `/apps/templates/pipelines`.
+1. **Navigate to Team pipeline templates** - Open **Templates**, then **Pipeline templates**, or go directly to `/apps/templates/pipelines`. This customization page lists only templates created and maintained by your team.
 2. **Create new template from an existing pipeline** - From the pipeline list, right-click the pipeline you want to reuse and select the action to create a template. This opens `/apps/templates/pipelines/new?pipeline_uuid={pipeline_uuid}`.
 3. **Configure template settings** - Set the template UUID, name, description, and other properties.
 4. **Save template** - The pipeline structure will be saved as a reusable template.
@@ -127,9 +164,12 @@ custom_templates/pipelines/
 1. **Navigate to the pipelines page** in your project
 2. **Click "New"** button to open the pipeline creation menu
 3. **Select "From a template"** from the dropdown options
-4. **Choose your template** from the available pipeline templates
-5. **Customize the pipeline** - Modify blocks, connections, and settings as needed
-6. **Save the pipeline** with your specific configuration
+4. **Choose a source** - Start in All templates, or select Basics, General purpose, Industry solutions, or Team
+5. **Find a template** - Search the catalog or apply the filters available for the selected source
+6. **Choose your template** from the available pipeline templates
+7. **Review the configuration guidance** - For a General purpose or Industry solution template, open its first **overview and setup** Markdown block and supply the required credentials, identifiers, schemas, and business rules
+8. **Customize the pipeline** - Modify blocks, connections, and settings as needed
+9. **Save the pipeline** with your specific configuration
 
 <Info>
   **Note**: Pipeline templates are created from existing pipelines using the right-click context menu. This allows you to reuse successful pipeline patterns across your projects.
