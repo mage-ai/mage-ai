@@ -25,7 +25,6 @@
               "pro-architecture/architecture-overview",
               "pro-architecture/saas",
               "pro-architecture/hybrid-cloud",
-              "pro-architecture/sidekick-tool-events",
               "pro-architecture/private-cloud",
               "pro-architecture/on-prem"
             ]
@@ -807,7 +806,6 @@
             "icon": "eye",
             "pages": [
               "observability/monitoring",
-              "observability/data-lineage",
               "observability/external/datadog",
               "observability/external/metaplane",
               "observability/external/newrelic",
