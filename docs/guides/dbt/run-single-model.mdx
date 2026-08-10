@@ -112,6 +112,43 @@ If the upstream block is dynamic, Mage resolves the output for the current
 dynamic run and passes that value to the dbt model. For structured outputs, use
 `parse` to return a scalar value that is valid SQL.
 
+### Run one dbt model for each dynamic output
+
+For example, create a data loader named `dynamic_cities` that returns one item
+for each dbt model run:
+
+```python
+@data_loader
+def load_dynamic_cities(*args, **kwargs):
+    outputs = [
+        [{'city': 'seattle'}],
+        [{'city': 'portland'}],
+    ]
+    metadata = [{}, {}]
+
+    return [outputs, metadata]
+```
+
+In the Pipeline Editor, mark `dynamic_cities` as a dynamic block. Then add a dbt
+SQL model directly downstream from it:
+
+```sql
+select
+  '{{ block_output(
+      "dynamic_cities",
+      parse=lambda rows: rows[0]["city"]
+  ) }}' as city
+```
+
+When the pipeline runs, Mage creates two dynamic runs of the downstream dbt
+block. The first run receives the output at index `0` and executes SQL containing
+`select 'seattle' as city`. The second receives index `1` and executes SQL
+containing `select 'portland' as city`.
+
+These are dynamically created block runs, not copies created with the manual
+block replication feature. The optional metadata entries can include
+`block_uuid` values when you want stable, descriptive identifiers for the runs.
+
 Mage only hydrates `block_output(...)` before invoking dbt. Other dbt Jinja such
 as `{{ config(...) }}`, `{{ ref(...) }}`, and `{{ source(...) }}` is left for dbt
 to compile. Hydrated dbt SQL is written to an isolated temporary copy of the dbt

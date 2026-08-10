@@ -5,6 +5,8 @@ icon: "slack"
 description: "Get real-time status updates from Mage pipelines directly in your Slack channels."
 ---
 
+import { ProOnly } from '/snippets/pro/only.mdx';
+
 <img
   alt="Slack"
   src="https://d34u8crftukxnk.cloudfront.net/slackpress/prod/sites/6/2019-01_BrandRefresh_Old-to-New-Final.gif"
@@ -16,6 +18,22 @@ description: "Get real-time status updates from Mage pipelines directly in your 
 1. Set up webhooks for Slack
 2. Update Mage project settings
 3. Customize message templates with dynamic variables (Pro only)
+
+---
+
+## Configure alerts in the Mage Pro UI
+
+After you create your Slack webhook, you can configure alerts in the Mage Pro UI
+instead of editing `metadata.yaml` directly:
+
+1. For project defaults, go to **Settings > Account > Alerts**.
+2. For one pipeline, open the pipeline and go to **Alerts**. Pipeline-level
+   settings override the project-level alert config for that pipeline.
+3. Choose the alert outcomes, enable Slack, enter the webhook URL, and use
+   **Send test notification** to send a test alert before saving.
+
+You can still reference secrets with values such as
+`{{ env_var('MAGE_SLACK_WEBHOOK_URL') }}`.
 
 ---
 
@@ -119,9 +137,6 @@ Here are the supported variables:
 the host url you want to use in the notification messages.
 
 ### 🚀 Pro Only: Interpolate Mage Variables in Message Templates
-
-import { ProButton } from '/snippets/pro/button.mdx';
-import { ProOnly } from '/snippets/pro/only.mdx';
 
 <ProOnly source="notification" />
 

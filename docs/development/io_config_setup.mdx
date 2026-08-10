@@ -5,6 +5,8 @@ icon: "key"
 description: "Learn how to set up and configure the io_config file for your Mage project"
 ---
 
+import { ProOnly } from '/snippets/pro/only.mdx';
+
 # IO Config Setup Guide
 
 The `io_config` file is a crucial configuration file in Mage that stores credentials and connection information for accessing various data sources. This guide will help you understand where to store it and how to create it from scratch.
@@ -187,6 +189,77 @@ staging:
   # Staging environment configuration
   POSTGRES_DBNAME: staging_db
 ```
+
+## Managing profiles in the UI
+
+<ProOnly source="io_config" />
+
+You can create, update, delete, and test `io_config.yaml` profiles from the Mage UI:
+
+1. Open **Settings**.
+2. In **Workspace**, select **Data connections**.
+3. Select an existing profile or choose **Add profile**. You can also open `/settings/workspace/io-config` directly.
+
+Viewers can inspect profiles with masked credentials. Creating, renaming, saving, deleting, and testing requires Editor access plus notebook edit access; otherwise, the page is read-only.
+
+### Create and save profiles
+
+- Enter a profile name before choosing a provider or editing YAML. New profiles start with **Full profile** and an empty YAML mapping.
+- Select **Save**, press **Command+S** on macOS, or press **Ctrl+S** on Windows and Linux.
+- Profile names can contain up to 128 letters, numbers, periods, underscores, and hyphens. They must start with a letter or number, cannot contain spaces, and cannot be `version`.
+- Mage confirms before deleting a profile or discarding an unsaved name or configuration change.
+- If another user changes `io_config.yaml`, Mage rejects your stale save or delete. Reload before applying the edit again.
+
+### Edit provider configuration
+
+Select a provider to edit only its keys, or select **Full profile** to edit the complete profile YAML.
+
+- The backend supplies the provider list, YAML templates, and connection-test capabilities.
+- Checked providers show their configured-value count. Blank template defaults are not saved or counted.
+- Saving one provider preserves unrelated provider keys in the same profile. Removing a key removes it only from the selected provider scope.
+- **Clear provider keys** resets that provider's draft; select **Save** to persist the removal.
+- Provider-scoped editing rejects mixed or custom keys. Use **Full profile** for those keys.
+- Providers can share credential groups, such as AWS or DuckDB keys. Editing or clearing a shared group affects every provider that uses that group but preserves unrelated keys.
+
+Switching providers with an unsaved draft prompts you to **Keep editing** or **Discard changes**.
+
+### Work with masked secrets
+
+Sensitive values appear as `********`.
+
+- Leave the mask unchanged at the same YAML path to preserve the saved value.
+- Replace it to update the secret, or remove the key to delete the value.
+- Mage rejects a mask when no saved secret exists at that path.
+- Lists containing masked secrets must remain unchanged. Replace the masks with explicit values before adding, removing, reordering, or editing list items.
+
+### YAML limitations and recovery
+
+Profiles must be YAML mappings with string keys. A profile can be at most 1 MiB, and the full `io_config.yaml` file can be at most 10 MiB.
+
+The UI rejects YAML tags, sets, binary values, timestamps, anchors, aliases, merge keys, and other non-JSON-safe or cross-profile graph features without rewriting the file. Edit `io_config.yaml` directly to preserve or remove unsupported constructs.
+
+- For invalid YAML, fix the file and select **Retry**.
+- For a symbolic link, edit the link target directly; the UI can read the file but cannot save it.
+
+### Test a connection
+
+Select **Test** to check the current editor contents without saving them. The action is available only when the backend advertises testing for the selected provider.
+
+- Mage renders Jinja expressions such as `{{ env_var('POSTGRES_PASSWORD') }}` using current runtime values.
+- Tests stop after 10 seconds, and only one test can run per project at a time.
+- Most tests open and close a connection without previewing, extracting, or writing data. Success confirms only that lightweight check.
+- Trino also runs `SELECT 1` and requires catalog, host, and user configuration.
+- Mage shows specific configuration errors after redacting known secrets. Provider and driver exceptions use the generic connection-failure message.
+
+### Workflow checklist
+
+When you validate a workspace manually, check the main profile lifecycle rather than editing `io_config.yaml` directly:
+
+1. Add a profile, choose a provider, edit its YAML, test when available, and save.
+2. Reload and confirm the profile persists, credentials are masked, and unchanged masks preserve saved values.
+3. Save two providers in one profile and confirm each keeps its own configuration.
+4. Clear one provider, save, and confirm unrelated provider keys remain.
+5. Confirm invalid YAML, mixed provider keys, stale revisions, read-only access, and delete confirmation block unsafe writes.
 
 ## Using io_config in Your Code
 

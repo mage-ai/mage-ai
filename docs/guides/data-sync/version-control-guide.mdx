@@ -28,7 +28,7 @@ Mage Pro supports three **authentication types**:
 | **HTTPS + PAT** | Your organization requires a **personal access token** instead of OAuth, or you use a provider / URL where OAuth is not an option. |
 | **SSH** | You use **deploy keys** or user SSH keys and `git@…` (or `ssh://`) remotes. |
 
-If you change authentication type, **save authentication settings** before continuing with the rest of the connection configuration. Switching types clears the credentials from the other method in your deployment settings.
+If you change authentication type, **save authentication settings** before continuing with the rest of the connection configuration. Switching types clears the credentials from the other method in your deployment settings. For **HTTPS + PAT** and **SSH**, run **Test connection** after saving. A successful test enables deployment selection from the Deployments list; if the repository URL, username, email, token, or SSH keys change later, Mage marks the connection as needing another test.
 
 ### Open the connection UI
 
@@ -97,6 +97,7 @@ After clicking **Save settings**, proceed to the **Connection** section below to
 3. Enter a **username** and **email** for Git commit authorship. These are also used as HTTP credentials: the username is your Git host account name and the PAT is sent in place of a password.
 4. In your Git host, create a **personal access token** (or app password) scoped to at least **clone, fetch, and push**. Scope names differ by provider — for example, GitHub requires the `repo` scope; GitLab requires `read_repository` and `write_repository`; Bitbucket uses the `repository:write` permission.
 5. Paste the token into **Personal access token** and click **Save authentication settings**. The token is stored as a **Mage secret** named `mage_git_access_token_{user_id}` (where `{user_id}` is your Mage user ID).
+6. Click **Test connection**. After the test passes, Mage shows **Verified for deployment selection** and the Deployments list can show **Select deployment** for this configuration.
 
 HTTPS+PAT uses your stored credentials for Git in the [version control terminal](#3-version-control-terminal) the same way OAuth does.
 
@@ -114,6 +115,7 @@ HTTPS+PAT uses your stored credentials for Git in the [version control terminal]
 3. Enter a **username** and **email** for Git **commit** identity (as shown in `git log`), matching what you use for the repository.
 4. Add **SSH public and private key** values. The form expects the key material in **base64** (as labeled in the UI). In your Git host, add the public key as a **deploy key** (repo-scoped) or a user key, with permission to read/write the repo as needed.
 5. Click **Save authentication settings**.
+6. Click **Test connection**. After the test passes, Mage shows **Verified for deployment selection** and the Deployments list can show **Select deployment** for this configuration.
 
 <Note>
 With **SSH** authentication, Mage cannot use the provider’s **Git hosting API** for some deployment flows the same way as with OAuth (for example, **listing commits in the Deployments** UI). For **`git push`**, **`git pull`**, fetches, and other Git wire operations, use the **[version control terminal](#access-the-version-control-terminal)**. A warning is shown in the app when this applies.
@@ -371,6 +373,9 @@ Mage then deploys a chosen commit to your environment:
 
 1. In Mage, go to the **Deployments** view and open the deployments list (highlighted in green at the top when updates are available).
 2. Click **Deploy** to ship the version you just merged. Use **Rollback** to deploy an earlier commit if you need to revert.
+
+If a configuration that uses **HTTPS + PAT** or **SSH** shows **Test connection required** instead of **Select deployment**, open **Configure**, run **Test connection**, and return to the Deployments list after the test passes. Mage requires a fresh successful test after saved custom authentication settings change.
+
 #### GitLab Authentication
 
 Mage Pro supports integration with GitLab repositories for version control, collaboration, and deployments.

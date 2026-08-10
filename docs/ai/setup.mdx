@@ -6,6 +6,8 @@ icon: "microchip-ai"
 "og:image": "https://steamuserimages-a.akamaihd.net/ugc/813376249149384255/EC3222795DC2961599F7FC0B69E0241C8EC7293E/?imw=5000&imh=5000&ima=fit&impolicy=Letterbox&imcolor=%23000000&letterbox=false"
 ---
 
+import { ProOnly } from '/snippets/pro/only.mdx';
+
 <Frame>
     <p align="center">
     <img
@@ -15,9 +17,9 @@ icon: "microchip-ai"
     </p>
 </Frame>
 
-Mage uses AI to help you build data pipelines faster— with our OpenAI integration, you can automate the tedious parts of pipeline development and focus on the fun stuff.
+Mage uses AI to help you build data pipelines faster. With our OpenAI integration and Mage Pro AI Chat, you can automate the tedious parts of pipeline development and focus on the fun stuff.
 
-<Note>You will need to add an OpenAI API key to your project before you can use AI for various actions.</Note>
+<Note>Some AI actions that use direct OpenAI integration require an OpenAI API key. Mage Pro AI Chat uses Mage Pro API proxy authentication for Codex model requests.</Note>
 
 We currently support the following AI features:
 
@@ -38,7 +40,7 @@ To see examples of how to use AI in Mage, check out our [AI guides](/guides/ai/o
 
 ## Setup
 
-You need to add an OpenAI API key to your project before you can use AI for various actions.
+For AI actions that use direct OpenAI integration, add an OpenAI API key to your project.
 
 <Note>
     Read [OpenAI’s documentation](https://help.openai.com/en/articles/4936850-where-do-i-find-my-secret-api-key)
@@ -49,19 +51,43 @@ Once you have your OpenAI API key, go to project settings (click the "wizard" in
 
 ## AI Chat in Mage Pro
 
+<ProOnly source="ai-sidekick" />
+
 Mage Pro includes AI Chat for Codex-backed workspace assistance. Open AI Chat from Mage Pro, or visit `/ai/chat` in an authenticated workspace as a user with the Editor role or higher.
 
 For each chat turn, Mage captures the visible non-chat text from the current browser page, along with the page title and URL, so Codex can answer page-relative prompts such as "explain this page" or "what am I looking at?" The captured context is scoped to the authenticated user and chat session, excludes the Codex chat UI, and is capped at 20,000 characters.
 
 The AI Chat sidebar lists active and archived chats, lets you search chat history by title, and loads older chats with **Show more** when more results are available. Mage Pro remembers the selected chat and whether you were viewing active or archived chats for the current workspace, then restores that state when you refresh or reopen AI Chat.
 
-AI Chat supports session-scoped file attachments. Attachment uploads require a chat session and are limited by the `MAGE_CODEX_CHAT_ATTACHMENT_MAX_BYTES`, `MAGE_CODEX_CHAT_ATTACHMENT_MAX_COUNT`, and `MAGE_CODEX_CHAT_ATTACHMENT_MAX_SESSION_BYTES` environment variables.
+When Codex replies with Markdown image links that resolve through Mage Pro's authenticated preview flow, AI Chat renders those image previews inline. Markdown links to other workspace files still open in the code editor.
+
+### Inspect delegated subagent work
+
+When a chat turn delegates work, select **Show work** in the AI Chat header. Its **Subagents** summary shows how many subagents are working and how many are done.
+
+Selecting **Subagents** opens the right panel, where subagents are grouped into **Active** and **Done**. Each row shows the subagent name and its latest activity. Select a row to inspect that subagent's turn output, tool activity, and generated outputs; use the back button to return to the grouped list.
+
+AI Chat supports session-scoped file attachments from the composer File action or paste, folder attachments from the composer Folder action, and file or folder attachments by drag and drop. Uploaded attachments remain available to Codex on follow-up messages in the same chat session, even after the composer clears for the next message. Folder uploads appear as a single folder attachment in the chat; for browser-selected folders, Mage Pro packages every browser-exposed file into one zip archive before upload, preserves the relative paths inside that archive, and does not filter files from the selected folder. Codex receives an uploaded-file manifest and bounded text previews from readable non-archive attachments so it can answer questions about uploaded files without guessing from workspace files. Attachment uploads require a chat session and are limited by the `MAGE_CODEX_CHAT_ATTACHMENT_MAX_BYTES` and `MAGE_CODEX_CHAT_ATTACHMENT_MAX_SESSION_BYTES` environment variables. Browser-zipped folder archives can be tuned separately with `MAGE_CODEX_CHAT_ARCHIVE_ATTACHMENT_MAX_BYTES` and `MAGE_CODEX_CHAT_ARCHIVE_ATTACHMENT_MAX_SESSION_BYTES`.
+
+AI Chat supports push-to-record voice dictation when the Mage Pro API OpenAI proxy is configured and the signed-in user has the same Editor-or-higher permission required to send AI Chat messages. Click the microphone in the composer, then click the stop control to insert the transcription into the draft for editing, or click the send arrow while recording to stop capture, transcribe the audio, and send or queue the dictated message. Audio is sent from the browser to the Mage Pro workspace, then to the Mage Pro API proxy; the workspace and browser never receive the raw OpenAI API key.
+
+Use the execution settings menu beside the chat composer to choose a **Speed** and **Effort** level for the current chat. Choose **Standard** to leave Codex on its normal tier, or **Fast** to enable Codex fast mode with the priority service tier for that chat. Choose **Light**, **Medium**, **High**, or **Extra High** effort based on how much model effort the task needs. The menu stays open after a selection so you can confirm both checked choices, and its button displays the active effort level. When **Fast** is selected, the button appends the speed after the effort level, such as **Medium Fast**.
+
+For guided Sidekick workflows, AI Chat can show inline forms directly in the chat transcript. Use these forms to choose sources, streams, destinations, and connector settings without leaving the conversation. Required fields must be completed before continuing, large option lists include filtering, and **Cancel** stops the guided setup. After submission, AI Chat replaces the form with a submitted summary and hides sensitive values such as passwords or credentials.
 
 When Codex returns a project-local PNG, JPEG, GIF, or WebP path, AI Chat renders the image inline. The path can be on its own line, embedded in prose, such as `Here it is: /home/src/demo/cyborg_mage.png`, or used as a Markdown link target, such as `[output/anime_styled_mage.png](output/anime_styled_mage.png)`. The preview is served through a short-lived authenticated URL, so the image file does not need a public URL.
 
-For direct model authentication, configure `MAGE_CODEX_CHAT_OPENAI_API_KEY` or store the key in a Mage secret named by `MAGE_CODEX_CHAT_OPENAI_API_KEY_SECRET`. `OPENAI_API_KEY` is also accepted as a fallback.
+When Sidekick media tools generate image, audio, or video files, AI Chat renders them at the end of the assistant answer as chat artifacts instead of only inside tool-usage details. Images render inline, audio renders with browser playback controls, and video renders with browser playback controls. Media previews use five-minute authenticated tokens. Supported preview files are GIF, JPEG, PNG, and WebP images up to 25 MB; AAC, MP3, Opus, WAV, and WebM audio up to 50 MB; and MOV, MP4, and WebM video up to 250 MB. Files must be under the current project or the current Sidekick media directory.
 
-For Mage Pro proxy authentication, set `MAGE_CODEX_MODEL_AUTH_MODE=proxy` and configure either `MAGE_CODEX_MODEL_PROXY_BASE_URL` or `MAGE_PRO_API_ENDPOINT` with `MAGE_PRO_API_API_KEY`. The chat model, reasoning effort, service tier, and concurrency defaults can be configured with the `MAGE_CODEX_CHAT_*` environment variables listed in [Environment variables](/development/variables/environment-variables).
+AI Chat in Mage Pro always sends Sidekick-managed Codex model requests through the Mage Pro API proxy. Configure either `MAGE_CODEX_MODEL_PROXY_BASE_URL` or `MAGE_PRO_API_ENDPOINT` with server-side `MAGE_PRO_API_API_KEY`. Parent-process provider keys such as `OPENAI_API_KEY`, `CODEX_API_KEY`, and `MAGE_CODEX_CHAT_OPENAI_API_KEY` are scrubbed from Sidekick-managed Codex child processes, `MAGE_PRO_API_API_KEY` is not passed to those Codex child processes or their MCP tool environments, and provider-auth failures are shown as user-safe Mage agent request errors without raw provider details. The chat model can be configured with `MAGE_CODEX_CHAT_MODEL` or the shared `MAGE_CODEX_DEFAULT_MODEL` fallback, and spawned Codex sessions inherit the resolved model. Reasoning effort, service tier, and concurrency defaults can be configured with the `MAGE_CODEX_CHAT_*` environment variables listed in [Environment variables](/development/variables/environment-variables). Per-chat execution settings take precedence over these defaults.
+
+Codex CLI commands that you run yourself from the Mage terminal use that terminal process environment and Codex config directly, including `CODEX_HOME`, provider credential variables, and any configured MCP servers. Mage does not rewrite terminal-launched Codex CLI processes into the AI Chat proxy environment.
+
+When Codex model capacity is temporarily unavailable, AI Chat shows a **Waiting for model capacity** status and automatically retries the run within the configured retry window. If the retry budget is exhausted, AI Chat shows the rate-limit error.
+
+AI Chat sends large prompts to Codex through stdin and starts Codex with a limited child-process environment. If a self-hosted deployment still hits an operating-system launch-size limit, Mage reports a structured launch-size error. Operators can tune the guardrail with `MAGE_CODEX_LAUNCH_MAX_STRING_BYTES` and `MAGE_CODEX_LAUNCH_MAX_TOTAL_BYTES`.
+
+Voice dictation uses the generalized Mage Pro API OpenAI proxy. Configure `MAGE_PRO_API_ENDPOINT` and `MAGE_PRO_API_API_KEY`; configure `MAGE_OPENAI_PROXY_BASE_URL` only when the OpenAI proxy base URL differs from `MAGE_PRO_API_ENDPOINT`; otherwise Mage Pro derives `/api/v1/openai/v1` from the Mage Pro API endpoint. Hosted production clusters fall back to `pro-api.mage.ai` unless `MAGE_OPENAI_PROXY_ALLOW_PRODUCTION_URL_OVERRIDE` allows a custom non-staging proxy URL. The OpenAI API key for transcription must be configured in mage-pro-api, not in the Mage Pro workspace. The browser labels recordings from their file signature before upload, and the workspace verifies that the declared audio type matches the uploaded bytes. Mage Pro accepts browser-recorded WebM plus common audio transcription MIME types, rejects unsupported formats, empty or oversized uploads, unsupported custom options, and declared-format mismatches before proxying, then obtains a short-lived scoped proxy token from mage-pro-api and forwards the audio to `/api/v1/openai/v1/audio/transcriptions`. Sidekick voice dictation requests English transcription with a Mage Sidekick prompt and the `gpt-4o-transcribe` model by default; configure `MAGE_SIDEKICK_VOICE_DICTATION_LANGUAGE`, `MAGE_SIDEKICK_VOICE_DICTATION_PROMPT`, or `MAGE_SIDEKICK_VOICE_DICTATION_MODEL` to override those transcription request values. Mage Pro exposes the configured `MAGE_SIDEKICK_VOICE_DICTATION_MAX_BYTES`, `MAGE_SIDEKICK_VOICE_DICTATION_MAX_SECONDS`, `MAGE_SIDEKICK_VOICE_DICTATION_RATE_LIMIT_PER_MINUTE`, `MAGE_SIDEKICK_VOICE_DICTATION_DAILY_MAX_BYTES`, and `MAGE_SIDEKICK_VOICE_DICTATION_MONTHLY_MAX_BYTES` limits through the Sidekick status response. The request, duration, and upload byte limits are enforced before token minting and passed into the proxy token budget.
 
 ## Generate pipeline using AI
 

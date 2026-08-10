@@ -26,14 +26,28 @@ the right panel and reveal the Sidekick.
 
 ## Visualize block output data
 
-<ProOnly source="pipeline-dependencies" />
+<ProOnly source="embedded-analytics" />
 
 Add 1 or multiple charts to visualize the data produced by a block.
+Click the chart icon in a supported block header, or click **Add chart** from
+a block output preview, to open AI Sidekick with the pipeline and block context
+already filled in. Describe the chart you want, and Sidekick generates Python
+Plotly code plus dashboard JSON metadata for the Analytics dashboard.
+
+When Sidekick opens for an Analytics chart, the prompt includes an Analytics
+workflow attachment with the target dashboard and source pipeline or block so the
+chart is saved in the expected place.
 
 When viewing block output as a table in the Sidekick data view, click a column
 header to sort the preview or use the filter icon to narrow rows by column value.
 Sorting and filtering only change the current table preview; they don’t modify
 the block output saved by the pipeline.
+
+For dynamic blocks and blocks with dynamic upstream dependencies, the Sidekick
+data view can show each dynamic child output separately. Use the Dynamic child
+selector to switch between child outputs, then use the output tabs to move
+between outputs within the selected child. Outputs without displayable data are
+skipped.
 
 <Frame>
     <p align="center">
@@ -44,8 +58,8 @@ the block output saved by the pipeline.
     </p>
 </Frame>
 
-[Read more](/visualizations/dashboards) about how to create entire dashboards 
-for an individual pipeline or for the entire project.
+[Read more](/observability/visualizations/dashboards) about how to create AI-generated
+Plotly dashboards for an individual pipeline or for the entire project.
 
 ---
 

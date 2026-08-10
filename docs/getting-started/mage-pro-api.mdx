@@ -5,6 +5,10 @@ icon: "network-wired"
 description: "Deploy your code in seconds!"
 ---
 
+import { ProOnly } from '/snippets/pro/only.mdx';
+
+<ProOnly source="mage-pro-api" />
+
 ### **Mage Pro API overview**
 
 Mage Pro offers two main APIs for managing your workflows and infrastructure:
@@ -369,11 +373,13 @@ A successful call returns HTTP 200 with the block output under the `run` key:
 | `pipeline_uuid` | required | The unique identifier of the pipeline containing the target block |
 | `block_uuid` | required | The unique identifier of the block to execute |
 | `variables` | `{}` | Key-value pairs injected into the block at runtime via `kwargs` |
-| `project` | `null` | Scopes the pipeline lookup to a specific sub-project in a multi-project workspace |
 | `record` | `true` | Write a PipelineRun and BlockRun record to the Mage database |
 | `store_variables` | `true` | Persist the passed variables to disk alongside the block run record |
 | `run_upstream_blocks` | `false` | Run all upstream block dependencies before executing the target block |
 | `incomplete_only` | `false` | When `run_upstream_blocks` is `true`, skip upstream blocks that already completed successfully |
+
+API runs execute pipelines from the current Mage repository. The legacy `project` option is no
+longer supported; send API-run requests to the workspace that owns the pipeline instead.
 
 ---
 

@@ -132,7 +132,7 @@ For detailed analysis of a specific run:
 3. **Examine block run details** including execution order, timing, and status
 4. **Access logs and error information** for each block
 5. **Review runtime variables** and configuration used
-6. **Review Kubernetes resource usage** in the **Resources** tab when stored metrics are available for Mage Pro runs that use the Kubernetes executor
+6. **Review observed Kubernetes resource usage** in the **Resources** tab when stored average and peak CPU/RAM metrics are available for Mage Pro runs that use the Kubernetes executor. Use pipeline **Monitoring** for pipeline-level Kubernetes executor recommendations.
 
 ## Pipeline Run Retry
 
@@ -149,6 +149,9 @@ Retry from the failed block instead of restarting the entire pipeline. For detai
 
 #### Retry from Selected Block
 Retry starting from any selected block regardless of its current status. For detailed instructions, see [Retrying block runs from a pipeline run](/orchestration/pipeline-runs/retrying-block-runs).
+
+#### Retry a Specific Integration Stream
+Select an incomplete stream row in a data integration pipeline run to retry only that stream. The broader retry incomplete action remains available for retrying every incomplete stream. For detailed instructions, see [Retrying block runs from a pipeline run](/orchestration/pipeline-runs/retrying-block-runs).
 
 ### Automatic Retry Configuration
 
@@ -266,7 +269,7 @@ When pipeline runs fail, use these debugging techniques to identify and resolve 
 - **Error tracking** - View error messages, stack traces, and debugging information
 - **Execution timeline** - See the order and timing of block executions
 - **Variable inspection** - Review runtime variables and their values
-- **Kubernetes resource summary** - In Mage Pro, review stored CPU and memory usage plus copied block-level executor recommendations for runs that use the Kubernetes executor
+- **Kubernetes resource summary** - In Mage Pro, review observed average and peak CPU/RAM for Kubernetes executor runs; use pipeline Monitoring for pipeline-level Kubernetes executor recommendations
 - **Block output export** - Save block output as CSV for analysis (see [Saving block output as CSV](/orchestration/pipeline-runs/saving-block-output-as-csv))
 
 ## Best Practices for Pipeline Run Management

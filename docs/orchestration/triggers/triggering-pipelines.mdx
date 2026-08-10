@@ -10,7 +10,7 @@ Pipeline triggers are automated scheduling mechanisms that determine **when and 
 
 ### Key Benefits of Pipeline Triggers:
 - **Automated execution** - Run pipelines without manual intervention
-- **Flexible scheduling** - Support for cron expressions, API calls, and event-based triggers
+- **Flexible scheduling** - Support for cron expressions and API calls
 - **Environment management** - Different trigger configurations for dev, staging, and production
 - **Resource optimization** - Control when pipelines consume compute resources
 - **Monitoring and SLA** - Built-in performance tracking and alerting
@@ -21,19 +21,24 @@ Pipeline triggers are automated scheduling mechanisms that determine **when and 
 
 ## Trigger Types
 
+<Info>
+  New trigger creation supports Schedule and API triggers. Event triggers are deprecated and may
+  only appear for existing legacy configurations.
+</Info>
+
 ### Schedule triggers
 
 Schedule triggers are the most common type, designed for **recurring data pipeline execution** at predetermined intervals. They're perfect for ETL processes, data updates, and regular analytics jobs.
 
 Available scheduling frequencies include:
 
-- **Run exactly once** - Execute the pipeline once and then disable the trigger
-- **Hourly** - Run every hour
-- **Daily** - Run once per day
-- **Weekly** - Run once per week
-- **Monthly** - Run once per month
-- **Always on** - Immediately create new pipeline run when previous pipeline run completes (either succeeds or fails)
-- **Custom (cron syntax)** - Use cron expressions for advanced scheduling patterns
+- **Run exactly once** - Run one time when the schedule starts, then disable the trigger
+- **Hourly** - Run at minute 0 of each hour in UTC
+- **Daily** - Run once per day at 00:00 UTC
+- **Weekly** - Run every Monday at 00:00 UTC
+- **Monthly** - Run on the first day of each month at 00:00 UTC
+- **Always on** - Keep streaming pipelines running continuously by starting a new run when the previous run completes
+- **Custom (cron syntax)** - Use cron expressions for exact clock times and advanced scheduling patterns
 
 <Info>
   **Custom frequency** allows you to use cron syntax for advanced scheduling patterns. This gives you complete control over when your pipeline runs.
@@ -105,32 +110,12 @@ Runtime variables can optionally be included in the request payload and are acce
 }
 ```
 
-### Event triggers
+### Deprecated Event triggers
 
-An event-type trigger instructs the pipeline to run whenever a specific
-event occurs.
-
-For example, you can configure a pipeline to run when a database query completes
-or when a new object is created in Amazon S3 or Google Cloud Storage.
-
-You can also trigger a pipeline using a custom event by making a `POST`
-request to the `/api/events` endpoint with your event payload:
-
-```bash
-POST /api/events
-Content-Type: application/json
-
-{
-  "event_type": "custom_event",
-  "payload": {
-    "key": "value"
-  }
-}
-```
-
-<Callout>
-  Check out this [tutorial](/design/data-pipeline-management#create-trigger) on how to create an event trigger.
-</Callout>
+<Warning>
+  Event triggers are deprecated for new trigger creation. Use API triggers for new event-driven
+  and webhook-style workflows. Existing legacy event triggers may still appear in older projects.
+</Warning>
 
 ## How to Create and Manage Pipeline Triggers
 
@@ -144,7 +129,10 @@ To create a new trigger for your pipeline:
 3. Click **+ New trigger** button
 4. Select the trigger type (Schedule or API)
 5. Configure the trigger settings based on the type you selected
-6. Click **Save changes** to create the trigger
+6. Click **Create trigger** to create the trigger
+
+The new trigger form opens as a draft. Mage does not create the trigger until you click
+**Create trigger**, and it warns you before leaving the page if the draft has unsaved changes.
 
 <Info>
   **Trigger storage**: Triggers created via the UI are stored in the database. For environment synchronization and version control, you can [save triggers in code](/orchestration/triggers/configure-triggers-in-code) to sync them across different environments.
@@ -155,14 +143,15 @@ To create a new trigger for your pipeline:
 When creating or editing a trigger, you'll see the following configuration fields:
 
 **Basic settings:**
-- **Name** - A descriptive name for your trigger
+- **Name** - A descriptive name for your trigger. Names are trimmed before validation, must be unique within the pipeline, must include at least one letter or number, and cannot exceed 255 characters.
 - **Description** - Optional description to explain the trigger's purpose
 - **Tags** - Add or search tags to organize and categorize your triggers
 
 **Schedule-specific fields:**
-- **Frequency** - Choose from predefined options (Hourly, Daily, Weekly, Monthly) or select Custom for CRON syntax
-- **Start date and time** - When the trigger should begin running
-- **Enable landing time** - Instead of starting at a specific time, schedule runs to finish by a specified time
+- **Frequency** - Choose from preset options (Hourly, Daily, Weekly, Monthly, Once, Always on) or select Custom for CRON syntax when you need more precise timing
+- **Schedule start** - Choose **Start at next Frequency time** to let the trigger run at the next scheduled **Frequency** time, or **Do not start before date/time** to set the earliest allowed start. That date/time is not the run time; **Frequency** still controls when runs happen. **Schedule start** only controls when that trigger plan is allowed to begin.
+- **Schedule load guidance** - For `@once` triggers with **Do not start before date/time**, Mage may show load or quiet-hour guidance for the selected start time. This is planning guidance only; use it to decide whether the selected start time is acceptable. If overlap is high, use suggested lower-load times, or keep your selected time if overlap is acceptable.
+- **Enable landing time** - Instead of scheduling starts at a specific time, schedule runs so the pipeline can complete by a specified time
 
 **Additional options:**
 - **Runtime variables** - Override pipeline variables for this specific trigger
@@ -193,7 +182,7 @@ To view all triggers across your entire project:
 - **Active** - Toggle switch showing if the trigger is enabled/disabled
 - **Logs** - Icon to access trigger execution logs
 - **Name** - The trigger name (clickable link with arrow icon for code-defined triggers)
-- **Type** - Trigger type (schedule, API, etc.)
+- **Type** - Trigger type (Schedule, API, or deprecated legacy Event)
 - **Frequency** - How often the trigger runs (e.g., @once, @daily)
 - **Status** - Current status of the trigger
 - **Next** - Scheduled time for the next execution (with info icon for details)
@@ -206,8 +195,10 @@ You can click on the logs icon to view detailed execution history and logs for e
 **Enabling/Disabling triggers:**
 - **From trigger list**: Use the toggle switch in the "Active" column to enable or disable a trigger
 - **From trigger detail page**: Navigate to `/pipelines/[pipeline_uuid]/triggers/[trigger_id]` and use the "Disable trigger" button
+- **Disable all triggers in Mage Pro**: On the global Triggers page, the current search and filters
+  define the scope; only matching active triggers are disabled
 - **Disabled triggers**: Will not run automatically but remain configured for future use
-- **Enabled triggers**: Will run according to their configured schedule or trigger conditions
+- **Enabled triggers**: Will run according to their configured schedule, API endpoint, or legacy event conditions
 
 **Testing triggers:**
 - **Run once button**: Click the "Run@once" button in the trigger list or detail page to manually trigger a pipeline run
@@ -248,6 +239,9 @@ You can click on the logs icon to view detailed execution history and logs for e
 * **Override runtime variables**
   * You can override the [runtime variables](/getting-started/runtime-variable) defined in the pipeline to use different values for different triggers.
   * This option only appears if you have runtime variables defined in the pipeline.
+  * Use **Form** mode to add, edit, or delete runtime variables one at a time.
+  * Switch to **JSON** mode to edit the full runtime variables object in a code editor. Click **Format JSON** to reformat valid JSON before saving.
+  * Runtime variable JSON must be an object. Variable names cannot contain whitespace, and reserved Mage variables cannot be included.
   * **Benefits**: Allows you to run the same pipeline with different configurations for different use cases (e.g., different data sources, environments, or processing parameters) without creating separate pipelines.
 * **Keep running pipeline even if blocks fail**
   * When enabled, the pipeline continues running even if individual blocks fail
@@ -262,10 +256,9 @@ You can click on the logs icon to view detailed execution history and logs for e
 
 ### What is a trigger in Mage?
 
-A trigger is a set of instructions that determine when or how a pipeline should run. There are three types of triggers in Mage: Schedule, Event, and API.
+A trigger is a set of instructions that determine when or how a pipeline should run. New trigger creation supports Schedule and API triggers. Event triggers are deprecated and may only appear for existing legacy configurations.
 
 - **Schedule**: Runs pipelines on a set interval (e.g., hourly, daily, weekly, monthly, or custom cron)
-- **Event**: Runs pipelines in response to specific events (e.g., file arrival, database update)
 - **API**: Runs pipelines when a specific API endpoint is called, optionally with runtime variables
 
 ### How do I create a trigger for my pipeline?

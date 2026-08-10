@@ -5,6 +5,8 @@ icon: "microsoft"
 description: "Get status updates in your Teams channel."
 ---
 
+import { ProOnly } from '/snippets/pro/only.mdx';
+
 <img
   alt="Teams"
   src="https://img.icons8.com/color-glass/512/microsoft-teams.png"
@@ -15,6 +17,22 @@ description: "Get status updates in your Teams channel."
 
 1. Set up webhooks for Teams
 2. Update Mage project settings
+
+---
+
+## Configure alerts in the Mage Pro UI
+
+After you create your Teams webhook, you can configure alerts in the Mage Pro UI
+instead of editing `metadata.yaml` directly:
+
+1. For project defaults, go to **Settings > Account > Alerts**.
+2. For one pipeline, open the pipeline and go to **Alerts**. Pipeline-level
+   settings override the project-level alert config for that pipeline.
+3. Choose the alert outcomes, enable Microsoft Teams, enter the webhook URL,
+   and use **Send test notification** to send a test alert before saving.
+
+You can still reference secrets with values such as
+`{{ env_var('MAGE_TEAMS_WEBHOOK_URL') }}`.
 
 ---
 
@@ -124,9 +142,6 @@ Here are the supported variables:
 the host url you want to use in the notification messages.
 
 ### 🚀 Pro Only: Interpolate Mage Variables in Message Templates
-
-import { ProButton } from '/snippets/pro/button.mdx';
-import { ProOnly } from '/snippets/pro/only.mdx';
 
 <ProOnly source="notification" />
 

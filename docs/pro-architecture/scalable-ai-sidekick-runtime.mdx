@@ -1,0 +1,1803 @@
+---
+title: "Scalable AI Sidekick runtime"
+sidebarTitle: "AI Sidekick runtime"
+icon: "robot"
+description: "Scalable local runtime design for Mage Pro AI Sidekick"
+---
+
+import { ProOnly } from '/snippets/pro/only.mdx';
+
+<ProOnly source="ai-sidekick-runtime" />
+
+# Scalable AI Sidekick Runtime Design
+
+Date: 2026-07-29
+Owner: Engineering
+Status: Draft implementation spec
+
+## Executive Summary
+
+AI Sidekick currently behaves too much like synchronous webserver work. When multiple Sidekick chat threads run at the same time, the webserver can become responsible for stream handling, Codex app-server startup, model-session token brokering, subprocess supervision, and long-running agent execution. Under load, those paths can pile up inside the same process capacity that serves ordinary Mage API traffic.
+
+The target design is to keep the user experience unrestricted while isolating execution pressure from the webserver request path.
+
+Users should be able to open multiple Sidekick threads and send freely. The webserver should accept each message quickly, create a local ephemeral run, stream state from local event files, and hand execution to an elastic local Sidekick runtime. Execution can still happen on the same machine and in the same container, so there is no Helm chart requirement for the first phase.
+
+The main changes are:
+
+1. Add a local ephemeral Sidekick run spool using filesystem state under a runtime directory.
+2. Add a local elastic Sidekick worker supervisor inside the existing webserver container.
+3. Move Sidekick turn execution out of the Tornado request handler and into worker processes.
+4. Reuse warm Codex app-server processes where safe instead of cold-starting per message.
+5. Add singleflight, caching, hard timeout, and circuit-breaker behavior to model-session token creation.
+6. Prewarm user-scoped Sidekick runtime state before the user sends a message.
+7. Replace per-chat long-lived browser streams with one user-level event stream that multiplexes all active Sidekick runs for that user.
+8. Stream from durable local event files so browser reconnects do not duplicate work.
+9. Add explicit states, cleanup, stale-claim recovery, observability, tests, and QA runbooks.
+
+This design does not require Postgres, Redis, Celery, new Kubernetes resources, or Helm chart changes for the initial rollout.
+
+## Problem Statement
+
+Recent production behavior showed all API calls hanging while multiple AI Sidekick chat threads were running concurrently. Server logs showed:
+
+- repeated `model_proxy_session_request` events for the same Sidekick session and turn,
+- `ConnectTimeout` failures from the model proxy session broker,
+- `/api/codex/model_proxy/session_tokens` requests lasting tens of seconds and later several minutes,
+- unrelated API calls such as session detail and voice dictation also waiting several minutes,
+- Sidekick streams staying open for long periods while token and app-server startup paths were congested.
+
+The user-visible problem is not just that one Sidekick turn can be slow. The bigger issue is that Sidekick load can degrade unrelated API traffic on the same webserver.
+
+The expected product behavior is:
+
+- users can start multiple Sidekick threads,
+- sending a message returns immediate feedback,
+- busy Sidekick work is visible as queued, starting, or running,
+- normal Mage API calls remain responsive,
+- slow upstream model/token paths fail fast or degrade cleanly,
+- stuck Sidekick subprocesses do not wedge the webserver.
+
+## Goals
+
+1. Preserve unrestricted Sidekick usage from the user's point of view.
+2. Keep ordinary webserver API latency stable under Sidekick load.
+3. Avoid Helm chart changes for the first implementation phase.
+4. Avoid using the existing Postgres database for ephemeral orchestration state.
+5. Keep Sidekick execution local to the existing pod/container initially.
+6. Support multiple concurrent Sidekick turns up to machine capacity.
+7. Automatically scale local worker processes up and down based on demand.
+8. Reuse warm Codex app-server processes to avoid avoidable startup latency.
+9. Deduplicate model-session token creation for identical run/auth keys.
+10. Prewarm runtime capacity for the active user so message send does not wait on cold startup when possible.
+11. Make all states observable and testable.
+12. Provide a path to later externalize workers to separate pods without rewriting the execution model.
+
+## Non-Goals
+
+1. Do not introduce Redis, Celery, Sidekiq, RabbitMQ, or another external queue in phase 1.
+2. Do not require new Kubernetes Deployments, Services, volumes, or Helm values in phase 1.
+3. Do not persist orchestration records longer than needed for short-term recovery and browser reconnects.
+4. Do not use Postgres as the queue for this first phase.
+5. Do not limit the UI to one Sidekick message at a time.
+6. Do not force users to understand backend capacity controls.
+7. Do not make the first implementation depend on multi-pod global scheduling.
+
+## Definitions
+
+### Run
+
+A run is one accepted Sidekick turn request. It corresponds to one user message submitted to one Sidekick chat session.
+
+### Worker
+
+A worker is an application-level Sidekick executor process. It is not a Kubernetes node and not a Celery worker. In phase 1 it is a Python child process started and supervised by the existing webserver container.
+
+A worker:
+
+- claims queued runs from the local spool,
+- executes Sidekick turn logic,
+- owns or leases a Codex app-server process,
+- appends JSON events to the local event log,
+- enforces hard timeouts,
+- heartbeats while alive,
+- exits after being idle for a configured TTL.
+
+### Supervisor
+
+The supervisor is a lightweight component in the webserver process that starts, monitors, and stops worker child processes.
+
+### Spool
+
+The spool is a local ephemeral runtime directory containing run state, event logs, claims, worker heartbeats, token cache entries, and cleanup metadata.
+
+### Codex App-Server
+
+The Codex app-server is the subprocess used by Sidekick for app-server based Codex interactions. Starting it is expensive enough that it should be reused where safe instead of launched cold for every Sidekick message.
+
+### Singleflight
+
+Singleflight means that for a given cache key, only one upstream operation is allowed to execute at a time. Other callers wait for or reuse the same result instead of stampeding the upstream service.
+
+## High-Level Architecture
+
+```text
+Browser
+  |
+  | GET /streams/ai/codex/user/<stream_uuid>
+  | POST /api/codex/sidekick/runs
+  v
+Webserver
+  - validates auth
+  - creates local run record
+  - appends queued/starting event
+  - returns run metadata immediately
+  - multiplexes user-owned run events on one SSE connection
+  |
+  v
+Local Sidekick Spool
+  - runs/*.json
+  - events/*.jsonl
+  - claims/*.lock
+  - credentials/*.json
+  - workers/*.heartbeat.json
+  - token-cache/*.json
+  |
+  v
+Elastic Local Worker Pool
+  - worker process 1
+  - worker process 2
+  - worker process N
+  |
+  v
+Warm Codex App-Server Lease
+  |
+  v
+Model proxy / tools / Mage APIs
+```
+
+The webserver remains the control plane. Workers become the execution plane.
+
+The browser keeps one authenticated Sidekick SSE connection per user session. Sending a message is a short JSON POST to enqueue a runtime run and returns `run_id`, `session_uuid`, `turn_uuid`, and `status`. Runtime output for every active chat owned by that user is routed over the user-level stream. Each emitted event carries the run, session, turn, and sequence identifiers needed for the client to dedupe and route the event into the correct chat panel.
+
+## Runtime Directory Layout
+
+Default runtime directory:
+
+```text
+/tmp/mage-sidekick-runtime/
+  runs/
+    <sha256(run_id)>.json
+  events/
+    <sha256(run_id)>.jsonl
+  claims/
+    <sha256(run_id)>.lock/
+      owner.json
+  credentials/
+    <credential_handle>.json
+  workers/
+    <worker_id>.heartbeat.json
+  token-cache/
+    <cache_key>.json
+    <cache_key>.lock/
+      owner.json
+  app-servers/
+    <worker_id>/
+      metadata.json
+  tmp/
+    *.tmp
+  cleanup/
+    last-run.json
+    supervisor.lock/
+```
+
+Configurable root env var:
+
+```text
+MAGE_SIDEKICK_RUNTIME_DIR=/tmp/mage-sidekick-runtime
+```
+
+The runtime directory must be on a local filesystem visible to the webserver process and its worker child processes. It does not need to be shared across pods in phase 1.
+
+Logical identifiers such as `run_id`, `session_uuid`, and `turn_uuid` are stored inside JSON payloads but must not be used directly as path names. Runtime files use opaque SHA-256 file stems so client-controlled IDs cannot create nested paths, collide with sibling runtime directories, or escape the runtime root.
+
+## Run State Model
+
+Run file:
+
+```json
+{
+  "schema_version": 1,
+  "run_id": "uuid",
+  "session_uuid": "uuid",
+  "turn_uuid": "uuid",
+  "user_id": "1",
+  "message": "user prompt",
+  "attachments": [],
+  "context": {},
+  "settings": {},
+  "credential_handle": "opaque-one-shot-handle",
+  "status": "queued",
+  "created_at": "2026-07-29T20:00:00Z",
+  "updated_at": "2026-07-29T20:00:00Z",
+  "started_at": null,
+  "completed_at": null,
+  "attempt": 0,
+  "max_attempts": 1,
+  "worker_id": null,
+  "error": null,
+  "lease": {
+    "claimed_at": null,
+    "expires_at": null,
+    "heartbeat_at": null
+  }
+}
+```
+
+Allowed statuses:
+
+- `queued`
+- `claiming`
+- `starting`
+- `running`
+- `waiting_on_model_session`
+- `waiting_on_tool`
+- `cancelling`
+- `complete`
+- `failed`
+- `cancelled`
+- `expired`
+- `orphaned`
+
+State transitions:
+
+```text
+queued -> claiming -> starting -> running -> complete
+queued -> claiming -> starting -> failed
+running -> waiting_on_model_session -> running
+running -> waiting_on_tool -> running
+running -> cancelling -> cancelled
+claiming/running -> orphaned -> queued or failed
+queued/running -> expired
+```
+
+Terminal statuses:
+
+- `complete`
+- `failed`
+- `cancelled`
+- `expired`
+
+Orphaned is non-terminal only if retry is allowed. Otherwise it becomes failed.
+
+## Event Log Model
+
+Event file:
+
+```text
+events/<sha256(run_id)>.jsonl
+```
+
+Each line is one JSON object:
+
+```json
+{
+  "schema_version": 1,
+  "run_id": "uuid",
+  "sequence": 12,
+  "timestamp": "2026-07-29T20:00:01Z",
+  "type": "status",
+  "status": "running",
+  "title": "Running",
+  "message": "Sidekick is working on this request.",
+  "metadata": {}
+}
+```
+
+Event types:
+
+- `accepted`
+- `queued`
+- `claimed`
+- `starting`
+- `app_server_starting`
+- `app_server_ready`
+- `model_session_request`
+- `model_session_cache_hit`
+- `model_session_singleflight_wait`
+- `model_session_created`
+- `model_session_failed`
+- `tool_call_start`
+- `tool_call_delta`
+- `tool_call_complete`
+- `assistant_delta`
+- `assistant_message`
+- `artifact_created`
+- `warning`
+- `error`
+- `complete`
+- `cancelled`
+- `heartbeat`
+
+Sequence handling:
+
+- The writer is the worker that owns the claim.
+- The sequence number is monotonic per run.
+- The event append must be atomic enough for readers to ignore partial trailing lines.
+- Readers should track the last sequence they delivered.
+
+## Atomic File Operations
+
+Use only atomic filesystem patterns:
+
+### Write Run State
+
+1. Resolve the logical `run_id` to `sha256(run_id)`.
+2. Serialize JSON to `tmp/<hashed-run-id>.<pid>.<nonce>.tmp`.
+3. `fsync` the file if available.
+4. `os.replace(tmp_path, runs/<hashed-run-id>.json)`.
+
+### Claim Run
+
+Use atomic directory creation:
+
+```python
+os.mkdir("claims/<sha256(run_id)>.lock")
+```
+
+If mkdir succeeds, the worker owns the claim. If it fails with `FileExistsError`, another worker owns or previously owned it.
+
+Write `claims/<sha256(run_id)>.lock/owner.json` after creating the directory:
+
+```json
+{
+  "worker_id": "worker-1",
+  "pid": 1234,
+  "run_id": "uuid",
+  "claimed_at": "2026-07-29T20:00:00Z",
+  "expires_at": "2026-07-29T20:03:00Z",
+  "heartbeat_at": "2026-07-29T20:00:00Z"
+}
+```
+
+### Release Claim
+
+Only the owning worker may release a claim. It must verify `owner.json` before removing the lock directory.
+
+### Credential Handoff
+
+Run files must not persist raw request API keys, OAuth tokens, model tokens, or other bearer credentials. Admission writes those values to a short-lived credential payload and stores only an opaque `credential_handle` on the run. The payload is sealed with a runtime-local secret, protected with `0600` file permissions, and consumed as one-shot state by the worker before it calls the existing Sidekick runner.
+
+Credential lifecycle:
+
+1. Webserver creates a handle only for a newly admitted run.
+2. Webserver writes `credentials/<credential_handle>.json` with sealed ciphertext, nonce, HMAC, creation time, and expiry.
+3. Run JSON stores only `credential_handle`.
+4. Worker pops and deletes the credential file before executing the run.
+5. Cleanup removes expired credential files.
+
+The runtime secret may come from `MAGE_SIDEKICK_RUNTIME_SECRET`; otherwise the runtime creates a local `runtime-secret.key` file with `0600` permissions under the runtime root. The secret file remains local to the container and is not exposed by status endpoints or logs.
+
+### Stale Claim Recovery
+
+A claim is stale if:
+
+- owner heartbeat is older than the worker claim TTL,
+- owning pid is not alive,
+- worker heartbeat file is stale,
+- run exceeded hard max runtime.
+
+Recovery behavior:
+
+- If attempts remain, mark run `queued` and increment attempt.
+- If attempts are exhausted, mark run `failed`.
+- Append a `warning` or `error` event explaining recovery.
+
+## Webserver Responsibilities
+
+The webserver must only do fast control-plane work.
+
+### On Message Submission
+
+1. Validate request auth and user permissions.
+2. Parse payload.
+3. Create `run_id`.
+4. Create or reuse `turn_uuid`.
+5. Write run file with status `queued`.
+6. Write any request credentials through the sealed credential handoff.
+7. Append `accepted` and `queued` events.
+8. Notify supervisor that queue depth changed.
+9. Return run metadata immediately.
+
+The webserver must not:
+
+- start Codex app-server synchronously,
+- wait for model-session token creation,
+- execute tools,
+- wait on a long-running Sidekick turn,
+- retry model auth in the request handler,
+- hold user-facing API capacity while Sidekick work runs.
+
+### On User Stream/Reconnect
+
+1. Authenticate the user and open one user-level SSE connection.
+2. Discover active runtime runs owned by that user.
+3. Replay and follow new events for those runs.
+4. Emit events with `run_id`, `session_uuid`, `turn_uuid`, and monotonic per-run `sequence`.
+5. Send heartbeat events when no run output was emitted in the poll interval.
+6. Drop terminal runs from the active watch set after a short grace period.
+5. Stop on terminal event or client disconnect.
+
+Reconnect must never create a duplicate run unless the client explicitly submitted a new message.
+
+### On Cancel
+
+1. Mark run `cancelling`.
+2. Append `cancelling` event.
+3. Worker observes cancellation and terminates child work.
+4. Mark `cancelled`.
+
+## Worker Supervisor
+
+The supervisor runs in the webserver process.
+
+Responsibilities:
+
+1. Start minimum warm workers on boot.
+2. Monitor queue depth.
+3. Start extra workers when queued work exceeds current capacity.
+4. Stop or allow idle workers to exit after idle TTL.
+5. Restart workers that crash unexpectedly if queue still has work.
+6. Avoid runaway process creation.
+7. Expose status to health/debug endpoints.
+8. Run periodic cleanup.
+9. Coordinate capacity decisions across webserver processes with a filesystem supervisor lock.
+
+Configuration:
+
+```text
+MAGE_SIDEKICK_RUNTIME_ENABLED=1  # default; set to 0 only for legacy inline fallback
+MAGE_SIDEKICK_MIN_WORKERS=0
+MAGE_SIDEKICK_MAX_WORKERS=<unset>
+MAGE_SIDEKICK_WORKER_QUEUE_PER_WORKER=1
+MAGE_SIDEKICK_WORKER_IDLE_TTL_SECONDS=600
+MAGE_SIDEKICK_RUN_MAX_SECONDS=3600
+MAGE_SIDEKICK_RUN_TTL_SECONDS=3600
+```
+
+Scale-up algorithm:
+
+```text
+desired_uncapped = max(
+  min_workers,
+  ceil((queued_runs + cancelling_runs) / queue_per_worker)
+)
+desired_workers = min(max_workers, desired_uncapped) if max_workers is set else desired_uncapped
+```
+
+Capacity must be computed against all healthy local workers, not only child processes started by the current webserver process. The supervisor reads `workers/*.heartbeat.json`, ignores stale/dead pids, and counts healthy external workers before spawning more. Scaling is guarded by `cleanup/supervisor.lock/` so concurrent webserver processes do not all spawn the same missing capacity at the same time.
+If a burst enqueue misses the supervisor lock, the caller returns without spawning immediately and schedules a short capacity retry so queued work is not left waiting for the next unrelated supervisor tick.
+
+When the supervisor starts a worker process, it immediately writes a `starting` heartbeat reservation with the child pid. This makes the new capacity visible to sibling webserver processes before the child emits its first heartbeat.
+
+Scale-down algorithm:
+
+- Workers exit themselves after `idle_ttl`.
+- Supervisor does not aggressively kill healthy idle workers unless memory pressure or shutdown requires it.
+
+Worker process start command:
+
+```text
+python -m mage_ai.ai.sidekick_worker --runtime-dir <dir> --worker-id <id>
+```
+
+## Worker Responsibilities
+
+Worker loop:
+
+1. Write worker heartbeat.
+2. Scan queued runs.
+3. Claim one run atomically.
+4. Mark run `starting`.
+5. Acquire or start Codex app-server lease.
+6. Execute Sidekick turn.
+7. Append events.
+8. Mark terminal status.
+9. Release claim.
+10. If idle beyond TTL and above minimum pool, exit.
+
+Worker must enforce:
+
+- max run runtime,
+- model-session timeout,
+- app-server startup timeout,
+- app-server request timeout,
+- tool-call timeout when available,
+- cancellation checks,
+- child process cleanup.
+
+Worker must never:
+
+- block the webserver event loop,
+- create duplicate runs,
+- emit events for runs it does not claim,
+- reuse a poisoned app-server process,
+- keep running indefinitely without heartbeat.
+
+## Elastic Worker Pool Details
+
+Workers should not all sit around forever.
+
+Recommended default:
+
+```text
+min_workers=1
+max_workers=6
+idle_ttl_seconds=600
+```
+
+For very small containers:
+
+```text
+min_workers=1
+max_workers=2  # optional operator override
+```
+
+For larger pods:
+
+```text
+min_workers=2
+max_workers=6, or an explicit operator override such as 8 or 16
+```
+
+The product default does not apply a static worker cap. Operators can set
+`MAGE_SIDEKICK_MAX_WORKERS` when a specific deployment needs a local resource limit.
+Setting `MAGE_SIDEKICK_MAX_WORKERS=auto` restores CPU-quota-derived sizing, with a
+fallback cap of `4` when no CPU quota is visible.
+
+Important distinction:
+
+- Users can submit unlimited work.
+- The runtime scales workers to queued work unless an operator explicitly configures a local cap.
+- Extra work is accepted and visible as queued.
+
+This preserves user freedom while leaving deployment-specific caps to explicit operator policy.
+
+## Codex App-Server Reuse
+
+Cold-starting Codex app-server per message is expensive and likely contributes to variable latency.
+
+Target behavior:
+
+1. Each active worker can own one warm Codex app-server process.
+2. The app-server is initialized once per worker lease.
+3. Existing Sidekick sessions use `thread/resume` where safe.
+4. New Sidekick sessions use `thread/start`.
+5. App-server process is recycled after idle TTL, error, memory growth, config change, or max turns.
+
+Configuration:
+
+```text
+MAGE_SIDEKICK_APP_SERVER_REUSE_ENABLED=1
+MAGE_SIDEKICK_APP_SERVER_IDLE_TTL_SECONDS=600
+MAGE_SIDEKICK_APP_SERVER_MAX_TURNS=50
+```
+
+Reuse safety:
+
+- Reuse only when user, workspace, config, model auth mode, and relevant environment are compatible.
+- Do not leak one user's state into another user's run.
+- Pass per-turn identity such as session UUID, turn UUID, and media output directory through a worker-owned dynamic context file so a warm app-server process does not retain stale turn-specific environment values.
+- If isolation cannot be proven, use one warm app-server per worker and ensure each worker handles one run at a time.
+- Always recycle on protocol errors, unexpected interactive requests, auth failures, or stdout/stderr corruption.
+
+Expected latency improvement:
+
+- Cold app-server startup can add 10-20+ seconds.
+- Warm reuse avoids that cost for subsequent turns.
+- Under load, queued runs wait for worker capacity but do not freeze webserver APIs.
+
+## User-Scoped Runtime Prewarm
+
+Mage Pro AI Chat can prewarm the Sidekick runtime for the signed-in user before
+the user sends a message. Mage does not request prewarm during ordinary
+authenticated app-load. Instead, the authenticated user-level SSE stream schedules
+a reusable new-thread prewarm when the user opens Sidekick or the standalone AI
+Chat route. That work is dispatched in the background after the stream is
+authenticated, so opening the stream does not wait for runtime capacity before
+continuing to replay and follow events. The request is idempotent for the user,
+repo, cluster, chat settings, and auth mode. Volatile page context is passed to
+turns as per-message context and is not part of the app-server compatibility key.
+When a matching prewarm is already `ready` or `warming`, Mage reuses that record
+without writing a new credential handoff or scanning worker capacity. The first
+turn in a new thread can consume that ready app-server once; existing threads do
+not match it, and concurrent first turns race through a worker claim so only one
+run binds the reusable prewarm.
+
+The authenticated client resource is `ai_agent_session_prewarms`. It writes
+status under the Sidekick runtime directory's `prewarm/` section using a
+user- and page-scoped `prewarm_id`, starts enough supervised worker capacity to
+prepare the active warming prewarms concurrently, and waits only up to
+`MAGE_SIDEKICK_PREWARM_SYNC_WAIT_MS` for a ready result before returning the
+current `warming`, `ready`, `failed`, `expired`, or `disabled` state.
+`MAGE_SIDEKICK_PREWARM_MIN_WORKERS` remains the worker-capacity floor, and
+`MAGE_SIDEKICK_MAX_WORKERS` limits automatic scaling only when configured. A
+`warming` response is not an error; the worker continues preparing the
+compatible app-server in the background. Once a prewarm is `ready`, it does not
+reserve the run or prevent another worker from claiming matching queued work.
+Page context scopes prewarm matching; it remains excluded from the warm
+app-server process compatibility key so one user can reuse the process across
+chats and pages.
+
+Prewarm creates only runtime coordination state. It must not create a chat turn,
+append a user-visible assistant response, or store raw OAuth tokens, API keys, or
+model credentials in the prewarm status file. Credentials use the same short-lived
+sealed credential handoff as runtime runs, and cleanup removes stale prewarm state
+with the rest of the Sidekick runtime directory.
+
+When model proxy authentication is enabled, the worker prewarm path also runs the
+same short-lived auth command used by Codex to verify token broker reachability.
+The auth subprocess receives the server-side Mage Pro API key only for that
+short-lived exchange. The returned token is discarded and only readiness
+metadata is stored.
+
+Target send behavior:
+
+1. The frontend immediately shows local queued or working state after Send.
+2. The stream handler accepts the run quickly and writes a durable
+   `runtime_run_accepted` event with prewarm metadata.
+3. A worker uses an already warmed app-server when the prewarm key matches the
+   user and runtime context.
+4. If prewarm is disabled, expired, failed, or mismatched, the normal runtime
+   queue still accepts the message and starts work through the cold path.
+
+Configuration:
+
+```text
+MAGE_SIDEKICK_PREWARM_ENABLED=1
+MAGE_SIDEKICK_PREWARM_ON_LOGIN=1
+MAGE_SIDEKICK_PREWARM_MIN_WORKERS=1
+MAGE_SIDEKICK_PREWARM_SYNC_WAIT_MS=500
+MAGE_SIDEKICK_PREWARM_TTL_SECONDS=1800
+```
+
+## Model Session Singleflight and Cache
+
+This is the most urgent mitigation for the observed token storm.
+
+Current risk:
+
+- Multiple callers can request model sessions for the same `session_uuid`, `turn_uuid`, model, and user.
+- When upstream is slow, requests pile up.
+- The webserver can hold many broker requests concurrently.
+
+Target behavior:
+
+For cache key:
+
+```text
+user_id
+session_uuid
+turn_uuid
+model
+reasoning_effort
+service_tier
+metadata hash
+```
+
+Only one upstream `create_codex_model_session` request may run at a time.
+
+Other callers should:
+
+1. wait for the in-flight request for a short bounded period,
+2. reuse the resulting session if valid,
+3. fail fast if the leader fails,
+4. never start duplicate upstream requests for the same key during the singleflight window.
+
+Cache file:
+
+```json
+{
+  "schema_version": 1,
+  "cache_key": "sha256",
+  "created_at": "2026-07-29T20:00:00Z",
+  "expires_at": "2026-07-29T20:55:00Z",
+  "session": {
+    "token": "...",
+    "session_uuid": "...",
+    "session_endpoint": "/api/v1/codex/model_session_tokens"
+  }
+}
+```
+
+Do not log tokens. Redact sensitive fields in events and logs.
+
+Token cache configuration:
+
+```text
+MAGE_SIDEKICK_MODEL_SESSION_SINGLEFLIGHT_ENABLED=1
+MAGE_SIDEKICK_MODEL_SESSION_CACHE_ENABLED=1
+MAGE_SIDEKICK_MODEL_SESSION_TIMEOUT_SECONDS=8
+MAGE_SIDEKICK_MODEL_SESSION_SINGLEFLIGHT_WAIT_SECONDS=10
+MAGE_SIDEKICK_MODEL_SESSION_CACHE_SKEW_SECONDS=60
+MAGE_SIDEKICK_MODEL_SESSION_CIRCUIT_FAILURE_THRESHOLD=5
+MAGE_SIDEKICK_MODEL_SESSION_CIRCUIT_OPEN_SECONDS=30
+```
+
+Circuit breaker:
+
+- Track recent failures to create model sessions.
+- If failures exceed threshold, open circuit.
+- While open, fail fast with clear event:
+
+```text
+Model session service is temporarily unavailable. Sidekick will retry shortly.
+```
+
+Do not let model-session calls sit for minutes.
+
+## Request Timeout Policy
+
+Hard timeouts must be enforced at every layer:
+
+1. Local broker call from Codex app-server to webserver.
+2. Webserver broker handler to Mage Pro API.
+3. Token exchange.
+4. Model session creation.
+5. Codex app-server JSON-RPC requests.
+6. Overall Sidekick run.
+
+Expected max durations:
+
+```text
+local broker request: 10s
+model session upstream: 8s
+token exchange: 8s
+app-server initialize: 30s
+thread/start or thread/resume: 30s
+overall run: configurable, default 1h
+```
+
+No request should remain in a handler for 273 seconds unless it is an intentional long-lived event stream.
+
+## Event Streaming Behavior
+
+The stream handler should become a reader, not the executor.
+
+Flow:
+
+```text
+Client submits message
+Webserver writes run and initial event
+Worker appends events
+Stream handler tails events
+Client receives continuous state
+```
+
+Reconnect:
+
+```text
+Client reconnects with cursor sequence
+Webserver replays events after sequence
+Webserver resumes tailing
+```
+
+Duplicate prevention:
+
+- Client submits should include an idempotency key.
+- Webserver maps idempotency key to existing run if already accepted.
+- Reconnect must not create new run.
+
+## Idempotency
+
+Each user message should include or receive:
+
+```text
+client_message_id
+idempotency_key
+run_id
+turn_uuid
+```
+
+If the browser retries after timeout, the webserver should return the existing accepted run instead of creating a duplicate Sidekick turn.
+
+Idempotency file:
+
+```text
+idempotency/<user_id>/<session_uuid>/<client_message_id>.json
+```
+
+It can point to:
+
+```json
+{
+  "run_id": "uuid",
+  "created_at": "...",
+  "expires_at": "..."
+}
+```
+
+This can be added after the initial spool if current client behavior already has sufficient turn IDs.
+
+These values are logical IDs only. Filesystem paths derived from them must use hashed stems.
+
+## Cleanup
+
+Cleanup should run periodically in the supervisor.
+
+Delete:
+
+- terminal runs older than TTL,
+- event logs older than TTL,
+- expired credential handoff files,
+- token cache entries past expiry,
+- stale temp files,
+- stale claim locks whose owner is dead,
+- worker heartbeat files for dead workers,
+- app-server metadata for dead workers.
+
+Default TTL:
+
+```text
+MAGE_SIDEKICK_RUN_TTL_SECONDS=3600
+MAGE_SIDEKICK_CLEANUP_INTERVAL_SECONDS=60
+```
+
+Cleanup must be safe:
+
+- Never delete a non-terminal run with a healthy claim.
+- Never delete event files currently being tailed unless terminal and expired.
+- Use atomic rename to quarantine questionable stale records before deletion if needed.
+
+## Observability
+
+Add structured logs for:
+
+- run accepted,
+- run claimed,
+- queue depth,
+- worker start,
+- worker exit,
+- worker crash,
+- worker idle exit,
+- app-server start,
+- app-server ready,
+- app-server recycled,
+- model-session cache hit,
+- model-session singleflight leader,
+- model-session singleflight waiter,
+- model-session timeout,
+- circuit open/close,
+- stale claim recovered,
+- run complete,
+- run failed.
+
+Add metrics if the current metrics stack supports them:
+
+```text
+sidekick_runs_accepted_total
+sidekick_runs_running
+sidekick_runs_queued
+sidekick_runs_failed_total
+sidekick_run_duration_seconds
+sidekick_queue_wait_seconds
+sidekick_workers_running
+sidekick_workers_idle
+sidekick_worker_restarts_total
+sidekick_app_server_start_duration_seconds
+sidekick_model_session_duration_seconds
+sidekick_model_session_cache_hits_total
+sidekick_model_session_singleflight_waiters_total
+sidekick_model_session_timeouts_total
+sidekick_webserver_streams_active
+```
+
+Debug endpoint:
+
+```text
+GET /api/sidekick/runtime/status
+```
+
+Response:
+
+```json
+{
+  "runtime_dir": "/tmp/mage-sidekick-runtime",
+  "enabled": true,
+  "queue_depth": 3,
+  "running": 2,
+  "workers": [
+    {
+      "worker_id": "worker-1",
+      "pid": 1234,
+      "status": "running",
+      "current_run_id": "uuid",
+      "heartbeat_age_seconds": 2
+    }
+  ],
+  "model_session_circuit": {
+    "state": "closed",
+    "recent_failures": 0
+  }
+}
+```
+
+Restrict this endpoint to authorized admins.
+
+## Configuration Summary
+
+```text
+MAGE_SIDEKICK_RUNTIME_ENABLED=1  # default; set to 0 only for legacy inline fallback
+MAGE_SIDEKICK_RUNTIME_DIR=/tmp/mage-sidekick-runtime
+MAGE_SIDEKICK_RUNTIME_SECRET=<optional-secret>
+
+MAGE_SIDEKICK_MIN_WORKERS=0
+MAGE_SIDEKICK_MAX_WORKERS=<unset>
+MAGE_SIDEKICK_WORKER_QUEUE_PER_WORKER=1
+MAGE_SIDEKICK_WORKER_IDLE_TTL_SECONDS=600
+
+MAGE_SIDEKICK_RUN_MAX_SECONDS=3600
+MAGE_SIDEKICK_RUN_TTL_SECONDS=3600
+MAGE_SIDEKICK_CLEANUP_INTERVAL_SECONDS=60
+
+MAGE_CODEX_CHAT_SESSION_HOME_CLEANUP_TTL_SECONDS=86400
+MAGE_CODEX_CHAT_SESSION_HOME_CLEANUP_MAX_DIRS=64
+MAGE_CODEX_CHAT_SESSION_HOME_CLEANUP_MAX_REMOVALS_PER_PASS=64
+MAGE_CODEX_CHAT_SESSION_HOME_CLEANUP_INODE_HIGH_WATERMARK=0.80
+MAGE_CODEX_CHAT_SESSION_HOME_CLEANUP_INODE_LOW_WATERMARK=0.60
+MAGE_CODEX_CHAT_SESSION_HOME_CLEANUP_SCHEDULE_INTERVAL_SECONDS=300
+
+MAGE_SIDEKICK_APP_SERVER_REUSE_ENABLED=1
+MAGE_SIDEKICK_APP_SERVER_IDLE_TTL_SECONDS=600
+MAGE_SIDEKICK_APP_SERVER_MAX_TURNS=50
+
+MAGE_SIDEKICK_MODEL_SESSION_SINGLEFLIGHT_ENABLED=1
+MAGE_SIDEKICK_MODEL_SESSION_CACHE_ENABLED=1
+MAGE_SIDEKICK_MODEL_SESSION_TIMEOUT_SECONDS=8
+MAGE_SIDEKICK_MODEL_SESSION_SINGLEFLIGHT_WAIT_SECONDS=10
+MAGE_SIDEKICK_MODEL_SESSION_CACHE_SKEW_SECONDS=60
+MAGE_SIDEKICK_MODEL_SESSION_CIRCUIT_FAILURE_THRESHOLD=5
+MAGE_SIDEKICK_MODEL_SESSION_CIRCUIT_OPEN_SECONDS=30
+```
+
+Backward compatibility:
+
+- Keep the new runtime enabled by default for production Sidekick load isolation.
+- Use an explicit false `MAGE_SIDEKICK_RUNTIME_ENABLED` value for legacy inline execution.
+- Do not remove existing Sidekick code paths until the new runtime is proven.
+
+Persistent Codex session homes:
+
+- Non-ephemeral Codex app-server turns keep a per-user, per-session home under the Mage data directory so Codex can resume the same thread.
+- Mage schedules inactive-home pruning outside the turn hot path. Non-ephemeral turns may request a throttled background cleanup, but they do not wait for the filesystem scan before starting the Codex app-server turn. The cleanup always skips the current turn and any session with a live durable active-run lease.
+- Inactive homes are removed when they are older than `MAGE_CODEX_CHAT_SESSION_HOME_CLEANUP_TTL_SECONDS`, when the inactive home count exceeds `MAGE_CODEX_CHAT_SESSION_HOME_CLEANUP_MAX_DIRS`, or when filesystem inode usage crosses `MAGE_CODEX_CHAT_SESSION_HOME_CLEANUP_INODE_HIGH_WATERMARK`.
+- Under inode pressure, cleanup continues until inode usage falls to `MAGE_CODEX_CHAT_SESSION_HOME_CLEANUP_INODE_LOW_WATERMARK` or no inactive homes remain.
+- `MAGE_CODEX_CHAT_SESSION_HOME_CLEANUP_SCHEDULE_INTERVAL_SECONDS` throttles per-process turn-start cleanup scheduling so concurrent or repeated turns do not each launch a scan. The Sidekick runtime supervisor also invokes this cleanup on its normal `MAGE_SIDEKICK_CLEANUP_INTERVAL_SECONDS` pass, and `MAGE_CODEX_CHAT_SESSION_HOME_CLEANUP_MAX_REMOVALS_PER_PASS` bounds one pass so a large stale backlog does not monopolize one background cleanup pass.
+- If a pruned home belongs to an older chat with a stored Codex thread id, the next turn recreates the local home and uses `thread/resume` for that stored thread. If the stored thread id is incompatible, the existing app-server fallback starts a fresh thread.
+
+## Implementation Plan
+
+### Phase 0: Instrument Current Behavior
+
+Purpose: Confirm current bottlenecks and establish baseline evidence.
+
+Implement:
+
+- Add explicit logging around model-session broker request start/end.
+- Add request IDs and singleflight candidate keys without sensitive values.
+- Log Codex app-server cold start duration.
+- Log stream duration and whether stream execution is inline or worker-backed.
+- Add counters for duplicate token requests by `session_uuid` and `turn_uuid`.
+
+Tests:
+
+- Unit test log metadata redacts tokens.
+- Unit test duplicate key hashing excludes secrets.
+
+QA:
+
+- Run 3 concurrent Sidekick messages.
+- Verify logs show duplicate model-session pressure.
+- Verify ordinary `/api/status` latency during load.
+
+Checklist:
+
+- [ ] Redacted structured logs added.
+- [ ] Duplicate model-session candidate key visible.
+- [ ] Current concurrency baseline captured.
+- [ ] No sensitive token leakage.
+
+### Phase 1: Model Session Singleflight and Cache
+
+Purpose: Stop the token creation storm first.
+
+Implement:
+
+- `ModelSessionKey` builder.
+- `ModelSessionCache` backed by local files.
+- `ModelSessionSingleflight` using atomic lock directories.
+- Bounded wait for in-flight leader.
+- Hard upstream timeout.
+- Circuit breaker for repeated failures.
+- Structured events and logs.
+
+Tests:
+
+- One leader, many waiters produce one upstream request.
+- Waiters receive same valid session.
+- Failed leader wakes waiters with failure.
+- Expired cache entry is ignored.
+- Cache skew prevents returning near-expired token.
+- Circuit opens after threshold.
+- Circuit closes after open interval.
+- Sensitive fields are redacted.
+- Timeout raises expected broker error quickly.
+
+QA:
+
+- Simulate 20 concurrent broker calls for same key.
+- Assert upstream token/session function called once.
+- Simulate upstream hang.
+- Assert all callers fail within configured timeout, not minutes.
+- Run a Sidekick turn and verify token cache hit on repeated auth.
+
+Checklist:
+
+- [ ] Singleflight key correct.
+- [ ] Cache writes atomic.
+- [ ] Lock cleanup handles stale leader.
+- [ ] Timeout bounded.
+- [ ] Circuit breaker visible.
+- [ ] No token leaked in logs/events.
+
+### Phase 2: Local Spool Library
+
+Purpose: Introduce file-backed ephemeral run/event state.
+
+Implement:
+
+- `SidekickRuntimePaths`.
+- `SidekickRunStore`.
+- `SidekickEventLog`.
+- `SidekickClaimStore`.
+- `SidekickCleanup`.
+- Atomic write helpers.
+- Event sequence handling.
+- Stale claim detection.
+
+Tests:
+
+- Create run writes valid JSON.
+- Update run uses atomic replace.
+- Append events preserves sequence.
+- Reader ignores partial trailing line.
+- Claim succeeds for one worker only.
+- Claim contention returns one winner.
+- Stale claim is recovered.
+- Cleanup deletes expired terminal runs.
+- Cleanup does not delete active claimed run.
+- Corrupt run file is quarantined or reported safely.
+
+QA:
+
+- Manually create queued runs and inspect files.
+- Kill a worker mid-run and verify stale recovery.
+- Restart webserver and verify event replay from files still works if files remain.
+
+Checklist:
+
+- [ ] Runtime dir created with safe permissions.
+- [ ] Runs are atomic JSON.
+- [ ] Events are append-only JSONL.
+- [ ] Claim locking is atomic.
+- [ ] Stale lock recovery works.
+- [ ] TTL cleanup works.
+
+### Phase 3: Worker Process
+
+Purpose: Execute Sidekick turns outside request handlers.
+
+Implement:
+
+- `python -m mage_ai.ai.sidekick_worker`.
+- Worker heartbeat.
+- Queue scan and claim loop.
+- Run execution adapter around existing Sidekick runner logic.
+- Event emission adapter.
+- Cancellation polling.
+- Terminal state handling.
+- Child process cleanup.
+- Idle TTL exit.
+
+Tests:
+
+- Worker claims queued run.
+- Worker emits claimed/starting/running/complete events.
+- Worker marks failed on exception.
+- Worker releases claim on terminal status.
+- Worker exits after idle TTL.
+- Worker updates heartbeat while running.
+- Worker refuses to execute run without claim.
+- Worker handles cancellation.
+- Worker kills child process on timeout.
+
+QA:
+
+- Start one worker manually.
+- Submit a run file.
+- Watch events append.
+- Kill worker and verify supervisor/recovery behavior after phase 4.
+
+Checklist:
+
+- [ ] Worker command works directly.
+- [ ] Worker never needs web request context.
+- [ ] Existing Sidekick auth/context is passed safely.
+- [ ] Worker emits all expected state events.
+- [ ] Worker exits cleanly.
+
+### Phase 4: Worker Supervisor
+
+Purpose: Manage elastic local worker pool.
+
+Implement:
+
+- `SidekickWorkerSupervisor`.
+- Boot hook in webserver startup.
+- Minimum worker start.
+- Queue depth polling or notification.
+- Scale up to queued work, respecting `MAGE_SIDEKICK_MAX_WORKERS` only when configured.
+- Idle worker retirement.
+- Crash detection and restart.
+- Status/debug endpoint.
+- Cleanup loop.
+
+Tests:
+
+- Supervisor starts min workers.
+- Supervisor scales up when queue grows.
+- Supervisor leaves worker capacity unbounded by default.
+- Supervisor does not exceed configured max workers when an operator sets or lowers a cap.
+- Supervisor retries capacity after lock contention during burst enqueue.
+- Supervisor restarts crashed worker when queue has work.
+- Supervisor does not restart endlessly when disabled.
+- Supervisor reports status.
+- Cleanup loop invokes cleanup safely.
+
+QA:
+
+- Configure min 1 with no max.
+- Submit 10 runs.
+- Verify workers scale to queued work.
+- Configure max 4 and verify remaining runs stay queued.
+- Verify webserver `/api/status` remains fast.
+- Wait idle TTL and verify extra workers exit.
+
+Checklist:
+
+- [ ] Supervisor starts on app boot.
+- [ ] Supervisor disabled flag works.
+- [ ] Scale up works.
+- [ ] Scale down works.
+- [ ] Crash restart works.
+- [ ] Status endpoint works.
+
+### Phase 5: Stream Handler Rewire
+
+Purpose: Stop executing Sidekick turns inline in the stream request.
+
+Implement:
+
+- Admission path creates run.
+- Stream path tails event log.
+- Existing event schema maps to current frontend expectations.
+- Reconnect supports cursor replay.
+- Idempotency prevents duplicate runs.
+- Backward compatible fallback when runtime disabled.
+
+Tests:
+
+- Stream submit creates run and returns queued event quickly.
+- Stream receives worker events.
+- Reconnect replays missed events.
+- Reconnect does not create duplicate run.
+- Client disconnect does not cancel run unless explicit cancel requested.
+- Legacy path still works when new runtime disabled.
+- Stream handles missing event file gracefully.
+
+QA:
+
+- Browser sends Sidekick message.
+- Verify immediate queued/starting UI.
+- Refresh browser mid-run.
+- Verify same run continues and events replay.
+- Run multiple threads and verify no duplicate execution.
+
+Checklist:
+
+- [ ] Stream handler no longer executes turn inline when runtime enabled.
+- [ ] Existing UI event contract preserved.
+- [ ] Reconnect works.
+- [ ] Duplicate submit is idempotent.
+- [ ] Legacy fallback works.
+
+### Phase 6: Codex App-Server Warm Reuse
+
+Purpose: Avoid cold start per message and reduce latency variability.
+
+Implement:
+
+- App-server lease owned by worker.
+- App-server initialize once per worker.
+- Reuse for compatible turns.
+- Thread resume support.
+- Recycle on max turns, idle TTL, error, config mismatch.
+- Startup metrics.
+- Memory/process health checks where practical.
+
+Tests:
+
+- First turn starts app-server.
+- Second compatible turn reuses app-server.
+- Config mismatch starts fresh app-server or uses another lease.
+- Protocol error recycles app-server.
+- Idle TTL terminates app-server.
+- Max turns recycles app-server.
+- User isolation rules enforced.
+
+QA:
+
+- Measure first-turn startup.
+- Measure second-turn startup.
+- Verify no cross-user transcript leakage.
+- Trigger app-server error and verify worker recovers with fresh process.
+
+Checklist:
+
+- [ ] Warm reuse reduces startup time.
+- [ ] Isolation constraints documented and tested.
+- [ ] Recycling works.
+- [ ] Errors do not poison future turns.
+
+### Phase 7: Cancellation, Recovery, and Cleanup Hardening
+
+Purpose: Make operational behavior predictable.
+
+Implement:
+
+- Cancel endpoint or existing cancel path integration.
+- Worker cancellation polling.
+- Child process termination ladder: terminate, wait, kill.
+- Stale claim recovery.
+- Orphaned app-server cleanup.
+- Expired run handling.
+- Startup cleanup of stale files.
+
+Tests:
+
+- Cancel queued run.
+- Cancel running run.
+- Cancel during model-session wait.
+- Cancel during tool call.
+- Worker crash during run.
+- Webserver restart while run is queued.
+- Webserver restart while run is running.
+- Cleanup removes old terminal records.
+- Cleanup preserves active records.
+
+QA:
+
+- Start long Sidekick turn.
+- Cancel from UI.
+- Verify process cleanup.
+- Force kill worker.
+- Verify stale recovery/failure event.
+
+Checklist:
+
+- [ ] Cancel works in all major states.
+- [ ] Stale claims recover.
+- [ ] Startup cleanup runs.
+- [ ] No orphan child processes remain.
+
+### Phase 8: Frontend State and UX Polish
+
+Purpose: Make queued/running states clear without limiting usage.
+
+Implement:
+
+- Show accepted immediately.
+- Show queued state when waiting for worker.
+- Show starting when worker claimed run.
+- Show running when model/tool work begins.
+- Show reconnect/resume state.
+- Show fast, human-readable failure for model-session circuit breaker.
+- Avoid scary internal timeout text unless expanded.
+
+Tests:
+
+- Render queued state.
+- Render starting state.
+- Render running state.
+- Render failure state.
+- Render reconnect replay without duplicate rows.
+- Render multiple threads with independent states.
+
+QA:
+
+- Multiple simultaneous Sidekick messages.
+- Browser refresh mid-run.
+- Network disconnect/reconnect.
+- Dark and light mode screenshots if UI changes are in scope.
+- Long thread names and long messages.
+
+Checklist:
+
+- [ ] Users can send freely.
+- [ ] Queued does not look hung.
+- [ ] Failure messages are actionable.
+- [ ] Reconnect does not duplicate messages.
+
+## Test Plan Summary
+
+### Unit Tests
+
+Model session:
+
+- key generation,
+- singleflight leader/waiter,
+- cache hit/miss/expiry,
+- timeout,
+- circuit breaker,
+- token redaction.
+
+Spool:
+
+- atomic run writes,
+- event append/read,
+- partial line handling,
+- claim contention,
+- stale claim,
+- cleanup.
+
+Worker:
+
+- claim loop,
+- state transitions,
+- heartbeat,
+- idle exit,
+- cancellation,
+- terminal cleanup.
+
+Supervisor:
+
+- min workers,
+- optional max workers,
+- scale up,
+- scale down,
+- crash restart,
+- disabled mode.
+
+Stream:
+
+- admission,
+- replay,
+- tail,
+- reconnect,
+- idempotency,
+- legacy fallback.
+
+App-server reuse:
+
+- warm reuse,
+- recycle triggers,
+- isolation rules,
+- protocol error handling.
+
+### Integration Tests
+
+1. Submit one Sidekick run and complete successfully.
+2. Submit N concurrent runs and verify workers scale to queued work when no max is configured.
+3. Set `MAGE_SIDEKICK_MAX_WORKERS` and verify only the configured max workers run.
+4. Verify queued runs start as workers free up.
+5. Verify `/api/status` remains responsive under Sidekick load.
+6. Simulate upstream model-session timeout.
+7. Simulate app-server startup timeout.
+8. Simulate worker crash.
+9. Simulate browser reconnect.
+10. Simulate duplicate client submit.
+11. Simulate cleanup of expired runs.
+
+### Load Tests
+
+Scenarios:
+
+- 1 user, 5 threads, 10 messages.
+- 10 users, 3 threads each, 1 message each.
+- 20 users, 3 threads each, staggered messages.
+- Token broker stampede: 50 identical token requests.
+- Upstream model-session service slow or unavailable.
+
+Assertions:
+
+- Webserver p95 `/api/status` remains under target.
+- No ordinary API request waits minutes.
+- Number of workers never exceeds max.
+- Duplicate token upstream calls are deduped.
+- Queue depth is visible.
+- Terminal states are produced for all runs.
+- No leaked child processes after test.
+
+## QA Plan
+
+### Local or EKS Runtime QA
+
+For this repo's normal agentic development, use the required EKS validation lane when changing product code. The design itself does not require Helm changes, but runtime proof should use the remote agent dev slot when implementing in Mage Pro.
+
+Legacy-inline fallback QA steps:
+
+1. Deploy with `MAGE_SIDEKICK_RUNTIME_ENABLED=0`.
+2. Start one Sidekick message.
+3. Confirm the legacy inline runner emits work and a final response.
+4. Confirm ordinary APIs remain responsive.
+
+Default scalable-runtime QA steps:
+
+1. Deploy with `MAGE_SIDEKICK_RUNTIME_ENABLED` unset or set to `1`.
+2. Confirm runtime status endpoint shows min worker alive when `MAGE_SIDEKICK_MIN_WORKERS` is configured.
+3. Start one Sidekick message.
+4. Confirm accepted/queued event appears immediately.
+5. Confirm worker claims and completes run.
+6. Start 10 Sidekick messages in parallel.
+7. Confirm workers scale to queued work when no max is configured.
+8. Configure `MAGE_SIDEKICK_MAX_WORKERS` in a test pass and confirm only that many workers execute at once.
+9. Kill one worker process.
+10. Confirm stale claim recovery or failure event.
+11. Restart browser mid-run.
+12. Confirm event replay without duplicate execution.
+13. Simulate model-session upstream timeout.
+14. Confirm failure within configured timeout.
+15. Confirm token circuit breaker opens and closes.
+16. Wait idle TTL.
+17. Confirm extra workers exit.
+18. Wait cleanup TTL.
+19. Confirm expired run files are removed.
+
+### Manual Browser QA
+
+User paths:
+
+- one thread, one message,
+- one thread, repeated messages,
+- multiple threads, simultaneous sends,
+- browser refresh mid-run,
+- network offline/online,
+- cancellation,
+- model-token failure,
+- worker crash recovery,
+- long prompt,
+- attachment prompt if supported,
+- voice dictation while Sidekick load is active.
+
+Expected:
+
+- No global webserver hang.
+- UI shows state transitions.
+- No duplicate assistant responses.
+- Normal settings/profile/status pages remain usable.
+
+## Rollout Plan
+
+### Stage 1: Dark Launch Internals
+
+- Ship spool and singleflight code behind env flags.
+- Keep legacy execution path active.
+- Validate unit and integration tests.
+
+### Stage 2: Token Singleflight Enabled
+
+- Enable model-session singleflight/cache first.
+- Monitor token request rates and failures.
+- Confirm no token leakage.
+
+### Stage 3: Worker Runtime Enabled for One Environment
+
+- Enable local worker runtime with `min=1`, `max=2`.
+- Compare webserver API latency under Sidekick load.
+- Validate recovery paths.
+
+### Stage 4: Increase Worker Capacity
+
+- Optionally tune `MAGE_SIDEKICK_MAX_WORKERS` based on deployment CPU/memory when a deployment needs a fixed local worker cap.
+- Add warm app-server reuse.
+- Validate multiple users and threads.
+
+### Stage 5: Default Runtime Rollout
+
+- Keep the scalable runtime enabled by default for production load isolation.
+- Keep `MAGE_SIDEKICK_RUNTIME_ENABLED=0` as the legacy inline-runner path for one release window.
+
+### Stage 6: Future Horizontal Scale
+
+If multi-pod global Sidekick scale is needed, evolve the same interfaces:
+
+- replace local spool with Redis or a queue service,
+- run workers as separate pods,
+- keep webserver admission and event streaming unchanged,
+- keep singleflight/cache semantics, possibly backed by shared cache.
+
+## Operational Runbook
+
+### If Webserver Starts Hanging
+
+Check:
+
+1. Active Sidekick streams.
+2. `/api/codex/model_proxy/session_tokens` latency.
+3. `sidekick_runs_queued`.
+4. `sidekick_workers_running`.
+5. Model-session circuit breaker state.
+6. Worker heartbeat age.
+7. Child process count.
+
+Immediate mitigation:
+
+1. Open model-session circuit temporarily if upstream is unhealthy.
+2. Set or lower `MAGE_SIDEKICK_MAX_WORKERS` if CPU/memory saturation requires tighter local concurrency.
+3. Kill stale worker processes, not the webserver, if supervisor fails.
+4. Disable runtime only if the new runtime itself is causing harm.
+
+### If Runs Stay Queued
+
+Check:
+
+- worker pool enabled,
+- configured max workers greater than zero if a max is set,
+- worker process startup errors,
+- runtime directory permissions,
+- stale claims,
+- supervisor status.
+
+### If Token Creation Fails
+
+Check:
+
+- Mage Pro API health,
+- API key/token validity,
+- circuit breaker state,
+- singleflight lock age,
+- token cache expiry.
+
+### If Browser Shows Duplicates
+
+Check:
+
+- idempotency key,
+- reconnect cursor,
+- event sequence replay,
+- stream handler duplicate run creation.
+
+## Security and Privacy
+
+Requirements:
+
+- Do not write raw OAuth tokens or model tokens to logs.
+- Do not write raw secrets to event files.
+- Do not write raw request API keys or OAuth tokens to run files.
+- Use one-shot sealed credential handles for worker handoff.
+- Runtime directory permissions should prevent other users/processes from reading tokens where possible.
+- Token cache files must be redacted in debug output.
+- Admin status endpoint must not expose token values.
+- Run files may include prompts and context, so they must expire quickly.
+- Cleanup must be reliable.
+- Cross-user app-server reuse must be prohibited unless isolation is proven.
+- Hash client-controlled logical IDs before using them in runtime file paths.
+
+Recommended permissions:
+
+```text
+runtime dir: 0700
+run files: 0600
+event files: 0600
+credential files: 0600
+runtime secret: 0600
+token cache: 0600
+lock dirs: 0700
+```
+
+## Risks and Mitigations
+
+### Risk: Local Files Do Not Work Across Multiple Pods
+
+Mitigation:
+
+- Phase 1 explicitly supports same-pod local execution.
+- If production has multiple webserver pods, require sticky stream routing for active local runs or keep worker runtime per pod.
+- Future phase can move spool to shared queue.
+
+### Risk: Worker Processes Consume Too Much Memory
+
+Mitigation:
+
+- Elastic pool with low min workers.
+- Explicit operator max worker cap when the deployment needs one.
+- Idle TTL.
+- App-server max turns.
+- Recycle on memory growth if measurable.
+
+### Risk: App-Server Reuse Leaks State
+
+Mitigation:
+
+- Start with one run at a time per worker.
+- Reuse only within strict compatibility boundary.
+- Recycle on user/config mismatch.
+- Add tests for cross-user isolation.
+
+### Risk: File Spool Corruption
+
+Mitigation:
+
+- Atomic writes.
+- Append-only event logs.
+- Ignore partial trailing JSONL.
+- Quarantine corrupt files.
+- Emit failure event where possible.
+
+### Risk: Singleflight Leader Dies
+
+Mitigation:
+
+- Lock owner heartbeat.
+- Stale lock timeout.
+- Waiters have bounded wait.
+- Followers can retry after stale lock cleanup.
+
+### Risk: Queue Hides Latency
+
+Mitigation:
+
+- UI displays queued state.
+- Metrics track queue wait time.
+- Autoscale local workers to queued work, or within the configured max when a cap is set.
+- Future external worker pool if demand exceeds one machine.
+
+## Done Criteria
+
+The scalable Sidekick runtime is ready when:
+
+- [ ] Users can submit multiple Sidekick messages without webserver hang.
+- [ ] Stream handler no longer runs Sidekick execution inline when runtime is enabled.
+- [ ] Local worker pool executes runs and scales up/down.
+- [ ] Worker supervisors coordinate across webserver processes and do not multiply missing capacity.
+- [ ] Model-session singleflight prevents duplicate upstream token storms.
+- [ ] Warm app-server reuse reduces repeated turn startup latency.
+- [ ] Browser reconnect replays events and does not duplicate work.
+- [ ] Cancellation works for queued and running turns.
+- [ ] Stale worker/claim recovery works.
+- [ ] Cleanup removes expired records.
+- [ ] Security review confirms no token leakage.
+- [ ] Security review confirms raw auth credentials are not persisted in run/event files.
+- [ ] Path-safety tests prove client-controlled run IDs cannot escape the runtime root.
+- [ ] Load QA shows ordinary API latency remains acceptable under Sidekick load.
+- [ ] Runtime remains enabled when `MAGE_SIDEKICK_RUNTIME_ENABLED` is unset or true.
+- [ ] Runtime can be disabled via env flag for legacy inline fallback.
+
+## Engineering Checklist
+
+### Design and Interfaces
+
+- [ ] Define runtime directory contract.
+- [ ] Define run JSON schema.
+- [ ] Define event JSONL schema.
+- [ ] Define claim lock schema.
+- [ ] Define credential handoff schema.
+- [ ] Define worker heartbeat schema.
+- [ ] Define token cache schema.
+- [ ] Define env vars and defaults.
+- [ ] Define stream cursor behavior.
+- [ ] Define idempotency behavior.
+
+### Backend Implementation
+
+- [ ] Add atomic file utilities.
+- [ ] Add local run store.
+- [ ] Add event log reader/writer.
+- [ ] Add claim store.
+- [ ] Add sealed credential store.
+- [ ] Add cleanup service.
+- [ ] Add model-session singleflight/cache.
+- [ ] Add circuit breaker.
+- [ ] Add worker command module.
+- [ ] Add worker supervisor.
+- [ ] Add status endpoint.
+- [ ] Rewire stream admission.
+- [ ] Add cancellation integration.
+- [ ] Add app-server reuse.
+
+### Tests
+
+- [ ] Unit tests for file atomicity.
+- [ ] Unit tests for claim contention.
+- [ ] Unit tests for event replay.
+- [ ] Unit tests for hashed runtime paths.
+- [ ] Unit tests for sealed credential handoff and cleanup.
+- [ ] Unit tests for singleflight.
+- [ ] Unit tests for circuit breaker.
+- [ ] Unit tests for worker lifecycle.
+- [ ] Unit tests for supervisor scaling.
+- [ ] Unit tests for cross-process supervisor capacity accounting.
+- [ ] Unit tests for stream reconnect.
+- [ ] Integration tests for concurrent runs.
+- [ ] Integration tests for upstream timeout.
+- [ ] Integration tests for worker crash.
+- [ ] Integration tests for cancellation.
+
+### QA
+
+- [ ] Single run completes.
+- [ ] Concurrent runs complete.
+- [ ] Queue visible when saturated.
+- [ ] Ordinary APIs remain responsive.
+- [ ] Browser reconnect works.
+- [ ] Duplicate submit does not duplicate run.
+- [ ] Worker crash recovers.
+- [ ] Token upstream outage fails fast.
+- [ ] Cleanup removes expired files.
+- [ ] No token appears in logs.
+- [ ] No request API key or OAuth token appears in run/event files.
+- [ ] Supervisor never exceeds configured max workers across sibling webserver processes when a cap is set.
+
+### Release
+
+- [ ] Dark-launch flags added.
+- [ ] Legacy fallback remains.
+- [ ] Metrics/logs dashboards updated.
+- [ ] Runbook documented.
+- [ ] Production defaults chosen.
+- [ ] Gradual rollout plan approved.
+
+## Recommended First PR Scope
+
+The first PR should not attempt the whole architecture.
+
+Recommended first PR:
+
+1. Add model-session singleflight/cache/hard timeout.
+2. Add structured logs and metrics for token broker behavior.
+3. Add tests proving concurrent identical token requests produce one upstream request.
+4. Add tests proving upstream hangs fail within configured timeout.
+
+Why first:
+
+- It directly addresses the observed production pileup.
+- It is smaller than the worker runtime.
+- It lowers risk before moving execution out of the stream handler.
+
+Recommended second PR:
+
+1. Add local spool library.
+2. Add worker process command.
+3. Add supervisor behind disabled env flag.
+
+Recommended third PR:
+
+1. Rewire stream handler to use spool and workers behind feature flag.
+2. Add reconnect and idempotency tests.
+
+Recommended fourth PR:
+
+1. Add warm Codex app-server reuse.
+2. Add app-server recycle policies.
+3. Add latency QA.
+
+## Open Questions
+
+1. Is the production deployment single webserver pod or multiple pods behind a load balancer?
+2. Does the browser have a stable client message id today?
+3. Can Sidekick currently resume every thread reliably through app-server `thread/resume`?
+4. Which production deployments, if any, need an explicit `MAGE_SIDEKICK_MAX_WORKERS` override?
+5. Are there existing metrics primitives we should use for queue and worker metrics?
+6. Should voice dictation share the model-session singleflight/circuit breaker path?
+7. What is the acceptable queue wait copy in the UI?
+8. Do we need admin controls to cancel all Sidekick runs for a user/session?

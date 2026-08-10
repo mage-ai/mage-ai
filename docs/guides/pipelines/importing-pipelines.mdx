@@ -6,8 +6,10 @@ description: "Import a pipeline zip file into your project."
 ---
 
 <Note>
-  Requires version `0.9.63` or greater. This feature is supported in single projects.
-  It may not work in setups using the multi-project platform.
+  Requires version `0.9.63` or greater. Mage loads and schedules pipelines from one project
+  repository per workspace. If you previously registered multiple projects through the
+  project platform, migrate each project to a separate [Mage Pro
+  workspace](/guides/developer-ux/workspaces) before upgrading.
 </Note>
 
 ## Overview
@@ -19,8 +21,12 @@ a pipeline from a different project.
 ## Supported block file types
 
 1. Custom
+1. Callback
+1. Chart
+1. Conditional
 1. Data exporter
 1. Data loader
+1. Extension
 1. Markdown
 1. Scratchpad
 1. Sensor
@@ -31,11 +37,7 @@ a pipeline from a different project.
 Including these types of block files in your pipeline zip file may cause errors when trying
 to import it.
 
-1. Callback
-1. Chart
-1. Conditional
 1. dbt
-1. Extension
 
 ## Downloading a pipeline
 
@@ -44,8 +46,9 @@ Dashboard (`/pipelines`), right-clicking one of the pipeline rows, and selecting
 "Download (keep folder structure)" or "Download (without folder structure)". You can use
 this pipeline zip file to import the pipeline into another Mage project.
 
-Note that the unsupported block file types listed above may not be included in the downloaded
-pipeline zip file.
+Downloaded pipeline zip files include the pipeline `metadata.yaml` and source files for
+regular, callback, conditional, chart, and extension blocks when those files are present
+in the project.
 
 ## Required files and folder structure of imported pipeline zip file
 

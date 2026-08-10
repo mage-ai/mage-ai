@@ -6,6 +6,8 @@ icon: "files"
 "og:image": "https://media0.giphy.com/media/AaBhK3dHsk0XS/giphy.gif"
 ---
 
+import { ProOnly } from '/snippets/pro/only.mdx';
+
 ## How to show the file browser
 
 <Frame>
@@ -22,6 +24,38 @@ icon: "files"
 1. When editing a pipeline, expand the left side panel to show the file browser.
 2. Go to the Files page [http://localhost:6789/files](http://localhost:6789/files).
 3. Launch the Text Editor application.
+
+---
+
+<ProOnly source="file-browser-project-shortcuts" />
+
+## Project folder shortcuts
+
+The Pipeline Editor and Apps/Coder file browsers include toolbar and context-menu
+shortcuts to help you focus on the current project folder.
+
+- Click the folder icon in the file browser toolbar to focus the tree on the
+  current project's root folder. Click it again to return to the full file tree.
+  The toolbar button is highlighted while the shortcut is active, exposes its
+  pressed state to assistive technology, and remembers the focused view for the
+  current project context.
+- Right-click a file or folder and choose <b>Show all project folders</b> for the
+  same focused view. Right-click again and choose <b>Show all files</b> to return
+  to the full file tree.
+- In the Pipeline Editor, the project-folder shortcut is separate from the
+  <b>All</b> and <b>This pipeline</b> selector. Use <b>This pipeline</b> to
+  filter to files related to the current pipeline, or use the folder shortcut to
+  focus the tree on the current project folder. Activating the folder shortcut
+  switches the selector back to <b>All</b> because the project folder and current
+  pipeline filters are alternate scopes.
+- Search results follow the active scope, so searches run inside the current
+  pipeline files or focused project folder when either filter is selected.
+
+<Note>
+Viewer users can browse folders, search files, and use the file browser scope controls
+in read-only mode. Actions that create, rename, move, upload, delete, or otherwise
+modify files still require edit access.
+</Note>
 
 ---
 
@@ -105,7 +139,7 @@ the option <b>Show hidden files</b> under the <b>View</b> menu dropdown options.
 ## Filter files to the current pipeline
 
 When editing a pipeline, open the <b>Files</b> tab and use the selector above the search box to
-switch between <b>All Files</b> and <b>This pipeline only</b>. The <b>This pipeline only</b>
+switch between <b>All</b> and <b>This pipeline</b>. The <b>This pipeline</b>
 filter shows repo-backed files related to the current pipeline, including pipeline metadata and
 configuration files, trigger configuration, referenced block source files, and supporting project
 configuration such as <code>io_config.yaml</code>, <code>metadata.yaml</code>, and

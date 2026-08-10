@@ -32,11 +32,22 @@ variables_dir: ~/.mage_data
 remote_variables_dir: s3://bucket/path_prefix
 help_improve_mage: true
 
+lineage:
+  enabled: true
+
 notification_config:
   alert_on:
     - trigger_failure
   slack_config:
     webhook_url: "{{ env_var('MAGE_SLACK_WEBHOOK_URL') }}"
+  managed_config:
+    enabled: true
+    channels:
+      - email
+    email_config:
+      to_emails:
+        - data-oncall@example.com
+    timeout: 10
 
 pipelines:
   settings:
@@ -44,6 +55,9 @@ pipelines:
       save_in_code_automatically: true
 
 project_uuid: 123456789abcdefg
+
+autopilot:
+  enabled: true
 ```
 
 ## Top-level fields
@@ -92,6 +106,12 @@ project_uuid: 123456789abcdefg
 <ParamField path="features" type="object">
   Feature flags for the project (e.g., `command_center`, `dbt_v2`,
   `automatic_kernel_cleanup`). Keys are booleans.
+</ParamField>
+
+<ParamField path="lineage.enabled" type="boolean">
+  Opts the project into Autopilot-managed data lineage hooks when the Mage Pro
+  cluster lineage service settings are also configured. See
+  [Data lineage](/observability/data-lineage).
 </ParamField>
 
 <ParamField path="pipelines.settings.triggers.save_in_code_automatically" type="boolean">
@@ -145,7 +165,19 @@ project_uuid: 123456789abcdefg
 ## Observability and safety
 
 <ParamField path="notification_config" type="object">
-  Project-level alerting configuration (alert types, Slack/Teams webhooks, etc.).
+  Project-level alerting configuration (alert types, Slack/Teams webhooks, email,
+  managed delivery in Mage Pro, etc.). You can edit this in `metadata.yaml`.
+  In Mage Pro, you can also edit it from **Settings > Account > Alerts** in the
+  Mage UI. Pipeline-level alert settings override this project-level configuration
+  for that pipeline.
+</ParamField>
+
+<ParamField path="notification_config.managed_config" type="object">
+  Mage Pro managed alert delivery configuration. Set `enabled` to `true`, use
+  `channels: [email]`, and optionally add recipient email addresses under
+  `email_config.to_emails`. Leave `to_emails` empty to use managed API default
+  recipients when the operator has configured them. You can also set `timeout`,
+  which is capped at `30` seconds.
 </ParamField>
 
 <ParamField path="logging_config" type="object">
@@ -153,11 +185,50 @@ project_uuid: 123456789abcdefg
 </ParamField>
 
 <ParamField path="retry_config" type="object">
-  Default retry behavior applied at the project level.
+  Default automatic retry behavior applied to block runs at the project level.
+  In Mage Pro, you can configure these values from **Settings > Workspace >
+  Automatic retry** or by opening `/settings/workspace/automatic-retry`.
+  Users with viewer access can open the page, but the retry controls are
+  read-only.
+  Mage merges retry settings from least specific to most specific: project
+  defaults, then pipeline-level `retry_config`, then block-level `retry_config`.
+  For the same retry field, the most specific configured value wins. Blank or
+  `null` retry fields are ignored during this merge, so a blank pipeline or
+  block field inherits the next available value from the less-specific config
+  instead of clearing it.
+
+  ```yaml
+  retry_config:
+    retries: 3
+    delay: 5
+    max_delay: 60
+    exponential_backoff: true
+  ```
+
+  - `retries`: number of retry attempts after a block run fails. Use `0` to
+    disable global automatic retries. Must be a non-negative integer up to `100`.
+  - `delay`: seconds to wait before the next retry attempt. Must be a
+    non-negative integer up to `86400`.
+  - `max_delay`: maximum accumulated retry delay in seconds before scheduling
+    the next attempt. This cap applies whether or not exponential backoff is
+    enabled.
+    Must be a non-negative integer up to `86400`.
+  - `exponential_backoff`: whether to increase the delay between retry attempts.
+    If omitted, Mage uses the default enabled backoff behavior.
+
+  In Mage Pro, blank project-level retry fields are omitted from saved project
+  metadata, and `0` is accepted for numeric retry fields.
 </ParamField>
 
 <ParamField path="ai_config" type="object">
   Global AI-related settings (e.g., model providers).
+</ParamField>
+
+<ParamField path="autopilot.enabled" type="boolean">
+  Mage Pro only. Enables Autopilot runtime callbacks and signed Autopilot K8s
+  executor configuration for this project. Leave unset or set to `false` for
+  projects that should not accept Autopilot runtime package, runtime run, or
+  executor-config grants.
 </ParamField>
 
 <ParamField path="rag_config" type="object">

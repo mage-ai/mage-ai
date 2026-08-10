@@ -8,7 +8,7 @@ icon: "user-robot"
 import { ProButton } from '/snippets/pro/button.mdx';
 import { ProOnly } from '/snippets/pro/only.mdx';
 
-<ProOnly source="pipeline-dependencies" />
+<ProOnly source="ai-sidekick" />
 
 **Mage Pro AI Sidekick is your intelligent assistant for data pipelines, analytics, and ML workflows.**
 It helps you design, debug, and optimize your pipelines — faster and smarter — using natural language. Whether you're building ETL processes, exploring data, or resolving code issues, Mage Pro AI understands your intent and delivers code, context, and insights on the spot.
@@ -20,6 +20,25 @@ Use it to:
 - Visualize outputs and transform them into shareable, interactive data products
 
 It’s like having a senior data engineer available 24/7 — inside your repo.
+
+## Start with Page-Aware Suggestions
+
+When you start a new chat from the Sidekick panel, its opening prompt and three
+suggestions adapt to the page you are viewing. For example, a pipeline page can
+offer actions to explain, change, or run that pipeline, while an analytics page
+can suggest ways to understand or compare its results.
+
+These suggestions are starting points, not limits. Use **Ask Mage anything** to
+enter any request, or select a suggestion to place it in the composer. The
+opening suggestions can update as you move through Mage while the chat is empty.
+After you send the first message, the conversation remains stable while
+Sidekick continues receiving the current page context in the background.
+
+In Apps Coder, this context includes the active file and, when you highlight
+code, the selected source text. Selecting a suggested prompt preserves the file
+and selection context from that moment for the prompt you send. Sidekick shows
+pending context as chips in the composer before you send the prompt, and you can
+remove a chip to exclude that context from the message.
 
 ## AI-Powered Answers for Data Engineering, Analytics, and ML
 
@@ -392,6 +411,30 @@ Mage Pro AI creates interactive tables with sorting, filtering, and searching au
 Don’t stop at raw output. Instantly turn your data into interactive, insightful products for analysts, stakeholders, or pipelines.
 
 
+---
+
+## Explore Large Data Previews from Chat
+
+Ask Sidekick for data such as "show website traffic", "show sessions by country", or "open the latest block output" and it can discover queryable sources, inspect schemas, create a preview, and render an interactive table in the chat artifact panel.
+
+### How it works
+
+Sidekick searches authorized IO profiles, database tables, and pipeline block outputs, then chooses the best match or asks you to choose from structured inline options when the request is ambiguous. When you ask broadly what data is available, Sidekick prioritizes queryable IO sources before pipeline or block outputs and can summarize how many sources or outputs are available while showing representative examples; if the inventory is larger than the discovery window, it describes the count as "at least N" instead of a complete total. For source-backed previews, it follows the provider's selector order before it opens the table, so it may ask for the missing warehouse, catalog, project, dataset, database, schema, or table instead of guessing. For SQL-capable IO profiles, Sidekick can also create a preview from a computed read-only query, such as a `SELECT` with `GROUP BY`, joins, or derived columns, so the query result opens in the same data viewer instead of only appearing as a small chat table. When it creates a preview, Mage renders the first window of rows and fetches additional windows as you scroll instead of loading the whole dataset into the browser. Sidekick only adds a preview row cap when you ask for one, such as "top 20", "first 100 rows", or "limit to N"; capped previews show a `Limit N` chip in the table controls.
+
+Column filters and sorts apply through preview refinements. Each refinement creates a child preview linked to the previous one, so follow-up requests such as "only USA traffic", "sort sessions descending", or "go back to the previous result" keep the table lineage intact while preserving the original preview.
+
+The chat transcript keeps a compact summary of the preview while the artifact panel
+renders the interactive table. The artifact shows the active source, query summary,
+row-count status, preview capabilities, and lineage markers for the current and
+root previews. Use the table controls to go back to the parent preview, return to
+the root preview, switch between available revisions, or start an **Ask follow-up**
+prompt that keeps the active preview context.
+
+### Why it matters
+
+Large datasets stay usable in chat because Sidekick works with preview IDs, schemas, row windows, and parent previews instead of copying full result sets into the conversation. You can start broad, narrow the data with follow-up prompts or column controls, and keep exploring without switching to a separate data explorer flow.
+
+
 
 ## Enable RAG
 
@@ -500,6 +543,8 @@ Need to load a CSV, clean nulls, or join with a Delta Lake table? Mage Pro AI ge
 
 ### Debug and Fix Pipelines with AI
 Highlight a broken step or describe the issue—Mage Pro AI suggests fixes, explains errors, and updates the code in context. Eliminate hours of debugging time.
+When Sidekick updates files for blocks or open code editor tabs, Mage Pro refreshes the matching open editor content without requiring a page reload.
+When Sidekick validates a fix for a failed or incomplete pipeline run, it retries the original run's failed or incomplete block runs instead of creating a separate run-once schedule.
 
 ### Build Self-Healing Pipelines
 Mage Pro AI can detect failed blocks, rerun them, and rewrite logic to meet validation rules—creating fault-tolerant pipelines that repair themselves automatically.
