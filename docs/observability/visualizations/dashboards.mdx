@@ -1,120 +1,486 @@
 ---
-title: "Analytics"
-sidebarTitle: "Analytics"
-description: "Create AI-generated Plotly charts from pipeline and block outputs, then save them as editable project code."
+title: "Customizable dashboards"
+sidebarTitle: "Dashboards"
+description: "There are 2 dashboards: a dashboard for all your pipelines and a dashboard for each pipeline. You can add charts of various types with different sources of data. Use these dashboards for observability or for analytics."
 icon: "chart-tree-map"
 "og:image": "https://media.tenor.com/yybImiR2408AAAAd/iron-man-hologram.gif"
 ---
 
+import { ProButton } from '/snippets/pro/button.mdx';
 import { ProOnly } from '/snippets/pro/only.mdx';
+import { urls } from '/snippets/variables/urls.mdx';
 
-<ProOnly source="embedded-analytics" />
+<ProOnly source="monitoring-dashboards" />
 
-Analytics is for business and data insights from outputs that already exist in Mage.
-Use them for revenue trends, user growth, product analytics, Salesforce data, Snowflake query
-results, model metrics, and other datasets produced by pipeline blocks.
+<Frame>
+    <img
+        alt="Customizable dashboards"
+        src="https://mage-ai.github.io/assets/visualizations/demo.gif"
+    />
+</Frame>
 
-These pages are separate from monitoring dashboards. Monitoring dashboards explain pipeline health,
-runs, schedules, and operational status. Analytics explains the data your
-pipelines produce.
+## Pages with customizable dashboards
 
-## Pages
+1. Project overview page (`/overview?tab=Dashboard`)
+1. Pipeline dashboard page (`/pipelines/[:id]/dashboard`)
 
-1. Project Analytics page: `/apps/analytics/dashboards`
-1. Legacy Project Analytics alias: `/visualizations`
-1. Pipeline Analytics page: `/pipelines/[:id]/visualizations`
+---
 
-These pages render saved Plotly charts. The pipeline Analytics page is scoped to charts saved with
-that pipeline UUID.
+## Adding charts
 
-Use the dashboard selector to switch between saved dashboards in the current scope. You can create
-new dashboards, rename the selected dashboard, or delete a non-default dashboard from the selector
-actions menu. Deleting a dashboard removes that dashboard view and its chart placements; it does not
-delete chart code, pipelines, blocks, or source data.
+1. In the top right corner of the dashboard, click the button labeled
+<b>+ Add content</b>.
+1. Click the dropdown option labeled <b>Create new chart</b>.
 
-## Create a chart with AI
+---
 
-1. Open `/apps/analytics/dashboards` or a pipeline Analytics page.
-1. Click **Add chart**.
-1. In AI Sidekick, describe the visualization you want, for example:
-   `Show revenue by month as a bar chart`.
-1. Sidekick generates Python Plotly code and saves the chart metadata.
-1. The open Analytics page refreshes after the chart is saved.
+## Configuring chart
 
-You can also create a chart from a block output. Click the chart icon in a supported
-block header, or run or inspect a block and click **Add chart** in the output toolbar.
-Sidekick opens with the pipeline and block context already included.
+### Chart name
 
-Sidekick includes an Analytics workflow attachment with the target dashboard and
-source pipeline or block while creating a chart. When editing an existing chart,
-Sidekick attaches the selected chart so the requested change stays focused on
-that chart.
+Human readable name for your chart.
 
-If Sidekick is already open, **Add chart** or **Add data** adds the Analytics
-context to the current chat. If Sidekick is closed, Mage starts a new Sidekick
-chat for the chart request.
+### Chart type
 
-## How charts are saved
+Choose from a variety of visualizations.
 
-Analytics uses project files so charts remain editable and version-controlled.
+#### Bar chart
+<Frame>
+    <p align="center">
+    <img
+        alt="Bar chart"
+        src="https://mage-ai.github.io/assets/visualizations/bar-chart.png"
+    />
+    </p>
+</Frame>
 
-| File | Purpose |
-| --- | --- |
-| `visualizations/dashboard.json` | Stores dashboard chart records, layout, ordering, and source context. |
-| `visualizations/charts/<chart_uuid>.py` | Stores the generated Python Plotly code for one chart. |
+#### Histogram
+<Frame>
+    <p align="center">
+    <img
+        alt="Histogram"
+        src="https://mage-ai.github.io/assets/visualizations/histogram.png"
+    />
+    </p>
+</Frame>
 
-Each chart record includes the chart UUID, title, pipeline UUID, optional block UUID, code path,
-prompt, and layout values.
+#### Line chart
+<Frame>
+    <p align="center">
+    <img
+        alt="chart"
+        src="https://mage-ai.github.io/assets/visualizations/line-chart.png"
+    />
+    </p>
+</Frame>
 
-## Plotly contract
+#### Pie chart
+<Frame>
+    <p align="center">
+    <img
+        alt="chart"
+        src="https://mage-ai.github.io/assets/visualizations/pie-chart.png"
+    />
+    </p>
+</Frame>
 
-Chart code must define `build_chart(data=None, context=None)` or assign `fig`, `figure`, `chart`,
-or `plotly_json`.
+#### Table
+<Frame>
+    <p align="center">
+    <img
+        alt="Table"
+        src="https://mage-ai.github.io/assets/visualizations/table.png"
+    />
+    </p>
+</Frame>
 
-The returned value can be any Plotly figure or Plotly JSON object with `data`, `layout`, and
-optional `config`. Mage executes the code, normalizes the result to Plotly JSON, and React Plotly
-renders it as an interactive chart.
+#### Time series bar chart
+<Frame>
+    <p align="center">
+    <img
+        alt="chart"
+        src="https://mage-ai.github.io/assets/visualizations/time-series-bar-chart.png"
+    />
+    </p>
+</Frame>
 
-Because the dashboard renders Plotly JSON directly, it supports Plotly figure JSON generated
-by the saved chart code. Compatibility follows the Plotly JSON schema that React Plotly can
-render in the browser.
+#### Time series line chart
+<Frame>
+    <p align="center">
+    <img
+        alt="chart"
+        src="https://mage-ai.github.io/assets/visualizations/time-series-line-chart.png"
+    />
+    </p>
+</Frame>
+
+
+### Data source
+
+A chart has at least 1 data source.
+In the near future, a chart can have more than 1 data source.
+
+#### Block data output (type)
+
+Get the output data from a block in a specific pipeline.
+
+| Field | Description | Required | Example |
+| --- | --- | --- | --- |
+| Pipeline UUID | The pipeline UUID the block belongs to. | ✅ | `example_pipeline` |
+| Block UUID | The block UUID you want data from. | ✅ | `load_api_data` |
+| Partitions | Enter a positive or a negative number. If positive, then data from the block will be the most recent N partitions. If negative, then data from the block will be the oldest N partitions. |  | `3` |
+
+#### Block runs (type)
+
+Get data from all block runs or
+all block runs from a specific pipeline.
+
+#### Custom code (type)
+
+Define a function using the `@data_source` decorator that returns the data
+for your chart.
 
 ```python
-def build_chart(data=None, context=None):
-    import plotly.express as px
-
-    df = data
-    if df is None or df.empty:
-        return {
-            "data": [],
-            "layout": {"title": "No data available"},
-        }
-
-    fig = px.bar(df, x="month", y="revenue", title="Revenue by month")
-    return fig
+@data_source
+def d(*args, **kwargs):
+    return [[dict(id=1), dict(id=2)]]
 ```
 
-## Resize and organize charts
+#### Pipelines (type)
 
-Saved charts appear in a responsive grid. Hover over a card, or move keyboard focus into it, to
-show its controls. The card menu in the lower-right corner lets you rename, explore, edit with AI,
-duplicate, reorder, or remove that chart. Duplicates receive their own saved chart code so you can
-edit them independently.
+Get data from all pipelines.
 
-The chart header shows the source pipeline and block, plus the age of the latest completed source
-output. Select **Refresh data** to re-render only that chart with the currently available output.
-Refreshing does not run the pipeline or change the saved chart code.
+#### Pipeline runs (type)
 
-You can also drag a chart by its header or top drag border to reorder the grid. While dragging,
-the dashboard cards stay in place, a chart preview follows the cursor, and an insertion indicator
-shows the target edge where the chart will land. Release the chart to save the new order.
-When a chart joins an occupied row, it adopts the row height and card widths are normalized
-proportionally to their saved widths.
+Get data from all pipeline runs or
+all pipeline runs from a specific pipeline or
+all pipeline runs from a specific trigger.
 
-To resize chart width, drag the right-edge width handle on a chart card. To resize a row, hover near
-its bottom edge and drag the horizontal resize handle. Every chart in that row keeps the same height.
-Use the corner handle to resize width and height together. Width snaps to the 12-column dashboard
-grid, and row height snaps to fixed height ticks. Width controls are hidden on compact layouts where
-charts stack into a single column.
+#### Triggers (type)
 
-Layout changes are saved back to `visualizations/dashboard.json`.
+Get data from all triggers or
+all triggers from a specific pipeline.
+
+#### Refresh interval
+
+How frequent do you want this chart to automatically fetch new data from its data source?
+Enter a number in milliseconds (e.g. 1000ms is 1 second).
+
+### Chart display settings
+
+#### Group by columns
+
+Select the column to group your data by.
+
+#### Metrics
+
+| Field | Description | Required | Example |
+| --- | --- | --- | --- |
+| Aggregation | After grouping the data by 1 or more columns, perform the following aggregation function on a column. | ✅ | Average |
+| Column | Select the column to perform the aggregation function on. | ✅ | `country` |
+
+#### Chart style
+
+Some charts have multiple styles of the same visualization.
+
+#### Sort direction
+
+Some charts can sort the visualizations in ascending or descending order.
+
+#### Number of buckets or slices
+
+You can limit the number of buckets or slices that are displayed for some charts.
+
+#### Time column
+
+For the time series charts, you must choose which column contains the date or time
+value to group the data by.
+
+#### Time interval
+
+For the time series charts, you can choose how granular the interval is between each
+date or time values in the time column. For example, you can display your time series
+data on a daily basis or annual basis.
+
+---
+
+## Custom code for chart
+
+The following decorators can optionally be used to further customize your chart.
+
+### `@data_source`
+
+If the data source type is `Custom code`, then this function’s return value is the
+data that the chart will display.
+
+However, if the data source type is anything else besides `Custom code`,
+then this function can be used for post processing of the data from the selected
+data source.
+
+For example, let’s say the data source type is `Block data output` and
+the number of partitions is `2`. The chart will retrieve the 2 most recent partitions of data from
+that block.
+
+In the `@data_source` decorated function, you can write code to operate on 2 of
+those block output data:
+
+```python
+from typing import List
+
+
+@data_source
+def filter_data(block_data_output: List, **kwargs) -> List:
+    df_partition_1, df_partition_2 = block_data_output
+
+    df_1 = df_partition_1[df_partition_1['Age'] >= 21]
+    df_2 = df_partition_2[df_partition_2['Age'] >= 21]
+
+    return [df_1, df_2]
+```
+
+### `@x`
+
+Write custom code to return the `x` values for your chart.
+X values typically contain the column that you group your data on.
+
+For example, group pipelines by their type.
+
+```python
+from typing import List
+
+
+@x
+def some_columns(data_from_data_source, **kwargs) -> List:
+    df_partition_1 = block_data_output[0]
+
+    return df_partition_1.columns[:3]
+```
+
+### `@y`
+
+Write custom code to return the `y` values for your chart.
+Y values typically contain the value for a group of rows.
+
+For example, the number of pipelines that are data integration pipelines.
+
+```python
+from typing import List
+
+
+@y
+def number_of_data_integration_pipelines(data_from_data_source, **kwargs) -> List:
+    df_partition_1 = block_data_output[0]
+
+    count = len(df_partition_1[df_partition_1['type'] == 'data_integration'].index)
+
+    return [count]
+```
+
+### `@xy`
+
+This function combines the purpose of `@x` and `@y` into 1 function.
+Use this function if you want to custom both the `x` and `y` values and you want to share the
+same variables defined within the function.
+
+The difference is that you must return a tuple where
+the `x` values are 1st and the `y` values are 2nd.
+
+```python
+from typing import List, Tuple
+
+
+@xy
+def columns_and_numbers(data_from_data_source, **kwargs) -> Tuple[List]:
+    df_partition_1 = block_data_output[0]
+
+    count = len(df_partition_1[df_partition_1['type'] == 'data_integration'].index)
+
+    return df_partition_1.columns[:1], [count]
+```
+
+### `@configuration`
+
+Each chart has a configuration dictionary that stores the chart settings.
+These chart settings are stored in a YAML file.
+
+However, if you want to encode the configurations into the chart file and reuse the configurations
+in other dashboards, you can write a function that returns a dictionary that will be used
+to configure the chart.
+
+```python
+from typing import Dict
+
+
+@configuration
+def chart_settings(*args, **kwargs) -> Dict:
+    return dict(
+        chart_type='time series line chart',
+        group_by=['execution_date'],
+        metrics=[dict(
+            aggregation='count_distinct',
+            column='id',
+        )],
+        time_interval='day',
+    )
+```
+
+### `@columns`
+
+In the chart settings, when choosing the group by columns, number columns, time column, metrics,
+etc., the chart must know about what available columns are selectable.
+
+Typically, the chart will attempt to infer the columns from the data source.
+However, you can customize the logic of how the columns are inferred or
+which columns are available to select.
+
+```python
+from typing import List
+
+
+@columns
+def some_columns(data_from_data_source, **kwargs) -> List:
+    df_partition_1 = block_data_output[0]
+
+    return df_partition_1.columns[:3]
+```
+
+### `@render`
+
+Define a function that returns a Base64 string representation of a JPEG/JPG image,
+PNG image, or a complete HTML string (with html and body tags).
+
+#### Render JPEG or JPG
+
+```python
+import base64
+import io
+import matplotlib.pyplot as plt
+
+
+# render_type can be 'jpeg' or 'jpg'
+@render(render_type='jpeg')
+def r(*args, **kwargs):
+    # creating the dataset
+    data = {'C':20, 'C++':15, 'Java':30,
+            'Python':35}
+    courses = list(data.keys())
+    values = list(data.values())
+
+    fig = plt.figure(figsize = (10, 5))
+
+    # creating the bar plot
+    plt.bar(courses, values, color ='maroon',
+            width = 0.4)
+
+    plt.xlabel("Courses offered")
+    plt.ylabel("No. of students enrolled")
+    plt.title("Students enrolled in different courses")
+    plt.show()
+
+    my_stringIObytes = io.BytesIO()
+    plt.savefig(my_stringIObytes, format='jpg')
+    my_stringIObytes.seek(0)
+    my_base64_jpgData = base64.b64encode(my_stringIObytes.read()).decode()
+
+    plt.close()
+
+    return my_base64_jpgData
+```
+
+#### Render PNG
+
+```python
+import base64
+import io
+import matplotlib.pyplot as plt
+import numpy as np
+
+
+@render(render_type='png')
+def r(*args, **kwargs):
+    t = np.arange(0.0, 2.0, 0.01)
+    s = 1 + np.sin(2*np.pi*t)
+    plt.plot(t, s)
+
+    plt.xlabel('time (s)')
+    plt.ylabel('voltage (mV)')
+    plt.title('About as simple as it gets, folks')
+    plt.grid(True)
+    plt.show()
+
+    my_stringIObytes = io.BytesIO()
+    plt.savefig(my_stringIObytes, format='png')
+    my_stringIObytes.seek(0)
+    my_base64_jpgData = base64.b64encode(my_stringIObytes.read()).decode()
+
+    plt.close()
+
+    return my_base64_jpgData
+```
+
+#### Render HTML
+
+```python
+import plotly.graph_objects as go
+
+
+@render(render_type='html')
+def r(*args, **kwargs):
+    fig = go.Figure(
+        data=[go.Bar(y=[2, 1, 3])],
+        layout_title_text="A Figure Displaying Itself"
+    )
+
+    return fig.to_html(full_html=False)
+```
+
+---
+
+## Recommended charts
+
+Depending on which page you’re on, adding recommended charts will automatically configure
+and add a few charts to your dashboard with little effort.
+
+The added charts will show visualizations with different chart types and various data sources.
+
+---
+
+## Resize chart
+
+When you resize a chart on the dashboard, you can change the width and height.
+
+### Width
+
+Set the width to a number.
+This number is divided by the sum of the width numbers from all the charts in the same row.
+The resulting number is the percentage of the row the chart will expand horizontally to.
+
+For example, if you have a row with 5 charts and the 1st chart has a width of 6 and the other
+4 charts have a width of 1, then the 1st chart will take up 60% of the entire row’s width.
+
+### Max width percentage
+
+Even if a chart is to take up a large percentage of the row’s entire width,
+you can set a limit as to how wide the chart should be.
+
+For example, in the above example the 1st chart should be 60% of the entire row’s width.
+However, you can set that chart’s max width percentage to 50 and the 1st chart will only
+expand to 50% of the row’s entire width.
+
+### Height
+
+Set this value to the number of pixels you want your chart to have in height.
+
+---
+
+## Move chart
+
+Click and hold down on a chart to begin dragging it. Then, drag the chart to move it and
+then release the click while on top of another chart to insert the initial chart after the
+chart that you dropped it on.
+
+---
+
+## Remove chart
+
+This will remove the chart from the current dashboard.

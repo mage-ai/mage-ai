@@ -812,6 +812,7 @@
               "observability/external/opentelemetry",
               "observability/external/prometheus",
               "observability/external/sentry",
+              "observability/visualizations/analytics",
               "observability/visualizations/dashboards"
             ]
           },

@@ -1,0 +1,121 @@
+/usr/local/Homebrew/Library/Homebrew/cmd/shellenv.sh: line 27: /bin/ps: Operation not permitted
+---
+title: "Analytics"
+sidebarTitle: "Analytics"
+description: "Create AI-generated Plotly charts from pipeline and block outputs, then save them as editable project code."
+icon: "chart-tree-map"
+"og:image": "https://media.tenor.com/yybImiR2408AAAAd/iron-man-hologram.gif"
+---
+
+import { ProOnly } from '/snippets/pro/only.mdx';
+
+<ProOnly source="embedded-analytics" />
+
+Analytics is for business and data insights from outputs that already exist in Mage.
+Use them for revenue trends, user growth, product analytics, Salesforce data, Snowflake query
+results, model metrics, and other datasets produced by pipeline blocks.
+
+These pages are separate from monitoring dashboards. Monitoring dashboards explain pipeline health,
+runs, schedules, and operational status. Analytics explains the data your
+pipelines produce.
+
+## Pages
+
+1. Project Analytics page: `/apps/analytics/dashboards`
+1. Legacy Project Analytics alias: `/visualizations`
+1. Pipeline Analytics page: `/pipelines/[:id]/visualizations`
+
+These pages render saved Plotly charts. The pipeline Analytics page is scoped to charts saved with
+that pipeline UUID.
+
+Use the dashboard selector to switch between saved dashboards in the current scope. You can create
+new dashboards, rename the selected dashboard, or delete a non-default dashboard from the selector
+actions menu. Deleting a dashboard removes that dashboard view and its chart placements; it does not
+delete chart code, pipelines, blocks, or source data.
+
+## Create a chart with AI
+
+1. Open `/apps/analytics/dashboards` or a pipeline Analytics page.
+1. Click **Add chart**.
+1. In AI Sidekick, describe the visualization you want, for example:
+   `Show revenue by month as a bar chart`.
+1. Sidekick generates Python Plotly code and saves the chart metadata.
+1. The open Analytics page refreshes after the chart is saved.
+
+You can also create a chart from a block output. Click the chart icon in a supported
+block header, or run or inspect a block and click **Add chart** in the output toolbar.
+Sidekick opens with the pipeline and block context already included.
+
+Sidekick includes an Analytics workflow attachment with the target dashboard and
+source pipeline or block while creating a chart. When editing an existing chart,
+Sidekick attaches the selected chart so the requested change stays focused on
+that chart.
+
+If Sidekick is already open, **Add chart** or **Add data** adds the Analytics
+context to the current chat. If Sidekick is closed, Mage starts a new Sidekick
+chat for the chart request.
+
+## How charts are saved
+
+Analytics uses project files so charts remain editable and version-controlled.
+
+| File | Purpose |
+| --- | --- |
+| `visualizations/dashboard.json` | Stores dashboard chart records, layout, ordering, and source context. |
+| `visualizations/charts/<chart_uuid>.py` | Stores the generated Python Plotly code for one chart. |
+
+Each chart record includes the chart UUID, title, pipeline UUID, optional block UUID, code path,
+prompt, and layout values.
+
+## Plotly contract
+
+Chart code must define `build_chart(data=None, context=None)` or assign `fig`, `figure`, `chart`,
+or `plotly_json`.
+
+The returned value can be any Plotly figure or Plotly JSON object with `data`, `layout`, and
+optional `config`. Mage executes the code, normalizes the result to Plotly JSON, and React Plotly
+renders it as an interactive chart.
+
+Because the dashboard renders Plotly JSON directly, it supports Plotly figure JSON generated
+by the saved chart code. Compatibility follows the Plotly JSON schema that React Plotly can
+render in the browser.
+
+```python
+def build_chart(data=None, context=None):
+    import plotly.express as px
+
+    df = data
+    if df is None or df.empty:
+        return {
+            "data": [],
+            "layout": {"title": "No data available"},
+        }
+
+    fig = px.bar(df, x="month", y="revenue", title="Revenue by month")
+    return fig
+```
+
+## Resize and organize charts
+
+Saved charts appear in a responsive grid. Hover over a card, or move keyboard focus into it, to
+show its controls. The card menu in the lower-right corner lets you rename, explore, edit with AI,
+duplicate, reorder, or remove that chart. Duplicates receive their own saved chart code so you can
+edit them independently.
+
+The chart header shows the source pipeline and block, plus the age of the latest completed source
+output. Select **Refresh data** to re-render only that chart with the currently available output.
+Refreshing does not run the pipeline or change the saved chart code.
+
+You can also drag a chart by its header or top drag border to reorder the grid. While dragging,
+the dashboard cards stay in place, a chart preview follows the cursor, and an insertion indicator
+shows the target edge where the chart will land. Release the chart to save the new order.
+When a chart joins an occupied row, it adopts the row height and card widths are normalized
+proportionally to their saved widths.
+
+To resize chart width, drag the right-edge width handle on a chart card. To resize a row, hover near
+its bottom edge and drag the horizontal resize handle. Every chart in that row keeps the same height.
+Use the corner handle to resize width and height together. Width snaps to the 12-column dashboard
+grid, and row height snaps to fixed height ticks. Width controls are hidden on compact layouts where
+charts stack into a single column.
+
+Layout changes are saved back to `visualizations/dashboard.json`.

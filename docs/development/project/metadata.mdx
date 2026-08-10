@@ -5,6 +5,8 @@ description: "Reference for configuring project-level settings in metadata.yaml.
 icon: "briefcase"
 ---
 
+import { ProOnly } from '/snippets/pro/only.mdx';
+
 ## Overview
 
 Each Mage project has a `metadata.yaml` file at the root of the project
@@ -37,14 +39,6 @@ notification_config:
     - trigger_failure
   slack_config:
     webhook_url: "{{ env_var('MAGE_SLACK_WEBHOOK_URL') }}"
-  managed_config:
-    enabled: true
-    channels:
-      - email
-    email_config:
-      to_emails:
-        - data-oncall@example.com
-    timeout: 10
 
 pipelines:
   settings:
@@ -160,12 +154,28 @@ project_uuid: 123456789abcdefg
   for that pipeline.
 </ParamField>
 
+### Managed notification delivery
+
+<ProOnly source="managed-notification-delivery" />
+
 <ParamField path="notification_config.managed_config" type="object">
   Mage Pro managed alert delivery configuration. Set `enabled` to `true`, use
   `channels: [email]`, and optionally add recipient email addresses under
   `email_config.to_emails`. Leave `to_emails` empty to use managed API default
   recipients when the operator has configured them. You can also set `timeout`,
   which is capped at `30` seconds.
+
+  ```yaml
+  notification_config:
+    managed_config:
+      enabled: true
+      channels:
+        - email
+      email_config:
+        to_emails:
+          - data-oncall@example.com
+      timeout: 10
+  ```
 </ParamField>
 
 <ParamField path="logging_config" type="object">
