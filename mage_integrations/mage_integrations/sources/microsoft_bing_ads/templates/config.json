@@ -1,0 +1,9 @@
+{
+  "developer_token": "<developer_token>",
+  "customer_id": "<customer_id>",
+  "oauth_client_secret": "<oauth_client_secret>",
+  "oauth_client_id": "<oauth_client_id>",
+  "refresh_token": "<refresh_token>",
+  "account_ids": "<account_id_list>",
+  "start_date": "2022-12-01T00:00:00Z"
+}
