@@ -74,7 +74,6 @@
                 "group": "AI",
                 "icon": "microchip-ai",
                 "pages": [
-                  "ai/sidekick/index",
                   "ai/blocks",
                   "ai/rag-pipeline",
                   "ai/custom-resources"
@@ -100,7 +99,6 @@
                 "group": "Data integrations",
                 "icon": "link",
                 "pages": [
-                  "data-integrations/data-explorer",
                   "data-integrations/sources/custom_source",
                   "contributing/data-integrations/adapt-existing-source",
                   "contributing/data-integrations/add-new-source",
@@ -285,7 +283,6 @@
                 "icon": "rotate",
                 "pages": [
                   "data-integrations/overview",
-                  "data-integrations/data-explorer",
                   "data-integrations/configuration",
                   {
                     "group": "Sources",
@@ -782,6 +779,13 @@
         "tab": "AI",
         "groups": [
           {
+            "group": "AI Sidekick",
+            "icon": "user-robot",
+            "pages": [
+              "ai/sidekick/index"
+            ]
+          },
+          {
             "group": "Development",
             "icon": "microchip-ai",
             "pages": [
@@ -806,12 +810,14 @@
             "icon": "eye",
             "pages": [
               "observability/monitoring",
+              "observability/data-explorer",
               "observability/external/datadog",
               "observability/external/metaplane",
               "observability/external/newrelic",
               "observability/external/opentelemetry",
               "observability/external/prometheus",
               "observability/external/sentry",
+              "observability/visualizations/analytics",
               "observability/visualizations/dashboards"
             ]
           },

@@ -1,24 +1,33 @@
 ---
 title: "Trigger pipeline"
-api: "POST /api/pipeline_schedules/:pipeline_schedule_id/pipeline_runs/:token"
+api: "POST /api/pipeline_schedules/:pipeline_schedule_id/api_trigger"
 ---
-`POST /api/pipeline_schedules/:pipeline_schedule_id/pipeline_runs/:token`
+import { ProOnly } from '/snippets/pro/only.mdx';
 
-Run a pipeline using an API request. For more information,
-read this [guide](/orchestration/triggers/trigger-pipeline-api).
+<ProOnly source="api-trigger-pipeline-runs" />
+
+`POST /api/pipeline_schedules/:pipeline_schedule_id/api_trigger`
+
+Run a pipeline using an API request and an API trigger token. For more
+information, read this [guide](/orchestration/triggers/trigger-pipeline-api).
+
+Use the trigger token in the `Authorization: Bearer <token>` header. The legacy
+`POST /api/pipeline_schedules/:pipeline_schedule_id/pipeline_runs/:token` route
+is still supported for existing integrations.
+
+The legacy JSON response includes a `stream_url` for attaching to the created
+pipeline run's stream. The stream URL is scoped to the trigger and pipeline run,
+uses the same API trigger token, and does not require a browser login.
 
 <ParamField path="pipeline_schedule_id" type="integer" required>
   Pipeline schedule ID that pipeline runs should all belong to.
 </ParamField>
 
-<ParamField path="token" type="string" required>
-  Unique token of the pipeline schedule that you want to trigger.
-</ParamField>
-
 <RequestExample>
 ```curl cURL
 curl --request POST \
-  --url 'http://localhost:6789/api/pipeline_schedules/71/pipeline_runs/4506463a01944ef492f70005996dac1a' \
+  --url 'http://localhost:6789/api/pipeline_schedules/71/api_trigger' \
+  --header 'Authorization: Bearer 4506463a01944ef492f70005996dac1a' \
   --data '{
   "env": "dev",
   "test": 1
@@ -45,7 +54,74 @@ curl --request POST \
     },
     "metrics": null,
     "backfill_id": null
-  }
+  },
+  "pipeline_run_id": 1249,
+  "pipeline_schedule_id": 71,
+  "stream_url": "/api/triggers/71/streams/1249"
 }
+```
+</ResponseExample>
+
+## Stream API trigger output
+
+`POST /api/triggers/:pipeline_schedule_id/streams`
+
+Start a new pipeline run and stream it as Server-Sent Events in the same
+request. Authenticate with the API trigger token using the
+`Authorization: Bearer <token>` header. For API-triggered AI Agent blocks, the
+stream emits the same agent/runtime events produced by the agent, one event per
+SSE frame. The stream starts with a `pipeline_run` event so clients can store
+the run ID and reconnect to the attach URL.
+
+To attach to an existing run instead of starting a new one, call
+`POST /api/triggers/:pipeline_schedule_id/streams/:pipeline_run_id`. The
+`stream_url` returned by the legacy JSON
+`POST /api/pipeline_schedules/:pipeline_schedule_id/api_trigger` response uses
+this attach form.
+
+Clients should keep reading until an `event: terminal` frame is received. If an
+SSE connection closes before `terminal`, reconnect to the same `stream_url`.
+
+<ParamField path="pipeline_schedule_id" type="integer" required>
+  Pipeline schedule ID for the API trigger.
+</ParamField>
+
+<ParamField path="pipeline_run_id" type="integer">
+  Optional pipeline run ID returned by the trigger request. Include it in the
+  path to attach to one exact run instead of starting a new run.
+</ParamField>
+
+<ParamField query="poll_interval" type="number">
+  Optional polling interval in seconds. Values are bounded between `0.5` and
+  `10`; the default is `2`.
+</ParamField>
+
+<RequestExample>
+```curl cURL
+curl --request POST \
+  --url 'http://localhost:6789/api/triggers/71/streams' \
+  --header 'Authorization: Bearer 4506463a01944ef492f70005996dac1a'
+```
+</RequestExample>
+<RequestExample>
+```curl cURL
+curl --request POST \
+  --url 'http://localhost:6789/api/triggers/71/streams/1249' \
+  --header 'Authorization: Bearer 4506463a01944ef492f70005996dac1a'
+```
+</RequestExample>
+<ResponseExample>
+```text Server-Sent Events
+event: pipeline_run
+data: {"event_type":"pipeline_run","pipeline_schedule_id":71,"pipeline_run_id":1249,"sequence":0,"stream_url":"/api/triggers/71/streams/1249","timestamp":"2026-08-11T12:00:00+00:00"}
+
+event: response.output_text.delta
+data: {"type":"response.output_text.delta","delta":"The pipeline run started.","sequence":1,"timestamp":"2026-08-11T12:00:00+00:00"}
+
+event: final_response
+data: {"event_type":"final_response","text":"Done.","sequence":2,"timestamp":"2026-08-11T12:00:07+00:00"}
+
+event: terminal
+data: {"event_type":"terminal","pipeline_schedule_id":71,"pipeline_run_id":1249,"status":"completed","sequence":3,"timestamp":"2026-08-11T12:00:08+00:00"}
 ```
 </ResponseExample>

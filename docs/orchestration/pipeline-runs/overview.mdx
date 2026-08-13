@@ -103,6 +103,14 @@ View runs for a specific pipeline:
 
 **Direct URL**: `/pipelines/[pipeline_uuid]/runs`
 
+In Mage Pro, right-click a run on either the project-wide **Pipeline runs** page or a
+pipeline's **Runs** page to open the run actions menu. From this menu, you can open the run,
+edit its pipeline, view its logs, select **Copy URL** to copy its direct URL, select **Retry
+pipeline run** to restart the entire run, or select **Retry incomplete blocks** on a failed run
+to resume from its incomplete blocks.
+**Cancel** is enabled only for running runs, and **Fix with AI** is enabled only for failed
+runs when AI Sidekick is enabled; unavailable actions remain visible but disabled.
+
 #### Batch Operations
 
 The pipeline-specific run page supports batch operations for managing multiple runs:
@@ -133,6 +141,10 @@ For detailed analysis of a specific run:
 4. **Access logs and error information** for each block
 5. **Review runtime variables** and configuration used
 6. **Review observed Kubernetes resource usage** in the **Resources** tab when stored average and peak CPU/RAM metrics are available for Mage Pro runs that use the Kubernetes executor. Use pipeline **Monitoring** for pipeline-level Kubernetes executor recommendations.
+
+In Mage Pro, right-click a block run to open its block in the pipeline editor, view its logs,
+or retry it after the pipeline run finishes. When CSV output download is available for a
+completed block run, the menu also includes **Download output**.
 
 ## Pipeline Run Retry
 

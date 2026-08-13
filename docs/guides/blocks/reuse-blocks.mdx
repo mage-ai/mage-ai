@@ -5,6 +5,8 @@ description: "Learn how to reuse blocks within pipelines, across pipelines, and 
 icon: "share"
 ---
 
+import { ProOnly } from '/snippets/pro/only.mdx';
+
 ## Overview
 
 Mage allows you to reuse blocks across multiple pipelines within the same project, enabling you to build modular, maintainable data pipelines. When you reuse a block, any changes made to that block will automatically apply to all pipelines that use it.
@@ -194,6 +196,8 @@ Learn more about [creating and using user-defined templates](/guides/blocks/user
 
 ### Block templates across projects (Mage Pro)
 
+<ProOnly source="block-templates" />
+
 <Info>
   **Mage Pro feature**: Mage Pro supports configuring a central template library that shares templates across projects, allowing you to create and share reusable block templates across multiple projects in your organization.
 </Info>
@@ -211,9 +215,17 @@ Learn more about [creating and using user-defined templates](/guides/blocks/user
 1. **Open pipeline editor** - Navigate to the pipeline where you want to add the block
 2. **Add new block** - Click the "+" button to add a new block
 3. **Browse templates** - Select "Browse templates" from the block creation options
-4. **Select template** - Choose the template you want to use from the available templates
-5. **Name the block** - Enter a specific name for your new block instance
+4. **Choose a source** - Select **Core** for Mage's built-in templates or **Team** for templates created in your workspace
+5. **Select template** - Browse or search the folders, then select a template to preview its code
+6. **Add to workflow** - Click **Add to workflow**. Core templates are added directly; Team templates open the add-block form so you can enter a block name, then click **Save and add**.
 
+The **dbt** folder contains three workflow starters: select a model or snapshot
+from a file, run all models with optional selection or exclusion rules, or
+start with a generic dbt command. Selecting the file-based starter opens the
+file browser so you can choose the model or snapshot to add.
+
+When you add a callback or conditional block from an existing block's add-on panel,
+Mage opens the same template browser scoped to the matching block type.
 
 ### Cross-project block sharing
 

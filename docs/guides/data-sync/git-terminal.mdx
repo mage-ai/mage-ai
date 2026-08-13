@@ -72,10 +72,7 @@ For OAuth connections, each terminal session receives a session-scoped Git crede
 
 If the terminal header shows **Authenticate Git**, Mage has not detected usable Git authentication for the repository, either from the terminal environment such as an environment token, GitHub CLI login, or SSH key, or from a connected Git OAuth token. Select **Authenticate Git** to open the repository connection page for the current project, complete the Deployments Git OAuth flow, and then return to the terminal. If you authenticate Git directly in the terminal, Mage hides the action after it detects that Git authentication is available.
 
-The Mage Pro image includes GitHub CLI (`gh`) for optional GitHub authentication
-and status checks. For GitLab, Azure DevOps, and Bitbucket, use standard Git
-commands with Mage's credential helper or configured SSH/PAT authentication;
-provider-specific CLIs are not required.
+The Mage Pro image includes common Git provider CLIs for terminal workflows: GitHub CLI (`gh`), GitLab CLI (`glab`), Azure CLI (`az`) with the Azure DevOps extension, and the community Bitbucket CLI (`bitbucket-cli`).
 
 ### Usage
 
@@ -104,13 +101,11 @@ workspace has **Display local timezone** enabled, new terminal sessions use your
 browser's local IANA timezone for the prompt timestamp and the session `TZ`
 environment variable.
 
-Terminal sessions load Mage-managed safeguards for AI and Mage API access. Codex
-commands launched from the terminal use Mage Pro proxy authentication instead of
-provider API keys inherited by the shell. Direct shell calls from the browser
-terminal to Mage REST endpoints such as pipelines, pipeline runs, blocks, block
-runs, pipeline schedules, and status are blocked; use the Mage UI, the
-documented API from outside the workspace terminal, or Mage agent MCP tools for
-those operations.
+Terminal sessions load Mage-managed safeguards for AI and Mage API access. Direct
+shell calls from the browser terminal to Mage REST endpoints such as pipelines,
+pipeline runs, blocks, block runs, pipeline schedules, and status are blocked;
+use the Mage UI, the documented API from outside the workspace terminal, or Mage
+agent MCP tools for those operations.
 
 ### Conclusion
 

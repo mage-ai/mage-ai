@@ -30,6 +30,11 @@ All default attributes for a pipeline may be updated in addition to the followin
   Array of [schedule](/guides/triggering-pipelines/) trigger objects.
 </ParamField>
 
+<ParamField query="tags" type="array of strings">
+  Non-empty tag names to associate with the pipeline. Tag names are trimmed and duplicate names are
+  ignored before persistence. Each tag name cannot exceed 70 characters.
+</ParamField>
+
 <RequestExample>
 
 ```bash Request

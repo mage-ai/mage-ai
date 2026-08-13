@@ -1,7 +1,11 @@
 ---
 title: "IDE Integration"
-description: "Connect Cursor, Claude Code, or OpenAI Codex CLI to your Mage Pro cluster via MCP."
+description: "Connect Cursor, Claude Code, OpenAI Codex CLI, or another MCP-compatible AI client to your Mage Pro cluster via MCP."
 ---
+
+import { ProOnly } from '/snippets/pro/only.mdx';
+
+<ProOnly source="mage-agent-ide-integration" />
 
 mage-agent exposes a [Model Context Protocol](https://modelcontextprotocol.io) (MCP) server over stdio. Any MCP-compatible AI client can connect by launching `mage-agent mcp` as a subprocess.
 
@@ -89,16 +93,6 @@ Complete [Installation](/agent/installation) and [Authentication](/agent/authent
     Restart Codex CLI and verify tools and resources are visible.
   </Step>
 </Steps>
-
-<Note>
-  Codex CLI commands that you run manually from the Mage terminal use the
-  terminal process environment and Codex config directly, including `CODEX_HOME`,
-  provider credential variables, and any configured `mcpServers`. Mage Pro AI
-  Chat still uses Mage Pro API proxy authentication for Sidekick-managed Codex
-  sessions.
-</Note>
-
----
 
 ## PATH issues
 

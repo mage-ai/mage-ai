@@ -12,7 +12,7 @@ import { ProOnly } from '/snippets/pro/only.mdx';
 
 This source syncs performance reports from the [Microsoft Advertising API](https://learn.microsoft.com/en-us/advertising/guides/get-started) (Bing Ads API **v13**) using the official [`bingads`](https://github.com/BingAds/BingAds-Python-SDK) Python SDK.
 
-Reports are requested asynchronously: the connector submits a report request, polls until the result is ready, downloads the data, and emits one record per row. All three streams use **daily aggregation** by default and sync **incrementally** on `TimePeriod` per ad account, so only new or updated days are fetched on subsequent runs.
+Reports are requested asynchronously: the connector submits a report request, polls until the result is ready, downloads the data, and emits one record per row. The three performance-report streams use **daily aggregation** by default and sync **incrementally** on `TimePeriod` per ad account, so only new or updated days are fetched on subsequent runs. The `ad_labels` stream is a full-table stream built from current Campaign Management ad label associations.
 
 Authentication uses **OAuth 2.0** with a `refresh_token` (no service accounts). You provide an Azure AD application's `client_id` (and optionally `client_secret`) alongside a `developer_token` that identifies your API application.
 
@@ -31,6 +31,9 @@ Authentication uses **OAuth 2.0** with a `refresh_token` (no service accounts). 
 | `account_ids`           | ✅ | — | Comma-separated **advertiser account IDs** to sync. Find these in the Microsoft Advertising UI under account settings. |
 | `start_date`            | ✅ | — | Reporting lower bound. Format: ISO 8601 (`YYYY-MM-DDTHH:MM:SSZ`). |
 | `end_date`              | | today (UTC) | Optional reporting upper bound. |
+| `insights_lookback_window` | | `0` | Days to rewind from the saved report bookmark when syncing performance reports. Never goes earlier than `start_date`. |
+| `ad_labels_max_ads` | | `10000` | Maximum current ads to scan per account when syncing `ad_labels`; increase only when large-account sync time and API quota are acceptable. |
+| `ad_labels_max_hierarchy_requests` | | `1000` | Maximum campaign/ad group/ad hierarchy API requests per account when syncing `ad_labels`. |
 | `environment`           | | `production` | API environment: `production` or `sandbox`. |
 | `aggregation`           | | `Daily` | Report aggregation period. Common values: `Daily`, `Weekly`, `Monthly`. |
 | `report_time_zone`      | | — | [ReportTimeZone](https://learn.microsoft.com/en-us/advertising/reporting-service/reporttimezonetype) value. Leave empty to use the account's default time zone. |
@@ -88,8 +91,9 @@ environment: sandbox
 | `campaign_performance_report` | [CampaignPerformanceReportRequest](https://learn.microsoft.com/en-us/advertising/reporting-service/campaignperformancereportrequest) | Daily campaign-level impressions, clicks, spend, and conversions. |
 | `ad_group_performance_report` | [AdGroupPerformanceReportRequest](https://learn.microsoft.com/en-us/advertising/reporting-service/adgroupperformancereportrequest) | Daily ad group-level performance metrics. |
 | `ad_performance_report` | [AdPerformanceReportRequest](https://learn.microsoft.com/en-us/advertising/reporting-service/adperformancereportrequest) | Daily ad-level performance metrics. |
+| `ad_labels` | [Campaign Management label associations](https://learn.microsoft.com/en-us/advertising/guides/labels) | Full-table rows for current ad label associations. |
 
-All streams sync **incrementally** on `TimePeriod` (one bookmark per ad account). On the first run the full history from `start_date` is fetched; subsequent runs fetch only new or updated days.
+Performance report streams sync **incrementally** on `TimePeriod` (one bookmark per ad account). On the first run the full history from `start_date` is fetched; subsequent runs fetch only new or updated days. The `ad_labels` stream syncs as **full table** from the current label associations returned by the Campaign Management API.
 
 <br/>
 
