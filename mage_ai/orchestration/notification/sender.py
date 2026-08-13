@@ -1,6 +1,6 @@
 import os
 import traceback
-from typing import Dict
+from typing import Dict, List
 
 from mage_ai.orchestration.notification.config import (
     AlertOn,
@@ -40,6 +40,25 @@ DEFAULT_MESSAGES = dict(
         ),
     ),
 )
+
+
+def format_failed_blocks_dbt_detail(failed_block_runs: List) -> str:
+    """Format per-block dbt failures (models/tests) for notifications."""
+    if not failed_block_runs:
+        return ''
+    lines = []
+    for br in failed_block_runs:
+        dbt = (br.metrics or {}).get('error', {}).get('dbt') or {}
+        models = dbt.get('failed_models') or []
+        tests = dbt.get('failed_tests') or []
+        if models or tests:
+            parts = []
+            if models:
+                parts.append(f"failed models: {', '.join(models)}")
+            if tests:
+                parts.append(f"failed tests: {', '.join(tests)}")
+            lines.append(f"Block {br.block_uuid}: {'; '.join(parts)}.")
+    return '\n'.join(lines) if lines else ''
 
 
 class NotificationSender:
@@ -229,28 +248,34 @@ class NotificationSender:
             if details is None and message_template.details is not None:
                 details = message_template.details
 
+        final_title = self.__interpolate_vars(
+            title or default_title,
+            pipeline,
+            pipeline_run,
+            error=error,
+            stacktrace=stacktrace,
+        )
+        final_summary = self.__interpolate_vars(
+            summary or default_summary,
+            pipeline,
+            pipeline_run,
+            error=error,
+            stacktrace=stacktrace,
+        )
+        final_details = self.__interpolate_vars(
+            details or default_details,
+            pipeline,
+            pipeline_run,
+            error=error,
+            stacktrace=stacktrace,
+        )
+        if stacktrace:
+            final_details = (final_details or '') + '\n\n' + stacktrace
+
         self.send(
-            title=self.__interpolate_vars(
-                title or default_title,
-                pipeline,
-                pipeline_run,
-                error=error,
-                stacktrace=stacktrace,
-            ),
-            summary=self.__interpolate_vars(
-                summary or default_summary,
-                pipeline,
-                pipeline_run,
-                error=error,
-                stacktrace=stacktrace,
-            ),
-            details=self.__interpolate_vars(
-                details or default_details,
-                pipeline,
-                pipeline_run,
-                error=error,
-                stacktrace=stacktrace,
-            ),
+            title=final_title,
+            summary=final_summary,
+            details=final_details,
         )
 
     def __with_pipeline_run_url(self, text, pipeline, pipeline_run):
