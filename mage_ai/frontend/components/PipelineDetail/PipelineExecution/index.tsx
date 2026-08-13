@@ -10,8 +10,7 @@ import KernelOutputType, {
 } from '@interfaces/KernelOutputType';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
-import ToggleSwitch from '@oracle/elements/Inputs/ToggleSwitch';
-import { Close, PlayButton } from '@oracle/icons';
+import { Close, PlayButton, Tree, VisibleEye } from '@oracle/icons';
 import {
   ContainerStyle as CodeBlockStyle,
   OutputRowStyle,
@@ -31,9 +30,13 @@ export type PipelineExecutionProps = {
   checkIfPipelineRunning: () => void;
   executePipeline: () => void;
   isPipelineExecuting: boolean;
+  onToggleTreeHidden?: () => void;
+  outputHeight?: number;
+  outputScrollRef?: React.RefObject<HTMLDivElement>;
   pipelineExecutionHidden: boolean;
   pipelineMessages: KernelOutputType[];
   setPipelineExecutionHidden: (pipelineExecutionHidden: boolean) => void;
+  treeHidden?: boolean;
 };
 
 function PipelineExecution({
@@ -41,9 +44,13 @@ function PipelineExecution({
   checkIfPipelineRunning,
   executePipeline,
   isPipelineExecuting,
+  onToggleTreeHidden,
+  outputHeight,
+  outputScrollRef,
   pipelineExecutionHidden,
   pipelineMessages,
   setPipelineExecutionHidden,
+  treeHidden,
 }: PipelineExecutionProps) {
   const numberOfMessages = useMemo(() => pipelineMessages?.length || 0, [pipelineMessages]);
   const truncatedPipelineMessages = useMemo(() => (
@@ -125,15 +132,31 @@ function PipelineExecution({
             </Button>
           </Flex>
           <Flex alignItems="center">
-            <Spacing ml={1} />
-            <Text>
-              Hide
-            </Text>
-            <Spacing mr={1} />
-            <ToggleSwitch
-              checked={pipelineExecutionHidden}
-              onCheck={togglePipelineExecution}
-            />
+            {onToggleTreeHidden && (
+              <>
+                <Button
+                  beforeIcon={<Tree muted={treeHidden} size={UNIT * 2} />}
+                  compact
+                  onClick={onToggleTreeHidden}
+                  secondary
+                >
+                  <Text bold noWrapping>
+                    {treeHidden ? 'Show tree' : 'Hide tree'}
+                  </Text>
+                </Button>
+                <Spacing mr={1} />
+              </>
+            )}
+            <Button
+              beforeIcon={<VisibleEye muted={pipelineExecutionHidden} size={UNIT * 2} />}
+              compact
+              onClick={togglePipelineExecution}
+              secondary
+            >
+              <Text bold noWrapping>
+                {pipelineExecutionHidden ? 'Show output' : 'Hide output'}
+              </Text>
+            </Button>
           </Flex>
         </FlexContainer>
       </OutputHeaderStyle>
@@ -142,7 +165,7 @@ function PipelineExecution({
       {!pipelineExecutionHidden &&
         <>
           <Spacing mb={1} />
-          <OutputContainerStyle noScrollbarTrackBackground>
+          <OutputContainerStyle data-testid="pipeline-execution-output" height={outputHeight} noScrollbarTrackBackground ref={outputScrollRef}>
             <CodeBlockStyle
               executedAndIdle
               hasError={false}
