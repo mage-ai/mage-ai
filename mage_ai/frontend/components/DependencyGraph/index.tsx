@@ -1,9 +1,8 @@
 import dynamic from 'next/dynamic';
 import { CanvasRef } from 'reaflow';
+import { toast } from 'react-toastify';
 import { ThemeContext } from 'styled-components';
-import { parse } from 'yaml';
 import {
-  createRef,
   useCallback,
   useContext,
   useEffect,
@@ -20,7 +19,6 @@ import BlockType, {
   BlockRequestPayloadType,
   BlockTypeEnum,
   SetEditingBlockType,
-  StatusTypeEnum,
 } from '@interfaces/BlockType';
 import ClickOutside from '@oracle/components/ClickOutside';
 import Divider from '@oracle/elements/Divider';
@@ -38,11 +36,10 @@ import useProject from '@utils/models/project/useProject';
 import {
   EdgeType,
   NodeType,
-  PortType,
   SideEnum,
   ZOOMABLE_CANVAS_SIZE,
 } from './constants';
-import { GraphContainerStyle, STROKE_WIDTH, inverseColorsMapping } from './index.style';
+import { GraphContainerStyle, STROKE_WIDTH } from './index.style';
 import { RunStatus } from '@interfaces/BlockRunType';
 import { ThemeType } from '@oracle/styles/themes/constants';
 import {
@@ -50,26 +47,18 @@ import {
   UNIT,
 } from '@oracle/styles/units/spacing';
 import { ViewKeyEnum } from '@components/Sidekick/constants';
+import { openSaveFileDialog } from '@components/PipelineDetail/utils';
+import { buildDependencyGraphSvgBlob } from './svgExport';
 import {
-  buildEdge,
   buildNodesEdgesPorts,
   buildPortIDDownstream,
-  buildPortsDownstream,
-  buildPortsUpstream,
   getBlockStatus,
   getParentNodeID,
   getParentNodeIDShared,
-  isActivePort,
 } from './utils';
 import { find, indexBy, removeAtIndex, sortByKey } from '@utils/array';
 import { getBlockNodeHeight, getBlockNodeWidth } from './BlockNode/utils';
-import { getBlockRunBlockUUID } from '@utils/models/blockRun';
 import { getColorsForBlockType } from '@components/CodeBlock/index.style';
-import {
-  getMessagesWithType,
-  hasErrorOrOutput,
-} from '@components/CodeBlock/utils';
-import { getModelAttributes } from '@utils/models/dbt';
 import { onSuccess } from '@api/utils/response';
 import { pauseEvent } from '@utils/events';
 
@@ -257,14 +246,13 @@ function DependencyGraph({
 }: DependencyGraphProps) {
   const { featureEnabled, featureUUIDs } = useProject();
   const themeContext: ThemeType = useContext(ThemeContext);
-  const colorsInverse = useMemo(() => inverseColorsMapping(themeContext), [themeContext]);
 
   const containerRef = useRef(null);
-  const portRefs = useRef({});
   const timeoutActiveRefs = useRef({});
   const timeoutDraggingRefs = useRef({});
   const treeInnerRef = useRef<CanvasRef>(null);
   const canvasRef = treeRef || treeInnerRef;
+  const [isDownloading, setIsDownloading] = useState<boolean>(false);
   const [zoomLevel, setZoomLevel] = useState<number>(DEFAULT_ZOOM_LEVEL);
 
   const [activeEdge, setActiveEdge] = useState<{
@@ -296,7 +284,7 @@ function DependencyGraph({
         }));
       }
     };
-    const handleMouseUp = (event) => {
+    const handleMouseUp = () => {
       if (isDragging && nodeDragging) {
         setIsDragging(false);
         setTimeout(() => setNodeDragging(null), 1);
@@ -321,8 +309,6 @@ function DependencyGraph({
 
   const [selectedBlockTwice, setSelectedBlockTwice] = useState(null);
   const [edgeSelections, setEdgeSelections] = useState<string[]>([]);
-  const [showPortsState, setShowPorts] = useState<boolean>(false);
-  const showPorts = enablePorts && showPortsState;
   const {
     block: blockEditing,
     values: upstreamBlocksEditing = [],
@@ -607,7 +593,6 @@ function DependencyGraph({
   const {
     edges,
     nodes,
-    ports,
     blocksWithDownstreamBlockSet,
   } = useMemo(() => buildNodesEdgesPorts({
     activeNodes,
@@ -716,6 +701,7 @@ function DependencyGraph({
     onClickWhenEditingUpstreamBlocks,
     selectedBlock,
     selectedBlockTwice,
+    setSelectedBlock,
     setSelectedBlockTwice,
   ]);
 
@@ -724,7 +710,7 @@ function DependencyGraph({
     if (nodeID in timeoutActiveRefs.current) {
       clearTimeout(timeoutActiveRefs?.current?.[nodeID]);
     }
-  }, [activeNodes]);
+  }, []);
 
   const setTimeoutForNode = useCallback((node) => {
     const nodeID = node?.id;
@@ -738,7 +724,7 @@ function DependencyGraph({
     }, 1000);
   }, [setActiveNodes]);
 
-  const onMouseEnterNode = useCallback((event, node, opts) => {
+  const onMouseEnterNode = useCallback((event, node) => {
     pauseEvent(event);
 
     if (!isDragging && nodeDragging) {
@@ -821,9 +807,10 @@ function DependencyGraph({
     setNodeHovering,
     setTargetNode,
     setTimeoutForNode,
+    updateBlockByDragAndDrop,
   ]);
 
-  const onMouseLeaveNode = useCallback((event, node, opts) => {
+  const onMouseLeaveNode = useCallback((event, node) => {
     pauseEvent(event);
 
     setNodeHovering(null);
@@ -863,7 +850,7 @@ function DependencyGraph({
     setNodeDragging,
   ]);
 
-  const onMouseUpNode = useCallback((event, node, opts) => {
+  const onMouseUpNode = useCallback((event, node) => {
     pauseEvent(event);
 
     const nodeID = node?.id;
@@ -894,7 +881,6 @@ function DependencyGraph({
   const onEnterPort = useCallback(({
     event,
     node,
-    port,
   }) => {
     pauseEvent(event);
 
@@ -908,7 +894,6 @@ function DependencyGraph({
   const onLeavePort = useCallback(({
     event,
     node,
-    port,
   }) => {
     pauseEvent(event);
 
@@ -937,12 +922,10 @@ function DependencyGraph({
   ]);
 
   const onDragEndPort = useCallback(({
-    event,
     node,
     port,
   }) => {
     const nodeID = node?.id;
-    const side = port?.side as SideEnum;
 
     if (targetNode) {
       const fromBlock: BlockType = node?.properties?.data?.block;
@@ -992,6 +975,7 @@ function DependencyGraph({
     setActivePorts,
     setTimeoutForNode,
     targetNode,
+    updateBlockByDragAndDrop,
   ]);
 
   const determineSelectedStatus = useCallback((node: {
@@ -1199,6 +1183,7 @@ function DependencyGraph({
     blockStatus,
     callbackBlocksByBlockUUID,
     conditionalBlocksByBlockUUID,
+    determineSelectedStatus,
     disabledProp,
     extensionBlocksByBlockUUID,
     messages,
@@ -1235,19 +1220,6 @@ function DependencyGraph({
       return;
     }
 
-    const {
-      hasFailed,
-      isInProgress,
-      isQueued,
-      isSuccessful,
-    } = getBlockStatus({
-      block,
-      blockStatus,
-      messages,
-      noStatus,
-      runningBlocks,
-      runningBlocksMapping,
-    });
     const callbackBlocks = callbackBlocksByBlockUUID?.[block?.uuid];
     const conditionalBlocks = conditionalBlocksByBlockUUID?.[block?.uuid];
     const extensionBlocks = extensionBlocksByBlockUUID?.[block?.uuid];
@@ -1286,12 +1258,8 @@ function DependencyGraph({
     conditionalBlocksByBlockUUID,
     extensionBlocksByBlockUUID,
     isDragging,
-    messages,
-    noStatus,
     nodeDragging,
     pipeline,
-    runningBlocks,
-    runningBlocksMapping,
   ]);
 
   // Show a menu to add a block between or delete the connection.
@@ -1445,7 +1413,10 @@ function DependencyGraph({
     );
   }, [
     activeEdge,
+    addNewBlockAtIndex,
     blocks,
+    blocksWithDownstreamBlockSet,
+    blockUUIDMapping,
     setActiveEdge,
     updateBlockByDragAndDrop,
   ]);
@@ -1464,13 +1435,11 @@ function DependencyGraph({
     const {
       event,
       node,
-      data,
     } = contextMenuData;
     const {
       data: {
         block,
         blocks,
-        children,
       },
     } = node;
 
@@ -1661,7 +1630,6 @@ function DependencyGraph({
     );
   }, [
     addNewBlockAtIndex,
-    blocks,
     contentByBlockUUID,
     contextMenuData,
     deleteBlock,
@@ -1673,6 +1641,45 @@ function DependencyGraph({
     setContextMenuData,
     setSelectedBlock,
     setSelectedBlockTwice,
+    selectedBlock,
+    selectedBlockTwice,
+    showUpdateBlockModal,
+    updateBlockByDragAndDrop,
+  ]);
+
+  const handleDownload = useCallback(async () => {
+    if (typeof document === 'undefined') {
+      return;
+    }
+
+    try {
+      setIsDownloading(true);
+
+      const canvasContainer = canvasRef?.current?.containerRef?.current as HTMLDivElement;
+      const svgElement = canvasContainer?.querySelector('svg') as SVGSVGElement;
+
+      if (!canvasContainer || !svgElement) {
+        throw new Error('Unable to find dependency tree SVG.');
+      }
+
+      if (document.fonts?.ready) {
+        await document.fonts.ready;
+      }
+
+      const blob = buildDependencyGraphSvgBlob(svgElement);
+
+      openSaveFileDialog(blob, `${pipeline?.uuid || 'pipeline'}_dependency_tree.svg`);
+    } catch (error) {
+      console.error(error);
+      toast.error('Unable to download dependency tree.', {
+        position: toast.POSITION.BOTTOM_RIGHT,
+      });
+    } finally {
+      setIsDownloading(false);
+    }
+  }, [
+    canvasRef,
+    pipeline,
   ]);
 
   return (
@@ -1772,6 +1779,8 @@ function DependencyGraph({
         <ZoomControls
           canvasRef={canvasRef}
           containerRef={containerRef}
+          isDownloading={isDownloading}
+          onDownload={handleDownload}
           zoomLevel={zoomLevel}
         />
         <Canvas
@@ -1824,8 +1833,12 @@ function DependencyGraph({
                   ...block?.downstream_blocks?.map((uuid) => blockUUIDMapping?.[uuid]),
                 );
               } else {
-                const downstreamBlockUUID = block?.downstream_blocks?.find((uuid) => buildPortIDDownstream(blockUUID, uuid) === edge?.sourcePort
-                    || getParentNodeID(blockUUID) === edge.target);
+                const downstreamBlockUUID = block?.downstream_blocks?.find(
+                  (uuid) => (
+                    buildPortIDDownstream(blockUUID, uuid) === edge?.sourcePort
+                    || getParentNodeID(blockUUID) === edge.target
+                  ),
+                );
                 const downstreamBlock = blockUUIDMapping?.[downstreamBlockUUID];
                 downstreamBlocks.push(downstreamBlock);
               }
@@ -1953,7 +1966,6 @@ function DependencyGraph({
           maxZoom={1}
           minZoom={-1}
           node={(node) => {
-            const nodeID = node?.id;
             const {
               block,
               blocks: blocksWithSameDownstreamBlocks,
@@ -1989,7 +2001,6 @@ function DependencyGraph({
                     }}
                     onDragEnd={(event, _, port) => {
                       onDragEndPort({
-                        event,
                         node,
                         port,
                       });
@@ -2002,18 +2013,16 @@ function DependencyGraph({
                         port,
                       });
                     }}
-                    onEnter={(event, port) => {
+                    onEnter={(event) => {
                       onEnterPort({
                         event,
                         node,
-                        port,
                       });
                     }}
-                    onLeave={(event, port) => {
+                    onLeave={(event) => {
                       onLeavePort({
                         event,
                         node,
-                        port,
                       });
                     }}
                     rx={isActive ? 10 : 0}
@@ -2100,23 +2109,16 @@ function DependencyGraph({
                         })
                         : null
                       }
-                      onMouseEnter={(e) => onMouseEnterNode(e, node, {
-                        nodeHeight,
-                        nodeWidth,
-                      })}
-                      onMouseLeave={(e) => onMouseLeaveNode(e, node, {
-                        nodeHeight,
-                        nodeWidth,
-                      })}
+                      onMouseEnter={(e) => onMouseEnterNode(e, node)}
+                      onMouseLeave={(e) => onMouseLeaveNode(e, node)}
                       onMouseUp={dragEnabled
-                        ? (e) => onMouseUpNode(e, node, {
-                          nodeHeight,
-                          nodeWidth,
-                        })
+                        ? (e) => onMouseUpNode(e, node)
                         : null
                       }
                       style={{
-                        // https://reaflow.dev/?path=/story/docs-advanced-custom-nodes--page#the-foreignobject-will-steal-events-onclick-onenter-onleave-etc-that-are-bound-to-the-rect-node
+                        // https://reaflow.dev/?path=/story/docs-advanced-custom-nodes--page
+                        // #the-foreignobject-will-steal-events-onclick-onenter-onleave-etc
+                        // -that-are-bound-to-the-rect-node
                         // pointerEvents: 'none',
                       }}
                       width={event.width}
@@ -2151,7 +2153,9 @@ function DependencyGraph({
             );
           }}
           nodes={nodes}
-          onNodeLinkCheck={(event, from, to) => !edges.some(e => e.from === from.id && e.to === to.id)}
+          onNodeLinkCheck={(_, from, to) => !edges.some(
+            (e) => e.from === from.id && e.to === to.id,
+          )}
           onZoomChange={z => {
             const zFinal = Math.max(z, 0.05);
             setZoom?.(zFinal);
