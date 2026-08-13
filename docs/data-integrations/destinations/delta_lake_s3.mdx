@@ -25,6 +25,31 @@ To use **Delta Lake on AWS S3** as a destination in Mage, provide the following 
 - Mage uses the [delta-rs](https://delta-io.github.io/delta-rs/python/usage.html) engine for writing data to Delta Lake on S3.
 - Use `overwrite` mode with caution: it deletes all existing rows and recreates the table.
 
+## Preview in Mage Pro
+
+Mage Pro Data Preview, Data Explorer, AI Sidekick exploration, and Analytics
+chart datasets can read a bounded window from a Delta Lake table on S3 when the
+source is configured as `delta_lake_s3`.
+
+Preview supports either a full table URI:
+
+```yaml
+provider: delta_lake_s3
+uri: s3://analytics-lake/warehouse/orders
+```
+
+Or a destination-style config:
+
+```yaml
+provider: delta_lake_s3
+bucket: analytics-lake
+object_key_path: warehouse
+table: orders
+```
+
+Mage reads AWS credentials from the selected `io_config.yaml` profile when one
+is provided. Use a profile with read access to the target table path.
+
 ---
 
 ## Related Resources

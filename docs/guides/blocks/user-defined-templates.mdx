@@ -91,9 +91,25 @@ The template library provides a centralized location to manage all your block an
 1. **Open pipeline editor** - Navigate to the pipeline where you want to add the block
 2. **Add new block** - Click the "+" button to add a new block
 3. **Browse templates** - Select "Browse templates" from the block creation options
-4. **Select template** - Choose the template you want to use from the available templates
-5. **Name the block** - Enter a specific name for your new block instance
-6. **Customize as needed** - Modify the generated code for your specific use case
+4. **Choose a source** - Select **Core** for Mage's built-in templates or **Team** for templates created in your workspace
+5. **Find a template** - Browse the folders or search the selected template source
+6. **Preview the code** - Select a template to inspect its code in the read-only preview
+7. **Add the template** - Click **Add to workflow**. Core templates are added directly; Team templates open the add-block form so you can enter a block name and click **Save and add**.
+8. **Customize as needed** - Modify the generated block code for your specific use case
+
+<Info>
+  The template browser preview is read-only. Add the template to your workflow before
+  customizing its generated block code.
+</Info>
+
+When you add a callback or conditional block from an existing block's add-on panel,
+Mage opens the same template browser scoped to the matching block type.
+
+The **Core > dbt** folder presents three dbt workflow starters:
+
+- **Single model or snapshot (from file)** opens the file browser so you can choose an existing dbt file.
+- **All models (w/ optional exclusion)** creates a dbt block configured to run all models, with optional selection or exclusion rules.
+- **Generic dbt command** creates an editable dbt command block.
 
 ## Pipeline Templates
 

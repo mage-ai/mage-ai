@@ -14,6 +14,11 @@ api: "POST /api/pipelines"
   Note that `python` is a standard (batch) pipeline with a python backend, while `pyspark` is a batch pipeline with a spark backend.
 </ResponseField>
 
+<ParamField query="tags" type="array of strings">
+  Non-empty tag names to associate with the pipeline. Tag names are trimmed and duplicate names are
+  ignored before persistence. Each tag name cannot exceed 70 characters.
+</ParamField>
+
 <ParamField query="clone_pipeline_uuid" type="string">
   If supplied, the uuid of a pipeline to clone.
 </ParamField>

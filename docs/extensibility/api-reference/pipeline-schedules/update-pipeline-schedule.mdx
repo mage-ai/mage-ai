@@ -47,6 +47,10 @@ api: "PUT /api/pipeline_schedules/:id"
     </ParamField>
     <ParamField body="status" type="string">
     </ParamField>
+    <ParamField body="tags" type="array of strings">
+      Non-empty tag names to associate with the trigger. Tag names are trimmed and duplicate names
+      are ignored before persistence. Each tag name cannot exceed 70 characters.
+    </ParamField>
     <ParamField body="variables" type="object">
     </ParamField>
   </Expandable>

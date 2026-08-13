@@ -3,6 +3,10 @@ title: "MCP Tools"
 description: "Full reference for every tool your AI assistant can call via mage-agent."
 ---
 
+import { ProOnly } from '/snippets/pro/only.mdx';
+
+<ProOnly source="mage-agent-mcp-tools" />
+
 Once mage-agent is connected to your IDE, your AI assistant has access to the following tools. All tools require valid authentication.
 
 <Note>
@@ -88,20 +92,20 @@ lists, run-once schedules, and next run dates, use `pipeline_schedules`. Use
 
 ---
 
-## Codex chat context
+## AI Chat context
 
 <AccordionGroup>
   <Accordion title="current_page_context">
     Read the visible non-chat text that Mage Pro AI Chat captured from the user's current browser page for the active chat turn.
 
-    This tool is only registered when Mage Pro AI Chat starts Codex with captured page context. Standard IDE MCP sessions do not expose it unless `MAGE_AGENT_CURRENT_PAGE_CONTEXT_PATH` points to a valid context sidecar file.
+    This tool is only registered when Mage Pro AI Chat starts with captured page context. Standard IDE MCP sessions do not expose it unless `MAGE_AGENT_CURRENT_PAGE_CONTEXT_PATH` points to a valid context sidecar file.
 
     | Parameter | Type | Required | Description |
     |---|---|---|---|
     | `include_text` | boolean | no | Return the captured page text. Set to `false` to return metadata only. |
 
     <Note>
-      The context is scoped to the authenticated user and chat session, excludes the Codex chat UI, and should only be used for page-relative requests such as "explain this page" or "what am I looking at?"
+      The context is scoped to the authenticated user and chat session, excludes the chat UI, and should only be used for page-relative requests such as "explain this page" or "what am I looking at?"
     </Note>
   </Accordion>
 </AccordionGroup>
@@ -195,7 +199,9 @@ lists, run-once schedules, and next run dates, use `pipeline_schedules`. Use
     | `config` | object | no | Additional block configuration |
 
     **Supported block types:**
-    `data_loader`, `transformer`, `data_exporter`, `sensor`, `callback`, `chart`, `conditional`, `custom`, `dbt`, `extension`, `global_data_product`, `markdown`, `scratchpad`
+    `ai`, `data_loader`, `transformer`, `data_exporter`, `sensor`, `callback`, `chart`, `conditional`, `custom`, `dbt`, `extension`, `global_data_product`, `markdown`, `scratchpad`
+
+    AI blocks are available in Mage Pro only. For Sidekick-powered agent blocks, use `type="ai"`, `language="yaml"`, and YAML content with top-level `type: agent`.
 
     <Note>
       If no `config` is provided, mage-agent automatically matches a block template for you. For `integration` pipelines, it also auto-detects available sources and destinations.

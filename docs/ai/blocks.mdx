@@ -1,14 +1,13 @@
 ---
-title: 'Building, Configuring, and Automating with LLMs'
+title: 'AI Blocks'
 sidebarTitle: 'AI Blocks'
-description: 'Learn how to create, configure, and run AI Blocks in Mage to generate text, produce structured outputs, write and validate code, and trigger other pipelines—empowering you to build advanced RAG and automation workflows with ease.'
+description: 'Use AI blocks to turn prompts, upstream data, and pipeline context into reusable pipeline outputs.'
 icon: 'microchip-ai'
 ---
 
-import { ProButton } from '/snippets/pro/button.mdx';
 import { ProOnly } from '/snippets/pro/only.mdx';
 
-<ProOnly source="rag-pipeline" />
+<ProOnly source="ai-blocks" />
 
 <Frame>
   <iframe
@@ -23,206 +22,121 @@ import { ProOnly } from '/snippets/pro/only.mdx';
   />
 </Frame>
 
-## 1. What is an AI Block?
+AI blocks bring generative AI into the same pipeline canvas as your loaders, transformers, exporters, and monitors. Use them to summarize data, classify records, draft messages, create structured JSON, generate code, or hand work to Mage Pro AI Sidekick when a task needs project context.
 
-An **AI block** is a special type of block in a Mage pipeline that uses a Large Language Model (LLM) to:
+Because AI blocks run inside a Mage pipeline, their answers can become real pipeline outputs. Downstream blocks can consume the final response just like any other block result.
 
-- Generate text or code
-- Return structured data in a defined schema
-- Trigger other pipelines as tools
-- Validate outputs before passing them downstream
+## Create an AI Block
 
-AI blocks are configured in **YAML** and can be designed to:
-
-- Write and validate executable code
-- Produce structured outputs for downstream blocks
-- Decide which other pipelines to trigger and pass them variables
-
-They integrate directly with Mage’s orchestration engine, allowing AI-generated outputs to be chained together, validated, and reused.
-
----
-
-## 2. How to Use an AI Block
-
-1. **Add a new block** in your Mage pipeline and set its type to `ai`.
-2. **Write a prompt** — the main instruction for the AI.
-3. **Optionally define output settings**:
-   - **Code generation** (`output.code`)
-   - **Structured JSON schema** (`output.format`)
-4. **(Optional) Configure tools** to allow the AI to trigger other pipelines.
-5. **Run the pipeline** — Mage will send your prompt and configuration to the AI model, validate the output (if specified), and pass it to the next blocks.
-
-**Minimal example:**
-
-```yaml
-prompt: Summarize the input text in two sentences
-```
-
----
-
-## 3. AI Block Configuration
-
-### 3.1 Basic Structure
+Add an AI block to a pipeline, then describe the job in YAML.
 
 ```yaml
 prompt: |
-  Enter what you want AI to do
-output:
-  # Choose either `code` or `format`, not both
-  code:
-    save: true
-    validation: Ensure this code runs without errors
-  format:
-    name:
-      type: string
-      description: The name of the person
-    age:
-      type: integer
-      minimum: 0
-validation: Validation prompt for output
-tools:
-  prompt: A prompt to decide which pipeline(s) to trigger
-  required: false
-  pipelines:
-    - uuid: pipeline_uuid
-      description: Description of the pipeline
-      blocks:
-        - uuid: block_uuid
-      variables:
-        user_id:
-          type: string
+  Summarize the customer feedback from upstream blocks.
+  Return the top themes and recommended next actions.
 ```
 
----
+Run the block from the editor, or run the full pipeline from a trigger. Mage sends the prompt to the configured AI runtime and stores the final response as the block output.
 
-### 3.2 Fields
+Use AI blocks when you want to:
 
-#### **prompt** (Required)
+- summarize reports, logs, feedback, or operational data
+- extract structured fields from text
+- classify rows or events into business categories
+- generate code or SQL for a controlled workflow
+- turn upstream block outputs into plain-language recommendations
+- automate a decision step before the next pipeline block runs
 
-The instruction to send to the AI model.
+## Use Sidekick as an Agent
 
-- Supports multi-line strings with `|`.
-- Example:
+Set `type: agent` when you want the AI block to run through Mage Pro AI Sidekick. Agent mode is useful when the block should understand pipeline context, inspect upstream block outputs, and produce a final answer with the same project awareness users expect from Sidekick.
+
+```yaml
+type: agent
+prompt: |
+  Use the upstream customer rows to summarize churn risk.
+message: Summarize the highest-risk customers and recommend next steps.
+settings:
+  speed: fast
+output:
+  level: default
+runtime:
+  report_name: weekly_churn_review
+```
+
+Agent mode is still an AI block. It runs as part of the pipeline and returns the final Sidekick answer as the block output. While Sidekick works, Mage prints progress and streamed response events to the block logs so users can see that the agent is running.
+
+Use agent mode when the task benefits from pipeline context:
+
+- "Read the upstream customer output and explain the highest churn risk."
+- "Review this pipeline run's logs and summarize what failed."
+- "Compare the two upstream datasets and write a short executive summary."
+- "Use the runtime variables and upstream rows to draft a customer follow-up."
+
+## Fields
+
+### `prompt`
+
+The main instruction for the AI block. Keep it clear and specific. Multi-line prompts are easier to read and maintain.
 
 ```yaml
 prompt: |
-  Write a haiku about the moon.
+  Write a three-bullet summary of the upstream sales report.
+  Include one recommended action for the revenue team.
 ```
 
-#### **output**
+### `message`
 
-Controls how the AI’s response is validated and structured.
-
-1. **Code Output**
+An optional user-style request for `type: agent` blocks. Use `prompt` for standing instructions and `message` for the specific request to answer on this run.
 
 ```yaml
+type: agent
+prompt: |
+  You are a customer retention analyst.
+message: Which accounts need attention this week?
+```
+
+### `settings`
+
+Controls how the AI runtime should behave. For agent blocks, `speed: fast` is a good default when you want a quick operational answer.
+
+```yaml
+settings:
+  speed: fast
+```
+
+### `runtime`
+
+Optional context that travels with the block run. Use it for business labels, report names, or request metadata that helps the AI understand the job.
+
+```yaml
+runtime:
+  customer_segment: enterprise
+  report_name: renewal_risk
+```
+
+### `output`
+
+Use `output` when you need the response to follow a predictable shape or control agent block logs.
+
+For `type: agent` blocks, `output.level` controls how much Sidekick runtime output Mage prints while the block runs:
+
+- `default`: print streamed answer, narration/status, tool call, and error events.
+- `all`: print every runtime event, including completion and other low-level events.
+- `none`: do not print Sidekick runtime output; the final answer still becomes the block output.
+
+```yaml
+type: agent
+prompt: Review the upstream data and summarize the result.
+message: What changed since the last run?
 output:
-  code:
-    save: true # Save generated code for reuse
-    validation: Ensure no syntax errors
-    language: sql # Optional, e.g., python or sql
-    profile: default # SQL connection profile from io_config.yaml
-    client: postgres # SQL client type
+  level: all
 ```
 
-2. **Structured Format Output**
+Use `format` when a non-agent AI block should return structured data.
 
 ```yaml
-output:
-  format:
-    title:
-      type: string
-      description: Blog post title
-    tags:
-      type: array
-      items:
-        type: string
-    published:
-      type: boolean
-  validation: Ensure all fields are present and valid
-```
-
-3. **Unstructured Output**
-
-```yaml
-output: ''
-```
-
----
-
-#### **tools**
-
-Lets the AI trigger other pipelines as part of execution.
-
-```yaml
-tools:
-  prompt: Select a pipeline to process this request
-  required: true
-  pipelines:
-    - uuid: abc123
-      description: Cleans and normalizes customer data
-      blocks:
-        - uuid: block_1
-      variables:
-        customer_id:
-          type: string
-```
-
----
-
-## 4. JSON Schema Support for Structured Outputs
-
-The `output.format` and `variables` fields use **JSON Schema draft-07** (subset) to define:
-
-- `type` — string, number, integer, boolean, array, object
-- `description` — field description
-- `enum` — allowed values
-- `items` — item schema for arrays
-- `minItems`, `maxItems` — constraints for arrays
-- `pattern` — regex validation for strings
-- `required` — list of required keys
-- `oneOf`, `anyOf`, `allOf` — branching validation
-- `$ref`, `$defs` — recursive or modular schemas
-
-**Example:**
-
-```yaml
-output:
-  format:
-    email:
-      type: string
-      format: email
-    signup_date:
-      type: string
-      format: date-time
-```
-
----
-
-## 5. Best Practices
-
-- Use **`output.code`** only when expecting executable code.
-- Use **`output.format`** for predictable structured outputs.
-- Avoid defining both `code` and `format` in the same block.
-- Use **multi-line prompts** with `|` for readability.
-- Only include fields you need — minimal configs run faster.
-- Always include a `validation` prompt for critical outputs.
-- When chaining pipelines, define `variables` clearly for tool execution.
-
----
-
-## 6. Example Configurations
-
-**Minimal AI Block**
-
-```yaml
-prompt: Summarize this document in bullet points
-```
-
-**AI Block with Structured Output**
-
-```yaml
-prompt: Extract customer details from the text
+prompt: Extract customer details from the text.
 output:
   format:
     name:
@@ -231,26 +145,117 @@ output:
     email:
       type: string
       format: email
-    phone:
+    priority:
       type: string
-      pattern: "^[0-9\\-]+$"
-  validation: Ensure all fields are filled
+      enum:
+        - low
+        - medium
+        - high
 ```
 
-**AI Block Triggering Another Pipeline**
+### `validation`
+
+Use validation when the answer has to meet a business rule before it moves downstream.
 
 ```yaml
-prompt: Analyze sales data and decide next action
+prompt: Draft a customer escalation summary.
+validation: Make sure the response includes the customer name, issue, impact, and next step.
+```
+
+### `tools`
+
+Use tools when a standard AI block should choose and trigger another pipeline as part of the workflow.
+
+```yaml
+prompt: Analyze the request and choose the next processing pipeline.
 tools:
-  prompt: Choose a data processing pipeline
+  prompt: Choose the best pipeline for the request.
   required: true
   pipelines:
-    - uuid: sales_analysis_001
-      description: Processes daily sales data
-      blocks:
-        - uuid: clean_data_block
+    - uuid: customer_follow_up
+      description: Creates customer follow-up tasks.
       variables:
-        date:
+        customer_id:
           type: string
-          format: date
 ```
+
+## Upstream Data
+
+AI blocks can sit downstream of regular Mage blocks. In agent mode, Sidekick receives references to upstream block outputs and can inspect those outputs through Mage instead of copying raw datasets into the prompt.
+
+```yaml
+type: agent
+prompt: |
+  Read the upstream customer scores and event history.
+  Explain the biggest churn risk in plain English.
+message: What should the account team do next?
+settings:
+  speed: fast
+```
+
+The final answer becomes the AI block output. Downstream blocks can store it, send it to another system, or combine it with additional data.
+
+## Examples
+
+### Minimal Summary
+
+```yaml
+prompt: Summarize this document in five bullet points.
+```
+
+### Structured Extraction
+
+```yaml
+prompt: Extract the renewal request from the customer note.
+output:
+  format:
+    customer_name:
+      type: string
+    renewal_date:
+      type: string
+      format: date
+    requested_discount:
+      type: number
+    risk_level:
+      type: string
+      enum:
+        - low
+        - medium
+        - high
+```
+
+### Agent Block With Upstream Outputs
+
+```yaml
+type: agent
+prompt: |
+  You are reviewing customer health data from upstream blocks.
+  Use the available customer scores and recent events to identify retention risk.
+message: Summarize the top risks and recommended outreach.
+settings:
+  speed: fast
+runtime:
+  audience: account_team
+```
+
+### Agent Block With No Message
+
+```yaml
+type: agent
+prompt: |
+  Use the upstream rows to produce a short operational summary.
+settings:
+  speed: fast
+```
+
+Use this pattern when the prompt itself is the complete request.
+
+## Best Practices
+
+- Give the block one clear job.
+- Put reusable instructions in `prompt`.
+- Put the run-specific ask in `message` for agent blocks.
+- Use upstream blocks for data and the AI block for interpretation.
+- Use structured output when downstream blocks need predictable fields.
+- Keep runtime context business-focused, such as segment, audience, or report name.
+- Use agent mode when project context or upstream block output matters.

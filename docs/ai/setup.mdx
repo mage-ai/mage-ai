@@ -19,13 +19,13 @@ import { ProOnly } from '/snippets/pro/only.mdx';
 
 Mage uses AI to help you build data pipelines faster. With our OpenAI integration and Mage Pro AI Chat, you can automate the tedious parts of pipeline development and focus on the fun stuff.
 
-<Note>Some AI actions that use direct OpenAI integration require an OpenAI API key. Mage Pro AI Chat uses Mage Pro API proxy authentication for Codex model requests.</Note>
+<Note>Some AI actions that use direct OpenAI integration require an OpenAI API key. Mage Pro AI Chat uses Mage Pro API proxy authentication for model requests.</Note>
 
 We currently support the following AI features:
 
 - Generate pipelines
 - Generate blocks
-- Chat with Codex in Mage Pro
+- Chat with AI in Mage Pro
 - Document code
   - Block documentation
   - Block comments
@@ -53,13 +53,13 @@ Once you have your OpenAI API key, go to project settings (click the "wizard" in
 
 <ProOnly source="ai-sidekick" />
 
-Mage Pro includes AI Chat for Codex-backed workspace assistance. Open AI Chat from Mage Pro, or visit `/ai/chat` in an authenticated workspace as a user with the Editor role or higher.
+Mage Pro includes AI Chat for workspace assistance. Open AI Chat from Mage Pro, or visit `/ai/chat` in an authenticated workspace as a user with the Editor role or higher.
 
-For each chat turn, Mage captures the visible non-chat text from the current browser page, along with the page title and URL, so Codex can answer page-relative prompts such as "explain this page" or "what am I looking at?" The captured context is scoped to the authenticated user and chat session, excludes the Codex chat UI, and is capped at 20,000 characters.
+For each chat turn, Mage captures the visible non-chat text from the current browser page, along with the page title and URL, so AI Chat can answer page-relative prompts such as "explain this page" or "what am I looking at?" The captured context is scoped to the authenticated user and chat session, excludes the chat UI, and is capped at 20,000 characters.
 
 The AI Chat sidebar lists active and archived chats, lets you search chat history by title, and loads older chats with **Show more** when more results are available. Mage Pro remembers the selected chat and whether you were viewing active or archived chats for the current workspace, then restores that state when you refresh or reopen AI Chat.
 
-When Codex replies with Markdown image links that resolve through Mage Pro's authenticated preview flow, AI Chat renders those image previews inline. Markdown links to other workspace files still open in the code editor.
+When AI Chat replies with Markdown image links that resolve through Mage Pro's authenticated preview flow, AI Chat renders those image previews inline. Markdown links to other workspace files still open in the code editor.
 
 ### Inspect delegated subagent work
 
@@ -67,15 +67,15 @@ When a chat turn delegates work, select **Show work** in the AI Chat header. Its
 
 Selecting **Subagents** opens the right panel, where subagents are grouped into **Active** and **Done**. Each row shows the subagent name and its latest activity. Select a row to inspect that subagent's turn output, tool activity, and generated outputs; use the back button to return to the grouped list.
 
-AI Chat supports session-scoped file attachments from the composer File action or paste, folder attachments from the composer Folder action, and file or folder attachments by drag and drop. Uploaded attachments remain available to Codex on follow-up messages in the same chat session, even after the composer clears for the next message. Folder uploads appear as a single folder attachment in the chat; for browser-selected folders, Mage Pro packages every browser-exposed file into one zip archive before upload, preserves the relative paths inside that archive, and does not filter files from the selected folder. Codex receives an uploaded-file manifest and bounded text previews from readable non-archive attachments so it can answer questions about uploaded files without guessing from workspace files. Attachment uploads require a chat session and are limited by the `MAGE_CODEX_CHAT_ATTACHMENT_MAX_BYTES` and `MAGE_CODEX_CHAT_ATTACHMENT_MAX_SESSION_BYTES` environment variables. Browser-zipped folder archives can be tuned separately with `MAGE_CODEX_CHAT_ARCHIVE_ATTACHMENT_MAX_BYTES` and `MAGE_CODEX_CHAT_ARCHIVE_ATTACHMENT_MAX_SESSION_BYTES`.
+AI Chat supports session-scoped file attachments from the composer File action or paste, folder attachments from the composer Folder action, and file or folder attachments by drag and drop. Uploaded attachments remain available on follow-up messages in the same chat session, even after the composer clears for the next message. Folder uploads appear as a single folder attachment in the chat; for browser-selected folders, Mage Pro packages every browser-exposed file into one zip archive before upload, preserves the relative paths inside that archive, and does not filter files from the selected folder. AI Chat receives an uploaded-file manifest and bounded text previews from readable non-archive attachments so it can answer questions about uploaded files without guessing from workspace files.
 
 AI Chat supports push-to-record voice dictation when the Mage Pro API OpenAI proxy is configured and the signed-in user has the same Editor-or-higher permission required to send AI Chat messages. Click the microphone in the composer, then click the stop control to insert the transcription into the draft for editing, or click the send arrow while recording to stop capture, transcribe the audio, and send or queue the dictated message. Audio is sent from the browser to the Mage Pro workspace, then to the Mage Pro API proxy; the workspace and browser never receive the raw OpenAI API key.
 
-Use the execution settings menu beside the chat composer to choose a **Speed** and **Effort** level for the current chat. Choose **Standard** to leave Codex on its normal tier, or **Fast** to enable Codex fast mode with the priority service tier for that chat. Choose **Light**, **Medium**, **High**, or **Extra High** effort based on how much model effort the task needs. The menu stays open after a selection so you can confirm both checked choices, and its button displays the active effort level. When **Fast** is selected, the button appends the speed after the effort level, such as **Medium Fast**.
+Use the execution settings menu beside the chat composer to choose a **Speed** and **Effort** level for the current chat. Choose **Standard** for the default response tier, or **Fast** to use the priority service tier for that chat. Choose **Light**, **Medium**, **High**, or **Extra High** effort based on how much model effort the task needs. The menu stays open after a selection so you can confirm both checked choices, and its button displays the active effort level. When **Fast** is selected, the button appends the speed after the effort level, such as **Medium Fast**.
 
-For guided Sidekick workflows, AI Chat can show inline forms directly in the chat transcript. Use these forms to choose sources, streams, destinations, and connector settings without leaving the conversation. Required fields must be completed before continuing, large option lists include filtering, and **Cancel** stops the guided setup. After submission, AI Chat replaces the form with a submitted summary and hides sensitive values such as passwords or credentials.
+For guided Sidekick workflows in Mage Pro, AI Chat can show inline forms directly in the chat transcript. Use these forms to choose sources, streams, destinations, and connector settings without leaving the conversation. Required fields must be completed before continuing, large option lists include filtering, and **Cancel** stops the guided setup. Submitting or cancelling the form resolves the original Sidekick turn instead of adding a separate chat message. After submission, AI Chat replaces the form with a submitted summary that shows safe submitted values, truncates long values, and masks sensitive values such as passwords or credentials.
 
-When Codex returns a project-local PNG, JPEG, GIF, or WebP path, AI Chat renders the image inline. The path can be on its own line, embedded in prose, such as `Here it is: /home/src/demo/cyborg_mage.png`, or used as a Markdown link target, such as `[output/anime_styled_mage.png](output/anime_styled_mage.png)`. The preview is served through a short-lived authenticated URL, so the image file does not need a public URL.
+When AI Chat returns a project-local PNG, JPEG, GIF, or WebP path, AI Chat renders the image inline. The path can be on its own line, embedded in prose, such as `Here it is: /home/src/demo/cyborg_mage.png`, or used as a Markdown link target, such as `[output/anime_styled_mage.png](output/anime_styled_mage.png)`. The preview is served through a short-lived authenticated URL, so the image file does not need a public URL.
 
 When Sidekick media tools generate image, audio, or video files, AI Chat renders them at the end of the assistant answer as chat artifacts instead of only inside tool-usage details. Images render inline, audio renders with browser playback controls, and video renders with browser playback controls. Media previews use five-minute authenticated tokens. Supported preview files are GIF, JPEG, PNG, and WebP images up to 25 MB; AAC, MP3, Opus, WAV, and WebM audio up to 50 MB; and MOV, MP4, and WebM video up to 250 MB. Files must be under the current project or the current Sidekick media directory.
 
