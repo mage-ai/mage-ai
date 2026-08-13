@@ -1,4 +1,5 @@
 import { Page, expect } from '@playwright/test';
+import { OAUTH2_APPLICATION_CLIENT_ID } from '@api/constants';
 
 import { FeatureUUIDEnum } from '@interfaces/ProjectType';
 import { capitalizeRemoveUnderscoreLower } from '@utils/string';
@@ -68,4 +69,69 @@ export async function enableSettings(
   }
 
   await page.getByRole('button', { name: 'Save project settings' }).click();
+}
+
+export async function createStreamingPipeline(page: Page) {
+  const pipelineName = `test_pipeline_${Date.now()}`;
+  await page.goto('/pipelines');
+  await page.getByRole('button', { name: 'New' }).click();
+  await page.getByRole('menuitem', { name: 'Streaming' }).click();
+  await page.getByRole('button', { exact: true, name: 'Create' }).click();
+  await page.waitForURL('**/pipelines/**/edit**', { timeout: 15000 });
+
+  await page.evaluate(() => {
+    localStorage.removeItem('pipeline_tree_hidden');
+    localStorage.removeItem('pipeline_execution_hidden');
+    localStorage.removeItem('pipeline_execution_output_height');
+  });
+  await page.reload();
+  await page.waitForLoadState();
+  return pipelineName;
+}
+
+export async function createBatchPipeline(page: Page) {
+  const pipelineName = `test_pipeline_${Date.now()}`;
+  await page.goto('/pipelines');
+  await page.getByRole('button', { name: 'New' }).click();
+  await page.getByRole('menuitem', { name: 'Standard (batch)' }).click();
+  await page.getByRole('button', { exact: true, name: 'Create' }).click();
+  await page.waitForURL('**/pipelines/**', { timeout: 15000 });
+
+  await page.evaluate(() => {
+    localStorage.removeItem('pipeline_tree_hidden');
+    localStorage.removeItem('pipeline_execution_hidden');
+    localStorage.removeItem('pipeline_execution_output_height');
+  });
+  await page.reload();
+  await page.waitForLoadState();
+  return pipelineName;
+}
+
+export async function navigateToTreeView(page: Page) {
+  const url = new URL(page.url());
+  url.searchParams.set('sideview', 'tree');
+  await page.goto(url.toString());
+
+  const container = page.locator('[data-testid="dependency-graph-container"]');
+  await expect(async () => {
+    const box = await container.boundingBox();
+    expect(box?.height).toBeGreaterThan(0);
+  }).toPass({ timeout: 10000 });
+}
+
+export async function deletePipeline(page: Page, pipelineName: string) {
+  if (!pipelineName) return;
+  const token = await page.evaluate(
+    (clientId) => localStorage.getItem(`token_${clientId}`),
+    OAUTH2_APPLICATION_CLIENT_ID
+  );
+  if (!token) return;
+  const parsedToken = JSON.parse(token);
+
+  const response = await page.request.delete(`http://localhost:6789/api/pipelines/${pipelineName}`, {
+    headers: {
+      Authorization: `Bearer ${parsedToken.token}`,
+    },
+  });
+  expect(response.ok()).toBeTruthy();
 }
