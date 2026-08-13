@@ -99,6 +99,9 @@ class DynamicItemCounter:
     def item_count(self, downstream_block: Optional[Any] = None) -> int:
         return 0
 
+    def output_exists(self) -> bool:
+        return self.variable.data_exists()
+
 
 class DynamicBlockItemCounter(DynamicItemCounter):
     @property
