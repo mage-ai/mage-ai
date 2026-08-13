@@ -134,6 +134,11 @@ class WorkspaceResource(GenericResource):
                     workspace.add_to_ingress(**payload)
                 else:
                     raise Exception('This workspace does not support ingress.')
+            elif action == 'create_http_route':
+                if isinstance(workspace, KubernetesWorkspace):
+                    workspace.create_http_route(**kwargs)
+                else:
+                    raise Exception('This workspace does not support gateway api and http routes.')
         except Exception as ex:
             error.update(message=str(ex))
             raise ApiError(error)

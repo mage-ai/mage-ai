@@ -125,6 +125,16 @@ class KubernetesWorkspace(Workspace):
                 self.name,
             )
 
+    def create_http_route(self, **kwargs):
+        if self.config.gateway_name and self.config.gateway_namespace:
+            self.workload_manager.create_http_route(
+                self.config.gateway_name,
+                self.config.gateway_namespace,
+                self.config.hostname,
+                f'{self.name}-service',
+                self.name
+            )
+
     def to_dict(self):
         config = dict(
             name=self.name,
