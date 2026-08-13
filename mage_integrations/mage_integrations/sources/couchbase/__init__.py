@@ -31,8 +31,11 @@ class Couchbase(Source):
             bucket=self.config['bucket'],
             scope=self.config['scope'],
             connection_string=self.config['connection_string'],
-            password=self.config['password'],
-            username=self.config['username']
+            password=self.config.get('password'),
+            username=self.config.get('username'),
+            cert_path=self.config.get('cert_path'),
+            trust_store_path=self.config.get('trust_store_path'),
+            key_path=self.config.get('key_path'),
         )
 
     def discover(self, streams: List[str] = None) -> Catalog:
@@ -42,21 +45,21 @@ class Couchbase(Source):
         catalog_entries = []
         for stream_id in collection_names:
             properties = dict()
-            
+
             infer_query = f"""
 INFER `{stream_id}`
 WITH {{"sample_size": 1000, "similarity_metric": 0.4, "dictionary_threshold": 3}}
             """
 
             infer_result = connection.load(infer_query)[0]
-            
+
             def get_infer_result_doc_count(result):
                 props = result.get('properties', {})
                 doc_count = props.get('#docs', 0)
                 if type(doc_count) is list:
                     doc_count = sum(doc_count)
                 return doc_count
-            
+
             strategy = self.config.get('strategy')
             if strategy == SchemaStrategy.INFER or \
                     (strategy is None and len(infer_result) == 1):
@@ -96,7 +99,7 @@ WITH {{"sample_size": 1000, "similarity_metric": 0.4, "dictionary_threshold": 3}
         column_type = dtype
         if dtype == 'missing':
             column_type = COLUMN_TYPE_STRING
-        
+
         return column_type
 
     def _build_comparison_statement(
