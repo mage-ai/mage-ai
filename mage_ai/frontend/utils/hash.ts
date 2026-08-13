@@ -24,19 +24,6 @@ export function selectEntriesWithValues(
   return finalObj;
 }
 
-export function getNestedTruthyValuesCount(obj) {
-  return Object.entries(obj).reduce((count, [key, cv]) => {
-    if (cv !== null && typeof cv === 'object' && !Array.isArray(cv)) {
-      const additionalCount = Object.values(cv).filter(v => !!v).length;
-      count += additionalCount;
-    } else {
-      count += !!cv ? 1 : 0;
-    }
-
-    return count;
-  }, 0);
-}
-
 export function ignoreKeys(d, keys) {
   const copy = { ...d };
 
