@@ -246,6 +246,12 @@
             "null",
             "integer"
           ]
+        },
+        "deleted": {
+          "type": [
+            "null",
+            "boolean"
+          ]
         }
       }
     },
@@ -376,6 +382,12 @@
       "type": [
         "null",
         "boolean"
+      ]
+    },
+    "iana_time_zone": {
+      "type": [
+        "null",
+        "string"
       ]
     }
   }

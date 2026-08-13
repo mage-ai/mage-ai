@@ -1,0 +1,163 @@
+{
+   "type": [
+          "null",
+          "object"
+        ],
+        "properties": {
+          "name": {
+            "type": [
+          "null",
+          "string"
+        ]
+          },
+          "agent_id": {
+            "type": [
+          "null",
+          "integer"
+        ]
+          },
+          "via": {
+            "type": [
+          "null",
+          "string"
+        ]
+          },
+          "avatar_url": {
+            "type": [
+          "null",
+          "string"
+        ]
+          },
+          "forwarding_number": {
+            "type": [
+          "null",
+          "string"
+        ]
+          },
+          "average_talk_time": {
+            "type": [
+          "null",
+          "integer"
+        ]
+          },
+          "calls_accepted": {
+            "type": [
+          "null",
+          "integer"
+        ]
+          },
+          "calls_denied": {
+            "type": [
+          "null",
+          "integer"
+        ]
+          },
+          "calls_missed": {
+            "type": [
+          "null",
+          "integer"
+        ]
+          },
+          "online_time": {
+            "type": [
+          "null",
+          "integer"
+        ]
+          },
+          "available_time": {
+            "type": [
+          "null",
+          "integer"
+        ]
+          },
+          "total_call_duration": {
+            "type": [
+          "null",
+          "integer"
+        ]
+          },
+          "total_talk_time": {
+            "type": [
+          "null",
+          "integer"
+        ]
+          },
+          "total_wrap_up_time": {
+            "type": [
+          "null",
+          "integer"
+        ]
+          },
+          "away_time": {
+            "type": [
+          "null",
+          "integer"
+        ]
+          },
+          "call_status": {
+            "type": [ "null",
+            "string"
+            ]
+          },
+          "agent_state": {
+            "type": [
+          "null",
+          "string"
+        ]
+          },
+          "transfers_only_time": {
+            "type": [
+          "null",
+          "integer"
+        ]
+          },
+          "average_wrap_up_time": {
+            "type": [
+          "null",
+          "integer"
+        ]
+          },
+          "accepted_transfers": {
+            "type": [
+          "null",
+          "integer"
+        ]
+          },
+          "started_transfers": {
+            "type": [
+          "null",
+          "integer"
+        ]
+          },
+          "calls_put_on_hold": {
+            "type": [
+          "null",
+          "integer"
+        ]
+          },
+          "average_hold_time": {
+            "type": [
+          "null",
+          "integer"
+        ]
+          },
+          "total_hold_time": {
+            "type": [
+          "null",
+          "integer"
+        ]
+          },
+          "started_third_party_conferences": {
+            "type": [
+          "null",
+          "integer"
+        ]
+          },
+          "accepted_third_party_conferences": {
+            "type": [
+          "null",
+          "integer"
+        ]
+          }
+   }
+}
