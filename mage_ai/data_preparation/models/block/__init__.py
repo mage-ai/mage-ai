@@ -1,4 +1,5 @@
 import asyncio
+import concurrent.futures
 import functools
 import importlib.util
 import inspect
@@ -6,6 +7,7 @@ import json
 import logging
 import os
 import sys
+import threading
 import time
 import traceback
 from contextlib import contextmanager, redirect_stderr, redirect_stdout
@@ -160,7 +162,10 @@ from mage_ai.shared.utils import clean_name as clean_name_orig
 from mage_ai.shared.utils import is_spark_env
 
 # from mage_ai.system.memory.manager import MemoryManager
-from mage_ai.system.memory.wrappers import execute_with_memory_tracking
+from mage_ai.system.memory.wrappers import (
+    execute_with_memory_tracking,
+    execute_with_memory_tracking_async,
+)
 from mage_ai.system.models import ResourceUsage
 
 PYTHON_COMMAND = 'python3'
@@ -1567,7 +1572,7 @@ class Block(
                         pipeline_uuid=self.pipeline_uuid,
                     )
 
-                output = self.execute_block(
+                _execute_block_coro = self.execute_block(
                     block_run_outputs_cache=block_run_outputs_cache,
                     build_block_output_stdout=build_block_output_stdout,
                     custom_code=custom_code,
@@ -1588,6 +1593,27 @@ class Block(
                     override_outputs=override_outputs,
                     **kwargs,
                 )
+                try:
+                    loop = asyncio.get_running_loop()
+                except RuntimeError:
+                    loop = None
+
+                if loop and loop.is_running():
+                    future = concurrent.futures.Future()
+
+                    def _run_in_thread(coro=_execute_block_coro, fut=future):
+                        try:
+                            result = asyncio.run(coro)
+                            fut.set_result(result)
+                        except Exception as exc:
+                            fut.set_exception(exc)
+
+                    t = threading.Thread(target=_run_in_thread, daemon=True)
+                    t.start()
+                    t.join()
+                    output = future.result()
+                else:
+                    output = asyncio.run(_execute_block_coro)
 
                 if self.configuration and self.configuration.get('disable_query_preprocessing'):
                     output = dict(output=None)
@@ -1852,7 +1878,7 @@ class Block(
 
         return outputs_from_input_vars, input_vars, kwargs_vars, upstream_block_uuids
 
-    def execute_block(
+    async def execute_block(
         self,
         block_run_outputs_cache: Dict[str, List] = None,
         build_block_output_stdout: Callable[..., object] = None,
@@ -1907,7 +1933,7 @@ class Block(
                     if isinstance(global_vars_copy, dict) and isinstance(kwargs_var, dict):
                         global_vars_copy.update(kwargs_var)
 
-            outputs = self._execute_block(
+            _result = self._execute_block(
                 outputs_from_input_vars,
                 custom_code=custom_code,
                 dynamic_block_index=dynamic_block_index,
@@ -1927,6 +1953,10 @@ class Block(
                 execution_partition_previous=execution_partition_previous,
                 **kwargs,
             )
+            if inspect.isawaitable(_result):
+                outputs = await _result
+            else:
+                outputs = _result
 
         return dict(output=outputs)
 
@@ -1963,7 +1993,7 @@ class Block(
         with redirect_stdout(stdout) as out, redirect_stderr(stdout) as err:
             yield (out, err)
 
-    def _execute_block(
+    async def _execute_block(
         self,
         outputs_from_input_vars,
         custom_code: str = None,
@@ -2047,7 +2077,7 @@ class Block(
 
         if preprocesser_functions:
             for preprocesser_function in preprocesser_functions:
-                self.execute_block_function(
+                await self.execute_block_function(
                     preprocesser_function,
                     input_vars,
                     dynamic_block_index=dynamic_block_index,
@@ -2070,7 +2100,7 @@ class Block(
                 self.cache_spark_application()
                 self.set_spark_job_execution_start()
 
-            outputs = self.execute_block_function(
+            outputs = await self.execute_block_function(
                 block_function,
                 input_vars,
                 dynamic_block_index=dynamic_block_index,
@@ -2097,7 +2127,7 @@ class Block(
 
         return outputs
 
-    def execute_block_function(
+    async def execute_block_function(
         self,
         block_function: Callable,
         input_vars: List,
@@ -2149,32 +2179,53 @@ class Block(
                 if global_vars:
                     global_vars.update(part_index=part_index)
 
+        is_async = inspect.iscoroutinefunction(block_function_updated)
+        is_async_gen = inspect.isasyncgenfunction(block_function_updated)
+
         if MEMORY_MANAGER_V2:
             log_message_prefix = self.uuid
             if self.pipeline:
                 log_message_prefix = f'{self.pipeline_uuid}:{log_message_prefix}'
             log_message_prefix = f'[{log_message_prefix}:execute_block_function]'
 
-            output, self.resource_usage = execute_with_memory_tracking(
-                block_function_updated,
-                args=input_vars,
-                kwargs=global_vars
-                if has_kwargs and global_vars is not None and len(global_vars) != 0
-                else None,
-                logger=logger,
-                logging_tags=logging_tags,
-                log_message_prefix=log_message_prefix,
-            )
+            if is_async or is_async_gen:
+                output, self.resource_usage = await execute_with_memory_tracking_async(
+                    block_function_updated,
+                    args=input_vars,
+                    kwargs=global_vars
+                    if has_kwargs and global_vars is not None and len(global_vars) != 0
+                    else None,
+                    logger=logger,
+                    logging_tags=logging_tags,
+                    log_message_prefix=log_message_prefix,
+                )
+            else:
+                output, self.resource_usage = execute_with_memory_tracking(
+                    block_function_updated,
+                    args=input_vars,
+                    kwargs=global_vars
+                    if has_kwargs and global_vars is not None and len(global_vars) != 0
+                    else None,
+                    logger=logger,
+                    logging_tags=logging_tags,
+                    log_message_prefix=log_message_prefix,
+                )
+        elif is_async or is_async_gen:
+            if has_kwargs and global_vars is not None and len(global_vars) != 0:
+                output = await block_function_updated(*input_vars, **global_vars)
+            else:
+                output = await block_function_updated(*input_vars)
         elif has_kwargs and global_vars is not None and len(global_vars) != 0:
             output = block_function_updated(*input_vars, **global_vars)
         else:
             output = block_function_updated(*input_vars)
 
-        if MEMORY_MANAGER_V2 and inspect.isgeneratorfunction(block_function_updated):
+        is_gen = inspect.isgeneratorfunction(block_function_updated)
+        if MEMORY_MANAGER_V2 and (is_gen or is_async_gen):
             variable_types = []
             dynamic_child = is_dynamic_block_child(self)
             output_count = part_index if part_index is not None else 0
-            if output is not None and is_iterable(output):
+            if output is not None and (is_gen or is_async_gen or is_iterable(output)):
                 if dynamic_child or self.is_dynamic_child:
                     # Each child will delete its own data
                     # How do we delete everything ahead of time?
@@ -2190,7 +2241,15 @@ class Block(
                         execution_partition=execution_partition,
                     )
 
-                for data in output:
+                async def _iter_output(gen, _is_async_gen=is_async_gen):
+                    if _is_async_gen:
+                        async for item in gen:
+                            yield item
+                    else:
+                        for item in gen:
+                            yield item
+
+                async for data in _iter_output(output):
                     if self._store_variables_in_block_function is None:
                         raise Exception(
                             'Store variables function isn’t defined, '
@@ -4272,7 +4331,7 @@ class Block(
 
 
 class SensorBlock(Block):
-    def execute_block_function(
+    async def execute_block_function(
         self,
         block_function: Callable,
         input_vars: List,
@@ -4282,7 +4341,7 @@ class SensorBlock(Block):
         **kwargs,
     ) -> List:
         if from_notebook:
-            return super().execute_block_function(
+            return await super().execute_block_function(
                 block_function,
                 input_vars,
                 from_notebook=from_notebook,
@@ -4294,10 +4353,20 @@ class SensorBlock(Block):
             has_kwargs = any([p.kind == p.VAR_KEYWORD for p in sig.parameters.values()])
             use_global_vars = has_kwargs and global_vars is not None and len(global_vars) != 0
             args = input_vars if has_args else []
+            is_async = inspect.iscoroutinefunction(block_function)
             while True:
-                condition = (
-                    block_function(*args, **global_vars) if use_global_vars else block_function()
-                )
+                if is_async:
+                    condition = (
+                        await block_function(*args, **global_vars)
+                        if use_global_vars
+                        else await block_function()
+                    )
+                else:
+                    condition = (
+                        block_function(*args, **global_vars)
+                        if use_global_vars
+                        else block_function()
+                    )
                 if condition:
                     break
                 print('Sensor sleeping for 1 minute...')
