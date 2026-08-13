@@ -260,24 +260,45 @@ function Header({
     width?: number;
   }>(null);
 
+  const customMediaUrl = useMemo(() => {
+    const media = design?.components?.header?.media;
+
+    return media?.url || media?.file_path;
+  }, [design]);
+
+  // Preload the custom header media (design.yaml: components.header.media) to
+  // measure its natural dimensions; customMediaSize gates rendering the custom
+  // logo and preserves its aspect ratio. Without this preload, customMediaSize
+  // stayed null forever, so the media configured in design.yaml was fetched
+  // from the API but never displayed.
+  useEffect(() => {
+    if (!customMediaUrl) {
+      return;
+    }
+
+    const img = new window.Image();
+    img.onload = () => setCustomMediaSize({
+      height: img.naturalHeight,
+      width: img.naturalWidth,
+    });
+    img.src = customMediaUrl;
+  }, [customMediaUrl]);
+
   const logoLink = useMemo(() => {
     let logoHeight = LOGO_HEIGHT;
     let logoEl = <GradientLogoIcon height={LOGO_HEIGHT} />;
 
-    if (design?.components?.header?.media) {
-      const media = design?.components?.header?.media;
-      if (customMediaSize !== null) {
-        const ratio = (customMediaSize?.width || 1) / (customMediaSize?.height || 1);
+    if (customMediaUrl && customMediaSize !== null) {
+      const ratio = (customMediaSize?.width || 1) / (customMediaSize?.height || 1);
 
-        logoHeight = CUSTOM_LOGO_HEIGHT;
-        logoEl = (
-          <MediaStyle
-            height={CUSTOM_LOGO_HEIGHT}
-            width={CUSTOM_LOGO_HEIGHT * ratio}
-            url={media?.url || media?.file_path}
-          />
-        );
-      }
+      logoHeight = CUSTOM_LOGO_HEIGHT;
+      logoEl = (
+        <MediaStyle
+          height={CUSTOM_LOGO_HEIGHT}
+          width={CUSTOM_LOGO_HEIGHT * ratio}
+          url={customMediaUrl}
+        />
+      );
     }
 
     return (
@@ -298,7 +319,7 @@ function Header({
     );
   }, [
     customMediaSize,
-    design,
+    customMediaUrl,
   ]);
 
   const userDropdown: FlyoutMenuItemType[] = hideActions
