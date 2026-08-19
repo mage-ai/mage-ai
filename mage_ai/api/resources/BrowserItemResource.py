@@ -2,17 +2,31 @@ from __future__ import annotations
 
 import re
 import urllib.parse
-from typing import Dict
+from typing import Dict, Optional
 
 from mage_ai.api.errors import ApiError
 from mage_ai.api.resources.GenericResource import GenericResource
 from mage_ai.api.result_set import ResultSet
+from mage_ai.data_preparation.models.errors import FileNotInProjectError
+from mage_ai.data_preparation.models.file import ensure_file_is_in_project
 from mage_ai.settings.utils import base_repo_path
 from mage_ai.shared.files import get_absolute_paths_from_all_files
 from mage_ai.system.browser.models import Item
 
 
 class BrowserItemResource(GenericResource):
+    @classmethod
+    def check_item_is_in_project(cls, path: Optional[str]) -> None:
+        if not path:
+            return
+
+        try:
+            ensure_file_is_in_project(path)
+        except FileNotInProjectError:
+            error = ApiError.RESOURCE_INVALID.copy()
+            error.update(message=f'Item at path: {path} is not in the project directory.')
+            raise ApiError(error)
+
     @classmethod
     async def collection(cls, query, meta, user, **kwargs) -> ResultSet:
         paths = query.get('paths', [None])
@@ -45,9 +59,13 @@ class BrowserItemResource(GenericResource):
             absolute_path, _size, _modified_timestamp = tup
             return Item.load(path=absolute_path)
 
+        directories = [directory] + (paths or [])
+        for dir_path in directories:
+            cls.check_item_is_in_project(dir_path)
+
         items = []
 
-        for dir_path in [directory] + (paths or []):
+        for dir_path in directories:
             items += get_absolute_paths_from_all_files(
                 starting_full_path_directory=dir_path,
                 comparator=lambda path: (
@@ -69,6 +87,8 @@ class BrowserItemResource(GenericResource):
 
     @classmethod
     async def member(cls, pk, user, **kwargs) -> BrowserItemResource:
+        cls.check_item_is_in_project(urllib.parse.unquote(pk))
+
         item = cls.get_model(pk)
         if not await item.exists():
             raise ApiError({
@@ -81,6 +101,8 @@ class BrowserItemResource(GenericResource):
 
     @classmethod
     async def create(cls, payload: Dict, user, **kwargs) -> BrowserItemResource:
+        cls.check_item_is_in_project(payload.get('path'))
+
         model = Item.load(**payload)
         await model.create()
         return cls(model, user, **kwargs)
@@ -91,6 +113,8 @@ class BrowserItemResource(GenericResource):
     async def update(self, payload, **kwargs):
         if 'path' not in payload:
             payload['path'] = self.model.path
+
+        self.check_item_is_in_project(payload.get('path'))
 
         try:
             await self.model.synchronize(Item.load(**payload))
