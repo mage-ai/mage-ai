@@ -12,6 +12,7 @@ from mage_ai.services.k8s.constants import (
     KUBE_CONTAINER_NAME,
     KUBE_POD_NAME_ENV_VAR,
     KUBE_POD_NAMESPACE_ENV_VAR,
+    MAGE_K8S_JOB_NAME_ENV_VAR,
 )
 from mage_ai.shared.hash import merge_dict
 
@@ -209,6 +210,12 @@ class JobManager():
         mage_server_container_spec = self.get_mage_server_container()
         container_spec.env = container_spec.env + \
             [item for item in mage_server_container_spec.env if item not in container_spec.env]
+        # Tell the block executor running inside the pod which Job owns it, so it can
+        # record whether backoffLimit retries are still pending when it fails.
+        container_spec.env = [
+            item for item in container_spec.env
+            if getattr(item, 'name', None) != MAGE_K8S_JOB_NAME_ENV_VAR
+        ] + [client.V1EnvVar(name=MAGE_K8S_JOB_NAME_ENV_VAR, value=self.job_name)]
         container_spec.env_from = (container_spec.env_from or []) + \
             [item for item in (mage_server_container_spec.env_from or [])
              if item not in (container_spec.env_from or [])]
