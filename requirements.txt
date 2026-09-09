@@ -1,7 +1,7 @@
 cachetools
 click<8.2.0
 Faker==4.14.0
-GitPython==3.1.41
+GitPython==3.1.62
 Jinja2>=3.1.6
 Pillow==10.3.0
 PyGithub==1.59.0
