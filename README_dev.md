@@ -2,7 +2,7 @@
 
 We'd love to have your contribution, but first you'll need to configure your local environment first. In this guide, we'll walk through:
 
-1. Configuring virtual environment
+1. Installing uv
 2. Installing dependencies
 3. Installing Git hooks
 4. Installing pre-commit hooks
@@ -12,89 +12,85 @@ We'd love to have your contribution, but first you'll need to configure your loc
 > [!WARNING]
 > _All commands below, without any notes, assume you are at the root of the repo._
 
-Mage server uses Python >=3.6 (as per `setup.py`), but the development dependencies will complain if you're not using at least Python 3.8. We [use Python 3.10](./Dockerfile).
+Mage server requires Python `>=3.10,<3.14`, as declared in `pyproject.toml`. The Docker images [use Python 3.10](./Dockerfile).
 
-As such, make sure you have Python >=3.8. Verify this with:
+Python dependencies are managed with [uv](https://docs.astral.sh/uv/). `pyproject.toml` declares them and `uv.lock` pins the resolved versions. Both files are committed.
+
+Install uv:
+
+```bash
+curl -LsSf https://astral.sh/uv/install.sh | sh
+```
+
+Then clone the repo:
 
 ```bash
 git clone https://github.com/mage-ai/mage-ai mage-ai
 cd mage-ai
-python --version
 ```
 
-Using a virtual environment is recommended.
+uv downloads a matching Python interpreter on its own, so there is no need to set one up beforehand.
 
-## Configuring a Virtual Env
+## Installing dependencies
 
-### Anaconda + Poetry
-
-Create an Anaconda virtual environment with the correct version of python:
-```bash
-conda create -n python3.10 python==3.10
-```
-
-Activate that virtual environment (to get the right version of Python on your PATH):
-
-```bash
-conda activate python3.10
-```
-
-Verify that the correct Python version is being used:
-
-```bash
-python --version
-# or
-where python
-# or
-which python
-# or
-whereis python
-```
-
-Then create a Poetry virtual environment using the same version of Python:
-
-```bash
-poetry env use $(which python)
-```
-
-Install the dev dependencies:
+Create the environment with the core runtime and the dev tooling:
 
 ```bash
 make dev_env
 ```
 
-### Virtualenv
+That runs `uv sync --locked --group dev`. It creates `.venv` in the repo root and installs the versions recorded in `uv.lock`.
 
-First, create a virtualenv environment in the root of the repo:
+To install every optional integration as well (dbt, cloud SDKs, streaming clients, database drivers):
 
 ```bash
-python -m venv .venv
+make dev_env_all
 ```
 
-Then activate it:
+Run commands against the environment with `uv run`:
+
+```bash
+uv run python mage_ai/server/server.py
+uv run pytest mage_ai/tests/data_preparation/git -v
+```
+
+You can also activate `.venv` and use it like any other virtual environment:
 
 ```bash
 source .venv/bin/activate
 ```
 
-To install dependencies:
+### Extras
+
+The optional dependency groups in `pyproject.toml` map to the integrations Mage supports. Install the ones you need:
 
 ```bash
-pip install -U pip
-pip install -r ./requirements.txt
-pip install toml mage-ai
+uv sync --locked --extra postgres --extra dbt --group dev
 ```
 
-Install additional dev dependencies from `pyproject.toml`:
+Two extras cover larger sets. `all` is what the published container image installs. `integrations` covers the packages the mage-integrations sources and destinations need at runtime.
+
+### Adding or changing a dependency
+
+Edit `pyproject.toml`, then refresh the lockfile and the requirements export:
 
 ```bash
-pip install $(python -c "import toml; print(' '.join(toml.load('pyproject.toml')['tool']['poetry']['group']['dev']['dependencies'].keys()))" | tr '\n' ' ')
+uv lock
+make requirements
 ```
 
-The above command uses the `toml` library to output the dev dependencies from the `pyproject.toml` as a space-delimited list, and passes that output to the `pip install` command. If you encounter the error: `ModuleNotFoundError: No module named 'toml'`, try running the following command instead:
+Commit `pyproject.toml`, `uv.lock`, and `requirements.txt` in the same change. CI fails when the three disagree.
+
+`requirements.txt` is generated from `uv.lock` and kept for tooling that still expects a pip requirements file. Edit `pyproject.toml` instead of editing it directly.
+
+### Running the tests
+
+pytest is the test runner for local development. It executes the existing `unittest` suites without any changes to them:
 
 ```bash
-pip install $(python3 -c "import toml; print(' '.join(toml.load('pyproject.toml')['tool']['poetry']['group']['dev']['dependencies'].keys()))" | tr '\n' ' ')
+make test
+uv run pytest mage_ai/tests/data_preparation/git -v
+uv run pytest --cov=mage_ai --cov-report=term-missing
 ```
 
 ## Mage frontend
@@ -131,7 +127,7 @@ This will copy the git hooks from `.git-dev/hooks` into `.git/hooks`, and make t
 Install the pre-commit hooks:
 
 ```bash
-pre-commit install
+uv run pre-commit install
 ```
 
 Note that this will install both pre-commit and pre-push hooks.
@@ -179,7 +175,7 @@ If an `Illegal instruction` error is received, or Docker containers exit instant
 List of builds:
 - `polars` -> [`polars-lts-cpu`](https://pypi.org/project/polars-lts-cpu/)
 
-### `pip install` fails on Windows
+### Installing packages fails on Windows
 
 Some Python packages assume a few core functionalities that are not available on Windows, so you need to install these prerequisites, see the fantastic (but archived) [pipwin](https://github.com/lepisma/pipwin) and [this issue](https://github.com/lepisma/pipwin/issues/64) for more options.
 
@@ -190,7 +186,7 @@ Please report any other build errors in our Slack.
 If there were added new libraries you should manually handle new dependencies. It can be done in 2 ways:
 
 1. `docker-compose build` from project root will fully rebuild an image with new dependencies - it can take lots of time
-2. `pip install x` from inside the container will only install the required dependency - it should be much faster
+2. `uv pip install x` from inside the container will only install the required dependency - it should be much faster
 
 ## Monaco Editor features
 

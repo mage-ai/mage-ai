@@ -191,3 +191,5 @@ package.json
 test.py
 test/
 test_data*
+
+do_not_commit/

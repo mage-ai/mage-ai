@@ -1,34 +1,286 @@
-[tool.poetry]
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
 name = "mage-ai"
-version = "0.8.75-dev"
-description = "DevEx poetry configuration"
-authors = ["Mage"]
+# NOTE: when you change this, change the value of VERSION in the following file:
+# mage_ai/server/constants.py
+version = "0.9.79"
+description = "Mage is a tool for building and deploying data pipelines."
 readme = "README.md"
+requires-python = ">=3.10,<3.14"
+authors = [{ name = "Mage", email = "eng@mage.ai" }]
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "License :: OSI Approved :: Apache Software License",
+  "Operating System :: OS Independent",
+]
+dependencies = [
+  "cachetools",
+  "click<8.2.0",
+  "Faker==4.14.0",
+  "GitPython==3.1.41",
+  "Jinja2>=3.1.6",
+  "Pillow==10.3.0",
+  "PyGithub==1.59.0",
+  "PyJWT==2.6.0",
+  "aiofiles==22.1.0",
+  "aiohttp==3.10.0",
+  "alembic>=1.7.5",
+  "bcrypt==4.0.1",
+  "cron-converter==1.2.1",
+  "cryptography==42.0.4",
+  "dask[dataframe]>=2022.2.0",
+  "datadog==0.44.0",
+  "freezegun==1.2.2",
+  "great-expectations==0.18.12",
+  "httpx>=0.27.0",
+  "inflection==0.5.1",
+  "ipykernel==6.15.0",
+  "ipython==8.10.0",
+  "itsdangerous~=1.1.0",
+  "joblib>=1.1.0",
+  "jupyter-server==2.14.1",
+  "jupyter_client==7.4.4",
+  "ldap3==2.9.1",
+  "memory_profiler",
+  "newrelic==8.8.0",
+  "numpy>=1.22.0",
+  "pandas>=2.1,<3",
+  "paramiko==3.5.1",
+  "polars==1.30.0",
+  "protobuf>=6.0,<7",
+  "psutil==5.9.8",
+  "pyairtable>=2.3.3",
+  "pyarrow>=14.0.1",
+  "python-dateutil==2.8.2",
+  "pytz>=2022.2.1",
+  "pyyaml~=6.0",
+  "redis~=5.0.1",
+  "requests~=2.31.0",
+  "ruamel.yaml==0.17.17",
+  "scikit-learn<1.8",
+  "sentry-sdk>=2.0.0,<3.0.0",
+  "setuptools==70.0.0",
+  "simplejson",
+  "six>=1.15.0",
+  "sqlalchemy>2.0.0",
+  "sqlglot[rs]",
+  "terminado==0.17.1",
+  "thefuzz[speedup]==0.19.0",
+  "tornado==6.4.2",
+  "typer[all]==0.9.0",
+  "typing_extensions==4.11.0",
+  "watchdog==4.0.0",
+  "Werkzeug==3.0.3",
+]
 
-[tool.poetry.dependencies]
-python = ">=3.8,<4.0"
+[project.urls]
+Homepage = "https://github.com/mage-ai/mage-ai"
+Repository = "https://github.com/mage-ai/mage-ai"
 
-[tool.poetry.group.dev.dependencies]
-mypy = "*"
-black = "*"
-flake8 = "*"
-pre-commit = "*"
-pytest = "*"
-pytest-cov = "*"
-interrogate = "*"
-isort = "*"
-commitizen = "*"
-ipykernel = "^6.17.1"
-pandas-stubs = "*"
-flake8-bugbear = "*"
-sourcery = "*"
+[project.scripts]
+mage = "mage_ai.cli.main:app"
+
+[project.optional-dependencies]
+ai = [
+  "astor>=0.8.1",
+  "langchain==0.2.5",
+  "langchain_community==0.2.5",
+  "openai==1.82.0",
+]
+airtable = [
+  "pyairtable>=2.3.3",
+]
+azure = [
+  "azure-eventhub==5.11.2",
+  "azure-identity==1.12.0",
+  "azure-keyvault-secrets==4.6.0",
+  "azure-keyvault-certificates==4.6.0",
+  "azure-mgmt-containerinstance==10.1.0",
+  "azure-storage-blob==12.14.1",
+]
+bigquery = [
+  "google-cloud-bigquery~=3.30.0",
+  "db-dtypes==1.2.0",
+]
+chroma = [
+  "chromadb>=0.4.17",
+]
+clickhouse = [
+  "clickhouse-connect>=0.10.0",
+]
+dbt = [
+  "dbt-adapters==1.22.5",
+  "dbt-bigquery==1.10.3",
+  "dbt-clickhouse==1.10.0",
+  "dbt-core==1.10.20",
+  "dbt-duckdb==1.10.1",
+  "dbt-postgres==1.10.0",
+  "dbt-redshift==1.10.1",
+  "dbt-snowflake==1.10.7",
+  "dbt-spark==1.10.1",
+  "dbt-sqlserver==1.9.0",
+  "dbt-synapse==1.8.4",
+  "dbt-trino==1.10.1",
+  "trino~=0.326",
+]
+google-cloud-storage = [
+  "google-cloud-storage==2.5.0",
+  "gspread==5.7.2",
+]
+hdf5 = [
+  "tables==3.7.0; python_version < '3.11'",
+  "tables==3.10.1; python_version >= '3.11'",
+]
+mysql = [
+  "mysql-connector-python~=8.4.0; python_version < '3.11'",
+  "mysql-connector-python~=9.0.0; python_version >= '3.11'",
+]
+oracle = [
+  "oracledb==1.3.1; python_version < '3.12'",
+  "oracledb==2.4.1; python_version >= '3.12'",
+]
+postgres = [
+  "psycopg2==2.9.3",
+  "psycopg2-binary==2.9.3",
+  "sshtunnel==0.4.0",
+]
+qdrant = [
+  "qdrant-client==1.6.9",
+  "sentence-transformers==2.2.2",
+]
+redshift = [
+  "boto3==1.26.60",
+  "redshift-connector>=2.1.8",
+  "lxml==4.9.4",
+]
+s3 = [
+  "boto3==1.26.60",
+  "botocore==1.29.60",
+]
+snowflake = [
+  "snowflake-connector-python>=4.0.0",
+]
+spark = [
+  "boto3==1.26.60",
+  "botocore==1.29.60",
+]
+streaming = [
+  "confluent-avro~=1.8.0",
+  "elasticsearch==8.15.1",
+  "influxdb_client==1.36.1",
+  "kafka-python==2.3.0",
+  "nats-py==2.6.0",
+  "nkeys~=0.2.0",
+  "opensearch-py==2.0.0",
+  "pika==1.3.1",
+  "pymongo==4.3.3",
+  "requests_aws4auth==1.1.2",
+  "stomp.py==8.1.0",
+]
+# Runtime packages needed by the mage-integrations sources and destinations that
+# run inside a Mage pipeline. mage-integrations itself is installed separately.
+integrations = [
+  "async-timeout==4.0.3",
+  "attrs==22.2.0; python_version < '3.12'",
+  "attrs==24.2.0; python_version >= '3.12'",
+  "backoff",
+  "clickhouse_sqlalchemy",
+  "deltalake==0.20.2",
+  "facebook_business==22.0.2",
+  "gnupg==2.3.1",
+  "google-analytics-data>=0.20.0",
+  "google-cloud-bigquery-storage==2.36.2",
+  "httpx[http2]>=0.27.0",
+  "pendulum==2.1.0; python_version < '3.12'",
+  "pendulum==3.0.0; python_version >= '3.12'",
+  "pymongo_schema==0.4.1",
+  "python-magic==0.4.27",
+  "requests_mock==1.10.0",
+  "simple_salesforce~=1.12.5",
+  "singer_sdk~=0.34.1",
+  "stripe==5.5.0",
+  "terminaltables==3.1.10",
+  "twitter-ads==11.0.0",
+  "tzlocal==4.2",
+  "xlsx2csv==0.8.1",
+  "xmltodict==0.13.0",
+  "zenpy==2.0.25",
+]
+# Convenience extra used by the published container image. It reuses the
+# extras above instead of repeating their pins, which is what let `all` and
+# `oracle` drift apart on oracledb.
+all = [
+  "mage-ai[ai]",
+  "mage-ai[airtable]",
+  "mage-ai[azure]",
+  "mage-ai[bigquery]",
+  "mage-ai[clickhouse]",
+  "mage-ai[dbt]",
+  "mage-ai[google-cloud-storage]",
+  "mage-ai[oracle]",
+  "mage-ai[postgres]",
+  "mage-ai[redshift]",
+  "mage-ai[s3]",
+  "mage-ai[snowflake]",
+  "mage-ai[spark]",
+  "mage-ai[streaming]",
+  "aws-secretsmanager-caching==1.1.1.5",
+  "duckdb==1.4.3",
+  "google-api-core>=2.30.0",
+  "google-api-python-client~=2.70.0",
+  "google-cloud-iam>=2.20.0",
+  "google-cloud-pubsub>=2.30.0",
+  "google-cloud-run~=0.10.1",
+  "kubernetes==33.1.0",
+  "opentelemetry-api>=1.40.0",
+  "opentelemetry-exporter-otlp>=1.40.0",
+  "opentelemetry-exporter-prometheus>=0.61b0",
+  "opentelemetry-instrumentation-sqlalchemy>=0.61b0",
+  "opentelemetry-instrumentation-tornado>=0.61b0",
+  "pinotdb==5.6.0",
+  "prometheus_client>=0.18.0",
+  "pydruid==0.6.5",
+  "pyodbc==4.0.35; python_version < '3.12'",
+  "pyodbc==5.0.1; python_version >= '3.12'",
+]
+
+[dependency-groups]
+dev = [
+  "black",
+  "commitizen",
+  "flake8",
+  "flake8-bugbear",
+  "interrogate",
+  "isort",
+  "mypy",
+  "pandas-stubs",
+  "pre-commit",
+  "pytest",
+  "pytest-cov",
+  "pytest-xdist",
+]
+
+[tool.uv]
+required-version = ">=0.9.0"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["mage_ai*"]
+
+[tool.setuptools]
+include-package-data = true
+
+[tool.pytest.ini_options]
+testpaths = ["mage_ai/tests"]
+python_files = ["test_*.py", "*_test.py"]
+python_classes = ["Test*", "*Test"]
+addopts = "--import-mode=importlib"
 
 [tool.isort]
 profile = "black"
-
-[build-system]
-requires = ["setuptools>=42"]
-build-backend = "setuptools.build_meta"
 
 [tool.ruff.lint]
 exclude = [

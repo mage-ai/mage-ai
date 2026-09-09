@@ -15,18 +15,17 @@ jobs:
 
     steps:
     - uses: actions/checkout@master
-    - name: Set up Python 3.10
-      uses: actions/setup-python@v6
+    - name: Set up uv
+      uses: astral-sh/setup-uv@v6
       with:
+        # Keep this in sync with UV_VERSION in build_and_test.yml.
+        version: "0.11.29"
         python-version: 3.10.18
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip uv
-        uv pip install --system --upgrade setuptools wheel requests pkginfo
+        enable-cache: true
     - name: Build stable distribution
       run: |
-        rm -rf dist/*
-        python setup.py sdist bdist_wheel
+        rm -rf dist
+        uv build
     - name: Publish distribution to Test PyPI
       if: github.event.inputs.dry_run == 'true'
       uses: pypa/gh-action-pypi-publish@release/v1

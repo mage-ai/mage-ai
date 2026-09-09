@@ -36,8 +36,12 @@ RUN apt-get update -y && \
 ## Node Packages
 RUN npm install --global yarn && yarn global add next
 
-# Install uv for faster package installation
-RUN pip3 install --no-cache-dir uv
+# uv is the package manager for this project. Pin it so image builds and CI
+# resolve dependencies the same way.
+ARG UV_VERSION=0.11.29
+RUN pip3 install --no-cache-dir "uv==$UV_VERSION"
+# Install into the image's Python instead of a project virtualenv.
+ENV UV_PROJECT_ENVIRONMENT=/usr/local
 
 ## Python Packages
 RUN \
@@ -59,11 +63,13 @@ COPY mage_integrations /tmp/mage_integrations
 RUN \
   uv pip install --system --no-cache-dir /tmp/mage_integrations && \
   rm -rf /tmp/mage_integrations
-# Mage Dependencies
-COPY requirements.txt /tmp/requirements.txt
+# Mage Dependencies, resolved from uv.lock. --inexact keeps the packages
+# installed in the steps above, which are not part of the lockfile.
+COPY pyproject.toml uv.lock /tmp/mage/
 RUN \
-  uv pip install --system --no-cache-dir -r /tmp/requirements.txt && \
-  rm /tmp/requirements.txt
+  uv sync --project /tmp/mage --locked --no-install-project --inexact --no-cache \
+  --extra all --extra integrations --group dev && \
+  rm -rf /tmp/mage
 
 ## Mage Frontend
 COPY ./mage_ai /home/src/mage_ai

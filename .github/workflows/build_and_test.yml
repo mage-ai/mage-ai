@@ -6,77 +6,76 @@ on:
       - "mage_ai/**"
       - "mage_integrations/**"
       - "pyproject.toml"
+      - "uv.lock"
       - "requirements.txt"
-      - "setup.py"
   pull_request:
     paths:
       - "mage_ai/**"
       - "mage_integrations/**"
       - "pyproject.toml"
+      - "uv.lock"
       - "requirements.txt"
-      - "setup.py"
 
 env:
   ENV: test_mage
+  # Keep this in sync with the UV_VERSION build args in the Dockerfiles.
+  UV_VERSION: "0.11.29"
 
 jobs:
-  # check-code-quality:
-
-  #   runs-on: ubuntu-latest
-  #   name: Check Code Quality
-  #   steps:
-  #     - name: Check out source repository
-  #       uses: actions/checkout@v5
-  #       with:
-  #         fetch-depth: 0
-  #     # https://github.com/actions/setup-python/blob/main/docs/advanced-usage.md#caching-packages
-  #     - name: Install Poetry
-  #       run: pipx install poetry
-  #     - name: Set up Python
-  #       uses: actions/setup-python@v6
-  #       with:
-  #         python-version: "3.10"
-  #         cache: 'poetry'
-  #     - name: Install Python dev dependencies
-  #       run: |
-  #         poetry install --no-interaction --only dev
-  #         poetry run pre-commit install
-  #     - id: changed-files
-  #       uses: tj-actions/changed-files@v36
-  #       with:
-  #         files_ignore: |
-  #           requirements.txt
-  #     - name: Run pre-commit hooks
-  #       run: poetry run pre-commit run --show-diff-on-failure --files ${{ steps.changed-files.outputs.all_changed_files }}
+  packaging:
+    runs-on: ubuntu-latest
+    name: Check packaging metadata
+    steps:
+      - uses: actions/checkout@v5
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          version: ${{ env.UV_VERSION }}
+          enable-cache: true
+      - name: Check that uv.lock matches pyproject.toml
+        run: uv lock --check
+      - name: Check that requirements.txt matches uv.lock
+        run: |
+          make requirements
+          git diff --exit-code -- requirements.txt
+      - name: Build the sdist and the wheel
+        run: uv build
 
   test_backend:
     runs-on: ubuntu-latest
     strategy:
       matrix:
         python-version: ["3.10", "3.11", "3.12"]
-    # needs: check-code-quality
     steps:
       - uses: actions/checkout@v5
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v6
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v6
         with:
+          version: ${{ env.UV_VERSION }}
           python-version: ${{ matrix.python-version }}
+          enable-cache: true
       - name: Install dependencies
         run: |
           sudo apt-get install freetds-dev
-          python -m pip install --upgrade pip uv
-          uv pip install --system "git+https://github.com/mage-ai/sqlglot#egg=sqlglot"
-          uv pip install --system "git+https://github.com/mage-ai/singer-python.git#egg=singer-python"
-          uv pip install --system -r requirements.txt
-          uv pip install --system mage_integrations/
+          uv sync --locked --extra all --extra integrations --group dev
+          # Forks and local packages that are not part of the lockfile.
+          uv pip install "git+https://github.com/mage-ai/sqlglot#egg=sqlglot"
+          uv pip install "git+https://github.com/mage-ai/singer-python.git#egg=singer-python"
+          uv pip install ./mage_integrations
+          echo "$GITHUB_WORKSPACE/.venv/bin" >> "$GITHUB_PATH"
+          echo "VIRTUAL_ENV=$GITHUB_WORKSPACE/.venv" >> "$GITHUB_ENV"
       - name: Run unit tests
         run: |
-          python3 -m unittest discover -s mage_ai --failfast
+          python -m unittest discover -s mage_ai --failfast
         env:
           OPENAI_API_KEY: abcdefg
+      - name: Run focused git tests through pytest
+        run: |
+          pytest mage_ai/tests/data_preparation/git \
+            mage_ai/tests/data_preparation/sync/test_git_sync.py -q
       - name: Run mage integrations unit tests
         run: |
-          cd mage_integrations && python3 -m unittest discover mage_integrations.tests
+          cd mage_integrations && python -m unittest discover mage_integrations.tests
 
       # Run Playwright web UI tests only run once per workflow (Python 3.10).
       - name: Set up Node
@@ -88,7 +87,7 @@ jobs:
         run: |
           python mage_ai/cli/main.py init test_project
         env:
-          PYTHONPATH: ${{ env.pythonLocation }}:.
+          PYTHONPATH: .
         if: matrix.python-version == '3.10'
       - name: Build frontend, start server, and run Playwright tests
         run: |
@@ -98,7 +97,7 @@ jobs:
           yarn playwright test -c playwright.config.ci.ts
         working-directory: mage_ai/frontend/
         env:
-          PYTHONPATH: ${{ env.pythonLocation }}:. # Playwright tests on CI depend on the Python web server
+          PYTHONPATH: ${{ github.workspace }} # Playwright tests on CI depend on the Python web server
         if: matrix.python-version == '3.10'
       - uses: actions/upload-artifact@v4
         if: always()
@@ -113,13 +112,14 @@ jobs:
     strategy:
       matrix:
         python-version: ["3.10"]
-    # needs: check-code-quality
     steps:
       - uses: actions/checkout@v5
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v6
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v6
         with:
+          version: ${{ env.UV_VERSION }}
           python-version: ${{ matrix.python-version }}
+          enable-cache: true
       # Run Playwright web UI tests only run once per workflow (Python 3.10).
       - name: Set up Node
         uses: actions/setup-node@v6
@@ -128,12 +128,10 @@ jobs:
       - name: Create Mage test project
         run: |
           Start-Process -Wait -FilePath "C:\Program Files\Git\unins000.exe" -ArgumentList "/SILENT"
-          python -m venv venv3
-          venv3/Scripts/Activate.ps1
+          uv sync --locked --extra all --extra integrations
+          "$pwd\.venv\Scripts" | Out-File -FilePath $env:GITHUB_PATH -Append -Encoding utf8
           $env:PYTHONPATH = "${env:PYTHONPATH};${pwd}"
-          python -m pip install --upgrade pip uv
-          uv pip install -r requirements.txt
-          python mage_ai/cli/main.py init test_project
+          .venv\Scripts\python.exe mage_ai/cli/main.py init test_project
       - name: Build frontend, start server, and run Playwright tests
         run: |
           yarn install &&

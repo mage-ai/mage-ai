@@ -29,8 +29,10 @@ RUN \
   R -e "install.packages('pacman', repos='http://cran.us.r-project.org')" && \
   R -e "install.packages('renv', repos='http://cran.us.r-project.org')"
 
-# Install uv for faster package installation
-RUN pip3 install --no-cache-dir uv
+# uv is the package manager for this project. Pin it so image builds and CI
+# resolve dependencies the same way.
+ARG UV_VERSION=0.11.29
+RUN pip3 install --no-cache-dir "uv==$UV_VERSION"
 
 ## Python Packages
 RUN \
