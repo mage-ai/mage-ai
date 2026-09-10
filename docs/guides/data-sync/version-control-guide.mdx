@@ -2,7 +2,7 @@
 title: "Mage Pro Version Control"
 sidebarTitle: "Version control guide"
 icon: "code"
-description: "Connect your data pipelines to Git repositories and deploy code seamlessly. Authenticate with GitHub, BitBucket, or GitLab, manage code with Git commands, and deploy from commits to your Mage Pro cluster."
+description: "Connect Mage Pro to GitHub, Bitbucket, GitLab, or Azure DevOps, manage code with Git, and deploy from a branch or fixed release tag."
 ---
 
 import { ProButton } from '/snippets/pro/button.mdx';
@@ -13,7 +13,7 @@ import { ProOnly } from '/snippets/pro/only.mdx';
 Mage Pro's version control workflow has three parts:
 
 1. **Authentication** — [Connect your Git host](#1-authentication) to Mage (OAuth with GitHub, Bitbucket, GitLab, or Azure DevOps; HTTPS with a personal access token; or SSH). You do this in the **Deployments** app, but it also enables the [Version control terminal](#3-version-control-terminal).
-2. **Deployments** — [Deploy](#2-deployments-app) commits to your Mage Pro cluster or workspace from the visual Deployments app.
+2. **Deployments** — [Deploy](#2-deployments-app) a commit from a branch or a fixed release tag to your Mage Pro cluster or workspace from the visual Deployments app.
 3. **Version control terminal** — [Run Git in the browser](#3-version-control-terminal) (push, pull, branches) once you are connected.
 
 ## 1. Authentication
@@ -364,6 +364,22 @@ Mage Pro supports integration with Azure DevOps repositories for version control
 ## 2. Deployments App
 
 The Deployments app is the control surface for [deploying](#merge-pull-request-and-deploy) merged work from Git to your Mage Pro cluster. It assumes you have already completed [authentication](#1-authentication).
+
+### Choose a branch or release tag
+
+In **Connect repository** → **Production source**, choose the Git reference your production deployment should use:
+
+- **Branch** — select a branch, then choose from the commits available on that branch. Use this for a moving source that follows your normal continuous delivery workflow.
+- **Tag** — select an available Git tag as a fixed release version. Use this when production should point to a named release boundary instead of a moving branch.
+
+After choosing the source type, click **Select version** to choose the exact commit or tag to deploy. The repository, source type, and selected version remain visible in the deployment configuration so reviewers and operators can identify what production is running.
+
+<Frame>
+  <img
+    alt="Mage Pro production source setup with Tag selected"
+    src="/media/deployments/release-tag-production-source.png"
+  />
+</Frame>
 
 ### Merge pull request and deploy
 
