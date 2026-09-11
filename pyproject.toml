@@ -35,7 +35,9 @@ exclude = [
   "mage_ai/data_preparation/templates",
   "mage_ai/orchestration/db/migrations/versions",
 ]
-ignore = []
+ignore = [
+  "E501", # Line too long
+]
 select = ["E", "F", "W"]
 
 [tool.ruff.lint.per-file-ignores]
