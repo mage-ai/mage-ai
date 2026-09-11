@@ -12,6 +12,7 @@ from mage_integrations.destinations.oracledb.utils import (
     clean_column_name,
     convert_column_to_type,
     convert_column_type,
+    convert_datetime,
 )
 from mage_integrations.destinations.sql.base import Destination, main
 from mage_integrations.destinations.sql.utils import (
@@ -161,6 +162,7 @@ WHERE TABLE_NAME = '{table_name.upper()}'
             columns=columns,
             records=records,
             convert_column_to_type_func=convert_column_to_type,
+            convert_datetime_func=convert_datetime,
             string_parse_func=lambda x, y: x.replace("'", "''").replace('\\', '\\\\')
             if COLUMN_TYPE_OBJECT == y['type'] else x,
             use_lowercase=self.use_lowercase,
@@ -176,9 +178,27 @@ WHERE TABLE_NAME = '{table_name.upper()}'
             if unique_constraints and unique_conflict_method:
                 if UNIQUE_CONFLICT_METHOD_UPDATE == unique_conflict_method:
                     # Build update command
+                    # Convert insert_value from format:
+                    # CAST('1' AS NUMBER), TO_DATE('2023-09-10', 'yyyy-mm-dd'),
+                    # to_nclob('{\"customer\": \"John Doe\", \"items\": {\"product\": \"Beer\"}'),
+
+                    # to format:
+                    # ["col1 = CAST('1' AS NUMBER)", "col2 =  TO_DATE('2023-09-10', 'yyyy-mm-dd')",
+                    # 'col3 =  to_nclob(\'{"customer": "John Doe", "items":
+                    # {"product": "Beer"}}\')']
+
+                    # Steps:
+                    # - First remove unnecessary punctuation
+                    # (1) ( at beginning (2) ) at the end (3), at the end
+                    # - split by "),"
+                    # -  Add back ) at the end of each value
                     insert_value_without_left_parenthesis = re.sub(r"^\(", "", insert_value)
                     insert_value_strip = re.sub(r"\)$", "", insert_value_without_left_parenthesis)
-                    updated_values = insert_value_strip.split(',')
+                    insert_value_strip = re.sub(r"\,$", "", insert_value_strip)
+                    splitted_values = insert_value_strip.split('),')
+                    updated_values = [s + ")" if i < len(splitted_values) - 1 else s
+                                      for i, s in enumerate(splitted_values)]
+
                     updated_command = ', '.join([f'{col} = {updated_values[idx].strip()}'
                                                 for idx, col in enumerate(columns_cleaned)])
                     update_command_constraint = ""
