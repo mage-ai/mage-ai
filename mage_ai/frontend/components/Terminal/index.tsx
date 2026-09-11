@@ -1,51 +1,27 @@
-import Ansi from 'ansi-to-react';
+import { Terminal as XTerm } from '@xterm/xterm';
+
+import { FitAddon } from './xtermFitAddon';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useTheme } from 'styled-components';
 
 import AuthToken from '@api/utils/AuthToken';
 import ClickOutside from '@oracle/components/ClickOutside';
-import KernelOutputType, {
-  DataTypeEnum,
-  DATA_TYPE_TEXTLIKE,
-} from '@interfaces/KernelOutputType';
-import Text from '@oracle/elements/Text';
-import {
-  CharacterStyle,
-  ContainerStyle,
-  InnerStyle,
-  InputStyle,
-  LineStyle,
-} from './index.style';
-import {
-  KEY_CODE_ARROW_DOWN,
-  KEY_CODE_ARROW_LEFT,
-  KEY_CODE_ARROW_RIGHT,
-  KEY_CODE_ARROW_UP,
-  KEY_CODE_BACKSPACE,
-  KEY_CODE_C,
-  KEY_CODE_CONTROL,
-  KEY_CODE_ENTER,
-  KEY_CODE_META,
-  KEY_CODE_V,
-} from '@utils/hooks/keyboardShortcuts/constants';
 import { OAUTH2_APPLICATION_CLIENT_ID } from '@api/constants';
-import { keysPresentAndKeysRecent, onlyKeysPresent } from '@utils/hooks/keyboardShortcuts/utils';
-import { pauseEvent } from '@utils/events';
 import { useKeyboardContext } from '@context/Keyboard';
+import dark from '@oracle/styles/themes/dark';
+import { ContainerStyle, XTermHost } from './index.style';
 
 export const DEFAULT_TERMINAL_UUID = 'terminal';
-// Limit the number of lines for the terminal output; otherwise, typing in the terminal can become laggy.
-const TERMINAL_OUTPUT_LIMIT = 2500;
 
 type TerminalProps = {
+  /** @deprecated Line buffer removed; xterm streams to PTY. */
   command?: string;
   commandHistory?: string[];
   commandIndex?: number;
   cursorIndex?: number;
   externalKeyboardShortcuts?: (
-    event: any,
-    keyMapping: {
-      [key: string]: boolean;
-    },
+    event: KeyboardEvent,
+    keyMapping: Record<string, boolean>,
     keyHistory: number[],
   ) => boolean;
   focus?: boolean;
@@ -55,7 +31,8 @@ type TerminalProps = {
     token: string;
   };
   onFocus?: () => void;
-  outputs?: KernelOutputType[];
+  /** @deprecated Output is rendered by xterm only. */
+  outputs?: unknown;
   sendMessage: (message: string, keep?: boolean) => void;
   setCommand?: (prev: (value: string) => string) => void;
   setCommandHistory?: (prev: (value: string[]) => string[]) => void;
@@ -69,476 +46,299 @@ type TerminalProps = {
 };
 
 function Terminal({
-  command: commandProp,
-  commandHistory: commandHistoryProp,
-  commandIndex: commandIndexProp,
-  cursorIndex: cursorIndexProp,
   externalKeyboardShortcuts,
   focus: focusProp,
   lastMessage,
   oauthWebsocketData: oauthWebsocketDataProp,
   onFocus,
-  outputs,
   sendMessage,
-  setCommand: setCommandProp,
-  setCommandHistory: setCommandHistoryProp,
-  setCommandIndex: setCommandIndexProp,
-  setCursorIndex: setCursorIndexProp,
   setFocus: setFocusProp,
-  setStdout: setStdoutProp,
-  stdout: stdoutProp,
-  uuid: terminalUUID = DEFAULT_TERMINAL_UUID,
+  uuid: _uuid = DEFAULT_TERMINAL_UUID,
   width,
 }: TerminalProps) {
-  const refContainer = useRef(null);
-  const refInner = useRef(null);
+  const refContainer = useRef<HTMLDivElement>(null);
+  const refHost = useRef<HTMLDivElement>(null);
+  const termRef = useRef<XTerm | null>(null);
+  const fitAddonRef = useRef<FitAddon | null>(null);
+  const resizeObserverRef = useRef<ResizeObserver | null>(null);
+  const resizeDebounceRef = useRef<number | null>(null);
 
-  const [commandState, setCommandState] = useState<string>('');
-  const setCommand = useCallback((prev) => {
-    if (setCommandProp) {
-      return setCommandProp?.(prev);
-    }
-
-    return setCommandState(prev);
-  }, [setCommandProp]);
-  const command = useMemo(() => typeof commandProp !== 'undefined'
-    ? commandProp
-    : commandState
-  , [commandProp, commandState]);
-  const [commandHistoryState, setCommandHistoryState] = useState<string[]>([]);
-  const setCommandHistory = useCallback((prev) => {
-    if (setCommandHistoryProp) {
-      return setCommandHistoryProp?.(prev);
-    }
-
-    return setCommandHistoryState(prev);
-  }, [setCommandHistoryProp]);
-  const commandHistory = useMemo(() => typeof commandHistoryProp !== 'undefined'
-    ? commandHistoryProp
-    : commandHistoryState
-  , [commandHistoryProp, commandHistoryState]);
-  const [commandIndexState, setCommandIndexState] = useState<number>(0);
-  const setCommandIndex = useCallback((prev) => {
-    if (setCommandIndexProp) {
-      return setCommandIndexProp?.(prev);
-    }
-
-    return setCommandIndexState(prev);
-  }, [setCommandIndexProp]);
-  const commandIndex = useMemo(() => typeof commandIndexProp !== 'undefined'
-    ? commandIndexProp
-    : commandIndexState
-  , [commandIndexProp, commandIndexState]);
-  const [cursorIndexState, setCursorIndexState] = useState<number>(0);
-  const setCursorIndex = useCallback((prev) => {
-    if (setCursorIndexProp) {
-      return setCursorIndexProp?.(prev);
-    }
-
-    return setCursorIndexState(prev);
-  }, [setCursorIndexProp]);
-  const cursorIndex = useMemo(() => typeof cursorIndexProp !== 'undefined'
-    ? cursorIndexProp
-    : cursorIndexState
-  , [cursorIndexProp, cursorIndexState]);
-  const [focusState, setFocusState] = useState<boolean>(false);
-  const setFocus = useCallback((prev) => {
-    if (setFocusProp) {
-      return setFocusProp?.(prev);
-    }
-
-    return setFocusState(prev);
-  }, [setFocusProp]);
-  const focus = useMemo(() => typeof focusProp !== 'undefined'
-    ? focusProp
-    : focusState
-  , [focusProp, focusState]);
-  const [stdoutState, setStdoutState] = useState<string>();
-  const setStdout = useCallback((prev) => {
-    if (setStdoutProp) {
-      return setStdoutProp?.(prev);
-    }
-
-    return setStdoutState(prev);
-  }, [setStdoutProp]);
-  const stdout = useMemo(() => typeof stdoutProp !== 'undefined'
-    ? stdoutProp
-    : stdoutState
-  , [stdoutProp, stdoutState]);
-
-  const token = useMemo(() => new AuthToken(), []);
-  const oauthWebsocketData = useMemo(() => oauthWebsocketDataProp || ({
-    api_key: OAUTH2_APPLICATION_CLIENT_ID,
-    token: token.decodedToken.token,
-  }), [
-    oauthWebsocketDataProp,
-    token,
-  ]);
-
-  useEffect(() => {
-    if (lastMessage) {
-      const msg = JSON.parse(lastMessage.data);
-
-      setStdout(prev => {
-        const p = prev || '';
-        if (msg[0] === 'stdout') {
-          const out = msg[1];
-          return p + out;
-        }
-        return p;
-      });
-    }
-  }, [
-    lastMessage,
-    setStdout,
-  ]);
-
-  const kernelOutputsUpdated: KernelOutputType[] = useMemo(() => {
-    if (typeof outputs !== 'undefined') {
-      return (outputs || []).slice(-TERMINAL_OUTPUT_LIMIT);
-    }
-
-    if (!stdout) {
-      return [];
-    }
-
-    // Filter out commands to configure settings
-    const splitStdout =
-      stdout
-        .split('\n')
-        .slice(-TERMINAL_OUTPUT_LIMIT)
-        .filter(d => !d.includes('# Mage terminal settings command'));
-
-    return splitStdout.map(d => ({
-      data: d,
-      execution_state: null,
-      type: DataTypeEnum.TEXT,
-    }));
-  }, [outputs, stdout]);
-
-  useEffect(() => {
-    if (refContainer.current && refInner.current) {
-      const height = refInner.current.getBoundingClientRect().height;
-      refContainer.current.scrollTo(0, height);
-    }
-  }, [
-    command,
-    kernelOutputsUpdated,
-    refContainer,
-    refInner,
-  ]);
-
-  const {
-    registerOnKeyDown,
-    setDisableGlobalKeyboardShortcuts,
-    unregisterOnKeyDown,
-  } = useKeyboardContext();
-
-  useEffect(() => () => {
-    unregisterOnKeyDown(terminalUUID);
-  }, [unregisterOnKeyDown, terminalUUID]);
-
-  function decreaseCursorIndex() {
-    return setCursorIndex(currIdx => currIdx > 0 ? currIdx - 1 : currIdx);
-  }
-  const increaseCursorIndex = useCallback(() => {
-    setCursorIndex(currIdx => (currIdx < command.length) ? currIdx + 1 : currIdx);
-  }, [command, setCursorIndex]);
-
-  const sendCommand = useCallback((cmd) => {
-    sendMessage(JSON.stringify({
-      ...oauthWebsocketData,
-      command: ['stdin', cmd],
-    }));
-    sendMessage(JSON.stringify({
-      ...oauthWebsocketData,
-      command: ['stdin', '\r'],
-    }));
-    if (cmd?.length >= 2) {
-      setCommandIndex(commandHistory.length + 1);
-      setCommandHistory(prev => prev.concat(cmd));
-      setCursorIndex(0);
-    }
-    setCommand('');
-  }, [
-    commandHistory,
-    sendMessage,
-    setCommand,
-    oauthWebsocketData,
-    setCommandHistory,
-    setCommandIndex,
-    setCursorIndex,
-  ]);
-
-  const handleCopiedText = useCallback((clipText) => {
-    const lines = clipText?.split(/\n/) || [];
-    if (lines.length > 1) {
-      const enteredLines = lines.slice(0, -1);
-      sendCommand(command + enteredLines.join('\n'));
-      const currentCommand = (lines.slice(-1)[0] || '').trim();
-      setCommand(currentCommand);
-      setCursorIndex(currentCommand.length);
-    } else {
-      setCommand(prev => prev + clipText);
-      setCursorIndex(command.length + clipText.length);
-    }
-  }, [
-    command,
-    sendCommand,
-    setCommand,
-    setCursorIndex,
-  ]);
-
-  registerOnKeyDown(
-    terminalUUID,
-    (event, keyMapping, keyHistory) => {
-      const {
-        code,
-        key,
-      } = event;
-
-      if (focus) {
-        if (externalKeyboardShortcuts && externalKeyboardShortcuts(event, keyMapping, keyHistory)) {
-          return;
-        } else {
-          pauseEvent(event);
-        }
-
-        if (onlyKeysPresent([KEY_CODE_CONTROL, KEY_CODE_C], keyMapping)) {
-          if (command?.length >= 0) {
-            sendMessage(JSON.stringify({
-              ...oauthWebsocketData,
-              command: ['stdin', command],
-            }));
-            sendMessage(JSON.stringify({
-              ...oauthWebsocketData,
-              command: ['stdin', '\x03'],
-            }));
-            setCursorIndex(0);
-          }
-          setCommand('');
-        } else {
-          if (KEY_CODE_BACKSPACE === code && !keyMapping[KEY_CODE_META]) {
-            const minIdx = Math.max(0, cursorIndex - 1);
-            setCommand(prev => prev.slice(0, minIdx) + prev.slice(cursorIndex));
-            setCursorIndex(currIdx => Math.max(0, currIdx - 1));
-          } else if (onlyKeysPresent([KEY_CODE_ARROW_LEFT], keyMapping)) {
-            decreaseCursorIndex();
-          } else if (onlyKeysPresent([KEY_CODE_ARROW_RIGHT], keyMapping)) {
-            increaseCursorIndex();
-          } else if (keysPresentAndKeysRecent([KEY_CODE_ARROW_UP], [KEY_CODE_ARROW_UP], keyMapping, keyHistory)) {
-            if (commandHistory.length >= 1) {
-              const idx = Math.max(0, commandIndex - 1);
-              setCommand(commandHistory[idx]);
-              setCommandIndex(idx);
-              setCursorIndex(commandHistory[idx]?.length || 0);
-            }
-          } else if (keysPresentAndKeysRecent([KEY_CODE_ARROW_DOWN], [KEY_CODE_ARROW_DOWN], keyMapping, keyHistory)) {
-            if (commandHistory.length >= 1) {
-              const idx = Math.min(commandHistory.length, commandIndex + 1);
-              const nextCommand = commandHistory[idx] || '';
-              setCommand(nextCommand);
-              setCommandIndex(idx);
-              setCursorIndex(nextCommand.length);
-            }
-          } else if (onlyKeysPresent([KEY_CODE_ENTER], keyMapping)) {
-            sendCommand(command);
-          } else if (onlyKeysPresent([KEY_CODE_META, KEY_CODE_C], keyMapping)) {
-            navigator.clipboard.writeText(window.getSelection().toString());
-          } else if (onlyKeysPresent([KEY_CODE_META, KEY_CODE_V], keyMapping)
-            || onlyKeysPresent([KEY_CODE_CONTROL, KEY_CODE_V], keyMapping)) {
-            if (typeof navigator?.clipboard === 'undefined') {
-              alert('Clipboard pasting is not allowed in insecure contexts. If your Mage '
-                + 'deployment is not secure but you still want to use clipboard paste, you '
-                + 'can override this setting (which should only be done temporarily) '
-                + 'on Chrome browsers by going to '
-                + '"chrome://flags/#unsafely-treat-insecure-origin-as-secure", '
-                + 'adding your origin to "Insecure origins treated as secure", '
-                + 'and enabling that setting.');
-            } else if (navigator?.clipboard?.readText) {
-              navigator.clipboard.readText()
-                .then(handleCopiedText)
-                .catch(err => alert(`${err}
-    For Chrome, users need to allow clipboard permissions for this site under \
-"Privacy and security" -> "Site settings".
-    For Safari, users need to allow the clipboard paste by clicking "Paste" \
-in the context menu that appears.`),
-                );
-            } else if (navigator?.clipboard?.read) {
-              navigator.clipboard.read()
-                .then(clipboardItems => {
-                  for (const clipboardItem of clipboardItems) {
-                    for (const type of clipboardItem.types) {
-                      if (type === 'text/plain') {
-                        return clipboardItem.getType(type);
-                      }
-                    }
-                  }
-                }).then(blob => blob.text())
-                .then(handleCopiedText)
-                .catch(err => alert(`${err}
-    For Firefox, users need to allow clipboard paste by setting the "dom.events.asyncClipboard.read" \
-preference in "about:config" to "true" and clicking "Paste" in the context menu that appears.`),
-                );
-            } else {
-              alert(`If pasting is not working properly, you may need to adjust some settings in your browser.
-
-    For Firefox, users need to allow clipboard paste by setting both the "dom.events.asyncClipboard.clipboardItem" \
-and "dom.events.asyncClipboard.read" preferences in "about:config" to "true" and clicking "Paste" in the context \
-menu that appears.
-    For Chrome, users need to allow clipboard permissions for this site under \
-"Privacy and security" -> "Site settings".
-    For Safari, users need to allow the clipboard paste by clicking "Paste" \
-in the context menu that appears.
-`);
-            }
-          } else if (!keyMapping[KEY_CODE_META] && !keyMapping[KEY_CODE_CONTROL] && key.length === 1) {
-            setCommand(prev => prev?.slice(0, cursorIndex) + key + prev?.slice(cursorIndex));
-            setCursorIndex(currIdx => currIdx + 1);
-          }
-        }
+  const [focusState, setFocusState] = useState(false);
+  const applyFocus = useCallback(
+    (next: boolean) => {
+      if (setFocusProp) {
+        setFocusProp(() => next);
+      } else {
+        setFocusState(next);
       }
     },
-    [
-      command,
-      commandHistory,
-      commandIndex,
-      externalKeyboardShortcuts,
-      focus,
-      kernelOutputsUpdated,
-      setCommand,
-      setCommandHistory,
-      setCommandIndex,
-      terminalUUID,
-    ],
+    [setFocusProp],
+  );
+  const focus = useMemo(
+    () => (typeof focusProp !== 'undefined' ? focusProp : focusState),
+    [focusProp, focusState],
   );
 
-  const lastCommand = useMemo(
-    () => kernelOutputsUpdated[kernelOutputsUpdated.length - 1]?.data,
-    [kernelOutputsUpdated],
+  const theme = useTheme() as typeof dark;
+  const bg = theme?.background?.blackTransparentDark || dark.background.blackTransparentDark;
+  const fg = theme?.content?.default || dark.content.default;
+  const cursor = theme?.accent?.yellow || dark.accent.yellow;
+
+  const token = useMemo(() => new AuthToken(), []);
+  const oauthWebsocketData = useMemo(
+    () =>
+      oauthWebsocketDataProp || {
+        api_key: OAUTH2_APPLICATION_CLIENT_ID,
+        token: token.decodedToken.token,
+      },
+    [oauthWebsocketDataProp, token],
   );
+
+  const sendPayload = useCallback(
+    (command: (string | number)[]) => {
+      sendMessage(
+        JSON.stringify({
+          ...oauthWebsocketData,
+          command,
+        }),
+      );
+    },
+    [oauthWebsocketData, sendMessage],
+  );
+
+  const fitAndNotifySize = useCallback(() => {
+    const term = termRef.current;
+    const fitAddon = fitAddonRef.current;
+    if (!term || !fitAddon) {
+      return;
+    }
+    try {
+      fitAddon.fit();
+    } catch {
+      return;
+    }
+    const { cols, rows } = term;
+    if (cols > 0 && rows > 0) {
+      // terminado: self.size = command[1:3] then rows, cols = client.size → expect [rows, cols]
+      sendPayload(['set_size', rows, cols]);
+    }
+  }, [sendPayload]);
+
+  const clearScreen = useCallback(() => {
+    termRef.current?.clear();
+    sendPayload(['stdin', '__CLEAR_OUTPUT__']);
+    sendPayload(['stdin', '\r']);
+  }, [sendPayload]);
+
+  const {
+    setDisableGlobalKeyboardShortcuts,
+  } = useKeyboardContext();
+
+  const externalShortcutsRef = useRef(externalKeyboardShortcuts);
+  externalShortcutsRef.current = externalKeyboardShortcuts;
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || !refHost.current) {
+      return undefined;
+    }
+
+    let term: XTerm | null = null;
+    let fitAddon: FitAddon | null = null;
+    let onWindowResize: (() => void) | null = null;
+    let ro: ResizeObserver | null = null;
+
+    try {
+      term = new XTerm({
+        cursorBlink: true,
+        fontFamily: 'Menlo, Monaco, "Courier New", monospace',
+        fontSize: 13,
+        overviewRuler: { width: 0 },
+        scrollback: 5000,
+        theme: {
+          background: bg,
+          cursor: cursor,
+          foreground: fg,
+        },
+      });
+
+      fitAddon = new FitAddon();
+      term.loadAddon(fitAddon);
+      term.open(refHost.current);
+      termRef.current = term;
+      fitAddonRef.current = fitAddon;
+
+      term.onData((data) => {
+        sendPayload(['stdin', data]);
+      });
+
+      term.attachCustomKeyEventHandler((domEvent) => {
+        if (domEvent.metaKey && domEvent.key.toLowerCase() === 'k') {
+          domEvent.preventDefault();
+          clearScreen();
+          return false;
+        }
+        const ext = externalShortcutsRef.current;
+        if (ext) {
+          const keyMapping: Record<string, boolean> = {
+            Meta: domEvent.metaKey,
+            Control: domEvent.ctrlKey,
+            Shift: domEvent.shiftKey,
+            Alt: domEvent.altKey,
+          };
+          if (ext(domEvent, keyMapping, [])) {
+            domEvent.preventDefault();
+            return false;
+          }
+        }
+        return true;
+      });
+
+      const scheduleDebouncedFit = () => {
+        if (resizeDebounceRef.current) {
+          window.clearTimeout(resizeDebounceRef.current);
+        }
+        resizeDebounceRef.current = window.setTimeout(() => {
+          resizeDebounceRef.current = null;
+          fitAndNotifySize();
+        }, 50);
+      };
+
+      const refitUntilStable = () => {
+        fitAndNotifySize();
+        requestAnimationFrame(() => {
+          fitAndNotifySize();
+          requestAnimationFrame(() => {
+            fitAndNotifySize();
+          });
+        });
+        window.setTimeout(() => fitAndNotifySize(), 50);
+        window.setTimeout(() => fitAndNotifySize(), 200);
+      };
+
+      refitUntilStable();
+
+      // Guard for environments where the Font Loading API may not exist.
+      const fontsReadyThen = (document as any)?.fonts?.ready?.then;
+      if (typeof fontsReadyThen === 'function') {
+        void (document as any).fonts.ready.then(() => {
+          fitAndNotifySize();
+          window.setTimeout(() => fitAndNotifySize(), 100);
+        });
+      } else {
+        fitAndNotifySize();
+      }
+
+      onWindowResize = () => scheduleDebouncedFit();
+      window.addEventListener('resize', onWindowResize);
+
+      ro = new ResizeObserver(() => {
+        scheduleDebouncedFit();
+      });
+      ro.observe(refHost.current);
+      resizeObserverRef.current = ro;
+    } catch (err) {
+      // If xterm fails to initialize, avoid breaking the whole page load.
+      // This helps keep non-terminal UI elements (like page breadcrumbs) visible.
+      // eslint-disable-next-line no-console
+      console.error('Mage terminal init failed:', err);
+      return undefined;
+    }
+
+    return () => {
+      if (onWindowResize) {
+        window.removeEventListener('resize', onWindowResize);
+      }
+      if (ro) {
+        ro.disconnect();
+        resizeObserverRef.current = null;
+      }
+      if (resizeDebounceRef.current) {
+        window.clearTimeout(resizeDebounceRef.current);
+      }
+      term?.dispose();
+      termRef.current = null;
+      fitAddonRef.current = null;
+    };
+    // Theme is applied in a separate effect; do not depend on colors here or the PTY session resets.
+  }, [sendPayload, clearScreen]);
+
+  useEffect(() => {
+    const term = termRef.current;
+    if (!term) {
+      return;
+    }
+    term.options.theme = {
+      background: bg,
+      cursor: cursor,
+      foreground: fg,
+    };
+  }, [bg, cursor, fg]);
+
+  useEffect(() => {
+    const term = termRef.current;
+    if (!lastMessage || !term) {
+      return;
+    }
+    let msg: unknown;
+    try {
+      msg = JSON.parse(lastMessage.data);
+    } catch {
+      return;
+    }
+    if (!Array.isArray(msg) || typeof msg[0] !== 'string') {
+      return;
+    }
+    if (msg[0] === 'stdout' && typeof msg[1] === 'string') {
+      term.write(msg[1]);
+    } else if (msg[0] === 'disconnect') {
+      term.write('\r\n\x1b[33m[Disconnected]\x1b[0m\r\n');
+    }
+  }, [lastMessage]);
+
+  useEffect(() => {
+    const term = termRef.current;
+    if (!term) {
+      return;
+    }
+    if (focus) {
+      term.focus();
+    } else {
+      term.blur();
+    }
+  }, [focus]);
 
   return (
     <ContainerStyle
       ref={refContainer}
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        overflow: 'hidden',
+      }}
       width={width}
     >
       <ClickOutside
         isOpen
         onClick={() => {
           onFocus?.();
-          setFocus(true);
+          applyFocus(true);
           setDisableGlobalKeyboardShortcuts(true);
+          termRef.current?.focus();
         }}
         onClickOutside={() => {
-          setFocus(false);
+          applyFocus(false);
           setDisableGlobalKeyboardShortcuts(false);
+          termRef.current?.blur();
         }}
         style={{
-          minHeight: '100%',
+          display: 'flex',
+          flex: 1,
+          flexDirection: 'column',
+          minHeight: 0,
+          minWidth: 0,
         }}
       >
-        <InnerStyle
-          ref={refInner}
-          width={width}
-        >
-          {kernelOutputsUpdated?.reduce((acc, kernelOutput: {
-            command?: string;
-            data: string;
-            type: DataTypeEnum;
-          }, idx: number) => {
-            if (idx == kernelOutputsUpdated.length - 1) {
-              return acc;
-            }
-            const {
-              command,
-              data: dataInit,
-              type: dataType,
-            } = kernelOutput || {};
-
-            let dataArray: string[] = [];
-            if (Array.isArray(dataInit)) {
-              dataArray = dataInit;
-            } else {
-              dataArray = [dataInit];
-            }
-            dataArray = dataArray.filter(d => d);
-
-            const arr = [];
-
-            dataArray.forEach((data: string, idxInner: number) => {
-              let displayElement;
-              if (DATA_TYPE_TEXTLIKE.includes(dataType)) {
-                // Replace difficult-to-read blue font with cyan font
-                const dataReplacedBlueFont = (data || '').replaceAll('[34;', '[36;');
-                displayElement = (
-                  <Text
-                    monospace
-                    preWrap
-                    // This used to be a no wrap Text component, but changing it
-                    // to no wrap for now. Please change it back if you see any issues.
-                  >
-                    {data && (
-                      <Ansi>
-                        {dataReplacedBlueFont}
-                      </Ansi>
-                    )}
-                  </Text>
-                );
-              }
-
-              if (displayElement) {
-                const key = `command-${idx}-${idxInner}-${data}`;
-
-                if (!command) {
-                  arr.push(
-                    // <LineStyle key={key}>
-                    <div key={key}>
-                      {displayElement}
-                    </div>,
-                    // </LineStyle>,
-                  );
-                }
-              }
-            });
-
-            return acc.concat(arr);
-          }, [])}
-
-          {(
-            <InputStyle
-              focused={focus
-                && (command?.length === 0)}
-            >
-              <Text monospace>
-                <Text inline monospace>
-                  {lastCommand
-                    && ((Array.isArray(lastCommand) && lastCommand?.length >= 1 && typeof lastCommand?.[0] === 'string') || typeof lastCommand === 'string')
-                    && (
-                    <Ansi>
-                      {Array.isArray(lastCommand) ? lastCommand.join('\n') : lastCommand}
-                    </Ansi>
-                  )}
-                </Text>
-                {command?.split('').map(((char: string, idx: number, arr: string[]) => (
-                  <CharacterStyle
-                    focusBeginning={focus && cursorIndex === 0 && idx === 0}
-                    focused={
-                      focus &&
-                        (cursorIndex === idx + 1 ||
-                          cursorIndex >= arr.length && idx === arr.length - 1)
-                    }
-                    key={`command-${idx}-${char}`}
-                  >
-                    {char === ' ' && <>&nbsp;</>}
-                    {char === '\n' && <br />}
-                    {char !== ' ' && char}
-                  </CharacterStyle>
-                )))}
-              </Text>
-            </InputStyle>
-          )}
-        </InnerStyle>
+        <XTermHost ref={refHost} width={width} />
       </ClickOutside>
     </ContainerStyle>
   );
