@@ -13,6 +13,7 @@ from mage_ai.data_preparation.models.block.hook.block import HookBlock
 from mage_ai.data_preparation.models.constants import BlockType
 from mage_ai.data_preparation.models.project.constants import FeatureUUID
 from mage_ai.orchestration.db.models.schedules import BlockRun, PipelineRun
+from mage_ai.services.k8s.constants import MAGE_K8S_JOB_NAME_ENV_VAR
 from mage_ai.shared.hash import merge_dict
 from mage_ai.tests.api.operations.test_base import BaseApiTestCase
 from mage_ai.tests.factory import create_pipeline_with_blocks
@@ -498,3 +499,63 @@ class BlockExecutorTest(BaseApiTestCase):
         with patch.object(executor.block, 'execute_sync') as mock_execute_sync:
             executor.execute(block_run_id=block_run.id, pipeline_run_id=pipeline_run.id)
             mock_execute_sync.assert_called_once()
+
+
+class BlockExecutorK8sRetriesRemainTest(BaseApiTestCase):
+    """
+    The block executor records whether the Kubernetes Job running a block still has
+    backoffLimit attempts left, so the scheduler can hold off failing the pipeline run.
+    """
+
+    def setUp(self):
+        super().setUp()
+        self.pipeline = MagicMock()
+        self.pipeline.uuid = 'pipeline_uuid'
+        self.pipeline.repo_config = MagicMock()
+        self.pipeline.repo_config.variables_dir = os.path.join(os.getcwd(), 'mage_data')
+
+        self.block_executor = BlockExecutor(self.pipeline, 'block_uuid', 'partition')
+        self.block_executor.logger = MagicMock()
+
+    def __call_with(self, backoff_limit, failed, job_name='mage-data-prep-block-1', raises=False):
+        job = MagicMock()
+        job.spec.backoff_limit = backoff_limit
+        job.status.failed = failed
+
+        batch_api = MagicMock()
+        if raises:
+            batch_api.read_namespaced_job.side_effect = Exception('forbidden')
+        else:
+            batch_api.read_namespaced_job.return_value = job
+
+        env = {MAGE_K8S_JOB_NAME_ENV_VAR: job_name} if job_name else {}
+        with patch.dict(os.environ, env, clear=True), \
+                patch('kubernetes.config.load_incluster_config'), \
+                patch('kubernetes.client.BatchV1Api', return_value=batch_api):
+            return self.block_executor._BlockExecutor__k8s_retries_remain(tags={})
+
+    def test_returns_false_when_not_running_in_a_k8s_job(self):
+        # Any non-k8s executor: the env var is absent, so nothing changes.
+        self.assertFalse(self.__call_with(3, 0, job_name=None))
+
+    def test_returns_true_while_attempts_remain(self):
+        # backoff_limit=3 -> attempts 1 and 2 still have a retry coming.
+        self.assertTrue(self.__call_with(3, 0))
+        self.assertTrue(self.__call_with(3, 1))
+
+    def test_returns_false_on_the_final_attempt(self):
+        self.assertFalse(self.__call_with(3, 2))
+
+    def test_returns_false_when_retries_are_disabled(self):
+        self.assertFalse(self.__call_with(0, 0))
+        self.assertFalse(self.__call_with(1, 0))
+        self.assertFalse(self.__call_with(None, 0))
+
+    def test_treats_missing_failed_count_as_first_attempt(self):
+        # status.failed is None until a pod has actually failed.
+        self.assertTrue(self.__call_with(3, None))
+
+    def test_returns_false_when_the_job_cannot_be_read(self):
+        # No RBAC or API error: fail safe.
+        self.assertFalse(self.__call_with(3, 0, raises=True))
+        self.block_executor.logger.warning.assert_called_once()

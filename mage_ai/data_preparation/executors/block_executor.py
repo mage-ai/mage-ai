@@ -1,5 +1,6 @@
 import asyncio
 import json
+import os
 import traceback
 from datetime import datetime, timedelta
 from typing import Callable, Dict, List, Optional, Union
@@ -42,6 +43,11 @@ from mage_ai.data_preparation.models.project.constants import FeatureUUID
 from mage_ai.data_preparation.models.triggers import ScheduleInterval, ScheduleType
 from mage_ai.data_preparation.shared.retry import RetryConfig
 from mage_ai.orchestration.db.models.schedules import BlockRun, PipelineRun
+from mage_ai.services.k8s.constants import (
+    DEFAULT_NAMESPACE,
+    K8S_RETRY_PENDING_METRIC_KEY,
+    MAGE_K8S_JOB_NAME_ENV_VAR,
+)
 from mage_ai.shared.hash import merge_dict
 from mage_ai.shared.utils import clean_name
 from mage_ai.usage_statistics.constants import EventNameType, EventObjectType
@@ -684,6 +690,10 @@ class BlockExecutor:
                             error=error_details,
                         )
                     else:
+                        # The block run is marked FAILED straight away so the failure is
+                        # visible and diagnosable. Whether the Kubernetes Job will still
+                        # retry is recorded alongside it, so the scheduler can hold off
+                        # failing the whole pipeline run without querying Kubernetes.
                         self.__update_block_run_status(
                             BlockRun.BlockRunStatus.FAILED,
                             block_run_id=block_run_id,
@@ -692,6 +702,7 @@ class BlockExecutor:
                                 error=error,
                             ),
                             tags=tags,
+                            k8s_retry_pending=self.__k8s_retries_remain(tags=tags),
                         )
                     self.execute_callback(
                         'on_failure',
@@ -1366,6 +1377,60 @@ class BlockExecutor:
             ]
         return cmd.split(' ') + options
 
+    def __k8s_retries_remain(self, tags: Dict = None) -> bool:
+        """
+        Whether the Kubernetes Job running this block still has backoffLimit attempts
+        left after the one that is failing right now.
+
+        Only meaningful inside a block pod created by K8sBlockExecutor, which injects
+        MAGE_K8S_JOB_NAME. Returns False whenever that cannot be established -- no env
+        var (so every non-k8s executor is unaffected), no RBAC to read the Job, any API
+        error -- so on any doubt the failure is treated as terminal.
+        """
+        job_name = os.getenv(MAGE_K8S_JOB_NAME_ENV_VAR)
+        if not job_name:
+            return False
+
+        if tags is None:
+            tags = dict()
+
+        try:
+            from kubernetes import client as k8s_client
+            from kubernetes import config as k8s_client_config
+
+            try:
+                k8s_client_config.load_incluster_config()
+            except Exception:
+                k8s_client_config.load_kube_config()
+
+            namespace = None
+            try:
+                with open(
+                    '/var/run/secrets/kubernetes.io/serviceaccount/namespace', 'r'
+                ) as f:
+                    namespace = f.read().strip()
+            except Exception:
+                pass
+            namespace = namespace or DEFAULT_NAMESPACE
+
+            job = k8s_client.BatchV1Api().read_namespaced_job(
+                name=job_name,
+                namespace=namespace,
+            )
+
+            backoff_limit = job.spec.backoff_limit or 0
+            # status.failed does not yet count the attempt that is failing right now.
+            failed_including_this_attempt = (job.status.failed or 0) + 1
+
+            return failed_including_this_attempt < backoff_limit
+        except Exception as err:
+            self.logger.warning(
+                f'Could not determine Kubernetes Job retry state for {job_name}: {err}. '
+                'Treating this failure as terminal.',
+                **tags,
+            )
+            return False
+
     def __update_block_run_status(
         self,
         status: BlockRun.BlockRunStatus,
@@ -1374,6 +1439,7 @@ class BlockExecutor:
         error_details: Dict = None,
         pipeline_run: PipelineRun = None,
         tags: Dict = None,
+        k8s_retry_pending: bool = None,
     ):
         """
         Update the status of block run by either updating the BlockRun db object or making
@@ -1398,6 +1464,12 @@ class BlockExecutor:
 
             if status == BlockRun.BlockRunStatus.COMPLETED:
                 update_kwargs['completed_at'] = datetime.now(tz=pytz.UTC)
+
+            if k8s_retry_pending is not None:
+                update_kwargs['metrics'] = merge_dict(
+                    block_run.metrics or {},
+                    {K8S_RETRY_PENDING_METRIC_KEY: bool(k8s_retry_pending)},
+                )
 
             # Cannot save raw value in DB; it breaks:
             # sqlalchemy.exc.StatementError:

@@ -12,6 +12,7 @@ from mage_ai.services.k8s.constants import (
     KUBE_CONTAINER_NAME,
     KUBE_POD_NAME_ENV_VAR,
     KUBE_POD_NAMESPACE_ENV_VAR,
+    MAGE_K8S_JOB_NAME_ENV_VAR,
 )
 from mage_ai.shared.hash import merge_dict
 
@@ -69,6 +70,7 @@ class JobManager():
         command: str,
         k8s_config: Union[K8sExecutorConfig, Dict] = None,
     ):
+        job = None
         if not self.job_exists():
             if type(k8s_config) is dict:
                 k8s_config = K8sExecutorConfig.load(config=k8s_config)
@@ -78,18 +80,34 @@ class JobManager():
             )
 
             self.create_job(job)
+        else:
+            job = self.batch_api_client.read_namespaced_job(
+                name=self.job_name,
+                namespace=self.namespace
+            )
 
         api_response = None
         job_completed = False
+        backoff_limit = job.spec.backoff_limit or 0
+
         while not job_completed:
             api_response = self.batch_api_client.read_namespaced_job(
                 name=self.job_name,
                 namespace=self.namespace
             )
-            if api_response.status.succeeded is not None or \
-                    api_response.status.failed is not None:
+            succeeded = api_response.status.succeeded or 0
+            failed = api_response.status.failed or 0
+            if succeeded >= 1:
                 job_completed = True
-            time.sleep(5)
+
+            elif failed >= backoff_limit:
+                job_completed = True
+                self._print(
+                    f'Backoff limit exceeded ({failed}) for job {self.job_name}'
+                )
+            else:
+                time.sleep(5)
+
             # self._print(f'Job {self.job_name} status={api_response.status}')
 
         self.delete_job()
@@ -192,6 +210,12 @@ class JobManager():
         mage_server_container_spec = self.get_mage_server_container()
         container_spec.env = container_spec.env + \
             [item for item in mage_server_container_spec.env if item not in container_spec.env]
+        # Tell the block executor running inside the pod which Job owns it, so it can
+        # record whether backoffLimit retries are still pending when it fails.
+        container_spec.env = [
+            item for item in container_spec.env
+            if getattr(item, 'name', None) != MAGE_K8S_JOB_NAME_ENV_VAR
+        ] + [client.V1EnvVar(name=MAGE_K8S_JOB_NAME_ENV_VAR, value=self.job_name)]
         container_spec.env_from = (container_spec.env_from or []) + \
             [item for item in (mage_server_container_spec.env_from or [])
              if item not in (container_spec.env_from or [])]
