@@ -2,18 +2,24 @@ from mage_ai.api.oauth_scope import OauthScope
 from mage_ai.api.operations import constants
 from mage_ai.api.policies.BasePolicy import BasePolicy
 from mage_ai.api.presenters.VariablePresenter import VariablePresenter
-from mage_ai.data_preparation.repo_manager import get_project_uuid
 from mage_ai.orchestration.constants import Entity
 
 
 class VariablePolicy(BasePolicy):
+    def initialize_project_uuid(self):
+        parent_model = self.options.get('parent_model')
+        if parent_model:
+            self.project_uuid = parent_model.project_uuid
+        else:
+            super().initialize_project_uuid()
+
     @property
     def entity(self):
         parent_model = self.options.get('parent_model')
         if parent_model:
             return Entity.PIPELINE, parent_model.uuid
 
-        return Entity.PROJECT, get_project_uuid()
+        return super().entity
 
 
 VariablePolicy.allow_actions([
