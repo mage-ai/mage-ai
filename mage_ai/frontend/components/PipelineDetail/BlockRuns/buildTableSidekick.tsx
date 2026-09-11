@@ -18,6 +18,7 @@ import { PADDING_UNITS } from '@oracle/styles/units/spacing';
 import { TABLE_COLUMN_HEADER_HEIGHT } from '@components/Sidekick/index.style';
 import { TABS_HEIGHT_OFFSET } from '@components/PipelineRun/shared/buildTableSidekick';
 import { createBlockStatus } from '@components/Triggers/utils';
+import { imageMimeTypeForDataType, isImageOutputDataType } from '@utils/imageOutput';
 import { alphabet, hashCode, isJsonString } from '@utils/string';
 import { indexBy, sortByKey } from '@utils/array';
 
@@ -157,7 +158,8 @@ export default function ({
             } else {
               el = emptyOutputMessageEl;
             }
-          } else if (DataTypeEnum.IMAGE_PNG === dataType && textData) {
+          } else if (isImageOutputDataType(dataType) && textData) {
+            const mime = imageMimeTypeForDataType(dataType);
             el = (
               <div
                 style={{
@@ -166,7 +168,10 @@ export default function ({
                   overflow: 'auto',
                 }}
               >
-                <img alt="Image from code output" src={`data:image/png;base64, ${textData}`} />
+                <img
+                  alt="Image from code output"
+                  src={`data:${mime};base64,${String(textData).replace(/^\s+|\s+$/g, '')}`}
+                />
               </div>
             );
           } else if (DataTypeEnum.TEXT_HTML === dataType && textData) {
