@@ -33,13 +33,41 @@ export const GENERAL_K8S_FIELDS = [
     placeholder: 'default',
     uuid: 'service_account_name',
   },
-  {
-    label: 'Ingress name',
-    labelDescription: 'If you want to add the workspace to an existing ingress, enter the name of the ingress here. Otherwise, the workspace can be accessed through the service.',
-    placeholder: 'my-ingress',
-    uuid: 'ingress_name',
-  },
 ];
+
+export const K8S_INGRESS_GATEWAY_FIELDS = [
+  {
+    label: "Ingress",
+    fields: [
+      {
+        label: 'Ingress name',
+        labelDescription: 'If you want to add the workspace to an existing ingress, enter the name of the ingress here. Otherwise, the workspace can be accessed through the service.',
+        placeholder: 'my-ingress',
+        uuid: 'ingress_name',
+      },
+    ]
+  },
+  {
+    label: "Gateway",
+    fields: [
+      {
+        label: 'Gateway',
+        labelDescription: 'Name of the Gateway to append HTTP Route to.',
+        uuid: 'gateway_name',
+      },
+      {
+        label: 'Gateway Namespace',
+        labelDescription: 'Namespace where the Gateway is deployed.',
+        uuid: 'gateway_namespace',
+      },
+      {
+        label: 'Hostname',
+        labelDescription: 'Desired hostname for the ',
+        uuid: 'hostname',
+      }
+    ]
+  }
+]
 
 export const VOLUME_CLAIM_K8S_FIELDS = [
   {
