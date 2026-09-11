@@ -1,0 +1,15 @@
+{
+ "type": [
+            "null",
+              "object"
+            ],
+  "properties": {
+    "comment_count": {
+     "type": [
+            "null",
+              "integer"
+            ]
+    }
+  },
+  "additionalProperties": true
+}
