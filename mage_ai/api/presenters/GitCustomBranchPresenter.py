@@ -1,3 +1,5 @@
+import asyncio
+
 from mage_ai.api.presenters.GitBranchPresenter import GitBranchPresenter
 
 
@@ -44,9 +46,13 @@ class GitCustomBranchPresenter(GitBranchPresenter):
                 )
             )
         elif 'with_logs' == display_format:
-            data_to_display.update(logs=self.resource.logs(commits=12))
+            data_to_display.update(
+                logs=await asyncio.to_thread(self.resource.logs, commits=12)
+            )
         elif 'with_remotes' == display_format:
-            data_to_display.update(remotes=self.resource.remotes(limit=100))
+            data_to_display.update(
+                remotes=await asyncio.to_thread(self.resource.remotes, limit=100)
+            )
 
         return data_to_display
 
