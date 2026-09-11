@@ -53,6 +53,7 @@ PipelinePolicy.allow_read(
         'callbacks',
         'conditionals',
         'extensions',
+        'pipeline_callbacks',
         'schedules',
     ],
     scopes=[
@@ -70,6 +71,7 @@ PipelinePolicy.allow_read(
         'callbacks',
         'conditionals',
         'extensions',
+        'pipeline_callbacks',
     ],
     scopes=[
         OauthScope.CLIENT_PRIVATE,
@@ -87,6 +89,7 @@ PipelinePolicy.allow_read(
         'callbacks',
         'conditionals',
         'extensions',
+        'pipeline_callbacks',
     ],
     scopes=[
         OauthScope.CLIENT_PRIVATE,
@@ -105,6 +108,7 @@ PipelinePolicy.allow_read(
         'extensions',
         'history',
         'operation_history',
+        'pipeline_callbacks',
         'schedules',
     ],
     scopes=[
@@ -126,6 +130,7 @@ PipelinePolicy.allow_write(
         'extensions',
         'llm',
         'name',
+        'pipeline_callbacks',
         'tags',
         'type',
     ],
@@ -145,6 +150,7 @@ PipelinePolicy.allow_write(
         'conditionals',
         'extensions',
         'llm',
+        'pipeline_callbacks',
         'schedules',
     ]
     + PipelinePresenter.default_attributes,
