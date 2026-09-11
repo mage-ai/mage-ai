@@ -47,13 +47,12 @@ export const ErrorProvider = ({
     See: https://github.com/mpontus/react-Error-hook/issues/18`);
   }
   const [errors, setErrors] = useState<Record<string, ErrorObjectType>>();
-
-  const hideError = useCallback(
-    (
-      key: string,
-    ) => setErrors(errors => hideSheets(key, errors)),
-    [],
-  );
+  const [errorsHistory, setErrorsHistory] = useState<ErrorType[]>([]);
+  const [minimized, setMinimized] = useState<boolean>(false);
+  const hideError = useCallback((key: string) => {
+    setErrorsHistory(prev => prev?.slice(1) || []);
+    return setErrors(errors => hideSheets(key, errors));
+  }, []);
 
   const showError = useCallback((
     key: string,
@@ -61,19 +60,33 @@ export const ErrorProvider = ({
     hide: (key: string) => void,
     errorProps: any,
     opts?: UseErrorOptionsType,
+  ) => {
     // @ts-ignore
-  ) => setErrors(errors => ({
-    ...errors,
-    [key]: {
-      ...opts,
-      component: error,
-      errorProps,
-      hide,
-      visible: true,
-    },
-  })), []);
+    setErrors((errors) => {
+      const value = {
+        ...errors,
+        [key]: {
+          ...opts,
+          component: error,
+          errorProps,
+          hide,
+          visible: true,
+        },
+      };
 
-  const contextValue = useMemo(() => ({ hideError, showError }), [hideError, showError]);
+      setErrorsHistory(prev => [value, ...(prev || [])]);
+
+      return value;
+    });
+  }, []);
+
+  const contextValue = useMemo(() => ({ hideError, showError }), [
+    hideError,
+    showError,
+    minimized,
+    setMinimized,
+    errorsHistory,
+  ]);
 
   return (
     // @ts-ignore
@@ -85,6 +98,7 @@ export const ErrorProvider = ({
           container={container}
           errors={errors}
           hideError={hideError}
+          setMinimized={setMinimized}
         />
       </>
     </ErrorContext.Provider>
