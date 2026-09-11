@@ -593,6 +593,7 @@ export default function useCodeOutput({
                   >
                     <Button
                       {...SHARED_BUTTON_PROPS}
+                      aria-label="Expand table"
                       onClick={() => {
                         addDataOutputBlockUUID(pipeline?.uuid, blockUUID);
                         openSidekickView?.(ViewKeyEnum.DATA);
