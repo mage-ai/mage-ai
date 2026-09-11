@@ -56,6 +56,7 @@ class PipelineExecutor:
             update_status (bool): Whether to update the execution status.
             **kwargs: Additional keyword arguments.
         """
+
         # Create the async task to execute
         async def _execute_task():
             if pipeline_run_id is None:
@@ -77,6 +78,7 @@ class PipelineExecutor:
                     allow_blocks_to_fail=allow_blocks_to_fail,
                     global_vars=global_vars,
                 )
+
         # Execute the task based on current context
         try:
             loop = asyncio.get_running_loop()
@@ -95,7 +97,7 @@ class PipelineExecutor:
         self,
         pipeline_run: PipelineRun,
         allow_blocks_to_fail: bool = False,
-        global_vars: Dict = None
+        global_vars: Dict = None,
     ):
         """
         Runs blocks asynchronously within a pipeline run.
@@ -119,19 +121,29 @@ class PipelineExecutor:
                     execution_partition=self.execution_partition,
                 )
                 block_run_data = dict(status=BlockRun.BlockRunStatus.RUNNING)
-                if not block_run.started_at or \
-                        (block_run.metrics and not block_run.metrics.get('controller')):
+                if not block_run.started_at or (
+                    block_run.metrics and not block_run.metrics.get('controller')
+                ):
                     block_run_data['started_at'] = datetime.now(tz=pytz.UTC)
 
                 block_run.update(**block_run_data)
 
                 try:
-                    return BlockExecutor(block_run_id=block_run.id, **executor_kwargs).execute(
+                    # Get retry_config from block only (open source version)
+                    block = self.pipeline.get_block(block_run.block_uuid)
+                    retry_config = (
+                        block.retry_config if block and block.retry_config else None
+                    )
+
+                    return BlockExecutor(
+                        block_run_id=block_run.id, **executor_kwargs
+                    ).execute(
                         block_run_id=block_run.id,
                         block_run_outputs_cache=block_run_outputs_cache,
                         cache_block_output_in_memory=self.pipeline.cache_block_output_in_memory,
                         global_vars=global_vars,
                         pipeline_run_id=pipeline_run.id,
+                        retry_config=retry_config,
                         skip_logging=True,
                     )
                 except Exception as error:
