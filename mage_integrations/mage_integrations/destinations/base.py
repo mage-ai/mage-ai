@@ -26,6 +26,7 @@ from mage_integrations.destinations.constants import (
     KEY_REPLICATION_METHOD,
     KEY_SCHEMA,
     KEY_STREAM,
+    KEY_TRUNCATE_BEFORE_REPLICATION,
     KEY_TYPE,
     KEY_UNIQUE_CONFLICT_METHOD,
     KEY_UNIQUE_CONSTRAINTS,
@@ -300,6 +301,8 @@ class Destination(ABC):
         self.key_properties[stream] = row.get(KEY_KEY_PROPERTIES)
         self.partition_keys[stream] = row.get(KEY_PARTITION_KEYS, [])
         self.replication_methods[stream] = row.get(KEY_REPLICATION_METHOD)
+        self.truncate_before_replication[stream] = row.get(KEY_TRUNCATE_BEFORE_REPLICATION, False)
+
         self.schemas[stream] = schema
         # Add internal columns to schema
         schema['properties'] = merge_dict(schema['properties'], INTERNAL_COLUMN_SCHEMA)
@@ -343,6 +346,7 @@ class Destination(ABC):
         self.key_properties = {}
         self.partition_keys = {}
         self.replication_methods = {}
+        self.truncate_before_replication = {}
         self.schemas = {}
         self.unique_conflict_methods = {}
         self.unique_constraints = {}

@@ -181,6 +181,16 @@ class Destination(BaseDestination):
 
             if table_exists:
                 self.logger.info(f'Table {friendly_table_name} already exists.', tags=tags)
+
+                if (
+                    replication_method == REPLICATION_METHOD_FULL_TABLE
+                    and self.truncate_before_replication.get(stream, False)
+                ):
+                    query_strings += self.build_truncate_commands(
+                        database_name=database_name,
+                        schema_name=schema_name,
+                        table_name=table_name,
+                    )
                 """
                 Check whether any new columns are added
                 """
@@ -211,6 +221,16 @@ class Destination(BaseDestination):
             raise Exception(message)
 
         return query_strings
+
+    def build_truncate_commands(
+        self,
+        database_name: str,
+        schema_name: str,
+        table_name: str,
+    ) -> List[str]:
+        parts = [x for x in [schema_name, table_name] if x]
+        full_table_name = '.'.join([f'{self.quote}{p}{self.quote}' for p in parts])
+        return [f'TRUNCATE TABLE {full_table_name}']
 
     def _handle_insert_commands_single_batch(
         self,
@@ -329,6 +349,17 @@ class Destination(BaseDestination):
         return [
             f'CREATE SCHEMA IF NOT EXISTS {self._wrap_with_quotes(schema_name)}',
         ]
+
+    def build_truncate_table_commands(
+        self,
+        schema: Dict,
+        schema_name: str,
+        stream: str,
+        table_name: str,
+        database_name: str = None,
+        unique_constraints: List[str] = None,
+    ) -> List[str]:
+        raise Exception('Subclasses must implement the build_create_table_commands method.')
 
     def build_create_table_commands(
         self,

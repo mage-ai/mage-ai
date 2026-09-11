@@ -121,6 +121,7 @@ export interface StreamType {
   schema?: SchemaType;
   stream?: string;
   tap_stream_id?: string;
+  truncate_before_replication?: boolean;
   unique_conflict_method?: UniqueConflictMethodEnum;
   unique_constraints?: string[];
 }
