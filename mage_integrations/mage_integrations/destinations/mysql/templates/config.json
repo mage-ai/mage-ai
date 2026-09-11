@@ -4,6 +4,7 @@
   "password": "",
   "port": 3306,
   "table": "",
+  "truncate_full_table": false,
   "username": "",
   "use_lowercase": true
 }
