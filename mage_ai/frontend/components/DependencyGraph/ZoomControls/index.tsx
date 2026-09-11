@@ -6,13 +6,15 @@ import Tooltip from '@oracle/components/Tooltip';
 import { BORDER_RADIUS_PILL } from '@oracle/styles/units/borders';
 import { CanvasRef } from 'reaflow';
 import { ICON_SIZE_MEDIUM } from '@oracle/styles/units/icons';
-import { Recenter, ZoomIn, ZoomOut } from '@oracle/icons';
+import { ArrowDown, Recenter, ZoomIn, ZoomOut } from '@oracle/icons';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { ZoomControlsStyle, ZoomDisplayStyle } from './index.style';
 
 type ZoomControlProps = {
   canvasRef?: { current?: CanvasRef };
-  containerRef?: { current?: any };
+  containerRef?: { current?: HTMLElement };
+  isDownloading?: boolean;
+  onDownload?: () => Promise<void> | void;
   zoomLevel: number;
 };
 
@@ -38,7 +40,13 @@ const SHARED_ICON_PROPS = {
   size: ICON_SIZE_MEDIUM,
 };
 
-function ZoomControls({ canvasRef, containerRef, zoomLevel }: ZoomControlProps) {
+function ZoomControls({
+  canvasRef,
+  containerRef,
+  isDownloading,
+  onDownload,
+  zoomLevel,
+}: ZoomControlProps) {
   const [minimizeControls, setMinimizeControls] = useState<boolean>(false);
 
   useEffect(() => {
@@ -54,11 +62,13 @@ function ZoomControls({ canvasRef, containerRef, zoomLevel }: ZoomControlProps) 
   }, [containerRef]);
 
   return (
-    <ZoomControlsStyle onDoubleClick={(event) => { event.stopPropagation(); }}>
+    <ZoomControlsStyle
+      onDoubleClick={(event) => { event.stopPropagation(); }}
+    >
       {!minimizeControls && (
         <>
           <Tooltip {...SHARED_TOOLTIP_PROPS} label="Reset (shortcut: double-click canvas)">
-            <Button 
+            <Button
               {...SHARED_BUTTON_PROPS}
               borderRadius={`${BORDER_RADIUS_PILL}px 0 0 ${BORDER_RADIUS_PILL}px`}
               onClick={() => canvasRef?.current?.fitCanvas?.()}
@@ -68,7 +78,7 @@ function ZoomControls({ canvasRef, containerRef, zoomLevel }: ZoomControlProps) 
             </Button>
           </Tooltip>
           <Tooltip {...SHARED_TOOLTIP_PROPS} label="Zoom in">
-            <Button  
+            <Button
               {...SHARED_BUTTON_PROPS}
               onClick={() => canvasRef?.current?.setZoom?.(
                 (zoomLevel - DEFAULT_ZOOM_LEVEL) + ZOOM_FACTOR,
@@ -78,7 +88,7 @@ function ZoomControls({ canvasRef, containerRef, zoomLevel }: ZoomControlProps) 
             </Button>
           </Tooltip>
           <Tooltip {...SHARED_TOOLTIP_PROPS} label="Zoom out">
-            <Button 
+            <Button
               {...SHARED_BUTTON_PROPS}
               onClick={() => canvasRef?.current?.setZoom?.(
                 (zoomLevel - DEFAULT_ZOOM_LEVEL) - ZOOM_FACTOR,
@@ -89,9 +99,23 @@ function ZoomControls({ canvasRef, containerRef, zoomLevel }: ZoomControlProps) 
           </Tooltip>
         </>
       )}
+      <Tooltip {...SHARED_TOOLTIP_PROPS} label="Download dependency tree as SVG">
+        <Button
+          {...SHARED_BUTTON_PROPS}
+          beforeIcon={<ArrowDown {...SHARED_ICON_PROPS} />}
+          borderRadius={minimizeControls
+            ? `${BORDER_RADIUS_PILL}px 0 0 ${BORDER_RADIUS_PILL}px`
+            : undefined}
+          iconOnly={false}
+          loading={isDownloading}
+          onClick={onDownload}
+        >
+          Download
+        </Button>
+      </Tooltip>
       <Tooltip {...SHARED_TOOLTIP_PROPS} label="Zoom level">
         <ZoomDisplayStyle minimizeControls={minimizeControls}>
-          <Text 
+          <Text
             center
             large
             minWidth={UNIT * 5} // Prevent button resizing due to varying number of digits
