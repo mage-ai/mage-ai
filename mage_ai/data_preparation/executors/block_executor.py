@@ -32,6 +32,7 @@ from mage_ai.data_preparation.models.block.utils import (
     build_dynamic_block_uuid,
     dynamic_block_values_and_metadata,
 )
+from mage_ai.data_preparation.models.block.dbt.exceptions import DbtBlockRunError
 from mage_ai.data_preparation.models.constants import (
     BlockLanguage,
     BlockType,
@@ -662,6 +663,11 @@ class BlockExecutor:
                         errors=errors,
                         message=traceback.format_exc(),
                     )
+                    if isinstance(error, DbtBlockRunError):
+                        error_details['dbt'] = dict(
+                            failed_models=getattr(error, 'failed_models', []) or [],
+                            failed_tests=getattr(error, 'failed_tests', []) or [],
+                        )
 
                     if not skip_logging:
                         asyncio.run(

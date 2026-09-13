@@ -42,7 +42,10 @@ from mage_ai.orchestration.metrics.pipeline_run import (
     calculate_source_metrics,
 )
 from mage_ai.orchestration.notification.config import NotificationConfig
-from mage_ai.orchestration.notification.sender import NotificationSender
+from mage_ai.orchestration.notification.sender import (
+    NotificationSender,
+    format_failed_blocks_dbt_detail,
+)
 from mage_ai.orchestration.utils.distributed_lock import DistributedLock
 from mage_ai.orchestration.utils.git import log_git_sync, run_git_sync
 from mage_ai.orchestration.utils.resources import get_compute, get_memory
@@ -249,10 +252,12 @@ class PipelineScheduler:
                         'Failed blocks: '
                         f'{", ".join([b.block_uuid for b in failed_block_runs])}.'
                     )
+                    dbt_detail = format_failed_blocks_dbt_detail(failed_block_runs)
                     self.notification_sender.send_pipeline_run_failure_message(
                         error=error_msg,
                         pipeline=self.pipeline,
                         pipeline_run=self.pipeline_run,
+                        stacktrace=dbt_detail or None,
                     )
                 else:
                     self.pipeline_run.complete()
@@ -325,8 +330,8 @@ class PipelineScheduler:
                 error_msg = (
                     'Failed blocks: ' f'{", ".join([b.block_uuid for b in failed_block_runs])}.'
                 )
-
-                self.on_pipeline_run_failure(error_msg)
+                dbt_detail = format_failed_blocks_dbt_detail(failed_block_runs)
+                self.on_pipeline_run_failure(error_msg, stacktrace=dbt_detail or None)
             elif PipelineType.INTEGRATION == self.pipeline.type:
                 self.__schedule_integration_streams(block_runs)
             elif self.pipeline.run_pipeline_in_one_process:
@@ -336,12 +341,13 @@ class PipelineScheduler:
                     self.__schedule_blocks(block_runs)
 
     @safe_db_query
-    def on_pipeline_run_failure(self, error: str) -> None:
+    def on_pipeline_run_failure(self, error: str, stacktrace: str = None) -> None:
         UsageStatisticLogger().pipeline_run_ended_sync(self.pipeline_run)
         self.notification_sender.send_pipeline_run_failure_message(
             pipeline=self.pipeline,
             pipeline_run=self.pipeline_run,
             error=error,
+            stacktrace=stacktrace,
         )
         # Cancel block runs that are still in progress for the pipeline run.
         cancel_block_runs_and_jobs(self.pipeline_run, self.pipeline)
@@ -431,6 +437,8 @@ class PipelineScheduler:
                 errors=error.get('errors'),
                 message=error.get('message'),
             )
+            if error.get('dbt'):
+                metrics['error']['dbt'] = error['dbt']
 
         update_status()
 
