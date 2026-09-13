@@ -12,7 +12,7 @@ import PopupMenu from '@oracle/components/PopupMenu';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import TextInput from '@oracle/elements/Inputs/TextInput';
-import ToggleMenu from '@oracle/components/ToggleMenu';
+import ToggleMenu, { DateRangeOptionType } from '@oracle/components/ToggleMenu';
 import Tooltip from '@oracle/components/Tooltip';
 import {
   BUTTON_PADDING,
@@ -27,7 +27,6 @@ import { FlyoutMenuItemType } from '@oracle/components/FlyoutMenu';
 import { SHARED_BUTTON_PROPS } from '@components/shared/AddButton';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { VerticalDividerStyle } from '@oracle/elements/Divider/index.style';
-import { getNestedTruthyValuesCount } from '@utils/hash';
 import { isViewer } from '@utils/session';
 
 type ToolbarProps = {
@@ -56,7 +55,7 @@ type ToolbarProps = {
     tooltip?: string;
   };
   filterOptions?: {
-    [keyof: string]: string[];
+    [keyof: string]: string[] | DateRangeOptionType;
   };
   filterValueLabelMapping?: {
     [keyof: string]: {
@@ -162,12 +161,20 @@ function Toolbar({
   } = searchProps || {};
 
   const filterOptionsEnabledMapping = useMemo(() => (
-    Object.entries(filterOptions).reduce((mapping, [filterKey, values]) => {
-      mapping[filterKey] = {};
-      values.forEach(value => {
-        const filterValueEnabled = query[`${filterKey}[]`]?.includes(value) || false;
-        mapping[filterKey][value] = filterValueEnabled;
-      });
+    Object.entries(filterOptions).reduce((mapping, [filterKey, value]) => {
+      if (Array.isArray(value)) {
+        mapping[filterKey] = {};
+        value.forEach(v => {
+          const filterValueEnabled = query[`${filterKey}[]`]?.includes(v) || false;
+          mapping[filterKey][v] = filterValueEnabled;
+        });
+      } else {
+        mapping[filterKey] = {
+          ...value,
+          startValue: query[value.startKey] || null,
+          endValue: query[value.endKey] || null,
+        };
+      }
 
       return mapping;
     }, {})
@@ -234,10 +241,20 @@ function Toolbar({
     secondaryButtonTooltip,
   ]);
 
-  const filtersAppliedCount = useMemo(
-    () => getNestedTruthyValuesCount(filterOptionsEnabledMapping),
-    [filterOptionsEnabledMapping],
-  );
+  const filtersAppliedCount = useMemo(() => {
+    let count = 0;
+    Object.entries(filterOptionsEnabledMapping).forEach(([, value]) => {
+      if (value && (value as DateRangeOptionType).type === 'date_range') {
+        const { startKey, endKey } = value as DateRangeOptionType;
+        if (query[startKey] || query[endKey]) {
+          count += 1;
+        }
+      } else if (value && typeof value === 'object') {
+        count += Object.values(value).filter(v => !!v).length;
+      }
+    });
+    return count;
+  }, [filterOptionsEnabledMapping, query]);
   const filterButtonEl = useMemo(() => (
     <ToggleMenu
       compact
