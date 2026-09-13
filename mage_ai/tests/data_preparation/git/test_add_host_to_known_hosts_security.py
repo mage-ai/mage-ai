@@ -26,8 +26,10 @@ class AddHostToKnownHostsSecurityTest(unittest.TestCase):
 
     def test_safe_hostname_accepted(self):
         with patch('subprocess.run') as mock_run, \
-             patch('builtins.open'), \
+             patch('builtins.open') as mock_open, \
              patch('os.makedirs'):
+            mock_run.return_value.returncode = 0
+            mock_run.return_value.stdout = b'git.example.com ssh-rsa key\n'
             result = utils.add_host_to_known_hosts('ssh://git.example.com:22')
             self.assertTrue(result)
             args, kwargs = mock_run.call_args
@@ -37,13 +39,42 @@ class AddHostToKnownHostsSecurityTest(unittest.TestCase):
             self.assertEqual(args[0][0:3], ['ssh-keyscan', '-t', 'rsa'])
             self.assertEqual(args[0][3], 'git.example.com')
             self.assertNotIn('shell', kwargs)  # never run via /bin/sh
+            mock_open.return_value.__enter__.return_value.write.assert_called_once_with(
+                mock_run.return_value.stdout
+            )
 
     def test_no_scheme_added_automatically(self):
         with patch('subprocess.run') as mock_run, \
              patch('builtins.open'), \
              patch('os.makedirs'):
+            mock_run.return_value.returncode = 0
+            mock_run.return_value.stdout = b'git.example.com ssh-rsa key\n'
             result = utils.add_host_to_known_hosts('git.example.com')
             self.assertTrue(result)
+
+    def test_keyscan_failure_is_reported(self):
+        with patch('subprocess.run') as mock_run, \
+             patch('builtins.open') as mock_open, \
+             patch('os.makedirs'):
+            mock_run.return_value.returncode = 1
+            mock_run.return_value.stdout = b''
+
+            result = utils.add_host_to_known_hosts('git.example.com')
+
+            self.assertFalse(result)
+            mock_open.assert_not_called()
+
+    def test_empty_keyscan_output_is_reported(self):
+        with patch('subprocess.run') as mock_run, \
+             patch('builtins.open') as mock_open, \
+             patch('os.makedirs'):
+            mock_run.return_value.returncode = 0
+            mock_run.return_value.stdout = b''
+
+            result = utils.add_host_to_known_hosts('git.example.com')
+
+            self.assertFalse(result)
+            mock_open.assert_not_called()
 
 
 if __name__ == '__main__':
