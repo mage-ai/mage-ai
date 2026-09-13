@@ -32,7 +32,7 @@ The following `tables` values are <b>optional</b>:
 
 | Key | Description | Sample Value |
 | --- | --- | --- |
-| `key_properties` | Array containing the unique keys of the table. Defaults to ['_sdc_source_file', '_sdc_source_lineno'], representing the file name and line number. Specify an emtpy array ([]) to load all new files without a replication key  |
+| `key_properties` | Array containing the unique keys of the table. Defaults to ['_sdc_source_file', '_sdc_source_lineno'], representing the file name and line number. Specify an empty array ([]) to load all new files without a replication key  |
 | `encoding` | File encoding, defaults to utf-8|
 | `sanitize_header` | Boolean, specifies whether to clean up header names so that they are more likely to be accepted by a target SQL database. Default is `False`. | `True` or `False`|
 | `skip_rows` | Integer, specifies the number of rows to skip at the top of the file to handle non-data content like comments or other text. Default 0. | 0 |
