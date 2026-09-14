@@ -599,7 +599,9 @@ def build_combinations_for_dynamic_child(
                 if arr is not None:
                     if not is_basic_iterable(arr) and not is_dataframe_or_series(arr):
                         arr = [0]
-            if arr is not None and hasattr(arr, '__len__') and len(arr) > 0:
+            if arr is None:
+                dynamic_counts.append([0])
+            elif hasattr(arr, '__len__'):
                 dynamic_counts.append([idx for idx in range(len(arr))])
             else:
                 dynamic_counts.append([0])
