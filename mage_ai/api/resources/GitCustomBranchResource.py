@@ -1,3 +1,4 @@
+import asyncio
 from typing import Dict, List
 
 from mage_ai.api.resources.GitBranchResource import GitBranchResource
@@ -18,7 +19,7 @@ class GitCustomBranchResource(GitBranchResource):
         )
 
     @classmethod
-    def create(cls, payload, user, **kwargs):
+    def _create(cls, payload, user, **kwargs):
         branch = payload.get('name')
         remote = payload.get('remote')
 
@@ -46,11 +47,15 @@ class GitCustomBranchResource(GitBranchResource):
         return cls(dict(name=git_manager.current_branch), user, **kwargs)
 
     @classmethod
+    async def create(cls, payload, user, **kwargs):
+        return await asyncio.to_thread(cls._create, payload, user, **kwargs)
+
+    @classmethod
     async def member(self, pk, user, **kwargs):
         resource = await GitBranchResource.member(pk, user, **kwargs)
         model = resource.model
-        model['access_token_exists'] = (
-            self.get_git_manager(user=user).get_access_token() is not None
+        model['access_token_exists'] = await asyncio.to_thread(
+            lambda: self.get_git_manager(user=user).get_access_token() is not None
         )
         return self(model, user, **kwargs)
 

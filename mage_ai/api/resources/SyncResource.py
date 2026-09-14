@@ -1,3 +1,4 @@
+import asyncio
 import os
 from typing import Dict
 
@@ -14,7 +15,7 @@ from mage_ai.data_preparation.sync import (
     UserGitConfig,
 )
 from mage_ai.data_preparation.sync.git_sync import GitSync
-from mage_ai.orchestration.db import safe_db_query
+from mage_ai.orchestration.db import safe_db_query_async
 from mage_ai.orchestration.db.models.oauth import User
 from mage_ai.orchestration.db.models.secrets import Secret
 from mage_ai.settings.repo import get_repo_path
@@ -48,8 +49,8 @@ class SyncResource(GenericResource):
         )
 
     @classmethod
-    @safe_db_query
-    def create(self, payload, user, **kwargs):
+    @safe_db_query_async
+    async def create(self, payload, user, **kwargs):
         repo_name = kwargs.get('repo_name')
 
         user_settings = payload.pop('user_git_settings', dict())
@@ -85,7 +86,7 @@ class SyncResource(GenericResource):
         preferences.update_preferences(dict(sync_config=updated_config))
 
         try:
-            GitSync(sync_config, setup_repo=True)
+            await asyncio.to_thread(GitSync, sync_config, setup_repo=True)
         except Exception as err:
             error = ApiError.RESOURCE_ERROR.copy()
             message = str(err)
@@ -101,7 +102,7 @@ class SyncResource(GenericResource):
         sync_config = self.get_project_sync_config(user, repo_path=(kwargs or {}).get('repo_path'))
         return self(sync_config, user, **kwargs)
 
-    def update(self, payload, **kwargs):
+    async def update(self, payload, **kwargs):
         self.model.pop('user_git_settings')
         config = GitConfig.load(config=self.model)
         sync = GitSync(config)
@@ -109,9 +110,9 @@ class SyncResource(GenericResource):
         action_type = payload.get('action_type')
         try:
             if action_type == 'sync_data':
-                sync.sync_data()
+                await asyncio.to_thread(sync.sync_data)
             elif action_type == 'reset':
-                sync.reset()
+                await asyncio.to_thread(sync.reset)
         except Exception as err:
             error = ApiError.RESOURCE_ERROR.copy()
             message = str(err)
