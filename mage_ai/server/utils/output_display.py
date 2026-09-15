@@ -21,6 +21,12 @@ from mage_ai.shared.code import is_pyspark_code
 REGEX_PATTERN = r'^[ ]{2,}[\w]+'
 
 
+def __python_string_literal(value: Optional[str]) -> str:
+    # Generated output-display snippets are parsed as Python code, so build a
+    # real string literal instead of interpolating paths directly.
+    return repr(value)
+
+
 def remove_comments(code_lines: List[str]) -> List[str]:
     return list(
         filter(
@@ -148,7 +154,6 @@ def add_internal_output_info(
         pipeline_uuid = block.pipeline.uuid if block.pipeline else None
         repo_path = block.pipeline.repo_path if block.pipeline else None
         block_uuid = block.uuid
-        escaped_repo_path = repo_path.replace('\\', '\\\\') if repo_path else None
         replacements = [
             ('DATAFRAME_ANALYSIS_MAX_COLUMNS', DATAFRAME_ANALYSIS_MAX_COLUMNS),
             ('DATAFRAME_SAMPLE_COUNT_PREVIEW', DATAFRAME_SAMPLE_COUNT_PREVIEW),
@@ -159,7 +164,7 @@ def add_internal_output_info(
             ('is_print_statement', is_print_statement),
             ('last_line', last_line),
             ('pipeline_uuid', f"'{pipeline_uuid}'"),
-            ('repo_path', f"'{escaped_repo_path}'"),
+            ('repo_path', __python_string_literal(repo_path)),
             ('widget', widget),
         ]
         replacements.append((
@@ -266,7 +271,7 @@ spark = SparkSession.builder.getOrCreate()
         ('pipeline_config_json_encoded', f"'{pipeline_config_json_encoded}'"),
         ('pipeline_uuid', f"'{pipeline_uuid}'"),
         ('repo_config_json_encoded', f"'{repo_config_json_encoded}'"),
-        ('repo_path', f"'{repo_path}'"),
+        ('repo_path', __python_string_literal(repo_path)),
         ('run_incomplete_upstream', run_incomplete_upstream),
         ('run_settings_json', f"'{run_settings_json}'"),
         ('run_tests', run_tests),
@@ -312,6 +317,7 @@ def get_block_output_process_code(
         BlockType.TRANSFORMER,
     ]:
         return None
+    repo_path_literal = __python_string_literal(repo_path)
     return f"""%%local
 from mage_ai.data_preparation.models.constants import BlockStatus
 from mage_ai.data_preparation.models.pipeline import Pipeline
@@ -321,7 +327,7 @@ import pandas
 block_uuid=\'{block_uuid}\'
 pipeline = Pipeline(
     uuid=\'{pipeline_uuid}\',
-    repo_path=\'{repo_path}\',
+    repo_path={repo_path_literal},
 )
 block = pipeline.get_block(block_uuid)
 variable_mapping = dict(df=df)
@@ -347,6 +353,7 @@ from pyspark.sql import SparkSession
 import os
 spark = SparkSession.builder.master(os.getenv('SPARK_MASTER_HOST', 'local')).getOrCreate()
 """
+    repo_path_literal = __python_string_literal(repo_path)
 
     return f"""
 from mage_ai.data_preparation.models.pipeline import Pipeline
@@ -357,7 +364,7 @@ import asyncio
 def execute_pipeline():
     pipeline = Pipeline(
         uuid=\'{pipeline_uuid}\',
-        repo_path=\'{repo_path}\',
+        repo_path={repo_path_literal},
         config={pipeline_config},
         repo_config={repo_config},
     )
