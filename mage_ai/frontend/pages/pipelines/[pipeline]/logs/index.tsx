@@ -44,7 +44,7 @@ import { find, indexBy, sortByKey } from '@utils/array';
 import { get, set } from '@storage/localStorage';
 import { goToWithQuery } from '@utils/routing';
 import { ignoreKeys, isEmptyObject, isEqual } from '@utils/hash';
-import { initializeLogs } from '@utils/models/log';
+import { getLogPlainTextForSearch, initializeLogs } from '@utils/models/log';
 import { numberWithCommas } from '@utils/string';
 import { queryFromUrl } from '@utils/url';
 
@@ -66,10 +66,11 @@ function PipelineLogsPage({
 
   const [query, setQuery] = useState<FilterQueryType>(null);
   const [selectedLog, setSelectedLog] = useState<LogType>(null);
-  const [selectedRange, setSelectedRange] = useState<LogRangeEnum>(null);
+  const [selectedRange, setSelectedRange] = useState<LogRangeEnum>(LogRangeEnum.LAST_DAY);
   const [errors, setErrors] = useState<ErrorsType>(null);
   const [selectedTab, setSelectedTab] = useState<TabType>(TAB_DETAILS);
   const [autoScrollLogs, setAutoScrollLogs] = useState(get(LOCAL_STORAGE_KEY_AUTO_SCROLL_LOGS, true));
+  const [messageSearch, setMessageSearch] = useState('');
 
   const { data: dataPipeline } = api.pipelines.detail(pipelineUUID, {
     includes_content: false,
@@ -225,7 +226,18 @@ function PipelineLogsPage({
       logsAll,
       query,
   ]);
-  const filteredLogCount = logsFiltered.length;
+
+  const logsAfterTextSearch: LogType[] = useMemo(() => {
+    const needle = messageSearch.trim().toLowerCase();
+    if (!needle) {
+      return logsFiltered;
+    }
+    return logsFiltered.filter(log =>
+      getLogPlainTextForSearch(log).toLowerCase().includes(needle),
+    );
+  }, [logsFiltered, messageSearch]);
+
+  const filteredLogCount = logsAfterTextSearch.length;
 
   const qPrev = usePrevious(q);
   useEffect(() => {
@@ -259,6 +271,19 @@ function PipelineLogsPage({
     selectedLog,
     selectedLogPrev,
   ]);
+
+  useEffect(() => {
+    if (!selectedLog?.data?.uuid) {
+      return;
+    }
+    const visible = logsAfterTextSearch.some(
+      ({ data }) => data?.uuid === selectedLog.data.uuid,
+    );
+    if (!visible) {
+      goToWithQuery({ [LOG_UUID_PARAM]: null });
+      setSelectedLog(null);
+    }
+  }, [logsAfterTextSearch, selectedLog]);
 
   const { _limit, _offset } = q;
   const limit = +(_limit || 0);
@@ -306,11 +331,12 @@ function PipelineLogsPage({
     <LogsTable
       autoScrollLogs={autoScrollLogs}
       blocksByUUID={blocksByUUID}
-      logs={logsFiltered}
+      logs={logsAfterTextSearch}
       onRowClick={setSelectedTab}
       pipeline={pipeline}
       query={query}
       saveScrollPosition={saveScrollPosition}
+      searchHighlight={messageSearch}
       setSelectedLog={setSelectedLog}
       tableInnerRef={tableInnerRef}
       themeContext={themeContext}
@@ -318,10 +344,13 @@ function PipelineLogsPage({
   ), [
     autoScrollLogs,
     blocksByUUID,
-    logsFiltered,
+    logsAfterTextSearch,
+    messageSearch,
     pipeline,
     query,
     saveScrollPosition,
+    setSelectedLog,
+    tableInnerRef,
     themeContext,
   ]);
 
@@ -330,6 +359,7 @@ function PipelineLogsPage({
       after={selectedLog && (
         <LogDetail
           log={selectedLog}
+          messageSearch={messageSearch}
           onClose={() => {
             goToWithQuery({ [LOG_UUID_PARAM]: null });
             setSelectedLog(null);
@@ -362,21 +392,24 @@ function PipelineLogsPage({
     >
       <Spacing px={PADDING_UNITS} py={1}>
         <Text>
-          {!isLoading && (
-            <>
-              {numberWithCommas(filteredLogCount)} logs found
-              <LogToolbar
-                allPastLogsLoaded={allPastLogsLoaded}
-                loadNewerLogInterval={loadNewerLogInterval}
-                loadPastLogInterval={loadPastLogInterval}
-                saveScrollPosition={saveScrollPosition}
-                selectedRange={selectedRange}
-                setSelectedRange={setSelectedRange}
-              />
-            </>
-          )}
+          {!isLoading && `${numberWithCommas(filteredLogCount)} logs found`}
           {isLoading && 'Searching...'}
         </Text>
+        {!isLoading && (
+          <LogToolbar
+            allPastLogsLoaded={allPastLogsLoaded}
+            loadNewerLogInterval={loadNewerLogInterval}
+            loadPastLogInterval={loadPastLogInterval}
+            messageSearch={messageSearch}
+            onMessageSearchChange={setMessageSearch}
+            saveScrollPosition={saveScrollPosition}
+            searchLimitedToLoadedHint={
+              Boolean(messageSearch.trim()) && !allPastLogsLoaded
+            }
+            selectedRange={selectedRange}
+            setSelectedRange={setSelectedRange}
+          />
+        )}
       </Spacing>
 
       <Divider light />
@@ -387,7 +420,16 @@ function PipelineLogsPage({
         </Spacing>
       )}
 
-      {!isLoading && logsFiltered.length >= 1 && LogsTableMemo}
+      {!isLoading && logsAfterTextSearch.length >= 1 && LogsTableMemo}
+
+      {!isLoading && logsFiltered.length >= 1 && logsAfterTextSearch.length < 1
+        && messageSearch.trim() && (
+        <Spacing px={PADDING_UNITS} py={1}>
+          <Text muted>
+            No log lines in the loaded window match that message search.
+          </Text>
+        </Spacing>
+      )}
 
       <Spacing p={`${UNIT * 1.5}px`}>
         <FlexContainer alignItems="center">

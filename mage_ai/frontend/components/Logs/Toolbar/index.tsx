@@ -43,7 +43,10 @@ type LogToolbarProps = {
   allPastLogsLoaded: boolean;
   loadNewerLogInterval: () => void;
   loadPastLogInterval: () => void;
+  messageSearch: string;
+  onMessageSearchChange: (value: string) => void;
   saveScrollPosition?: boolean;
+  searchLimitedToLoadedHint?: boolean;
   selectedRange: LogRangeEnum;
   setSelectedRange: (range: LogRangeEnum) => void;
 };
@@ -64,7 +67,10 @@ function LogToolbar({
   allPastLogsLoaded,
   loadNewerLogInterval,
   loadPastLogInterval,
+  messageSearch,
+  onMessageSearchChange,
   saveScrollPosition,
+  searchLimitedToLoadedHint,
   selectedRange,
   setSelectedRange,
 }: LogToolbarProps) {
@@ -134,7 +140,7 @@ function LogToolbar({
 
   return (
     <Spacing py={1}>
-      <FlexContainer alignItems="center">
+      <FlexContainer alignItems="center" flexWrap="wrap">
         <KeyboardShortcutButton
           {...SHARED_BUTTON_PROPS}
           disabled={allPastLogsLoaded}
@@ -272,7 +278,29 @@ function LogToolbar({
             </Button>
           </>
         )}
+
+        <Spacing mr={1} />
+
+        <TextInput
+          ariaLabel="Search log messages in the loaded window"
+          compact
+          defaultColor
+          monospace
+          onChange={e => onMessageSearchChange(e.target.value)}
+          paddingRight={UNIT * 2}
+          placeholder="Search message text…"
+          value={messageSearch}
+          width={UNIT * 28}
+        />
       </FlexContainer>
+      {searchLimitedToLoadedHint && (
+        <Spacing mt={1}>
+          <Text muted small>
+            Message search applies only to logs loaded in this view. Use &quot;Load older logs&quot;
+            to fetch more rows, then search again.
+          </Text>
+        </Spacing>
+      )}
     </Spacing>
   );
 }

@@ -1,4 +1,5 @@
-import { createElement, isValidElement, useMemo, useState } from 'react';
+import { createElement, isValidElement, useContext, useMemo, useState } from 'react';
+import { ThemeContext } from 'styled-components';
 
 import Button from '@oracle/elements/Button';
 import ButtonTabs, { TabType } from '@oracle/components/Tabs/ButtonTabs';
@@ -16,7 +17,7 @@ import {
 } from './index.style';
 import { Close } from '@oracle/icons';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
-import { formatTimestamp } from '@utils/models/log';
+import { formatTimestamp, stripAnsi } from '@utils/models/log';
 import { isJsonString } from '@utils/string';
 import { isObject } from '@utils/hash';
 import { sortByKey } from '@utils/array';
@@ -33,6 +34,7 @@ export const TAB_ERRORS = { uuid: 'Errors' };
 
 type LogDetailProps = {
   log: LogType;
+  messageSearch?: string;
   onClose: () => void;
   selectedTab: TabType;
   setSelectedTab: (tab: TabType) => void;
@@ -40,10 +42,12 @@ type LogDetailProps = {
 
 function LogDetail({
   log,
+  messageSearch,
   onClose,
   selectedTab,
   setSelectedTab,
 }: LogDetailProps) {
+  const themeContext = useContext(ThemeContext);
   const [showFullLogMessage, setShowFullLogMessage] = useState<boolean>(false);
   const {
     data,
@@ -163,6 +167,36 @@ function LogDetail({
 
             let valueToDisplay = v;
             let valueTitle = v;
+            const searchQ = messageSearch?.trim();
+            if (isMessageKey && searchQ && typeof v === 'string' && !showFullLogMessage) {
+              const plain = stripAnsi(v);
+              if (plain.toLowerCase().includes(searchQ.toLowerCase())) {
+                const escaped = searchQ.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                const segments = plain.split(new RegExp(`(${escaped})`, 'gi'));
+                valueTitle = plain;
+                valueToDisplay = (
+                  <>
+                    {segments.map((part, segIdx) => (
+                      part.toLowerCase() === searchQ.toLowerCase() ? (
+                        <Text
+                          backgroundColor={themeContext.accent.yellowLight}
+                          default
+                          inline
+                          key={segIdx}
+                          monospace
+                        >
+                          {part}
+                        </Text>
+                      ) : (
+                        <Text default inline key={segIdx} monospace>
+                          {part}
+                        </Text>
+                      )
+                    ))}
+                  </>
+                );
+              }
+            }
             if (isTagsKey) {
               valueToDisplay = isJsonString(v)
                 ? JSON.parse(JSON.stringify(v, null, 2))
@@ -180,7 +214,7 @@ function LogDetail({
                 valueToDisplay = createElement('pre', null, valueToDisplay.props.children);
               }
             }
-            if (typeof valueToDisplay === 'object') {
+            if (typeof valueToDisplay === 'object' && !isValidElement(valueToDisplay)) {
               try {
                 valueToDisplay = JSON.stringify(valueToDisplay, null, 2);
                 valueToDisplay = <pre>{valueToDisplay}</pre>;
