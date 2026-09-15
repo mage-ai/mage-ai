@@ -175,6 +175,13 @@ TEMPLATES_ONLY_FOR_V2 = [
         name='Google Cloud Storage',
         path='data_loaders/google_cloud_storage.py',
     ),
+    dict(
+        block_type=BlockType.DATA_LOADER,
+        groups=[GROUP_DATA_LAKES],
+        language=BlockLanguage.PYTHON,
+        name='SFTP',
+        path='data_loaders/sftp.py',
+    ),
     #   Data warehouses
     dict(
         block_type=BlockType.DATA_LOADER,
@@ -564,6 +571,13 @@ TEMPLATES_ONLY_FOR_V2 = [
         name='Google Cloud Storage',
         path='data_exporters/google_cloud_storage.py',
     ),
+    dict(
+        block_type=BlockType.DATA_EXPORTER,
+        groups=[GROUP_DATA_LAKES],
+        language=BlockLanguage.PYTHON,
+        name='SFTP',
+        path='data_exporters/sftp.py',
+    ),
     #   Data warehouses
     dict(
         block_type=BlockType.DATA_EXPORTER,
@@ -664,6 +678,13 @@ TEMPLATES_ONLY_FOR_V2 = [
         language=BlockLanguage.PYTHON,
         name='Google Cloud Storage',
         path='sensors/google_cloud_storage.py',
+    ),
+    dict(
+        block_type=BlockType.SENSOR,
+        groups=[GROUP_DATA_LAKES],
+        language=BlockLanguage.PYTHON,
+        name='SFTP',
+        path='sensors/sftp.py',
     ),
     #   Data warehouses
     dict(
