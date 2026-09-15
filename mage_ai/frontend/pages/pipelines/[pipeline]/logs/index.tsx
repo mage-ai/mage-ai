@@ -10,6 +10,7 @@ import {
 } from 'react';
 
 import BlockType, { BlockTypeEnum } from '@interfaces/BlockType';
+import Button from '@oracle/elements/Button';
 import Divider from '@oracle/elements/Divider';
 import ErrorsType from '@interfaces/ErrorsType';
 import Filter, { FilterQueryType, FilterQueryParamEnum } from '@components/Logs/Filter';
@@ -26,6 +27,7 @@ import PrivateRoute from '@components/shared/PrivateRoute';
 import Spacing from '@oracle/elements/Spacing';
 import Spinner from '@oracle/components/Spinner';
 import Text from '@oracle/elements/Text';
+import TextInput from '@oracle/elements/Inputs/TextInput';
 import ToggleSwitch from '@oracle/elements/Inputs/ToggleSwitch';
 import api from '@api';
 import dark from '@oracle/styles/themes/dark';
@@ -38,18 +40,22 @@ import { LOCAL_STORAGE_KEY_AUTO_SCROLL_LOGS } from '@storage/constants';
 import { MetaQueryEnum } from '@api/constants';
 import { PageNameEnum } from '@components/PipelineDetailPage/constants';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
+import { SEARCH_INPUT_PROPS } from '@components/shared/Table/Toolbar/constants';
 import { TabType } from '@oracle/components/Tabs/ButtonTabs';
 import { calculateStartTimestamp } from '@utils/number';
 import { find, indexBy, sortByKey } from '@utils/array';
 import { get, set } from '@storage/localStorage';
 import { goToWithQuery } from '@utils/routing';
 import { ignoreKeys, isEmptyObject, isEqual } from '@utils/hash';
-import { initializeLogs } from '@utils/models/log';
+import { Close } from '@oracle/icons';
+import { getLogMessageText, initializeLogs } from '@utils/models/log';
 import { numberWithCommas } from '@utils/string';
 import { queryFromUrl } from '@utils/url';
 
 const PIPELINE_RUN_ID_PARAM = 'pipeline_run_id[]';
 const BLOCK_RUN_ID_PARAM = 'block_run_id[]';
+const LOG_SEARCH_INPUT_MAX_WIDTH = UNIT * 40;
+const LOG_SEARCH_INPUT_MIN_WIDTH = UNIT * 24;
 
 type PipelineLogsPageProp = {
   pipeline: {
@@ -62,6 +68,7 @@ function PipelineLogsPage({
 }: PipelineLogsPageProp) {
   const themeContext = useContext(ThemeContext);
   const tableInnerRef = useRef(null);
+  const logSearchInputRef = useRef(null);
   const pipelineUUID = pipelineProp.uuid;
 
   const [query, setQuery] = useState<FilterQueryType>(null);
@@ -70,6 +77,7 @@ function PipelineLogsPage({
   const [errors, setErrors] = useState<ErrorsType>(null);
   const [selectedTab, setSelectedTab] = useState<TabType>(TAB_DETAILS);
   const [autoScrollLogs, setAutoScrollLogs] = useState(get(LOCAL_STORAGE_KEY_AUTO_SCROLL_LOGS, true));
+  const [logSearchText, setLogSearchText] = useState<string>('');
 
   const { data: dataPipeline } = api.pipelines.detail(pipelineUUID, {
     includes_content: false,
@@ -226,6 +234,21 @@ function PipelineLogsPage({
       query,
   ]);
   const filteredLogCount = logsFiltered.length;
+  const logSearchQuery = useMemo(() => logSearchText.trim().toLowerCase(), [logSearchText]);
+  const logsDisplayed: LogType[] = useMemo(() => {
+    if (!logSearchQuery?.length) {
+      return logsFiltered;
+    }
+
+    return logsFiltered.filter((log: LogType) => (
+      getLogMessageText(log).toLowerCase().includes(logSearchQuery)
+    ));
+  }, [
+    logSearchQuery,
+    logsFiltered,
+  ]);
+  const displayedLogCount = logsDisplayed.length;
+  const hasLogSearch = logSearchQuery.length >= 1;
 
   const qPrev = usePrevious(q);
   useEffect(() => {
@@ -258,6 +281,17 @@ function PipelineLogsPage({
     q,
     selectedLog,
     selectedLogPrev,
+  ]);
+  useEffect(() => {
+    if (selectedLog?.data?.uuid
+      && !logsDisplayed.some(({ data }) => data?.uuid === selectedLog.data?.uuid)
+    ) {
+      goToWithQuery({ [LOG_UUID_PARAM]: null });
+      setSelectedLog(null);
+    }
+  }, [
+    logsDisplayed,
+    selectedLog,
   ]);
 
   const { _limit, _offset } = q;
@@ -306,7 +340,7 @@ function PipelineLogsPage({
     <LogsTable
       autoScrollLogs={autoScrollLogs}
       blocksByUUID={blocksByUUID}
-      logs={logsFiltered}
+      logs={logsDisplayed}
       onRowClick={setSelectedTab}
       pipeline={pipeline}
       query={query}
@@ -318,7 +352,7 @@ function PipelineLogsPage({
   ), [
     autoScrollLogs,
     blocksByUUID,
-    logsFiltered,
+    logsDisplayed,
     pipeline,
     query,
     saveScrollPosition,
@@ -361,10 +395,25 @@ function PipelineLogsPage({
       uuid="pipeline/logs"
     >
       <Spacing px={PADDING_UNITS} py={1}>
-        <Text>
-          {!isLoading && (
-            <>
-              {numberWithCommas(filteredLogCount)} logs found
+        {!isLoading && (
+          <FlexContainer
+            alignItems="center"
+            flexWrap="wrap"
+            justifyContent="space-between"
+            style={{ gap: UNIT }}
+          >
+            <Flex
+              alignItems="center"
+              flexWrap="wrap"
+              style={{ gap: UNIT }}
+            >
+              <Text>
+                {hasLogSearch
+                  ? `${numberWithCommas(displayedLogCount)} of ${numberWithCommas(filteredLogCount)} logs match`
+                  : `${numberWithCommas(filteredLogCount)} logs found`
+                }
+              </Text>
+
               <LogToolbar
                 allPastLogsLoaded={allPastLogsLoaded}
                 loadNewerLogInterval={loadNewerLogInterval}
@@ -373,10 +422,51 @@ function PipelineLogsPage({
                 selectedRange={selectedRange}
                 setSelectedRange={setSelectedRange}
               />
-            </>
-          )}
-          {isLoading && 'Searching...'}
-        </Text>
+            </Flex>
+
+            <Flex
+              alignItems="center"
+              flex="1 1 240px"
+              justifyContent="flex-end"
+              style={{
+                gap: UNIT,
+                maxWidth: LOG_SEARCH_INPUT_MAX_WIDTH + (UNIT * 5),
+                minWidth: LOG_SEARCH_INPUT_MIN_WIDTH,
+              }}
+            >
+              <TextInput
+                {...SEARCH_INPUT_PROPS}
+                maxWidth={LOG_SEARCH_INPUT_MAX_WIDTH}
+                minWidth={LOG_SEARCH_INPUT_MIN_WIDTH}
+                onChange={e => setLogSearchText(e.target.value)}
+                paddingVertical={6}
+                placeholder="Search messages"
+                ref={logSearchInputRef}
+                value={logSearchText}
+              />
+
+              {logSearchText && (
+                <Button
+                  iconOnly
+                  noBackground
+                  noBorder
+                  onClick={() => {
+                    setLogSearchText('');
+                    logSearchInputRef?.current?.focus();
+                  }}
+                  title="Clear search"
+                >
+                  <Close default size={2 * UNIT} />
+                </Button>
+              )}
+            </Flex>
+          </FlexContainer>
+        )}
+        {isLoading && (
+          <Text>
+            Searching...
+          </Text>
+        )}
       </Spacing>
 
       <Divider light />
@@ -387,7 +477,15 @@ function PipelineLogsPage({
         </Spacing>
       )}
 
-      {!isLoading && logsFiltered.length >= 1 && LogsTableMemo}
+      {!isLoading && logsDisplayed.length >= 1 && LogsTableMemo}
+
+      {!isLoading && logsDisplayed.length === 0 && (
+        <Spacing p={PADDING_UNITS}>
+          <Text muted>
+            {hasLogSearch ? 'No matching logs found.' : 'No logs found.'}
+          </Text>
+        </Spacing>
+      )}
 
       <Spacing p={`${UNIT * 1.5}px`}>
         <FlexContainer alignItems="center">
