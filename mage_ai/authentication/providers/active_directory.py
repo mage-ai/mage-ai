@@ -125,7 +125,7 @@ class ADProvider(SsoProvider, OauthProvider):
     async def get_access_token_response(self, code: str, **kwargs) -> Awaitable[Dict]:
         base_url = get_base_url(kwargs.get('redirect_uri'))
 
-        async with aiohttp.ClientSession() as session:
+        async with aiohttp.ClientSession(trust_env=True) as session:
             async with session.post(
                 f'{self.host}/organizations/oauth2/v2.0/token',
                 headers={
@@ -152,7 +152,7 @@ class ADProvider(SsoProvider, OauthProvider):
             raise Exception('Access token is required to fetch user info.')
 
         mage_roles = []
-        async with aiohttp.ClientSession() as session:
+        async with aiohttp.ClientSession(trust_env=True) as session:
             async with session.get(
                 f'{self.graph_api_host}/v1.0/me',
                 headers={
