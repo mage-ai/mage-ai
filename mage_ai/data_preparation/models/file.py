@@ -13,7 +13,6 @@ from mage_ai.data_preparation.models.errors import (
 )
 from mage_ai.data_preparation.models.project import Project
 from mage_ai.data_preparation.models.project.constants import FeatureUUID
-from mage_ai.settings.platform import project_platform_activated
 from mage_ai.settings.repo import get_repo_path
 from mage_ai.shared.environments import is_debug
 from mage_ai.shared.files import exists_async, rename_async, write_async
@@ -498,9 +497,6 @@ class File:
 
 
 def ensure_file_is_in_project(file_path: str) -> None:
-    if project_platform_activated():
-        return
-
     full_file_path = get_absolute_path(file_path)
     full_repo_path = get_absolute_path(get_repo_path(file_path=file_path))
     if full_repo_path != os.path.commonpath([full_file_path, full_repo_path]):
