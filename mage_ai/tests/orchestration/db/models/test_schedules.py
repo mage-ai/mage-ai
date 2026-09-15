@@ -15,6 +15,7 @@ from mage_ai.data_preparation.models.triggers import (
     Trigger,
 )
 from mage_ai.data_preparation.repo_manager import get_repo_config
+from mage_ai.orchestration.db import db_connection
 from mage_ai.orchestration.db.models.schedules import (
     BlockRun,
     PipelineRun,
@@ -189,6 +190,43 @@ class PipelineScheduleTests(DBTestCase):
                 schedule_interval='random_str',
             )
         self.assertTrue('Cron expression is invalid.' in str(context.exception))
+
+        PipelineSchedule.create(
+            name=self.faker.name(),
+            pipeline_uuid='test_pipeline',
+            schedule_interval='',
+            schedule_type=ScheduleType.TIME,
+            status=ScheduleStatus.INACTIVE,
+        )
+        PipelineSchedule.create(
+            name=self.faker.name(),
+            pipeline_uuid='test_pipeline',
+            schedule_interval='',
+            schedule_type=ScheduleType.API,
+            status=ScheduleStatus.ACTIVE,
+        )
+
+        with self.assertRaises(ValueError) as context:
+            PipelineSchedule.create(
+                name=self.faker.name(),
+                pipeline_uuid='test_pipeline',
+                schedule_interval='',
+                schedule_type=ScheduleType.TIME,
+                status=ScheduleStatus.ACTIVE,
+            )
+        self.assertTrue('Cron expression cannot be empty.' in str(context.exception))
+
+        pipeline_schedule = PipelineSchedule.create(
+            name=self.faker.name(),
+            pipeline_uuid='test_pipeline',
+            schedule_interval='',
+            schedule_type=ScheduleType.TIME,
+            status=ScheduleStatus.INACTIVE,
+        )
+        with self.assertRaises(ValueError) as context:
+            pipeline_schedule.update(status=ScheduleStatus.ACTIVE)
+        self.assertTrue('Cron expression cannot be empty.' in str(context.exception))
+        db_connection.session.rollback()
 
     def test_active_schedules(self):
         create_pipeline_with_blocks(
