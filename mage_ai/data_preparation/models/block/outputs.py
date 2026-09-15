@@ -43,7 +43,7 @@ from mage_ai.shared.parsers import (
     encode_complex,
     has_to_dict,
 )
-from mage_ai.shared.strings import is_json
+from mage_ai.shared.strings import is_image, is_json
 
 
 def format_output_data(
@@ -371,6 +371,7 @@ df = get_variable('{block.pipeline.uuid}', '{block.uuid}', 'df')
         return data, False
     elif is_primitive(data):
         json_data = is_json(data)
+        img_format, img_data = is_image(data)
         if json_data:
             text_data = json_data.get('data') or ''
             if isinstance(text_data, list):
@@ -378,6 +379,19 @@ df = get_variable('{block.pipeline.uuid}', '{block.uuid}', 'df')
             data = dict(
                 text_data=text_data,
                 type=DataType.TEXT_PLAIN,
+                variable_uuid=variable_uuid,
+            )
+        elif img_data:
+            FORMAT_TO_DATA_TYPE = {
+                'PNG': DataType.IMAGE_PNG,
+                'JPEG': DataType.IMAGE_JPEG,
+                'GIF': DataType.IMAGE_GIF,
+                'WebP': DataType.IMAGE_WEBP,
+            }
+            mime_type = FORMAT_TO_DATA_TYPE.get(img_format, DataType.IMAGE_PNG)
+            data = dict(
+                text_data=str(data),
+                type=mime_type,
                 variable_uuid=variable_uuid,
             )
         else:
