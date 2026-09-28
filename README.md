@@ -68,6 +68,10 @@ conda install -c conda-forge mage-ai
 
 Full setup guide and docs: [docs.mage.ai](https://docs.mage.ai/getting-started/setup#%E2%9B%B5%EF%B8%8F-mage-oss-overview)
 
+[Easypanel](https://easypanel.io) is a self-hosted Docker deployment platform, and it maintains a one-click deployment template for Mage OSS:
+
+[![Deploy on Easypanel](https://easypanel.io/img/deploy-on-easypanel-40.svg)](https://easypanel.io/templates/mageai)
+
 <br />
 
 ## Core Features
