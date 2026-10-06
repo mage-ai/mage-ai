@@ -108,6 +108,7 @@ export const COMMON_EXCLUDE_DIR_PATTERNS = new RegExp(['compiled', '__pycache__'
 
 export default interface FileType {
   children?: FileType[];
+  children_loaded?: boolean;
   content?: string;
   disabled?: boolean;
   extension?: FileExtensionEnum;
