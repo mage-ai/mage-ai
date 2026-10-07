@@ -61,6 +61,7 @@ FilePolicy.allow_write([
 
 FilePolicy.allow_query(
     [
+        'directory_path',
         'exclude_dir_pattern',
         'exclude_pattern',
         'flatten',
@@ -68,6 +69,8 @@ FilePolicy.allow_query(
         'pattern',
         'project_uuid',
         'repo_path',
+        'search',
+        'unused_only',
         'version_control_files',
     ],
     scopes=[

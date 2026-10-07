@@ -508,7 +508,7 @@ function useFileComponents(
   const wholeTreeQuery = {
     ...(showHiddenFilesSetting && showHiddenFiles ? FILES_QUERY_INCLUDE_HIDDEN_FILES : {}),
     include_pipeline_count: query?.include_pipeline_count,
-    ...(debouncedFileSearchText ? { search: encodeURIComponent(debouncedFileSearchText) } : {}),
+    ...(debouncedFileSearchText ? { search: debouncedFileSearchText } : {}),
     ...(fileFilter === FileFilterEnum.UNUSED_BLOCK_FILES ? { unused_only: true } : {}),
   };
   const { data: wholeTreeData } = api.files.list(
@@ -537,7 +537,7 @@ function useFileComponents(
       const response = await api.files.listAsync({
         ...(showHiddenFilesSetting && showHiddenFiles ? FILES_QUERY_INCLUDE_HIDDEN_FILES : {}),
         ...query,
-        directory_path: encodeURIComponent(path),
+        directory_path: path,
       });
       const data = response?.data || response;
       if (data?.error) throw new Error(data.error.message);

@@ -1,3 +1,4 @@
+import asyncio
 import os
 import re
 import urllib.parse
@@ -43,6 +44,18 @@ def resolve_directory_path(repo_path: str, directory_path: str) -> str:
     return scan_path
 
 
+def initialize_block_cache_for_file_listing() -> None:
+    # Cache initialization has synchronous discovery and mapping work even
+    # though it is async. Give it a worker-owned loop to keep Tornado responsive.
+    asyncio.run(BlockCache.initialize_cache())
+
+
+def query_value_is_true(value) -> bool:
+    if isinstance(value, bytes):
+        value = value.decode('utf-8')
+    return value is True or isinstance(value, str) and value.lower() == 'true'
+
+
 class FileResource(GenericResource):
     @classmethod
     @safe_db_query
@@ -59,9 +72,7 @@ class FileResource(GenericResource):
         if isinstance(search, bytes):
             search = search.decode('utf-8')
 
-        unused_only = query.get('unused_only', [False])
-        if unused_only:
-            unused_only = unused_only[0] in [True, 'true', 'True']
+        unused_only = query_value_is_true(query.get('unused_only', [False])[0])
 
         pattern = query.get('pattern', [None])
         if pattern:
@@ -87,11 +98,11 @@ class FileResource(GenericResource):
         if project_uuid:
             project_uuid = project_uuid[0]
 
-        include_pipeline_count = query.get('include_pipeline_count', [False])
-        if include_pipeline_count:
-            include_pipeline_count = include_pipeline_count[0]
-        if include_pipeline_count:
-            await BlockCache.initialize_cache()
+        include_pipeline_count = query_value_is_true(
+            query.get('include_pipeline_count', [False])[0],
+        )
+        if include_pipeline_count or unused_only:
+            await run_file_work(initialize_block_cache_for_file_listing)
 
         exclude_dir_pattern = query.get('exclude_dir_pattern', [None])
         if exclude_dir_pattern:
