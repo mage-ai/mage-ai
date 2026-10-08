@@ -11,6 +11,8 @@ from mage_ai.api.operations.constants import CREATE, DELETE, DETAIL, LIST, UPDAT
 from mage_ai.services.tracking.metrics import increment, timing
 from mage_ai.shared.parsers import encode_complex
 
+MAX_FILE_UPLOAD_SIZE = 50 * 1024 * 1024  # 50 MB per file
+
 
 async def execute_operation(
     handler,
@@ -43,6 +45,17 @@ async def execute_operation(
         )
 
     action, options = __determine_action(request, child=child, child_pk=child_pk, pk=pk)
+
+    for file_list in request.files.values():
+        for file_info in file_list:
+            if len(file_info.get('body', b'')) > MAX_FILE_UPLOAD_SIZE:
+                return __render_error(
+                    handler,
+                    dict(code=413, message='Uploaded file exceeds maximum allowed size.'),
+                    http_error_codes=True,
+                    **tags,
+                )
+
     try:
         base_operation = BaseOperation(
             action=action,
