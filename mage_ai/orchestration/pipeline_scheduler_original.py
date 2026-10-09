@@ -44,6 +44,7 @@ from mage_ai.orchestration.metrics.pipeline_run import (
 )
 from mage_ai.orchestration.notification.config import NotificationConfig
 from mage_ai.orchestration.notification.sender import NotificationSender
+from mage_ai.services.k8s.constants import K8S_RETRY_PENDING_METRIC_KEY
 from mage_ai.orchestration.utils.distributed_lock import DistributedLock
 from mage_ai.orchestration.utils.git import log_git_sync, run_git_sync
 from mage_ai.orchestration.utils.resources import get_compute, get_memory
@@ -305,7 +306,11 @@ class PipelineScheduler:
                 )
                 self.pipeline_run.update(status=status)
                 self.on_pipeline_run_failure('Pipeline run timed out.', status=status)
-            elif self.pipeline_run.any_blocks_failed() and not self.allow_blocks_to_fail:
+            elif (
+                self.pipeline_run.any_blocks_failed()
+                and not self.allow_blocks_to_fail
+                and not self.__any_failed_block_awaiting_k8s_retry()
+            ):
                 self.pipeline_run.update(status=PipelineRun.PipelineRunStatus.FAILED)
 
                 # Backfill status updated to "failed" if at least 1 of its pipeline runs failed
@@ -439,6 +444,26 @@ class PipelineScheduler:
             ),
         )
 
+    def __any_failed_block_awaiting_k8s_retry(self) -> bool:
+        """
+        Whether a FAILED block run is still backed by a Kubernetes Job that has
+        backoffLimit attempts left.
+
+        The block executor records this on the block run when it writes the failure,
+        so no Kubernetes API call is needed here. While it holds, the pipeline run is
+        left alone and re-evaluated on the next tick: a block that goes on to succeed
+        on a Job retry must not leave the run failed. The block run itself is already
+        FAILED, so the failure stays visible while the retry is in flight.
+
+        on_block_failure clears the flag once the Job is genuinely exhausted, which is
+        what lets the run fail even if the last pod dies without reporting.
+        """
+        for block_run in self.pipeline_run.failed_block_runs:
+            if (block_run.metrics or {}).get(K8S_RETRY_PENDING_METRIC_KEY):
+                return True
+
+        return False
+
     @safe_db_query
     def on_block_failure(self, block_uuid: str, **kwargs) -> None:
         job_manager = get_job_manager()
@@ -451,6 +476,10 @@ class PipelineScheduler:
                 metrics=metrics,
                 status=BlockRun.BlockRunStatus.FAILED,
             )
+
+        # Reached only once JobManager.run_job has given up, so the Job really is
+        # exhausted; clear the flag so the pipeline run is free to fail.
+        metrics[K8S_RETRY_PENDING_METRIC_KEY] = False
 
         error = kwargs.get('error', {})
         if error:

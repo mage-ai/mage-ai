@@ -19,6 +19,7 @@ from kubernetes.client import (
 )
 
 from mage_ai.services.k8s.config import K8sExecutorConfig
+from mage_ai.services.k8s.constants import MAGE_K8S_JOB_NAME_ENV_VAR
 from mage_ai.services.k8s.job_manager import (
     JobManager,
     filter_used_volumes,
@@ -271,10 +272,13 @@ class JobManagerTests(TestCase):
         # Assertions
         self.assertEqual(job.spec.template.spec.containers[0].image, 'test_image_2')
         self.assertEqual(job.spec.template.spec.containers[0].image_pull_policy, 'Always')
+        # MAGE_K8S_JOB_NAME is injected so the block executor running inside the pod can
+        # look up its own Job and record whether backoffLimit retries are still pending.
         self.assertEqual(job.spec.template.spec.containers[0].env, [
             dict(name='spark_host', value='127.0.0.1'),
             V1EnvVar(name='VAR1', value='VALUE1'),
             V1EnvVar(name='VAR2', value='VALUE2'),
+            V1EnvVar(name=MAGE_K8S_JOB_NAME_ENV_VAR, value='test_job_name'),
         ])
         self.assertEqual(
             job.spec.template.spec.containers[0].resources,

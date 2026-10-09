@@ -43,6 +43,7 @@ from mage_ai.orchestration.metrics.pipeline_run import (
 )
 from mage_ai.orchestration.notification.config import NotificationConfig
 from mage_ai.orchestration.notification.sender import NotificationSender
+from mage_ai.services.k8s.constants import K8S_RETRY_PENDING_METRIC_KEY
 from mage_ai.orchestration.utils.distributed_lock import DistributedLock
 from mage_ai.orchestration.utils.git import log_git_sync, run_git_sync
 from mage_ai.orchestration.utils.resources import get_compute, get_memory
@@ -303,7 +304,11 @@ class PipelineScheduler:
                 self.pipeline_run.update(status=status)
 
                 self.on_pipeline_run_failure('Pipeline run timed out.')
-            elif self.pipeline_run.any_blocks_failed() and not self.allow_blocks_to_fail:
+            elif (
+                self.pipeline_run.any_blocks_failed()
+                and not self.allow_blocks_to_fail
+                and not self.__any_failed_block_awaiting_k8s_retry()
+            ):
                 self.pipeline_run.update(status=PipelineRun.PipelineRunStatus.FAILED)
 
                 # Backfill status updated to "failed" if at least 1 of its pipeline runs failed
@@ -412,6 +417,17 @@ class PipelineScheduler:
             ),
         )
 
+    def __any_failed_block_awaiting_k8s_retry(self) -> bool:
+        """
+        Whether a FAILED block run is still backed by a Kubernetes Job that has
+        backoffLimit attempts left. See the same method on the original scheduler.
+        """
+        for block_run in self.pipeline_run.failed_block_runs:
+            if (block_run.metrics or {}).get(K8S_RETRY_PENDING_METRIC_KEY):
+                return True
+
+        return False
+
     @safe_db_query
     def on_block_failure(self, block_uuid: str, **kwargs) -> None:
         block_run = BlockRun.get(pipeline_run_id=self.pipeline_run.id, block_uuid=block_uuid)
@@ -423,6 +439,10 @@ class PipelineScheduler:
                 metrics=metrics,
                 status=BlockRun.BlockRunStatus.FAILED,
             )
+
+        # Reached only once JobManager.run_job has given up, so the Job really is
+        # exhausted; clear the flag so the pipeline run is free to fail.
+        metrics[K8S_RETRY_PENDING_METRIC_KEY] = False
 
         error = kwargs.get('error', {})
         if error:

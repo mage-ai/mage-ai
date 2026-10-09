@@ -27,6 +27,7 @@ from mage_ai.orchestration.pipeline_scheduler import (
     check_sla,
     schedule_all,
 )
+from mage_ai.services.k8s.constants import K8S_RETRY_PENDING_METRIC_KEY
 from mage_ai.shared.array import find
 from mage_ai.shared.hash import ignore_keys, merge_dict
 from mage_ai.tests.base_test import DBTestCase
@@ -430,6 +431,50 @@ class PipelineSchedulerTests(DBTestCase):
                 pipeline_run=pipeline_run,
                 stacktrace=None,
             )
+
+    def test_schedule_with_block_failure_awaiting_k8s_retry(self):
+        """
+        A block whose Kubernetes Job still has backoffLimit attempts left must not fail
+        the pipeline run, and must not notify: the retry may still succeed. The block run
+        itself stays FAILED so the failure remains visible.
+        """
+        pipeline_run = create_pipeline_run_with_schedule(
+            pipeline_uuid='test_pipeline',
+        )
+        pipeline_run.update(status=PipelineRun.PipelineRunStatus.RUNNING)
+        block_runs = pipeline_run.block_runs
+        block_runs[0].update(
+            status=BlockRun.BlockRunStatus.FAILED,
+            metrics={K8S_RETRY_PENDING_METRIC_KEY: True},
+        )
+        scheduler = PipelineScheduler(pipeline_run=pipeline_run)
+        with patch.object(
+            scheduler.notification_sender, 'send_pipeline_run_failure_message'
+        ) as mock_send_message:
+            scheduler.schedule()
+            self.assertEqual(pipeline_run.status, PipelineRun.PipelineRunStatus.RUNNING)
+            mock_send_message.assert_not_called()
+
+    def test_schedule_with_block_failure_after_k8s_retries_exhausted(self):
+        """
+        Once the Job is exhausted the flag is false, and the run fails as it always did.
+        """
+        pipeline_run = create_pipeline_run_with_schedule(
+            pipeline_uuid='test_pipeline',
+        )
+        pipeline_run.update(status=PipelineRun.PipelineRunStatus.RUNNING)
+        block_runs = pipeline_run.block_runs
+        block_runs[0].update(
+            status=BlockRun.BlockRunStatus.FAILED,
+            metrics={K8S_RETRY_PENDING_METRIC_KEY: False},
+        )
+        scheduler = PipelineScheduler(pipeline_run=pipeline_run)
+        with patch.object(
+            scheduler.notification_sender, 'send_pipeline_run_failure_message'
+        ) as mock_send_message:
+            scheduler.schedule()
+            self.assertEqual(pipeline_run.status, PipelineRun.PipelineRunStatus.FAILED)
+            mock_send_message.assert_called_once()
 
     @patch('mage_ai.orchestration.pipeline_scheduler_original.run_pipeline')
     @patch('mage_ai.orchestration.pipeline_scheduler_original.get_job_manager')
