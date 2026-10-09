@@ -68,3 +68,19 @@ class TestTableBigQuery(DBTestCase):
 
         self.bigquery_instance.client.create_dataset.assert_not_called()
         self.bigquery_instance.client.load_table_from_dataframe.assert_not_called()
+
+    def test_execute_returns_query_result(self):
+        # Mock the query job and result
+        mock_query_job = MagicMock()
+        mock_result = MagicMock()
+        mock_query_job.result.return_value = mock_result
+        self.bigquery_instance.client.query.return_value = mock_query_job
+
+        # Execute a query
+        query_string = "SELECT * FROM test_table"
+        result = self.bigquery_instance.execute(query_string)
+
+        # Verify that query was called and result was returned
+        self.bigquery_instance.client.query.assert_called_once()
+        self.assertEqual(result, mock_result)
+        mock_query_job.result.assert_called_once()
