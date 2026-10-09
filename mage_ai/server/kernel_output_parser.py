@@ -5,6 +5,9 @@ from mage_ai.shared.enum import StrEnum
 class DataType(StrEnum):
     DATA_FRAME = 'data_frame'
     IMAGE_PNG = 'image/png'
+    IMAGE_JPEG = 'image/jpeg'
+    IMAGE_GIF = 'image/gif'
+    IMAGE_WEBP = 'image/webp'
     PROGRESS = 'progress'  # Deprecated; can come from Great Expectations
     PROGRESS_STATUS = 'progress_status'  # Comes from execute_custom_code.py
     GROUP = 'group'
@@ -43,6 +46,9 @@ def parse_output_message(message: dict) -> dict:
     text_html = data.get('text/html')
     code = data.get('code')
     image = data.get('image/png')
+    image_jpeg = data.get('image/jpeg')
+    image_gif = data.get('image/gif')
+    image_webp = data.get('image/webp')
 
     if content.get('name') in ['stdout', 'stderr']:
         text_stdout = content.get('text')
@@ -54,6 +60,15 @@ def parse_output_message(message: dict) -> dict:
     elif image:
         data_content = image
         data_type = DataType.IMAGE_PNG
+    elif image_jpeg:
+        data_content = image_jpeg
+        data_type = DataType.IMAGE_JPEG
+    elif image_gif:
+        data_content = image_gif
+        data_type = DataType.IMAGE_GIF
+    elif image_webp:
+        data_content = image_webp
+        data_type = DataType.IMAGE_WEBP
     elif traceback:
         data_content = [line for line in traceback]
         data_type = DataType.TEXT
