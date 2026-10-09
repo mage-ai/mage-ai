@@ -18,6 +18,7 @@ from mage_ai.authentication.permissions.constants import (
     PermissionAccess,
     PermissionCondition,
 )
+from mage_ai.orchestration.constants import Entity
 from mage_ai.orchestration.db.models.oauth import Permission, User
 from mage_ai.settings import (
     DISABLE_NOTEBOOK_EDIT_ACCESS,
@@ -64,6 +65,9 @@ async def validate_condition_with_permissions(
     resource_attribute: str = None,
 ) -> bool:
     entity_name = policy.entity_name_uuid()
+    # Hardcode entity scope to project for now
+    entity_scope = Entity.PROJECT
+    entity_scope_id = policy.project_uuid
     access = OPERATION_TYPE_TO_ACCESS_MAPPING.get(operation) or Permission.Access.OWNER
     disable_access = OPERATION_TYPE_DISABLE_TO_ACCESS_MAPPING.get(operation)
 
@@ -87,6 +91,8 @@ async def validate_condition_with_permissions(
     async def __permission_grants_access(
         permission: Permission,
         entity_name=entity_name,
+        entity_scope=entity_scope,
+        entity_scope_id=entity_scope_id,
         access=access,
         disable_access=disable_access,
         access_for_attribute_operation=access_for_attribute_operation,
@@ -101,6 +107,9 @@ async def validate_condition_with_permissions(
         # Check if user is an owner
         if permission.access & PermissionAccess.OWNER:
             return (True, False)
+
+        if not permission.verify_scope(entity_scope, entity_scope_id):
+            return (False, False)
 
         # 1. Get permissions for current entity_name for roles belonging to current user.
         # Include permissions where entity_name is ALL or ALL_EXCEPT_RESERVED.

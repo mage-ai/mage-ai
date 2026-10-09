@@ -7,6 +7,7 @@ from mage_ai.authentication.permissions.constants import (
     EntityName,
     PipelineEntityType,
 )
+from mage_ai.orchestration.constants import Entity
 
 
 class PermissionPresenter(BasePresenter):
@@ -16,6 +17,8 @@ class PermissionPresenter(BasePresenter):
         'entity',
         'entity_id',
         'entity_name',
+        'entity_scope',
+        'entity_scope_id',
         'entity_type',
         'id',
         'updated_at',
@@ -28,6 +31,9 @@ class PermissionPresenter(BasePresenter):
         return sorted(
             [n for n in BlockEntityType] + [n for n in PipelineEntityType],
         )
+
+    def entity_scopes(self, **kwargs) -> List[str]:
+        return [Entity.PROJECT]
 
 
 PermissionPresenter.register_format(
@@ -49,6 +55,7 @@ PermissionPresenter.register_formats([
 ], PermissionPresenter.default_attributes + [
     'conditions',
     'entity_names',
+    'entity_scopes',
     'entity_types',
     'query_attributes',
     'read_attributes',
@@ -65,5 +72,6 @@ PermissionPresenter.register_formats([
     'with_only_entity_options',
 ], [
     'entity_names',
+    'entity_scopes',
     'entity_types',
 ])

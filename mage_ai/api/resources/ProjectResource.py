@@ -15,6 +15,7 @@ from mage_ai.data_preparation.repo_manager import (
     ProjectType,
     get_repo_config,
     init_repo,
+    set_project_uuid_from_metadata,
 )
 from mage_ai.orchestration.db import safe_db_query
 from mage_ai.server.constants import VERSION
@@ -117,12 +118,14 @@ class ProjectResource(GenericResource):
     @classmethod
     @safe_db_query
     async def create(self, payload, user, **kwargs):
-        project_uuid = payload.get('uuid')
         project_repo_path = payload.get('repo_path')
         project_type = payload.get('type')
+        project_uuid = payload.get('uuid')
 
         directory = os.path.join(base_repo_path(), project_repo_path)
         if ProjectType.STANDALONE == project_type:
+            # we need project_uuid to be unique for each project
+            project_uuid = uuid.uuid4().hex
             init_repo(
                 os.path.join(directory, project_uuid),
                 project_type=project_type,
@@ -161,6 +164,8 @@ class ProjectResource(GenericResource):
                     ),
                 })
                 f.write(content)
+
+        set_project_uuid_from_metadata()
 
         return self({}, user, **kwargs)
 
