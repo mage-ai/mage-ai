@@ -92,6 +92,12 @@ default:
   # Qdrant
   QDRANT_COLLECTION: collection
   QDRANT_PATH: path
+  # SFTP
+  SFTP_HOST: hostname
+  SFTP_USERNAME: username
+  SFTP_PASSWORD: password
+  SFTP_PKEY: /path/to/private_key   # Optional – used instead of password
+  SFTP_PORT: 22
   # Redshift
   REDSHIFT_SCHEMA: public # Optional
   REDSHIFT_DBNAME: redshift_db_name
