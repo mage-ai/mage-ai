@@ -23,6 +23,7 @@ from kubernetes import client
 from kubernetes.client.exceptions import ApiException
 from kubernetes.stream import stream
 from urllib3.connectionpool import HTTPConnectionPool
+from urllib3.response import HTTPResponse
 from urllib3.util import Retry
 
 from mage_ai.services.k8s.api_client import KubernetesApiClient
@@ -55,10 +56,21 @@ class _Handler(BaseHTTPRequestHandler):
         elif self.server.mode == 'retry':
             self.server.status = 200
         body = json.dumps(JOB).encode()
+        if self.server.mode == 'malformed':
+            job = dict(JOB, status={'succeeded': SECRET})
+            body = json.dumps(job).encode()
         # Include dummy secrets even in the remote reason phrase and headers.
         self.send_response(self.server.status, SECRET)
         self.send_header('Content-Type', 'application/json')
-        self.send_header('Content-Length', str(len(body)))
+        if self.server.mode in ('broken_chunk', 'chunked'):
+            self.send_header('Transfer-Encoding', 'chunked')
+            if self.server.mode == 'broken_chunk':
+                body = (SECRET + '\r\n').encode()
+            else:
+                body = f'{len(body):x}\r\n'.encode() + body + b'\r\n0\r\n\r\n'
+            self.close_connection = True
+        else:
+            self.send_header('Content-Length', str(len(body)))
         self.send_header('Set-Cookie', SECRET)
         self.end_headers()
         self.wfile.write(body)
@@ -342,6 +354,85 @@ class KubernetesApiClientTests(unittest.TestCase):
                         finally:
                             response.release_conn()
                 self.assertNotIn(SECRET, capture.getvalue())
+
+    def test_malformed_response_traceback_does_not_leak_values(self):
+        for asynchronous in (False, True):
+            with self.subTest(async_req=asynchronous):
+                capture = io.StringIO()
+                with redirect_stdout(capture), redirect_stderr(capture):
+                    set_logging_format(level='DEBUG')
+                    configuration, server = self.configuration('https')
+                    configuration.debug = True
+                    server.mode = 'malformed'
+                    with KubernetesApiClient(configuration) as api_client:
+                        try:
+                            result = client.BatchV1Api(api_client).read_namespaced_job(
+                                'dummy', 'dummy', async_req=asynchronous,
+                            )
+                            if asynchronous:
+                                result.get()
+                        except ValueError as error:
+                            self.assertEqual(str(error), 'Invalid Kubernetes API response')
+                            logging.exception('Kubernetes response failed')
+                        else:
+                            self.fail('Expected a response conversion failure')
+                self.assertNotIn(SECRET, capture.getvalue())
+
+    def test_deferred_response_traceback_does_not_leak_values(self):
+        readers = {
+            'read': lambda response: response.read(),
+            'stream': lambda response: list(response.stream()),
+            'read_chunked': lambda response: list(response.read_chunked()),
+            'data': lambda response: response.data,
+            'readinto': lambda response: response.readinto(bytearray(128)),
+            'iteration': lambda response: list(response),
+        }
+        for name, read in readers.items():
+            with self.subTest(reader=name):
+                capture = io.StringIO()
+                with redirect_stdout(capture), redirect_stderr(capture):
+                    set_logging_format(level='DEBUG')
+                    configuration, server = self.configuration('https')
+                    configuration.debug = True
+                    server.mode = 'broken_chunk'
+                    with KubernetesApiClient(configuration) as api_client:
+                        response = client.BatchV1Api(api_client).read_namespaced_job(
+                            'dummy', 'dummy', _preload_content=False,
+                        )
+                        try:
+                            read(response)
+                        except Exception:
+                            logging.exception('Kubernetes response failed')
+                        else:
+                            self.fail('Expected a deferred transport failure')
+                        finally:
+                            response.release_conn()
+                self.assertIn('Kubernetes transport failed', capture.getvalue())
+                self.assertNotIn(SECRET, capture.getvalue())
+
+    def test_chunked_stream_preserves_response_and_caller_diagnostics(self):
+        capture = io.StringIO()
+        with redirect_stderr(capture):
+            set_logging_format(level='DEBUG')
+            configuration, server = self.configuration('https')
+            server.mode = 'chunked'
+            with KubernetesApiClient(configuration) as api_client:
+                response = client.BatchV1Api(api_client).read_namespaced_job(
+                    'dummy', 'dummy', _preload_content=False,
+                )
+                self.assertIsInstance(response, HTTPResponse)
+                self.assertEqual(response.status, 200)
+                try:
+                    chunks = response.stream()
+                    body = next(chunks)
+                    logging.getLogger('urllib3').setLevel(logging.DEBUG)
+                    logging.getLogger('urllib3.connectionpool').debug('caller diagnostic')
+                    body += b''.join(chunks)
+                    self.assertEqual(json.loads(body), JOB)
+                finally:
+                    response.release_conn()
+        self.assertIn('caller diagnostic', capture.getvalue())
+        self.assertNotIn(SECRET, capture.getvalue())
 
     def test_untrusted_tls_certificate_is_rejected(self):
         capture = io.StringIO()

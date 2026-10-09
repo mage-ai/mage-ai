@@ -10,6 +10,7 @@ from kubernetes.client.exceptions import ApiException
 from urllib3.connection import HTTPConnection, HTTPSConnection
 from urllib3.connectionpool import HTTPConnectionPool, HTTPSConnectionPool
 from urllib3.exceptions import HTTPError
+from urllib3.response import HTTPResponse
 
 from mage_ai.shared.logger import configure_kubernetes_logging
 
@@ -62,12 +63,31 @@ class _HTTPSConnection(_NoWireDebug, HTTPSConnection):
     pass
 
 
+class _SafeHTTPResponse(HTTPResponse):
+    def read(self, *args, **kwargs):
+        with _safe_diagnostics():
+            return super().read(*args, **kwargs)
+
+    def read_chunked(self, *args, **kwargs):
+        chunks = super().read_chunked(*args, **kwargs)
+        while True:
+            # Leave the guard before yielding control back to the caller.
+            with _safe_diagnostics():
+                try:
+                    chunk = next(chunks)
+                except StopIteration:
+                    return
+            yield chunk
+
+
 class _HTTPConnectionPool(HTTPConnectionPool):
     ConnectionCls = _HTTPConnection
+    ResponseCls = _SafeHTTPResponse
 
 
 class _HTTPSConnectionPool(HTTPSConnectionPool):
     ConnectionCls = _HTTPSConnection
+    ResponseCls = _SafeHTTPResponse
 
 
 def _safe_api_exception(error: ApiException) -> ApiException:
@@ -106,6 +126,14 @@ class KubernetesApiClient(client.ApiClient):
             response = super().request(*args, **kwargs)
             logger.debug('Kubernetes API request completed (HTTP %s)', response.status)
             return response
+
+    def deserialize(self, response, response_type):
+        # Conversion errors can quote credential-bearing values from the body.
+        try:
+            with _safe_diagnostics():
+                return super().deserialize(response, response_type)
+        except ValueError:
+            raise ValueError('Invalid Kubernetes API response') from None
 
     def _ApiClient__call_api(self, *args, **kwargs):
         # The generated client dispatches both synchronous calls and async workers
