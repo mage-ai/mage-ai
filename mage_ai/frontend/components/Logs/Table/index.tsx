@@ -23,7 +23,7 @@ import { TabType } from '@oracle/components/Tabs/ButtonTabs';
 import { ThemeType } from '@oracle/styles/themes/constants';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { WIDTH_OF_SINGLE_CHARACTER_MONOSPACE } from '@components/DataTable';
-import { formatTimestamp } from '@utils/models/log';
+import { formatTimestamp, getLogMessageText } from '@utils/models/log';
 import { get, set } from '@storage/localStorage';
 import { getColorsForBlockType } from '@components/CodeBlock/index.style';
 import { getLogScrollPositionLocalStorageKey } from '../utils';
@@ -140,22 +140,16 @@ function LogsTable({
       logs,
       themeContext,
     } = data;
-    const { content, data: logData, name } = logs[index];
+    const { data: logData, name } = logs[index];
     const {
       block_uuid: blockUUIDProp,
       level,
-      message,
       pipeline_uuid: pipelineUUID,
       timestamp,
       uuid,
     } = logData || {};
 
-    let displayText = message == null ? content : message;
-    if (Array.isArray(displayText)) {
-      displayText = displayText.join(' ');
-    } else if (typeof displayText === 'object') {
-      displayText = JSON.stringify(displayText);
-    }
+    const displayText = getLogMessageText(logs[index]);
 
     let idEl;
     const uuidInit = blockUUIDProp || name.split('.log')[0];
