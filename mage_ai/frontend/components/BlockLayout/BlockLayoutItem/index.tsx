@@ -77,6 +77,8 @@ function BlockLayoutItem({
   width,
 }: BlockLayoutItemProps) {
   const refMenu = useRef(null);
+  const outerRef = useRef<HTMLDivElement | null>(null); // drop target node
+  const innerRef = useRef<HTMLDivElement | null>(null); // drag handle node
   const [menuVisible, setMenuVisible] = useState<boolean>(false);
   const [editing, setEditing] = useState<boolean>(false);
 
@@ -257,6 +259,15 @@ function BlockLayoutItem({
     }),
     [onDrop],
   );
+  const setDropRef = useCallback((node: HTMLDivElement | null) => {
+  outerRef.current = node;
+  if (node) drop(node);
+  }, [drop]);
+
+  const setDragRef = useCallback((node: HTMLDivElement | null) => {
+  innerRef.current = node;
+  if (!disableDrag && node) drag(node);
+  }, [drag, disableDrag]);
 
   if (detail) {
     return <BlockLayoutItemDetail buildChart={buildChart} height={height} width={width} />;
@@ -279,9 +290,9 @@ function BlockLayoutItem({
         <div
           onMouseEnter={() => setIsHovering(true)}
           onMouseLeave={() => setIsHovering(false)}
-          ref={drop}
+          ref={setDropRef}
         >
-          <ItemStyle {...collected} ref={disableDrag ? null : drag}>
+          <ItemStyle {...collected} ref={setDragRef}>
             <Spacing mb={1}>
               <FlexContainer alignContent="center" justifyContent="space-between">
                 <Spacing py={1}>
