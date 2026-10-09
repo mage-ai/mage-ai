@@ -206,6 +206,7 @@ function GitActions({
     lastMessage,
     sendMessage,
   } = useWebSocket(getWebSocket('terminal'), {
+    queryParams: sharedWebsocketData,
     shouldReconnect: () => true,
   }, 'cwd' in sharedWebsocketData);
 
