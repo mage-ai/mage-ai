@@ -122,10 +122,14 @@ class KubernetesApiClient(client.ApiClient):
         })
 
     def request(self, *args, **kwargs):
-        with _safe_diagnostics():
-            response = super().request(*args, **kwargs)
-            logger.debug('Kubernetes API request completed (HTTP %s)', response.status)
-            return response
+        try:
+            with _safe_diagnostics():
+                response = super().request(*args, **kwargs)
+                logger.debug('Kubernetes API request completed (HTTP %s)', response.status)
+                return response
+        except ValueError:
+            # HTTP header validation errors can quote the authorization value.
+            raise ValueError('Invalid Kubernetes API request') from None
 
     def deserialize(self, response, response_type):
         # Conversion errors can quote credential-bearing values from the body.

@@ -244,6 +244,51 @@ class KubernetesApiClientTests(unittest.TestCase):
                 client.BatchV1Api(api_client).create_namespaced_job('dummy', JOB)
         self.assertIn(SECRET, capture.getvalue())
 
+    def test_invalid_header_is_safe_and_client_recovers(self):
+        for transport in ('http', 'https', 'proxy'):
+            for level in ('DEBUG', 'INFO'):
+                for output_format in (None, 'json'):
+                    for debug in (False, True):
+                        for asynchronous in (False, True):
+                            with self.subTest(transport=transport, level=level,
+                                              format=output_format, debug=debug,
+                                              async_req=asynchronous):
+                                capture = io.StringIO()
+                                with redirect_stdout(capture), redirect_stderr(capture):
+                                    set_logging_format(output_format, level=level)
+                                    configuration, server = self.configuration(transport)
+                                    configuration.debug = debug
+                                    configuration.api_key['authorization'] = SECRET + '\ninvalid'
+                                    previous_requests = len(server.requests)
+                                    with KubernetesApiClient(configuration) as api_client:
+                                        api = client.BatchV1Api(api_client)
+                                        try:
+                                            result = api.read_namespaced_job(
+                                                'dummy', 'dummy', async_req=asynchronous,
+                                            )
+                                            if asynchronous:
+                                                result.get()
+                                        except ValueError as error:
+                                            self.assertEqual(str(error),
+                                                             'Invalid Kubernetes API request')
+                                            self.assertTrue(error.__suppress_context__)
+                                            logging.exception('Kubernetes request failed')
+                                        else:
+                                            self.fail('Expected an invalid-header failure')
+                                        self.assertEqual(len(server.requests), previous_requests)
+                                        # Correct the token and reuse the same client normally.
+                                        configuration.api_key['authorization'] = SECRET
+                                        result = api.read_namespaced_job('dummy', 'dummy')
+                                        self.assertEqual(result.status.succeeded, 1)
+                                        self.assertIs(api_client.configuration, configuration)
+                                        self.assertEqual(configuration.debug, debug)
+                                self.assertNotIn(SECRET, capture.getvalue())
+                                if level == 'DEBUG':
+                                    self.assertIn('Kubernetes API request completed (HTTP 200)',
+                                                  capture.getvalue())
+                                self.assertEqual(server.requests[-1][0]['authorization'],
+                                                 f'Bearer {SECRET}')
+
     def test_stream_request_replacement_errors_are_safe(self):
         configuration, _ = self.configuration('http')
         with KubernetesApiClient(configuration) as api_client:
