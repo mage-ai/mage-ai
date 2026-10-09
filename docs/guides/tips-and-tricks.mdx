@@ -274,7 +274,7 @@ def load_data_sync(*args, **kwargs) -> Dict[str, Any]:
 
     async def fetch_data(url: str) -> Dict[str, Any]:
         # Create an aiohttp session and fetch the data
-        async with aiohttp.ClientSession() as session:
+        async with aiohttp.ClientSession(trust_env=True) as session:
             async with session.get(url) as response:
                 response.raise_for_status()
                 data: Dict[str, Any] = await response.json()

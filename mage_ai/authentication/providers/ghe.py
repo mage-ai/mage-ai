@@ -59,7 +59,7 @@ class GHEProvider(OauthProvider):
 
     async def get_access_token_response(self, code: str, **kwargs) -> Awaitable[Dict]:
         data = dict()
-        async with aiohttp.ClientSession() as session:
+        async with aiohttp.ClientSession(trust_env=True) as session:
             async with session.post(
                 f'{self.hostname}/login/oauth/access_token',
                 headers={

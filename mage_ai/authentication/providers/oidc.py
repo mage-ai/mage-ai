@@ -111,7 +111,7 @@ class OidcProvider(OauthProvider, SsoProvider):
         if self.client_secret:
             payload['client_secret'] = self.client_secret
 
-        async with aiohttp.ClientSession() as session:
+        async with aiohttp.ClientSession(trust_env=True) as session:
             async with session.post(
                 self.token_endpoint,
                 headers={
@@ -128,7 +128,7 @@ class OidcProvider(OauthProvider, SsoProvider):
         if access_token is None:
             raise Exception('Access token is required to fetch user info.')
         mage_roles = []
-        async with aiohttp.ClientSession() as session:
+        async with aiohttp.ClientSession(trust_env=True) as session:
             async with session.get(
                 self.userinfo_endpoint,
                 headers={
