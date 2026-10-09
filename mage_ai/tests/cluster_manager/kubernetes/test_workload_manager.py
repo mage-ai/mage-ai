@@ -1,5 +1,5 @@
 import os
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
 from kubernetes import client
 
@@ -13,9 +13,16 @@ class WorkloadManagerTests(TestCase):
         self.mock_core_client = MagicMock()
         self.mock_apps_client = MagicMock()
         self.mock_networking_client = MagicMock()
-        client.CoreV1Api = MagicMock(return_value=self.mock_core_client)
-        client.AppsV1Api = MagicMock(return_value=self.mock_apps_client)
-        client.NetworkingV1Api = MagicMock(return_value=self.mock_networking_client)
+        for name, mocked_client in (
+            ('CoreV1Api', self.mock_core_client),
+            ('AppsV1Api', self.mock_apps_client),
+            ('NetworkingV1Api', self.mock_networking_client),
+        ):
+            # Restore generated clients after each test so later transport tests
+            # exercise the actual implementation during full-suite discovery.
+            patcher = patch.object(client, name, return_value=mocked_client)
+            patcher.start()
+            self.addCleanup(patcher.stop)
 
         self.workload_manager = WorkloadManager()
 
