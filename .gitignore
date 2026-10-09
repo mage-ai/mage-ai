@@ -191,3 +191,6 @@ package.json
 test.py
 test/
 test_data*
+branch_structure.json
+temp_auto_push.bat
+temp_interactive_push.bat
