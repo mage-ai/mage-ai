@@ -1,5 +1,8 @@
+import asyncio
 import os
 from typing import Dict, List, Tuple
+
+from git.exc import GitCommandError
 
 from mage_ai.api.errors import ApiError
 from mage_ai.api.resources.GenericResource import GenericResource
@@ -53,7 +56,7 @@ class GitBranchResource(GenericResource):
         )
 
     @classmethod
-    def collection(self, query, meta, user, **kwargs):
+    def _collection(self, query, meta, user, **kwargs):
         arr = []
 
         include_remote_branches = query.get('include_remote_branches', None)
@@ -100,13 +103,21 @@ class GitBranchResource(GenericResource):
         )
 
     @classmethod
-    def create(self, payload, user, **kwargs):
+    async def collection(self, query, meta, user, **kwargs):
+        return await asyncio.to_thread(self._collection, query, meta, user, **kwargs)
+
+    @classmethod
+    def _create(self, payload, user, **kwargs):
         branch = payload.get('name')
         remote = payload.get('remote')
         git_manager = self.get_git_manager(user=user)
         git_manager.switch_branch(branch, remote=remote)
 
         return self(dict(name=git_manager.current_branch), user, **kwargs)
+
+    @classmethod
+    async def create(self, payload, user, **kwargs):
+        return await asyncio.to_thread(self._create, payload, user, **kwargs)
 
     @classmethod
     async def member(self, pk, user, **kwargs):
@@ -119,13 +130,16 @@ class GitBranchResource(GenericResource):
         setup_repo = False
         if preferences.is_git_integration_enabled():
             setup_repo = True
-        git_manager = self.get_git_manager(
-            user=user,
-            context_data=context_data,
-            preferences=preferences,
-            repo_path=repo_path,
-            setup_repo=setup_repo,
+        git_manager = await asyncio.to_thread(
+            self.get_git_manager,
+            user,
+            context_data,
+            preferences,
+            repo_path,
+            setup_repo,
         )
+
+        current_branch = await asyncio.to_thread(lambda: git_manager.current_branch)
 
         display_format = kwargs.get('meta', {}).get('_format')
         if 'with_basic_details' == display_format:
@@ -134,7 +148,7 @@ class GitBranchResource(GenericResource):
                     files={},
                     is_git_integration_enabled=preferences.is_git_integration_enabled(),
                     modified_files=[],
-                    name=git_manager.current_branch,
+                    name=current_branch,
                     staged_files=[],
                     sync_config=preferences.sync_config,
                     untracked_files=[],
@@ -143,7 +157,7 @@ class GitBranchResource(GenericResource):
                 **kwargs,
             )
 
-        modified_files = git_manager.modified_files
+        modified_files = await asyncio.to_thread(lambda: git_manager.modified_files)
         staged_files = await git_manager.staged_files()
         untracked_files = await git_manager.untracked_files()
 
@@ -152,7 +166,7 @@ class GitBranchResource(GenericResource):
                 files={},
                 is_git_integration_enabled=preferences.is_git_integration_enabled(),
                 modified_files=modified_files,
-                name=git_manager.current_branch,
+                name=current_branch,
                 staged_files=staged_files,
                 sync_config=preferences.sync_config,
                 untracked_files=untracked_files,
@@ -206,7 +220,10 @@ class GitBranchResource(GenericResource):
     async def update(self, payload, **kwargs):
         query = kwargs.get('query') or {}
 
-        git_manager = self.get_git_manager(user=self.current_user)
+        git_manager = await asyncio.to_thread(
+            self.get_git_manager,
+            user=self.current_user,
+        )
         action_type = payload.get('action_type')
         action_payload = payload.get('action_payload', dict())
         action_remote = action_payload.get('remote', None)
@@ -226,23 +243,27 @@ class GitBranchResource(GenericResource):
         if remote_url:
             remote_url = remote_url[0]
 
-        token, provider, url, config_overwrite = self.get_oauth_config(
-            remote_url=remote_url,
-            remote_name=action_remote,
-            user=self.current_user,
+        token, provider, url, config_overwrite = await asyncio.to_thread(
+            self.get_oauth_config,
+            remote_url,
+            action_remote,
+            self.current_user,
         )
 
         # Recreate git manager with updated config
-        git_manager = self.get_git_manager(
-            user=self.current_user, config_overwrite=config_overwrite
+        git_manager = await asyncio.to_thread(
+            self.get_git_manager,
+            user=self.current_user,
+            config_overwrite=config_overwrite,
         )
 
         if action_type == 'status':
-            status = git_manager.status()
+            status = await asyncio.to_thread(git_manager.status)
             untracked_files = await git_manager.untracked_files()
-            modified_files = git_manager.modified_files
+            modified_files = await asyncio.to_thread(lambda: git_manager.modified_files)
+            current_branch = await asyncio.to_thread(lambda: git_manager.current_branch)
             self.model = dict(
-                name=git_manager.current_branch,
+                name=current_branch,
                 status=status,
                 untracked_files=untracked_files,
                 modified_files=modified_files,
@@ -257,14 +278,13 @@ class GitBranchResource(GenericResource):
                 )
                 raise ApiError(error)
 
-            git_manager.commit(message, files)
+            await asyncio.to_thread(git_manager.commit, message, files)
         elif action_type == 'push':
             if action_remote:
-                from git.exc import GitCommandError
-
                 try:
                     if token:
-                        custom_progress = api.push(
+                        custom_progress = await asyncio.to_thread(
+                            api.push,
                             action_remote,
                             url,
                             action_branch,
@@ -286,16 +306,15 @@ class GitBranchResource(GenericResource):
                 except GitCommandError as err:
                     self.model['error'] = str(err)
             else:
-                git_manager.push()
+                await asyncio.to_thread(git_manager.push)
         elif action_type == 'pull':
             if action_remote:
-                from git.exc import GitCommandError
-
                 try:
                     if token:
                         custom_progress = None
                         if action_branch:
-                            custom_progress = api.pull(
+                            custom_progress = await asyncio.to_thread(
+                                api.pull,
                                 action_remote,
                                 url,
                                 action_branch,
@@ -304,7 +323,8 @@ class GitBranchResource(GenericResource):
                                 **action_kwargs,
                             )
                         else:
-                            custom_progress = api.fetch(
+                            custom_progress = await asyncio.to_thread(
+                                api.fetch,
                                 action_remote,
                                 url,
                                 token,
@@ -326,14 +346,13 @@ class GitBranchResource(GenericResource):
                 except GitCommandError as err:
                     self.model['error'] = str(err)
             else:
-                git_manager.pull()
+                await asyncio.to_thread(git_manager.pull)
         elif action_type == 'fetch':
             if action_remote:
-                from git.exc import GitCommandError
-
                 try:
                     if token:
-                        custom_progress = api.fetch(
+                        custom_progress = await asyncio.to_thread(
+                            api.fetch,
                             action_remote,
                             url,
                             token,
@@ -359,14 +378,13 @@ class GitBranchResource(GenericResource):
         elif action_type == 'reset':
             if files and len(files) >= 1:
                 for file_path in files:
-                    git_manager.reset_file(file_path)
+                    await asyncio.to_thread(git_manager.reset_file, file_path)
             else:
                 if action_remote:
-                    from git.exc import GitCommandError
-
                     try:
                         if token:
-                            api.reset_hard(
+                            await asyncio.to_thread(
+                                api.reset_hard,
                                 action_remote,
                                 url,
                                 action_branch,
@@ -384,11 +402,10 @@ class GitBranchResource(GenericResource):
                         self.model['error'] = str(err)
         elif action_type == 'clone':
             if action_remote:
-                from git.exc import GitCommandError
-
                 try:
                     if token:
-                        api.clone(
+                        await asyncio.to_thread(
+                            api.clone,
                             action_remote,
                             url,
                             token,
@@ -404,13 +421,13 @@ class GitBranchResource(GenericResource):
                 except GitCommandError as err:
                     self.model['error'] = str(err)
             else:
-                git_manager.clone()
+                await asyncio.to_thread(git_manager.clone)
         elif action_type == 'add':
             for file_path in files:
-                git_manager.add_file(file_path, ['-f'])
+                await asyncio.to_thread(git_manager.add_file, file_path, ['-f'])
         elif action_type == 'checkout':
             for file_path in files:
-                git_manager.checkout_file(file_path)
+                await asyncio.to_thread(git_manager.checkout_file, file_path)
         elif action_type in ['add_remote', 'remove_remote']:
             if not action_payload:
                 error = ApiError.RESOURCE_ERROR
@@ -449,9 +466,9 @@ class GitBranchResource(GenericResource):
                         }
                     )
                     raise ApiError(error)
-                git_manager.add_remote(*args)
+                await asyncio.to_thread(git_manager.add_remote, *args)
             elif action_type == 'remove_remote':
-                git_manager.remove_remote(*args)
+                await asyncio.to_thread(git_manager.remove_remote, *args)
         elif action_type in [
             'delete',
             'merge',
@@ -461,11 +478,19 @@ class GitBranchResource(GenericResource):
                 base_branch = action_payload.get('base_branch')
 
                 if 'delete' == action_type:
-                    git_manager.delete_branch(base_branch)
+                    await asyncio.to_thread(git_manager.delete_branch, base_branch)
                 elif 'merge' == action_type:
-                    git_manager.merge_branch(base_branch, message=message)
+                    await asyncio.to_thread(
+                        git_manager.merge_branch,
+                        base_branch,
+                        message=message,
+                    )
                 elif 'rebase' == action_type:
-                    git_manager.rebase_branch(base_branch, message=message)
+                    await asyncio.to_thread(
+                        git_manager.rebase_branch,
+                        base_branch,
+                        message=message,
+                    )
             else:
                 error = ApiError.RESOURCE_ERROR
                 error.update(
