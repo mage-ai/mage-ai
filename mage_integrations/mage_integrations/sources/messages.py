@@ -1,12 +1,16 @@
-from mage_integrations.utils.parsers import encode_complex
+import sys
+from typing import List
+
+import simplejson
 from singer.messages import (
     RecordMessage,
-    SchemaMessage as SchemaMessageOriginal,
+)
+from singer.messages import SchemaMessage as SchemaMessageOriginal
+from singer.messages import (
     StateMessage,
 )
-from typing import List
-import simplejson
-import sys
+
+from mage_integrations.utils.parsers import encode_complex
 
 
 class SchemaMessage(SchemaMessageOriginal):
@@ -15,6 +19,7 @@ class SchemaMessage(SchemaMessageOriginal):
         disable_column_type_check: bool = None,
         partition_keys: List[str] = None,
         replication_method: str = None,
+        truncate_before_replication: bool = None,
         unique_conflict_method: str = None,
         unique_constraints: List[str] = None,
         **kwargs,
@@ -23,6 +28,7 @@ class SchemaMessage(SchemaMessageOriginal):
         self.disable_column_type_check = disable_column_type_check
         self.partition_keys = partition_keys
         self.replication_method = replication_method
+        self.truncate_before_replication = truncate_before_replication
         self.unique_conflict_method = unique_conflict_method
         self.unique_constraints = unique_constraints
 
@@ -35,6 +41,8 @@ class SchemaMessage(SchemaMessageOriginal):
             result['partition_keys'] = self.partition_keys
         if self.replication_method:
             result['replication_method'] = self.replication_method
+        if self.truncate_before_replication:
+            result['truncate_before_replication'] = self.truncate_before_replication
         if self.unique_conflict_method:
             result['unique_conflict_method'] = self.unique_conflict_method
         if self.unique_constraints:
@@ -69,6 +77,7 @@ def write_schema(
     partition_keys: List[str] = None,
     replication_method: str = None,
     stream_alias: str = None,
+    truncate_before_replication: bool = None,
     unique_conflict_method: str = None,
     unique_constraints: List[str] = None,
 ) -> None:
@@ -93,6 +102,7 @@ def write_schema(
             replication_method=replication_method,
             schema=schema,
             stream=(stream_alias or stream_name),
+            truncate_before_replication=truncate_before_replication,
             unique_conflict_method=unique_conflict_method,
             unique_constraints=unique_constraints,
         ),
