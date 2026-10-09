@@ -102,6 +102,13 @@ default:
   REDSHIFT_DBUSER: redshift_db_user
   REDSHIFT_CLUSTER_ID: redshift_cluster_id
   REDSHIFT_IAM_PROFILE: default
+  # SFTP
+  SFTP_HOST: hostname
+  SFTP_PORT: 22
+  SFTP_USERNAME: username
+  SFTP_PASSWORD: password
+  SFTP_PRIVATE_KEY: null                      # Optional path to private key file or PEM contents
+  SFTP_PRIVATE_KEY_PASSPHRASE: null           # Optional passphrase for the private key
   # Snowflake
   SNOWFLAKE_USER: username
   SNOWFLAKE_PASSWORD: password
