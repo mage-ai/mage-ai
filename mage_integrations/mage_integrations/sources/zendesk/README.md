@@ -6,11 +6,21 @@
 
 ## Config
 
-You must enter the following credentials when configuring this source:
+You should enter the following credentials when configuring this source for `OAuth`:
 
 | Key | Description | Sample value
 | --- | --- | --- |
 | `access_token` | OAuth token to access API endpoints. | `abc123...` |
+| `request_timeout` | Number of milliseconds until the API request should timeout and raise an error. | 300 |
+| `start_date` | Fetch data that is newer than the `start_date`. | `2022-01-01T00:00:00Z` |
+| `subdomain` | If you access Zendesk from a URL like this https://magesupport.zendesk.com/, then the `domain` is `magesupport`. | `magesupport` |
+
+You should enter the following credentials when configuring this source for `API Token`:
+
+| Key | Description | Sample value
+| --- | --- | --- |
+| `api_token` | API token to access endpoints. | `abc123...` |
+| `email` | email account linked to the API token. | `email@mage.ai` |
 | `request_timeout` | Number of milliseconds until the API request should timeout and raise an error. | 300 |
 | `start_date` | Fetch data that is newer than the `start_date`. | `2022-01-01T00:00:00Z` |
 | `subdomain` | If you access Zendesk from a URL like this https://magesupport.zendesk.com/, then the `domain` is `magesupport`. | `magesupport` |
@@ -62,3 +72,7 @@ curl --request POST \
 ```
 
 <br />
+
+## How to get your `api_token`
+
+Follow [Zendesk's documentation](https://support.zendesk.com/hc/en-us/articles/4408889192858-Managing-access-to-the-Zendesk-API)
