@@ -1,4 +1,4 @@
-import React, { useCallback, useContext, useEffect, useMemo, useRef } from 'react';
+import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import Link from '@oracle/elements/Link';
 import NextLink from 'next/link';
 import styled from 'styled-components';
@@ -11,6 +11,8 @@ import Text from '@oracle/elements/Text';
 import dark from '@oracle/styles/themes/dark';
 import light from '@oracle/styles/themes/light';
 import scrollbarWidth from './scrollbarWidth';
+import { DEBOUNCE_MS } from '@components/constants';
+import { ColumnDtype, parseAndApplyFilter } from '@utils/table/filterExpression';
 import { FONT_FAMILY_REGULAR, MONO_FONT_FAMILY_REGULAR } from '@oracle/styles/fonts/primary';
 import { REGULAR, REGULAR_LINE_HEIGHT, SMALL } from '@oracle/styles/fonts/sizes';
 import { ScrollbarStyledCss } from '@oracle/styles/scrollbars';
@@ -18,6 +20,7 @@ import { TAB_REPORTS } from '@components/datasets/overview/constants';
 import { ThemeContext } from 'styled-components';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { createDatasetTabRedirectLink } from '@components/utils';
+import { inferColumnDtype } from '@utils/table/inferColumnDtype';
 import { range, sum } from '@utils/array';
 import { isObject } from '@utils/hash';
 import { isJsonString } from '@utils/string';
@@ -71,16 +74,22 @@ type TableProps = {
     sticky?: string;
   }[];
   data: (string | number | { [key: string]: string | number | boolean } | (string | number)[])[][];
+  filterable?: boolean;
+  filterErrors?: { [col: string]: boolean };
+  filters?: { [col: string]: string };
   numberOfIndexes: number;
+  onFilterChange?: (col: string, value: string) => void;
 } & SharedProps;
 
 type DataTableProps = {
   columns: string[];
   disableZeroIndexRowNumber?: boolean;
+  filterable?: boolean;
   noBorderBottom?: boolean;
   noBorderLeft?: boolean;
   noBorderRight?: boolean;
   noBorderTop?: boolean;
+  onFilteredCountChange?: (count: number | null) => void;
   rows: string[][] | number[][];
 } & SharedProps;
 
@@ -198,6 +207,28 @@ const CellStyle = styled.div`
 const PreStyle = styled.pre`
   overflow: auto;
   ${ScrollbarStyledCss}
+`;
+
+const FilterInput = styled.input<{ error?: boolean }>`
+  background: ${props => (props.error ? 'rgba(255,59,48,0.05)' : 'transparent')};
+  border: 1px solid
+    ${props =>
+      props.error ? (props.theme.status || dark.status).negative : 'transparent'};
+  border-radius: 2px;
+  color: ${props => (props.theme.content || dark.content).default};
+  font-family: ${FONT_FAMILY_REGULAR};
+  font-size: ${REGULAR};
+  outline: none;
+  padding: ${UNIT * 0.5}px ${UNIT}px;
+  width: 100%;
+
+  &:focus {
+    border-color: ${props => (props.theme.interactive || dark.interactive).focusBorder};
+  }
+
+  &::placeholder {
+    color: ${props => (props.theme.content || dark.content).disabled};
+  }
 `;
 
 function estimateCellHeight({
@@ -357,11 +388,15 @@ function Table({ ...props }: TableProps) {
     columns,
     data,
     disableScrolling,
+    filterable,
+    filterErrors,
+    filters,
     height,
     index: indexProp,
     invalidValues,
     maxHeight,
     numberOfIndexes,
+    onFilterChange,
     previewIndexes,
     renderColumnHeader,
     renderColumnHeaderCell,
@@ -699,6 +734,49 @@ function Table({ ...props }: TableProps) {
               })}
             </div>
           ))}
+
+          {filterable && (
+            <div
+              className="tr"
+              style={{
+                display: 'flex',
+                width: headerGroups[0]?.getHeaderGroupProps()?.style?.width,
+              }}
+            >
+              {columns.map((column, idx) => {
+                const isIndexCol = idx <= numberOfIndexes - 1;
+                const filterCellStyle: React.CSSProperties = {
+                  flexShrink: 0,
+                  overflow: 'visible',
+                  padding: `${UNIT * 0.5}px`,
+                  position: 'relative',
+                  width: isIndexCol ? maxWidthOfIndexColumns[idx] : defaultColumn.width,
+                };
+
+                if (isIndexCol) {
+                  filterCellStyle.left = 0;
+                  filterCellStyle.position = 'sticky';
+                }
+
+                const colName = column.Header as string;
+
+                return (
+                  <div className="th" key={`filter-${idx}`} style={filterCellStyle}>
+                    {!isIndexCol && (
+                      <FilterInput
+                        aria-label={`Filter ${colName} column`}
+                        autoComplete="off"
+                        error={!!filterErrors?.[colName]}
+                        onChange={e => onFilterChange?.(colName, e.target.value)}
+                        placeholder="filter..."
+                        value={filters?.[colName] ?? ''}
+                      />
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
 
         {variableListMemo}
@@ -712,6 +790,7 @@ function DataTable({
   columns: columnsProp,
   disableScrolling,
   disableZeroIndexRowNumber,
+  filterable,
   height,
   index,
   invalidValues,
@@ -720,12 +799,102 @@ function DataTable({
   noBorderLeft,
   noBorderRight,
   noBorderTop,
+  onFilteredCountChange,
   previewIndexes,
   renderColumnHeader,
   renderColumnHeaderCell,
   rows: rowsProp,
   width,
 }: DataTableProps) {
+  // ---------------------------------------------------------------------------
+  // Filter state
+  // ---------------------------------------------------------------------------
+
+  // `filters` drives FilterInput values immediately (no lag on typing).
+  // `debouncedFilters` drives filteredRows memo (updates 200ms after typing stops).
+  // Two separate states are intentional — do not merge them.
+  const [filters, setFilters] = useState<{ [col: string]: string }>({});
+  const [debouncedFilters, setDebouncedFilters] = useState<{ [col: string]: string }>({});
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Debounce cleanup on unmount — prevents timer firing after component is gone.
+  useEffect(() => {
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+    };
+  }, []);
+
+  const handleFilterChange = useCallback((col: string, value: string) => {
+    setFilters(prev => ({ ...prev, [col]: value }));
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => {
+      setDebouncedFilters(prev => ({ ...prev, [col]: value }));
+    }, DEBOUNCE_MS);
+  }, []);
+
+  // ---------------------------------------------------------------------------
+  // Column dtype inference — memoised per column, runs once per dataset change.
+  // ---------------------------------------------------------------------------
+
+  const columnDtypes = useMemo<{ [col: string]: ColumnDtype }>(() => {
+    if (!filterable || !columnsProp || !rowsProp) return {};
+    return Object.fromEntries(
+      columnsProp.map((col, i) => [
+        col,
+        inferColumnDtype((rowsProp as (string | number)[][]).slice(0, 20).map(row => row[i])),
+      ]),
+    );
+  }, [filterable, columnsProp, rowsProp]);
+
+  // ---------------------------------------------------------------------------
+  // Filtered rows + errors — single pure memo, no setState side-effects.
+  //
+  // filterErrors is derived here rather than held in useState. Calling setState
+  // inside useMemo is a React anti-pattern (side-effect during render) that can
+  // trigger render loops. Deriving both values together keeps the memo pure.
+  // ---------------------------------------------------------------------------
+
+  const { filterErrors, filteredRows } = useMemo(() => {
+    const errors: { [col: string]: boolean } = {};
+
+    if (!filterable || !columnsProp || !rowsProp) {
+      return { filterErrors: errors, filteredRows: rowsProp ?? [] };
+    }
+
+    const activeEntries = columnsProp
+      .map((col, idx) => ({ col, expr: debouncedFilters[col]?.trim() ?? '', idx }))
+      .filter(({ expr }) => expr.length > 0);
+
+    if (activeEntries.length === 0) {
+      return { filterErrors: errors, filteredRows: rowsProp };
+    }
+
+    const filtered = (rowsProp as (string | number)[][]).filter(row =>
+      activeEntries.every(({ col, expr, idx }) => {
+        const result = parseAndApplyFilter(row[idx], expr, columnDtypes[col] ?? 'unknown');
+        if (result.hint) {
+          errors[col] = true;
+        }
+        return result.match;
+      }),
+    );
+
+    return { filterErrors: errors, filteredRows: filtered };
+  }, [columnDtypes, columnsProp, debouncedFilters, filterable, rowsProp]);
+
+  // ---------------------------------------------------------------------------
+  // Notify parent of filtered row count whenever it changes.
+  // ---------------------------------------------------------------------------
+
+  useEffect(() => {
+    const hasActiveFilters = Object.values(debouncedFilters).some(v => v?.trim().length > 0);
+    onFilteredCountChange?.(hasActiveFilters ? filteredRows.length : null);
+  }, [debouncedFilters, filteredRows.length, onFilteredCountChange]);
+
+  // ---------------------------------------------------------------------------
+  // Existing derived state (unchanged)
+  // ---------------------------------------------------------------------------
+
   const columnHeadersContainEmptyString = useMemo(
     () => columnsProp?.some(header => header === ''),
     [columnsProp],
@@ -759,13 +928,17 @@ function DataTable({
         <Table
           columnHeaderHeight={columnHeaderHeight}
           columns={columns}
-          data={rowsProp}
+          data={filteredRows}
           disableScrolling={disableScrolling}
+          filterable={filterable}
+          filterErrors={filterErrors}
+          filters={filters}
           height={height}
           index={index}
           invalidValues={invalidValues}
           maxHeight={maxHeight}
           numberOfIndexes={numberOfIndexes}
+          onFilterChange={handleFilterChange}
           previewIndexes={previewIndexes}
           renderColumnHeader={renderColumnHeader}
           renderColumnHeaderCell={renderColumnHeaderCell}
@@ -776,8 +949,12 @@ function DataTable({
       columnHeaderHeight,
       columnHeadersContainEmptyString,
       columns,
-      rowsProp,
       disableScrolling,
+      filterable,
+      filterErrors,
+      filters,
+      filteredRows,
+      handleFilterChange,
       height,
       index,
       invalidValues,
@@ -802,6 +979,23 @@ function DataTable({
       noBorderTop={noBorderTop}
     >
       {!columnHeadersContainEmptyString && table}
+      {filterable && Object.values(filters).some(v => v.trim().length > 0) && (
+        <div style={{ display: 'flex', justifyContent: 'flex-end', padding: `${UNIT * 0.5}px ${UNIT}px` }}>
+          <Link
+            onClick={() => {
+              setFilters({});
+              setDebouncedFilters({});
+              if (debounceRef.current) {
+                clearTimeout(debounceRef.current);
+                debounceRef.current = null;
+              }
+            }}
+            small
+          >
+            ✕ Clear filters
+          </Link>
+        </div>
+      )}
     </Styles>
   );
 }

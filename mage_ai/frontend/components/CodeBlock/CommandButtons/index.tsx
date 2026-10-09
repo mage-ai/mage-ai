@@ -362,6 +362,7 @@ function CommandButtons({
               widthFitContent
             >
               <Button
+                aria-label="Run block"
                 noBackground
                 noBorder
                 noPadding
