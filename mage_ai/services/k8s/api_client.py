@@ -1,5 +1,7 @@
 """Kubernetes transport that keeps sensitive wire data out of diagnostics."""
 
+from contextlib import contextmanager
+from contextvars import ContextVar
 from http import HTTPStatus
 import logging
 
@@ -7,10 +9,40 @@ from kubernetes import client
 from kubernetes.client.exceptions import ApiException
 from urllib3.connection import HTTPConnection, HTTPSConnection
 from urllib3.connectionpool import HTTPConnectionPool, HTTPSConnectionPool
+from urllib3.exceptions import HTTPError
 
 from mage_ai.shared.logger import configure_kubernetes_logging
 
 logger = logging.getLogger(__name__)
+_protected_request = ContextVar('mage_kubernetes_request', default=False)
+
+
+class _TransportLogFilter(logging.Filter):
+    def filter(self, record):
+        # URLs, retry reasons, and peer responses can all contain credentials.
+        # Other HTTP clients keep their diagnostics, including in other threads.
+        return not _protected_request.get()
+
+
+@contextmanager
+def _safe_diagnostics():
+    token = _protected_request.set(True)
+    try:
+        yield
+    except ApiException as error:
+        raise _safe_api_exception(error) from None
+    except KubernetesTransportError:
+        raise
+    except HTTPError as error:
+        raise KubernetesTransportError(
+            f'Kubernetes transport failed ({type(error).__name__})',
+        ) from None
+    finally:
+        _protected_request.reset(token)
+
+
+class KubernetesTransportError(HTTPError):
+    """Transport failure without a credential-bearing URL or remote payload."""
 
 
 class _NoWireDebug:
@@ -51,6 +83,13 @@ def _safe_api_exception(error: ApiException) -> ApiException:
 class KubernetesApiClient(client.ApiClient):
     def __init__(self, *args, **kwargs):
         configure_kubernetes_logging()
+        for name in (
+            'urllib3.connection', 'urllib3.connectionpool', 'urllib3.poolmanager',
+            'urllib3.response', 'urllib3.util.retry', 'urllib3.contrib.pyopenssl',
+        ):
+            transport_logger = logging.getLogger(name)
+            if not any(isinstance(f, _TransportLogFilter) for f in transport_logger.filters):
+                transport_logger.addFilter(_TransportLogFilter())
         super().__init__(*args, **kwargs)
         # Use a per-manager copy: do not change urllib3 pools for unrelated clients.
         # This applies equally to PoolManager and ProxyManager and retains TLS,
@@ -63,18 +102,14 @@ class KubernetesApiClient(client.ApiClient):
         })
 
     def request(self, *args, **kwargs):
-        try:
+        with _safe_diagnostics():
             response = super().request(*args, **kwargs)
             logger.debug('Kubernetes API request completed (HTTP %s)', response.status)
             return response
-        except ApiException as error:
-            # Suppress the original exception's context in formatted tracebacks.
-            raise _safe_api_exception(error) from None
 
-    def call_api(self, *args, **kwargs):
-        try:
-            return super().call_api(*args, **kwargs)
-        except ApiException as error:
-            # Also protect synchronous websocket operations, whose stream helper
-            # temporarily replaces request(). HTTP async calls use request() above.
-            raise _safe_api_exception(error) from None
+    def _ApiClient__call_api(self, *args, **kwargs):
+        # The generated client dispatches both synchronous calls and async workers
+        # here. Protect stream() too, which temporarily replaces request(). This
+        # dependency hook is regression-tested against supported client versions.
+        with _safe_diagnostics():
+            return super()._ApiClient__call_api(*args, **kwargs)

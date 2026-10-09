@@ -5,6 +5,7 @@ import ipaddress
 import json
 import logging
 import ssl
+import socket
 import tempfile
 import threading
 import traceback
@@ -20,7 +21,9 @@ from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.x509.oid import NameOID
 from kubernetes import client
 from kubernetes.client.exceptions import ApiException
+from kubernetes.stream import stream
 from urllib3.connectionpool import HTTPConnectionPool
+from urllib3.util import Retry
 
 from mage_ai.services.k8s.api_client import KubernetesApiClient
 from mage_ai.shared.logger import set_logging_format
@@ -47,6 +50,10 @@ class _Handler(BaseHTTPRequestHandler):
         self.respond()
 
     def respond(self):
+        if self.server.mode == 'retry' and len(self.server.requests) == 1:
+            self.server.status = 503
+        elif self.server.mode == 'retry':
+            self.server.status = 200
         body = json.dumps(JOB).encode()
         # Include dummy secrets even in the remote reason phrase and headers.
         self.send_response(self.server.status, SECRET)
@@ -89,6 +96,7 @@ class KubernetesApiClientTests(unittest.TestCase):
         for secure in (False, True):
             server = ThreadingHTTPServer(('127.0.0.1', 0), _Handler)
             server.status = 200
+            server.mode = None
             server.requests = []
             if secure:
                 context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
@@ -108,13 +116,18 @@ class KubernetesApiClientTests(unittest.TestCase):
 
     def setUp(self):
         self.states = []
-        for name in ('', 'kubernetes.client.rest', 'client', 'urllib3'):
+        for name in (
+            '', 'kubernetes.client.rest', 'client', 'urllib3', 'urllib3.connection',
+            'urllib3.connectionpool', 'urllib3.poolmanager', 'urllib3.response',
+            'urllib3.util.retry', 'urllib3.contrib.pyopenssl',
+        ):
             logger = logging.getLogger(name)
             self.states.append((logger, logger.level, logger.handlers[:], logger.filters[:]))
         self.debuglevel = http.client.HTTPConnection.debuglevel
         logging.getLogger().handlers = []
         for server, _ in self.servers:
             server.status = 200
+            server.mode = None
             server.requests.clear()
 
     def tearDown(self):
@@ -246,3 +259,143 @@ class KubernetesApiClientTests(unittest.TestCase):
                              ssl.CERT_REQUIRED)
             self.assertEqual(safe.rest_client.pool_manager.connection_pool_kw['ca_certs'],
                              self.cert_path)
+
+    def test_query_parameters_do_not_leak_in_transport_diagnostics(self):
+        capture = io.StringIO()
+        with redirect_stdout(capture), redirect_stderr(capture):
+            set_logging_format(level='DEBUG')
+            configuration, _ = self.configuration('http')
+            configuration.debug = True
+            with KubernetesApiClient(configuration) as api_client:
+                result = api_client.call_api(
+                    '/dummy', 'GET', query_params=[('token', SECRET)],
+                    response_type='V1Job', _return_http_data_only=True,
+                )
+                self.assertEqual(result.status.succeeded, 1)
+        self.assertNotIn(SECRET, capture.getvalue())
+
+    def test_retry_preserves_functionality_without_leaking_query(self):
+        capture = io.StringIO()
+        with redirect_stdout(capture), redirect_stderr(capture):
+            set_logging_format(level='DEBUG')
+            configuration, server = self.configuration('https')
+            server.mode = 'retry'
+            configuration.debug = True
+            configuration.retries = Retry(total=1, status_forcelist=[503], backoff_factor=0)
+            with KubernetesApiClient(configuration) as api_client:
+                result = api_client.call_api(
+                    '/dummy', 'GET', query_params=[('token', SECRET)],
+                    response_type='V1Job', _return_http_data_only=True,
+                )
+                self.assertEqual(result.status.succeeded, 1)
+                self.assertEqual(len(server.requests), 2)
+        self.assertNotIn(SECRET, capture.getvalue())
+
+    def test_connection_failure_traceback_does_not_leak_query(self):
+        with socket.socket() as unused:
+            unused.bind(('127.0.0.1', 0))
+            port = unused.getsockname()[1]
+        capture = io.StringIO()
+        with redirect_stdout(capture), redirect_stderr(capture):
+            set_logging_format(level='DEBUG')
+            configuration, _ = self.configuration('http')
+            configuration.host = f'http://127.0.0.1:{port}'
+            configuration.retries = 0
+            configuration.debug = True
+            with KubernetesApiClient(configuration) as api_client:
+                try:
+                    api_client.call_api('/dummy', 'GET', query_params=[('token', SECRET)],
+                                        _request_timeout=1)
+                except Exception:
+                    print(traceback.format_exc())
+                else:
+                    self.fail('Expected a connection failure')
+        self.assertNotIn(SECRET, capture.getvalue())
+
+    def test_async_stream_transport_error_is_safe(self):
+        configuration, _ = self.configuration('http')
+        with KubernetesApiClient(configuration) as api_client:
+            with patch.object(api_client, 'request', side_effect=ApiException(
+                status=0, reason=SECRET,
+            )):
+                future = client.CoreV1Api(api_client).connect_get_namespaced_pod_exec(
+                    'dummy', 'dummy', async_req=True,
+                )
+                with self.assertRaises(ApiException) as caught:
+                    future.get()
+                self.assertNotIn(SECRET, str(caught.exception))
+
+    def test_unpreloaded_responses_still_work_at_every_logging_level(self):
+        for level in ('DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'):
+            with self.subTest(level=level):
+                capture = io.StringIO()
+                with redirect_stdout(capture), redirect_stderr(capture):
+                    set_logging_format(level=level)
+                    configuration, _ = self.configuration('https')
+                    configuration.debug = True
+                    with KubernetesApiClient(configuration) as api_client:
+                        response = client.BatchV1Api(api_client).read_namespaced_job(
+                            'dummy', 'dummy', _preload_content=False,
+                        )
+                        try:
+                            self.assertIn(SECRET.encode(), response.read())
+                        finally:
+                            response.release_conn()
+                self.assertNotIn(SECRET, capture.getvalue())
+
+    def test_untrusted_tls_certificate_is_rejected(self):
+        capture = io.StringIO()
+        with redirect_stdout(capture), redirect_stderr(capture):
+            set_logging_format(level='DEBUG')
+            configuration, _ = self.configuration('https')
+            configuration.ssl_ca_cert = None
+            configuration.retries = 0
+            configuration.debug = True
+            with KubernetesApiClient(configuration) as api_client:
+                with self.assertRaises(Exception):
+                    client.BatchV1Api(api_client).read_namespaced_job('dummy', 'dummy')
+        self.assertNotIn(SECRET, capture.getvalue())
+
+    def test_real_websocket_handshake_error_is_safe(self):
+        capture = io.StringIO()
+        with redirect_stdout(capture), redirect_stderr(capture):
+            set_logging_format(level='DEBUG')
+            configuration, server = self.configuration('http')
+            configuration.debug = True
+            server.status = 403
+            with KubernetesApiClient(configuration) as api_client:
+                with self.assertRaises(ApiException):
+                    try:
+                        stream(client.CoreV1Api(api_client).connect_get_namespaced_pod_exec,
+                               'dummy', 'dummy', command=['true'], stderr=True, stdout=True)
+                    except ApiException:
+                        print(traceback.format_exc())
+                        raise
+        self.assertNotIn(SECRET, capture.getvalue())
+        self.assertEqual(len(server.requests), 1)
+
+    def test_transport_filters_do_not_suppress_other_clients_or_threads(self):
+        capture = io.StringIO()
+        with redirect_stderr(capture):
+            set_logging_format(level='DEBUG')
+            configuration, _ = self.configuration('http')
+            with KubernetesApiClient(configuration) as api_client:
+                transport_logger = logging.getLogger('urllib3.connectionpool')
+                logging.getLogger('urllib3').setLevel(logging.DEBUG)
+
+                def replaced_request(*args, **kwargs):
+                    transport_logger.debug('protected request: %s', SECRET)
+                    thread = threading.Thread(
+                        target=lambda: transport_logger.debug('unrelated thread diagnostic'),
+                    )
+                    thread.start()
+                    thread.join()
+                    raise ApiException(status=404, reason=SECRET)
+
+                with patch.object(api_client, 'request', side_effect=replaced_request):
+                    with self.assertRaises(ApiException):
+                        client.BatchV1Api(api_client).read_namespaced_job('dummy', 'dummy')
+                transport_logger.debug('unrelated diagnostic after failure')
+        self.assertNotIn(SECRET, capture.getvalue())
+        self.assertIn('unrelated thread diagnostic', capture.getvalue())
+        self.assertIn('unrelated diagnostic after failure', capture.getvalue())
