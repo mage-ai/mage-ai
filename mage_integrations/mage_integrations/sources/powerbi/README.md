@@ -9,7 +9,7 @@ You must enter the following credentials when configuring this source:
 | Key | Description | Sample value
 | --- | --- | --- |
 | `access_token` | (REQUIRED) The access token used to authenticate your PowerBI account. | `abcdefg123456` |
-| `request_timeout` | (OPTIONAL) The amout of time before the request times out, default: 300 | `300`|
+| `request_timeout` | (OPTIONAL) The amount of time before the request times out, default: 300 | `300`|
 | `user_agent` | (OPTIONAL) The User Agent string to send in the request header | `my-app-v1.0`|
 | `start_date` | (OPTIONAL) Used to filter the results. When using IncrementalSync, only fetch records updated after `start_date` | `2023-01-01` |
 
