@@ -63,5 +63,22 @@ class MySQLDestinationTests(unittest.TestCase, SQLDestinationMixin):
                                                                  DATABASE_NAME)
         self.assertEqual(
             table_commands,
-            ['CREATE TABLE test_db.test_table (ID CHAR(255))']
+            ['CREATE TABLE test_db.test_table (ID TEXT)']
         )
+
+    def test_build_insert_commands_preserves_long_utf8_text(self):
+        destination = MySQL(config=self.config)
+        value = '原因分析 こんにちは مرحبا café ' * 40
+
+        insert_command, row_count_command = destination.build_insert_commands(
+            [{'ID': value}],
+            SCHEMA,
+            SCHEMA_NAME,
+            TABLE_NAME,
+            DATABASE_NAME,
+        )
+
+        self.assertEqual('SELECT ROW_COUNT()', row_count_command)
+        self.assertIn(f"VALUES ('{value}')", insert_command)
+        self.assertNotIn('CAST(', insert_command)
+        self.assertNotIn('CHAR(255)', insert_command)
