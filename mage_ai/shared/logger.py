@@ -95,13 +95,17 @@ class KubernetesResponseBodyFilter(logging.Filter):
         )
 
 
-def set_logging_format(logging_format: str = None, level: str = None) -> None:
+def configure_kubernetes_logging() -> None:
     # Filter at the source so every handler is protected, including handlers
     # installed later by framework logging setup. Root logger filters do not
     # run for records propagated from child loggers.
     kubernetes_logger = logging.getLogger('kubernetes.client.rest')
     if not any(isinstance(f, KubernetesResponseBodyFilter) for f in kubernetes_logger.filters):
         kubernetes_logger.addFilter(KubernetesResponseBodyFilter())
+
+
+def set_logging_format(logging_format: str = None, level: str = None) -> None:
+    configure_kubernetes_logging()
 
     if isinstance(logging_format, str):
         logging_format = logging_format.lower()

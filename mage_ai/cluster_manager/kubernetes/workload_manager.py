@@ -35,6 +35,7 @@ from mage_ai.orchestration.constants import (
     PG_DB_PASS,
     PG_DB_USER,
 )
+from mage_ai.services.k8s.api_client import KubernetesApiClient
 from mage_ai.services.k8s.constants import (
     DEFAULT_NAMESPACE,
     DEFAULT_SERVICE_ACCOUNT_NAME,
@@ -49,9 +50,9 @@ from mage_ai.shared.hash import merge_dict, safe_dig
 class WorkloadManager:
     def __init__(self, namespace: str = DEFAULT_NAMESPACE):
         self.load_config()
-        self.core_client = client.CoreV1Api()
-        self.apps_client = client.AppsV1Api()
-        self.networking_client = client.NetworkingV1Api()
+        self.core_client = client.CoreV1Api(KubernetesApiClient())
+        self.apps_client = client.AppsV1Api(KubernetesApiClient())
+        self.networking_client = client.NetworkingV1Api(KubernetesApiClient())
 
         self.namespace = namespace
         if not self.namespace:
@@ -107,8 +108,8 @@ class WorkloadManager:
     @classmethod
     def list_all_workloads(cls):
         cls.load_config()
-        core_client = client.CoreV1Api()
-        apps_client = client.AppsV1Api()
+        core_client = client.CoreV1Api(KubernetesApiClient())
+        apps_client = client.AppsV1Api(KubernetesApiClient())
 
         services = core_client.list_service_for_all_namespaces().items
 
@@ -161,7 +162,7 @@ class WorkloadManager:
                     if service_type == 'NodePort':
                         try:
                             if node_name:
-                                items = client.CoreV1Api().list_node(
+                                items = client.CoreV1Api(KubernetesApiClient()).list_node(
                                     field_selector=f'metadata.name={node_name}'
                                 ).items
                                 node = items[0]

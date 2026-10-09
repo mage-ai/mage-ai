@@ -6,6 +6,7 @@ from kubernetes import client, config
 from kubernetes.client import V1Container, V1PodSpec
 from kubernetes.client.rest import ApiException
 
+from mage_ai.services.k8s.api_client import KubernetesApiClient
 from mage_ai.services.k8s.config import K8sExecutorConfig
 from mage_ai.services.k8s.constants import (
     DEFAULT_NAMESPACE,
@@ -38,9 +39,9 @@ class JobManager():
         self.logging_tags = logging_tags or dict()
 
         self.load_config()
-        self.batch_api_client = client.BatchV1Api()
+        self.batch_api_client = client.BatchV1Api(KubernetesApiClient())
         self.api_version = 'batch/v1'
-        self.core_api_client = client.CoreV1Api()
+        self.core_api_client = client.CoreV1Api(KubernetesApiClient())
 
         self.pod_config = self.core_api_client.read_namespaced_pod(
             name=os.getenv(KUBE_POD_NAME_ENV_VAR),
