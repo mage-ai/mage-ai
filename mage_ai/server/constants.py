@@ -12,4 +12,4 @@ DATAFRAME_OUTPUT_SAMPLE_COUNT = 10
 # Dockerfiles depend on it because install steps use
 # the last line to determine the version to install.
 VERSION = \
-'0.9.79'
+'0.9.80'
