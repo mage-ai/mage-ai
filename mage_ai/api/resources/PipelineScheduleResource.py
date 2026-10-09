@@ -3,7 +3,7 @@ import uuid
 from datetime import datetime
 
 import pytz
-from sqlalchemy import case
+from sqlalchemy import case, or_
 from sqlalchemy.orm import joinedload
 from sqlalchemy.sql.expression import func
 
@@ -77,6 +77,10 @@ class PipelineScheduleResource(DatabaseResource):
         if statuses:
             statuses = statuses.split(',')
 
+        search = query_arg.get('search', [None])
+        if search:
+            search = search[0]
+
         if project_platform_activated():
             query = PipelineSchedule.query
         else:
@@ -110,6 +114,14 @@ class PipelineScheduleResource(DatabaseResource):
         if statuses:
             query = query.filter(
                 PipelineSchedule.status.in_(statuses),
+            )
+        
+        if search:
+            query = query.filter(
+                or_(
+                    PipelineSchedule.name.ilike(f'%{search}%'),
+                    PipelineSchedule.pipeline_uuid.ilike(f'%{search}%'),
+                )
             )
 
         if global_data_product_uuid or pipeline:
