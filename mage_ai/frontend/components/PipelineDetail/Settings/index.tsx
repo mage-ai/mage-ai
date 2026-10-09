@@ -43,6 +43,29 @@ type PipelineSettingsProps = {
   updatePipeline: (pipeline: PipelineType) => void;
 };
 
+type ConcurrencyLimitKey =
+  | 'block_run_limit'
+  | 'pipeline_run_limit'
+  | 'pipeline_run_limit_all_triggers';
+
+function buildUpdatedConcurrencyConfig(
+  prev: PipelineType,
+  key: ConcurrencyLimitKey,
+  value: string,
+) {
+  const concurrencyConfig = {
+    ...prev?.concurrency_config,
+  };
+
+  if (value === '') {
+    delete concurrencyConfig[key];
+  } else {
+    concurrencyConfig[key] = Number(value);
+  }
+
+  return concurrencyConfig;
+}
+
 function PipelineSettings({
   isPipelineUpdating,
   pipeline,
@@ -260,14 +283,17 @@ function PipelineSettings({
               monospace: true,
               onChange: e => setPipelineAttributes(prev => ({
                 ...prev,
-                concurrency_config: {
-                  ...prev?.concurrency_config,
-                  pipeline_run_limit_all_triggers: Number(e.target.value),
-                },
+                concurrency_config: buildUpdatedConcurrencyConfig(
+                  prev,
+                  'pipeline_run_limit_all_triggers',
+                  e.target.value,
+                ),
               })),
               placeholder: 'e.g. 40',
               type: 'number',
-              value: String(pipelineAttributes?.concurrency_config?.pipeline_run_limit_all_triggers || ''),
+              value: String(
+                pipelineAttributes?.concurrency_config?.pipeline_run_limit_all_triggers ?? '',
+              ),
             }}
             title="Pipeline run limit across all triggers"
           />
@@ -284,14 +310,15 @@ function PipelineSettings({
               monospace: true,
               onChange: e => setPipelineAttributes(prev => ({
                 ...prev,
-                concurrency_config: {
-                  ...prev?.concurrency_config,
-                  pipeline_run_limit: Number(e.target.value),
-                },
+                concurrency_config: buildUpdatedConcurrencyConfig(
+                  prev,
+                  'pipeline_run_limit',
+                  e.target.value,
+                ),
               })),
               placeholder: 'e.g. 10',
               type: 'number',
-              value: String(pipelineAttributes?.concurrency_config?.pipeline_run_limit || ''),
+              value: String(pipelineAttributes?.concurrency_config?.pipeline_run_limit ?? ''),
             }}
             title="Pipeline run limit in 1 trigger"
           />
@@ -308,14 +335,15 @@ function PipelineSettings({
               monospace: true,
               onChange: e => setPipelineAttributes(prev => ({
                 ...prev,
-                concurrency_config: {
-                  ...prev?.concurrency_config,
-                  block_run_limit: Number(e.target.value),
-                },
+                concurrency_config: buildUpdatedConcurrencyConfig(
+                  prev,
+                  'block_run_limit',
+                  e.target.value,
+                ),
               })),
               placeholder: 'e.g. 20',
               type: 'number',
-              value: String(pipelineAttributes?.concurrency_config?.block_run_limit || ''),
+              value: String(pipelineAttributes?.concurrency_config?.block_run_limit ?? ''),
             }}
             title="Block run limit"
           />
