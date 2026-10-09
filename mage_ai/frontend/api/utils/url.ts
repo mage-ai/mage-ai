@@ -1,7 +1,7 @@
 import { queryString } from '@utils/url';
 
 export const DEFAULT_HOST: string = 'localhost';
-export const DEFAULT_PORT: string = '6789';
+export const DEFAULT_PORT: string = process.env.NEXT_PUBLIC_MAGE_API_PORT || '6789';
 
 function getHostCore(
   windowDefined: boolean,

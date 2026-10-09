@@ -1,9 +1,11 @@
+import asyncio
 import os
 import re
 import urllib.parse
 from typing import Dict
 
 from mage_ai.api.errors import ApiError
+from mage_ai.api.file_executor import run_file_work
 from mage_ai.api.resources.BlockResource import BlockResource
 from mage_ai.api.resources.GenericResource import GenericResource
 from mage_ai.cache.block import BlockCache
@@ -27,10 +29,51 @@ from mage_ai.version_control.models import File as VersionControlFile
 from mage_ai.version_control.models import Project
 
 
+def resolve_directory_path(repo_path: str, directory_path: str) -> str:
+    """Resolve a folder query without permitting traversal outside its project."""
+    root_path = os.path.realpath(repo_path)
+    scan_path = os.path.realpath(os.path.join(root_path, directory_path))
+    if (
+        os.path.commonpath([root_path, scan_path]) != root_path or
+        not os.path.isdir(scan_path)
+    ):
+        error = ApiError.RESOURCE_INVALID.copy()
+        error['message'] = 'Directory must be inside the project.'
+        raise ApiError(error)
+
+    return scan_path
+
+
+def initialize_block_cache_for_file_listing() -> None:
+    # Cache initialization has synchronous discovery and mapping work even
+    # though it is async. Give it a worker-owned loop to keep Tornado responsive.
+    asyncio.run(BlockCache.initialize_cache())
+
+
+def query_value_is_true(value) -> bool:
+    if isinstance(value, bytes):
+        value = value.decode('utf-8')
+    return value is True or isinstance(value, str) and value.lower() == 'true'
+
+
 class FileResource(GenericResource):
     @classmethod
     @safe_db_query
     async def collection(self, query, meta, user, **kwargs):
+        directory_path = query.get('directory_path', [None])
+        if directory_path:
+            directory_path = directory_path[0]
+        if isinstance(directory_path, bytes):
+            directory_path = directory_path.decode('utf-8')
+
+        search = query.get('search', [None])
+        if search:
+            search = search[0]
+        if isinstance(search, bytes):
+            search = search.decode('utf-8')
+
+        unused_only = query_value_is_true(query.get('unused_only', [False])[0])
+
         pattern = query.get('pattern', [None])
         if pattern:
             pattern = pattern[0]
@@ -55,11 +98,11 @@ class FileResource(GenericResource):
         if project_uuid:
             project_uuid = project_uuid[0]
 
-        include_pipeline_count = query.get('include_pipeline_count', [False])
-        if include_pipeline_count:
-            include_pipeline_count = include_pipeline_count[0]
-        if include_pipeline_count:
-            await BlockCache.initialize_cache()
+        include_pipeline_count = query_value_is_true(
+            query.get('include_pipeline_count', [False])[0],
+        )
+        if include_pipeline_count or unused_only:
+            await run_file_work(initialize_block_cache_for_file_listing)
 
         exclude_dir_pattern = query.get('exclude_dir_pattern', [None])
         if exclude_dir_pattern:
@@ -100,28 +143,45 @@ class FileResource(GenericResource):
                     modified_timestamp=modified_timestamp,
                 )
 
+            files = await run_file_work(
+                get_absolute_paths_from_all_files,
+                starting_full_path_directory=base_repo_path(),
+                comparator=lambda path: (
+                    not exclude_pattern or
+                    not re.search(exclude_pattern, path or '')
+                ) and (not pattern or re.search(pattern, path or '')),
+                parse_values=__parse_values,
+            )
             return self.build_result_set(
-                get_absolute_paths_from_all_files(
-                    starting_full_path_directory=base_repo_path(),
-                    comparator=lambda path: (
-                        not exclude_pattern or
-                        not re.search(exclude_pattern, path or '')
-                    ) and (not pattern or re.search(pattern, path or '')),
-                    parse_values=__parse_values,
-                ),
+                files,
                 user,
                 **kwargs,
             )
 
+        root_path = repo_path or get_repo_path(root_project=True)
+        scan_path = root_path
+        max_depth = None
+        if directory_path is not None:
+            # Opt-in shallow listing; omitted directory_path keeps the legacy
+            # recursive response for existing API consumers.
+            scan_path = resolve_directory_path(root_path, directory_path)
+            max_depth = 2
+
+        files = await run_file_work(
+            File.get_all_files,
+            scan_path,
+            exclude_dir_pattern=exclude_dir_pattern,
+            exclude_pattern=exclude_pattern,
+            pattern=pattern,
+            check_file_path=check_file_path,
+            include_pipeline_count=include_pipeline_count,
+            search=search,
+            unused_only=unused_only,
+            **({'max_depth': max_depth} if max_depth is not None else {}),
+        )
+
         return self.build_result_set(
-            [File.get_all_files(
-                repo_path or get_repo_path(root_project=True),
-                exclude_dir_pattern=exclude_dir_pattern,
-                exclude_pattern=exclude_pattern,
-                pattern=pattern,
-                check_file_path=check_file_path,
-                include_pipeline_count=include_pipeline_count,
-            )],
+            [files],
             user,
             **kwargs,
         )
