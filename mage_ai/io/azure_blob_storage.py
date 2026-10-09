@@ -92,6 +92,15 @@ class AzureBlobStorage(BaseFile):
         """
 
         upload_kwargs = kwargs.pop('upload_kwargs', None)
+        if not isinstance(upload_kwargs, dict):
+            upload_kwargs = {}
+        else:
+            upload_kwargs = upload_kwargs.copy()
+
+        overwrite = kwargs.pop('overwrite', None)
+        if overwrite is not None:
+            upload_kwargs['overwrite'] = overwrite
+
         if format is None:
             format = self._get_file_format(blob_path)
 
@@ -105,7 +114,7 @@ class AzureBlobStorage(BaseFile):
             buffer = BytesIO()
             self._write(df, format, buffer, **kwargs)
             buffer.seek(0)
-            if upload_kwargs and isinstance(upload_kwargs, dict):
+            if upload_kwargs:
                 blob_client.upload_blob(buffer.read(), **upload_kwargs)
             else:
                 blob_client.upload_blob(buffer.read())
