@@ -13,6 +13,9 @@ export enum MsgTypeEnum {
 export enum DataTypeEnum {
   GROUP = 'group',
   IMAGE_PNG = 'image/png',
+  IMAGE_JPEG = 'image/jpeg',
+  IMAGE_GIF = 'image/gif',
+  IMAGE_WEBP = 'image/webp',
   OBJECT = 'object',
   PROGRESS = 'progress', // Deprecated; can come from Great Expectations
   PROGRESS_STATUS = 'progress_status',
