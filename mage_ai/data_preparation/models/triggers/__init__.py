@@ -44,6 +44,9 @@ class ScheduleInterval(StrEnum):
     WEEKLY = '@weekly'
     MONTHLY = '@monthly'
     ALWAYS_ON = '@always_on'
+    # Same restart semantics as ALWAYS_ON, but only while the wall clock is within the daytime
+    # window in UTC (07:00–22:59 inclusive). See schedules.is_now_within_always_on_daytime_window.
+    ALWAYS_ON_DAYTIME = '@always_on_daytime'
 
 
 @dataclass
@@ -55,6 +58,9 @@ class SettingsConfig(BaseConfig):
     pipeline_run_limit: int = None
     timeout: int = None  # in seconds
     timeout_status: str = None
+    # Used by the `@always_on_daytime` schedule interval (UTC hours, inclusive).
+    always_on_daytime_start_hour: int = None
+    always_on_daytime_end_hour: int = None
 
 
 @dataclass
