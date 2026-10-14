@@ -288,8 +288,16 @@ class PipelineSchedulerTests(DBTestCase):
 
         with patch.object(PipelineScheduler, 'schedule', new_schedule):
             with patch.object(PipelineSchedule, 'should_schedule', should_schedule):
-                schedule_all()
+                with self.assertLogs(
+                    'mage_ai.orchestration.pipeline_scheduler_original',
+                    level='ERROR',
+                ) as logs:
+                    schedule_all()
 
+        self.assertIn(
+            f'Failed to schedule pipeline schedule {broken_schedule.id}',
+            logs.output[0],
+        )
         self.assertEqual(0, broken_schedule.pipeline_runs_count)
         self.assertEqual(1, healthy_schedule.pipeline_runs_count)
         self.assertEqual(
