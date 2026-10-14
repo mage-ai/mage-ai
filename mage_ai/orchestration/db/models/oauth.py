@@ -15,6 +15,7 @@ from sqlalchemy import (
     and_,
     asc,
     func,
+    select,
 )
 from sqlalchemy.orm import relationship, validates
 
@@ -258,10 +259,9 @@ class User(BaseModel):
             )
         )
 
-        query = query.add_column(row_number_column)
-        query = query.from_self().filter(row_number_column == 1)
-        query.cache = True
-        rows = query.all()
+        subquery = query.add_column(row_number_column).subquery()
+        query = select(subquery).filter(subquery.c.row_number == 1)
+        rows = db_connection.session.execute(query).all()
 
         arr = []
 
@@ -784,9 +784,9 @@ class Permission(BaseModel):
             )
         )
 
-        query = query.add_column(row_number_column)
-        query = query.from_self().filter(row_number_column == 1)
-        rows = query.all()
+        subquery = query.add_column(row_number_column).subquery()
+        query = select(subquery).filter(subquery.c.row_number == 1)
+        rows = db_connection.session.execute(query).all()
 
         arr = []
 
