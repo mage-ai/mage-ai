@@ -79,18 +79,16 @@ class JobManager():
 
             self.create_job(job)
 
-        api_response = None
-        job_completed = False
-        while not job_completed:
+        # Wait for Kubernetes to finish the Job rather than deciding from the pod counts:
+        # it only marks the Job Failed once every backoffLimit retry is used up.
+        while True:
             api_response = self.batch_api_client.read_namespaced_job(
                 name=self.job_name,
                 namespace=self.namespace
             )
-            if api_response.status.succeeded is not None or \
-                    api_response.status.failed is not None:
-                job_completed = True
+            if self.__is_job_finished(api_response.status):
+                break
             time.sleep(5)
-            # self._print(f'Job {self.job_name} status={api_response.status}')
 
         self.delete_job()
         self._print(f'Job {self.job_name} status={api_response.status}')
@@ -239,6 +237,12 @@ class JobManager():
             self._print("Job deleted. status='%s'" % str(api_response.status))
         except Exception as e:
             self._print(f'Failed to delete job {self.job_name} with error {e}')
+
+    def __is_job_finished(self, job_status) -> bool:
+        for condition in job_status.conditions or []:
+            if condition.type in ('Complete', 'Failed') and condition.status == 'True':
+                return True
+        return False
 
     def job_exists(self):
         try:
