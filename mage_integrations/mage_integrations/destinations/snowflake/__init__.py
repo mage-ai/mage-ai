@@ -261,6 +261,14 @@ WHERE TABLE_SCHEMA = '{schema_name}' AND TABLE_NAME ILIKE '%{table_name}%'
             f'USE DATABASE {database_name}',
         ] + super().build_create_schema_commands(database_name, schema_name)
 
+    def build_truncate_commands(
+        self,
+        database_name: str,
+        schema_name: str,
+        table_name: str,
+    ) -> List[str]:
+        return [f'TRUNCATE TABLE {self.full_table_name(database_name, schema_name, table_name)}']
+
     def full_table_name(self, database_name: str, schema_name: str, table_name: str) -> str:
         if self.disable_double_quotes:
             return f'{database_name}.{schema_name}.{table_name}'

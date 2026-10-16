@@ -360,6 +360,7 @@ class Source:
             replication_method=stream.replication_method,
             schema=schema_dict,
             stream_name=tap_stream_id,
+            truncate_before_replication=getattr(stream, 'truncate_before_replication', False),
             unique_conflict_method=stream.unique_conflict_method,
             unique_constraints=stream.unique_constraints,
         )
