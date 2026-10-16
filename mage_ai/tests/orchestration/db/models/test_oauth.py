@@ -1,7 +1,13 @@
 import uuid
 
 from mage_ai.orchestration.constants import Entity
-from mage_ai.orchestration.db.models.oauth import Role
+from mage_ai.orchestration.db.models.oauth import (
+    Permission,
+    Role,
+    RolePermission,
+    User,
+    UserRole,
+)
 from mage_ai.tests.base_test import DBTestCase
 
 
@@ -40,3 +46,32 @@ class RoleTests(DBTestCase):
 
         self.assertEqual(owner.get_access(entity=Entity.PROJECT, entity_id=test_entity_id), 1)
         self.assertEqual(owner.get_access(entity=Entity.PROJECT, entity_id=test_entity_id2), 1)
+
+
+class UserPermissionTests(DBTestCase):
+    def test_fetch_permissions_deduplicates_permissions_from_multiple_roles(self):
+        user = User.create(email='user-permissions@test.com')
+        roles = [Role.create(name=f'permission-role-{index}') for index in range(2)]
+        permission = Permission.create(access=Permission.Access.VIEWER)
+
+        for role in roles:
+            UserRole.create(user_id=user.id, role_id=role.id)
+            RolePermission.create(permission_id=permission.id, role_id=role.id)
+
+        permissions = User.fetch_permissions([user.id])
+
+        self.assertEqual([permission.id], [model.id for model in permissions])
+        self.assertEqual(user.id, permissions[0].user_id)
+
+    def test_permission_users_deduplicates_users_with_multiple_roles(self):
+        user = User.create(email='permission-users@test.com')
+        roles = [Role.create(name=f'user-role-{index}') for index in range(2)]
+        permission = Permission.create(access=Permission.Access.VIEWER)
+
+        for role in roles:
+            UserRole.create(user_id=user.id, role_id=role.id)
+            RolePermission.create(permission_id=permission.id, role_id=role.id)
+
+        users = permission.users()
+
+        self.assertEqual([user.id], [model.id for model in users])
