@@ -6,6 +6,7 @@ from mage_ai.authentication.ldap import new_ldap_connection
 from mage_ai.authentication.oauth2 import encode_token, generate_access_token
 from mage_ai.authentication.passwords import verify_password
 from mage_ai.authentication.providers.constants import NAME_TO_PROVIDER
+from mage_ai.authentication.providers.sso import SsoProvider
 from mage_ai.orchestration.db import safe_db_query, safe_db_query_async
 from mage_ai.orchestration.db.models.oauth import Role, User
 from mage_ai.settings import (
@@ -33,39 +34,49 @@ class SessionResource(BaseResource):
         update_roles_on_login = get_bool_value(
             get_settings_value(UPDATE_ROLES_ON_LOGIN, default='False'))
 
-        # Oauth sign in
-        if token and provider:
-            roles = []
+        # OAuth identity must come from a verified sign-in provider, never the request body.
+        if token or provider:
+            error = ApiError.UNAUTHORIZED_ACCESS.copy()
+            error.update({'message': 'Invalid OAuth credentials.'})
+            if not isinstance(provider, str) or not isinstance(token, str) or not token:
+                raise ApiError(error)
             provider_class = NAME_TO_PROVIDER.get(provider)
-            if provider_class is not None:
+            if provider_class is None or not issubclass(provider_class, SsoProvider):
+                raise ApiError(error)
+
+            try:
                 provider_instance = provider_class()
                 user_info = await provider_instance.get_user_info(access_token=token)
-                email = user_info.get('email')
-                username = user_info.get('username')
-                if 'user_roles' in user_info:
-                    user_roles = user_info.get('user_roles')
-                    roles = Role.query.filter(Role.name.in_(user_roles)).all()
+            except Exception:
+                raise ApiError(error) from None
 
-            if not email:
-                error = ApiError.RESOURCE_NOT_FOUND
-                error.update({'message': 'Could not get email from oauth provider.'})
+            if not isinstance(user_info, dict):
                 raise ApiError(error)
-            else:
-                user = User.query.filter(User.email == email).first()
-                if not user:  # noqa: E712
-                    print('first user login, creating user.')
-                    if not roles and OAUTH_DEFAULT_ACCESS:
-                        roles = Role.query.filter(Role.name == OAUTH_DEFAULT_ACCESS).all()
-                    user = User.create(
-                        username=username,
-                        email=email,
-                        roles_new=roles,
-                    )
-                elif update_roles_on_login and roles:
-                    user.update(roles_new=roles)
+            email = user_info.get('email')
+            username = user_info.get('username')
+            if not isinstance(email, str) or not email.strip():
+                raise ApiError(error)
 
-                oauth_token = generate_access_token(user, oauth_client)
-                return self(oauth_token, user, **kwargs)
+            roles = []
+            if 'user_roles' in user_info:
+                user_roles = user_info.get('user_roles')
+                roles = Role.query.filter(Role.name.in_(user_roles)).all()
+
+            user = User.query.filter(User.email == email).first()
+            if not user:  # noqa: E712
+                print('first user login, creating user.')
+                if not roles and OAUTH_DEFAULT_ACCESS:
+                    roles = Role.query.filter(Role.name == OAUTH_DEFAULT_ACCESS).all()
+                user = User.create(
+                    username=username,
+                    email=email,
+                    roles_new=roles,
+                )
+            elif update_roles_on_login and roles:
+                user.update(roles_new=roles)
+
+            oauth_token = generate_access_token(user, oauth_client)
+            return self(oauth_token, user, **kwargs)
 
         error = ApiError.RESOURCE_NOT_FOUND
         error.update({'message': 'Email/username and/or password invalid.'})

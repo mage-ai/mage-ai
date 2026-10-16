@@ -1,19 +1,121 @@
 import json
 import os
 from datetime import datetime
-from unittest.mock import patch
+from unittest.mock import AsyncMock, patch
 
 from freezegun import freeze_time
 
 from mage_ai.api.operations import constants
 from mage_ai.authentication.ldap import LDAPConnection
 from mage_ai.authentication.oauth2 import encode_token
+from mage_ai.authentication.providers.google import GoogleProvider
 from mage_ai.orchestration.db.models.oauth import Oauth2AccessToken, Role, User
 from mage_ai.tests.api.operations.test_base import BaseApiTestCase
 from mage_ai.tests.factory import create_user
 
 
 class SessionOperationTests(BaseApiTestCase):
+    async def assert_oauth_rejected(self, payload):
+        user_count = User.query.count()
+        token_count = Oauth2AccessToken.query.count()
+        operation = self.build_operation(
+            action=constants.CREATE,
+            payload=dict(session=payload),
+            resource='sessions',
+            user=None,
+        )
+        response = await operation.execute()
+        self.assertIsNotNone(response.get('error'))
+        self.assertNotIn('session', response)
+        self.assertEqual(User.query.count(), user_count)
+        self.assertEqual(Oauth2AccessToken.query.count(), token_count)
+
+    async def test_oauth_unknown_provider_cannot_impersonate_user(self):
+        user = create_user()
+        await self.assert_oauth_rejected(dict(
+            email=user.email, token='unverified', provider='invalid',
+        ))
+
+    async def test_oauth_unknown_provider_cannot_create_user(self):
+        await self.assert_oauth_rejected(dict(
+            email=self.faker.email(), token='unverified', provider='invalid',
+        ))
+
+    async def test_oauth_rejects_incomplete_or_malformed_credentials(self):
+        for credentials in [
+            dict(token='unverified'),
+            dict(provider='google'),
+            dict(provider=['google'], token='unverified'),
+            dict(provider='google', token={'value': 'unverified'}),
+            dict(provider='ghe', token='unverified'),
+        ]:
+            with self.subTest(credentials=credentials):
+                await self.assert_oauth_rejected(dict(email=self.faker.email(), **credentials))
+
+    @patch.object(GoogleProvider, '__init__', return_value=None)
+    @patch.object(GoogleProvider, 'get_user_info', new_callable=AsyncMock)
+    async def test_oauth_rejects_invalid_provider_identity(self, get_user_info, _init):
+        for identity in [None, {}, {'email': ''}, {'email': ' '}, {'email': ['bad']}]:
+            with self.subTest(identity=identity):
+                get_user_info.return_value = identity
+                await self.assert_oauth_rejected(dict(
+                    email=self.faker.email(), token='invalid', provider='google',
+                ))
+
+    @patch.object(GoogleProvider, '__init__', return_value=None)
+    @patch.object(GoogleProvider, 'get_user_info', new_callable=AsyncMock)
+    async def test_oauth_rejects_provider_failure(self, get_user_info, _init):
+        get_user_info.side_effect = ValueError('Invalid or expired token')
+        await self.assert_oauth_rejected(dict(
+            email=self.faker.email(), token='invalid', provider='google',
+        ))
+
+    @patch.object(GoogleProvider, '__init__', side_effect=ValueError('Not configured'))
+    async def test_oauth_rejects_unconfigured_provider(self, _init):
+        await self.assert_oauth_rejected(dict(
+            email=self.faker.email(), token='invalid', provider='google',
+        ))
+
+    @patch.object(GoogleProvider, '__init__', return_value=None)
+    @patch.object(GoogleProvider, 'get_user_info', new_callable=AsyncMock)
+    async def test_oauth_uses_provider_identity_for_existing_user(self, get_user_info, _init):
+        user = create_user()
+        target = create_user()
+        get_user_info.return_value = dict(email=user.email, username=user.username)
+        operation = self.build_operation(
+            action=constants.CREATE,
+            payload=dict(session=dict(
+                email=target.email, token='verified', provider='google',
+            )),
+            resource='sessions',
+            user=None,
+        )
+        response = await operation.execute()
+        self.assertIn('session', response)
+        get_user_info.assert_awaited_once_with(access_token='verified')
+        token = Oauth2AccessToken.query.order_by(Oauth2AccessToken.id.desc()).first()
+        self.assertEqual(token.user_id, user.id)
+
+    @patch.object(GoogleProvider, '__init__', return_value=None)
+    @patch.object(GoogleProvider, 'get_user_info', new_callable=AsyncMock)
+    async def test_oauth_creates_user_from_provider_identity(self, get_user_info, _init):
+        email = self.faker.email()
+        get_user_info.return_value = dict(email=email, username=email)
+        operation = self.build_operation(
+            action=constants.CREATE,
+            payload=dict(session=dict(
+                email=self.faker.email(), token='verified', provider='google',
+            )),
+            resource='sessions',
+            user=None,
+        )
+        response = await operation.execute()
+        self.assertIn('session', response)
+        user = User.query.filter(User.email == email).first()
+        self.assertIsNotNone(user)
+        token = Oauth2AccessToken.query.order_by(Oauth2AccessToken.id.desc()).first()
+        self.assertEqual(token.user_id, user.id)
+
     @freeze_time(datetime(3000, 1, 1))
     async def test_execute_create(self):
         password = 'password'
