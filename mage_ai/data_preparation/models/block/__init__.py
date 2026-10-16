@@ -4294,14 +4294,17 @@ class SensorBlock(Block):
             has_kwargs = any([p.kind == p.VAR_KEYWORD for p in sig.parameters.values()])
             use_global_vars = has_kwargs and global_vars is not None and len(global_vars) != 0
             args = input_vars if has_args else []
+            poll_interval_seconds = int(
+                (self.configuration or {}).get('poll_interval_seconds', 60)
+            )
             while True:
                 condition = (
                     block_function(*args, **global_vars) if use_global_vars else block_function()
                 )
                 if condition:
                     break
-                print('Sensor sleeping for 1 minute...')
-                time.sleep(60)
+                print(f'Sensor sleeping for {poll_interval_seconds} seconds...')
+                time.sleep(poll_interval_seconds)
             return []
 
 
