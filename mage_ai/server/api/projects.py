@@ -8,7 +8,7 @@ from mage_ai.settings.repo import get_repo_path
 class ApiProjectsHandler(BaseHandler):
     async def get(self):
         try:
-            async with aiohttp.ClientSession() as session:
+            async with aiohttp.ClientSession(trust_env=True) as session:
                 async with session.get(
                     'https://pypi.org/pypi/mage-ai/json',
                     timeout=3,
