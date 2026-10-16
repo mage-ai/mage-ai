@@ -22,7 +22,6 @@ VersionControlBranchPolicy.allow_actions(
         OauthScope.CLIENT_PRIVATE,
     ],
     condition=lambda policy: policy.has_at_least_editor_role(),
-    override_permission_condition=lambda _policy: True,
 )
 
 
@@ -39,7 +38,6 @@ VersionControlBranchPolicy.allow_read(
         OperationType.UPDATE,
     ],
     condition=lambda policy: policy.has_at_least_editor_role(),
-    override_permission_condition=lambda _policy: True,
 )
 
 
@@ -55,7 +53,6 @@ VersionControlBranchPolicy.allow_write(
         OperationType.CREATE,
     ],
     condition=lambda policy: policy.has_at_least_editor_role(),
-    override_permission_condition=lambda _policy: True,
 )
 
 
@@ -75,7 +72,6 @@ VersionControlBranchPolicy.allow_write(
         OperationType.UPDATE,
     ],
     condition=lambda policy: policy.has_at_least_editor_role(),
-    override_permission_condition=lambda _policy: True,
 )
 
 
@@ -90,7 +86,6 @@ VersionControlBranchPolicy.allow_query(
         OperationType.DETAIL,
     ],
     condition=lambda policy: policy.has_at_least_editor_role(),
-    override_permission_condition=lambda _policy: True,
 )
 
 
@@ -111,5 +106,4 @@ VersionControlBranchPolicy.allow_query(
         OperationType.UPDATE,
     ],
     condition=lambda policy: policy.has_at_least_editor_role(),
-    override_permission_condition=lambda _policy: True,
 )
