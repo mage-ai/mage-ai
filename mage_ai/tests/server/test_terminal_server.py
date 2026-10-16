@@ -138,9 +138,32 @@ class TerminalAuthenticationTest(AsyncHTTPTestCase):
         self.terminal.resize_to_smallest.assert_called()
         self.assertEqual(len(self.terminal.clients), 1)
         self.authentication.return_value = (None, False)
+        self.terminal.clients[0]._authorization_valid_until = 0
         self.terminal.clients[0].on_pty_read('new private output')
         self.assertIn('Unauthorized', json.loads(await connection.read_message())[1])
         self.assertIsNone(await connection.read_message())
+
+    @gen_test
+    async def test_output_reuses_authorization_for_a_bounded_interval(self):
+        self.configure_auth()
+        connection = await self.connect()
+        connection.write_message(json.dumps({
+            'api_key': 'client', 'token': 'valid', 'command': ['set_size', 24, 80],
+        }))
+        self.assertEqual(json.loads(await connection.read_message()), ['setup', {}])
+        self.assertEqual(json.loads(await connection.read_message()),
+                         ['stdout', 'buffered private output'])
+
+        authentication_calls = self.authentication.call_count
+        client = self.terminal.clients[0]
+        client.on_pty_read('first output')
+        client.on_pty_read('second output')
+
+        self.assertEqual(json.loads(await connection.read_message()),
+                         ['stdout', 'first output'])
+        self.assertEqual(json.loads(await connection.read_message()),
+                         ['stdout', 'second output'])
+        self.assertEqual(self.authentication.call_count, authentication_calls)
 
     @gen_test
     async def test_disabled_terminal_does_not_spawn_or_replay(self):

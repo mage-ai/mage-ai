@@ -1,6 +1,7 @@
 import json
 import os
 import re
+import time
 
 import terminado
 from tornado import gen
@@ -18,6 +19,8 @@ from mage_ai.settings import (
     is_disable_pipeline_edit_access,
 )
 from mage_ai.shared.array import find_index
+
+AUTHORIZATION_CACHE_SECONDS = 5
 
 
 class MageTermManager(terminado.NamedTermManager):
@@ -105,6 +108,7 @@ class TerminalWebsocketServer(terminado.TermSocket):
         self._requested_cwd = cwd
         self._oauth_client_id = None
         self._oauth_token_value = None
+        self._authorization_valid_until = 0
         # Clients send credentials in their first message. Do not attach to a PTY or
         # replay its buffer until those credentials have been checked.
         if self._is_authorized():
@@ -117,14 +121,21 @@ class TerminalWebsocketServer(terminado.TermSocket):
             return True
         if not self._oauth_client_id or not self._oauth_token_value:
             return False
+        now = time.monotonic()
+        if self._authorization_valid_until > now:
+            return True
         oauth_token, valid = authenticate_client_and_token(
             self._oauth_client_id, self._oauth_token_value,
         )
-        return bool(
+        authorized = bool(
             valid and oauth_token and oauth_token.user and has_at_least_editor_role(
                 oauth_token.user, Entity.PROJECT, get_project_uuid(),
             )
         )
+        self._authorization_valid_until = (
+            now + AUTHORIZATION_CACHE_SECONDS if authorized else 0
+        )
+        return authorized
 
     def _reject_access(self):
         try:
@@ -151,6 +162,7 @@ class TerminalWebsocketServer(terminado.TermSocket):
         token = message.get('token')
         self._oauth_client_id = None
         self._oauth_token_value = None
+        self._authorization_valid_until = 0
         if REQUIRE_USER_AUTHENTICATION and isinstance(api_key, str) and isinstance(token, str):
             oauth_client = Oauth2Application.query.filter(
                 Oauth2Application.client_id == api_key,
