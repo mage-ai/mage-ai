@@ -60,6 +60,114 @@ With dynamic block 2.0, you can enable stream mode which will allow downstream d
 3. As soon as 1 output is detected from block B, block C spawns 1 dynamic child.
 4. As soon as 1 output is detected from both block B and block C, block D spawns 1 dynamic child.
 
+## Generated child dependencies
+
+Dynamic block metadata can also define dependencies between generated child block runs.
+Use this when a dynamic parent emits many children for the same downstream block, but some
+generated children must wait for other generated children before they run.
+
+For example, a dynamic parent can emit five generated children for a downstream transformer:
+
+```python
+from typing import Dict, List
+
+
+@data_loader
+def load_data(*args, **kwargs) -> List[List[Dict]]:
+    rows = [
+        dict(child_id='root_a', sleep_seconds=4),
+        dict(child_id='root_b', sleep_seconds=4),
+        dict(child_id='after_a', sleep_seconds=1),
+        dict(child_id='after_a_b', sleep_seconds=1),
+        dict(child_id='after_c_d', sleep_seconds=1),
+    ]
+
+    metadata = [
+        dict(block_uuid='root_a'),
+        dict(block_uuid='root_b'),
+        dict(block_uuid='after_a', upstream_blocks=['root_a']),
+        dict(block_uuid='after_a_b', upstream_blocks=['root_a', 'root_b']),
+        dict(block_uuid='after_c_d', upstream_blocks=['after_a', 'after_a_b']),
+    ]
+
+    return [
+        rows,
+        metadata,
+    ]
+```
+
+If the downstream transformer block UUID is `process_child`, Mage creates these block runs:
+
+| Generated block run UUID | Metadata dependency | Scheduling behavior |
+| --- | --- | --- |
+| `process_child:root_a` | None | Can run as soon as the dynamic parent and static upstreams are ready. |
+| `process_child:root_b` | None | Can run as soon as the dynamic parent and static upstreams are ready. |
+| `process_child:after_a` | `root_a` | Waits for `process_child:root_a`. |
+| `process_child:after_a_b` | `root_a`, `root_b` | Waits for `process_child:root_a` and `process_child:root_b`. |
+| `process_child:after_c_d` | `after_a`, `after_a_b` | Waits for `process_child:after_a` and `process_child:after_a_b`. |
+
+The dependency graph for the generated child runs is:
+
+```mermaid
+graph TD
+  root_a["process_child:root_a"] --> after_a["process_child:after_a"]
+  root_a --> after_a_b["process_child:after_a_b"]
+  root_b["process_child:root_b"] --> after_a_b
+  after_a --> after_c_d["process_child:after_c_d"]
+  after_a_b --> after_c_d
+```
+
+### Metadata keys
+
+Add these keys to each metadata dictionary returned by the dynamic parent:
+
+| Key | Type | Required | Description |
+| --- | --- | --- | --- |
+| `block_uuid` | string | Yes | Stable name for the generated child. Mage combines this with the downstream block UUID using the format `[downstream_block_uuid]:[block_uuid]`. |
+| `upstream_blocks` | list of strings | No | Generated child dependencies that must finish before this generated child can run. |
+| `dynamic_upstream_block_uuids` | list of strings | No | Alternate dependency key for generated child dependencies. Use `upstream_blocks` for new dynamic parent metadata unless you already produce this key. |
+
+Each dependency can be written as a short generated child name, a full generated block run UUID,
+or a normal static block UUID:
+
+```python
+dict(block_uuid='after_a', upstream_blocks=['root_a'])
+dict(block_uuid='after_a', upstream_blocks=['process_child:root_a'])
+dict(block_uuid='after_a', upstream_blocks=['load_shared_inputs'])
+```
+
+The first two examples make `process_child:after_a` wait for `process_child:root_a`.
+The third example makes `process_child:after_a` wait for the static block run
+`load_shared_inputs`.
+When the dependency value does not contain `:`, Mage treats it as a generated child name for the
+same downstream block if that generated child exists. When the dependency value already contains
+`:`, Mage treats it as the exact block run UUID. Use the full UUID form to depend on a generated
+child from another downstream block, such as `validate_child:root_a`.
+
+### Scheduling behavior
+
+Generated child dependencies are enforced after the normal pipeline dependency checks.
+That means a generated child can run only when both of these are true:
+
+1. The dynamic parent and the downstream block's static upstream chain are ready.
+2. Every generated child listed in that generated child's metadata dependencies has finished.
+
+Children with no metadata dependencies can run concurrently. Children with one or more metadata
+dependencies remain queued until those generated upstream children finish.
+
+These metadata dependencies control scheduling only. They do not change the input data passed to
+the child block. To pass data between generated children, write and read it explicitly using normal
+block output, variables, storage, or another shared data location.
+
+Make sure every metadata dependency points to a block run that will exist in the same pipeline run.
+If a dependency references a generated child that is never created, the waiting generated child will
+not become executable because its declared upstream never finishes.
+
+If a downstream dynamic child has **Reduce output** enabled, Mage still enforces the metadata
+dependencies before the generated child block runs. The reduce step happens after the generated
+children complete, so downstream reduced blocks receive the combined outputs only after the
+dependency-constrained child runs have finished.
+
 ## Enabling stream mode
 
 Stream mode allows downstream dynamic child blocks to execute without waiting for every upstream block to finish, improving pipeline performance.

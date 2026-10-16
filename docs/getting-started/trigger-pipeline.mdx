@@ -5,6 +5,10 @@ icon: "rocket"
 description: "Trigger your first Mage Pro data pipeline"
 ---
 
+import { ProOnly } from '/snippets/pro/only.mdx';
+
+<ProOnly source="pipeline-triggers" />
+
   Pipeline automation is a critical component of production data workflows It ensures consistent and reliable execution without manual intervention. Mage Pro provides comprehensive orchestration capabilities through its trigger UI or YAML conde configuration, which initiates pipeline execution based on predefined conditions or external events.
 
 Mage supports two primary orchestration patterns for pipeline automation:
@@ -33,7 +37,7 @@ This approach is ideal for real-time processing scenarios, webhook integrations,
 
 **Let’s create a new schedule based trigger:**
 
-**Step 1**: From the pipeline editor page hover over the left popout navigation menu and select triggers.
+**Step 1**: From the pipeline editor, non-viewer users can select **Run pipeline** in the header or **Run** menu to open the Triggers page. Viewer users and users in compact layouts should use the existing left popout navigation menu and select **Triggers**.
 
 **Step 2**: Once on the triggers page click the green “New trigger” button
 
@@ -46,7 +50,7 @@ This approach is ideal for real-time processing scenarios, webhook integrations,
 
 **Step 4**: Complete the text fields below to configure your trigger based on the workflows requirements. You can also configure Run settings, SLA requirements, and Runtime variables in this UI.
 
-**Step 5**: Click Save changes to save your trigger.
+**Step 5**: Click Create trigger to save your trigger.
 
 <img
     alt="Create new pipeline"
@@ -62,6 +66,6 @@ This approach is ideal for real-time processing scenarios, webhook integrations,
     src="https://raw.githubusercontent.com/mage-ai/assets/main/pro/cloud/enable-trigger.png"
 />
 
-Once your trigger is enabled, if you set a past date in the “Start date and time” field your trigger will automatically run the pipeline. If you chose a date further out it will start to run on the schedule you provided in the Frequency and Start date and time fields.
+Once your trigger is enabled, **Frequency** is the trigger plan: it controls the run schedule and actual run time. **Schedule start** only controls when that plan is allowed to begin. Choose **Start at next Frequency time** to let the trigger run at the next scheduled **Frequency** time, or choose **Do not start before date/time** to set the earliest allowed start. That date/time is not the run time; **Frequency** still controls when runs happen.
 
 You have successfully automated your first Mage pipeline. This foundational automation capability enables consistent, reliable data processing without manual intervention. You can now apply these same principles to build additional automated workflows for your data infrastructure.

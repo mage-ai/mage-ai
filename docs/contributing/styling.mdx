@@ -1,5 +1,23 @@
+## Python
+
+Ruff is the repository's only canonical Python formatter. It uses single quotes and
+a 100-character line length. Run the pinned version from the repository environment
+only on the Python files changed by your PR:
+
+```bash
+isort <changed-python-files>
+pre-commit run ruff-format --files <changed-python-files>
+python -m ruff check <changed-python-files>
+flake8 <changed-python-files>
+pre-commit run --files <changed-python-files>
 ```
+
+Do not use Black or format whole directories as part of a feature or bug-fix PR.
+Repository-wide formatting should be isolated in a dedicated formatting PR.
+
+## Frontend
+
+```bash
 eslint_d --fix --ext .js,.jsx,.ts,.tsx
-git status --porcelain | grep '^[AM?]' | cut -c4- | grep '\.py$' | xargs black
 git diff --name-status master | grep '^[AM?]' | awk '{$1=""; sub("^[ \t]+", ""); print}' | grep '\.\(js\|jsx\|ts\|tsx\)$' | xargs eslint_d --config mage_ai/frontend/.eslintrc.js --fix --ext .js,.jsx,.ts,.tsx
 ```

@@ -60,6 +60,10 @@ mage db diagnose --project-path /path/to/project
 
 The command prints the database dialect, redacted database URL, revision stored in the `alembic_version` table, migration head in the installed Mage code, recommendations, and any pending revisions that have not been migrated yet.
 
+When the database revision is not present in the installed migration scripts, `diagnose` also inspects schema evidence registered for a baseline anchor and each subsequent revision in the instrumented migration tail. The anchor verifies selected baseline tables and structures, and each supported revision verifies a structural fingerprint that can include column types and nullability, primary and foreign keys, and index columns and uniqueness. Mage reports each evidence revision as `applied`, `missing`, or `partial`. If the registered evidence is contiguous through the installed head and forms one applied prefix, the output identifies the latest schema-evidenced candidate and the first missing evidenced revision.
+
+The candidate is a diagnostic boundary, not proof that every migration before the baseline anchor succeeded. Mage does not emit a stamp command from schema evidence alone. Inspect the earlier migration files and live schema before changing `alembic_version`; if the evidence has a gap, a partial fingerprint, an applied revision after a missing revision, no applied baseline, or a non-linear migration graph, Mage does not report a candidate at all.
+
 To list every Alembic revision available in the installed Mage code:
 
 ```bash
@@ -150,13 +154,31 @@ mage db stamp <revision> --yes
 
 `stamp` changes Alembic metadata without creating, dropping, or altering database objects. It can help when a migration partially completed outside Alembic, but it can also hide real schema drift if used incorrectly. If you see an error such as `index "..." does not exist`, confirm whether the rest of the migration's expected schema changes are already present before stamping past that revision.
 
+After independently verifying that the PostgreSQL schema matches the intended known revision, replace the exact unknown marker with a compare-and-swap recovery command. For example:
+
+```bash
+mage db stamp <independently_verified_revision> \
+  --replace-unknown-revision <current_unknown_revision> \
+  --yes
+```
+
+Back up the database and stop migration-capable Mage processes before running this command in production. `--replace-unknown-revision` is supported only for PostgreSQL and requires `--yes`; the target must exist in the installed migration scripts, the database must contain exactly one `alembic_version` row, that row must still equal the supplied unknown revision, and the supplied current revision must remain unknown to the installed code. Mage performs the replacement transactionally and makes no change if any check fails. This recovery option changes only the revision marker; it does not apply migration SQL.
+
+After replacing the unknown marker, apply the missing migrations and verify the result:
+
+```bash
+mage db migrate
+mage db diagnose
+```
+
 ### Typical recovery flow
 
 1. Back up the database before making changes in production.
 2. Run `mage db diagnose`.
-3. Run `mage db history` to find the target revision and surrounding migrations.
-4. If the error names a table, index, or constraint, run `mage db schema <table>` to inspect the live table.
-5. If the database is behind, run `mage db migrate`.
-6. If the latest migration is bad for your deployment, run `mage db rollback --revision -1`, then pin or deploy a Mage version with a compatible migration chain.
-7. If the schema already matches the intended revision but `alembic_version` is wrong, run `mage db stamp <revision>`.
-8. Run `mage db diagnose` again and restart Mage.
+3. If `diagnose` reports an unknown revision and a schema-evidenced candidate, verify all earlier migrations and the live schema independently; do not stamp from the candidate alone.
+4. If `diagnose` cannot infer a candidate, run `mage db history` and inspect the surrounding migration files; do not guess a revision.
+5. If the error names a table, index, or constraint, run `mage db schema <table>` to inspect the live table.
+6. If the database is behind, run `mage db migrate`.
+7. If the latest migration is bad for your deployment, run `mage db rollback --revision -1`, then pin or deploy a Mage version with a compatible migration chain.
+8. If a PostgreSQL schema independently matches the intended known revision but `alembic_version` contains an unknown revision, run `mage db stamp <revision> --replace-unknown-revision <unknown_revision> --yes`. For other marker problems, use the normal `mage db stamp <revision>` command only after verifying the schema.
+9. Run `mage db diagnose` again and restart Mage.

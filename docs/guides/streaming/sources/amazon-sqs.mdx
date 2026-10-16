@@ -2,11 +2,25 @@
 title: "Amazon SQS"
 ---
 
+import { ProButton } from '/snippets/pro/button.mdx';
+import { ProOnly } from '/snippets/pro/only.mdx';
+
+<ProOnly source="workspaces" />
+
 ## Config
 
 ```yaml
 connector_type: amazon_sqs
-queue_name: test-queue
+queue_names:
+  - producer-events
+  - controller-events
+# Optional. Defaults to false so startup fails if any queue can't be initialized.
+skip_failed_queues: false
+# Optional. Prefer IAM roles or environment variables for production.
+# aws_access_key_id: "{{ env_var('AWS_ACCESS_KEY_ID') }}"
+# aws_secret_access_key: "{{ env_var('AWS_SECRET_ACCESS_KEY') }}"
+# aws_session_token: "{{ env_var('AWS_SESSION_TOKEN') }}"  # Optional for temporary credentials
+# aws_region: "{{ env_var('AWS_DEFAULT_REGION') }}"
 batch_size: 10
 wait_time_seconds: 1
 message_deletion_method: AFTER_RECEIVED   # AFTER_RECEIVED or MANUAL
@@ -15,15 +29,49 @@ serde_config:
   serialization_method: JSON
 ```
 
+Use `queue_names` when one streaming source block should consume from multiple SQS queues.
+Mage polls every configured queue and sends received messages through the same downstream
+streaming pipeline. Existing single-queue configs can continue to use `queue_name`:
+
+```yaml
+connector_type: amazon_sqs
+queue_name: producer-events
+batch_size: 10
+wait_time_seconds: 1
+```
+
+By default, startup fails if any configured queue can't be initialized, including when a queue
+is missing, configured for the wrong AWS region, or denied by IAM. This avoids silently ignoring
+events from one producer. If you want best-effort consumption from the queues that can be
+initialized, opt in with:
+
+```yaml
+skip_failed_queues: true
+```
+
+When `skip_failed_queues` is enabled, Mage logs the failed queue name and continues polling the
+remaining queues. If every configured queue fails to initialize, startup still fails.
+
 ## Authentication
-Here are the options to authenticate with the AWS SQS.
-1. Add the following keys and values to your environment variables
-  * `AWS_ACCESS_KEY_ID`
-  * `AWS_SECRET_ACCESS_KEY`
-  * `AWS_REGION`
-2. If you deploy Mage on AWS ECS cluster, you can use ECS execution task role to authenticate.
-   You can grant the ECS task permissions to access other AWS services by attaching IAM policies
-   to this ECS task execution role.
+Here are the options to authenticate with AWS SQS.
+1. Grant your Mage runtime an AWS IAM role with access to the configured queues. This is the
+   recommended option for Mage deployments running on AWS infrastructure.
+1. Add the following keys and values to your runtime environment variables:
+   * `AWS_ACCESS_KEY_ID`
+   * `AWS_SECRET_ACCESS_KEY`
+   * `AWS_SESSION_TOKEN` if you're using temporary AWS credentials
+   * `AWS_DEFAULT_REGION`
+1. Configure credentials in the source config. Use environment-variable references instead of
+   pasting raw secrets into the block YAML:
+   ```yaml
+   aws_access_key_id: "{{ env_var('AWS_ACCESS_KEY_ID') }}"
+   aws_secret_access_key: "{{ env_var('AWS_SECRET_ACCESS_KEY') }}"
+   aws_session_token: "{{ env_var('AWS_SESSION_TOKEN') }}"
+   aws_region: us-east-1
+   ```
+1. If you deploy Mage on an AWS ECS cluster, you can use the ECS task execution role to
+   authenticate. Grant the ECS task permissions to access SQS by attaching IAM policies to this
+   role.
 
 If you get the `botocore.exceptions.NoRegionError` error, try setting the `AWS_DEFAULT_REGION`
 environment variable.
@@ -47,6 +95,8 @@ We support two ways to delete messages:
       ```python
       {
         'parsed_msg_body': {'k1': 'v1', ...},
+        'queue_name': 'producer-events',
+        'queue_url': 'https://sqs...',
         'raw_message': sqs.Message(...)
       }
       ```

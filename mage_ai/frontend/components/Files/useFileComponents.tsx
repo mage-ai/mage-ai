@@ -131,6 +131,7 @@ type UseFileComponentsProps = {
   originalContent?: OriginalContentMappingType;
   pipeline?: PipelineType;
   query?: {
+    directory_path?: string;
     include_pipeline_count?: boolean;
     pattern?: string;
   };
@@ -473,32 +474,77 @@ function useFileComponents(
     set(LOCAL_STORAGE_KEY_SHOW_HIDDEN_FILES, updatedShowHiddenFiles);
   }, [showHiddenFiles]);
 
+  const directoryBrowser = typeof query?.directory_path === 'string';
+  const [fileFilterMenuOpen, setFileFilterMenuOpen] = useState<boolean>(false);
+  const [fileFilter, setFileFilter] = useState<FileFilterEnum>(FileFilterEnum.ALL_FILES);
+  const [fileSearchText, setFileSearchText] = useState<string>(null);
+  const [debouncedFileSearchText, setDebouncedFileSearchText] = useState<string>(null);
+
+  useEffect(() => {
+    const timeout = setTimeout(() => setDebouncedFileSearchText(fileSearchText), 300);
+    return () => clearTimeout(timeout);
+  }, [fileSearchText]);
+
+  const filesQuery = showHiddenFilesSetting && showHiddenFiles
+    ? { ...FILES_QUERY_INCLUDE_HIDDEN_FILES, ...query }
+    : query;
   const { data: filesData, mutate: fetchFiles } = useDelayFetch(
     api.files.list,
-    showHiddenFilesSetting && showHiddenFiles
-      ? {
-          ...FILES_QUERY_INCLUDE_HIDDEN_FILES,
-          ...query,
-        }
-      : query,
+    filesQuery,
     {
-      delay: typeof delayFetch === 'undefined' || delayFetch === null ? 0 : delayFetch,
+      // useDelayFetch invokes the hook once with a null query before it becomes ready.
+      // A zero delay would issue an unintended full-tree /api/files request here.
+      delay: directoryBrowser
+        ? Math.max(1, delayFetch ?? 0)
+        : (delayFetch ?? 0),
     },
   );
   const files = useMemo(() => filesData?.files || [], [filesData]);
 
-  const [fileFilterMenuOpen, setFileFilterMenuOpen] = useState<boolean>(false);
-  const [fileFilter, setFileFilter] = useState<FileFilterEnum>(FileFilterEnum.ALL_FILES);
-  const [fileSearchText, setFileSearchText] = useState<string>(null);
+  const needsWholeTree = directoryBrowser && (
+    !!fileSearchText || fileFilter === FileFilterEnum.UNUSED_BLOCK_FILES
+  );
+  const searchPending = !!fileSearchText && fileSearchText !== debouncedFileSearchText;
+  const wholeTreeQuery = {
+    ...(showHiddenFilesSetting && showHiddenFiles ? FILES_QUERY_INCLUDE_HIDDEN_FILES : {}),
+    include_pipeline_count: query?.include_pipeline_count,
+    ...(debouncedFileSearchText ? { search: debouncedFileSearchText } : {}),
+    ...(fileFilter === FileFilterEnum.UNUSED_BLOCK_FILES ? { unused_only: true } : {}),
+  };
+  const { data: wholeTreeData } = api.files.list(
+    wholeTreeQuery,
+    {},
+    { pauseFetch: !needsWholeTree || searchPending },
+  );
+  const filesForDisplay = useMemo(
+    () => needsWholeTree
+      ? (searchPending ? [] : wholeTreeData?.files || [])
+      : files,
+    [files, needsWholeTree, searchPending, wholeTreeData],
+  );
   const filteredFiles = useMemo(() => {
-    let filteredFiles = filterFiles(files, fileFilter);
+    let filteredFiles = filterFiles(filesForDisplay, fileFilter);
 
     if (fileSearchText) {
       filteredFiles = searchFiles(filteredFiles, fileSearchText);
     }
 
     return filteredFiles;
-  }, [fileFilter, fileSearchText, files]);
+  }, [fileFilter, fileSearchText, filesForDisplay]);
+
+  const loadFolder = useCallback(
+    async (path: string): Promise<FileType[]> => {
+      const response = await api.files.listAsync({
+        ...(showHiddenFilesSetting && showHiddenFiles ? FILES_QUERY_INCLUDE_HIDDEN_FILES : {}),
+        ...query,
+        directory_path: path,
+      });
+      const data = response?.data || response;
+      if (data?.error) throw new Error(data.error.message);
+      return data?.files?.[0]?.children || [];
+    },
+    [query, showHiddenFiles, showHiddenFilesSetting],
+  );
 
   const { data: filesFlattenData, mutate: fetchFilesFLatten } = useDelayFetch(
     api.files.list,
@@ -703,6 +749,7 @@ function useFileComponents(
       fetchFiles,
       fetchPipeline,
       onCreateFile,
+      onLoadFolder: directoryBrowser ? loadFolder : undefined,
       onSelectBlockFile,
       openSidekickView,
       pipeline,
@@ -724,6 +771,8 @@ function useFileComponents(
       fetchPipeline,
       fileTreeRef,
       onCreateFile,
+      directoryBrowser,
+      loadFolder,
       onSelectBlockFile,
       openSidekickView,
       pipeline,

@@ -262,12 +262,16 @@ Here is the example:
 concurrency_config:
   block_run_limit: 5
   pipeline_run_limit: 3
+  pipeline_run_priority: 10
 ```
 The default value of `block_run_limit` and `pipeline_run_limit` can be set via environment variables: `CONCURRENCY_CONFIG_BLOCK_RUN_LIMIT` and `CONCURRENCY_CONFIG_PIPELINE_RUN_LIMIT`
 
 * `block_run_limit`: limit the concurrent blocks runs in one pipeline run.
 * `pipeline_run_limit`: limit the concurrent pipeline runs in one pipeline trigger.
 * `pipeline_run_limit_all_triggers`: limit the concurrent pipeline runs across all triggers in a pipeline.
+* `pipeline_run_priority` (Mage Pro only): set the priority for this pipeline's runs when run limits are reached.
+  Higher values start first, and runs with the same priority use execution date order.
+  The default value is `0`. You can edit this in Pipeline Settings as **Pipeline priority**.
 * `on_pipeline_run_limit_reached`: choose whether to `wait` or `skip` when the pipeline run limit is reached.
 
 ## Variable storage

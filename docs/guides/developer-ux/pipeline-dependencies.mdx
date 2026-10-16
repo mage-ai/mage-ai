@@ -5,10 +5,12 @@ description: "Manage cross-pipeline dependencies and execution flow across every
 icon: "arrows-cross"
 ---
 
-import { ProButton } from '/snippets/pro/button.mdx';
 import { ProOnly } from '/snippets/pro/only.mdx';
 
 <ProOnly source="pipeline-dependencies" />
+
+Use pipeline dependency views to understand how pipelines in one project depend
+on each other.
 
 <Frame>
   <img
@@ -16,3 +18,95 @@ import { ProOnly } from '/snippets/pro/only.mdx';
     src="https://mage-ai.github.io/assets/pro/features/pipeline-dependencies.jpg"
   />
 </Frame>
+
+## Explore the project graph
+
+Open `/apps/pipelines/graph` to review the cross-pipeline dependency graph.
+Each node represents a pipeline. Each edge points from an upstream pipeline to a
+downstream pipeline:
+
+1. **Upstream pipelines** must run first or provide data, state, or execution
+   context used by the selected pipeline.
+1. **Downstream pipelines** depend on the selected pipeline or run after it.
+1. Selecting a pipeline focuses it and highlights the upstream and downstream
+   paths that match the current trace direction.
+
+The graph is read-only. Update pipeline relationships from the pipeline or
+dependency configuration surfaces that create the underlying upstream and
+downstream metadata. When the dependency response includes pipeline colors, the
+graph uses those colors for the matching pipeline nodes.
+
+## Focus on one pipeline
+
+Use **Find pipeline** to search by pipeline name or UUID. Selecting a result
+centers the graph on that pipeline, selects it, and highlights the dependency
+paths that match the selected trace direction.
+
+## Filter the neighborhood
+
+Use the graph controls to narrow large projects:
+
+1. **All pipelines** shows every pipeline node returned by the dependency
+   source.
+1. **With dependencies** hides isolated pipelines that do not have an upstream or
+   downstream relationship.
+1. **Both** highlights upstream and downstream pipelines around the focused
+   pipeline.
+1. **Upstream** highlights only pipelines that lead into the focused pipeline.
+1. **Downstream** highlights only pipelines that depend on or follow the focused
+   pipeline.
+
+Clear the focus to return to the project-wide graph.
+
+## Review pipeline relationships
+
+Open a pipeline and select **Dependencies** to review the pipelines connected to
+the current pipeline. The page groups relationships into upstream dependencies
+and downstream pipelines, and shows the relationship type, active trigger count,
+edge source, and latest run status when Mage can resolve that information.
+
+Dependency edges can come from configured relationships, runtime lineage, or
+pipeline code that calls helpers such as `trigger_pipeline`,
+`trigger_pipeline_for_workspace`, `trigger_workspace_pipeline`, and
+`check_status`.
+
+When a pipeline is focused, highlighted graph edges show concise relationship
+labels such as **Trigger**, **Sensor**, and **Global data product**.
+
+## Use diagnostics
+
+The graph reports diagnostics when dependency metadata is incomplete or
+ambiguous, such as a pipeline referencing a missing pipeline, a self-dependency,
+or a cycle. Use diagnostics to decide whether the project needs dependency
+metadata cleanup before relying on the graph for release planning or incident
+analysis.
+
+## Validate relationship direction
+
+When reviewing a dependency layout, confirm the selected pipeline context before
+acting:
+
+1. Select the pipeline you care about.
+1. Check whether the highlighted relationships point upstream or downstream from
+   the selected pipeline.
+1. Use **Upstream** to highlight the pipelines that must run before the selected
+   pipeline.
+1. Use **Downstream** to highlight the pipelines that can be affected by the
+   selected pipeline.
+1. Follow the highlighted edge labels to confirm which dependency evidence Mage
+   resolved for each relationship.
+
+For dense graphs, keep the focused pipeline selected and move between direction
+filters instead of trying to interpret every edge at once.
+
+## Cancel downstream runs
+
+When cancelling a running pipeline run, Mage can also cancel downstream runs that
+were triggered by that run. In the cancellation confirmation, select **Cancel
+downstream runs triggered by this run** to preview the eligible downstream runs
+before confirming.
+
+The preview only counts downstream runs that are still running or queued and
+that you have permission to cancel. Runs that are already terminal are skipped,
+and runs you cannot edit are shown as blocked. Leaving the option unchecked
+cancels only the selected pipeline run.

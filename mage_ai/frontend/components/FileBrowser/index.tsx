@@ -65,6 +65,7 @@ type FileBrowserProps = {
   fetchPipeline?: () => void;
   files?: FileType[];
   onCreateFile?: (file: FileType) => void;
+  onLoadFolder?: (path: string) => Promise<FileType[]>;
   pipeline?: PipelineType;
   renderAfterContent?: (file: FileType) => any;
   showError?: (opts: {
@@ -103,6 +104,7 @@ function FileBrowser({
   // eslint-disable-next-line react/prop-types
   onClickFolder,      // included in FolderSharedProps
   onCreateFile,
+  onLoadFolder,
   // eslint-disable-next-line react/prop-types
   onSelectBlockFile,  // included in FolderSharedProps
   // eslint-disable-next-line react/prop-types
@@ -397,6 +399,7 @@ function FileBrowser({
       level={0}
       onClickFile={onClickFile}
       onClickFolder={onClickFolder}
+      onLoadFolder={onLoadFolder}
       onSelectBlockFile={onSelectBlockFile}
       openFile={openFile}
       reloadCount={reloadCount}
@@ -414,13 +417,16 @@ function FileBrowser({
     files,
     onClickFile,
     onClickFolder,
+    onLoadFolder,
     openFile,
+    ref,
     // These cause re-render
     // Don’t use this for now. Just open the block as a file.
     // This function will re-render whenever a block is added or removed to the pipeline.
     onSelectBlockFile,
     reloadCount,
     renderAfterContent,
+    themeContext,
     uuidFileBrowser,
   ]);
 

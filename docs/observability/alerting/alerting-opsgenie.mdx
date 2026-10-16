@@ -5,6 +5,8 @@ description: "Get status updates in Opsgenie."
 icon: "cauldron"
 ---
 
+import { ProOnly } from '/snippets/pro/only.mdx';
+
 <img
   alt="Opsgenie"
   src="https://logotyp.us/files/opsgenie.svg"
@@ -15,6 +17,22 @@ icon: "cauldron"
 
 1. Set up Api Integration for Opsgenie
 2. Update Mage project settings
+
+---
+
+## Configure alerts in the Mage Pro UI
+
+After you create your Opsgenie API integration, you can configure alerts in the
+Mage Pro UI instead of editing `metadata.yaml` directly:
+
+1. For project defaults, go to **Settings > Account > Alerts**.
+2. For one pipeline, open the pipeline and go to **Alerts**. Pipeline-level
+   settings override the project-level alert config for that pipeline.
+3. Choose the alert outcomes, enable Opsgenie, enter the API URL and API key,
+   and use **Send test notification** to send a test alert before saving.
+
+You can still reference secrets with values such as
+`{{ env_var('MAGE_OPSGENIE_API_KEY') }}`.
 
 ---
 

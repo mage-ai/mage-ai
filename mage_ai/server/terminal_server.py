@@ -4,6 +4,7 @@ import re
 
 import terminado
 from tornado import gen
+from tornado.websocket import WebSocketClosedError
 
 from mage_ai.api.utils import authenticate_client_and_token, has_at_least_editor_role
 from mage_ai.data_preparation.models.errors import FileNotInProjectError
@@ -62,7 +63,12 @@ class TerminalWebsocketServer(terminado.TermSocket):
         if self.term_command == 'cmd':
             xterm_escape = re.compile(r'(?:\x1B\]0;).*\x07')
             updated_text = xterm_escape.sub('', text)
-        self.send_json_message(["stdout", updated_text])
+        try:
+            self.send_json_message(["stdout", updated_text])
+        except WebSocketClosedError:
+            # The PTY can produce output after the terminal websocket disconnects.
+            # This is an expected race during tab closes and network interruptions.
+            pass
 
     def open(self, url_component=None):
         """Websocket connection opened.

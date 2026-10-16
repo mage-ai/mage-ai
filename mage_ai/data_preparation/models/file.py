@@ -171,11 +171,20 @@ class File:
         pattern: str = None,
         check_file_path: bool = False,
         include_pipeline_count: bool = False,
+        max_depth: int = MAX_DEPTH,
+        search: str = None,
+        unused_only: bool = False,
     ):
         dir_selector = None
         file_selector = None
 
-        if exclude_pattern is not None or pattern is not None:
+        pipeline_count_mapping = None
+        if include_pipeline_count or unused_only:
+            from mage_ai.cache.block import BlockCache
+
+            pipeline_count_mapping = BlockCache().get_pipeline_count_mapping()
+
+        if exclude_pattern is not None or pattern is not None or search or unused_only:
 
             def __select(x: Dict, check_file_path=check_file_path, pattern=pattern):
                 filename = x.get('path') if check_file_path else x.get('name')
@@ -184,6 +193,14 @@ class File:
                     checks.append(not re.search(exclude_pattern, filename or ''))
                 if pattern:
                     checks.append(re.search(pattern, filename or ''))
+                if search:
+                    checks.append(
+                        search.lower().replace('_', ' ') in
+                        (x.get('name') or '').lower().replace('_', ' ')
+                    )
+                if unused_only:
+                    cache_key = remove_base_repo_path_or_name(x.get('path'))
+                    checks.append(not (pipeline_count_mapping or {}).get(cache_key))
                 return all(checks)
 
             file_selector = __select
@@ -199,12 +216,6 @@ class File:
 
             dir_selector = __select
 
-        pipeline_count_mapping = None
-        if include_pipeline_count:
-            from mage_ai.cache.block import BlockCache
-
-            pipeline_count_mapping = BlockCache().get_pipeline_count_mapping()
-
         return traverse(
             os.path.basename(repo_path),
             True,
@@ -213,6 +224,8 @@ class File:
             file_selector=file_selector,
             include_pipeline_count=include_pipeline_count,
             pipeline_count_mapping=pipeline_count_mapping,
+            max_depth=max_depth,
+            prune_empty=bool(search or unused_only),
         )
 
     @classmethod
@@ -513,6 +526,8 @@ def traverse(
     file_selector: Callable = None,
     include_pipeline_count: bool = False,
     pipeline_count_mapping: Dict = None,
+    max_depth: int = MAX_DEPTH,
+    prune_empty: bool = False,
 ) -> Dict:
     tree_entry = dict(name=name)
     if not is_dir:
@@ -525,7 +540,9 @@ def traverse(
                 tree_entry['pipeline_count'] = pipeline_count
 
         return tree_entry
-    if depth >= MAX_DEPTH:
+    if depth >= max_depth:
+        tree_entry['children'] = []
+        tree_entry['children_loaded'] = False
         return tree_entry
     can_access_children = name[0] == '.' or name in INACCESSIBLE_DIRS
 
@@ -542,7 +559,11 @@ def traverse(
             return True
 
         entry_path = entry.path
-        if entry.is_dir(follow_symlinks=False) or os.path.isdir(entry_path):
+        # os.path.isdir() performs a separate stat for every regular file. Only
+        # symlinks need that fallback to preserve the existing filter behavior.
+        if entry.is_dir(follow_symlinks=False) or (
+            entry.is_symlink() and os.path.isdir(entry_path)
+        ):
             return (
                 True
                 if dir_selector is None
@@ -576,12 +597,20 @@ def traverse(
             file_selector=file_selector,
             include_pipeline_count=include_pipeline_count,
             pipeline_count_mapping=pipeline_count_mapping,
+            max_depth=max_depth,
+            prune_empty=prune_empty,
         )
         for entry in sorted(
             filter(__filter, os.scandir(path)),
             key=lambda entry: entry.name,
         )
     )
+
+    if prune_empty:
+        tree_entry['children'] = [
+            child for child in tree_entry['children']
+            if 'children' not in child or child['children']
+        ]
 
     return tree_entry
 

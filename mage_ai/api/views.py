@@ -5,6 +5,7 @@ from typing import Dict, List, Optional, Tuple, Union
 
 import simplejson
 
+from mage_ai.api.file_executor import run_file_work
 from mage_ai.api.logging import debug, error, info
 from mage_ai.api.operations.base import BaseOperation
 from mage_ai.api.operations.constants import CREATE, DELETE, DETAIL, LIST, UPDATE
@@ -96,13 +97,20 @@ async def execute_operation(
     timing('api.time', api_time, tags)
     timing('sql.time', api_time, tags)
 
-    handler.write(
-        simplejson.dumps(
+    if action == LIST and resource == 'files':
+        body = await run_file_work(
+            simplejson.dumps,
             response,
             default=encode_complex,
             ignore_nan=True,
         )
-    )
+    else:
+        body = simplejson.dumps(
+            response,
+            default=encode_complex,
+            ignore_nan=True,
+        )
+    handler.write(body)
 
 
 def __determine_action(

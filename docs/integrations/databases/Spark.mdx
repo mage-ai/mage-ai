@@ -56,6 +56,27 @@ def load_data_from_spark(**kwargs) -> DataFrame:
 
 5. Run the block.
 
+## Data Preview for Spark paths
+
+In Mage Pro, Data Preview can read file-backed Spark datasets without requiring
+a persistent Hive metastore table. Use a configured Spark profile and select a
+project-relative path with one of the supported Spark file formats: `parquet`,
+`csv`, `json`, or `orc`.
+
+For example, a Spark Data Preview source can target a Parquet dataset stored
+under the Mage project:
+
+```yaml
+provider: spark
+profile: default
+format: parquet
+path: datasets/events
+```
+
+The path must resolve inside the Mage project directory. If you need catalog
+table discovery across separate Spark sessions or worker processes, configure a
+durable Spark catalog or metastore and use the table name instead.
+
 ### Export a dataframe to Spark
 
 ```python

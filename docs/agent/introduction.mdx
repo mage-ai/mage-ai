@@ -3,6 +3,10 @@ title: "Introduction"
 description: "Build and manage Mage data pipelines directly from your AI coding assistant."
 ---
 
+import { ProOnly } from '/snippets/pro/only.mdx';
+
+<ProOnly source="mage-agent" />
+
 **Mage Agent** connects your local development environment to your Mage Pro cluster through the [Model Context Protocol (MCP)](https://modelcontextprotocol.io). Your AI assistant can inspect, create, modify, and run Mage pipelines using natural language — and a built-in sync engine keeps local files in step with the cluster.
 
 <CardGroup cols={2}>
@@ -10,7 +14,7 @@ description: "Build and manage Mage data pipelines directly from your AI coding 
     Get connected in under five minutes.
   </Card>
   <Card title="IDE Integration" icon="code" href="/agent/ide-integration">
-    Connect Cursor, Claude Code, or Codex CLI.
+    Connect Cursor, Claude Code, OpenAI Codex CLI, or another MCP-compatible client.
   </Card>
   <Card title="Sync" icon="arrows-rotate" href="/agent/sync">
     Mirror your Mage project to local files.

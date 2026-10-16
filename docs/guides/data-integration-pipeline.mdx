@@ -104,6 +104,18 @@ Here are the steps you can optionally go through:
    - `IGNORE`: skip the new record if it’s a duplicate of an existing record.
    - `UPDATE`: update the existing record with the new record’s properties.
 
+For supported SQL sources, the selected stream configuration surface also shows
+**Count rows** next to **Load sample data**. Click **Count rows** after selecting
+and configuring a stream to count only that active stream on demand. Mage shows
+one context-appropriate result: `FULL_TABLE` streams show the total row count,
+and `INCREMENTAL` streams show the row count eligible after the saved bookmark.
+If no bookmark exists, Mage warns that the next incremental sync may read all
+rows. Log-based SQL replication streams do not support row counts. Slow or
+transient failed count requests show an error for the active stream and can be
+retried without automatically counting every stream. Permission failures show
+the source error without a retry action, since the source credentials or grants
+must be fixed first.
+
 Once you've configured the schema for the stream, you can optionally choose to
 run the stream in parallel. Parallel streams will be attempted to be synchronized
 in parallel if there are enough worker resources available. This may speed up the
@@ -153,11 +165,11 @@ sync process if you have a large number of streams.
 
 ## Run pipeline and start sync
 
-Once you’re done configuring your pipeline, go back to the pipeline’s trigger
-page by clicking the name of your pipeline in your header.
+Once you’re done configuring your pipeline, open the pipeline’s **Triggers**
+page from the pipeline navigation.
 
-The breadcrumbs in your header could look like this:
-`Pipelines / pipeline name / Edit`.
+While you’re still in the editor, the breadcrumbs in your header could look like this:
+`Pipelines / pipeline name / Editor`.
 
 Once you’re on the pipeline triggers page, create a
 [new scheduled trigger](/design/data-pipeline-management#create-trigger)

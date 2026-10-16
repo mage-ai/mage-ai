@@ -54,7 +54,7 @@ View all pipeline runs across your entire project:
 
 1. **Navigate to the homepage** and click **"Pipeline runs"** in the left navigation
 2. **Or go directly to** `/pipeline-runs` URL
-3. **Filter and search** by pipeline, status, date range, or trigger
+3. **Filter** by pipeline, status, or date range, and **search** by pipeline or trigger
 4. **Monitor key metrics** like success rate, average duration, and recent activity
 
 #### View Types
@@ -77,7 +77,8 @@ The pipeline run list page provides comprehensive filtering options:
 - **Pipeline UUID** - Filter by specific pipeline identifiers
 - **Status** - Filter by run status (Cancelled, Done, Failed, Last run failed, Ready, Running)
 - **Pipeline Tag** - Filter by pipeline tags
-- **Search** - Text search across pipeline runs (Mage Pro only)
+- **Date range** - Filter current and past runs by bounded UTC preset ranges (Last hour, Last day, Last week, Last 30 days, Last year), all time, or a custom UTC start and end date
+- **Search** - Text search by pipeline or trigger (Mage Pro only)
 
 **Filter Actions:**
 - **Apply filters** - Apply selected filter criteria
@@ -101,6 +102,14 @@ View runs for a specific pipeline:
 4. **Access individual run details** by clicking on specific runs
 
 **Direct URL**: `/pipelines/[pipeline_uuid]/runs`
+
+In Mage Pro, right-click a run on either the project-wide **Pipeline runs** page or a
+pipeline's **Runs** page to open the run actions menu. From this menu, you can open the run,
+edit its pipeline, view its logs, select **Copy URL** to copy its direct URL, select **Retry
+pipeline run** to restart the entire run, or select **Retry incomplete blocks** on a failed run
+to resume from its incomplete blocks.
+**Cancel** is enabled only for running runs, and **Fix with AI** is enabled only for failed
+runs when AI Sidekick is enabled; unavailable actions remain visible but disabled.
 
 #### Batch Operations
 
@@ -131,6 +140,11 @@ For detailed analysis of a specific run:
 3. **Examine block run details** including execution order, timing, and status
 4. **Access logs and error information** for each block
 5. **Review runtime variables** and configuration used
+6. **Review observed Kubernetes resource usage** in the **Resources** tab when stored average and peak CPU/RAM metrics are available for Mage Pro runs that use the Kubernetes executor. Use pipeline **Monitoring** for pipeline-level Kubernetes executor recommendations.
+
+In Mage Pro, right-click a block run to open its block in the pipeline editor, view its logs,
+or retry it after the pipeline run finishes. When CSV output download is available for a
+completed block run, the menu also includes **Download output**.
 
 ## Pipeline Run Retry
 
@@ -147,6 +161,9 @@ Retry from the failed block instead of restarting the entire pipeline. For detai
 
 #### Retry from Selected Block
 Retry starting from any selected block regardless of its current status. For detailed instructions, see [Retrying block runs from a pipeline run](/orchestration/pipeline-runs/retrying-block-runs).
+
+#### Retry a Specific Integration Stream
+Select an incomplete stream row in a data integration pipeline run to retry only that stream. The broader retry incomplete action remains available for retrying every incomplete stream. For detailed instructions, see [Retrying block runs from a pipeline run](/orchestration/pipeline-runs/retrying-block-runs).
 
 ### Automatic Retry Configuration
 
@@ -227,8 +244,9 @@ When pipeline runs fail, use these debugging techniques to identify and resolve 
 **Block-Level Debugging:**
 1. **Click on individual block runs** to see detailed information
 2. **Access block logs** for error messages and stack traces
-3. **Review block output** to understand data state at failure
-4. **Check upstream dependencies** to ensure data flow is correct
+3. **Open the log source** from the selected error log's source-location link, or click the block name in the Block column, to open the failing block in the pipeline editor. When line metadata is available, Mage focuses that line in the editor.
+4. **Review block output** to understand data state at failure
+5. **Check upstream dependencies** to ensure data flow is correct
 
 ### Common Failure Patterns
 
@@ -263,6 +281,7 @@ When pipeline runs fail, use these debugging techniques to identify and resolve 
 - **Error tracking** - View error messages, stack traces, and debugging information
 - **Execution timeline** - See the order and timing of block executions
 - **Variable inspection** - Review runtime variables and their values
+- **Kubernetes resource summary** - In Mage Pro, review observed average and peak CPU/RAM for Kubernetes executor runs; use pipeline Monitoring for pipeline-level Kubernetes executor recommendations
 - **Block output export** - Save block output as CSV for analysis (see [Saving block output as CSV](/orchestration/pipeline-runs/saving-block-output-as-csv))
 
 ## Best Practices for Pipeline Run Management

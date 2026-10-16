@@ -24,6 +24,23 @@ import { ProOnly } from '/snippets/pro/only.mdx';
 
 ---
 
+## Configure alerts in the Mage Pro UI
+
+After you create your Zendesk API token, you can configure alerts in the Mage Pro
+UI instead of editing `metadata.yaml` directly:
+
+1. For project defaults, go to **Settings > Account > Alerts**.
+2. For one pipeline, open the pipeline and go to **Alerts**. Pipeline-level
+   settings override the project-level alert config for that pipeline.
+3. Choose the alert outcomes, enable Zendesk, enter the subdomain, email, and
+   API token, and use **Send test notification** to create a test ticket before
+   saving.
+
+You can still reference secrets with values such as
+`{{ env_var('MAGE_ZENDESK_API_TOKEN') }}`.
+
+---
+
 ## Create an API token in Zendesk
 
 To allow Mage to create tickets in Zendesk, you need to set up an API token:

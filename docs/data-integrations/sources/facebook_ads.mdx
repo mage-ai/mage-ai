@@ -2,6 +2,10 @@
 title: "Facebook Ads"
 ---
 
+import { ProOnly } from '/snippets/pro/only.mdx';
+
+<ProOnly source="facebook-ads" />
+
 ![Facebook](https://upload.wikimedia.org/wikipedia/commons/thumb/8/89/Facebook_Logo_%282019%29.svg/2560px-Facebook_Logo_%282019%29.svg.png)
 
 <br/>
@@ -15,6 +19,21 @@ To set up the Facebook Ads source, provide the following configuration parameter
 | `account_id`    | The Facebook Ad account ID used when extracting data.                | `"abc123..."` (double quotes required) | ✅       |
 | `access_token`  | OAuth token to access API endpoints.                                 | `abc123...`                  | ✅       |
 | `start_date`    | Fetch data newer than the specified `start_date`. Format: ISO8601.   | `2022-01-01T00:00:00Z`        | ✅       |
+
+<br/>
+
+## Streams
+
+Facebook Ads includes the following insight streams:
+
+- `ads_insights`
+- `ads_insights_age_and_gender`
+- `ads_insights_country`
+- `ads_insights_device_platform`
+- `ads_insights_platform_and_device`
+- `ads_insights_region`
+- `ads_insights_dma`
+- `ads_insights_hourly_advertiser`
 
 <br/>
 

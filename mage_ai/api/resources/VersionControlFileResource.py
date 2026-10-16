@@ -2,6 +2,7 @@ import asyncio
 import urllib.parse
 from typing import Dict
 
+from mage_ai.api.errors import ApiError
 from mage_ai.api.resources.AsyncBaseResource import AsyncBaseResource
 from mage_ai.api.resources.mixins.version_control_errors import VersionControlErrors
 from mage_ai.orchestration.db.models.oauth import User
@@ -75,7 +76,10 @@ class VersionControlFileResource(VersionControlErrors, AsyncBaseResource):
         return res
 
     async def update(self, payload: Dict, **kwargs):
-        await self.model.update_async(**payload)
+        try:
+            await self.model.update_async(**payload)
+        except ValueError as err:
+            raise ApiError(dict(ApiError.RESOURCE_INVALID, message=str(err))) from None
         self.validate_output()
 
     async def delete(self, **kwargs):

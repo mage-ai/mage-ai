@@ -8,7 +8,10 @@ icon: "clock"
 You can display dates on various pages (e.g. the Pipelines list and
 Triggers/Pipeline runs/Block runs pages) in your local timezone, as
 well as configure the start date for triggers and backfills in local
-time.
+time. In the Version control terminal, this setting also controls new
+terminal session timezone behavior: sessions use UTC by default, and use your
+browser's local IANA timezone for prompt timestamps and the `TZ` environment
+variable when `Display local timezone` is enabled.
 
 ## Steps to enable local timezone setting
 

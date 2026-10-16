@@ -92,7 +92,8 @@ block dependencies."
     `@once`, `@hourly`, `@daily`, `@weekly`, `@monthly`
   </ResponseField>
   <ResponseField name="schedule_type" type="string" required>
-    Trigger type: `api`, `event`, `time`
+    Trigger type. Supported new trigger creation uses `api` or `time`; `event` may appear for
+    deprecated legacy event triggers.
   </ResponseField>
   <ResponseField name="start_time" type="datetime">
     Date and time when the trigger should start running.
