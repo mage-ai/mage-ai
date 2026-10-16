@@ -25,7 +25,8 @@ export const ContainerStyle = styled.div<{
   ${ScrollbarStyledCss}
 
   height: 100%;
-  overflow: auto;
+  /* xterm viewport scrolls; outer scroll breaks PTY width vs grid alignment */
+  overflow: hidden;
   position: absolute;
 
   ${props => `
@@ -37,6 +38,33 @@ export const InnerStyle = styled.div`
   ${SHARED_STYLES}
 
   padding: ${PADDING_UNITS * UNIT}px;
+`;
+
+/** Fills parent; xterm FitAddon measures this element. */
+export const XTermHost = styled.div<{
+  width?: number;
+}>`
+  ${SHARED_STYLES}
+  box-sizing: border-box;
+  flex: 1;
+  height: 100%;
+  min-height: 0;
+  min-width: 0;
+  /* xterm should occupy the full measured area; padding shrinks PTY cols/lines and
+   * causes premature wrapping. */
+  padding: 0;
+  position: relative;
+  width: 100%;
+
+  .xterm {
+    height: 100%;
+    padding: 0;
+    width: 100%;
+  }
+
+  .xterm-viewport {
+    border-radius: 0;
+  }
 `;
 
 export const LineStyle = styled.div`
