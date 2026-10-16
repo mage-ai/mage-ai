@@ -78,7 +78,7 @@ def get_count_pp(test_case) -> int:
     with patch('mage_ai.settings.platform.project_platform_activated', lambda: True):
         with patch('mage_ai.settings.repo.project_platform_activated', lambda: True):
             with patch(
-                'mage_ai.data_preparation.models.file.project_platform_activated',
+                'mage_ai.settings.repo.project_platform_activated',
                 lambda: True,
             ):
                 folders = set()
@@ -97,7 +97,7 @@ class FolderWithProjectPlatformAPIEndpointTest(BaseAPIEndpointTest, ProjectPlatf
         with patch('mage_ai.settings.platform.project_platform_activated', lambda: True):
             with patch('mage_ai.settings.repo.project_platform_activated', lambda: True):
                 with patch(
-                    'mage_ai.data_preparation.models.file.project_platform_activated',
+                    'mage_ai.settings.repo.project_platform_activated',
                     lambda: True,
                 ):
                     super().setUp()
@@ -108,7 +108,7 @@ class FolderWithProjectPlatformAPIEndpointTest(BaseAPIEndpointTest, ProjectPlatf
         with patch('mage_ai.settings.platform.project_platform_activated', lambda: True):
             with patch('mage_ai.settings.repo.project_platform_activated', lambda: True):
                 with patch(
-                    'mage_ai.data_preparation.models.file.project_platform_activated',
+                    'mage_ai.settings.repo.project_platform_activated',
                     lambda: True,
                 ):
                     self.teardown_final()
@@ -125,7 +125,7 @@ build_create_endpoint_tests(
     ),
     resource='folders',
     patch_function_settings=[
-        ('mage_ai.data_preparation.models.file.project_platform_activated', lambda: True),
+        ('mage_ai.settings.repo.project_platform_activated', lambda: True),
         ('mage_ai.settings.repo.project_platform_activated', lambda: True),
         ('mage_ai.settings.platform.project_platform_activated', lambda: True),
         ('mage_ai.api.resources.FolderResource.ensure_file_is_in_project', lambda _x: True),
@@ -143,7 +143,7 @@ build_update_endpoint_tests(
     get_model_before_update=get_model_before_update,
     assert_after_update=lambda self, result, model, mocks: model['name'] != result['name'],
     patch_function_settings=[
-        ('mage_ai.data_preparation.models.file.project_platform_activated', lambda: True),
+        ('mage_ai.settings.repo.project_platform_activated', lambda: True),
         ('mage_ai.settings.repo.project_platform_activated', lambda: True),
         ('mage_ai.settings.platform.project_platform_activated', lambda: True),
         ('mage_ai.api.resources.FolderResource.ensure_file_is_in_project', lambda _x: True),
@@ -158,7 +158,7 @@ build_delete_endpoint_tests(
     get_resource_id=lambda self: get_resource_id(self),
     resource='folders',
     patch_function_settings=[
-        ('mage_ai.data_preparation.models.file.project_platform_activated', lambda: True),
+        ('mage_ai.settings.repo.project_platform_activated', lambda: True),
         ('mage_ai.settings.repo.project_platform_activated', lambda: True),
         ('mage_ai.settings.platform.project_platform_activated', lambda: True),
         ('mage_ai.api.resources.FolderResource.ensure_file_is_in_project', lambda _x: True),
