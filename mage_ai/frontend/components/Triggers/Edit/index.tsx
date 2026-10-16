@@ -1627,20 +1627,21 @@ function Edit({
           </FlexContainer>
         </Spacing>
 
+        <Spacing mt={PADDING_UNITS}>
+          <FlexContainer alignItems="center">
+            <Checkbox
+              checked={settings?.skip_if_previous_running}
+              label="Skip run if previous run still in progress"
+              onClick={() => setSettings(prev => ({
+                ...prev,
+                skip_if_previous_running: !settings?.skip_if_previous_running,
+              }))}
+            />
+          </FlexContainer>
+        </Spacing>
+
         {ScheduleTypeEnum.TIME === scheduleType && (
           <>
-            <Spacing mt={PADDING_UNITS}>
-              <FlexContainer alignItems="center">
-                <Checkbox
-                  checked={settings?.skip_if_previous_running}
-                  label="Skip run if previous run still in progress"
-                  onClick={() => setSettings(prev => ({
-                    ...prev,
-                    skip_if_previous_running: !settings?.skip_if_previous_running,
-                  }))}
-                />
-              </FlexContainer>
-            </Spacing>
             <Spacing mt={PADDING_UNITS}>
               <FlexContainer alignItems="center">
                 <Checkbox
