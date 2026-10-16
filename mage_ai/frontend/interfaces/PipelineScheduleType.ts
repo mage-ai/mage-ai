@@ -65,6 +65,8 @@ export interface PipelineScheduleSettingsType {
   timeout?: number;
   timeout_status?: string;
   invalid_schedule_interval?: boolean; // Used to detect triggers with invalid cron expressions
+  active_hours_start?: number;
+  active_hours_end?: number;
 }
 
 export const SORT_QUERY_TO_COLUMN_NAME_MAPPING = {
