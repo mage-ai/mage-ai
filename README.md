@@ -105,7 +105,9 @@ Explore our full documentation at [docs.mage.ai](https://docs.mage.ai).
 
 We welcome contributions of all kinds — bug fixes, docs, new features, or community examples.
 
-Start with our [contributing guide](https://docs.mage.ai/contributing/overview), check out open issues, or suggest improvements.
+Please read our [Contributing Guide](CONTRIBUTING.md) to get started. You can also check out our [detailed documentation](https://docs.mage.ai/contributing/overview) for in-depth guides.
+
+This project adheres to the [Contributor Covenant Code of Conduct](CODE_OF_CONDUCT.md). By participating, you are expected to uphold this code.
 
 <br />
 
