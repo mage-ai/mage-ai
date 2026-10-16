@@ -7,7 +7,9 @@ from kubernetes.client import (
     V1Container,
     V1EnvFromSource,
     V1EnvVar,
+    V1JobCondition,
     V1JobSpec,
+    V1JobStatus,
     V1NodeAffinity,
     V1NodeSelector,
     V1NodeSelectorRequirement,
@@ -491,3 +493,63 @@ class JobManagerTests(TestCase):
             namespace='test_namespace',
             body=mock_delete_options
         )
+
+    def __run_job(self, mock_client, statuses):
+        mock_api_client = MagicMock()
+        mock_api_client.read_namespaced_job = MagicMock(
+            side_effect=[MagicMock(status=status) for status in statuses],
+        )
+        mock_client.BatchV1Api = MagicMock(return_value=mock_api_client)
+        job_manager = JobManager(
+            job_name='test_job_name',
+            namespace='test_namespace',
+        )
+        job_manager.delete_job = MagicMock()
+        with patch.object(JobManager, 'job_exists', return_value=True), \
+                patch('mage_ai.services.k8s.job_manager.time.sleep') as mock_sleep:
+            try:
+                job_manager.run_job('command')
+            finally:
+                self.assertEqual(
+                    len(statuses),
+                    mock_api_client.read_namespaced_job.call_count,
+                )
+                self.assertEqual(len(statuses) - 1, mock_sleep.call_count)
+                job_manager.delete_job.assert_called_once()
+
+    @patch('mage_ai.services.k8s.job_manager.client')
+    @patch('mage_ai.services.k8s.job_manager.config')
+    def test_run_job_waits_for_retry_to_succeed(self, mock_config, mock_client):
+        self.__run_job(
+            mock_client,
+            [
+                # Not started yet: nothing to decide on, whatever backoffLimit is.
+                V1JobStatus(active=1),
+                # First pod failed, Kubernetes is retrying.
+                V1JobStatus(active=1, failed=1),
+                V1JobStatus(
+                    conditions=[V1JobCondition(status='True', type='Complete')],
+                    failed=1,
+                    succeeded=1,
+                ),
+            ],
+        )
+
+    @patch('mage_ai.services.k8s.job_manager.client')
+    @patch('mage_ai.services.k8s.job_manager.config')
+    def test_run_job_raises_once_job_failed(self, mock_config, mock_client):
+        with self.assertRaises(Exception) as context:
+            self.__run_job(
+                mock_client,
+                [
+                    V1JobStatus(active=1, failed=1),
+                    V1JobStatus(
+                        conditions=[
+                            V1JobCondition(status='True', type='FailureTarget'),
+                            V1JobCondition(status='True', type='Failed'),
+                        ],
+                        failed=2,
+                    ),
+                ],
+            )
+        self.assertIn('Failed to execute k8s job test_job_name', str(context.exception))
