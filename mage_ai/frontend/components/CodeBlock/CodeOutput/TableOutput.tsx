@@ -1,5 +1,5 @@
 import InnerHTML from 'dangerously-set-html-content';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 
 import DataTable from '@components/DataTable';
 import FlexContainer from '@oracle/components/FlexContainer';
@@ -69,6 +69,9 @@ function TableOutput({
     [data, sampleData],
   );
 
+  // null = no active filters; number = at least one filter is active
+  const [filteredRowCount, setFilteredRowCount] = useState<number | null>(null);
+
   if (columns?.some(header => header === '')) {
     return (
       <Spacing mx={5} my={3}>
@@ -120,12 +123,24 @@ function TableOutput({
     const arr2 = [];
 
     if (shape?.length >= 1) {
-      const r = pluralize('row', shape?.[0]);
-      if (shape?.length >= 2) {
-        const c = pluralize('column', shape?.[1]);
-        arr1.push(`${r} x ${c}`);
+      const totalRows = shape[0];
+      const r = pluralize('row', totalRows);
+
+      if (shape.length >= 2) {
+        const totalCols = shape[1];
+        const c = pluralize('column', totalCols);
+
+        if (filteredRowCount !== null && filteredRowCount !== totalRows) {
+          arr1.push(`${filteredRowCount} of ${r} × ${c}`);
+        } else {
+          arr1.push(`${r} x ${c}`);
+        }
       } else {
-        arr1.push(r);
+        if (filteredRowCount !== null && filteredRowCount !== totalRows) {
+          arr1.push(`${filteredRowCount} of ${r}`);
+        } else {
+          arr1.push(r);
+        }
       }
     }
 
@@ -161,19 +176,21 @@ function TableOutput({
         </Text>
       </>
     );
-  }, [shape, resourceUsage]);
+  }, [filteredRowCount, resourceUsage, shape]);
 
   return (
     <>
       <DataTable
         columns={columns}
         disableScrolling={!selected}
-        key={`data-table-${order}`}
+        filterable
+        key={`data-table-${output?.timestamp ?? order}`}
         maxHeight={maxHeight || UNIT * 60}
         noBorderBottom
         noBorderLeft
         noBorderRight
         noBorderTop={!borderTop}
+        onFilteredCountChange={setFilteredRowCount}
         renderColumnHeaderCell={(
           { Header: columnName },
           _,
