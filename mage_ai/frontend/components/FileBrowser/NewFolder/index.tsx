@@ -172,7 +172,6 @@ function NewFolder({
                   project: {
                     repo_path: directory,
                     type: projectType,
-                    uuid: filename,
                   },
                 });
               } else {
