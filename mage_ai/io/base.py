@@ -36,6 +36,7 @@ class DataSource(StrEnum):
     QDRANT = 'qdrant'
     REDSHIFT = 'redshift'
     S3 = 's3'
+    SFTP = 'sftp'
     SNOWFLAKE = 'snowflake'
     SPARK = 'spark'
     TRINO = 'trino'
