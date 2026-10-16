@@ -66,7 +66,7 @@ class FileProjectPlatformTest(ProjectPlatformMixin, AsyncDBTestCase):
 
     def test_create(self):
         with patch(
-            'mage_ai.data_preparation.models.file.project_platform_activated',
+            'mage_ai.settings.repo.project_platform_activated',
             lambda: True,
         ):
             with patch('mage_ai.settings.platform.project_platform_activated', lambda: True):
@@ -79,7 +79,7 @@ class FileProjectPlatformTest(ProjectPlatformMixin, AsyncDBTestCase):
                 )
 
         with patch(
-            'mage_ai.data_preparation.models.file.project_platform_activated',
+            'mage_ai.settings.repo.project_platform_activated',
             lambda: False,
         ):
             with patch('mage_ai.settings.platform.project_platform_activated', lambda: False):
@@ -92,7 +92,7 @@ class FileProjectPlatformTest(ProjectPlatformMixin, AsyncDBTestCase):
 
     async def test_create_async(self):
         with patch(
-            'mage_ai.data_preparation.models.file.project_platform_activated',
+            'mage_ai.settings.repo.project_platform_activated',
             lambda: True,
         ):
             with patch('mage_ai.settings.platform.project_platform_activated', lambda: True):
@@ -105,7 +105,7 @@ class FileProjectPlatformTest(ProjectPlatformMixin, AsyncDBTestCase):
                 )
 
         with patch(
-            'mage_ai.data_preparation.models.file.project_platform_activated',
+            'mage_ai.settings.repo.project_platform_activated',
             lambda: False,
         ):
             with patch('mage_ai.settings.platform.project_platform_activated', lambda: False):
@@ -118,7 +118,7 @@ class FileProjectPlatformTest(ProjectPlatformMixin, AsyncDBTestCase):
 
     def test_from_path(self):
         with patch(
-            'mage_ai.data_preparation.models.file.project_platform_activated',
+            'mage_ai.settings.repo.project_platform_activated',
             lambda: True,
         ):
             with patch('mage_ai.settings.platform.project_platform_activated', lambda: True):
@@ -128,7 +128,7 @@ class FileProjectPlatformTest(ProjectPlatformMixin, AsyncDBTestCase):
                 self.assertEqual(file.repo_path, os.path.join(base_repo_path(), 'mage_platform'))
 
         with patch(
-            'mage_ai.data_preparation.models.file.project_platform_activated',
+            'mage_ai.settings.repo.project_platform_activated',
             lambda: False,
         ):
             with patch('mage_ai.settings.platform.project_platform_activated', lambda: False):
@@ -140,7 +140,7 @@ class FileProjectPlatformTest(ProjectPlatformMixin, AsyncDBTestCase):
 
     def test_get_all_files(self):
         with patch(
-            'mage_ai.data_preparation.models.file.project_platform_activated',
+            'mage_ai.settings.repo.project_platform_activated',
             lambda: True,
         ):
             with patch('mage_ai.settings.platform.project_platform_activated', lambda: True):
@@ -216,7 +216,7 @@ class FileProjectPlatformTest(ProjectPlatformMixin, AsyncDBTestCase):
 
     def test_ensure_file_is_in_project(self):
         with patch(
-            'mage_ai.data_preparation.models.file.project_platform_activated',
+            'mage_ai.settings.repo.project_platform_activated',
             lambda: False,
         ):
             with patch('mage_ai.settings.platform.project_platform_activated', lambda: False):
