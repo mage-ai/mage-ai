@@ -67,6 +67,37 @@ TEAMS_NOTIFICATION_CONFIG_NO_ALERT_ON = dict(
 )
 
 
+NTFY_NOTIFICATION_CONFIG = dict(
+    alert_on=[
+        'trigger_failure',
+        'trigger_success',
+    ],
+    ntfy_config=dict(
+        base_url='https://ntfy.sh',
+        topic='test_topic',
+    )
+)
+
+NTFY_NOTIFICATION_CONFIG_WITH_CUSTOM_TEMPLATE = dict(
+    alert_on=[
+        'trigger_failure',
+        'trigger_success',
+    ],
+    ntfy_config=dict(
+        base_url='https://ntfy.sh',
+        topic='test_topic',
+    ),
+    message_templates=dict(
+        failure=dict(
+            title='Pipeline {pipeline_uuid} failed at {execution_time}',
+            summary='Failed: {pipeline_run_url} | trigger={pipeline_schedule_name} '
+                    '(id={pipeline_schedule_id}) | desc={pipeline_schedule_description} '
+                    '| error={error} | stacktrace={stacktrace}',
+        )
+    )
+)
+
+
 OPSGENIE_NOTIFICATION_CONFIG = dict(
     alert_on=[
         'trigger_failure',
