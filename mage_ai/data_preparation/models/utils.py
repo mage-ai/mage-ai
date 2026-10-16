@@ -392,6 +392,11 @@ def construct_value(type_info: Dict[str, Union[str, Optional[str]]], value: Any)
     """
     type_name = type_info['name']
 
+    # Handle None/NoneType specially since it's not directly accessible as builtins.NoneType
+    # Check type_name first (primary case), but also check value as defensive programming
+    if type_name == 'NoneType' or value is None:
+        return None
+
     if 'path' in type_info and 'variable_type' in type_info:
         return deserialize_custom_complex_objects(
             value,
