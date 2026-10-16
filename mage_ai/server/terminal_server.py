@@ -59,6 +59,9 @@ class TerminalWebsocketServer(terminado.TermSocket):
 
     def on_pty_read(self, text):
         """Data read from pty; send to frontend"""
+        if not self._is_authorized():
+            self._reject_access()
+            return
         updated_text = text
         if self.term_command == 'cmd':
             xterm_escape = re.compile(r'(?:\x1B\]0;).*\x07')
@@ -98,47 +101,73 @@ class TerminalWebsocketServer(terminado.TermSocket):
         term_name = term_name if term_name else 'tty'
         self._logger.info("TermSocket.open: %s", term_name)
 
-        self.__initialize_terminal(term_name, cwd=cwd)
+        self._requested_term_name = term_name
+        self._requested_cwd = cwd
+        self._oauth_client_id = None
+        self._oauth_token_value = None
+        # Clients send credentials in their first message. Do not attach to a PTY or
+        # replay its buffer until those credentials have been checked.
+        if self._is_authorized():
+            self.__initialize_terminal(term_name, cwd=cwd)
+
+    def _is_authorized(self):
+        if DISABLE_TERMINAL or is_disable_pipeline_edit_access():
+            return False
+        if not REQUIRE_USER_AUTHENTICATION:
+            return True
+        if not self._oauth_client_id or not self._oauth_token_value:
+            return False
+        oauth_token, valid = authenticate_client_and_token(
+            self._oauth_client_id, self._oauth_token_value,
+        )
+        return bool(
+            valid and oauth_token and oauth_token.user and has_at_least_editor_role(
+                oauth_token.user, Entity.PROJECT, get_project_uuid(),
+            )
+        )
+
+    def _reject_access(self):
+        try:
+            self.send_json_message(['stdout', 'Unauthorized access to the terminal.'])
+        except WebSocketClosedError:
+            pass
+        self.close(code=1008, reason='Unauthorized terminal access')
 
     @gen.coroutine
     def on_message(self, raw_message):
-        message = json.loads(raw_message)
+        try:
+            message = json.loads(raw_message)
+        except (ValueError, TypeError):
+            self.close(code=1008, reason='Invalid terminal message')
+            return
+        command = message.get('command') if isinstance(message, dict) else None
+        if not isinstance(command, list) or len(command) < 2:
+            self.close(code=1008, reason='Invalid terminal message')
+            return
 
+        # Resolve only the client identifier here; credentials and permissions are
+        # checked before terminal creation, attachment, buffer replay, or input.
         api_key = message.get('api_key')
         token = message.get('token')
-        # This is a list of strings
-        command = message.get('command')
+        self._oauth_client_id = None
+        self._oauth_token_value = None
+        if REQUIRE_USER_AUTHENTICATION and isinstance(api_key, str) and isinstance(token, str):
+            oauth_client = Oauth2Application.query.filter(
+                Oauth2Application.client_id == api_key,
+            ).first()
+            if oauth_client:
+                self._oauth_client_id = oauth_client.id
+                self._oauth_token_value = token
+        if not self._is_authorized():
+            self._reject_access()
+            return
 
-        index = find_index(lambda x: x == '__CLEAR_OUTPUT__', command or [])
+        if self.terminal is None:
+            self.__initialize_terminal(self._requested_term_name, cwd=self._requested_cwd)
+
+        index = find_index(lambda x: x == '__CLEAR_OUTPUT__', command)
         if index >= 0:
             command[index] = r"clear -x && history -c && history -w && clear -x"
-
-        # If terminal access disable return
-        if DISABLE_TERMINAL:
-            return self.send_json_message(
-                ['stdout', f'{command[1]}\nUnauthorized access to the terminal.'])
-
-        if REQUIRE_USER_AUTHENTICATION or is_disable_pipeline_edit_access():
-            valid = False
-            if api_key and token:
-                oauth_client = Oauth2Application.query.filter(
-                    Oauth2Application.client_id == api_key,
-                ).first()
-                if oauth_client:
-                    oauth_token, valid = authenticate_client_and_token(oauth_client.id, token)
-                    if valid and oauth_token and oauth_token.user:
-                        valid = has_at_least_editor_role(
-                            oauth_token.user,
-                            Entity.PROJECT,
-                            get_project_uuid(),
-                        )
-                    else:
-                        # If the user is deleted, set valid to False
-                        valid = False
-            if not valid or is_disable_pipeline_edit_access():
-                return self.send_json_message(
-                    ['stdout', f'{command[1]}\nUnauthorized access to the terminal.'])
-
         return terminado.TermSocket.on_message(self, json.dumps(command))
 
     def __initialize_terminal(self, term_name: str, cwd: str = None):
