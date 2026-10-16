@@ -17,6 +17,25 @@ with the Mage clusters you authorize. After installation and sign-in, the agent
 can help inspect and operate Mage workflows, including pipelines, blocks,
 schedules, runs, logs, outputs, files, and other Mage project resources.
 
+## Tool And Skill Availability
+
+The installed plugin exposes the shared API-backed tools and their skill
+guidance, including data previews, Explore Data, charts, reusable context,
+context preparation, and programmable context analysis. The Codex and Claude Code
+installers include the same native skill catalog on macOS and Windows.
+
+You do not need to set `AI_READY_DATA_ENABLED` on your computer to make these
+tools available in the installed plugin. AI-ready data operations require the
+connected Mage server to support the operation and have
+`AI_READY_DATA_ENABLED=1` configured there. A listed tool does not guarantee
+that the selected cluster supports it: unsupported or disabled operations can
+return API errors. Ask your cluster administrator to check the server version,
+configuration, and your permissions when an operation is unavailable.
+
+Internal Sidekick tools that depend on a local session, such as captured-page
+context and media handling, still require that session. Internal/local mode
+continues to use its own environment flags for AI-ready data tool discovery.
+
 ## Where To Download It
 
 Download the installer from the public Mage Agent Plugin releases repository:
@@ -63,11 +82,28 @@ Before installing, make sure you have:
 - The correct agent client installed, such as Codex or Claude Code.
 - For Claude Code, the Claude Code CLI must be installed and support plugins.
 
-For Claude Code, verify:
+### Check Claude Code Plugin Support
+
+In Terminal, run:
 
 ```bash
+claude --version
+claude --help
 claude plugin --help
 ```
+
+Confirm that the help output lists `plugin` commands such as `install` and
+`marketplace`. A successful exit from `claude plugin --help` alone is not sufficient:
+older versions can display general help without supporting plugins.
+
+To update the Claude Code installation used by your Terminal, run:
+
+```bash
+claude update
+```
+
+If multiple copies are installed, also check the copy used by the Mage installer.
+See [Multiple Claude Code installations](#multiple-claude-code-installations).
 
 ## Install On macOS
 
@@ -90,7 +126,22 @@ Mage-Agent-MacOS-Claude.pkg
    agent client.
 
 The macOS installer starts the Mage OAuth sign-in helper after installing the
-plugin.
+plugin. Complete the browser sign-in, choose your Mage cluster, and authorize access.
+Then open a new Claude Code session to load the plugin:
+
+```bash
+claude
+```
+
+Ask:
+
+> Use Mage to show my connected cluster and list my pipelines. Do not modify anything.
+
+Approve the Mage tool calls when prompted. A response showing the expected cluster
+and its pipelines confirms that installation, authentication, and read access work.
+If you already had Claude Code open, exit and reopen it before retrying.
+
+The macOS package supports Apple silicon, including M1, and Intel Macs.
 
 ## Install On Windows
 
@@ -208,6 +259,75 @@ After installation and sign-in:
    checking the current cluster.
 4. If the agent asks you to authenticate, complete the browser sign-in and retry
    the request.
+
+## Troubleshoot Claude Code Installation On macOS
+
+### Multiple Claude Code Installations
+
+Your Terminal and the Mage installer can select different Claude Code executables.
+For example, Terminal may use a recent copy installed through Node Version Manager
+(`~/.nvm/...`), while the installer selects an older `/usr/local/bin/claude`.
+Updating the Terminal copy does not necessarily update the installer-selected copy.
+
+List the copies available in Terminal:
+
+```bash
+type -a claude
+```
+
+Open `/var/log/mage-plugin-installer.log` and find the latest installation attempt.
+The `Using Claude Code CLI:` entry identifies the executable used by the installer;
+the next lines report its version. Check that exact path. For example:
+
+```bash
+/usr/local/bin/claude --version
+/usr/local/bin/claude --help
+/usr/local/bin/claude plugin --help
+```
+
+If this copy is outdated and belongs to a global npm installation under `/usr/local`,
+update that installation explicitly:
+
+```bash
+sudo /usr/local/bin/npm install -g --prefix /usr/local @anthropic-ai/claude-code@latest
+```
+
+This command applies to the `/usr/local` npm installation. For installations managed
+another way, use that installation's update method.
+
+Verify the same executable again:
+
+```bash
+/usr/local/bin/claude --version
+/usr/local/bin/claude plugin --help
+```
+
+Confirm plugin-specific help is available, then reopen `Mage-Agent-MacOS-Claude.pkg`
+and complete installation and browser sign-in.
+
+### Installer Reports A Script Failure
+
+If macOS displays “The installation failed,” inspect:
+
+- `/var/log/install.log` for the macOS installer result.
+- `/var/log/mage-plugin-installer.log` for the command and underlying error.
+
+If the Mage log shows an older Claude Code version followed by an API 404 during
+`plugin marketplace add`, check whether the installer selected a different copy
+from your Terminal. This occurred with Claude Code 1.0.52 and was resolved by
+updating the selected copy to 2.1.301. Follow the steps above to check and update
+the correct installation.
+
+`PKInstallErrorDomain Code=112` identifies a package script failure; it does not
+identify the underlying cause. Use the detailed Mage log to determine the next step.
+
+### Mage Tools Are Missing After Installation
+
+Exit Claude Code and start a new session with `claude`. If Mage tools are still
+missing, use Claude Code's `/plugin` interface to check that Mage is installed and
+enabled. If a tool asks you to authenticate, complete browser sign-in and retry.
+If the tool is available but an operation fails, check the selected cluster,
+your permissions, and the server's supported features.
 
 ## Quick Checklist
 
