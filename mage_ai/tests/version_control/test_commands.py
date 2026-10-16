@@ -8,6 +8,9 @@ from types import SimpleNamespace
 from unittest.mock import AsyncMock, Mock, patch
 
 from mage_ai.api.errors import ApiError
+from mage_ai.api.resources.VersionControlBranchResource import (
+    VersionControlBranchResource,
+)
 from mage_ai.api.resources.VersionControlFileResource import VersionControlFileResource
 from mage_ai.version_control.commands import parse_read_command
 from mage_ai.version_control.models import BaseVersionControl, Branch, File, Remote
@@ -167,5 +170,13 @@ class FileCommandIntegrationTests(unittest.IsolatedAsyncioTestCase):
         resource = SimpleNamespace(model=self.file, validate_output=Mock())
         with self.assertRaises(ApiError) as caught:
             await VersionControlFileResource.update(resource, {'command': 'rebase --exec id HEAD'})
+        self.assertEqual(caught.exception.code, 400)
+        resource.validate_output.assert_not_called()
+
+    async def test_branch_api_returns_validation_error_for_unsafe_name(self):
+        branch = Branch(project=self.project, name='--exec=touch marker')
+        resource = SimpleNamespace(model=branch, validate_output=Mock())
+        with self.assertRaises(ApiError) as caught:
+            await VersionControlBranchResource.update(resource, {'rebase': True})
         self.assertEqual(caught.exception.code, 400)
         resource.validate_output.assert_not_called()
