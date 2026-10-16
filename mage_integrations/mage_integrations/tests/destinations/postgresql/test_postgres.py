@@ -24,6 +24,7 @@ class PostgreSQLDestinationTests(unittest.TestCase, SQLDestinationMixin):
         'password': 'password',
         'username': 'username',
         'lower_case': False,
+        'truncate_full_table': True,
     }
     conn_class_path = 'mage_integrations.destinations.postgresql.PostgreSQLConnection'
     destination_class = PostgreSQL
@@ -42,6 +43,7 @@ class PostgreSQLDestinationTests(unittest.TestCase, SQLDestinationMixin):
             'port': 5432,
             'schema': '',
             'table': '',
+            'truncate_full_table': False,
             'username': '',
         }
     }
@@ -57,4 +59,33 @@ class PostgreSQLDestinationTests(unittest.TestCase, SQLDestinationMixin):
         self.assertEqual(
             table_commands,
             ['CREATE TABLE IF NOT EXISTS "test"."test_table" ("ID" TEXT)']
+        )
+
+    def test_build_query_strings_truncate_full_table(self):
+        destination = PostgreSQL(config=self.config)
+        stream = STREAM
+        destination.schemas = {stream: SCHEMA}
+        destination.unique_constraints = {stream: None}
+        destination.replication_methods = {stream: 'FULL_TABLE'}
+
+        with unittest.mock.patch.object(
+            destination,
+            'does_table_exist',
+            return_value=True,
+        ):
+            with unittest.mock.patch.object(
+                destination,
+                'build_alter_table_commands',
+                return_value=[],
+            ):
+                queries = destination.build_query_strings(
+                    record_data=[],
+                    stream=stream,
+                    tags={'batch': 0},
+                )
+
+        self.assertGreaterEqual(len(queries), 1)
+        self.assertTrue(
+            any('TRUNCATE TABLE' in q for q in queries),
+            msg=f'Expected TRUNCATE TABLE in queries, got: {queries}',
         )
