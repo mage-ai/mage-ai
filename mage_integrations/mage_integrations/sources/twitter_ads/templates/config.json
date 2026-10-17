@@ -12,13 +12,13 @@
   "reports": [
     {
       "name": "campaigns_genders_hourly_report",
-      "enitity": "CAMPAIGN",
+      "entity": "CAMPAIGN",
       "segment": "GENDER",
       "granularity": "HOUR"
     },
     {
       "name": "line_items_regions_daily_report",
-      "enitity": "LINE_ITEM",
+      "entity": "LINE_ITEM",
       "segment": "REGIONS",
       "granularity": "DAY"
     }

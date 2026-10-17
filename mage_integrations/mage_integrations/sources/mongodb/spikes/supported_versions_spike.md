@@ -1,4 +1,4 @@
-# tap-mongodb suppored versions & flavors spike
+# tap-mongodb supported versions & flavors spike
 
 ## Connecting to mongodb (shell and via pymongo)
 ### Mongo Shell
@@ -12,7 +12,7 @@ mongodb.
 Mongo officially supports versions 3.4, 3.6, 4.0. They are ending support for 3.4 in Jan 2020
 
 According to the
-[Pymongo docs on compatability](https://docs.mongodb.com/ecosystem/drivers/pymongo/#compatibility),
+[Pymongo docs on compatibility](https://docs.mongodb.com/ecosystem/drivers/pymongo/#compatibility),
 pymongo version 3.7/3.8 supports
 - 4.0
 - 3.6

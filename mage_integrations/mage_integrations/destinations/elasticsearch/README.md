@@ -17,7 +17,7 @@ By default, table name config is used to set elasticsearch `index` name
 | bearer_token | Bearer token for bearer authorization | None | Not Required |
 | api_key_id | api key id for auth key authorization | None | Not Required |
 | api_key | api key for auth key authorization | None | Not Required |
-| ssl_ca_file | path of the the SSL certificate for cert verification | None | Not Required |
+| ssl_ca_file | path of the SSL certificate for cert verification | None | Not Required |
 | verify_certs | disable the SSL certificate verification | True | Not Required |
 | index_schema_fields | this id map allows you to specify specific record values via jsonpath from the stream to be used in index formulation. | None | Not Required |
 | _op_type | select the operation type depending on the indexing mode | "index" | Not Required |
