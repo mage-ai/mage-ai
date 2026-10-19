@@ -14,6 +14,7 @@ from mage_ai.data_preparation.models.triggers import (
 )
 from mage_ai.data_preparation.preferences import get_preferences
 from mage_ai.orchestration.backfills.service import start_backfill
+from mage_ai.orchestration.db import db_connection
 from mage_ai.orchestration.db.models.schedules import (
     Backfill,
     BlockRun,
@@ -776,6 +777,50 @@ class PipelineSchedulerTests(DBTestCase):
             block_run = BlockRun.get(pipeline_run_id=pipeline_run.id, block_uuid='block1')
             self.assertEqual(block_run.status, BlockRun.BlockRunStatus.COMPLETED)
             self.assertEqual(block_run.metrics, dict(mage=1))
+
+    @patch('mage_ai.orchestration.pipeline_scheduler_original.get_job_manager')
+    def test_fetch_crashed_block_runs(self, mock_get_job_manager):
+        mock_job_manager = mock_get_job_manager()
+        mock_job_manager.has_block_run_job = MagicMock(return_value=False)
+        pipeline_run = create_pipeline_run_with_schedule(pipeline_uuid='test_pipeline')
+        block_run = BlockRun.get(pipeline_run_id=pipeline_run.id, block_uuid='block1')
+        block_run.update(status=BlockRun.BlockRunStatus.RUNNING)
+        scheduler = PipelineScheduler(pipeline_run=pipeline_run)
+
+        crashed_runs = scheduler._PipelineScheduler__fetch_crashed_block_runs()
+
+        self.assertEqual([b.id for b in crashed_runs], [block_run.id])
+        block_run.refresh()
+        self.assertEqual(block_run.status, BlockRun.BlockRunStatus.INITIAL)
+
+    @patch('mage_ai.orchestration.pipeline_scheduler_original.get_job_manager')
+    def test_fetch_crashed_block_runs_completed_after_status_refresh(
+        self,
+        mock_get_job_manager,
+    ):
+        pipeline_run = create_pipeline_run_with_schedule(pipeline_uuid='test_pipeline')
+        block_run = BlockRun.get(pipeline_run_id=pipeline_run.id, block_uuid='block1')
+        block_run.update(status=BlockRun.BlockRunStatus.RUNNING)
+
+        def complete_block_run_and_exit(block_run_id, **kwargs):
+            # The block run's process marks it as completed after the scheduler refreshed
+            # the statuses, then exits, so the job is gone by the time it is checked.
+            BlockRun.query.filter(BlockRun.id == block_run_id).update(
+                {BlockRun.status: BlockRun.BlockRunStatus.COMPLETED},
+                synchronize_session=False,
+            )
+            db_connection.session.commit()
+            return False
+
+        mock_job_manager = mock_get_job_manager()
+        mock_job_manager.has_block_run_job = MagicMock(side_effect=complete_block_run_and_exit)
+        scheduler = PipelineScheduler(pipeline_run=pipeline_run)
+
+        crashed_runs = scheduler._PipelineScheduler__fetch_crashed_block_runs()
+
+        self.assertEqual(crashed_runs, [])
+        block_run.refresh()
+        self.assertEqual(block_run.status, BlockRun.BlockRunStatus.COMPLETED)
 
     def test_on_block_failure(self):
         pipeline_run = create_pipeline_run_with_schedule(pipeline_uuid='test_pipeline')

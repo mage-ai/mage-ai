@@ -33,6 +33,39 @@ class ProcessQueueTests(TestCase):
         self.assertFalse('block_run_3' in self.queue.job_dict)
         self.assertFalse('block_run_4' in self.queue.job_dict)
 
+    @patch.object(ProcessQueue, 'is_worker_pool_alive')
+    @patch.object(ProcessQueue, 'start_worker_pool')
+    def test_clean_up_jobs_restarts_dead_worker_pool(
+        self,
+        mock_start_worker_pool,
+        mock_is_worker_pool_alive,
+    ):
+        mock_is_worker_pool_alive.return_value = True
+        self.queue.enqueue('block_run_1', run_block)
+        mock_start_worker_pool.assert_not_called()
+
+        # The worker pool is alive: nothing to do
+        self.queue.clean_up_jobs()
+        mock_start_worker_pool.assert_not_called()
+        self.assertEqual(self.queue.job_dict['block_run_1'], JobStatus.QUEUED)
+
+        # The worker pool died before it picked up the queued job
+        mock_is_worker_pool_alive.return_value = False
+        self.queue.clean_up_jobs()
+        mock_start_worker_pool.assert_called_once()
+        self.assertEqual(self.queue.job_dict['block_run_1'], JobStatus.QUEUED)
+
+        # Restarting the pool can fail (e.g. the fork fails); the scheduler must survive it
+        mock_start_worker_pool.side_effect = OSError('cannot fork')
+        self.queue.clean_up_jobs()
+        self.assertEqual(mock_start_worker_pool.call_count, 2)
+        mock_start_worker_pool.side_effect = None
+
+        # Nothing queued: a dead worker pool is normal, it exits when it is idle
+        self.queue.queue.get()
+        self.queue.clean_up_jobs()
+        self.assertEqual(mock_start_worker_pool.call_count, 2)
+
     @patch.object(ProcessQueue, 'start_worker_pool')
     @patch('mage_ai.orchestration.queue.process_queue.psutil.pid_exists')
     def test_has_job(self, mock_pid_exists, mock_start_worker_pool):
