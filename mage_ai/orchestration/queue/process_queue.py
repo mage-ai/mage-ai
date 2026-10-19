@@ -2,6 +2,7 @@ import multiprocessing as mp
 import os
 import signal
 import time
+import traceback
 from multiprocessing import Manager
 from typing import Callable, Dict
 
@@ -85,6 +86,7 @@ class ProcessQueue(Queue):
         """
         1. Cleans up completed jobs from the job dictionary.
         2. Check whether there're jobs need to be killed.
+        3. Restart the worker pool if it died while jobs were still queued.
         """
         job_ids = self.job_dict.keys()
         for job_id in job_ids:
@@ -93,6 +95,24 @@ class ProcessQueue(Queue):
                     del self.job_dict[job_id]
                 elif self.__should_kill_job(job_id):
                     self.kill_job(job_id)
+
+        try:
+            if (
+                self.status == QueueStatus.ACTIVE
+                and not self.queue.empty()
+                and not self.is_worker_pool_alive()
+            ):
+                # Only the worker pool takes jobs out of the queue, and enqueue() only
+                # restarts it when a new job arrives. Without this, jobs that were queued
+                # when the pool died would wait until the next enqueue, which may never
+                # happen.
+                self._print('Worker pool is not alive while jobs are queued. Restarting it.')
+                self.start_worker_pool()
+        except Exception:
+            # The scheduler calls this outside of its per-run error handling, so an error
+            # here (e.g. the fork failing) must not take the scheduler down. Try again on
+            # the next tick.
+            self._print(f'Failed to restart the worker pool: {traceback.format_exc()}')
 
     def enqueue(self, job_id: str, target: Callable, *args, **kwargs):
         """
@@ -311,7 +331,8 @@ class Worker(mp.Process):
             args = self.queue.get()
             job_id = args[0]
             print(f'Run worker for job {job_id}')
-            if self.job_dict[job_id] != JobStatus.QUEUED:
+            if self.job_dict.get(job_id) != JobStatus.QUEUED:
+                # The job was cancelled, already claimed or cleaned up while it was queued.
                 return
             self.job_dict[job_id] = self.pid
 
